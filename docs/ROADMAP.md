@@ -12,7 +12,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | Slot | Running | Next |
 |---|---|---|
 | impl-1 | — | FMT-2 part b (after INF-4) |
-| impl-2 | INF-4/5/6 determinism + recorder + hasher (worktree) | INF-8 |
+| impl-2 | — | INF-8 / INF-15 |
 | measurement / REA | — (CAT-14 done) | CAT-12b (data-referenced code: script range fns, cheat table) / CAT-13 / CAT-6 |
 | harness | MATH-2 (port all MATH with L1, worktree) | INF-8 (after INF-4) |
 | verifier | audit of the L1 oracle + sa-math claims (worktree) | — |
@@ -54,9 +54,9 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | INF-1 | Wine prefix `wine/prefix` + game copy `wine/gta-sa` (1.0 US exe + data), lanes `wine/lane-N` with symlinked data, DXVK | done | boots; `vorbisFile.dll` was missing at first (STATUS_DLL_NOT_FOUND), then copied | no intro movies; Space is pressed while gGameState is 2/4 |
 | INF-2 | Headless gamescope per lane: start, screenshot, key injection, teardown (`tools/e2e/lib.sh`) | done | lane 1 main menu + gameplay screenshots | lanes created on demand by `e2e_lane_setup`; `flock target/locks/lane-N.lock`; teardown = `wineserver -k` for the lane prefix + its own gamescope group |
 | INF-3 | `sa-launcher` + `sa-hook` skeleton | done | `tools/e2e/inf3-hooks.sh`: 3 hooks (CTimer::Update passthrough; CGeneral::LimitRadianAngle and CGameLogic::IsCoopGameGoingOn (a `.HOODLUM` stub) ported), live toggles + a 300-switch storm, 600 s soak 0 crashes, selftest 160,024 inputs 0 mismatches. Re-run by the main session: all PASS | x86 decoder checked against iced-x86 (18,613 entries, 1.53M-instruction sweep). The selftest is not yet a recorded L1/L2 oracle. Branch-into-patch check is heuristic (0x400 bytes) |
-| INF-4 | Determinism mode: virtual `timeGetTime`/QPC, fixed timestep, `rand`/`srand` logged with caller, synchronous CdStream, audio thread control, deterministic heap | todo | two runs of the same recording are frame-hash identical | |
-| INF-5 | Input recorder/replayer (`CPad` per frame) + recording format (`sa-oracle`) | todo | record → replay → same hashes | |
-| INF-6 | Frame state hasher: per-subsystem hashes (pools, entity transforms/velocities, world lists, streaming, script vars, camera, clock/weather, rand state) | todo | detects a 1-ulp change injected in a ped position | |
+| INF-4 | Determinism mode | done | `tools/e2e/inf4-determinism.sh` (lane 2), re-run by the main session: record + 2 replays hash-identical on all 17 subsystems over 5,200 frames | virtual clock (40 ms step) at the game's time call sites, busy-wait sites patched (WinMain limiter, Game::Idle 0x53E930), rand 0x821B1E hooked, main-thread CRT heap arena at 0x20000000, synchronous CdStream, audio threads stepped from CAEAudioHardware::Service with a virtual DirectSound cursor. Open: user-track scan thread, window focus, Pads[1]/menu mouse not injected, non-main-thread heap. `docs/re/determinism.md` |
+| INF-5 | Input recorder/replayer | done | per input tick (CPad::UpdatePads) from process start; replay desyncs=0 | format + `satool` in `crates/sa-oracle-format`; scripted input programs `tools/e2e/programs/` |
+| INF-6 | Frame state hasher | done | 17 subsystem hashes; a 1-ulp player x change at frame 3700 is caught at 3700 in `peds` only | not hashed yet: ped health, AI tasks, audio, menu state |
 | INF-7 | L1 Unicorn harness | done | `crates/sa-oracle` 14 tests; `l1 <fn> --cases 1000000`: 0 mismatches on 6 functions in `crates/sa-math`; re-run by the main session (tests + SolveQuadratic 1M + mutants 3/3) | `docs/re/l1-harness.md`. Unicorn 2.1.5 defects measured: MXCSR.FZ leaks into x87 (worked around), SNaN loads not quieted (those cases go to the CPU), transcendentals/FSCALE/FXTRACT unfaithful (routed to L2 by a code scan); a native CPU backend runs under Wine |
 | INF-8 | L2: snapshot/restore of the read/write set in-process, call original then Rust, normalise, diff, store fixtures | todo | self-test + mutation smoke test | needs CAT-7 |
 | INF-9 | L3 runner + automatic divergence bisection (first divergent frame → subsystem → function by toggling hooks) | todo | finds an injected fault without help | |
@@ -65,6 +65,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | INF-12 | Mutation runner (inject faults into Rust functions, expect detection) | in-progress | F9 smoke test | seed: 3 faults in `solve_quadratic` (feature `mutants`), all caught; gta-reversed's `1/(2a)` is an equivalent mutant |
 | INF-13 | Acceptance scripts `tools/accept/*.sh` (F1–F13 + per-milestone) | todo | each exits 0/1 with a readable report | |
 | INF-14 | Corpus v1: scripted recordings (routes per zone/time/weather, vehicle classes, combat drills) + SCM setup scripts | todo | manifest + coverage % | grows until F8 |
+| INF-15 | Concurrent lanes: with lane 2 running `inf4-determinism.sh`, a non-deterministic lane-1 run hung on the loading screen (frames frozen at 333; `inf3-hooks.sh` alone passes). Find the cause (shared files via symlinked data? CPU starvation + real-time waits? gamescope/DXVK?) before using several lanes at once | todo | 2 lanes running at once both PASS, 3 times in a row | until then: one game lane at a time |
 
 ## Phase II: foundations (M6–M9)
 

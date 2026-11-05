@@ -258,6 +258,7 @@ name = "sa-hook"
 version = "0.1.0"
 dependencies = [
  "iced-x86",
+ "sa-oracle-format",
  "windows-sys",
 ]
 
@@ -283,6 +284,10 @@ dependencies = [
  "sa-math",
  "unicorn-engine",
 ]
+
+[[package]]
+name = "sa-oracle-format"
+version = "0.1.0"
 
 [[package]]
 name = "shlex"

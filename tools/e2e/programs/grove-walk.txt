@@ -1,0 +1,16 @@
+# INF-4/5/6 acceptance input program (tools/e2e/inf4-determinism.sh): boot, new game, then walk, run and
+# turn around Grove Street through injected pad states. Frames are frame boundaries (40 ms of virtual
+# time each in determinism mode); ticks before frame 1 (logo/intro states) see frame 0.
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene (CCutsceneMgr::IsCutsceneSkipButtonBeingPressed)
+1500..2199 ly=-128           # walk forward
+2200..2499 ly=-128 cross     # sprint
+2500..2699 ly=-128 mouse=8,0 # turn the camera while walking
+2700..3299 ly=-128 lx=128    # walk diagonally
+3300..3799 ly=-128 cross mouse=-5,0
+3800..4299 ly=128            # walk back
+4300..4599 mouse=10,0        # look around
+4600..5199 ly=-128 cross     # run
+end 5200

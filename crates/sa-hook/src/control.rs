@@ -9,6 +9,11 @@
 //! | `hook ADDR\|NAME rust\|orig` | `ok NAME MODE frame=N` once applied at a frame boundary, `pending …` on timeout |
 //! | `peek ADDR LEN` | `peek ADDR HEX` (LEN ≤ 4096) |
 //! | `selftest` | parity check original vs Rust on the game thread: `selftest NAME n=… mismatches=…; …` |
+//! | `hashes [FRAME]` | frame-state hashes of the latest (or given) frame: `hashes frame=F tick=T NAME=HEX …` |
+//! | `det` | oracle status: `det enabled=… det=… frame=… ticks=… input=MODE … desyncs=…` |
+//! | `record PATH` / `record stop` | start recording the pad input at the next tick / write it to PATH |
+//! | `replay PATH` | inject a recording from the next tick on |
+//! | `stack` | main thread EIP/ESP and the stack words pointing into game code (hang diagnosis) |
 
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
@@ -25,6 +30,11 @@ pub enum Command {
     Hook { key: String, rust: bool },
     Peek { addr: u32, len: usize },
     Selftest,
+    Hashes(Option<u32>),
+    Det,
+    Record(String),
+    Replay(String),
+    Stack,
     Unknown(String),
 }
 
@@ -47,6 +57,15 @@ pub fn parse(line: &str) -> Option<Command> {
         ("frames", []) => Command::Frames,
         ("hooks", []) => Command::Hooks,
         ("selftest", []) => Command::Selftest,
+        ("hashes", []) => Command::Hashes(None),
+        ("hashes", [f]) => match f.parse() {
+            Ok(f) => Command::Hashes(Some(f)),
+            Err(_) => Command::Unknown(t.to_string()),
+        },
+        ("det", []) => Command::Det,
+        ("stack", []) => Command::Stack,
+        ("record", [p]) => Command::Record(p.to_string()),
+        ("replay", [p]) => Command::Replay(p.to_string()),
         ("hook", [key, m]) if m.eq_ignore_ascii_case("rust") || m.eq_ignore_ascii_case("orig") => {
             Command::Hook {
                 key: key.to_string(),
@@ -140,6 +159,16 @@ mod tests {
         );
         assert!(matches!(parse("peek 0x10 99999"), Some(Command::Unknown(_))));
         assert!(matches!(parse("peek 0x1ffffffff 4"), Some(Command::Unknown(_))));
+        assert_eq!(parse("hashes"), Some(Command::Hashes(None)));
+        assert_eq!(parse("hashes 120"), Some(Command::Hashes(Some(120))));
+        assert!(matches!(parse("hashes x"), Some(Command::Unknown(_))));
+        assert_eq!(parse("det"), Some(Command::Det));
+        assert_eq!(
+            parse("record C:\\r.sarec"),
+            Some(Command::Record("C:\\r.sarec".into()))
+        );
+        assert_eq!(parse("record stop"), Some(Command::Record("stop".into())));
+        assert_eq!(parse("replay r.sarec"), Some(Command::Replay("r.sarec".into())));
         assert_eq!(port_from_env(Some("47801")), 47801);
         assert_eq!(port_from_env(Some("x")), DEFAULT_PORT);
         assert_eq!(port_from_env(None), DEFAULT_PORT);

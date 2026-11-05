@@ -1,0 +1,12 @@
+[package]
+name = "sa-oracle-format"
+version = "0.1.0"
+description = "Platform-independent oracle data formats: frame-state hash definitions, hash traces, input recordings and input programs"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
