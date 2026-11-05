@@ -13,6 +13,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 sa-oracle-format = { path = "../sa-oracle-format" }
 sa-math = { path = "../sa-math" }
+# Engine ports (their `#[hook]` registrations become hook-table entries); phase A memory model.
+sa-core = { path = "../sa-core", features = ["in-process"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

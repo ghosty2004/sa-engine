@@ -351,7 +351,12 @@ pub fn host_rust(c: &Case) -> Result<Case, String> {
         .iter()
         .position(|h| h.addr == c.fn_addr)
         .ok_or_else(|| format!("{:#x}: no hook", c.fn_addr))?;
-    let id = HOOKS[i].id;
+    let Some(id) = HOOKS[i].id else {
+        return Err(format!(
+            "{}: engine-crate port (sa-core), no host replay yet",
+            HOOKS[i].name
+        ));
+    };
     let f = |k: usize| -> Result<f32, String> {
         c.args
             .get(k)
