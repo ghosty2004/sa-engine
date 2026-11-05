@@ -12,6 +12,8 @@ evidence names as a function entry that Ghidra's auto-analysis missed:
   vtable     slot of a gta-reversed vtable (RH_ScopedVirtualClass) pointing into game code
   cat7-call  direct call / tail-call target found in a catalogued body by CAT-7, listed with
              its callers in catalog/extra-code-addresses.csv (callgraph.py gaps maintains it)
+  data-*     entry reached only through data: pointer-table slot or code immediate (CAT-12b),
+             listed in catalog/data-code-addresses.csv (data_refs.py maintains it)
 
 .HOODLUM (CAT-9): a `.HOODLUM` procedure that is the body of a game-.text `jmp` stub is not a
 separate function. Its row gets state `stub-body` and the stub's name; the function is counted
@@ -129,6 +131,13 @@ def main():
     if extra.exists():
         for r in csv.DictReader(open(extra)):
             add(int(r['address'], 16), 'cat7-call')
+
+    # CAT-12b: entries reached only through data (pointer tables, code immediates), found by
+    # data_refs.py and appended to catalog/data-code-addresses.csv
+    data = cat / 'data-code-addresses.csv'
+    if data.exists():
+        for r in csv.DictReader(open(data)):
+            add(int(r['address'], 16), 'data-' + r['kind'].split(':')[0])
 
     # CAT-9: .HOODLUM bodies of game-.text stubs are counted at the stub.
     stub_body = {}

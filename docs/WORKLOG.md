@@ -180,3 +180,25 @@
   in `crates/sa-oracle/tests/verifier_l1.rs`; re-run by the main session at reduced size: 5/5 pass.
   Report: docs/re/verify-l1.md. PLAN §5 L1 definition amended (CPU-decided evidence, caller-used outputs,
   FPU state). Ledger wording corrected (> 2^33). Follow-ups as VER-1.
+
+## 2026-11-05: CAT-12b data-referenced code
+- New `tools/catalog/data_refs.py`, which runs in the `run_all.sh` fixpoint loop after `callgraph.py gaps`.
+  It scans aligned dwords in `.rdata`/`.data`/`_TEXT_HA`/`_rwdseg`, plus the code immediates that
+  `callgraph.py build` now writes to `catalog/raw/cat7-code-immediates.csv`, for values in game code that
+  are not catalogue entries. A value is accepted only when the bytes show an entry (16-byte aligned,
+  preceded by padding, a ret or a switch table, a clean decode, not inside a Ghidra body except where an
+  absorbed entry is proven) and the data gives context: a pointer table, a vtable install, the
+  `RxNodeDefinition`/`RwDevice` layout, a struct array, a pointer variable, or an immediate.
+  `merge_ghidra.py` reads the result, `catalog/data-code-addresses.csv` (rule `data-<kind>`).
+  Reports: `catalog/data-tables.csv` and `catalog/data-refs.csv`. Notes: `docs/re/cat12b-data-tables.md`.
+- Result: 2,720 entries. 1,666 are C++ static initialisers (`__xc`), 595 code immediates (callbacks,
+  `atexit` destructors), 343 slots of 164 vtables unknown to gta-reversed, 58/65 cheats, 24/27
+  ProcessCommands ranges, and 34 others (RW node defs and device, anim-callback table, d3dx9 tables,
+  zlib config, QuickTime glue). Another 16 CAT-7 call targets came up in the new bodies. Catalogue
+  19,425 → 22,161 functions; live 12,761 → 15,485.
+- Verified: the convergence run took 5 passes. A second `run_all.sh` closed in 1 pass and gave
+  sha256-identical `catalog/` files. Data/immediate entries outside the catalogue: 0.
+  `noncatalogue_targets`: 0. The cheat table equals gta-reversed `Cheat.cpp` (92/92 slots). The
+  script table equals plugin-sdk (27/27). Rejected candidates were reviewed by hand (see the notes).
+- Cost: about 4 full pipeline runs (8 min the first time, about 3 min each after that) under an 8 GB cap,
+  plus short Python scans. Disk: +0.7 MB in `catalog/`.

@@ -1,0 +1,1616 @@
+start,end,slots,pointers,in_catalogue_before,new,kind,kind_evidence,name,members,base_code_refs,n_referencing_functions
+0x8585c8,0x858620,22,22,22,0,vtable-gr:CBuilding,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1,0x403e00,1
+0x858e68,0x858eac,17,17,17,0,vtable-gr:CEventAcquaintancePedHate,gta-reversed RH_ScopedVirtualClass vtable,,game 12;gr-reversed 5,0x420e70;0x420f30;0x420f50;0x42c2b0;0x439b20;0x439c70;0x5e8030;0x604500;...,12
+0x858eb0,0x858edc,11,11,11,0,vtable-gr:CTaskComplexLeaveAnyCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x421150;0x4211c0;0x421270;0x433ba0;0x433ea0;0x5f8900;0x5f9840;0x65be80;...,9
+0x859540,0x859580,16,16,16,0,vtable-gr:CEventLeaderEntryExit,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x43e1c0;0x43e220;0x43e2b0;0x4404a0,4
+0x859580,0x8595a4,9,9,9,0,vtable-gr:CTaskSimpleUninterruptable,gta-reversed RH_ScopedVirtualClass vtable,,game 8;gr-reversed 1,0x43e2e0;0x43e330;0x43e3d0,3
+0x859988,0x85998c,1,1,1,1,vtable,base stored into [reg] by a referencing function,,game 1,0x447000;0x447050;0x447110;0x4a9f60;0x4aa260;0x4e34c0;0x4e6e00;0x4f2b80;...,22
+0x85998c,0x859990,1,1,1,0,vtable-gr:CAEDoorAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x4470e0;0x5074d0;0x507670,3
+0x859c80,0x859cbc,15,15,15,0,vtable-gr:CTaskComplexWanderCop,gta-reversed RH_ScopedVirtualClass vtable,,game 8;gr-reversed 7,0x460c80;0x460d80;0x461170,3
+0x859cfc,0x859d20,9,9,9,1,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x463540;0x463560;0x463570;0x4636e0;0x5f8900;0x5f90a0;0x5f9530;0x5f9710;...,35
+0x859d20,0x859d44,9,9,9,0,vtable-gr:CTaskSimpleFinishBrain,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x463640;0x463660,2
+0x859da0,0x859dc4,9,9,9,0,vtable-gr:CTaskSimpleSetCharDecisionMaker,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x46a470;0x46a490,2
+0x859dc4,0x859dc8,1,1,1,0,vtable-gr:CEntitySeekPosCalculatorStandard,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x46a610;0x46ad70;0x492f60;0x493890;0x5f99f0;0x65de90;0x661f30;0x667980;...,10
+0x859dc8,0x859dcc,1,1,1,0,single,,,gr-reversed 1,0x46ac10,1
+0x859dcc,0x859df8,11,11,11,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 4,0x46a630;0x46a650;0x46a6e0,3
+0x859df8,0x859e24,11,11,11,0,vtable-gr:CTaskComplexSeekEntityStandard,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8;game 3,0x46ac10;0x46ad70;0x5f99f0,3
+0x859e50,0x859e74,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 6;gr-unreversed 2;gr-reversed 1,0x46f1e0;0x46f570;0x46f690;0x496270;0x5ff940;0x665270,6
+0x859ebc,0x859ee0,9,9,9,0,vtable-gr:CTaskSimpleSetCharIgnoreWeaponRangeFlag,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x474620;0x474640,2
+0x85a0d0,0x85a0f8,10,10,10,0,vtable-gr:CTaskSimpleCower,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x48de70;0x48deb0;0x655570,3
+0x85a100,0x85a128,10,10,10,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 3,0x48df30;0x48df60,2
+0x85a134,0x85a15c,10,10,10,0,vtable-gr:CTaskSimpleUseAtm,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x48dfe0;0x48e010,2
+0x85a164,0x85a18c,10,10,10,0,vtable-gr:CTaskSimpleLookAbout,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4,0x48e0a0;0x48e0f0;0x69bca0,3
+0x85a198,0x85a1dc,17,17,17,0,vtable-gr:CEventLeaderEnteredCarAsDriver,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x48e1c0;0x48e220,2
+0x85a1dc,0x85a200,9,9,9,0,vtable-gr:CTaskSimpleSay,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x48e360;0x48e390;0x48e4e0;0x4b97b0,4
+0x85a200,0x85a23c,15,15,15,1,vtable,base stored into [reg] by a referencing function,,game 9;gr-reversed 5;gr-unreversed 1,0x48e4f0;0x48e530;0x48e600,3
+0x85a23c,0x85a278,15,15,15,1,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 5;gr-called-only 1;gr-unreversed 1,0x48e610;0x48e650;0x48e720,3
+0x85a278,0x85a29c,9,9,9,0,vtable-gr:CTaskSimplePause,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4,0x48e750;0x48e780;0x48e8a0;0x6359c0;0x635a90;0x690dc0;0x690f30;0x690fc0,8
+0x85a29c,0x85a2c4,10,10,10,0,vtable-gr:CTaskSimpleHandsUp,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4,0x48e970;0x48e9c0;0x65a110,3
+0x85a334,0x85a358,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x492d10;0x492d40;0x492d50;0x493fe0,4
+0x85a358,0x85a384,11,11,11,0,vtable-gr:CTaskComplexDiveFromAttachedEntityAndGetUp,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x492e20;0x492e70;0x492f10,3
+0x85a384,0x85a388,1,1,1,0,vtable-gr:CEntitySeekPosCalculatorRadiusAngleOffset,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x493730;0x496e00;0x62e6c0;0x62e8b0,4
+0x85a388,0x85a38c,1,1,1,0,vtable-gr:CTaskComplexSeekEntityRadiusAngleOffset,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x493730;0x493890,2
+0x85a38c,0x85a3b4,10,10,10,0,fnptr-table-unreferenced,,,gr-reversed 7;game 3,,0
+0x85a428,0x85a464,15,15,15,1,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 7,0x4993d0;0x4994e0,2
+0x85a788,0x85a7a4,7,7,7,0,vtable-gr:FxEmitterBP_c,gta-reversed RH_ScopedVirtualClass vtable,,gr-unreversed 5;game 1;gr-reversed 1,0x4a18d0;0x4a18f0,2
+0x85a7a4,0x85a7bc,6,6,6,0,vtable-gr:FxEmitter_c,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x4a1920;0x4a2b40,2
+0x85a7dc,0x85a7e8,3,3,3,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 3,0x4a4940;0x4a6a90;0x4a6b00;0x4a6b70;0x4a6be0;0x4a6c50;0x4a6cc0;0x4a6d30;...,33
+0x85a7e8,0x85a7f4,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a4c20,1
+0x85a7f4,0x85a800,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a4d00,1
+0x85a800,0x85a80c,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a4dc0,1
+0x85a80c,0x85a818,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a4e90,1
+0x85a818,0x85a824,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a4f50,1
+0x85a824,0x85a830,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5010,1
+0x85a830,0x85a83c,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a50e0,1
+0x85a83c,0x85a848,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a51b0,1
+0x85a848,0x85a854,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5270,1
+0x85a854,0x85a860,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5450,1
+0x85a860,0x85a86c,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5550,1
+0x85a86c,0x85a878,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5650,1
+0x85a878,0x85a884,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a57c0,1
+0x85a884,0x85a890,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5980,1
+0x85a890,0x85a89c,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5a10,1
+0x85a89c,0x85a8a8,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5b20,1
+0x85a8a8,0x85a8b4,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5cb0,1
+0x85a8b4,0x85a8c0,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5da0,1
+0x85a8c0,0x85a8cc,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5e20,1
+0x85a8cc,0x85a8d8,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5ea0,1
+0x85a8d8,0x85a8e4,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a5fa0,1
+0x85a8e4,0x85a8f0,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a60b0,1
+0x85a8f0,0x85a8fc,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a61a0,1
+0x85a8fc,0x85a908,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6220,1
+0x85a908,0x85a914,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6320,1
+0x85a914,0x85a920,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6440,1
+0x85a920,0x85a92c,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6550,1
+0x85a92c,0x85a938,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6630,1
+0x85a938,0x85a944,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6760,1
+0x85a944,0x85a950,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a67d0,1
+0x85a950,0x85a95c,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a68e0,1
+0x85a95c,0x85a968,3,3,3,2,vtable,base stored into [reg] by a referencing function,,game 3,0x4a6a00,1
+0x85a968,0x85a970,2,2,2,1,vtable,base stored into [reg] by a referencing function,,excluded:crt 1;game 1,0x4a8460;0x4a87f0;0x4a89b0;0x4a8b70;0x4a8d10,5
+0x85a970,0x85a978,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x4a8440,1
+0x85a978,0x85a980,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x4a87d0,1
+0x85a980,0x85a988,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x4a8990,1
+0x85a988,0x85a990,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x4a8b50,1
+0x85a9c4,0x85a9e0,7,7,7,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 7,0x4a9cf0;0x4a9d20,2
+0x85a9e0,0x85a9f8,6,6,6,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 6,0x4a9f20;0x4a9f40,2
+0x85aa94,0x85aa98,1,1,1,0,vtable-gr:CAEFireAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x4aaf00,1
+0x85aab0,0x85aab4,1,1,1,0,vtable-gr:CEventGroup,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x4ab340;0x4ab980;0x4ab9b0;0x4aba20,4
+0x85aab4,0x85aab8,1,1,1,0,vtable-gr:CEventGlobalGroup,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x4aba50,1
+0x85ab38,0x85ab78,16,16,16,0,vtable-gr:CEvent,gta-reversed RH_ScopedVirtualClass vtable,,game 12;excluded:crt 4,0x4abfc0;0x4ac010;0x4ac480;0x4ac720;0x4ac920;0x4aca70;0x4acdd0;0x4acff0;...,50
+0x85ab80,0x85abc4,17,17,17,0,vtable-gr:CEventEditableResponse,gta-reversed RH_ScopedVirtualClass vtable,,game 11;excluded:crt 4;gr-reversed 2,0x4ac450,1
+0x85abe0,0x85ac24,17,17,17,0,vtable-gr:CEventGunShot,gta-reversed RH_ScopedVirtualClass vtable,,game 11;gr-reversed 6,0x4ac610;0x4ac720,2
+0x85ac28,0x85ac68,16,16,16,0,vtable-gr:CEventVehicleCollision,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x4ac840;0x4ac920,2
+0x85ac68,0x85aca8,16,16,16,0,vtable-gr:CEventPedCollisionWithPed,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x4ac990;0x4aca70,2
+0x85aca8,0x85ace8,16,16,16,0,vtable-gr:CEventObjectCollision,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4accf0;0x4acdd0,2
+0x85ace8,0x85ad28,16,16,16,0,vtable-gr:CEventBuildingCollision,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4acf00;0x4acff0,2
+0x85ad30,0x85ad74,17,17,17,6,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4ad250;0x4ad330,2
+0x85ad78,0x85adbc,17,17,17,0,vtable-gr:CEventDamage,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 15;game 2,0x4ad830;0x4ad960;0x4b33b0,3
+0x85adc0,0x85ae00,16,16,16,5,vtable,base stored into [reg] by a referencing function,,game 16,0x4addf0;0x4b6e30,2
+0x85ae00,0x85ae44,17,17,17,6,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4adea0;0x4adf70,2
+0x85ae48,0x85ae88,16,16,16,6,vtable,base stored into [reg] by a referencing function,,game 16,0x4adfd0;0x4ae070,2
+0x85ae88,0x85aecc,17,17,17,5,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4ae1a0;0x4ae270,2
+0x85aed0,0x85af14,17,17,17,0,vtable-gr:CEventPotentialWalkIntoVehicle,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x4ae320;0x4ae3c0,2
+0x85af18,0x85af5c,17,17,17,0,vtable-gr:CEventPotentialWalkIntoObject,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x4ae5d0;0x4ae670,2
+0x85af60,0x85afa4,17,17,17,0,vtable-gr:CEventPotentialWalkIntoPed,gta-reversed RH_ScopedVirtualClass vtable,,game 13;gr-reversed 4,0x4ae6e0;0x4ae7a0,2
+0x85afa8,0x85afe8,16,16,16,0,vtable-gr:CEventVehicleHitAndRun,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x4ae990;0x4aea50,2
+0x85afe8,0x85b02c,17,17,17,5,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4aeac0;0x4aeb90,2
+0x85b030,0x85b070,16,16,16,6,vtable,base stored into [reg] by a referencing function,,game 16,0x4aec50;0x4b71e0,2
+0x85b070,0x85b0b0,16,16,16,3,vtable,base stored into [reg] by a referencing function,,game 16,0x4aecd0;0x4aed60,2
+0x85b0b0,0x85b0f4,17,17,17,4,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4aedf0;0x4aeea0,2
+0x85b0f8,0x85b138,16,16,16,3,vtable,base stored into [reg] by a referencing function,,game 16,0x4af010;0x4af0a0,2
+0x85b138,0x85b178,16,16,16,4,vtable,base stored into [reg] by a referencing function,,game 16,0x4af130;0x4af1c0,2
+0x85b178,0x85b1b8,16,16,16,4,vtable,base stored into [reg] by a referencing function,,game 16,0x4af240;0x4af2d0,2
+0x85b1b8,0x85b1fc,17,17,17,0,vtable-gr:CEventAttractor,gta-reversed RH_ScopedVirtualClass vtable,,game 13;gr-reversed 4,0x4af350;0x4af400,2
+0x85b210,0x85b250,16,16,16,0,vtable-gr:CEventVehicleToSteal,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4af670;0x4af700,2
+0x85b250,0x85b294,17,17,17,0,vtable-gr:CEventAcquaintancePed,gta-reversed RH_ScopedVirtualClass vtable,,game 9;gr-reversed 5;excluded:crt 3,0x4af820;0x4af890,2
+0x85b298,0x85b2dc,17,17,17,4,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4afb50;0x4afbf0,2
+0x85b2e0,0x85b320,16,16,16,0,vtable-gr:CEventKnockOffBike,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x4afc70;0x4afcf0;0x4afe70;0x4b4a50,4
+0x85b330,0x85b374,17,17,17,6,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4b0700;0x4b07b0,2
+0x85b378,0x85b3bc,17,17,17,0,vtable-gr:CEventScriptCommand,gta-reversed RH_ScopedVirtualClass vtable,,game 10;gr-reversed 7,0x4b0a00;0x4b0a50;0x4b6490,3
+0x85b3c0,0x85b400,16,16,16,0,vtable-gr:CEventInAir,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4b0cb0;0x4b76a0,2
+0x85b400,0x85b440,16,16,16,0,vtable-gr:CEventVehicleDied,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x4b0d10;0x4b0da0,2
+0x85b440,0x85b484,17,17,17,0,vtable-gr:CEventVehicleOnFire,gta-reversed RH_ScopedVirtualClass vtable,,game 13;gr-reversed 4,0x4b10c0;0x4b1170,2
+0x85b488,0x85b4c8,16,16,16,0,vtable-gr:CEventHitByWaterCannon,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4b1290;0x4b77b0,2
+0x85b4c8,0x85b508,16,16,16,4,vtable,base stored into [reg] by a referencing function,,game 16,0x4b1370;0x4b7810,2
+0x85b508,0x85b548,16,16,16,0,vtable-gr:CEventStuckInAir,gta-reversed RH_ScopedVirtualClass vtable,,game 13;gr-reversed 3,0x4b1490;0x4b1520,2
+0x85b548,0x85b588,16,16,16,0,vtable-gr:CEventCopCarBeingStolen,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4b1740;0x4b17f0,2
+0x85b588,0x85b5cc,17,17,17,0,vtable-gr:CEventVehicleDamage,gta-reversed RH_ScopedVirtualClass vtable,,game 9;gr-reversed 6;excluded:crt 2,0x4b18d0;0x4b1990,2
+0x85b5d0,0x85b614,17,17,17,6,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4b7920,1
+0x85b618,0x85b65c,17,17,17,6,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4b1b60;0x4b1c10,2
+0x85b660,0x85b6a0,16,16,16,0,vtable-gr:CEventCarUpsideDown,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x4b1cc0;0x4b1d50,2
+0x85b6a0,0x85b6e4,17,17,17,0,vtable-gr:CEventPotentialWalkIntoFire,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x4b1e20,1
+0x85b6e8,0x85b72c,17,17,17,5,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x4b1f10;0x4b7a70,2
+0x85b730,0x85b774,17,17,17,0,vtable-gr:CEventGunShotWhizzedBy,gta-reversed RH_ScopedVirtualClass vtable,,game 12;gr-reversed 5,0x4b1fd0;0x4b2070,2
+0x85b778,0x85b7bc,17,17,17,0,vtable-gr:CEventSeenPanickedPed,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x4b2080;0x4b2130,2
+0x85b7c0,0x85b800,16,16,16,0,vtable-gr:CEventAreaCodes,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x4b2190;0x4b2210,2
+0x85b800,0x85b844,17,17,17,0,vtable-gr:CEventPlayerCommandToGroup,gta-reversed RH_ScopedVirtualClass vtable,,game 11;excluded:crt 3;gr-reversed 3,0x4b23d0;0x4b2470,2
+0x85b848,0x85b88c,17,17,17,0,vtable-gr:CEventDanger,gta-reversed RH_ScopedVirtualClass vtable,,game 12;gr-reversed 5,0x4b2600;0x4b26a0,2
+0x85b898,0x85b8dc,17,17,17,0,vtable-gr:CEventLeaderExitedCarAsDriver,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x4b8300;0x4b8340;0x4b83c0,3
+0x85b8dc,0x85b900,9,9,9,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 2,0x4b86c0;0x4b8750;0x4bc150,3
+0x85b904,0x85b930,11,11,11,0,vtable-gr:CTaskComplexUseClosestFreeScriptedAttractorRun,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5;gr-unreversed 1,0x4b8790;0x4b87b0;0x4b8840;0x4b9dd0,4
+0x85b930,0x85b95c,11,11,11,0,vtable-gr:CTaskComplexUseClosestFreeScriptedAttractorSprint,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5;gr-unreversed 1,0x4b8850;0x4b8870;0x4b8900;0x4b9dd0,4
+0x85b95c,0x85b994,14,14,14,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 7,0x4b8920;0x4b8950;0x4b89f0,3
+0x85b994,0x85b9cc,14,14,14,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 7,0x4b8a00;0x4b8a30;0x4b8ad0,3
+0x85bb9c,0x85bbd8,15,15,15,0,vtable-gr:CBaseModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 9;excluded:crt 5;game 1,0x4c4a60;0x4c4af0;0x4c5590;0x4c55d0;0x4c5620;0x4c5680;0x4c56e0;0x4c5750;...,11
+0x85bbf0,0x85bc30,16,16,16,0,vtable-gr:CAtomicModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 15;game 1,0x4c5540,1
+0x85bc30,0x85bc70,16,16,16,0,vtable-gr:CDamageAtomicModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 15;game 1,0x4c55a0,1
+0x85bc70,0x85bcb0,16,16,16,0,vtable-gr:CLodAtomicModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 15;game 1,0x4c55e0,1
+0x85bcb0,0x85bcf0,16,16,16,0,vtable-gr:CTimeModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 15;game 1,0x4c5640,1
+0x85bcf0,0x85bd30,16,16,16,0,vtable-gr:CLodTimeModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 13;game 3,0x4c5690,1
+0x85bd30,0x85bd74,17,17,17,0,vtable-gr:CClumpModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 16;game 1,0x4c56f0,1
+0x85bd78,0x85bdbc,17,17,17,0,vtable-gr:CWeaponModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 16;game 1,0x4c5760,1
+0x85bdc0,0x85be04,17,17,17,0,vtable-gr:CPedModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 16;game 1,0x4c57a0;0x4c62f0,2
+0x85c5c8,0x85c60c,17,17,17,0,vtable-gr:CVehicleModelInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 16;game 1,0x4c75e0,1
+0x85c6cc,0x85c6d0,1,1,1,0,vtable-gr:CAnimBlendStaticAssociation,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x4ce940;0x4cec00;0x4cef30;0x4cef60,4
+0x85c6d0,0x85c6d4,1,1,1,0,vtable,base stored into [reg] by a referencing function,,game 1,0x4ce9b0;0x4cecf0;0x4cefc0;0x4cf020;0x4cf080,5
+0x85da54,0x85da58,1,1,0,0,single,,,new 1,,0
+0x85da64,0x85da68,1,1,1,0,single,,,gr-unreversed 1,,0
+0x85f03c,0x85f060,9,9,9,0,vtable-gr:CAEAudioChannel,gta-reversed RH_ScopedVirtualClass vtable,,excluded:crt 7;game 1;gr-reversed 1,0x4d7890;0x4d7910;0x4d7c00,3
+0x85f0bc,0x85f0f4,14,14,14,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 14,0x4dc490;0x4dc550;0x4dc5b0;0x4dc620,4
+0x85f310,0x85f330,8,8,8,0,vtable-gr:CAEPedSpeechAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8,0x4e4f10,1
+0x85f330,0x85f350,8,8,8,0,vtable-gr:CAEPedlessSpeechAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 1,0x4e6070,1
+0x85f368,0x85f36c,1,1,1,0,vtable-gr:CAEPoliceScannerAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x4e6e00;0x56da00;0x571880,3
+0x85f370,0x85f390,8,8,8,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 7;game 1,0x4e7770;0x4e77c0,2
+0x85f3cc,0x85f3f0,9,9,9,0,vtable-gr:CAEStaticChannel,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8;game 1,0x4f0b10;0x4f0b50,2
+0x85f3f0,0x85f414,9,9,9,0,vtable-gr:CAEStreamingChannel,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8;game 1,0x4f1800;0x4f2200,2
+0x85f418,0x85f438,8,8,8,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 7;game 1,0x4f2810;0x4f2830;0x4f2860,3
+0x85f438,0x85f43c,1,1,1,0,vtable-gr:CAETwinLoopSoundEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x4f2b80;0x4f63b0;0x4f63e0;0x507670;0x5de8d0;0x5e8030,6
+0x860e2c,0x860e30,1,1,1,0,single,,,gr-reversed 1,,0
+0x861120,0x861124,1,1,1,0,single,,,game 1,,0
+0x861990,0x861994,1,1,1,0,single,,,game 1,,0
+0x8620e0,0x8620e4,1,1,1,0,single,,,game 1,,0
+0x862104,0x862108,1,1,1,0,single,,,game 1,,0
+0x862cec,0x862cf0,1,1,1,0,vtable-gr:CAEVehicleAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x4f63e0;0x6d0a10,2
+0x862d70,0x862d90,8,8,8,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 7;game 1,0x5023f0;0x5026b0,2
+0x862d90,0x862db0,8,8,8,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 7;game 1,0x502720;0x502760,2
+0x862de8,0x862e08,8,8,8,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 7;game 1,0x503250;0x503290,2
+0x862e54,0x862e58,1,1,1,0,vtable-gr:CAEFrontendAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-unreversed 1,0x506b20;0x507670,2
+0x862e58,0x862e5c,1,1,1,0,vtable-gr:CAEScriptAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-unreversed 1,0x506ba0;0x5074d0,2
+0x862e5c,0x862e60,1,1,1,0,vtable-gr:CAEGlobalWeaponAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x506c50;0x5075b0,2
+0x862e60,0x862e64,1,1,1,0,vtable-gr:CAEExplosionAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x5074b0;0x5074d0,2
+0x862e64,0x862e68,1,1,1,0,vtable-gr:CAECollisionAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x507670,1
+0x862e68,0x862e6c,1,1,1,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 1,0x507560,1
+0x862e70,0x862e84,5,5,5,4,vtable,base stored into [reg] by a referencing function,,game 4;excluded:crt 1,0x509170,1
+0x8630e8,0x8630ec,1,1,1,0,vtable,base stored into [reg] by a referencing function,,game 1,0x50a870;0x51a450,2
+0x86381c,0x863820,1,1,0,0,single,,,new 1,,0
+0x8638c0,0x863918,22,22,22,0,vtable-gr:CDummy,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1,0x532540;0x532560,2
+0x863928,0x863980,22,22,22,0,vtable-gr:CEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1,0x532a90;0x535e90,2
+0x8639b0,0x863a08,22,22,22,0,vtable-gr:CAnimatedBuilding,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1,0x537a10,1
+0x863ba0,0x863bfc,23,23,23,0,vtable-gr:CPhysical,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1;gr-unreversed 1,0x542260;0x542450,2
+0x863c40,0x863c44,1,1,1,0,vtable-gr:CPlaceable,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x54f1e0;0x54f490;0x54f5d0,3
+0x8649b8,0x8649bc,1,1,0,0,single,,,new 1,0x55d220,1
+0x866db0,0x866dd8,10,10,10,5,vtable,base stored into [reg] by a referencing function,,game 6;excluded:crt 4,0x59cb70;0x59cba0,2
+0x866e78,0x866ed0,22,22,22,0,vtable-gr:CDummyObject,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1,0x59ea00;0x59ea20;0x59eab0,3
+0x866ee0,0x866f3c,23,23,23,0,vtable-gr:CHandObject,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1;gr-unreversed 1,0x59eeb0,1
+0x866f60,0x866fbc,23,23,23,0,vtable-gr:CObject,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1;gr-unreversed 1,0x59f660;0x5a1d10;0x5a1d70;0x5a1df0;0x5a1f60,5
+0x867030,0x86708c,23,23,23,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 21;game 1;gr-unreversed 1,0x5a4030;0x5a40e0,2
+0x8670c8,0x8670cc,1,1,1,0,single,,,gr-reversed 1,,0
+0x867170,0x867178,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x5a6db0;0x5a6fc0;0x5a7490;0x5a74f0;0x856690,5
+0x867178,0x867180,2,2,2,2,vtable,base stored into [reg] by a referencing function,,game 2,0x5a7570,1
+0x867b30,0x867b34,1,1,0,0,single,,,new 1,,0
+0x867b68,0x867b6c,1,1,1,0,single,,,gr-reversed 1,,0
+0x867b70,0x867b74,1,1,0,0,single,,,new 1,,0
+0x868468,0x86846c,1,1,0,0,single,,,new 1,,0
+0x868a60,0x868abc,23,23,23,0,vtable-gr:CCutsceneObject,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;game 1;gr-unreversed 1,0x5b19d0;0x5b1a80,2
+0x86aad8,0x86aaf4,7,3,3,0,struct-array,3 slots at stride 0xc,,gr-reversed 3,,1
+0x86ab08,0x86ab0c,1,1,1,0,single,,,gr-reversed 1,,0
+0x86ab1c,0x86ab20,1,1,1,0,single,,,gr-reversed 1,,0
+0x86ab28,0x86ab2c,1,1,1,0,single,,,gr-reversed 1,,0
+0x86ab68,0x86ab6c,1,1,1,0,single,,,gr-reversed 1,0x5bf6b0,1
+0x86c0a8,0x86c110,26,26,26,0,vtable-gr:CCivilianPed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 22;gr-unreversed 4,0x5ddb70;0x5ddbe0,2
+0x86c120,0x86c188,26,26,26,0,vtable-gr:CCopPed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;gr-unreversed 4;game 1,0x5ddc60;0x5de0d0,2
+0x86c198,0x86c1f0,22,22,22,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 21;game 1,0x5de2e0;0x5de300,2
+0x86c200,0x86c268,26,26,26,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 20;gr-unreversed 4;game 2,0x5de340;0x5de3b0,2
+0x86c2a8,0x86c2ac,1,1,1,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 1,0x5de8d0;0x5de920;0x5e8030,3
+0x86c2ac,0x86c2b0,1,1,1,0,vtable-gr:CAEWeaponAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x5de990;0x5e8030,2
+0x86c2b0,0x86c2b4,1,1,1,0,vtable-gr:CEventSoundQuiet,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x5dea00;0x5e05b0,2
+0x86c2b4,0x86c2f4,16,16,16,0,fnptr-table-unreferenced,,,game 12;gr-reversed 4,,0
+0x86c358,0x86c3c0,26,26,26,0,vtable-gr:CPed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 20;gr-unreversed 5;game 1,0x5e8030;0x5e8620,2
+0x86c538,0x86c550,6,6,6,0,vtable-gr:CPedAttractor,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 4;excluded:crt 1;game 1,0x5ec410;0x5edfb0,2
+0x86c550,0x86c568,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5ee470;0x5ee530,2
+0x86c568,0x86c580,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5ee540;0x5ee600,2
+0x86c580,0x86c598,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5ee610;0x5ee6d0,2
+0x86c598,0x86c5b4,7,7,7,2,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 3,0x5ee6e0;0x5ee7b0,2
+0x86c5b4,0x86c5cc,6,6,6,0,vtable-gr:CPedShelterAttractor,gta-reversed RH_ScopedVirtualClass vtable,,game 3;gr-reversed 3,0x5ee7c0;0x5ee880,2
+0x86c5cc,0x86c5e4,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5ee890;0x5ee950,2
+0x86c5e4,0x86c5fc,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5ee960;0x5eea20,2
+0x86c5fc,0x86c614,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5eea30;0x5eeaf0,2
+0x86c614,0x86c62c,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5eeb00;0x5eebc0,2
+0x86c62c,0x86c644,6,6,6,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 4;game 2,0x5eebd0;0x5eec90,2
+0x86c6d0,0x86c710,16,16,16,4,vtable,base stored into [reg] by a referencing function,,game 16,0x5f6190;0x5f6200,2
+0x86c710,0x86c754,17,17,17,0,vtable-gr:CEventPlayerCommandToGroupAttack,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x5f6340;0x5f6370;0x5f63f0;0x5f7cc0;0x60a1d0;0x60cd20,6
+0x86c754,0x86c75c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 2,0x856800;0x856810;0x856820;0x856830;0x856840;0x856850,6
+0x86c75c,0x86c764,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f6450,1
+0x86c764,0x86c76c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f6480,1
+0x86c76c,0x86c774,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f64b0,1
+0x86c774,0x86c77c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 2,0x5f64e0,1
+0x86c77c,0x86c784,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 1;gr-unreversed 1,0x5f6510,1
+0x86c784,0x86c78c,2,2,2,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 1;gr-unreversed 1,0x5f6540,1
+0x86c78c,0x86c7b4,10,10,10,0,vtable-gr:CTaskSimpleChat,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4,0x5f65a0;0x5f65e0;0x5f8180;0x682630,4
+0x86c7bc,0x86c7e8,11,11,11,3,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x5f6660;0x5f6680;0x5f6700;0x5f6da0,4
+0x86c7e8,0x86c80c,9,9,9,0,vtable-gr:CTaskSimpleWaitUntilLeaderAreaCodesMatch,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x5f67e0;0x5f67f0;0x5f9710,3
+0x86c80c,0x86c824,6,6,6,0,vtable-gr:CTaskAllocatorKillThreatsBasicRandomGroup,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x5f6920;0x5fb590,2
+0x86c950,0x86c954,1,1,1,0,single,,,gr-reversed 1,,0
+0x86c968,0x86c96c,1,1,1,0,single,,,gr-reversed 1,,0
+0x86c970,0x86c9b0,16,16,16,0,vtable-gr:CEventPedCollisionWithPlayer,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x5fed40;0x5fed80;0x5feda0;0x604500,4
+0x86c9b0,0x86c9f0,16,16,16,0,vtable-gr:CEventPlayerCollisionWithPed,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 2,0x5fee40;0x5fee80;0x5feea0;0x604500,4
+0x86c9f0,0x86ca34,17,17,17,0,vtable-gr:CEventScriptedAttractor,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x5fef40;0x5fef70;0x5fef90;0x6060a0,4
+0x86ca38,0x86ca7c,17,17,17,2,vtable,base stored into [reg] by a referencing function,,game 12;gr-reversed 5,0x5ff030;0x5ff050;0x606ba0;0x672700,4
+0x86ca80,0x86cac4,17,17,17,2,vtable,base stored into [reg] by a referencing function,,game 12;gr-reversed 5,0x5ff0f0;0x5ff110;0x606ba0,3
+0x86cac8,0x86cb0c,17,17,17,2,vtable,base stored into [reg] by a referencing function,,game 12;gr-reversed 5,0x5ff1b0;0x5ff1d0;0x606ba0;0x670100,4
+0x86cb10,0x86cb54,17,17,17,0,vtable-gr:CEventAcquaintancePedHateBadlyLit,gta-reversed RH_ScopedVirtualClass vtable,,game 12;gr-reversed 5,0x5ff250;0x5ff2c0;0x606ba0,3
+0x86cb58,0x86cb9c,17,17,17,0,vtable-gr:CEventSeenCop,gta-reversed RH_ScopedVirtualClass vtable,,game 13;gr-reversed 4,0x5ff380;0x5ff3a0;0x5ff3c0;0x606ba0,4
+0x86cba0,0x86cbe4,17,17,17,4,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x5ff440;0x5ff460;0x5ff490;0x6008a0,4
+0x86cbe8,0x86cc2c,17,17,17,4,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x5ff500;0x5ff520;0x5ff550;0x6008a0,4
+0x86cc30,0x86cc74,17,17,17,4,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x5ff5c0;0x5ff5e0;0x5ff610;0x6008a0,4
+0x86cc78,0x86ccbc,17,17,17,4,vtable,base stored into [reg] by a referencing function,,game 15;gr-reversed 2,0x5ff680;0x5ff6a0;0x5ff6d0;0x6008a0,4
+0x86ccc0,0x86cd00,16,16,16,0,vtable-gr:CEventOnFire,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x5ff740;0x5ff760;0x5ff790;0x607e30,4
+0x86cd00,0x86cd40,16,16,16,0,vtable-gr:CEventEscalator,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x5ff820;0x602b90;0x607e30,3
+0x86cd40,0x86cd44,1,1,1,0,vtable-gr:CEntityScanner,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x5ff990;0x603480;0x605fb0;0x606000;0x606050;0x606890;0x607300,7
+0x86cd84,0x86cd88,1,1,1,0,single,,,gr-reversed 1,0x607140,1
+0x86cd88,0x86cd8c,1,1,1,0,single,,,gr-reversed 1,0x607140,1
+0x86cd8c,0x86cd90,1,1,1,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 1,0x606010,1
+0x86d0a0,0x86d0e0,16,16,16,0,vtable-gr:CEventNewGangMember,gta-reversed RH_ScopedVirtualClass vtable,,game 16,0x608f70;0x609080,2
+0x86d0e0,0x86d120,16,16,16,0,vtable-gr:CEventDontJoinPlayerGroup,gta-reversed RH_ScopedVirtualClass vtable,,game 16,0x6090e0;0x609140,2
+0x86d120,0x86d164,17,17,17,0,vtable-gr:CEventPlayerCommandToGroupGather,gta-reversed RH_ScopedVirtualClass vtable,,game 14;gr-reversed 3,0x609250;0x609280;0x609300;0x60a1d0;0x60cd20,5
+0x86d168,0x86d1d0,26,26,26,0,vtable-gr:CPlayerPed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 21;gr-unreversed 4;game 1,0x6093b0;0x60d5b0,2
+0x86d1e4,0x86d1e8,1,1,0,0,single,,,new 1,,0
+0x86d48c,0x86d4a4,6,6,6,0,vtable-gr:CTask,gta-reversed RH_ScopedVirtualClass vtable,,excluded:crt 4;game 1;gr-reversed 1,0x61a350;0x61a3a0;0x61a3d0;0x61a660,4
+0x86d4a4,0x86d4a8,1,1,1,0,single,,,excluded:crt 1,,0
+0x86d4a8,0x86d4cc,9,9,9,1,vtable,base stored into [reg] by a referencing function,,excluded:crt 4;game 4;gr-reversed 1,0x61a390,1
+0x86d4cc,0x86d4f8,11,11,11,0,vtable,base stored into [reg] by a referencing function,,excluded:crt 5;game 5;gr-reversed 1,0x61a3b0;0x61a3d0,2
+0x86d504,0x86d528,9,9,9,0,vtable-gr:CTaskSimpleAnim,gta-reversed RH_ScopedVirtualClass vtable,,game 4;excluded:crt 3;gr-reversed 2,0x61a6c0;0x61a6f0,2
+0x86d528,0x86d54c,9,9,9,0,vtable-gr:CTaskSimpleRunAnim,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4,0x61a8b0;0x61a900;0x61b6d0,3
+0x86d54c,0x86d570,9,9,9,0,vtable-gr:CTaskSimpleRunNamedAnim,gta-reversed RH_ScopedVirtualClass vtable,,game 4;gr-unreversed 3;gr-reversed 2,0x61a990;0x6674b0,2
+0x86d570,0x86d594,9,9,9,0,vtable-gr:CTaskSimpleRunTimedAnim,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x61ab70;0x61abe0,2
+0x86d594,0x86d5b8,9,9,9,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 2,0x61ac90;0x61ad10,2
+0x86d5b8,0x86d5dc,9,9,9,0,vtable-gr:CTaskSimplePlayHandSignalAnim,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 2,0x61ae50;0x61aeb0,2
+0x86d5dc,0x86d608,11,11,11,0,vtable-gr:CTaskComplexPlayHandSignalAnim,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 4;gr-reversed 2,0x61b2b0;0x61ba00;0x61bdf0,3
+0x86d640,0x86d684,17,17,17,0,vtable-gr:CEventVehicleDamageWeapon,gta-reversed RH_ScopedVirtualClass vtable,,game 10;gr-reversed 7,0x61c2e0;0x61c310;0x61c330;0x61d0b0;0x65d780;0x6d7c90;0x73b550,7
+0x86d684,0x86d6a8,9,9,9,0,vtable-gr:CTaskSimpleFight,gta-reversed RH_ScopedVirtualClass vtable,,game 8;gr-reversed 1,0x61c470;0x61c530,2
+0x86d700,0x86d724,9,9,9,0,vtable-gr:CTaskSimpleFightingControl,gta-reversed RH_ScopedVirtualClass vtable,,game 4;gr-reversed 4;gr-unreversed 1,0x61dc10;0x61dca0,2
+0x86d724,0x86d748,9,9,9,0,vtable-gr:CTaskSimpleUseGun,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 3;gr-unreversed 1,0x61de60;0x61df30,2
+0x86d76c,0x86d790,9,9,9,0,vtable-gr:CTaskSimpleGunControl,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x61f3f0;0x61f4d0,2
+0x86d790,0x86d7b4,9,9,9,0,vtable-gr:CTaskSimpleThrowProjectile,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x61f660;0x61f700,2
+0x86d7b4,0x86d7d8,9,9,9,0,vtable-gr:CTaskSimpleThrowControl,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x61f8b0;0x61f950,2
+0x86d7d8,0x86d7fc,9,9,9,3,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x61fc20;0x61fc50;0x623120,3
+0x86d7fc,0x86d820,9,9,9,3,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x61fe30;0x61fe70;0x623190,3
+0x86d820,0x86d844,9,9,9,0,vtable-gr:CTaskSimpleChoking,gta-reversed RH_ScopedVirtualClass vtable,,game 4;gr-reversed 4;gr-unreversed 1,0x6202c0;0x620370,2
+0x86d844,0x86d868,9,9,9,0,vtable-gr:CTaskSimpleBeHit,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x620780;0x620810,2
+0x86d868,0x86d894,11,11,11,2,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x620b00;0x620b90,2
+0x86d894,0x86d8c0,11,11,11,0,vtable-gr:CTaskComplexKillPedOnFoot,gta-reversed RH_ScopedVirtualClass vtable,,game 10;gr-reversed 1,0x620e30;0x620ef0,2
+0x86d8c0,0x86d8ec,11,11,11,0,vtable-gr:CTaskComplexKillPedOnFootStealth,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x620f70;0x620ff0,2
+0x86d8ec,0x86d918,11,11,11,0,vtable-gr:CTaskComplexKillPedOnFootMelee,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x621000;0x621090,2
+0x86d918,0x86d944,11,11,11,0,vtable-gr:CTaskComplexKillPedOnFootArmed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4;gr-unreversed 1,0x621190;0x621250,2
+0x86d944,0x86d968,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x6217d0;0x6218c0,2
+0x86d968,0x86d994,11,11,11,0,vtable-gr:CTaskComplexDestroyCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x621c00;0x621cb0,2
+0x86d994,0x86d9c0,11,11,11,0,vtable-gr:CTaskComplexDestroyCarMelee,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x621d10;0x621da0,2
+0x86d9c4,0x86d9f0,11,11,11,0,vtable-gr:CTaskComplexDestroyCarArmed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x621f50;0x622010,2
+0x86d9f0,0x86da1c,11,11,11,0,vtable-gr:CTaskComplexRoadRage,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x6220a0;0x622110,2
+0x86da1c,0x86da48,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x622180;0x6221c0;0x623750,3
+0x86da48,0x86da74,11,11,11,0,vtable-gr:CTaskComplexKillPedGroupOnFoot,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x622240;0x6222b0,2
+0x86da74,0x86da98,9,9,9,0,vtable-gr:CTaskSimpleStealthKill,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x6225f0;0x622680,2
+0x86da98,0x86dac4,11,11,11,0,vtable-gr:CTaskComplexKillPedFromBoat,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x6227c0;0x622830,2
+0x86dac4,0x86daf0,11,11,11,0,vtable-gr:CTaskComplexSeekCoverUntilTargetDead,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x622b80;0x622bc0;0x622c20;0x623900,4
+0x86db48,0x86db70,10,10,10,0,vtable-gr:CTaskSimpleIKChain,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4,0x62ec10;0x6339c0;0x633a90,3
+0x86db70,0x86db98,10,10,10,0,vtable-gr:CTaskSimpleHitFromBack,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62ec60;0x62ec90,2
+0x86dba4,0x86dbcc,10,10,10,0,vtable-gr:CTaskSimpleHitFromLeft,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62ed10;0x62ed40,2
+0x86dbd8,0x86dc00,10,10,10,0,vtable-gr:CTaskSimpleHitFromRight,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62edc0;0x62edf0,2
+0x86dc10,0x86dc38,10,10,10,0,vtable-gr:CTaskSimpleHitByGunFromFront,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62ee70;0x62eea0,2
+0x86dc4c,0x86dc74,10,10,10,0,vtable-gr:CTaskSimpleHitByGunFromRear,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62ef20;0x62ef50,2
+0x86dc88,0x86dcb0,10,10,10,0,vtable-gr:CTaskSimpleHitByGunFromLeft,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62efd0;0x62f000,2
+0x86dcc4,0x86dcec,10,10,10,0,vtable-gr:CTaskSimpleHitByGunFromRight,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x62f080;0x62f0b0,2
+0x86dd00,0x86dd2c,11,11,11,0,vtable-gr:CTaskComplexLeaveCarAndDie,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 4,0x62f1a0;0x62f1d0;0x62f270,3
+0x86dd2c,0x86dd50,9,9,9,0,vtable-gr:CTaskSimpleStandStill,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x62f310;0x62f360;0x62f910;0x6316a0;0x632650;0x632860;0x634c10;0x6355e0;...,9
+0x86dd50,0x86dd74,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x62f590;0x62f5d0;0x635bd0,3
+0x86dd74,0x86dd98,9,9,9,0,vtable-gr:CTaskSimpleSetKindaStayInSamePlace,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x62f610;0x62f650;0x635c30,3
+0x86dd98,0x86ddbc,9,9,9,0,vtable-gr:CTaskSimpleDuckToggle,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x62f690;0x62f6d0;0x635c90,3
+0x86ddbc,0x86dde0,9,9,9,0,vtable-gr:CTaskSimpleDie,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4,0x62fa00;0x62fa60;0x62faf0;0x62fb40,4
+0x86dde0,0x86de04,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 2,0x62fc20;0x62fc70;0x635ef0,3
+0x86de04,0x86de30,11,11,11,0,vtable-gr:CTaskComplexDieInCar,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x62fc80;0x62fcf0;0x6302d0;0x635f90,4
+0x86de30,0x86de54,9,9,9,0,vtable-gr:CTaskSimpleDrown,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x62fec0;0x62ff10;0x635e60,3
+0x86de54,0x86de78,9,9,9,0,vtable-gr:CTaskSimpleDrownInCar,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 2,0x62ff20;0x62ff60;0x6301e0;0x636010,4
+0x86de78,0x86dea4,11,11,11,0,vtable-gr:CTaskComplexDie,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 4,0x630040;0x6300c0,2
+0x86dea4,0x86dec8,9,9,9,0,vtable-gr:CTaskSimpleDead,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 1;gr-unreversed 1,0x630590;0x6305f0;0x636100,3
+0x86ded0,0x86def4,9,9,9,0,vtable-gr:CTaskSimpleTired,gta-reversed RH_ScopedVirtualClass vtable,,game 8;gr-reversed 1,0x630f20;0x630f60;0x636180,3
+0x86def4,0x86df18,9,9,9,0,vtable-gr:CTaskSimpleSitDown,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x631030;0x631070;0x636200,3
+0x86df18,0x86df3c,9,9,9,0,vtable-gr:CTaskSimpleSitIdle,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x631160;0x6311b0;0x636280,3
+0x86df3c,0x86df60,9,9,9,0,vtable-gr:CTaskSimpleStandUp,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x6312e0;0x631320;0x631550;0x636310,4
+0x86df60,0x86df8c,11,11,11,0,vtable-gr:CTaskComplexSitDownThenIdleThenStandUp,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x631460;0x6314a0;0x636390,3
+0x86df98,0x86dfc4,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x631790;0x6317c0;0x631990;0x636410,4
+0x86dfc4,0x86dff0,11,11,11,1,vtable,base stored into [reg] by a referencing function,,gr-reversed 6;game 5,0x631910;0x631980;0x636490,3
+0x86dff0,0x86e01c,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x631ae0;0x631b50;0x636500,3
+0x86e01c,0x86e040,9,9,9,0,vtable-gr:CTaskSimpleTurn180,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x631cc0;0x631d00;0x636570,3
+0x86e040,0x86e06c,11,11,11,0,vtable-gr:CTaskComplexHitResponse,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x631d70;0x631da0;0x6365e0,3
+0x86e06c,0x86e098,11,11,11,0,vtable-gr:CTaskComplexHitByGunResponse,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x631dd0;0x631e30;0x636640,3
+0x86e0ac,0x86e0d8,11,11,11,0,vtable-gr:CTaskComplexSunbathe,gta-reversed RH_ScopedVirtualClass vtable,,gr-unreversed 5;game 4;gr-reversed 2,0x631f80;0x632050,2
+0x86e0d8,0x86e104,11,11,11,0,vtable-gr:CTaskComplexUseEffect,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x6321f0;0x632270,2
+0x86e108,0x86e134,11,11,11,0,vtable-gr:CTaskComplexWaitAtAttractor,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6325f0;0x632630;0x636940,3
+0x86e134,0x86e160,11,11,11,0,vtable-gr:CTaskComplexUseAttractor,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6326f0;0x632720;0x6369b0,3
+0x86e160,0x86e18c,11,11,11,0,vtable-gr:CTaskComplexWaitForDryWeather,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x632800;0x632830;0x636a10,3
+0x86e18c,0x86e1b8,11,11,11,0,vtable-gr:CTaskComplexWaitForBus,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x632900;0x632930;0x636a60,3
+0x86e1b8,0x86e1dc,9,9,9,0,vtable-gr:CTaskSimpleWaitForBus,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x632a50;0x632a90;0x636ad0;0x638940,4
+0x86e1dc,0x86e200,9,9,9,3,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x632b30;0x632b70;0x636b40,3
+0x86e200,0x86e22c,11,11,11,0,vtable-gr:CTaskComplexSequence,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x632bd0;0x6389f0,2
+0x86e22c,0x86e258,11,11,11,0,vtable-gr:CTaskComplexBeInGroup,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x632e50;0x632ea0;0x636be0,3
+0x86e258,0x86e284,11,11,11,0,vtable-gr:CTaskComplexUsePairedAttractor,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6331a0;0x6331e0;0x636c70,3
+0x86e284,0x86e2b0,11,11,11,0,vtable-gr:CTaskComplexAttractorPartnerWait,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x633250;0x633290;0x636cf0,3
+0x86e2b0,0x86e2dc,11,11,11,0,vtable-gr:CTaskComplexUseAttractorPartner,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6332c0;0x633300;0x636d60,3
+0x86e2dc,0x86e308,11,11,11,0,vtable-gr:CTaskComplexUseScriptedAttractor,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x633330;0x633360;0x636dd0;0x638d30,4
+0x86e308,0x86e334,11,11,11,0,vtable-gr:CTaskComplexOnFire,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x633390;0x6333c0;0x636e30,3
+0x86e334,0x86e358,9,9,9,0,vtable-gr:CTaskSimplePlayerOnFire,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x633560;0x6335b0;0x636e80,3
+0x86e358,0x86e37c,9,9,9,0,vtable-gr:CTaskSimpleIKManager,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x6337f0;0x633830;0x639350,3
+0x86e37c,0x86e3a4,10,10,10,0,vtable-gr:CTaskSimpleIKLookAt,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4,0x633e00;0x633ef0,2
+0x86e3a4,0x86e3cc,10,10,10,0,vtable-gr:CTaskSimpleIKPointArm,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4,0x634150;0x634240,2
+0x86e3cc,0x86e3f0,9,9,9,3,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x634440;0x634500,2
+0x86e404,0x86e428,9,9,9,0,vtable-gr:CTaskSimpleClearLookAt,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x634670;0x6346a0;0x636f20,3
+0x86e428,0x86e454,11,11,11,0,vtable-gr:CTaskComplexUseClosestFreeScriptedAttractor,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5;gr-unreversed 1,0x6346f0;0x634720;0x636f70,3
+0x86e454,0x86e480,11,11,11,5,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6348a0;0x6348e0;0x636fd0,3
+0x86e4a8,0x86e4d4,11,11,11,0,vtable-gr:CTaskComplexUseGoggles,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x634ef0;0x634f20;0x637060,3
+0x86e4ec,0x86e518,11,11,11,0,vtable-gr:CTaskComplexInWater,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6350d0;0x635100;0x6370b0,3
+0x86e518,0x86e544,11,11,11,0,vtable-gr:CTaskComplexUseSequence,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x635450;0x637100;0x638f20;0x638ff0;0x6390c0;0x6396c0,6
+0x86e544,0x86e568,9,9,9,0,vtable-gr:CTaskSimpleWaitUntilAreaCodesMatch,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x635540;0x6355e0,2
+0x86e568,0x86e594,11,11,11,0,vtable-gr:CTaskComplexUseScriptedBrain,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x6358b0;0x635900,2
+0x86e594,0x86e5c0,11,11,11,0,vtable-gr:CTaskComplexUseEffectRunning,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x636780;0x6367c0;0x636850,3
+0x86e5c0,0x86e5ec,11,11,11,0,vtable-gr:CTaskComplexUseEffectSprinting,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x636860;0x6368a0;0x636930,3
+0x86e5ec,0x86e614,10,10,10,0,vtable-gr:CTaskSimpleHitFromFront,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x637250;0x637290,2
+0x86e6b0,0x86e6f0,16,16,16,0,vtable-gr:CEventLeaderQuitEnteringCarAsDriver,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x63a110;0x63a150;0x63a1d0,3
+0x86e6f0,0x86e720,12,12,12,0,vtable-gr:CTaskComplexEnterCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 4;excluded:crt 2,0x63a220;0x63dfa0,2
+0x86e720,0x86e74c,11,11,11,0,vtable-gr:CTaskComplexEnterCarAsDriverTimed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x63ad70;0x63ae00,2
+0x86e74c,0x86e778,11,11,11,0,vtable-gr:CTaskComplexEnterCarAsPassengerTimed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x63b030;0x63b0c0,2
+0x86e778,0x86e7a4,11,11,11,0,vtable-gr:CTaskComplexEnterCarAsPassengerWait,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 3;gr-unreversed 3,0x63b320;0x63b3c0,2
+0x86e7a4,0x86e7d0,11,11,11,0,vtable-gr:CTaskComplexLeaveCarAsPassengerWait,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x63b430;0x63b4a0,2
+0x86e7d0,0x86e7fc,11,11,11,0,vtable-gr:CTaskComplexEnterBoatAsDriver,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x63b5e0;0x63b650,2
+0x86e7fc,0x86e828,11,11,11,0,vtable-gr:CTaskComplexStealCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x63b7d0;0x63b850,2
+0x86e828,0x86e854,11,11,11,0,vtable-gr:CTaskComplexLeaveCar,gta-reversed RH_ScopedVirtualClass vtable,,game 10;gr-reversed 1,0x63b8c0;0x63b970,2
+0x86e854,0x86e880,11,11,11,0,vtable-gr:CTaskComplexLeaveBoat,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x63bb60;0x63bbd0,2
+0x86e880,0x86e8ac,11,11,11,0,vtable-gr:CTaskComplexLeaveCarAndWander,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x63bdd0;0x63be50,2
+0x86e8ac,0x86e8d8,11,11,11,0,vtable-gr:CTaskComplexLeaveCarAndFlee,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x63bf90;0x63c030,2
+0x86e8d8,0x86e904,11,11,11,0,vtable-gr:CTaskComplexScreamInCarThenLeave,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x63c240;0x63c2c0,2
+0x86e904,0x86e928,9,9,9,0,vtable-gr:CTaskSimpleCarDrive,gta-reversed RH_ScopedVirtualClass vtable,,game 3;gr-reversed 3;gr-unreversed 3,0x63c340;0x63c460,2
+0x86e934,0x86e96c,14,14,14,0,vtable-gr:CTaskComplexCarDrive,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8;game 6,0x63c940;0x63c9d0;0x63ca40,3
+0x86e96c,0x86e9a4,14,14,14,3,vtable,base stored into [reg] by a referencing function,,game 9;gr-reversed 5,0x63cb10;0x63cb50;0x63dd00,3
+0x86e9a4,0x86e9dc,14,14,14,0,vtable-gr:CTaskComplexCarDriveMission,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 9;game 5,0x63cc30;0x63ccc0,2
+0x86e9dc,0x86ea14,14,14,14,1,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 4,0x63ce00;0x63ce70,2
+0x86ea14,0x86ea40,11,11,11,0,vtable-gr:CTaskComplexEnterAnyCarAsDriver,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x63d0d0;0x63d100;0x63de60;0x642fa0,4
+0x86ea40,0x86ea6c,11,11,11,0,vtable-gr:CTaskComplexShuffleSeats,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x63d130;0x63d1a0,2
+0x86ea6c,0x86ea90,9,9,9,0,vtable-gr:CTaskSimpleCarSetTempAction,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 3;gr-unreversed 1,0x63d6f0;0x63d730;0x63df10,3
+0x86eaac,0x86eadc,12,12,12,1,vtable,base stored into [reg] by a referencing function,,game 6;gr-reversed 6,0x6402f0;0x640330;0x6405b0;0x643510;0x643780,5
+0x86eadc,0x86eb0c,12,12,12,1,vtable,base stored into [reg] by a referencing function,,game 6;gr-reversed 6,0x640340;0x640380;0x640660;0x6437f0,4
+0x86eb0c,0x86eb3c,12,12,12,1,vtable,base stored into [reg] by a referencing function,,game 6;gr-reversed 6,0x640390;0x6403d0;0x643870,3
+0x86eb3c,0x86eb6c,12,12,12,1,vtable,base stored into [reg] by a referencing function,,game 6;gr-reversed 6,0x6403e0;0x640420;0x6438e0,3
+0x86eb6c,0x86eb98,11,11,11,0,vtable-gr:CTaskComplexDragPedFromCar,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x640430;0x6404d0,2
+0x86eb98,0x86eb9c,1,1,1,0,single,,,gr-reversed 1,,0
+0x86ebf8,0x86ec24,11,11,11,0,vtable-gr:CTaskComplexDrivePointRoute,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6433e0;0x643490,2
+0x86ec4c,0x86ec78,11,11,11,0,vtable-gr:CTaskComplexGoToCarDoorAndStandStill,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x645780;0x64a580,2
+0x86ec78,0x86ec9c,9,9,9,0,vtable-gr:CTaskSimpleCarAlign,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x645b40;0x645be0,2
+0x86ec9c,0x86ecc0,9,9,9,0,vtable-gr:CTaskSimpleCarOpenDoorFromOutside,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x645e50;0x645ee0,2
+0x86ecc0,0x86ece4,9,9,9,0,vtable-gr:CTaskSimpleCarOpenLockedDoorFromOutside,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x646070;0x6460f0,2
+0x86ece4,0x86ed08,9,9,9,0,vtable-gr:CTaskSimplePickUpBike,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x6461b0;0x646230,2
+0x86ed08,0x86ed2c,9,9,9,0,vtable-gr:CTaskSimpleCarCloseDoorFromInside,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x646300;0x646380,2
+0x86ed2c,0x86ed50,9,9,9,0,vtable-gr:CTaskSimpleCarCloseDoorFromOutside,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x6464f0;0x646570,2
+0x86ed50,0x86ed74,9,9,9,0,vtable-gr:CTaskSimpleCarGetIn,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x646690;0x646710,2
+0x86ed74,0x86ed98,9,9,9,0,vtable-gr:CTaskSimpleCarShuffle,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x646810;0x646890,2
+0x86ed98,0x86edbc,9,9,9,0,vtable-gr:CTaskSimpleCarWaitToSlowDown,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x646990;0x646a00,2
+0x86edbc,0x86ede0,9,9,9,0,vtable-gr:CTaskSimpleCarWaitForDoorNotToBeInUse,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x646b70;0x646c00,2
+0x86ede0,0x86ee04,9,9,9,0,vtable-gr:CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x646d70;0x646e50,2
+0x86ee04,0x86ee28,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x646fe0;0x647080,2
+0x86ee28,0x86ee4c,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x6470e0;0x647170,2
+0x86ee4c,0x86ee70,9,9,9,0,vtable-gr:CTaskSimpleCarGetOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x6471d0;0x647260,2
+0x86ee70,0x86ee94,9,9,9,0,vtable-gr:CTaskSimpleCarJumpOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x647490;0x64be40,2
+0x86ee94,0x86eeb8,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x647710;0x647790,2
+0x86eeb8,0x86eedc,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x6478b0;0x647950,2
+0x86eee8,0x86ef0c,9,9,9,0,vtable-gr:CTaskSimpleCarSlowDragPedOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x647fe0;0x648070,2
+0x86ef0c,0x86ef30,9,9,9,0,vtable-gr:CTaskSimpleCarSlowBeDraggedOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x648230;0x6482c0,2
+0x86ef30,0x86ef54,9,9,9,0,vtable-gr:CTaskSimpleCarSetPedSlowDraggedOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x6483b0;0x648430,2
+0x86ef54,0x86ef80,11,11,11,0,vtable-gr:CTaskComplexCarSlowBeDraggedOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x648490;0x64c580,2
+0x86ef80,0x86efac,11,11,11,0,vtable-gr:CTaskComplexCarSlowBeDraggedOutAndStandUp,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x648620;0x648690,2
+0x86efac,0x86efd0,9,9,9,0,vtable-gr:CTaskSimpleBikeJacked,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x648b90;0x648c40,2
+0x86efd0,0x86eff4,9,9,9,0,vtable-gr:CTaskSimpleCarFallOut,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x648d60;0x648de0,2
+0x86eff4,0x86f018,9,9,9,0,vtable-gr:CTaskSimpleSetPedAsAutoDriver,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x648f40;0x648fc0,2
+0x86f018,0x86f044,11,11,11,0,vtable-gr:CTaskComplexGoToBoatSteeringWheel,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x649090;0x649100,2
+0x86f044,0x86f070,11,11,11,0,vtable-gr:CTaskComplexGetOnBoatSeat,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x649210;0x649280,2
+0x86f070,0x86f094,9,9,9,0,vtable-gr:CTaskSimpleCreateCarAndGetIn,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x6493e0;0x64a410;0x64cea0,3
+0x86f094,0x86f0b8,9,9,9,0,vtable-gr:CTaskSimpleWaitUntilPedIsOutCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x649450;0x6494f0,2
+0x86f0b8,0x86f0dc,9,9,9,0,vtable-gr:CTaskSimpleWaitUntilPedIsInCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x649620;0x6496a0,2
+0x86f168,0x86f190,10,10,10,0,vtable-gr:CTaskSimpleHitFromBehind,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x652ee0;0x652f10,2
+0x86f1a0,0x86f1c8,10,10,10,0,vtable-gr:CTaskSimpleHitWall,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5,0x652f90;0x652fc0;0x655390,3
+0x86f1d0,0x86f1f4,9,9,9,0,vtable-gr:CTaskSimpleHitHead,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x653060;0x653090;0x6557a0,3
+0x86f1f4,0x86f218,9,9,9,2,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x653160;0x6531d0,2
+0x86f218,0x86f244,11,11,11,3,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6532d0;0x653350,2
+0x86f244,0x86f268,9,9,9,3,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x653560;0x6535d0,2
+0x86f268,0x86f294,11,11,11,0,vtable-gr:CTaskComplexEvasiveDiveAndGetUp,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x6536b0;0x653740,2
+0x86f294,0x86f2c0,11,11,11,0,vtable-gr:CTaskComplexHitPedWithCar,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x6539a0;0x653a30,2
+0x86f2c0,0x86f2e4,9,9,9,0,vtable-gr:CTaskSimpleKillPedWithCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x653c10;0x653c90,2
+0x86f2e4,0x86f308,9,9,9,0,vtable-gr:CTaskSimpleHurtPedWithCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x653ea0;0x653f30,2
+0x86f308,0x86f334,11,11,11,0,vtable-gr:CTaskComplexWalkRoundCar,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4;gr-unreversed 2,0x6541b0;0x656b00,2
+0x86f334,0x86f360,11,11,11,0,vtable-gr:CTaskComplexWalkRoundBuildingAttempt,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x654740;0x654840;0x654950,3
+0x86f364,0x86f390,11,11,11,0,vtable-gr:CTaskComplexWalkRoundObject,gta-reversed RH_ScopedVirtualClass vtable,,game 10;gr-reversed 1,0x655020;0x6550d0,2
+0x86f390,0x86f3bc,11,11,11,0,vtable-gr:CTaskComplexMoveBackAndJump,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x655340;0x655370;0x655c80,3
+0x86f3bc,0x86f3e8,11,11,11,3,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x655460;0x6554e0,2
+0x86f3e8,0x86f414,11,11,11,0,vtable-gr:CTaskComplexWalkRoundFire,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x655720;0x655780,2
+0x86f45c,0x86f484,10,10,10,1,vtable,base stored into [reg] by a referencing function,,game 7;gr-reversed 3,0x6586a0;0x6586d0,2
+0x86f48c,0x86f4c8,15,15,15,2,vtable,base stored into [reg] by a referencing function,,game 9;gr-reversed 5;gr-unreversed 1,0x658770;0x6587a0;0x658850,3
+0x86f4c8,0x86f4ec,9,9,9,0,vtable-gr:CTaskSimpleGiveCPR,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4,0x658860;0x6588a0;0x659a10,3
+0x86f4ec,0x86f518,11,11,11,0,vtable-gr:CTaskComplexTreatAccident,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x658ab0;0x658ae0;0x659a90,3
+0x86f518,0x86f544,11,11,11,0,vtable-gr:CTaskComplexMedicTreatInjuredPed,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x658ba0;0x658c30,2
+0x86f544,0x86f570,11,11,11,3,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6591d0;0x659240,2
+0x86f570,0x86f59c,11,11,11,0,vtable-gr:CTaskComplexDriveFireTruck,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x659310;0x6593a0,2
+0x86f59c,0x86f5d0,13,13,13,0,vtable-gr:CTaskComplexUseSwatRope,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 6,0x659410;0x659470;0x6594d0;0x659c30,4
+0x86f5d0,0x86f5fc,11,11,11,0,vtable-gr:CTaskComplexUseWaterCannon,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x659780;0x6597b0;0x659d10;0x65a240,4
+0x86f5fc,0x86f628,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x659870;0x6598b0;0x659d70,3
+0x86f690,0x86f6cc,15,15,15,0,vtable-gr:CTaskComplexWanderFlee,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8;game 6;gr-unreversed 1,0x65b320;0x65b370;0x65be80;0x65cd70;0x65d2e0,5
+0x86f6cc,0x86f6f8,11,11,11,0,vtable-gr:CTaskComplexFleePoint,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x65b390;0x65b410,2
+0x86f708,0x86f734,11,11,11,0,vtable-gr:CTaskComplexFleeEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x65b930;0x65b9d0,2
+0x86f744,0x86f770,11,11,11,0,vtable-gr:CTaskComplexSmartFleePoint,gta-reversed RH_ScopedVirtualClass vtable,,gr-unreversed 6;game 4;gr-reversed 1,0x65bd20;0x65bdb0,2
+0x86f784,0x86f7b0,11,11,11,0,vtable-gr:CTaskComplexSmartFleeEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x65c430;0x65c4d0,2
+0x86f7c4,0x86f7f0,11,11,11,0,vtable-gr:CTaskComplexFleeShooting,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x65c900;0x65c9a0,2
+0x86f7f0,0x86f81c,11,11,11,0,vtable-gr:CTaskComplexFleeAnyMeans,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x65cc60;0x65cd10,2
+0x86f878,0x86f8b8,16,16,16,0,vtable-gr:CEventLeanOnVehicle,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x65daf0;0x65dc10,2
+0x86f8b8,0x86f8f8,16,16,16,0,vtable-gr:CEventPassObject,gta-reversed RH_ScopedVirtualClass vtable,,game 15;gr-reversed 1,0x65dc70;0x65dcf0,2
+0x86f8f8,0x86f8fc,1,1,1,0,vtable-gr:CEntitySeekPosCalculatorXYOffset,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x65de60;0x661dc0;0x695600;0x6f8170,4
+0x86f8fc,0x86f92c,12,12,12,0,vtable-gr:CTaskComplexGangLeader,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 8;game 4,0x65ded0;0x65df30;0x661fa0,3
+0x86f938,0x86f964,11,11,11,0,vtable-gr:CTaskComplexGangFollower,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x65eaa0;0x65ebb0,2
+0x86f964,0x86f988,9,9,9,0,vtable-gr:CTaskSimpleGoToPointFine,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4,0x65eeb0;0x65eef0;0x662040,3
+0x86f998,0x86f9c4,11,11,11,0,vtable-gr:CTaskComplexTrackEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x65f3b0;0x65f460,2
+0x86f9d4,0x86fa00,11,11,11,0,vtable-gr:CTaskGangHassleVehicle,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-unreversed 4;gr-reversed 1,0x65fac0;0x65fb60,2
+0x86fa00,0x86fa2c,11,11,11,0,vtable-gr:CTaskGangHasslePed,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-unreversed 3;gr-reversed 1,0x65fed0;0x65ff60,2
+0x86fa2c,0x86fa58,11,11,11,0,vtable-gr:CTaskComplexStareAtPed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x660270;0x660310,2
+0x86fa68,0x86fa8c,9,9,9,0,vtable-gr:CTaskSimpleDoHandSignal,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x660880;0x6608b0;0x6608c0;0x660b30,4
+0x86fa8c,0x86fab8,11,11,11,0,vtable-gr:CTaskComplexSignalAtPed,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 3;gr-unreversed 3,0x660a37;0x660ab0,2
+0x86fac8,0x86faf4,11,11,11,0,vtable-gr:CTaskGoToVehicleAndLean,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x660e60;0x660ee0,2
+0x86faf4,0x86fb18,9,9,9,0,vtable-gr:CTaskLeanOnVehicle,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 2;gr-unreversed 1,0x660f90;0x661030,2
+0x86fb18,0x86fb44,11,11,11,0,vtable-gr:CTaskComplexPassObject,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x6611b0;0x661230,2
+0x86fb5c,0x86fb88,11,11,11,0,vtable-gr:CTaskComplexGangJoinRespond,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x6616f0;0x661720;0x662290,3
+0x86fb88,0x86fbb4,11,11,11,3,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x661a60;0x661af0,2
+0x86fbb4,0x86fbe0,11,11,11,0,vtable,base stored into [reg] by a referencing function,,gr-reversed 7;game 4,0x661dc0;0x661f30,2
+0x86fd18,0x86fd1c,1,1,1,0,vtable-gr:CEntitySeekPosCalculatorFixedPos,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x66ca40,1
+0x86fd1c,0x86fd20,1,1,1,0,vtable-gr:CTaskSimpleGoTo,gta-reversed RH_ScopedVirtualClass vtable,,game 1,0x6679c0;0x667a00;0x667cd0;0x667d50,4
+0x86fd20,0x86fd40,8,8,8,0,vtable,_purecall slot,,excluded:crt 4;game 3;gr-reversed 1,,0
+0x86fd50,0x86fd74,9,9,9,0,vtable-gr:CTaskSimpleGoToPoint,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x667cd0,1
+0x86fd74,0x86fd98,9,9,9,0,vtable-gr:CTaskSimpleAchieveHeading,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x667e20;0x667e70;0x66ccf0;0x670850,4
+0x86fda8,0x86fdd4,11,11,11,0,vtable-gr:CTaskComplexGoToPointAndStandStill,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x668120;0x668240;0x668630,3
+0x86fdd4,0x86fe00,11,11,11,0,vtable-gr:CTaskComplexGoToPointAndStandStillTimed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x6685e0;0x66cf30,2
+0x86fe00,0x86fe2c,11,11,11,0,vtable-gr:CTaskComplexGoToPointAiming,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x668790;0x668870,2
+0x86fe2c,0x86fe58,11,11,11,0,vtable-gr:CTaskComplexGoToPointShooting,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x668c70;0x66ce10,2
+0x86fe58,0x86fe84,11,11,11,0,vtable-gr:CTaskComplexGoToPointAndStandStillAndAchieveHeading,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 5;gr-unreversed 1,0x668cd0;0x668d40,2
+0x86fe84,0x86fec0,15,15,15,0,vtable-gr:CTaskComplexWander,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5;excluded:crt 3;gr-unreversed 1,0x669d20;0x66f450;0x66f670;0x6726f0,4
+0x86fec4,0x86fef0,11,11,11,0,vtable-gr:CTaskComplexAvoidOtherPedWhileWandering,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x66a100;0x66a1d0,2
+0x86ff00,0x86ff2c,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x66aa20;0x66aae0,2
+0x86ff3c,0x86ff68,11,11,11,0,vtable-gr:CTaskComplexGoToAttractor,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-unreversed 3;gr-reversed 1,0x66b640;0x66b6a0;0x66d130,3
+0x86ff68,0x86ff94,11,11,11,0,vtable-gr:CTaskComplexGoToPointAnyMeans,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-unreversed 3;gr-reversed 1,0x66b720;0x66b790;0x66b830,3
+0x86ff94,0x86ffc0,11,11,11,0,vtable-gr:CTaskComplexTurnToFaceEntityOrCoord,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x66b890;0x66b910;0x66b960,3
+0x86ffc0,0x86ffec,11,11,11,0,vtable-gr:CTaskComplexGotoDoorAndOpen,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-unreversed 4;gr-reversed 1,0x66bb20;0x66bba0;0x66bc00,3
+0x86ffec,0x870010,9,9,9,0,vtable-gr:CTaskSimpleSlideToCoord,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x66c3e0;0x66c450;0x66c4c0,3
+0x870010,0x87003c,11,11,11,0,vtable-gr:CTaskComplexInvestigateDisturbance,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x66c720;0x66c7a0,2
+0x87004c,0x870078,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x66ca40;0x66cbb0,2
+0x870078,0x8700a4,11,11,11,0,vtable-gr:CTaskComplexFollowPointRoute,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x66e050;0x671510,2
+0x8700a8,0x8700d4,11,11,11,0,vtable-gr:CTaskComplexFollowNodeRoute,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x66ea30;0x66eb70,2
+0x8700d4,0x870110,15,15,15,2,vtable,base stored into [reg] by a referencing function,,game 9;gr-reversed 5;gr-unreversed 1,0x66f5c0,1
+0x870114,0x870140,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6709f0;0x674930,2
+0x870148,0x870184,15,15,15,2,vtable,base stored into [reg] by a referencing function,,game 9;gr-reversed 4;gr-called-only 1;gr-unreversed 1,0x672690;0x673c80,2
+0x8701a8,0x8701e8,16,16,16,4,vtable,base stored into [reg] by a referencing function,,game 16,0x674ea0;0x674ed0;0x674f00;0x6754d0,4
+0x8701e8,0x870214,11,11,11,0,vtable-gr:CTaskInteriorBeInHouse,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x674fc0;0x675000;0x675010,3
+0x870218,0x870244,11,11,11,0,vtable-gr:CTaskInteriorBeInOffice,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x675220;0x675260;0x675270,3
+0x870244,0x870280,15,15,15,0,vtable-gr:CTaskInteriorBeInShop,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 9;game 5;gr-unreversed 1,0x6753e0;0x675460,2
+0x870290,0x8702bc,11,11,11,0,vtable-gr:CTaskInteriorShopKeeper,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x675660;0x6756a0;0x6756c0,3
+0x8702bc,0x8702e8,11,11,11,0,vtable-gr:CTaskInteriorGoToInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6757d0;0x675810;0x675820;0x675b60,4
+0x8702e8,0x870314,11,11,11,0,vtable-gr:CTaskInteriorUseInfo,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4;gr-unreversed 2,0x675a50;0x675a90;0x675ab0;0x676200;0x6762b0;0x676350;0x676400;0x6764c0;...,9
+0x870314,0x870338,9,9,9,3,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x675c30;0x675c90,2
+0x870338,0x87035c,9,9,9,0,vtable-gr:CTaskInteriorLieInBed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x675e20;0x675e90,2
+0x87035c,0x870380,9,9,9,0,vtable-gr:CTaskInteriorSitAtDesk,gta-reversed RH_ScopedVirtualClass vtable,,game 4;gr-reversed 4;gr-unreversed 1,0x676010;0x676080,2
+0x8703e0,0x870404,9,9,9,0,vtable-gr:CTaskSimpleGetUp,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x677f50;0x677f80;0x678170;0x678900;0x67c0c0,5
+0x870404,0x870430,11,11,11,0,vtable-gr:CTaskComplexGetUpAndStandStill,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 4,0x678130;0x678160;0x67c130,3
+0x870430,0x870454,9,9,9,0,vtable-gr:CTaskSimpleFall,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x6782c0;0x678310;0x678870;0x678b20;0x678bd0;0x67c180,6
+0x870454,0x870480,11,11,11,0,vtable-gr:CTaskComplexFallAndGetUp,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x6786c0;0x678700;0x678790;0x67c200,4
+0x870480,0x8704ac,11,11,11,3,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6789d0;0x678a10;0x678a90;0x67c270,4
+0x8704ac,0x8704d8,11,11,11,0,vtable-gr:CTaskComplexInAirAndLand,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 4,0x678c80;0x678cc0;0x67c2e0;0x67d980,4
+0x8704d8,0x8704fc,9,9,9,0,vtable-gr:CTaskSimpleInAir,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x678cd0;0x678d50,2
+0x8704fc,0x870520,9,9,9,0,vtable-gr:CTaskSimpleLand,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x678e90;0x678ee0;0x679270;0x679510;0x67c3f0;0x67ccb0,6
+0x870520,0x87054c,11,11,11,0,vtable-gr:CTaskComplexFallToDeath,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x679040;0x6790b0,2
+0x87054c,0x870570,9,9,9,0,vtable-gr:CTaskSimpleJump,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-reversed 4,0x679aa0;0x679af0;0x67c510,3
+0x870570,0x87059c,11,11,11,0,vtable-gr:CTaskComplexJump,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 5,0x67a030;0x67a060;0x67ba80;0x67c5a0,4
+0x87059c,0x8705c0,9,9,9,0,vtable-gr:CTaskSimpleClimb,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x67a110;0x67a1d0,2
+0x8705c4,0x8705e8,9,9,9,0,vtable-gr:CTaskSimpleJetPack,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x67b4e0;0x67e600,2
+0x870608,0x870634,11,11,11,0,vtable-gr:CTaskComplexStuckInAir,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x67ba40;0x67ba70;0x67c700,3
+0x870664,0x87069c,14,14,14,0,vtable-gr:CTaskComplexPartner,gta-reversed RH_ScopedVirtualClass vtable,,game 9;excluded:crt 2;gr-called-only 2;gr-reversed 1,0x681e70;0x683a40,2
+0x8706a0,0x8706cc,11,11,11,0,vtable-gr:CTaskComplexChat,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x682cb0;0x682d40,2
+0x8706cc,0x8706d8,3,3,3,0,vtable-gr:CTaskComplexWalkAlongsidePed,gta-reversed RH_ScopedVirtualClass vtable,,game 2;gr-reversed 1,0x683240;0x6832c0,2
+0x8706d8,0x8706f8,8,8,8,0,fnptr-table-unreferenced,,,gr-reversed 6;game 2,,0
+0x8706f8,0x870724,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x683340;0x6833d0,2
+0x870724,0x870750,11,11,11,5,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6836f0;0x683780,2
+0x870754,0x87078c,14,14,14,0,vtable-gr:CTaskComplexPartnerDeal,gta-reversed RH_ScopedVirtualClass vtable,,game 11;gr-called-only 2;gr-reversed 1,0x684190;0x684200,2
+0x87078c,0x8707c4,14,14,14,0,vtable-gr:CTaskComplexPartnerGreet,gta-reversed RH_ScopedVirtualClass vtable,,game 7;gr-reversed 6;gr-called-only 1,0x684210;0x684280,2
+0x8707c4,0x8707fc,14,14,14,0,vtable-gr:CTaskComplexPartnerChat,gta-reversed RH_ScopedVirtualClass vtable,,game 11;gr-called-only 2;gr-reversed 1,0x684290;0x684320,2
+0x870800,0x870838,14,14,14,0,vtable-gr:CTaskComplexPartnerShove,gta-reversed RH_ScopedVirtualClass vtable,,game 11;gr-called-only 2;gr-reversed 1,0x6846f0;0x684750,2
+0x8708ec,0x870910,9,9,9,0,vtable-gr:CTaskSimplePlayerOnFoot,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x685750;0x6857d0,2
+0x870920,0x870944,9,9,9,0,vtable-gr:CTaskSimpleSwim,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x688930;0x688a00,2
+0x870984,0x8709a8,9,9,9,0,vtable-gr:CTaskSimpleArrestPed,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3,0x68b620;0x68b690,2
+0x8709a8,0x8709d4,11,11,11,0,vtable-gr:CTaskComplexArrestPed,gta-reversed RH_ScopedVirtualClass vtable,,game 6;gr-reversed 3;gr-unreversed 2,0x68b990;0x68ba00,2
+0x8709d4,0x870a00,11,11,11,0,vtable-gr:CTaskComplexPolicePursuit,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x68ba70;0x68cdd0;0x68d880,3
+0x870a00,0x870a2c,11,11,11,0,vtable-gr:CTaskComplexKillCriminal,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4;gr-unreversed 2,0x68be70;0x68bf30,2
+0x870a2c,0x870a58,11,11,11,0,vtable-gr:CTaskComplexCopInCar,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x68c7f0;0x68c8c0,2
+0x870a94,0x870ab8,9,9,9,0,vtable-gr:CTaskSimpleShakeFist,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x690b80;0x690bb0;0x6927b0,3
+0x870ab8,0x870adc,9,9,9,0,vtable-gr:CTaskSimpleFacial,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x690c70;0x690cb0;0x690dc0;0x692820,4
+0x870adc,0x870b08,11,11,11,0,vtable-gr:CTaskComplexFacial,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 7;game 4,0x690d20;0x690d90,2
+0x870b08,0x870b2c,9,9,9,0,vtable-gr:CTaskSimpleAffectSecondaryBehaviour,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x691270;0x6912c0;0x692910,3
+0x870b2c,0x870b50,9,9,9,0,vtable-gr:CTaskSimpleHoldEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x6913a0;0x691470;0x691550;0x691630,4
+0x870b50,0x870b74,9,9,9,0,vtable-gr:CTaskSimplePickUpEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x6917b0;0x691870,2
+0x870b74,0x870b98,9,9,9,0,vtable-gr:CTaskSimplePutDownEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 3,0x691990;0x692b70,2
+0x870b98,0x870bc4,11,11,11,4,vtable,base stored into [reg] by a referencing function,,game 10;gr-reversed 1,0x6919c0;0x691a50,2
+0x870bc4,0x870be8,9,9,9,0,vtable-gr:CTaskSimpleDuck,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 4,0x691fc0;0x692030;0x692680,3
+0x870bec,0x870c10,9,9,9,1,vtable,base stored into [reg] by a referencing function,,game 8;gr-reversed 1,0x692680;0x6926f0,2
+0x870c3c,0x870c68,11,11,11,0,vtable-gr:CTaskComplexFollowLeaderInFormation,gta-reversed RH_ScopedVirtualClass vtable,,game 5;gr-unreversed 5;gr-reversed 1,0x6949a0;0x694a40;0x695b20,3
+0x870c68,0x870c94,11,11,11,0,vtable-gr:CTaskComplexFollowLeaderAnyMeans,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x694aa0;0x694b30,2
+0x870c94,0x870cc0,11,11,11,0,vtable-gr:CTaskComplexSeekEntityAiming,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x694b90;0x694c10,2
+0x870cc0,0x870cf0,12,12,12,0,vtable-gr:CTaskComplexFollowPedFootsteps,gta-reversed RH_ScopedVirtualClass vtable,,game 11;gr-reversed 1,0x694e20;0x695dc0,2
+0x870cf0,0x870d1c,11,11,11,0,vtable-gr:CTaskComplexSeekEntityAnyMeansXYOffset,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x695600;0x6956d0,2
+0x870d3c,0x870d68,11,11,11,0,vtable-gr:CTaskComplexInvestigateDeadPed,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x696df0;0x696e80,2
+0x870d78,0x870da4,11,11,11,0,vtable-gr:CTaskComplexReactToGunAimedAt,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6971b0;0x697230,2
+0x870da4,0x870dd0,11,11,11,0,vtable-gr:CTaskComplexWaitForBackup,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x697290;0x697330,2
+0x870dd0,0x870dfc,11,11,11,0,vtable-gr:CTaskComplexExtinguishFires,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 6;game 5,0x6975c0;0x6975f0;0x6977b0,3
+0x870e30,0x870e48,6,6,6,0,vtable-gr:CTaskAllocator,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 3;excluded:crt 2;game 1,0x69bb40;0x69bbf0;0x69c2d0;0x69c780;0x69cb60;0x69dac0,6
+0x870e48,0x870e60,6,6,6,0,vtable-gr:CTaskAllocatorKillOnFoot,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x69bb80;0x69bbf0,2
+0x870e60,0x870e78,6,6,6,0,vtable-gr:CTaskAllocatorAttack,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x69c240;0x69c2d0,2
+0x870e78,0x870e90,6,6,6,0,vtable-gr:CTaskAllocatorPlayerCommandAttack,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x69c480;0x69db40,2
+0x870e90,0x870ea8,6,6,6,0,vtable-gr:CTaskAllocatorKillThreatsBasic,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x69c710;0x69c780,2
+0x870ea8,0x870ec0,6,6,6,0,vtable-gr:CTaskAllocatorKillThreatsDriveby,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 5;game 1,0x69caf0;0x69cb60,2
+0x8710d0,0x871114,17,17,17,0,vtable-gr:CEventVehicleDamageCollision,gta-reversed RH_ScopedVirtualClass vtable,,game 10;gr-reversed 7,0x6a0620;0x6a0650;0x6a0670;0x6a7650,4
+0x871120,0x87123c,71,71,71,0,vtable-gr:CAutomobile,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 62;game 6;gr-called-only 2;gr-unreversed 1,0x6a61e0;0x6b0a90,2
+0x871360,0x87146c,67,67,67,0,vtable-gr:CBike,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 31;game 24;gr-unreversed 12,0x6b57a0;0x6bf430,2
+0x871528,0x871634,67,67,67,0,vtable-gr:CBmx,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 34;game 24;gr-unreversed 9,0x6bf820;0x6bf9d0,2
+0x871680,0x87179c,71,71,71,0,vtable-gr:CHeli,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 60;game 5;gr-called-only 5;gr-unreversed 1,0x6c4190;0x6c4340,2
+0x8717d8,0x8718f4,71,71,71,0,vtable-gr:CMonsterTruck,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 60;gr-unreversed 6;game 4;gr-called-only 1,0x6c7d10;0x6c8d60,2
+0x871948,0x871a64,71,71,71,0,vtable-gr:CPlane,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 60;gr-unreversed 7;game 4,0x6c8e20;0x6c9160,2
+0x871ae8,0x871c04,71,71,71,0,vtable-gr:CQuadBike,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 63;game 5;gr-unreversed 2;gr-called-only 1,0x6cdc30;0x6ce370,2
+0x871c28,0x871d44,71,71,71,0,vtable-gr:CTrailer,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 63;game 6;gr-called-only 1;gr-unreversed 1,0x6ced10;0x6d03a0,2
+0x871e80,0x871f88,66,66,66,0,vtable-gr:CVehicle,gta-reversed RH_ScopedVirtualClass vtable,,game 36;gr-reversed 29;gr-unreversed 1,0x6d5f10;0x6e2b40,2
+0x8721a0,0x8722a8,66,66,66,0,vtable-gr:CBoat,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 33;game 32;gr-unreversed 1,0x6f00f0;0x6f2940,2
+0x872370,0x872478,66,66,66,0,vtable-gr:CTrain,gta-reversed RH_ScopedVirtualClass vtable,,game 39;gr-reversed 26;gr-unreversed 1,0x6f54d0;0x6f6030,2
+0x872a60,0x872a64,1,1,1,0,vtable-gr:CAEWaterCannonAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x728a90;0x728ab0;0x728b10,3
+0x872a74,0x872a78,1,1,1,0,vtable-gr:CAEWeatherAudioEntity,gta-reversed RH_ScopedVirtualClass vtable,,gr-reversed 1,0x72a620,1
+0x879b68,0x879b6c,1,1,1,0,single,,,gr-reversed 1,,0
+0x87ad58,0x87ad5c,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87ad6c,0x87adc4,22,22,22,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 22,,0
+0x87add4,0x87ade0,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x87adf0,0x87adfc,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x87ae0c,0x87ae18,3,3,3,1,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x87ae70,0x87ae78,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x87ae80,0x87ae8c,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x87ae90,0x87aee4,21,6,6,0,struct-array,6 slots at stride 0x10,,excluded:thirdparty:d3dx9 6,,0
+0x87aeec,0x87aef4,2,2,2,1,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x87aef8,0x87aefc,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87af00,0x87af34,13,4,4,0,struct-array,4 slots at stride 0x10,,excluded:thirdparty:d3dx9 4,,0
+0x87af40,0x87af48,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x87af50,0x87af54,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87af60,0x87af64,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87af6c,0x87af74,2,2,2,1,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x87b0d0,0x87b0dc,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x87b0e0,0x87b0e8,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x87b0f0,0x87b0f4,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87b100,0x87b104,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87b10c,0x87b110,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x87b114,0x87b120,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x880780,0x880784,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x880788,0x880790,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x880794,0x8807a0,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x8807a4,0x8807c0,7,7,7,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 7,,0
+0x8807d8,0x8807f8,8,8,8,1,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 8,,0
+0x880804,0x880808,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x881678,0x88167c,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x881680,0x881684,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x88168c,0x881698,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x88169c,0x8816a4,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8816a8,0x8816bc,5,5,5,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 5,,0
+0x8816d0,0x8816ec,7,7,7,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 7,,0
+0x8819f0,0x8819f4,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8819f8,0x8819fc,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x881a04,0x881a10,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x881a14,0x881a1c,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x881a20,0x881a24,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x881a28,0x881a34,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x881a48,0x881a68,8,8,8,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 8,,0
+0x881a6c,0x881a74,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x881b00,0x881b04,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x881b08,0x881b10,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x881b14,0x881b20,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x881b34,0x881b38,1,1,0,0,single,,,new 1,,0
+0x881b3c,0x881b40,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x881b58,0x881b70,6,6,6,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 6,,0
+0x881c04,0x881c08,1,1,0,0,single,,,new 1,,0
+0x882218,0x88221c,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x882224,0x882228,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x88222c,0x882238,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x88224c,0x882250,1,1,0,0,single,,,new 1,,0
+0x882254,0x882258,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x882270,0x882288,6,6,6,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 6,,0
+0x8832b0,0x883320,28,10,10,10,struct-array,10 slots at stride 0xc,,excluded:thirdparty:libpng-1.0.12+zlib-1.1.3 10,,0
+0x885a68,0x885a6c,1,1,0,0,single,,,new 1,,0
+0x887d5c,0x887d64,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x4f3d10;0x4f4090;0x4f4130;0x4f4230,4
+0x887d68,0x887d70,2,2,2,1,vtable,base stored into [reg] by a referencing function,,game 2,0x4f41b0;0x4f42a0;0x5ecab0;0x5ecb30;0x5ecbb0;0x5ecc30;0x5eccb0,7
+0x887d74,0x887d7c,2,2,2,1,fnptr-table-unreferenced,,,excluded:crt 1;game 1,,0
+0x887da8,0x887dac,1,1,1,0,single,,,excluded:crt 1,,0
+0x887e28,0x887e2c,1,1,1,0,single,,,excluded:crt 1,,0
+0x887e38,0x887e3c,1,1,1,0,single,,,excluded:crt 1,,0
+0x887e58,0x887e5c,1,1,1,0,single,,,excluded:crt 1,,0
+0x887e80,0x887e84,1,1,1,0,single,,,excluded:crt 1,,0
+0x887ea0,0x887ec8,10,4,4,0,struct-array,4 slots at stride 0xc,,excluded:crt 4,,0
+0x887f00,0x887f04,1,1,1,0,single,,,excluded:crt 1,,0
+0x887f58,0x887f7c,9,3,3,0,struct-array,3 slots at stride 0x10,,excluded:crt 3,,0
+0x887fe0,0x887fe4,1,1,1,0,single,,,excluded:crt 1,,0
+0x888008,0x88800c,1,1,1,0,single,,,excluded:crt 1,,0
+0x888020,0x888044,9,3,3,0,struct-array,3 slots at stride 0x10,,excluded:crt 3,,0
+0x8880e4,0x8880e8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x888260,0x888264,1,1,1,0,single,,,excluded:crt 1,,0
+0x888278,0x88829c,9,3,3,0,struct-array,3 slots at stride 0x10,,excluded:crt 3,,0
+0x88833c,0x888340,1,1,0,0,single,,,new 1,,0
+0x888368,0x88836c,1,1,0,0,single,,,new 1,,0
+0x8883c4,0x8883c8,1,1,1,0,single,,,game 1,,0
+0x88be24,0x88be28,1,1,0,0,single,,,new 1,,0
+0x88bee0,0x88bee4,1,1,1,0,single,,,excluded:crt 1,,0
+0x88c288,0x88c28c,1,1,0,0,single,,,new 1,,0
+0x88c458,0x88c45c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88c660,0x88c664,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88cae0,0x88cae4,1,1,1,0,single,,,gr-reversed 1,,0
+0x88cc98,0x88cc9c,1,1,1,0,single,,,gr-unreversed 1,,0
+0x88db88,0x88db8c,1,1,1,0,single,,,excluded:crt 1,,0
+0x88ddb0,0x88ddb4,1,1,1,0,single,,,excluded:crt 1,,0
+0x88df20,0x88df24,1,1,1,0,single,,,excluded:crt 1,,0
+0x88e250,0x88e254,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e258,0x88e25c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e27c,0x88e280,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e284,0x88e360,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x88e364,0x88e378,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88e398,0x88e3b4,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88e3d4,0x88e3f0,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88e410,0x88e414,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e418,0x88e41c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e43c,0x88e458,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88e478,0x88e4c4,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x88e4c8,0x88e50c,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x88e52c,0x88e530,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e534,0x88e580,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x88e584,0x88e5f4,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x88e5f8,0x88e5fc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e61c,0x88e620,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e624,0x88e628,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e648,0x88e654,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88e674,0x88e678,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e67c,0x88e6ec,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x88e6f0,0x88e72c,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x88e74c,0x88e750,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e770,0x88e7cc,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x88e7ec,0x88e880,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x88e884,0x88e8d0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x88e8d4,0x88e8f8,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x88e918,0x88e934,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88e954,0x88e958,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e95c,0x88e960,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88e980,0x88e9bc,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x88e9dc,0x88ea00,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x88ea20,0x88ea34,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88ea54,0x88ea58,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ea78,0x88eabc,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x88eadc,0x88eae0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88eae4,0x88eae8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88eb08,0x88eb14,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88eb18,0x88eb1c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88eb3c,0x88eb50,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88eb70,0x88eb7c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88eb9c,0x88eba8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88ebc8,0x88ebcc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ebd0,0x88ebd4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ebf4,0x88ec50,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x88ec70,0x88ec74,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ec94,0x88ec98,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ecb8,0x88ecf4,15,8,8,0,fnptr-table-unreferenced,,,excluded:eh-funclet 8,,0
+0x88ed14,0x88ed30,7,4,4,0,fnptr-table-unreferenced,,,excluded:eh-funclet 4,,0
+0x88ed50,0x88ed5c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88ed7c,0x88ee58,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x88ee5c,0x88ee70,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88ee90,0x88ee94,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88eeb4,0x88eed0,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88eef0,0x88eef4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ef14,0x88ef18,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88ef38,0x88ef44,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88ef64,0x88ef70,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88ef90,0x88efa4,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88efc4,0x88f028,25,13,13,0,struct-array,13 slots at stride 0x8,,excluded:eh-funclet 13,,0
+0x88f048,0x88f084,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x88f0a4,0x88f0f0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x88f0f4,0x88f138,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x88f158,0x88f15c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f17c,0x88f1a8,11,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88f264,0x88f268,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f2cc,0x88f2d0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f330,0x88f344,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88f364,0x88f390,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x88f3b0,0x88f3fc,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x88f41c,0x88f420,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f440,0x88f444,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f448,0x88f4b8,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x88f4bc,0x88f4c0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f4c4,0x88f4c8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f4e8,0x88f504,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88f524,0x88f528,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f52c,0x88f530,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f550,0x88f55c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88f560,0x88f57c,7,4,4,0,fnptr-table-unreferenced,,,excluded:eh-funclet 4,,0
+0x88f59c,0x88f5d8,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x88f5f8,0x88f614,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x88f634,0x88f638,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88f658,0x88f66c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x88f68c,0x88f840,109,13,13,0,struct-array,13 slots at stride 0x24,,excluded:eh-funclet 13,,0
+0x88f844,0x88f978,77,39,39,0,struct-array,39 slots at stride 0x8,,excluded:eh-funclet 39,,0
+0x88f998,0x88faa4,67,34,34,0,struct-array,34 slots at stride 0x8,,excluded:eh-funclet 34,,0
+0x88fac4,0x88fac8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88fae8,0x88faec,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88fb0c,0x88fb18,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88fb38,0x88fb44,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88fb64,0x88fbc8,25,13,13,0,struct-array,13 slots at stride 0x8,,excluded:eh-funclet 13,,0
+0x88fbe8,0x88fc34,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x88fc38,0x88fc7c,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x88fc9c,0x88fcc8,11,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x88fd84,0x88fd88,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88fdec,0x88fdf0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x88fe50,0x88fecc,31,16,16,0,struct-array,16 slots at stride 0x8,,excluded:eh-funclet 16,,0
+0x88feec,0x88ff5c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x88ff60,0x88ff84,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x88ffa4,0x88fff0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x890010,0x89001c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89003c,0x890048,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890068,0x890074,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890094,0x8900a0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8900c0,0x8900cc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8900ec,0x8900f8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890118,0x890124,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890144,0x890150,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890170,0x89017c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89019c,0x8901a8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8901c8,0x8901d4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8901f4,0x890200,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890220,0x89022c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89024c,0x890258,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890278,0x890284,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8902a4,0x8902b0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8902d0,0x8902dc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8902fc,0x890300,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x890320,0x890324,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x890344,0x890350,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890370,0x89037c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89039c,0x8903a8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8903c8,0x8903cc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8903ec,0x8903f8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890418,0x890424,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890444,0x890450,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890470,0x89047c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89049c,0x8904a8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8904c8,0x8904cc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8904ec,0x8904f8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890518,0x890524,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890544,0x890550,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890570,0x8909f4,289,33,33,0,struct-array,33 slots at stride 0x24,,excluded:eh-funclet 33,,0
+0x8909f8,0x890aec,61,31,31,0,struct-array,31 slots at stride 0x8,,excluded:eh-funclet 31,,0
+0x890b0c,0x890b18,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890b1c,0x890b20,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x890b40,0x890b4c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890b50,0x890c08,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x890c28,0x890c34,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x890c54,0x8913cc,478,54,54,0,struct-array,54 slots at stride 0x24,,excluded:eh-funclet 54,,0
+0x8913d0,0x8913e4,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x891404,0x891d98,613,69,69,0,struct-array,69 slots at stride 0x24,,excluded:eh-funclet 69,,0
+0x891d9c,0x891de8,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x891e08,0x891e54,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x891e58,0x891e5c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x891e60,0x891eac,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x891eb0,0x891fd4,73,9,9,0,struct-array,9 slots at stride 0x24,,excluded:eh-funclet 9,,0
+0x891fd8,0x891fec,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89200c,0x892010,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892030,0x89203c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x892040,0x89209c,23,12,12,0,fnptr-table-unreferenced,,,excluded:eh-funclet 12,,0
+0x8920bc,0x89212c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x892130,0x892134,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892138,0x89213c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89215c,0x892170,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x892190,0x892194,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892198,0x892274,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x892278,0x8922c4,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8922c8,0x892314,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x892334,0x892338,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892358,0x8923ac,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x8923cc,0x892418,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89241c,0x892420,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892424,0x8924b8,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x8924bc,0x89252c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x892530,0x892534,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892538,0x89253c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89255c,0x8925b8,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x8925d8,0x8926cc,61,31,31,0,struct-array,31 slots at stride 0x8,,excluded:eh-funclet 31,,0
+0x8926ec,0x892720,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x892740,0x8927dc,39,20,20,0,struct-array,20 slots at stride 0x8,,excluded:eh-funclet 20,,0
+0x8927fc,0x892860,25,13,13,0,struct-array,13 slots at stride 0x8,,excluded:eh-funclet 13,,0
+0x892888,0x8928f4,27,14,14,0,struct-array,14 slots at stride 0x8,,excluded:eh-funclet 14,,0
+0x892914,0x8929c8,45,23,23,0,struct-array,23 slots at stride 0x8,,excluded:eh-funclet 23,,0
+0x8929e8,0x892a1c,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x892a3c,0x892a98,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x892ab8,0x892b04,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x892b24,0x892b28,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892b48,0x892c6c,73,37,37,0,struct-array,37 slots at stride 0x8,,excluded:eh-funclet 37,,0
+0x892c8c,0x892c90,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892c94,0x892c98,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892cb8,0x892d64,43,22,22,0,struct-array,22 slots at stride 0x8,,excluded:eh-funclet 22,,0
+0x892d84,0x892df0,27,14,14,0,struct-array,14 slots at stride 0x8,,excluded:eh-funclet 14,,0
+0x892e10,0x892e34,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x892e54,0x892e68,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x892e88,0x892e8c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x892e90,0x893068,118,14,14,0,struct-array,14 slots at stride 0x24,,excluded:eh-funclet 14,,0
+0x89306c,0x893100,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x893104,0x893118,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x893138,0x893430,190,22,22,0,struct-array,22 slots at stride 0x24,,excluded:eh-funclet 22,,0
+0x893434,0x8934ec,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x8934f0,0x89350c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x893554,0x893568,5,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8935b0,0x8935b4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8935e8,0x893624,15,3,3,1,struct-array,3 slots at stride 0x1c,,game 2;excluded:crt 1,,0
+0x893638,0x89363c,1,1,1,0,single,,,game 1,,0
+0x893648,0x89364c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89366c,0x893670,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8936b8,0x8936bc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893714,0x893a54,208,24,24,0,struct-array,24 slots at stride 0x24,,excluded:eh-funclet 24,,0
+0x893a74,0x893a80,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893aa0,0x893aac,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893acc,0x893ad0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893af0,0x893afc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893b00,0x893b04,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893b08,0x893b0c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893b2c,0x893b38,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893b58,0x893b64,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893b68,0x893bb4,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x893bd4,0x893be0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893be4,0x893c18,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x893c38,0x893c84,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x893ca4,0x893cb0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893cb4,0x893cf0,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x893d10,0x893dc8,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x893dcc,0x893dd0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893dd4,0x893dd8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893df8,0x893dfc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893e1c,0x893e28,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893e48,0x893e54,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893e74,0x893e80,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893ea0,0x893ea4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893ec4,0x893ed0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893ed4,0x893ed8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893edc,0x893ee0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893f00,0x893f04,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893f08,0x893f0c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x893f2c,0x893f38,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893f58,0x893fa4,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x893fc4,0x893fd0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x893fd4,0x893fe8,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x894008,0x894054,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x894058,0x8940d4,31,16,16,0,struct-array,16 slots at stride 0x8,,excluded:eh-funclet 16,,0
+0x8940f4,0x8941ac,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x8941b0,0x8941b4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8941d4,0x8941e0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894200,0x894204,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894224,0x894248,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x894268,0x89426c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89428c,0x8942c8,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x8942e8,0x8943a0,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x8943c0,0x8943cc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8943ec,0x8943f8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894418,0x89441c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89443c,0x894440,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894460,0x89446c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894470,0x894484,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x894488,0x894494,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894498,0x8944bc,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x8944dc,0x8944e8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8944ec,0x894500,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x894520,0x894524,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894544,0x894548,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89454c,0x894598,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8945b8,0x8945c4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8945c8,0x8945cc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8945d0,0x8945d4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8945f4,0x894600,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894604,0x894608,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89460c,0x89479c,100,12,12,0,struct-array,12 slots at stride 0x24,,excluded:eh-funclet 12,,0
+0x8947bc,0x8947c8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8947cc,0x8947d0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8947d4,0x8947d8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8947f8,0x8947fc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894800,0x894804,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894824,0x894830,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894850,0x89486c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89488c,0x894898,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8948b8,0x89494c,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x894950,0x894954,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894974,0x894978,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89497c,0x894ae8,91,11,11,0,struct-array,11 slots at stride 0x24,,excluded:eh-funclet 11,,0
+0x894aec,0x894b30,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x894b50,0x894be4,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x894be8,0x894bec,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894bf0,0x894ccc,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x894cec,0x894cf8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894cfc,0x894d28,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x894d48,0x894d54,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894d74,0x894d80,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894da0,0x894dec,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x894df0,0x894df4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894e14,0x894e20,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894e24,0x894e28,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894e2c,0x894e30,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894e50,0x894e54,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894e58,0x894e5c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894e7c,0x894e80,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894ea0,0x894eac,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894eb0,0x894ee4,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x894f04,0x894f10,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894f14,0x894f28,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x894f48,0x894f4c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x894f6c,0x894f78,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x894f7c,0x895034,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89507c,0x895080,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895100,0x895104,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895184,0x895188,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895208,0x89520c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89528c,0x895290,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8952e8,0x8952f4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8952f8,0x89532c,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89534c,0x895358,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89535c,0x895360,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895364,0x8953d4,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8953d8,0x8953ec,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89540c,0x895428,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x895448,0x89544c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89546c,0x8954b8,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x8954d8,0x8954e4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8954e8,0x8954ec,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8954f0,0x895638,82,10,10,0,struct-array,10 slots at stride 0x24,,excluded:eh-funclet 10,,0
+0x89563c,0x895640,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895660,0x895664,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895668,0x89566c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89568c,0x895690,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895694,0x895698,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8956b8,0x8956bc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8956c0,0x8956c4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8956e4,0x895710,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x895730,0x89577c,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x895780,0x895784,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8957a4,0x8957c8,9,5,5,0,fnptr-table-unreferenced,,,excluded:eh-funclet 5,,0
+0x8957e8,0x895804,7,4,4,0,fnptr-table-unreferenced,,,excluded:eh-funclet 4,,0
+0x895808,0x895844,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x895864,0x895880,7,4,4,0,fnptr-table-unreferenced,,,excluded:eh-funclet 4,,0
+0x895884,0x8958c0,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x8958e0,0x8958ec,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8958f0,0x8958f4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8958f8,0x8958fc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89591c,0x895928,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895948,0x89596c,9,5,5,0,fnptr-table-unreferenced,,,excluded:eh-funclet 5,,0
+0x89598c,0x895998,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89599c,0x8959a0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8959a4,0x8959a8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8959c8,0x8959d4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8959f4,0x895a00,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895a20,0x895a2c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895a30,0x895a4c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x895a6c,0x895a78,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895a98,0x895aa4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895ac4,0x895ad8,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x895af8,0x895b0c,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x895b2c,0x895b38,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895b58,0x895b64,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895b84,0x895b88,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895ba8,0x895bb4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895bd4,0x895bd8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895bf8,0x895bfc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895c00,0x895c04,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895c24,0x895c30,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895c50,0x895c54,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895c74,0x895c78,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895c7c,0x895c80,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895ca0,0x895ca4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895ca8,0x895cac,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895ccc,0x895cd0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895cd4,0x895cd8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895cf8,0x895d04,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x895d08,0x895d0c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x895d10,0x895f30,136,16,16,0,struct-array,16 slots at stride 0x24,,excluded:eh-funclet 16,,0
+0x895f34,0x895f70,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x895f90,0x895fdc,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x895fe0,0x896004,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x896024,0x896028,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89602c,0x896108,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89610c,0x896110,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x896130,0x89613c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x896140,0x8961ac,27,14,14,0,struct-array,14 slots at stride 0x8,,excluded:eh-funclet 14,,0
+0x8961cc,0x8961d0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8961d4,0x8961d8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8961f8,0x8961fc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89621c,0x896228,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x896248,0x89627c,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89629c,0x8962a8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8962c8,0x8962d4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8962d8,0x8962ec,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89630c,0x896338,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x896358,0x8964a0,82,10,10,0,struct-array,10 slots at stride 0x24,,excluded:eh-funclet 10,,0
+0x8964c0,0x8964d4,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x8964f4,0x896508,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x896528,0x89652c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x896530,0x896534,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x896554,0x896578,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x896598,0x8965bc,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x8965dc,0x896628,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89662c,0x896630,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x896634,0x896638,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x896658,0x8966a4,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x8966c4,0x8966c8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8966cc,0x8966d0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8966f0,0x89670c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89672c,0x896748,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x896768,0x89676c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89678c,0x8967d0,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x8967f0,0x896860,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x896880,0x89688c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8968ac,0x8968b8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8968d8,0x8968dc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8968e0,0x8968e4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x896904,0x896908,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89690c,0x8969e8,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x8969ec,0x896a10,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x896a30,0x896a4c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x896a6c,0x896adc,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x896ae0,0x896c04,73,9,9,0,struct-array,9 slots at stride 0x24,,excluded:eh-funclet 9,,0
+0x896c08,0x896edc,181,21,21,0,struct-array,21 slots at stride 0x24,,excluded:eh-funclet 21,,0
+0x896ee0,0x896efc,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x896f1c,0x8971a8,163,19,19,0,struct-array,19 slots at stride 0x24,,excluded:eh-funclet 19,,0
+0x8971ac,0x8971b0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8971b4,0x8972b4,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x8972b8,0x897688,244,28,28,0,struct-array,28 slots at stride 0x24,,excluded:eh-funclet 28,,0
+0x89768c,0x897690,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8976b0,0x8976bc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8976c0,0x89770c,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x897710,0x897764,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x8977a4,0x8977a8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89783c,0x897840,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897844,0x897848,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897868,0x8978a4,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x8978c4,0x897918,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x897938,0x89794c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89796c,0x897990,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x8979b0,0x8979d4,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x8979f4,0x897a38,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x897a58,0x897a5c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897a7c,0x897a80,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897a84,0x897a88,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897aa8,0x897ab4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x897ad4,0x897b20,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x897b24,0x897b40,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x897b60,0x897b64,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897b84,0x897bb0,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x897bd0,0x897bf4,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x897c14,0x897c48,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x897c68,0x897d8c,73,9,9,0,struct-array,9 slots at stride 0x24,,excluded:eh-funclet 9,,0
+0x897d90,0x897d94,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897db4,0x897db8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897dbc,0x897e2c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x897e30,0x897e44,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x897e64,0x897eb0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x897eb4,0x897ed0,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x897ef0,0x897f84,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x897f88,0x897f8c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x897f90,0x897fdc,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x897fe0,0x897fe4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898004,0x898008,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89800c,0x898010,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898030,0x898034,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898038,0x898084,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x898088,0x89809c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x8980bc,0x898204,82,10,10,0,struct-array,10 slots at stride 0x24,,excluded:eh-funclet 10,,0
+0x898208,0x898404,127,15,15,0,struct-array,15 slots at stride 0x24,,excluded:eh-funclet 15,,0
+0x898408,0x89840c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898410,0x898414,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898434,0x898440,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x898460,0x898464,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898484,0x898488,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89848c,0x8984d8,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8984dc,0x8984f8,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x898518,0x898660,82,10,10,0,struct-array,10 slots at stride 0x24,,excluded:eh-funclet 10,,0
+0x898664,0x898c74,388,44,44,0,struct-array,44 slots at stride 0x24,,excluded:eh-funclet 44,,0
+0x898c9c,0x898cc0,9,3,3,0,struct-array,3 slots at stride 0x10,,excluded:eh-funclet 3,,0
+0x898cd4,0x898cd8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x898d18,0x898d34,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x898d54,0x898d80,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x898da0,0x898de4,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x898e04,0x898e50,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x898e54,0x898e70,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x898e90,0x898f24,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x898f28,0x898f3c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x898f5c,0x898fcc,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x898fec,0x899000,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x899020,0x89903c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89905c,0x8991c8,91,11,11,0,struct-array,11 slots at stride 0x24,,excluded:eh-funclet 11,,0
+0x8991e8,0x8991f4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x899214,0x899260,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x899264,0x899268,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89926c,0x8993b4,82,10,10,0,struct-array,10 slots at stride 0x24,,excluded:eh-funclet 10,,0
+0x8993b8,0x899428,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89942c,0x89949c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8994a0,0x8994b4,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x8994d4,0x8994d8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8994f8,0x8994fc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89951c,0x899528,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x899548,0x8996fc,109,13,13,0,struct-array,13 slots at stride 0x24,,excluded:eh-funclet 13,,0
+0x899700,0x899714,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x899734,0x899a2c,190,22,22,0,struct-array,22 slots at stride 0x24,,excluded:eh-funclet 22,,0
+0x899a30,0x899aec,47,24,24,0,struct-array,24 slots at stride 0x8,,excluded:eh-funclet 24,,0
+0x899b0c,0x899b68,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x899b88,0x899be4,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x899c04,0x899c98,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x899c9c,0x899cd8,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x899cf8,0x899d0c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x899d2c,0x899d48,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x899d68,0x899d74,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x899d94,0x899e10,31,16,16,0,struct-array,16 slots at stride 0x8,,excluded:eh-funclet 16,,0
+0x899ea8,0x899eac,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x899f28,0x899f3c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x899fb0,0x899fb4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x899fc0,0x899fc4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89a05c,0x89a078,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89a098,0x89a0c4,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x89a0e4,0x89a130,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89a134,0x89a138,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89a13c,0x89a23c,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89a240,0x89a244,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89a264,0x89a2b0,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x89a2d0,0x89a5a4,181,21,21,0,struct-array,21 slots at stride 0x24,,excluded:eh-funclet 21,,0
+0x89a5c4,0x89a5d8,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x89a5f8,0x89a7d0,118,14,14,0,struct-array,14 slots at stride 0x24,,excluded:eh-funclet 14,,0
+0x89a7d4,0x89a964,100,12,12,0,struct-array,12 slots at stride 0x24,,excluded:eh-funclet 12,,0
+0x89a968,0x89a98c,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89a9ac,0x89a9b0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89a9ec,0x89a9f0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89aac0,0x89ac2c,91,11,11,0,struct-array,11 slots at stride 0x24,,excluded:eh-funclet 11,,0
+0x89ac30,0x89b144,325,37,37,0,struct-array,37 slots at stride 0x24,,excluded:eh-funclet 37,,0
+0x89b148,0x89b16c,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89b18c,0x89b190,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b1b0,0x89b1b4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b1b8,0x89b1bc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b1dc,0x89b208,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x89b228,0x89b22c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b24c,0x89b250,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b254,0x89b2c4,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89b2c8,0x89b2dc,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89b2fc,0x89b300,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b304,0x89b308,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b328,0x89b32c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b330,0x89b334,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b354,0x89b358,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b378,0x89b384,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89b3a4,0x89b414,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89b434,0x89b440,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89b444,0x89b448,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b44c,0x89b498,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89b4b8,0x89b4cc,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x89b4d0,0x89b4f4,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89b514,0x89b614,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89b618,0x89b6d0,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89b6d4,0x89b6e8,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89b708,0x89b7c0,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89b7e0,0x89b7ec,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89b80c,0x89b8c4,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89b8c8,0x89b8cc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b8d0,0x89b8d4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89b8f4,0x89b928,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89b948,0x89b9dc,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x89b9e0,0x89ba50,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89ba54,0x89bc74,136,16,16,0,struct-array,16 slots at stride 0x24,,excluded:eh-funclet 16,,0
+0x89bc78,0x89bc9c,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89bcbc,0x89bcc8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89bccc,0x89bcd0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89bcf0,0x89bd6c,31,3,3,0,struct-array,3 slots at stride 0x3c,,excluded:eh-funclet 3,,0
+0x89bd8c,0x89bd98,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89bdb8,0x89beb8,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89bebc,0x89bf00,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x89bf20,0x89bffc,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89c000,0x89c004,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c008,0x89c12c,73,9,9,0,struct-array,9 slots at stride 0x24,,excluded:eh-funclet 9,,0
+0x89c130,0x89c1a0,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89c1a4,0x89c1a8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c1ac,0x89c1b0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c1d0,0x89c1d4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c1d8,0x89c1dc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c1fc,0x89c218,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89c238,0x89c284,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89c288,0x89c2ac,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89c2cc,0x89c360,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x89c364,0x89c388,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89c3a8,0x89c3f4,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89c3f8,0x89c5f4,127,15,15,0,struct-array,15 slots at stride 0x24,,excluded:eh-funclet 15,,0
+0x89c5f8,0x89c614,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89c65c,0x89c660,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c664,0x89c788,73,9,9,0,struct-array,9 slots at stride 0x24,,excluded:eh-funclet 9,,0
+0x89c78c,0x89c790,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c794,0x89c798,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c7b8,0x89c7e4,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x89c804,0x89c8e0,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89c8e4,0x89c8e8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89c8ec,0x89c980,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x89c984,0x89c9f4,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89c9f8,0x89c9fc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89ca00,0x89ca94,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x89ca98,0x89cb98,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89cb9c,0x89cba0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89cba4,0x89cd7c,118,14,14,0,struct-array,14 slots at stride 0x24,,excluded:eh-funclet 14,,0
+0x89cd80,0x89cd84,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89cd88,0x89cdf8,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89ce18,0x89ce24,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89ce44,0x89ce50,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89ce70,0x89cf70,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89cf98,0x89cfbc,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89cfdc,0x89d000,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89d020,0x89d074,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x89d094,0x89d0e0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89d0e4,0x89d0e8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d0ec,0x89d1a4,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89d1a8,0x89d1ec,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x89d20c,0x89d238,11,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89d2f4,0x89d2f8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d35c,0x89d360,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d3c0,0x89d3f4,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89d414,0x89d430,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89d450,0x89d484,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89d4a4,0x89d4a8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d4c8,0x89d4ec,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89d50c,0x89d558,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89d55c,0x89d560,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d564,0x89d5b0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89d5b4,0x89d5b8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d5bc,0x89d5c0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d5e0,0x89d60c,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x89d62c,0x89d650,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89d670,0x89d704,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x89d724,0x89d730,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89d750,0x89d850,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89d854,0x89d858,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d878,0x89d88c,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x89d8ac,0x89d8b0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d8b4,0x89d96c,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89d970,0x89d974,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89d994,0x89d9a0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89d9c0,0x89d9cc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89d9ec,0x89db7c,100,12,12,0,struct-array,12 slots at stride 0x24,,excluded:eh-funclet 12,,0
+0x89db80,0x89db84,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89dba4,0x89dba8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89dbac,0x89dbf8,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89dbfc,0x89dc00,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89dc04,0x89dc08,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89dc1c,0x89dc20,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89dc50,0x89dc9c,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89dcbc,0x89dcc8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89dce8,0x89dcec,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89dd0c,0x89dd28,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89dd48,0x89dd74,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x89dd94,0x89dde0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89dde4,0x89de00,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89de20,0x89ded8,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89dedc,0x89df00,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89df20,0x89dfd8,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89dfdc,0x89e020,17,9,9,0,struct-array,9 slots at stride 0x8,,excluded:eh-funclet 9,,0
+0x89e040,0x89e06c,11,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89e128,0x89e12c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e190,0x89e194,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e1f4,0x89e240,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89e244,0x89e260,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89e280,0x89e2a4,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89e2cc,0x89e2d0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e31c,0x89e348,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x89e374,0x89e378,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e39c,0x89e3a0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e3d4,0x89e420,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89e424,0x89e428,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e448,0x89e454,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89e474,0x89e490,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89e4b0,0x89e58c,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89e590,0x89e624,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x89e628,0x89e824,127,15,15,0,struct-array,15 slots at stride 0x24,,excluded:eh-funclet 15,,0
+0x89e828,0x89e82c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e84c,0x89e850,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e854,0x89e858,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e878,0x89e8cc,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x89e8ec,0x89e8f0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e910,0x89e914,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89e918,0x89e988,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89e98c,0x89ea68,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89ea6c,0x89ea80,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89eaa0,0x89eaa4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89eaa8,0x89eb60,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89eb64,0x89eb78,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x89eb98,0x89ed70,118,14,14,0,struct-array,14 slots at stride 0x24,,excluded:eh-funclet 14,,0
+0x89ed90,0x89ed9c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89edbc,0x89edc0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89ede0,0x89ee34,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x89ee54,0x89ee58,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89ee78,0x89ee9c,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89eebc,0x89ef98,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89ef9c,0x89efb8,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89efd8,0x89f07c,41,21,21,0,struct-array,21 slots at stride 0x8,,excluded:eh-funclet 21,,0
+0x89f09c,0x89f10c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x89f110,0x89f134,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89f154,0x89f170,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89f190,0x89f344,109,13,13,0,struct-array,13 slots at stride 0x24,,excluded:eh-funclet 13,,0
+0x89f348,0x89f3ac,25,13,13,0,struct-array,13 slots at stride 0x8,,excluded:eh-funclet 13,,0
+0x89f3cc,0x89f3d0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89f3f0,0x89f43c,19,10,10,0,struct-array,10 slots at stride 0x8,,excluded:eh-funclet 10,,0
+0x89f45c,0x89f460,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89f464,0x89f540,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89f544,0x89f548,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89f54c,0x89f598,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89f59c,0x89f5f8,23,12,12,0,struct-array,12 slots at stride 0x8,,excluded:eh-funclet 12,,0
+0x89f618,0x89f664,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89f684,0x89f690,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89f6b0,0x89f6fc,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89f71c,0x89f728,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89f748,0x89f824,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89f828,0x89f864,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x89f884,0x89f8d0,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x89f8d4,0x89f908,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89f928,0x89f9e0,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x89f9e4,0x89fa18,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x89fa38,0x89fa3c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fa5c,0x89fa78,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89fa98,0x89fa9c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89faa0,0x89faa4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fae8,0x89fb04,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x89fb68,0x89fb6c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fb98,0x89fb9c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fbe0,0x89fbe4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fc10,0x89fc14,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fc34,0x89fc88,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x89fca8,0x89fcbc,5,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x89fcec,0x89fcf0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fd10,0x89fd34,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89fd54,0x89fd58,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fd78,0x89fd9c,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x89fdbc,0x89febc,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x89fec0,0x89fec4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fec8,0x89ffa4,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x89ffa8,0x89ffac,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89ffcc,0x89ffd0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89ffd4,0x89ffd8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x89fff8,0x89fffc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0000,0x8a00dc,55,7,7,0,struct-array,7 slots at stride 0x24,,excluded:eh-funclet 7,,0
+0x8a00e0,0x8a0228,82,10,10,0,struct-array,10 slots at stride 0x24,,excluded:eh-funclet 10,,0
+0x8a0248,0x8a0254,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0274,0x8a0280,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a02a0,0x8a0358,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x8a035c,0x8a03cc,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a03d0,0x8a03e4,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x8a0404,0x8a0474,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a0478,0x8a04ac,13,7,7,0,struct-array,7 slots at stride 0x8,,excluded:eh-funclet 7,,0
+0x8a04cc,0x8a04e8,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x8a0548,0x8a054c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0580,0x8a0584,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a05a0,0x8a05a4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a05ec,0x8a0638,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8a063c,0x8a0660,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x8a0680,0x8a0714,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x8a0718,0x8a072c,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x8a074c,0x8a07e0,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x8a07e4,0x8a0810,11,6,6,0,struct-array,6 slots at stride 0x8,,excluded:eh-funclet 6,,0
+0x8a0830,0x8a0834,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0838,0x8a08a8,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a08c8,0x8a08f4,11,6,6,0,fnptr-table-unreferenced,,,excluded:eh-funclet 6,,0
+0x8a08f8,0x8a0914,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x8a0934,0x8a0980,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8a09a0,0x8a09bc,7,4,4,0,fnptr-table-unreferenced,,,excluded:eh-funclet 4,,0
+0x8a09dc,0x8a0a4c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a0a6c,0x8a0a78,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0a7c,0x8a0ab8,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x8a0ad8,0x8a0ae4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0ae8,0x8a0b04,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x8a0b24,0x8a0b30,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0b34,0x8a0b70,15,8,8,0,struct-array,8 slots at stride 0x8,,excluded:eh-funclet 8,,0
+0x8a0b90,0x8a0c90,64,8,8,0,struct-array,8 slots at stride 0x24,,excluded:eh-funclet 8,,0
+0x8a0cb0,0x8a0cc4,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x8a0ce4,0x8a0d54,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a0d58,0x8a0d7c,9,5,5,0,struct-array,5 slots at stride 0x8,,excluded:eh-funclet 5,,0
+0x8a0d9c,0x8a0da0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0dc0,0x8a0dcc,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0dec,0x8a0df0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0e10,0x8a0e14,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0e18,0x8a0e88,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a0ea8,0x8a0eb4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0eb8,0x8a0ebc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0edc,0x8a0ee0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0f00,0x8a0f0c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0f10,0x8a0f14,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0f34,0x8a0f38,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0f3c,0x8a0f40,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0f60,0x8a0f6c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a0f70,0x8a0f8c,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x8a0fac,0x8a0fb0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0fd0,0x8a0fd4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a0ff4,0x8a1000,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1004,0x8a1008,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a100c,0x8a1010,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1030,0x8a103c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1040,0x8a1044,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1064,0x8a1068,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1088,0x8a1094,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1098,0x8a109c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a10bc,0x8a10c0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a10c4,0x8a10c8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a10e8,0x8a10f4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1114,0x8a1120,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1124,0x8a1170,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8a1190,0x8a119c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a11a0,0x8a1210,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a1214,0x8a1218,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a121c,0x8a1268,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8a126c,0x8a1270,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1290,0x8a12ac,7,4,4,0,fnptr-table-unreferenced,,,excluded:eh-funclet 4,,0
+0x8a12cc,0x8a133c,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a135c,0x8a1380,9,5,5,0,fnptr-table-unreferenced,,,excluded:eh-funclet 5,,0
+0x8a13a0,0x8a13a4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a13c4,0x8a13e0,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x8a1400,0x8a1404,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1424,0x8a1430,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1450,0x8a149c,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8a14bc,0x8a14c8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a14e8,0x8a14ec,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a14f0,0x8a14f4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1514,0x8a1520,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1540,0x8a1544,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1564,0x8a1568,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a156c,0x8a1570,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1590,0x8a159c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a15bc,0x8a15c8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a15e8,0x8a15ec,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a160c,0x8a1610,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1630,0x8a163c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a165c,0x8a1660,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1680,0x8a168c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a16ac,0x8a16b8,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a16d8,0x8a16e4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1704,0x8a1828,73,9,9,0,struct-array,9 slots at stride 0x24,,excluded:eh-funclet 9,,0
+0x8a182c,0x8a1880,21,11,11,0,struct-array,11 slots at stride 0x8,,excluded:eh-funclet 11,,0
+0x8a18a0,0x8a1958,46,6,6,0,struct-array,6 slots at stride 0x24,,excluded:eh-funclet 6,,0
+0x8a1978,0x8a198c,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x8a19ac,0x8a19b0,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a19d0,0x8a19d4,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a19f4,0x8a1a08,5,3,3,0,fnptr-table-unreferenced,,,excluded:eh-funclet 3,,0
+0x8a1a0c,0x8a1a20,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x8a1a40,0x8a1ab0,28,4,4,0,struct-array,4 slots at stride 0x24,,excluded:eh-funclet 4,,0
+0x8a1ab4,0x8a1ab8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1ad8,0x8a1ae4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1ae8,0x8a1b04,7,4,4,0,struct-array,4 slots at stride 0x8,,excluded:eh-funclet 4,,0
+0x8a1b24,0x8a1b30,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1b34,0x8a1b38,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1b3c,0x8a1b40,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1b60,0x8a1b6c,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1b8c,0x8a1ba0,5,3,3,0,struct-array,3 slots at stride 0x8,,excluded:eh-funclet 3,,0
+0x8a1bc0,0x8a1c54,37,5,5,0,struct-array,5 slots at stride 0x24,,excluded:eh-funclet 5,,0
+0x8a1c74,0x8a1c98,9,5,5,0,fnptr-table-unreferenced,,,excluded:eh-funclet 5,,0
+0x8a1cb8,0x8a1cc4,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1ce4,0x8a1cf0,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1d10,0x8a1d14,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1d18,0x8a1d64,19,3,3,0,struct-array,3 slots at stride 0x24,,excluded:eh-funclet 3,,0
+0x8a1d84,0x8a1d90,3,2,2,0,fnptr-table-unreferenced,,,excluded:eh-funclet 2,,0
+0x8a1d94,0x8a1d98,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1db8,0x8a1dbc,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1df4,0x8a1df8,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1e58,0x8a1e5c,1,1,1,0,single,,,excluded:crt 1,,0
+0x8a1e68,0x8a1e6c,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1e8c,0x8a1e90,1,1,1,0,single,,,excluded:eh-funclet 1,,0
+0x8a1ed8,0x8a1edc,1,1,1,0,single,,,excluded:crt 1,,0
+0x8a1f28,0x8a1f2c,1,1,0,0,single,,,new 1,,0
+0x8a1f48,0x8a1f4c,1,1,0,0,single,,,new 1,,0
+0x8a238c,0x8a2390,1,1,1,0,single,,,gr-unreversed 1,,0
+0x8a23ac,0x8a23b0,1,1,1,0,single,,,gr-unreversed 1,,0
+0x8a2a18,0x8a2a1c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8a4004,0x8a5a10,1667,1667,1667,1666,crt-init:__xc,between the _cinit bounds 0x8a4000..0x8a5a10,,game 1666;excluded:crt 1,,0
+0x8a5a18,0x8a5a1c,1,1,1,0,crt-init:__xi,between the _cinit bounds 0x8a5a14..0x8a5a30,,excluded:crt 1,,0
+0x8a5a24,0x8a5a2c,2,2,2,0,crt-init:__xi,between the _cinit bounds 0x8a5a14..0x8a5a30,,excluded:crt 2,,0
+0x8a5a38,0x8a5a48,4,2,2,0,fnptr-table-unreferenced,,,excluded:crt 2,,0
+0x8a5b58,0x8a5cc0,90,65,65,58,fnptr-table,base or slots named by code,CCheat::m_aCheatFunctions,game 65,0x438370;0x438480,2
+0x8a6168,0x8a61d4,27,27,27,24,script-range-fns,CRunningScript::ProcessOneCommand (0x469eb0) `call [opcode/100*4 + 0x8a6168]` (CAT-10),CRunningScript::s_OriginalCommandHandlerTable,game 27,0x469eb0;0x469f00,2
+0x8aa5b8,0x8aa5bc,1,1,1,0,single,,,gr-reversed 1,0x4d39b0;0x4d3a30,2
+0x8aa5e8,0x8aa5ec,1,1,1,0,single,,,gr-reversed 1,,0
+0x8aabe8,0x8aabec,1,1,1,0,single,,,gr-reversed 1,,0
+0x8aae28,0x8aae2c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8aafd8,0x8aafdc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab068,0x8ab06c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab0f8,0x8ab0fc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab188,0x8ab18c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab218,0x8ab21c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab2a8,0x8ab2ac,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab2d8,0x8ab2dc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab638,0x8ab63c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab668,0x8ab66c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab6c8,0x8ab6cc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8ab9c8,0x8ab9cc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8aba58,0x8aba5c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8abb78,0x8abb7c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8bac58,0x8bac5c,1,1,1,0,single,,,game 1,,0
+0x8bb3a0,0x8bb3a4,1,1,1,0,single,,,gr-reversed 1,,0
+0x8bb420,0x8bb424,1,1,1,0,single,,,gr-reversed 1,,0
+0x8bb9f8,0x8bb9fc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8bc194,0x8bc198,1,1,1,0,single,,,game 1,,0
+0x8bc220,0x8bc224,1,1,1,0,single,,,gr-reversed 1,,0
+0x8bc4d4,0x8bc4d8,1,1,0,0,single,,,new 1,,0
+0x8bc774,0x8bc778,1,1,0,0,single,,,new 1,,0
+0x8bcbe4,0x8bcbe8,1,1,1,0,single,,,gr-reversed 1,,0
+0x8beb38,0x8beb3c,1,1,0,0,single,,,new 1,,0
+0x8bfb10,0x8bfb14,1,1,0,0,single,,,new 1,,0
+0x8c0d0c,0x8c0d10,1,1,0,0,single,,,new 1,,0
+0x8c17f0,0x8c17f4,1,1,0,0,single,,,new 1,,0
+0x8c1ab4,0x8c1ab8,1,1,0,0,single,,,new 1,,0
+0x8c5e98,0x8c5e9c,1,1,0,0,single,,,new 1,,0
+0x8c6530,0x8c6534,1,1,1,0,single,,,game 1,,0
+0x8c8518,0x8c851c,1,1,0,0,single,,,new 1,,0
+0x8c8828,0x8c882c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8cda00,0x8cda04,1,1,1,0,single,,,game 1,,0
+0x8d0954,0x8d09fc,42,42,42,11,fnptr-table-unreferenced,,,gr-reversed 29;game 13,,0
+0x8d4264,0x8d4268,1,1,0,0,single,,,new 1,,0
+0x8d6228,0x8d6238,4,4,4,0,fnptr-table,base or slots named by code,,gr-unreversed 4,0x745510,1
+0x8d633c,0x8d634c,4,2,2,2,rw-node-def,RxNodeDefinition 'nodeD3D9AtomicAllInOne.csl' at 0x8d6338,,RW 2,,0
+0x8d6388,0x8d638c,1,1,1,0,fnptr-variable,slot read or written by code,,gr-called-only 1,0x75d4c0;0x75d500;0x75d970,3
+0x8d63bc,0x8d63cc,4,2,2,2,rw-node-def,RxNodeDefinition 'nodeD3D9WorldSectorAllInOne.csl' at 0x8d63b8,,RW 2,,0
+0x8d7490,0x8d7494,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d749c,0x8d74b0,5,5,5,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 5,,0
+0x8d74b4,0x8d74bc,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d74c8,0x8d74d0,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d74d8,0x8d74e0,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d74e4,0x8d74e8,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d74f4,0x8d74fc,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d7504,0x8d7518,5,5,5,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 5,,0
+0x8d751c,0x8d7520,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d7524,0x8d752c,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d7530,0x8d7560,12,12,12,1,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 12,,0
+0x8d7564,0x8d7574,4,4,4,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 4,,0
+0x8d7580,0x8d7598,6,6,6,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 6,,0
+0x8d759c,0x8d75a8,3,3,3,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x8d75b0,0x8d75b4,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d75c4,0x8d75c8,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d75cc,0x8d75dc,4,4,4,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 4,,0
+0x8d75e4,0x8d75f0,3,3,3,1,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 3,,0
+0x8d7608,0x8d760c,1,1,0,0,single,,,new 1,,0
+0x8d761c,0x8d7624,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d7648,0x8d7658,4,4,4,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 4,,0
+0x8d7678,0x8d767c,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d7684,0x8d7688,1,1,0,0,single,,,new 1,,0
+0x8d7694,0x8d76a8,5,5,5,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 5,,0
+0x8d76ac,0x8d76b0,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d76b8,0x8d76c0,2,2,2,0,fnptr-table-unreferenced,,,excluded:thirdparty:d3dx9 2,,0
+0x8d76c4,0x8d76c8,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8d89d8,0x8d89dc,1,1,1,0,single,,,gr-reversed 1,,0
+0x8d8d78,0x8d8d7c,1,1,1,0,single,,,gr-reversed 1,,0
+0x8d8e20,0x8d8e24,1,1,1,0,single,,,game 1,,0
+0x8db6a0,0x8db6a4,1,1,1,0,single,,,excluded:thirdparty:d3dx9 1,,0
+0x8ded0c,0x8ded1c,4,2,2,2,rw-node-def,RxNodeDefinition 'nodeD3D9SkinAtomicAllInOne.csl' at 0x8ded08,,RW 2,,0
+0x8ded68,0x8ded84,7,6,6,0,fnptr-table-unreferenced,,,gr-called-only 6,,0
+0x8ded90,0x8dedb0,8,8,8,0,fnptr-table-unreferenced,,,gr-called-only 8,,0
+0x8dedc0,0x8dede0,8,8,8,0,fnptr-table-unreferenced,,,gr-called-only 8,,0
+0x8e249c,0x8e24c0,9,7,7,4,rw-device,"RwDevice (gammaCorrection 1.0, fpSystem, zBufferNear/Far, fpRenderStateSet/Get, Im2D/Im3D render functions) returned by 0x7f9c20 `mov eax, 0x8e2498; ret`",,RW 7,,0
+0x8e291c,0x8e2920,1,1,1,1,rw-node-def,RxNodeDefinition 'ImmInstance.csl' at 0x8e2918,,RW 1,,0
+0x8e297c,0x8e2980,1,1,1,1,rw-node-def,RxNodeDefinition 'nodeD3D9SubmitNoLight.csl' at 0x8e2978,,RW 1,,0
+0x8e2a08,0x8e2a0c,1,1,1,0,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
+0x8e2a0c,0x8e2a10,1,1,1,1,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
+0x8e2a10,0x8e2a14,1,1,1,1,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
+0x8e2a14,0x8e2a18,1,1,1,1,fnptr-variable,slot read or written by code,,excluded:thirdparty:quicktime-qtml 1,0x4f2fb0,1
+0x8e2b74,0x8e2b78,1,1,1,0,single,,,excluded:crt 1,,0
+0x8e2bc0,0x8e2bc4,1,1,1,0,single,,,excluded:crt 1,,0
+0x8e2eb0,0x8e2eb4,1,1,1,0,single,,,excluded:crt 1,,0
+0x8e3070,0x8e308c,7,3,3,0,struct-array,3 slots at stride 0xc,,excluded:crt 3,,0
+0x8e30f0,0x8e3110,8,8,8,0,fnptr-table-unreferenced,,,excluded:crt 8,,0
+0x8e3128,0x8e312c,1,1,1,0,single,,,excluded:crt 1,,0
+0x8e3ebc,0x8e3ed8,7,4,4,0,fnptr-table-unreferenced,,,excluded:linker-thunk 4,,0
+0xc9eb4c,0xc9eb54,2,2,2,0,fnptr-table-unreferenced,,,gr-reversed 2,,0
+0xca6530,0xca6534,1,1,0,0,single,,,new 1,,0
+0xca65b4,0xca65b8,1,1,0,0,single,,,new 1,,0
+0xca6840,0xca6844,1,1,1,0,single,,,game 1,,0
+0xca9fd0,0xca9fd4,1,1,0,0,single,,,new 1,,0
