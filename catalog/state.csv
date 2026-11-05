@@ -5099,12 +5099,12 @@ address,name,subsystem,state,source,evidence,updated
 0x53c860,,UNK-game,unknown,REA,unnamed (class game),2026-11-05
 0x53c890,,UNK-game,unknown,REA,unnamed (class game),2026-11-05
 0x53c900,CGame::Shutdown,CORE,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
-0x53cb00,CGeneral::LimitAngle,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
-0x53cb50,CGeneral::LimitRadianAngle,MATH,implemented,gta-reversed,"crates/sa-hook/src/game.rs (Rust port) + src/table.rs hook; INF-3 selftest 160,024 inputs 0 mismatches, not a recorded L1 oracle",2026-11-05
-0x53cbe0,CGeneral::GetRadianAngleBetweenPoints-,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
-0x53cc70,CGeneral::GetATanOfXY,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
+0x53cb00,CGeneral::LimitAngle,MATH,L1,gta-reversed,sa-math limit_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn; SNaN via CPU); original UB ledger entry,2026-11-05
+0x53cb50,CGeneral::LimitRadianAngle,MATH,L1,gta-reversed,sa-math limit_radian_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn),2026-11-05
+0x53cbe0,CGeneral::GetRadianAngleBetweenPoints-,MATH,L1,gta-reversed,"sa-math get_radian_angle_between_points; l1 1.25M cases 0 mismatches (CPU backend, FPATAN)",2026-11-05
+0x53cc70,CGeneral::GetATanOfXY,MATH,L1,gta-reversed,"sa-math get_atan_of_xy; l1 1M cases 0 mismatches on f32 result (CPU backend, FPATAN); ledger pending: ST0 precision",2026-11-05
 0x53cdc0,CGeneral::GetNodeHeadingFromVector,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
-0x53ce30,CGeneral::SolveQuadratic,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
+0x53ce30,CGeneral::SolveQuadratic,MATH,L1,gta-reversed,sa-math solve_quadratic; l1 1M 0 mismatches; mutants 3/3,2026-11-05
 0x53cea0,CGeneral::GetAngleBetweenPoints,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
 0x53ced0,CKeyGen::GetKey-sized,CORE,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
 0x53cf00,CKeyGen::GetKey-null-terminated,CORE,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
@@ -6348,7 +6348,7 @@ address,name,subsystem,state,source,evidence,updated
 0x59c790,Multiply3x3,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05
 0x59c810,,UNK-game,unknown,REA,unnamed (class game),2026-11-05
 0x59c890,CMatrix::operator*-Vec,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
-0x59c910,CVector::Normalise,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
+0x59c910,CVector::Normalise,MATH,L1,gta-reversed,sa-math CVector::normalise; l1 1M 0 mismatches,2026-11-05
 0x59c970,CVector::NormaliseAndMag,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05
 0x59ca10,,UNK-game,unknown,REA,unnamed (class game),2026-11-05
 0x59cba0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05
