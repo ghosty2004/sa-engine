@@ -55,3 +55,11 @@
   `procedures.csv` byte-identically. The real remaining backlog is 2,793 unknown game/RW functions, plus
   730 hooked-unreversed and 528 called-only.
 - plugin-sdk cloned shallowly into `re/plugin-sdk` (15f15b6) for naming.
+
+## 2026-11-05: INF-2 + INF-3 integrated
+- `crates/sa-launcher`, `crates/sa-hook`, `tools/e2e/lib.sh`, `tools/e2e/inf3-hooks.sh` (impl-2). Details in
+  the ROADMAP INF-3 row. Re-verified by the main session: i686 build and clippy clean; host tests pass
+  (decoder differential against iced-x86); `inf3-hooks.sh` on lane 1 all PASS (menu, gameplay screenshot
+  checked visually, toggles, storm, selftest 0 mismatches, no crash). The agent's 600 s soak passed too.
+- Measured: about 25 fps in gameplay under Wine/DXVK headless, about 63 fps in the menu. Not investigated
+  yet.
