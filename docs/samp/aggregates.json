@@ -1,0 +1,997 @@
+{
+ "closure": {
+  "A_direct": {
+   "by_subsystem": {
+    "AI": [
+     21,
+     4112
+    ],
+    "ANIM": [
+     5,
+     278
+    ],
+    "AUDIO": [
+     12,
+     889
+    ],
+    "CALLED-ONLY": [
+     0,
+     37
+    ],
+    "CAM": [
+     4,
+     217
+    ],
+    "COLL": [
+     7,
+     145
+    ],
+    "CORE": [
+     15,
+     333
+    ],
+    "HUD": [
+     33,
+     373
+    ],
+    "INPUT": [
+     4,
+     161
+    ],
+    "MATH": [
+     1,
+     112
+    ],
+    "PED": [
+     22,
+     389
+    ],
+    "PHYS": [
+     6,
+     79
+    ],
+    "POP": [
+     3,
+     518
+    ],
+    "RENDER": [
+     19,
+     907
+    ],
+    "RW": [
+     9,
+     1815
+    ],
+    "SAVE": [
+     0,
+     48
+    ],
+    "SCRIPT": [
+     29,
+     260
+    ],
+    "STREAM": [
+     29,
+     593
+    ],
+    "UNK-game": [
+     9,
+     2242
+    ],
+    "VEH": [
+     32,
+     808
+    ],
+    "WEAPON": [
+     12,
+     190
+    ],
+    "WORLD": [
+     53,
+     980
+    ]
+   },
+   "total": 325
+  },
+  "B_samp_roots_resolved_edges": {
+   "by_subsystem": {
+    "AI": [
+     797,
+     4112
+    ],
+    "ANIM": [
+     132,
+     278
+    ],
+    "AUDIO": [
+     483,
+     889
+    ],
+    "CALLED-ONLY": [
+     20,
+     37
+    ],
+    "CAM": [
+     162,
+     217
+    ],
+    "COLL": [
+     102,
+     145
+    ],
+    "CORE": [
+     172,
+     333
+    ],
+    "HUD": [
+     270,
+     373
+    ],
+    "INPUT": [
+     116,
+     161
+    ],
+    "MATH": [
+     65,
+     112
+    ],
+    "PED": [
+     228,
+     389
+    ],
+    "PHYS": [
+     63,
+     79
+    ],
+    "POP": [
+     311,
+     518
+    ],
+    "RENDER": [
+     478,
+     907
+    ],
+    "RW": [
+     602,
+     1815
+    ],
+    "SAVE": [
+     23,
+     48
+    ],
+    "SCRIPT": [
+     182,
+     260
+    ],
+    "STREAM": [
+     275,
+     593
+    ],
+    "UNK-game": [
+     513,
+     2242
+    ],
+    "VEH": [
+     409,
+     808
+    ],
+    "WEAPON": [
+     104,
+     190
+    ],
+    "WORLD": [
+     558,
+     980
+    ]
+   },
+   "total": 6065
+  },
+  "C_samp_roots_plus_instantiated_vtables": {
+   "by_subsystem": {
+    "AI": [
+     3590,
+     4112
+    ],
+    "ANIM": [
+     163,
+     278
+    ],
+    "AUDIO": [
+     529,
+     889
+    ],
+    "CALLED-ONLY": [
+     21,
+     37
+    ],
+    "CAM": [
+     164,
+     217
+    ],
+    "COLL": [
+     112,
+     145
+    ],
+    "CORE": [
+     179,
+     333
+    ],
+    "HUD": [
+     277,
+     373
+    ],
+    "INPUT": [
+     125,
+     161
+    ],
+    "MATH": [
+     73,
+     112
+    ],
+    "PED": [
+     294,
+     389
+    ],
+    "PHYS": [
+     68,
+     79
+    ],
+    "POP": [
+     327,
+     518
+    ],
+    "RENDER": [
+     510,
+     907
+    ],
+    "RW": [
+     617,
+     1815
+    ],
+    "SAVE": [
+     26,
+     48
+    ],
+    "SCRIPT": [
+     191,
+     260
+    ],
+    "STREAM": [
+     281,
+     593
+    ],
+    "UNK-game": [
+     656,
+     2242
+    ],
+    "VEH": [
+     600,
+     808
+    ],
+    "WEAPON": [
+     105,
+     190
+    ],
+    "WORLD": [
+     675,
+     980
+    ]
+   },
+   "total": 9583
+  },
+  "D_game_and_samp_roots_resolved_edges": {
+   "by_subsystem": {
+    "AI": [
+     797,
+     4112
+    ],
+    "ANIM": [
+     132,
+     278
+    ],
+    "AUDIO": [
+     483,
+     889
+    ],
+    "CALLED-ONLY": [
+     20,
+     37
+    ],
+    "CAM": [
+     162,
+     217
+    ],
+    "COLL": [
+     102,
+     145
+    ],
+    "CORE": [
+     177,
+     333
+    ],
+    "HUD": [
+     270,
+     373
+    ],
+    "INPUT": [
+     116,
+     161
+    ],
+    "MATH": [
+     65,
+     112
+    ],
+    "PED": [
+     228,
+     389
+    ],
+    "PHYS": [
+     63,
+     79
+    ],
+    "POP": [
+     311,
+     518
+    ],
+    "RENDER": [
+     478,
+     907
+    ],
+    "RW": [
+     602,
+     1815
+    ],
+    "SAVE": [
+     23,
+     48
+    ],
+    "SCRIPT": [
+     182,
+     260
+    ],
+    "STREAM": [
+     275,
+     593
+    ],
+    "UNK-game": [
+     513,
+     2242
+    ],
+    "VEH": [
+     409,
+     808
+    ],
+    "WEAPON": [
+     104,
+     190
+    ],
+    "WORLD": [
+     558,
+     980
+    ]
+   },
+   "total": 6070
+  },
+  "E_game_and_samp_roots_plus_instantiated_vtables": {
+   "by_subsystem": {
+    "AI": [
+     3590,
+     4112
+    ],
+    "ANIM": [
+     163,
+     278
+    ],
+    "AUDIO": [
+     529,
+     889
+    ],
+    "CALLED-ONLY": [
+     21,
+     37
+    ],
+    "CAM": [
+     164,
+     217
+    ],
+    "COLL": [
+     112,
+     145
+    ],
+    "CORE": [
+     184,
+     333
+    ],
+    "HUD": [
+     277,
+     373
+    ],
+    "INPUT": [
+     125,
+     161
+    ],
+    "MATH": [
+     73,
+     112
+    ],
+    "PED": [
+     294,
+     389
+    ],
+    "PHYS": [
+     68,
+     79
+    ],
+    "POP": [
+     327,
+     518
+    ],
+    "RENDER": [
+     510,
+     907
+    ],
+    "RW": [
+     617,
+     1815
+    ],
+    "SAVE": [
+     26,
+     48
+    ],
+    "SCRIPT": [
+     191,
+     260
+    ],
+    "STREAM": [
+     281,
+     593
+    ],
+    "UNK-game": [
+     656,
+     2242
+    ],
+    "VEH": [
+     600,
+     808
+    ],
+    "WEAPON": [
+     105,
+     190
+    ],
+    "WORLD": [
+     675,
+     980
+    ]
+   },
+   "total": 9588
+  },
+  "F_E_without_samp_cuts": {
+   "by_subsystem": {
+    "AI": [
+     3593,
+     4112
+    ],
+    "ANIM": [
+     176,
+     278
+    ],
+    "AUDIO": [
+     532,
+     889
+    ],
+    "CALLED-ONLY": [
+     21,
+     37
+    ],
+    "CAM": [
+     175,
+     217
+    ],
+    "COLL": [
+     112,
+     145
+    ],
+    "CORE": [
+     186,
+     333
+    ],
+    "HUD": [
+     280,
+     373
+    ],
+    "INPUT": [
+     126,
+     161
+    ],
+    "MATH": [
+     78,
+     112
+    ],
+    "PED": [
+     302,
+     389
+    ],
+    "PHYS": [
+     68,
+     79
+    ],
+    "POP": [
+     336,
+     518
+    ],
+    "RENDER": [
+     536,
+     907
+    ],
+    "RW": [
+     624,
+     1815
+    ],
+    "SAVE": [
+     26,
+     48
+    ],
+    "SCRIPT": [
+     191,
+     260
+    ],
+    "STREAM": [
+     285,
+     593
+    ],
+    "UNK-game": [
+     672,
+     2242
+    ],
+    "VEH": [
+     610,
+     808
+    ],
+    "WEAPON": [
+     107,
+     190
+    ],
+    "WORLD": [
+     718,
+     980
+    ]
+   },
+   "total": 9754
+  },
+  "catalogue_live_total": 15486,
+  "only_reachable_without_cuts": 166,
+  "only_reachable_without_cuts_by_subsystem": {
+   "AI": 3,
+   "ANIM": 13,
+   "AUDIO": 3,
+   "CAM": 11,
+   "CORE": 2,
+   "HUD": 3,
+   "INPUT": 1,
+   "MATH": 5,
+   "PED": 8,
+   "POP": 9,
+   "RENDER": 26,
+   "RW": 7,
+   "STREAM": 4,
+   "UNK-game": 16,
+   "VEH": 10,
+   "WEAPON": 2,
+   "WORLD": 43
+  }
+ },
+ "code_unmapped_hook_slots": [
+  "0x4385aa",
+  "0x47bf54",
+  "0x47bf88",
+  "0x4b3433",
+  "0x4b5abc",
+  "0x4d3934",
+  "0x4d4609",
+  "0x538084",
+  "0x5534a6",
+  "0x5647a0",
+  "0x5674db",
+  "0x584a79",
+  "0x59c721",
+  "0x63b8ba",
+  "0x6919bb",
+  "0x6a0043",
+  "0x6d1874",
+  "0x73885b",
+  "0x738b1b",
+  "0x83c931",
+  "0x841618"
+ ],
+ "cut_functions": {
+  "0x4083c0": "CStreaming::InitImageList (row 128: game image-list registration (samp/archive registers IMGs))",
+  "0x4090a0": "CStreaming::DeleteAllRwObjects (row 178: streaming mass RW-object deletion (DeleteAllRwObjects))",
+  "0x588be0": "CHud::SetHelpMessage (row 180: single-player help boxes)",
+  "0x5b47b0": "CFileLoader::LoadPickup (row 172: IPL pickups (CFileLoader::LoadPickup))",
+  "0x60dc50": "CPlayerPed::FindWeaponLockOnTarget (row 4: weapon lock-on (auto-aim))",
+  "0x60e530": "CPlayerPed::FindNextWeaponLockOnTarget (row 5: weapon lock-on (auto-aim))",
+  "0x612710": "CPopulation::AddPed (row 185: ambient population peds (CPopulation::AddPed))",
+  "0x6a8500": "CAutomobile::ProcessFlyingCarStuff (row 207: flying-car physics (ProcessFlyingCarStuff))"
+ },
+ "direct_functions": 325,
+ "disabled_features": {
+  "'Wasted' big message": [
+   "191@0x56e5ad"
+  ],
+  "BMX fire player ignition": [
+   "199@0x53a984"
+  ],
+  "CJ clothes rebuild on skin change": [
+   "363@0x5a82c0 (runtime)"
+  ],
+  "CPlayerInfo::Process task block (task not identified)": [
+   "215@0x570535",
+   "217@0x570546"
+  ],
+  "CTrain::ProcessControl passenger block": [
+   "188@0x6f8cf8"
+  ],
+  "CVehicle::SetDriver freebies": [
+   "218@0x6d1874"
+  ],
+  "CVehicle::SetupRender (made RET by a hook body, never restored)": [
+   "375@0x6d64f0 (runtime)"
+  ],
+  "ClearPlayerWeaponMode in ClearWeaponTarget": [
+   "192@0x609cb4"
+  ],
+  "ClumpCollisionStreamRead during samp model load (temporary)": [
+   "364@0x41b1d0 (runtime)"
+  ],
+  "HUD vehicle name": [
+   "161@0x58fbe9"
+  ],
+  "HUD vital stats": [
+   "205@0x58fc2e"
+  ],
+  "IPL pickups (CFileLoader::LoadPickup)": [
+   "172@0x5b47b0"
+  ],
+  "Interior_c::Exit in InteriorGroup_c::Exit": [
+   "212@0x5952a6"
+  ],
+  "Pay'n'Spray sprayable check": [
+   "171@0x44ac75"
+  ],
+  "RW-object deletion after death (DeleteRwObjectsAfterDeath)": [
+   "179@0x441482"
+  ],
+  "RsMouseSetPos while samp shows the cursor (runtime toggle)": [
+   "353@0x6194a0 (runtime)"
+  ],
+  "ambient gunfire audio": [
+   "155@0x4df7e2"
+  ],
+  "ambient planes (CPlane::DoPlaneGenerationAndRemoval)": [
+   "182@0x434272"
+  ],
+  "ambient population peds (CPopulation::AddPed)": [
+   "185@0x612710"
+  ],
+  "ambient population: seating peds created in cars": [
+   "186@0x613ba7"
+  ],
+  "camera fade at spawn": [
+   "365@0x50ac20 (runtime)"
+  ],
+  "car generators (CTheCarGenerators::Process)": [
+   "181@0x53c06a"
+  ],
+  "cell-phone model": [
+   "223@0x6348f6",
+   "224@0x634de2"
+  ],
+  "cutscenes (CCutsceneMgr::Update)": [
+   "246@0x53bf28"
+  ],
+  "event facial expressions": [
+   "170@0x4bc6c1"
+  ],
+  "flying-car physics (ProcessFlyingCarStuff)": [
+   "207@0x6a8500"
+  ],
+  "game clock (CClock::Update) while the HUD clock is off (runtime toggle)": [
+   "354@0x52cf10 (runtime)"
+  ],
+  "game image-list registration (samp/archive registers IMGs)": [
+   "128@0x4083c0"
+  ],
+  "game keyboard input while samp UI owns input (runtime toggle)": [
+   "349@0x541df5 (runtime)"
+  ],
+  "game mouse input while samp UI owns input (runtime toggle)": [
+   "350@0x53f417 (runtime)",
+   "351@0x53f41f (runtime)"
+  ],
+  "idle camera (CIdleCam::Process)": [
+   "244@0x524582"
+  ],
+  "interior ambient peds (CEntryExit::GenerateAmbientPeds)": [
+   "164@0x440833"
+  ],
+  "interior pickups (Interior_c::AddPickups)": [
+   "208@0x593d7c"
+  ],
+  "loading-screen splash rectangle": [
+   "129@0x590099"
+  ],
+  "menu map DrawRect": [
+   "203@0x575b0e"
+  ],
+  "peds reacting to guns aimed at them": [
+   "247@0x4c3a5b"
+  ],
+  "plant manager (CPlantMgr::Update)": [
+   "158@0x53c159"
+  ],
+  "player anim-block release / move-anim switch in ProcessAnimGroups": [
+   "167@0x609c08"
+  ],
+  "player idle animations (playidles block)": [
+   "162@0x86d1ec"
+  ],
+  "random traffic (CCarCtrl::GenerateRandomCars)": [
+   "189@0x53c1c1"
+  ],
+  "re-init on window focus regain (CGame::InitAfterLostFocus)": [
+   "160@0x748063"
+  ],
+  "real-time shadows (CRealTimeShadowManager::Update)": [
+   "165@0x53ea08"
+  ],
+  "real-time shadows (ReturnRealTimeShadow)": [
+   "184@0x542485"
+  ],
+  "replay (CReplay::Update)": [
+   "163@0x53c090"
+  ],
+  "rocket 'fire failed' sound": [
+   "201@0x60f29d"
+  ],
+  "single-player help boxes": [
+   "180@0x588be0"
+  ],
+  "sniper 'fire failed' sound": [
+   "200@0x60f289"
+  ],
+  "speed blur (CPostEffects::SpeedFX)": [
+   "177@0x704e8a"
+  ],
+  "startup logos / intro movies": [
+   "121@0x747483"
+  ],
+  "stat changes (CStats::SetStatValue)": [
+   "356@0x55a070 (runtime)"
+  ],
+  "streaming mass RW-object deletion (DeleteAllRwObjects)": [
+   "178@0x4090a0"
+  ],
+  "sun / moon coronas": [
+   "159@0x53c136"
+  ],
+  "video-mode aspect-ratio filter": [
+   "124@0x745b87",
+   "125@0x7459e1"
+  ],
+  "weapon lock-on (auto-aim)": [
+   "4@0x60dc50",
+   "5@0x60e530"
+  ],
+  "zone-name display (CPlaceName::Process)": [
+   "157@0x5720a5"
+  ]
+ },
+ "patch_entries_by_kind": {
+  "code-read": 1,
+  "dead": 4,
+  "global-write": 14,
+  "hook": 103,
+  "patch-disable": 60,
+  "patch-modify": 220
+ },
+ "patch_rows": 384,
+ "patch_rows_implemented_in_samp_rs": 362,
+ "removed_call_edges": [
+  "0x4341c0 CCarCtrl::GenerateRandomCars -> 0x6cd2f0 CPlane::DoPlaneGenerationAndRemoval",
+  "0x4404a0 CEntryExit::TransitionFinished -> 0x43e8b0 CEntryExit::GenerateAmbientPeds",
+  "0x441440 CGameLogic::SortOutStreamingAndMemory -> 0x409210 CStreaming::DeleteRwObjectsAfterDeath",
+  "0x44aa50 CGarage::Update -> 0x4479a0 CGarages::IsCarSprayable",
+  "0x522d40 CCam::Process_FollowPed_SA -> 0x522c80 CIdleCam::Process",
+  "0x53bee0 CGame::Process -> 0x4341c0 CCarCtrl::GenerateRandomCars",
+  "0x53bee0 CGame::Process -> 0x460500 CReplay::Update",
+  "0x53bee0 CGame::Process -> 0x4d5d00 CCutsceneMgr::Update",
+  "0x53bee0 CGame::Process -> 0x5dcfa0 CPlantMgr::Update",
+  "0x53bee0 CGame::Process -> 0x6f3f40 CTheCarGenerators::Process",
+  "0x53bee0 CGame::Process -> 0x6fc5a0 CCoronas::DoSunAndMoon",
+  "0x53e920 Game::Idle -> 0x706ab0 CRealTimeShadowManager::Update",
+  "0x542450 CPhysical::Destructor -> 0x705b30 CRealTimeShadowManager::ReturnRealTimeShadow",
+  "0x56e580 CPlayerInfo::KillPlayer -> 0x69f2b0 CMessages::AddBigMessage",
+  "0x5720a0 CUserDisplay::Process -> 0x571f20 CPlaceName::Process",
+  "0x58fae0 CHud::Draw -> 0x58aea0 CHud::DrawVehicleName",
+  "0x58ff60 CLoadingScreen::RenderSplash -> 0x727b60 CSprite2d::DrawRect-CRGBA",
+  "0x593bf0 Interior_c::Init -> 0x591f90 Interior_c::AddPickups",
+  "0x595290 InteriorGroup_c::Exit -> 0x592230 Interior_c::Exit",
+  "0x609c80 CPlayerPed::ClearWeaponTarget -> 0x50ab10 CCamera::ClearPlayerWeaponMode",
+  "0x613a00 CPopulation::AddPedInCar -> 0x650280 CCarEnterExit::SetPedInCarDirect",
+  "0x7046e0 CPostEffects::Render -> 0x7030a0 CPostEffects::SpeedFX",
+  "0x747eb0 Win::__MainWndProc -> 0x53bc60 CGame::InitAfterLostFocus"
+ ],
+ "samp_rs_distinct_addresses": 622,
+ "samp_rs_dropped_values": {
+  "BASS stream flags 0x940000": 1,
+  "base of derived constants only (the derived addresses are listed)": 1,
+  "outside game sections (colours/constants)": 15,
+  "range bound in a plausibility check": 5
+ },
+ "samp_rs_rows_by_kind": {
+  "call": 96,
+  "code-compare": 17,
+  "global-access": 5,
+  "global-read": 56,
+  "global-write": 38,
+  "hook": 157,
+  "patch-disable": 55,
+  "patch-modify": 194,
+  "patch-operand": 13,
+  "scm-opcode": 104,
+  "struct-field": 62
+ },
+ "samp_rs_test_only_addresses": 18,
+ "scm_opcodes_declared_unused": [
+  "01B2 GIVE_WEAPON_TO_CHAR"
+ ],
+ "scm_opcodes_used": [
+  "0053 CREATE_PLAYER",
+  "009A CREATE_CHAR",
+  "00A5 CREATE_CAR",
+  "00A6 DELETE_CAR",
+  "00BE CLEAR_PRINTS",
+  "00C0 SET_TIME_OF_DAY",
+  "00FE LOCATE_CHAR_ANY_MEANS_3D",
+  "0107 CREATE_OBJECT",
+  "0108 DELETE_OBJECT",
+  "0109 ADD_SCORE",
+  "0158 POINT_CAMERA_AT_CAR",
+  "0159 POINT_CAMERA_AT_CHAR",
+  "015F SET_FIXED_CAMERA_POSITION",
+  "0160 POINT_CAMERA_AT_POINT",
+  "0161 ADD_BLIP_FOR_CAR_OLD",
+  "0164 REMOVE_BLIP",
+  "0165 CHANGE_BLIP_COLOUR",
+  "0168 CHANGE_BLIP_SCALE",
+  "016C ADD_HOSPITAL_RESTART",
+  "0173 SET_CHAR_HEADING",
+  "0175 SET_CAR_HEADING",
+  "0187 ADD_BLIP_FOR_CHAR",
+  "018B CHANGE_BLIP_DISPLAY",
+  "01B4 SET_PLAYER_CONTROL",
+  "01B9 SET_CURRENT_CHAR_WEAPON",
+  "01E8 SWITCH_ROADS_OFF",
+  "01EB SET_CAR_DENSITY_MULTIPLIER",
+  "01F0 SET_MAX_WANTED_LEVEL",
+  "01F5 GET_PLAYER_CHAR",
+  "0213 CREATE_PICKUP",
+  "0214 HAS_PICKUP_BEEN_COLLECTED",
+  "0215 REMOVE_PICKUP",
+  "0247 REQUEST_MODEL",
+  "0248 HAS_MODEL_LOADED",
+  "0249 MARK_MODEL_AS_NO_LONGER_NEEDED",
+  "02A3 SWITCH_WIDESCREEN",
+  "02A7 ADD_SPRITE_BLIP_FOR_CONTACT_POINT",
+  "02A8 ADD_SPRITE_BLIP_FOR_COORD",
+  "02AB SET_CHAR_PROOFS",
+  "02AC SET_CAR_PROOFS",
+  "02BF IS_CAR_IN_WATER",
+  "02CE GET_GROUND_Z_FOR_3D_COORD",
+  "02EB RESTORE_CAMERA_JUMPCUT",
+  "0321 EXPLODE_CHAR_HEAD",
+  "0362 WARP_CHAR_FROM_CAR_TO_COORD",
+  "036A WARP_CHAR_INTO_CAR",
+  "0373 SET_CAMERA_BEHIND_PLAYER",
+  "038B LOAD_ALL_MODELS_NOW",
+  "03DE SET_PED_DENSITY_MULTIPLIER",
+  "03FE SET_CHAR_MONEY",
+  "0430 WARP_CHAR_INTO_CAR_AS_PASSENGER",
+  "0446 SET_CHAR_SUFFERS_CRITICAL_HITS",
+  "0453 SET_OBJECT_ROTATION",
+  "0470 GET_CURRENT_CHAR_WEAPON",
+  "04BB SET_AREA_VISIBLE",
+  "04CE ADD_SHORT_RANGE_SPRITE_BLIP_FOR_COORD",
+  "04D7 FREEZE_CHAR_POSITION",
+  "04E4 REQUEST_COLLISION",
+  "04ED REQUEST_ANIMATION",
+  "04EE HAS_ANIMATION_LOADED",
+  "052C SET_PLAYER_DRUNKENNESS",
+  "053F SET_CAN_BURST_CAR_TYRES",
+  "0570 ADD_SHORT_RANGE_SPRITE_BLIP_FOR_CONTACT_POINT",
+  "05C4 TASK_HANDS_UP",
+  "05CA TASK_ENTER_CAR_AS_PASSENGER",
+  "05CB TASK_ENTER_CAR_AS_DRIVER",
+  "05CD TASK_LEAVE_CAR",
+  "060B SET_CHAR_DECISION_MAKER",
+  "0681 ATTACH_OBJECT_TO_CAR",
+  "0685 IS_OBJECT_ATTACHED",
+  "069A ATTACH_OBJECT_TO_OBJECT",
+  "069B ATTACH_OBJECT_TO_CHAR",
+  "06D5 CREATE_CHECKPOINT",
+  "06D6 DELETE_CHECKPOINT",
+  "06D7 SWITCH_RANDOM_TRAINS",
+  "06D8 CREATE_MISSION_TRAIN",
+  "06E7 ADD_VEHICLE_MOD",
+  "06E8 REMOVE_VEHICLE_MOD",
+  "06E9 REQUEST_VEHICLE_MOD",
+  "06EA HAS_VEHICLE_MOD_LOADED",
+  "06ED GIVE_VEHICLE_PAINTJOB",
+  "070D BUILD_PLAYER_MODEL",
+  "0713 TASK_DRIVE_BY",
+  "0729 TASK_USE_MOBILE_PHONE",
+  "077E GET_AREA_VISIBLE",
+  "07AC DETACH_TRAILER_FROM_CAB",
+  "07BD DELETE_MISSION_TRAIN",
+  "07C7 SET_MISSION_TRAIN_COORDINATES",
+  "07FE GIVE_MELEE_ATTACK_TO_CHAR",
+  "07FF SET_CAR_HYDRAULICS",
+  "0812 TASK_PLAY_ANIM_NON_INTERRUPTABLE",
+  "0840 SET_VEHICLE_AREA_VISIBLE",
+  "0860 SET_CHAR_AREA_VISIBLE",
+  "087E SET_CHAR_DROPS_WEAPONS_WHEN_DEAD",
+  "0893 ATTACH_TRAILER_TO_CAB",
+  "0920 CAMERA_SET_VECTOR_TRACK",
+  "0925 CAMERA_RESET_NEW_SCRIPTABLES",
+  "092F CAMERA_PERSIST_TRACK",
+  "0930 CAMERA_PERSIST_POS",
+  "0936 CAMERA_SET_VECTOR_MOVE",
+  "0948 ADD_EXPLOSION",
+  "09BA DISPLAY_ZONE_NAMES",
+  "09C4 SET_PETROL_TANK_WEAKPOINT"
+ ],
+ "struct_fields": {
+  "by_status": {
+   "class-unknown": 22,
+   "not-in-psdk": 34,
+   "psdk-match": 29,
+   "psdk-offset-match": 55
+  },
+  "distinct": 62,
+  "occurrences": 140
+ },
+ "unresolved": [
+  "0x4048e0 in unnamed catalogue function 0x4048e0 (call)",
+  "0x404cdc in unnamed catalogue function 0x404cdc (hook)",
+  "0x5647a0 code outside every catalogue body (patch-modify) crates/samp-client/src/sectors.rs:116",
+  "0x5647a0 code outside every catalogue body (patch-modify) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:321;impl crates/samp-client/sr",
+  "0x6063ca in unnamed catalogue function 0x6060a0 (patch-modify)",
+  "0x621aea in unnamed catalogue function 0x621960 (patch-modify)",
+  "0x6348f6 in unnamed catalogue function 0x6348f0 (patch-disable)",
+  "0x6d1874 code outside every catalogue body (patch-disable) crates/samp-client/src/vehpatches.rs:161",
+  "0x6d1874 code outside every catalogue body (patch-disable) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:218;impl crates/samp-client/sr",
+  "0x858ba4 data without a catalogue/global name (patch-modify, data:.rdata) crates/samp-client/src/worldhooks.rs:459;crates/samp-client/",
+  "0x858ba4 data without a catalogue/global name (patch-modify, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:371;impl c",
+  "0x858ef0 data without a catalogue/global name (patch-modify, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:370",
+  "0x858f84 data without a catalogue/global name (patch-modify, data:.rdata) crates/samp-client/src/worldhooks.rs:459",
+  "0x858f84 data without a catalogue/global name (patch-modify, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:371;impl c",
+  "0x859520 data without a catalogue/global name (patch-modify, data:.rdata) crates/samp-client/src/mainhooks.rs:30;crates/samp-client/sr",
+  "0x859520 data without a catalogue/global name (patch-modify, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:368;impl c",
+  "0x859524 data without a catalogue/global name (global-read, data:.rdata) crates/samp-client/src/ui/textdraws.rs:202",
+  "0x859524 data without a catalogue/global name (global-write, data:.rdata) crates/samp-client/src/mainhooks.rs:31",
+  "0x859a6c data without a catalogue/global name (global-write, data:.rdata) crates/samp-client/src/world.rs:28",
+  "0x859a6c data without a catalogue/global name (global-write, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:355;impl c",
+  "0x859a90 data without a catalogue/global name (patch-operand, data:.rdata) crates/samp-client/src/combathooks.rs:981;crates/samp-client",
+  "0x859a94 data without a catalogue/global name (patch-operand, data:.rdata) crates/samp-client/src/combathooks.rs:982;crates/samp-client",
+  "0x866b74 data without a catalogue/global name (patch-modify, data:.rdata) crates/samp-client/src/mainhooks.rs:33",
+  "0x866b74 data without a catalogue/global name (patch-modify, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:369;impl c",
+  "0x866b78 data without a catalogue/global name (global-write, data:.rdata) crates/samp-client/src/mainhooks.rs:34",
+  "0x86d1ec data without a catalogue/global name (patch-disable, data:.rdata) crates/samp-client/src/patches.rs:549",
+  "0x86d1ec data without a catalogue/global name (patch-disable, data:.rdata) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:162;impl c",
+  "0xa4a474 data without a catalogue/global name (global-write, data:.data) crates/samp-client/src/behaviourclient.rs:35",
+  "0xa4a474 data without a catalogue/global name (global-write, data:.data) samp-rs/docs/re/data/gta-patches-r4-annotated.csv:359;impl c",
+  "0xb5fcc8 data without a catalogue/global name (global-read, data:.data) crates/samp-client/src/audio.rs:325",
+  "0xb6f858 data without a catalogue/global name (global-write, data:.data) crates/samp-client/src/swap.rs:47",
+  "0xb6f9cc data without a catalogue/global name (global-read, data:.data) crates/samp-client/src/behaviourclient.rs:29;crates/samp-cli"
+ ]
+}

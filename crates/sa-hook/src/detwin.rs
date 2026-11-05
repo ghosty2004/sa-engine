@@ -690,10 +690,12 @@ pub extern "C" fn heap_alloc_hook(size: u32) -> u32 {
     table::count(Id::HeapAlloc);
     if HEAP_ACTIVE.load(Ordering::Acquire) {
         if is_main() {
+            l2_heap_touch();
             if let Some(Some(p)) = arena(|a| a.alloc(size)) {
                 if HEAPLOG_ON.load(Ordering::Relaxed) {
                     heaplog('a', size, p);
                 }
+                crate::l2::note_alloc(p, size);
                 return p;
             }
             HEAP_OOM.fetch_add(1, Ordering::Relaxed);
@@ -714,6 +716,7 @@ pub extern "C" fn free_hook(p: u32) {
         if !is_main() {
             HEAP_XTHREAD.fetch_add(1, Ordering::Relaxed);
         }
+        l2_heap_touch();
         if arena(|a| a.free(p)) != Some(true) {
             HEAP_BAD_FREE.fetch_add(1, Ordering::Relaxed);
         }
@@ -739,6 +742,7 @@ pub extern "C" fn realloc_hook(p: u32, size: u32) -> u32 {
             free_hook(p);
             return 0;
         }
+        l2_heap_touch();
         if arena(|a| a.resize_in_place(p, size)) == Some(true) {
             return p;
         }
@@ -768,7 +772,9 @@ pub extern "C" fn calloc_hook(n: u32, size: u32) -> u32 {
     table::count(Id::Calloc);
     if HEAP_ACTIVE.load(Ordering::Acquire) && is_main() {
         let total = n.wrapping_mul(size);
+        l2_heap_touch();
         if let Some(Some(p)) = arena(|a| a.alloc(total)) {
+            crate::l2::note_alloc(p, total);
             // SAFETY: fresh block of at least `max(total, 1)` bytes.
             unsafe { std::ptr::write_bytes(p as usize as *mut u8, 0, total.max(1) as usize) };
             return p;
@@ -900,6 +906,106 @@ fn on_rand(kind: u8, caller: u32, value: u32) {
         // SAFETY: plain Win32 call.
         let tid = unsafe { GetCurrentThreadId() };
         *m.entry((tid, kind, caller)).or_insert(0) += 1;
+    }
+}
+
+// ------------------------------------------------------------------ L2 side state ---------------
+
+/// Process state outside game memory that a function run changes through the oracle hooks: the rand
+/// counters/hash, the main thread's `_holdrand` (thread data, not in a watched window) and the heap
+/// arena's bookkeeping. The L2 oracle saves it before a case and puts the leave run's version back.
+#[derive(Clone)]
+pub(crate) struct Side {
+    rand: (u64, u32, u32),
+    holdrand: Option<(u32, u32)>,
+    pub arena: Option<Arena>,
+}
+
+static HOLDRAND_ADDR: AtomicU32 = AtomicU32::new(0);
+static L2_ARENA_CHECKPOINT: Mutex<Option<Arena>> = Mutex::new(None);
+static L2_CHECKPOINT_WANTED: AtomicBool = AtomicBool::new(false);
+
+/// Main-thread `&_holdrand`, resolved once.
+fn holdrand_addr() -> u32 {
+    let a = HOLDRAND_ADDR.load(Ordering::Relaxed);
+    if a != 0 {
+        return a;
+    }
+    // SAFETY: called on the main thread; _getptd (0x827B3D) is cdecl without arguments.
+    let getptd: extern "C" fn() -> u32 = unsafe { std::mem::transmute(0x827B3Dusize) };
+    let p = getptd();
+    let a = if p == 0 { 0 } else { p + 0x14 };
+    HOLDRAND_ADDR.store(a, Ordering::Relaxed);
+    a
+}
+
+pub(crate) fn side_save() -> Side {
+    let h = if ENABLED.load(Ordering::Acquire) {
+        holdrand_addr()
+    } else {
+        0
+    };
+    Side {
+        rand: (
+            RAND_SEQ.load(Ordering::Relaxed),
+            RAND_MAIN.load(Ordering::Relaxed),
+            SRAND_MAIN.load(Ordering::Relaxed),
+        ),
+        holdrand: (h != 0).then(|| (h, get_u32(h))),
+        arena: None,
+    }
+}
+
+pub(crate) fn side_restore(s: &Side) {
+    RAND_SEQ.store(s.rand.0, Ordering::Relaxed);
+    RAND_MAIN.store(s.rand.1, Ordering::Relaxed);
+    SRAND_MAIN.store(s.rand.2, Ordering::Relaxed);
+    if let Some((a, v)) = s.holdrand {
+        put(a, &v.to_le_bytes());
+    }
+    if let Some(a) = &s.arena
+        && let Ok(mut g) = ARENA.lock()
+    {
+        *g = Some(a.clone());
+    }
+}
+
+/// Starts a case: the arena is checkpointed lazily, at the first heap change inside a run.
+pub(crate) fn l2_case_begin() {
+    if let Ok(mut g) = L2_ARENA_CHECKPOINT.lock() {
+        *g = None;
+    }
+    L2_CHECKPOINT_WANTED.store(true, Ordering::Release);
+}
+
+/// Ends a case: the arena as it was before the case's first heap change (None: untouched).
+pub(crate) fn l2_case_end() -> Option<Arena> {
+    L2_CHECKPOINT_WANTED.store(false, Ordering::Release);
+    L2_ARENA_CHECKPOINT.lock().ok().and_then(|mut g| g.take())
+}
+
+/// The checkpoint so far (a copy), without ending the case.
+pub(crate) fn l2_checkpoint() -> Option<Arena> {
+    L2_ARENA_CHECKPOINT.lock().ok().and_then(|g| g.clone())
+}
+
+/// The used part of the arena [base, base + high water), if the arena is on.
+pub(crate) fn arena_extent() -> Option<(u32, u32)> {
+    arena(|a| (a.base, a.base + a.high_water))
+}
+
+/// The arena now (for the leave run's state).
+pub(crate) fn arena_clone() -> Option<Arena> {
+    ARENA.lock().ok().and_then(|g| g.clone())
+}
+
+fn l2_heap_touch() {
+    if L2_CHECKPOINT_WANTED.load(Ordering::Relaxed)
+        && crate::l2::heap_change_in_run()
+        && let Ok(mut c) = L2_ARENA_CHECKPOINT.lock()
+        && c.is_none()
+    {
+        *c = arena_clone();
     }
 }
 
@@ -1171,6 +1277,7 @@ fn finish(f: u32) {
     if let (Some(rec), Some(path)) = (rec, path) {
         log(&format!("oracle: {}", write_recording(&path, rec, f)));
     }
+    crate::l2win::finish();
     DONE.store(true, Ordering::Release);
     log(&format!("oracle: end frame {f} reached; {}", status()));
     if CFG.get().is_some_and(|c| c.exit_at_end) {

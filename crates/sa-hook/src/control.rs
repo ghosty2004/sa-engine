@@ -14,6 +14,9 @@
 //! | `record PATH` / `record stop` | start recording the pad input at the next tick / write it to PATH |
 //! | `replay PATH` | inject a recording from the next tick on |
 //! | `stack` | main thread EIP/ESP and the stack words pointing into game code (hang diagnosis) |
+//! | `hook ADDR\|NAME l2` | route every call through the L2 oracle (original vs Rust at the call site) |
+//! | `l2` | L2 oracle summary: per function calls, cases, mismatches, undeclared writes |
+//! | `l2 flush` | flush the L2 spool and report |
 
 use std::io::{BufRead, BufReader, Write};
 use std::net::TcpListener;
@@ -35,6 +38,8 @@ pub enum Command {
     Record(String),
     Replay(String),
     Stack,
+    HookL2(String),
+    L2(Option<String>),
     Unknown(String),
 }
 
@@ -64,6 +69,9 @@ pub fn parse(line: &str) -> Option<Command> {
         },
         ("det", []) => Command::Det,
         ("stack", []) => Command::Stack,
+        ("l2", []) => Command::L2(None),
+        ("l2", [a]) => Command::L2(Some(a.to_string())),
+        ("hook", [key, m]) if m.eq_ignore_ascii_case("l2") => Command::HookL2(key.to_string()),
         ("record", [p]) => Command::Record(p.to_string()),
         ("replay", [p]) => Command::Replay(p.to_string()),
         ("hook", [key, m]) if m.eq_ignore_ascii_case("rust") || m.eq_ignore_ascii_case("orig") => {
@@ -169,6 +177,12 @@ mod tests {
         );
         assert_eq!(parse("record stop"), Some(Command::Record("stop".into())));
         assert_eq!(parse("replay r.sarec"), Some(Command::Replay("r.sarec".into())));
+        assert_eq!(parse("l2"), Some(Command::L2(None)));
+        assert_eq!(parse("l2 flush"), Some(Command::L2(Some("flush".into()))));
+        assert_eq!(
+            parse("hook CVector::Normalise L2"),
+            Some(Command::HookL2("CVector::Normalise".into()))
+        );
         assert_eq!(port_from_env(Some("47801")), 47801);
         assert_eq!(port_from_env(Some("x")), DEFAULT_PORT);
         assert_eq!(port_from_env(None), DEFAULT_PORT);

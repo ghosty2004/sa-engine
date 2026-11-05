@@ -9,6 +9,8 @@
 //! - [`pad`]: the raw input block captured/injected per input tick (original memory layouts).
 
 pub mod fnv;
+pub mod l2;
+pub mod normalise;
 pub mod pad;
 pub mod program;
 pub mod recording;

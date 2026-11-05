@@ -34,8 +34,10 @@ use crate::game;
 use crate::table::{self, Group, HOOKS, Id, Kind, Mode};
 use crate::x86;
 
-const SLOT: usize = 64;
+const SLOT: usize = 96;
 const TRAMP_OFF: usize = 32;
+/// Per-hook L2 entry stub (`push i; jmp l2_common`).
+const L2_OFF: usize = 80;
 /// Bytes swept after an entry for branches into the patched range.
 const INBOUND_SWEEP: usize = 0x400;
 
@@ -134,6 +136,7 @@ extern "C" fn frame_boundary() {
         for (i, m) in table::apply_pending() {
             log(&format!("frame {f}: {} -> {}", HOOKS[i].name, m.name()));
         }
+        crate::l2win::on_boundary();
         // Hashes of the state the previous frame left, virtual clock step, end-of-run handling.
         crate::detwin::on_boundary(f);
         let jobs: Vec<Job> = match JOBS.try_lock() {
@@ -192,7 +195,7 @@ fn install_one(i: usize, slot: u32) -> Result<String, String> {
             let tramp = slot + TRAMP_OFF as u32;
             let src = read(h.addr, 32).ok_or("entry not readable")?;
             let r = x86::relocate(&src, h.addr, tramp, 5).map_err(|e| e.to_string())?;
-            if r.code.len() > SLOT - TRAMP_OFF {
+            if r.code.len() > L2_OFF - TRAMP_OFF {
                 return Err("trampoline too long".into());
             }
             let around = read(h.addr, INBOUND_SWEEP).unwrap_or_default();
@@ -210,6 +213,13 @@ fn install_one(i: usize, slot: u32) -> Result<String, String> {
     };
     // SAFETY: the slot lies in our RWX block.
     unsafe { std::ptr::copy_nonoverlapping(code.as_ptr(), slot as usize as *mut u8, code.len()) };
+    if h.sig.is_some() {
+        let at = slot + L2_OFF as u32;
+        let stub = crate::l2win::stub_bytes(at, i);
+        // SAFETY: the slot lies in our RWX block.
+        unsafe { std::ptr::copy_nonoverlapping(stub.as_ptr(), at as usize as *mut u8, stub.len()) };
+        table::set_l2_stub(i, at);
+    }
     let mode = if h.start_rust { Mode::Rust } else { Mode::Original };
     table::set_installed(i, original, mode);
     patch(h.addr, &entry_patch)?;
@@ -404,6 +414,26 @@ fn handle(cmd: &Command) -> String {
         Command::Record(arg) => crate::detwin::record(arg),
         Command::Replay(path) => crate::detwin::replay(path),
         Command::Stack => crate::detwin::main_stack(),
+        Command::HookL2(key) => {
+            let Some(i) = table::find(key) else {
+                return format!("err unknown hook {key}");
+            };
+            if !table::installed(i) || table::l2_stub(i) == 0 {
+                return format!("err {} has no L2 entry", HOOKS[i].name);
+            }
+            table::request(i, Mode::L2);
+            let t0 = Instant::now();
+            while table::pending(i).is_some() {
+                if t0.elapsed() > Duration::from_secs(5) {
+                    return format!("pending {} l2", HOOKS[i].name);
+                }
+                std::thread::sleep(Duration::from_millis(2));
+            }
+            format!("ok {} {}", HOOKS[i].name, table::mode(i).name())
+        }
+        Command::L2(None) => crate::l2win::summary(),
+        Command::L2(Some(a)) if a == "flush" => crate::l2win::flush(),
+        Command::L2(Some(a)) => format!("err l2 {a}: unknown (l2 | l2 flush)"),
         Command::Unknown(s) => format!("err unknown command {s:?}"),
     }
 }
@@ -455,6 +485,29 @@ fn attach() {
         "{ok}/{wanted} hooks installed (oracle group {})",
         if oracle { "on" } else { "off" }
     ));
+    // Start modes (game threads are still suspended, so the stores take effect before any call).
+    if let Ok(v) = std::env::var("SA_HOOK_MODE") {
+        match crate::l2::parse_hook_modes(&v) {
+            Ok(list) => {
+                for (i, m) in list {
+                    table::set_mode_now(i, m);
+                    log(&format!(
+                        "start mode: {} -> {}",
+                        HOOKS[i].name,
+                        table::mode(i).name()
+                    ));
+                }
+            }
+            Err(e) => log(&format!("SA_HOOK_MODE ignored: {e}")),
+        }
+    }
+    for i in crate::l2win::init(&dir) {
+        if table::installed(i) {
+            table::set_mode_now(i, Mode::L2);
+        } else {
+            log(&format!("l2: {} is not installed", HOOKS[i].name));
+        }
+    }
     let _ = std::thread::Builder::new()
         .name("sa-hook-ctl".into())
         .spawn(move || control_thread(port));

@@ -14,6 +14,7 @@ pub mod catalog;
 pub mod emu;
 pub mod fidelity;
 pub mod generate;
+pub mod l2;
 pub mod native;
 pub mod pe;
 pub mod runner;
