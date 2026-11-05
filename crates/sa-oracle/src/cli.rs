@@ -179,6 +179,101 @@ fn fidelity(a: &Args) -> Result<bool, String> {
     Ok(true)
 }
 
+fn hook_indices(list: Option<&String>) -> Result<Vec<usize>, String> {
+    let Some(list) = list else { return Ok(Vec::new()) };
+    list.split(',')
+        .filter(|k| !k.is_empty())
+        .map(|k| sa_hook::table::find(k).ok_or(format!("unknown hook {k}")))
+        .collect()
+}
+
+fn fixtures_dir(a: &Args) -> std::path::PathBuf {
+    a.opts
+        .get("fixtures")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| sa_oracle::workspace_root().join("fixtures/l2"))
+}
+
+fn read_spool(p: &str) -> Result<Vec<sa_oracle_format::l2::Case>, String> {
+    let b = std::fs::read(p).map_err(|e| format!("{p}: {e}"))?;
+    sa_oracle_format::l2::parse_spool(&b)
+}
+
+/// `l2 spec|ingest|report|replay|show`
+fn l2(a: &Args) -> Result<bool, String> {
+    use sa_oracle::l2 as l2h;
+    let root = sa_oracle::workspace_root();
+    let cat = l2h::RwCatalog::load(&root)?;
+    match a.pos.get(1).map(String::as_str) {
+        Some("spec") => {
+            let t = l2h::spec_text(&cat, &hook_indices(a.opts.get("hooks"))?);
+            match a.opts.get("out") {
+                Some(p) => std::fs::write(p, &t).map_err(|e| format!("{p}: {e}"))?,
+                None => print!("{t}"),
+            }
+            Ok(true)
+        }
+        Some("ingest") => {
+            let p = a.pos.get(2).ok_or("usage: l2 ingest SPOOL [--fixtures DIR]")?;
+            let cases = read_spool(p)?;
+            let dir = fixtures_dir(a);
+            let r = l2h::ingest(&cases, &dir)?;
+            println!(
+                "ingested {}: {} cases, {} new fixtures ({} bytes zstd), {} already stored, into {}",
+                p,
+                r.cases,
+                r.new,
+                r.bytes,
+                r.dup,
+                dir.display()
+            );
+            Ok(true)
+        }
+        Some("report") => {
+            let p = a.pos.get(2).ok_or("usage: l2 report SPOOL")?;
+            let cases = read_spool(p)?;
+            let t = l2h::tally(&cases, false);
+            println!("L2 report {p}: {} cases (stored verdicts: original vs in-process Rust)", cases.len());
+            print!("{}", l2h::print_tally(&t, Some(&cat)));
+            Ok(t.values().all(|x| x.mismatches == 0))
+        }
+        Some("replay") => {
+            if let Some(m) = a.opts.get("mutant") {
+                sa_hook::l2::set_mutants(&hook_indices(Some(m))?);
+            }
+            let only = match a.opts.get("fn") {
+                Some(k) => Some(sa_hook::table::HOOKS[*hook_indices(Some(k))?.first().ok_or("--fn")?].addr),
+                None => None,
+            };
+            let dir = fixtures_dir(a);
+            let cases: Vec<_> = l2h::load_fixtures(&dir, only)?.into_iter().map(|(_, c)| c).collect();
+            let t = l2h::tally(&cases, true);
+            println!(
+                "L2 host replay of {} stored cases from {} (Rust recomputed on the host, original outputs from the fixtures)",
+                cases.len(),
+                dir.display()
+            );
+            print!("{}", l2h::print_tally(&t, None));
+            Ok(!cases.is_empty() && t.values().all(|x| x.mismatches == 0))
+        }
+        Some("show") => {
+            let p = a.pos.get(2).ok_or("usage: l2 show SPOOL|FIXTURE [N]")?;
+            let b = std::fs::read(p).map_err(|e| format!("{p}: {e}"))?;
+            let cases = if p.ends_with(".zst") {
+                let d = zstd::decode_all(&b[..]).map_err(|e| e.to_string())?;
+                vec![sa_oracle_format::l2::Case::decode(&d)?]
+            } else {
+                sa_oracle_format::l2::parse_spool(&b)?
+            };
+            let n: usize = a.pos.get(3).and_then(|s| s.parse().ok()).unwrap_or(0);
+            let c = cases.get(n).ok_or("no such case")?;
+            print!("{}", l2h::show_case(c));
+            Ok(true)
+        }
+        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
+    }
+}
+
 #[cfg(feature = "mutants")]
 fn mutants(a: &Args) -> Result<bool, String> {
     use sa_math::general::mutants::ALL;
@@ -253,7 +348,8 @@ pub fn main() -> ExitCode {
         Some("l1") => l1(&a),
         Some("fidelity") => fidelity(&a),
         Some("mutants") => mutants(&a),
-        _ => Err("usage: sa-oracle list | l1 <fn|all> [--cases N] [--seed S] [--backend auto|unicorn|native] | fidelity | mutants".into()),
+        Some("l2") => l2(&a),
+        _ => Err("usage: sa-oracle list | l1 <fn|all> [--cases N] [--seed S] [--backend auto|unicorn|native] | fidelity | mutants | l2 spec|ingest|report|replay|show".into()),
     };
     if let Some(hwm) = std::fs::read_to_string("/proc/self/status").ok().and_then(|s| {
         s.lines()

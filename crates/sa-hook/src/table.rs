@@ -6,6 +6,8 @@
 
 use std::sync::atomic::{AtomicU8, AtomicU32, Ordering};
 
+use sa_oracle_format::l2::{Conv, PtrArg, Ret, Sig};
+
 /// How the entry is patched.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Kind {
@@ -32,6 +34,11 @@ pub enum Id {
     Calloc = 11,
     Msize = 12,
     AudioHardwareService = 13,
+    LimitAngle = 14,
+    GetRadianAngleBetweenPoints = 15,
+    GetATanOfXY = 16,
+    SolveQuadratic = 17,
+    VectorNormalise = 18,
 }
 
 /// When a hook is installed.
@@ -58,6 +65,19 @@ pub struct HookSpec {
     /// Mode at attach.
     pub start_rust: bool,
     pub group: Group,
+    /// Calling signature for the L2 oracle (None: L2 not supported for this hook).
+    pub sig: Option<Sig>,
+}
+
+const fn sig(conv: Conv, args: u8, ret: Ret) -> Option<Sig> {
+    Some(Sig {
+        conv,
+        args,
+        ret,
+        this_type: None,
+        this_size: 0,
+        ptr_args: &[],
+    })
 }
 
 pub static HOOKS: &[HookSpec] = &[
@@ -72,6 +92,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: true,
         start_rust: true,
         group: Group::Core,
+        sig: sig(Conv::Cdecl, 0, Ret::Void),
     },
     HookSpec {
         id: Id::LimitRadianAngle,
@@ -80,10 +101,11 @@ pub static HOOKS: &[HookSpec] = &[
         kind: Kind::Inline,
         // fld dword [esp+4]; fld dword [0x863AC0]
         expect: &[0xD9, 0x44, 0x24, 0x04, 0xD9, 0x05, 0xC0, 0x3A, 0x86, 0x00],
-        rust: || crate::game::limit_radian_angle_hook as extern "C" fn(f32) -> f32 as usize,
+        rust: || crate::game::limit_radian_angle_hook as extern "C" fn(f32) -> f64 as usize,
         frame_boundary: false,
         start_rust: true,
         group: Group::Core,
+        sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
         id: Id::IsCoopGameGoingOn,
@@ -96,6 +118,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Core,
+        sig: sig(Conv::Cdecl, 0, Ret::Eax),
     },
     HookSpec {
         id: Id::PadUpdate,
@@ -108,6 +131,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::PadUpdateMouse,
@@ -120,6 +144,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::CdStreamRead,
@@ -132,6 +157,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::Rand,
@@ -144,6 +170,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::Srand,
@@ -156,6 +183,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     // The CRT heap (VC7.1 static CRT): every allocation path ends in one of these. In determinism
     // mode the main thread's blocks come from the deterministic arena (`arena.rs`).
@@ -170,6 +198,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::Free,
@@ -181,6 +210,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::Realloc,
@@ -192,6 +222,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::Calloc,
@@ -203,6 +234,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::Msize,
@@ -214,6 +246,7 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
     },
     HookSpec {
         id: Id::AudioHardwareService,
@@ -226,15 +259,107 @@ pub static HOOKS: &[HookSpec] = &[
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        sig: None,
+    },
+    // sa-math ports (L1-verified). Installed in original mode; `SA_HOOK_MODE` / `hook NAME rust|l2`
+    // switch them.
+    HookSpec {
+        id: Id::LimitAngle,
+        addr: 0x53CB00,
+        name: "CGeneral::LimitAngle",
+        kind: Kind::Inline,
+        // fld dword [esp+4]; fcom dword [0x85A994]
+        expect: &[0xD9, 0x44, 0x24, 0x04, 0xD8, 0x15, 0x94, 0xA9, 0x85, 0x00],
+        rust: || crate::game::limit_angle_hook as extern "C" fn(f32) -> f64 as usize,
+        frame_boundary: false,
+        start_rust: false,
+        group: Group::Core,
+        sig: sig(Conv::Cdecl, 1, Ret::St0),
+    },
+    HookSpec {
+        id: Id::GetRadianAngleBetweenPoints,
+        addr: 0x53CBE0,
+        name: "CGeneral::GetRadianAngleBetweenPoints-",
+        kind: Kind::Inline,
+        // fld dword [esp+0xC]; fsub dword [esp+4]
+        expect: &[0xD9, 0x44, 0x24, 0x0C, 0xD8, 0x64, 0x24, 0x04],
+        rust: || {
+            crate::game::get_radian_angle_between_points_hook as extern "C" fn(f32, f32, f32, f32) -> f64
+                as usize
+        },
+        frame_boundary: false,
+        start_rust: false,
+        group: Group::Core,
+        sig: sig(Conv::Cdecl, 4, Ret::St0),
+    },
+    HookSpec {
+        id: Id::GetATanOfXY,
+        addr: 0x53CC70,
+        name: "CGeneral::GetATanOfXY",
+        kind: Kind::Inline,
+        // fld dword [esp+4]; fcomp dword [0x858B50]
+        expect: &[0xD9, 0x44, 0x24, 0x04, 0xD8, 0x1D, 0x50, 0x8B, 0x85, 0x00],
+        rust: || crate::game::get_atan_of_xy_hook as extern "C" fn(f32, f32) -> f64 as usize,
+        frame_boundary: false,
+        start_rust: false,
+        group: Group::Core,
+        sig: sig(Conv::Cdecl, 2, Ret::St0),
+    },
+    HookSpec {
+        id: Id::SolveQuadratic,
+        addr: 0x53CE30,
+        name: "CGeneral::SolveQuadratic",
+        kind: Kind::Inline,
+        // fld dword [esp+8]; fmul dword [esp+8]
+        expect: &[0xD9, 0x44, 0x24, 0x08, 0xD8, 0x4C, 0x24, 0x08],
+        rust: || {
+            crate::game::solve_quadratic_hook
+                as unsafe extern "C" fn(f32, f32, f32, *mut f32, *mut f32) -> bool as usize
+        },
+        frame_boundary: false,
+        start_rust: false,
+        group: Group::Core,
+        sig: Some(Sig {
+            conv: Conv::Cdecl,
+            args: 5,
+            ret: Ret::Al,
+            this_type: None,
+            this_size: 0,
+            // float* x1, float* x2
+            ptr_args: &[PtrArg { arg: 3, size: 4 }, PtrArg { arg: 4, size: 4 }],
+        }),
+    },
+    HookSpec {
+        id: Id::VectorNormalise,
+        addr: 0x59C910,
+        name: "CVector::Normalise",
+        kind: Kind::Inline,
+        // fld dword [ecx+8]; fld dword [ecx+4]
+        expect: &[0xD9, 0x41, 0x08, 0xD9, 0x41, 0x04],
+        rust: crate::game::vector_normalise_entry,
+        frame_boundary: false,
+        start_rust: false,
+        group: Group::Core,
+        sig: Some(Sig {
+            conv: Conv::Thiscall,
+            args: 0,
+            ret: Ret::Void,
+            this_type: Some("CVector"),
+            // sizeof(CVector) = 0xC (catalog/layouts.csv)
+            this_size: 0xC,
+            ptr_args: &[],
+        }),
     },
 ];
 
-const N: usize = 14;
+const N: usize = 19;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
     Original = 1,
     Rust = 2,
+    /// Every call goes through the L2 oracle dispatcher (`l2win`).
+    L2 = 3,
 }
 
 impl Mode {
@@ -242,12 +367,14 @@ impl Mode {
         match self {
             Mode::Original => "orig",
             Mode::Rust => "rust",
+            Mode::L2 => "l2",
         }
     }
     fn from_u8(v: u8) -> Option<Mode> {
         match v {
             1 => Some(Mode::Original),
             2 => Some(Mode::Rust),
+            3 => Some(Mode::L2),
             _ => None,
         }
     }
@@ -266,6 +393,33 @@ pub static TARGET: [AtomicU32; N] = [Z32; N];
 static PENDING: [AtomicU8; N] = [Z8; N];
 static CALLS: [AtomicU32; N] = [Z32; N];
 static INSTALLED: [AtomicU8; N] = [Z8; N];
+/// Per-hook L2 entry stub (`push i; jmp l2_common`), 0 when L2 is not available.
+static L2_STUB: [AtomicU32; N] = [Z32; N];
+
+pub fn set_l2_stub(i: usize, addr: u32) {
+    L2_STUB[i].store(addr, Ordering::Release);
+}
+
+pub fn l2_stub(i: usize) -> u32 {
+    L2_STUB[i].load(Ordering::Acquire)
+}
+
+/// The Rust implementation's entry.
+pub fn rust_entry(i: usize) -> u32 {
+    (HOOKS[i].rust)() as u32
+}
+
+/// Original entry by index.
+pub fn original_at(i: usize) -> u32 {
+    ORIGINAL[i].load(Ordering::Acquire)
+}
+
+/// Sets the mode immediately. Only on the game thread (e.g. the L2 dispatcher retiring a hook).
+pub fn set_mode_now(i: usize, mode: Mode) {
+    if installed(i) {
+        TARGET[i].store(target_for(i, mode), Ordering::Release);
+    }
+}
 
 pub fn spec(id: Id) -> &'static HookSpec {
     &HOOKS[id as usize]
@@ -277,6 +431,7 @@ pub fn original(id: Id) -> u32 {
 
 pub fn count(id: Id) {
     CALLS[id as usize].fetch_add(1, Ordering::Relaxed);
+    crate::l2::note_call(id as u32);
 }
 
 pub fn calls(i: usize) -> u32 {
@@ -303,12 +458,19 @@ fn target_for(i: usize, mode: Mode) -> u32 {
     match mode {
         Mode::Rust => (HOOKS[i].rust)() as u32,
         Mode::Original => ORIGINAL[i].load(Ordering::Acquire),
+        Mode::L2 => match L2_STUB[i].load(Ordering::Acquire) {
+            0 => TARGET[i].load(Ordering::Acquire),
+            s => s,
+        },
     }
 }
 
 pub fn mode(i: usize) -> Mode {
-    if TARGET[i].load(Ordering::Acquire) == ORIGINAL[i].load(Ordering::Acquire) {
+    let t = TARGET[i].load(Ordering::Acquire);
+    if t == ORIGINAL[i].load(Ordering::Acquire) {
         Mode::Original
+    } else if t != 0 && t == L2_STUB[i].load(Ordering::Acquire) {
+        Mode::L2
     } else {
         Mode::Rust
     }
@@ -404,7 +566,7 @@ mod tests {
                     .lines()
                     .find(|l| l.starts_with(&key))
                     .unwrap_or_else(|| panic!("{} not in catalogue", h.name));
-                assert!(p.ends_with(",excluded:crt"), "{}: {p}", h.name);
+                assert!(p.split(',').any(|c| c == "excluded:crt"), "{}: {p}", h.name);
                 assert_eq!(h.group, Group::Oracle);
                 continue;
             };
@@ -420,6 +582,17 @@ mod tests {
         let Some(exe) = crate::testexe::load() else { return };
         for h in HOOKS {
             assert_eq!(exe.bytes(h.addr, h.expect.len()), h.expect, "{}", h.name);
+            // The installer refuses an inline hook with a branch into the patched range; check it here.
+            if h.kind == Kind::Inline {
+                let r = x86::relocate(h.expect, h.addr, 0x1000_0000, 5).unwrap();
+                let around = exe.bytes(h.addr, 0x400);
+                assert_eq!(
+                    x86::inbound_branch(around, h.addr, h.addr, h.addr + r.consumed as u32),
+                    None,
+                    "{}",
+                    h.name
+                );
+            }
         }
     }
 }

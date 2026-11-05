@@ -10,10 +10,13 @@
 //!   configuration, virtual clock, input state machine.
 //! - `win`: DllMain, hook installation, frame-boundary toggles, control server, log (Windows only).
 //! - `detwin`: the Windows side of the oracle features (Windows only).
+//! - [`l2`] / `l2win`: the L2 oracle (INF-8): original vs Rust at real call sites, see
+//!   `docs/re/l2-oracle.md`.
 
 pub mod arena;
 pub mod control;
 pub mod game;
+pub mod l2;
 pub mod oracle;
 pub mod table;
 pub mod x86;
@@ -25,5 +28,7 @@ mod testexe;
 mod detaudio;
 #[cfg(windows)]
 mod detwin;
+#[cfg(windows)]
+mod l2win;
 #[cfg(windows)]
 mod win;

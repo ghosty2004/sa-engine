@@ -210,3 +210,12 @@
   driver lives at 0x4C9970–0x4CD820; RW re-forces x87 PC=24 every frame (0x857432). Open: plugin offsets
   were derived, not measured; the transform kernel (x87/SSE/SSE2) on the oracle machine; 0x7FFF00 has no
   catalogue row.
+
+## 2026-11-05: INF-8 integrated
+- L2 oracle (sa-hook l2/l2win, sa-oracle-format l2/normalise, sa-oracle l2 CLI, tools/e2e/inf8-l2.sh).
+  Re-verified by the main session: workspace tests pass (I fixed a sa-hook test that assumed the last
+  column of procedures.csv), and `inf8-l2.sh` passes everything. L2 reached in game:
+  LimitRadianAngle, GetRadianAngleBetweenPoints, SolveQuadratic, CVector::Normalise and
+  IsCoopGameGoingOn (1,000 cases each, 0 mismatches). GetATanOfXY: f32 equal, 517/1,000 ST0 cases on the
+  pending ledger entry. LimitAngle had no call in the corpus. The state.csv update waits until CAT-6
+  finishes regenerating the catalogue. New: CAT-15 (x87 stores missing from rwsets).
