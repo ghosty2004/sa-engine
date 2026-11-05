@@ -362,3 +362,10 @@
   uninitialised locals passed as 0; CPedModelInfo::m_pColNodeInfos address (0x8A630C vs gta-reversed
   0x8A6308); globals placed in the wrong owner modules; the OLD_KEY_STATE/PAD0_OLD_CROSS overlap in
   sa-core.
+
+## 2026-11-05: RE-SPEC-2 integrated
+- 405 full specs + 156 deviation notes for ANIM/CAM/INPUT/PED/WEAPON/VEH (docs/re/specs/,
+  catalog/specs-index.csv). Many gta-reversed logic errors were confirmed against the bytes (e.g.
+  CShotInfo::Update uses 0.075f where gr has 0.0075f, which the main session re-checked; CPed::SetAmmo
+  uses min, not max; AddGunshell makes an extra rand() call). The spec tooling is now tracked in
+  tools/specs/.

@@ -136,7 +136,8 @@ placement.UpdateMatrix(m_matrix) 0x54F1B0 }`.
      `E = S + d * wi->range` with `d = left ? -M.right : (right ? M.right : M.forward)` (left: `S - M.right*range`, computed as
      `S.x - range*M.right.x` etc.).
   B. bike class (9) with a driver, 0x73EC7C: same as A but without the 1.8/-0.1 scaling.
-  C. bike class (9) without driver, seat geometry (cm = veh->GetColModel(), `r = rand() & 0xFF` drawn before GetColModel):
+  C. bike class (9) without driver, seat geometry (cm = veh->GetColModel(), `r = rand() & 0xFF`; left/right call rand() BEFORE
+     GetColModel (0x73EE19/0x73EF2E), the neither path calls GetColModel FIRST (0x73F047, rand at 0x73F04E)):
      - left (0x73EDE9): `L = (-cm.max.x (+0xC) - 0.25f, r*0.001f + (P.y - 0.05f), P.z + 0.63f)`; `S = M*L + mv*ts`;
        `E = M * (-range, P.y, P.z + 0.6f)`.
      - right (0x73EF02): `L = (cm.max.x + 0.25f, r*0.001f + (P.y - 0.18f), P.z + 0.52f)`; `S = M*L + mv*ts`; `E = M * (range, P.y, P.z + 0.5f)`.
@@ -146,10 +147,14 @@ placement.UpdateMatrix(m_matrix) 0x54F1B0 }`.
      `E.z += (rand() & 0xFF)*0.01f - 1.28f` (third rand); each offset is `fild; fmul 0.01f; fsub 1.28f` then added to E.
      `DoDriveByAutoAiming(FindPlayerPed(-1), veh, &S, &E, false)` - the owner is always the PLAYER ped, whoever fires.
      `this->FireInstantHitFromCar2(S, E, veh, veh->m_pDriver)`; return true.
-- gta-reversed: `plugin::CallMethodAndReturn` (unreversed). Open questions: (1) 0x73F021-0x73F03E: in path C-neither the seat
-  base selection was read with some register stores elided in this analysis; the structure (type 5 -> +0, else +0x30) matches
-  the other two paths but should be re-checked against the bytes. (2) 0x73ECB0/0x73F1F0: which bone `driver->+0x4A0` denotes
-  (gr m_apBones index) is not resolved; value used exactly as read. Confidence: medium.
+- gta-reversed: `plugin::CallMethodAndReturn` (unreversed). Re-check (H6) of 0x73F021-0x73F045: `mi->+0x3C == 5 ? struct+0 :
+  struct+0x30` is computed twice into the (dead) arg slots S+0x54 (used for P.z) and S+0x50 (used for P.y); both are the
+  same P, so `L = (r*0.001f - 0.4f, (cm.max.y + P.y) + 0.2f, P.z + 0.55f)` and `E = M*(0, range, P.z + 0.5f)` (0x73F0FC re-selects
+  P the same way) are confirmed; the x87 order is `fld P.z; fadd 0.55; fld cm+0x10; fadd P.y; fadd 0.2; fild r; fmul 0.001;
+  fsub 0.4`. The left/right seat formulas, the D-block rand order and the A/B paths were re-read too and match. Note ebp (wi) is
+  overwritten by the seat pointer in the right path (0x73EF14), which therefore reads range via the saved wi at S+0x10.
+  Open question: 0x73ECB0/0x73F1F0 `driver->+0x4A0` = m_apBones[6] (PED_NODE_RIGHT_HAND) if gr's CPed layout (m_apBones at
+  0x488, consistent with +0x528 = m_pedIK.m_nFlags) holds; value used exactly as read. Confidence: medium-high.
 
 ## 0x73F480 CWeapon::CheckForShootingVehicleOccupant  (catalogue: specified/REA, port level 17)
 - Convention: `__cdecl bool (CEntity** pEntity [esp+4], CColPoint* cp [+8], eWeaponType type [+0xC] (unused),
@@ -170,7 +175,7 @@ placement.UpdateMatrix(m_matrix) 0x54F1B0 }`.
   2. `saved = *cp` (local copy); `line = CColLine(*origin, *target)`; `minDist = 1.0f`; `hit = 0`.
   3. Occupants, in this order: driver (`veh+0x460`), then the 8 passenger slots `veh+0x464 + 4k` (k = 0..7). For each non-null
      ped with `ped+0x470 & 0x4000000`:
-     `h = GetAnimHierarchyFromSkinClump(ped->m_pRwClump (+0x18))`; `idx = RpHAnimIDGetIndex(h, ped->m_apBones[0] (+0x490)->+0x14)`;
+     `h = GetAnimHierarchyFromSkinClump(ped->m_pRwClump (+0x18))`; `idx = RpHAnimIDGetIndex(h, ped->m_apBones[2 = PED_NODE_HEAD] (+0x490; array at +0x488, see VEH/CBike.md 0x6B7280 and CPed::DoesLOSBulletHitPed)->+0x14 m_nNodeId)`;
      `P = (0,0,0)` transformed by `GetMatrixArray(h)[idx]` (RwV3dTransformPoints, 0x40-byte matrices);
      `sphere.Set(0.2f, (P.x, P.y, P.z + 0.1f [0x858B1C]), 0, 9, 0xFF)`; if `ProcessLineSphere(line, sphere, *cp, minDist)`:
      `*pEntity = ped; hit = 1`. minDist is shared, so later occupants only hit if closer; cp holds the last hit.
@@ -185,82 +190,216 @@ placement.UpdateMatrix(m_matrix) 0x54F1B0 }`.
      `veh->SetPanelDamage(4, true)` }. (SetPanelDamage only runs when the first ProgressPanelDamage returned true.)
   5. If `!hit`: `*pEntity = veh` (unchanged) and `*cp = saved` (restore).
 - gta-reversed: `plugin::CallAndReturn` (Weapon.cpp). Open questions: (1) 0x73F4FE/0x73F5FB: meaning of `ped+0x470 & 0x4000000`
-  and of `veh+0x429 & 4` (gr flag names not verified); values exact. (2) 0x73F545: `m_apBones[0]` node identity (which bone) not
-  resolved; the code reads index 0's `+0x14`.
+  and of `veh+0x429 & 4` (gr flag names not verified); values exact. (2) 0x73F545: resolved by the lead's cross-check: +0x490 is
+  `m_apBones[2]` (PED_NODE_HEAD), not index 0; the code reads that node's `+0x14` (m_nNodeId).
 
 ## 0x73FB10 CWeapon::FireInstantHit  (catalogue: specified/REA, port level 19)
-STRUCTURAL SPEC (block level). The function has 1716 instructions; this section fixes the control flow, the calls and their
-arguments, the constants and the RNG draws, but the x87 operation order inside the aiming blocks listed under "Open
-questions" was NOT transcribed and must be taken from the bytes (`tools/specs/dis.py 0x73FB10`) before porting.
+Full block-level spec with x87 order (rewritten by follow-up H6 from the bytes; the first-wave structural notes are folded in and
+corrected where they were wrong, see "Corrections" at the end).
 - Convention: `__thiscall bool (CEntity* firer [esp+4], CVector* origin [+8], CVector* muzzle [+0xC], CEntity* targetEnt [+0x10],
-  CVector* target [+0x14], CVector* originForDriveBy [+0x18], bool arg6 [+0x1C], bool doMuzzleFx [+0x20])`, `ret 0x20`.
-  SEH frame (local CMatrix destroyed at 0x7411FB). Locals 0x198.
-- Callers: CWeapon::Fire 0x742300 (several sites).
-- Callees (in order of appearance): CPed::GetWeaponSkill(type) 0x5E3B60, CWeaponInfo::GetWeaponInfo 0x743C60, CPedIntelligence::GetTaskUseGun
-  0x600F70, bone transform (GetAnimHierarchyFromSkinClump 0x734A40 / RpHAnimIDGetIndex / GetMatrixArray / RwV3dTransformPoints),
-  CVector::Normalise, CBirds::HandleGunShot 0x712E40, CShadows::GunShotSetsOilOnFire 0x707550, CWorld::ProcessLineOfSight 0x56BA00
-  (4 sites), CPed::GetTransformedBonePosition 0x5E01C0, CPed::GetBonePosition 0x5E4280, CWeapon::TargetWeaponRangeMultiplier 0x73B380,
-  CGeneral::GetRandomNumberInRange(float) 0x41BD90, CrossProduct 0x59C730, CPed::IsPlayer, CVector::Magnitude 0x4082C0, rand (x6),
-  CCamera::Find3rdPersonCamTargetVector 0x514970, CCam::Get_TwoPlayer_AimVector 0x513E40, CheckForShootingVehicleOccupant 0x73F480,
-  FindPlayerPed, DoDriveByAutoAiming 0x73D720, DoDoomAiming 0x73CDC0, CEventGunShot ctor 0x4AC610 + GetEventGlobalGroup 0x4ABA50 +
-  CEventGroup::Add 0x4AB420, CEventGunShotWhizzedBy ctor 0x4B1FD0 (+ Add), CInterestingEvents::Add 0x602590 (type 0x16),
-  `_ftol2`, CPointLights::AddLight 0x7000E0, Fx_c::TriggerGunshot 0x4A0DE0, CWeapon::AddGunshell 0x73A3E0, CWaterLevel line test
-  0x6E61B0 (x2, see `_unattributed-G.md`), Fx_c::TriggerBulletSplash 0x4A10E0, CAudioEngine::ReportBulletHit 0x506EC0, SetUpPelletCol
-  0x73C710, CPedModelInfo::AnimatePedColModelSkinned 0x4C6F70, CEntity::GetColModel, CCollision::ProcessColModels 0x4185C0,
-  CWeapon::DoBulletImpact 0x73B550 (4 sites), CWorld::ResetLineTestOptions 0x5631C0, event dtors 0x4B2070 / 0x4AC720.
-- Globals written: CWorld::fWeaponSpreadRate 0xB7CD64, CWorld::pIgnoreEntity 0xB7CD68, CWorld::bIncludeBikers 0xB7CD6F,
-  bIncludeCarTyres 0xB7CD70, bIncludeDeadPeds 0xB7CD71 (all reset by ResetLineTestOptions at the end), byte 0xC8A80C (toggle).
-  .data tuning floats read: fPlayerAimScale 0x8D6110 (0.75), fPlayerAimScaleDist 0x8D6114 (5.0), fPlayerAimRotRate 0x8D6118
-  (0.0062831854), SHOTGUN_SPREAD_RATE 0x8D611C (0.05), SHOTGUN_NUM_PELLETS 0x8D6120, SPAS_NUM_PELLETS 0x8D6124.
-- Behaviour (blocks):
-  1. Setup (0x73FB10-0x73FC4E): `wi = GetWeaponInfo(m_Type, firer is ped ? firer->GetWeaponSkill(m_Type) : 1)`; local start =
-     `*origin`, local muzzle copy = `*muzzle`; if `originForDriveBy` non-null it replaces the start copy (0x73FBD4). Accuracy
-     `acc = 0` unless the firer is a ped: `acc = (100.0f - (float)firer->m_nWeaponAccuracy (u8 +0x71A)) / wi->+0x38` (fsubr, fdiv);
-     if `firer->m_pPlayerData (+0x480)` and `firer->+0x46C & 0x4000000` (ducking): `acc *= 0.5f`; `task = GetTaskUseGun(intel)`.
-  2. Shotguns (types 25, 26, 27): `acc = 0`; `CWorld::fWeaponSpreadRate = SHOTGUN_SPREAD_RATE / wi->+0x38` (0x73FC5F-0x73FC72).
-  3. Task-driven ped shot (task non-null and `task->+0xE` set, 0x73FC89): the local vector `(wi->+8 (range), 0, 0)` is transformed
-     by the bone matrix of `firer->+0x4A0 ->+0x14` (0x73FC94-0x73FCFA) giving the end point; a normalised direction is formed
-     from it (0x73FCFF-0x73FD42; operand details: open question 1); ignore entity = the ped's vehicle when
-     `+0x46C & 0x100` and `+0x58C` set, else its `m_pAttachedTo (+0xFC)` if that is a vehicle; `bIncludeBikers = 1`;
-     HandleGunShot(&start, &end), GunShotSetsOilOnFire; `ProcessLineOfSight(start, end, cp, hitEnt, 1,1,1,1,1, 0,0, 1)`; -> block 9.
-  4. Ped firer without task (0x73FDD7..0x74034A): if targetEnt or target: aim at targetEnt (peds: GetTransformedBonePosition /
-     GetBonePosition(3)) else target; range scaling via TargetWeaponRangeMultiplier; for player peds with no explicit target the
-     aim uses camera modes (active cam mode 0x35 / 0x37 use cam+0x190 / +0x1B4 vectors at 0xB6F32C/0xB6F350, else cross products
-     of the ped matrix), a time-based wobble `now * fPlayerAimRotRate` (0x7400E7-0x7401D5, scaled by 0.04f) and the scale
-     `fPlayerAimScale * 0.5f` with `fPlayerAimScaleDist`, a GRN(float) draw (0x73FFED); for non-player peds with `acc > 0`:
-     3 rand() draws giving the offset `((t*0.4f - 0.2f), (t*0.4f - 0.2f), (t*0.2f - 0.1f))` (0x74024F-0x7402B6, t = rand*1/32767,
-     one draw per axis, x first) scaled by `min(|v|, 0.33f) * 0.90909094f + 0.8f` for player-attached cases (0x740213-0x740241).
-     Ignore-entity selection (0x7402F4-0x74032A, `+0x42D & 4` tests on vehicles), `bIncludeDeadPeds = 1` for players. -> block 8.
-  5. Player in 3rd-person mouse/aim modes (0x74034A): active cam mode in {0x35, 0x37, 0x41, 0x31}: Find3rdPersonCamTargetVector(range*3, ...),
-     direction normalise, same scale/wobble scheme as block 4 with factor 3.0f; mode 0x31 uses CCam::Get_TwoPlayer_AimVector.
-     Ignore entity / bIncludeDeadPeds / bIncludeCarTyres / bIncludeBikers set (0x740682-0x7406DF); HandleGunShot, oil;
-     LOS (1,1,1,1,1,0,0,1); on hit: TargetWeaponRangeMultiplier test, CheckForShootingVehicleOccupant(&hitEnt, &cp, type, start, end)
-     (0x7407B4) -> block 9.
-  6. Vehicle firer (type 2, 0x7407C1): `acc = 0.6f`; driver/heli handling (vehicle subtype 8 / types 3, 4), DoDriveByAutoAiming
-     (owner = FindPlayerPed(-1) for subtype 8), normalise; model 0x1BF / 0x1D5 -> 0.1f, model 0x234 -> 0.1f else 0.3f (0x7408E7-0x740901);
-     three rand() draws (same formulas as block 4, 0x740909-0x740974); normalise; `pIgnoreEntity = firer`.
-  7. Other firers (0x7409FD-0x740B17): DoDoomAiming(firer, &start, &end) for non-player peds without target (0x740AD9); ignore
-     entity selection.
-  8. Generic LOS (0x740B1D): `bIncludeBikers = 1`; HandleGunShot; oil; `ProcessLineOfSight(start, end, cp, hitEnt, 1,1,1,1,1,0,0,1)`.
-  9. Events and effects (0x740B71-0x740F66): weapon type 0x17/0x11 special-case; `CEventGunShot` (0x4AC610; arguments: open question 5) added to the global group; if a ped was hit: `CEventGunShotWhizzedBy` added; `CInterestingEvents::Add(0x16, firer)`.
-     Muzzle light block (entry tests at 0x740C66-0x740C78 include an unsigned `<= 0x10` compare; open question 5): `n = _ftol2(time * 900.0f)`; if `n < 50` toggle byte 0xC8A80C
-     (only every other call continues); light colours by weapon class (0.65/0.25, 0.2/0.3, 0.2/0.25, 0.3/0.45 pairs at
-     0x740CB6-0x740CF4); `CPointLights::AddLight(..., 3.0f, 0.25f, 0.22f, ...)`; Fx_c::TriggerGunshot (if doMuzzleFx); AddGunshell.
-     Water (entry conditions 0x740E3A-0x740EA9: a byte range test 2..4 and IsPlayer; open question 6): `0x6E61B0(start, end, &p)` twice (0x740EEB, 0x740F36); on hit
-     TriggerBulletSplash(p) and `ReportBulletHit(0, 0x27, p, 0)`.
-  10. Impact (0x740F6A-0x7412E4): if `fWeaponSpreadRate == 0` or no hit or the hit is a wheel piece (13..16) of a vehicle ->
-      single `DoBulletImpact(firer, hitEnt, &start, &end, &cp, 0)` (0x7412DF). Otherwise shotgun pellets:
-      `n = SHOTGUN_NUM_PELLETS` (SPAS: SPAS_NUM_PELLETS); SetUpPelletCol(n, firer, hitEnt, end, cp, matrix); hit entity col model
-      (peds: AnimatePedColModelSkinned) ; `ProcessColModels(pelletMatrix, ms_PelletTestCol, entMatrix, entCol, 0xB9ACD0 x2, ...)`;
-      count pellet hits (`< 1.0f` tests, loop unrolled by 4); DoBulletImpact for each hit (incremental flag 1 after the first);
-      for peds/vehicles: retry with another LOS (0x7412B5) when the fraction tests `>= 1.0f` / `< 0.5f` and a counter < 2.
-  11. Exit: `CWorld::ResetLineTestOptions()`; destroy the event locals; return AL (hit flag).
-- gta-reversed: `plugin::CallMethodAndReturn` (unreversed); gr's constants PLAYER_AIM_SCALE 0.75, PLAYER_AIM_SCALE_DIST 5.0,
-  PLAYER_ANIM_ROT_RATE 0.0062832, SHOTGUN_SPREAD_RATE 0.05, SHOTGUN_NUM_PELLETS 15, SPAS_NUM_PELLETS 4 correspond to the .data
-  values above (the original reads them from .data, so they could be patched; keep reading the globals).
-- Open questions (must be resolved from the bytes before porting; confidence low):
-  (1) 0x73FC94-0x73FD42 exact construction of the bone-local start vector. (2) 0x73FE0A-0x7402EE aim computation: x87 order,
-  which vectors feed the cross products, wobble formula. (3) 0x74034A-0x740679 same for camera modes. (4) 0x7407C1-0x7409F8 vehicle
-  aiming details (subtype tests, accuracy scaling of the random offset). (5) 0x740B71-0x740E3A event arguments and light colour
-  selection table per weapon. (6) 0x740E3A-0x740F66 water-test conditions. (7) 0x740F6A-0x7412E4 pellet loop bookkeeping and the
-  retry LOS. (8) Return value register (bl/al) assignments along all paths.
+  CVector* target [+0x14], CVector* originOverride [+0x18], bool forceAim [+0x1C], bool doMuzzleFx [+0x20])`, `ret 0x20`
+  (gr names: firingEntity, origin, muzzlePosn, targetEntity, target, originForDriveBy, arg6, muzzle). SEH frame (handler 0x848EBB,
+  state byte F+0x1B0: 0 after the gunshot event, 1 after the whizzed-by event, 2 while the pellet CMatrix is live).
+  Return: AL = 1 on the single exit path (0x74131E `mov al,1`); there is no other return, so the function ALWAYS returns true.
+- Frame: F = ESP after the prologue (0x73FB2E; 0x1B4 bytes pushed). Args at F+0x1B8 (firer) .. F+0x1D4 (doMuzzleFx).
+  Locals: E F+0x10 (CVector end point, also used as a direction), acc F+0x1C (f32), F+0x20 (wi pointer, later f32/int temp),
+  F+0x24 (temp), hitEnt F+0x28 (CEntity*), S F+0x2C (CVector start), T F+0x38 (CVector temp / camera source / water point),
+  A F+0x44, this F+0x50, F+0x54 (temp), B F+0x60, dir F+0x6C (CVector used by the muzzle FX), M F+0x78 (copy of *muzzle),
+  F+0x84 (temp CVector), cp F+0x90 (CColPoint 0x2C; cp.point at +0, cp.pieceTypeB at +0x24 = F+0xB4), dists F+0xBC (float[15]),
+  pelletMat F+0xF8 (CMatrix 0x48), whizz F+0x140 (CEventGunShotWhizzedBy), shot F+0x174 (CEventGunShot).
+  Registers kept across blocks: EDI = firer, EBX = wi (until block 10), ESI = targetEnt (from 0x73FC7C), EBP = firer if it is a ped
+  (`(firer->+0x36 & 7) == 3`), else 0.
+- Callers (5): CWeapon::Fire 0x742300 (3 sites), CRunningScript::ProcessCommands1300To1399 0x48CDD0, 0x56EC80 (unnamed),
+  CAutomobile::TankControl 0x6AE850, CVehicle::FirePlaneGuns 0x6D4D30 (2 sites). AL is always 1.
+- Callees (address, convention): CPed::GetWeaponSkill(type) 0x5E3B60 (thiscall), CWeaponInfo::GetWeaponInfo 0x743C60 (cdecl(type, skill)),
+  CPedIntelligence::GetTaskUseGun 0x600F70 (thiscall), RwHelper::GetAnimHierarchyFromSkinClump 0x734A40, RpHAnimIDGetIndex 0x7C51A0,
+  RpHAnimHierarchyGetMatrixArray 0x7C5120, RwV3dTransformPoints 0x7EDD90 (cdecl(out, in, n, mat)), CVector::Normalise 0x59C910
+  (thiscall, 8 sites), CrossProduct 0x59C730 (cdecl(out, a, b) = a x b, 6 sites), CPed::IsPlayer 0x5DF8F0 (6 sites),
+  CPed::GetTransformedBonePosition 0x5E01C0 (thiscall(RwV3d&, bone, bool), ret 0xC), CPed::GetBonePosition 0x5E4280 (same shape),
+  CWeapon::TargetWeaponRangeMultiplier 0x73B380 (cdecl(victim, owner) -> ST0), CGeneral::GetRandomNumberInRange<float> 0x41BD90
+  (cdecl(min, max) -> ST0), CVector::Magnitude 0x4082C0 (thiscall -> ST0), rand 0x821B1E (6 sites), _ftol2 0x821B40 (truncation),
+  CCamera::Find3rdPersonCamTargetVector 0x514970 (thiscall(float range, CVector src by value, CVector& outSource, CVector& outTarget),
+  ret 0x18), CCam::Get_TwoPlayer_AimVector 0x513E40 (thiscall(CVector&), ret 4), CWorld::FindPlayerPed 0x56E210 (cdecl(-1)),
+  CWeapon::DoDriveByAutoAiming 0x73D720 (cdecl(owner, veh, CVector* start, CVector* end, bool canAimVehicles)),
+  CWeapon::DoDoomAiming 0x73CDC0 (cdecl(owner, CVector* start, CVector* end)), CPlaceable::AllocateMatrix 0x54F560 +
+  CSimpleTransform::UpdateMatrix 0x54F1B0 ("ensure matrix", 5 sites), CBirds::HandleGunShot 0x712E40 (cdecl(const CVector* a,
+  const CVector* b), 4 sites), CShadows::GunShotSetsOilOnFire 0x707550 (cdecl(a, b), 4 sites), CWorld::ProcessLineOfSight 0x56BA00
+  (cdecl, 12 args, 4 sites, return value never used), CWeapon::CheckForShootingVehicleOccupant 0x73F480, CEventGunShot ctor 0x4AC610
+  (thiscall(CEntity*, CVector start, CVector end (by value), bool), ret 0x20), CEventGunShotWhizzedBy ctor 0x4B1FD0
+  (thiscall(CEntity*, const CVector&, const CVector&, bool), ret 0x10), GetEventGlobalGroup 0x4ABA50, CEventGroup::Add 0x4AB420
+  (thiscall(CEvent*, bool)), CInterestingEvents::Add 0x602590 (thiscall on g_InterestingEvents 0xC0B058), CPointLights::AddLight
+  0x7000E0 (cdecl, 0x38 bytes), Fx_c::TriggerGunshot 0x4A0DE0 (thiscall on g_fx 0xA9AE00, ret 0x10), CWeapon::AddGunshell 0x73A3E0
+  (thiscall, ret 0x10), water line test 0x6E61B0 (cdecl(CVector a, CVector b by value, CVector* out) -> AL; see `_unattributed.md`),
+  Fx_c::TriggerBulletSplash 0x4A10E0 (thiscall(const CVector&)), CAudioEngine::ReportBulletHit 0x506EC0 (thiscall on AudioEngine
+  0xB6BC90), CWeapon::SetUpPelletCol 0x73C710 (callee pops 0x18: (int n, CEntity* owner, CEntity* victim, CVector& start,
+  CColPoint& cp, CMatrix& out)), CPedModelInfo::AnimatePedColModelSkinned 0x4C6F70 (thiscall(RpClump*) -> CColModel*),
+  CEntity::GetColModel 0x535300, CCollision::ProcessColModels 0x4185C0 (cdecl, 8 args), CWeapon::DoBulletImpact 0x73B550
+  (thiscall(owner, victim, const CVector& start, const CVector& end, const CColPoint&, int32 incrementalHit), ret 0x18, 3 sites),
+  CMatrix::~CMatrix 0x59ACD0, CWorld::ResetLineTestOptions 0x5631C0, ~CEventGunShotWhizzedBy 0x4B2070, ~CEventGunShot 0x4AC720.
+- Globals: R CTimer::m_snTimeInMilliseconds 0xB7CB84 (u32); TheCamera 0xB6F028: m_nActiveCam byte 0xB6F081, Cams[i].m_nMode
+  (u16) at 0xB6F1A8 + 0x238*i, Cams[0] 0xB6F19C, Cams[0].m_vecFront 0xB6F32C, Cams[0].m_vecUp 0xB6F350..0xB6F358;
+  .data tuning (read every call, keep reading the globals): fPlayerAimScale 0x8D6110 (0.75), fPlayerAimScaleDist 0x8D6114 (5.0),
+  fPlayerAimRotRate 0x8D6118 (0.0062831854), SHOTGUN_SPREAD_RATE 0x8D611C (0.05), SHOTGUN_NUM_PELLETS 0x8D6120 (int 15),
+  SPAS_NUM_PELLETS 0x8D6124 (int 4). R/W CWorld::fWeaponSpreadRate 0xB7CD64; W CWorld::pIgnoreEntity 0xB7CD68, bIncludeBikers 0xB7CD6F,
+  bIncludeCarTyres 0xB7CD70, bIncludeDeadPeds 0xB7CD71; R/W byte 0xC8A80C (muzzle-flash toggle; = ms_PelletTestCol+0x30);
+  R CModelInfo::ms_modelInfoPtrs 0xA9B0C8; A CWorld::m_aTempColPts 0xB9ACD0 (stride 0x2C); A CWeapon::ms_PelletTestCol 0xC8A7DC.
+  Constants: 0x858624 1.0, 0x858628 100.0, 0x858B50 0.0, 0x858B8C 0.5, 0x858C58 0.01, 0x858CC4 0.2, 0x858B1C 0.1, 0x858EE8 0.4,
+  0x858C7C 3.0518509e-05 (1/32767), 0x858CEC 0.04, 0x858C54 4294967296.0, 0x85AD74 0.33, 0x872C70 0.90909094, 0x858C98 0.8,
+  0x858B3C 3.0, 0x858978 900.0; immediates 0x3F19999A 0.6, 0x3E99999A 0.3, 0x3DCCCCCD 0.1, 0x3E4CCCCD 0.2, 0x3F266666 0.65,
+  0x3E800000 0.25, 0x3EE66666 0.45, 0x3E6147AE 0.22, 0x40400000 3.0.
+- Fields: entity +0x14 m_matrix (right +0, forward +0x10), +0x22 m_nModelIndex (i16), +0x36 (type = &7, status = >>3), +0x40 physical
+  flags (bit 8 = bSubmergedInWater), +0x44 m_vecMoveSpeed, +0xFC m_pAttachedTo. Ped: +0x46C flags (bit 8 bInVehicle, bit 26
+  0x4000000 bIsDucking), +0x470 flags (0x2000000: gr bDoomAim, by bit count), +0x47C m_pIntelligence, +0x480 m_pPlayerData,
+  +0x4A0 m_apBones[6] (PED_NODE_RIGHT_HAND, m_apBones starts at 0x488) -> AnimBlendFrameData +0x14 m_nNodeId, +0x4F8
+  m_pGunflashObject, +0x528 m_pedIK.m_nFlags (bit 0 bGunReachedTarget), +0x58C m_pVehicle, +0x71A m_nWeaponAccuracy (u8).
+  CPlayerPedData +0x2C m_fAttackButtonCounter (f32), +0x70 m_nTargetBone, +0x74 m_vecTargetBoneOffset. Vehicle +0x42D bit 2 (raw;
+  gr name not verified), +0x460 m_pDriver, +0x594 m_nVehicleSubType (3 heli, 4 plane). CWeaponInfo +0x08 m_fWeaponRange,
+  +0x18 flags (bit 0 bCanAim), +0x22 m_nDamage (read as i16, movsx), +0x38 m_fAccuracy, +0x40 m_fAnimLoopStart, +0x44 m_fAnimLoopEnd.
+  CTaskSimpleUseGun +0xE (byte; gr layout puts m_SkipAim there, unverified).
+- Common sub-sequences used below:
+  * LOS(a, b) = `ProcessLineOfSight(a, b, &cp, &hitEnt, 1,1,1,1,1, 0, 0, 1)` (buildings, vehicles, peds, objects, dummies,
+    seeThrough 0, ignoreSomeObjects 0, shootThrough 1); always preceded by `HandleGunShot(a, b); GunShotSetsOilOnFire(a, b)`.
+  * "E = S + v*R" pattern (0x73FF16, 0x74082C, 0x7409B1): `st=R; t=v.x*R (reg); E.y=v.y*R (f32); E.z=R*v.z (f32); E.x=S.x+t;
+    E.y=E.y+S.y; E.z=S.z+E.z` (f32 stores).
+  * Wobble W(U, V, r) (0x7400E7-0x7401D5 and 0x74057F-0x740676): `a = (float)time_u32 * fPlayerAimRotRate` (fild of the dword; if it is
+    negative as i32, `+= 4294967296.0`; fmul f32). `uz = U.z*r` (reg), `uy = U.y*r` (f32), `ux = U.x*r` (f32); `s = fsin(a)` stored f32;
+    `E.x = ux*s + E.x`; `E.y = E.y + uy*s`; `zacc = uz*s + E.z` (kept in a register, not stored); `vz = V.z*r` (reg), `vy = V.y*r` (f32),
+    `vx = V.x*r` (f32); `c = fcos(a)` stored f32 (fcos of the same unrounded a); `E.x = vx*c + E.x`; `E.y = E.y + vy*c`;
+    `E.z = vz*c + zacc`. Then `pd->m_fAttackButtonCounter = (float)(i16)wi->m_nDamage * 0.04f + pd->m_fAttackButtonCounter`
+    (fild, fmul 0x858CEC, fadd, fstp) with pd = firer->m_pPlayerData.
+  * Scatter(k) (0x74024F-0x7402EA and 0x740909-0x7409A8): `t1 = (float)rand()*k1` (f32 store), `t2 = (float)rand()*k1` (f32 store),
+    `t3 = (float)rand()*k1` (reg), k1 = 3.0518509e-05; `ox = t3*0.4f - 0.2f`, `oy = t2*0.4f - 0.2f`, `oz = (t1*0.2f - 0.1f)*acc` (f32);
+    `E.x = ox*acc + E.x`, `E.y = E.y + oy*acc`, `E.z = oz + E.z`. The FIRST rand() goes to z, the second to y, the third to x.
+
+Behaviour, block by block (original order):
+1. Setup 0x73FB10-0x73FC49. `skill = (firer && type(firer)==3) ? firer->GetWeaponSkill(this->m_Type) : 1`; `wi = GetWeaponInfo(m_Type,
+   skill)` (firer may be null here only). `M = *muzzle` (F+0x78), `S = *origin`; `E = (0,0,0)`; `hitEnt = 0`; `acc = 0`;
+   if `originOverride` (0x73FBD2): `S = *originOverride`. `task = 0`. Then (firer dereferenced without null check from 0x73FBE8) if
+   firer is a ped (0x73FBFB): `EBP = firer`; `acc = (100.0f - (float)m_nWeaponAccuracy) / wi->m_fAccuracy` (fld wi+0x38; fild u8;
+   fsubr 100; fdiv st1; f32 store); if `m_pPlayerData != 0 && (+0x46C & 0x4000000)`: `acc = acc*0.5f`; `task = GetTaskUseGun(intel)`.
+2. Shotguns 0x73FC4E: if `m_Type` is 25, 26 or 27: `acc = 0`; `fWeaponSpreadRate = SHOTGUN_SPREAD_RATE / wi->m_fAccuracy` (f32).
+   (Other weapons leave fWeaponSpreadRate as it is; it is normally 0 because ResetLineTestOptions clears it.)
+3. Task path 0x73FC7A-0x73FDD2: if `task && task->+0xE`: `E = (wi->range, 0, 0)` (also stored in T); transform E in place by
+   `GetMatrixArray(h)[RpHAnimIDGetIndex(h, firer->m_apBones[6]->m_nNodeId)]`, `h = GetAnimHierarchyFromSkinClump(firer->+0x18)`
+   (RwV3dTransformPoints(&E, &E, 1, mat)). `d = E - S` computed z, y, x (fld E.z; fsub S.z; fld E.y; fsub S.y; fld E.x; fsub S.x) stored
+   x,y,z to T and copied to dir; `dir.Normalise()` (0x73FD42). Ignore entity (0x73FD47): if `(+0x46C & 0x100) && m_pVehicle` ->
+   `pIgnoreEntity = m_pVehicle`; else if `m_pAttachedTo && type(m_pAttachedTo) == 2` -> `pIgnoreEntity = m_pAttachedTo`; else
+   unchanged. `bIncludeBikers = 1`; HandleGunShot(&S,&E); oil(&S,&E); LOS(S, E) (0x73FDC2); jump to 0x740B6E (block 9).
+4. Ped firer with an explicit target 0x73FDD7-0x740345. 0x73FDD7: `EBP == 0` (not a ped) -> block 6. If `targetEnt == 0 && target == 0`
+   -> block 5. If `!(firer->+0x528 & 1) && !forceAim` (0x73FDF2/0x73FDFB) -> jump DIRECTLY to block 9 (0x740B71): no LOS, E stays
+   (0,0,0), hitEnt 0, dir and cp uninitialised (see oddities).
+   4a. Aim point (0x73FE0A): if `target`: `E = *target`. Else (targetEnt): ped (type 3): if `firer->m_pPlayerData` (note: the FIRER's
+       player data): `E = pd->m_vecTargetBoneOffset; targetEnt->GetTransformedBonePosition(E, pd->m_nTargetBone, false)`; else
+       `targetEnt->GetBonePosition(E, 3, false)`. Non-ped: `E = targetEnt->GetPosition()`.
+   4b. Direction (0x73FE81): `dx = E.x - S.x` (reg), `E.y = E.y - S.y` (f32 store), `dz = E.z - S.z` (reg);
+       `q = (dx*dx + dy*dy) + dz*dz` (dy read back as f32); `len = sqrt(q)`; if `len < 0.01f` (strict; NaN -> sqrt branch) `len = 0.01f`
+       (fld 0x858C58), else `len = fsqrt(q)` again; `inv = 1.0f / len` (fdivr); `E = (inv*dx, dy*inv, inv*dz)` (f32) and `dir = E`.
+       `R = TargetWeaponRangeMultiplier(targetEnt, firer) * wi->range` (ST0 * f32 copy of range); "E = S + E*R" pattern (0x73FF16).
+   4c. Player scatter (0x73FF1E): if `firer->m_pPlayerData` and `acc != 0.0f` (0x73FF6F: `fcomp 0.0; test ah,0x44; jnp` -> only exact
+       equality skips; NaN and negatives continue):
+       `k = 5.0f / range`; `scale = (1.0f < k) ? 1.0f : 5.0f/range` (fcompp 1.0 vs k; recomputed by fdivr when not taken; NaN -> recompute);
+       `t = ((scale*acc) * pd->m_fAttackButtonCounter) * fPlayerAimScale`; `acc = t` (fst f32); `h = t*0.5f`;
+       `lo = (0.2f < h) ? 0.2f : h` (stored f32); `r = GetRandomNumberInRange(lo, acc)` (cdecl, min = lo, max = acc; one RNG draw inside
+       0x41BD90); `acc = r` (f32). Basis (mode read from Cams[0] at 0xB6F1A8, NOT the active cam): if mode is 0x35 or 0x37:
+       `B = Cams[0].m_vecUp` (unnormalised), `A = Cross(Cams[0].m_vecFront, B)`, `A.Normalise()`. Else: `A = Cross(E, (0,0,1))`
+       (E is the END POINT, not a direction; original behaviour), `A.Normalise()`, `B = Cross(E, A)`, `B.Normalise()`.
+       Then W(A, B, acc) (sin with A, cos with B). -> 4e.
+   4d. Non-player scatter (0x7401DA): only if `acc > 0.0f` (`test ah,0x41; jne` skips <=, NaN). If `targetEnt` is a ped and
+       `targetEnt->IsPlayer()`: `m = |targetEnt->m_vecMoveSpeed|` (Magnitude); `acc = ((m > 0.33f ? 0.33f : Magnitude() again) *
+       0.90909094f + 0.8f) * acc` (`fcomp 0.33; test ah,0x41; jne` -> m <= 0.33 or NaN calls Magnitude a second time). Then Scatter
+       (3 rand() draws).
+   4e. Ignore entity (0x7402EE): if `(+0x46C & 0x100) && m_pVehicle && !(m_pVehicle->+0x42D & 4)` -> `pIgnoreEntity = m_pVehicle`;
+       else if `m_pAttachedTo && type == 2 && !(m_pAttachedTo->+0x42D & 4)` -> `pIgnoreEntity = m_pAttachedTo`; else unchanged.
+       If `firer->IsPlayer()`: `bIncludeDeadPeds = 1`. -> block 8 (0x740B1D).
+5. Ped firer without target 0x74034A-0x7407BC. If `!firer->IsPlayer()` -> block 6. Mode of the ACTIVE camera
+   (`Cams[m_nActiveCam].m_nMode`) must be 0x35, 0x37, 0x41 or 0x31, else -> block 6.
+   `Find3rdPersonCamTargetVector(wi->range * 3.0f, S, T, E)` (T = camera source out, E = aim point out). `d = E - S` (z, y, x order,
+   stored to A then dir); `dir.Normalise()`. E itself is not changed.
+   If `acc != 0.0f` (0x740414, same test as 4c): `k = (5.0f / range) * 3.0f`; `scale = (1.0f < k) ? 1.0f : (5.0f/range)*3.0f`;
+   `acc = ((scale*acc) * pd->m_fAttackButtonCounter) * fPlayerAimScale` (no 0.5, no GetRandomNumberInRange in this block). Basis by
+   Cams[0].m_nMode: 0x35/0x37 -> `A = Cams[0].m_vecUp`, `B = Cross(Cams[0].m_vecFront, A)`, `B.Normalise()`; 0x31 ->
+   `Cams[0].Get_TwoPlayer_AimVector(F+0x84)` (result is overwritten unread at 0x7405BF, only side effects matter), then as 0x35/0x37
+   but the cross product is written via F+0x54 (same values); otherwise -> `B = Cross(E, (0,0,1))`, `B.Normalise()`, `A = Cross(E, B)`,
+   `A.Normalise()`. Then W(B, A, acc) (sin with B, cos with A).
+   Ignore entity (0x740679): if `(+0x46C & 0x100) && m_pVehicle && !(m_pVehicle->+0x42D & 4)` -> m_pVehicle; else if
+   `m_pAttachedTo && type 2 && !(+0x42D & 4)` -> m_pAttachedTo; else `pIgnoreEntity = firer` (differs from 4e).
+   `bIncludeDeadPeds = bIncludeCarTyres = bIncludeBikers = 1`; HandleGunShot(&T,&E); oil(&T,&E); LOS(T, E) from the CAMERA SOURCE.
+   If `hitEnt` (0x74072D): `dist = sqrt(dy*dy + dx*dx)` with `dy = cp.y - T.y`, `dx = cp.x - T.x` (2D, f32 store);
+   `if (TargetWeaponRangeMultiplier(hitEnt, firer) * range < dist) hitEnt = 0` (`test ah,5; jp` -> >= or NaN keeps it);
+   if still hit: `CheckForShootingVehicleOccupant(&hitEnt, &cp, m_Type, &T, &E)` (0x7407B4). -> block 9 (0x740B71).
+6. Vehicle firer 0x7407C1-0x7409F8 (type(firer) == 2; else block 7): `acc = 0.6f`; ensure matrix; `E = dir = firer.forward`.
+   If status (`+0x36 >> 3`) is 0 (PLAYER) or 8 (REMOTE_CONTROLLED): "E = S + forward*range"; `aimVeh = (m_nVehicleSubType == 4 ||
+   == 3)` (byte at F+0x24; the dword is pushed, upper bytes stale); `owner = (status == 8) ? FindPlayerPed(-1) : firer->m_pDriver`;
+   `DoDriveByAutoAiming(owner, firer, &S, &E, aimVeh)`; `E = E - S` (x, y, z, each fld/fsub/fstp); `E.Normalise()`;
+   `acc = (model == 447 || model == 469 || model == 564) ? 0.1f : 0.3f` (u16 compares 0x1BF, 0x1D5, 0x234).
+   Then (all statuses, 0x740909): Scatter (3 rand() draws); `E.Normalise()`; `pIgnoreEntity = firer`; "E = S + E*range";
+   -> 0x740B24 (block 8 WITHOUT setting bIncludeBikers).
+7. Other firers 0x7409FD-0x740B17 (peds that reached here from block 4/5, objects, etc.): `F+0x20 = range`; ensure matrix;
+   `E = M + forward*range`, x87: `z = range*fwd.z` (reg), `y = range*fwd.y` (f32), `x = range*fwd.x` (f32); `z = z + M.z`;
+   `y = M.y + y`; `x = x + M.x`; stored x,y,z (via T) -> E. (The start of the shot stays S, the end is relative to the MUZZLE copy.)
+   A second ensure-matrix at 0x740A7E is dead (the matrix pointer is non-null by then). `dir = forward`.
+   If EBP (ped): if `(+0x470 & 0x2000000)` and `!(firer->IsPlayer() && (wi->+0x18 & 1))`: `DoDoomAiming(firer, &S, &E)` (0x740AD9).
+   Ignore entity (0x740AE1): if `(+0x46C & 0x100) && m_pVehicle` -> m_pVehicle (no +0x42D test); else if `m_pAttachedTo` ->
+   `pIgnoreEntity = m_pAttachedTo`, then if its type != 2 `pIgnoreEntity = firer`; else (no attachedTo) firer. Non-peds: firer.
+8. Generic LOS 0x740B1D: `bIncludeBikers = 1`; (0x740B24) HandleGunShot(&S,&E); oil(&S,&E); LOS(S, E); `add esp,0x40` (0x740B6E).
+9. Events and effects 0x740B71-0x740F66.
+   - `silenced = (m_Type == 0x17 || m_Type == 0x11)`; `shot = CEventGunShot(firer, S, E, silenced)`; `GetEventGlobalGroup()->Add(&shot, false)`.
+   - `whizz = CEventGunShotWhizzedBy(firer, S, E, m_Type == 0x17)` (only the silenced pistol counts here) and Add(&whizz, false);
+     unconditional. `g_InterestingEvents.Add(0x16, firer)`. If EBP: `firer->IsPlayer()` is called and its result discarded (0x740C3D).
+   - 0x740C42: `S = *origin` again (the override from block 1 is dropped from here on).
+   - Muzzle FX (0x740C55): if `doMuzzleFx` and `(u32)(m_Type - 22) <= 16`, table (bytes 0x741348, targets 0x741334):
+     types 22,23,24,34 -> (a,b) = (0.2, 0.25); 25,26,27 -> (0.3, 0.45); 28,29,32 -> (0.2, 0.3); 30,31,38 -> flash test then
+     (0.65, 0.25); 33,35,36,37 -> no FX. Flash test (0x740C8C): `n = _ftol2((wi->m_fAnimLoopEnd - wi->m_fAnimLoopStart) * 900.0f)`;
+     if `n < 50`: `++byte[0xC8A80C]`; if the new value is odd -> no FX this shot. (a, b) are written to F+0x1C/F+0x20.
+     `AddLight(0, M, (0,0,0), 3.0f, 0.25f, 0.22f, 0.0f, 0, false, nullptr)` (the zero vector is built in T; light colour is fixed).
+     `gunflash = !(type(firer) == 3 && firer->m_pGunflashObject (+0x4F8))`; `g_fx.TriggerGunshot(firer, M, dir, gunflash)`.
+     Shell: `G.x = M.x - dir.x*a` (fld dir.x; fmul a; fsubr M.x), same for y, z (stored to A); ensure matrix;
+     `AddGunshell(firer, G, CVector2D(firer.right.x, firer.right.y), b)`.
+   - Water (0x740E3A): with targetEnt: only if `1 < type(targetEnt) < 5` and `(targetEnt->+0x40 & 0x100)` -> test. Without targetEnt:
+     if EBP && firer->IsPlayer() and `E.z < S.z` (`test ah,5; jnp`) -> test; otherwise (also when that compare fails) the status of
+     the firer must be 0 or 8 and `E.z < S.z` (`jp` skips >= / NaN) -> test.
+     Test (0x740EA3): if hitEnt: `0x6E61B0(S, cp.point, &T)`; if false -> block 10 (no second test). If no hitEnt:
+     `0x6E61B0(S, E, &T)`; if false -> block 10. On true: `g_fx.TriggerBulletSplash(T)`;
+     `AudioEngine.ReportBulletHit(nullptr, 39 (0x27, SURFACE_WATER_SHALLOW), T, 0.0f)`.
+10. Impact 0x740F66-0x7412E4. `retry = 0` (F+0x24). Single impact (0x7412C2) if `!(fWeaponSpreadRate > 0.0f)` (`test ah,0x41`), or
+   `hitEnt == 0`, or hitEnt is a vehicle and `13 <= cp.pieceTypeB <= 16` (unsigned byte, wheels):
+   `DoBulletImpact(firer, hitEnt, M, E, cp, 0)` (start = MUZZLE copy). Otherwise pellet loop (0x740FB0):
+   - `++retry`; `n = (m_Type == 27) ? SPAS_NUM_PELLETS : SHOTGUN_NUM_PELLETS` (int, F+0x20); pelletMat attach fields (F+0x138,
+     F+0x13C) = 0; state 2; `SetUpPelletCol(n, firer, hitEnt, S, cp, pelletMat)`; `dists[0..14] = 1.0f` (rep stosd 15 dwords).
+   - `cm = (type(hitEnt)==3) ? ms_modelInfoPtrs[hitEnt->m_nModelIndex]->AnimatePedColModelSkinned(hitEnt->m_pRwClump) :
+     hitEnt->GetColModel()`; ensure hitEnt matrix; `ProcessColModels(pelletMat, ms_PelletTestCol, *hitEnt->m_matrix, *cm,
+     m_aTempColPts, m_aTempColPts, dists, false)`.
+   - Count (unrolled by 4 at 0x7410C0, remainder 0x741130; equivalent to): `hits = 0; last = 0; for i in 0..n: if dists[i] < 1.0f
+     { hits++; last = i }` (NaN not counted). F+0x1C = hits.
+   - For b in 0..n-1 (0x741160): if `dists[b] < 1.0f`: `DoBulletImpact(firer, hitEnt, M, m_aTempColPts[b].point, m_aTempColPts[b],
+     (b == last) ? -hits : 1)`.
+   - If hitEnt is neither ped nor vehicle (0x7411AA): `DoBulletImpact(firer, hitEnt, M, E, cp, 0)`; `hitEnt = 0`.
+     Ped/vehicle (0x741211): retry when `(dists[0] == 1.0f || (float)hits / n < 0.5f)` (fild/fidiv; `== 1.0` test via `ah&0x44, jnp`;
+     NaN dists[0] goes to the ratio test) and `retry < 2`: `pIgnoreEntity = hitEnt; S = cp.point; hitEnt = 0`;
+     HandleGunShot(&S,&E); oil(&S,&E); LOS(S, E) (0x7412B5); no extra impact. Otherwise `hitEnt = 0`.
+   - 0x7411EC: state 1; `pelletMat.~CMatrix()`; if `hitEnt` (only possible after a retry LOS hit) -> loop again from 0x740FB0 (no
+     spread / wheel re-check); else exit. At most one retry.
+11. Exit 0x7412E4: `ResetLineTestOptions()`; `~CEventGunShotWhizzedBy(whizz)`; state -1; `~CEventGunShot(shot)`; return 1.
+- RNG draws per path (rand 0x821B1E unless noted): block 4c: 1 (inside GetRandomNumberInRange 0x41BD90); 4d: 3; 5: 0;
+  6: 3; 3/7: 0; plus whatever callees draw (DoDriveByAutoAiming, DoDoomAiming, SetUpPelletCol, DoBulletImpact, Fx, AddGunshell).
+- Oddities / original bugs (keep): (a) 4c/5 cross products use the end POINT E with (0,0,1), not a direction (0x74003D, 0x7404D5).
+  (b) 4c/5 read Cams[0].m_nMode directly while block 5's entry test uses the active cam. (c) Block 4 early exit (0x73FE04): E =
+  (0,0,0) goes into both events, dir (F+0x6C) is uninitialised stack when doMuzzleFx is set, cp is uninitialised and passed to the
+  final DoBulletImpact (hitEnt 0). (d) Block 5 traces from the camera source but events/effects use S. (e) Block 7 end point is
+  relative to *muzzle, block 6/4 relative to S. (f) S is reset to *origin at 0x740C42 before the water test and the pellet setup.
+  (g) The bool args at 0x74089D (DoDriveByAutoAiming) and 0x740D8F (TriggerGunshot) are pushed as dwords from F+0x24 whose upper
+  bytes are stale. (h) Dead IsPlayer call 0x740C3D; dead Get_TwoPlayer_AimVector result; dead ensure-matrix 0x740A7E.
+  (i) dists has 15 slots; SHOTGUN_NUM_PELLETS/SPAS_NUM_PELLETS > 15 would overflow (values 15/4 in .data).
+- gta-reversed: `RH_ScopedInstall(FireInstantHit, 0x73FB10, { .Reversed = false })`; the body is only `plugin::CallMethodAndReturn`
+  plus six unused constexpr constants. Differences: PLAYER_ANIM_ROT_RATE = 0.0062832f is a different f32 from the .data value
+  0.0062831854 (2*pi/1000) - port must read 0x8D6118; the other constants match .data. No C++ logic exists to compare.
+- Corrections to the first-wave block notes: scatter draw order is z, y, x (first rand -> z), not x first; the 0.33/0.909/0.8 factor
+  applies when the TARGET is a player ped; block 6 tests entity STATUS 0/8 (not "subtype 8") and passes `subtype in {3,4}` as
+  canAimVehicles; block 5 has no GetRandomNumberInRange draw and its LOS starts at the camera source; CEventGunShotWhizzedBy is
+  always raised; the per-weapon pairs are gunshell offset/size, the light colour is constant (0.25, 0.22, 0); DoBulletImpact's start
+  is the muzzle copy M; the event silenced flag for the whizz event is type 0x17 only.
+- Open questions: (1) 0x73FC89: meaning of CTaskSimpleUseGun +0xE (gr: m_SkipAim) - behaviour exact either way. (2) 0x740303/0x74068E:
+  name of vehicle flag +0x42D bit 2. (3) 0x740AB1: +0x470 bit 25 named bDoomAim by counting gr bitfields (gr comments are off by
+  one around bIsDucking); value exact. (4) Uninitialised dir/cp in the 0x73FE04 early-exit path cannot be reproduced bit-exactly;
+  a port must pick a value (stack garbage in the original).
+  Confidence: medium (all blocks transcribed from the bytes; names of a few flags unverified).
