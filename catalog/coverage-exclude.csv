@@ -1,0 +1,2 @@
+address,reason
+0x55c410,"CStats::SetNewRecordStat entry (jmp 0x408235): an int3 here stops the grove-walk replay at frame 202 (loading screen) although the point is only reached later; found by tools/e2e/cov-bisect.py (23 probes, 2026-11-05); cause not analysed (no sa-hook code reads it; suspected: the game or its protection reads this stub)"

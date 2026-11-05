@@ -20,7 +20,7 @@
 //! | `SA_L2_WINDOW` | watched windows for undeclared writes: `data` (default: .data/.bss, _TEXT_HA, _rwdseg), `all` (every writable image section + the used part of the heap arena; slow), `none` |
 //! | `SA_L2_WINDOWS` | extra watched ranges `START-END,…` |
 //! | `SA_L2_STACK` | bytes of the caller's stack above the arguments to watch (default 1024) |
-//! | `SA_L2_MUTANT` | hooks whose Rust implementation is made deliberately wrong (self-test) |
+//! | `SA_L2_MUTANT` | hooks whose Rust implementation is made deliberately wrong (self-test); also honoured without `SA_L2` (the L3 bisection self-test runs the mutant in plain Rust mode) |
 //! | `SA_HOOK_MODE` | start modes `NAME=orig\|rust\|l2,…` (independent of L2) |
 
 use std::sync::Mutex;
@@ -155,9 +155,7 @@ impl Config {
                 c.windows.push((a, b));
             }
         }
-        if let Some(v) = get("SA_L2_MUTANT") {
-            c.mutants = hook_list(&v, "SA_L2_MUTANT")?;
-        }
+        c.mutants = mutants_from_env(&get)?;
         Ok(Some(c))
     }
 }
@@ -288,6 +286,15 @@ impl Extra {
             Some(a) => return Err(bad(format!("access {a:?}"))),
         };
         Ok(Extra { hook, addr, len, acc })
+    }
+}
+
+/// `SA_L2_MUTANT` on its own: read even when `SA_L2` is unset, so a mutant can run as a plain Rust
+/// hook (INF-9 L3 self-test: the bisection must find the wrong hook from frame hashes alone).
+pub fn mutants_from_env(get: &impl Fn(&str) -> Option<String>) -> Result<Vec<usize>, String> {
+    match get("SA_L2_MUTANT") {
+        Some(v) => hook_list(&v, "SA_L2_MUTANT"),
+        None => Ok(Vec::new()),
     }
 }
 
@@ -529,6 +536,10 @@ mod tests {
             vec![(1, Mode::Original), (2, Mode::L2)]
         );
         assert!(parse_hook_modes("x=orig").is_err());
+        let get = env(&[("SA_L2_MUTANT", "CGeneral::LimitRadianAngle")]);
+        assert_eq!(Config::from_env(&get).unwrap(), None);
+        assert_eq!(mutants_from_env(&get).unwrap(), vec![1]);
+        assert_eq!(mutants_from_env(&env(&[])).unwrap(), Vec::<usize>::new());
     }
 
     #[test]

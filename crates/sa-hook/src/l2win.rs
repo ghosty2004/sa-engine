@@ -322,7 +322,25 @@ fn writable_sections() -> Vec<(u32, u32, String)> {
 pub fn init(dir: &std::path::Path) -> Vec<usize> {
     let c = match Config::from_env(|k| std::env::var(k).ok()) {
         Ok(Some(c)) => c,
-        Ok(None) => Config::default(),
+        // L2 off; mutants may still be requested (INF-9 L3 self-test).
+        Ok(None) => match crate::l2::mutants_from_env(&|k: &str| std::env::var(k).ok()) {
+            Ok(mutants) => {
+                if !mutants.is_empty() {
+                    log(&format!(
+                        "l2: off; mutant Rust implementations {:?}",
+                        mutants.iter().map(|&i| HOOKS[i].name).collect::<Vec<_>>()
+                    ));
+                }
+                Config {
+                    mutants,
+                    ..Config::default()
+                }
+            }
+            Err(e) => {
+                log(&format!("l2: bad SA_L2_MUTANT ignored: {e}"));
+                Config::default()
+            }
+        },
         Err(e) => {
             log(&format!("l2: bad configuration, L2 off: {e}"));
             Config::default()
@@ -413,6 +431,9 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
     }
     let hooks = c.hooks.clone();
     let _ = CFG.set(c);
+    // INF-10 coverage arms its breakpoints here: this runs after every hook and determinism patch is
+    // installed and before the game's threads resume (kept out of win.rs, see coverage.rs).
+    crate::coverage::init(dir);
     hooks
 }
 
