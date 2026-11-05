@@ -21,12 +21,11 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 1. CAT-5: classify the 9,454 unknown game-`.text` functions (EH funclets, CRT, the third-party lib at
    0x760000–0x7BFFFF, protection junk, real game functions)
-2. CAT-7: call graph + global read/write sets (Ghidra headless script)
-3. INF-1: own Wine prefix and game copy, lanes, headless display
-4. INF-3: `sa-launcher` + `sa-hook` skeleton
-5. FMT-1…: `sa-formats` (can run in parallel with INF; no game needed)
-6. CAT-6, CAT-8, CAT-9, CAT-10, CAT-11, SAMP-1
-7. INF-4…INF-14
+2. INF-1: own Wine prefix and game copy, lanes, headless display
+3. INF-3: `sa-launcher` + `sa-hook` skeleton
+4. FMT-1…: `sa-formats` (can run in parallel with INF; no game needed)
+5. CAT-6, CAT-8, CAT-9, CAT-10, CAT-11, SAMP-1
+6. INF-4…INF-14
 
 ## Phase 0: catalogue (M0)
 
@@ -39,11 +38,13 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | CAT-4b | Subsystem map | done | every hooked function has a subsystem, `OTHER` = 0 | `subsystems.py` → `catalog/subsystems.md` |
 | CAT-5 | Classify the 9,454 unknowns | done | `classify_unknowns.py` → `catalog/classification.csv`, reproducible (re-run identical). Excluded 6,661 (EH funclets 3,556 via FuncInfo tables, D3DX9 949, protection 741, Ghidra mis-splits 653, CRT 508, libpng 1.0.12 + zlib 1.1.3 194, QuickTime glue 34, linker thunks 26). RW +312. Game 2,481 (1,015 assigned to a subsystem, 1,466 `UNK-game`) | notes `docs/re/cat5-unknowns.md`; 138 rows rest on link order only (marked) |
 | CAT-6 | Name unknowns from plugin-sdk addresses (own pinned clone in `re/plugin-sdk`) | todo | match count recorded | |
-| CAT-7 | Call graph + global read/write sets per function | todo | Ghidra headless script output in `catalog/callgraph.*`, `catalog/rwsets.*` | needed for leaf-first order and L2 snapshots |
+| CAT-7 | Call graph + global read/write sets per function | done | `tools/catalog/callgraph.py ghidra` + `build` → `catalog/extents.csv` (11,945 bodies, 0 fallback), `callgraph.csv` (36,890 rows: 31,275 call, 811 tailcall, 208 import, 223+363 virtual/override, 1,874 eh-unwind, 4,715 unresolved indirect sites), `rwsets.csv` (42,677 rows, 13,282 globals, 14,600 named), `indirect-calls.csv`, `port-order.csv` (44 levels, 3,926 leaves, 15 SCCs / 64 functions). Spot check vs gta-reversed (2×10 functions): every miss is inlining or a checker false positive. Rerun incl. fresh Ghidra analysis byte-identical | notes `docs/re/cat7-callgraph.md`. Blind spots: virtual calls on non-`this` objects; 93 unresolved computed jumps. Found 153 called/vtable code addresses missing from the catalogue (`catalog/raw/cat7-noncatalogue-targets.csv`) |
 | CAT-8 | Layout table from `VALIDATE_SIZE` / `VALIDATE_OFFSET` | done (table) | `catalog/layouts.csv`: 781 sizes + 39 offsets (20 symbolic expressions kept verbatim) | Rust const-assert generation happens when the crates that own the types exist |
 | CAT-9 | Fix the `.HOODLUM` body/stub double count | todo | totals reconcile | |
 | CAT-10 | Script command table | in-progress | part 1 done: `catalog/script-commands.csv`, 2,826 opcodes from eScriptCommands.h (gta-reversed: 770 handler, 713 unimplemented, 281 NOP, 13 unsupported, 1,049 unregistered). Part 2 todo: the original's handler per opcode from the `ProcessCommands*` switch ranges (REA, after CAT-5), and which opcodes `main.scm`/`script.img` actually use (needs FMT-3) | |
 | CAT-11 | Per-function state file (`catalog/state.csv`) + `tools/catalog/progress.py` → `catalog/progress.md` | todo | report per subsystem and state (PLAN §5) | |
+| CAT-12 | Add the 153 called/vtable-slot code addresses missing from `procedures.csv` (`catalog/raw/cat7-noncatalogue-targets.csv`, mostly CEvent*/CTask* slots in 0x4AC6B0–0x4B8330 and `_purecall`), then rerun CAT-5/CAT-7 | todo | 0 call/vtable targets outside the catalogue | |
+| CAT-13 | Resolve virtual calls on non-`this` objects (2,791 tagged with a slot but no target): type propagation from gta-reversed member types and Ghidra data types, then use the result in the port order | todo | share of resolved indirect sites reported | the port order currently misses most virtual dispatch |
 
 ## Phase I: infrastructure (M1–M5)
 
