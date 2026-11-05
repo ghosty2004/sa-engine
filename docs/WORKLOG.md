@@ -173,3 +173,10 @@
   `inf3-hooks.sh` (determinism off) exit 0 when run alone.
 - Found: running lane 1 (real-time mode) at the same time as the lane-2 determinism run hung lane 1 on the
   loading screen. New task INF-15; until it is fixed, run one game lane at a time.
+
+## 2026-11-05: L1 verifier report integrated
+- Verifier (adversarial) on INF-7 + sa-math: 5 of 6 claims stand. GetATanOfXY goes back to `implemented`
+  (V-1: 35 callers consume the 64-bit ST0). 15 new mutants, all caught; branch coverage complete. Probes
+  in `crates/sa-oracle/tests/verifier_l1.rs`; re-run by the main session at reduced size: 5/5 pass.
+  Report: docs/re/verify-l1.md. PLAN §5 L1 definition amended (CPU-decided evidence, caller-used outputs,
+  FPU state). Ledger wording corrected (> 2^33). Follow-ups as VER-1.

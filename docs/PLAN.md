@@ -157,7 +157,7 @@ difference must be a ledger entry.
 | `unknown` | not yet identified (CAT-5) |
 | `specified` | named, signature and layout known, source chosen (gta-reversed / REA) |
 | `implemented` | Rust code exists and the hook is registered, not verified |
-| `L1` | pure function: bit-exact against the original bytes under Unicorn on ≥ 10⁶ generated inputs plus edge cases |
+| `L1` | pure function: bit-exact against the original bytes on ≥ 10⁶ generated inputs plus edge cases, run under Unicorn, or on the real CPU under Wine for instructions Unicorn emulates unfaithfully (the evidence records 'CPU-decided' and the CPU model; FPATAN and other transcendentals are implementation-specific). Every observable output the callers use is compared (e.g. the full ST0 when a caller consumes it), under the FPU state of the real call sites |
 | `L2` | in-process: for every corpus state at which the function is called (sampled up to N=1000 per function), original-vs-Rust output plus read/write set are identical after normalisation |
 | `L3` | the subsystem's corpus recordings are frame-hash identical with this function on Rust, *and* with only this function switched back to original (hook-off check) |
 | `excluded` | not game code (EH funclet, CRT, protection junk, replaced library), with the justification in the catalogue |
