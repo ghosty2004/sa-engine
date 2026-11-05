@@ -132,3 +132,10 @@
 - OOM root cause (agent): the `fidelity` command held 2.52M probe results in RAM at once (2.7 GB) next to an
   unrelated 10.7 GB python process. Now chunked (peak 1.3 GB), and threads are capped.
 - Ledger: 1 pending (GetATanOfXY ST0 precision beyond f32), 1 original-UB (LimitAngle hang).
+
+## 2026-11-05: FMT-3 integrated
+- sa-formats: IFP (ANP3/ANPK), GXT, carrec, saves (structure), SCM (headers, script.img, control-flow
+  decoder with parameter reads taken from the exe's handlers), audio containers (CONFIG, SFX banks, XOR'd
+  stream packs with Ogg framing). Re-verified by the main session: all ignored whole-install tests pass,
+  86 unit tests, clippy clean. CAT-10 part 3 (opcodes used by main.scm/script.img) is now
+  `catalog/script-usage.csv`.
