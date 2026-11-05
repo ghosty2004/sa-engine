@@ -1296,6 +1296,7 @@ fn finish(f: u32) {
         log(&format!("oracle: {}", write_recording(&path, rec, f)));
     }
     crate::l2win::finish();
+    crate::coverage::finish();
     DONE.store(true, Ordering::Release);
     log(&format!("oracle: end frame {f} reached; {}", status()));
     if CFG.get().is_some_and(|c| c.exit_at_end) {

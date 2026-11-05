@@ -378,3 +378,18 @@
   sampling cap on 2 hooks, which the agent's solo runs covered completely. F1 progress is now in
   catalog/progress.md.
 - Found: the game panics in sa-stream with all ports on Rust (STREAM-FIX-1).
+
+## 2026-11-05: INF-9 / INF-10 integrated
+- INF-9 (done): `sa-oracle l3` + `tools/e2e/l3.sh`: per-frame L3 comparison against a cached all-original
+  reference, automatic bisection to the minimal culprit with a ready L2 command, and the hook-off check.
+  Main-session verification after merging with CORE-L2 (one conflict in sa-hook l2.rs, both sides kept):
+  tests and clippy pass; `l3.sh --selftest --rust <8 sa-hook + 27 pilot hooks>` with hook-off for 2
+  hooks: clean set matches over 5,200 frames, the injected LimitRadianAngle fault is found at frame 210
+  without help (PASS). The default `--selftest` (every port on Rust) currently stops at the STREAM-FIX-1
+  panic.
+- INF-10 (in progress): DynamoRIO does not run under this Wine 11 (WoW64). Breakpoint coverage instead
+  (169,618 entry/block points, `sa-hook/coverage.rs`, `sa-oracle coverage`). The grove-walk coverage
+  run still stops in the loading-screen fade loop because entry stubs are read as data (one point,
+  0x55C410, is excluded; at least one more remains; `tools/e2e/cov-bisect.py` finds them). Partial
+  coverage (boot to loading screen): 3,084/15,479 functions.
+- Agent process note: one `pkill -f` on its own processes (against PLAN §8); no damage.

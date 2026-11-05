@@ -11,10 +11,12 @@
 
 pub mod call;
 pub mod catalog;
+pub mod coverage;
 pub mod emu;
 pub mod fidelity;
 pub mod generate;
 pub mod l2;
+pub mod l3;
 pub mod list_specs;
 pub mod math_specs;
 pub mod mspec;

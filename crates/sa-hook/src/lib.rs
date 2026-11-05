@@ -13,9 +13,12 @@
 //! - `cdsync`: lost-wake-up fix for `CdStreamSync` (INF-15, Windows only).
 //! - [`l2`] / `l2win`: the L2 oracle (INF-8): original vs Rust at real call sites, see
 //!   `docs/re/l2-oracle.md`.
+//! - [`coverage`]: execution coverage of the original code (INF-10, first-hit breakpoints), see
+//!   `docs/re/l3-coverage.md`.
 
 pub mod arena;
 pub mod control;
+pub mod coverage;
 pub mod game;
 pub mod l2;
 pub mod oracle;

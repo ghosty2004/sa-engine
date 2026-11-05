@@ -6,6 +6,8 @@
 //!                       [--cw 0x7f] [--mxcsr 0x9fa0] [--no-fixtures]
 //! sa-oracle fidelity [--cases N] [--fn-cases N]
 //! sa-oracle mutants [--cases N]          (needs --features mutants)
+//! sa-oracle l3 --rec R --runner CMD [--rust ports] [--hookoff all]   (INF-9, see l3.rs)
+//! sa-oracle coverage points|report ...                              (INF-10, see coverage.rs)
 //! ```
 //!
 //! `--backend auto` (default): Unicorn for functions routed to L1; for functions routed to L2 the
@@ -349,7 +351,10 @@ pub fn main() -> ExitCode {
         Some("fidelity") => fidelity(&a),
         Some("mutants") => mutants(&a),
         Some("l2") => l2(&a),
-        _ => Err("usage: sa-oracle list | l1 <fn|all> [--cases N] [--seed S] [--backend auto|unicorn|native] | fidelity | mutants | l2 spec|ingest|report|replay|show".into()),
+        // INF-9 / INF-10 (own argument parsing: `--no-x` flags, `--k v` options)
+        Some("l3") => sa_oracle::l3::cli(&std::env::args().skip(2).collect::<Vec<_>>()),
+        Some("coverage") => sa_oracle::coverage::cli(&std::env::args().skip(2).collect::<Vec<_>>()),
+        _ => Err("usage: sa-oracle list | l1 <fn|all> [--cases N] [--seed S] [--backend auto|unicorn|native] | fidelity | mutants | l2 spec|ingest|report|replay|show | l3 ... | coverage points|report".into()),
     };
     if let Some(hwm) = std::fs::read_to_string("/proc/self/status").ok().and_then(|s| {
         s.lines()
