@@ -1,0 +1,1830 @@
+level,address,name,module,class
+0,0x41b1a0,cb_RSCOLLISION_RpClump_Ctor,game-plugin,unknown (no decompilation)
+0,0x41b1b0,cb_RSCOLLISION_RpClump_Copy,game-plugin,unknown (no decompilation)
+0,0x41b1c0,cb_RSCOLLISION_RpClump_Dtor,game-plugin,unknown (no decompilation)
+0,0x41b1d0,cb_RSCOLLISION_RpClump_StreamRead,game-plugin,unknown (no decompilation)
+0,0x41b2f0,cb_RSCOLLISION_RpClump_StreamWrite,game-plugin,unknown (no decompilation)
+0,0x41b300,cb_RSCOLLISION_RpClump_StreamGetSize,game-plugin,unknown (no decompilation)
+0,0x41b350,CCollisionPlugin::SetModelInfo,game-plugin,L2 (globals)
+0,0x4aba50,RwHelper::GetEventGlobalGroup,game-plugin,L2 (globals)
+0,0x4c4340,C2dEffect::RpGeometryGet2dFxCount,game-plugin,L2 (globals)
+0,0x4c4a40,C2dEffect::RpGeometryGet2dFxAtIndex,game-plugin,L2 (globals)
+0,0x4c9970,RwD3D9IndexBufferCreate,d3d9-driver,L1
+0,0x4c9a60,cb_DEVICEMODULE_RwRaster_Ctor,d3d9-driver,L2 (globals)
+0,0x4c9a80,cb_DEVICEMODULE_RwRaster_Dtor,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x4c9ab0,_rwD3D9RasterPluginAttach,d3d9-driver,unknown (no decompilation)
+0,0x4c9ea0,_rwD3D9RasterHasAlpha,d3d9-driver,L2 (globals)
+0,0x4c9f70,_rwD3D9RasterIsCubeMap,d3d9-driver,L2 (globals)
+0,0x4c9f90,_rwD3D9RasterLock,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4ca4e0,_rwD3D9RasterLockPalette,d3d9-driver,L2 (globals)
+0,0x4ca540,_rwD3D9RasterUnlockPalette,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cad90,_rwD3D9RasterRenderGeneric,d3d9-driver,L2 (calls stateful)
+0,0x4cb520,_rwD3D9SetRasterContext,d3d9-driver,L2 (globals)
+0,0x4cb530,_rxD3D9VideoMemoryRasterListAdd,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x4cb560,_rxD3D9VideoMemoryRasterListRemove,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x4cb640,_rxD3D9VideoMemoryRasterListRelease,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x4cbcb0,_rwD3D9RasterGetMipLevels,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x4cbd40,_rwD3D9TextureSetRaster,d3d9-driver,L1
+0,0x4cbd50,_rwD3D9RasterSubRaster,d3d9-driver,L1
+0,0x4cbd80,_rwD3D9CheckValidZBufferFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cbde0,_rwD3D9CheckValidTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cbe20,_rwD3D9CheckValidCameraTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cbe80,_rwD3D9CheckValidZBufferTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cbee0,_rwD3D9CheckValidCubeTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cbf20,_rwD3D9CheckValidCameraCubeTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cbfd0,_rwD3D9CheckAutoMipmapGenTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cc020,_rwD3D9CheckAutoMipmapGenCubeTextureFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x4cc970,_rxD3D9VideoMemoryRasterListRestore,d3d9-driver,L2 (calls stateful)
+0,0x4cd360,_rwD3D9NativeTextureGetSize,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x4d15e0,RpAnimBlend::RpAnimBlendClumpGetFirstAssociation-,game-plugin,L2 (calls stateful)
+0,0x4d1680,RpAnimBlend::FrameUpdateCallBackSkinnedWithVelocityExtraction,game-plugin,L2 (globals)
+0,0x4d1a50,RpAnimBlend::FrameUpdateCallBackSkinnedWith3dVelocityExtraction,game-plugin,L2 (globals)
+0,0x4d1db0,RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedSkinned,game-plugin,L2 (globals)
+0,0x4d5ef0,RpAnimBlend::RpAnimBlendFrameGetName,game-plugin,L2 (calls stateful)
+0,0x4d5f40,RpAnimBlend::ClumpAnimConstruct,game-plugin,L1
+0,0x4d5f50,RpAnimBlend::RpAnimBlendAllocateData,game-plugin,L2 (globals)
+0,0x4d5f90,RpAnimBlend::ClumpAnimCopy,game-plugin,L1
+0,0x4d5fa0,RpAnimBlend::RtAnimBlendKeyFrameApply,game-plugin,L1
+0,0x4d60c0,RpAnimBlend::RpAnimBlendKeyFrameInterpolate,game-plugin,L1
+0,0x4d6400,RpAnimBlend::RpAnimBlendClumpFindBone,game-plugin,L2 (globals)
+0,0x4d6760,RpAnimBlend::RpAnimBlendClumpIsInitialized,game-plugin,L2 (calls stateful)
+0,0x4d6790,RpAnimBlend::RpAnimBlendClumpAddAssociation,game-plugin,L2 (globals)
+0,0x4d67e0,RpAnimBlend::RpAnimBlendClumpSetBlendDeltas,game-plugin,L2 (globals)
+0,0x4d6820,RpAnimBlend::RpAnimBlendClumpRemoveAssociations,game-plugin,"L2 (globals, indirect-calls)"
+0,0x4d6870,RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimName,game-plugin,L2 (globals)
+0,0x4d68b0,RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId,game-plugin,L2 (globals)
+0,0x4d68e0,RpAnimBlend::RpAnimBlendClumpGetAssociation-Hier,game-plugin,L2 (globals)
+0,0x4d6910,RpAnimBlend::RpAnimBlendClumpGetMainAssociation,game-plugin,L2 (globals)
+0,0x4d69a0,RpAnimBlend::RpAnimBlendClumpGetMainPartialAssociation,game-plugin,L2 (globals)
+0,0x4d69f0,RpAnimBlend::RpAnimBlendClumpGetMainPartialAssociation_N,game-plugin,L2 (globals)
+0,0x4d6a30,RpAnimBlend::RpAnimBlendClumpGetMainAssociation_N,game-plugin,L2 (globals)
+0,0x4d6a70,RpAnimBlend::RpAnimBlendClumpGetFirstAssociation-Flags,game-plugin,L2 (globals)
+0,0x4d6ab0,RpAnimBlend::RpAnimBlendGetNextAssociation-Any,game-plugin,L1
+0,0x4d6ad0,RpAnimBlend::RpAnimBlendGetNextAssociation-Flags,game-plugin,L1
+0,0x4d6b00,RpAnimBlend::RpAnimBlendClumpPauseAllAnimations,game-plugin,L2 (globals)
+0,0x4d6b30,RpAnimBlend::RpAnimBlendClumpUnPauseAllAnimations,game-plugin,L2 (globals)
+0,0x4d6b60,RpAnimBlend::RpAnimBlendClumpGetNumAssociations,game-plugin,L2 (globals)
+0,0x4d6b80,RpAnimBlend::RpAnimBlendClumpGetNumPartialAssociations,game-plugin,L2 (globals)
+0,0x4d6bb0,RpAnimBlend::RpAnimBlendClumpGetNumNonPartialAssociations,game-plugin,L2 (globals)
+0,0x4d6be0,RpAnimBlend::RpAnimBlendClumpExtractAssociations,game-plugin,L2 (globals)
+0,0x4d6c00,RpAnimBlend::RpAnimBlendClumpRemoveAllAssociations,game-plugin,"L2 (globals, indirect-calls)"
+0,0x4d6c30,RpAnimBlend::RpAnimBlendClumpGiveAssociations,game-plugin,"L2 (globals, indirect-calls)"
+0,0x5370a0,RwHelper::GetNameAndDamage,game-plugin,L1
+0,0x59cd70,BreakablePlugin::BreakableConstructor,game-plugin,L2 (globals)
+0,0x59d0f0,BreakablePlugin::BreakableStreamGetSize,game-plugin,L1
+0,0x5a4190,CClothesBuilder::LoadCdDirectory,game-plugin,L2 (globals)
+0,0x5a41c0,CClothesBuilder::RequestGeometry,game-plugin,L2 (globals)
+0,0x5a4220,CClothesBuilder::RequestTexture,game-plugin,L2 (globals)
+0,0x5a42b0,CClothesBuilder::unnamed_0x5a42b0,game-plugin,L1
+0,0x5a44c0,CClothesBuilder::PreprocessClothesDesc,game-plugin,L2 (globals)
+0,0x5a47b0,CClothesBuilder::ReleaseGeometry,game-plugin,L1
+0,0x5a4840,CClothesBuilder::AddWeightToBoneVertex,game-plugin,L1
+0,0x5a56c0,CClothesBuilder::DestroySkinArrays,game-plugin,L1
+0,0x5a5730,CClothesBuilder::CopyTexture,game-plugin,L2 (calls stateful)
+0,0x5d0320,JPegPlugin::JPegDecompressToVramFromBuffer,game-plugin,L2 (globals)
+0,0x5d5b10,CCarFXRenderer::PreRenderUpdate,game-pipeline,L2 (globals)
+0,0x5d5b20,CCarFXRenderer::CustomCarPipeAtomicSetup,game-pipeline,L2 (calls stateful)
+0,0x5d5ba0,CCarFXRenderer::SetFxEnvMapLightMult,game-pipeline,L2 (globals)
+0,0x5d63e0,CCustomBuildingDNPipeline::CustomPipeReinstanceCB,game-pipeline,unknown (no decompilation)
+0,0x5d6d10,CCustomBuildingDNPipeline::pluginExtraVertColourConstructorCB,game-pipeline,L2 (globals)
+0,0x5d6d30,CCustomBuildingDNPipeline::pluginExtraVertColourDestructorCB,game-pipeline,L2 (globals)
+0,0x5d6dc0,CCustomBuildingDNPipeline::pluginExtraVertColourStreamGetSizeCB,game-pipeline,L1
+0,0x5d6f90,CCustomCarEnvMapPipeline::GetFxEnvScaleX,game-pipeline,L2 (globals)
+0,0x5d6fc0,CCustomCarEnvMapPipeline::GetFxEnvScaleY,game-pipeline,L2 (globals)
+0,0x5d7040,CCustomCarEnvMapPipeline::GetFxEnvTransSclX,game-pipeline,L2 (globals)
+0,0x5d7070,CCustomCarEnvMapPipeline::GetFxEnvTransSclY,game-pipeline,L2 (globals)
+0,0x5d7200,CCustomBuildingDNPipeline::PreRenderUpdate-Atomic,game-pipeline,L2 (calls stateful)
+0,0x5d77a0,CCustomBuildingPipeline::CustomPipeReinstanceCB,game-pipeline,L2 (indirect-calls)
+0,0x5d7f80,CCustomBuildingRenderer::UpdateDayNightBalanceParam,game-pipeline,L2 (globals)
+0,0x5d8490,CCustomCarEnvMapPipeline::CustomPipeInstanceCB,game-pipeline,L2 (indirect-calls)
+0,0x5d8870,CCustomCarEnvMapPipeline::PreRenderUpdate,game-pipeline,L2 (globals)
+0,0x5d8ad0,CCustomCarEnvMapPipeline::GetFxEnvShininess,game-pipeline,L2 (globals)
+0,0x5d8b50,CCustomCarEnvMapPipeline::GetFxSpecTexture,game-pipeline,L2 (globals)
+0,0x5d8b90,CCustomCarEnvMapPipeline::GetFxSpecSpecularity,game-pipeline,L2 (globals)
+0,0x5d8bb0,CCustomCarEnvMapPipeline::SetCustomEnvMapPipeMaterialDataDefaults,game-pipeline,L1
+0,0x5d8bd0,CCustomCarEnvMapPipeline::pluginEnvMatConstructorCB,game-pipeline,L2 (globals)
+0,0x5d8d10,CCustomCarEnvMapPipeline::pluginEnvMatStreamGetSizeCB,game-pipeline,L1
+0,0x5d8d30,CCustomCarEnvMapPipeline::pluginEnvAtmConstructorCB,game-pipeline,L1
+0,0x5d8d40,CCustomCarEnvMapPipeline::pluginSpecMatConstructorCB,game-pipeline,L2 (globals)
+0,0x5d8dd0,CCustomCarEnvMapPipeline::pluginSpecMatStreamGetSizeCB,game-pipeline,L2 (globals)
+0,0x5d9570,CCustomBuildingDNPipeline::SetFxEnvTexture,game-pipeline,L2 (globals)
+0,0x5d95b0,CCustomCarEnvMapPipeline::pluginEnvMatDestructorCB,game-pipeline,L2 (globals)
+0,0x5d9600,CCustomCarEnvMapPipeline::pluginEnvMatCopyConstructorCB,game-pipeline,L2 (globals)
+0,0x5d96f0,CCustomCarEnvMapPipeline::AllocEnvMapPipeAtomicData,game-pipeline,L2 (globals)
+0,0x5d9730,CCustomCarEnvMapPipeline::pluginEnvAtmDestructorCB,game-pipeline,L2 (globals)
+0,0x5d9780,CCustomCarEnvMapPipeline::pluginEnvAtmCopyConstructorCB,game-pipeline,L2 (calls stateful)
+0,0x5d9830,CCustomCarEnvMapPipeline::pluginSpecMatCopyConstructorCB,game-pipeline,L2 (globals)
+0,0x5da230,CCustomCarEnvMapPipeline::SetFxEnvTexture,game-pipeline,L2 (globals)
+0,0x5da610,CCustomCarEnvMapPipeline::CustomPipeAtomicSetup,game-pipeline,L2 (calls stateful)
+0,0x5e46d0,CVisibilityPlugins::AddWeaponPedForPC,game-plugin,L2 (globals)
+0,0x6f9f90,C2dEffect::t2dEffectPluginConstructor,game-plugin,L2 (globals)
+0,0x6f9fb0,C2dEffect::t2dEffectPluginCopyConstructor,game-plugin,L2 (globals)
+0,0x6fa620,C2dEffect::Rwt2dEffectPluginDataChunkWriteCallBack,game-plugin,L1
+0,0x6fa630,C2dEffect::Rwt2dEffectPluginDataChunkGetSizeCallBack,game-plugin,L1
+0,0x6fa640,C2dEffect::Roadsign_GetNumLinesFromFlags,game-plugin,L1
+0,0x6fa670,C2dEffect::Roadsign_GetNumLettersFromFlags,game-plugin,L1
+0,0x6fa6a0,C2dEffect::Roadsign_GetPaletteIDFromFlags,game-plugin,L1
+0,0x707790,RenderBuffer::ClearRenderBuffer,game-plugin,L2 (globals)
+0,0x7077a0,RenderBuffer::StopStoring,game-plugin,L2 (globals)
+0,0x72f9c0,cb_RSNODENAME_RwFrame_Ctor,game-plugin,unknown (no decompilation)
+0,0x72f9e0,cb_RSNODENAME_RwFrame_Dtor,game-plugin,unknown (no decompilation)
+0,0x72f9f0,cb_RSNODENAME_RwFrame_Copy,game-plugin,unknown (no decompilation)
+0,0x72fa20,cb_RSNODENAME_RwFrame_StreamWrite,game-plugin,unknown (no decompilation)
+0,0x72fa50,cb_RSNODENAME_RwFrame_StreamRead,game-plugin,unknown (no decompilation)
+0,0x72fa80,cb_RSNODENAME_RwFrame_StreamGetSize,game-plugin,unknown (no decompilation)
+0,0x72fb00,NodeNamePlugin::SetFrameNodeName,game-plugin,L2 (globals)
+0,0x72fb30,NodeNamePlugin::GetFrameNodeName,game-plugin,L2 (calls stateful)
+0,0x72fb50,cb_RSPIPELINE_RpAtomic_Ctor,game-plugin,unknown (no decompilation)
+0,0x72fb70,cb_RSPIPELINE_RpAtomic_Copy,game-plugin,unknown (no decompilation)
+0,0x72fb90,cb_RSPIPELINE_RpAtomic_StreamRead,game-plugin,unknown (no decompilation)
+0,0x72fbc0,cb_RSPIPELINE_RpAtomic_StreamGetSize,game-plugin,unknown (no decompilation)
+0,0x72fc40,PipelinePlugin::GetPipelineID,game-plugin,L2 (globals)
+0,0x72fc50,PipelinePlugin::SetPipelineID,game-plugin,L2 (globals)
+0,0x731600,cb_RSTXDPARENT_RwTexDictionary_Ctor,game-plugin,unknown (no decompilation)
+0,0x731620,cb_RSTXDPARENT_RwTexDictionary_Dtor,game-plugin,unknown (no decompilation)
+0,0x731630,cb_RSTXDPARENT_RwTexDictionary_Copy,game-plugin,unknown (no decompilation)
+0,0x731650,CTxdStore::PluginAttach,game-plugin,unknown (no decompilation)
+0,0x732150,CVisibilityPlugins::AtomicConstructor,game-plugin,unknown (no decompilation)
+0,0x732170,CVisibilityPlugins::AtomicCopyConstructor,game-plugin,L2 (globals)
+0,0x7321a0,CVisibilityPlugins::AtomicDestructor,game-plugin,L1
+0,0x7321b0,CVisibilityPlugins::FrameConstructor,game-plugin,L2 (globals)
+0,0x7321d0,CVisibilityPlugins::FrameCopyConstructor,game-plugin,L2 (globals)
+0,0x7321f0,CVisibilityPlugins::FrameDestructor,game-plugin,L1
+0,0x732200,CVisibilityPlugins::ClumpCopyConstructor,game-plugin,L2 (globals)
+0,0x732220,CVisibilityPlugins::ClumpDestructor,game-plugin,L1
+0,0x732230,CVisibilityPlugins::SetModelInfoIndex,game-plugin,L2 (globals)
+0,0x732250,CVisibilityPlugins::GetModelInfoIndex,game-plugin,L2 (globals)
+0,0x732260,CVisibilityPlugins::GetModelInfo,game-plugin,L2 (globals)
+0,0x732290,CVisibilityPlugins::SetAtomicId,game-plugin,L2 (globals)
+0,0x7322b0,CVisibilityPlugins::SetAtomicFlag,game-plugin,L2 (globals)
+0,0x7322d0,CVisibilityPlugins::setClumpForAllAtomicsFlagCB,game-plugin,L2 (globals)
+0,0x732307,CVisibilityPlugins::SetClumpForAllAtomicsFlag,game-plugin,L1
+0,0x732310,CVisibilityPlugins::ClearAtomicFlag,game-plugin,L2 (globals)
+0,0x732330,CVisibilityPlugins::clearClumpForAllAtomicsFlagCB,game-plugin,L2 (globals)
+0,0x732370,CVisibilityPlugins::GetAtomicId,game-plugin,L2 (globals)
+0,0x732380,CVisibilityPlugins::SetUserValue,game-plugin,L2 (globals)
+0,0x7323a0,CVisibilityPlugins::GetUserValue,game-plugin,L2 (globals)
+0,0x7323b0,CVisibilityPlugins::SetAlphaCB,game-plugin,L1
+0,0x732500,CVisibilityPlugins::CalculateFadingAtomicAlpha,game-plugin,L1
+0,0x7326d0,CVisibilityPlugins::GetDotProductWithCameraVector,game-plugin,L2 (globals)
+0,0x7328a0,CVisibilityPlugins::SetAtomicRenderCallback,game-plugin,L1
+0,0x7328c0,CVisibilityPlugins::SetRenderWareCamera,game-plugin,L2 (globals)
+0,0x732a00,CVisibilityPlugins::SetFrameHierarchyId,game-plugin,L2 (globals)
+0,0x732a20,CVisibilityPlugins::GetFrameHierarchyId,game-plugin,L2 (calls stateful)
+0,0x732a30,CVisibilityPlugins::DefaultVisibilityCB,game-plugin,L1
+0,0x732ac0,CVisibilityPlugins::GetClumpModelInfo,game-plugin,L2 (globals)
+0,0x732ae0,CVisibilityPlugins::IsClumpVisible,game-plugin,"L2 (globals, indirect-calls)"
+0,0x732b00,CVisibilityPlugins::SetClumpAlpha,game-plugin,L2 (globals)
+0,0x732b20,CVisibilityPlugins::GetClumpAlpha,game-plugin,L2 (globals)
+0,0x732cc0,CVisibilityPlugins::GetDistanceSquaredFromCamera-RwV3d,game-plugin,L1
+0,0x732e10,CVisibilityPlugins::ClumpConstructor,game-plugin,L2 (globals)
+0,0x732eb0,CVisibilityPlugins::Shutdown,game-plugin,L2 (globals)
+0,0x733750,CVisibilityPlugins::SetClumpModelInfo,game-plugin,"L2 (globals, indirect-calls)"
+0,0x7337a0,CVisibilityPlugins::RenderOrderedList,game-plugin,L2 (indirect-calls)
+0,0x7337d0,CVisibilityPlugins::RenderFadingUnderwaterEntities,game-plugin,"L2 (globals, indirect-calls)"
+0,0x733800,CVisibilityPlugins::RenderReallyDrawLastObjects,game-plugin,"L2 (globals, indirect-calls)"
+0,0x733a20,CVisibilityPlugins::Initialise,game-plugin,L2 (globals)
+0,0x733d90,CVisibilityPlugins::InsertEntityIntoUnderwaterList,game-plugin,L2 (calls stateful)
+0,0x733dd0,CVisibilityPlugins::InsertObjectIntoSortedList,game-plugin,L2 (calls stateful)
+0,0x733e10,CVisibilityPlugins::InsertAtomicIntoReallyDrawLastList,game-plugin,L2 (calls stateful)
+0,0x733e50,CVisibilityPlugins::InsertEntityIntoReallyDrawLastList,game-plugin,L2 (calls stateful)
+0,0x733e90,CVisibilityPlugins::RenderAlphaAtomics,game-plugin,"L2 (globals, indirect-calls)"
+0,0x733ec0,CVisibilityPlugins::RenderBoatAlphaAtomics,game-plugin,"L2 (globals, indirect-calls)"
+0,0x733f10,CVisibilityPlugins::RenderFadingEntities,game-plugin,"L2 (globals, indirect-calls)"
+0,0x734530,CVisibilityPlugins::InitAlphaAtomicList,game-plugin,L2 (calls stateful)
+0,0x734540,CVisibilityPlugins::InitAlphaEntityList,game-plugin,L2 (calls stateful)
+0,0x734570,CVisibilityPlugins::InsertEntityIntoSortedList,game-plugin,L2 (calls stateful)
+0,0x734810,RwHelper::GetFirstAtomicCallback,game-plugin,L1
+0,0x734850,RwHelper::Get2DEffectAtomicCallback,game-plugin,L2 (globals)
+0,0x7348b0,RwHelper::GetFirstObjectCallback,game-plugin,L1
+0,0x7348f0,RwHelper::GetFirstFrameCallback,game-plugin,L1
+0,0x734d60,RwHelper::forceLinearFilteringMatTexturesCB,game-plugin,L1
+0,0x748f30,RpAnisotTextureSetMaxAnisotropy,toolkit,L2 (globals)
+0,0x748f50,RpAnisotTextureGetMaxAnisotropy,toolkit,L2 (globals)
+0,0x749000,cb_ANISOTPLUGIN_RwEngine_Open,toolkit,L2 (globals)
+0,0x749010,cb_ANISOTPLUGIN_RwEngine_Close,toolkit,L2 (globals)
+0,0x749020,cb_ANISOTPLUGIN_RwTexture_Ctor,toolkit,L2 (globals)
+0,0x749030,cb_ANISOTPLUGIN_RwTexture_Dtor,toolkit,L1
+0,0x749040,cb_ANISOTPLUGIN_RwTexture_Copy,toolkit,L2 (globals)
+0,0x7490f0,cb_ANISOTPLUGIN_RwTexture_StreamGetSize,toolkit,L2 (globals)
+0,0x7491a0,cb_RIGHTTORENDER_RpAtomic_StreamGetSize,world,L1
+0,0x7491f0,_rpAtomicResyncInterpolatedSphere,world,L1
+0,0x749720,RpAtomicSetFreeListCreateParams,world,L2 (globals)
+0,0x749740,RpClumpSetFreeListCreateParams,world,L2 (globals)
+0,0x749880,cb_CLUMP_RwCamera_Ctor,world,L2 (globals)
+0,0x7498a0,cb_CLUMP_RwCamera_Dtor,world,L1
+0,0x7498b0,cb_CLUMP_RpLight_Ctor,world,L2 (globals)
+0,0x7498d0,cb_CLUMP_RpLight_Dtor,world,L1
+0,0x7498e0,RpClumpGetNumAtomics,world,L1
+0,0x749910,RpClumpGetNumLights,world,L2 (globals)
+0,0x749940,RpClumpGetNumCameras,world,L2 (globals)
+0,0x749b70,RpClumpForAllAtomics,world,L2 (indirect-calls)
+0,0x749bb0,RpClumpForAllCameras,world,"L2 (globals, indirect-calls)"
+0,0x749c00,RpClumpForAllLights,world,"L2 (globals, indirect-calls)"
+0,0x749e40,RpLightGetClump,world,L2 (globals)
+0,0x749e50,RwCameraGetClump,world,L2 (globals)
+0,0x74a240,RpClumpSetCallBack,world,L1
+0,0x74a260,_rpClumpDefaultCallBack,world,L1
+0,0x74a270,RpClumpGetCallBack,world,L1
+0,0x74a490,RpClumpAddAtomic,world,L1
+0,0x74a4c0,RpClumpRemoveAtomic,world,L1
+0,0x74a4f0,RpClumpAddLight,world,L2 (globals)
+0,0x74a520,RpClumpRemoveLight,world,L2 (globals)
+0,0x74a550,RpClumpAddCamera,world,L2 (globals)
+0,0x74a580,RpClumpRemoveCamera,world,L2 (globals)
+0,0x74ae40,_rpClumpCountObjectsCB,world,L1
+0,0x74bf00,RpAtomicValidatePlugins,world,L1
+0,0x74bf10,RpClumpValidatePlugins,world,L1
+0,0x74bfa0,cb_GEOMETRYMODULE_RwEngine_Open,world,L2 (globals)
+0,0x74bfc0,cb_GEOMETRYMODULE_RwEngine_Close,world,L2 (globals)
+0,0x74bfd0,_rpGeometryGetSortMaterialsDefault,world,L2 (globals)
+0,0x74c690,RpGeometryTriangleSetVertexIndices,world,L1
+0,0x74c720,RpGeometryTriangleGetVertexIndices,world,L1
+0,0x74c760,RpGeometryTriangleGetMaterial,world,L1
+0,0x74c790,RpGeometryForAllMaterials,world,L2 (indirect-calls)
+0,0x74ccb0,_rpGeometryAddRef,world,L1
+0,0x74ce10,RpGeometryValidatePlugins,world,L1
+0,0x74ce60,_rpGeometryStructGetSize,world,L1
+0,0x74d850,cb_RIGHTTORENDER_RpMaterial_StreamGetSize,world,L1
+0,0x74d870,_rpMaterialSetDefaultSurfaceProperties,world,L2 (globals)
+0,0x74d8c0,RpMaterialSetFreeListCreateParams,world,L2 (globals)
+0,0x74dcb0,RpMaterialValidatePlugins,world,L1
+0,0x74e1b0,_rpMaterialListInitialize,world,L1
+0,0x74e1c0,_rpMaterialListAlloc,world,"L2 (globals, indirect-calls)"
+0,0x74e2b0,_rpMaterialListGetMaterial,world,L1
+0,0x74e420,_rpMaterialListFindMaterialIndex,world,L1
+0,0x74e9e0,_rpD3D9RemoveDynamicGeometry,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x74ea80,_rpD3D9WorldRestoreCallback,world,"L2 (globals, indirect-calls)"
+0,0x74eab0,_rpWorldPipeDummyTrue,world,L1
+0,0x74eac0,_rpWorldPipeDummyVoid,world,L1
+0,0x74ef10,_rpWorldForAllGlobalLights,world,"L2 (globals, indirect-calls)"
+0,0x74ef60,_rpWorldSectorForAllLocalLights,world,L2 (indirect-calls)
+0,0x74f020,_rpWorldSetupSectorBoundingBoxes,world,L1
+0,0x74f0c0,_rpWorldRegisterWorld,world,"L2 (globals, indirect-calls)"
+0,0x74f140,_rpWorldUnregisterWorld,world,"L2 (globals, indirect-calls)"
+0,0x74f4e0,RpWorldSectorGetWorld,world,L2 (globals)
+0,0x74f730,RpWorldSetSectorRenderCallBack,world,L1
+0,0x74f750,RpWorldGetSectorRenderCallBack,world,L1
+0,0x74fb80,RpWorldForAllClumps,world,L2 (indirect-calls)
+0,0x74fbc0,RpWorldForAllMaterials,world,L2 (indirect-calls)
+0,0x74fc00,RpWorldForAllLights,world,L2 (indirect-calls)
+0,0x74fc70,RpWorldForAllWorldSectors,world,L2 (indirect-calls)
+0,0x74fd90,RpWorldValidatePlugins,world,L1
+0,0x74ff60,RpTieSetFreeListCreateParams,world,L2 (globals)
+0,0x74ff80,RpLightTieSetFreeListCreateParams,world,L2 (globals)
+0,0x74ffa0,_rpWorldSectorTieDestroy,world,"L2 (globals, indirect-calls)"
+0,0x74fff0,_rpWorldSectorLightTieDestroy,world,"L2 (globals, indirect-calls)"
+0,0x7503e0,cb_WORLDOBJMODULE_RwCamera_Ctor,world,L2 (globals)
+0,0x750430,_rpWorldObjCameraBeginUpdate,world,"L2 (globals, indirect-calls)"
+0,0x750460,_rpWorldObjCameraEndUpdate,world,"L2 (globals, indirect-calls)"
+0,0x750760,cb_WORLDOBJMODULE_RwCamera_Dtor,world,"L2 (globals, indirect-calls)"
+0,0x7507b0,cb_WORLDOBJMODULE_RpAtomic_Ctor,world,L2 (globals)
+0,0x7509a0,cb_WORLDOBJMODULE_RpAtomic_Copy,world,L1
+0,0x7509b0,cb_WORLDOBJMODULE_RpAtomic_Dtor,world,"L2 (globals, indirect-calls)"
+0,0x750a30,cb_WORLDOBJMODULE_RpClump_Ctor,world,L2 (globals)
+0,0x750a90,cb_WORLDOBJMODULE_RpClump_Dtor,world,L1
+0,0x750aa0,cb_WORLDOBJMODULE_RpLight_Ctor,world,L2 (globals)
+0,0x750d30,cb_WORLDOBJMODULE_RpLight_Dtor,world,"L2 (globals, indirect-calls)"
+0,0x750f50,RpWorldRemoveCamera,world,L2 (globals)
+0,0x750f80,RwCameraGetWorld,world,L2 (globals)
+0,0x751050,RpAtomicGetWorld,world,L2 (globals)
+0,0x751060,RpAtomicForAllWorldSectors,world,L2 (indirect-calls)
+0,0x7510a0,RpWorldSectorForAllAtomics,world,L2 (indirect-calls)
+0,0x751140,RpWorldSectorForAllCollisionAtomics,world,L2 (indirect-calls)
+0,0x7515a0,_rpWorldRemoveLightCB,world,"L2 (globals, indirect-calls)"
+0,0x751630,_rpWorldRemoveCameraCB,world,L2 (globals)
+0,0x751660,RwCameraForAllSectorsInFrustum,world,"L2 (globals, indirect-calls)"
+0,0x7516b0,RpClumpGetWorld,world,L2 (globals)
+0,0x751960,RpWorldRemoveLight,world,"L2 (globals, indirect-calls)"
+0,0x7519e0,RpLightGetWorld,world,L2 (globals)
+0,0x751a90,RpLightSetColor,world,L1
+0,0x751d20,RpLightSetConeAngle,world,L1
+0,0x751e00,RpLightValidatePlugins,world,L1
+0,0x7521a0,_rpLightDefaultSyncCallBack,world,L1
+0,0x752250,RpLightSetFreeListCreateParams,world,L2 (globals)
+0,0x7522e0,_rpD3D9VertexDeclarationGetSize,d3d9-driver,L1
+0,0x7522f0,_rpD3D9VertexDeclarationGetStride,d3d9-driver,L1
+0,0x752320,_rpD3D9VertexDeclarationInstWeights,d3d9-driver,L1
+0,0x752ad0,_rpD3D9VertexDeclarationInstV3d,d3d9-driver,L1
+0,0x7531b0,_rpD3D9VertexDeclarationInstV3dComp,d3d9-driver,L1
+0,0x753b60,_rpD3D9VertexDeclarationInstV3dMorph,d3d9-driver,L1
+0,0x7544e0,_rpD3D9VertexDeclarationInstV2d,d3d9-driver,L1
+0,0x754ae0,_rpD3D9VertexDeclarationInstColor,d3d9-driver,L1
+0,0x754b40,_rpD3D9VertexDeclarationInstIndices,d3d9-driver,L1
+0,0x754c80,_rpD3D9VertexDeclarationInstIndicesRemap,d3d9-driver,L1
+0,0x7551f0,_rpD3D9VertexDeclarationUnInstV3d,d3d9-driver,L1
+0,0x7555e0,_rpD3D9VertexDeclarationUnInstV2d,d3d9-driver,L1
+0,0x755830,_rpD3D9GetMinMaxValuesV3d,d3d9-driver,L1
+0,0x7558f0,_rpD3D9GetMinMaxValuesV2d,d3d9-driver,L1
+0,0x755bc0,cb_LIGHTMODULE_RpLight_Ctor,d3d9-driver,L2 (globals)
+0,0x755bf0,cb_LIGHTMODULE_RpLight_Dtor,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x755ce0,cb_LIGHTMODULE_RpLight_Copy,d3d9-driver,L2 (globals)
+0,0x755d20,RpD3D9LightSetAttenuationParams,d3d9-driver,L2 (globals)
+0,0x755d50,RpD3D9LightGetAttenuationParams,d3d9-driver,L2 (globals)
+0,0x755fe0,_rwD3D9LightsClose,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x756710,_rpD3D9IndexRangeMinMax,d3d9-driver,L1
+0,0x756770,_rpD3D9SortTriangles,d3d9-driver,L1
+0,0x7567a0,_rpD3D9TriangleSortCompare,d3d9-driver,L1
+0,0x756830,_rpD3D9ConvertTriStripToList,d3d9-driver,L1
+0,0x757380,RxD3D9AllInOneSetInstanceCallBack,d3d9-driver,L1
+0,0x757390,RxD3D9AllInOneGetInstanceCallBack,d3d9-driver,L1
+0,0x7573a0,RxD3D9AllInOneSetReinstanceCallBack,d3d9-driver,L1
+0,0x7573b0,RxD3D9AllInOneGetReinstanceCallBack,d3d9-driver,L1
+0,0x7573c0,RxD3D9AllInOneSetLightingCallBack,d3d9-driver,L1
+0,0x7573d0,RxD3D9AllInOneGetLightingCallBack,d3d9-driver,L1
+0,0x7573e0,RxD3D9AllInOneSetRenderCallBack,d3d9-driver,L1
+0,0x7573f0,RxD3D9AllInOneGetRenderCallBack,d3d9-driver,L1
+0,0x757890,_rwD3D9AtomicAllInOnePipelineInit,d3d9-driver,L1
+0,0x758240,_rxD3D9IndexCompare,d3d9-driver,L1
+0,0x7582e0,RxNodeDefinitionGetD3D9AtomicAllInOne,d3d9-driver,L1
+0,0x758850,cb_RXWORLDDEVICEMODULE_RpGeometry_RpWorldSector_Ctor,world,L1
+0,0x758860,cb_RXWORLDDEVICEMODULE_RpGeometry_RpWorldSector_Dtor,world,L1
+0,0x758870,cb_RXWORLDDEVICEMODULE_RpGeometry_RpWorldSector_Copy,world,L1
+0,0x758890,cb_RXWORLDDEVICEMODULE_RwEngine_Open,world,L2 (globals)
+0,0x7588a0,cb_RXWORLDDEVICEMODULE_RwEngine_Close,world,L2 (globals)
+0,0x7588b0,RpD3D9GeometrySetUsageFlags,d3d9-driver,L2 (globals)
+0,0x7588d0,RpD3D9GeometryGetUsageFlags,d3d9-driver,L2 (globals)
+0,0x7588e0,RpD3D9WorldSectorSetUsageFlags,d3d9-driver,L2 (globals)
+0,0x758900,RpD3D9WorldSectorGetUsageFlags,d3d9-driver,L2 (globals)
+0,0x758910,_rpMeshHeaderDestroy,world,"L2 (globals, indirect-calls)"
+0,0x758920,_rpMeshHeaderCreate,world,"L2 (globals, indirect-calls)"
+0,0x758b80,_rpBuildMeshDestroy,world,"L2 (globals, indirect-calls)"
+0,0x758bc0,_rpMeshDestroy,world,"L2 (globals, indirect-calls)"
+0,0x758d30,_rpMeshHeaderForAllMeshes,world,L2 (indirect-calls)
+0,0x759090,_rpMeshSize,world,L1
+0,0x7590e0,_rpMeshGetNextSerialNumber,world,L2 (globals)
+0,0x759640,_rpBuildMeshMaterialCompare,world,L1
+0,0x75a1b0,_rpTriStripEdgeAdd,world,"L2 (globals, indirect-calls)"
+0,0x75a250,_rpTriStripMarkUsed,world,L1
+0,0x75a660,_rpTriStripMeshCreate,world,"L2 (globals, indirect-calls)"
+0,0x75b500,RpTriStripDefaultCost,world,L1
+0,0x75bb20,_rpTriStripMeshToggleFlags,world,L1
+0,0x75bb50,_rpTriStripPolygonCountMarked,world,L1
+0,0x75bb80,_rpTriStripMeshTunnelStep,world,L1
+0,0x75bc80,_rpTriStripMeshTunnelSearch,world,"L2 (globals, indirect-calls)"
+0,0x75c290,_rpTriStripQuickFindNeighbour,world,L1
+0,0x75c330,RpTriStripPolygonFollowStrip,world,L1
+0,0x75c660,_rpBuildMeshTriStripVertexCount,world,"L2 (globals, indirect-calls)"
+0,0x75d240,_rpBuildMeshTriStripExtend,world,L1
+0,0x75d4c0,RpMeshSetTriStripMethod,world,L2 (globals)
+0,0x75d500,RpMeshGetTriStripMethod,world,L2 (globals)
+0,0x75d730,_rpTriListMeshGenerateCallback,world,"L2 (globals, indirect-calls)"
+0,0x75d9d0,RpGeometryIsCorrectlySorted,world,"L2 (globals, indirect-calls)"
+0,0x75e230,_rpGeometrySortByMaterialCompare,world,L1
+0,0x75e270,RpWorldSetDefaultSectorPipeline,world,L2 (globals)
+0,0x75e2a0,RpAtomicSetDefaultPipeline,world,L2 (globals)
+0,0x75e2d0,RpMaterialSetDefaultPipeline,world,L2 (globals)
+0,0x75e3e0,_rpWorldObjDummyTrue,world,L1
+0,0x75e540,_rwD3D9WorldSectorAllInOnePipelineInit,d3d9-driver,L1
+0,0x75e9f0,RxNodeDefinitionGetD3D9WorldSectorAllInOne,d3d9-driver,L1
+0,0x75edd0,_rpD3D9GetNumConstantsUsed,d3d9-driver,L2 (globals)
+0,0x760cf0,_rpD3D9VertexShaderCacheReset,d3d9-driver,L2 (globals)
+0,0x761000,_rxD3D9VertexShaderDefaultEndCallBack,d3d9-driver,L1
+0,0x761720,_rpD3D9VertexShaderUpdateLightsColors,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x761820,_rpD3D9VertexShaderUpdateMaterialColor,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x761950,_rpD3D9VertexShaderUpdateMorphingCoef,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7619a0,_rpD3DVertexShaderSetUVAnimMatrix,world,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x761c30,cb_SECTORMODULE_RwEngine_Open,world,L2 (globals)
+0,0x761c40,cb_SECTORMODULE_RwEngine_Close,world,L2 (globals)
+0,0x761c50,RpWorldSectorRender,world,"L2 (globals, indirect-calls)"
+0,0x761d50,RpWorldSectorValidatePlugins,world,L1
+0,0x761de0,cb_RIGHTTORENDER_RpWorld_StreamGetSize,world,L1
+0,0x761e80,cb_RIGHTTORENDER_RpWorldSector_StreamGetSize,world,L1
+0,0x762440,_rpWorldAtomicSectorStructGetSize,world,L1
+0,0x7637d0,cb_BINWORLDMODULE_RwEngine_Close,world,L2 (globals)
+0,0x7637e0,cb_BINWORLDMODULE_RwEngine_Open,world,L2 (globals)
+0,0x763eb0,_rpD3D9NativeDataGeometryStreamGetSize,d3d9-driver,L2 (indirect-calls)
+0,0x764650,_rwD3D9VSSetActiveWorldMatrix,d3d9-driver,L2 (globals)
+0,0x7646e0,_rwD3D9VSGetComposedTransformMatrix,d3d9-driver,L2 (globals)
+0,0x764730,_rwD3D9VSGetWorldViewTransposedMatrix,d3d9-driver,L2 (globals)
+0,0x764890,_rwD3D9MatrixInvertOrthonormal,d3d9-driver,L1
+0,0x764d20,_rwD3D9VSGetProjectionTransposedMatrix,d3d9-driver,L2 (globals)
+0,0x7c45e0,RpHAnimHierarchySetFreeListCreateParams,anim,L2 (globals)
+0,0x7c4750,cb_HANIMPLUGIN_RwFrame_Ctor,anim,L2 (globals)
+0,0x7c4bf0,cb_HANIMPLUGIN_RwFrame_StreamGetSize,anim,L2 (globals)
+0,0x7c4ff0,RpHAnimHierarchyDetach,anim,L1
+0,0x7c5100,RpHAnimHierarchyDetachFrameIndex,anim,L1
+0,0x7c5120,RpHAnimHierarchyGetMatrixArray,anim,L1
+0,0x7c5130,RpHAnimFrameSetHierarchy,anim,L2 (globals)
+0,0x7c5160,RpHAnimFrameGetHierarchy,anim,L2 (globals)
+0,0x7c5170,RpHAnimFrameSetID,anim,L2 (globals)
+0,0x7c5190,RpHAnimFrameGetID,anim,L2 (globals)
+0,0x7c51a0,RpHAnimIDGetIndex,anim,L1
+0,0x7c5b80,RpHAnimKeyFrameApply,anim,L1
+0,0x7c65b0,RpHAnimKeyFrameStreamGetSize,anim,L1
+0,0x7c65c0,RpHAnimKeyFrameMulRecip,anim,L1
+0,0x7c6720,RpHAnimKeyFrameAdd,anim,L1
+0,0x7c67f0,RpSkinSetFreeListCreateParams,skin,L2 (globals)
+0,0x7c69f0,cb_SKINPLUGIN_RpGeometry_Ctor,skin,L2 (globals)
+0,0x7c6a70,cb_SKINPLUGIN_RpGeometry_Copy,skin,L1
+0,0x7c6a80,cb_SKINPLUGIN_RpAtomic_Ctor,skin,L2 (globals)
+0,0x7c6aa0,cb_SKINPLUGIN_RpAtomic_Dtor,skin,L2 (globals)
+0,0x7c6ac0,cb_SKINPLUGIN_RpAtomic_Copy,skin,L2 (globals)
+0,0x7c70c0,_rpSkinFindUsedBones,skin,L1
+0,0x7c7190,_rpSkinAllocateData,skin,"L2 (globals, indirect-calls)"
+0,0x7c7500,cb_SKINPLUGIN_RpAtomic_StreamWrite,skin,L1
+0,0x7c7510,cb_SKINPLUGIN_RpAtomic_StreamGetSize,skin,L1
+0,0x7c7520,RpSkinAtomicSetHAnimHierarchy,skin,L2 (globals)
+0,0x7c7540,RpSkinAtomicGetHAnimHierarchy,skin,L2 (globals)
+0,0x7c7550,RpSkinGeometryGetSkin,skin,L2 (globals)
+0,0x7c77e0,RpSkinGetNumBones,skin,L1
+0,0x7c77f0,RpSkinGetVertexBoneWeights,skin,L1
+0,0x7c7800,RpSkinGetVertexBoneIndices,skin,L1
+0,0x7c7810,RpSkinGetSkinToBoneMatrices,skin,L1
+0,0x7c7820,RpSkinIsSplit,skin,L1
+0,0x7c7880,RpSkinAtomicGetType,skin,L1
+0,0x7c8720,_rpSkinBoneIndexCompare,skin,L1
+0,0x7c8740,_rpSkinInitialize,skin,L2 (globals)
+0,0x7c8820,_rpSkinDeinitialize,skin,L1
+0,0x7c8830,_rpSkinGeometryNativeSize,skin,L1
+0,0x7c89b0,_rpSkinAtomicSetPipeline,skin,L2 (globals)
+0,0x7c89c0,_rpD3D9SkinUseSoftware,skin,L2 (globals)
+0,0x7c8a00,_rpD3D9SkinUseHardware,skin,L2 (globals)
+0,0x7c8a40,_rpSkinGetMeshBoneRemapIndices,skin,L1
+0,0x7c8a50,_rpSkinGetMeshBoneRLECount,skin,L1
+0,0x7c8a60,_rpSkinGetMeshBoneRLE,skin,L1
+0,0x7c8a70,_rpSkinSplitDataCreate,skin,"L2 (globals, indirect-calls)"
+0,0x7c8b10,_rpSkinSplitDataDestroy,skin,"L2 (globals, indirect-calls)"
+0,0x7c8d40,_rpSkinSplitDataStreamGetSize,skin,L1
+0,0x7c9da0,_rpSkinBlendNormalsGeneric,skin,L1
+0,0x7ca240,_rpSkinBlendPositions1Weight,skin,L1
+0,0x7ca330,_rpSkinBlendPositionsRigid,skin,L1
+0,0x7ca410,_rpSkinBlendPositionsGeneric,skin,L1
+0,0x7ca6c0,_rpSkinMatrixMultiplyTransposed,skin,L1
+0,0x7caad0,_rpD3D9SkinMatrixBlend,skin,L1
+0,0x7cab80,_rpD3D9SkinVertexBlend,skin,L1
+0,0x7cac60,_rpSkinBlendSSE,skin,L1
+0,0x7caf50,_rpSkinBlendSSENormals,skin,L1
+0,0x7cb190,_rpD3D9SkinVertexShaderDescriptor,skin,"L2 (globals, indirect-calls)"
+0,0x7cb240,_rpD3D9SkinPipelineInit,skin,L2 (globals)
+0,0x7cb2a0,RxNodeDefinitionGetD3D9SkinAtomicAllInOne,d3d9-driver,L1
+0,0x7cb828,_rpSkinTransformPoint,skin,L1
+0,0x7cb8b0,_rpSkinTransformNormal,skin,L1
+0,0x7cba80,cb_UVANIMPLUGIN_RpMaterial_Ctor,uvanim,L2 (globals)
+0,0x7cbb30,cb_UVANIMPLUGIN_RpMaterial_Copy,uvanim,L2 (globals)
+0,0x7cbf20,cb_UVANIMPLUGIN_RpMaterial_StreamGetSize,uvanim,L2 (globals)
+0,0x7cc010,_rpUVAnimCustomDataStreamGetSize,uvanim,L1
+0,0x7cc100,RpUVAnimAddRef,uvanim,L1
+0,0x7cc3a0,RpUVAnimGetName,uvanim,L1
+0,0x7cc430,RpMaterialUVAnimGetInterpolator,uvanim,L2 (globals)
+0,0x7cc450,RpMaterialUVAnimSetInterpolator,uvanim,L2 (globals)
+0,0x7cc530,RpMaterialUVAnimExists,uvanim,L2 (globals)
+0,0x7cc600,RpUVAnimParamKeyFrameInterpolate,uvanim,L1
+0,0x7cc6a0,RpUVAnimParamKeyFrameBlend,uvanim,L1
+0,0x7cc740,RpUVAnimParamKeyFrameMulRecip,uvanim,L1
+0,0x7cc750,RpUVAnimParamKeyFrameAdd,uvanim,L1
+0,0x7cca40,RpUVAnimLinearKeyFrameInterpolate,uvanim,L1
+0,0x7ccac0,RpUVAnimLinearKeyFrameBlend,uvanim,L1
+0,0x7ccb30,RpUVAnimLinearKeyFrameMulRecip,uvanim,L1
+0,0x7ccbe0,RpUVAnimLinearKeyFrameAdd,uvanim,L1
+0,0x7ccc50,_rpUVAnimLinearKeyFrameFromMatrix,uvanim,L1
+0,0x7ccc80,RtAnimAnimationFreeListCreateParams,anim,L2 (globals)
+0,0x7ccf10,RtAnimAnimationDestroy,anim,"L2 (globals, indirect-calls)"
+0,0x7cd4d0,RtAnimAnimationStreamGetSize,anim,L2 (indirect-calls)
+0,0x7cd4f0,RtAnimAnimationGetNumNodes,anim,L1
+0,0x7cd520,RtAnimInterpolatorCreate,anim,"L2 (globals, indirect-calls)"
+0,0x7cd590,RtAnimInterpolatorDestroy,anim,"L2 (globals, indirect-calls)"
+0,0x7cd5a0,RtAnimInterpolatorSetCurrentAnim,anim,L2 (indirect-calls)
+0,0x7cd6f0,RtAnimInterpolatorSetAnimLoopCallBack,anim,L1
+0,0x7cd710,RtAnimInterpolatorSetAnimCallBack,anim,L1
+0,0x7cd730,RtAnimInterpolatorCopy,anim,L1
+0,0x7cdbf0,RtAnimInterpolatorBlend,anim,L2 (indirect-calls)
+0,0x7cdc50,RtAnimInterpolatorAddTogether,anim,L2 (indirect-calls)
+0,0x7cdcf0,RtAnimInterpolatorBlendSubInterpolator,anim,L2 (indirect-calls)
+0,0x7cdef0,RtAnimInterpolatorAddSubInterpolator,anim,L2 (indirect-calls)
+0,0x7ceee0,RtDictSchemaGetCurrentDict,toolkit,L1
+0,0x7ceef0,RtDictSchemaSetCurrentDict,toolkit,L1
+0,0x7cf940,_rtPNGMalloc,toolkit,"L2 (globals, indirect-calls)"
+0,0x7cf960,_rtPNGFree,toolkit,"L2 (globals, indirect-calls)"
+0,0x7ebbb0,RtQuatTransformVectors,toolkit,L1
+0,0x7ec760,RwStreamSetFreeListCreateParams,core,L2 (globals)
+0,0x7ed1e0,_rwChunkIsComplex,core,L1
+0,0x7ed5f0,_rwVectorSetMultFn,core,L2 (globals)
+0,0x7ed670,_rwV3dTransformPointsDefault,core,L1
+0,0x7ed730,_rwV3dTransformPointDefault,core,L1
+0,0x7ed7d0,_rwV3dTransformVectorsDefault,core,L1
+0,0x7ed880,_rwV3dTransformVectorDefault,core,L1
+0,0x7ed910,_rwV3dNormalize,core,L2 (globals)
+0,0x7edac0,RwV3dLength,core,L2 (globals)
+0,0x7edb30,_rwSqrt,core,L2 (globals)
+0,0x7edb90,_rwInvSqrt,core,L2 (globals)
+0,0x7edbf0,RwV2dLength,core,L2 (globals)
+0,0x7edd60,RwV3dTransformPoint,core,"L2 (globals, indirect-calls)"
+0,0x7edd90,RwV3dTransformPoints,core,"L2 (globals, indirect-calls)"
+0,0x7eddc0,RwV3dTransformVector,core,"L2 (globals, indirect-calls)"
+0,0x7eddf0,RwV3dTransformVectors,core,"L2 (globals, indirect-calls)"
+0,0x7ede20,cb_VECTORMODULE_RwEngine_Close,core,"L2 (globals, indirect-calls)"
+0,0x7ee0f0,RwCameraSetFreeListCreateParams,core,L2 (globals)
+0,0x7ee180,RwCameraEndUpdate,core,L2 (indirect-calls)
+0,0x7ee190,RwCameraBeginUpdate,core,L2 (indirect-calls)
+0,0x7ee200,_rwCameraUpdateZShiftScale,core,L2 (globals)
+0,0x7ee2d0,RwCameraFrustumTestSphere,core,L1
+0,0x7ee340,RwCameraClear,core,"L2 (globals, indirect-calls)"
+0,0x7ee4a0,RwCameraValidatePlugins,core,L1
+0,0x7ef340,_rwCameraDefaultEndUpdate,core,"L2 (globals, indirect-calls)"
+0,0x7ef520,RwIm3DEnd,core,L2 (globals)
+0,0x7ef9d0,RwIm3DGetTransformPipeline,core,L2 (globals)
+0,0x7efac0,RwIm3DSetTransformPipeline,core,L2 (globals)
+0,0x7efdd0,_rwIm3DGetPool,core,L2 (globals)
+0,0x7efed0,RwFrameSetFreeListCreateParams,core,L2 (globals)
+0,0x7f0210,_rwSetHierarchyRoot,core,L1
+0,0x7f0340,RwFrameDirty,core,L1
+0,0x7f0910,RwFrameUpdateObjects,core,L2 (globals)
+0,0x7f09b0,RwFrameGetRoot,core,L1
+0,0x7f0dc0,RwFrameForAllChildren,core,L2 (indirect-calls)
+0,0x7f0e00,RwFrameCount,core,L1
+0,0x7f10b0,RwFrameSetIdentity,core,L2 (globals)
+0,0x7f1200,RwFrameForAllObjects,core,L2 (indirect-calls)
+0,0x7f12b0,RwFrameValidatePlugins,core,L1
+0,0x7f12c0,_rwMatrixSetMultFn,core,L2 (globals)
+0,0x7f12f0,_rwMatrixMultiplyDefault,core,L1
+0,0x7f1450,_rwMatrixDeterminant,core,L1
+0,0x7f14a0,_rwMatrixOrthogonalError,core,L1
+0,0x7f1500,_rwMatrixNormalError,core,L1
+0,0x7f1590,_rwMatrixIdentityError,core,L1
+0,0x7f16a0,RwMatrixSetFreeListCreateParams,core,L2 (globals)
+0,0x7f1780,RwEngineGetMatrixTolerances,core,L2 (globals)
+0,0x7f17b0,RwEngineSetMatrixTolerances,core,L2 (globals)
+0,0x7f18a0,RwMatrixUpdate,core,L1
+0,0x7f18b0,RwMatrixMultiply,core,"L2 (globals, indirect-calls)"
+0,0x7f2160,_rwMatrixInvertOrthoNormalizedOrGeneral,core,L1
+0,0x7f2a20,RwMatrixDestroy,core,"L2 (globals, indirect-calls)"
+0,0x7f2a50,RwMatrixCreate,core,"L2 (globals, indirect-calls)"
+0,0x7f2b90,_rwGetNumEngineInstances,core,L2 (globals)
+0,0x7f2ba0,RwEngineGetVersion,core,L1
+0,0x7f2e10,RwEngineGetMetrics,core,L2 (globals)
+0,0x7f3490,_rwMallocBypass,core,"L2 (globals, indirect-calls)"
+0,0x7f34b0,_rwFreeBypass,core,"L2 (globals, indirect-calls)"
+0,0x7f34d0,RwTextureSetFindCallBack,core,L2 (globals)
+0,0x7f34f0,RwTextureGetFindCallBack,core,L2 (globals)
+0,0x7f3500,RwTextureSetReadCallBack,core,L2 (globals)
+0,0x7f3520,RwTextureGetReadCallBack,core,L2 (globals)
+0,0x7f3530,RwTextureSetMipmapping,core,L2 (globals)
+0,0x7f3550,RwTextureGetMipmapping,core,L2 (globals)
+0,0x7f3560,RwTextureSetAutoMipmapping,core,L2 (globals)
+0,0x7f3580,RwTextureGetAutoMipmapping,core,L2 (globals)
+0,0x7f3590,_rwTextureSetAutoMipMapState,core,L2 (globals)
+0,0x7f35c0,_rwTextureGetAutoMipMapState,core,L2 (globals)
+0,0x7f35d0,RwTextureSetRaster,core,"L2 (globals, indirect-calls)"
+0,0x7f3730,RwTexDictionaryForAllTextures,core,L2 (indirect-calls)
+0,0x7f3770,RwTexDictionaryForAllTexDictionaries,core,"L2 (globals, indirect-calls)"
+0,0x7f3980,RwTexDictionaryAddTexture,core,L1
+0,0x7f39c0,RwTexDictionaryRemoveTexture,core,L1
+0,0x7f39f0,RwTexDictionaryFindNamedTexture,core,L1
+0,0x7f3a70,RwTexDictionarySetCurrent,core,L2 (globals)
+0,0x7f3a90,RwTexDictionaryGetCurrent,core,L2 (globals)
+0,0x7f3aa0,RwTextureGenerateMipmapName,core,"L2 (globals, indirect-calls)"
+0,0x7f3c00,RwTextureValidatePlugins,core,L1
+0,0x7f3c60,RwTexDictionaryValidatePlugins,core,L1
+0,0x7f3c70,RwTextureSetMipmapGenerationCallBack,core,L2 (globals)
+0,0x7f3c90,RwTextureGetMipmapGenerationCallBack,core,L2 (globals)
+0,0x7f3ca0,RwTextureSetMipmapNameCallBack,core,L2 (globals)
+0,0x7f3cc0,RwTextureGetMipmapNameCallBack,core,L2 (globals)
+0,0x7f3cd0,RwTextureRasterGenerateMipmaps,core,"L2 (globals, indirect-calls)"
+0,0x7f3e80,RwTexDictionarySetFreeListCreateParams,core,L2 (globals)
+0,0x7f4080,_rwTextureMipmapNameCB,core,"L2 (globals, indirect-calls)"
+0,0x7f53d0,_rwTextureDefaultFindCallBack,core,L2 (globals)
+0,0x7f5500,RwD3D9CreateVertexBuffer,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f56a0,RwD3D9DestroyVertexBuffer,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x7f57f0,RwD3D9VertexBufferManagerChangeDefaultSize,d3d9-driver,L2 (globals)
+0,0x7f5800,_rwD3D9DynamicVertexBufferManagerFrame,d3d9-driver,L2 (globals)
+0,0x7f5840,_rwD3D9DynamicVertexBufferRelease,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x7f5a00,RwD3D9DynamicVertexBufferCreate,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f5ae0,RwD3D9DynamicVertexBufferDestroy,d3d9-driver,L2 (globals)
+0,0x7f5c90,RwD3D9DynamicVertexBufferUnlock,d3d9-driver,L2 (indirect-calls)
+0,0x7f5ef0,_rwD3D9SetDepthStencilSurface,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f5f20,_rwD3D9SetRenderTarget,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f6b00,_rwD3D9RenderStateCacheInvalidate,d3d9-driver,L2 (globals)
+0,0x7f6bf0,D3D9CalculateMaxMultisamplingLevels,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f6cb0,D3D9SetPresentParameters,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f72e0,_rwD3D9SetStandardFunctions,d3d9-driver,L1
+0,0x7f7530,_rwD3D9StandardFuncNotImplemented,d3d9-driver,L1
+0,0x7f7540,D3D9DeviceSystemEnumModes,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f7c41,WindowedModeHooks::notsa::WindowedMode::HookDxCamFix,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f84e0,RwD3D9EngineGetMaxMultiSamplingLevels,d3d9-driver,L2 (globals)
+0,0x7f84f0,RwD3D9EngineSetMultiSamplingLevels,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f8580,RwD3D9EngineSetRefreshRate,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f8620,RwD3D9EngineSetMultiThreadSafe,d3d9-driver,L2 (globals)
+0,0x7f8630,RwD3D9EngineSetSoftwareVertexProcessing,d3d9-driver,L2 (globals)
+0,0x7f98d0,_rwD3D9CameraEndUpdate,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f9c20,_rwDeviceGetHandle,d3d9-driver,L2 (globals)
+0,0x7f9c30,RwD3D9DeviceSupportsDXTTexture,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f9d30,RwD3D9SetStencilClear,d3d9-driver,L2 (globals)
+0,0x7f9d40,RwD3D9GetStencilClear,d3d9-driver,L2 (globals)
+0,0x7f9e80,RwD3D9GetCurrentD3DRenderTarget,d3d9-driver,L2 (globals)
+0,0x7f9e90,RwD3D9SetRenderTarget,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f9f30,_rwD3D9SetFVF,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f9f70,_rwD3D9SetVertexDeclaration,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f9fb0,_rwD3D9SetVertexShader,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7f9ff0,_rwD3D9SetPixelShader,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa030,RwD3D9SetStreamSource,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa090,_rwD3D9SetStreams,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa1c0,_rwD3D9SetIndices,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa390,RwD3D9SetTransform,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa4f0,RwD3D9GetTransform,d3d9-driver,L2 (globals)
+0,0x7fa520,RwD3D9SetTransformWorld,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa820,RwD3D9GetLight,d3d9-driver,L2 (globals)
+0,0x7fa860,RwD3D9EnableLight,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fa8b0,_rwD3D9LightCompare,d3d9-driver,L1
+0,0x7faa30,RwD3D9CreateVertexDeclaration,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fac10,RwD3D9DeleteVertexDeclaration,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x7fac60,RwD3D9CreateVertexShader,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fac90,RwD3D9DeleteVertexShader,d3d9-driver,L2 (indirect-calls)
+0,0x7faca0,_rwD3D9SetVertexShaderConstant,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7facc0,RwD3D9CreatePixelShader,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7facf0,RwD3D9DeletePixelShader,d3d9-driver,L2 (indirect-calls)
+0,0x7fad00,_rwD3D9SetPixelShaderConstant,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fad20,RwD3D9GetCaps,d3d9-driver,L2 (globals)
+0,0x7fad30,RwD3D9CameraIsSphereFullyInsideFrustum,d3d9-driver,L1
+0,0x7fad90,RwD3D9CameraIsBBoxFullyInsideFrustum,d3d9-driver,L1
+0,0x7fae20,_rwD3D9DeviceSetRestoreCallback,d3d9-driver,L2 (globals)
+0,0x7fae30,_rwD3D9DeviceGetRestoreCallback,d3d9-driver,L2 (globals)
+0,0x7fae60,RwRasterGetCurrentContext,core,L2 (globals)
+0,0x7fae80,RwRasterRenderScaled,core,"L2 (globals, indirect-calls)"
+0,0x7faea0,RwRasterGetOffset,core,L1
+0,0x7faec0,RwRasterUnlock,core,"L2 (globals, indirect-calls)"
+0,0x7faf50,RwRasterRenderFast,core,"L2 (globals, indirect-calls)"
+0,0x7faf90,RwRasterClearRect,core,"L2 (globals, indirect-calls)"
+0,0x7fafb0,RwRasterRender,core,"L2 (globals, indirect-calls)"
+0,0x7faff0,RwRasterUnlockPalette,core,"L2 (globals, indirect-calls)"
+0,0x7fb060,RwRasterPushContext,core,"L2 (globals, indirect-calls)"
+0,0x7fb0e0,RwRasterLockPalette,core,"L2 (globals, indirect-calls)"
+0,0x7fb110,RwRasterPopContext,core,"L2 (globals, indirect-calls)"
+0,0x7fb160,RwRasterGetNumLevels,core,"L2 (globals, indirect-calls)"
+0,0x7fb1d0,RwRasterSubRaster,core,"L2 (globals, indirect-calls)"
+0,0x7fb2d0,RwRasterLock,core,"L2 (globals, indirect-calls)"
+0,0x7fb350,RwRasterSetFreeListCreateParams,core,L2 (globals)
+0,0x7fc200,_rwD3D9RenderStateFlushCache,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fc2d0,RwD3D9SetRenderState,d3d9-driver,L2 (globals)
+0,0x7fc320,RwD3D9GetRenderState,d3d9-driver,L2 (globals)
+0,0x7fc340,RwD3D9SetTextureStageState,d3d9-driver,L2 (globals)
+0,0x7fc3a0,RwD3D9GetTextureStageState,d3d9-driver,L2 (globals)
+0,0x7fc3c0,RwD3D9SetSamplerState,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fc400,RwD3D9GetSamplerState,d3d9-driver,L2 (globals)
+0,0x7fc430,RwD3D9SetMaterial,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fc4a0,RwD3D9SetClipPlane,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fc4d0,RwD3D9SetSurfaceProperties,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fd810,_rwD3D9RWGetRenderState,d3d9-driver,L2 (globals)
+0,0x7fdb80,_rwD3D9RenderStateTextureFilter,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fdc30,_rwD3D9RenderStateSrcBlend,d3d9-driver,L2 (globals)
+0,0x7fdc80,_rwD3D9RenderStateDestBlend,d3d9-driver,L2 (globals)
+0,0x7fdcd0,_rwD3D9SetTextureInternal,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fde50,_rwD3D9GetCurrentTexture,d3d9-driver,L2 (globals)
+0,0x7fde60,_rwD3D9SetMaxAnisotropy,d3d9-driver,L2 (globals)
+0,0x7fe0a0,_rwD3D9RenderStateVertexAlphaEnable,game-plugin,L2 (globals)
+0,0x7fe190,_rwD3D9RenderStateIsVertexAlphaEnable,game-plugin,L2 (globals)
+0,0x7fe1a0,_rwD3D9RenderStateStencilEnable,d3d9-driver,L2 (globals)
+0,0x7fe1f0,_rwD3D9RenderStateStencilFail,d3d9-driver,L2 (globals)
+0,0x7fe240,_rwD3D9RenderStateStencilZFail,d3d9-driver,L2 (globals)
+0,0x7fe290,_rwD3D9RenderStateStencilPass,d3d9-driver,L2 (globals)
+0,0x7fe2e0,_rwD3D9RenderStateStencilFunction,d3d9-driver,L2 (globals)
+0,0x7fe330,_rwD3D9RenderStateStencilRef,d3d9-driver,L2 (globals)
+0,0x7fe380,_rwD3D9RenderStateStencilMask,d3d9-driver,L2 (globals)
+0,0x7fe3d0,_rwD3D9RenderStateStencilWriteMask,d3d9-driver,L2 (globals)
+0,0x7fea70,_rwD3D9RenderStateZTestEnable,d3d9-driver,L2 (globals)
+0,0x7feb70,_rwD3D9RenderStateZWriteEnable,d3d9-driver,L2 (globals)
+0,0x7fec70,_rwD3D9RenderStateShadeMode,d3d9-driver,L2 (globals)
+0,0x7fecc0,_rwD3D9RenderStateTextureBorderColor,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+0,0x7fed00,_rwD3D9RenderStateCullMode,d3d9-driver,L2 (globals)
+0,0x7fed70,_rwD3D9ClampRasterSize,d3d9-driver,L2 (globals)
+0,0x7ffbe0,_rwD3D9PixelToRGBA_X1R5G5B5,d3d9-driver,L1
+0,0x7ffc10,_rwD3D9PixelToRGBA_R5G6B5,d3d9-driver,L1
+0,0x7ffc40,_rwD3D9PixelToRGBA_B5G6R5,d3d9-driver,L1
+0,0x7ffc70,_rwD3D9PixelToRGBA_A1R5G5B5,d3d9-driver,L1
+0,0x7ffcb0,_rwD3D9PixelToRGBA_A4R4G4B4,d3d9-driver,L1
+0,0x7ffd00,_rwD3D9PixelToRGBA_A8R3G3B2,d3d9-driver,L1
+0,0x7ffd30,_rwD3D9PixelToRGBA_R3G3B2,d3d9-driver,L1
+0,0x7ffd60,_rwD3D9PixelToRGBA_X4R4G4B4,d3d9-driver,L1
+0,0x7ffd90,_rwD3D9PixelToRGBA_X8R8G8B8,d3d9-driver,L1
+0,0x7ffdb0,_rwD3D9PixelToRGBA_X8B8G8R8,d3d9-driver,L1
+0,0x7ffdd0,_rwD3D9PixelToRGBA_G8R8,d3d9-driver,L1
+0,0x7ffdf0,_rwD3D9PixelToRGBA_A8R8G8B8,d3d9-driver,L1
+0,0x7ffe20,_rwD3D9PixelToRGBA_A8B8G8R8,d3d9-driver,L1
+0,0x7ffe50,_rwD3D9PixelToRGBA_L8,d3d9-driver,L1
+0,0x7ffe70,_rwD3D9PixelToRGBA_A8,d3d9-driver,L1
+0,0x7ffe90,_rwD3D9PixelToRGBA_A4L4,d3d9-driver,L1
+0,0x7ffec0,_rwD3D9PixelToRGBA_A8L8,d3d9-driver,L1
+0,0x7ffee0,_rwD3D9PixelToRGBA_L16,d3d9-driver,L1
+0,0x7fff00,_rwD3D9ImageFindRasterFormat,d3d9-driver,unknown (no decompilation)
+0,0x800810,_rwD3D9GetRGBAToPixelConverter,d3d9-driver,L1
+0,0x800930,_rwD3D9RGBAToPixel_X1R5G5B5,d3d9-driver,L1
+0,0x800960,_rwD3D9RGBAToPixel_R5G6B5,d3d9-driver,L1
+0,0x800990,_rwD3D9RGBAToPixel_A1R5G5B5,d3d9-driver,L1
+0,0x8009d0,_rwD3D9RGBAToPixel_A4R4G4B4,d3d9-driver,L1
+0,0x800a10,_rwD3D9RGBAToPixel_A8R3G3B2,d3d9-driver,L1
+0,0x800a40,_rwD3D9RGBAToPixel_X4R4G4B4,d3d9-driver,L1
+0,0x800a70,_rwD3D9RGBAToPixel_B5G6R5,d3d9-driver,L1
+0,0x800aa0,_rwD3D9RGBAToPixel_X8R8G8B8,d3d9-driver,L1
+0,0x800ad0,_rwD3D9RGBAToPixel_X8B8G8R8,d3d9-driver,L1
+0,0x800b00,_rwD3D9RGBAToPixel_A8R8G8B8,d3d9-driver,L1
+0,0x800b30,_rwD3D9RGBAToPixel_A8B8G8R8,d3d9-driver,L1
+0,0x800b60,_rwD3D9RGBAToPixel_16Copy,d3d9-driver,L1
+0,0x800b70,_rwD3D9RGBAToPixel_L8,d3d9-driver,L1
+0,0x800bd0,_rwD3D9RGBAToPixel_A8L8,d3d9-driver,L1
+0,0x800c20,_rwD3D9RGBAToPixel_L16,d3d9-driver,L1
+0,0x801390,_rwD3D9RasterSetImagePalettized,d3d9-driver,"L2 (globals, indirect-calls)"
+0,0x801970,_rwFreeListSetFlags,core,L2 (globals)
+0,0x8019b0,_rwFreeListCreateInternal,core,"L2 (globals, indirect-calls)"
+0,0x801b70,RwFreeListCreateAndPreallocateSpace,core,"L2 (globals, indirect-calls)"
+0,0x801b80,RwFreeListDestroy,core,"L2 (globals, indirect-calls)"
+0,0x801c10,RwFreeListSetFlags,core,L1
+0,0x801c20,RwFreeListGetFlags,core,L1
+0,0x801c30,_rwFreeListAllocReal,core,"L2 (globals, indirect-calls)"
+0,0x801d50,_rwFreeListFreeReal,core,"L2 (globals, indirect-calls)"
+0,0x801e00,RwFreeListPurge,core,"L2 (globals, indirect-calls)"
+0,0x801e90,RwFreeListForAllUsed,core,"L2 (globals, indirect-calls)"
+0,0x8020a0,_rwMemoryDefaultMalloc,core,L1
+0,0x8020b0,_rwMemoryDefaultRealloc,core,L1
+0,0x8020d0,_rwMemoryDefaultCalloc,core,L1
+0,0x8020f0,_rwMemoryClose,core,"L2 (globals, indirect-calls)"
+0,0x802230,RwOsGetMemoryInterface,core,L2 (globals)
+0,0x802860,RwImageFreePixels,core,"L2 (globals, indirect-calls)"
+0,0x802a20,RwImageMakeMask,core,L1
+0,0x802f60,_rwImageGetPathInternal,core,L2 (globals)
+0,0x8032d0,_rwImageReadFileCB,core,"L2 (globals, indirect-calls)"
+0,0x803340,_rwImageFindFileTypeCB,core,"L2 (globals, indirect-calls)"
+0,0x803740,RwImageGammaCorrectValue,core,"L2 (globals, indirect-calls)"
+0,0x803790,_rwImageApplyMaskPalettized,core,L1
+0,0x803fe0,RwImageSetGamma,core,L2 (globals)
+0,0x804130,RwOsGetFileInterface,core,L2 (globals)
+0,0x804140,_rwFileSystemOpen,core,L2 (globals)
+0,0x804200,_rwFileExists,core,"L2 (globals, indirect-calls)"
+0,0x804240,_rwFileSystemClose,core,L1
+0,0x804250,RwImageSetFromRaster,core,"L2 (globals, indirect-calls)"
+0,0x804290,RwRasterSetFromImage,core,"L2 (globals, indirect-calls)"
+0,0x8042c0,RwImageFindRasterFormat,core,"L2 (globals, indirect-calls)"
+0,0x804b60,_rwTexDictionaryCountTexturesCB,core,L1
+0,0x804f40,_rwObjectHasFrameReleaseFrame,core,L1
+0,0x804fc0,RxPipelineSetFreeListCreateParams,pipeline,L2 (globals)
+0,0x8050c0,_rxPipelineNodeDestroyRecurse,pipeline,"L2 (globals, indirect-calls)"
+0,0x8052f0,RxHeapGetGlobalHeap,pipeline,L2 (globals)
+0,0x805300,RxPacketCreate,pipeline,L2 (globals)
+0,0x805330,RxClusterSetStride,pipeline,L1
+0,0x8055c0,RxClusterUnlock,pipeline,L1
+0,0x8055d0,RxPipelineNodeSendConfigMsg,pipeline,L2 (indirect-calls)
+0,0x8055f0,RxPipelineNodeForAllConnectedOutputs,pipeline,L2 (indirect-calls)
+0,0x805680,RxPipelineNodeGetPipelineCluster,pipeline,L1
+0,0x8056b0,RxPipelineClusterGetCreationAttributes,pipeline,L1
+0,0x8056c0,RxPipelineClusterSetCreationAttributes,pipeline,L1
+0,0x8056e0,RxClusterGetAttributes,pipeline,L1
+0,0x8056f0,RxClusterSetAttributes,pipeline,L1
+0,0x805950,_rxPipelineTopSortCountNodes,pipeline,L1
+0,0x805d10,RxPipelineNodeFindOutputByName,pipeline,"L2 (globals, indirect-calls)"
+0,0x805d70,RxPipelineNodeFindOutputByIndex,pipeline,L1
+0,0x805da0,RxPipelineNodeFindInput,pipeline,L1
+0,0x805f30,RxPipelineNodeGetInitData,pipeline,L1
+0,0x8067b0,_rxPipelineTopSort,pipeline,L1
+0,0x806b30,RxPipelineFindNodeByName,pipeline,"L2 (globals, indirect-calls)"
+0,0x806bc0,RxPipelineFindNodeByIndex,pipeline,L1
+0,0x807070,RxLockedPipeSetEntryPoint,pipeline,L1
+0,0x8070d0,RxLockedPipeGetEntryPoint,pipeline,L1
+0,0x807100,RxLockedPipeAddPath,pipeline,L1
+0,0x807170,RxLockedPipeDeletePath,pipeline,L1
+0,0x807570,RwFrameListSetAutoUpdate,core,L2 (globals)
+0,0x8076a0,_rwFrameListFlattenRecurse,core,L1
+0,0x8076e0,_rwFrameListFindFrame,core,L1
+0,0x807720,_rwFrameListDeinitialize,core,"L2 (globals, indirect-calls)"
+0,0x807c70,_rwPipeAttachDummy,pipeline,L1
+0,0x807c80,_rwCameraBeginUpdateHook,core,L1
+0,0x807e50,_rwResourcesPurge,core,L2 (globals)
+0,0x8081b0,RwResourcesGetArenaSize,core,L2 (globals)
+0,0x8081c0,RwResourcesGetArenaUsage,core,L2 (globals)
+0,0x8083f0,_rwResourcesFreeEntryCB,core,"L2 (globals, indirect-calls)"
+0,0x808430,_rwPluginRegistrySetStaticPluginsSize,core,L1
+0,0x808470,_rwPluginRegistryGetPluginOffset,core,L1
+0,0x8086b0,_rwPluginRegistryDefaultConstructor,core,L1
+0,0x8086c0,_rwPluginRegistryDefaultDestructor,core,L1
+0,0x8086d0,_rwPluginRegistryDefaultCopyConstructor,core,L1
+0,0x8086e0,_rwPluginRegistryInitObject,core,L2 (indirect-calls)
+0,0x808740,_rwPluginRegistryDeInitObject,core,L2 (indirect-calls)
+0,0x808770,_rwPluginRegistryCopyObject,core,L2 (indirect-calls)
+0,0x8087b0,RwPluginRegistrySetFreeListCreateParams,core,L2 (globals)
+0,0x8087d0,cb_ERRORMODULE_RwEngine_Open,core,L2 (globals)
+0,0x808810,cb_ERRORMODULE_RwEngine_Close,core,L2 (globals)
+0,0x808820,RwErrorSet,core,L2 (globals)
+0,0x808880,RwErrorGet,core,L2 (globals)
+0,0x8088d0,_rwerror,core,L1
+0,0x8088e0,_rwPluginRegistryAddPluginStream,core,L1
+0,0x808920,_rwPluginRegistryAddPlgnStrmlwysCB,core,L1
+0,0x808950,_rwPluginRegistryAddPlgnStrmRightsCB,core,L1
+0,0x808ab0,_rwPluginRegistryInvokeRights,core,L2 (indirect-calls)
+0,0x808b00,_rwPluginRegistryGetSize,core,L2 (indirect-calls)
+0,0x808f60,RwBBoxCalculate,core,L1
+0,0x809020,RwBBoxInitialize,core,L1
+0,0x809060,RwBBoxAddPoint,core,L1
+0,0x8090e0,RwBBoxContainsPoint,core,L1
+0,0x809400,_rwSListDestroyEndEntries,core,L1
+0,0x809440,_rwSListDestroy,core,"L2 (globals, indirect-calls)"
+0,0x8094b0,_rwSListGetNumEntries,core,L1
+0,0x809510,_rwSListGetEntry,core,L1
+0,0x809530,_rwSListGetBegin,core,L1
+0,0x809540,_rwSListGetEnd,core,L1
+0,0x809780,_rwFrameSyncDirtyObjects,core,L2 (indirect-calls)
+0,0x809c70,_rxHeapSplitBlock,pipeline,L1
+0,0x809f30,RxHeapDestroy,pipeline,"L2 (globals, indirect-calls)"
+0,0x80a240,_rwStringOpen,core,L2 (globals)
+0,0x80a350,_rwStringCompareNoCase,core,L1
+0,0x80a3a0,_rwStringToUpper,core,L1
+0,0x80a3d0,_rwStringToLower,core,L1
+0,0x80a400,_rwStringFindChar,core,L1
+0,0x80a420,_rwStringFindCharReverse,core,L1
+0,0x80a440,_rwStringClose,core,L1
+0,0x80a450,_rwStringDestroy,core,"L2 (globals, indirect-calls)"
+0,0x80a470,_rwStringStreamGetSize,core,"L2 (globals, indirect-calls)"
+0,0x80aa40,cb_COLORMODULE_RwEngine_Open,core,L2 (globals)
+0,0x80aa50,cb_COLORMODULE_RwEngine_Close,core,L2 (globals)
+0,0x80ad90,_rwPalQuantAddPixel,core,L2 (globals)
+0,0x80aed0,_rwPalQuantOctreeInsert,core,"L2 (globals, indirect-calls)"
+0,0x80b490,_rwPalQuantNodeToColour,core,L1
+0,0x80b5d0,_rwPalQuantBuildBoxes,core,L1
+0,0x80b910,_rwPalQuantMergeStats,core,L1
+0,0x80be60,_rwPalQuantCountLeaves,core,L1
+0,0x80c430,_rwPalQuantLookup,core,L1
+0,0x80c5a0,_rwPalQuantFreeTree,core,"L2 (globals, indirect-calls)"
+0,0x80ca20,_rwImageResampleSpan,core,L1
+0,0x80ce10,_rwSSEMatrixMultiply,core,L1
+0,0x80d070,_rwSSEV3dTransformPoints,core,L1
+0,0x80d100,_rwSSEV3dTransformPointsUnaligned,core,L1
+0,0x80d180,_rwSSEV3dTransformVectors,core,L1
+0,0x80d210,_rwSSEV3dTransformVectorsUnaligned,core,L1
+0,0x80d280,_rwSSEV3dTransformPoint,core,L1
+0,0x80d370,_rwSSEV3dTransformVector,core,L1
+0,0x80d440,_rwSSE2V3dTransformPoints,core,L1
+0,0x80d4e0,_rwSSE2V3dTransformVectors,core,L1
+0,0x80d570,_rwSSE2V3dTransformPoint,core,L1
+0,0x80d600,_rwSSE2V3dTransformVector,core,L1
+0,0x80d680,_rwCPUGetInfo,core,L2 (globals)
+0,0x80dbe0,_rwIntelMMXsupported,core,L1
+0,0x80dc40,_rwIntelSSEsupported,core,L1
+0,0x80dca0,_rwIntelSSE2supported,core,L1
+0,0x80dd00,_rwAMD3DNowSupported,core,L1
+0,0x80e970,_rwD3D9ImmInstanceNode,d3d9-driver,L2 (globals)
+0,0x80e990,RxNodeDefinitionGetD3D9ImmInstance,pipeline,L1
+0,0x80e9a0,RxNodeDefinitionGetD3D9SubmitNoLight,pipeline,L1
+0,0x80e9b0,_rwFileNameIsAbsolute,core,L1
+0,0x80f4b0,_rxPipelineUnlockMarkPaths,pipeline,L1
+0,0x80f540,_rxPipelineUnlockFindCluster,pipeline,L1
+0,0x80f570,_rxPipelineUnlockPropagate,pipeline,L1
+0,0x80fba0,_rxPipelineUnlockCountRequirements,pipeline,L1
+0,0x80ffe0,_rwResourcesArenaInit,core,L1
+0,0x810030,_rwResourcesArenaTerm,core,L1
+0,0x810040,_rwResourcesArenaFreeBlock,core,L1
+0,0x810140,_rwResourcesArenaSplitBlock,core,L1
+0,0x8103d0,_rxPipelineUnlockSortRequirements,pipeline,L1
+0,0x810700,RpMatFXMaterialDataSetFreeListCreateParams,matfx,L2 (globals)
+0,0x810c40,cb_MATERIALEFFECTSPLUGIN_RpMaterial_Ctor,matfx,L2 (globals)
+0,0x811150,_rpMatFXMaterialFindEffect,matfx,L2 (globals)
+0,0x8111a0,_rpMatFXMaterialFindEffectCopy,matfx,L2 (globals)
+0,0x811a00,cb_MATERIALEFFECTSPLUGIN_RpAtomic_Ctor,matfx,L2 (globals)
+0,0x811a20,cb_MATERIALEFFECTSPLUGIN_RpAtomic_Dtor,matfx,L2 (globals)
+0,0x811a40,cb_MATERIALEFFECTSPLUGIN_RpAtomic_Copy,matfx,L2 (globals)
+0,0x811ae0,cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamGetSize,matfx,L2 (globals)
+0,0x811b00,cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Ctor,matfx,L2 (globals)
+0,0x811b20,cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Dtor,matfx,L2 (globals)
+0,0x811b40,cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Copy,matfx,L2 (globals)
+0,0x811be0,cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamGetSize,matfx,L2 (globals)
+0,0x811c30,RpMatFXAtomicQueryEffects,matfx,L2 (globals)
+0,0x811c70,RpMatFXWorldSectorQueryEffects,matfx,L2 (globals)
+0,0x812140,RpMatFXMaterialGetEffects,matfx,L2 (globals)
+0,0x812320,RpMatFXMaterialSetBumpMapFrame,matfx,L2 (globals)
+0,0x812380,RpMatFXMaterialSetBumpMapCoefficient,matfx,L2 (globals)
+0,0x8123e0,RpMatFXMaterialGetBumpMapBumpedTexture,matfx,L2 (globals)
+0,0x812430,RpMatFXMaterialGetBumpMapTexture,matfx,L2 (globals)
+0,0x812480,RpMatFXMaterialGetBumpMapFrame,matfx,L2 (globals)
+0,0x8124d0,RpMatFXMaterialGetBumpMapCoefficient,matfx,L2 (globals)
+0,0x8125b0,RpMatFXMaterialSetEnvMapFrame,matfx,L2 (globals)
+0,0x812610,RpMatFXMaterialSetEnvMapFrameBufferAlpha,matfx,L2 (globals)
+0,0x812680,RpMatFXMaterialSetEnvMapCoefficient,matfx,L2 (globals)
+0,0x8126f0,RpMatFXMaterialGetEnvMapTexture,matfx,L2 (globals)
+0,0x812740,RpMatFXMaterialGetEnvMapFrame,matfx,L2 (globals)
+0,0x812790,RpMatFXMaterialGetEnvMapFrameBufferAlpha,matfx,L2 (globals)
+0,0x8127e0,RpMatFXMaterialGetEnvMapCoefficient,matfx,L2 (globals)
+0,0x812930,RpMatFXMaterialGetDualTexture,matfx,L2 (globals)
+0,0x812980,RpMatFXMaterialGetDualBlendModes,matfx,L2 (globals)
+0,0x8129e0,RpMatFXMaterialSetUVTransformMatrices,matfx,L2 (globals)
+0,0x812a50,RpMatFXMaterialGetUVTransformMatrices,matfx,L2 (globals)
+0,0x816260,_rpMatFXAtomicSetPipeline,matfx,L2 (globals)
+0,0x816270,_rpMatFXWorldSectorSetPipeline,matfx,L2 (globals)
+0,0x816280,_rpMatFXDummyTrue,matfx,L1
+0,0x8162f0,RpMatFXGetD3D9Pipeline,matfx,L2 (globals)
+0,0x81e720,_rwD3D9DecompressDXT1,d3d9-driver,L1
+0,0x81ea70,_rwD3D9DecompressDXT3,d3d9-driver,L1
+0,0x81f0c0,_rwD3D9DecompressDXT5Alpha,d3d9-driver,L1
+0,0x820c90,RwD3D9RasterIsCompressed,d3d9-driver,L2 (globals)
+0,0x857000,_rwX87V3dTransformPoints,core,L1
+0,0x85707f,_rwX87V3dTransformVectors,core,L1
+0,0x8570ef,_rwX87V3dTransformPoint,core,L1
+0,0x857160,_rwX87V3dTransformVector,core,L1
+0,0x8572a0,_rwX87MatrixMultiply,core,L1
+0,0x857404,_rwProcessorInitialize,core,L2 (globals)
+0,0x85742b,_rwProcessorRelease,core,L1
+0,0x857432,_rwProcessorForceSinglePrecision,core,L2 (globals)
+1,0x4c7510,CVehicleModelInfo::FindTextureCB,game-plugin,L2 (globals)
+1,0x4c9990,_rxD3D9DefaultDestroyInstanceCallback,d3d9-driver,L2 (calls stateful)
+1,0x4ca290,_rwD3D9RasterUnlock,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x4cae40,_rwD3D9RasterRender,d3d9-driver,L2 (calls stateful)
+1,0x4cae60,_rwD3D9RasterRenderFast,d3d9-driver,L2 (calls stateful)
+1,0x4cae80,_rwD3D9RasterRenderScaled,d3d9-driver,L2 (calls stateful)
+1,0x4cb5e0,_rxD3D9VideoMemoryRasterListDestroy,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x4cb9c0,_rwD3D9RasterCreateTexture,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x4cbb00,_rwD3D9RasterDestroy,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x4cc0c0,_rwD3D9CheckValidFormatForRasterType,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x4cc5c0,_rwD3D9RasterCreateFormatSelect,d3d9-driver,L2 (globals)
+1,0x4ccd70,_rwD3D9RasterCreateZBuffer,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x4d2100,RpAnimBlend::FrameUpdateCallBackNonSkinnedWithVelocityExtraction,game-plugin,L2 (globals)
+1,0x4d2450,RpAnimBlend::FrameUpdateCallBackNonSkinnedWith3dVelocityExtraction,game-plugin,L2 (globals)
+1,0x4d27f0,RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned,game-plugin,L2 (globals)
+1,0x4d2b90,RpAnimBlend::FrameUpdateCallBackSkinned,game-plugin,L2 (globals)
+1,0x4d2e40,RpAnimBlend::FrameUpdateCallBackCompressedSkinned,game-plugin,L2 (globals)
+1,0x4d5f00,RpAnimBlend::RpAnimBlendFrameSetName,game-plugin,L2 (calls stateful)
+1,0x4d6110,RpAnimBlend::ClumpAnimDestruct,game-plugin,L2 (globals)
+1,0x5a4810,CClothesBuilder::GetAtomicWithName,game-plugin,L2 (calls stateful)
+1,0x5a48b0,CClothesBuilder::StoreBoneArray,game-plugin,L2 (globals)
+1,0x5a56e0,CClothesBuilder::BuildBoneIndexConversionTable,game-plugin,L2 (globals)
+1,0x5a57b0,CClothesBuilder::PlaceTextureOnTopOfTexture,game-plugin,L2 (calls stateful)
+1,0x5a5820,CClothesBuilder::BlendTextures-Dst-Src,game-plugin,L2 (calls stateful)
+1,0x5a59c0,CClothesBuilder::BlendTextures-Dst-Src1-Src2,game-plugin,L2 (calls stateful)
+1,0x5a5bc0,CClothesBuilder::BlendTextures-Dst-Src1-Src2-Tat,game-plugin,L2 (calls stateful)
+1,0x5d05f0,JPegPlugin::JPegDecompressToRaster,game-plugin,L2 (globals)
+1,0x5d5b40,CCarFXRenderer::CustomCarPipeClumpSetup,game-pipeline,L2 (calls stateful)
+1,0x5d5b60,CCarFXRenderer::SetCustomFXAtomicRenderPipelinesVMICB,game-pipeline,L2 (calls stateful)
+1,0x5d5b80,CCarFXRenderer::IsCCPCPipelineAttached,game-pipeline,L2 (calls stateful)
+1,0x5d6f40,CCustomCarEnvMapPipeline::SetFxEnvScale,game-pipeline,L2 (globals)
+1,0x5d6ff0,CCustomCarEnvMapPipeline::SetFxEnvTransScl,game-pipeline,L2 (globals)
+1,0x5d70a0,CCustomCarEnvMapPipeline::SetFxEnvShininess,game-pipeline,L2 (globals)
+1,0x5d7120,CCustomBuildingDNPipeline::CustomPipeMaterialSetup,game-pipeline,L2 (globals)
+1,0x5d71c0,CCustomBuildingDNPipeline::CustomPipeAtomicSetup,game-pipeline,L2 (globals)
+1,0x5d72c0,CCustomBuildingDNPipeline::PreRenderUpdate-Clump,game-pipeline,L2 (calls stateful)
+1,0x5d7db0,CCustomBuildingPipeline::CustomPipeMaterialSetup,game-pipeline,L2 (globals)
+1,0x5d7e50,CCustomBuildingPipeline::CustomPipeAtomicSetup,game-pipeline,L2 (globals)
+1,0x5d7f40,CCustomBuildingRenderer::IsCBPCPipelineAttached,game-pipeline,L2 (calls stateful)
+1,0x5d8050,CCustomBuildingRenderer::Update,game-pipeline,L2 (calls stateful)
+1,0x5da560,CCustomCarEnvMapPipeline::CustomPipeMaterialSetup,game-pipeline,L2 (globals)
+1,0x7226d0,RwHelper::RemoveRefsCB,game-plugin,L2 (calls stateful)
+1,0x72e700,RpClumpGtaCancelStream,world,L2 (globals)
+1,0x732350,CVisibilityPlugins::ClearClumpForAllAtomicsFlag,game-plugin,L2 (calls stateful)
+1,0x732680,CVisibilityPlugins::RenderFadingClump,game-plugin,"L2 (globals, indirect-calls)"
+1,0x732990,CVisibilityPlugins::IsAtomicVisible,game-plugin,L2 (globals)
+1,0x734820,RwHelper::GetFirstAtomic,game-plugin,L2 (calls stateful)
+1,0x734880,RwHelper::Get2DEffectAtomic,game-plugin,L2 (calls stateful)
+1,0x7348c0,RwHelper::GetFirstObject,game-plugin,L2 (calls stateful)
+1,0x734900,RwHelper::GetFirstChild,game-plugin,L2 (calls stateful)
+1,0x734a20,RwHelper::SkinAtomicGetHAnimHierarchCB,game-plugin,L2 (calls stateful)
+1,0x734a40,RwHelper::GetAnimHierarchyFromSkinClump,game-plugin,L2 (calls stateful)
+1,0x734ab0,RwHelper::GetAnimHierarchyFromFrame,game-plugin,L2 (calls stateful)
+1,0x734b90,RwHelper::AtomicRemoveAnimFromSkinCB,game-plugin,L2 (calls stateful)
+1,0x734cb0,RwHelper::RpClumpConvertGeometryToTL,game-plugin,L2 (calls stateful)
+1,0x734d30,RwHelper::RpClumpConvertGeometryToTS,game-plugin,L2 (calls stateful)
+1,0x734d80,RwHelper::SetFilterModeOnAtomicsTextures,game-plugin,L2 (calls stateful)
+1,0x734da0,RwHelper::forceLinearFilteringAtomicsCB,game-plugin,L2 (calls stateful)
+1,0x734dc0,RwHelper::SetFilterModeOnClumpsTextures,game-plugin,L2 (calls stateful)
+1,0x748f20,RpAnisotGetMaxSupportedMaxAnisotropy,toolkit,L2 (calls stateful)
+1,0x749480,cb_CLUMPMODULE_RwEngine_Close,world,L2 (globals)
+1,0x749760,cb_CLUMPMODULE_RwEngine_Open,world,L2 (globals)
+1,0x749d20,_rpAtomicDefaultFrameSyncCallBack,world,L1
+1,0x74a290,RpClumpCreate,world,"L2 (globals, indirect-calls)"
+1,0x74a770,_rpClumpBuildFrameAndGeometryLists,world,"L2 (globals, indirect-calls)"
+1,0x74b000,_rpClumpAtomicStreamGetSizeCB,world,L2 (globals)
+1,0x74be00,RpAtomicRegisterPluginStream,world,L2 (globals)
+1,0x74be30,RpAtomicSetStreamAlwaysCallBack,world,L2 (globals)
+1,0x74be50,RpAtomicSetStreamRightsCallBack,world,L2 (globals)
+1,0x74be70,RpClumpRegisterPluginStream,world,L2 (globals)
+1,0x74bea0,RpClumpSetStreamAlwaysCallBack,world,L2 (globals)
+1,0x74bec0,RpAtomicGetPluginOffset,world,L2 (globals)
+1,0x74bee0,RpClumpGetPluginOffset,world,L2 (globals)
+1,0x74c200,RpMorphTargetCalcBoundingSphere,world,L2 (calls stateful)
+1,0x74c310,RpGeometryAddMorphTargets,world,"L2 (globals, indirect-calls)"
+1,0x74c4e0,RpGeometryRemoveMorphTarget,world,"L2 (globals, indirect-calls)"
+1,0x74c7d0,RpGeometryLock,world,L2 (calls stateful)
+1,0x74ca60,RpGeometryForAllMeshes,world,L2 (calls stateful)
+1,0x74cda0,RpGeometryRegisterPluginStream,world,L2 (globals)
+1,0x74cdd0,RpGeometrySetStreamAlwaysCallBack,world,L2 (globals)
+1,0x74cdf0,RpGeometryGetPluginOffset,world,L2 (globals)
+1,0x74d8e0,cb_MATERIALMODULE_RwEngine_Open,world,L2 (globals)
+1,0x74d950,cb_MATERIALMODULE_RwEngine_Close,world,L2 (globals)
+1,0x74d990,RpMaterialCreate,world,"L2 (globals, indirect-calls)"
+1,0x74dc20,RpMaterialRegisterPluginStream,world,L2 (globals)
+1,0x74dc50,RpMaterialSetStreamAlwaysCallBack,world,L2 (globals)
+1,0x74dc70,RpMaterialSetStreamRightsCallBack,world,L2 (globals)
+1,0x74dc90,RpMaterialGetPluginOffset,world,L2 (globals)
+1,0x74e1f0,_rpMaterialListCopy,world,"L2 (globals, indirect-calls)"
+1,0x74e2c0,_rpMaterialListSetSize,world,"L2 (globals, indirect-calls)"
+1,0x74e350,_rpMaterialListAppendMaterial,world,"L2 (globals, indirect-calls)"
+1,0x74efa0,_rpWorldFindBBox,world,L1
+1,0x74f1a0,RpWorldLock,world,L2 (calls stateful)
+1,0x74f570,RpWorldRender,world,"L2 (globals, indirect-calls)"
+1,0x74fd00,RpWorldRegisterPluginStream,world,L2 (globals)
+1,0x74fd30,RpWorldSetStreamAlwaysCallBack,world,L2 (globals)
+1,0x74fd50,RpWorldSetStreamRightsCallBack,world,L2 (globals)
+1,0x74fd70,RpWorldGetPluginOffset,world,L2 (globals)
+1,0x750280,cb_WORLDOBJMODULE_RwEngine_Open,world,L2 (globals)
+1,0x750370,cb_WORLDOBJMODULE_RwEngine_Close,world,L2 (globals)
+1,0x750710,cb_WORLDOBJMODULE_RwCamera_Copy,world,L2 (globals)
+1,0x750cd0,cb_WORLDOBJMODULE_RpLight_Copy,world,L2 (globals)
+1,0x750de0,cb_BINMESHPLUGIN_RpGeometry_StreamGetSize,world,L1
+1,0x750e40,cb_NATIVEDATAPLUGIN_RpGeometry_StreamGetSize,world,L2 (calls stateful)
+1,0x750f00,cb_BINMESHPLUGIN_RpWorldSector_StreamGetSize,world,L2 (calls stateful)
+1,0x750f20,RpWorldAddCamera,world,L2 (globals)
+1,0x750f90,RpWorldAddAtomic,world,L2 (globals)
+1,0x7511e0,RpWorldSectorForAllLights,world,L2 (indirect-calls)
+1,0x751390,_rpWorldAddAtomicSetWorldCB,world,L2 (globals)
+1,0x7513d0,_rpWorldAddLightCB,world,L2 (globals)
+1,0x751420,_rpWorldAddCameraCB,world,L2 (globals)
+1,0x751460,RpWorldRemoveClump,world,L2 (globals)
+1,0x751910,RpWorldAddLight,world,L2 (globals)
+1,0x7519f0,RpLightForAllWorldSectors,world,"L2 (globals, indirect-calls)"
+1,0x751a70,RpLightSetRadius,world,L2 (calls stateful)
+1,0x751ae0,RpLightGetConeAngle,world,L2 (calls stateful)
+1,0x751d90,RpLightRegisterPluginStream,world,L2 (globals)
+1,0x751dc0,RpLightSetStreamAlwaysCallBack,world,L2 (globals)
+1,0x751de0,RpLightGetPluginOffset,world,L2 (globals)
+1,0x751e10,RpLightStreamGetSize,world,L2 (globals)
+1,0x7520d0,RpLightDestroy,world,"L2 (globals, indirect-calls)"
+1,0x752110,RpLightCreate,world,"L2 (globals, indirect-calls)"
+1,0x7521b0,cb_LIGHTMODULE_RwEngine_Close,world,L2 (globals)
+1,0x752210,_rpLightDestructor,world,"L2 (globals, indirect-calls)"
+1,0x752270,cb_LIGHTMODULE_RwEngine_Open,world,L2 (globals)
+1,0x754e20,_rpD3D9VertexDeclarationInstTangent,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x755980,_rpD3D9FindFormatV3d,d3d9-driver,L2 (globals)
+1,0x755aa0,_rpD3D9FindFormatV2d,d3d9-driver,L2 (globals)
+1,0x755d80,_rwD3D9LightsOpen,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x756600,_rwD3D9LightsEnable,d3d9-driver,L2 (globals)
+1,0x758940,_rpMeshClose,world,L2 (globals)
+1,0x758a90,_rpBuildMeshCreate,world,"L2 (globals, indirect-calls)"
+1,0x758c00,_rpBuildMeshAddTriangle,world,"L2 (globals, indirect-calls)"
+1,0x759100,RpBuildMeshGenerateTrivialTriStrip,world,L2 (calls stateful)
+1,0x75a370,_rpTriStripWalk,world,L1
+1,0x75b780,RpTriStripMeshTunnel,world,"L2 (globals, indirect-calls)"
+1,0x75bd80,RpTriStripMeshQuick,world,L1
+1,0x75c9d0,_rpBuildMeshTriStripCore,world,L1
+1,0x75d530,_rpTriListMeshGenerate,world,"L2 (globals, indirect-calls)"
+1,0x75d970,_rpMeshOptimise,world,"L2 (globals, indirect-calls)"
+1,0x75ee60,_rpD3D9VertexShaderCachePurge,d3d9-driver,L2 (globals)
+1,0x75f0b0,_rpD3D9VertexShaderGenerate,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x7618b0,_rpD3D9VertexShaderUpdateFogData,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x761c60,RpWorldSectorForAllMeshes,world,L2 (calls stateful)
+1,0x761cc0,RpWorldSectorRegisterPluginStream,world,L2 (globals)
+1,0x761cf0,RpWorldSectorSetStreamAlwaysCallBack,world,L2 (globals)
+1,0x761d10,RpWorldSectorSetStreamRightsCallBack,world,L2 (globals)
+1,0x761d30,RpWorldSectorGetPluginOffset,world,L2 (globals)
+1,0x762040,_rpWorldPlaneSectorStreamGetSize,world,L2 (globals)
+1,0x7645c0,_rpD3D9NativeDataWorldSectorStreamGetSize,d3d9-driver,L2 (indirect-calls)
+1,0x764760,_rwD3D9VSGetWorldViewMatrix,d3d9-driver,L2 (globals)
+1,0x764920,_rwD3D9VSGetWorldMultiplyMatrix,d3d9-driver,L2 (globals)
+1,0x764960,_rwD3D9VSGetWorldMultiplyTransposeMatrix,d3d9-driver,L2 (globals)
+1,0x7649d0,_rwD3D9VSGetWorldViewMultiplyTransposeMatrix,d3d9-driver,L2 (globals)
+1,0x7c4720,cb_HANIMPLUGIN_RwEngine_Close,anim,L2 (globals)
+1,0x7c4770,cb_HANIMPLUGIN_RwFrame_Dtor,anim,"L2 (globals, indirect-calls)"
+1,0x7c4c30,RpHAnimHierarchyCreate,anim,"L2 (globals, indirect-calls)"
+1,0x7c4d30,RpHAnimHierarchyDestroy,anim,"L2 (globals, indirect-calls)"
+1,0x7c4f40,RpHAnimHierarchyAttach,anim,L2 (globals)
+1,0x7c4f90,_rpHAnimHierarchyAttachFrameCB,anim,L2 (globals)
+1,0x7c5020,RpHAnimHierarchyAttachFrameIndex,anim,L2 (globals)
+1,0x7c50a0,_rpHAnimHierarchyAttachFrameIndexCB,anim,L2 (globals)
+1,0x7c5ca0,RpHAnimKeyFrameInterpolate,anim,L2 (calls stateful)
+1,0x7c60c0,RpHAnimKeyFrameBlend,anim,L2 (calls stateful)
+1,0x7c6a10,cb_SKINPLUGIN_RpGeometry_Dtor,skin,"L2 (globals, indirect-calls)"
+1,0x7c6be0,cb_SKINPLUGIN_RpGeometry_StreamGetSize,skin,L2 (globals)
+1,0x7c7560,RpSkinGeometrySetSkin,skin,L2 (globals)
+1,0x7c75b0,RpSkinCreate,skin,"L2 (globals, indirect-calls)"
+1,0x7c77a0,RpSkinDestroy,skin,"L2 (globals, indirect-calls)"
+1,0x7cb6a0,_rpSkinMatrixUpdateLoop,skin,L2 (calls stateful)
+1,0x7cbaa0,cb_UVANIMPLUGIN_RpMaterial_Dtor,uvanim,"L2 (globals, indirect-calls)"
+1,0x7cbd80,_rpUVAnimMaterialAddAnimCB,uvanim,L2 (calls stateful)
+1,0x7cc0c0,RpUVAnimDestroy,uvanim,"L2 (globals, indirect-calls)"
+1,0x7cc9d0,RpUVAnimKeyFrameStreamGetSize,uvanim,L1
+1,0x7cc9f0,RpUVAnimLinearKeyFrameApply,uvanim,L1
+1,0x7cccd0,cb_ANIMTOOLKIT_RwEngine_Open,anim,L2 (globals)
+1,0x7ccd10,cb_ANIMTOOLKIT_RwEngine_Close,anim,L2 (globals)
+1,0x7ccd40,RtAnimRegisterInterpolationScheme,anim,L2 (globals)
+1,0x7ccde0,RtAnimGetInterpolatorInfo,anim,L2 (globals)
+1,0x7cce40,RtAnimAnimationCreate,anim,"L2 (globals, indirect-calls)"
+1,0x7cd660,RtAnimInterpolatorSetKeyFrameCallBacks,anim,L2 (globals)
+1,0x7cd8d0,RtAnimInterpolatorAddAnimTime,anim,L2 (indirect-calls)
+1,0x7cdcb0,RtAnimInterpolatorCreateSubInterpolator,anim,L2 (calls stateful)
+1,0x7ce5d0,_rtBMPDecodeRow,toolkit,L2 (calls stateful)
+1,0x7ced70,RtDictSchemaDestruct,toolkit,L2 (calls stateful)
+1,0x7cee80,RtDictSchemaRemoveDict,toolkit,L1
+1,0x7cef60,_rtDictDestruct,toolkit,L2 (indirect-calls)
+1,0x7cefe0,RtDictFindNamedEntry,toolkit,"L2 (globals, indirect-calls)"
+1,0x7cf060,RtDictForAllEntries,toolkit,L2 (indirect-calls)
+1,0x7cf0c0,RtDictRemoveEntry,toolkit,L2 (indirect-calls)
+1,0x7cf130,RtDictDestroy,toolkit,"L2 (globals, indirect-calls)"
+1,0x7cf1f0,RtDictStreamGetSize,toolkit,L2 (indirect-calls)
+1,0x7cf5b0,RtDictSchemaForAllDictionaries,toolkit,L2 (indirect-calls)
+1,0x7eb6a0,_rtQuatFromMatrixX,toolkit,L2 (calls stateful)
+1,0x7eb700,_rtQuatFromMatrixY,toolkit,L2 (calls stateful)
+1,0x7eb760,_rtQuatFromMatrixZ,toolkit,L2 (calls stateful)
+1,0x7eba80,RtQuatQueryRotate,toolkit,L2 (calls stateful)
+1,0x7ebd10,RtQuatModulus,toolkit,L2 (calls stateful)
+1,0x7ec220,RtQuatSetupSlerpCache,toolkit,L2 (calls stateful)
+1,0x7ec780,cb_STREAMMODULE_RwEngine_Open,core,L2 (globals)
+1,0x7ec7e0,cb_STREAMMODULE_RwEngine_Close,core,L2 (globals)
+1,0x7ec810,_rwStreamInitialize,core,"L2 (globals, indirect-calls)"
+1,0x7ec9d0,RwStreamRead,core,"L2 (globals, indirect-calls)"
+1,0x7ecb30,RwStreamWrite,core,"L2 (globals, indirect-calls)"
+1,0x7ecd00,RwStreamSkip,core,"L2 (globals, indirect-calls)"
+1,0x7ece20,RwStreamClose,core,"L2 (globals, indirect-calls)"
+1,0x7ecef0,RwStreamOpen,core,"L2 (globals, indirect-calls)"
+1,0x7ed9b0,RwV3dNormalize,core,L2 (globals)
+1,0x7edc60,RwV2dNormalize,core,L2 (globals)
+1,0x7ede90,cb_VECTORMODULE_RwEngine_Open,core,"L2 (globals, indirect-calls)"
+1,0x7ee0b0,cb_CAMERAMODULE_RwEngine_Close,core,L2 (globals)
+1,0x7ee110,cb_CAMERAMODULE_RwEngine_Open,core,L2 (globals)
+1,0x7ee1a0,RwCameraSetViewOffset,core,L2 (calls stateful)
+1,0x7ee1d0,RwCameraSetNearClipPlane,core,L2 (calls stateful)
+1,0x7ee2a0,RwCameraSetFarClipPlane,core,L2 (calls stateful)
+1,0x7ee3a0,RwCameraSetProjection,core,L2 (calls stateful)
+1,0x7ee410,RwCameraSetViewWindow,core,L2 (calls stateful)
+1,0x7ee480,RwCameraGetPluginOffset,core,L2 (globals)
+1,0x7ee4b0,RwCameraDestroy,core,"L2 (globals, indirect-calls)"
+1,0x7ee4f0,RwCameraCreate,core,"L2 (globals, indirect-calls)"
+1,0x7ee740,_rwCameraBuildPerspClipPlanes,core,L2 (calls stateful)
+1,0x7eede0,_rwCameraBuildFrustumBBox,core,L2 (calls stateful)
+1,0x7ef9e0,RwIm3DGetRenderPipeline,core,L2 (globals)
+1,0x7efb10,RwIm3DSetRenderPipeline,core,L2 (globals)
+1,0x7efef0,cb_FRAMEMODULE_RwEngine_Open,core,L2 (globals)
+1,0x7eff70,cb_FRAMEMODULE_RwEngine_Close,core,L2 (globals)
+1,0x7f01a0,_rwFramePurgeClone,core,L1
+1,0x7f0360,_rwFrameInternalInit,core,L2 (globals)
+1,0x7f05a0,RwFrameDestroy,core,"L2 (globals, indirect-calls)"
+1,0x7f06f0,_rwFrameDeInit,core,L2 (globals)
+1,0x7f0830,_rwFrameDestroyRecurse,core,"L2 (globals, indirect-calls)"
+1,0x7f09c0,RwFrameAddChildNoUpdate,core,L2 (globals)
+1,0x7f0b00,RwFrameAddChild,core,L2 (globals)
+1,0x7f0cd0,RwFrameRemoveChild,core,L2 (globals)
+1,0x7f1290,RwFrameGetPluginOffset,core,L2 (globals)
+1,0x7f1660,cb_MATRIXMODULE_RwEngine_Close,core,L2 (globals)
+1,0x7f16c0,cb_MATRIXMODULE_RwEngine_Open,core,L2 (globals)
+1,0x7f17e0,RwMatrixOptimize,core,L2 (globals)
+1,0x7f1920,RwMatrixOrthoNormalize,core,L2 (calls stateful)
+1,0x7f1930,_rwMatrixOrthoNormalizeInternal,core,L2 (calls stateful)
+1,0x7f1d00,RwMatrixRotateOneMinusCosineSine,core,"L2 (globals, indirect-calls)"
+1,0x7f2070,RwMatrixInvert,core,L2 (globals)
+1,0x7f22c0,RwMatrixScale,core,L2 (calls stateful)
+1,0x7f2450,RwMatrixTranslate,core,L2 (calls stateful)
+1,0x7f25a0,RwMatrixTransform,core,"L2 (globals, indirect-calls)"
+1,0x7f2930,_rwMatrixToQuat,core,L2 (calls stateful)
+1,0x7f2ab0,_rwDeviceSystemRequest,core,"L2 (globals, indirect-calls)"
+1,0x7f2be0,RwEngineGetPluginOffset,core,L2 (globals)
+1,0x7f3600,RwTexDictionaryCreate,core,"L2 (globals, indirect-calls)"
+1,0x7f37c0,RwTextureCreate,core,"L2 (globals, indirect-calls)"
+1,0x7f38a0,RwTextureSetName,core,"L2 (globals, indirect-calls)"
+1,0x7f3910,RwTextureSetMaskName,core,"L2 (globals, indirect-calls)"
+1,0x7f3ac0,RwTextureRead,core,"L2 (globals, indirect-calls)"
+1,0x7f3be0,RwTextureGetPluginOffset,core,L2 (globals)
+1,0x7f3c40,RwTexDictionaryGetPluginOffset,core,L2 (globals)
+1,0x7f5940,_rwD3D9DynamicVertexBufferManagerCreate,d3d9-driver,L2 (globals)
+1,0x7f5b10,RwD3D9DynamicVertexBufferLock,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x7f5d20,_rwD3D9VertexBufferManagerClose,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x7fa1f0,_rwD3D9DrawIndexedPrimitiveUP,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fa290,_rwD3D9DrawPrimitiveUP,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fa320,_rwD3D9DrawIndexedPrimitive,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fa360,_rwD3D9DrawPrimitive,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fa660,RwD3D9SetLight,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fae40,RwRasterGetPluginOffset,core,L2 (globals)
+1,0x7faee0,RwRasterClear,core,"L2 (globals, indirect-calls)"
+1,0x7fb020,RwRasterDestroy,core,"L2 (globals, indirect-calls)"
+1,0x7fb1a0,RwRasterShowRaster,core,"L2 (globals, indirect-calls)"
+1,0x7fb230,RwRasterCreate,core,"L2 (globals, indirect-calls)"
+1,0x7fb310,cb_RASTERMODULE_RwEngine_Close,core,L2 (globals)
+1,0x7fb370,cb_RASTERMODULE_RwEngine_Open,core,L2 (globals)
+1,0x7fb480,_rwD3D9Im2DRenderOpen,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fb5f0,_rwD3D9Im2DRenderClose,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x7fb810,_rwD3D9Im2DSetRenderStates,d3d9-driver,L2 (globals)
+1,0x7fcac0,_rwD3D9RenderStateOpen,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fd100,_rwD3D9RenderStateReset,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fde70,RwD3D9SetTexture,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fe420,_rwD3D9RWSetRenderState,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x7fee20,_rwD3D9RGBToPixel,d3d9-driver,L2 (calls stateful)
+1,0x7ff070,_rwD3D9PixelToRGB,d3d9-driver,L2 (calls stateful)
+1,0x7ff8c0,_rwD3D9ConvertRasterToImage,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x7ffff0,_rwD3D9ImageFindFormat,d3d9-driver,L2 (globals)
+1,0x801980,_rwFreeListCreate,core,L2 (calls stateful)
+1,0x801f90,RwFreeListPurgeAllFreeLists,core,L2 (globals)
+1,0x801fd0,_rwMemoryOpen,core,L2 (globals)
+1,0x802280,cb_IMAGEMODULE_RwEngine_Open,core,"L2 (globals, indirect-calls)"
+1,0x8024e0,cb_IMAGEMODULE_RwEngine_Close,core,"L2 (globals, indirect-calls)"
+1,0x8026e0,RwImageCreate,core,"L2 (globals, indirect-calls)"
+1,0x802740,RwImageDestroy,core,"L2 (globals, indirect-calls)"
+1,0x8027a0,RwImageAllocatePixels,core,"L2 (globals, indirect-calls)"
+1,0x802ea0,RwImageSetPath,core,"L2 (globals, indirect-calls)"
+1,0x803210,_rwImageGrowScratchBuffer,core,"L2 (globals, indirect-calls)"
+1,0x803840,_rwImageApplyMaskTrueColor,core,L2 (calls stateful)
+1,0x803950,_rwImageCopyResample,core,L2 (calls stateful)
+1,0x803e30,RwImageGammaCorrect,core,L2 (globals)
+1,0x804550,RwTextureRegisterPluginStream,core,L2 (globals)
+1,0x804580,RwTextureSetStreamAlwaysCallBack,core,L2 (globals)
+1,0x8045a0,RwTextureStreamGetSize,core,L2 (globals)
+1,0x8048e0,RwTexDictionaryRegisterPluginStream,core,L2 (globals)
+1,0x804910,RwTexDictionarySetStreamAlwaysCallBack,core,L2 (globals)
+1,0x804930,RwTexDictionaryStreamGetSize,core,L2 (globals)
+1,0x804990,_rwTexDictionaryTextureGetSizeCB,core,"L2 (globals, indirect-calls)"
+1,0x804ef0,_rwObjectHasFrameSetFrame,core,L2 (calls stateful)
+1,0x804f60,_rxPipelineClose,pipeline,L2 (globals)
+1,0x8057b0,RxPipelineCreate,pipeline,"L2 (globals, indirect-calls)"
+1,0x805820,_rxPipelineDestroy,pipeline,"L2 (globals, indirect-calls)"
+1,0x805890,_rxHeapStackAllocTop,pipeline,L2 (globals)
+1,0x8058f0,_rxHeapStackAllocBottom,pipeline,L2 (globals)
+1,0x805a20,_rxPipelineNodeClustersRealloc,pipeline,"L2 (globals, indirect-calls)"
+1,0x805ea0,RxPipelineNodeCreateInitData,pipeline,"L2 (globals, indirect-calls)"
+1,0x8064d0,_rxPipelineResize,pipeline,"L2 (globals, indirect-calls)"
+1,0x8065e0,_rxPipelineCopyInto,pipeline,"L2 (globals, indirect-calls)"
+1,0x806de0,_rxPipelineNodeInitFromDefinition,pipeline,L2 (globals)
+1,0x807040,RxLockedPipeDeleteNode,pipeline,L2 (calls stateful)
+1,0x807580,RwFrameRegisterPluginStream,core,L2 (globals)
+1,0x8075b0,RwFrameSetStreamAlwaysCallBack,core,L2 (globals)
+1,0x8075d0,_rwFrameListInitialize,core,"L2 (globals, indirect-calls)"
+1,0x807750,_rwFrameListStreamGetSize,core,L2 (globals)
+1,0x807c90,cb_RESOURCESMODULE_RwEngine_Open,core,"L2 (globals, indirect-calls)"
+1,0x807de0,RwResourcesFreeResEntry,core,"L2 (globals, indirect-calls)"
+1,0x8081f0,RwResourcesEmptyArena,core,"L2 (globals, indirect-calls)"
+1,0x8082e0,_rwResourcesOpen,core,L2 (globals)
+1,0x808320,_rwResourcesClose,core,"L2 (globals, indirect-calls)"
+1,0x8084a0,_rwPluginRegistryAddPlugin,core,"L2 (globals, indirect-calls)"
+1,0x808c90,RwCameraRegisterPluginStream,core,L2 (globals)
+1,0x808cc0,RwCameraSetStreamAlwaysCallBack,core,L2 (globals)
+1,0x808ce0,RwCameraStreamGetSize,core,L2 (globals)
+1,0x809160,_rwSListCreate,core,"L2 (globals, indirect-calls)"
+1,0x809240,_rwSListGetNewEntry,core,"L2 (globals, indirect-calls)"
+1,0x809700,_rwFrameSyncDirtyLTM,core,L2 (indirect-calls)
+1,0x809850,_rwFrameSyncHierarchyLTMRecurse,core,L2 (calls stateful)
+1,0x8099f0,_rxHeapFreeBlockSlot,pipeline,"L2 (globals, indirect-calls)"
+1,0x80a780,cb_CHUNKGROUPMODULE_RwEngine_Open,core,L2 (globals)
+1,0x80a7e0,cb_CHUNKGROUPMODULE_RwEngine_Close,core,L2 (globals)
+1,0x80aa80,RwPalQuantAddImage,core,"L2 (globals, indirect-calls)"
+1,0x80b730,_rwPalQuantBoxStats,core,L1
+1,0x80bca0,_rwPalQuantAssignIndices,core,L2 (globals)
+1,0x80beb0,_rwPalQuantFillPalette,core,L1
+1,0x80bf20,RwPalQuantMatchImage,core,L2 (globals)
+1,0x80c520,RwPalQuantTerm,core,"L2 (globals, indirect-calls)"
+1,0x80c600,RwImageResample,core,L1
+1,0x80dfb0,_rwD3D9Im3DRenderClose,d3d9-driver,"L2 (globals, indirect-calls)"
+1,0x80e020,_rwD3D9Im3DRenderOpen,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x80ea40,RxRenderStateVectorSetDefaultRenderStateVector,pipeline,L2 (globals)
+1,0x80f690,_rxPipelineUnlockResolveClusters,pipeline,L2 (calls stateful)
+1,0x8100c0,_rwResourcesArenaFindFree,core,L1
+1,0x811c00,RpMatFXAtomicEnableEffects,matfx,L2 (globals)
+1,0x811c40,RpMatFXWorldSectorEnableEffects,matfx,L2 (globals)
+1,0x8128c0,RpMatFXMaterialSetDualBlendModes,matfx,L2 (globals)
+1,0x812c90,_rpMatFXD3D9SetVertexShaderState,matfx,"L2 (globals, indirect-calls, D3D9 device)"
+1,0x8160a0,_rpMatFXAtomicInstanceCallback,matfx,"L2 (globals, indirect-calls)"
+1,0x816120,_rpMatFXWorldSectorInstanceCallback,matfx,"L2 (globals, indirect-calls)"
+1,0x81edc0,_rwD3D9DecompressDXT5,d3d9-driver,L1
+2,0x4caea0,_rwD3D9RasterClearGeneric,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x4cb7c0,_rwD3D9RasterCreatePalettized,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x4cc150,_rxD3D9VideoMemoryRasterListCreate,d3d9-driver,L2 (globals)
+2,0x4cc170,_rwD3D9RasterClose,d3d9-driver,"L2 (globals, indirect-calls)"
+2,0x4cd050,_rwD3D9RasterCreateFromDDSFormat,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x4d30a0,RpAnimBlend::FrameUpdateCallBackNonSkinned,game-plugin,L2 (globals)
+2,0x4d32d0,RpAnimBlend::FrameUpdateCallBackCompressedNonSkinned,game-plugin,L2 (globals)
+2,0x4d34f0,RpAnimBlend::RpAnimBlendClumpUpdateAnimations,game-plugin,L2 (globals)
+2,0x4d60e0,RpAnimBlend::RpAnimBlendCreateAnimationForHierarchy,game-plugin,L2 (calls stateful)
+2,0x4d62a0,RpAnimBlend::RpAnimBlendClumpFindFrame,game-plugin,L2 (globals)
+2,0x4d6370,RpAnimBlend::RpAnimBlendClumpFindFrameFromHashKey,game-plugin,L2 (globals)
+2,0x4d64a0,RpAnimBlend::RpAnimBlendClumpFillFrameArray,game-plugin,L2 (calls stateful)
+2,0x4d6720,RpAnimBlend::RpAnimBlendClumpInit,game-plugin,L2 (calls stateful)
+2,0x59cde0,BreakablePlugin::BreakableStreamWrite,game-plugin,L2 (globals)
+2,0x59cec0,BreakablePlugin::BreakableStreamRead,game-plugin,L2 (globals)
+2,0x5a55a0,CClothesBuilder::ConstructGeometryArray,game-plugin,L2 (globals)
+2,0x5a5f70,CClothesBuilder::GetTextureFromTxdAndLoadNextTxd,game-plugin,"L2 (globals, indirect-calls)"
+2,0x5d0470,JPegPlugin::JPegCompressScreen,game-plugin,L2 (calls stateful)
+2,0x5d5bc0,CCarFXRenderer::InitialiseDirtTexture,game-pipeline,L2 (globals)
+2,0x5d5fa0,CCustomBuildingDNPipeline::DestroyPipe,game-pipeline,L2 (globals)
+2,0x5d6d80,CCustomBuildingDNPipeline::pluginExtraVertColourStreamWriteCB,game-pipeline,L2 (globals)
+2,0x5d6de0,CCustomBuildingDNPipeline::pluginExtraVertColourStreamReadCB,game-pipeline,L2 (globals)
+2,0x5d7380,CCustomBuildingPipeline::DestroyPipe,game-pipeline,L2 (globals)
+2,0x5d7f00,CCustomBuildingRenderer::AtomicSetup,game-pipeline,L2 (calls stateful)
+2,0x5d8cd0,CCustomCarEnvMapPipeline::pluginEnvMatStreamWriteCB,game-pipeline,L2 (calls stateful)
+2,0x5d8d60,CCustomCarEnvMapPipeline::pluginSpecMatStreamWriteCB,game-pipeline,L2 (globals)
+2,0x5d9660,CCustomCarEnvMapPipeline::pluginEnvMatStreamReadCB,game-pipeline,L2 (globals)
+2,0x5d9880,CCustomCarEnvMapPipeline::pluginSpecMatStreamReadCB,game-pipeline,L2 (globals)
+2,0x5da130,CCustomCarEnvMapPipeline::DestroyPipe,game-pipeline,L2 (globals)
+2,0x6f9fd0,C2dEffect::Rwt2dEffectPluginDataChunkReadCallBack,game-plugin,L2 (globals)
+2,0x734b10,RwHelper::GetAnimHierarchyFromClump,game-plugin,L2 (calls stateful)
+2,0x749c50,RpAtomicCreate,world,"L2 (globals, indirect-calls)"
+2,0x74a1c0,_rpClumpRemoveAndDestroyLight,world,L2 (globals)
+2,0x74a200,_rpClumpRemoveAndDestroyCamera,world,L2 (globals)
+2,0x74afa0,_rpClumpLightStreamGetSizeCB,world,L2 (calls stateful)
+2,0x74afd0,_rpClumpCameraStreamGetSizeCB,world,L2 (calls stateful)
+2,0x74bda0,RpAtomicRegisterPlugin,world,L2 (globals)
+2,0x74bdd0,RpClumpRegisterPlugin,world,L2 (globals)
+2,0x74bf20,RpAtomicSetFrame,world,L2 (calls stateful)
+2,0x74bf40,RpAtomicInstance,world,L2 (indirect-calls)
+2,0x74c4d0,RpGeometryAddMorphTarget,world,L2 (calls stateful)
+2,0x74c6c0,RpGeometryTriangleSetMaterial,world,L2 (calls stateful)
+2,0x74c800,RpGeometryUnlock,world,"L2 (globals, indirect-calls)"
+2,0x74cd70,RpGeometryRegisterPlugin,world,L2 (globals)
+2,0x74dbf0,RpMaterialRegisterPlugin,world,L2 (globals)
+2,0x74e010,RpMaterialStreamGetSize,world,L2 (globals)
+2,0x74e970,_rpD3D9AddDynamicGeometry,d3d9-driver,"L2 (globals, indirect-calls)"
+2,0x74eb40,_rpDestroyD3D9WorldSectorPipe,world,L2 (globals)
+2,0x74ec00,_rpD3D9GeometryListDestroy,world,"L2 (globals, indirect-calls)"
+2,0x74eca0,_rpWorldSectorDeinstanceAll,world,L2 (globals)
+2,0x74ed50,_rpWorldSectorDestroyRecurse,world,"L2 (globals, indirect-calls)"
+2,0x74f210,RpWorldUnlock,world,"L2 (globals, indirect-calls)"
+2,0x74fcd0,RpWorldRegisterPlugin,world,L2 (globals)
+2,0x750e90,cb_NATIVEDATAPLUGIN_RpWorldSector_StreamGetSize,world,L2 (calls stateful)
+2,0x750fc0,RpWorldRemoveAtomic,world,"L2 (globals, indirect-calls)"
+2,0x751300,RpWorldAddClump,world,L2 (globals)
+2,0x751500,_rpWorldRemoveAtomicCB,world,"L2 (globals, indirect-calls)"
+2,0x751d60,RpLightRegisterPlugin,world,L2 (globals)
+2,0x758970,_rpMeshOpen,world,L2 (globals)
+2,0x75a090,_rpTriStripAdjacencyCreate,world,"L2 (globals, indirect-calls)"
+2,0x75c380,RpBuildMeshGenerateTriStrip,world,"L2 (globals, indirect-calls)"
+2,0x75e5e0,_rxD3D9WorldSectorDefaultInstanceCallback,d3d9-driver,"L2 (globals, indirect-calls)"
+2,0x75eed0,_rpD3D9GetVertexShader,d3d9-driver,L2 (globals)
+2,0x761030,_rxD3D9VertexShaderDefaultMeshRenderCallBack,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x761c90,RpWorldSectorRegisterPlugin,world,L2 (globals)
+2,0x7647b0,_rwD3D9VSGetInverseWorldMatrix,d3d9-driver,L2 (globals)
+2,0x764a70,_rwD3D9VSGetWorldNormalizedMultiplyTransposeMatrix,d3d9-driver,L2 (globals)
+2,0x764b50,_rwD3D9VSGetWorldNormalizedViewMultiplyTransposeMatrix,d3d9-driver,L2 (globals)
+2,0x764c60,_rwD3D9VSGetWorldNormalizedTransposeMatrix,d3d9-driver,L2 (globals)
+2,0x764d30,_rwD3D9VSGetNormalInLocalSpace,d3d9-driver,L2 (globals)
+2,0x764e70,_rwD3D9VSGetPointInLocalSpace,d3d9-driver,L2 (globals)
+2,0x764f60,_rwD3D9VSGetRadiusInLocalSpace,d3d9-driver,L2 (globals)
+2,0x7c4670,cb_HANIMPLUGIN_RwEngine_Open,anim,L2 (globals)
+2,0x7c4830,cb_HANIMPLUGIN_RwFrame_Copy,anim,L2 (globals)
+2,0x7c4db0,RpHAnimHierarchyCreateSubHierarchy,anim,"L2 (globals, indirect-calls)"
+2,0x7c4ed0,RpHAnimHierarchyCreateFromHierarchy,anim,L2 (calls stateful)
+2,0x7c6ae0,_rpSkinAtomicSetupPipelineCB,skin,L2 (globals)
+2,0x7c6b70,_rpSkinAtomicAlwaysCB,skin,L2 (globals)
+2,0x7c7830,RpSkinAtomicSetType,skin,L2 (calls stateful)
+2,0x7c86f0,_rpSkinPipelinesDestroy,skin,L2 (globals)
+2,0x7c90d0,_rpD3D9SkinGeometryInstance,skin,"L2 (globals, indirect-calls)"
+2,0x7cba20,cb_UVANIMPLUGIN_RwEngine_Close,uvanim,L2 (globals)
+2,0x7cc020,RpUVAnimCreate,uvanim,"L2 (globals, indirect-calls)"
+2,0x7cc3b0,RpMaterialSetUVAnim,uvanim,L2 (globals)
+2,0x7cc4b0,RpMaterialUVAnimAddAnimTime,uvanim,L2 (globals)
+2,0x7cd760,RtAnimInterpolatorSubAnimTime,anim,L2 (indirect-calls)
+2,0x7cdf60,RtBMPImageRead,toolkit,"L2 (globals, indirect-calls)"
+2,0x7cec40,_rtBMPEncodeRow,toolkit,L2 (calls stateful)
+2,0x7ced40,RtDictSchemaInit,toolkit,L2 (calls stateful)
+2,0x7ced90,RtDictSchemaCreateDict,toolkit,"L2 (globals, indirect-calls)"
+2,0x7cee50,RtDictSchemaAddDict,toolkit,L2 (calls stateful)
+2,0x7cef00,_rtDictSchemaInitDict,toolkit,L2 (calls stateful)
+2,0x7cefb0,RtDictAddEntry,toolkit,L2 (indirect-calls)
+2,0x7cf600,RtPNGImageWrite,toolkit,"L2 (globals, indirect-calls)"
+2,0x7cf980,_rtPNGWriteData,toolkit,L2 (calls stateful)
+2,0x7cf9b0,RtPNGImageRead,toolkit,"L2 (globals, indirect-calls)"
+2,0x7cfde0,_rtPNGReadData,toolkit,L2 (calls stateful)
+2,0x7eb5c0,RtQuatConvertFromMatrix,toolkit,L2 (indirect-calls)
+2,0x7eb7c0,RtQuatRotate,toolkit,L2 (calls stateful)
+2,0x7ed0f0,_rwStreamReadChunkHeader,game-plugin,L2 (calls stateful)
+2,0x7ed270,_rwStreamWriteVersionedChunkHeader,core,L2 (calls stateful)
+2,0x7ed3d0,RwStreamWriteReal,core,L2 (calls stateful)
+2,0x7ed460,RwStreamWriteInt32,core,L2 (calls stateful)
+2,0x7ed480,RwStreamWriteInt16,core,L2 (calls stateful)
+2,0x7ed4a0,RwStreamReadInt16,core,L2 (calls stateful)
+2,0x7ed4f0,RwStreamReadReal,core,L2 (calls stateful)
+2,0x7ed540,RwStreamReadInt32,core,L2 (calls stateful)
+2,0x7ee370,RwCameraShowRaster,core,L2 (calls stateful)
+2,0x7ee450,RwCameraRegisterPlugin,core,L2 (globals)
+2,0x7ef1f0,_rwCameraBuildParallelClipPlanes,core,L2 (calls stateful)
+2,0x7ef3b0,RwCameraClone,core,L2 (globals)
+2,0x7f0050,_rwFrameCloneRecurse,core,"L2 (globals, indirect-calls)"
+2,0x7f0410,RwFrameCreate,core,"L2 (globals, indirect-calls)"
+2,0x7f0450,_rwFrameInit,core,L2 (calls stateful)
+2,0x7f08a0,RwFrameDestroyHierarchy,core,"L2 (globals, indirect-calls)"
+2,0x7f0e30,RwFrameTranslate,core,L2 (globals)
+2,0x7f0ed0,RwFrameScale,core,L2 (globals)
+2,0x7f0f70,RwFrameTransform,core,L2 (globals)
+2,0x7f1170,RwFrameOrthoNormalize,core,L2 (globals)
+2,0x7f1260,RwFrameRegisterPlugin,core,L2 (globals)
+2,0x7f1fd0,RwMatrixRotate,core,L2 (calls stateful)
+2,0x7f2720,RwMatrixQueryRotate,core,L2 (calls stateful)
+2,0x7f2bb0,RwEngineRegisterPlugin,core,L2 (globals)
+2,0x7f2c00,RwEngineGetNumSubSystems,core,L2 (globals)
+2,0x7f2c30,RwEngineGetSubSystemInfo,core,L2 (globals)
+2,0x7f2c60,RwEngineGetCurrentSubSystem,core,L2 (globals)
+2,0x7f2c90,RwEngineSetSubSystem,core,L2 (globals)
+2,0x7f2cc0,RwEngineGetNumVideoModes,core,L2 (globals)
+2,0x7f2cf0,RwEngineGetVideoModeInfo,core,L2 (globals)
+2,0x7f2d20,RwEngineGetCurrentVideoMode,core,L2 (globals)
+2,0x7f2d50,RwEngineSetVideoMode,core,L2 (globals)
+2,0x7f2d80,RwEngineGetTextureMemorySize,core,L2 (globals)
+2,0x7f2db0,RwEngineGetMaxTextureSize,core,L2 (globals)
+2,0x7f2de0,RwEngineSetFocus,core,L2 (globals)
+2,0x7f2e20,RwEngineStop,core,L2 (globals)
+2,0x7f2e70,RwEngineStart,core,L2 (globals)
+2,0x7f2f00,RwEngineClose,core,"L2 (globals, indirect-calls)"
+2,0x7f2f70,RwEngineOpen,core,"L2 (globals, indirect-calls)"
+2,0x7f3130,RwEngineTerm,core,L2 (globals)
+2,0x7f3170,RwEngineInit,core,L2 (globals)
+2,0x7f3820,RwTextureDestroy,core,"L2 (globals, indirect-calls)"
+2,0x7f3bb0,RwTextureRegisterPlugin,core,L2 (globals)
+2,0x7f3c10,RwTexDictionaryRegisterPlugin,core,L2 (globals)
+2,0x7f3ea0,cb_TEXTUREMODULE_RwEngine_Open,core,L2 (globals)
+2,0x7f58d0,_rwD3D9DynamicVertexBufferRestore,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7f5cb0,_rwD3D9VertexBufferManagerOpen,d3d9-driver,L2 (globals)
+2,0x7f6b40,_rwD3D9DeviceLightCacheOpen,d3d9-driver,"L2 (globals, indirect-calls)"
+2,0x7f7f70,D3D9DeviceReleaseVideoMemory,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7f8d70,RwD3D9CameraAttachWindow,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7f9d50,RwD3D9GetCurrentD3DDevice,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7fb0b0,RwRasterRegisterPlugin,core,L2 (globals)
+2,0x7fb650,_rwD3D9Im2DRenderLine,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7fb8e0,_rwD3D9Im2DRenderTriangle,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7fbb00,_rwD3D9Im2DRenderPrimitive,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7fbd30,_rwD3D9Im2DRenderIndexedPrimitive,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x7ff450,_rwD3D9ImageGetRasterBody,d3d9-driver,L2 (globals)
+2,0x802af0,RwImageApplyMask,core,"L2 (globals, indirect-calls)"
+2,0x8030c0,_rwImageFindFileAndCall,core,"L2 (globals, indirect-calls)"
+2,0x8059c0,RxPipelineNodeCloneDefinition,pipeline,L2 (calls stateful)
+2,0x805db0,RxPipelineNodeRequestCluster,pipeline,L2 (calls stateful)
+2,0x805e20,RxPipelineNodeReplaceCluster,pipeline,L2 (calls stateful)
+2,0x806990,RxPipelineLock,pipeline,"L2 (globals, indirect-calls)"
+2,0x806be0,RxLockedPipeAddFragment,pipeline,L2 (globals)
+2,0x806f20,RxLockedPipeReplaceNode,pipeline,L2 (calls stateful)
+2,0x807c60,cb_PIPEMODULE_RwEngine_Close,pipeline,L2 (calls stateful)
+2,0x807d80,cb_RESOURCESMODULE_RwEngine_Close,core,"L2 (globals, indirect-calls)"
+2,0x807ed0,RwResourcesAllocateResEntry,core,"L2 (globals, indirect-calls)"
+2,0x8080c0,RwResourcesSetArenaSize,core,"L2 (globals, indirect-calls)"
+2,0x809550,_rwFrameSyncDirty,core,"L2 (globals, indirect-calls)"
+2,0x8097d0,_rwFrameSyncHierarchyLTM,core,L2 (calls stateful)
+2,0x8098b0,RxHeapFree,pipeline,L2 (calls stateful)
+2,0x809bf0,_rxHeapAddBlock,pipeline,L2 (calls stateful)
+2,0x80a110,_rwIm3DDestroyTransformPipeline,pipeline,L2 (calls stateful)
+2,0x80a140,_rwIm3DDestroyRenderPipelines,pipeline,L2 (calls stateful)
+2,0x80ba30,_rwPalQuantSplitCost,core,L2 (globals)
+2,0x80c470,RwPalQuantInit,core,"L2 (globals, indirect-calls)"
+2,0x80cd10,RwImageCreateResample,core,L2 (calls stateful)
+2,0x80e270,_rwD3D9ImmRenderPrimitiveNode,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x80f460,_rxPipelineUnlockAllocNodeSet,pipeline,L2 (calls stateful)
+2,0x80f970,_rxPipelineUnlockAssignSlots,pipeline,L2 (calls stateful)
+2,0x80fc30,_rxPipelineUnlockFinalise,pipeline,L2 (calls stateful)
+2,0x811970,cb_MATERIALEFFECTSPLUGIN_RpMaterial_StreamGetSize,matfx,L2 (globals)
+2,0x812ac0,_rpMatFXD3D9SetupTextureStages,matfx,"L2 (globals, indirect-calls, D3D9 device)"
+2,0x816190,_rpMatFXPipelinesDestroy,matfx,L2 (globals)
+3,0x41b310,CCollisionPlugin::PluginAttach,game-plugin,L2 (globals)
+3,0x4cb4c0,_rwD3D9RasterClearRect,d3d9-driver,L2 (calls stateful)
+3,0x4cb4e0,_rwD3D9RasterClear,d3d9-driver,L2 (calls stateful)
+3,0x4cce60,_rwD3D9RasterCreate,d3d9-driver,"L2 (globals, indirect-calls)"
+3,0x4cd4d0,_rwD3D9NativeTextureWrite,d3d9-driver,"L2 (globals, indirect-calls)"
+3,0x4d6150,RpAnimBlend::RpAnimBlendPluginAttach,game-plugin,L2 (globals)
+3,0x59cd90,BreakablePlugin::BreakableDestructor,game-plugin,L2 (globals)
+3,0x59d100,BreakablePlugin::BreakablePluginAttach,game-plugin,L2 (globals)
+3,0x5a4380,CClothesBuilder::unnamed_0x5a4380,game-plugin,L2 (calls stateful)
+3,0x5a44a0,CClothesBuilder::unnamed_0x5a44a0,game-plugin,L2 (calls stateful)
+3,0x5a4940,CClothesBuilder::BlendGeometry-3,game-plugin,L2 (calls stateful)
+3,0x5a4f10,CClothesBuilder::BlendGeometry-2,game-plugin,L2 (calls stateful)
+3,0x5a5340,CClothesBuilder::CopyGeometry,game-plugin,L2 (calls stateful)
+3,0x5a6040,CClothesBuilder::ConstructTextures,game-plugin,"L2 (globals, indirect-calls)"
+3,0x5d0740,JPegPlugin::JPegCompressScreenToBuffer,game-plugin,L2 (globals)
+3,0x5d0820,JPegPlugin::JPegCompressScreenToFile,game-plugin,L2 (globals)
+3,0x5d5ad0,CCarFXRenderer::Shutdown,game-pipeline,L2 (globals)
+3,0x5d6850,CCustomBuildingDNPipeline::NVCPipelineProcess,game-pipeline,L2 (globals)
+3,0x5d72e0,CCustomBuildingDNPipeline::ExtraVertColourPluginAttach,game-pipeline,L2 (globals)
+3,0x5d7ee0,CCustomBuildingRenderer::Shutdown,game-pipeline,L2 (calls stateful)
+3,0x5d97d0,CCustomCarEnvMapPipeline::pluginSpecMatDestructorCB,game-pipeline,L2 (globals)
+3,0x5da450,CCustomCarEnvMapPipeline::RegisterPlugin,game-pipeline,L2 (globals)
+3,0x6fa970,C2dEffect::PluginAttach,game-plugin,L2 (globals)
+3,0x72fab0,NodeNamePlugin::NodeNamePluginAttach,game-plugin,L2 (globals)
+3,0x72fbd0,PipelinePlugin::PipelinePluginAttach,game-plugin,L2 (globals)
+3,0x732e30,CVisibilityPlugins::PluginAttach,game-plugin,L2 (globals)
+3,0x734be0,RwHelper::RpAtomicConvertGeometryToTL,game-plugin,L2 (calls stateful)
+3,0x734c20,RwHelper::RpAtomicConvertGeometryToTS,game-plugin,L2 (calls stateful)
+3,0x734c60,RwHelper::atomicConvertGeometryToTL,game-plugin,L2 (calls stateful)
+3,0x734ce0,RwHelper::atomicConvertGeometryToTS,game-plugin,L2 (calls stateful)
+3,0x748f70,RpAnisotPluginAttach,toolkit,L2 (globals)
+3,0x749060,cb_ANISOTPLUGIN_RwTexture_StreamRead,toolkit,L2 (globals)
+3,0x7490b0,cb_ANISOTPLUGIN_RwTexture_StreamWrite,toolkit,L2 (globals)
+3,0x749120,cb_RIGHTTORENDER_RpAtomic_StreamRead,world,L2 (globals)
+3,0x749160,cb_RIGHTTORENDER_RpAtomic_StreamWrite,world,L2 (calls stateful)
+3,0x749830,_rpClumpRegisterExtensions,world,L2 (globals)
+3,0x74d7d0,cb_RIGHTTORENDER_RpMaterial_StreamRead,world,L2 (globals)
+3,0x74d810,cb_RIGHTTORENDER_RpMaterial_StreamWrite,world,L2 (calls stateful)
+3,0x74da20,RpMaterialDestroy,world,"L2 (globals, indirect-calls)"
+3,0x74da80,RpMaterialClone,world,"L2 (globals, indirect-calls)"
+3,0x74dbc0,RpMaterialSetTexture,world,L2 (calls stateful)
+3,0x74e450,_rpMaterialListStreamGetSize,world,L2 (calls stateful)
+3,0x750050,_rpWorldObjRegisterPlugins,world,L2 (globals)
+3,0x750a60,cb_WORLDOBJMODULE_RpClump_Copy,world,L2 (globals)
+3,0x755b90,_rpD3D9LightRegisterPlugin,d3d9-driver,L2 (globals)
+3,0x756960,_rpD3D9InstanceMeshes,d3d9-driver,"L2 (globals, indirect-calls)"
+3,0x7578c0,_rxD3D9DefaultInstanceCallback,d3d9-driver,"L2 (globals, indirect-calls)"
+3,0x7587d0,_rpWorldDeviceRegisterPlugins2,world,L2 (globals)
+3,0x758d70,_rpMeshWrite,world,L2 (calls stateful)
+3,0x758ec0,_rpMeshRead,world,"L2 (globals, indirect-calls)"
+3,0x759790,_rpBuildMeshStripify,world,"L2 (globals, indirect-calls)"
+3,0x75a960,_rpBuildMeshGenerateExhaustiveTriStripCommon,world,"L2 (globals, indirect-calls)"
+3,0x75e300,_rpWorldPipeClose,world,L2 (calls stateful)
+3,0x761010,_rxD3D9VertexShaderDefaultGetMaterialShaderCallBack,d3d9-driver,L2 (calls stateful)
+3,0x761d60,cb_RIGHTTORENDER_RpWorld_StreamRead,world,L2 (globals)
+3,0x761da0,cb_RIGHTTORENDER_RpWorld_StreamWrite,world,L2 (calls stateful)
+3,0x761e00,cb_RIGHTTORENDER_RpWorldSector_StreamRead,world,L2 (globals)
+3,0x761e40,cb_RIGHTTORENDER_RpWorldSector_StreamWrite,world,L2 (calls stateful)
+3,0x7637f0,_rpD3D9NativeDataGeometryStreamWrite,d3d9-driver,"L2 (globals, indirect-calls)"
+3,0x763f20,_rpD3D9NativeDataWorldSectorStreamWrite,d3d9-driver,"L2 (globals, indirect-calls)"
+3,0x7c4600,RpHAnimPluginAttach,anim,L2 (globals)
+3,0x7c48d0,cb_HANIMPLUGIN_RwFrame_StreamWrite,anim,L2 (globals)
+3,0x7c4a00,cb_HANIMPLUGIN_RwFrame_StreamRead,anim,"L2 (globals, indirect-calls)"
+3,0x7c64c0,RpHAnimKeyFrameStreamRead,anim,L2 (calls stateful)
+3,0x7c6540,RpHAnimKeyFrameStreamWrite,anim,L2 (calls stateful)
+3,0x7c6820,RpSkinPluginAttach,skin,L2 (globals)
+3,0x7c69a0,cb_SKINPLUGIN_RwEngine_Close,skin,"L2 (globals, indirect-calls)"
+3,0x7c72a0,cb_SKINPLUGIN_RpAtomic_StreamRead,skin,"L2 (globals, indirect-calls)"
+3,0x7c8840,_rpSkinGeometryNativeWrite,skin,L2 (globals)
+3,0x7c8b50,_rpSkinSplitDataStreamWrite,skin,L2 (calls stateful)
+3,0x7c8be0,_rpSkinSplitDataStreamRead,skin,"L2 (globals, indirect-calls)"
+3,0x7c9680,_rpD3D9SkinGeometryInstanceVS,skin,L2 (globals)
+3,0x7cb940,RpUVAnimPluginAttach,uvanim,L2 (globals)
+3,0x7cb9b0,cb_UVANIMPLUGIN_RwEngine_Open,uvanim,L2 (globals)
+3,0x7cbb70,cb_UVANIMPLUGIN_RpMaterial_StreamWrite,uvanim,L2 (globals)
+3,0x7cbf70,_rpUVAnimCustomDataStreamRead,uvanim,"L2 (globals, indirect-calls)"
+3,0x7cbfd0,_rpUVAnimCustomDataStreamWrite,uvanim,L2 (calls stateful)
+3,0x7cc110,RpMaterialUVAnimApplyUpdate,uvanim,"L2 (globals, indirect-calls)"
+3,0x7cc4f0,RpMaterialUVAnimSubAnimTime,uvanim,L2 (globals)
+3,0x7cc560,RpUVAnimParamKeyFrameApply,uvanim,L2 (calls stateful)
+3,0x7cc760,_rpUVAnimParamKeyFrameFromMatrix,uvanim,L2 (calls stateful)
+3,0x7ccca0,RtAnimInitialize,anim,L2 (calls stateful)
+3,0x7cd160,RtAnimAnimationWrite,anim,L2 (indirect-calls)
+3,0x7cd220,RtAnimAnimationStreamRead,anim,"L2 (globals, indirect-calls)"
+3,0x7cd410,RtAnimAnimationStreamWrite,anim,L2 (indirect-calls)
+3,0x7cdab0,RtAnimInterpolatorSetCurrentTime,anim,L2 (calls stateful)
+3,0x7cdb00,RtAnimAnimationMakeDelta,anim,"L2 (globals, indirect-calls)"
+3,0x7ce990,RtBMPImageWrite,toolkit,"L2 (globals, indirect-calls)"
+3,0x7cf490,RtDictStreamWrite,toolkit,L2 (indirect-calls)
+3,0x7ed2d0,RwStreamFindChunk,core,L2 (calls stateful)
+3,0x7ed590,RwStreamReadChunkHeaderInfo,core,L2 (calls stateful)
+3,0x7ee5a0,_rwCameraFrameSyncCB,core,L2 (calls stateful)
+3,0x7ef370,_rwCameraDefaultBeginUpdate,core,"L2 (globals, indirect-calls)"
+3,0x7efde0,cb_IMMEDIATEMODULE_RwEngine_Close,pipeline,L2 (globals)
+3,0x7effb0,_rwFrameCloneAndLinkClones,core,L2 (globals)
+3,0x7f0250,RwFrameCloneHierarchy,core,L2 (globals)
+3,0x7f0990,RwFrameGetLTM,core,L2 (calls stateful)
+3,0x7f1010,RwFrameRotate,core,L2 (globals)
+3,0x7f36a0,RwTexDictionaryDestroy,core,"L2 (globals, indirect-calls)"
+3,0x7f3d00,cb_TEXTUREMODULE_RwEngine_Close,core,"L2 (globals, indirect-calls)"
+3,0x7f5f60,_rwDeviceRegisterPlugin,core,L2 (globals)
+3,0x7f6781,WindowedModeHooks::notsa::WindowedMode::HookDirect3DDeviceReplacerSA,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7f7100,D3D9DeviceSystemStop,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7f7730,WindowedModeHooks::RenderWare::_rwD3D9CameraClear,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7f8300,_rwD3D9TestState,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7f8640,RwD3D9ChangeVideoMode,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7f8a90,RwD3D9ChangeMultiSamplingLevels,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7f99b0,_rwD3D9RasterShowRaster,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+3,0x7ff270,_rwD3D9ImageGetRaster,d3d9-driver,L2 (globals)
+3,0x802fd0,RwImageRead,core,"L2 (globals, indirect-calls)"
+3,0x803310,_rwImageFindFileType,core,L2 (calls stateful)
+3,0x804e40,_rwTexDictionaryDestroyTextureCB,core,L2 (calls stateful)
+3,0x805340,RxClusterSetExternalData,pipeline,L2 (globals)
+3,0x8053a0,RxClusterSetData,pipeline,L2 (globals)
+3,0x8054c0,RxClusterDestroyData,pipeline,L2 (globals)
+3,0x808b40,_rwPluginRegistryWriteDataChunks,core,L2 (indirect-calls)
+3,0x809aa0,RxHeapAlloc,pipeline,"L2 (globals, indirect-calls)"
+3,0x809ec0,_rxHeapReset,pipeline,L2 (calls stateful)
+3,0x809f90,RxHeapCreate,pipeline,"L2 (globals, indirect-calls)"
+3,0x80a4a0,_rwStringStreamWrite,core,"L2 (globals, indirect-calls)"
+3,0x80a510,_rwStringStreamFindAndRead,core,"L2 (globals, indirect-calls)"
+3,0x80af60,RwPalQuantResolvePalette,core,L2 (globals)
+3,0x80f070,_rxPacketDestroy,pipeline,L2 (globals)
+3,0x80f0d0,_rxPipelineUnlockBuildClusters,pipeline,L2 (calls stateful)
+3,0x810830,_rpMatFXBumpMapCreateRaster,matfx,L2 (calls stateful)
+3,0x810aa0,RpMatFXPluginAttach,matfx,L2 (globals)
+3,0x810bb0,cb_MATERIALEFFECTSPLUGIN_RwEngine_Close,matfx,L2 (globals)
+3,0x810ca0,_rpMatFXMaterialDataDestroyEffects,matfx,L2 (calls stateful)
+3,0x811a60,cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamWrite,matfx,L2 (globals)
+3,0x811a90,cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead,matfx,L2 (globals)
+3,0x811b60,cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamWrite,matfx,L2 (globals)
+3,0x811b90,cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamRead,matfx,L2 (globals)
+3,0x811ed0,RpMatFXMaterialSetupEnvMap,matfx,L2 (globals)
+3,0x812040,RpMatFXMaterialSetupDualTexture,matfx,L2 (globals)
+3,0x812530,RpMatFXMaterialSetEnvMapTexture,matfx,L2 (globals)
+3,0x812830,RpMatFXMaterialSetDualTexture,matfx,L2 (globals)
+3,0x81f360,RwD3D9RasterStreamReadDDS,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+4,0x4cd820,_rwD3D9NativeTextureRead,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+4,0x5d5b00,CCarFXRenderer::RegisterPlugins,game-pipeline,L2 (calls stateful)
+4,0x5d7ef0,CCustomBuildingRenderer::PluginAttach,game-pipeline,L2 (calls stateful)
+4,0x732850,CVisibilityPlugins::SetTextureCB,game-plugin,L2 (calls stateful)
+4,0x732a40,CVisibilityPlugins::FrustumSphereCB,game-plugin,L2 (globals)
+4,0x732c80,CVisibilityPlugins::GetDistanceSquaredFromCamera-Frame,game-plugin,L2 (calls stateful)
+4,0x733160,CVisibilityPlugins::SetupVehicleVariables,game-plugin,L2 (globals)
+4,0x749330,RpAtomicGetWorldBoundingSphere,world,L2 (calls stateful)
+4,0x749b20,RpClumpRender,world,L2 (indirect-calls)
+4,0x74bd40,_rpClumpChunkInfoRead,world,L2 (calls stateful)
+4,0x74ce20,RpGeometryStreamGetSize,world,L2 (globals)
+4,0x74d750,_rpGeometryChunkInfoRead,world,L2 (calls stateful)
+4,0x74dcc0,_rpMaterialChunkInfoRead,world,L2 (calls stateful)
+4,0x74e150,_rpMaterialListDeinitialize,world,"L2 (globals, indirect-calls)"
+4,0x74ea40,_rpWorldDeviceRegisterPlugins,world,L2 (globals)
+4,0x74fe90,cb_WORLDMODULE_RwEngine_Close,world,L2 (globals)
+4,0x750480,_rpWorldObjCameraSync,world,"L2 (globals, indirect-calls)"
+4,0x750ac0,_rpWorldObjLightSync,world,"L2 (globals, indirect-calls)"
+4,0x750d90,cb_BINMESHPLUGIN_RpGeometry_StreamWrite,world,L2 (calls stateful)
+4,0x750db0,cb_BINMESHPLUGIN_RpGeometry_StreamRead,world,L2 (calls stateful)
+4,0x750e00,cb_NATIVEDATAPLUGIN_RpGeometry_StreamWrite,world,L2 (calls stateful)
+4,0x750e50,cb_NATIVEDATAPLUGIN_RpWorldSector_StreamWrite,world,L2 (calls stateful)
+4,0x750ea0,cb_BINMESHPLUGIN_RpWorldSector_StreamWrite,world,L2 (calls stateful)
+4,0x750ed0,cb_BINMESHPLUGIN_RpWorldSector_StreamRead,world,L2 (calls stateful)
+4,0x751e30,RpLightStreamWrite,world,L2 (globals)
+4,0x752060,_rpLightChunkInfoRead,world,L2 (calls stateful)
+4,0x756070,_rwD3D9LightsGlobalEnable,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x756260,_rwD3D9LightDirectionalEnable,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x756390,_rwD3D9LightLocalEnable,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x7575f0,_rwD3D9AtomicAllInOneNode,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x758270,_rxD3D9DefaultReinstanceCallback,d3d9-driver,L2 (indirect-calls)
+4,0x7591d0,_rpBuildMeshGenerateTriStripCommon,world,"L2 (globals, indirect-calls)"
+4,0x75a940,RpBuildMeshGenerateExhaustiveTriStrip,world,L2 (calls stateful)
+4,0x75b4e0,RpBuildMeshGenerateExhaustiveIgnoreWindingTriStrip,world,L2 (calls stateful)
+4,0x75e3f0,_rwD3D9WorldSectorAllInOneNode,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x760df0,_rxD3D9VertexShaderDefaultBeginCallBack,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x761a10,_rpD3D9VertexShaderSetEnvMatrix,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+4,0x761b70,_rpD3D9VertexShaderSetBumpMatrix,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+4,0x761ea0,RpWorldStreamGetSize,world,L2 (globals)
+4,0x7624a0,_rpWorldAtomicSectorStreamWrite,world,L2 (globals)
+4,0x7635b0,_rpWorldSectorChunkInfoRead,world,L2 (calls stateful)
+4,0x763620,_rpPlaneSectorChunkInfoRead,world,L2 (calls stateful)
+4,0x763690,_rpWorldChunkInfoRead,world,L2 (calls stateful)
+4,0x763a80,_rpD3D9NativeDataGeometryStreamRead,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x7641c0,_rpD3D9NativeDataWorldSectorStreamRead,d3d9-driver,"L2 (globals, indirect-calls)"
+4,0x7c51d0,RpHAnimHierarchyUpdateMatrices,anim,"L2 (globals, indirect-calls)"
+4,0x7c6c30,cb_SKINPLUGIN_RpGeometry_StreamWrite,skin,L2 (globals)
+4,0x7c78a0,_rpSkinUpdateMatricesCached,skin,L2 (globals)
+4,0x7c85b0,_rpD3D9SkinRenderSoftware,skin,"L2 (globals, indirect-calls)"
+4,0x7c88b0,_rpSkinGeometryNativeRead,skin,"L2 (globals, indirect-calls)"
+4,0x7c8d60,_rpD3D9SkinInstanceMeshes,skin,"L2 (globals, indirect-calls)"
+4,0x7ca850,_rpSkinPrepareMatrices,skin,L2 (globals)
+4,0x7cb390,_rpSkinPrepareMatricesInternal,skin,L2 (globals)
+4,0x7cc470,RpMaterialUVAnimSetCurrentTime,uvanim,L2 (globals)
+4,0x7cc810,_rpUVAnimKeyFrameSet,uvanim,L2 (globals)
+4,0x7cc870,RpUVAnimKeyFrameStreamRead,uvanim,L2 (calls stateful)
+4,0x7cc920,RpUVAnimKeyFrameStreamWrite,uvanim,L2 (calls stateful)
+4,0x7ccf30,RtAnimAnimationRead,anim,"L2 (globals, indirect-calls)"
+4,0x7cf240,RtDictSchemaStreamReadDict,toolkit,"L2 (globals, indirect-calls)"
+4,0x7f44c0,_rwTextureImageReadMipmaps,core,L2 (calls stateful)
+4,0x7f5f70,D3D9System,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+4,0x7f8f20,WindowedModeHooks::RenderWare::_rwD3D9CameraBeginUpdate,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+4,0x800c80,_rwD3D9RasterSetImageMipmaps,d3d9-driver,L2 (globals)
+4,0x8035c0,RwImageReadMaskedImage,core,"L2 (globals, indirect-calls)"
+4,0x8043f0,RwRasterRead,core,"L2 (globals, indirect-calls)"
+4,0x8045e0,RwTextureStreamWrite,core,L2 (globals)
+4,0x8049f0,RwTexDictionaryStreamWrite,core,L2 (globals)
+4,0x804b70,_rwTexDictionaryTextureWriteCB,core,"L2 (globals, indirect-calls)"
+4,0x804e60,_rwTextureChunkInfoRead,core,L2 (calls stateful)
+4,0x804fe0,_rxPipelineOpen,pipeline,L2 (globals)
+4,0x805400,RxClusterInitializeData,pipeline,L2 (globals)
+4,0x8054f0,RxClusterLockWrite,pipeline,L2 (globals)
+4,0x805710,RxPipelineExecute,pipeline,"L2 (globals, indirect-calls)"
+4,0x805f40,RxLockedPipeUnlock,pipeline,"L2 (globals, indirect-calls)"
+4,0x8077a0,_rwFrameListStreamWrite,core,L2 (globals)
+4,0x808980,_rwPluginRegistryReadDataChunks,core,L2 (indirect-calls)
+4,0x808c10,_rwPluginRegistrySkipDataChunks,core,L2 (calls stateful)
+4,0x808d00,RwCameraStreamWrite,core,L2 (globals)
+4,0x808ef0,RwCameraChunkInfoRead,core,L2 (calls stateful)
+4,0x809d10,RxHeapRealloc,pipeline,L2 (calls stateful)
+4,0x810c60,cb_MATERIALEFFECTSPLUGIN_RpMaterial_Dtor,matfx,"L2 (globals, indirect-calls)"
+4,0x811c80,RpMatFXMaterialSetEffects,matfx,"L2 (globals, indirect-calls)"
+4,0x814270,_rpMatFXD3D9SetEnvMapTexture,matfx,"L2 (globals, indirect-calls)"
+4,0x8149e0,_rpMatFXD3D9RenderBumpEnv,matfx,"L2 (globals, indirect-calls)"
+4,0x816290,_rpMatFXSetupBumpMapTextures,matfx,L2 (calls stateful)
+4,0x820a10,RwD3D9DDSTextureRead,d3d9-driver,"L2 (globals, indirect-calls)"
+5,0x5d6750,CCustomBuildingDNPipeline::CreateCustomObjPipe,game-pipeline,L2 (globals)
+5,0x5d7aa0,CCustomBuildingPipeline::CreateCustomObjPipe,game-pipeline,L2 (calls stateful)
+5,0x5d9f80,CCustomCarEnvMapPipeline::CreateCustomObjPipe,game-pipeline,L2 (calls stateful)
+5,0x732ab0,CVisibilityPlugins::VehicleVisibilityCB_BigVehicle,game-plugin,L2 (calls stateful)
+5,0x732f30,CVisibilityPlugins::RenderWeaponPedsForPC,game-plugin,"L2 (globals, indirect-calls)"
+5,0x7336f0,CVisibilityPlugins::VehicleVisibilityCB,game-plugin,L2 (globals)
+5,0x7491c0,AtomicDefaultRenderCallBack,world,L2 (globals)
+5,0x74a5b0,RpAtomicStreamGetSize,world,L2 (globals)
+5,0x74aea0,_rpClumpLightStreamWrite,world,L2 (calls stateful)
+5,0x74af20,_rpClumpCameraStreamWrite,world,L2 (calls stateful)
+5,0x74bfe0,RpGeometryTransform,world,"L2 (globals, indirect-calls)"
+5,0x74ca90,RpGeometryCreate,world,"L2 (globals, indirect-calls)"
+5,0x74ccc0,RpGeometryDestroy,world,"L2 (globals, indirect-calls)"
+5,0x74d6d0,_rpGeometryStreamReadFailCleanup,world,"L2 (globals, indirect-calls)"
+5,0x74e050,RpMaterialStreamWrite,world,L2 (globals)
+5,0x74ead0,_rpCreateD3D9WorldSectorAllInOnePipe,world,L2 (globals)
+5,0x74eb80,_rpCreateD3D9AtomicAllInOnePipe,world,L2 (globals)
+5,0x74eec0,_rpSectorDefaultRenderCallBack,world,L2 (globals)
+5,0x74f590,_rpWorldRenderSectorCB,world,"L2 (globals, indirect-calls)"
+5,0x74f610,RpWorldDestroy,world,"L2 (globals, indirect-calls)"
+5,0x74f760,RpWorldCreate,world,"L2 (globals, indirect-calls)"
+5,0x74fda0,RpWorldPluginAttach,world,L2 (calls stateful)
+5,0x7507e0,_rpWorldObjAtomicSync,world,"L2 (globals, indirect-calls)"
+5,0x750e20,cb_NATIVEDATAPLUGIN_RpGeometry_StreamRead,world,L2 (calls stateful)
+5,0x750e70,cb_NATIVEDATAPLUGIN_RpWorldSector_StreamRead,world,L2 (calls stateful)
+5,0x7516c0,RwCameraForAllClumpsInFrustum,world,"L2 (globals, indirect-calls)"
+5,0x7517f0,RwCameraForAllAtomicsInFrustum,world,"L2 (globals, indirect-calls)"
+5,0x751f00,RpLightStreamRead,world,L2 (globals)
+5,0x756d90,_rwD3D9EnableClippingIfNeeded,d3d9-driver,L2 (globals)
+5,0x756df0,_rxD3D9DefaultRenderCallback,d3d9-driver,"L2 (globals, indirect-calls, D3D9 device)"
+5,0x757400,_rxD3D9AtomicDefaultLightingCallback,d3d9-driver,L2 (globals)
+5,0x7591b0,RpBuildMeshGenerateDefaultTriStrip,world,L2 (calls stateful)
+5,0x75a8e0,RpBuildMeshGenerateDefaultIgnoreWindingTriStrip,world,L2 (calls stateful)
+5,0x75a900,RpBuildMeshGeneratePreprocessTriStrip,world,L2 (calls stateful)
+5,0x75a920,RpBuildMeshGeneratePreprocessIgnoreWindingTriStrip,world,L2 (calls stateful)
+5,0x75e570,_rxD3D9WorldSectorDefaultLightingCallback,d3d9-driver,L2 (globals)
+5,0x761170,_rxD3D9VertexShaderDefaultLightingCallBack,d3d9-driver,L2 (globals)
+5,0x762740,_rpWorldPlaneSectorStreamWrite,world,L2 (globals)
+5,0x762f30,_rpWorldAtomicSectorStreamRead,world,L2 (globals)
+5,0x7c6d20,cb_SKINPLUGIN_RpGeometry_StreamRead,skin,"L2 (globals, indirect-calls)"
+5,0x7c8060,_rpD3D9SkinRenderVS,skin,"L2 (globals, indirect-calls, D3D9 device)"
+5,0x7caa30,_rpSkinPrepareMatricesVS,skin,L2 (globals)
+5,0x7cb2b0,_rpD3D9SkinPipelineCreate,skin,L2 (globals)
+5,0x7cbe00,_rpUVAnimCreateFromName,uvanim,"L2 (globals, indirect-calls)"
+5,0x7ef450,RwIm3DTransform,core,L2 (globals)
+5,0x7ef550,RwIm3DRenderIndexedPrimitive,core,L2 (globals)
+5,0x7ef6b0,RwIm3DRenderPrimitive,core,L2 (globals)
+5,0x7ef810,RwIm3DRenderTriangle,core,L2 (globals)
+5,0x7ef900,RwIm3DRenderLine,core,L2 (globals)
+5,0x7f4690,_rwTextureImageReadAndMask,core,"L2 (globals, indirect-calls)"
+5,0x7f5140,_rwTextureDefaultMipmapGenerate,core,L2 (calls stateful)
+5,0x8001e0,_rwD3D9RasterSetImage,d3d9-driver,"L2 (globals, indirect-calls)"
+5,0x8044e0,RwRasterReadMaskedRaster,core,"L2 (globals, indirect-calls)"
+5,0x8046e0,RwTextureStreamRead,core,L2 (globals)
+5,0x804c30,RwTexDictionaryStreamRead,core,"L2 (globals, indirect-calls)"
+5,0x805470,RxClusterResizeData,pipeline,L2 (globals)
+5,0x806ac0,RxPipelineClone,pipeline,L2 (calls stateful)
+5,0x8071b0,RxPipelineInsertDebugNode,pipeline,"L2 (globals, indirect-calls)"
+5,0x807970,_rwFrameListStreamRead,core,"L2 (globals, indirect-calls)"
+5,0x807c40,cb_PIPEMODULE_RwEngine_Open,pipeline,L2 (globals)
+5,0x808de0,RwCameraStreamRead,core,L2 (globals)
+5,0x80a0a0,_rwIm3DCreateTransformPipeline,pipeline,L2 (calls stateful)
+5,0x80a1a0,_rwIm3DCreateRenderPipelines,pipeline,L2 (calls stateful)
+5,0x810d20,cb_MATERIALEFFECTSPLUGIN_RpMaterial_Copy,matfx,"L2 (globals, indirect-calls)"
+5,0x8111f0,cb_MATERIALEFFECTSPLUGIN_RpMaterial_StreamWrite,matfx,L2 (globals)
+5,0x812160,RpMatFXMaterialSetBumpMapTexture,matfx,L2 (globals)
+5,0x815e60,_rpMatFXPipelinesCreate,matfx,L2 (globals)
+6,0x4cd250,_rwD3D9RasterConvertToNonPalettized,d3d9-driver,L2 (globals)
+6,0x5a6530,CClothesBuilder::ConstructGeometryAndSkinArrays,game-plugin,L2 (calls stateful)
+6,0x5d6480,CCustomBuildingDNPipeline::CustomPipeRenderCB,game-pipeline,"L2 (globals, indirect-calls)"
+6,0x5d7100,CCustomBuildingDNPipeline::CreatePipe,game-pipeline,L2 (globals)
+6,0x5d77d0,CCustomBuildingPipeline::CustomPipeRenderCB,game-pipeline,"L2 (globals, indirect-calls)"
+6,0x5d7d90,CCustomBuildingPipeline::CreatePipe,game-pipeline,L2 (globals)
+6,0x5d9900,CCustomCarEnvMapPipeline::CustomPipeRenderCB,game-pipeline,"L2 (globals, indirect-calls)"
+6,0x5da020,CCustomCarEnvMapPipeline::CreatePipe,game-pipeline,L2 (globals)
+6,0x707800,RenderBuffer::RenderStuffInBuffer,game-plugin,L2 (globals)
+6,0x7323c0,CVisibilityPlugins::RenderWheelAtomicCB,game-plugin,L2 (calls stateful)
+6,0x7323e0,CVisibilityPlugins::RenderObjNormalAtomic,game-plugin,L2 (globals)
+6,0x732480,CVisibilityPlugins::RenderAtomicWithAlpha,game-plugin,L2 (calls stateful)
+6,0x732820,CVisibilityPlugins::RenderVehicleReallyLowDetailCB_BigVehicle,game-plugin,L2 (globals)
+6,0x732870,CVisibilityPlugins::RenderPlayerCB,game-plugin,L2 (globals)
+6,0x733240,CVisibilityPlugins::RenderVehicleHiDetailCB,game-plugin,L2 (globals)
+6,0x733330,CVisibilityPlugins::RenderTrainHiDetailCB,game-plugin,L2 (globals)
+6,0x733420,CVisibilityPlugins::RenderVehicleHiDetailCB_BigVehicle,game-plugin,L2 (globals)
+6,0x733550,CVisibilityPlugins::RenderVehicleHiDetailCB_Boat,game-plugin,L2 (globals)
+6,0x733670,CVisibilityPlugins::RenderWeaponCB,game-plugin,L2 (globals)
+6,0x733f80,CVisibilityPlugins::RenderVehicleHiDetailAlphaCB,game-plugin,L2 (globals)
+6,0x7340b0,CVisibilityPlugins::RenderHeliRotorAlphaCB,game-plugin,L2 (globals)
+6,0x734170,CVisibilityPlugins::RenderHeliTailRotorAlphaCB,game-plugin,L2 (globals)
+6,0x734240,CVisibilityPlugins::RenderTrainHiDetailAlphaCB,game-plugin,L2 (globals)
+6,0x734370,CVisibilityPlugins::RenderVehicleHiDetailAlphaCB_BigVehicle,game-plugin,L2 (globals)
+6,0x7344a0,CVisibilityPlugins::RenderVehicleHiDetailAlphaCB_Boat,game-plugin,L2 (globals)
+6,0x749520,_rpClumpDestructor,world,"L2 (globals, indirect-calls)"
+6,0x7496a0,_rpAtomicDestructor,world,"L2 (globals, indirect-calls)"
+6,0x749d40,RpAtomicSetGeometry,world,L2 (calls stateful)
+6,0x749dc0,RpAtomicDestroy,world,"L2 (globals, indirect-calls)"
+6,0x749e60,RpAtomicClone,world,L2 (globals)
+6,0x74a310,RpClumpDestroy,world,"L2 (globals, indirect-calls)"
+6,0x74a5e0,RpClumpStreamGetSize,world,"L2 (globals, indirect-calls)"
+6,0x74ae50,_rpClumpGeometryListDestroy,world,"L2 (globals, indirect-calls)"
+6,0x74bcc0,_rpAtomicDestroyNoClumpCheck,world,"L2 (globals, indirect-calls)"
+6,0x74c130,RpGeometryCreateSpace,world,"L2 (globals, indirect-calls)"
+6,0x74dd30,RpMaterialStreamRead,world,"L2 (globals, indirect-calls)"
+6,0x74e4b0,_rpMaterialListStreamWrite,world,L2 (calls stateful)
+6,0x75dae0,RpGeometrySortByMaterial,world,"L2 (globals, indirect-calls)"
+6,0x75e310,_rpWorldPipeOpen,world,L2 (globals)
+6,0x763310,_rpWorldPlaneSectorStreamRead,world,L2 (calls stateful)
+6,0x7c7b90,_rpD3D9SkinAllInOneNode,skin,"L2 (globals, indirect-calls)"
+6,0x7c8980,_rpSkinPipelinesCreate,skin,L2 (globals)
+6,0x7cbc20,cb_UVANIMPLUGIN_RpMaterial_StreamRead,uvanim,"L2 (globals, indirect-calls)"
+6,0x7efe20,cb_IMMEDIATEMODULE_RwEngine_Open,pipeline,L2 (globals)
+6,0x7f4ae0,_rwTextureReadAutoMipmap,core,"L2 (globals, indirect-calls)"
+6,0x810bf0,cb_MATERIALEFFECTSPLUGIN_RwEngine_Open,matfx,L2 (globals)
+6,0x811410,cb_MATERIALEFFECTSPLUGIN_RpMaterial_StreamRead,matfx,"L2 (globals, indirect-calls)"
+6,0x811e00,RpMatFXMaterialSetupBumpMap,matfx,L2 (globals)
+7,0x4c54e0,C2dEffect::DestroyAtomic,game-plugin,L2 (calls stateful)
+7,0x5a69d0,CClothesBuilder::CreateSkinnedClump,game-plugin,L2 (globals)
+7,0x5d5ac0,CCarFXRenderer::Initialise,game-pipeline,L2 (calls stateful)
+7,0x5d7ec0,CCustomBuildingRenderer::Initialise,game-pipeline,L2 (calls stateful)
+7,0x6fa880,C2dEffect::t2dEffectPluginDestructor,game-plugin,L2 (globals)
+7,0x708290,RenderBuffer::StartStoring,game-plugin,L2 (globals)
+7,0x732610,CVisibilityPlugins::RenderFadingAtomic,game-plugin,"L2 (globals, indirect-calls)"
+7,0x732660,CVisibilityPlugins::RenderAtomicWithAlphaCB,game-plugin,L2 (calls stateful)
+7,0x7331e0,CVisibilityPlugins::RenderVehicleReallyLowDetailCB,game-plugin,L2 (globals)
+7,0x7334f0,CVisibilityPlugins::RenderVehicleLoDetailCB_Boat,game-plugin,L2 (globals)
+7,0x7335b0,CVisibilityPlugins::RenderPedCB,game-plugin,L2 (globals)
+7,0x733630,CVisibilityPlugins::RenderFadingClumpCB,game-plugin,L2 (globals)
+7,0x749970,RpClumpCreateSpace,world,"L2 (globals, indirect-calls)"
+7,0x749f70,RpClumpClone,world,"L2 (globals, indirect-calls)"
+7,0x74ced0,RpGeometryStreamWrite,world,L2 (globals)
+7,0x74e600,_rpMaterialListStreamRead,world,"L2 (globals, indirect-calls)"
+7,0x74fee0,cb_WORLDMODULE_RwEngine_Open,world,L2 (globals)
+7,0x762150,RpWorldStreamWrite,world,L2 (globals)
+7,0x7c68e0,cb_SKINPLUGIN_RwEngine_Open,skin,"L2 (globals, indirect-calls)"
+7,0x7f40f0,_rwTextureDefaultReadCallBack,core,"L2 (globals, indirect-calls)"
+7,0x812d40,_rpMatFXD3D9RenderBumpMap,matfx,"L2 (globals, indirect-calls, D3D9 device)"
+7,0x813a10,_rpMatFXD3D9RenderEnvMap,matfx,"L2 (globals, indirect-calls, D3D9 device)"
+8,0x4c57d0,C2dEffect::Shutdown,game-plugin,L2 (calls stateful)
+8,0x732b40,CVisibilityPlugins::RenderEntity,game-plugin,"L2 (globals, indirect-calls)"
+8,0x74a880,_rpClumpAtomicStreamWrite,world,L2 (globals)
+8,0x74d190,RpGeometryStreamRead,world,"L2 (globals, indirect-calls)"
+8,0x762960,RpWorldStreamRead,world,"L2 (globals, indirect-calls)"
+8,0x814460,_rpMatFXD3D9RenderDual,matfx,"L2 (globals, indirect-calls, D3D9 device)"
+9,0x74a850,RpAtomicStreamWrite,world,L2 (calls stateful)
+9,0x74aa10,RpClumpStreamWrite,world,"L2 (globals, indirect-calls)"
+9,0x74b060,_rpClumpAtomicStreamRead,world,"L2 (globals, indirect-calls)"
+9,0x815c20,_rpMatFXD3D9AtomicRenderCallback,matfx,"L2 (globals, indirect-calls, D3D9 device)"
+10,0x74b030,RpAtomicStreamRead,world,L2 (calls stateful)
+10,0x74b420,RpClumpStreamRead,world,"L2 (globals, indirect-calls)"
+11,0x5a43a0,CClothesBuilder::unnamed_0x5a43a0,game-plugin,L2 (globals)

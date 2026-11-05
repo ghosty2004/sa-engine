@@ -202,3 +202,11 @@
   script table equals plugin-sdk (27/27). Rejected candidates were reviewed by hand (see the notes).
 - Cost: about 4 full pipeline runs (8 min the first time, about 3 min each after that) under an 8 GB cap,
   plus short Python scans. Disk: +0.7 MB in `catalog/`.
+
+## 2026-11-05: RW-RE integrated
+- The RE agent (REA + headless Ghidra) named every RW catalogue row and all 862 RW thunks
+  (`catalog/rw-names.csv`, 1,829 rows) and wrote the RenderWare spec in `docs/re/rw/`. Key facts:
+  gta-reversed's RwGlobals is 0x2C short (no fileFuncs); plugin-sdk misnames 0x4C7510; part of the D3D9
+  driver lives at 0x4C9970–0x4CD820; RW re-forces x87 PC=24 every frame (0x857432). Open: plugin offsets
+  were derived, not measured; the transform kernel (x87/SSE/SSE2) on the oracle machine; 0x7FFF00 has no
+  catalogue row.

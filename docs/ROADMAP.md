@@ -79,7 +79,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | MATH | vectors, matrices, quaternions, CGeneral, CMaths, x87 helpers | 96/0 | in-progress | `crates/sa-math`: `x87` model + 6 functions at 10^6 cases (LimitAngle, LimitRadianAngle, GetATanOfXY, GetRadianAngleBetweenPoints, SolveQuadratic, CVector::Normalise) |
 | CORE | pools, timer, memory mgr, file mgr, game/app states | 265/10 | todo | L2, L3 boot sequence |
 | STREAM | CdStream, CStreaming, CFileLoader, stores, model infos | 472/1 | todo | L2 + L3 streaming paths |
-| RW | RW core + plugins + pipelines + RW functions from REA (catalogue: 291 rev / 19 unrev / 313 unknown). The statically linked D3DX9 (949) and libpng/zlib (194) stay original in phase A; in phase B they are replaced by Rust equivalents for what RW uses (D3DX shader assembly for the pipelines, PNG reading) | 291/19 (+313) | todo | L2 + D3D diff |
+| RW | RW core + plugins + pipelines + RW functions from REA (catalogue: 291 rev / 19 unrev / 313 unknown). The statically linked D3DX9 (949) and libpng/zlib (194) stay original in phase A; in phase B they are replaced by Rust equivalents for what RW uses (D3DX shader assembly for the pipelines, PNG reading) | 291/19 (+313) | todo | L2 + D3D diff Spec done (RW-RE): `docs/re/rw/` (life cycle, plugins, object layouts, D3D9 driver + pipelines, port plan with 361 L1 / 1,444 L2 candidates), `catalog/rw-names.csv` (1,829 names: 1,389 high, 203 medium, 237 low). gta-reversed `RwGlobals` lacks `fileFuncs` (size 0x12C, but 0x158 in the exe): use the plugin-sdk/exe layout. RW forces x87 single precision at 0x857404 and again every frame at 0x857432 |
 
 ## Phase III: world (M10–M11)
 
