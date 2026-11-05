@@ -12,9 +12,9 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | Slot | Running | Next |
 |---|---|---|
 | impl-1 | FMT-2 part a (worktree) | FMT-3 |
-| impl-2 | INF-2 + INF-3 launcher/sa-hook (worktree) | INF-4 |
+| impl-2 | INF-4/5/6 determinism + recorder + hasher (worktree) | INF-8 |
 | measurement / REA | CAT-7 | CAT-10 part 2 |
-| harness | — | — |
+| harness | INF-7 L1 Unicorn harness (`sa-oracle`, worktree) | INF-9 |
 | verifier | — | — |
 
 ## Next up (ordered queue; the scheduler takes from the top)
@@ -49,9 +49,9 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 | ID | Task | Status | Verification | Notes |
 |---|---|---|---|---|
-| INF-1 | Wine prefix `wine/prefix` + game copy `wine/gta-sa` (1.0 US exe + data), lanes `wine/lane-N` with symlinked data, DXVK | in-progress | single-player boots on a headless lane | modelled on samp-rs `tools/run-gta.sh` (read-only reference; game data copied, never modified there) |
-| INF-2 | Headless gamescope per lane: start, screenshot, key injection, teardown (`tools/e2e/lib.sh`) | todo | screenshot of the main menu from lane 1 | never the user's desktop |
-| INF-3 | `sa-launcher` (suspended start + injection) and `sa-hook` skeleton: hook table from the catalogue, inline jmp + trampoline, `.HOODLUM` stub handling, runtime toggle, TCP control channel, logging | todo | hook `CTimer::Update` (Rust passthrough), toggle live, 0 crashes in a 10-min run | |
+| INF-1 | Wine prefix `wine/prefix` + game copy `wine/gta-sa` (1.0 US exe + data), lanes `wine/lane-N` with symlinked data, DXVK | done | boots; `vorbisFile.dll` was missing at first (STATUS_DLL_NOT_FOUND), then copied | no intro movies; Space is pressed while gGameState is 2/4 |
+| INF-2 | Headless gamescope per lane: start, screenshot, key injection, teardown (`tools/e2e/lib.sh`) | done | lane 1 main menu + gameplay screenshots | lanes created on demand by `e2e_lane_setup`; `flock target/locks/lane-N.lock`; teardown = `wineserver -k` for the lane prefix + its own gamescope group |
+| INF-3 | `sa-launcher` + `sa-hook` skeleton | done | `tools/e2e/inf3-hooks.sh`: 3 hooks (CTimer::Update passthrough; CGeneral::LimitRadianAngle and CGameLogic::IsCoopGameGoingOn (a `.HOODLUM` stub) ported), live toggles + a 300-switch storm, 600 s soak 0 crashes, selftest 160,024 inputs 0 mismatches. Re-run by the main session: all PASS | x86 decoder checked against iced-x86 (18,613 entries, 1.53M-instruction sweep). The selftest is not yet a recorded L1/L2 oracle. Branch-into-patch check is heuristic (0x400 bytes) |
 | INF-4 | Determinism mode: virtual `timeGetTime`/QPC, fixed timestep, `rand`/`srand` logged with caller, synchronous CdStream, audio thread control, deterministic heap | todo | two runs of the same recording are frame-hash identical | |
 | INF-5 | Input recorder/replayer (`CPad` per frame) + recording format (`sa-oracle`) | todo | record → replay → same hashes | |
 | INF-6 | Frame state hasher: per-subsystem hashes (pools, entity transforms/velocities, world lists, streaming, script vars, camera, clock/weather, rand state) | todo | detects a 1-ulp change injected in a ped position | |
@@ -128,6 +128,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | SAMP-API | Document the engine API covering every samp-rs game access (proposal for the samp-rs side; we never edit samp-rs) | todo | F13 |
 
 ## Decisions made autonomously
+- 2026-11-05 (INF-3): a hook toggle is a 32-bit store into the hook's `TARGET` slot (`jmp [TARGET]`), applied by the game thread at the frame boundary (the CTimer::Update thunk). In-process comparisons run on the game thread so the game's FPU state applies (x87 CW 0x007F = 24-bit precision, MXCSR with FTZ on).
 - 2026-11-05: game data = a copy of the Steam 3.0 data set already used by samp-rs (SA:MP files excluded) with the 1.0 US exe. The original and Rust run on the same data, so parity is unaffected. Data-dependent findings may not match retail 1.0 data, and the corpus records the data hashes.
 - 2026-11-05: the catalogue's function set is Ghidra functions ∪ gta-reversed hook addresses that decode as
   code, because Ghidra misses vtable-only functions.
