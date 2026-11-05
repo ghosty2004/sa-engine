@@ -235,17 +235,3 @@ Total procedures: 22711 (+214 imports)
 | rw-cseg | 0 | 0 | 0 | 8 | 8 |
 
 Imports by DLL: KERNEL32.DLL 137, USER32.DLL 44, VORBISFILE.DLL 7, WS2_32.DLL 7, ADVAPI32.DLL 6, WINMM.DLL 4, OLE32.DLL 3, EAX.DLL 1, GDI32.DLL 1, D3D9.DLL 1, DINPUT8.DLL 1, DSOUND.DLL 1, DDRAW.DLL 1
-
-## Ghidra procedures by region and gta-reversed state
-
-Total procedures: 22711 (+214 imports)
-
-| Region | gr-reversed | gr-unreversed | gr-called-only | unknown | total |
-|---|---|---|---|---|---|
-| game-text | 7894 | 730 | 528 | 9446 | 18598 |
-| hoodlum | 357 | 17 | 0 | 118 | 492 |
-| other | 0 | 0 | 0 | 1615 | 1615 |
-| protection-text | 0 | 0 | 0 | 1998 | 1998 |
-| rw-cseg | 0 | 0 | 0 | 8 | 8 |
-
-Imports by DLL: KERNEL32.DLL 137, USER32.DLL 44, VORBISFILE.DLL 7, WS2_32.DLL 7, ADVAPI32.DLL 6, WINMM.DLL 4, OLE32.DLL 3, EAX.DLL 1, GDI32.DLL 1, D3D9.DLL 1, DINPUT8.DLL 1, DSOUND.DLL 1, DDRAW.DLL 1
