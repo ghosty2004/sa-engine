@@ -331,6 +331,10 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
     *STATS.lock().unwrap_or_else(|e| e.into_inner()) = vec![FnStats::default(); HOOKS.len()];
     *OFFTHREAD.lock().unwrap_or_else(|e| e.into_inner()) = vec![0; HOOKS.len()];
     crate::l2::set_mutants(&c.mutants);
+    // The game thread until the first frame boundary confirms it: determinism mode's attach-time guess
+    // (the process' only thread besides the injector's), so start-up calls before frame 1 (e.g.
+    // CTimer::Initialise) are compared instead of passed through as off-thread.
+    GAME_TID.store(crate::detwin::main_tid(), Ordering::Relaxed);
     // read/write sets
     let mut specs: BTreeMap<u32, Vec<fmt::Global>> = BTreeMap::new();
     if let Some(p) = &c.spec {
@@ -412,7 +416,7 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
     hooks
 }
 
-/// Frame boundary (game thread): remembers the game thread.
+/// Frame boundary (game thread): remembers (confirms) the game thread.
 pub fn on_boundary() {
     GAME_TID.store(tid(), Ordering::Relaxed);
 }
@@ -744,8 +748,17 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
             add(g.addr, g.len, RegionKind::Global { exact: g.exact }, g.access);
         }
     }
-    for &(a, l, acc) in &c.extra {
-        add(a, l, RegionKind::Extra, acc);
+    let regs_in = [f.eax, f.ecx, f.edx, f.ebx, f.esi, f.edi, f.ebp];
+    let rd = |a: u32| mem_read(a, 4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]));
+    for e in c.extra.iter().filter(|e| e.hook.is_none_or(|h| h == i)) {
+        match (
+            e.addr.eval(&regs_in, &args, &rd),
+            e.len.eval(&regs_in, &args, &rd),
+        ) {
+            // at most 16 MiB per region
+            (Some(a), Some(l)) => add(a, l.min(1 << 24), RegionKind::Extra, e.acc),
+            _ => add(0, 0, RegionKind::Extra, e.acc), // counted as unreadable
+        }
     }
     if sig.conv == fmt::Conv::Thiscall && sig.this_size > 0 {
         add(f.ecx, sig.this_size, RegionKind::This, fmt::ACC_R | fmt::ACC_W);

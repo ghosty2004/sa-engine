@@ -79,3 +79,22 @@ toggles: return value (EAX, or AL for 0x561AD0, ST0 80-bit for 0x41BD90) and the
   instruction (integer moves/jumps only).
 - `GetRandomNumberInRange` L1 treats `rand()` as an input (the image's `rand` is replaced by a stub that
   returns a scratch value); `rand` itself is the CRT's and is not ported.
+
+## CORE-L2 results (in game, determinism mode, lane 2)
+
+`tools/e2e/port-l2.sh @tools/e2e/lists/core-pilots.txt` on two corpus recordings from process start: the
+INF-4 grove walk (5,200 frames) and `tools/e2e/programs/pause-restart.txt` (3,700 frames: pause menu twice,
+then "Start New Game" from the pause menu, which runs `CGame::ShutDownForRestart` → `CTimer::Shutdown` and
+`CTimer::Initialise` again). Heap regions of the pool functions are declared in `tools/e2e/l2-extras.txt`;
+the pool `New`/`delete` hooks also ran with `SA_L2_WINDOW=all` (heap arena watched: no write outside the
+pool header and byte map). Results: 0 mismatches and 0 undeclared writes for every function with calls;
+the l2 traces equal the plain traces; all 27 on Rust are frame-hash identical to the all-original replay on
+all 17 subsystems (`randcalls` included) on both recordings; hook-off (each one back on the original, the
+other 26 on Rust) identical on the grove walk for all 27.
+
+Functions without calls in the corpus: `CPools::GetPedRef`/`GetVehicleRef`/`GetObjectRef` are called only
+by `CPools::Save*Pool` (saving a game); `CObjectPool::GetAt` only by one script command
+(`CRunningScript::ProcessCommands2000To2099`); `CPools::GetPed`/`GetVehicle`/`GetObject` and
+`CTimer::GetCyclesPerFrame` have no caller and no data reference in the exe (catalog/callgraph.csv,
+data-code-addresses.csv): dead code, unreachable in game. `CPedPool::New` is entered only through
+`CPed::operator new`'s `jmp`, so it is verified in a separate run without that hook.

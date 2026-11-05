@@ -369,3 +369,12 @@
   CShotInfo::Update uses 0.075f where gr has 0.0075f, which the main session re-checked; CPed::SetAmmo
   uses min, not max; AddGunshell makes an extra rand() call). The spec tooling is now tracked in
   tools/specs/.
+
+## 2026-11-05: CORE-L2 integrated
+- `tools/e2e/port-l2.sh` (reusable L2/L3/hook-off runner for any set of port hooks), the
+  `record-program.sh` recorder, the pause-restart corpus recording, and the L2 harness fixes (game thread
+  known at attach; heap regions via SA_L2_EXTRA). 19 pilots → L3. The main-session re-run of grove-walk
+  (plain/l2/rust) gives 0 mismatches everywhere; the script exits 1 only because of the per-frame
+  sampling cap on 2 hooks, which the agent's solo runs covered completely. F1 progress is now in
+  catalog/progress.md.
+- Found: the game panics in sa-stream with all ports on Rust (STREAM-FIX-1).

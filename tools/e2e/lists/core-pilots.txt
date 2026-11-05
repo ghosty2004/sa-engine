@@ -1,0 +1,28 @@
+# The 27 ARCH-1 pilot port hooks (docs/arch/pilot-ports.md), for tools/e2e/port-l2.sh @FILE.
+0x407180  # CGeneral::GetRandomNumberInRange_int32
+0x41BD90  # CGeneral::GetRandomNumberInRange<float>
+0x5E45E0  # CPedPool::New
+0x6E2A50  # CVehiclePool::New
+0x5A1C20  # CObjectPool::New
+0x404910  # CPedPool::GetAtRef
+0x404870  # CObjectPool::GetAt
+0x5E4720  # CPed::operator new
+0x5E4760  # CPed::operator delete
+0x54FF60  # CPools::GetPedRef
+0x54FF90  # CPools::GetPed
+0x54FFC0  # CPools::GetVehicleRef
+0x54FFF0  # CPools::GetVehicle
+0x550020  # CPools::GetObjectRef
+0x550050  # CPools::GetObject
+0x5617E0  # CTimer::Initialise
+0x5618C0  # CTimer::Shutdown
+0x5618D0  # CTimer::UpdateVariables
+0x5619D0  # CTimer::Suspend
+0x561A00  # CTimer::Resume
+0x561A40  # CTimer::GetCyclesPerMillisecond
+0x561A50  # CTimer::GetCyclesPerFrame
+0x561A80  # CTimer::GetCurrentTimeInCycles
+0x561AA0  # CTimer::Stop
+0x561AD0  # CTimer::GetIsSlowMotionActive
+0x561AF0  # CTimer::StartUserPause
+0x561B00  # CTimer::EndUserPause
