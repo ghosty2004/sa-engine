@@ -6,12 +6,13 @@
 #
 # Order: build_catalog -> merge_ghidra -> classify_unknowns (CAT-5) -> subsystems -> callgraph
 # ghidra + build (CAT-7) -> callgraph gaps (CAT-12: closes the catalogue over call targets; when
-# it adds rows the loop reruns from build_catalog) -> layouts (CAT-8) -> script_commands (CAT-10)
+# it adds rows the loop reruns from build_catalog) -> data_refs (CAT-12b: entries reached only
+# through data tables / code immediates, catalog/data-code-addresses.csv; loops back the same way) -> layouts (CAT-8) -> script_commands (CAT-10)
 # -> gr_deviations (CAT-14: gta-reversed fidelity audit -> catalog/gr-deviations.csv)
 # -> progress merge + report (CAT-11, catalog/state.csv is merged, never reset; adds gr_deviations).
 #
 # Inputs: re/gta-reversed, re/plugin-sdk, re/gta/1.0-US/gta_sa.exe, catalog/raw/rea-evidence.json,
-# catalog/extra-code-addresses.csv, catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
+# catalog/extra-code-addresses.csv, catalog/data-code-addresses.csv, catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
 # `callgraph.py analyse` on first use) and the existing catalog/state.csv.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -33,7 +34,7 @@ step() {  # step NAME CMD... : run quietly, keep the log, fail loudly
     fi
 }
 
-for pass in 1 2 3 4 5; do
+for pass in 1 2 3 4 5 6 7 8; do
     echo "run_all: catalogue pass $pass"
     step build_catalog "${PY[@]}" tools/catalog/build_catalog.py "$GR" "$EXE" "$CAT"
     step merge_ghidra "${PY[@]}" tools/catalog/merge_ghidra.py "$CAT/raw/rea-evidence.json" "$CAT" "$EXE" "$GR"
@@ -46,9 +47,18 @@ for pass in 1 2 3 4 5; do
     rc=$?
     set -e
     cat "$LOG/callgraph-gaps.log"
-    [ $rc -eq 0 ] && break
-    if [ $rc -ne 3 ]; then echo "run_all: catalogue gaps not closable (exit $rc)" >&2; exit $rc; fi
-    if [ "$pass" -eq 5 ]; then echo "run_all: catalogue did not converge in 5 passes" >&2; exit 1; fi
+    if [ $rc -ne 0 ] && [ $rc -ne 3 ]; then echo "run_all: catalogue gaps not closable (exit $rc)" >&2; exit $rc; fi
+    if [ $rc -eq 0 ]; then
+        # CAT-12b: entries reached only through data (pointer tables, code immediates)
+        set +e
+        "${PY[@]}" tools/catalog/data_refs.py "$CAT" "$EXE" "$GR" >"$LOG/data-refs.log" 2>&1
+        rc=$?
+        set -e
+        tail -1 "$LOG/data-refs.log"
+        [ $rc -eq 0 ] && break
+        if [ $rc -ne 3 ]; then echo "run_all: data_refs failed (exit $rc), see $LOG/data-refs.log" >&2; exit $rc; fi
+    fi
+    if [ "$pass" -eq 8 ]; then echo "run_all: catalogue did not converge in 8 passes" >&2; exit 1; fi
 done
 
 step layouts "${PY[@]}" tools/catalog/layouts.py "$GR" "$CAT"

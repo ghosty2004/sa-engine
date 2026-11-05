@@ -440,6 +440,7 @@ def build(cat):
     ecls, ename = {}, {}
     rw = collections.defaultdict(set)         # (func, addr) -> {(size, access, mode)}
     indirect = []                             # (func, site, form, resolution, detail)
+    codeimm = set()                           # (func, site, value): game-code immediates, no proc (CAT-12b)
     summ = {}
 
     def edge(c, t, kind, cl, nm):
@@ -596,13 +597,15 @@ def build(cat):
                                                 edge(a, cc, 'eh-unwind', cls_of(cc), name_of(cc))
                         elif c != a:
                             edge(a, c, 'fnref', cls_of(c), name_of(c))
+                    elif GAME_TEXT[0] <= v < RWCSEG[1]:
+                        codeimm.add((a, ins.address, v))
 
         summ[a] = dict(n_insns=len(ins_all), direct_calls=n_direct, indirect_calls=n_ind,
                        indirect_resolved=n_ind_res, unresolved_jumps=n_cjmp_unres, jumps_outside=n_jout,
                        writes_through_pointer=wtp, ebp_frame=int(ebp_frame))
 
     return dict(im=im, procs=procs, funcs=funcs, edges=edges, ecls=ecls, ename=ename, rw=rw,
-                indirect=indirect, summ=summ, gnames=gnames, gsorted=gsorted, stats=stats, live=live,
+                indirect=indirect, codeimm=codeimm, summ=summ, gnames=gnames, gsorted=gsorted, stats=stats, live=live,
                 stubs=stubs, dump=dump, vt=vt, hood2stub=hood2stub)
 
 
@@ -918,6 +921,10 @@ def cmd_build(cat):
     write_csv(cat / 'raw' / 'cat7-noncatalogue-targets.csv', ['address', 'class', 'sites', 'kinds', 'callers'],
               [[hx(t), v[3], v[0], ';'.join(sorted(v[1])), ';'.join(hx(c) for c in sorted(v[2]))]
                for t, v in sorted(gap.items())])
+
+    # immediates naming game code that is not a procedure (callback candidates, CAT-12b data_refs.py)
+    write_csv(cat / 'raw' / 'cat7-code-immediates.csv', ['function', 'site', 'value'],
+              [[hx(a), hx(s), hx(v)] for a, s, v in sorted(r['codeimm'])])
 
     po = port_order(live, r['edges'])
     write_csv(cat / 'port-order.csv', ['address', 'name', 'subsystem', 'level', 'scc_id', 'scc_size'],
