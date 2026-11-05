@@ -1,0 +1,1341 @@
+address,kinds,sites,also_hooked,status,first_insn,first_site
+0x411ec0,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Collision/Collision.cpp:3552
+0x412130,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Collision/Collision.cpp:3581
+0x41b950,plugin_call,1,no,stub-to-.HOODLUM,jmp 0x1562000,source/game_sa/AutoPilot.cpp:52
+0x41b980,plugin_call,1,no,ok,fld dword ptr [esp + 4],source/game_sa/AutoPilot.cpp:47
+0x421050,plugin_call,1,no,stub-to-.HOODLUM,jmp 0x156fc20,source/game_sa/MentalHealth.cpp:6
+0x4217c0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/CarCtrl.cpp:864
+0x4222a0,plugin_call,1,yes,ok,push esi,source/game_sa/CarCtrl.cpp:1059
+0x422760,plugin_call,1,yes,ok,jmp 0x401e69,source/game_sa/CarCtrl.cpp:259
+0x422b20,plugin_call,1,yes,ok,"sub esp, 0x30",source/game_sa/CarCtrl.cpp:944
+0x423000,plugin_call,1,yes,ok,jmp 0x401961,source/game_sa/CarCtrl.cpp:451
+0x423790,plugin_call,1,yes,ok,push esi,source/game_sa/CarCtrl.cpp:1049
+0x4237f0,plugin_call,1,yes,ok,push ebx,source/game_sa/CarCtrl.cpp:1044
+0x423880,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156a3a0,source/game_sa/CarCtrl.cpp:1039
+0x4238e0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/CarCtrl.cpp:1014
+0x423940,plugin_call,1,yes,ok,"mov eax, dword ptr [0xb7cb78]",source/game_sa/CarCtrl.cpp:446
+0x423de0,plugin_call,1,yes,ok,push ebx,source/game_sa/CarCtrl.cpp:754
+0x423f00,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x15649a0,source/game_sa/CarCtrl.cpp:254
+0x423fc0,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x1569420,source/game_sa/CarCtrl.cpp:1064
+0x424000,plugin_call,1,yes,ok,"mov al, byte ptr [esp + 8]",source/game_sa/CarCtrl.cpp:1094
+0x424100,plugin_call,1,no,ok,"xor al, al",source/game_sa/Entity/Vehicle/Train.cpp:913
+0x424f80,plugin_call,1,yes,ok,"sub esp, 0x2c",source/game_sa/CarCtrl.cpp:729
+0x425440,plugin_call,1,yes,ok,push -1,source/game_sa/CarCtrl.cpp:902
+0x426350,plugin_call,1,yes,ok,"sub esp, 0x84",source/game_sa/CarCtrl.cpp:1109
+0x426bc0,plugin_call,1,yes,ok,"movzx ecx, word ptr [0x8cd4f4]",source/game_sa/CarCtrl.cpp:1104
+0x428990,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 0x18]",source/game_sa/CarCtrl.cpp:994
+0x428be0,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/CarCtrl.cpp:939
+0x428de0,plugin_call,1,yes,ok,"sub esp, 0x1c",source/game_sa/CarCtrl.cpp:929
+0x429090,plugin_call,1,yes,ok,"sub esp, 0x20",source/game_sa/CarCtrl.cpp:934
+0x429300,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/CarCtrl.cpp:1089
+0x429520,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/CarCtrl.cpp:1079
+0x429780,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/CarCtrl.cpp:524
+0x429890,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/CarCtrl.cpp:529
+0x429a70,plugin_call,1,yes,ok,"sub esp, 0x90",source/game_sa/CarCtrl.cpp:441
+0x42a630,plugin_call,1,yes,ok,push esi,source/game_sa/CarCtrl.cpp:1034
+0x42a730,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156dd90,source/game_sa/CarCtrl.cpp:519
+0x42a750,plugin_call,1,yes,ok,"sub esp, 0x1c",source/game_sa/CarCtrl.cpp:1019
+0x42aad0,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/CarCtrl.cpp:1004
+0x42acb0,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/CarCtrl.cpp:1009
+0x42ad30,plugin_call,1,yes,ok,push ecx,source/game_sa/CarCtrl.cpp:1029
+0x42aeb0,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/CarCtrl.cpp:1024
+0x42b270,plugin_call,1,yes,ok,"sub esp, 0x30",source/game_sa/CarCtrl.cpp:436
+0x42b470,plugin_call,1,yes,ok,"sub esp, 0x1c",source/game_sa/CarCtrl.cpp:379
+0x42bd20,plugin_call,1,yes,ok,"sub esp, 0x9c",source/game_sa/CarCtrl.cpp:389
+0x42ce40,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/CarCtrl.cpp:842
+0x42d0e0,plugin_call,1,yes,ok,"sub esp, 0x30",source/game_sa/CarCtrl.cpp:896
+0x42d4f0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/CarCtrl.cpp:891
+0x42d680,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/CarCtrl.cpp:1115
+0x42d7e0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/CarCtrl.cpp:1127
+0x42d950,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/CarCtrl.cpp:1121
+0x42de80,plugin_call,1,yes,ok,"sub esp, 0x44",source/game_sa/CarCtrl.cpp:685
+0x42ec90,plugin_call,1,yes,ok,"sub esp, 0x110",source/game_sa/CarCtrl.cpp:359
+0x42f370,plugin_call,1,yes,ok,push 0,source/game_sa/CarCtrl.cpp:534
+0x42f3c0,plugin_call,1,yes,ok,"sub esp, 0x40",source/game_sa/CarCtrl.cpp:514
+0x42f5a0,plugin_call,1,yes,ok,"sub esp, 0x54",source/game_sa/CarCtrl.cpp:663
+0x42f9c0,plugin_call,1,yes,ok,"mov al, byte ptr [0x8a5b28]",source/game_sa/CarCtrl.cpp:461
+0x42fc40,plugin_call,1,yes,ok,"mov eax, dword ptr [0xb7cb78]",source/game_sa/CarCtrl.cpp:749
+0x430050,plugin_call,1,yes,ok,nop,source/game_sa/CarCtrl.cpp:471
+0x432420,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/CarCtrl.cpp:870
+0x432dd0,plugin_call,1,yes,ok,"sub esp, 0x1c",source/game_sa/CarCtrl.cpp:979
+0x433280,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/CarCtrl.cpp:984
+0x4335e0,plugin_call,1,yes,ok,fld dword ptr [esp + 0x18],source/game_sa/CarCtrl.cpp:989
+0x4336d0,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/CarCtrl.cpp:959
+0x433ba0,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/CarCtrl.cpp:949
+0x433ea0,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/CarCtrl.cpp:954
+0x4342a0,plugin_call,1,yes,ok,fld dword ptr [esp + 0x10],source/game_sa/CarCtrl.cpp:859
+0x434900,plugin_call,1,yes,ok,"sub esp, 0x60",source/game_sa/CarCtrl.cpp:969
+0x435830,plugin_call,1,yes,ok,"sub esp, 0x68",source/game_sa/CarCtrl.cpp:974
+0x436540,plugin_call,1,yes,ok,"sub esp, 0x64",source/game_sa/CarCtrl.cpp:1099
+0x436a90,plugin_call,1,yes,ok,"sub esp, 0xe4",source/game_sa/CarCtrl.cpp:999
+0x437c20,plugin_call,1,yes,ok,"sub esp, 0x34",source/game_sa/CarCtrl.cpp:964
+0x43adb0,plugin_call,1,yes,ok,push ecx,source/game_sa/Conversations/Conversations.cpp:157
+0x43b0f0,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Conversations/PedToPlayerConversations.cpp:28
+0x43c190,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x15668b0,source/game_sa/Conversations/ConversationForPed.cpp:24
+0x444530,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x1568e00,source/game_sa/GangWars.cpp:678
+0x446610,plugin_call,1,yes,ok,"sub esp, 0x34",source/game_sa/GangWars.cpp:728
+0x4471e0,plugin_call,1,yes,ok,push ecx,source/game_sa/Garages.cpp:147
+0x447600,plugin_call,1,yes,ok,"mov al, byte ptr [ecx + 0x4e]",source/game_sa/Garage.cpp:137
+0x448890,plugin_call,1,yes,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/Garages.cpp:523
+0x449690,plugin_call,1,yes,ok,push ecx,source/game_sa/Garage.cpp:86
+0x449760,plugin_call,1,no,ok,push ebx,source/game_sa/Garage.cpp:277
+0x449c50,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/Garage.cpp:48
+0x449d10,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/Garage.cpp:43
+0x44a3c0,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/Garages.cpp:517
+0x44aa50,plugin_call,1,yes,ok,"sub esp, 0x1e8",source/game_sa/Garage.cpp:147
+0x44d520,raw_thunk,1,no,stub-to-.HOODLUM,jmp 0x156e9c0,source/game_sa/Entity/Vehicle/Automobile.cpp:6416
+0x44f8c0,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/PathFind.cpp:286
+0x4513f0,plugin_call,1,yes,ok,"sub esp, 0x48",source/game_sa/PathFind.cpp:907
+0x451b70,plugin_call,1,yes,ok,"sub esp, 0x1c",source/game_sa/PathFind.cpp:293
+0x452760,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156b7d0,source/game_sa/PathFind.cpp:494
+0x455720,plugin_call,1,yes,ok,"sub esp, 0x28",source/game_sa/Pickups.cpp:249
+0x458a80,plugin_call,1,yes,ok,"sub esp, 0xa8",source/game_sa/Pickups.cpp:100
+0x45ab10,plugin_call,1,no,ok,push -1,source/game_sa/Remote.cpp:12
+0x45ae80,plugin_call,1,no,stub-to-.HOODLUM,jmp 0x1562160,source/game_sa/Remote.cpp:7
+0x4619c0,plugin_call,1,yes,ok,push -1,source/game_sa/RoadBlocks.cpp:105
+0x4637c0,raw_thunk,1,no,ok,"mov eax, ecx",source/game_sa/MissionCleanup.cpp:34
+0x4652d0,raw_thunk,1,no,stub-to-.HOODLUM,jmp 0x1569d40,source/game_sa/MissionCleanup.cpp:109
+0x465aa0,plugin_call,1,yes,ok,push -1,source/game_sa/Scripts/RunningScript.cpp:208
+0x468560,raw_thunk,1,no,ok,push ecx,source/game_sa/MissionCleanup.cpp:27
+0x46aa80,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156d980,source/game_sa/ScriptsForBrains.cpp:42
+0x46aae0,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156d940,source/game_sa/ScriptsForBrains.cpp:38
+0x46ac10,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156e100,source/game_sa/Tasks/TaskTypes/SeekEntity/PosCalculators/EntitySeekPosCalculatorStandard.cpp:15
+0x46af50,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x156b440,source/game_sa/Scripts/RunningScript.cpp:463
+0x46ff20,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/ScriptsForBrains.cpp:34
+0x470150,plugin_call,1,yes,stub-to-.HOODLUM,jmp 0x1569460,source/game_sa/Scripts/RunningScript.cpp:281
+0x485c20,plugin_call,1,yes,ok,"sub esp, 0x40",source/game_sa/Scripts/TheScripts.cpp:1816
+0x486d80,plugin_call,1,yes,ok,"sub esp, 0x2c",source/game_sa/Scripts/RunningScript.cpp:291
+0x4870f0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Scripts/RunningScript.cpp:306
+0x487420,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Scripts/RunningScript.cpp:301
+0x487720,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Scripts/RunningScript.cpp:311
+0x487a20,plugin_call,1,yes,ok,"sub esp, 0x28",source/game_sa/Scripts/RunningScript.cpp:286
+0x487d10,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Scripts/RunningScript.cpp:296
+0x487f60,plugin_call,1,yes,ok,"sub esp, 0x6c",source/game_sa/Scripts/RunningScript.cpp:331
+0x4883f0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Scripts/RunningScript.cpp:341
+0x488780,plugin_call,1,yes,ok,"sub esp, 0x5c",source/game_sa/Scripts/RunningScript.cpp:336
+0x488b50,plugin_call,1,yes,ok,"sub esp, 0x2c",source/game_sa/Scripts/RunningScript.cpp:321
+0x488ec0,plugin_call,1,yes,ok,"sub esp, 0x28",source/game_sa/Scripts/RunningScript.cpp:316
+0x489150,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Scripts/RunningScript.cpp:326
+0x49e950,raw_thunk,1,yes,ok,push esi,source/game_sa/Fx/Fx.cpp:201
+0x49eb00,raw_thunk,1,yes,ok,"sub esp, 0x38",source/game_sa/Fx/Fx.cpp:233
+0x49ee10,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xb6f03c]",source/game_sa/Fx/Fx.cpp:238
+0x49f040,raw_thunk,1,yes,ok,jmp 0x40742c,source/game_sa/Fx/Fx.cpp:243
+0x49f300,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xb6f03c]",source/game_sa/Fx/Fx.cpp:248
+0x49f3d0,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/Fx/Fx.cpp:253
+0x49f670,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xb6f03c]",source/game_sa/Fx/Fx.cpp:258
+0x49f750,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xb6f03c]",source/game_sa/Fx/Fx.cpp:263
+0x49f970,raw_thunk,1,yes,ok,jmp 0x4015e5,source/game_sa/Fx/Fx.cpp:268
+0x49fb30,raw_thunk,1,yes,ok,"sub esp, 0x8c",source/game_sa/Fx/Fx.cpp:273
+0x49ff20,raw_thunk,1,yes,ok,"sub esp, 0x34",source/game_sa/Fx/Fx.cpp:278
+0x4a0170,raw_thunk,1,yes,ok,"sub esp, 0x34",source/game_sa/Fx/Fx.cpp:283
+0x4a03c0,raw_thunk,1,yes,ok,"sub esp, 0x34",source/game_sa/Fx/Fx.cpp:288
+0x4a0610,raw_thunk,1,yes,ok,"sub esp, 0x58",source/game_sa/Fx/Fx.cpp:293
+0x4a09c0,raw_thunk,1,yes,ok,"sub esp, 0x58",source/game_sa/Fx/Fx.cpp:298
+0x4a0d70,raw_thunk,1,yes,ok,jmp 0x404d09,source/game_sa/Fx/Fx.cpp:303
+0x4a0de0,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xb6f03c]",source/game_sa/Fx/Fx.cpp:308
+0x4a0fa0,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xb6f03c]",source/game_sa/Fx/Fx.cpp:313
+0x4a11e0,raw_thunk,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Fx/Fx.cpp:160
+0x4a1280,raw_thunk,1,yes,ok,push ebx,source/game_sa/Fx/Fx.cpp:174
+0x4a1940,plugin_call,1,yes,ok,"sub esp, 0x12c",source/game_sa/Fx/FxEmitterBP.cpp:35
+0x4a2c40,plugin_call,1,yes,ok,"sub esp, 0x1e8",source/game_sa/Fx/FxEmitterBP.cpp:113
+0x4a3ea0,plugin_call,1,yes,ok,"sub esp, 0x70",source/game_sa/Fx/FxEmitter.cpp:46
+0x4a4050,plugin_call,1,yes,ok,"sub esp, 0x70",source/game_sa/Fx/FxEmitter.cpp:86
+0x4a41e0,plugin_call,1,yes,ok,"sub esp, 0x8c",source/game_sa/Fx/FxEmitter.cpp:122
+0x4a4880,plugin_call,1,no,ok,"mov edx, dword ptr [esp + 0xc]",source/game_sa/Fx/Blueprints/FxInfoAttractLine.cpp:18
+0x4a8470,plugin_call,1,no,ok,push ecx,source/game_sa/Fx/Blueprints/Interp/FxInterpInfoFloat.cpp:46
+0x4a8800,plugin_call,1,no,ok,push ecx,source/game_sa/Fx/Blueprints/Interp/FxInterpInfoU255.cpp:41
+0x4a89c0,plugin_call,1,no,ok,push ecx,source/game_sa/Fx/Blueprints/Interp/FxInterpInfo32.cpp:41
+0x4a8b80,plugin_call,1,no,ok,push ecx,source/game_sa/Fx/Blueprints/Interp/FxInterpInfo255.cpp:41
+0x4a92a0,raw_thunk,1,yes,ok,push ecx,source/game_sa/Fx/FxManager.cpp:248
+0x4a9360,raw_thunk,1,yes,ok,"sub esp, 0x80",source/game_sa/Fx/FxManager.cpp:197
+0x4a9400,raw_thunk,1,yes,ok,push esi,source/game_sa/Fx/FxManager.cpp:276
+0x4a9a80,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Fx/FxManager.cpp:230
+0x4a9ae0,raw_thunk,1,yes,ok,push -1,source/game_sa/Fx/FxManager.cpp:168
+0x4aa9a0,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Fx/FxSystem.cpp:307
+0x4aaf70,raw_thunk,1,yes,ok,"sub esp, 0x10",source/game_sa/Fx/FxSystem.cpp:418
+0x4b9ff0,plugin_call,1,yes,ok,push -1,source/game_sa/Events/EventHandler.cpp:1470
+0x4bdb80,plugin_call,1,yes,ok,push -1,source/game_sa/Events/EventHandler.cpp:1564
+0x4be7d0,plugin_call,1,yes,ok,push -1,source/game_sa/Events/EventHandler.cpp:1569
+0x4c5a60,raw_thunk,1,no,ok,"mov eax, 0xb4c2d8",source/game_sa/Models/ModelInfo.cpp:338
+0x4c9970,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:769
+0x4cd250,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:809
+0x4cf800,plugin_call,1,yes,ok,push ebx,source/game_sa/Animation/AnimBlendHierarchy.cpp:173
+0x4cf9b0,raw_thunk,1,no,ok,fld dword ptr [esp + 4],source/game_sa/Core/Quaternion.cpp:93
+0x4cf9e0,raw_thunk,1,no,ok,"mov eax, ecx",source/game_sa/Core/Quaternion.cpp:98
+0x4d37d0,raw_thunk,1,no,ok,fld dword ptr [ecx],source/game_sa/Core/Quaternion.cpp:82
+0x4dd4a0,plugin_call,1,yes,ok,push -1,source/game_sa/Audio/Entities/AEFrontendAudioEntity.cpp:45
+0x4deda0,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Audio/Entities/AEFrontendAudioEntity.cpp:768
+0x4e1a40,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/Audio/Entities/AEPedAudioEntity.cpp:500
+0x4e1cc0,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Audio/Entities/AEPedAudioEntity.cpp:505
+0x4e2ee0,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Audio/Entities/AEPedAudioEntity.cpp:651
+0x4e6f60,plugin_call,1,yes,ok,push -1,source/game_sa/Audio/Entities/AEPoliceScannerAudioEntity.cpp:135
+0x4e71e0,plugin_call,1,yes,ok,"sub esp, 0x30",source/game_sa/Audio/Entities/AEPoliceScannerAudioEntity.cpp:37
+0x4e9820,plugin_call,1,yes,ok,push ebx,source/game_sa/Audio/Managers/AERadioTrackManager.cpp:692
+0x4ea930,plugin_call,1,yes,ok,push ecx,source/game_sa/Audio/Managers/AERadioTrackManager.cpp:362
+0x4eb550,plugin_call,1,yes,ok,nop,source/game_sa/Audio/Managers/AERadioTrackManager.cpp:597
+0x4eccf0,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Audio/Entities/AEScriptAudioEntity.cpp:263
+0x4ffdc0,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Audio/Entities/AEVehicleAudioEntity.cpp:4418
+0x500040,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Audio/Entities/AEVehicleAudioEntity.cpp:4423
+0x500f50,plugin_call,1,yes,ok,push ecx,source/game_sa/Audio/Entities/AEVehicleAudioEntity.cpp:3912
+0x50afa0,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Camera.cpp:513
+0x50c910,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 0x1c]",source/game_sa/Camera.cpp:1102
+0x50cb90,plugin_call,1,yes,ok,"mov eax, dword ptr [0xb6fe88]",source/game_sa/Camera.cpp:1128
+0x50cfa0,plugin_call,1,yes,ok,push esi,source/game_sa/Camera.cpp:1271
+0x50d090,plugin_call,1,yes,ok,push esi,source/game_sa/Camera.cpp:1277
+0x514d60,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Camera.cpp:1647
+0x5150e0,plugin_call,1,yes,ok,push -1,source/game_sa/Camera.cpp:1652
+0x515bd0,plugin_call,1,yes,ok,"sub esp, 0x48",source/game_sa/Camera.cpp:1122
+0x516b20,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/Camera.cpp:1657
+0x51a6f0,plugin_call,1,yes,ok,push ecx,source/game_sa/Camera.cpp:1516
+0x520190,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/Camera.cpp:1700
+0x527fa0,plugin_call,1,yes,ok,"sub esp, 0xb4",source/game_sa/Camera.cpp:1705
+0x52b730,plugin_call,1,yes,ok,"sub esp, 0xa0",source/game_sa/Camera.cpp:1537
+0x543100,raw_thunk,1,no,ok,"sub esp, 0x1c",source/game_sa/Entity/Physical.cpp:855
+0x544100,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/Entity/Physical.cpp:1197
+0x546ed0,raw_thunk,1,no,ok,"sub esp, 0x4c",source/game_sa/Entity/Physical.cpp:2158
+0x557530,plugin_call,1,yes,ok,push -1,source/game_sa/Rope.cpp:197
+0x559230,plugin_call,1,yes,ok,push ebp,source/game_sa/Stats.cpp:187
+0x559760,plugin_call,1,yes,ok,push 0,source/game_sa/Stats.cpp:279
+0x559860,plugin_call,1,yes,ok,push ebp,source/game_sa/Stats.cpp:284
+0x55bc50,plugin_call,1,yes,ok,"mov al, byte ptr [esp + 4]",source/game_sa/Stats.cpp:483
+0x55bf20,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Stats.cpp:488
+0x55c470,plugin_call,1,yes,ok,push ecx,source/game_sa/Stats.cpp:562
+0x55c780,plugin_call,1,yes,ok,push ebx,source/game_sa/Stats.cpp:591
+0x55c990,plugin_call,1,yes,ok,push ecx,source/game_sa/Stats.cpp:596
+0x55cac0,plugin_call,1,yes,ok,push ecx,source/game_sa/Stats.cpp:601
+0x55cc00,plugin_call,1,yes,ok,push ecx,source/game_sa/Stats.cpp:606
+0x55ceb0,plugin_call,1,yes,ok,push ecx,source/game_sa/Stats.cpp:629
+0x55cfc0,plugin_call,1,yes,ok,push ecx,source/game_sa/Stats.cpp:639
+0x55d030,plugin_call,1,yes,ok,"mov eax, dword ptr [0xb79510]",source/game_sa/Stats.cpp:644
+0x56f4e0,plugin_call,1,yes,ok,"sub esp, 0x38",source/game_sa/PlayerInfo.cpp:138
+0x56f8d0,plugin_call,1,yes,ok,push -1,source/game_sa/PlayerInfo.cpp:133
+0x571920,plugin_call,1,yes,ok,push ebx,source/game_sa/PlayerInfo.cpp:44
+0x572800,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/TheZones.cpp:244
+0x581b30,plugin_call,1,yes,ok,"movzx eax, byte ptr [esp + 8]",source/game_sa/MenuSystem.cpp:572
+0x5820e0,plugin_call,1,yes,ok,push -1,source/game_sa/MenuSystem.cpp:606
+0x587000,plugin_call,1,yes,ok,"sub esp, 0x3c",source/game_sa/Radar.cpp:1730
+0x589650,plugin_call,1,yes,ok,"mov al, byte ptr [0xa43088]",source/game_sa/Hud.cpp:1349
+0x58b180,plugin_call,1,yes,ok,"mov al, byte ptr [0xbaaec0]",source/game_sa/Hud.cpp:940
+0x58b6e0,plugin_call,1,yes,ok,"mov al, byte ptr [0xbaa7a0]",source/game_sa/Hud.cpp:935
+0x58c250,plugin_call,1,yes,ok,"mov al, byte ptr [0xbab040]",source/game_sa/Hud.cpp:1241
+0x58c6a0,plugin_call,1,yes,ok,push ecx,source/game_sa/Hud.cpp:1246
+0x58d9a0,plugin_call,1,yes,ok,"sub esp, 0x4c",source/game_sa/Hud.cpp:1559
+0x58e020,plugin_call,2,yes,ok,"sub esp, 0x30",source/game_sa/Hud.cpp:596
+0x58eaf0,plugin_call,1,yes,ok,"sub esp, 0x1a0",source/game_sa/Hud.cpp:1461
+0x5914d0,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Interior/Interior_c.cpp:218
+0x591590,plugin_call,1,yes,ok,"mov eax, dword ptr [ecx + 0x14]",source/game_sa/Interior/Interior_c.cpp:223
+0x5915d0,plugin_call,1,yes,ok,push ebp,source/game_sa/Interior/Interior_c.cpp:228
+0x591700,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Interior/Interior_c.cpp:238
+0x5917c0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Interior/Interior_c.cpp:243
+0x591d20,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Interior/Interior_c.cpp:273
+0x591f90,plugin_call,1,yes,ok,"mov eax, dword ptr [0xb7cb84]",source/game_sa/Interior/Interior_c.cpp:283
+0x592230,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Interior/Interior_c.cpp:72
+0x5922c0,plugin_call,1,yes,ok,push ebx,source/game_sa/Interior/Interior_c.cpp:288
+0x5924a0,plugin_call,1,yes,ok,"sub esp, 0x20",source/game_sa/Interior/Interior_c.cpp:293
+0x592aa0,plugin_call,1,yes,ok,push -1,source/game_sa/Interior/Interior_c.cpp:303
+0x593120,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/Interior/Interior_c.cpp:309
+0x593340,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/Interior/Interior_c.cpp:316
+0x593910,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/Interior/Interior_c.cpp:197
+0x593fc0,plugin_call,1,yes,ok,"sub esp, 0x20",source/game_sa/Interior/Interior_c.cpp:82
+0x594bf0,plugin_call,1,yes,ok,push esi,source/game_sa/Interior/InteriorGroup_c.cpp:148
+0x594e90,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Interior/InteriorGroup_c.cpp:133
+0x595320,plugin_call,1,yes,ok,push esi,source/game_sa/Interior/InteriorGroup_c.cpp:90
+0x596830,plugin_call,1,yes,ok,push edi,source/game_sa/Interior/InteriorGroup_c.cpp:70
+0x596890,plugin_call,1,yes,ok,push esi,source/game_sa/Interior/InteriorGroup_c.cpp:65
+0x5968e0,plugin_call,1,yes,ok,push esi,source/game_sa/Interior/InteriorGroup_c.cpp:55
+0x5970b0,plugin_call,1,yes,ok,"sub esp, 0xc",source/game_sa/Interior/Interior_c.cpp:92
+0x5974e0,plugin_call,1,yes,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/Interior/Interior_c.cpp:107
+0x5975c0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Interior/Interior_c.cpp:112
+0x597740,plugin_call,1,yes,ok,"sub esp, 0x28",source/game_sa/Interior/Interior_c.cpp:117
+0x599770,plugin_call,1,yes,ok,push ebx,source/game_sa/Interior/Interior_c.cpp:137
+0x599af0,plugin_call,1,yes,ok,push esi,source/game_sa/Interior/Interior_c.cpp:152
+0x59a030,plugin_call,1,yes,ok,push ecx,source/game_sa/Interior/Interior_c.cpp:172
+0x59a130,plugin_call,1,yes,ok,ret,source/game_sa/Interior/Interior_c.cpp:177
+0x59a140,plugin_call,1,yes,ok,push ecx,source/game_sa/Interior/Interior_c.cpp:182
+0x59a1b0,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/Interior/Interior_c.cpp:187
+0x59a590,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Interior/Interior_c.cpp:263
+0x59a790,plugin_call,1,yes,ok,"mov al, byte ptr [esp + 4]",source/game_sa/Interior/Interior_c.cpp:327
+0x59c160,raw_thunk,1,no,ok,"sub esp, 0x40",source/game_sa/Core/Quaternion.cpp:42
+0x59c230,raw_thunk,1,no,ok,push esi,source/game_sa/Core/Quaternion.cpp:47
+0x59c270,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/Core/Quaternion.cpp:52
+0x59c300,raw_thunk,1,no,ok,fld dword ptr [esp + 0xc],source/game_sa/Core/Quaternion.cpp:57
+0x59c3e0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/Core/Quaternion.cpp:62
+0x59c530,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/Core/Quaternion.cpp:67
+0x59c600,raw_thunk,1,no,ok,fld dword ptr [esp + 8],source/game_sa/Core/Quaternion.cpp:72
+0x59c630,raw_thunk,1,no,ok,push ebx,source/game_sa/Core/Quaternion.cpp:77
+0x5a44c0,plugin_call,1,yes,ok,"sub esp, 0x3c",source/game_sa/ClothesBuilder.cpp:87
+0x5a6040,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/ClothesBuilder.cpp:492
+0x5a6530,plugin_call,1,yes,ok,"sub esp, 0x84",source/game_sa/ClothesBuilder.cpp:497
+0x5b24d0,plugin_call,1,yes,ok,push ecx,source/game_sa/Camera.cpp:1718
+0x5b7670,plugin_call,1,yes,ok,"sub esp, 0x1cc",source/game_sa/FileLoader.cpp:966
+0x5bedc0,plugin_call,1,yes,ok,"sub esp, 0x80",source/game_sa/Tasks/TaskTypes/TaskSimpleFight.cpp:39
+0x5c1f50,raw_thunk,1,yes,ok,push -1,source/game_sa/Fx/FxManager.cpp:183
+0x5d43d0,plugin_call,1,no,ok,push esi,source/game_sa/Entity/Ped/PedSaveStructure.cpp:9
+0x5d44b0,plugin_call,1,no,ok,push ebx,source/game_sa/Entity/Ped/PedSaveStructure.cpp:5
+0x5d6480,plugin_call,1,yes,ok,push ecx,source/game_sa/Pipelines/CustomBuilding/CustomBuildingDNPipeline.cpp:234
+0x5d7f00,plugin_call,1,yes,ok,push esi,source/game_sa/Pipelines/CustomBuilding/CustomBuildingRenderer.cpp:43
+0x5d7f80,plugin_call,1,yes,ok,push ecx,source/game_sa/Pipelines/CustomBuilding/CustomBuildingRenderer.cpp:53
+0x5d8050,plugin_call,1,yes,ok,call 0x5d7f80,source/game_sa/Pipelines/CustomBuilding/CustomBuildingRenderer.cpp:87
+0x5dd100,plugin_call,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/PlantMgr.cpp:13
+0x5dfdf0,raw_thunk,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Ped/Ped.cpp:1363
+0x5e0820,raw_thunk,1,yes,ok,"sub esp, 0x64",source/game_sa/Entity/Ped/Ped.cpp:1574
+0x5e17e0,raw_thunk,1,no,ok,push ebx,source/game_sa/Entity/Ped/Ped.cpp:1675
+0x5e1b10,raw_thunk,1,yes,ok,"mov al, byte ptr [0xa43088]",source/game_sa/Entity/Ped/Ped.cpp:1705
+0x5e3c30,plugin_call,1,yes,ok,push ebx,source/game_sa/Entity/Ped/Ped.cpp:3741
+0x5e4c50,raw_thunk,1,yes,ok,"sub esp, 0x18",source/game_sa/Entity/Ped/Ped.cpp:2194
+0x5e5380,raw_thunk,1,yes,ok,"sub esp, 0x30",source/game_sa/Entity/Ped/Ped.cpp:2224
+0x5e57f0,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Ped/Ped.cpp:2231
+0x5e8cd0,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Entity/Ped/Ped.cpp:3706
+0x5f0360,raw_thunk,1,yes,ok,push -1,source/game_sa/Entity/Ped/Ped.cpp:3573
+0x5f6e90,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Tasks/Allocators/PedGroup/PedGroupDefaultTaskAllocatorRandom.h:13
+0x5f7800,plugin_call,1,yes,ok,"sub esp, 0xa8",source/game_sa/PedGroupIntelligence.cpp:442
+0x5fb8a0,plugin_call,1,yes,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/PedGroups.cpp:49
+0x5fb8c0,plugin_call,1,yes,ok,push ebx,source/game_sa/PedGroups.cpp:54
+0x5fb930,plugin_call,1,yes,ok,push ecx,source/game_sa/PedGroups.cpp:65
+0x5fff90,plugin_call,1,no,ok,push esi,source/game_sa/AttractorScanner.cpp:7
+0x600840,plugin_call,1,yes,ok,push 0x86cd44,source/game_sa/DecisionMakers/DecisionMakerTypes.cpp:55
+0x6008a0,plugin_call,1,no,ok,push -1,source/game_sa/MentalHealth.cpp:11
+0x602320,plugin_call,1,no,ok,push esi,source/game_sa/PedIntelligence.cpp:827
+0x602590,plugin_call,1,yes,ok,"sub esp, 0x2c",source/game_sa/InterestingEvents.cpp:89
+0x603720,plugin_call,1,no,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Events/EventScanner.cpp:35
+0x6043a0,plugin_call,1,yes,ok,push ecx,source/game_sa/DecisionMakers/DecisionMakerTypes.cpp:35
+0x604490,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/DecisionMakers/DecisionMakerTypes.cpp:51
+0x6044c0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/DecisionMakers/DecisionMakerTypes.cpp:46
+0x604500,plugin_call,1,no,ok,push -1,source/game_sa/Collision/CollisionEventScanner.cpp:7
+0x605a30,plugin_call,1,yes,ok,push ebp,source/game_sa/InterestingEvents.cpp:151
+0x606e70,plugin_call,1,yes,ok,"mov al, byte ptr [esp + 0x24]",source/game_sa/DecisionMakers/DecisionMakerTypes.cpp:30
+0x607e30,plugin_call,1,no,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Events/EventScanner.cpp:16
+0x608940,plugin_call,1,yes,ok,"mov ecx, dword ptr [0xc0bbec]",source/game_sa/PedStats.cpp:130
+0x6098f0,plugin_call,1,yes,ok,push ecx,source/game_sa/Entity/Ped/PlayerPed.cpp:361
+0x60a9c0,plugin_call,1,yes,ok,"sub esp, 0x20",source/game_sa/Entity/Ped/PlayerPed.cpp:737
+0x60b650,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Ped/PlayerPed.cpp:793
+0x60ba80,plugin_call,1,yes,ok,"sub esp, 0x58",source/game_sa/Entity/Ped/PlayerPed.cpp:798
+0x60c1e0,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Ped/PlayerPed.cpp:826
+0x60c840,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Ped/PlayerPed.cpp:917
+0x60cd20,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Ped/PlayerPed.cpp:927
+0x60d1c0,plugin_call,1,yes,ok,"mov eax, dword ptr [ecx + 0x14]",source/game_sa/Entity/Ped/PlayerPed.cpp:964
+0x60d350,plugin_call,1,yes,ok,"mov al, byte ptr [0xb6ec2e]",source/game_sa/Entity/Ped/PlayerPed.cpp:969
+0x60d850,plugin_call,1,yes,ok,push esi,source/game_sa/Entity/Ped/PlayerPed.cpp:994
+0x614720,raw_thunk,1,yes,ok,push -1,source/game_sa/Population.cpp:1583
+0x615dc0,raw_thunk,1,yes,ok,push ecx,source/game_sa/Population.cpp:1714
+0x619d60,plugin_call,1,no,ok,"sub esp, 0x45c",source/app/platform/preset_view.cpp:122
+0x619fa0,plugin_call,1,no,ok,push ebp,source/app/platform/preset_view.cpp:127
+0x61a1d0,plugin_call,1,no,ok,"sub esp, 8",source/game_sa/PlayerRelationshipRecorder.cpp:34
+0x61c470,plugin_call,1,no,ok,push -1,source/game_sa/Tasks/TaskTypes/TaskSimpleFight.cpp:7
+0x61c530,plugin_call,1,no,ok,push -1,source/game_sa/Tasks/TaskTypes/TaskSimpleFight.cpp:12
+0x642760,plugin_call,1,yes,ok,push ecx,source/game_sa/Tasks/TaskTypes/TaskSimpleCarDrive.cpp:117
+0x6428c0,plugin_call,1,yes,ok,push ecx,source/game_sa/Tasks/TaskTypes/TaskSimpleCarDrive.cpp:122
+0x642ae0,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Tasks/TaskTypes/TaskSimpleCarDrive.cpp:127
+0x6479b0,plugin_call,1,no,ok,"sub esp, 0xc",source/game_sa/Tasks/TaskTypes/TaskSimpleCarSetPedOut.cpp:20
+0x64f540,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/CarEnterExit.cpp:604
+0x65eaa0,plugin_call,1,yes,ok,push -1,source/game_sa/Tasks/TaskTypes/TaskComplexGangFollower.cpp:21
+0x65ebb0,plugin_call,1,yes,ok,push -1,source/game_sa/Tasks/TaskTypes/TaskComplexGangFollower.cpp:27
+0x65ed40,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Tasks/TaskTypes/TaskComplexGangFollower.cpp:33
+0x65f780,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/Tasks/TaskTypes/TaskComplexTrackEntity.cpp:58
+0x65f930,plugin_call,1,yes,ok,"mov eax, dword ptr [0xc18d08]",source/game_sa/Tasks/TaskTypes/TaskComplexTrackEntity.cpp:63
+0x6641a0,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/Tasks/TaskTypes/TaskGangHassleVehicle.cpp:59
+0x66af60,plugin_call,1,no,ok,push ebx,source/game_sa/Tasks/TaskTypes/TaskComplexWanderStandard.cpp:47
+0x66b4f0,plugin_call,1,no,ok,push -1,source/game_sa/Tasks/TaskTypes/TaskComplexWanderCriminal.cpp:41
+0x670350,plugin_call,1,no,ok,push ecx,source/game_sa/Tasks/TaskTypes/TaskComplexWanderCriminal.cpp:10
+0x672700,plugin_call,1,no,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Tasks/TaskTypes/TaskComplexWanderProstitute.cpp:14
+0x682310,plugin_call,1,no,ok,push ebp,source/game_sa/Tasks/TaskTypes/TaskComplexPartner.cpp:61
+0x682370,plugin_call,1,no,ok,push ebp,source/game_sa/Tasks/TaskTypes/TaskComplexPartner.cpp:65
+0x6823c0,plugin_call,1,no,ok,push esi,source/game_sa/Tasks/TaskTypes/TaskComplexPartnerDeal.cpp:32
+0x687530,plugin_call,1,yes,ok,"sub esp, 0x28",source/game_sa/Tasks/TaskTypes/TaskSimplePlayerOnFoot.cpp:763
+0x6949a0,plugin_call,1,yes,ok,push -1,source/game_sa/Tasks/TaskTypes/TaskComplexFollowLeaderInFormation.cpp:21
+0x6988e0,plugin_call,1,yes,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/Cover.cpp:276
+0x69a340,plugin_call,1,yes,ok,push ebx,source/game_sa/PedList.cpp:51
+0x69a450,plugin_call,1,yes,ok,push edi,source/game_sa/PedList.cpp:73
+0x69c850,plugin_call,1,yes,ok,"sub esp, 0x108",source/game_sa/Tasks/Allocators/TaskAllocatorKillThreatsBasic.cpp:72
+0x6a2b10,plugin_call,1,no,ok,"sub esp, 0x74",source/game_sa/Entity/Vehicle/Automobile.cpp:6443
+0x6aa290,raw_thunk,1,no,ok,nop,source/game_sa/Entity/Vehicle/Automobile.cpp:5547
+0x6aab50,plugin_call,1,no,ok,push -1,source/game_sa/Entity/Vehicle/Automobile.cpp:6438
+0x6ae0d0,raw_thunk,1,yes,ok,"sub esp, 0x84",source/game_sa/Entity/Ped/Ped.cpp:3582
+0x6b5f50,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Entity/Vehicle/Bike.cpp:278
+0x6b6740,raw_thunk,1,yes,ok,"lea eax, [ecx + 0x80c]",source/game_sa/Entity/Vehicle/Bike.cpp:528
+0x6b6950,plugin_call,1,yes,ok,push ebp,source/game_sa/Entity/Vehicle/Bike.cpp:666
+0x6b6d40,raw_thunk,1,yes,ok,"sub esp, 0x18",source/game_sa/Entity/Vehicle/Bike.cpp:543
+0x6b7080,plugin_call,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/Bike.cpp:656
+0x6b7280,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Bike.cpp:387
+0x6b7f90,raw_thunk,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Vehicle/Bike.cpp:569
+0x6b89b0,plugin_call,1,yes,ok,"sub esp, 0x68",source/game_sa/Entity/Vehicle/Bike.cpp:639
+0x6b8ec0,plugin_call,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/Bike.cpp:634
+0x6b9250,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Bike.cpp:523
+0x6bd090,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Bike.cpp:597
+0x6be310,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Entity/Vehicle/Bike.cpp:397
+0x6bea10,plugin_call,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/Bike.cpp:584
+0x6beeb0,raw_thunk,1,yes,ok,"sub esp, 0x74",source/game_sa/Entity/Vehicle/Bike.cpp:574
+0x6bf230,raw_thunk,1,yes,ok,"sub esp, 0x30",source/game_sa/Entity/Vehicle/Bike.cpp:579
+0x6bfb50,plugin_call,1,yes,ok,"sub esp, 0x10",source/game_sa/Entity/Vehicle/Bmx.cpp:109
+0x6c0810,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Bmx.cpp:214
+0x6c4760,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Entity/Vehicle/Heli.cpp:160
+0x6c4830,plugin_call,1,no,ok,"sub esp, 0x24",source/game_sa/Entity/Vehicle/Heli.cpp:287
+0x6c4e60,plugin_call,1,no,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Vehicle/Heli.cpp:338
+0x6c5420,plugin_call,1,no,ok,push -1,source/game_sa/Entity/Vehicle/Heli.cpp:343
+0x6c58e0,raw_thunk,1,no,ok,"sub esp, 0x424",source/game_sa/Entity/Vehicle/Heli.cpp:199
+0x6c6520,raw_thunk,1,no,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Vehicle/Heli.cpp:204
+0x6c69c0,raw_thunk,1,no,ok,push -1,source/game_sa/Entity/Vehicle/Heli.cpp:229
+0x6c6d30,plugin_call,1,no,ok,push ebx,source/game_sa/Entity/Vehicle/Heli.cpp:266
+0x6c7050,plugin_call,1,no,ok,"sub esp, 0x54",source/game_sa/Entity/Vehicle/Heli.cpp:348
+0x6c79a0,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/Entity/Vehicle/Heli.cpp:236
+0x6c7d40,plugin_call,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/MonsterTruck.cpp:169
+0x6c7d80,plugin_call,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/MonsterTruck.cpp:164
+0x6c7fb0,plugin_call,1,yes,ok,"sub esp, 0x28",source/game_sa/Entity/Vehicle/MonsterTruck.cpp:136
+0x6c8250,plugin_call,1,yes,ok,push ebx,source/game_sa/Entity/Vehicle/MonsterTruck.cpp:131
+0x6c8330,plugin_call,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/MonsterTruck.cpp:126
+0x6c83a0,plugin_call,1,yes,ok,"sub esp, 0xe8",source/game_sa/Entity/Vehicle/MonsterTruck.cpp:121
+0x6c9260,plugin_call,1,yes,ok,"sub esp, 0x74",source/game_sa/Entity/Vehicle/Plane.cpp:379
+0x6c94a0,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Plane.cpp:368
+0x6cadd0,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/Entity/Vehicle/Plane.cpp:433
+0x6cb7c0,plugin_call,1,yes,ok,fld dword ptr [0xb7cb5c],source/game_sa/Entity/Vehicle/Plane.cpp:438
+0x6cc4b0,plugin_call,1,yes,ok,"sub esp, 0x48",source/game_sa/Entity/Vehicle/Plane.cpp:284
+0x6ccc50,plugin_call,1,yes,ok,"mov al, byte ptr [0x8d33bc]",source/game_sa/Entity/Vehicle/Plane.cpp:343
+0x6cccf0,plugin_call,1,yes,ok,push ebx,source/game_sa/Entity/Vehicle/Plane.cpp:158
+0x6cd090,plugin_call,1,yes,ok,"sub esp, 0x80",source/game_sa/Entity/Vehicle/Plane.cpp:348
+0x6cd2f0,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Vehicle/Plane.cpp:353
+0x6cdcc0,plugin_call,1,yes,ok,"sub esp, 0x38",source/game_sa/Entity/Vehicle/QuadBike.cpp:211
+0x6d2950,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Entity/Vehicle/Vehicle.cpp:1957
+0x6d3300,raw_thunk,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/Vehicle.cpp:2286
+0x6d3370,raw_thunk,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/Vehicle.cpp:2291
+0x6d33b0,raw_thunk,1,yes,ok,push ebx,source/game_sa/Entity/Vehicle/Vehicle.cpp:2296
+0x6d3490,raw_thunk,1,yes,ok,push esi,source/game_sa/Entity/Vehicle/Vehicle.cpp:2323
+0x6d3830,raw_thunk,1,yes,ok,"sub esp, 0xc",source/game_sa/Entity/Vehicle/Vehicle.cpp:2455
+0x6d46e0,raw_thunk,1,yes,ok,"sub esp, 0xc",source/game_sa/Entity/Vehicle/Vehicle.cpp:2766
+0x6dd130,plugin_call,1,yes,ok,"sub esp, 0x80",source/game_sa/Entity/Vehicle/Vehicle.cpp:4541
+0x6df930,raw_thunk,1,yes,ok,push ebp,source/game_sa/Entity/Vehicle/Vehicle.cpp:5050
+0x6dfa20,raw_thunk,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/Vehicle.cpp:5055
+0x6e3290,raw_thunk,1,yes,ok,push ebx,source/game_sa/Entity/Vehicle/Vehicle.cpp:5730
+0x6e7210,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/WaterLevel.cpp:771
+0x6e7760,plugin_call,1,yes,ok,"mov al, byte ptr [0x8d37d4]",source/game_sa/WaterLevel.cpp:665
+0x6e7b30,plugin_call,1,yes,ok,"sub esp, 0x18",source/game_sa/WaterLevel.cpp:963
+0x6e81e0,plugin_call,1,yes,ok,"sub esp, 0x38",source/game_sa/WaterLevel.cpp:200
+0x6e9d70,plugin_call,1,yes,ok,jmp 0x406b2a,source/game_sa/WaterLevel.cpp:647
+0x6eb810,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/WaterLevel.cpp:521
+0x6ef650,plugin_call,1,yes,ok,"sub esp, 0x5c",source/game_sa/WaterLevel.cpp:808
+0x6f55d0,raw_thunk,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Vehicle/Train.cpp:180
+0x6f59e0,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Entity/Vehicle/Train.cpp:210
+0x6f5ba0,raw_thunk,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/Train.cpp:215
+0x6f5cf0,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Entity/Vehicle/Train.cpp:340
+0x6f5e70,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Entity/Vehicle/Train.cpp:285
+0x6f5e90,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Entity/Vehicle/Train.cpp:290
+0x6f5eb0,raw_thunk,1,yes,ok,"mov dl, byte ptr [esp + 8]",source/game_sa/Entity/Vehicle/Train.cpp:295
+0x6f5f00,raw_thunk,1,yes,ok,"xor ecx, ecx",source/game_sa/Entity/Vehicle/Train.cpp:305
+0x6f6030,plugin_call,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Train.cpp:78
+0x6f6850,raw_thunk,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Train.cpp:345
+0x6f6bd0,raw_thunk,1,yes,ok,"sub esp, 0x20",source/game_sa/Entity/Vehicle/Train.cpp:400
+0x6f6cc0,raw_thunk,1,yes,ok,"sub esp, 0x50",source/game_sa/Entity/Vehicle/Train.cpp:405
+0x6f7090,raw_thunk,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/Train.cpp:410
+0x6f7260,raw_thunk,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/Train.cpp:421
+0x6f72f0,raw_thunk,1,yes,ok,"sub esp, 8",source/game_sa/Entity/Vehicle/Train.cpp:426
+0x6f7440,plugin_call,1,yes,ok,push ecx,source/game_sa/Entity/Vehicle/Train.cpp:153
+0x6f7550,raw_thunk,1,yes,ok,push -1,source/game_sa/Entity/Vehicle/Train.cpp:431
+0x6f7900,raw_thunk,1,yes,ok,"mov eax, 0x57619f1",source/game_sa/Entity/Vehicle/Train.cpp:436
+0x6f8170,raw_thunk,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/Entity/Vehicle/Train.cpp:441
+0x701780,plugin_call,1,yes,ok,"sub esp, 0x34",source/game_sa/PostEffects.cpp:543
+0x702080,plugin_call,1,yes,ok,"sub esp, 0x14",source/game_sa/PostEffects.cpp:888
+0x7030a0,plugin_call,1,yes,ok,"sub esp, 0x3c",source/game_sa/PostEffects.cpp:844
+0x706870,plugin_call,1,yes,ok,"sub esp, 8",source/game_sa/RealTimeShadowManager.cpp:67
+0x706f60,raw_thunk,1,yes,ok,push esi,source/game_sa/Shadows.cpp:136
+0x7086b0,raw_thunk,1,yes,ok,"mov eax, dword ptr [0xc4b8c8]",source/game_sa/Shadows.cpp:650
+0x70a040,raw_thunk,1,yes,ok,"mov ecx, dword ptr [esp + 0x38]",source/game_sa/Shadows.cpp:655
+0x70a630,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Shadows.cpp:747
+0x70a7e0,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Shadows.cpp:753
+0x70b730,raw_thunk,1,yes,ok,"sub esp, 0x2c",source/game_sa/Shadows.cpp:984
+0x70ba00,raw_thunk,1,yes,ok,jmp 0x401efa,source/game_sa/Shadows.cpp:989
+0x70bda0,raw_thunk,1,yes,ok,"sub esp, 0x44",source/game_sa/Shadows.cpp:995
+0x70c950,raw_thunk,1,yes,ok,"sub esp, 8",source/game_sa/Shadows.cpp:143
+0x70fae0,plugin_call,1,yes,ok,"mov eax, dword ptr fs:[0]",source/game_sa/StencilShadows.cpp:204
+0x710310,plugin_call,1,yes,ok,push -1,source/game_sa/StencilShadows.cpp:209
+0x710d50,plugin_call,1,yes,ok,"sub esp, 0x84",source/game_sa/StencilShadows.cpp:61
+0x727fd0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Sprite2d.cpp:409
+0x728150,raw_thunk,1,no,ok,fld dword ptr [esp + 4],source/game_sa/Sprite2d.cpp:414
+0x728200,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x28]",source/game_sa/Sprite2d.cpp:420
+0x72cae0,plugin_call,1,no,ok,push ebp,source/game_sa/Renderer.cpp:63
+0x72d5e0,plugin_call,1,no,ok,fld dword ptr [esp + 4],source/game_sa/Renderer.cpp:68
+0x72e700,plugin_call,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:599
+0x72e8e0,plugin_call,1,no,ok,"mov edx, ecx",source/game_sa/Memory/MemoryHeap.cpp:331
+0x72f430,plugin_call,1,yes,ok,jmp 0x82413f,source/game_sa/MemoryMgr.cpp:261
+0x72f480,plugin_call,1,yes,ok,push 0,source/game_sa/MemoryMgr.cpp:108
+0x72f4f0,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/MemoryMgr.cpp:321
+0x7305e0,plugin_call,1,no,ok,push esi,source/game_sa/RenderWare/D3DResourceSystem.cpp:49
+0x730740,plugin_call,1,no,ok,push esi,source/game_sa/RenderWare/D3DResourceSystem.cpp:44
+0x730830,plugin_call,1,no,ok,push ebx,source/game_sa/RenderWare/D3DResourceSystem.cpp:27
+0x730900,plugin_call,1,no,ok,"mov eax, dword ptr [0xc87c60]",source/game_sa/RenderWare/D3DResourceSystem.cpp:12
+0x730a00,plugin_call,1,no,ok,"mov eax, dword ptr [0xc87c60]",source/game_sa/RenderWare/D3DResourceSystem.cpp:39
+0x730ac0,plugin_call,1,no,ok,"mov al, byte ptr [esp + 4]",source/game_sa/RenderWare/D3DResourceSystem.cpp:34
+0x730b70,plugin_call,1,no,ok,"mov al, byte ptr [0x8d6084]",source/game_sa/RenderWare/D3DResourceSystem.cpp:69
+0x730d30,plugin_call,1,no,ok,"mov al, byte ptr [0x8d6084]",source/game_sa/RenderWare/D3DResourceSystem.cpp:64
+0x734850,raw_thunk,1,yes,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RwHelper.cpp:91
+0x734ab0,raw_thunk,1,yes,ok,push ecx,source/game_sa/RwHelper.cpp:130
+0x734de0,raw_thunk,1,no,ok,push ecx,source/game_sa/RwHelper.cpp:255
+0x734e50,raw_thunk,1,no,ok,push ebx,source/game_sa/RwHelper.cpp:260
+0x734fc0,raw_thunk,1,no,ok,"mov al, byte ptr [esp + 0xc]",source/game_sa/RwHelper.cpp:265
+0x735140,raw_thunk,1,no,ok,"mov al, byte ptr [0xc88658]",source/game_sa/RwHelper.cpp:270
+0x7352d0,raw_thunk,1,no,ok,push ecx,source/game_sa/RwHelper.cpp:275
+0x735360,raw_thunk,1,no,ok,"sub esp, 0x15c",source/game_sa/RwHelper.cpp:280
+0x737b40,plugin_call,1,yes,ok,push edi,source/game_sa/ProjectileInfo.cpp:32
+0x737b80,plugin_call,1,yes,ok,push esi,source/game_sa/ProjectileInfo.cpp:114
+0x737bc0,plugin_call,1,yes,ok,push esi,source/game_sa/ProjectileInfo.cpp:37
+0x737c00,plugin_call,1,yes,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/ProjectileInfo.cpp:47
+0x738860,plugin_call,1,yes,ok,push ebp,source/game_sa/ProjectileInfo.cpp:57
+0x7388f0,plugin_call,1,yes,ok,push ebp,source/game_sa/ProjectileInfo.cpp:62
+0x738b20,plugin_call,1,yes,ok,"mov al, byte ptr [0xa43088]",source/game_sa/ProjectileInfo.cpp:67
+0x7399b0,plugin_call,1,yes,ok,push ebx,source/game_sa/ProjectileInfo.cpp:104
+0x73d1e0,plugin_call,1,yes,ok,nop,source/game_sa/Weapon.cpp:1015
+0x73d720,plugin_call,1,yes,ok,"sub esp, 0xb0",source/game_sa/Weapon.cpp:1020
+0x73df00,plugin_call,1,yes,ok,"mov edx, dword ptr [0xb7cb84]",source/game_sa/Entity/Vehicle/Vehicle.cpp:5924
+0x741fd0,plugin_call,1,yes,ok,"sub esp, 0x24",source/game_sa/Entity/Vehicle/Vehicle.cpp:5929
+0x742cf0,plugin_call,1,yes,ok,"mov al, byte ptr [0xb6f065]",source/game_sa/WeaponEffects.cpp:106
+0x748f20,raw_thunk,1,no,ok,call 0x7fad20,source/game_sa/RenderWare/rw/rpanisot.cpp:6
+0x748f30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpanisot.cpp:10
+0x748f50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpanisot.cpp:14
+0x748f70,raw_thunk,1,no,ok,push 0x749010,source/game_sa/RenderWare/rw/rpanisot.cpp:18
+0x7491c0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:587
+0x7491f0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:591
+0x749330,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:595
+0x749720,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:579
+0x749740,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:583
+0x7498e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:687
+0x749910,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:691
+0x749940,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:695
+0x749970,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:619
+0x749b20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:623
+0x749b70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:603
+0x749bb0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:611
+0x749c00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:607
+0x749c50,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:671
+0x749d40,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:675
+0x749dc0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:663
+0x749e40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:699
+0x749e50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:703
+0x749e60,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:667
+0x749f70,raw_thunk,1,no,ok,"sub esp, 0x14",source/game_sa/RenderWare/rw/rpworld.cpp:659
+0x74a240,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:679
+0x74a270,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:683
+0x74a290,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:655
+0x74a310,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:651
+0x74a490,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:631
+0x74a4c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:627
+0x74a4f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:639
+0x74a520,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:635
+0x74a550,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:647
+0x74a580,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:643
+0x74a5b0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:707
+0x74a5e0,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rpworld.cpp:719
+0x74a850,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rpworld.cpp:715
+0x74aa10,raw_thunk,1,no,ok,"sub esp, 0x38",source/game_sa/RenderWare/rw/rpworld.cpp:727
+0x74b030,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rpworld.cpp:711
+0x74b420,raw_thunk,1,no,ok,"sub esp, 0x44",source/game_sa/RenderWare/rw/rpworld.cpp:723
+0x74bd40,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:731
+0x74bda0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:735
+0x74bdd0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:739
+0x74be00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:743
+0x74be30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:747
+0x74be50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:751
+0x74be70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:755
+0x74bea0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:759
+0x74bec0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:763
+0x74bee0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:767
+0x74bf00,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:771
+0x74bf10,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:775
+0x74bf20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:615
+0x74bf40,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:779
+0x74bfe0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:355
+0x74c130,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:359
+0x74c200,raw_thunk,1,no,ok,"sub esp, 0x2c",source/game_sa/RenderWare/rw/rpworld.cpp:363
+0x74c310,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpworld.cpp:367
+0x74c4d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:371
+0x74c4e0,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rpworld.cpp:375
+0x74c690,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:379
+0x74c6c0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:383
+0x74c720,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rpworld.cpp:387
+0x74c760,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:391
+0x74c790,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:395
+0x74c7d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:399
+0x74c800,raw_thunk,1,no,ok,"sub esp, 0x24",source/game_sa/RenderWare/rw/rpworld.cpp:403
+0x74ca60,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:407
+0x74ca90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:411
+0x74ccc0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:415
+0x74cd70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:419
+0x74cda0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:423
+0x74cdd0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:427
+0x74cdf0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:431
+0x74ce10,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:435
+0x74ce20,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:439
+0x74ced0,raw_thunk,1,no,ok,"sub esp, 0x30",source/game_sa/RenderWare/rw/rpworld.cpp:443
+0x74d190,raw_thunk,1,no,ok,"sub esp, 0x3c",source/game_sa/RenderWare/rw/rpworld.cpp:447
+0x74d750,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:451
+0x74d870,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/RenderWare.h:45
+0x74d8c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:135
+0x74d990,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:139
+0x74da20,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:143
+0x74da80,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:147
+0x74dbc0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:151
+0x74dbf0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:155
+0x74dc20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:159
+0x74dc50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:163
+0x74dc70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:167
+0x74dc90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:171
+0x74dcb0,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:175
+0x74dcc0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:191
+0x74dd30,raw_thunk,1,no,ok,"sub esp, 0x2c",source/game_sa/RenderWare/rw/rpworld.cpp:183
+0x74e010,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:179
+0x74e050,raw_thunk,1,no,ok,"sub esp, 0x1c",source/game_sa/RenderWare/rw/rpworld.cpp:187
+0x74e150,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:199
+0x74e1b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:195
+0x74e1c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:203
+0x74e1f0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpworld.cpp:215
+0x74e2b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:207
+0x74e2c0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpworld.cpp:211
+0x74e350,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpworld.cpp:219
+0x74e420,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:223
+0x74e450,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:227
+0x74e4b0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:235
+0x74e600,raw_thunk,1,no,ok,"sub esp, 0x14",source/game_sa/RenderWare/rw/rpworld.cpp:231
+0x74e970,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc92520]",source/game_sa/RenderWare/rw/rpworld.cpp:943
+0x74e9e0,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc92520]",source/game_sa/RenderWare/rw/rpworld.cpp:947
+0x74eca0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:791
+0x74ed50,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:795
+0x74eec0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:807
+0x74ef10,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:799
+0x74ef60,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:803
+0x74efa0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:783
+0x74f020,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:787
+0x74f0c0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:819
+0x74f140,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:823
+0x74f1a0,raw_thunk,1,no,ok,"sub esp, 0x100",source/game_sa/RenderWare/rw/rpworld.cpp:811
+0x74f210,raw_thunk,1,no,ok,"sub esp, 0x130",source/game_sa/RenderWare/rw/rpworld.cpp:815
+0x74f4e0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:867
+0x74f570,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:847
+0x74f610,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:851
+0x74f730,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:859
+0x74f750,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:863
+0x74f760,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8d62d0]",source/game_sa/RenderWare/rw/rpworld.cpp:855
+0x74fb80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:831
+0x74fbc0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:835
+0x74fc00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:839
+0x74fc70,raw_thunk,1,no,ok,"sub esp, 0x100",source/game_sa/RenderWare/rw/rpworld.cpp:843
+0x74fcd0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:871
+0x74fd00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:875
+0x74fd30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:879
+0x74fd50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:883
+0x74fd70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:887
+0x74fd90,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:891
+0x74fda0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:827
+0x74ff60,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1039
+0x74ff80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1043
+0x750f20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:1051
+0x750f50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:1047
+0x750f80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1055
+0x750f90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:1063
+0x750fc0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc925a8]",source/game_sa/RenderWare/rw/rpworld.cpp:1059
+0x751050,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1067
+0x751060,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1111
+0x7510a0,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rpworld.cpp:1115
+0x751140,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rpworld.cpp:1119
+0x7511e0,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rpworld.cpp:1123
+0x751300,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc925ac]",source/game_sa/RenderWare/rw/rpworld.cpp:1071
+0x751460,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc925ac]",source/game_sa/RenderWare/rw/rpworld.cpp:1075
+0x751660,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc925a4]",source/game_sa/RenderWare/rw/rpworld.cpp:1103
+0x7516b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1079
+0x7516c0,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rpworld.cpp:1095
+0x7517f0,raw_thunk,1,no,ok,"sub esp, 0x1c",source/game_sa/RenderWare/rw/rpworld.cpp:1099
+0x751910,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc925b0]",source/game_sa/RenderWare/rw/rpworld.cpp:1083
+0x751960,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc925b0]",source/game_sa/RenderWare/rw/rpworld.cpp:1087
+0x7519e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1091
+0x7519f0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:1107
+0x751a70,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:499
+0x751a90,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:503
+0x751ae0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:507
+0x751d20,raw_thunk,1,no,ok,fld dword ptr [esp + 8],source/game_sa/RenderWare/rw/rpworld.cpp:511
+0x751d60,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:527
+0x751d90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:531
+0x751dc0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:535
+0x751de0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:539
+0x751e00,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:543
+0x751e10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:515
+0x751f00,raw_thunk,1,no,ok,"sub esp, 0x24",source/game_sa/RenderWare/rw/rpworld.cpp:519
+0x752060,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:523
+0x7520d0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:495
+0x752110,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:491
+0x752250,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:487
+0x7522e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:951
+0x7522f0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:955
+0x752320,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:987
+0x752ad0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:959
+0x7531b0,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rpworld.cpp:963
+0x753b60,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:967
+0x7544e0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:971
+0x754ae0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:975
+0x754b40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rpworld.cpp:979
+0x754c80,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:983
+0x754e20,raw_thunk,1,no,ok,"sub esp, 0x50",source/game_sa/RenderWare/rw/rpworld.cpp:991
+0x7551f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:995
+0x7555e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:999
+0x755830,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1003
+0x7558f0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1007
+0x755980,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:1011
+0x755aa0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:1015
+0x755d20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:547
+0x755d50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:551
+0x755d80,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc926c4]",source/game_sa/RenderWare/rw/rpworld.cpp:555
+0x755fe0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc926c4]",source/game_sa/RenderWare/rw/rpworld.cpp:575
+0x756070,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:559
+0x756260,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:563
+0x756390,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc926b0]",source/game_sa/RenderWare/rw/rpworld.cpp:567
+0x756600,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:571
+0x757380,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:911
+0x757390,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:915
+0x7573a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:919
+0x7573b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:923
+0x7573c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:927
+0x7573d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:931
+0x7573e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:935
+0x7573f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:939
+0x7582e0,raw_thunk,1,no,ok,"mov eax, 0x8d6338",source/game_sa/RenderWare/rw/rpworld.cpp:131
+0x7588b0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:895
+0x7588d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:899
+0x7588e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:903
+0x758900,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:907
+0x758910,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:283
+0x758920,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:287
+0x758940,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9b8c4]",source/game_sa/RenderWare/rw/rpworld.cpp:243
+0x758970,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:239
+0x758a90,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc926f0]",source/game_sa/RenderWare/rw/rpworld.cpp:251
+0x758b80,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:255
+0x758bc0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:259
+0x758c00,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpworld.cpp:263
+0x758d30,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:267
+0x758d70,raw_thunk,1,no,ok,"sub esp, 0x418",source/game_sa/RenderWare/rw/rpworld.cpp:271
+0x758ec0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:275
+0x759090,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:279
+0x7590e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc9b8c0]",source/game_sa/RenderWare/rw/rpworld.cpp:247
+0x759100,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:311
+0x7591b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:315
+0x75a8e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:327
+0x75a900,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:319
+0x75a920,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:331
+0x75a940,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:323
+0x75b4e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:335
+0x75b500,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rpworld.cpp:295
+0x75b780,raw_thunk,1,no,ok,"sub esp, 0x30",source/game_sa/RenderWare/rw/rpworld.cpp:299
+0x75bd80,raw_thunk,1,no,ok,"sub esp, 0x38",source/game_sa/RenderWare/rw/rpworld.cpp:303
+0x75c330,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:291
+0x75c380,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rpworld.cpp:307
+0x75d4c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:339
+0x75d500,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:343
+0x75d530,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpworld.cpp:347
+0x75d970,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:351
+0x75d9d0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:1031
+0x75dae0,raw_thunk,1,no,ok,"sub esp, 0x4c",source/game_sa/RenderWare/rw/rpworld.cpp:1035
+0x75e270,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1019
+0x75e2a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1023
+0x75e2d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:1027
+0x75e9f0,raw_thunk,1,no,ok,"mov eax, 0x8d63b8",source/game_sa/RenderWare/rw/rpworld.cpp:127
+0x75edd0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:75
+0x75ee60,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc94bf8]",source/game_sa/RenderWare/rw/rpworld.cpp:67
+0x75eed0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc94bfc]",source/game_sa/RenderWare/rw/rpworld.cpp:71
+0x760df0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:79
+0x761000,raw_thunk,1,no,ok,ret,source/game_sa/RenderWare/rw/rpworld.cpp:95
+0x761010,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rpworld.cpp:87
+0x761030,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8e244c]",source/game_sa/RenderWare/rw/rpworld.cpp:91
+0x761170,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:83
+0x761720,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:99
+0x761820,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rpworld.cpp:103
+0x7618b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:107
+0x761950,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rpworld.cpp:111
+0x7619a0,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rpworld.cpp:115
+0x761a10,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:119
+0x761b70,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:123
+0x761c50,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rpworld.cpp:455
+0x761c60,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpworld.cpp:459
+0x761c90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rpworld.cpp:463
+0x761cc0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rpworld.cpp:467
+0x761cf0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:471
+0x761d10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpworld.cpp:475
+0x761d30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:479
+0x761d50,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rpworld.cpp:483
+0x761ea0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpworld.cpp:1127
+0x762150,raw_thunk,1,no,ok,"sub esp, 0x14c",source/game_sa/RenderWare/rw/rpworld.cpp:1135
+0x762960,raw_thunk,1,no,ok,"sub esp, 0x8c",source/game_sa/RenderWare/rw/rpworld.cpp:1131
+0x7635b0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:1139
+0x763620,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpworld.cpp:1143
+0x763690,raw_thunk,1,no,ok,"sub esp, 0x40",source/game_sa/RenderWare/rw/rpworld.cpp:1147
+0x764650,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:7
+0x7646e0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:11
+0x764730,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:15
+0x764760,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc94c70]",source/game_sa/RenderWare/rw/rpworld.cpp:19
+0x7647b0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:23
+0x764920,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc94c70]",source/game_sa/RenderWare/rw/rpworld.cpp:27
+0x764960,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc94c70]",source/game_sa/RenderWare/rw/rpworld.cpp:31
+0x7649d0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:35
+0x764a70,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:39
+0x764b50,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:43
+0x764c60,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:47
+0x764d20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpworld.cpp:51
+0x764d30,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:55
+0x764e70,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:59
+0x764f60,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rpworld.cpp:63
+0x7c45e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:6
+0x7c4600,raw_thunk,1,no,ok,push 0x7c4720,source/game_sa/RenderWare/rw/rphanim.cpp:69
+0x7c4c30,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9b8cc]",source/game_sa/RenderWare/rw/rphanim.cpp:10
+0x7c4d30,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rphanim.cpp:18
+0x7c4db0,raw_thunk,1,no,ok,"sub esp, 0x84",source/game_sa/RenderWare/rw/rphanim.cpp:22
+0x7c4ed0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rphanim.cpp:14
+0x7c4f40,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rphanim.cpp:26
+0x7c4ff0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:30
+0x7c5020,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rphanim.cpp:34
+0x7c5100,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:38
+0x7c5120,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:50
+0x7c5130,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:42
+0x7c5160,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:46
+0x7c5170,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:105
+0x7c5190,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:109
+0x7c51a0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:65
+0x7c51d0,raw_thunk,1,no,ok,"sub esp, 0xa14",source/game_sa/RenderWare/rw/rphanim.cpp:61
+0x7c5b80,raw_thunk,1,no,ok,"sub esp, 0x28",source/game_sa/RenderWare/rw/rphanim.cpp:73
+0x7c5ca0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rphanim.cpp:81
+0x7c60c0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rphanim.cpp:77
+0x7c64c0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rphanim.cpp:93
+0x7c6540,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rphanim.cpp:97
+0x7c65b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rphanim.cpp:101
+0x7c65c0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rphanim.cpp:89
+0x7c6720,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rphanim.cpp:85
+0x7c67f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:6
+0x7c6820,raw_thunk,1,no,ok,push 0x7c69a0,source/game_sa/RenderWare/rw/rpskin.cpp:10
+0x7c7520,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:14
+0x7c7540,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:18
+0x7c7550,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:26
+0x7c7560,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc978a8]",source/game_sa/RenderWare/rw/rpskin.cpp:22
+0x7c75b0,raw_thunk,1,no,ok,"sub esp, 0x104",source/game_sa/RenderWare/rw/rpskin.cpp:30
+0x7c77a0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpskin.cpp:34
+0x7c77e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:38
+0x7c77f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:42
+0x7c7800,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:46
+0x7c7810,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:50
+0x7c7820,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:54
+0x7c7830,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpskin.cpp:58
+0x7c7880,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:62
+0x7c8740,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc978a8]",source/game_sa/RenderWare/rw/rpskin.cpp:66
+0x7c8820,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:70
+0x7c8a40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:74
+0x7c8a50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:78
+0x7c8a60,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpskin.cpp:82
+0x7c8a70,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpskin.cpp:86
+0x7c8b10,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpskin.cpp:90
+0x7cb2a0,raw_thunk,1,no,ok,"mov eax, 0x8ded08",source/game_sa/RenderWare/rw/rpskin.cpp:94
+0x7cb940,raw_thunk,1,no,ok,push 0x7cba20,source/game_sa/RenderWare/rw/rpuvanim.cpp:18
+0x7cbf70,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc978f4]",source/game_sa/RenderWare/rw/rpuvanim.cpp:6
+0x7cbfd0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpuvanim.cpp:10
+0x7cc010,raw_thunk,1,no,ok,"mov eax, 0x40",source/game_sa/RenderWare/rw/rpuvanim.cpp:14
+0x7cc020,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x18]",source/game_sa/RenderWare/rw/rpuvanim.cpp:74
+0x7cc0c0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpuvanim.cpp:78
+0x7cc100,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpuvanim.cpp:82
+0x7cc3a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpuvanim.cpp:86
+0x7cc3b0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rpuvanim.cpp:90
+0x7cc430,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpuvanim.cpp:94
+0x7cc450,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rpuvanim.cpp:98
+0x7cc470,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9b8d0]",source/game_sa/RenderWare/rw/rpuvanim.cpp:102
+0x7cc4b0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9b8d0]",source/game_sa/RenderWare/rw/rpuvanim.cpp:106
+0x7cc4f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9b8d0]",source/game_sa/RenderWare/rw/rpuvanim.cpp:110
+0x7cc530,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpuvanim.cpp:119
+0x7cc560,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rpuvanim.cpp:42
+0x7cc600,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpuvanim.cpp:50
+0x7cc6a0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpuvanim.cpp:46
+0x7cc740,raw_thunk,1,no,ok,ret,source/game_sa/RenderWare/rw/rpuvanim.cpp:58
+0x7cc750,raw_thunk,1,no,ok,ret,source/game_sa/RenderWare/rw/rpuvanim.cpp:54
+0x7cc870,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpuvanim.cpp:62
+0x7cc920,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rpuvanim.cpp:66
+0x7cc9d0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rpuvanim.cpp:70
+0x7cc9f0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpuvanim.cpp:22
+0x7cca40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpuvanim.cpp:30
+0x7ccac0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rpuvanim.cpp:26
+0x7ccb30,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpuvanim.cpp:38
+0x7ccbe0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rpuvanim.cpp:34
+0x7ccc80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:7
+0x7ccca0,raw_thunk,1,no,ok,push 0x7ccd10,source/game_sa/RenderWare/rw/rtanim.cpp:11
+0x7ccd40,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97900]",source/game_sa/RenderWare/rw/rtanim.cpp:15
+0x7ccde0,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc97900]",source/game_sa/RenderWare/rw/rtanim.cpp:19
+0x7cce40,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc97900]",source/game_sa/RenderWare/rw/rtanim.cpp:23
+0x7ccf10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:27
+0x7ccf30,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rtanim.cpp:31
+0x7cd160,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rtanim.cpp:35
+0x7cd220,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rtanim.cpp:39
+0x7cd410,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rtanim.cpp:43
+0x7cd4d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:47
+0x7cd4f0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:51
+0x7cd520,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtanim.cpp:55
+0x7cd590,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rtanim.cpp:59
+0x7cd660,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc97900]",source/game_sa/RenderWare/rw/rtanim.cpp:164
+0x7cd6f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:168
+0x7cd710,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:172
+0x7cd730,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:176
+0x7cd760,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rtanim.cpp:180
+0x7cd8d0,raw_thunk,1,no,ok,fld dword ptr [esp + 8],source/game_sa/RenderWare/rw/rtanim.cpp:184
+0x7cdab0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtanim.cpp:188
+0x7cdb00,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rtanim.cpp:192
+0x7cdbf0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtanim.cpp:196
+0x7cdc50,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtanim.cpp:200
+0x7cdcb0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rtanim.cpp:204
+0x7cdcf0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtanim.cpp:208
+0x7cdef0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rtanim.cpp:212
+0x7cdf60,raw_thunk,1,no,ok,"sub esp, 0x454",source/game_sa/RenderWare/rw/rtbmp.cpp:10
+0x7ce990,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rtbmp.cpp:6
+0x7ced40,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtdict.cpp:6
+0x7ced70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtdict.cpp:10
+0x7ced90,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rtdict.cpp:18
+0x7cee50,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtdict.cpp:22
+0x7cee80,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtdict.cpp:26
+0x7ceee0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtdict.cpp:34
+0x7ceef0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtdict.cpp:38
+0x7cef00,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtdict.cpp:70
+0x7cef60,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:74
+0x7cefb0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rtdict.cpp:46
+0x7cefe0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rtdict.cpp:50
+0x7cf060,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:54
+0x7cf0c0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:58
+0x7cf130,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:42
+0x7cf1f0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:66
+0x7cf240,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rtdict.cpp:14
+0x7cf490,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:62
+0x7cf5b0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtdict.cpp:30
+0x7cf600,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rtpng.cpp:6
+0x7cf9b0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rtpng.cpp:10
+0x7eb5c0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rtquat.cpp:6
+0x7eb7c0,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rtquat.cpp:10
+0x7eba80,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rtquat.cpp:14
+0x7ebbb0,raw_thunk,1,no,ok,"sub esp, 0x24",source/game_sa/RenderWare/rw/rtquat.cpp:18
+0x7ebd10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtquat.cpp:22
+0x7ec220,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rtslerp.cpp:6
+0x7ec760,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:42
+0x7ec810,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwplcore.cpp:46
+0x7ec9d0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwplcore.cpp:58
+0x7ecb30,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwplcore.cpp:62
+0x7ecd00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwplcore.cpp:66
+0x7ece20,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwplcore.cpp:54
+0x7ecef0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:50
+0x7ed270,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rwplcore.cpp:442
+0x7ed2d0,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rwplcore.cpp:438
+0x7ed3d0,raw_thunk,1,no,ok,"sub esp, 0x100",source/game_sa/RenderWare/rw/rwplcore.cpp:446
+0x7ed460,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:450
+0x7ed480,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:454
+0x7ed4a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:466
+0x7ed4f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:458
+0x7ed540,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:462
+0x7ed590,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rwplcore.cpp:470
+0x7ed910,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwplcore.cpp:274
+0x7ed9b0,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rwplcore.cpp:234
+0x7edac0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:238
+0x7edb30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:266
+0x7edb90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:270
+0x7edbf0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:242
+0x7edc60,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwplcore.cpp:246
+0x7edd60,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:250
+0x7edd90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwplcore.cpp:254
+0x7eddc0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:258
+0x7eddf0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwplcore.cpp:262
+0x7ee0f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1094
+0x7ee1a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1110
+0x7ee1d0,raw_thunk,1,no,ok,fld dword ptr [esp + 8],source/game_sa/RenderWare/rw/rwcore.cpp:1122
+0x7ee2a0,raw_thunk,1,no,ok,fld dword ptr [esp + 8],source/game_sa/RenderWare/rw/rwcore.cpp:1126
+0x7ee2d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1142
+0x7ee3a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1118
+0x7ee410,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1114
+0x7ee450,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rwcore.cpp:1130
+0x7ee480,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1134
+0x7ee4a0,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rwcore.cpp:1138
+0x7ee4b0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:1098
+0x7ee4f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:1102
+0x7ef3b0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:1106
+0x7ef450,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:557
+0x7ef520,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc9c078]",source/game_sa/RenderWare/rw/rwcore.cpp:561
+0x7ef550,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9c078]",source/game_sa/RenderWare/rw/rwcore.cpp:573
+0x7ef6b0,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:577
+0x7ef810,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:569
+0x7ef900,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:565
+0x7ef9d0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:581
+0x7ef9e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:585
+0x7efac0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:589
+0x7efb10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:593
+0x7efdd0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:553
+0x7efed0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:917
+0x7effb0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:958
+0x7f01a0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:962
+0x7f0250,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:881
+0x7f0340,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:938
+0x7f0410,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:921
+0x7f0450,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:930
+0x7f05a0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:926
+0x7f06f0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:934
+0x7f08a0,raw_thunk,1,no,ok,push edi,source/game_sa/RenderWare/rw/rwcore.cpp:885
+0x7f0910,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:913
+0x7f0990,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:909
+0x7f09b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:905
+0x7f09c0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:901
+0x7f0b00,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:897
+0x7f0cd0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:893
+0x7f0dc0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:889
+0x7f0e00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:942
+0x7f0e30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:857
+0x7f0ed0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:865
+0x7f0f70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:869
+0x7f1010,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwcore.cpp:861
+0x7f10b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:877
+0x7f1170,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:873
+0x7f1200,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:853
+0x7f1260,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rwcore.cpp:946
+0x7f1290,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:950
+0x7f12b0,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rwcore.cpp:954
+0x7f1450,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:218
+0x7f14a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:226
+0x7f1500,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:222
+0x7f1590,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rwplcore.cpp:230
+0x7f16a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:162
+0x7f1780,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:154
+0x7f17b0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:158
+0x7f17e0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwplcore.cpp:214
+0x7f18a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:210
+0x7f18b0,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc979bc]",source/game_sa/RenderWare/rw/rwplcore.cpp:174
+0x7f1920,raw_thunk,1,no,ok,jmp 0x7f1930,source/game_sa/RenderWare/rw/rwplcore.cpp:182
+0x7f1d00,raw_thunk,1,no,ok,"sub esp, 0xa4",source/game_sa/RenderWare/rw/rwplcore.cpp:202
+0x7f1fd0,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rwplcore.cpp:198
+0x7f2070,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:186
+0x7f22c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:190
+0x7f2450,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:194
+0x7f25a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwplcore.cpp:178
+0x7f2720,raw_thunk,1,no,ok,"sub esp, 0x90",source/game_sa/RenderWare/rw/rwplcore.cpp:206
+0x7f2a20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:166
+0x7f2a50,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:170
+0x7f2ba0,raw_thunk,1,no,ok,"mov eax, 0x36003",source/game_sa/RenderWare/rw/rwplcore.cpp:310
+0x7f2bb0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwplcore.cpp:318
+0x7f2be0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:322
+0x7f2c00,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:346
+0x7f2c30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwplcore.cpp:350
+0x7f2c60,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:354
+0x7f2c90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:358
+0x7f2cc0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:362
+0x7f2d20,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:370
+0x7f2d50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:374
+0x7f2d80,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:378
+0x7f2db0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:382
+0x7f2de0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:386
+0x7f2e10,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:390
+0x7f2e20,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:334
+0x7f2e70,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:330
+0x7f2f00,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:338
+0x7f2f70,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:326
+0x7f3130,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b20]",source/game_sa/RenderWare/rw/rwplcore.cpp:342
+0x7f3170,raw_thunk,1,no,ok,"mov al, byte ptr [esp + 8]",source/game_sa/RenderWare/rw/rwplcore.cpp:314
+0x7f34d0,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:461
+0x7f34f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:457
+0x7f3500,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:453
+0x7f3520,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:449
+0x7f3530,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:401
+0x7f3550,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:405
+0x7f3560,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:409
+0x7f3580,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:413
+0x7f3590,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b4c]",source/game_sa/RenderWare/rw/rwcore.cpp:441
+0x7f35c0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:445
+0x7f35d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:497
+0x7f3600,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:477
+0x7f36a0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b4c]",source/game_sa/RenderWare/rw/rwcore.cpp:481
+0x7f3730,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:521
+0x7f3770,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:525
+0x7f37c0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:485
+0x7f3820,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:493
+0x7f38a0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:465
+0x7f3910,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:469
+0x7f3980,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:501
+0x7f39c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:505
+0x7f39f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:509
+0x7f3a70,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:517
+0x7f3a90,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:513
+0x7f3aa0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:433
+0x7f3bb0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rwcore.cpp:529
+0x7f3be0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:537
+0x7f3c00,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rwcore.cpp:545
+0x7f3c10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rwcore.cpp:533
+0x7f3c40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:541
+0x7f3c60,raw_thunk,1,no,ok,"mov eax, 1",source/game_sa/RenderWare/rw/rwcore.cpp:549
+0x7f3c70,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:417
+0x7f3c90,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:421
+0x7f3ca0,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:425
+0x7f3cc0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:429
+0x7f3cd0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:437
+0x7f3e80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:473
+0x7f5500,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:224
+0x7f56a0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwcore.cpp:228
+0x7f57f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:220
+0x7f5a00,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b8c]",source/game_sa/RenderWare/rw/rwcore.cpp:232
+0x7f5ae0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b8c]",source/game_sa/RenderWare/rw/rwcore.cpp:236
+0x7f5b10,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:240
+0x7f5c90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:244
+0x7f5ef0,plugin_call,1,no,ok,"mov eax, dword ptr [esp + 4]",source/app/platform/win/WindowedMode.cpp:140
+0x7f5f60,raw_thunk,1,no,ok,jmp 0x4c9ab0,source/game_sa/RenderWare/rw/rwcore.cpp:813
+0x7f84e0,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8e242c]",source/game_sa/RenderWare/rw/rwcore.cpp:617
+0x7f84f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8e242c]",source/game_sa/RenderWare/rw/rwcore.cpp:621
+0x7f8580,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:625
+0x7f8620,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:629
+0x7f8630,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:633
+0x7f8640,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97c38]",source/game_sa/RenderWare/rw/rwcore.cpp:645
+0x7f8a90,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97c38]",source/game_sa/RenderWare/rw/rwcore.cpp:649
+0x7f8d70,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc9c060]",source/game_sa/RenderWare/rw/rwcore.cpp:653
+0x7f9c30,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc9bef0]",source/game_sa/RenderWare/rw/rwcore.cpp:609
+0x7f9d30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:721
+0x7f9d40,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97c44]",source/game_sa/RenderWare/rw/rwcore.cpp:725
+0x7f9d50,raw_thunk,1,no,ok,"xor eax, eax",source/game_sa/RenderWare/rw/rwcore.cpp:613
+0x7f9e80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:637
+0x7f9e90,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwcore.cpp:641
+0x7f9f30,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8e2440]",source/game_sa/RenderWare/rw/rwcore.cpp:685
+0x7f9fb0,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8e2448]",source/game_sa/RenderWare/rw/rwcore.cpp:689
+0x7f9ff0,raw_thunk,1,no,ok,"mov eax, dword ptr [0x8e244c]",source/game_sa/RenderWare/rw/rwcore.cpp:693
+0x7fa030,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:657
+0x7fa1f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97bd8]",source/game_sa/RenderWare/rw/rwcore.cpp:665
+0x7fa290,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97bd8]",source/game_sa/RenderWare/rw/rwcore.cpp:669
+0x7fa320,raw_thunk,1,no,ok,call 0x7fc200,source/game_sa/RenderWare/rw/rwcore.cpp:673
+0x7fa390,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwcore.cpp:733
+0x7fa4f0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwcore.cpp:737
+0x7fa520,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwcore.cpp:749
+0x7fa660,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:757
+0x7fa820,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:761
+0x7fa860,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:765
+0x7faa30,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:773
+0x7fac10,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc97c58]",source/game_sa/RenderWare/rw/rwcore.cpp:777
+0x7fac90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:781
+0x7faca0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:677
+0x7facc0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:785
+0x7facf0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:789
+0x7fad00,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:681
+0x7fad20,raw_thunk,1,no,ok,"mov eax, 0xc9bf00",source/game_sa/RenderWare/rw/rwcore.cpp:797
+0x7fad30,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:801
+0x7fad90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:805
+0x7fae20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:817
+0x7fae30,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc980b0]",source/game_sa/RenderWare/rw/rwcore.cpp:821
+0x7fae40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:329
+0x7fae60,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc980d8]",source/game_sa/RenderWare/rw/rwcore.cpp:292
+0x7fae80,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:280
+0x7faea0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:260
+0x7faec0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:313
+0x7faee0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:296
+0x7faf50,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwcore.cpp:272
+0x7faf90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:300
+0x7fafb0,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwcore.cpp:276
+0x7faff0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:321
+0x7fb020,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:256
+0x7fb060,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:284
+0x7fb0b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x14]",source/game_sa/RenderWare/rw/rwcore.cpp:325
+0x7fb0e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:317
+0x7fb110,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc980d8]",source/game_sa/RenderWare/rw/rwcore.cpp:288
+0x7fb160,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:264
+0x7fb1a0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:304
+0x7fb1d0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:268
+0x7fb230,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:252
+0x7fb2d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:309
+0x7fb350,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:248
+0x7fc200,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9a5ec]",source/game_sa/RenderWare/rw/rwcore.cpp:661
+0x7fc2d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:697
+0x7fc320,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:701
+0x7fc340,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:705
+0x7fc3a0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:709
+0x7fc3c0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:713
+0x7fc400,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:717
+0x7fc430,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:741
+0x7fc4a0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:745
+0x7fc4d0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:753
+0x7fd100,plugin_call,1,no,ok,"sub esp, 0xc",source/app/platform/win/WindowedMode.cpp:561
+0x7fde70,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:729
+0x801980,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwplcore.cpp:10
+0x801b70,raw_thunk,1,no,ok,jmp 0x8019b0,source/game_sa/RenderWare/rw/rwplcore.cpp:14
+0x801b80,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwplcore.cpp:18
+0x801c10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:22
+0x801c20,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:26
+0x801e00,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:30
+0x801e90,raw_thunk,1,no,ok,"sub esp, 0xc",source/game_sa/RenderWare/rw/rwplcore.cpp:34
+0x801f90,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwplcore.cpp:38
+0x802230,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:6
+0x8026e0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:337
+0x802740,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:341
+0x8027a0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:345
+0x802860,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:349
+0x802a20,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwcore.cpp:357
+0x802af0,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwcore.cpp:353
+0x802ea0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:369
+0x802fd0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:365
+0x8035c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:361
+0x803e30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:377
+0x803fe0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwcore.cpp:373
+0x804130,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:394
+0x804250,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:833
+0x804290,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:837
+0x8042c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:849
+0x8043f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:841
+0x8044e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:845
+0x804550,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwcore.cpp:978
+0x804580,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:982
+0x8045a0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:986
+0x8045e0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:994
+0x8046e0,raw_thunk,1,no,ok,"sub esp, 0x110",source/game_sa/RenderWare/rw/rwcore.cpp:990
+0x8048e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwcore.cpp:998
+0x804910,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1002
+0x804930,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:1006
+0x8049f0,raw_thunk,1,no,ok,"sub esp, 0x14",source/game_sa/RenderWare/rw/rwcore.cpp:1014
+0x804c30,raw_thunk,1,no,ok,"sub esp, 0x18",source/game_sa/RenderWare/rw/rwcore.cpp:1010
+0x804e60,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwcore.cpp:1018
+0x804ef0,plugin_call,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1170
+0x804f40,plugin_call+raw_thunk,2,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:966
+0x804f60,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9a6ac]",source/game_sa/RenderWare/rw/rwcore.cpp:48
+0x804fc0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:40
+0x804fe0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9a6ac]",source/game_sa/RenderWare/rw/rwcore.cpp:44
+0x8052f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9a6b0]",source/game_sa/RenderWare/rw/rwcore.cpp:60
+0x805300,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9bc40]",source/game_sa/RenderWare/rw/rwcore.cpp:68
+0x805330,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:72
+0x805340,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:76
+0x8053a0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:80
+0x805400,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:88
+0x805470,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:92
+0x8054c0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:96
+0x8054f0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:100
+0x8055c0,raw_thunk,1,no,ok,ret,source/game_sa/RenderWare/rw/rwcore.cpp:104
+0x8055d0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:108
+0x8055f0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:112
+0x805680,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:116
+0x8056b0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:120
+0x8056c0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:124
+0x8056e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:128
+0x8056f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:132
+0x805710,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:64
+0x8057b0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwcore.cpp:52
+0x805820,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:56
+0x8059c0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:148
+0x805d10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:136
+0x805d70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:140
+0x805da0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:144
+0x805db0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:152
+0x805e20,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:156
+0x805ea0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:164
+0x805f30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:160
+0x805f40,raw_thunk,1,no,ok,"sub esp, 0x14",source/game_sa/RenderWare/rw/rwcore.cpp:184
+0x806990,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:180
+0x806ac0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:168
+0x806b30,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:172
+0x806bc0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:176
+0x806f20,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:188
+0x807040,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:192
+0x807070,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:196
+0x8070d0,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:204
+0x807100,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:208
+0x807170,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:212
+0x8071b0,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwcore.cpp:216
+0x807570,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1022
+0x807580,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwcore.cpp:1026
+0x8075b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1030
+0x8075d0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwcore.cpp:1034
+0x8076e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1038
+0x807720,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:1042
+0x807750,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:1046
+0x8077a0,raw_thunk,1,no,ok,"sub esp, 0x3c",source/game_sa/RenderWare/rw/rwcore.cpp:1054
+0x807970,raw_thunk,1,no,ok,"sub esp, 0x4c",source/game_sa/RenderWare/rw/rwcore.cpp:1050
+0x807de0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwplcore.cpp:430
+0x807e50,raw_thunk,1,no,ok,"mov edx, dword ptr [0xc9bc58]",source/game_sa/RenderWare/rw/rwplcore.cpp:434
+0x807ed0,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwplcore.cpp:426
+0x8080c0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9bc5c]",source/game_sa/RenderWare/rw/rwplcore.cpp:410
+0x8081b0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:414
+0x8081c0,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc9bc58]",source/game_sa/RenderWare/rw/rwplcore.cpp:418
+0x8081f0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9bc58]",source/game_sa/RenderWare/rw/rwplcore.cpp:422
+0x808430,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:98
+0x808470,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:106
+0x8084a0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9a6e4]",source/game_sa/RenderWare/rw/rwplcore.cpp:102
+0x8086e0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwplcore.cpp:110
+0x808740,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwplcore.cpp:114
+0x808770,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwplcore.cpp:118
+0x8087b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:94
+0x808820,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc9a6f0]",source/game_sa/RenderWare/rw/rwplcore.cpp:402
+0x808880,raw_thunk,1,no,ok,"mov ecx, dword ptr [0xc9a6f0]",source/game_sa/RenderWare/rw/rwplcore.cpp:398
+0x8088e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:122
+0x808920,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:126
+0x808950,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:130
+0x808980,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwplcore.cpp:134
+0x808ab0,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwplcore.cpp:150
+0x808b00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:146
+0x808b40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:138
+0x808c10,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwplcore.cpp:142
+0x808c90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0x10]",source/game_sa/RenderWare/rw/rwcore.cpp:1146
+0x808cc0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1150
+0x808ce0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1154
+0x808d00,raw_thunk,1,no,ok,"sub esp, 0x20",source/game_sa/RenderWare/rw/rwcore.cpp:1162
+0x808de0,raw_thunk,1,no,ok,"sub esp, 0x2c",source/game_sa/RenderWare/rw/rwcore.cpp:1158
+0x808ef0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:1166
+0x808f60,raw_thunk,1,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1058
+0x809020,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:1062
+0x809060,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1066
+0x8090e0,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:1070
+0x809160,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:278
+0x809240,raw_thunk,1,no,ok,"sub esp, 8",source/game_sa/RenderWare/rw/rwplcore.cpp:294
+0x809400,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:286
+0x809440,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwplcore.cpp:282
+0x8094b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:298
+0x809510,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:290
+0x809530,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:302
+0x809540,raw_thunk,1,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:306
+0x809550,raw_thunk,1,no,ok,"sub esp, 0x10",source/game_sa/RenderWare/rw/rwcore.cpp:970
+0x8097d0,raw_thunk,1,no,ok,push ebp,source/game_sa/RenderWare/rw/rwcore.cpp:974
+0x8098b0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rwcore.cpp:32
+0x809aa0,raw_thunk,1,no,ok,"sub esp, 0x108",source/game_sa/RenderWare/rw/rwcore.cpp:28
+0x809d10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:36
+0x809ec0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:24
+0x809f30,raw_thunk,1,no,ok,push edi,source/game_sa/RenderWare/rw/rwcore.cpp:20
+0x809f90,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:16
+0x80a240,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc97b24]",source/game_sa/RenderWare/rw/rwplcore.cpp:70
+0x80a440,raw_thunk,1,no,ok,ret,source/game_sa/RenderWare/rw/rwplcore.cpp:74
+0x80a450,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:78
+0x80a470,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwplcore.cpp:82
+0x80a4a0,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwplcore.cpp:86
+0x80a510,raw_thunk,1,no,ok,"sub esp, 0x9c",source/game_sa/RenderWare/rw/rwplcore.cpp:90
+0x80aa80,raw_thunk,1,no,ok,"sub esp, 0x1c",source/game_sa/RenderWare/rw/rwcore.cpp:389
+0x80af60,raw_thunk,1,no,ok,"sub esp, 0x68",source/game_sa/RenderWare/rw/rwcore.cpp:393
+0x80bf20,raw_thunk,1,no,ok,"sub esp, 0x14",source/game_sa/RenderWare/rw/rwcore.cpp:397
+0x80c470,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rwcore.cpp:381
+0x80c520,raw_thunk,1,no,ok,push esi,source/game_sa/RenderWare/rw/rwcore.cpp:385
+0x80c600,raw_thunk,1,no,ok,"sub esp, 0x70",source/game_sa/RenderWare/rw/rwcore.cpp:825
+0x80cd10,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 0xc]",source/game_sa/RenderWare/rw/rwcore.cpp:829
+0x80ea40,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:333
+0x80f070,raw_thunk,1,no,ok,push ebx,source/game_sa/RenderWare/rw/rwcore.cpp:84
+0x810700,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:6
+0x810aa0,raw_thunk,1,no,ok,push 0x810bb0,source/game_sa/RenderWare/rw/rpmatfx.cpp:10
+0x811c00,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab84]",source/game_sa/RenderWare/rw/rpmatfx.cpp:14
+0x811c30,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:18
+0x811c40,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab88]",source/game_sa/RenderWare/rw/rpmatfx.cpp:22
+0x811c70,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:26
+0x811c80,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:30
+0x811e00,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/RenderWare/rw/rpmatfx.cpp:34
+0x811ed0,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpmatfx.cpp:38
+0x812040,raw_thunk,1,no,ok,push ecx,source/game_sa/RenderWare/rw/rpmatfx.cpp:42
+0x812140,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:46
+0x812160,raw_thunk,1,no,ok,"sub esp, 0x28",source/game_sa/RenderWare/rw/rpmatfx.cpp:50
+0x812320,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:54
+0x812380,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:58
+0x8123e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:66
+0x812430,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:62
+0x812480,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:70
+0x8124d0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:74
+0x812530,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:78
+0x8125b0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:82
+0x812610,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:86
+0x812680,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:90
+0x8126f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:94
+0x812740,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:98
+0x812790,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:102
+0x8127e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:106
+0x812830,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:110
+0x8128c0,raw_thunk,1,no,ok,"mov eax, dword ptr [0xc9ab74]",source/game_sa/RenderWare/rw/rpmatfx.cpp:114
+0x812930,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:118
+0x812980,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:122
+0x8129e0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:126
+0x812a50,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:130
+0x8162f0,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rpmatfx.cpp:134
+0x81f360,raw_thunk,1,no,ok,"sub esp, 0xe0",source/game_sa/RenderWare/rw/rwcore.cpp:597
+0x820a10,raw_thunk,1,no,ok,"sub esp, 0x108",source/game_sa/RenderWare/rw/rwcore.cpp:601
+0x820c90,raw_thunk,1,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/RenderWare/rw/rwcore.cpp:605
+0x821195,raw_thunk,1,no,ok,jmp 0x82119a,source/game_sa/Core/LinkList.h:20
+0x8213ae,plugin_call+raw_thunk,2,no,ok,jmp 0x8214bd,source/game_sa/Core/LinkList.h:24
+0x8214bd,plugin_call,1,no,ok,jmp 0x82413f,source/game_sa/MemoryMgr.cpp:458

@@ -1,0 +1,8 @@
+/.venv/
+/target/
+/catalog/raw/
+__pycache__/
+/re/
+/wine/
+/fixtures/
+/traces/
