@@ -23,6 +23,17 @@ _sa_call:
     fldcw [esi + 80]
     ldmxcsr [esi + 84]
     mov [saved_esp], esp
+    # fill STACK_FILL_LEN (0x800) bytes below the return address slot with STACK_FILL (as the Unicorn
+    # backend does), so uninitialised stack reads are deterministic
+    mov ecx, [esi + 12]
+    lea edi, [ecx * 4 + 4]
+    mov edx, esp
+    sub edx, edi
+    lea edi, [edx - 0x800]
+    mov ecx, 0x200
+    mov eax, 0x5A5A5A5A
+    cld
+    rep stosd
     mov ecx, [esi + 12]
 1:  test ecx, ecx
     jz 2f

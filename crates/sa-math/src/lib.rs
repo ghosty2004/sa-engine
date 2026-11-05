@@ -5,7 +5,14 @@
 //! Each function names its original address. They are verified against the original bytes by
 //! `sa-oracle` (L1 runner, see `docs/re/l1-harness.md`).
 
+pub mod col;
+pub mod compressed;
 pub mod consts;
 pub mod general;
+pub mod maths;
+pub mod matrix;
+pub mod matrix_link;
+pub mod quaternion;
+pub mod rect;
 pub mod vector;
 pub mod x87;

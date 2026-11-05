@@ -60,6 +60,8 @@ pub const EXIT_STUB: [u8; 93] = [
 #[derive(Clone, Debug, Default)]
 pub struct Allow {
     pub ranges: Vec<(u32, u32)>,
+    /// writable image ranges [lo, hi) the code may read (see `Spec::reads`)
+    pub reads: Vec<(u32, u32)>,
 }
 
 impl Allow {
@@ -67,18 +69,22 @@ impl Allow {
     pub fn function(cat: &Catalog, addr: u32, callees: &[u32]) -> Result<Allow, String> {
         let mut ranges = Vec::new();
         for &a in std::iter::once(&addr).chain(callees) {
-            ranges.push(
-                cat.extent(a)
+            ranges.extend(
+                cat.ranges(a)
                     .ok_or(format!("{a:#x} is not a catalogued function start"))?,
             );
         }
-        Ok(Allow { ranges })
+        Ok(Allow {
+            ranges,
+            reads: Vec::new(),
+        })
     }
 
     /// An explicit range (probes).
     pub fn range(lo: u32, hi: u32) -> Allow {
         Allow {
             ranges: vec![(lo, hi)],
+            reads: Vec::new(),
         }
     }
 
@@ -143,6 +149,12 @@ impl Emu {
         uc.mem_write(img.base as u64, &img.flat).map_err(uerr)?;
         uc.mem_map(SCRATCH as u64, 0x1_0000, Prot::READ | Prot::WRITE)
             .map_err(uerr)?;
+        // FS points at the fake TIB (SEH prologues read and write fs:[0]). FS_BASE cannot be written as a
+        // register in 32-bit mode; the IA32_FS_BASE MSR (0xC0000100) sets the same segment cache.
+        let mut msr = [0u8; 16]; // uc_x86_msr { u32 rid; u64 value; }
+        msr[..4].copy_from_slice(&0xC000_0100u32.to_le_bytes());
+        msr[8..].copy_from_slice(&(TIB as u64).to_le_bytes());
+        uc.reg_write_long(R::MSR, &msr).map_err(uerr)?;
         uc.mem_map(PROBE as u64, PROBE_LEN as u64, Prot::ALL)
             .map_err(uerr)?;
         uc.ctl_exits_enable().map_err(uerr)?;
@@ -209,6 +221,14 @@ impl Emu {
                 |uc, _ty, addr, size, _v| {
                     let pc = uc.reg_read(R::EIP).unwrap_or(0) as u32;
                     let d = uc.get_data_mut();
+                    let a = addr as u32;
+                    if d.allow
+                        .reads
+                        .iter()
+                        .any(|&(lo, hi)| a >= lo && a + size as u32 <= hi)
+                    {
+                        return true;
+                    }
                     if d.error.is_none() {
                         d.error = Some(CallError::GlobalRead {
                             addr: addr as u32,
@@ -301,8 +321,22 @@ impl Emu {
         let mut ctx = call.ctx();
         ctx[88..].fill(0);
         self.uc.mem_write(RESULT as u64, &ctx).map_err(be)?;
-        // Stack: return address, then the args.
+        // Fake TIB for FS-relative accesses: an empty SEH chain.
+        self.uc
+            .mem_write(TIB as u64, &TIB_SEH_END.to_le_bytes())
+            .map_err(be)?;
+        // Stack: return address, then the args; below them the fill pattern (as native/thunk.S).
         let esp = ESP0 - 4 * call.stack.len() as u32 - 4;
+        let fill: Vec<u8> = STACK_FILL
+            .to_le_bytes()
+            .iter()
+            .copied()
+            .cycle()
+            .take(STACK_FILL_LEN as usize)
+            .collect();
+        self.uc
+            .mem_write((esp - STACK_FILL_LEN) as u64, &fill)
+            .map_err(be)?;
         let mut st = Vec::with_capacity(4 + 4 * call.stack.len());
         st.extend_from_slice(&STUB.to_le_bytes());
         for v in &call.stack {
@@ -353,6 +387,14 @@ impl Emu {
         b[96..100].copy_from_slice(&(esp_now.wrapping_sub(ESP0)).to_le_bytes());
         let mut s = [0u8; SCRATCH_LEN];
         self.uc.mem_read(SCRATCH as u64, &mut s).map_err(be)?;
+        let mut seh = [0u8; 4];
+        self.uc.mem_read(TIB as u64, &mut seh).map_err(be)?;
+        if u32::from_le_bytes(seh) != TIB_SEH_END {
+            return Err(CallError::Backend(format!(
+                "SEH chain head fs:[0] not restored ({:#x})",
+                u32::from_le_bytes(seh)
+            )));
+        }
         let mut o = Outcome::from_ctx(&b, &s);
         if self.ftz_workaround {
             o.mxcsr |= call.fpu.mxcsr & 0x8000;

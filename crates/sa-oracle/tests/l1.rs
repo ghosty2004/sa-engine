@@ -246,9 +246,11 @@ fn routes_match_hazards() {
     let cat = sa_oracle::catalog_cached().expect("catalogue");
     for s in specs::all() {
         let h = sa_oracle::scan::scan(&img, cat, s.addr, s.callees).unwrap();
+        // With SSE the MXCSR.FZ workaround is off, so Unicorn's x87 flushes f32 subnormals: such a
+        // function must be decided by the CPU.
         assert!(
-            h.sse.is_none(),
-            "{}: SSE {:?} (MXCSR.FZ workaround not applicable)",
+            h.sse.is_none() || s.route != Route::L1,
+            "{}: SSE {:?} (MXCSR.FZ workaround not applicable) but routed to L1",
             s.name,
             h.sse
         );
@@ -328,5 +330,62 @@ fn mutation_smoke_test() {
             "equivalent mutant {mt:?}: {}",
             runner::print_report(&s, &rep)
         );
+    }
+}
+
+/// The FSIN/FCOS model of `sa_math::x87` (66-bit-pi reduction) against the CPU: every table entry of
+/// `CMaths::InitMathsTables` (the argument is the PC=24 product `i * 2pi/256`, an f32) and random
+/// arguments over the whole f32 range. The stored f32 is compared (the model has 53 of the CPU's 64
+/// result bits).
+#[test]
+fn fsin_fcos_model_matches_the_cpu() {
+    let Some(img) = img() else { return };
+    if !sa_oracle::native::available() {
+        eprintln!("note: native backend unavailable, test skipped");
+        return;
+    }
+    use sa_math::x87::X87;
+    // 0x00: fld dword [esp+4]; fsin; ret   0x10: fld dword [esp+4]; fcos; ret
+    let mut code = vec![0xCCu8; 0x20];
+    code[..7].copy_from_slice(&[0xD9, 0x44, 0x24, 0x04, 0xD9, 0xFE, 0xC3]);
+    code[0x10..0x17].copy_from_slice(&[0xD9, 0x44, 0x24, 0x04, 0xD9, 0xFF, 0xC3]);
+    let mut xs: Vec<f32> = (0..256)
+        .map(|i| {
+            X87::from_i32(i)
+                .fmul_m(f32::from_bits(sa_math::consts::SIN_TABLE_STEP))
+                .to_f32()
+        })
+        .collect();
+    let mut r = sa_oracle::generate::Rng::new(0xF51);
+    for _ in 0..100_000 {
+        xs.push(match r.below(3) {
+            0 => f32::from_bits(r.next_u32()),
+            1 => r.uniform(10.0),
+            _ => r.uniform(1e6),
+        });
+    }
+    let calls: Vec<Call> = xs
+        .iter()
+        .flat_map(|&x| [PROBE, PROBE + 0x10].map(|a| Call::new(a, Conv::Cdecl, &[Arg::F32(x)])))
+        .collect();
+    let out = sa_oracle::native::run(&img, &calls, Some(&code)).unwrap();
+    let mut bad = Vec::new();
+    for (k, o) in out.iter().enumerate() {
+        let x = X87::from_f32(xs[k / 2]);
+        let m = if k % 2 == 0 { x.fsin() } else { x.fcos() };
+        if o.st0_f32 != Some(m.to_f32().to_bits()) {
+            bad.push((xs[k / 2], k % 2, o.st0_f32, m.to_f32().to_bits()));
+        }
+    }
+    assert!(
+        bad.is_empty(),
+        "{} of {} differ, e.g. {:x?}",
+        bad.len(),
+        out.len(),
+        &bad[..bad.len().min(5)]
+    );
+    let table = sa_math::maths::init_maths_tables();
+    for (i, v) in table.iter().enumerate() {
+        assert_eq!(Some(v.to_bits()), out[2 * i].st0_f32, "table[{i}]");
     }
 }

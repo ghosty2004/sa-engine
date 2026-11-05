@@ -230,6 +230,46 @@ pub fn solve_quadratic(a: f32, b: f32, c_: f32) -> Option<(f32, f32)> {
     Some((x1.to_f32(), x2.to_f32()))
 }
 
+/// `CGeneral::GetRandomNumberInRange(int min, int max)` (0x407180) given the value `rand()` (CRT, 0x821B1E)
+/// returned: `min + ftol(fild(rand & 0xFFFF) * (1/32768) * fimul(max - min))` (wrapping integer
+/// arithmetic). gta-reversed's formula differs (lerp with /32767, catalog/gr-deviations.csv); this is the
+/// original's.
+pub fn get_random_number_in_range_i32(rand: i32, min: i32, max: i32) -> i32 {
+    let r = X87::from_i32(rand & 0xFFFF).fmul_m(m(k::RAND_SCALE_INT));
+    let v = r.fmul(X87::from_i32(max.wrapping_sub(min)));
+    (v.ftol() as u32).wrapping_add(min as u32) as i32
+}
+
+/// `CGeneral::GetRandomNumberInRange(float min, float max)` (0x41BD90) given `rand()`: ST0 =
+/// `(max - min) * (fild(rand) * (1/32767)) + min` (`fadd` with `min` as the memory operand).
+pub fn get_random_number_in_range_f32_x87(rand: i32, min: f32, max: f32) -> X87 {
+    let t = X87::from_i32(rand).fmul_m(m(k::RAND_SCALE_FLOAT));
+    X87::from_f32(max).fsub_m(min).fmul(t).fadd_m(min)
+}
+
+/// `CGeneral::GetAngleBetweenPoints(x1, y1, x2, y2)` (0x53CEA0): the radian angle times 57.295776
+/// (degrees). ST0 value.
+pub fn get_angle_between_points_x87(x1: f32, y1: f32, x2: f32, y2: f32) -> X87 {
+    get_radian_angle_between_points_x87(x1, y1, x2, y2).fmul_m(m(k::RAD_TO_DEG))
+}
+
+/// `CGeneral::GetNodeHeadingFromVector(float x, float y)` (0x53CDC0): the node heading 0..7 of a
+/// direction. `a = GetRadianAngleBetweenPoints(x, y, 0, 0)`, `+2pi` when negative, `h = (2pi - a) + pi/8`,
+/// `-2pi` when `h >= 2pi`, then `ftol(floor(h * (1/2pi) * 8))` (the CRT `floor` at 0x8219F0 on the
+/// double).
+pub fn get_node_heading_from_vector(x: f32, y: f32) -> i32 {
+    let mut a = get_radian_angle_between_points_x87(x, y, 0.0, 0.0);
+    if !a.fcom(X87::zero()).test_parity(0x05) {
+        a = a.fadd_m(m(k::TWO_PI));
+    }
+    let mut h = a.fsubr_m(m(k::TWO_PI)).fadd_m(m(k::PI_OVER_8));
+    if !h.fcom(c(k::TWO_PI)).test_any(0x01) {
+        h = h.fsub_m(m(k::TWO_PI));
+    }
+    let v = h.fmul_m(m(k::INV_TWO_PI)).fmul_m(m(k::F8));
+    X87::from_f64_exact(libm::floor(v.to_f64())).ftol() as u32 as i32
+}
+
 /// Deliberately faulty variants for the INF-12 mutation smoke test. Test-only (feature `mutants`).
 #[cfg(feature = "mutants")]
 pub mod mutants {

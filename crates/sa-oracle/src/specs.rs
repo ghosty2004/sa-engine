@@ -16,6 +16,8 @@ pub enum RetKind {
     St0,
     /// bool in AL (x87 stack empty)
     Al,
+    /// 32-bit integer or pointer in EAX (x87 stack empty)
+    Eax,
     /// nothing (x87 stack empty)
     Void,
 }
@@ -34,10 +36,13 @@ pub enum Route {
 pub enum ExpRet {
     St0 { f32: u32, ext: [u8; 10] },
     Al(u8),
+    Eax(u32),
     Void,
 }
 
-/// What the Rust port says the original does.
+/// What the Rust port says the original does. (The scratch image is kept inline: tests construct it
+/// directly from `*scratch`.)
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Expect {
     Returns {
@@ -65,11 +70,24 @@ pub struct Spec {
     pub budget: u64,
     /// Number of leading inputs that are f32 (shrunk as floats).
     pub floats: usize,
-    pub generate: fn(&mut Rng) -> Inputs,
-    pub edges: fn() -> Vec<Inputs>,
-    pub call: fn(&Inputs) -> Call,
+    pub generate: GenFn,
+    pub edges: EdgesFn,
+    pub call: CallFn,
     pub rust: RustFn,
+    /// Scratch byte ranges (offset, length) not compared: outputs the original fills from uninitialised
+    /// stack memory (documented per spec, ledger "original UB").
+    pub ignore: Vec<(usize, usize)>,
+    /// Byte patches applied to the image for this spec (both backends), e.g. a `rand()` stub that
+    /// returns a value from scratch memory so that the random input becomes an L1 input.
+    pub patches: Vec<(u32, Vec<u8>)>,
+    /// Writable image ranges [lo, hi) the function may read (Unicorn guard rail exception), with the
+    /// values the patches give them.
+    pub reads: Vec<(u32, u32)>,
 }
+
+pub type GenFn = Arc<dyn Fn(&mut Rng) -> Inputs + Send + Sync>;
+pub type EdgesFn = Arc<dyn Fn() -> Vec<Inputs> + Send + Sync>;
+pub type CallFn = Arc<dyn Fn(&Inputs) -> Call + Send + Sync>;
 
 fn f(x: u32) -> f32 {
     f32::from_bits(x)
@@ -145,9 +163,12 @@ pub fn limit_angle() -> Spec {
         callees: &[],
         budget: 1_000_000,
         floats: 1,
-        generate: limit_angle_gen,
-        edges: limit_angle_edges,
-        call: |i| cdecl_f32(0x53CB00, i, 1),
+        generate: Arc::new(limit_angle_gen),
+        edges: Arc::new(limit_angle_edges),
+        call: Arc::new(|i| cdecl_f32(0x53CB00, i, 1)),
+        ignore: vec![],
+        patches: vec![],
+        reads: vec![],
         rust: Arc::new(|i, s| ret_st0(sa_math::general::limit_angle_checked(f(i[0])), s)),
     }
 }
@@ -165,9 +186,12 @@ pub fn limit_radian_angle() -> Spec {
         callees: &[],
         budget: 100_000,
         floats: 1,
-        generate: |r| bits(generate::f32_tuple(r, 1)),
-        edges: || edges_n(1),
-        call: |i| cdecl_f32(0x53CB50, i, 1),
+        generate: Arc::new(|r| bits(generate::f32_tuple(r, 1))),
+        edges: Arc::new(|| edges_n(1)),
+        call: Arc::new(|i| cdecl_f32(0x53CB50, i, 1)),
+        ignore: vec![],
+        patches: vec![],
+        reads: vec![],
         rust: Arc::new(|i, s| ret_st0(Some(sa_math::general::limit_radian_angle_x87(f(i[0]))), s)),
     }
 }
@@ -191,9 +215,12 @@ pub fn get_atan_of_xy() -> Spec {
         callees: &[],
         budget: 10_000,
         floats: 2,
-        generate: |r| bits(generate::f32_tuple(r, 2)),
-        edges: || edges_n(2),
-        call: |i| cdecl_f32(0x53CC70, i, 2),
+        generate: Arc::new(|r| bits(generate::f32_tuple(r, 2))),
+        edges: Arc::new(|| edges_n(2)),
+        call: Arc::new(|i| cdecl_f32(0x53CC70, i, 2)),
+        ignore: vec![],
+        patches: vec![],
+        reads: vec![],
         rust: Arc::new(|i, s| ret_st0(Some(sa_math::general::get_atan_of_xy_x87(f(i[0]), f(i[1]))), s)),
     }
 }
@@ -214,9 +241,12 @@ pub fn get_radian_angle_between_points() -> Spec {
         callees: &[],
         budget: 10_000,
         floats: 4,
-        generate: |r| bits(generate::f32_tuple(r, 4)),
-        edges: || edges_n(4),
-        call: |i| cdecl_f32(0x53CBE0, i, 4),
+        generate: Arc::new(|r| bits(generate::f32_tuple(r, 4))),
+        edges: Arc::new(|| edges_n(4)),
+        call: Arc::new(|i| cdecl_f32(0x53CBE0, i, 4)),
+        ignore: vec![],
+        patches: vec![],
+        reads: vec![],
         rust: Arc::new(|i, s| {
             let v = sa_math::general::get_radian_angle_between_points_x87(f(i[0]), f(i[1]), f(i[2]), f(i[3]));
             ret_st0(Some(v), s)
@@ -287,15 +317,18 @@ pub fn solve_quadratic() -> Spec {
         callees: &[],
         budget: 10_000,
         floats: 3,
-        generate: quadratic_gen,
-        edges: || {
+        generate: Arc::new(quadratic_gen),
+        edges: Arc::new(|| {
             let mut e = edges_n(3);
             for (k, v) in e.iter_mut().enumerate() {
                 v.push((k % 7 == 0) as u32);
             }
             e
-        },
-        call: quadratic_call,
+        }),
+        call: Arc::new(quadratic_call),
+        ignore: vec![],
+        patches: vec![],
+        reads: vec![],
         rust: Arc::new(|i, s| {
             quadratic_expect(i, s, sa_math::general::solve_quadratic(f(i[0]), f(i[1]), f(i[2])))
         }),
@@ -328,9 +361,12 @@ pub fn normalise() -> Spec {
         callees: &[],
         budget: 10_000,
         floats: 3,
-        generate: |r| bits(generate::f32_tuple(r, 3)),
-        edges: || edges_n(3),
-        call: normalise_call,
+        generate: Arc::new(|r| bits(generate::f32_tuple(r, 3))),
+        edges: Arc::new(|| edges_n(3)),
+        call: Arc::new(normalise_call),
+        ignore: vec![],
+        patches: vec![],
+        reads: vec![],
         rust: Arc::new(|i, s| {
             let v = sa_math::vector::normalise([f(i[0]), f(i[1]), f(i[2])]);
             let mut s = *s;
@@ -356,6 +392,9 @@ pub fn all() -> Vec<Spec> {
         solve_quadratic(),
         normalise(),
     ]
+    .into_iter()
+    .chain(crate::math_specs::all())
+    .collect()
 }
 
 pub fn by_key(key: &str) -> Option<Spec> {

@@ -6,8 +6,22 @@
 
 /// Fixed addresses shared by both backends.
 pub const SCRATCH: u32 = 0x1000_0000;
-/// Bytes of scratch memory per call (initialised from [`Call::scratch`], read back into the outcome).
-pub const SCRATCH_LEN: usize = 64;
+/// Bytes of scratch memory per call (initialised from [`Call::scratch`], read back into the outcome and
+/// compared whole). 0x500 holds the largest MATH-2 layout (a CMatrixLinkList with eight links).
+pub const SCRATCH_LEN: usize = 0x500;
+/// Scratch memory mapped at [`SCRATCH`] (both backends). The bytes from [`SCRATCH_LEN`] up to
+/// [`SCRATCH_MAX`] are not reset between calls and not compared.
+pub const SCRATCH_MAX: usize = 0x8000;
+/// A fake thread environment block (TIB) for FS-relative accesses (SEH frames): FS base under Unicorn.
+/// Its first dword (the SEH chain head) is reset to [`TIB_SEH_END`] before every call; a function that
+/// links an SEH frame must unlink it again (checked by the runner through `Outcome::fs0`).
+pub const TIB: u32 = 0x1000_8000;
+pub const TIB_SEH_END: u32 = 0xFFFF_FFFF;
+/// Dword pattern the stack below the arguments is filled with before every call (both backends), so
+/// reads of uninitialised stack slots are deterministic.
+pub const STACK_FILL: u32 = 0x5A5A_5A5A;
+/// Bytes of stack filled with [`STACK_FILL`] below the arguments.
+pub const STACK_FILL_LEN: u32 = 0x800;
 /// Code blob for x87 fidelity probes.
 pub const PROBE: u32 = 0x1010_0000;
 pub const PROBE_LEN: usize = 0x1_0000;

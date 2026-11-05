@@ -63,7 +63,7 @@ impl Default for Cfg {
             fpu: Fpu::default(),
             fixtures: true,
             keep: 8,
-            block: 250_000,
+            block: 50_000,
             snan_native: true,
             shrink: true,
         }
@@ -142,7 +142,8 @@ pub struct Prepared {
 
 pub fn prepare(img: &Image, spec: &Spec) -> Result<Prepared, String> {
     let cat = crate::catalog_cached().ok_or("catalog/procedures.csv not found")?;
-    let allow = Allow::function(cat, spec.addr, spec.callees)?;
+    let mut allow = Allow::function(cat, spec.addr, spec.callees)?;
+    allow.reads = spec.reads.clone();
     let hazards = crate::scan::scan(img, cat, spec.addr, spec.callees)?;
     Ok(Prepared {
         allow,
@@ -314,18 +315,30 @@ pub fn compare(
                 return Err(("al".into(), format!("orig al={} | rust al={al}", o.eax & 0xFF)));
             }
         }
+        ExpRet::Eax(v) => {
+            if o.eax != *v {
+                return Err(("eax".into(), format!("orig eax={:#x} | rust eax={v:#x}", o.eax)));
+            }
+        }
         ExpRet::Void => {}
     }
-    if o.scratch != *scratch {
-        let k = (0..SCRATCH_LEN).find(|&k| o.scratch[k] != scratch[k]).unwrap();
+    let ignored = |k: usize| spec.ignore.iter().any(|&(o, n)| k >= o && k < o + n);
+    if o.scratch.len() != scratch.len() {
+        return Err((
+            "memory".into(),
+            format!("scratch length {} vs {}", o.scratch.len(), scratch.len()),
+        ));
+    }
+    if let Some(k) = (0..scratch.len()).find(|&k| o.scratch[k] != scratch[k] && !ignored(k)) {
         let w = k & !3;
+        let e = (w + 4).min(scratch.len());
         return Err((
             "memory".into(),
             format!(
-                "first difference at {:#x}: orig {:02x?} | rust {:02x?}",
+                "first difference at {:#x} (+{w:#x}): orig {:02x?} | rust {:02x?}",
                 SCRATCH as usize + w,
-                &o.scratch[w..w + 4],
-                &scratch[w..w + 4]
+                &o.scratch[w..e],
+                &scratch[w..e]
             ),
         ));
     }
@@ -343,7 +356,11 @@ fn observable(spec: &Spec, field: &str) -> bool {
 }
 
 fn eax_mask(spec: &Spec) -> u32 {
-    if spec.ret == RetKind::Al { 0xFF } else { 0 }
+    match spec.ret {
+        RetKind::Al => 0xFF,
+        RetKind::Eax => 0xFFFF_FFFF,
+        _ => 0,
+    }
 }
 
 fn shrink_candidates(x: f32) -> Vec<f32> {
@@ -505,8 +522,22 @@ fn write_fixture(spec: &Spec, cfg: &Cfg, m: &Mismatch) -> std::io::Result<()> {
 }
 
 /// Runs the spec. `spec.route` is reported, not enforced (the CLI chooses the backend from it).
+/// The image with the spec's patches applied (the same image when there are none).
+pub fn patched(img: &Arc<Image>, spec: &Spec) -> Arc<Image> {
+    if spec.patches.is_empty() {
+        return img.clone();
+    }
+    let mut i = (**img).clone();
+    for (a, bytes) in &spec.patches {
+        let o = (a - i.base) as usize;
+        i.flat[o..o + bytes.len()].copy_from_slice(bytes);
+    }
+    Arc::new(i)
+}
+
 pub fn run(spec: &Spec, img: &Arc<Image>, cfg: &Cfg) -> Result<Report, String> {
     let t0 = Instant::now();
+    let img = &patched(img, spec);
     let prep = prepare(img, spec)?;
     let edges = (spec.edges)();
     let total = edges.len() as u64 + cfg.cases;
