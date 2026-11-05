@@ -92,3 +92,33 @@
 - Main session re-verified CAT-7: `callgraph.py build` reproduces all 5 CSVs (sha256 identical);
   `spotcheck 5 99`: globals 7/7, calls 3/5 (misses explained as original inlines in the agent's notes).
   Added CAT-12 (153 targets missing from the catalogue) and CAT-13 (virtual call resolution).
+
+## 2026-11-05: session restart; OOM note
+- The Claude Code process exited while 4 agents were running. All of them were resumed from their
+  transcripts. The journal has no kill record for the Claude process. The only OOM event (04:07) was
+  triggered by an `sa-oracle` allocation and killed a 10.7 GB python process. Added a memory-cap rule to
+  PLAN §8 and told the INF-7 agent.
+
+## 2026-11-05: CAT-9, CAT-10 part 2, CAT-11, CAT-12 (RE agent, no REA)
+- CAT-12: `merge_ghidra.py` now adds every evidenced function entry that Ghidra missed: hooks incl.
+  `.HOODLUM` stubs (1,894), gta-reversed callees (416), gta-reversed vtable slots (351), and CAT-7 call
+  targets (46, `catalog/extra-code-addresses.csv`, appended by the new `callgraph.py gaps` fixpoint step;
+  bootstrap took 3 passes). SecuROM return-address thunks in `.HOODLUM`/protection `.text` (49 targets,
+  75 sites) are classified `excluded:protection-thunk`. Result: 0 call/tail-call/vtable targets outside
+  the catalogue; all 153 earlier gaps are rows. New `tools/catalog/vtables.py`: slot layouts rebuilt from
+  gta-reversed headers and validated against hooks, slot counts and inline `return <int>` bodies (328/379
+  vtables), so vtable slots get names such as `CEventGunShot::GetEventType`.
+- CAT-9: `.HOODLUM` bodies are `stub-body` rows counted at their stub. Totals reconcile (19,425 everywhere);
+  the reconciliation section in summary.md is asserted by `subsystems.py`.
+- CAT-10 part 2: handler table 0x8A6168 (27 range functions) and all 27 switches decoded; per opcode case
+  address / range function / default. Verified: 35/35 gta-reversed case annotations inside the decoded case
+  blocks, plus 5 handlers checked by hand.
+- CAT-11: `catalog/state.csv` + `tools/catalog/progress.py` (merge / set / report) → `catalog/progress.md`.
+  The 3 sa-hook hooks are `implemented`; F1 = 0 / 12,761.
+- `tools/catalog/run_all.sh` regenerates everything. Verified: two consecutive runs give sha256-identical
+  `catalog/` (23 files); the Ghidra dump log (timestamps) moved to `target/ghidra/dump.log`.
+- Notes: `docs/re/cat9-12-pipeline.md`. Cost: ~10 pipeline runs × ~1.5–3 min CPU; no new disk use
+  beyond `target/catalog-logs`.
+- Main session re-verified CAT-9/10b/11/12: `run_all.sh` under an 8 GB memory cap reproduced every
+  catalogue file sha256-identically. Set CTimer::Update back to `specified`, because a passthrough hook is
+  not an implementation (PLAN §5).

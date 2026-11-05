@@ -14,6 +14,10 @@ Two steps:
       catalog/extents.csv, callgraph.csv, rwsets.csv, indirect-calls.csv, port-order.csv
       and catalog/raw/cat7-stats.json. Deterministic: no timestamps, sorted output.
 
+  callgraph.py gaps [catalog-dir]
+      CAT-12: append call targets outside the catalogue to catalog/extra-code-addresses.csv
+      (exit 3 = rows added, rerun the pipeline from merge_ghidra.py; 0 = catalogue closed).
+
   callgraph.py spotcheck N SEED
       Verification: N random reversed functions vs their gta-reversed source.
 
@@ -51,6 +55,7 @@ BASE = 0x400000
 GAME_TEXT = (0x401000, 0x857000)
 RWCSEG = (0x857000, 0x858000)
 HOODLUM = (0x1556000, 0x1577000)
+PROT_TEXT = (0xCB1000, 0x1301000)
 CODE = [(0x401000, 0x858000), (0xCB1000, 0x1301000), HOODLUM]
 # data sections an absolute operand can name (section label, lo, hi)
 DATA = [('.rdata', 0x858000, 0x8A4000), ('.data', 0x8A4000, 0xC9E000), ('_TEXT_HA', 0xC9E000, 0xCAF000),
@@ -137,6 +142,26 @@ def load_procs(cat):
         out[a] = dict(state=r['state'], cls=r['class'] or ('game' if r['state'] != 'excluded' else ''),
                       sub=r['subsystem'], name=name, ghidra=r['ghidra_name'])
     return out
+
+
+def securom_thunk(im, t):
+    """SecuROM code called from game bodies, outside the catalogue (CAT-12):
+    (a) anything in the protection `.text` (0xCB1000-0x1301000, the SecuROM section of the no-CD
+        build; never game code);
+    (b) `.HOODLUM` code that rewrites its own return address (`add dword ptr [esp(+k)], imm`
+        before the first ret/jmp, within 16 instructions): it decodes a key into a register and
+        returns past junk bytes behind the call site. Checked on the bytes."""
+    if PROT_TEXT[0] <= t < PROT_TEXT[1]:
+        return True
+    for n, ins in enumerate(im.md.disasm(im.rd(t, 160), t)):
+        if ins.mnemonic == 'add' and ins.op_str.startswith('dword ptr [esp') and \
+                ins.operands[1].type == X.X86_OP_IMM:
+            return True
+        if ins.mnemonic in ('ret', 'jmp') and not ins.op_str.startswith('dword ptr [esp'):
+            return False
+        if n >= 16:
+            return False
+    return False
 
 
 def hoodlum_stubs(im, procs):
@@ -271,8 +296,8 @@ def cmd_ghidra(cat):
     out = raw / 'functions.jsonl'
     run([GHIDRA / 'support' / 'analyzeHeadless', PROJ_DIR, PROJ_NAME, '-process', EXE.name, '-readOnly',
          '-noanalysis', '-scriptPath', SCRIPT_DIR, '-postScript', 'DumpCat7.java',
-         raw / 'remove.txt', raw / 'create.txt', out], raw / 'dump.log')
-    summary = [l for l in open(raw / 'dump.log') if 'CAT7' in l]
+         raw / 'remove.txt', raw / 'create.txt', out], PROJ_DIR / 'dump.log')  # log has timestamps: kept out of catalog/
+    summary = [l for l in open(PROJ_DIR / 'dump.log') if 'CAT7' in l]
     print(''.join(summary), end='')
 
 
@@ -345,9 +370,11 @@ def build(cat):
     def cls_of(t):
         if t in procs:
             return procs[t]['cls']
+        if (HOODLUM[0] <= t < HOODLUM[1] or PROT_TEXT[0] <= t < PROT_TEXT[1]) and securom_thunk(im, t):
+            return 'excluded:protection-thunk'
         if HOODLUM[0] <= t < HOODLUM[1]:
             return 'noncatalogue:hoodlum'
-        if 0xCB1000 <= t < 0x1301000:
+        if PROT_TEXT[0] <= t < PROT_TEXT[1]:
             return 'noncatalogue:protection-text'
         return 'noncatalogue'
 
@@ -880,14 +907,17 @@ def cmd_build(cat):
     write_csv(cat / 'indirect-calls.csv', ['function', 'site', 'instruction', 'resolution', 'detail'],
               [[hx(a), hx(s), form, res, det] for a, s, form, res, det in sorted(r['indirect'])])
 
-    # branch / vtable targets in game code that are not catalogue procedures (catalogue gaps)
-    gap = collections.defaultdict(lambda: [0, set()])
+    # branch / vtable targets that are not catalogue procedures (catalogue gaps, CAT-12)
+    gap = collections.defaultdict(lambda: [0, set(), set(), ''])
     for (c, t, kind), n in r['edges'].items():
-        if r['ecls'][(c, t, kind)] == 'noncatalogue' and isinstance(t, int):
+        if r['ecls'][(c, t, kind)].startswith('noncatalogue') and isinstance(t, int):
             gap[t][0] += n
             gap[t][1].add(kind)
-    write_csv(cat / 'raw' / 'cat7-noncatalogue-targets.csv', ['address', 'sites', 'kinds'],
-              [[hx(t), v[0], ';'.join(sorted(v[1]))] for t, v in sorted(gap.items())])
+            gap[t][2].add(c)
+            gap[t][3] = r['ecls'][(c, t, kind)]
+    write_csv(cat / 'raw' / 'cat7-noncatalogue-targets.csv', ['address', 'class', 'sites', 'kinds', 'callers'],
+              [[hx(t), v[3], v[0], ';'.join(sorted(v[1])), ';'.join(hx(c) for c in sorted(v[2]))]
+               for t, v in sorted(gap.items())])
 
     po = port_order(live, r['edges'])
     write_csv(cat / 'port-order.csv', ['address', 'name', 'subsystem', 'level', 'scc_id', 'scc_size'],
@@ -943,7 +973,12 @@ def cmd_build(cat):
                             and not any(lo <= t < hi for lo, hi in f.ranges):
                         miss += 1
     st['ghidra_direct_calls_not_in_edges'] = miss
-    st['noncatalogue_game_targets'] = len(gap)
+    st['noncatalogue_targets'] = len(gap)
+    pt = collections.Counter()
+    for (c, t, kind), n in r['edges'].items():
+        if r['ecls'][(c, t, kind)] == 'excluded:protection-thunk':
+            pt[t] += n
+    st['securom_call_thunks'] = {'targets': len(pt), 'sites': sum(pt.values())}
     (cat / 'raw').mkdir(exist_ok=True)
     (cat / 'raw' / 'cat7-stats.json').write_text(json.dumps(st, indent=1, sort_keys=True) + '\n')
     print(json.dumps(st, indent=1, sort_keys=True))
@@ -1049,13 +1084,46 @@ def cmd_spotcheck(cat, n, seed):
     print(f'TOTAL calls {tot_f - miss_f}/{tot_f} found, globals {tot_g - miss_g}/{tot_g} found')
 
 
+# ============================================================================ gaps
+def cmd_gaps(cat):
+    """CAT-12 fixpoint step: append every game-code call / tail-call target that CAT-7 found
+    outside the catalogue to catalog/extra-code-addresses.csv (merge_ghidra.py adds those rows).
+    Exit status 3 when rows were added (the pipeline must rerun from build_catalog), 0 when the
+    catalogue is closed. Other gaps (vtable slots, .HOODLUM / protection code that is not a
+    SecuROM thunk) mean a rule is missing: exit 4."""
+    path = cat / 'extra-code-addresses.csv'
+    have = {}
+    if path.exists():
+        have = {int(r['address'], 16): r for r in csv.DictReader(open(path))}
+    new, bad = {}, []
+    for r in csv.DictReader(open(cat / 'raw' / 'cat7-noncatalogue-targets.csv')):
+        a = int(r['address'], 16)
+        kinds = set(r['kinds'].split(';'))
+        if r['class'] == 'noncatalogue' and kinds <= {'call', 'tailcall'} and a not in have:
+            new[a] = {'address': hx(a), 'rule': 'cat7-' + '+'.join(sorted(kinds)),
+                      'evidence': f"{r['sites']} site(s) in catalogued bodies: {r['callers']}"}
+        else:
+            bad.append(r)
+    if new:
+        rows = sorted(list(have.values()) + list(new.values()), key=lambda x: int(x['address'], 16))
+        write_csv(path, ['address', 'rule', 'evidence'], [[x['address'], x['rule'], x['evidence']] for x in rows])
+        print(f'gaps: added {len(new)} call targets to {path}')
+        sys.exit(3)
+    if bad:
+        for r in bad:
+            print('gaps: not closable by a call-target row:', dict(r))
+        sys.exit(4)
+    print('gaps: 0 call/tail-call/vtable targets outside the catalogue')
+
+
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ('ghidra', 'build', 'analyse', 'spotcheck'):
+    if len(sys.argv) < 2 or sys.argv[1] not in ('ghidra', 'build', 'analyse', 'spotcheck', 'gaps'):
         sys.exit(__doc__)
     if sys.argv[1] == 'spotcheck':
         return cmd_spotcheck(ROOT / 'catalog', int(sys.argv[2]), int(sys.argv[3]))
     cat = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / 'catalog'
-    {'ghidra': lambda: cmd_ghidra(cat), 'build': lambda: cmd_build(cat), 'analyse': cmd_analyse}[sys.argv[1]]()
+    {'ghidra': lambda: cmd_ghidra(cat), 'build': lambda: cmd_build(cat), 'gaps': lambda: cmd_gaps(cat),
+     'analyse': cmd_analyse}[sys.argv[1]]()
 
 
 if __name__ == '__main__':
