@@ -83,3 +83,9 @@ mod tests {
         assert!((5.63..5.64).contains(&v), "{v}");
     }
 }
+
+/// This module's registrations (collected by [`crate::hooks`]).
+pub const HOOKS: &[crate::abi::HookReg] = &[
+    HOOK_GET_RANDOM_NUMBER_IN_RANGE_I32,
+    HOOK_GET_RANDOM_NUMBER_IN_RANGE_F32,
+];

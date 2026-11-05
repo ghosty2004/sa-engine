@@ -4,40 +4,84 @@
 //! test fails when a `#[hook]` is missing here.
 
 use crate::abi::HookReg;
-use crate::{general, pool, timer};
+use crate::general;
+use crate::mem::GlobalDesc;
 
-pub const ALL: &[HookReg] = &[
-    // CGeneral
-    general::HOOK_GET_RANDOM_NUMBER_IN_RANGE_I32,
-    general::HOOK_GET_RANDOM_NUMBER_IN_RANGE_F32,
-    // CPool<T> instantiations and the CPools wrappers
-    pool::HOOK_PED_POOL_NEW,
-    pool::HOOK_VEHICLE_POOL_NEW,
-    pool::HOOK_OBJECT_POOL_NEW,
-    pool::HOOK_PED_POOL_AT_REF,
-    pool::HOOK_OBJECT_POOL_AT,
-    pool::HOOK_PED_OPERATOR_NEW,
-    pool::HOOK_PED_OPERATOR_DELETE,
-    pool::HOOK_GET_PED_REF,
-    pool::HOOK_GET_PED,
-    pool::HOOK_GET_VEHICLE_REF,
-    pool::HOOK_GET_VEHICLE,
-    pool::HOOK_GET_OBJECT_REF,
-    pool::HOOK_GET_OBJECT,
-    // CTimer (not Update: sa-hook's frame-boundary passthrough)
-    timer::HOOK_INITIALISE,
-    timer::HOOK_SHUTDOWN,
-    timer::HOOK_UPDATE_VARIABLES,
-    timer::HOOK_SUSPEND,
-    timer::HOOK_RESUME,
-    timer::HOOK_GET_CYCLES_PER_MILLISECOND,
-    timer::HOOK_GET_CYCLES_PER_FRAME,
-    timer::HOOK_GET_CURRENT_TIME_IN_CYCLES,
-    timer::HOOK_STOP,
-    timer::HOOK_GET_IS_SLOW_MOTION_ACTIVE,
-    timer::HOOK_START_USER_PAUSE,
-    timer::HOOK_END_USER_PAUSE,
+/// Every module's registrations, in this order. Each port module keeps its own `pub const HOOKS`
+/// list next to its `#[hook]`s (one list per module keeps parallel porting work conflict-free).
+pub const MODULES: &[&[HookReg]] = &[
+    crate::general::HOOKS,
+    crate::pool::HOOKS,
+    crate::timer::HOOKS,
+    crate::pools::HOOKS,
+    crate::quadtree::HOOKS,
+    crate::references::HOOKS,
+    crate::directory::HOOKS,
+    crate::keygen::HOOKS,
+    crate::filemgr::HOOKS,
+    crate::inifile::HOOKS,
+    crate::memory::HOOKS,
+    crate::loadmonitor::HOOKS,
+    crate::common::HOOKS,
+    crate::platform::HOOKS,
+    crate::input::HOOKS,
+    crate::video::HOOKS,
+    crate::light::HOOKS,
+    crate::game::HOOKS,
 ];
+
+/// Every module's globals (initial values checked against the exe image by a test).
+pub const GLOBALS: &[&[GlobalDesc]] = &[
+    crate::timer::TIMER_GLOBALS,
+    crate::pool::POOL_GLOBALS,
+    crate::pools::GLOBALS,
+    crate::quadtree::GLOBALS,
+    crate::references::GLOBALS,
+    crate::directory::GLOBALS,
+    crate::keygen::GLOBALS,
+    crate::filemgr::GLOBALS,
+    crate::inifile::GLOBALS,
+    crate::memory::GLOBALS,
+    crate::loadmonitor::GLOBALS,
+    crate::common::GLOBALS,
+    crate::platform::GLOBALS,
+    crate::input::GLOBALS,
+    crate::video::GLOBALS,
+    crate::light::GLOBALS,
+    crate::game::GLOBALS,
+];
+
+const fn total(parts: &[&[HookReg]]) -> usize {
+    let (mut n, mut i) = (0, 0);
+    while i < parts.len() {
+        n += parts[i].len();
+        i += 1;
+    }
+    n
+}
+
+const fn concat<const N: usize>(parts: &[&[HookReg]]) -> [HookReg; N] {
+    let mut out = [general::HOOKS[0]; N];
+    let (mut k, mut i) = (0, 0);
+    while i < parts.len() {
+        let mut j = 0;
+        while j < parts[i].len() {
+            out[k] = parts[i][j];
+            k += 1;
+            j += 1;
+        }
+        i += 1;
+    }
+    assert!(k == N);
+    out
+}
+
+// A `const` (not a `static`): sa-hook reads it while building its own table in const evaluation.
+#[allow(clippy::large_const_arrays)]
+const ALL_ARRAY: [HookReg; total(MODULES)] = concat(MODULES);
+
+/// All registrations of this crate (the concatenation of [`MODULES`]).
+pub const ALL: &[HookReg] = &ALL_ARRAY;
 
 pub const COUNT: usize = ALL.len();
 
@@ -91,10 +135,7 @@ mod tests {
             std::eprintln!("note: gta_sa.exe not found, initial values not checked");
             return;
         };
-        for g in crate::timer::TIMER_GLOBALS
-            .iter()
-            .chain(crate::pool::POOL_GLOBALS)
-        {
+        for g in GLOBALS.iter().flat_map(|l| l.iter()) {
             // pointer-sized globals are 4 bytes in the exe; owned storage may be wider (64-bit host)
             let n = g.size.min(if g.init.len() == core::mem::size_of::<usize>() {
                 4
@@ -104,6 +145,15 @@ mod tests {
             let img =
                 exe_image_bytes(&exe, g.addr, n).unwrap_or_else(|| panic!("{} not in the image", g.name));
             assert_eq!(&img[..], &g.init[..n], "{} @ {:#x}", g.name, g.addr);
+        }
+    }
+
+    /// A global is declared once (two declarations would be two separate statics in phases B/C).
+    #[test]
+    fn globals_are_declared_once() {
+        let mut seen = BTreeSet::new();
+        for g in GLOBALS.iter().flat_map(|l| l.iter()) {
+            assert!(seen.insert(g.addr), "{} @ {:#x} declared twice", g.name, g.addr);
         }
     }
 

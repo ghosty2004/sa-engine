@@ -341,3 +341,13 @@
   `catalog/specs-index.csv`). Main-session spot check against the bytes: CPickups::PictureTaken
   (0x456C57 `add edi,0x64` to Players[0].money; 0x456CD8 `+0x186A0` bonus to PlayerInFocus) matches the
   spec. New tasks CAT-17 (name corrections) and RE-SPEC-2.
+
+## 2026-11-05: PORT-CORE integrated
+- 270 of 298 remaining CORE functions ported in `crates/sa-core` (248 new `#[hook]`s; four forks plus the
+  agent): 56 L1 at 1M cases, 191 need L2 in game, 23 ported but not hookable, 25 deferred
+  (CGame/Game/platform orchestrators), 3 blocked (FPTAN has no CPU-checked model). New `orig!` forms
+  (cell/vslot/table/dyn). The pilot `CPed::operator delete` had a read/write order bug, now fixed (found
+  by the 0x536DD0 L1 spec). 56 new keep-original deviations are listed in docs/arch/core-port.md.
+- Re-verified by the main session on master: i686 + wasm32 builds, sa-core 58, sa-hook 31, sa-math 14,
+  `--test l1` 15/15, clippy host + i686 clean; 3 random new L1 specs at 1M PASS. state.csv: 147 L1 and
+  240 implemented in total.

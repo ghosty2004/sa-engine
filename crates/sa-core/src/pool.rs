@@ -172,12 +172,12 @@ pub fn pool_ref<T: 'static>(pool: GPtr<CPool<T>>, obj: GPtr<T>) -> i32 {
     ref_of_slot(&p.byte_map, obj.index_from(p.objects))
 }
 
-/// `CPool<T>::Delete(obj)`. No null check (gta-reversed's is `FIX_BUGS`).
+/// `CPool<T>::Delete(obj)`. No null check (gta-reversed's is `FIX_BUGS`). `m_nFirstFree` is read
+/// after the map write and written only when lowered (`or byte [map+idx], 80h; cmp idx, [pool+0Ch];
+/// jge`), as [`crate::pools::pool_delete_exact`] (PORT-CORE: the L1 spec of the identical inlined
+/// copies in 0x536DD0 / 0x156E0C0 found the read-after-write order through negative indices).
 pub fn pool_delete<T: 'static>(pool: GPtr<CPool<T>>, obj: GPtr<T>) {
-    let p = pool.read();
-    let mut map = p.byte_map;
-    let ff = delete_slot(&mut map, p.first_free, obj.index_from(p.objects));
-    first_free_field(pool).write(ff);
+    crate::pools::pool_delete_exact(pool, obj)
 }
 
 globals! {
@@ -420,3 +420,20 @@ mod tests {
         assert_eq!(pool_at_ref(GPtr::from_raw(&raw mut pool), r), b);
     }
 }
+
+/// This module's registrations (collected by [`crate::hooks`]).
+pub const HOOKS: &[crate::abi::HookReg] = &[
+    HOOK_PED_POOL_NEW,
+    HOOK_VEHICLE_POOL_NEW,
+    HOOK_OBJECT_POOL_NEW,
+    HOOK_PED_POOL_AT_REF,
+    HOOK_OBJECT_POOL_AT,
+    HOOK_PED_OPERATOR_NEW,
+    HOOK_PED_OPERATOR_DELETE,
+    HOOK_GET_PED_REF,
+    HOOK_GET_PED,
+    HOOK_GET_VEHICLE_REF,
+    HOOK_GET_VEHICLE,
+    HOOK_GET_OBJECT_REF,
+    HOOK_GET_OBJECT,
+];

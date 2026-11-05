@@ -457,3 +457,20 @@ mod tests {
         assert_eq!(fild_u32(0xFFFF_FFFF).to_f64(), 4_294_967_296.0);
     }
 }
+
+/// This module's registrations (collected by [`crate::hooks`]); not `Update` (sa-hook's frame
+/// boundary passthrough).
+pub const HOOKS: &[crate::abi::HookReg] = &[
+    HOOK_INITIALISE,
+    HOOK_SHUTDOWN,
+    HOOK_UPDATE_VARIABLES,
+    HOOK_SUSPEND,
+    HOOK_RESUME,
+    HOOK_GET_CYCLES_PER_MILLISECOND,
+    HOOK_GET_CYCLES_PER_FRAME,
+    HOOK_GET_CURRENT_TIME_IN_CYCLES,
+    HOOK_STOP,
+    HOOK_GET_IS_SLOW_MOTION_ACTIVE,
+    HOOK_START_USER_PAUSE,
+    HOOK_END_USER_PAUSE,
+];
