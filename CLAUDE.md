@@ -34,12 +34,22 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
 ## 1.0 US specifics (verified, see catalog/summary.md)
 - `.text` 0x401000–0x857000 is game code. A second `.text` at 0xCB1000 and `.HOODLUM` at 0x1556000 belong
   to the no-CD build.
-- 501 functions in game `.text` are 5-byte `jmp` stubs into `.HOODLUM`, where their bodies live. 379 of them
-  are gta-reversed hooks. Game code reaches `.HOODLUM` only through these stubs (0 direct calls from game
+- 501 `jmp` sites (497 catalogue functions) in game `.text` are 5-byte stubs into `.HOODLUM`, where their
+  bodies live. 379 of them are gta-reversed hooks. The catalogue counts each once, at the stub (CAT-9). Game code reaches `.HOODLUM` only through these stubs (0 direct calls from game
   `.text`), so hooking the stub address is enough.
 
 ## Layout
-- `tools/catalog/`: catalogue builders, run in this order: `build_catalog.py re/gta-reversed re/gta/1.0-US/gta_sa.exe catalog`, `merge_ghidra.py catalog/raw/rea-evidence.json catalog`, `classify_unknowns.py re/gta/1.0-US/gta_sa.exe catalog` (CAT-5, needs `re/plugin-sdk`), `subsystems.py catalog`, `layouts.py re/gta-reversed catalog`, `callgraph.py ghidra` then `callgraph.py build` (CAT-7, Ghidra headless project in `target/ghidra`) (`hoodlum_xrefs.py` is a one-off check). Python venv in `.venv`.
-  Run with `.venv/bin/python -I`.
-- `catalog/`: generated `functions.csv`, `callees.csv`, `summary.md`.
+- `tools/catalog/`: catalogue builders. Regenerate everything with **`tools/catalog/run_all.sh`**
+  (deterministic: two runs give byte-identical `catalog/`; ~2 min with an analysed Ghidra project).
+  Order: `build_catalog.py` → `merge_ghidra.py` → `classify_unknowns.py` (CAT-5, needs `re/plugin-sdk`)
+  → `subsystems.py` → `callgraph.py ghidra` + `build` (CAT-7, Ghidra headless project in `target/ghidra`)
+  → `callgraph.py gaps` (CAT-12: closes the catalogue over call targets, loops back when it adds rows)
+  → `layouts.py` → `script_commands.py` (CAT-10) → `progress.py` (CAT-11). Logs in
+  `target/catalog-logs`. `vtables.py` = validated gta-reversed vtable slot names. `hoodlum_xrefs.py` is a
+  one-off check. Python venv in `.venv`; run with `.venv/bin/python -I`. Notes: `docs/re/cat*.md`.
+- `catalog/`: generated catalogue (`procedures.csv` = one row per function, `subsystems.md`,
+  `summary.md`, CAT-7 CSVs, `script-commands.csv`, `progress.md`). Hand-maintained inputs:
+  `catalog/state.csv` (per-function state, PLAN §5; `run_all.sh` merges it and never lowers a state above
+  `specified`; record changes with `progress.py set ADDRESS STATE EVIDENCE`) and
+  `catalog/extra-code-addresses.csv` (CAT-12 call targets, appended by `callgraph.py gaps`).
 - `crates/`: Rust workspace (created milestone by milestone, see PLAN.md §4).

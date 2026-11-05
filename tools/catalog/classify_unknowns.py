@@ -42,6 +42,7 @@ from capstone import x86_const as X
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import subsystems as SUB  # noqa: E402  (RULES / classify for owner -> subsystem)
+from vtables import VTables, implementation_name  # noqa: E402  (validated slot names, CAT-12)
 
 BASE = 0x400000
 GAME_TEXT = (0x401000, 0x857000)
@@ -189,7 +190,7 @@ class XrefIndex:
 def gr_vtables(gr):
     """{vtable address: (class, n virtuals)} from RH_ScopedVirtualClass in gta-reversed."""
     out = {}
-    for f in glob.glob(os.path.join(gr, 'source', '**', '*.cpp'), recursive=True):
+    for f in sorted(glob.glob(os.path.join(gr, 'source', '**', '*.cpp'), recursive=True)):
         for m in re.finditer(r'RH_ScopedVirtualClass\(\s*([\w:]+)\s*,\s*(0x[0-9A-Fa-f]+)\s*,\s*(\d+)',
                              open(f, errors='replace').read()):
             out[int(m.group(2), 16)] = (m.group(1), int(m.group(3)))
@@ -576,6 +577,8 @@ def main():
     for v, (cls, n) in vt.items():
         for i in range(n):
             vt_slot[im.u32(v + 4 * i)] = (cls, i, v)
+    vts = VTables(exe, gr) if os.path.isdir(gr) else None
+    slot_names = vts.slot_names() if vts else {}
 
     def proc_sub(p):
         """Subsystem of a known procedure (hook or classified)."""
@@ -608,7 +611,12 @@ def main():
             nm = psn[a][0]
             sub = subsystem_for(nm)
             ev.insert(0, f'plugin-sdk name {nm} ({psn[a][1]})')
-        if a in vt_slot:
+        if a in slot_names:
+            vnm, vev = implementation_name(vts, a, slot_names[a])
+            nm = nm or vnm
+            sub = sub or subsystem_for(vnm)
+            ev.insert(0, vev)
+        elif a in vt_slot:
             cls, i, v = vt_slot[a]
             nm = nm or f'{cls}::vfunc_{i}'
             sub = sub or subsystem_for(f'{cls}::x')

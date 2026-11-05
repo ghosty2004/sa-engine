@@ -234,6 +234,7 @@ The goal text states only the end condition. The next action is derived from the
   trailers. Agents work in worktrees and never commit. Push only when the user asks.
 - Agents never kill processes outside their lane, never use `pkill -f`, never screenshot the user's
   desktop, never write to `~/samp-rs`.
+- Memory: the machine has 31 GB RAM and no swap. Heavy processes (oracle runs, Ghidra headless, bulk Python, game lanes) run under a cap: `systemd-run --user --scope -q -p MemoryMax=<N>G -p MemorySwapMax=0 <cmd>` (default 6G; Ghidra 8G). Reason: on 2026-11-05 an `sa-oracle` run triggered the kernel OOM killer.
 - Disk: `fixtures/`, `traces/` and coverage logs have quotas. Keep ≥ 20 GB free on /home, checked by the
   scheduler before starting a lane run.
 - Budget: ≤ ~1.5M tokens per agent step. Workflows only for broad sweeps (for example CAT-5
