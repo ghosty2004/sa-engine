@@ -11,9 +11,9 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | — | — |
-| impl-2 | — | — |
-| measurement / REA | — | CAT-5 |
+| impl-1 | FMT-1 sa-formats (worktree) | FMT-2 |
+| impl-2 | INF-2 + INF-3 launcher/sa-hook (worktree) | INF-4 |
+| measurement / REA | CAT-5 | CAT-7 |
 | harness | — | — |
 | verifier | — | — |
 
@@ -40,16 +40,16 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | CAT-5 | Classify unknowns: `UNK-eh-funclets` 3,689 · `UNK-game` 3,145 · `UNK-thirdparty-lib` 930 · `UNK-rw-crt` 899 · `UNK-protection-mix` 791 | todo | each row gets a subsystem or `excluded` with a reason | confirm EH funclets via FuncInfo; identify the library through strings/xrefs; split RW from CRT through the RW names known from rwcore headers |
 | CAT-6 | Name unknowns from plugin-sdk addresses (own pinned clone in `re/plugin-sdk`) | todo | match count recorded | |
 | CAT-7 | Call graph + global read/write sets per function | todo | Ghidra headless script output in `catalog/callgraph.*`, `catalog/rwsets.*` | needed for leaf-first order and L2 snapshots |
-| CAT-8 | Layout table from 784 `VALIDATE_SIZE` + 40 `VALIDATE_OFFSET` | todo | `catalog/layouts.csv` → generated Rust const asserts | |
+| CAT-8 | Layout table from `VALIDATE_SIZE` / `VALIDATE_OFFSET` | done (table) | `catalog/layouts.csv`: 781 sizes + 39 offsets (20 symbolic expressions kept verbatim) | Rust const-assert generation happens when the crates that own the types exist |
 | CAT-9 | Fix the `.HOODLUM` body/stub double count | todo | totals reconcile | |
-| CAT-10 | Script command table: 781 handlers ported in gta-reversed, 716 unimplemented, 283 NOP, plus the original's `ProcessCommands*` switch ranges | todo | `catalog/script-commands.csv` with the handler address per opcode | |
+| CAT-10 | Script command table | in-progress | part 1 done: `catalog/script-commands.csv`, 2,826 opcodes from eScriptCommands.h (gta-reversed: 770 handler, 713 unimplemented, 281 NOP, 13 unsupported, 1,049 unregistered). Part 2 todo: the original's handler per opcode from the `ProcessCommands*` switch ranges (REA, after CAT-5), and which opcodes `main.scm`/`script.img` actually use (needs FMT-3) | |
 | CAT-11 | Per-function state file (`catalog/state.csv`) + `tools/catalog/progress.py` → `catalog/progress.md` | todo | report per subsystem and state (PLAN §5) | |
 
 ## Phase I: infrastructure (M1–M5)
 
 | ID | Task | Status | Verification | Notes |
 |---|---|---|---|---|
-| INF-1 | Wine prefix `wine/prefix` + game copy `wine/gta-sa` (1.0 US exe + data), lanes `wine/lane-N` with symlinked data, DXVK | todo | single-player boots on a headless lane | modelled on samp-rs `tools/run-gta.sh` (read-only reference; game data copied, never modified there) |
+| INF-1 | Wine prefix `wine/prefix` + game copy `wine/gta-sa` (1.0 US exe + data), lanes `wine/lane-N` with symlinked data, DXVK | in-progress | single-player boots on a headless lane | modelled on samp-rs `tools/run-gta.sh` (read-only reference; game data copied, never modified there) |
 | INF-2 | Headless gamescope per lane: start, screenshot, key injection, teardown (`tools/e2e/lib.sh`) | todo | screenshot of the main menu from lane 1 | never the user's desktop |
 | INF-3 | `sa-launcher` (suspended start + injection) and `sa-hook` skeleton: hook table from the catalogue, inline jmp + trampoline, `.HOODLUM` stub handling, runtime toggle, TCP control channel, logging | todo | hook `CTimer::Update` (Rust passthrough), toggle live, 0 crashes in a 10-min run | |
 | INF-4 | Determinism mode: virtual `timeGetTime`/QPC, fixed timestep, `rand`/`srand` logged with caller, synchronous CdStream, audio thread control, deterministic heap | todo | two runs of the same recording are frame-hash identical | |
@@ -128,6 +128,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | SAMP-API | Document the engine API covering every samp-rs game access (proposal for the samp-rs side; we never edit samp-rs) | todo | F13 |
 
 ## Decisions made autonomously
+- 2026-11-05: game data = a copy of the Steam 3.0 data set already used by samp-rs (SA:MP files excluded) with the 1.0 US exe. The original and Rust run on the same data, so parity is unaffected. Data-dependent findings may not match retail 1.0 data, and the corpus records the data hashes.
 - 2026-11-05: the catalogue's function set is Ghidra functions ∪ gta-reversed hook addresses that decode as
   code, because Ghidra misses vtable-only functions.
 - 2026-11-05: gta-reversed's bug fixes (`FIX_BUGS`, `NOTSA` changes) are not ported as default behaviour.
