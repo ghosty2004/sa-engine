@@ -63,6 +63,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | INF-10 | Execution coverage of the original (drcov under Wine, or breakpoint sampling in `sa-hook`) | todo | coverage report of the corpus | F2, F8 |
 | INF-11 | D3D9 call-stream capture/diff + audio event log/diff + screenshot capture | todo | same capture twice on the original | modelled on samp-rs `d3d.rs` (reference only) |
 | INF-12 | Mutation runner (inject faults into Rust functions, expect detection) | in-progress | F9 smoke test | seed: 3 faults in `solve_quadratic` (feature `mutants`), all caught; gta-reversed's `1/(2a)` is an equivalent mutant |
+| VER-1 | Fixes from the L1 verifier (docs/re/verify-l1.md): caller-composite spec with `st0_exact` for GetATanOfXY + force the `_x87` API at the 35 ST0-consuming sites; record the CPU model in CPU-decided fixtures; native-only LimitAngle range 2^24..2^34 in acceptance; check that a 'hang' is a true fixed point; generator emits signed all-zero tuples; static scan flags `fcom … fsqrt … fnstsw` condition-code patterns; FPU control word per spec (captured per call site in L2); widen the compare window (stack writes, full scratch, EAX/EDX by spec) | todo | the verifier probes (`crates/sa-oracle/tests/verifier_l1.rs`) still pass and V-1..V-8 are closed | after MATH-2 merges (same files) |
 | INF-13 | Acceptance scripts `tools/accept/*.sh` (F1–F13 + per-milestone) | todo | each exits 0/1 with a readable report | |
 | INF-14 | Corpus v1: scripted recordings (routes per zone/time/weather, vehicle classes, combat drills) + SCM setup scripts | todo | manifest + coverage % | grows until F8 |
 | INF-15 | Concurrent lanes: with lane 2 running `inf4-determinism.sh`, a non-deterministic lane-1 run hung on the loading screen (frames frozen at 333; `inf3-hooks.sh` alone passes). Find the cause (shared files via symlinked data? CPU starvation + real-time waits? gamescope/DXVK?) before using several lanes at once | todo | 2 lanes running at once both PASS, 3 times in a row | until then: one game lane at a time |
@@ -144,10 +145,10 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accepted (user-approved)*.
 
 *pending*
-- `CGeneral::GetATanOfXY` (0x53CC70), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
+- `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
 
 *original UB, not reproducible*
-- `CGeneral::LimitAngle` (0x53CB00) never returns for ±inf and |a| ≥ 2^33 (`a - 360` rounds back to `a` under PC=24), so the game would hang. `limit_angle` panics there; `limit_angle_checked` returns `None` exactly for those inputs (L1-verified).
+- `CGeneral::LimitAngle` (0x53CB00) never returns for ±inf and |a| > 2^33 (2^33 itself returns, verifier V-3; `a - 360` rounds back to `a` under PC=24), so the game would hang. `limit_angle` panics there; `limit_angle_checked` returns `None` exactly for those inputs (L1-verified).
 
 ## Waiting for the user
 - Human playthrough recordings of the missions (PLAN §6.1) are needed for F4. Not needed before M17. The

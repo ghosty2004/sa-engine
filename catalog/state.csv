@@ -5102,7 +5102,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations
 0x53cb00,CGeneral::LimitAngle,MATH,L1,gta-reversed,sa-math limit_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn; SNaN via CPU); original UB ledger entry,2026-11-05,0
 0x53cb50,CGeneral::LimitRadianAngle,MATH,L1,gta-reversed,sa-math limit_radian_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn),2026-11-05,0
 0x53cbe0,CGeneral::GetRadianAngleBetweenPoints-,MATH,L1,gta-reversed,"sa-math get_radian_angle_between_points; l1 1.25M cases 0 mismatches (CPU backend, FPATAN)",2026-11-05,0
-0x53cc70,CGeneral::GetATanOfXY,MATH,L1,gta-reversed,"sa-math get_atan_of_xy; l1 1M cases 0 mismatches on f32 result (CPU backend, FPATAN); ledger pending: ST0 precision",2026-11-05,0
+0x53cc70,CGeneral::GetATanOfXY,MATH,implemented,gta-reversed,verifier V-1: 35 call sites consume the 64-bit ST0; L1 compared only the f32. Re-verify with an st0_exact caller-composite spec (VER-1),2026-11-05,0
 0x53cdc0,CGeneral::GetNodeHeadingFromVector,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0
 0x53ce30,CGeneral::SolveQuadratic,MATH,L1,gta-reversed,sa-math solve_quadratic; l1 1M 0 mismatches; mutants 3/3,2026-11-05,0
 0x53cea0,CGeneral::GetAngleBetweenPoints,MATH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0
