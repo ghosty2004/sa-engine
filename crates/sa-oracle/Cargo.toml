@@ -13,6 +13,8 @@ sa-oracle-format = { path = "../sa-oracle-format" }
 sa-hook = { path = "../sa-hook" }
 # CORE ports (pure parts) for the CORE specs; host build = Rust-owned memory.
 sa-core = { path = "../sa-core" }
+# STREAM ports (pure parts) for the STREAM specs.
+sa-stream = { path = "../sa-stream" }
 
 # Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
 [target.'cfg(not(windows))'.dependencies]

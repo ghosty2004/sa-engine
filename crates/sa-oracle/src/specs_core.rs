@@ -155,7 +155,7 @@ fn pool_new_call(addr: u32, i: &Inputs) -> Call {
     c
 }
 
-fn pool_new_spec(key: &'static str, name: &'static str, addr: u32, stride: u32) -> Spec {
+pub(crate) fn pool_new_spec(key: &'static str, name: &'static str, addr: u32, stride: u32) -> Spec {
     Spec {
         key,
         name,
@@ -408,7 +408,7 @@ impl ByteMap for MapAt {
     }
 }
 
-fn ctor_spec(key: &'static str, name: &'static str, addr: u32, stride: u32, alloc: u32) -> Spec {
+pub(crate) fn ctor_spec(key: &'static str, name: &'static str, addr: u32, stride: u32, alloc: u32) -> Spec {
     Spec {
         key,
         name,
@@ -458,7 +458,7 @@ fn ctor_spec(key: &'static str, name: &'static str, addr: u32, stride: u32, allo
 }
 
 /// `operator new` of a pooled type: loads the pool global (patched to SCRATCH) and runs `New`.
-fn op_new_spec(key: &'static str, name: &'static str, addr: u32, new_addr: &'static [u32], cell: u32, stride: u32) -> Spec {
+pub(crate) fn op_new_spec(key: &'static str, name: &'static str, addr: u32, new_addr: &'static [u32], cell: u32, stride: u32) -> Spec {
     let mut s = pool_new_spec(key, name, addr, stride);
     s.callees = new_addr;
     s.call = Arc::new(move |i| {

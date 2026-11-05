@@ -90,7 +90,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | CORE-L2 | In-game verification of the 27 ARCH-1 port hooks (pools, CTimer, GetRandomNumberInRange; list in docs/arch/pilot-ports.md): the hooks install; inf3/inf4 pass with `SA_HOOK_PORTS` unset and `=orig`; L2 ≥1000 cases each (or all calls) on the corpus; `randcalls` hash identical Rust vs original | todo | inf8-style report | needs the game lane (after INF-15) |
 | CORE-L2b | L2 in game for the 191 PORT-CORE `implemented` functions (port-l2.sh once CORE-L2 delivers it) | todo | per-function L2 table | |
 | MATH-FPTAN | CPU-checked FPTAN model in sa_math::x87 (unblocks App::DoRWStuffStartOfFrame*, AppEventHandler) | todo | L1 0 mismatches vs CPU | |
-| STREAM | CdStream, CStreaming, CFileLoader, stores, model infos | 472/1 | todo | L2 + L3 streaming paths |
+| STREAM | CdStream, CStreaming, CFileLoader, stores, model infos | 552 rows | in-progress | PORT-STREAM: `crates/sa-stream`, 544/552 ported (504 hooks): 70 L1, 434 need L2, 40 not hookable, 6 deferred, 2 blocked (CdStreamOpen protection VM index; LoadObjectInstance needs a CPU-checked acos); docs/arch/stream-port.md |
 | RW | RW core + plugins + pipelines + RW functions from REA (catalogue: 291 rev / 19 unrev / 313 unknown). The statically linked D3DX9 (949) and libpng/zlib (194) stay original in phase A; in phase B they are replaced by Rust equivalents for what RW uses (D3DX shader assembly for the pipelines, PNG reading) | 291/19 (+313) | todo | L2 + D3D diff Spec done (RW-RE): `docs/re/rw/` (life cycle, plugins, object layouts, D3D9 driver + pipelines, port plan with 361 L1 / 1,444 L2 candidates), `catalog/rw-names.csv` (1,829 names: 1,389 high, 203 medium, 237 low). gta-reversed `RwGlobals` lacks `fileFuncs` (size 0x12C, but 0x158 in the exe): use the plugin-sdk/exe layout. RW forces x87 single precision at 0x857404 and again every frame at 0x857432 |
 
 ## Phase III: world (M10–M11)
@@ -146,6 +146,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | SAMP-API | Document the engine API covering every samp-rs game access (proposal for the samp-rs side; we never edit samp-rs) | todo | F13 |
 
 ## Decisions made autonomously
+- 2026-11-05 (PORT-STREAM): CdStreamThread's port runs game-memory accessors on the streaming thread, as the original does. This is an accepted exception to ADR-001's single-thread rule, because 1:1 requires the original threading.
 - 2026-11-05 (INF-7): L1 has two backends. Unicorn decides L1-routed functions. Functions with x87 instructions measured unfaithful under Unicorn (transcendentals, FPREM, FSCALE, FXTRACT) go to L2; until INF-8 exists the real CPU (native backend under Wine) is their interim authority. Signalling-NaN inputs are always decided by the CPU. Unicorn runs with MXCSR.FZ cleared when the code has no SSE.
 - 2026-11-05 (INF-7): ports of x87 code use `sa_math::x87::X87` (24-bit significand, CPU-measured NaN rules), never plain f32 arithmetic.
 - 2026-11-05 (INF-3): a hook toggle is a 32-bit store into the hook's `TARGET` slot (`jmp [TARGET]`), applied by the game thread at the frame boundary (the CTimer::Update thunk). In-process comparisons run on the game thread so the game's FPU state applies (x87 CW 0x007F = 24-bit precision, MXCSR with FTZ on).
@@ -164,6 +165,7 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
 
 *original UB, not reproducible*
+- `CountCompsInRule` never returns for negative input words (original and port both loop forever) (PORT-STREAM).
 - CdStreamSync/CdStreamThread lost wake-up (0x156CD9D–0x156CDAE vs 0x406669–0x406678): the original can hang forever on a loading screen (~7% of new-game loads under Wine). The harness patches the wait (INF-15). The Rust CdStream port will not reproduce the hang; it keeps the observable behaviour of a completed read (decision recorded here).
 - CMatrix `operator*(Mat, Mat)`, `operator+`, `Invert(const CMatrix&)` and `operator*=` copy four uninitialised stack dwords (offsets 0xC/0x1C/0x2C/0x3C) into the result. The port writes 0, and those 16 bytes are excluded from comparison (MATH-2).
 - `CGeneral::LimitAngle` (0x53CB00) never returns for ±inf and |a| > 2^33 (2^33 itself returns, verifier V-3; `a - 360` rounds back to `a` under PC=24), so the game would hang. `limit_angle` panics there; `limit_angle_checked` returns `None` exactly for those inputs (L1-verified).
