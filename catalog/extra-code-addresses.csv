@@ -22,6 +22,7 @@ address,rule,evidence
 0x74af20,cat7-call,1 site(s) in catalogued bodies: 0x74aa10
 0x74bfd0,cat7-call,1 site(s) in catalogued bodies: 0x75dae0
 0x74ce60,cat7-call,3 site(s) in catalogued bodies: 0x74ce20;0x74ced0
+0x750480,rw-names,"RW-RE: _rpWorldObjCameraSync, immediate at 0x750409 in 0x7503e0; entry follows the tail jmp [ecx+0x14] of 0x750460 (data_refs entry check rejects it: not preceded by padding/ret)"
 0x751e30,cat7-call,1 site(s) in catalogued bodies: 0x74aea0
 0x756960,cat7-call,2 site(s) in catalogued bodies: 0x7575f0;0x75e3f0
 0x75a960,cat7-call,2 site(s) in catalogued bodies: 0x75a940;0x75b4e0

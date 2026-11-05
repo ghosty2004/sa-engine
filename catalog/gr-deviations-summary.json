@@ -130,7 +130,7 @@
  "functions_with_rows": 1572,
  "functions_counted": 1003,
  "by_subsystem_counted": {
-  "AI": 386,
+  "AI": 389,
   "WORLD": 165,
   "RENDER": 145,
   "SCRIPT": 124,
@@ -147,14 +147,13 @@
   "ANIM": 24,
   "RW": 24,
   "INPUT": 21,
-  "UNK-game": 16,
+  "UNK-game": 14,
   "MATH": 9,
   "PHYS": 8,
-  "SAVE": 5,
-  "CALLED-ONLY": 1
+  "SAVE": 5
  },
  "keep_original_by_subsystem": {
-  "AI": 172,
+  "AI": 174,
   "SCRIPT": 97,
   "RENDER": 86,
   "VEH": 77,
@@ -167,14 +166,13 @@
   "PED": 20,
   "CORE": 10,
   "INPUT": 9,
-  "UNK-game": 9,
   "ANIM": 8,
   "COLL": 8,
+  "UNK-game": 8,
   "PHYS": 6,
   "MATH": 4,
   "RW": 4,
   "CAM": 3,
-  "CALLED-ONLY": 1,
   "SAVE": 1
  }
 }

@@ -4,7 +4,12 @@
 catalog/state.csv holds one row per catalogue function (procedures.csv: game .text + _rwcseg;
 a `.HOODLUM` body is part of its stub's row):
 
-    address, name, subsystem, state, source, evidence, updated, gr_deviations
+    address, name, subsystem, state, source, evidence, updated, gr_deviations, role
+
+`name` is procedures.csv's final name (subsystems.py: gta-reversed hook, rw-names.csv high/medium,
+CAT-5, CAT-6 catalog/names-extra.csv high/medium); low-confidence names never become names, they
+are quoted in the evidence as `low-confidence name hint`. `role` (CAT-6) = init / dtor for the C++
+static initialisers and the atexit destructor callbacks they register.
 
 `state` follows docs/PLAN.md section 5: unknown, specified, implemented, L1, L2, L3, excluded.
 
@@ -46,7 +51,7 @@ ROOT = Path(__file__).resolve().parents[2]
 STATES = ['unknown', 'specified', 'implemented', 'L1', 'L2', 'L3', 'excluded']
 ABOVE_SPECIFIED = ('implemented', 'L1', 'L2', 'L3')
 AT_LEAST_L2 = ('L2', 'L3')
-COLS = ['address', 'name', 'subsystem', 'state', 'source', 'evidence', 'updated', 'gr_deviations']
+COLS = ['address', 'name', 'subsystem', 'state', 'source', 'evidence', 'updated', 'gr_deviations', 'role']
 
 
 def today():
@@ -75,7 +80,7 @@ def derive(cat):
     for p in csv.DictReader(open(cat / 'procedures.csv')):
         a = int(p['address'], 16)
         c = cls.get(a)
-        name = p['gr_name'] or (c['name'] if c else '')
+        name = p['name'] if 'name' in p else (p['gr_name'] or (c['name'] if c else ''))
         st = p['state']
         if st == 'excluded':
             state, source, ev = 'excluded', '', f"CAT-5 class {p['class']}"
@@ -86,13 +91,18 @@ def derive(cat):
             ev = {'gr-unreversed': 'gta-reversed hook, not reversed (.Reversed = false)',
                   'gr-called-only': 'named, called from gta-reversed only (plugin::Call / thunk)'}.get(
                 st, f"named by CAT-5/CAT-12 (class {p['class'] or 'game'})")
+            ns = p.get('name_source', '')
+            if ns and ns not in ('gta-reversed', 'cat5'):
+                ev += f"; name from {ns} ({p.get('name_confidence', '')})"
         else:
             state, source = 'unknown', 'REA'
             ev = {'gr-called-only': 'called from gta-reversed (plugin::Call / thunk), no name',
                   'gr-unreversed': 'gta-reversed hook without a name'}.get(
                 st, f"unnamed (class {p['class'] or 'game'})")
+            if p.get('name_hint'):
+                ev += f"; low-confidence name hint: {p['name_hint']}"
         out[a] = {'address': f'{a:#08x}', 'name': name, 'subsystem': p['subsystem'], 'state': state,
-                  'source': source, 'evidence': ev}
+                  'source': source, 'evidence': ev, 'role': p.get('role', '')}
     return out
 
 
@@ -116,7 +126,7 @@ def merge(cat):
     for a, r in new.items():
         o = old.get(a)
         if o and o['state'] in ABOVE_SPECIFIED:
-            rows[a] = {**o, 'name': r['name'] or o['name'], 'subsystem': r['subsystem']}
+            rows[a] = {**o, 'name': r['name'] or o['name'], 'subsystem': r['subsystem'], 'role': r['role']}
             kept += 1
             continue
         same = o and all(o[k] == r[k] for k in ('state', 'source', 'evidence'))

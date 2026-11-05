@@ -16,6 +16,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 # (subsystem id, category prefixes, owner regex)
 RULES = [
     ('MATH', [], r'^(CVector\w*|CMatrix\w*|CQuaternion|CRect|CBox|CSphere|CColSphere|CColBox|CColLine|CCompressed\w*|CMaths|CGeneral)$'),
@@ -46,6 +48,7 @@ RULES = [
      r'^(CWorld|CEntity|CObject|CDummy\w*|CBuilding|CTheZones|CZone\w*|CGridRef|CEntryExit\w*|Interior\w*|CBridge|CCranes?|CEscalators?|BreakObject_c|BreakManager_c|CGarages?|CStuntJumpManager|CPickups?|CSetPieces?|CObjectData|WaterCreature\w*|CTreadable|CReplay|CGameLogic|CStats|CRestart|CCheat|CShopping|CGangWars)$'),
 ]
 COMPILED = [(sid, cats, re.compile(rx)) for sid, cats, rx in RULES]
+NAME_COLS = ('name', 'name_source', 'name_confidence', 'role', 'name_hint')  # CAT-6, written here
 UNKNOWN_BUCKETS = [  # address-region buckets for unnamed game-.text functions (CAT-5)
     (0x400000, 0x410000, 'UNK-protection-mix'),
     (0x760000, 0x7C0000, 'UNK-thirdparty-lib'),
@@ -75,11 +78,16 @@ def main():
     if (cat / 'classification.csv').exists():
         for c in csv.DictReader(open(cat / 'classification.csv')):
             cls[int(c['address'], 16)] = c
+    import names_extra as NX  # noqa: E402  (CAT-6 name precedence; imported late: it imports this module)
+    rwn = NX.load_rw_names(cat)
+    extra = NX.load_names_extra(cat)
     out_rows = []
     counts = defaultdict(lambda: defaultdict(int))
     for p in csv.DictReader(open(cat / 'procedures.csv')):
         if p['region'] not in ('game-text', 'rw-cseg'):
             continue
+        for k in NAME_COLS:
+            p.pop(k, None)
         va = int(p['address'], 16)
         h = hooks.get(va)
         if h:
@@ -97,8 +105,22 @@ def main():
                 sid = cls[va]['subsystem'] or 'UNK-game'
         else:
             sid = next((b for lo, hi, b in UNKNOWN_BUCKETS if lo <= va < hi), 'UNK-game')
+        name, nsrc, nconf, hint = NX.final_name(p, cls.get(va), rwn.get(va), extra.get(va))
+        x, r = extra.get(va), rwn.get(va)
+        if p['state'] != 'excluded' and sid in ('CALLED-ONLY', 'UNK-game'):
+            # CAT-6: a RenderWare name puts a called-only RW function into RW; a names-extra name
+            # brings its subsystem (owner class, or the global an initialiser constructs)
+            if nsrc == 'rw-names' and r['module'] not in ('game-plugin', 'game-pipeline'):
+                sid = 'RW'
+            elif nsrc.startswith('cat6:') and x['subsystem']:
+                sid = x['subsystem']
+            elif nsrc and nsrc != 'gta-reversed' and name:
+                o = name.split('::')[0] if '::' in name else ''
+                sid = next((s_ for s_, _c, rx in COMPILED if o and rx.match(o)), sid)
         counts[sid][p['state']] += 1
-        out_rows.append({**p, 'subsystem': sid, 'class': cls[va]['class'] if va in cls else ''})
+        out_rows.append({**p, 'subsystem': sid, 'class': cls[va]['class'] if va in cls else '',
+                         'name': name, 'name_source': nsrc, 'name_confidence': nconf,
+                         'role': x['role'] if x and nsrc.startswith('cat6:') else '', 'name_hint': hint})
     with open(cat / 'procedures.csv', 'w', newline='') as f:
         w = csv.DictWriter(f, list(out_rows[0]))
         w.writeheader()

@@ -45,6 +45,7 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
   → `subsystems.py` → `callgraph.py ghidra` + `build` (CAT-7, Ghidra headless project in `target/ghidra`)
   → `callgraph.py gaps` (CAT-12: closes the catalogue over call targets, loops back when it adds rows)
   → `data_refs.py` (CAT-12b: functions reached only through data tables; same loop)
+  → `names_extra.py` (CAT-6 names: gta-reversed comments, plugin-sdk, `rw-names.csv`, init/dtor, unknown vtables; `cat13_types.py` = typed virtual calls)
   → `layouts.py` → `script_commands.py` (CAT-10) → `gr_deviations.py` (CAT-14) → `progress.py` (CAT-11). Logs in
   `target/catalog-logs`. `vtables.py` = validated gta-reversed vtable slot names. `hoodlum_xrefs.py` is a
   one-off check. Python venv in `.venv`; run with `.venv/bin/python -I`. Notes: `docs/re/cat*.md`.
