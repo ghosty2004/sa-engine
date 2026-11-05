@@ -1,0 +1,39 @@
+# Per-function extra L2 regions (SA_L2_EXTRA syntax, docs/re/l2-oracle.md): HOOK@ADDR:LEN[:R|W|RW]
+#
+# For memory a function reads or writes that catalog/rwsets.csv cannot name: heap objects behind
+# global pointers or behind `this`. ADDR/LEN are expressions evaluated at each case: numbers, registers
+# at entry (ecx = this for thiscall), argN (stack arguments), [EXPR] = the dword at EXPR, + and -.
+# A declared region is snapshotted, restored between the original and the Rust run, compared after
+# both, and counts as declared for the undeclared-write check. tools/e2e/port-l2.sh passes the lines
+# whose HOOK is in its hook list.
+#
+# Lines so far: the ARCH-1 pilots (CORE-L2). PORT-CORE's other CPool instantiations, pool constructors
+# and class operator new/delete (sa-core pools.rs) need the same kind of lines (CORE-L2b).
+#
+# CPool<T> (layouts.csv CPool<int32>, 0x14 bytes): +0 objects, +4 byte map, +8 size, +0xC first free.
+# Pools: ped [0xB74490], vehicle [0xB74494], object [0xB7449C].
+
+# thiscall pool methods: the header is `this` (declared by the hook signature); the byte map:
+CPedPool::New@[ecx+4]:[ecx+8]:RW
+CVehiclePool::New@[ecx+4]:[ecx+8]:RW
+CObjectPool::New@[ecx+4]:[ecx+8]:RW
+CPedPool::GetAtRef@[ecx+4]:[ecx+8]:R
+CObjectPool::GetAt@[ecx+4]:[ecx+8]:R
+
+# cdecl wrappers on CPools::ms_p*Pool: header and byte map
+CPed::operator new-anon@[0xB74490]:0x14:RW
+CPed::operator new-anon@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPed::operator delete-anon@[0xB74490]:0x14:RW
+CPed::operator delete-anon@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPools::GetPedRef@[0xB74490]:0x14:R
+CPools::GetPedRef@[[0xB74490]+4]:[[0xB74490]+8]:R
+CPools::GetPed@[0xB74490]:0x14:R
+CPools::GetPed@[[0xB74490]+4]:[[0xB74490]+8]:R
+CPools::GetVehicleRef@[0xB74494]:0x14:R
+CPools::GetVehicleRef@[[0xB74494]+4]:[[0xB74494]+8]:R
+CPools::GetVehicle@[0xB74494]:0x14:R
+CPools::GetVehicle@[[0xB74494]+4]:[[0xB74494]+8]:R
+CPools::GetObjectRef@[0xB7449C]:0x14:R
+CPools::GetObjectRef@[[0xB7449C]+4]:[[0xB7449C]+8]:R
+CPools::GetObject@[0xB7449C]:0x14:R
+CPools::GetObject@[[0xB7449C]+4]:[[0xB7449C]+8]:R

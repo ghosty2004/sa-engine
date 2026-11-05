@@ -1,0 +1,21 @@
+# CORE-L2 corpus program: the grove-walk start, then the pause menu twice (CTimer::StartUserPause /
+# EndUserPause through CMenuManager) and a new game started from the pause menu (CGame::ShutDownForRestart
+# -> CTimer::Shutdown, CGame::InitialiseWhenRestarting -> CTimer::Initialise). Recorded by
+# tools/e2e/record-program.sh; frames as in grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300..1499 ly=-128           # walk forward
+1500 key=esc                 # pause menu
+1600 key=esc                 # resume
+1700..1799 ly=-128 cross     # sprint
+1900 key=esc                 # pause menu again
+2000 down                    # Resume -> Start New Game
+2050 key=enter               # Start New Game (one of 2050/2100 opens "Proceed?",
+2100 key=enter               # the other falls into the menu input delay; shots at 2029/2108)
+2150 down                    # "Proceed?": No -> Yes
+2200 key=enter               # restart
+2400..3199 cross pulse       # skip the intro cutscene again
+3300..3599 ly=-128           # walk
+end 3700

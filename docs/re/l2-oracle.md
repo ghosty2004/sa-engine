@@ -18,12 +18,14 @@ A hook in mode `l2` (`SA_L2`, `SA_HOOK_MODE=NAME=l2`, or the control command `ho
 call to a per-hook stub (`push i; jmp l2_common`, in the hook's RWX slot at +80). `l2_common` saves all
 registers, EFLAGS, the FPU environment (`fnstenv`) and MXCSR into a frame and calls the dispatcher.
 
-- Not sampled, not the game thread, or a call made while a case runs (no nesting): the frame is unwound
+- Not sampled, not the game thread (the main thread guessed at attach by determinism mode, confirmed
+  at every frame boundary; so start-up calls before frame 1 such as `CTimer::Initialise` are sampled
+  too), or a call made while a case runs (no nesting): the frame is unwound
   and the call tail-jumps to the leave target (original by default) with every register, flag, FPU and
   MXCSR value as the caller left them. Sampling is deterministic (counts only): every `SA_L2_RATE`-th
   call, at most `SA_L2_PER_FRAME` per function per frame, from frame `SA_L2_FROM`, `SA_L2_MAX` cases per
   function (default 1000); then the hook is switched to the leave mode.
-- Sampled: (1) snapshot of the regions (read/write-set globals from the spec, `SA_L2_EXTRA` globals,
+- Sampled: (1) snapshot of the regions (read/write-set globals from the spec, `SA_L2_EXTRA` regions,
   `this` sized by the hook signature's layouts.csv type, pointed-to arguments) and of the watched windows
   (default: the game's writable sections .data/.bss 0x8A4000–0xC9E000, _TEXT_HA, _rwdseg; plus 1 KiB of
   the caller's stack above the arguments; `SA_L2_WINDOW=all` adds the no-CD sections and the used heap
@@ -65,6 +67,66 @@ unbounded (base/index) catalogue entry are marked as such.
   memory through `this`/pointers; ABI fields come from the stored in-process Rust run).
 - `sa-oracle l2 report SPOOL`, `sa-oracle l2 show SPOOL|FIXTURE [N]`.
 - Control channel: `l2` (summary), `l2 flush`, `hook NAME l2`.
+
+## Extra regions (heap memory the catalogue cannot name)
+
+`catalog/rwsets.csv` names globals only. Memory a function reaches through a global pointer or through
+`this` (pool headers and byte maps on the heap, for example) is declared with `SA_L2_EXTRA` entries
+`[HOOK@]ADDR:LEN[:R|W|RW]` (comma list). Without `HOOK@` an entry applies to every enabled hook,
+with it only to that hook (name or address). ADDR and LEN are numbers or expressions evaluated when
+the case starts, before the original runs: registers at entry (`eax ecx edx ebx esi edi ebp`; `ecx` =
+`this` for thiscall), stack arguments `arg0`, `arg1`, …, `[EXPR]` = the dword at EXPR, joined with `+`
+and `-`. Examples: the ped pool's header `[0xB74490]:0x14`, its byte map `[[0xB74490]+4]:[[0xB74490]+8]`,
+a thiscall pool method's byte map `[ecx+4]:[ecx+8]`. An extra region is snapshotted, restored between
+the original and the Rust run (so a function that changes heap memory starts both runs from the same
+state), compared after both runs, and counts as declared for the undeclared-write check when it has
+`W`. An expression that cannot be evaluated (null pointer) gives an unreadable region (counted in the
+summary's `unreadable=`). Regions are capped at 16 MiB.
+
+`tools/e2e/l2-extras.txt` holds the extra regions of every hooked function that needs them; add lines
+there when a port reads or writes heap memory.
+
+## Verifying a porting batch: `tools/e2e/port-l2.sh`
+
+```text
+tools/e2e/port-l2.sh <HOOKS|ports> [RECORDING] [--runs "plain l2 rust hookoff"] [--max N]
+                     [--window-all HOOKS] [--tag NAME]
+```
+
+The reusable L2 + L3 check for any set of hooks. HOOKS (resolved by `tools/e2e/hook-names.py`) is a comma
+list of names or addresses, `@FILE` (one per line, e.g. `tools/e2e/lists/core-pilots.txt` = the 27 ARCH-1
+pilots), `state:STATE[:DOC]` (the rows of the `docs/arch/*.md` (or only `DOC.md`) function tables in that state, e.g.
+`state:implemented-needs-L2:core-port` = PORT-CORE's 191), or `ports` = every engine-crate `#[hook]` registration.
+Hooks are passed to sa-hook by address. RECORDING is a corpus
+recording from process start (default the INF-4 grove walk). Every run replays it in determinism mode
+with `SA_HOOK_PORTS=orig` and the earlier sa-hook math ports on the original, so the reference is
+all-original:
+
+| run | what |
+|---|---|
+| `plain` | everything on the original: the reference trace |
+| `l2` | `SA_L2` = the list, spec from `sa-oracle l2 spec`, extra regions from `l2-extras.txt`, `SA_L2_WINDOW=data` |
+| `l2all` | with `--window-all HOOKS`: L2 on those hooks with `SA_L2_WINDOW=all` (heap arena watched: writes to heap memory outside the declared regions are reported; slow) |
+| `rust` | the list on Rust (`ports`: `SA_HOOK_PORTS=rust`, otherwise `SA_HOOK_MODE=NAME=rust`) |
+| `hookoff` | opt-in: one run per hook with every other listed hook on Rust (PLAN §5 hook-off check) |
+
+Checks: per hook ≥ MAX cases (default 1000) or every call, 0 mismatches, 0 undeclared writes (a hook
+without calls is `NOCALLS`: no failure, no evidence); the l2 trace equals the plain trace (the oracle
+does not perturb the run); the rust trace equals the plain trace on every frame and all 17 subsystems
+(L3; the `randcalls` line is printed separately); hook-off traces equal plain; `sa-oracle l2 report`
+of each spool. Output in `target/e2e/lane-N/port-l2[-TAG]/`: `summary.txt`, `results.tsv` (addr, name,
+calls, cases, mismatches, undeclared cases, l2, l3, hookoff per hook), traces, spools, logs and the
+`plain-vs-RUN.txt` diffs. Exit 0 = no failure.
+
+Two things to watch in the results: a hook reached only from inside another listed hook (CPedPool::New
+is entered only through `CPed::operator new`'s `jmp`) runs during the outer hook's case and is never
+sampled, so it shows `NOCALLS`: verify it in a second invocation without the outer hook. And
+`SA_L2_PER_FRAME` (env `L2_PER_FRAME`, default 4) can leave a hook with bursts of calls (pool `New`
+during loading) below both 1000 cases and every call: rerun it with a large `L2_PER_FRAME`.
+
+New corpus recordings: `tools/e2e/record-program.sh PROGRAM [--shot-every N] [--replay]` records an
+input program from `tools/e2e/programs/` (screenshots every N frames, optional replay check); pass the
+resulting `rec.sarec` to `port-l2.sh`.
 
 ## Limits
 

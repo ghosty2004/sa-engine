@@ -15,7 +15,7 @@
 //! | `SA_L2_LEAVE` | `orig` (default): the game continues with the original's results; `rust`: with Rust's |
 //! | `SA_L2_OUT` | spool file (default `l2.spool` next to gta_sa.exe); a text report goes to OUT + `.txt` |
 //! | `SA_L2_SPEC` | read/write-set spec (`sa-oracle l2 spec`); without it only `this`/pointer args are snapshotted |
-//! | `SA_L2_EXTRA` | extra globals `ADDR:LEN[:R\|W\|RW],…` added to every enabled function's set |
+//! | `SA_L2_EXTRA` | extra regions `[HOOK@]ADDR:LEN[:R\|W\|RW],…` added to every enabled function's set, or only to HOOK's (name or address); ADDR and LEN are numbers or expressions evaluated at each case ([`Expr`]), e.g. `CPed::operator delete-anon@[[0xB74490]+4]:[[0xB74490]+8]:RW` |
 //! | `SA_L2_DROP` | spec globals to drop (`ADDR,…`; self-test of the rwset check) |
 //! | `SA_L2_WINDOW` | watched windows for undeclared writes: `data` (default: .data/.bss, _TEXT_HA, _rwdseg), `all` (every writable image section + the used part of the heap arena; slow), `none` |
 //! | `SA_L2_WINDOWS` | extra watched ranges `START-END,…` |
@@ -47,8 +47,7 @@ pub struct Config {
     pub leave_rust: bool,
     pub out: Option<String>,
     pub spec: Option<String>,
-    /// (addr, len, access bits)
-    pub extra: Vec<(u32, u32, u8)>,
+    pub extra: Vec<Extra>,
     pub drop: Vec<u32>,
     pub window: Window,
     pub windows: Vec<(u32, u32)>,
@@ -135,17 +134,7 @@ impl Config {
         };
         if let Some(v) = get("SA_L2_EXTRA") {
             for e in v.split(',').map(str::trim).filter(|e| !e.is_empty()) {
-                let p: Vec<&str> = e.split(':').collect();
-                let bad = || format!("SA_L2_EXTRA: {e:?} (ADDR:LEN[:R|W|RW])");
-                let addr = p.first().and_then(|s| num(s)).ok_or_else(bad)?;
-                let len = p.get(1).and_then(|s| num(s)).ok_or_else(bad)?;
-                let acc = match p.get(2).copied() {
-                    None | Some("RW") => 3,
-                    Some("R") => 1,
-                    Some("W") => 2,
-                    _ => return Err(bad()),
-                };
-                c.extra.push((addr, len, acc));
+                c.extra.push(Extra::parse(e)?);
             }
         }
         if let Some(v) = get("SA_L2_DROP") {
@@ -170,6 +159,135 @@ impl Config {
             c.mutants = hook_list(&v, "SA_L2_MUTANT")?;
         }
         Ok(Some(c))
+    }
+}
+
+/// An address or length of an extra region, evaluated when a case starts (before the original runs):
+/// hex/decimal numbers, the registers at entry `eax ecx edx ebx esi edi ebp`, stack arguments `arg0`,
+/// `arg1`, …, `[EXPR]` = the dword at EXPR, combined with `+` and `-` (wrapping). Pool storage, for
+/// example, lives on the heap behind a global pointer: the ped pool's byte map is `[[0xB74490]+4]`,
+/// its length `[[0xB74490]+8]`; for a thiscall pool method `[ecx+4]` / `[ecx+8]`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Expr {
+    Num(u32),
+    /// Index in `regs_in` order: eax, ecx, edx, ebx, esi, edi, ebp.
+    Reg(u8),
+    Arg(u8),
+    Deref(Box<Expr>),
+    /// Terms with their sign (`true` = subtract).
+    Sum(Vec<(bool, Expr)>),
+}
+
+const REGS: [&str; 7] = ["eax", "ecx", "edx", "ebx", "esi", "edi", "ebp"];
+
+impl Expr {
+    pub fn parse(s: &str) -> Result<Expr, String> {
+        let b: Vec<char> = s.chars().filter(|c| !c.is_whitespace()).collect();
+        let mut pos = 0;
+        let e = Self::sum(&b, &mut pos)?;
+        if pos != b.len() {
+            return Err(format!("expression {s:?}: unexpected {:?} at {pos}", b[pos]));
+        }
+        Ok(e)
+    }
+
+    fn sum(b: &[char], pos: &mut usize) -> Result<Expr, String> {
+        let mut terms = vec![(false, Self::term(b, pos)?)];
+        while *pos < b.len() && (b[*pos] == '+' || b[*pos] == '-') {
+            let neg = b[*pos] == '-';
+            *pos += 1;
+            terms.push((neg, Self::term(b, pos)?));
+        }
+        Ok(if terms.len() == 1 {
+            terms.pop().map(|t| t.1).unwrap_or(Expr::Num(0))
+        } else {
+            Expr::Sum(terms)
+        })
+    }
+
+    fn term(b: &[char], pos: &mut usize) -> Result<Expr, String> {
+        if b.get(*pos) == Some(&'[') {
+            *pos += 1;
+            let e = Self::sum(b, pos)?;
+            if b.get(*pos) != Some(&']') {
+                return Err("expression: missing ']'".into());
+            }
+            *pos += 1;
+            return Ok(Expr::Deref(Box::new(e)));
+        }
+        let start = *pos;
+        while *pos < b.len() && b[*pos].is_ascii_alphanumeric() {
+            *pos += 1;
+        }
+        let w = b[start..*pos].iter().collect::<String>().to_ascii_lowercase();
+        if let Some(r) = REGS.iter().position(|&r| r == w) {
+            return Ok(Expr::Reg(r as u8));
+        }
+        if let Some(n) = w.strip_prefix("arg").and_then(|n| n.parse::<u8>().ok()) {
+            return Ok(Expr::Arg(n));
+        }
+        num(&w)
+            .map(Expr::Num)
+            .ok_or_else(|| format!("expression: bad term {w:?}"))
+    }
+
+    /// `None` when a dereference cannot be read or an argument is missing.
+    pub fn eval(&self, regs: &[u32; 7], args: &[u32], read: &dyn Fn(u32) -> Option<u32>) -> Option<u32> {
+        Some(match self {
+            Expr::Num(n) => *n,
+            Expr::Reg(r) => regs[*r as usize],
+            Expr::Arg(a) => *args.get(*a as usize)?,
+            Expr::Deref(e) => read(e.eval(regs, args, read)?)?,
+            Expr::Sum(t) => {
+                let mut v = 0u32;
+                for (neg, e) in t {
+                    let x = e.eval(regs, args, read)?;
+                    v = if *neg {
+                        v.wrapping_sub(x)
+                    } else {
+                        v.wrapping_add(x)
+                    };
+                }
+                v
+            }
+        })
+    }
+}
+
+/// One `SA_L2_EXTRA` entry.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Extra {
+    /// Only for this hook (index); `None`: every enabled hook.
+    pub hook: Option<usize>,
+    pub addr: Expr,
+    pub len: Expr,
+    pub acc: u8,
+}
+
+impl Extra {
+    /// `[HOOK@]ADDR:LEN[:R|W|RW]`
+    pub fn parse(e: &str) -> Result<Extra, String> {
+        let bad = |why: String| format!("SA_L2_EXTRA: {e:?} ([HOOK@]ADDR:LEN[:R|W|RW]): {why}");
+        let (hook, rest) = match e.rsplit_once('@') {
+            Some((h, r)) => {
+                let i = crate::table::find(h.trim()).ok_or_else(|| bad(format!("unknown hook {h:?}")))?;
+                (Some(i), r)
+            }
+            None => (None, e),
+        };
+        let p: Vec<&str> = rest.split(':').collect();
+        if p.len() > 3 {
+            return Err(bad("too many fields".into()));
+        }
+        let addr = Expr::parse(p.first().copied().unwrap_or("")).map_err(bad)?;
+        let len = Expr::parse(p.get(1).copied().unwrap_or("")).map_err(bad)?;
+        let acc = match p.get(2).copied() {
+            None | Some("RW") => 3,
+            Some("R") => 1,
+            Some("W") => 2,
+            Some(a) => return Err(bad(format!("access {a:?}"))),
+        };
+        Ok(Extra { hook, addr, len, acc })
     }
 }
 
@@ -377,7 +495,23 @@ mod tests {
         .unwrap();
         assert_eq!(c.hooks, vec![1, 18]);
         assert_eq!((c.max, c.leave_rust), (50, true));
-        assert_eq!(c.extra, vec![(0xB7CB4C, 4, 3), (0x10, 2, 1)]);
+        assert_eq!(
+            c.extra,
+            vec![
+                Extra {
+                    hook: None,
+                    addr: Expr::Num(0xB7CB4C),
+                    len: Expr::Num(4),
+                    acc: 3
+                },
+                Extra {
+                    hook: None,
+                    addr: Expr::Num(0x10),
+                    len: Expr::Num(2),
+                    acc: 1
+                },
+            ]
+        );
         assert_eq!(
             (c.drop.clone(), c.windows.clone(), c.mutants.clone()),
             (vec![0xB7CB4C], vec![(0x1000, 0x2000)], vec![18])
@@ -395,6 +529,34 @@ mod tests {
             vec![(1, Mode::Original), (2, Mode::L2)]
         );
         assert!(parse_hook_modes("x=orig").is_err());
+    }
+
+    #[test]
+    fn extra_expressions() {
+        let e = Extra::parse("CPed::operator delete-anon@[[0xB74490]+4]:[[0xb74490]+8]:R").unwrap();
+        assert_eq!(e.hook, crate::table::find("CPed::operator delete-anon"));
+        assert_eq!(e.acc, 1);
+        let mem = |a: u32| match a {
+            0xB74490 => Some(0x1000),
+            0x1004 => Some(0x2000),
+            0x1008 => Some(140),
+            _ => None,
+        };
+        let regs = [0, 0x1000, 0, 0, 0, 0, 0];
+        assert_eq!(e.addr.eval(&regs, &[], &mem), Some(0x2000));
+        assert_eq!(e.len.eval(&regs, &[], &mem), Some(140));
+        let t = Extra::parse("[ecx+4]-arg1+0x10:8").unwrap();
+        assert_eq!(t.hook, None);
+        assert_eq!(t.addr.eval(&regs, &[0, 0x20], &mem), Some(0x2000 - 0x20 + 0x10));
+        assert_eq!(t.addr.eval(&regs, &[0], &mem), None, "missing argument");
+        assert_eq!(
+            Expr::parse("[0x5]").unwrap().eval(&regs, &[], &mem),
+            None,
+            "unreadable"
+        );
+        assert!(Extra::parse("nope@0x10:4").is_err());
+        assert!(Extra::parse("[0x10:4").is_err());
+        assert!(Extra::parse("0x10:4:X").is_err());
     }
 
     #[test]

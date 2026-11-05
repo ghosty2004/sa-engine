@@ -96,6 +96,11 @@ pub(crate) fn qpf() -> u64 {
     QPF.load(Ordering::Acquire)
 }
 
+/// The game's main thread as known so far (guessed at attach, corrected at frame 1); 0 = unknown.
+pub(crate) fn main_tid() -> u32 {
+    MAIN_TID.load(Ordering::Acquire)
+}
+
 fn is_main() -> bool {
     // SAFETY: plain Win32 call.
     unsafe { GetCurrentThreadId() == MAIN_TID.load(Ordering::Relaxed) }
