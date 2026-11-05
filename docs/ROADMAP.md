@@ -14,7 +14,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | impl-1 | FMT-3 (worktree) | FMT-2 part b |
 | impl-2 | INF-4/5/6 determinism + recorder + hasher (worktree) | INF-8 |
 | measurement / REA | — (CAT-9/10b/11/12 done) | CAT-13 / CAT-6 |
-| harness | INF-7 L1 Unicorn harness (`sa-oracle`, worktree) | INF-9 |
+| harness | — | INF-8 (after INF-4) |
 | verifier | — | — |
 
 ## Next up (ordered queue; the scheduler takes from the top)
@@ -45,6 +45,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | CAT-11 | Per-function state file (`catalog/state.csv`) + `tools/catalog/progress.py` → `catalog/progress.md` | done | 19,425 rows: excluded 6,664, specified 9,633 (7,897 gta-reversed, 1,736 REA), unknown 3,125, implemented 3 (0x53CB50, 0x441390, 0x561B10 passthrough; no oracle yet). F1 = 0 / 12,761 at ≥L2. Merge keeps states above `specified`; rerun byte-identical | `progress.py set ADDR STATE EVIDENCE` records changes |
 | CAT-12 | Close the catalogue over call / vtable targets | done | `merge_ghidra.py` adds missed hooks (incl. `.HOODLUM` stubs) 1,894, gta-reversed callees 416, gta-reversed vtable slots 351, CAT-7 call targets 46 (`catalog/extra-code-addresses.csv`, fixpoint via `callgraph.py gaps`). `noncatalogue_targets` = 0; 49 `.HOODLUM`/protection call targets (75 sites) are SecuROM return-address thunks → `excluded:protection-thunk`. All 153 original gaps are rows (130 vtable slots, 112 named + 18 `vfunc_N`). Slot names from validated header layouts (`vtables.py`, 328/379 vtables). Whole pipeline: `tools/catalog/run_all.sh`, two runs sha256-identical | notes `docs/re/cat9-12-pipeline.md`; caveat: bytes after a SecuROM thunk call are junk in the caller's linear decode |
 | CAT-13 | Resolve virtual calls on non-`this` objects (2,791 tagged with a slot but no target): type propagation from gta-reversed member types and Ghidra data types, then use the result in the port order | todo | share of resolved indirect sites reported | the port order currently misses most virtual dispatch |
+| CAT-14 | gta-reversed fidelity audit: list every place where its C++ deviates from the original on purpose (`NOTSA`, `FIX_BUGS`, `#ifdef` fixes, changed constants, "fixed" bugs, unported branches) per function → `catalog/gr-deviations.csv`, so ports keep original behaviour by default | todo | every deviation linked to a function row + the original bytes that show the difference | measurement slot |
 
 ## Phase I: infrastructure (M1–M5)
 
@@ -56,12 +57,12 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | INF-4 | Determinism mode: virtual `timeGetTime`/QPC, fixed timestep, `rand`/`srand` logged with caller, synchronous CdStream, audio thread control, deterministic heap | todo | two runs of the same recording are frame-hash identical | |
 | INF-5 | Input recorder/replayer (`CPad` per frame) + recording format (`sa-oracle`) | todo | record → replay → same hashes | |
 | INF-6 | Frame state hasher: per-subsystem hashes (pools, entity transforms/velocities, world lists, streaming, script vars, camera, clock/weather, rand state) | todo | detects a 1-ulp change injected in a ped position | |
-| INF-7 | L1 Unicorn harness: map the original image, call a function with generated args/memory, compare with Rust | todo | self-test on 5 math functions | |
+| INF-7 | L1 Unicorn harness | done | `crates/sa-oracle` 14 tests; `l1 <fn> --cases 1000000`: 0 mismatches on 6 functions in `crates/sa-math`; re-run by the main session (tests + SolveQuadratic 1M + mutants 3/3) | `docs/re/l1-harness.md`. Unicorn 2.1.5 defects measured: MXCSR.FZ leaks into x87 (worked around), SNaN loads not quieted (those cases go to the CPU), transcendentals/FSCALE/FXTRACT unfaithful (routed to L2 by a code scan); a native CPU backend runs under Wine |
 | INF-8 | L2: snapshot/restore of the read/write set in-process, call original then Rust, normalise, diff, store fixtures | todo | self-test + mutation smoke test | needs CAT-7 |
 | INF-9 | L3 runner + automatic divergence bisection (first divergent frame → subsystem → function by toggling hooks) | todo | finds an injected fault without help | |
 | INF-10 | Execution coverage of the original (drcov under Wine, or breakpoint sampling in `sa-hook`) | todo | coverage report of the corpus | F2, F8 |
 | INF-11 | D3D9 call-stream capture/diff + audio event log/diff + screenshot capture | todo | same capture twice on the original | modelled on samp-rs `d3d.rs` (reference only) |
-| INF-12 | Mutation runner (inject faults into Rust functions, expect detection) | todo | F9 smoke test | |
+| INF-12 | Mutation runner (inject faults into Rust functions, expect detection) | in-progress | F9 smoke test | seed: 3 faults in `solve_quadratic` (feature `mutants`), all caught; gta-reversed's `1/(2a)` is an equivalent mutant |
 | INF-13 | Acceptance scripts `tools/accept/*.sh` (F1–F13 + per-milestone) | todo | each exits 0/1 with a readable report | |
 | INF-14 | Corpus v1: scripted recordings (routes per zone/time/weather, vehicle classes, combat drills) + SCM setup scripts | todo | manifest + coverage % | grows until F8 |
 
@@ -72,7 +73,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | FMT-1 | IMG v2, RW chunk stream (DFF/TXD), COL1–4 | — | done | 8 IMG / 21,038 entries, 15,347 DFF, 4,037 TXD (32,869 textures), 253/254 COL byte-exact round trip. peds.col is an expected failure (not loaded as collision; ValidateVersion stamp bytes, see docs/re/formats.md). Open: verify the triangle index order against the exe's RW stream reader before rendering relies on it |
 | FMT-2 | IPL text+binary, IDE, all DAT/CFG the exe loads | — | in-progress | part a done: MSVC 7.1 `sscanf`/`fgets`/LoadLine semantics, taken from REA decompiles of 1.0 US. Whole-install test: 0 failures; binary IPL (190), nodes (128), roadblox byte-exact; canonical dumps for part b. Part b todo (after INF-4): compare against the original's in-memory tables (incl. uninitialised fields, float parsing via `__strgtold12`, the obfuscated carcols stub at 0x405FB1). Findings in docs/re/formats.md |
 | FMT-3 | IFP (ANP3), GXT, SCM (main + script.img), SFX/stream audio containers, saves | — | todo | same as above |
-| MATH | vectors, matrices, quaternions, CGeneral, CMaths, x87 helpers | 96/0 | todo | L1 |
+| MATH | vectors, matrices, quaternions, CGeneral, CMaths, x87 helpers | 96/0 | in-progress | `crates/sa-math`: `x87` model + 6 functions at 10^6 cases (LimitAngle, LimitRadianAngle, GetATanOfXY, GetRadianAngleBetweenPoints, SolveQuadratic, CVector::Normalise) |
 | CORE | pools, timer, memory mgr, file mgr, game/app states | 265/10 | todo | L2, L3 boot sequence |
 | STREAM | CdStream, CStreaming, CFileLoader, stores, model infos | 472/1 | todo | L2 + L3 streaming paths |
 | RW | RW core + plugins + pipelines + RW functions from REA (catalogue: 291 rev / 19 unrev / 313 unknown). The statically linked D3DX9 (949) and libpng/zlib (194) stay original in phase A; in phase B they are replaced by Rust equivalents for what RW uses (D3DX shader assembly for the pipelines, PNG reading) | 291/19 (+313) | todo | L2 + D3D diff |
@@ -129,6 +130,8 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | SAMP-API | Document the engine API covering every samp-rs game access (proposal for the samp-rs side; we never edit samp-rs) | todo | F13 |
 
 ## Decisions made autonomously
+- 2026-11-05 (INF-7): L1 has two backends. Unicorn decides L1-routed functions. Functions with x87 instructions measured unfaithful under Unicorn (transcendentals, FPREM, FSCALE, FXTRACT) go to L2; until INF-8 exists the real CPU (native backend under Wine) is their interim authority. Signalling-NaN inputs are always decided by the CPU. Unicorn runs with MXCSR.FZ cleared when the code has no SSE.
+- 2026-11-05 (INF-7): ports of x87 code use `sa_math::x87::X87` (24-bit significand, CPU-measured NaN rules), never plain f32 arithmetic.
 - 2026-11-05 (INF-3): a hook toggle is a 32-bit store into the hook's `TARGET` slot (`jmp [TARGET]`), applied by the game thread at the frame boundary (the CTimer::Update thunk). In-process comparisons run on the game thread so the game's FPU state applies (x87 CW 0x007F = 24-bit precision, MXCSR with FTZ on).
 - 2026-11-05: game data = a copy of the Steam 3.0 data set already used by samp-rs (SA:MP files excluded) with the 1.0 US exe. The original and Rust run on the same data, so parity is unaffected. Data-dependent findings may not match retail 1.0 data, and the corpus records the data hashes.
 - 2026-11-05: the catalogue's function set is Ghidra functions ∪ gta-reversed hook addresses that decode as
@@ -138,7 +141,12 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 ## Divergence ledger
 Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accepted (user-approved)*.
-(empty)
+
+*pending*
+- `CGeneral::GetATanOfXY` (0x53CC70), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
+
+*original UB, not reproducible*
+- `CGeneral::LimitAngle` (0x53CB00) never returns for ±inf and |a| ≥ 2^33 (`a - 360` rounds back to `a` under PC=24), so the game would hang. `limit_angle` panics there; `limit_angle_checked` returns `None` exactly for those inputs (L1-verified).
 
 ## Waiting for the user
 - Human playthrough recordings of the missions (PLAN §6.1) are needed for F4. Not needed before M17. The

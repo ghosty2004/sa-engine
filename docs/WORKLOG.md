@@ -122,3 +122,13 @@
 - Main session re-verified CAT-9/10b/11/12: `run_all.sh` under an 8 GB memory cap reproduced every
   catalogue file sha256-identically. Set CTimer::Update back to `specified`, because a passthrough hook is
   not an implementation (PLAN §5).
+
+## 2026-11-05: INF-7 integrated
+- `crates/sa-oracle` (L1 harness: Unicorn backend + native CPU backend under Wine, guard rails, seeded
+  runner with shrinking, x87 fidelity probes, mutants) and `crates/sa-math` (x87 model + 6 functions).
+  Re-verified by the main session under a 6 GB cap: sa-math 11/11, sa-oracle 14/14; `l1 SolveQuadratic
+  --cases 1000000` PASS (peak RSS 509 MB); mutants caught 3/3. Workspace build and i686 sa-hook build
+  green.
+- OOM root cause (agent): the `fidelity` command held 2.52M probe results in RAM at once (2.7 GB) next to an
+  unrelated 10.7 GB python process. Now chunked (peak 1.3 GB), and threads are capped.
+- Ledger: 1 pending (GetATanOfXY ST0 precision beyond f32), 1 original-UB (LimitAngle hang).
