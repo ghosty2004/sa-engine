@@ -31,3 +31,14 @@
 - `tools/catalog/subsystems.py`: every catalogued function is assigned to a subsystem
   (`catalog/subsystems.md`; owner rules take precedence over gta-reversed categories). Script commands in
   gta-reversed: 781 handlers, 716 unimplemented, 283 NOP.
+
+## 2026-11-05: goal set; INF-1 partial; agents started
+- Initial commit 28ba9b1.
+- INF-1: copied the Wine prefix (d3dx9 + DXVK) and the GTA files (no SA:MP files) from samp-rs, read-only,
+  into `wine/prefix` and `wine/gta-sa`, with the 1.0 US exe. Added `tools/wine-env.sh` and the Cargo
+  workspace. Lanes are still to be created.
+- Started: CAT-5 (RE agent), FMT-1 (impl-1, worktree), INF-2/INF-3 (impl-2, worktree).
+- CAT-8: `tools/catalog/layouts.py` → `catalog/layouts.csv` (781 size and 39 offset assertions; 20 symbolic
+  expressions such as `sizeof(void*)` are kept verbatim).
+- CAT-10 part 1: `tools/catalog/script_commands.py` → `catalog/script-commands.csv`. 2,826 enum opcodes:
+  770 handlers, 713 unimplemented, 281 NOP, 13 unsupported, 1,049 not registered in gta-reversed.
