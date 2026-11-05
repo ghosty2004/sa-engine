@@ -7,6 +7,8 @@ and the milestone acceptance live in `docs/PLAN.md`. Update this file at the end
 Status: `done` · `in-progress` · `todo` · `blocked` (needs the user) · `deferred`.
 Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalog/*.py`).
 
+**PAUSED (2026-11-05, user request):** no new agents. The running ones (INF-9/10, CORE-L2, PORT-STREAM, RE-SPEC-2) finish, get verified and are committed; then the project stops. To resume: read this file, the WORKLOG tail and the "Next up" queue.
+
 ## Lanes now
 
 | Slot | Running | Next |
