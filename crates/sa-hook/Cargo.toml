@@ -4,20 +4,31 @@ version = "0.1.0"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-description = "Phase A DLL injected into gta_sa.exe 1.0 US: hook table, live Rust/original toggles, control channel"
+description = "Phase A DLL injected into gta_sa.exe 1.0 US: hook table, live Rust/original toggles, control channel, determinism mode, input recorder/replayer, frame-state hasher"
 
 [lib]
 name = "sa_hook"
 crate-type = ["cdylib", "rlib"]
 
+[dependencies]
+sa-oracle-format = { path = "../sa-oracle-format" }
+
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [
     "Win32_Foundation",
+    "Win32_Storage_FileSystem",
     "Win32_System_Diagnostics_Debug",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_IO",
+    "Win32_System_Kernel",
     "Win32_System_LibraryLoader",
     "Win32_System_Memory",
+    "Win32_System_Performance",
+    "Win32_System_SystemInformation",
     "Win32_System_SystemServices",
     "Win32_System_Threading",
+    "Win32_System_Time",
+    "Win32_UI_WindowsAndMessaging",
 ] }
 
 # Differential tests only: our length decoder is checked against iced-x86 on the real exe.

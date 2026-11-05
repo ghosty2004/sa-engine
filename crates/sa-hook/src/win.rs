@@ -31,7 +31,7 @@ use windows_sys::Win32::System::Threading::GetCurrentProcess;
 
 use crate::control::{self, Command};
 use crate::game;
-use crate::table::{self, HOOKS, Id, Kind, Mode};
+use crate::table::{self, Group, HOOKS, Id, Kind, Mode};
 use crate::x86;
 
 const SLOT: usize = 64;
@@ -44,7 +44,7 @@ const INBOUND_SWEEP: usize = 0x400;
 static LOG: Mutex<Option<File>> = Mutex::new(None);
 static START: OnceLock<Instant> = OnceLock::new();
 
-fn log(msg: &str) {
+pub(crate) fn log(msg: &str) {
     let t = START.get().map(|s| s.elapsed().as_millis()).unwrap_or(0);
     if let Ok(mut g) = LOG.lock()
         && let Some(f) = g.as_mut()
@@ -56,7 +56,7 @@ fn log(msg: &str) {
 
 // ------------------------------------------------------------------ memory --------------------
 
-fn readable(addr: u32, len: usize) -> bool {
+pub(crate) fn readable(addr: u32, len: usize) -> bool {
     if addr < 0x10000 {
         return false;
     }
@@ -80,7 +80,7 @@ fn readable(addr: u32, len: usize) -> bool {
     true
 }
 
-fn read(addr: u32, len: usize) -> Option<Vec<u8>> {
+pub(crate) fn read(addr: u32, len: usize) -> Option<Vec<u8>> {
     if !readable(addr, len) {
         return None;
     }
@@ -95,7 +95,7 @@ fn read_u32(addr: u32) -> Option<u32> {
 }
 
 /// Writes code bytes (temporarily making the page writable) and flushes the instruction cache.
-fn patch(addr: u32, bytes: &[u8]) -> Result<(), String> {
+pub(crate) fn patch(addr: u32, bytes: &[u8]) -> Result<(), String> {
     let p = addr as usize as *mut c_void;
     let mut old = 0u32;
     // SAFETY: `addr` is verified game code; the game's threads are suspended (attach) or the caller
@@ -118,6 +118,11 @@ fn patch(addr: u32, bytes: &[u8]) -> Result<(), String> {
 
 static FRAMES: AtomicU32 = AtomicU32::new(0);
 
+/// Frame boundaries so far (1 = the first `CTimer::Update` of the process).
+pub(crate) fn frames() -> u32 {
+    FRAMES.load(Ordering::Acquire)
+}
+
 type Job = Box<dyn FnOnce() + Send>;
 static JOBS: Mutex<Vec<Job>> = Mutex::new(Vec::new());
 
@@ -129,6 +134,8 @@ extern "C" fn frame_boundary() {
         for (i, m) in table::apply_pending() {
             log(&format!("frame {f}: {} -> {}", HOOKS[i].name, m.name()));
         }
+        // Hashes of the state the previous frame left, virtual clock step, end-of-run handling.
+        crate::detwin::on_boundary(f);
         let jobs: Vec<Job> = match JOBS.try_lock() {
             Ok(mut g) if !g.is_empty() => std::mem::take(&mut *g),
             _ => Vec::new(),
@@ -209,7 +216,8 @@ fn install_one(i: usize, slot: u32) -> Result<String, String> {
     Ok(format!("{what}; thunk {slot:#x}; mode {}", mode.name()))
 }
 
-fn install_all() -> usize {
+/// Installs every Core hook, and the Oracle group too when `oracle` is set. Returns (installed, wanted).
+fn install_all(oracle: bool) -> (usize, usize) {
     // SAFETY: plain allocation of an executable block for thunks and trampolines.
     let block = unsafe {
         VirtualAlloc(
@@ -221,10 +229,14 @@ fn install_all() -> usize {
     } as usize as u32;
     if block == 0 {
         log("VirtualAlloc failed: no hooks installed");
-        return 0;
+        return (0, HOOKS.len());
     }
-    let mut ok = 0;
+    let (mut ok, mut wanted) = (0, 0);
     for (i, h) in HOOKS.iter().enumerate() {
+        if h.group == Group::Oracle && !oracle {
+            continue;
+        }
+        wanted += 1;
         match install_one(i, block + (i * SLOT) as u32) {
             Ok(s) => {
                 ok += 1;
@@ -233,7 +245,7 @@ fn install_all() -> usize {
             Err(e) => log(&format!("hook {:#x} {}: FAILED: {e}", h.addr, h.name)),
         }
     }
-    ok
+    (ok, wanted)
 }
 
 // ------------------------------------------------------------------ control -------------------
@@ -387,6 +399,11 @@ fn handle(cmd: &Command) -> String {
         },
         Command::Selftest => on_game_thread(selftest, Duration::from_secs(10))
             .unwrap_or_else(|| "err no frame boundary".into()),
+        Command::Hashes(f) => crate::detwin::hashes(*f),
+        Command::Det => crate::detwin::status(),
+        Command::Record(arg) => crate::detwin::record(arg),
+        Command::Replay(path) => crate::detwin::replay(path),
+        Command::Stack => crate::detwin::main_stack(),
         Command::Unknown(s) => format!("err unknown command {s:?}"),
     }
 }
@@ -432,8 +449,12 @@ fn attach() {
         env!("CARGO_PKG_VERSION"),
         dir.display()
     ));
-    let ok = install_all();
-    log(&format!("{ok}/{} hooks installed", HOOKS.len()));
+    let oracle = crate::detwin::init(&dir);
+    let (ok, wanted) = install_all(oracle);
+    log(&format!(
+        "{ok}/{wanted} hooks installed (oracle group {})",
+        if oracle { "on" } else { "off" }
+    ));
     let _ = std::thread::Builder::new()
         .name("sa-hook-ctl".into())
         .spawn(move || control_thread(port));

@@ -164,3 +164,12 @@
   GetRandomNumberInRange finding to the MATH-2 lane. Follow-up CAT-12b: about 24 ProcessCommands* range
   functions and 58 cheat functions are reached only through data tables and are missing from the
   catalogue.
+
+## 2026-11-05: INF-4/5/6 integrated
+- sa-hook determinism mode (oracle.rs, detwin.rs, detaudio.rs, arena.rs; 11 hooks installed only with
+  `SA_DET*`/`SA_HASH`), `crates/sa-oracle-format` (hasher, recording + trace formats, `satool`),
+  `tools/e2e/inf4-determinism.sh`. Re-verified by the main session: workspace tests pass, i686 build;
+  `inf4-determinism.sh` exit 0 (identical hashes, perturbation detected at frame 3700);
+  `inf3-hooks.sh` (determinism off) exit 0 when run alone.
+- Found: running lane 1 (real-time mode) at the same time as the lane-2 determinism run hung lane 1 on the
+  loading screen. New task INF-15; until it is fixed, run one game lane at a time.

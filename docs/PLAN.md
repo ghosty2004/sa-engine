@@ -224,7 +224,7 @@ The goal text states only the end condition. The next action is derived from the
 
 ## 8. Concurrency and resource rules
 
-- Lanes are separate Wine prefixes plus game copies (`wine/lane-N`, data symlinked read-only) and headless
+- (Until INF-15 is fixed: only ONE game lane runs at a time.) Lanes are separate Wine prefixes plus game copies (`wine/lane-N`, data symlinked read-only) and headless
   gamescope displays. Every lane run is wrapped in `flock target/locks/lane-N.lock`. Start with 3 lanes.
 - REA holds one binary at a time, so a single agent uses REA at any moment. Others use the exported
   decompilation under `catalog/raw/`.

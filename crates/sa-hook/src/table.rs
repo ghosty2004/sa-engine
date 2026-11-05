@@ -21,6 +21,27 @@ pub enum Id {
     TimerUpdate = 0,
     LimitRadianAngle = 1,
     IsCoopGameGoingOn = 2,
+    PadUpdate = 3,
+    PadUpdateMouse = 4,
+    CdStreamRead = 5,
+    Rand = 6,
+    Srand = 7,
+    HeapAlloc = 8,
+    Free = 9,
+    Realloc = 10,
+    Calloc = 11,
+    Msize = 12,
+    AudioHardwareService = 13,
+}
+
+/// When a hook is installed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Group {
+    /// Always (the INF-3 set).
+    Core,
+    /// Only when an oracle feature (determinism mode, hashing, record/replay) is enabled at attach;
+    /// these are observers/injectors that pass through to the original unless their feature is on.
+    Oracle,
 }
 
 pub struct HookSpec {
@@ -36,6 +57,7 @@ pub struct HookSpec {
     pub frame_boundary: bool,
     /// Mode at attach.
     pub start_rust: bool,
+    pub group: Group,
 }
 
 pub static HOOKS: &[HookSpec] = &[
@@ -49,6 +71,7 @@ pub static HOOKS: &[HookSpec] = &[
         rust: || crate::game::timer_update_hook as extern "C" fn() as usize,
         frame_boundary: true,
         start_rust: true,
+        group: Group::Core,
     },
     HookSpec {
         id: Id::LimitRadianAngle,
@@ -60,6 +83,7 @@ pub static HOOKS: &[HookSpec] = &[
         rust: || crate::game::limit_radian_angle_hook as extern "C" fn(f32) -> f32 as usize,
         frame_boundary: false,
         start_rust: true,
+        group: Group::Core,
     },
     HookSpec {
         id: Id::IsCoopGameGoingOn,
@@ -71,10 +95,141 @@ pub static HOOKS: &[HookSpec] = &[
         rust: || crate::game::is_coop_game_going_on_hook as extern "C" fn() -> u32 as usize,
         frame_boundary: false,
         start_rust: true,
+        group: Group::Core,
+    },
+    HookSpec {
+        id: Id::PadUpdate,
+        addr: 0x541C40,
+        name: "CPad::Update",
+        kind: Kind::Inline,
+        // sub esp,0x30; push ebx; push ebp
+        expect: &[0x83, 0xEC, 0x30, 0x53, 0x55],
+        rust: crate::oracle::pad_update_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::PadUpdateMouse,
+        addr: 0x53F3C0,
+        name: "CPad::UpdateMouse",
+        kind: Kind::Inline,
+        // sub esp,0x18; push ebp; mov ebp,ecx
+        expect: &[0x83, 0xEC, 0x18, 0x55, 0x8B, 0xE9],
+        rust: crate::oracle::pad_update_mouse_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::CdStreamRead,
+        addr: 0x406A20,
+        name: "CdStream::CdStreamRead",
+        kind: Kind::HoodlumStub,
+        // jmp 0x156C2C0
+        expect: &[0xE9, 0x9B, 0x58, 0x16, 0x01],
+        rust: crate::oracle::cd_stream_read_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::Rand,
+        addr: 0x821B1E,
+        name: "_rand",
+        kind: Kind::Inline,
+        // call _getptd (0x827B3D); mov ecx,[eax+0x14]
+        expect: &[0xE8, 0x1A, 0x60, 0x00, 0x00, 0x8B, 0x48, 0x14],
+        rust: crate::oracle::rand_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::Srand,
+        addr: 0x821B11,
+        name: "_srand",
+        kind: Kind::Inline,
+        // call _getptd (0x827B3D); mov ecx,[esp+4]
+        expect: &[0xE8, 0x27, 0x60, 0x00, 0x00, 0x8B, 0x4C, 0x24, 0x04],
+        rust: crate::oracle::srand_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    // The CRT heap (VC7.1 static CRT): every allocation path ends in one of these. In determinism
+    // mode the main thread's blocks come from the deterministic arena (`arena.rs`).
+    HookSpec {
+        id: Id::HeapAlloc,
+        addr: 0x8241B0,
+        name: "__heap_alloc",
+        kind: Kind::Inline,
+        // push 0xC; push 0x888048 (SEH prolog)
+        expect: &[0x6A, 0x0C, 0x68, 0x48, 0x80, 0x88, 0x00],
+        rust: crate::oracle::heap_alloc_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::Free,
+        addr: 0x82413F,
+        name: "_free",
+        kind: Kind::Inline,
+        expect: &[0x6A, 0x0C, 0x68, 0x38, 0x80, 0x88, 0x00],
+        rust: crate::oracle::free_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::Realloc,
+        addr: 0x824269,
+        name: "_realloc",
+        kind: Kind::Inline,
+        expect: &[0x6A, 0x14, 0x68, 0x58, 0x80, 0x88, 0x00],
+        rust: crate::oracle::realloc_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::Calloc,
+        addr: 0x824416,
+        name: "_calloc",
+        kind: Kind::Inline,
+        expect: &[0x6A, 0x10, 0x68, 0x68, 0x80, 0x88, 0x00],
+        rust: crate::oracle::calloc_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::Msize,
+        addr: 0x828C4A,
+        name: "__msize",
+        kind: Kind::Inline,
+        expect: &[0x6A, 0x10, 0x68, 0x80, 0x84, 0x88, 0x00],
+        rust: crate::oracle::msize_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
+    },
+    HookSpec {
+        id: Id::AudioHardwareService,
+        addr: 0x4D9870,
+        name: "CAEAudioHardware::Service",
+        kind: Kind::Inline,
+        // push ebx; push esi; push edi; mov esi,ecx
+        expect: &[0x53, 0x56, 0x57, 0x8B, 0xF1],
+        rust: crate::oracle::audio_hw_service_entry,
+        frame_boundary: false,
+        start_rust: true,
+        group: Group::Oracle,
     },
 ];
 
-const N: usize = 3;
+const N: usize = 14;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -239,12 +394,20 @@ mod tests {
     fn matches_catalogue_and_exe() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let csv = std::fs::read_to_string(root.join("catalog/functions.csv")).unwrap();
+        let procs = std::fs::read_to_string(root.join("catalog/procedures.csv")).unwrap();
         for h in HOOKS {
             let key = format!("{:#x},", h.addr);
-            let row = csv
-                .lines()
-                .find(|l| l.starts_with(&key))
-                .unwrap_or_else(|| panic!("{} not in catalogue", h.name));
+            let Some(row) = csv.lines().find(|l| l.starts_with(&key)) else {
+                // Not a gta-reversed hook: the CRT's rand/srand (catalogue class excluded:crt, found by
+                // the MSVC LCG constants 214013/2531011 at 0x821B28/0x821B2E).
+                let p = procs
+                    .lines()
+                    .find(|l| l.starts_with(&key))
+                    .unwrap_or_else(|| panic!("{} not in catalogue", h.name));
+                assert!(p.ends_with(",excluded:crt"), "{}: {p}", h.name);
+                assert_eq!(h.group, Group::Oracle);
+                continue;
+            };
             let f: Vec<&str> = row.split(',').collect();
             assert_eq!(format!("{}::{}", f[1], f[2]), h.name);
             assert_eq!(
