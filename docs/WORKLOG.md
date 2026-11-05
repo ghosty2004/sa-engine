@@ -73,3 +73,22 @@
   uninitialised wheel scales (gta-reversed sets 0.7, which is a fix). Details in docs/re/formats.md.
 - Process note: this agent used REA while CAT-7 was also running. REA is single-user (PLAN §8), so briefs
   now say explicitly whether the agent may use REA.
+
+## 2026-11-05: CAT-7 call graph, read/write sets, extents, port order (RE agent)
+- `tools/catalog/callgraph.py` (`ghidra`, `build`, `spotcheck`, `analyse`) and
+  `tools/catalog/ghidra/DumpCat7.java`. Ghidra 12.1.2 headless: fresh import + auto-analysis into
+  `target/ghidra` (≈160 s), then a `-readOnly` dump. The dump removes the CAT-5 mis-split/protection
+  procedures, clears the wrong non-returning flag on `_free` and its thunks (800 truncated callers),
+  creates 2,044 functions (all missed hook targets, 0 failures), and heals undecoded branch targets.
+  Analysis in Python/capstone.
+- Outputs: `catalog/extents.csv`, `callgraph.csv`, `rwsets.csv`, `indirect-calls.csv`,
+  `port-order.csv` (all < 2.3 MB). Totals and blind spots: `docs/re/cat7-callgraph.md`.
+- Verified: rerun twice and once after deleting the Ghidra project; all outputs byte-identical. Spot
+  check vs gta-reversed on 2×10 random functions: 11/15 calls and 35/36 globals found. Each miss was
+  checked: 4 are inlined in the original, 1 is a checker false positive.
+- Found: 153 code addresses that are called or are vtable slots, but missing from `procedures.csv`
+  (`catalog/raw/cat7-noncatalogue-targets.csv`).
+- Cost: ~10 min of Ghidra CPU; `target/ghidra` 112 MB, `catalog/raw` 10 MB.
+- Main session re-verified CAT-7: `callgraph.py build` reproduces all 5 CSVs (sha256 identical);
+  `spotcheck 5 99`: globals 7/7, calls 3/5 (misses explained as original inlines in the agent's notes).
+  Added CAT-12 (153 targets missing from the catalogue) and CAT-13 (virtual call resolution).
