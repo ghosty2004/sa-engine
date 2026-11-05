@@ -328,3 +328,10 @@
 - Main session re-verified CAT-16: two `run_all.sh` runs identical, sa-hook tests pass. Moved the RW name
   of 0x732307 (a ret inside the function) to 0x7322F0 in rw-names.csv. Follow-up for INF-8:
   `sa-oracle/src/l2.rs` closures should also follow `fallthrough` edges (none exist yet).
+
+## 2026-11-05: INF-15 integrated
+- Root cause of the lane hang: a lost-wake-up race inside the original's CdStreamSync. It happens even
+  with one lane (~7%). sa-hook's `cdsync.rs` patches the wait. The agent also fixed the inf3 selftest
+  (x87 model run under the game's FTZ). The main session merged it with ARCH-1 (conflict in win.rs) and
+  re-verified: tests and i686 clippy pass; inf3 on lane 1 and inf4 on lane 2 at the same time both pass.
+  PLAN §8 now allows several lanes. Ledger: original-UB entry. New task INF-16.

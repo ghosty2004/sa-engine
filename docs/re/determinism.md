@@ -111,6 +111,8 @@ from DirectX/DXVK. Their addresses are not used as game logic input as far as th
   (`nSectorsToRead = 0`, `bInUse = 0`, status 0 or 0xFE, `gLastCdStreamPosn = sectors + pos`, overlapped
   offset at +0x24; offsets read from 0x156C2C0 and 0x406560). The streaming thread then never gets work.
   Callers: CStreaming (RequestModelStream, RetryLoadFile) and `CAEMP3BankLoader::Service` (sound banks).
+  Real-time runs keep the thread; its lost-wake-up race with `CdStreamSync` (a loading-screen hang) is
+  fixed by `cdsync.rs`, see lanes.md (INF-15). With synchronous reads the race cannot occur.
 - **Audio** (measured feedback): with time, rand, heap and CdStream fixed, a replay still diverged in some
   runs at frame 204/205 because `CAEWeatherAudioEntity::UpdateParameters` (0x506647) called
   `CAEAudioUtility::ResolveProbability` (rand) one frame earlier; its call chain contains

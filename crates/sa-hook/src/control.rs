@@ -14,6 +14,7 @@
 //! | `record PATH` / `record stop` | start recording the pad input at the next tick / write it to PATH |
 //! | `replay PATH` | inject a recording from the next tick on |
 //! | `stack` | main thread EIP/ESP and the stack words pointing into game code (hang diagnosis) |
+//! | `cdsync` | `cdsync recovered=N slow=M`: CdStreamSync lost wake-ups recovered by the INF-15 fix |
 //! | `hook ADDR\|NAME l2` | route every call through the L2 oracle (original vs Rust at the call site) |
 //! | `l2` | L2 oracle summary: per function calls, cases, mismatches, undeclared writes |
 //! | `l2 flush` | flush the L2 spool and report |
@@ -38,6 +39,7 @@ pub enum Command {
     Record(String),
     Replay(String),
     Stack,
+    CdSync,
     HookL2(String),
     L2(Option<String>),
     Unknown(String),
@@ -69,6 +71,7 @@ pub fn parse(line: &str) -> Option<Command> {
         },
         ("det", []) => Command::Det,
         ("stack", []) => Command::Stack,
+        ("cdsync", []) => Command::CdSync,
         ("l2", []) => Command::L2(None),
         ("l2", [a]) => Command::L2(Some(a.to_string())),
         ("hook", [key, m]) if m.eq_ignore_ascii_case("l2") => Command::HookL2(key.to_string()),
@@ -171,6 +174,7 @@ mod tests {
         assert_eq!(parse("hashes 120"), Some(Command::Hashes(Some(120))));
         assert!(matches!(parse("hashes x"), Some(Command::Unknown(_))));
         assert_eq!(parse("det"), Some(Command::Det));
+        assert_eq!(parse("cdsync"), Some(Command::CdSync));
         assert_eq!(
             parse("record C:\\r.sarec"),
             Some(Command::Record("C:\\r.sarec".into()))

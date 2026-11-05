@@ -68,6 +68,8 @@ if [ "$GAMEPLAY" = 1 ]; then
     e2e_key Return; sleep 1.5; e2e_key Return
     e2e_wait_state 9 180
     check "gameplay state" "$([ "$(e2e_frames_field state)" = 9 ] && echo 1)" "gGameState=9"
+    # Hang diagnosis (INF-15): main-thread stack and the CdStreamSync lost-wake-up counter.
+    [ "$(e2e_frames_field state)" = 9 ] || { ctl stack > /dev/null; ctl cdsync > /dev/null; }
     sleep 20
     e2e_shot 02-intro; e2e_key Return; sleep 25
     e2e_shot 03-gameplay; check "gameplay screenshot" "$([ -s "$E2E_OUT/03-gameplay.png" ] && echo 1)" "$E2E_OUT/03-gameplay.png"
@@ -120,6 +122,7 @@ if [ "$SOAK" -gt 0 ]; then
         "alive after ${elapsed} s, frames $last, $stalls stalled 10-s windows, $n toggle rounds"
 fi
 
+ctl cdsync > /dev/null # CdStreamSync lost wake-ups recovered by sa-hook (INF-15), for the record
 check "game still running" "$(e2e_game_alive && echo 1)" "$(e2e_ctl frames)"
 crash="$(grep -E -c 'Unhandled exception|page fault|PANIC|wine: Unhandled' "$E2E_OUT/wine.log" "$GTA_DIR/sa-hook.log" 2> /dev/null | awk -F: '{ s += $2 } END { print s + 0 }')"
 check "no crash / panic in logs" "$([ "$crash" = 0 ] && echo 1)" "$crash crash lines in wine.log + sa-hook.log"
