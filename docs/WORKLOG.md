@@ -219,3 +219,9 @@
   IsCoopGameGoingOn (1,000 cases each, 0 mismatches). GetATanOfXY: f32 equal, 517/1,000 ST0 cases on the
   pending ledger entry. LimitAngle had no call in the corpus. The state.csv update waits until CAT-6
   finishes regenerating the catalogue. New: CAT-15 (x87 stores missing from rwsets).
+
+## 2026-11-05: SAMP-1 (static) integrated
+- samp-rs (read-only) and samp.dll patches classified against the catalogue: `docs/samp/`,
+  `catalog/samp-usage.csv`. Result: SA:MP keeps the whole frame loop, so the static closure is 67% of the
+  catalogue; samp's disables remove only 182 functions. A real reduction needs the dynamic measurement
+  (SAMP-1D). New: CAT-16 (fall-through edges).
