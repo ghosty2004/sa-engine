@@ -9,6 +9,9 @@ use crate::catalog::Catalog;
 use crate::pe::Image;
 use iced_x86::{CpuidFeature, Decoder, DecoderOptions, Instruction};
 
+/// Hazard name: an FSQRT between a compare and the FNSTSW that reads its condition codes.
+pub const FSQRT_BEFORE_FNSTSW: &str = "FSQRT between FCOM and FNSTSW";
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Hazards {
     /// unfaithful x87 mnemonics found, with the first address
@@ -20,18 +23,37 @@ pub struct Hazards {
 
 pub fn scan(img: &Image, cat: &Catalog, addr: u32, callees: &[u32]) -> Result<Hazards, String> {
     let mut h = Hazards::default();
+    let mut ranges = Vec::new();
     for &a in std::iter::once(&addr).chain(callees) {
-        let (lo, hi) = cat
-            .extent(a)
-            .ok_or(format!("{a:#x} is not a catalogued function start"))?;
+        ranges.extend(
+            cat.ranges(a)
+                .ok_or(format!("{a:#x} is not a catalogued function start"))?,
+        );
+    }
+    for (lo, hi) in ranges {
         let bytes = img.bytes(lo, (hi - lo) as usize);
         let mut dec = Decoder::with_ip(32, bytes, lo as u64, DecoderOptions::NONE);
         let mut ins = Instruction::default();
+        // condition codes set by a compare, then an FSQRT before they are read (verifier V-6: Unicorn's
+        // FSQRT leaves C2 set, so the branch can differ from the CPU)
+        let (mut cmp, mut sqrt_after) = (false, false);
         while dec.can_decode() {
             dec.decode_out(&mut ins);
             h.instructions += 1;
             let m = format!("{:?}", ins.mnemonic());
             let ip = ins.ip32();
+            match m.as_str() {
+                "Fcom" | "Fcomp" | "Fcompp" | "Fucom" | "Fucomp" | "Fucompp" | "Ftst" | "Fxam" | "Ficom"
+                | "Ficomp" => (cmp, sqrt_after) = (true, false),
+                "Fsqrt" if cmp => sqrt_after = true,
+                "Fnstsw" | "Fstsw" => {
+                    if cmp && sqrt_after && !h.x87.iter().any(|(x, _)| x == FSQRT_BEFORE_FNSTSW) {
+                        h.x87.push((FSQRT_BEFORE_FNSTSW.to_string(), ip));
+                    }
+                    (cmp, sqrt_after) = (false, false);
+                }
+                _ => {}
+            }
             if crate::fidelity::UNFAITHFUL.contains(&m.as_str()) && !h.x87.iter().any(|(x, _)| *x == m) {
                 h.x87.push((m.clone(), ip));
             }

@@ -96,15 +96,32 @@ fn prepare(img: &Image) -> Result<(PathBuf, PathBuf), String> {
             ));
         }
     }
-    let image = dir.join("image.bin");
-    let same = std::fs::metadata(&image)
-        .map(|m| m.len() as usize == img.flat.len())
-        .unwrap_or(false)
-        && std::fs::read(&image).map(|b| b == img.flat).unwrap_or(false);
-    if !same {
-        std::fs::write(&image, &img.flat).map_err(|e| e.to_string())?;
+    // One file per image content (specs may patch the image), so concurrent runs never share a file
+    // whose content changes; written to a temporary name and renamed.
+    let h = img.flat.iter().fold(0xCBF2_9CE4_8422_2325u64, |h, &b| {
+        (h ^ b as u64).wrapping_mul(0x100_0000_01B3)
+    });
+    let image = dir.join(format!("image-{h:016x}.bin"));
+    if !std::fs::metadata(&image).is_ok_and(|m| m.len() as usize == img.flat.len()) {
+        let tmp = dir.join(format!("image-{h:016x}.{}.tmp", tmp_tag()));
+        std::fs::write(&tmp, &img.flat).map_err(|e| e.to_string())?;
+        std::fs::rename(&tmp, &image).map_err(|e| e.to_string())?;
     }
     Ok((exe, image))
+}
+
+/// A temporary-file tag unique per process and call.
+fn tmp_tag() -> String {
+    static N: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let n = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    format!("{}-{n}", std::process::id())
+}
+
+/// FNV-1a 64 (file names by content).
+fn fnv(b: &[u8]) -> u64 {
+    b.iter().fold(0xCBF2_9CE4_8422_2325u64, |h, &x| {
+        (h ^ x as u64).wrapping_mul(0x100_0000_01B3)
+    })
 }
 
 fn winpath(p: &std::path::Path) -> String {
@@ -116,8 +133,11 @@ pub fn run(img: &Image, calls: &[Call], probes: Option<&[u8]>) -> Result<Vec<Out
     let (exe, image) = prepare(img)?;
     let probe_arg = match probes {
         Some(code) => {
-            let p = work_dir().join("probes.bin");
-            std::fs::write(&p, code).map_err(|e| e.to_string())?;
+            // one file per content, written under a temporary name: concurrent runs never share it
+            let p = work_dir().join(format!("probes-{:016x}.bin", fnv(code)));
+            let tmp = work_dir().join(format!("probes.{}.tmp", tmp_tag()));
+            std::fs::write(&tmp, code).map_err(|e| e.to_string())?;
+            std::fs::rename(&tmp, &p).map_err(|e| e.to_string())?;
             winpath(&p)
         }
         None => "-".into(),
@@ -138,7 +158,8 @@ pub fn run(img: &Image, calls: &[Call], probes: Option<&[u8]>) -> Result<Vec<Out
     let input: Vec<u8> = calls
         .iter()
         .flat_map(|c| {
-            let mut r = c.ctx().to_vec();
+            let mut r = (c.scratch.len() as u32).to_le_bytes().to_vec();
+            r.extend_from_slice(&c.ctx());
             r.extend_from_slice(&c.scratch);
             r
         })
@@ -159,20 +180,25 @@ pub fn run(img: &Image, calls: &[Call], probes: Option<&[u8]>) -> Result<Vec<Out
     child.stderr.take().unwrap().read_to_string(&mut err).ok();
     let status = child.wait().map_err(|e| e.to_string())?;
     let written = writer.join().map_err(|_| "writer thread panicked".to_string())?;
-    let rec = CTX_LEN + SCRATCH_LEN;
+    let want: usize = calls.iter().map(|c| 4 + CTX_LEN + c.scratch.len()).sum();
     if let Err(e) = written {
         return Err(format!("ref.exe: status {status}, stdin: {e}\n{}", err.trim()));
     }
-    if !status.success() || out.len() != rec * calls.len() {
+    if !status.success() || out.len() != want {
         return Err(format!(
-            "ref.exe: status {status}, {} of {} records\n{}",
-            out.len() / rec,
-            calls.len(),
+            "ref.exe: status {status}, {} of {} bytes\n{}",
+            out.len(),
+            want,
             err.trim()
         ));
     }
-    Ok(out
-        .chunks_exact(rec)
-        .map(|r| Outcome::from_ctx(&r[..CTX_LEN], &r[CTX_LEN..]))
-        .collect())
+    let mut res = Vec::with_capacity(calls.len());
+    let mut o = 0;
+    for c in calls {
+        let n = c.scratch.len();
+        let r = &out[o + 4..o + 4 + CTX_LEN + n];
+        res.push(Outcome::from_ctx(&r[..CTX_LEN], &r[CTX_LEN..]));
+        o += 4 + CTX_LEN + n;
+    }
+    Ok(res)
 }

@@ -6,8 +6,8 @@
  * IMAGE   flat image (SizeOfImage bytes, sections laid out, IAT slots pointing at the trap page); everything
  *         after the header page is copied to 0x401000 (the exe's preferred base is 0x400000).
  * PROBES  code blob loaded at 0x10100000 (x87 fidelity probes), or "-".
- * CASES   N records of { ctx (128 bytes, see thunk.S), scratch (SCRATCH_LEN bytes at 0x10000000) },
- *         or "-" for stdin.
+ * CASES   N records of { u32 len, ctx (128 bytes, see thunk.S), scratch (len bytes at 0x10000000,
+ *         len <= SCRATCH_MAX) }, or "-" for stdin.
  * OUT     the same records with the outputs filled in, or "-" for stdout.
  *
  * Wine puts its heaps at 0x400000 when the main exe lives elsewhere, so ref.exe itself is linked at
@@ -26,7 +26,7 @@
 
 #define IMAGE_BASE 0x400000u
 #define SCRATCH 0x10000000u
-#define SCRATCH_LEN 64u
+#define SCRATCH_MAX 0x8000u
 #define PROBE 0x10100000u
 #define PROBE_LEN 0x10000u
 #define CTX_LEN 128u
@@ -54,7 +54,15 @@ static void *map_at(uint32_t addr, uint32_t len) {
     return p;
 }
 
+/* Commits the stack pages below main's frame once, so the thunk can fill the stack below the
+ * arguments without stepping over the guard page. */
+static void __attribute__((noinline)) commit_stack(void) {
+    volatile char buf[0x10000];
+    for (unsigned i = 0; i < sizeof buf; i += 256) buf[i] = 0;
+}
+
 int main(int argc, char **argv) {
+    commit_stack();
     if (argc != 5) {
         fprintf(stderr, "usage: ref IMAGE PROBES CASES OUT\n");
         return 2;
@@ -103,13 +111,19 @@ int main(int argc, char **argv) {
     }
     setvbuf(in, NULL, _IOFBF, 1 << 20);
     setvbuf(out, NULL, _IOFBF, 1 << 20);
-    static uint8_t rec[CTX_LEN + SCRATCH_LEN];
+    static uint8_t rec[4 + CTX_LEN + SCRATCH_MAX];
     unsigned long n = 0;
-    while (fread(rec, 1, sizeof rec, in) == sizeof rec) {
-        memcpy((void *)(uintptr_t)SCRATCH, rec + CTX_LEN, SCRATCH_LEN);
-        sa_call(rec);
-        memcpy(rec + CTX_LEN, (void *)(uintptr_t)SCRATCH, SCRATCH_LEN);
-        fwrite(rec, 1, sizeof rec, out);
+    uint32_t len;
+    while (fread(&len, 1, 4, in) == 4) {
+        if (len > SCRATCH_MAX || fread(rec + 4, 1, CTX_LEN + len, in) != CTX_LEN + len) {
+            fprintf(stderr, "ref: bad record %lu\n", n);
+            return 2;
+        }
+        memcpy(rec, &len, 4);
+        memcpy((void *)(uintptr_t)SCRATCH, rec + 4 + CTX_LEN, len);
+        sa_call(rec + 4);
+        memcpy(rec + 4 + CTX_LEN, (void *)(uintptr_t)SCRATCH, len);
+        fwrite(rec, 1, 4 + CTX_LEN + len, out);
         n++;
     }
     fflush(out);

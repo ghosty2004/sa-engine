@@ -24,7 +24,7 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | WEAPON | 5 | 153 | 0 | 0 | 0 | 0 | 0 | 158 | 0.0 |
 | INPUT | 0 | 155 | 0 | 0 | 0 | 0 | 0 | 155 | 0.0 |
 | COLL | 2 | 143 | 0 | 0 | 0 | 0 | 0 | 145 | 0.0 |
-| MATH | 0 | 106 | 1 | 1 | 4 | 0 | 0 | 112 | 3.6 |
+| MATH | 0 | 16 | 1 | 91 | 4 | 0 | 0 | 112 | 3.6 |
 | PHYS | 1 | 72 | 0 | 0 | 0 | 0 | 0 | 73 | 0.0 |
 | CALLED-ONLY | 4 | 33 | 0 | 0 | 0 | 0 | 0 | 37 | 0.0 |
 | SAVE | 2 | 34 | 0 | 0 | 0 | 0 | 0 | 36 | 0.0 |
@@ -36,18 +36,108 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 1560 | 13919 | 1 | 1 | 5 | 0 | 6676 | 22162 | 0.03 |
+| **total** | 1560 | 13829 | 1 | 91 | 5 | 0 | 6676 | 22162 | 0.03 |
 
-`specified` by source: REA 6026, gta-reversed 7893
+`specified` by source: REA 6023, gta-reversed 7806
 
-## Functions above `specified` (7)
+## Functions above `specified` (97)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
+| 0x404190 | CRect::IsFlipped | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x404200 | CRect::Restrict | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x404260 | CRect::Resize | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x404290 | CRect::IsPointInside- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4042d0 | CRect::IsPointInside-Tolerance | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x406d50 | CVector::Magnitude2D | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x407180 | CGeneral::GetRandomNumberInRange_int32 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x4082c0 | CVector::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40ede0 | CBox::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40ee20 | CBox::Recalc | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40ee70 | CColBox::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40ef10 | CColLine::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40fcf0 | CSphere::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40fd10 | CColSphere::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40fdb0 | CVector::DotProduct-v3d*v3d* | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x40fdd0 | CVector::Sum | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40fe00 | CVector::Difference | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40ff20 | CColSphere::IntersectRay | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x410040 | CColSphere::IntersectPoint | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x410090 | CColSphere::IntersectSphere | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4100e0 | CColSphere::IntersectEdge | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x411a80 | CMatrix::operator*= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x41bd90 | CGeneral::GetRandomNumberInRange<float>- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x420860 | CVector2D::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x43e020 | CRect::SetFromCenter | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x43e050 | CRect::GetCenter- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x43e110 | CVector2D::operator= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x441390 | CGameLogic::IsCoopGameGoingOn | WORLD | L2 | INF-8 inf8-l2.sh: 1000 in-game cases, 0 mismatches, 0 undeclared writes | 2026-11-05 |
-| 0x53cb00 | CGeneral::LimitAngle | MATH | L1 | sa-math limit_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn; SNaN via CPU); original UB ledger entry | 2026-11-05 |
+| 0x44e480 | CVector2D::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x459350 | CMatrix::Scale | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4a1340 | CMaths::GetSinFast | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4a1360 | CMaths::GetCosFast | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4d1610 | CQuaternion::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x5327f0 | CRect::StretchToPoint | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x53cb00 | CGeneral::LimitAngle | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x53cb50 | CGeneral::LimitRadianAngle | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x53cbe0 | CGeneral::GetRadianAngleBetweenPoints- | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x53cc70 | CGeneral::GetATanOfXY | MATH | implemented | verifier V-1: 35 call sites consume the 64-bit ST0; L1 compared only the f32. Re-verify with an st0_exact caller-composite spec (VER-1) | 2026-11-05 |
+| 0x53cdc0 | CGeneral::GetNodeHeadingFromVector | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x53ce30 | CGeneral::SolveQuadratic | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
+| 0x53cea0 | CGeneral::GetAngleBetweenPoints | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x54e8f0 | CMatrixLink::Insert | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54e910 | CMatrixLink::Remove | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54e9d0 | CMatrixLinkList::AddToList1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54ea10 | CMatrixLinkList::AddToList2 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54ea60 | CMatrixLinkList::MoveToList1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54ea90 | CMatrixLinkList::MoveToList2 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54ead0 | CMatrixLinkList::MoveToFreeList | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54eb10 | CMatrixLinkList::GetNumFree | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54eb30 | CMatrixLinkList::GetNumUsed1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54eb50 | CMatrixLinkList::GetNumUsed2 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59a840 | CMatrix::ConvertToEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59aa40 | CMatrix::ConvertFromEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59acf0 | CMatrix::Detach | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59ad20 | CMatrix::UpdateMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59ad70 | CMatrix::UpdateRwMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59add0 | CMatrix::CopyOnlyMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59adf0 | CMatrix::operator+= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59ae70 | CMatrix::SetUnity | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59aea0 | CMatrix::ResetOrientation | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59aed0 | CMatrix::SetScale-f | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59af00 | CMatrix::SetScale-fff | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59af40 | CMatrix::SetTranslate | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59af80 | CMatrix::SetTranslateOnly | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59afa0 | CMatrix::SetRotateXOnly | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59afe0 | CMatrix::SetRotateYOnly | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b020 | CMatrix::SetRotateZOnly | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b060 | CMatrix::SetRotateX | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b0a0 | CMatrix::SetRotateY | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b0e0 | CMatrix::SetRotateZ | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b120 | CMatrix::SetRotate-xyz | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b1e0 | CMatrix::RotateX | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b2c0 | CMatrix::RotateY | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b390 | CMatrix::RotateZ | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b460 | CMatrix::Rotate | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b6a0 | CMatrix::Reorthogonalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59b7e0 | CMatrix::ForceUpVector | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59b8b0 | CMatrix::CopyToRwMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59b920 | CMatrix::Invert-1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59b9f0 | CCompressedMatrixNotAligned::DecompressIntoFullMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59bad0 | CCompressedMatrixNotAligned::CompressFromFullMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59bb60 | CMatrix::Update | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59bbb0 | CMatrix::UpdateRW | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59bbc0 | CMatrix::operator= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59bbf0 | CMatrix::SetRotate-quat | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59bd10 | CMatrix::Attach | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59bdd0 | CMatrix::Invert-2 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59be30 | CMatrix::operator*-Mat | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59bfa0 | CMatrix::operator+- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59c080 | CQuaternion::Get- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59c670 | CVector::FromMultiply | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59c6d0 | CVector::FromMultiply3x3 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x59c730 | CVector::CrossProduct-out | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59c890 | CMatrix::operator*-Vec | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59c910 | CVector::Normalise | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
+| 0x59c970 | CVector::NormaliseAndMag | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x70f890 | CVector::Cross_OG | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |

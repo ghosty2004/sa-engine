@@ -138,6 +138,13 @@ pub fn f32_any(r: &mut Rng) -> f32 {
 /// branches on `x == y`, `|x| == |y|` and zero differences.
 pub fn f32_tuple(r: &mut Rng, n: usize) -> Vec<f32> {
     let mut v: Vec<f32> = (0..n).map(|_| f32_any(r)).collect();
+    // all zeros with random signs (zero-length vectors, `-0` branches; verifier V-8)
+    if r.chance(3) {
+        for x in v.iter_mut() {
+            *x = if r.chance(50) { -0.0 } else { 0.0 };
+        }
+        return v;
+    }
     if n >= 2 && r.chance(20) {
         let i = r.below(n as u32) as usize;
         let j = r.below(n as u32) as usize;

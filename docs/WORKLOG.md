@@ -265,3 +265,11 @@
   as R, not "no flags"). Fixed in callgraph.py (CAT-15); verified on 0x561B10/0xB7CB50.
 - state.csv: L2 for LimitRadianAngle, GetRadianAngleBetweenPoints, SolveQuadratic, CVector::Normalise,
   CGameLogic::IsCoopGameGoingOn (INF-8 evidence).
+
+## 2026-11-05: MATH-2 integrated
+- 99 MATH functions ported (`crates/sa-math`), 96 L1-verified at 10^6 cases (state.csv: 91 at L1 + 4 at L2
+  + GetATanOfXY implemented). Harness extensions in sa-oracle (0x500-byte scratch compared whole, fake TIB,
+  image patches, content-hashed native files, the FSQRT condition-code hazard in the scan). Re-verified by
+  the main session after merging with INF-8 (one conflict in lib.rs): sa-math/sa-oracle/sa-hook tests pass
+  (incl. verifier_l1 5/5), and 3 random specs at 1M cases PASS. Ledger: 2 pending + 1 original-UB entries
+  added.

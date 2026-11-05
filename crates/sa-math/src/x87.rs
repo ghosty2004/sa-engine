@@ -136,6 +136,33 @@ fn two_sum_err(a: f64, b: f64, s: f64) -> f64 {
     (a - aa) + (b - bb)
 }
 
+/// The CPU's pi for argument reduction (FSIN/FCOS/FPTAN): 66 bits, `P = PI66 * 2^-64`.
+const PI66: u128 = 0x3_243F_6A88_85A3_08D3;
+
+/// Reduces a finite `0 <= x < 2^63` against [`PI66`] by quadrants: returns (k mod 4, x - k*P/2) with
+/// `k = round(x / (P/2))`, so `|r| <= P/4`. The remainder is exact before its final rounding to f64
+/// (results near zero, e.g. `cos` near pi/2, keep their full relative precision).
+fn reduce_pi66(x: f64) -> (u32, f64) {
+    if x < 0.78 {
+        return (0, x);
+    }
+    let bits = x.to_bits();
+    let e = ((bits >> 52) & 0x7FF) as i32 - 1075; // x = m * 2^e
+    let m = (bits & FRAC) | (1 << 52);
+    // x / (P/2) = m * 2^(e+65) / PI66; 0.78 <= x < 2^63 gives 13 <= e+65 <= 75, so n < 2^128
+    let n = u128::from(m) << (e + 65) as u32;
+    let mut k = n / PI66;
+    let rem = n % PI66;
+    // PI66 is odd, so there is no tie; r = rem * 2^-65
+    let r = if 2 * rem > PI66 {
+        k += 1;
+        -((PI66 - rem) as f64)
+    } else {
+        rem as f64
+    };
+    ((k & 3) as u32, r * 2f64.powi(-65))
+}
+
 /// True for a signalling NaN f32 (quiet bit clear).
 pub fn is_snan_f32(v: f32) -> bool {
     let b = v.to_bits();
@@ -410,6 +437,100 @@ impl X87 {
         X87(libm::atan2(self.0, x.0))
     }
 
+    /// A register value from an f64 that the x87 holds exactly (e.g. `fld qword` of an integral double).
+    pub fn from_f64_exact(v: f64) -> X87 {
+        X87(v)
+    }
+
+    /// `fild dword`: exact (an i32 always fits the 64-bit significand, and an f64).
+    pub fn from_i32(v: i32) -> X87 {
+        X87(f64::from(v))
+    }
+
+    /// `fadd st, st` (doubling: exact unless it overflows the modelled range).
+    pub fn fdouble(self) -> X87 {
+        self.fadd(self)
+    }
+
+    /// FSIN (not affected by PC). See [`X87::fcos`] for the model.
+    pub fn fsin(self) -> X87 {
+        self.trig(false)
+    }
+
+    /// FCOS (not affected by PC). Model of the CPU (checked against it by `sa-oracle`):
+    /// - NaN → the quieted NaN; ±inf → the indefinite;
+    /// - |x| >= 2^63 → the operand unchanged (the CPU sets C2 and does nothing);
+    /// - otherwise the argument is reduced against the CPU's 66-bit approximation of pi,
+    ///   `P = 0x3.243F6A8885A308D3`, by quadrants: `k = round(x / (P/2))`, `r = x - k*P/2` computed
+    ///   exactly, and the result is `sin`/`cos` of `r` rotated by `k` quadrants, evaluated in f64. So for large arguments the result follows
+    ///   the CPU's pi, not the true one (`sin(x*pi/P)`, not `sin(x)`).
+    ///
+    /// Precision caveat as for [`X87::fpatan`]: 53 instead of 64 significand bits.
+    pub fn fcos(self) -> X87 {
+        self.trig(true)
+    }
+
+    fn trig(self, cos: bool) -> X87 {
+        let x = self.0;
+        if x.is_nan() {
+            return self.quiet();
+        }
+        if x.is_infinite() {
+            return X87::indefinite();
+        }
+        let ax = x.abs();
+        if ax >= 9_223_372_036_854_775_808.0 {
+            return self;
+        }
+        let (q, r) = reduce_pi66(ax);
+        // sin(r + q*pi/2) and cos(r + q*pi/2)
+        let (sr, cr) = (libm::sin(r), libm::cos(r));
+        let v = match (cos, q) {
+            (false, 0) | (true, 3) => sr,
+            (false, 1) | (true, 0) => cr,
+            (false, 2) | (true, 1) => -sr,
+            _ => -cr,
+        };
+        // sin is odd, cos is even
+        X87(if !cos && x.is_sign_negative() { -v } else { v })
+    }
+
+    /// MSVC `_ftol2` (0x821B40), which the game calls for every float-to-int conversion: truncation of
+    /// ST0 (the operand is consumed) to a 64-bit integer, returned in EDX:EAX. It rounds with FISTP
+    /// (round to nearest) and corrects by the sign of the f32-stored difference. NaN, ±inf and values out
+    /// of the i64 range give the "integer indefinite" `0x8000_0000_0000_0000`.
+    pub fn ftol(self) -> u64 {
+        let v = self.0;
+        // fistp qword (RC = nearest)
+        let r: u64 = if v.is_nan() || v.abs() >= 9_223_372_036_854_775_808.0 {
+            0x8000_0000_0000_0000 // also the exact encoding of -2^63
+        } else {
+            libm::rint(v) as i64 as u64
+        };
+        let (lo, hi) = (r as u32, (r >> 32) as u32);
+        let sign_bits = self.to_f32().to_bits(); // fst dword [esp+18h]
+        if lo == 0 && hi & 0x7FFF_FFFF == 0 {
+            return r;
+        }
+        // fsubp: v - r (PC=24), stored as f32
+        let d = self.fsub(X87(r as i64 as f64)).to_f32().to_bits();
+        let (mut lo, mut hi) = (lo, hi);
+        if (sign_bits as i32) < 0 {
+            // xor ecx, 80000000h; add ecx, 7FFFFFFFh; adc eax, 0; adc edx, 0
+            let (_, carry) = (d ^ 0x8000_0000).overflowing_add(0x7FFF_FFFF);
+            let (l, c2) = lo.overflowing_add(carry as u32);
+            lo = l;
+            hi = hi.wrapping_add(c2 as u32);
+        } else {
+            // add ecx, 7FFFFFFFh; sbb eax, 0; sbb edx, 0
+            let (_, carry) = d.overflowing_add(0x7FFF_FFFF);
+            let (l, b2) = lo.overflowing_sub(carry as u32);
+            lo = l;
+            hi = hi.wrapping_sub(b2 as u32);
+        }
+        (u64::from(hi) << 32) | u64::from(lo)
+    }
+
     /// FCOM/FCOMP: compare `self` (ST0) with `o`.
     pub fn fcom(self, o: X87) -> Cmp {
         match self.0.partial_cmp(&o.0) {
@@ -501,5 +622,37 @@ mod tests {
         assert!(!Cmp::Equal.test_parity(0x44));
         assert!(Cmp::Less.test_parity(0x44));
         assert!(Cmp::Unordered.test_parity(0x44));
+    }
+
+    #[test]
+    fn ftol_truncates() {
+        let t = |v: f32| X87::from_f32(v).ftol() as i64;
+        assert_eq!(t(2.5), 2);
+        assert_eq!(t(-2.5), -2);
+        assert_eq!(t(0.49), 0);
+        assert_eq!(t(-0.6), 0);
+        assert_eq!(t(3.0), 3);
+        assert_eq!(t(-1e10), -10_000_000_000);
+        assert_eq!(X87::from_f32(f32::NAN).ftol(), 0x8000_0000_0000_0000);
+        assert_eq!(X87::from_f32(1e30).ftol(), 0x8000_0000_0000_0000);
+    }
+
+    #[test]
+    fn trig_model() {
+        let s = |v: f32| X87::from_f32(v).fsin().to_f32();
+        assert_eq!(s(0.0), 0.0);
+        assert_eq!(s(-0.0).to_bits(), 0x8000_0000);
+        assert!((s(1.0) - 0.841_470_96).abs() < 1e-7);
+        assert!((X87::from_f32(3.0).fcos().to_f32() + 0.989_992_5).abs() < 1e-6);
+        // |x| >= 2^63: unchanged
+        assert_eq!(s(1e30), 1e30);
+        assert_eq!(
+            X87::from_f32(f32::INFINITY).fsin().to_f32().to_bits(),
+            0xFFC0_0000
+        );
+        // reduction against the 66-bit pi: sin(k * P66) for a large multiple differs from libm's sin
+        let big = 1.0e17f32;
+        let m = X87::from_f32(big).fsin().to_f32();
+        assert!(m.abs() <= 1.0);
     }
 }
