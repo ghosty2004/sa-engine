@@ -63,3 +63,13 @@
   checked visually, toggles, storm, selftest 0 mismatches, no crash). The agent's 600 s soak passed too.
 - Measured: about 25 fps in gameplay under Wine/DXVK headless, about 63 fps in the menu. Not investigated
   yet.
+
+## 2026-11-05: FMT-2 part a integrated
+- `sa-formats` data modules (impl-1 plus 3 forked helpers): every data definition file gta_sa.exe loads,
+  parsed with the exe's own line reader and an MSVC `sscanf` model. Re-verified by the main session: 63 unit
+  tests pass; `game_data_defs` and `game_data` ignored tests pass on the install; clippy clean.
+- Original quirks kept as-is (1:1), e.g. the trailing space on gta.dat paths breaks the `occl` interior
+  test, `path` sections end text IPL reads, timecyc `dir_mult` is never assigned, and 11 vehicles keep
+  uninitialised wheel scales (gta-reversed sets 0.7, which is a fix). Details in docs/re/formats.md.
+- Process note: this agent used REA while CAT-7 was also running. REA is single-user (PLAN §8), so briefs
+  now say explicitly whether the agent may use REA.

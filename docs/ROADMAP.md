@@ -11,7 +11,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | FMT-2 part a (worktree) | FMT-3 |
+| impl-1 | FMT-3 (worktree) | FMT-2 part b |
 | impl-2 | INF-4/5/6 determinism + recorder + hasher (worktree) | INF-8 |
 | measurement / REA | CAT-7 | CAT-10 part 2 |
 | harness | INF-7 L1 Unicorn harness (`sa-oracle`, worktree) | INF-9 |
@@ -69,7 +69,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | ID | Task | Funcs (rev/unrev) | Status | Verification |
 |---|---|---|---|---|
 | FMT-1 | IMG v2, RW chunk stream (DFF/TXD), COL1–4 | — | done | 8 IMG / 21,038 entries, 15,347 DFF, 4,037 TXD (32,869 textures), 253/254 COL byte-exact round trip. peds.col is an expected failure (not loaded as collision; ValidateVersion stamp bytes, see docs/re/formats.md). Open: verify the triangle index order against the exe's RW stream reader before rendering relies on it |
-| FMT-2 | IPL text+binary, IDE, all DAT/CFG (handling, timecyc, carcols, pedstats, weapon, surfinfo, water, paths/nodes, object.dat, popcycle, …) | — | todo | the original's in-memory tables equal after load |
+| FMT-2 | IPL text+binary, IDE, all DAT/CFG the exe loads | — | in-progress | part a done: MSVC 7.1 `sscanf`/`fgets`/LoadLine semantics, taken from REA decompiles of 1.0 US. Whole-install test: 0 failures; binary IPL (190), nodes (128), roadblox byte-exact; canonical dumps for part b. Part b todo (after INF-4): compare against the original's in-memory tables (incl. uninitialised fields, float parsing via `__strgtold12`, the obfuscated carcols stub at 0x405FB1). Findings in docs/re/formats.md |
 | FMT-3 | IFP (ANP3), GXT, SCM (main + script.img), SFX/stream audio containers, saves | — | todo | same as above |
 | MATH | vectors, matrices, quaternions, CGeneral, CMaths, x87 helpers | 96/0 | todo | L1 |
 | CORE | pools, timer, memory mgr, file mgr, game/app states | 265/10 | todo | L2, L3 boot sequence |
