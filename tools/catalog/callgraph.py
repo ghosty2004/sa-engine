@@ -18,6 +18,11 @@ Two steps:
       CAT-12: append call targets outside the catalogue to catalog/extra-code-addresses.csv
       (exit 3 = rows added, rerun the pipeline from merge_ghidra.py; 0 = catalogue closed).
 
+  callgraph.py fallthrough [catalog-dir]
+      CAT-16: append the mid-function entries that `build` found (catalog/fallthrough.csv, decision
+      mis-split) to catalog/fallthrough-splits.csv (exit 3 = rows added, rerun the pipeline; 4 = an
+      undecided case needs a hand row; 0 = done).
+
   callgraph.py spotcheck N SEED
       Verification: N random reversed functions vs their gta-reversed source.
 
@@ -63,7 +68,7 @@ DATA = [('.rdata', 0x858000, 0x8A4000), ('.data', 0x8A4000, 0xC9E000), ('_TEXT_H
 LIVE_STATES = ('gr-reversed', 'gr-unreversed', 'gr-called-only', 'unknown')
 # edges that make a function depend on another for porting (leaf-first order)
 ORDER_KINDS = ('call', 'tailcall', 'virtual', 'virtual-override', 'virtual-typed', 'virtual-typed-override',
-               'indirect-ghidra', 'eh-unwind')
+               'indirect-ghidra', 'eh-unwind', 'fallthrough')
 REMOVE_CLASSES = ('excluded:mis-split', 'excluded:protection')
 CXX_FRAME_HANDLER = 0x8215A0
 FUNCINFO_MAGIC = (0x19930520, 0x19930521, 0x19930522)
@@ -669,9 +674,227 @@ def build(cat):
                        indirect_resolved=n_ind_res, unresolved_jumps=n_cjmp_unres, jumps_outside=n_jout,
                        writes_through_pointer=wtp, ebp_frame=int(ebp_frame))
 
+    # ---- CAT-16: fall-through into another catalogue entry
+    fall = fallthroughs(im, cat, procs, funcs, live, dump, edges, entry_set)
+    for x in fall:
+        if x['decision'] == 'fallthrough':
+            edge(x['faller'], x['target'], 'fallthrough', cls_of(x['target']), name_of(x['target']))
+    stats['cat16_noreturn_functions'] = len(fall.noreturn)
+    stats['cat16_by_decision'] = dict(sorted(collections.Counter(x['decision'] for x in fall).items()))
+
     return dict(im=im, procs=procs, funcs=funcs, edges=edges, ecls=ecls, ename=ename, rw=rw,
                 indirect=indirect, codeimm=codeimm, summ=summ, gnames=gnames, gsorted=gsorted, stats=stats, live=live,
-                stubs=stubs, dump=dump, vt=vt, hood2stub=hood2stub)
+                stubs=stubs, dump=dump, vt=vt, hood2stub=hood2stub, fall=fall)
+
+
+# ---------------------------------------------------------------------------- CAT-16 fall-through
+# Ghidra's genuinely non-returning MSVC runtime functions (the names DumpCat7.java keeps flagged)
+NORETURN_NAMES = ('_abort', '__exit', '_exit', '__CxxThrowException@8', '_longjmp', '__amsg_exit')
+NORETURN_IMPORTS = ('KERNEL32.dll!ExitProcess', 'KERNEL32.dll!TerminateProcess')
+TERMINATORS = (X.X86_INS_RET, X.X86_INS_RETF, X.X86_INS_JMP, X.X86_INS_INT3, X.X86_INS_HLT, X.X86_INS_UD2)
+SPLITS_FILE = 'fallthrough-splits.csv'
+
+
+class Fall(list):
+    noreturn = ()
+
+
+def noreturn_set(im, dump):
+    """Entries of functions that never return: the named MSVC runtime ones, MSVC `exit` (same shape as
+    `__exit` = doexit(code, 1, 0), but doexit(code, 0, 0); Ghidra leaves it unnamed), and, to a fixpoint,
+    every function whose body has no ret, leaves its body only towards a non-returning function and
+    calls at least one."""
+    nr = {a for a, j in dump.items() if j['name'] in NORETURN_NAMES and not j['thunk']}
+    iat = {a for a, n in im.iat.items() if n in NORETURN_IMPORTS}
+
+    def head(a, n):
+        return [(i.mnemonic, i.op_str) for _k, i in zip(range(n), im.md.disasm(im.rd(a, 32), a))]
+    ex = [a for a, j in dump.items() if j['name'] == '__exit']
+    if ex:
+        h = head(ex[0], 4)
+        if [x for x, _ in h] == ['push', 'push', 'push', 'call'] and h[1] == ('push', '1'):
+            want = [h[0], ('push', '0'), h[2], h[3][0]]
+            doexit = h[3][1]
+            for a in sorted(dump):
+                g = head(a, 4)
+                if len(g) == 4 and g[:3] == want[:3] and g[3][0] == 'call' and \
+                        int(g[3][1], 16) == int(doexit, 16):
+                    nr.add(a)
+
+    def target(ins):
+        op = ins.operands[0] if ins.operands else None
+        if op is not None and op.type == X.X86_OP_IMM:
+            return op.imm & 0xFFFFFFFF
+        if op is not None and op.type == X.X86_OP_MEM and op.mem.base == 0 and op.mem.index == 0:
+            return ('iat', op.mem.disp & 0xFFFFFFFF)
+        return None
+
+    def nr_call(ins):
+        t = target(ins)
+        return t[1] in iat if isinstance(t, tuple) else t in nr
+    # per body: None when it can return (ret, or a jump that leaves the body to something other than a
+    # direct target), else (direct jump targets outside the body, call targets)
+    summ = {}
+    for a in sorted(dump):
+        body = dump[a]['body']
+        jo, ct, ok = set(), set(), bool(body)
+        for lo, hi in body:
+            for ins in im.insns(lo, hi):
+                if ins.id in (X.X86_INS_RET, X.X86_INS_RETF):
+                    ok = False
+                elif ins.group(capstone.CS_GRP_JUMP):
+                    t = target(ins)
+                    if not isinstance(t, int):
+                        ok = False
+                    elif not any(l2 <= t < h2 for l2, h2 in body):
+                        jo.add(t)
+                elif ins.group(capstone.CS_GRP_CALL):
+                    ct.add(target(ins))
+            if not ok:
+                break
+        if ok:
+            summ[a] = (jo, ct)
+    changed = True
+    while changed:
+        changed = False
+        for a, (jo, ct) in summ.items():
+            if a not in nr and jo <= nr and any(t[1] in iat if isinstance(t, tuple) else t in nr for t in ct):
+                nr.add(a)
+                changed = True
+    return nr, nr_call
+
+
+def code_xrefs(im, targets):
+    """{target: sorted sites} of every rel32 call / jmp / jcc and every 4-byte little-endian occurrence
+    (pointers, immediates) anywhere in the image that names one of `targets`. Byte-level scan, so it
+    over-approximates (never misses a rel32 or absolute reference)."""
+    out = collections.defaultdict(set)
+    if not targets:
+        return out
+    img = bytes(im.img)
+    for lo, hi in CODE:
+        seg = img[lo - BASE:hi - BASE]
+        for m in re.finditer(rb'[\xe8\xe9]|\x0f[\x80-\x8f]', seg, re.S):
+            p = m.start()
+            n = len(m.group(0))
+            if p + n + 4 > len(seg):
+                continue
+            t = (lo + p + n + 4 + struct.unpack_from('<i', seg, p + n)[0]) & 0xFFFFFFFF
+            if t in targets:
+                out[t].add((lo + p, 'rel32'))
+    for t in targets:
+        v = struct.pack('<I', t)
+        i = img.find(v)
+        while i >= 0:
+            out[t].add((BASE + i, 'u32'))
+            i = img.find(v, i + 1)
+    return out
+
+
+def fallthroughs(im, cat, procs, funcs, live, dump, edges, entry_set):
+    """Every instruction of a live body whose fall-through address leaves the body and is another
+    catalogue entry. Decision per case:
+      noreturn-call  the instruction is a call to a non-returning function: no flow, no edge
+      fallthrough    the entry is referenced from outside the faller (call, jump, pointer, gta-reversed
+                     call): a real function that the faller shares as its tail -> `fallthrough` edge
+      mis-split      the entry has no reference outside the faller and the instruction before it is
+                     ordinary code (not a call, not nop/int3 padding): a mid-function label; it is
+                     merged into the faller by `callgraph.py fallthrough` (catalog/fallthrough-splits.csv)
+      undecided      anything else: needs a hand decision in catalog/fallthrough-splits.csv"""
+    nr, nr_call = noreturn_set(im, dump)
+    cand = []
+    for a in live:
+        f = funcs[a]
+        own = [(lo, hi) for lo, hi in f.ranges]
+        for lo, hi in own:
+            insl = list(im.insns(lo, hi))
+            for k, ins in enumerate(insl):
+                if ins.id in TERMINATORS:
+                    continue
+                n = ins.address + ins.size
+                if any(l2 <= n < h2 for l2, h2 in own) or n not in entry_set or n in (a, f.hood):
+                    continue
+                # dead code after a call to a non-returning function (Ghidra keeps it in the body when
+                # it does not know the callee never returns): walk back to the start of the straight
+                # line; a branch target or the range start makes it live
+                tg = {t for x in (a, f.hood) if x in dump for _s, t, _k in dump[x]['jumps']}
+                for i2 in (i for l2, h2 in own for i in im.insns(l2, h2)):
+                    if i2.group(capstone.CS_GRP_JUMP) and i2.operands and i2.operands[0].type == X.X86_OP_IMM:
+                        tg.add(i2.operands[0].imm & 0xFFFFFFFF)
+                j, dead = k, None
+                while j > 0 and insl[j].address not in tg:
+                    p = insl[j - 1]
+                    if p.group(capstone.CS_GRP_CALL) and nr_call(p):
+                        dead = p
+                        break
+                    if p.id in TERMINATORS:
+                        break
+                    j -= 1
+                cand.append((a, dead or ins, n))
+    xr = code_xrefs(im, {n for _a, _i, n in cand})
+    gcall = collections.defaultdict(set)
+    for fa, j in dump.items():
+        for s, t, _k in j['calls']:
+            gcall[t].add(s)
+    fall = Fall()
+    fall.noreturn = nr
+    for a, ins, n in cand:
+        rs = funcs[a].ranges
+        inside = lambda s: any(lo <= s < hi for lo, hi in rs)  # noqa: E731
+        refs = sorted({f'{k} {s:#x}' for s, k in xr.get(n, ()) if not inside(s)} |
+                      {f'ghidra-call {s:#x}' for s in gcall.get(n, ()) if not inside(s)} |
+                      {f'{k} from {c:#x}' for (c, t, k) in edges if t == n and c != a})
+        if n in procs and procs[n]['state'] == 'gr-called-only':
+            refs.append('called from gta-reversed (plugin::Call)')
+        own_jumps = sorted(s for s, _k in xr.get(n, ()) if inside(s))
+        last = f'{ins.mnemonic} {ins.op_str}'.strip()
+        nrc = ins.group(capstone.CS_GRP_CALL) and nr_call(ins)
+        ev = ((f'{ins.address:#x} `{last}` never returns; the dead bytes after it run into {n:#x}; ' if nrc else
+               f'{ins.address:#x} `{last}` falls into {n:#x}; ')
+              + (f'refs: {", ".join(refs[:6])}' + (f' (+{len(refs) - 6})' if len(refs) > 6 else '')
+                 if refs else 'no reference outside the faller')
+              + (f'; also jumped to from the faller at {",".join(hex(s) for s in own_jumps)}' if own_jumps else ''))
+        if nrc:
+            dec = 'noreturn-call'
+        elif refs:
+            dec = 'fallthrough'
+        elif not ins.group(capstone.CS_GRP_CALL) and ins.id not in (X.X86_INS_NOP,):
+            dec = 'mis-split'
+        else:
+            dec = 'undecided'
+        fall.append(dict(faller=a, site=ins.address, insn=last, target=n, decision=dec, evidence=ev))
+    return fall
+
+
+def cmd_fallthrough(cat):
+    """CAT-16 fixpoint step: append every `mis-split` fall-through target of catalog/fallthrough.csv to
+    catalog/fallthrough-splits.csv (classify_unknowns.py classifies those rows excluded:mis-split, so
+    the next pass merges them into the faller's extent). Exit 3 when rows were added (rerun the
+    pipeline), 4 when a case is undecided (add a hand row), 0 when nothing is left to merge."""
+    path = cat / SPLITS_FILE
+    have = {}
+    if path.exists():
+        have = {int(r['address'], 16): r for r in csv.DictReader(open(path))}
+    new, bad = {}, []
+    for r in csv.DictReader(open(cat / 'fallthrough.csv')):
+        t = int(r['target'], 16)
+        if r['decision'] == 'mis-split' and t not in have:
+            new[t] = {'address': hx(t), 'host': r['faller'], 'rule': 'cat16-auto',
+                      'evidence': f"mid-function label of {r['faller']} {r['faller_name']}: {r['evidence']}"}
+        elif r['decision'] == 'undecided':
+            bad.append(r)
+    if new:
+        rows = sorted(list(have.values()) + list(new.values()), key=lambda x: int(x['address'], 16))
+        write_csv(path, ['address', 'host', 'rule', 'evidence'],
+                  [[x['address'], x['host'], x['rule'], x['evidence']] for x in rows])
+        print(f'fallthrough: merged {len(new)} mid-function entries into their host ({path})')
+        sys.exit(3)
+    if bad:
+        for r in bad:
+            print('fallthrough: undecided, add a hand row to', path, dict(r))
+        sys.exit(4)
+    n = sum(1 for r in csv.DictReader(open(cat / 'fallthrough.csv')) if r['decision'] == 'fallthrough')
+    print(f'fallthrough: {n} fall-through edges, {len(have)} merged mid-function entries, nothing new')
 
 
 # ---------------------------------------------------------------------------- body completion
@@ -1029,6 +1252,14 @@ def cmd_build(cat):
     write_csv(cat / 'rwsets.csv', ['function', 'address', 'section', 'name', 'near', 'size', 'access', 'mode'],
               rrows)
 
+    # CAT-16: every fall-through out of a body into another catalogue entry, with its decision
+    write_csv(cat / 'fallthrough.csv', ['faller', 'faller_name', 'site', 'instruction', 'target', 'target_name',
+                                        'target_state', 'decision', 'evidence'],
+              [[hx(x['faller']), procs[x['faller']]['name'], hx(x['site']), x['insn'], hx(x['target']),
+                procs[x['target']]['name'] if x['target'] in procs else r['dump'][x['target']]['name'],
+                procs[x['target']]['state'] if x['target'] in procs else 'noncatalogue', x['decision'],
+                x['evidence']] for x in sorted(r['fall'], key=lambda x: (x['faller'], x['site']))])
+
     write_csv(cat / 'indirect-calls.csv', ['function', 'site', 'instruction', 'resolution', 'detail'],
               [[hx(a), hx(s), form, res, det] for a, s, form, res, det in sorted(r['indirect'])])
 
@@ -1246,13 +1477,14 @@ def cmd_gaps(cat):
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ('ghidra', 'build', 'analyse', 'spotcheck', 'gaps'):
+    if len(sys.argv) < 2 or sys.argv[1] not in ('ghidra', 'build', 'analyse', 'spotcheck', 'gaps',
+                                                       'fallthrough'):
         sys.exit(__doc__)
     if sys.argv[1] == 'spotcheck':
         return cmd_spotcheck(ROOT / 'catalog', int(sys.argv[2]), int(sys.argv[3]))
     cat = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / 'catalog'
     {'ghidra': lambda: cmd_ghidra(cat), 'build': lambda: cmd_build(cat), 'gaps': lambda: cmd_gaps(cat),
-     'analyse': cmd_analyse}[sys.argv[1]]()
+     'fallthrough': lambda: cmd_fallthrough(cat), 'analyse': cmd_analyse}[sys.argv[1]]()
 
 
 if __name__ == '__main__':

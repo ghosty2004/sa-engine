@@ -4,7 +4,7 @@
    "by_subsystem": {
     "AI": [
      21,
-     4048
+     4047
     ],
     "ANIM": [
      5,
@@ -28,7 +28,7 @@
     ],
     "CORE": [
      15,
-     320
+     319
     ],
     "HUD": [
      32,
@@ -60,23 +60,23 @@
     ],
     "RW": [
      9,
-     1807
+     1804
     ],
     "SAVE": [
      0,
      36
     ],
     "SCRIPT": [
-     29,
+     30,
      223
     ],
     "STREAM": [
      26,
-     553
+     552
     ],
     "UNK-game": [
      9,
-     2888
+     2887
     ],
     "VEH": [
      31,
@@ -91,16 +91,16 @@
      919
     ]
    },
-   "total": 317
+   "total": 318
   },
   "B_samp_roots_resolved_edges": {
    "by_subsystem": {
     "AI": [
-     797,
-     4048
+     801,
+     4047
     ],
     "ANIM": [
-     132,
+     133,
      265
     ],
     "AUDIO": [
@@ -121,10 +121,10 @@
     ],
     "CORE": [
      172,
-     320
+     319
     ],
     "HUD": [
-     270,
+     275,
      342
     ],
     "INPUT": [
@@ -136,7 +136,7 @@
      112
     ],
     "PED": [
-     228,
+     229,
      371
     ],
     "PHYS": [
@@ -148,28 +148,28 @@
      429
     ],
     "RENDER": [
-     477,
+     479,
      832
     ],
     "RW": [
-     603,
-     1807
+     602,
+     1804
     ],
     "SAVE": [
      23,
      36
     ],
     "SCRIPT": [
-     182,
+     186,
      223
     ],
     "STREAM": [
-     272,
-     553
+     271,
+     552
     ],
     "UNK-game": [
-     507,
-     2888
+     508,
+     2887
     ],
     "VEH": [
      407,
@@ -180,17 +180,17 @@
      158
     ],
     "WORLD": [
-     558,
+     559,
      919
     ]
    },
-   "total": 6037
+   "total": 6054
   },
   "C_samp_roots_plus_instantiated_vtables": {
    "by_subsystem": {
     "AI": [
      3590,
-     4048
+     4047
     ],
     "ANIM": [
      163,
@@ -214,7 +214,7 @@
     ],
     "CORE": [
      179,
-     320
+     319
     ],
     "HUD": [
      277,
@@ -245,8 +245,8 @@
      832
     ],
     "RW": [
-     618,
-     1807
+     617,
+     1804
     ],
     "SAVE": [
      26,
@@ -257,12 +257,12 @@
      223
     ],
     "STREAM": [
-     278,
-     553
+     277,
+     552
     ],
     "UNK-game": [
-     653,
-     2888
+     652,
+     2887
     ],
     "VEH": [
      598,
@@ -277,16 +277,16 @@
      919
     ]
    },
-   "total": 9559
+   "total": 9556
   },
   "D_game_and_samp_roots_resolved_edges": {
    "by_subsystem": {
     "AI": [
-     809,
-     4048
+     813,
+     4047
     ],
     "ANIM": [
-     145,
+     146,
      265
     ],
     "AUDIO": [
@@ -306,11 +306,11 @@
      145
     ],
     "CORE": [
-     215,
-     320
+     214,
+     319
     ],
     "HUD": [
-     277,
+     282,
      342
     ],
     "INPUT": [
@@ -322,7 +322,7 @@
      112
     ],
     "PED": [
-     246,
+     247,
      371
     ],
     "PHYS": [
@@ -334,28 +334,28 @@
      429
     ],
     "RENDER": [
-     555,
+     557,
      832
     ],
     "RW": [
-     651,
-     1807
+     650,
+     1804
     ],
     "SAVE": [
      32,
      36
     ],
     "SCRIPT": [
-     190,
+     193,
      223
     ],
     "STREAM": [
-     347,
-     553
+     346,
+     552
     ],
     "UNK-game": [
-     537,
-     2888
+     538,
+     2887
     ],
     "VEH": [
      421,
@@ -370,13 +370,13 @@
      919
     ]
    },
-   "total": 6615
+   "total": 6629
   },
   "E_game_and_samp_roots_plus_instantiated_vtables": {
    "by_subsystem": {
     "AI": [
      3602,
-     4048
+     4047
     ],
     "ANIM": [
      176,
@@ -399,8 +399,8 @@
      145
     ],
     "CORE": [
-     221,
-     320
+     220,
+     319
     ],
     "HUD": [
      284,
@@ -431,8 +431,8 @@
      832
     ],
     "RW": [
-     666,
-     1807
+     665,
+     1804
     ],
     "SAVE": [
      34,
@@ -443,12 +443,12 @@
      223
     ],
     "STREAM": [
-     353,
-     553
+     352,
+     552
     ],
     "UNK-game": [
-     836,
-     2888
+     835,
+     2887
     ],
     "VEH": [
      612,
@@ -463,13 +463,13 @@
      919
     ]
    },
-   "total": 10425
+   "total": 10421
   },
   "F_E_without_samp_cuts": {
    "by_subsystem": {
     "AI": [
      3605,
-     4048
+     4047
     ],
     "ANIM": [
      189,
@@ -492,8 +492,8 @@
      145
     ],
     "CORE": [
-     222,
-     320
+     221,
+     319
     ],
     "HUD": [
      287,
@@ -524,8 +524,8 @@
      832
     ],
     "RW": [
-     673,
-     1807
+     672,
+     1804
     ],
     "SAVE": [
      34,
@@ -536,12 +536,12 @@
      223
     ],
     "STREAM": [
-     360,
-     553
+     359,
+     552
     ],
     "UNK-game": [
-     854,
-     2888
+     853,
+     2887
     ],
     "VEH": [
      624,
@@ -556,13 +556,13 @@
      919
     ]
    },
-   "total": 10607
+   "total": 10603
   },
   "G_game_roots_only_plus_instantiated_vtables": {
    "by_subsystem": {
     "AI": [
      3473,
-     4048
+     4047
     ],
     "ANIM": [
      159,
@@ -585,8 +585,8 @@
      145
     ],
     "CORE": [
-     192,
-     320
+     191,
+     319
     ],
     "HUD": [
      142,
@@ -617,8 +617,8 @@
      832
     ],
     "RW": [
-     606,
-     1807
+     605,
+     1804
     ],
     "SAVE": [
      20,
@@ -629,12 +629,12 @@
      223
     ],
     "STREAM": [
-     328,
-     553
+     327,
+     552
     ],
     "UNK-game": [
      697,
-     2888
+     2887
     ],
     "VEH": [
      586,
@@ -649,9 +649,9 @@
      919
     ]
    },
-   "total": 9226
+   "total": 9223
   },
-  "catalogue_live_total": 15486,
+  "catalogue_live_total": 15479,
   "only_reachable_without_cuts": 182,
   "only_reachable_without_cuts_by_subsystem": {
    "AI": 3,
@@ -707,7 +707,7 @@
   "0x612710": "CPopulation::AddPed (row 185: ambient population peds (CPopulation::AddPed))",
   "0x6a8500": "CAutomobile::ProcessFlyingCarStuff (row 207: flying-car physics (ProcessFlyingCarStuff))"
  },
- "direct_functions": 317,
+ "direct_functions": 318,
  "disabled_features": {
   "'Wasted' big message": [
    "191@0x56e5ad"
@@ -881,14 +881,7 @@
   ]
  },
  "fallthrough_edges": [
-  "0x43a7a0 CConversationNode::ClearRecursively -> 0x43a7b0 CConversations::Clear",
-  "0x4c88f0  -> 0x4c88f4 CVehicleModelInfo::SetRenderPipelinesCB",
-  "0x5030d0 CAEWaterCannonAudioEntity::Service -> 0x503219 ",
-  "0x5cd6b0  -> 0x5cd6d0 ",
-  "0x7322f0  -> 0x732307 CVisibilityPlugins::SetClumpForAllAtomicsFlag",
-  "0x748710 Win::NOTSA_WinMain -> 0x7487cf Input::Initialise",
-  "0x7f5f70 D3D9System -> 0x7f6781 WindowedModeHooks::notsa::WindowedMode::HookDirect3DDeviceReplacerSA",
-  "0x7f7730 WindowedModeHooks::RenderWare::_rwD3D9CameraClear -> 0x7f7c41 WindowedModeHooks::notsa::WindowedMode::HookDxCamFix"
+  "0x5cd6b0  -> 0x5cd6d0 "
  ],
  "moot_disable_containers": [
   "0x41b1d0 cb_RSCOLLISION_RpClump_StreamRead",
@@ -929,7 +922,7 @@
   "0x7046e0 CPostEffects::Render -> 0x7030a0 CPostEffects::SpeedFX",
   "0x747eb0 Win::__MainWndProc -> 0x53bc60 CGame::InitAfterLostFocus"
  ],
- "samp_rs_distinct_addresses": 622,
+ "samp_rs_distinct_addresses": 623,
  "samp_rs_dropped_values": {
   "BASS stream flags 0x940000": 1,
   "base of derived constants only (the derived addresses are listed)": 1,
@@ -941,15 +934,15 @@
   "code-compare": 17,
   "global-access": 5,
   "global-read": 56,
-  "global-write": 38,
+  "global-write": 39,
   "hook": 157,
   "patch-disable": 55,
   "patch-modify": 194,
   "patch-operand": 13,
-  "scm-opcode": 104,
-  "struct-field": 62
+  "scm-opcode": 114,
+  "struct-field": 65
  },
- "samp_rs_test_only_addresses": 18,
+ "samp_rs_test_only_addresses": 20,
  "scm_opcodes_declared_unused": [
   "01B2 GIVE_WEAPON_TO_CHAR"
  ],
@@ -977,6 +970,7 @@
   "0175 SET_CAR_HEADING",
   "0187 ADD_BLIP_FOR_CHAR",
   "018B CHANGE_BLIP_DISPLAY",
+  "018C ADD_ONE_OFF_SOUND",
   "01B4 SET_PLAYER_CONTROL",
   "01B9 SET_CURRENT_CHAR_WEAPON",
   "01E8 SWITCH_ROADS_OFF",
@@ -1022,7 +1016,11 @@
   "05CB TASK_ENTER_CAR_AS_DRIVER",
   "05CD TASK_LEAVE_CAR",
   "060B SET_CHAR_DECISION_MAKER",
+  "064C PLAY_FX_SYSTEM",
+  "0650 KILL_FX_SYSTEM",
+  "066A CREATE_FX_SYSTEM_ON_CHAR_WITH_DIRECTION",
   "0681 ATTACH_OBJECT_TO_CAR",
+  "0682 DETACH_OBJECT",
   "0685 IS_OBJECT_ATTACHED",
   "069A ATTACH_OBJECT_TO_OBJECT",
   "069B ATTACH_OBJECT_TO_CHAR",
@@ -1035,9 +1033,12 @@
   "06E9 REQUEST_VEHICLE_MOD",
   "06EA HAS_VEHICLE_MOD_LOADED",
   "06ED GIVE_VEHICLE_PAINTJOB",
+  "070A TASK_PICK_UP_OBJECT",
   "070D BUILD_PLAYER_MODEL",
   "0713 TASK_DRIVE_BY",
   "0729 TASK_USE_MOBILE_PHONE",
+  "0750 SET_OBJECT_VISIBLE",
+  "075A PLAY_OBJECT_ANIM",
   "077E GET_AREA_VISIBLE",
   "07AC DETACH_TRAILER_FROM_CAB",
   "07BD DELETE_MISSION_TRAIN",
@@ -1049,24 +1050,26 @@
   "0860 SET_CHAR_AREA_VISIBLE",
   "087E SET_CHAR_DROPS_WEAPONS_WHEN_DEAD",
   "0893 ATTACH_TRAILER_TO_CAB",
+  "08D2 SET_OBJECT_SCALE",
   "0920 CAMERA_SET_VECTOR_TRACK",
   "0925 CAMERA_RESET_NEW_SCRIPTABLES",
   "092F CAMERA_PERSIST_TRACK",
   "0930 CAMERA_PERSIST_POS",
   "0936 CAMERA_SET_VECTOR_MOVE",
   "0948 ADD_EXPLOSION",
+  "09A2 REMOVE_OBJECT_ELEGANTLY",
   "09BA DISPLAY_ZONE_NAMES",
   "09C4 SET_PETROL_TANK_WEAKPOINT"
  ],
  "struct_fields": {
   "by_status": {
-   "class-unknown": 22,
+   "class-unknown": 25,
    "not-in-psdk": 34,
    "psdk-match": 29,
    "psdk-offset-match": 55
   },
-  "distinct": 62,
-  "occurrences": 140
+  "distinct": 65,
+  "occurrences": 143
  },
  "unresolved": [
   "0x4048e0 in unnamed catalogue function 0x4048e0 (call)",

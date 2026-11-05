@@ -944,6 +944,7 @@ address,class,subsystem,name,evidence
 0x43a680,game,WORLD,CCheat::MonsterTruckCheat,plugin-sdk name CCheat::MonsterTruckCheat (plugin_sa/game_sa/meta/meta.CCheat.h); refs=D
 0x43a6a0,game,UNK-game,,game-.text stub to relocated .HOODLUM body 0x15697d0; refs=C
 0x43a710,game,UNK-game,,refs=C
+0x43a7a0,excluded:mis-split,,,"CAT-16 (cat16-hand): not an instruction boundary: the entry lies inside the 7-byte `mov dword ptr [edx + 0x10], 0` at 0x43a79f of the uncatalogued code 0x43a770-0x43a7b0 (no rel32 or pointer reference to 0x43a770 or 0x43a7a0 in the image); decoded from 0x43a7a0 it is junk that falls into 0x43a7b0 CConversations::Clear. gta-reversed hooks CConversationNode::ClearRecursively at 0x43A7A0, but its source comment gives 0x43A710 (catalogue row 0x43a710)"
 0x43b9a0,excluded:mis-split,,,"SecuROM re-entry point inside 0x43b0f0 (CPedToPlayerConversations::Update): mid-body (previous byte 0xff), only jumped to from protection code (0x401a30)"
 0x43ce70,game,UNK-game,,refs=I
 0x43d7a8,excluded:mis-split,,,"SecuROM re-entry point inside 0x43d7a0 (CDarkel::DealWithWeaponChangeAtEndOfFrenzy): mid-body (previous byte 0xff), only jumped to from protection code (0x403a9b)"
@@ -1992,6 +1993,7 @@ address,class,subsystem,name,evidence
 0x4c75e0,game,UNK-game,,refs=I
 0x4c84c3,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c84b0 (CVehicleModelInfo::SetVehicleColour): mid-body (previous byte 0xff), only jumped to from protection code (0x406006)"
 0x4c88f0,game,UNK-game,,refs=C
+0x4c88f4,excluded:mis-split,,,"CAT-16 (cat16-auto): merged into 0x4c88f0: mid-function label of 0x4c88f0 : 0x4c88f0 `mov eax, dword ptr [esp + 4]` falls into 0x4c88f4; no reference outside the faller"
 0x4c8d60,game,STREAM,,"refs=C; subsystem from its 1 caller(s), all STREAM"
 0x4c8e10,game,STREAM,CVehicleModelInfo::vfunc_0,slot 0 of CVehicleModelInfo vtable 0x85c5c8 (gta-reversed RH_ScopedVirtualClass); refs=D
 0x4c94c0,game,UNK-game,,refs=CJ
@@ -2227,7 +2229,7 @@ address,class,subsystem,name,evidence
 0x502c40,game,UNK-game,,refs=D
 0x502f80,game,UNK-game,,refs=C
 0x502f8d,excluded:mis-split,,,"SecuROM re-entry point inside 0x502f50 (CAEWaterCannonAudioEntity::SetSplashInfo): mid-body (previous byte 0xff), only jumped to from protection code (0x407e7c)"
-0x503219,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
+0x503219,excluded:mis-split,,,CAT-16 (cat16-auto): merged into 0x5030d0: mid-function label of 0x5030d0 CAEWaterCannonAudioEntity::Service: 0x503213 `fld dword ptr [0x8cc290]` falls into 0x503219; no reference outside the faller
 0x503430,game,UNK-game,,refs=D
 0x503cf0,excluded:mis-split,,,"SecuROM re-entry point inside 0x503ce0 (CAEWeaponAudioEntity::PlayGunSounds): mid-body (previous byte 0xff), only jumped to from protection code (0x405b91)"
 0x5052b8,excluded:mis-split,,,"SecuROM re-entry point inside 0x5052b0 (CAEWeatherAudioEntity::StaticReset): mid-body (previous byte 0xff), only jumped to from protection code (0x4064c7)"
@@ -4841,6 +4843,7 @@ address,class,subsystem,name,evidence
 0x7320ba,excluded:mis-split,,,"SecuROM re-entry point inside 0x7320b0 (CTxdStore::LoadTxd-filename): mid-body (previous byte 0xff), only jumped to from protection code (0x402167)"
 0x732150,game,RW,CVisibilityPlugins::AtomicConstructor,plugin-sdk name CVisibilityPlugins::AtomicConstructor (plugin_sa/game_sa/CVisibilityPlugins.cpp); refs=I
 0x7322f0,game,UNK-game,,refs=C
+0x732307,excluded:mis-split,,,"CAT-16 (cat16-auto): merged into 0x7322f0: mid-function label of 0x7322f0 : 0x732304 `add esp, 0xc` falls into 0x732307; no reference outside the faller"
 0x732a2a,excluded:mis-split,,,"SecuROM re-entry point inside 0x732a20 (CVisibilityPlugins::GetFrameHierarchyId): mid-body (previous byte 0xff), only jumped to from protection code (0x4017de)"
 0x732b30,game,UNK-game,,refs=I
 0x732d60,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
@@ -4902,6 +4905,7 @@ address,class,subsystem,name,evidence
 0x747300,game,AUDIO,,"refs=C; subsystem from its 2 caller(s), all AUDIO"
 0x7477c0,game,CORE,,"refs=C; subsystem from its 1 caller(s), all CORE"
 0x747db0,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
+0x7487cf,excluded:mis-split,,,"CAT-16 (cat16-auto): merged into 0x748710: mid-function label of 0x748710 Win::NOTSA_WinMain: 0x7487cc `mov dword ptr [eax + 4], esi` falls into 0x7487cf; no reference outside the faller"
 0x749000,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x749010,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x749020,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
@@ -6382,6 +6386,7 @@ address,class,subsystem,name,evidence
 0x7f5d20,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f5f20,RW,RW,,link order only: between RenderWare functions 0x7f5ef0 and 0x7f5f60; refs=C; RenderWare span 0x748f20-0x820ce6
 0x7f5f70,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
+0x7f6781,excluded:mis-split,,,CAT-16 (cat16-auto): merged into 0x7f5f70: mid-function label of 0x7f5f70 D3D9System: 0x7f6780 `push ecx` falls into 0x7f6781; no reference outside the faller
 0x7f6b00,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f6b40,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f6bf0,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
@@ -6389,6 +6394,7 @@ address,class,subsystem,name,evidence
 0x7f72e0,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f7530,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f7540,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
+0x7f7c41,excluded:mis-split,,,"CAT-16 (cat16-auto): merged into 0x7f7730: mid-function label of 0x7f7730 WindowedModeHooks::RenderWare::_rwD3D9CameraClear: 0x7f7c3b `mov dword ptr [0xc9bee8], ecx` falls into 0x7f7c41; no reference outside the faller; also jumped to from the faller at 0x7f7955"
 0x7f7f70,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f8300,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7f98d0,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6

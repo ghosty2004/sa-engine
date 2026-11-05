@@ -279,7 +279,7 @@ address,name,module,evidence,confidence
 0x732290,CVisibilityPlugins::SetAtomicId,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high
 0x7322b0,CVisibilityPlugins::SetAtomicFlag,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high
 0x7322d0,CVisibilityPlugins::setClumpForAllAtomicsFlagCB,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high
-0x732307,CVisibilityPlugins::SetClumpForAllAtomicsFlag,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high
+0x7322f0,CVisibilityPlugins::SetClumpForAllAtomicsFlag,game-plugin,gta-reversed hook address 0x732307 is the function's ret (CAT-16 mis-split); gta-reversed source comment gives 0x7322F0,high
 0x732310,CVisibilityPlugins::ClearAtomicFlag,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high
 0x732330,CVisibilityPlugins::clearClumpForAllAtomicsFlagCB,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high
 0x732350,CVisibilityPlugins::ClearClumpForAllAtomicsFlag,game-plugin,[catalogue: RW/specified] gta-reversed hook/name from catalogue state.csv (gta-reversed),high

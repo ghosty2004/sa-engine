@@ -663,7 +663,6 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x43a680,CCheat::MonsterTruckCheat,unknown,game,WORLD,ghidra-created,0x43a680,0x43a68c,12,1,0x43a680-0x43a68c,,4,1,0,0,0,0,0
 0x43a6a0,,unknown,game,UNK-game,ghidra,0x43a6a0,0x15697e7,28,2,0x43a6a0-0x43a6a5;0x15697d0-0x15697e7,0x15697d0,10,0,0,0,0,0,0
 0x43a710,CConversationNode::ClearRecursively,unknown,game,UNK-game,ghidra,0x43a710,0x43a76e,94,1,0x43a710-0x43a76e,,25,2,0,0,0,6,0
-0x43a7a0,CConversationNode::ClearRecursively,gr-reversed,game,AI,ghidra-created,0x43a7a0,0x43a7b0,16,1,0x43a7a0-0x43a7b0,,9,0,0,0,0,3,0
 0x43a7b0,CConversations::Clear,gr-reversed,game,AI,ghidra,0x43a7b0,0x156e045,90,2,0x43a7b0-0x43a7b5;0x156dff0-0x156e045,0x156dff0,27,0,0,0,0,11,0
 0x43a810,CConversations::AwkwardSay,gr-reversed,game,AI,ghidra,0x43a810,0x1561ced,50,2,0x43a810-0x43a815;0x1561cc0-0x1561ced,0x1561cc0,13,2,0,0,0,0,0
 0x43a840,CConversations::StartSettingUpConversation,gr-reversed,game,AI,ghidra,0x43a840,0x1565576,43,2,0x43a840-0x43a845;0x1565550-0x1565576,0x1565550,8,1,0,0,0,0,0
@@ -2883,8 +2882,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c8810,CVehicleModelInfo::GetMatFXEffectMaterialCB,gr-reversed,game,STREAM,ghidra-created,0x4c8810,0x4c8839,41,1,0x4c8810-0x4c8839,,18,2,0,0,0,1,0
 0x4c8840,CVehicleModelInfo::SetEnvironmentMapCB,gr-reversed,game,STREAM,ghidra-created,0x4c8840,0x4c88a5,101,1,0x4c8840-0x4c88a5,,37,5,0,0,0,0,0
 0x4c88b0,CVehicleModelInfo::SetEnvMapCoeffCB,gr-reversed,game,STREAM,ghidra,0x4c88b0,0x4c88ec,60,1,0x4c88b0-0x4c88ec,,21,2,0,0,0,0,0
-0x4c88f0,,unknown,game,UNK-game,ghidra,0x4c88f0,0x4c88f4,4,1,0x4c88f0-0x4c88f4,,1,0,0,0,0,0,0
-0x4c88f4,CVehicleModelInfo::SetRenderPipelinesCB,gr-reversed,game,STREAM,ghidra-created,0x4c88f4,0x4c88f5,1,1,0x4c88f4-0x4c88f5,,1,0,0,0,0,0,0
+0x4c88f0,,unknown,game,UNK-game,ghidra,0x4c88f0,0x4c88f5,5,1,0x4c88f0-0x4c88f5,,2,0,0,0,0,0,0
 0x4c8900,CVehicleModelInfo::SetRenderPipelines,gr-reversed,game,STREAM,ghidra,0x4c8900,0x4c896d,109,1,0x4c8900-0x4c896d,,29,5,0,0,0,0,0
 0x4c8970,CVehicleModelInfo::GetCustomCarPlateText,gr-reversed,game,STREAM,ghidra,0x4c8970,0x4c897c,12,1,0x4c8970-0x4c897c,,6,0,0,0,0,0,0
 0x4c8980,CVehicleModelInfo::SetCustomCarPlateText,gr-reversed,game,STREAM,ghidra,0x4c8980,0x4c89a1,33,1,0x4c8980-0x4c89a1,,12,1,0,0,0,1,0
@@ -3863,8 +3861,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x502f80,CAEWaterCannonAudioEntity::UpdateGenericWaterCannonSound,unknown,game,AUDIO,ghidra,0x407e77,0x50305f,233,2,0x407e77-0x407e81;0x502f80-0x50305f,,80,4,0,0,0,13,0
 0x503060,CAEWaterCannonAudioEntity::Initialise,gr-reversed,game,AUDIO,ghidra,0x503060,0x50309d,61,1,0x503060-0x50309d,,19,0,0,0,0,7,0
 0x5030a0,CAEWaterCannonAudioEntity::Terminate,gr-reversed,game,AUDIO,ghidra,0x5030a0,0x5030c4,36,1,0x5030a0-0x5030c4,,15,1,0,0,0,0,0
-0x5030d0,CAEWaterCannonAudioEntity::Service,gr-reversed,game,AUDIO,ghidra,0x5030d0,0x50324d,334,2,0x5030d0-0x503219;0x503248-0x50324d,,116,5,0,0,0,12,0
-0x503219,,unknown,game,UNK-game,ghidra,0x503219,0x50324d,52,1,0x503219-0x50324d,,19,1,0,0,0,0,0
+0x5030d0,CAEWaterCannonAudioEntity::Service,gr-reversed,game,AUDIO,ghidra,0x5030d0,0x50324d,381,1,0x5030d0-0x50324d,,130,6,0,0,0,12,0
 0x503250,CAEWaveDecoder::Constructor,gr-reversed,game,AUDIO,ghidra,0x503250,0x503272,34,1,0x503250-0x503272,,13,1,0,0,0,3,0
 0x503280,CAEWaveDecoder::GetStreamID,gr-reversed,game,AUDIO,ghidra-created,0x503280,0x503287,7,1,0x503280-0x503287,,3,0,0,0,0,0,0
 0x503290,CAEWaveDecoder::Destructor,gr-reversed,game,AUDIO,ghidra,0x503290,0x50329b,11,1,0x503290-0x50329b,,2,0,0,0,0,1,0
@@ -11888,8 +11885,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x732290,CVisibilityPlugins::SetAtomicId,gr-reversed,game,RW,ghidra,0x732290,0x7322a5,21,1,0x732290-0x7322a5,,5,0,0,0,0,1,0
 0x7322b0,CVisibilityPlugins::SetAtomicFlag,gr-reversed,game,RW,ghidra,0x7322b0,0x7322c4,20,1,0x7322b0-0x7322c4,,5,0,0,0,0,1,0
 0x7322d0,CVisibilityPlugins::setClumpForAllAtomicsFlagCB,gr-reversed,game,RW,ghidra-created,0x7322d0,0x7322e5,21,1,0x7322d0-0x7322e5,,5,0,0,0,0,1,0
-0x7322f0,,unknown,game,UNK-game,ghidra,0x7322f0,0x732307,23,1,0x7322f0-0x732307,,7,1,0,0,0,0,0
-0x732307,CVisibilityPlugins::SetClumpForAllAtomicsFlag,gr-reversed,game,RW,ghidra-created,0x732307,0x732308,1,1,0x732307-0x732308,,1,0,0,0,0,0,0
+0x7322f0,CVisibilityPlugins::SetClumpForAllAtomicsFlag,unknown,game,RW,ghidra,0x7322f0,0x732308,24,1,0x7322f0-0x732308,,8,1,0,0,0,0,0
 0x732310,CVisibilityPlugins::ClearAtomicFlag,gr-reversed,game,RW,ghidra,0x732310,0x732325,21,1,0x732310-0x732325,,6,0,0,0,0,1,0
 0x732330,CVisibilityPlugins::clearClumpForAllAtomicsFlagCB,gr-reversed,game,RW,ghidra-created,0x732330,0x732346,22,1,0x732330-0x732346,,6,0,0,0,0,1,0
 0x732350,CVisibilityPlugins::ClearClumpForAllAtomicsFlag,gr-reversed,game,RW,ghidra,0x732350,0x732368,24,1,0x732350-0x732368,,8,1,0,0,0,0,0
@@ -12209,8 +12205,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x747eb0,Win::__MainWndProc,gr-reversed,game,CORE,ghidra-created,0x747eb0,0x748462,1458,1,0x747eb0-0x748462,,459,51,8,0,0,0,0
 0x7485c0,Input::diPadInit,gr-reversed,game,CORE,ghidra,0x7485c0,0x748699,214,2,0x7485c0-0x7485cd;0x7485d0-0x748699,,63,2,3,0,0,4,0
 0x7486a0,Win::Win32_InitApplication,gr-reversed,game,CORE,ghidra,0x7486a0,0x748703,99,1,0x7486a0-0x748703,,27,3,0,0,0,0,0
-0x748710,Win::NOTSA_WinMain,gr-reversed,game,CORE,ghidra,0x748710,0x74887b,206,2,0x748710-0x7487cf;0x74886c-0x74887b,,67,8,0,0,0,2,0
-0x7487cf,Input::Initialise,gr-reversed,game,CORE,ghidra-created,0x7487cf,0x748ef7,1832,1,0x7487cf-0x748ef7,,523,94,11,0,0,0,0
+0x748710,Win::NOTSA_WinMain,gr-reversed,game,CORE,ghidra,0x748710,0x748ef7,2023,1,0x748710-0x748ef7,,583,102,11,0,0,2,0
 0x748f20,RpAnisotGetMaxSupportedMaxAnisotropy,gr-called-only,game,RW,ghidra,0x748f20,0x748f29,9,1,0x748f20-0x748f29,,3,1,0,0,0,0,0
 0x748f30,RpAnisotTextureSetMaxAnisotropy,gr-called-only,game,RW,ghidra,0x748f30,0x748f49,25,1,0x748f30-0x748f49,,9,0,0,0,0,1,0
 0x748f50,RpAnisotTextureGetMaxAnisotropy,gr-called-only,game,RW,ghidra,0x748f50,0x748f65,21,1,0x748f50-0x748f65,,8,0,0,0,0,0,0
@@ -13126,8 +13121,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x7f5ef0,_rwD3D9SetDepthStencilSurface,gr-called-only,game,RW,ghidra,0x7f5ef0,0x7f5f14,36,1,0x7f5ef0-0x7f5f14,,11,0,1,0,0,0,0
 0x7f5f20,_rwD3D9SetRenderTarget,unknown,RW,RW,ghidra,0x7f5f20,0x7f5f5b,59,1,0x7f5f20-0x7f5f5b,,20,0,1,0,0,0,0
 0x7f5f60,_rwDeviceRegisterPlugin,gr-called-only,game,RW,ghidra,0x7f5f60,0x7f5f65,5,1,0x7f5f60-0x7f5f65,,1,0,0,0,0,0,0
-0x7f5f70,D3D9System,unknown,RW,RW,ghidra-created,0x7f5f70,0x7f6a1c,2492,2,0x7f5f70-0x7f6781;0x7f6871-0x7f6a1c,,734,19,20,0,0,21,0
-0x7f6781,WindowedModeHooks::notsa::WindowedMode::HookDirect3DDeviceReplacerSA,gr-reversed,game,RW,ghidra-created,0x7f6781,0x7f6871,240,1,0x7f6781-0x7f6871,,68,7,6,0,0,0,0
+0x7f5f70,D3D9System,unknown,RW,RW,ghidra-created,0x7f5f70,0x7f6a1c,2732,1,0x7f5f70-0x7f6a1c,,802,26,26,0,0,21,0
 0x7f6b00,,unknown,RW,RW,ghidra,0x7f6b00,0x7f6b40,64,1,0x7f6b00-0x7f6b40,,15,0,0,0,0,0,0
 0x7f6b40,,unknown,RW,RW,ghidra,0x7f6b40,0x7f6be9,169,1,0x7f6b40-0x7f6be9,,50,2,2,0,0,2,0
 0x7f6bf0,,unknown,RW,RW,ghidra,0x7f6bf0,0x7f6ca4,180,1,0x7f6bf0-0x7f6ca4,,61,0,2,0,0,0,0
@@ -13136,8 +13130,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x7f72e0,_rwD3D9SetStandardFunctions,unknown,RW,RW,ghidra,0x7f72e0,0x7f7523,579,1,0x7f72e0-0x7f7523,,81,0,0,0,0,2,0
 0x7f7530,_rwD3D9StandardFuncNotImplemented,unknown,RW,RW,ghidra-created,0x7f7530,0x7f7533,3,1,0x7f7530-0x7f7533,,2,0,0,0,0,0,0
 0x7f7540,,unknown,RW,RW,ghidra,0x7f7540,0x7f770b,459,1,0x7f7540-0x7f770b,,143,0,6,0,0,3,0
-0x7f7730,WindowedModeHooks::RenderWare::_rwD3D9CameraClear,gr-reversed,game,RW,ghidra-created,0x7f7730,0x7f7f6b,1334,2,0x7f7730-0x7f7c41;0x7f7f46-0x7f7f6b,,420,22,26,0,0,2,0
-0x7f7c41,WindowedModeHooks::notsa::WindowedMode::HookDxCamFix,gr-reversed,game,RW,ghidra-created,0x7f7c41,0x7f7f61,800,1,0x7f7c41-0x7f7f61,,248,0,17,0,0,0,0
+0x7f7730,WindowedModeHooks::RenderWare::_rwD3D9CameraClear,gr-reversed,game,RW,ghidra-created,0x7f7730,0x7f7f6b,2107,1,0x7f7730-0x7f7f6b,,657,22,42,0,0,2,0
 0x7f7f70,D3D9DeviceReleaseVideoMemory,unknown,RW,RW,ghidra,0x7f7f70,0x7f8158,488,1,0x7f7f70-0x7f8158,,147,7,11,0,0,2,0
 0x7f8300,_rwD3D9TestState,unknown,RW,RW,ghidra,0x7f8300,0x7f84bb,443,1,0x7f8300-0x7f84bb,,143,6,12,0,0,0,0
 0x7f84e0,RwD3D9EngineGetMaxMultiSamplingLevels,gr-called-only,game,RW,ghidra,0x7f84e0,0x7f84e6,6,1,0x7f84e0-0x7f84e6,,2,0,0,0,0,0,0

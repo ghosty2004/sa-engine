@@ -4526,17 +4526,17 @@ function,site,instruction,resolution,detail
 0x7485c0,0x74860e,call dword ptr [ecx + 0xc],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xc]), slot 3, object type not known statically"
 0x7485c0,0x74863b,call dword ptr [ecx + 0x14],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x14]), slot 5, object type not known statically"
 0x7485c0,0x748676,call dword ptr [edx + 0x14],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x14]), slot 5, object type not known statically"
-0x7487cf,0x748930,call ebp,unresolved,
-0x7487cf,0x748938,call ebp,unresolved,
-0x7487cf,0x748940,call ebp,unresolved,
-0x7487cf,0x748959,call ebp,unresolved,
-0x7487cf,0x74896d,call ebp,unresolved,
-0x7487cf,0x748bd5,call dword ptr [ecx + 0x24],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x24]), slot 9, object type not known statically"
-0x7487cf,0x748c19,call dword ptr [edx + 0x24],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x24]), slot 9, object type not known statically"
-0x7487cf,0x748ec0,call ebp,unresolved,
-0x7487cf,0x748ec8,call ebp,unresolved,
-0x7487cf,0x748ed0,call ebp,unresolved,
-0x7487cf,0x748ed8,call ebp,unresolved,
+0x748710,0x748930,call ebp,unresolved,
+0x748710,0x748938,call ebp,unresolved,
+0x748710,0x748940,call ebp,unresolved,
+0x748710,0x748959,call ebp,unresolved,
+0x748710,0x74896d,call ebp,unresolved,
+0x748710,0x748bd5,call dword ptr [ecx + 0x24],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x24]), slot 9, object type not known statically"
+0x748710,0x748c19,call dword ptr [edx + 0x24],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x24]), slot 9, object type not known statically"
+0x748710,0x748ec0,call ebp,unresolved,
+0x748710,0x748ec8,call ebp,unresolved,
+0x748710,0x748ed0,call ebp,unresolved,
+0x748710,0x748ed8,call ebp,unresolved,
 0x749520,0x7495af,call dword ptr [eax + 0x148],unresolved,
 0x749520,0x749686,call dword ptr [eax + 0x148],unresolved,
 0x7496a0,0x74970e,call dword ptr [eax + 0x148],unresolved,
@@ -5380,13 +5380,13 @@ function,site,instruction,resolution,detail
 0x7f5f70,0x7f6666,call dword ptr [ecx + 0x2c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x2c]), slot 11, object type not known statically"
 0x7f5f70,0x7f66ae,call dword ptr [ecx + 0x20],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x20]), slot 8, object type not known statically"
 0x7f5f70,0x7f6707,call dword ptr [ecx + 0x38],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x38]), slot 14, object type not known statically"
+0x7f5f70,0x7f6781,call dword ptr [edx + 0x40],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x40]), slot 16, object type not known statically"
+0x7f5f70,0x7f67cf,call dword ptr [ecx + 0x98],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x98]), slot 38, object type not known statically"
+0x7f5f70,0x7f67dd,call dword ptr [edx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
+0x7f5f70,0x7f67ed,call dword ptr [ecx + 0xa0],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xa0]), slot 40, object type not known statically"
+0x7f5f70,0x7f67fb,call dword ptr [edx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
+0x7f5f70,0x7f683a,call dword ptr [ecx + 0x138],unresolved,
 0x7f5f70,0x7f68cd,call dword ptr [edx + 0x10],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x10]), slot 4, object type not known statically"
-0x7f6781,0x7f6781,call dword ptr [edx + 0x40],unresolved,
-0x7f6781,0x7f67cf,call dword ptr [ecx + 0x98],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x98]), slot 38, object type not known statically"
-0x7f6781,0x7f67dd,call dword ptr [edx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
-0x7f6781,0x7f67ed,call dword ptr [ecx + 0xa0],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xa0]), slot 40, object type not known statically"
-0x7f6781,0x7f67fb,call dword ptr [edx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
-0x7f6781,0x7f683a,call dword ptr [ecx + 0x138],unresolved,
 0x7f6b40,0x7f6b67,call dword ptr [eax + 0x148],unresolved,
 0x7f6b40,0x7f6bca,call dword ptr [edx + 0x144],unresolved,
 0x7f6bf0,0x7f6c42,call dword ptr [edx + 0x2c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x2c]), slot 11, object type not known statically"
@@ -5448,24 +5448,23 @@ function,site,instruction,resolution,detail
 0x7f7730,0x7f7be1,call dword ptr [ecx + 0xcc],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xcc]), slot 51, object type not known statically"
 0x7f7730,0x7f7bfb,call dword ptr [ecx + 0xd4],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xd4]), slot 53, object type not known statically"
 0x7f7730,0x7f7c2a,call eax,unresolved,
+0x7f7730,0x7f7c71,call dword ptr [edx + 0x48],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x48]), slot 18, object type not known statically"
+0x7f7730,0x7f7c85,call dword ptr [ecx + 0x48],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x48]), slot 18, object type not known statically"
+0x7f7730,0x7f7c97,call dword ptr [ecx + 0x30],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x30]), slot 12, object type not known statically"
+0x7f7730,0x7f7cc7,call dword ptr [edx + 0x94],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x94]), slot 37, object type not known statically"
+0x7f7730,0x7f7d05,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
+0x7f7730,0x7f7d19,call dword ptr [ecx + 0x48],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x48]), slot 18, object type not known statically"
+0x7f7730,0x7f7d39,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
+0x7f7730,0x7f7d46,call dword ptr [ecx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
+0x7f7730,0x7f7d6a,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
+0x7f7730,0x7f7db4,call dword ptr [ecx + 0xbc],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xbc]), slot 47, object type not known statically"
+0x7f7730,0x7f7df8,call dword ptr [edx + 0xac],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xac]), slot 43, object type not known statically"
+0x7f7730,0x7f7e57,call dword ptr [ecx + 0x88],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x88]), slot 34, object type not known statically"
+0x7f7730,0x7f7e67,call dword ptr [ecx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
+0x7f7730,0x7f7e98,call dword ptr [edx + 0x94],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x94]), slot 37, object type not known statically"
+0x7f7730,0x7f7ebc,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
+0x7f7730,0x7f7efd,call dword ptr [ecx + 0xbc],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xbc]), slot 47, object type not known statically"
 0x7f7730,0x7f7f4e,call dword ptr [ecx + 0xac],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xac]), slot 43, object type not known statically"
-0x7f7c41,0x7f7c71,call dword ptr [edx + 0x48],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x48]), slot 18, object type not known statically"
-0x7f7c41,0x7f7c85,call dword ptr [ecx + 0x48],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x48]), slot 18, object type not known statically"
-0x7f7c41,0x7f7c97,call dword ptr [ecx + 0x30],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x30]), slot 12, object type not known statically"
-0x7f7c41,0x7f7cc7,call dword ptr [edx + 0x94],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x94]), slot 37, object type not known statically"
-0x7f7c41,0x7f7d05,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
-0x7f7c41,0x7f7d19,call dword ptr [ecx + 0x48],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x48]), slot 18, object type not known statically"
-0x7f7c41,0x7f7d39,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
-0x7f7c41,0x7f7d46,call dword ptr [ecx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
-0x7f7c41,0x7f7d6a,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
-0x7f7c41,0x7f7db4,call dword ptr [ecx + 0xbc],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xbc]), slot 47, object type not known statically"
-0x7f7c41,0x7f7df8,call dword ptr [edx + 0xac],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xac]), slot 43, object type not known statically"
-0x7f7c41,0x7f7e57,call dword ptr [ecx + 0x88],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x88]), slot 34, object type not known statically"
-0x7f7c41,0x7f7e67,call dword ptr [ecx + 8],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x8]), slot 2, object type not known statically"
-0x7f7c41,0x7f7e98,call dword ptr [edx + 0x94],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x94]), slot 37, object type not known statically"
-0x7f7c41,0x7f7ebc,call dword ptr [edx + 0x9c],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x9c]), slot 39, object type not known statically"
-0x7f7c41,0x7f7efd,call dword ptr [ecx + 0xbc],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xbc]), slot 47, object type not known statically"
-0x7f7c41,0x7f7f4e,call dword ptr [ecx + 0xac],unresolved,"virtual call pattern (mov r,[obj]; call [r+0xac]), slot 43, object type not known statically"
 0x7f7f70,0x7f7fd5,call dword ptr [eax + 0x148],unresolved,
 0x7f7f70,0x7f8038,call dword ptr [edx + 0x144],unresolved,
 0x7f7f70,0x7f8061,call dword ptr [ecx + 0x104],unresolved,"virtual call pattern (mov r,[obj]; call [r+0x104]), slot 65, object type not known statically"

@@ -261,7 +261,12 @@ def main():
     x = XrefIndex(im, procs)
     # 'excluded' is what subsystems.py writes back for rows classified here, so a rerun on
     # an already processed procedures.csv sees the same input set.
-    unknown = [a for a in procs if prow[a]['state'] in ('unknown', 'excluded')
+    # CAT-16: mid-function entries merged into the function that falls into them (hand rows and
+    # `callgraph.py fallthrough`); classified here whatever their state, gta-reversed hooks included
+    splits = {}
+    if (cat / 'fallthrough-splits.csv').exists():
+        splits = {int(r['address'], 16): r for r in csv.DictReader(open(cat / 'fallthrough-splits.csv'))}
+    unknown = [a for a in procs if (prow[a]['state'] in ('unknown', 'excluded') or a in splits)
                and prow[a]['region'] in ('game-text', 'rw-cseg')]
     unk = set(unknown)
     known = {a for a in procs if a not in unk and prow[a]['region'] in ('game-text', 'rw-cseg')}
@@ -284,6 +289,11 @@ def main():
     def put(a, cls, ev, sub='', name=''):
         if a in unk and a not in out:
             out[a] = (cls, sub, name, ev)
+
+    for a in sorted(splits):
+        r = splits[a]
+        put(a, 'excluded:mis-split', f"CAT-16 ({r['rule']}): " + (f"merged into {r['host']}: " if r['host'] else '')
+            + r['evidence'])
 
     # ---------------------------------------------------------------- 1. C++ EH
     cfh = [a for a in procs if prow[a]['ghidra_name'] == CXX_FRAME_HANDLER_FID and CODE_LO <= a < CODE_HI]

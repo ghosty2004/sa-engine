@@ -90,7 +90,11 @@ def main():
             p.pop(k, None)
         va = int(p['address'], 16)
         h = hooks.get(va)
-        if h:
+        if h and va in cls and cls[va]['class'].startswith('excluded:'):
+            # CAT-16: a gta-reversed hook at a mid-function label (catalog/fallthrough-splits.csv)
+            p['state'] = 'excluded'
+            sid = 'X-' + cls[va]['class'].split(':', 1)[1].split(':')[-1]
+        elif h:
             sid = classify(h['category'], h['owner'], h['name'])
         elif p['state'] == 'gr-called-only':
             sid = 'CALLED-ONLY'

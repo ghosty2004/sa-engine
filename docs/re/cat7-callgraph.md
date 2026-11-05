@@ -88,6 +88,7 @@ Edge kinds:
 | `eh-unwind` | 1,874 | | host pushes an MSVC `__ehhandler` stub: direct callees of its FuncInfo unwind/catch funclets (destructors run on unwind) |
 | `fnref` | 475 | | a function address used as an immediate (callbacks, `atexit` registrations); not a call |
 | `indirect-unresolved` | 1,613 | 4,715 | one row per function, `sites` = number of unresolved indirect calls; per-site detail in `indirect-calls.csv` |
+| `fallthrough` | 0 | | (CAT-16) the body runs on into another entry that is referenced elsewhere; entries reached only by falling through are merged into the faller instead (`catalog/fallthrough-splits.csv`, `docs/re/cat16-fallthrough.md`) |
 
 `this` is tracked by a forward must-dataflow over the body's CFG (Ghidra switch targets included); any
 unmodelled write kills the token. Unresolved indirect calls are never given a target. Of the 4,715:
@@ -123,7 +124,7 @@ functions have at least one.
 
 ### 4. Port order
 Graph over the 11,945 live functions with edges `call, tailcall, virtual, virtual-override,
-indirect-ghidra, eh-unwind` (not `fnref`, not unresolved). Tarjan SCCs, level = 0 for SCCs with no
+indirect-ghidra, eh-unwind` (+ `virtual-typed*` from CAT-13 and `fallthrough` from CAT-16; not `fnref`, not unresolved). Tarjan SCCs, level = 0 for SCCs with no
 outgoing edge, else 1 + max(successor level). `scc_id` is assigned in (level, lowest address) order.
 Result: 44 levels, 3,926 functions at level 0; 15 non-trivial SCCs holding 64 functions. The largest
 two (12 each) are the explosion cycle (`CExplosion::AddExplosion` → `CWorld::TriggerExplosion` →
