@@ -32,7 +32,11 @@ const fn crc_table() -> [u32; 256] {
         let mut c = i as u32;
         let mut k = 0;
         while k < 8 {
-            c = if c & 1 != 0 { (c >> 1) ^ 0xEDB8_8320 } else { c >> 1 };
+            c = if c & 1 != 0 {
+                (c >> 1) ^ 0xEDB8_8320
+            } else {
+                c >> 1
+            };
             k += 1;
         }
         t[i] = c;
@@ -166,7 +170,10 @@ impl GxtTable {
     /// terminated string inside TDAT. Returns the number of strings.
     pub fn check(&self) -> std::result::Result<usize, String> {
         if let Some(w) = self.keys.windows(2).find(|w| w[0].hash >= w[1].hash) {
-            return Err(format!("keys not strictly sorted: {:#x} then {:#x}", w[0].hash, w[1].hash));
+            return Err(format!(
+                "keys not strictly sorted: {:#x} then {:#x}",
+                w[0].hash, w[1].hash
+            ));
         }
         if self.wide && !self.tdat().len().is_multiple_of(2) {
             return Err("odd TDAT size in a 16-bit file".into());
@@ -176,7 +183,10 @@ impl GxtTable {
                 return Err(format!("key {:#x}: odd offset in a 16-bit file", k.hash));
             }
             if self.string_at(k.offset).is_none() {
-                return Err(format!("key {:#x}: offset {} has no terminated string", k.hash, k.offset));
+                return Err(format!(
+                    "key {:#x}: offset {} has no terminated string",
+                    k.hash, k.offset
+                ));
             }
         }
         Ok(self.keys.len())
@@ -199,7 +209,10 @@ impl GxtTable {
                         // CMissionTextOffsets::Load reads whole 12-byte entries; a remainder
                         // would be skipped by nothing (the exe reads entries until the count).
                         if size % 12 != 0 {
-                            return Err(Error::invalid("GXT TABL", format!("size {size} is not a multiple of 12")));
+                            return Err(Error::invalid(
+                                "GXT TABL",
+                                format!("size {size} is not a multiple of 12"),
+                            ));
                         }
                         let mut v = Vec::new();
                         while tr.remaining() > 0 {
@@ -309,7 +322,12 @@ impl Gxt {
         let wide = match char_bits {
             8 => false,
             16 => true,
-            b => return Err(Error::unsupported("GXT header", format!("{b} bits per character"))),
+            b => {
+                return Err(Error::unsupported(
+                    "GXT header",
+                    format!("{b} bits per character"),
+                ));
+            }
         };
         r.set_context("GXT main table");
         let main = GxtTable::parse(&mut r, 4, false, true, wide)?;
@@ -375,10 +393,10 @@ impl Gxt {
 
     /// Finds a mission table by name (exact, as `LoadMissionText` compares).
     pub fn table(&self, name: &str) -> Option<&GxtTable> {
-        self.tables
-            .iter()
-            .skip(1)
-            .find(|t| t.name_raw.is_some_and(|n| crate::bytes::c_str(&n) == name.as_bytes()))
+        self.tables.iter().skip(1).find(|t| {
+            t.name_raw
+                .is_some_and(|n| crate::bytes::c_str(&n) == name.as_bytes())
+        })
     }
 
     /// Structural observations: TABL entries whose offset does not point at a table start,
@@ -390,7 +408,10 @@ impl Gxt {
             match self.tables.iter().skip(1).find(|t| t.start == e.offset as usize) {
                 Some(t) => {
                     if t.name_raw != Some(e.name_raw) {
-                        v.push(format!("TABL {name}: table name field {:?} differs", t.name_lossy()));
+                        v.push(format!(
+                            "TABL {name}: table name field {:?} differs",
+                            t.name_lossy()
+                        ));
                     }
                 }
                 None => {
@@ -409,7 +430,10 @@ impl Gxt {
                             i,
                             String::from_utf8_lossy(&main.chunks[i].fourcc)
                         )),
-                        None => v.push(format!("TABL {name}: offset {:#x} is not a table start", e.offset)),
+                        None => v.push(format!(
+                            "TABL {name}: offset {:#x} is not a table start",
+                            e.offset
+                        )),
                     }
                 }
             }
@@ -522,7 +546,12 @@ mod tests {
             assert!(g.table("MIS1").unwrap().get("M1_A").is_some());
             assert_eq!(g.trailing, vec![0x55]);
             let notes = g.notes();
-            assert!(notes.iter().any(|n| n.contains("MAIN -> main table chunk 1 (TKEY)")), "{notes:?}");
+            assert!(
+                notes
+                    .iter()
+                    .any(|n| n.contains("MAIN -> main table chunk 1 (TKEY)")),
+                "{notes:?}"
+            );
             assert!(notes.iter().any(|n| n.starts_with("3 zero gap")), "{notes:?}");
         }
     }

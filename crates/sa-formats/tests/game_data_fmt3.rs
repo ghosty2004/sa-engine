@@ -73,7 +73,11 @@ impl Report {
         for f in self.failures.iter().take(50) {
             println!("{f}");
         }
-        assert!(self.failures.is_empty(), "{} unexpected failures", self.failures.len());
+        assert!(
+            self.failures.is_empty(),
+            "{} unexpected failures",
+            self.failures.len()
+        );
     }
 }
 
@@ -100,11 +104,17 @@ fn check_ifp(rep: &mut Report, label: &str, data: &[u8], padded: bool) {
     };
     if !trailing.is_empty() {
         if !padded {
-            rep.fail(label, format!("{} trailing bytes in a loose file", trailing.len()));
+            rep.fail(
+                label,
+                format!("{} trailing bytes in a loose file", trailing.len()),
+            );
         } else if trailing.iter().any(|&b| b != 0) {
             rep.fail(label, format!("{} trailing bytes, not all zero", trailing.len()));
         } else {
-            rep.count(format!("ifp {kind}: files with zero sector padding after the data"), 1);
+            rep.count(
+                format!("ifp {kind}: files with zero sector padding after the data"),
+                1,
+            );
         }
     }
     for (k, n) in ifp_notes(&ifp) {
@@ -177,7 +187,10 @@ fn gxt_whole_install() {
             if t.start % 4 == 0 {
                 rep.count("gxt: mission tables starting at a multiple of 4", 1);
             } else {
-                rep.fail(&label, format!("table {} at unaligned {:#x}", t.name_lossy(), t.start));
+                rep.fail(
+                    &label,
+                    format!("table {} at unaligned {:#x}", t.name_lossy(), t.start),
+                );
             }
         }
         // Keys of known strings must hash to entries of the main table.
@@ -185,7 +198,10 @@ fn gxt_whole_install() {
         for k in ["CDERROR", "FEM_MM", "FESZ_CA", "IE23"] {
             match main.get(k) {
                 Some(_) => rep.count("gxt: known keys found via key_hash", 1),
-                None => rep.fail(&label, format!("key {k} ({:#010x}) not in MAIN", key_hash(k.as_bytes()))),
+                None => rep.fail(
+                    &label,
+                    format!("key {k} ({:#010x}) not in MAIN", key_hash(k.as_bytes())),
+                ),
             }
         }
     }
@@ -228,9 +244,15 @@ fn scm_whole_install() {
     }
     for n in decoded.notes() {
         if n.contains("jumps into main.scm") {
-            rep.count("scm decode: mission/streamed instructions jumping into main.scm code", 1);
+            rep.count(
+                "scm decode: mission/streamed instructions jumping into main.scm code",
+                1,
+            );
         } else if n.contains("tie broken by the majority list") {
-            rep.count("scm decode: ambiguous occurrences resolved by the majority list", 1);
+            rep.count(
+                "scm decode: ambiguous occurrences resolved by the majority list",
+                1,
+            );
         } else {
             rep.notes.push(n);
         }

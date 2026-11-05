@@ -140,7 +140,10 @@ impl Recording {
             v.push(("entries with handbrake byte > 1".into(), 1));
         }
         if self.frames.iter().any(|f| f.gas < 0 || f.brake < 0) {
-            v.push(("entries with negative gas/brake bytes (exe reads them signed)".into(), 1));
+            v.push((
+                "entries with negative gas/brake bytes (exe reads them signed)".into(),
+                1,
+            ));
         }
         v
     }

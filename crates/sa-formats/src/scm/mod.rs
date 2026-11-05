@@ -283,9 +283,15 @@ impl MainScm {
     pub fn counts(&self) -> Vec<(String, u64)> {
         let mut v = vec![
             ("header segments".to_string(), self.segments.len() as u64),
-            ("global variable space bytes".into(), self.global_space_size() as u64),
+            (
+                "global variable space bytes".into(),
+                self.global_space_size() as u64,
+            ),
             ("model names".into(), self.models().len() as u64),
-            ("streamed script table entries".into(), self.streamed().len() as u64),
+            (
+                "streamed script table entries".into(),
+                self.streamed().len() as u64,
+            ),
             ("code start offset".into(), self.code_start as u64),
         ];
         if let Some((main_size, offs)) = self.missions() {
