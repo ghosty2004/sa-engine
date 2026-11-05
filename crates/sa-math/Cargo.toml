@@ -1,0 +1,17 @@
+[package]
+name = "sa-math"
+version = "0.1.0"
+description = "Pure Rust math ports of gta_sa.exe 1.0 US (CGeneral, CMaths, vectors), wasm-compatible"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+libm = "=0.2.16"
+
+[features]
+# Test-only: deliberately faulty variants used by the mutation smoke test (INF-12). Never enable in builds.
+mutants = []
+
+[lints.rust]
+unsafe_code = "forbid"

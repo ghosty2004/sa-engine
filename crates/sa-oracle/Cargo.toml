@@ -1,0 +1,25 @@
+[package]
+name = "sa-oracle"
+version = "0.1.0"
+description = "Host-side oracles: L1 Unicorn runner for original gta_sa.exe 1.0 US functions, property runner, fixtures"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-math = { path = "../sa-math" }
+
+# Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
+[target.'cfg(not(windows))'.dependencies]
+# GPL-2.0; sa-oracle is a host-only test tool that is never shipped. Bundled build (cmake + cc), x86 only.
+unicorn-engine = { version = "=2.1.5", default-features = false, features = ["arch_x86"] }
+# static scan of function code for x87/SSE hazards
+iced-x86 = { version = "1.21", default-features = false, features = ["std", "decoder", "instr_info"] }
+
+[dev-dependencies]
+# Tests run the mutation smoke test; the release binary only gets it with `--features mutants`.
+sa-math = { path = "../sa-math", features = ["mutants"] }
+
+[features]
+# INF-12 seed: compile the deliberately faulty sa-math variants into the runner.
+mutants = ["sa-math/mutants"]
