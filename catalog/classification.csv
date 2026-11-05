@@ -4967,6 +4967,7 @@ address,class,subsystem,name,evidence
 0x7503e0,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x750430,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x750460,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
+0x750480,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x750710,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x750760,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6
 0x7507b0,RW,RW,,call-graph component contains gta-reversed RenderWare functions; RenderWare span 0x748f20-0x820ce6

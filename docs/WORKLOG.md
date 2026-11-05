@@ -225,3 +225,43 @@
   `catalog/samp-usage.csv`. Result: SA:MP keeps the whole frame loop, so the static closure is 67% of the
   catalogue; samp's disables remove only 182 functions. A real reduction needs the dynamic measurement
   (SAMP-1D). New: CAT-16 (fall-through edges).
+
+## 2026-11-05: CAT-6 names + CAT-13 typed virtual calls (measurement agent)
+- New `tools/catalog/names_extra.py`, which runs in the `run_all.sh` loop after `data_refs.py` (exit 3 =
+  the names changed and the loop reruns). It writes `catalog/names-extra.csv` from these sources:
+  gta-reversed/plugin-sdk one-statement wrappers, `// 0xADDR` comments, plugin-sdk `Converted from` and
+  `#define FUNC_`, the `__xc` static initialisers (`__init_<global>`) and their `atexit` callbacks
+  (`__dtor_<global>`), the classes of unknown vtables (installing constructor, slot-0 deleting
+  destructor, header `RH_ScopedVirtualClass`, unique-slot owner) and their slot names from validated
+  layouts. Low-confidence hints (`sub_<addr>_from_<caller>`, string) are written but never used as
+  names. `catalog/rw-names.csv` is now the RW name source (high/medium). Precedence: gr hook >
+  rw-names > CAT-5 > CAT-6. That keeps plugin-sdk's wrong `RwTextureRead`@0x4c7510 out. The final
+  name goes into `procedures.csv` (`name`, `name_source`, `name_confidence`, `role`, `name_hint`,
+  written by `subsystems.py`) and `state.csv` (`name` + new `role` column; low hints only in the
+  evidence). `callgraph.py` uses the final names.
+- Result: unnamed non-excluded rows 5,862 → 1,656 (non-RW 4,354 → 1,418, RW 1,508 → 238). States:
+  specified 9,727 → 13,919, unknown 5,751 → 1,560. CALLED-ONLY 944 → 37 (853 RW thunks moved to RW).
+  Added 0x750480 `_rpWorldObjCameraSync` via `extra-code-addresses.csv`; 0x7fff00 was already a row.
+  Refreshed the rw-names `[catalogue: …]` tags (`names_extra.py refresh-rw-tags`, 1,318 rows, tags only).
+- CAT-13: new `tools/catalog/cat13_types.py` computes class layouts from the gta-reversed headers; it
+  keeps a layout only when the size and offsets equal VALIDATE_SIZE/VALIDATE_OFFSET (604 classes).
+  `callgraph.py` dataflow gained the tokens OBJ/VTC/SLOTC from members, typed globals and return
+  types. Results: 596 / 3,092 virtual-pattern sites typed (134 with edges `virtual-typed[-override]`,
+  in the port order; 462 wide), unresolved indirect sites 5,566 → 4,971. Fixed: x87 stores were
+  recorded as reads in `rwsets.csv`. gta-reversed vtables declared in headers are now used.
+- Verified: two `run_all.sh` runs give sha256-identical `catalog/` (excluding rw-names.csv and
+  samp-usage.csv, which another agent wrote). Spot checks against the bytes and gta-reversed: 15
+  random new names (seed 6) and 15 non-initialisers (seed 21), all consistent. The source extractors
+  were measured against already-known names: gta-reversed comments agree 98.5 %, plugin-sdk wrappers
+  97.6 %, so plugin-sdk-only names are medium. Found that gta-reversed `TaskComplexClimb.h` has the
+  Clone/GetTaskType comments swapped; the validated layout wins.
+- Cost: about 7 full pipeline runs (2.5–5 min each, 8 GB cap), plus short scans. Disk: about +1 MB in
+  `catalog/`. Notes: `docs/re/cat6-names.md`.
+
+## 2026-11-05: CAT-6/13 integrated, CAT-15 fixed, first L2 states
+- CAT-6 (agent): unnamed non-excluded functions fell from 5,862 to 1,656 (init/dtor 1,804, gta-reversed
+  comments 459, vtables 562, …); CAT-13 typed 596/3,092 virtual sites (134 resolved). The main session
+  re-ran `run_all.sh`: identical. The agent's x87-store fix did not take effect (capstone marks `fstp m32`
+  as R, not "no flags"). Fixed in callgraph.py (CAT-15); verified on 0x561B10/0xB7CB50.
+- state.csv: L2 for LimitRadianAngle, GetRadianAngleBetweenPoints, SolveQuadratic, CVector::Normalise,
+  CGameLogic::IsCoopGameGoingOn (INF-8 evidence).

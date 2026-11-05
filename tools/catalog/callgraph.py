@@ -62,7 +62,8 @@ DATA = [('.rdata', 0x858000, 0x8A4000), ('.data', 0x8A4000, 0xC9E000), ('_TEXT_H
         ('_rwdseg', 0xCAF000, 0xCB0000), ('.rsrc', 0xCB0000, 0xCB1000), ('.data2', 0x1301000, 0x1556000)]
 LIVE_STATES = ('gr-reversed', 'gr-unreversed', 'gr-called-only', 'unknown')
 # edges that make a function depend on another for porting (leaf-first order)
-ORDER_KINDS = ('call', 'tailcall', 'virtual', 'virtual-override', 'indirect-ghidra', 'eh-unwind')
+ORDER_KINDS = ('call', 'tailcall', 'virtual', 'virtual-override', 'virtual-typed', 'virtual-typed-override',
+               'indirect-ghidra', 'eh-unwind')
 REMOVE_CLASSES = ('excluded:mis-split', 'excluded:protection')
 CXX_FRAME_HANDLER = 0x8215A0
 FUNCINFO_MAGIC = (0x19930520, 0x19930521, 0x19930522)
@@ -81,6 +82,8 @@ for full, subs in ((X.X86_REG_EAX, (X.X86_REG_AX, X.X86_REG_AL, X.X86_REG_AH)),
     for s in subs:
         ALIAS[s] = full
 CALLER_SAVED = (X.X86_REG_EAX, X.X86_REG_ECX, X.X86_REG_EDX)
+X87_STORES = ('fst', 'fstp', 'fist', 'fistp', 'fisttp', 'fbstp', 'fnstcw', 'fstcw', 'fnstsw', 'fstsw',
+              'fnstenv', 'fstenv', 'fnsave', 'fsave')
 
 
 def hx(v):
@@ -138,7 +141,7 @@ def load_procs(cat):
     out = {}
     for r in rows:
         a = int(r['address'], 16)
-        name = r['gr_name'] or (cls[a]['name'] if a in cls else '')
+        name = r['name'] if 'name' in r else (r['gr_name'] or (cls[a]['name'] if a in cls else ''))
         out[a] = dict(state=r['state'], cls=r['class'] or ('game' if r['state'] != 'excluded' else ''),
                       sub=r['subsystem'], name=name, ghidra=r['ghidra_name'])
     return out
@@ -245,9 +248,11 @@ def global_names(gr, psdk, data_ok):
 
 
 def gr_vtables(gr):
-    """{class: (vtable address, n virtuals)} from RH_ScopedVirtualClass."""
+    """{class: (vtable address, n virtuals)} from RH_ScopedVirtualClass (in .cpp files and, since
+    CAT-13, the 8 declared in headers)."""
     out = {}
-    for f in sorted(glob.glob(str(gr / 'source' / '**' / '*.cpp'), recursive=True)):
+    for f in sorted(glob.glob(str(gr / 'source' / '**' / '*.cpp'), recursive=True)) + \
+            sorted(glob.glob(str(gr / 'source' / '**' / '*.h'), recursive=True)):
         for m in re.finditer(r'RH_ScopedVirtualClass\(\s*([\w:]+)\s*,\s*(0x[0-9A-Fa-f]+)\s*,\s*(\d+)',
                              open(f, errors='replace').read()):
             out.setdefault(m.group(1), (int(m.group(2), 16), int(m.group(3))))
@@ -397,6 +402,8 @@ def build(cat):
             derived[b].add(c)
             b = bases.get(b)
     vtaddr = {a: c for c, (a, _n) in vt.items()}
+    stats = collections.Counter()
+    hoodlum_body_of = dict(stubs)   # stub -> .HOODLUM body (calls may target the body directly)
 
     def slot_impl(c, slot):
         a, n = vt[c]
@@ -405,12 +412,34 @@ def build(cat):
         v = im.u32(a + 4 * slot)
         return v if in_code(v) else None
 
+    # CAT-13: receiver types (validated layouts, typed globals, return types)
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import cat13_types as CT
+    TypeCtx.layouts = CT.Layouts(GR, cat)
+    TypeCtx.vclasses = set(vt)
+    TypeCtx.gtypes = CT.global_types(GR, PSDK, TypeCtx.vclasses)
+    rnames = CT.return_types(GR, TypeCtx.vclasses)
+    TypeCtx.rettype = {}
+    for a_, p_ in procs.items():
+        nm_ = re.sub(r'-.*$', '', p_['name'])
+        own_, _, fn_ = nm_.rpartition('::')
+        rc_ = rnames.get((own_.split('::')[-1], fn_))
+        if rc_:
+            TypeCtx.rettype[a_] = rc_
+            for h_ in (hoodlum_body_of.get(a_),):
+                if h_:
+                    TypeCtx.rettype[h_] = rc_
+    stats['cat13_validated_layouts'] = sum(1 for c in TypeCtx.layouts.vsize if c in TypeCtx.layouts.decl
+                                           and TypeCtx.layouts.validated(c))
+    stats['cat13_typed_globals'] = len(TypeCtx.gtypes)
+    stats['cat13_typed_returns'] = len(TypeCtx.rettype)
+    TYPED_FANOUT = 16
+
     ehstubs = eh_funclets(im, procs)
 
     # ---- function extents
     entry_set = set(procs) | set(dump)
     funcs = {}
-    stats = collections.Counter()
     for a in live:
         f = Func(a)
         if a in dump:
@@ -470,6 +499,7 @@ def build(cat):
         frames = {lo for lo in (a, f.hood) if lo is not None and im.rd(lo, 3) == b'\x55\x8b\xec'}
         ebp_frame = bool(frames)
         n_direct = n_ind = n_ind_res = n_cjmp_unres = wtp = n_jout = 0
+        TypeCtx.owner = owner if owner and TypeCtx.layouts.validated(owner) else None
         st_in = this_dataflow(ins_all, {a, f.hood} - {None}, gh)
         for ins in ins_all:
             state = st_in.get(ins.address) or {}
@@ -508,15 +538,43 @@ def build(cat):
                     n_ind += 1
                     res = None
                     # vtable slot of `this`
+                    typed = None
                     if op0.type == X.X86_OP_MEM and op0.mem.index == 0 and op0.mem.base:
                         tok = state.get(ALIAS.get(op0.mem.base))
                         if tok == ('VT',) and op0.mem.disp % 4 == 0:
                             res = ('slot', op0.mem.disp // 4)
+                        elif tok and tok[0] == 'VTC' and op0.mem.disp % 4 == 0 and op0.mem.disp >= 0:
+                            typed = (tok[1], op0.mem.disp // 4)
                     elif op0.type == X.X86_OP_REG:
                         tok = state.get(ALIAS.get(op0.reg))
                         if tok and tok[0] == 'SLOT':
                             res = ('slot', tok[1])
-                    if res and owner in vt:
+                        elif tok and tok[0] == 'SLOTC':
+                            typed = (tok[1], tok[2])
+                    own_ok = bool(typed) and typed[0] in vt and typed[1] < vt[typed[0]][1]
+                    if typed and (own_ok or any(typed[1] < vt[dc][1] for dc in derived.get(typed[0], ()))):
+                        # CAT-13: virtual call on an object of static class C (typed member / global /
+                        # return value): C's implementation plus the overrides of its derived classes
+                        c13, slot = typed
+                        # a base without the slot in its known vtable (abstract CTask: 6 of 9 slots
+                        # declared): the derived classes' implementations only
+                        impl = slot_impl(c13, slot) if own_ok else None
+                        over = sorted({slot_impl(dc, slot) for dc in derived.get(c13, ())} - {impl, None})
+                        tgts = ([impl] if impl is not None and impl != 0x82263A else [])
+                        if len(over) <= TYPED_FANOUT:
+                            tgts += over
+                        for t_ in tgts:
+                            cc = canon(t_)
+                            edge(a, cc, 'virtual-typed' if t_ == impl else 'virtual-typed-override', cls_of(cc),
+                                 name_of(cc))
+                        n_ind_res += 1
+                        indirect.append((a, ins.address, f'call {form}', 'virtual-typed' if tgts else 'virtual-typed-wide',
+                                         (f'{c13} vtable {vt[c13][0]:#x} slot {slot}' if own_ok else
+                                          f'{c13} slot {slot} (not in its own known vtable)') +
+                                         (f' -> {impl:#x}' if impl is not None else '') +
+                                         (f'; {len(over)} override(s) in derived classes' if over else '') +
+                                         ('' if len(over) <= TYPED_FANOUT else f' (more than {TYPED_FANOUT}: no edges)')))
+                    elif res and owner in vt:
                         slot = res[1]
                         impl = slot_impl(owner, slot)
                         detail = [f'{owner} vtable {vt[owner][0]:#x} slot {slot}']
@@ -543,7 +601,10 @@ def build(cat):
                         why = ''
                         btok = state.get(ALIAS.get(op0.mem.base)) if op0.type == X.X86_OP_MEM and op0.mem.base \
                             and op0.mem.index == 0 else None
-                        if btok == ('VPTR',) and op0.mem.disp % 4 == 0:
+                        if typed:
+                            why = f'virtual call on static class {typed[0]} slot {typed[1]} (CAT-13), ' + (
+                                'no vtable known for the class' if typed[0] not in vt else 'slot outside its vtable')
+                        elif btok == ('VPTR',) and op0.mem.disp % 4 == 0:
                             why = f'virtual call pattern (mov r,[obj]; call [r+{op0.mem.disp:#x}]), slot ' \
                                   f'{op0.mem.disp // 4}, object type not known statically'
                         elif res and owner not in vt:
@@ -568,6 +629,10 @@ def build(cat):
                         continue
                     acc = ('R' if op.access & capstone.CS_AC_READ else '') + \
                           ('W' if op.access & capstone.CS_AC_WRITE else '')
+                    if ins.mnemonic in X87_STORES:
+                        # capstone reports x87 store memory operands as R or with no flags at all;
+                        # these instructions only write their memory operand (CAT-15).
+                        acc = 'W'
                     if sec and (absolute or (op.mem.base and disp >= 0x858000)):
                         if not (op.mem.segment == X.X86_REG_FS):
                             rw[(a, disp)].add((op.size, acc or 'R', 'direct' if absolute and not op.mem.index
@@ -672,48 +737,105 @@ _DESC = {}
 
 
 def _desc(ins):
-    """Pre-decoded transfer facts of one instruction (cached by address)."""
+    """Pre-decoded transfer facts of one instruction (cached by address).
+    mov = (dst, kind, src, disp): kind 'reg' (mov r, r2), 'mem' (mov r, [r2 + disp]), 'abs' (mov r, [disp]),
+    'imm' (mov r, imm), 'lea' (lea r, [r2 + disp]), 'leaabs' (lea r, [disp]) or None (anything else)."""
     d = _DESC.get(ins.address)
     if d is None:
         is_call = bool(ins.group(capstone.CS_GRP_CALL))
         mov = None
-        if ins.id == X.X86_INS_MOV and len(ins.operands) == 2 and ins.operands[0].type == X.X86_OP_REG \
-                and ins.operands[0].reg in R32:
-            s = ins.operands[1]
-            if s.type == X.X86_OP_REG and s.reg in R32:
-                mov = (ins.operands[0].reg, 'reg', s.reg, 0)
-            elif s.type == X.X86_OP_MEM and s.mem.index == 0 and s.mem.base in R32 and s.mem.segment == 0:
-                mov = (ins.operands[0].reg, 'mem', s.mem.base, s.mem.disp)
+        target = None
+        if is_call and ins.operands and ins.operands[0].type == X.X86_OP_IMM:
+            target = ins.operands[0].imm & 0xFFFFFFFF
+        if ins.id in (X.X86_INS_MOV, X.X86_INS_LEA) and len(ins.operands) == 2 and \
+                ins.operands[0].type == X.X86_OP_REG and ins.operands[0].reg in R32:
+            s_ = ins.operands[1]
+            lea = ins.id == X.X86_INS_LEA
+            if s_.type == X.X86_OP_REG and s_.reg in R32 and not lea:
+                mov = (ins.operands[0].reg, 'reg', s_.reg, 0)
+            elif s_.type == X.X86_OP_MEM and s_.mem.index == 0 and s_.mem.base in R32 and s_.mem.segment == 0:
+                mov = (ins.operands[0].reg, 'lea' if lea else 'mem', s_.mem.base, s_.mem.disp)
+            elif s_.type == X.X86_OP_MEM and s_.mem.index == 0 and s_.mem.base == 0 and s_.mem.segment in (0, X.X86_REG_DS):
+                mov = (ins.operands[0].reg, 'leaabs' if lea else 'abs', 0, s_.mem.disp & 0xFFFFFFFF)
+            elif s_.type == X.X86_OP_IMM and not lea:
+                mov = (ins.operands[0].reg, 'imm', 0, s_.imm & 0xFFFFFFFF)
             else:
                 mov = (ins.operands[0].reg, None, 0, 0)
         writes = tuple(sorted({ALIAS.get(r, r) for r in ins.regs_access()[1]})) if not is_call else ()
-        d = _DESC[ins.address] = (is_call, mov, writes)
+        d = _DESC[ins.address] = (is_call, mov, writes, target)
     return d
+
+
+class TypeCtx:
+    """CAT-13 receiver typing for one function: owner class of `this` and the typed sources
+    (cat13_types.py). Tokens: OBJ C (pointer to an object of static class C), VTC C (its vptr),
+    SLOTC C n (slot n of it)."""
+    layouts = None
+    gtypes = {}
+    rettype = {}
+    vclasses = set()
+    owner = None
+
+    @classmethod
+    def member(cls, c, disp):
+        if cls.layouts is None or c is None:
+            return None
+        return cls.layouts.member_at(c, disp)
 
 
 def transfer(ins, state):
     """Register tokens after `ins`: THIS (ecx at a member function's entry), VT (*THIS),
-    SLOT n (VT[n]), VPTR (first dword of any other object). Must-analysis: anything written
-    in a way not modelled loses its token."""
-    is_call, mov, writes = _desc(ins)
+    SLOT n (VT[n]), VPTR (first dword of any other object), and the CAT-13 typed tokens OBJ C,
+    VTC C, SLOTC C n. Must-analysis: anything written in a way not modelled loses its token."""
+    is_call, mov, writes, target = _desc(ins)
     state = dict(state)
     if is_call:
         for r in CALLER_SAVED:
             state.pop(r, None)
+        rc = TypeCtx.rettype.get(target) if target is not None else None
+        if rc:
+            state[X.X86_REG_EAX] = ('OBJ', rc)
         return state
     new = dst = None
     if mov:
         dst, kind, src, disp = mov
         if kind == 'reg':
             new = state.get(src)
-        elif kind == 'mem':
+        elif kind in ('mem', 'lea'):
             bt = state.get(src)
-            if bt == ('THIS',) and disp == 0:
+            obj = TypeCtx.owner if bt == ('THIS',) else (bt[1] if bt and bt[0] == 'OBJ' else None)
+            if kind == 'lea':
+                m = TypeCtx.member(obj, disp) if obj and disp else None
+                if obj and disp == 0:
+                    new = ('OBJ', obj)
+                elif m and m[0] == 'obj' and m[1] in TypeCtx.vclasses:
+                    new = ('OBJ', m[1])
+            elif bt == ('THIS',) and disp == 0:
                 new = ('VT',)
             elif bt == ('VT',) and disp % 4 == 0 and disp >= 0:
                 new = ('SLOT', disp // 4)
+            elif bt and bt[0] == 'OBJ' and disp == 0:
+                new = ('VTC', bt[1])
+            elif bt and bt[0] == 'VTC' and disp % 4 == 0 and disp >= 0:
+                new = ('SLOTC', bt[1], disp // 4)
+            elif obj:
+                m = TypeCtx.member(obj, disp)
+                if m and m[0] == 'ptr' and m[1] in TypeCtx.vclasses:
+                    new = ('OBJ', m[1])
+                elif m and m[0] == 'obj' and m[1] in TypeCtx.vclasses:
+                    new = ('VTC', m[1])   # first dword of an embedded polymorphic object
             elif disp == 0 and src != dst:
                 new = ('VPTR',)
+        elif kind == 'abs':
+            g = TypeCtx.gtypes.get(disp)
+            if g and g[0] == 'ptr':
+                new = ('OBJ', g[1])
+            elif g and g[0] == 'obj':
+                new = ('VTC', g[1])
+        elif kind in ('imm', 'leaabs'):
+            g = TypeCtx.gtypes.get(disp)
+            if g and g[0] == 'obj':
+                new = ('OBJ', g[1])
     for r in writes:
         state.pop(r, None)
     if dst is not None and new is not None:

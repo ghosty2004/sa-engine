@@ -4177,7 +4177,6 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x750075,.data,0x8c01ac,rejected,,inside the body of 0x750050
 0x750075,_TEXT_HA,0xca9e0c,rejected,,inside the body of 0x750050
 0x75008a,_TEXT_HA,0xca788c,rejected,,inside the body of 0x750050
-0x750480,code-imm,0x7503e0@0x750409,rejected,code-immediate,"not preceded by padding, ret or a switch table (byte 0x14)"
 0x75076f,_TEXT_HA,0xca2554,rejected,,inside the body of 0x750760
 0x756854,.rdata,0x88c3c4,rejected,,inside the body of 0x756830
 0x756c25,.rdata,0x874acc,rejected,,inside the body of 0x756960

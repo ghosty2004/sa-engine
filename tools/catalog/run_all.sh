@@ -7,12 +7,13 @@
 # Order: build_catalog -> merge_ghidra -> classify_unknowns (CAT-5) -> subsystems -> callgraph
 # ghidra + build (CAT-7) -> callgraph gaps (CAT-12: closes the catalogue over call targets; when
 # it adds rows the loop reruns from build_catalog) -> data_refs (CAT-12b: entries reached only
-# through data tables / code immediates, catalog/data-code-addresses.csv; loops back the same way) -> layouts (CAT-8) -> script_commands (CAT-10)
+# through data tables / code immediates, catalog/data-code-addresses.csv; loops back the same way) -> names_extra
+# (CAT-6: catalog/names-extra.csv; loops back when it changes) -> layouts (CAT-8) -> script_commands (CAT-10)
 # -> gr_deviations (CAT-14: gta-reversed fidelity audit -> catalog/gr-deviations.csv)
 # -> progress merge + report (CAT-11, catalog/state.csv is merged, never reset; adds gr_deviations).
 #
 # Inputs: re/gta-reversed, re/plugin-sdk, re/gta/1.0-US/gta_sa.exe, catalog/raw/rea-evidence.json,
-# catalog/extra-code-addresses.csv, catalog/data-code-addresses.csv, catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
+# catalog/extra-code-addresses.csv, catalog/data-code-addresses.csv, catalog/rw-names.csv (RW-RE names), catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
 # `callgraph.py analyse` on first use) and the existing catalog/state.csv.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -55,8 +56,18 @@ for pass in 1 2 3 4 5 6 7 8; do
         rc=$?
         set -e
         tail -1 "$LOG/data-refs.log"
-        [ $rc -eq 0 ] && break
-        if [ $rc -ne 3 ]; then echo "run_all: data_refs failed (exit $rc), see $LOG/data-refs.log" >&2; exit $rc; fi
+        if [ $rc -ne 0 ] && [ $rc -ne 3 ]; then echo "run_all: data_refs failed (exit $rc), see $LOG/data-refs.log" >&2; exit $rc; fi
+        if [ $rc -eq 0 ]; then
+            # CAT-6: names for the functions nothing else names (catalog/names-extra.csv); when the
+            # file changes the loop reruns so subsystems.py / callgraph.py / progress.py use it
+            set +e
+            "${PY[@]}" tools/catalog/names_extra.py "$CAT" "$EXE" "$GR" >"$LOG/names-extra.log" 2>&1
+            rc=$?
+            set -e
+            tail -1 "$LOG/names-extra.log"
+            [ $rc -eq 0 ] && break
+            if [ $rc -ne 3 ]; then echo "run_all: names_extra failed (exit $rc), see $LOG/names-extra.log" >&2; exit $rc; fi
+        fi
     fi
     if [ "$pass" -eq 8 ]; then echo "run_all: catalogue did not converge in 8 passes" >&2; exit 1; fi
 done
