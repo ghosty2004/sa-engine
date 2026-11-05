@@ -58,7 +58,7 @@ pub extern "C" fn timer_update_hook() {
 /// (0x9FA0, FTZ on) afterwards, sticky flags included. The `sa_math::x87` model is f64 arithmetic that
 /// was verified under the default MXCSR; the original x87 code does not depend on MXCSR.
 #[inline(always)]
-fn ieee<T>(f: impl FnOnce() -> T) -> T {
+pub(crate) fn ieee<T>(f: impl FnOnce() -> T) -> T {
     #[cfg(all(windows, target_arch = "x86"))]
     {
         let mut old = 0u32;

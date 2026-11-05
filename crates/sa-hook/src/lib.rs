@@ -10,6 +10,7 @@
 //!   configuration, virtual clock, input state machine.
 //! - `win`: DllMain, hook installation, frame-boundary toggles, control server, log (Windows only).
 //! - `detwin`: the Windows side of the oracle features (Windows only).
+//! - `cdsync`: lost-wake-up fix for `CdStreamSync` (INF-15, Windows only).
 //! - [`l2`] / `l2win`: the L2 oracle (INF-8): original vs Rust at real call sites, see
 //!   `docs/re/l2-oracle.md`.
 
@@ -24,6 +25,8 @@ pub mod x86;
 #[cfg(test)]
 mod testexe;
 
+#[cfg(windows)]
+mod cdsync;
 #[cfg(windows)]
 mod detaudio;
 #[cfg(windows)]

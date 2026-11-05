@@ -314,7 +314,8 @@ fn selftest() -> String {
         let mut bad = 0usize;
         let mut first = String::new();
         for &x in &inputs {
-            let (a, b) = (orig(x), game::general::limit_radian_angle(x));
+            // Same MXCSR as the hook (game::ieee): the x87 model flushes denormals under FTZ.
+            let (a, b) = (orig(x), game::ieee(|| game::general::limit_radian_angle(x)));
             let same = a.to_bits() == b.to_bits() || (a.is_nan() && b.is_nan());
             if !same {
                 if bad == 0 {
@@ -414,6 +415,7 @@ fn handle(cmd: &Command) -> String {
         Command::Record(arg) => crate::detwin::record(arg),
         Command::Replay(path) => crate::detwin::replay(path),
         Command::Stack => crate::detwin::main_stack(),
+        Command::CdSync => crate::cdsync::status(),
         Command::HookL2(key) => {
             let Some(i) = table::find(key) else {
                 return format!("err unknown hook {key}");
@@ -488,6 +490,7 @@ fn attach() {
         }
     };
     let (ok, wanted) = install_all(oracle, &ports);
+    crate::cdsync::install();
     log(&format!(
         "{ok}/{wanted} hooks installed (oracle group {}, ports {ports:?})",
         if oracle { "on" } else { "off" }
