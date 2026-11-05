@@ -42,3 +42,9 @@
   expressions such as `sizeof(void*)` are kept verbatim).
 - CAT-10 part 1: `tools/catalog/script_commands.py` → `catalog/script-commands.csv`. 2,826 enum opcodes:
   770 handlers, 713 unimplemented, 281 NOP, 13 unsupported, 1,049 not registered in gta-reversed.
+
+## 2026-11-05: FMT-1 integrated
+- `crates/sa-formats` (impl-1): IMG v2, RW chunk tree, typed DFF/TXD, COL1–4. Re-verified by the main
+  session: `cargo test -p sa-formats` gives 18 passed; `SA_GAME_DIR=… cargo test -p sa-formats --release
+  --test game_data -- --ignored` passes with every IMG/DFF/TXD/COL byte-exact and 1 expected failure
+  (peds.col). Clippy is clean; the crate builds for wasm32. Findings are in `docs/re/formats.md`.
