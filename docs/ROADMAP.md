@@ -11,7 +11,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | FMT-1 sa-formats (worktree) | FMT-2 |
+| impl-1 | FMT-2 (next) | FMT-3 |
 | impl-2 | INF-2 + INF-3 launcher/sa-hook (worktree) | INF-4 |
 | measurement / REA | CAT-5 | CAT-7 |
 | harness | — | — |
@@ -68,7 +68,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 | ID | Task | Funcs (rev/unrev) | Status | Verification |
 |---|---|---|---|---|
-| FMT-1 | IMG v2, RW chunk stream (DFF/TXD), COL1–4 | — | todo | parse all install files, byte round-trip |
+| FMT-1 | IMG v2, RW chunk stream (DFF/TXD), COL1–4 | — | done | 8 IMG / 21,038 entries, 15,347 DFF, 4,037 TXD (32,869 textures), 253/254 COL byte-exact round trip. peds.col is an expected failure (not loaded as collision; ValidateVersion stamp bytes, see docs/re/formats.md). Open: verify the triangle index order against the exe's RW stream reader before rendering relies on it |
 | FMT-2 | IPL text+binary, IDE, all DAT/CFG (handling, timecyc, carcols, pedstats, weapon, surfinfo, water, paths/nodes, object.dat, popcycle, …) | — | todo | the original's in-memory tables equal after load |
 | FMT-3 | IFP (ANP3), GXT, SCM (main + script.img), SFX/stream audio containers, saves | — | todo | same as above |
 | MATH | vectors, matrices, quaternions, CGeneral, CMaths, x87 helpers | 96/0 | todo | L1 |

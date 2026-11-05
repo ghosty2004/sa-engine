@@ -1,0 +1,12 @@
+[package]
+name = "sa-formats"
+version = "0.1.0"
+description = "Readers and writers for GTA San Andreas file formats (IMG, RenderWare streams, COL)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints.rust]
+unsafe_code = "forbid"
