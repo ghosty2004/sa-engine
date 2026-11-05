@@ -25,7 +25,7 @@ Functions: 19425 (12761 non-excluded, 6664 excluded). States per docs/PLAN.md se
 | INPUT | 4 | 143 | 0 | 0 | 0 | 0 | 0 | 147 | 0.0 |
 | COLL | 2 | 143 | 0 | 0 | 0 | 0 | 0 | 145 | 0.0 |
 | WEAPON | 5 | 134 | 0 | 0 | 0 | 0 | 0 | 139 | 0.0 |
-| MATH | 0 | 98 | 1 | 0 | 0 | 0 | 0 | 99 | 0.0 |
+| MATH | 0 | 93 | 0 | 6 | 0 | 0 | 0 | 99 | 0.0 |
 | PHYS | 1 | 66 | 0 | 0 | 0 | 0 | 0 | 67 | 0.0 |
 | SAVE | 3 | 31 | 0 | 0 | 0 | 0 | 0 | 34 | 0.0 |
 | X-eh-funclet | 0 | 0 | 0 | 0 | 0 | 0 | 3556 | 3556 | - |
@@ -36,13 +36,18 @@ Functions: 19425 (12761 non-excluded, 6664 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 194 | 194 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 36 | 36 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 3125 | 9634 | 2 | 0 | 0 | 0 | 6664 | 19425 | 0.00 |
+| **total** | 3125 | 9629 | 1 | 6 | 0 | 0 | 6664 | 19425 | 0.00 |
 
-`specified` by source: REA 1736, gta-reversed 7898
+`specified` by source: REA 1736, gta-reversed 7893
 
-## Functions above `specified` (2)
+## Functions above `specified` (7)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
 | 0x441390 | CGameLogic::IsCoopGameGoingOn | WORLD | implemented | crates/sa-hook/src/game.rs (Rust port, .HOODLUM stub hooked) + src/table.rs hook; no recorded oracle yet | 2026-11-05 |
-| 0x53cb50 | CGeneral::LimitRadianAngle | MATH | implemented | crates/sa-hook/src/game.rs (Rust port) + src/table.rs hook; INF-3 selftest 160,024 inputs 0 mismatches, not a recorded L1 oracle | 2026-11-05 |
+| 0x53cb00 | CGeneral::LimitAngle | MATH | L1 | sa-math limit_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn; SNaN via CPU); original UB ledger entry | 2026-11-05 |
+| 0x53cb50 | CGeneral::LimitRadianAngle | MATH | L1 | sa-math limit_radian_angle; sa-oracle l1 1M cases 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x53cbe0 | CGeneral::GetRadianAngleBetweenPoints- | MATH | L1 | sa-math get_radian_angle_between_points; l1 1.25M cases 0 mismatches (CPU backend, FPATAN) | 2026-11-05 |
+| 0x53cc70 | CGeneral::GetATanOfXY | MATH | L1 | sa-math get_atan_of_xy; l1 1M cases 0 mismatches on f32 result (CPU backend, FPATAN); ledger pending: ST0 precision | 2026-11-05 |
+| 0x53ce30 | CGeneral::SolveQuadratic | MATH | L1 | sa-math solve_quadratic; l1 1M 0 mismatches; mutants 3/3 | 2026-11-05 |
+| 0x59c910 | CVector::Normalise | MATH | L1 | sa-math CVector::normalise; l1 1M 0 mismatches | 2026-11-05 |
