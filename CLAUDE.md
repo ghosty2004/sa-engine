@@ -39,7 +39,7 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
   `.text`), so hooking the stub address is enough.
 
 ## Layout
-- `tools/catalog/`: catalogue builders, run in this order: `build_catalog.py re/gta-reversed re/gta/1.0-US/gta_sa.exe catalog`, `merge_ghidra.py catalog/raw/rea-evidence.json catalog`, `subsystems.py catalog`, `layouts.py re/gta-reversed catalog` (`hoodlum_xrefs.py` is a one-off check). Python venv in `.venv`.
+- `tools/catalog/`: catalogue builders, run in this order: `build_catalog.py re/gta-reversed re/gta/1.0-US/gta_sa.exe catalog`, `merge_ghidra.py catalog/raw/rea-evidence.json catalog`, `classify_unknowns.py re/gta/1.0-US/gta_sa.exe catalog` (CAT-5, needs `re/plugin-sdk`), `subsystems.py catalog`, `layouts.py re/gta-reversed catalog` (`hoodlum_xrefs.py` is a one-off check). Python venv in `.venv`.
   Run with `.venv/bin/python -I`.
 - `catalog/`: generated `functions.csv`, `callees.csv`, `summary.md`.
 - `crates/`: Rust workspace (created milestone by milestone, see PLAN.md §4).

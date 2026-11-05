@@ -48,3 +48,10 @@
   session: `cargo test -p sa-formats` gives 18 passed; `SA_GAME_DIR=… cargo test -p sa-formats --release
   --test game_data -- --ignored` passes with every IMG/DFF/TXD/COL byte-exact and 1 expected failure
   (peds.col). Clippy is clean; the crate builds for wasm32. Findings are in `docs/re/formats.md`.
+
+## 2026-11-05: CAT-5 integrated
+- The RE agent classified all 9,454 unknowns (see ROADMAP CAT-5 and `docs/re/cat5-unknowns.md`).
+  Re-verified by the main session: the full pipeline build → merge → classify → subsystems reproduces
+  `procedures.csv` byte-identically. The real remaining backlog is 2,793 unknown game/RW functions, plus
+  730 hooked-unreversed and 528 called-only.
+- plugin-sdk cloned shallowly into `re/plugin-sdk` (15f15b6) for naming.

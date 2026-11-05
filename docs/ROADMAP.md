@@ -11,9 +11,9 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | FMT-2 (next) | FMT-3 |
+| impl-1 | FMT-2 part a (worktree) | FMT-3 |
 | impl-2 | INF-2 + INF-3 launcher/sa-hook (worktree) | INF-4 |
-| measurement / REA | CAT-5 | CAT-7 |
+| measurement / REA | CAT-7 | CAT-10 part 2 |
 | harness | — | — |
 | verifier | — | — |
 
@@ -37,7 +37,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | CAT-3 | How game code reaches `.HOODLUM` | done | 501 `jmp`, 0 `call` from game `.text` | `hoodlum_xrefs.py` |
 | CAT-4 | Merge with the Ghidra procedure list | done | 20,823 Ghidra functions + 1,890 missed hook targets | `catalog/procedures.csv` |
 | CAT-4b | Subsystem map | done | every hooked function has a subsystem, `OTHER` = 0 | `subsystems.py` → `catalog/subsystems.md` |
-| CAT-5 | Classify unknowns: `UNK-eh-funclets` 3,689 · `UNK-game` 3,145 · `UNK-thirdparty-lib` 930 · `UNK-rw-crt` 899 · `UNK-protection-mix` 791 | todo | each row gets a subsystem or `excluded` with a reason | confirm EH funclets via FuncInfo; identify the library through strings/xrefs; split RW from CRT through the RW names known from rwcore headers |
+| CAT-5 | Classify the 9,454 unknowns | done | `classify_unknowns.py` → `catalog/classification.csv`, reproducible (re-run identical). Excluded 6,661 (EH funclets 3,556 via FuncInfo tables, D3DX9 949, protection 741, Ghidra mis-splits 653, CRT 508, libpng 1.0.12 + zlib 1.1.3 194, QuickTime glue 34, linker thunks 26). RW +312. Game 2,481 (1,015 assigned to a subsystem, 1,466 `UNK-game`) | notes `docs/re/cat5-unknowns.md`; 138 rows rest on link order only (marked) |
 | CAT-6 | Name unknowns from plugin-sdk addresses (own pinned clone in `re/plugin-sdk`) | todo | match count recorded | |
 | CAT-7 | Call graph + global read/write sets per function | todo | Ghidra headless script output in `catalog/callgraph.*`, `catalog/rwsets.*` | needed for leaf-first order and L2 snapshots |
 | CAT-8 | Layout table from `VALIDATE_SIZE` / `VALIDATE_OFFSET` | done (table) | `catalog/layouts.csv`: 781 sizes + 39 offsets (20 symbolic expressions kept verbatim) | Rust const-assert generation happens when the crates that own the types exist |
@@ -74,7 +74,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | MATH | vectors, matrices, quaternions, CGeneral, CMaths, x87 helpers | 96/0 | todo | L1 |
 | CORE | pools, timer, memory mgr, file mgr, game/app states | 265/10 | todo | L2, L3 boot sequence |
 | STREAM | CdStream, CStreaming, CFileLoader, stores, model infos | 472/1 | todo | L2 + L3 streaming paths |
-| RW | RW core + plugins + pipelines + about 850 thunked RW functions from REA | 291/19 (+~850) | todo | L2 + D3D diff |
+| RW | RW core + plugins + pipelines + RW functions from REA (catalogue: 291 rev / 19 unrev / 313 unknown). The statically linked D3DX9 (949) and libpng/zlib (194) stay original in phase A; in phase B they are replaced by Rust equivalents for what RW uses (D3DX shader assembly for the pipelines, PNG reading) | 291/19 (+313) | todo | L2 + D3D diff |
 
 ## Phase III: world (M10–M11)
 
@@ -110,7 +110,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | SCRIPT | interpreter + handlers (see CAT-10) | 115/28 + commands | todo | F4 |
 | HUD | HUD, radar, fonts, text, menus, loading screen | 298/11 | todo | F7 |
 | SAVE | generic game storage | 13/15 | todo | F5 |
-| AUDIO | CAE* entities/managers/loaders/hardware | 718/26 | todo | F7 audio |
+| AUDIO | CAE* entities/managers/loaders/hardware; user-track MP3 playback goes through QuickTime (0x4E77C0–0x4E7CB0 → QuickTime.qts), which needs a Rust decoder in phase B | 718/26 | todo | F7 audio |
 | TAIL | `CALLED-ONLY` 528 + classified `UNK-game` remainder | 528 + ? | todo | F1, F2, F8 |
 
 ## Phase VII–IX: standalone, browser, release gates
