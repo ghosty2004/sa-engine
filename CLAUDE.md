@@ -44,12 +44,17 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
   Order: `build_catalog.py` → `merge_ghidra.py` → `classify_unknowns.py` (CAT-5, needs `re/plugin-sdk`)
   → `subsystems.py` → `callgraph.py ghidra` + `build` (CAT-7, Ghidra headless project in `target/ghidra`)
   → `callgraph.py gaps` (CAT-12: closes the catalogue over call targets, loops back when it adds rows)
-  → `layouts.py` → `script_commands.py` (CAT-10) → `progress.py` (CAT-11). Logs in
+  → `data_refs.py` (CAT-12b: functions reached only through data tables; same loop)
+  → `layouts.py` → `script_commands.py` (CAT-10) → `gr_deviations.py` (CAT-14) → `progress.py` (CAT-11). Logs in
   `target/catalog-logs`. `vtables.py` = validated gta-reversed vtable slot names. `hoodlum_xrefs.py` is a
   one-off check. Python venv in `.venv`; run with `.venv/bin/python -I`. Notes: `docs/re/cat*.md`.
 - `catalog/`: generated catalogue (`procedures.csv` = one row per function, `subsystems.md`,
   `summary.md`, CAT-7 CSVs, `script-commands.csv`, `progress.md`). Hand-maintained inputs:
   `catalog/state.csv` (per-function state, PLAN §5; `run_all.sh` merges it and never lowers a state above
   `specified`; record changes with `progress.py set ADDRESS STATE EVIDENCE`) and
-  `catalog/extra-code-addresses.csv` (CAT-12 call targets, appended by `callgraph.py gaps`).
+  `catalog/extra-code-addresses.csv` (CAT-12 call targets, appended by `callgraph.py gaps`),
+  `catalog/data-code-addresses.csv` (CAT-12b data-only entries), `catalog/gr-deviations-notes.csv`
+  (CAT-14 hand-checked deviations).
+- Per-function porting inputs: `catalog/gr-deviations.csv` (where gta-reversed differs from the
+  original; ports follow the original), `catalog/port-order.csv`, `catalog/rwsets.csv`, `catalog/layouts.csv`.
 - `crates/`: Rust workspace (created milestone by milestone, see PLAN.md §4).
