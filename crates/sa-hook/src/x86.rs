@@ -535,6 +535,42 @@ pub fn relocate(code: &[u8], src: u32, dst: u32, min: usize) -> Result<Relocated
     Ok(Relocated { code: out, consumed })
 }
 
+/// Like [`relocate`], but when the last stolen instruction is a `call rel32` it becomes
+/// `push src+consumed; jmp target` and the trailing jmp is dropped: the callee then returns straight
+/// to the original code after the stolen range, with the *original* return address on the stack.
+/// Observers that key on the caller (determinism mode's rand log hashes `rand()`'s return address)
+/// see the same value whether the hook is installed or not. The result is equivalent: the callee
+/// returns to `src+consumed`, where the plain trampoline's trailing jmp would have gone.
+pub fn relocate_keep_return(code: &[u8], src: u32, dst: u32, min: usize) -> Result<Relocated, RelocError> {
+    let insns = steal(code, min)?;
+    let consumed: usize = insns.iter().map(|i| i.len).sum();
+    let Some(last) = insns.last() else {
+        return relocate(code, src, dst, min);
+    };
+    if last.branch != Some(Branch::Call) || insns.len() == 1 {
+        return relocate(code, src, dst, min);
+    }
+    let call_at = consumed - last.len;
+    let target = last
+        .target(&code[call_at..consumed], src + call_at as u32)
+        .expect("branch");
+    if target >= src && target < src + consumed as u32 {
+        // a call into the stolen range itself: keep the general form
+        return relocate(code, src, dst, min);
+    }
+    // Relocate everything before the call (which ends in a jmp back to the call site) and replace
+    // that trailing jmp with push + jmp.
+    let mut r = relocate(code, src, dst, call_at)?;
+    debug_assert_eq!(r.consumed, call_at);
+    r.code.truncate(r.code.len() - 5);
+    r.code.push(0x68); // push imm32
+    r.code.extend_from_slice(&(src + consumed as u32).to_le_bytes());
+    let here = dst + r.code.len() as u32;
+    r.code.extend_from_slice(&jmp_rel32(here, target));
+    r.consumed = consumed;
+    Ok(r)
+}
+
 /// Linear sweep over `code` (at `base`): the first relative branch whose target lies strictly inside
 /// `(lo, hi)`, i.e. one that would land in the NOP padding of a patched entry. Stops at the first
 /// undecodable byte. A heuristic safety check, not a proof.
@@ -665,6 +701,30 @@ mod tests {
         assert_eq!(target_of(&r.code[..5], 0x2000_0000), 0x400015);
         // trailing jmp back
         assert_eq!(target_of(&r.code[5..10], 0x2000_0005), 0x400005);
+    }
+
+    #[test]
+    fn trailing_call_keeps_the_original_return_address() {
+        // 0x407180: push ecx; push esi; call 0x821B1E; mov esi,[esp+0Ch]
+        let code = [0x51, 0x56, 0xE8, 0x97, 0xA9, 0x41, 0x00, 0x8B, 0x74, 0x24, 0x0C];
+        let r = relocate_keep_return(&code, 0x407180, 0x2000_0000, 5).unwrap();
+        assert_eq!(r.consumed, 7);
+        assert_eq!(&r.code[..3], &[0x51, 0x56, 0x68]);
+        assert_eq!(u32::from_le_bytes(r.code[3..7].try_into().unwrap()), 0x407187);
+        assert_eq!(target_of(&r.code[7..12], 0x2000_0007), 0x821B1E);
+        assert_eq!(r.code.len(), 12);
+        // a call that is not the last stolen instruction: the plain form
+        let code = [0xE8, 0x1A, 0x60, 0x00, 0x00, 0x8B, 0x48, 0x14];
+        assert_eq!(
+            relocate_keep_return(&code, 0x821B1E, 0x2000_0000, 5),
+            relocate(&code, 0x821B1E, 0x2000_0000, 5)
+        );
+        // no call at all: the plain form
+        let code = [0x8B, 0x51, 0x08, 0x56, 0x32, 0xC0, 0x57];
+        assert_eq!(
+            relocate_keep_return(&code, 0x5E45E0, 0x2000_0000, 5),
+            relocate(&code, 0x5E45E0, 0x2000_0000, 5)
+        );
     }
 
     #[test]

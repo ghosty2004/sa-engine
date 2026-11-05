@@ -1,0 +1,20 @@
+[package]
+name = "sa-core"
+version = "0.1.0"
+description = "Engine core (ADR-001): game globals and layouts, typed calls into original code, hook registration; CORE ports (pools, timer, CGeneral random). no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook). Takes effect only on 32-bit x86 Windows targets
+# (build.rs sets `cfg(sa_phase_a)`); with the feature on any other target the crate still uses
+# Rust-owned memory, so host tests stay valid under workspace feature unification.
+in-process = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }

@@ -58,4 +58,7 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
   (CAT-14 hand-checked deviations).
 - Per-function porting inputs: `catalog/gr-deviations.csv` (where gta-reversed differs from the
   original; ports follow the original), `catalog/port-order.csv`, `catalog/rwsets.csv`, `catalog/layouts.csv`.
-- `crates/`: Rust workspace (created milestone by milestone, see PLAN.md §4).
+- `crates/`: Rust workspace (created milestone by milestone, see PLAN.md §4). Every port follows
+  `docs/arch/ADR-001-globals-and-layouts.md`: game state through `sa_core::globals!`/`GPtr`, calls to
+  other catalogued functions through `sa_core::orig!`, registration with `#[hook]` + the crate's
+  `hooks::ALL`. `tools/gen/layouts_rs.py` regenerates `sa-core/src/layouts.rs` from `catalog/layouts.csv`.

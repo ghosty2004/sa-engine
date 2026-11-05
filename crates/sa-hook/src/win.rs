@@ -31,7 +31,7 @@ use windows_sys::Win32::System::Threading::GetCurrentProcess;
 
 use crate::control::{self, Command};
 use crate::game;
-use crate::table::{self, Group, HOOKS, Id, Kind, Mode};
+use crate::table::{self, Group, HOOKS, Id, Kind, Mode, PortPlan};
 use crate::x86;
 
 const SLOT: usize = 96;
@@ -173,7 +173,7 @@ fn thunk(slot: u32, i: usize, boundary: bool) -> Vec<u8> {
     c
 }
 
-fn install_one(i: usize, slot: u32) -> Result<String, String> {
+fn install_one(i: usize, slot: u32, mode: Mode) -> Result<String, String> {
     let h = &HOOKS[i];
     let cur = read(h.addr, h.expect.len()).ok_or("entry not readable")?;
     if cur != h.expect {
@@ -194,7 +194,7 @@ fn install_one(i: usize, slot: u32) -> Result<String, String> {
         Kind::Inline => {
             let tramp = slot + TRAMP_OFF as u32;
             let src = read(h.addr, 32).ok_or("entry not readable")?;
-            let r = x86::relocate(&src, h.addr, tramp, 5).map_err(|e| e.to_string())?;
+            let r = x86::relocate_keep_return(&src, h.addr, tramp, 5).map_err(|e| e.to_string())?;
             if r.code.len() > L2_OFF - TRAMP_OFF {
                 return Err("trampoline too long".into());
             }
@@ -220,14 +220,14 @@ fn install_one(i: usize, slot: u32) -> Result<String, String> {
         unsafe { std::ptr::copy_nonoverlapping(stub.as_ptr(), at as usize as *mut u8, stub.len()) };
         table::set_l2_stub(i, at);
     }
-    let mode = if h.start_rust { Mode::Rust } else { Mode::Original };
     table::set_installed(i, original, mode);
     patch(h.addr, &entry_patch)?;
     Ok(format!("{what}; thunk {slot:#x}; mode {}", mode.name()))
 }
 
-/// Installs every Core hook, and the Oracle group too when `oracle` is set. Returns (installed, wanted).
-fn install_all(oracle: bool) -> (usize, usize) {
+/// Installs every Core hook, the Oracle group too when `oracle` is set, and the engine ports as
+/// `ports` says (`SA_HOOK_PORTS`, see `PortPlan`). Returns (installed, wanted).
+fn install_all(oracle: bool, ports: &PortPlan) -> (usize, usize) {
     // SAFETY: plain allocation of an executable block for thunks and trampolines.
     let block = unsafe {
         VirtualAlloc(
@@ -243,11 +243,11 @@ fn install_all(oracle: bool) -> (usize, usize) {
     }
     let (mut ok, mut wanted) = (0, 0);
     for (i, h) in HOOKS.iter().enumerate() {
-        if h.group == Group::Oracle && !oracle {
+        if (h.group == Group::Oracle && !oracle) || (h.group == Group::Port && !ports.installs()) {
             continue;
         }
         wanted += 1;
-        match install_one(i, block + (i * SLOT) as u32) {
+        match install_one(i, block + (i * SLOT) as u32, ports.start_mode(i)) {
             Ok(s) => {
                 ok += 1;
                 log(&format!("hook {:#x} {}: {s}", h.addr, h.name));
@@ -480,9 +480,16 @@ fn attach() {
         dir.display()
     ));
     let oracle = crate::detwin::init(&dir);
-    let (ok, wanted) = install_all(oracle);
+    let ports = match PortPlan::parse(std::env::var("SA_HOOK_PORTS").ok().as_deref()) {
+        Ok(p) => p,
+        Err(e) => {
+            log(&format!("{e}: engine ports not installed"));
+            PortPlan::Off
+        }
+    };
+    let (ok, wanted) = install_all(oracle, &ports);
     log(&format!(
-        "{ok}/{wanted} hooks installed (oracle group {})",
+        "{ok}/{wanted} hooks installed (oracle group {}, ports {ports:?})",
         if oracle { "on" } else { "off" }
     ));
     // Start modes (game threads are still suspended, so the stores take effect before any call).

@@ -12,12 +12,12 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | WORLD | 24 | 894 | 0 | 0 | 1 | 0 | 0 | 919 | 0.1 |
 | AUDIO | 9 | 833 | 0 | 0 | 0 | 0 | 0 | 842 | 0.0 |
 | RENDER | 19 | 813 | 0 | 0 | 0 | 0 | 0 | 832 | 0.0 |
-| VEH | 5 | 709 | 0 | 0 | 0 | 0 | 0 | 714 | 0.0 |
+| VEH | 5 | 708 | 1 | 0 | 0 | 0 | 0 | 714 | 0.0 |
 | STREAM | 18 | 535 | 0 | 0 | 0 | 0 | 0 | 553 | 0.0 |
 | POP | 9 | 420 | 0 | 0 | 0 | 0 | 0 | 429 | 0.0 |
-| PED | 9 | 362 | 0 | 0 | 0 | 0 | 0 | 371 | 0.0 |
+| PED | 9 | 360 | 2 | 0 | 0 | 0 | 0 | 371 | 0.0 |
 | HUD | 2 | 340 | 0 | 0 | 0 | 0 | 0 | 342 | 0.0 |
-| CORE | 27 | 293 | 0 | 0 | 0 | 0 | 0 | 320 | 0.0 |
+| CORE | 27 | 271 | 22 | 0 | 0 | 0 | 0 | 320 | 0.0 |
 | ANIM | 3 | 262 | 0 | 0 | 0 | 0 | 0 | 265 | 0.0 |
 | SCRIPT | 21 | 202 | 0 | 0 | 0 | 0 | 0 | 223 | 0.0 |
 | CAM | 7 | 210 | 0 | 0 | 0 | 0 | 0 | 217 | 0.0 |
@@ -36,11 +36,11 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 1560 | 13829 | 1 | 91 | 5 | 0 | 6676 | 22162 | 0.03 |
+| **total** | 1560 | 13804 | 26 | 91 | 5 | 0 | 6676 | 22162 | 0.03 |
 
-`specified` by source: REA 6023, gta-reversed 7806
+`specified` by source: REA 6023, gta-reversed 7781
 
-## Functions above `specified` (97)
+## Functions above `specified` (122)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
@@ -49,6 +49,8 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | 0x404260 | CRect::Resize | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x404290 | CRect::IsPointInside- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4042d0 | CRect::IsPointInside-Tolerance | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x404870 | CObjectPool::GetAt | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x404910 | CPedPool::GetAtRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
 | 0x406d50 | CVector::Magnitude2D | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x407180 | CGeneral::GetRandomNumberInRange_int32 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x4082c0 | CVector::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -95,6 +97,24 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | 0x54eb10 | CMatrixLinkList::GetNumFree | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54eb30 | CMatrixLinkList::GetNumUsed1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54eb50 | CMatrixLinkList::GetNumUsed2 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x54ff60 | CPools::GetPedRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x54ff90 | CPools::GetPed | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x54ffc0 | CPools::GetVehicleRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x54fff0 | CPools::GetVehicle | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x550020 | CPools::GetObjectRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x550050 | CPools::GetObject | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x5617e0 | CTimer::Initialise | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x5618c0 | CTimer::Shutdown | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x5618d0 | CTimer::UpdateVariables | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x5619d0 | CTimer::Suspend | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561a00 | CTimer::Resume | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561a40 | CTimer::GetCyclesPerMillisecond | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561a50 | CTimer::GetCyclesPerFrame | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561a80 | CTimer::GetCurrentTimeInCycles | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561aa0 | CTimer::Stop | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561ad0 | CTimer::GetIsSlowMotionActive | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561af0 | CTimer::StartUserPause | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x561b00 | CTimer::EndUserPause | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x59a840 | CMatrix::ConvertToEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59aa40 | CMatrix::ConvertFromEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59acf0 | CMatrix::Detach | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -140,4 +160,9 @@ Functions: 22162 (15486 non-excluded, 6676 excluded). States per docs/PLAN.md se
 | 0x59c890 | CMatrix::operator*-Vec | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59c910 | CVector::Normalise | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x59c970 | CVector::NormaliseAndMag | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x5a1c20 | CObjectPool::New | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x5e45e0 | CPedPool::New | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x5e4720 | CPed::operator new-anon | PED | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x5e4760 | CPed::operator delete-anon | PED | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x6e2a50 | CVehiclePool::New | VEH | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
 | 0x70f890 | CVector::Cross_OG | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |

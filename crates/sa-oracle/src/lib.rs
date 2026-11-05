@@ -23,6 +23,7 @@ pub mod pe;
 pub mod runner;
 pub mod scan;
 pub mod specs;
+pub mod specs_core;
 
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};

@@ -864,7 +864,19 @@ pub unsafe extern "C" fn srand_shim() {
     )
 }
 
+/// The caller a rand/srand call is attributed to: its return address when that is game code,
+/// otherwise (a call from a Rust port) the original return address the port declared with
+/// `sa_core::orig::at_site`, so original and Rust runs log and hash the same caller.
+fn attributed_caller(ret: u32) -> u32 {
+    if (0x401000..0x857000).contains(&ret) || (0x1556000..0x1577000).contains(&ret) {
+        ret
+    } else {
+        sa_core::orig::current_site().unwrap_or(ret)
+    }
+}
+
 extern "C" fn rand_impl(caller: u32) -> i32 {
+    let caller = attributed_caller(caller);
     table::count(Id::Rand);
     // SAFETY: the trampoline has rand's signature.
     let orig: extern "C" fn() -> i32 = unsafe { std::mem::transmute(table::original(Id::Rand) as usize) };
@@ -874,6 +886,7 @@ extern "C" fn rand_impl(caller: u32) -> i32 {
 }
 
 extern "C" fn srand_impl(caller: u32, seed: u32) {
+    let caller = attributed_caller(caller);
     table::count(Id::Srand);
     // SAFETY: the trampoline has srand's signature.
     let orig: extern "C" fn(u32) = unsafe { std::mem::transmute(table::original(Id::Srand) as usize) };

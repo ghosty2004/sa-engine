@@ -49,10 +49,16 @@ pub enum Group {
     /// Only when an oracle feature (determinism mode, hashing, record/replay) is enabled at attach;
     /// these are observers/injectors that pass through to the original unless their feature is on.
     Oracle,
+    /// Ports from the engine crates (`sa_core::hooks::ALL`, state `implemented` until verified):
+    /// installed only when `SA_HOOK_PORTS` is set (see `win.rs`), starting in original mode unless
+    /// listed there.
+    Port,
 }
 
+#[derive(Clone, Copy)]
 pub struct HookSpec {
-    pub id: Id,
+    /// The sa-hook-local hooks (`Id`); `None` for ports registered by engine crates (`sa_core::hooks`).
+    pub id: Option<Id>,
     pub addr: u32,
     pub name: &'static str,
     pub kind: Kind,
@@ -60,6 +66,8 @@ pub struct HookSpec {
     pub expect: &'static [u8],
     /// Address of the Rust implementation (original calling convention).
     pub rust: fn() -> usize,
+    /// Call counter kept by the port's own shim (engine-crate ports); `None`: counted here.
+    pub calls: Option<fn() -> u32>,
     /// The thunk calls the frame-boundary handler before dispatching (one per frame).
     pub frame_boundary: bool,
     /// Mode at attach.
@@ -80,106 +88,115 @@ const fn sig(conv: Conv, args: u8, ret: Ret) -> Option<Sig> {
     })
 }
 
-pub static HOOKS: &[HookSpec] = &[
+/// The hooks of sa-hook itself (indices = `Id`).
+const LOCAL: [HookSpec; LOCAL_N] = [
     HookSpec {
-        id: Id::TimerUpdate,
+        id: Some(Id::TimerUpdate),
         addr: 0x561B10,
         name: "CTimer::Update",
         kind: Kind::Inline,
         // mov ecx,[0xB7CB28]; sub esp,0xC
         expect: &[0x8B, 0x0D, 0x28, 0xCB, 0xB7, 0x00, 0x83, 0xEC, 0x0C],
         rust: || crate::game::timer_update_hook as extern "C" fn() as usize,
+        calls: None,
         frame_boundary: true,
         start_rust: true,
         group: Group::Core,
         sig: sig(Conv::Cdecl, 0, Ret::Void),
     },
     HookSpec {
-        id: Id::LimitRadianAngle,
+        id: Some(Id::LimitRadianAngle),
         addr: 0x53CB50,
         name: "CGeneral::LimitRadianAngle",
         kind: Kind::Inline,
         // fld dword [esp+4]; fld dword [0x863AC0]
         expect: &[0xD9, 0x44, 0x24, 0x04, 0xD9, 0x05, 0xC0, 0x3A, 0x86, 0x00],
         rust: || crate::game::limit_radian_angle_hook as extern "C" fn(f32) -> f64 as usize,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Core,
         sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
-        id: Id::IsCoopGameGoingOn,
+        id: Some(Id::IsCoopGameGoingOn),
         addr: 0x441390,
         name: "CGameLogic::IsCoopGameGoingOn",
         kind: Kind::HoodlumStub,
         // jmp 0x156CF30
         expect: &[0xE9, 0x9B, 0xBB, 0x12, 0x01],
         rust: || crate::game::is_coop_game_going_on_hook as extern "C" fn() -> u32 as usize,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Core,
         sig: sig(Conv::Cdecl, 0, Ret::Eax),
     },
     HookSpec {
-        id: Id::PadUpdate,
+        id: Some(Id::PadUpdate),
         addr: 0x541C40,
         name: "CPad::Update",
         kind: Kind::Inline,
         // sub esp,0x30; push ebx; push ebp
         expect: &[0x83, 0xEC, 0x30, 0x53, 0x55],
         rust: crate::oracle::pad_update_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::PadUpdateMouse,
+        id: Some(Id::PadUpdateMouse),
         addr: 0x53F3C0,
         name: "CPad::UpdateMouse",
         kind: Kind::Inline,
         // sub esp,0x18; push ebp; mov ebp,ecx
         expect: &[0x83, 0xEC, 0x18, 0x55, 0x8B, 0xE9],
         rust: crate::oracle::pad_update_mouse_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::CdStreamRead,
+        id: Some(Id::CdStreamRead),
         addr: 0x406A20,
         name: "CdStream::CdStreamRead",
         kind: Kind::HoodlumStub,
         // jmp 0x156C2C0
         expect: &[0xE9, 0x9B, 0x58, 0x16, 0x01],
         rust: crate::oracle::cd_stream_read_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::Rand,
+        id: Some(Id::Rand),
         addr: 0x821B1E,
         name: "_rand",
         kind: Kind::Inline,
         // call _getptd (0x827B3D); mov ecx,[eax+0x14]
         expect: &[0xE8, 0x1A, 0x60, 0x00, 0x00, 0x8B, 0x48, 0x14],
         rust: crate::oracle::rand_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::Srand,
+        id: Some(Id::Srand),
         addr: 0x821B11,
         name: "_srand",
         kind: Kind::Inline,
         // call _getptd (0x827B3D); mov ecx,[esp+4]
         expect: &[0xE8, 0x27, 0x60, 0x00, 0x00, 0x8B, 0x4C, 0x24, 0x04],
         rust: crate::oracle::srand_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
@@ -188,74 +205,80 @@ pub static HOOKS: &[HookSpec] = &[
     // The CRT heap (VC7.1 static CRT): every allocation path ends in one of these. In determinism
     // mode the main thread's blocks come from the deterministic arena (`arena.rs`).
     HookSpec {
-        id: Id::HeapAlloc,
+        id: Some(Id::HeapAlloc),
         addr: 0x8241B0,
         name: "__heap_alloc",
         kind: Kind::Inline,
         // push 0xC; push 0x888048 (SEH prolog)
         expect: &[0x6A, 0x0C, 0x68, 0x48, 0x80, 0x88, 0x00],
         rust: crate::oracle::heap_alloc_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::Free,
+        id: Some(Id::Free),
         addr: 0x82413F,
         name: "_free",
         kind: Kind::Inline,
         expect: &[0x6A, 0x0C, 0x68, 0x38, 0x80, 0x88, 0x00],
         rust: crate::oracle::free_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::Realloc,
+        id: Some(Id::Realloc),
         addr: 0x824269,
         name: "_realloc",
         kind: Kind::Inline,
         expect: &[0x6A, 0x14, 0x68, 0x58, 0x80, 0x88, 0x00],
         rust: crate::oracle::realloc_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::Calloc,
+        id: Some(Id::Calloc),
         addr: 0x824416,
         name: "_calloc",
         kind: Kind::Inline,
         expect: &[0x6A, 0x10, 0x68, 0x68, 0x80, 0x88, 0x00],
         rust: crate::oracle::calloc_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::Msize,
+        id: Some(Id::Msize),
         addr: 0x828C4A,
         name: "__msize",
         kind: Kind::Inline,
         expect: &[0x6A, 0x10, 0x68, 0x80, 0x84, 0x88, 0x00],
         rust: crate::oracle::msize_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
         sig: None,
     },
     HookSpec {
-        id: Id::AudioHardwareService,
+        id: Some(Id::AudioHardwareService),
         addr: 0x4D9870,
         name: "CAEAudioHardware::Service",
         kind: Kind::Inline,
         // push ebx; push esi; push edi; mov esi,ecx
         expect: &[0x53, 0x56, 0x57, 0x8B, 0xF1],
         rust: crate::oracle::audio_hw_service_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
@@ -264,20 +287,21 @@ pub static HOOKS: &[HookSpec] = &[
     // sa-math ports (L1-verified). Installed in original mode; `SA_HOOK_MODE` / `hook NAME rust|l2`
     // switch them.
     HookSpec {
-        id: Id::LimitAngle,
+        id: Some(Id::LimitAngle),
         addr: 0x53CB00,
         name: "CGeneral::LimitAngle",
         kind: Kind::Inline,
         // fld dword [esp+4]; fcom dword [0x85A994]
         expect: &[0xD9, 0x44, 0x24, 0x04, 0xD8, 0x15, 0x94, 0xA9, 0x85, 0x00],
         rust: || crate::game::limit_angle_hook as extern "C" fn(f32) -> f64 as usize,
+        calls: None,
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
         sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
-        id: Id::GetRadianAngleBetweenPoints,
+        id: Some(Id::GetRadianAngleBetweenPoints),
         addr: 0x53CBE0,
         name: "CGeneral::GetRadianAngleBetweenPoints-",
         kind: Kind::Inline,
@@ -287,26 +311,28 @@ pub static HOOKS: &[HookSpec] = &[
             crate::game::get_radian_angle_between_points_hook as extern "C" fn(f32, f32, f32, f32) -> f64
                 as usize
         },
+        calls: None,
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
         sig: sig(Conv::Cdecl, 4, Ret::St0),
     },
     HookSpec {
-        id: Id::GetATanOfXY,
+        id: Some(Id::GetATanOfXY),
         addr: 0x53CC70,
         name: "CGeneral::GetATanOfXY",
         kind: Kind::Inline,
         // fld dword [esp+4]; fcomp dword [0x858B50]
         expect: &[0xD9, 0x44, 0x24, 0x04, 0xD8, 0x1D, 0x50, 0x8B, 0x85, 0x00],
         rust: || crate::game::get_atan_of_xy_hook as extern "C" fn(f32, f32) -> f64 as usize,
+        calls: None,
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
         sig: sig(Conv::Cdecl, 2, Ret::St0),
     },
     HookSpec {
-        id: Id::SolveQuadratic,
+        id: Some(Id::SolveQuadratic),
         addr: 0x53CE30,
         name: "CGeneral::SolveQuadratic",
         kind: Kind::Inline,
@@ -316,6 +342,7 @@ pub static HOOKS: &[HookSpec] = &[
             crate::game::solve_quadratic_hook
                 as unsafe extern "C" fn(f32, f32, f32, *mut f32, *mut f32) -> bool as usize
         },
+        calls: None,
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
@@ -330,13 +357,14 @@ pub static HOOKS: &[HookSpec] = &[
         }),
     },
     HookSpec {
-        id: Id::VectorNormalise,
+        id: Some(Id::VectorNormalise),
         addr: 0x59C910,
         name: "CVector::Normalise",
         kind: Kind::Inline,
         // fld dword [ecx+8]; fld dword [ecx+4]
         expect: &[0xD9, 0x41, 0x08, 0xD9, 0x41, 0x04],
         rust: crate::game::vector_normalise_entry,
+        calls: None,
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
@@ -352,7 +380,71 @@ pub static HOOKS: &[HookSpec] = &[
     },
 ];
 
-const N: usize = 19;
+const LOCAL_N: usize = 19;
+/// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order).
+pub const N: usize = LOCAL_N + sa_core::hooks::COUNT;
+
+/// The hook table.
+pub static HOOKS: [HookSpec; N] = build();
+
+/// The L2 calling signature of an engine-crate port (from its `#[hook]` registration).
+const fn sig_of(r: &sa_core::abi::HookReg) -> Sig {
+    use sa_core::abi::{AbiRet, Conv as C};
+    Sig {
+        conv: match r.conv {
+            C::Cdecl => Conv::Cdecl,
+            C::Stdcall => Conv::Stdcall,
+            C::Thiscall => Conv::Thiscall,
+            C::Fastcall => Conv::Fastcall,
+        },
+        args: r.stack_words,
+        ret: match r.ret {
+            AbiRet::Void => Ret::Void,
+            AbiRet::Al => Ret::Al,
+            AbiRet::Eax => Ret::Eax,
+            AbiRet::EaxEdx => Ret::EaxEdx,
+            AbiRet::St0 => Ret::St0,
+        },
+        this_type: r.this_type,
+        this_size: r.this_size,
+        ptr_args: &[],
+    }
+}
+
+const fn from_core(r: &sa_core::abi::HookReg) -> HookSpec {
+    HookSpec {
+        id: None,
+        addr: r.addr,
+        name: r.name,
+        kind: if r.is_hoodlum_stub() {
+            Kind::HoodlumStub
+        } else {
+            Kind::Inline
+        },
+        expect: r.expect,
+        rust: r.entry,
+        calls: Some(r.calls),
+        frame_boundary: false,
+        start_rust: false,
+        group: Group::Port,
+        sig: Some(sig_of(r)),
+    }
+}
+
+const fn build() -> [HookSpec; N] {
+    let mut out = [LOCAL[0]; N];
+    let mut i = 0;
+    while i < LOCAL_N {
+        out[i] = LOCAL[i];
+        i += 1;
+    }
+    let mut j = 0;
+    while j < sa_core::hooks::COUNT {
+        out[LOCAL_N + j] = from_core(&sa_core::hooks::ALL[j]);
+        j += 1;
+    }
+    out
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
@@ -435,7 +527,10 @@ pub fn count(id: Id) {
 }
 
 pub fn calls(i: usize) -> u32 {
-    CALLS[i].load(Ordering::Relaxed)
+    match HOOKS[i].calls {
+        Some(f) => f(),
+        None => CALLS[i].load(Ordering::Relaxed),
+    }
 }
 
 pub fn installed(i: usize) -> bool {
@@ -509,19 +604,92 @@ pub fn find(key: &str) -> Option<usize> {
         .position(|h| Some(h.addr) == addr || h.name.eq_ignore_ascii_case(key))
 }
 
+/// What `SA_HOOK_PORTS` asks for the `Group::Port` hooks at attach:
+/// unset or empty → not installed (the original runs untouched);
+/// `orig` → installed, all in original mode (toggle them with the control channel's `hook`);
+/// `rust` → installed, all in Rust mode;
+/// a comma-separated list of names or `0x` addresses → installed, those in Rust mode, the rest original.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PortPlan {
+    Off,
+    AllOriginal,
+    AllRust,
+    Rust(Vec<usize>),
+}
+
+impl PortPlan {
+    pub fn parse(env: Option<&str>) -> Result<PortPlan, String> {
+        let v = env.map(str::trim).unwrap_or("");
+        Ok(match v {
+            "" => PortPlan::Off,
+            "orig" | "original" => PortPlan::AllOriginal,
+            "rust" => PortPlan::AllRust,
+            list => {
+                let mut ids = Vec::new();
+                for k in list.split(',').map(str::trim).filter(|k| !k.is_empty()) {
+                    match find(k) {
+                        Some(i) if HOOKS[i].group == Group::Port => ids.push(i),
+                        Some(_) => return Err(format!("SA_HOOK_PORTS: {k} is not a port hook")),
+                        None => return Err(format!("SA_HOOK_PORTS: unknown hook {k}")),
+                    }
+                }
+                PortPlan::Rust(ids)
+            }
+        })
+    }
+
+    pub fn installs(&self) -> bool {
+        *self != PortPlan::Off
+    }
+
+    /// Mode at attach of hook `i` (any group).
+    pub fn start_mode(&self, i: usize) -> Mode {
+        let rust = if HOOKS[i].group != Group::Port {
+            HOOKS[i].start_rust
+        } else {
+            match self {
+                PortPlan::AllRust => true,
+                PortPlan::Rust(ids) => ids.contains(&i),
+                PortPlan::Off | PortPlan::AllOriginal => false,
+            }
+        };
+        if rust { Mode::Rust } else { Mode::Original }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn port_plans() {
+        assert_eq!(PortPlan::parse(None), Ok(PortPlan::Off));
+        assert_eq!(PortPlan::parse(Some(" ")), Ok(PortPlan::Off));
+        assert_eq!(PortPlan::parse(Some("orig")), Ok(PortPlan::AllOriginal));
+        let p = PortPlan::parse(Some("CPedPool::New, 0x41bd90")).unwrap();
+        let (a, b) = (find("CPedPool::New").unwrap(), find("0x41bd90").unwrap());
+        assert_eq!(p, PortPlan::Rust(vec![a, b]));
+        assert_eq!(p.start_mode(a), Mode::Rust);
+        assert_eq!(p.start_mode(find("CTimer::Stop").unwrap()), Mode::Original);
+        // sa-hook's own hooks keep their configured mode
+        assert_eq!(p.start_mode(Id::TimerUpdate as usize), Mode::Rust);
+        assert!(PortPlan::parse(Some("CTimer::Update")).is_err());
+        assert!(PortPlan::parse(Some("nope")).is_err());
+        assert_eq!(PortPlan::AllRust.start_mode(a), Mode::Rust);
+    }
     use crate::x86;
 
     #[test]
     fn table_is_consistent() {
         assert_eq!(HOOKS.len(), N);
         for (i, h) in HOOKS.iter().enumerate() {
-            assert_eq!(h.id as usize, i, "{}", h.name);
+            match h.id {
+                Some(id) => assert_eq!(id as usize, i, "{}", h.name),
+                None => assert!(i >= LOCAL_N && h.group == Group::Port, "{}", h.name),
+            }
             match h.kind {
                 Kind::Inline => {
-                    let r = x86::relocate(h.expect, h.addr, 0x1000_0000, 5).unwrap();
+                    let r = x86::relocate_keep_return(h.expect, h.addr, 0x1000_0000, 5).unwrap();
                     assert!(r.consumed <= h.expect.len(), "{}: expect too short", h.name);
                 }
                 Kind::HoodlumStub => {
@@ -580,7 +748,7 @@ mod tests {
             );
         }
         let Some(exe) = crate::testexe::load() else { return };
-        for h in HOOKS {
+        for h in &HOOKS {
             assert_eq!(exe.bytes(h.addr, h.expect.len()), h.expect, "{}", h.name);
             // The installer refuses an inline hook with a branch into the patched range; check it here.
             if h.kind == Kind::Inline {
@@ -594,5 +762,63 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// The installer's checks (`win::install_one`) on the real exe for every hook: inline entries
+    /// relocate, the stolen bytes lie within `expect`, no branch in the next 0x400 bytes lands in the
+    /// patched range, and two hooks never overlap.
+    #[test]
+    fn every_hook_installs_on_the_exe() {
+        let Some(exe) = crate::testexe::load() else { return };
+        let mut ranges: Vec<(u32, u32, &str)> = Vec::new();
+        for h in &HOOKS {
+            let len = match h.kind {
+                Kind::Inline => {
+                    let code = exe.bytes(h.addr, 32);
+                    let r = x86::relocate_keep_return(code, h.addr, 0x1000_0000, 5)
+                        .unwrap_or_else(|e| panic!("{}: {e:?}", h.name));
+                    assert!(
+                        r.consumed <= h.expect.len(),
+                        "{}: expect shorter than the steal",
+                        h.name
+                    );
+                    let around = exe.bytes(h.addr, 0x400);
+                    let hit = x86::inbound_branch(around, h.addr, h.addr, h.addr + r.consumed as u32);
+                    assert_eq!(hit, None, "{}: branch into the patched range", h.name);
+                    r.consumed as u32
+                }
+                Kind::HoodlumStub => 5,
+            };
+            ranges.push((h.addr, h.addr + len, h.name));
+        }
+        ranges.sort();
+        for w in ranges.windows(2) {
+            assert!(w[0].1 <= w[1].0, "{} overlaps {}", w[0].2, w[1].2);
+        }
+    }
+
+    #[test]
+    fn port_hooks_follow_the_local_ones() {
+        assert_eq!(N, LOCAL_N + sa_core::hooks::COUNT);
+        for (k, r) in sa_core::hooks::ALL.iter().enumerate() {
+            let h = &HOOKS[LOCAL_N + k];
+            assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));
+            assert_eq!(h.group, Group::Port);
+            assert!(!h.start_rust && !h.frame_boundary);
+        }
+        assert_eq!(find("CPedPool::New"), Some(LOCAL_N + 2));
+        // L2 signatures derived from the #[hook] registrations
+        let s = HOOKS[find("CPedPool::GetAtRef").unwrap()].sig.unwrap();
+        assert_eq!((s.conv, s.args, s.ret), (Conv::Thiscall, 1, Ret::Eax));
+        assert_eq!((s.this_type, s.this_size), (Some("CPool<int32>"), 0x14));
+        let s = HOOKS[find("0x41bd90").unwrap()].sig.unwrap();
+        assert_eq!(
+            (s.conv, s.args, s.ret, s.this_type),
+            (Conv::Cdecl, 2, Ret::St0, None)
+        );
+        let s = HOOKS[find("CTimer::GetIsSlowMotionActive").unwrap()].sig.unwrap();
+        assert_eq!((s.args, s.ret), (0, Ret::Al));
+        let s = HOOKS[find("CTimer::UpdateVariables").unwrap()].sig.unwrap();
+        assert_eq!((s.args, s.ret), (1, Ret::Void));
     }
 }

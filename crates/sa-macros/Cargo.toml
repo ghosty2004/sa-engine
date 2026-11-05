@@ -1,0 +1,15 @@
+[package]
+name = "sa-macros"
+version = "0.1.0"
+description = "Proc macros for the engine crates: #[hook] registers a ported function in the phase A hook table (ADR-001)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
