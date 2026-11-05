@@ -298,6 +298,7 @@ dependencies = [
  "sa-core",
  "sa-math",
  "sa-oracle-format",
+ "sa-stream",
  "windows-sys",
 ]
 
@@ -333,6 +334,7 @@ dependencies = [
  "sa-hook",
  "sa-math",
  "sa-oracle-format",
+ "sa-stream",
  "unicorn-engine",
  "zstd",
 ]
@@ -340,6 +342,15 @@ dependencies = [
 [[package]]
 name = "sa-oracle-format"
 version = "0.1.0"
+
+[[package]]
+name = "sa-stream"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+]
 
 [[package]]
 name = "shlex"

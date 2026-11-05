@@ -25,6 +25,10 @@ pub mod scan;
 pub mod specs;
 pub mod specs_core;
 pub mod specs_core_util;
+pub mod specs_stream_a;
+pub mod specs_stream_b;
+pub mod specs_stream_c;
+pub mod specs_stream_m;
 
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};

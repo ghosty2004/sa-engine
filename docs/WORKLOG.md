@@ -351,3 +351,14 @@
 - Re-verified by the main session on master: i686 + wasm32 builds, sa-core 58, sa-hook 31, sa-math 14,
   `--test l1` 15/15, clippy host + i686 clean; 3 random new L1 specs at 1M PASS. state.csv: 147 L1 and
   240 implemented in total.
+
+## 2026-11-05: PORT-STREAM integrated
+- New crate `crates/sa-stream` (504 hooks; three forks plus the agent): 544/552 STREAM functions ported;
+  70 L1, 434 need L2, 40 not hookable, 6 deferred, 2 blocked. The CdStreamSync port does not reproduce
+  the lost wake-up (ledger). Re-verified by the main session on master: i686 + wasm32 builds,
+  sa-stream 10, sa-core 58, sa-hook 31 (incl. install/catalogue checks), `--test l1` 15/15, clippy host +
+  i686 clean, 3 random STREAM specs at 1M PASS. state.csv: 217 L1, 5 L2, 714 implemented.
+- Open (from the agent): values decided at run time by the protection VM need L2 confirmation;
+  uninitialised locals passed as 0; CPedModelInfo::m_pColNodeInfos address (0x8A630C vs gta-reversed
+  0x8A6308); globals placed in the wrong owner modules; the OLD_KEY_STATE/PAD0_OLD_CROSS overlap in
+  sa-core.

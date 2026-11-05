@@ -1,0 +1,20 @@
+[package]
+name = "sa-stream"
+version = "0.1.0"
+description = "STREAM subsystem of gta_sa.exe 1.0 US (PORT-STREAM): CdStream, CStreaming, CStreamingInfo, CFileLoader, IPL/TXD/COL stores, model infos, CLoadedCarGroup, CLoadingScreen. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook). Forwards to sa-core (whose `globals!`/`orig!`
+# expansions pick the memory model); build.rs sets `cfg(sa_phase_a)` for this crate's own tests.
+in-process = ["sa-core/in-process"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }
