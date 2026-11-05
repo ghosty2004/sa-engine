@@ -4779,7 +4779,7 @@ value,source,slot_or_sites,verdict,kind,evidence
 0x7f00a4,.data,0x8da224,rejected,,inside the body of 0x7f0050
 0x7f0100,_TEXT_HA,0xca41c0,rejected,,inside the body of 0x7f0050
 0x7f5f70,.data,0x8e249c,catalogue,rw-device,table 0x8e249c
-0x7f7e7d,.rdata,0x888204,rejected,,inside the body of 0x7f7c41
+0x7f7e7d,.rdata,0x888204,rejected,,inside the body of 0x7f7730
 0x7f8d1b,_TEXT_HA,0xcad69c,rejected,,inside the body of 0x7f8a90
 0x7fb650,.data,0x8e24b0,catalogue,rw-device,table 0x8e249c
 0x7fb8e0,.data,0x8e24b4,catalogue,rw-device,table 0x8e249c

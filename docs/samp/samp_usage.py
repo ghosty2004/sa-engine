@@ -877,7 +877,7 @@ def build_rows():
 
 
 # ============================================================================ closure
-FOLLOW = ('call', 'tailcall', 'virtual', 'virtual-override', 'indirect-ghidra', 'eh-unwind', 'fnref')
+FOLLOW = ('call', 'tailcall', 'virtual', 'virtual-override', 'indirect-ghidra', 'eh-unwind', 'fnref', 'fallthrough')
 GAME_ROOTS = {0x748710: 'Win::NOTSA_WinMain (game entry after CRT start-up)',
               0x747eb0: 'Win::__MainWndProc (window procedure, called by the OS)'}
 

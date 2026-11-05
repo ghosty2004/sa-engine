@@ -307,3 +307,24 @@
   builds, all host tests, `--test l1` twice (15/15 both times; the agent saw 3 unexplained failures once,
   probably the content-hashed native files shared with a concurrent run; watch for it), clippy
   --workspace --all-targets clean. In-game verification is CORE-L2 (needs the game lane).
+
+## 2026-11-05: CAT-16 fall-through into another catalogue entry (measurement agent, main checkout)
+- `callgraph.py build` now lists every live-body instruction whose flow runs on into another entry
+  (`catalog/fallthrough.csv`). Each case is decided as `noreturn-call` (non-returning set: named MSVC
+  runtime + `exit` by shape + fixpoint, 28 functions), `fallthrough` (the target has its own
+  references, so an edge is added), `mis-split` (no other reference, so it is merged), or `undecided`
+  (the pipeline stops). The new `callgraph.py fallthrough` step in the `run_all.sh` fixpoint appends
+  merges to `catalog/fallthrough-splits.csv`. `classify_unknowns.py` makes those rows
+  `excluded:mis-split` (hooks included), and `subsystems.py` sets the state of such hooks to excluded.
+  `fallthrough` was added to ORDER_KINDS and to `docs/samp/samp_usage.py` FOLLOW (only change there).
+- Result: 7 mid-function entries merged (WinMain's 0x7487cf `Input::Initialise`, three gta-reversed
+  hooks at wrong addresses (0x43a7a0 mid-instruction, 0x4c88f4 and 0x732307 on a `ret`), two naked
+  WindowedMode patch points, one Ghidra split in `CAEWaterCannonAudioEntity::Service`). 1 dead fall-out
+  after `exit(1)`. 0 real fall-through edges. WinMain 206 → 2,023 B, and CGame::Initialise is
+  reachable from it (474 → 3,654 functions reachable). Live functions 15,486 → 15,479.
+- Verified: 10 spot checks with disassembly + gta-reversed source (docs/re/cat16-fallthrough.md);
+  `run_all.sh` twice → 35 catalog files sha256-identical; `samp_usage.py` rerun (B 6,037 → 6,054,
+  D 6,615 → 6,629). Cost: 4 full pipeline runs (~2.5–7 min each, under an 8G scope), no Ghidra re-analysis.
+- Main session re-verified CAT-16: two `run_all.sh` runs identical, sa-hook tests pass. Moved the RW name
+  of 0x732307 (a ret inside the function) to 0x7322F0 in rw-names.csv. Follow-up for INF-8:
+  `sa-oracle/src/l2.rs` closures should also follow `fallthrough` edges (none exist yet).

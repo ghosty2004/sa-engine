@@ -663,13 +663,12 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x43a680,CCheat::MonsterTruckCheat,WORLD,unknown,0,,0,1,0,1,0,0
 0x43a6a0,,UNK-game,unknown,0,,1,1,1,1,0,0
 0x43a710,CConversationNode::ClearRecursively,UNK-game,unknown,0,,1,1,1,1,0,0
-0x43a7a0,CConversationNode::ClearRecursively,AI,gr-reversed,0,,0,0,0,0,0,0
 0x43a7b0,CConversations::Clear,AI,gr-reversed,0,,0,0,1,1,0,0
 0x43a810,CConversations::AwkwardSay,AI,gr-reversed,0,,1,1,1,1,0,0
 0x43a840,CConversations::StartSettingUpConversation,AI,gr-reversed,0,,1,1,1,1,0,0
 0x43a870,CConversations::SetUpConversationNode,AI,gr-reversed,0,,1,1,1,1,0,0
 0x43a960,CConversations::RemoveConversationForPed,AI,gr-reversed,0,,1,1,1,1,0,0
-0x43aa40,CConversations::EnableConversation,AI,gr-reversed,0,,0,1,0,1,0,0
+0x43aa40,CConversations::EnableConversation,AI,gr-reversed,0,,1,1,1,1,0,0
 0x43aac0,CConversations::IsConversationGoingOn,AI,gr-reversed,0,,1,1,1,1,0,0
 0x43aae0,CPedToPlayerConversations::Clear,AI,gr-reversed,0,,0,0,1,1,0,0
 0x43ab10,CPedToPlayerConversations::EndConversation,AI,gr-reversed,0,,1,1,1,1,0,0
@@ -678,7 +677,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x43ac40,CConversationForPed::IsPlayerInPositionForConversation,AI,gr-unreversed,0,,1,1,1,1,0,0
 0x43adb0,CConversations::DoneSettingUpConversation,AI,gr-unreversed,0,,1,1,1,1,0,0
 0x43b000,CConversations::IsConversationAtNode,AI,gr-reversed,0,,1,1,1,1,0,0
-0x43b0b0,CConversations::IsPlayerInPositionForConversation,AI,gr-reversed,0,,0,1,0,1,0,0
+0x43b0b0,CConversations::IsPlayerInPositionForConversation,AI,gr-reversed,0,,1,1,1,1,0,0
 0x43b0f0,CPedToPlayerConversations::Update,AI,gr-unreversed,0,,1,1,1,1,0,0
 0x43c190,CConversationForPed::Update,AI,gr-unreversed,0,,1,1,1,1,0,0
 0x43c590,CConversations::Update,AI,gr-reversed,0,,1,1,1,1,0,0
@@ -1362,13 +1361,13 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x4746b0,CTaskSimpleSetCharIgnoreWeaponRangeFlag::MakeAbortable,AI,gr-reversed,0,,0,0,0,0,0,0
 0x474710,CTheScripts::InitialiseSpecialAnimGroup,SCRIPT,gr-reversed,0,,0,0,0,0,0,0
 0x474730,CTheScripts::InitialiseSpecialAnimGroupsAttachedToCharModels,SCRIPT,gr-reversed,0,,1,1,1,1,0,0
-0x474750,CTheScripts::AddToListOfSpecialAnimGroupsAttachedToCharModels,SCRIPT,gr-reversed,0,,0,1,0,1,0,0
-0x474800,CTheScripts::ScriptAttachAnimGroupToCharModel,SCRIPT,gr-reversed,0,,0,1,1,1,0,0
+0x474750,CTheScripts::AddToListOfSpecialAnimGroupsAttachedToCharModels,SCRIPT,gr-reversed,0,,1,1,1,1,0,0
+0x474800,CTheScripts::ScriptAttachAnimGroupToCharModel,SCRIPT,gr-reversed,0,,1,1,1,1,0,0
 0x474870,CCamera::VectorTrackRunning,CAM,unknown,0,,1,1,1,1,0,0
 0x4748a0,CCamera::VectorMoveRunning,CAM,unknown,0,,1,1,1,1,0,0
 0x4748d0,CTaskSimpleSetCharIgnoreWeaponRangeFlag::~CTaskSimpleSetCharIgnoreWeaponRangeFlag,AI,unknown,0,,0,0,0,0,0,0
 0x4748f0,CTaskSimpleSetCharIgnoreWeaponRangeFlag::Destructor,AI,gr-reversed,0,,0,0,0,0,0,0
-0x474900,CRunningScript::ProcessCommands2200To2299,SCRIPT,unknown,0,,0,1,0,1,0,0
+0x474900,CRunningScript::ProcessCommands2200To2299,SCRIPT,unknown,1,scm-opcode-range,1,1,1,1,0,0
 0x4762d0,CRunningScript::ProcessCommands2300To2399,SCRIPT,unknown,1,scm-opcode-range,1,1,1,1,0,0
 0x478000,CRunningScript::ProcessCommands2400To2499,SCRIPT,unknown,1,scm-opcode-range,1,1,1,1,0,0
 0x479d10,CPed::IsWearingGoggles,PED,gr-reversed,0,,0,0,0,0,0,0
@@ -1423,7 +1422,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x487a20,CRunningScript::LocateCarCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
 0x487d10,CRunningScript::LocateObjectCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
 0x487f60,CRunningScript::CharInAngledAreaCheckCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
-0x4883f0,CRunningScript::ObjectInAngledAreaCheckCommand,SCRIPT,gr-unreversed,0,,0,1,0,1,0,0
+0x4883f0,CRunningScript::ObjectInAngledAreaCheckCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
 0x488780,CRunningScript::FlameInAngledAreaCheckCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
 0x488b50,CRunningScript::CharInAreaCheckCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
 0x488ec0,CRunningScript::CarInAreaCheckCommand,SCRIPT,gr-unreversed,0,,1,1,1,1,0,0
@@ -1561,7 +1560,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x49ab30,CShopping::GetKey,WORLD,gr-reversed,0,,1,1,1,1,0,0
 0x49abd0,GetChangingStatIndex,WORLD,unknown,0,,0,0,1,1,0,0
 0x49ac90,CShopping::RemoveLoadedPrices,WORLD,gr-reversed,0,,0,0,0,0,0,0
-0x49acd0,,UNK-game,unknown,0,,0,1,0,1,0,0
+0x49acd0,,UNK-game,unknown,0,,1,1,1,1,0,0
 0x49ad20,CShopping::FindItem,WORLD,gr-reversed,0,,0,0,0,0,0,0
 0x49ad50,CShopping::GetPrice,WORLD,gr-reversed,0,,1,1,1,1,0,0
 0x49ada0,CShopping::GetNameTag,WORLD,gr-reversed,0,,1,1,1,1,0,0
@@ -1584,7 +1583,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x49b6a0,CShopping::LoadStats,WORLD,gr-reversed,0,,0,0,1,1,0,0
 0x49b8d0,CShopping::LoadPrices,WORLD,gr-reversed,0,,1,1,1,1,0,0
 0x49bbe0,CShopping::LoadShop,WORLD,gr-reversed,1,call,1,1,1,1,0,0
-0x49bdd0,,UNK-game,unknown,0,,0,1,0,1,0,0
+0x49bdd0,,UNK-game,unknown,0,,1,1,1,1,0,0
 0x49be70,CShopping::IncrementStat,WORLD,gr-reversed,0,,1,1,1,1,0,0
 0x49bef0,CShopping::UpdateStats,WORLD,gr-reversed,0,,1,1,1,1,0,0
 0x49bf70,CShopping::Buy,WORLD,gr-reversed,0,,1,1,1,1,0,0
@@ -2884,7 +2883,6 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x4c8840,CVehicleModelInfo::SetEnvironmentMapCB,STREAM,gr-reversed,0,,0,0,0,0,0,0
 0x4c88b0,CVehicleModelInfo::SetEnvMapCoeffCB,STREAM,gr-reversed,0,,0,1,0,1,0,0
 0x4c88f0,,UNK-game,unknown,0,,1,1,1,1,0,0
-0x4c88f4,CVehicleModelInfo::SetRenderPipelinesCB,STREAM,gr-reversed,0,,1,1,1,1,0,0
 0x4c8900,CVehicleModelInfo::SetRenderPipelines,STREAM,gr-reversed,0,,0,0,0,0,0,0
 0x4c8970,CVehicleModelInfo::GetCustomCarPlateText,STREAM,gr-reversed,0,,1,1,1,1,0,0
 0x4c8980,CVehicleModelInfo::SetCustomCarPlateText,STREAM,gr-reversed,0,,1,1,1,1,0,0
@@ -3127,7 +3125,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x4d5c10,CCutsceneMgr::LoadEverythingBecauseCutsceneDeletedAllOfIt,ANIM,gr-reversed,0,,1,1,1,1,0,0
 0x4d5d00,CCutsceneMgr::Update,ANIM,gr-reversed,0,,0,0,0,0,0,1
 0x4d5d10,CCutsceneMgr::IsCutsceneSkipButtonBeingPressed,ANIM,gr-reversed,0,,1,1,1,1,0,0
-0x4d5db0,CCutsceneMgr::AppendToNextCutscene,ANIM,gr-reversed,0,,0,1,0,1,0,0
+0x4d5db0,CCutsceneMgr::AppendToNextCutscene,ANIM,gr-reversed,0,,1,1,1,1,0,0
 0x4d5e20,CCutsceneMgr::BuildCutscenePlayer,ANIM,gr-reversed,0,,0,0,0,0,0,0
 0x4d5e50,CCutsceneMgr::RemoveCutscenePlayer,ANIM,gr-reversed,0,,0,0,0,0,0,0
 0x4d5e60,CCutsceneMgr::Shutdown,ANIM,gr-reversed,0,,1,1,1,1,0,0
@@ -3864,7 +3862,6 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x503060,CAEWaterCannonAudioEntity::Initialise,AUDIO,gr-reversed,0,,1,1,1,1,0,0
 0x5030a0,CAEWaterCannonAudioEntity::Terminate,AUDIO,gr-reversed,0,,0,0,0,0,0,0
 0x5030d0,CAEWaterCannonAudioEntity::Service,AUDIO,gr-reversed,0,,1,1,1,1,0,0
-0x503219,,UNK-game,unknown,0,,1,1,1,1,0,0
 0x503250,CAEWaveDecoder::Constructor,AUDIO,gr-reversed,0,,0,0,1,1,0,0
 0x503280,CAEWaveDecoder::GetStreamID,AUDIO,gr-reversed,0,,0,0,0,1,0,0
 0x503290,CAEWaveDecoder::Destructor,AUDIO,gr-reversed,0,,0,0,0,1,0,0
@@ -5216,7 +5213,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x572040,CCurrentVehicle::Process,VEH,gr-reversed,0,,1,1,1,1,0,0
 0x5720a0,CUserDisplay::Process,HUD,gr-reversed,1,patch-disable,1,1,1,1,0,0
 0x5720c0,CZone::GetTranslatedName,HUD,unknown,0,,1,1,1,1,0,0
-0x5720d0,CTheZones::InitZonesPopulationSettings,WORLD,gr-reversed,0,,0,1,1,1,0,0
+0x5720d0,CTheZones::InitZonesPopulationSettings,WORLD,gr-reversed,0,,1,1,1,1,0,0
 0x572110,CTheZones::ResetZonesRevealed,WORLD,gr-reversed,0,,0,0,1,1,0,0
 0x572130,CTheZones::GetCurrentZoneLockedOrUnlocked,WORLD,unknown,0,,1,1,1,1,0,0
 0x572180,CTheZones::AssignZoneInfoForThisZone,WORLD,gr-reversed,0,,0,0,1,1,0,0
@@ -5313,12 +5310,12 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x580e00,CMenuSystem::DisplayStandardMenu,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x5816e0,CMenuSystem::DisplayGridMenu,HUD,gr-reversed,1,patch-modify,1,1,1,1,0,0
 0x581990,CMenuSystem::ActivateItems,HUD,gr-reversed,0,,1,1,1,1,0,0
-0x581b30,CMenuSystem::ActivateOneItem,HUD,gr-reversed,0,,0,1,0,1,0,0
+0x581b30,CMenuSystem::ActivateOneItem,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x581c10,CMenuSystem::HighlightOneItem,HUD,gr-reversed,0,,1,1,1,1,0,0
-0x581d70,CMenuSystem::InsertOneMenuItemWithNumber,HUD,gr-reversed,0,,0,1,0,1,0,0
+0x581d70,CMenuSystem::InsertOneMenuItemWithNumber,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x581e00,CMenuSystem::InsertMenu,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x582050,CMenuSystem::SetColumnWidth,HUD,gr-reversed,0,,1,1,1,1,0,0
-0x582080,CMenuSystem::SetColumnOrientation,HUD,gr-reversed,0,,0,1,0,1,0,0
+0x582080,CMenuSystem::SetColumnOrientation,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x5820c0,CMenuSystem::SetActiveMenuItem,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x5820e0,CMenuSystem::FillGridWithCarColours,HUD,gr-unreversed,1,patch-modify,1,1,1,1,0,0
 0x5822b0,CMenuSystem::GetCarColourFromGrid,HUD,gr-reversed,0,,1,1,1,1,0,0
@@ -5349,9 +5346,9 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x583d70,CRadar::SetBlipSprite,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x583db0,CRadar::SetBlipAlwaysDisplayInZoom,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x583e00,CRadar::SetBlipFade,HUD,gr-reversed,0,,0,0,0,0,0,0
-0x583e50,CRadar::SetCoordBlipAppearance,HUD,gr-reversed,0,,0,1,0,1,0,0
+0x583e50,CRadar::SetCoordBlipAppearance,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x583eb0,CRadar::SetBlipFriendly,HUD,gr-reversed,0,,1,1,1,1,0,0
-0x583f00,CRadar::SetBlipEntryExit,HUD,gr-reversed,0,,0,1,0,1,0,0
+0x583f00,CRadar::SetBlipEntryExit,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x583f40,CRadar::ShowRadarTrace,HUD,gr-reversed,0,,0,0,0,0,0,0
 0x584070,CRadar::ShowRadarTraceWithHeight,HUD,gr-reversed,0,,1,1,1,1,0,0
 0x584480,CRadar::ShowRadarMarker,HUD,gr-reversed,0,,1,1,1,1,0,0
@@ -7170,8 +7167,8 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x601390,CPedIntelligence::ClearTaskDuckSecondary,AI,gr-reversed,0,,1,1,1,1,0,0
 0x601420,CPedIntelligence::ClearTasks,AI,gr-reversed,0,,1,1,1,1,0,0
 0x601640,CPedIntelligence::FlushImmediately,AI,gr-reversed,1,call,1,1,1,1,0,0
-0x6018d0,CPedIntelligence::GetEffectInUse,AI,gr-reversed,0,,0,1,0,1,0,0
-0x6018e0,CPedIntelligence::SetEffectInUse,AI,gr-reversed,0,,0,1,0,1,0,0
+0x6018d0,CPedIntelligence::GetEffectInUse,AI,gr-reversed,0,,1,1,1,1,0,0
+0x6018e0,CPedIntelligence::SetEffectInUse,AI,gr-reversed,0,,1,1,1,1,0,0
 0x6018f0,CPedIntelligence::ProcessAfterProcCol,AI,gr-reversed,0,,1,1,1,1,0,0
 0x6019b0,CPedIntelligence::ProcessAfterPreRender,AI,gr-reversed,0,,1,1,1,1,0,0
 0x601bb0,CPedIntelligence::ProcessEventHandler,AI,gr-reversed,0,,1,1,1,1,0,0
@@ -7336,7 +7333,7 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x60a0a0,CPlayerPed::DisbandPlayerGroup,PED,gr-reversed,0,,1,1,1,1,0,0
 0x60a110,CPlayerPed::MakeGroupRespondToPlayerTakingDamage,PED,gr-reversed,0,,1,1,1,1,0,0
 0x60a1d0,CPlayerPed::TellGroupToStartFollowingPlayer,PED,gr-reversed,0,,1,1,1,1,0,0
-0x60a440,CPlayerPed::MakePlayerGroupDisappear,PED,gr-reversed,0,,0,1,0,1,0,0
+0x60a440,CPlayerPed::MakePlayerGroupDisappear,PED,gr-reversed,0,,1,1,1,1,0,0
 0x60a4b0,CPlayerPed::MakePlayerGroupReappear,PED,gr-reversed,0,,1,1,1,1,0,0
 0x60a530,CPlayerPed::ResetSprintEnergy,PED,gr-reversed,0,,1,1,1,1,0,0
 0x60a550,CPlayerPed::HandleSprintEnergy,PED,gr-reversed,0,,1,1,1,1,0,0
@@ -11299,8 +11296,8 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x700ec0,CPostEffects::DrawQuad,RENDER,gr-reversed,0,,1,1,1,1,0,0
 0x7010c0,CPostEffects::Close,RENDER,gr-reversed,0,,0,0,0,0,0,0
 0x7010f0,CPostEffects::ScriptResetForEffects,RENDER,gr-reversed,0,,1,1,1,1,0,0
-0x701120,CPostEffects::ScriptNightVisionSwitch,RENDER,gr-reversed,0,,0,1,0,1,0,0
-0x701140,CPostEffects::ScriptInfraredVisionSwitch,RENDER,gr-reversed,0,,0,1,0,1,0,0
+0x701120,CPostEffects::ScriptNightVisionSwitch,RENDER,gr-reversed,0,,1,1,1,1,0,0
+0x701140,CPostEffects::ScriptInfraredVisionSwitch,RENDER,gr-reversed,0,,1,1,1,1,0,0
 0x701160,CPostEffects::ScriptHeatHazeFXSwitch,RENDER,gr-reversed,0,,1,1,1,1,0,0
 0x701170,CPostEffects::ScriptDarknessFilterSwitch,RENDER,gr-reversed,0,,1,1,1,1,0,0
 0x7011b0,CPostEffects::ScriptCCTVSwitch,RENDER,gr-reversed,0,,0,0,0,0,0,0
@@ -11889,7 +11886,6 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x7322b0,CVisibilityPlugins::SetAtomicFlag,RW,gr-reversed,0,,1,1,1,1,0,0
 0x7322d0,CVisibilityPlugins::setClumpForAllAtomicsFlagCB,RW,gr-reversed,0,,1,1,1,1,0,0
 0x7322f0,,UNK-game,unknown,0,,1,1,1,1,0,0
-0x732307,CVisibilityPlugins::SetClumpForAllAtomicsFlag,RW,gr-reversed,0,,1,1,1,1,0,0
 0x732310,CVisibilityPlugins::ClearAtomicFlag,RW,gr-reversed,0,,1,1,1,1,0,0
 0x732330,CVisibilityPlugins::clearClumpForAllAtomicsFlagCB,RW,gr-reversed,0,,0,0,0,0,0,0
 0x732350,CVisibilityPlugins::ClearClumpForAllAtomicsFlag,RW,gr-reversed,0,,0,0,0,0,0,0
@@ -12210,7 +12206,6 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x7485c0,Input::diPadInit,CORE,gr-reversed,0,,0,0,1,1,0,0
 0x7486a0,Win::Win32_InitApplication,CORE,gr-reversed,0,,0,0,1,1,0,0
 0x748710,Win::NOTSA_WinMain,CORE,gr-reversed,0,,0,0,1,1,0,0
-0x7487cf,Input::Initialise,CORE,gr-reversed,0,,0,0,1,1,0,0
 0x748f20,RpAnisotGetMaxSupportedMaxAnisotropy,RW,gr-called-only,0,,1,1,1,1,0,0
 0x748f30,RpAnisotTextureSetMaxAnisotropy,RW,gr-called-only,0,,1,1,1,1,0,0
 0x748f50,RpAnisotTextureGetMaxAnisotropy,RW,gr-called-only,0,,1,1,1,1,0,0
@@ -13127,7 +13122,6 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x7f5f20,_rwD3D9SetRenderTarget,RW,unknown,0,,0,0,0,0,0,0
 0x7f5f60,_rwDeviceRegisterPlugin,RW,gr-called-only,0,,1,1,1,1,0,0
 0x7f5f70,D3D9System,RW,unknown,0,,0,0,0,0,0,0
-0x7f6781,WindowedModeHooks::notsa::WindowedMode::HookDirect3DDeviceReplacerSA,RW,gr-reversed,0,,0,0,0,0,0,0
 0x7f6b00,,RW,unknown,0,,0,0,0,0,0,0
 0x7f6b40,,RW,unknown,0,,0,0,0,0,0,0
 0x7f6bf0,,RW,unknown,0,,0,0,0,0,0,0
@@ -13137,7 +13131,6 @@ address,name,subsystem,state,direct,direct_kinds,in_B,in_C,in_D,in_E,cut_by_samp
 0x7f7530,_rwD3D9StandardFuncNotImplemented,RW,unknown,0,,0,0,0,0,0,0
 0x7f7540,,RW,unknown,0,,0,0,0,0,0,0
 0x7f7730,WindowedModeHooks::RenderWare::_rwD3D9CameraClear,RW,gr-reversed,0,,0,0,0,0,0,0
-0x7f7c41,WindowedModeHooks::notsa::WindowedMode::HookDxCamFix,RW,gr-reversed,0,,0,0,0,0,0,0
 0x7f7f70,D3D9DeviceReleaseVideoMemory,RW,unknown,0,,1,1,1,1,0,0
 0x7f8300,_rwD3D9TestState,RW,unknown,0,,0,0,0,0,0,0
 0x7f84e0,RwD3D9EngineGetMaxMultiSamplingLevels,RW,gr-called-only,0,,1,1,1,1,0,0

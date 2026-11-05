@@ -35,7 +35,7 @@ address,name,role,subsystem,source,confidence,evidence
 0x421a50,sub_421a50_from_CCarCtrl__WeaveForOtherCar,,,hint-caller,low,only caller 0x426350 CCarCtrl::WeaveForOtherCar
 0x422f80,sub_422f80_from_CCarCtrl__FlyAIPlaneInCertainDirection,,,hint-caller,low,only caller 0x423000 CCarCtrl::FlyAIPlaneInCertainDirection
 0x426970,sub_426970_from_CCarCtrl__WeaveThroughPedsSectorList_CPtrListDou,,,hint-caller,low,only caller 0x42d7e0 CCarCtrl::WeaveThroughPedsSectorList<CPtrListDoubleLink<CPhysical*>>
-0x43a710,CConversationNode::ClearRecursively,,,src-addr-comment,medium,src-addr-comment gta-reversed:source/game_sa/Conversations/ConversationNode.cpp:19; same name as 0x43a7a0 (overload?)
+0x43a710,CConversationNode::ClearRecursively,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Conversations/ConversationNode.cpp:19
 0x43e090,sub_43e090_from_CRunningScript__ProcessCommands2300To2399,,,hint-caller,low,only caller 0x4762d0 CRunningScript::ProcessCommands2300To2399
 0x43e2b0,sub_43e2b0_from_CEventLeaderEntryExit___CEventLeaderEntryExit,,,hint-caller,low,only caller 0x43e290 CEventLeaderEntryExit::~CEventLeaderEntryExit
 0x43e3d0,sub_43e3d0_from_CTaskSimpleUninterruptable___CTaskSimpleUninterr,,,hint-caller,low,only caller 0x43e3b0 CTaskSimpleUninterruptable::~CTaskSimpleUninterruptable
@@ -1453,7 +1453,7 @@ address,name,role,subsystem,source,confidence,evidence
 0x72ed80,CMemoryHeap::Malloc,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:192
 0x72f180,CMemoryHeap::Init,,,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/Memory/MemoryHeap.cpp:31
 0x72f3b0,CMemoryMgr::Init,,CORE,src-addr-comment,high,src-addr-comment gta-reversed:source/game_sa/MemoryMgr.cpp:36
-0x72f3c0,sub_72f3c0_from_Input__Initialise,,,hint-caller,low,only caller 0x7487cf Input::Initialise
+0x72f3c0,sub_72f3c0_from_Win__NOTSA_WinMain,,,hint-caller,low,only caller 0x748710 Win::NOTSA_WinMain
 0x72fc70,CameraSize,,,src-addr-comment,high,src-addr-comment gta-reversed:source/app/app_camera.cpp:53
 0x7305e0,D3DResourceSystem::TidyUpD3DTextures,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/RenderWare/D3DResourceSystem.cpp:48; gta-reversed:source/game_sa/RenderWare/D3DResourceSystem.cpp:47; plugin-sdk:plugin_sa/game_sa/D3DResourceSystem.cpp:50 (+1)
 0x730740,D3DResourceSystem::TidyUpD3DIndexBuffers,,,src-wrapper,high,src-wrapper gta-reversed:source/game_sa/RenderWare/D3DResourceSystem.cpp:43; gta-reversed:source/game_sa/RenderWare/D3DResourceSystem.cpp:42; plugin-sdk:plugin_sa/game_sa/D3DResourceSystem.cpp:45 (+1)

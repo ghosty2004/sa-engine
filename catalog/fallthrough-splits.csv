@@ -1,0 +1,8 @@
+address,host,rule,evidence
+0x43a7a0,,cat16-hand,"not an instruction boundary: the entry lies inside the 7-byte `mov dword ptr [edx + 0x10], 0` at 0x43a79f of the uncatalogued code 0x43a770-0x43a7b0 (no rel32 or pointer reference to 0x43a770 or 0x43a7a0 in the image); decoded from 0x43a7a0 it is junk that falls into 0x43a7b0 CConversations::Clear. gta-reversed hooks CConversationNode::ClearRecursively at 0x43A7A0, but its source comment gives 0x43A710 (catalogue row 0x43a710)"
+0x4c88f4,0x4c88f0,cat16-auto,"mid-function label of 0x4c88f0 : 0x4c88f0 `mov eax, dword ptr [esp + 4]` falls into 0x4c88f4; no reference outside the faller"
+0x503219,0x5030d0,cat16-auto,mid-function label of 0x5030d0 CAEWaterCannonAudioEntity::Service: 0x503213 `fld dword ptr [0x8cc290]` falls into 0x503219; no reference outside the faller
+0x732307,0x7322f0,cat16-auto,"mid-function label of 0x7322f0 : 0x732304 `add esp, 0xc` falls into 0x732307; no reference outside the faller"
+0x7487cf,0x748710,cat16-auto,"mid-function label of 0x748710 Win::NOTSA_WinMain: 0x7487cc `mov dword ptr [eax + 4], esi` falls into 0x7487cf; no reference outside the faller"
+0x7f6781,0x7f5f70,cat16-auto,mid-function label of 0x7f5f70 D3D9System: 0x7f6780 `push ecx` falls into 0x7f6781; no reference outside the faller
+0x7f7c41,0x7f7730,cat16-auto,"mid-function label of 0x7f7730 WindowedModeHooks::RenderWare::_rwD3D9CameraClear: 0x7f7c3b `mov dword ptr [0xc9bee8], ecx` falls into 0x7f7c41; no reference outside the faller; also jumped to from the faller at 0x7f7955"
