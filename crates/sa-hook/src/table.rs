@@ -734,6 +734,14 @@ mod tests {
                     .lines()
                     .find(|l| l.starts_with(&key))
                     .unwrap_or_else(|| panic!("{} not in catalogue", h.name));
+                if h.group == Group::Port {
+                    // A port of a function gta-reversed does not hook (REA-named or unknown): its
+                    // name is the catalogue's `name` column, or Ghidra's name while that is empty.
+                    let c: Vec<&str> = p.split(',').collect();
+                    let want = if c[8].is_empty() { c[4] } else { c[8] };
+                    assert_eq!(h.name, want, "{p}");
+                    continue;
+                }
                 assert!(p.split(',').any(|c| c == "excluded:crt"), "{}: {p}", h.name);
                 assert_eq!(h.group, Group::Oracle);
                 continue;

@@ -17,7 +17,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | POP | 9 | 420 | 0 | 0 | 0 | 0 | 0 | 429 | 0.0 |
 | PED | 9 | 360 | 2 | 0 | 0 | 0 | 0 | 371 | 0.0 |
 | HUD | 2 | 340 | 0 | 0 | 0 | 0 | 0 | 342 | 0.0 |
-| CORE | 27 | 270 | 22 | 0 | 0 | 0 | 0 | 319 | 0.0 |
+| CORE | 1 | 26 | 236 | 56 | 0 | 0 | 0 | 319 | 0.0 |
 | ANIM | 3 | 262 | 0 | 0 | 0 | 0 | 0 | 265 | 0.0 |
 | SCRIPT | 21 | 202 | 0 | 0 | 0 | 0 | 0 | 223 | 0.0 |
 | CAM | 7 | 210 | 0 | 0 | 0 | 0 | 0 | 217 | 0.0 |
@@ -36,14 +36,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 1558 | 13799 | 26 | 91 | 5 | 0 | 6683 | 22162 | 0.03 |
+| **total** | 1532 | 13555 | 240 | 147 | 5 | 0 | 6683 | 22162 | 0.03 |
 
-`specified` by source: REA 6024, gta-reversed 7775
+`specified` by source: REA 5996, gta-reversed 7559
 
-## Functions above `specified` (122)
+## Functions above `specified` (392)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
+| 0x403fa0 | CBuildingPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x404190 | CRect::IsFlipped | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x404200 | CRect::Restrict | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x404260 | CRect::Resize | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -51,6 +52,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4042d0 | CRect::IsPointInside-Tolerance | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x404870 | CObjectPool::GetAt | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
 | 0x404910 | CPedPool::GetAtRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x405900 | CIplDefPool::Constructor | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x406d50 | CVector::Magnitude2D | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x407180 | CGeneral::GetRandomNumberInRange_int32 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x4082c0 | CVector::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -58,6 +60,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x40ee20 | CBox::Recalc | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40ee70 | CColBox::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40ef10 | CColLine::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40fb80 | CColModelPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x40fcf0 | CSphere::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40fd10 | CColSphere::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40fdb0 | CVector::DotProduct-v3d*v3d* | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
@@ -68,18 +71,66 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x410090 | CColSphere::IntersectSphere | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4100e0 | CColSphere::IntersectEdge | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x411a80 | CMatrix::operator*= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x41b5b0 | CPointRoutePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x41b660 | CPatrolRoutePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x41b710 | CNodeRoutePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x41b860 | CNodeRoute::operator new | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x41b870 | CNodeRoute::operator delete | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x41bd90 | CGeneral::GetRandomNumberInRange<float>- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x420860 | CVector2D::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x43e020 | CRect::SetFromCenter | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x43e050 | CRect::GetCenter- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x43e110 | CVector2D::operator= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x441390 | CGameLogic::IsCoopGameGoingOn | WORLD | L2 | INF-8 inf8-l2.sh: 1000 in-game cases, 0 mismatches, 0 undeclared writes | 2026-11-05 |
+| 0x44d0e0 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x44e480 | CVector2D::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x459350 | CMatrix::Scale | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4a1340 | CMaths::GetSinFast | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4a1360 | CMaths::GetCosFast | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4d1610 | CQuaternion::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4d5980 | CPad::IsEnterJustPressed | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x4d59b0 | CPad::IsStandardKeyJustPressed | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532240 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532260 | CDebug::DebugDisplayTextBuffer | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532290 | CDirectory::Constructor-Empty | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5322a0 | CDirectory::Constructor-Capacity | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5322d0 | CDirectory::Destructor | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5322f0 | CDirectory::Init | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532310 | CDirectory::AddItem- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532350 | CDirectory::ReadDirFile | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532410 | CDirectory::WriteDirFile | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x532450 | CDirectory::FindItem- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5324a0 | CDirectory::FindItem-ByName | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5324d0 | CDirectory::FindItem-ByHash | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5327f0 | CRect::StretchToPoint | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x536d10 | CEntryInfoNodePool::GetAt | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x536dc0 | CEntryInfoNode::operator new | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x536dd0 | CEntryInfoNode::operator delete | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x536e10 | CEntryInfoList::Flush | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5386f0 | CFileMgr::Initialise | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538730 | CFileMgr::ChangeDir | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5387d0 | CFileMgr::SetDir | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538860 | CFileMgr::SetDirMyDocuments | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538890 | CFileMgr::LoadFile | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538900 | CFileMgr::OpenFile | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538910 | CFileMgr::OpenFileForWriting | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538930 | CFileMgr::OpenFileForAppending | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538950 | CFileMgr::Read | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538970 | CFileMgr::Write | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538990 | CFileMgr::Seek | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5389b0 | CFileMgr::ReadLine | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5389d0 | CFileMgr::CloseFile | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5389e0 | CFileMgr::GetTotalSize | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538a20 | CFileMgr::Tell | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538a50 | CFileMgr::GetErrorReadWrite | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53bb50 | CGame::InitialiseOnceBeforeRW | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53bc30 | CGame::FinalShutdown | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53bc60 | CGame::InitAfterLostFocus | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53bed0 | CGame::ReloadIPLs | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53c4a0 | CGame::CanSeeOutSideFromCurrArea | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53c4b0 | CGame::CanSeeWaterFromCurrArea | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53c500 | CGame::TidyUpMemory | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53c810 | CGame::DrasticTidyUpMemory | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x53cb00 | CGeneral::LimitAngle | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x53cb50 | CGeneral::LimitRadianAngle | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x53cbe0 | CGeneral::GetRadianAngleBetweenPoints- | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
@@ -87,6 +138,27 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x53cdc0 | CGeneral::GetNodeHeadingFromVector | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x53ce30 | CGeneral::SolveQuadratic | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x53cea0 | CGeneral::GetAngleBetweenPoints | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x53ced0 | CKeyGen::GetKey-sized | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53cf00 | CKeyGen::GetKey-null-terminated | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53cf30 | CKeyGen::GetUppercaseKey- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53cf70 | CKeyGen::AppendStringToKey | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53cfa0 | CLoadMonitor::Constructor | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d030 | CLoadMonitor::BeginFrame | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d050 | CLoadMonitor::StartTimer | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d070 | CLoadMonitor::EndTimer | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d0b0 | CLoadMonitor::EndFrame | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d480 | CLoadMonitor::Render | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d840 | App::DoRWStuffEndOfFrame | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d870 | App::PluginAttach | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d910 | Game::RwTerminate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53df10 | Game::TheGame | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53e160 | Game::RenderDebugShit | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53e530 | Game::RenderMenus | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53e580 | Game::InitialiseGame | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53e600 | DoFade | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53ed30 | TestModelIndices | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53f2d0 | Input::GetMouseSetUp | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x541330 | Common::LittleTest | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x54e8f0 | CMatrixLink::Insert | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54e910 | CMatrixLink::Remove | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54e9d0 | CMatrixLinkList::AddToList1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -103,6 +175,43 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x54fff0 | CPools::GetVehicle | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x550020 | CPools::GetObjectRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x550050 | CPools::GetObject | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x550080 | CPools::MakeSureSlotInObjectPoolIsEmpty | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550170 | CPools::CheckBuildingAtomics | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550180 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550250 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550320 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5503f0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5504c0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550570 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550640 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5506f0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5507c0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550890 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550960 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550a30 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550b00 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550bd0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550ca0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550d70 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550e40 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x550f10 | CPools::Initialise | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x551950 | CPools::CheckPoolsEmpty | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5519f0 | CPools::ShutDown | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552240 | CPtrNodeSingleLinkPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5522e0 | CPtrNodeDoubleLinkPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5525a0 | CQuadTreeNode<T>::FindSector-rect | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552640 | CQuadTreeNode<T>::FindSector-vec | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5526a0 | CQuadTreeNode<T>::InSector | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552870 | CQuadTreeNode<T>::GetAll | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5528c0 | CQuadTreeNode<T>::GetAllMatching-rect | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552930 | CQuadTreeNode<T>::GetAllMatching-vec | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552980 | CQuadTreeNode<T>::ForAllMatching-rect | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5529f0 | CQuadTreeNode<T>::ForAllMatching-vec | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552a40 | CQuadTreeNode<T>::DeleteItem- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552a90 | CQuadTreeNode<T>::DeleteItem-rect | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552af0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552c00 | CQuadTreeNode<T>::InitPool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552cd0 | CQuadTreeNode<T>::AddItem | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5617e0 | CTimer::Initialise | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x5618c0 | CTimer::Shutdown | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x5618d0 | CTimer::UpdateVariables | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
@@ -115,6 +224,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x561ad0 | CTimer::GetIsSlowMotionActive | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x561af0 | CTimer::StartUserPause | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x561b00 | CTimer::EndUserPause | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x56d070 | CIniFile::LoadIniFile | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5719b0 | CReferences::Init | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5719e0 | CReferences::ListSize | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x571ad0 | CReferences::RemoveReferencesToPlayer | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x571cc0 | CReferences::PruneAllReferencesInWorld | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x57c5e0 | CMenuManager::NoDiskInDriveMessage | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x59a840 | CMatrix::ConvertToEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59aa40 | CMatrix::ConvertFromEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59acf0 | CMatrix::Detach | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -161,8 +276,163 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x59c910 | CVector::Normalise | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x59c970 | CVector::NormaliseAndMag | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x5a1c20 | CObjectPool::New | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x5a4150 | Common::WriteRaster | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5ba060 | CGame::ValidateVersion | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5ba120 | CGame::D3DDeviceRestoreCallback | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5ba160 | CGame::InitialiseEssentialsAfterRW | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5ba520 | Light::LightsCreate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5bf390 | Game::RwInitialize | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5bf3b0 | Game::GameInit | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d0880 | CPools::Save | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d0890 | CPools::Load | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d2a20 | CPools::LoadVehiclePool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d2d70 | CPools::LoadPedPool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d4800 | CPools::SaveVehiclePool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d4940 | CPools::SaveObjectPool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d4a40 | CPools::LoadObjectPool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x5d4b40 | CPools::SavePedPool | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5e45e0 | CPedPool::New | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
 | 0x5e4720 | CPed::operator new-anon | PED | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x5e4760 | CPed::operator delete-anon | PED | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
+| 0x605ec0 | CPedIntelligencePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x60f8c0 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6193f0 | Rs::RsKeyFromScanCode | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619410 | Rs::RsTimer | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619420 | Rs::RsWindowSetText | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619430 | Rs::RsPathGetSeparator | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619450 | Rs::RsCameraBeginUpdate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619460 | Rs::RsAlwaysOnTop | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619470 | Rs::RsRegisterImageLoader | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619480 | Rs::RsSetDebug | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619490 | Rs::RsMouseSetVisibility | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6194a0 | Rs::RsMouseSetPos | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6194b0 | Rs::RsSelectDevice | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6194c0 | Rs::RsInputDeviceAttach | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619510 | Rs::rsCommandLine | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619530 | Rs::rsPreInitCommandLine | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619560 | Rs::RsKeyboardEventHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619580 | Rs::RsMouseEventHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6195a0 | Rs::RsPadEventHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6195c0 | Rs::RsPathnameDestroy | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6195d0 | Rs::RsPathnameCreate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6195e0 | Rs::RsRwTerminate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6195f0 | Rs::RsTerminate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619600 | Rs::RsInitialize | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619af0 | Rs::RsGrabScreen | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619b00 | Rs::RsErrorMessage | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619b30 | Rs::RsWarningMessage | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619b60 | Rs::RsEventHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x6e2a50 | CVehiclePool::New | VEH | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x6fab30 | Light::GetDayNightBalance | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x70f890 | CVector::Cross_OG | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x718600 | Common::AsciiToGxtChar | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7186e0 | Common::MakeUpperCase- | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x718710 | Common::MakeUpperCase-in | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x71d720 | CMBlur::MotionBlurClose | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x71da00 | Common::CalcScreenCoors-VVff | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x71dab0 | Common::CalcScreenCoors-VV | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x71db30 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x71db80 | Common::DoesInfiniteLineTouchScreen | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x71e050 | Common::IsPointInsideLine | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f180 | CMemoryHeap::Init | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f3b0 | CMemoryMgr::Init | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f3c0 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f420 | CMemoryMgr::Malloc- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f430 | CMemoryMgr::Free | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f440 | CMemoryMgr::Realloc- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f460 | CMemoryMgr::Calloc- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f480 | CMemoryMgr::InitScratchPad | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f4c0 | CMemoryMgr::MallocAlign- | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72f4f0 | CMemoryMgr::FreeAlign | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x72fd90 | CGame::CameraDestroy | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x731650 | CTxdStore::PluginAttach | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x734610 | CreateDebugFont | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x734620 | DestroyDebugFont | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x734640 | FlushObrsPrintfs | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x734650 | App::DefinedState | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x734750 | App::DefinedState2d | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7354e0 | Light::SetLightsWithTimeOfDayColour | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735720 | Light::LightsEnable | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735730 | Light::LightsDestroy | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7357e0 | Light::WorldReplaceNormalLightsWithScorched | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735820 | Light::WorldReplaceScorchedLightsWithNormal | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735840 | Light::AddAnExtraDirectionalLight | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7359e0 | Light::RemoveExtraDirectionalLights | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735a20 | Light::SetAmbientAndDirectionalColours | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735ab0 | Light::SetFlashyColours | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735b40 | Light::SetFlashyColours_Mild | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735bd0 | Light::SetBrightMarkerColours | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735c40 | Light::ReSetAmbientAndDirectionalColours | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735c70 | Light::DeActivateDirectional | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735c80 | Light::ActivateDirectional | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735c90 | Light::SetAmbientColoursToIndicateRoadGroup | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735d10 | Light::SetFullAmbient | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735d30 | Light::SetAmbientColours-void | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735d50 | Light::SetAmbientColours-color | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735d70 | Light::SetDirectionalColours | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735d90 | Light::SetLightColoursForPedsCarsAndObjects | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735e40 | Light::SetLightsForInfraredVisionHeatObjects | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735e70 | Light::StoreAndSetLightsForInfraredVisionHeatObjects | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735ef0 | Light::RestoreLightsForInfraredVisionHeatObjects | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735f20 | Light::SetLightsForInfraredVisionDefaultObjects | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x735f70 | Light::SetLightsForNightVision | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x743df0 | Input::HandleKeyDown | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7443c0 | Input::HandleKeyUp | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744880 | Input::KeyboardHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7448b0 | Input::HandlePadButtonDown | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744930 | Input::HandlePadButtonUp | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7449f0 | Input::PadHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744a20 | Input::AttachInputDevices | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744a70 | Securom::SecuromDisplayInit | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744ae0 | Securom::SecuromStateDisplay | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744d50 | CPad::IsMenuKeyJustPressed | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744d90 | CPad::IsTabJustPressed | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x744fb0 | CFileMgr::InitUserDirectories | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7451b0 | Ps::psWindowSetText | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7451d0 | Ps::psErrorMessage | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7451f0 | Ps::psWarningMessage | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745210 | Ps::psCameraBeginUpdate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745240 | Ps::psCameraShowRaster | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745270 | Ps::psTimer | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7452b0 | Ps::psGrabScreen | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7453e0 | Ps::psMouseSetVisibility | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7453f0 | Ps::psMouseSetPos | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745470 | Ps::psPathnameCreate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7454e0 | Ps::psPathnameDestroy | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745500 | Ps::psPathGetSeparator | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745510 | psGetMemoryFunctions | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745520 | Ps::psInstallFileSystem | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745530 | Ps::psNativeTextureSupport | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745540 | Ps::psDebugMessageHandler | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745560 | Win::Win32_InitInstance | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7455e0 | Ps::GetVideoMemInfo | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745650 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745840 | Ps::CheckDirectSound | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7458a0 | Ps::psTerminate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7458b0 | Ps::psAlwaysOnTop | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745a80 | VideoMode::FreeVideoModeList | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745af0 | VideoMode::GetVideoModeList | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745c70 | VideoMode::SetVideoMode | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745ca0 | VideoMode::IsVideoModeExclusive | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745f90 | VideoPlayer::WaitState | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x745fb0 | VideoPlayer::OnGraphNotify | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x746060 | Win::IsForegroundApp | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7460a0 | GetBestRefreshRate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7465b0 | Ps::InitialiseLanguage | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7466d0 | VideoPlayer::UpdateWindow | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x746740 | VideoPlayer::Release | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7467b0 | VideoPlayer::Shutdown | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x746870 | Win::MessageLoop | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7468e0 | Win::IsAlreadyRunning | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7469a0 | Input::diMouseInit | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x746d80 | Input::diPadSetRanges | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x747000 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x747020 | Input::EnumDevicesCallback | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x747660 | VideoPlayer::Play | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7477c0 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x747820 | Win::GTATranslateKey | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x747cd0 | Win::GTATranslateShiftKey | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7485c0 | Input::diPadInit | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x7486a0 | Win::Win32_InitApplication | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x855690 | __init_g_c87bd0 | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x856430 | CLoadMonitor::Destructor | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |

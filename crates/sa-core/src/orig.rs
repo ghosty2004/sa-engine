@@ -18,6 +18,10 @@
 //!   `site ADDR` names a `call dword ptr [cell]` instruction of the original (an import call): the
 //!   cell is read from that instruction at call time, so call-site redirections made by sa-hook's
 //!   determinism mode (virtual clock) apply to the Rust port exactly as to the original code.
+//!   `cell ADDR` calls the pointer stored at ADDR now (an IAT slot used by `jmp/mov reg, [cell]`
+//!   forms, or a global function pointer). `vslot OFF` calls slot OFF (bytes) of the vtable of the
+//!   first argument (C++ virtual call with `thiscall`, COM method with `stdcall`). `table CELL OFF`
+//!   calls slot OFF of the function table the global pointer at CELL points to (RwEngineInstance).
 //! - Phases B/C: the call goes straight to the Rust path after `=>`. `unported` makes it a panic
 //!   naming the function (phase B starts only when F2 holds, i.e. nothing is unported).
 //!
@@ -62,17 +66,121 @@ pub fn import_at_call_site(site: u32) -> usize {
     GPtr::<u32>::from_addr(cell as usize).read() as usize
 }
 
+/// The function pointer stored at `cell` right now (an IAT slot read by `call/jmp dword ptr [cell]`,
+/// or a global function pointer such as `RwEngineInstance`-style tables).
+#[cfg(sa_phase_a)]
+pub fn fn_at_cell(cell: u32) -> usize {
+    crate::mem::GPtr::<u32>::from_addr(cell as usize).read() as usize
+}
+
+/// Slot `off` (bytes) of the vtable of the object at `obj` (a C++ virtual call or a COM method:
+/// `mov eax, [obj]; call [eax+off]`).
+#[cfg(sa_phase_a)]
+pub fn vtable_slot(obj: usize, off: u32) -> usize {
+    let vt = crate::mem::GPtr::<u32>::from_addr(obj).read();
+    crate::mem::GPtr::<u32>::from_addr(vt as usize + off as usize).read() as usize
+}
+
 /// Declares typed calls into possibly-original functions (see the module docs).
 #[macro_export]
 macro_rules! orig {
     () => {};
+    // `dyn`: the first argument is the address to call (a pointer computed at run time, e.g. a
+    // `GetProcAddress` result); the remaining arguments are passed.
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($f0:ident : u32 $(, $a:ident : $t:ty)* $(,)?) $(-> $r:ty)? = $conv:ident dyn => unported;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($f0: u32 $(, $a: $t)*) $(-> $r)? {
+            let _ = $f0;
+            $crate::__orig_body!(unported $name, $conv, ($f0 as usize), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    // `table CELL OFF`: slot OFF (bytes) of the function table a global pointer at CELL points to
+    // (e.g. `RwEngineInstance` 0xC97B24: `mov eax, [0xC97B24]; call [eax+OFF]`).
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident table $cell:literal $off:literal => unported;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(unported $name, $conv, ($crate::orig::vtable_slot($cell as usize, $off)), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident table $cell:literal $off:literal => $imp:path;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(ported $imp, $conv, ($crate::orig::vtable_slot($cell as usize, $off)), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident cell $cell:literal => unported;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(unported $name, $conv, ($crate::orig::fn_at_cell($cell)), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident cell $cell:literal => $imp:path;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(ported $imp, $conv, ($crate::orig::fn_at_cell($cell)), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($a0:ident : $t0:ty $(, $a:ident : $t:ty)* $(,)?) $(-> $r:ty)? = $conv:ident vslot $off:literal => unported;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($a0: $t0 $(, $a: $t)*) $(-> $r)? {
+            $crate::__orig_body!(unported $name, $conv, ($crate::orig::vtable_slot($a0.addr(), $off)), ($a0: $t0 $(, $a: $t)*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($a0:ident : $t0:ty $(, $a:ident : $t:ty)* $(,)?) $(-> $r:ty)? = $conv:ident vslot $off:literal => $imp:path;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($a0: $t0 $(, $a: $t)*) $(-> $r)? {
+            $crate::__orig_body!(ported $imp, $conv, ($crate::orig::vtable_slot($a0.addr(), $off)), ($a0: $t0 $(, $a: $t)*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
     (
         $(#[$m:meta])*
         $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident site $site:literal => unported;
         $($rest:tt)*
     ) => {
         $(#[$m])*
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
         $vis fn $name($($a: $t),*) $(-> $r)? {
             $crate::__orig_body!(unported $name, $conv, ($crate::orig::import_at_call_site($site)), ($($a: $t),*) $(-> $r)?)
         }
@@ -84,7 +192,7 @@ macro_rules! orig {
         $($rest:tt)*
     ) => {
         $(#[$m])*
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
         $vis fn $name($($a: $t),*) $(-> $r)? {
             $crate::__orig_body!(ported $imp, $conv, ($crate::orig::import_at_call_site($site)), ($($a: $t),*) $(-> $r)?)
         }
@@ -96,7 +204,7 @@ macro_rules! orig {
         $($rest:tt)*
     ) => {
         $(#[$m])*
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
         $vis fn $name($($a: $t),*) $(-> $r)? {
             $crate::__orig_body!(unported $name, $conv, ($addr as usize), ($($a: $t),*) $(-> $r)?)
         }
@@ -108,7 +216,7 @@ macro_rules! orig {
         $($rest:tt)*
     ) => {
         $(#[$m])*
-        #[allow(clippy::not_unsafe_ptr_arg_deref)]
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
         $vis fn $name($($a: $t),*) $(-> $r)? {
             $crate::__orig_body!(ported $imp, $conv, ($addr as usize), ($($a: $t),*) $(-> $r)?)
         }
@@ -186,6 +294,20 @@ mod tests {
     crate::orig! {
         fn doubled(x: i32) -> i32 = cdecl 0x401000 => twice;
         fn missing(x: i32) = thiscall 0x401010 => unported;
+        fn through_cell(x: i32) -> i32 = stdcall cell 0x858000 => twice;
+        fn virtual_call(obj: crate::mem::GPtr<u32>, x: i32) -> i32 = thiscall vslot 0x0C => twice_obj;
+        fn virtual_missing(obj: crate::mem::GPtr<u32>) = stdcall vslot 0x08 => unported;
+    }
+
+    fn twice_obj(_obj: crate::mem::GPtr<u32>, x: i32) -> i32 {
+        2 * x
+    }
+
+    #[test]
+    fn cell_and_vslot_forms() {
+        assert_eq!(through_cell(4), 8);
+        assert_eq!(virtual_call(crate::mem::GPtr::NULL, 5), 10);
+        assert!(std::panic::catch_unwind(|| virtual_missing(crate::mem::GPtr::NULL)).is_err());
     }
 
     #[test]

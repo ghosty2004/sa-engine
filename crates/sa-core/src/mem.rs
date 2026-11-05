@@ -232,7 +232,7 @@ macro_rules! globals {
                 size: ::core::mem::size_of::<$ty>(),
                 init: {
                     const V: $ty = $init;
-                    #[allow(unsafe_code, unknown_lints, unnecessary_transmutes)]
+                    #[allow(unsafe_code, unknown_lints, unnecessary_transmutes, clippy::useless_transmute)]
                     const B: [u8; ::core::mem::size_of::<$ty>()] = unsafe {
                         ::core::mem::transmute::<$ty, [u8; ::core::mem::size_of::<$ty>()]>(V)
                     };

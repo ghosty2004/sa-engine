@@ -395,6 +395,7 @@ pub fn all() -> Vec<Spec> {
     .into_iter()
     .chain(crate::math_specs::all())
     .chain(crate::specs_core::all())
+    .chain(crate::specs_core_util::all())
     .collect()
 }
 
