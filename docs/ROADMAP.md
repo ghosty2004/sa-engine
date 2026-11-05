@@ -13,9 +13,9 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 |---|---|---|
 | impl-1 | — | FMT-2 part b (after INF-4) |
 | impl-2 | INF-4/5/6 determinism + recorder + hasher (worktree) | INF-8 |
-| measurement / REA | — (CAT-9/10b/11/12 done) | CAT-13 / CAT-6 |
-| harness | — | INF-8 (after INF-4) |
-| verifier | — | — |
+| measurement / REA | — (CAT-14 done) | CAT-12b (data-referenced code: script range fns, cheat table) / CAT-13 / CAT-6 |
+| harness | MATH-2 (port all MATH with L1, worktree) | INF-8 (after INF-4) |
+| verifier | audit of the L1 oracle + sa-math claims (worktree) | — |
 
 ## Next up (ordered queue; the scheduler takes from the top)
 
@@ -45,7 +45,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 | CAT-11 | Per-function state file (`catalog/state.csv`) + `tools/catalog/progress.py` → `catalog/progress.md` | done | 19,425 rows: excluded 6,664, specified 9,633 (7,897 gta-reversed, 1,736 REA), unknown 3,125, implemented 3 (0x53CB50, 0x441390, 0x561B10 passthrough; no oracle yet). F1 = 0 / 12,761 at ≥L2. Merge keeps states above `specified`; rerun byte-identical | `progress.py set ADDR STATE EVIDENCE` records changes |
 | CAT-12 | Close the catalogue over call / vtable targets | done | `merge_ghidra.py` adds missed hooks (incl. `.HOODLUM` stubs) 1,894, gta-reversed callees 416, gta-reversed vtable slots 351, CAT-7 call targets 46 (`catalog/extra-code-addresses.csv`, fixpoint via `callgraph.py gaps`). `noncatalogue_targets` = 0; 49 `.HOODLUM`/protection call targets (75 sites) are SecuROM return-address thunks → `excluded:protection-thunk`. All 153 original gaps are rows (130 vtable slots, 112 named + 18 `vfunc_N`). Slot names from validated header layouts (`vtables.py`, 328/379 vtables). Whole pipeline: `tools/catalog/run_all.sh`, two runs sha256-identical | notes `docs/re/cat9-12-pipeline.md`; caveat: bytes after a SecuROM thunk call are junk in the caller's linear decode |
 | CAT-13 | Resolve virtual calls on non-`this` objects (2,791 tagged with a slot but no target): type propagation from gta-reversed member types and Ghidra data types, then use the result in the port order | todo | share of resolved indirect sites reported | the port order currently misses most virtual dispatch |
-| CAT-14 | gta-reversed fidelity audit: list every place where its C++ deviates from the original on purpose (`NOTSA`, `FIX_BUGS`, `#ifdef` fixes, changed constants, "fixed" bugs, unported branches) per function → `catalog/gr-deviations.csv`, so ports keep original behaviour by default | todo | every deviation linked to a function row + the original bytes that show the difference | measurement slot |
+| CAT-14 | gta-reversed fidelity audit: list every place where its C++ deviates from the original on purpose (`NOTSA`, `FIX_BUGS`, `#ifdef` fixes, changed constants, "fixed" bugs, unported branches) per function → `catalog/gr-deviations.csv`, so ports keep original behaviour by default | done | 3,997 rows (`tools/catalog/gr_deviations.py`, in `run_all.sh`): keep-original/yes 840, keep-original/no 184, unclear 1,238, harmless 1,735; 2,764 mapped to 1,569 addresses; `state.csv` column `gr_deviations` (978 functions > 0). 26 reversible bug fixes (+1 undefined) with 53 use sites; 15 script-default + 70 unimplemented-with-case opcodes. 11 spot checks against the exe, all confirmed. Findings: gr's `CGeneral::GetRandomNumberInRange` differs from 0x407180/0x41BD90 (375 call sites), `GetAllValid` iterates in ascending order (98 sites), 24/27 ProcessCommandsXToY and 58/65 cheat functions are missing from the catalogue; fixed the CVehicleModelInfo names (75 rows). Two `run_all.sh` runs sha256-identical | docs/re/cat14-gr-deviations.md; hand checks in `catalog/gr-deviations-notes.csv` |
 
 ## Phase I: infrastructure (M1–M5)
 

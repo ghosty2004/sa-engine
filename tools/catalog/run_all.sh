@@ -7,10 +7,11 @@
 # Order: build_catalog -> merge_ghidra -> classify_unknowns (CAT-5) -> subsystems -> callgraph
 # ghidra + build (CAT-7) -> callgraph gaps (CAT-12: closes the catalogue over call targets; when
 # it adds rows the loop reruns from build_catalog) -> layouts (CAT-8) -> script_commands (CAT-10)
-# -> progress merge + report (CAT-11, catalog/state.csv is merged, never reset).
+# -> gr_deviations (CAT-14: gta-reversed fidelity audit -> catalog/gr-deviations.csv)
+# -> progress merge + report (CAT-11, catalog/state.csv is merged, never reset; adds gr_deviations).
 #
 # Inputs: re/gta-reversed, re/plugin-sdk, re/gta/1.0-US/gta_sa.exe, catalog/raw/rea-evidence.json,
-# catalog/extra-code-addresses.csv, the analysed Ghidra project in target/ghidra (created by
+# catalog/extra-code-addresses.csv, catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
 # `callgraph.py analyse` on first use) and the existing catalog/state.csv.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -53,6 +54,8 @@ done
 step layouts "${PY[@]}" tools/catalog/layouts.py "$GR" "$CAT"
 step script_commands "${PY[@]}" tools/catalog/script_commands.py "$GR" "$CAT" "$EXE"
 grep 'case annotations' "$LOG/script_commands.log"
+step gr_deviations "${PY[@]}" tools/catalog/gr_deviations.py "$GR" "$CAT" "$EXE"
+cut -c1-200 "$LOG/gr_deviations.log"
 step progress "${PY[@]}" tools/catalog/progress.py "$CAT"
 head -3 "$CAT/progress.md" | tail -1
 echo "run_all: done (logs in $LOG)"

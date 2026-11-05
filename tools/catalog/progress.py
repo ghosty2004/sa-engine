@@ -4,7 +4,7 @@
 catalog/state.csv holds one row per catalogue function (procedures.csv: game .text + _rwcseg;
 a `.HOODLUM` body is part of its stub's row):
 
-    address, name, subsystem, state, source, evidence, updated
+    address, name, subsystem, state, source, evidence, updated, gr_deviations
 
 `state` follows docs/PLAN.md section 5: unknown, specified, implemented, L1, L2, L3, excluded.
 
@@ -20,6 +20,10 @@ a `.HOODLUM` body is part of its stub's row):
       catalogue is kept and reported as an orphan. `updated` changes only when the state,
       source or evidence of a row changes (date from $SA_STATE_DATE, default today), so a
       rerun on the same catalogue writes a byte-identical file.
+
+      `gr_deviations` (CAT-14) = number of catalog/gr-deviations.csv rows for the function whose
+      `deviates` is yes or maybe (gta-reversed differs or may differ from the original there; check
+      those rows before porting). Recomputed on every merge; it never changes `updated`.
 
   progress.py set ADDRESS STATE EVIDENCE [catalog-dir]
       Record a state change (for example `implemented` when a hook is registered, `L1`/`L2`/`L3`
@@ -42,7 +46,7 @@ ROOT = Path(__file__).resolve().parents[2]
 STATES = ['unknown', 'specified', 'implemented', 'L1', 'L2', 'L3', 'excluded']
 ABOVE_SPECIFIED = ('implemented', 'L1', 'L2', 'L3')
 AT_LEAST_L2 = ('L2', 'L3')
-COLS = ['address', 'name', 'subsystem', 'state', 'source', 'evidence', 'updated']
+COLS = ['address', 'name', 'subsystem', 'state', 'source', 'evidence', 'updated', 'gr_deviations']
 
 
 def today():
@@ -61,7 +65,7 @@ def write_state(cat, rows):
         w = csv.DictWriter(f, COLS, lineterminator='\n')
         w.writeheader()
         for a in sorted(rows):
-            w.writerow(rows[a])
+            w.writerow({k: rows[a].get(k, '') for k in COLS})
 
 
 def derive(cat):
@@ -92,9 +96,21 @@ def derive(cat):
     return out
 
 
+def gr_deviation_counts(cat):
+    """{address: rows of catalog/gr-deviations.csv with deviates yes/maybe} (CAT-14)."""
+    p = cat / 'gr-deviations.csv'
+    n = Counter()
+    if p.exists():
+        for r in csv.DictReader(open(p)):
+            if r['address'] and r['deviates'] != 'no':
+                n[int(r['address'], 16)] += 1
+    return n
+
+
 def merge(cat):
     old = read_state(cat)
     new = derive(cat)
+    devs = gr_deviation_counts(cat)
     d = today()
     rows, kept, changed, orphans = {}, 0, 0, 0
     for a, r in new.items():
@@ -113,6 +129,8 @@ def merge(cat):
                 ev = 'ORPHAN: address no longer in the catalogue; ' + ev
             rows[a] = {**o, 'evidence': ev}
             orphans += 1
+    for a, r in rows.items():
+        r['gr_deviations'] = str(devs.get(a, 0))
     write_state(cat, rows)
     print(f'state.csv: {len(rows)} rows, {kept} kept above specified, {changed} new/changed, '
           f'{orphans} orphans')

@@ -139,3 +139,28 @@
   stream packs with Ogg framing). Re-verified by the main session: all ignored whole-install tests pass,
   86 unit tests, clippy clean. CAT-10 part 3 (opcodes used by main.scm/script.img) is now
   `catalog/script-usage.csv`.
+
+## 2026-11-05: CAT-14 gta-reversed fidelity audit
+- `tools/catalog/gr_deviations.py` (run by `run_all.sh` before `progress.py`): lexes `source/game_sa` and
+  `source/app`, parses function extents, maps markers to hook addresses (overloads by signature, `// 0xADDR`
+  comments, script handlers → range functions) and writes `catalog/gr-deviations.csv` (3,997 rows) and
+  `catalog/gr-deviations-summary.json`. Hand checks live in `catalog/gr-deviations-notes.csv`. `progress.py`
+  merge adds the `state.csv` column `gr_deviations` (rows with deviates yes/maybe; never changes states or
+  `updated`). New Ghidra post-script `tools/catalog/ghidra/DecompileList.java` (read-only).
+- Counts: keep-original/yes 840, keep-original/no 184, unclear 1,238, harmless 1,735. Reversible bug fixes:
+  26 defined (+1 used but undefined), 53 use sites, enabled by default in gr. Script opcodes: 15 default +
+  70 unimplemented-with-case.
+- Spot checks (Ghidra decompile + capstone): 0x6FD5B0, 0x4EF2E0, 0x42CD10, 0x64E550, 0x7189B0, 0x5F3970,
+  0x66C3E0, 0x7295E0, 0x6E1A60, 0x4D0C50 and 0x407180/0x41BD90: all 11 match gr's description of the
+  original.
+- Findings: gr's integer and float `GetRandomNumberInRange` do not reproduce the original formula
+  (375 call sites tagged); `GetAllValid` walks pools upwards, while the original often walks downwards.
+  The catalogue lacks 24/27 ProcessCommandsXToY and 58/65 cheat functions (data-referenced code, not closed
+  by CAT-12). `RH_ScopedClass` is now block-scoped in `build_catalog.py`: it fixed the names of 75
+  CVehicleModelInfo hooks; no state changed.
+- Verified: `run_all.sh` twice under an 8 GB cap → sha256-identical `catalog/`. Cost: ~4 pipeline runs
+  (~3 min each) plus one Ghidra decompile run; no new disk use beyond the scratchpad.
+- Main session re-verified CAT-14: `run_all.sh` reproduces `catalog/` sha256-identically. Sent the
+  GetRandomNumberInRange finding to the MATH-2 lane. Follow-up CAT-12b: about 24 ProcessCommands* range
+  functions and 58 cheat functions are reached only through data tables and are missing from the
+  catalogue.
