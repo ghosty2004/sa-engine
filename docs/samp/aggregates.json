@@ -31,7 +31,7 @@
      333
     ],
     "HUD": [
-     33,
+     32,
      373
     ],
     "INPUT": [
@@ -43,7 +43,7 @@
      112
     ],
     "PED": [
-     22,
+     20,
      389
     ],
     "PHYS": [
@@ -51,7 +51,7 @@
      79
     ],
     "POP": [
-     3,
+     2,
      518
     ],
     "RENDER": [
@@ -71,7 +71,7 @@
      260
     ],
     "STREAM": [
-     29,
+     26,
      593
     ],
     "UNK-game": [
@@ -79,7 +79,7 @@
      2242
     ],
     "VEH": [
-     32,
+     31,
      808
     ],
     "WEAPON": [
@@ -91,7 +91,7 @@
      980
     ]
    },
-   "total": 325
+   "total": 317
   },
   "B_samp_roots_resolved_edges": {
    "by_subsystem": {
@@ -116,7 +116,7 @@
      217
     ],
     "COLL": [
-     102,
+     101,
      145
     ],
     "CORE": [
@@ -144,15 +144,15 @@
      79
     ],
     "POP": [
-     311,
+     296,
      518
     ],
     "RENDER": [
-     478,
+     477,
      907
     ],
     "RW": [
-     602,
+     603,
      1815
     ],
     "SAVE": [
@@ -164,19 +164,19 @@
      260
     ],
     "STREAM": [
-     275,
+     272,
      593
     ],
     "UNK-game": [
-     513,
+     507,
      2242
     ],
     "VEH": [
-     409,
+     407,
      808
     ],
     "WEAPON": [
-     104,
+     103,
      190
     ],
     "WORLD": [
@@ -184,7 +184,7 @@
      980
     ]
    },
-   "total": 6065
+   "total": 6037
   },
   "C_samp_roots_plus_instantiated_vtables": {
    "by_subsystem": {
@@ -209,7 +209,7 @@
      217
     ],
     "COLL": [
-     112,
+     111,
      145
     ],
     "CORE": [
@@ -237,15 +237,15 @@
      79
     ],
     "POP": [
-     327,
+     313,
      518
     ],
     "RENDER": [
-     510,
+     509,
      907
     ],
     "RW": [
-     617,
+     618,
      1815
     ],
     "SAVE": [
@@ -257,108 +257,15 @@
      260
     ],
     "STREAM": [
-     281,
+     278,
      593
     ],
     "UNK-game": [
-     656,
+     653,
      2242
     ],
     "VEH": [
-     600,
-     808
-    ],
-    "WEAPON": [
-     105,
-     190
-    ],
-    "WORLD": [
-     675,
-     980
-    ]
-   },
-   "total": 9583
-  },
-  "D_game_and_samp_roots_resolved_edges": {
-   "by_subsystem": {
-    "AI": [
-     797,
-     4112
-    ],
-    "ANIM": [
-     132,
-     278
-    ],
-    "AUDIO": [
-     483,
-     889
-    ],
-    "CALLED-ONLY": [
-     20,
-     37
-    ],
-    "CAM": [
-     162,
-     217
-    ],
-    "COLL": [
-     102,
-     145
-    ],
-    "CORE": [
-     177,
-     333
-    ],
-    "HUD": [
-     270,
-     373
-    ],
-    "INPUT": [
-     116,
-     161
-    ],
-    "MATH": [
-     65,
-     112
-    ],
-    "PED": [
-     228,
-     389
-    ],
-    "PHYS": [
-     63,
-     79
-    ],
-    "POP": [
-     311,
-     518
-    ],
-    "RENDER": [
-     478,
-     907
-    ],
-    "RW": [
-     602,
-     1815
-    ],
-    "SAVE": [
-     23,
-     48
-    ],
-    "SCRIPT": [
-     182,
-     260
-    ],
-    "STREAM": [
-     275,
-     593
-    ],
-    "UNK-game": [
-     513,
-     2242
-    ],
-    "VEH": [
-     409,
+     598,
      808
     ],
     "WEAPON": [
@@ -366,24 +273,24 @@
      190
     ],
     "WORLD": [
-     558,
+     675,
      980
     ]
    },
-   "total": 6070
+   "total": 9559
   },
-  "E_game_and_samp_roots_plus_instantiated_vtables": {
+  "D_game_and_samp_roots_resolved_edges": {
    "by_subsystem": {
     "AI": [
-     3590,
+     809,
      4112
     ],
     "ANIM": [
-     163,
+     145,
      278
     ],
     "AUDIO": [
-     529,
+     584,
      889
     ],
     "CALLED-ONLY": [
@@ -391,15 +298,15 @@
      37
     ],
     "CAM": [
-     164,
+     165,
      217
     ],
     "COLL": [
-     112,
+     117,
      145
     ],
     "CORE": [
-     184,
+     215,
      333
     ],
     "HUD": [
@@ -407,68 +314,68 @@
      373
     ],
     "INPUT": [
-     125,
+     116,
      161
     ],
     "MATH": [
-     73,
+     68,
      112
     ],
     "PED": [
-     294,
+     246,
      389
     ],
     "PHYS": [
-     68,
+     63,
      79
     ],
     "POP": [
-     327,
+     320,
      518
     ],
     "RENDER": [
-     510,
+     555,
      907
     ],
     "RW": [
-     617,
+     651,
      1815
     ],
     "SAVE": [
-     26,
+     32,
      48
     ],
     "SCRIPT": [
-     191,
+     190,
      260
     ],
     "STREAM": [
-     281,
+     347,
      593
     ],
     "UNK-game": [
-     656,
+     537,
      2242
     ],
     "VEH": [
-     600,
+     421,
      808
     ],
     "WEAPON": [
-     105,
+     118,
      190
     ],
     "WORLD": [
-     675,
+     618,
      980
     ]
    },
-   "total": 9588
+   "total": 6615
   },
-  "F_E_without_samp_cuts": {
+  "E_game_and_samp_roots_plus_instantiated_vtables": {
    "by_subsystem": {
     "AI": [
-     3593,
+     3602,
      4112
     ],
     "ANIM": [
@@ -476,39 +383,39 @@
      278
     ],
     "AUDIO": [
-     532,
+     700,
      889
     ],
     "CALLED-ONLY": [
-     21,
+     27,
      37
     ],
     "CAM": [
-     175,
+     167,
      217
     ],
     "COLL": [
-     112,
+     127,
      145
     ],
     "CORE": [
-     186,
+     221,
      333
     ],
     "HUD": [
-     280,
+     284,
      373
     ],
     "INPUT": [
-     126,
+     125,
      161
     ],
     "MATH": [
-     78,
+     76,
      112
     ],
     "PED": [
-     302,
+     312,
      389
     ],
     "PHYS": [
@@ -516,66 +423,253 @@
      79
     ],
     "POP": [
-     336,
+     337,
      518
     ],
     "RENDER": [
-     536,
+     651,
      907
     ],
     "RW": [
-     624,
+     666,
      1815
     ],
     "SAVE": [
-     26,
+     34,
      48
     ],
     "SCRIPT": [
-     191,
+     198,
      260
     ],
     "STREAM": [
-     285,
+     353,
      593
     ],
     "UNK-game": [
-     672,
+     836,
      2242
     ],
     "VEH": [
-     610,
+     612,
      808
     ],
     "WEAPON": [
-     107,
+     119,
      190
     ],
     "WORLD": [
-     718,
+     734,
      980
     ]
    },
-   "total": 9754
+   "total": 10425
+  },
+  "F_E_without_samp_cuts": {
+   "by_subsystem": {
+    "AI": [
+     3605,
+     4112
+    ],
+    "ANIM": [
+     189,
+     278
+    ],
+    "AUDIO": [
+     703,
+     889
+    ],
+    "CALLED-ONLY": [
+     27,
+     37
+    ],
+    "CAM": [
+     178,
+     217
+    ],
+    "COLL": [
+     128,
+     145
+    ],
+    "CORE": [
+     222,
+     333
+    ],
+    "HUD": [
+     287,
+     373
+    ],
+    "INPUT": [
+     126,
+     161
+    ],
+    "MATH": [
+     80,
+     112
+    ],
+    "PED": [
+     318,
+     389
+    ],
+    "PHYS": [
+     68,
+     79
+    ],
+    "POP": [
+     360,
+     518
+    ],
+    "RENDER": [
+     675,
+     907
+    ],
+    "RW": [
+     673,
+     1815
+    ],
+    "SAVE": [
+     34,
+     48
+    ],
+    "SCRIPT": [
+     198,
+     260
+    ],
+    "STREAM": [
+     360,
+     593
+    ],
+    "UNK-game": [
+     854,
+     2242
+    ],
+    "VEH": [
+     624,
+     808
+    ],
+    "WEAPON": [
+     121,
+     190
+    ],
+    "WORLD": [
+     777,
+     980
+    ]
+   },
+   "total": 10607
+  },
+  "G_game_roots_only_plus_instantiated_vtables": {
+   "by_subsystem": {
+    "AI": [
+     3473,
+     4112
+    ],
+    "ANIM": [
+     159,
+     278
+    ],
+    "AUDIO": [
+     677,
+     889
+    ],
+    "CALLED-ONLY": [
+     27,
+     37
+    ],
+    "CAM": [
+     168,
+     217
+    ],
+    "COLL": [
+     123,
+     145
+    ],
+    "CORE": [
+     192,
+     333
+    ],
+    "HUD": [
+     142,
+     373
+    ],
+    "INPUT": [
+     103,
+     161
+    ],
+    "MATH": [
+     72,
+     112
+    ],
+    "PED": [
+     295,
+     389
+    ],
+    "PHYS": [
+     68,
+     79
+    ],
+    "POP": [
+     266,
+     518
+    ],
+    "RENDER": [
+     416,
+     907
+    ],
+    "RW": [
+     606,
+     1815
+    ],
+    "SAVE": [
+     20,
+     48
+    ],
+    "SCRIPT": [
+     193,
+     260
+    ],
+    "STREAM": [
+     328,
+     593
+    ],
+    "UNK-game": [
+     697,
+     2242
+    ],
+    "VEH": [
+     586,
+     808
+    ],
+    "WEAPON": [
+     101,
+     190
+    ],
+    "WORLD": [
+     514,
+     980
+    ]
+   },
+   "total": 9226
   },
   "catalogue_live_total": 15486,
-  "only_reachable_without_cuts": 166,
+  "only_reachable_without_cuts": 182,
   "only_reachable_without_cuts_by_subsystem": {
    "AI": 3,
    "ANIM": 13,
    "AUDIO": 3,
    "CAM": 11,
-   "CORE": 2,
+   "COLL": 1,
+   "CORE": 1,
    "HUD": 3,
    "INPUT": 1,
-   "MATH": 5,
-   "PED": 8,
-   "POP": 9,
-   "RENDER": 26,
+   "MATH": 4,
+   "PED": 6,
+   "POP": 23,
+   "RENDER": 24,
    "RW": 7,
-   "STREAM": 4,
-   "UNK-game": 16,
-   "VEH": 10,
+   "STREAM": 7,
+   "UNK-game": 18,
+   "VEH": 12,
    "WEAPON": 2,
    "WORLD": 43
   }
@@ -613,7 +707,7 @@
   "0x612710": "CPopulation::AddPed (row 185: ambient population peds (CPopulation::AddPed))",
   "0x6a8500": "CAutomobile::ProcessFlyingCarStuff (row 207: flying-car physics (ProcessFlyingCarStuff))"
  },
- "direct_functions": 325,
+ "direct_functions": 317,
  "disabled_features": {
   "'Wasted' big message": [
    "191@0x56e5ad"
@@ -786,6 +880,20 @@
    "157@0x5720a5"
   ]
  },
+ "fallthrough_edges": [
+  "0x43a7a0 CConversationNode::ClearRecursively -> 0x43a7b0 CConversations::Clear",
+  "0x4c88f0  -> 0x4c88f4 CVehicleModelInfo::SetRenderPipelinesCB",
+  "0x5030d0 CAEWaterCannonAudioEntity::Service -> 0x503219 ",
+  "0x5cd6b0  -> 0x5cd6d0 ",
+  "0x7322f0  -> 0x732307 CVisibilityPlugins::SetClumpForAllAtomicsFlag",
+  "0x748710 Win::NOTSA_WinMain -> 0x7487cf Input::Initialise",
+  "0x7f5f70 D3D9System -> 0x7f6781 WindowedModeHooks::notsa::WindowedMode::HookDirect3DDeviceReplacerSA",
+  "0x7f7730 WindowedModeHooks::RenderWare::_rwD3D9CameraClear -> 0x7f7c41 WindowedModeHooks::notsa::WindowedMode::HookDxCamFix"
+ ],
+ "moot_disable_containers": [
+  "0x41b1d0 cb_RSCOLLISION_RpClump_StreamRead",
+  "0x4341c0 CCarCtrl::GenerateRandomCars"
+ ],
  "patch_entries_by_kind": {
   "code-read": 1,
   "dead": 4,

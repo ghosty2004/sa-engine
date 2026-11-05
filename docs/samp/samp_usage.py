@@ -906,7 +906,24 @@ def table_refs(cat):
     return refs, members
 
 
-def closure(cat, roots, cut, removed_edges, tables=None):
+def fallthrough_edges(cat):
+    """Edges f -> g where a body range of f ends exactly at the entry of catalogue function g and the last
+    instruction of that range does not end the flow (ret / jmp / int3): f falls through into g.
+    callgraph.csv has no edge for this (e.g. Win::NOTSA_WinMain falls into the entry gta-reversed names
+    Input::Initialise at 0x7487cf, which holds the rest of WinMain)."""
+    out = set()
+    for (lo, hi, fa) in cat.ivs:
+        if hi == fa or hi not in cat.proc:
+            continue
+        last = None
+        for ins in cat.img.insns(lo, hi):
+            last = ins
+        if last is not None and last.mnemonic not in ('ret', 'retn', 'jmp', 'int3', 'ljmp'):
+            out.add((fa, hi))
+    return out
+
+
+def closure(cat, roots, cut, removed_edges, tables=None, extra=None):
     seen = set()
     stack = [r for r in roots if r not in cut]
     inst = set()
@@ -926,6 +943,8 @@ def closure(cat, roots, cut, removed_edges, tables=None):
                 continue
             if b not in seen:
                 stack.append(b)
+        if extra:
+            stack.extend(b for b in extra.get(f, ()) if b not in seen)
         if tables:
             for t in by_ref.get(f, ()):
                 if t in inst:
@@ -1039,20 +1058,38 @@ def aggregate(cat, patches, rows, dropped, test_only, fields, ops):
         rf = sc.get(o['op'], {}).get('orig_range_fn', '')
         if rf.startswith('0x') and live(cat, int(rf, 16)):
             direct[int(rf, 16)].add('scm-opcode-range')
-    agg['direct_functions'] = len(direct)
     agg['cut_functions'] = {hx(f): f'{cat.fname(f)} ({w})' for f, w in sorted(cut_why.items())}
     agg['removed_call_edges'] = [f'{hx(a)} {cat.fname(a)} -> {hx(b)} {cat.fname(b)}' for (a, b) in sorted(removed)]
     tables = table_refs(cat)
+    ft = fallthrough_edges(cat)
+    extra = collections.defaultdict(list)
+    for (a, b) in sorted(ft):
+        extra[a].append(b)
+    agg['fallthrough_edges'] = [f'{hx(a)} {cat.fname(a)} -> {hx(b)} {cat.fname(b)}' for (a, b) in sorted(ft)]
+    # a function that is direct only because it contains a samp disable site is a root only if the rest of
+    # the closure reaches it (otherwise the patch is moot: nothing calls the container)
+    core = {f for f, k in direct.items() if k - {'patch-disable'}}
+    moot = set()
+    base_e = closure(cat, core | set(GAME_ROOTS), cut, removed, tables, extra)
+    for f, k in direct.items():
+        if not (k - {'patch-disable'}) and f not in base_e and f not in cut:
+            moot.add(f)
+    agg['direct_functions'] = len([f for f in direct if f not in cut])
+    agg['moot_disable_containers'] = [f'{hx(f)} {cat.fname(f)}' for f in sorted(moot)]
+    for f in cut:
+        direct.pop(f, None)
+    droots = set(direct) - moot
     allf = [f for f in cat.proc if live(cat, f)]
     sub_total = collections.Counter(cat.subsystem(f) for f in allf)
     res = {}
     variants = {
         'A_direct': set(direct),
-        'B_samp_roots_resolved_edges': closure(cat, direct, cut, removed),
-        'C_samp_roots_plus_instantiated_vtables': closure(cat, direct, cut, removed, tables),
-        'D_game_and_samp_roots_resolved_edges': closure(cat, set(direct) | set(GAME_ROOTS), cut, removed),
-        'E_game_and_samp_roots_plus_instantiated_vtables': closure(cat, set(direct) | set(GAME_ROOTS), cut, removed, tables),
-        'F_E_without_samp_cuts': closure(cat, set(direct) | set(GAME_ROOTS), set(), set(), tables),
+        'B_samp_roots_resolved_edges': closure(cat, droots, cut, removed, None, extra),
+        'C_samp_roots_plus_instantiated_vtables': closure(cat, droots, cut, removed, tables, extra),
+        'D_game_and_samp_roots_resolved_edges': closure(cat, droots | set(GAME_ROOTS), cut, removed, None, extra),
+        'E_game_and_samp_roots_plus_instantiated_vtables': closure(cat, droots | set(GAME_ROOTS), cut, removed, tables, extra),
+        'F_E_without_samp_cuts': closure(cat, set(direct) | set(GAME_ROOTS), set(), set(), tables, extra),
+        'G_game_roots_only_plus_instantiated_vtables': closure(cat, set(GAME_ROOTS), set(), set(), tables, extra),
     }
     for k, s in variants.items():
         c = collections.Counter(cat.subsystem(f) for f in s)
