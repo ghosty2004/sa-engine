@@ -1,0 +1,20 @@
+# InteriorManager_c: gta-reversed deviation notes (WORLD)
+
+Scope: functions that gta-reversed provides and that have `gr_deviations > 0` in `catalog/state.csv`. Each `##` checks the flagged rows of `catalog/gr-deviations.csv` against the original 1.0 US bytes (bundle disassembly is the authority). CONFIRMED = gr really differs; REFUTED = gr matches the original or the marker is not a behavioural difference; UNCLEAR = open question. Class keep-original = the port must do what the original does; harmless = no observable difference. "Found in passing" items are differences between gr and the bytes that the CAT-14 rows did not flag.
+
+Common notation: `rand` = CRT rand 0x821b1e, `_ftol` = 0x821b40 (truncation), 0x407180 / 0x41bd90 = the original CGeneral::GetRandomNumberInRange int/float helpers (gr's helpers differ, see docs/re/cat14-gr-deviations.md finding 1). Pool loops: "descending" means slot size-1 down to 0 (flag byte bit 7 = free slot), which is the opposite of gr's `GetAllValid()`.
+
+## 0x598430 InteriorManager_c::AddSameGroupEffectInfos  (gr_deviations = 1)
+Rows checked: 2 (CONFIRMED 0, REFUTED 2, UNCLEAR 0).
+- gr `source/game_sa/Interior/InteriorManager_c.cpp:187` (notsa): `if (ifxi->NumFx + 1 >= ifxi->Effects.size()) return; // NOTSA` plus an in-loop `if (NumFx >= 8) return; // Moved down here`.
+  - Original bytes (thiscall, `ret 8`; `this` unused, args ifxi +4, a2 +8 unused): no early return. `for (i = 0; i < mi->m_n2dfxCount (byte +0xd, re-read each iteration); i++)`: skip `i == ifxi->FxIds[0] (+0x28)`; `fx = mi->Get2dEffect(i)` (0x4c4c70, no null check); skip unless `fx->type (+0xc) == 5`; skip unless `ifxi->Effects[0] (+8)->groupId (+0x11) == fx->groupId`; then only `if (ifxi->NumFx (+4) < 8)` (signed, 0x598471) append `Effects[NumFx] = fx; FxIds[NumFx] = i; NumFx++` (0x598476-0x598481); otherwise the match is skipped and the loop continues.
+  - Verdict: REFUTED for the normal call path (callers pass NumFx == 1, and stopping at 8 vs. skipping further matches gives the same result). Edge: with NumFx == 7 on entry gr adds nothing, the original adds one more effect.
+  - Class: harmless (port the original guard `NumFx < 8` inside the loop).
+- gr `InteriorManager_c.cpp:197` (notsa-helper `dyn_cast_if_present`, deviates=no): REFUTED, matches the type test `[fx+0xc] == 5`; the original has no null test on the Get2dEffect result. Class: harmless.
+
+## 0x598690 InteriorManager_c::IsInteriorEffectVisible  (gr_deviations = 1)
+Rows checked: 1 (CONFIRMED 1, REFUTED 0, UNCLEAR 0).
+- gr `source/game_sa/Interior/InteriorManager_c.cpp:306` (original-comment): "Original horrifically complicated code:" (kept in a comment). gr's live code instead transforms each test point into the entity's local space (`mat.InverseTransformPoint`) and tests it against the col-model bounding box (an oriented-box test), with short-circuit `||`.
+  - Original bytes (thiscall, `ret 8`; effect arg unused): builds a world-space AABB. Initial min = (999999.0, 999999.0, 999999.0) (0x497423f0), max = (-999999.0, ...) (0xc97423f0) (0x59877e-0x5987a6). The 8 corners of the col model's bounding box (min at colModel+0, max at +0xc) are each transformed by `CMatrix::operator*(entity->m_matrix, corner)` (0x59c890; the matrix is allocated/updated first if null, 0x5987c0-0x5987d3). Per corner and axis: `if (c < min) min = c` (ordered, `test ah,5; jp`), `if (c > max) max = c` (`test ah,0x41; jne`) (0x5987f9-0x598872). Then three point tests, each `min <= p <= max` on x, y, z (inclusive; NaN fails): TheCamera position (matrix at 0xb6f03c +0x30, else placement 0xb6f02c) (0x598880-0x598906), `FindPlayerPed(0)` position (0x59890a-0x598995), and `FindPlayerPed(1)` position only if that ped exists (0x598999-0x598a32). All tests are evaluated; result = OR of the three bytes (0x598a34-0x598a46).
+  - Verdict: CONFIRMED. The original uses the axis-aligned world bounds of the rotated box (larger than the box when the entity is rotated); gr's oriented test returns false for points inside the AABB but outside the rotated box. Bounds start at +-999999.0f, not FLT_MAX.
+  - Class: keep-original.

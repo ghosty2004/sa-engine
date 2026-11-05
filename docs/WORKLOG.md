@@ -335,3 +335,9 @@
   (x87 model run under the game's FTZ). The main session merged it with ARCH-1 (conflict in win.rs) and
   re-verified: tests and i686 clippy pass; inf3 on lane 1 and inf4 on lane 2 at the same time both pass.
   PLAN §8 now allows several lanes. Ledger: original-UB entry. New task INF-16.
+
+## 2026-11-05: RE-SPEC-1 integrated
+- 392 full specs and 168 deviation notes for STREAM/COLL/PHYS/WORLD (`docs/re/specs/`,
+  `catalog/specs-index.csv`). Main-session spot check against the bytes: CPickups::PictureTaken
+  (0x456C57 `add edi,0x64` to Players[0].money; 0x456CD8 `+0x186A0` bonus to PlayerInFocus) matches the
+  spec. New tasks CAT-17 (name corrections) and RE-SPEC-2.
