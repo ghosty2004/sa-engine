@@ -148,7 +148,9 @@ impl SaveFile {
 
     /// Whether the marker split is confirmed for block 0 (its fixed size matches).
     pub fn block0_size_ok(&self) -> bool {
-        self.blocks.first().is_some_and(|b| b.len() == SIMPLE_VARIABLES_SIZE)
+        self.blocks
+            .first()
+            .is_some_and(|b| b.len() == SIMPLE_VARIABLES_SIZE)
     }
 }
 

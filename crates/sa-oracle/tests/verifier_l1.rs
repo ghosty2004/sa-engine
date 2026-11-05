@@ -106,7 +106,8 @@ mod cov {
             },
         )
         .unwrap();
-        uc.ctl_set_cpu_model(unicorn_engine::X86CpuModel::PENTIUM3 as i32).unwrap();
+        uc.ctl_set_cpu_model(unicorn_engine::X86CpuModel::PENTIUM3 as i32)
+            .unwrap();
         let cr4 = uc.reg_read(R::CR4).unwrap();
         uc.reg_write(R::CR4, cr4 | 0x600).unwrap();
         let cr0 = uc.reg_read(R::CR0).unwrap();
@@ -114,11 +115,13 @@ mod cov {
         let page = |x: u32| (x + 0xFFF) & !0xFFF;
         uc.mem_map(EXIT as u64, 0x1000, Prot::ALL).unwrap();
         uc.mem_write(EXIT as u64, &[0xF4]).unwrap();
-        uc.mem_map(0x10_0000, 0x10_0000, Prot::READ | Prot::WRITE).unwrap();
+        uc.mem_map(0x10_0000, 0x10_0000, Prot::READ | Prot::WRITE)
+            .unwrap();
         uc.mem_map(img.base as u64, page(img.flat.len() as u32) as u64, Prot::ALL)
             .unwrap();
         uc.mem_write(img.base as u64, &img.flat).unwrap();
-        uc.mem_map(SCRATCH as u64, 0x1_0000, Prot::READ | Prot::WRITE).unwrap();
+        uc.mem_map(SCRATCH as u64, 0x1_0000, Prot::READ | Prot::WRITE)
+            .unwrap();
         uc.add_code_hook(lo as u64, (hi - 1) as u64, |uc, a, _| {
             let d = uc.get_data_mut();
             let a = a as u32;
@@ -146,7 +149,12 @@ mod cov {
                 st.extend_from_slice(&v.to_le_bytes());
             }
             uc.mem_write(esp as u64, &st).unwrap();
-            for (r, v) in [(R::ECX, c.ecx), (R::EDX, c.edx), (R::ESP, esp), (R::EFLAGS, 0x202)] {
+            for (r, v) in [
+                (R::ECX, c.ecx),
+                (R::EDX, c.edx),
+                (R::ESP, esp),
+                (R::EFLAGS, 0x202),
+            ] {
                 uc.reg_write(r, v as u64).unwrap();
             }
             uc.reg_write(R::FPCW, c.fpu.cw as u64).unwrap();
@@ -182,7 +190,8 @@ mod cov {
             if ins.flow_control() == FlowControl::ConditionalBranch {
                 let t = ins.near_branch32();
                 let n = ins.next_ip32();
-                out.jcc.push((a, text, d.edges.contains(&(a, t)), d.edges.contains(&(a, n))));
+                out.jcc
+                    .push((a, text, d.edges.contains(&(a, t)), d.edges.contains(&(a, n))));
             }
         }
         out
@@ -202,7 +211,11 @@ fn verifier_branch_coverage() {
             .map(|i| runner::case_input(&spec, &[], 0x5A_0001, i))
             .collect();
         let all: Vec<Inputs> = edges.iter().cloned().chain(generated.iter().cloned()).collect();
-        for (label, set) in [("edges only", &edges), ("generator only", &generated), ("edges + generator", &all)] {
+        for (label, set) in [
+            ("edges only", &edges),
+            ("generator only", &generated),
+            ("edges + generator", &all),
+        ] {
             let c = cov::coverage(&img, &spec, set, 200_000);
             let partial: Vec<_> = c.jcc.iter().filter(|j| !(j.2 && j.3)).collect();
             println!(
@@ -219,9 +232,7 @@ fn verifier_branch_coverage() {
                 println!("    uncovered {a:#x}: {t}");
             }
             for (a, t, taken, fall) in partial {
-                println!(
-                    "    jcc {a:#x} {t}: taken={taken} fallthrough={fall}"
-                );
+                println!("    jcc {a:#x} {t}: taken={taken} fallthrough={fall}");
             }
         }
     }
@@ -254,8 +265,8 @@ fn verifier_unicorn_agrees_with_cpu_outside_snan() {
             let calls: Vec<Call> = inputs.iter().map(|i| (spec.call)(i)).collect();
             let c = cfg(0, Backend::Native);
             let b = runner::oracle_batch(&img, &spec, &prep, &inputs, &calls, &c).unwrap();
-            for k in 0..inputs.len() {
-                if runner::has_snan(&spec, &inputs[k]) {
+            for (k, input) in inputs.iter().enumerate() {
+                if runner::has_snan(&spec, input) {
                     continue;
                 }
                 if let (Ok(u), Ok(cpu)) = (&b.uni[k], &b.res[k]) {
@@ -263,7 +274,10 @@ fn verifier_unicorn_agrees_with_cpu_outside_snan() {
                     let mask = if spec.ret == specs::RetKind::Al { 0xFF } else { 0 };
                     // everything a caller could see, including C0/C2/C3 and the exception flags
                     let d = u.diff(cpu, mask);
-                    let d: Vec<_> = d.into_iter().filter(|f| *f != "C1" && *f != "exc-flags").collect();
+                    let d: Vec<_> = d
+                        .into_iter()
+                        .filter(|f| *f != "C1" && *f != "exc-flags")
+                        .collect();
                     if !d.is_empty() {
                         for x in &d {
                             *bad.entry(x.to_string()).or_default() += 1;
@@ -279,7 +293,10 @@ fn verifier_unicorn_agrees_with_cpu_outside_snan() {
             spec.name
         );
         if let Some((i, u, c)) = &example {
-            println!("    e.g. {} unicorn {u:?}\n         cpu {c:?}", runner::fmt_inputs(&spec, i));
+            println!(
+                "    e.g. {} unicorn {u:?}\n         cpu {c:?}",
+                runner::fmt_inputs(&spec, i)
+            );
         }
         // C0/C2/C3 after the return are reported, not asserted: callers never read them (finding V-6 in
         // docs/re/verify-l1.md), but they show Unicorn's condition codes are not CPU-exact.
@@ -335,7 +352,11 @@ fn normalise_m(v: [f32; 3], m: &str) -> [f32; 3] {
     if !root {
         return [1.0, v[1], v[2]];
     }
-    let one = if m == "one-ulp-const" { f(k::F1 + 1) } else { f(k::F1) };
+    let one = if m == "one-ulp-const" {
+        f(k::F1 + 1)
+    } else {
+        f(k::F1)
+    };
     if m == "divide-by-sqrt" {
         let r = s.fsqrt();
         return v.map(|c| X87::from_f32(c).fdiv(r).to_f32());
@@ -367,7 +388,11 @@ fn quadratic_m(i: &Inputs, sc: &[u8; SCRATCH_LEN], m: &str) -> Expect {
         } else {
             s.fsub_m(b).fmul(inv).fmul_m(f(k::F0_5))
         };
-        let half1 = if m == "half-ulp-const" { f(k::F0_5 + 1) } else { f(k::F0_5) };
+        let half1 = if m == "half-ulp-const" {
+            f(k::F0_5 + 1)
+        } else {
+            f(k::F0_5)
+        };
         let x1 = bv.fchs().fsub(s).fmul(inv).fmul_m(half1);
         Some((x1.to_f32(), x2.to_f32()))
     };
@@ -457,14 +482,26 @@ fn verifier_mutants() {
             rep.kinds
         );
         if let Some(e) = rep.examples.first() {
-            println!("      e.g. [{}] {}: {}", runner::fmt_inputs(&spec, &e.input), e.kind, e.detail);
+            println!(
+                "      e.g. [{}] {}: {}",
+                runner::fmt_inputs(&spec, &e.input),
+                e.kind,
+                e.detail
+            );
         }
         if caught != expect_caught {
             missed.push(name);
         }
     };
     println!("mutants, {n} generated cases each (+ edges)");
-    for m in ["reference", "sum-order", "f32-arith", "nan-to-zero-branch", "one-ulp-const", "divide-by-sqrt"] {
+    for m in [
+        "reference",
+        "sum-order",
+        "f32-arith",
+        "nan-to-zero-branch",
+        "one-ulp-const",
+        "divide-by-sqrt",
+    ] {
         let mm = m.to_string();
         run(
             format!("Normalise/{m}"),
@@ -484,7 +521,12 @@ fn verifier_mutants() {
         let mm = m.to_string();
         let mut s = specs::solve_quadratic();
         s.rust = Arc::new(move |i, sc| quadratic_m(i, sc, &mm));
-        run(format!("SolveQuadratic/{m}"), s, Backend::Unicorn, m != "reference");
+        run(
+            format!("SolveQuadratic/{m}"),
+            s,
+            Backend::Unicorn,
+            m != "reference",
+        );
     }
     if sa_oracle::native::available() {
         for m in [
@@ -498,7 +540,12 @@ fn verifier_mutants() {
             let mm = m.to_string();
             let mut s = specs::get_radian_angle_between_points();
             s.rust = Arc::new(move |i, sc| st0(radian_m(f(i[0]), f(i[1]), f(i[2]), f(i[3]), &mm), sc));
-            run(format!("GetRadianAngleBetweenPoints/{m}"), s, Backend::Native, m != "reference");
+            run(
+                format!("GetRadianAngleBetweenPoints/{m}"),
+                s,
+                Backend::Native,
+                m != "reference",
+            );
         }
     }
     assert!(missed.is_empty(), "mutants with the wrong verdict: {missed:?}");
@@ -535,7 +582,13 @@ fn verifier_limit_angle_large_range() {
     let exp: Vec<Option<X87>> = std::thread::scope(|s| {
         let hs: Vec<_> = xs
             .chunks(xs.len().div_ceil(8))
-            .map(|c| s.spawn(move || c.iter().map(|&x| sa_math::general::limit_angle_checked(x)).collect::<Vec<_>>()))
+            .map(|c| {
+                s.spawn(move || {
+                    c.iter()
+                        .map(|&x| sa_math::general::limit_angle_checked(x))
+                        .collect::<Vec<_>>()
+                })
+            })
             .collect();
         hs.into_iter().flat_map(|h| h.join().unwrap()).collect()
     });
@@ -559,7 +612,9 @@ fn verifier_limit_angle_large_range() {
         }
     }
     let min_hang = hang.iter().map(|&i| xs[i].abs()).fold(f32::INFINITY, f32::min);
-    println!("    CPU vs port mismatches on returning values: {bad}; smallest |x| the port calls a hang: {min_hang:e}");
+    println!(
+        "    CPU vs port mismatches on returning values: {bad}; smallest |x| the port calls a hang: {min_hang:e}"
+    );
     assert_eq!(bad, 0);
 }
 
@@ -621,6 +676,10 @@ fn verifier_atan_st0_consumed_by_callers() {
         inputs.len()
     );
     if let Some((x, y, c, p)) = ex {
-        println!("    e.g. x={x:e} y={y:e} cpu {} port {}", ext_hex(&c), ext_hex(&p));
+        println!(
+            "    e.g. x={x:e} y={y:e} cpu {} port {}",
+            ext_hex(&c),
+            ext_hex(&p)
+        );
     }
 }

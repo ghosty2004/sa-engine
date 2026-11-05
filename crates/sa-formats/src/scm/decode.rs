@@ -94,7 +94,12 @@ pub enum ParamValue {
     /// Variable reference (types 2, 3, 0x0A, 0x0B, 0x10, 0x11).
     Var(u16),
     /// Array element (types 7, 8, 0x0C, 0x0D, 0x12, 0x13).
-    Array { base: u16, index: u16, size: u8, flags: u8 },
+    Array {
+        base: u16,
+        index: u16,
+        size: u8,
+        flags: u8,
+    },
     /// Type 9.
     Str8([u8; 8]),
     /// Type 0x0F.
@@ -233,7 +238,11 @@ fn parse_alt(s: &str) -> Vec<Tok> {
             "P" => continue,
             _ if t.starts_with('R') => Tok::Fixed(Slot::Raw(t[1..].parse().unwrap_or(0)), 1),
             _ => {
-                let slot = if t.starts_with('C') { Slot::Collect } else { Slot::Store };
+                let slot = if t.starts_with('C') {
+                    Slot::Collect
+                } else {
+                    Slot::Store
+                };
                 match t[1..].parse::<u16>() {
                     Ok(n) => Tok::Fixed(slot, n),
                     Err(_) => Tok::Unknown(slot),
@@ -270,18 +279,44 @@ fn read_param(code: &[u8], pos: usize, slot: Slot) -> Option<(Param, usize)> {
     let ty = *code.get(pos)?;
     if let Slot::Raw(n) = slot {
         let b = code.get(pos..pos + n as usize)?.to_vec();
-        return Some((Param { ty, slot, value: ParamValue::Raw(b) }, pos + n as usize));
+        return Some((
+            Param {
+                ty,
+                slot,
+                value: ParamValue::Raw(b),
+            },
+            pos + n as usize,
+        ));
     }
     let p = pos + 1;
     let le16 = |at: usize| -> Option<u16> { Some(u16::from_le_bytes([*code.get(at)?, *code.get(at + 1)?])) };
     let le32 = |at: usize| -> Option<u32> {
-        Some(u32::from_le_bytes([*code.get(at)?, *code.get(at + 1)?, *code.get(at + 2)?, *code.get(at + 3)?]))
+        Some(u32::from_le_bytes([
+            *code.get(at)?,
+            *code.get(at + 1)?,
+            *code.get(at + 2)?,
+            *code.get(at + 3)?,
+        ]))
     };
     if slot == Slot::VarArgs && ty == 0 {
-        return Some((Param { ty, slot, value: ParamValue::End }, p));
+        return Some((
+            Param {
+                ty,
+                slot,
+                value: ParamValue::End,
+            },
+            p,
+        ));
     }
     if !slot.accepts(ty) {
-        return Some((Param { ty, slot, value: ParamValue::Unhandled }, p));
+        return Some((
+            Param {
+                ty,
+                slot,
+                value: ParamValue::Unhandled,
+            },
+            p,
+        ));
     }
     let (value, end) = match ty {
         1 => (ParamValue::Int(le32(p)? as i32), p + 4),
@@ -325,7 +360,13 @@ fn read_param(code: &[u8], pos: usize, slot: Slot) -> Option<(Param, usize)> {
 }
 
 /// Decodes the parameters of one candidate slot list. `strict` rejects unhandled types.
-fn read_params(code: &[u8], mut pos: usize, slots: &[Slot], varargs: bool, strict: bool) -> Option<(Vec<Param>, usize)> {
+fn read_params(
+    code: &[u8],
+    mut pos: usize,
+    slots: &[Slot],
+    varargs: bool,
+    strict: bool,
+) -> Option<(Vec<Param>, usize)> {
     let mut params = Vec::with_capacity(slots.len());
     for &s in slots {
         let (p, e) = read_param(code, pos, s)?;
@@ -443,7 +484,9 @@ impl ScriptSet {
         let file = scm.to_bytes();
         let mut notes = Vec::new();
         let mut units = Vec::new();
-        let (main_size, offsets) = scm.missions().map_or((file.len() as u32, &[][..]), |(m, o)| (m, o));
+        let (main_size, offsets) = scm
+            .missions()
+            .map_or((file.len() as u32, &[][..]), |(m, o)| (m, o));
         units.push(Unit {
             kind: ScriptKind::Main,
             name: "MAIN".into(),
@@ -471,16 +514,23 @@ impl ScriptSet {
         let table: &[StreamedEntry] = scm.streamed();
         for (i, (name, data)) in streamed.iter().enumerate() {
             let stem = name.rsplit_once('.').map_or(name.as_str(), |(s, _)| s);
-            let entry = table.iter().find(|e| e.name().eq_ignore_ascii_case(stem.as_bytes()));
+            let entry = table
+                .iter()
+                .find(|e| e.name().eq_ignore_ascii_case(stem.as_bytes()));
             let size = match entry {
                 Some(e) => e.size as usize,
                 None => {
-                    notes.push(format!("script.img {name}: no entry in the main.scm streamed table"));
+                    notes.push(format!(
+                        "script.img {name}: no entry in the main.scm streamed table"
+                    ));
                     data.len()
                 }
             };
             if size > data.len() {
-                notes.push(format!("script.img {name}: table size {size} > entry size {}", data.len()));
+                notes.push(format!(
+                    "script.img {name}: table size {size} > entry size {}",
+                    data.len()
+                ));
             }
             let size = size.min(data.len());
             units.push(Unit {
@@ -631,26 +681,49 @@ impl DecodeReport {
             *m.entry(format!("{k}: units")).or_default() += 1;
             *m.entry(format!("{k}: instructions")).or_default() += u.instructions.len() as u64;
             *m.entry(format!("{k}: bytes")).or_default() += u.size as u64;
-            *m.entry(format!("{k}: bytes covered by reachable instructions")).or_default() += u.covered as u64;
+            *m.entry(format!("{k}: bytes covered by reachable instructions"))
+                .or_default() += u.covered as u64;
             for (s, e, c) in &u.gaps {
                 *m.entry(format!("{k}: unreached bytes, {c:?}")).or_default() += (e - s) as u64;
                 *m.entry(format!("{k}: unreached ranges, {c:?}")).or_default() += 1;
             }
         }
-        let ops: BTreeSet<u16> = self.units.iter().flat_map(|u| u.instructions.iter().map(|i| i.opcode())).collect();
+        let ops: BTreeSet<u16> = self
+            .units
+            .iter()
+            .flat_map(|u| u.instructions.iter().map(|i| i.opcode()))
+            .collect();
         m.insert("distinct opcodes used".into(), ops.len() as u64);
-        m.insert("streamed: entries holding the header version words (not decoded)".into(), self.stamps);
+        m.insert(
+            "streamed: entries holding the header version words (not decoded)".into(),
+            self.stamps,
+        );
         let exact = ops
             .iter()
-            .filter(|o| opcode_table()[**o as usize].as_ref().is_some_and(|i| i.is_exact()))
+            .filter(|o| {
+                opcode_table()[**o as usize]
+                    .as_ref()
+                    .is_some_and(|i| i.is_exact())
+            })
             .count();
-        m.insert("distinct opcodes used, parameter list exact from the exe".into(), exact as u64);
-        m.insert("distinct opcodes used, parameter list selected by the data".into(), self.choices.len() as u64);
+        m.insert(
+            "distinct opcodes used, parameter list exact from the exe".into(),
+            exact as u64,
+        );
+        m.insert(
+            "distinct opcodes used, parameter list selected by the data".into(),
+            self.choices.len() as u64,
+        );
         m.into_iter().collect()
     }
 }
 
-fn decode_unit(u: &Unit, entries: &[usize], main_entries: &mut BTreeSet<usize>, rep: &mut DecodeReport) -> UnitDecode {
+fn decode_unit(
+    u: &Unit,
+    entries: &[usize],
+    main_entries: &mut BTreeSet<usize>,
+    rep: &mut DecodeReport,
+) -> UnitDecode {
     let code = &u.data[..u.end];
     let mut mark = vec![0u8; u.end]; // 0 free, 1 instruction start, 2 inside
     let mut instrs: BTreeMap<usize, Instruction> = BTreeMap::new();
@@ -662,13 +735,15 @@ fn decode_unit(u: &Unit, entries: &[usize], main_entries: &mut BTreeSet<usize>, 
             from_of.entry(pos).or_insert(f);
         }
         if pos >= u.end || pos < u.start {
-            rep.failures.push(format!("{}: jump target outside the script", label(pos)));
+            rep.failures
+                .push(format!("{}: jump target outside the script", label(pos)));
             continue;
         }
         match mark[pos] {
             1 => continue,
             2 => {
-                rep.failures.push(format!("{}: jump target inside an instruction", label(pos)));
+                rep.failures
+                    .push(format!("{}: jump target inside an instruction", label(pos)));
                 continue;
             }
             _ => {}
@@ -685,7 +760,8 @@ fn decode_unit(u: &Unit, entries: &[usize], main_entries: &mut BTreeSet<usize>, 
             continue;
         };
         if mark[pos..pos + ins.len].iter().any(|&m| m != 0) {
-            rep.failures.push(format!("{}: instruction overlaps another", label(pos)));
+            rep.failures
+                .push(format!("{}: instruction overlaps another", label(pos)));
             continue;
         }
         mark[pos] = 1;
@@ -701,7 +777,9 @@ fn decode_unit(u: &Unit, entries: &[usize], main_entries: &mut BTreeSet<usize>, 
                 targets.extend(ins.params.first().and_then(Param::as_int));
                 falls = false;
             }
-            0x004C | 0x004D | 0x0050 | 0x004F | 0x00D7 => targets.extend(ins.params.first().and_then(Param::as_int)),
+            0x004C | 0x004D | 0x0050 | 0x004F | 0x00D7 => {
+                targets.extend(ins.params.first().and_then(Param::as_int))
+            }
             0x004E | 0x0051 => falls = false,
             0x0871 => {
                 // var, case count, has default, default label, 7 x (value, label). Unused pairs
@@ -726,13 +804,15 @@ fn decode_unit(u: &Unit, entries: &[usize], main_entries: &mut BTreeSet<usize>, 
             } else if u.kind == ScriptKind::Main {
                 work.push((t as usize, Some(pos)));
             } else {
-                rep.notes.push(format!("{}: jumps into main.scm at {t:#x}", label(pos)));
+                rep.notes
+                    .push(format!("{}: jumps into main.scm at {t:#x}", label(pos)));
                 main_entries.insert(t as usize);
             }
         }
         if falls {
             if next >= u.end {
-                rep.notes.push(format!("{}: last instruction falls through the end", label(pos)));
+                rep.notes
+                    .push(format!("{}: last instruction falls through the end", label(pos)));
             } else {
                 work.push((next, Some(pos)));
             }
@@ -816,7 +896,8 @@ fn decode_at(code: &[u8], pos: usize, u: &Unit, rep: &mut DecodeReport) -> Optio
     let raw = u16::from_le_bytes([code[pos], code[pos + 1]]);
     let op = raw & 0x7FFF;
     let Some(info) = &opcode_table()[op as usize] else {
-        rep.failures.push(format!("{}: opcode {op:04X} has no handler in the exe", label()));
+        rep.failures
+            .push(format!("{}: opcode {op:04X} has no handler in the exe", label()));
         return None;
     };
     let cands = info.candidates();
@@ -825,7 +906,11 @@ fn decode_at(code: &[u8], pos: usize, u: &Unit, rep: &mut DecodeReport) -> Optio
         match read_params(code, pos + 2, &slots, va, false) {
             Some((p, e)) => (slots, va, p, e),
             None => {
-                rep.failures.push(format!("{}: {op:04X} {} parameters run past the end", label(), info.name));
+                rep.failures.push(format!(
+                    "{}: {op:04X} {} parameters run past the end",
+                    label(),
+                    info.name
+                ));
                 return None;
             }
         }
@@ -840,15 +925,25 @@ fn decode_at(code: &[u8], pos: usize, u: &Unit, rep: &mut DecodeReport) -> Optio
             }
         }
         let best = scored.iter().map(|s| s.0).max().unwrap_or(0);
-        let mut ok: Vec<_> = scored.into_iter().filter(|s| s.0 == best && best > 0).map(|s| s.1).collect();
-        let key_of = |c: &(Vec<Slot>, bool, Vec<Param>, usize)| format!("{}{}", c.0.len(), if c.1 { "+var" } else { "" });
+        let mut ok: Vec<_> = scored
+            .into_iter()
+            .filter(|s| s.0 == best && best > 0)
+            .map(|s| s.1)
+            .collect();
+        let key_of = |c: &(Vec<Slot>, bool, Vec<Param>, usize)| {
+            format!("{}{}", c.0.len(), if c.1 { "+var" } else { "" })
+        };
         if ok.len() > 1
             && let Some(pref) = rep.prefer.get(&op)
             && let Some(k) = ok.iter().position(|c| &key_of(c) == pref)
         {
             // Several lists fit this occurrence equally well: take the list the other
             // occurrences of the opcode select (pass 1 majority).
-            rep.tie_breaks.push(format!("{}: {op:04X} {}: tie broken by the majority list {pref}", label(), info.name));
+            rep.tie_breaks.push(format!(
+                "{}: {op:04X} {}: tie broken by the majority list {pref}",
+                label(),
+                info.name
+            ));
             let c = ok.swap_remove(k);
             ok = vec![c];
         }
@@ -975,21 +1070,45 @@ mod tests {
         c.put_f32(1.5);
         c.extend_from_slice(&[7, 8, 0, 2, 0, 10, 0x80]);
         c.extend_from_slice(&[0x0E, 3, b'a', b'b', b'c']);
-        let slots = [Slot::Collect, Slot::Collect, Slot::Collect, Slot::Collect, Slot::Collect, Slot::Text];
+        let slots = [
+            Slot::Collect,
+            Slot::Collect,
+            Slot::Collect,
+            Slot::Collect,
+            Slot::Collect,
+            Slot::Text,
+        ];
         let (p, e) = read_params(&c, 0, &slots, false, true).unwrap();
         assert_eq!(e, c.len());
         assert_eq!(p[0].value, ParamValue::Int(-5));
         assert_eq!(p[1].value, ParamValue::Int(-1));
         assert_eq!(p[2].value, ParamValue::Int(0x1234));
         assert_eq!(p[3].value, ParamValue::Float(1.5));
-        assert_eq!(p[4].value, ParamValue::Array { base: 8, index: 2, size: 10, flags: 0x80 });
+        assert_eq!(
+            p[4].value,
+            ParamValue::Array {
+                base: 8,
+                index: 2,
+                size: 10,
+                flags: 0x80
+            }
+        );
         assert_eq!(p[5].as_str(), Some(&b"abc"[..]));
         // A string type in a numeric slot: only the type byte is consumed.
         let (p, e) = read_params(&[9, 1, 2], 0, &[Slot::Collect], false, false).unwrap();
         assert_eq!((p[0].value.clone(), e), (ParamValue::Unhandled, 1));
         // Negative pascal length reads nothing.
         let (p, e) = read_param(&[0x0E, 0xF0, 1], 0, Slot::Text).unwrap();
-        assert_eq!((p.value, e), (ParamValue::Pascal { len: -16, bytes: vec![] }, 2));
+        assert_eq!(
+            (p.value, e),
+            (
+                ParamValue::Pascal {
+                    len: -16,
+                    bytes: vec![]
+                },
+                2
+            )
+        );
     }
 
     #[test]
@@ -1032,7 +1151,10 @@ mod tests {
         let decl = t[0x0180].as_ref().unwrap();
         assert_eq!(decl.candidates(), vec![(vec![Slot::Raw(3)], false)]);
         let (p, e) = read_params(&[0x09, 0x34, 0x12, 0xFF], 0, &[Slot::Raw(3)], false, true).unwrap();
-        assert_eq!((p[0].value.clone(), e), (ParamValue::Raw(vec![0x09, 0x34, 0x12]), 3));
+        assert_eq!(
+            (p[0].value.clone(), e),
+            (ParamValue::Raw(vec![0x09, 0x34, 0x12]), 3)
+        );
         // SAVE_STRING_TO_DEBUG_FILE: 128 bytes from m_IP.
         let dbg = t[0x05B6].as_ref().unwrap();
         assert_eq!(dbg.candidates(), vec![(vec![Slot::Raw(128)], false)]);

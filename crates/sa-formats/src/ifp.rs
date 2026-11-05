@@ -207,7 +207,10 @@ impl AnpFrames {
 
     /// Whether the frames are compressed (types 3 and 4).
     pub fn is_compressed(&self) -> bool {
-        matches!(self, AnpFrames::RotCompressed(_) | AnpFrames::RotTransCompressed(_))
+        matches!(
+            self,
+            AnpFrames::RotCompressed(_) | AnpFrames::RotTransCompressed(_)
+        )
     }
 
     /// Whether the frames carry a translation (types 2 and 4).
@@ -786,7 +789,9 @@ pub fn ifp_notes(ifp: &Ifp) -> Vec<(String, u64)> {
                 add("header size word != bytes after the header".into());
             }
             for a in &p.animations {
-                if a.frame_memory_size.is_some_and(|sz| sz as usize != a.frame_data_size()) {
+                if a.frame_memory_size
+                    .is_some_and(|sz| sz as usize != a.frame_data_size())
+                {
                     add("animations with frame memory size != frame data size".into());
                 }
                 if let (Some(f), Some(c)) = (a.flags, a.exe_compressed()) {
