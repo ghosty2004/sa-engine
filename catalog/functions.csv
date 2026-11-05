@@ -1678,79 +1678,79 @@ address,owner,name,category,macro,reversed,locked,status,first_insn,file,line
 0x4c7170,CPedModelInfo,AnimatePedColModelSkinnedWorld,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x28",source/game_sa/Models/PedModelInfo.cpp,16
 0x4c7300,CPedModelInfo,IncrementVoice,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/PedModelInfo.cpp,17
 0x4c7340,CPedModelInfo,SetClump,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/PedModelInfo.cpp,11
-0x4c73c0,CLinkedUpgradeList,GetNumDoors,Models,RH_ScopedInstall,yes,no,ok,"movsx eax, byte ptr [ecx + 0x4c]",source/game_sa/Models/VehicleModelInfo.cpp,60
-0x4c7470,CLinkedUpgradeList,ShutdownLightTexture,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e68c]",source/game_sa/Models/VehicleModelInfo.cpp,63
+0x4c73c0,CVehicleModelInfo,GetNumDoors,Models,RH_ScopedInstall,yes,no,ok,"movsx eax, byte ptr [ecx + 0x4c]",source/game_sa/Models/VehicleModelInfo.cpp,60
+0x4c7470,CVehicleModelInfo,ShutdownLightTexture,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e68c]",source/game_sa/Models/VehicleModelInfo.cpp,63
 0x4c74b0,CLinkedUpgradeList,AddUpgradeLink,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x78]",source/game_sa/Models/VehicleModelInfo.cpp,30
 0x4c74d0,CLinkedUpgradeList,FindOtherUpgrade,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x78]",source/game_sa/Models/VehicleModelInfo.cpp,31
-0x4c7510,CLinkedUpgradeList,FindTextureCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e688]",source/game_sa/Models/VehicleModelInfo.cpp,67
-0x4c75a0,CLinkedUpgradeList,UseCommonVehicleTexDicationary,Models,RH_ScopedInstall,yes,no,ok,call 0x7f34f0,source/game_sa/Models/VehicleModelInfo.cpp,65
-0x4c75c0,CLinkedUpgradeList,StopUsingCommonVehicleTexDicationary,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e6a0]",source/game_sa/Models/VehicleModelInfo.cpp,66
-0x4c7630,CLinkedUpgradeList,Init,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,35
-0x4c7650,CLinkedUpgradeList,GetModelType,Models,RH_ScopedVMTInstall,yes,no,ok,"mov al, 6",source/game_sa/Models/VehicleModelInfo.cpp,34
-0x4c7660,CLinkedUpgradeList,GetAnimFileIndex,Models,RH_ScopedVMTInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x304]",source/game_sa/Models/VehicleModelInfo.cpp,40
-0x4c7670,CLinkedUpgradeList,SetAnimFile,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,38
-0x4c76d0,CLinkedUpgradeList,ConvertAnimFileIndex,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,39
-0x4c7700,CLinkedUpgradeList,MoveObjectsCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,68
-0x4c7720,CLinkedUpgradeList,HideDamagedAtomicCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,74
-0x4c7790,CLinkedUpgradeList,HideAllComponentsAtomicCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,75
-0x4c77c0,CLinkedUpgradeList,HasAlphaMaterialCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,76
-0x4c77e0,CLinkedUpgradeList,SetAtomicRendererCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,77
-0x4c7870,CLinkedUpgradeList,SetAtomicRendererCB_RealHeli,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,78
-0x4c7930,CLinkedUpgradeList,SetAtomicRendererCB_Plane,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,79
-0x4c79a0,CLinkedUpgradeList,SetAtomicRendererCB_Boat,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,80
-0x4c7a30,CLinkedUpgradeList,SetAtomicRendererCB_Heli,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,81
-0x4c7aa0,CLinkedUpgradeList,SetAtomicRendererCB_Train,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,82
-0x4c7b10,CLinkedUpgradeList,SetAtomicRenderCallbacks,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x3c]",source/game_sa/Models/VehicleModelInfo.cpp,42
-0x4c7b90,CLinkedUpgradeList,SetAtomicFlagCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,83
-0x4c7bb0,CLinkedUpgradeList,ClearAtomicFlagCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,84
-0x4c7bd0,CLinkedUpgradeList,GetOkAndDamagedAtomicCB,Models,RH_ScopedGlobalInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,112
-0x4c7c10,CLinkedUpgradeList,SetVehicleComponentFlags,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,43
-0x4c7d20,CLinkedUpgradeList,GetWheelPosn,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,44
-0x4c7dd0,CLinkedUpgradeList,GetOriginalCompPosition,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,45
-0x4c7e10,CLinkedUpgradeList,IsValidCompRule,Models,RH_ScopedGlobalInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,107
-0x4c7e50,CLinkedUpgradeList,GetListOfComponentsNotUsedByRules,Models,RH_ScopedGlobalInstall,yes,no,ok,"sub esp, 0x18",source/game_sa/Models/VehicleModelInfo.cpp,110
-0x4c7f80,CLinkedUpgradeList,CountCompsInRule,Models,RH_ScopedGlobalInstall,yes,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,109
-0x4c7fb0,CLinkedUpgradeList,ChooseComponent-Global,Models,RH_ScopedNamedGlobalInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,108
-0x4c8040,CLinkedUpgradeList,ChooseComponent,Models,RH_ScopedInstall,yes,no,ok,"mov al, byte ptr [0x8a6458]",source/game_sa/Models/VehicleModelInfo.cpp,46
-0x4c8120,CLinkedUpgradeList,ChooseSecondComponent,Models,RH_ScopedInstall,yes,no,ok,"mov al, byte ptr [0x8a6459]",source/game_sa/Models/VehicleModelInfo.cpp,47
-0x4c8200,CLinkedUpgradeList,IsUpgradeAvailable,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,48
-0x4c8220,CLinkedUpgradeList,SetEditableMaterialsCB-RpMaterial,Models,RH_ScopedOverloadedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,71
-0x4c83b0,CLinkedUpgradeList,RemoveWindowAlphaCB,Models,RH_ScopedGlobalInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,111
-0x4c83e0,CLinkedUpgradeList,SetEditableMaterialsCB-RpAtomic,Models,RH_ScopedOverloadedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,72
-0x4c8430,CLinkedUpgradeList,SetEditableMaterials,Models,RH_ScopedInstall,yes,no,ok,push ecx,source/game_sa/Models/VehicleModelInfo.cpp,70
-0x4c8460,CLinkedUpgradeList,ResetEditableMaterials,Models,RH_ScopedInstall,yes,no,ok,"mov ecx, dword ptr [0xb4dbe8]",source/game_sa/Models/VehicleModelInfo.cpp,69
-0x4c84b0,CLinkedUpgradeList,SetVehicleColour,Models,RH_ScopedInstall,yes,no,ok,"mov al, byte ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,49
-0x4c8500,CLinkedUpgradeList,ChooseVehicleColour,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,50
-0x4c86b0,CLinkedUpgradeList,GetNumRemaps,Models,RH_ScopedInstall,yes,no,ok,"add ecx, 0x2fa",source/game_sa/Models/VehicleModelInfo.cpp,51
-0x4c86d0,CLinkedUpgradeList,AddRemap,Models,RH_ScopedInstall,yes,no,ok,"lea edx, [ecx + 0x2fa]",source/game_sa/Models/VehicleModelInfo.cpp,52
-0x4c8700,CLinkedUpgradeList,AddWheelUpgrade,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,85
-0x4c8740,CLinkedUpgradeList,GetNumWheelUpgrades,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,86
-0x4c8750,CLinkedUpgradeList,GetWheelUpgrade,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,87
-0x4c8770,CLinkedUpgradeList,DeleteVehicleColourTextures,Models,RH_ScopedInstall,yes,no,ok,ret,source/game_sa/Models/VehicleModelInfo.cpp,88
-0x4c8780,CLinkedUpgradeList,LoadEnvironmentMaps,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,104
-0x4c87d0,CLinkedUpgradeList,ShutdownEnvironmentMaps,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e3ec]",source/game_sa/Models/VehicleModelInfo.cpp,90
-0x4c8810,CLinkedUpgradeList,GetMatFXEffectMaterialCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,91
-0x4c8840,CLinkedUpgradeList,SetEnvironmentMapCB,Models,RH_ScopedInstall,yes,no,ok,"cmp dword ptr [esp + 8], 0xffff",source/game_sa/Models/VehicleModelInfo.cpp,92
-0x4c88b0,CLinkedUpgradeList,SetEnvMapCoeffCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,93
-0x4c88f4,CLinkedUpgradeList,SetRenderPipelinesCB,Models,RH_ScopedInstall,yes,no,ok,ret,source/game_sa/Models/VehicleModelInfo.cpp,94
-0x4c8900,CLinkedUpgradeList,SetRenderPipelines,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x1c]",source/game_sa/Models/VehicleModelInfo.cpp,53
-0x4c8970,CLinkedUpgradeList,GetCustomCarPlateText,Models,RH_ScopedInstall,yes,no,ok,"lea eax, [ecx + 0x28]",source/game_sa/Models/VehicleModelInfo.cpp,54
-0x4c8980,CLinkedUpgradeList,SetCustomCarPlateText,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,55
-0x4c89b0,CLinkedUpgradeList,GetMaximumNumberOfPassengersFromNumberOfDoors,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0xc",source/game_sa/Models/VehicleModelInfo.cpp,64
-0x4c8b60,CLinkedUpgradeList,StoreAtomicUsedMaterialsCB,Models,RH_ScopedInstall,yes,no,ok,push ebp,source/game_sa/Models/VehicleModelInfo.cpp,73
-0x4c8bd0,CLinkedUpgradeList,ReduceMaterialsInVehicle,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0xc",source/game_sa/Models/VehicleModelInfo.cpp,56
-0x4c8c90,CLinkedUpgradeList,SetupLightFlags,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,62
-0x4c8e30,CLinkedUpgradeList,CollapseFramesCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,95
-0x4c8e60,CLinkedUpgradeList,PreprocessHierarchy,Models,RH_ScopedInstall,yes,no,ok,push ebp,source/game_sa/Models/VehicleModelInfo.cpp,61
-0x4c9360,CLinkedUpgradeList,AssignRemapTxd,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x18",source/game_sa/Models/VehicleModelInfo.cpp,98
-0x4c9410,CLinkedUpgradeList,SetEnvironmentMapAtomicCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,96
-0x4c9430,CLinkedUpgradeList,SetEnvMapCoeffAtomicCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,97
-0x4c9450,CLinkedUpgradeList,SetCarCustomPlate,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x10",source/game_sa/Models/VehicleModelInfo.cpp,57
-0x4c95c0,CLinkedUpgradeList,SetClump,Models,RH_ScopedVMTInstall,yes,no,ok,push -1,source/game_sa/Models/VehicleModelInfo.cpp,41
-0x4c9680,CLinkedUpgradeList,CreateInstance,Models,RH_ScopedVMTInstall,yes,no,ok,"sub esp, 8",source/game_sa/Models/VehicleModelInfo.cpp,37
-0x4c97e0,CLinkedUpgradeList,DisableEnvMap,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x1c]",source/game_sa/Models/VehicleModelInfo.cpp,58
-0x4c9800,CLinkedUpgradeList,SetEnvMapCoeff,Models,RH_ScopedInstall,yes,no,ok,fld dword ptr [esp + 4],source/game_sa/Models/VehicleModelInfo.cpp,59
-0x4c9890,CLinkedUpgradeList,DeleteRwObject,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,36
+0x4c7510,CVehicleModelInfo,FindTextureCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e688]",source/game_sa/Models/VehicleModelInfo.cpp,67
+0x4c75a0,CVehicleModelInfo,UseCommonVehicleTexDicationary,Models,RH_ScopedInstall,yes,no,ok,call 0x7f34f0,source/game_sa/Models/VehicleModelInfo.cpp,65
+0x4c75c0,CVehicleModelInfo,StopUsingCommonVehicleTexDicationary,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e6a0]",source/game_sa/Models/VehicleModelInfo.cpp,66
+0x4c7630,CVehicleModelInfo,Init,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,35
+0x4c7650,CVehicleModelInfo,GetModelType,Models,RH_ScopedVMTInstall,yes,no,ok,"mov al, 6",source/game_sa/Models/VehicleModelInfo.cpp,34
+0x4c7660,CVehicleModelInfo,GetAnimFileIndex,Models,RH_ScopedVMTInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x304]",source/game_sa/Models/VehicleModelInfo.cpp,40
+0x4c7670,CVehicleModelInfo,SetAnimFile,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,38
+0x4c76d0,CVehicleModelInfo,ConvertAnimFileIndex,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,39
+0x4c7700,CVehicleModelInfo,MoveObjectsCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,68
+0x4c7720,CVehicleModelInfo,HideDamagedAtomicCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,74
+0x4c7790,CVehicleModelInfo,HideAllComponentsAtomicCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,75
+0x4c77c0,CVehicleModelInfo,HasAlphaMaterialCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,76
+0x4c77e0,CVehicleModelInfo,SetAtomicRendererCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,77
+0x4c7870,CVehicleModelInfo,SetAtomicRendererCB_RealHeli,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,78
+0x4c7930,CVehicleModelInfo,SetAtomicRendererCB_Plane,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,79
+0x4c79a0,CVehicleModelInfo,SetAtomicRendererCB_Boat,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,80
+0x4c7a30,CVehicleModelInfo,SetAtomicRendererCB_Heli,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,81
+0x4c7aa0,CVehicleModelInfo,SetAtomicRendererCB_Train,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,82
+0x4c7b10,CVehicleModelInfo,SetAtomicRenderCallbacks,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x3c]",source/game_sa/Models/VehicleModelInfo.cpp,42
+0x4c7b90,CVehicleModelInfo,SetAtomicFlagCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,83
+0x4c7bb0,CVehicleModelInfo,ClearAtomicFlagCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,84
+0x4c7bd0,CVehicleModelInfo,GetOkAndDamagedAtomicCB,Models,RH_ScopedGlobalInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,112
+0x4c7c10,CVehicleModelInfo,SetVehicleComponentFlags,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,43
+0x4c7d20,CVehicleModelInfo,GetWheelPosn,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,44
+0x4c7dd0,CVehicleModelInfo,GetOriginalCompPosition,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,45
+0x4c7e10,CVehicleModelInfo,IsValidCompRule,Models,RH_ScopedGlobalInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,107
+0x4c7e50,CVehicleModelInfo,GetListOfComponentsNotUsedByRules,Models,RH_ScopedGlobalInstall,yes,no,ok,"sub esp, 0x18",source/game_sa/Models/VehicleModelInfo.cpp,110
+0x4c7f80,CVehicleModelInfo,CountCompsInRule,Models,RH_ScopedGlobalInstall,yes,no,ok,"mov ecx, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,109
+0x4c7fb0,CVehicleModelInfo,ChooseComponent-Global,Models,RH_ScopedNamedGlobalInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,108
+0x4c8040,CVehicleModelInfo,ChooseComponent,Models,RH_ScopedInstall,yes,no,ok,"mov al, byte ptr [0x8a6458]",source/game_sa/Models/VehicleModelInfo.cpp,46
+0x4c8120,CVehicleModelInfo,ChooseSecondComponent,Models,RH_ScopedInstall,yes,no,ok,"mov al, byte ptr [0x8a6459]",source/game_sa/Models/VehicleModelInfo.cpp,47
+0x4c8200,CVehicleModelInfo,IsUpgradeAvailable,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,48
+0x4c8220,CVehicleModelInfo,SetEditableMaterialsCB-RpMaterial,Models,RH_ScopedOverloadedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,71
+0x4c83b0,CVehicleModelInfo,RemoveWindowAlphaCB,Models,RH_ScopedGlobalInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,111
+0x4c83e0,CVehicleModelInfo,SetEditableMaterialsCB-RpAtomic,Models,RH_ScopedOverloadedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,72
+0x4c8430,CVehicleModelInfo,SetEditableMaterials,Models,RH_ScopedInstall,yes,no,ok,push ecx,source/game_sa/Models/VehicleModelInfo.cpp,70
+0x4c8460,CVehicleModelInfo,ResetEditableMaterials,Models,RH_ScopedInstall,yes,no,ok,"mov ecx, dword ptr [0xb4dbe8]",source/game_sa/Models/VehicleModelInfo.cpp,69
+0x4c84b0,CVehicleModelInfo,SetVehicleColour,Models,RH_ScopedInstall,yes,no,ok,"mov al, byte ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,49
+0x4c8500,CVehicleModelInfo,ChooseVehicleColour,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,50
+0x4c86b0,CVehicleModelInfo,GetNumRemaps,Models,RH_ScopedInstall,yes,no,ok,"add ecx, 0x2fa",source/game_sa/Models/VehicleModelInfo.cpp,51
+0x4c86d0,CVehicleModelInfo,AddRemap,Models,RH_ScopedInstall,yes,no,ok,"lea edx, [ecx + 0x2fa]",source/game_sa/Models/VehicleModelInfo.cpp,52
+0x4c8700,CVehicleModelInfo,AddWheelUpgrade,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,85
+0x4c8740,CVehicleModelInfo,GetNumWheelUpgrades,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,86
+0x4c8750,CVehicleModelInfo,GetWheelUpgrade,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,87
+0x4c8770,CVehicleModelInfo,DeleteVehicleColourTextures,Models,RH_ScopedInstall,yes,no,ok,ret,source/game_sa/Models/VehicleModelInfo.cpp,88
+0x4c8780,CVehicleModelInfo,LoadEnvironmentMaps,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,104
+0x4c87d0,CVehicleModelInfo,ShutdownEnvironmentMaps,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xb4e3ec]",source/game_sa/Models/VehicleModelInfo.cpp,90
+0x4c8810,CVehicleModelInfo,GetMatFXEffectMaterialCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,91
+0x4c8840,CVehicleModelInfo,SetEnvironmentMapCB,Models,RH_ScopedInstall,yes,no,ok,"cmp dword ptr [esp + 8], 0xffff",source/game_sa/Models/VehicleModelInfo.cpp,92
+0x4c88b0,CVehicleModelInfo,SetEnvMapCoeffCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,93
+0x4c88f4,CVehicleModelInfo,SetRenderPipelinesCB,Models,RH_ScopedInstall,yes,no,ok,ret,source/game_sa/Models/VehicleModelInfo.cpp,94
+0x4c8900,CVehicleModelInfo,SetRenderPipelines,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x1c]",source/game_sa/Models/VehicleModelInfo.cpp,53
+0x4c8970,CVehicleModelInfo,GetCustomCarPlateText,Models,RH_ScopedInstall,yes,no,ok,"lea eax, [ecx + 0x28]",source/game_sa/Models/VehicleModelInfo.cpp,54
+0x4c8980,CVehicleModelInfo,SetCustomCarPlateText,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,55
+0x4c89b0,CVehicleModelInfo,GetMaximumNumberOfPassengersFromNumberOfDoors,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0xc",source/game_sa/Models/VehicleModelInfo.cpp,64
+0x4c8b60,CVehicleModelInfo,StoreAtomicUsedMaterialsCB,Models,RH_ScopedInstall,yes,no,ok,push ebp,source/game_sa/Models/VehicleModelInfo.cpp,73
+0x4c8bd0,CVehicleModelInfo,ReduceMaterialsInVehicle,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0xc",source/game_sa/Models/VehicleModelInfo.cpp,56
+0x4c8c90,CVehicleModelInfo,SetupLightFlags,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Models/VehicleModelInfo.cpp,62
+0x4c8e30,CVehicleModelInfo,CollapseFramesCB,Models,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,95
+0x4c8e60,CVehicleModelInfo,PreprocessHierarchy,Models,RH_ScopedInstall,yes,no,ok,push ebp,source/game_sa/Models/VehicleModelInfo.cpp,61
+0x4c9360,CVehicleModelInfo,AssignRemapTxd,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x18",source/game_sa/Models/VehicleModelInfo.cpp,98
+0x4c9410,CVehicleModelInfo,SetEnvironmentMapAtomicCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,96
+0x4c9430,CVehicleModelInfo,SetEnvMapCoeffAtomicCB,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 8]",source/game_sa/Models/VehicleModelInfo.cpp,97
+0x4c9450,CVehicleModelInfo,SetCarCustomPlate,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x10",source/game_sa/Models/VehicleModelInfo.cpp,57
+0x4c95c0,CVehicleModelInfo,SetClump,Models,RH_ScopedVMTInstall,yes,no,ok,push -1,source/game_sa/Models/VehicleModelInfo.cpp,41
+0x4c9680,CVehicleModelInfo,CreateInstance,Models,RH_ScopedVMTInstall,yes,no,ok,"sub esp, 8",source/game_sa/Models/VehicleModelInfo.cpp,37
+0x4c97e0,CVehicleModelInfo,DisableEnvMap,Models,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [ecx + 0x1c]",source/game_sa/Models/VehicleModelInfo.cpp,58
+0x4c9800,CVehicleModelInfo,SetEnvMapCoeff,Models,RH_ScopedInstall,yes,no,ok,fld dword ptr [esp + 4],source/game_sa/Models/VehicleModelInfo.cpp,59
+0x4c9890,CVehicleModelInfo,DeleteRwObject,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/VehicleModelInfo.cpp,36
 0x4c98f0,CWeaponModelInfo,Init,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/WeaponModelInfo.cpp,11
 0x4c9910,CWeaponModelInfo,SetClump,Models,RH_ScopedVMTInstall,yes,no,ok,push esi,source/game_sa/Models/WeaponModelInfo.cpp,12
 0x4cde70,CAnimBlendAssocGroup,Constructor,Animation,RH_ScopedInstall,yes,no,ok,"mov eax, ecx",source/game_sa/Animation/AnimBlendAssocGroup.cpp,19
@@ -4242,8 +4242,8 @@ address,owner,name,category,macro,reversed,locked,status,first_insn,file,line
 0x5b5360,CObjectData,Initialise,,RH_ScopedInstall,yes,no,ok,"sub esp, 0x22c",source/game_sa/ObjectData.cpp,12
 0x5b57c0,ModelIndices,MatchAllModelStrings,,RH_ScopedGlobalInstall,yes,no,ok,push 0x8cd594,source/game_sa/ModelIndices.cpp,178
 0x5b6170,CStreaming,LoadCdDirectory-char,,RH_ScopedOverloadedInstall,yes,no,ok,"sub esp, 0x3c",source/game_sa/Streaming.cpp,44
-0x5b65a0,CLinkedUpgradeList,LoadVehicleUpgrades,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x18",source/game_sa/Models/VehicleModelInfo.cpp,103
-0x5b6890,CLinkedUpgradeList,LoadVehicleColours,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x4d8",source/game_sa/Models/VehicleModelInfo.cpp,102
+0x5b65a0,CVehicleModelInfo,LoadVehicleUpgrades,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x18",source/game_sa/Models/VehicleModelInfo.cpp,103
+0x5b6890,CVehicleModelInfo,LoadVehicleColours,Models,RH_ScopedInstall,yes,no,ok,"sub esp, 0x4d8",source/game_sa/Models/VehicleModelInfo.cpp,102
 0x5b6d40,CPopulation,FindPedRaceFromName,,RH_ScopedGlobalInstall,yes,no,ok,"mov edx, dword ptr [esp + 4]",source/game_sa/Population.cpp,40
 0x5b6f30,CFileLoader,LoadVehicleObject,,RH_ScopedInstall,yes,no,ok,"sub esp, 0xa8",source/game_sa/FileLoader.cpp,78
 0x5b7420,CFileLoader,LoadPedObject,,RH_ScopedInstall,yes,no,ok,"sub esp, 0x128",source/game_sa/FileLoader.cpp,79
@@ -4255,7 +4255,7 @@ address,owner,name,category,macro,reversed,locked,status,first_insn,file,line
 0x5b8400,CFileLoader,LoadObjectTypes,,RH_ScopedInstall,yes,no,ok,"sub esp, 0x110",source/game_sa/FileLoader.cpp,85
 0x5b8700,CFileLoader,LoadScene,,RH_ScopedInstall,yes,no,ok,push ecx,source/game_sa/FileLoader.cpp,84
 0x5b8ad0,CStreaming,Init2,,RH_ScopedInstall,yes,no,ok,push -1,source/game_sa/Streaming.cpp,94
-0x5b8f00,CLinkedUpgradeList,SetupCommonData,Models,RH_ScopedInstall,yes,no,ok,push -1,source/game_sa/Models/VehicleModelInfo.cpp,101
+0x5b8f00,CVehicleModelInfo,SetupCommonData,Models,RH_ScopedInstall,yes,no,ok,push -1,source/game_sa/Models/VehicleModelInfo.cpp,101
 0x5b9030,CFileLoader,LoadLevel,,RH_ScopedInstall,yes,no,ok,"sub esp, 0x44",source/game_sa/FileLoader.cpp,83
 0x5b9340,CAEAudioHardware,AllocateChannels,Audio/Hardware,RH_ScopedInstall,yes,no,ok,push esi,source/game_sa/Audio/Hardware/AEAudioHardware.cpp,21
 0x5b9390,CAERadioTrackManager,Initialise,Audio/Managers,RH_ScopedInstall,yes,no,ok,"sub esp, 0xc",source/game_sa/Audio/Managers/AERadioTrackManager.cpp,19
@@ -4421,7 +4421,7 @@ address,owner,name,category,macro,reversed,locked,status,first_insn,file,line
 0x5d5b80,CCarFXRenderer,IsCCPCPipelineAttached,Fx,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Fx/CarFXRenderer.cpp,15
 0x5d5ba0,CCarFXRenderer,SetFxEnvMapLightMult,Fx,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [esp + 4]",source/game_sa/Fx/CarFXRenderer.cpp,19
 0x5d5bc0,CCarFXRenderer,InitialiseDirtTexture,Fx,RH_ScopedInstall,yes,no,ok,"sub esp, 0x28",source/game_sa/Fx/CarFXRenderer.cpp,12
-0x5d5db0,CLinkedUpgradeList,SetDirtTextures,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,89
+0x5d5db0,CVehicleModelInfo,SetDirtTextures,Models,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Models/VehicleModelInfo.cpp,89
 0x5d5fa0,CCustomBuildingDNPipeline,DestroyPipe,Pipelines,RH_ScopedInstall,yes,no,ok,"mov eax, dword ptr [0xc02c1c]",source/game_sa/Pipelines/CustomBuilding/CustomBuildingDNPipeline.cpp,302
 0x5d6480,CCustomBuildingDNPipeline,CustomPipeRenderCB,Pipelines,RH_ScopedInstall,no,no,ok,push ecx,source/game_sa/Pipelines/CustomBuilding/CustomBuildingDNPipeline.cpp,307
 0x5d6750,CCustomBuildingDNPipeline,CreateCustomObjPipe,Pipelines,RH_ScopedInstall,yes,no,ok,push ebx,source/game_sa/Pipelines/CustomBuilding/CustomBuildingDNPipeline.cpp,303

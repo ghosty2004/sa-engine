@@ -1702,9 +1702,9 @@ address,class,subsystem,name,evidence
 0x4c6bd0,game,UNK-game,CModelInfoAccelerator::EndOfLoadPhase,plugin-sdk name CModelInfoAccelerator::EndOfLoadPhase (plugin_sa/game_sa/CModelInfoAccelerator.cpp); no static reference found (dead code or reached through a computed pointer)
 0x4c6d97,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c6d90 (CPedModelInfo::CreateHitColModelSkinned): mid-body (previous byte 0xff), only jumped to from protection code (0x40383f)"
 0x4c7410,game,UNK-game,,refs=C
-0x4c75aa,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c75a0 (CLinkedUpgradeList::UseCommonVehicleTexDicationary): mid-body (previous byte 0xff), only jumped to from protection code (0x406429)"
+0x4c75aa,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c75a0 (CVehicleModelInfo::UseCommonVehicleTexDicationary): mid-body (previous byte 0xff), only jumped to from protection code (0x406429)"
 0x4c75e0,game,UNK-game,,refs=I
-0x4c84c3,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c84b0 (CLinkedUpgradeList::SetVehicleColour): mid-body (previous byte 0xff), only jumped to from protection code (0x406006)"
+0x4c84c3,excluded:mis-split,,,"SecuROM re-entry point inside 0x4c84b0 (CVehicleModelInfo::SetVehicleColour): mid-body (previous byte 0xff), only jumped to from protection code (0x406006)"
 0x4c88f0,game,UNK-game,,refs=C
 0x4c8d60,game,STREAM,,"refs=C; subsystem from its 1 caller(s), all STREAM"
 0x4c8e10,game,STREAM,CVehicleModelInfo::vfunc_0,slot 0 of CVehicleModelInfo vtable 0x85c5c8 (gta-reversed RH_ScopedVirtualClass); refs=D
@@ -2350,7 +2350,7 @@ address,class,subsystem,name,evidence
 0x5b3680,game,STREAM,LoadingScreenLoadingFile,"plugin-sdk name LoadingScreenLoadingFile (plugin_sa/game_sa/meta/meta.CFileLoader.h); refs=C; subsystem from its 1 caller(s), all STREAM"
 0x5b423f,excluded:mis-split,,,"SecuROM re-entry point inside 0x5b41f0 (CFileLoader::LoadPedPathNode): mid-body (previous byte 0xff), only jumped to from protection code (0x4022e2)"
 0x5b6449,excluded:mis-split,,,"SecuROM re-entry point inside 0x5b6170 (CStreaming::LoadCdDirectory-char): mid-body (previous byte 0xff), only jumped to from protection code (0x409bc3)"
-0x5b6d0d,excluded:mis-split,,,"SecuROM re-entry point inside 0x5b6890 (CLinkedUpgradeList::LoadVehicleColours): mid-body (previous byte 0xff), only jumped to from protection code (0x405fc5)"
+0x5b6d0d,excluded:mis-split,,,"SecuROM re-entry point inside 0x5b6890 (CVehicleModelInfo::LoadVehicleColours): mid-body (previous byte 0xff), only jumped to from protection code (0x405fc5)"
 0x5b8340,game,STREAM,,"refs=C; subsystem from its 1 caller(s), all STREAM"
 0x5ba020,game,UNK-game,,no static reference found (dead code or reached through a computed pointer)
 0x5bb9f0,game,AI,,"refs=C; subsystem from its 1 caller(s), all AI"

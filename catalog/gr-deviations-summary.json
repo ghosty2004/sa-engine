@@ -1,0 +1,208 @@
+{
+ "rows": 3997,
+ "notes_applied": 16,
+ "by_kind": {
+  "assert": 732,
+  "bug-note": 145,
+  "bugfix-comment": 82,
+  "define-branch": 71,
+  "fix-bugs-comment": 53,
+  "fix-bugs-ifdef": 60,
+  "fix-bugs-runtime": 49,
+  "inlined": 115,
+  "notsa": 261,
+  "notsa-decl": 41,
+  "notsa-function": 260,
+  "notsa-helper": 562,
+  "notsa-unreachable": 417,
+  "original-comment": 514,
+  "pool-iteration": 98,
+  "rbf": 53,
+  "rng-helper": 375,
+  "script-default": 15,
+  "script-unimpl-case": 70,
+  "todo": 24
+ },
+ "by_class": {
+  "harmless": 1735,
+  "keep-original": 1024,
+  "unclear": 1238
+ },
+ "by_deviates": {
+  "maybe": 1238,
+  "no": 1919,
+  "yes": 840
+ },
+ "by_mapping": {
+  "addr-comment": 111,
+  "gr-only": 834,
+  "hand": 2,
+  "hook": 2500,
+  "hook-overload": 41,
+  "none": 399,
+  "script-handler": 25,
+  "script-opcode": 85
+ },
+ "by_class_deviates": {
+  "harmless/no": 1735,
+  "keep-original/no": 184,
+  "keep-original/yes": 840,
+  "unclear/maybe": 1238
+ },
+ "by_kind_class": {
+  "assert": {
+   "harmless": 732
+  },
+  "bug-note": {
+   "harmless": 9,
+   "keep-original": 136
+  },
+  "bugfix-comment": {
+   "keep-original": 82
+  },
+  "define-branch": {
+   "unclear": 71
+  },
+  "fix-bugs-comment": {
+   "keep-original": 53
+  },
+  "fix-bugs-ifdef": {
+   "harmless": 1,
+   "keep-original": 59
+  },
+  "fix-bugs-runtime": {
+   "keep-original": 49
+  },
+  "inlined": {
+   "harmless": 115
+  },
+  "notsa": {
+   "harmless": 15,
+   "keep-original": 22,
+   "unclear": 224
+  },
+  "notsa-decl": {
+   "harmless": 41
+  },
+  "notsa-function": {
+   "harmless": 245,
+   "unclear": 15
+  },
+  "notsa-helper": {
+   "harmless": 488,
+   "unclear": 74
+  },
+  "notsa-unreachable": {
+   "keep-original": 6,
+   "unclear": 411
+  },
+  "original-comment": {
+   "harmless": 88,
+   "keep-original": 103,
+   "unclear": 323
+  },
+  "pool-iteration": {
+   "unclear": 98
+  },
+  "rbf": {
+   "keep-original": 53
+  },
+  "rng-helper": {
+   "keep-original": 375
+  },
+  "script-default": {
+   "keep-original": 15
+  },
+  "script-unimpl-case": {
+   "keep-original": 70
+  },
+  "todo": {
+   "harmless": 1,
+   "keep-original": 1,
+   "unclear": 22
+  }
+ },
+ "mapped_rows": 2764,
+ "mapped_not_in_catalogue": 106,
+ "not_in_catalogue_addresses": [
+  "0x439880",
+  "0x439b20",
+  "0x439d80",
+  "0x465e60",
+  "0x466de0",
+  "0x469390",
+  "0x46d050",
+  "0x472310",
+  "0x474900",
+  "0x4762d0",
+  "0x478000",
+  "0x479da0",
+  "0x47a760",
+  "0x47c100",
+  "0x47d210",
+  "0x47e090",
+  "0x47f370",
+  "0x47fa30",
+  "0x481300",
+  "0x483bd0",
+  "0x489500",
+  "0x48a320",
+  "0x48cdd0",
+  "0x48eaa0",
+  "0x490db0",
+  "0x493fe0",
+  "0x8d0aa8"
+ ],
+ "functions_with_rows": 1569,
+ "functions_counted": 1003,
+ "by_subsystem_counted": {
+  "AI": 386,
+  "WORLD": 160,
+  "RENDER": 145,
+  "VEH": 124,
+  "AUDIO": 121,
+  "POP": 98,
+  "?": 92,
+  "STREAM": 80,
+  "HUD": 64,
+  "COLL": 56,
+  "WEAPON": 53,
+  "CORE": 42,
+  "PED": 42,
+  "SCRIPT": 37,
+  "CAM": 30,
+  "ANIM": 24,
+  "RW": 24,
+  "INPUT": 21,
+  "UNK-game": 16,
+  "MATH": 9,
+  "PHYS": 8,
+  "SAVE": 5,
+  "CALLED-ONLY": 1
+ },
+ "keep_original_by_subsystem": {
+  "AI": 172,
+  "RENDER": 86,
+  "?": 82,
+  "VEH": 77,
+  "WORLD": 75,
+  "POP": 44,
+  "AUDIO": 37,
+  "STREAM": 34,
+  "WEAPON": 28,
+  "HUD": 23,
+  "PED": 20,
+  "SCRIPT": 16,
+  "CORE": 10,
+  "INPUT": 9,
+  "UNK-game": 9,
+  "ANIM": 8,
+  "COLL": 8,
+  "PHYS": 6,
+  "MATH": 4,
+  "RW": 4,
+  "CAM": 3,
+  "CALLED-ONLY": 1,
+  "SAVE": 1
+ }
+}

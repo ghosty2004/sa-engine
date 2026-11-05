@@ -58,8 +58,16 @@ def scan_sources(root):
         rel = str(path.relative_to(root))
         cls = ns = cat = ''
         lines = path.read_text(errors='replace').splitlines()
+        depth, scopes, prev = 0, [], ''  # RH_ScopedClass is block-scoped: restore the outer class after `}`
         for ln, line in enumerate(lines, 1):
+            code = prev.split('//')[0]  # braces of the previous line
+            depth += code.count('{') - code.count('}')
+            prev = line
+            while scopes and depth < scopes[-1][0]:
+                _, cls, ns = scopes.pop()
             if (m := CLASS_RE.search(line)):
+                if not scopes or scopes[-1][0] < depth:
+                    scopes.append((depth, cls, ns))  # restore point for the end of this block
                 cls, ns = m.group(1), ''
             if (m := NS_RE.search(line)):
                 ns = m.group(1)
