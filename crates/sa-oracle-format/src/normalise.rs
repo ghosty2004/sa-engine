@@ -11,6 +11,8 @@
 //! | entity pool slot | `Pool { pool, slot, off }` | inside an entity pool's storage (ped, vehicle, building, object, dummy; strides from INF-6) |
 //! | model info | `Model { id, off }` | inside `CModelInfo::ms_modelInfoPtrs[id]` .. +0x20 (`CBaseModelInfo` size, layouts.csv) |
 //! | exe image | `Image { off }` | 0x400000 + off inside the image (symbol + offset; symbolised by the host report) |
+//! | OS object | `Foreign` | split-run only: one of the case's `foreign` values (a pointer into committed memory outside the image, the arena and the stack, i.e. Wine/D3D/DirectInput/DirectSound objects); no identity |
+//! | stack | `Stack { off }` | inside the thread's stack [limit, base) of a split-run case, off = value - the case's first-argument address (split-run only: `esp` is 0 elsewhere) |
 //! | anything else | `Raw(v)` | |
 //!
 //! Inside one process, pools, model infos and the image are at the same addresses for the original's
@@ -18,6 +20,23 @@
 //! verdict in-process is `Alloc` (the original and the Rust implementation allocate the "same" block at
 //! different arena addresses). The other classes make fixtures comparable across runs. A word that is
 //! not 4-byte aligned inside the compared buffer is never normalised (raw comparison).
+//!
+//! `Stack` (split-run L2, INF-17): the plain and the rust run are different processes. When an ancestor
+//! of a recorded call is a Rust implementation (its frames differ in size from the original's, e.g.
+//! VideoMode::SetVideoMode above the RW file reads at frame 0: plain 0x36F208, rust 0x36F1D8, the whole
+//! stack 0x30 lower), every stack address below it moves by the same amount. A stack pointer is then
+//! compared by its distance from the call's own argument block, which identifies the same caller
+//! variable in both runs. `sa-oracle l2 split-report` counts the pairs compared with a stack shift.
+//!
+//! `Foreign` (split-run L2, INF-17; OS-assigned values): objects the OS / Wine / D3D allocate outside
+//! the determinism arena (IDirect3D9 0xC97C20, the depth-stencil surface 0xC97C2C, vertex
+//! declarations 0x8E2444, DirectInput devices PsGlobal+0x18, the D3D driver resource pointers in
+//! RwEngineInstance+0x94 / 0xC980F0 / 0xC9AB40) live at addresses that differ between two processes:
+//! Rust code allocates from the same process heap (evidence: identical windows up to
+//! Win::Win32_InitInstance, then these words differ, plain 0x0301A530 rust 0x0301A340). Such a word is
+//! equal to another such word whatever its value; that it IS an OS object in both runs is still
+//! checked (0, a game pointer or a number in one run does not match). The class only exists in
+//! split-run cases (their `foreign` list); every use is listed by `sa-oracle l2 split-report`.
 
 use crate::subsys::PoolMap;
 
@@ -35,6 +54,8 @@ pub enum Norm {
     Pool { pool: u8, slot: u32, off: u32 },
     Model { id: u32, off: u32 },
     Alloc { ordinal: u32, off: u32 },
+    Stack { off: u32 },
+    Foreign,
 }
 
 /// What the normaliser knows about one run (the original's or the Rust implementation's).
@@ -47,6 +68,11 @@ pub struct NormCtx {
     pub model_infos: Vec<u32>,
     /// Blocks allocated by this run during the case, in allocation order: (address, size).
     pub allocs: Vec<(u32, u32)>,
+    /// Split-run: the thread's stack [limit, base) and the case's first-argument address (0: no class).
+    pub stack: (u32, u32),
+    pub esp: u32,
+    /// Split-run: this run's OS object addresses (sorted; empty: no class).
+    pub foreign: Vec<u32>,
 }
 
 impl NormCtx {
@@ -79,6 +105,14 @@ impl NormCtx {
                     off: v - self.model_infos[id],
                 };
             }
+        }
+        if !self.foreign.is_empty() && self.foreign.binary_search(&v).is_ok() {
+            return Norm::Foreign;
+        }
+        if self.esp != 0 && v >= self.stack.0 && v < self.stack.1 {
+            return Norm::Stack {
+                off: v.wrapping_sub(self.esp),
+            };
         }
         if v >= self.image.0 && v < self.image.1 {
             return Norm::Image {
@@ -126,10 +160,249 @@ pub fn bytes_equal(addr: u32, a: &[u8], ca: &NormCtx, b: &[u8], cb: &NormCtx) ->
     None
 }
 
+// ------------------------------------------------------------------ excluded bytes ----------------
+//
+// Bytes the comparison ignores because the ORIGINAL leaves them uninitialised (stack or heap residue
+// that no port can reproduce bit for bit). Every rule is narrow (one function, computed addresses),
+// carries its byte evidence, and every use is listed by `sa-oracle l2 split-report` (`excluded:` lines)
+// so no exclusion is silent. OS-assigned values (descriptors, handles) are NOT excluded here: the file
+// probe records no handle value, and CRT descriptor numbers are compared raw.
+
+/// One excluded byte range of a case.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Exclusion {
+    pub addr: u32,
+    pub len: u32,
+    pub rule: &'static str,
+}
+
+/// `Light::LightsCreate` (0x5BA520).
+pub const LIGHTS_CREATE: u32 = 0x5BA520;
+/// `pAmbient`, `pDirect`, `pExtraDirectionals[6]` (0xC886E8..0xC88708).
+const LIGHT_PTRS: (u32, u32) = (0xC886E8, 8);
+/// `RpLight.color.alpha`: RpLightSetColor (0x751A90) copies the 16-byte RwRGBAReal to light+0x18.
+const RPLIGHT_ALPHA: u32 = 0x24;
+/// The three pad words of `RwFrame.modelling` (RwFrame+0x10; RwMatrix pad1/pad2/pad3 at +0x1C/+0x2C/+0x3C).
+const FRAME_MODELLING_PADS: [u32; 3] = [0x10 + 0x1C, 0x10 + 0x2C, 0x10 + 0x3C];
+
+pub const RULE_LIGHT_ALPHA: &str = "LightsCreate: RpLight colour alpha (+0x24) is uninitialised stack in the original: \
+     the RwRGBAReal passed to RpLightSetColor is built at 0x5BA54E-0x5BA55E (and 0x5BA586-0x5BA596 \
+     for pDirect, likewise for the extra lights) with red/green/blue only; RpLightSetColor 0x751A90 \
+     copies all 16 bytes to light+0x18";
+pub const RULE_FRAME_PADS: &str = "LightsCreate: pad1/pad2/pad3 of pDirect's frame modelling matrix are left \
+     uninitialised by RwFrameRotate inside RenderWare (stack residue; CORE-L2b l2all evidence: orig \
+     1 / 0x7BCDAEA0 / 0x00460000, Rust 4 / 0x0036F294 / 0x03219A28)";
+
+/// The word at `a` after the run (`orig` run or the Rust run), from any region of the case that
+/// holds memory after the call.
+fn post_word(c: &crate::l2::Case, a: u32, orig: bool) -> Option<u32> {
+    for r in c.regions.iter().filter(|r| r.readable && r.extent() > 0) {
+        let b = if orig { &r.post_orig } else { &r.post_rust };
+        if a >= r.addr && (a - r.addr) as u64 + 4 <= b.len() as u64 {
+            let o = (a - r.addr) as usize;
+            return Some(u32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]));
+        }
+    }
+    None
+}
+
+/// The byte ranges of case `c` excluded from the comparison (both runs' views; empty for almost every
+/// function).
+pub fn exclusions(c: &crate::l2::Case) -> Vec<Exclusion> {
+    let mut out: Vec<Exclusion> = Vec::new();
+    if c.merged {
+        // Split-run pair: values the OS / CPU assign differ between the two processes, also when the
+        // function itself writes them (psCameraBeginUpdate stores `rdtsc`).
+        for e in INPUT_EXCLUSIONS {
+            out.push(Exclusion {
+                addr: e.addr,
+                len: e.len,
+                rule: e.rule,
+            });
+        }
+    }
+    if c.fn_addr != LIGHTS_CREATE {
+        return out;
+    }
+    let mut push = |addr: u32, len: u32, rule: &'static str| {
+        let e = Exclusion { addr, len, rule };
+        if !out.contains(&e) {
+            out.push(e);
+        }
+    };
+    for orig in [true, false] {
+        for k in 0..LIGHT_PTRS.1 {
+            let Some(light) = post_word(c, LIGHT_PTRS.0 + 4 * k, orig).filter(|&p| p != 0) else {
+                continue;
+            };
+            push(light + RPLIGHT_ALPHA, 4, RULE_LIGHT_ALPHA);
+            // pDirect (k == 1): its frame is RwObject.parent (light+4).
+            if k == 1
+                && let Some(frame) = post_word(c, light + 4, orig).filter(|&p| p != 0)
+            {
+                for p in FRAME_MODELLING_PADS {
+                    push(frame + p, 4, RULE_FRAME_PADS);
+                }
+            }
+        }
+    }
+    out
+}
+
+// ------------------------------------------------------------------ input fingerprint exclusions ---
+//
+// Split-run L2 (INF-17) checks that a call's inputs are identical in the plain and the rust run, among
+// them a hash of every 4 KiB page of the watched windows. Bytes that differ between two runs of the SAME
+// binary for reasons outside the game (values the OS or the CRT derive from time / process ids) are
+// zeroed before hashing. Each entry: evidence below, test in this file; the raw values are recorded in
+// every split-run case (`Case::volatile`) and `sa-oracle l2 split-report` lists every pair in which they
+// differed, so the exclusion is never silent.
+
+/// One input range excluded from the page fingerprint.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct InputExclusion {
+    pub addr: u32,
+    pub len: u32,
+    pub rule: &'static str,
+}
+
+pub const INPUT_EXCLUSIONS: &[InputExclusion] = &[
+    InputExclusion {
+        addr: 0x8E31BC,
+        len: 4,
+        rule: "CRT __security_cookie (0x8E31BC): __security_init_cookie 0x8339CA-0x833A1A XORs \
+               GetSystemTimeAsFileTime, GetCurrentProcessId, GetCurrentThreadId, GetTickCount and \
+               QueryPerformanceCounter (default 0xBB40E64E only when the XOR is 0); per-process random, \
+               read only by /GS prologues/epilogues (XOR with the frame address, compared on return)",
+    },
+    InputExclusion {
+        addr: 0x8E4000,
+        len: 4,
+        rule: "gStreamingThreadId (0x8E4000): the OS thread id CreateThread writes (lpThreadId pushed \
+               at 0x4069AB); OS-assigned",
+    },
+    InputExclusion {
+        addr: 0xC8CF74,
+        len: 4,
+        rule: "MEMORYSTATUS.dwAvailPhys copy (0xC8CF74): GlobalMemoryStatus at 0x7475CD, stored at \
+               0x7475EF; free physical memory of the machine at that moment",
+    },
+    InputExclusion {
+        addr: 0xC8CF7C,
+        len: 4,
+        rule: "MEMORYSTATUS.dwAvailVirtual copy (0xC8CF7C): GlobalMemoryStatus at 0x7475CD, stored at \
+               0x7475FA; free address space of the process (Rust code allocates from the same heap)",
+    },
+    InputExclusion {
+        addr: 0xB606D0,
+        len: 4,
+        rule: "AEAudioHardware+0xE18 (0xB606D0; AEAudioHardware at 0xB5F8B8): an OS handle of the \
+               audio stream thread (observed: two processes hold 0x2C / 0x04 after the same input; \
+               gta-reversed CAEAudioHardware::m_pStreamThread area, CAEStreamThread::m_nHandle)",
+    },
+    InputExclusion {
+        addr: 0xB608D0,
+        len: 8,
+        rule: "AESmoothFadeThread (0xB608D0) m_threadHandle / m_dwThreadId (gta-reversed \
+               AESmoothFadeThread.h, +0 HANDLE, +4 DWORD): OS-assigned handle and thread id",
+    },
+    InputExclusion {
+        addr: 0x9655C8,
+        len: 8,
+        rule: "gpColCache2 / gpColCache (0x9655C8 / 0x9655CC): 0x41B000 stores the addresses of two of its \
+               own stack buffers there on every entry (`lea eax,[esp+0x50]` / `lea ecx,[esp+0x690]`, \
+               0x41B016-0x41B028) before any use; the value is a stack depth, which differs below a \
+               Rust ancestor (InitialiseGame: plain 0x0036E960 rust 0x0036E950)",
+    },
+    InputExclusion {
+        addr: 0xC92104,
+        len: 8,
+        rule: "raw time stamp counter (0xC92104/0xC92108): `rdtsc` at 0x746202, stored at \
+               0x746204/0x74620A (not virtualised by determinism mode); CPU-assigned",
+    },
+];
+
+/// `page` (at `addr`) with the excluded input bytes zeroed (a copy only when one lies inside).
+pub fn fingerprint_bytes(addr: u32, page: &[u8]) -> std::borrow::Cow<'_, [u8]> {
+    let end = addr as u64 + page.len() as u64;
+    let hit: Vec<&InputExclusion> = INPUT_EXCLUSIONS
+        .iter()
+        .filter(|e| (e.addr as u64) < end && e.addr as u64 + e.len as u64 > addr as u64)
+        .collect();
+    if hit.is_empty() {
+        return std::borrow::Cow::Borrowed(page);
+    }
+    let mut v = page.to_vec();
+    for e in hit {
+        for k in 0..e.len {
+            let a = e.addr as u64 + k as u64;
+            if a >= addr as u64 && a < end {
+                v[(a - addr as u64) as usize] = 0;
+            }
+        }
+    }
+    std::borrow::Cow::Owned(v)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::subsys::{PoolHdr, addr};
+
+    #[test]
+    fn security_cookie_is_excluded_from_the_fingerprint_only() {
+        let mut a = vec![7u8; 4096];
+        let mut b = a.clone();
+        a[0x1BC..0x1C0].copy_from_slice(&0x1234_5678u32.to_le_bytes());
+        b[0x1BC..0x1C0].copy_from_slice(&0x9ABC_DEF0u32.to_le_bytes());
+        assert_eq!(fingerprint_bytes(0x8E3000, &a), fingerprint_bytes(0x8E3000, &b));
+        b[0x1C0] = 1;
+        assert_ne!(fingerprint_bytes(0x8E3000, &a), fingerprint_bytes(0x8E3000, &b));
+        // another page: untouched
+        assert!(matches!(fingerprint_bytes(0x8E5000, &a), std::borrow::Cow::Borrowed(_)));
+        // the streaming thread id at the start of the next page is excluded too
+        assert_eq!(&fingerprint_bytes(0x8E4000, &a)[..8], &[0, 0, 0, 0, 7, 7, 7, 7]);
+        // a page that starts inside the range
+        let c = vec![1u8; 8];
+        assert_eq!(&*fingerprint_bytes(0x8E31BE, &c), &[0, 0, 1, 1, 1, 1, 1, 1]);
+    }
+
+    #[test]
+    fn lights_create_exclusions_are_narrow() {
+        use crate::l2::{Case, Region, RegionKind};
+        let mut ptrs = vec![0u8; 32];
+        ptrs[4..8].copy_from_slice(&0x2000_0000u32.to_le_bytes()); // pDirect
+        ptrs[0..4].copy_from_slice(&0x2000_0100u32.to_le_bytes()); // pAmbient
+        let mut light = vec![0u8; 0x30];
+        light[4..8].copy_from_slice(&0x3000_0000u32.to_le_bytes()); // frame
+        let reg = |addr: u32, kind, post: Vec<u8>| Region {
+            addr,
+            kind,
+            access: 3,
+            readable: true,
+            pre: if kind == RegionKind::Post { vec![] } else { vec![0; post.len()] },
+            post_orig: post.clone(),
+            post_rust: post,
+        };
+        let mut c = Case {
+            fn_addr: LIGHTS_CREATE,
+            regions: vec![
+                reg(0xC886E8, RegionKind::Global { exact: true }, ptrs),
+                reg(0x2000_0000, RegionKind::Post, light),
+            ],
+            ..Case::default()
+        };
+        let e = exclusions(&c);
+        let addrs: Vec<u32> = e.iter().map(|x| x.addr).collect();
+        assert_eq!(addrs, vec![0x2000_0124, 0x2000_0024, 0x3000_002C, 0x3000_003C, 0x3000_004C]);
+        // alpha differs, everything else equal: identical after exclusion; a red difference is not
+        c.regions[1].post_rust[0x24] = 0x50;
+        assert!(crate::l2::compare(&c).is_empty());
+        c.regions[1].post_rust[0x18] = 1;
+        assert_eq!(crate::l2::compare(&c).len(), 1);
+        c.fn_addr = 0x5BA521;
+        assert!(exclusions(&c).is_empty(), "other functions get no exclusion");
+    }
 
     fn ctx(allocs: Vec<(u32, u32)>) -> NormCtx {
         let mut pools = PoolMap {
@@ -145,6 +418,9 @@ mod tests {
             pools,
             model_infos: vec![0, 0x00A0_0000, 0x00A0_1000],
             allocs,
+            stack: (0, 0),
+            esp: 0,
+            foreign: Vec::new(),
         }
     }
 
@@ -170,6 +446,34 @@ mod tests {
         assert_eq!(c.normalise(0x00A0_1004), Norm::Model { id: 2, off: 4 });
         assert_eq!(c.normalise(0x00B7_CD98), Norm::Image { off: 0x77CD98 });
         assert_eq!(c.normalise(0x00A0_1020), Norm::Image { off: 0x601020 });
+    }
+
+    #[test]
+    fn stack_pointers_compare_by_offset_from_the_call() {
+        let mut a = ctx(vec![]);
+        let mut b = ctx(vec![]);
+        assert!(!words_equal(0x36F208, &a, 0x36F1D8, &b), "no stack class without esp");
+        (a.stack, a.esp) = ((0x270000, 0x370000), 0x36F1F0);
+        (b.stack, b.esp) = ((0x270000, 0x370000), 0x36F1C0);
+        assert_eq!(a.normalise(0x36F208), Norm::Stack { off: 0x18 });
+        assert!(words_equal(0x36F208, &a, 0x36F1D8, &b));
+        assert!(!words_equal(0x36F208, &a, 0x36F1DC, &b), "different variable");
+        assert!(!words_equal(0x36F208, &a, 0x5000, &b), "a non-stack value");
+        assert!(!words_equal(0x1234, &a, 0x1235, &b));
+    }
+
+    #[test]
+    fn foreign_objects_are_equal_only_to_foreign_objects() {
+        let mut a = ctx(vec![]);
+        let mut b = ctx(vec![]);
+        assert!(!words_equal(0x0301_A530, &a, 0x0301_A340, &b), "no class without the lists");
+        a.foreign = vec![0x0301_A530, 0x05F0_C5E0];
+        b.foreign = vec![0x0301_A340];
+        assert_eq!(a.normalise(0x0301_A530), Norm::Foreign);
+        assert!(words_equal(0x0301_A530, &a, 0x0301_A340, &b));
+        assert!(!words_equal(0x0301_A530, &a, 0, &b), "an OS object vs null");
+        assert!(!words_equal(0x0301_A531, &a, 0x0301_A340, &b), "not in the plain run's list");
+        assert!(!words_equal(0x0301_A530, &a, 0x00B7_CD98, &b), "an OS object vs a game global");
     }
 
     #[test]

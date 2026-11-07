@@ -520,3 +520,14 @@
   stay original vs Rust from the same restored state); sR3 crashed at frame 4,096 (no table); split
   into three: sR301/sR302 16 PASS, identical l2 traces; sR300 (8 hooks) crashes at 4,096 again → open.
   Total confirmed from the agent's 164: 65 + 73 + 16 = 154 → L2. F1 = 343 / 15,479 (2.22 %).
+
+## 2026-11-08 ~00:50: agents stopped by the user, work merged
+- The user ran out of tokens and asked to stop the agents and bring their work in. Lanes 3/4
+  stopped (wineserver -k), agent processes in the harness2/inf10 worktrees killed, both sessions
+  confirmed "stopped". Their work was saved as branches wip-harness2 / wip-inf10 and merged into
+  master; conflicts in tools/e2e/port-l2.sh (spool discard FIFO + disk check + L2_EXTRA + doc: extras)
+  and l2-extras.txt (all sections kept) resolved by hand.
+- Verified by the main session: i686 + host release builds, cargo test --workspace (sa-oracle lib
+  16/16), clippy --workspace --all-targets host + i686 clean, `bash -n port-l2.sh`.
+- NOT verified: the agents' in-game results (INF-18 quota test, INF-17 split-run verdicts, INF-10
+  coverage). Documented in the ROADMAP rows INF-10/INF-17/INF-18 and the new FPU-GUARD task.

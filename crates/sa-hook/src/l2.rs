@@ -22,6 +22,14 @@
 //! | `SA_L2_STACK` | bytes of the caller's stack above the arguments to watch (default 1024) |
 //! | `SA_L2_MUTANT` | hooks whose Rust implementation is made deliberately wrong (self-test); also honoured without `SA_L2` (the L3 bisection self-test runs the mutant in plain Rust mode) |
 //! | `SA_HOOK_MODE` | start modes `NAME=orig\|rust\|l2,…` (independent of L2) |
+//! | `SA_L2_SPOOL_MAX` | spool quota in bytes (default 2 GiB; suffixes `k`, `M`, `G`): at the quota sa-hook stops spooling, writes a trailer and logs it; cases compared before stay valid (INF-18) |
+//! | `SA_L2_DUMP_SEQ` | split-run diagnostic: case sequence numbers whose static windows are dumped to `SA_L2_OUT.seqN.win` (compare two dumps with `sa-oracle l2 dump-diff`) |
+//! | `SA_L2_SPLIT` | `orig` or `rust`: split-run mode (INF-17). Each sampled call runs ONE implementation (the original in the plain run, the Rust one in the rust run) and is recorded (inputs, outputs, OS probes, page hashes); `sa-oracle l2 split-report` compares two such runs call by call. Cases may nest |
+//!
+//! `SA_L2_EXTRA` entries may start with `post:` (address/length evaluated after the run with the exit
+//! registers, e.g. `post:eax:0x30` for a returned object; only post bytes are compared) and/or name an
+//! OS probe instead of `ADDR:LEN`: `os:file:EXPR` (CRT `FILE*` at EXPR: FILE block, descriptor flags, OS
+//! path/position/size), `os:cwd` (current directory), `os:cursor` (cursor show state).
 
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -53,6 +61,83 @@ pub struct Config {
     pub windows: Vec<(u32, u32)>,
     pub stack: u32,
     pub mutants: Vec<usize>,
+    /// Spool quota in bytes (INF-18).
+    pub spool_max: u64,
+    /// Split-run mode (INF-17): which implementation this run records.
+    pub split: Option<Split>,
+    /// Split-run diagnostic: case sequence numbers at which the static windows are dumped to
+    /// `SA_L2_OUT.seqN.win` (`SA_L2_DUMP_SEQ`).
+    pub dump_seq: Vec<u32>,
+}
+
+/// Split-run mode: the implementation every sampled call runs (once) and is recorded with.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Split {
+    Orig,
+    Rust,
+}
+
+/// Default spool quota: 2 GiB.
+pub const SPOOL_MAX_DEFAULT: u64 = 2 << 30;
+
+/// `123`, `0x10`, `512k`, `100M`, `2G` (binary units).
+pub fn parse_size(v: &str) -> Option<u64> {
+    let v = v.trim();
+    let (n, m) = match v.char_indices().last() {
+        Some((i, 'k' | 'K')) => (&v[..i], 1u64 << 10),
+        Some((i, 'm' | 'M')) => (&v[..i], 1 << 20),
+        Some((i, 'g' | 'G')) => (&v[..i], 1 << 30),
+        _ => (v, 1),
+    };
+    let n = match n.strip_prefix("0x") {
+        Some(h) => u64::from_str_radix(h, 16).ok()?,
+        None => n.parse().ok()?,
+    };
+    n.checked_mul(m)
+}
+
+/// Spool size accounting (INF-18): admits records until the quota; the first refused record ends
+/// spooling for the rest of the run.
+#[derive(Debug, Clone, Default)]
+pub struct SpoolQuota {
+    pub max: u64,
+    pub written: u64,
+    pub records: u64,
+    /// Set when the quota was reached: (hook name, frame, records written before).
+    pub hit: Option<(String, u32, u64)>,
+}
+
+impl SpoolQuota {
+    pub fn new(max: u64, header: u64) -> Self {
+        SpoolQuota {
+            max,
+            written: header,
+            ..Default::default()
+        }
+    }
+    /// True when a record of `n` bytes may be written; on the first refusal records `hit`.
+    pub fn admit(&mut self, n: u64, hook: &str, frame: u32) -> bool {
+        if self.hit.is_some() {
+            return false;
+        }
+        if self.written + n > self.max {
+            self.hit = Some((hook.to_string(), frame, self.records));
+            return false;
+        }
+        self.written += n;
+        self.records += 1;
+        true
+    }
+    /// The trailer / log text once the quota was hit.
+    pub fn message(&self) -> Option<String> {
+        self.hit.as_ref().map(|(h, f, n)| {
+            format!(
+                "spool quota reached for {h} at frame {f}: SA_L2_SPOOL_MAX={} bytes, {} bytes in {n} records written; \
+                 no further cases spooled (cases compared before it still valid)",
+                self.max, self.written
+            )
+        })
+    }
 }
 
 impl Default for Config {
@@ -72,6 +157,9 @@ impl Default for Config {
             windows: Vec::new(),
             stack: 1024,
             mutants: Vec::new(),
+            spool_max: SPOOL_MAX_DEFAULT,
+            split: None,
+            dump_seq: Vec::new(),
         }
     }
 }
@@ -156,6 +244,24 @@ impl Config {
             }
         }
         c.mutants = mutants_from_env(&get)?;
+        if let Some(v) = get("SA_L2_SPOOL_MAX").filter(|v| !v.is_empty()) {
+            c.spool_max = parse_size(&v).ok_or_else(|| format!("SA_L2_SPOOL_MAX: bad size {v:?}"))?;
+        }
+        c.split = match get("SA_L2_SPLIT").as_deref() {
+            None | Some("") => None,
+            Some("orig") => Some(Split::Orig),
+            Some("rust") => Some(Split::Rust),
+            Some(v) => return Err(format!("SA_L2_SPLIT: {v:?} (orig|rust)")),
+        };
+        if let Some(v) = get("SA_L2_DUMP_SEQ") {
+            for e in v.split(',').map(str::trim).filter(|e| !e.is_empty()) {
+                c.dump_seq.push(num(e).ok_or_else(|| format!("SA_L2_DUMP_SEQ: {e:?}"))?);
+            }
+        }
+        if let Some(s) = c.split {
+            // Unsampled and nested calls run this run's implementation too.
+            c.leave_rust = s == Split::Rust;
+        }
         Ok(Some(c))
     }
 }
@@ -260,12 +366,17 @@ pub struct Extra {
     pub addr: Expr,
     pub len: Expr,
     pub acc: u8,
+    /// Evaluated after the run with the exit registers (`post:`).
+    pub post: bool,
+    /// An OS-state probe instead of a memory range (`os:KIND[:EXPR]`; `addr` = EXPR, `len` unused).
+    pub os: Option<sa_oracle_format::l2::OsProbe>,
 }
 
 impl Extra {
-    /// `[HOOK@]ADDR:LEN[:R|W|RW]`
+    /// `[HOOK@][post:]ADDR:LEN[:R|W|RW]` or `[HOOK@][post:]os:file:EXPR|os:cwd|os:cursor`
     pub fn parse(e: &str) -> Result<Extra, String> {
-        let bad = |why: String| format!("SA_L2_EXTRA: {e:?} ([HOOK@]ADDR:LEN[:R|W|RW]): {why}");
+        use sa_oracle_format::l2::OsProbe;
+        let bad = |why: String| format!("SA_L2_EXTRA: {e:?} ([HOOK@][post:]ADDR:LEN[:R|W|RW]): {why}");
         let (hook, rest) = match e.rsplit_once('@') {
             Some((h, r)) => {
                 let i = crate::table::find(h.trim()).ok_or_else(|| bad(format!("unknown hook {h:?}")))?;
@@ -273,6 +384,35 @@ impl Extra {
             }
             None => (None, e),
         };
+        let (post, rest) = match rest.trim().strip_prefix("post:") {
+            Some(r) => (true, r),
+            None => (false, rest),
+        };
+        if let Some(o) = rest.trim().strip_prefix("os:") {
+            let (kind, ex) = o.split_once(':').unwrap_or((o, ""));
+            let os = match kind {
+                "file" => OsProbe::File,
+                "cwd" => OsProbe::Cwd,
+                "cursor" => OsProbe::Cursor,
+                k => return Err(bad(format!("OS probe {k:?} (file|cwd|cursor)"))),
+            };
+            if (os == OsProbe::File) == ex.is_empty() {
+                return Err(bad("os:file needs an expression, os:cwd / os:cursor none".into()));
+            }
+            let addr = if ex.is_empty() {
+                Expr::Num(0)
+            } else {
+                Expr::parse(ex).map_err(bad)?
+            };
+            return Ok(Extra {
+                hook,
+                addr,
+                len: Expr::Num(0),
+                acc: 0,
+                post,
+                os: Some(os),
+            });
+        }
         let p: Vec<&str> = rest.split(':').collect();
         if p.len() > 3 {
             return Err(bad("too many fields".into()));
@@ -285,7 +425,14 @@ impl Extra {
             Some("W") => 2,
             Some(a) => return Err(bad(format!("access {a:?}"))),
         };
-        Ok(Extra { hook, addr, len, acc })
+        Ok(Extra {
+            hook,
+            addr,
+            len,
+            acc,
+            post,
+            os: None,
+        })
     }
 }
 
@@ -442,6 +589,46 @@ pub fn run_end() -> (Vec<u32>, Vec<(u32, u32)>) {
     (c, a)
 }
 
+/// The logs of an outer run, saved while a nested split-run case runs.
+pub struct SavedRun {
+    active: bool,
+    tid: u32,
+    self_id: u32,
+    calls: Vec<u32>,
+    allocs: Vec<(u32, u32)>,
+}
+
+/// Saves (and clears) the current run's logs before a nested case (split-run mode).
+pub fn run_suspend() -> SavedRun {
+    let active = RUN_ACTIVE.swap(false, Ordering::AcqRel);
+    SavedRun {
+        active,
+        tid: RUN_TID.load(Ordering::Acquire),
+        self_id: RUN_SELF.load(Ordering::Acquire),
+        calls: RUN_CALLS
+            .lock()
+            .map(|mut v| std::mem::take(&mut *v))
+            .unwrap_or_default(),
+        allocs: RUN_ALLOCS
+            .lock()
+            .map(|mut v| std::mem::take(&mut *v))
+            .unwrap_or_default(),
+    }
+}
+
+/// Restores an outer run's logs after a nested case.
+pub fn run_resume(s: SavedRun) {
+    if let Ok(mut v) = RUN_CALLS.lock() {
+        *v = s.calls;
+    }
+    if let Ok(mut v) = RUN_ALLOCS.lock() {
+        *v = s.allocs;
+    }
+    RUN_SELF.store(s.self_id, Ordering::Release);
+    RUN_TID.store(s.tid, Ordering::Release);
+    RUN_ACTIVE.store(s.active, Ordering::Release);
+}
+
 fn in_run() -> bool {
     RUN_ACTIVE.load(Ordering::Relaxed) && RUN_TID.load(Ordering::Relaxed) == tid()
 }
@@ -509,13 +696,17 @@ mod tests {
                     hook: None,
                     addr: Expr::Num(0xB7CB4C),
                     len: Expr::Num(4),
-                    acc: 3
+                    acc: 3,
+                    post: false,
+                    os: None,
                 },
                 Extra {
                     hook: None,
                     addr: Expr::Num(0x10),
                     len: Expr::Num(2),
-                    acc: 1
+                    acc: 1,
+                    post: false,
+                    os: None,
                 },
             ]
         );
@@ -568,6 +759,49 @@ mod tests {
         assert!(Extra::parse("nope@0x10:4").is_err());
         assert!(Extra::parse("[0x10:4").is_err());
         assert!(Extra::parse("0x10:4:X").is_err());
+    }
+
+    #[test]
+    fn spool_quota_and_split_config() {
+        assert_eq!(parse_size("2G"), Some(2 << 30));
+        assert_eq!(parse_size("512k"), Some(512 << 10));
+        assert_eq!(parse_size("0x100"), Some(256));
+        assert_eq!(parse_size("x"), None);
+        let mut q = SpoolQuota::new(100, 8);
+        assert!(q.admit(50, "A", 1));
+        assert!(q.admit(42, "A", 2));
+        assert!(!q.admit(1, "B", 3), "101 > 100");
+        assert!(!q.admit(0, "A", 4), "stays closed");
+        assert_eq!(q.hit, Some(("B".into(), 3, 2)));
+        assert!(q.message().unwrap().contains("spool quota reached for B at frame 3"));
+        let c = Config::from_env(env(&[("SA_L2", "ports")])).unwrap().unwrap();
+        assert_eq!((c.spool_max, c.split, c.leave_rust), (SPOOL_MAX_DEFAULT, None, false));
+        let c = Config::from_env(env(&[
+            ("SA_L2", "ports"),
+            ("SA_L2_SPOOL_MAX", "1M"),
+            ("SA_L2_SPLIT", "rust"),
+        ]))
+        .unwrap()
+        .unwrap();
+        assert_eq!((c.spool_max, c.split, c.leave_rust), (1 << 20, Some(Split::Rust), true));
+        assert!(Config::from_env(env(&[("SA_L2", "ports"), ("SA_L2_SPLIT", "x")])).is_err());
+        assert!(Config::from_env(env(&[("SA_L2", "ports"), ("SA_L2_SPOOL_MAX", "y")])).is_err());
+    }
+
+    #[test]
+    fn post_and_os_extras() {
+        use sa_oracle_format::l2::OsProbe;
+        let e = Extra::parse("CVector::Normalise@post:eax:0x30:W").unwrap();
+        assert!(e.post && e.os.is_none() && e.acc == 2);
+        assert_eq!(e.addr, Expr::Reg(0));
+        let f = Extra::parse("CVector::Normalise@post:os:file:eax").unwrap();
+        assert_eq!((f.post, f.os), (true, Some(OsProbe::File)));
+        let g = Extra::parse("os:file:arg0").unwrap();
+        assert_eq!((g.post, g.os, g.addr), (false, Some(OsProbe::File), Expr::Arg(0)));
+        assert_eq!(Extra::parse("os:cwd").unwrap().os, Some(OsProbe::Cwd));
+        assert!(Extra::parse("os:file").is_err());
+        assert!(Extra::parse("os:cwd:eax").is_err());
+        assert!(Extra::parse("os:disk:eax").is_err());
     }
 
     #[test]

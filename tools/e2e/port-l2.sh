@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # L2 + L3 verification of a set of hooked ports on a corpus recording (CORE-L2; for every porting batch).
 #
-#   tools/e2e/port-l2.sh <HOOKS|ports> [RECORDING] [--runs "plain l2 rust hookoff"] [--max N]
+#   tools/e2e/port-l2.sh <HOOKS|ports> [RECORDING] [--runs "plain l2 rust hookoff split"] [--max N]
 #                        [--window-all HOOKS] [--tag NAME]
 #
 # HOOKS: comma list of hook names or addresses (any hook of sa-hook's table, see tools/e2e/hook-names.py),
@@ -20,15 +20,27 @@
 #            is watched too, so writes to heap memory outside the declared regions are reported
 #   rust     every listed hook on Rust (`ports`: SA_HOOK_PORTS=rust; otherwise SA_HOOK_MODE=NAME=rust)
 #   hookoff  (opt-in, one run per hook) every listed hook on Rust except that one (PLAN §5 L3 hook-off)
+#   split    (opt-in, INF-17) two split-run recordings: `splito` (SA_L2_SPLIT=orig: every sampled call of
+#            the listed hooks runs the original ONCE and is recorded) and `splitr` (SA_L2_SPLIT=rust: the
+#            Rust implementations); `sa-oracle l2 split-report` pairs the calls by (function, ordinal),
+#            checks that their inputs are identical and compares the outputs (for functions that cannot
+#            run twice on the same OS state; docs/re/l2-oracle.md). SPLIT_PER_FRAME (default 1000);
+#            SPLIT_DUMP_SEQ=N,… dumps the watched windows at those cases (`sa-oracle l2 dump-diff`)
 # and checks:
 #   (a) per hook: >= MAX cases or every call compared, 0 mismatches, 0 undeclared writes; a hook that
 #       got no call in the run is reported as NOCALLS (not a failure, but no evidence either)
 #   (b) l2 trace == plain trace on every frame (the oracle does not perturb the run)
 #   (c) rust trace == plain trace on every frame and all 17 subsystems (L3); `randcalls` listed apart
 #   (d) hookoff traces == plain trace
+#   (e)  split: splito trace == plain, splitr trace == plain, split-report verdict per hook
 #   host: `sa-oracle l2 report` of each spool (0 mismatches)
+#   spool quota (INF-18): sa-hook stops spooling at L2_SPOOL_MAX bytes (SA_L2_SPOOL_MAX, default 2 GiB);
+#   a run that reached it is a FAIL line (cases compared before it stay valid); `df` is checked before
+#   every run (>= 20 GB free on /home)
 #
-# Env: LANE (default 2), SA_ROOT, L2_PER_FRAME (default 4), RUN_TIMEOUT (s, default 1500),
+# Env: LANE (default 2), SA_ROOT, L2_PER_FRAME (default 4), SPLIT_PER_FRAME (default 1000),
+# L2_SPOOL_MAX (bytes, default sa-hook's 2 GiB), L2_EXTRA (extra regions appended to every run's
+# SA_L2_EXTRA), RUN_TIMEOUT (s, default 1500),
 # L2_SPOOL_DISCARD=1 (drain the binary spool through a FIFO: no host report, bounded disk use).
 # Build first (see inf8-l2.sh). Output: target/e2e/lane-N/port-l2[-TAG]/ with summary.txt and
 # results.tsv (one row per hook: addr name calls cases mismatches undeclared_cases l2 l3).
@@ -99,9 +111,11 @@ modes() { # modes RUST_NAME... → SA_HOOK_MODE value: BASE_ORIG and listed sa-h
 # hook; `doc:DOC@REGION` lines to the hooks of a docs/arch/DOC.md function table: passed once without a
 # hook prefix (so they apply to every listed hook; a per-hook expansion for a few hundred hooks would
 # exceed the Windows environment limit) when at least one listed hook is in DOC.
+# L2_EXTRA (env) is appended as is (self-tests, e.g. the INF-18 quota test's huge region).
 extras_for() {
     local want="$1" line doc rest n hit
     local -A docset=()
+    {
     grep -v '^\s*#' "$HERE/l2-extras.txt" | grep -v '^\s*$' | while IFS= read -r line; do
         case "$line" in
             doc:*@*)
@@ -118,7 +132,9 @@ extras_for() {
                 ;;
             *) case ",$want," in *",${line%@*},"*) printf '%s,' "$line" ;; esac ;;
         esac
-    done | sed 's/,$//'
+    done
+    [ -n "${L2_EXTRA:-}" ] && printf '%s,' "$L2_EXTRA"
+    } | sed 's/,$//'
 }
 
 OUT="$E2E_OUT/port-l2$TAG"
@@ -151,9 +167,13 @@ win() { winepath -w "$1"; }
 cp "$OUT/l2.spec" "$DET/l2.spec"
 
 run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from process start to the end frame
-    local name="$1" start last="" st kv
+    local name="$1" start last="" st kv q
     shift
-    rm -f "$DET/$name.trace" "$DET/$name.spool" "$DET/$name.spool.txt" "$GTA_DIR/sa-hook.log"
+    if ! e2e_disk_check; then
+        check "run $name: >= 20 GB free on /home before the run" 0 "$(df -h /home | awk 'NR == 2 { print $4 }') free; run skipped"
+        return
+    fi
+    rm -f "$DET/$name.trace" "$DET/$name.spool" "$DET/$name.spool.txt" "$DET/$name".spool.seq*.win "$GTA_DIR/sa-hook.log"
     local drain=""
     if [ "${L2_SPOOL_DISCARD:-0}" = 1 ]; then
         # the binary spool (several MB per case) goes to a FIFO that is drained; verdicts stay in the
@@ -187,8 +207,16 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     for f in trace spool spool.txt; do
         [ -f "$DET/$name.$f" ] && mv -f "$DET/$name.$f" "$OUT/$name.$f"
     done
+    for f in "$DET/$name".spool.seq*.win; do
+        [ -f "$f" ] && mv -f "$f" "$OUT/"
+    done
     printf '%s\n' "$last" > "$OUT/$name.det"
     e2e_say "run $name finished in $(($(date +%s) - start)) s"
+    q="$(sed -n 's/.*l2: \(spool quota reached for [^ ]*\).*/\1/p' "$OUT/$name.log" 2> /dev/null | head -1)"
+    if [ -n "$q" ]; then
+        check "run $name: $q…, cases compared before it still valid" 0 \
+            "$(sed -n 's/.*l2: spool quota reached/spool quota reached/p' "$OUT/$name.log" | head -1)"
+    fi
 }
 reached() { grep -q "end frame $END_FRAME reached" "$OUT/$1.log" 2> /dev/null && echo 1; }
 trace_info() { "$SATOOL" show "$1" | awk 'NR > 1 { n++; f = $1 } END { printf "%d frames, last %d", n, f }'; }
@@ -217,6 +245,10 @@ note "hooks ($LIST): ${#NAMES[@]}: $L2NAMES"
 note "recording $REC ($("$SATOOL" rec "$REC" 2>&1 | tail -1)); end frame $END_FRAME"
 REPLAY="SA_DET_REPLAY=$(win "$DET/port-l2.sarec")"
 L2COMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${L2_PER_FRAME:-4}" SA_L2_SPEC="$(win "$DET/l2.spec")")
+[ -n "${L2_SPOOL_MAX:-}" ] && L2COMMON+=(SA_L2_SPOOL_MAX="$L2_SPOOL_MAX")
+SPLITCOMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${SPLIT_PER_FRAME:-1000}" SA_L2_SPEC="$(win "$DET/l2.spec")")
+[ -n "${L2_SPOOL_MAX:-}" ] && SPLITCOMMON+=(SA_L2_SPOOL_MAX="$L2_SPOOL_MAX")
+[ -n "${SPLIT_DUMP_SEQ:-}" ] && SPLITCOMMON+=(SA_L2_DUMP_SEQ="$SPLIT_DUMP_SEQ")
 
 for run in $RUNS; do
     case "$run" in
@@ -247,6 +279,16 @@ for run in $RUNS; do
             fi
             check "rust reached the end frame" "$(reached rust)" "$(trace_info "$OUT/rust.trace")"
             ;;
+        split)
+            ex="$(extras_for "$L2NAMES")"
+            note "split extra regions / OS probes: ${ex:-none}"
+            for side in orig rust; do
+                run_game "split${side:0:1}" "$REPLAY" SA_HOOK_MODE="$(modes)" SA_L2="$L2LIST" "${SPLITCOMMON[@]}" \
+                    SA_L2_SPLIT="$side" SA_L2_EXTRA="$ex" SA_L2_OUT="$(win "$DET/split${side:0:1}.spool")"
+                check "split${side:0:1} reached the end frame" "$(reached "split${side:0:1}")" \
+                    "$(trace_info "$OUT/split${side:0:1}.trace")"
+            done
+            ;;
         hookoff)
             for k in "${!NAMES[@]}"; do
                 others=()
@@ -259,11 +301,23 @@ done
 e2e_cleanup
 
 # ---- checks --------------------------------------------------------------------------------------------
-for r in l2 l2all; do
-    [ -f "$OUT/$r.trace" ] || continue
+for r in l2 l2all splito; do
+    [ -f "$OUT/$r.trace" ] && [ -f "$OUT/plain.trace" ] || continue
     ok="$(same_as_plain "$r")"
     check "(b) $r trace == plain trace on all $END_FRAME frames" "$ok" "$(tail -1 "$OUT/plain-vs-$r.txt" 2> /dev/null)"
 done
+if [ -f "$OUT/splitr.trace" ] && [ -f "$OUT/plain.trace" ]; then
+    ok="$(same_as_plain splitr)"
+    check "(e) splitr (Rust, split-run recording) trace == all-original trace on all $END_FRAME frames" "$ok" \
+        "$(tail -1 "$OUT/plain-vs-splitr.txt" 2> /dev/null)"
+fi
+SPLITREP=""
+if [ -f "$OUT/splito.spool" ] && [ -f "$OUT/splitr.spool" ]; then
+    "$ORACLE" l2 split-report "$OUT/splito.spool" "$OUT/splitr.spool" > "$OUT/split-report.txt" 2>&1
+    check "(e) split-report: every hook PASS, PASS-FP or NOCASES, no trailer" "$([ $? = 0 ] && echo 1)" \
+        "$(grep -c "^SPLIT PASS " "$OUT/split-report.txt") PASS, $(grep -c "^SPLIT PASS-FP" "$OUT/split-report.txt") PASS-FP, $(grep -c '^SPLIT FAIL' "$OUT/split-report.txt") FAIL, $(grep -c '^SPLIT DIVERGED' "$OUT/split-report.txt") DIVERGED, $(grep -c '^SPLIT COUNT' "$OUT/split-report.txt") COUNT; $(grep -m1 '^first input divergence' "$OUT/split-report.txt")"
+    SPLITREP="$OUT/split-report.txt"
+fi
 L3=""
 if [ -f "$OUT/rust.trace" ]; then
     L3="$(same_as_plain rust)"
@@ -276,7 +330,7 @@ S="$(l2_summary l2)"
 SA="$(l2_summary l2all)"
 [ -n "$S" ] && note "l2 summary: $S"
 [ -n "$SA" ] && note "l2all summary: $SA"
-printf 'addr\tname\tcalls\tcases\tmismatches\tundeclared_cases\tl2\tl3\thookoff\n' > "$OUT/results.tsv"
+printf 'addr\tname\tcalls\tcases\tmismatches\tundeclared_cases\tl2\tl3\thookoff\tsplit\n' > "$OUT/results.tsv"
 for k in "${!NAMES[@]}"; do
     fn="${NAMES[$k]}" addr="${ADDRS[$k]}"
     calls="$(l2_field "$S" "$fn" calls)"; cases="$(l2_field "$S" "$fn" cases)"
@@ -312,8 +366,13 @@ for k in "${!NAMES[@]}"; do
     fi
     l3=""
     [ -f "$OUT/rust.trace" ] && l3=$([ "$L3" = 1 ] && echo PASS || echo FAIL)
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$addr" "$fn" "${calls:-}" "${cases:-}" "${mism:-}" "${und:-}" \
-        "$l2" "$l3" "$ho" >> "$OUT/results.tsv"
+    sp=""
+    if [ -n "$SPLITREP" ]; then
+        sp="$(awk -v a="$(printf '0x%08x' "$addr")" '$1 == "SPLIT" && $3 == a { print $2; exit }' "$SPLITREP")"
+        sp="${sp:-NOCASES}"
+    fi
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$addr" "$fn" "${calls:-}" "${cases:-}" "${mism:-}" "${und:-}" \
+        "$l2" "$l3" "$ho" "$sp" >> "$OUT/results.tsv"
 done
 for r in l2 l2all; do
     [ -f "$OUT/$r.spool" ] || continue

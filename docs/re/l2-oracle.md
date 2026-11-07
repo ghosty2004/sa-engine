@@ -65,7 +65,8 @@ unbounded (base/index) catalogue entry are marked as such.
 - `sa-oracle l2 replay [--fn F] [--mutant F]`: recomputes the Rust side on the host from the stored inputs
   with the same Rust hook code and compares with the stored original outputs (return values, x87 stack,
   memory through `this`/pointers; ABI fields come from the stored in-process Rust run).
-- `sa-oracle l2 report SPOOL`, `sa-oracle l2 show SPOOL|FIXTURE [N]`.
+- `sa-oracle l2 report SPOOL`, `sa-oracle l2 show SPOOL|FIXTURE [N]`, `sa-oracle l2 split-report PLAIN RUST`
+  and `l2 dump-diff A B` (split-run mode, below).
 - Control channel: `l2` (summary), `l2 flush`, `hook NAME l2`.
 
 ## Extra regions (heap memory the catalogue cannot name)
@@ -89,7 +90,7 @@ there when a port reads or writes heap memory.
 ## Verifying a porting batch: `tools/e2e/port-l2.sh`
 
 ```text
-tools/e2e/port-l2.sh <HOOKS|ports> [RECORDING] [--runs "plain l2 rust hookoff"] [--max N]
+tools/e2e/port-l2.sh <HOOKS|ports> [RECORDING] [--runs "plain l2 rust hookoff split"] [--max N]
                      [--window-all HOOKS] [--tag NAME]
 ```
 
@@ -109,6 +110,7 @@ all-original:
 | `l2all` | with `--window-all HOOKS`: L2 on those hooks with `SA_L2_WINDOW=all` (heap arena watched: writes to heap memory outside the declared regions are reported; slow) |
 | `rust` | the list on Rust (`ports`: `SA_HOOK_PORTS=rust`, otherwise `SA_HOOK_MODE=NAME=rust`) |
 | `hookoff` | opt-in: one run per hook with every other listed hook on Rust (PLAN §5 hook-off check) |
+| `split` | opt-in: `splito` + `splitr` split-run recordings and `split-report` (INF-17, below) |
 
 Checks: per hook ≥ MAX cases (default 1000) or every call, 0 mismatches, 0 undeclared writes (a hook
 without calls is `NOCALLS`: no failure, no evidence); the l2 trace equals the plain trace (the oracle
@@ -128,8 +130,83 @@ New corpus recordings: `tools/e2e/record-program.sh PROGRAM [--shot-every N] [--
 input program from `tools/e2e/programs/` (screenshots every N frames, optional replay check); pass the
 resulting `rec.sarec` to `port-l2.sh`.
 
+## Spool quota (INF-18)
+
+sa-hook counts the bytes it spools. When the next record would pass `SA_L2_SPOOL_MAX` (bytes, default
+2 GiB; `k`/`M`/`G` suffixes), it stops spooling for the rest of the run: it writes a trailer
+(`[u32 0xFFFFFFFF][u32 len][text]`, `sa_oracle_format::l2::spool_trailer`) and logs
+`l2: spool quota reached for HOOK at frame F: … (cases compared before it still valid)`. Comparisons go on
+in-process (the summary gets `spool_quota_reached=HOOK@frameF spooled=N`); only the spool stops.
+`sa-oracle l2 report` prints the trailer (`TRAILER …`), `split-report` fails on one. `port-l2.sh` passes
+`L2_SPOOL_MAX` through, reports a run that reached the quota as a FAIL line (`spool quota reached for
+HOOK…, cases compared before it still valid`) and checks `df` (≥ 20 GB free on /home) before every run.
+Test: CTimer::UpdateVariables with a 16 MiB extra region (`L2_EXTRA='CTimer::UpdateVariables@0x400000:0x1000000:R'`,
+48 MiB per case): quota reached at frame 43 after 42 records (2,113,969,760 bytes); the in-process run
+went on to 1,000 cases, 0 mismatches.
+
+## Split-run L2 (INF-17): functions that cannot run twice on the same OS state
+
+The double-run case runs the original and the Rust implementation one after the other on the same
+process; effects outside process memory (file positions, descriptors, CRT thread state, D3D/OS objects,
+one-time initialisers) are not undone between them. Split-run mode runs each implementation in its own
+process and compares call by call:
+
+- `SA_L2_SPLIT=orig` (the plain run) / `rust` (the rust run), with `SA_L2` = the hooks. Every sampled call
+  runs ONE implementation on the live state (no restore; unsampled and nested calls run the same
+  implementation), and is recorded like an L2 case with that outcome in `orig` and `leave` = 2 / 3:
+  arguments, entry registers, FPU env, MXCSR, the regions before and after (spec globals, `SA_L2_EXTRA`,
+  `this`, pointer arguments), window writes with the whole aligned words around them before the call,
+  the callee log, arena allocations, plus (case extension `EXT1`, plain L2 cases are encoded unchanged)
+  a global sequence number, the hash of every 4 KiB page of the static windows, the entry stack pointer
+  and the thread's stack range, the OS object addresses seen and the raw values of the reviewed
+  volatile bytes. Cases may nest (the invoker restores its block; callee logs are saved/restored).
+- `SA_L2_EXTRA` gains `post:` (address/length evaluated after the call with the exit registers, e.g.
+  `post:[0xC886EC]:0x30` for an object the call creates; only post bytes compared) and OS-effect probes
+  `os:file:EXPR` (CRT `FILE*` at EXPR: the FILE block, the descriptor's CRT flags from `__pioinfo`
+  0xC9C300 / `_nhandle` 0xC9C2FC as read from `_get_osfhandle` 0x833D2C, and the OS file: final path,
+  position from a zero `FILE_CURRENT` move, size; the handle value is never recorded), `os:cwd`,
+  `os:cursor`. Probes without `post:` are taken before and after the call. OS probes compare raw.
+- `sa-oracle l2 split-report PLAIN.spool RUST.spool [--timeline N] [--nesting]` pairs cases by (function,
+  ordinal). Determinism mode keeps both runs identical up to the first differing output, so a pair is
+  compared only when its inputs are identical: frame, caller (soft when either return address is
+  outside the exe: a Rust or Wine frame between), stack arguments and convention registers, x87 CW,
+  MXCSR control bits, every read region before the call, the pre-call OS probes, the window bytes both
+  runs wrote. The first differing pair ends that function's comparison (`DIVERGED`, field shown); the
+  earliest one over all functions is printed first because later differences may follow from it.
+  Outputs: `l2::compare` on a merged case (plain record + rust outcome, each run's own window bytes
+  before the call); callee-saved registers whose entry values differ compare as "preserved". The page
+  fingerprint does not stop the comparison: a function whose outputs and declared inputs matched while
+  some page differed is `PASS-FP` (pages listed). Verdicts: PASS, PASS-FP, FAIL, DIVERGED, COUNT (case
+  counts differ), NOCASES. Undeclared write ranges are listed (spec/extras completeness).
+  `--nesting` lists recorded calls made inside other recorded calls; `--timeline` lists every pair
+  with differing inputs in call order.
+- `port-l2.sh … --runs "plain split"` runs `splito` and `splitr` (`SPLIT_PER_FRAME`, default 1000),
+  checks both traces against `plain` and writes `split-report.txt` and a `split` column in results.tsv.
+  Diagnostics: `SPLIT_DUMP_SEQ=N,…` (`SA_L2_DUMP_SEQ`) dumps the static windows at those cases to
+  `SPOOL.seqN.win`; `sa-oracle l2 dump-diff A.win B.win` lists the differing ranges with symbols.
+
+What two processes legitimately disagree on, and how each is handled (all in `normalise.rs`, each with
+a test, every use listed by `split-report`):
+
+| what | rule | evidence |
+|---|---|---|
+| CRT `__security_cookie` 0x8E31BC, `gStreamingThreadId` 0x8E4000, MEMORYSTATUS free phys/virtual 0xC8CF74/0xC8CF7C, `rdtsc` copy 0xC92104 (8), AESmoothFadeThread handle/thread id 0xB608D0 (8), audio stream thread handle 0xB606D0, gpColCache2/gpColCache 0x9655C8 (8) | `INPUT_EXCLUSIONS`: zeroed in the page fingerprint and, in merged pairs, excluded from the comparison; raw values recorded per case (`input exclusion used` lines) | disassembly addresses in the rule texts; window dumps of plain vs rust (`dump-diff`): these were the only differing non-pointer bytes |
+| OS object addresses (IDirect3D9, surfaces, vertex declarations, DirectInput/DirectSound objects) | `Foreign` class: a word that points into committed memory outside the image, the arena and the stack (VirtualQuery map before and after the call) equals another such word; the page fingerprint masks every word whose value lies below the arena outside image/stack (value-only decision, identical in both runs) | Rust code allocates from the process heap, so later Wine allocations move (identical windows up to Win32_InitInstance, then e.g. RwEngineInstance+0x94 0x0301A530 vs 0x0301A340) |
+| stack addresses below a Rust ancestor | `Stack` class: compared by offset from the call's argument block; rust-run stack addresses rebased by the entry-ESP difference | SetVideoMode (Rust) above the RW file reads: whole stack 0x30 lower |
+| uninitialised original bytes | `exclusions()`: Light::LightsCreate RpLight alpha (+0x24) and pDirect's frame matrix pads | 0x5BA54E-0x5BA55E (RGB only), RpLightSetColor 0x751A90 copies 16 bytes; RwFrameRotate pads |
+
+No rule normalises CRT descriptor numbers: they compared equal in every pair.
+
+Grouping: a recorded call below another listed Rust function runs below Rust frames (other stack
+depth, the FpuGuard's MXCSR, other return path). Lists for the CORE-L2b set: `tools/e2e/lists/core-split.txt`
+(all 54), `core-split-l.txt` (leaves), `core-split-m.txt`, `core-split-h.txt` (outer); see `--nesting`.
+
 ## Limits
 
+- Split-run mode cannot see state outside game memory that it does not probe (D3D device state, the
+  message queue, DirectShow), compares heap objects only through declared regions, and needs both runs
+  to stay in step: a port that changes later state (directly or through original UB on its stack
+  residue) makes every later pair `PASS-FP` or `DIVERGED`.
 - Memory outside the regions and windows (heap objects other than `this`/pointer arguments) is neither
   restored between the two runs nor compared, unless `SA_L2_WINDOW=all`. A function with such effects
   can therefore leave the Rust run starting from a different state; the case then shows a mismatch.
