@@ -17,6 +17,12 @@
 //!   bytes the installer must find, the shim address (0 off x86) and the call counter. The crate lists
 //!   these constants explicitly (`sa_core::hooks::ALL`); `sa-hook` installs them.
 //!
+//! `preserve = "edx"` (or `"ecx"`, `"ecx,edx"`): some original callers rely on the original function
+//! leaving a scratch register unchanged (whole-program-optimised call sites, e.g. 0x5B4177 tests DL
+//! after calling 0x5B3AD0). The entry is then a naked wrapper around the shim: it pushes the listed
+//! registers, copies the stack arguments, calls the shim, pops the registers and returns with the
+//! original convention (`ret` / `ret 4*n`). The shim's result registers (EAX, ST0) pass through.
+//!
 //! Generated paths start with `::sa_core`, so the crate that uses `#[hook]` must have `sa_core` in
 //! scope (sa-core itself declares `extern crate self as sa_core`).
 
@@ -91,6 +97,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut name: Option<LitStr> = None;
     let mut expect: Option<Vec<u8>> = None;
     let mut this: Option<LitStr> = None;
+    let mut preserve: Option<LitStr> = None;
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -105,14 +112,16 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             expect = Some(parse_expect(&v)?);
         } else if meta.path.is_ident("this") {
             this = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("preserve") {
+            preserve = Some(meta.value()?.parse()?);
         } else {
-            return Err(meta.error("expected addr, conv, name, expect or this"));
+            return Err(meta.error("expected addr, conv, name, expect, this or preserve"));
         }
         Ok(())
     });
     parse_macro_input!(attr with parser);
     let f = parse_macro_input!(item as ItemFn);
-    match expand(f, addr, conv, name, expect, this) {
+    match expand(f, addr, conv, name, expect, this, preserve) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -125,6 +134,7 @@ fn expand(
     name: Option<LitStr>,
     expect: Option<Vec<u8>>,
     this: Option<LitStr>,
+    preserve: Option<LitStr>,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -204,6 +214,77 @@ fn expand(
     let abi = conv.abi();
     let variant = conv.variant();
     let doc = format!("Hook registration of `{}` ({addr:#x}).", name.value());
+    // Registers to return unchanged, in push order.
+    let mut saved: Vec<&'static str> = Vec::new();
+    if let Some(p) = &preserve {
+        for r in p.value().split(',').map(str::trim) {
+            let r = match r {
+                "ecx" => "ecx",
+                "edx" => "edx",
+                _ => {
+                    return Err(syn::Error::new(
+                        p.span(),
+                        format!("preserve: `{r}` is not ecx or edx"),
+                    ));
+                }
+            };
+            if saved.contains(&r) {
+                return Err(syn::Error::new(p.span(), format!("preserve: `{r}` twice")));
+            }
+            saved.push(r);
+        }
+        if saved.is_empty() {
+            return Err(syn::Error::new(p.span(), "preserve: no register"));
+        }
+        let wide = matches!(&sig.output, ReturnType::Type(_, t) if matches!(quote!(#t).to_string().as_str(), "u64" | "i64"));
+        if wide && saved.contains(&"edx") {
+            return Err(syn::Error::new(
+                p.span(),
+                "preserve: EDX carries the upper half of a 64-bit result",
+            ));
+        }
+    }
+    let mask: u8 = saved
+        .iter()
+        .map(|r| if *r == "ecx" { 1u8 } else { 2u8 })
+        .fold(0, |a, b| a | b);
+    let words = quote!((0u8 #(+ ::sa_core::abi::stack_words::<#stack_tys>())*));
+    // The naked wrapper (entry when registers are preserved): push the saved registers, copy the
+    // `n` stack argument words (each `push [esp + 4*(saved + n)]` copies the next lower word, the
+    // displacement stays constant), call the shim (ECX/EDX still hold register arguments), drop the
+    // copies for cdecl, pop, return as the original.
+    let (wrapper, entry) = if saved.is_empty() {
+        (quote!(), quote!(#shim as usize))
+    } else {
+        let wrap = format_ident!("__sa_hook_preserve_{}", fname);
+        let mut lines: Vec<String> = saved.iter().map(|r| format!("push {r}")).collect();
+        lines.push(".rept {n}".into());
+        lines.push("push dword ptr [esp + {d}]".into());
+        lines.push(".endr".into());
+        lines.push("call {inner}".into());
+        if matches!(conv, Conv::Cdecl) {
+            lines.push("add esp, {b}".into());
+        }
+        lines.extend(saved.iter().rev().map(|r| format!("pop {r}")));
+        lines.push(if matches!(conv, Conv::Cdecl) { "ret".into() } else { "ret {b}".into() });
+        let nsaved = saved.len() as u32;
+        let wrapper = quote! {
+            #[cfg(target_arch = "x86")]
+            #[doc(hidden)]
+            #[unsafe(naked)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+                ::core::arch::naked_asm!(
+                    #(#lines),*,
+                    n = const #words as u32,
+                    d = const 4 * (#nsaved + #words as u32),
+                    b = const 4 * (#words as u32),
+                    inner = sym #shim,
+                )
+            }
+        };
+        (wrapper, quote!(#wrap as usize))
+    };
     Ok(quote! {
         #f
 
@@ -221,6 +302,8 @@ fn expand(
             ::sa_core::abi::IntoAbi::into_abi(r)
         }
 
+        #wrapper
+
         #[doc = #doc]
         pub const #reg: ::sa_core::abi::HookReg = ::sa_core::abi::HookReg {
             addr: #addr,
@@ -230,7 +313,7 @@ fn expand(
             entry: || {
                 #[cfg(target_arch = "x86")]
                 {
-                    #shim as usize
+                    #entry
                 }
                 #[cfg(not(target_arch = "x86"))]
                 {
@@ -238,10 +321,11 @@ fn expand(
                 }
             },
             calls: || #calls.load(::core::sync::atomic::Ordering::Relaxed),
-            stack_words: 0 #(+ ::sa_core::abi::stack_words::<#stack_tys>())*,
+            stack_words: #words,
             ret: <#ret as ::sa_core::abi::IntoAbi>::RET,
             this_type: #this_type,
             this_size: #this_size,
+            preserve: #mask,
         };
     })
 }

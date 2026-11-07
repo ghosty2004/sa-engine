@@ -81,6 +81,7 @@ fn ptr(s: &mut [u8; SCRATCH_LEN], off: u32) -> GPtr<u8> {
 
 fn base_spec(key: &'static str, name: &'static str, addr: u32, ret: RetKind) -> Spec {
     Spec {
+        preserve: 0,
         key,
         name,
         addr,
@@ -336,6 +337,9 @@ pub fn does_infinite_line_cross_finite_line() -> Spec {
             );
             Expect::Returns { ret: ExpRet::Eax(v as u32), scratch: *s }
         }),
+        // DoesInfiniteLineTouchScreen (0x71DB80) keeps the screen width/height in ECX/EDX across
+        // its first call (0x71DC62) and pushes them again for the second (VER-2)
+        preserve: sa_core::abi::PRESERVE_ECX | sa_core::abi::PRESERVE_EDX,
         ..float_spec("DoesInfiniteLineCrossFiniteLine", "FUN_0071db30", 0x71DB30, 8, RetKind::Eax)
     }
 }

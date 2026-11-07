@@ -185,12 +185,11 @@ mod audit {
                         d.stack_gen[o] = d.generation;
                     }
                 }
-            } else if (SCRATCH..SCRATCH + SCRATCH_LEN as u32).contains(&a) {
-            } else if (TIB..TIB + 4).contains(&a) {
+            } else if (SCRATCH..SCRATCH + SCRATCH_LEN as u32).contains(&a) || (TIB..TIB + 4).contains(&a) {
+                // compared scratch, SEH head
             } else if (SCRATCH..SCRATCH + 0x1_0000).contains(&a) {
                 bump(&mut d.w_scratch_hi, a - SCRATCH);
-            } else if (EXIT..EXIT + 0x1000).contains(&a) {
-            } else {
+            } else if !(EXIT..EXIT + 0x1000).contains(&a) {
                 bump(&mut d.w_other, a);
             }
             true
@@ -473,11 +472,11 @@ fn verifier_mutants_core_stream() {
                 e
             }
         }),
-        // generator gap (V-11): ~2 hits per 10^6 cases; see verifier_gta_translate_key_boundary
-        false,
+        // V-11 (fixed in VER-2): the generator biases MapVirtualKeyA's char to 0xFE/0xFF/0x100
+        true,
     ));
-    // SetBaseModelInfoFlags: EDX is part of the caller-visible state (0x5B4179), the spec cannot see it
-    // (no mutant expressible: Expect has no EDX field) -> documented as V-9, not a mutant.
+    // SetBaseModelInfoFlags: EDX is part of the caller-visible state (0x5B4179); since VER-2 the
+    // spec compares it (`Spec::preserve`), see verifier_edx_live_across_set_base_model_info_flags.
     // CPedModelInfo::IncrementVoice: wrap test `>=` instead of `>`
     cases.push((
         "CPedModelInfoIncrementVoice",
@@ -554,10 +553,23 @@ fn verifier_mutants_core_stream() {
         Box::new(|i, _b, e| {
             let scan = i[0];
             if scan > 0xFF {
-                with(e, |ret, _| *ret = ExpRet::Al(0xEE))
+                with(e, |ret, _| *ret = ExpRet::Eax(0xEE))
             } else {
                 e
             }
+        }),
+        true,
+    ));
+    // RsKeyFromScanCode: AL right, upper EAX not zero-extended (V-14: EAX is compared whole)
+    cases.push((
+        "RsKeyFromScanCode",
+        "upper EAX bits left set",
+        Box::new(|_i, _b, e| {
+            with(e, |ret, _| {
+                if let ExpRet::Eax(v) = ret {
+                    *ret = ExpRet::Eax(*v | 0xA500)
+                }
+            })
         }),
         true,
     ));
@@ -661,103 +673,81 @@ fn verifier_store_mutants_all_claimed() {
     assert!(uncaught_writers.is_empty());
 }
 
-// =========================================== 4. specs that do not run the hooked entry ==============
+// =========================================== 4. specs that did not run the hooked entry (V-10) =====
 
-/// The four `CPad::Is*JustPressed` specs compute the expected value inside the spec (`key_spec`,
-/// `CPadIsStandardKeyJustPressed`), and `GetDayNightBalance` / `__init_g_bab358` run a pure helper:
-/// none of them calls the hooked port. Here the same specs get the actual hooked entries, run on the
-/// host with sa-core's / sa-stream's Rust-owned globals filled from the scratch regions. Expected: 0
-/// mismatches (the ports are right; the claims just did not test them).
+/// V-10: the 44 helper/model specs now run the hooked entries on the host (`sa_oracle::hosted`):
+/// host globals filled from the scratch regions, stand-ins for unported callees, and the 32-bit
+/// `CPool` header bridged to the host layout. Re-run of the six specs this probe used to rewire
+/// itself (10^6 cases by default), plus discriminating faults that only the entries can show.
 #[test]
 fn verifier_hooked_entries_through_host_globals() {
-    use sa_core::input::{self, NEW_KEY_STATE, OLD_KEY_STATE};
-    use sa_core::light::{self, CLOCK_HOURS, CLOCK_MINUTES, CLOCK_SECONDS};
     let Some(img) = img() else { return };
     let n = env_u64("VERIFY_HOOKED_CASES", 1_000_000);
-    fn set_key(state: &sa_core::mem::Global<input::KeyboardState>, byte_off: usize, v: u16) {
-        let mut s = state.get();
-        s[byte_off / 2] = v as i16;
-        state.set(s);
-    }
-    fn word(s: &[u8; SCRATCH_LEN], o: usize) -> u32 {
-        u32::from_le_bytes(s[o..o + 4].try_into().unwrap())
-    }
-    // (spec, key offsets in the original's order)
-    let pairs: [(&str, &[usize]); 3] = [
-        ("CPadIsEnterJustPressed", &[0x23C, 0x25A]),
-        ("CPadIsMenuKeyJustPressed", &[0x266, 0x268]),
-        ("CPadIsTabJustPressed", &[0x256]),
-    ];
     let mut ok = true;
-    for (key, offs) in pairs {
-        let mut s = spec(key);
-        let offs: Vec<usize> = offs.to_vec();
-        let al = s.ret == RetKind::Al;
-        s.rust = Arc::new(move |_i, sc| {
-            NEW_KEY_STATE.set([0; 0x138]);
-            OLD_KEY_STATE.set([0; 0x138]);
-            for (p, &o) in offs.iter().enumerate() {
-                set_key(&NEW_KEY_STATE, o, word(sc, 0x10 + 8 * p) as u16);
-                set_key(&OLD_KEY_STATE, o, word(sc, 0x14 + 8 * p) as u16);
-            }
-            let ret = match key {
-                "CPadIsEnterJustPressed" => ExpRet::Al(input::is_enter_just_pressed() as u8),
-                "CPadIsMenuKeyJustPressed" => ExpRet::Eax(input::is_menu_key_just_pressed()),
-                _ => ExpRet::Eax(input::is_tab_just_pressed()),
-            };
-            let _ = al;
-            Expect::Returns { ret, scratch: *sc }
-        });
-        let rep = runner::run(&s, &img, &cfg(n)).unwrap();
+    for key in [
+        "CPadIsEnterJustPressed",
+        "CPadIsMenuKeyJustPressed",
+        "CPadIsTabJustPressed",
+        "CPadIsStandardKeyJustPressed",
+        "GetDayNightBalance",
+        "InitGBab358",
+    ] {
+        let s = spec(key);
+        let cases = if key == "InitGBab358" { n.min(10_000) } else { n };
+        let rep = runner::run(&s, &img, &cfg(cases)).unwrap();
         println!("  {key:<34} hooked entry: mismatches={} {:?}", rep.mismatches, rep.kinds);
         ok &= rep.mismatches == 0;
     }
-    {
-        let mut s = spec("CPadIsStandardKeyJustPressed");
-        s.rust = Arc::new(|i, sc| {
-            let mut new = [0i16; 0x138];
-            let mut old = [0i16; 0x138];
-            for k in 0..0x100 {
-                new[0x0C + k] = i16::from_le_bytes([sc[0x10 + 2 * k], sc[0x11 + 2 * k]]);
-                old[0x0C + k] = i16::from_le_bytes([sc[0x220 + 2 * k], sc[0x221 + 2 * k]]);
-            }
-            NEW_KEY_STATE.set(new);
-            OLD_KEY_STATE.set(old);
-            // args: [this (raw), key]: raw slots first
-            let r = input::is_standard_key_just_pressed(sa_core::mem::GPtr::NULL, i[1]);
-            Expect::Returns { ret: ExpRet::Eax(r), scratch: *sc }
-        });
-        let rep = runner::run(&s, &img, &cfg(n)).unwrap();
-        println!("  CPadIsStandardKeyJustPressed       hooked entry: mismatches={} {:?}", rep.mismatches, rep.kinds);
-        ok &= rep.mismatches == 0;
-    }
-    {
-        let mut s = spec("GetDayNightBalance");
-        s.rust = Arc::new(|_i, sc| {
-            let w = word(sc, 0x10);
-            CLOCK_SECONDS.set(w as u16);
-            CLOCK_MINUTES.set((w >> 16) as u8);
-            CLOCK_HOURS.set((w >> 24) as u8);
-            let v = light::get_day_night_balance();
-            Expect::Returns { ret: ExpRet::St0 { f32: v.to_f32().to_bits(), ext: v.to_ext() }, scratch: *sc }
-        });
-        let rep = runner::run(&s, &img, &cfg(n)).unwrap();
-        println!("  GetDayNightBalance                 hooked entry: mismatches={} {:?}", rep.mismatches, rep.kinds);
-        ok &= rep.mismatches == 0;
-    }
-    {
-        let mut s = spec("InitGBab358");
-        s.rust = Arc::new(|_i, sc| {
-            sa_stream::loading_screen::init_g_bab358();
-            let mut o = *sc;
-            o[0x10..0x14].copy_from_slice(&sa_stream::loading_screen::G_BAB358.get().to_bits().to_le_bytes());
-            Expect::Returns { ret: ExpRet::Void, scratch: o }
-        });
-        let rep = runner::run(&s, &img, &cfg(n.min(10_000))).unwrap();
-        println!("  InitGBab358                        hooked entry: mismatches={} {:?}", rep.mismatches, rep.kinds);
-        ok &= rep.mismatches == 0;
-    }
     assert!(ok);
+}
+
+/// The hosted pool specs see what the entries do: a slot type of the wrong size, the wrong
+/// allocator, and a delete through the wrong pool global are all caught.
+#[test]
+fn verifier_hosted_pool_entries_discriminate() {
+    use sa_core::mem::GPtr;
+    use sa_core::pool::{self, CPool};
+    use sa_core::pools::{self as ps, Slot};
+    let Some(img) = img() else { return };
+    let n = env_u64("VERIFY_MUTANT_CASES", 20_000);
+    // CColModelPool::New (slot 0x30) run with a 0x2C slot
+    let mut s = spec("CColModelPoolNew");
+    s.rust = Arc::new(|_i, sc| {
+        let (out, eax) = sa_oracle::hosted::run_pool::<Slot<0x2C>>(sc, &|p| pool::pool_new(p).addr());
+        Expect::Returns { ret: ExpRet::Eax(eax), scratch: out }
+    });
+    let r = runner::run(&s, &img, &cfg(n)).unwrap();
+    println!("  CColModelPoolNew with slot 0x2C: mismatches={} {:?}", r.mismatches, r.kinds);
+    assert!(r.mismatches > 0);
+    // CPool<CPtrNodeSingleLink> ctor (new[] 0x821195) checked against `operator new` 0x82119A
+    let mut s = spec("CPoolCtor550180");
+    let real = s.rust.clone();
+    s.rust = Arc::new(move |i, sc| {
+        let e = real(i, sc);
+        sa_oracle::hosted::expect_allocator(sa_oracle::hosted::NEW);
+        let r = std::panic::catch_unwind(|| {
+            sa_oracle::hosted::run_pool::<Slot<0x08>>(sc, &|p| ps::ctor_ptr_node_single(p, i[0] as i32, GPtr::NULL).addr())
+        });
+        assert!(r.is_err(), "allocator mismatch not detected");
+        e
+    });
+    let r = runner::run(&s, &img, &cfg(200)).unwrap();
+    assert_eq!(r.mismatches, 0);
+    // CEntryInfoNode::operator delete through the node-route pool global (slot 0x24 instead of 0x14)
+    let mut s = spec("CEntryInfoNodeOperatorDelete");
+    s.rust = Arc::new(|i, sc| {
+        let obj = *i.last().unwrap();
+        let _g = sa_oracle::host_globals();
+        let (out, _) = sa_oracle::hosted::run_pool::<Slot<0x24>>(sc, &|p: GPtr<CPool<Slot<0x24>>>| {
+            ps::NODE_ROUTE_POOL.set(p);
+            ps::node_route_operator_delete(GPtr::from_addr(obj as usize));
+            0
+        });
+        Expect::Returns { ret: ExpRet::Void, scratch: out }
+    });
+    let r = runner::run(&s, &img, &cfg(n)).unwrap();
+    println!("  CEntryInfoNodeOperatorDelete via CNodeRoute's entry: mismatches={} {:?}", r.mismatches, r.kinds);
+    assert!(r.mismatches > 0);
 }
 
 // ============================================== 5. targeted generator-gap probes ===================
@@ -799,27 +789,32 @@ fn verifier_gta_translate_key_boundary() {
 // ====================================== 6. EDX is live across SetBaseModelInfoFlags (0x5B4179) =====
 
 /// The caller at 0x5B4177 (`mov edx, eax; call 0x5B3AD0; add esp, 8; test dl, 0x20`) relies on the
-/// callee leaving EDX unchanged (whole-program optimisation: 0x5B3AD0 never writes EDX). The spec
-/// does not compare EDX, and the hook shim is a plain `extern "C"` function for which EDX is
-/// caller-saved. Checks the caller's bytes and that the original preserves EDX on every spec case.
+/// callee leaving EDX unchanged (whole-program optimisation: 0x5B3AD0 never writes EDX). Since
+/// VER-2 the spec declares EDX preserved: the runner loads EDX with a per-case value, requires the
+/// original to return it and the port's `#[hook]` to declare `preserve = "edx"` (its entry is then
+/// an EDX-saving wrapper). Both halves of that comparison are shown to discriminate.
 #[test]
 fn verifier_edx_live_across_set_base_model_info_flags() {
     let Some(img) = img() else { return };
     let site = img.bytes(0x5B4177, 15);
     assert_eq!(site, &[0x8B, 0xD0, 0xE8, 0x52, 0xF9, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0xF6, 0xC2, 0x20, 0x74, 0x06]);
     let s = spec("CBaseModelInfoSetBaseModelInfoFlags");
-    let prep = runner::prepare(&img, &s).unwrap();
-    let mut emu = sa_oracle::emu::Emu::new(img.clone()).unwrap();
-    emu.budget = s.budget;
-    let mut changed = 0;
-    let n = 100_000u64;
-    for k in 0..n {
-        let i = (s.generate)(&mut Rng::for_case(0xED0, k));
-        let mut c = (s.call)(&i);
-        c.edx = i[0] ^ 0x5A5A_1234;
-        let o = emu.call(&c, &prep.allow).unwrap();
-        changed += (o.edx != c.edx) as u64;
-    }
-    println!("  0x5B3AD0: EDX changed on {changed}/{n} calls; caller 0x5B4181 tests DL after the call");
-    assert_eq!(changed, 0);
+    assert_eq!(s.preserve, sa_core::abi::PRESERVE_EDX);
+    assert_eq!(sa_oracle::hook_preserve(0x5B3AD0), Some(sa_core::abi::PRESERVE_EDX));
+    let r = runner::run(&s, &img, &cfg(100_000)).unwrap();
+    println!("  0x5B3AD0 with EDX compared: mismatches={} {:?}", r.mismatches, r.kinds);
+    assert_eq!(r.mismatches, 0);
+    // a port without `preserve`: RsKeyFromScanCode's original never writes EDX either
+    let mut k = spec("RsKeyFromScanCode");
+    k.preserve = sa_core::abi::PRESERVE_EDX;
+    let r = runner::run(&k, &img, &cfg(10_000)).unwrap();
+    println!("  RsKeyFromScanCode declared EDX-preserving, hook without preserve: mismatches={} {:?}", r.mismatches, r.kinds);
+    assert_eq!(r.mismatches, r.total());
+    // an original that writes EDX: SetAtomicModelInfoFlags (`mov dx, ...` after the call)
+    let mut a = spec("CAtomicModelInfoSetAtomicModelInfoFlags");
+    a.preserve = sa_core::abi::PRESERVE_EDX;
+    let r = runner::run(&a, &img, &cfg(10_000)).unwrap();
+    println!("  SetAtomicModelInfoFlags declared EDX-preserving: mismatches={} {:?}", r.mismatches, r.kinds);
+    assert!(r.mismatches > 0);
+    assert!(r.examples.iter().all(|m| m.detail.contains("on return")));
 }

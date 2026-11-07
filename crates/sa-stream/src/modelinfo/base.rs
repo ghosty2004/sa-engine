@@ -308,7 +308,7 @@ pub fn base_model_info_flags_byte(b: u8, flags: u32) -> u8 {
 /// `CBaseModelInfo::SetBaseModelInfoFlags(CBaseModelInfo*, uint32)` (0x5B3AD0, cdecl): six
 /// read-modify-writes of the low flags byte (draw last, additive, no z-write, no shadows, and
 /// "backface culled" = IDE bit 21 clear).
-#[hook(addr = 0x5B3AD0, conv = cdecl, name = "CBaseModelInfo::SetBaseModelInfoFlags", expect = "8B 44 24 04 8B 4C 24 08")]
+#[hook(addr = 0x5B3AD0, conv = cdecl, name = "CBaseModelInfo::SetBaseModelInfoFlags", expect = "8B 44 24 04 8B 4C 24 08", preserve = "edx")]
 pub fn set_base_model_info_flags(m: MiPtr, flags: u32) {
     let p = flags_lo(m);
     p.write(base_model_info_flags_byte(p.read(), flags));

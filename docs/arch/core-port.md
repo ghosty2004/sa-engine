@@ -416,3 +416,49 @@ All keep-original (the ports follow the bytes). Candidates for CAT-14 notes.
 | 0x53C500 | source/game_sa/Game.cpp:192 (TidyUpMemory) | the original calls TidyUpD3DTextures(100)/TidyUpD3DIndexBuffers(200) itself; gr calls DrasticTidyUpMemory (same effect, different call graph for hook toggles) | 0x53C516-0x53C527 |
 | 0x53E600 | source/game_sa/Draw.cpp:39,43 (DoFade) | `JustLoadedDontFadeInYet` / `StillToFadeOut` are tested with `cmp byte, 1` (exactly 1), not as bools | 0x53E629 `cmp al, cl` (cl = 1), 0x53E63D `cmp byte [0xC16EDD], cl` |
 | 0x5BF3B0 | source/app/app_game.cpp:51 (GameInit) | `RwInitialize(nullptr)` is inlined and its result ignored (gr wraps it in VERIFY) | 0x5BF3B2-0x5BF3BE |
+
+## CORE-L2b: in-game L2/L3 of the 191 `implemented-needs-L2` rows (lane 1)
+
+`tools/e2e/port-l2.sh` on the INF-4 grove walk (5,200 frames) and the pause-restart recording (3,700
+frames), heap regions in `tools/e2e/l2-extras.txt` (CORE-L2b block). No Rust port had to change: every
+mismatch found traces back to the harness (state outside game memory that the two runs share) or to
+original uninitialised stack data. Runs (all from process start, `SA_HOOK_PORTS=orig`):
+
+| run | what | result |
+|---|---|---|
+| grove `l2`, 138 hooks (L2-safe set), `L2_PER_FRAME=4` | per-function L2 | (b) l2 == plain on 5,200 frames; 0 mismatches except Ps::InitialiseLanguage (below) |
+| grove `l2`, 14 burst hooks, `L2_PER_FRAME=1000`; psTimer + InitUserDirectories alone | every call compared | (b) identical; 0 mismatches, 0 undeclared |
+| grove `rust`, all 191 on Rust | L3 | 5,200/5,200 frames IDENTICAL on all 17 subsystems, `randcalls` identical, no crash |
+| pause-restart `plain` + `l2` (same 138), burst re-run (17 hooks, `L2_PER_FRAME=1000`), psTimer/InitUserDirectories | L2 | (b) identical on 3,700 frames; 0 mismatches except InitialiseLanguage |
+| `l2all` (window all) on LightsCreate; file functions | heap arena restored and watched | see open items |
+
+Not runnable in L2 (the case runs the function twice; effects outside process memory are not undone):
+file position / descriptor / handle state (CFileMgr::Read, Write, Seek, ReadLine, Tell; OpenFile and
+CloseFile: the second `fopen` gets the next descriptor, the second `fclose` returns -1 on the handle the
+first one closed; ChangeDir appends a relative path to the OS current directory twice), one-time
+initialisers (RwInitialize, GameInit, InitialiseOnceBeforeRW, InitialiseEssentialsAfterRW, InitialiseGame,
+the two PluginAttach, RsInitialize, RsEventHandler, Win32_InitInstance, IsAlreadyRunning (the second
+`CreateEventA` reports ERROR_ALREADY_EXISTS and the port then reads RsGlobal.ps = NULL, exactly as the
+original would: 0x746924), diMouseInit, diPadInit, EnumDevicesCallback, AttachInputDevices,
+RsInputDeviceAttach, FUN_007477c0, FUN_00747000), OS counters/queues (ShowCursor in
+Rs/psMouseSetVisibility, PeekMessage in MessageLoop, DirectShow events in VideoPlayer::*), D3D scene and
+device state (Rs/psCameraBeginUpdate, psCameraShowRaster, DoRWStuffEndOfFrame, SetVideoMode,
+TidyUpMemory, DrasticTidyUpMemory, CameraDestroy, D3DDeviceRestoreCallback) and shutdown paths
+(RwTerminate, RsRwTerminate, RsTerminate, FinalShutdown) plus the MessageBox wrappers. These have L3
+evidence only (the all-191 Rust run); an L2 for them needs a harness mode that does not run the
+original and the port on the same OS state.
+
+Open items (evidence in `target/e2e/lane-1/port-l2-*` of the CORE-L2b worktree):
+- Light::LightsCreate (1 call, frame 0): with `SA_L2_WINDOW=data` the RW free lists and the world's
+  light list (heap) are not restored, so the Rust run gets the next RpLights and the extra lights stay in
+  the world (the l2 trace then diverges at frame 203, `player`). With `l2all` the pointers match and the
+  only differences are original uninitialised stack bytes: the colour `alpha` of each RpLight (+0x24;
+  the original pushes an `RwRGBAReal` whose alpha is never written, 0x5BA54E-0x5BA55E; the port passes 0)
+  and the three `pad` words of the RwMatrix that `RwFrameRotate` writes for pDirect's frame (orig 1 /
+  0x7BCDAEA0 / 0x00460000, Rust 4 / 0x0036F294 / 0x03219A28: stack residue inside RW). Not portable
+  bit for bit; a divergence-ledger decision.
+- Ps::InitialiseLanguage (and the first CKeyGen::GetUppercaseKey case of a run): the original run makes
+  the thread's first locale-aware CRT call; `__updatetlocinfo` (0x825456 → 0x82524D) sees the thread's
+  ptd (TLS index 0x8E3110, OS state) without `ptlocinfo`, increments `__ptlocinfo`'s refcount at
+  0x8E2EC0 (1→2) and 0x8E377C (0→1); the Rust run finds the ptd already updated. The only differing
+  bytes; GetUppercaseKey's other 999 cases (and 1,000 on pause-restart) match.

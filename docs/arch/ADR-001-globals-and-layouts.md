@@ -134,6 +134,9 @@ emits:
   converts the result with `abi::IntoAbi` (`X87` → `f64`, which the i686 C ABI returns in ST0 through
   `fld qword`, exact for every value of the 24-bit/extended-exponent model). Off x86 nothing is emitted,
   so the x86-only ABIs never reach wasm or x86_64.
+- with `preserve = "edx"` (or `"ecx"`, `"ecx,edx"`), the registered entry is a naked wrapper around the
+  shim that returns those registers unchanged, for original callers that keep a value in them across
+  the call (VER-2; sa-hook's `callers` test finds such callers, see `docs/re/l1-harness.md`).
 - `pub const HOOK_<NAME>: abi::HookReg` = address, catalogue name, convention, the entry bytes the
   installer must find, the shim address (0 off x86), the call counter, and the L2 signature data:
   stack argument words (from the argument types' sizes, after the register arguments), the return

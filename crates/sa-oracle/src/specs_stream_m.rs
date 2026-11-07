@@ -118,7 +118,10 @@ pub fn all() -> Vec<Spec> {
             .patch(vec![(0x84F2BE, (SCRATCH + 0x10).to_le_bytes().to_vec())])
             .reads(vec![(0x858630, 0x858634), (0x866CC0, 0x866CC4)])
             .rust(|c| {
-                c.set_u(0, 0, sa_stream::loading_screen::g_bab358_value().to_bits());
+                // the hooked entry, which stores into sa-stream's host `G_BAB358`
+                let _g = crate::host_globals();
+                sa_stream::loading_screen::init_g_bab358();
+                c.set_u(0, 0, sa_stream::loading_screen::G_BAB358.get().to_bits());
                 ExpRet::Void
             }),
     ]
@@ -128,14 +131,48 @@ pub fn all() -> Vec<Spec> {
 }
 
 /// The `CPool<T>` instantiations of `sa_stream::misc` (same generic algorithm as sa-core's pools,
-/// whose spec builders are reused with these addresses and slot sizes).
+/// whose spec builders are reused with these addresses and slot sizes). `TxdDef` holds a pointer,
+/// so its host size (16) is not the 32-bit one (0x0C, asserted by the i686 build): the `CPool<TxdDef>`
+/// specs run the same generic code (`pool_new` / `pool_construct` with the original's allocator)
+/// on a 0x0C-byte slot type instead of the entries. `CDummy::operator new` calls the original
+/// `CDummyPool::New` (0x532630, allow-listed callee of the original): its stand-in is the generic
+/// `CPool::New` on `CDummy`'s slot type.
 fn pools() -> Vec<Spec> {
+    use crate::hosted::{NEW, NEW_ARRAY};
     use crate::specs_core::{ctor_spec, op_new_spec, pool_new_spec};
+    use sa_core::mem::GPtr;
+    use sa_core::pool::{self, CPool};
+    use sa_core::pools::{self as ps, DUMMY_POOL, DummySlot, Slot};
+    use sa_stream::misc;
+    type TxdSlot = Slot<0x0C>;
+    fn txd_pool_ctor(p: GPtr<CPool<TxdSlot>>, size: i32, _name: GPtr<u8>) -> GPtr<CPool<TxdSlot>> {
+        ps::pool_construct(p, size, sa_core::pools::call::operator_new)
+    }
+    sa_core::orig::host::set::<fn(GPtr<CPool<DummySlot>>) -> GPtr<DummySlot>>(
+        "sa_stream::misc::dummy_pool_new",
+        pool::pool_new::<DummySlot>,
+    );
     vec![
-        pool_new_spec("CTxdPoolNew", "FUN_00731b80", 0x731B80, 0x0C),
-        ctor_spec("CTxdPoolCtor", "FUN_00731ad0", 0x731AD0, 0x0C, 0x82119A),
-        ctor_spec("CColPoolCtor", "thunk_FUN_015611f0", 0x410F80, 0x2C, 0x821195),
-        ctor_spec("CVehicleStructurePoolCtor", "FUN_005b8340", 0x5B8340, 0x314, 0x821195),
-        op_new_spec("CDummyOperatorNew", "CDummy::operator new", 0x5326E0, &[0x532630], 0xB744A0, 0x38),
+        pool_new_spec("CTxdPoolNew", "FUN_00731b80", 0x731B80, 0x0C, pool::pool_new::<TxdSlot>),
+        ctor_spec("CTxdPoolCtor", "FUN_00731ad0", 0x731AD0, 0x0C, NEW, txd_pool_ctor),
+        ctor_spec("CColPoolCtor", "thunk_FUN_015611f0", 0x410F80, 0x2C, NEW_ARRAY, misc::col_pool_ctor),
+        ctor_spec(
+            "CVehicleStructurePoolCtor",
+            "FUN_005b8340",
+            0x5B8340,
+            0x314,
+            NEW_ARRAY,
+            misc::vehicle_structure_pool_ctor,
+        ),
+        op_new_spec(
+            "CDummyOperatorNew",
+            "CDummy::operator new",
+            0x5326E0,
+            &[0x532630],
+            0xB744A0,
+            0x38,
+            &DUMMY_POOL,
+            misc::dummy_operator_new,
+        ),
     ]
 }

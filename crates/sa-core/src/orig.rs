@@ -263,7 +263,91 @@ macro_rules! __orig_body {
     }};
 }
 
-/// Phases B/C: call the Rust implementation, or fail loudly for an unported function.
+/// Host builds (not phase A): stand-ins for functions declared `=> unported`, for the L1 harness.
+///
+/// A port whose hooked entry calls an unported function (an allocator, an import such as
+/// `MapVirtualKeyA`, an original callee) cannot run on the host. The L1 specs run those entries
+/// anyway: they register a stand-in that does what the spec's patched original does (return the
+/// spec's value, record the arguments), keyed by the declaration's path
+/// (`module_path!()::name`, e.g. `"sa_core::pools::call::operator_new_array"`) and checked against
+/// the declared signature. Without a stand-in, the call panics as before. Phase A never consults
+/// this table (the call goes to the original address).
+#[cfg(not(sa_phase_a))]
+pub mod host {
+    use core::any::TypeId;
+    use core::sync::atomic::{AtomicBool, Ordering};
+
+    const SLOTS: usize = 64;
+
+    #[derive(Clone, Copy)]
+    struct Slot {
+        key: &'static str,
+        ty: TypeId,
+        f: usize,
+    }
+
+    static LOCK: AtomicBool = AtomicBool::new(false);
+    static mut TABLE: [Option<Slot>; SLOTS] = [None; SLOTS];
+
+    fn with<R>(f: impl FnOnce(&mut [Option<Slot>; SLOTS]) -> R) -> R {
+        while LOCK
+            .compare_exchange_weak(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_err()
+        {
+            core::hint::spin_loop();
+        }
+        // SAFETY: the table is only accessed with LOCK held.
+        let r = f(unsafe { &mut *core::ptr::addr_of_mut!(TABLE) });
+        LOCK.store(false, Ordering::Release);
+        r
+    }
+
+    /// Registers `f` (a function pointer of the declared signature `fn(args) -> ret`) for the
+    /// unported declaration `key`, replacing an earlier one.
+    pub fn set<F: Copy + 'static>(key: &'static str, f: F) {
+        assert_eq!(
+            core::mem::size_of::<F>(),
+            core::mem::size_of::<usize>(),
+            "orig::host::set: not a function pointer"
+        );
+        // SAFETY: F is pointer-sized and Copy; it is turned back into the same type in `get`.
+        let f = unsafe { core::mem::transmute_copy::<F, usize>(&f) };
+        let slot = Slot { key, ty: TypeId::of::<F>(), f };
+        with(|t| {
+            let i = t
+                .iter()
+                .position(|s| s.is_some_and(|s| s.key == key))
+                .or_else(|| t.iter().position(Option::is_none))
+                .expect("orig::host: table full");
+            t[i] = Some(slot);
+        });
+    }
+
+    /// Removes the stand-in for `key`.
+    pub fn clear(key: &'static str) {
+        with(|t| {
+            for s in t.iter_mut() {
+                if s.is_some_and(|x| x.key == key) {
+                    *s = None;
+                }
+            }
+        });
+    }
+
+    /// The stand-in for `key`, if one of exactly type `F` is registered.
+    pub fn get<F: Copy + 'static>(key: &'static str) -> Option<F> {
+        let s = with(|t| t.iter().flatten().find(|s| s.key == key).copied())?;
+        assert!(
+            s.ty == TypeId::of::<F>(),
+            "orig::host: the stand-in for {key} has another signature"
+        );
+        // SAFETY: registered by `set` from a value of type F (same TypeId).
+        Some(unsafe { core::mem::transmute_copy::<usize, F>(&s.f) })
+    }
+}
+
+/// Phases B/C: call the Rust implementation, or fail loudly for an unported function (unless a host
+/// stand-in is registered, see [`host`]).
 #[cfg(not(sa_phase_a))]
 #[doc(hidden)]
 #[macro_export]
@@ -272,6 +356,13 @@ macro_rules! __orig_body {
         $imp($($a),*)
     };
     (unported $name:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        if let Some(f) = $crate::orig::host::get::<fn($($t),*) $(-> $r)?>(concat!(
+            module_path!(),
+            "::",
+            stringify!($name)
+        )) {
+            return f($($a),*);
+        }
         $(let _ = $a;)*
         panic!(concat!(
             stringify!($name),
@@ -297,6 +388,7 @@ mod tests {
         fn through_cell(x: i32) -> i32 = stdcall cell 0x858000 => twice;
         fn virtual_call(obj: crate::mem::GPtr<u32>, x: i32) -> i32 = thiscall vslot 0x0C => twice_obj;
         fn virtual_missing(obj: crate::mem::GPtr<u32>) = stdcall vslot 0x08 => unported;
+        fn stand_in(x: i32) -> i32 = cdecl 0x401020 => unported;
     }
 
     fn twice_obj(_obj: crate::mem::GPtr<u32>, x: i32) -> i32 {
@@ -315,6 +407,17 @@ mod tests {
         assert_eq!(doubled(21), 42);
         let r = std::panic::catch_unwind(|| missing(1));
         assert!(r.is_err());
+    }
+
+    #[test]
+    fn host_stand_ins() {
+        fn thrice(x: i32) -> i32 {
+            3 * x
+        }
+        host::set::<fn(i32) -> i32>("sa_core::orig::tests::stand_in", thrice);
+        assert_eq!(stand_in(2), 6);
+        host::clear("sa_core::orig::tests::stand_in");
+        assert!(std::panic::catch_unwind(|| stand_in(1)).is_err());
     }
 
     #[test]

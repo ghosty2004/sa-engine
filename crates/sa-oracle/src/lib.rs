@@ -15,6 +15,7 @@ pub mod coverage;
 pub mod emu;
 pub mod fidelity;
 pub mod generate;
+pub mod hosted;
 pub mod l2;
 pub mod l3;
 pub mod list_specs;
@@ -58,4 +59,30 @@ pub fn image_cached() -> Option<Arc<pe::Image>> {
                 .map(Arc::new)
         })
         .clone()
+}
+
+static HOOK_PRESERVE: OnceLock<std::collections::HashMap<u32, u8>> = OnceLock::new();
+
+/// The `#[hook(preserve = ...)]` registers of the port hooked at `addr` (sa-core and sa-stream
+/// registrations; `None` when no port is hooked there).
+pub fn hook_preserve(addr: u32) -> Option<u8> {
+    HOOK_PRESERVE
+        .get_or_init(|| {
+            sa_core::hooks::ALL
+                .iter()
+                .chain(sa_stream::hooks::ALL.iter())
+                .map(|r| (r.addr, r.preserve))
+                .collect()
+        })
+        .get(&addr)
+        .copied()
+}
+
+static HOST_GLOBALS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Serialises spec ports that run a hooked entry on sa-core's / sa-stream's Rust-owned globals
+/// (phase B storage, one copy per process): hold the guard from filling the globals to reading the
+/// results, so specs running on other test threads cannot interleave.
+pub fn host_globals() -> std::sync::MutexGuard<'static, ()> {
+    HOST_GLOBALS.lock().unwrap_or_else(|e| e.into_inner())
 }

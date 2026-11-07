@@ -6,7 +6,7 @@
 #
 # ctx: +0 fn, +4 ecx, +8 edx, +12 nstack, +16 stack[16], +80 cw (u16), +84 mxcsr,
 #      +88 out eax, +92 out edx, +96 esp_delta, +100 fpsw (u16), +102 fptag (u16), +104 st0 (10 bytes),
-#      +116 st0 stored as f32, +120 mxcsr after, +124 has_st0
+#      +116 st0 stored as f32, +120 mxcsr after, +124 has_st0; after the call +12 holds the returned ECX
 .intel_syntax noprefix
 .text
 .globl _sa_call
@@ -45,6 +45,7 @@ _sa_call:
     mov edx, [esi + 8]
     call eax
     mov esi, [saved_ctx]
+    mov [esi + 12], ecx
     mov [esi + 88], eax
     mov [esi + 92], edx
     mov eax, esp

@@ -193,7 +193,7 @@ fn side(px: f32, py: f32, ox: f32, oy: f32, dx: f32, dy: f32) -> X87 {
 /// 0x71DB30 (cdecl, EAX = 0/1; gta-reversed `DoesInfiniteLineCrossFiniteLine`, `@unk` there): the
 /// finite segment `a`–`b` has its ends strictly on opposite sides of the infinite line `o + t*d`
 /// (`side(a) * side(b) < 0`; NaN: 0).
-#[hook(addr = 0x71DB30, conv = cdecl, name = "FUN_0071db30", expect = "D9 44 24 04 D8 64 24 14")]
+#[hook(addr = 0x71DB30, conv = cdecl, name = "FUN_0071db30", expect = "D9 44 24 04 D8 64 24 14", preserve = "ecx,edx")]
 #[allow(clippy::too_many_arguments)]
 pub fn does_infinite_line_cross_finite_line(ax: f32, ay: f32, bx: f32, by: f32, ox: f32, oy: f32, dx: f32, dy: f32) -> i32 {
     let p = side(ax, ay, ox, oy, dx, dy).fmul(side(bx, by, ox, oy, dx, dy));

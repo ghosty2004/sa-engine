@@ -289,6 +289,8 @@ pub struct B {
     /// reject/repair generated inputs (e.g. away from paths that need state beyond L1)
     pub fix: Option<FixFn>,
     pub edge_cap: usize,
+    /// see [`Spec::preserve`]
+    pub preserve: u8,
 }
 
 pub fn b(key: &'static str, name: &'static str, addr: u32, conv: Conv, ret: RetKind) -> B {
@@ -311,6 +313,7 @@ pub fn b(key: &'static str, name: &'static str, addr: u32, conv: Conv, ret: RetK
         reads: vec![],
         fix: None,
         edge_cap: 60_000,
+        preserve: 0,
     }
 }
 
@@ -364,6 +367,11 @@ impl B {
     }
     pub fn st0_exact(mut self, e: bool) -> B {
         self.st0_exact = e;
+        self
+    }
+    /// Registers the original preserves for its callers (see [`Spec::preserve`]).
+    pub fn preserve(mut self, regs: u8) -> B {
+        self.preserve = regs;
         self
     }
 
@@ -629,6 +637,7 @@ impl B {
             ignore,
             patches: self.patches,
             reads: self.reads,
+            preserve: self.preserve,
         }
     }
 }

@@ -459,3 +459,22 @@
   hooks (540 with direct callers): only 0x5B4177 reads ECX/EDX after a hooked call (11 other hits are
   writes, stack-allocation pushes, alignment `lea ecx,[ecx]`, or a misdecoded site).
 - 0x5B3AD0 set back to `implemented`; ledger entry (pending); VER-2 queued for the harness slot.
+
+## 2026-11-07: CORE-L2b (part 1) and VER-2 integrated
+- CORE-L2b agent (lane 1): no port bug; ~200 evidence-backed L2 regions in tools/e2e/l2-extras.txt;
+  pool/heap/CRT/delay-import/RW-driver regions documented in docs/arch/core-port.md.
+- Main-session re-run on master, lane 1 (target/corel2b/verify.sh): vB (14 burst functions, 1000/frame)
+  exit 0, (b) identical; vC exit 0; vA (138, 4/frame) (b) identical over 5,200 frames, only real
+  mismatch Ps::InitialiseLanguage (CRT locale refcounts 0x8E2EC0/0x8E377C, double-run effect), other
+  FAIL lines are the 4/frame sampling cap for functions covered by vB/vC; vR all 191 on Rust IDENTICAL
+  5,200 frames / 17 subsystems; vPRR pause-restart all 191 on Rust IDENTICAL 3,700 frames; vPRB exit 0.
+  81 functions set to L2 (target/corel2b/pass.tsv). F1: 24 → 105 (0.68 %).
+- VER-2 agent: preserve-register hooks, caller scan, hosted specs, generator bias, FPU caller audit
+  (details in ROADMAP). Main session: confirmed the second case (0x71DC62 → re-push of ECX/EDX at
+  0x71DC7C on the je path), cargo test --workspace, sa-oracle lib/l1/verifier_l1 (5 passed, 27 min),
+  clippy --workspace --all-targets host + i686, wasm32 builds, 10^6 re-runs of
+  SetBaseModelInfoFlags and GTATranslateKey PASS, all-ports grove walk on Rust IDENTICAL (lane 1,
+  exit 0). 0x5B3AD0 back to L1; its ledger entry removed (resolved).
+- Disk incident: a STREAM-L2 run wrote a 43 GB spool (/home 5.8 GB free); deleted by the main
+  session (regenerable), agent given a 10 GB budget; INF-18 (spool quota) queued.
+- New ledger entry (original UB): LightsCreate uninitialised alpha/pad words. New tasks INF-17, INF-18.

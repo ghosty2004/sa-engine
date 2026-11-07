@@ -70,6 +70,8 @@ fn calling_conventions() {
     code[0x60..0x6A].copy_from_slice(&[0x8D, 0x04, 0x11, 0x03, 0x44, 0x24, 0x04, 0xC2, 0x04, 0x00]);
     // 0x80 cdecl double arg: fld qword [esp+4]
     code[0x80..0x85].copy_from_slice(&[0xDD, 0x44, 0x24, 0x04, 0xC3]);
+    // 0xA0 cdecl: ecx = 0x12345678, edx = ecx-on-entry + 1
+    code[0xA0..0xAF].copy_from_slice(&[0x8D, 0x51, 0x01, 0xB9, 0x78, 0x56, 0x34, 0x12, 0xC3, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC]);
     let (mut e, allow) = probe_emu(&img, &code);
     let run = |e: &mut Emu, c: &Call| {
         let o = e.call(c, &allow).unwrap();
@@ -95,6 +97,11 @@ fn calling_conventions() {
     let o = run(&mut e, &c);
     assert_eq!(o.st0_f32, Some(1.5f32.to_bits()));
     assert_eq!(o.depth(), 1);
+    // ECX and EDX after return are captured (preserved-register comparison, VER-2)
+    let mut c = Call::new(PROBE + 0xA0, Conv::Cdecl, &[]);
+    c.ecx = 0x41;
+    let o = run(&mut e, &c);
+    assert_eq!((o.ecx, o.edx), (0x1234_5678, 0x42));
     // A wrong convention is visible: the stdcall probe declared as cdecl.
     let c = Call::new(PROBE + 0x20, Conv::Cdecl, &[Arg::I32(5), Arg::I32(7)]);
     let o = e.call(&c, &allow).unwrap();
@@ -387,5 +394,26 @@ fn fsin_fcos_model_matches_the_cpu() {
     let table = sa_math::maths::init_maths_tables();
     for (i, v) in table.iter().enumerate() {
         assert_eq!(Some(v.to_bits()), out[2 * i].st0_f32, "table[{i}]");
+    }
+}
+
+/// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
+/// whose `#[hook(preserve = ...)]` covers them, and every hook that preserves registers has a spec
+/// that compares them.
+#[test]
+fn preserved_registers_match_the_hook_registrations() {
+    let all = specs::all();
+    for s in all.iter().filter(|s| s.preserve != 0) {
+        let p = sa_oracle::hook_preserve(s.addr).unwrap_or_else(|| panic!("{}: no hook", s.key));
+        assert_eq!(p & s.preserve, s.preserve, "{}: hook preserves {p:#x}", s.key);
+    }
+    for r in sa_core::hooks::ALL.iter().chain(sa_stream::hooks::ALL.iter()).filter(|r| r.preserve != 0) {
+        assert!(
+            all.iter().any(|s| s.addr == r.addr && s.preserve == r.preserve),
+            "{} ({:#x}) preserves {:#x} without a spec comparing it",
+            r.name,
+            r.addr,
+            r.preserve
+        );
     }
 }

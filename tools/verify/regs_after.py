@@ -1,3 +1,12 @@
+"""Verifier helper (V-9, docs/re/verify-l1-core-stream.md): for each direct call to a claimed L1
+function, the first read of ECX/EDX after the call before a write (straight-line code only, stops at
+the first branch or call).
+
+Superseded for the hook table by the sa-hook test `callers::callers_reading_ecx_edx_after_a_hook_are_declared`
+(crates/sa-hook/src/callers.rs, VER-2): every hook, every path after the call, byte-wise register
+tracking, and the exceptions (`push ecx/edx` as stack allocation or save, `lea r, [r]` and other
+no-ops, `xor/sub/sbb r, r`, `or r, -1`, partial-register idioms, E8 bytes off an instruction
+boundary). This script is kept as the quick scan the audit used."""
 import sys, re
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

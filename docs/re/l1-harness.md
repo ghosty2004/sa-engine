@@ -36,7 +36,8 @@ note) what they cannot run.
   ESP delta after return is checked against the convention (a wrong convention is reported).
 - **Return capture.** The function returns into an exit stub that stores EAX, EDX, the x87 status and
   full tag word, MXCSR, and, if the x87 stack is not empty, ST0 with `fst dword` (what a caller's `fstp`
-  stores) and `fstp tbyte` (all 80 bits). The native backend's thunk (`native/thunk.S`) uses the same
+  stores) and `fstp tbyte` (all 80 bits). ECX is captured too (Unicorn: the register after the stub,
+  which does not touch it; native: `thunk.S` stores it over the input `nstack` field, context offset 12). The native backend's thunk (`native/thunk.S`) uses the same
   instructions, so both backends observe the result the same way. ST0 is also read through Unicorn's
   register API (`Emu::last_st0_reg`); a test checks both agree.
 - **Guard rails.** A block hook allows only blocks inside the function's extent, the extents of its
@@ -49,6 +50,40 @@ note) what they cannot run.
 - **Static scan** (`scan`, iced-x86): each spec's code is swept for x87 instructions measured as
   unfaithful under Unicorn and for SSE instructions. A test (`routes_match_hazards`) enforces that a
   function using an unfaithful instruction is routed to L2.
+
+## Preserved registers (VER-2)
+
+Some original callers keep a value in ECX or EDX across a call to a function they know does not write
+it (whole-program optimisation; e.g. 0x5B4177 tests DL after calling `SetBaseModelInfoFlags` 0x5B3AD0).
+A Rust hook entry is a C-convention function for which ECX/EDX are caller-saved, so it must restore
+them explicitly:
+
+- `#[hook(..., preserve = "edx")]` (or `"ecx"`, `"ecx,edx"`) makes the registered entry a naked wrapper:
+  `push edx; push [esp+4(s+n)] ×n; call shim; add esp, 4n (cdecl); pop edx; ret / ret 4n`. EAX and
+  ST0 pass through. `HookReg::preserve` records the registers.
+- `Spec::preserve` declares that the original preserves them for its callers. The runner loads each
+  such register that is not an argument with a per-case value (FNV of the inputs) and fails the case
+  (`preserve-edx`) when the original returns another value, or when the port's hook registration does
+  not declare it. `tests/l1.rs::preserved_registers_match_the_hook_registrations` checks that every
+  preserving hook has a spec comparing the registers.
+- Which hooks need it is decided by sa-hook's test `callers::callers_reading_ecx_edx_after_a_hook_are_declared`
+  (`crates/sa-hook/src/callers.rs`): every direct call into every hook in game `.text` and `.HOODLUM`,
+  every path after the call, byte-wise register tracking; exceptions documented there. Result on
+  2026-11-07: 796 hooks, 569 with direct callers, 5,575 call sites; ECX/EDX read after the call at
+  0x5B4179, 0x5B3B2B, 0x5B3C3B (EDX, callee 0x5B3AD0) and 0x71DC62 (ECX and EDX, callee 0x71DB30).
+  Calls through pointers and virtual calls are not covered.
+
+## Specs run the hooked entries (VER-2)
+
+A spec's Rust side is the function `#[hook]` installs (PLAN §5), run on the host
+(`sa_oracle::hosted`): globals the original reads through patched operands are copied into sa-core's /
+sa-stream's Rust-owned globals (under `sa_oracle::host_globals()`, one lock for all specs), unported
+callees get stand-ins registered with `sa_core::orig::host` (the allocator stub's queue and argument
+record, `MapVirtualKeyA`'s recorded arguments and result, the original `CDummyPool::New`), and the
+32-bit `CPool` header is bridged to the 64-bit host layout by running the entry on two host views and
+splicing them (module docs of `hosted.rs`). Slot sizes come from the entries' types and are asserted
+equal to the strides encoded in the original. Exception: `CPool<TxdDef>` (`TxdDef` holds a pointer, so
+its host size is 16): those two specs run the same generic code on a 0x0C-byte slot type.
 
 ## Property runner
 

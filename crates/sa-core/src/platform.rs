@@ -491,16 +491,18 @@ pub mod call {
 
 // ------------------------------------------------------------------------------- Rs (skeleton) --
 
-/// `Rs::RsKeyFromScanCode(uint8 scan, RwBool shiftKeyDown)` (0x6193F0, cdecl, result in AL):
-/// `KeysShifted[scan]` when the second argument is non-zero, else `KeysNormal[scan]`.
+/// `Rs::RsKeyFromScanCode(uint8 scan, RwBool shiftKeyDown)` (0x6193F0, cdecl, `RsKeyCodes` in EAX):
+/// `KeysShifted[scan]` when the second argument is non-zero, else `KeysNormal[scan]`, zero-extended
+/// (`movzx eax, byte [esp+4]; mov al, [eax+table]`: EAX = the table byte).
 #[hook(addr = 0x6193F0, conv = cdecl, name = "Rs::RsKeyFromScanCode", expect = "8B 44 24 08 85 C0")]
-pub fn rs_key_from_scan_code(scan: u32, shifted: i32) -> u8 {
+pub fn rs_key_from_scan_code(scan: u32, shifted: i32) -> u32 {
     let i = (scan & 0xFF) as usize;
-    if shifted != 0 {
+    let b = if shifted != 0 {
         KEYS_SHIFTED.get()[i]
     } else {
         KEYS_NORMAL.get()[i]
-    }
+    };
+    b as u32
 }
 
 /// `Rs::RsTimer` (0x619410): `jmp psTimer`.
@@ -1471,11 +1473,11 @@ mod tests {
 
     #[test]
     fn key_tables_and_scan_codes() {
-        assert_eq!(rs_key_from_scan_code(0x41, 0), b'A');
-        assert_eq!(rs_key_from_scan_code(0x61, 1), b'A');
-        assert_eq!(rs_key_from_scan_code(0x31, 1), b'!');
+        assert_eq!(rs_key_from_scan_code(0x41, 0), b'A' as u32);
+        assert_eq!(rs_key_from_scan_code(0x61, 1), b'A' as u32);
+        assert_eq!(rs_key_from_scan_code(0x31, 1), b'!' as u32);
         // only the low byte of the scan code is used
-        assert_eq!(rs_key_from_scan_code(0x161, 0), b'a');
+        assert_eq!(rs_key_from_scan_code(0x161, 0), b'a' as u32);
     }
 
     #[test]
