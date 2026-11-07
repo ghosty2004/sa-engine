@@ -7,16 +7,13 @@ and the milestone acceptance live in `docs/PLAN.md`. Update this file at the end
 Status: `done` · `in-progress` · `todo` · `blocked` (needs the user) · `deferred`.
 Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalog/*.py`).
 
-**PAUSED since 2026-11-05 (user request).** All agents finished, were verified and committed (last: 236bc82).
-Resume only when the user asks. State at pause: catalogue complete, formats complete, L1/L2/L3 oracles +
-determinism + concurrent lanes working; CORE, STREAM, MATH ported (~1,000 functions); F1 = 24 functions at
-L2/L3, 217 at L1, ~700 `implemented` awaiting in-game verification (catalog/progress.md).
+Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 
 ## Lanes now
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | — | STREAM-FIX-1 |
+| impl-1 | main session: STREAM-FIX-1 (rand divergence bisection, lane 3) | CORE-L2b | sa-stream panic with all ports on Rust: `sscanf_n` has 34 targets, a caller passes 38 (fileloader); fix, then run port-l2.sh on all STREAM ports | in-progress | `port-l2.sh ports --runs "plain rust"` frame-identical | 2026-11-07: (1) `sscanf_n` widened to 38 targets (Load2dEffect type 5; format 0x8698F8 has 38 conversions, read from the exe); (2) `CStreamedScripts::Initialise` (0x470660) was declared cdecl without `this`; the original calls it thiscall with ecx = 0xA47B60 (0x5B8DEF), so the Rust Init2 crashed in .HOODLUM 0x1562440; fixed. Static audit of every non-thiscall `orig!` declaration in game .text (callee reads ecx before writing it): no other case. Now with all 777 ports on Rust the grove walk runs 5,200/5,200 frames; 15/17 subsystems identical, `rand`/`randcalls` diverge at frame 1 → bisection (l3.sh) |
 | impl-2 | — | CORE-L2b |
 | measurement / REA | — | INF-10 (finish coverage) |
 | harness | — | VER-1 / INF-16 |
@@ -99,7 +96,7 @@ L2/L3, 217 at L1, ~700 `implemented` awaiting in-game verification (catalog/prog
 | ARCH-1 | Foundation for every port: globals/layouts, typed calls into the original, `#[hook]` registration (`docs/arch/ADR-001-globals-and-layouts.md`), crates `sa-core` + `sa-macros` | — | implemented | agent: sa-core host/i686/wasm32 builds, clippy host+i686, sa-hook tests check every registration against the exe. To accept: main-session rerun; INF-8 L2 of the pilots |
 | CORE | pools, timer, memory mgr, file mgr, game/app states | 323 rows | in-progress | 27 pilots (ARCH-1) + PORT-CORE: 270/298 ported, 56 L1, 191 need L2 (CORE-L2 / port-l2.sh), 25 deferred orchestrators, 3 blocked (FPTAN), 23 not hookable; docs/arch/core-port.md |
 | CORE-L2 | In-game verification of the 27 ARCH-1 pilots | done | `tools/e2e/port-l2.sh` (new, reusable): 19 pilots L3 (L2 0 mismatches, frame-hash identical with all pilots on Rust, hook-off check); 8 never called in the corpus (save-game callers or dead code) stay implemented; main-session re-run on grove-walk: 0 mismatches. New corpus recording pause-restart. L2 harness fixes: startup calls, heap regions via `SA_L2_EXTRA` (`tools/e2e/l2-extras.txt`) | found: with all 777 ports on Rust the game panics in sa-stream (`modelinfo/vehicle.rs:2037` sscanf_n 38 > 34 targets) → STREAM-FIX-1 |
-| STREAM-FIX-1 | sa-stream panic with all ports on Rust: `sscanf_n` has 34 targets, a caller passes 38 (fileloader); fix, then run port-l2.sh on all STREAM ports | todo | `port-l2.sh ports --runs "plain rust"` frame-identical | blocker for STREAM L2 |
+| STREAM-FIX-1 | sa-stream panic with all ports on Rust: `sscanf_n` has 34 targets, a caller passes 38 (fileloader); fix, then run port-l2.sh on all STREAM ports | in-progress | `port-l2.sh ports --runs "plain rust"` frame-identical | 2026-11-07: (1) `sscanf_n` widened to 38 targets (Load2dEffect type 5; format 0x8698F8 has 38 conversions, read from the exe); (2) `CStreamedScripts::Initialise` (0x470660) was declared cdecl without `this`; the original calls it thiscall with ecx = 0xA47B60 (0x5B8DEF), so the Rust Init2 crashed in .HOODLUM 0x1562440; fixed. Static audit of every non-thiscall `orig!` declaration in game .text (callee reads ecx before writing it): no other case. Now with all 777 ports on Rust the grove walk runs 5,200/5,200 frames; 15/17 subsystems identical, `rand`/`randcalls` diverge at frame 1 → bisection (l3.sh) | sa-stream panic with all ports on Rust: `sscanf_n` has 34 targets, a caller passes 38 (fileloader); fix, then run port-l2.sh on all STREAM ports | todo | `port-l2.sh ports --runs "plain rust"` frame-identical | blocker for STREAM L2 |
 | CORE-L2b | L2 in game for the 191 PORT-CORE `implemented` functions (port-l2.sh once CORE-L2 delivers it) | todo | per-function L2 table | |
 | MATH-FPTAN | CPU-checked FPTAN model in sa_math::x87 (unblocks App::DoRWStuffStartOfFrame*, AppEventHandler) | todo | L1 0 mismatches vs CPU | |
 | STREAM | CdStream, CStreaming, CFileLoader, stores, model infos | 552 rows | in-progress | PORT-STREAM: `crates/sa-stream`, 544/552 ported (504 hooks): 70 L1, 434 need L2, 40 not hookable, 6 deferred, 2 blocked (CdStreamOpen protection VM index; LoadObjectInstance needs a CPU-checked acos); docs/arch/stream-port.md |
@@ -158,6 +155,7 @@ L2/L3, 217 at L1, ~700 `implemented` awaiting in-game verification (catalog/prog
 | SAMP-API | Document the engine API covering every samp-rs game access (proposal for the samp-rs side; we never edit samp-rs) | todo | F13 |
 
 ## Decisions made autonomously
+- 2026-11-07 (harness): `tools/e2e/lib.sh` unsets DISPLAY/WAYLAND_DISPLAY/WAYLAND_SOCKET for every lane Wine command and exports only the lane's gamescope DISPLAY. Reason: `winepath` ran before the game with the inherited desktop variables, started the Wine session on the user's desktop, and the game then picked the desktop's 240 Hz modes and failed to enter 800x600@240 (every run exited before frame 1).
 - 2026-11-05 (PORT-STREAM): CdStreamThread's port runs game-memory accessors on the streaming thread, as the original does. This is an accepted exception to ADR-001's single-thread rule, because 1:1 requires the original threading.
 - 2026-11-05 (INF-7): L1 has two backends. Unicorn decides L1-routed functions. Functions with x87 instructions measured unfaithful under Unicorn (transcendentals, FPREM, FSCALE, FXTRACT) go to L2; until INF-8 exists the real CPU (native backend under Wine) is their interim authority. Signalling-NaN inputs are always decided by the CPU. Unicorn runs with MXCSR.FZ cleared when the code has no SSE.
 - 2026-11-05 (INF-7): ports of x87 code use `sa_math::x87::X87` (24-bit significand, CPU-measured NaN rules), never plain f32 arithmetic.
