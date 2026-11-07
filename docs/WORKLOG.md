@@ -393,3 +393,26 @@
   0x55C410, is excluded; at least one more remains; `tools/e2e/cov-bisect.py` finds them). Partial
   coverage (boot to loading screen): 3,084/15,479 functions.
 - Agent process note: one `pkill -f` on its own processes (against PLAN §8); no damage.
+
+## 2026-11-07: resumed; harness display fix; STREAM-FIX-1 part 1
+- Resumed from 1d26881 at the user's request (ROADMAP banner replaced).
+- Every game run exited before frame 1 (`D3D9: EnterFullscreenMode: Failed to change display mode`) on
+  lanes 1 and 2, also with every hook on the original. Cause, measured with WINEDEBUG=+system and a
+  small EnumDisplaySettings probe: `winepath` in `e2e_game_start` ran before `env -u WAYLAND_DISPLAY
+  DISPLAY=<lane>`, so it started the Wine session (explorer.exe) on the user's desktop; the session
+  then reported the desktop's modes (7680x2160@82, 800x600@240), GetBestRefreshRate chose 240 Hz and
+  the mode change failed. Directly launched gta_sa.exe on the lane display got 1280x720@60. Fix:
+  `lib.sh` clears the desktop display variables and exports only the lane DISPLAY. After the fix the
+  all-original grove-walk run reaches 5,200/5,200 frames.
+- STREAM-FIX-1: `sscanf_n` widened to 38 targets (the 0x8698F8 format has 38 conversions, read
+  from the exe). The all-ports run then crashed in .HOODLUM 0x1562440 (CStreamedScripts::Initialise
+  body) writing to 0x44C0: the Rust CStreaming::Init2 called 0x470660 as cdecl without `this`; the
+  original sets ecx = 0xA47B60 at 0x5B8DEF. Fixed to thiscall. A static audit of every non-thiscall
+  `orig!` declaration into game .text (callee reads ecx before writing it, `push ecx` ignored) found
+  no other case (5 hits, all `or ecx, -1` writes).
+- Verification: sa-hook/sa-launcher i686 release build, `cargo test -p sa-stream` 10/10, clippy host +
+  i686 (sa-stream, sa-hook) clean, wasm32 build of sa-stream OK. `port-l2.sh ports --runs "plain
+  rust"` (lane 2): plain 5,200 frames, rust 5,200 frames, no crash/panic; L3 compare: 15/17
+  subsystems identical over all frames, `rand` + `randcalls` diverge from frame 1.
+- Open: bisect the rand divergence (`l3.sh --rust ports`, lane 3, running); STREAM-FIX-1 stays
+  in-progress until the all-ports run is frame-identical.

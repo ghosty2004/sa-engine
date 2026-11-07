@@ -704,7 +704,7 @@ orig! {
     pub fn streamed_scripts_remove_from_memory(ss: GPtr<u8>, i: i32) = thiscall 0x4708E0 => unported;
     pub fn streamed_scripts_register_script(ss: GPtr<u8>, name: GPtr<u8>) -> i32 = thiscall 0x4706C0 => unported;
     pub fn streamed_scripts_re_initialise(ss: GPtr<u8>) = thiscall 0x4706A0 => unported;
-    pub fn streamed_scripts_initialise() = cdecl 0x470660 => unported;
+    pub fn streamed_scripts_initialise(ss: GPtr<u8>) = thiscall 0x470660 => unported;
     /// CRT `operator new` through its `jmp` entry 0x821195 (Init2's link array)
     pub fn operator_new_alias(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
     /// `CGenericGameStorage::SaveDataToWorkBuffer` / `LoadDataFromWorkBuffer` (0x5D1270 / 0x5D1300)
@@ -4006,7 +4006,7 @@ pub fn init2() {
     LOADED_GANGS.set(0);
     LAST_CULL_ZONE.set(-1);
     NUM_PRIORITY_REQUESTS.set(0);
-    streamed_scripts_initialise();
+    streamed_scripts_initialise(g(0xA47B60));
     call_load_cd_directory();
     if STREAMING_BUFFER_SIZE.get() & 1 != 0 {
         STREAMING_BUFFER_SIZE.set(STREAMING_BUFFER_SIZE.get() + 1);

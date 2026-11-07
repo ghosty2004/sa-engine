@@ -2013,7 +2013,7 @@ orig! {
     fn add_wheel_upgrade_call(set: i32, model: i32) = cdecl 0x4C8700 => add_wheel_upgrade_i32;
     fn add_upgrade_link_call(list: GPtr<u8>, u1: i32, u2: i32) = thiscall 0x4C74B0 => add_upgrade_link_i32;
     /// CRT `sscanf` (0x8220AD), up to 34 targets
-    fn sscanf(s: GPtr<u8>, fmt: GPtr<u8>, a0: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>, a6: GPtr<u8>, a7: GPtr<u8>, a8: GPtr<u8>, a9: GPtr<u8>, a10: GPtr<u8>, a11: GPtr<u8>, a12: GPtr<u8>, a13: GPtr<u8>, a14: GPtr<u8>, a15: GPtr<u8>, a16: GPtr<u8>, a17: GPtr<u8>, a18: GPtr<u8>, a19: GPtr<u8>, a20: GPtr<u8>, a21: GPtr<u8>, a22: GPtr<u8>, a23: GPtr<u8>, a24: GPtr<u8>, a25: GPtr<u8>, a26: GPtr<u8>, a27: GPtr<u8>, a28: GPtr<u8>, a29: GPtr<u8>, a30: GPtr<u8>, a31: GPtr<u8>, a32: GPtr<u8>, a33: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
+    fn sscanf(s: GPtr<u8>, fmt: GPtr<u8>, a0: GPtr<u8>, a1: GPtr<u8>, a2: GPtr<u8>, a3: GPtr<u8>, a4: GPtr<u8>, a5: GPtr<u8>, a6: GPtr<u8>, a7: GPtr<u8>, a8: GPtr<u8>, a9: GPtr<u8>, a10: GPtr<u8>, a11: GPtr<u8>, a12: GPtr<u8>, a13: GPtr<u8>, a14: GPtr<u8>, a15: GPtr<u8>, a16: GPtr<u8>, a17: GPtr<u8>, a18: GPtr<u8>, a19: GPtr<u8>, a20: GPtr<u8>, a21: GPtr<u8>, a22: GPtr<u8>, a23: GPtr<u8>, a24: GPtr<u8>, a25: GPtr<u8>, a26: GPtr<u8>, a27: GPtr<u8>, a28: GPtr<u8>, a29: GPtr<u8>, a30: GPtr<u8>, a31: GPtr<u8>, a32: GPtr<u8>, a33: GPtr<u8>, a34: GPtr<u8>, a35: GPtr<u8>, a36: GPtr<u8>, a37: GPtr<u8>) -> i32 = cdecl 0x8220AD => unported;
     /// CFileMgr::OpenFile (0x538900)
     fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
     /// CFileMgr::CloseFile (0x5389D0)
@@ -2032,13 +2032,14 @@ fn add_upgrade_link_i32(list: GPtr<u8>, u1: i32, u2: i32) {
 }
 
 /// `sscanf` with a list of targets (the rest passed as null; `sscanf` ignores extra arguments).
+/// 38 slots: the largest caller is the 2dfx type-5 line in `CFileLoader::Load2dEffect` (38 targets).
 pub fn sscanf_n(line: GPtr<u8>, fmt: GPtr<u8>, t: &[GPtr<u8>]) -> i32 {
-    let mut a = [GPtr::<u8>::NULL; 34];
+    let mut a = [GPtr::<u8>::NULL; 38];
     a[..t.len()].copy_from_slice(t);
     sscanf(
         line, fmt, a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14],
         a[15], a[16], a[17], a[18], a[19], a[20], a[21], a[22], a[23], a[24], a[25], a[26], a[27], a[28], a[29],
-        a[30], a[31], a[32], a[33],
+        a[30], a[31], a[32], a[33], a[34], a[35], a[36], a[37],
     )
 }
 

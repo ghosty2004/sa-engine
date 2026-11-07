@@ -34,6 +34,12 @@ E2E_OUT="${E2E_OUT:-$E2E_SCRIPT_ROOT/target/e2e/lane-$LANE}"
 E2E_BIN="${E2E_BIN:-${CARGO_TARGET_DIR:-$E2E_SCRIPT_ROOT/target}/i686-pc-windows-gnu/release}"
 E2E_RES="${E2E_RES:-1280x720}"
 mkdir -p "$E2E_OUT"
+# Every Wine command of a lane (winepath, wineserver, the game) must see only the lane's headless
+# display: the first Wine process starts the session (explorer.exe), which keeps the display it was
+# started with. Inherited desktop variables made winepath start the session on the user's desktop,
+# so the game got the desktop's modes (7680x2160, 240 Hz) and failed to set 800x600@240.
+# e2e_headless_start exports DISPLAY again for the lane's gamescope.
+unset WAYLAND_DISPLAY WAYLAND_SOCKET DISPLAY
 # WINEDEBUG, DXVK log level and the null audio sink (PULSE_SINK=sa_engine_null).
 # shellcheck source=../wine-env.sh
 source "$E2E_SCRIPT_ROOT/tools/wine-env.sh"
@@ -113,6 +119,7 @@ e2e_headless_start() {
     E2E_GAMESCOPE="$(sed -n 's/^GAMESCOPE_WAYLAND_DISPLAY=//p' "$env_file")"
     [ -n "$E2E_DISPLAY" ] && [ -n "$E2E_GAMESCOPE" ] || { echo "e2e: no DISPLAY/GAMESCOPE_WAYLAND_DISPLAY from gamescope" >&2; return 1; }
     export E2E_DISPLAY E2E_GAMESCOPE
+    export DISPLAY="$E2E_DISPLAY"
     e2e_say "gamescope pid $E2E_GAMESCOPE_PID, DISPLAY=$E2E_DISPLAY, wayland=$E2E_GAMESCOPE"
 }
 
