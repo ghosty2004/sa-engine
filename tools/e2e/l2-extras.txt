@@ -256,3 +256,34 @@ CPools::CheckPoolsEmpty@0xC9AC4C:4:RW
 CPools::ShutDown@0x8E2C30:0x280:RW
 CPools::ShutDown@0x8E31C0:0x120:RW
 CPools::ShutDown@0xC9AC4C:4:RW
+
+# ---- INF-17 split-run L2: post-call regions and OS-effect probes (docs/re/l2-oracle.md) ----
+# CFileMgr (0x538900..): the CRT stream (FILE*: the returned one for OpenFile, arg0 otherwise) and the
+# OS file behind its descriptor (path, position, size; the handle value is not recorded); the caller's
+# buffer of Read/ReadLine (written) and Write (read). Read 0x538950 = fread(arg1, 1, arg2, arg0).
+CFileMgr::OpenFile@post:os:file:eax
+CFileMgr::CloseFile@os:file:arg0
+CFileMgr::Read@os:file:arg0
+CFileMgr::Read@arg1:arg2:W
+CFileMgr::Write@os:file:arg0
+CFileMgr::Write@arg1:arg2:R
+CFileMgr::Seek@os:file:arg0
+CFileMgr::ReadLine@os:file:arg0
+CFileMgr::ReadLine@arg1:arg2:W
+CFileMgr::Tell@os:file:arg0
+CFileMgr::ChangeDir@os:cwd
+# Light::LightsCreate: the RpLights it creates (pAmbient 0xC886E8, pDirect 0xC886EC, pExtraDirectionals
+# 0xC886F0..; RpLight colour at +0x18, RpLightSetColor 0x751A90) and pDirect's frame (RwObject.parent at
+# +4; modelling matrix at +0x10, LTM at +0x50)
+Light::LightsCreate@post:[0xC886E8]:0x30:W
+Light::LightsCreate@post:[0xC886EC]:0x30:W
+Light::LightsCreate@post:[[0xC886EC]+4]:0x90:W
+Light::LightsCreate@post:[0xC886F0]:0x30:W
+Light::LightsCreate@post:[0xC886F4]:0x30:W
+Light::LightsCreate@post:[0xC886F8]:0x30:W
+Light::LightsCreate@post:[0xC886FC]:0x30:W
+Light::LightsCreate@post:[0xC88700]:0x30:W
+Light::LightsCreate@post:[0xC88704]:0x30:W
+# ShowCursor counters (Rs/psMouseSetVisibility)
+Rs::RsMouseSetVisibility@os:cursor
+Ps::psMouseSetVisibility@os:cursor

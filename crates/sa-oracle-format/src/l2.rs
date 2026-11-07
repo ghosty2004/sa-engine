@@ -184,6 +184,107 @@ pub enum RegionKind {
     ArgPtr(u8),
     /// From the configurable extra list.
     Extra,
+    /// Extra region whose address is evaluated after the run (exit registers, e.g. a returned object):
+    /// `pre` is empty, only the post bytes are compared.
+    Post,
+    /// Observable OS state outside process memory (not bytes at `addr`): an encoded probe record
+    /// ([`OsProbe`]), compared raw (never normalised). `addr` is the probed object (FILE*), or 0.
+    Os(OsProbe),
+}
+
+/// OS-effect probes (INF-17 split-run L2): state a function changes outside game memory.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OsProbe {
+    /// A CRT stream (`FILE*` at `addr`): the FILE block, its descriptor's CRT flags and the OS file
+    /// behind it (path, position, size). The OS handle value itself is never recorded.
+    File = 1,
+    /// The process' current directory.
+    Cwd = 2,
+    /// The cursor's show counter state (`GetCursorInfo` flags).
+    Cursor = 3,
+}
+
+impl OsProbe {
+    pub fn from_u8(v: u8) -> Option<OsProbe> {
+        match v {
+            1 => Some(OsProbe::File),
+            2 => Some(OsProbe::Cwd),
+            3 => Some(OsProbe::Cursor),
+            _ => None,
+        }
+    }
+    pub fn name(self) -> &'static str {
+        match self {
+            OsProbe::File => "file",
+            OsProbe::Cwd => "cwd",
+            OsProbe::Cursor => "cursor",
+        }
+    }
+}
+
+/// Decoded file probe record (see `sa-hook` l2win `probe_file`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct FileProbe {
+    /// The 32-byte CRT `FILE` block (empty when unreadable).
+    pub file: Vec<u8>,
+    /// `_file` (CRT descriptor), -1 when the FILE is unreadable.
+    pub fd: i32,
+    /// `ioinfo.osfile` of the descriptor (0x01 = FOPEN), 0 when out of range.
+    pub osfile: u8,
+    /// The OS file: present when the descriptor is open.
+    pub os: Option<(u64, u64, String)>,
+}
+
+impl FileProbe {
+    pub fn encode(&self) -> Vec<u8> {
+        let mut w = W(Vec::new());
+        w.bytes(&self.file);
+        w.u32(self.fd as u32);
+        w.u8(self.osfile);
+        match &self.os {
+            Some((pos, size, path)) => {
+                w.u8(1);
+                w.0.extend_from_slice(&pos.to_le_bytes());
+                w.0.extend_from_slice(&size.to_le_bytes());
+                w.bytes(path.as_bytes());
+            }
+            None => w.u8(0),
+        }
+        w.0
+    }
+    pub fn decode(b: &[u8]) -> Result<FileProbe, String> {
+        let mut r = R(crate::Reader::new(b));
+        let mut p = FileProbe {
+            file: r.bytes()?,
+            fd: r.u32()? as i32,
+            osfile: r.u8()?,
+            os: None,
+        };
+        if r.u8()? == 1 {
+            let pos = r.0.u64()?;
+            let size = r.0.u64()?;
+            p.os = Some((pos, size, String::from_utf8_lossy(&r.bytes()?).into_owned()));
+        }
+        Ok(p)
+    }
+    pub fn describe(&self) -> String {
+        let os = match &self.os {
+            Some((pos, size, path)) => format!("{path:?} pos {pos} size {size}"),
+            None => "no OS file".into(),
+        };
+        format!("fd {} osfile {:#x} {os} FILE {}", self.fd, self.osfile, hex(&self.file))
+    }
+}
+
+/// Human-readable form of an OS probe record.
+pub fn describe_os(p: OsProbe, b: &[u8]) -> String {
+    match p {
+        OsProbe::File => FileProbe::decode(b)
+            .map(|f| f.describe())
+            .unwrap_or_else(|e| format!("bad file probe: {e}")),
+        OsProbe::Cwd => format!("cwd {:?}", String::from_utf8_lossy(b)),
+        OsProbe::Cursor => format!("cursor {}", hex(b)),
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -205,11 +306,24 @@ impl Region {
     pub fn is_empty(&self) -> bool {
         self.pre.is_empty()
     }
+    /// Bytes of memory the region covers (a `Post` region has no `pre`); 0 for an OS probe.
+    pub fn extent(&self) -> u32 {
+        match self.kind {
+            RegionKind::Os(_) => 0,
+            RegionKind::Post => self.post_orig.len().max(self.post_rust.len()) as u32,
+            _ => self.len(),
+        }
+    }
+    /// Memory region whose `pre` bytes are the memory at `addr` (not a post-only or OS region).
+    pub fn has_pre_memory(&self) -> bool {
+        !matches!(self.kind, RegionKind::Post | RegionKind::Os(_))
+    }
     /// Declared as written (bytes changed here are inside the write set).
     pub fn declared_write(&self) -> bool {
         match self.kind {
-            RegionKind::Global { .. } | RegionKind::Extra => self.access & ACC_W != 0,
+            RegionKind::Global { .. } | RegionKind::Extra | RegionKind::Post => self.access & ACC_W != 0,
             RegionKind::This | RegionKind::ArgPtr(_) => true,
+            RegionKind::Os(_) => false,
         }
     }
 }
@@ -276,9 +390,60 @@ pub struct Case {
     pub leave: u8,
     /// Rust side was a deliberately wrong implementation (self-test).
     pub mutant: bool,
+    /// Split-run record (INF-17; [`LEAVE_SPLIT_ORIG`] / [`LEAVE_SPLIT_RUST`] in `leave`): global
+    /// sequence number of the case in its run (provenance).
+    pub seq: u32,
+    /// Split-run record: hash of every 4 KiB page of the static watched windows before the call
+    /// (page address, [`page_hash`]); the input fingerprint for state outside the declared regions.
+    pub page_hashes: Vec<(u32, u64)>,
+    /// Split-run record: raw values of the bytes excluded from the page hashes
+    /// (`normalise::INPUT_EXCLUSIONS`), so the report can show when they differed.
+    pub volatile: Vec<Write>,
+    /// Split-run record: address of the first stack argument at the call (the caller's ESP + 4) and
+    /// the thread's stack [limit, base) then. Stack pointers compare by their offset from `esp`
+    /// (normalise.rs `Stack` class): Rust frames above a call (a ported ancestor) move the stack.
+    pub esp: u32,
+    pub stack: (u32, u32),
+    /// Merged split-run case only: `esp` of the rust run (the Rust outcome's stack pointers).
+    pub esp_rust: u32,
+    /// Split-run record: OS-assigned object addresses (normalise.rs `Foreign` class): the distinct word
+    /// values of this case (arguments, registers, regions, window bytes) that point into committed
+    /// memory outside the exe image, the determinism arena and the stack (Wine/D3D/DirectInput/
+    /// DirectSound heaps), sorted.
+    pub foreign: Vec<u32>,
+    /// Merged split-run case only: `foreign` of the rust run.
+    pub foreign_rust: Vec<u32>,
+    /// Split-run record: watched-window words that held an OS object address before the call, as
+    /// flat (address, value) pairs. The page fingerprint replaces every word whose VALUE lies in the OS
+    /// heap range (below the determinism arena, outside the image and the stack) by a marker, so the
+    /// fingerprint does not depend on where the OS put its objects; these pairs show what was masked.
+    pub foreign_words: Vec<u32>,
+    /// Host only (not encoded): a merged split-run pair (plain record + rust outcome); the reviewed
+    /// volatile bytes (`normalise::INPUT_EXCLUSIONS`) are excluded from its comparison too.
+    pub merged: bool,
+    /// Host only (not encoded), merged split-run pair: the rust run's window bytes before the call
+    /// (`window_pre` then holds the plain run's); unchanged bytes of a written word may differ
+    /// between the two processes (OS object addresses).
+    pub window_pre_rust: Vec<Write>,
+}
+
+/// `leave` of a split-run record made in the plain run: `orig` holds the original's outcome.
+pub const LEAVE_SPLIT_ORIG: u8 = 2;
+/// `leave` of a split-run record made in the rust run: `orig` holds the Rust implementation's outcome.
+pub const LEAVE_SPLIT_RUST: u8 = 3;
+
+/// Hash of one page of the watched windows at `addr` (split-run input fingerprint): FNV-1a 64 over
+/// the bytes, with the reviewed input exclusions (`normalise::INPUT_EXCLUSIONS`) zeroed.
+pub fn page_hash(addr: u32, b: &[u8]) -> u64 {
+    let mut h = crate::fnv::Fnv64::new();
+    h.write(&normalise::fingerprint_bytes(addr, b));
+    h.0
 }
 
 const MAGIC: &[u8; 8] = b"SAL2CAS1";
+/// Optional trailing block of a case (split-run fields); absent in plain L2 cases, so their encoding
+/// and content ids are unchanged.
+const EXT_MAGIC: &[u8; 4] = b"EXT1";
 
 struct W(Vec<u8>);
 impl W {
@@ -422,6 +587,8 @@ impl Case {
                 RegionKind::This => (1, 0),
                 RegionKind::ArgPtr(i) => (2, i),
                 RegionKind::Extra => (3, 0),
+                RegionKind::Post => (4, 0),
+                RegionKind::Os(p) => (5, p as u8),
             };
             w.u8(k);
             w.u8(x);
@@ -449,7 +616,29 @@ impl Case {
         }
         w.u8(self.leave);
         w.u8(self.mutant as u8);
+        if self.is_split() || !self.page_hashes.is_empty() {
+            w.0.extend_from_slice(EXT_MAGIC);
+            w.u32(self.seq * p);
+            w.u32(self.page_hashes.len() as u32);
+            for &(a, h) in &self.page_hashes {
+                w.u32(a);
+                w.0.extend_from_slice(&h.to_le_bytes());
+            }
+            w.writes(&self.volatile);
+            w.u32(self.esp);
+            w.u32(self.stack.0);
+            w.u32(self.stack.1);
+            w.u32(self.esp_rust);
+            w.words(&self.foreign);
+            w.words(&self.foreign_rust);
+            w.words(&self.foreign_words);
+        }
         w.0
+    }
+
+    /// A split-run record (one implementation's outcome in `orig`, `rust` empty).
+    pub fn is_split(&self) -> bool {
+        self.leave == LEAVE_SPLIT_ORIG || self.leave == LEAVE_SPLIT_RUST
     }
 
     pub fn encode(&self) -> Vec<u8> {
@@ -496,6 +685,8 @@ impl Case {
                 1 => RegionKind::This,
                 2 => RegionKind::ArgPtr(x),
                 3 => RegionKind::Extra,
+                4 => RegionKind::Post,
+                5 => RegionKind::Os(OsProbe::from_u8(x).ok_or_else(|| format!("bad OS probe {x}"))?),
                 _ => return Err(format!("bad region kind {k}")),
             };
             c.regions.push(Region {
@@ -522,6 +713,23 @@ impl Case {
         }
         c.leave = r.u8()?;
         c.mutant = r.u8()? != 0;
+        if !r.0.at_end() {
+            if r.0.bytes(4)? != EXT_MAGIC {
+                return Err("trailing bytes".into());
+            }
+            c.seq = r.u32()?;
+            let n = r.len()?;
+            for _ in 0..n {
+                c.page_hashes.push((r.u32()?, r.0.u64()?));
+            }
+            c.volatile = r.writes()?;
+            c.esp = r.u32()?;
+            c.stack = (r.u32()?, r.u32()?);
+            c.esp_rust = r.u32()?;
+            c.foreign = r.words()?;
+            c.foreign_rust = r.words()?;
+            c.foreign_words = r.words()?;
+        }
         if !r.0.at_end() {
             return Err("trailing bytes".into());
         }
@@ -551,13 +759,22 @@ impl Case {
                 })
                 .collect(),
         };
-        let mk = |o: &Outcome| NormCtx {
+        let mk = |o: &Outcome, esp: u32, foreign: &Vec<u32>| NormCtx {
             image: self.image,
             pools: pools.clone(),
             model_infos: Vec::new(),
             allocs: o.allocs.clone(),
+            stack: self.stack,
+            esp,
+            foreign: foreign.clone(),
         };
-        (mk(&self.orig), mk(&self.rust))
+        let merged = self.esp_rust != 0 || !self.foreign_rust.is_empty();
+        let (esp_r, f_r) = if merged {
+            (self.esp_rust, &self.foreign_rust)
+        } else {
+            (self.esp, &self.foreign)
+        };
+        (mk(&self.orig, self.esp, &self.foreign), mk(&self.rust, esp_r, f_r))
     }
 }
 
@@ -574,7 +791,23 @@ pub fn spool_record(c: &Case) -> Vec<u8> {
     out
 }
 
+/// Record length marking the spool trailer (INF-18): `[TRAILER_MARK][u32 len][UTF-8 text]`, written
+/// once when sa-hook stops spooling (quota reached); nothing follows it.
+pub const TRAILER_MARK: u32 = u32::MAX;
+
+pub fn spool_trailer(text: &str) -> Vec<u8> {
+    let mut out = TRAILER_MARK.to_le_bytes().to_vec();
+    out.extend_from_slice(&(text.len() as u32).to_le_bytes());
+    out.extend_from_slice(text.as_bytes());
+    out
+}
+
 pub fn parse_spool(buf: &[u8]) -> Result<Vec<Case>, String> {
+    parse_spool_full(buf).map(|s| s.0)
+}
+
+/// The cases and the trailer text (present when sa-hook stopped spooling at the quota).
+pub fn parse_spool_full(buf: &[u8]) -> Result<(Vec<Case>, Option<String>), String> {
     if buf.len() < 8 || &buf[..8] != SPOOL_MAGIC {
         return Err("not an L2 spool (magic)".into());
     }
@@ -586,13 +819,22 @@ pub fn parse_spool(buf: &[u8]) -> Result<Vec<Case>, String> {
         }
         let n = u32::from_le_bytes([buf[p], buf[p + 1], buf[p + 2], buf[p + 3]]) as usize;
         p += 4;
+        if n as u32 == TRAILER_MARK {
+            let t = buf.get(p..p + 4).ok_or("truncated trailer")?;
+            let k = u32::from_le_bytes([t[0], t[1], t[2], t[3]]) as usize;
+            let s = buf.get(p + 4..p + 4 + k).ok_or("truncated trailer")?;
+            if p + 4 + k != buf.len() {
+                return Err("bytes after the spool trailer".into());
+            }
+            return Ok((out, Some(String::from_utf8_lossy(s).into_owned())));
+        }
         let b = buf
             .get(p..p + n)
             .ok_or_else(|| format!("truncated record at {p}"))?;
         out.push(Case::decode(b).map_err(|e| format!("record at {p}: {e}"))?);
         p += n;
     }
-    Ok(out)
+    Ok((out, None))
 }
 
 // ------------------------------------------------------------------ comparison ----------------------
@@ -772,6 +1014,21 @@ pub fn compare(c: &Case) -> Vec<Diff> {
             detail: format!("orig {:#x} rust {:#x}", o.mxcsr, r.mxcsr),
         });
     }
+    // Bytes the reviewed normaliser excludes (original uninitialised data, evidence in normalise.rs):
+    // both runs' values are replaced by zero before the comparison.
+    let excl = normalise::exclusions(c);
+    let masked = |addr: u32, b: &[u8]| -> Vec<u8> {
+        let mut v = b.to_vec();
+        for e in &excl {
+            for k in 0..e.len {
+                let a = e.addr.wrapping_add(k);
+                if a >= addr && ((a - addr) as usize) < v.len() {
+                    v[(a - addr) as usize] = 0;
+                }
+            }
+        }
+        v
+    };
     for reg in &c.regions {
         if !reg.readable {
             continue;
@@ -781,19 +1038,47 @@ pub fn compare(c: &Case) -> Vec<Diff> {
             RegionKind::This => "this".into(),
             RegionKind::ArgPtr(i) => format!("*arg{i}"),
             RegionKind::Extra => format!("extra {:#x}", reg.addr),
+            RegionKind::Post => format!("post {:#x}", reg.addr),
+            RegionKind::Os(p) => {
+                // OS state is compared raw: OS-assigned values are never normalised here.
+                if reg.post_orig != reg.post_rust {
+                    d.push(Diff {
+                        field: format!("os-{} {:#x}", p.name(), reg.addr),
+                        detail: format!(
+                            "orig {} rust {}",
+                            describe_os(p, &reg.post_orig),
+                            describe_os(p, &reg.post_rust)
+                        ),
+                    });
+                }
+                continue;
+            }
         };
-        cmp_bytes(&mut d, what, reg.addr, &reg.post_orig, &ca, &reg.post_rust, &cb);
+        if excl.is_empty() {
+            cmp_bytes(&mut d, what, reg.addr, &reg.post_orig, &ca, &reg.post_rust, &cb);
+        } else {
+            let (a, b) = (masked(reg.addr, &reg.post_orig), masked(reg.addr, &reg.post_rust));
+            cmp_bytes(&mut d, what, reg.addr, &a, &ca, &b, &cb);
+        }
     }
     // Window writes: same bytes written to the same addresses (normalised word-wise).
     let (wo, wr) = (write_map(&o.writes), write_map(&r.writes));
     if wo != wr {
         let keys: std::collections::BTreeSet<u32> = wo.keys().chain(wr.keys()).copied().collect();
         let pre = write_map(&c.window_pre);
-        let get =
-            |m: &std::collections::BTreeMap<u32, u8>, a: u32| m.get(&a).or(pre.get(&a)).copied().unwrap_or(0);
+        let pre_r = if c.window_pre_rust.is_empty() {
+            pre.clone()
+        } else {
+            write_map(&c.window_pre_rust)
+        };
+        // a byte the run did not write keeps its value before the call (in that run)
+        let get = |m: &std::collections::BTreeMap<u32, u8>, a: u32| {
+            let p = if std::ptr::eq(m, &wr) { &pre_r } else { &pre };
+            m.get(&a).or(p.get(&a)).copied().unwrap_or(0)
+        };
         let mut bad = None;
         for &a in &keys {
-            if get(&wo, a) == get(&wr, a) {
+            if get(&wo, a) == get(&wr, a) || excl.iter().any(|e| a.wrapping_sub(e.addr) < e.len) {
                 continue;
             }
             let ws = a & !3;
@@ -849,7 +1134,7 @@ pub fn undeclared_writes(c: &Case) -> Vec<Undeclared> {
         .regions
         .iter()
         .filter(|r| r.declared_write())
-        .map(|r| (r.addr as u64, r.addr as u64 + r.len().max(1) as u64))
+        .map(|r| (r.addr as u64, r.addr as u64 + r.extent().max(1) as u64))
         .collect();
     let unbounded: Vec<u32> = c
         .regions
@@ -926,7 +1211,77 @@ mod tests {
             pools: vec![(0, 0, 0); 17],
             leave: 0,
             mutant: false,
+            seq: 0,
+            page_hashes: Vec::new(),
+            volatile: Vec::new(),
+            esp: 0,
+            stack: (0, 0),
+            esp_rust: 0,
+            foreign: Vec::new(),
+            foreign_rust: Vec::new(),
+            foreign_words: Vec::new(),
+            merged: false,
+            window_pre_rust: Vec::new(),
         }
+    }
+
+    #[test]
+    fn split_fields_trailer_and_os_regions() {
+        let mut c = sample();
+        c.rust = c.orig.clone();
+        let plain = c.encode();
+        let mut s = c.clone();
+        s.leave = LEAVE_SPLIT_RUST;
+        s.seq = 42;
+        s.page_hashes = vec![(0x8A4000, 7), (0x8A5000, page_hash(0x8A5000, &[1, 2, 3]))];
+        s.esp = 0x36F200;
+        s.foreign = vec![0x0301_A530];
+        s.foreign_words = vec![0xC97BB8, 0x0301_A530];
+        s.stack = (0x270000, 0x370000);
+        s.volatile = vec![Write {
+            addr: 0x8E31BC,
+            bytes: vec![1, 2, 3, 4],
+        }];
+        s.regions.push(Region {
+            addr: 0x8E2C30,
+            kind: RegionKind::Os(OsProbe::File),
+            access: 0,
+            readable: true,
+            pre: vec![],
+            post_orig: FileProbe {
+                file: vec![0; 32],
+                fd: 3,
+                osfile: 1,
+                os: Some((10, 20, "C:\\x".into())),
+            }
+            .encode(),
+            post_rust: vec![],
+        });
+        let b = s.encode();
+        assert!(b.len() > plain.len());
+        assert_eq!(Case::decode(&b).unwrap(), s);
+        assert_eq!(Case::decode(&plain).unwrap(), c, "plain cases keep their old encoding");
+        let mut s2 = s.clone();
+        s2.seq = 7;
+        assert_eq!(s2.content_id(), s.content_id(), "seq is provenance");
+        // OS probe regions compare raw and are reported
+        s.regions[1].post_rust = s.regions[1].post_orig.clone();
+        s.rust = s.orig.clone();
+        assert!(compare(&s).is_empty());
+        let mut f = FileProbe::decode(&s.regions[1].post_orig).unwrap();
+        f.os = Some((11, 20, "C:\\x".into()));
+        s.regions[1].post_rust = f.encode();
+        assert_eq!(compare(&s)[0].field, "os-file 0x8e2c30");
+        assert!(undeclared_writes(&s).is_empty());
+        // trailer
+        let mut spool = SPOOL_MAGIC.to_vec();
+        spool.extend(spool_record(&c));
+        spool.extend(spool_trailer("quota"));
+        let (cases, t) = parse_spool_full(&spool).unwrap();
+        assert_eq!((cases.len(), t.as_deref()), (1, Some("quota")));
+        assert_eq!(parse_spool(&spool).unwrap().len(), 1);
+        spool.push(0);
+        assert!(parse_spool(&spool).is_err());
     }
 
     #[test]

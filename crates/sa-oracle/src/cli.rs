@@ -197,11 +197,16 @@ fn fixtures_dir(a: &Args) -> std::path::PathBuf {
 }
 
 fn read_spool(p: &str) -> Result<Vec<sa_oracle_format::l2::Case>, String> {
-    let b = std::fs::read(p).map_err(|e| format!("{p}: {e}"))?;
-    sa_oracle_format::l2::parse_spool(&b)
+    read_spool_full(p).map(|s| s.0)
 }
 
-/// `l2 spec|ingest|report|replay|show`
+/// The cases and the quota trailer (INF-18) of a spool.
+fn read_spool_full(p: &str) -> Result<(Vec<sa_oracle_format::l2::Case>, Option<String>), String> {
+    let b = std::fs::read(p).map_err(|e| format!("{p}: {e}"))?;
+    sa_oracle_format::l2::parse_spool_full(&b).map_err(|e| format!("{p}: {e}"))
+}
+
+/// `l2 spec|ingest|report|split-report|replay|show`
 fn l2(a: &Args) -> Result<bool, String> {
     use sa_oracle::l2 as l2h;
     let root = sa_oracle::workspace_root();
@@ -218,6 +223,9 @@ fn l2(a: &Args) -> Result<bool, String> {
         Some("ingest") => {
             let p = a.pos.get(2).ok_or("usage: l2 ingest SPOOL [--fixtures DIR]")?;
             let cases = read_spool(p)?;
+            if cases.iter().any(|c| c.is_split()) {
+                return Err(format!("{p} is a split-run spool (one outcome per case); not ingested"));
+            }
             let dir = fixtures_dir(a);
             let r = l2h::ingest(&cases, &dir)?;
             println!(
@@ -233,11 +241,56 @@ fn l2(a: &Args) -> Result<bool, String> {
         }
         Some("report") => {
             let p = a.pos.get(2).ok_or("usage: l2 report SPOOL")?;
-            let cases = read_spool(p)?;
+            let (cases, trailer) = read_spool_full(p)?;
+            if cases.iter().any(|c| c.is_split()) {
+                return Err(format!("{p} is a split-run spool: use `l2 split-report PLAIN RUST`"));
+            }
             let t = l2h::tally(&cases, false);
             println!("L2 report {p}: {} cases (stored verdicts: original vs in-process Rust)", cases.len());
+            if let Some(t) = &trailer {
+                println!("TRAILER {t}");
+            }
             print!("{}", l2h::print_tally(&t, Some(&cat)));
             Ok(t.values().all(|x| x.mismatches == 0))
+        }
+        Some("dump-diff") => {
+            let (Some(x), Some(y)) = (a.pos.get(2), a.pos.get(3)) else {
+                return Err("usage: l2 dump-diff A.win B.win".into());
+            };
+            let rd = |p: &String| std::fs::read(p).map_err(|e| format!("{p}: {e}"));
+            let d = sa_oracle::split::dump_diff(&rd(x)?, &rd(y)?)?;
+            for (addr, ba, bb) in &d {
+                println!("{addr:#x} {} plain {} rust {}", cat.symbol(*addr), ba, bb);
+            }
+            println!("{} differing range(s)", d.len());
+            Ok(d.is_empty())
+        }
+        Some("split-report") => {
+            let (Some(pp), Some(rp)) = (a.pos.get(2), a.pos.get(3)) else {
+                return Err("usage: l2 split-report PLAIN_SPOOL RUST_SPOOL".into());
+            };
+            let (plain, tp) = read_spool_full(pp)?;
+            let (rust, tr) = read_spool_full(rp)?;
+            let mut rep = sa_oracle::split::split_report(&plain, &rust);
+            rep.trailers.extend(tp.map(|t| format!("plain: {t}")));
+            rep.trailers.extend(tr.map(|t| format!("rust: {t}")));
+            println!(
+                "L2 split-run report: plain {pp} ({} cases), rust {rp} ({} cases)",
+                plain.len(),
+                rust.len()
+            );
+            print!("{}", sa_oracle::split::print_report(&rep));
+            if a.flags.iter().any(|f| f == "nesting") || a.opts.contains_key("nesting") {
+                for ((o, i), n) in sa_oracle::split::nesting(&plain) {
+                    println!("nested (plain run): {i} inside {o}: {n} case(s)");
+                }
+            }
+            if let Some(n) = a.opts.get("timeline") {
+                print!("{}", sa_oracle::split::print_timeline(&rep, parse_num(n)? as usize));
+            }
+            Ok(rep.errors.is_empty()
+                && rep.trailers.is_empty()
+                && rep.fns.iter().all(|f| matches!(f.verdict(), "PASS" | "PASS-FP" | "NOCASES")))
         }
         Some("replay") => {
             if let Some(m) = a.opts.get("mutant") {
@@ -272,7 +325,7 @@ fn l2(a: &Args) -> Result<bool, String> {
             print!("{}", l2h::show_case(c));
             Ok(true)
         }
-        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
+        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--timeline N] [--nesting] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
     }
 }
 
@@ -354,7 +407,7 @@ pub fn main() -> ExitCode {
         // INF-9 / INF-10 (own argument parsing: `--no-x` flags, `--k v` options)
         Some("l3") => sa_oracle::l3::cli(&std::env::args().skip(2).collect::<Vec<_>>()),
         Some("coverage") => sa_oracle::coverage::cli(&std::env::args().skip(2).collect::<Vec<_>>()),
-        _ => Err("usage: sa-oracle list | l1 <fn|all> [--cases N] [--seed S] [--backend auto|unicorn|native] | fidelity | mutants | l2 spec|ingest|report|replay|show | l3 ... | coverage points|report".into()),
+        _ => Err("usage: sa-oracle list | l1 <fn|all> [--cases N] [--seed S] [--backend auto|unicorn|native] | fidelity | mutants | l2 spec|ingest|report|split-report|replay|show | l3 ... | coverage points|report".into()),
     };
     if let Some(hwm) = std::fs::read_to_string("/proc/self/status").ok().and_then(|s| {
         s.lines()
