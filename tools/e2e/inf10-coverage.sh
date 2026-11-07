@@ -50,7 +50,9 @@ END="$("$SATOOL" rec "$REC" | sed -n 's/^frames=//p')"
 [ -n "$END" ] || { echo "inf10: recording has no frames= header" >&2; exit 1; }
 
 OUT="$E2E_OUT/inf10"
-RAW="$SA_ROOT/catalog/raw"
+# Outputs go to the checkout that holds this script and the catalogue sa-oracle read (a worktree's
+# own catalog/raw, not SA_ROOT's).
+RAW="$E2E_SCRIPT_ROOT/catalog/raw"
 mkdir -p "$OUT" "$RAW"
 FAILS=0
 SUMMARY="$OUT/summary.txt"
