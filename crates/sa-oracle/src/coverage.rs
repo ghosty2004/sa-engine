@@ -371,6 +371,126 @@ pub fn points_text(points: &[Point]) -> String {
     s
 }
 
+/// A point left unarmed by `catalog/coverage-exclude.csv` (its breakpoint changes the game, e.g. the
+/// protection reads its bytes as data). `proxy`: a point that executes exactly when this one does (the
+/// target of the `jmp rel32` at this point when that target has no other way in); the report counts
+/// the excluded point with the proxy's hits. No proxy: the point stays unmeasured.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Excluded {
+    pub point: Point,
+    pub proxy: Option<u32>,
+}
+
+/// `catalog/coverage-exclude.csv` (`address,proxy,reason`; proxy may be empty): address -> proxy.
+pub fn parse_exclude_csv(text: &str) -> BTreeMap<u32, Option<u32>> {
+    text.lines()
+        .skip(1)
+        .filter_map(|l| {
+            let mut f = l.split(',');
+            let a = hex(f.next()?.trim())?;
+            Some((a, f.next().and_then(|s| hex(s.trim()))))
+        })
+        .collect()
+}
+
+/// Comment lines appended to the points file for the excluded points (sa-hook skips `#` lines):
+/// `#X ADDR BYTE KIND FUNC PROXY|-`.
+pub fn excluded_text(ex: &[Excluded]) -> String {
+    let mut s = String::from("# excluded (catalog/coverage-exclude.csv, not armed): #X ADDR BYTE KIND FUNC PROXY\n");
+    for e in ex {
+        let p = &e.point;
+        s += &format!(
+            "#X {:#x} {:02x} {} {:#x} {}\n",
+            p.addr,
+            p.byte,
+            if p.kind == Kind::Entry { "F" } else { "B" },
+            p.func,
+            e.proxy.map(|x| format!("{x:#x}")).unwrap_or_else(|| "-".into())
+        );
+    }
+    s
+}
+
+pub fn parse_excluded_text(text: &str) -> Result<Vec<Excluded>, String> {
+    let mut v = Vec::new();
+    for (n, l) in text.lines().enumerate() {
+        let Some(l) = l.strip_prefix("#X ") else { continue };
+        let f: Vec<&str> = l.split_whitespace().collect();
+        let bad = || format!("points line {}: {l:?}", n + 1);
+        if f.len() < 5 {
+            return Err(bad());
+        }
+        v.push(Excluded {
+            point: Point {
+                addr: hex(f[0]).ok_or_else(bad)?,
+                byte: hex(f[1]).filter(|&b| b < 256).ok_or_else(bad)? as u8,
+                kind: if f[2] == "F" { Kind::Entry } else { Kind::Block },
+                func: hex(f[3]).ok_or_else(bad)?,
+            },
+            proxy: hex(f[4]),
+        });
+    }
+    Ok(v)
+}
+
+/// Adds the excluded points to `points` and gives each one with a measured proxy the proxy's hits.
+/// Returns the extended points, the hits and per excluded point its derived hits (None: unmeasured).
+pub fn with_excluded(
+    points: &[Point],
+    hits: &BTreeMap<u32, u64>,
+    ex: &[Excluded],
+) -> (Vec<Point>, BTreeMap<u32, u64>, Vec<Option<u64>>) {
+    let mut pts = points.to_vec();
+    let mut h = hits.clone();
+    let mut derived = Vec::new();
+    for e in ex {
+        let d = e.proxy.and_then(|p| hits.get(&p).copied());
+        if let Some(x) = d {
+            h.insert(e.point.addr, x);
+        }
+        pts.push(e.point.clone());
+        derived.push(d);
+    }
+    (pts, h, derived)
+}
+
+/// Report section for the excluded points (none silently dropped).
+pub fn excluded_report(ex: &[Excluded], derived: &[Option<u64>], rows: &[Row]) -> String {
+    let name = |a: u32| {
+        rows.iter()
+            .find(|r| r.addr == a)
+            .map(|r| r.name.clone())
+            .unwrap_or_default()
+    };
+    let n = ex.len();
+    let entries = ex.iter().filter(|e| e.point.kind == Kind::Entry).count();
+    let funcs: BTreeSet<u32> = ex.iter().map(|e| e.point.func).collect();
+    let by_proxy = derived.iter().filter(|d| d.is_some()).count();
+    let hit = derived.iter().filter(|d| d.is_some_and(|x| x > 0)).count();
+    let mut s = format!(
+        "\npoints excluded from arming (catalog/coverage-exclude.csv): {n} ({entries} entries, {} blocks) in {} \
+         functions; counted through their proxy point: {by_proxy} ({hit} hit); unmeasured: {}\n",
+        n - entries,
+        funcs.len(),
+        n - by_proxy
+    );
+    for (e, d) in ex.iter().zip(derived) {
+        s += &format!(
+            "  {:#x} {} of {:#x} {:<40} proxy {:<9} {}\n",
+            e.point.addr,
+            if e.point.kind == Kind::Entry { "entry" } else { "block" },
+            e.point.func,
+            name(e.point.func),
+            e.proxy.map(|x| format!("{x:#x}")).unwrap_or_else(|| "-".into()),
+            match d {
+                Some(x) => format!("hits {x}"),
+                None => "unmeasured".into(),
+            }
+        );
+    }
+    s
+}
+
 pub fn parse_points_text(text: &str) -> Result<Vec<Point>, String> {
     let mut v = Vec::new();
     for (n, l) in text.lines().enumerate() {
@@ -577,18 +697,34 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
             let ext = parse_extents(&read(&root.join("catalog/extents.csv"))?)?;
             let (mut p, st) = points(&img, &rows, &ext, !flags.contains("no-blocks"));
             // Hand-maintained: points whose breakpoint changes the game (catalog/coverage-exclude.csv,
-            // each with the measurement that found it).
-            let excl: Vec<u32> = std::fs::read_to_string(root.join("catalog/coverage-exclude.csv"))
-                .unwrap_or_default()
-                .lines()
-                .skip(1)
-                .filter_map(|l| hex(l.split(',').next().unwrap_or("")))
+            // each with its evidence). They stay in the file as `#X` comment lines for the report.
+            let excl = parse_exclude_csv(
+                &std::fs::read_to_string(root.join("catalog/coverage-exclude.csv")).unwrap_or_default(),
+            );
+            let mut ex = Vec::new();
+            p.retain(|x| match excl.get(&x.addr) {
+                Some(&proxy) => {
+                    ex.push(Excluded { point: x.clone(), proxy });
+                    false
+                }
+                None => true,
+            });
+            for e in &mut ex {
+                if e.proxy.is_some_and(|q| !p.iter().any(|x| x.addr == q)) {
+                    eprintln!("coverage-exclude: proxy {:#x?} of {:#x} is not a point; unmeasured", e.proxy, e.point.addr);
+                    e.proxy = None;
+                }
+            }
+            let missing: Vec<String> = excl
+                .keys()
+                .filter(|a| !ex.iter().any(|e| e.point.addr == **a))
+                .map(|a| format!("{a:#x}"))
                 .collect();
-            let before = p.len();
-            p.retain(|x| !excl.contains(&x.addr));
             eprintln!(
-                "points excluded by catalog/coverage-exclude.csv: {}",
-                before - p.len()
+                "points excluded by catalog/coverage-exclude.csv: {} ({} with a proxy){}",
+                ex.len(),
+                ex.iter().filter(|e| e.proxy.is_some()).count(),
+                if missing.is_empty() { String::new() } else { format!("; not points: {}", missing.join(" ")) }
             );
             eprintln!(
                 "points: {} ({} entries, {} blocks); functions armed {} ({} with body ranges, {} entry only), \
@@ -606,7 +742,7 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
                 st.unresolved_indirect,
                 st.shared
             );
-            let t = points_text(&p);
+            let t = points_text(&p) + &excluded_text(&ex);
             match o.get("out") {
                 Some(_) => write("out", &t)?,
                 None => print!("{t}"),
@@ -614,13 +750,16 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
             Ok(true)
         }
         Some("report") => {
-            let pts = parse_points_text(&read(std::path::Path::new(o.get("points").ok_or(USAGE)?))?)?;
+            let ptext = read(std::path::Path::new(o.get("points").ok_or(USAGE)?))?;
+            let pts = parse_points_text(&ptext)?;
+            let ex = parse_excluded_text(&ptext)?;
             let mut maps = Vec::new();
             for h in o.get("hits").ok_or(USAGE)?.split(',').filter(|s| !s.is_empty()) {
                 maps.push(parse_hits(&read(std::path::Path::new(h))?)?);
             }
             let hits = merge(&maps);
-            let c = Coverage::new(&pts, &hits);
+            let (all_pts, all_hits, derived) = with_excluded(&pts, &hits, &ex);
+            let c = Coverage::new(&all_pts, &all_hits);
             let title = o.get("title").cloned().unwrap_or_else(|| {
                 format!(
                     "coverage of {} run(s): {}",
@@ -628,7 +767,7 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
                     o.get("hits").cloned().unwrap_or_default()
                 )
             });
-            let rep = c.report(&rows, &title);
+            let rep = c.report(&rows, &title) + &excluded_report(&ex, &derived, &rows);
             print!("{rep}");
             write("out", &rep)?;
             write("csv", &c.function_csv(&rows))?;
@@ -749,6 +888,54 @@ mod tests {
                 .any(|l| l.starts_with("excluded:crt") && l.contains("0 / 1")),
             "{rep}"
         );
+    }
+
+    #[test]
+    fn excluded_points_counted_through_proxy() {
+        let ex_csv = "address,proxy,reason\n0x1000,0x1004,\"jmp stub, key read\"\n0x2000,,no proxy\n";
+        let m = parse_exclude_csv(ex_csv);
+        assert_eq!(m[&0x1000], Some(0x1004));
+        assert_eq!(m[&0x2000], None);
+        let pts = vec![Point {
+            addr: 0x1004,
+            byte: 0x31,
+            kind: Kind::Block,
+            func: 0x1000,
+        }];
+        let ex = vec![
+            Excluded {
+                point: Point {
+                    addr: 0x1000,
+                    byte: 0xE9,
+                    kind: Kind::Entry,
+                    func: 0x1000,
+                },
+                proxy: Some(0x1004),
+            },
+            Excluded {
+                point: Point {
+                    addr: 0x2000,
+                    byte: 0xE9,
+                    kind: Kind::Entry,
+                    func: 0x2000,
+                },
+                proxy: None,
+            },
+        ];
+        let t = points_text(&pts) + &excluded_text(&ex);
+        assert_eq!(parse_points_text(&t).unwrap(), pts);
+        assert_eq!(parse_excluded_text(&t).unwrap(), ex);
+        // sa-hook arms only the real points
+        assert_eq!(sa_hook::coverage::parse_points(&t).unwrap().len(), 1);
+        let hits = parse_hits("address,hits\n0x1004,1\n").unwrap();
+        let (p2, h2, d) = with_excluded(&pts, &hits, &ex);
+        assert_eq!(d, vec![Some(1), None]);
+        let c = Coverage::new(&p2, &h2);
+        assert!(c.funcs[&0x1000].measured && c.funcs[&0x1000].entry_hits == 1);
+        assert!(!c.funcs.get(&0x2000).is_some_and(|f| f.measured));
+        let r = excluded_report(&ex, &d, &[]);
+        assert!(r.contains("2 (2 entries, 0 blocks) in 2 functions"), "{r}");
+        assert!(r.contains("proxy point: 1 (1 hit); unmeasured: 1"), "{r}");
     }
 
     /// The real catalogue and exe (when present): entries decode, points are instruction starts.
