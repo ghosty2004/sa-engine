@@ -502,7 +502,7 @@ fn gen_delete(r: &mut Rng, stride: u32) -> Inputs {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn op_delete_spec<T: 'static>(
+pub(crate) fn op_delete_spec<T: 'static>(
     key: &'static str,
     name: &'static str,
     addr: u32,

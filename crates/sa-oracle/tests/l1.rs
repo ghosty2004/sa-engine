@@ -407,7 +407,12 @@ fn preserved_registers_match_the_hook_registrations() {
         let p = sa_oracle::hook_preserve(s.addr).unwrap_or_else(|| panic!("{}: no hook", s.key));
         assert_eq!(p & s.preserve, s.preserve, "{}: hook preserves {p:#x}", s.key);
     }
-    for r in sa_core::hooks::ALL.iter().chain(sa_stream::hooks::ALL.iter()).filter(|r| r.preserve != 0) {
+    for r in sa_core::hooks::ALL
+        .iter()
+        .chain(sa_stream::hooks::ALL.iter())
+        .chain(sa_world::hooks::ALL.iter())
+        .filter(|r| r.preserve != 0)
+    {
         assert!(
             all.iter().any(|s| s.addr == r.addr && s.preserve == r.preserve),
             "{} ({:#x}) preserves {:#x} without a spec comparing it",

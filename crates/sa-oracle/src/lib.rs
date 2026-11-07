@@ -27,6 +27,9 @@ pub mod runner;
 pub mod scan;
 pub mod specs;
 pub mod specs_core;
+pub mod specs_coll_data;
+pub mod specs_coll_prim;
+pub mod specs_coll_surface;
 pub mod specs_core_util;
 pub mod specs_stream_a;
 pub mod specs_stream_b;
@@ -63,7 +66,7 @@ pub fn image_cached() -> Option<Arc<pe::Image>> {
 
 static HOOK_PRESERVE: OnceLock<std::collections::HashMap<u32, u8>> = OnceLock::new();
 
-/// The `#[hook(preserve = ...)]` registers of the port hooked at `addr` (sa-core and sa-stream
+/// The `#[hook(preserve = ...)]` registers of the port hooked at `addr` (sa-core, sa-stream and sa-world
 /// registrations; `None` when no port is hooked there).
 pub fn hook_preserve(addr: u32) -> Option<u8> {
     HOOK_PRESERVE
@@ -71,6 +74,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
             sa_core::hooks::ALL
                 .iter()
                 .chain(sa_stream::hooks::ALL.iter())
+                .chain(sa_world::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })

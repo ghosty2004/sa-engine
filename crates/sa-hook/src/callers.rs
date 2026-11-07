@@ -362,6 +362,7 @@ mod tests {
         sa_core::hooks::ALL
             .iter()
             .chain(sa_stream::hooks::ALL.iter())
+            .chain(sa_world::hooks::ALL.iter())
             .find(|r| r.addr == addr)
             .map_or(0, |r| r.preserve)
     }
