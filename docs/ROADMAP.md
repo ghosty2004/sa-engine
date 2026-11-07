@@ -16,8 +16,8 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 | impl-1 | agent: CORE-L2b (worktree core-l2b, lane 1) | — |
 | impl-2 | agent: STREAM-L2 (worktree stream-l2, lane 2) | — |
 | measurement / REA | agent: INF-10 coverage finish (worktree inf10, lane 3; only REA user) | SAMP-1D |
-| harness | — | VER-1 / INF-16 (after the verifier reports) |
-| verifier | agent: adversarial audit of PORT-CORE/PORT-STREAM L1 claims (worktree verifier, no game) | — |
+| harness | — | VER-2 → VER-1 → INF-16 |
+| verifier | — (CORE/STREAM L1 audit done, V-9..V-14) | audit of the CORE-L2b / STREAM-L2 results |
 
 ## Next up (ordered queue; the scheduler takes from the top)
 
@@ -78,6 +78,7 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 | INF-11 | D3D9 call-stream capture/diff + audio event log/diff + screenshot capture | todo | same capture twice on the original | modelled on samp-rs `d3d.rs` (reference only) |
 | INF-12 | Mutation runner (inject faults into Rust functions, expect detection) | in-progress | F9 smoke test | seed: 3 faults in `solve_quadratic` (feature `mutants`), all caught; gta-reversed's `1/(2a)` is an equivalent mutant |
 | VER-1 | Fixes from the L1 verifier (docs/re/verify-l1.md): caller-composite spec with `st0_exact` for GetATanOfXY + force the `_x87` API at the 35 ST0-consuming sites; record the CPU model in CPU-decided fixtures; native-only LimitAngle range 2^24..2^34 in acceptance; check that a 'hang' is a true fixed point; generator emits signed all-zero tuples; static scan flags `fcom … fsqrt … fnstsw` condition-code patterns; FPU control word per spec (captured per call site in L2); widen the compare window (stack writes, full scratch, EAX/EDX by spec) | todo | the verifier probes (`crates/sa-oracle/tests/verifier_l1.rs`) still pass and V-1..V-8 are closed | after MATH-2 merges (same files) |
+| VER-2 | Fixes from the CORE/STREAM L1 verifier (docs/re/verify-l1-core-stream.md): V-9 EDX-preserving hook option in sa-macros/sa-hook shims for CBaseModelInfo::SetBaseModelInfoFlags (0x5B3AD0; caller 0x5B4177 reads DL after the call) and a check in sa-hook tests that flags any hook whose direct caller reads ECX/EDX after the call; V-10 make the 44 helper/model specs call the hooked entry (incl. pool slot sizes, delete index, GTATranslateKey wiring); V-11 GTATranslateKey generator must hit chr == 0xFF; V-12 record per caller that the float functions run under PC=24 (or add CW-specific cases); V-14 RsKeyFromScanCode full EAX, 0x536D10 catalogue name (CPool::New) | todo | verifier_core_stream.rs passes and V-9..V-12 closed | main-session scan of all 776 hooks (540 with direct callers): 0x5B4177 is the only caller reading ECX/EDX after a hooked call; indirect/virtual callers not covered |
 | INF-13 | Acceptance scripts `tools/accept/*.sh` (F1–F13 + per-milestone) | todo | each exits 0/1 with a readable report | |
 | INF-14 | Corpus v1: scripted recordings (routes per zone/time/weather, vehicle classes, combat drills) + SCM setup scripts | todo | manifest + coverage % | grows until F8 |
 | INF-15 | Concurrent lanes hang | done | cause: a lost-wake-up race in the ORIGINAL CdStreamSync (.HOODLUM 0x156CD80) vs CdStreamThread (0x406560), ~7% of new-game loads even on one lane; fixed in sa-hook (`cdsync.rs`: polled wait at 0x156CDAE, logged recoveries). Agent: 0/40 hangs with 4 recoveries, 3× pair + 1× triple acceptance PASS; main session: inf3 (lane 1) + inf4 (lane 2) concurrently, 14 + 12 PASS | docs/re/lanes.md. The fix is a harness intervention, not a port (ledger) |
@@ -168,6 +169,7 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accepted (user-approved)*.
 
 *pending*
+- `CBaseModelInfo::SetBaseModelInfoFlags` (0x5B3AD0): the original caller 0x5B4177 relies on EDX surviving the call; the Rust hook clobbers it, so with the caller on the original and this function on Rust bit 2 of +0x13 comes from the wrong byte. State set back to `implemented`; fix in VER-2.
 - FSIN/FCOS/FPATAN modelled at 53 bits vs the CPU's 64 (sa_math::x87): every stored/product result matched on the 17 CPU-decided specs; the authority is one Intel CPU (an AMD CPU may differ) (MATH-2).
 - Aliased output pointers are not modelled for IntersectRay, IntersectEdge, CRect::GetCenter, ConvertToEulerAngles and matrix ops whose result aliases an operand; explicit in-place variants exist; L2 must confirm the call sites (MATH-2).
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).

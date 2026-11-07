@@ -443,3 +443,19 @@
 - Verification: i686 release build, cargo test sa-core 58 / sa-stream 10 / sa-hook 33, clippy host +
   i686 clean; `port-l2.sh ports --runs "plain rust"` (lane 2): exit 0, plain and rust 5,200 frames,
   rust trace IDENTICAL to the all-original trace over 5,200 frames, 17 subsystems.
+
+## 2026-11-07: CORE/STREAM L1 verifier audit integrated
+- Adversarial verifier (worktree verifier, Unicorn only, Wine backend disabled) over the 126 PORT-CORE
+  / PORT-STREAM L1 claims; report docs/re/verify-l1-core-stream.md, tests
+  crates/sa-oracle/tests/verifier_core_stream.rs (7), scan tools in tools/verify/.
+- Findings: V-9 wrong claim (SetBaseModelInfoFlags 0x5B3AD0: caller 0x5B4177 reads DL after the call,
+  the original never writes EDX, the Rust shim clobbers it); V-10 44 specs exercise a helper or a
+  hand model instead of the hooked entry (no error found; 6 re-run through the hooked entries, 0
+  mismatches); V-11 GTATranslateKey generator hits chr == 0xFF ~2 per 10^6; V-12 seven float specs
+  differ under CW 0x027F (they assume PC=24); V-13 instrumented audit found no hidden outputs; V-14
+  minor. Sample of 17 specs at 10^6: 0 mismatches.
+- Main-session verification: caller bytes at 0x5B4177 and callee 0x5B3AD0 disassembled (confirmed);
+  7/7 verifier tests pass on master (158 s); CStreamingInfoAddToList at 10^6 PASS; own scan of all 776
+  hooks (540 with direct callers): only 0x5B4177 reads ECX/EDX after a hooked call (11 other hits are
+  writes, stack-allocation pushes, alignment `lea ecx,[ecx]`, or a misdecoded site).
+- 0x5B3AD0 set back to `implemented`; ledger entry (pending); VER-2 queued for the harness slot.

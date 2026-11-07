@@ -6953,7 +6953,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x5b3930,CFileLoader::FindRelatedModelInfoCB,STREAM,implemented,gta-reversed,PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md),2026-11-05,0,
 0x5b39d0,CFileLoader::LoadAtomicFile-,STREAM,implemented,gta-reversed,PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md),2026-11-05,0,
 0x5b3a30,CFileLoader::LoadClumpFile-,STREAM,implemented,gta-reversed,PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md),2026-11-05,0,
-0x5b3ad0,CBaseModelInfo::SetBaseModelInfoFlags,STREAM,L1,gta-reversed,"PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md)",2026-11-05,0,
+0x5b3ad0,CBaseModelInfo::SetBaseModelInfoFlags,STREAM,implemented,gta-reversed,"VER audit V-9 (2026-11-07): L1 claim withdrawn; caller 0x5B4177 keeps EDX live across the call (mov edx,eax; call; test dl,0x20) and the Rust hook shim clobbers EDX; needs an EDX-preserving hook (VER-2)",2026-11-07,0,
 0x5b3b20,CAtomicModelInfo::SetAtomicModelInfoFlags,STREAM,L1,gta-reversed,"PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md)",2026-11-05,0,
 0x5b3c30,CClumpModelInfo::SetClumpModelInfoFlags,STREAM,L1,gta-reversed,"PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md)",2026-11-05,0,
 0x5b3c60,CFileLoader::LoadObject,STREAM,implemented,gta-reversed,PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md),2026-11-05,0,
