@@ -9,7 +9,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 **PAUSED 2026-11-07 ~22:45 (user request).** Master is consistent at this commit (F1 = 254 / 15,479 at ≥L2).
 Work in flight when paused (not merged, not verified; worktrees under ~/.local/share/opencode/worktree/28ba9b/):
-`coll` (PORT-COLL merged and committed; worktree can be deleted; open: native-backend L1 10^6 for the 80 COLL specs → target/collv/l1-native.txt, then set L1 where PASS), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
+`coll` (PORT-COLL merged and committed; worktree can be deleted; L1 native re-run done), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
 `inf10` (INF-10 coverage, lane 3), `stream-l2` (agent finished; already merged, safe to delete).
 Resume: (1) check each worktree's `git status`/diff and any summary under its target/e2e; finish or relaunch the
 agent with its ROADMAP brief; verify on master before merging; (2) re-run the 99 remaining STREAM-L2 PASS claims
@@ -114,7 +114,7 @@ ones to L2; (3) continue the "Next up" queue.
 
 | ID | Task | Funcs | Status | Verification |
 |---|---|---|---|---|
-| COLL | collision | 141/0 | in-progress | PORT-COLL (2026-11-07, agent + main-session verification): new crate `crates/sa-world` (collision/*), 121/145 ported (120 hooks + CCollision::Update unhookable), 24 deferred with reasons (large x87 line/triangle tests, ProcessColModels/LineOfSight drivers, camera collision, sphere casts, CCollisionData::Copy protection chunks, ProcessSphereTriangle needs a k = 0 measurement). Main-session re-runs on lane 1: 84 → L2 (grove 4/frame, burst 1000/frame, nested-only alone, pause-restart: 0 mismatches, 0 undeclared, l2 traces identical), all 120 on Rust frame-identical on both recordings, all 897 ports frame-identical; 36 implemented (no corpus call or below budget); L1 at 10^6 with the native backend (SNaN cases) running for the 80 COLL specs; `preserve = "edx"` on TestSphereSphere (caller 0x417F83); deviations kept with byte evidence in docs/arch/coll-port.md |
+| COLL | collision | 141/0 | in-progress | PORT-COLL (2026-11-07, agent + main-session verification): new crate `crates/sa-world` (collision/*), 121/145 ported (120 hooks + CCollision::Update unhookable), 24 deferred with reasons (large x87 line/triangle tests, ProcessColModels/LineOfSight drivers, camera collision, sphere casts, CCollisionData::Copy protection chunks, ProcessSphereTriangle needs a k = 0 measurement). Main-session re-runs on lane 1: 84 → L2 (grove 4/frame, burst 1000/frame, nested-only alone, pause-restart: 0 mismatches, 0 undeclared, l2 traces identical), all 120 on Rust frame-identical on both recordings, all 897 ports frame-identical; main-session L1 10^6 re-run of all 80 COLL specs with the default backends (Unicorn + real CPU for SNaN cases): 80/80 PASS, 0 mismatches → 25 more to L1, 11 stay implemented (no corpus call and no pure spec); `preserve = "edx"` on TestSphereSphere (caller 0x417F83); deviations kept with byte evidence in docs/arch/coll-port.md |
 | PHYS | CPhysical, buoyancy | 63/2 | todo | L3 object trajectories |
 | WORLD | CWorld, entities, objects, zones, interiors, garages, pickups, misc world | 621/123 | todo | L3 |
 | RENDER | renderer, visibility, shadows, FX, post FX, coronas, clouds, timecycle, weather, water, glass, plants, markers | 676/50 | todo | F7 subset |
