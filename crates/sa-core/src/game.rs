@@ -409,7 +409,8 @@ pub fn game_init() {
         call::game_initialise_render_ware();
     }
     let t = call::rs_timer();
-    crt::srand(t);
+    // return address of the original's `call srand` (0x5BF3C9), for the determinism rand log
+    crate::orig::at_site(0x5BF3CE, || crt::srand(t));
 }
 
 /// Colour of the fade rectangle (`DoFade`): black while the fade target is the splash screen,

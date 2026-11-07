@@ -429,3 +429,17 @@
   pattern, __dtor_TheCamera → 0x50A870) all consistent. 16 sa-stream hook names updated to the new
   catalogue names; cargo test sa-hook (incl. matches_catalogue_and_exe) / sa-stream / sa-core pass,
   clippy host + i686 clean.
+
+## 2026-11-07: STREAM-FIX-1 done
+- `l3.sh --rust ports` (lane 3) bisected the rand divergence to CLoadingScreen::LoadSplashes alone
+  (rest of the set matched all 5,200 frames). Causes: QueryPerformanceCounter called through the IAT
+  cell 0x8580C8 instead of the determinism-patched call site 0x5900FF (so srand got real time); then
+  srand in LoadSplashes and Game::GameInit not attributed to the original return addresses 0x59010F /
+  0x5BF3CE (randcalls hash). Audit: the 9 determinism-patched sites inside catalogue functions were
+  mapped to their functions; the ported ones (CdStreamSync by design, GetCurrentTimeInCycles,
+  psTimer, LoadSplashes) all use `site` now; every Rust rand/srand call goes through `at_site`.
+- Harness: nested `l3.sh --probe` runs re-source lib.sh; it now keeps the inherited lane display
+  (E2E_DISPLAY) after clearing the desktop variables (the first bisection attempt failed on this).
+- Verification: i686 release build, cargo test sa-core 58 / sa-stream 10 / sa-hook 33, clippy host +
+  i686 clean; `port-l2.sh ports --runs "plain rust"` (lane 2): exit 0, plain and rust 5,200 frames,
+  rust trace IDENTICAL to the all-original trace over 5,200 frames, 17 subsystems.
