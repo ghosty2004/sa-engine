@@ -469,7 +469,7 @@ pub fn set_frame_ids(this: MiPtr, ids: GPtr<u8>) {
 }
 
 /// `CClumpModelInfo`'s scalar deleting destructor (0x4C62B0).
-#[hook(addr = 0x4C62B0, conv = thiscall, name = "CClumpModelInfo::vfunc_0", expect = "56 8B F1 E8 98 F4 FF FF", this = "CClumpModelInfo")]
+#[hook(addr = 0x4C62B0, conv = thiscall, name = "CClumpModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 98 F4 FF FF", this = "CClumpModelInfo")]
 pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     super::atomic::scalar_delete(this, flags, clump_destructor)
 }

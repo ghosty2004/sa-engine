@@ -52,7 +52,7 @@ EXE = ROOT / 're' / 'gta' / '1.0-US' / 'gta_sa.exe'
 GR = ROOT / 're' / 'gta-reversed'
 PSDK = ROOT / 're' / 'plugin-sdk'
 GHIDRA = Path(os.environ.get('GHIDRA_HOME', '/opt/ghidra'))
-PROJ_DIR = ROOT / 'target' / 'ghidra'
+PROJ_DIR = Path(os.environ.get('SA_GHIDRA_PROJ', ROOT / 'target' / 'ghidra'))  # Ghidra rejects '.' path elements
 PROJ_NAME = 'gta_sa_10us'
 SCRIPT_DIR = Path(__file__).resolve().parent / 'ghidra'
 
@@ -444,6 +444,12 @@ def build(cat):
 
     # ---- function extents
     entry_set = set(procs) | set(dump)
+    # CAT-17: hand-proven continuation points that no static flow reaches (switch tables Ghidra did
+    # not resolve, SecuROM stubs that "return" to a computed address); catalog/extent-seeds.csv
+    seeds = {}
+    if (cat / 'extent-seeds.csv').exists():
+        for r in csv.DictReader(open(cat / 'extent-seeds.csv')):
+            seeds[int(r['address'], 16)] = [int(x, 16) for x in r['seeds'].split(';') if x]
     funcs = {}
     for a in live:
         f = Func(a)
@@ -460,10 +466,12 @@ def build(cat):
             f.hood = stubs[a]
             f.ranges = f.ranges + list(dump[stubs[a]]['body'])
         f.ranges = sorted(set(f.ranges))
-        extra = complete_body(im, f.ranges, entry_set, {a, f.hood} - {None})
+        extra = complete_body(im, f.ranges, entry_set, {a, f.hood} - {None}, seeds.get(a, ()))
+        if a in seeds:
+            stats['seeded_functions'] += 1
         if extra:
             f.ranges = merge_ranges(f.ranges + extra)
-            f.source += '+completed'
+            f.source += '+seeded' if a in seeds else '+completed'
             stats['completed_functions'] += 1
             stats['completed_bytes'] += sum(hi - lo for lo, hi in extra)
         funcs[a] = f
@@ -908,11 +916,12 @@ def merge_ranges(rs):
     return out
 
 
-def complete_body(im, ranges, entries, own):
+def complete_body(im, ranges, entries, own, seeds=()):
     """Recursive descent from every direct branch target and conditional-jump fall-through of
     the Ghidra body that the body does not cover (Ghidra left the bytes undecoded or decoded
-    them misaligned). Stops at other functions' entries, at code already in the body and at
-    ret/jmp. Returns the added [lo, hi) ranges."""
+    them misaligned), and from the hand-proven `seeds` (catalog/extent-seeds.csv). Stops at other
+    functions' entries, at code already in the body and at ret/jmp. Returns the added [lo, hi)
+    ranges."""
     def covered(x, rs):
         i = bisect.bisect_right(rs, (x, float('inf'))) - 1
         return i >= 0 and rs[i][0] <= x < rs[i][1]
@@ -931,6 +940,7 @@ def complete_body(im, ranges, entries, own):
         if last is not None and not last.group(capstone.CS_GRP_CALL) and \
                 last.id not in (X.X86_INS_RET, X.X86_INS_RETF, X.X86_INS_JMP, X.X86_INS_INT3, X.X86_INS_HLT):
             work.append(last.address + last.size)
+    work.extend(seeds)
     seen = set()
     while work:
         t = work.pop()

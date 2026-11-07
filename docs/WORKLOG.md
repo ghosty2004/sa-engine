@@ -416,3 +416,16 @@
   subsystems identical over all frames, `rand` + `randcalls` diverge from frame 1.
 - Open: bisect the rand divergence (`l3.sh --rust ports`, lane 3, running); STREAM-FIX-1 stays
   in-progress until the all-ports run is frame-identical.
+
+## 2026-11-07: CAT-17 integrated (sub-agent, worktree cat17)
+- Name/extent corrections from RE-SPEC-1/2 through two new evidence-carrying inputs
+  (`catalog/name-corrections.csv`, `catalog/extent-seeds.csv`); pipeline readers in names_extra.py,
+  subsystems.py, progress.py, callgraph.py (also `SA_GHIDRA_PROJ`, since Ghidra rejects paths with '.'
+  elements). Agent evidence: two run_all.sh runs sha256-identical over 46 catalog files; 113 names, 9
+  unknown → specified, 4 subsystem moves, F1 unchanged.
+- Main-session verification: patch applied to master cleanly; byte spot checks (0x6C7D10 vptr store +
+  jmp CAutomobile dtor, 0x6F54D0, CTimeModelInfo vtable 0x85BCB0 slots 4/5 = 0x4C5660/0x4C5670 with
+  time info at +0x20 vs CLodTimeModelInfo 0x4C56C0/0x4C56D0 at +0x24, 0x6B8950 scalar deleting dtor
+  pattern, __dtor_TheCamera → 0x50A870) all consistent. 16 sa-stream hook names updated to the new
+  catalogue names; cargo test sa-hook (incl. matches_catalogue_and_exe) / sa-stream / sa-core pass,
+  clippy host + i686 clean.

@@ -1181,7 +1181,7 @@ pub fn set_env_map_coeff_cb(mat: GPtr<u8>, data: i32) -> GPtr<u8> {
 }
 
 /// `CVehicleModelInfo::scalar deleting destructor` (0x4C8E10, `ret 4`).
-#[hook(addr = 0x4C8E10, conv = thiscall, name = "CVehicleModelInfo::vfunc_0", expect = "56 8B F1 E8 08 CB FF FF", this = "CVehicleModelInfo")]
+#[hook(addr = 0x4C8E10, conv = thiscall, name = "CVehicleModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 08 CB FF FF", this = "CVehicleModelInfo")]
 pub fn scalar_deleting_destructor(mi: GPtr<u8>, flags: u8) -> GPtr<u8> {
     dtor(mi);
     if flags & 1 != 0 {

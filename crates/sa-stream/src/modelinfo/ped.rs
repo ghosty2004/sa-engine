@@ -194,7 +194,7 @@ pub fn destructor(this: MiPtr) {
 }
 
 /// `CPedModelInfo`'s scalar deleting destructor (0x4C6350).
-#[hook(addr = 0x4C6350, conv = thiscall, name = "CPedModelInfo::vfunc_0", expect = "56 8B F1 E8 98 FF FF FF", this = "CPedModelInfo")]
+#[hook(addr = 0x4C6350, conv = thiscall, name = "CPedModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 98 FF FF FF", this = "CPedModelInfo")]
 pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, ped_destructor_call)
 }

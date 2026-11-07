@@ -14,7 +14,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x403f00,0x535fa0,call,game,CEntity::PreRender,1
 0x403f00,0x532b20,tailcall,game,CEntity::UpdateRpHAnim,1
 0x404090,0x403fa0,tailcall,game,CBuildingPool::New,1
-0x404130,0x404180,call,game,thunk_FUN_00535e90,1
+0x404130,0x404180,call,game,CBuilding::~CBuilding,1
 0x404180,0x535e90,tailcall,game,CEntity::Destructor,1
 0x404590,0x552520,call,game,CQuadTreeNode,1
 0x404590,0x552c90,call,game,delete,1
@@ -1210,19 +1210,19 @@ caller,callee,kind,callee_class,callee_name,sites
 0x42c2b0,0x420f30,eh-unwind,game,FUN_00420f30,2
 0x42c2b0,0x61a5b0,eh-unwind,game,CTask::operator delete,1
 0x42c2b0,0x6d63f0,virtual-typed,game,CVehicle::GetHeightAboveRoad,1
-0x42c2b0,0x6e38a0,virtual-typed,game,CVehicle::vfunc_0,3
+0x42c2b0,0x6e38a0,virtual-typed,game,CVehicle::`scalar deleting destructor',3
 0x42c2b0,0x6a62b0,virtual-typed-override,game,CAutomobile::GetHeightAboveRoad,1
-0x42c2b0,0x6b1330,virtual-typed-override,game,CAutomobile::vfunc_0,3
+0x42c2b0,0x6b1330,virtual-typed-override,game,CAutomobile::`scalar deleting destructor',3
 0x42c2b0,0x6b58b0,virtual-typed-override,game,CBike::GetHeightAboveRoad,1
-0x42c2b0,0x6b8950,virtual-typed-override,game,CBike::vfunc_0,3
-0x42c2b0,0x6c0570,virtual-typed-override,game,CBmx::vfunc_0,3
-0x42c2b0,0x6c4810,virtual-typed-override,game,CHeli::vfunc_0,3
-0x42c2b0,0x6c7f90,virtual-typed-override,game,CMonsterTruck::vfunc_0,3
-0x42c2b0,0x6cadb0,virtual-typed-override,game,CPlane::vfunc_0,3
-0x42c2b0,0x6ce440,virtual-typed-override,game,CQuadBike::vfunc_0,3
-0x42c2b0,0x6cf180,virtual-typed-override,game,CTrailer::vfunc_0,3
-0x42c2b0,0x6f1120,virtual-typed-override,game,CBoat::vfunc_0,3
-0x42c2b0,0x6f6300,virtual-typed-override,game,CTrain::vfunc_0,3
+0x42c2b0,0x6b8950,virtual-typed-override,game,CBike::`scalar deleting destructor',3
+0x42c2b0,0x6c0570,virtual-typed-override,game,CBmx::`scalar deleting destructor',3
+0x42c2b0,0x6c4810,virtual-typed-override,game,CHeli::`scalar deleting destructor',3
+0x42c2b0,0x6c7f90,virtual-typed-override,game,CMonsterTruck::`scalar deleting destructor',3
+0x42c2b0,0x6cadb0,virtual-typed-override,game,CPlane::`scalar deleting destructor',3
+0x42c2b0,0x6ce440,virtual-typed-override,game,CQuadBike::`scalar deleting destructor',3
+0x42c2b0,0x6cf180,virtual-typed-override,game,CTrailer::`scalar deleting destructor',3
+0x42c2b0,0x6f1120,virtual-typed-override,game,CBoat::`scalar deleting destructor',3
+0x42c2b0,0x6f6300,virtual-typed-override,game,CTrain::`scalar deleting destructor',3
 0x42c740,0x41ccb0,call,game,CPlaceable::GetTopDirection,1
 0x42c740,0x421440,call,game,CCarCtrl::GetNewVehicleDependingOnCarModel,1
 0x42c740,0x4217c0,call,game,CCarCtrl::SetUpDriverAndPassengersForVehicle,1
@@ -1240,19 +1240,19 @@ caller,callee,kind,callee_class,callee_name,sites
 0x42c740,0x821b40,call,excluded:crt,FUN_00821b40,1
 0x42c740,0x61a5b0,eh-unwind,game,CTask::operator delete,1
 0x42c740,0x6d63f0,virtual-typed,game,CVehicle::GetHeightAboveRoad,1
-0x42c740,0x6e38a0,virtual-typed,game,CVehicle::vfunc_0,2
+0x42c740,0x6e38a0,virtual-typed,game,CVehicle::`scalar deleting destructor',2
 0x42c740,0x6a62b0,virtual-typed-override,game,CAutomobile::GetHeightAboveRoad,1
-0x42c740,0x6b1330,virtual-typed-override,game,CAutomobile::vfunc_0,2
+0x42c740,0x6b1330,virtual-typed-override,game,CAutomobile::`scalar deleting destructor',2
 0x42c740,0x6b58b0,virtual-typed-override,game,CBike::GetHeightAboveRoad,1
-0x42c740,0x6b8950,virtual-typed-override,game,CBike::vfunc_0,2
-0x42c740,0x6c0570,virtual-typed-override,game,CBmx::vfunc_0,2
-0x42c740,0x6c4810,virtual-typed-override,game,CHeli::vfunc_0,2
-0x42c740,0x6c7f90,virtual-typed-override,game,CMonsterTruck::vfunc_0,2
-0x42c740,0x6cadb0,virtual-typed-override,game,CPlane::vfunc_0,2
-0x42c740,0x6ce440,virtual-typed-override,game,CQuadBike::vfunc_0,2
-0x42c740,0x6cf180,virtual-typed-override,game,CTrailer::vfunc_0,2
-0x42c740,0x6f1120,virtual-typed-override,game,CBoat::vfunc_0,2
-0x42c740,0x6f6300,virtual-typed-override,game,CTrain::vfunc_0,2
+0x42c740,0x6b8950,virtual-typed-override,game,CBike::`scalar deleting destructor',2
+0x42c740,0x6c0570,virtual-typed-override,game,CBmx::`scalar deleting destructor',2
+0x42c740,0x6c4810,virtual-typed-override,game,CHeli::`scalar deleting destructor',2
+0x42c740,0x6c7f90,virtual-typed-override,game,CMonsterTruck::`scalar deleting destructor',2
+0x42c740,0x6cadb0,virtual-typed-override,game,CPlane::`scalar deleting destructor',2
+0x42c740,0x6ce440,virtual-typed-override,game,CQuadBike::`scalar deleting destructor',2
+0x42c740,0x6cf180,virtual-typed-override,game,CTrailer::`scalar deleting destructor',2
+0x42c740,0x6f1120,virtual-typed-override,game,CBoat::`scalar deleting destructor',2
+0x42c740,0x6f6300,virtual-typed-override,game,CTrain::`scalar deleting destructor',2
 0x42cd10,0x424f80,call,game,CCarCtrl::PossiblyRemoveVehicle,1
 0x42cd10,0x461170,call,game,CRoadBlocks::GenerateRoadBlockPedsForCar,1
 0x42cd10,0x56e250,call,game,CWorld::FindPlayerCentreOfWorld,1
@@ -1399,19 +1399,19 @@ caller,callee,kind,callee_class,callee_name,sites
 0x430050,0x821b1e,call,excluded:crt,_rand,5
 0x430050,0x821b40,call,excluded:crt,FUN_00821b40,8
 0x430050,0x6d63f0,virtual-typed,game,CVehicle::GetHeightAboveRoad,1
-0x430050,0x6e38a0,virtual-typed,game,CVehicle::vfunc_0,3
+0x430050,0x6e38a0,virtual-typed,game,CVehicle::`scalar deleting destructor',3
 0x430050,0x6a62b0,virtual-typed-override,game,CAutomobile::GetHeightAboveRoad,1
-0x430050,0x6b1330,virtual-typed-override,game,CAutomobile::vfunc_0,3
+0x430050,0x6b1330,virtual-typed-override,game,CAutomobile::`scalar deleting destructor',3
 0x430050,0x6b58b0,virtual-typed-override,game,CBike::GetHeightAboveRoad,1
-0x430050,0x6b8950,virtual-typed-override,game,CBike::vfunc_0,3
-0x430050,0x6c0570,virtual-typed-override,game,CBmx::vfunc_0,3
-0x430050,0x6c4810,virtual-typed-override,game,CHeli::vfunc_0,3
-0x430050,0x6c7f90,virtual-typed-override,game,CMonsterTruck::vfunc_0,3
-0x430050,0x6cadb0,virtual-typed-override,game,CPlane::vfunc_0,3
-0x430050,0x6ce440,virtual-typed-override,game,CQuadBike::vfunc_0,3
-0x430050,0x6cf180,virtual-typed-override,game,CTrailer::vfunc_0,3
-0x430050,0x6f1120,virtual-typed-override,game,CBoat::vfunc_0,3
-0x430050,0x6f6300,virtual-typed-override,game,CTrain::vfunc_0,3
+0x430050,0x6b8950,virtual-typed-override,game,CBike::`scalar deleting destructor',3
+0x430050,0x6c0570,virtual-typed-override,game,CBmx::`scalar deleting destructor',3
+0x430050,0x6c4810,virtual-typed-override,game,CHeli::`scalar deleting destructor',3
+0x430050,0x6c7f90,virtual-typed-override,game,CMonsterTruck::`scalar deleting destructor',3
+0x430050,0x6cadb0,virtual-typed-override,game,CPlane::`scalar deleting destructor',3
+0x430050,0x6ce440,virtual-typed-override,game,CQuadBike::`scalar deleting destructor',3
+0x430050,0x6cf180,virtual-typed-override,game,CTrailer::`scalar deleting destructor',3
+0x430050,0x6f1120,virtual-typed-override,game,CBoat::`scalar deleting destructor',3
+0x430050,0x6f6300,virtual-typed-override,game,CTrain::`scalar deleting destructor',3
 0x431f80,0x421440,call,game,CCarCtrl::GetNewVehicleDependingOnCarModel,1
 0x431f80,0x42f5a0,call,game,CCarCtrl::JoinCarWithRoadSystem,2
 0x431f80,0x4637e0,call,game,CMissionCleanup::AddEntityToList,2
@@ -5896,18 +5896,18 @@ caller,callee,kind,callee_class,callee_name,sites
 0x499a80,0x668120,call,game,CTaskComplexGoToPointAndStandStill::Constructor,3
 0x499a80,0x681af0,call,game,CTaskManager::SetTask,2
 0x499a80,0x61a5b0,eh-unwind,game,CTask::operator delete,6
-0x499a80,0x5de2c0,virtual-typed,game,CCopPed::vfunc_0,1
-0x499a80,0x6e38a0,virtual-typed,game,CVehicle::vfunc_0,1
-0x499a80,0x6b1330,virtual-typed-override,game,CAutomobile::vfunc_0,1
-0x499a80,0x6b8950,virtual-typed-override,game,CBike::vfunc_0,1
-0x499a80,0x6c0570,virtual-typed-override,game,CBmx::vfunc_0,1
-0x499a80,0x6c4810,virtual-typed-override,game,CHeli::vfunc_0,1
-0x499a80,0x6c7f90,virtual-typed-override,game,CMonsterTruck::vfunc_0,1
-0x499a80,0x6cadb0,virtual-typed-override,game,CPlane::vfunc_0,1
-0x499a80,0x6ce440,virtual-typed-override,game,CQuadBike::vfunc_0,1
-0x499a80,0x6cf180,virtual-typed-override,game,CTrailer::vfunc_0,1
-0x499a80,0x6f1120,virtual-typed-override,game,CBoat::vfunc_0,1
-0x499a80,0x6f6300,virtual-typed-override,game,CTrain::vfunc_0,1
+0x499a80,0x5de2c0,virtual-typed,game,CCopPed::`scalar deleting destructor',1
+0x499a80,0x6e38a0,virtual-typed,game,CVehicle::`scalar deleting destructor',1
+0x499a80,0x6b1330,virtual-typed-override,game,CAutomobile::`scalar deleting destructor',1
+0x499a80,0x6b8950,virtual-typed-override,game,CBike::`scalar deleting destructor',1
+0x499a80,0x6c0570,virtual-typed-override,game,CBmx::`scalar deleting destructor',1
+0x499a80,0x6c4810,virtual-typed-override,game,CHeli::`scalar deleting destructor',1
+0x499a80,0x6c7f90,virtual-typed-override,game,CMonsterTruck::`scalar deleting destructor',1
+0x499a80,0x6cadb0,virtual-typed-override,game,CPlane::`scalar deleting destructor',1
+0x499a80,0x6ce440,virtual-typed-override,game,CQuadBike::`scalar deleting destructor',1
+0x499a80,0x6cf180,virtual-typed-override,game,CTrailer::`scalar deleting destructor',1
+0x499a80,0x6f1120,virtual-typed-override,game,CBoat::`scalar deleting destructor',1
+0x499a80,0x6f6300,virtual-typed-override,game,CTrain::`scalar deleting destructor',1
 0x49aa00,0x499a80,call,game,CSetPiece::Update,1
 0x49aa00,0xcb73e0,indirect-ghidra,excluded:protection-thunk,,1
 0x49aad0,0x8229b6,call,excluded:crt,__stricmp,1
@@ -5929,6 +5929,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x49af10,0xcb73e0,indirect-ghidra,excluded:protection-thunk,,1
 0x49af90,0x49ae70,call,game,CShopping::FindSection,2
 0x49afd0,0x55d090,call,game,CStats::ModifyStat,1
+0x49b010,0x4c8740,call,game,CVehicleModelInfo::GetNumWheelUpgrades,1
+0x49b010,0x4c8750,call,game,CVehicleModelInfo::GetWheelUpgrade,1
 0x49b010,0x156921b,call,excluded:protection-thunk,,1
 0x49b0e0,0x56e0d0,call,game,CWorld::FindPlayerVehicle,1
 0x49b0e0,0x6a3580,call,game,CAutomobile::FixTyre,4
@@ -8777,45 +8779,45 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4c5c80,,indirect-unresolved,,,1
 0x4c5cb0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5cb0,0x4c5540,fnref,game,FUN_004c5540,1
-0x4c5cb0,0x4c5590,fnref,game,FUN_004c5590,1
+0x4c5cb0,0x4c5590,fnref,game,CAtomicModelInfo::~CAtomicModelInfo,1
 0x4c5d10,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5d10,0x4c55a0,fnref,game,FUN_004c55a0,1
-0x4c5d10,0x4c55d0,fnref,game,FUN_004c55d0,1
+0x4c5d10,0x4c55d0,fnref,game,CDamageAtomicModelInfo::~CDamageAtomicModelInfo,1
 0x4c5d70,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5d70,0x4c55e0,fnref,game,FUN_004c55e0,1
-0x4c5d70,0x4c5620,fnref,game,FUN_004c5620,1
+0x4c5d70,0x4c5620,fnref,game,CLodAtomicModelInfo::~CLodAtomicModelInfo,1
 0x4c5dd0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5dd0,0x4c5640,fnref,game,FUN_004c5640,1
-0x4c5dd0,0x4c5680,fnref,game,FUN_004c5680,1
+0x4c5dd0,0x4c5680,fnref,game,CTimeModelInfo::~CTimeModelInfo,1
 0x4c5e30,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5e30,0x4c5690,fnref,game,FUN_004c5690,1
-0x4c5e30,0x4c56e0,fnref,game,FUN_004c56e0,1
+0x4c5e30,0x4c56e0,fnref,game,CLodTimeModelInfo::~CLodTimeModelInfo,1
 0x4c5e90,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5e90,0x4c5760,fnref,game,FUN_004c5760,1
-0x4c5e90,0x4c5790,fnref,game,FUN_004c5790,1
+0x4c5e90,0x4c5790,fnref,game,CWeaponModelInfo::~CWeaponModelInfo,1
 0x4c5ef0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5ef0,0x4c56f0,fnref,game,FUN_004c56f0,1
-0x4c5ef0,0x4c5750,fnref,game,FUN_004c5750,1
+0x4c5ef0,0x4c5750,fnref,game,CClumpModelInfo::~CClumpModelInfo,1
 0x4c5f50,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4c5f50,0x4c5920,fnref,game,CVehicleModelInfo::~CVehicleModelInfo,1
 0x4c5f50,0x4c75e0,fnref,game,FUN_004c75e0,1
-0x4c6210,0x4c5590,call,game,FUN_004c5590,1
+0x4c6210,0x4c5590,call,game,CAtomicModelInfo::~CAtomicModelInfo,1
 0x4c6210,0x8214bd,call,game,_free,1
-0x4c6230,0x4c55d0,call,game,FUN_004c55d0,1
+0x4c6230,0x4c55d0,call,game,CDamageAtomicModelInfo::~CDamageAtomicModelInfo,1
 0x4c6230,0x8214bd,call,game,_free,1
-0x4c6250,0x4c5620,call,game,FUN_004c5620,1
+0x4c6250,0x4c5620,call,game,CLodAtomicModelInfo::~CLodAtomicModelInfo,1
 0x4c6250,0x8214bd,call,game,_free,1
-0x4c6270,0x4c5680,call,game,FUN_004c5680,1
+0x4c6270,0x4c5680,call,game,CTimeModelInfo::~CTimeModelInfo,1
 0x4c6270,0x8214bd,call,game,_free,1
-0x4c6290,0x4c56e0,call,game,FUN_004c56e0,1
+0x4c6290,0x4c56e0,call,game,CLodTimeModelInfo::~CLodTimeModelInfo,1
 0x4c6290,0x8214bd,call,game,_free,1
-0x4c62b0,0x4c5750,call,game,FUN_004c5750,1
+0x4c62b0,0x4c5750,call,game,CClumpModelInfo::~CClumpModelInfo,1
 0x4c62b0,0x8214bd,call,game,_free,1
-0x4c62d0,0x4c5790,call,game,FUN_004c5790,1
+0x4c62d0,0x4c5790,call,game,CWeaponModelInfo::~CWeaponModelInfo,1
 0x4c62d0,0x8214bd,call,game,_free,1
 0x4c62f0,0x40f700,call,game,CColModel,1
 0x4c62f0,0x40fc40,call,game,CColModel::operator delete,1
-0x4c62f0,0x4c5750,eh-unwind,game,FUN_004c5750,2
+0x4c62f0,0x4c5750,eh-unwind,game,CClumpModelInfo::~CClumpModelInfo,2
 0x4c6350,0x4c62f0,call,game,CPedModelInfo::~CPedModelInfo,1
 0x4c6350,0x8214bd,call,game,_free,1
 0x4c63b0,0x4c4c20,call,game,CBaseModelInfo::Init2dEffects,1
@@ -9070,8 +9072,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4c9360,0x822789,call,excluded:crt,_isdigit,3
 0x4c9360,0x4c5570,virtual-typed-override,game,CAtomicModelInfo::GetModelType,1
 0x4c9360,0x4c5600,virtual-typed-override,game,CLodAtomicModelInfo::GetModelType,1
-0x4c9360,0x4c5660,virtual-typed-override,game,CLodTimeModelInfo::GetModelType,1
-0x4c9360,0x4c56c0,virtual-typed-override,game,CLodTimeModelInfo::vfunc_4,1
+0x4c9360,0x4c5660,virtual-typed-override,game,CTimeModelInfo::GetModelType,1
+0x4c9360,0x4c56c0,virtual-typed-override,game,CLodTimeModelInfo::GetModelType,1
 0x4c9360,0x4c5720,virtual-typed-override,game,CClumpModelInfo::GetModelType,1
 0x4c9360,0x4c5780,virtual-typed-override,game,CWeaponModelInfo::GetModelType,1
 0x4c9360,0x4c57c0,virtual-typed-override,game,CPedModelInfo::GetModelType,1
@@ -9265,10 +9267,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4cd820,0x7fb230,call,game,RwRasterCreate,3
 0x4cd820,0x7fb2d0,call,game,RwRasterLock,1
 0x4cd820,,indirect-unresolved,,,2
-0x4cdf50,0x4cec00,call,game,CAnimBlendStaticAssociation,1
+0x4cdf50,0x4cec00,call,game,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,1
 0x4cdf50,0x8214bd,call,game,_free,2
 0x4cdf50,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x4cdf50,0x4cec00,fnref,game,CAnimBlendStaticAssociation,1
+0x4cdf50,0x4cec00,fnref,game,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,1
 0x4cdfb0,0x4cec20,call,game,CAnimBlendStaticAssociation::Init,1
 0x4cdff0,0x8214bd,call,game,_free,1
 0x4cdff0,0x4cdf50,virtual-typed,game,CAnimBlendStaticAssociation::Destructor,1
@@ -9298,7 +9300,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4ce220,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4ce220,0x8214bd,eh-unwind,game,_free,1
 0x4ce220,0x4ce940,fnref,game,CAnimBlendStaticAssociation::Constructor1,1
-0x4ce220,0x4cec00,fnref,game,CAnimBlendStaticAssociation,1
+0x4ce220,0x4cec00,fnref,game,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,1
 0x4ce220,0x734b90,fnref,game,RwHelper::AtomicRemoveAnimFromSkinCB,1
 0x4ce220,0x4cdf50,virtual-typed,game,CAnimBlendStaticAssociation::Destructor,1
 0x4ce220,0x4c4530,virtual-typed-override,game,CAtomicModelInfo::CreateInstance-void,1
@@ -9320,7 +9322,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4ce3b0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4ce3b0,0x8214bd,eh-unwind,game,_free,1
 0x4ce3b0,0x4ce940,fnref,game,CAnimBlendStaticAssociation::Constructor1,1
-0x4ce3b0,0x4cec00,fnref,game,CAnimBlendStaticAssociation,1
+0x4ce3b0,0x4cec00,fnref,game,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,1
 0x4ce3b0,0x734b90,fnref,game,RwHelper::AtomicRemoveAnimFromSkinCB,1
 0x4ce3b0,0x4c4530,virtual-typed-override,game,CAtomicModelInfo::CreateInstance-void,1
 0x4ce3b0,0x4c4960,virtual-typed-override,game,CDamageAtomicModelInfo::CreateInstance-void,1
@@ -9333,7 +9335,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4ce5c0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4ce5c0,0x8214bd,eh-unwind,game,_free,1
 0x4ce5c0,0x4ce940,fnref,game,CAnimBlendStaticAssociation::Constructor1,1
-0x4ce5c0,0x4cec00,fnref,game,CAnimBlendStaticAssociation,1
+0x4ce5c0,0x4cec00,fnref,game,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,1
 0x4ce5c0,0x4cdf50,virtual-typed,game,CAnimBlendStaticAssociation::Destructor,1
 0x4ce6e0,0x4cec20,call,game,CAnimBlendStaticAssociation::Init,1
 0x4ce6e0,0x4d3940,call,game,CAnimManager::GetAnimationBlock-,1
@@ -9343,7 +9345,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4ce6e0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x4ce6e0,0x8214bd,eh-unwind,game,_free,1
 0x4ce6e0,0x4ce940,fnref,game,CAnimBlendStaticAssociation::Constructor1,1
-0x4ce6e0,0x4cec00,fnref,game,CAnimBlendStaticAssociation,1
+0x4ce6e0,0x4cec00,fnref,game,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,1
 0x4ce6e0,0x4cdf50,virtual-typed,game,CAnimBlendStaticAssociation::Destructor,1
 0x4ce960,0x72f420,call,game,CMemoryMgr::Malloc-,1
 0x4ce9a0,0x72f430,call,game,CMemoryMgr::Free,1
@@ -10251,7 +10253,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4e2ee0,0x5df8f0,call,game,CPed::IsPlayer,1
 0x4e2ee0,0x6011b0,call,game,CPedIntelligence::GetUsingParachute,1
 0x4e2ee0,0x4f2960,tailcall,game,CAETwinLoopSoundEntity::StopSoundAndForget,1
-0x4e2ee0,0x6b5840,virtual-typed,game,CVehicle::vfunc_39,1
+0x4e2ee0,0x6b5840,virtual-typed,game,CVehicle::IsOpenTopCar,1
 0x4e2ee0,0x6a2350,virtual-typed-override,game,CAutomobile::IsOpenTopCar,1
 0x4e34c0,0x4ef660,tailcall,game,CAESound,1
 0x4e3520,0x4ef1c0,call,game,CAESound::StopSound,1
@@ -11110,7 +11112,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x4f96a0,0x5d46e0,virtual-typed-override,game,CPlayerPed::Load,1
 0x4f96a0,0x6a2210,virtual-typed-override,game,CAutomobile::GetComponentWorldPosition,1
 0x4f96a0,0x6b5990,virtual-typed-override,game,CBike::GetComponentWorldPosition,1
-0x4f96a0,0x6d6290,virtual-typed-override,game,CVehicle::vfunc_25,1
+0x4f96a0,0x6d6290,virtual-typed-override,game,CVehicle::GetComponentWorldPosition,1
 0x4f96a0,0x6f01d0,virtual-typed-override,game,CBoat::GetComponentWorldPosition,1
 0x4f9710,0x4d88c0,call,game,CAEAudioHardware::IsSoundBankLoaded,2
 0x4f9710,0x4d9c10,call,game,CAEAudioUtility::GetRandomNumberInRange<int32>-int,1
@@ -11621,7 +11623,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x506c40,0x4ef660,tailcall,game,CAESound,1
 0x506c50,0x4ef660,call,game,CAESound,1
 0x506c50,0x506c40,eh-unwind,game,FUN_00506c40,2
-0x506c50,0x544990,virtual-typed,game,CPhysical::vfunc_0,1
+0x506c50,0x544990,virtual-typed,game,CPhysical::`scalar deleting destructor',1
 0x506cc0,0x4ef660,tailcall,game,CAESound,1
 0x506cd0,0x4ef660,call,game,CAESound,3
 0x506cd0,0x506b20,call,game,FUN_00506b20,1
@@ -12110,7 +12112,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x513e40,0x5e6580,call,game,CPed::GetWeaponSkill-Current,1
 0x513e40,0x73e240,call,game,CWeapon::FindNearestTargetEntityWithScreenCoors,1
 0x513e40,0x743c60,call,game,CWeaponInfo::GetWeaponInfo-original,1
-0x514010,0x50a870,call,game,CCamera,1
+0x514010,0x50a870,call,game,CCamera::~CCamera,1
 0x514010,0x8214bd,call,game,_free,1
 0x514030,0x40fe60,call,game,VectorSub,1
 0x514030,0x411990,call,game,CPlaceable::GetMatrix,2
@@ -12552,6 +12554,31 @@ caller,callee,kind,callee_class,callee_name,sites
 0x522d40,0x681720,call,game,CTaskManager::GetActiveTask,2
 0x522d40,0x821e70,call,excluded:crt,FUN_00821e70,5
 0x522d40,0x822130,call,excluded:crt,FUN_00822130,3
+0x5245b0,0x40fdb0,call,game,CVector::DotProduct-v3d*v3d*,1
+0x5245b0,0x420800,call,game,FUN_00420800,2
+0x5245b0,0x441db0,call,game,CPlaceable::GetHeading,3
+0x5245b0,0x509c50,call,game,CCam::ClipBeta,1
+0x5245b0,0x509ce0,call,game,CCam::GetVectorsReadyForRW,2
+0x5245b0,0x50a0a0,call,game,FUN_0050a0a0,9
+0x5245b0,0x50a480,call,game,CCamera::ApplyVehicleCameraTweaks,1
+0x5245b0,0x50af00,call,game,CCamera::GetArrPosForVehicleType,1
+0x5245b0,0x50cca0,call,game,CCamera::SetColVarsVehicle,1
+0x5245b0,0x50cde0,call,game,CCamera::CameraVehicleModeSpecialCases,1
+0x5245b0,0x516b20,call,game,CCamera::ImproveNearClip,1
+0x5245b0,0x520190,call,game,CCamera::CameraColDetAndReact,1
+0x5245b0,0x535300,call,game,CEntity::GetColModel,6
+0x5245b0,0x53cc70,call,game,CGeneral::GetATanOfXY,1
+0x5245b0,0x53fb70,call,game,CPad::GetPad,2
+0x5245b0,0x53fbd0,call,game,CPad::GetSteeringUpDown,2
+0x5245b0,0x541040,call,game,CPad::AimWeaponLeftRight,1
+0x5245b0,0x5410c0,call,game,CPad::AimWeaponUpDown,1
+0x5245b0,0x59c730,call,game,CVector::CrossProduct-out,2
+0x5245b0,0x59c910,call,game,CVector::Normalise,3
+0x5245b0,0x681720,call,game,CTaskManager::GetActiveTask,5
+0x5245b0,0x6d1080,call,game,CVehicle::GetVehicleAppearance,2
+0x5245b0,0x821e70,call,excluded:crt,FUN_00821e70,2
+0x5245b0,0x822130,call,excluded:crt,FUN_00822130,3
+0x5245b0,,indirect-unresolved,,,1
 0x525e50,0x4082c0,call,game,CVector::Magnitude,1
 0x525e50,0x513220,call,game,FUN_00513220,3
 0x525e50,0x5132d0,call,game,FUN_005132d0,4
@@ -13142,7 +13169,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x537990,0x6f32c0,tailcall,game,CCarGenerator::SwitchOn,1
 0x537a10,0x403e00,call,game,CBuilding,1
 0x537a50,0x4040a0,call,game,delete,1
-0x537a50,0x537a70,call,game,thunk_FUN_00535e90,1
+0x537a50,0x537a70,call,game,CAnimatedBuilding::~CAnimatedBuilding,1
 0x537a70,0x535e90,tailcall,game,CEntity::Destructor,1
 0x537ae0,0x40faf0,call,game,CBoundingBox,1
 0x537ae0,0x537510,call,game,FUN_00537510,1
@@ -13953,7 +13980,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x544d50,0x59c730,call,game,CVector::CrossProduct-out,2
 0x544d50,0x59c790,call,game,Multiply3x3,2
 0x544d50,0x6a1ed0,virtual-override,game,CTrailer: CAutomobile::AddMovingCollisionSpeed,6
-0x544d50,0x6b5860,virtual-override,game,CVehicle: CVehicle::vfunc_49,5
+0x544d50,0x6b5860,virtual-override,game,CVehicle: CVehicle::AddMovingCollisionSpeed,5
 0x5454c0,0x40fdb0,call,game,CVector::DotProduct-v3d*v3d*,1
 0x5454c0,0x40fe90,call,game,FUN_0040fe90,2
 0x5454c0,0x411a00,call,game,FUN_00411a00,1
@@ -14071,7 +14098,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x548680,0x821b1e,call,excluded:crt,_rand,3
 0x548680,,indirect-unresolved,,,6
 0x548680,0x6a1ed0,virtual-override,game,CTrailer: CAutomobile::AddMovingCollisionSpeed,18
-0x548680,0x6b5860,virtual-override,game,CVehicle: CVehicle::vfunc_49,15
+0x548680,0x6b5860,virtual-override,game,CVehicle: CVehicle::AddMovingCollisionSpeed,15
 0x54a2c0,0x406da0,call,game,FUN_00406da0,1
 0x54a2c0,0x40fe90,call,game,FUN_0040fe90,1
 0x54a2c0,0x40fec0,call,game,FUN_0040fec0,3
@@ -14098,7 +14125,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x54a2c0,0x821b1e,call,excluded:crt,_rand,2
 0x54a2c0,,indirect-unresolved,,,5
 0x54a2c0,0x6a1ed0,virtual-override,game,CTrailer: CAutomobile::AddMovingCollisionSpeed,12
-0x54a2c0,0x6b5860,virtual-override,game,CVehicle: CVehicle::vfunc_49,10
+0x54a2c0,0x6b5860,virtual-override,game,CVehicle: CVehicle::AddMovingCollisionSpeed,10
 0x54ba60,0x406da0,call,game,FUN_00406da0,10
 0x54ba60,0x40fdb0,call,game,CVector::DotProduct-v3d*v3d*,2
 0x54ba60,0x40fe60,call,game,VectorSub,2
@@ -15212,7 +15239,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x56e870,0x7369e0,call,game,CExplosion::RemoveAllExplosionsInArea,1
 0x56e870,0x7399b0,call,game,CProjectileInfo::RemoveAllProjectiles,1
 0x56ea30,0x45ae80,call,game,CRemote::TakeRemoteControlledCarFromPlayer,1
-0x56ea30,0x6d6340,virtual-typed,game,CVehicle::vfunc_41,1
+0x56ea30,0x6d6340,virtual-typed,game,CVehicle::BlowUpCar,1
 0x56ea30,0x6b3780,virtual-typed-override,game,CAutomobile::BlowUpCar,1
 0x56ea30,0x6bea10,virtual-typed-override,game,CBike::BlowUpCar,1
 0x56ea30,0x6c0560,virtual-typed-override,game,CBmx::BlowUpCar,1
@@ -16830,7 +16857,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x595590,0x44de80,call,game,CPathFind::StartNewInterior,1
 0x595590,0x44ded0,call,game,CPathFind::AddInteriorLink,21
 0x595590,0x44df30,call,game,CPathFind::AddInteriorLinkToExternalNode,4
-0x595590,0x44df60,call,game,thunk_FUN_01562390,1
+0x595590,0x44df60,call,game,CPathFind::RemoveInteriorLinks,1
 0x595590,0x450e90,call,game,CPathFind::AddNodeToNewInterior,11
 0x595590,0x450f30,call,game,CPathFind::FindNearestExteriorNodeToInteriorNode,4
 0x595590,0x452270,call,game,CPathFind::CompleteNewInterior,1
@@ -17117,7 +17144,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x59eac0,0x46ff20,call,game,CScriptsForBrains::CheckIfNewEntityNeedsScript,1
 0x59eac0,0x5a2070,call,game,CObject::Create-dummy,1
 0x59eb50,0x5326f0,call,game,CDummy::operator delete,1
-0x59eb50,0x59eab0,call,game,FUN_0059eab0,1
+0x59eb50,0x59eab0,call,game,CDummyObject::~CDummyObject,1
 0x59eb70,0x533ed0,call,game,CEntity::AttachToRwObject,1
 0x59eb70,0x533fb0,call,game,CEntity::DetachFromRwObject,1
 0x59eb70,0x54ef40,call,game,CSimpleTransform::UpdateRwMatrix,1
@@ -17991,7 +18018,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5b3de0,0x53cf30,call,game,CKeyGen::GetUppercaseKey-,1
 0x5b3de0,0x5b3b20,call,game,CAtomicModelInfo::SetAtomicModelInfoFlags,1
 0x5b3de0,0x8220ad,call,excluded:crt,_sscanf,5
-0x5b3de0,0x4c5670,virtual-typed,game,CLodTimeModelInfo::GetTimeInfo,1
+0x5b3de0,0x4c5670,virtual-typed,game,CTimeModelInfo::GetTimeInfo,1
 0x5b3fb0,0x4c4b40,call,game,CBaseModelInfo::SetTexDictionary,1
 0x5b3fb0,0x4c4bc0,call,game,CBaseModelInfo::SetColModel,1
 0x5b3fb0,0x4c6710,call,game,CModelInfo::AddWeaponModel,1
@@ -19828,7 +19855,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5de340,0x5e8030,call,game,CPed::Constructor,1
 0x5de340,0x5e8620,eh-unwind,game,CPed::Destructor,2
 0x5de3b0,0x5e8620,tailcall,game,CPed::Destructor,1
-0x5de3e0,0x5de3b0,call,game,FUN_005de3b0,1
+0x5de3e0,0x5de3b0,call,game,CEmergencyPed::~CEmergencyPed,1
 0x5de3e0,0x5e4760,call,game,CPed::operator delete-anon,1
 0x5de400,0x5e8cd0,call,game,CPed::ProcessControl,1
 0x5de400,0x73db40,call,game,CWeapon::Update,2
@@ -20233,7 +20260,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5e65a0,0x7f1fd0,call,game,RwMatrixRotate,15
 0x5e65a0,0x7f22c0,call,game,RwMatrixScale,10
 0x5e65a0,0x821b1e,call,excluded:crt,_rand,13
-0x5e65a0,0x6b5840,virtual-typed,game,CVehicle::vfunc_39,1
+0x5e65a0,0x6b5840,virtual-typed,game,CVehicle::IsOpenTopCar,1
 0x5e65a0,0x6a2350,virtual-typed-override,game,CAutomobile::IsOpenTopCar,1
 0x5e7680,0x406da0,call,game,FUN_00406da0,1
 0x5e7680,0x40fe60,call,game,VectorSub,1
@@ -20925,21 +20952,21 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5f7350,0x69d9c0,virtual-typed-override,game,CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot,2
 0x5f7350,0x69da00,virtual-typed-override,game,CTaskAllocatorAttack::~CTaskAllocatorAttack,2
 0x5f7350,0x69da40,virtual-typed-override,game,CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic,2
-0x5f7350,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::vfunc_0,2
+0x5f7350,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor',2
 0x5f7350,0x69db00,virtual-typed-override,game,CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack,2
 0x5f7410,0x69dac0,virtual-typed,game,CTaskAllocator::~CTaskAllocator,1
 0x5f7410,0x5f6900,virtual-typed-override,game,CTaskAllocatorKillThreatsBasicRandomGroup::~CTaskAllocatorKillThreatsBasicRandomGroup,1
 0x5f7410,0x69d9c0,virtual-typed-override,game,CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot,1
 0x5f7410,0x69da00,virtual-typed-override,game,CTaskAllocatorAttack::~CTaskAllocatorAttack,1
 0x5f7410,0x69da40,virtual-typed-override,game,CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic,1
-0x5f7410,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::vfunc_0,1
+0x5f7410,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor',1
 0x5f7410,0x69db00,virtual-typed-override,game,CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack,1
 0x5f7440,0x69dac0,virtual-typed,game,CTaskAllocator::~CTaskAllocator,1
 0x5f7440,0x5f6900,virtual-typed-override,game,CTaskAllocatorKillThreatsBasicRandomGroup::~CTaskAllocatorKillThreatsBasicRandomGroup,1
 0x5f7440,0x69d9c0,virtual-typed-override,game,CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot,1
 0x5f7440,0x69da00,virtual-typed-override,game,CTaskAllocatorAttack::~CTaskAllocatorAttack,1
 0x5f7440,0x69da40,virtual-typed-override,game,CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic,1
-0x5f7440,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::vfunc_0,1
+0x5f7440,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor',1
 0x5f7440,0x69db00,virtual-typed-override,game,CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack,1
 0x5f7470,0x4ac490,call,game,CEventEditableResponse::WillRespond,1
 0x5f7470,0x4ae100,call,game,CEventGroupEvent::BaseEventTakesPriorityOverBaseEvent,1
@@ -21016,7 +21043,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5f87a0,0x69d9c0,virtual-typed-override,game,CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot,1
 0x5f87a0,0x69da00,virtual-typed-override,game,CTaskAllocatorAttack::~CTaskAllocatorAttack,1
 0x5f87a0,0x69da40,virtual-typed-override,game,CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic,1
-0x5f87a0,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::vfunc_0,1
+0x5f87a0,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor',1
 0x5f87a0,0x69db00,virtual-typed-override,game,CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack,1
 0x5f88d0,0x5f79c0,call,game,CPedGroupIntelligence::FlushTasks,1
 0x5f88d0,,indirect-unresolved,,,1
@@ -21353,7 +21380,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x5fc4a0,0x69d9c0,virtual-typed-override,game,CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot,1
 0x5fc4a0,0x69da00,virtual-typed-override,game,CTaskAllocatorAttack::~CTaskAllocatorAttack,1
 0x5fc4a0,0x69da40,virtual-typed-override,game,CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic,1
-0x5fc4a0,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::vfunc_0,1
+0x5fc4a0,0x69da80,virtual-typed-override,game,CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor',1
 0x5fc4a0,0x69db00,virtual-typed-override,game,CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack,1
 0x5fc7e0,0x5fba60,call,game,CPedGroupMembership::Process,1
 0x5fc7e0,0x5fc4a0,tailcall,game,CPedGroupIntelligence::Process,1
@@ -22231,7 +22258,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x60a8d0,0x73a530,call,game,CWeapon::GenerateDamageEvent,1
 0x60a8d0,0x821b40,call,excluded:crt,FUN_00821b40,1
 0x60a9a0,0x5e4760,call,game,CPed::operator delete-anon,1
-0x60a9a0,0x6093b0,call,game,FUN_006093b0,1
+0x60a9a0,0x6093b0,call,game,CPlayerPed::~CPlayerPed,1
 0x60a9c0,0x4cea80,call,game,CAnimBlendAssociation::SetCurrentTime,5
 0x60a9c0,0x4cebc0,call,game,CAnimBlendAssociation::SetDeleteCallback,2
 0x60a9c0,0x4d3aa0,call,game,CAnimManager::AddAnimation-id,5
@@ -22661,10 +22688,10 @@ caller,callee,kind,callee_class,callee_name,sites
 0x612cd0,0x732b00,call,game,CVisibilityPlugins::SetClumpAlpha,1
 0x612cd0,0x4b0a50,eh-unwind,game,FUN_004b0a50,2
 0x612cd0,0x61a5b0,eh-unwind,game,CTask::operator delete,1
-0x612cd0,0x5e8c80,virtual-typed,game,CPed::vfunc_0,1
+0x612cd0,0x5e8c80,virtual-typed,game,CPed::`scalar deleting destructor',1
 0x612cd0,0x5ddc30,virtual-typed-override,game,CCivilianPed::Destructor,1
-0x612cd0,0x5de2c0,virtual-typed-override,game,CCopPed::vfunc_0,1
-0x612cd0,0x60a9a0,virtual-typed-override,game,CPlayerPed::vfunc_0,1
+0x612cd0,0x5de2c0,virtual-typed-override,game,CCopPed::`scalar deleting destructor',1
+0x612cd0,0x60a9a0,virtual-typed-override,game,CPlayerPed::`scalar deleting destructor',1
 0x612f90,0x610720,call,game,CPopCycle::PedIsAcceptableInCurrentZone,1
 0x612f90,0x610f50,call,game,CPopulation::ArePedStatsCompatible,1
 0x612f90,0x6110e0,call,game,CPopulation::PedMICanBeCreatedAtThisAttractor,1
@@ -25844,7 +25871,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x63e040,0x4b17f0,eh-unwind,game,FUN_004b17f0,2
 0x63e040,0x4b5630,eh-unwind,game,CEvent::operator delete,1
 0x63e040,0x61a5b0,eh-unwind,game,CTask::operator delete,22
-0x63e040,0x6d6320,virtual-typed,game,CVehicle::vfunc_37,1
+0x63e040,0x6d6320,virtual-typed,game,CVehicle::IsDoorMissingU32,1
 0x63e040,0x6a6500,virtual-typed-override,game,CAutomobile::IsDoorMissingU32,1
 0x63e040,0x6b5950,virtual-typed-override,game,CBike::IsDoorMissingU32,1
 0x63e990,0x4ab420,call,game,CEventGroup::Add-,1
@@ -26006,7 +26033,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x641100,0x646570,eh-unwind,game,CTaskSimpleCarCloseDoorFromOutside::Destructor,2
 0x641100,0x647950,eh-unwind,game,FUN_00647950,2
 0x641100,,indirect-unresolved,,,7
-0x641100,0x6d63d0,virtual-typed,game,CVehicle::vfunc_55,1
+0x641100,0x6d63d0,virtual-typed,game,CVehicle::GetNumContactWheels,1
 0x641100,0x6a62a0,virtual-typed-override,game,CAutomobile::GetNumContactWheels,1
 0x641100,0x6b58a0,virtual-typed-override,game,CBike::GetNumContactWheels,1
 0x641530,0x48e750,call,game,CTaskSimplePause::Constructor,1
@@ -26290,7 +26317,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x644470,0x4b1d50,eh-unwind,game,FUN_004b1d50,2
 0x644470,0x61a5b0,eh-unwind,game,CTask::operator delete,5
 0x644470,,indirect-unresolved,,,3
-0x644470,0x6a6280,virtual-typed,game,CVehicle::vfunc_47,2
+0x644470,0x6a6280,virtual-typed,game,CVehicle::GetRideAnimData,2
 0x644470,0x6df4a0,virtual-typed,game,CVehicle::ProcessDrivingAnims,1
 0x644470,0x6b58c0,virtual-typed-override,game,CBike::GetRideAnimData,2
 0x644470,0x6bf400,virtual-typed-override,game,CBike::ProcessDrivingAnims,1
@@ -26820,8 +26847,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x64b2d0,0x4d4610,call,game,CAnimManager::BlendAnimation-id,1
 0x64b2d0,0x6e3b00,call,game,CVehicleAnimGroup::GetGroup,1
 0x64b2d0,0x6467f0,fnref,game,CTaskSimpleCarGetIn::FinishAnimCarGetInCB,1
-0x64b2d0,0x6d6310,virtual-typed,game,CVehicle::vfunc_35,1
-0x64b2d0,0x6d6320,virtual-typed,game,CVehicle::vfunc_37,1
+0x64b2d0,0x6d6310,virtual-typed,game,CVehicle::IsDoorClosedU32,1
+0x64b2d0,0x6d6320,virtual-typed,game,CVehicle::IsDoorMissingU32,1
 0x64b2d0,0x6a6470,virtual-typed-override,game,CAutomobile::IsDoorClosedU32,1
 0x64b2d0,0x6a6500,virtual-typed-override,game,CAutomobile::IsDoorMissingU32,1
 0x64b2d0,0x6b5940,virtual-typed-override,game,CBike::IsDoorClosedU32,1
@@ -33381,9 +33408,39 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6c0810,0x821e70,call,excluded:crt,FUN_00821e70,1
 0x6c0810,0x59acd0,eh-unwind,game,CMatrix,6
 0x6c0810,0x6b6950,virtual,game,CBike::DoBurstAndSoftGroundRatios,1
-0x6c1470,0x4d68b0,call,game,RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId,5
+0x6c1470,0x4082c0,call,game,CVector::Magnitude,5
+0x6c1470,0x40fdb0,call,game,CVector::DotProduct-v3d*v3d*,1
+0x6c1470,0x40fe30,call,game,FUN_0040fe30,2
+0x6c1470,0x40fe90,call,game,FUN_0040fe90,2
+0x6c1470,0x41da30,call,game,CCarAI::UpdateCarAI,2
+0x6c1470,0x420800,call,game,FUN_00420800,2
+0x6c1470,0x436540,call,game,CCarCtrl::UpdateCarOnRails,1
+0x6c1470,0x437c20,call,game,CCarCtrl::SteerAICarWithPhysics,1
+0x6c1470,0x4d68b0,call,game,RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId,6
+0x6c1470,0x53fb80,call,game,CPad::GetSteeringLeftRight,3
+0x6c1470,0x53ffe0,call,game,CPad::CarGunJustDown,1
+0x6c1470,0x5403f0,call,game,CPad::GetAccelerate,1
+0x6c1470,0x540440,call,game,CPad::GetAccelerateJustDown,1
 0x6c1470,0x5429f0,call,game,CPhysical::ApplyMoveForce-vec,1
+0x6c1470,0x542a50,call,game,CPhysical::ApplyTurnForce,2
+0x6c1470,0x5485e0,call,game,CPhysical::ProcessControl,1
 0x6c1470,0x559af0,call,game,CStats::GetFatAndMuscleModifier,1
+0x6c1470,0x55c780,call,game,CStats::UpdateStatsWhenCycling,1
+0x6c1470,0x571a90,call,game,CEntity::PruneReferences,1
+0x6c1470,0x5df8f0,call,game,CPed::IsPlayer,1
+0x6c1470,0x609560,call,game,CPlayerPed::GetPadFromPlayer,1
+0x6c1470,0x60a550,call,game,CPlayerPed::HandleSprintEnergy,1
+0x6c1470,0x60a610,call,game,CPlayerPed::ControlButtonSprint,1
+0x6c1470,0x60a820,call,game,CPlayerPed::GetButtonSprintResults,2
+0x6c1470,0x6b5f90,call,game,CBike::ReduceHornCounter,1
+0x6c1470,0x6b6d40,call,game,CBike::DoSoftGroundResistance,1
+0x6c1470,0x6b7130,call,game,CBike::PlayHornIfNecessary,2
+0x6c1470,0x6c0590,call,game,CBmx::ProcessBunnyHop,1
+0x6c1470,0x6d0530,call,game,cTransmission::CalculateGearForSimpleCar,1
+0x6c1470,0x6d1230,call,game,CVehicle::ProcessWheelRotation,2
+0x6c1470,0x6d24f0,call,game,CVehicle::ActivateBomb,1
+0x6c1470,0x741fd0,call,game,CVehicle::DoDriveByShootings,1
+0x6c1470,,indirect-unresolved,,,1
 0x6c2320,0x6f4790,call,game,CDoor::Open,1
 0x6c2320,0x821b1e,call,excluded:crt,_rand,1
 0x6c23c0,0x821b1e,call,excluded:crt,_rand,2
@@ -33600,7 +33657,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6c7de0,0x6dba30,call,game,CVehicle::SetComponentRotation,1
 0x6c7de0,0x6dbbb0,call,game,CVehicle::SetTransmissionRotation,2
 0x6c7de0,0x59acd0,eh-unwind,game,CMatrix,2
-0x6c7f90,0x6c7d10,call,game,FUN_006c7d10,1
+0x6c7f90,0x6c7d10,call,game,CMonsterTruck::~CMonsterTruck,1
 0x6c7f90,0x6e2d90,call,game,delete,1
 0x6c7fb0,0x40fd50,call,game,CColDisk::Set,1
 0x6c7fb0,0x4c7d20,call,game,CVehicleModelInfo::GetWheelPosn,1
@@ -33947,7 +34004,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6d1280,0x56e0d0,call,game,CWorld::FindPlayerVehicle,1
 0x6d1280,0x56e210,call,game,CWorld::FindPlayerPed,4
 0x6d1340,0x821b40,call,excluded:crt,FUN_00821b40,1
-0x6d1340,0x6d6340,virtual,game,CVehicle::vfunc_41,1
+0x6d1340,0x6d6340,virtual,game,CVehicle::BlowUpCar,1
 0x6d1340,0x6b3780,virtual-override,game,CTrailer: CAutomobile::BlowUpCar,4
 0x6d1340,0x6bea10,virtual-override,game,CBike: CBike::BlowUpCar,1
 0x6d1340,0x6c0560,virtual-override,game,CBmx: CBmx::BlowUpCar,1
@@ -34054,7 +34111,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6d30e0,0x6a3ea0,call,game,CAutomobile::NitrousControl,1
 0x6d3210,0x506fa0,call,game,CAudioEngine::SetRadioBassSetting,1
 0x6d3210,0x6a3ea0,call,game,CAutomobile::NitrousControl,1
-0x6d3210,0x6d6380,virtual,game,CVehicle::vfunc_48,1
+0x6d3210,0x6d6380,virtual,game,CVehicle::SetupSuspensionLines,1
 0x6d3210,0x6a65d0,virtual-override,game,CPlane: CAutomobile::SetupSuspensionLines,3
 0x6d3210,0x6b89b0,virtual-override,game,CBmx: CBike::SetupSuspensionLines,2
 0x6d3210,0x6c7fb0,virtual-override,game,CMonsterTruck: CMonsterTruck::SetupSuspensionLines,1
@@ -34206,16 +34263,16 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6d5490,0x821b40,call,excluded:crt,FUN_00821b40,2
 0x6d55c0,0x72ddb0,call,game,CCullZones::CamNoRain,1
 0x6d56c0,0x645630,call,game,CVehicleAnimGroupData::GetInOutTimings,4
-0x6d56c0,0x6b5820,virtual,game,CVehicle::vfunc_27,7
-0x6d56c0,0x6d56b0,virtual,game,CVehicle::vfunc_30,4
-0x6d56c0,0x6d62e0,virtual,game,CVehicle::vfunc_38,1
+0x6d56c0,0x6b5820,virtual,game,CVehicle::OpenDoor,7
+0x6d56c0,0x6d56b0,virtual,game,CVehicle::GetDooorAngleOpenRatio,4
+0x6d56c0,0x6d62e0,virtual,game,CVehicle::IsDoorMissing,1
 0x6d56c0,0x6a2270,virtual-override,game,CTrailer: CAutomobile::GetDooorAngleOpenRatio,24
 0x6d56c0,0x6a2330,virtual-override,game,CTrailer: CAutomobile::IsDoorMissing,6
 0x6d56c0,0x6a6ae0,virtual-override,game,CTrailer: CAutomobile::OpenDoor,35
 0x6d56c0,0x6b5910,virtual-override,game,CBmx: CBike::IsDoorMissing,2
 0x6d56c0,0x6cacb0,virtual-override,game,CPlane: CPlane::OpenDoor,7
-0x6d56c0,0x6f59c0,virtual-override,game,CTrain: CTrain::vfunc_30,4
-0x6d56c0,0x6f6370,virtual-override,game,CTrain: CTrain::vfunc_27,7
+0x6d56c0,0x6f59c0,virtual-override,game,CTrain: CTrain::GetDooorAngleOpenRatio,4
+0x6d56c0,0x6f6370,virtual-override,game,CTrain: CTrain::OpenDoor,7
 0x6d5d70,0x424000,call,game,CCarCtrl::UpdateCarCount,2
 0x6d5e20,0x821b1e,call,excluded:crt,_rand,1
 0x6d5f10,0x424000,call,game,CCarCtrl::UpdateCarCount,1
@@ -34284,8 +34341,8 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6d7c90,0x6d1280,call,game,CVehicle::CanVehicleBeDamaged,1
 0x6d7c90,0x6d7bc0,call,game,CVehicle::FindTyreNearestPoint,1
 0x6d7c90,0x821b1e,call,excluded:crt,_rand,3
-0x6d7c90,0x6d6340,virtual,game,CVehicle::vfunc_41,1
-0x6d7c90,0x6d6360,virtual,game,CVehicle::vfunc_44,1
+0x6d7c90,0x6d6340,virtual,game,CVehicle::BlowUpCar,1
+0x6d7c90,0x6d6360,virtual,game,CVehicle::BurstTyre,1
 0x6d7c90,0x6a32b0,virtual-override,game,CTrailer: CAutomobile::BurstTyre,3
 0x6d7c90,0x6b3780,virtual-override,game,CTrailer: CAutomobile::BlowUpCar,4
 0x6d7c90,0x6bea10,virtual-override,game,CBike: CBike::BlowUpCar,1
@@ -34489,7 +34546,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6de880,0x821b1e,call,excluded:crt,_rand,1
 0x6de880,0x821b40,call,excluded:crt,FUN_00821b40,3
 0x6de880,,indirect-unresolved,,,2
-0x6de880,0x6d3d50,virtual,game,CVehicle::vfunc_63,1
+0x6de880,0x6d3d50,virtual,game,CVehicle::FindWheelWidth,1
 0x6de880,0x6a6090,virtual-override,game,CTrailer: CAutomobile::FindWheelWidth,6
 0x6de880,0x6b8940,virtual-override,game,CBike: CBike::FindWheelWidth,1
 0x6de880,0x6c0550,virtual-override,game,CBmx: CBmx::FindWheelWidth,1
@@ -34531,7 +34588,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6dfc50,0x59c790,call,game,Multiply3x3,1
 0x6dfc50,0x59c910,call,game,CVector::Normalise,1
 0x6dfc50,0x6d0af0,call,game,FUN_006d0af0,1
-0x6dfc50,0x6b5890,virtual,game,CVehicle::vfunc_62,2
+0x6dfc50,0x6b5890,virtual,game,CVehicle::BreakTowLink,2
 0x6dfc50,0x6dfb70,virtual,game,CVehicle::GetTowHitchPos,1
 0x6dfc50,0x6a4400,virtual-override,game,CQuadBike: CAutomobile::BreakTowLink,10
 0x6dfc50,0x6af1d0,virtual-override,game,CQuadBike: CAutomobile::GetTowHitchPos,5
@@ -34681,9 +34738,9 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6e3e60,0x4a8df0,call,game,FUN_004a8df0,1
 0x6e3e60,0x4a8e30,call,game,FUN_004a8e30,1
 0x6e3e60,0x563280,call,game,CWorld::Remove,1
-0x6e3e60,0x5a2bd0,virtual-typed,game,CObject::vfunc_0,1
-0x6e3e60,0x59efe0,virtual-typed-override,game,CHandObject::vfunc_0,1
-0x6e3e60,0x5b1de0,virtual-typed-override,game,CCutsceneObject::vfunc_0,1
+0x6e3e60,0x5a2bd0,virtual-typed,game,CObject::`scalar deleting destructor',1
+0x6e3e60,0x59efe0,virtual-typed-override,game,CHandObject::`scalar deleting destructor',1
+0x6e3e60,0x5b1de0,virtual-typed-override,game,CCutsceneObject::`scalar deleting destructor',1
 0x6e3eb0,0x4a8dd0,call,game,FUN_004a8dd0,2
 0x6e3eb0,0x821d30,call,excluded:crt,`eh_vector_constructor_iterator',1
 0x6e3eb0,0x4a8de0,eh-unwind,game,FUN_004a8de0,2
@@ -35128,7 +35185,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x6f6030,0x821b1e,call,excluded:crt,_rand,2
 0x6f6030,0x6e2b40,eh-unwind,game,CVehicle::Destructor,2
 0x6f6300,0x6e2d90,call,game,delete,1
-0x6f6300,0x6f54d0,call,game,FUN_006f54d0,1
+0x6f6300,0x6f54d0,call,game,CTrain::~CTrain,1
 0x6f6320,0x5674e0,call,game,CWorld::ProcessVerticalLine,1
 0x6f6370,0x4ab420,call,game,CEventGroup::Add-,1
 0x6f6370,0x4aba50,call,game,RwHelper::GetEventGlobalGroup,1
@@ -37682,7 +37739,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x741fd0,0x73db40,call,game,CWeapon::Update,1
 0x741fd0,0x73fa20,call,game,CWeapon::FireFromCar,1
 0x741fd0,0x743c60,call,game,CWeaponInfo::GetWeaponInfo-original,2
-0x741fd0,0x6a6280,virtual,game,CVehicle::vfunc_47,2
+0x741fd0,0x6a6280,virtual,game,CVehicle::GetRideAnimData,2
 0x741fd0,0x6b58c0,virtual-override,game,CBmx: CBike::GetRideAnimData,4
 0x741fd0,0x6cdc90,virtual-override,game,CQuadBike: CQuadBike::GetRideAnimData,2
 0x742300,0x4082c0,call,game,CVector::Magnitude,2
@@ -41761,19 +41818,19 @@ caller,callee,kind,callee_class,callee_name,sites
 0x856210,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856210,0x4b29a0,fnref,game,CInformGroupEvent::Destructor,1
 0x856230,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856230,0x4c5590,fnref,game,FUN_004c5590,1
+0x856230,0x4c5590,fnref,game,CAtomicModelInfo::~CAtomicModelInfo,1
 0x856240,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856240,0x4c55d0,fnref,game,FUN_004c55d0,1
+0x856240,0x4c55d0,fnref,game,CDamageAtomicModelInfo::~CDamageAtomicModelInfo,1
 0x856250,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856250,0x4c5620,fnref,game,FUN_004c5620,1
+0x856250,0x4c5620,fnref,game,CLodAtomicModelInfo::~CLodAtomicModelInfo,1
 0x856260,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856260,0x4c5680,fnref,game,FUN_004c5680,1
+0x856260,0x4c5680,fnref,game,CTimeModelInfo::~CTimeModelInfo,1
 0x856270,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856270,0x4c56e0,fnref,game,FUN_004c56e0,1
+0x856270,0x4c56e0,fnref,game,CLodTimeModelInfo::~CLodTimeModelInfo,1
 0x856280,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856280,0x4c5790,fnref,game,FUN_004c5790,1
+0x856280,0x4c5790,fnref,game,CWeaponModelInfo::~CWeaponModelInfo,1
 0x856290,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
-0x856290,0x4c5750,fnref,game,FUN_004c5750,1
+0x856290,0x4c5750,fnref,game,CClumpModelInfo::~CClumpModelInfo,1
 0x8562a0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8562a0,0x4c5920,fnref,game,CVehicleModelInfo::~CVehicleModelInfo,1
 0x8562b0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
@@ -41793,7 +41850,7 @@ caller,callee,kind,callee_class,callee_name,sites
 0x8563e0,0x59acd0,tailcall,game,CMatrix,1
 0x8563f0,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x8563f0,0x50e080,fnref,game,(missed by ghidra: data-code-immediate),1
-0x856410,0x50a870,tailcall,game,CCamera,1
+0x856410,0x50a870,tailcall,game,CCamera::~CCamera,1
 0x856420,0x538bb0,tailcall,game,CFireManager::Destructor,1
 0x856460,0x821e02,call,excluded:crt,`eh_vector_destructor_iterator',1
 0x856460,0x53ed60,fnref,game,CPad::~CPad,1

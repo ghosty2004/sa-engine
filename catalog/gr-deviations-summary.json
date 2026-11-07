@@ -1,6 +1,6 @@
 {
  "rows": 3997,
- "notes_applied": 16,
+ "notes_applied": 20,
  "by_kind": {
   "assert": 732,
   "bug-note": 145,
@@ -24,30 +24,30 @@
   "todo": 24
  },
  "by_class": {
-  "harmless": 1735,
+  "harmless": 1736,
   "keep-original": 1024,
-  "unclear": 1238
+  "unclear": 1237
  },
  "by_deviates": {
-  "maybe": 1238,
-  "no": 1919,
+  "maybe": 1237,
+  "no": 1920,
   "yes": 840
  },
  "by_mapping": {
   "addr-comment": 116,
   "gr-only": 831,
-  "hand": 2,
-  "hook": 2500,
+  "hand": 6,
+  "hook": 2496,
   "hook-overload": 41,
   "none": 399,
   "script-handler": 23,
   "script-opcode": 85
  },
  "by_class_deviates": {
-  "harmless/no": 1735,
+  "harmless/no": 1736,
   "keep-original/no": 184,
   "keep-original/yes": 840,
-  "unclear/maybe": 1238
+  "unclear/maybe": 1237
  },
  "by_kind_class": {
   "assert": {
@@ -102,7 +102,8 @@
    "unclear": 323
   },
   "pool-iteration": {
-   "unclear": 98
+   "harmless": 1,
+   "unclear": 97
   },
   "rbf": {
    "keep-original": 53
@@ -127,7 +128,7 @@
  "not_in_catalogue_addresses": [
   "0x8d0aa8"
  ],
- "functions_with_rows": 1572,
+ "functions_with_rows": 1573,
  "functions_counted": 1003,
  "by_subsystem_counted": {
   "AI": 389,
@@ -137,7 +138,7 @@
   "VEH": 124,
   "AUDIO": 121,
   "POP": 98,
-  "STREAM": 80,
+  "STREAM": 79,
   "HUD": 64,
   "COLL": 56,
   "WEAPON": 53,
