@@ -512,3 +512,4 @@
   ProcessSphereSphere with the native backend: 53,566 CPU-decided, 0 differ, PASS. Lane 1 re-runs
   (target/collv/verify.sh): vc3/vcpr (b)+(c) IDENTICAL (5,200 / 3,700 frames), vcb and vcn exit 0,
   vcports (all 897 ports on Rust) IDENTICAL. 84 → L2 (F1 170 → 254, 1.64 %), 36 → implemented.
+- COLL L1: all 80 specs re-run at 10^6 by the main session with the default backends (real CPU decides SNaN cases): 80/80 PASS, 0 mismatches; 25 implemented rows → L1 (COLL now 84 L2, 25 L1, 11 implemented, 24 deferred, 1 unknown).
