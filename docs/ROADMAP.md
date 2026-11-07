@@ -13,10 +13,10 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | — (CORE-L2b agent done; hook-off runs pending) | COLL porting |
+| impl-1 | agent: PORT-COLL into new crate sa-world (worktree coll, lane 1) | PHYS |
 | impl-2 | agent: STREAM-L2 (worktree stream-l2, lane 2) | — |
 | measurement / REA | agent: INF-10 coverage finish (worktree inf10, lane 3; only REA user) | SAMP-1D |
-| harness | — | INF-18 → INF-17 → VER-1 → INF-16 |
+| harness | agent: INF-18 spool quota → INF-17 split-run L2 (worktree harness2, lane 4) | VER-1 → INF-16 |
 | verifier | — (CORE/STREAM L1 audit done, V-9..V-14) | audit of the CORE-L2b / STREAM-L2 results |
 
 ## Next up (ordered queue; the scheduler takes from the top)
