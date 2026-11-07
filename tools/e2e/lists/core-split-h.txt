@@ -1,0 +1,5 @@
+# INF-17 split-run group H (outer functions, without Rs::RsEventHandler)
+Game::InitialiseGame
+CGame::InitialiseEssentialsAfterRW
+Game::GameInit
+Win::MessageLoop

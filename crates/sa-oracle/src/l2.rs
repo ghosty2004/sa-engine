@@ -315,7 +315,7 @@ struct Mem<'a> {
 
 impl Mem<'_> {
     fn pre(&self, a: u32) -> Option<u8> {
-        for r in &self.c.regions {
+        for r in self.c.regions.iter().filter(|r| r.has_pre_memory()) {
             if r.readable && a >= r.addr && a - r.addr < r.len() {
                 return Some(r.pre[(a - r.addr) as usize]);
             }
@@ -587,8 +587,13 @@ pub fn print_tally(t: &BTreeMap<(u32, String), Tally>, cat: Option<&RwCatalog>) 
 pub fn show_case(c: &Case) -> String {
     let mut s = format!("{}\n", describe_case(c));
     s += &format!(
-        "  regs_in {:x?} mxcsr {:#x} leave {} mutant {}\n",
-        c.regs_in, c.mxcsr, c.leave, c.mutant
+        "  regs_in {:x?} mxcsr {:#x} leave {} mutant {} seq {} page_hashes {}\n",
+        c.regs_in,
+        c.mxcsr,
+        c.leave,
+        c.mutant,
+        c.seq,
+        c.page_hashes.len()
     );
     for r in &c.regions {
         let k = match r.kind {
@@ -596,6 +601,18 @@ pub fn show_case(c: &Case) -> String {
             RegionKind::This => "this".into(),
             RegionKind::ArgPtr(i) => format!("*arg{i}"),
             RegionKind::Extra => "extra".into(),
+            RegionKind::Post => "post".into(),
+            RegionKind::Os(p) => {
+                s += &format!(
+                    "  os-{} {:#x} pre [{}] orig [{}] rust [{}]\n",
+                    p.name(),
+                    r.addr,
+                    fmt::describe_os(p, &r.pre),
+                    fmt::describe_os(p, &r.post_orig),
+                    fmt::describe_os(p, &r.post_rust)
+                );
+                continue;
+            }
         };
         let h = |b: &[u8]| b.iter().map(|x| format!("{x:02x}")).collect::<String>();
         s += &format!(
