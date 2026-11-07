@@ -513,3 +513,10 @@
   (target/collv/verify.sh): vc3/vcpr (b)+(c) IDENTICAL (5,200 / 3,700 frames), vcb and vcn exit 0,
   vcports (all 897 ports on Rust) IDENTICAL. 84 → L2 (F1 170 → 254, 1.64 %), 36 → implemented.
 - COLL L1: all 80 specs re-run at 10^6 by the main session with the default backends (real CPU decides SNaN cases): 80/80 PASS, 0 mismatches; 25 implemented rows → L1 (COLL now 84 L2, 25 L1, 11 implemented, 24 deferred, 1 unknown).
+
+## 2026-11-08: STREAM-L2 re-verification (parts 2–3)
+- Lane 2, all-frames batches (SA_L2_FROM=0, 1000/frame, spool drained): sR0–sR2 73 PASS, 0 mismatches,
+  0 undeclared (sR0 l2 trace leaves plain at frame 202: loader sampling shifts heap allocation; cases
+  stay original vs Rust from the same restored state); sR3 crashed at frame 4,096 (no table); split
+  into three: sR301/sR302 16 PASS, identical l2 traces; sR300 (8 hooks) crashes at 4,096 again → open.
+  Total confirmed from the agent's 164: 65 + 73 + 16 = 154 → L2. F1 = 343 / 15,479 (2.22 %).
