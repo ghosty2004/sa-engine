@@ -1,0 +1,4 @@
+# INF-17 split-run: run each line alone (port-l2.sh NAME --runs split)
+Game::RwInitialize
+Rs::RsEventHandler
+Ps::psCameraShowRaster

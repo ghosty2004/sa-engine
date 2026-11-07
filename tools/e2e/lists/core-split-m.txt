@@ -1,0 +1,15 @@
+# INF-17 split-run group M (callers of group L functions; Ps::InitialiseLanguage loads the GXT through CFileMgr::Read, Ps::psCameraShowRaster triggers CGame::D3DDeviceRestoreCallback). Game::RwInitialize and Rs::RsEventHandler are run alone (core-split-solo.txt): their Rust FpuGuard leaves MXCSR 0x1F80 after D3D set 0x9FA0, so every later case diverges
+Rs::RsCameraBeginUpdate
+App::DoRWStuffEndOfFrame
+App::PluginAttach
+Rs::RsMouseSetVisibility
+Rs::RsErrorMessage
+Rs::RsWarningMessage
+Input::AttachInputDevices
+VideoPlayer::Shutdown
+Input::diPadInit
+Game::RwTerminate
+Rs::RsInitialize
+CGame::InitialiseOnceBeforeRW
+Ps::InitialiseLanguage
+Ps::psCameraShowRaster

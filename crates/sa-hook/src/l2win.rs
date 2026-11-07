@@ -23,6 +23,10 @@
 //! 5. compare (`sa_oracle_format::l2::compare`, normaliser in `sa_oracle_format::normalise`), report
 //!    writes outside the declared write set (`undeclared_writes`), append the case to the spool.
 //!
+//! Split-run mode (`SA_L2_SPLIT`, INF-17, [`run_split`]): a sampled call runs one implementation only,
+//! on the live state, and is recorded for `sa-oracle l2 split-report` (docs/re/l2-oracle.md).
+//! The spool stops at `SA_L2_SPOOL_MAX` bytes with a trailer (INF-18, [`spool_write`]).
+//!
 //! Limits: memory outside the regions and windows that a run writes (heap objects other than `this` and
 //! the pointer arguments, unless `SA_L2_WINDOW=all`) is neither restored nor compared; other threads
 //! writing a watched window during a run would show up as writes of the function.
@@ -37,7 +41,8 @@ use std::sync::{Mutex, OnceLock};
 use sa_oracle_format::l2::{self as fmt, Case, Outcome, Region, RegionKind, Write};
 use sa_oracle_format::subsys::{Mem, PoolMap};
 
-use crate::l2::{Config, FnStats, Window};
+use crate::l2::{Config, FnStats, Split, SpoolQuota, Window};
+use sa_oracle_format::l2::OsProbe;
 use crate::table::{self, HOOKS, Mode};
 use crate::win::{self, log};
 
@@ -275,7 +280,16 @@ static REPORT: Mutex<Option<BufWriter<File>>> = Mutex::new(None);
 static IN_CASE: AtomicBool = AtomicBool::new(false);
 static GAME_TID: AtomicU32 = AtomicU32::new(0);
 static WINDOWS: OnceLock<Vec<(u32, u32)>> = OnceLock::new();
-static BUFS: Mutex<Vec<Vec<u8>>> = Mutex::new(Vec::new());
+/// Free window snapshot buffer sets (one set per active case; split-run cases nest).
+static BUFS: Mutex<Vec<Vec<Vec<u8>>>> = Mutex::new(Vec::new());
+static QUOTA: Mutex<SpoolQuota> = Mutex::new(SpoolQuota {
+    max: crate::l2::SPOOL_MAX_DEFAULT,
+    written: 0,
+    records: 0,
+    hit: None,
+});
+/// Split-run: global sequence number of the next case.
+static SEQ: AtomicU32 = AtomicU32::new(0);
 static CASES_TOTAL: AtomicU32 = AtomicU32::new(0);
 static POOLS: Mutex<(u32, PoolMap)> = Mutex::new((u32::MAX, PoolMap { pools: Vec::new() }));
 
@@ -411,6 +425,8 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
                 let mut b = BufWriter::with_capacity(1 << 20, f);
                 let _ = b.write_all(fmt::SPOOL_MAGIC);
                 *SPOOL.lock().unwrap_or_else(|e| e.into_inner()) = Some(b);
+                *QUOTA.lock().unwrap_or_else(|e| e.into_inner()) =
+                    SpoolQuota::new(c.spool_max, fmt::SPOOL_MAGIC.len() as u64);
             }
             Err(e) => log(&format!("l2: spool {out}: {e}")),
         }
@@ -419,14 +435,20 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
             Err(e) => log(&format!("l2: report {out}.txt: {e}")),
         }
         log(&format!(
-            "l2: on for {:?}, max {} rate {} per_frame {} from {} leave {} mutants {:?}; spool {out}",
+            "l2: on for {:?}, max {} rate {} per_frame {} from {} leave {} mutants {:?}{}; spool {out} (quota {} bytes)",
             c.hooks.iter().map(|&i| HOOKS[i].name).collect::<Vec<_>>(),
             c.max,
             c.rate,
             c.per_frame,
             c.from_frame,
             if c.leave_rust { "rust" } else { "orig" },
-            c.mutants.iter().map(|&i| HOOKS[i].name).collect::<Vec<_>>()
+            c.mutants.iter().map(|&i| HOOKS[i].name).collect::<Vec<_>>(),
+            match c.split {
+                Some(Split::Orig) => "; SPLIT-RUN recording of the original",
+                Some(Split::Rust) => "; SPLIT-RUN recording of the Rust implementations",
+                None => "",
+            },
+            c.spool_max
         ));
     }
     let hooks = c.hooks.clone();
@@ -489,17 +511,22 @@ fn dispatch(f: &mut Frame, i: usize) {
         f.tail = leave_target(i);
         return;
     }
-    if IN_CASE.load(Ordering::Acquire) {
+    let c = cfg();
+    if c.split.is_none() && IN_CASE.load(Ordering::Acquire) {
         f.tail = leave_target(i);
         return;
     }
     let frame = win::frames();
-    let c = cfg();
-    let (sample, retire) = {
+    let (sample, retire, ordinal) = {
         let mut st = STATS.lock().unwrap_or_else(|e| e.into_inner());
         let s = &mut st[i];
         let sample = s.sample(c, frame);
-        (sample, s.cases >= c.max && !s.retired)
+        let ordinal = s.cases;
+        if sample && c.split.is_some() && (sig.args as usize) <= MAX_ARGS {
+            // Split-run cases may nest: the ordinal is taken at entry.
+            s.cases += 1;
+        }
+        (sample, s.cases >= c.max && !s.retired, ordinal)
     };
     if retire {
         // Budget used up: the hook goes to the leave mode for the rest of the run.
@@ -512,6 +539,10 @@ fn dispatch(f: &mut Frame, i: usize) {
     }
     if !sample || sig.args as usize > MAX_ARGS {
         f.tail = leave_target(i);
+        return;
+    }
+    if let Some(split) = c.split {
+        run_split(f, i, &sig, frame, ordinal, split);
         return;
     }
     IN_CASE.store(true, Ordering::Release);
@@ -542,9 +573,13 @@ fn new_invoke(f: &Frame, args: &[u32]) -> Invoke {
 }
 
 fn invoke(inv: &mut Invoke, target: u32) {
+    // A nested split-run case runs inside this call and sets INV_CUR to its own block; the outer
+    // `l2_invoke` reads INV_CUR after its call returns, so the outer block is put back afterwards.
+    let outer = INV_CUR.load(Ordering::Acquire);
     INV_TARGET.store(target, Ordering::Release);
     // SAFETY: `target` has the hook's signature; `inv` carries its arguments.
     unsafe { l2_invoke(inv) };
+    INV_CUR.store(outer, Ordering::Release);
 }
 
 fn outcome(inv: &Invoke, calls: Vec<u32>, allocs: Vec<(u32, u32)>, writes: Vec<Write>) -> Outcome {
@@ -665,11 +700,23 @@ fn window_diff(start: u32, snap: &[u8]) -> Vec<Write> {
 
 struct Snap {
     windows: Vec<(u32, u32)>,
+    bufs: Vec<Vec<u8>>,
+}
+
+impl Drop for Snap {
+    fn drop(&mut self) {
+        let b = std::mem::take(&mut self.bufs);
+        BUFS.lock().unwrap_or_else(|e| e.into_inner()).push(b);
+    }
 }
 
 impl Snap {
     fn take(windows: Vec<(u32, u32)>) -> Snap {
-        let mut bufs = BUFS.lock().unwrap_or_else(|e| e.into_inner());
+        let mut bufs = BUFS
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .pop()
+            .unwrap_or_default();
         bufs.resize_with(windows.len(), Vec::new);
         for (k, &(a, b)) in windows.iter().enumerate() {
             let len = (b - a) as usize;
@@ -678,23 +725,76 @@ impl Snap {
             // SAFETY: the window is readable (checked by the caller).
             unsafe { std::ptr::copy_nonoverlapping(a as usize as *const u8, buf.as_mut_ptr(), len) };
         }
-        Snap { windows }
+        Snap { windows, bufs }
     }
     fn diff(&self) -> Vec<Write> {
-        let bufs = BUFS.lock().unwrap_or_else(|e| e.into_inner());
         let mut out = Vec::new();
         for (k, &(a, _)) in self.windows.iter().enumerate() {
-            out.extend(window_diff(a, &bufs[k]));
+            out.extend(window_diff(a, &self.bufs[k]));
         }
         out
     }
+    /// Hashes of every 4 KiB page of the first `n` windows (split-run input fingerprint). Words whose
+    /// value lies in the OS heap range (`mask`: below the determinism arena, outside the image and the
+    /// stack; the same decision in both runs, it depends on the value only) are replaced by a marker
+    /// first. Those that point into committed OS memory now (`fm`, OS object addresses) are listed in
+    /// `foreign_words` as (address, value) pairs, so the report can show which ones differed.
+    fn page_hashes(
+        &self,
+        n: usize,
+        mask: &impl Fn(u32) -> bool,
+        fm: &ForeignMap,
+        foreign_words: &mut Vec<u32>,
+    ) -> Vec<(u32, u64)> {
+        let mut out = Vec::new();
+        let mut tmp = vec![0u8; 4096];
+        for (k, &(a, _)) in self.windows.iter().enumerate().take(n) {
+            for (j, page) in self.bufs[k].chunks(4096).enumerate() {
+                let pa = a + 4096 * j as u32;
+                let mut hit = false;
+                for (w, b) in page.as_chunks::<4>().0.iter().enumerate() {
+                    let v = u32::from_le_bytes(*b);
+                    if mask(v) {
+                        if !hit {
+                            tmp[..page.len()].copy_from_slice(page);
+                            hit = true;
+                        }
+                        tmp[4 * w..4 * w + 4].copy_from_slice(&FOREIGN_MARK.to_le_bytes());
+                        if fm.contains(v) {
+                            foreign_words.push(pa + 4 * w as u32);
+                            foreign_words.push(v);
+                        }
+                    }
+                }
+                let h = if hit {
+                    fmt::page_hash(pa, &tmp[..page.len()])
+                } else {
+                    fmt::page_hash(pa, page)
+                };
+                out.push((pa, h));
+            }
+        }
+        out
+    }
+    /// Diagnostic dump of the first `n` windows: per window `[u32 start][u32 len][bytes]`.
+    fn dump(&self, n: usize, path: &str) {
+        let mut b = Vec::new();
+        for (k, &(a, _)) in self.windows.iter().enumerate().take(n) {
+            b.extend_from_slice(&a.to_le_bytes());
+            b.extend_from_slice(&(self.bufs[k].len() as u32).to_le_bytes());
+            b.extend_from_slice(&self.bufs[k]);
+        }
+        match std::fs::write(path, b) {
+            Ok(()) => log(&format!("l2: window dump {path}")),
+            Err(e) => log(&format!("l2: window dump {path}: {e}")),
+        }
+    }
     /// The snapshot's bytes for `[addr, addr + len)` (inside one window).
     fn pre(&self, addr: u32, len: usize) -> Vec<u8> {
-        let bufs = BUFS.lock().unwrap_or_else(|e| e.into_inner());
         for (k, &(a, b)) in self.windows.iter().enumerate() {
             if addr >= a && addr as u64 + len as u64 <= b as u64 {
                 let o = (addr - a) as usize;
-                return bufs[k][o..o + len].to_vec();
+                return self.bufs[k][o..o + len].to_vec();
             }
         }
         Vec::new()
@@ -710,7 +810,10 @@ impl Snap {
 }
 
 fn read_regions(regions: &mut [Region], orig: bool) {
-    for r in regions.iter_mut().filter(|r| r.readable) {
+    for r in regions
+        .iter_mut()
+        .filter(|r| r.readable && r.has_pre_memory())
+    {
         let b = mem_read(r.addr, r.pre.len()).unwrap_or_default();
         if orig {
             r.post_orig = b;
@@ -721,15 +824,241 @@ fn read_regions(regions: &mut [Region], orig: bool) {
 }
 
 fn restore_regions(regions: &[Region]) {
-    for r in regions.iter().filter(|r| r.readable) {
+    for r in regions
+        .iter()
+        .filter(|r| r.readable && r.has_pre_memory())
+    {
         put_diff(r.addr, &r.pre);
     }
+}
+
+
+/// The case's regions before the call: spec globals, extra regions evaluated at entry, `this`,
+/// pointed-to arguments, and the pre-call OS probes (`os:` extras without `post:`).
+fn build_regions(f: &Frame, i: usize, sig: &fmt::Sig, args: &[u32]) -> Vec<Region> {
+    let c = cfg();
+    let h = &HOOKS[i];
+    let mut regions: Vec<Region> = Vec::new();
+    fn add(regions: &mut Vec<Region>, addr: u32, len: u32, kind: RegionKind, access: u8) {
+        let pre = if len > 0 {
+            mem_read(addr, len as usize)
+        } else {
+            None
+        };
+        regions.push(Region {
+            addr,
+            kind,
+            access,
+            readable: pre.is_some(),
+            pre: pre.unwrap_or_default(),
+            post_orig: Vec::new(),
+            post_rust: Vec::new(),
+        });
+    }
+    if let Some(gs) = SPECS.get().and_then(|s| s.get(&h.addr)) {
+        for g in gs {
+            add(&mut regions, g.addr, g.len, RegionKind::Global { exact: g.exact }, g.access);
+        }
+    }
+    let regs_in = [f.eax, f.ecx, f.edx, f.ebx, f.esi, f.edi, f.ebp];
+    for e in c
+        .extra
+        .iter()
+        .filter(|e| e.hook.is_none_or(|h| h == i) && !e.post)
+    {
+        if let Some(p) = e.os {
+            let a = e.addr.eval(&regs_in, args, &rd32).unwrap_or(0);
+            regions.push(Region {
+                addr: a,
+                kind: RegionKind::Os(p),
+                access: 0,
+                readable: true,
+                pre: probe(p, a),
+                post_orig: Vec::new(),
+                post_rust: Vec::new(),
+            });
+            continue;
+        }
+        match (
+            e.addr.eval(&regs_in, args, &rd32),
+            e.len.eval(&regs_in, args, &rd32),
+        ) {
+            // at most 16 MiB per region
+            (Some(a), Some(l)) => add(&mut regions, a, l.min(1 << 24), RegionKind::Extra, e.acc),
+            _ => add(&mut regions, 0, 0, RegionKind::Extra, e.acc), // counted as unreadable
+        }
+    }
+    if sig.conv == fmt::Conv::Thiscall && sig.this_size > 0 {
+        add(&mut regions, f.ecx, sig.this_size, RegionKind::This, fmt::ACC_R | fmt::ACC_W);
+    }
+    for p in sig.ptr_args {
+        if let Some(&a) = args.get(p.arg as usize) {
+            add(&mut regions, a, p.size, RegionKind::ArgPtr(p.arg), fmt::ACC_R | fmt::ACC_W);
+        }
+    }
+    regions
+}
+
+fn rd32(a: u32) -> Option<u32> {
+    mem_read(a, 4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+}
+
+/// After a run: the OS probes again (same object as before the call) and the `post:` extras,
+/// evaluated with the run's exit registers. The first run (`first`) appends the post regions; the
+/// second run (double-run L2) reads them at the addresses the first run found.
+fn capture_post(regions: &mut Vec<Region>, i: usize, regs_out: &[u32; 7], args: &[u32], first: bool) {
+    for r in regions.iter_mut() {
+        if let RegionKind::Os(p) = r.kind
+            && !r.pre.is_empty()
+        {
+            let b = probe(p, r.addr);
+            if first {
+                r.post_orig = b;
+            } else {
+                r.post_rust = b;
+            }
+        }
+    }
+    let c = cfg();
+    let posts: Vec<&crate::l2::Extra> = c
+        .extra
+        .iter()
+        .filter(|e| e.hook.is_none_or(|h| h == i) && e.post)
+        .collect();
+    if posts.is_empty() {
+        return;
+    }
+    if first {
+        for e in posts {
+            let a = e.addr.eval(regs_out, args, &rd32);
+            if let Some(p) = e.os {
+                let a = a.unwrap_or(0);
+                regions.push(Region {
+                    addr: a,
+                    kind: RegionKind::Os(p),
+                    access: 0,
+                    readable: true,
+                    pre: Vec::new(),
+                    post_orig: probe(p, a),
+                    post_rust: Vec::new(),
+                });
+                continue;
+            }
+            let l = e.len.eval(regs_out, args, &rd32);
+            let b = match (a, l) {
+                (Some(a), Some(l)) if l > 0 => mem_read(a, l.min(1 << 24) as usize),
+                _ => None,
+            };
+            regions.push(Region {
+                addr: a.unwrap_or(0),
+                kind: RegionKind::Post,
+                access: e.acc,
+                readable: b.is_some(),
+                pre: Vec::new(),
+                post_orig: b.unwrap_or_default(),
+                post_rust: Vec::new(),
+            });
+        }
+    } else {
+        for r in regions.iter_mut() {
+            match r.kind {
+                RegionKind::Post if r.readable => {
+                    r.post_rust = mem_read(r.addr, r.post_orig.len()).unwrap_or_default();
+                }
+                RegionKind::Os(p) if r.pre.is_empty() => r.post_rust = probe(p, r.addr),
+                _ => {}
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------ OS probes -----------------
+
+/// `_nhandle` and `__pioinfo` of the exe's static CRT (read from `_get_osfhandle` 0x833D2C:
+/// `cmp eax, [0xC9C2FC]`; `mov ecx, [ecx*4 + 0xC9C300]`; ioinfo stride 0x24, osfhnd +0, osfile +4).
+const CRT_NHANDLE: u32 = 0xC9C2FC;
+const CRT_PIOINFO: u32 = 0xC9C300;
+const CRT_IOINFO_SIZE: u32 = 0x24;
+/// sizeof(FILE) in the static CRT (_ptr _cnt _base _flag _file _charbuf _bufsiz _tmpfname).
+const CRT_FILE_SIZE: usize = 0x20;
+
+fn probe(p: OsProbe, addr: u32) -> Vec<u8> {
+    match p {
+        OsProbe::File => probe_file(addr).encode(),
+        OsProbe::Cwd => std::env::current_dir()
+            .map(|d| d.to_string_lossy().into_owned())
+            .unwrap_or_else(|e| format!("? {e}"))
+            .into_bytes(),
+        OsProbe::Cursor => {
+            use windows_sys::Win32::UI::WindowsAndMessaging::{CURSORINFO, GetCursorInfo};
+            // SAFETY: plain Win32 call with a sized out struct.
+            let mut ci: CURSORINFO = unsafe { std::mem::zeroed() };
+            ci.cbSize = std::mem::size_of::<CURSORINFO>() as u32;
+            let ok = unsafe { GetCursorInfo(&mut ci) } != 0;
+            let mut v = vec![ok as u8];
+            v.extend_from_slice(&ci.flags.to_le_bytes());
+            v
+        }
+    }
+}
+
+/// The CRT stream at `fp` and the OS file behind its descriptor. Reads only: the OS position is
+/// queried with a zero `FILE_CURRENT` move, the handle value is not recorded.
+fn probe_file(fp: u32) -> fmt::FileProbe {
+    use windows_sys::Win32::Storage::FileSystem::{
+        FILE_CURRENT, GetFileSizeEx, GetFinalPathNameByHandleW, SetFilePointerEx,
+    };
+    let mut out = fmt::FileProbe {
+        fd: -1,
+        ..Default::default()
+    };
+    let Some(file) = (fp != 0).then(|| mem_read(fp, CRT_FILE_SIZE)).flatten() else {
+        return out;
+    };
+    out.fd = i32::from_le_bytes([file[16], file[17], file[18], file[19]]);
+    out.file = file;
+    let n = rd32(CRT_NHANDLE).unwrap_or(0);
+    if out.fd < 0 || out.fd as u32 >= n {
+        return out;
+    }
+    let fd = out.fd as u32;
+    let Some(block) = rd32(CRT_PIOINFO + 4 * (fd >> 5)).filter(|&b| b != 0) else {
+        return out;
+    };
+    let io = block + (fd & 31) * CRT_IOINFO_SIZE;
+    out.osfile = mem_read(io + 4, 1).map(|b| b[0]).unwrap_or(0);
+    if out.osfile & 1 == 0 {
+        return out;
+    }
+    let Some(h) = rd32(io) else { return out };
+    let h = h as usize as windows_sys::Win32::Foundation::HANDLE;
+    let mut pos = 0i64;
+    let mut size = 0i64;
+    let mut buf = [0u16; 1024];
+    // SAFETY: plain Win32 calls on the CRT's open handle; out pointers are local.
+    let (okp, oks, n) = unsafe {
+        (
+            SetFilePointerEx(h, 0, &mut pos, FILE_CURRENT) != 0,
+            GetFileSizeEx(h, &mut size) != 0,
+            GetFinalPathNameByHandleW(h, buf.as_mut_ptr(), buf.len() as u32, 0),
+        )
+    };
+    let path = if n > 0 && (n as usize) < buf.len() {
+        String::from_utf16_lossy(&buf[..n as usize])
+    } else {
+        "?".into()
+    };
+    out.os = Some((
+        if okp { pos as u64 } else { u64::MAX },
+        if oks { size as u64 } else { u64::MAX },
+        path,
+    ));
+    out
 }
 
 fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
     let t0 = std::time::Instant::now();
     let c = cfg();
-    let h = &HOOKS[i];
     let args_ptr = f as *mut Frame as usize as u32 + std::mem::size_of::<Frame>() as u32;
     let n = sig.args as usize;
     let args: Vec<u32> = mem_read(args_ptr, 4 * n)
@@ -747,48 +1076,7 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
     }
 
     // ---- regions
-    let mut regions: Vec<Region> = Vec::new();
-    let mut add = |addr: u32, len: u32, kind: RegionKind, access: u8| {
-        let pre = if len > 0 {
-            mem_read(addr, len as usize)
-        } else {
-            None
-        };
-        regions.push(Region {
-            addr,
-            kind,
-            access,
-            readable: pre.is_some(),
-            pre: pre.unwrap_or_default(),
-            post_orig: Vec::new(),
-            post_rust: Vec::new(),
-        });
-    };
-    if let Some(gs) = SPECS.get().and_then(|s| s.get(&h.addr)) {
-        for g in gs {
-            add(g.addr, g.len, RegionKind::Global { exact: g.exact }, g.access);
-        }
-    }
-    let regs_in = [f.eax, f.ecx, f.edx, f.ebx, f.esi, f.edi, f.ebp];
-    let rd = |a: u32| mem_read(a, 4).map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]));
-    for e in c.extra.iter().filter(|e| e.hook.is_none_or(|h| h == i)) {
-        match (
-            e.addr.eval(&regs_in, &args, &rd),
-            e.len.eval(&regs_in, &args, &rd),
-        ) {
-            // at most 16 MiB per region
-            (Some(a), Some(l)) => add(a, l.min(1 << 24), RegionKind::Extra, e.acc),
-            _ => add(0, 0, RegionKind::Extra, e.acc), // counted as unreadable
-        }
-    }
-    if sig.conv == fmt::Conv::Thiscall && sig.this_size > 0 {
-        add(f.ecx, sig.this_size, RegionKind::This, fmt::ACC_R | fmt::ACC_W);
-    }
-    for p in sig.ptr_args {
-        if let Some(&a) = args.get(p.arg as usize) {
-            add(a, p.size, RegionKind::ArgPtr(p.arg), fmt::ACC_R | fmt::ACC_W);
-        }
-    }
+    let regions = build_regions(f, i, sig, &args);
     let unreadable = regions.iter().filter(|r| !r.readable).count() as u32;
 
     // ---- windows: static ones + the caller's stack above the arguments (+ the used arena)
@@ -813,7 +1101,9 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
     crate::l2::run_begin(i as u32);
     invoke(&mut inv_o, table::original_at(i));
     let (calls_o, allocs_o) = crate::l2::run_end();
+    let mut regions = regions;
     read_regions(&mut regions, true);
+    capture_post(&mut regions, i, &inv_o.regs_out, &args, true);
     let writes_o = snap.diff();
     let cp = crate::detwin::l2_checkpoint();
     let mut side_o = crate::detwin::side_save();
@@ -832,6 +1122,7 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
     invoke(&mut inv_r, table::rust_entry(i));
     let (calls_r, allocs_r) = crate::l2::run_end();
     read_regions(&mut regions, false);
+    capture_post(&mut regions, i, &inv_r.regs_out, &args, false);
     let writes_r = snap.diff();
     let cp = crate::detwin::l2_case_end();
     let out_r = outcome(&inv_r, calls_r, allocs_r, writes_r);
@@ -843,7 +1134,10 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
         for w in &out_o.writes {
             put(w.addr, &w.bytes);
         }
-        for r in regions.iter().filter(|r| r.readable) {
+        for r in regions
+            .iter()
+            .filter(|r| r.readable && r.has_pre_memory())
+        {
             put_diff(r.addr, &r.post_orig);
         }
         let mut s = side_o;
@@ -857,10 +1151,33 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
     }
 
     // ---- record
+    let window_pre = pre_of_writes(&snap, &[&out_o.writes, &out_r.writes], false);
+    let ordinal = STATS.lock().map(|s| s[i].cases).unwrap_or(0);
+    let mut case = new_case(f, i, sig, frame, ordinal, &args, regions, windows, window_pre);
+    case.orig = out_o;
+    case.rust = out_r;
+    case.leave = c.leave_rust as u8;
+    case.mutant = c.mutants.contains(&i);
+    drop(snap);
+    record(case, i, t0, unreadable, true);
+}
+
+/// The window bytes before the call at every address one of the runs wrote (`words`: the whole
+/// aligned words around them, for split-run records, whose two runs are compared word-wise later).
+fn pre_of_writes(snap: &Snap, runs: &[&Vec<Write>], words: bool) -> Vec<Write> {
     let mut addrs: BTreeMap<u32, ()> = BTreeMap::new();
-    for w in out_o.writes.iter().chain(&out_r.writes) {
+    for w in runs.iter().flat_map(|r| r.iter()) {
         for k in 0..w.bytes.len() as u32 {
-            addrs.insert(w.addr + k, ());
+            let a = w.addr + k;
+            if words {
+                for b in (a & !3)..(a & !3) + 4 {
+                    if !snap.pre(b, 1).is_empty() {
+                        addrs.insert(b, ());
+                    }
+                }
+            } else {
+                addrs.insert(a, ());
+            }
         }
     }
     let mut window_pre: Vec<Write> = Vec::new();
@@ -874,6 +1191,22 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
             }),
         }
     }
+    window_pre
+}
+
+#[allow(clippy::too_many_arguments)]
+fn new_case(
+    f: &Frame,
+    i: usize,
+    sig: &fmt::Sig,
+    frame: u32,
+    ordinal: u32,
+    args: &[u32],
+    regions: Vec<Region>,
+    windows: Vec<(u32, u32)>,
+    window_pre: Vec<Write>,
+) -> Case {
+    let h = &HOOKS[i];
     // Pool headers, read once per frame (pools are only created at start-up).
     let pools = {
         let mut g = POOLS.lock().unwrap_or_else(|e| e.into_inner());
@@ -884,8 +1217,7 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
     };
     let mut env = f.env_in.to_vec();
     env.truncate(28);
-    let ordinal = STATS.lock().map(|s| s[i].cases).unwrap_or(0);
-    let case = Case {
+    Case {
         fn_addr: h.addr,
         name: h.name.to_string(),
         conv: sig.conv as u8,
@@ -894,30 +1226,36 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
         ordinal,
         caller: f.ret,
         regs_in: [f.eax, f.ecx, f.edx, f.ebx, f.esi, f.edi, f.ebp],
-        args: args.clone(),
+        args: args.to_vec(),
         fpu_env: env,
         mxcsr: f.mxcsr_in,
         regions,
         windows,
         window_pre,
-        orig: out_o,
-        rust: out_r,
         image: (0x400000, 0x1577000),
         pools: pools
             .pools
             .iter()
             .map(|p| (p.objects, p.bytemap, p.size))
             .collect(),
-        leave: c.leave_rust as u8,
-        mutant: c.mutants.contains(&i),
-    };
-    let diffs = fmt::compare(&case);
+        ..Case::default()
+    }
+}
+
+/// Statistics, text report and spool for one case. `compare = false` for split-run records (one
+/// outcome only; compared on the host by `sa-oracle l2 split-report`).
+fn record(case: Case, i: usize, t0: std::time::Instant, unreadable: u32, compare: bool) {
+    let h = &HOOKS[i];
+    let (frame, ordinal) = (case.frame, case.ordinal);
+    let diffs = if compare { fmt::compare(&case) } else { Vec::new() };
     let und = fmt::undeclared_writes(&case);
     let ledger = !diffs.is_empty() && is_ledger(h.addr, &case, &diffs);
     {
         let mut st = STATS.lock().unwrap_or_else(|e| e.into_inner());
         let s = &mut st[i];
-        s.cases += 1;
+        if compare {
+            s.cases += 1; // split-run cases are counted at entry (they nest)
+        }
         s.us += t0.elapsed().as_micros() as u64;
         s.unreadable_regions += unreadable;
         if !diffs.is_empty() {
@@ -928,8 +1266,8 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
                 if s.first_mismatch.is_none() {
                     s.first_mismatch = Some(format!(
                         "frame {frame} caller {:#x} args {}: {}",
-                        f.ret,
-                        args_str(&args),
+                        case.caller,
+                        args_str(&case.args),
                         diffs
                             .iter()
                             .map(|d| format!("{}: {}", d.field, d.detail))
@@ -969,8 +1307,8 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
                 "MISMATCH"
             },
             h.name,
-            f.ret,
-            args_str(&args),
+            case.caller,
+            args_str(&case.args),
             case.content_id()
         );
         for d in &diffs {
@@ -989,11 +1327,251 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
             );
         }
     }
-    if let Ok(mut g) = SPOOL.lock()
-        && let Some(w) = g.as_mut()
-    {
-        let _ = w.write_all(&fmt::spool_record(&case));
+    spool_write(&case, h.name, frame);
+}
+
+/// Appends a case to the spool unless the quota (INF-18) is reached; at the first refusal the
+/// trailer is written and the stop is logged.
+fn spool_write(case: &Case, hook: &str, frame: u32) {
+    let rec = fmt::spool_record(case);
+    let Ok(mut g) = SPOOL.lock() else { return };
+    let Some(w) = g.as_mut() else { return };
+    let mut q = QUOTA.lock().unwrap_or_else(|e| e.into_inner());
+    if q.admit(rec.len() as u64, hook, frame) {
+        let _ = w.write_all(&rec);
+        return;
     }
+    if let Some(m) = q.message()
+        && q.hit.as_ref().is_some_and(|h| h.0 == hook && h.1 == frame)
+        && !QUOTA_LOGGED.swap(true, Ordering::AcqRel)
+    {
+        let _ = w.write_all(&fmt::spool_trailer(&m));
+        let _ = w.flush();
+        log(&format!("l2: {m}"));
+    }
+}
+
+static QUOTA_LOGGED: AtomicBool = AtomicBool::new(false);
+
+// ------------------------------------------------------------------ split-run (INF-17) ----------
+
+/// Marker that replaces an OS object address in the page fingerprint.
+const FOREIGN_MARK: u32 = 0xF0F0_F0F0;
+
+/// Committed memory that holds OS-assigned objects: everything committed outside the exe image, the
+/// determinism arena and the current thread's stack (Wine heaps, D3D/DirectInput/DirectSound objects,
+/// DLL data). Built per split-run case (VirtualQuery walk).
+struct ForeignMap {
+    ranges: Vec<(u32, u32)>,
+}
+
+impl ForeignMap {
+    fn build(stack: (u32, u32)) -> ForeignMap {
+        use windows_sys::Win32::System::Memory::{MEM_COMMIT, MEMORY_BASIC_INFORMATION, VirtualQuery};
+        let arena = crate::detwin::arena_range();
+        let excluded = [IMAGE, arena, stack];
+        let mut ranges: Vec<(u32, u32)> = Vec::new();
+        let mut a: u64 = 0x10000;
+        while a < 0xFFFF_0000 {
+            // SAFETY: VirtualQuery only reads the address space description.
+            let mut mbi: MEMORY_BASIC_INFORMATION = unsafe { std::mem::zeroed() };
+            let n = unsafe {
+                VirtualQuery(
+                    a as usize as *const std::ffi::c_void,
+                    &mut mbi,
+                    std::mem::size_of::<MEMORY_BASIC_INFORMATION>(),
+                )
+            };
+            if n == 0 || mbi.RegionSize == 0 {
+                break;
+            }
+            let lo = mbi.BaseAddress as usize as u64;
+            let hi = lo + mbi.RegionSize as u64;
+            if mbi.State == MEM_COMMIT && hi <= 0x1_0000_0000 {
+                let (lo, hi) = (lo as u32, (hi - 1) as u32);
+                let inside = |r: (u32, u32)| r.1 > r.0 && lo < r.1 && hi >= r.0;
+                if !excluded.iter().any(|&r| inside(r)) {
+                    match ranges.last_mut() {
+                        Some(last) if last.1 == lo => last.1 = hi.wrapping_add(1),
+                        _ => ranges.push((lo, hi.wrapping_add(1))),
+                    }
+                }
+            }
+            a = hi.max(a + 0x1000);
+        }
+        ForeignMap { ranges }
+    }
+    fn contains(&self, v: u32) -> bool {
+        if v < 0x10000 || (v >= IMAGE.0 && v < IMAGE.1) {
+            return false;
+        }
+        self.ranges
+            .binary_search_by(|r| {
+                if v < r.0 {
+                    std::cmp::Ordering::Greater
+                } else if r.1 != 0 && v >= r.1 {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            })
+            .is_ok()
+    }
+}
+
+/// The distinct OS object addresses among the case's arguments, registers, region bytes and the
+/// window words around its writes (before and after the call).
+fn foreign_values(fm: &ForeignMap, fm_post: &ForeignMap, c: &Case, snap: &Snap) -> Vec<u32> {
+    let mut v: Vec<u32> = Vec::new();
+    let mut add = |w: u32| {
+        if fm.contains(w) || fm_post.contains(w) {
+            v.push(w);
+        }
+    };
+    for &w in c.args.iter().chain(&c.regs_in).chain(&c.orig.regs) {
+        add(w);
+    }
+    let words = |b: &[u8], add: &mut dyn FnMut(u32)| {
+        for x in b.as_chunks::<4>().0 {
+            add(u32::from_le_bytes(*x));
+        }
+    };
+    for r in c.regions.iter().filter(|r| !matches!(r.kind, RegionKind::Os(_))) {
+        let o = ((4 - (r.addr & 3)) & 3) as usize;
+        for b in [&r.pre, &r.post_orig] {
+            if b.len() > o {
+                words(&b[o..], &mut add);
+            }
+        }
+    }
+    for w in &c.orig.writes {
+        let (lo, hi) = (w.addr & !3, (w.addr + w.bytes.len() as u32 + 3) & !3);
+        if let Some(post) = mem_read(lo, (hi - lo) as usize) {
+            words(&post, &mut add);
+        }
+        let pre = snap.pre(lo, (hi - lo) as usize);
+        words(&pre, &mut add);
+    }
+    v.sort_unstable();
+    v.dedup();
+    v
+}
+
+/// The current thread's stack [StackLimit, StackBase) from its TIB.
+fn thread_stack() -> (u32, u32) {
+    let (base, limit): (u32, u32);
+    // SAFETY: reads the current thread's NT_TIB through FS (i686 Windows).
+    unsafe {
+        std::arch::asm!("mov {0}, fs:[4]", "mov {1}, fs:[8]", out(reg) base, out(reg) limit, options(nostack, readonly, preserves_flags));
+    }
+    (limit, base)
+}
+
+/// One sampled call in split-run mode: runs only this run's implementation (the original in the
+/// plain run, Rust in the rust run) on the live state, records inputs and outputs, and returns its
+/// results to the caller. Nothing is restored: the game continues with what the call did, so both runs
+/// stay identical up to the first differing output (determinism mode), which `split-report` checks
+/// through the inputs of every later case.
+fn run_split(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32, ordinal: u32, split: Split) {
+    let t0 = std::time::Instant::now();
+    let c = cfg();
+    let seq = SEQ.fetch_add(1, Ordering::Relaxed);
+    let args_ptr = f as *mut Frame as usize as u32 + std::mem::size_of::<Frame>() as u32;
+    let n = sig.args as usize;
+    let args: Vec<u32> = mem_read(args_ptr, 4 * n)
+        .map(|b| {
+            b.as_chunks::<4>()
+                .0
+                .iter()
+                .map(|w| u32::from_le_bytes(*w))
+                .collect()
+        })
+        .unwrap_or_default();
+    if args.len() != n {
+        f.tail = leave_target(i);
+        return;
+    }
+    let mut regions = build_regions(f, i, sig, &args);
+    let unreadable = regions.iter().filter(|r| !r.readable).count() as u32;
+    let mut windows = WINDOWS.get().cloned().unwrap_or_default();
+    let nstatic = windows.len();
+    let stack_lo = args_ptr + 4 * n as u32;
+    if c.stack > 0 && win::readable(stack_lo, c.stack as usize) {
+        windows.push((stack_lo, stack_lo + c.stack));
+    }
+    if c.window == Window::All
+        && let Some((a, b)) = crate::detwin::arena_extent()
+        && b > a
+        && win::readable(a, (b - a) as usize)
+    {
+        windows.push((a, b));
+    }
+    let snap = Snap::take(windows.clone());
+    let stack = thread_stack();
+    let fm = ForeignMap::build(stack);
+    let mut foreign_words = Vec::new();
+    let arena_lo = match crate::detwin::arena_range().0 {
+        0 => 0x1800_0000,
+        a => a,
+    };
+    let mask = |v: u32| {
+        (0x10000..arena_lo).contains(&v)
+            && !(IMAGE.0..IMAGE.1).contains(&v)
+            && !(stack.0..stack.1).contains(&v)
+    };
+    let page_hashes = snap.page_hashes(nstatic, &mask, &fm, &mut foreign_words);
+    let volatile: Vec<Write> = sa_oracle_format::normalise::INPUT_EXCLUSIONS
+        .iter()
+        .filter_map(|e| {
+            mem_read(e.addr, e.len as usize).map(|bytes| Write {
+                addr: e.addr,
+                bytes,
+            })
+        })
+        .collect();
+    if c.dump_seq.contains(&seq) {
+        let out = c.out.clone().unwrap_or_else(|| "l2.spool".into());
+        snap.dump(nstatic, &format!("{out}.seq{seq}.win"));
+    }
+
+    let mut inv = new_invoke(f, &args);
+    let outer = crate::l2::run_suspend();
+    crate::l2::run_begin(i as u32);
+    let target = match split {
+        Split::Orig => table::original_at(i),
+        Split::Rust => table::rust_entry(i),
+    };
+    invoke(&mut inv, target);
+    let (calls, allocs) = crate::l2::run_end();
+    crate::l2::run_resume(outer);
+    read_regions(&mut regions, true);
+    capture_post(&mut regions, i, &inv.regs_out, &args, true);
+    let writes = snap.diff();
+    let out = outcome(&inv, calls, allocs, writes);
+    finish_frame(f, &inv, &out, args_ptr);
+
+    let window_pre = pre_of_writes(&snap, &[&out.writes], true);
+    let mut case = new_case(f, i, sig, frame, ordinal, &args, regions, windows, window_pre);
+    // The frame's registers are the outputs now: the inputs were captured by build_regions/new_invoke.
+    case.regs_in = inv.regs_in;
+    case.orig = out;
+    case.leave = match split {
+        Split::Orig => fmt::LEAVE_SPLIT_ORIG,
+        Split::Rust => fmt::LEAVE_SPLIT_RUST,
+    };
+    case.mutant = c.mutants.contains(&i);
+    case.seq = seq;
+    case.page_hashes = page_hashes;
+    case.volatile = volatile;
+    case.esp = args_ptr;
+    case.stack = stack;
+    // Objects the call itself created (D3D device, DirectInput devices) live in memory committed
+    // during the call: the map is built again for the outputs.
+    let fm_post = ForeignMap::build(stack);
+    case.foreign = foreign_values(&fm, &fm_post, &case, &snap);
+    case.foreign_words = foreign_words;
+    drop(snap);
+    record(case, i, t0, unreadable, false);
 }
 
 /// Pending ledger entry "GetATanOfXY raw FPATAN path": ST0 differs beyond f32 only.
@@ -1032,6 +1610,12 @@ pub fn summary() -> String {
             .collect::<Vec<_>>()
             .join(",")
     )];
+    if let Some((h, f, n)) = QUOTA.lock().ok().and_then(|q| q.hit.clone()) {
+        parts[0] += &format!(" spool_quota_reached={h}@frame{f} spooled={n}");
+    }
+    if let Some(sp) = c.split {
+        parts[0] += &format!(" split={}", if sp == Split::Orig { "orig" } else { "rust" });
+    }
     for (i, s) in st.iter().enumerate() {
         if s.calls > 0 || c.hooks.contains(&i) {
             parts.push(format!(

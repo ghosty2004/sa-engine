@@ -32,6 +32,7 @@ pub mod specs_stream_a;
 pub mod specs_stream_b;
 pub mod specs_stream_c;
 pub mod specs_stream_m;
+pub mod split;
 
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
