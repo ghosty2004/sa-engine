@@ -123,13 +123,13 @@ pub fn time_get_time_info(this: MiPtr) -> TimeInfoPtr {
 }
 
 /// `CTimeModelInfo::~CTimeModelInfo` (0x4C5680, `FUN_004c5680`).
-#[hook(addr = 0x4C5680, conv = thiscall, name = "FUN_004c5680", expect = "C7 01 9C BB 85 00", this = "CTimeModelInfo")]
+#[hook(addr = 0x4C5680, conv = thiscall, name = "CTimeModelInfo::~CTimeModelInfo", expect = "C7 01 9C BB 85 00", this = "CTimeModelInfo")]
 pub fn time_destructor(this: MiPtr) {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
 }
 
 /// `CTimeModelInfo`'s scalar deleting destructor (0x4C6270).
-#[hook(addr = 0x4C6270, conv = thiscall, name = "CTimeModelInfo::vfunc_0", expect = "56 8B F1 E8 08 F4 FF FF", this = "CTimeModelInfo")]
+#[hook(addr = 0x4C6270, conv = thiscall, name = "CTimeModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 08 F4 FF FF", this = "CTimeModelInfo")]
 pub fn time_scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, time_destructor_call)
 }
@@ -147,13 +147,13 @@ pub fn lod_time_get_time_info(this: MiPtr) -> TimeInfoPtr {
 }
 
 /// `CLodTimeModelInfo::~CLodTimeModelInfo` (0x4C56E0, `FUN_004c56e0`).
-#[hook(addr = 0x4C56E0, conv = thiscall, name = "FUN_004c56e0", expect = "C7 01 9C BB 85 00", this = "CLodTimeModelInfo")]
+#[hook(addr = 0x4C56E0, conv = thiscall, name = "CLodTimeModelInfo::~CLodTimeModelInfo", expect = "C7 01 9C BB 85 00", this = "CLodTimeModelInfo")]
 pub fn lod_time_destructor(this: MiPtr) {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
 }
 
 /// `CLodTimeModelInfo`'s scalar deleting destructor (0x4C6290).
-#[hook(addr = 0x4C6290, conv = thiscall, name = "CLodTimeModelInfo::vfunc_0", expect = "56 8B F1 E8 48 F4 FF FF", this = "CLodTimeModelInfo")]
+#[hook(addr = 0x4C6290, conv = thiscall, name = "CLodTimeModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 48 F4 FF FF", this = "CLodTimeModelInfo")]
 pub fn lod_time_scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, lod_time_destructor_call)
 }

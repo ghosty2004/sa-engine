@@ -24,8 +24,8 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x404090,new,unknown,game,UNK-game,ghidra,0x404090,0x40409b,11,1,0x404090-0x40409b,,2,0,0,0,0,0,0
 0x4040a0,delete,unknown,game,UNK-game,ghidra,0x4040a0,0x156c093,56,2,0x4040a0-0x4040a5;0x156c060-0x156c093,0x156c060,20,0,0,0,0,2,0
 0x4040e0,CBuilding::IsBuildingPointerValid,gr-reversed,game,WORLD,ghidra,0x4040e0,0x404121,65,1,0x4040e0-0x404121,,28,0,0,0,0,0,0
-0x404130,CBuilding::vfunc_0,unknown,game,WORLD,ghidra,0x404130,0x40417e,78,1,0x404130-0x40417e,,31,1,0,0,0,2,0
-0x404180,,unknown,game,WORLD,ghidra,0x404180,0x404185,5,1,0x404180-0x404185,,1,0,0,0,0,0,0
+0x404130,CBuilding::`scalar deleting destructor',unknown,game,WORLD,ghidra,0x404130,0x40417e,78,1,0x404130-0x40417e,,31,1,0,0,0,2,0
+0x404180,CBuilding::~CBuilding,unknown,game,WORLD,ghidra,0x404180,0x404185,5,1,0x404180-0x404185,,1,0,0,0,0,0,0
 0x404190,CRect::IsFlipped,gr-reversed,game,MATH,ghidra-created,0x404190,0x4041b2,34,1,0x404190-0x4041b2,,14,0,0,0,0,0,0
 0x404200,CRect::Restrict,gr-reversed,game,MATH,ghidra,0x404200,0x404251,81,1,0x404200-0x404251,,31,0,0,0,0,4,0
 0x404260,CRect::Resize,gr-reversed,game,MATH,ghidra-created,0x404260,0x404289,41,1,0x404260-0x404289,,13,0,0,0,0,4,0
@@ -953,7 +953,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x44de80,CPathFind::StartNewInterior,gr-reversed,game,POP,ghidra,0x44de80,0x156ad83,72,2,0x44de80-0x44de85;0x156ad40-0x156ad83,0x156ad40,20,0,0,0,0,0,0
 0x44ded0,CPathFind::AddInteriorLink,gr-reversed,game,POP,ghidra,0x44ded0,0x156ecef,100,2,0x44ded0-0x44ded5;0x156ec90-0x156ecef,0x156ec90,32,0,0,0,0,0,0
 0x44df30,CPathFind::AddInteriorLinkToExternalNode,gr-reversed,game,POP,ghidra,0x44df30,0x44df54,36,1,0x44df30-0x44df54,,8,0,0,0,0,0,0
-0x44df60,,unknown,game,WORLD,ghidra,0x44df60,0x15623ed,54,3,0x44df60-0x44df65;0x1562390-0x15623bd;0x15623e9-0x15623ed,0x1562390,21,0,0,0,0,0,0
+0x44df60,CPathFind::RemoveInteriorLinks,unknown,game,POP,ghidra,0x44df60,0x15623ed,54,3,0x44df60-0x44df65;0x1562390-0x15623bd;0x15623e9-0x15623ed,0x1562390,21,0,0,0,0,0,0
 0x44e000,CPathFind::AddDynamicLinkBetween2Nodes_For1Node,gr-reversed,game,POP,ghidra,0x44e000,0x1560db1,406,2,0x44e000-0x44e005;0x1560c20-0x1560db1,0x1560c20,122,0,0,0,0,10,0
 0x44e1a0,CPathFind::RemoveInterior,gr-reversed,game,POP,ghidra,0x44e1a0,0x15645e2,711,2,0x44e1a0-0x44e1a5;0x1564320-0x15645e2,0x1564320,196,4,0,0,0,21,0
 0x44e480,CVector2D::Normalise,gr-reversed,game,MATH,ghidra,0x44e480,0x44e4be,62,1,0x44e480-0x44e4be,,24,0,0,0,0,3,0
@@ -1509,7 +1509,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x492e20,CTaskComplexDiveFromAttachedEntityAndGetUp::Constructor,gr-reversed,game,AI,ghidra,0x492e20,0x1565ac2,71,2,0x492e20-0x492e25;0x1565a80-0x1565ac2,0x1565a80,20,1,0,0,0,1,0
 0x492e70,CTaskComplexDiveFromAttachedEntityAndGetUp::Clone,gr-reversed,game,AI,ghidra,0x492e70,0x492ede,110,1,0x492e70-0x492ede,,37,2,0,0,0,1,0
 0x492ee0,CTaskComplexDiveFromAttachedEntityAndGetUp::GetTaskType,gr-reversed,game,AI,ghidra-created,0x492ee0,0x492ee6,6,1,0x492ee0-0x492ee6,,2,0,0,0,0,0,0
-0x492ef0,CTaskComplexDiveFromAttachedEntityAndGetUp::vfunc_0,unknown,game,AI,ghidra,0x492ef0,0x492f0e,30,1,0x492ef0-0x492f0e,,11,2,0,0,0,0,0
+0x492ef0,CTaskComplexDiveFromAttachedEntityAndGetUp::`scalar deleting destructor',unknown,game,AI,ghidra,0x492ef0,0x492f0e,30,1,0x492ef0-0x492f0e,,11,2,0,0,0,0,0
 0x492f10,CTaskComplexDiveFromAttachedEntityAndGetUp::Destructor,gr-reversed,game,AI,ghidra,0x492f10,0x492f1b,11,1,0x492f10-0x492f1b,,2,0,0,0,0,1,0
 0x492f60,,unknown,game,UNK-game,ghidra,0x492f60,0x492f67,7,1,0x492f60-0x492f67,,2,0,0,0,0,1,0
 0x492f90,CTheScripts::AddScriptEffectSystem,gr-reversed,game,SCRIPT,ghidra,0x492f90,0x156b9ef,68,2,0x492f90-0x492f95;0x156b9b0-0x156b9ef,0x156b9b0,20,1,0,0,0,0,0
@@ -1526,7 +1526,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x493730,CTaskComplexSeekEntityRadiusAngleOffset::Constructor,gr-reversed,game,AI,ghidra,0x493730,0x156f70e,211,2,0x493730-0x493735;0x156f640-0x156f70e,0x156f640,64,2,0,0,0,21,0
 0x493800,CTaskComplexSeekEntityRadiusAngleOffset::GetTaskType,gr-reversed,game,AI,ghidra-created,0x493800,0x493806,6,1,0x493800-0x493806,,2,0,0,0,0,0,0
 0x493810,CTaskComplexSeekEntityRadiusAngleOffset::MakeAbortable,gr-reversed,game,AI,ghidra-created,0x493810,0x493862,82,1,0x493810-0x493862,,29,0,1,0,0,7,0
-0x493870,CTaskComplexSeekEntityRadiusAngleOffset::vfunc_0,unknown,game,AI,ghidra,0x493870,0x49388e,30,1,0x493870-0x49388e,,11,2,0,0,0,0,0
+0x493870,CTaskComplexSeekEntityRadiusAngleOffset::`scalar deleting destructor',unknown,game,AI,ghidra,0x493870,0x49388e,30,1,0x493870-0x49388e,,11,2,0,0,0,0,0
 0x493890,CTaskComplexSeekEntityRadiusAngleOffset::Destructor,gr-reversed,game,AI,ghidra,0x493890,0x1566191,102,2,0x493890-0x493895;0x1566130-0x1566191,0x1566130,27,2,0,0,0,2,0
 0x493900,CTheScripts::IsEntityWithinSearchLight,unknown,game,SCRIPT,ghidra,0x493900,0x156c05a,95,2,0x493900-0x493905;0x156c000-0x156c05a,0x156c000,35,2,0,0,0,0,0
 0x493960,CTheScripts::IsEntityWithinAnySearchLight,unknown,game,SCRIPT,ghidra,0x493960,0x4939e8,136,1,0x493960-0x4939e8,,53,1,0,0,0,2,0
@@ -1570,7 +1570,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x49af10,CShopping::GetNextSection,gr-reversed,game,WORLD,ghidra,0x49af10,0x156b9a8,141,2,0x49af10-0x49af15;0x156b920-0x156b9a8,0x156b920,58,5,1,1,0,0,0
 0x49af90,CShopping::FindSectionInSection,gr-reversed,game,WORLD,ghidra-created,0x49af90,0x49afc1,49,1,0x49af90-0x49afc1,,22,2,0,0,0,0,0
 0x49afd0,CShopping::IncrementStat2,gr-reversed,game,WORLD,ghidra-created,0x49afd0,0x49b002,50,1,0x49afd0-0x49b002,,18,1,0,0,0,0,0
-0x49b010,IsValidModForVehicle,unknown,game,WORLD,ghidra,0x49b010,0x15692bb,205,3,0x49b010-0x49b015;0x15691d0-0x1569236;0x1569259-0x15692bb,0x15691d0,73,1,0,0,0,0,0
+0x49b010,IsValidModForVehicle,unknown,game,WORLD,ghidra+seeded,0x49b010,0x15692bb,240,2,0x49b010-0x49b015;0x15691d0-0x15692bb,0x15691d0,88,3,0,0,0,0,0
 0x49b0e0,,unknown,game,WORLD,ghidra,0x49b0e0,0x49b1b9,217,1,0x49b0e0-0x49b1b9,,82,10,0,0,0,0,0
 0x49b1f0,CShopping::SetCurrentProperty,gr-reversed,game,WORLD,ghidra-created,0x49b1f0,0x49b1fa,10,1,0x49b1f0-0x49b1fa,,3,0,0,0,0,0,0
 0x49b200,CShopping::StoreClothesState,gr-reversed,game,WORLD,ghidra,0x49b200,0x156e324,57,2,0x49b200-0x49b205;0x156e2f0-0x156e324,0x156e2f0,15,0,0,0,0,1,0
@@ -1691,7 +1691,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4a2580,FxEmitter_c::CreateParticle,gr-reversed,game,RENDER,ghidra,0x406067,0x4a2b1a,1444,2,0x406067-0x406071;0x4a2580-0x4a2b1a,,408,38,0,0,0,28,0
 0x4a2b20,FxEmitterBP_c::~FxEmitterBP_c,unknown,game,UNK-game,ghidra,0x4a2b20,0x4a2b3e,30,1,0x4a2b20-0x4a2b3e,,11,2,0,0,0,0,0
 0x4a2b40,FxEmitterBP_c::CreateInstance,gr-unreversed,game,RENDER,ghidra,0x4a2b40,0x4a2b90,80,1,0x4a2b40-0x4a2b90,,25,2,0,0,0,1,0
-0x4a2b90,FxEmitter_c::vfunc_0,unknown,game,UNK-game,ghidra,0x4a2b90,0x4a2bae,30,1,0x4a2b90-0x4a2bae,,11,2,0,0,0,0,0
+0x4a2b90,FxEmitter_c::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x4a2b90,0x4a2bae,30,1,0x4a2b90-0x4a2bae,,11,2,0,0,0,0,0
 0x4a2bb0,FxEmitter_c::~FxEmitter_c,unknown,game,UNK-game,ghidra,0x4a2bb0,0x4a2bb5,5,1,0x4a2bb0-0x4a2bb5,,1,0,0,0,0,0,0
 0x4a2bc0,FxEmitterBP_c::Update,gr-unreversed,game,RENDER,ghidra-created,0x4a2bc0,0x4a2c3a,122,1,0x4a2bc0-0x4a2c3a,,52,4,0,0,0,1,0
 0x4a2c40,FxEmitterBP_c::Render,gr-unreversed,game,RENDER,ghidra-created,0x4a2c40,0x4a3e98,4696,1,0x4a2c40-0x4a3e98,,1167,33,5,0,0,36,0
@@ -1880,10 +1880,10 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4a8b70,FxInterpInfo255_c::~FxInterpInfo255_c,unknown,game,UNK-game,ghidra,0x4a8b70,0x4a8b77,7,1,0x4a8b70-0x4a8b77,,2,0,0,0,0,1,0
 0x4a8b80,FxInterpInfo255_c::GetVal,gr-called-only,game,CALLED-ONLY,ghidra-created,0x4a8b80,0x4a8d0b,395,1,0x4a8b80-0x4a8d0b,,133,1,0,0,0,3,0
 0x4a8d10,,unknown,game,UNK-game,ghidra-created,0x4a8d10,0x4a8d2f,31,1,0x4a8d10-0x4a8d2f,,11,1,0,0,0,1,0
-0x4a8d30,FxInterpInfoFloat_c::vfunc_0,unknown,game,UNK-game,ghidra,0x4a8d30,0x4a8d4e,30,1,0x4a8d30-0x4a8d4e,,11,2,0,0,0,0,0
-0x4a8d50,FxInterpInfoU255_c::vfunc_0,unknown,game,UNK-game,ghidra,0x4a8d50,0x4a8d6e,30,1,0x4a8d50-0x4a8d6e,,11,2,0,0,0,0,0
-0x4a8d70,FxInterpInfo32_c::vfunc_0,unknown,game,UNK-game,ghidra,0x4a8d70,0x4a8d8e,30,1,0x4a8d70-0x4a8d8e,,11,2,0,0,0,0,0
-0x4a8d90,FxInterpInfo255_c::vfunc_0,unknown,game,UNK-game,ghidra,0x4a8d90,0x4a8dae,30,1,0x4a8d90-0x4a8dae,,11,2,0,0,0,0,0
+0x4a8d30,FxInterpInfoFloat_c::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x4a8d30,0x4a8d4e,30,1,0x4a8d30-0x4a8d4e,,11,2,0,0,0,0,0
+0x4a8d50,FxInterpInfoU255_c::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x4a8d50,0x4a8d6e,30,1,0x4a8d50-0x4a8d6e,,11,2,0,0,0,0,0
+0x4a8d70,FxInterpInfo32_c::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x4a8d70,0x4a8d8e,30,1,0x4a8d70-0x4a8d8e,,11,2,0,0,0,0,0
+0x4a8d90,FxInterpInfo255_c::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x4a8d90,0x4a8dae,30,1,0x4a8d90-0x4a8dae,,11,2,0,0,0,0,0
 0x4a8db0,ListItem_c::ListItem_c,unknown,game,UNK-game,ghidra,0x401c62,0x4a8dc0,27,2,0x401c62-0x401c6d;0x4a8db0-0x4a8dc0,,7,0,0,0,0,2,0
 0x4a8dc0,,unknown,game,UNK-game,ghidra,0x4a8dc0,0x4a8dc1,1,1,0x4a8dc0-0x4a8dc1,,1,0,0,0,0,0,0
 0x4a8dd0,,unknown,game,UNK-game,ghidra,0x4a8dd0,0x4a8ddd,13,1,0x4a8dd0-0x4a8ddd,,6,0,0,0,0,3,0
@@ -2501,7 +2501,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4b6990,CEventGunShotWhizzedBy::~CEventGunShotWhizzedBy,unknown,game,AI,ghidra,0x4b6990,0x4b69dc,76,1,0x4b6990-0x4b69dc,,30,1,0,0,0,2,0
 0x4b69e0,CEventSeenPanickedPed::~CEventSeenPanickedPed,unknown,game,AI,ghidra,0x4b69e0,0x4b6a2c,76,1,0x4b69e0-0x4b6a2c,,30,1,0,0,0,2,0
 0x4b6a30,CEventAreaCodes::~CEventAreaCodes,unknown,game,AI,ghidra,0x4b6a30,0x4b6a7c,76,1,0x4b6a30-0x4b6a7c,,30,1,0,0,0,2,0
-0x4b6a80,CEventPlayerCommandToGroup::vfunc_0,unknown,game,AI,ghidra,0x4b6a80,0x4b6acc,76,1,0x4b6a80-0x4b6acc,,30,1,0,0,0,2,0
+0x4b6a80,CEventPlayerCommandToGroup::`scalar deleting destructor',unknown,game,AI,ghidra,0x4b6a80,0x4b6acc,76,1,0x4b6a80-0x4b6acc,,30,1,0,0,0,2,0
 0x4b6ad0,CEventDanger::~CEventDanger,unknown,game,AI,ghidra,0x4b6ad0,0x4b6b1c,76,1,0x4b6ad0-0x4b6b1c,,30,1,0,0,0,2,0
 0x4b6b20,CEventGunShot::CloneEditable,gr-reversed,game,AI,ghidra,0x4b6b20,0x4b6bba,154,1,0x4b6b20-0x4b6bba,,53,2,0,0,0,6,0
 0x4b6bc0,CEventVehicleCollision::Clone,gr-reversed,game,AI,ghidra,0x4b6bc0,0x4b6c3b,123,1,0x4b6bc0-0x4b6c3b,,41,2,0,0,0,0,0
@@ -2694,7 +2694,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c4ac0,CBaseModelInfo::SetAnimFile,gr-reversed,game,STREAM,ghidra-created,0x4c4ac0,0x4c4ac3,3,1,0x4c4ac0-0x4c4ac3,,1,0,0,0,0,0,0
 0x4c4ad0,CBaseModelInfo::ConvertAnimFileIndex,gr-reversed,game,STREAM,ghidra-created,0x4c4ad0,0x4c4ad1,1,1,0x4c4ad0-0x4c4ad1,,1,0,0,0,0,0,0
 0x4c4ae0,CBaseModelInfo::GetAnimFileIndex,gr-reversed,game,STREAM,ghidra-created,0x4c4ae0,0x4c4ae4,4,1,0x4c4ae0-0x4c4ae4,,2,0,0,0,0,0,0
-0x4c4af0,CBaseModelInfo::vfunc_0,unknown,game,STREAM,ghidra-created,0x4c4af0,0x4c4b0f,31,1,0x4c4af0-0x4c4b0f,,11,1,0,0,0,1,0
+0x4c4af0,CBaseModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra-created,0x4c4af0,0x4c4b0f,31,1,0x4c4af0-0x4c4b0f,,11,1,0,0,0,1,0
 0x4c4b10,CBaseModelInfo::Init,gr-reversed,game,STREAM,ghidra,0x4c4b10,0x4c4b3c,44,1,0x4c4b10-0x4c4b3c,,12,0,0,0,0,9,0
 0x4c4b40,CBaseModelInfo::SetTexDictionary,gr-reversed,game,STREAM,ghidra,0x4c4b40,0x4c4b6d,45,1,0x4c4b40-0x4c4b6d,,17,2,0,0,0,2,0
 0x4c4b70,CBaseModelInfo::ClearTexDictionary,gr-reversed,game,STREAM,ghidra,0x4c4b70,0x4c4b77,7,1,0x4c4b70-0x4c4b77,,2,0,0,0,0,1,0
@@ -2736,31 +2736,31 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c5560,CAtomicModelInfo::AsAtomicModelInfoPtr,gr-reversed,game,STREAM,ghidra-created,0x4c5560,0x4c5563,3,1,0x4c5560-0x4c5563,,2,0,0,0,0,0,0
 0x4c5570,CAtomicModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5570,0x4c5573,3,1,0x4c5570-0x4c5573,,2,0,0,0,0,0,0
 0x4c5580,CAtomicModelInfo::GetRwModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5580,0x4c5586,6,1,0x4c5580-0x4c5586,,2,0,0,0,0,0,0
-0x4c5590,,unknown,game,STREAM,ghidra,0x4c5590,0x4c5597,7,1,0x4c5590-0x4c5597,,2,0,0,0,0,1,0
+0x4c5590,CAtomicModelInfo::~CAtomicModelInfo,unknown,game,STREAM,ghidra,0x4c5590,0x4c5597,7,1,0x4c5590-0x4c5597,,2,0,0,0,0,1,0
 0x4c55a0,,unknown,game,UNK-game,ghidra,0x4c55a0,0x4c55b2,18,1,0x4c55a0-0x4c55b2,,7,1,0,0,0,1,0
 0x4c55c0,CDamageAtomicModelInfo::AsDamageAtomicModelInfoPtr,gr-reversed,game,STREAM,ghidra-created,0x4c55c0,0x4c55c3,3,1,0x4c55c0-0x4c55c3,,2,0,0,0,0,0,0
-0x4c55d0,,unknown,game,STREAM,ghidra,0x4c55d0,0x4c55d7,7,1,0x4c55d0-0x4c55d7,,2,0,0,0,0,1,0
+0x4c55d0,CDamageAtomicModelInfo::~CDamageAtomicModelInfo,unknown,game,STREAM,ghidra,0x4c55d0,0x4c55d7,7,1,0x4c55d0-0x4c55d7,,2,0,0,0,0,1,0
 0x4c55e0,,unknown,game,UNK-game,ghidra,0x4c55e0,0x4c55fc,28,1,0x4c55e0-0x4c55fc,,10,1,0,0,0,3,0
 0x4c5600,CLodAtomicModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5600,0x4c5603,3,1,0x4c5600-0x4c5603,,2,0,0,0,0,0,0
 0x4c5610,CLodAtomicModelInfo::AsLodAtomicModelInfoPtr,gr-reversed,game,STREAM,ghidra-created,0x4c5610,0x4c5613,3,1,0x4c5610-0x4c5613,,2,0,0,0,0,0,0
-0x4c5620,,unknown,game,STREAM,ghidra,0x4c5620,0x4c5627,7,1,0x4c5620-0x4c5627,,2,0,0,0,0,1,0
+0x4c5620,CLodAtomicModelInfo::~CLodAtomicModelInfo,unknown,game,STREAM,ghidra,0x4c5620,0x4c5627,7,1,0x4c5620-0x4c5627,,2,0,0,0,0,1,0
 0x4c5640,,unknown,game,UNK-game,ghidra,0x4c5640,0x4c5658,24,1,0x4c5640-0x4c5658,,8,1,0,0,0,2,0
-0x4c5660,CLodTimeModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5660,0x4c5663,3,1,0x4c5660-0x4c5663,,2,0,0,0,0,0,0
-0x4c5670,CLodTimeModelInfo::GetTimeInfo,gr-reversed,game,STREAM,ghidra-created,0x4c5670,0x4c5674,4,1,0x4c5670-0x4c5674,,2,0,0,0,0,0,0
-0x4c5680,,unknown,game,STREAM,ghidra,0x4c5680,0x4c5687,7,1,0x4c5680-0x4c5687,,2,0,0,0,0,1,0
+0x4c5660,CTimeModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5660,0x4c5663,3,1,0x4c5660-0x4c5663,,2,0,0,0,0,0,0
+0x4c5670,CTimeModelInfo::GetTimeInfo,gr-reversed,game,STREAM,ghidra-created,0x4c5670,0x4c5674,4,1,0x4c5670-0x4c5674,,2,0,0,0,0,0,0
+0x4c5680,CTimeModelInfo::~CTimeModelInfo,unknown,game,STREAM,ghidra,0x4c5680,0x4c5687,7,1,0x4c5680-0x4c5687,,2,0,0,0,0,1,0
 0x4c5690,,unknown,game,UNK-game,ghidra,0x4c5690,0x4c56b2,34,1,0x4c5690-0x4c56b2,,11,1,0,0,0,4,0
-0x4c56c0,CLodTimeModelInfo::vfunc_4,unknown,game,STREAM,ghidra-created,0x4c56c0,0x4c56c3,3,1,0x4c56c0-0x4c56c3,,2,0,0,0,0,0,0
-0x4c56d0,CLodTimeModelInfo::vfunc_5,unknown,game,STREAM,ghidra-created,0x4c56d0,0x4c56d4,4,1,0x4c56d0-0x4c56d4,,2,0,0,0,0,0,0
-0x4c56e0,,unknown,game,STREAM,ghidra,0x4c56e0,0x4c56e7,7,1,0x4c56e0-0x4c56e7,,2,0,0,0,0,1,0
+0x4c56c0,CLodTimeModelInfo::GetModelType,unknown,game,STREAM,ghidra-created,0x4c56c0,0x4c56c3,3,1,0x4c56c0-0x4c56c3,,2,0,0,0,0,0,0
+0x4c56d0,CLodTimeModelInfo::GetTimeInfo,unknown,game,STREAM,ghidra-created,0x4c56d0,0x4c56d4,4,1,0x4c56d0-0x4c56d4,,2,0,0,0,0,0,0
+0x4c56e0,CLodTimeModelInfo::~CLodTimeModelInfo,unknown,game,STREAM,ghidra,0x4c56e0,0x4c56e7,7,1,0x4c56e0-0x4c56e7,,2,0,0,0,0,1,0
 0x4c56f0,,unknown,game,UNK-game,ghidra,0x4c56f0,0x4c5702,18,1,0x4c56f0-0x4c5702,,7,1,0,0,0,1,0
 0x4c5710,CClumpModelInfo::GetBoundingBox,gr-reversed,game,STREAM,ghidra-created,0x4c5710,0x4c5714,4,1,0x4c5710-0x4c5714,,2,0,0,0,0,0,0
 0x4c5720,CClumpModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5720,0x4c5723,3,1,0x4c5720-0x4c5723,,2,0,0,0,0,0,0
 0x4c5730,CClumpModelInfo::GetRwModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5730,0x4c5736,6,1,0x4c5730-0x4c5736,,2,0,0,0,0,0,0
 0x4c5740,CClumpModelInfo::GetAnimFileIndex,gr-reversed,game,STREAM,ghidra-created,0x4c5740,0x4c5744,4,1,0x4c5740-0x4c5744,,2,0,0,0,0,0,0
-0x4c5750,,unknown,game,UNK-game,ghidra,0x4c5750,0x4c5757,7,1,0x4c5750-0x4c5757,,2,0,0,0,0,1,0
+0x4c5750,CClumpModelInfo::~CClumpModelInfo,unknown,game,STREAM,ghidra,0x4c5750,0x4c5757,7,1,0x4c5750-0x4c5757,,2,0,0,0,0,1,0
 0x4c5760,,unknown,game,UNK-game,ghidra,0x4c5760,0x4c5772,18,1,0x4c5760-0x4c5772,,7,1,0,0,0,1,0
 0x4c5780,CWeaponModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c5780,0x4c5783,3,1,0x4c5780-0x4c5783,,2,0,0,0,0,0,0
-0x4c5790,,unknown,game,STREAM,ghidra,0x4c5790,0x4c5797,7,1,0x4c5790-0x4c5797,,2,0,0,0,0,1,0
+0x4c5790,CWeaponModelInfo::~CWeaponModelInfo,unknown,game,STREAM,ghidra,0x4c5790,0x4c5797,7,1,0x4c5790-0x4c5797,,2,0,0,0,0,1,0
 0x4c57a0,CPedModelInfo::CPedModelInfo,unknown,game,STREAM,ghidra,0x4c57a0,0x4c57b9,25,1,0x4c57a0-0x4c57b9,,8,1,0,0,0,2,0
 0x4c57c0,CPedModelInfo::GetModelType,gr-reversed,game,STREAM,ghidra-created,0x4c57c0,0x4c57c3,3,1,0x4c57c0-0x4c57c3,,2,0,0,0,0,0,0
 0x4c57d0,C2dEffect::Shutdown,gr-reversed,game,RW,ghidra,0x4c57d0,0x4c5833,99,1,0x4c57d0-0x4c5833,,43,4,0,0,0,4,0
@@ -2791,15 +2791,15 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c5ef0,,unknown,game,UNK-game,ghidra,0x4c5ef0,0x4c5f14,36,1,0x4c5ef0-0x4c5f14,,13,1,0,0,0,1,0
 0x4c5f50,,unknown,game,UNK-game,ghidra,0x4c5f50,0x4c5f7a,42,1,0x4c5f50-0x4c5f7a,,13,1,0,0,0,1,0
 0x4c6200,,unknown,game,STREAM,ghidra,0x4c6200,0x4c6205,5,1,0x4c6200-0x4c6205,,2,0,0,0,1,0,0
-0x4c6210,CAtomicModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c6210,0x4c622e,30,1,0x4c6210-0x4c622e,,11,2,0,0,0,0,0
-0x4c6230,CDamageAtomicModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c6230,0x4c624e,30,1,0x4c6230-0x4c624e,,11,2,0,0,0,0,0
-0x4c6250,CLodAtomicModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c6250,0x4c626e,30,1,0x4c6250-0x4c626e,,11,2,0,0,0,0,0
-0x4c6270,CTimeModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c6270,0x4c628e,30,1,0x4c6270-0x4c628e,,11,2,0,0,0,0,0
-0x4c6290,CLodTimeModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c6290,0x4c62ae,30,1,0x4c6290-0x4c62ae,,11,2,0,0,0,0,0
-0x4c62b0,CClumpModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c62b0,0x4c62ce,30,1,0x4c62b0-0x4c62ce,,11,2,0,0,0,0,0
-0x4c62d0,CWeaponModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c62d0,0x4c62ee,30,1,0x4c62d0-0x4c62ee,,11,2,0,0,0,0,0
+0x4c6210,CAtomicModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6210,0x4c622e,30,1,0x4c6210-0x4c622e,,11,2,0,0,0,0,0
+0x4c6230,CDamageAtomicModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6230,0x4c624e,30,1,0x4c6230-0x4c624e,,11,2,0,0,0,0,0
+0x4c6250,CLodAtomicModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6250,0x4c626e,30,1,0x4c6250-0x4c626e,,11,2,0,0,0,0,0
+0x4c6270,CTimeModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6270,0x4c628e,30,1,0x4c6270-0x4c628e,,11,2,0,0,0,0,0
+0x4c6290,CLodTimeModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6290,0x4c62ae,30,1,0x4c6290-0x4c62ae,,11,2,0,0,0,0,0
+0x4c62b0,CClumpModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c62b0,0x4c62ce,30,1,0x4c62b0-0x4c62ce,,11,2,0,0,0,0,0
+0x4c62d0,CWeaponModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c62d0,0x4c62ee,30,1,0x4c62d0-0x4c62ee,,11,2,0,0,0,0,0
 0x4c62f0,CPedModelInfo::~CPedModelInfo,unknown,game,STREAM,ghidra,0x4c62f0,0x4c634a,90,1,0x4c62f0-0x4c634a,,27,2,0,0,0,2,0
-0x4c6350,CPedModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c6350,0x4c636e,30,1,0x4c6350-0x4c636e,,11,2,0,0,0,0,0
+0x4c6350,CPedModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c6350,0x4c636e,30,1,0x4c6350-0x4c636e,,11,2,0,0,0,0,0
 0x4c63b0,CModelInfo::ReInit2dEffects,gr-reversed,game,STREAM,ghidra-created,0x4c63b0,0x4c63d8,40,1,0x4c63b0-0x4c63d8,,12,1,0,0,0,0,0
 0x4c63e0,CModelInfo::ShutDown,gr-reversed,game,STREAM,ghidra,0x4c63e0,0x4c6617,567,1,0x4c63e0-0x4c6617,,186,15,0,0,0,4,0
 0x4c6620,CModelInfo::AddAtomicModel,gr-reversed,game,STREAM,ghidra,0x4c6620,0x4c664d,45,1,0x4c6620-0x4c664d,,15,0,1,0,0,0,0
@@ -2891,7 +2891,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4c8bd0,CVehicleModelInfo::ReduceMaterialsInVehicle,gr-reversed,game,STREAM,ghidra,0x4c8bd0,0x4c8c82,178,1,0x4c8bd0-0x4c8c82,,57,11,0,0,0,0,0
 0x4c8c90,CVehicleModelInfo::SetupLightFlags,gr-reversed,game,STREAM,ghidra,0x4c8c90,0x4c8cd9,73,1,0x4c8c90-0x4c8cd9,,17,0,0,0,0,0,0
 0x4c8d60,CVehicleModelInfo::CVehicleStructure::CVehicleStructure,unknown,game,STREAM,ghidra,0x4c8d60,0x4c8e01,161,1,0x4c8d60-0x4c8e01,,49,1,0,0,0,7,0
-0x4c8e10,CVehicleModelInfo::vfunc_0,unknown,game,STREAM,ghidra,0x4c8e10,0x4c8e2e,30,1,0x4c8e10-0x4c8e2e,,11,2,0,0,0,0,0
+0x4c8e10,CVehicleModelInfo::`scalar deleting destructor',unknown,game,STREAM,ghidra,0x4c8e10,0x4c8e2e,30,1,0x4c8e10-0x4c8e2e,,11,2,0,0,0,0,0
 0x4c8e30,CVehicleModelInfo::CollapseFramesCB,gr-reversed,game,STREAM,ghidra,0x4c8e30,0x4c8e60,48,1,0x4c8e30-0x4c8e60,,19,3,0,0,0,0,0
 0x4c8e60,CVehicleModelInfo::PreprocessHierarchy,gr-reversed,game,STREAM,ghidra,0x4c8e60,0x4c9352,1266,1,0x4c8e60-0x4c9352,,390,36,0,0,0,27,1
 0x4c9360,CVehicleModelInfo::AssignRemapTxd,gr-reversed,game,STREAM,ghidra,0x4c9360,0x4c9401,161,1,0x4c9360-0x4c9401,,62,6,1,1,0,0,0
@@ -2992,7 +2992,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x4ceba0,CAnimBlendAssociation::SetBlend,gr-reversed,game,ANIM,ghidra,0x4ceba0,0x4cebb1,17,1,0x4ceba0-0x4cebb1,,5,0,0,0,0,2,0
 0x4cebc0,CAnimBlendAssociation::SetDeleteCallback,gr-reversed,game,ANIM,ghidra,0x4cebc0,0x4cebd8,24,1,0x4cebc0-0x4cebd8,,6,0,0,0,0,3,0
 0x4cebe0,CAnimBlendAssociation::SetFinishCallback,gr-reversed,game,ANIM,ghidra,0x4cebe0,0x4cebf8,24,1,0x4cebe0-0x4cebf8,,6,0,0,0,0,3,0
-0x4cec00,CAnimBlendStaticAssociation,unknown,game,ANIM,ghidra,0x4cec00,0x4cec15,21,1,0x4cec00-0x4cec15,,8,1,0,0,0,1,0
+0x4cec00,CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation,unknown,game,ANIM,ghidra,0x4cec00,0x4cec15,21,1,0x4cec00-0x4cec15,,8,1,0,0,0,1,0
 0x4cec20,CAnimBlendStaticAssociation::Init,gr-reversed,game,ANIM,ghidra,0x4cec20,0x4cecee,206,1,0x4cec20-0x4cecee,,79,3,0,0,0,4,0
 0x4cecf0,CAnimBlendAssociation,unknown,game,UNK-game,ghidra,0x4cecf0,0x4ced4e,94,1,0x4cecf0-0x4ced4e,,33,2,0,0,0,5,0
 0x4ced50,CAnimBlendAssociation::Init-0,gr-reversed,game,ANIM,ghidra,0x4ced50,0x4cee32,226,1,0x4ced50-0x4cee32,,83,3,0,0,0,4,0
@@ -4028,7 +4028,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x50a480,CCamera::ApplyVehicleCameraTweaks,gr-reversed,game,CAM,ghidra,0x50a480,0x50a4e8,104,1,0x50a480-0x50a4e8,,37,1,0,0,0,4,0
 0x50a4f0,CCam::RotCamIfInFrontCar,gr-reversed,game,CAM,ghidra,0x50a4f0,0x50a850,858,2,0x50a4f0-0x50a5ea;0x50a5f0-0x50a850,,272,11,0,0,0,7,0
 0x50a850,CCam::Using3rdPersonMouseCam,gr-reversed,game,CAM,ghidra,0x50a850,0x50a866,22,1,0x50a850-0x50a866,,9,0,0,0,0,0,0
-0x50a870,CCamera,unknown,game,UNK-game,ghidra,0x50a870,0x50a96d,253,1,0x50a870-0x50a96d,,58,10,0,0,0,2,0
+0x50a870,CCamera::~CCamera,unknown,game,CAM,ghidra,0x50a870,0x50a96d,253,1,0x50a870-0x50a96d,,58,10,0,0,0,2,0
 0x50a970,CCamera::CamShakeNoPos,gr-reversed,game,CAM,ghidra,0x50a970,0x50a9e8,120,1,0x50a970-0x50a9e8,,34,0,0,0,0,2,0
 0x50a9f0,CCamera::CamShake,gr-reversed,game,CAM,ghidra,0x50a9f0,0x50ab0f,287,1,0x50a9f0-0x50ab0f,,80,0,0,0,0,2,0
 0x50ab10,CCamera::ClearPlayerWeaponMode,gr-reversed,game,CAM,ghidra,0x50ab10,0x50ab32,34,1,0x50ab10-0x50ab32,,6,0,0,0,0,4,0
@@ -4201,7 +4201,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x521500,CCam::Process_AimWeapon,gr-unreversed,game,CAM,ghidra,0x521500,0x522c74,6004,1,0x521500-0x522c74,,1569,63,0,0,0,50,0
 0x522c80,CIdleCam::Process,gr-reversed,game,CAM,ghidra,0x522c80,0x522d35,181,1,0x522c80-0x522d35,,53,5,0,0,0,4,0
 0x522d40,CCam::Process_FollowPed_SA,gr-unreversed,game,CAM,ghidra,0x406afc,0x5245a9,6260,2,0x406afc-0x406b07;0x522d40-0x5245a9,,1744,88,1,1,0,75,0
-0x5245b0,CCam::Process_FollowCar_SA,gr-unreversed,game,CAM,ghidra,0x407e47,0x5245bd,38,2,0x407e47-0x407e60;0x5245b0-0x5245bd,,14,0,0,0,0,0,0
+0x5245b0,CCam::Process_FollowCar_SA,gr-unreversed,game,CAM,ghidra+seeded,0x407e47,0x525e4b,6324,2,0x407e47-0x407e60;0x5245b0-0x525e4b,,1713,54,3,2,0,76,0
 0x525e50,CCam::Process_Cam_TwoPlayer,gr-unreversed,game,CAM,ghidra,0x525e50,0x5267b6,2406,1,0x525e50-0x5267b6,,703,29,0,0,0,37,0
 0x5267c0,CCamera::ProcessObbeCinemaCameraCar,unknown,game,CAM,ghidra,0x5267c0,0x526945,389,1,0x5267c0-0x526945,,114,6,0,0,0,3,0
 0x526950,CCamera::ProcessObbeCinemaCameraTrain,unknown,game,CAM,ghidra,0x526950,0x526ad5,389,1,0x526950-0x526ad5,,114,6,0,0,0,3,0
@@ -4235,7 +4235,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x52ef30,CControllerConfigManager::GetIsMouseButtonDown,gr-reversed,game,INPUT,ghidra,0x52ef30,0x52eff6,198,1,0x52ef30-0x52eff6,,63,7,0,0,0,0,0
 0x52f020,CControllerConfigManager::GetIsMouseButtonUp,gr-reversed,game,INPUT,ghidra,0x52f020,0x52f0e6,198,1,0x52f020-0x52f0e6,,63,7,0,0,0,0,0
 0x52f110,CControllerConfigManager::GetIsMouseButtonJustUp,gr-reversed,game,INPUT,ghidra-created,0x52f110,0x52f277,26,2,0x52f110-0x52f125;0x52f272-0x52f277,,7,0,0,0,1,0,0
-0x52f2a0,CControllerConfigManager::GetIsKeyBlank,gr-reversed,game,INPUT,ghidra-created,0x52f2a0,0x52f2d1,21,2,0x52f2a0-0x52f2b0;0x52f2cc-0x52f2d1,,6,0,0,0,1,0,0
+0x52f2a0,CControllerConfigManager::GetIsKeyBlank,gr-reversed,game,INPUT,ghidra-created+seeded,0x52f2a0,0x52f2d1,49,1,0x52f2a0-0x52f2d1,,15,0,0,0,1,0,0
 0x52f2f0,CControllerConfigManager::GetActionType,gr-reversed,game,INPUT,ghidra,0x52f2f0,0x52f337,71,1,0x52f2f0-0x52f337,,17,0,0,0,0,0,0
 0x52f390,CControllerConfigManager::GetControllerSettingTextMouse,gr-reversed,game,INPUT,ghidra,0x52f390,0x52f433,163,1,0x52f390-0x52f433,,31,0,0,0,0,0,0
 0x52f450,CControllerConfigManager::GetControllerSettingTextJoystick,gr-reversed,game,INPUT,ghidra,0x52f450,0x52f495,69,1,0x52f450-0x52f495,,21,2,0,0,0,0,0
@@ -4298,7 +4298,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5326e0,CDummy::operator new,unknown,game,STREAM,ghidra,0x5326e0,0x5326eb,11,1,0x5326e0-0x5326eb,,2,0,0,0,0,0,0
 0x5326f0,CDummy::operator delete,unknown,game,WORLD,ghidra,0x5326f0,0x532723,51,1,0x5326f0-0x532723,,19,0,0,0,0,2,0
 0x532730,CDummy::IsDummyPointerValid,gr-reversed,game,WORLD,ghidra-created,0x532730,0x532765,53,1,0x532730-0x532765,,23,0,0,0,0,0,0
-0x532770,CDummy::vfunc_0,unknown,game,WORLD,ghidra,0x532770,0x5327be,78,1,0x532770-0x5327be,,31,1,0,0,0,2,0
+0x532770,CDummy::`scalar deleting destructor',unknown,game,WORLD,ghidra,0x532770,0x5327be,78,1,0x532770-0x5327be,,31,1,0,0,0,2,0
 0x5327f0,CRect::StretchToPoint,gr-reversed,game,MATH,ghidra,0x5327f0,0x532847,87,1,0x5327f0-0x532847,,30,0,0,0,0,4,0
 0x5328b0,CBaseModelInfo::HasBeenPreRendered,gr-reversed,game,STREAM,ghidra-created,0x5328b0,0x5328b9,9,1,0x5328b0-0x5328b9,,4,0,0,0,0,0,0
 0x5328c0,CBaseModelInfo::GetIsDrawLast,gr-reversed,game,STREAM,ghidra-created,0x5328c0,0x5328c9,9,1,0x5328c0-0x5328c9,,4,0,0,0,0,0,0
@@ -4358,7 +4358,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x535fa0,CEntity::PreRender,gr-reversed,game,WORLD,ghidra,0x40a0bf,0x536bb5,3105,2,0x40a0bf-0x40a0cb;0x535fa0-0x536bb5,,977,65,2,0,0,27,0
 0x536bc0,CEntity::IsVisible,gr-reversed,game,WORLD,ghidra,0x536bc0,0x536bd6,22,1,0x536bc0-0x536bd6,,9,0,0,0,0,0,0
 0x536be0,CEntity::GetDistanceFromCentreOfMassToBaseOfModel,gr-reversed,game,WORLD,ghidra,0x536be0,0x536c1b,59,1,0x536be0-0x536c1b,,20,0,0,0,0,0,0
-0x536c20,CEntity::vfunc_0,unknown,game,WORLD,ghidra,0x536c20,0x536c3e,30,1,0x536c20-0x536c3e,,11,2,0,0,0,0,0
+0x536c20,CEntity::`scalar deleting destructor',unknown,game,WORLD,ghidra,0x536c20,0x536c3e,30,1,0x536c20-0x536c3e,,11,2,0,0,0,0,0
 0x536d10,CEntryInfoNodePool::GetAt,gr-reversed,game,CORE,ghidra,0x536d10,0x536d78,104,1,0x536d10-0x536d78,,47,0,0,0,0,4,0
 0x536dc0,CEntryInfoNode::operator new,gr-reversed,game,CORE,ghidra,0x536dc0,0x536dcb,11,1,0x536dc0-0x536dcb,,2,0,0,0,0,0,0
 0x536dd0,CEntryInfoNode::operator delete,gr-reversed,game,CORE,ghidra,0x536dd0,0x536e01,49,1,0x536dd0-0x536e01,,18,0,0,0,0,2,0
@@ -4382,8 +4382,8 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x537a10,CAnimatedBuilding,unknown,game,STREAM,ghidra,0x537a10,0x537a22,18,1,0x537a10-0x537a22,,7,1,0,0,0,1,0
 0x537a30,CAnimatedBuilding::ProcessControl,gr-reversed,game,ANIM,ghidra-created,0x537a30,0x537a31,1,1,0x537a30-0x537a31,,1,0,0,0,0,0,0
 0x537a40,CAnimatedBuilding::ProcessCollision,gr-reversed,game,ANIM,ghidra-created,0x537a40,0x537a45,5,1,0x537a40-0x537a45,,2,0,0,0,0,1,0
-0x537a50,CAnimatedBuilding::vfunc_0,unknown,game,ANIM,ghidra,0x537a50,0x537a6e,30,1,0x537a50-0x537a6e,,11,2,0,0,0,0,0
-0x537a70,,unknown,game,ANIM,ghidra,0x537a70,0x537a75,5,1,0x537a70-0x537a75,,1,0,0,0,0,0,0
+0x537a50,CAnimatedBuilding::`scalar deleting destructor',unknown,game,ANIM,ghidra,0x537a50,0x537a6e,30,1,0x537a50-0x537a6e,,11,2,0,0,0,0,0
+0x537a70,CAnimatedBuilding::~CAnimatedBuilding,unknown,game,ANIM,ghidra,0x537a70,0x537a75,5,1,0x537a70-0x537a75,,1,0,0,0,0,0,0
 0x537ae0,CFileLoader::LoadCollisionModelVer4,gr-reversed,game,STREAM,ghidra,0x537ae0,0x537cda,506,1,0x537ae0-0x537cda,,173,3,0,0,0,36,0
 0x537ce0,CFileLoader::LoadCollisionModelVer3,gr-reversed,game,STREAM,ghidra,0x537ce0,0x537eda,506,1,0x537ce0-0x537eda,,173,3,0,0,0,36,0
 0x537ee0,CFileLoader::LoadCollisionModelVer2,gr-reversed,game,STREAM,ghidra,0x4038d6,0x538084,430,2,0x4038d6-0x4038e0;0x537ee0-0x538084,,144,2,0,0,0,33,0
@@ -4631,7 +4631,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5447b0,CPhysical::GetLightingFromCol,gr-reversed,game,PHYS,ghidra,0x5447b0,0x544842,146,1,0x5447b0-0x544842,,32,3,0,0,0,0,0
 0x544850,CPhysical::GetLightingTotal,gr-reversed,game,PHYS,ghidra,0x544850,0x5448a1,81,1,0x544850-0x5448a1,,29,1,0,0,0,0,0
 0x5448b0,CPhysical::CanPhysicalBeDamaged,gr-reversed,game,PHYS,ghidra,0x5448b0,0x544938,136,1,0x5448b0-0x544938,,42,0,0,0,0,2,0
-0x544990,CPhysical::vfunc_0,unknown,game,PHYS,ghidra,0x544990,0x5449ae,30,1,0x544990-0x5449ae,,11,2,0,0,0,0,0
+0x544990,CPhysical::`scalar deleting destructor',unknown,game,PHYS,ghidra,0x544990,0x5449ae,30,1,0x544990-0x5449ae,,11,2,0,0,0,0,0
 0x5449b0,CPhysical::GetBoundRect,gr-reversed,game,PHYS,ghidra-created,0x5449b0,0x544a23,115,1,0x5449b0-0x544a23,,36,1,0,0,0,4,0
 0x544a30,CPhysical::Add,gr-unreversed,game,PHYS,ghidra-created,0x544a30,0x544c34,501,3,0x544a30-0x544b17;0x544b20-0x544b3a;0x544b40-0x544c34,,149,11,1,1,0,12,0
 0x544c40,CPhysical::ApplyAirResistance,gr-reversed,game,PHYS,ghidra,0x544c40,0x544d50,272,1,0x544c40-0x544d50,,91,3,0,0,0,12,0
@@ -5665,15 +5665,15 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x59e9b0,BreakManager_c::Add,gr-reversed,game,WORLD,ghidra,0x59e9b0,0x59e9f5,69,1,0x59e9b0-0x59e9f5,,28,1,0,0,0,0,0
 0x59ea00,CDummyObject::CDummyObject,unknown,game,STREAM,ghidra,0x59ea00,0x59ea12,18,1,0x59ea00-0x59ea12,,7,1,0,0,0,1,0
 0x59ea20,CDummyObject::CDummyObject,unknown,game,WORLD,ghidra,0x59ea20,0x59eaa7,135,1,0x59ea20-0x59eaa7,,43,5,0,0,0,3,0
-0x59eab0,,unknown,game,WORLD,ghidra,0x59eab0,0x59eabb,11,1,0x59eab0-0x59eabb,,2,0,0,0,0,1,0
+0x59eab0,CDummyObject::~CDummyObject,unknown,game,WORLD,ghidra,0x59eab0,0x59eabb,11,1,0x59eab0-0x59eabb,,2,0,0,0,0,1,0
 0x59eac0,CDummyObject::CreateObject,gr-reversed,game,WORLD,ghidra,0x59eac0,0x59eb15,85,1,0x59eac0-0x59eb15,,31,2,0,0,0,5,0
-0x59eb50,CDummyObject::vfunc_0,unknown,game,WORLD,ghidra,0x59eb50,0x59eb6e,30,1,0x59eb50-0x59eb6e,,11,2,0,0,0,0,0
+0x59eb50,CDummyObject::`scalar deleting destructor',unknown,game,WORLD,ghidra,0x59eb50,0x59eb6e,30,1,0x59eb50-0x59eb6e,,11,2,0,0,0,0,0
 0x59eb70,CDummyObject::UpdateFromObject,gr-reversed,game,WORLD,ghidra,0x59eb70,0x59ec39,201,1,0x59eb70-0x59ec39,,70,4,0,0,0,8,0
 0x59ec40,CHandObject::ProcessControl,gr-reversed,game,WORLD,ghidra,0x59ec40,0x59ecd0,144,1,0x59ec40-0x59ecd0,,40,6,0,0,0,1,0
 0x59ecd0,CHandObject::PreRender,gr-reversed,game,WORLD,ghidra,0x59ecd0,0x59ee79,425,1,0x59ecd0-0x59ee79,,123,10,0,0,0,12,0
 0x59ee80,CHandObject::Render,gr-reversed,game,WORLD,ghidra,0x59ee80,0x59eeac,44,1,0x59ee80-0x59eeac,,16,2,0,0,0,0,0
 0x59eeb0,,unknown,game,AI,ghidra,0x407615,0x59efd9,321,2,0x407615-0x40762d;0x59eeb0-0x59efd9,,97,9,0,0,0,10,0
-0x59efe0,CHandObject::vfunc_0,unknown,game,UNK-game,ghidra,0x59efe0,0x59effe,30,1,0x59efe0-0x59effe,,11,2,0,0,0,0,0
+0x59efe0,CHandObject::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x59efe0,0x59effe,30,1,0x59efe0-0x59effe,,11,2,0,0,0,0,0
 0x59f000,,unknown,game,UNK-game,ghidra,0x59f000,0x59f005,5,1,0x59f000-0x59f005,,1,0,0,0,0,0,0
 0x59f050,,unknown,game,WORLD,ghidra,0x59f050,0x59f086,54,1,0x59f050-0x59f086,,17,0,0,0,0,0,0
 0x59f090,CBaseModelInfo::IsBreakableStatuePart,gr-reversed,game,STREAM,ghidra-created,0x59f090,0x59f0a6,22,1,0x59f090-0x59f0a6,,8,0,0,0,0,0,0
@@ -5729,7 +5729,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5a2130,CObject::ProcessControl,gr-reversed,game,WORLD,ghidra-created,0x5a2130,0x5a2994,2148,1,0x5a2130-0x5a2994,,621,26,6,5,0,71,0
 0x5a29a0,CObject::ProcessControlLogic,gr-reversed,game,WORLD,ghidra,0x5a29a0,0x5a2b86,486,1,0x5a29a0-0x5a2b86,,140,8,0,0,0,3,0
 0x5a2b90,CObject::IsObjectPointerValid_NotInWorld,gr-reversed,game,WORLD,ghidra-created,0x5a2b90,0x5a2bc8,56,1,0x5a2b90-0x5a2bc8,,23,0,0,0,0,0,0
-0x5a2bd0,CObject::vfunc_0,unknown,game,WORLD,ghidra,0x5a2bd0,0x5a2c1c,76,1,0x5a2bd0-0x5a2c1c,,30,1,0,0,0,2,0
+0x5a2bd0,CObject::`scalar deleting destructor',unknown,game,WORLD,ghidra,0x5a2bd0,0x5a2c1c,76,1,0x5a2bd0-0x5a2c1c,,30,1,0,0,0,2,0
 0x5a2c20,CObject::IsObjectPointerValid,gr-reversed,game,WORLD,ghidra,0x5a2c20,0x5a2c73,83,1,0x5a2c20-0x5a2c73,,36,0,0,0,0,0,0
 0x5a2cb0,,unknown,game,UNK-game,ghidra,0x404cac,0x5a2ceb,70,2,0x404cac-0x404cb7;0x5a2cb0-0x5a2ceb,,19,0,0,0,0,3,0
 0x5a2d00,CObjectData::SetObjectData,gr-reversed,game,WORLD,ghidra,0x5a2d00,0x5a2e54,340,1,0x5a2d00-0x5a2e54,,99,1,0,0,0,19,0
@@ -5755,7 +5755,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5a3f70,ProcObjectMan_c::ProcessTriangleRemoved,gr-reversed,game,RENDER,ghidra,0x5a3f70,0x5a4030,192,1,0x5a3f70-0x5a4030,,70,3,2,0,0,3,0
 0x5a4030,CProjectile,unknown,game,UNK-game,ghidra,0x4037b3,0x5a40d7,191,2,0x4037b3-0x4037cb;0x5a4030-0x5a40d7,,46,3,0,0,0,9,0
 0x5a40e0,,unknown,game,UNK-game,ghidra,0x5a40e0,0x5a40eb,11,1,0x5a40e0-0x5a40eb,,2,0,0,0,0,1,0
-0x5a40f0,CProjectile::vfunc_0,unknown,game,WEAPON,ghidra,0x5a40f0,0x5a410e,30,1,0x5a40f0-0x5a410e,,11,2,0,0,0,0,0
+0x5a40f0,CProjectile::`scalar deleting destructor',unknown,game,WEAPON,ghidra,0x5a40f0,0x5a410e,30,1,0x5a40f0-0x5a410e,,11,2,0,0,0,0,0
 0x5a4150,Common::WriteRaster,gr-reversed,game,CORE,ghidra-created,0x5a4150,0x5a418d,61,1,0x5a4150-0x5a418d,,26,5,0,0,0,0,0
 0x5a4190,CClothesBuilder::LoadCdDirectory,gr-reversed,game,RW,ghidra-created,0x5a4190,0x5a41b4,36,1,0x5a4190-0x5a41b4,,8,2,0,0,0,0,0
 0x5a41c0,CClothesBuilder::RequestGeometry,gr-reversed,game,RW,ghidra,0x5a41c0,0x5a4216,86,1,0x5a41c0-0x5a4216,,30,3,0,0,0,1,0
@@ -5852,7 +5852,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5b1ab0,CCutsceneObject::SetupCarPipeAtomicsForClump,gr-reversed,game,WORLD,ghidra,0x5b1ab0,0x5b1b18,104,1,0x5b1ab0-0x5b1b18,,32,2,0,0,0,0,0
 0x5b1b20,CCutsceneObject::SetModelIndex,gr-reversed,game,WORLD,ghidra-created,0x5b1b20,0x5b1b8c,108,1,0x5b1b20-0x5b1b8c,,36,3,0,0,0,4,0
 0x5b1b90,CCutsceneObject::ProcessControl,gr-reversed,game,WORLD,ghidra-created,0x5b1b90,0x5b1de0,592,1,0x5b1b90-0x5b1de0,,164,11,0,0,0,16,0
-0x5b1de0,CCutsceneObject::vfunc_0,unknown,game,UNK-game,ghidra,0x5b1de0,0x5b1dfe,30,1,0x5b1de0-0x5b1dfe,,11,2,0,0,0,0,0
+0x5b1de0,CCutsceneObject::`scalar deleting destructor',unknown,game,UNK-game,ghidra,0x5b1de0,0x5b1dfe,30,1,0x5b1de0-0x5b1dfe,,11,2,0,0,0,0,0
 0x5b1e00,CCutsceneObject::PreRender,gr-reversed,game,WORLD,ghidra-created,0x5b1e00,0x5b208f,655,1,0x5b1e00-0x5b208f,,189,16,0,0,0,5,0
 0x5b2090,,unknown,game,CAM,ghidra,0x5b2090,0x5b2322,658,1,0x5b2090-0x5b2322,,201,1,0,0,0,12,0
 0x5b2330,,unknown,game,CAM,ghidra,0x5b2330,0x5b249b,363,1,0x5b2330-0x5b249b,,127,1,0,0,0,5,0
@@ -6481,13 +6481,13 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5de070,CCopPed::ClearCriminalsToKill,gr-reversed,game,PED,ghidra,0x5de070,0x5de0c2,82,1,0x5de070-0x5de0c2,,26,1,0,0,0,4,0
 0x5de0d0,CCopPed::Destructor,gr-reversed,game,PED,ghidra,0x5de0d0,0x5de157,135,1,0x5de0d0-0x5de157,,38,6,0,0,0,1,0
 0x5de160,CCopPed::ProcessControl,gr-reversed,game,PED,ghidra-created,0x5de160,0x5de2b4,340,1,0x5de160-0x5de2b4,,104,9,2,2,0,0,0
-0x5de2c0,CCopPed::vfunc_0,unknown,game,PED,ghidra,0x5de2c0,0x5de2de,30,1,0x5de2c0-0x5de2de,,11,2,0,0,0,0,0
+0x5de2c0,CCopPed::`scalar deleting destructor',unknown,game,PED,ghidra,0x5de2c0,0x5de2de,30,1,0x5de2c0-0x5de2de,,11,2,0,0,0,0,0
 0x5de2e0,,unknown,game,UNK-game,ghidra,0x5de2e0,0x5de2f2,18,1,0x5de2e0-0x5de2f2,,7,1,0,0,0,1,0
 0x5de300,,unknown,game,UNK-game,ghidra,0x5de300,0x5de30b,11,1,0x5de300-0x5de30b,,2,0,0,0,0,1,0
 0x5de310,,unknown,game,UNK-game,ghidra,0x5de310,0x5de32e,30,1,0x5de310-0x5de32e,,11,2,0,0,0,0,0
 0x5de340,CEmergencyPed,unknown,game,UNK-game,ghidra,0x5de340,0x5de3a1,97,1,0x5de340-0x5de3a1,,27,3,0,0,0,1,0
-0x5de3b0,,unknown,game,UNK-game,ghidra,0x5de3b0,0x5de3bb,11,1,0x5de3b0-0x5de3bb,,2,0,0,0,0,1,0
-0x5de3e0,CEmergencyPed::vfunc_0,unknown,game,PED,ghidra,0x5de3e0,0x5de3fe,30,1,0x5de3e0-0x5de3fe,,11,2,0,0,0,0,0
+0x5de3b0,CEmergencyPed::~CEmergencyPed,unknown,game,PED,ghidra,0x5de3b0,0x5de3bb,11,1,0x5de3b0-0x5de3bb,,2,0,0,0,0,1,0
+0x5de3e0,CEmergencyPed::`scalar deleting destructor',unknown,game,PED,ghidra,0x5de3e0,0x5de3fe,30,1,0x5de3e0-0x5de3fe,,11,2,0,0,0,0,0
 0x5de400,CEmergencyPed::ProcessControl,unknown,game,PED,ghidra,0x5de400,0x5de46c,108,1,0x5de400-0x5de46c,,31,3,0,0,0,0,0
 0x5de4e0,CGangs::SetWillAttackPlayerWithCops,gr-reversed,game,POP,ghidra-created,0x5de4e0,0x5de4f9,25,1,0x5de4e0-0x5de4f9,,8,0,0,0,0,0,0
 0x5de500,CGangs::GetWillAttackPlayerWithCops,gr-reversed,game,POP,ghidra-created,0x5de500,0x5de518,24,1,0x5de500-0x5de518,,9,0,0,0,0,0,0
@@ -6640,7 +6640,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x5e8a30,IsPedPointerValid,unknown,game,UNK-game,ghidra,0x5e8a30,0x5e8aad,125,1,0x5e8a30-0x5e8aad,,49,1,0,0,0,0,0
 0x5e8ab0,CPed::GiveWeaponAtStartOfFight,gr-reversed,game,PED,ghidra,0x5e8ab0,0x5e8bb8,264,1,0x5e8ab0-0x5e8bb8,,76,9,0,0,0,0,0
 0x5e8be0,CPed::GiveWeaponWhenJoiningGang,gr-reversed,game,PED,ghidra,0x5e8be0,0x5e8c7e,158,1,0x5e8be0-0x5e8c7e,,53,9,0,0,0,0,0
-0x5e8c80,CPed::vfunc_0,unknown,game,PED,ghidra,0x5e8c80,0x5e8ccc,76,1,0x5e8c80-0x5e8ccc,,30,1,0,0,0,2,0
+0x5e8c80,CPed::`scalar deleting destructor',unknown,game,PED,ghidra,0x5e8c80,0x5e8ccc,76,1,0x5e8c80-0x5e8ccc,,30,1,0,0,0,2,0
 0x5e8cd0,CPed::ProcessControl,gr-unreversed,game,PED,ghidra,0x5e8cd0,0x5e9531,2145,1,0x5e8cd0-0x5e9531,,576,47,1,1,0,28,0
 0x5e95b0,CPedTaskPair::Flush,gr-reversed,game,AI,ghidra,0x403956,0x5e95d6,49,2,0x403956-0x403961;0x5e95b0-0x5e95d6,,16,0,1,1,0,3,0
 0x5e95e0,CPedAttractor::ComputeAttractTime,gr-reversed,game,AI,ghidra-created,0x5e95e0,0x5e9600,32,1,0x5e95e0-0x5e9600,,11,0,0,0,0,2,0
@@ -7302,7 +7302,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x609320,CEventDontJoinPlayerGroup::GetEventPriority,unknown,game,AI,ghidra-created,0x609320,0x609326,6,1,0x609320-0x609326,,2,0,0,0,0,0,0
 0x609330,CEventPlayerCommandToGroupGather::GetEventPriority,unknown,game,AI,ghidra-created,0x609330,0x609336,6,1,0x609330-0x609336,,2,0,0,0,0,0,0
 0x609380,,unknown,game,PED,ghidra,0x609380,0x6093a1,33,1,0x609380-0x6093a1,,13,0,0,0,0,0,0
-0x6093b0,,unknown,game,PED,ghidra,0x6093b0,0x609489,217,1,0x6093b0-0x609489,,56,4,0,0,0,3,0
+0x6093b0,CPlayerPed::~CPlayerPed,unknown,game,PED,ghidra,0x6093b0,0x609489,217,1,0x6093b0-0x609489,,56,4,0,0,0,3,0
 0x609490,CPlayerPed::SetMoveAnim,gr-reversed,game,PED,ghidra-created,0x609490,0x609491,1,1,0x609490-0x609491,,1,0,0,0,0,0,0
 0x6094a0,CPlayerPed::RemovePlayerPed,gr-reversed,game,PED,ghidra,0x6094a0,0x609518,120,1,0x6094a0-0x609518,,33,1,1,0,0,4,0
 0x609520,CPlayerPed::DeactivatePlayerPed,gr-reversed,game,PED,ghidra,0x609520,0x609539,25,1,0x609520-0x609539,,5,0,0,0,0,0,0
@@ -7341,7 +7341,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x60a820,CPlayerPed::GetButtonSprintResults,gr-unreversed,game,PED,ghidra,0x60a820,0x60a891,113,1,0x60a820-0x60a891,,29,0,0,0,0,0,0
 0x60a8a0,CPlayerPed::ResetPlayerBreath,gr-reversed,game,PED,ghidra,0x60a8a0,0x60a8cb,43,1,0x60a8a0-0x60a8cb,,15,1,0,0,0,2,0
 0x60a8d0,CPlayerPed::HandlePlayerBreath,gr-reversed,game,PED,ghidra,0x60a8d0,0x60a992,194,1,0x60a8d0-0x60a992,,59,3,0,0,0,3,0
-0x60a9a0,CPlayerPed::vfunc_0,unknown,game,PED,ghidra,0x60a9a0,0x60a9be,30,1,0x60a9a0-0x60a9be,,11,2,0,0,0,0,0
+0x60a9a0,CPlayerPed::`scalar deleting destructor',unknown,game,PED,ghidra,0x60a9a0,0x60a9be,30,1,0x60a9a0-0x60a9be,,11,2,0,0,0,0,0
 0x60a9c0,CPlayerPed::SetRealMoveAnim,gr-unreversed,game,PED,ghidra,0x409b28,0x60b457,2722,2,0x409b28-0x409b33;0x60a9c0-0x60b457,,787,53,8,0,0,80,0
 0x60b460,CPlayerPed::MakeChangesForNewWeapon-,gr-reversed,game,PED,ghidra,0x60b460,0x60b54a,234,1,0x60b460-0x60b54a,,64,8,0,0,0,5,0
 0x60b550,CPlayerPed::LOSBlockedBetweenPeds,gr-reversed,game,PED,ghidra,0x60b550,0x60b633,227,1,0x60b550-0x60b633,,83,3,0,0,0,0,0
@@ -8657,7 +8657,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x643c80,CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger,unknown,game,AI,ghidra,0x643c80,0x643c9e,30,1,0x643c80-0x643c9e,,11,2,0,0,0,0,0
 0x643ca0,CTaskComplexOpenDriverDoor::~CTaskComplexOpenDriverDoor,unknown,game,AI,ghidra,0x643ca0,0x643cbe,30,1,0x643ca0-0x643cbe,,11,2,0,0,0,0,0
 0x643cc0,CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor,unknown,game,AI,ghidra,0x643cc0,0x643cde,30,1,0x643cc0-0x643cde,,11,2,0,0,0,0,0
-0x643ce0,CTaskComplexDragPedFromCar::vfunc_0,unknown,game,AI,ghidra,0x643ce0,0x643cfe,30,1,0x643ce0-0x643cfe,,11,2,0,0,0,0,0
+0x643ce0,CTaskComplexDragPedFromCar::`scalar deleting destructor',unknown,game,AI,ghidra,0x643ce0,0x643cfe,30,1,0x643ce0-0x643cfe,,11,2,0,0,0,0,0
 0x643d00,CTaskComplexDragPedFromCar::CreateFirstSubTask,gr-reversed,game,AI,ghidra,0x643d00,0x643e10,272,1,0x643d00-0x643e10,,86,8,0,0,0,5,0
 0x643e10,CTaskComplexEnterCarAsPassengerWait::CreateNextSubTask,gr-unreversed,game,AI,ghidra,0x643e10,0x643efe,238,1,0x643e10-0x643efe,,89,5,1,0,0,1,0
 0x643f00,CTaskComplexEnterCarAsPassengerWait::CreateFirstSubTask,gr-unreversed,game,AI,ghidra-created,0x643f00,0x643f88,136,1,0x643f00-0x643f88,,53,5,0,0,0,0,0
@@ -9309,14 +9309,14 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x65cf40,CTaskComplexSmartFleeEntity::Clone,gr-reversed,game,AI,ghidra,0x65cf40,0x65cfae,110,1,0x65cf40-0x65cfae,,39,2,0,0,0,1,0
 0x65cfb0,CTaskComplexFleeShooting::Clone,gr-reversed,game,AI,ghidra,0x65cfb0,0x65d02e,126,1,0x65cfb0-0x65d02e,,45,2,0,0,0,0,0
 0x65d030,CTaskComplexFleeAnyMeans::Clone,gr-reversed,game,AI,ghidra,0x65d030,0x65d0b2,130,1,0x65d030-0x65d0b2,,47,2,0,0,0,0,0
-0x65d0c0,CTaskComplexWanderFlee::vfunc_0,unknown,game,AI,ghidra,0x65d0c0,0x65d0de,30,1,0x65d0c0-0x65d0de,,11,2,0,0,0,0,0
+0x65d0c0,CTaskComplexWanderFlee::`scalar deleting destructor',unknown,game,AI,ghidra,0x65d0c0,0x65d0de,30,1,0x65d0c0-0x65d0de,,11,2,0,0,0,0,0
 0x65d0e0,CTaskComplex::~CTaskComplex,unknown,game,AI,ghidra,0x65d0e0,0x65d0fe,30,1,0x65d0e0-0x65d0fe,,11,2,0,0,0,0,0
 0x65d100,CTaskComplexFleePoint::CreateFirstSubTask,gr-reversed,game,AI,ghidra-created,0x65d100,0x65d144,68,1,0x65d100-0x65d144,,22,3,0,0,0,0,0
 0x65d150,CTaskComplexFleePoint::CreateNextSubTask,gr-reversed,game,AI,ghidra,0x65d150,0x65d238,232,1,0x65d150-0x65d238,,85,7,2,0,0,0,0
 0x65d240,CTaskComplex::~CTaskComplex,unknown,game,AI,ghidra,0x65d240,0x65d25e,30,1,0x65d240-0x65d25e,,11,2,0,0,0,0,0
 0x65d260,CTaskComplex::~CTaskComplex,unknown,game,AI,ghidra,0x65d260,0x65d27e,30,1,0x65d260-0x65d27e,,11,2,0,0,0,0,0
 0x65d280,CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity,unknown,game,AI,ghidra,0x65d280,0x65d29e,30,1,0x65d280-0x65d29e,,11,2,0,0,0,0,0
-0x65d2a0,CTaskComplexFleeShooting::vfunc_0,unknown,game,AI,ghidra,0x65d2a0,0x65d2be,30,1,0x65d2a0-0x65d2be,,11,2,0,0,0,0,0
+0x65d2a0,CTaskComplexFleeShooting::`scalar deleting destructor',unknown,game,AI,ghidra,0x65d2a0,0x65d2be,30,1,0x65d2a0-0x65d2be,,11,2,0,0,0,0,0
 0x65d2c0,CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity,unknown,game,AI,ghidra,0x65d2c0,0x65d2de,30,1,0x65d2c0-0x65d2de,,11,2,0,0,0,0,0
 0x65d2e0,CTaskComplexFleeAnyMeans::CreateSubTask,gr-reversed,game,AI,ghidra-created,0x402333,0x65d538,611,2,0x402333-0x40233e;0x65d2e0-0x65d538,,178,11,0,0,0,4,0
 0x65d540,CTaskComplexFleeAnyMeans::CreateNextSubTask,gr-reversed,game,AI,ghidra,0x65d540,0x65d632,242,1,0x65d540-0x65d632,,83,4,3,2,0,3,0
@@ -10075,7 +10075,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x684290,CTaskComplexPartnerChat::Constructor,gr-reversed,game,AI,ghidra,0x684290,0x684311,129,1,0x684290-0x684311,,47,1,0,0,0,10,0
 0x684320,CTaskComplexPartnerChat::~CTaskComplexPartnerChat,unknown,game,AI,ghidra,0x684320,0x68437d,93,1,0x684320-0x68437d,,26,2,0,0,0,1,0
 0x684380,CTaskComplexPartnerChat::GetPartnerSequence,unknown,game,AI,ghidra,0x684380,0x6846c4,836,1,0x684380-0x6846c4,,260,30,0,0,0,2,0
-0x6846d0,CTaskComplexChat::vfunc_0,unknown,game,AI,ghidra,0x6846d0,0x6846ee,30,1,0x6846d0-0x6846ee,,11,2,0,0,0,0,0
+0x6846d0,CTaskComplexChat::`scalar deleting destructor',unknown,game,AI,ghidra,0x6846d0,0x6846ee,30,1,0x6846d0-0x6846ee,,11,2,0,0,0,0,0
 0x6846f0,CTaskComplexPartnerShove::Constructor,gr-reversed,game,AI,ghidra,0x6846f0,0x684746,86,1,0x6846f0-0x684746,,31,1,0,0,0,6,0
 0x684750,,unknown,game,AI,ghidra,0x684750,0x68475b,11,1,0x684750-0x68475b,,2,0,0,0,0,1,0
 0x684760,CTaskComplex::~CTaskComplex,unknown,game,AI,ghidra,0x684760,0x68477e,30,1,0x684760-0x68477e,,11,2,0,0,0,0,0
@@ -10088,7 +10088,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x684da0,CTaskComplexPartnerGreet::Clone,gr-reversed,game,AI,ghidra,0x684da0,0x684e2d,141,1,0x684da0-0x684e2d,,51,2,0,0,0,3,0
 0x684e30,CTaskComplexPartnerChat::Clone,unknown,game,AI,ghidra,0x684e30,0x684eca,154,1,0x684e30-0x684eca,,57,2,0,0,0,3,0
 0x684ed0,CTaskComplexPartnerShove::Clone,unknown,game,AI,ghidra,0x684ed0,0x684f5e,142,1,0x684ed0-0x684f5e,,51,2,0,0,0,3,0
-0x684f60,CTaskComplexPartner::vfunc_0,unknown,game,AI,ghidra,0x684f60,0x684f7e,30,1,0x684f60-0x684f7e,,11,2,0,0,0,0,0
+0x684f60,CTaskComplexPartner::`scalar deleting destructor',unknown,game,AI,ghidra,0x684f60,0x684f7e,30,1,0x684f60-0x684f7e,,11,2,0,0,0,0,0
 0x684f80,CTaskComplexPartnerDeal::~CTaskComplexPartnerDeal,unknown,game,AI,ghidra,0x684f80,0x684f9e,30,1,0x684f80-0x684f9e,,11,2,0,0,0,0,0
 0x684fa0,CTaskComplexPartnerGreet::~CTaskComplexPartnerGreet,unknown,game,AI,ghidra,0x684fa0,0x684fbe,30,1,0x684fa0-0x684fbe,,11,2,0,0,0,0,0
 0x684fc0,CTaskComplexPartnerChat::~CTaskComplexPartnerChat,unknown,game,AI,ghidra,0x684fc0,0x684fde,30,1,0x684fc0-0x684fde,,11,2,0,0,0,0,0
@@ -10299,7 +10299,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x695600,,unknown,game,AI,ghidra,0x695600,0x695687,135,1,0x695600-0x695687,,40,2,0,0,0,12,0
 0x695690,CTaskComplexSeekEntityAnyMeansXYOffset::GetTaskType,gr-reversed,game,AI,ghidra-created,0x695690,0x695696,6,1,0x695690-0x695696,,2,0,0,0,0,0,0
 0x6956a0,CTaskComplexSeekEntityAnyMeansXYOffset::CreateNextSubTask,gr-reversed,game,AI,ghidra-created,0x6956a0,0x6956a5,5,1,0x6956a0-0x6956a5,,2,0,0,0,0,0,0
-0x6956b0,CTaskComplexSeekEntityAnyMeansXYOffset::vfunc_0,unknown,game,AI,ghidra,0x6956b0,0x6956ce,30,1,0x6956b0-0x6956ce,,11,2,0,0,0,0,0
+0x6956b0,CTaskComplexSeekEntityAnyMeansXYOffset::`scalar deleting destructor',unknown,game,AI,ghidra,0x6956b0,0x6956ce,30,1,0x6956b0-0x6956ce,,11,2,0,0,0,0,0
 0x6956d0,,unknown,game,AI,ghidra,0x6956d0,0x695731,97,1,0x6956d0-0x695731,,26,2,0,0,0,2,0
 0x695740,CTaskComplexFollowLeaderInFormation::Clone,gr-unreversed,game,AI,ghidra,0x695740,0x6957ac,108,1,0x695740-0x6957ac,,36,2,0,0,0,0,0
 0x6957b0,CTaskComplexFollowLeaderAnyMeans::Clone,gr-reversed,game,AI,ghidra,0x6957b0,0x695818,104,1,0x6957b0-0x695818,,34,2,0,0,0,0,0
@@ -10438,7 +10438,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x69d9c0,CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot,unknown,game,AI,ghidra,0x69d9c0,0x69d9fb,59,1,0x69d9c0-0x69d9fb,,23,1,0,0,0,2,0
 0x69da00,CTaskAllocatorAttack::~CTaskAllocatorAttack,unknown,game,AI,ghidra,0x69da00,0x69da3b,59,1,0x69da00-0x69da3b,,23,1,0,0,0,2,0
 0x69da40,CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic,unknown,game,AI,ghidra,0x69da40,0x69da7b,59,1,0x69da40-0x69da7b,,23,1,0,0,0,2,0
-0x69da80,CTaskAllocatorKillThreatsDriveby::vfunc_0,unknown,game,AI,ghidra,0x69da80,0x69dabb,59,1,0x69da80-0x69dabb,,23,1,0,0,0,2,0
+0x69da80,CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor',unknown,game,AI,ghidra,0x69da80,0x69dabb,59,1,0x69da80-0x69dabb,,23,1,0,0,0,2,0
 0x69dac0,CTaskAllocator::~CTaskAllocator,unknown,game,AI,ghidra-created,0x69dac0,0x69daf8,56,1,0x69dac0-0x69daf8,,21,0,0,0,0,3,0
 0x69db00,CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack,unknown,game,AI,ghidra,0x69db00,0x69db3b,59,1,0x69db00-0x69db3b,,23,1,0,0,0,2,0
 0x69db40,,unknown,game,AI,ghidra,0x69db40,0x69db4b,11,1,0x69db40-0x69db4b,,2,0,0,0,0,1,0
@@ -10562,8 +10562,8 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6a6090,CAutomobile::FindWheelWidth,gr-reversed,game,VEH,ghidra-created,0x6a6090,0x6a6139,169,1,0x6a6090-0x6a6139,,53,0,0,0,0,0,0
 0x6a6140,CAutomobile::IsInAir,gr-reversed,game,VEH,ghidra,0x6a6140,0x6a61d3,147,1,0x6a6140-0x6a61d3,,44,0,0,0,0,0,0
 0x6a61e0,CAutomobile::Destructor,gr-reversed,game,VEH,ghidra,0x401cb3,0x6a6274,172,2,0x401cb3-0x401ccb;0x6a61e0-0x6a6274,,47,5,0,0,0,4,0
-0x6a6280,CVehicle::vfunc_47,unknown,game,VEH,ghidra-created,0x6a6280,0x6a6283,3,1,0x6a6280-0x6a6283,,2,0,0,0,0,0,0
-0x6a6290,CVehicle::vfunc_21,unknown,game,VEH,ghidra-created,0x6a6290,0x6a6291,1,1,0x6a6290-0x6a6291,,1,0,0,0,0,0,0
+0x6a6280,CVehicle::GetRideAnimData,unknown,game,VEH,ghidra-created,0x6a6280,0x6a6283,3,1,0x6a6280-0x6a6283,,2,0,0,0,0,0,0
+0x6a6290,CVehicle::FlagToDestroyWhenNextProcessed,unknown,game,VEH,ghidra-created,0x6a6290,0x6a6291,1,1,0x6a6290-0x6a6291,,1,0,0,0,0,0,0
 0x6a62a0,CAutomobile::GetNumContactWheels,gr-reversed,game,VEH,ghidra-created,0x6a62a0,0x6a62a8,8,1,0x6a62a0-0x6a62a8,,2,0,0,0,0,0,0
 0x6a62b0,CAutomobile::GetHeightAboveRoad,gr-reversed,game,VEH,ghidra-created,0x6a62b0,0x6a62b7,7,1,0x6a62b0-0x6a62b7,,2,0,0,0,0,0,0
 0x6a62c0,CAutomobile::GetDooorAngleOpenRatioU32,gr-reversed,game,VEH,ghidra-created,0x6a62c0,0x6a6327,103,1,0x6a62c0-0x6a6327,,26,0,0,0,4,0,0
@@ -10602,7 +10602,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6afb10,CAutomobile::ProcessSuspension,gr-reversed,game,VEH,ghidra,0x6afb10,0x6b0687,2927,2,0x6afb10-0x6b01e8;0x6b01f0-0x6b0687,,728,13,0,0,0,28,0
 0x6b0690,CAutomobile::DoHeliDustEffect,gr-reversed,game,VEH,ghidra,0x6b0690,0x6b0a8a,1018,1,0x6b0690-0x6b0a8a,,308,20,0,0,0,4,0
 0x6b0a90,CAutomobile::Constructor,gr-reversed,game,VEH,ghidra,0x407ded,0x6b1323,2218,2,0x407ded-0x407e04;0x6b0a90-0x6b1323,,495,26,0,0,0,144,0
-0x6b1330,CAutomobile::vfunc_0,unknown,game,VEH,ghidra,0x6b1330,0x6b134e,30,1,0x6b1330-0x6b134e,,11,2,0,0,0,0,0
+0x6b1330,CAutomobile::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6b1330,0x6b134e,30,1,0x6b1330-0x6b134e,,11,2,0,0,0,0,0
 0x6b1350,CAutomobile::SetBumperDamage,gr-reversed,game,VEH,ghidra,0x409b1d,0x6b1475,304,2,0x409b1d-0x409b28;0x6b1350-0x6b1475,,99,7,0,0,0,0,0
 0x6b1480,CAutomobile::SetPanelDamage,gr-reversed,game,VEH,ghidra,0x6b1480,0x6b15f2,370,1,0x6b1480-0x6b15f2,,123,11,0,0,0,0,0
 0x6b1600,CAutomobile::SetDoorDamage,gr-reversed,game,VEH,ghidra,0x6b1600,0x6b187b,635,1,0x6b1600-0x6b187b,,185,17,0,0,0,4,0
@@ -10616,13 +10616,13 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6b45e0,CAutomobile::RcbanditCheckHitWheels,gr-reversed,game,VEH,ghidra,0x6b45e0,0x6b47fd,541,1,0x6b45e0-0x6b47fd,,169,18,0,0,0,0,1
 0x6b4800,CAutomobile::ProcessAI,gr-reversed,game,VEH,ghidra,0x6b4800,0x6b5715,3861,1,0x6b4800-0x6b5715,,1103,77,4,4,0,75,0
 0x6b57a0,CBike::Destructor,gr-reversed,game,VEH,ghidra,0x40162c,0x6b5815,141,2,0x40162c-0x401644;0x6b57a0-0x6b5815,,35,4,0,0,0,1,0
-0x6b5820,CVehicle::vfunc_27,unknown,game,VEH,ghidra-created,0x6b5820,0x6b5823,3,1,0x6b5820-0x6b5823,,1,0,0,0,0,0,0
-0x6b5830,CVehicle::vfunc_29,unknown,game,VEH,ghidra-created,0x6b5830,0x6b5839,9,1,0x6b5830-0x6b5839,,2,0,0,0,0,0,0
-0x6b5840,CVehicle::vfunc_39,unknown,game,VEH,ghidra-created,0x6b5840,0x6b5843,3,1,0x6b5840-0x6b5843,,2,0,0,0,0,0,0
-0x6b5850,CVehicle::vfunc_42,unknown,game,VEH,ghidra-created,0x6b5850,0x6b5853,3,1,0x6b5850-0x6b5853,,1,0,0,0,0,0,0
-0x6b5860,CVehicle::vfunc_49,unknown,game,VEH,ghidra-created,0x6b5860,0x6b5871,17,1,0x6b5860-0x6b5871,,6,0,0,0,0,3,0
-0x6b5880,CVehicle::vfunc_61,unknown,game,VEH,ghidra-created,0x6b5880,0x6b5885,5,1,0x6b5880-0x6b5885,,2,0,0,0,0,0,0
-0x6b5890,CVehicle::vfunc_62,unknown,game,VEH,ghidra-created,0x6b5890,0x6b5893,3,1,0x6b5890-0x6b5893,,2,0,0,0,0,0,0
+0x6b5820,CVehicle::OpenDoor,unknown,game,VEH,ghidra-created,0x6b5820,0x6b5823,3,1,0x6b5820-0x6b5823,,1,0,0,0,0,0,0
+0x6b5830,CVehicle::GetDooorAngleOpenRatioU32,unknown,game,VEH,ghidra-created,0x6b5830,0x6b5839,9,1,0x6b5830-0x6b5839,,2,0,0,0,0,0,0
+0x6b5840,CVehicle::IsOpenTopCar,unknown,game,VEH,ghidra-created,0x6b5840,0x6b5843,3,1,0x6b5840-0x6b5843,,2,0,0,0,0,0,0
+0x6b5850,CVehicle::BlowUpCarCutSceneNoExtras,unknown,game,VEH,ghidra-created,0x6b5850,0x6b5853,3,1,0x6b5850-0x6b5853,,1,0,0,0,0,0,0
+0x6b5860,CVehicle::AddMovingCollisionSpeed,unknown,game,VEH,ghidra-created,0x6b5860,0x6b5871,17,1,0x6b5860-0x6b5871,,6,0,0,0,0,3,0
+0x6b5880,CVehicle::SetTowLink,unknown,game,VEH,ghidra-created,0x6b5880,0x6b5885,5,1,0x6b5880-0x6b5885,,2,0,0,0,0,0,0
+0x6b5890,CVehicle::BreakTowLink,unknown,game,VEH,ghidra-created,0x6b5890,0x6b5893,3,1,0x6b5890-0x6b5893,,2,0,0,0,0,0,0
 0x6b58a0,CBike::GetNumContactWheels,unknown,game,VEH,ghidra-created,0x6b58a0,0x6b58a8,8,1,0x6b58a0-0x6b58a8,,2,0,0,0,0,0,0
 0x6b58b0,CBike::GetHeightAboveRoad,unknown,game,VEH,ghidra-created,0x6b58b0,0x6b58b7,7,1,0x6b58b0-0x6b58b7,,2,0,0,0,0,0,0
 0x6b58c0,CBike::GetRideAnimData,unknown,game,VEH,ghidra-created,0x6b58c0,0x6b58c7,7,1,0x6b58c0-0x6b58c7,,2,0,0,0,0,0,0
@@ -10660,7 +10660,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6b7280,CBike::ProcessRiderAnims,gr-unreversed,game,VEH,ghidra,0x6b7280,0x6b7f84,3332,1,0x6b7280-0x6b7f84,,918,40,0,0,0,23,0
 0x6b7f90,CBike::FixHandsToBars,gr-unreversed,game,VEH,ghidra,0x403c8d,0x6b8931,2476,2,0x403c8d-0x403c98;0x6b7f90-0x6b8931,,677,42,0,0,0,38,0
 0x6b8940,CBike::FindWheelWidth,unknown,game,VEH,ghidra-created,0x6b8940,0x6b8949,9,1,0x6b8940-0x6b8949,,2,0,0,0,0,0,0
-0x6b8950,CBike::vfunc_0,unknown,game,VEH,ghidra,0x6b8950,0x6b896e,30,1,0x6b8950-0x6b896e,,11,2,0,0,0,0,0
+0x6b8950,CBike::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6b8950,0x6b896e,30,1,0x6b8950-0x6b896e,,11,2,0,0,0,0,0
 0x6b8970,CBike::SetModelIndex,gr-reversed,game,VEH,ghidra-created,0x6b8970,0x6b89a1,49,1,0x6b8970-0x6b89a1,,19,2,0,0,0,1,0
 0x6b89b0,CBike::SetupSuspensionLines,gr-unreversed,game,VEH,ghidra,0x6b89b0,0x6b8ead,1271,2,0x6b89b0-0x6b8a1a;0x6b8a20-0x6b8ead,,389,3,0,0,0,23,0
 0x6b8ec0,CBike::VehicleDamage,gr-unreversed,game,VEH,ghidra-created,0x6b8ec0,0x6b9249,905,1,0x6b8ec0-0x6b9249,,254,18,0,0,0,8,0
@@ -10686,10 +10686,10 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6c0390,CBmx::LaunchBunnyHopCB,gr-reversed,game,VEH,ghidra-created,0x6c0390,0x6c0500,368,1,0x6c0390-0x6c0500,,105,3,0,0,0,9,0
 0x6c0550,CBmx::FindWheelWidth,gr-reversed,game,VEH,ghidra-created,0x6c0550,0x6c0559,9,1,0x6c0550-0x6c0559,,2,0,0,0,0,0,0
 0x6c0560,CBmx::BlowUpCar,unknown,game,VEH,ghidra-created,0x6c0560,0x6c0563,3,1,0x6c0560-0x6c0563,,1,0,0,0,0,0,0
-0x6c0570,CBmx::vfunc_0,unknown,game,VEH,ghidra,0x6c0570,0x6c058e,30,1,0x6c0570-0x6c058e,,11,2,0,0,0,0,0
+0x6c0570,CBmx::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6c0570,0x6c058e,30,1,0x6c0570-0x6c058e,,11,2,0,0,0,0,0
 0x6c0590,CBmx::ProcessBunnyHop,gr-reversed,game,VEH,ghidra,0x6c0590,0x6c0809,633,1,0x6c0590-0x6c0809,,173,9,0,0,0,15,0
 0x6c0810,CBmx::PreRender,gr-unreversed,game,VEH,ghidra,0x6c0810,0x6c146c,3164,1,0x6c0810-0x6c146c,,824,55,1,1,0,13,0
-0x6c1470,CBmx::ProcessAI,gr-unreversed,game,VEH,ghidra-created,0x401797,0x6c200a,743,4,0x401797-0x4017a2;0x6c1470-0x6c14b2;0x6c19fe-0x6c1b65;0x6c1ed7-0x6c200a,,211,7,0,0,1,7,0
+0x6c1470,CBmx::ProcessAI,gr-unreversed,game,VEH,ghidra-created+seeded,0x401797,0x6c200a,2981,2,0x401797-0x4017a2;0x6c1470-0x6c200a,,793,51,1,0,1,77,0
 0x6c2040,CDamageManager::GetComponentGroup,gr-reversed,game,VEH,ghidra,0x6c2040,0x6c20da,154,1,0x6c2040-0x6c20da,,59,0,0,0,0,11,0
 0x6c20e0,CDamageManager::ResetDamageStatus,gr-reversed,game,VEH,ghidra,0x6c20e0,0x6c20f8,24,1,0x6c20e0-0x6c20f8,,9,0,0,0,0,6,0
 0x6c2100,CDamageManager::SetLightStatus,gr-reversed,game,VEH,ghidra,0x6c2100,0x6c2129,41,1,0x6c2100-0x6c2129,,16,0,0,0,0,1,0
@@ -10740,7 +10740,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6c4750,CHeli::SpecialHeliPreRender,unknown,game,VEH,ghidra,0x6c4750,0x6c4751,1,1,0x6c4750-0x6c4751,,1,0,0,0,0,0,0
 0x6c4760,CHeli::FindSwatPositionRelativeToHeli,gr-called-only,game,VEH,ghidra,0x6c4760,0x6c47ed,141,1,0x6c4760-0x6c47ed,,30,0,0,0,0,15,0
 0x6c4800,CHeli::SwitchPoliceHelis,gr-reversed,game,VEH,ghidra-created,0x6c4800,0x6c480a,10,1,0x6c4800-0x6c480a,,3,0,0,0,0,0,0
-0x6c4810,CHeli::vfunc_0,unknown,game,VEH,ghidra,0x6c4810,0x6c482e,30,1,0x6c4810-0x6c482e,,11,2,0,0,0,0,0
+0x6c4810,CHeli::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6c4810,0x6c482e,30,1,0x6c4810-0x6c482e,,11,2,0,0,0,0,0
 0x6c4830,CHeli::ProcessControlInputs,gr-called-only,game,VEH,ghidra-created,0x6c4830,0x6c4e53,1571,1,0x6c4830-0x6c4e53,,427,29,0,0,0,26,0
 0x6c4e60,CHeli::ProcessFlyingCarStuff,gr-called-only,game,VEH,ghidra-created,0x6c4e60,0x6c541b,1467,1,0x6c4e60-0x6c541b,,406,12,0,0,0,15,0
 0x6c5420,CHeli::PreRender,gr-called-only,game,VEH,ghidra,0x6c5420,0x6c58d4,1204,1,0x6c5420-0x6c58d4,,322,25,1,1,0,5,0
@@ -10752,13 +10752,13 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6c7050,CHeli::ProcessControl,gr-called-only,game,VEH,ghidra-created+completed,0x6c7050,0x6c7980,2352,1,0x6c7050-0x6c7980,,669,38,0,0,0,32,0
 0x6c79a0,CHeli::UpdateHelis,gr-called-only,game,VEH,ghidra,0x6c79a0,0x6c7c46,678,1,0x6c79a0-0x6c7c46,,205,8,1,0,0,8,0
 0x6c7c50,CHeli::RenderAllHeliSearchLights,gr-reversed,game,VEH,ghidra,0x6c7c50,0x6c7d06,182,1,0x6c7c50-0x6c7d06,,59,1,0,0,0,6,0
-0x6c7d10,,unknown,game,VEH,ghidra,0x6c7d10,0x6c7d1b,11,1,0x6c7d10-0x6c7d1b,,2,0,0,0,0,1,0
+0x6c7d10,CMonsterTruck::~CMonsterTruck,unknown,game,VEH,ghidra,0x6c7d10,0x6c7d1b,11,1,0x6c7d10-0x6c7d1b,,2,0,0,0,0,1,0
 0x6c7d20,CMonsterTruck::SetUpWheelColModel,gr-reversed,game,VEH,ghidra-created,0x6c7d20,0x6c7d25,5,1,0x6c7d20-0x6c7d25,,2,0,0,0,0,0,0
 0x6c7d30,CMonsterTruck::BurstTyre,gr-reversed,game,VEH,ghidra-created,0x6c7d30,0x6c7d35,5,1,0x6c7d30-0x6c7d35,,2,0,0,0,0,0,0
 0x6c7d40,CMonsterTruck::ResetSuspension,gr-unreversed,game,VEH,ghidra,0x6c7d40,0x6c7d73,45,2,0x6c7d40-0x6c7d5a;0x6c7d60-0x6c7d73,,15,1,0,0,0,2,0
 0x6c7d80,CMonsterTruck::ExtendSuspension,gr-unreversed,game,VEH,ghidra,0x6c7d80,0x6c7de0,96,1,0x6c7d80-0x6c7de0,,32,0,0,0,0,3,0
 0x6c7de0,CMonsterTruck::PreRender,gr-reversed,game,VEH,ghidra-created,0x6c7de0,0x6c7f89,425,1,0x6c7de0-0x6c7f89,,115,7,0,0,0,10,0
-0x6c7f90,CMonsterTruck::vfunc_0,unknown,game,VEH,ghidra,0x6c7f90,0x6c7fae,30,1,0x6c7f90-0x6c7fae,,11,2,0,0,0,0,0
+0x6c7f90,CMonsterTruck::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6c7f90,0x6c7fae,30,1,0x6c7f90-0x6c7fae,,11,2,0,0,0,0,0
 0x6c7fb0,CMonsterTruck::SetupSuspensionLines,gr-unreversed,game,VEH,ghidra,0x6c7fb0,0x6c8250,672,1,0x6c7fb0-0x6c8250,,211,5,0,0,0,17,0
 0x6c8250,CMonsterTruck::ProcessControl,gr-unreversed,game,VEH,ghidra-created,0x6c8250,0x6c832f,223,1,0x6c8250-0x6c832f,,72,1,0,0,0,3,0
 0x6c8330,CMonsterTruck::ProcessControlCollisionCheck,gr-unreversed,game,VEH,ghidra,0x6c8330,0x6c8397,93,2,0x6c8330-0x6c8356;0x6c8360-0x6c8397,,29,2,0,0,0,2,0
@@ -10779,7 +10779,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6cac70,CPlane::SetGearDown,gr-reversed,game,VEH,ghidra,0x6cac70,0x6cacac,60,1,0x6cac70-0x6cacac,,12,0,0,0,0,6,0
 0x6cacb0,CPlane::OpenDoor,gr-reversed,game,VEH,ghidra-created,0x6cacb0,0x6cad88,216,1,0x6cacb0-0x6cad88,,62,5,0,0,0,0,0
 0x6cad90,CPlane::InitPlaneGenerationAndRemoval,gr-reversed,game,VEH,ghidra,0x6cad90,0x6cada4,20,1,0x6cad90-0x6cada4,,5,0,0,0,0,0,0
-0x6cadb0,CPlane::vfunc_0,unknown,game,VEH,ghidra,0x6cadb0,0x6cadce,30,1,0x6cadb0-0x6cadce,,11,2,0,0,0,0,0
+0x6cadb0,CPlane::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6cadb0,0x6cadce,30,1,0x6cadb0-0x6cadce,,11,2,0,0,0,0,0
 0x6cadd0,CPlane::ProcessControlInputs,gr-unreversed,game,VEH,ghidra-created,0x406af1,0x6cb7b7,2546,2,0x406af1-0x406afc;0x6cadd0-0x6cb7b7,,636,58,0,0,0,44,0
 0x6cb7c0,CPlane::ProcessFlyingCarStuff,gr-unreversed,game,VEH,ghidra-created,0x6cb7c0,0x6cc48a,3274,1,0x6cb7c0-0x6cc48a,,850,33,0,0,0,24,0
 0x6cc4b0,CPlane::VehicleDamage,gr-unreversed,game,VEH,ghidra-created,0x6cc4b0,0x6cca44,1422,2,0x6cc4b0-0x6cc8ba;0x6cc8c0-0x6cca44,,412,24,1,1,0,5,0
@@ -10801,7 +10801,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6ce2b0,CQuadBike::Fix,gr-reversed,game,VEH,ghidra,0x6ce2b0,0x6ce33e,142,1,0x6ce2b0-0x6ce33e,,50,10,0,0,0,1,0
 0x6ce340,CQuadBike::SetupDamageAfterLoad,gr-reversed,game,VEH,ghidra,0x6ce340,0x6ce36d,45,1,0x6ce340-0x6ce36d,,17,2,0,0,0,0,0
 0x6ce370,CQuadBike::Constructor,gr-reversed,game,VEH,ghidra,0x408028,0x6ce436,222,2,0x408028-0x408040;0x6ce370-0x6ce436,,59,3,0,0,0,10,0
-0x6ce440,CQuadBike::vfunc_0,unknown,game,VEH,ghidra,0x6ce440,0x6ce45e,30,1,0x6ce440-0x6ce45e,,11,2,0,0,0,0,0
+0x6ce440,CQuadBike::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6ce440,0x6ce45e,30,1,0x6ce440-0x6ce45e,,11,2,0,0,0,0,0
 0x6ce460,CQuadBike::ProcessAI,gr-reversed,game,VEH,ghidra-created,0x6ce460,0x6ceacf,1647,1,0x6ce460-0x6ceacf,,475,33,2,2,0,32,0
 0x6cead0,CQuadBike::PreRender,gr-reversed,game,VEH,ghidra,0x6cead0,0x6ced08,568,1,0x6cead0-0x6ced08,,154,14,0,0,0,3,0
 0x6ced10,CTrailer::~CTrailer,unknown,game,VEH,ghidra,0x6ced10,0x6ced1b,11,1,0x6ced10-0x6ced1b,,2,0,0,0,0,1,0
@@ -10810,7 +10810,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6ceea0,CTrailer::GetTowHitchPos,gr-reversed,game,VEH,ghidra-created,0x6ceea0,0x6cefa5,261,1,0x6ceea0-0x6cefa5,,91,2,0,0,0,12,0
 0x6cefb0,CTrailer::BreakTowLink,gr-reversed,game,VEH,ghidra,0x6cefb0,0x6cf02b,123,1,0x6cefb0-0x6cf02b,,44,3,0,0,0,3,0
 0x6cf030,CTrailer::ScanForTowLink,gr-reversed,game,VEH,ghidra,0x6cf030,0x6cf17b,331,1,0x6cf030-0x6cf17b,,107,3,3,2,0,0,0
-0x6cf180,CTrailer::vfunc_0,unknown,game,VEH,ghidra,0x6cf180,0x6cf19e,30,1,0x6cf180-0x6cf19e,,11,2,0,0,0,0,0
+0x6cf180,CTrailer::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6cf180,0x6cf19e,30,1,0x6cf180-0x6cf19e,,11,2,0,0,0,0,0
 0x6cf1a0,CTrailer::SetupSuspensionLines,gr-reversed,game,VEH,ghidra,0x6cf1a0,0x6cf584,996,1,0x6cf1a0-0x6cf584,,306,5,0,0,0,32,0
 0x6cf590,CTrailer::ProcessAI,gr-reversed,game,VEH,ghidra-created,0x6cf590,0x6cf69b,267,1,0x6cf590-0x6cf69b,,92,2,0,0,0,3,0
 0x6cf6a0,CTrailer::ProcessSuspension,gr-reversed,game,VEH,ghidra-created,0x6cf6a0,0x6cfab1,1041,1,0x6cf6a0-0x6cfab1,,305,10,0,0,0,21,0
@@ -10920,7 +10920,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6d3cf0,CVehicle::QueryPickedUpEntityWithWinch,gr-reversed,game,VEH,ghidra,0x6d3cf0,0x6d3d09,25,1,0x6d3cf0-0x6d3d09,,7,1,0,0,0,0,0
 0x6d3d10,CVehicle::GetRopeHeightForHeli,gr-reversed,game,VEH,ghidra-created,0x6d3d10,0x6d3d29,25,1,0x6d3d10-0x6d3d29,,7,1,0,0,0,0,0
 0x6d3d30,CVehicle::SetRopeHeightForHeli,gr-reversed,game,VEH,ghidra-created,0x6d3d30,0x6d3d4f,31,1,0x6d3d30-0x6d3d4f,,8,1,0,0,0,0,0
-0x6d3d50,CVehicle::vfunc_63,unknown,game,VEH,ghidra-created,0x6d3d50,0x6d3d59,9,1,0x6d3d50-0x6d3d59,,2,0,0,0,0,0,0
+0x6d3d50,CVehicle::FindWheelWidth,unknown,game,VEH,ghidra-created,0x6d3d50,0x6d3d59,9,1,0x6d3d50-0x6d3d59,,2,0,0,0,0,0,0
 0x6d3d60,CVehicle::RenderDriverAndPassengers,gr-reversed,game,VEH,ghidra,0x6d3d60,0x6d3da4,68,1,0x6d3d60-0x6d3da4,,25,0,2,1,0,0,0
 0x6d3db0,CVehicle::PreRenderDriverAndPassengers,gr-reversed,game,VEH,ghidra,0x6d3db0,0x6d3df4,68,1,0x6d3db0-0x6d3df4,,23,2,0,0,0,0,0
 0x6d3e00,CVehicle::GetPlaneGunsAutoAimAngle,gr-reversed,game,VEH,ghidra,0x6d3e00,0x6d3e6b,107,1,0x6d3e00-0x6d3e6b,,28,0,0,0,0,0,0
@@ -10938,37 +10938,37 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6d5400,CVehicle::CanBeDriven,gr-reversed,game,VEH,ghidra,0x6d5400,0x6d5490,144,1,0x6d5400-0x6d5490,,45,0,0,0,0,0,0
 0x6d5490,CVehicle::ReactToVehicleDamage,gr-reversed,game,VEH,ghidra,0x6d5490,0x6d55bc,300,1,0x6d5490-0x6d55bc,,93,8,0,0,0,0,0
 0x6d55c0,CVehicle::GetVehicleLightsStatus,gr-reversed,game,VEH,ghidra,0x6d55c0,0x6d5697,215,1,0x6d55c0-0x6d5697,,82,1,0,0,0,0,0
-0x6d56b0,CVehicle::vfunc_30,unknown,game,VEH,ghidra-created,0x6d56b0,0x6d56b9,9,1,0x6d56b0-0x6d56b9,,2,0,0,0,0,0,0
+0x6d56b0,CVehicle::GetDooorAngleOpenRatio,unknown,game,VEH,ghidra-created,0x6d56b0,0x6d56b9,9,1,0x6d56b0-0x6d56b9,,2,0,0,0,0,0,0
 0x6d56c0,CVehicle::ProcessOpenDoor,gr-reversed,game,VEH,ghidra-created,0x6d56c0,0x6d5c28,1384,1,0x6d56c0-0x6d5c28,,439,4,12,12,0,0,0
 0x6d5cf0,CVehicle::CanPedLeanOut,gr-reversed,game,VEH,ghidra-created,0x4011cd,0x6d5d63,126,2,0x4011cd-0x4011d8;0x6d5cf0-0x6d5d63,,40,0,0,0,0,0,0
 0x6d5d70,CVehicle::SetVehicleCreatedBy,gr-reversed,game,VEH,ghidra,0x6d5d70,0x6d5da1,49,1,0x6d5d70-0x6d5da1,,18,2,0,0,0,1,0
 0x6d5dd0,,unknown,game,UNK-game,ghidra,0x6d5dd0,0x6d5e1a,74,1,0x6d5dd0-0x6d5e1a,,29,0,0,0,0,4,0
 0x6d5e20,CAutoPilot::CAutoPilot,unknown,game,VEH,ghidra,0x6d5e20,0x6d5f03,227,1,0x6d5e20-0x6d5f03,,69,1,0,0,0,40,0
 0x6d5f10,CVehicle::Constructor,gr-reversed,game,VEH,ghidra,0x6d5f10,0x6d6266,854,1,0x6d5f10-0x6d6266,,175,6,0,0,0,89,0
-0x6d6270,CVehicle::vfunc_23,unknown,game,VEH,ghidra-created,0x6d6270,0x6d6273,3,1,0x6d6270-0x6d6273,,1,0,0,0,0,0,0
-0x6d6280,CVehicle::vfunc_24,unknown,game,VEH,ghidra-created,0x6d6280,0x6d6283,3,1,0x6d6280-0x6d6283,,1,0,0,0,0,0,0
-0x6d6290,CVehicle::vfunc_25,unknown,game,VEH,ghidra-created,0x6d6290,0x6d6293,3,1,0x6d6290-0x6d6293,,1,0,0,0,0,0,0
-0x6d62a0,CVehicle::vfunc_26,unknown,game,VEH,ghidra-created,0x6d62a0,0x6d62a5,5,1,0x6d62a0-0x6d62a5,,2,0,0,0,0,0,0
-0x6d62b0,CVehicle::vfunc_32,unknown,game,VEH,ghidra-created,0x6d62b0,0x6d62b5,5,1,0x6d62b0-0x6d62b5,,2,0,0,0,0,0,0
-0x6d62c0,CVehicle::vfunc_34,unknown,game,VEH,ghidra-created,0x6d62c0,0x6d62c5,5,1,0x6d62c0-0x6d62c5,,2,0,0,0,0,0,0
-0x6d62d0,CVehicle::vfunc_36,unknown,game,VEH,ghidra-created,0x6d62d0,0x6d62d5,5,1,0x6d62d0-0x6d62d5,,2,0,0,0,0,0,0
-0x6d62e0,CVehicle::vfunc_38,unknown,game,VEH,ghidra-created,0x6d62e0,0x6d62e5,5,1,0x6d62e0-0x6d62e5,,2,0,0,0,0,0,0
-0x6d62f0,CVehicle::vfunc_31,unknown,game,VEH,ghidra-created,0x6d62f0,0x6d62f5,5,1,0x6d62f0-0x6d62f5,,2,0,0,0,0,0,0
-0x6d6300,CVehicle::vfunc_33,unknown,game,VEH,ghidra-created,0x6d6300,0x6d6305,5,1,0x6d6300-0x6d6305,,2,0,0,0,0,0,0
-0x6d6310,CVehicle::vfunc_35,unknown,game,VEH,ghidra-created,0x6d6310,0x6d6315,5,1,0x6d6310-0x6d6315,,2,0,0,0,0,0,0
-0x6d6320,CVehicle::vfunc_37,unknown,game,VEH,ghidra-created,0x6d6320,0x6d6325,5,1,0x6d6320-0x6d6325,,2,0,0,0,0,0,0
-0x6d6330,CVehicle::vfunc_40,unknown,game,VEH,ghidra-created,0x6d6330,0x6d6333,3,1,0x6d6330-0x6d6333,,1,0,0,0,0,0,0
-0x6d6340,CVehicle::vfunc_41,unknown,game,VEH,ghidra-created,0x6d6340,0x6d6343,3,1,0x6d6340-0x6d6343,,1,0,0,0,0,0,0
-0x6d6350,CVehicle::vfunc_43,unknown,game,VEH,ghidra-created,0x6d6350,0x6d6355,5,1,0x6d6350-0x6d6355,,2,0,0,0,0,0,0
-0x6d6360,CVehicle::vfunc_44,unknown,game,VEH,ghidra-created,0x6d6360,0x6d6365,5,1,0x6d6360-0x6d6365,,2,0,0,0,0,0,0
-0x6d6370,CVehicle::vfunc_45,unknown,game,VEH,ghidra-created,0x6d6370,0x6d6375,5,1,0x6d6370-0x6d6375,,2,0,0,0,0,0,0
-0x6d6380,CVehicle::vfunc_48,unknown,game,VEH,ghidra-created,0x6d6380,0x6d6381,1,1,0x6d6380-0x6d6381,,1,0,0,0,0,0,0
+0x6d6270,CVehicle::ProcessControlCollisionCheck,unknown,game,VEH,ghidra-created,0x6d6270,0x6d6273,3,1,0x6d6270-0x6d6273,,1,0,0,0,0,0,0
+0x6d6280,CVehicle::ProcessControlInputs,unknown,game,VEH,ghidra-created,0x6d6280,0x6d6283,3,1,0x6d6280-0x6d6283,,1,0,0,0,0,0,0
+0x6d6290,CVehicle::GetComponentWorldPosition,unknown,game,VEH,ghidra-created,0x6d6290,0x6d6293,3,1,0x6d6290-0x6d6293,,1,0,0,0,0,0,0
+0x6d62a0,CVehicle::IsComponentPresent,unknown,game,VEH,ghidra-created,0x6d62a0,0x6d62a5,5,1,0x6d62a0-0x6d62a5,,2,0,0,0,0,0,0
+0x6d62b0,CVehicle::IsDoorReady,unknown,game,VEH,ghidra-created,0x6d62b0,0x6d62b5,5,1,0x6d62b0-0x6d62b5,,2,0,0,0,0,0,0
+0x6d62c0,CVehicle::IsDoorFullyOpen,unknown,game,VEH,ghidra-created,0x6d62c0,0x6d62c5,5,1,0x6d62c0-0x6d62c5,,2,0,0,0,0,0,0
+0x6d62d0,CVehicle::IsDoorClosed,unknown,game,VEH,ghidra-created,0x6d62d0,0x6d62d5,5,1,0x6d62d0-0x6d62d5,,2,0,0,0,0,0,0
+0x6d62e0,CVehicle::IsDoorMissing,unknown,game,VEH,ghidra-created,0x6d62e0,0x6d62e5,5,1,0x6d62e0-0x6d62e5,,2,0,0,0,0,0,0
+0x6d62f0,CVehicle::IsDoorReadyU32,unknown,game,VEH,ghidra-created,0x6d62f0,0x6d62f5,5,1,0x6d62f0-0x6d62f5,,2,0,0,0,0,0,0
+0x6d6300,CVehicle::IsDoorFullyOpenU32,unknown,game,VEH,ghidra-created,0x6d6300,0x6d6305,5,1,0x6d6300-0x6d6305,,2,0,0,0,0,0,0
+0x6d6310,CVehicle::IsDoorClosedU32,unknown,game,VEH,ghidra-created,0x6d6310,0x6d6315,5,1,0x6d6310-0x6d6315,,2,0,0,0,0,0,0
+0x6d6320,CVehicle::IsDoorMissingU32,unknown,game,VEH,ghidra-created,0x6d6320,0x6d6325,5,1,0x6d6320-0x6d6325,,2,0,0,0,0,0,0
+0x6d6330,CVehicle::RemoveRefsToVehicle,unknown,game,VEH,ghidra-created,0x6d6330,0x6d6333,3,1,0x6d6330-0x6d6333,,1,0,0,0,0,0,0
+0x6d6340,CVehicle::BlowUpCar,unknown,game,VEH,ghidra-created,0x6d6340,0x6d6343,3,1,0x6d6340-0x6d6343,,1,0,0,0,0,0,0
+0x6d6350,CVehicle::SetUpWheelColModel,unknown,game,VEH,ghidra-created,0x6d6350,0x6d6355,5,1,0x6d6350-0x6d6355,,2,0,0,0,0,0,0
+0x6d6360,CVehicle::BurstTyre,unknown,game,VEH,ghidra-created,0x6d6360,0x6d6365,5,1,0x6d6360-0x6d6365,,2,0,0,0,0,0,0
+0x6d6370,CVehicle::IsRoomForPedToLeaveCar,unknown,game,VEH,ghidra-created,0x6d6370,0x6d6375,5,1,0x6d6370-0x6d6375,,2,0,0,0,0,0,0
+0x6d6380,CVehicle::SetupSuspensionLines,unknown,game,VEH,ghidra-created,0x6d6380,0x6d6381,1,1,0x6d6380-0x6d6381,,1,0,0,0,0,0,0
 0x6d6390,CVehicle::Fix,unknown,game,VEH,ghidra-created,0x6d6390,0x6d6391,1,1,0x6d6390-0x6d6391,,1,0,0,0,0,0,0
-0x6d63a0,CVehicle::vfunc_51,unknown,game,VEH,ghidra-created,0x6d63a0,0x6d63a1,1,1,0x6d63a0-0x6d63a1,,1,0,0,0,0,0,0
-0x6d63b0,CVehicle::vfunc_52,unknown,game,VEH,ghidra-created,0x6d63b0,0x6d63b1,1,1,0x6d63b0-0x6d63b1,,1,0,0,0,0,0,0
-0x6d63c0,CVehicle::vfunc_54,unknown,game,VEH,ghidra-created,0x6d63c0,0x6d63c1,1,1,0x6d63c0-0x6d63c1,,1,0,0,0,0,0,0
-0x6d63d0,CVehicle::vfunc_55,unknown,game,VEH,ghidra-created,0x6d63d0,0x6d63d6,6,1,0x6d63d0-0x6d63d6,,2,0,0,0,0,0,0
-0x6d63e0,CVehicle::vfunc_56,unknown,game,VEH,ghidra-created,0x6d63e0,0x6d63e3,3,1,0x6d63e0-0x6d63e3,,1,0,0,0,0,0,0
+0x6d63a0,CVehicle::SetupDamageAfterLoad,unknown,game,VEH,ghidra-created,0x6d63a0,0x6d63a1,1,1,0x6d63a0-0x6d63a1,,1,0,0,0,0,0,0
+0x6d63b0,CVehicle::DoBurstAndSoftGroundRatios,unknown,game,VEH,ghidra-created,0x6d63b0,0x6d63b1,1,1,0x6d63b0-0x6d63b1,,1,0,0,0,0,0,0
+0x6d63c0,CVehicle::PlayCarHorn,unknown,game,VEH,ghidra-created,0x6d63c0,0x6d63c1,1,1,0x6d63c0-0x6d63c1,,1,0,0,0,0,0,0
+0x6d63d0,CVehicle::GetNumContactWheels,unknown,game,VEH,ghidra-created,0x6d63d0,0x6d63d6,6,1,0x6d63d0-0x6d63d6,,2,0,0,0,0,0,0
+0x6d63e0,CVehicle::VehicleDamage,unknown,game,VEH,ghidra-created,0x6d63e0,0x6d63e3,3,1,0x6d63e0-0x6d63e3,,1,0,0,0,0,0,0
 0x6d63f0,CVehicle::GetHeightAboveRoad,gr-reversed,game,VEH,ghidra-created,0x6d63f0,0x6d6408,24,1,0x6d63f0-0x6d6408,,6,0,0,0,0,0,0
 0x6d6410,CVehicle::DeleteRwObject,gr-reversed,game,VEH,ghidra,0x6d6410,0x6d6477,103,1,0x6d6410-0x6d6477,,28,2,0,0,0,5,0
 0x6d6480,CVehicle::PreRender,gr-reversed,game,VEH,ghidra,0x6d6480,0x6d64ec,108,1,0x6d6480-0x6d64ec,,31,5,0,0,0,1,0
@@ -11022,7 +11022,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6e3290,CVehicle::AddVehicleUpgrade,gr-reversed,game,VEH,ghidra,0x6e3290,0x6e33ff,367,1,0x6e3290-0x6e33ff,,115,11,0,0,0,5,0
 0x6e3400,CVehicle::SetupUpgradesAfterLoad,gr-reversed,game,VEH,ghidra,0x6e3400,0x6e3433,51,1,0x6e3400-0x6e3433,,21,1,0,0,0,1,0
 0x6e3440,CVehicle::GetPlaneWeaponFiringStatus,gr-reversed,game,VEH,ghidra,0x6e3440,0x6e37f0,944,1,0x6e3440-0x6e37f0,,283,18,0,0,0,24,0
-0x6e38a0,CVehicle::vfunc_0,unknown,game,VEH,ghidra,0x6e38a0,0x6e38ec,76,1,0x6e38a0-0x6e38ec,,30,1,0,0,0,2,0
+0x6e38a0,CVehicle::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6e38a0,0x6e38ec,76,1,0x6e38a0-0x6e38ec,,30,1,0,0,0,2,0
 0x6e38f0,CVehicle::IsVehiclePointerValid,gr-reversed,game,VEH,ghidra,0x401729,0x6e3948,111,2,0x401729-0x401740;0x6e38f0-0x6e3948,,44,0,0,0,0,0,0
 0x6e3950,CVehicle::ProcessWeapons,gr-reversed,game,VEH,ghidra,0x6e3950,0x6e3ae3,403,1,0x6e3950-0x6e3ae3,,148,11,0,0,0,0,0
 0x6e3b00,CVehicleAnimGroup::GetGroup,gr-reversed,game,ANIM,ghidra,0x6e3b00,0x6e3c0c,268,1,0x6e3b00-0x6e3c0c,,55,2,0,0,0,0,0
@@ -11106,7 +11106,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6f0e80,CBoat::IsSectorAffectedByWake,gr-reversed,game,VEH,ghidra-created,0x6f0e80,0x6f0f48,193,2,0x6f0e80-0x6f0e99;0x6f0ea0-0x6f0f48,,69,0,0,0,0,1,0
 0x6f0f50,CBoat::IsVertexAffectedByWake,gr-reversed,game,VEH,ghidra-created,0x6f0f50,0x6f10b4,356,1,0x6f0f50-0x6f10b4,,94,0,0,0,0,0,0
 0x6f10c0,CBoat::CheckForSkippingCalculations,gr-reversed,game,VEH,ghidra-created,0x6f10c0,0x6f111c,86,2,0x6f10c0-0x6f10ca;0x6f10d0-0x6f111c,,28,0,0,0,0,0,0
-0x6f1120,CBoat::vfunc_0,unknown,game,VEH,ghidra,0x6f1120,0x6f113e,30,1,0x6f1120-0x6f113e,,11,2,0,0,0,0,0
+0x6f1120,CBoat::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6f1120,0x6f113e,30,1,0x6f1120-0x6f113e,,11,2,0,0,0,0,0
 0x6f1140,CBoat::SetModelIndex,gr-reversed,game,VEH,ghidra-created,0x6f1140,0x6f1171,49,1,0x6f1140-0x6f1171,,19,2,0,0,0,1,0
 0x6f1180,CBoat::PreRender,gr-reversed,game,VEH,ghidra,0x6f1180,0x6f176d,1514,2,0x6f1180-0x6f129d;0x6f12a0-0x6f176d,,436,35,1,0,0,17,0
 0x6f1770,CBoat::ProcessControl,gr-reversed,game,VEH,ghidra-created,0x6f1770,0x6f20be,2382,1,0x6f1770-0x6f20be,,650,32,2,2,0,37,0
@@ -11156,17 +11156,17 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6f5300,cHandlingDataMgr::GetBoatPointer,gr-reversed,game,VEH,ghidra,0x6f5300,0x6f5325,37,1,0x6f5300-0x6f5325,,11,0,0,0,0,0,0
 0x6f5370,CTrainNode,unknown,game,UNK-game,ghidra-created,0x6f5370,0x6f5377,7,1,0x6f5370-0x6f5377,,3,0,0,0,0,1,0
 0x6f5440,CTrainNode::GetPosn,unknown,game,VEH,ghidra,0x6f5440,0x6f5486,70,1,0x6f5440-0x6f5486,,19,0,0,0,0,3,0
-0x6f54d0,,unknown,game,VEH,ghidra,0x6f54d0,0x6f5525,85,1,0x6f54d0-0x6f5525,,21,2,0,0,0,1,0
+0x6f54d0,CTrain::~CTrain,unknown,game,VEH,ghidra,0x6f54d0,0x6f5525,85,1,0x6f54d0-0x6f5525,,21,2,0,0,0,1,0
 0x6f5530,CTrain::SetModelIndex,gr-reversed,game,VEH,ghidra-created,0x6f5530,0x6f5561,49,1,0x6f5530-0x6f5561,,19,2,0,0,0,1,0
-0x6f5570,CTrain::vfunc_17,unknown,game,VEH,ghidra,0x6f5570,0x6f55bb,75,1,0x6f5570-0x6f55bb,,31,4,0,0,0,0,0
-0x6f55c0,CTrain::vfunc_18,unknown,game,VEH,ghidra-created,0x6f55c0,0x6f55c5,5,1,0x6f55c0-0x6f55c5,,1,0,0,0,0,0,0
+0x6f5570,CTrain::PreRender,unknown,game,VEH,ghidra,0x6f5570,0x6f55bb,75,1,0x6f5570-0x6f55bb,,31,4,0,0,0,0,0
+0x6f55c0,CTrain::Render,unknown,game,VEH,ghidra-created,0x6f55c0,0x6f55c5,5,1,0x6f55c0-0x6f55c5,,1,0,0,0,0,0,0
 0x6f55d0,CTrain::ReadAndInterpretTrackFile,gr-unreversed,game,VEH,ghidra,0x6f55d0,0x6f58c8,752,2,0x6f55d0-0x6f5668;0x6f5670-0x6f58c8,,237,11,0,0,0,12,0
 0x6f58d0,CTrain::Shutdown,gr-reversed,game,VEH,ghidra,0x6f58d0,0x6f58f8,40,1,0x6f58d0-0x6f58f8,,14,1,0,0,0,1,0
 0x6f5900,CTrain::UpdateTrains,gr-reversed,game,VEH,ghidra,0x6f5900,0x6f5901,1,1,0x6f5900-0x6f5901,,1,0,0,0,0,0,0
 0x6f5910,CTrain::ProcessTrainAnnouncements,gr-reversed,game,VEH,ghidra-created,0x6f5910,0x6f5911,1,1,0x6f5910-0x6f5911,,1,0,0,0,0,0,0
 0x6f5920,CTrain::PlayAnnouncement,gr-reversed,game,VEH,ghidra-created,0x6f5920,0x6f5921,1,1,0x6f5920-0x6f5921,,1,0,0,0,0,0,0
-0x6f5930,CTrain::vfunc_29,unknown,game,VEH,ghidra-created,0x6f5930,0x6f5997,103,1,0x6f5930-0x6f5997,,26,0,0,0,4,0,0
-0x6f59c0,CTrain::vfunc_30,unknown,game,VEH,ghidra-created,0x6f59c0,0x6f59d6,22,1,0x6f59c0-0x6f59d6,,5,1,0,0,0,0,0
+0x6f5930,CTrain::GetDooorAngleOpenRatioU32,unknown,game,VEH,ghidra-created,0x6f5930,0x6f5997,103,1,0x6f5930-0x6f5997,,26,0,0,0,4,0,0
+0x6f59c0,CTrain::GetDooorAngleOpenRatio,unknown,game,VEH,ghidra-created,0x6f59c0,0x6f59d6,22,1,0x6f59c0-0x6f59d6,,5,1,0,0,0,0,0
 0x6f59e0,CTrain::FindCoorsFromPositionOnTrack,gr-unreversed,game,VEH,ghidra-created,0x6f59e0,0x6f5b92,434,1,0x6f59e0-0x6f5b92,,127,0,0,0,0,3,0
 0x6f5ba0,CTrain::FindMaximumSpeedToStopAtStations,gr-unreversed,game,VEH,ghidra,0x6f5ba0,0x6f5cd0,301,2,0x6f5ba0-0x6f5c2d;0x6f5c30-0x6f5cd0,,92,0,0,0,0,3,0
 0x6f5cd0,CTrain::FindNumCarriagesPulled,gr-reversed,game,VEH,ghidra,0x6f5cd0,0x6f5cec,28,1,0x6f5cd0-0x6f5cec,,10,0,0,0,0,0,0
@@ -11182,14 +11182,14 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6f5e70,CTrain::FindCaboose,gr-unreversed,game,VEH,ghidra,0x6f5e70,0x6f5e8d,29,1,0x6f5e70-0x6f5e8d,,10,0,0,0,0,0,0
 0x6f5e90,CTrain::FindEngine,gr-unreversed,game,VEH,ghidra-created,0x6f5e90,0x6f5ead,29,1,0x6f5e90-0x6f5ead,,10,0,0,0,0,0,0
 0x6f5eb0,CTrain::FindCarriage,gr-unreversed,game,VEH,ghidra,0x6f5eb0,0x6f5ed4,36,1,0x6f5eb0-0x6f5ed4,,15,0,0,0,0,0,0
-0x6f5ee0,CTrain::vfunc_45,unknown,game,VEH,ghidra-created,0x6f5ee0,0x6f5ee5,5,1,0x6f5ee0-0x6f5ee5,,2,0,0,0,0,0,0
+0x6f5ee0,CTrain::IsRoomForPedToLeaveCar,unknown,game,VEH,ghidra-created,0x6f5ee0,0x6f5ee5,5,1,0x6f5ee0-0x6f5ee5,,2,0,0,0,0,0,0
 0x6f5ef0,CTrain::FindSideStationIsOn,gr-reversed,game,VEH,ghidra-created,0x6f5ef0,0x6f5efc,12,1,0x6f5ef0-0x6f5efc,,4,0,0,0,0,0,0
 0x6f5f00,CTrain::FindNextStationPositionInDirection,gr-unreversed,game,VEH,ghidra,0x6f5f00,0x6f5f75,117,1,0x6f5f00-0x6f5f75,,43,0,0,0,0,2,0
 0x6f5f80,CTrainNode::GetLightingFromCollision,unknown,game,UNK-game,ghidra,0x6f5f80,0x6f6021,161,1,0x6f5f80-0x6f6021,,54,1,0,0,0,2,0
 0x6f6030,CTrain::Constructor,gr-unreversed,game,VEH,ghidra,0x6f6030,0x6f62f3,707,1,0x6f6030-0x6f62f3,,173,7,0,0,0,50,0
-0x6f6300,CTrain::vfunc_0,unknown,game,VEH,ghidra,0x6f6300,0x6f631e,30,1,0x6f6300-0x6f631e,,11,2,0,0,0,0,0
+0x6f6300,CTrain::`scalar deleting destructor',unknown,game,VEH,ghidra,0x6f6300,0x6f631e,30,1,0x6f6300-0x6f631e,,11,2,0,0,0,0,0
 0x6f6320,CTrain::IsInTunnel,gr-reversed,game,VEH,ghidra,0x6f6320,0x6f636c,76,1,0x6f6320-0x6f636c,,30,1,0,0,0,0,0
-0x6f6370,CTrain::vfunc_27,unknown,game,VEH,ghidra-created,0x6f6370,0x6f663f,719,1,0x6f6370-0x6f663f,,168,14,0,0,0,0,0
+0x6f6370,CTrain::OpenDoor,unknown,game,VEH,ghidra-created,0x6f6370,0x6f663f,719,1,0x6f6370-0x6f663f,,168,14,0,0,0,0,0
 0x6f6640,CTrain::MarkSurroundingEntitiesForCollisionWithTrain,gr-reversed,game,VEH,ghidra,0x6f6640,0x6f6850,528,1,0x6f6640-0x6f6850,,152,20,0,0,0,0,0
 0x6f6850,CTrain::RemoveRandomPassenger,gr-unreversed,game,VEH,ghidra,0x6f6850,0x6f6a19,457,1,0x6f6850-0x6f6a19,,137,10,2,0,0,4,0
 0x6f6a20,CTrain::RemoveMissionTrains,gr-reversed,game,VEH,ghidra,0x6f6a20,0x6f6a94,116,1,0x6f6a20-0x6f6a94,,44,2,1,0,0,0,0
@@ -11199,7 +11199,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x6f6cc0,CTrain::FindPositionOnTrackFromCoors,gr-unreversed,game,VEH,ghidra,0x403c30,0x6f7085,968,3,0x403c30-0x403c3c;0x6f6cc0-0x6f6ce7;0x6f6cf0-0x6f7085,,285,2,0,0,0,6,0
 0x6f7090,CTrain::FindNearestTrain,gr-unreversed,game,VEH,ghidra,0x6f7090,0x6f713c,169,2,0x6f7090-0x6f70bd;0x6f70c0-0x6f713c,,65,0,0,0,0,0,0
 0x6f7140,CTrain::SetNewTrainPosition,gr-reversed,game,VEH,ghidra,0x6f7140,0x6f7185,69,1,0x6f7140-0x6f7185,,20,0,0,0,0,6,0
-0x6f7190,CTrain::vfunc_14,unknown,game,VEH,ghidra,0x6f7190,0x6f7255,197,1,0x6f7190-0x6f7255,,56,3,0,0,0,12,0
+0x6f7190,CTrain::Teleport,unknown,game,VEH,ghidra,0x6f7190,0x6f7255,197,1,0x6f7190-0x6f7255,,56,3,0,0,0,12,0
 0x6f7260,CTrain::IsNextStationAllowed,gr-unreversed,game,VEH,ghidra,0x6f7260,0x6f72f0,144,1,0x6f7260-0x6f72f0,,45,3,0,0,0,0,0
 0x6f72f0,CTrain::SkipToNextAllowedStation,gr-unreversed,game,VEH,ghidra,0x6f72f0,0x6f7437,327,1,0x6f72f0-0x6f7437,,92,7,0,0,0,4,0
 0x6f7440,CTrain::InitTrains,gr-unreversed,game,VEH,ghidra,0x6f7440,0x6f7550,272,1,0x6f7440-0x6f7550,,76,5,0,0,0,4,0
@@ -13932,7 +13932,7 @@ address,name,state,class,subsystem,body_source,start,end,size,n_ranges,ranges,ho
 0x84b160,__init_g_a9580c,unknown,game,UNK-game,ghidra-created,0x84b160,0x84b179,25,1,0x84b160-0x84b179,,5,0,0,0,0,0,0
 0x84b180,__init_g_a95810,unknown,game,UNK-game,ghidra-created,0x84b180,0x84b193,19,1,0x84b180-0x84b193,,4,0,0,0,0,0,0
 0x84b1a0,__init_g_a95814,unknown,game,UNK-game,ghidra-created,0x84b1a0,0x84b1b3,19,1,0x84b1a0-0x84b1b3,,4,0,0,0,0,0,0
-0x84b1c0,__init_g_a95834,unknown,game,WORLD,ghidra-created,0x84b1c0,0x84b1dc,28,1,0x84b1c0-0x84b1dc,,10,0,0,0,0,2,0
+0x84b1c0,__init_CSetPieces__aSetPieces,unknown,game,WORLD,ghidra-created,0x84b1c0,0x84b1dc,28,1,0x84b1c0-0x84b1dc,,10,0,0,0,0,2,0
 0x84b1e0,__init_g_a9a7f4,unknown,game,UNK-game,ghidra-created,0x84b1e0,0x84b1f3,19,1,0x84b1e0-0x84b1f3,,4,0,0,0,0,0,0
 0x84b200,__init_g_a9a7f8,unknown,game,UNK-game,ghidra-created,0x84b200,0x84b213,19,1,0x84b200-0x84b213,,4,0,0,0,0,0,0
 0x84b220,__init_g_a9a7fc,unknown,game,UNK-game,ghidra-created,0x84b220,0x84b233,19,1,0x84b220-0x84b233,,4,0,0,0,0,0,0

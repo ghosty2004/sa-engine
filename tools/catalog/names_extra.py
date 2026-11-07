@@ -102,12 +102,24 @@ def load_names_extra(cat):
     return {int(r['address'], 16): r for r in csv.DictReader(open(p))}
 
 
-def final_name(p, cls_row, rw, extra):
-    """(name, source, confidence, low_hint) for a procedures.csv row. Precedence: gta-reversed hook
-    name, RenderWare name (rw-names.csv high/medium), CAT-5 name (plugin-sdk, validated vtable
-    slot), CAT-6 names-extra (high/medium), CAT-5 bare `vfunc_N` name. Low-confidence names are
-    returned as a hint only."""
+def load_name_corrections(cat):
+    """CAT-17: catalog/name-corrections.csv, hand-maintained names proven from the exe bytes that
+    replace a wrong or missing name from any other source (address, name, subsystem, role,
+    confidence, evidence)."""
+    p = cat / 'name-corrections.csv'
+    if not p.exists():
+        return {}
+    return {int(r['address'], 16): r for r in csv.DictReader(open(p))}
+
+
+def final_name(p, cls_row, rw, extra, corr=None):
+    """(name, source, confidence, low_hint) for a procedures.csv row. Precedence: CAT-17 name
+    correction, gta-reversed hook name, RenderWare name (rw-names.csv high/medium), CAT-5 name
+    (plugin-sdk, validated vtable slot), CAT-6 names-extra (high/medium), CAT-5 bare `vfunc_N`
+    name. Low-confidence names are returned as a hint only."""
     hint = ''
+    if corr:
+        return corr['name'], 'correction', corr['confidence'], hint
     if p.get('gr_name'):
         return p['gr_name'], 'gta-reversed', 'high', hint
     if rw and rw['confidence'] in ('high', 'medium'):

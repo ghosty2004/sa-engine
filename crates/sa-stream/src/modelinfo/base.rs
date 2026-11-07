@@ -316,7 +316,7 @@ pub fn set_base_model_info_flags(m: MiPtr, flags: u32) {
 
 /// `CBaseModelInfo`'s scalar deleting destructor (vtable slot 0, 0x4C4AF0, `ret 4`): vptr =
 /// 0x85BB9C, `operator delete(this)` when `flags & 1`; returns `this`.
-#[hook(addr = 0x4C4AF0, conv = thiscall, name = "CBaseModelInfo::vfunc_0", expect = "F6 44 24 04 01", this = "CBaseModelInfo")]
+#[hook(addr = 0x4C4AF0, conv = thiscall, name = "CBaseModelInfo::`scalar deleting destructor'", expect = "F6 44 24 04 01", this = "CBaseModelInfo")]
 pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
     if flags & 1 != 0 {

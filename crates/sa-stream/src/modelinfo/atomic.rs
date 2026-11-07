@@ -281,7 +281,7 @@ pub fn get_rw_model_type(_this: MiPtr) -> u32 {
 }
 
 /// `CAtomicModelInfo::~CAtomicModelInfo` (0x4C5590, catalogue `FUN_004c5590`): vptr = 0x85BB9C.
-#[hook(addr = 0x4C5590, conv = thiscall, name = "FUN_004c5590", expect = "C7 01 9C BB 85 00", this = "CAtomicModelInfo")]
+#[hook(addr = 0x4C5590, conv = thiscall, name = "CAtomicModelInfo::~CAtomicModelInfo", expect = "C7 01 9C BB 85 00", this = "CAtomicModelInfo")]
 pub fn destructor(this: MiPtr) {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
 }
@@ -297,7 +297,7 @@ pub fn scalar_delete(this: MiPtr, flags: u32, dtor: fn(MiPtr)) -> MiPtr {
 }
 
 /// `CAtomicModelInfo`'s scalar deleting destructor (0x4C6210, `ret 4`).
-#[hook(addr = 0x4C6210, conv = thiscall, name = "CAtomicModelInfo::vfunc_0", expect = "56 8B F1 E8 78 F3 FF FF", this = "CAtomicModelInfo")]
+#[hook(addr = 0x4C6210, conv = thiscall, name = "CAtomicModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 78 F3 FF FF", this = "CAtomicModelInfo")]
 pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, atomic_destructor)
 }
@@ -403,13 +403,13 @@ pub fn as_damage_atomic_model_info_ptr(this: MiPtr) -> MiPtr {
 }
 
 /// `CDamageAtomicModelInfo::~CDamageAtomicModelInfo` (0x4C55D0, `FUN_004c55d0`).
-#[hook(addr = 0x4C55D0, conv = thiscall, name = "FUN_004c55d0", expect = "C7 01 9C BB 85 00", this = "CDamageAtomicModelInfo")]
+#[hook(addr = 0x4C55D0, conv = thiscall, name = "CDamageAtomicModelInfo::~CDamageAtomicModelInfo", expect = "C7 01 9C BB 85 00", this = "CDamageAtomicModelInfo")]
 pub fn damage_destructor(this: MiPtr) {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
 }
 
 /// `CDamageAtomicModelInfo`'s scalar deleting destructor (0x4C6230).
-#[hook(addr = 0x4C6230, conv = thiscall, name = "CDamageAtomicModelInfo::vfunc_0", expect = "56 8B F1 E8 98 F3 FF FF", this = "CDamageAtomicModelInfo")]
+#[hook(addr = 0x4C6230, conv = thiscall, name = "CDamageAtomicModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 98 F3 FF FF", this = "CDamageAtomicModelInfo")]
 pub fn damage_scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, damage_atomic_destructor)
 }
@@ -433,13 +433,13 @@ pub fn as_lod_atomic_model_info_ptr(this: MiPtr) -> MiPtr {
 }
 
 /// `CLodAtomicModelInfo::~CLodAtomicModelInfo` (0x4C5620, `FUN_004c5620`).
-#[hook(addr = 0x4C5620, conv = thiscall, name = "FUN_004c5620", expect = "C7 01 9C BB 85 00", this = "CLodAtomicModelInfo")]
+#[hook(addr = 0x4C5620, conv = thiscall, name = "CLodAtomicModelInfo::~CLodAtomicModelInfo", expect = "C7 01 9C BB 85 00", this = "CLodAtomicModelInfo")]
 pub fn lod_destructor(this: MiPtr) {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
 }
 
 /// `CLodAtomicModelInfo`'s scalar deleting destructor (0x4C6250).
-#[hook(addr = 0x4C6250, conv = thiscall, name = "CLodAtomicModelInfo::vfunc_0", expect = "56 8B F1 E8 C8 F3 FF FF", this = "CLodAtomicModelInfo")]
+#[hook(addr = 0x4C6250, conv = thiscall, name = "CLodAtomicModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 C8 F3 FF FF", this = "CLodAtomicModelInfo")]
 pub fn lod_scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, lod_atomic_destructor)
 }

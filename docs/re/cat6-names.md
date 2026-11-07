@@ -189,6 +189,41 @@ matters for the static initialisers and every float global write.
   can be shared by several functions through identical-code folding. Their name is the one the source
   attaches to that address.
 
+## CAT-17: name and extent corrections (from RE-SPEC-1/2)
+
+Two new hand-maintained inputs, each row with its byte evidence:
+
+- `catalog/name-corrections.csv` (`address, name, subsystem, role, confidence, evidence`, 113 rows). It
+  is the first rule of `names_extra.final_name`, ahead of the gta-reversed hook name
+  (`name_source` = `correction`). A non-empty `subsystem` replaces the row's subsystem. `role` replaces
+  the CAT-6 role. `names-extra.csv` itself is unchanged.
+- `catalog/extent-seeds.csv` (`address, seeds, evidence`, 4 rows). It gives extra start points for
+  `callgraph.complete_body`: switch-table cases Ghidra did not resolve, and the continuation after a
+  SecuROM stub that "returns" to a computed address. `extents.csv` `body_source` gets `+seeded`.
+
+Corrections (each checked against the exe):
+
+| rows | what | evidence |
+|---:|---|---|
+| 50 | every `Class::vfunc_0` → ``Class::`scalar deleting destructor'`` (MSVC's name) | the address is slot 0 of exactly one vtable (the class's). Body: call the destructor (or inline it), `test byte [esp+n], 1`, conditional delete, return this, `ret 4`. No `test …, 2` (vector form) |
+| 16 | unnamed destructors → `Class::~Class` | the first call of the class's scalar deleting destructor before the conditional delete: model infos 0x4c5590/0x4c55d0/0x4c5620/0x4c5680/0x4c56e0/0x4c5750/0x4c5790 (trivial chains: only the CBaseModelInfo vptr store), CBuilding 0x404180, CAnimatedBuilding 0x537a70 (`jmp CEntity::Destructor`), CDummyObject 0x59eab0, CEmergencyPed 0x5de3b0, CPlayerPed 0x6093b0, CMonsterTruck 0x6c7d10, CTrain 0x6f54d0. Also CCamera 0x50a870 and CAnimBlendStaticAssociation 0x4cec00: CAT-5 turned plugin-sdk `DTOR_META(Class)` into the bare name `Class` |
+| 4 | CTimeModelInfo / CLodTimeModelInfo slots 4–5 | gta-reversed registers 0x4C5660/0x4C5670 for both classes. Those are slots 4/5 of the CTimeModelInfo vtable 0x85bcb0. The CLodTimeModelInfo slots are 0x4c56c0 (`mov al, 3`) and 0x4c56d0 (`lea eax, [ecx+0x24]`) |
+| 34 + 7 | CVehicle 0x871e80 / CTrain 0x872370 `vfunc_N` → slot names | gta-reversed declaration order. Every run of unhooked slots lies between hooked anchors (5, 8, 15–20, 22, 28, 46, 50, 53, 57–60, 64–65) and has exactly the declared count. `ret n` matches the arity. U32/eDoors pairs: CAutomobile's odd slots 29–37 map a component id and tail-call slot +1 |
+| 1 | 0x44df60 `CPathFind::RemoveInteriorLinks` (medium, POP) | `this` = ThePaths. It sets every 6-byte connection entry that equals the argument to -1 (the inverse of AddInteriorLink). The name is gta-reversed's address-less declaration. The table base comes through a protection indirection |
+| 1 | 0x84b1c0 `__init_CSetPieces__aSetPieces` | the loop over 0xA95818 × 210, stride 0x20. CAT-6 had named the first store target (+0x1c) |
+
+Extent seeds: 0x5245b0 Process_FollowCar_SA → 0x5245b0–0x525e4b (was 14 instructions), 0x6c1470
+CBmx::ProcessAI → 0x6c1470–0x6c200a + 0x401797, 0x52f2a0 GetIsKeyBlank (table 0x52f2d4), 0x49b010
+IsValidModForVehicle (0x1569236 after the obfuscated call to 0x4c8740; that call has no
+callgraph edge). gr-deviations-notes.csv moves TxdStore.cpp:177 to the hash overload 0x7318e0 (the
+original matches: no, harmless). It also moves VehicleModelInfo.cpp:1627/1632/1639 to `::ChooseComponent`
+0x4c7fb0. The rw-names move 0x732307 → 0x7322f0 was already on master.
+
+Not done (follow-ups): the other CAT-5 names without `::`. There were 105, now 103. Some are free
+functions, but many are plugin-sdk ctor/dtor metas or `new`/`delete` that lost their class (for example
+0x59f660 `CObject`, the destructor CObject's scalar deleting destructor calls). 98 functions with an unresolved computed jump (possibly incomplete
+extents), and the remaining `(proposed …)` names in `specs-index.csv`, which need proof one by one.
+
 ## Commands
 
 ```sh

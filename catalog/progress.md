@@ -7,20 +7,20 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
 | AI | 126 | 3921 | 0 | 0 | 0 | 0 | 0 | 4047 | 0.0 |
-| UNK-game | 1035 | 1851 | 0 | 0 | 0 | 0 | 0 | 2886 | 0.0 |
+| UNK-game | 1033 | 1850 | 0 | 0 | 0 | 0 | 0 | 2883 | 0.0 |
 | RW | 230 | 1575 | 0 | 0 | 0 | 0 | 0 | 1805 | 0.0 |
-| WORLD | 24 | 894 | 0 | 0 | 1 | 0 | 0 | 919 | 0.1 |
+| WORLD | 21 | 896 | 0 | 0 | 1 | 0 | 0 | 918 | 0.1 |
 | AUDIO | 9 | 833 | 0 | 0 | 0 | 0 | 0 | 842 | 0.0 |
 | RENDER | 19 | 813 | 0 | 0 | 0 | 0 | 0 | 832 | 0.0 |
-| VEH | 5 | 708 | 0 | 0 | 0 | 1 | 0 | 714 | 0.1 |
-| STREAM | 0 | 8 | 474 | 70 | 0 | 0 | 0 | 552 | 0.0 |
-| POP | 9 | 420 | 0 | 0 | 0 | 0 | 0 | 429 | 0.0 |
-| PED | 9 | 360 | 0 | 0 | 0 | 2 | 0 | 371 | 0.5 |
+| VEH | 3 | 710 | 0 | 0 | 0 | 1 | 0 | 714 | 0.1 |
+| STREAM | 0 | 9 | 474 | 70 | 0 | 0 | 0 | 553 | 0.0 |
+| POP | 9 | 421 | 0 | 0 | 0 | 0 | 0 | 430 | 0.0 |
+| PED | 8 | 362 | 0 | 0 | 0 | 2 | 0 | 372 | 0.5 |
 | HUD | 2 | 340 | 0 | 0 | 0 | 0 | 0 | 342 | 0.0 |
 | CORE | 1 | 26 | 222 | 56 | 0 | 14 | 0 | 319 | 4.4 |
-| ANIM | 3 | 262 | 0 | 0 | 0 | 0 | 0 | 265 | 0.0 |
+| ANIM | 2 | 263 | 0 | 0 | 0 | 0 | 0 | 265 | 0.0 |
 | SCRIPT | 21 | 202 | 0 | 0 | 0 | 0 | 0 | 223 | 0.0 |
-| CAM | 7 | 210 | 0 | 0 | 0 | 0 | 0 | 217 | 0.0 |
+| CAM | 7 | 211 | 0 | 0 | 0 | 0 | 0 | 218 | 0.0 |
 | WEAPON | 5 | 153 | 0 | 0 | 0 | 0 | 0 | 158 | 0.0 |
 | INPUT | 0 | 155 | 0 | 0 | 0 | 0 | 0 | 155 | 0.0 |
 | COLL | 2 | 143 | 0 | 0 | 0 | 0 | 0 | 145 | 0.0 |
@@ -36,9 +36,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 1514 | 13029 | 697 | 215 | 5 | 19 | 6683 | 22162 | 0.16 |
+| **total** | 1505 | 13038 | 697 | 215 | 5 | 19 | 6683 | 22162 | 0.16 |
 
-`specified` by source: REA 5934, gta-reversed 7095
+`specified` by source: REA 5943, gta-reversed 7095
 
 ## Functions above `specified` (936)
 
@@ -288,7 +288,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c4ac0 | CBaseModelInfo::SetAnimFile | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c4ad0 | CBaseModelInfo::ConvertAnimFileIndex | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c4ae0 | CBaseModelInfo::GetAnimFileIndex | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c4af0 | CBaseModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c4af0 | CBaseModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c4b10 | CBaseModelInfo::Init | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c4b40 | CBaseModelInfo::SetTexDictionary | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c4b70 | CBaseModelInfo::ClearTexDictionary | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
@@ -327,24 +327,24 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c5560 | CAtomicModelInfo::AsAtomicModelInfoPtr | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5570 | CAtomicModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5580 | CAtomicModelInfo::GetRwModelType | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5590 |  | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5590 | CAtomicModelInfo::~CAtomicModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c55c0 | CDamageAtomicModelInfo::AsDamageAtomicModelInfoPtr | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c55d0 |  | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c55d0 | CDamageAtomicModelInfo::~CDamageAtomicModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5600 | CLodAtomicModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5610 | CLodAtomicModelInfo::AsLodAtomicModelInfoPtr | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5620 |  | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5660 | CLodTimeModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5670 | CLodTimeModelInfo::GetTimeInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5680 |  | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c56c0 | CLodTimeModelInfo::vfunc_4 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c56d0 | CLodTimeModelInfo::vfunc_5 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c56e0 |  | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5620 | CLodAtomicModelInfo::~CLodAtomicModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5660 | CTimeModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5670 | CTimeModelInfo::GetTimeInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5680 | CTimeModelInfo::~CTimeModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c56c0 | CLodTimeModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c56d0 | CLodTimeModelInfo::GetTimeInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c56e0 | CLodTimeModelInfo::~CLodTimeModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5710 | CClumpModelInfo::GetBoundingBox | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5720 | CClumpModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5730 | CClumpModelInfo::GetRwModelType | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5740 | CClumpModelInfo::GetAnimFileIndex | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5780 | CWeaponModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c5790 |  | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5790 | CWeaponModelInfo::~CWeaponModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c57a0 | CPedModelInfo::CPedModelInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c57c0 | CPedModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5920 | CVehicleModelInfo::~CVehicleModelInfo | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
@@ -366,15 +366,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c5c50 | CModelInfo::IsTrailerModel | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5c80 | CModelInfo::IsVehicleModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6200 |  | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6210 | CAtomicModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6230 | CDamageAtomicModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6250 | CLodAtomicModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6270 | CTimeModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6290 | CLodTimeModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c62b0 | CClumpModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c62d0 | CWeaponModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6210 | CAtomicModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6230 | CDamageAtomicModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6250 | CLodAtomicModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6270 | CTimeModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6290 | CLodTimeModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c62b0 | CClumpModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c62d0 | CWeaponModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c62f0 | CPedModelInfo::~CPedModelInfo | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c6350 | CPedModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c6350 | CPedModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c63b0 | CModelInfo::ReInit2dEffects | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c63e0 | CModelInfo::ShutDown | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6620 | CModelInfo::AddAtomicModel | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -457,7 +457,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c8bd0 | CVehicleModelInfo::ReduceMaterialsInVehicle | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c8c90 | CVehicleModelInfo::SetupLightFlags | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c8d60 | CVehicleModelInfo::CVehicleStructure::CVehicleStructure | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
-| 0x4c8e10 | CVehicleModelInfo::vfunc_0 | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c8e10 | CVehicleModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c8e30 | CVehicleModelInfo::CollapseFramesCB | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c8e60 | CVehicleModelInfo::PreprocessHierarchy | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c9360 | CVehicleModelInfo::AssignRemapTxd | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |

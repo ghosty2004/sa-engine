@@ -14,8 +14,9 @@
 # -> progress merge + report (CAT-11, catalog/state.csv is merged, never reset; adds gr_deviations).
 #
 # Inputs: re/gta-reversed, re/plugin-sdk, re/gta/1.0-US/gta_sa.exe, catalog/raw/rea-evidence.json,
-# catalog/extra-code-addresses.csv, catalog/data-code-addresses.csv, catalog/fallthrough-splits.csv, catalog/rw-names.csv (RW-RE names), catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
-# `callgraph.py analyse` on first use) and the existing catalog/state.csv.
+# catalog/extra-code-addresses.csv, catalog/data-code-addresses.csv, catalog/fallthrough-splits.csv, catalog/rw-names.csv (RW-RE names), catalog/name-corrections.csv + catalog/extent-seeds.csv (CAT-17 hand-proven names / extent seeds), catalog/gr-deviations-notes.csv (CAT-14 hand checks), the analysed Ghidra project in target/ghidra (created by
+# `callgraph.py analyse` on first use; $SA_GHIDRA_PROJ overrides the path, needed when the checkout path has a
+# '.' element such as ~/.local, which Ghidra rejects) and the existing catalog/state.csv.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 PY=(.venv/bin/python -I)

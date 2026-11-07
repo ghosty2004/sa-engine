@@ -46,13 +46,13 @@ pub fn get_model_type(_this: MiPtr) -> u8 {
 }
 
 /// `CWeaponModelInfo::~CWeaponModelInfo` (0x4C5790, `FUN_004c5790`).
-#[hook(addr = 0x4C5790, conv = thiscall, name = "FUN_004c5790", expect = "C7 01 9C BB 85 00", this = "CWeaponModelInfo")]
+#[hook(addr = 0x4C5790, conv = thiscall, name = "CWeaponModelInfo::~CWeaponModelInfo", expect = "C7 01 9C BB 85 00", this = "CWeaponModelInfo")]
 pub fn destructor(this: MiPtr) {
     f::<u32>(this, mi::VTABLE).write(VTBL_BASE_MODEL_INFO);
 }
 
 /// `CWeaponModelInfo`'s scalar deleting destructor (0x4C62D0).
-#[hook(addr = 0x4C62D0, conv = thiscall, name = "CWeaponModelInfo::vfunc_0", expect = "56 8B F1 E8 B8 F4 FF FF", this = "CWeaponModelInfo")]
+#[hook(addr = 0x4C62D0, conv = thiscall, name = "CWeaponModelInfo::`scalar deleting destructor'", expect = "56 8B F1 E8 B8 F4 FF FF", this = "CWeaponModelInfo")]
 pub fn scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
     scalar_delete(this, flags, weapon_destructor_call)
 }

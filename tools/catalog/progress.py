@@ -86,6 +86,8 @@ def derive(cat):
             state, source, ev = 'excluded', '', f"CAT-5 class {p['class']}"
         elif st == 'gr-reversed':
             state, source, ev = 'specified', 'gta-reversed', 'gta-reversed hook, reversed'
+            if p.get('name_source') == 'correction':
+                ev += f"; name from correction ({p.get('name_confidence', '')}), gta-reversed hook name {p['gr_name']}"
         elif name:
             state, source = 'specified', 'REA'
             ev = {'gr-unreversed': 'gta-reversed hook, not reversed (.Reversed = false)',
