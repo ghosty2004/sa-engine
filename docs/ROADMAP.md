@@ -7,27 +7,38 @@ and the milestone acceptance live in `docs/PLAN.md`. Update this file at the end
 Status: `done` · `in-progress` · `todo` · `blocked` (needs the user) · `deferred`.
 Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalog/*.py`).
 
-**PAUSED (2026-11-05, user request):** no new agents. The running ones (INF-9/10, CORE-L2, PORT-STREAM, RE-SPEC-2) finish, get verified and are committed; then the project stops. To resume: read this file, the WORKLOG tail and the "Next up" queue.
+**PAUSED since 2026-11-05 (user request).** All agents finished, were verified and committed (last: 236bc82).
+Resume only when the user asks. State at pause: catalogue complete, formats complete, L1/L2/L3 oracles +
+determinism + concurrent lanes working; CORE, STREAM, MATH ported (~1,000 functions); F1 = 24 functions at
+L2/L3, 217 at L1, ~700 `implemented` awaiting in-game verification (catalog/progress.md).
 
 ## Lanes now
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | — | FMT-2 part b (after INF-4) |
-| impl-2 | — | INF-15 / INF-9 |
-| measurement / REA | — (CAT-6 done, CAT-13 partial) | CAT-13 (typed arguments) |
-| harness | MATH-2 (port all MATH with L1, worktree) | INF-8 (after INF-4) |
-| verifier | audit of the L1 oracle + sa-math claims (worktree) | — |
+| impl-1 | — | STREAM-FIX-1 |
+| impl-2 | — | CORE-L2b |
+| measurement / REA | — | INF-10 (finish coverage) |
+| harness | — | VER-1 / INF-16 |
+| verifier | — | audit PORT-CORE + PORT-STREAM claims |
 
 ## Next up (ordered queue; the scheduler takes from the top)
 
-1. CAT-5: classify the 9,454 unknown game-`.text` functions (EH funclets, CRT, the third-party lib at
-   0x760000–0x7BFFFF, protection junk, real game functions)
-2. INF-1: own Wine prefix and game copy, lanes, headless display
-3. INF-3: `sa-launcher` + `sa-hook` skeleton
-4. FMT-1…: `sa-formats` (can run in parallel with INF; no game needed)
-5. CAT-6, CAT-8, CAT-9, CAT-10, CAT-11, SAMP-1
-6. INF-4…INF-14
+1. STREAM-FIX-1: the sa-stream panic with every port on Rust (`modelinfo/vehicle.rs:2037`, `sscanf_n` has
+   34 targets, a caller passes 38). Blocks every all-ports L3 run and `l3.sh --selftest` with the default set.
+2. CORE-L2b: in-game L2/L3 for the 191 PORT-CORE `implemented` functions with
+   `tools/e2e/port-l2.sh state:implemented-needs-L2:core-port`. First add the heap regions of the other
+   pool / operator new/delete hooks to `tools/e2e/l2-extras.txt` (as done for the pilots).
+3. STREAM-L2: the same for the 434 PORT-STREAM `implemented` functions (after STREAM-FIX-1); confirm the
+   values decided at run time by the protection VM (docs/arch/stream-port.md open questions).
+4. INF-10: finish coverage — `tools/e2e/cov-bisect.py` on `target/e2e/lane-3/inf10/points.txt` until the
+   grove-walk coverage run reaches frame 5,200; then the `--rust ports` run and multi-recording merge.
+5. Verifier: adversarial audit of PORT-CORE/PORT-STREAM L1 claims (as done for INF-7/MATH, docs/re/verify-l1.md).
+6. CAT-17 (name corrections from RE-SPEC-1/2), VER-1, INF-16, MATH-FPTAN, CORE-L2 leftovers (save-game
+   recording for CPools::Get*Ref).
+7. Porting, leaves first, using docs/re/specs/: COLL → PHYS → WORLD (specs ready), then RW (docs/re/rw/),
+   then ANIM/INPUT/CAM/PED/WEAPON/VEH (specs ready), then RE-SPEC-3 for RENDER/AI/POP/SCRIPT/HUD/AUDIO/SAVE.
+8. SAMP-1D (dynamic SA:MP measurement, needs INF-10).
 
 ## Phase 0: catalogue (M0)
 
