@@ -9,7 +9,7 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 **PAUSED 2026-11-07 ~22:45 (user request).** Master is consistent at this commit (F1 = 170 / 15,479 at ≥L2).
 Work in flight when paused (not merged, not verified; worktrees under ~/.local/share/opencode/worktree/28ba9b/):
-`coll` (PORT-COLL into new crate sa-world, lane 1), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
+`coll` (PORT-COLL agent finished: 121/145 ported in crates/sa-world; its diff is APPLIED UNCOMMITTED on the main checkout's working tree, under main-session verification: target/collv/verify.sh lane-1 re-runs and target/collv/l1-native.txt 10^6 native-backend L1 runs; if the session ended before the commit, rerun both, then set states and commit), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
 `inf10` (INF-10 coverage, lane 3), `stream-l2` (agent finished; already merged, safe to delete).
 Resume: (1) check each worktree's `git status`/diff and any summary under its target/e2e; finish or relaunch the
 agent with its ROADMAP brief; verify on master before merging; (2) re-run the 99 remaining STREAM-L2 PASS claims
