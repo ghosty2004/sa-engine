@@ -40,6 +40,8 @@ mkdir -p "$E2E_OUT"
 # so the game got the desktop's modes (7680x2160, 240 Hz) and failed to set 800x600@240.
 # e2e_headless_start exports DISPLAY again for the lane's gamescope.
 unset WAYLAND_DISPLAY WAYLAND_SOCKET DISPLAY
+# Nested runs (l3.sh --probe started by sa-oracle) inherit the lane display of their parent.
+[ -n "${E2E_DISPLAY:-}" ] && export DISPLAY="$E2E_DISPLAY"
 # WINEDEBUG, DXVK log level and the null audio sink (PULSE_SINK=sa_engine_null).
 # shellcheck source=../wine-env.sh
 source "$E2E_SCRIPT_ROOT/tools/wine-env.sh"

@@ -99,6 +99,8 @@ const HUD_COLOUR: u32 = 0xBAB22C;
 const AUDIO_ENGINE: u32 = 0xB6BC90;
 /// Return address of LoadSplashes' `call rand` (0x590128 + 5).
 pub const RAND_RET_LOAD_SPLASHES: u32 = 0x59012D;
+/// Return address of the original's `call srand` (0x59010A) in LoadSplashes.
+pub const SRAND_RET_LOAD_SPLASHES: u32 = 0x59010F;
 /// `CSprite2d::Constructor` / `Destructor` (static init iterators)
 pub const SPRITE_CTOR: u32 = 0x727230;
 pub const SPRITE_DTOR: u32 = 0x7281E0;
@@ -151,7 +153,7 @@ orig! {
     pub fn remove_txd(slot: i32) = cdecl 0x731E90 => crate::txdstore::remove_txd;
     pub fn remove_txd_slot(slot: i32) = cdecl 0x731CD0 => crate::txdstore::remove_txd_slot;
     /// KERNEL32 `QueryPerformanceCounter` (IAT 0x8580C8)
-    pub fn query_performance_counter(out: GPtr<u64>) -> i32 = stdcall cell 0x8580C8 => unported;
+    pub fn query_performance_counter(out: GPtr<u64>) -> i32 = stdcall site 0x5900FF => unported;
     /// CRT `sprintf(buf, fmt)` / `sprintf(buf, fmt, int)` (0x821BB5)
     pub fn sprintf0(buf: GPtr<u8>, fmt: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     pub fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, v: u32) -> i32 = cdecl 0x821BB5 => unported;
@@ -269,7 +271,7 @@ pub fn load_splashes(use_id: u8, id: u8) {
     let mut pool: [u8; 15] = core::array::from_fn(|k| k as u8);
     let mut qpc: u64 = 0;
     query_performance_counter(GPtr::from_raw(&raw mut qpc));
-    crt::srand(qpc as u32);
+    sa_core::orig::at_site(SRAND_RET_LOAD_SPLASHES, || crt::srand(qpc as u32));
     let mut out = [0u8; 15];
     let mut rem: i32 = 14;
     for k in 0..15 {
