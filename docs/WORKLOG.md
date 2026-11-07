@@ -478,3 +478,18 @@
 - Disk incident: a STREAM-L2 run wrote a 43 GB spool (/home 5.8 GB free); deleted by the main
   session (regenerable), agent given a 10 GB budget; INF-18 (spool quota) queued.
 - New ledger entry (original UB): LightsCreate uninitialised alpha/pad words. New tasks INF-17, INF-18.
+
+## 2026-11-07: STREAM-L2 (part 1) integrated
+- STREAM-L2 agent (lane 2): no port bug; 164 PASS, 142 NOCALLS, 97 not replayable by double-run L2
+  (RW/D3D objects, file/OS handles, loading-screen rendering), 15 mismatches all traced to harness
+  limits or original uninitialised data (LoadVehicleObject skimmer wheel sizes), 11 partial, 5
+  undeclared-only. Open questions answered (m_pColNodeInfos at 0x8A630C, protection-VM values measured
+  identical). Tools: STREAM section in l2-extras.txt (`doc:` lines), port-l2.sh `L2_SPOOL_DISCARD=1`,
+  hook-names.py `doc:` selector. Merge conflict in l2-extras.txt resolved keeping both sections.
+- Main-session re-run of the 164 PASS rows (lane 2, target/streaml2/verify.sh): sIG grove in-game
+  (SA_L2_FROM=205, 4/frame) and sPR pause-restart: l2 traces IDENTICAL (5,200 / 3,700 frames), 0
+  mismatches; sAF all-frames (1000/frame) crashed at frame 4,096 after the end of sampling as the agent
+  reported, so it gave no per-hook table; its text report showed 60 RemoveWindowAlphaCB mismatches:
+  a double-run artifact (material colour and restore list not declared); declared from the bytes
+  (0x4C83C5/0x4C83D2/0x4C83D8), targeted run 1000/1000 cases, 0 mismatches. 65 rows confirmed and set to
+  L2 (F1 105 → 170); the remaining 99 PASS claims need per-batch re-runs (in progress).

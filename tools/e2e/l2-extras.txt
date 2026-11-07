@@ -256,3 +256,256 @@ CPools::CheckPoolsEmpty@0xC9AC4C:4:RW
 CPools::ShutDown@0x8E2C30:0x280:RW
 CPools::ShutDown@0x8E31C0:0x120:RW
 CPools::ShutDown@0xC9AC4C:4:RW
+# STREAM-L2: heap regions of the PORT-STREAM hooks (every hook of docs/arch/stream-port.md; port-l2.sh
+# passes `doc:DOC@` lines once without a hook prefix when at least one listed hook is in DOC, so they
+# then apply to every listed hook). Sizes from the constructors in the 1.0 US bytes (the expression
+# syntax has no multiplication, so they are constants). Per-hook lines follow below.
+# CTxdStore::ms_pTxdPool (CPool<TxdDef>(5000), TxdDef 0x0C): header, objects, byte map
+doc:stream-port@[0xC8800C]:0x14:RW
+doc:stream-port@[[0xC8800C]]:0xEA60:RW
+doc:stream-port@[[0xC8800C]+4]:0x1388:RW
+# CColStore::ms_pColPool (CPool<ColDef>(255), ColDef 0x2C)
+doc:stream-port@[0x965560]:0x14:RW
+doc:stream-port@[[0x965560]]:0x2BD4:RW
+doc:stream-port@[[0x965560]+4]:0xFF:RW
+# CIplStore::ms_pPool (CPool<IplDef>(256), IplDef 0x34)
+doc:stream-port@[0x8E3FB0]:0x14:RW
+doc:stream-port@[[0x8E3FB0]]:0x3400:RW
+doc:stream-port@[[0x8E3FB0]+4]:0x100:RW
+# CStreaming::ms_rwObjectInstances (CLinkList at 0x9654F0, links buffer at +0x30: Init(1000), 12-byte links)
+doc:stream-port@[0x965520]:0x2EE0:RW
+# CdStream: gpCdStreams (CdStreamInit(5): 5 * 0x30 bytes) and the queue data ((5 + 1) * 4)
+doc:stream-port@[0x8E3FFC]:0xF0:RW
+doc:stream-port@[0x8E3FEC]:0x18:RW
+
+# STREAM-L2: globals of the per-function write sets that catalog/rwsets.csv only names by their base
+# (based/indexed accesses beyond 64 KiB, callee writes); extents from the sa-stream/sa-core declarations.
+# INFO_FOR_MODEL
+CColStore::LoadCollision@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CIplStore::RequestIplAndIgnore@0x8E4CC0:0x807F0:RW
+# RW_OBJECT_INSTANCES
+CStreaming::AddEntity@0x9654F0:0x34:RW
+# ATOMIC_STORE
+CStreaming::AddEntity@0xAAE950:0x6D604:RW
+# VEHICLES_LOADED
+CStreaming::AddToLoadedVehiclesList@0x8E4C24:0x2E:RW
+# VEHICLE_STORE
+CStreaming::AddToLoadedVehiclesList@0xB1F650:0x282A4:RW
+# INFO_FOR_MODEL
+CStreaming::ProcessEntitiesInSectorList@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CStreaming::ProcessEntitiesInSectorList<CPtrListSingleLink<CEntity*>>-@0x8E4CC0:0x807F0:RW
+# RENDER_ENTITY_LINK
+CStreaming::RenderEntity@0x8E48A0:0x4:RW
+# RW_OBJECT_INSTANCES
+CStreaming::RenderEntity@0x9654F0:0x34:RW
+# INFO_FOR_MODEL
+CStreaming::RequestBigBuildings@0x8E4CC0:0x807F0:RW
+# CHANNEL
+CStreaming::RequestFile@0x8E4A60:0x130:RW
+# INFO_FOR_MODEL
+CStreaming::RequestFile@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CStreaming::RequestModel@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CStreaming::RequestSpecialModel@0x8E4CC0:0x807F0:RW
+# CLUMP_STORE
+CStreaming::RequestSpecialModel@0xB1E958:0xCF4:RW
+# INFO_FOR_MODEL
+CStreaming::RequestTxdModel@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CStreaming::SetMissionDoesntRequireModel@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CStreaming::SetModelIsDeletable@0x8E4CC0:0x807F0:RW
+# INFO_FOR_MODEL
+CStreaming::SetModelTxdIsDeletable@0x8E4CC0:0x807F0:RW
+# STORED_TXD
+CTxdStore::PushCurrentTxd@0xC88010:0x4:RW
+# RW_OBJECT_INSTANCES
+thunk_FUN_01563580@0x9654F0:0x34:RW
+# CCollision::ms_colModelCache (CLinkList, written by the col-model cache callees)
+CColStore::LoadCollision@0x96592C:0x34:RW
+# CTheCarGenerators::CarGeneratorArray (500 * 0x20)
+CFileLoader::LoadCarGenerator-0@0xC27AD0:0x3E80:RW
+# CTheCarGenerators::CarGeneratorArray (500 * 0x20)
+CFileLoader::LoadCarGenerator-1@0xC27AD0:0x3E80:RW
+# CPopulation loaded car groups (0xC0E998 boats, 0xC0E9C8 inappropriate, 0xC0E9F8 appropriate, 0xC0EA28 gangs): written by CLoadedCarGroup::AddMember
+CStreaming::AddToLoadedVehiclesList@0xC0E998:0x370:RW
+# *index (int32 out parameter)
+CModelInfo::GetModelInfo-full@arg1:4:W
+# building pool objects (13000 * 0x38): entity scan codes
+CStreaming::ProcessEntitiesInSectorList@[[0xB74498]]:0xB1BC0:RW
+# dummy pool objects (2500 * 0x38)
+CStreaming::ProcessEntitiesInSectorList@[[0xB744A0]]:0x222E0:RW
+# object pool objects (350 * 0x17C)
+CStreaming::ProcessEntitiesInSectorList@[[0xB7449C]]:0x20788:RW
+# building pool objects (13000 * 0x38): entity scan codes
+CStreaming::ProcessEntitiesInSectorList<CPtrListSingleLink<CEntity*>>-@[[0xB74498]]:0xB1BC0:RW
+# dummy pool objects (2500 * 0x38)
+CStreaming::ProcessEntitiesInSectorList<CPtrListSingleLink<CEntity*>>-@[[0xB744A0]]:0x222E0:RW
+# object pool objects (350 * 0x17C)
+CStreaming::ProcessEntitiesInSectorList<CPtrListSingleLink<CEntity*>>-@[[0xB7449C]]:0x20788:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddAtomicModel@0xAAE950:0x6D604:RW
+CModelInfo::AddAtomicModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddDamageAtomicModel@0xB1BF58:0x9DC:RW
+CModelInfo::AddDamageAtomicModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddLodAtomicModel@0xB1C934:0x28:RW
+CModelInfo::AddLodAtomicModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddTimeModel@0xB1C960:0x17C8:RW
+CModelInfo::AddTimeModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddLodTimeModel@0xB1E128:0x2C:RW
+CModelInfo::AddLodTimeModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddWeaponModel@0xB1E158:0x7FC:RW
+CModelInfo::AddWeaponModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddClumpModel@0xB1E958:0xCF4:RW
+CModelInfo::AddClumpModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddVehicleModel@0xB1F650:0x282A4:RW
+CModelInfo::AddVehicleModel@0xA9B0C8:0x13880:RW
+# model info store (count + entries) and CModelInfo::ms_modelInfoPtrs
+CModelInfo::AddPedModel@0xB478F8:0x49DC:RW
+CModelInfo::AddPedModel@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::LoadObject@0xAAE950:0x6D604:RW
+CFileLoader::LoadObject@0xB1BF58:0x9DC:RW
+CFileLoader::LoadObject@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::LoadTimeObject@0xB1C960:0x17C8:RW
+CFileLoader::LoadTimeObject@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::LoadWeaponObject@0xB1E158:0x7FC:RW
+CFileLoader::LoadWeaponObject@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::LoadAnimatedClumpObject@0xB1E958:0xCF4:RW
+CFileLoader::LoadAnimatedClumpObject@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::LoadVehicleObject@0xB1F650:0x282A4:RW
+CFileLoader::LoadVehicleObject@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::LoadPedObject@0xB478F8:0x49DC:RW
+CFileLoader::LoadPedObject@0xA9B0C8:0x13880:RW
+# model info stores and pointers written through the CModelInfo::Add*Model / 2d-effect callees
+CFileLoader::Load2dEffect@0xAAE950:0x6D604:RW
+CFileLoader::Load2dEffect@0xB4C2D8:0x1904:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_atomicModelInfoStore@0xAAE950:0x6D604:RW
+__init_CModelInfo__ms_atomicModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_damageAtomicModelInfoStore@0xB1BF58:0x9DC:RW
+__init_CModelInfo__ms_damageAtomicModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_lodAtomicModelInfoStore@0xB1C934:0x28:RW
+__init_CModelInfo__ms_lodAtomicModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_timeModelInfoStore@0xB1C960:0x17C8:RW
+__init_CModelInfo__ms_timeModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_lodTimeModelInfoStore@0xB1E128:0x2C:RW
+__init_CModelInfo__ms_lodTimeModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_weaponModelInfoStore@0xB1E158:0x7FC:RW
+__init_CModelInfo__ms_weaponModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_clumpModelInfoStore@0xB1E958:0xCF4:RW
+__init_CModelInfo__ms_clumpModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_vehicleModelInfoStore@0xB1F650:0x282A4:RW
+__init_CModelInfo__ms_vehicleModelInfoStore@0xC9D428:0x8:RW
+# the store it constructs; CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_CModelInfo__ms_pedModelInfoStore@0xB478F8:0x49DC:RW
+__init_CModelInfo__ms_pedModelInfoStore@0xC9D428:0x8:RW
+# CPedModelInfo entries (special characters)
+CStreaming::RequestSpecialModel@0xB478F8:0x49DC:RW
+# CStreaming::ms_aInfoForModel (26316 * 0x14)
+CColStore::RequestCollision@0x8E4CC0:0x807F0:RW
+# CIplStore::ms_pIplEntityIndexArrays
+CIplStore::GetNewIplEntityIndexArray@0x8E3F08:0xA0:RW
+# CFileLoader::ms_line; CRT _cflush counter 0xC9AC4C (incremented by __stbuf 0x827E15 when a stream gets a buffer)
+CStreaming::ReadIniFile@0xB71848:0x200:RW
+CStreaming::ReadIniFile@0xC9AC4C:0x4:RW
+# the ModelIndices tables
+ModelIndices::MatchAllModelStrings@0x8CD4F4:0x23C:RW
+ModelIndices::MatchAllModelStrings@0x8CD740:0x42:RW
+# CAudioZones::m_aBoxes (158 * 0x18), m_aSpheres (3 * 0x1C) (gta-reversed AudioZones.h)
+CFileLoader::LoadAudioZone@0xB6DCD0:0xED0:RW
+CFileLoader::LoadAudioZone@0xB6EBA8:0x54:RW
+# CCullZones::aMirrorAttributeZones (72 * 0x18), aAttributeZones (1300 * 0x12)
+CFileLoader::LoadCullZone@0xC815C0:0x6C0:RW
+CFileLoader::LoadCullZone@0xC81F50:0x5B68:RW
+# CGarages::aGarages (50 * 0xD8)
+CFileLoader::LoadGarage@0x96C048:0x2A30:RW
+# COcclusion::Occluders (1000 * 0x12)
+CFileLoader::LoadOcclusionVolume@0xC73FA0:0x4650:RW
+# CPickups::aPickUps (620 * 0x20)
+CFileLoader::LoadPickup@0x9788C0:0x4D80:RW
+# CTimeCycle::m_aBoxes (20 * 0x28)
+CFileLoader::LoadTimeCyclesModifier@0xB7C550:0x320:RW
+# CTheZones::MapZoneArray (39 * 0x20), NavigationZoneArray (380 * 0x20)
+CFileLoader::LoadZone@0xBA1908:0x4E0:RW
+CFileLoader::LoadZone@0xBA3798:0x2F80:RW
+# CStreaming::ms_aInfoForModel (26316 * 0x14) written by the request/stream functions
+CStreaming::PurgeRequestList@0x8E4CC0:0x807F0:RW
+CStreaming::StreamCopModels@0x8E4CC0:0x807F0:RW
+CStreaming::StreamOneNewCar@0x8E4CC0:0x807F0:RW
+CStreaming::StreamVehiclesAndPeds_Always@0x8E4CC0:0x807F0:RW
+CStreaming::StreamVehiclesAndPeds@0x8E4CC0:0x807F0:RW
+# CStreaming::ms_timePassedSinceLastCopBike (0x9654C0)
+CStreaming::StreamCopModels@0x9654C0:0x4:RW
+CStreaming::StreamVehiclesAndPeds@0x9654C0:0x4:RW
+# CPopulation loaded car groups (0xC0E998 .. 0xC0ED08), written by CLoadedCarGroup::AddMember/RemoveMember
+CStreaming::ReclassifyLoadedCars@0xC0E998:0x370:RW
+CStreaming::StreamVehiclesAndPeds_Always@0xC0E998:0x370:RW
+# RwTextureSetFindCallBack target: RwEngineInstance + the texture module's globals offset ([0xC97B4C]) + 0x18
+# (0x7F34D0/0x7F34F0); heap memory of the RW engine block
+CVehicleModelInfo::UseCommonVehicleTexDicationary@[0xC97B24]+[0xC97B4C]+0x18:4:RW
+CVehicleModelInfo::StopUsingCommonVehicleTexDicationary@[0xC97B24]+[0xC97B4C]+0x18:4:RW
+# CColModel pool (10150 * 0x30): header, objects, byte map (LoadCollision removes collision files)
+CColStore::LoadCollision@[0xB744A4]:0x14:RW
+CColStore::LoadCollision@[[0xB744A4]]:0x76F20:RW
+CColStore::LoadCollision@[[0xB744A4]+4]:0x27A6:RW
+# CCollision::ms_colModelCache links buffer (CCollision::Init 0x416260: operator new(0x258) = 50 links, stored at 0x96595C)
+CColStore::LoadCollision@[0x96595C]:0x258:RW
+# out / callback-data parameters on the caller's stack
+CVehicleModelInfo::GetWheelPosn@arg1:0xC:W
+CClumpModelInfo::FindFrameFromIdCB@arg1:8:RW
+CClumpModelInfo::FindFrameFromNameCB@arg1:8:RW
+CClumpModelInfo::FindFrameFromNameWithoutIdCB@arg1:8:RW
+CVehicleModelInfo::GetOkAndDamagedAtomicCB@arg1:8:RW
+CVehicleModelInfo::SetEditableMaterialsCB-RpAtomic@arg1:4:RW
+CVehicleModelInfo::SetEditableMaterialsCB-RpMaterial@arg1:4:RW
+# CVehicleModelInfo::ms_aRestoreEntries (0xB4DBE8, 0x800): the editable-material restore list
+CVehicleModelInfo::SetEditableMaterials@0xB4DBE8:0x800:RW
+CVehicleModelInfo::SetEditableMaterialsCB-RpAtomic@0xB4DBE8:0x800:RW
+CVehicleModelInfo::SetEditableMaterialsCB-RpMaterial@0xB4DBE8:0x800:RW
+# CVehicleModelInfo::ms_upgradeWheels / ms_numWheelUpgrades
+CVehicleModelInfo::AddWheelUpgrade@0xB4E3F8:0x78:RW
+CVehicleModelInfo::AddWheelUpgrade@0xB4E470:0x8:RW
+# carcols.dat: the colour table, the vehicle model infos' colour lists, the CRT _cflush counter (0xC9AC4C)
+CVehicleModelInfo::LoadVehicleColours@0xB4E480:0x200:RW
+CVehicleModelInfo::LoadVehicleColours@0xB1F650:0x282A4:RW
+CVehicleModelInfo::LoadVehicleColours@0xC9AC4C:0x4:RW
+# RemoveWindowAlphaCB (0x4C83B0): the RpMaterial colour (+4..+7), *data (the restore cursor) and the
+# restore list it appends to (writes at 0x4C83C5/0x4C83D2/0x4C83D8)
+CVehicleModelInfo::RemoveWindowAlphaCB@arg0:0x60:RW
+CVehicleModelInfo::RemoveWindowAlphaCB@arg1:4:RW
+CVehicleModelInfo::RemoveWindowAlphaCB@0xB4DBE8:0x800:RW
+# the RpMaterial (heap; 0x60 covers the base struct and the plugin data the callback touches)
+CVehicleModelInfo::SetEditableMaterialsCB-RpMaterial@arg0:0x60:RW
+# *index (uint16 out parameter; ModelIndices tables)
+CModelInfo::GetModelInfoUInt16@arg1:2:W
+# CStreaming::ms_aInfoForModel (26316 * 0x14)
+CStreaming::StreamZoneModels_Gangs@0x8E4CC0:0x807F0:RW
+CStreaming::PossiblyStreamCarOutAfterCreation@0x8E4CC0:0x807F0:RW
+# CStreaming::ms_rwObjectInstances (CLinkList, 0x34 bytes)
+CStreaming::RemoveEntity@0x9654F0:0x34:RW
+CStreaming::RemoveEntity@0x8E48A0:0x4:RW
+# CTimeModelInfo store entries (the time-model chain of SetColModel)
+CBaseModelInfo::SetColModel@0xB1C960:0x17C8:RW
