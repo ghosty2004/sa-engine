@@ -270,6 +270,28 @@ pub fn compare(
             ),
         ));
     }
+    // Preserved registers: the original must return them unchanged (else the spec's claim about
+    // the callers is wrong), and the port's hook entry must restore them.
+    for (bit, name, got, input) in [
+        (sa_core::abi::PRESERVE_ECX, "ecx", o.ecx, call.ecx),
+        (sa_core::abi::PRESERVE_EDX, "edx", o.edx, call.edx),
+    ] {
+        if spec.preserve & bit == 0 {
+            continue;
+        }
+        if got != input {
+            return Err((
+                format!("preserve-{name}"),
+                format!("orig {name}={got:#x} on return, {input:#x} on entry (spec says the original preserves it)"),
+            ));
+        }
+        if crate::hook_preserve(spec.addr).unwrap_or(0) & bit == 0 {
+            return Err((
+                format!("preserve-{name}"),
+                format!("orig preserves {name}={input:#x}; the port's #[hook] does not declare preserve = \"{name}\""),
+            ));
+        }
+    }
     let want_depth = if spec.ret == RetKind::St0 { 1 } else { 0 };
     if o.depth() != want_depth {
         return Err((
@@ -393,15 +415,33 @@ fn score(x: f32) -> (u32, i32, u32) {
     )
 }
 
+/// A per-case value for a preserved register that is not an argument (FNV-1a of the inputs, so
+/// every case, including shrunk ones, gets its own).
+fn preserved_value(i: &Inputs, salt: u32) -> u32 {
+    i.iter().fold(0x811C_9DC5u32 ^ salt, |h, &w| (h ^ w).wrapping_mul(0x0100_0193))
+}
+
+/// The call of case `i`: the spec's call, the configured FPU state, and the preserved registers
+/// that do not carry an argument loaded with a per-case value ([`Spec::preserve`]).
+pub fn make_call(spec: &Spec, cfg: &Cfg, i: &Inputs) -> Call {
+    let mut c = (spec.call)(i);
+    c.fpu = cfg.fpu;
+    let (ecx_arg, edx_arg) = match c.conv {
+        Conv::Thiscall => (true, false),
+        Conv::Fastcall => (true, true),
+        _ => (false, false),
+    };
+    if spec.preserve & sa_core::abi::PRESERVE_ECX != 0 && !ecx_arg {
+        c.ecx = preserved_value(i, 0xEC);
+    }
+    if spec.preserve & sa_core::abi::PRESERVE_EDX != 0 && !edx_arg {
+        c.edx = preserved_value(i, 0xED).rotate_left(13);
+    }
+    c
+}
+
 fn make_calls(spec: &Spec, cfg: &Cfg, inputs: &[Inputs]) -> Vec<Call> {
-    inputs
-        .iter()
-        .map(|i| {
-            let mut c = (spec.call)(i);
-            c.fpu = cfg.fpu;
-            c
-        })
-        .collect()
+    inputs.iter().map(|i| make_call(spec, cfg, i)).collect()
 }
 
 /// For each input: the mismatch (kind, detail), or None.

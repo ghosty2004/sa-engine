@@ -217,3 +217,110 @@ All faults are injected by replacing a spec's port in the test file; the ports t
 - GTATranslateKey: the claim stands, but its documented boundary is undersampled (V-11).
 - The remaining claims stand. No write is hidden from the comparison, every real branch is
   covered, and the semantic mutants are caught.
+
+## VER-2 follow-up (2026-11-07)
+
+Harness changes that close V-9..V-12 and V-14. Commands as above (`SA_WINEPREFIX=/nonexistent`, Unicorn).
+
+### V-9: preserved registers
+
+- `#[hook(preserve = "edx")]` (`"ecx"`, `"ecx,edx"`) in sa-macros: the registered entry becomes a
+  naked wrapper that saves the registers, copies the stack arguments, calls the shim and restores
+  them (`HookReg::preserve`). Emitted i686 code for 0x5B3AD0 (`cargo rustc -p sa-stream --release
+  --target i686-pc-windows-gnu --lib -- --emit asm`):
+  ```
+  __sa_hook_preserve_set_base_model_info_flags:
+      pushl %edx
+      pushl 12(%esp)
+      pushl 12(%esp)
+      calll __sa_hook_shim_set_base_model_info_flags
+      addl  $8, %esp
+      popl  %edx
+      retl
+  ```
+- L1: `Spec::preserve`. The runner loads each preserved register that is not an argument with a
+  per-case value, requires the original to return it unchanged and the port's hook to declare it
+  (kind `preserve-ecx`/`preserve-edx`). ECX is now captured by both backends. The 0x5B3AD0 spec
+  compares EDX; `verifier_edx_live_across_set_base_model_info_flags` shows both checks discriminate
+  (a hook without `preserve`: every case fails; an original that writes EDX: caught).
+- Caller scan: sa-hook test `callers::callers_reading_ecx_edx_after_a_hook_are_declared` (all 796
+  hooks, 569 with direct callers, 5,575 call sites in `.text` and `.HOODLUM`, every path after the
+  call, byte-wise register tracking). It found more than the audit's straight-line scan:
+  - 0x5B3AD0 is also relied on by its callers 0x5B3B2B (`SetAtomicModelInfoFlags`) and 0x5B3C3B
+    (`SetClumpModelInfoFlags`): they keep a value in DX across the call. Covered by the same
+    `preserve = "edx"`.
+  - **New:** `DoesInfiniteLineTouchScreen` (0x71DB80) keeps the screen width/height in ECX/EDX
+    across its first call to `DoesInfiniteLineCrossFiniteLine` (0x71DB30, site 0x71DC62) and pushes
+    them again for the second call (0x71DC7C..7E). The original 0x71DB30 never writes ECX/EDX. The
+    hook now has `preserve = "ecx,edx"` (shim-only change in `sa-core/src/common.rs`), and its spec
+    compares both registers.
+
+### V-10: specs run the hooked entries
+
+All 44 specs (and the pilot `CPed/CVehicle/CObjectPool::New`, `CPed::operator new/delete` specs
+built by the same builders) now call the function `#[hook]` installs, on the host
+(`sa_oracle::hosted`, documented in `docs/re/l1-harness.md`): host globals for the key states, the
+clock, the OS version, the LOD multiplier and the pool pointers; `sa_core::orig::host` stand-ins for
+the allocators (the port must call the allocator the original calls), `MapVirtualKeyA` (its arguments
+are now recorded by the original's stub and by the stand-in, and compared) and the original
+`CDummyPool::New`; the 32-bit `CPool` header bridged to the host layout. Slot sizes come from the
+entries' types, asserted against the strides in the original's code. Remaining gap: the two
+`CPool<TxdDef>` specs (`TxdDef` holds a pointer, host size 16) run the same generic code on a
+0x0C-byte slot type instead of the entries. `verifier_hosted_pool_entries_discriminate`: a wrong slot
+size, the wrong allocator and the wrong pool global are caught.
+
+### V-11: GTATranslateKey boundary
+
+The generator now sets the low half of the `MapVirtualKeyA` result to 0xFF (5/16), 0xFE, 0x100 (2/16
+each), 0xFFFF or 0 (1/16 each), with the upper half random or zero. The gta-reversed mutant
+(`chr <= 0xFF`) is caught at 10^5 cases: 60,333 mismatches (was 0).
+
+### V-12: FPU state of the callers of the seven float functions
+
+Call graph from `catalog/callgraph.csv` (`tools/verify/fpu_callers.py`) and the exe:
+
+- PC=24 is set by `_rwProcessorInitialize` (0x857404) from `D3D9System` case 17
+  (rwDEVICESYSTEMFINALIZESTART, 0x7F68E8), i.e. by `RwEngineStart` inside `RsRwInitialize`, reached
+  from WinMain's `RsEventHandler(0x15 = rsRWINITIALISE)` at 0x748847. It is forced again per camera
+  update (`_rwProcessorForceSinglePrecision` 0x857432 from `_rwD3D9CameraBeginUpdate`). The saved CW is
+  restored only by `_rwProcessorRelease` (0x85742B) in rwDEVICESYSTEMSTOP (`RwEngineStop`: shutdown
+  after `CGame::Shutdown`, and the video-mode change, which restarts the engine right after). Other
+  CW writes on the main thread are save/restore pairs inside one function (CRT `_ftol` and math
+  `__ctrlfp`, RW image functions) or D3DX9 objects (0x76B89B/0x76B940) that set `_PC_53` with
+  `_controlfp(0x10000, 0x30000)` for their lifetime inside RW's vertex-shader setup; no game code runs
+  inside those scopes.
+- Per function:
+
+| function | direct callers | entry points from WinMain / roots | runs at |
+|---|---|---|---|
+| GetDayNightBalance 0x6FAB30 | `CEntity::ProcessLightsForEntity` (0x6FC7AC) | only the 11 `*::PreRender` virtuals (render loop) | PC=24 |
+| SetIfCollisionIsRequiredReducedBB 0x410470 | none direct; callback pushed from `.HOODLUM` 0x156CFB4 (`SetCollisionRequired`, `LoadCollision`) | WinMain only via `Game::InitialiseGame` (0x748CFB), `CGame::ShutDownForRestart`/`InitialiseWhenRestarting` (0x748E04–0x748E48), `CGame::Shutdown` (0x748E6B), all after 0x748847; other roots: game loop, script commands, `ProcessControl` virtuals | PC=24 |
+| DoesInfiniteLineCrossFiniteLine 0x71DB30 | `DoesInfiniteLineTouchScreen` (0x71DC62, 0x71DC81) | `COccluder::ProcessLineSegment` → `Game::Idle` | PC=24 |
+| DoesInfiniteLineTouchScreen 0x71DB80 | `COccluder::ProcessLineSegment` (0x71E520) | `Game::Idle` | PC=24 |
+| CQuadTreeNode::FindSector-vec 0x552640 | `GetAllMatching-vec` (0x55295B), `ForAllMatching-vec` (0x552A1A) | as 0x410470, plus `CIplStore::RequestIpls` | PC=24 |
+| IsPointInsideLine 0x71E050 | none (no call, no data reference) | never runs in 1.0 US | — |
+| GetAtomicFromDistance 0x4C44B0 | none (no call, no data reference) | never runs in 1.0 US | — |
+
+`Win32_InitApplication` (which registers `MainWndProc`, the only code that runs before 0x748847
+besides the CRT initialisers and WinMain's start) reaches none of them. No spec needs another CW; V-12
+is closed without spec changes. Limitation: indirect calls the catalogue has not resolved are not in
+the graph.
+
+### V-14
+
+- `Rs::RsKeyFromScanCode` returns `u32` (the table byte zero-extended, as `movzx eax, …; mov al, …`
+  leaves EAX); the spec compares the whole EAX. Mutant "upper EAX bits left set" caught (102,000/102,000).
+- Catalogue name of 0x536D10: `CEntryInfoNodePool::GetAt` (from gta-reversed's `RH_ScopedInstall`,
+  `catalog/functions.csv` row 2966 / `procedures.csv`). The bytes are `CPool<CEntryInfoNode>::New`
+  (slot 0x14, target of `CEntryInfoNode::operator new`); the name should be `CEntryInfoNodePool::New`.
+  Not edited (catalogue is out of scope for this task).
+
+### Re-runs at 10^6 cases of every changed spec (Unicorn, seed 0x5A0001, native off)
+
+All 53: 0 mismatches. PASS, except `DoesInfiniteLineCrossFiniteLine` (1,100,000 cases, 116,280 SNaN
+cases unverified) and `CAtomicModelInfoGetAtomicFromDistance` (1,060,000, 41,136 unverified):
+INCOMPLETE only because the native backend was off. Specs: SetBaseModelInfoFlags (EDX compared),
+DoesInfiniteLineCrossFiniteLine (ECX/EDX compared), RsKeyFromScanCode, GTATranslateKey, CPad ×4,
+GetDayNightBalance, InitGBab358, GetAtomicFromDistance, 13 `CPool::New` (incl. the three pilots and
+CTxd), 4 `operator new` (CNodeRoute, CEntryInfoNode, CPed, CDummy), 3 `operator delete`, 22 pool
+constructors.

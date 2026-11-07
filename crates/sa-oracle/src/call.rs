@@ -154,6 +154,8 @@ impl Call {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Outcome {
     pub eax: u32,
+    /// ECX after return (context offset 12, the input `nstack` field, overwritten by both backends)
+    pub ecx: u32,
     pub edx: u32,
     pub esp_delta: i32,
     /// x87 status word right after return (TOP, condition codes, exception flags)
@@ -182,6 +184,7 @@ impl Outcome {
         s.copy_from_slice(&scratch[..SCRATCH_LEN]);
         Outcome {
             eax: u32_at(b, 88),
+            ecx: u32_at(b, 12),
             edx: u32_at(b, 92),
             esp_delta: u32_at(b, 96) as i32,
             fpsw: u16::from_le_bytes([b[100], b[101]]),

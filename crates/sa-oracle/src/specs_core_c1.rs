@@ -34,10 +34,11 @@ fn constant(key: &'static str, name: &'static str, addr: u32, value: u32) -> Spe
 /// Every C1 spec.
 pub fn all() -> Vec<Spec> {
     vec![
-        b("RsKeyFromScanCode", "Rs::RsKeyFromScanCode", 0x6193F0, Cdecl, Al)
+        // EAX compared whole: the original zero-extends (`movzx eax, byte [esp+4]; mov al, [eax+tbl]`)
+        b("RsKeyFromScanCode", "Rs::RsKeyFromScanCode", 0x6193F0, Cdecl, Eax)
             .args(vec![A::I(g_scan), A::I(g_flag)])
             .reads(vec![(0x8D2C00, 0x8D2E00)])
-            .rust(|c| ExpRet::Al(platform::rs_key_from_scan_code(c.i(0), c.i(1) as i32))),
+            .rust(|c| ExpRet::Eax(platform::rs_key_from_scan_code(c.i(0), c.i(1) as i32))),
         constant("RsRegisterImageLoader", "Rs::RsRegisterImageLoader", 0x619470, platform::rs_register_image_loader() as u32),
         constant("RsSetDebug", "Rs::RsSetDebug", 0x619480, platform::rs_set_debug() as u32),
         constant("MotionBlurClose", "CMBlur::MotionBlurClose", 0x71D720, platform::motion_blur_close() as u32),

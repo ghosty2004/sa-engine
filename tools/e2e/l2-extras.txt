@@ -7,8 +7,8 @@
 # both, and counts as declared for the undeclared-write check. tools/e2e/port-l2.sh passes the lines
 # whose HOOK is in its hook list.
 #
-# Lines so far: the ARCH-1 pilots (CORE-L2). PORT-CORE's other CPool instantiations, pool constructors
-# and class operator new/delete (sa-core pools.rs) need the same kind of lines (CORE-L2b).
+# Lines: the ARCH-1 pilots (CORE-L2) and PORT-CORE (CORE-L2b, below). Pool constructors need none: their
+# header is `this` (declared by the hook signature) and the arrays they write are allocated inside the call.
 #
 # CPool<T> (layouts.csv CPool<int32>, 0x14 bytes): +0 objects, +4 byte map, +8 size, +0xC first free.
 # Pools: ped [0xB74490], vehicle [0xB74494], object [0xB7449C].
@@ -37,3 +37,222 @@ CPools::GetObjectRef@[0xB7449C]:0x14:R
 CPools::GetObjectRef@[[0xB7449C]+4]:[[0xB7449C]+8]:R
 CPools::GetObject@[0xB7449C]:0x14:R
 CPools::GetObject@[[0xB7449C]+4]:[[0xB7449C]+8]:R
+
+# ---- CORE-L2b (PORT-CORE) ------------------------------------------------------------------------
+# Pools behind CPools::ms_p*Pool: ptr-node-single [0xB74484] (70000 x 8), entry-info-node [0xB7448C]
+# (500 x 0x14), ped [0xB74490] (140 x 0x7C4), vehicle [0xB74494] (110 x 0xA18), object [0xB7449C]
+# (350 x 0x19C); CQuadTreeNode's pool [0xB745BC] (400 x 0x28). Sizes from CPools::Initialise /
+# CQuadTreeNode::InitPool (pools.rs, quadtree.rs).
+
+# PORT-CORE pool methods (sa-core pools.rs; L1 already, these lines are for in-game L2 runs):
+# thiscall New on the header in ecx, cdecl operator new/delete on CPools::ms_p*Pool
+CBuildingPool::New@[ecx+4]:[ecx+8]:RW
+CColModelPool::New@[ecx+4]:[ecx+8]:RW
+CPointRoutePool::New@[ecx+4]:[ecx+8]:RW
+CPatrolRoutePool::New@[ecx+4]:[ecx+8]:RW
+CNodeRoutePool::New@[ecx+4]:[ecx+8]:RW
+CEntryInfoNodePool::GetAt@[ecx+4]:[ecx+8]:RW
+CPtrNodeSingleLinkPool::New@[ecx+4]:[ecx+8]:RW
+CPtrNodeDoubleLinkPool::New@[ecx+4]:[ecx+8]:RW
+CPedIntelligencePool::New@[ecx+4]:[ecx+8]:RW
+CEntryInfoNode::operator new@[0xB7448C]:0x14:RW
+CEntryInfoNode::operator new@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CEntryInfoNode::operator delete@[0xB7448C]:0x14:RW
+CEntryInfoNode::operator delete@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CNodeRoute::operator delete@[0xB744B8]:0x14:RW
+CNodeRoute::operator delete@[[0xB744B8]+4]:[[0xB744B8]+8]:RW
+
+# CEntryInfoList::Flush: the list head (this), the node pool (links +0xC/+0x10 in the nodes, map, first_free)
+CEntryInfoList::Flush@ecx:4:RW
+CEntryInfoList::Flush@[0xB7448C]:0x14:RW
+CEntryInfoList::Flush@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CEntryInfoList::Flush@[[0xB7448C]]:0x2710:RW
+
+# CQuadTreeNode methods: list nodes come from the ptr-node-single pool (header and byte map; its 560 KiB
+# of objects would make every case huge), child nodes from the quad-tree
+# node pool (AddItem); the GetAll* output lists are CPtrListSingleLink heads (last argument)
+CQuadTreeNode<T>::GetAll@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::GetAll@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::GetAll@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::GetAll@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::GetAll@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::GetAllMatching-rect@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::GetAllMatching-rect@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::GetAllMatching-rect@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::GetAllMatching-rect@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::GetAllMatching-rect@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::GetAllMatching-vec@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::GetAllMatching-vec@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::GetAllMatching-vec@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::GetAllMatching-vec@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::GetAllMatching-vec@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::DeleteItem-@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::DeleteItem-@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::DeleteItem-@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::DeleteItem-@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::DeleteItem-@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::DeleteItem-rect@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::DeleteItem-rect@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::DeleteItem-rect@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::DeleteItem-rect@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::DeleteItem-rect@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::AddItem@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::AddItem@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::AddItem@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::AddItem@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::AddItem@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::ForAllMatching-rect@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::ForAllMatching-rect@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::ForAllMatching-rect@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::ForAllMatching-rect@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::ForAllMatching-rect@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::ForAllMatching-vec@[0xB74484]:0x14:RW
+CQuadTreeNode<T>::ForAllMatching-vec@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CQuadTreeNode<T>::ForAllMatching-vec@[0xB745BC]:0x14:RW
+CQuadTreeNode<T>::ForAllMatching-vec@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CQuadTreeNode<T>::ForAllMatching-vec@[[0xB745BC]]:0x3E80:RW
+CQuadTreeNode<T>::GetAll@arg0:4:RW
+CQuadTreeNode<T>::GetAllMatching-rect@arg1:4:RW
+CQuadTreeNode<T>::GetAllMatching-vec@arg1:4:RW
+
+# CReferences: entity reference lists live in the ped/vehicle/object pool objects
+CReferences::PruneAllReferencesInWorld@[[0xB74490]]:0x43F30:RW
+CReferences::PruneAllReferencesInWorld@[[0xB74494]]:0x45390:RW
+CReferences::PruneAllReferencesInWorld@[[0xB7449C]]:0x23268:RW
+CReferences::RemoveReferencesToPlayer@[[0xB74490]]:0x43F30:RW
+CReferences::RemoveReferencesToPlayer@[[0xB74494]]:0x45390:RW
+CReferences::RemoveReferencesToPlayer@[[0xB7449C]]:0x23268:RW
+
+# CPools::MakeSureSlotInObjectPoolIsEmpty: the object pool (header, map, objects)
+CPools::MakeSureSlotInObjectPoolIsEmpty@[0xB7449C]:0x14:RW
+CPools::MakeSureSlotInObjectPoolIsEmpty@[[0xB7449C]+4]:[[0xB7449C]+8]:RW
+CPools::MakeSureSlotInObjectPoolIsEmpty@[[0xB7449C]]:0x23268:RW
+
+# CPools::CheckPoolsEmpty reads the object pool
+CPools::CheckPoolsEmpty@[0xB7449C]:0x14:R
+CPools::CheckPoolsEmpty@[[0xB7449C]+4]:[[0xB7449C]+8]:R
+CPools::CheckPoolsEmpty@[[0xB7449C]]:0x23268:R
+
+# CReferences::aRefs (0xB9B9A8, 3000 x 8) and pEmptyList (0xBA1768): catalog/rwsets.csv has them as
+# indexed (unbounded) entries, which do not declare the bytes written
+CReferences::Init@0xB9B9A8:0x5DC4:W
+CReferences::PruneAllReferencesInWorld@0xB9B9A8:0x5DC4:RW
+CReferences::RemoveReferencesToPlayer@0xB9B9A8:0x5DC4:RW
+
+# CMemoryHeap::Init (this = CMemoryHeap, 0x48 bytes, not in layouts.csv; arg0/arg1 = the managed block)
+# and InitScratchPad (gScratchPadHeap 0xC87BD0, PC_Scratch 0xC8E0C8 x 0x4000)
+CMemoryHeap::Init@ecx:0x48:RW
+CMemoryHeap::Init@arg0:arg1:RW
+CMemoryMgr::InitScratchPad@0xC87BD0:0x48:RW
+CMemoryMgr::InitScratchPad@0xC8E0C8:0x4000:RW
+
+# Out-parameters (pointer arguments the hook signature does not size)
+CDirectory::FindItem-ByName@arg1:4:W
+CDirectory::FindItem-ByName@arg2:4:W
+CDirectory::FindItem-ByHash@arg1:4:W
+CDirectory::FindItem-ByHash@arg2:4:W
+Common::CalcScreenCoors-VV@arg1:12:W
+Common::CalcScreenCoors-VVff@arg1:12:W
+Common::CalcScreenCoors-VVff@arg2:4:W
+Common::CalcScreenCoors-VVff@arg3:4:W
+
+# DoFade draws through RwEngineInstance (indirect calls the spec cannot follow): the RW D3D9 driver
+# state it writes, _rwD3D9LastVertexDeclarationUsed.. (0x8E2444) and the driver statics
+# 0xC97B98..0xC9A5F0 (dynamic vertex buffer manager, render/texture-stage state caches)
+DoFade@0x8E2444:12:RW
+DoFade@0xC97B98:0x2A58:RW
+
+# Light::LightsCreate: pExtraDirectionals[6] (0xC886F0, rwsets: indexed)
+Light::LightsCreate@0xC886F0:0x18:W
+
+# CFileMgr / file users: CRT stream state written by fopen/fread/fclose (the CRT is excluded from the
+# catalogue): _iob 0x8E2C30 (20 x FILE 0x20; 0x823FA2 _lock_file range check), _locktable 0x8E31C0
+# (36 x 8, lazily created locks; 0x82ADBE), _cflush 0xC9AC4C (0x827E15); ms_dirName 0xB71A60 /
+# ms_rootDirName 0xB71AE0 (128 each; rwsets: based)
+CFileMgr::OpenFile@0x8E2C30:0x280:RW
+CFileMgr::OpenFile@0x8E31C0:0x120:RW
+CFileMgr::OpenFile@0xC9AC4C:4:RW
+CFileMgr::OpenFileForWriting@0x8E2C30:0x280:RW
+CFileMgr::OpenFileForWriting@0x8E31C0:0x120:RW
+CFileMgr::OpenFileForWriting@0xC9AC4C:4:RW
+CFileMgr::OpenFileForAppending@0x8E2C30:0x280:RW
+CFileMgr::OpenFileForAppending@0x8E31C0:0x120:RW
+CFileMgr::OpenFileForAppending@0xC9AC4C:4:RW
+CFileMgr::CloseFile@0x8E2C30:0x280:RW
+CFileMgr::CloseFile@0x8E31C0:0x120:RW
+CFileMgr::CloseFile@0xC9AC4C:4:RW
+CFileMgr::LoadFile@0x8E2C30:0x280:RW
+CFileMgr::LoadFile@0x8E31C0:0x120:RW
+CFileMgr::LoadFile@0xC9AC4C:4:RW
+CFileMgr::Read@0x8E2C30:0x280:RW
+CFileMgr::Read@0x8E31C0:0x120:RW
+CFileMgr::Read@0xC9AC4C:4:RW
+CFileMgr::Write@0x8E2C30:0x280:RW
+CFileMgr::Write@0x8E31C0:0x120:RW
+CFileMgr::Write@0xC9AC4C:4:RW
+CFileMgr::Seek@0x8E2C30:0x280:RW
+CFileMgr::Seek@0x8E31C0:0x120:RW
+CFileMgr::Seek@0xC9AC4C:4:RW
+CFileMgr::ReadLine@0x8E2C30:0x280:RW
+CFileMgr::ReadLine@0x8E31C0:0x120:RW
+CFileMgr::ReadLine@0xC9AC4C:4:RW
+CFileMgr::Tell@0x8E2C30:0x280:RW
+CFileMgr::Tell@0x8E31C0:0x120:RW
+CFileMgr::Tell@0xC9AC4C:4:RW
+CFileMgr::GetTotalSize@0x8E2C30:0x280:RW
+CFileMgr::GetTotalSize@0x8E31C0:0x120:RW
+CFileMgr::GetTotalSize@0xC9AC4C:4:RW
+CDirectory::ReadDirFile@0x8E2C30:0x280:RW
+CDirectory::ReadDirFile@0x8E31C0:0x120:RW
+CDirectory::ReadDirFile@0xC9AC4C:4:RW
+CDirectory::WriteDirFile@0x8E2C30:0x280:RW
+CDirectory::WriteDirFile@0x8E31C0:0x120:RW
+CDirectory::WriteDirFile@0xC9AC4C:4:RW
+CIniFile::LoadIniFile@0x8E2C30:0x280:RW
+CIniFile::LoadIniFile@0x8E31C0:0x120:RW
+CIniFile::LoadIniFile@0xC9AC4C:4:RW
+CGame::ValidateVersion@0x8E2C30:0x280:RW
+CGame::ValidateVersion@0x8E31C0:0x120:RW
+CGame::ValidateVersion@0xC9AC4C:4:RW
+CFileMgr::Initialise@0xB71AE0:0x80:W
+CFileMgr::ChangeDir@0xB71A60:0x80:RW
+CFileMgr::SetDirMyDocuments@0xB71A60:0x80:RW
+# CDirectory::ReadDirFile of the player image directory (0xBC12C0, Init(550, playerImgEntries) at 0x5A4190/0x5A69D0)
+CDirectory::ReadDirFile@0xBBCDC8:0x44C0:RW
+# CGame::ValidateVersion: version_name (0xB72C28, 64-byte buffer filled by strncpy)
+CGame::ValidateVersion@0xB72C28:0x40:W
+
+# App::DefinedState / DefinedState2d set render states through RwEngineInstance+0x20: the RW D3D9
+# render-state caches (within the driver statics range declared for DoFade)
+App::DefinedState@0xC97B98:0x2A58:RW
+App::DefinedState2d@0xC97B98:0x2A58:RW
+# CFileMgr::InitUserDirectories: user_tracks_dir_path 0xC92168, user_gallery_dir_path 0xC92268,
+# gta_user_dir_path 0xC92368 (0x100 each; rwsets: based)
+CFileMgr::InitUserDirectories@0xC92168:0x300:W
+# Delay-load import resolution on the first call (PE delay-import directory of gta_sa.exe):
+# DSOUND.dll IAT 0x8E3ECC / module handle 0xC9ABD0, DDRAW.dll IAT 0x8E3EBC / module handle 0xC9ABD4
+Ps::CheckDirectSound@0x8E3ECC:4:RW
+Ps::CheckDirectSound@0xC9ABD0:4:RW
+Ps::GetVideoMemInfo@0x8E3EBC:4:RW
+Ps::GetVideoMemInfo@0xC9ABD4:4:RW
+FUN_00745650@0x8E3EBC:4:RW
+FUN_00745650@0xC9ABD4:4:RW
+# Ps::GetVideoMemInfo writes the two video-memory dwords at 0xC8CF80 (rwsets: s_WinVer+0x18)
+Ps::GetVideoMemInfo@0xC8CF80:8:W
+# PsGlobal lastMousePos (0xC8CF94, two floats) written back by psMouseSetPos
+Rs::RsMouseSetPos@0xC8CF94:8:RW
+Ps::psMouseSetPos@0xC8CF94:8:RW
+# Out-parameters: GetMouseSetUp's hidden result (CMouseControllerState, 0x14), GTATranslateShiftKey's key code
+Input::GetMouseSetUp@arg0:0x14:W
+Win::GTATranslateShiftKey@arg0:4:RW
+# CQuadTreeNode::DeleteItem*: CPtrListSingleLink::DeleteItem unlinks the node inside the ptr-node-single
+# pool's objects, so the whole object array (70000 x 8) must be restored between the two runs
+CQuadTreeNode<T>::DeleteItem-@[[0xB74484]]:0x88B80:RW
+CQuadTreeNode<T>::DeleteItem-rect@[[0xB74484]]:0x88B80:RW
+# CPools::CheckPoolsEmpty / ShutDown print with CRT printf (stdout = _iob[1] 0x8E2C50, lock table, _cflush)
+CPools::CheckPoolsEmpty@0x8E2C30:0x280:RW
+CPools::CheckPoolsEmpty@0x8E31C0:0x120:RW
+CPools::CheckPoolsEmpty@0xC9AC4C:4:RW
+CPools::ShutDown@0x8E2C30:0x280:RW
+CPools::ShutDown@0x8E31C0:0x120:RW
+CPools::ShutDown@0xC9AC4C:4:RW

@@ -83,6 +83,11 @@ pub struct Spec {
     /// Writable image ranges [lo, hi) the function may read (Unicorn guard rail exception), with the
     /// values the patches give them.
     pub reads: Vec<(u32, u32)>,
+    /// Caller-saved registers the original returns unchanged and some original caller relies on
+    /// (`sa_core::abi::PRESERVE_ECX | PRESERVE_EDX`; VER-2, verifier finding V-9). The runner loads
+    /// each with a per-case value that is not an argument, requires the original to return it
+    /// unchanged and the port's hook registration to declare it (`#[hook(preserve = ...)]`).
+    pub preserve: u8,
 }
 
 pub type GenFn = Arc<dyn Fn(&mut Rng) -> Inputs + Send + Sync>;
@@ -154,6 +159,7 @@ fn limit_angle_edges() -> Vec<Inputs> {
 
 pub fn limit_angle() -> Spec {
     Spec {
+        preserve: 0,
         key: "LimitAngle",
         name: "CGeneral::LimitAngle",
         addr: 0x53CB00,
@@ -177,6 +183,7 @@ pub fn limit_angle() -> Spec {
 
 pub fn limit_radian_angle() -> Spec {
     Spec {
+        preserve: 0,
         key: "LimitRadianAngle",
         name: "CGeneral::LimitRadianAngle",
         addr: 0x53CB50,
@@ -203,6 +210,7 @@ pub const FPATAN_REASON: &str = "FPATAN: Unicorn (QEMU 5.0.1 helper_fpatan) comp
 
 pub fn get_atan_of_xy() -> Spec {
     Spec {
+        preserve: 0,
         key: "GetATanOfXY",
         name: "CGeneral::GetATanOfXY",
         addr: 0x53CC70,
@@ -229,6 +237,7 @@ pub fn get_atan_of_xy() -> Spec {
 
 pub fn get_radian_angle_between_points() -> Spec {
     Spec {
+        preserve: 0,
         key: "GetRadianAngleBetweenPoints",
         name: "CGeneral::GetRadianAngleBetweenPoints",
         addr: 0x53CBE0,
@@ -308,6 +317,7 @@ fn quadratic_gen(r: &mut Rng) -> Inputs {
 
 pub fn solve_quadratic() -> Spec {
     Spec {
+        preserve: 0,
         key: "SolveQuadratic",
         name: "CGeneral::SolveQuadratic",
         addr: 0x53CE30,
@@ -352,6 +362,7 @@ fn normalise_call(i: &Inputs) -> Call {
 
 pub fn normalise() -> Spec {
     Spec {
+        preserve: 0,
         key: "CVectorNormalise",
         name: "CVector::Normalise",
         addr: 0x59C910,

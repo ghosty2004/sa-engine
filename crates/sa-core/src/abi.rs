@@ -37,7 +37,16 @@ pub struct HookReg {
     /// For thiscall: the `this` type (catalog/layouts.csv name) and its size, when declared.
     pub this_type: Option<&'static str>,
     pub this_size: u32,
+    /// Caller registers the phase-A entry returns unchanged although the convention lets a callee
+    /// clobber them ([`PRESERVE_ECX`] | [`PRESERVE_EDX`]): original callers that rely on the original
+    /// leaving them alone (whole-program-optimised call sites, `#[hook(preserve = "edx")]`).
+    pub preserve: u8,
 }
+
+/// [`HookReg::preserve`]: ECX is returned unchanged.
+pub const PRESERVE_ECX: u8 = 1;
+/// [`HookReg::preserve`]: EDX is returned unchanged.
+pub const PRESERVE_EDX: u8 = 2;
 
 /// Where a function returns its result (MSVC 32-bit).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -234,6 +234,8 @@ pub fn all() -> Vec<Spec> {
         ),
         this_spec("CBaseModelInfoGetAnimFileIndex", "CBaseModelInfo::GetAnimFileIndex", 0x4C4AE0, Eax, 1, vec![])
             .rust(|c| ExpRet::Eax(base::get_anim_file_index(ga(c, 0)) as u32)),
+        // EDX: callers 0x5B4179 (LoadAnimatedClumpObject), 0x5B3B2B and 0x5B3C3B keep a value in
+        // EDX across the call (verifier V-9, VER-2)
         cdecl_spec(
             "CBaseModelInfoSetBaseModelInfoFlags",
             "CBaseModelInfo::SetBaseModelInfoFlags",
@@ -241,6 +243,7 @@ pub fn all() -> Vec<Spec> {
             8,
             g_ide_flags,
         )
+        .preserve(sa_core::abi::PRESERVE_EDX)
         .rust(|c| {
             let fl = c.i(1);
             base::set_base_model_info_flags(tp(c, 0), fl);
@@ -291,8 +294,14 @@ pub fn all() -> Vec<Spec> {
             .args(vec![A::P(1), A::F])
             .patch(vec![(0x4C44B2, (SCRATCH + 0x10).to_le_bytes().to_vec())])
             .rust(|c| {
-                let hit = atomic::in_draw_range(c.fl(0, 0), c.fl(1, 6), c.f(1));
-                ExpRet::Eax(if hit { c.u(1, 7) } else { 0 })
+                // the hooked entry: `TheCamera.m_fLODDistMultiplier` (patched to region 0 in the
+                // original) from sa-stream's host global, `this` = region 1. The returned pointer is
+                // the 32-bit field +0x1C (the host reads it as the low half of a 64-bit GPtr).
+                let mult = c.fl(0, 0);
+                let (this, dist) = (tp(c, 1), c.f(1));
+                let _g = crate::host_globals();
+                atomic::LOD_DIST_MULTIPLIER.set(mult);
+                ExpRet::Eax(atomic::get_atomic_from_distance(this, dist).addr() as u32)
             }),
         b("CAtomicModelInfoSetupVehicleUpgradeFlags", "CAtomicModelInfo::SetupVehicleUpgradeFlags", 0x4C4570, Thiscall, Void)
             .regions(vec![raw(8), raw(4)])

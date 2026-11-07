@@ -26,6 +26,8 @@ pub mod table;
 pub mod x86;
 
 #[cfg(test)]
+mod callers;
+#[cfg(test)]
 mod testexe;
 
 #[cfg(windows)]

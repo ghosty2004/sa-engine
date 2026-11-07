@@ -385,6 +385,10 @@ impl Emu {
         self.uc.mem_read(RESULT as u64, &mut b).map_err(be)?;
         let esp_now = self.uc.reg_read(R::ESP).map_err(be)? as u32;
         b[96..100].copy_from_slice(&(esp_now.wrapping_sub(ESP0)).to_le_bytes());
+        // the exit stub does not touch ECX: its value is the function's (native/thunk.S stores it
+        // at the same offset)
+        let ecx = self.uc.reg_read(R::ECX).map_err(be)? as u32;
+        b[12..16].copy_from_slice(&ecx.to_le_bytes());
         let mut s = [0u8; SCRATCH_LEN];
         self.uc.mem_read(SCRATCH as u64, &mut s).map_err(be)?;
         let mut seh = [0u8; 4];

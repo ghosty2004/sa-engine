@@ -150,6 +150,7 @@ fn spec(key: &'static str, name: &'static str, addr: u32, op: Op) -> Spec {
         v
     };
     Spec {
+        preserve: 0,
         key,
         name,
         addr,
