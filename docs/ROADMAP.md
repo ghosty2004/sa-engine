@@ -8,7 +8,7 @@ Status: `done` · `in-progress` · `todo` · `blocked` (needs the user) · `defe
 Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalog/*.py`).
 
 **PAUSED 2026-11-07 ~22:45 (user request).** Master is consistent at this commit (F1 = 343 / 15,479 at ≥L2).
-Work in flight when paused (not merged, not verified; worktrees under ~/.local/share/opencode/worktree/28ba9b/):
+Unverified agent work saved as WIP commits on the worktree branches (harness2: INF-18 + INF-17 split-run L2, FpuGuard MXCSR finding; inf10: coverage); verify before merging. Work in flight when paused (not merged, not verified; worktrees under ~/.local/share/opencode/worktree/28ba9b/):
 `coll` (PORT-COLL merged and committed; worktree can be deleted; L1 native re-run done), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
 `inf10` (INF-10 coverage, lane 3), `stream-l2` (agent finished; already merged, safe to delete).
 Resume: (1) check each worktree's `git status`/diff and any summary under its target/e2e; finish or relaunch the
