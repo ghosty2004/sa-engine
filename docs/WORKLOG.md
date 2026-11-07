@@ -497,3 +497,18 @@
 ## 2026-11-07 ~22:45: paused (user request)
 - State: F1 170 / 15,479 (1.10 %). Session commits 50c928e..this one. Unmerged work in worktrees coll,
   harness2, inf10 (see the ROADMAP PAUSED banner); STREAM-L2 re-verification of 99 claims interrupted.
+
+## 2026-11-07 (night): PORT-COLL integrated
+- Agent (worktree coll): crates/sa-world with 121/145 COLL functions (120 hooks), sa-oracle specs
+  specs_coll_{prim,data,surface}.rs (80), PORT-COLL section in l2-extras.txt, docs/arch/coll-port.md.
+  No harness-core change. Catalogue notes: 0x4161F0 = CLinkList<CCollisionData*>::Insert (registered as
+  thunk_FUN_01570010), 0x50D590 = GetNearestDistanceOfPedSphereToCameraNearClip.
+- Main-session verification: patch applied (l2-extras conflict resolved keeping all sections); i686 +
+  host release builds, cargo test --workspace (sa-oracle excluded; its lib/l1 ran in the agent run and
+  after VER-2), clippy --workspace --all-targets host + i686, wasm32 build of sa-world. Byte checks:
+  0x417F76/0x417F83 (EDX live across TestSphereSphere), 0x415234 (sphere A radius for both spheres),
+  0x416450 sum order. L1 10^6 samples: SurfaceInfosIsAudioSand, IsBeach PASS; GetPrincipleAxis,
+  ProcessSphereSphere, ProcessLineSphere 0 mismatches but INCOMPLETE under Unicorn only (SNaN cases);
+  ProcessSphereSphere with the native backend: 53,566 CPU-decided, 0 differ, PASS. Lane 1 re-runs
+  (target/collv/verify.sh): vc3/vcpr (b)+(c) IDENTICAL (5,200 / 3,700 frames), vcb and vcn exit 0,
+  vcports (all 897 ports on Rust) IDENTICAL. 84 → L2 (F1 170 → 254, 1.64 %), 36 → implemented.

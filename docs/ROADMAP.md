@@ -7,9 +7,9 @@ and the milestone acceptance live in `docs/PLAN.md`. Update this file at the end
 Status: `done` · `in-progress` · `todo` · `blocked` (needs the user) · `deferred`.
 Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalog/*.py`).
 
-**PAUSED 2026-11-07 ~22:45 (user request).** Master is consistent at this commit (F1 = 170 / 15,479 at ≥L2).
+**PAUSED 2026-11-07 ~22:45 (user request).** Master is consistent at this commit (F1 = 254 / 15,479 at ≥L2).
 Work in flight when paused (not merged, not verified; worktrees under ~/.local/share/opencode/worktree/28ba9b/):
-`coll` (PORT-COLL agent finished: 121/145 ported in crates/sa-world; its diff is APPLIED UNCOMMITTED on the main checkout's working tree, under main-session verification: target/collv/verify.sh lane-1 re-runs and target/collv/l1-native.txt 10^6 native-backend L1 runs; if the session ended before the commit, rerun both, then set states and commit), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
+`coll` (PORT-COLL merged and committed; worktree can be deleted; open: native-backend L1 10^6 for the 80 COLL specs → target/collv/l1-native.txt, then set L1 where PASS), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
 `inf10` (INF-10 coverage, lane 3), `stream-l2` (agent finished; already merged, safe to delete).
 Resume: (1) check each worktree's `git status`/diff and any summary under its target/e2e; finish or relaunch the
 agent with its ROADMAP brief; verify on master before merging; (2) re-run the 99 remaining STREAM-L2 PASS claims
@@ -114,7 +114,7 @@ ones to L2; (3) continue the "Next up" queue.
 
 | ID | Task | Funcs | Status | Verification |
 |---|---|---|---|---|
-| COLL | collision | 141/0 | todo | L1 for primitives, L2 |
+| COLL | collision | 141/0 | in-progress | PORT-COLL (2026-11-07, agent + main-session verification): new crate `crates/sa-world` (collision/*), 121/145 ported (120 hooks + CCollision::Update unhookable), 24 deferred with reasons (large x87 line/triangle tests, ProcessColModels/LineOfSight drivers, camera collision, sphere casts, CCollisionData::Copy protection chunks, ProcessSphereTriangle needs a k = 0 measurement). Main-session re-runs on lane 1: 84 → L2 (grove 4/frame, burst 1000/frame, nested-only alone, pause-restart: 0 mismatches, 0 undeclared, l2 traces identical), all 120 on Rust frame-identical on both recordings, all 897 ports frame-identical; 36 implemented (no corpus call or below budget); L1 at 10^6 with the native backend (SNaN cases) running for the 80 COLL specs; `preserve = "edx"` on TestSphereSphere (caller 0x417F83); deviations kept with byte evidence in docs/arch/coll-port.md |
 | PHYS | CPhysical, buoyancy | 63/2 | todo | L3 object trajectories |
 | WORLD | CWorld, entities, objects, zones, interiors, garages, pickups, misc world | 621/123 | todo | L3 |
 | RENDER | renderer, visibility, shadows, FX, post FX, coronas, clouds, timecycle, weather, water, glass, plants, markers | 676/50 | todo | F7 subset |
@@ -184,6 +184,7 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
 
 *original UB, not reproducible*
+- `CCollision::PointInPoly` with an impossible axis value reads uninitialised stack in the original; the port compares zeros. Surface-info loaders (SurfaceInfos_c) start their sscanf locals at 0 instead of stack residue (visible only on malformed first lines) (PORT-COLL).
 - `CFileLoader::LoadVehicleObject` (0x5B6F30): for the skimmer (vehicles.ide id 460, 11 fields) the original stores leftover stack values as wheel sizes (+0x40 = 8, +0x44 = 0x0036F144 in the measured run, low byte of +0x48 changed); the port writes 0 (STREAM-L2, `sa-oracle l2 show` frame 201 ordinal 60).
 - `Light::LightsCreate` (0x5BA520): the original never writes the colour alpha at +0x24 of each light (0x5BA54E–0x5BA55E; holds stack residue such as 0x7992FD50) and RW leaves three uninitialised pad words in pDirect's frame matrix; the port writes 0. L2 needs these bytes excluded in the reviewed normaliser before the function can reach L2 (CORE-L2b).
 - `CountCompsInRule` never returns for negative input words (original and port both loop forever) (PORT-STREAM).

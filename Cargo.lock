@@ -299,6 +299,7 @@ dependencies = [
  "sa-math",
  "sa-oracle-format",
  "sa-stream",
+ "sa-world",
  "windows-sys",
 ]
 
@@ -335,6 +336,7 @@ dependencies = [
  "sa-math",
  "sa-oracle-format",
  "sa-stream",
+ "sa-world",
  "unicorn-engine",
  "zstd",
 ]
@@ -350,6 +352,16 @@ dependencies = [
  "sa-core",
  "sa-macros",
  "sa-math",
+]
+
+[[package]]
+name = "sa-world"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-stream",
 ]
 
 [[package]]

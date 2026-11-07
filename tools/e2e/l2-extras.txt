@@ -509,3 +509,82 @@ CStreaming::RemoveEntity@0x9654F0:0x34:RW
 CStreaming::RemoveEntity@0x8E48A0:0x4:RW
 # CTimeModelInfo store entries (the time-model chain of SetColModel)
 CBaseModelInfo::SetColModel@0xB1C960:0x17C8:RW
+# PORT-COLL
+# CCollision::ms_colModelCache (0x96592C) keeps its 50 links (12 bytes each) in the heap block at
+# [0x96595C] (CCollision::Init: operator new(0x258)); every function that moves links between the used
+# and the free list writes them (port-l2 coll1: mismatches at 0x96594C/0x96593C without this region).
+thunk_FUN_01570010@[0x96595C]:0x258:RW
+thunk_FUN_01570010@arg0:4:R
+CCollision::CalculateTrianglePlanes-colData@[0x96595C]:0x258:RW
+CCollision::RemoveTrianglePlanes-colData@[0x96595C]:0x258:RW
+CCollision::CalculateTrianglePlanes-CColModelPtr@[0x96595C]:0x258:RW
+CCollision::RemoveTrianglePlanes-CColModelPtr@[0x96595C]:0x258:RW
+CCollisionData::RemoveCollisionVolumes@[0x96595C]:0x258:RW
+CColModel::RemoveCollisionVolumes@[0x96595C]:0x258:RW
+CTempColModels::Shutdown@[0x96595C]:0x258:RW
+CCollision::Shutdown@[0x96595C]:0x258:RW
+# The CCollisionData a cdecl collision function gets (0x30), or the one of the CColModel it gets (+0x2C):
+# the planes pointer +0x1C decides the path (coll1: the Rust run saw the planes the original allocated)
+CCollision::CalculateTrianglePlanes-colData@arg0:0x30:RW
+CCollision::RemoveTrianglePlanes-colData@arg0:0x30:RW
+CCollision::CalculateTrianglePlanes-CColModelPtr@arg0:0x30:RW
+CCollision::CalculateTrianglePlanes-CColModelPtr@[arg0+0x2C]:0x30:RW
+CCollision::RemoveTrianglePlanes-CColModelPtr@arg0:0x30:RW
+CCollision::RemoveTrianglePlanes-CColModelPtr@[arg0+0x2C]:0x30:RW
+CColModel::RemoveCollisionVolumes@[ecx+0x2C]:0x30:RW
+CColModel::CalculateTrianglePlanes@[ecx+0x2C]:0x30:RW
+CColModel::RemoveTrianglePlanes@[ecx+0x2C]:0x30:RW
+CColModel::MakeMultipleAlloc@[ecx+0x2C]:0x30:RW
+# CColModel::operator new/delete work on CPools::ms_pColModelPool (0xB744A4): header and byte map
+# (coll1: the Rust run took the slot after the one the original took)
+CColModel::operator new@[0xB744A4]:0x14:RW
+CColModel::operator new@[[0xB744A4]+4]:[[0xB744A4]+8]:RW
+CColModel::operator delete@[0xB744A4]:0x14:RW
+CColModel::operator delete@[[0xB744A4]+4]:[[0xB744A4]+8]:RW
+CColAccel::cacheLoadCol@[0xB744A4]:0x14:RW
+CColAccel::cacheLoadCol@[[0xB744A4]+4]:[[0xB744A4]+8]:RW
+# CCollision::Init tail-calls CColStore::Initialise, which takes a CQuadTreeNode from its pool
+# [0xB745BC] (coll1: global 0x96555C got the next node in the Rust run)
+CCollision::Init@[0xB745BC]:0x14:RW
+CCollision::Init@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CCollision::Init@[[0xB745BC]]:0x3E80:RW
+# Out-parameters (CVector 12, CColBox's box 0x18, CColPoint 0x2C, float 4, bool 1, IplDef 0x34, ColDef 0x30)
+CCollisionData::GetTrianglePoint@arg0:12:W
+CCollisionData::GetShadTrianglePoint@arg0:12:W
+CColTrianglePlane::GetNormal-Out@arg0:12:W
+CCollision::GetBoundingBoxFromTwoSpheres@arg0:0x18:W
+CCollision::ClosestPointOnLine@arg3:12:W
+CCollision::CalculateColPointInsideBox@arg2:0x2C:RW
+CCollision::ProcessSphereSphere@arg2:0x2C:RW
+CCollision::ProcessSphereSphere@arg3:4:RW
+CCollision::ProcessLineSphere@arg2:0x2C:RW
+CCollision::ProcessLineSphere@arg3:4:RW
+CCollision::ProcessSphereBox@arg2:0x2C:RW
+CCollision::ProcessSphereBox@arg3:4:RW
+CCollision::ProcessDiscCollision@arg3:0x2C:RW
+CCollision::ProcessDiscCollision@arg4:1:RW
+CCollision::ProcessDiscCollision@arg5:4:RW
+CCollision::ProcessDiscCollision@arg6:0x2C:RW
+CCollision::CheckPeds@arg2:4:RW
+CColAccel::getIplDef@arg0:0x34:W
+CColAccel::getColDef@arg0:0x30:RW
+# SurfaceInfos_c's loaders read their files through CFileLoader::LoadLine into CFileLoader::ms_line
+# (0xB71848, 0x200; coll1: Init's writes there were undeclared)
+SurfaceInfos_c::Init@0xB71848:0x200:RW
+SurfaceInfos_c::LoadAdhesiveLimits@0xB71848:0x200:RW
+SurfaceInfos_c::LoadSurfaceInfos@0xB71848:0x200:RW
+SurfaceInfos_c::LoadSurfaceAudioInfos@0xB71848:0x200:RW
+# The list heads/tails themselves (CLinkList at 0x96592C, 0x34): unlinking the last used link writes
+# usedTail.prev (0x96593C) through the link's pointers (coll2: undeclared 0x96593C)
+CCollision::CalculateTrianglePlanes-colData@0x96592C:0x34:RW
+CCollision::RemoveTrianglePlanes-colData@0x96592C:0x34:RW
+CCollision::CalculateTrianglePlanes-CColModelPtr@0x96592C:0x34:RW
+CCollision::RemoveTrianglePlanes-CColModelPtr@0x96592C:0x34:RW
+CCollisionData::RemoveCollisionVolumes@0x96592C:0x34:RW
+CColModel::RemoveCollisionVolumes@0x96592C:0x34:RW
+CTempColModels::Shutdown@0x96592C:0x34:RW
+# CRT stdio lock word written by the loaders' fopen/fclose (coll2: undeclared 0xC9AC4C)
+SurfaceInfos_c::Init@0xC9AC4C:4:RW
+SurfaceInfos_c::LoadAdhesiveLimits@0xC9AC4C:4:RW
+SurfaceInfos_c::LoadSurfaceInfos@0xC9AC4C:4:RW
+SurfaceInfos_c::LoadSurfaceAudioInfos@0xC9AC4C:4:RW
