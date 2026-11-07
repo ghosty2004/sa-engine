@@ -493,3 +493,7 @@
   a double-run artifact (material colour and restore list not declared); declared from the bytes
   (0x4C83C5/0x4C83D2/0x4C83D8), targeted run 1000/1000 cases, 0 mismatches. 65 rows confirmed and set to
   L2 (F1 105 → 170); the remaining 99 PASS claims need per-batch re-runs (in progress).
+
+## 2026-11-07 ~22:45: paused (user request)
+- State: F1 170 / 15,479 (1.10 %). Session commits 50c928e..this one. Unmerged work in worktrees coll,
+  harness2, inf10 (see the ROADMAP PAUSED banner); STREAM-L2 re-verification of 99 claims interrupted.

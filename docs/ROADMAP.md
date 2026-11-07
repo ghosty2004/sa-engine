@@ -7,7 +7,14 @@ and the milestone acceptance live in `docs/PLAN.md`. Update this file at the end
 Status: `done` · `in-progress` · `todo` · `blocked` (needs the user) · `deferred`.
 Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalog/*.py`).
 
-Resumed 2026-11-07 (user request); previous pause state at 1d26881.
+**PAUSED 2026-11-07 ~22:45 (user request).** Master is consistent at this commit (F1 = 170 / 15,479 at ≥L2).
+Work in flight when paused (not merged, not verified; worktrees under ~/.local/share/opencode/worktree/28ba9b/):
+`coll` (PORT-COLL into new crate sa-world, lane 1), `harness2` (INF-18 spool quota → INF-17 split-run L2, lane 4),
+`inf10` (INF-10 coverage, lane 3), `stream-l2` (agent finished; already merged, safe to delete).
+Resume: (1) check each worktree's `git status`/diff and any summary under its target/e2e; finish or relaunch the
+agent with its ROADMAP brief; verify on master before merging; (2) re-run the 99 remaining STREAM-L2 PASS claims
+with target/streaml2/verify2.sh (lane 2, batches rest0–3 of 25, SA_L2_FROM=0, 1000/frame) and set the confirmed
+ones to L2; (3) continue the "Next up" queue.
 
 ## Lanes now
 
