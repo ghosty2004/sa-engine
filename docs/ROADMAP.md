@@ -13,11 +13,11 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 
 | Slot | Running | Next |
 |---|---|---|
-| impl-1 | — | CORE-L2b | sa-stream panic with all ports on Rust: `sscanf_n` has 34 targets, a caller passes 38 (fileloader); fix, then run port-l2.sh on all STREAM ports | in-progress | `port-l2.sh ports --runs "plain rust"` frame-identical | 2026-11-07: (1) `sscanf_n` widened to 38 targets (Load2dEffect type 5; format 0x8698F8 has 38 conversions, read from the exe); (2) `CStreamedScripts::Initialise` (0x470660) was declared cdecl without `this`; the original calls it thiscall with ecx = 0xA47B60 (0x5B8DEF), so the Rust Init2 crashed in .HOODLUM 0x1562440; fixed. Static audit of every non-thiscall `orig!` declaration in game .text (callee reads ecx before writing it): no other case. Now with all 777 ports on Rust the grove walk runs 5,200/5,200 frames; 15/17 subsystems identical, `rand`/`randcalls` diverge at frame 1 → bisection (l3.sh) |
-| impl-2 | — | CORE-L2b |
-| measurement / REA | — | INF-10 (finish coverage) |
-| harness | — | VER-1 / INF-16 |
-| verifier | — | audit PORT-CORE + PORT-STREAM claims |
+| impl-1 | agent: CORE-L2b (worktree core-l2b, lane 1) | — |
+| impl-2 | agent: STREAM-L2 (worktree stream-l2, lane 2) | — |
+| measurement / REA | agent: INF-10 coverage finish (worktree inf10, lane 3; only REA user) | SAMP-1D |
+| harness | — | VER-1 / INF-16 (after the verifier reports) |
+| verifier | agent: adversarial audit of PORT-CORE/PORT-STREAM L1 claims (worktree verifier, no game) | — |
 
 ## Next up (ordered queue; the scheduler takes from the top)
 
