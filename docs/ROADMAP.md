@@ -16,7 +16,7 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 | impl-1 | agent: CORE-L2b (worktree core-l2b, lane 1) | — |
 | impl-2 | agent: STREAM-L2 (worktree stream-l2, lane 2) | — |
 | measurement / REA | agent: INF-10 coverage finish (worktree inf10, lane 3; only REA user) | SAMP-1D |
-| harness | — | VER-2 → VER-1 → INF-16 |
+| harness | agent: VER-2 (worktree ver2, no game) | VER-1 → INF-16 |
 | verifier | — (CORE/STREAM L1 audit done, V-9..V-14) | audit of the CORE-L2b / STREAM-L2 results |
 
 ## Next up (ordered queue; the scheduler takes from the top)
@@ -154,6 +154,7 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 | SAMP-API | Document the engine API covering every samp-rs game access (proposal for the samp-rs side; we never edit samp-rs) | todo | F13 |
 
 ## Decisions made autonomously
+- 2026-11-07 (lanes): lane 4 (`wine/lane-4`) created for one-off screenshots while lanes 1–3 run agent work; created while no wineserver ran for `wine/prefix`; 17 GB RAM was available.
 - 2026-11-07 (harness): `tools/e2e/lib.sh` unsets DISPLAY/WAYLAND_DISPLAY/WAYLAND_SOCKET for every lane Wine command and exports only the lane's gamescope DISPLAY. Reason: `winepath` ran before the game with the inherited desktop variables, started the Wine session on the user's desktop, and the game then picked the desktop's 240 Hz modes and failed to enter 800x600@240 (every run exited before frame 1).
 - 2026-11-05 (PORT-STREAM): CdStreamThread's port runs game-memory accessors on the streaming thread, as the original does. This is an accepted exception to ADR-001's single-thread rule, because 1:1 requires the original threading.
 - 2026-11-05 (INF-7): L1 has two backends. Unicorn decides L1-routed functions. Functions with x87 instructions measured unfaithful under Unicorn (transcendentals, FPREM, FSCALE, FXTRACT) go to L2; until INF-8 exists the real CPU (native backend under Wine) is their interim authority. Signalling-NaN inputs are always decided by the CPU. Unicorn runs with MXCSR.FZ cleared when the code has no SSE.
