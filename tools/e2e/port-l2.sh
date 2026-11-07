@@ -28,7 +28,8 @@
 #   (d) hookoff traces == plain trace
 #   host: `sa-oracle l2 report` of each spool (0 mismatches)
 #
-# Env: LANE (default 2), SA_ROOT, L2_PER_FRAME (default 4), RUN_TIMEOUT (s, default 1500).
+# Env: LANE (default 2), SA_ROOT, L2_PER_FRAME (default 4), RUN_TIMEOUT (s, default 1500),
+# L2_SPOOL_DISCARD=1 (drain the binary spool through a FIFO: no host report, bounded disk use).
 # Build first (see inf8-l2.sh). Output: target/e2e/lane-N/port-l2[-TAG]/ with summary.txt and
 # results.tsv (one row per hook: addr name calls cases mismatches undeclared_cases l2 l3).
 # Exit 0 = no failure (NOCALLS rows do not fail the run).
@@ -94,11 +95,29 @@ modes() { # modes RUST_NAME... → SA_HOOK_MODE value: BASE_ORIG and listed sa-h
     done
     join_by , "${out[@]}"
 }
-# The extra regions (tools/e2e/l2-extras.txt) of the hooks in a list.
+# The extra regions (tools/e2e/l2-extras.txt) of the hooks in a list. `HOOK@REGION` lines apply to that
+# hook; `doc:DOC@REGION` lines to the hooks of a docs/arch/DOC.md function table: passed once without a
+# hook prefix (so they apply to every listed hook; a per-hook expansion for a few hundred hooks would
+# exceed the Windows environment limit) when at least one listed hook is in DOC.
 extras_for() {
-    local want="$1" line
+    local want="$1" line doc rest n hit
+    local -A docset=()
     grep -v '^\s*#' "$HERE/l2-extras.txt" | grep -v '^\s*$' | while IFS= read -r line; do
-        case ",$want," in *",${line%@*},"*) printf '%s,' "$line" ;; esac
+        case "$line" in
+            doc:*@*)
+                doc="${line%%@*}"; doc="${doc#doc:}"; rest="${line#*@}"
+                if [ -z "${docset[$doc]+x}" ]; then
+                    docset[$doc]=",$(python3 -I "$HERE/hook-names.py" "$E2E_SCRIPT_ROOT" "doc:$doc" | cut -f3 | paste -sd,),"
+                fi
+                hit=0
+                IFS=, read -r -a wl <<< "$want"
+                for n in "${wl[@]}"; do
+                    case "${docset[$doc]}" in *",$n,"*) hit=1; break ;; esac
+                done
+                [ "$hit" = 1 ] && printf '%s,' "$rest"
+                ;;
+            *) case ",$want," in *",${line%@*},"*) printf '%s,' "$line" ;; esac ;;
+        esac
     done | sed 's/,$//'
 }
 
@@ -135,6 +154,12 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     local name="$1" start last="" st kv
     shift
     rm -f "$DET/$name.trace" "$DET/$name.spool" "$DET/$name.spool.txt" "$GTA_DIR/sa-hook.log"
+    local drain=""
+    if [ "${L2_SPOOL_DISCARD:-0}" = 1 ]; then
+        # the binary spool (several MB per case) goes to a FIFO that is drained; verdicts stay in the
+        # log summary and the text report (NAME.spool.txt)
+        mkfifo "$DET/$name.spool" && { cat "$DET/$name.spool" > /dev/null & drain=$!; }
+    fi
     (
         export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$(win "$DET/$name.trace")" SA_HOOK_PORTS=orig
         for kv in "$@"; do export "${kv?}"; done
@@ -158,6 +183,7 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     wineserver -k 2> /dev/null || true
     wait "$pid" 2> /dev/null
     cp -f "$GTA_DIR/sa-hook.log" "$OUT/$name.log" 2> /dev/null
+    [ -n "$drain" ] && { kill "$drain" 2> /dev/null; rm -f "$DET/$name.spool"; }
     for f in trace spool spool.txt; do
         [ -f "$DET/$name.$f" ] && mv -f "$DET/$name.$f" "$OUT/$name.$f"
     done

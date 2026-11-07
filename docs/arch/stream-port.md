@@ -744,3 +744,508 @@ details; the most important ones:
   pointers) and calls into UNK-game helpers (store ctors/dtors 0x4C5CB0–0x4C67D0, 0x4C5840–0x4C6390,
   `CPool<CVehicleStructure>::New` 0x4C94C0, `CdStreamGetLastPosn` 0x406450, `GetGTA3ImgSize` 0x406360).
 
+
+## STREAM-L2 (in-game L2 of the 434 `implemented` rows; agent results, states set by the main session)
+
+Runs: lane 2, `tools/e2e/port-l2.sh` on the grove walk (`target/e2e/lane-2/inf4/rec.sarec`, 5,200 frames)
+and pause-restart (`target/e2e/corpus/pause-restart.sarec`, 3,700 frames), `SA_L2_WINDOW=data`, extra
+regions from the `# STREAM-L2` part of `tools/e2e/l2-extras.txt`. Batches: in-game (`SA_L2_FROM=205`,
+`L2_PER_FRAME=4`) and all-frames (`SA_L2_FROM=0`, `L2_PER_FRAME=1000`, only for hooks whose calls are in
+the loading frames 0 and 201; spool discarded through a FIFO, `L2_SPOOL_DISCARD=1`, so the per-frame
+cap does not cost disk). L3: `port-l2.sh ports --runs "plain rust"` (every port on Rust) is
+frame-identical on all 5,200 frames and 17 subsystems. The l2 traces of the final in-game batches are
+identical to the plain trace (grove walk 5,200 frames, pause-restart 3,700 frames); batches that sample
+the loading frames are not (heap allocations of loaders are not restored, see below), so their
+verdicts are per case only.
+
+Totals: PASS 164, no call in the corpus 142, not replayable in this harness 97, mismatch 15 (all with a
+cause below; one ledger candidate), partial coverage 11 (0 mismatches), undeclared only 5.
+
+### Harness limits found (why 97 rows have no L2 verdict)
+
+`SA_L2_WINDOW=data` restores only .data/.bss, declared regions and the heap arena's bookkeeping. A
+function whose original run changes heap objects that are not declared leaves the Rust run starting
+from a different state, and destroying an object twice corrupts allocator state that lives inside heap
+blocks:
+
+- H1, RenderWare/D3D objects and heap object graphs (create/destroy textures, dictionaries, clumps,
+  atomics, frames, materials, col data; RW free lists live in heap blocks): cases mismatch (texture
+  pointers differ per run; `RemoveModel` 3/4, `RwTextureGtaStreamRead` 4/4) and the game later crashes
+  in `_rwFreeListAllocReal` (0x801C65), `RwFrameForAllObjects` (0x7F18CF) or loops in the renderer
+  (stall at frame 2532 after `CFileLoader::SetRelatedModelInfoCB` cases).
+- H2, CD/file I/O and OS handles: the CD stream thread, file positions and handles are outside memory
+  (`LoadRequestedModels` cases end in a crash in `CIplStore::LoadIpl` 0x406205; `AddImageToList` gets
+  handle 0x208 instead of 0x204; `CFileLoader::LoadLine` differs only on a CRT buffer refill;
+  `CdStreamInit` gets a new LocalAlloc block, semaphore and thread).
+- H3, loading-screen rendering: `CLoadingScreen::DoPCTitleFadeIn` crashes the L2 run (execution at
+  0x03460000) on its first call; the other loading-screen functions create/destroy splash textures.
+- `SA_L2_WINDOW=all` (whole arena restored) crashes in the D3D9 runtime (read of 0xFFFFFFFF at
+  0x04959C4D): RW objects reference D3D resources whose reference counts are outside the arena.
+
+These rows stay `implemented` (L3 evidence only: frame-identical with every port on Rust). Making them
+L2-checkable needs a harness that snapshots/restores the whole arena *and* replays without D3D/file
+side effects (sa-hook work, not done here).
+
+### Open questions, measured
+
+- `CPedModelInfo::m_pColNodeInfos`: the array starts at 0x8A630C (static, bytes): the three users
+  (0x4C6D90, 0x4C6F70, 0x4C7170) load `ebp/ebx/esi = 0x8A6318`, read fields at -0xC, -8, -4, 0, +4, +8,
+  step 0x1C and stop at 0x8A6468: 12 entries of 0x1C, first byte read 0x8A630C, last 0x8A6457 (83
+  dwords). gta-reversed's 0x8A6308 is 4 bytes early. `AnimatePedColModelSkinned`/`...World` 1000/1000
+  cases identical.
+- Protection-VM values: `AddToLoadedVehiclesList` writes the CLoadedCarGroup at 0xC0E9C8
+  (inappropriate cars) in both runs (22/22 cases identical); gang groups at stride 0x2E from 0xC0EA28;
+  `IsCarModelNeededInCurrentZone` 34/34 (all-frames) and 12 (in-game) cases identical (second loop start
+  18); `CColStore::AddColSlot` 252/252 identical ("stadint" length 7); `StreamCopModels` 1000 cases
+  identical, two of them take the cop-bike timer branch (both runs write
+  `ms_timePassedSinceLastCopBike`); `StreamFireEngineAndFireman` 14+17 calls, all identical (whether the
+  request tail ran is not recorded per case).
+- Uninitialised locals passed as 0: `LoadVehicleObject` (skimmer, `vehicles.ide` id 460, type plane,
+  11 fields): the original stores stack data as wheel sizes (+0x40 = 0x00000008, +0x44 = 0x0036F144) and
+  changes the low byte of +0x48; the port writes 0 (case frame 201 ordinal 60, `sa-oracle l2 show`).
+  Not reproducible (stack contents of earlier calls): ledger candidate "original UB, uninitialised
+  locals". `LoadTimeObject` 160/160, `Load2dEffect` 97/97, `LoadVehicleColours` 1/1 identical (the corpus
+  never leaves those locals unset). `RequestModelStream` and `CdStreamInit` are not replayable (H2).
+- Foreign globals in owner modules: no L2 difference attributable to them.
+
+### Per-function results
+
+calls / cases = the best run (calls counted while L2 was on; for not-replayable rows: calls from a
+count-only run, `SA_L2_FROM=100000`). L3 = the all-ports Rust run (frame-identical) for every row.
+
+| address | name | calls | cases | mismatches | undeclared cases | L2 | note |
+|---|---|---|---|---|---|---|---|
+| 0x4076A0 | CStreaming::IsVeryBusy | 1159 | 1000 | 0 | 0 | PASS |  |
+| 0x407800 | CStreaming::IsObjectInCdImage | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407A10 | CStreaming::ForceLayerToRead | 2 | 2 | 0 | 0 | PASS |  |
+| 0x407A30 | CStreaming::SetLoadVehiclesInLoadScene | 4 | 4 | 0 | 0 | PASS |  |
+| 0x407A40 | CStreaming::ClearFlagForAll | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407AD0 | CStreaming::AreAnimsUsedByRequestedModels | 3 | 3 | 0 | 0 | PASS |  |
+| 0x407C00 | CStreaming::GetDefaultCopModel | 6 | 6 | 0 | 0 | PASS |  |
+| 0x407C50 | CStreaming::GetDefaultCopCarModel | 248 | 239 | 0 | 0 | PASS |  |
+| 0x407D10 | CStreaming::DisableCopBikes | 1 | 1 | 0 | 0 | PASS |  |
+| 0x407D20 | CStreaming::GetDefaultMedicModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407D40 | CStreaming::GetDefaultFiremanModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407D50 | CStreaming::GetDefaultCabDriverModel | 9 | 9 | 0 | 0 | PASS |  |
+| 0x407F00 | CStreaming::HasSpecialCharLoaded | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407F80 | CStreaming::WeAreTryingToPhaseVehicleOut | 1132 | 1000 | 0 | 0 | PASS |  |
+| 0x407FB0 | CStreaming::FindMIPedSlotForInterior | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x408230 | thunk_FUN_01563580 | 3613 | 1000 | 0 | 0 | PASS |  |
+| 0x4084F0 | CStreaming::InstanceLoadedModels | 3 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4090A0 | CStreaming::DeleteAllRwObjects | 3 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x409210 | CStreaming::DeleteRwObjectsAfterDeath | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4094B0 | CStreaming::RemoveBuildingsNotInArea | 4 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4096C0 | CStreaming::StartRenderEntities | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x4096D0 | CStreaming::RenderEntity | 50396 | 1000 | 0 | 0 | PASS |  |
+| 0x409710 | CStreaming::RemoveEntity | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x40BA70 | CStreaming::PossiblyStreamCarOutAfterCreation | 16 | 16 | 0 | 0 | PASS |  |
+| 0x4103A0 | CColStore::AddCollisionNeededAtPosn | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4107A0 | CColStore::AddRef | 455 | 267 | 0 | 0 | PASS |  |
+| 0x4107D0 | CColStore::RemoveRef | 224 | 139 | 0 | 0 | PARTIAL | in-game run only (per-frame cap): 139 of 224 calls, 0 mismatches |
+| 0x410800 | CColStore::GetBoundingBox | 50329 | 1000 | 0 | 0 | PASS |  |
+| 0x410820 | CColStore::IncludeModelIndex | 10155 | 1000 | 0 | 0 | PASS |  |
+| 0x407100 | CStreaming::RequestTxdModel | 1849 | 659 | 0 | 0 | PASS |  |
+| 0x407610 | CStreaming::AddImageToList | 4 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x407820 | CStreaming::HasVehicleUpgradeLoaded | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407DD0 | CStreaming::IsCarModelNeededInCurrentZone | 34 | 34 | 0 | 0 | PASS |  |
+| 0x4083C0 | CStreaming::InitImageList | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x4087E0 | CStreaming::RequestModel | 45187 | 1000 | 0 | 0 | PASS |  |
+| 0x409650 | CStreaming::AddEntity | 2628 | 1000 | 357 | 315 | MISMATCH | cases 1-608 identical; from frame 2553 the link list is full and the original path deletes another entity's RW object (heap entity + RW freelists not restored; H1) |
+| 0x409A90 | CStreaming::AreTexturesUsedByRequestedModels | 297 | 202 | 0 | 0 | PASS |  |
+| 0x411140 | CColStore::AddColSlot | 252 | 252 | 0 | 0 | PASS |  |
+| 0x408000 | CStreaming::AddToLoadedVehiclesList | 32 | 30 | 0 | 0 | PASS |  |
+| 0x4084B0 | CStreaming::Shutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x408C70 | CStreaming::RequestVehicleUpgrade | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x408E20 | CStreaming::GetNextFileOnCd | 2511 | 1000 | 0 | 0 | PASS |  |
+| 0x409430 | CStreaming::RequestBigBuildings | 6 | 5 | 0 | 0 | PASS |  |
+| 0x40A120 | CStreaming::LoadInitialWeapons | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40AFA0 | CStreaming::ReclassifyLoadedCars | 8 | 7 | 0 | 0 | PARTIAL | 7 of 8 calls compared (one before frame 205), 0 mismatches |
+| 0x40C270 | CStreaming::ProcessEntitiesInSectorList<CPtrListSingleLink<CEntity*>>- | 11267 | 1000 | 0 | 0 | PASS |  |
+| 0x40C450 | CStreaming::ProcessEntitiesInSectorList | 1017 | 1000 | 0 | 0 | PASS |  |
+| 0x4104E0 | CColStore::SetCollisionRequired | 1004 | 1000 | 0 | 0 | PASS |  |
+| 0x4113F0 | CColStore::Initialise | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5BCCD0 | CStreaming::ReadIniFile | 1 | 1 | 0 | 0 | PASS |  |
+| 0x40B4B0 | CStreaming::LoadZoneVehicle | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40B4F0 | CStreaming::StreamOneNewCar | 10 | 10 | 0 | 0 | PASS |  |
+| 0x40C520 | CStreaming::AddLodsToRequestList | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x410690 | CColStore::LoadCol- | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4106D0 | CColStore::LoadCol-2 | 288 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x410C00 | CColStore::RequestCollision | 2 | 1 | 0 | 0 | PASS |  |
+| 0x410CE0 | CColStore::HasCollisionLoaded | 2 | 2 | 0 | 0 | PASS |  |
+| 0x410EC0 | CColStore::BoundingBoxesPostProcess | 1 | 1 | 0 | 0 | PASS |  |
+| 0x5B6170 | CStreaming::LoadCdDirectory-char | 5 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5B82C0 | CStreaming::LoadCdDirectory-void | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5D29A0 | CStreaming::Save | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x407A70 | CStreaming::DeleteRwObjectsInSectorList<CPtrListSingleLink<CEntity*>> | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x410730 | CColStore::RemoveCol | 266 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B8AD0 | CStreaming::Init2 | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5D29E0 | CStreaming::Load | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x411330 | CColStore::RemoveColSlot | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4114D0 | CColStore::Shutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4080F0 | CStreaming::RemoveCarModel | 9 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4089A0 | CStreaming::RemoveModel | 755154 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x409C10 | CStreaming::SetModelIsDeletable | 2299 | 1000 | 0 | 0 | PASS |  |
+| 0x409C70 | CStreaming::SetModelTxdIsDeletable | 8 | 8 | 0 | 0 | PASS |  |
+| 0x409050 | CStreaming::RequestFilesInChannel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4093B0 | CStreaming::RemoveBigBuildings | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x409760 | CStreaming::DeleteLeastUsedEntityRwObject | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x409940 | CStreaming::DeleteRwObjectsBehindCameraInSectorList<CPtrListSingleLink<CEntity*>> | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4099E0 | CStreaming::DeleteRwObjectsNotInFrustumInSectorList<CPtrListSingleLink<CEntity*>> | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x409C90 | CStreaming::SetMissionDoesntRequireModel | 1033 | 1000 | 0 | 0 | PASS |  |
+| 0x40A080 | CStreaming::RequestFile | 33 | 24 | 0 | 0 | PASS |  |
+| 0x40A150 | CStreaming::StreamCopModels | 1004 | 1000 | 0 | 0 | PASS |  |
+| 0x40A2A0 | CStreaming::StreamAmbulanceAndMedic | 18 | 18 | 0 | 0 | PASS |  |
+| 0x40A400 | CStreaming::StreamFireEngineAndFireman | 18 | 18 | 0 | 0 | PASS |  |
+| 0x40AA10 | CStreaming::StreamZoneModels_Gangs | 1003 | 1000 | 0 | 0 | PASS |  |
+| 0x40B080 | CStreaming::RemoveCurrentZonesModels | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x40B340 | CStreaming::RemoveLoadedZoneModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40B3A0 | CStreaming::RemoveInappropriatePedModels | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40BAA0 | CStreaming::ClearSlots | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40BDA0 | CStreaming::StreamPedsIntoRandomSlots | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40BE60 | CStreaming::RemoveDodgyPedsFromRandomSlots | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40C020 | CStreaming::RemoveLoadedVehicle | 8 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x40C180 | CStreaming::RemoveTxdModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40C1E0 | CStreaming::PurgeRequestList | 1003 | 1000 | 0 | 0 | PASS |  |
+| 0x40CBA0 | CStreaming::RequestModelStream | 11283 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40D2F0 | CStreaming::RemoveReferencedTxds | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x410860 | CColStore::LoadCollision | 1003 | 1000 | 4 | 0 | MISMATCH | 998/1000 identical; 2 cases differ in CCollision::ms_colModelCache order (cache links live in CCollisionData heap blocks; H1) |
+| 0x410E00 | CColStore::RemoveAllCollision | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x40B490 | CStreaming::SetMissionDoesntRequireSpecialChar | 10 | 10 | 0 | 0 | PASS |  |
+| 0x40B650 | CStreaming::StreamVehiclesAndPeds_Always | 1003 | 1000 | 0 | 0 | PASS |  |
+| 0x40B700 | CStreaming::StreamVehiclesAndPeds | 1002 | 1000 | 0 | 0 | PASS |  |
+| 0x40BBB0 | CStreaming::StreamPedsForInterior | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40CF80 | CStreaming::RemoveAllUnusedModels | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40CFD0 | CStreaming::RemoveLeastUsedModel | 302 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x40D3D0 | CStreaming::LoadInitialPeds | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x48B570 | CStreaming::SetMissionDoesntRequireAnim | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x408CB0 | CStreaming::FinishLoadingLargeFile | 4 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40C6B0 | CStreaming::ConvertBufferToObject | 1902 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40E120 | CStreaming::MakeSpaceFor | 1675 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4076C0 | CStreaming::RetryLoadFile | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40E170 | CStreaming::ProcessLoadingChannel | 1052 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40E3A0 | CStreaming::LoadRequestedModels | 5009 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40E460 | CStreaming::FlushChannels | 684 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40E4E0 | CStreaming::FlushRequestList | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40EA10 | CStreaming::LoadAllRequestedModels | 342 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x409D10 | CStreaming::RequestSpecialModel | 9 | 8 | 0 | 0 | PASS |  |
+| 0x40E560 | CStreaming::ReInit | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40ED80 | CStreaming::LoadSceneCollision | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x410AD0 | CColStore::EnsureCollisionIsInMemory | 4994 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x410E60 | CColStore::LoadAllCollision | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40B450 | CStreaming::RequestSpecialChar | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x40E670 | CStreaming::Update | 4994 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x4113D0 | CColStore::LoadAllBoundingBoxes | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x40EB70 | CStreaming::LoadScene | 3 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x4C4BC0 | CBaseModelInfo::SetColModel | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x4C5200 | CClumpModelInfo::SetAnimFile | 384 | 384 | 0 | 0 | PASS |  |
+| 0x4C59B0 | CModelInfo::GetModelInfoFromHashKey | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5A70 | CModelInfo::IsBoatModel | 225 | 225 | 0 | 0 | PASS |  |
+| 0x4C5AA0 | CModelInfo::IsCarModel | 84 | 84 | 0 | 0 | PASS |  |
+| 0x4C5AD0 | CModelInfo::IsTrainModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5B00 | CModelInfo::IsHeliModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5B30 | CModelInfo::IsPlaneModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5B60 | CModelInfo::IsBikeModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5B90 | CModelInfo::IsFakePlaneModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5BC0 | CModelInfo::IsMonsterTruckModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5BF0 | CModelInfo::IsQuadBikeModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5C20 | CModelInfo::IsBmxModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5C50 | CModelInfo::IsTrailerModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5C80 | CModelInfo::IsVehicleModelType | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6200 | FUN_004c6200 | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6620 | CModelInfo::AddAtomicModel | 13976 | 1000 | 0 | 0 | PASS |  |
+| 0x4C6650 | CModelInfo::AddDamageAtomicModel | 69 | 57 | 0 | 0 | PASS |  |
+| 0x4C6680 | CModelInfo::AddLodAtomicModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C66B0 | CModelInfo::AddTimeModel | 160 | 160 | 0 | 0 | PASS |  |
+| 0x4C66E0 | CModelInfo::AddLodTimeModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6710 | CModelInfo::AddWeaponModel | 50 | 50 | 0 | 0 | PASS |  |
+| 0x4C6740 | CModelInfo::AddClumpModel | 89 | 35 | 0 | 0 | PASS |  |
+| 0x4C6770 | CModelInfo::AddVehicleModel | 212 | 212 | 0 | 0 | PASS |  |
+| 0x4C67A0 | CModelInfo::AddPedModel | 276 | 276 | 0 | 0 | PASS |  |
+| 0x5BCA10 | ModelIndices::InitModelIndices | 1 | 1 | 0 | 0 | PASS |  |
+| 0x856230 | __dtor_CModelInfo__ms_atomicModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x856240 | __dtor_CModelInfo__ms_damageAtomicModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x856250 | __dtor_CModelInfo__ms_lodAtomicModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x856260 | __dtor_CModelInfo__ms_timeModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x856270 | __dtor_CModelInfo__ms_lodTimeModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x856280 | __dtor_CModelInfo__ms_weaponModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x856290 | __dtor_CModelInfo__ms_clumpModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x8562A0 | __dtor_CModelInfo__ms_vehicleModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x8562B0 | __dtor_CModelInfo__ms_pedModelInfoStore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C47E0 | CTimeInfo::FindOtherTimeModel | 160 | 160 | 0 | 0 | PASS |  |
+| 0x4C4AF0 | CBaseModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C4B80 | CBaseModelInfo::AddTexDictionaryRef | 1220 | 850 | 0 | 0 | PASS |  |
+| 0x4C4BA0 | CBaseModelInfo::AddRef | 3464 | 1000 | 0 | 0 | PASS |  |
+| 0x4C5280 | CClumpModelInfo::SetAtomicRendererCB | 66 | 65 | 0 | 0 | PASS |  |
+| 0x4C52A0 | CClumpModelInfo::FindFrameFromNameCB | 1 | 0 | 0 | 0 | PARTIAL | 1 call, nested in a sampled case (not sampled) |
+| 0x4C52F0 | CClumpModelInfo::FindFrameFromNameWithoutIdCB | 40599 | 1000 | 0 | 0 | PASS |  |
+| 0x4C5350 | CClumpModelInfo::FindFrameFromIdCB | 31517 | 1000 | 0 | 0 | PASS |  |
+| 0x4C5390 | CClumpModelInfo::FillFrameArrayCB | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C53C0 | CClumpModelInfo::GetFrameFromId | 1013 | 1000 | 0 | 0 | PASS |  |
+| 0x4C5400 | CClumpModelInfo::GetFrameFromName | 26 | 26 | 0 | 0 | PASS |  |
+| 0x4C5440 | CClumpModelInfo::FillFrameArray | 231 | 231 | 0 | 0 | PASS |  |
+| 0x4C5460 | CClumpModelInfo::SetFrameIds | 83 | 82 | 0 | 0 | PASS |  |
+| 0x4C57A0 | CPedModelInfo::CPedModelInfo | 278 | 278 | 0 | 0 | PASS |  |
+| 0x4C5940 | CModelInfo::GetModelInfo-full | 24833 | 1000 | 0 | 0 | PASS |  |
+| 0x4C5A20 | CModelInfo::GetModelInfo-minmax | 1528 | 1000 | 0 | 0 | PASS |  |
+| 0x4C6210 | CAtomicModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6230 | CDamageAtomicModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6250 | CLodAtomicModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6270 | CTimeModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6290 | CLodTimeModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C62B0 | CClumpModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C62D0 | CWeaponModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C63B0 | CModelInfo::ReInit2dEffects | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x84BBF0 | __init_CModelInfo__ms_atomicModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BC10 | __init_CModelInfo__ms_damageAtomicModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BC30 | __init_CModelInfo__ms_lodAtomicModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BC50 | __init_CModelInfo__ms_timeModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BC70 | __init_CModelInfo__ms_lodTimeModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BC90 | __init_CModelInfo__ms_weaponModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BCB0 | __init_CModelInfo__ms_clumpModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BCD0 | __init_CModelInfo__ms_vehicleModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x84BCF0 | __init_CModelInfo__ms_pedModelInfoStore | 1 | 1 | 0 | 0 | PASS |  |
+| 0x4C4B40 | CBaseModelInfo::SetTexDictionary | 14841 | 1000 | 0 | 0 | PASS |  |
+| 0x4C4C70 | CBaseModelInfo::Get2dEffect | 345165 | 1000 | 0 | 0 | PASS |  |
+| 0x4C4EF0 | CClumpModelInfo::SetHierarchyForSkinAtomic | 378 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C5250 | CClumpModelInfo::ConvertAnimFileIndex | 419 | 419 | 0 | 0 | PASS |  |
+| 0x4C59F0 | CModelInfo::GetModelInfoUInt16 | 160 | 160 | 0 | 0 | PASS |  |
+| 0x4C6D90 | CPedModelInfo::CreateHitColModelSkinned | 56 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C4360 | CAtomicModelInfo::SetAtomic | 994 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C48D0 | CDamageAtomicModelInfo::SetDamagedAtomic | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C4F30 | CClumpModelInfo::AtomicSetupLightingCB | 780 | 694 | 0 | 0 | PASS |  |
+| 0x4C4F70 | CClumpModelInfo::SetClump | 112 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C6810 | CModelInfo::Initialise | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C6F70 | CPedModelInfo::AnimatePedColModelSkinned | 14153 | 1000 | 0 | 0 | PASS |  |
+| 0x4C7170 | CPedModelInfo::AnimatePedColModelSkinnedWorld | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x5B57C0 | ModelIndices::MatchAllModelStrings | 1 | 1 | 0 | 0 | PASS |  |
+| 0x4C7340 | CPedModelInfo::SetClump | 56 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C9910 | CWeaponModelInfo::SetClump | 7 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C4C40 | CBaseModelInfo::DeleteCollisionModel | 4309 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C62F0 | CPedModelInfo::~CPedModelInfo | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6350 | CPedModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C63E0 | CModelInfo::ShutDown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C4B90 | CBaseModelInfo::RemoveTexDictionaryRef | 253 | 127 | 13 | 13 | MISMATCH | mismatching cases are the ones whose TXD reference drops to 0 (RwTexDictionaryDestroy; H1) |
+| 0x4C4BB0 | CBaseModelInfo::RemoveRef | 2926 | 1000 | 0 | 0 | PASS |  |
+| 0x4C4440 | CAtomicModelInfo::DeleteRwObject | 294 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C44D0 | CAtomicModelInfo::CreateInstance-rwmat | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C4530 | CAtomicModelInfo::CreateInstance-void | 36159 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C4960 | CDamageAtomicModelInfo::CreateInstance-void | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C4E70 | CClumpModelInfo::DeleteRwObject | 24 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C5140 | CClumpModelInfo::CreateInstance-void | 590 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C4910 | CDamageAtomicModelInfo::CreateInstance-rwmat | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C49D0 | CDamageAtomicModelInfo::DeleteRwObject | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C6C50 | CPedModelInfo::DeleteRwObject | 4 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C4D50 | CBaseModelInfo::Shutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C5110 | CClumpModelInfo::CreateInstance-mat | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C4E60 | CClumpModelInfo::Shutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7E10 | CVehicleModelInfo::IsValidCompRule | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7E50 | CVehicleModelInfo::GetListOfComponentsNotUsedByRules | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C8200 | CVehicleModelInfo::IsUpgradeAvailable | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C8220 | CVehicleModelInfo::SetEditableMaterialsCB-RpMaterial | 53149 | 1000 | 0 | 0 | PASS |  |
+| 0x4C83B0 | CVehicleModelInfo::RemoveWindowAlphaCB | 1874 | 1000 | 0 | 0 | PASS |  |
+| 0x4C8460 | CVehicleModelInfo::ResetEditableMaterials | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x4C84B0 | CVehicleModelInfo::SetVehicleColour | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x4C8700 | CVehicleModelInfo::AddWheelUpgrade | 29 | 29 | 0 | 0 | PASS |  |
+| 0x4C8740 | CVehicleModelInfo::GetNumWheelUpgrades | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C8750 | CVehicleModelInfo::GetWheelUpgrade | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C8980 | CVehicleModelInfo::SetCustomCarPlateText | 8 | 8 | 0 | 0 | PASS |  |
+| 0x4C89B0 | CVehicleModelInfo::GetMaximumNumberOfPassengersFromNumberOfDoors | 231 | 231 | 0 | 0 | PASS |  |
+| 0x4C8C90 | CVehicleModelInfo::SetupLightFlags | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x4C8D60 | CVehicleModelInfo::CVehicleStructure::CVehicleStructure | 32 | 30 | 0 | 0 | PASS |  |
+| 0x536FE0 | CFileLoader::LoadLine-Bufer | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B41C0 | CFileLoader::LoadPathHeader | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7510 | CVehicleModelInfo::FindTextureCB | 5184 | 1000 | 0 | 0 | PASS |  |
+| 0x4C75A0 | CVehicleModelInfo::UseCommonVehicleTexDicationary | 32 | 30 | 0 | 0 | PASS |  |
+| 0x4C75C0 | CVehicleModelInfo::StopUsingCommonVehicleTexDicationary | 32 | 30 | 0 | 0 | PASS |  |
+| 0x4C7670 | CVehicleModelInfo::SetAnimFile | 212 | 212 | 0 | 0 | PASS |  |
+| 0x4C7720 | CVehicleModelInfo::HideDamagedAtomicCB | 39 | 4 | 0 | 0 | PARTIAL | 4 of 39 calls compared (nested in SetClump cases / per-frame cap) |
+| 0x4C7790 | CVehicleModelInfo::HideAllComponentsAtomicCB | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7A30 | CVehicleModelInfo::SetAtomicRendererCB_Heli | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7B10 | CVehicleModelInfo::SetAtomicRenderCallbacks | 32 | 30 | 0 | 0 | PASS |  |
+| 0x4C7B90 | CVehicleModelInfo::SetAtomicFlagCB | 1574 | 1000 | 0 | 0 | PASS |  |
+| 0x4C7BB0 | CVehicleModelInfo::ClearAtomicFlagCB | 36 | 36 | 0 | 0 | PASS |  |
+| 0x4C7BD0 | CVehicleModelInfo::GetOkAndDamagedAtomicCB | 512 | 452 | 0 | 0 | PASS |  |
+| 0x4C7C10 | CVehicleModelInfo::SetVehicleComponentFlags | 453 | 404 | 0 | 0 | PASS |  |
+| 0x4C7FB0 | CVehicleModelInfo::ChooseComponent-Global | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C83E0 | CVehicleModelInfo::SetEditableMaterialsCB-RpAtomic | 22295 | 1000 | 865 | 0 | MISMATCH | materials of the atomic's geometry are heap objects (not expressible as regions); the RpMaterial callback passes once its material is declared |
+| 0x4C8430 | CVehicleModelInfo::SetEditableMaterials | 1001 | 1000 | 3000 | 0 | MISMATCH | as above: the original run recolours the clump's materials in the heap, the Rust run then finds no magic colours |
+| 0x4C8500 | CVehicleModelInfo::ChooseVehicleColour | 320 | 320 | 0 | 0 | PASS |  |
+| 0x4C8810 | CVehicleModelInfo::GetMatFXEffectMaterialCB | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C88B0 | CVehicleModelInfo::SetEnvMapCoeffCB | 80721 | 1000 | 0 | 0 | PASS |  |
+| 0x4C8E10 | CVehicleModelInfo::`scalar deleting destructor' | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C9410 | CVehicleModelInfo::SetEnvironmentMapAtomicCB | 5671 | 1000 | 0 | 0 | PASS |  |
+| 0x4C9430 | CVehicleModelInfo::SetEnvMapCoeffAtomicCB | 22295 | 1000 | 0 | 0 | PASS |  |
+| 0x4C97E0 | CVehicleModelInfo::DisableEnvMap | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C9800 | CVehicleModelInfo::SetEnvMapCoeff | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x536F80 | CFileLoader::LoadLine-File | 36264 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x537580 | CFileLoader::LoadCollisionModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x537AE0 | CFileLoader::LoadCollisionModelVer4 | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x537CE0 | CFileLoader::LoadCollisionModelVer3 | 11157 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x537EE0 | CFileLoader::LoadCollisionModelVer2 | 1408 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B3910 | CFileLoader::AddTexDictionaries | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B4530 | CFileLoader::LoadGarage | 52 | 52 | 0 | 0 | PASS |  |
+| 0x5B4C80 | CFileLoader::LoadOcclusionVolume | 995 | 995 | 0 | 0 | PASS |  |
+| 0x5B4D70 | CFileLoader::LoadAudioZone | 155 | 155 | 0 | 0 | PASS |  |
+| 0x5B81D0 | CFileLoader::LoadTimeCyclesModifier | 8 | 8 | 0 | 0 | PASS |  |
+| 0x4C7630 | CVehicleModelInfo::Init | 212 | 212 | 0 | 0 | PASS |  |
+| 0x4C76D0 | CVehicleModelInfo::ConvertAnimFileIndex | 212 | 212 | 0 | 0 | PASS |  |
+| 0x4C77E0 | CVehicleModelInfo::SetAtomicRendererCB | 43 | 4 | 0 | 0 | PARTIAL | 4 of 43 calls compared (as above) |
+| 0x4C7870 | CVehicleModelInfo::SetAtomicRendererCB_RealHeli | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7930 | CVehicleModelInfo::SetAtomicRendererCB_Plane | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C79A0 | CVehicleModelInfo::SetAtomicRendererCB_Boat | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7AA0 | CVehicleModelInfo::SetAtomicRendererCB_Train | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7D20 | CVehicleModelInfo::GetWheelPosn | 1075 | 1000 | 0 | 0 | PASS |  |
+| 0x4C7DD0 | CVehicleModelInfo::GetOriginalCompPosition | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C8040 | CVehicleModelInfo::ChooseComponent | 53 | 53 | 0 | 0 | PASS |  |
+| 0x4C8120 | CVehicleModelInfo::ChooseSecondComponent | 53 | 53 | 0 | 0 | PASS |  |
+| 0x4C8780 | CVehicleModelInfo::LoadEnvironmentMaps | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C8B60 | CVehicleModelInfo::StoreAtomicUsedMaterialsCB | 572 | 76 | 0 | 76 | UNDECLARED | 0 mismatches; writes through its data cursor into the caller's stack list (not declared) |
+| 0x4C8E30 | CVehicleModelInfo::CollapseFramesCB | 570 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C9360 | CVehicleModelInfo::AssignRemapTxd | 572 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C9450 | CVehicleModelInfo::SetCarCustomPlate | 32 | 30 | 77 | 9 | MISMATCH | the original run replaces the plate material texture in the heap; the Rust run then finds no plate material (H1) |
+| 0x537990 | CFileLoader::LoadCarGenerator-0 | 167 | 102 | 0 | 0 | PASS |  |
+| 0x538440 | CFileLoader::LoadCollisionFile-Buffer | 37 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5B45D0 | CFileLoader::LoadStuntJump | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B4AB0 | CFileLoader::LoadZone | 384 | 384 | 0 | 0 | PASS |  |
+| 0x5B4B40 | CFileLoader::LoadCullZone | 1266 | 1000 | 0 | 0 | PASS |  |
+| 0x5B4E60 | CFileLoader::LoadCollisionFile-File | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5B5000 | CFileLoader::LoadCollisionFileFirstTime | 251 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5B65A0 | CVehicleModelInfo::LoadVehicleUpgrades | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B6890 | CVehicleModelInfo::LoadVehicleColours | 1 | 1 | 0 | 0 | PASS |  |
+| 0x5B75E0 | CFileLoader::LoadTXDParent | 23 | 23 | 0 | 0 | PASS |  |
+| 0x5B7670 | CFileLoader::Load2dEffect | 97 | 97 | 0 | 0 | PASS |  |
+| 0x4C7470 | CVehicleModelInfo::ShutdownLightTexture | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C7700 | CVehicleModelInfo::MoveObjectsCB | 489 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C87D0 | CVehicleModelInfo::ShutdownEnvironmentMaps | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B3C60 | CFileLoader::LoadObject | 14045 | 1000 | 0 | 0 | PASS |  |
+| 0x5B3DE0 | CFileLoader::LoadTimeObject | 160 | 160 | 0 | 0 | PASS |  |
+| 0x5B3FB0 | CFileLoader::LoadWeaponObject | 50 | 50 | 0 | 0 | PASS |  |
+| 0x5B4040 | CFileLoader::LoadClumpObject | 35 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B40C0 | CFileLoader::LoadAnimatedClumpObject | 54 | 54 | 0 | 0 | PASS |  |
+| 0x5B4740 | CFileLoader::LoadCarGenerator-1 | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B6F30 | CFileLoader::LoadVehicleObject | 212 | 212 | 1 | 0 | MISMATCH | 211/212 identical; skimmer (vehicles.ide 460, 11 fields): wheel sizes +0x40/+0x44 and wheel model index +0x48 are uninitialised locals in the original (0x00000008, 0x0036F144 = stack data); the port writes 0. Ledger candidate |
+| 0x5B7420 | CFileLoader::LoadPedObject | 276 | 276 | 0 | 0 | PASS |  |
+| 0x4C8900 | CVehicleModelInfo::SetRenderPipelines | 31 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x537150 | CFileLoader::SetRelatedModelInfoCB | 994 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B3930 | CFileLoader::FindRelatedModelInfoCB | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B8030 | CFileLoader::LoadEntryExit | 376 | 376 | 0 | 0 | PASS |  |
+| 0x5B8400 | CFileLoader::LoadObjectTypes | 57 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5D5DB0 | CVehicleModelInfo::SetDirtTextures | 1001 | 1000 | 0 | 0 | PASS |  |
+| 0x4C8840 | CVehicleModelInfo::SetEnvironmentMapCB | 20184 | 720 | 0 | 0 | PARTIAL | in-game run only: 720 of 20184 calls, 0 mismatches |
+| 0x4C8BD0 | CVehicleModelInfo::ReduceMaterialsInVehicle | 31 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x538690 | CFileLoader::LoadObjectInstance-file | 9268 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B3860 | CFileLoader::LoadTexDictionary | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C8E60 | CVehicleModelInfo::PreprocessHierarchy | 31 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B51E0 | CFileLoader::LinkLods | 52 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C95C0 | CVehicleModelInfo::SetClump | 31 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5371F0 | CFileLoader::LoadAtomicFile-stream | 994 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5372D0 | CFileLoader::LoadClumpFile-1 | 110 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5373F0 | CFileLoader::StartLoadClumpFile | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x537450 | CFileLoader::FinishLoadClumpFile | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B39D0 | CFileLoader::LoadAtomicFile- | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5B3A30 | CFileLoader::LoadClumpFile- | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4C9680 | CVehicleModelInfo::CreateInstance | 255 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x4C9890 | CVehicleModelInfo::DeleteRwObject | 9 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B8F00 | CVehicleModelInfo::SetupCommonData | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x5B3680 | LoadingScreenLoadingFile | 114 | 4 | 1 | 4 | MISMATCH | early run without the txd-pool regions; loads a TXD (H1) |
+| 0x5B47B0 | CFileLoader::LoadPickup | 5 | 5 | 0 | 0 | PASS |  |
+| 0x5B8700 | CFileLoader::LoadScene | 52 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5B9030 | CFileLoader::LoadLevel | 2 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x406370 | CdStream::CdStreamShutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4063E0 | CdStream::CdStreamGetStatus | 1240 | 866 | 0 | 0 | PARTIAL | 866 of 867 calls compared, 0 mismatches |
+| 0x406460 | CdStream::CdStreamSync | 835 | 600 | 0 | 0 | PASS |  |
+| 0x406560 | CdStream::CdStreamThread | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x406690 | CdStream::CdStreamRemoveImages | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4068F0 | CdStream::CdStreamInitThread | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x406B70 | CdStream::CdStreamInit | 1 | 1 | 1 | 1 | MISMATCH | LocalAlloc block, semaphore and thread handles of the second run differ (OS resources; H2) |
+| 0x4045B0 | CIplStore::AddIplsNeededAtPosn | 198 | 198 | 0 | 0 | PASS |  |
+| 0x4045E0 | CIplStore::ClearIplsNeededAtPosn | 2 | 2 | 0 | 0 | PASS |  |
+| 0x4045F0 | CIplStore::SetIfInteriorIplIsRequired | 17008 | 1000 | 0 | 0 | PASS |  |
+| 0x404660 | CIplStore::SetIfIplIsRequired | 3256 | 592 | 0 | 0 | PARTIAL | pause-restart only: 592 of 3256 calls compared (per-frame cap 4) |
+| 0x404690 | CIplStore::SetIfIplIsRequiredReducedBB | 8471 | 1000 | 0 | 0 | PASS |  |
+| 0x404700 | CIplStore::SetIplsRequired | 1006 | 1000 | 0 | 0 | PASS |  |
+| 0x404780 | CIplStore::GetNewIplEntityIndexArray | 30 | 30 | 0 | 0 | PASS |  |
+| 0x4047B0 | CIplStore::GetIplEntityIndexArray | 30 | 30 | 0 | 0 | PASS |  |
+| 0x404A60 | CIplStore::GetIplName | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x404A90 | CIplStore::SetIsInterior | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x404AC0 | CIplStore::FindIplSlot | 196 | 193 | 0 | 0 | PASS |  |
+| 0x404B20 | CIplStore::RemoveIpl | 216 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x404C70 | CIplStore::GetBoundingBox | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x404C90 | CIplStore::IncludeEntity | 52842 | 1000 | 0 | 0 | PASS |  |
+| 0x404D30 | CIplStore::EnableDynamicStreaming | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x404DE0 | CIplStore::SetupRelatedIpls | 52 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x405110 | CIplStore::RemoveRelatedIpls | 52 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x405170 | CIplStore::LoadIpls | 4997 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x4053F0 | CIplStore::EnsureIplsAreInMemory | 4994 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x405520 | CIplStore::RequestIpls | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x405600 | CIplStore::HaveIplsLoaded | 2 | 2 | 0 | 0 | PASS |  |
+| 0x405720 | CIplStore::RemoveAllIpls | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x405780 | CIplStore::LoadAllRemainingIpls | 1 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x405850 | CIplStore::RequestIplAndIgnore | 6 | 5 | 0 | 0 | PASS |  |
+| 0x405890 | CIplStore::RemoveIplAndIgnore | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x4058D0 | CIplStore::RemoveIplWhenFarAway | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x405AC0 | CIplStore::AddIplSlot | 191 | 191 | 0 | 0 | PASS |  |
+| 0x405B60 | CIplStore::RemoveIplSlot | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x405C00 | CIplStore::LoadIplBoundingBox | 190 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x405EC0 | CIplStore::Initialise | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x405FA0 | CIplStore::Shutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x406080 | CIplStore::LoadIpl | 232 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x5D5420 | CIplStore::Save | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5D54A0 | CIplStore::Load | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x408340 | CTxdStore::GetTxd | 35 | 33 | 0 | 0 | PASS |  |
+| 0x408370 | CTxdStore::GetParentTxdSlot | 260 | 116 | 0 | 0 | PASS |  |
+| 0x731680 | CTxdStore::RemoveIfRefCountIsGreaterThanOne | 225 | 24 | 0 | 0 | PARTIAL | in-game run only: 24 of 225 calls, 0 mismatches |
+| 0x7316A0 | CTxdStore::PushCurrentTxd | 211 | 71 | 0 | 0 | PASS |  |
+| 0x7316B0 | CTxdStore::PopCurrentTxd | 211 | 71 | 0 | 0 | PASS |  |
+| 0x731720 | CTxdStore::TxdStoreFindCB | 4420 | 1000 | 0 | 0 | PASS |  |
+| 0x731850 | CTxdStore::FindTxdSlot-name | 19111 | 1000 | 0 | 0 | PASS |  |
+| 0x7318E0 | CTxdStore::FindTxdSlot-hash | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x731930 | CTxdStore::StartLoadTxd | 4 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x731990 | CTxdStore::Create | 2 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x7319C0 | CTxdStore::SetCurrentTxd | 1426 | 918 | 0 | 0 | PASS |  |
+| 0x731A00 | CTxdStore::AddRef | 6051 | 1000 | 0 | 0 | PASS |  |
+| 0x731A30 | CTxdStore::RemoveRef | 3824 | 1000 | 2 | 2 | MISMATCH | 998/1000 identical; the 2 differing cases drop the count to 0 and destroy the RW dictionary (H1) |
+| 0x731A70 | CTxdStore::RemoveRefWithoutDelete | 1024 | 350 | 0 | 0 | PARTIAL | in-game run only: 350 of 1024 calls, 0 mismatches |
+| 0x731AA0 | CTxdStore::GetNumRefs | 1099 | 946 | 0 | 0 | PASS |  |
+| 0x731C80 | CTxdStore::AddTxdSlot | 3597 | 1000 | 0 | 0 | PASS |  |
+| 0x731CD0 | CTxdStore::RemoveTxdSlot | 3 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x731D50 | CTxdStore::SetupTxdParent | 311 | 220 | 0 | 0 | PASS |  |
+| 0x731DD0 | CTxdStore::LoadTxd-stream | 259 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x731E40 | CTxdStore::FinishLoadTxd | 4 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x731E90 | CTxdStore::RemoveTxd | 63 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x731F20 | CTxdStore::Initialise | 1 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x732000 | CTxdStore::Shutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x732060 | CTxdStore::GameShutdown | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x7320B0 | CTxdStore::LoadTxd-filename | 13 | 0 | 0 | 0 | not replayable | H2 CD/file I/O, OS handles |
+| 0x611C50 | CLoadedCarGroup::PickRandomCar | 1179 | 1000 | 0 | 0 | PASS |  |
+| 0x611E10 | CLoadedCarGroup::SortBasedOnUsage | 40 | 4 | 0 | 0 | PARTIAL | pause-restart only: 4 of 40 calls compared (per-frame cap) |
+| 0x611E90 | CLoadedCarGroup::PickLeastUsedModel | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x53DED0 | CLoadingScreen::LoadingScreen | 132 | 6 | 0 | 6 | UNDECLARED | early run: undeclared CLoadingScreen message buffers + RW engine statics |
+| 0x58FF10 | CLoadingScreen::Shutdown | 2 | 2 | 2 | 2 | MISMATCH | destroys splash sprites/TXD (H1/H3) |
+| 0x58FF60 | CLoadingScreen::RenderSplash | 1106 | 12 | 0 | 12 | UNDECLARED | undeclared RW/D3D9 driver statics (render-state cache) |
+| 0x5900B0 | CLoadingScreen::LoadSplashes | 2 | 2 | 2 | 2 | MISMATCH | creates RW textures: texture pointers differ per run (H1/H3) |
+| 0x590220 | CLoadingScreen::DisplayMessage | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x590240 | CLoadingScreen::SetLoadingBarMsg | 117 | 4 | 0 | 4 | UNDECLARED | undeclared CLoadingScreen::m_LoadingGxtMsg1/2 |
+| 0x590280 | CLoadingScreen::GetClockTime | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x5902B0 | CLoadingScreen::Init | 3 | 3 | 1 | 1 | MISMATCH | calls LoadSplashes (H1/H3) |
+| 0x590320 | CLoadingScreen::Continue | 1 | 1 | 0 | 0 | PASS |  |
+| 0x590370 | CLoadingScreen::RenderLoadingBar | 139 | 0 | 0 | 0 | not replayable | H3 loading-screen rendering |
+| 0x5904D0 | CLoadingScreen::DisplayNextSplash | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x590530 | CLoadingScreen::StartFading | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x590570 | CLoadingScreen::DisplayPCScreen | 139 | 0 | 0 | 0 | not replayable | H3 loading-screen rendering |
+| 0x5905E0 | CLoadingScreen::Update | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x590860 | CLoadingScreen::DoPCTitleFadeIn | 3 | 0 | 0 | 0 | not replayable | H3 loading-screen rendering |
+| 0x590990 | CLoadingScreen::DoPCTitleFadeOut | 3 | 3 | 0 | 3 | UNDECLARED | undeclared RW/D3D9 driver statics |
+| 0x590AC0 | CLoadingScreen::DoPCScreenChange | 2 | 2 | 2 | 2 | MISMATCH | renders frames and releases splashes (H3) |
+| 0x590D00 | CLoadingScreen::NewChunkLoaded | 1137 | 1000 | 2 | 5 | MISMATCH | 998/1000 identical; the 2 differing cases call DoPCScreenChange (H3) |
+| 0x84F2D0 | __init_CLoadingScreen__m_aSplashes | 1 | 0 | 0 | 0 | not replayable | H3 loading-screen rendering |
+| 0x8565E0 | __dtor_CLoadingScreen__m_aSplashes | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x72E570 | RpClumpGtaStreamRead1 | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x72E620 | RpClumpGtaStreamRead2 | 0 | 0 | 0 | 0 | NOCALLS |  |
+| 0x730E60 | RwTextureGtaStreamRead | 2642 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x730FC0 | RwTexDictionaryGtaStreamRead | 259 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x731070 | RwTexDictionaryGtaStreamRead1 | 4 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x731150 | RwTexDictionaryGtaStreamRead2 | 4 | 0 | 0 | 0 | not replayable | H1 RW/D3D objects, heap object graphs |
+| 0x537510 | FUN_00537510 | 827 | 827 | 0 | 0 | PASS |  |
+| 0x537A10 | CAnimatedBuilding | 68 | 68 | 0 | 0 | PASS |  |
+| 0x59EA00 | CDummyObject::CDummyObject | 1001 | 1000 | 0 | 0 | PASS |  |

@@ -8,7 +8,8 @@ every `#[hook(...)]` registration in crates/*/src (group `port`; sa-hook install
 SA_HOOK_PORTS). With `ports` only the port hooks are printed, with `all` every hook; LIST is a comma
 list of names, addresses, `@FILE` (one name/address per line, `#` comments) or `state:STATE[:DOC]` (the
 addresses of the docs/arch/*.md (or docs/arch/DOC.md) function-table rows with that state, e.g.
-`state:implemented-needs-L2:core-port` = PORT-CORE's L2 batch), resolved against the table; an unknown entry is
+`state:implemented-needs-L2:core-port` = PORT-CORE's L2 batch) or `doc:DOC` (every row of docs/arch/DOC.md
+that is a hook), resolved against the table; an unknown entry is
 an error.
 """
 import pathlib
@@ -44,6 +45,13 @@ def keys_of(sel):
                 line = line.split("#", 1)[0].strip()
                 if line:
                     yield line
+        elif k.startswith("doc:"):
+            # every function-table row of docs/arch/DOC.md that is a hook (rows without a hook skipped)
+            for line in (root / f"docs/arch/{k[len('doc:'):]}.md").read_text().splitlines():
+                cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                if len(cells) > 2 and re.fullmatch(r"0x[0-9A-Fa-f]+", cells[0]):
+                    if any(h[0] == int(cells[0], 16) for h in hooks):
+                        yield cells[0]
         elif k.startswith("state:"):
             want, _, doc = k[len("state:"):].partition(":")
             for md in sorted((root / "docs/arch").glob(f"{doc or '*'}.md")):

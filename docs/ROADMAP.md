@@ -14,7 +14,7 @@ Resumed 2026-11-07 (user request); previous pause state at 1d26881.
 | Slot | Running | Next |
 |---|---|---|
 | impl-1 | agent: PORT-COLL into new crate sa-world (worktree coll, lane 1) | PHYS |
-| impl-2 | agent: STREAM-L2 (worktree stream-l2, lane 2) | — |
+| impl-2 | main session: STREAM-L2 verification (lane 2) | — |
 | measurement / REA | agent: INF-10 coverage finish (worktree inf10, lane 3; only REA user) | SAMP-1D |
 | harness | agent: INF-18 spool quota → INF-17 split-run L2 (worktree harness2, lane 4) | VER-1 → INF-16 |
 | verifier | — (CORE/STREAM L1 audit done, V-9..V-14) | audit of the CORE-L2b / STREAM-L2 results |
@@ -177,6 +177,7 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
 
 *original UB, not reproducible*
+- `CFileLoader::LoadVehicleObject` (0x5B3FB0 family): for the skimmer (vehicles.ide id 460, 11 fields) the original stores leftover stack values as wheel sizes (+0x40 = 8, +0x44 = 0x0036F144 in the measured run, low byte of +0x48 changed); the port writes 0 (STREAM-L2, `sa-oracle l2 show` frame 201 ordinal 60).
 - `Light::LightsCreate` (0x5BA520): the original never writes the colour alpha at +0x24 of each light (0x5BA54E–0x5BA55E; holds stack residue such as 0x7992FD50) and RW leaves three uninitialised pad words in pDirect's frame matrix; the port writes 0. L2 needs these bytes excluded in the reviewed normaliser before the function can reach L2 (CORE-L2b).
 - `CountCompsInRule` never returns for negative input words (original and port both loop forever) (PORT-STREAM).
 - CdStreamSync/CdStreamThread lost wake-up (0x156CD9D–0x156CDAE vs 0x406669–0x406678): the original can hang forever on a loading screen (~7% of new-game loads under Wine). The harness patches the wait (INF-15). The Rust CdStream port will not reproduce the hang; it keeps the observable behaviour of a completed read (decision recorded here).
