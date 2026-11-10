@@ -565,3 +565,13 @@
   all ports on Rust IDENTICAL on pause-restart. States: 83 L2, 21 L1, 144 implemented → F1 = 452
   (2.92 %).
 - Found: the protection reads some hooked function entries as data → INF-20.
+
+## 2026-11-10: PORT-PHYS integrated
+- 62 PHYS functions ported (sa-world/src/physical), merged with PORT-WORLD (keep-both conflicts in
+  hook/spec/module lists and l2-extras). Main-session verification on lanes 3/6/7: tests + clippy host/i686
+  + wasm32; phys-sec L2 IDENTICAL; split groups s1–s5 re-run: the 8 claimed PASS confirmed, the 4 collision
+  checkers FAIL/DIVERGED as reported; AddToMovingList/RemoveFromMovingList show undeclared writes at
+  0xB9ACC8 (agent claimed 0) → held at implemented; PhysSetVelocity L1 1M PASS; all ports
+  (CORE+STREAM+COLL+WORLD+PHYS) on Rust IDENTICAL on grove walk, pause-restart and world-cheats.
+  States: 29 L2, 6 L1 → F1 = 481 (3.11 %).
+- PLAN §8: nested-agent cap (≤2 helpers per sub-agent, one level) after nested forks reached 20 agents.

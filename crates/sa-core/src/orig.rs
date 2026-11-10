@@ -81,6 +81,42 @@ pub fn vtable_slot(obj: usize, off: u32) -> usize {
     crate::mem::GPtr::<u32>::from_addr(vt as usize + off as usize).read() as usize
 }
 
+/// Calls an original function that takes two operands on the x87 stack (`st1`, `st0`, loaded with
+/// `fld qword`, exact for f32-loaded values) and returns its result in ST0 (stored with `fstp qword`):
+/// the CRT's `_CIpow` (0x822130) and friends, which no `extern` ABI describes. Runs under the game's
+/// MXCSR like every `orig!` call ([`crate::abi::call_original`]); the x87 control word is the game's.
+#[cfg(sa_phase_a)]
+pub fn x87_binary(addr: usize, st1: f64, st0: f64) -> f64 {
+    let mut out: f64 = 0.0;
+    let (a, b, o) = (&raw const st1, &raw const st0, &raw mut out);
+    crate::abi::call_original(|| {
+        // SAFETY: `addr` is an original CRT intrinsic with the `_CI*` convention (operands on the x87
+        // stack, result in ST0, EAX/ECX/EDX clobbered); the operand and output pointers are locals.
+        // EDI and EBX are callee-saved, so the output pointer survives the call.
+        #[allow(unsafe_code)]
+        unsafe {
+            core::arch::asm!(
+                "fld qword ptr [{a}]",
+                "fld qword ptr [{b}]",
+                "call edi",
+                "fstp qword ptr [ebx]",
+                a = in(reg) a,
+                b = in(reg) b,
+                in("edi") addr,
+                in("ebx") o,
+                clobber_abi("C"),
+            );
+        }
+    });
+    out
+}
+
+/// Phases B/C: no original code to call (the caller's `=> path` decides).
+#[cfg(not(sa_phase_a))]
+pub fn x87_binary(addr: usize, _st1: f64, _st0: f64) -> f64 {
+    panic!("orig::x87_binary({addr:#x}): unported")
+}
+
 /// Declares typed calls into possibly-original functions (see the module docs).
 #[macro_export]
 macro_rules! orig {
