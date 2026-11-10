@@ -359,6 +359,10 @@ impl Expr {
     }
 }
 
+/// `Extra::acc` of a `D` entry: a declared write range that is neither snapshotted nor compared as a
+/// region (`RegionKind::Decl`); bytes written there are compared as window writes.
+pub const ACC_DECL: u8 = 0x80;
+
 /// One `SA_L2_EXTRA` entry.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Extra {
@@ -374,7 +378,7 @@ pub struct Extra {
 }
 
 impl Extra {
-    /// `[HOOK@][post:]ADDR:LEN[:R|W|RW]` or `[HOOK@][post:]os:file:EXPR|os:cwd|os:cursor`
+    /// `[HOOK@][post:]ADDR:LEN[:R|W|RW|D]` or `[HOOK@][post:]os:file:EXPR|os:cwd|os:cursor`
     pub fn parse(e: &str) -> Result<Extra, String> {
         use sa_oracle_format::l2::OsProbe;
         let bad = |why: String| format!("SA_L2_EXTRA: {e:?} ([HOOK@][post:]ADDR:LEN[:R|W|RW]): {why}");
@@ -424,6 +428,8 @@ impl Extra {
             None | Some("RW") => 3,
             Some("R") => 1,
             Some("W") => 2,
+            // declared written, not recorded (static windows only; docs/re/l2-oracle.md)
+            Some("D") if !post => ACC_DECL,
             Some(a) => return Err(bad(format!("access {a:?}"))),
         };
         Ok(Extra {
@@ -813,6 +819,9 @@ mod tests {
         assert!(Extra::parse("os:file").is_err());
         assert!(Extra::parse("os:cwd:eax").is_err());
         assert!(Extra::parse("os:disk:eax").is_err());
+        let d = Extra::parse("CVector::Normalise@0x8E4CC0:0x80850:D").unwrap();
+        assert_eq!((d.acc, d.post), (ACC_DECL, false));
+        assert!(Extra::parse("post:0x8E4CC0:4:D").is_err());
     }
 
     #[test]

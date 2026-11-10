@@ -190,6 +190,11 @@ pub enum RegionKind {
     /// Observable OS state outside process memory (not bytes at `addr`): an encoded probe record
     /// ([`OsProbe`]), compared raw (never normalised). `addr` is the probed object (FILE*), or 0.
     Os(OsProbe),
+    /// Declared write range without a snapshot (`SA_L2_EXTRA` access `D`, L2-EXTRAS): `len` bytes at
+    /// `addr` count as written for the undeclared-write check; nothing is recorded or restored. Only
+    /// meaningful inside the watched static windows, whose written bytes are compared anyway (window
+    /// writes) and whose pre-call state is the page fingerprint. Encoded with `pre` = `len` (u32 LE).
+    Decl(u32),
 }
 
 /// OS-effect probes (INF-17 split-run L2): state a function changes outside game memory.
@@ -311,18 +316,19 @@ impl Region {
         match self.kind {
             RegionKind::Os(_) => 0,
             RegionKind::Post => self.post_orig.len().max(self.post_rust.len()) as u32,
+            RegionKind::Decl(n) => n,
             _ => self.len(),
         }
     }
     /// Memory region whose `pre` bytes are the memory at `addr` (not a post-only or OS region).
     pub fn has_pre_memory(&self) -> bool {
-        !matches!(self.kind, RegionKind::Post | RegionKind::Os(_))
+        !matches!(self.kind, RegionKind::Post | RegionKind::Os(_) | RegionKind::Decl(_))
     }
     /// Declared as written (bytes changed here are inside the write set).
     pub fn declared_write(&self) -> bool {
         match self.kind {
             RegionKind::Global { .. } | RegionKind::Extra | RegionKind::Post => self.access & ACC_W != 0,
-            RegionKind::This | RegionKind::ArgPtr(_) => true,
+            RegionKind::This | RegionKind::ArgPtr(_) | RegionKind::Decl(_) => true,
             RegionKind::Os(_) => false,
         }
     }
@@ -589,12 +595,16 @@ impl Case {
                 RegionKind::Extra => (3, 0),
                 RegionKind::Post => (4, 0),
                 RegionKind::Os(p) => (5, p as u8),
+                RegionKind::Decl(_) => (6, 0),
             };
             w.u8(k);
             w.u8(x);
             w.u8(r.access);
             w.u8(r.readable as u8);
-            w.bytes(&r.pre);
+            match r.kind {
+                RegionKind::Decl(n) => w.bytes(&n.to_le_bytes()),
+                _ => w.bytes(&r.pre),
+            }
             w.bytes(&r.post_orig);
             w.bytes(&r.post_rust);
         }
@@ -687,14 +697,24 @@ impl Case {
                 3 => RegionKind::Extra,
                 4 => RegionKind::Post,
                 5 => RegionKind::Os(OsProbe::from_u8(x).ok_or_else(|| format!("bad OS probe {x}"))?),
+                6 => RegionKind::Decl(0),
                 _ => return Err(format!("bad region kind {k}")),
+            };
+            let (access, readable, mut pre) = (r.u8()?, r.u8()? != 0, r.bytes()?);
+            let kind = match kind {
+                RegionKind::Decl(_) => {
+                    let b: [u8; 4] = pre.as_slice().try_into().map_err(|_| "bad declared region length".to_string())?;
+                    pre = Vec::new();
+                    RegionKind::Decl(u32::from_le_bytes(b))
+                }
+                k => k,
             };
             c.regions.push(Region {
                 addr,
                 kind,
-                access: r.u8()?,
-                readable: r.u8()? != 0,
-                pre: r.bytes()?,
+                access,
+                readable,
+                pre,
                 post_orig: r.bytes()?,
                 post_rust: r.bytes()?,
             });
@@ -1039,6 +1059,8 @@ pub fn compare(c: &Case) -> Vec<Diff> {
             RegionKind::ArgPtr(i) => format!("*arg{i}"),
             RegionKind::Extra => format!("extra {:#x}", reg.addr),
             RegionKind::Post => format!("post {:#x}", reg.addr),
+            // declaration only: its written bytes are compared as window writes below
+            RegionKind::Decl(_) => continue,
             RegionKind::Os(p) => {
                 // OS state is compared raw: OS-assigned values are never normalised here.
                 if reg.post_orig != reg.post_rust {
@@ -1223,6 +1245,30 @@ mod tests {
             merged: false,
             window_pre_rust: Vec::new(),
         }
+    }
+
+    #[test]
+    fn declared_region_roundtrip_and_undeclared() {
+        let mut c = sample();
+        c.regions.push(Region {
+            addr: 0xB7CC00,
+            kind: RegionKind::Decl(0x100),
+            access: ACC_W,
+            readable: true,
+            pre: Vec::new(),
+            post_orig: Vec::new(),
+            post_rust: Vec::new(),
+        });
+        c.orig.writes.push(Write { addr: 0xB7CC10, bytes: vec![1, 2] });
+        c.rust.writes.push(Write { addr: 0xB7CC10, bytes: vec![1, 2] });
+        c.orig.writes.push(Write { addr: 0xB7CD00, bytes: vec![3] });
+        c.rust.writes.push(Write { addr: 0xB7CD00, bytes: vec![3] });
+        let d = Case::decode(&c.encode()).unwrap();
+        assert_eq!(d.regions.last().unwrap().kind, RegionKind::Decl(0x100));
+        assert!(d.regions.last().unwrap().pre.is_empty());
+        let u = undeclared_writes(&d);
+        assert!(u.iter().all(|x| x.addr == 0xB7CD00), "{u:?}");
+        assert_eq!(u.len(), 2);
     }
 
     #[test]

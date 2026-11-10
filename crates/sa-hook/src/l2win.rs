@@ -882,6 +882,16 @@ fn build_regions(f: &Frame, i: usize, sig: &fmt::Sig, args: &[u32]) -> Vec<Regio
             e.addr.eval(&regs_in, args, &rd32),
             e.len.eval(&regs_in, args, &rd32),
         ) {
+            // declared write range: no bytes recorded
+            (Some(a), Some(l)) if e.acc == crate::l2::ACC_DECL => regions.push(Region {
+                addr: a,
+                kind: RegionKind::Decl(l),
+                access: fmt::ACC_W,
+                readable: true,
+                pre: Vec::new(),
+                post_orig: Vec::new(),
+                post_rust: Vec::new(),
+            }),
             // at most 16 MiB per region
             (Some(a), Some(l)) => add(&mut regions, a, l.min(1 << 24), RegionKind::Extra, e.acc),
             _ => add(&mut regions, 0, 0, RegionKind::Extra, e.acc), // counted as unreadable

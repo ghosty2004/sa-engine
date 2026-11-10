@@ -602,6 +602,10 @@ pub fn show_case(c: &Case) -> String {
             RegionKind::ArgPtr(i) => format!("*arg{i}"),
             RegionKind::Extra => "extra".into(),
             RegionKind::Post => "post".into(),
+            RegionKind::Decl(n) => {
+                s += &format!("  declared {:#x}+{n:#x} (written, not recorded)\n", r.addr);
+                continue;
+            }
             RegionKind::Os(p) => {
                 s += &format!(
                     "  os-{} {:#x} pre [{}] orig [{}] rust [{}]\n",

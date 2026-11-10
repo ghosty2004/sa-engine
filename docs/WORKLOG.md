@@ -685,3 +685,10 @@
   (combined: pop then script in the table), l2-extras (both sections kept). sa-hook lib 45, sa-pop 3, sa-script 3 tests;
   i686 build and clippy clean; all-ports IDENTICAL on grove, c-bug, pause-restart. States: 9 → L2, 6 → implemented.
 - Decision recorded in ROADMAP PORT-SCRIPT (partial switch ports with original fallback).
+
+## 2026-11-11 L2-EXTRAS integrated (main session)
+- Agent a9db9276 (lane 6): extras for 190 rows, all final runs 0 undeclared / 0 mismatches; tool changes listed in
+  ROADMAP L2-EXTRAS. Merge conflict in l2-extras.txt resolved keeping all sections.
+- States: 109 → L2 (at least one plain PASS, no FAIL, orchestrators excluded). F1 = 678 / 15,479 (4.38 %).
+- Policy note: an extras line covering the whole static data with access D does not count toward L2 (PLAN §5 asks for
+  0 undeclared writes against an evidence-backed set; a blanket region proves nothing).

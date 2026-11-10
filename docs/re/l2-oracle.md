@@ -65,15 +65,16 @@ unbounded (base/index) catalogue entry are marked as such.
 - `sa-oracle l2 replay [--fn F] [--mutant F]`: recomputes the Rust side on the host from the stored inputs
   with the same Rust hook code and compares with the stored original outputs (return values, x87 stack,
   memory through `this`/pointers; ABI fields come from the stored in-process Rust run).
-- `sa-oracle l2 report SPOOL`, `sa-oracle l2 show SPOOL|FIXTURE [N]`, `sa-oracle l2 split-report PLAIN RUST`
-  and `l2 dump-diff A B` (split-run mode, below).
+- `sa-oracle l2 report SPOOL [--undeclared]`, `sa-oracle l2 show SPOOL|FIXTURE [N]`, `sa-oracle l2
+  split-report PLAIN RUST [--undeclared]` and `l2 dump-diff A B` (split-run mode, below). `--undeclared`
+  (last argument) prints every undeclared write range as `undeclared FN NAME ADDR+LEN xCASES SYMBOL`.
 - Control channel: `l2` (summary), `l2 flush`, `hook NAME l2`.
 
 ## Extra regions (heap memory the catalogue cannot name)
 
 `catalog/rwsets.csv` names globals only. Memory a function reaches through a global pointer or through
 `this` (pool headers and byte maps on the heap, for example) is declared with `SA_L2_EXTRA` entries
-`[HOOK@]ADDR:LEN[:R|W|RW]` (comma list). Without `HOOK@` an entry applies to every enabled hook,
+`[HOOK@]ADDR:LEN[:R|W|RW|D]` (comma list). Without `HOOK@` an entry applies to every enabled hook,
 with it only to that hook (name or address). ADDR and LEN are numbers or expressions evaluated when
 the case starts, before the original runs: registers at entry (`eax ecx edx ebx esi edi ebp`; `ecx` =
 `this` for thiscall), stack arguments `arg0`, `arg1`, …, `[EXPR]` = the dword at EXPR, joined with `+`
@@ -86,6 +87,27 @@ summary's `unreadable=`). Regions are capped at 16 MiB.
 
 `tools/e2e/l2-extras.txt` holds the extra regions of every hooked function that needs them; add lines
 there when a port reads or writes heap memory.
+
+Access `D` (L2-EXTRAS): a declared write range that is neither snapshotted nor compared as a region
+(`RegionKind::Decl`, encoded as region kind 6 with the length in place of the pre bytes). It only counts
+as written for the undeclared-write check. Use it for static memory inside the watched windows: the
+bytes a run writes there are compared anyway (window writes), and the state before the call is part of
+the split-run page fingerprint, so a whole array (`CStreaming::ms_aInfoForModel`, 0x80860 bytes) or the
+whole `.data`/`.bss` of an orchestrator costs nothing per case. It gives nothing for heap memory (not
+watched unless `SA_L2_WINDOW=all`): use `RW`/`W` there. Not allowed with `post:`.
+
+Finding the writers (`tools/e2e/l2-writers.py ROOT …`, capstone over the catalogue's function bodies,
+index in `target/l2writers/index.tsv`): `index` builds the index of every store with an absolute
+displacement into the writable sections and every instruction that takes such an address (`push imm`,
+`mov reg, imm`, `lea`); `undeclared REPORT` lists, for each coalesced undeclared range of
+`sa-oracle l2 split-report … --undeclared` / `l2 report … --undeclared` (every range, not only the first 8),
+the candidate instructions (exact stores first, then the nearest object base, by call depth from the
+hook); `who FN ADDR+LEN` the same for one range; `writes HOOK FN,…` extras lines for every absolute
+store in the static closure of FN (for a callee reached through a function pointer); `draft REPORT
+HOOK` one reviewed-before-use line per range. `port-l2.sh` now passes `--undeclared` to both reports
+and fails a split run with undeclared writes (`(e) split-report: 0 undeclared writes`; PLAN §5), and
+it refuses a host `sa-oracle` whose spec lacks a listed hook (a stale host build declares nothing
+for newer hooks: the PHYS 0xB9ACC8 case).
 
 ## Verifying a porting batch: `tools/e2e/port-l2.sh`
 

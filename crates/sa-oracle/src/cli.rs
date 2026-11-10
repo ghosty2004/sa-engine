@@ -295,6 +295,14 @@ fn l2(a: &Args) -> Result<bool, String> {
                 println!("TRAILER {t}");
             }
             print!("{}", l2h::print_tally(&t, Some(&cat)));
+            // --undeclared: every undeclared write range (the tally lists the first 12 per function)
+            if a.flags.iter().any(|f| f == "undeclared") || a.opts.contains_key("undeclared") {
+                for ((fa, name), x) in &t {
+                    for ((ad, n), (k, runs)) in &x.undeclared {
+                        println!("undeclared {fa:#x} {name} {ad:#x}+{n} x{k} {} runs {runs:?}", cat.symbol(*ad));
+                    }
+                }
+            }
             Ok(t.values().all(|x| x.mismatches == 0))
         }
         Some("dump-diff") => {
@@ -339,6 +347,14 @@ fn l2(a: &Args) -> Result<bool, String> {
             if let Some(n) = a.opts.get("timeline") {
                 print!("{}", sa_oracle::split::print_timeline(&rep, parse_num(n)? as usize));
             }
+            // --undeclared: every undeclared write range (the report lists the first 8 per function)
+            if a.flags.iter().any(|f| f == "undeclared") || a.opts.contains_key("undeclared") {
+                for f in &rep.fns {
+                    for ((ad, n), k) in &f.undeclared {
+                        println!("undeclared {:#x} {} {ad:#x}+{n} x{k} {}", f.addr, f.name, cat.symbol(*ad));
+                    }
+                }
+            }
             Ok(rep.errors.is_empty()
                 && rep.trailers.is_empty()
                 && rep.fns.iter().all(|f| matches!(f.verdict(), "PASS" | "PASS-FP" | "NOCASES")))
@@ -376,7 +392,7 @@ fn l2(a: &Args) -> Result<bool, String> {
             print!("{}", l2h::show_case(c));
             Ok(true)
         }
-        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--fn F,G] [--timeline N] [--nesting] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
+        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--fn F,G] [--timeline N] [--nesting] [--undeclared] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
     }
 }
 
