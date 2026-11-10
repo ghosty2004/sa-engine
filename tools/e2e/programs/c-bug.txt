@@ -1,0 +1,211 @@
+# C-bug corpus program (SA:MP 'c-bug'; pad controls: the test setup runs the game in pad mode, where
+# mouse buttons and the C key do not reach the controls; on the pad aim = r1, fire = circle, crouch = l3): the grove-walk start, the
+# cheats KJKSZPJ (weapons) and HESOYAM (health), then with the desert eagle and the sawn-off: aim
+# (r1 held), one shot (circle, one frame), crouch (l3) a few frames later to cut the post-fire
+# animation, a shot from the crouch, l3 to stand up, repeat. Fire->crouch delays 1, 2, 3, 5, 8 frames cover
+# the timing window; a control block fires without crouching. ASNAEB clears any wanted level between
+# blocks so the police do not end the run. Frames as in grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300..1379 ly=-128           # walk forward
+1400 key=std:0x4B
+1402 key=std:0x4A
+1404 key=std:0x4B
+1406 key=std:0x53
+1408 key=std:0x5A
+1410 key=std:0x50
+1412 key=std:0x4A
+1420 key=std:0x48
+1422 key=std:0x45
+1424 key=std:0x53
+1426 key=std:0x4F
+1428 key=std:0x59
+1430 key=std:0x41
+1432 key=std:0x4D
+1460 r2                      # knife
+1500 r2                      # desert eagle
+1520..1560 mouse=-10,0       # turn the camera towards the wall
+# control: aimed fire without crouching, one shot every 6 frames
+1580..1660 r1
+1590 circle
+1596 circle
+1602 circle
+1608 circle
+1614 circle
+1620 circle
+1626 circle
+1632 circle
+1638 circle
+1644 circle
+1650 circle
+1656 circle
+# desert eagle c-bug
+1700..1740 r1
+1702 circle
+1703 l3                # crouch 1 frame(s) after the shot
+1706 circle
+1711 l3
+1744..1784 r1
+1746 circle
+1747 l3                # crouch 1 frame(s) after the shot
+1750 circle
+1755 l3
+1788..1828 r1
+1790 circle
+1791 l3                # crouch 1 frame(s) after the shot
+1794 circle
+1799 l3
+1832..1872 r1
+1834 circle
+1836 l3                # crouch 2 frame(s) after the shot
+1839 circle
+1844 l3
+1876..1916 r1
+1878 circle
+1880 l3                # crouch 2 frame(s) after the shot
+1883 circle
+1888 l3
+1920..1960 r1
+1922 circle
+1924 l3                # crouch 2 frame(s) after the shot
+1927 circle
+1932 l3
+1964..2004 r1
+1966 circle
+1969 l3                # crouch 3 frame(s) after the shot
+1972 circle
+1977 l3
+2008..2048 r1
+2010 circle
+2013 l3                # crouch 3 frame(s) after the shot
+2016 circle
+2021 l3
+2052..2092 r1
+2054 circle
+2057 l3                # crouch 3 frame(s) after the shot
+2060 circle
+2065 l3
+2096..2136 r1
+2098 circle
+2103 l3                # crouch 5 frame(s) after the shot
+2106 circle
+2111 l3
+2140..2180 r1
+2142 circle
+2147 l3                # crouch 5 frame(s) after the shot
+2150 circle
+2155 l3
+2184..2224 r1
+2186 circle
+2191 l3                # crouch 5 frame(s) after the shot
+2194 circle
+2199 l3
+2228..2268 r1
+2230 circle
+2238 l3                # crouch 8 frame(s) after the shot
+2241 circle
+2246 l3
+2272..2312 r1
+2274 circle
+2282 l3                # crouch 8 frame(s) after the shot
+2285 circle
+2290 l3
+2316..2356 r1
+2318 circle
+2326 l3                # crouch 8 frame(s) after the shot
+2329 circle
+2334 l3
+2370 key=std:0x41
+2372 key=std:0x53
+2374 key=std:0x4E
+2376 key=std:0x41
+2378 key=std:0x45
+2380 key=std:0x42
+2384 key=std:0x48
+2386 key=std:0x45
+2388 key=std:0x53
+2390 key=std:0x4F
+2392 key=std:0x59
+2394 key=std:0x41
+2396 key=std:0x4D
+2410 r2                      # sawn-off
+# sawn-off c-bug
+2440..2480 r1
+2442 circle
+2443 l3                # crouch 1 frame(s) after the shot
+2446 circle
+2451 l3
+2484..2524 r1
+2486 circle
+2487 l3                # crouch 1 frame(s) after the shot
+2490 circle
+2495 l3
+2528..2568 r1
+2530 circle
+2531 l3                # crouch 1 frame(s) after the shot
+2534 circle
+2539 l3
+2572..2612 r1
+2574 circle
+2576 l3                # crouch 2 frame(s) after the shot
+2579 circle
+2584 l3
+2616..2656 r1
+2618 circle
+2620 l3                # crouch 2 frame(s) after the shot
+2623 circle
+2628 l3
+2660..2700 r1
+2662 circle
+2664 l3                # crouch 2 frame(s) after the shot
+2667 circle
+2672 l3
+2704..2744 r1
+2706 circle
+2709 l3                # crouch 3 frame(s) after the shot
+2712 circle
+2717 l3
+2748..2788 r1
+2750 circle
+2753 l3                # crouch 3 frame(s) after the shot
+2756 circle
+2761 l3
+2792..2832 r1
+2794 circle
+2797 l3                # crouch 3 frame(s) after the shot
+2800 circle
+2805 l3
+2836..2876 r1
+2838 circle
+2843 l3                # crouch 5 frame(s) after the shot
+2846 circle
+2851 l3
+2880..2920 r1
+2882 circle
+2887 l3                # crouch 5 frame(s) after the shot
+2890 circle
+2895 l3
+2924..2964 r1
+2926 circle
+2931 l3                # crouch 5 frame(s) after the shot
+2934 circle
+2939 l3
+2968..3008 r1
+2970 circle
+2978 l3                # crouch 8 frame(s) after the shot
+2981 circle
+2986 l3
+3012..3052 r1
+3014 circle
+3022 l3                # crouch 8 frame(s) after the shot
+3025 circle
+3030 l3
+3056..3096 r1
+3058 circle
+3066 l3                # crouch 8 frame(s) after the shot
+3069 circle
+3074 l3
+3100..3160 ly=-128 cross     # run away
+end 3220
