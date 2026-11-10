@@ -615,3 +615,10 @@
 - Main session: re-applied only the agent's win.rs hunk onto master (a whole-file checkout had dropped
   `keycells::install`, caught by an unused-code warning); i686 build has 0 warnings, sa-hook 45 tests pass.
 - Open: no frequency counts (SA_COV_CAP>1 hangs under samp); trailers/mod shop/jetpack/second client not covered.
+
+## 2026-11-11 NATIVE-DEMO: native wgpu world viewer (main session)
+- Agent a280cefa: new crates sa-platform, sa-rw, sa-rw-wgpu, sa-viewer (+ docs/arch/native-demo.md,
+  tools/native-demo/screenshots.sh). Native x86_64 binary loads IMG/IDE/IPL/timecyc/water from the install and
+  renders area 0 with LODs, day/night prelight, fog, colour filter. Reuses sa-formats and four L1 helpers.
+- Verified by main session: release build, 28 unit tests pass; offscreen screenshot of Grove Street at 19:30
+  streamed in 0.15 s and looks like the game. Screenshots stay in target/ (rendered Rockstar assets, never committed).

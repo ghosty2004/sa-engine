@@ -1,0 +1,20 @@
+[package]
+name = "sa-viewer"
+version = "0.1.0"
+description = "NATIVE-DEMO: standalone San Andreas world viewer (free camera, streaming, time of day) on sa-platform + sa-rw + sa-rw-wgpu; no gta_sa.exe"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-formats = { path = "../sa-formats" }
+sa-math = { path = "../sa-math" }
+sa-stream = { path = "../sa-stream" }
+sa-rw = { path = "../sa-rw" }
+sa-rw-wgpu = { path = "../sa-rw-wgpu" }
+sa-platform = { path = "../sa-platform" }
+wgpu = "29"
+png = "0.18"
+
+[lints.rust]
+unsafe_code = "forbid"

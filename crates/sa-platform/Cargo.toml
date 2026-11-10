@@ -1,0 +1,18 @@
+[package]
+name = "sa-platform"
+version = "0.1.0"
+description = "Platform layer (PLAN §2): file system, clock, input, window/event loop, worker spawn. Traits are target-independent; the `native` module (winit + std fs) is the first implementation, a web one follows in phase C"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+default = ["native"]
+# winit window + input and std::fs (ignored on wasm32)
+native = ["dep:winit"]
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+winit = { version = "0.30", optional = true }
+
+[lints.rust]
+unsafe_code = "forbid"
