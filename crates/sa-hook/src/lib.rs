@@ -20,6 +20,7 @@ pub mod arena;
 pub mod control;
 pub mod coverage;
 pub mod game;
+pub mod keycells;
 pub mod l2;
 pub mod oracle;
 pub mod table;

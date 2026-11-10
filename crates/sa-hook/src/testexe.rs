@@ -61,4 +61,13 @@ impl Exe {
         }
         &[]
     }
+
+    /// The sections that hold code: game `.text` (0x401000), the no-CD `.text` and `.HOODLUM` (by
+    /// address, as listed in CLAUDE.md).
+    pub fn code_sections(&self) -> impl Iterator<Item = (u32, &[u8])> {
+        self.sections
+            .iter()
+            .filter(|(va, _)| [0x401000, 0xCB1000, 0x1556000].contains(va))
+            .map(|(va, b)| (*va, b.as_slice()))
+    }
 }

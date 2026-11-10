@@ -192,6 +192,7 @@ a test, every use listed by `split-report`):
 |---|---|---|
 | CRT `__security_cookie` 0x8E31BC, `gStreamingThreadId` 0x8E4000, MEMORYSTATUS free phys/virtual 0xC8CF74/0xC8CF7C, `rdtsc` copy 0xC92104 (8), AESmoothFadeThread handle/thread id 0xB608D0 (8), audio stream thread handle 0xB606D0, gpColCache2/gpColCache 0x9655C8 (8) | `INPUT_EXCLUSIONS`: zeroed in the page fingerprint and, in merged pairs, excluded from the comparison; raw values recorded per case (`input exclusion used` lines) | disassembly addresses in the rule texts; window dumps of plain vs rust (`dump-diff`): these were the only differing non-pointer bytes |
 | OS object addresses (IDirect3D9, surfaces, vertex declarations, DirectInput/DirectSound objects) | `Foreign` class: a word that points into committed memory outside the image, the arena and the stack (VirtualQuery map before and after the call) equals another such word; the page fingerprint masks every word whose value lies below the arena outside image/stack (value-only decision, identical in both runs) | Rust code allocates from the process heap, so later Wine allocations move (identical windows up to Win32_InitInstance, then e.g. RwEngineInstance+0x94 0x0301A530 vs 0x0301A340) |
+| addresses of regions read through a pointer into OS-allocated memory (`[0x8E3FEC]:0x18`: the CdStream request queue's buffer, LocalAlloc'd in CdStreamInit) | sa-hook adds every region address to the case's `foreign` list when it lies in such memory; `split-report` then accepts two different `Foreign` region addresses as the same object (pre and post regions) and still compares their bytes; listed as `region address …` uses | STREAM-L2 split groups: `region Extra 0x2f3ab10 vs Extra 0x2fde1e8` at the first pair of every function of 5 of the 9 groups, the plain run's address changing between processes too (0x2f3ab10 / 0x2fde548); `l2 show` of sp-g04b: the 0x18-byte region after gpCdStreams |
 | stack addresses below a Rust ancestor | `Stack` class: compared by offset from the call's argument block; rust-run stack addresses rebased by the entry-ESP difference | SetVideoMode (Rust) above the RW file reads: whole stack 0x30 lower |
 | uninitialised original bytes | `exclusions()`: Light::LightsCreate RpLight alpha (+0x24) and pDirect's frame matrix pads | 0x5BA54E-0x5BA55E (RGB only), RpLightSetColor 0x751A90 copies 16 bytes; RwFrameRotate pads |
 
@@ -200,6 +201,29 @@ No rule normalises CRT descriptor numbers: they compared equal in every pair.
 Grouping: a recorded call below another listed Rust function runs below Rust frames (other stack
 depth, the FpuGuard's MXCSR, other return path). Lists for the CORE-L2b set: `tools/e2e/lists/core-split.txt`
 (all 54), `core-split-l.txt` (leaves), `core-split-m.txt`, `core-split-h.txt` (outer); see `--nesting`.
+
+## Hooked code bytes read as data (key cells)
+
+Some no-CD protection chunks decode a global's address from a dword of game *code*: `0x401E46 adc ecx,
+[0x410860]` adds the entry bytes of `CColStore::LoadCollision` to decode CTaskAllocator's pool 0xB744BC
+for `CTaskAllocator::operator new` (0x69D980). With that function hooked the chunk read the hook's `jmp`
+and faulted (`Unhandled page fault on read access to 173715BC at address 00401E4C`). This was the
+"crash at frame 4,096" of the STREAM-L2 sR300 batch (reproduced on lane 4; sR3 and sAF show the same
+signature): their l2 traces had left the plain trace at frame 202 (rand), so peds reached CTaskAllocator
+around frame 4,100 (the trace is flushed every 256 frames, so the trace file ended at 4,096; winedbg
+then held the process until the 1,500 s timeout).
+Any run that reaches that path would crash the same way, not only L2 runs.
+
+sa-hook (`keycells.rs`) gives every such reader its own cell holding the original dword and points
+the instruction's `disp32` at it, before the hooks are installed. Five readers exist for the current
+table (0x401BCE, 0x40203A: AreAnimsUsedByRequestedModels; 0x401E46: LoadCollision; 0x1564881,
+0x156B570: SetupVehicleUpgradeFlags); the test `every_code_key_read_of_a_hooked_range_is_redirected`
+scans the exe for absolute reads of every hook's patched bytes and fails on an unlisted one (new hooks
+are covered when the test runs). `SA_KEYCELLS=0` disables it. `port-l2.sh` now stops a run as soon as
+Wine reports an unhandled exception (`run NAME: crashed: …`) and keeps Wine's output as `NAME.wine.log`.
+A fault after `oracle: exiting` (inside `ExitProcess`, after the trace, spool and summary are flushed;
+seen in 7 of 43 lane-4 runs on 2026-11-10, always `at address 7BCF0729`, plain runs too) is reported as a
+note and kept as `NAME.wine-exitfault.txt`; it does not fail the run.
 
 ## Limits
 

@@ -446,6 +446,21 @@ CFileLoader::LoadGarage@0x96C048:0x2A30:RW
 CFileLoader::LoadOcclusionVolume@0xC73FA0:0x4650:RW
 # CPickups::aPickUps (620 * 0x20)
 CFileLoader::LoadPickup@0x9788C0:0x4D80:RW
+# LoadEntryExit -> CEntryExitManager::AddOne (0x43FA00): a slot of mp_poolEntryExits [0x96A7D8] (400 x 0x3C)
+# and the entry-exit quad tree (list nodes from the ptr-node-single pool [0xB74484] (70000 x 8), child
+# nodes from the quad-tree node pool [0xB745BC] (400 x 0x28)). Undeclared, these heap writes were not
+# restored between the two runs: every case left a second pool slot / list node behind and the l2
+# trace left the plain one at frame 202 (STREAM-L2 r3p00; SA_L2_WINDOW=all run: trace identical, writes
+# at the ptr-node pool's header and storage)
+CFileLoader::LoadEntryExit@[0x96A7D8]:0x14:RW
+CFileLoader::LoadEntryExit@[[0x96A7D8]+4]:[[0x96A7D8]+8]:RW
+CFileLoader::LoadEntryExit@[[0x96A7D8]]:0x5DC0:RW
+CFileLoader::LoadEntryExit@[0xB74484]:0x14:RW
+CFileLoader::LoadEntryExit@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CFileLoader::LoadEntryExit@[[0xB74484]]:0x88B80:RW
+CFileLoader::LoadEntryExit@[0xB745BC]:0x14:RW
+CFileLoader::LoadEntryExit@[[0xB745BC]+4]:[[0xB745BC]+8]:RW
+CFileLoader::LoadEntryExit@[[0xB745BC]]:0x3E80:RW
 # CTimeCycle::m_aBoxes (20 * 0x28)
 CFileLoader::LoadTimeCyclesModifier@0xB7C550:0x320:RW
 # CTheZones::MapZoneArray (39 * 0x20), NavigationZoneArray (380 * 0x20)

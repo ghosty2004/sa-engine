@@ -1437,6 +1437,9 @@ fn foreign_values(fm: &ForeignMap, fm_post: &ForeignMap, c: &Case, snap: &Snap) 
         }
     };
     for r in c.regions.iter().filter(|r| !matches!(r.kind, RegionKind::Os(_))) {
+        // the region's own address: an extra region read through a pointer (`[0x8E3FEC]:0x18`, the
+        // LocalAlloc'd CdStream queue buffer) lies in OS-allocated memory whose address differs per process
+        add(r.addr);
         let o = ((4 - (r.addr & 3)) & 3) as usize;
         for b in [&r.pre, &r.post_orig] {
             if b.len() > o {

@@ -489,6 +489,7 @@ fn attach() {
             PortPlan::Off
         }
     };
+    crate::keycells::install();
     let (ok, wanted) = install_all(oracle, &ports);
     crate::cdsync::install();
     log(&format!(

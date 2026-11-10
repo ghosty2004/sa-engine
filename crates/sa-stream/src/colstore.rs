@@ -125,6 +125,9 @@ orig! {
     pub fn col_accel_get_col_def(def: GPtr<ColDef>) = cdecl 0x5B2E60 => unported;
     /// `CColAccel::cacheLoadCol` (0x5B2CC0)
     pub fn col_accel_cache_load_col() = cdecl 0x5B2CC0 => unported;
+    /// `CColStore::LoadAllCollision` (0x410E60): LoadAllBoundingBoxes' `jmp`, through the hooked entry
+    /// as in the original (a split-run L2 recording then sees the same nested call)
+    pub fn load_all_collision_call() = cdecl 0x410E60 => load_all_collision;
     /// `CCamera::GetScreenFadeStatus` (0x50AE20, `TheCamera`)
     pub fn camera_get_screen_fade_status(cam: GPtr<u8>) -> i32 = thiscall 0x50AE20 => unported;
     /// `CMenuManager::MessageScreen(const char*, bool, bool)` (0x579330, `FrontEndMenuManager`)
@@ -694,7 +697,7 @@ pub fn load_all_bounding_boxes() {
     if col_accel_is_cache_loading() != 0 {
         col_accel_cache_load_col();
     } else {
-        load_all_collision();
+        load_all_collision_call();
     }
 }
 
