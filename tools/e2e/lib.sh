@@ -64,6 +64,17 @@ e2e_disk_check() {
         echo "e2e: less than 20 GB free on /home ($((free_kb / 1024 / 1024)) GB), refusing to run" >&2
         return 1
     fi
+    # INF-19: more lanes run at once now that replays are CPU-bound; no swap on this machine, so wait
+    # (up to 10 min) until at least E2E_MIN_MEM_MB (default 4096) MB are available before a game run.
+    local avail i
+    for i in $(seq 1 120); do
+        avail="$(awk '/^MemAvailable:/ { print int($2 / 1024) }' /proc/meminfo)"
+        [ "$avail" -ge "${E2E_MIN_MEM_MB:-4096}" ] && return 0
+        [ "$i" = 1 ] && echo "e2e: only $avail MB available, waiting for memory" >&2
+        sleep 5
+    done
+    echo "e2e: less than ${E2E_MIN_MEM_MB:-4096} MB available for 10 min, refusing to run" >&2
+    return 1
 }
 
 # A prefix's Documents must never point at the user's real ~/Documents (Wine may create it as a
