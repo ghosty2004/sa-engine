@@ -551,3 +551,6 @@
   hit vs 78 s cold, and ~240 s before INF-19.
 - lib.sh waits for ≥4 GB available RAM before a game run; PLAN §8 now allows up to 7 lanes.
 - sccache installation was blocked by the permission classifier (left for the user).
+- sccache (installed by the user) measured: a clean i686 sa-hook build is only ~10 s, and two fresh
+  target directories gave 0 cache hits / 28 misses (the cache key includes the output paths, which
+  differ between worktrees). No benefit, so it is not enabled in the repo.
