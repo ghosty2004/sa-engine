@@ -1,0 +1,15 @@
+[package]
+name = "sa-rw-wgpu"
+version = "0.1.0"
+description = "RenderWare device layer on wgpu (phases B/C): GPU geometry/texture instancing of sa-rw objects and the world pass (prelit day/night blend, alpha test/blend, fog, sky). Native (Vulkan/Metal/DX12) and wasm32 (WebGPU)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-rw = { path = "../sa-rw" }
+wgpu = "29"
+bytemuck = { version = "1", features = ["derive"] }
+
+[lints.rust]
+unsafe_code = "forbid"
