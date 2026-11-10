@@ -30,6 +30,7 @@ pub mod specs_core;
 pub mod specs_coll_data;
 pub mod specs_coll_prim;
 pub mod specs_coll_surface;
+pub mod specs_world_p1;
 pub mod specs_core_util;
 pub mod specs_stream_a;
 pub mod specs_stream_b;

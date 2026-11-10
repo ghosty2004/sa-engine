@@ -1,0 +1,97 @@
+# PORT-WORLD part 1 hooks that cannot run twice on the same state (they delete/create entities, allocate,
+# register references or atexit handlers, drive audio, or call functions that do): verified with
+# port-l2.sh --runs "... split" (INF-17), never with the plain l2 mode (CPickup::Remove under l2 deleted
+# the pickup object twice and crashed the game: world auto-bisect).
+0x4556C0  # CPickup::Remove
+0x454CF0  # CPickup::GetRidOfObjects
+0x455470  # CPickups::RemovePickupObjects
+0x456DE0  # CPickups::RemoveMissionPickUps
+0x4573D0  # CPickups::RemovePickUp
+0x458DE0  # CPickups::Update
+0x717860  # CEscalator::SwitchOff
+0x717940  # CEscalators::Shutdown
+0x717C50  # CEscalators::Init
+0x717C90  # CEscalators::AddOne
+0x718580  # CEscalators::Update
+0x717130  # CEscalator::Destructor
+0x49CA50  # CStuntJumpManager::Init
+0x49CB10  # CStuntJumpManager::ShutdownForRestart
+0x49CB40  # CStuntJumpManager::AddOne
+0x4471B0  # CGarages::Shutdown
+0x447110  # CGarage::~CGarage
+0x44C8C0  # CGarages::Update
+0x4423C0  # CGameLogic::SetUpSkip
+0x441240  # CGameLogic::ForceDeathRestart
+0x438480  # CCheat::AddToCheatString
+0x439AF0  # CCheat::DoCheats
+0x438370  # CCheat::ApplyCheat
+0x438450  # CCheat::ResetCheats
+0x407410
+0x438F40
+0x438F50
+0x438F60
+0x438F70
+0x438F80
+0x438F90
+0x438FC0
+0x4390D0
+0x4390F0
+0x4393D0
+0x439510
+0x439540
+0x439570
+0x439590
+0x4396C0
+0x4396F0
+0x438E90
+0x438F20
+0x439710
+0x439930
+0x439940
+0x4399D0
+0x43A4A0
+0x43A4B0
+0x43A4C0
+0x43A4D0
+0x43A4E0
+0x43A4F0
+0x43A500
+0x43A510
+0x43A520
+0x43A530
+0x43A540
+0x43A550
+0x43A560
+0x43A660
+0x43A670
+0x43A680
+0x439110
+0x439150
+0x439190
+0x4394B0
+0x4394E0
+0x439360
+0x849B20
+0x849B40
+0x84A260
+0x84A280
+0x849CE0
+0x849E90
+0x84B1C0
+0x84B2A0
+0x84E980
+0x84E9B0
+0x84E9E0
+0x84EA10
+0x84EA40
+0x84EA50
+0x854D50
+0x856110
+0x856130
+0x8564C0
+0x8564E0
+0x8564F0
+0x856500
+0x856520
+0x856540
+0x856B20

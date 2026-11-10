@@ -5,6 +5,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
 use crate::collision;
+use crate::world;
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -13,6 +14,20 @@ pub const MODULES: &[&[HookReg]] = &[
     collision::prim::HOOKS,
     collision::accel::HOOKS,
     collision::misc::HOOKS,
+    // PORT-WORLD part 1
+    world::cheat::HOOKS,
+    world::zones::HOOKS,
+    world::cworld::HOOKS,
+    world::entryexit::HOOKS,
+    world::escalators::HOOKS,
+    world::gamelogic::HOOKS,
+    world::garages::HOOKS,
+    world::misc::HOOKS,
+    world::pickups::HOOKS,
+    world::restart::HOOKS,
+    world::shopping::HOOKS,
+    world::statics::HOOKS,
+    world::stats::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -22,6 +37,20 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     collision::prim::GLOBALS,
     collision::accel::GLOBALS,
     collision::misc::GLOBALS,
+    // PORT-WORLD part 1
+    world::cheat::GLOBALS,
+    world::common::GLOBALS,
+    world::zones::GLOBALS,
+    world::cworld::GLOBALS,
+    world::entryexit::GLOBALS,
+    world::escalators::GLOBALS,
+    world::gamelogic::GLOBALS,
+    world::garages::GLOBALS,
+    world::misc::GLOBALS,
+    world::pickups::GLOBALS,
+    world::restart::GLOBALS,
+    world::shopping::GLOBALS,
+    world::stats::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
