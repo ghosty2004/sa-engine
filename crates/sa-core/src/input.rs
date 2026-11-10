@@ -7,8 +7,8 @@
 //! `vslot`s, RenderWare's `RwRenderStateSet` through `RwEngineInstance`'s function table. Switch
 //! tables (`HandleKeyDown/Up`, `GTATranslateKey`) were extracted from the exe's jump tables.
 
-use crate::mem::{GPtr, GameData};
 use crate::game::MENU_ACTIVE;
+use crate::mem::{GPtr, GameData};
 use crate::platform::{RS_PS, RS_QUIT};
 use crate::{globals, hook, orig};
 
@@ -35,7 +35,8 @@ pub struct CMouseControllerState {
 // SAFETY: integers and floats.
 #[allow(unsafe_code)]
 unsafe impl GameData for CMouseControllerState {}
-const _: () = assert!(core::mem::size_of::<CMouseControllerState>() == crate::layouts::size::CMouseControllerState);
+const _: () =
+    assert!(core::mem::size_of::<CMouseControllerState>() == crate::layouts::size::CMouseControllerState);
 
 /// `CKeyboardState` as 0x138 `int16` words (FKeys at +0, standardKeys at +0x18, named keys from +0x218).
 pub type KeyboardState = [i16; 0x138];
@@ -188,10 +189,10 @@ pub const RS_NULL: i32 = 0x420;
 /// `TempKeyState` byte offset per RsKeyCode 0x3E8..=0x41F (the shared jump table of 0x743DF0 /
 /// 0x7443C0 at 0x7442E0 / 0x744798; F1..F12 = 0x3E9..0x3F4 are `FKeys[code - rsF1]`).
 pub const KEY_FIELD: [u16; 0x38] = [
-    0x218, 0x000, 0x002, 0x004, 0x006, 0x008, 0x00A, 0x00C, 0x00E, 0x010, 0x012, 0x014, 0x016, 0x21A,
-    0x21C, 0x21E, 0x220, 0x222, 0x224, 0x226, 0x228, 0x22A, 0x22C, 0x234, 0x236, 0x23A, 0x238, 0x23E,
-    0x240, 0x242, 0x244, 0x246, 0x248, 0x232, 0x24A, 0x24C, 0x24E, 0x250, 0x252, 0x23C, 0x22E, 0x230,
-    0x254, 0x256, 0x258, 0x25A, 0x25C, 0x25E, 0x260, 0x262, 0x264, 0x266, 0x268, 0x26A, 0x26C, 0x26E,
+    0x218, 0x000, 0x002, 0x004, 0x006, 0x008, 0x00A, 0x00C, 0x00E, 0x010, 0x012, 0x014, 0x016, 0x21A, 0x21C,
+    0x21E, 0x220, 0x222, 0x224, 0x226, 0x228, 0x22A, 0x22C, 0x234, 0x236, 0x23A, 0x238, 0x23E, 0x240, 0x242,
+    0x244, 0x246, 0x248, 0x232, 0x24A, 0x24C, 0x24E, 0x250, 0x252, 0x23C, 0x22E, 0x230, 0x254, 0x256, 0x258,
+    0x25A, 0x25C, 0x25E, 0x260, 0x262, 0x264, 0x266, 0x268, 0x26A, 0x26C, 0x26E,
 ];
 
 /// Second pad's `PCTempKeyState` word (offset in `CPad`) and its key-down value, per key code.
@@ -252,7 +253,9 @@ fn handle_key(ks: GPtr<i32>, down: bool) -> i32 {
         return 1;
     }
     if let Some((off, v)) = pad_key(code) {
-        pad1.byte_add(off as isize).cast::<i16>().write(if down { v } else { 0 });
+        pad1.byte_add(off as isize)
+            .cast::<i16>()
+            .write(if down { v } else { 0 });
     }
     1
 }
@@ -291,7 +294,11 @@ pub fn handle_pad_button_down(status: GPtr<i32>) -> i32 {
     ccm_update_joy_button_state(ccm(), pad);
     let states = JOY_BUTTON_STATES.ptr().cast::<u8>();
     for i in 1..0x11 {
-        let btn = if states.wrapping_index(i - 1).read() == 1 { i } else { 0 };
+        let btn = if states.wrapping_index(i - 1).read() == 1 {
+            i
+        } else {
+            0
+        };
         if MENU_ACTIVE.get().get() || two {
             ccm_update_joy_in_config_menus_button_down(ccm(), btn, pad);
         } else {
@@ -314,7 +321,11 @@ pub fn handle_pad_button_up(status: GPtr<i32>) -> i32 {
     ccm_update_joy_button_state(ccm(), pad);
     let states = JOY_BUTTON_STATES.ptr().cast::<u8>();
     for i in 2..0x11 {
-        let btn = if states.wrapping_index(i - 1).read() == 0 { i } else { 0 };
+        let btn = if states.wrapping_index(i - 1).read() == 0 {
+            i
+        } else {
+            0
+        };
         if MENU_ACTIVE.get().get() || two || cam {
             ccm_update_joy_in_config_menus_button_up(ccm(), btn, pad);
         } else {
@@ -611,7 +622,11 @@ pub fn translate_key_case(vk: u32, lparam: u32, os_ver: i32) -> Option<(i32, boo
     }
     let (_, n, e) = TRANSLATE.iter().find(|t| t.0 as u32 == vk)?;
     if *n == SHIFT {
-        return Some(if os_ver == 1 { (0x418, true) } else { (RS_NULL, false) });
+        return Some(if os_ver == 1 {
+            (0x418, true)
+        } else {
+            (RS_NULL, false)
+        });
     }
     Some((if lparam & 0x0100_0000 != 0 { *e } else { *n } as i32, true))
 }
@@ -672,7 +687,19 @@ pub fn defined_state_fog_colour(rgb: [u16; 3]) -> u32 {
 /// `App::DefinedState()` (0x734650): sixteen `RwRenderStateSet` calls.
 #[hook(addr = 0x734650, conv = cdecl, name = "App::DefinedState", expect = "A1 24 7B C9 00 6A 01")]
 pub fn defined_state() {
-    for (s, v) in [(2, 1), (5, 1), (6, 1), (8, 1), (7, 2), (9, 2), (0xC, 0), (0xA, 5), (0xB, 6), (0xD, 0xFF00_0000), (0xE, 0)] {
+    for (s, v) in [
+        (2, 1),
+        (5, 1),
+        (6, 1),
+        (8, 1),
+        (7, 2),
+        (9, 2),
+        (0xC, 0),
+        (0xA, 5),
+        (0xB, 6),
+        (0xD, 0xFF00_0000),
+        (0xE, 0),
+    ] {
         let _ = rw_render_state_set(s, v);
     }
     let _ = rw_render_state_set(0xF, defined_state_fog_colour(TC_DEFINED_STATE_RGB.get()));

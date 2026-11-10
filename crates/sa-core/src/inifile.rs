@@ -74,7 +74,10 @@ fn read_multiplier(f: GPtr<u8>, g: &crate::mem::Global<f32>) {
 #[hook(addr = 0x56D070, conv = cdecl, name = "CIniFile::LoadIniFile", expect = "56 68 54 8B 85 00")]
 pub fn load_ini_file() {
     set_dir(GPtr::from_addr(EMPTY as usize));
-    let f = open_file(GPtr::from_addr(GTA3_INI as usize), GPtr::from_addr(MODE_R as usize));
+    let f = open_file(
+        GPtr::from_addr(GTA3_INI as usize),
+        GPtr::from_addr(MODE_R as usize),
+    );
     if !f.is_null() {
         read_multiplier(f, &PED_NUMBER_MULTIPLIER);
         read_multiplier(f, &CAR_NUMBER_MULTIPLIER);

@@ -467,10 +467,7 @@ pub fn do_fade() {
     }
     let mut colour = fade_colour(rgbv, CAMERA_FADE_TARGET_IS_SPLASH.get().get());
     let mut rect = fade_rect(RS_MAXIMUM_WIDTH.get(), RS_MAXIMUM_HEIGHT.get());
-    call::sprite2d_draw_rect(
-        GPtr::from_raw(&raw mut rect),
-        GPtr::from_raw(&raw mut colour),
-    );
+    call::sprite2d_draw_rect(GPtr::from_raw(&raw mut rect), GPtr::from_raw(&raw mut colour));
 }
 
 /// `TestModelIndices` (0x53ED30, cdecl): empty in 1.0 US (`ret`, nop padding).

@@ -531,3 +531,12 @@
   16/16), clippy --workspace --all-targets host + i686 clean, `bash -n port-l2.sh`.
 - NOT verified: the agents' in-game results (INF-18 quota test, INF-17 split-run verdicts, INF-10
   coverage). Documented in the ROADMAP rows INF-10/INF-17/INF-18 and the new FPU-GUARD task.
+
+## 2026-11-10: resumed in Claude Code; FPU-GUARD fix
+- Resumed (main session). FPU-GUARD: sa-core's FpuGuard now keeps a per-thread "game MXCSR" (table keyed
+  by TEB thread id, no_std); every phase-A `orig!` call goes through `abi::call_original`, which runs the
+  original callee under the game MXCSR and keeps what the callee leaves (D3D device creation sets 0x9FA0);
+  the guard's exit loads that value instead of the stale entry value.
+- Verified: i686 + wasm32 builds, sa-core 59 / sa-hook 37 tests, clippy host + i686 clean;
+  `port-l2.sh ports --runs "plain rust"`: grove walk (lane 1) and pause-restart (lane 2), all ports on Rust,
+  IDENTICAL over 5,200 / 3,700 frames on 17 subsystems, 0 crash lines.

@@ -74,7 +74,11 @@ impl Lm {
 /// `fild dword` of an unsigned value: + 2^32 when bit 31 is set (`jge` skips the add).
 pub fn fild_u32(v: u32) -> X87 {
     let x = X87::from_i32(v as i32);
-    if (v as i32) < 0 { x.fadd_m(f32::from_bits(k::TWO_POW_32)) } else { x }
+    if (v as i32) < 0 {
+        x.fadd_m(f32::from_bits(k::TWO_POW_32))
+    } else {
+        x
+    }
 }
 
 /// `CLoadMonitor::CLoadMonitor()` (0x53CFA0, thiscall, returns `this`).
@@ -160,7 +164,11 @@ pub fn end_frame(this: GPtr<u8>) {
         // `m_nPedFlags` bit 8 (`bInVehicle`) and `m_pVehicle`: the vehicle's move speed (+0x44)
         let flags = ped.byte_add(0x46C).cast::<u32>().read();
         let veh = ped.byte_add(0x58C).cast::<GPtr<u8>>().read();
-        let src = if flags & 0x100 != 0 && !veh.is_null() { veh } else { ped };
+        let src = if flags & 0x100 != 0 && !veh.is_null() {
+            veh
+        } else {
+            ped
+        };
         Some(src.byte_add(0x44).cast::<[f32; 3]>().read())
     };
     end_frame_with(Lm(this), speed, || TIME_MS.get(), get_cycles_per_millisecond)
@@ -221,7 +229,11 @@ fn end_frame_with(m: Lm, speed: Option<[f32; 3]>, now: impl Fn() -> u32, cycles_
                 let avg = sum.fmul_m(f32::from_bits(k::EIGHTH));
                 let maxf = fild_u32(max).to_f32();
                 // fcom m32; test ah, 41h; jne keep -> replace only when avg > max
-                let v = if avg.fcom(X87::from_f32(maxf)) == Cmp::Greater { X87::from_f32(maxf) } else { avg };
+                let v = if avg.fcom(X87::from_f32(maxf)) == Cmp::Greater {
+                    X87::from_f32(maxf)
+                } else {
+                    avg
+                };
                 m.set_f(0x5C + 4 * t, v.to_f32());
             }
             let val = match t {

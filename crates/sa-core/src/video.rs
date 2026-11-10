@@ -129,7 +129,9 @@ pub fn free_video_mode_list() -> i32 {
     let n = call::rw_engine_get_num_video_modes();
     if VIDEO_MODES.get() != 0 {
         for i in 0..n.max(0) {
-            let e = GPtr::<u32>::from_addr(VIDEO_MODES.get() as usize).wrapping_index(i).read();
+            let e = GPtr::<u32>::from_addr(VIDEO_MODES.get() as usize)
+                .wrapping_index(i)
+                .read();
             crate::platform::call::rw_free(GPtr::from_addr(e as usize));
         }
         crate::platform::call::rw_free(GPtr::from_addr(VIDEO_MODES.get() as usize));
@@ -186,7 +188,11 @@ pub fn get_video_mode_list() -> u32 {
     for i in 0..n.max(0) {
         let mut m: RwVideoMode = [0; 6];
         call::rw_engine_get_video_mode_info(GPtr::from_raw(&raw mut m), i);
-        let slot = |v: u32| GPtr::<u32>::from_addr(VIDEO_MODES.get() as usize).wrapping_index(i).write(v);
+        let slot = |v: u32| {
+            GPtr::<u32>::from_addr(VIDEO_MODES.get() as usize)
+                .wrapping_index(i)
+                .write(v)
+        };
         if mode_is_listed(&m, VRAM_AVAIL.get()) {
             let s = call::memory_calloc(0x64, 1, 0);
             slot(s.addr() as u32);
@@ -326,7 +332,13 @@ pub fn update_window() -> i32 {
 /// pvMediaSeeking, pvMediaControl, pvVideoWindow, pvGraphBuilder (each only if set).
 #[hook(addr = 0x746740, conv = cdecl, name = "VideoPlayer::Release", expect = "A1 DC 20 C9 00 56")]
 pub fn release() {
-    for g in [&MEDIA_EVENT, &MEDIA_SEEKING, &MEDIA_CONTROL, &VIDEO_WINDOW, &GRAPH_BUILDER] {
+    for g in [
+        &MEDIA_EVENT,
+        &MEDIA_SEEKING,
+        &MEDIA_CONTROL,
+        &VIDEO_WINDOW,
+        &GRAPH_BUILDER,
+    ] {
         let p = g.get();
         if p != 0 {
             call::com_release(com(p));
@@ -418,7 +430,10 @@ mod tests {
         let m = |w, h, d, f| [w, h, d, f, 60, 0];
         assert!(mode_is_listed(&m(640, 480, 32, 1), 0));
         assert!(!mode_is_listed(&m(640, 480, 32, 0), u32::MAX));
-        assert!(mode_is_listed(&m(800, 480, 32, 1), 0x2D0_0000 + 800 * 480 * 4 + 1));
+        assert!(mode_is_listed(
+            &m(800, 480, 32, 1),
+            0x2D0_0000 + 800 * 480 * 4 + 1
+        ));
         assert!(!mode_is_listed(&m(800, 480, 32, 1), 0x2D0_0000 + 800 * 480 * 4));
         assert!(mode_is_listed(&m(1280, 1024, 32, 1), 0x1000_0000)); // 0.8
         assert!(!mode_is_listed(&m(1280, 720, 32, 1), u32::MAX)); // 0.5625

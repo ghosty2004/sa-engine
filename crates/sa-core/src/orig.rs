@@ -235,7 +235,7 @@ macro_rules! __orig_body {
             ::core::mem::transmute::<usize, unsafe extern "C" fn($($t),*) $(-> $r)?>($addr)
         };
         #[allow(unsafe_code)]
-        unsafe { f($($a),*) }
+        $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
     ($kind:ident $what:path, stdcall, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         #[allow(unsafe_code)]
@@ -243,7 +243,7 @@ macro_rules! __orig_body {
             ::core::mem::transmute::<usize, unsafe extern "stdcall" fn($($t),*) $(-> $r)?>($addr)
         };
         #[allow(unsafe_code)]
-        unsafe { f($($a),*) }
+        $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
     ($kind:ident $what:path, thiscall, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         #[allow(unsafe_code)]
@@ -251,7 +251,7 @@ macro_rules! __orig_body {
             ::core::mem::transmute::<usize, unsafe extern "thiscall" fn($($t),*) $(-> $r)?>($addr)
         };
         #[allow(unsafe_code)]
-        unsafe { f($($a),*) }
+        $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
     ($kind:ident $what:path, fastcall, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         #[allow(unsafe_code)]
@@ -259,7 +259,7 @@ macro_rules! __orig_body {
             ::core::mem::transmute::<usize, unsafe extern "fastcall" fn($($t),*) $(-> $r)?>($addr)
         };
         #[allow(unsafe_code)]
-        unsafe { f($($a),*) }
+        $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
 }
 
@@ -312,7 +312,11 @@ pub mod host {
         );
         // SAFETY: F is pointer-sized and Copy; it is turned back into the same type in `get`.
         let f = unsafe { core::mem::transmute_copy::<F, usize>(&f) };
-        let slot = Slot { key, ty: TypeId::of::<F>(), f };
+        let slot = Slot {
+            key,
+            ty: TypeId::of::<F>(),
+            f,
+        };
         with(|t| {
             let i = t
                 .iter()

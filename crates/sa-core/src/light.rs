@@ -79,7 +79,8 @@ const C0: RwRGBAReal = RwRGBAReal {
 /// (0x8D60D8), B (0x8D60E0). One block because `SetAmbientColoursToIndicateRoadGroup` indexes the
 /// tables with a signed `idx % 7` that reaches back into `FullLight`.
 pub const ROAD_GROUP_BLOCK_INIT: [u8; 40] = [
-    0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, // FullLight
+    0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80,
+    0x3F, // FullLight
     0x00, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, // R
     0x00, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, // G
     0x00, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0x00, // B
@@ -263,18 +264,35 @@ pub fn lights_create(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
     let amb = rp_light_create(2);
     P_AMBIENT.set(amb);
     set_light_flags(amb, 1);
-    set_color_local(P_AMBIENT.get(), RwRGBAReal { red: 0.25, green: 0.25, blue: f32::from_bits(0x3E4C_CCCD), alpha: 0.0 });
+    set_color_local(
+        P_AMBIENT.get(),
+        RwRGBAReal {
+            red: 0.25,
+            green: 0.25,
+            blue: f32::from_bits(0x3E4C_CCCD),
+            alpha: 0.0,
+        },
+    );
     let dir = rp_light_create(1);
     P_DIRECT.set(dir);
     set_light_flags(dir, 1);
     set_color_local(
         P_DIRECT.get(),
-        RwRGBAReal { red: 1.0, green: f32::from_bits(0x3F59_999A), blue: f32::from_bits(0x3EE6_6666), alpha: 0.0 },
+        RwRGBAReal {
+            red: 1.0,
+            green: f32::from_bits(0x3F59_999A),
+            blue: f32::from_bits(0x3EE6_6666),
+            alpha: 0.0,
+        },
     );
     let _ = rp_light_set_radius(P_DIRECT.get(), 2.0);
     let frame = rw_frame_create();
     rw_object_has_frame_set_frame(P_DIRECT.get(), frame);
-    let mut axis = RwV3d { x: 1.0, y: 1.0, z: 0.0 };
+    let mut axis = RwV3d {
+        x: 1.0,
+        y: 1.0,
+        z: 0.0,
+    };
     let _ = rw_frame_rotate(frame, GPtr::from_raw(&raw mut axis), 160.0, 1);
     let _ = rp_world_add_light(world, P_AMBIENT.get());
     let _ = rp_world_add_light(world, P_DIRECT.get());
@@ -284,7 +302,15 @@ pub fn lights_create(world: GPtr<RpWorld>) -> GPtr<RpWorld> {
         let l = rp_light_create(1);
         slot.write(l);
         set_light_flags(l, 0);
-        set_color_local(slot.read(), RwRGBAReal { red: 1.0, green: 0.5, blue: 0.0, alpha: 0.0 });
+        set_color_local(
+            slot.read(),
+            RwRGBAReal {
+                red: 1.0,
+                green: 0.5,
+                blue: 0.0,
+                alpha: 0.0,
+            },
+        );
         let _ = rp_light_set_radius(slot.read(), 2.0);
         let f = rw_frame_create();
         rw_object_has_frame_set_frame(slot.read(), f);
@@ -343,8 +369,14 @@ pub fn set_lights_with_time_of_day_colour(_world: GPtr<RpWorld>) {
         ];
         let dst: [GPtr<f32>; 6] = [
             AMBIENT_LIGHT_COLOUR_FOR_FRAME.ptr().cast(),
-            AMBIENT_LIGHT_COLOUR_FOR_FRAME.ptr().cast::<f32>().wrapping_index(1),
-            AMBIENT_LIGHT_COLOUR_FOR_FRAME.ptr().cast::<f32>().wrapping_index(2),
+            AMBIENT_LIGHT_COLOUR_FOR_FRAME
+                .ptr()
+                .cast::<f32>()
+                .wrapping_index(1),
+            AMBIENT_LIGHT_COLOUR_FOR_FRAME
+                .ptr()
+                .cast::<f32>()
+                .wrapping_index(2),
             AMBIENT_FOR_FRAME_PCO.ptr().cast(),
             AMBIENT_FOR_FRAME_PCO.ptr().cast::<f32>().wrapping_index(1),
             AMBIENT_FOR_FRAME_PCO.ptr().cast::<f32>().wrapping_index(2),
@@ -376,16 +408,34 @@ pub fn set_lights_with_time_of_day_colour(_world: GPtr<RpWorld>) {
     set_color(dir, DIRECTIONAL_LIGHT_COLOUR_FOR_FRAME.ptr());
 
     let mut sun = TC_DIRN_LIGHT_TO_SUN.get();
-    let mut z = RwV3d { x: 0.0, y: 0.0, z: 1.0 };
+    let mut z = RwV3d {
+        x: 0.0,
+        y: 0.0,
+        z: 1.0,
+    };
     let mut tmp = RwV3d::default();
-    let r = cross_product(GPtr::from_raw(&raw mut tmp), GPtr::from_raw(&raw mut z), GPtr::from_raw(&raw mut sun)).read();
+    let r = cross_product(
+        GPtr::from_raw(&raw mut tmp),
+        GPtr::from_raw(&raw mut z),
+        GPtr::from_raw(&raw mut sun),
+    )
+    .read();
     let mut right = r;
     vector_normalise(GPtr::from_raw(&raw mut right));
-    let u = cross_product(GPtr::from_raw(&raw mut tmp), GPtr::from_raw(&raw mut right), GPtr::from_raw(&raw mut sun)).read();
+    let u = cross_product(
+        GPtr::from_raw(&raw mut tmp),
+        GPtr::from_raw(&raw mut right),
+        GPtr::from_raw(&raw mut sun),
+    )
+    .read();
     let mut m = RwMatrix {
         right: u,
         up: right,
-        at: RwV3d { x: neg(sun.x), y: neg(sun.y), z: neg(sun.z) },
+        at: RwV3d {
+            x: neg(sun.x),
+            y: neg(sun.y),
+            z: neg(sun.z),
+        },
         ..RwMatrix::default()
     };
     let _ = rw_frame_transform(light_frame(P_DIRECT.get()), GPtr::from_raw(&raw mut m), 0);
@@ -397,7 +447,15 @@ pub fn set_lights_with_time_of_day_colour(_world: GPtr<RpWorld>) {
 pub fn world_replace_normal_lights_with_scorched(_world: GPtr<RpWorld>, lighting_bits: u32) {
     // copied with integer moves: the bits are kept (no x87 load)
     let l = f32::from_bits(lighting_bits);
-    set_color_local(P_AMBIENT.get(), RwRGBAReal { red: l, green: l, blue: l, alpha: 0.0 });
+    set_color_local(
+        P_AMBIENT.get(),
+        RwRGBAReal {
+            red: l,
+            green: l,
+            blue: l,
+            alpha: 0.0,
+        },
+    );
     set_light_flags(P_DIRECT.get(), 0);
 }
 
@@ -412,7 +470,14 @@ pub fn world_replace_scorched_lights_with_normal(_world: GPtr<RpWorld>) {
 /// original's compare order; the slot is `num` while `num < limit`, else the index of the weakest
 /// light weaker than `strength`, or none (gta-reversed starts that search at 0, the original at -1:
 /// a light not stronger than every... weaker one is dropped).
-pub fn extra_light_slot(red: f32, green: f32, blue: f32, num: i32, limit: i32, strengths: &[f32; 6]) -> (f32, Option<usize>) {
+pub fn extra_light_slot(
+    red: f32,
+    green: f32,
+    blue: f32,
+    num: i32,
+    limit: i32,
+    strengths: &[f32; 6],
+) -> (f32, Option<usize>) {
     // fld red; fcomp green; test ah,41h; jne -> green (also unordered)
     let m = if red > green { red } else { green };
     // fcom blue; test ah,41h; jne -> blue (copied by integer move)
@@ -436,14 +501,30 @@ pub fn extra_light_slot(red: f32, green: f32, blue: f32, num: i32, limit: i32, s
 /// so a light weaker than all six is dropped (gta-reversed: replaces slot 0). The colour's alpha is
 /// uninitialised (port 0).
 #[hook(addr = 0x735840, conv = cdecl, name = "Light::AddAnExtraDirectionalLight", expect = "D9 44 24 14 83 EC 14")]
-pub fn add_an_extra_directional_light(_world: GPtr<RpWorld>, x: f32, y: f32, z: f32, red: f32, green: f32, blue: f32) {
+pub fn add_an_extra_directional_light(
+    _world: GPtr<RpWorld>,
+    x: f32,
+    y: f32,
+    z: f32,
+    red: f32,
+    green: f32,
+    blue: f32,
+) {
     let limit = if crate::game::CURR_AREA.get() != 0 { 6 } else { 4 };
     let num = NUM_EXTRA_DIRECTIONAL_LIGHTS.get();
     let (strength, slot) = extra_light_slot(red, green, blue, num, limit, &LIGHT_STRENGTHS.get());
     let Some(slot) = slot else { return };
     let lights = P_EXTRA_DIRECTIONALS.ptr().cast::<GPtr<RpLight>>();
     // colour words copied with integer moves (bits kept)
-    set_color_local(lights.wrapping_index(slot as i32).read(), RwRGBAReal { red, green, blue, alpha: 0.0 });
+    set_color_local(
+        lights.wrapping_index(slot as i32).read(),
+        RwRGBAReal {
+            red,
+            green,
+            blue,
+            alpha: 0.0,
+        },
+    );
     let frame = light_frame(lights.wrapping_index(slot as i32).read());
     let at = frame.cast::<f32>().byte_add(0x30);
     at.write(neg(x));
@@ -452,7 +533,11 @@ pub fn add_an_extra_directional_light(_world: GPtr<RpWorld>, x: f32, y: f32, z: 
     let _ = rw_matrix_update(frame.cast::<RwMatrix>().byte_add(0x10));
     let _ = rw_frame_update_objects(frame);
     set_light_flags(lights.wrapping_index(slot as i32).read(), 1);
-    LIGHT_STRENGTHS.ptr().cast::<f32>().wrapping_index(slot as i32).write(X87::from_f32(strength).to_f32());
+    LIGHT_STRENGTHS
+        .ptr()
+        .cast::<f32>()
+        .wrapping_index(slot as i32)
+        .write(X87::from_f32(strength).to_f32());
     let n = NUM_EXTRA_DIRECTIONAL_LIGHTS.get().wrapping_add(1);
     NUM_EXTRA_DIRECTIONAL_LIGHTS.set(if n < limit { n } else { limit });
 }
@@ -540,7 +625,8 @@ pub fn set_ambient_colours_to_indicate_road_group(idx: i32) {
     let a = AMBIENT_LIGHT_COLOUR.ptr().cast::<f32>();
     for t in 0..3 {
         let b = base.byte_add(road_group_offset(idx, t)).read();
-        a.wrapping_index(t).write(X87::from_i32(b as i32).fmul_m(kf(k::INV_255)).to_f32());
+        a.wrapping_index(t)
+            .write(X87::from_i32(b as i32).fmul_m(kf(k::INV_255)).to_f32());
     }
     set_color(P_AMBIENT.get(), AMBIENT_LIGHT_COLOUR.ptr());
 }
@@ -573,7 +659,12 @@ pub fn set_directional_colours(color: GPtr<RwRGBAReal>) {
 /// directional). Ambient red/green add the brightness to the unrounded PC=24 products still on the
 /// x87 stack; blue adds it to the already stored f32. Each channel uses its own brightness global
 /// (gta-reversed adds the red one to all three).
-pub fn peds_cars_objects_colours(mult: f32, pco: [f32; 3], dir_ff: [f32; 3], add: [f32; 3]) -> ([f32; 3], [f32; 3]) {
+pub fn peds_cars_objects_colours(
+    mult: f32,
+    pco: [f32; 3],
+    dir_ff: [f32; 3],
+    add: [f32; 3],
+) -> ([f32; 3], [f32; 3]) {
     let r = X87::from_f32(pco[0]).fmul_m(mult);
     let g = X87::from_f32(pco[1]).fmul_m(mult);
     let b = X87::from_f32(pco[2]).fmul_m(mult).to_f32();
@@ -591,7 +682,11 @@ pub fn set_light_colours_for_peds_cars_and_objects(mult: f32) {
         mult,
         rgb(AMBIENT_FOR_FRAME_PCO.get()),
         rgb(DIRECTIONAL_LIGHT_COLOUR_FOR_FRAME.get()),
-        [TC_BRIGHTNESS_ADDED_RED.get(), TC_BRIGHTNESS_ADDED_GREEN.get(), TC_BRIGHTNESS_ADDED_BLUE.get()],
+        [
+            TC_BRIGHTNESS_ADDED_RED.get(),
+            TC_BRIGHTNESS_ADDED_GREEN.get(),
+            TC_BRIGHTNESS_ADDED_BLUE.get(),
+        ],
     );
     set_amb_dir(a, d);
     set_color(P_AMBIENT.get(), AMBIENT_LIGHT_COLOUR.ptr());
@@ -625,7 +720,12 @@ pub fn restore_lights_for_infrared_vision_heat_objects() {
 /// `SetLightsForInfraredVisionDefaultObjects()` (0x735F20): `{0, 0, 1, 1}` for both.
 #[hook(addr = 0x735F20, conv = cdecl, name = "Light::SetLightsForInfraredVisionDefaultObjects", expect = "83 EC 10 8B 0D E8 86 C8 00")]
 pub fn set_lights_for_infrared_vision_default_objects() {
-    let mut c = RwRGBAReal { red: 0.0, green: 0.0, blue: 1.0, alpha: 1.0 };
+    let mut c = RwRGBAReal {
+        red: 0.0,
+        green: 0.0,
+        blue: 1.0,
+        alpha: 1.0,
+    };
     set_color(P_AMBIENT.get(), GPtr::from_raw(&raw mut c));
     set_color(P_DIRECT.get(), GPtr::from_raw(&raw mut c));
 }
@@ -633,7 +733,12 @@ pub fn set_lights_for_infrared_vision_default_objects() {
 /// `SetLightsForNightVision()` (0x735F70): `{0, 1, 0, 1}` for both.
 #[hook(addr = 0x735F70, conv = cdecl, name = "Light::SetLightsForNightVision", expect = "83 EC 10 8B 0D E8 86 C8 00")]
 pub fn set_lights_for_night_vision() {
-    let mut c = RwRGBAReal { red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0 };
+    let mut c = RwRGBAReal {
+        red: 0.0,
+        green: 1.0,
+        blue: 0.0,
+        alpha: 1.0,
+    };
     set_color(P_AMBIENT.get(), GPtr::from_raw(&raw mut c));
     set_color(P_DIRECT.get(), GPtr::from_raw(&raw mut c));
 }
@@ -710,9 +815,15 @@ mod tests {
     #[test]
     fn day_night_balance_points() {
         assert_eq!(day_night_balance(0, 0, 0).to_f32(), 1.0);
-        assert_eq!(day_night_balance(6, 30, 0).to_f32(), X87::from_f32(30.0).fmul_m(kf(k::INV_60)).to_f32());
+        assert_eq!(
+            day_night_balance(6, 30, 0).to_f32(),
+            X87::from_f32(30.0).fmul_m(kf(k::INV_60)).to_f32()
+        );
         assert_eq!(day_night_balance(12, 0, 0).to_f32(), 0.0);
-        let x = X87::from_f32(1260.0).fsub_m(1230.0).fmul_m(kf(k::INV_60)).fsubr_m(1.0);
+        let x = X87::from_f32(1260.0)
+            .fsub_m(1230.0)
+            .fmul_m(kf(k::INV_60))
+            .fsubr_m(1.0);
         assert!(day_night_balance(20, 30, 0).same(x));
         assert_eq!(day_night_balance(23, 0, 0).to_f32(), 1.0);
     }
@@ -742,7 +853,10 @@ mod tests {
     fn peds_colours_use_three_brightness_globals() {
         let (a, d) = peds_cars_objects_colours(0.5, [0.2, 0.4, 0.6], [1.0, 0.5, 0.25], [0.1, 0.2, 0.3]);
         assert_eq!(d, [0.5, 0.25, 0.125]);
-        assert_eq!(a[0], X87::from_f32(0.1).fadd(X87::from_f32(0.2).fmul_m(0.5)).to_f32());
+        assert_eq!(
+            a[0],
+            X87::from_f32(0.1).fadd(X87::from_f32(0.2).fmul_m(0.5)).to_f32()
+        );
         assert_eq!(a[2], X87::from_f32(0.3).fadd_m(0.3).to_f32());
     }
 }
