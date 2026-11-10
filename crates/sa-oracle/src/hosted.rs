@@ -137,7 +137,10 @@ fn check_layout<T: 'static>() {
 /// Runs `entry` (called with the host pool header) on the 32-bit pool header at scratch offset 0
 /// of `init` (see the module docs). Returns the expected scratch image and `entry`'s result (a host
 /// address or value) translated to a guest address.
-pub fn run_pool<T: 'static>(init: &[u8; SCRATCH_LEN], entry: &dyn Fn(GPtr<CPool<T>>) -> usize) -> ([u8; SCRATCH_LEN], u32) {
+pub fn run_pool<T: 'static>(
+    init: &[u8; SCRATCH_LEN],
+    entry: &dyn Fn(GPtr<CPool<T>>) -> usize,
+) -> ([u8; SCRATCH_LEN], u32) {
     check_layout::<T>();
     let objects0 = word(init, 0);
     let map0 = word(init, 4);

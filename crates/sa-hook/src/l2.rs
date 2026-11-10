@@ -255,7 +255,8 @@ impl Config {
         };
         if let Some(v) = get("SA_L2_DUMP_SEQ") {
             for e in v.split(',').map(str::trim).filter(|e| !e.is_empty()) {
-                c.dump_seq.push(num(e).ok_or_else(|| format!("SA_L2_DUMP_SEQ: {e:?}"))?);
+                c.dump_seq
+                    .push(num(e).ok_or_else(|| format!("SA_L2_DUMP_SEQ: {e:?}"))?);
             }
         }
         if let Some(s) = c.split {
@@ -773,9 +774,16 @@ mod tests {
         assert!(!q.admit(1, "B", 3), "101 > 100");
         assert!(!q.admit(0, "A", 4), "stays closed");
         assert_eq!(q.hit, Some(("B".into(), 3, 2)));
-        assert!(q.message().unwrap().contains("spool quota reached for B at frame 3"));
+        assert!(
+            q.message()
+                .unwrap()
+                .contains("spool quota reached for B at frame 3")
+        );
         let c = Config::from_env(env(&[("SA_L2", "ports")])).unwrap().unwrap();
-        assert_eq!((c.spool_max, c.split, c.leave_rust), (SPOOL_MAX_DEFAULT, None, false));
+        assert_eq!(
+            (c.spool_max, c.split, c.leave_rust),
+            (SPOOL_MAX_DEFAULT, None, false)
+        );
         let c = Config::from_env(env(&[
             ("SA_L2", "ports"),
             ("SA_L2_SPOOL_MAX", "1M"),
@@ -783,7 +791,10 @@ mod tests {
         ]))
         .unwrap()
         .unwrap();
-        assert_eq!((c.spool_max, c.split, c.leave_rust), (1 << 20, Some(Split::Rust), true));
+        assert_eq!(
+            (c.spool_max, c.split, c.leave_rust),
+            (1 << 20, Some(Split::Rust), true)
+        );
         assert!(Config::from_env(env(&[("SA_L2", "ports"), ("SA_L2_SPLIT", "x")])).is_err());
         assert!(Config::from_env(env(&[("SA_L2", "ports"), ("SA_L2_SPOOL_MAX", "y")])).is_err());
     }

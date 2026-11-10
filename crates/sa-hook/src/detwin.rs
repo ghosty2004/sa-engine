@@ -1009,7 +1009,10 @@ pub(crate) fn l2_checkpoint() -> Option<Arena> {
 
 /// The arena's reserved range [base, end) (0, 0 when off).
 pub(crate) fn arena_range() -> (u32, u32) {
-    (ARENA_BASE.load(Ordering::Acquire), ARENA_END.load(Ordering::Acquire))
+    (
+        ARENA_BASE.load(Ordering::Acquire),
+        ARENA_END.load(Ordering::Acquire),
+    )
 }
 
 /// The used part of the arena [base, base + high water), if the arena is on.

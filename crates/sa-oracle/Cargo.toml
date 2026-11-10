@@ -18,6 +18,8 @@ sa-stream = { path = "../sa-stream" }
 # COLL ports for the COLL specs.
 sa-world = { path = "../sa-world" }
 sa-pop = { path = "../sa-pop" }
+# SCRIPT ports (hook registrations: preserve masks).
+sa-script = { path = "../sa-script" }
 
 # Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
 [target.'cfg(not(windows))'.dependencies]

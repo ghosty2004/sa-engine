@@ -60,7 +60,10 @@ fn claimed() -> BTreeMap<u32, String> {
 
 fn claimed_specs() -> Vec<Spec> {
     let c = claimed();
-    specs::all().into_iter().filter(|s| c.contains_key(&s.addr)).collect()
+    specs::all()
+        .into_iter()
+        .filter(|s| c.contains_key(&s.addr))
+        .collect()
 }
 
 /// Unicorn only: native backend never used (`snan_native: false`), SNaN cases count as unverified.
@@ -84,7 +87,11 @@ fn verifier_every_claim_has_a_spec() {
     let c = claimed();
     let keys: BTreeSet<u32> = specs::all().iter().map(|s| s.addr).collect();
     let missing: Vec<_> = c.iter().filter(|(a, _)| !keys.contains(a)).collect();
-    println!("{} claimed functions, {} without a spec: {missing:?}", c.len(), missing.len());
+    println!(
+        "{} claimed functions, {} without a spec: {missing:?}",
+        c.len(),
+        missing.len()
+    );
     assert!(missing.is_empty());
 }
 
@@ -143,7 +150,8 @@ mod audit {
         let own = cat.ranges(spec.addr).unwrap();
         let mut uc = Unicorn::new_with_data(Arch::X86, Mode::MODE_32, St::default()).unwrap();
         uc.get_data_mut().stack_gen = vec![0; (STACK_HI - STACK_LO) as usize];
-        uc.ctl_set_cpu_model(unicorn_engine::X86CpuModel::PENTIUM3 as i32).unwrap();
+        uc.ctl_set_cpu_model(unicorn_engine::X86CpuModel::PENTIUM3 as i32)
+            .unwrap();
         let cr4 = uc.reg_read(R::CR4).unwrap();
         uc.reg_write(R::CR4, cr4 | 0x600).unwrap();
         let cr0 = uc.reg_read(R::CR0).unwrap();
@@ -151,10 +159,17 @@ mod audit {
         let page = |x: u32| (x + 0xFFF) & !0xFFF;
         uc.mem_map(EXIT as u64, 0x1000, Prot::ALL).unwrap();
         uc.mem_write(EXIT as u64, &[0xF4]).unwrap();
-        uc.mem_map(STACK_LO as u64, (STACK_HI - STACK_LO) as u64, Prot::READ | Prot::WRITE).unwrap();
-        uc.mem_map(img.base as u64, page(img.flat.len() as u32) as u64, Prot::ALL).unwrap();
+        uc.mem_map(
+            STACK_LO as u64,
+            (STACK_HI - STACK_LO) as u64,
+            Prot::READ | Prot::WRITE,
+        )
+        .unwrap();
+        uc.mem_map(img.base as u64, page(img.flat.len() as u32) as u64, Prot::ALL)
+            .unwrap();
         uc.mem_write(img.base as u64, &img.flat).unwrap();
-        uc.mem_map(SCRATCH as u64, 0x1_0000, Prot::READ | Prot::WRITE).unwrap();
+        uc.mem_map(SCRATCH as u64, 0x1_0000, Prot::READ | Prot::WRITE)
+            .unwrap();
         let mut msr = [0u8; 16];
         msr[..4].copy_from_slice(&0xC000_0100u32.to_le_bytes());
         msr[8..].copy_from_slice(&(TIB as u64).to_le_bytes());
@@ -195,28 +210,40 @@ mod audit {
             true
         })
         .unwrap();
-        uc.add_mem_hook(HookType::MEM_READ, SCRATCH as u64 + SCRATCH_LEN as u64, SCRATCH as u64 + 0xFFFF, |uc, _t, a, _s, _v| {
-            let a = a as u32;
-            if !(TIB..TIB + 4).contains(&a) {
-                bump(&mut uc.get_data_mut().r_scratch_hi, a - SCRATCH);
-            }
-            true
-        })
-        .unwrap();
-        uc.add_mem_hook(HookType::MEM_READ, STACK_LO as u64, ESP0 as u64 - 1, |uc, _t, a, size, _v| {
-            let d = uc.get_data_mut();
-            let a = a as u32;
-            if a < d.esp_in {
-                let all_written = (0..size as u32).all(|k| d.stack_gen[(a + k - STACK_LO) as usize] == d.generation);
-                if !all_written {
-                    let off = a as i32 - d.esp_in as i32;
-                    *d.r_uninit_stack.entry(off).or_default() += 1;
+        uc.add_mem_hook(
+            HookType::MEM_READ,
+            SCRATCH as u64 + SCRATCH_LEN as u64,
+            SCRATCH as u64 + 0xFFFF,
+            |uc, _t, a, _s, _v| {
+                let a = a as u32;
+                if !(TIB..TIB + 4).contains(&a) {
+                    bump(&mut uc.get_data_mut().r_scratch_hi, a - SCRATCH);
                 }
-            }
-            true
-        })
+                true
+            },
+        )
         .unwrap();
-        uc.add_mem_hook(HookType::MEM_INVALID, 1, 0, |_uc, _t: MemType, _a, _s, _v| false).unwrap();
+        uc.add_mem_hook(
+            HookType::MEM_READ,
+            STACK_LO as u64,
+            ESP0 as u64 - 1,
+            |uc, _t, a, size, _v| {
+                let d = uc.get_data_mut();
+                let a = a as u32;
+                if a < d.esp_in {
+                    let all_written =
+                        (0..size as u32).all(|k| d.stack_gen[(a + k - STACK_LO) as usize] == d.generation);
+                    if !all_written {
+                        let off = a as i32 - d.esp_in as i32;
+                        *d.r_uninit_stack.entry(off).or_default() += 1;
+                    }
+                }
+                true
+            },
+        )
+        .unwrap();
+        uc.add_mem_hook(HookType::MEM_INVALID, 1, 0, |_uc, _t: MemType, _a, _s, _v| false)
+            .unwrap();
 
         let mut rep = Report {
             instructions: 0,
@@ -234,7 +261,13 @@ mod audit {
             uc.mem_write(SCRATCH as u64, &c.scratch).unwrap();
             uc.mem_write(TIB as u64, &TIB_SEH_END.to_le_bytes()).unwrap();
             let esp = ESP0 - 4 * c.stack.len() as u32 - 4;
-            let fill: Vec<u8> = STACK_FILL.to_le_bytes().iter().copied().cycle().take(STACK_FILL_LEN as usize).collect();
+            let fill: Vec<u8> = STACK_FILL
+                .to_le_bytes()
+                .iter()
+                .copied()
+                .cycle()
+                .take(STACK_FILL_LEN as usize)
+                .collect();
             uc.mem_write((esp - STACK_FILL_LEN) as u64, &fill).unwrap();
             let mut st = EXIT.to_le_bytes().to_vec();
             for v in &c.stack {
@@ -304,7 +337,12 @@ mod audit {
                 if ins.flow_control() == FlowControl::ConditionalBranch {
                     let (t, n) = (ins.near_branch32(), ins.next_ip32());
                     // blocks ending right after this jcc
-                    let owners: Vec<u32> = d.blocks.iter().filter(|&&(b, s)| b <= a && b + s == n).map(|&(b, _)| b).collect();
+                    let owners: Vec<u32> = d
+                        .blocks
+                        .iter()
+                        .filter(|&&(b, s)| b <= a && b + s == n)
+                        .map(|&(b, _)| b)
+                        .collect();
                     let taken = owners.iter().any(|&b| d.bedges.contains(&(b, t)));
                     let fall = owners.iter().any(|&b| d.bedges.contains(&(b, n)));
                     rep.jcc.push((a, text, taken, fall));
@@ -317,7 +355,11 @@ mod audit {
 }
 
 fn top<K: std::fmt::Debug + Copy>(m: &BTreeMap<K, u64>, n: usize) -> String {
-    m.iter().take(n).map(|(k, v)| format!("{k:x?}:{v}")).collect::<Vec<_>>().join(" ")
+    m.iter()
+        .take(n)
+        .map(|(k, v)| format!("{k:x?}:{v}"))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 /// For every claimed spec: branch coverage of the original under (edges + generated) inputs and
@@ -401,7 +443,10 @@ fn verifier_audit_claimed_specs() {
 // ================================================================== 3. mutants ====================
 
 /// A spec whose port is replaced by `m(input, scratch-before, expected-by-the-real-port)`.
-fn mutate(spec: &Spec, m: impl Fn(&Inputs, &[u8; SCRATCH_LEN], Expect) -> Expect + Send + Sync + 'static) -> Spec {
+fn mutate(
+    spec: &Spec,
+    m: impl Fn(&Inputs, &[u8; SCRATCH_LEN], Expect) -> Expect + Send + Sync + 'static,
+) -> Spec {
     let mut s = spec.clone();
     let real = spec.rust.clone();
     s.rust = Arc::new(move |i, sc| m(i, sc, real(i, sc)));
@@ -611,7 +656,12 @@ fn verifier_mutants_core_stream() {
                 1.0
             };
             let x = sa_math::x87::X87::from_f32(v);
-            with(e, |ret, _| *ret = ExpRet::St0 { f32: v.to_bits(), ext: x.to_ext() })
+            with(e, |ret, _| {
+                *ret = ExpRet::St0 {
+                    f32: v.to_bits(),
+                    ext: x.to_ext(),
+                }
+            })
         }),
         true,
     ));
@@ -653,7 +703,10 @@ fn verifier_store_mutants_all_claimed() {
             matches!((base.rust)(&i, &c.scratch), Expect::Returns { scratch, .. } if scratch != c.scratch)
         });
         for (label, m) in [
-            ("missing store", drop_last_store as fn(&Inputs, &[u8; SCRATCH_LEN], Expect) -> Expect),
+            (
+                "missing store",
+                drop_last_store as fn(&Inputs, &[u8; SCRATCH_LEN], Expect) -> Expect,
+            ),
             ("stray store", stray_store),
         ] {
             let s = mutate(&base, m);
@@ -695,7 +748,10 @@ fn verifier_hooked_entries_through_host_globals() {
         let s = spec(key);
         let cases = if key == "InitGBab358" { n.min(10_000) } else { n };
         let rep = runner::run(&s, &img, &cfg(cases)).unwrap();
-        println!("  {key:<34} hooked entry: mismatches={} {:?}", rep.mismatches, rep.kinds);
+        println!(
+            "  {key:<34} hooked entry: mismatches={} {:?}",
+            rep.mismatches, rep.kinds
+        );
         ok &= rep.mismatches == 0;
     }
     assert!(ok);
@@ -714,10 +770,16 @@ fn verifier_hosted_pool_entries_discriminate() {
     let mut s = spec("CColModelPoolNew");
     s.rust = Arc::new(|_i, sc| {
         let (out, eax) = sa_oracle::hosted::run_pool::<Slot<0x2C>>(sc, &|p| pool::pool_new(p).addr());
-        Expect::Returns { ret: ExpRet::Eax(eax), scratch: out }
+        Expect::Returns {
+            ret: ExpRet::Eax(eax),
+            scratch: out,
+        }
     });
     let r = runner::run(&s, &img, &cfg(n)).unwrap();
-    println!("  CColModelPoolNew with slot 0x2C: mismatches={} {:?}", r.mismatches, r.kinds);
+    println!(
+        "  CColModelPoolNew with slot 0x2C: mismatches={} {:?}",
+        r.mismatches, r.kinds
+    );
     assert!(r.mismatches > 0);
     // CPool<CPtrNodeSingleLink> ctor (new[] 0x821195) checked against `operator new` 0x82119A
     let mut s = spec("CPoolCtor550180");
@@ -726,7 +788,9 @@ fn verifier_hosted_pool_entries_discriminate() {
         let e = real(i, sc);
         sa_oracle::hosted::expect_allocator(sa_oracle::hosted::NEW);
         let r = std::panic::catch_unwind(|| {
-            sa_oracle::hosted::run_pool::<Slot<0x08>>(sc, &|p| ps::ctor_ptr_node_single(p, i[0] as i32, GPtr::NULL).addr())
+            sa_oracle::hosted::run_pool::<Slot<0x08>>(sc, &|p| {
+                ps::ctor_ptr_node_single(p, i[0] as i32, GPtr::NULL).addr()
+            })
         });
         assert!(r.is_err(), "allocator mismatch not detected");
         e
@@ -743,10 +807,16 @@ fn verifier_hosted_pool_entries_discriminate() {
             ps::node_route_operator_delete(GPtr::from_addr(obj as usize));
             0
         });
-        Expect::Returns { ret: ExpRet::Void, scratch: out }
+        Expect::Returns {
+            ret: ExpRet::Void,
+            scratch: out,
+        }
     });
     let r = runner::run(&s, &img, &cfg(n)).unwrap();
-    println!("  CEntryInfoNodeOperatorDelete via CNodeRoute's entry: mismatches={} {:?}", r.mismatches, r.kinds);
+    println!(
+        "  CEntryInfoNodeOperatorDelete via CNodeRoute's entry: mismatches={} {:?}",
+        r.mismatches, r.kinds
+    );
     assert!(r.mismatches > 0);
 }
 
@@ -781,7 +851,10 @@ fn verifier_gta_translate_key_boundary() {
         }
     });
     let m = runner::run(&mutant, &img, &cfg(n)).unwrap();
-    println!("  forced chr=0xFF: real port mismatches={}  gta-reversed mutant mismatches={} {:?}", real.mismatches, m.mismatches, m.kinds);
+    println!(
+        "  forced chr=0xFF: real port mismatches={}  gta-reversed mutant mismatches={} {:?}",
+        real.mismatches, m.mismatches, m.kinds
+    );
     assert_eq!(real.mismatches, 0);
     assert!(m.mismatches > 0);
 }
@@ -797,24 +870,41 @@ fn verifier_gta_translate_key_boundary() {
 fn verifier_edx_live_across_set_base_model_info_flags() {
     let Some(img) = img() else { return };
     let site = img.bytes(0x5B4177, 15);
-    assert_eq!(site, &[0x8B, 0xD0, 0xE8, 0x52, 0xF9, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0xF6, 0xC2, 0x20, 0x74, 0x06]);
+    assert_eq!(
+        site,
+        &[
+            0x8B, 0xD0, 0xE8, 0x52, 0xF9, 0xFF, 0xFF, 0x83, 0xC4, 0x08, 0xF6, 0xC2, 0x20, 0x74, 0x06
+        ]
+    );
     let s = spec("CBaseModelInfoSetBaseModelInfoFlags");
     assert_eq!(s.preserve, sa_core::abi::PRESERVE_EDX);
-    assert_eq!(sa_oracle::hook_preserve(0x5B3AD0), Some(sa_core::abi::PRESERVE_EDX));
+    assert_eq!(
+        sa_oracle::hook_preserve(0x5B3AD0),
+        Some(sa_core::abi::PRESERVE_EDX)
+    );
     let r = runner::run(&s, &img, &cfg(100_000)).unwrap();
-    println!("  0x5B3AD0 with EDX compared: mismatches={} {:?}", r.mismatches, r.kinds);
+    println!(
+        "  0x5B3AD0 with EDX compared: mismatches={} {:?}",
+        r.mismatches, r.kinds
+    );
     assert_eq!(r.mismatches, 0);
     // a port without `preserve`: RsKeyFromScanCode's original never writes EDX either
     let mut k = spec("RsKeyFromScanCode");
     k.preserve = sa_core::abi::PRESERVE_EDX;
     let r = runner::run(&k, &img, &cfg(10_000)).unwrap();
-    println!("  RsKeyFromScanCode declared EDX-preserving, hook without preserve: mismatches={} {:?}", r.mismatches, r.kinds);
+    println!(
+        "  RsKeyFromScanCode declared EDX-preserving, hook without preserve: mismatches={} {:?}",
+        r.mismatches, r.kinds
+    );
     assert_eq!(r.mismatches, r.total());
     // an original that writes EDX: SetAtomicModelInfoFlags (`mov dx, ...` after the call)
     let mut a = spec("CAtomicModelInfoSetAtomicModelInfoFlags");
     a.preserve = sa_core::abi::PRESERVE_EDX;
     let r = runner::run(&a, &img, &cfg(10_000)).unwrap();
-    println!("  SetAtomicModelInfoFlags declared EDX-preserving: mismatches={} {:?}", r.mismatches, r.kinds);
+    println!(
+        "  SetAtomicModelInfoFlags declared EDX-preserving: mismatches={} {:?}",
+        r.mismatches, r.kinds
+    );
     assert!(r.mismatches > 0);
     assert!(r.examples.iter().all(|m| m.detail.contains("on return")));
 }

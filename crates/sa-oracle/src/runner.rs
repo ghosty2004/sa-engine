@@ -282,13 +282,17 @@ pub fn compare(
         if got != input {
             return Err((
                 format!("preserve-{name}"),
-                format!("orig {name}={got:#x} on return, {input:#x} on entry (spec says the original preserves it)"),
+                format!(
+                    "orig {name}={got:#x} on return, {input:#x} on entry (spec says the original preserves it)"
+                ),
             ));
         }
         if crate::hook_preserve(spec.addr).unwrap_or(0) & bit == 0 {
             return Err((
                 format!("preserve-{name}"),
-                format!("orig preserves {name}={input:#x}; the port's #[hook] does not declare preserve = \"{name}\""),
+                format!(
+                    "orig preserves {name}={input:#x}; the port's #[hook] does not declare preserve = \"{name}\""
+                ),
             ));
         }
     }
@@ -418,7 +422,8 @@ fn score(x: f32) -> (u32, i32, u32) {
 /// A per-case value for a preserved register that is not an argument (FNV-1a of the inputs, so
 /// every case, including shrunk ones, gets its own).
 fn preserved_value(i: &Inputs, salt: u32) -> u32 {
-    i.iter().fold(0x811C_9DC5u32 ^ salt, |h, &w| (h ^ w).wrapping_mul(0x0100_0193))
+    i.iter()
+        .fold(0x811C_9DC5u32 ^ salt, |h, &w| (h ^ w).wrapping_mul(0x0100_0193))
 }
 
 /// The call of case `i`: the spec's call, the configured FPU state, and the preserved registers

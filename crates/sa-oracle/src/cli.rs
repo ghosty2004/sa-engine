@@ -208,7 +208,10 @@ fn read_spool_full(p: &str) -> Result<(Vec<sa_oracle_format::l2::Case>, Option<S
 
 /// The cases of the functions at `only` (and the quota trailer) of a spool, read record by record, so
 /// a multi-GB split-run spool does not have to fit in memory (`split-report --fn`).
-fn read_spool_only(p: &str, only: &[u32]) -> Result<(Vec<sa_oracle_format::l2::Case>, Option<String>), String> {
+fn read_spool_only(
+    p: &str,
+    only: &[u32],
+) -> Result<(Vec<sa_oracle_format::l2::Case>, Option<String>), String> {
     use std::io::Read;
     let f = std::fs::File::open(p).map_err(|e| format!("{p}: {e}"))?;
     let mut r = std::io::BufReader::with_capacity(1 << 20, f);
@@ -227,13 +230,16 @@ fn read_spool_only(p: &str, only: &[u32]) -> Result<(Vec<sa_oracle_format::l2::C
         let n = u32::from_le_bytes(h);
         if n == sa_oracle_format::l2::TRAILER_MARK {
             let mut k = [0u8; 4];
-            r.read_exact(&mut k).map_err(|_| format!("{p}: truncated trailer"))?;
+            r.read_exact(&mut k)
+                .map_err(|_| format!("{p}: truncated trailer"))?;
             let mut t = vec![0u8; u32::from_le_bytes(k) as usize];
-            r.read_exact(&mut t).map_err(|_| format!("{p}: truncated trailer"))?;
+            r.read_exact(&mut t)
+                .map_err(|_| format!("{p}: truncated trailer"))?;
             return Ok((out, Some(String::from_utf8_lossy(&t).into_owned())));
         }
         buf.resize(n as usize, 0);
-        r.read_exact(&mut buf).map_err(|_| format!("{p}: truncated record at {at}"))?;
+        r.read_exact(&mut buf)
+            .map_err(|_| format!("{p}: truncated record at {at}"))?;
         // fn_addr follows the 8-byte case magic (Case::decode)
         if buf.len() >= 12 && only.contains(&u32::from_le_bytes([buf[8], buf[9], buf[10], buf[11]])) {
             out.push(

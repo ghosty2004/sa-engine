@@ -837,3 +837,22 @@ CPopCycle::Update@0xC0BC64:4:RW
 # (port-l2-pop-p-l2 undeclared 0xC0E9C9).
 CCarCtrl::ReInit@0xC0E998:0x28A:RW
 CCarCtrl::Init@0xC0E998:0x28A:RW
+# PORT-SCRIPT-1 (docs/arch/script-port.md): the CRunningScript VM core. `this` (0xE0) and the script
+# globals (ScriptSpace 0xA49960, ScriptParams 0xA43C78, LocalVariablesForCurrentMission 0xA48960, the
+# CRunningScript array 0xA8B430) are static data. Out-parameters on the caller's stack:
+CRunningScript::ReadArrayInformation@arg1:2:W
+CRunningScript::ReadArrayInformation@arg2:4:W
+# the label buffer: up to 16 bytes copied, the pascal form zero-fills up to `length` (a byte, <= 0xFF)
+CRunningScript::ReadTextLabelFromScript@arg0:0x100:W
+# ScriptParams (tScriptParam[32]) written by the collectors, read by the storers; ScriptSpace and the
+# mission locals written by the storers (sc-grove: undeclared 0xA43C79.., 0xA4996C.. without these)
+CRunningScript::CollectParameters@0xA43C78:0x80:RW
+CRunningScript::StoreParameters@0xA43C78:0x80:R
+CRunningScript::StoreParameters@0xA48960:0x1000:RW
+CRunningScript::StoreParameters@0xA49960:0x41AC8:RW
+# ProcessCommands0To99: the script globals above, the script lists and array (pIdleScripts 0xA8B428,
+# pActiveScripts 0xA8B42C, ScriptsArray 0xA8B430, 96 x 0xE0) for START_NEW_SCRIPT / TERMINATE_THIS_SCRIPT
+CRunningScript::ProcessCommands0To99@0xA43C78:0x80:RW
+CRunningScript::ProcessCommands0To99@0xA48960:0x1000:RW
+CRunningScript::ProcessCommands0To99@0xA49960:0x41AC8:RW
+CRunningScript::ProcessCommands0To99@0xA8B428:0x5408:RW

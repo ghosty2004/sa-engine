@@ -42,9 +42,9 @@ use sa_oracle_format::l2::{self as fmt, Case, Outcome, Region, RegionKind, Write
 use sa_oracle_format::subsys::{Mem, PoolMap};
 
 use crate::l2::{Config, FnStats, Split, SpoolQuota, Window};
-use sa_oracle_format::l2::OsProbe;
 use crate::table::{self, HOOKS, Mode};
 use crate::win::{self, log};
+use sa_oracle_format::l2::OsProbe;
 
 // ------------------------------------------------------------------ frame / invoke layouts ------
 
@@ -810,10 +810,7 @@ impl Snap {
 }
 
 fn read_regions(regions: &mut [Region], orig: bool) {
-    for r in regions
-        .iter_mut()
-        .filter(|r| r.readable && r.has_pre_memory())
-    {
+    for r in regions.iter_mut().filter(|r| r.readable && r.has_pre_memory()) {
         let b = mem_read(r.addr, r.pre.len()).unwrap_or_default();
         if orig {
             r.post_orig = b;
@@ -824,14 +821,10 @@ fn read_regions(regions: &mut [Region], orig: bool) {
 }
 
 fn restore_regions(regions: &[Region]) {
-    for r in regions
-        .iter()
-        .filter(|r| r.readable && r.has_pre_memory())
-    {
+    for r in regions.iter().filter(|r| r.readable && r.has_pre_memory()) {
         put_diff(r.addr, &r.pre);
     }
 }
-
 
 /// The case's regions before the call: spec globals, extra regions evaluated at entry, `this`,
 /// pointed-to arguments, and the pre-call OS probes (`os:` extras without `post:`).
@@ -857,7 +850,13 @@ fn build_regions(f: &Frame, i: usize, sig: &fmt::Sig, args: &[u32]) -> Vec<Regio
     }
     if let Some(gs) = SPECS.get().and_then(|s| s.get(&h.addr)) {
         for g in gs {
-            add(&mut regions, g.addr, g.len, RegionKind::Global { exact: g.exact }, g.access);
+            add(
+                &mut regions,
+                g.addr,
+                g.len,
+                RegionKind::Global { exact: g.exact },
+                g.access,
+            );
         }
     }
     let regs_in = [f.eax, f.ecx, f.edx, f.ebx, f.esi, f.edi, f.ebp];
@@ -889,11 +888,23 @@ fn build_regions(f: &Frame, i: usize, sig: &fmt::Sig, args: &[u32]) -> Vec<Regio
         }
     }
     if sig.conv == fmt::Conv::Thiscall && sig.this_size > 0 {
-        add(&mut regions, f.ecx, sig.this_size, RegionKind::This, fmt::ACC_R | fmt::ACC_W);
+        add(
+            &mut regions,
+            f.ecx,
+            sig.this_size,
+            RegionKind::This,
+            fmt::ACC_R | fmt::ACC_W,
+        );
     }
     for p in sig.ptr_args {
         if let Some(&a) = args.get(p.arg as usize) {
-            add(&mut regions, a, p.size, RegionKind::ArgPtr(p.arg), fmt::ACC_R | fmt::ACC_W);
+            add(
+                &mut regions,
+                a,
+                p.size,
+                RegionKind::ArgPtr(p.arg),
+                fmt::ACC_R | fmt::ACC_W,
+            );
         }
     }
     regions
@@ -1134,10 +1145,7 @@ fn run_case(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32) {
         for w in &out_o.writes {
             put(w.addr, &w.bytes);
         }
-        for r in regions
-            .iter()
-            .filter(|r| r.readable && r.has_pre_memory())
-        {
+        for r in regions.iter().filter(|r| r.readable && r.has_pre_memory()) {
             put_diff(r.addr, &r.post_orig);
         }
         let mut s = side_o;
@@ -1525,12 +1533,7 @@ fn run_split(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32, ordinal: u32, 
     let page_hashes = snap.page_hashes(nstatic, &mask, &fm, &mut foreign_words);
     let volatile: Vec<Write> = sa_oracle_format::normalise::INPUT_EXCLUSIONS
         .iter()
-        .filter_map(|e| {
-            mem_read(e.addr, e.len as usize).map(|bytes| Write {
-                addr: e.addr,
-                bytes,
-            })
-        })
+        .filter_map(|e| mem_read(e.addr, e.len as usize).map(|bytes| Write { addr: e.addr, bytes }))
         .collect();
     if c.dump_seq.contains(&seq) {
         let out = c.out.clone().unwrap_or_else(|| "l2.spool".into());

@@ -382,7 +382,13 @@ fn gen_ctor(r: &mut Rng) -> Inputs {
 
 fn ctor_edges() -> Vec<Inputs> {
     let mut e = Vec::new();
-    for (size, off) in [(0u32, 0x20usize), (1, 0x20), (2, 0x4DE), ((-1i32) as u32, 0x100), (0x4C0, 0x20)] {
+    for (size, off) in [
+        (0u32, 0x20usize),
+        (1, 0x20),
+        (2, 0x4DE),
+        ((-1i32) as u32, 0x100),
+        (0x4C0, 0x20),
+    ] {
         for fill in [0u32, 0xFFFF_FFFF, 0x7F7F_7F7F] {
             let mut v = vec![size, 0, 0x2000_0000, off as u32];
             v.extend(std::iter::repeat_n(fill, SCRATCH_LEN / 4));
@@ -443,7 +449,8 @@ pub(crate) fn ctor_spec<T: 'static>(
         rust: Arc::new(move |i, s| {
             hosted::expect_allocator(alloc);
             let (size, name) = (i[0] as i32, i[1]);
-            let (out, eax) = hosted::run_pool::<T>(s, &|p| entry(p, size, GPtr::from_addr(name as usize)).addr());
+            let (out, eax) =
+                hosted::run_pool::<T>(s, &|p| entry(p, size, GPtr::from_addr(name as usize)).addr());
             Expect::Returns {
                 ret: ExpRet::Eax(eax),
                 scratch: out,
@@ -496,7 +503,9 @@ fn gen_delete(r: &mut Rng, stride: u32) -> Inputs {
     let mut v = gen_pool_lookup(r, false);
     let idx = *v.last().unwrap() as i32;
     let off = if r.chance(70) { 0 } else { r.below(stride) as i32 };
-    let diff = idx.wrapping_mul(stride as i32).wrapping_add(if idx < 0 { -off } else { off });
+    let diff = idx
+        .wrapping_mul(stride as i32)
+        .wrapping_add(if idx < 0 { -off } else { off });
     *v.last_mut().unwrap() = v[0].wrapping_add(diff as u32);
     v
 }
@@ -588,14 +597,22 @@ fn check_building_atomics() -> Spec {
 /// bytes random), the head as the argument (null for an empty list).
 fn gen_list(r: &mut Rng) -> Inputs {
     let slots = SCRATCH_LEN / 8;
-    let n = if r.chance(10) { 0 } else { 1 + r.below(slots as u32) as usize };
+    let n = if r.chance(10) {
+        0
+    } else {
+        1 + r.below(slots as u32) as usize
+    };
     let mut order: Vec<usize> = (0..slots).collect();
     for k in (1..slots).rev() {
         order.swap(k, r.below(k as u32 + 1) as usize);
     }
     let mut words: Vec<u32> = (0..SCRATCH_LEN / 4).map(|_| r.next_u32()).collect();
     for k in 0..n {
-        let next = if k + 1 < n { SCRATCH + 8 * order[k + 1] as u32 } else { 0 };
+        let next = if k + 1 < n {
+            SCRATCH + 8 * order[k + 1] as u32
+        } else {
+            0
+        };
         words[2 * order[k]] = next;
     }
     words.push(if n == 0 { 0 } else { SCRATCH + 8 * order[0] as u32 });
@@ -651,7 +668,10 @@ fn qt_node() -> crate::mspec::Region {
     use crate::mspec::{Kind, Region, W};
     let mut w = vec![W::F; 4];
     w.extend(std::iter::repeat_n(W::R, 6));
-    Region { words: w, kind: Kind::Any }
+    Region {
+        words: w,
+        kind: Kind::Any,
+    }
 }
 
 /// A quarter of the generated levels are 0 (leaf).
@@ -672,29 +692,45 @@ fn gen_sector(r: &mut Rng) -> u32 {
 
 fn quad_tree_specs() -> Vec<Spec> {
     use crate::call::Conv::Thiscall;
-    use crate::mspec::{b, floats, vec2, A};
+    use crate::mspec::{A, b, floats, vec2};
     use crate::specs::RetKind::{Al, Eax};
     use sa_core::quadtree as q;
     vec![
-        b("CQuadTreeNodeFindSectorRect", "CQuadTreeNode<T>::FindSector-rect", 0x5525A0, Thiscall, Eax)
-            .regions(vec![qt_node(), floats(4)])
-            .args(vec![A::P(0), A::P(1)])
-            .fix(qt_fix)
-            .rust(|c| ExpRet::Eax(q::find_sector_rect_of(qt_rect(c, 0), c.u(0, 9), qt_rect(c, 1)) as u32)),
-        b("CQuadTreeNodeFindSectorVec", "CQuadTreeNode<T>::FindSector-vec", 0x552640, Thiscall, Eax)
-            .regions(vec![qt_node(), vec2()])
-            .args(vec![A::P(0), A::P(1)])
-            .fix(qt_fix)
-            .rust(|c| {
-                ExpRet::Eax(q::find_sector_vec_of(qt_rect(c, 0), c.u(0, 9), [c.fl(1, 0), c.fl(1, 1)]) as u32)
-            }),
-        b("CQuadTreeNodeInSector", "CQuadTreeNode<T>::InSector", 0x5526A0, Thiscall, Al)
-            .regions(vec![qt_node(), floats(4)])
-            .args(vec![A::P(0), A::P(1), A::I(gen_sector)])
-            .fix(qt_fix)
-            .rust(|c| {
-                ExpRet::Al(q::in_sector_of(qt_rect(c, 0), c.u(0, 9), qt_rect(c, 1), c.i(2) as i32) as u8)
-            }),
+        b(
+            "CQuadTreeNodeFindSectorRect",
+            "CQuadTreeNode<T>::FindSector-rect",
+            0x5525A0,
+            Thiscall,
+            Eax,
+        )
+        .regions(vec![qt_node(), floats(4)])
+        .args(vec![A::P(0), A::P(1)])
+        .fix(qt_fix)
+        .rust(|c| ExpRet::Eax(q::find_sector_rect_of(qt_rect(c, 0), c.u(0, 9), qt_rect(c, 1)) as u32)),
+        b(
+            "CQuadTreeNodeFindSectorVec",
+            "CQuadTreeNode<T>::FindSector-vec",
+            0x552640,
+            Thiscall,
+            Eax,
+        )
+        .regions(vec![qt_node(), vec2()])
+        .args(vec![A::P(0), A::P(1)])
+        .fix(qt_fix)
+        .rust(|c| {
+            ExpRet::Eax(q::find_sector_vec_of(qt_rect(c, 0), c.u(0, 9), [c.fl(1, 0), c.fl(1, 1)]) as u32)
+        }),
+        b(
+            "CQuadTreeNodeInSector",
+            "CQuadTreeNode<T>::InSector",
+            0x5526A0,
+            Thiscall,
+            Al,
+        )
+        .regions(vec![qt_node(), floats(4)])
+        .args(vec![A::P(0), A::P(1), A::I(gen_sector)])
+        .fix(qt_fix)
+        .rust(|c| ExpRet::Al(q::in_sector_of(qt_rect(c, 0), c.u(0, 9), qt_rect(c, 1), c.i(2) as i32) as u8)),
     ]
 }
 
@@ -703,15 +739,69 @@ pub fn port_core() -> Vec<Spec> {
     use sa_core::pool::PED_POOL;
     use sa_core::pools::{self as ps, ENTRY_INFO_NODE_POOL, NODE_ROUTE_POOL};
     let mut v = vec![
-        pool_new_spec("CBuildingPoolNew", "CBuildingPool::New", 0x403FA0, 0x38, ps::building_pool_new),
-        pool_new_spec("CColModelPoolNew", "CColModelPool::New", 0x40FB80, 0x30, ps::col_model_pool_new),
-        pool_new_spec("CPointRoutePoolNew", "CPointRoutePool::New", 0x41B5B0, 0x64, ps::point_route_pool_new),
-        pool_new_spec("CPatrolRoutePoolNew", "CPatrolRoutePool::New", 0x41B660, 0x1A4, ps::patrol_route_pool_new),
-        pool_new_spec("CNodeRoutePoolNew", "CNodeRoutePool::New", 0x41B710, 0x24, ps::node_route_pool_new),
-        pool_new_spec("CEntryInfoNodePoolNew", "CEntryInfoNodePool::GetAt", 0x536D10, 0x14, ps::entry_info_node_pool_new),
-        pool_new_spec("CPtrNodeSingleLinkPoolNew", "CPtrNodeSingleLinkPool::New", 0x552240, 0x08, ps::ptr_node_single_pool_new),
-        pool_new_spec("CPtrNodeDoubleLinkPoolNew", "CPtrNodeDoubleLinkPool::New", 0x5522E0, 0x0C, ps::ptr_node_double_pool_new),
-        pool_new_spec("CPedIntelligencePoolNew", "CPedIntelligencePool::New", 0x605EC0, 0x294, ps::ped_intelligence_pool_new),
+        pool_new_spec(
+            "CBuildingPoolNew",
+            "CBuildingPool::New",
+            0x403FA0,
+            0x38,
+            ps::building_pool_new,
+        ),
+        pool_new_spec(
+            "CColModelPoolNew",
+            "CColModelPool::New",
+            0x40FB80,
+            0x30,
+            ps::col_model_pool_new,
+        ),
+        pool_new_spec(
+            "CPointRoutePoolNew",
+            "CPointRoutePool::New",
+            0x41B5B0,
+            0x64,
+            ps::point_route_pool_new,
+        ),
+        pool_new_spec(
+            "CPatrolRoutePoolNew",
+            "CPatrolRoutePool::New",
+            0x41B660,
+            0x1A4,
+            ps::patrol_route_pool_new,
+        ),
+        pool_new_spec(
+            "CNodeRoutePoolNew",
+            "CNodeRoutePool::New",
+            0x41B710,
+            0x24,
+            ps::node_route_pool_new,
+        ),
+        pool_new_spec(
+            "CEntryInfoNodePoolNew",
+            "CEntryInfoNodePool::GetAt",
+            0x536D10,
+            0x14,
+            ps::entry_info_node_pool_new,
+        ),
+        pool_new_spec(
+            "CPtrNodeSingleLinkPoolNew",
+            "CPtrNodeSingleLinkPool::New",
+            0x552240,
+            0x08,
+            ps::ptr_node_single_pool_new,
+        ),
+        pool_new_spec(
+            "CPtrNodeDoubleLinkPoolNew",
+            "CPtrNodeDoubleLinkPool::New",
+            0x5522E0,
+            0x0C,
+            ps::ptr_node_double_pool_new,
+        ),
+        pool_new_spec(
+            "CPedIntelligencePoolNew",
+            "CPedIntelligencePool::New",
+            0x605EC0,
+            0x294,
+            ps::ped_intelligence_pool_new,
+        ),
         op_new_spec(
             "CNodeRouteOperatorNew",
             "CNodeRoute::operator new",
@@ -776,26 +866,159 @@ pub fn port_core() -> Vec<Spec> {
     type Ctor<T> = PoolCtor<T>;
     let a = NEW_ARRAY;
     v.extend([
-        ctor_spec("CPoolCtor550180", "FUN_00550180", 0x550180, 0x08, a, ps::ctor_ptr_node_single as Ctor<_>),
-        ctor_spec("CPoolCtor550250", "FUN_00550250", 0x550250, 0x0C, a, ps::ctor_ptr_node_double as Ctor<_>),
-        ctor_spec("CPoolCtor550320", "FUN_00550320", 0x550320, 0x14, a, ps::ctor_entry_info_node as Ctor<_>),
-        ctor_spec("CPoolCtor5503F0", "FUN_005503f0", 0x5503F0, 0x7C4, a, ps::ctor_ped as Ctor<_>),
-        ctor_spec("CPoolCtor5504C0", "FUN_005504c0", 0x5504C0, 0xA18, a, ps::ctor_vehicle as Ctor<_>),
-        ctor_spec("CPoolCtor550570", "FUN_00550570", 0x550570, 0x38, a, ps::ctor_building as Ctor<_>),
-        ctor_spec("CPoolCtor550640", "FUN_00550640", 0x550640, 0x19C, a, ps::ctor_object as Ctor<_>),
-        ctor_spec("CPoolCtor5506F0", "FUN_005506f0", 0x5506F0, 0x38, a, ps::ctor_dummy as Ctor<_>),
-        ctor_spec("CPoolCtor5507C0", "FUN_005507c0", 0x5507C0, 0x30, a, ps::ctor_col_model as Ctor<_>),
-        ctor_spec("CPoolCtor550890", "FUN_00550890", 0x550890, 0x80, a, ps::ctor_task as Ctor<_>),
-        ctor_spec("CPoolCtor550960", "FUN_00550960", 0x550960, 0x44, a, ps::ctor_event as Ctor<_>),
-        ctor_spec("CPoolCtor550A30", "FUN_00550a30", 0x550A30, 0x64, a, ps::ctor_point_route as Ctor<_>),
-        ctor_spec("CPoolCtor550B00", "FUN_00550b00", 0x550B00, 0x1A4, a, ps::ctor_patrol_route as Ctor<_>),
-        ctor_spec("CPoolCtor550BD0", "FUN_00550bd0", 0x550BD0, 0x24, a, ps::ctor_node_route as Ctor<_>),
-        ctor_spec("CPoolCtor550CA0", "FUN_00550ca0", 0x550CA0, 0x20, a, ps::ctor_task_allocator as Ctor<_>),
-        ctor_spec("CPoolCtor550D70", "FUN_00550d70", 0x550D70, 0x294, a, ps::ctor_ped_intelligence as Ctor<_>),
-        ctor_spec("CPoolCtor550E40", "FUN_00550e40", 0x550E40, 0xC4, a, ps::ctor_ped_attractor as Ctor<_>),
+        ctor_spec(
+            "CPoolCtor550180",
+            "FUN_00550180",
+            0x550180,
+            0x08,
+            a,
+            ps::ctor_ptr_node_single as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550250",
+            "FUN_00550250",
+            0x550250,
+            0x0C,
+            a,
+            ps::ctor_ptr_node_double as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550320",
+            "FUN_00550320",
+            0x550320,
+            0x14,
+            a,
+            ps::ctor_entry_info_node as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor5503F0",
+            "FUN_005503f0",
+            0x5503F0,
+            0x7C4,
+            a,
+            ps::ctor_ped as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor5504C0",
+            "FUN_005504c0",
+            0x5504C0,
+            0xA18,
+            a,
+            ps::ctor_vehicle as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550570",
+            "FUN_00550570",
+            0x550570,
+            0x38,
+            a,
+            ps::ctor_building as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550640",
+            "FUN_00550640",
+            0x550640,
+            0x19C,
+            a,
+            ps::ctor_object as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor5506F0",
+            "FUN_005506f0",
+            0x5506F0,
+            0x38,
+            a,
+            ps::ctor_dummy as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor5507C0",
+            "FUN_005507c0",
+            0x5507C0,
+            0x30,
+            a,
+            ps::ctor_col_model as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550890",
+            "FUN_00550890",
+            0x550890,
+            0x80,
+            a,
+            ps::ctor_task as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550960",
+            "FUN_00550960",
+            0x550960,
+            0x44,
+            a,
+            ps::ctor_event as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550A30",
+            "FUN_00550a30",
+            0x550A30,
+            0x64,
+            a,
+            ps::ctor_point_route as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550B00",
+            "FUN_00550b00",
+            0x550B00,
+            0x1A4,
+            a,
+            ps::ctor_patrol_route as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550BD0",
+            "FUN_00550bd0",
+            0x550BD0,
+            0x24,
+            a,
+            ps::ctor_node_route as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550CA0",
+            "FUN_00550ca0",
+            0x550CA0,
+            0x20,
+            a,
+            ps::ctor_task_allocator as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550D70",
+            "FUN_00550d70",
+            0x550D70,
+            0x294,
+            a,
+            ps::ctor_ped_intelligence as Ctor<_>,
+        ),
+        ctor_spec(
+            "CPoolCtor550E40",
+            "FUN_00550e40",
+            0x550E40,
+            0xC4,
+            a,
+            ps::ctor_ped_attractor as Ctor<_>,
+        ),
         // `operator new` 0x82119A called directly
-        ctor_spec("CPoolCtor552AF0", "FUN_00552af0", 0x552AF0, 0x28, NEW, ps::ctor_quad_tree_node as Ctor<_>),
-        ctor_spec("CIplDefPoolConstructor", "CIplDefPool::Constructor", 0x405900, 0x34, a, ps::ctor_ipl_def as Ctor<_>),
+        ctor_spec(
+            "CPoolCtor552AF0",
+            "FUN_00552af0",
+            0x552AF0,
+            0x28,
+            NEW,
+            ps::ctor_quad_tree_node as Ctor<_>,
+        ),
+        ctor_spec(
+            "CIplDefPoolConstructor",
+            "CIplDefPool::Constructor",
+            0x405900,
+            0x34,
+            a,
+            ps::ctor_ipl_def as Ctor<_>,
+        ),
     ]);
     v.extend(quad_tree_specs());
     v
@@ -804,9 +1027,27 @@ pub fn port_core() -> Vec<Spec> {
 /// Every CORE spec.
 pub fn all() -> Vec<Spec> {
     vec![
-        pool_new_spec("CPedPoolNew", "CPedPool::New", 0x5E45E0, 0x7C4, pool::ped_pool_new),
-        pool_new_spec("CVehiclePoolNew", "CVehiclePool::New", 0x6E2A50, 0xA18, pool::vehicle_pool_new),
-        pool_new_spec("CObjectPoolNew", "CObjectPool::New", 0x5A1C20, 0x19C, pool::object_pool_new),
+        pool_new_spec(
+            "CPedPoolNew",
+            "CPedPool::New",
+            0x5E45E0,
+            0x7C4,
+            pool::ped_pool_new,
+        ),
+        pool_new_spec(
+            "CVehiclePoolNew",
+            "CVehiclePool::New",
+            0x6E2A50,
+            0xA18,
+            pool::vehicle_pool_new,
+        ),
+        pool_new_spec(
+            "CObjectPoolNew",
+            "CObjectPool::New",
+            0x5A1C20,
+            0x19C,
+            pool::object_pool_new,
+        ),
         ped_pool_get_at_ref(),
         object_pool_get_at(),
     ]

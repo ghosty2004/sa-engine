@@ -678,3 +678,10 @@
 - Main session: squash merge clean; sa-hook lib 45 tests (keycells, INF-20, callers), sa-pop 3 tests, i686 build 0
   warnings; all-ports on Rust IDENTICAL on grove (5200), c-bug (3220, new) and world-cheats (3276).
 - States: 61 → L2 (L2 runs 0 mismatches and 0 undeclared), 13 → implemented. F1 = 560 / 15,479 (3.62 %).
+
+## 2026-11-11 PORT-SCRIPT pass 1 integrated (main session)
+- Agent a740d873 (lane 4): new crate sa-script (VM core, ProcessCommands0To99); docs/arch/script-port.md + verdicts.
+- Main session: squash merge with conflicts against PORT-POP in sa-hook table.rs/callers.rs/Cargo.toml and sa-oracle
+  (combined: pop then script in the table), l2-extras (both sections kept). sa-hook lib 45, sa-pop 3, sa-script 3 tests;
+  i686 build and clippy clean; all-ports IDENTICAL on grove, c-bug, pause-restart. States: 9 → L2, 6 → implemented.
+- Decision recorded in ROADMAP PORT-SCRIPT (partial switch ports with original fallback).

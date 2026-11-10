@@ -94,7 +94,10 @@ fn base_spec(key: &'static str, name: &'static str, addr: u32, ret: RetKind) -> 
         generate: Arc::new(|_| vec![]),
         edges: Arc::new(Vec::new),
         call: Arc::new(|_| Call::new(0, Conv::Cdecl, &[])),
-        rust: Arc::new(|_, s| Expect::Returns { ret: ExpRet::Void, scratch: *s }),
+        rust: Arc::new(|_, s| Expect::Returns {
+            ret: ExpRet::Void,
+            scratch: *s,
+        }),
         ignore: vec![],
         patches: vec![],
         reads: vec![],
@@ -114,7 +117,11 @@ fn gen_key(r: &mut Rng) -> Inputs {
     let off = if r.chance(50) { 0 } else { r.below(0x40) as usize };
     let len = str_len(r, SCRATCH_LEN - 1 - off);
     let s = scratch_with_string(r, off, len);
-    let key = if r.chance(20) { r.pick(&[0, 0xFFFF_FFFF, 0x8000_0000]) } else { r.next_u32() };
+    let key = if r.chance(20) {
+        r.pick(&[0, 0xFFFF_FFFF, 0x8000_0000])
+    } else {
+        r.next_u32()
+    };
     let size = match r.below(6) {
         0 => r.pick(&[0u32, 0xFFFF_FFFF, 0x8000_0000, 1]),
         1 => r.below((SCRATCH_LEN - off) as u32 + 1),
@@ -150,10 +157,18 @@ pub fn get_key() -> Spec {
         rust: Arc::new(|i, s| {
             let mut m = *s;
             let k = keygen::get_key_with(&key_table(), ptr(&mut m, i[1]));
-            Expect::Returns { ret: ExpRet::Eax(k), scratch: m }
+            Expect::Returns {
+                ret: ExpRet::Eax(k),
+                scratch: m,
+            }
         }),
         reads: vec![KEY_TABLE],
-        ..base_spec("CKeyGenGetKey", "CKeyGen::GetKey-null-terminated", 0x53CF00, RetKind::Eax)
+        ..base_spec(
+            "CKeyGenGetKey",
+            "CKeyGen::GetKey-null-terminated",
+            0x53CF00,
+            RetKind::Eax,
+        )
     }
 }
 
@@ -169,10 +184,18 @@ pub fn get_key_sized() -> Spec {
         rust: Arc::new(|i, s| {
             let mut m = *s;
             let k = keygen::get_key_sized_with(&key_table(), ptr(&mut m, i[1]), i[2] as i32);
-            Expect::Returns { ret: ExpRet::Eax(k), scratch: m }
+            Expect::Returns {
+                ret: ExpRet::Eax(k),
+                scratch: m,
+            }
         }),
         reads: vec![KEY_TABLE],
-        ..base_spec("CKeyGenGetKeySized", "CKeyGen::GetKey-sized", 0x53CED0, RetKind::Eax)
+        ..base_spec(
+            "CKeyGenGetKeySized",
+            "CKeyGen::GetKey-sized",
+            0x53CED0,
+            RetKind::Eax,
+        )
     }
 }
 
@@ -188,10 +211,18 @@ pub fn append_string_to_key() -> Spec {
         rust: Arc::new(|i, s| {
             let mut m = *s;
             let k = keygen::append_string_to_key_with(&key_table(), i[0], ptr(&mut m, i[1]));
-            Expect::Returns { ret: ExpRet::Eax(k), scratch: m }
+            Expect::Returns {
+                ret: ExpRet::Eax(k),
+                scratch: m,
+            }
         }),
         reads: vec![KEY_TABLE],
-        ..base_spec("CKeyGenAppendStringToKey", "CKeyGen::AppendStringToKey", 0x53CF70, RetKind::Eax)
+        ..base_spec(
+            "CKeyGenAppendStringToKey",
+            "CKeyGen::AppendStringToKey",
+            0x53CF70,
+            RetKind::Eax,
+        )
     }
 }
 
@@ -241,16 +272,28 @@ pub fn ascii_to_gxt_char() -> Spec {
         generate: Arc::new(gen_copy),
         edges: Arc::new(copy_edges),
         call: Arc::new(|i| {
-            let mut c = Call::new(0x718600, Conv::Cdecl, &[Arg::Ptr(SCRATCH + i[0]), Arg::Ptr(SCRATCH + i[1])]);
+            let mut c = Call::new(
+                0x718600,
+                Conv::Cdecl,
+                &[Arg::Ptr(SCRATCH + i[0]), Arg::Ptr(SCRATCH + i[1])],
+            );
             c.scratch = image(i, 2);
             c
         }),
         rust: Arc::new(|i, s| {
             let mut m = *s;
             common::ascii_to_gxt_char(ptr(&mut m, i[0]), ptr(&mut m, i[1]));
-            Expect::Returns { ret: ExpRet::Void, scratch: m }
+            Expect::Returns {
+                ret: ExpRet::Void,
+                scratch: m,
+            }
         }),
-        ..base_spec("AsciiToGxtChar", "Common::AsciiToGxtChar", 0x718600, RetKind::Void)
+        ..base_spec(
+            "AsciiToGxtChar",
+            "Common::AsciiToGxtChar",
+            0x718600,
+            RetKind::Void,
+        )
     }
 }
 
@@ -259,7 +302,11 @@ pub fn make_upper_case() -> Spec {
         generate: Arc::new(gen_copy),
         edges: Arc::new(copy_edges),
         call: Arc::new(|i| {
-            let mut c = Call::new(0x7186E0, Conv::Cdecl, &[Arg::Ptr(SCRATCH + i[1]), Arg::Ptr(SCRATCH + i[0])]);
+            let mut c = Call::new(
+                0x7186E0,
+                Conv::Cdecl,
+                &[Arg::Ptr(SCRATCH + i[1]), Arg::Ptr(SCRATCH + i[0])],
+            );
             c.scratch = image(i, 2);
             c
         }),
@@ -268,7 +315,10 @@ pub fn make_upper_case() -> Spec {
             let base = m.as_ptr() as usize;
             let r = common::make_upper_case(ptr(&mut m, i[1]), ptr(&mut m, i[0]));
             let eax = SCRATCH + (r.addr() - base) as u32;
-            Expect::Returns { ret: ExpRet::Eax(eax), scratch: m }
+            Expect::Returns {
+                ret: ExpRet::Eax(eax),
+                scratch: m,
+            }
         }),
         ..base_spec("MakeUpperCase", "Common::MakeUpperCase-", 0x7186E0, RetKind::Eax)
     }
@@ -286,9 +336,17 @@ pub fn make_upper_case_in() -> Spec {
         rust: Arc::new(|i, s| {
             let mut m = *s;
             common::make_upper_case_in(ptr(&mut m, i[0]));
-            Expect::Returns { ret: ExpRet::Void, scratch: m }
+            Expect::Returns {
+                ret: ExpRet::Void,
+                scratch: m,
+            }
         }),
-        ..base_spec("MakeUpperCaseIn", "Common::MakeUpperCase-in", 0x718710, RetKind::Void)
+        ..base_spec(
+            "MakeUpperCaseIn",
+            "Common::MakeUpperCase-in",
+            0x718710,
+            RetKind::Void,
+        )
     }
 }
 
@@ -315,10 +373,20 @@ fn float_spec(key: &'static str, name: &'static str, addr: u32, n: usize, ret: R
 pub fn is_point_inside_line() -> Spec {
     Spec {
         rust: Arc::new(|i, s| {
-            let v = common::is_point_inside_line(f(i[0]), f(i[1]), f(i[2]), f(i[3]), f(i[4]), f(i[5]), f(i[6]));
-            Expect::Returns { ret: ExpRet::Al(v as u8), scratch: *s }
+            let v =
+                common::is_point_inside_line(f(i[0]), f(i[1]), f(i[2]), f(i[3]), f(i[4]), f(i[5]), f(i[6]));
+            Expect::Returns {
+                ret: ExpRet::Al(v as u8),
+                scratch: *s,
+            }
         }),
-        ..float_spec("IsPointInsideLine", "Common::IsPointInsideLine", 0x71E050, 7, RetKind::Al)
+        ..float_spec(
+            "IsPointInsideLine",
+            "Common::IsPointInsideLine",
+            0x71E050,
+            7,
+            RetKind::Al,
+        )
     }
 }
 
@@ -335,19 +403,38 @@ pub fn does_infinite_line_cross_finite_line() -> Spec {
                 f(i[6]),
                 f(i[7]),
             );
-            Expect::Returns { ret: ExpRet::Eax(v as u32), scratch: *s }
+            Expect::Returns {
+                ret: ExpRet::Eax(v as u32),
+                scratch: *s,
+            }
         }),
         // DoesInfiniteLineTouchScreen (0x71DB80) keeps the screen width/height in ECX/EDX across
         // its first call (0x71DC62) and pushes them again for the second (VER-2)
         preserve: sa_core::abi::PRESERVE_ECX | sa_core::abi::PRESERVE_EDX,
-        ..float_spec("DoesInfiniteLineCrossFiniteLine", "FUN_0071db30", 0x71DB30, 8, RetKind::Eax)
+        ..float_spec(
+            "DoesInfiniteLineCrossFiniteLine",
+            "FUN_0071db30",
+            0x71DB30,
+            8,
+            RetKind::Eax,
+        )
     }
 }
 
 /// Screen sizes the `DoesInfiniteLineTouchScreen` specs patch into `RsGlobal`.
 const SCREENS: [(&str, &str, i32, i32); 2] = [
-    ("DoesInfiniteLineTouchScreen", "Common::DoesInfiniteLineTouchScreen", 640, 480),
-    ("DoesInfiniteLineTouchScreen1366", "Common::DoesInfiniteLineTouchScreen", 1366, 768),
+    (
+        "DoesInfiniteLineTouchScreen",
+        "Common::DoesInfiniteLineTouchScreen",
+        640,
+        480,
+    ),
+    (
+        "DoesInfiniteLineTouchScreen1366",
+        "Common::DoesInfiniteLineTouchScreen",
+        1366,
+        768,
+    ),
 ];
 
 /// Coordinates around the screen, plus the generic float tuples.
@@ -361,7 +448,12 @@ fn gen_touch(r: &mut Rng, w: i32, h: i32) -> Inputs {
         1 => (r.below(lim as u32 + 1)) as f32,
         _ => r.uniform(span),
     };
-    let v = vec![pick(r, w as f32), pick(r, h as f32), r.uniform(2.0), r.uniform(2.0)];
+    let v = vec![
+        pick(r, w as f32),
+        pick(r, h as f32),
+        r.uniform(2.0),
+        r.uniform(2.0),
+    ];
     bits(v)
 }
 
@@ -374,7 +466,10 @@ pub fn does_infinite_line_touch_screen(k: usize) -> Spec {
         generate: Arc::new(move |r| gen_touch(r, w, h)),
         rust: Arc::new(move |i, s| {
             let v = common::infinite_line_touches_screen(w, h, f(i[0]), f(i[1]), f(i[2]), f(i[3]));
-            Expect::Returns { ret: ExpRet::Al(v as u8), scratch: *s }
+            Expect::Returns {
+                ret: ExpRet::Al(v as u8),
+                scratch: *s,
+            }
         }),
         patches: vec![(0xC17044, p)],
         reads: vec![(0xC17044, 0xC1704C)],

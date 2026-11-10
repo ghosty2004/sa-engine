@@ -86,9 +86,7 @@ pub fn changed(exe: &crate::testexe::Exe, addr: u32, kind: Kind) -> (u32, u32) {
 pub fn unredirected(rows: &[Row], lo: u32, hi: u32) -> Vec<String> {
     rows.iter()
         .filter(|r| r.target < hi && lo < r.target + r.size && (r.chunk || r.sweep))
-        .filter(|r| {
-            !(r.kind == "mem-abs" && READERS.iter().any(|k| k.at == r.reader && k.key == r.target))
-        })
+        .filter(|r| !(r.kind == "mem-abs" && READERS.iter().any(|k| k.at == r.reader && k.key == r.target)))
         .map(|r| {
             format!(
                 "{:#x} `{}` ({}) sees {:#x}+{}",

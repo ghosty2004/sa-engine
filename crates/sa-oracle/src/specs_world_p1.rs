@@ -5,12 +5,12 @@
 //! small common grid in most cases, so the boundaries (equal coordinates) are frequent.
 
 use crate::call::Conv::*;
+use crate::call::SCRATCH;
 use crate::generate::Rng;
 use crate::mspec::*;
 use crate::specs::{ExpRet, RetKind::*, Spec};
 use sa_core::abi::{PRESERVE_ECX, PRESERVE_EDX};
 use sa_core::mem::GPtr;
-use crate::call::SCRATCH;
 use sa_world::world::{common, cworld, entryexit, gamelogic, garages, misc, pickups, stats, zones};
 
 fn tp<T>(c: &mut Ctx, r: usize) -> GPtr<T> {
@@ -79,11 +79,19 @@ fn g_small_int(r: &mut Rng) -> u32 {
 }
 
 fn g_stat(r: &mut Rng) -> u32 {
-    if r.chance(80) { r.below(0x140) } else { r.next_u32() }
+    if r.chance(80) {
+        r.below(0x140)
+    } else {
+        r.next_u32()
+    }
 }
 
 fn g_count(r: &mut Rng) -> u32 {
-    if r.chance(90) { r.below(9) } else { (r.below(8) as i32 - 8) as u32 }
+    if r.chance(90) {
+        r.below(9)
+    } else {
+        (r.below(8) as i32 - 8) as u32
+    }
 }
 
 pub fn all() -> Vec<Spec> {
@@ -98,12 +106,23 @@ pub fn all() -> Vec<Spec> {
         .regions(vec![raw(8), raw(8)])
         .args(vec![A::P(0), A::P(1)])
         .fix(|v, l| small_ints(v, l))
-        .rust(|c| ExpRet::Al(zones::zone_is_entirely_contained_within_other_zone(tp(c, 0), tp(c, 1)))),
-        b("TheZonesPointLiesWithinZone", "CTheZones::PointLiesWithinZone", 0x572270, Cdecl, Al)
-            .regions(vec![vec3(), raw(8)])
-            .args(vec![A::P(0), A::P(1)])
-            .fix(|v, l| small_ints(v, l))
-            .rust(|c| ExpRet::Al(zones::point_lies_within_zone(tp(c, 0), tp(c, 1)))),
+        .rust(|c| {
+            ExpRet::Al(zones::zone_is_entirely_contained_within_other_zone(
+                tp(c, 0),
+                tp(c, 1),
+            ))
+        }),
+        b(
+            "TheZonesPointLiesWithinZone",
+            "CTheZones::PointLiesWithinZone",
+            0x572270,
+            Cdecl,
+            Al,
+        )
+        .regions(vec![vec3(), raw(8)])
+        .args(vec![A::P(0), A::P(1)])
+        .fix(|v, l| small_ints(v, l))
+        .rust(|c| ExpRet::Al(zones::point_lies_within_zone(tp(c, 0), tp(c, 1)))),
         b(
             "TheZonesCalc2DDistanceBetween2Zones",
             "CTheZones::Calc2DDistanceBetween2Zones",
@@ -115,14 +134,20 @@ pub fn all() -> Vec<Spec> {
         .args(vec![A::P(0), A::P(1)])
         .fix(|v, l| small_ints(v, l))
         .rust(|c| st0(zones::calc_2d_distance_between_2_zones(tp(c, 0), tp(c, 1)))),
-        b("ZoneDefIsPointWithin", "CZoneDef::IsPointWithin", 0x72D850, Thiscall, Al)
-            .regions(vec![raw(4)])
-            .args(vec![A::P(0), A::F, A::F, A::F])
-            .fix(|v, l| small_ints(v, l))
-            .rust(|c| {
-                let (x, y, z) = (c.f(1), c.f(2), c.f(3));
-                ExpRet::Al(zones::zone_def_is_point_within(tp(c, 0), x, y, z))
-            }),
+        b(
+            "ZoneDefIsPointWithin",
+            "CZoneDef::IsPointWithin",
+            0x72D850,
+            Thiscall,
+            Al,
+        )
+        .regions(vec![raw(4)])
+        .args(vec![A::P(0), A::F, A::F, A::F])
+        .fix(|v, l| small_ints(v, l))
+        .rust(|c| {
+            let (x, y, z) = (c.f(1), c.f(2), c.f(3));
+            ExpRet::Al(zones::zone_def_is_point_within(tp(c, 0), x, y, z))
+        }),
         b(
             "GameLogicFindCityClosestToPoint",
             "CGameLogic::FindCityClosestToPoint",
@@ -149,12 +174,24 @@ pub fn all() -> Vec<Spec> {
             let (n, x, y) = (c.i(1) as i32, c.f(2).to_bits(), c.f(3).to_bits());
             ExpRet::Eax(gamelogic::is_point_within_line_area(tp(c, 0), n, x, y))
         }),
-        b("StatsConvertToMins", "CStats::ConvertToMins", 0x559540, Cdecl, Eax)
-            .args(vec![A::I(g_small_int)])
-            .rust(|c| ExpRet::Eax(stats::convert_to_mins(c.i(0) as i32) as u32)),
-        b("StatsConvertToSecs", "CStats::ConvertToSecs", 0x559560, Cdecl, Eax)
-            .args(vec![A::I(g_small_int)])
-            .rust(|c| ExpRet::Eax(stats::convert_to_secs(c.i(0) as i32) as u32)),
+        b(
+            "StatsConvertToMins",
+            "CStats::ConvertToMins",
+            0x559540,
+            Cdecl,
+            Eax,
+        )
+        .args(vec![A::I(g_small_int)])
+        .rust(|c| ExpRet::Eax(stats::convert_to_mins(c.i(0) as i32) as u32)),
+        b(
+            "StatsConvertToSecs",
+            "CStats::ConvertToSecs",
+            0x559560,
+            Cdecl,
+            Eax,
+        )
+        .args(vec![A::I(g_small_int)])
+        .rust(|c| ExpRet::Eax(stats::convert_to_secs(c.i(0) as i32) as u32)),
         b("StatsIsStatCapped", "CStats::IsStatCapped", 0x559630, Cdecl, Al)
             .args(vec![A::I(g_stat)])
             .preserve(PRESERVE_ECX)
@@ -162,23 +199,31 @@ pub fn all() -> Vec<Spec> {
         b("StatsIsStatFloat", "CStats::IsStatFloat", 0x558E30, Cdecl, Al)
             .args(vec![A::I(g_stat)])
             .rust(|c| ExpRet::Al(stats::is_stat_float(c.i(0) as u16))),
-        b("StatsCheckForThreshold", "CStats::CheckForThreshold", 0x5595F0, Cdecl, Al)
-            .regions(vec![floats(1)])
-            .args(vec![A::P(0), A::F])
-            .fix(|v, l| {
-                let mut r = Rng::new(seed(v));
-                if r.chance(70) {
-                    for x in v.iter_mut().take(l.n_float) {
-                        *x = (r.below(400) as f32 - 200.0).to_bits();
-                    }
+        b(
+            "StatsCheckForThreshold",
+            "CStats::CheckForThreshold",
+            0x5595F0,
+            Cdecl,
+            Al,
+        )
+        .regions(vec![floats(1)])
+        .args(vec![A::P(0), A::F])
+        .fix(|v, l| {
+            let mut r = Rng::new(seed(v));
+            if r.chance(70) {
+                for x in v.iter_mut().take(l.n_float) {
+                    *x = (r.below(400) as f32 - 200.0).to_bits();
                 }
-            })
-            .rust(|c| {
-                let t = c.f(1).to_bits();
-                ExpRet::Al(stats::check_for_threshold(tp(c, 0), t))
-            }),
+            }
+        })
+        .rust(|c| {
+            let t = c.f(1).to_bits();
+            ExpRet::Al(stats::check_for_threshold(tp(c, 0), t))
+        }),
         b("PickupsIsType345", "thunk_FUN_0156f730", 0x454920, Cdecl, Eax)
-            .args(vec![A::I(|r| if r.chance(80) { r.below(12) } else { r.next_u32() })])
+            .args(vec![A::I(
+                |r| if r.chance(80) { r.below(12) } else { r.next_u32() },
+            )])
             .rust(|c| ExpRet::Eax(pickups::is_type_3_4_5(c.i(0) as i32))),
         b("PickupGetPosn", "CPickup::GetPosn", 0x4549A0, Thiscall, Eax)
             .regions(vec![raw(8), raw(3)])
@@ -246,30 +291,43 @@ pub fn all() -> Vec<Spec> {
         // `FindPlayerWanted`: `PlayerInFocus` (0xB7CD74) and `Players[i].m_pWanted` (0xB7CD9C + i*0x190)
         // read through patched operands from scratch: region 0 = the focus byte (0 or 1), region 1 =
         // `CWorld::Players` from +0 (words 1 and 101 are the two wanted pointers). Ids -1, 0, 1.
-        b("WorldFindPlayerWanted", "CWorld::FindPlayerWanted", 0x56E230, Cdecl, Eax)
-            .regions(vec![raw(1), raw(102)])
-            .args(vec![A::I(|r| (r.below(3) as i32 - 1) as u32)])
-            .patch(vec![
-                (0x56E23B, (SCRATCH + 0x10).to_le_bytes().to_vec()),
-                (0x56E247, (SCRATCH + 0x30 + 4).to_le_bytes().to_vec()),
-            ])
-            .fix(|v, l| {
-                let s = l.word_slot[0][0].unwrap();
-                v[s] &= 1;
-            })
-            .preserve(PRESERVE_ECX)
-            .rust(|c| {
-                let _g = crate::host_globals();
-                cworld::PLAYER_IN_FOCUS.set(c.byte(0, 0));
-                common::PLAYER0_WANTED.set(GPtr::from_addr(c.u(1, 1) as usize));
-                common::PLAYER1_WANTED.set(GPtr::from_addr(c.u(1, 101) as usize));
-                let r = cworld::find_player_wanted(c.i(0) as i32);
-                ExpRet::Eax(r.addr() as u32)
-            }),
+        b(
+            "WorldFindPlayerWanted",
+            "CWorld::FindPlayerWanted",
+            0x56E230,
+            Cdecl,
+            Eax,
+        )
+        .regions(vec![raw(1), raw(102)])
+        .args(vec![A::I(|r| (r.below(3) as i32 - 1) as u32)])
+        .patch(vec![
+            (0x56E23B, (SCRATCH + 0x10).to_le_bytes().to_vec()),
+            (0x56E247, (SCRATCH + 0x30 + 4).to_le_bytes().to_vec()),
+        ])
+        .fix(|v, l| {
+            let s = l.word_slot[0][0].unwrap();
+            v[s] &= 1;
+        })
+        .preserve(PRESERVE_ECX)
+        .rust(|c| {
+            let _g = crate::host_globals();
+            cworld::PLAYER_IN_FOCUS.set(c.byte(0, 0));
+            common::PLAYER0_WANTED.set(GPtr::from_addr(c.u(1, 1) as usize));
+            common::PLAYER1_WANTED.set(GPtr::from_addr(c.u(1, 101) as usize));
+            let r = cworld::find_player_wanted(c.i(0) as i32);
+            ExpRet::Eax(r.addr() as u32)
+        }),
         // `CPickup::IsVisible`: the camera entity pointer (0xB6F03C) is read from a zero word in scratch
         // (region 2) and the fallback vector (0xB6F02C, an immediate) is region 1.
         b("PickupIsVisible", "CPickup::IsVisible", 0x454C70, Thiscall, Eax)
-            .regions(vec![raw(8), floats(3), Region { words: vec![W::C(0)], kind: Kind::Any }])
+            .regions(vec![
+                raw(8),
+                floats(3),
+                Region {
+                    words: vec![W::C(0)],
+                    kind: Kind::Any,
+                },
+            ])
             .args(vec![A::P(0)])
             .patch(vec![
                 (0x454C80, (SCRATCH + 0x60).to_le_bytes().to_vec()),
@@ -283,22 +341,28 @@ pub fn all() -> Vec<Spec> {
                 common::CAM_VECTOR.set([c.fl(1, 0), c.fl(1, 1), c.fl(1, 2)]);
                 ExpRet::Eax(pickups::is_visible(tp(c, 0)))
             }),
-        b("GaragePlayerArrestedOrDied", "CGarage::PlayerArrestedOrDied", 0x4486C0, Thiscall, Void)
-            .regions(vec![raw(32)])
-            .args(vec![A::P(0)])
-            .fix(|v, l| {
-                // type byte +0x4C and door byte +0x4D small
-                let s = l.word_slot[0][0x13].unwrap();
-                let mut r = Rng::new(seed(v));
-                let ty = r.below(50);
-                let door = r.below(7);
-                v[s] = (v[s] & 0xFFFF_0000) | ty | (door << 8);
-            })
-            .preserve(PRESERVE_ECX | PRESERVE_EDX)
-            .rust(|c| {
-                garages::player_arrested_or_died(tp(c, 0));
-                ExpRet::Void
-            }),
+        b(
+            "GaragePlayerArrestedOrDied",
+            "CGarage::PlayerArrestedOrDied",
+            0x4486C0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![raw(32)])
+        .args(vec![A::P(0)])
+        .fix(|v, l| {
+            // type byte +0x4C and door byte +0x4D small
+            let s = l.word_slot[0][0x13].unwrap();
+            let mut r = Rng::new(seed(v));
+            let ty = r.below(50);
+            let door = r.below(7);
+            v[s] = (v[s] & 0xFFFF_0000) | ty | (door << 8);
+        })
+        .preserve(PRESERVE_ECX | PRESERVE_EDX)
+        .rust(|c| {
+            garages::player_arrested_or_died(tp(c, 0));
+            ExpRet::Void
+        }),
         // `CEntryExit::GetPositionRelativeToOutsideWorld`: no link (+0x38 = 0; the following word too,
         // for the 64-bit host read); area byte +0x32 random.
         b(
@@ -311,7 +375,22 @@ pub fn all() -> Vec<Spec> {
         .regions(vec![
             Region {
                 words: {
-                    let mut w = vec![W::R, W::R, W::F, W::F, W::F, W::F, W::F, W::F, W::F, W::F, W::F, W::F, W::R, W::R];
+                    let mut w = vec![
+                        W::R,
+                        W::R,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::F,
+                        W::R,
+                        W::R,
+                    ];
                     w.extend([W::C(0), W::C(0)]);
                     w
                 },

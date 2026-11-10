@@ -383,12 +383,13 @@ const LOCAL: [HookSpec; LOCAL_N] = [
 const LOCAL_N: usize = 19;
 /// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order), then
 /// sa-stream's (`sa_stream::hooks::ALL`), then sa-world's (`sa_world::hooks::ALL`), then sa-pop's
-/// (`sa_pop::hooks::ALL`).
+/// (`sa_pop::hooks::ALL`), then sa-script's (`sa_script::hooks::ALL`).
 pub const N: usize = LOCAL_N
     + sa_core::hooks::COUNT
     + sa_stream::hooks::COUNT
     + sa_world::hooks::COUNT
-    + sa_pop::hooks::COUNT;
+    + sa_pop::hooks::COUNT
+    + sa_script::hooks::COUNT;
 
 /// The hook table.
 pub static HOOKS: [HookSpec; N] = build();
@@ -465,6 +466,16 @@ const fn build() -> [HookSpec; N] {
         out[LOCAL_N + sa_core::hooks::COUNT + sa_stream::hooks::COUNT + sa_world::hooks::COUNT + p] =
             from_core(&sa_pop::hooks::ALL[p]);
         p += 1;
+    }
+    let mut c = 0;
+    while c < sa_script::hooks::COUNT {
+        out[LOCAL_N
+            + sa_core::hooks::COUNT
+            + sa_stream::hooks::COUNT
+            + sa_world::hooks::COUNT
+            + sa_pop::hooks::COUNT
+            + c] = from_core(&sa_script::hooks::ALL[c]);
+        c += 1;
     }
     out
 }
@@ -854,12 +865,14 @@ mod tests {
                 + sa_stream::hooks::COUNT
                 + sa_world::hooks::COUNT
                 + sa_pop::hooks::COUNT
+                + sa_script::hooks::COUNT
         );
         let ports = sa_core::hooks::ALL
             .iter()
             .chain(sa_stream::hooks::ALL.iter())
             .chain(sa_world::hooks::ALL.iter())
-            .chain(sa_pop::hooks::ALL.iter());
+            .chain(sa_pop::hooks::ALL.iter())
+            .chain(sa_script::hooks::ALL.iter());
         for (k, r) in ports.enumerate() {
             let h = &HOOKS[LOCAL_N + k];
             assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));

@@ -71,7 +71,9 @@ fn calling_conventions() {
     // 0x80 cdecl double arg: fld qword [esp+4]
     code[0x80..0x85].copy_from_slice(&[0xDD, 0x44, 0x24, 0x04, 0xC3]);
     // 0xA0 cdecl: ecx = 0x12345678, edx = ecx-on-entry + 1
-    code[0xA0..0xAF].copy_from_slice(&[0x8D, 0x51, 0x01, 0xB9, 0x78, 0x56, 0x34, 0x12, 0xC3, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC]);
+    code[0xA0..0xAF].copy_from_slice(&[
+        0x8D, 0x51, 0x01, 0xB9, 0x78, 0x56, 0x34, 0x12, 0xC3, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC,
+    ]);
     let (mut e, allow) = probe_emu(&img, &code);
     let run = |e: &mut Emu, c: &Call| {
         let o = e.call(c, &allow).unwrap();
@@ -411,6 +413,7 @@ fn preserved_registers_match_the_hook_registrations() {
         .iter()
         .chain(sa_stream::hooks::ALL.iter())
         .chain(sa_world::hooks::ALL.iter())
+        .chain(sa_script::hooks::ALL.iter())
         .filter(|r| r.preserve != 0)
     {
         assert!(

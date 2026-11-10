@@ -6,10 +6,10 @@
 //! allow-listed as a callee. See `docs/arch/core-port.md`.
 
 use crate::call::{Conv::*, SCRATCH};
-use sa_core::mem::GPtr;
 use crate::generate::Rng;
 use crate::mspec::*;
 use crate::specs::{ExpRet, RetKind::*, Spec};
+use sa_core::mem::GPtr;
 use sa_core::{input, light};
 use sa_math::x87::X87;
 
@@ -41,7 +41,10 @@ fn key_word_of_site(site: u32) -> (bool, usize) {
     let (new, base) = if (0xB73190..0xB73190 + 0x270).contains(&a) {
         (true, 0xB73190)
     } else {
-        assert!((0xB72F20..0xB72F20 + 0x270).contains(&a), "{site:#x}: {a:#x} is no key state word");
+        assert!(
+            (0xB72F20..0xB72F20 + 0x270).contains(&a),
+            "{site:#x}: {a:#x} is no key state word"
+        );
         (false, 0xB72F20)
     };
     (new, (a - base) as usize)
@@ -57,7 +60,14 @@ fn set_key(state: &sa_core::mem::Global<input::KeyboardState>, byte_off: usize, 
 /// at `sites` (address bytes at site + 3), in the original's order new0, old0, new1, old1, ...
 /// The Rust side is the hooked entry `entry`, run on sa-core's host key states filled from the
 /// scratch words (zero elsewhere).
-fn key_spec(key: &'static str, name: &'static str, addr: u32, ret_al: bool, sites: &'static [u32], entry: fn() -> u32) -> Spec {
+fn key_spec(
+    key: &'static str,
+    name: &'static str,
+    addr: u32,
+    ret_al: bool,
+    sites: &'static [u32],
+    entry: fn() -> u32,
+) -> Spec {
     let patches = sites
         .iter()
         .enumerate()
@@ -72,7 +82,11 @@ fn key_spec(key: &'static str, name: &'static str, addr: u32, ret_al: bool, site
             input::NEW_KEY_STATE.set([0; 0x138]);
             input::OLD_KEY_STATE.set([0; 0x138]);
             for (k, &(new, off)) in words.iter().enumerate() {
-                let st = if new { &input::NEW_KEY_STATE } else { &input::OLD_KEY_STATE };
+                let st = if new {
+                    &input::NEW_KEY_STATE
+                } else {
+                    &input::OLD_KEY_STATE
+                };
                 set_key(st, off, c.u(0, k) as u16);
             }
             let r = entry();
@@ -130,23 +144,29 @@ fn map_vk_stub() -> Vec<(u32, Vec<u8>)> {
 pub fn all() -> Vec<Spec> {
     vec![
         // ------------------------------------------------------------------ Light
-        b("GetDayNightBalance", "Light::GetDayNightBalance", 0x6FAB30, Cdecl, St0)
-            .regions(vec![raw(1)])
-            .patch(vec![
-                addr_patch(0x6FAB34, R0 + 3),
-                addr_patch(0x6FAB3B, R0 + 2),
-                addr_patch(0x6FAB45, R0),
-            ])
-            .rust(|c| {
-                // the hooked entry on the host clock globals: hours = byte 3, minutes = byte 2,
-                // seconds = the low word (the patched operands above)
-                let w = c.u(0, 0);
-                let _g = crate::host_globals();
-                light::CLOCK_HOURS.set((w >> 24) as u8);
-                light::CLOCK_MINUTES.set((w >> 16) as u8);
-                light::CLOCK_SECONDS.set(w as u16);
-                st0(light::get_day_night_balance())
-            }),
+        b(
+            "GetDayNightBalance",
+            "Light::GetDayNightBalance",
+            0x6FAB30,
+            Cdecl,
+            St0,
+        )
+        .regions(vec![raw(1)])
+        .patch(vec![
+            addr_patch(0x6FAB34, R0 + 3),
+            addr_patch(0x6FAB3B, R0 + 2),
+            addr_patch(0x6FAB45, R0),
+        ])
+        .rust(|c| {
+            // the hooked entry on the host clock globals: hours = byte 3, minutes = byte 2,
+            // seconds = the low word (the patched operands above)
+            let w = c.u(0, 0);
+            let _g = crate::host_globals();
+            light::CLOCK_HOURS.set((w >> 24) as u8);
+            light::CLOCK_MINUTES.set((w >> 16) as u8);
+            light::CLOCK_SECONDS.set(w as u16);
+            st0(light::get_day_night_balance())
+        }),
         // ------------------------------------------------------------------ CPad
         key_spec(
             "CPadIsEnterJustPressed",
@@ -197,7 +217,10 @@ pub fn all() -> Vec<Spec> {
             }
             input::NEW_KEY_STATE.set(new);
             input::OLD_KEY_STATE.set(old);
-            ExpRet::Eax(input::is_standard_key_just_pressed(GPtr::from_addr(c.i(0) as usize), c.i(1)))
+            ExpRet::Eax(input::is_standard_key_just_pressed(
+                GPtr::from_addr(c.i(0) as usize),
+                c.i(1),
+            ))
         }),
         // ------------------------------------------------------------------ Win
         b("GTATranslateKey", "Win::GTATranslateKey", 0x747820, Cdecl, Al)
@@ -284,7 +307,12 @@ mod tests {
     fn c2_specs_pass_and_discriminate() {
         let Some(img) = crate::image_cached() else { return };
         for s in all() {
-            assert_eq!(runner::run(&s, &img, &quick()).unwrap().mismatches, 0, "{}", s.key);
+            assert_eq!(
+                runner::run(&s, &img, &quick()).unwrap().mismatches,
+                0,
+                "{}",
+                s.key
+            );
         }
         let mut s = spec("CPadIsMenuKeyJustPressed");
         s.rust = Arc::new(|_, sc| {

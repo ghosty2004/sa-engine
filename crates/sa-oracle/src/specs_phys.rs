@@ -22,7 +22,10 @@ fn phys(n: usize, floats: &[usize]) -> Region {
     for &f in floats {
         words[f] = W::F;
     }
-    Region { words, kind: Kind::Any }
+    Region {
+        words,
+        kind: Kind::Any,
+    }
 }
 
 /// Physical flags with every combination of the low byte's bits likely (0x10/0x20/0x40/0x80 decide
@@ -56,55 +59,85 @@ pub fn all() -> Vec<Spec> {
                 c.set_u(0, 0, sa_core::timer::TIME_STEP.get().to_bits());
                 ExpRet::Void
             }),
-        b("PhysSetVelocity", "CPhysical::SetVelocity", 0x441130, Thiscall, Void)
-            .regions(vec![phys(20, &[])])
-            .args(vec![A::P(0), A::F, A::F, A::F])
-            .rust(|c| {
-                let (x, y, z) = (c.f(1).to_bits(), c.f(2).to_bits(), c.f(3).to_bits());
-                base::set_velocity(tp(c, 0), x, y, z);
-                ExpRet::Void
-            }),
-        b("PhysApplyMoveForceVec", "CPhysical::ApplyMoveForce-vec", 0x5429F0, Thiscall, Void)
-            .regions(vec![phys(36, &mf)])
-            .args(vec![A::P(0), A::F, A::F, A::F])
-            .preserve(sa_core::abi::PRESERVE_EDX)
-            .fix(|v, l| fix_flags(v, l, 0))
-            .rust(|c| {
-                let v = CVector::new(c.f(1), c.f(2), c.f(3));
-                forces::apply_move_force(tp(c, 0), v);
-                ExpRet::Void
-            }),
-        b("PhysApplyFrictionMoveForce", "CPhysical::ApplyFrictionMoveForce", 0x5430A0, Thiscall, Void)
-            .regions(vec![phys(36, &mf)])
-            .args(vec![A::P(0), A::F, A::F, A::F])
-            .fix(|v, l| fix_flags(v, l, 0))
-            .rust(|c| {
-                let v = CVector::new(c.f(1), c.f(2), c.f(3));
-                forces::apply_friction_move_force(tp(c, 0), v);
-                ExpRet::Void
-            }),
-        b("PhysCanPhysicalBeDamaged", "CPhysical::CanPhysicalBeDamaged", 0x5448B0, Thiscall, Al)
-            .regions(vec![phys(17, &[]), raw(1)])
-            .args(vec![A::P(0), A::I(g_weapon), A::P(1)])
-            .rust(|c| {
-                let w = c.i(1);
-                let out = tp(c, 1);
-                ExpRet::Al(base::can_physical_be_damaged(tp(c, 0), w, out))
-            }),
+        b(
+            "PhysSetVelocity",
+            "CPhysical::SetVelocity",
+            0x441130,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![phys(20, &[])])
+        .args(vec![A::P(0), A::F, A::F, A::F])
+        .rust(|c| {
+            let (x, y, z) = (c.f(1).to_bits(), c.f(2).to_bits(), c.f(3).to_bits());
+            base::set_velocity(tp(c, 0), x, y, z);
+            ExpRet::Void
+        }),
+        b(
+            "PhysApplyMoveForceVec",
+            "CPhysical::ApplyMoveForce-vec",
+            0x5429F0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![phys(36, &mf)])
+        .args(vec![A::P(0), A::F, A::F, A::F])
+        .preserve(sa_core::abi::PRESERVE_EDX)
+        .fix(|v, l| fix_flags(v, l, 0))
+        .rust(|c| {
+            let v = CVector::new(c.f(1), c.f(2), c.f(3));
+            forces::apply_move_force(tp(c, 0), v);
+            ExpRet::Void
+        }),
+        b(
+            "PhysApplyFrictionMoveForce",
+            "CPhysical::ApplyFrictionMoveForce",
+            0x5430A0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![phys(36, &mf)])
+        .args(vec![A::P(0), A::F, A::F, A::F])
+        .fix(|v, l| fix_flags(v, l, 0))
+        .rust(|c| {
+            let v = CVector::new(c.f(1), c.f(2), c.f(3));
+            forces::apply_friction_move_force(tp(c, 0), v);
+            ExpRet::Void
+        }),
+        b(
+            "PhysCanPhysicalBeDamaged",
+            "CPhysical::CanPhysicalBeDamaged",
+            0x5448B0,
+            Thiscall,
+            Al,
+        )
+        .regions(vec![phys(17, &[]), raw(1)])
+        .args(vec![A::P(0), A::I(g_weapon), A::P(1)])
+        .rust(|c| {
+            let w = c.i(1);
+            let out = tp(c, 1);
+            ExpRet::Al(base::can_physical_be_damaged(tp(c, 0), w, out))
+        }),
         // ApplyMoveSpeed reads the matrix pointer (no hosted run); this spec covers its zeroing path
         // (`bDontApplySpeed` / `bDisableMoveForce`) and compares the ECX it preserves for ApplySpeed.
-        b("PhysApplyMoveSpeedZero", "CPhysical::ApplyMoveSpeed", 0x542DD0, Thiscall, Void)
-            .regions(vec![phys(20, &[17, 18, 19])])
-            .args(vec![A::P(0)])
-            .preserve(sa_core::abi::PRESERVE_ECX)
-            .fix(|v, l| {
-                let s = l.word_slot[0][16].unwrap();
-                v[s] |= if v[s] & 1 != 0 { 0x2000 } else { 0x20 };
-            })
-            .rust(|c| {
-                forces::apply_move_speed(tp(c, 0));
-                ExpRet::Void
-            }),
+        b(
+            "PhysApplyMoveSpeedZero",
+            "CPhysical::ApplyMoveSpeed",
+            0x542DD0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![phys(20, &[17, 18, 19])])
+        .args(vec![A::P(0)])
+        .preserve(sa_core::abi::PRESERVE_ECX)
+        .fix(|v, l| {
+            let s = l.word_slot[0][16].unwrap();
+            v[s] |= if v[s] & 1 != 0 { 0x2000 } else { 0x20 };
+        })
+        .rust(|c| {
+            forces::apply_move_speed(tp(c, 0));
+            ExpRet::Void
+        }),
         b("BuoyancyCtor", "cBuoyancy::cBuoyancy", 0x6C2740, Thiscall, Eax)
             .regions(vec![raw(0x34)])
             .args(vec![A::P(0)])
