@@ -596,3 +596,13 @@
 - States: STREAM verdicts with 0 mismatches AND 0 undeclared → 29 L2. Split PASS rows that list
   undeclared writes are not L2 (PLAN §5); for consistency 11 CORE functions set to L2 earlier today from
   split runs with undeclared writes were demoted to implemented. F1 = 499.
+
+## 2026-11-11 harness: INF-20 done, callers through calls, ColModels pads (main session)
+- Agent abc057e8 (lane 1). INF-20: `catalog/code-data-reads.csv` + `code_data_reads.py` in run_all.sh; sa-hook install
+  test now rejects hooks whose bytes the protection reads unless keycells redirects them. Callers test follows
+  ECX/EDX into callees (depth 3); only the 4 declared ApplySpeed sites found across 8,765 call sites.
+- Normaliser: ProcessColModels static matrix pads, TheCamera inverse-matrix pads, CRT NLG frame. Split PASS for
+  CheckCollision, CheckCollision_SimpleCar, ProcessShift, ProcessEntityCollision (states not changed until
+  undeclared counts are checked). RsEventHandler still FAIL (OS handle, 0xC96438).
+- Verified by main session: sa-hook 44 + sa-oracle-format 22 tests pass. Open: L1 `CPhysical::ApplyMoveForce-vec`
+  fails on 82 signalling-NaN cases (payload 0x7FC00001 vs 0x7FC00000) — PHYS port, ledger.

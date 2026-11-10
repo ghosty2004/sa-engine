@@ -51,6 +51,8 @@ pub struct FnResult {
     pub exclusion_examples: Vec<String>,
     /// Compared pairs whose fingerprint-excluded input bytes (normalise::INPUT_EXCLUSIONS) differed.
     pub volatile_uses: usize,
+    /// The same per excluded range (its address): pairs in which it differed.
+    pub volatile_addrs: BTreeMap<u32, usize>,
     /// Compared pairs whose stacks were shifted (normalise.rs `Stack` class in use): delta -> pairs.
     pub stack_shifts: BTreeMap<i64, usize>,
     /// Uses of the `Foreign` class (OS object addresses differing raw): location -> pairs.
@@ -485,6 +487,9 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
             e.volatile_uses += 1;
             let r = rep.volatile_rules.entry(a.fn_addr).or_default();
             for (x, y) in a.volatile.iter().zip(&b.volatile) {
+                if x != y {
+                    *e.volatile_addrs.entry(x.addr).or_default() += 1;
+                }
                 if x != y && r.len() < 2 {
                     r.push(format!("{:#x}: plain {} rust {}", x.addr, hex(&x.bytes), hex(&y.bytes)));
                 }
@@ -711,6 +716,10 @@ pub fn print_report(rep: &Report) -> String {
         }
         for v in rep.volatile_rules.get(&f.addr).into_iter().flatten() {
             let _ = writeln!(s, "    input exclusion used (fingerprint-excluded bytes differed): {v}");
+        }
+        if !f.volatile_addrs.is_empty() {
+            let v: Vec<String> = f.volatile_addrs.iter().map(|(a, n)| format!("{a:#x} x{n}")).collect();
+            let _ = writeln!(s, "    input exclusions that differed (address x pairs): {}", v.join(", "));
         }
         if !f.undeclared.is_empty() {
             let v: Vec<String> = f.undeclared.iter().take(8).map(|((a, n), k)| format!("{a:#x}+{n} x{k}")).collect();

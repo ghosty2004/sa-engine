@@ -51,10 +51,10 @@ the CRT; it is called as the original does. sa-oracle: `specs_phys.rs` (6 L1 spe
 - **Preserved registers.** `ApplyMoveForce(CVector)` has `preserve = "edx"` (found by sa-hook's
   `callers` test: ApplyCollision 0x543643/0x544E14 push the EDX they loaded before the call).
   `ApplyMoveSpeed` has `preserve = "ecx"`: `ApplySpeed` calls `ApplyTurnSpeed` right after it without
-  reloading `this` (0x547D96, 0x547EDD, 0x5480B0, 0x548248). **Harness gap (report):** sa-hook's
-  `callers` test ends a path at the next `call`, so an *implicit* ECX use by a following thiscall is
-  not detected; a scan of every PHYS hook's call sites (capstone, scratch script `ecxscan.py`) found
-  only these four sites. The test should treat a `call` to a thiscall callee as an ECX read.
+  reloading `this` (0x547D96, 0x547EDD, 0x5480B0, 0x548248). sa-hook's `callers` test now follows a
+  path through direct calls and reports a call whose callee reads the incoming ECX/EDX (INF-20); it
+  finds exactly these four sites (negative test `apply_move_speed_without_preserve_is_flagged`) and no
+  other hook missing a declaration.
 - **Uninitialised stack.** `ApplyFriction()` (bDisableZ objects), `ApplySpeed` (bounded door) and
   `ApplyScriptCollision` build a local `CColPoint` with only point and normal set; the original passes
   whatever its stack held in the other fields (`ApplyFriction(float, CColPoint&)` reads the surface
@@ -121,19 +121,18 @@ the CRT; it is called as the original does. sa-oracle: `specs_phys.rs` (6 L1 spe
   `ApplyCollisionAlt`, `ApplyFriction-other`), the sector drivers (`ProcessCollisionSectorList(_SimpleCar)`,
   `ProcessShiftSectorList`, `ProcessCollision`), `PositionAttachedEntity`, `ProcessBuoyancyBoat`,
   `AddSplashParticles`: ~12,000 instructions, each a dedicated pass.
-- `CheckCollision`, `CheckCollision_SimpleCar`, `ProcessShift`, `ProcessEntityCollision`: all-Rust
-  traces identical (L3-level evidence), but the split-run compare is inconclusive: every one reaches
-  `CCollision::ProcessColModels` (0x4185C0), which writes scratch statics at 0x968940..0x9689D0 (rwsets:
-  `A imm` + direct W) that hold stack addresses / per-call counts; under a Rust frame the stack depth
-  differs (ProcessShift ordinal 5: 0x96896C orig 0x0036ECDC, rust 0x0036EB74), so later inputs differ
-  (`DIVERGED`/`FAIL` at the first such byte). Needs a reviewed normaliser rule (like gpColCache 0x9655C8)
-  from the harness owner; CheckCollision's first mismatch (0x96894C: orig 0x20F3CAA0, rust 0, frame
-  204) must be re-checked after that rule before calling it a port bug.
+- `CheckCollision`, `CheckCollision_SimpleCar`, `ProcessShift`, `ProcessEntityCollision`: resolved
+  by INF-20's reviewed rule (normalise.rs `RULE_COL_MATRIX_PADS`). 0x968940/0x968988 are
+  `CCollision::ProcessColModels`' two static `CMatrix`; the words that differed are their pads
+  (+0x0C/0x1C/0x2C/0x3C), copied from never-written locals of `CMatrix::operator*` (0x59BE30) by
+  `operator=` (0x59BBC0): stack residue, read by nothing. CheckCollision's 0x96894C (orig 0x20F3CAA0,
+  rust 0, frame 204) is such a pad (+0x0C of 0x968940): harness, not a port bug. Re-run (grove walk,
+  lane 1, `--runs "plain split"`, `phys-s1`/`phys-s2`): CheckCollision PASS 1000/1000, 0 mismatches;
+  CheckCollision_SimpleCar PASS 1000/1000; ProcessShift PASS 476/476 (every call); ProcessEntityCollision
+  PASS 1000/1000; splito/splitr traces identical to plain on all 5200 frames; the pads differed in up to
+  966 of the pairs (split-report `input exclusions that differed`).
 - 21 `implemented-needs-L2` rows have no call in either recording (attach/detach, script collision,
   spring collision, most of cBuoyancy (no water), TestCollision, the scalar deleting destructor).
-- **Harness gap**: sa-hook's `callers` test stops at the next `call`, so a caller that passes ECX
-  unchanged into a following thiscall (ApplySpeed after ApplyMoveSpeed) is not flagged; found by a
-  capstone scan instead (`preserve = "ecx"` added). Suggest treating such calls as ECX reads.
 - SNaN cases of the float L1 specs: rerun with the native backend (CPU-decided).
 
 ## Functions (all 73 PHYS rows)
