@@ -38,7 +38,7 @@ RUN_TIMEOUT="${RUN_TIMEOUT:-900}"
 # One game run (probe). Locks, lane setup and the headless display are taken here unless the caller
 # (this script's top level, exporting L3_LOCKED=1) already holds them.
 # Extra inputs through the environment: L3_REC (recording), L3_COV_POINTS / L3_COV_CAP (coverage,
-# INF-10), L3_L2="HOOK FROM" (L2 on HOOK from FROM).
+# INF-10), L3_L2="HOOK FROM" (L2 on HOOK from FROM), L3_HOOK_PORTS (SA_HOOK_PORTS, default orig).
 # Outputs next to OUT_TRACE: .log (sa-hook.log), .det (last det status), .cov.csv, .l2.spool(.txt).
 probe_main() {
     local name="$1" end="$2" modes="$3" out="$4"
@@ -62,8 +62,9 @@ probe_main() {
     rm -f "$DET/$name".* "$GTA_DIR/sa-hook.log"
     (
         export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$(win "$DET/$name.trace")" SA_DET_REPLAY="$(win "$DET/l3.sarec")"
-        # Engine-crate ports (once registered) are installed in original mode; MODES switches them.
-        export SA_DET_END="$end" SA_HOOK_MODE="$modes" SA_HOOK_PORTS=orig
+        # Engine-crate ports are installed in original mode (L3_HOOK_PORTS overrides SA_HOOK_PORTS; set
+        # it empty to leave the ports uninstalled); MODES switches them.
+        export SA_DET_END="$end" SA_HOOK_MODE="$modes" SA_HOOK_PORTS="${L3_HOOK_PORTS-orig}"
         if [ -n "${L3_COV_POINTS:-}" ]; then
             cp -f "$L3_COV_POINTS" "$DET/$name.points"
             export SA_COV="$(win "$DET/$name.points")" SA_COV_OUT="$(win "$DET/$name.cov.csv")" SA_COV_CAP="${L3_COV_CAP:-1}"

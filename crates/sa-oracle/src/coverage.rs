@@ -396,7 +396,8 @@ pub fn parse_exclude_csv(text: &str) -> BTreeMap<u32, Option<u32>> {
 /// Comment lines appended to the points file for the excluded points (sa-hook skips `#` lines):
 /// `#X ADDR BYTE KIND FUNC PROXY|-`.
 pub fn excluded_text(ex: &[Excluded]) -> String {
-    let mut s = String::from("# excluded (catalog/coverage-exclude.csv, not armed): #X ADDR BYTE KIND FUNC PROXY\n");
+    let mut s =
+        String::from("# excluded (catalog/coverage-exclude.csv, not armed): #X ADDR BYTE KIND FUNC PROXY\n");
     for e in ex {
         let p = &e.point;
         s += &format!(
@@ -478,7 +479,11 @@ pub fn excluded_report(ex: &[Excluded], derived: &[Option<u64>], rows: &[Row]) -
         s += &format!(
             "  {:#x} {} of {:#x} {:<40} proxy {:<9} {}\n",
             e.point.addr,
-            if e.point.kind == Kind::Entry { "entry" } else { "block" },
+            if e.point.kind == Kind::Entry {
+                "entry"
+            } else {
+                "block"
+            },
             e.point.func,
             name(e.point.func),
             e.proxy.map(|x| format!("{x:#x}")).unwrap_or_else(|| "-".into()),
@@ -673,11 +678,103 @@ impl Coverage {
         s += &line("TOTAL excluded", &all_x);
         s
     }
+
+    /// F2 view of a run with the hooks in `rust` on Rust: per subsystem, the original functions that
+    /// still executed (entry hit, not a Rust port), and per Rust port whether only its entry was hit
+    /// (the Rust code ran) or also blocks of its original body (original code of the port still ran,
+    /// e.g. reached past the patched entry).
+    pub fn f2_report(&self, rows: &[Row], rust: &BTreeSet<u32>) -> String {
+        #[derive(Default)]
+        struct Agg {
+            total: usize,
+            orig_hit: usize,
+            orig_bhit: usize,
+            ports: usize,
+            ports_entered: usize,
+            ports_body: usize,
+        }
+        let mut per: BTreeMap<String, Agg> = BTreeMap::new();
+        let mut all = Agg::default();
+        let mut body = Vec::new();
+        for r in rows {
+            let key = if r.excluded() {
+                r.class.clone()
+            } else {
+                r.subsystem.clone()
+            };
+            let a = per.entry(key).or_default();
+            let f = self.funcs.get(&r.addr).filter(|f| f.measured);
+            for x in [&mut *a, &mut all] {
+                x.total += 1;
+            }
+            let Some(f) = f else { continue };
+            let entered = f.entry_hits > 0;
+            let body_blocks = f.blocks_hit - entered as usize;
+            if rust.contains(&r.addr) {
+                for x in [&mut *a, &mut all] {
+                    x.ports += 1;
+                    x.ports_entered += entered as usize;
+                    x.ports_body += (body_blocks > 0) as usize;
+                }
+                if body_blocks > 0 {
+                    body.push((r.addr, body_blocks, f.blocks_total, r.name.clone()));
+                }
+            } else if entered {
+                for x in [&mut *a, &mut all] {
+                    x.orig_hit += 1;
+                    x.orig_bhit += f.blocks_hit;
+                }
+            }
+        }
+        let mut s = format!(
+            "\nF2: original code still executed with {} hooks on Rust\n{:<44} {:>22} {:>14} {:>8} {:>8} {:>10}\n",
+            rust.len(),
+            "subsystem / excluded class",
+            "orig functions hit/all",
+            "orig blocks",
+            "ports",
+            "entered",
+            "orig body"
+        );
+        let mut keys: Vec<&String> = per.keys().collect();
+        keys.sort_by_key(|k| {
+            (
+                k.starts_with("excluded"),
+                std::cmp::Reverse(per[*k].orig_hit),
+                (*k).clone(),
+            )
+        });
+        let line = |k: &str, a: &Agg| {
+            format!(
+                "{k:<44} {:>10} / {:<9} {:>14} {:>8} {:>8} {:>10}\n",
+                a.orig_hit, a.total, a.orig_bhit, a.ports, a.ports_entered, a.ports_body
+            )
+        };
+        for k in keys {
+            s += &line(k, &per[k]);
+        }
+        s += &line("TOTAL", &all);
+        s += &format!("Rust ports whose original body blocks were hit: {}\n", body.len());
+        for (a, b, t, n) in body {
+            s += &format!("  {a:#x} {n:<48} {b} of {t} points\n");
+        }
+        s
+    }
+}
+
+/// Hooks on Rust from a modes string (`sa-oracle l3 --print-modes`): `ADDR=rust,ADDR=orig,...`.
+pub fn parse_rust_modes(text: &str) -> BTreeSet<u32> {
+    text.split([',', '\n'])
+        .filter_map(|m| {
+            let (a, mode) = m.trim().split_once('=')?;
+            (mode == "rust").then(|| hex(a)).flatten()
+        })
+        .collect()
 }
 
 pub const USAGE: &str = "usage: sa-oracle coverage points [--out FILE] [--no-blocks]\n       \
     sa-oracle coverage report --points FILE --hits A.csv[,B.csv...] [--title T] [--csv FUNCS.csv] \
-    [--merged HITS.csv] [--out REPORT]";
+    [--merged HITS.csv] [--out REPORT] [--rust-modes MODES.txt]";
 
 /// `sa-oracle coverage points|report`.
 pub fn cli(args: &[String]) -> Result<bool, String> {
@@ -704,14 +801,20 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
             let mut ex = Vec::new();
             p.retain(|x| match excl.get(&x.addr) {
                 Some(&proxy) => {
-                    ex.push(Excluded { point: x.clone(), proxy });
+                    ex.push(Excluded {
+                        point: x.clone(),
+                        proxy,
+                    });
                     false
                 }
                 None => true,
             });
             for e in &mut ex {
                 if e.proxy.is_some_and(|q| !p.iter().any(|x| x.addr == q)) {
-                    eprintln!("coverage-exclude: proxy {:#x?} of {:#x} is not a point; unmeasured", e.proxy, e.point.addr);
+                    eprintln!(
+                        "coverage-exclude: proxy {:#x?} of {:#x} is not a point; unmeasured",
+                        e.proxy, e.point.addr
+                    );
                     e.proxy = None;
                 }
             }
@@ -724,7 +827,11 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
                 "points excluded by catalog/coverage-exclude.csv: {} ({} with a proxy){}",
                 ex.len(),
                 ex.iter().filter(|e| e.proxy.is_some()).count(),
-                if missing.is_empty() { String::new() } else { format!("; not points: {}", missing.join(" ")) }
+                if missing.is_empty() {
+                    String::new()
+                } else {
+                    format!("; not points: {}", missing.join(" "))
+                }
             );
             eprintln!(
                 "points: {} ({} entries, {} blocks); functions armed {} ({} with body ranges, {} entry only), \
@@ -767,7 +874,11 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
                     o.get("hits").cloned().unwrap_or_default()
                 )
             });
-            let rep = c.report(&rows, &title) + &excluded_report(&ex, &derived, &rows);
+            let mut rep = c.report(&rows, &title) + &excluded_report(&ex, &derived, &rows);
+            if let Some(m) = o.get("rust-modes") {
+                // A file holding `sa-oracle l3 --print-modes` output (the hooks on Rust in the run).
+                rep += &c.f2_report(&rows, &parse_rust_modes(&read(std::path::Path::new(m))?));
+            }
             print!("{rep}");
             write("out", &rep)?;
             write("csv", &c.function_csv(&rows))?;
@@ -887,6 +998,61 @@ mod tests {
             rep.lines()
                 .any(|l| l.starts_with("excluded:crt") && l.contains("0 / 1")),
             "{rep}"
+        );
+    }
+
+    #[test]
+    fn f2_splits_ports_and_original() {
+        let pt = |addr, kind, func| Point {
+            addr,
+            byte: 0x55,
+            kind,
+            func,
+        };
+        let pts = vec![
+            pt(0x1000, Kind::Entry, 0x1000),
+            pt(0x1004, Kind::Block, 0x1000),
+            pt(0x2000, Kind::Entry, 0x2000),
+            pt(0x2008, Kind::Block, 0x2000),
+            pt(0x3000, Kind::Entry, 0x3000),
+            pt(0x4000, Kind::Entry, 0x4000),
+        ];
+        let hits =
+            parse_hits("address,hits\n0x1000,1\n0x1004,0\n0x2000,1\n0x2008,1\n0x3000,1\n0x4000,0\n").unwrap();
+        let row = |addr, sub: &str| Row {
+            addr,
+            region: "game-text".into(),
+            state: "unknown".into(),
+            subsystem: sub.into(),
+            class: "game".into(),
+            name: format!("f{addr:x}"),
+        };
+        let rows = vec![
+            row(0x1000, "A"),
+            row(0x2000, "A"),
+            row(0x3000, "B"),
+            row(0x4000, "B"),
+        ];
+        let rust = parse_rust_modes("0x1000=rust,0x2000=rust,0x3000=orig\n");
+        assert_eq!(rust, BTreeSet::from([0x1000, 0x2000]));
+        let r = Coverage::new(&pts, &hits).f2_report(&rows, &rust);
+        // A: two ports entered, one with its original body hit; B: one original function hit of 2
+        assert!(
+            r.contains("Rust ports whose original body blocks were hit: 1"),
+            "{r}"
+        );
+        assert!(r.contains("0x2000 f2000"), "{r}");
+        let b = r.lines().find(|l| l.starts_with("B ")).unwrap();
+        assert_eq!(
+            b.split_whitespace().collect::<Vec<_>>(),
+            ["B", "1", "/", "2", "1", "0", "0", "0"],
+            "{r}"
+        );
+        let a = r.lines().find(|l| l.starts_with("A ")).unwrap();
+        assert_eq!(
+            a.split_whitespace().collect::<Vec<_>>(),
+            ["A", "0", "/", "2", "0", "2", "2", "1"],
+            "{r}"
         );
     }
 

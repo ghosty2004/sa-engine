@@ -71,30 +71,37 @@ case "$RUSTSET" in
     none) MODES="$("$ORACLE" l3 --print-modes ports --except ports 2> /dev/null)" ;;
     *) MODES="$("$ORACLE" l3 --print-modes "$RUSTSET" 2> /dev/null)" ;;
 esac
+# Runs with ports on Rust are kept apart from the plain ones: TAG prefixes every output name and the
+# merge only takes hits files of the same port mode (coverage-NAME.* vs coverage-rust-SET-NAME.*).
+TAG=""
+[ "$RUSTSET" = none ] || TAG="rust-$(printf '%s' "$RUSTSET" | tr -c 'A-Za-z0-9\n' '-')-"
+KEY="$TAG$NAME"
 export L3_REC="$REC"
-L3_COV_POINTS="$OUT/points.txt" L3_COV_CAP="$CAP" "$HERE/l3.sh" --probe "cov-$NAME" "$END" "$MODES" "$OUT/cov.trace"
-check "coverage replay reached the end frame" "$(grep -q "end frame $END reached" "$OUT/cov.trace.log" && echo 1)" \
-    "$(grep -m1 'coverage: [0-9]* of' "$OUT/cov.trace.log" | sed 's/.*coverage: //')"
-note "$(grep 'coverage: final' "$OUT/cov.trace.log" | sed 's/.*coverage: //')"
+COV="$OUT/cov-$KEY.trace"
+L3_COV_POINTS="$OUT/points.txt" L3_COV_CAP="$CAP" "$HERE/l3.sh" --probe "cov-$KEY" "$END" "$MODES" "$COV"
+check "coverage replay reached the end frame" "$(grep -q "end frame $END reached" "$COV.log" && echo 1)" \
+    "$(grep -m1 'coverage: [0-9]* of' "$COV.log" | sed 's/.*coverage: //')"
+note "$(grep 'coverage: final' "$COV.log" | sed 's/.*coverage: //')"
 
-# Reference: the cached L3 reference (same recording/exe/dll key) if l3.sh made one, else a plain replay.
-REF="$OUT/ref-$RUSTSET.trace"
+# Reference: a plain replay of the same recording with the same port modes (made once per KEY).
+REF="$OUT/ref-$KEY.trace"
 if [ ! -s "$REF" ]; then
-    "$HERE/l3.sh" --probe "ref-$NAME" "$END" "$MODES" "$REF"
+    "$HERE/l3.sh" --probe "ref-$KEY" "$END" "$MODES" "$REF"
 fi
-"$SATOOL" diff "$REF" "$OUT/cov.trace" > "$OUT/ref-vs-cov.txt" 2>&1
+"$SATOOL" diff "$REF" "$COV" > "$OUT/ref-vs-cov-$KEY.txt" 2>&1
 rc=$?
-n="$(sed -n "s/^frames: .* common=\([0-9]*\) .*/\1/p" "$OUT/ref-vs-cov.txt")"
-check "breakpoints do not perturb the game: coverage trace == plain replay trace for all $END frames" "$([ "$rc" = 0 ] && [ "$n" = "$END" ] && echo 1)" "$(tail -1 "$OUT/ref-vs-cov.txt")"
+n="$(sed -n "s/^frames: .* common=\([0-9]*\) .*/\1/p" "$OUT/ref-vs-cov-$KEY.txt")"
+check "breakpoints do not perturb the game: coverage trace == plain replay trace for all $END frames" "$([ "$rc" = 0 ] && [ "$n" = "$END" ] && echo 1)" "$(tail -1 "$OUT/ref-vs-cov-$KEY.txt")"
 
-cp -f "$OUT/cov.trace.cov.csv" "$RAW/coverage-$NAME.hits.csv"
-"$ORACLE" coverage report --points "$OUT/points.txt" --hits "$RAW/coverage-$NAME.hits.csv" \
+cp -f "$COV.cov.csv" "$RAW/coverage-$KEY.hits.csv"
+"$ORACLE" coverage report --points "$OUT/points.txt" --hits "$RAW/coverage-$KEY.hits.csv" \
     --title "INF-10 coverage of $NAME ($REC, $END frames, ports $RUSTSET, cap $CAP)" \
-    --csv "$RAW/coverage-$NAME.csv" --out "$OUT/report-$NAME.txt" > /dev/null
-check "report written" "$([ -s "$RAW/coverage-$NAME.csv" ] && echo 1)" "$RAW/coverage-$NAME.csv"
-sed 's/^/    /' "$OUT/report-$NAME.txt" | tee -a "$SUMMARY"
-all="$(ls "$RAW"/coverage-*.hits.csv | grep -v /coverage-all.hits.csv | tr '\n' ',')"
-"$ORACLE" coverage report --points "$OUT/points.txt" --hits "$all" --title "merged coverage: $all" \
-    --merged "$RAW/coverage-all.hits.csv" --csv "$RAW/coverage-all.csv" --out "$OUT/report-all.txt" > /dev/null
-note "merged over $(echo "$all" | tr ',' '\n' | grep -c .) recording(s): $RAW/coverage-all.csv"
+    --csv "$RAW/coverage-$KEY.csv" --out "$OUT/report-$KEY.txt" > /dev/null
+check "report written" "$([ -s "$RAW/coverage-$KEY.csv" ] && echo 1)" "$RAW/coverage-$KEY.csv"
+sed 's/^/    /' "$OUT/report-$KEY.txt" | tee -a "$SUMMARY"
+all="$(ls "$RAW"/coverage-"$TAG"*.hits.csv | grep -v "/coverage-${TAG}all.hits.csv" |
+    { if [ -z "$TAG" ]; then grep -v /coverage-rust-; else cat; fi; } | tr '\n' ',')"
+"$ORACLE" coverage report --points "$OUT/points.txt" --hits "$all" --title "merged coverage (ports $RUSTSET): $all" \
+    --merged "$RAW/coverage-${TAG}all.hits.csv" --csv "$RAW/coverage-${TAG}all.csv" --out "$OUT/report-${TAG}all.txt" > /dev/null
+note "merged over $(echo "$all" | tr ',' '\n' | grep -c .) recording(s): $RAW/coverage-${TAG}all.csv ($OUT/report-${TAG}all.txt)"
 exit $((FAILS > 0))
