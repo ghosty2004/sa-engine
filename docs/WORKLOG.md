@@ -575,3 +575,10 @@
   (CORE+STREAM+COLL+WORLD+PHYS) on Rust IDENTICAL on grove walk, pause-restart and world-cheats.
   States: 29 L2, 6 L1 → F1 = 481 (3.11 %).
 - PLAN §8: nested-agent cap (≤2 helpers per sub-agent, one level) after nested forks reached 20 agents.
+
+## 2026-11-10: INF-10 integrated
+- Coverage of the original done: 12 validated data-read exclusions; grove walk + pause-restart coverage
+  runs IDENTICAL to plain; the corpus executes 48.2 % of the non-excluded functions (7,462/15,479) —
+  this is why ~half of the ports end NOCALLS; F2 report with all ports on Rust (no port lets its original
+  body run). Main-session re-verification: sa-oracle lib 17/17, pause-restart coverage run (76 s)
+  IDENTICAL.
