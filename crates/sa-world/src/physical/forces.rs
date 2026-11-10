@@ -50,6 +50,34 @@ fn move_part(this: Ent, v: [f32; 3], dst: isize) {
     wf(this, dst + 8, f.fstp());
 }
 
+/// The move part as `ApplyMoveForce`/`ApplyFrictionMoveForce` (0x5429F0/0x5430A0) do it: z is
+/// loaded onto the stack *before* `1/mass` and multiplied as a register (`fmul st,st(2)`), not as a
+/// memory operand as in `move_part`. This matters for NaN arguments: a signalling NaN z is quieted
+/// by the `fld` and then competes with a NaN `1/mass` as a quiet register NaN.
+fn move_part_zreg(this: Ent, v: [f32; 3], dst: isize) {
+    let mut f = Fpu::new();
+    f.fld(v[2]);
+    f.fld(rf(this, MASS));
+    f.fdivr_m(cf(k::K_858624));
+    f.fld(v[0]);
+    f.fmul_st(1);
+    f.fld(v[1]);
+    f.fmul_st(2);
+    let y = f.fstp();
+    f.fxch(1);
+    f.fmul_st(2);
+    let z = f.fstp();
+    f.fadd_m(rf(this, dst));
+    wf(this, dst, f.fstp());
+    f.fstp();
+    f.fld(y);
+    f.fadd_m(rf(this, dst + 4));
+    wf(this, dst + 4, f.fstp());
+    f.fld(z);
+    f.fadd_m(rf(this, dst + 8));
+    wf(this, dst + 8, f.fstp());
+}
+
 /// The turn part (see the module docs). `adjust_infinite`: with `bInfiniteMass` the turn mass
 /// becomes `((com.z*mass)*com.z)*0.5f + turnMass` (ApplyForce, ApplyFrictionForce,
 /// ApplyFrictionTurnForce; not ApplyTurnForce). `force` is the by-value argument (its z is zeroed
@@ -123,7 +151,7 @@ pub fn apply_move_force(this: Ent, force: CVector) {
         return;
     }
     let z = if fl & 0x80 != 0 { cf(k::K_858B50) } else { force.z };
-    move_part(this, [force.x, force.y, z], MOVE_SPEED);
+    move_part_zreg(this, [force.x, force.y, z], MOVE_SPEED);
 }
 
 /// `CPhysical::ApplyFrictionMoveForce(CVector)` (0x5430A0, `ret 0xC`): as ApplyMoveForce into
@@ -135,7 +163,7 @@ pub fn apply_friction_move_force(this: Ent, force: CVector) {
         return;
     }
     let z = if fl & 0x80 != 0 { cf(k::K_858B50) } else { force.z };
-    move_part(this, [force.x, force.y, z], FRICTION_MOVE);
+    move_part_zreg(this, [force.x, force.y, z], FRICTION_MOVE);
 }
 
 /// `CPhysical::ApplyTurnForce(CVector force, CVector point)` (0x542A50, `ret 0x18`): nothing with

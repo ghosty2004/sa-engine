@@ -633,3 +633,11 @@
   deleting dtor; 0x44DA30 TakeWidthIntoAccountForCoors; 0x44E790 GeneratePedCreationCoors; 0x450FB0
   AddInteriorNodeLink; 0x421A50 WouldCollideAtThisAngle; 0x4410E0 IsDPadRightPressed; 0x41BDD0 SetEngineOn;
   0x45AFB0 SetTurnSpeed; 0x821B40 _ftol2; missing from catalogue: 0x477DA0, 0x43EF90, 0x6E76E0.
+
+## 2026-11-11 PHYS fix: ApplyMoveForce NaN order (main session)
+- L1 failure reported by the harness agent: CPhysical::ApplyMoveForce-vec, 82 signalling-NaN cases (payload
+  0x7FC00001 vs 0x7FC00000). Cause: 0x5429F0 and 0x5430A0 load z onto the x87 stack before 1/mass and multiply it
+  as a register (`fmul st,st(2)`); the port used the memory form that ApplyForce (0x542B50) uses. New
+  `move_part_zreg` for the two functions; ApplyForce/ApplyFrictionForce keep `move_part`.
+- Verified: `sa-oracle l1` 1,000,000 cases each, unicorn, 131,411 sNaN inputs decided by the CPU: PASS, 0
+  mismatches for ApplyMoveForce-vec and ApplyFrictionMoveForce. clippy -D warnings, i686 build, sa-world tests OK.
