@@ -619,3 +619,65 @@ Light::LightsCreate@post:[0xC88704]:0x30:W
 # ShowCursor counters (Rs/psMouseSetVisibility)
 Rs::RsMouseSetVisibility@os:cursor
 Ps::psMouseSetVisibility@os:cursor
+
+# ---- PORT-WORLD part 1 (docs/arch/world-port.md) -------------------------------------------------
+# CTheZones arrays (sa-world world::zones): NavigationZoneArray 0xBA3798 (380 x 0x20), MapZoneArray
+# 0xBA1908 (39 x 0x20), ZoneInfoArray 0xBA1DF0 (380 x 0x11), ZonesVisited 0xBA3730 (100). The
+# functions index them with computed addresses that catalog/rwsets.csv cannot name (run world-a:
+# undeclared writes without these lines).
+CTheZones::AssignZoneInfoForThisZone@0xBA3798:0x2F80:RW
+CTheZones::FillZonesWithGangColours@0xBA1DF0:0x193C:RW
+CTheZones::Init@0xBA3798:0x2F80:RW
+CTheZones::Init@0xBA1908:0x4E0:RW
+CTheZones::Init@0xBA1DF0:0x193C:RW
+CTheZones::Init@0xBA3730:100:RW
+CTheZones::SetCurrentZoneAsUnlocked@0xBA3730:100:RW
+CTheZones::Update@0xBA3730:100:RW
+# out-parameters
+CTheZones::GetZoneInfo-@arg1:4:W
+CWorld::FindPlayerCoors@arg0:12:W
+CWorld::FindPlayerCentreOfWorldForMap@arg0:12:W
+# Arrays indexed with computed addresses (run g-l2: undeclared writes without these lines, 0 mismatches):
+# aGarages 0x96C048 (50 x 0xD8), aPickUps 0x9788C0 (620 x 0x20) + collected 0x978624..0x978678,
+# CRestart tables 0xA43270..0xA43408, CShopping bought flags 0xA9729F.. (index -1 writes the byte before),
+# gStoredClothesState 0xA9A810 (0x78), CStats int/float stats 0xB79000..0xB794C8, mission attempts 0xB78CC8.
+CGarages::ChangeGarageType@0x96C048:0x2A30:RW
+CGarages::DeActivateGarage@0x96C048:0x2A30:RW
+CGarages::ActivateGarage@0x96C048:0x2A30:RW
+CGarages::AllRespraysCloseOrOpen@0x96C048:0x2A30:RW
+CGarages::Init@0x96ABC0:0x500:RW
+CPickups::Init@0x9788C0:0x4D80:RW
+CPickups::PassTime@0x9788C0:0x4D80:RW
+CPickups::AddToCollectedPickupsArray@0x978628:0x50:RW
+CPickups::IsPickUpPickedUp@0x978628:0x50:RW
+CPickups::UpdateMoneyPerDay@0x9788C0:0x4D80:RW
+CPickups::GetNewUniquePickupIndex@0x9788C0:0x4D80:RW
+CPickup::GetPosn@arg0:12:W
+CRestart::AddHospitalRestartPoint@0xA43270:0x198:RW
+CRestart::AddPoliceRestartPoint@0xA43270:0x198:RW
+CRestart::FindClosestHospitalRestartPoint@arg3:12:W
+CRestart::FindClosestHospitalRestartPoint@arg4:4:W
+CRestart::FindClosestPoliceRestartPoint@arg3:12:W
+CRestart::FindClosestPoliceRestartPoint@arg4:4:W
+CShopping::StoreClothesState@0xA9A810:0x78:RW
+CShopping::RestoreClothesState@[[[0xB7CD98]+0x480]+4]:0x78:W
+CShopping::SetPlayerHasBought@0xA9729F:0x231:RW
+CStats::SetStatValue@0xB79000:0x4C8:RW
+CStats::DecrementStat@0xB79000:0x4C8:RW
+CStats::ModifyStat@0xB79000:0x4C8:RW
+CStats::ProcessReactionStatsOnDecrement@0xB79000:0x4C8:RW
+CStats::ProcessReactionStatsOnIncrement@0xB79000:0x4C8:RW
+CStats::RegisterMissionAttempted@0xB78CC8:0x190:RW
+CStats::RegisterMissionPassed@0xB78CC8:0x190:RW
+CStats::CheckForThreshold@arg0:4:RW
+CGameLogic::StorePedsWeapons@0x96A9B8:0x16C:RW
+CGridRef::GetGridRefPositions-@arg0:1:W
+CGridRef::GetGridRefPositions-@arg1:1:W
+CGridRef::GetGridRefPositions-vec@arg3:1:W
+CGridRef::GetGridRefPositions-vec@arg4:1:W
+CEntryExitManager::SetEntryExitFlag@[0x96A7D8]:0x14:R
+CEntryExitManager::GetPositionRelativeToOutsideWorld@arg0:12:RW
+CEntryExit::GetPositionRelativeToOutsideWorld@arg0:12:RW
+# pause-restart (run p-l2: undeclared writes without these lines, 0 mismatches)
+CRestart::Initialise@0xA43248:0x1F0:RW
+CTheZones::InitZonesPopulationSettings@0xBA1DF0:0x193C:RW

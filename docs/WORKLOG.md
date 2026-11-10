@@ -554,3 +554,14 @@
 - sccache (installed by the user) measured: a clean i686 sa-hook build is only ~10 s, and two fresh
   target directories gave 0 cache hits / 28 misses (the cache key includes the output paths, which
   differ between worktrees). No benefit, so it is not enabled in the repo.
+
+## 2026-11-10: PORT-WORLD part 1 integrated
+- 248 WORLD functions ported (sa-world/src/world): zones, CWorld leaves, pickups, garages, entry-exits,
+  escalators, stunt jumps, game logic, restart, stats, cheats, shopping, static initialisers. New
+  recording target/e2e/corpus/world-cheats.sarec (17 typed cheats + suicide + respawn).
+- Main-session verification: tests + clippy host/i686 + i686 build; lanes 3/6: world-p1-l2 list on the
+  grove walk and world-cheats: 0 mismatches, 0 undeclared, l2 and rust traces IDENTICAL (the FAIL lines
+  are only the default 4-per-frame sampling cap; the agent's runs at 1000/frame compared every call);
+  all ports on Rust IDENTICAL on pause-restart. States: 83 L2, 21 L1, 144 implemented → F1 = 452
+  (2.92 %).
+- Found: the protection reads some hooked function entries as data → INF-20.

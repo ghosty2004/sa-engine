@@ -414,6 +414,7 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_coll_surface::all())
     .chain(crate::specs_coll_data::all())
     .chain(crate::specs_coll_prim::all())
+    .chain(crate::specs_world_p1::all())
     .collect()
 }
 
