@@ -17,7 +17,7 @@
 //!   no null check and no DEADLAND fill.
 
 use crate::mem::{GBool, GPtr, GameData, Global};
-use crate::pool::{self, ByteMap, CPool, ObjectSlot, PedSlot, VehicleSlot, FREE};
+use crate::pool::{self, ByteMap, CPool, FREE, ObjectSlot, PedSlot, VehicleSlot};
 use crate::{globals, hook, orig};
 
 /// Storage of one pool slot of `N` bytes (the original's `sizeof(S)`).
@@ -314,12 +314,7 @@ pub fn shutdown_pool<T: 'static>(pool: GPtr<CPool<T>>) {
 type PoolCtor<T> = fn(PoolPtr<T>, i32, GPtr<u8>) -> PoolPtr<T>;
 
 /// One step of `CPools::Initialise` (0x550F10): `new(0x14)`, then the constructor when non-null.
-fn init_pool<T: 'static>(
-    g: &Global<PoolPtr<T>>,
-    ctor: PoolCtor<T>,
-    size: i32,
-    name: u32,
-) {
+fn init_pool<T: 'static>(g: &Global<PoolPtr<T>>, ctor: PoolCtor<T>, size: i32, name: u32) {
     let p: GPtr<CPool<T>> = call::operator_new(0x14).cast();
     let r = if p.is_null() {
         GPtr::NULL
@@ -465,19 +460,31 @@ pub fn entry_info_list_flush(list: GPtr<GPtr<u8>>) {
 
 /// `CPool<CPtrNodeSingleLink>::CPool(size, name)` (0x550180, slot 8).
 #[hook(addr = 0x550180, conv = thiscall, name = "FUN_00550180", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_ptr_node_single(p: PoolPtr<PtrNodeSingleSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<PtrNodeSingleSlot> {
+pub fn ctor_ptr_node_single(
+    p: PoolPtr<PtrNodeSingleSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<PtrNodeSingleSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
 /// `CPool<CPtrNodeDoubleLink>::CPool` (0x550250, slot 0xC).
 #[hook(addr = 0x550250, conv = thiscall, name = "FUN_00550250", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_ptr_node_double(p: PoolPtr<PtrNodeDoubleSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<PtrNodeDoubleSlot> {
+pub fn ctor_ptr_node_double(
+    p: PoolPtr<PtrNodeDoubleSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<PtrNodeDoubleSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
 /// `CPool<CEntryInfoNode>::CPool` (0x550320, slot 0x14).
 #[hook(addr = 0x550320, conv = thiscall, name = "FUN_00550320", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_entry_info_node(p: PoolPtr<EntryInfoNodeSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<EntryInfoNodeSlot> {
+pub fn ctor_entry_info_node(
+    p: PoolPtr<EntryInfoNodeSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<EntryInfoNodeSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
@@ -537,7 +544,11 @@ pub fn ctor_point_route(p: PoolPtr<PointRouteSlot>, size: i32, _name: GPtr<u8>) 
 
 /// `CPool<CPatrolRoute>::CPool` (0x550B00, slot 0x1A4).
 #[hook(addr = 0x550B00, conv = thiscall, name = "FUN_00550b00", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_patrol_route(p: PoolPtr<PatrolRouteSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<PatrolRouteSlot> {
+pub fn ctor_patrol_route(
+    p: PoolPtr<PatrolRouteSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<PatrolRouteSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
@@ -549,25 +560,41 @@ pub fn ctor_node_route(p: PoolPtr<NodeRouteSlot>, size: i32, _name: GPtr<u8>) ->
 
 /// `CPool<CTaskAllocator>::CPool` (0x550CA0, slot 0x20).
 #[hook(addr = 0x550CA0, conv = thiscall, name = "FUN_00550ca0", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_task_allocator(p: PoolPtr<TaskAllocatorSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<TaskAllocatorSlot> {
+pub fn ctor_task_allocator(
+    p: PoolPtr<TaskAllocatorSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<TaskAllocatorSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
 /// `CPool<CPedIntelligence>::CPool` (0x550D70, slot 0x294).
 #[hook(addr = 0x550D70, conv = thiscall, name = "FUN_00550d70", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_ped_intelligence(p: PoolPtr<PedIntelligenceSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<PedIntelligenceSlot> {
+pub fn ctor_ped_intelligence(
+    p: PoolPtr<PedIntelligenceSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<PedIntelligenceSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
 /// `CPool<CPedAttractor>::CPool` (0x550E40, slot 0xC4).
 #[hook(addr = 0x550E40, conv = thiscall, name = "FUN_00550e40", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_ped_attractor(p: PoolPtr<PedAttractorSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<PedAttractorSlot> {
+pub fn ctor_ped_attractor(
+    p: PoolPtr<PedAttractorSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<PedAttractorSlot> {
     pool_construct(p, size, call::operator_new_array)
 }
 
 /// `CPool<CQuadTreeNode>::CPool` (0x552AF0, slot 0x28; calls `operator new` 0x82119A directly).
 #[hook(addr = 0x552AF0, conv = thiscall, name = "FUN_00552af0", expect = "56 57 8B 7C 24 0C", this = "CPool<int32>")]
-pub fn ctor_quad_tree_node(p: PoolPtr<QuadTreeNodeSlot>, size: i32, _name: GPtr<u8>) -> PoolPtr<QuadTreeNodeSlot> {
+pub fn ctor_quad_tree_node(
+    p: PoolPtr<QuadTreeNodeSlot>,
+    size: i32,
+    _name: GPtr<u8>,
+) -> PoolPtr<QuadTreeNodeSlot> {
     pool_construct(p, size, call::operator_new)
 }
 
@@ -641,7 +668,11 @@ pub fn check_pools_empty() {
             return;
         }
         let m = at::<GPtr<u8>>(obj, 0x14).read();
-        let pos = if m.is_null() { obj.byte_add(4) } else { m.byte_add(0x30) };
+        let pos = if m.is_null() {
+            obj.byte_add(4)
+        } else {
+            m.byte_add(0x30)
+        };
         call::printf_i_ddd(
             GPtr::from_addr(0x863D3C),
             at::<i16>(obj, 0x22).read() as i32,
@@ -824,7 +855,8 @@ pub fn save_object_pool() -> u8 {
 #[hook(addr = 0x5D4B40, conv = cdecl, name = "CPools::SavePedPool", expect = "83 EC 10 8B 15 90 44 B7 00")]
 pub fn save_ped_pool() -> u8 {
     let size = pool::PED_POOL.get().read().size as u32;
-    let saved = |ped: GPtr<u8>| at::<u32>(ped, 0x46C).read() & 0x100 == 0 && at::<u32>(ped, 0x598).read() == 0;
+    let saved =
+        |ped: GPtr<u8>| at::<u32>(ped, 0x46C).read() & 0x100 == 0 && at::<u32>(ped, 0x598).read() == 0;
     let mut count: u32 = 0;
     let mut i = 0u32;
     while i < size {
@@ -880,7 +912,11 @@ pub fn load_object_pool() -> u8 {
             }
         }
         let mem = call::object_new_at(0x17C, r);
-        let obj = if mem.is_null() { GPtr::NULL } else { call::object_ctor(mem, model, 0) };
+        let obj = if mem.is_null() {
+            GPtr::NULL
+        } else {
+            call::object_ctor(mem, model, 0)
+        };
         let mut n: u32 = 0;
         let mut buf = [0u8; 0x30];
         call::load_data(local(&mut n), 4);
@@ -909,7 +945,11 @@ pub fn load_ped_pool() -> u8 {
         call::load_data(local(&mut ty), 4);
         if ty == 0 {
             let mem = call::ped_new_at(0x7A4, r);
-            let p = if mem.is_null() { GPtr::NULL } else { call::player_ped_ctor(mem, 0, 0) };
+            let p = if mem.is_null() {
+                GPtr::NULL
+            } else {
+                call::player_ped_ctor(mem, 0, 0)
+            };
             at::<u8>(p, 0x71A).write(100);
             ped = p;
             PLAYER0_PED.set(p);
@@ -939,12 +979,20 @@ pub fn load_vehicle_pool() -> u8 {
         call::load_data(local(&mut model), 4);
         call::request_model(model, 8);
         call::load_all_requested_models(0);
-        let mi = MODEL_INFO_PTRS.ptr().cast::<GPtr<u8>>().wrapping_index(model).read();
+        let mi = MODEL_INFO_PTRS
+            .ptr()
+            .cast::<GPtr<u8>>()
+            .wrapping_index(model)
+            .read();
         let ty = at::<u32>(mi, 0x3C).read().wrapping_sub(1);
         type Ctor = fn(GPtr<u8>, i32, i32) -> GPtr<u8>;
         let make = |size: u32, ctor: Ctor| {
             let m = call::vehicle_new_at(size, r);
-            if m.is_null() { GPtr::NULL } else { ctor(m, model, 1) }
+            if m.is_null() {
+                GPtr::NULL
+            } else {
+                ctor(m, model, 1)
+            }
         };
         let v = match ty {
             0 => make(0x99C, call::monster_truck_ctor),
@@ -966,7 +1014,11 @@ pub fn load_vehicle_pool() -> u8 {
             10 => make(0x9F4, call::trailer_ctor),
             _ => {
                 let m = call::vehicle_new_at(0x988, r);
-                if m.is_null() { GPtr::NULL } else { call::automobile_ctor(m, model, 1, 1) }
+                if m.is_null() {
+                    GPtr::NULL
+                } else {
+                    call::automobile_ctor(m, model, 1, 1)
+                }
             }
         };
         call::vehicle_load(v);
@@ -1086,7 +1138,10 @@ mod tests {
         };
         let p = GPtr::from_raw(&raw mut hdr);
         assert_eq!(pool_construct(p, 5, fake_alloc), p);
-        assert_eq!((hdr.size, hdr.first_free, hdr.owns_arrays, hdr.locked), (5, -1, GBool::TRUE, GBool(0x42)));
+        assert_eq!(
+            (hdr.size, hdr.first_free, hdr.owns_arrays, hdr.locked),
+            (5, -1, GBool::TRUE, GBool(0x42))
+        );
         for i in 0..5 {
             assert_eq!(hdr.byte_map.wrapping_index(i).read(), 0x80);
         }

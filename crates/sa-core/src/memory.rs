@@ -156,7 +156,11 @@ pub fn heap_init(heap: GPtr<u8>, mem: GPtr<u8>, size: u32, init_sizes: u8) {
     let next = heap.byte_add(0x18).cast::<u32>().read();
     // `next` is the `end` just stored (re-read as the original does); keep the full-width pointer
     // so a 64-bit build addresses the same memory.
-    let next_p = if next == end { heap.byte_add(0x20) } else { GPtr::from_addr(next as usize) };
+    let next_p = if next == end {
+        heap.byte_add(0x20)
+    } else {
+        GPtr::from_addr(next as usize)
+    };
     w32(mem, 0x10, next);
     w32(next_p, 0x14, first);
     w32(mem, 0x14, begin);
@@ -168,7 +172,11 @@ pub fn heap_init(heap: GPtr<u8>, mem: GPtr<u8>, size: u32, init_sizes: u8) {
         for i in 0..64u32 {
             // `[esi+38h]` is re-read for every element (it is `cs`, see above)
             let v = heap.byte_add(0x38).cast::<u32>().read();
-            let base = if v == cs.addr() as u32 { cs } else { GPtr::from_addr(v as usize) };
+            let base = if v == cs.addr() as u32 {
+                cs
+            } else {
+                GPtr::from_addr(v as usize)
+            };
             common_size_init(base.byte_add((0x3C * i) as isize), 16 * (i + 1));
         }
     }
@@ -205,7 +213,10 @@ mod tests {
     fn heap_init_without_sizes() {
         let mut heap = vec![0xAAu8; 0x48];
         let mut mem = vec![0xBBu8; 0x100];
-        let (h, m) = (GPtr::from_raw(heap.as_mut_ptr()), GPtr::from_raw(mem.as_mut_ptr()));
+        let (h, m) = (
+            GPtr::from_raw(heap.as_mut_ptr()),
+            GPtr::from_raw(mem.as_mut_ptr()),
+        );
         heap_init(h, m, 0x100, 0);
         let r = |b: &[u8], o: usize| u32::from_le_bytes(b[o..o + 4].try_into().unwrap());
         let (ha, ma) = (h.addr() as u32, m.addr() as u32);

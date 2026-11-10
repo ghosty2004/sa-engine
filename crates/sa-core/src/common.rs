@@ -152,7 +152,11 @@ pub fn calc_screen_coors(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> bool {
 /// The common part of both `CalcScreenCoors`: returns `1/z` (still on the x87 stack) on success.
 fn project(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> Option<X87> {
     let mut tmp = [0f32; 3];
-    let t = matrix_mul_vector(GPtr::from_raw(tmp.as_mut_ptr().cast()), GPtr::from_addr(CAMERA_VIEW_MATRIX as usize), input);
+    let t = matrix_mul_vector(
+        GPtr::from_raw(tmp.as_mut_ptr().cast()),
+        GPtr::from_addr(CAMERA_VIEW_MATRIX as usize),
+        input,
+    );
     // three dword moves through the returned pointer
     let r = t.cast::<[u32; 3]>().read();
     out.cast::<[u32; 3]>().write(r);
@@ -164,7 +168,9 @@ fn project(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> Option<X87> {
     let recip = X87::constant(k::ONE).fdiv_m(o.wrapping_index(2).read());
     let x = X87::from_i32(SCREEN_WIDTH.get()).fmul(recip).fmul_m(o.read());
     o.write(x.to_f32());
-    let y = X87::from_i32(SCREEN_HEIGHT.get()).fmul(recip).fmul_m(o.wrapping_index(1).read());
+    let y = X87::from_i32(SCREEN_HEIGHT.get())
+        .fmul(recip)
+        .fmul_m(o.wrapping_index(1).read());
     o.wrapping_index(1).write(y.to_f32());
     Some(recip)
 }
@@ -173,7 +179,12 @@ fn project(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>) -> Option<X87> {
 /// form, then `*sx = W/z`, `*sy = H/z` (f32 stores), then each reloaded and turned into
 /// `v / CDraw::ms_fFOV * 70`.
 #[hook(addr = 0x71DA00, conv = cdecl, name = "Common::CalcScreenCoors-VVff", expect = "8B 44 24 04 83 EC 0C")]
-pub fn calc_screen_coors_scaled(input: GPtr<[f32; 3]>, out: GPtr<[f32; 3]>, sx: GPtr<f32>, sy: GPtr<f32>) -> bool {
+pub fn calc_screen_coors_scaled(
+    input: GPtr<[f32; 3]>,
+    out: GPtr<[f32; 3]>,
+    sx: GPtr<f32>,
+    sy: GPtr<f32>,
+) -> bool {
     let Some(recip) = project(input, out) else {
         return false;
     };
@@ -195,7 +206,16 @@ fn side(px: f32, py: f32, ox: f32, oy: f32, dx: f32, dy: f32) -> X87 {
 /// (`side(a) * side(b) < 0`; NaN: 0).
 #[hook(addr = 0x71DB30, conv = cdecl, name = "FUN_0071db30", expect = "D9 44 24 04 D8 64 24 14", preserve = "ecx,edx")]
 #[allow(clippy::too_many_arguments)]
-pub fn does_infinite_line_cross_finite_line(ax: f32, ay: f32, bx: f32, by: f32, ox: f32, oy: f32, dx: f32, dy: f32) -> i32 {
+pub fn does_infinite_line_cross_finite_line(
+    ax: f32,
+    ay: f32,
+    bx: f32,
+    by: f32,
+    ox: f32,
+    oy: f32,
+    dx: f32,
+    dy: f32,
+) -> i32 {
     let p = side(ax, ay, ox, oy, dx, dy).fmul(side(bx, by, ox, oy, dx, dy));
     // fcomp 0.0; test ah, 5; jp -> 0
     (!p.fcom(X87::zero()).test_parity(5)) as i32
@@ -279,7 +299,10 @@ mod tests {
         make_upper_case_in(GPtr::from_raw(s.as_mut_ptr()));
         assert_eq!(&s, b"ABC\0x");
         let mut g = [9u8; 4];
-        ascii_to_gxt_char(GPtr::from_raw(c"hi".as_ptr() as *mut u8), GPtr::from_raw(g.as_mut_ptr()));
+        ascii_to_gxt_char(
+            GPtr::from_raw(c"hi".as_ptr() as *mut u8),
+            GPtr::from_raw(g.as_mut_ptr()),
+        );
         assert_eq!(g, [b'h', b'i', 0, 9]);
         little_test();
         assert_eq!(NUM_IM3D_DRAW_CALLS.get(), 1);
@@ -294,8 +317,14 @@ mod tests {
         assert!(is_point_inside_line(0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0));
         assert!(!is_point_inside_line(0.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0));
         assert!(is_point_inside_line(0.0, 0.0, 0.0, 1.0, f32::NAN, 0.0, 0.0));
-        assert_eq!(does_infinite_line_cross_finite_line(-1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0), 1);
-        assert_eq!(does_infinite_line_cross_finite_line(0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0);
+        assert_eq!(
+            does_infinite_line_cross_finite_line(-1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+            1
+        );
+        assert_eq!(
+            does_infinite_line_cross_finite_line(0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0),
+            0
+        );
         assert!(infinite_line_touches_screen(640, 480, 10.0, 10.0, 1.0, 0.0));
         assert!(!infinite_line_touches_screen(640, 480, 0.0, 10.0, 0.0, 0.0));
         // horizontal line y = 100 starting left of the screen crosses the left edge

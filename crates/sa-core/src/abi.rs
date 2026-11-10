@@ -142,30 +142,121 @@ impl IntoAbi for sa_math::x87::X87 {
 ///
 /// The game runs with MXCSR 0x9FA0 (flush-to-zero on, measured by INF-3). The original's code is x87,
 /// which MXCSR does not affect, but Rust compiles f32/f64 arithmetic (including the `X87` model) to
-/// SSE, where FTZ would flush subnormal results. The guard clears FTZ and DAZ on entry and restores
-/// the caller's exact MXCSR (sticky flags included) on exit, so a Rust port leaves MXCSR as the x87
-/// original would: untouched. No-op off x86.
+/// SSE, where FTZ would flush subnormal results. The guard clears FTZ and DAZ for the Rust code; calls
+/// into original code run under the game's MXCSR ([`call_original`]), and on exit the guard loads the
+/// game's MXCSR as those callees left it, so a Rust port affects MXCSR exactly as the original would.
+/// No-op off x86.
 pub struct FpuGuard {
     #[cfg(target_arch = "x86")]
-    saved: u32,
+    slot: usize,
+    #[cfg(target_arch = "x86")]
+    prev: u32,
 }
 
 /// MXCSR flush-to-zero (bit 15) and denormals-are-zero (bit 6).
 pub const MXCSR_FTZ_DAZ: u32 = 0x8040;
+
+/// Per-thread "game MXCSR" while Rust code runs under a guard (FPU-GUARD, 2026-11-10).
+///
+/// The guard used to restore the entry MXCSR on exit, which (1) discarded MXCSR changes made by
+/// original code that Rust called (D3D device creation inside `RwInitialize` sets 0x9FA0), and
+/// (2) ran those original callees with FTZ/DAZ cleared. Now the game's MXCSR is kept per thread:
+/// [`call_original`] loads it for the callee, stores back what the callee left, and re-clears
+/// FTZ/DAZ for Rust; the guard's exit loads the current game value. `no_std`: a small table keyed
+/// by the Win32 thread id (TEB +0x24), not `thread_local!`.
+#[cfg(target_arch = "x86")]
+mod game_mxcsr {
+    use core::sync::atomic::{AtomicU32, Ordering};
+
+    const N: usize = 32;
+    /// Value of `prev` meaning "the slot was free before this guard".
+    pub const FREE: u32 = u32::MAX;
+    static TID: [AtomicU32; N] = [const { AtomicU32::new(0) }; N];
+    static VAL: [AtomicU32; N] = [const { AtomicU32::new(FREE) }; N];
+
+    #[inline(always)]
+    pub fn tid() -> u32 {
+        #[cfg(windows)]
+        {
+            let t: u32;
+            // SAFETY: reads the current thread id from the TEB (fs:[0x24]) on 32-bit Windows.
+            #[allow(unsafe_code)]
+            unsafe {
+                core::arch::asm!("mov {0}, fs:[0x24]", out(reg) t, options(nostack, readonly, preserves_flags));
+            }
+            t
+        }
+        #[cfg(not(windows))]
+        {
+            1
+        }
+    }
+
+    /// The slot of the current thread, claiming a free one if needed.
+    pub fn slot() -> usize {
+        let t = tid();
+        if let Some(i) = TID.iter().position(|x| x.load(Ordering::Acquire) == t) {
+            return i;
+        }
+        loop {
+            if let Some(i) = TID.iter().position(|x| {
+                x.compare_exchange(0, t, Ordering::AcqRel, Ordering::Acquire)
+                    .is_ok()
+            }) {
+                return i;
+            }
+            core::hint::spin_loop();
+        }
+    }
+
+    /// The slot of the current thread if it is inside a guard.
+    pub fn find() -> Option<usize> {
+        let t = tid();
+        (0..N).find(|&i| TID[i].load(Ordering::Acquire) == t && VAL[i].load(Ordering::Acquire) != FREE)
+    }
+
+    pub fn get(i: usize) -> u32 {
+        VAL[i].load(Ordering::Acquire)
+    }
+    pub fn set(i: usize, v: u32) {
+        VAL[i].store(v, Ordering::Release)
+    }
+    pub fn release(i: usize) {
+        VAL[i].store(FREE, Ordering::Release);
+        TID[i].store(0, Ordering::Release);
+    }
+}
+
+#[cfg(target_arch = "x86")]
+#[inline(always)]
+#[allow(unsafe_code)]
+fn stmxcsr() -> u32 {
+    let mut v: u32 = 0;
+    // SAFETY: stores MXCSR into a local.
+    unsafe { core::arch::asm!("stmxcsr [{0}]", in(reg) &mut v, options(nostack, preserves_flags)) };
+    v
+}
+
+#[cfg(target_arch = "x86")]
+#[inline(always)]
+#[allow(unsafe_code)]
+fn ldmxcsr(v: u32) {
+    // SAFETY: loads MXCSR from a local; callers only pass values read from MXCSR (possibly with
+    // FTZ/DAZ cleared).
+    unsafe { core::arch::asm!("ldmxcsr [{0}]", in(reg) &v, options(nostack, preserves_flags)) };
+}
 
 impl FpuGuard {
     #[inline(always)]
     pub fn enter() -> FpuGuard {
         #[cfg(target_arch = "x86")]
         {
-            let mut saved: u32 = 0;
-            // SAFETY: stores/loads MXCSR from/to locals; only FTZ/DAZ change.
-            unsafe {
-                core::arch::asm!("stmxcsr [{0}]", in(reg) &mut saved, options(nostack, preserves_flags));
-                let clean = saved & !MXCSR_FTZ_DAZ;
-                core::arch::asm!("ldmxcsr [{0}]", in(reg) &clean, options(nostack, preserves_flags));
-            }
-            FpuGuard { saved }
+            let entry = stmxcsr();
+            let slot = game_mxcsr::slot();
+            let prev = game_mxcsr::get(slot);
+            game_mxcsr::set(slot, entry);
+            ldmxcsr(entry & !MXCSR_FTZ_DAZ);
+            FpuGuard { slot, prev }
         }
         #[cfg(not(target_arch = "x86"))]
         FpuGuard {}
@@ -176,9 +267,34 @@ impl Drop for FpuGuard {
     #[inline(always)]
     fn drop(&mut self) {
         #[cfg(target_arch = "x86")]
-        // SAFETY: restores the MXCSR value saved on entry.
-        unsafe {
-            core::arch::asm!("ldmxcsr [{0}]", in(reg) &self.saved, options(nostack, preserves_flags));
+        {
+            // The game's MXCSR as the original callees left it (sticky flags included).
+            ldmxcsr(game_mxcsr::get(self.slot));
+            if self.prev == game_mxcsr::FREE {
+                game_mxcsr::release(self.slot);
+            } else {
+                game_mxcsr::set(self.slot, self.prev);
+            }
         }
     }
+}
+
+/// Run a call into original code (every `orig!` call in phase A) under the game's MXCSR.
+///
+/// Inside a guard: load the thread's game MXCSR, call, record the MXCSR the callee left as the new
+/// game value, then clear FTZ/DAZ again for the Rust code that continues. Outside a guard: just call.
+#[inline(always)]
+pub fn call_original<R>(f: impl FnOnce() -> R) -> R {
+    #[cfg(target_arch = "x86")]
+    {
+        if let Some(slot) = game_mxcsr::find() {
+            ldmxcsr(game_mxcsr::get(slot));
+            let r = f();
+            let after = stmxcsr();
+            game_mxcsr::set(slot, after);
+            ldmxcsr(after & !MXCSR_FTZ_DAZ);
+            return r;
+        }
+    }
+    f()
 }

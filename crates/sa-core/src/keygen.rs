@@ -18,7 +18,11 @@ pub const fn crc_table() -> [u32; 256] {
         let mut c = i as u32;
         let mut k = 0;
         while k < 8 {
-            c = if c & 1 != 0 { 0xEDB8_8320 ^ (c >> 1) } else { c >> 1 };
+            c = if c & 1 != 0 {
+                0xEDB8_8320 ^ (c >> 1)
+            } else {
+                c >> 1
+            };
             k += 1;
         }
         t[i] = c;
@@ -61,7 +65,11 @@ orig! {
 
 /// Phases B/C `toupper`: the "C" locale (the game never calls `setlocale`).
 pub fn toupper_c_locale(c: i32) -> i32 {
-    if (b'a' as i32..=b'z' as i32).contains(&c) { c - 0x20 } else { c }
+    if (b'a' as i32..=b'z' as i32).contains(&c) {
+        c - 0x20
+    } else {
+        c
+    }
 }
 
 /// `CKeyGen::GetKey(const char* str, int32 size)` (0x53CED0, cdecl): `size` bytes (none if

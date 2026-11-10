@@ -199,7 +199,9 @@ pub fn write_dir_file(dir: GPtr<CDirectory>, filename: GPtr<u8>) -> bool {
 pub fn find_item(dir: GPtr<CDirectory>, name: GPtr<u8>) -> GPtr<DirectoryInfo> {
     let mut i = 0i32;
     while i < field::<i32>(dir, NUM).read() {
-        let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES).read().wrapping_index(i);
+        let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES)
+            .read()
+            .wrapping_index(i);
         if stricmp(e.cast::<u8>().byte_add(8), name) == 0 {
             return e;
         }
@@ -226,11 +228,17 @@ pub fn find_item_by_name(dir: GPtr<CDirectory>, name: GPtr<u8>, pos: GPtr<u32>, 
 pub fn find_item_by_hash(dir: GPtr<CDirectory>, hash: u32, pos: GPtr<u32>, size: GPtr<u32>) -> bool {
     let mut i = 0i32;
     while i < field::<i32>(dir, NUM).read() {
-        let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES).read().wrapping_index(i);
+        let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES)
+            .read()
+            .wrapping_index(i);
         if get_uppercase_key(e.cast::<u8>().byte_add(8)) == hash {
-            let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES).read().wrapping_index(i);
+            let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES)
+                .read()
+                .wrapping_index(i);
             size.write(e.cast::<u8>().byte_add(4).cast::<u16>().read() as u32);
-            let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES).read().wrapping_index(i);
+            let e = field::<GPtr<DirectoryInfo>>(dir, ENTRIES)
+                .read()
+                .wrapping_index(i);
             pos.write(e.cast::<u32>().read());
             return true;
         }
@@ -271,13 +279,24 @@ mod tests {
     fn entry(pos: u32, size: u16, name: &str) -> DirectoryInfo {
         let mut n = [0u8; 24];
         n[..name.len()].copy_from_slice(name.as_bytes());
-        DirectoryInfo { pos, size, size_in_archive: 0, name: n }
+        DirectoryInfo {
+            pos,
+            size,
+            size_in_archive: 0,
+            name: n,
+        }
     }
 
     #[test]
     fn init_and_hash_lookup() {
         let mut storage = vec![entry(0, 0, ""); 2];
-        let mut d = CDirectory { entries: GPtr::NULL, capacity: 9, num_entries: 9, owns_entries: GBool(7), _pad: [0; 3] };
+        let mut d = CDirectory {
+            entries: GPtr::NULL,
+            capacity: 9,
+            num_entries: 9,
+            owns_entries: GBool(7),
+            _pad: [0; 3],
+        };
         let dp = GPtr::from_raw(&raw mut d);
         constructor_empty(dp);
         assert_eq!((d.capacity, d.num_entries, d.owns_entries), (0, 0, GBool(7)));
@@ -292,8 +311,18 @@ mod tests {
         assert_eq!(storage[1], b);
         let (mut pos, mut size) = (0u32, 0u32);
         let key = crate::keygen::get_key(GPtr::from_raw(c"PED.TXD".as_ptr() as *mut u8));
-        assert!(find_item_by_hash(dp, key, GPtr::from_raw(&raw mut pos), GPtr::from_raw(&raw mut size)));
+        assert!(find_item_by_hash(
+            dp,
+            key,
+            GPtr::from_raw(&raw mut pos),
+            GPtr::from_raw(&raw mut size)
+        ));
         assert_eq!((pos, size), (0x99, 0xFFFF));
-        assert!(!find_item_by_hash(dp, key ^ 1, GPtr::from_raw(&raw mut pos), GPtr::from_raw(&raw mut size)));
+        assert!(!find_item_by_hash(
+            dp,
+            key ^ 1,
+            GPtr::from_raw(&raw mut pos),
+            GPtr::from_raw(&raw mut size)
+        ));
     }
 }

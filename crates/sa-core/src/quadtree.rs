@@ -68,7 +68,9 @@ fn mid_m(a: f32, b: f32) -> X87 {
 
 /// `(b + a) * 0.5` in the register form (`fld a; fld b; fadd st, st(1); fmul half`).
 fn mid_r(a: f32, b: f32) -> X87 {
-    X87::from_f32(b).fadd(X87::from_f32(a)).fmul_m(f32::from_bits(HALF))
+    X87::from_f32(b)
+        .fadd(X87::from_f32(a))
+        .fmul_m(f32::from_bits(HALF))
 }
 
 /// `CQuadTreeNode::FindSector(const CRect&)` (0x5525A0) on the node rect `n`, level, query rect `r`.
@@ -77,8 +79,14 @@ fn mid_r(a: f32, b: f32) -> X87 {
 /// else `r.x0 > mx` → (cl ? 1 : 3), otherwise -1. (NaN compares take the "not less"/"not greater"
 /// branches of `test ah,5; jp` / `test ah,41h; jne`.)
 pub fn find_sector_rect_of(n: [f32; 4], level: u32, r: [f32; 4]) -> i32 {
-    let mx = X87::from_f32(n[2]).fadd_m(n[0]).fmul_m(f32::from_bits(HALF)).to_f32();
-    let my = X87::from_f32(n[3]).fadd_m(n[1]).fmul_m(f32::from_bits(HALF)).to_f32();
+    let mx = X87::from_f32(n[2])
+        .fadd_m(n[0])
+        .fmul_m(f32::from_bits(HALF))
+        .to_f32();
+    let my = X87::from_f32(n[3])
+        .fadd_m(n[1])
+        .fmul_m(f32::from_bits(HALF))
+        .to_f32();
     if level == 0 {
         return -1;
     }
@@ -373,7 +381,11 @@ pub fn init_pool() {
         return;
     }
     let p = call::operator_new(0x14);
-    let r = if p.is_null() { GPtr::NULL } else { call::pool_ctor(p, 400, GPtr::from_addr(0x863DEC)) };
+    let r = if p.is_null() {
+        GPtr::NULL
+    } else {
+        call::pool_ctor(p, 400, GPtr::from_addr(0x863DEC))
+    };
     QUAD_TREE_NODE_POOL.set(r);
 }
 
