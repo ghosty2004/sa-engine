@@ -491,6 +491,8 @@ the CdStream wake-up fix, D3D device internals (kept behind `RenderApi::Direct3D
 
 ## 10. Open questions (for the user and the samp-rs agent)
 
+**Answered by the user (2026-11-11):** Q1 git dependency pinned to a commit; Q2 sa-engine writes the original backend in samp-rs on a separate branch; Q7 Rust decoder for audio streams (no BASS). The rest are decided by the implementer with the defaults in this section unless they affect samp-rs behaviour against the original exe.
+
 * **Q1 — how samp-rs gets the crate.** Git dependency on the sa-engine repository (pinned commit), a path
   dependency in a shared checkout, or a vendored copy in samp-rs kept identical by a check? The crate has
   no dependencies so any of these works; vendoring keeps samp-rs buildable alone.
