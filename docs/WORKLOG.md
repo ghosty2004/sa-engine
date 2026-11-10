@@ -653,3 +653,10 @@
 - `crates/sa-samp-api`: traits and types only, no dependencies. Verified: `cargo clippy -p sa-samp-api
   --all-targets -- -D warnings` (host), same for `--target wasm32-unknown-unknown` and `--target
   i686-pc-windows-gnu`, `cargo test -p sa-samp-api` (1 test), `RUSTDOCFLAGS=-D warnings cargo doc`.
+
+## 2026-11-11 SAMP-2 steps 1–3 + API revision (main session)
+- Agent a08af60d: samp-rs worktree ~/samp-rs-adapter, branch sa-engine/adapter (4 commits, samp-rs main and its
+  working tree untouched). Steps 1–3 of the migration; verification in ROADMAP SAMP-2.
+- Main session: freed 17 GB (target/ of four integrated worktrees; /home was at 23 GB free). Applied the agent's
+  API proposals to sa-samp-api (menu_active byte/dword, area_raw, time_step_clipped, script threads,
+  GameError::Unreadable, infallible-read contract); clippy host+wasm32, test, rustdoc -D warnings clean.

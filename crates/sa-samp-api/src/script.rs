@@ -30,6 +30,10 @@ pub enum ScriptArg<'a> {
     Local(u16),
 }
 
+/// A private script thread created by [`ScriptCommands::create_script_thread`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ScriptThreadRef(pub u32);
+
 /// Local variables of the private script thread after a command (outputs land here).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct ScriptLocals(pub [u32; 32]);
@@ -57,6 +61,23 @@ pub trait ScriptCommands {
         args: &[ScriptArg<'_>],
         locals: &mut ScriptLocals,
     ) -> GameResult<bool>;
+
+    /// Creates a private script thread with its own `CRunningScript` buffer and locals. Locals persist
+    /// between commands on the same thread, as with samp-rs's `Runner`s (client, audio, dll); this is the
+    /// 1:1 mapping for the original backend. `run_command` behaves like a thread whose locals are copied in
+    /// and out.
+    fn create_script_thread(&mut self) -> GameResult<ScriptThreadRef>;
+    /// Runs one command on `thread`; returns the condition result.
+    fn run_on_thread(
+        &mut self,
+        thread: ScriptThreadRef,
+        op: Opcode,
+        args: &[ScriptArg<'_>],
+    ) -> GameResult<bool>;
+    /// Reads local `i` of `thread` (raw dword).
+    fn thread_local(&self, thread: ScriptThreadRef, i: usize) -> GameResult<u32>;
+    /// Writes local `i` of `thread` (raw dword).
+    fn set_thread_local(&mut self, thread: ScriptThreadRef, i: usize, value: u32) -> GameResult<()>;
 
     /// Last opcode run and whether a command is in progress (samp's crash report fields "SCM Op" / "lDbg").
     fn last_command(&self) -> (Opcode, bool);

@@ -122,6 +122,11 @@ pub trait GameAdapter:
     /// Game time in milliseconds (`CTimer::m_snTimeInMilliseconds` 0xB7CB84).
     fn game_time_ms(&self) -> u32;
 
+    /// Only the clipped time step (`CTimer::ms_fTimeStep` 0xB7CB5C), for sites that read just that one.
+    fn time_step_clipped(&self) -> f32 {
+        self.time_step().clipped
+    }
+
     /// Requests the game to quit at the next frame boundary (`RsGlobal.quit` 0xC17050).
     fn request_quit(&mut self);
 }

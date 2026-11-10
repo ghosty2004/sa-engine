@@ -14,6 +14,11 @@ pub enum GameError {
     /// The call is not allowed in the current phase (for example entity creation from a mid-frame hook, or
     /// a frame call before [`crate::SampHost::install`]).
     WrongPhase,
+    /// Game memory the call needed could not be read (null or freed pointer; original/phase A backends).
+    Unreadable {
+        /// Address that could not be read.
+        address: u32,
+    },
     /// This backend does not implement the call (yet). The string names the method.
     Unsupported(&'static str),
     /// The original code faulted inside the call (original/phase A backends; samp's SEH guard). `code` is
@@ -43,6 +48,7 @@ impl fmt::Display for GameError {
             Self::Unsupported(m) => write!(f, "not supported by this backend: {m}"),
             Self::Fault { code, address } => write!(f, "fault {code:#x} at {address:#x}"),
             Self::Mismatch { address } => write!(f, "unexpected original bytes at {address:#x}"),
+            Self::Unreadable { address } => write!(f, "game memory at {address:#x} is not readable"),
             Self::Other(s) => f.write_str(s),
         }
     }

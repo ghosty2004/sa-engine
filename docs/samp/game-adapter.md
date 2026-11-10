@@ -530,3 +530,21 @@ the CdStream wake-up fix, D3D device internals (kept behind `RenderApi::Direct3D
 * **Q12 — vehicle palette and the 707-site model table.** The 256-colour palette is data in samp.dll's
   `.data`. samp-rs already ships it (`vehpatches.rs`); confirm it may be passed through
   `SampModeConfig::vehicle_colours` to the engine (it is interop data, not Rockstar data).
+
+## 11. Revisions after SAMP-2 steps 1–3 (2026-11-11)
+
+From the first samp-rs migration steps (branch `sa-engine/adapter` in ~/samp-rs-adapter):
+- `Hud::menu_active` reads the **byte** at 0xBA67A4; new `Hud::menu_active_dword` for samp-rs sites that test
+  the dword (they also see the three following bytes).
+- New `WorldState::area_raw() -> i32` (`CGame::currArea` is an i32; samp-rs reads it as such).
+- `GameAdapter::time_step_clipped()` (default method) for sites that read only `ms_fTimeStep`.
+- Script threads: `create_script_thread` / `run_on_thread` / `thread_local` / `set_thread_local` map 1:1 onto
+  samp-rs's `Runner`s (each owns a `CRunningScript` whose locals persist between commands). `run_command`
+  stays for one-shot calls. Step 4 routes the `runner.run` sites through threads.
+- `GameError::Unreadable { address }` for failed memory reads (was mapped to `InvalidHandle`).
+- Infallible reads (`clock`, `menu_active`, `pad`, ...): a backend that cannot serve them returns the value the
+  game has right after `CGame::Initialise` (clock 12:00, menu inactive, neutral pad). Only the original and
+  phase A backends can hit this, and only before the game is initialised.
+- Q1 note: the pinned git dependency uses `file:///home/ghosty2004/sa-engine`, which resolves only on this
+  machine. It is fine while the adapter branch is local; before samp-rs merges it, sa-engine must be reachable
+  from samp-rs's remote (a published repository) or the crate vendored. That is a user decision.

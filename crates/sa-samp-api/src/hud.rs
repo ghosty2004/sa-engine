@@ -50,8 +50,13 @@ pub trait Hud {
     /// HUD and radar on/off (`FrontEndMenuManager.m_bHudOn` 0xBA6769, `CHud::bScriptDontDisplayRadar`
     /// 0xBAA3FB).
     fn set_hud_visible(&mut self, on: bool) -> GameResult<()>;
-    /// Whether the pause menu is open (`FrontEndMenuManager.m_bMenuActive` 0xBA67A4); samp draws no UI then.
+    /// Whether the pause menu is open: the **byte** `FrontEndMenuManager.m_bMenuActive` 0xBA67A4 is non-zero;
+    /// samp draws no UI then. Call sites that read the dword at 0xBA67A4 (it also covers the next three
+    /// bytes) are not equivalent; use [`Hud::menu_active_dword`] for them.
     fn menu_active(&self) -> bool;
+    /// The dword at 0xBA67A4 (`m_bMenuActive` and the three bytes after it), for samp-rs sites that test
+    /// it as a `u32`. Native backends return `menu_active() as u32` plus the same following fields.
+    fn menu_active_dword(&self) -> u32;
     /// GameText / big message (`CMessages::AddBigMessage` 0x69F2B0).
     fn big_message(&mut self, text: &str, time_ms: u32, style: u16) -> GameResult<()>;
     /// `CLEAR_PRINTS` (00BE).
