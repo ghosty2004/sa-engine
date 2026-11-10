@@ -13,7 +13,7 @@ Notation (shared by all ProcessCommands* spec files):
   CPool<CPed>::GetRef).
 - `ftol` = 0x821B40 (MSVC _ftol2: truncates ST0 toward zero, result EDX:EAX). `CRGBA(r,g,b,a)` = 0x7170C0 (thiscall ctor, ret 0x10).
 - AL return 0 = OR_CONTINUE unless the case says otherwise (gr OpcodeResult: 0 continue, 1 wait, -1 interrupt).
-- Memory stores are written `[0xADDR] <- value`. SEH: every switch has a frame; a case that constructs a task sets the state slot to 0 around the ctor and back to -1.
+- Memory stores are written `[0xADDR] <- value`. SEH: in switches that have an SEH frame (see the dispatcher), task-constructing cases set the frame state slot around `new` + ctor and back to -1; this only matters for exception unwinding.
 - Vtable slots (index = offset/4): CEntity 0 dtor, 1 Add(rect), 2 Add, 3 Remove, 4 SetIsStatic, 5 SetModelIndex, 6
   SetModelIndexNoCreate, 7 CreateRwObject, 8 DeleteRwObject, 9 GetBoundRect, 10 ProcessControl, 11 ProcessCollision, 12
   ProcessShift, 13 TestCollision, 14 Teleport, 15 SpecialEntityPreCollisionStuff, 16 SpecialEntityCalcCollisionSteps, 17 PreRender,
@@ -36,7 +36,7 @@ Notation (shared by all ProcessCommands* spec files):
 - Ground-Z rule used by several cases: `fld z; fcomp [0x859014] (-100.0f); test ah,0x41; jp skip` -> the lookup happens only when
   `z <= -100.0f` (NaN skips it).
 
-## 0x47FA30 CRunningScript::ProcessCommands700To799  (catalogue: specified/REA, port level 10)
+## 0x47FA30 CRunningScript::ProcessCommands700To799  (catalogue: specified/REA, port level 35)
 - Dispatcher: `__thiscall` (this = ECX -> ESI at 0x47FA49), command id at [esp+4], `ret 4`. No SEH frame. `sub esp,0xD8`
   (0x47FA30), push EBX/EBP/ESI/EDI. Before the range check it zeroes the local `[esp+0x54]` (0x47FA4B): this is the
   water-level output of 02D3 (see there). Range: `eax = id - 0x2BF` (0x47FA40), `cmp eax,0x5F; ja 0x480F00` (0x47FA45/0x47FA53);

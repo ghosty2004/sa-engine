@@ -13,7 +13,7 @@ Notation (shared by all ProcessCommands* spec files):
   CPool<CPed>::GetRef).
 - `ftol` = 0x821B40 (MSVC _ftol2: truncates ST0 toward zero, result EDX:EAX). `CRGBA(r,g,b,a)` = 0x7170C0 (thiscall ctor, ret 0x10).
 - AL return 0 = OR_CONTINUE unless the case says otherwise (gr OpcodeResult: 0 continue, 1 wait, -1 interrupt).
-- Memory stores are written `[0xADDR] <- value`. SEH: every switch has a frame; a case that constructs a task sets the state slot to 0 around the ctor and back to -1.
+- Memory stores are written `[0xADDR] <- value`. SEH: in switches that have an SEH frame (see the dispatcher), task-constructing cases set the frame state slot around `new` + ctor and back to -1; this only matters for exception unwinding.
 - Vtable slots (index = offset/4): CEntity 0 dtor, 1 Add(rect), 2 Add, 3 Remove, 4 SetIsStatic, 5 SetModelIndex, 6
   SetModelIndexNoCreate, 7 CreateRwObject, 8 DeleteRwObject, 9 GetBoundRect, 10 ProcessControl, 11 ProcessCollision, 12
   ProcessShift, 13 TestCollision, 14 Teleport, 15 SpecialEntityPreCollisionStuff, 16 SpecialEntityCalcCollisionSteps, 17 PreRender,
@@ -33,7 +33,7 @@ Notation (shared by all ProcessCommands* spec files):
   GetActualScriptThingIndex 0x4839A0 / GetNewUniqueScriptThingIndex 0x483720 (cdecl (value, type)): 4 sequence, 6 attractor
   (2D effect), 8 group.
 
-## 0x490DB0 CRunningScript::ProcessCommands1500To1599  (catalogue: specified/REA, port level 10)
+## 0x490DB0 CRunningScript::ProcessCommands1500To1599  (catalogue: specified/REA, port level 36)
 - Dispatcher: `__thiscall` (this = ECX -> ESI at 0x490DDF), command id at [esp+4] kept in EBX for the whole function
   (`mov ebx,[esp+0x22C]` at 0x490DCC), `ret 4`. SEH frame `push -1; push 0x838A54; push fs:[0]` (0x490DB0-0x490DBE), `sub esp,0x218`,
   push EBX/EBP/ESI/EDI. In the cases: command id also at `[esp+0x238]`, SEH state slot `[esp+0x230]` (each task-constructing case

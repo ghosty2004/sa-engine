@@ -622,3 +622,14 @@
   renders area 0 with LODs, day/night prelight, fog, colour filter. Reuses sa-formats and four L1 helpers.
 - Verified by main session: release build, 28 unit tests pass; offscreen screenshot of Grove Street at 19:30
   streamed in 0.15 s and looks like the game. Screenshots stay in target/ (rendered Rockstar assets, never committed).
+
+## 2026-11-11 RE-SPEC-3 partial (main session)
+- Agent add9c262 with 5 writers (started before the nested-agent ban; stopped early on it). 683 new spec rows for
+  POP/RENDER/SCRIPT/AUDIO/HUD/SAVE; AI not started. Main session re-ran check_consts on every changed spec file:
+  817 claims, 0 mismatches (agent: 1,258 over all new files).
+- Notable gta-reversed errors (ports follow the exe): SCRIPT 0384 is real; many gr handlers return -1 where the exe
+  returns 0; CPopCycle renormalises rows to 100; HUD InsertStringInString uses "~a~"; FxEmitter rate ×0.001.
+- CAT-17 proposals: 0x6E7680 not RenderIfDoesntFit; vt_866db0 is a WinSock TCP helper; 0x4F1020 CAEStaticChannel
+  deleting dtor; 0x44DA30 TakeWidthIntoAccountForCoors; 0x44E790 GeneratePedCreationCoors; 0x450FB0
+  AddInteriorNodeLink; 0x421A50 WouldCollideAtThisAngle; 0x4410E0 IsDPadRightPressed; 0x41BDD0 SetEngineOn;
+  0x45AFB0 SetTurnSpeed; 0x821B40 _ftol2; missing from catalogue: 0x477DA0, 0x43EF90, 0x6E76E0.

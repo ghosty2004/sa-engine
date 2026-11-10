@@ -13,7 +13,7 @@ Notation (shared by all ProcessCommands* spec files):
   CPool<CPed>::GetRef).
 - `ftol` = 0x821B40 (MSVC _ftol2: truncates ST0 toward zero, result EDX:EAX). `CRGBA(r,g,b,a)` = 0x7170C0 (thiscall ctor, ret 0x10).
 - AL return 0 = OR_CONTINUE unless the case says otherwise (gr OpcodeResult: 0 continue, 1 wait, -1 interrupt).
-- Memory stores are written `[0xADDR] <- value`. SEH: every switch has a frame; a case that constructs a task sets the state slot to 0 around the ctor and back to -1.
+- Memory stores are written `[0xADDR] <- value`. SEH: in switches that have an SEH frame (see the dispatcher), task-constructing cases set the frame state slot around `new` + ctor and back to -1; this only matters for exception unwinding.
 - Vtable slots (index = offset/4): CEntity 0 dtor, 1 Add(rect), 2 Add, 3 Remove, 4 SetIsStatic, 5 SetModelIndex, 6
   SetModelIndexNoCreate, 7 CreateRwObject, 8 DeleteRwObject, 9 GetBoundRect, 10 ProcessControl, 11 ProcessCollision, 12
   ProcessShift, 13 TestCollision, 14 Teleport, 15 SpecialEntityPreCollisionStuff, 16 SpecialEntityCalcCollisionSteps, 17 PreRender,
@@ -27,7 +27,7 @@ Notation (shared by all ProcessCommands* spec files):
   parameters and returns OR_INTERRUPT (-1). That equals the exe only for opcodes that reach the switch default; for an
   `unimplemented` opcode that HAS a case here, gr deviates (it skips the case and leaves the IP on the parameters).
 
-## 0x47D210 CRunningScript::ProcessCommands400To499  (catalogue: specified/REA, port level 10)
+## 0x47D210 CRunningScript::ProcessCommands400To499  (catalogue: specified/REA, port level 32)
 - Dispatcher: `__thiscall` (this = ECX, copied to ESI at 0x47D22E; in this switch `this` is ESI, not EDI), command id at [esp+4],
   `ret 4`. SEH frame `push -1; push 0x838329; push fs:[0]` (0x47D210-0x47D21D), `fs:[0] <- esp` (0x47D222), `sub esp,0x58`,
   push EBX/ESI/EDI. EAX keeps the command id through the dispatch (`mov eax,[esp+0x10]` at 0x47D21E).
