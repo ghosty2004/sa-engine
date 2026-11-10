@@ -148,14 +148,23 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
     let in_image = |x: u32| (a.image.0..a.image.1).contains(&x);
     let caller_soft = a.caller != b.caller && !(in_image(a.caller) && in_image(b.caller));
     if a.caller != b.caller && !caller_soft {
-        return (Some(format!("caller: plain {:#x} rust {:#x}", a.caller, b.caller)), false);
+        return (
+            Some(format!("caller: plain {:#x} rust {:#x}", a.caller, b.caller)),
+            false,
+        );
     }
     let (ca, cb) = input_ctx(a, b);
     let delta = stack_delta(a, b);
     if a.args.len() != b.args.len()
-        || a.args.iter().zip(&b.args).any(|(&x, &y)| !normalise::words_equal(x, &ca, y, &cb))
+        || a.args
+            .iter()
+            .zip(&b.args)
+            .any(|(&x, &y)| !normalise::words_equal(x, &ca, y, &cb))
     {
-        return (Some(format!("args: plain {:x?} rust {:x?}", a.args, b.args)), false);
+        return (
+            Some(format!("args: plain {:x?} rust {:x?}", a.args, b.args)),
+            false,
+        );
     }
     let used: &[usize] = match a.conv {
         2 => &[1],    // thiscall: ECX
@@ -179,11 +188,18 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
         return (Some("x87 control word at entry".into()), false);
     }
     if a.mxcsr & 0xFFC0 != b.mxcsr & 0xFFC0 {
-        return (Some(format!("mxcsr: plain {:#x} rust {:#x}", a.mxcsr, b.mxcsr)), false);
+        return (
+            Some(format!("mxcsr: plain {:#x} rust {:#x}", a.mxcsr, b.mxcsr)),
+            false,
+        );
     }
     if a.regions.len() != b.regions.len() {
         return (
-            Some(format!("region count: plain {} rust {}", a.regions.len(), b.regions.len())),
+            Some(format!(
+                "region count: plain {} rust {}",
+                a.regions.len(),
+                b.regions.len()
+            )),
             false,
         );
     }
@@ -197,7 +213,10 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
                 && !normalise::words_equal(x.addr, &ca, y.addr, &cb))
         {
             return (
-                Some(format!("region {:?} {:#x} vs {:?} {:#x}", x.kind, x.addr, y.kind, y.addr)),
+                Some(format!(
+                    "region {:?} {:#x} vs {:?} {:#x}",
+                    x.kind, x.addr, y.kind, y.addr
+                )),
                 false,
             );
         }
@@ -238,38 +257,65 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
     let pre_b: BTreeMap<u32, u8> = b
         .window_pre
         .iter()
-        .flat_map(|w| w.bytes.iter().enumerate().map(move |(k, &v)| (rebase(b, delta, w.addr + k as u32), v)))
+        .flat_map(|w| {
+            w.bytes
+                .iter()
+                .enumerate()
+                .map(move |(k, &v)| (rebase(b, delta, w.addr + k as u32), v))
+        })
         .collect();
     let pre_a: BTreeMap<u32, u8> = a
         .window_pre
         .iter()
-        .flat_map(|w| w.bytes.iter().enumerate().map(move |(k, &v)| (w.addr + k as u32, v)))
+        .flat_map(|w| {
+            w.bytes
+                .iter()
+                .enumerate()
+                .map(move |(k, &v)| (w.addr + k as u32, v))
+        })
         .collect();
     for (&at, &v) in &pre_a {
-        let st = a.windows.iter().any(|&r| at >= r.0 && at < r.1 && is_static_window(a, r));
+        let st = a
+            .windows
+            .iter()
+            .any(|&r| at >= r.0 && at < r.1 && is_static_window(a, r));
         let Some(&u) = pre_b.get(&at) else { continue };
-        if !st || u == v || normalise::INPUT_EXCLUSIONS.iter().any(|e| at.wrapping_sub(e.addr) < e.len) {
+        if !st
+            || u == v
+            || normalise::INPUT_EXCLUSIONS
+                .iter()
+                .any(|e| at.wrapping_sub(e.addr) < e.len)
+        {
             continue;
         }
         // The aligned word, when both runs have all four bytes: compared through the normaliser
         // (OS object addresses, stack addresses).
         let ws = at & !3;
         let word = |m: &BTreeMap<u32, u8>| -> Option<u32> {
-            Some(u32::from_le_bytes([m.get(&ws).copied()?, m.get(&(ws + 1)).copied()?, m.get(&(ws + 2)).copied()?, m.get(&(ws + 3)).copied()?]))
+            Some(u32::from_le_bytes([
+                m.get(&ws).copied()?,
+                m.get(&(ws + 1)).copied()?,
+                m.get(&(ws + 2)).copied()?,
+                m.get(&(ws + 3)).copied()?,
+            ]))
         };
         if let (Some(x), Some(y)) = (word(&pre_a), word(&pre_b))
             && normalise::words_equal(x, &ca, y, &cb)
         {
             continue;
         }
-        return (Some(format!("window byte {at:#x} before the call: plain {v:#04x} rust {u:#04x}")), false);
+        return (
+            Some(format!(
+                "window byte {at:#x} before the call: plain {v:#04x} rust {u:#04x}"
+            )),
+            false,
+        );
     }
     let soft = caller_soft
-        || a
-        .regs_in
-        .iter()
-        .zip(&b.regs_in)
-        .any(|(&x, &y)| !normalise::words_equal(x, &ca, y, &cb));
+        || a.regs_in
+            .iter()
+            .zip(&b.regs_in)
+            .any(|(&x, &y)| !normalise::words_equal(x, &ca, y, &cb));
     (None, soft)
 }
 
@@ -303,7 +349,8 @@ pub fn merge(a: &Case, b: &Case) -> (Case, Option<String>) {
     // in EBP where the original used EBP as a general register): compare "preserved" with "preserved".
     let mut rust_out = b.orig.clone();
     for k in 3..7 {
-        if a.regs_in[k] != b.regs_in[k] && a.orig.regs[k] == a.regs_in[k] && rust_out.regs[k] == b.regs_in[k] {
+        if a.regs_in[k] != b.regs_in[k] && a.orig.regs[k] == a.regs_in[k] && rust_out.regs[k] == b.regs_in[k]
+        {
             rust_out.regs[k] = a.orig.regs[k];
         }
     }
@@ -351,7 +398,10 @@ fn foreign_uses(a: &Case, b: &Case, m: &Case) -> Vec<String> {
     let (oa, ob) = m.norm_ctx();
     let mut out = Vec::new();
     let mut word = |what: String, x: u32, cx: &normalise::NormCtx, y: u32, cy: &normalise::NormCtx| {
-        if x != y && cx.normalise(x) == normalise::Norm::Foreign && cy.normalise(y) == normalise::Norm::Foreign {
+        if x != y
+            && cx.normalise(x) == normalise::Norm::Foreign
+            && cy.normalise(y) == normalise::Norm::Foreign
+        {
             out.push(what);
         }
     };
@@ -359,8 +409,20 @@ fn foreign_uses(a: &Case, b: &Case, m: &Case) -> Vec<String> {
         word(format!("arg{k}"), x, &ia, y, &ib);
     }
     for k in 0..7 {
-        word(format!("{} in", fmt::REG_NAMES[k]), a.regs_in[k], &ia, b.regs_in[k], &ib);
-        word(format!("{} out", fmt::REG_NAMES[k]), m.orig.regs[k], &oa, m.rust.regs[k], &ob);
+        word(
+            format!("{} in", fmt::REG_NAMES[k]),
+            a.regs_in[k],
+            &ia,
+            b.regs_in[k],
+            &ib,
+        );
+        word(
+            format!("{} out", fmt::REG_NAMES[k]),
+            m.orig.regs[k],
+            &oa,
+            m.rust.regs[k],
+            &ob,
+        );
     }
     for (x, y) in a.regions.iter().zip(&b.regions) {
         if matches!(x.kind, RegionKind::Os(_)) {
@@ -371,7 +433,8 @@ fn foreign_uses(a: &Case, b: &Case, m: &Case) -> Vec<String> {
         let at = |k: usize| x.addr.wrapping_add((o + 4 * k) as u32);
         let w = |v: &[u8], k: usize| {
             let i = o + 4 * k;
-            v.get(i..i + 4).map(|q| u32::from_le_bytes([q[0], q[1], q[2], q[3]]))
+            v.get(i..i + 4)
+                .map(|q| u32::from_le_bytes([q[0], q[1], q[2], q[3]]))
         };
         let n = x.pre.len().max(x.post_orig.len()) / 4 + 1;
         for k in 0..n {
@@ -411,13 +474,20 @@ fn exclusion_uses(c: &Case) -> Vec<(normalise::Exclusion, String, String)> {
 
 pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
     let mut rep = Report::default();
-    for (what, v, want) in [("plain", plain, fmt::LEAVE_SPLIT_ORIG), ("rust", rust, fmt::LEAVE_SPLIT_RUST)] {
+    for (what, v, want) in [
+        ("plain", plain, fmt::LEAVE_SPLIT_ORIG),
+        ("rust", rust, fmt::LEAVE_SPLIT_RUST),
+    ] {
         if let Some(c) = v.iter().find(|c| c.leave != want) {
             rep.errors.push(format!(
                 "{what} spool: {} frame {} is not a split-run record of the {} (leave {})",
                 c.name,
                 c.frame,
-                if want == fmt::LEAVE_SPLIT_ORIG { "original" } else { "Rust implementation" },
+                if want == fmt::LEAVE_SPLIT_ORIG {
+                    "original"
+                } else {
+                    "Rust implementation"
+                },
                 c.leave
             ));
         }
@@ -446,14 +516,26 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
         };
         if by_fn[&a.fn_addr].diverged.is_some() {
             if let (Some(d), _) = input_diff(a, b) {
-                rep.timeline.push((a.seq, format!("{} ordinal {} frame {} caller {:#x}: {d}", a.name, a.ordinal, a.frame, a.caller)));
+                rep.timeline.push((
+                    a.seq,
+                    format!(
+                        "{} ordinal {} frame {} caller {:#x}: {d}",
+                        a.name, a.ordinal, a.frame, a.caller
+                    ),
+                ));
             }
             continue;
         }
         let e = by_fn.get_mut(&a.fn_addr).expect("counted above");
         let (d, soft) = input_diff(a, b);
         if let Some(d) = &d {
-            rep.timeline.push((a.seq, format!("{} ordinal {} frame {} caller {:#x}: {d}", a.name, a.ordinal, a.frame, a.caller)));
+            rep.timeline.push((
+                a.seq,
+                format!(
+                    "{} ordinal {} frame {} caller {:#x}: {d}",
+                    a.name, a.ordinal, a.frame, a.caller
+                ),
+            ));
         }
         if let Some(d) = d {
             if first_div.as_ref().is_none_or(|f| a.seq < f.0) {
@@ -477,7 +559,17 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
             for p in pages {
                 *e.fingerprint_pages.entry(p).or_default() += 1;
             }
-            rep.timeline.push((a.seq, format!("{} ordinal {} frame {} caller {:#x}: fingerprint only: pages {:x?}", a.name, a.ordinal, a.frame, a.caller, e.fingerprint_pages.keys().take(8).collect::<Vec<_>>())));
+            rep.timeline.push((
+                a.seq,
+                format!(
+                    "{} ordinal {} frame {} caller {:#x}: fingerprint only: pages {:x?}",
+                    a.name,
+                    a.ordinal,
+                    a.frame,
+                    a.caller,
+                    e.fingerprint_pages.keys().take(8).collect::<Vec<_>>()
+                ),
+            ));
         }
         let d = stack_delta(a, b);
         if d != 0 {
@@ -491,7 +583,12 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
                     *e.volatile_addrs.entry(x.addr).or_default() += 1;
                 }
                 if x != y && r.len() < 2 {
-                    r.push(format!("{:#x}: plain {} rust {}", x.addr, hex(&x.bytes), hex(&y.bytes)));
+                    r.push(format!(
+                        "{:#x}: plain {} rust {}",
+                        x.addr,
+                        hex(&x.bytes),
+                        hex(&y.bytes)
+                    ));
                 }
             }
         }
@@ -500,7 +597,11 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
             *e.foreign_uses.entry(u).or_default() += 1;
         }
         let fw = |c: &Case| -> BTreeMap<u32, u32> {
-            c.foreign_words.chunks(2).filter(|p| p.len() == 2).map(|p| (p[0], p[1])).collect()
+            c.foreign_words
+                .chunks(2)
+                .filter(|p| p.len() == 2)
+                .map(|p| (p[0], p[1]))
+                .collect()
         };
         let (fa, fb) = (fw(a), fw(b));
         for (addr, va) in &fa {
@@ -574,7 +675,11 @@ pub fn dump_diff(a: &[u8], b: &[u8]) -> Result<Vec<(u32, String, String)>, Strin
     let mut out = Vec::new();
     for ((sa, x), (sb, y)) in wa.iter().zip(&wb) {
         if sa != sb || x.len() != y.len() {
-            return Err(format!("window layout differs: {sa:#x}+{} vs {sb:#x}+{}", x.len(), y.len()));
+            return Err(format!(
+                "window layout differs: {sa:#x}+{} vs {sb:#x}+{}",
+                x.len(),
+                y.len()
+            ));
         }
         let mut k = 0;
         while k < x.len() {
@@ -608,7 +713,8 @@ pub fn nesting(spool: &[Case]) -> BTreeMap<(String, String), usize> {
             stack.pop();
         }
         if let Some(&(_, o)) = stack.last() {
-            *out.entry((spool[o].name.clone(), spool[i].name.clone())).or_default() += 1;
+            *out.entry((spool[o].name.clone(), spool[i].name.clone()))
+                .or_default() += 1;
         }
         stack.push((i, i));
     }
@@ -705,7 +811,12 @@ pub fn print_report(rep: &Report) -> String {
             );
         }
         if !f.foreign_words.is_empty() {
-            let v: Vec<String> = f.foreign_words.iter().take(12).map(|a| format!("{a:#x}")).collect();
+            let v: Vec<String> = f
+                .foreign_words
+                .iter()
+                .take(12)
+                .map(|a| format!("{a:#x}"))
+                .collect();
             let _ = writeln!(
                 s,
                 "    window words holding differing OS object addresses (masked in the fingerprint): {} address(es): {}{}",
@@ -715,14 +826,30 @@ pub fn print_report(rep: &Report) -> String {
             );
         }
         for v in rep.volatile_rules.get(&f.addr).into_iter().flatten() {
-            let _ = writeln!(s, "    input exclusion used (fingerprint-excluded bytes differed): {v}");
+            let _ = writeln!(
+                s,
+                "    input exclusion used (fingerprint-excluded bytes differed): {v}"
+            );
         }
         if !f.volatile_addrs.is_empty() {
-            let v: Vec<String> = f.volatile_addrs.iter().map(|(a, n)| format!("{a:#x} x{n}")).collect();
-            let _ = writeln!(s, "    input exclusions that differed (address x pairs): {}", v.join(", "));
+            let v: Vec<String> = f
+                .volatile_addrs
+                .iter()
+                .map(|(a, n)| format!("{a:#x} x{n}"))
+                .collect();
+            let _ = writeln!(
+                s,
+                "    input exclusions that differed (address x pairs): {}",
+                v.join(", ")
+            );
         }
         if !f.undeclared.is_empty() {
-            let v: Vec<String> = f.undeclared.iter().take(8).map(|((a, n), k)| format!("{a:#x}+{n} x{k}")).collect();
+            let v: Vec<String> = f
+                .undeclared
+                .iter()
+                .take(8)
+                .map(|((a, n), k)| format!("{a:#x}+{n} x{k}"))
+                .collect();
             let _ = writeln!(
                 s,
                 "    writes outside the declared write set (add to tools/e2e/l2-extras.txt): {}{}",
@@ -776,10 +903,16 @@ mod tests {
             page_hashes: vec![(0x8A4000, 1), (0x8A5000, 2)],
             orig: Outcome {
                 regs: [eax, 0, 0, 4, 5, 6, 7],
-                writes: vec![Write { addr: 0x8A4010, bytes: vec![9] }],
+                writes: vec![Write {
+                    addr: 0x8A4010,
+                    bytes: vec![9],
+                }],
                 ..Outcome::default()
             },
-            window_pre: vec![Write { addr: 0x8A4010, bytes: vec![0] }],
+            window_pre: vec![Write {
+                addr: 0x8A4010,
+                bytes: vec![0],
+            }],
             ret: 1,
             ..Case::default()
         }
@@ -802,12 +935,23 @@ mod tests {
         let mut r3 = r.clone();
         r3[1].page_hashes[1].1 = 3;
         let rep = split_report(&p, &r3);
-        assert_eq!(rep.fns[0].verdict(), "PASS-FP", "undeclared state differed, outputs equal");
+        assert_eq!(
+            rep.fns[0].verdict(),
+            "PASS-FP",
+            "undeclared state differed, outputs equal"
+        );
         assert_eq!(rep.fns[0].compared, 2);
         assert_eq!(rep.fns[0].fingerprint_pages.get(&0x8A5000), Some(&1));
         let mut r4 = r.clone();
         r4[0].regions[0].pre[1] = 7;
-        assert!(split_report(&p, &r4).fns[0].diverged.as_ref().unwrap().2.contains("0xb71a61"));
+        assert!(
+            split_report(&p, &r4).fns[0]
+                .diverged
+                .as_ref()
+                .unwrap()
+                .2
+                .contains("0xb71a61")
+        );
         // scratch registers are soft
         let mut r5 = r.clone();
         r5[0].regs_in[2] = 99;
@@ -816,12 +960,22 @@ mod tests {
         // a shifted stack: a stack-pointer argument and a write to the caller's stack
         let mut p2 = p.clone();
         let mut r6 = r.clone();
-        for (c, esp) in p2.iter_mut().map(|c| (c, 0x36F1F0)).chain(r6.iter_mut().map(|c| (c, 0x36F1C0))) {
+        for (c, esp) in p2
+            .iter_mut()
+            .map(|c| (c, 0x36F1F0))
+            .chain(r6.iter_mut().map(|c| (c, 0x36F1C0)))
+        {
             c.esp = esp;
             c.stack = (0x270000, 0x370000);
             c.args[0] = esp + 0x18;
-            c.orig.writes.push(Write { addr: esp + 0x20, bytes: vec![5] });
-            c.window_pre.push(Write { addr: esp + 0x20, bytes: vec![0] });
+            c.orig.writes.push(Write {
+                addr: esp + 0x20,
+                bytes: vec![5],
+            });
+            c.window_pre.push(Write {
+                addr: esp + 0x20,
+                bytes: vec![0],
+            });
         }
         let rep = split_report(&p2, &r6);
         assert_eq!(rep.fns[0].verdict(), "PASS", "{:?}", rep.fns[0]);
@@ -853,7 +1007,10 @@ mod tests {
         assert_eq!(rep.fns[0].verdict(), "PASS", "{:?}", rep.fns[0]);
         assert_eq!(rep.fns[0].foreign_uses.get("region address 0x2f3ab10"), Some(&1));
         r9[0].foreign.clear();
-        assert!(split_report(&p5, &r9).fns[0].diverged.is_some(), "a raw address in one run differs");
+        assert!(
+            split_report(&p5, &r9).fns[0].diverged.is_some(),
+            "a raw address in one run differs"
+        );
         // callee-saved EBP with different entry values: preserved in both runs = equal
         let mut p4 = p.clone();
         let mut r8 = r.clone();

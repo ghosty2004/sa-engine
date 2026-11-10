@@ -1,0 +1,16 @@
+addr	name	port	state	l2_grove	l2_pause_restart	l2_world_cheats	l3	hookoff_grove	notes
+0x463CA0	CRunningScript::GetPointerToLocalVariable	vm::get_pointer_to_local_variable	implemented-needs-L2	NOCALLS	NOCALLS	NOCALLS	PASS	PASS	stub 0x156E2B0; preserve ecx
+0x463CC0	CRunningScript::GetPointerToLocalArrayElement	vm::get_pointer_to_local_array_element	implemented-needs-L2	NOCALLS	NOCALLS	NOCALLS	PASS	PASS	preserve ecx
+0x463CF0	CRunningScript::ReadArrayInformation	vm::read_array_information	L2	PASS 1000/1001	PASS 235/235	PASS 1000/1001	PASS	PASS	stub 0x156E350; preserve ecx; extras arg1/arg2
+0x463D50	CRunningScript::ReadTextLabelFromScript	vm::read_text_label_from_script	L2	PASS 1000/1564	PASS 1000/1001	PASS 1000/1001	PASS	PASS	exe differs from gr for 0xF (raw copy) and long-string lengths
+0x464080	CRunningScript::CollectParameters	vm::collect_parameters	L2	PASS 1000/1001	PASS 1000/1001	PASS 1000/1001	PASS	no trace (harness)	preserve ecx; extras ScriptParams; hookoff-4 reached frame 5200 but wrote no trace
+0x464250	CRunningScript::CollectNextParameterWithoutIncreasingPC	vm::collect_next_parameter_without_increasing_pc	L2	PASS 475/475	PASS 937/937	PASS 475/475	PASS	PASS	preserve ecx
+0x464370	CRunningScript::StoreParameters	vm::store_parameters	L2	PASS 1000/1001	PASS 1000/1001	PASS 1000/1001	PASS	PASS	preserve ecx; signed count; extras ScriptSpace/locals
+0x464500	CRunningScript::ReadParametersForNewlyStartedScript	vm::read_parameters_for_newly_started_script	L2	PASS 28/28	PASS 51/51	PASS 28/28	PASS	PASS	preserve ecx
+0x464700	CRunningScript::GetIndexOfGlobalVariable	vm::get_index_of_global_variable	implemented-needs-L2	NOCALLS	NOCALLS	NOCALLS	PASS	PASS	stub 0x156F340; upper EAX bits not modelled
+0x464790	CRunningScript::GetPointerToScriptVariable	vm::get_pointer_to_script_variable	L2	PASS 1000/5158	PASS 1000/1001	PASS 1000/1001	PASS	PASS
+0x464DA0	CRunningScript::UpdatePC	vm::update_pc	L2	PASS 1000/3184	PASS 1000/1001	PASS 1000/1001	PASS	PASS	stub 0x15620B0; preserve ecx
+0x4859D0	CRunningScript::UpdateCompareFlag	vm::update_compare_flag	L2	PASS 1000/3084	PASS 1000/1001	PASS 1000/1001	PASS	PASS	preserve ecx; raw argument byte
+0x469EB0	CRunningScript::ProcessOneCommand	vm::process_one_command	implemented-needs-L2	NOCALLS	NOCALLS	NOCALLS	PASS	PASS	no caller in the exe (inlined into Process)
+0x469F00	CRunningScript::Process	vm::process	implemented	not run	not run	not run	PASS	PASS	runs the whole command loop; needs split-run L2
+0x465E60	CRunningScript::ProcessCommands0To99	cmd0::process_commands_0_to_99	implemented	HANG (5 cases, 0 mism, run stuck at frame 202)	not run	not run	PASS	PASS	whole switch, 85 cases; needs split-run L2

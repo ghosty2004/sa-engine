@@ -1684,6 +1684,7 @@ dependencies = [
  "sa-math",
  "sa-oracle-format",
  "sa-pop",
+ "sa-script",
  "sa-stream",
  "sa-world",
  "windows-sys 0.61.2",
@@ -1722,6 +1723,7 @@ dependencies = [
  "sa-math",
  "sa-oracle-format",
  "sa-pop",
+ "sa-script",
  "sa-stream",
  "sa-world",
  "unicorn-engine",
@@ -1769,6 +1771,17 @@ dependencies = [
 [[package]]
 name = "sa-samp-api"
 version = "0.1.0"
+
+[[package]]
+name = "sa-script"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-stream",
+ "sa-world",
+]
 
 [[package]]
 name = "sa-stream"

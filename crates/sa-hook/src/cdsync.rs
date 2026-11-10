@@ -63,7 +63,9 @@ fn stream_of(sema: HANDLE) -> Option<u32> {
     if base == 0 {
         return None;
     }
-    (0..n).map(|i| base + i * 0x30).find(|&s| rd_u32(s + 0x14) == sema as usize as u32)
+    (0..n)
+        .map(|i| base + i * 0x30)
+        .find(|&s| rd_u32(s + 0x14) == sema as usize as u32)
 }
 
 /// Replaces `WaitForSingleObject(s->sema, INFINITE)` in CdStreamSync (stdcall, same signature).
@@ -112,7 +114,9 @@ pub(crate) fn install() {
     match win::read(SITE, 6) {
         Some(b) if b == SITE_BYTES => {}
         other => {
-            log(&format!("cdsync: {SITE:#x} unexpected bytes {other:02x?}, not patched"));
+            log(&format!(
+                "cdsync: {SITE:#x} unexpected bytes {other:02x?}, not patched"
+            ));
             return;
         }
     }

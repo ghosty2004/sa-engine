@@ -17,7 +17,7 @@ use crate::mspec::*;
 use crate::specs::{ExpRet, RetKind::*, Spec};
 use sa_core::mem::GPtr;
 use sa_stream::colstore;
-use sa_stream::shared::{ColDef, CStreamingInfo};
+use sa_stream::shared::{CStreamingInfo, ColDef};
 use sa_stream::streaming_info as si;
 
 const BASE: u32 = SCRATCH + 0x10;
@@ -66,13 +66,18 @@ fn handle(i: i32) -> u32 {
     ((i as u32) << 24) | 0x123
 }
 fn handle_patches() -> Vec<(u32, Vec<u8>)> {
-    (0..8).map(|i| (0x8E4904 + 0x30 * i as u32, handle(i).to_le_bytes().to_vec())).collect()
+    (0..8)
+        .map(|i| (0x8E4904 + 0x30 * i as u32, handle(i).to_le_bytes().to_vec()))
+        .collect()
 }
 
 fn coldef_region() -> Region {
     let mut w = vec![W::F; 4];
     w.extend([W::R; 7]);
-    Region { words: w, kind: Kind::Any }
+    Region {
+        words: w,
+        kind: Kind::Any,
+    }
 }
 
 /// Area word: 0 half of the time.
@@ -86,87 +91,135 @@ fn fix_area(v: &mut [u32], lay: &Layout) {
 /// Every spec of this file.
 pub fn all() -> Vec<Spec> {
     vec![
-        b("CStreamingInfoInit", "CStreamingInfo::Init", 0x407460, Thiscall, Void)
-            .regions(vec![info_region()])
-            .args(vec![A::P(0)])
-            .rust(|c| {
-                si::init(host(c, 0));
-                ExpRet::Void
-            }),
-        b("CStreamingInfoInList", "CStreamingInfo::InList", 0x407560, Thiscall, Eax)
-            .regions(vec![info_region()])
-            .args(vec![A::P(0)])
-            .rust(|c| ExpRet::Eax(si::in_list(host(c, 0)))),
-        b("CStreamingInfoSetCdPosnAndSize", "CStreamingInfo::SetCdPosnAndSize", 0x4075E0, Thiscall, Void)
-            .regions(vec![info_region()])
-            .args(vec![A::P(0), A::I(g_word), A::I(g_word)])
-            .rust(|c| {
-                let (a, b2) = (c.i(1), c.i(2));
-                si::set_cd_posn_and_size(host(c, 0), a, b2);
-                ExpRet::Void
-            }),
-        b("CStreamingInfoGetCdPosn", "CStreamingInfo::GetCdPosn", 0x407570, Thiscall, Eax)
-            .regions(vec![info_region()])
-            .args(vec![A::P(0)])
-            .fix(|v, lay| fix_img(v, lay, 0))
-            .patch(handle_patches())
-            .reads(vec![(0x8E4904, 0x8E4904 + 8 * 0x30)])
-            .rust(|c| ExpRet::Eax(si::get_cd_posn_with(handle, host(c, 0)))),
-        b("CStreamingInfoGetCdPosnAndSize", "CStreamingInfo::GetCdPosnAndSize", 0x4075A0, Thiscall, Al)
-            .regions(vec![info_region(), raw(1), raw(1)])
-            .args(vec![A::P(0), A::P(1), A::P(2)])
-            .fix(|v, lay| {
-                fix_img(v, lay, 0);
-                // size 0 a quarter of the time
-                let s = lay.word_slot[0][3].unwrap();
-                if v[s] & 3 == 0 {
-                    v[s] = 0;
-                }
-            })
-            .patch(handle_patches())
-            .reads(vec![(0x8E4904, 0x8E4904 + 8 * 0x30)])
-            .rust(|c| {
-                let r = si::get_cd_posn_and_size_with(handle, host(c, 0), host(c, 1), host(c, 2));
-                ExpRet::Al(r as u8)
-            }),
-        b("CStreamingInfoAddToList", "CStreamingInfo::AddToList", 0x407480, Thiscall, Void)
-            .regions(vec![raw(40)])
-            .args(vec![A::I(g_elem), A::I(g_elem)])
-            .fix(|v, l| fix_indices(v, l))
-            .patch(vec![(0x9654B4, BASE.to_le_bytes().to_vec())])
-            .reads(vec![(0x9654B4, 0x9654B8)])
-            .rust(|c| {
-                let (t, a) = (c.i(0), c.i(1));
-                let base: GPtr<CStreamingInfo> = host(c, 0);
-                let this = host_at(c, t);
-                let after = host_at(c, a);
-                si::add_to_list_with(base, this, after);
-                ExpRet::Void
-            }),
-        b("CStreamingInfoRemoveFromList", "CStreamingInfo::RemoveFromList", 0x4074E0, Thiscall, Void)
-            .regions(vec![raw(40)])
-            .args(vec![A::I(g_elem)])
-            .fix(|v, l| fix_indices(v, l))
-            .patch(vec![(0x9654B4, BASE.to_le_bytes().to_vec())])
-            .reads(vec![(0x9654B4, 0x9654B8)])
-            .rust(|c| {
-                let t = c.i(0);
-                let base: GPtr<CStreamingInfo> = host(c, 0);
-                let this = host_at(c, t);
-                si::remove_from_list_with(base, this);
-                ExpRet::Void
-            }),
-        b("CColStoreSetIfCollisionIsRequired", "CColStore::SetIfCollisionIsRequired", 0x4103D0, Cdecl, Void)
-            .regions(vec![vec2(), coldef_region(), raw(1)])
-            .args(vec![A::P(0), A::P(1)])
-            .fix(|v, l| fix_area(v, l))
-            .patch(vec![(0x4103D1, (SCRATCH + 0x70).to_le_bytes().to_vec())])
-            .rust(|c| {
-                let area = c.u(2, 0) as i32;
-                let def: GPtr<ColDef> = host(c, 1);
-                colstore::set_if_collision_is_required_with(area, host(c, 0), def);
-                ExpRet::Void
-            }),
+        b(
+            "CStreamingInfoInit",
+            "CStreamingInfo::Init",
+            0x407460,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![info_region()])
+        .args(vec![A::P(0)])
+        .rust(|c| {
+            si::init(host(c, 0));
+            ExpRet::Void
+        }),
+        b(
+            "CStreamingInfoInList",
+            "CStreamingInfo::InList",
+            0x407560,
+            Thiscall,
+            Eax,
+        )
+        .regions(vec![info_region()])
+        .args(vec![A::P(0)])
+        .rust(|c| ExpRet::Eax(si::in_list(host(c, 0)))),
+        b(
+            "CStreamingInfoSetCdPosnAndSize",
+            "CStreamingInfo::SetCdPosnAndSize",
+            0x4075E0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![info_region()])
+        .args(vec![A::P(0), A::I(g_word), A::I(g_word)])
+        .rust(|c| {
+            let (a, b2) = (c.i(1), c.i(2));
+            si::set_cd_posn_and_size(host(c, 0), a, b2);
+            ExpRet::Void
+        }),
+        b(
+            "CStreamingInfoGetCdPosn",
+            "CStreamingInfo::GetCdPosn",
+            0x407570,
+            Thiscall,
+            Eax,
+        )
+        .regions(vec![info_region()])
+        .args(vec![A::P(0)])
+        .fix(|v, lay| fix_img(v, lay, 0))
+        .patch(handle_patches())
+        .reads(vec![(0x8E4904, 0x8E4904 + 8 * 0x30)])
+        .rust(|c| ExpRet::Eax(si::get_cd_posn_with(handle, host(c, 0)))),
+        b(
+            "CStreamingInfoGetCdPosnAndSize",
+            "CStreamingInfo::GetCdPosnAndSize",
+            0x4075A0,
+            Thiscall,
+            Al,
+        )
+        .regions(vec![info_region(), raw(1), raw(1)])
+        .args(vec![A::P(0), A::P(1), A::P(2)])
+        .fix(|v, lay| {
+            fix_img(v, lay, 0);
+            // size 0 a quarter of the time
+            let s = lay.word_slot[0][3].unwrap();
+            if v[s] & 3 == 0 {
+                v[s] = 0;
+            }
+        })
+        .patch(handle_patches())
+        .reads(vec![(0x8E4904, 0x8E4904 + 8 * 0x30)])
+        .rust(|c| {
+            let r = si::get_cd_posn_and_size_with(handle, host(c, 0), host(c, 1), host(c, 2));
+            ExpRet::Al(r as u8)
+        }),
+        b(
+            "CStreamingInfoAddToList",
+            "CStreamingInfo::AddToList",
+            0x407480,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![raw(40)])
+        .args(vec![A::I(g_elem), A::I(g_elem)])
+        .fix(|v, l| fix_indices(v, l))
+        .patch(vec![(0x9654B4, BASE.to_le_bytes().to_vec())])
+        .reads(vec![(0x9654B4, 0x9654B8)])
+        .rust(|c| {
+            let (t, a) = (c.i(0), c.i(1));
+            let base: GPtr<CStreamingInfo> = host(c, 0);
+            let this = host_at(c, t);
+            let after = host_at(c, a);
+            si::add_to_list_with(base, this, after);
+            ExpRet::Void
+        }),
+        b(
+            "CStreamingInfoRemoveFromList",
+            "CStreamingInfo::RemoveFromList",
+            0x4074E0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![raw(40)])
+        .args(vec![A::I(g_elem)])
+        .fix(|v, l| fix_indices(v, l))
+        .patch(vec![(0x9654B4, BASE.to_le_bytes().to_vec())])
+        .reads(vec![(0x9654B4, 0x9654B8)])
+        .rust(|c| {
+            let t = c.i(0);
+            let base: GPtr<CStreamingInfo> = host(c, 0);
+            let this = host_at(c, t);
+            si::remove_from_list_with(base, this);
+            ExpRet::Void
+        }),
+        b(
+            "CColStoreSetIfCollisionIsRequired",
+            "CColStore::SetIfCollisionIsRequired",
+            0x4103D0,
+            Cdecl,
+            Void,
+        )
+        .regions(vec![vec2(), coldef_region(), raw(1)])
+        .args(vec![A::P(0), A::P(1)])
+        .fix(|v, l| fix_area(v, l))
+        .patch(vec![(0x4103D1, (SCRATCH + 0x70).to_le_bytes().to_vec())])
+        .rust(|c| {
+            let area = c.u(2, 0) as i32;
+            let def: GPtr<ColDef> = host(c, 1);
+            colstore::set_if_collision_is_required_with(area, host(c, 0), def);
+            ExpRet::Void
+        }),
         b(
             "CColStoreSetIfCollisionIsRequiredReducedBB",
             "CColStore::SetIfCollisionIsRequiredReducedBB",

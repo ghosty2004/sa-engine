@@ -55,7 +55,11 @@ fn shape_group(v: &mut Inputs, l: &Layout, arg: Option<usize>) {
         let pick = (v[s] >> 8) % 26;
         if v[s] & 3 != 0 && (pick as usize) < 23 {
             let e = m[pick as usize];
-            v[s] = if v[s] & 4 != 0 { e as u16 as u32 } else { e as i32 as u32 };
+            v[s] = if v[s] & 4 != 0 {
+                e as u16 as u32
+            } else {
+                e as i32 as u32
+            };
         }
     }
 }
@@ -74,44 +78,74 @@ fn g_index(r: &mut crate::generate::Rng) -> u32 {
 /// Every spec of this file.
 pub fn all() -> Vec<Spec> {
     vec![
-        b("CLoadedCarGroupClear", "CLoadedCarGroup::Clear", 0x611B90, Thiscall, Void)
-            .regions(vec![group_region()])
-            .args(vec![A::P(0)])
-            .rust(|c| {
-                lcg::clear(group_ptr(c));
-                ExpRet::Void
-            }),
-        b("CLoadedCarGroupAddMember", "CLoadedCarGroup::AddMember", 0x611BB0, Thiscall, Void)
-            .regions(vec![group_region()])
-            .args(vec![A::P(0), A::I(|r| r.next_u32())])
-            .fix(|v, l| shape_group(v, l, None))
-            .rust(|c| {
-                let m = c.i(1) as i32;
-                lcg::add_member(group_ptr(c), m);
-                ExpRet::Void
-            }),
-        b("CLoadedCarGroupRemoveMember", "CLoadedCarGroup::RemoveMember", 0x611BD0, Thiscall, Void)
-            .regions(vec![group_region()])
-            .args(vec![A::P(0), A::I(|r| r.next_u32())])
-            .fix(|v, l| shape_group(v, l, Some(1)))
-            .rust(|c| {
-                let m = c.i(1) as i32;
-                lcg::remove_member(group_ptr(c), m);
-                ExpRet::Void
-            }),
-        b("CLoadedCarGroupGetMember", "CLoadedCarGroup::GetMember", 0x611C20, Thiscall, Eax)
-            .regions(vec![raw(64)])
-            .args(vec![A::P(0), A::I(g_index)])
-            .rust(|c| {
-                // indices < 0x80 stay inside the 0x100-byte region
-                let i = c.i(1) as i32;
-                ExpRet::Eax(lcg::get_member(group_ptr(c), i) as u32)
-            }),
-        b("CLoadedCarGroupCountMembers", "CLoadedCarGroup::CountMembers", 0x611C30, Thiscall, Eax)
-            .regions(vec![group_region()])
-            .args(vec![A::P(0)])
-            .fix(|v, l| shape_group(v, l, None))
-            .rust(|c| ExpRet::Eax(lcg::count_members(group_ptr(c)) as u32)),
+        b(
+            "CLoadedCarGroupClear",
+            "CLoadedCarGroup::Clear",
+            0x611B90,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![group_region()])
+        .args(vec![A::P(0)])
+        .rust(|c| {
+            lcg::clear(group_ptr(c));
+            ExpRet::Void
+        }),
+        b(
+            "CLoadedCarGroupAddMember",
+            "CLoadedCarGroup::AddMember",
+            0x611BB0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![group_region()])
+        .args(vec![A::P(0), A::I(|r| r.next_u32())])
+        .fix(|v, l| shape_group(v, l, None))
+        .rust(|c| {
+            let m = c.i(1) as i32;
+            lcg::add_member(group_ptr(c), m);
+            ExpRet::Void
+        }),
+        b(
+            "CLoadedCarGroupRemoveMember",
+            "CLoadedCarGroup::RemoveMember",
+            0x611BD0,
+            Thiscall,
+            Void,
+        )
+        .regions(vec![group_region()])
+        .args(vec![A::P(0), A::I(|r| r.next_u32())])
+        .fix(|v, l| shape_group(v, l, Some(1)))
+        .rust(|c| {
+            let m = c.i(1) as i32;
+            lcg::remove_member(group_ptr(c), m);
+            ExpRet::Void
+        }),
+        b(
+            "CLoadedCarGroupGetMember",
+            "CLoadedCarGroup::GetMember",
+            0x611C20,
+            Thiscall,
+            Eax,
+        )
+        .regions(vec![raw(64)])
+        .args(vec![A::P(0), A::I(g_index)])
+        .rust(|c| {
+            // indices < 0x80 stay inside the 0x100-byte region
+            let i = c.i(1) as i32;
+            ExpRet::Eax(lcg::get_member(group_ptr(c), i) as u32)
+        }),
+        b(
+            "CLoadedCarGroupCountMembers",
+            "CLoadedCarGroup::CountMembers",
+            0x611C30,
+            Thiscall,
+            Eax,
+        )
+        .regions(vec![group_region()])
+        .args(vec![A::P(0)])
+        .fix(|v, l| shape_group(v, l, None))
+        .rust(|c| ExpRet::Eax(lcg::count_members(group_ptr(c)) as u32)),
         // __init_g_bab358: the `fstp dword [0xBAB358]` operand (0x84F2BC + 2) patched to region 0
         b("InitGBab358", "__init_g_bab358", 0x84F2B0, Cdecl, Void)
             .regions(vec![out1()])
@@ -153,9 +187,22 @@ fn pools() -> Vec<Spec> {
         pool::pool_new::<DummySlot>,
     );
     vec![
-        pool_new_spec("CTxdPoolNew", "FUN_00731b80", 0x731B80, 0x0C, pool::pool_new::<TxdSlot>),
+        pool_new_spec(
+            "CTxdPoolNew",
+            "FUN_00731b80",
+            0x731B80,
+            0x0C,
+            pool::pool_new::<TxdSlot>,
+        ),
         ctor_spec("CTxdPoolCtor", "FUN_00731ad0", 0x731AD0, 0x0C, NEW, txd_pool_ctor),
-        ctor_spec("CColPoolCtor", "thunk_FUN_015611f0", 0x410F80, 0x2C, NEW_ARRAY, misc::col_pool_ctor),
+        ctor_spec(
+            "CColPoolCtor",
+            "thunk_FUN_015611f0",
+            0x410F80,
+            0x2C,
+            NEW_ARRAY,
+            misc::col_pool_ctor,
+        ),
         ctor_spec(
             "CVehicleStructurePoolCtor",
             "FUN_005b8340",

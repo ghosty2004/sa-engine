@@ -39,12 +39,38 @@ pub fn all() -> Vec<Spec> {
             .args(vec![A::I(g_scan), A::I(g_flag)])
             .reads(vec![(0x8D2C00, 0x8D2E00)])
             .rust(|c| ExpRet::Eax(platform::rs_key_from_scan_code(c.i(0), c.i(1) as i32))),
-        constant("RsRegisterImageLoader", "Rs::RsRegisterImageLoader", 0x619470, platform::rs_register_image_loader() as u32),
-        constant("RsSetDebug", "Rs::RsSetDebug", 0x619480, platform::rs_set_debug() as u32),
-        constant("MotionBlurClose", "CMBlur::MotionBlurClose", 0x71D720, platform::motion_blur_close() as u32),
-        constant("psInstallFileSystem", "Ps::psInstallFileSystem", 0x745520, platform::ps_install_file_system() as u32),
-        b("psPathGetSeparator", "Ps::psPathGetSeparator", 0x745500, Cdecl, Al)
-            .args(vec![A::I(|r| r.next_u32())])
-            .rust(|_| ExpRet::Al(platform::ps_path_get_separator())),
+        constant(
+            "RsRegisterImageLoader",
+            "Rs::RsRegisterImageLoader",
+            0x619470,
+            platform::rs_register_image_loader() as u32,
+        ),
+        constant(
+            "RsSetDebug",
+            "Rs::RsSetDebug",
+            0x619480,
+            platform::rs_set_debug() as u32,
+        ),
+        constant(
+            "MotionBlurClose",
+            "CMBlur::MotionBlurClose",
+            0x71D720,
+            platform::motion_blur_close() as u32,
+        ),
+        constant(
+            "psInstallFileSystem",
+            "Ps::psInstallFileSystem",
+            0x745520,
+            platform::ps_install_file_system() as u32,
+        ),
+        b(
+            "psPathGetSeparator",
+            "Ps::psPathGetSeparator",
+            0x745500,
+            Cdecl,
+            Al,
+        )
+        .args(vec![A::I(|r| r.next_u32())])
+        .rust(|_| ExpRet::Al(platform::ps_path_get_separator())),
     ]
 }
