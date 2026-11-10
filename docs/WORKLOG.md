@@ -692,3 +692,16 @@
 - States: 109 → L2 (at least one plain PASS, no FAIL, orchestrators excluded). F1 = 678 / 15,479 (4.38 %).
 - Policy note: an extras line covering the whole static data with access D does not count toward L2 (PLAN §5 asks for
   0 undeclared writes against an evidence-backed set; a blanket region proves nothing).
+
+## 2026-11-11 RE-SPEC-AI pass 1 (main session)
+- Agent ad07387a + 2 helpers: docs/re/specs/AI/ (159 files), 564 index rows. Main session re-ran check_consts over all
+  AI files: 228 claims, 0 mismatches (claim density is low; ports must re-read the bytes for rows marked
+  medium/low: 0x4BDB80, 0x4BE7D0, 0x662A10, 0x683AD0, 0x644470, 0x642AE0, 0x681FE0, 0x674140, 0x6479B0, 0x64FC10 low,
+  and the CPedGeometryAnalyser notes, which nobody checked against the bytes).
+- gr errors the ports must not copy: EventHandler response functions keep m_EventResponseTask on null source;
+  0x4C2610 2D squared radius; Sequence repeat count; CTaskSimpleCarDrive::TriggerIK rand only for some missions
+  (RNG stream!); GangLeader 1% roll; KillCriminal ped types ≥ 24; several structure sizes/offsets
+  (WalkRoundObject up to +0x53, GoToVehicleAndLean 0x24, CTaskComplexPartner +8).
+- CAT-17 proposals: scalar deleting destructors catalogued as ~X (vtable slot 0) in CTaskComplex.md/CTaskSimple.md
+  tables; names 0x4ABCA0 CEventDamage::HasKilledPed, 0x5FFEE0 CEntityScanner::GetClosestEntityInRange, 0x606060
+  CDecisionMaker::MakeDecision, 0x646CF0 CCarEnterExit::IsCarDoorInUse, 0x667310 CPathNode::GetNodeCoors, others in files.

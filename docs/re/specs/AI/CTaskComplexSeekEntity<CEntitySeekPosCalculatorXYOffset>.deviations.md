@@ -10,3 +10,8 @@
   (move state); `if (entity) RegisterReference(entity, this+0xC)`.
 - Verdict: REFUTED (the original has no calculator argument and default-constructs it with a zero offset; gr's default `{}` is equivalent provided
   its CVector value-initialises to zero). Class: harmless. Note: `+0x20` is zeroed by the original between the args (0x661E12).
+
+## 0x665080 CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CreateNextSubTask  (gr_deviations = 1)
+- SeekEntity/TaskComplexSeekEntity.h:217 `NOTSA_UNREACHABLE();`: Original (`ret 4`): `edi = 0` (0x66509F); dispatch on m_pSubTask->GetTaskType() 0x6650B1-0x665149
+  (0x2CF, 0xF4, 0xCB, 0xDB (= 0xCB + 0x10), 0x2C0, ...); unknown types jump to 0x665256 and return EDI = 0.
+  Verdict: CONFIRMED (returns nullptr). Class: keep-original.
