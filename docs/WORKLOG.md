@@ -543,3 +543,11 @@
 - INF-17 re-run (lane 3, main session): split-L2 groups l/m/h/solo on the grove walk after FPU-GUARD:
   26 PASS → L2 (F1 343 → 369), 6 PASS-FP not set, 20 NOCASES, 2 FAIL open (RsEventHandler,
   psCameraShowRaster solo). Every splito/splitr trace IDENTICAL to plain.
+
+## 2026-11-10: INF-19 workflow speed-ups
+- DXVK frame limiter/vsync off by default: a 5,200-frame replay takes 34 s instead of 113 s, with an
+  IDENTICAL state trace (target/inf19). inf3/inf4 pass with it.
+- port-l2.sh caches the all-original trace (target/l2cache): the same pilot batch takes 43 s on a cache
+  hit vs 78 s cold, and ~240 s before INF-19.
+- lib.sh waits for ≥4 GB available RAM before a game run; PLAN §8 now allows up to 7 lanes.
+- sccache installation was blocked by the permission classifier (left for the user).

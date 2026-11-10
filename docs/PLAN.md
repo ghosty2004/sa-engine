@@ -224,7 +224,7 @@ The goal text states only the end condition. The next action is derived from the
 
 ## 8. Concurrency and resource rules
 
-- Several game lanes may run at once (lanes 1–3, more if memory and disk allow); real-time lanes rely on sa-hook's CdStreamSync lost-wake-up fix (INF-15, docs/re/lanes.md), without which any real-time run can hang on a loading screen (~7% of new-game loads). Create new lane prefixes only while no wineserver runs for `wine/prefix`. Lanes are separate Wine prefixes plus game copies (`wine/lane-N`, data symlinked read-only) and headless
+- Several game lanes may run at once (lanes 1–7; replays are CPU-bound since INF-19, each lane needs ~1.5–2 GB RAM; `e2e_disk_check` waits for ≥4 GB available memory before a run); real-time lanes rely on sa-hook's CdStreamSync lost-wake-up fix (INF-15, docs/re/lanes.md), without which any real-time run can hang on a loading screen (~7% of new-game loads). Create new lane prefixes only while no wineserver runs for `wine/prefix`. Lanes are separate Wine prefixes plus game copies (`wine/lane-N`, data symlinked read-only) and headless
   gamescope displays. Every lane run is wrapped in `flock target/locks/lane-N.lock`. Start with 3 lanes.
 - REA holds one binary at a time, so a single agent uses REA at any moment. Others use the exported
   decompilation under `catalog/raw/`.

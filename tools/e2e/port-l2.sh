@@ -253,7 +253,22 @@ SPLITCOMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${SPLIT_PER_FRAME:-1000}" SA_L2_S
 for run in $RUNS; do
     case "$run" in
         plain)
-            run_game plain "$REPLAY" SA_HOOK_MODE="$(modes)"
+            # INF-19: the all-original trace depends only on the recording, the exe, the hook DLL and the
+            # end frame, so it is cached (target/l2cache) and reused by later runs. PLAIN_CACHE=0 re-runs.
+            pkey="$(cat "$REC" "$GTA_DIR/gta_sa.exe" "$GTA_DIR/sa_hook.dll" | sha256sum | cut -c1-16)-$END_FRAME"
+            pdir="$SA_ROOT/target/l2cache"
+            if [ "${PLAIN_CACHE:-1}" = 1 ] && [ -s "$pdir/plain-$pkey.trace" ] && [ -s "$pdir/plain-$pkey.log" ]; then
+                cp -f "$pdir/plain-$pkey.trace" "$OUT/plain.trace"
+                cp -f "$pdir/plain-$pkey.log" "$OUT/plain.log"
+                note "plain: reused cached all-original trace $pdir/plain-$pkey.trace"
+            else
+                run_game plain "$REPLAY" SA_HOOK_MODE="$(modes)"
+                if [ "$(reached plain)" = 1 ]; then
+                    mkdir -p "$pdir"
+                    cp -f "$OUT/plain.trace" "$pdir/plain-$pkey.trace"
+                    cp -f "$OUT/plain.log" "$pdir/plain-$pkey.log"
+                fi
+            fi
             check "plain (all original) reached the end frame" "$(reached plain)" "$(trace_info "$OUT/plain.trace")"
             ;;
         l2)
