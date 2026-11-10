@@ -540,3 +540,6 @@
 - Verified: i686 + wasm32 builds, sa-core 59 / sa-hook 37 tests, clippy host + i686 clean;
   `port-l2.sh ports --runs "plain rust"`: grove walk (lane 1) and pause-restart (lane 2), all ports on Rust,
   IDENTICAL over 5,200 / 3,700 frames on 17 subsystems, 0 crash lines.
+- INF-17 re-run (lane 3, main session): split-L2 groups l/m/h/solo on the grove walk after FPU-GUARD:
+  26 PASS → L2 (F1 343 → 369), 6 PASS-FP not set, 20 NOCASES, 2 FAIL open (RsEventHandler,
+  psCameraShowRaster solo). Every splito/splitr trace IDENTICAL to plain.
