@@ -606,3 +606,12 @@
   undeclared counts are checked). RsEventHandler still FAIL (OS handle, 0xC96438).
 - Verified by main session: sa-hook 44 + sa-oracle-format 22 tests pass. Open: L1 `CPhysical::ApplyMoveForce-vec`
   fails on 82 signalling-NaN cases (payload 0x7FC00001 vs 0x7FC00000) — PHYS port, ledger.
+
+## 2026-11-11 SAMP-1D dynamic SA:MP coverage (main session)
+- Agent ab5d93ec (lane 4): original gta_sa.exe + samp.dll 0.3.7-R4 joined a private open.mp server and played all
+  docs/samp/README §6 scenarios; 7,003 functions executed. Results: catalog/samp-priority.csv, docs/samp/dynamic.md,
+  scm-opcodes-dynamic.csv; tooling tools/e2e/samp-cov.sh + tools/e2e/samp/; sa-hook coverage gains SA_COV_SCM
+  (opcode counter detour, coverage-only) and a flush at DLL_PROCESS_DETACH.
+- Main session: re-applied only the agent's win.rs hunk onto master (a whole-file checkout had dropped
+  `keycells::install`, caught by an unused-code warning); i686 build has 0 warnings, sa-hook 45 tests pass.
+- Open: no frequency counts (SA_COV_CAP>1 hangs under samp); trailers/mod shop/jetpack/second client not covered.

@@ -249,6 +249,10 @@ These come from the user's samp.saa and are not listed here.
    (§4.3).
 
 ## 6. Dynamic measurement still needed (the confirmation step)
+
+**Done (SAMP-1D): `docs/samp/dynamic.md`.** Executed set, closure misses, porting priority list
+(`catalog/samp-priority.csv`), zero-hit check of the disables and executed SCM opcodes.
+
 Run the original 1.0 US with samp.dll 0.3.7-R4 on an open.mp server, using our own Wine prefix and headless
 display. Record executed game functions: INF-10 coverage, i.e. drcov, or entry breakpoints on all 15,486
 catalogue functions. Scenarios: boot → connect → class selection → spawn → on foot → vehicles (car, bike,

@@ -26,7 +26,7 @@ use windows_sys::Win32::System::Memory::{
     MEM_COMMIT, MEM_RESERVE, MEMORY_BASIC_INFORMATION, PAGE_EXECUTE_READWRITE, PAGE_GUARD, PAGE_NOACCESS,
     VirtualAlloc, VirtualProtect, VirtualQuery,
 };
-use windows_sys::Win32::System::SystemServices::DLL_PROCESS_ATTACH;
+use windows_sys::Win32::System::SystemServices::{DLL_PROCESS_ATTACH, DLL_PROCESS_DETACH};
 use windows_sys::Win32::System::Threading::GetCurrentProcess;
 
 use crate::control::{self, Command};
@@ -461,6 +461,10 @@ pub extern "system" fn DllMain(hinst: HINSTANCE, reason: u32, _reserved: *mut c_
         // SAFETY: valid module handle passed by the loader.
         unsafe { DisableThreadLibraryCalls(hinst) };
         let _ = catch_unwind(attach);
+    } else if reason == DLL_PROCESS_DETACH {
+        // Process exit (e.g. the game quits on its own, as under SA:MP's /q): the coverage hits of
+        // the last seconds, shutdown code included, are written once more.
+        let _ = catch_unwind(crate::coverage::exit_flush);
     }
     TRUE
 }
