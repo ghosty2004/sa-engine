@@ -89,6 +89,7 @@ step script_commands "${PY[@]}" tools/catalog/script_commands.py "$GR" "$CAT" "$
 grep 'case annotations' "$LOG/script_commands.log"
 step gr_deviations "${PY[@]}" tools/catalog/gr_deviations.py "$GR" "$CAT" "$EXE"
 cut -c1-200 "$LOG/gr_deviations.log"
+step code_data_reads "${PY[@]}" tools/catalog/code_data_reads.py --exe "$EXE" --out "$CAT/code-data-reads.csv"
 step progress "${PY[@]}" tools/catalog/progress.py "$CAT"
 head -3 "$CAT/progress.md" | tail -1
 echo "run_all: done (logs in $LOG)"

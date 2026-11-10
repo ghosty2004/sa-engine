@@ -451,7 +451,8 @@ const fn build() -> [HookSpec; N] {
     }
     let mut w = 0;
     while w < sa_world::hooks::COUNT {
-        out[LOCAL_N + sa_core::hooks::COUNT + sa_stream::hooks::COUNT + w] = from_core(&sa_world::hooks::ALL[w]);
+        out[LOCAL_N + sa_core::hooks::COUNT + sa_stream::hooks::COUNT + w] =
+            from_core(&sa_world::hooks::ALL[w]);
         w += 1;
     }
     out
@@ -814,6 +815,23 @@ mod tests {
         for w in ranges.windows(2) {
             assert!(w[0].1 <= w[1].0, "{} overlaps {}", w[0].2, w[1].2);
         }
+        // INF-20: no instruction reads (or points into) the bytes a hook changes, unless sa-hook
+        // redirects it to a copy of the original dword (`keycells::READERS`). The candidates come from
+        // catalog/code-data-reads.csv (tools/catalog/code_data_reads.py: every code section,
+        // .HOODLUM and the no-CD .text included).
+        let reads = crate::data_reads::rows();
+        let mut bad = Vec::new();
+        for h in &HOOKS {
+            let (lo, hi) = crate::data_reads::changed(&exe, h.addr, h.kind);
+            for r in crate::data_reads::unredirected(&reads, lo, hi) {
+                bad.push(format!("{} ({:#x}): {r}", h.name, h.addr));
+            }
+        }
+        assert!(
+            bad.is_empty(),
+            "hooks whose patched bytes are read as data:\n{}",
+            bad.join("\n")
+        );
     }
 
     #[test]

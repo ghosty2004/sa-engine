@@ -237,7 +237,7 @@ The goal text states only the end condition. The next action is derived from the
 - Memory: the machine has 31 GB RAM and no swap. Heavy processes (oracle runs, Ghidra headless, bulk Python, game lanes) run under a cap: `systemd-run --user --scope -q -p MemoryMax=<N>G -p MemorySwapMax=0 <cmd>` (default 6G; Ghidra 8G). Reason: on 2026-11-05 an `sa-oracle` run triggered the kernel OOM killer.
 - Disk: `fixtures/`, `traces/` and coverage logs have quotas. Keep ≥ 20 GB free on /home, checked by the
   scheduler before starting a lane run.
-- Nested agents: a sub-agent may start at most 2 helpers of its own, and helpers start none (one level only). Every brief states this. Reason: on 2026-11-10 nested forks grew to 20 concurrent agents within minutes.
+- Nested agents: **forbidden** (user, 2026-11-10). Only the main session starts agents; a sub-agent never starts helpers or forks, it does the work itself or hands back and asks the main session. Every brief states this. Reason: nested forks grew to 20 concurrent agents within minutes, and the user wants one level only.
 - Budget: ≤ ~1.5M tokens per agent step. Workflows only for broad sweeps (for example CAT-5
   classification).
 

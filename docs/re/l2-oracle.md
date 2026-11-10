@@ -190,7 +190,7 @@ a test, every use listed by `split-report`):
 
 | what | rule | evidence |
 |---|---|---|
-| CRT `__security_cookie` 0x8E31BC, `gStreamingThreadId` 0x8E4000, MEMORYSTATUS free phys/virtual 0xC8CF74/0xC8CF7C, `rdtsc` copy 0xC92104 (8), AESmoothFadeThread handle/thread id 0xB608D0 (8), audio stream thread handle 0xB606D0, gpColCache2/gpColCache 0x9655C8 (8) | `INPUT_EXCLUSIONS`: zeroed in the page fingerprint and, in merged pairs, excluded from the comparison; raw values recorded per case (`input exclusion used` lines) | disassembly addresses in the rule texts; window dumps of plain vs rust (`dump-diff`): these were the only differing non-pointer bytes |
+| CRT `__security_cookie` 0x8E31BC, `gStreamingThreadId` 0x8E4000, MEMORYSTATUS free phys/virtual 0xC8CF74/0xC8CF7C, `rdtsc` copy 0xC92104 (8), AESmoothFadeThread handle/thread id 0xB608D0 (8), audio stream thread handle 0xB606D0, gpColCache2/gpColCache 0x9655C8 (8), the pad words (+0x0C/0x1C/0x2C/0x3C) of ProcessColModels' two static CMatrix 0x968940/0x968988 and pad1..3 of TheCamera.m_mMatInverse 0xB6FA74 (uninitialised stack residue copied by CMatrix::operator* 0x59BE30 / Invert-2 0x59BDD0 → operator= 0x59BBC0), CRT `__NLG_Destination` frame 0x8E2B8C (EBP stored for debuggers, never read) | `INPUT_EXCLUSIONS`: zeroed in the page fingerprint and, in merged pairs, excluded from the comparison; raw values recorded per case (`input exclusion used` lines) | disassembly addresses in the rule texts; window dumps of plain vs rust (`dump-diff`): these were the only differing non-pointer bytes |
 | OS object addresses (IDirect3D9, surfaces, vertex declarations, DirectInput/DirectSound objects) | `Foreign` class: a word that points into committed memory outside the image, the arena and the stack (VirtualQuery map before and after the call) equals another such word; the page fingerprint masks every word whose value lies below the arena outside image/stack (value-only decision, identical in both runs) | Rust code allocates from the process heap, so later Wine allocations move (identical windows up to Win32_InitInstance, then e.g. RwEngineInstance+0x94 0x0301A530 vs 0x0301A340) |
 | addresses of regions read through a pointer into OS-allocated memory (`[0x8E3FEC]:0x18`: the CdStream request queue's buffer, LocalAlloc'd in CdStreamInit) | sa-hook adds every region address to the case's `foreign` list when it lies in such memory; `split-report` then accepts two different `Foreign` region addresses as the same object (pre and post regions) and still compares their bytes; listed as `region address …` uses | STREAM-L2 split groups: `region Extra 0x2f3ab10 vs Extra 0x2fde1e8` at the first pair of every function of 5 of the 9 groups, the plain run's address changing between processes too (0x2f3ab10 / 0x2fde548); `l2 show` of sp-g04b: the 0x18-byte region after gpCdStreams |
 | stack addresses below a Rust ancestor | `Stack` class: compared by offset from the call's argument block; rust-run stack addresses rebased by the entry-ESP difference | SetVideoMode (Rust) above the RW file reads: whole stack 0x30 lower |
@@ -224,6 +224,35 @@ Wine reports an unhandled exception (`run NAME: crashed: …`) and keeps Wine's 
 A fault after `oracle: exiting` (inside `ExitProcess`, after the trace, spool and summary are flushed;
 seen in 7 of 43 lane-4 runs on 2026-11-10, always `at address 7BCF0729`, plain runs too) is reported as a
 note and kept as `NAME.wine-exitfault.txt`; it does not fail the run.
+
+### Data-read scan of every hook (INF-20)
+
+The no-CD protection decodes pointers, rotate counts and pushed constants from dwords of game *code*
+(`0x401E46 adc ecx, [0x410860]` adds the entry bytes of `CColStore::LoadCollision` to decode
+CTaskAllocator's pool 0xB744BC). A hook rewrites those bytes. `tools/catalog/code_data_reads.py`
+generates `catalog/code-data-reads.csv`: every instruction in every code section (game `.text`,
+`_rwcseg`, the no-CD `.text`, `.init`, the executable `.data`, `.HOODLUM`) whose memory operand or
+immediate address lies in the first 24 bytes of a catalogued function (3,326 candidates, 311 in
+protection chunks; flags `chunk`/`sweep` mark the decodes that are in line). sa-hook's install test
+(`every_hook_installs_on_the_exe`) fails for a hook whose changed bytes (stub: rel32; inline: the
+relocated instructions) such an instruction sees, unless it is redirected; negative test
+`data_reads::tests::a_hook_on_a_read_entry_is_rejected` (0x55C410, 0x563470, 0x410860 without redirect).
+
+Readers of registered hooks (all redirected by `keycells.rs`) and what they decode (values computed
+from the exe):
+
+| reader | hook | decodes | effect without the redirect |
+|---|---|---|---|
+| 0x401BCE, 0x40203A | 0x407AD0 stub (AreAnimsUsedByRequestedModels) | rotate count = low 5 bits of the stub's `E9` | none (a stub keeps its `E9`) |
+| 0x401E46 | 0x410860 stub (CColStore::LoadCollision) | CTaskAllocator pool pointer, dereferenced | page fault at 0x401E4C (measured, STREAM-L2) |
+| 0x1564881 | 0x4C4570 `nop; jmp` (SetupVehicleUpgradeFlags) | rotate count for pointer 0x96A8A0 (SkipCanBeActivated) | wrong pointer (INF-10 peek: 0x4B545, unreadable) |
+| 0x156B570 | 0x4C4570 | pushed constant 0 (ScriptTaskPickUpObject call argument) | non-zero argument |
+| 0x40A4C3 | 0x54D690 `nop; jmp` (AttachEntityToEntity-quat, PORT-PHYS) | SEH handler 0x841408 of a prologue | wrong handler if an exception unwinds |
+
+A hook on an entry read by anything other than an absolute memory operand (immediates, indexed
+operands) cannot be redirected this way and is rejected by the install test. Not hooked yet but read:
+0x55C410 (at 0x4017B4), 0x563470 (0x4013A2), 0x572360 region (0x406A9E); a port of one of these needs a
+`READERS` entry (absolute reads: the install test says which).
 
 ## Limits
 

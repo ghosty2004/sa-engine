@@ -29,6 +29,8 @@ pub mod x86;
 #[cfg(test)]
 mod callers;
 #[cfg(test)]
+mod data_reads;
+#[cfg(test)]
 mod testexe;
 
 #[cfg(windows)]

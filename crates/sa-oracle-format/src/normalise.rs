@@ -266,6 +266,35 @@ pub struct InputExclusion {
     pub rule: &'static str,
 }
 
+/// `CCollision::ProcessColModels` (0x4185C0)'s two function-local `static CMatrix` (0x48 bytes each;
+/// guard bits in 0x9689D0, constructors 0x418602/0x41862C zero `m_pAttachMatrix` / `m_bOwnsAttachedMatrix`
+/// at +0x40/+0x44, `atexit` destructor thunks 0x856010 / 0x856020): 0x968940 (B's matrix in A's space,
+/// 0x4186F1..0x418705) and 0x968988 (A's, 0x418671..0x418697).
+pub const COL_MATRICES: [u32; 2] = [0x968940, 0x968988];
+
+pub const RULE_COL_MATRIX_PADS: &str = "ProcessColModels' static CMatrix pads (0x968940/0x968988 + 0x0C, 0x1C, \
+    0x2C, 0x3C): uninitialised stack residue, not data. Each matrix is set by CMatrix::Invert-1 \
+    (0x59B920: writes +0x00..0x08, 0x10..0x18, 0x20..0x28, 0x30..0x38 only), CMatrix::operator= \
+    (0x59BBC0: `rep movsd`, 16 dwords incl. the pads) and CMatrix::operator*= (0x411A80 -> 0x156FF00: \
+    operator* 0x59BE30 builds the product in a local at [esp+0xC] writing right/up/at/pos only, copies \
+    16 dwords incl. its never-written pads out (0x59BF8F), then operator= into the static). The pads \
+    therefore hold whatever operator*'s frame held before: stack addresses, floats or 0, depending on \
+    the stack depth (below a Rust ancestor: 0x96896C plain 0x0036ECDC rust 0x0036EB74; 0x96894C plain \
+    0x20F3CAA0 rust 0). No code reads them except these copies. The data words (vectors, +0x40/+0x44, \
+    the guard 0x9689D0) stay compared";
+
+/// `TheCamera.m_mMatInverse` (TheCamera 0xB6F028 + 0xA4C; the six CCamera matrices start at +0x974,
+/// 0x48 apart, destructors 0x50A8C2..0x50A8F2).
+pub const CAMERA_MAT_INVERSE: u32 = 0xB6FA74;
+
+pub const RULE_CAMERA_MAT_INVERSE_PADS: &str = "TheCamera.m_mMatInverse pads (0xB6FA74 + 0x1C, 0x2C, 0x3C): \
+    uninitialised stack residue. 0x5150F0 sets it as `m_mMatInverse = Invert(m_mCameraMatrix)`: \
+    CMatrix::Invert-2 (0x59BDD0) fills a local through Invert-1 (0x59B920, pads never written) and copies \
+    16 dwords incl. the pads into its result (0x59BE10), then operator= (0x59BBC0) copies them into \
+    TheCamera. Observed (Rs::RsEventHandler split run, frame 242): 0xB6FAA0 plain 0x0036F0CC rust \
+    0x0036F098. RenderWare treats these words as padding (RwMatrix pad1..pad3); +0x0C (RwMatrix \
+    `flags`, which RW functions may read) stays compared";
+
 pub const INPUT_EXCLUSIONS: &[InputExclusion] = &[
     InputExclusion {
         addr: 0x8E31BC,
@@ -313,6 +342,26 @@ pub const INPUT_EXCLUSIONS: &[InputExclusion] = &[
                own stack buffers there on every entry (`lea eax,[esp+0x50]` / `lea ecx,[esp+0x690]`, \
                0x41B016-0x41B028) before any use; the value is a stack depth, which differs below a \
                Rust ancestor (InitialiseGame: plain 0x0036E960 rust 0x0036E950)",
+    },
+    InputExclusion { addr: COL_MATRICES[0] + 0x0C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[0] + 0x1C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[0] + 0x2C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[0] + 0x3C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[1] + 0x0C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[1] + 0x1C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[1] + 0x2C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: COL_MATRICES[1] + 0x3C, len: 4, rule: RULE_COL_MATRIX_PADS },
+    InputExclusion { addr: CAMERA_MAT_INVERSE + 0x1C, len: 4, rule: RULE_CAMERA_MAT_INVERSE_PADS },
+    InputExclusion { addr: CAMERA_MAT_INVERSE + 0x2C, len: 4, rule: RULE_CAMERA_MAT_INVERSE_PADS },
+    InputExclusion { addr: CAMERA_MAT_INVERSE + 0x3C, len: 4, rule: RULE_CAMERA_MAT_INVERSE_PADS },
+    InputExclusion {
+        addr: 0x8E2B8C,
+        len: 4,
+        rule: "CRT __NLG_Destination.Frame (0x8E2B80 = {0x19930520, code, info, frame}): __NLG_Notify \
+               (0x821961/0x82196A, called by the SEH/C++ EH unwinders) stores EBP there (0x82197A) for \
+               debuggers; nothing in the exe reads it (only references: `mov ebx, 0x8E2B80` at 0x821963 \
+               and 0x82196C). A frame address: differs with the stack depth (Rs::RsEventHandler split \
+               run, frame 273: plain 0x0036EF14 rust 0x0036EEE0)",
     },
     InputExclusion {
         addr: 0xC92104,
@@ -365,6 +414,49 @@ mod tests {
         // a page that starts inside the range
         let c = vec![1u8; 8];
         assert_eq!(&*fingerprint_bytes(0x8E31BE, &c), &[0, 0, 1, 1, 1, 1, 1, 1]);
+    }
+
+    /// ProcessColModels' static matrices: exactly the four pad words of each are excluded, the
+    /// vectors, `m_pAttachMatrix`, `m_bOwnsAttachedMatrix` and the guard word are not.
+    #[test]
+    fn col_matrix_pads_are_excluded_and_nothing_else() {
+        let excluded = |a: u32| INPUT_EXCLUSIONS.iter().any(|e| a.wrapping_sub(e.addr) < e.len);
+        let mut got = Vec::new();
+        for a in 0x968940..0x9689D4u32 {
+            if excluded(a) {
+                got.push(a);
+            }
+        }
+        let want: Vec<u32> = [0x96894C, 0x96895C, 0x96896C, 0x96897C, 0x968994, 0x9689A4, 0x9689B4, 0x9689C4]
+            .iter()
+            .flat_map(|&w| w..w + 4)
+            .collect();
+        assert_eq!(got, want);
+        // the page fingerprint ignores them (the reported pairs: 0x96896C, 0x96894C) ...
+        let page = 0x968000;
+        let mut a = vec![0x11u8; 4096];
+        let mut b = a.clone();
+        a[0x96C..0x970].copy_from_slice(&0x0036_ECDCu32.to_le_bytes());
+        b[0x96C..0x970].copy_from_slice(&0x0036_EB74u32.to_le_bytes());
+        a[0x94C..0x950].copy_from_slice(&0x20F3_CAA0u32.to_le_bytes());
+        b[0x94C..0x950].copy_from_slice(&0u32.to_le_bytes());
+        assert_eq!(fingerprint_bytes(page, &a), fingerprint_bytes(page, &b));
+        // ... but not a matrix element next to them (pos.z of 0x968940 at +0x38)
+        b[0x978] ^= 1;
+        assert_ne!(fingerprint_bytes(page, &a), fingerprint_bytes(page, &b));
+    }
+
+    /// TheCamera.m_mMatInverse: pad1..pad3 excluded, `flags` (+0x0C) and the vectors are not.
+    #[test]
+    fn camera_mat_inverse_pads_are_excluded_and_nothing_else() {
+        let excluded = |a: u32| INPUT_EXCLUSIONS.iter().any(|e| a.wrapping_sub(e.addr) < e.len);
+        let got: Vec<u32> = (CAMERA_MAT_INVERSE..CAMERA_MAT_INVERSE + 0x48).filter(|&a| excluded(a)).collect();
+        let want: Vec<u32> = [0xB6FA90, 0xB6FAA0, 0xB6FAB0].iter().flat_map(|&w| w..w + 4).collect();
+        assert_eq!(got, want);
+        assert!(!excluded(0xB6FA80) && !excluded(0xB6FAA4));
+        // __NLG_Destination: only the frame word, not the signature/code/info words
+        let got: Vec<u32> = (0x8E2B80..0x8E2B90).filter(|&a| excluded(a)).collect();
+        assert_eq!(got, (0x8E2B8C..0x8E2B90).collect::<Vec<u32>>());
     }
 
     #[test]
