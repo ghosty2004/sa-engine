@@ -46,7 +46,7 @@ result for 0..255 values); (b) open mode "rb" (gr "r"; LoadLine 0x536F80 turns c
 behavioural difference); (c) gr does not reset m_nCurrentTimeIndex / m_nCurrentTimeOfWeek / m_pCurrZoneInfo / m_nCurrentZoneType
 (0, 0, NULL, -1) at the end; the port must (Initialise is also called from CGame::ReInitGameObjectVariables 0x53BCF0).
 
-## 0x60FBD0 CPopCycle::FindNewPedType  (gr_deviations = 7)
+## 0x60FBD0 CPopCycle::FindNewPedType  (gr_deviations = 8)
 Original: `__cdecl bool (ePedType* outType [esp+4], int32* outMI [+8], bool noGangs [+0xC], bool noCops [+0x10])`, returns AL,
 plain `ret`. Locals (before the 4 pushes at 0x60FDE0): gang [esp], dealers [+4], cops [+8], civ [+0xC].
 1. `if (m_pCurrZoneInfo == NULL) return 0` (0x60FBD0-0x60FBE1); nothing is written.

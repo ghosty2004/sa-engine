@@ -13,7 +13,7 @@ Notation (shared by all ProcessCommands* spec files):
   CPool<CPed>::GetRef).
 - `ftol` = 0x821B40 (MSVC _ftol2: truncates ST0 toward zero, result EDX:EAX). `CRGBA(r,g,b,a)` = 0x7170C0 (thiscall ctor, ret 0x10).
 - AL return 0 = OR_CONTINUE unless the case says otherwise (gr OpcodeResult: 0 continue, 1 wait, -1 interrupt).
-- Memory stores are written `[0xADDR] <- value`. SEH: every switch has a frame; a case that constructs a task sets the state slot to 0 around the ctor and back to -1.
+- Memory stores are written `[0xADDR] <- value`. SEH: in switches that have an SEH frame (see the dispatcher), task-constructing cases set the frame state slot around `new` + ctor and back to -1; this only matters for exception unwinding.
 - Vtable slots (index = offset/4): CEntity 0 dtor, 1 Add(rect), 2 Add, 3 Remove, 4 SetIsStatic, 5 SetModelIndex, 6
   SetModelIndexNoCreate, 7 CreateRwObject, 8 DeleteRwObject, 9 GetBoundRect, 10 ProcessControl, 11 ProcessCollision, 12
   ProcessShift, 13 TestCollision, 14 Teleport, 15 SpecialEntityPreCollisionStuff, 16 SpecialEntityCalcCollisionSteps, 17 PreRender,
@@ -31,7 +31,7 @@ Notation (shared by all ProcessCommands* spec files):
   m_nSecondaryColor (u8), +0x460 m_pDriver, +0x464 m_apPassengers[8], +0x488 m_nMaxPassengers (u8), +0x590 m_nVehicleType
   (0 = VEHICLE_TYPE_AUTOMOBILE), CAutomobile +0x868 autoFlags (bit 0x08 bNotDamagedUpsideDown).
 
-## 0x489500 CRunningScript::ProcessCommands1000To1099  (catalogue: specified/REA, port level 10)
+## 0x489500 CRunningScript::ProcessCommands1000To1099  (catalogue: specified/REA, port level 32)
 - Dispatcher: `__thiscall` (this = ECX -> ESI at 0x489528), command id at [esp+4], `ret 4`. SEH frame `push -1; push 0x838478;
   push fs:[0]`, `fs:[0] <- esp` (0x489512), `sub esp,0x74`, push EBX/EBP/ESI/EDI. Range: `eax = id - 0x3E8` (0x48951F),
   `cmp eax,0x63; ja 0x48A1E6`; `movzx eax, byte [eax + 0x48A2B4]` (100-byte index table), `jmp [eax*4 + 0x48A204]` (44 dwords;

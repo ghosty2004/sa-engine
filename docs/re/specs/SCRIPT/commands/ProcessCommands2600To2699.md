@@ -19,6 +19,12 @@ Notation (shared by all ProcessCommands* spec files):
   ProcessShift, 13 TestCollision, 14 Teleport, 15 SpecialEntityPreCollisionStuff, 16 SpecialEntityCalcCollisionSteps, 17 PreRender,
   18 Render, 19 SetupLighting, 20 RemoveLighting, 21 FlagToDestroyWhenNextProcessed, 22 ProcessEntityCollision (CPhysical);
   CVehicle slot 50 (+0xC8) = Fix (CAutomobile vtable 0x871120 slot 50 = 0x6A3440 CAutomobile::Fix).
+- CRunningScript fields: +0x10 m_BaseIP, +0x14 m_IP, +0x3C m_LocalVars[34], +0xC5 m_CondResult, +0xC6 m_UsesMissionCleanup,
+  +0xC7 m_IsExternal, +0xC9 m_ExternalType. `MissionCleanUp` = CTheScripts::MissionCleanUp 0xA90850 (CMissionCleanup;
+  AddEntityToList 0x4637E0 / RemoveEntityFromList 0x4654B0, thiscall (handle, type: 1 car, 2 char, 3 object)).
+- gr `unimplemented` = REGISTER_COMMAND_UNIMPLEMENTED -> notsa::script::detail::NotImplemented (CommandParser/Parser.hpp:68): reads no
+  parameters and returns OR_INTERRUPT (-1). That equals the exe only for opcodes that reach the switch default; for an
+  `unimplemented` opcode that HAS a case here, gr deviates (it skips the case and leaves the IP on the parameters).
 
 ## 0x479DA0 CRunningScript::ProcessCommands2600To2699  (catalogue: specified/REA, port level 10)
 - Dispatcher: `__thiscall` (this = ECX CRunningScript*, copied to EDI at 0x479DCB), command id at [esp+4], `ret 4` (0x47A6C0).
