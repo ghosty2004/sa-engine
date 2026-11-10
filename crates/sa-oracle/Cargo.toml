@@ -17,6 +17,7 @@ sa-core = { path = "../sa-core" }
 sa-stream = { path = "../sa-stream" }
 # COLL ports for the COLL specs.
 sa-world = { path = "../sa-world" }
+sa-pop = { path = "../sa-pop" }
 
 # Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
 [target.'cfg(not(windows))'.dependencies]

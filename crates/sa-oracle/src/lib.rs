@@ -32,6 +32,7 @@ pub mod specs_coll_prim;
 pub mod specs_coll_surface;
 pub mod specs_world_p1;
 pub mod specs_phys;
+pub mod specs_pop;
 pub mod specs_core_util;
 pub mod specs_stream_a;
 pub mod specs_stream_b;
@@ -78,6 +79,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .iter()
                 .chain(sa_stream::hooks::ALL.iter())
                 .chain(sa_world::hooks::ALL.iter())
+                .chain(sa_pop::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })
