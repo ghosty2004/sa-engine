@@ -14,6 +14,12 @@
 //! | `SA_COV` | points file (`ADDR BYTE [anything]` per line, hex; `#` comments) |
 //! | `SA_COV_OUT` | output CSV (`address,hits`, every armed point), default `coverage.csv` next to gta_sa.exe; rewritten every 10 s and at the end frame |
 //! | `SA_COV_CAP` | traps counted per point (default 1 = first hit only) |
+//! | `SA_COV_SCM` | output CSV of SCM opcodes executed (`opcode,count`), written with the hits (SAMP-1D) |
+//!
+//! `SA_COV_SCM` detours `CRunningScript::ProcessOneCommand` (0x469EB0): a stub counts the command
+//! word at `m_pCurrentIP` (`& 0x7FFF`, the high bit is the negation flag) in a 32768-entry table, runs
+//! the relocated first instruction (`inc word ptr [0xA447F4]`, position independent) and jumps back to
+//! 0x469EB7. The entry point is then no longer armed (byte mismatch); the opcode counts stand for it.
 //!
 //! `OUT.last` lists the last 256 first hits in order (where a run that hangs was last seen). At init a
 //! throw-away `int3; ret` calibrates how the platform reports a breakpoint (ExceptionAddress at the
@@ -67,7 +73,40 @@ pub fn csv(points: &[u32], hits: impl Fn(usize) -> u32) -> String {
 }
 
 #[cfg(windows)]
-pub use imp::{finish, init, summary};
+pub use imp::{exit_flush, finish, init, summary};
+
+/// `CRunningScript::ProcessOneCommand` and its first instruction (`inc word ptr [0xA447F4]`).
+pub const SCM_DISPATCH: u32 = 0x469EB0;
+pub const SCM_FIRST: [u8; 7] = [0x66, 0xFF, 0x05, 0xF4, 0x47, 0xA4, 0x00];
+
+/// The detour stub for `SCM_DISPATCH` at `at`, counting into the u32 table at `counts`.
+pub fn scm_stub(at: u32, counts: u32) -> Vec<u8> {
+    let mut v = vec![
+        0x50, 0x8B, 0x41, 0x14, 0x0F, 0xB7, 0x00, 0x25, 0xFF, 0x7F, 0x00, 0x00,
+    ];
+    // inc dword ptr [eax*4 + counts]
+    v.extend([0xFF, 0x04, 0x85]);
+    v.extend(counts.to_le_bytes());
+    v.push(0x58); // pop eax
+    v.extend(SCM_FIRST);
+    let back = SCM_DISPATCH + SCM_FIRST.len() as u32;
+    let next = at + v.len() as u32 + 5;
+    v.push(0xE9);
+    v.extend(back.wrapping_sub(next).to_le_bytes());
+    v
+}
+
+/// `opcode,count` lines for every opcode with a non-zero count.
+pub fn scm_csv(count: impl Fn(usize) -> u32) -> String {
+    let mut s = String::from("opcode,count\n");
+    for op in 0..0x8000 {
+        let n = count(op);
+        if n > 0 {
+            s += &format!("{op:04X},{n}\n");
+        }
+    }
+    s
+}
 
 #[cfg(windows)]
 mod imp {
@@ -81,7 +120,7 @@ mod imp {
     use windows_sys::Win32::System::Diagnostics::Debug::{
         AddVectoredExceptionHandler, EXCEPTION_POINTERS, FlushInstructionCache,
     };
-    use windows_sys::Win32::System::Memory::{PAGE_EXECUTE_READWRITE, VirtualProtect};
+    use windows_sys::Win32::System::Memory::{PAGE_EXECUTE_READWRITE, PAGE_READWRITE, VirtualProtect};
     use windows_sys::Win32::System::Threading::GetCurrentProcess;
 
     use super::{csv, parse_points};
@@ -101,6 +140,69 @@ mod imp {
     }
 
     static STATE: OnceLock<State> = OnceLock::new();
+    /// SA_COV_SCM: (output path, address of the 32768 x u32 count table).
+    static SCM: OnceLock<(String, u32)> = OnceLock::new();
+
+    fn install_scm(out: String) {
+        use windows_sys::Win32::System::Memory::{MEM_COMMIT, MEM_RESERVE, VirtualAlloc};
+        match win::read(super::SCM_DISPATCH, super::SCM_FIRST.len()) {
+            Some(b) if b == super::SCM_FIRST => {}
+            other => {
+                log(&format!(
+                    "coverage: SCM dispatch bytes {other:02x?} unexpected; no opcode counts"
+                ));
+                return;
+            }
+        }
+        // SAFETY: plain allocations: the count table (RW) and the stub page (RWX).
+        let (counts, stub) = unsafe {
+            (
+                VirtualAlloc(
+                    std::ptr::null(),
+                    0x8000 * 4,
+                    MEM_COMMIT | MEM_RESERVE,
+                    PAGE_READWRITE,
+                ),
+                VirtualAlloc(
+                    std::ptr::null(),
+                    64,
+                    MEM_COMMIT | MEM_RESERVE,
+                    PAGE_EXECUTE_READWRITE,
+                ),
+            )
+        };
+        let (counts, stub) = (counts as usize as u32, stub as usize as u32);
+        if counts == 0 || stub == 0 {
+            log("coverage: VirtualAlloc for the SCM counter failed");
+            return;
+        }
+        let code = super::scm_stub(stub, counts);
+        // SAFETY: the stub page was just allocated with room for the stub.
+        unsafe { std::ptr::copy_nonoverlapping(code.as_ptr(), stub as usize as *mut u8, code.len()) };
+        let mut jmp = vec![0xE9];
+        jmp.extend(stub.wrapping_sub(super::SCM_DISPATCH + 5).to_le_bytes());
+        jmp.extend([0x90, 0x90]);
+        if let Err(e) = win::patch(super::SCM_DISPATCH, &jmp) {
+            log(&format!("coverage: SCM detour failed: {e}"));
+            return;
+        }
+        let _ = SCM.set((out, counts));
+        log(&format!(
+            "coverage: SCM opcode counter at {:#x} (stub {stub:#x})",
+            super::SCM_DISPATCH
+        ));
+    }
+
+    fn write_scm() {
+        let Some((out, counts)) = SCM.get() else { return };
+        // SAFETY: the table holds 0x8000 u32 counters allocated in install_scm.
+        let text =
+            super::scm_csv(|i| unsafe { std::ptr::read_volatile((*counts as usize as *const u32).add(i)) });
+        let tmp = format!("{out}.tmp");
+        if std::fs::write(&tmp, text).is_ok() {
+            let _ = std::fs::rename(&tmp, out);
+        }
+    }
     static WRITE: Mutex<()> = Mutex::new(());
     static DONE: AtomicBool = AtomicBool::new(false);
 
@@ -234,6 +336,9 @@ mod imp {
             .ok()
             .filter(|v| !v.is_empty())
             .unwrap_or_else(|| dir.join("coverage.csv").to_string_lossy().into_owned());
+        if let Some(o) = std::env::var("SA_COV_SCM").ok().filter(|v| !v.is_empty()) {
+            install_scm(o);
+        }
         let secs = sections();
         let hook_entries: Vec<u32> = (0..HOOKS.len())
             .filter(|&i| table::installed(i))
@@ -358,8 +463,13 @@ mod imp {
     }
 
     fn write() {
-        let Some(s) = STATE.get() else { return };
         let _g = WRITE.lock().unwrap_or_else(|e| e.into_inner());
+        write_locked();
+    }
+
+    fn write_locked() {
+        write_scm();
+        let Some(s) = STATE.get() else { return };
         let text = csv(&s.addrs, |i| s.hits[i].load(Ordering::Relaxed));
         let tmp = format!("{}.tmp", s.out);
         if std::fs::write(&tmp, text).is_ok() {
@@ -383,6 +493,18 @@ mod imp {
         log(&format!("coverage: final {}", summary()));
     }
 
+    /// Process exit (DLL_PROCESS_DETACH): one last write. The writer thread may have been ended
+    /// while holding the lock, so it is only tried (a blocked exit would hang the game).
+    pub fn exit_flush() {
+        if STATE.get().is_none() {
+            return;
+        }
+        DONE.store(true, Ordering::Release);
+        if let Ok(_g) = WRITE.try_lock() {
+            write_locked();
+        }
+    }
+
     pub fn summary() -> String {
         match STATE.get() {
             Some(s) => {
@@ -397,6 +519,26 @@ mod imp {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scm_stub_encoding() {
+        let at = 0x0100_0000;
+        let v = scm_stub(at, 0x0200_0000);
+        // push eax; mov eax,[ecx+0x14]; movzx eax,word [eax]; and eax,0x7fff; inc dword [eax*4+T]; pop eax
+        assert_eq!(
+            &v[..12],
+            &[
+                0x50, 0x8B, 0x41, 0x14, 0x0F, 0xB7, 0x00, 0x25, 0xFF, 0x7F, 0x00, 0x00
+            ]
+        );
+        assert_eq!(&v[12..19], &[0xFF, 0x04, 0x85, 0x00, 0x00, 0x00, 0x02]);
+        assert_eq!(v[19], 0x58);
+        assert_eq!(&v[20..27], &SCM_FIRST);
+        assert_eq!(v[27], 0xE9);
+        let rel = i32::from_le_bytes([v[28], v[29], v[30], v[31]]);
+        assert_eq!((at + 32).wrapping_add(rel as u32), 0x469EB7);
+        assert_eq!(scm_csv(|i| (i == 0x9C6) as u32 * 3), "opcode,count\n09C6,3\n");
+    }
 
     #[test]
     fn points_and_csv() {
