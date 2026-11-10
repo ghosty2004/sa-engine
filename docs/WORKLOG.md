@@ -660,3 +660,14 @@
 - Main session: freed 17 GB (target/ of four integrated worktrees; /home was at 23 GB free). Applied the agent's
   API proposals to sa-samp-api (menu_active byte/dword, area_raw, time_step_clipped, script threads,
   GameError::Unreadable, infallible-read contract); clippy host+wasm32, test, rustdoc -D warnings clean.
+
+## 2026-11-11 c-bug corpus recording (main session, user request)
+- tools/e2e/programs/c-bug.txt: SA:MP "c-bug" (fire, crouch a few frames later, fire from the crouch, stand up) with
+  the desert eagle and the sawn-off, fire->crouch delays 1/2/3/5/8 frames, plus a no-crouch control block. Pad
+  controls (r1 aim, circle fire, l3 crouch): the e2e setup runs the game in pad mode, where mouse buttons and the
+  C key do not reach the controls (second attempt showed no aim/fire). HESOYAM/ASNAEB keep CJ alive (the first
+  attempt died to the police and played the sawn-off block after respawn).
+- Recorded on lane 7 with all hooks original: 3220 frames, replay IDENTICAL; screenshots show crouched fire
+  and a used clip. Recording at target/e2e/corpus/c-bug.sarec (local, gitignored); use it in all-ports L3 runs
+  once WEAPON/PED/task ports land. Whether the crouch shortens the fire cycle is not measured here; the user
+  will check the feel manually on the Rust build.
