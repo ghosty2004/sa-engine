@@ -810,3 +810,30 @@ CPhysical::RemoveAndAdd@0xB99EB8:0xE10:RW
 CPhysical::RemoveAndAdd@[0xB74484]:0x14:RW
 CPhysical::RemoveAndAdd@[[0xB74484]+4]:[[0xB74484]+8]:RW
 CPhysical::RemoveAndAdd@[[0xB74484]]:0x88B80:RW
+
+# PORT-POP (docs/arch/pop-port.md). Evidence: grove walk, lane 1, port-l2-pop-g-l2 (undeclared writes /
+# the restore gap listed per line).
+# CPopulation::UpdatePedCount: the ped's flag word +0x474 (orig set bit 2, the Rust run then saw it set:
+# 22 mismatches at 0xC0EC70) and the computed gang counter ms_nNumGang[pedType - 7] (0xC0EC40).
+CPopulation::UpdatePedCount@arg0+0x474:4:RW
+CPopulation::UpdatePedCount@0xC0EC24:0x50:RW
+# CGangWars::ClearSpecificZonesToTriggerGangWar: CTheZones::FillZonesWithGangColours writes the zone-info
+# colours (0xBA27F4, 0xBA2805 = CTheZones::ZoneInfoArray 380 x 0x11).
+CGangWars::ClearSpecificZonesToTriggerGangWar@0xBA1DF0:0x193C:RW
+# CTheCarGenerators: CarGeneratorArray (500 x 0x20) written at computed slots, m_SpecialPlateHandler.
+CTheCarGenerators::CreateCarGenerator@0xC27AD0:0x3E80:RW
+CTheCarGenerators::RemoveCarGenerators@0xC27AD0:0x3E80:RW
+CTheCarGenerators::Init@0xC279D8:0xF4:RW
+CTheCarGenerators::Init@0xC27AD0:0x3E80:RW
+# CTagManager::AddTag: ms_tagDesc[ms_numTags] (150 x 8).
+CTagManager::AddTag@0xA9A8C0:0x4B0:RW
+# CPopCycle::Update: CPopCycle::UpdatePercentages (original callee) writes m_NumOther_Cars .. m_fPercDealers
+# (0xC0BC30 .. 0xC0BC5B; port-l2-pop-g-l2 undeclared 0xC0BC30 .. 0xC0BC48+).
+CPopCycle::Update@0xC0BC30:0x2C:RW
+# CPopCycle::Update: CTheZones::GetZoneInfo's out-parameter is m_pCurrZone (0xC0BC64; port-l2-pop-p-l2 /
+# pop-c-l2 undeclared 0xC0BC65).
+CPopCycle::Update@0xC0BC64:4:RW
+# CCarCtrl::ReInit / Init: CLoadedCarGroup::Clear (callee) writes the loaded car groups 0xC0E998..0xC0EC22
+# (port-l2-pop-p-l2 undeclared 0xC0E9C9).
+CCarCtrl::ReInit@0xC0E998:0x28A:RW
+CCarCtrl::Init@0xC0E998:0x28A:RW

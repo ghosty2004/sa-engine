@@ -671,3 +671,10 @@
   and a used clip. Recording at target/e2e/corpus/c-bug.sarec (local, gitignored); use it in all-ports L3 runs
   once WEAPON/PED/task ports land. Whether the crouch shortens the fire cycle is not measured here; the user
   will check the feel manually on the Rust build.
+
+## 2026-11-11 PORT-POP first pass integrated (main session)
+- Agent ad992e74 (lane 1): new crate sa-pop, 74 POP functions from the exe bytes; docs/arch/pop-port.md,
+  pop-port-verdicts.tsv, lists tools/e2e/lists/pop-*.txt, L2 extras section `# PORT-POP`.
+- Main session: squash merge clean; sa-hook lib 45 tests (keycells, INF-20, callers), sa-pop 3 tests, i686 build 0
+  warnings; all-ports on Rust IDENTICAL on grove (5200), c-bug (3220, new) and world-cheats (3276).
+- States: 61 → L2 (L2 runs 0 mismatches and 0 undeclared), 13 → implemented. F1 = 560 / 15,479 (3.62 %).
