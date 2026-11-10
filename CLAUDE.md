@@ -18,7 +18,7 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
   Ghidra snapshot: `re/snapshots/gta_sa_1.0US.snapshot`. `re/` is gitignored and holds our own copies.
 
 ## Rules
-- **Never write into `~/samp-rs`.** Another agent works there. This project does not depend on any of its
+- **`~/samp-rs` (changed 2026-11-10, user):** sa-engine may now write in samp-rs ONLY for the engine-adapter work (SAMP-2/3/5), on a separate git branch there, coordinated with the agent that owns samp-rs, and samp-rs must keep working with the ORIGINAL gta_sa.exe (its current address-based path stays the default adapter). Never touch its wine prefixes, server or running processes. Earlier rule text: Another agent works there. This project does not depend on any of its
   paths. Reading its code or docs for reference is fine; changes there belong to that project.
 - Never commit or ship Rockstar files (exe, assets). They are read from the user's install. `catalog/`
   holds only addresses and names.
