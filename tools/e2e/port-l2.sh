@@ -164,6 +164,11 @@ DET="$GTA_DIR/det"
 mkdir -p "$DET"
 win() { winepath -w "$1"; }
 "$ORACLE" l2 spec --out "$OUT/l2.spec" > /dev/null || exit 1
+# The spec comes from the host sa-oracle's hook table: a host binary older than the DLL has no entry
+# for newer hooks, so their globals would be missing and every write to them reported as undeclared
+# (seen 2026-11-10: CPhysical::AddToMovingList's 0xB9ACC8 with a spec of 1,139 instead of 1,201 hooks).
+missing="$(for a in "${ADDRS[@]}"; do grep -qi "^fn $(printf '0x%x' "$a") " "$OUT/l2.spec" || printf '%s ' "$a"; done)"
+[ -z "$missing" ] || { echo "port-l2: $ORACLE has no spec entry for: $missing(stale host build? cargo build --release -p sa-oracle)" >&2; exit 1; }
 cp "$OUT/l2.spec" "$DET/l2.spec"
 
 run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from process start to the end frame
@@ -344,9 +349,14 @@ if [ -f "$OUT/splitr.trace" ] && [ -f "$OUT/plain.trace" ]; then
 fi
 SPLITREP=""
 if [ -f "$OUT/splito.spool" ] && [ -f "$OUT/splitr.spool" ]; then
-    "$ORACLE" l2 split-report "$OUT/splito.spool" "$OUT/splitr.spool" > "$OUT/split-report.txt" 2>&1
+    # --undeclared: every undeclared write range (`undeclared FN NAME ADDR+LEN xN SYMBOL` lines;
+    # tools/e2e/l2-writers.py undeclared lists the instructions that can write them)
+    "$ORACLE" l2 split-report "$OUT/splito.spool" "$OUT/splitr.spool" --undeclared > "$OUT/split-report.txt" 2>&1
     check "(e) split-report: every hook PASS, PASS-FP or NOCASES, no trailer" "$([ $? = 0 ] && echo 1)" \
         "$(grep -c "^SPLIT PASS " "$OUT/split-report.txt") PASS, $(grep -c "^SPLIT PASS-FP" "$OUT/split-report.txt") PASS-FP, $(grep -c '^SPLIT FAIL' "$OUT/split-report.txt") FAIL, $(grep -c '^SPLIT DIVERGED' "$OUT/split-report.txt") DIVERGED, $(grep -c '^SPLIT COUNT' "$OUT/split-report.txt") COUNT; $(grep -m1 '^first input divergence' "$OUT/split-report.txt")"
+    # PLAN §5: L2 needs 0 undeclared writes too (an incomplete write set is not a pass)
+    und_fns="$(grep -E '^SPLIT ' "$OUT/split-report.txt" | grep -v ' undeclared_cases=0 ' | awk '{ print $4 }' | paste -sd, -)"
+    check "(e) split-report: 0 undeclared writes" "$([ -z "$und_fns" ] && echo 1)" "${und_fns:-none}"
     SPLITREP="$OUT/split-report.txt"
 fi
 L3=""
@@ -407,7 +417,7 @@ for k in "${!NAMES[@]}"; do
 done
 for r in l2 l2all; do
     [ -f "$OUT/$r.spool" ] || continue
-    "$ORACLE" l2 report "$OUT/$r.spool" > "$OUT/$r-report.txt" 2>&1
+    "$ORACLE" l2 report "$OUT/$r.spool" --undeclared > "$OUT/$r-report.txt" 2>&1
     check "host report of the $r spool: 0 mismatches" "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/$r-report.txt")"
 done
 crash="$(grep -E -c 'Unhandled exception|page fault|PANIC|dispatch failed|FAILED' "$OUT"/*.log 2> /dev/null | awk -F: '{ s += $2 } END { print s + 0 }')"

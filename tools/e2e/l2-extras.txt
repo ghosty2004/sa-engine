@@ -1,4 +1,4 @@
-# Per-function extra L2 regions (SA_L2_EXTRA syntax, docs/re/l2-oracle.md): HOOK@ADDR:LEN[:R|W|RW]
+# Per-function extra L2 regions (SA_L2_EXTRA syntax, docs/re/l2-oracle.md): HOOK@ADDR:LEN[:R|W|RW|D]
 #
 # For memory a function reads or writes that catalog/rwsets.csv cannot name: heap objects behind
 # global pointers or behind `this`. ADDR/LEN are expressions evaluated at each case: numbers, registers
@@ -856,3 +856,817 @@ CRunningScript::ProcessCommands0To99@0xA43C78:0x80:RW
 CRunningScript::ProcessCommands0To99@0xA48960:0x1000:RW
 CRunningScript::ProcessCommands0To99@0xA49960:0x41AC8:RW
 CRunningScript::ProcessCommands0To99@0xA8B428:0x5408:RW
+# ---- L2-EXTRAS (2026-11-10): write sets completed from the bytes (undeclared writes of split-L2 runs) --
+# Every region below was reported as an undeclared write by `sa-oracle l2 split-report --undeclared` and
+# is declared from the instructions that write it (tools/e2e/l2-writers.py `undeclared` / `who` /
+# `writes`: absolute stores, and the instruction that passes the object's address when the store goes
+# through a pointer). Recurring blocks:
+# - RW D3D9 driver statics 0xC979C8..0xC9C080: RwGlobals (RwEngineInstance = 0xC979C8, 0x7F2F7C
+#   mov eax,0xC979C8 / 0x7F2F81 mov [0xC97B24],eax), the D3D9 render-state / texture-stage caches
+#   (RwD3D9SetRenderState 0x7FC304 mov [ecx*4+0xC98B40],eax; _rwD3D9RenderStateFlushCache 0x7FC227,
+#   0x7FC236, 0x7FC28D, 0x7FC296; RwD3D9SetTextureStageState 0x7FC38B), the transform cache
+#   (RwD3D9SetTransform 0x7FA3FB mov [edi*4+0xC97C70],eax), InsideScene 0xC97C54 (0x7F987D / 0x7F99C7),
+#   _RwD3D9D3D9ViewTransform 0xC9BC80 (0x7F8F40 push 0xC9BC80 -> RwMatrixInvert 0x7F2070; 0x7F8F89..
+#   0x7F8FA7), dgGGlobals 0xC9BCC0 (0x7F8F30 / 0x7F999E), the present parameters 0xC9C040..0xC9C078
+#   (0x7F9238.., D3D9SetPresentParameters 0x7F6CF1), the plugin-entry free list 0xC9A6C0 (0x8082F0
+#   push 0xC9A6C0, its block list at +0x10 changes when _rwPluginRegistryAddPlugin 0x8085DC allocates),
+#   the RtAnim interpolation schemes 0xC9B920 (16 x 0x30, 0x7CCD77 add edi,0xC9B920; rep movsd).
+#   Declared with access D (declared write range, not recorded: its written bytes are compared as
+#   window writes, its pre-call state is in the page fingerprint), so 17 KiB per case cost nothing.
+# - CRT data 0x8E2C30..0x8E37E0 (statically linked MSVC CRT): _iob FILE table 0x8E2C30 (19 x 0x20;
+#   __flushall 0x823F37 mov ecx,0x8E2C30, __lock_file 0x823FAF cmp eax,0x8E2E90), the locale/mbc info
+#   (__getptd 0x827CCA cmp eax,0x8E2EC0), _locktable 0x8E31C0 (__mtinitlocks 0x82ACB1 [esi*8+0x8E31C0]),
+#   setlocale data 0x8E36C0..0x8E37D4 (0x82FDB3, 0x8304E5, 0x826A74..0x826A97); fopen/fclose/fread/
+#   setlocale write it through FILE* / locale pointers. Access D. _cflush 0xC9AC4C (inc in __openfile
+#   0x82B165, __getbuf 0x83361B, __stbuf 0x827E15).
+
+# CTxdStore::PluginAttach -> RwTexDictionaryRegisterPlugin: 0x7F3C29 push 0x8E23E4 (RwTexDictionary
+# plugin registry, RwPluginRegistry 0x18 bytes) -> _rwPluginRegistryAddPlugin 0x8085F7 mov [edi],esi
+# (sizeOfStruct), 0x80864D / 0x808650 mov [edi+0x10] / [edi+0x14],eax (first / last entry); the entry
+# comes from the plugin-entry free list (0x8085DC call [ecx+0x144], RW block)
+CTxdStore::PluginAttach@0x8E23E4:0x18:RW
+CTxdStore::PluginAttach@0xC979C8:0x46B8:D
+# App::PluginAttach: the plugin registries (each RwPluginRegistry 0x18 bytes, address pushed by its
+# Rx*RegisterPlugin: atomic 0x74BDB9, clump 0x74BDE9, geometry 0x74CD89, material 0x74DC09, world
+# 0x74FCE9, light 0x751D79, world sector 0x761CA9, camera 0x7EE469, frame 0x7F1279, engine 0x7F2BC6,
+# texture 0x7F3BC9, texdict 0x7F3C29, raster 0x7FB0C9), written by _rwPluginRegistryAddPlugin
+# (0x8085F7, 0x80864D, 0x808650); the free list and RtAnim schemes in the RW block
+App::PluginAttach@0x8D624C:0x30:RW
+App::PluginAttach@0x8D628C:0x30:RW
+App::PluginAttach@0x8D62D0:0x40:RW
+App::PluginAttach@0x8D736C:0x18:RW
+App::PluginAttach@0x8E222C:0x18:RW
+App::PluginAttach@0x8E2270:0x40:RW
+App::PluginAttach@0x8E23CC:0x30:RW
+App::PluginAttach@0x8E2518:0x18:RW
+App::PluginAttach@0xC979C8:0x46B8:D
+# Ps::psCameraBeginUpdate / Rs::RsCameraBeginUpdate -> RwCameraBeginUpdate 0x7EE198 jmp [eax+0x18]
+# (camera->beginUpdate, not in the call graph) = _rpWorldObjCameraBeginUpdate 0x750430 ->
+# _rwD3D9CameraBeginUpdate 0x7F8F20: 0x8E2440..0x8E2498 (vertex declaration cache 0x8E2440.. written
+# by D3D9DeviceReleaseVideoMemory 0x7F7F77; _RwD3D9D3D9ProjTransform 0x8E2458 (D3DMATRIX): 0x7F8FBC,
+# 0x7F8FC5, 0x7F9017..0x7F903D, 0x7F9062 fstp [0x8E2490], 0x7F9059 push 0x8E2458 -> SetTransform(3))
+# and the RW block (view transform, transform cache, InsideScene, dgGGlobals)
+Ps::psCameraBeginUpdate@0x8E2440:0x58:RW
+Ps::psCameraBeginUpdate@0xC979C8:0x46B8:D
+Rs::RsCameraBeginUpdate@0x8E2440:0x58:RW
+Rs::RsCameraBeginUpdate@0xC979C8:0x46B8:D
+# Ps::psCameraShowRaster -> RwCameraShowRaster 0x7EE370 -> RwRasterShowRaster 0x7FB1A0 -> device
+# _rwD3D9RasterShowRaster 0x7F99B0 (0x7F99C7 mov [0xC97C54],0; 0x7F99F3 mov [0xC9C074],eax; render
+# state flush / device restore in the RW block); vertex declaration cache 0x8E2444.. (0x7F7F77,
+# _rxD3D9DefaultRenderCallback 0x756E07 mov [0x8E244C],edi)
+Ps::psCameraShowRaster@0x8E2440:0x14:RW
+Ps::psCameraShowRaster@0xC979C8:0x46B8:D
+# App::DoRWStuffEndOfFrame: RwCameraEndUpdate 0x7EE180 (camera->endUpdate = _rpWorldObjCameraEndUpdate
+# 0x750460 -> _rwD3D9CameraEndUpdate 0x7F98D0: 0x7F9998 mov [0xC97C34],edi, 0x7F999E mov [0xC9BCC0],edi)
+# and RsCameraShowRaster (above): RW block, vertex declaration cache
+App::DoRWStuffEndOfFrame@0x8E2440:0x14:RW
+App::DoRWStuffEndOfFrame@0xC979C8:0x46B8:D
+# CGame::DrasticTidyUpMemory -> D3DResourceSystem::TidyUpD3DTextures 0x7305E0: 0x730606 imul eax,eax,0x1C;
+# 0x730609 add eax,0xC87C68; 0x73061A / 0x73061D mov [eax+0x10] / [eax+0x14] (TextureBuffer[] entries,
+# 0x1C bytes each, up to the round-robin index at 0xC87FE0, 0x73064A)
+CGame::DrasticTidyUpMemory@0xC87C68:0x37C:RW
+# Input::diMouseInit: 0x7469A4 mov ecx,[0xC17054] (RsGlobal.ps = PsGlobal), 0x7469BB add ecx,0x1C;
+# push ecx; 0x7469C5 call [edx+0xC] (IDirectInput8::CreateDevice writes the device pointer to
+# PsGlobal.mouse; an OS object address, normalise.rs Foreign)
+Input::diMouseInit@[0xC17054]+0x1C:4:RW
+# CGame::InitialiseOnceBeforeRW: CdStreamInit 0x406B70 -> CdStreamInitThread 0x4069AB push 0x8E4000
+# (CreateThread's lpThreadId = gStreamingThreadId; INPUT_EXCLUSION value, compared through it);
+# gCdImageNames 0x8E4098 (8 x 0x40; CdStreamInit 0x406B80 mov edx,0x8E4098 clears them) and the image
+# handles 0x8E4010 (CdStreamRemoveImages 0x4066EA mov [esi*4+0x8E4010],ebx); CFileMgr::Initialise
+# 0x5386F6 push 0xB71AE0 (_getcwd -> CFileMgr::ms_rootDirName, char[128])
+CGame::InitialiseOnceBeforeRW@0x8E4000:4:D
+CGame::InitialiseOnceBeforeRW@0x8E4010:0x20:RW
+CGame::InitialiseOnceBeforeRW@0x8E4098:0x200:RW
+CGame::InitialiseOnceBeforeRW@0xB71AE0:0x80:RW
+# Ps::InitialiseLanguage: CText::Load / Unload on TheText (0x74668F / 0x7466A4 mov ecx,0xC1B340; CText
+# 0xA90 bytes); CText::Load -> CFileMgr::SetDir (0x5387D8 mov [eax+0xB71A60],cl, ms_dirName char[128])
+# and the CRT stream functions (CRT block, _cflush)
+Ps::InitialiseLanguage@0xC1B340:0xA90:RW
+Ps::InitialiseLanguage@0xB71A60:0x80:RW
+Ps::InitialiseLanguage@0x8E2C30:0xBB0:D
+Ps::InitialiseLanguage@0xC9AC4C:4:RW
+# CGame::InitialiseEssentialsAfterRW: 0x5BA162 mov ecx,0xC1B340 (CText::Load on TheText); SetDir
+# (0x5387D8); the CRT; RxNodeDefinitionGetD3D9AtomicAllInOne 0x7582E0 mov eax,0x8D6338 (static
+# RxNodeDefinition, 0x40 bytes: its InputPipesCnt +0x3C changes when a pipeline locks the node)
+CGame::InitialiseEssentialsAfterRW@0xC1B340:0xA90:RW
+CGame::InitialiseEssentialsAfterRW@0xB71A60:0x80:RW
+CGame::InitialiseEssentialsAfterRW@0x8E2C30:0xBB0:D
+CGame::InitialiseEssentialsAfterRW@0xC9AC4C:4:RW
+CGame::InitialiseEssentialsAfterRW@0x8D6338:0x40:RW
+# Rs::RsInitialize -> psInitialize 0x747420 and the front end: TheText (0x747562 mov ecx,0xC1B340),
+# ControlsManager (CControllerConfigManager 0xB70198, 0x12E4 bytes; LoadSettings 0x5305E9 mov ebp,
+# 0xB70D08), FrontEndMenuManager (CMenuManager 0xBA6748, 0x1B78 bytes; 0x747540 mov ecx,0xBA6748;
+# WinMain 0x748C85 mov [0xBA6820],eax), C_PcSave::SetSaveDirectory 0x61904F push 0xC16F18 (char[256]),
+# CFileMgr::InitUserDirectories (0x7450F6 [eax+0xC92168], 0x745086 [eax+0xC92268], 0x744FE4 push
+# 0xC92368; three char[256]), SetDir (0xB71A60), the two out-parameters of psInitialize's call 0x747600
+# (0x7475E5 push 0xC8CF84, 0x7475EA push 0xC8CF80 -> 0x7455E0, the DirectX version query), delay-load import cells 0x8E3EBC..0x8E3ED0 (DelayLoad
+# thunk 0x818020 mov eax,0x8E3ECC: __delayLoadHelper2 writes the resolved import), the CRT, and the
+# MatFX pipelines 0xC9ABA8.. (_rpMatFXPipelinesCreate 0x816048 push 0xC9ABA8; RW block)
+Rs::RsInitialize@0xC1B340:0xA90:RW
+Rs::RsInitialize@0xB70198:0x12E4:RW
+Rs::RsInitialize@0xBA6748:0x1B78:RW
+Rs::RsInitialize@0xC16F18:0x100:RW
+Rs::RsInitialize@0xC92168:0x300:RW
+Rs::RsInitialize@0xB71A60:0x80:RW
+Rs::RsInitialize@0xC8CF80:8:RW
+Rs::RsInitialize@0x8E3EB8:0x20:RW
+Rs::RsInitialize@0x8E2C30:0xBB0:D
+Rs::RsInitialize@0xC979C8:0x46B8:D
+# Orchestrators: their closure writes the game's whole static state (observed: Game::InitialiseGame
+# 4,259 undeclared ranges over 202 globals, from CAnimManager::ms_aAnimAssocDefinitions 0x8ABBC8 to the
+# audio zones 0xB6EBFC; Game::RwInitialize 1,887 ranges over 55 globals, plugin offsets 0x8D12BC to the
+# D3D9 caps 0xC9C02E and _rwdseg 0xCAF000). Declared as the whole .data/.bss (0x8A4000, 0x3FA000 bytes)
+# with access D (every written byte is still compared as a window write).
+# Game::InitialiseGame: 0x53E58E call CGame::Initialise 0x53BC80 (the whole game init), 0x53E59B call
+# CAudioEngine::Restart 0x506DB0
+Game::InitialiseGame@0x8A4000:0x3FA000:D
+# Game::RwInitialize: 0x5BF395 call Rs::RsRwInitialize 0x619C90 (RwEngineInit/Open/Start, every plugin
+# registry, the D3D9 device), 0x5BF3A1 call CGame::InitialiseRenderWare 0x5BD600 (TheCamera, fonts, HUD
+# sprites, pipelines, txds); _rwdseg 0xCAF000: 0x85741E mov [0xCAF000],eax / 0x857411 mov [0xCAF004],eax
+# (reached at 0x7F8F20's call 0x857432, _rwProcessorForceSinglePrecision)
+Game::RwInitialize@0x8A4000:0x3FA000:D
+Game::RwInitialize@0xCAF000:8:D
+
+# ---- L2-EXTRAS: STREAM (PORT-STREAM split groups, target/streaml2/h4/g00..g08, m31g00..02, solos) ----
+# Static objects the STREAM functions' callees write through pointers or computed indices (the spec
+# declares only the first element of an indexed / based catalogue entry, so every other element was
+# "undeclared"). Declared with access D (window writes are compared; nothing recorded). Per object, the
+# instructions that write it:
+# INFOFORMODEL 0x8E4CC0..0x965524: CStreaming::ms_aInfoForModel (26,316 x 0x14), the list sentinels
+#   0x9654B0.. and ms_rwObjectInstances 0x9654F0 (CLinkList, 0x34). CStreamingInfo::AddToList body
+#   0x15674FC / 0x15674FF / 0x1567503 / 0x1567513 mov word [edx+ecx*4+2],si (edx = ms_pArrayBase
+#   [0x9654B4]); RemoveModel 0x408B59 / 0x408B60 mov word [edi+0x8E4CC0],bp, 0x408B17, 0x408BAB..;
+#   LoadCdDirectory 0x5B6468 / 0x5B6495 / 0x5B64A2 [edx*4+0x8E4CC4]; ConvertBufferToObject 0x40C92F;
+#   FinishLoadingLargeFile 0x408DDD; ms_rwObjectInstances: CStreaming::AddEntity 0x409666 mov ecx,
+#   0x9654F0 (CLinkList::Insert), Init2 0x5B8E8F.
+# MODELINFO 0xA9B0C8..0xB4DBE0: CModelInfo::ms_modelInfoPtrs (20,000 x 4) and the model-info stores up
+#   to the end of ms_2dFXInfoStore (atomic 0xAAE950, damage-atomic 0xB1BF58, lod-atomic 0xB1C934, time
+#   0xB1C960, lod-time 0xB1E128, weapon 0xB1E158, clump 0xB1E958, vehicle 0xB1F650, ped 0xB478F8, 2dFX
+#   0xB4C2D8): CBaseModelInfo / CAtomicModelInfo / CClumpModelInfo / CVehicleModelInfo methods write
+#   their `this` (reference counts, txd slot, RwObject, collision model, flags) for the model ids the
+#   functions handle; CModelInfo::Add*Model stores (CModelInfo::ShutDown 0x4C63F1 mov edi,0xAAE954
+#   walks the same stores).
+# SECTORS 0xB7D0B8 (120x120x8), REPEATSECTORS 0xB992B8 (16x16x0xC), LODLISTS 0xB99EB8 (30x30x4): the
+#   CEntity::Add / Remove sector lists (as for CPhysical::Add above).
+# WORLDLISTS 0xB9ACC8: CWorld::ms_listMovingEntityPtrs / ms_listObjectsWithControlCode
+#   (CObject::RemoveFromControlCodeList 0x59F468 mov [0xB9ACCC],ecx).
+# REFERENCES 0xB9B9A8..0xBA176C: CReferences::aRefs (3,000 x 8) and pEmptyList 0xBA1768 (CReferences::
+#   Init 0x5719B0 / 0x5719B5; CEntity::CleanUpOldReference 0x571A2C mov [0xBA1768],eax).
+# PLANTCOLCACHE 0xC08E48: CPlantMgr::m_ColEntCacheTab (ReloadConfig 0x5DD899 [eax+0xC08E48]; entity
+#   removal unlinks the cache entry). COVERPOINTS 0xC197C8: CCover::m_Points (AddCoverPoint 0x6990A7;
+#   removal on entity deletion). CARGENS 0xC27AD0: CTheCarGenerators::CarGeneratorArray (500 x 0x20,
+#   CTheCarGenerators::Get 0x479D68 add eax,0xC27AD0). STENCILSHADOWS 0xC6A198: CStencilShadows::
+#   m_StencilShadowObjects (Init 0x70FA0D / 0x70FA14 [eax+0xC6A19C]). SCRIPTBRAINWAIT 0xA476B8:
+#   CTheScripts::EntitiesWaitingForScriptBrain (150 x 8; CTheScripts::Init 0x468F31).
+# MATRIXLIST 0xB74288 / NUMMATRICES 0xB74238: CPlaceable's static matrix list (CPlaceable::
+#   InitMatrixArray 0x54F3A5 mov ecx,0xB74288; FreeStaticMatrix 0x54F037; ~CPlaceable 0x54F5E5 dec
+#   [0xB74238]). GBUILDINGS 0xB71804: entity RwObject counter (CEntity::CreateRwObject 0x533D87 inc,
+#   DeleteRwObject 0x5340CD dec). RENDERENTITYLINK 0x8E48A0 (StartRenderEntities 0x4096C0).
+# GRWSTREAM 0x8E48AC (RwStream, 0x24): FinishLoadingLargeFile 0x408CFE / ConvertBufferToObject
+#   0x40C6DB push 0x8E48AC (RwStreamOpen on the static stream; its position advances in every read).
+# MSFILES 0x8E48D8..0x8E4A58: CStreaming::ms_files (8 x 0x30; InitImageList 0x4083E8 mov eax,0x8E48D8,
+#   AddImageToList body 0x1567BD4 mov [esi+0x8E4904],eax). CDIMG 0x8E4010..0x8E4898: CdStream image
+#   handles 0x8E4010 (CdStreamRemoveImages 0x4066EA [esi*4+0x8E4010]) and gCdImageNames 0x8E4098
+#   (32 x 0x40; CdStreamInit 0x406B80 mov edx,0x8E4098).
+# COLMODELCACHE 0x96593C: CCollision::ms_colModelCache (RemoveTrianglePlanes 0x416440 mov [0x96594C],eax).
+# TAGMANAGER 0xA9A8C0..0xA9AD74: CTagManager::ms_tagDesc (150 x 8) + ms_numTags (CTagManager::AddTag).
+# GFX 0xA9AE00: g_fx / g_fxMan (Fx_c, FxManager_c; entity creation registers its effects).
+# ANIMBLOCKS 0xB5D4A0: CAnimManager::ms_aAnimBlocks (180 x 0x20; 0x406F97 add eax,0xB5D4A0;
+#   RemoveLastAnimFile 0x4D3F30 [ecx+0xB5D4B0]): reference counts of the clump's anim block.
+# CARFRAME 0xB4E6B8 (CVehicleModelInfo::SetRenderPipelines 0x4C8940 mov [0xB4E6B8],eax).
+# CARPLATEMAT 0xC3EF7C: CCustomCarPlateMgr::CurrentLicensePlateMaterial (SetupClump 0x6FE103).
+# SCRATCHHEAP 0xC87BD0 + 0xC8E0C8 (0x4000): the scratch-pad CMemoryHeap (CMemoryMgr::InitScratchPad
+#   0x72F48C mov ecx,0xC87BD0) and its buffer s_MemoryHeapBuffer (also the renderer's scan lists,
+#   CRenderer::SetupScanLists 0x55358C), used by RpClumpStreamRead's temporary allocations.
+# TEXTUREBUFFER 0xC87C60: D3DResourceSystem's buffer count 0xC87C60 and TextureBuffer (as for
+#   DrasticTidyUpMemory above).
+# DEFAULTTXDS 0xC88000: CTxdStore::defaultTxds. VEHREC 0x97D880: CVehicleRecording::StreamingArray
+#   (475 x 0x10; RegisterRecordingFile body 0x156F157 mov [eax+0x97D880],edx).
+# 2DFXSLOT 0x8D4948: C2dEffect's plugin txd slot (Rwt2dEffectPluginDataChunkReadCallBack 0x6F9FED
+#   mov [0x8D4948],eax; a plugin stream callback of RpAtomicStreamRead).
+# COLFILEHDR 0xBC40D8: LoadCollisionFile(File)'s static header buffer (0x5B4EEE / 0x5B4F7E / 0x5B4F9B /
+#   0x5B4FB0 push 0xBC40D8 -> CFileMgr::Read).
+# RWSTATIC 0xC92470..0xC979C8: RW core module statics (static free lists and module data: cb_CLUMPMODULE_
+#   RwEngine_Open 0x749775 push 0xC92484, cb_FRAMEMODULE_RwEngine_Open 0x7EFF05 push 0xC97974,
+#   cb_CAMERAMODULE 0x7EE125 push 0xC9793C, cb_STREAMMODULE 0x7EC795 push 0xC97908): their free-list
+#   block lists change when the stream readers allocate clumps / frames.
+# CRT, RWD3D9, CFLUSH, D3D9VDECL+PROJ, DIRNAME, DELAYLOAD, RWREG*: see the CORE block above.
+# STREAMSTATICS 0x8E4A58..0x8E4CC0: CStreaming's scalar statics: ms_channel 0x8E4A60 (2 x 0x98;
+#   ProcessLoadingChannel 0x40E1C6 / 0x40E2F0 mov [ebp+0x8E4A60]), ms_pedsLoaded 0x8E4C00
+#   (StreamZoneModels 0x40A637 mov [edi*4+0x8E4C00],esi), ms_vehiclesLoaded 0x8E4C24 (CLoadedCarGroup;
+#   ProcessLoadingChannel 0x40E217 / RemoveLeastUsedModel 0x40D18A mov ecx,0x8E4C24), the list ends
+#   0x8E4C54..0x8E4C60, ms_imageOffsets 0x8E4C8C, the memory counters 0x8E4CB4.
+# POPCARGROUPS 0xC0E998: CPopulation's CLoadedCarGroups (boats 0xC0E998, inappropriate 0xC0E9C8,
+#   appropriate 0xC0E9F8, gang cars 0xC0EA28 x 10; 0x30 each): AddToLoadedVehiclesList body 0x156632C,
+#   RemoveCarModel body 0x156C0A7, RemoveLoadedVehicle 0x40C0FA mov ecx|esi,0xC0E9F8.
+# THEPATHS 0x96F050: ThePaths (CPathFind, 0x3C80): RemoveModel 0x408A85 / ConvertBufferToObject
+#   0x40CA26 mov ecx,0x96F050 (path node loading / unloading).
+# STREAMEDSCRIPTS 0xA47B60: CTheScripts::StreamedScripts (CStreamedScripts, 0xA48; LoadCdDirectory
+#   0x5B6414 mov ecx,0xA47B60 -> RegisterScript).
+# ANIMATIONS 0xB4EA40: CAnimManager::ms_aAnimations (2,500 x 0x18; __init_ 0x84BFE1 push 0xB4EA40).
+# COLOURTABLE 0xB4E480: CVehicleModelInfo::ms_vehicleColourTable (LoadVehicleColours 0x5B68D4).
+# UPGRADEWHEELS 0xB4E3F8 (AddWheelUpgrade 0x4C871F [edx*2+0xB4E3F8], 0x4C8727 [eax*2+0xB4E470]),
+#   LINKEDUPGRADES 0xB4E6D8 (LoadVehicleUpgrades 0x5B6859 mov ecx,0xB4E6D8 -> AddUpgradeLink).
+# DIRTTEXTURES 0xC02BD0: CCarFXRenderer::ms_aDirtTextures (InitialiseDirtTexture 0x5D5C24).
+# IPLINSTANCES 0xBCC0D8: gCurrIplInstancesCount + gCurrIplInstances (4,096 x 4; LoadScene 0x5B8938
+#   mov [ecx*4+0xBCC0E0],eax, 0x5B8940 mov [0xBCC0D8],ecx).
+# DEVRESTORE 0xC7C728: CGame::D3DDeviceRestoreCallback 0x5BA13B / 0x5BA141 mov [0xC7C729].
+# ONEXIT 0xC9D428: the CRT onexit table end / begin (__onexit_lk 0x821CAB mov [0xC9D428],ecx, 0x821CB3 add
+#   [0xC9D428],4; 0x821CA0 / 0x821CCB mov [0xC9D42C],eax when the table is reallocated).
+# Per hook: the objects its undeclared writes fell in (base run s0-*, lane 6).
+# CAtomicModelInfo::CreateInstance-void: RWSTATIC
+CAtomicModelInfo::CreateInstance-void@0xC92470:0x5558:D
+# CAtomicModelInfo::DeleteRwObject: INFOFORMODEL, TEXTUREBUFFER
+CAtomicModelInfo::DeleteRwObject@0x8E4CC0:0x80864:D
+CAtomicModelInfo::DeleteRwObject@0xC87C60:0x384:D
+# CClumpModelInfo::CreateInstance-void: RWSTATIC
+CClumpModelInfo::CreateInstance-void@0xC92470:0x5558:D
+# CClumpModelInfo::DeleteRwObject: INFOFORMODEL, COLMODELCACHE, ANIMBLOCKS, TEXTUREBUFFER, RWSTATIC
+CClumpModelInfo::DeleteRwObject@0x8E4CC0:0x80864:D
+CClumpModelInfo::DeleteRwObject@0x96593C:0x1C:D
+CClumpModelInfo::DeleteRwObject@0xB5D4A0:0x1680:D
+CClumpModelInfo::DeleteRwObject@0xC87C60:0x384:D
+CClumpModelInfo::DeleteRwObject@0xC92470:0x5558:D
+# CClumpModelInfo::SetClump: ANIMBLOCKS
+CClumpModelInfo::SetClump@0xB5D4A0:0x1680:D
+# CColStore::EnsureCollisionIsInMemory: GRWSTREAM, STREAMSTATICS, INFOFORMODEL, MODELINFO, POPCARGROUPS, CARPLATEMAT, TEXTUREBUFFER, SCRATCHHEAP, RWD3D9
+CColStore::EnsureCollisionIsInMemory@0x8E48AC:0x24:D
+CColStore::EnsureCollisionIsInMemory@0x8E4A58:0x268:D
+CColStore::EnsureCollisionIsInMemory@0x8E4CC0:0x80864:D
+CColStore::EnsureCollisionIsInMemory@0xA9B0C8:0xB2B18:D
+CColStore::EnsureCollisionIsInMemory@0xC0E998:0x270:D
+CColStore::EnsureCollisionIsInMemory@0xC3EF7C:0x8:D
+CColStore::EnsureCollisionIsInMemory@0xC87C60:0x384:D
+CColStore::EnsureCollisionIsInMemory@0xC8E0C8:0x4000:D
+CColStore::EnsureCollisionIsInMemory@0xC979C8:0x46B8:D
+# CColStore::LoadCol-2: MODELINFO
+CColStore::LoadCol-2@0xA9B0C8:0xB2B18:D
+# CColStore::RemoveCol: COLMODELCACHE
+CColStore::RemoveCol@0x96593C:0x1C:D
+# CFileLoader::LinkLods: MODELINFO, SECTORS, LODLISTS
+CFileLoader::LinkLods@0xA9B0C8:0xB2B18:D
+CFileLoader::LinkLods@0xB7D0B8:0x1C200:D
+CFileLoader::LinkLods@0xB99EB8:0xE10:D
+# CFileLoader::LoadAtomicFile-stream: 2DFXSLOT, GRWSTREAM, MODELINFO, RWSTATIC
+CFileLoader::LoadAtomicFile-stream@0x8D4948:0x4:D
+CFileLoader::LoadAtomicFile-stream@0x8E48AC:0x24:D
+CFileLoader::LoadAtomicFile-stream@0xA9B0C8:0xB2B18:D
+CFileLoader::LoadAtomicFile-stream@0xC92470:0x5558:D
+# CFileLoader::LoadClumpFile-1: GRWSTREAM, MODELINFO, CARFRAME, ANIMBLOCKS, CARPLATEMAT, SCRATCHHEAP, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CFileLoader::LoadClumpFile-1@0x8E48AC:0x24:D
+CFileLoader::LoadClumpFile-1@0xA9B0C8:0xB2B18:D
+CFileLoader::LoadClumpFile-1@0xB4E6B8:0x4:D
+CFileLoader::LoadClumpFile-1@0xB5D4A0:0x1680:D
+CFileLoader::LoadClumpFile-1@0xC3EF7C:0x8:D
+CFileLoader::LoadClumpFile-1@0xC87BD0:0x50:D
+CFileLoader::LoadClumpFile-1@0xC87C60:0x384:D
+CFileLoader::LoadClumpFile-1@0xC8E0C8:0x4000:D
+CFileLoader::LoadClumpFile-1@0xC92470:0x5558:D
+CFileLoader::LoadClumpFile-1@0xC979C8:0x46B8:D
+# CFileLoader::LoadClumpObject: MODELINFO
+CFileLoader::LoadClumpObject@0xA9B0C8:0xB2B18:D
+# CFileLoader::LoadCollisionFile-Buffer: MODELINFO
+CFileLoader::LoadCollisionFile-Buffer@0xA9B0C8:0xB2B18:D
+# CFileLoader::LoadCollisionFile-File: COLFILEHDR, CFLUSH
+CFileLoader::LoadCollisionFile-File@0xBC40D8:0x40:D
+CFileLoader::LoadCollisionFile-File@0xC9AC4C:0x4:D
+# CFileLoader::LoadCollisionFileFirstTime: MODELINFO
+CFileLoader::LoadCollisionFileFirstTime@0xA9B0C8:0xB2B18:D
+# CFileLoader::LoadLine-File: CRT, FILELOADERLINE, CFLUSH
+CFileLoader::LoadLine-File@0x8E2C30:0xBB0:D
+CFileLoader::LoadLine-File@0xB71848:0x200:D
+CFileLoader::LoadLine-File@0xC9AC4C:0x4:D
+# CFileLoader::LoadObjectInstance-file: TAGMANAGER
+CFileLoader::LoadObjectInstance-file@0xA9A8C0:0x4B4:D
+# CFileLoader::LoadObjectTypes: CRT, MODELINFO, FILELOADERLINE, CFLUSH
+CFileLoader::LoadObjectTypes@0x8E2C30:0xBB0:D
+CFileLoader::LoadObjectTypes@0xA9B0C8:0xB2B18:D
+CFileLoader::LoadObjectTypes@0xB71848:0x200:D
+CFileLoader::LoadObjectTypes@0xC9AC4C:0x4:D
+# CFileLoader::SetRelatedModelInfoCB: MODELINFO, RWSTATIC
+CFileLoader::SetRelatedModelInfoCB@0xA9B0C8:0xB2B18:D
+CFileLoader::SetRelatedModelInfoCB@0xC92470:0x5558:D
+# CIplStore::LoadIpl: MATRIXLIST, SECTORS, IPLINSTANCES, CARGENS
+CIplStore::LoadIpl@0xB74288:0x1F8:D
+CIplStore::LoadIpl@0xB7D0B8:0x1C200:D
+CIplStore::LoadIpl@0xBCC0D8:0x4008:D
+CIplStore::LoadIpl@0xC27AD0:0x3E80:D
+# CIplStore::LoadIplBoundingBox: MATRIXLIST, SECTORS, IPLINSTANCES
+CIplStore::LoadIplBoundingBox@0xB74288:0x1F8:D
+CIplStore::LoadIplBoundingBox@0xB7D0B8:0x1C200:D
+CIplStore::LoadIplBoundingBox@0xBCC0D8:0x4008:D
+# CIplStore::LoadIpls: INFOFORMODEL, SCRIPTBRAINWAIT, NUMMATRICES, MATRIXLIST, SECTORS, REPEATSECTORS, WORLDLISTS, REFERENCES, PLANTCOLCACHE, COVERPOINTS, CARGENS, STENCILSHADOWS
+CIplStore::LoadIpls@0x8E4CC0:0x80864:D
+CIplStore::LoadIpls@0xA476B8:0x4B0:D
+CIplStore::LoadIpls@0xB74238:0x4:D
+CIplStore::LoadIpls@0xB74288:0x1F8:D
+CIplStore::LoadIpls@0xB7D0B8:0x1C200:D
+CIplStore::LoadIpls@0xB992B8:0xC00:D
+CIplStore::LoadIpls@0xB9ACC8:0x8:D
+CIplStore::LoadIpls@0xB9B9A8:0x5DC4:D
+CIplStore::LoadIpls@0xC08E48:0x1A0:D
+CIplStore::LoadIpls@0xC197C8:0x130:D
+CIplStore::LoadIpls@0xC27AD0:0x3E80:D
+CIplStore::LoadIpls@0xC6A198:0x440:D
+# CIplStore::RemoveIpl: INFOFORMODEL, SCRIPTBRAINWAIT, MODELINFO, GBUILDINGS, NUMMATRICES, MATRIXLIST, SECTORS, REPEATSECTORS, WORLDLISTS, REFERENCES, PLANTCOLCACHE, COVERPOINTS, CARGENS, STENCILSHADOWS
+CIplStore::RemoveIpl@0x8E4CC0:0x80864:D
+CIplStore::RemoveIpl@0xA476B8:0x4B0:D
+CIplStore::RemoveIpl@0xA9B0C8:0xB2B18:D
+CIplStore::RemoveIpl@0xB71804:0x4:D
+CIplStore::RemoveIpl@0xB74238:0x4:D
+CIplStore::RemoveIpl@0xB74288:0x1F8:D
+CIplStore::RemoveIpl@0xB7D0B8:0x1C200:D
+CIplStore::RemoveIpl@0xB992B8:0xC00:D
+CIplStore::RemoveIpl@0xB9ACC8:0x8:D
+CIplStore::RemoveIpl@0xB9B9A8:0x5DC4:D
+CIplStore::RemoveIpl@0xC08E48:0x1A0:D
+CIplStore::RemoveIpl@0xC197C8:0x130:D
+CIplStore::RemoveIpl@0xC27AD0:0x3E80:D
+CIplStore::RemoveIpl@0xC6A198:0x440:D
+# CIplStore::RemoveRelatedIpls: INFOFORMODEL, NUMMATRICES, MATRIXLIST, SECTORS
+CIplStore::RemoveRelatedIpls@0x8E4CC0:0x80864:D
+CIplStore::RemoveRelatedIpls@0xB74238:0x4:D
+CIplStore::RemoveRelatedIpls@0xB74288:0x1F8:D
+CIplStore::RemoveRelatedIpls@0xB7D0B8:0x1C200:D
+# CLoadingScreen::DisplayPCScreen: RWD3D9
+CLoadingScreen::DisplayPCScreen@0xC979C8:0x46B8:D
+# CLoadingScreen::DoPCTitleFadeIn: D3D9VDECL+PROJ, DEVRESTORE, RWSTATIC, RWD3D9
+CLoadingScreen::DoPCTitleFadeIn@0x8E2440:0x58:D
+CLoadingScreen::DoPCTitleFadeIn@0xC7C728:0x4:D
+CLoadingScreen::DoPCTitleFadeIn@0xC92470:0x5558:D
+CLoadingScreen::DoPCTitleFadeIn@0xC979C8:0x46B8:D
+# CLoadingScreen::RenderLoadingBar: RWD3D9
+CLoadingScreen::RenderLoadingBar@0xC979C8:0x46B8:D
+# CModelInfo::Initialise: MODELINFO
+CModelInfo::Initialise@0xA9B0C8:0xB2B18:D
+# CPedModelInfo::DeleteRwObject: INFOFORMODEL, TEXTUREBUFFER
+CPedModelInfo::DeleteRwObject@0x8E4CC0:0x80864:D
+CPedModelInfo::DeleteRwObject@0xC87C60:0x384:D
+# CPedModelInfo::SetClump: ANIMBLOCKS
+CPedModelInfo::SetClump@0xB5D4A0:0x1680:D
+# CStreaming::AddImageToList: CDIMG, MSFILES
+CStreaming::AddImageToList@0x8E4010:0x888:D
+CStreaming::AddImageToList@0x8E48D8:0x180:D
+# CStreaming::ConvertBufferToObject: GRWSTREAM, STREAMSTATICS, INFOFORMODEL, MODELINFO, CARFRAME, ANIMATIONS, ANIMBLOCKS, MATRIXLIST, SECTORS, IPLINSTANCES, POPCARGROUPS, CARGENS, CARPLATEMAT, SCRATCHHEAP, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::ConvertBufferToObject@0x8E48AC:0x24:D
+CStreaming::ConvertBufferToObject@0x8E4A58:0x268:D
+CStreaming::ConvertBufferToObject@0x8E4CC0:0x80864:D
+CStreaming::ConvertBufferToObject@0xA9B0C8:0xB2B18:D
+CStreaming::ConvertBufferToObject@0xB4E6B8:0x4:D
+CStreaming::ConvertBufferToObject@0xB4EA40:0xEA60:D
+CStreaming::ConvertBufferToObject@0xB5D4A0:0x1680:D
+CStreaming::ConvertBufferToObject@0xB74288:0x1F8:D
+CStreaming::ConvertBufferToObject@0xB7D0B8:0x1C200:D
+CStreaming::ConvertBufferToObject@0xBCC0D8:0x4008:D
+CStreaming::ConvertBufferToObject@0xC0E998:0x270:D
+CStreaming::ConvertBufferToObject@0xC27AD0:0x3E80:D
+CStreaming::ConvertBufferToObject@0xC3EF7C:0x8:D
+CStreaming::ConvertBufferToObject@0xC87BD0:0x50:D
+CStreaming::ConvertBufferToObject@0xC87C60:0x384:D
+CStreaming::ConvertBufferToObject@0xC8E0C8:0x4000:D
+CStreaming::ConvertBufferToObject@0xC92470:0x5558:D
+CStreaming::ConvertBufferToObject@0xC979C8:0x46B8:D
+# CStreaming::DeleteAllRwObjects: INFOFORMODEL, MODELINFO
+CStreaming::DeleteAllRwObjects@0x8E4CC0:0x80864:D
+CStreaming::DeleteAllRwObjects@0xA9B0C8:0xB2B18:D
+# CStreaming::FinishLoadingLargeFile: GRWSTREAM, INFOFORMODEL, RWD3D9
+CStreaming::FinishLoadingLargeFile@0x8E48AC:0x24:D
+CStreaming::FinishLoadingLargeFile@0x8E4CC0:0x80864:D
+CStreaming::FinishLoadingLargeFile@0xC979C8:0x46B8:D
+# CStreaming::FlushChannels: GRWSTREAM, STREAMSTATICS, INFOFORMODEL, MODELINFO, ANIMATIONS, ANIMBLOCKS, SECTORS, POPCARGROUPS, CARPLATEMAT, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::FlushChannels@0x8E48AC:0x24:D
+CStreaming::FlushChannels@0x8E4A58:0x268:D
+CStreaming::FlushChannels@0x8E4CC0:0x80864:D
+CStreaming::FlushChannels@0xA9B0C8:0xB2B18:D
+CStreaming::FlushChannels@0xB4EA40:0xEA60:D
+CStreaming::FlushChannels@0xB5D4A0:0x1680:D
+CStreaming::FlushChannels@0xB7D0B8:0x1C200:D
+CStreaming::FlushChannels@0xC0E998:0x270:D
+CStreaming::FlushChannels@0xC3EF7C:0x8:D
+CStreaming::FlushChannels@0xC87C60:0x384:D
+CStreaming::FlushChannels@0xC8E0C8:0x4000:D
+CStreaming::FlushChannels@0xC92470:0x5558:D
+CStreaming::FlushChannels@0xC979C8:0x46B8:D
+# CStreaming::Init2: STREAMSTATICS, INFOFORMODEL, VEHREC, STREAMEDSCRIPTS, MODELINFO, ANIMBLOCKS, CFLUSH
+CStreaming::Init2@0x8E4A58:0x268:D
+CStreaming::Init2@0x8E4CC0:0x80864:D
+CStreaming::Init2@0x97D880:0x1DB0:D
+CStreaming::Init2@0xA47B60:0xA48:D
+CStreaming::Init2@0xA9B0C8:0xB2B18:D
+CStreaming::Init2@0xB5D4A0:0x1680:D
+CStreaming::Init2@0xC9AC4C:0x4:D
+# CStreaming::InitImageList: CDIMG, MSFILES
+CStreaming::InitImageList@0x8E4010:0x888:D
+CStreaming::InitImageList@0x8E48D8:0x180:D
+# CStreaming::InstanceLoadedModels: INFOFORMODEL, GFX, MODELINFO, GBUILDINGS, RWSTATIC
+CStreaming::InstanceLoadedModels@0x8E4CC0:0x80864:D
+CStreaming::InstanceLoadedModels@0xA9AE00:0xC0:D
+CStreaming::InstanceLoadedModels@0xA9B0C8:0xB2B18:D
+CStreaming::InstanceLoadedModels@0xB71804:0x4:D
+CStreaming::InstanceLoadedModels@0xC92470:0x5558:D
+# CStreaming::LoadAllRequestedModels: 2DFXSLOT, GRWSTREAM, STREAMSTATICS, INFOFORMODEL, THEPATHS, MODELINFO, CARFRAME, ANIMATIONS, ANIMBLOCKS, MATRIXLIST, SECTORS, IPLINSTANCES, POPCARGROUPS, CARGENS, CARPLATEMAT, SCRATCHHEAP, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::LoadAllRequestedModels@0x8D4948:0x4:D
+CStreaming::LoadAllRequestedModels@0x8E48AC:0x24:D
+CStreaming::LoadAllRequestedModels@0x8E4A58:0x268:D
+CStreaming::LoadAllRequestedModels@0x8E4CC0:0x80864:D
+CStreaming::LoadAllRequestedModels@0x96F050:0x3C80:D
+CStreaming::LoadAllRequestedModels@0xA9B0C8:0xB2B18:D
+CStreaming::LoadAllRequestedModels@0xB4E6B8:0x4:D
+CStreaming::LoadAllRequestedModels@0xB4EA40:0xEA60:D
+CStreaming::LoadAllRequestedModels@0xB5D4A0:0x1680:D
+CStreaming::LoadAllRequestedModels@0xB74288:0x1F8:D
+CStreaming::LoadAllRequestedModels@0xB7D0B8:0x1C200:D
+CStreaming::LoadAllRequestedModels@0xBCC0D8:0x4008:D
+CStreaming::LoadAllRequestedModels@0xC0E998:0x270:D
+CStreaming::LoadAllRequestedModels@0xC27AD0:0x3E80:D
+CStreaming::LoadAllRequestedModels@0xC3EF7C:0x8:D
+CStreaming::LoadAllRequestedModels@0xC87BD0:0x50:D
+CStreaming::LoadAllRequestedModels@0xC87C60:0x384:D
+CStreaming::LoadAllRequestedModels@0xC8E0C8:0x4000:D
+CStreaming::LoadAllRequestedModels@0xC92470:0x5558:D
+CStreaming::LoadAllRequestedModels@0xC979C8:0x46B8:D
+# CStreaming::LoadCdDirectory-char: INFOFORMODEL, VEHREC, STREAMEDSCRIPTS, MODELINFO, ANIMBLOCKS, CFLUSH
+CStreaming::LoadCdDirectory-char@0x8E4CC0:0x80864:D
+CStreaming::LoadCdDirectory-char@0x97D880:0x1DB0:D
+CStreaming::LoadCdDirectory-char@0xA47B60:0xA48:D
+CStreaming::LoadCdDirectory-char@0xA9B0C8:0xB2B18:D
+CStreaming::LoadCdDirectory-char@0xB5D4A0:0x1680:D
+CStreaming::LoadCdDirectory-char@0xC9AC4C:0x4:D
+# CStreaming::LoadCdDirectory-void: INFOFORMODEL, VEHREC, STREAMEDSCRIPTS, MODELINFO, ANIMBLOCKS, CFLUSH
+CStreaming::LoadCdDirectory-void@0x8E4CC0:0x80864:D
+CStreaming::LoadCdDirectory-void@0x97D880:0x1DB0:D
+CStreaming::LoadCdDirectory-void@0xA47B60:0xA48:D
+CStreaming::LoadCdDirectory-void@0xA9B0C8:0xB2B18:D
+CStreaming::LoadCdDirectory-void@0xB5D4A0:0x1680:D
+CStreaming::LoadCdDirectory-void@0xC9AC4C:0x4:D
+# CStreaming::LoadInitialPeds: INFOFORMODEL
+CStreaming::LoadInitialPeds@0x8E4CC0:0x80864:D
+# CStreaming::LoadInitialWeapons: INFOFORMODEL
+CStreaming::LoadInitialWeapons@0x8E4CC0:0x80864:D
+# CStreaming::LoadRequestedModels: GRWSTREAM, STREAMSTATICS, INFOFORMODEL, STREAMEDSCRIPTS, MODELINFO, ANIMATIONS, ANIMBLOCKS, SECTORS, POPCARGROUPS, CARGENS, CARPLATEMAT, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::LoadRequestedModels@0x8E48AC:0x24:D
+CStreaming::LoadRequestedModels@0x8E4A58:0x268:D
+CStreaming::LoadRequestedModels@0x8E4CC0:0x80864:D
+CStreaming::LoadRequestedModels@0xA47B60:0xA48:D
+CStreaming::LoadRequestedModels@0xA9B0C8:0xB2B18:D
+CStreaming::LoadRequestedModels@0xB4EA40:0xEA60:D
+CStreaming::LoadRequestedModels@0xB5D4A0:0x1680:D
+CStreaming::LoadRequestedModels@0xB7D0B8:0x1C200:D
+CStreaming::LoadRequestedModels@0xC0E998:0x270:D
+CStreaming::LoadRequestedModels@0xC27AD0:0x3E80:D
+CStreaming::LoadRequestedModels@0xC3EF7C:0x8:D
+CStreaming::LoadRequestedModels@0xC87C60:0x384:D
+CStreaming::LoadRequestedModels@0xC8E0C8:0x4000:D
+CStreaming::LoadRequestedModels@0xC92470:0x5558:D
+CStreaming::LoadRequestedModels@0xC979C8:0x46B8:D
+# CStreaming::ProcessLoadingChannel: 2DFXSLOT, GRWSTREAM, STREAMSTATICS, INFOFORMODEL, COLMODELCACHE, THEPATHS, STREAMEDSCRIPTS, MODELINFO, CARFRAME, ANIMATIONS, ANIMBLOCKS, MATRIXLIST, SECTORS, IPLINSTANCES, POPCARGROUPS, CARGENS, CARPLATEMAT, SCRATCHHEAP, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::ProcessLoadingChannel@0x8D4948:0x4:D
+CStreaming::ProcessLoadingChannel@0x8E48AC:0x24:D
+CStreaming::ProcessLoadingChannel@0x8E4A58:0x268:D
+CStreaming::ProcessLoadingChannel@0x8E4CC0:0x80864:D
+CStreaming::ProcessLoadingChannel@0x96593C:0x1C:D
+CStreaming::ProcessLoadingChannel@0x96F050:0x3C80:D
+CStreaming::ProcessLoadingChannel@0xA47B60:0xA48:D
+CStreaming::ProcessLoadingChannel@0xA9B0C8:0xB2B18:D
+CStreaming::ProcessLoadingChannel@0xB4E6B8:0x4:D
+CStreaming::ProcessLoadingChannel@0xB4EA40:0xEA60:D
+CStreaming::ProcessLoadingChannel@0xB5D4A0:0x1680:D
+CStreaming::ProcessLoadingChannel@0xB74288:0x1F8:D
+CStreaming::ProcessLoadingChannel@0xB7D0B8:0x1C200:D
+CStreaming::ProcessLoadingChannel@0xBCC0D8:0x4008:D
+CStreaming::ProcessLoadingChannel@0xC0E998:0x270:D
+CStreaming::ProcessLoadingChannel@0xC27AD0:0x3E80:D
+CStreaming::ProcessLoadingChannel@0xC3EF7C:0x8:D
+CStreaming::ProcessLoadingChannel@0xC87BD0:0x50:D
+CStreaming::ProcessLoadingChannel@0xC87C60:0x384:D
+CStreaming::ProcessLoadingChannel@0xC8E0C8:0x4000:D
+CStreaming::ProcessLoadingChannel@0xC92470:0x5558:D
+CStreaming::ProcessLoadingChannel@0xC979C8:0x46B8:D
+# CStreaming::RemoveBuildingsNotInArea: RENDERENTITYLINK, INFOFORMODEL, GFX, MODELINFO, GBUILDINGS
+CStreaming::RemoveBuildingsNotInArea@0x8E48A0:0x4:D
+CStreaming::RemoveBuildingsNotInArea@0x8E4CC0:0x80864:D
+CStreaming::RemoveBuildingsNotInArea@0xA9AE00:0xC0:D
+CStreaming::RemoveBuildingsNotInArea@0xA9B0C8:0xB2B18:D
+CStreaming::RemoveBuildingsNotInArea@0xB71804:0x4:D
+# CStreaming::RemoveCarModel: STREAMSTATICS, INFOFORMODEL, POPCARGROUPS
+CStreaming::RemoveCarModel@0x8E4A58:0x268:D
+CStreaming::RemoveCarModel@0x8E4CC0:0x80864:D
+CStreaming::RemoveCarModel@0xC0E998:0x270:D
+# CStreaming::RemoveCurrentZonesModels: STREAMSTATICS, INFOFORMODEL
+CStreaming::RemoveCurrentZonesModels@0x8E4A58:0x268:D
+CStreaming::RemoveCurrentZonesModels@0x8E4CC0:0x80864:D
+# CStreaming::RemoveLeastUsedModel: STREAMSTATICS, INFOFORMODEL, STREAMEDSCRIPTS, MODELINFO, ANIMATIONS, ANIMBLOCKS, POPCARGROUPS, TEXTUREBUFFER
+CStreaming::RemoveLeastUsedModel@0x8E4A58:0x268:D
+CStreaming::RemoveLeastUsedModel@0x8E4CC0:0x80864:D
+CStreaming::RemoveLeastUsedModel@0xA47B60:0xA48:D
+CStreaming::RemoveLeastUsedModel@0xA9B0C8:0xB2B18:D
+CStreaming::RemoveLeastUsedModel@0xB4EA40:0xEA60:D
+CStreaming::RemoveLeastUsedModel@0xB5D4A0:0x1680:D
+CStreaming::RemoveLeastUsedModel@0xC0E998:0x270:D
+CStreaming::RemoveLeastUsedModel@0xC87C60:0x384:D
+# CStreaming::RemoveLoadedVehicle: STREAMSTATICS, INFOFORMODEL, COLMODELCACHE, MODELINFO, ANIMBLOCKS, POPCARGROUPS, TEXTUREBUFFER
+CStreaming::RemoveLoadedVehicle@0x8E4A58:0x268:D
+CStreaming::RemoveLoadedVehicle@0x8E4CC0:0x80864:D
+CStreaming::RemoveLoadedVehicle@0x96593C:0x1C:D
+CStreaming::RemoveLoadedVehicle@0xA9B0C8:0xB2B18:D
+CStreaming::RemoveLoadedVehicle@0xB5D4A0:0x1680:D
+CStreaming::RemoveLoadedVehicle@0xC0E998:0x270:D
+CStreaming::RemoveLoadedVehicle@0xC87C60:0x384:D
+# CStreaming::RemoveModel: INFOFORMODEL, NUMMATRICES, MATRIXLIST, SECTORS
+CStreaming::RemoveModel@0x8E4CC0:0x80864:D
+CStreaming::RemoveModel@0xB74238:0x4:D
+CStreaming::RemoveModel@0xB74288:0x1F8:D
+CStreaming::RemoveModel@0xB7D0B8:0x1C200:D
+# CStreaming::RequestModelStream: STREAMSTATICS, INFOFORMODEL
+CStreaming::RequestModelStream@0x8E4A58:0x268:D
+CStreaming::RequestModelStream@0x8E4CC0:0x80864:D
+# CTxdStore::FinishLoadTxd: GRWSTREAM, RWD3D9
+CTxdStore::FinishLoadTxd@0x8E48AC:0x24:D
+CTxdStore::FinishLoadTxd@0xC979C8:0x46B8:D
+# CTxdStore::Initialise: DEFAULTTXDS
+CTxdStore::Initialise@0xC88000:0x10:D
+# CTxdStore::LoadTxd-filename: CRT, RWSTATIC, RWD3D9, CFLUSH
+CTxdStore::LoadTxd-filename@0x8E2C30:0xBB0:D
+CTxdStore::LoadTxd-filename@0xC92470:0x5558:D
+CTxdStore::LoadTxd-filename@0xC979C8:0x46B8:D
+CTxdStore::LoadTxd-filename@0xC9AC4C:0x4:D
+# CTxdStore::LoadTxd-stream: CRT, GRWSTREAM, TEXTUREBUFFER, RWD3D9, CFLUSH
+CTxdStore::LoadTxd-stream@0x8E2C30:0xBB0:D
+CTxdStore::LoadTxd-stream@0x8E48AC:0x24:D
+CTxdStore::LoadTxd-stream@0xC87C60:0x384:D
+CTxdStore::LoadTxd-stream@0xC979C8:0x46B8:D
+CTxdStore::LoadTxd-stream@0xC9AC4C:0x4:D
+# CTxdStore::RemoveTxd: TEXTUREBUFFER, RWD3D9
+CTxdStore::RemoveTxd@0xC87C60:0x384:D
+CTxdStore::RemoveTxd@0xC979C8:0x46B8:D
+# CTxdStore::StartLoadTxd: GRWSTREAM, RWD3D9
+CTxdStore::StartLoadTxd@0x8E48AC:0x24:D
+CTxdStore::StartLoadTxd@0xC979C8:0x46B8:D
+# CVehicleModelInfo::AssignRemapTxd: MODELINFO
+CVehicleModelInfo::AssignRemapTxd@0xA9B0C8:0xB2B18:D
+# CVehicleModelInfo::CollapseFramesCB: RWSTATIC
+CVehicleModelInfo::CollapseFramesCB@0xC92470:0x5558:D
+# CVehicleModelInfo::CreateInstance: RWSTATIC
+CVehicleModelInfo::CreateInstance@0xC92470:0x5558:D
+# CVehicleModelInfo::DeleteRwObject: INFOFORMODEL, COLMODELCACHE, ANIMBLOCKS, TEXTUREBUFFER
+CVehicleModelInfo::DeleteRwObject@0x8E4CC0:0x80864:D
+CVehicleModelInfo::DeleteRwObject@0x96593C:0x1C:D
+CVehicleModelInfo::DeleteRwObject@0xB5D4A0:0x1680:D
+CVehicleModelInfo::DeleteRwObject@0xC87C60:0x384:D
+# CVehicleModelInfo::LoadVehicleUpgrades: MODELINFO, UPGRADEWHEELS, LINKEDUPGRADES, FILELOADERLINE, CFLUSH
+CVehicleModelInfo::LoadVehicleUpgrades@0xA9B0C8:0xB2B18:D
+CVehicleModelInfo::LoadVehicleUpgrades@0xB4E3F8:0x78:D
+CVehicleModelInfo::LoadVehicleUpgrades@0xB4E6D8:0x7C:D
+CVehicleModelInfo::LoadVehicleUpgrades@0xB71848:0x200:D
+CVehicleModelInfo::LoadVehicleUpgrades@0xC9AC4C:0x4:D
+# CVehicleModelInfo::PreprocessHierarchy: RWSTATIC
+CVehicleModelInfo::PreprocessHierarchy@0xC92470:0x5558:D
+# CVehicleModelInfo::ReduceMaterialsInVehicle: SCRATCHHEAP, SCRATCHHEAP
+CVehicleModelInfo::ReduceMaterialsInVehicle@0xC87BD0:0x50:D
+CVehicleModelInfo::ReduceMaterialsInVehicle@0xC8E0C8:0x4000:D
+# CVehicleModelInfo::SetClump: ANIMBLOCKS, SCRATCHHEAP, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC
+CVehicleModelInfo::SetClump@0xB5D4A0:0x1680:D
+CVehicleModelInfo::SetClump@0xC87BD0:0x50:D
+CVehicleModelInfo::SetClump@0xC87C60:0x384:D
+CVehicleModelInfo::SetClump@0xC8E0C8:0x4000:D
+CVehicleModelInfo::SetClump@0xC92470:0x5558:D
+# CVehicleModelInfo::SetupCommonData: MODELINFO, UPGRADEWHEELS, COLOURTABLE, LINKEDUPGRADES, FILELOADERLINE, DIRTTEXTURES, RWD3D9, CFLUSH
+CVehicleModelInfo::SetupCommonData@0xA9B0C8:0xB2B18:D
+CVehicleModelInfo::SetupCommonData@0xB4E3F8:0x78:D
+CVehicleModelInfo::SetupCommonData@0xB4E480:0x200:D
+CVehicleModelInfo::SetupCommonData@0xB4E6D8:0x7C:D
+CVehicleModelInfo::SetupCommonData@0xB71848:0x200:D
+CVehicleModelInfo::SetupCommonData@0xC02BD0:0x40:D
+CVehicleModelInfo::SetupCommonData@0xC979C8:0x46B8:D
+CVehicleModelInfo::SetupCommonData@0xC9AC4C:0x4:D
+# CWeaponModelInfo::SetClump: ANIMBLOCKS
+CWeaponModelInfo::SetClump@0xB5D4A0:0x1680:D
+# RwTexDictionaryGtaStreamRead: CRT, GRWSTREAM, TEXTUREBUFFER, RWD3D9
+RwTexDictionaryGtaStreamRead@0x8E2C30:0xBB0:D
+RwTexDictionaryGtaStreamRead@0x8E48AC:0x24:D
+RwTexDictionaryGtaStreamRead@0xC87C60:0x384:D
+RwTexDictionaryGtaStreamRead@0xC979C8:0x46B8:D
+# RwTexDictionaryGtaStreamRead1: GRWSTREAM, RWD3D9
+RwTexDictionaryGtaStreamRead1@0x8E48AC:0x24:D
+RwTexDictionaryGtaStreamRead1@0xC979C8:0x46B8:D
+# RwTexDictionaryGtaStreamRead2: GRWSTREAM, RWD3D9
+RwTexDictionaryGtaStreamRead2@0x8E48AC:0x24:D
+RwTexDictionaryGtaStreamRead2@0xC979C8:0x46B8:D
+# RwTextureGtaStreamRead: CRT, GRWSTREAM, TEXTUREBUFFER, RWD3D9
+RwTextureGtaStreamRead@0x8E2C30:0xBB0:D
+RwTextureGtaStreamRead@0x8E48AC:0x24:D
+RwTextureGtaStreamRead@0xC87C60:0x384:D
+RwTextureGtaStreamRead@0xC979C8:0x46B8:D
+# __init_CLoadingScreen__m_aSplashes: ONEXIT
+__init_CLoadingScreen__m_aSplashes@0xC9D428:0x8:D
+# CBaseModelInfo::RemoveTexDictionaryRef: INFOFORMODEL, TEXTUREBUFFER
+CBaseModelInfo::RemoveTexDictionaryRef@0x8E4CC0:0x80864:D
+CBaseModelInfo::RemoveTexDictionaryRef@0xC87C60:0x384:D
+# CVehicleModelInfo::StoreAtomicUsedMaterialsCB: 
+# CVehicleModelInfo::StoreAtomicUsedMaterialsCB(atomic, data): data = the caller's RpMaterialList
+# (materials, numMaterials, space; 0xC bytes, on the caller's stack): 0x4C8B8A mov esi,[esp+0x18]
+# (arg1), 0x4C8BA7 push esi, 0x4C8BA8 call _rpMaterialListAppendMaterial 0x74E350 (grows the list)
+CVehicleModelInfo::StoreAtomicUsedMaterialsCB@arg1:0xC:RW
+# CVehicleModelInfo::SetCarCustomPlate: TEXTUREBUFFER (the plate texture's D3D resource buffer)
+CVehicleModelInfo::SetCarCustomPlate@0xC87C60:0x384:D
+# CdStream::CdStreamInit: CDIMG; gStreamingThreadId 0x8E4000 (CdStreamInitThread 0x4069AB push 0x8E4000:
+# CreateThread's lpThreadId; an input exclusion, compared through it)
+CdStream::CdStreamInit@0x8E4010:0x888:D
+CdStream::CdStreamInit@0x8E4000:4:D
+# LoadingScreenLoadingFile: 0x5B369F push 0xB71670 / 0x5B36A4 call sprintf (gString, char[0x100]);
+# 0x5B36B5 call CLoadingScreen::LoadingScreen -> SetLoadingBarMsg (CLoadingScreen::m_LoadingGxtMsg2
+# 0xBAB278 / m_LoadingGxtMsg1 0xBAB2C8, 0x50 each), the loading-tune service (CAudioEngine::
+# ServiceLoadingTune 0x5078DF mov ecx,0xB62CB0 -> CAESoundManager::Service on AESoundManager, 0x8CBC
+# bytes) and the frame render (RW block, vertex declaration cache)
+LoadingScreenLoadingFile@0xB71670:0x100:D
+LoadingScreenLoadingFile@0xBAB278:0xA0:D
+LoadingScreenLoadingFile@0xB62CB0:0x8CBC:D
+LoadingScreenLoadingFile@0x8E2440:0x58:D
+LoadingScreenLoadingFile@0xC979C8:0x46B8:D
+# ---- STREAM: CLoadingScreen (m31g02). More objects:
+# AEAUDIOHW 0xB5F8B8 (CAEAudioHardware, 0x1014), AESMOOTHFADE 0xB608D0 (CAESmoothFadeThread, 0x81C),
+#   AESOUNDMGR 0xB62CB0 (CAESoundManager, 0x8CBC): the loading tune is serviced from the loading screen
+#   (CAudioEngine::ServiceLoadingTune 0x5078A0 / 0x5078D5 mov ecx,0xB5F8B8, 0x5078DF mov ecx,0xB62CB0).
+# GXTMSG 0xBAB278: CLoadingScreen::m_LoadingGxtMsg2 / m_LoadingGxtMsg1 (0x50 each; SetLoadingBarMsg
+#   converts its strings into them). SPLASHES 0xBAB35C: CLoadingScreen::m_aSplashes (7 CSprite2d, written
+#   by LoadSplashes / Shutdown / the screen change). Others: see the STREAM object table above.
+# CLoadingScreen::DoPCScreenChange: D3D9VDECL+PROJ, AEAUDIOHW, AESMOOTHFADE, AESOUNDMGR, SPLASHES, RWD3D9
+CLoadingScreen::DoPCScreenChange@0x8E2440:0x58:D
+CLoadingScreen::DoPCScreenChange@0xB5F8B8:0x1014:D
+CLoadingScreen::DoPCScreenChange@0xB608D0:0x81C:D
+CLoadingScreen::DoPCScreenChange@0xB62CB0:0x8CBC:D
+CLoadingScreen::DoPCScreenChange@0xBAB35C:0x1C:D
+CLoadingScreen::DoPCScreenChange@0xC979C8:0x46B8:D
+# CLoadingScreen::DoPCTitleFadeOut: RWD3D9
+CLoadingScreen::DoPCTitleFadeOut@0xC979C8:0x46B8:D
+# CLoadingScreen::Init: SPLASHES, RWD3D9, CFLUSH
+CLoadingScreen::Init@0xBAB35C:0x1C:D
+CLoadingScreen::Init@0xC979C8:0x46B8:D
+CLoadingScreen::Init@0xC9AC4C:0x4:D
+# CLoadingScreen::LoadSplashes: DIRNAME, SPLASHES, RWD3D9, CFLUSH
+CLoadingScreen::LoadSplashes@0xB71A60:0x80:D
+CLoadingScreen::LoadSplashes@0xBAB35C:0x1C:D
+CLoadingScreen::LoadSplashes@0xC979C8:0x46B8:D
+CLoadingScreen::LoadSplashes@0xC9AC4C:0x4:D
+# CLoadingScreen::LoadingScreen: D3D9VDECL+PROJ, AESOUNDMGR, GXTMSG, RWD3D9
+CLoadingScreen::LoadingScreen@0x8E2440:0x58:D
+CLoadingScreen::LoadingScreen@0xB62CB0:0x8CBC:D
+CLoadingScreen::LoadingScreen@0xBAB278:0xA0:D
+CLoadingScreen::LoadingScreen@0xC979C8:0x46B8:D
+# CLoadingScreen::NewChunkLoaded: D3D9VDECL+PROJ, AEAUDIOHW, AESMOOTHFADE, AESOUNDMGR, SPLASHES, RWD3D9
+CLoadingScreen::NewChunkLoaded@0x8E2440:0x58:D
+CLoadingScreen::NewChunkLoaded@0xB5F8B8:0x1014:D
+CLoadingScreen::NewChunkLoaded@0xB608D0:0x81C:D
+CLoadingScreen::NewChunkLoaded@0xB62CB0:0x8CBC:D
+CLoadingScreen::NewChunkLoaded@0xBAB35C:0x1C:D
+CLoadingScreen::NewChunkLoaded@0xC979C8:0x46B8:D
+# CLoadingScreen::RenderSplash: D3D9VDECL+PROJ, RWD3D9
+CLoadingScreen::RenderSplash@0x8E2440:0x58:D
+CLoadingScreen::RenderSplash@0xC979C8:0x46B8:D
+# CLoadingScreen::SetLoadingBarMsg: GXTMSG
+CLoadingScreen::SetLoadingBarMsg@0xBAB278:0xA0:D
+# CLoadingScreen::Shutdown: SPLASHES, RWD3D9
+CLoadingScreen::Shutdown@0xBAB35C:0x1C:D
+CLoadingScreen::Shutdown@0xC979C8:0x46B8:D
+# ---- STREAM solos (CFileLoader::LoadScene, CIplStore::SetupRelatedIpls). IPLENTITYINDEX 0x8E3F00:
+# NumIplEntityIndexArrays + IplEntityIndexArrays (GetNewIplEntityIndexArray body 0x15649F7 mov
+# [ecx*4+0x8E3F08],eax). Others: STREAM object table above.
+# CIplStore::SetupRelatedIpls: GRWSTREAM, STREAMSTATICS, INFOFORMODEL, MATRIXLIST, SECTORS, IPLINSTANCES
+CIplStore::SetupRelatedIpls@0x8E48AC:0x24:D
+CIplStore::SetupRelatedIpls@0x8E4A58:0x268:D
+CIplStore::SetupRelatedIpls@0x8E4CC0:0x80864:D
+CIplStore::SetupRelatedIpls@0xB74288:0x1F8:D
+CIplStore::SetupRelatedIpls@0xB7D0B8:0x1C200:D
+CIplStore::SetupRelatedIpls@0xBCC0D8:0x4008:D
+# CFileLoader::LoadScene is the scene loader: 0x5B8922 jmp [ecx*4+0x5B8A94] dispatches every IPL /
+# zone section (object instances 0x5B892A call 0x538690 -> 0x5B8938 [ecx*4+0xBCC0E0], zones, cull
+# zones, occluders, garages, pickups, audio zones, time-cycle boxes, ...): observed 13,476+ undeclared
+# ranges over 26 globals from IplEntityIndexArrays 0x8E3F0D to CCullZones::aAttributeZones 0xC87248.
+# Declared like the other orchestrators: the whole .data/.bss, access D.
+CFileLoader::LoadScene@0x8A4000:0x3FA000:D
+# Rs::RsInitialize / Ps::InitialiseLanguage (second pass, x1-core-m): 0x69F7E0 (a text converter reached
+# from CText::Load) fills a static buffer and returns it: 0x69F87E / 0x69F88B / 0x69F89E / 0x69F8AE mov
+# byte [ecx+0xC1BDD0], 0x69F8B5 mov eax,0xC1BDD0 (observed 0x36 bytes; 0x100 declared, access D)
+Rs::RsInitialize@0xC1BDD0:0x100:D
+Ps::InitialiseLanguage@0xC1BDD0:0x100:D
+# ---- L2-EXTRAS: WORLD (world-p1-split, grove / pause-restart / cheats). Objects as in the STREAM table,
+# plus PICKUPS 0x9788D0 (CPickups::aPickUps, 620 x 0x20; CPickup::Remove / Update on its elements) and
+# PLAYERS 0xB7CD98 (CWorld::Players, 2 x 0x190, constructed by its static initialiser); GARAGES
+# 0x96C024 (NumGarages + aGarages, 50 x 0xD8; CGarages::AddOne 0x4474E2 [ecx+0x96C064]); the static
+# initialisers register their destructor with atexit (ONEXIT).
+# CGarages::Update: GARAGES
+CGarages::Update@0x96C024:0x2A54:D
+# CPickup::Remove: NUMMATRICES, MATRIXLIST, REPEATSECTORS, REFERENCES
+CPickup::Remove@0xB74238:0x4:D
+CPickup::Remove@0xB74288:0x1F8:D
+CPickup::Remove@0xB992B8:0xC00:D
+CPickup::Remove@0xB9B9A8:0x5DC4:D
+# CPickups::RemovePickUp: PICKUPS, NUMMATRICES, MATRIXLIST, REPEATSECTORS, REFERENCES
+CPickups::RemovePickUp@0x9788D0:0x4D80:D
+CPickups::RemovePickUp@0xB74238:0x4:D
+CPickups::RemovePickUp@0xB74288:0x1F8:D
+CPickups::RemovePickUp@0xB992B8:0xC00:D
+CPickups::RemovePickUp@0xB9B9A8:0x5DC4:D
+# CPickups::Update: PICKUPS, NUMMATRICES, REPEATSECTORS, REFERENCES
+CPickups::Update@0x9788D0:0x4D80:D
+CPickups::Update@0xB74238:0x4:D
+CPickups::Update@0xB992B8:0xC00:D
+CPickups::Update@0xB9B9A8:0x5DC4:D
+# __init_CEscalators__aEscalators: ONEXIT
+__init_CEscalators__aEscalators@0xC9D428:0x8:D
+# __init_CGameLogic__SavedWeapons: ONEXIT
+__init_CGameLogic__SavedWeapons@0xC9D428:0x8:D
+# __init_CGarages__aGarages: GARAGES, ONEXIT
+__init_CGarages__aGarages@0x96C024:0x2A54:D
+__init_CGarages__aGarages@0xC9D428:0x8:D
+# __init_CWorld__Players: PLAYERS, ONEXIT
+__init_CWorld__Players@0xB7CD98:0x320:D
+__init_CWorld__Players@0xC9D428:0x8:D
+# __init_CWorld__ms_aLodPtrLists: ONEXIT
+__init_CWorld__ms_aLodPtrLists@0xC9D428:0x8:D
+# __init_CWorld__ms_aRepeatSectors: ONEXIT
+__init_CWorld__ms_aRepeatSectors@0xC9D428:0x8:D
+# __init_CWorld__ms_aSectors: ONEXIT
+__init_CWorld__ms_aSectors@0xC9D428:0x8:D
+# __init_CWorld__ms_listMovingEntityPtrs: ONEXIT
+__init_CWorld__ms_listMovingEntityPtrs@0xC9D428:0x8:D
+# __init_CWorld__ms_listObjectsWithControlCode: ONEXIT
+__init_CWorld__ms_listObjectsWithControlCode@0xC9D428:0x8:D
+# CCheat (cheats recording): AddToCheatString dispatches the matched cheat through the cheat-function
+# table (0x43856A mov eax,[esi*4+0x8A5B58]; call eax: any of ~90 cheats: weather, clock, time scale,
+# weapons, vehicles, population, wanted level, stats) besides shifting CCheat::m_CheatString 0x969110 and
+# CStats::IncrementStat 0x438565; observed in 40 globals. Declared like the orchestrators: whole
+# .data/.bss, access D.
+CCheat::AddToCheatString@0x8A4000:0x3FA000:D
+# WantedCheat / WantedLevelUpCheat -> CPlayerPed::CheatWantedLevel 0x609F5E jmp CWanted::CheatWantedLevel
+# 0x562540 (a tail jump missing from the call graph) -> 0x5625AF call CStats::IncrementStat 0x55C180:
+# CStats::StatTypesInt 0xB79000 (0x37C)
+CCheat::WantedCheat@0xB79000:0x37C:D
+CCheat::WantedLevelUpCheat@0xB79000:0x37C:D
+# AllCarsAreShitCheat / AllCarsAreGreatCheat: POPCARGROUPS (CPopulation's loaded car groups are rebuilt)
+CCheat::AllCarsAreShitCheat@0xC0E998:0x270:D
+CCheat::AllCarsAreGreatCheat@0xC0E998:0x270:D
+# ---- STREAM g08 (second pass, s1-g08). More objects: TOBESTREAMED 0x96EFD0 (CPathFind's ToBeStreamed
+# flags, 0x80; LoadSceneForPathNodes body 0x15656A2 / 0x15656CB mov edi|ebx,0x96EFD0), COLPOINTVL 0x9659FC
+# (CCollision::ProcessVerticalLine's static CColPoint, 0x2C: 0x417DCC push 0x9659FC, 0x417E73 mov esi,
+# 0x9659FC). CFileLoader::LoadLevel is the level loader (every data file: IDE, IPL, COL, TXD, zones,
+# vehicle colours / upgrades, the loading screen; 31 objects observed): whole .data/.bss, access D.
+CFileLoader::LoadLevel@0x8A4000:0x3FA000:D
+# CColStore::LoadAllBoundingBoxes: GRWSTREAM, STREAMSTATICS, MODELINFO
+CColStore::LoadAllBoundingBoxes@0x8E48AC:0x24:D
+CColStore::LoadAllBoundingBoxes@0x8E4A58:0x268:D
+CColStore::LoadAllBoundingBoxes@0xA9B0C8:0xB2B18:D
+# CColStore::LoadAllCollision: GRWSTREAM, STREAMSTATICS, MODELINFO
+CColStore::LoadAllCollision@0x8E48AC:0x24:D
+CColStore::LoadAllCollision@0x8E4A58:0x268:D
+CColStore::LoadAllCollision@0xA9B0C8:0xB2B18:D
+# CIplStore::LoadAllRemainingIpls: STREAMSTATICS, INFOFORMODEL
+CIplStore::LoadAllRemainingIpls@0x8E4A58:0x268:D
+CIplStore::LoadAllRemainingIpls@0x8E4CC0:0x80864:D
+# CStreaming::LoadScene: 2DFXSLOT, GRWSTREAM, STREAMSTATICS, INFOFORMODEL, TOBESTREAMED, THEPATHS, SCRIPTBRAINWAIT, GFX, MODELINFO, ANIMATIONS, ANIMBLOCKS, GBUILDINGS, NUMMATRICES, MATRIXLIST, SECTORS, REPEATSECTORS, REFERENCES, PLANTCOLCACHE, POPCARGROUPS, COVERPOINTS, CARGENS, CARPLATEMAT, STENCILSHADOWS, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::LoadScene@0x8D4948:0x4:D
+CStreaming::LoadScene@0x8E48AC:0x24:D
+CStreaming::LoadScene@0x8E4A58:0x268:D
+CStreaming::LoadScene@0x8E4CC0:0x80864:D
+CStreaming::LoadScene@0x96EFD0:0x80:D
+CStreaming::LoadScene@0x96F050:0x3C80:D
+CStreaming::LoadScene@0xA476B8:0x4B0:D
+CStreaming::LoadScene@0xA9AE00:0xC0:D
+CStreaming::LoadScene@0xA9B0C8:0xB2B18:D
+CStreaming::LoadScene@0xB4EA40:0xEA60:D
+CStreaming::LoadScene@0xB5D4A0:0x1680:D
+CStreaming::LoadScene@0xB71804:0x4:D
+CStreaming::LoadScene@0xB74238:0x4:D
+CStreaming::LoadScene@0xB74288:0x1F8:D
+CStreaming::LoadScene@0xB7D0B8:0x1C200:D
+CStreaming::LoadScene@0xB992B8:0xC00:D
+CStreaming::LoadScene@0xB9B9A8:0x5DC4:D
+CStreaming::LoadScene@0xC08E48:0x1A0:D
+CStreaming::LoadScene@0xC0E998:0x270:D
+CStreaming::LoadScene@0xC197C8:0x130:D
+CStreaming::LoadScene@0xC27AD0:0x3E80:D
+CStreaming::LoadScene@0xC3EF7C:0x8:D
+CStreaming::LoadScene@0xC6A198:0x440:D
+CStreaming::LoadScene@0xC87C60:0x384:D
+CStreaming::LoadScene@0xC8E0C8:0x4000:D
+CStreaming::LoadScene@0xC92470:0x5558:D
+CStreaming::LoadScene@0xC979C8:0x46B8:D
+# CStreaming::Update: GRWSTREAM, STREAMSTATICS, INFOFORMODEL, COLMODELCACHE, COLPOINTVL, STREAMEDSCRIPTS, MODELINFO, ANIMATIONS, ANIMBLOCKS, NUMMATRICES, SECTORS, POPCARGROUPS, CARGENS, CARPLATEMAT, TEXTUREBUFFER, SCRATCHHEAP, RWSTATIC, RWD3D9
+CStreaming::Update@0x8E48AC:0x24:D
+CStreaming::Update@0x8E4A58:0x268:D
+CStreaming::Update@0x8E4CC0:0x80864:D
+CStreaming::Update@0x96593C:0x1C:D
+CStreaming::Update@0x9659FC:0x2C:D
+CStreaming::Update@0xA47B60:0xA48:D
+CStreaming::Update@0xA9B0C8:0xB2B18:D
+CStreaming::Update@0xB4EA40:0xEA60:D
+CStreaming::Update@0xB5D4A0:0x1680:D
+CStreaming::Update@0xB74238:0x4:D
+CStreaming::Update@0xB7D0B8:0x1C200:D
+CStreaming::Update@0xC0E998:0x270:D
+CStreaming::Update@0xC27AD0:0x3E80:D
+CStreaming::Update@0xC3EF7C:0x8:D
+CStreaming::Update@0xC87C60:0x384:D
+CStreaming::Update@0xC8E0C8:0x4000:D
+CStreaming::Update@0xC92470:0x5558:D
+CStreaming::Update@0xC979C8:0x46B8:D
