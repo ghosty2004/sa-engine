@@ -11,13 +11,13 @@ Function counts come from `catalog/subsystems.md` (regenerate with `tools/catalo
 
 ## Lanes now
 
-| Slot | Running | Next |
+| Slot | Running (2026-11-10) | Lane |
 |---|---|---|
-| impl-1 | agent: PORT-COLL into new crate sa-world (worktree coll, lane 1) | PHYS |
-| impl-2 | main session: STREAM-L2 verification (lane 2) | — |
-| measurement / REA | agent: INF-10 coverage finish (worktree inf10, lane 3; only REA user) | SAMP-1D |
-| harness | agent: INF-18 spool quota → INF-17 split-run L2 (worktree harness2, lane 4) | VER-1 → INF-16 |
-| verifier | — (CORE/STREAM L1 audit done, V-9..V-14) | audit of the CORE-L2b / STREAM-L2 results |
+| impl-1 | PORT-PHYS (worktree) | 1 |
+| impl-2 | PORT-WORLD part 1 (worktree) | 2 |
+| main session | FPU-GUARD done; INF-17 split-L2 re-run | 3 |
+| harness | STREAM sR300 crash at frame 4,096 + STREAM-L2 remainder (worktree) | 4 |
+| measurement / REA | INF-10 coverage finish + `--rust ports` (worktree, only REA user) | 5 |
 
 ## Next up (ordered queue; the scheduler takes from the top)
 
