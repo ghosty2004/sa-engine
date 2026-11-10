@@ -6,6 +6,7 @@ use sa_core::mem::GlobalDesc;
 
 use crate::collision;
 use crate::world;
+use crate::physical;
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -28,6 +29,17 @@ pub const MODULES: &[&[HookReg]] = &[
     world::shopping::HOOKS,
     world::statics::HOOKS,
     world::stats::HOOKS,
+    physical::base::HOOKS,
+    physical::forces::HOOKS,
+    physical::collide::HOOKS,
+    physical::spring::HOOKS,
+    physical::attach::HOOKS,
+    physical::friction::HOOKS,
+    physical::attach::HOOKS_2,
+    physical::attach::HOOKS_3,
+    physical::buoyancy::HOOKS,
+    physical::buoyancy::HOOKS_2,
+    physical::buoyancy::HOOKS_3,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -51,6 +63,13 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     world::restart::GLOBALS,
     world::shopping::GLOBALS,
     world::stats::GLOBALS,
+    physical::shared::GLOBALS,
+    physical::base::GLOBALS,
+    physical::forces::GLOBALS,
+    physical::collide::GLOBALS,
+    physical::attach::GLOBALS,
+    physical::attach::GLOBALS_SPEED,
+    physical::buoyancy::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

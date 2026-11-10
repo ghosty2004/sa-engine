@@ -105,3 +105,56 @@ in split subsystems, `_static-init.md` otherwise.
 ## Spot checks (RE-SPEC-2)
 The lead re-checks a sample of every writer's claims against the bytes (constants, operation order, branch
 conditions, verdicts). Write every claim with the instruction address that proves it, so it can be checked.
+
+## RE-SPEC-3 (RENDER, HUD, SAVE, POP, SCRIPT, AUDIO, AI)
+Pipeline: `select.py WORK RENDER HUD SAVE POP SCRIPT AUDIO AI` -> `decomp.sh` -> `bundle.py` ->
+`opcases.py WORK unregistered unimplemented` (script case blocks) -> `assign3.py WORK COVERAGE.hits.csv`
+-> writers -> `check_consts.py` on every written file -> `merge_index.py WORK`.
+
+- Assign files (`$WORK/assign-<G>.txt`) now name the target file per line:
+  `address kind Llevel n=insns hits=H SUBSYS name -> spec_file`. Write each function into exactly that file
+  (create it if missing; if it already exists because an earlier writer created it, APPEND your sections and
+  keep the existing ones). `hits` = how often the function ran in the coverage corpus (0 = never executed in
+  our recordings): spend the most care on executed functions; never-executed ones still need a full spec.
+- `_unattributed-<G>.md`: unnamed functions and `vt_XXXXXX::vfunc_N` rows. Give each a proposed
+  `Class::Method` name with evidence (vtable slot meaning from the gr class whose vtable matches, callers,
+  `this` layout). `_static-init-<G>.md`: `__init_*` / `__dtor_*` as in RE-SPEC-2.
+- Run `.venv/bin/python -I tools/specs/check_consts.py <your files>` before you finish and fix every mismatch.
+- Index fragment: `$WORK/index-<G>.csv` (header `address,name,subsystem,spec_file,kind,confidence`); one row
+  per assign line, spec_file exactly as given.
+
+### Script switches (groups S1..S3): `CRunningScript::ProcessCommandsXToY`
+gta-reversed's `ProcessOneCommand` (RunningScript.cpp:882) calls its own handler when one is registered and
+otherwise the ORIGINAL switch `s_OriginalCommandHandlerTable[op/100]` (0x8A6168). So every opcode whose
+gta-reversed status is `unregistered` (878 with a case) or `unimplemented` (70 with a case) is code gta-reversed
+never reversed: these need per-opcode specs. Opcodes with status `handler`/`nop` are ported from gta-reversed
+and are NOT re-specified (but list how many there are). Evidence: `$WORK/opcases/<fn>_<name>.txt` (one section
+per opcode: case block from its case address to the next case label; follow shared tails with
+`tools/specs/dis.py LO-HI`), `$WORK/opcases/defaults.csv` (opcodes that reach `default`), the whole-function
+bundle `$WORK/bundles/<fn>.txt`, `catalog/script-commands.csv`, `catalog/script-params.csv` (parameter reads
+per opcode), `catalog/script-usage.csv` (which scripts use the opcode).
+File `docs/re/specs/SCRIPT/commands/ProcessCommandsXToY.md`:
+```
+## 0xFN CRunningScript::ProcessCommandsXToY  (catalogue: ..., port level N)
+- Dispatcher: convention (this = ECX CRunningScript*, command id at [esp+4], `ret 4`), SEH frame, range check
+  (`cmp eax, K; ja default`), jump table address and index, default label and what it returns, the common
+  epilogues and the return-value meaning (AL: 0 = continue, 1 = stop this script for this frame, -1 default;
+  verify per switch from the bytes).
+- Opcodes: N with a case; gta-reversed handler/nop: list count; specified below: list. Opcodes reaching the
+  default (from defaults.csv), and for any with a gta-reversed handler (e.g. 00C5 RETURN_TRUE) state that the
+  original returns the default value instead (a gta-reversed deviation).
+### 0xCASE OPCODE COMMAND_NAME  (gr: unregistered|unimplemented, used: main/missions/streamed counts)
+- Parameters: the exact read sequence (CollectParameters(n) 0x464080, ReadTextLabelFromScript 0x463D50,
+  GetPointerToScriptVariable 0x464790, CollectNextParameterWithoutIncreasingPC ...), then which
+  ScriptParams[i] (0xA43C78 + 4*i) is used as what (int / float / handle).
+- Behaviour: steps in order, handle lookups (pool GetAtRef), calls, float order, constants with addresses,
+  UpdateCompareFlag 0x4859D0 arguments, StoreParameters 0x464370 outputs, return value.
+- gta-reversed: absent / `unimplemented` stub; Open questions with instruction addresses.
+```
+Shared case blocks: write the section once at the case address and list all opcodes that share it. Trivial
+cases (2-6 instructions) may be a table row `| 0xCASE | opcode | name | behaviour |`.
+Index: one row per range function (the `## 0xFN` address), kind full-spec.
+
+### Spot checks
+The lead re-checks a sample of every writer against the bytes. Write every claim with the instruction address
+that proves it.

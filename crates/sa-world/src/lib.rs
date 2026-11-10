@@ -20,3 +20,4 @@ pub mod collision;
 pub mod hooks;
 // PORT-WORLD part 1 (docs/arch/world-port.md)
 pub mod world;
+pub mod physical;

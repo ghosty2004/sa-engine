@@ -681,3 +681,117 @@ CEntryExit::GetPositionRelativeToOutsideWorld@arg0:12:RW
 # pause-restart (run p-l2: undeclared writes without these lines, 0 mismatches)
 CRestart::Initialise@0xA43248:0x1F0:RW
 CTheZones::InitZonesPopulationSettings@0xBA1DF0:0x193C:RW
+# PORT-PHYS
+# CPhysical sector lists (Add / Remove / RemoveAndAdd / ~CPhysical's CEntryInfoList::Flush) and the moving
+# list: CPtrNodeDoubleLink pool [0xB74488] (3200 x 0xC) and CEntryInfoNode pool [0xB7448C] (500 x 0x14),
+# header, byte map and objects (the links/nodes are written and allocated).
+CPhysical::Add@[0xB74488]:0x14:RW
+CPhysical::Add@[[0xB74488]+4]:[[0xB74488]+8]:RW
+CPhysical::Add@[[0xB74488]]:0x9600:RW
+CPhysical::Add@[0xB7448C]:0x14:RW
+CPhysical::Add@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CPhysical::Add@[[0xB7448C]]:0x2710:RW
+CPhysical::Remove@[0xB74488]:0x14:RW
+CPhysical::Remove@[[0xB74488]+4]:[[0xB74488]+8]:RW
+CPhysical::Remove@[[0xB74488]]:0x9600:RW
+CPhysical::Remove@[0xB7448C]:0x14:RW
+CPhysical::Remove@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CPhysical::Remove@[[0xB7448C]]:0x2710:RW
+CPhysical::RemoveAndAdd@[0xB74488]:0x14:RW
+CPhysical::RemoveAndAdd@[[0xB74488]+4]:[[0xB74488]+8]:RW
+CPhysical::RemoveAndAdd@[[0xB74488]]:0x9600:RW
+CPhysical::RemoveAndAdd@[0xB7448C]:0x14:RW
+CPhysical::RemoveAndAdd@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CPhysical::RemoveAndAdd@[[0xB7448C]]:0x2710:RW
+CPhysical::Destructor@[0xB7448C]:0x14:RW
+CPhysical::Destructor@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
+CPhysical::Destructor@[[0xB7448C]]:0x2710:RW
+CPhysical::AddToMovingList@[0xB74488]:0x14:RW
+CPhysical::AddToMovingList@[[0xB74488]+4]:[[0xB74488]+8]:RW
+CPhysical::AddToMovingList@[[0xB74488]]:0x9600:RW
+CPhysical::RemoveFromMovingList@[0xB74488]:0x14:RW
+CPhysical::RemoveFromMovingList@[[0xB74488]+4]:[[0xB74488]+8]:RW
+CPhysical::RemoveFromMovingList@[[0xB74488]]:0x9600:RW
+# The entity matrix (CMatrix at [this+0x14], 0x48 bytes): read by the force/speed functions, written by
+# ApplyMoveSpeed / ApplyTurnSpeed.
+CPhysical::ApplyMoveSpeed@[ecx+0x14]:0x48:RW
+CPhysical::ApplyTurnSpeed@[ecx+0x14]:0x48:RW
+CPhysical::ApplyTurnForce@[ecx+0x14]:0x48:R
+CPhysical::ApplyForce@[ecx+0x14]:0x48:R
+CPhysical::ApplyFrictionForce@[ecx+0x14]:0x48:R
+CPhysical::ApplyFrictionTurnForce@[ecx+0x14]:0x48:R
+CPhysical::GetSpeed@[ecx+0x14]:0x48:R
+CPhysical::ApplyGravity@[ecx+0x14]:0x48:R
+# Out-parameters and subclass fields outside the CPhysical `this` (0x138)
+CPhysical::GetSpeed@arg0:12:W
+CPhysical::GetBoundRect@arg0:16:W
+CPhysical::CanPhysicalBeDamaged@arg1:1:W
+CPhysical::AddCollisionRecord@ecx+0x45C:2:RW
+CPhysical::AddCollisionRecord@arg0+0x45C:2:RW
+CPhysical::SetDamagedPieceRecord@arg2:0x2C:R
+CPhysical::SetDamagedPieceRecord@ecx+0x140:4:RW
+CPhysical::SetDamagedPieceRecord@ecx+0x148:1:RW
+CPhysical::SetDamagedPieceRecord@arg1+0x140:4:RW
+# CWorld::ms_aRepeatSectors (0xB992B8, 16x16x0xC): the sector list heads (phys-b1: undeclared writes
+# 0xB9930C.. for Add/Remove/RemoveAndAdd without this line; the catalogue's rwsets miss them).
+CPhysical::Add@0xB992B8:0xC00:RW
+CPhysical::Remove@0xB992B8:0xC00:RW
+CPhysical::RemoveAndAdd@0xB992B8:0xC00:RW
+CPhysical::ProcessShift@0xB992B8:0xC00:RW
+# CReferences (aRefs 0xB9B9A8, 3000 x 8; free head 0xBA1768) and the entities' m_pReferences (+0x24):
+# RegisterReference / CleanUpOldReference (phys-b1: 626 mismatches + undeclared 0xB9B9F0.. without them)
+CPhysical::SetDamagedPieceRecord@0xB9B9A8:0x5DC0:RW
+CPhysical::SetDamagedPieceRecord@0xBA1768:4:RW
+CPhysical::SetDamagedPieceRecord@arg1+0x24:4:RW
+CPhysical::SetDamagedPieceRecord@[ecx+0xDC]+0x24:4:RW
+CPhysical::SkipPhysics@0xB9B9A8:0x5DC0:RW
+CPhysical::SkipPhysics@0xBA1768:4:RW
+CPhysical::SkipPhysics@[ecx+0xDC]+0x24:4:RW
+CPhysical::ProcessControl@0xB9B9A8:0x5DC0:RW
+CPhysical::ProcessControl@0xBA1768:4:RW
+CPhysical::ProcessControl@[ecx+0xDC]+0x24:4:RW
+CPhysical::AttachEntityToEntity-vec@0xB9B9A8:0x5DC0:RW
+CPhysical::AttachEntityToEntity-vec@0xBA1768:4:RW
+CPhysical::AttachEntityToEntity-vec@arg0+0x24:4:RW
+CPhysical::AttachEntityToEntity-quat@0xB9B9A8:0x5DC0:RW
+CPhysical::AttachEntityToEntity-quat@0xBA1768:4:RW
+CPhysical::AttachEntityToEntity-quat@arg0+0x24:4:RW
+# Out-parameters of the spring and collision responses (phys-all: undeclared writes on the caller's stack)
+CPhysical::ApplySpringCollision@arg5:4:W
+CPhysical::ApplySpringCollisionAlt@arg5:12:RW
+CPhysical::ApplySpringCollisionAlt@arg6:4:W
+CPhysical::ApplyCollision-1@arg2:4:W
+CPhysical::ApplySoftCollision-1@arg2:4:W
+CPhysical::ApplyScriptCollision@0xB5F000:0x10000:RW
+# AudioEngine.ReportCollision's audio-entity state (.bss 0xB5F000..0xB6F000; phys-all: the same bytes
+# written by both runs at 0xB5FD02.. / 0xB63298.. but not in the catalogue's read/write sets)
+CPhysical::ApplyCollision-1@0xB5F000:0x10000:RW
+CPhysical::ApplySoftCollision-1@0xB5F000:0x10000:RW
+# GetSpeed's out-parameter inside the spring dampening / friction callers is a Rust or original local:
+# nothing to declare. The CCollisionData/temp-colpoint users (CheckCollision, ProcessShift,
+# ProcessEntityCollision, CheckCollision_SimpleCar) touch other entities on the heap: split runs.
+# The matrix that ApplySpeed (ApplyMoveSpeed/ApplyTurnSpeed inside), UnsetIsInSafePosition, TestCollision
+# and ProcessShift move or restore (phys-l2: l2 trace diverged at frame 204 without it)
+CPhysical::ApplySpeed@[ecx+0x14]:0x48:RW
+CPhysical::UnsetIsInSafePosition@[ecx+0x14]:0x48:RW
+CPhysical::TestCollision@[ecx+0x14]:0x48:RW
+CPhysical::ProcessShift@[ecx+0x14]:0x48:RW
+CPhysical::PlacePhysicalRelativeToOtherPhysical@[arg1+0x14]:0x48:RW
+# CEntity::Add/Remove for big buildings and the sector bookkeeping they share: the world sectors (0xB7D0B8,
+# 120x120x8), the LOD lists (0xB99EB8, 30x30x4) and the PtrNodeSingle pool [0xB74484] (70000 x 8)
+# (phys-l2b: 7 mismatches at 0xB9A5DC.. in CPhysical::Add without them)
+CPhysical::Add@0xB7D0B8:0x1C200:RW
+CPhysical::Add@0xB99EB8:0xE10:RW
+CPhysical::Add@[0xB74484]:0x14:RW
+CPhysical::Add@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CPhysical::Add@[[0xB74484]]:0x88B80:RW
+CPhysical::Remove@0xB7D0B8:0x1C200:RW
+CPhysical::Remove@0xB99EB8:0xE10:RW
+CPhysical::Remove@[0xB74484]:0x14:RW
+CPhysical::Remove@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CPhysical::Remove@[[0xB74484]]:0x88B80:RW
+CPhysical::RemoveAndAdd@0xB7D0B8:0x1C200:RW
+CPhysical::RemoveAndAdd@0xB99EB8:0xE10:RW
+CPhysical::RemoveAndAdd@[0xB74484]:0x14:RW
+CPhysical::RemoveAndAdd@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CPhysical::RemoveAndAdd@[[0xB74484]]:0x88B80:RW
