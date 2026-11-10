@@ -186,7 +186,14 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
         );
     }
     for (x, y) in a.regions.iter().zip(&b.regions) {
-        if x.kind != y.kind || (x.has_pre_memory() && x.addr != rebase(b, delta, y.addr)) {
+        // A region whose address was read from game memory (`[0x8E3FFC]`, an extra region) can be an
+        // OS-allocated object (the CdStream queue buffer `[0x8E3FEC]`, LocalAlloc'd): two such addresses are the same object
+        // through the `Foreign` class (as for post regions in `merge`); its bytes are still compared.
+        if x.kind != y.kind
+            || (x.has_pre_memory()
+                && x.addr != rebase(b, delta, y.addr)
+                && !normalise::words_equal(x.addr, &ca, y.addr, &cb))
+        {
             return (
                 Some(format!("region {:?} {:#x} vs {:?} {:#x}", x.kind, x.addr, y.kind, y.addr)),
                 false,
@@ -357,6 +364,7 @@ fn foreign_uses(a: &Case, b: &Case, m: &Case) -> Vec<String> {
         if matches!(x.kind, RegionKind::Os(_)) {
             continue;
         }
+        word(format!("region address {:#x}", x.addr), x.addr, &ia, y.addr, &ib);
         let o = ((4 - (x.addr & 3)) & 3) as usize;
         let at = |k: usize| x.addr.wrapping_add((o + 4 * k) as u32);
         let w = |v: &[u8], k: usize| {
@@ -825,6 +833,18 @@ mod tests {
         assert_eq!(rep.fns[0].foreign_uses.get("eax out"), Some(&1));
         r7[0].foreign.clear();
         assert_eq!(split_report(&p3, &r7).fns[0].verdict(), "FAIL");
+        // a region at an OS-allocated address (an extra region `[0x8E3FFC]:...`): same object
+        let mut p5 = p.clone();
+        let mut r9 = r.clone();
+        for (c, at) in [(&mut p5[0], 0x02F3_AB10u32), (&mut r9[0], 0x02FD_E530)] {
+            c.regions[0].addr = at;
+            c.foreign = vec![at];
+        }
+        let rep = split_report(&p5, &r9);
+        assert_eq!(rep.fns[0].verdict(), "PASS", "{:?}", rep.fns[0]);
+        assert_eq!(rep.fns[0].foreign_uses.get("region address 0x2f3ab10"), Some(&1));
+        r9[0].foreign.clear();
+        assert!(split_report(&p5, &r9).fns[0].diverged.is_some(), "a raw address in one run differs");
         // callee-saved EBP with different entry values: preserved in both runs = equal
         let mut p4 = p.clone();
         let mut r8 = r.clone();

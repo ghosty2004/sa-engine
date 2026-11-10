@@ -193,6 +193,12 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     while kill -0 "$pid" 2> /dev/null; do
         st="$(e2e_ctl det)"
         [ -n "$st" ] && last="$st"
+        # A crash under Wine starts winedbg, which keeps the process (and the control channel)
+        # suspended until the timeout: stop at once and keep the fault line.
+        if grep -q -E 'Unhandled (page fault|exception)' "$E2E_OUT/wine.log" 2> /dev/null; then
+            e2e_say "run $name: crashed: $(grep -m1 -E 'Unhandled (page fault|exception)' "$E2E_OUT/wine.log"); $last"
+            break
+        fi
         if [ $(($(date +%s) - start)) -gt "$RUN_TIMEOUT" ]; then
             e2e_say "run $name: timeout after $RUN_TIMEOUT s; $last"
             e2e_ctl stack > "$OUT/$name.stack"
@@ -203,6 +209,16 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     wineserver -k 2> /dev/null || true
     wait "$pid" 2> /dev/null
     cp -f "$GTA_DIR/sa-hook.log" "$OUT/$name.log" 2> /dev/null
+    # Wine's own output (an unhandled-exception line ends up in the crash check below). A fault after
+    # `oracle: exiting` happens inside ExitProcess, after the trace, spool and summary were flushed: it
+    # is kept apart (NAME.wine-exitfault.txt, a note) and does not count as a crash of the run.
+    if grep -q 'oracle: exiting' "$OUT/$name.log" 2> /dev/null \
+        && grep -q -E 'Unhandled (page fault|exception)' "$E2E_OUT/wine.log" 2> /dev/null; then
+        cp -f "$E2E_OUT/wine.log" "$OUT/$name.wine-exitfault.txt"
+        note "run $name: Wine fault during process exit, after the end frame: $(grep -m1 -E 'Unhandled (page fault|exception)' "$E2E_OUT/wine.log")"
+    else
+        cp -f "$E2E_OUT/wine.log" "$OUT/$name.wine.log" 2> /dev/null
+    fi
     [ -n "$drain" ] && { kill "$drain" 2> /dev/null; rm -f "$DET/$name.spool"; }
     for f in trace spool spool.txt; do
         [ -f "$DET/$name.$f" ] && mv -f "$DET/$name.$f" "$OUT/$name.$f"

@@ -206,6 +206,44 @@ fn read_spool_full(p: &str) -> Result<(Vec<sa_oracle_format::l2::Case>, Option<S
     sa_oracle_format::l2::parse_spool_full(&b).map_err(|e| format!("{p}: {e}"))
 }
 
+/// The cases of the functions at `only` (and the quota trailer) of a spool, read record by record, so
+/// a multi-GB split-run spool does not have to fit in memory (`split-report --fn`).
+fn read_spool_only(p: &str, only: &[u32]) -> Result<(Vec<sa_oracle_format::l2::Case>, Option<String>), String> {
+    use std::io::Read;
+    let f = std::fs::File::open(p).map_err(|e| format!("{p}: {e}"))?;
+    let mut r = std::io::BufReader::with_capacity(1 << 20, f);
+    let mut magic = [0u8; 8];
+    r.read_exact(&mut magic).map_err(|e| format!("{p}: {e}"))?;
+    // the header check of parse_spool_full, on the magic alone
+    sa_oracle_format::l2::parse_spool_full(&magic).map_err(|e| format!("{p}: {e}"))?;
+    let (mut out, mut buf, mut at) = (Vec::new(), Vec::new(), 8u64);
+    loop {
+        let mut h = [0u8; 4];
+        match r.read_exact(&mut h) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => return Ok((out, None)),
+            Err(e) => return Err(format!("{p}: {e}")),
+        }
+        let n = u32::from_le_bytes(h);
+        if n == sa_oracle_format::l2::TRAILER_MARK {
+            let mut k = [0u8; 4];
+            r.read_exact(&mut k).map_err(|_| format!("{p}: truncated trailer"))?;
+            let mut t = vec![0u8; u32::from_le_bytes(k) as usize];
+            r.read_exact(&mut t).map_err(|_| format!("{p}: truncated trailer"))?;
+            return Ok((out, Some(String::from_utf8_lossy(&t).into_owned())));
+        }
+        buf.resize(n as usize, 0);
+        r.read_exact(&mut buf).map_err(|_| format!("{p}: truncated record at {at}"))?;
+        // fn_addr follows the 8-byte case magic (Case::decode)
+        if buf.len() >= 12 && only.contains(&u32::from_le_bytes([buf[8], buf[9], buf[10], buf[11]])) {
+            out.push(
+                sa_oracle_format::l2::Case::decode(&buf).map_err(|e| format!("{p}: record at {at}: {e}"))?,
+            );
+        }
+        at += 4 + n as u64;
+    }
+}
+
 /// `l2 spec|ingest|report|split-report|replay|show`
 fn l2(a: &Args) -> Result<bool, String> {
     use sa_oracle::l2 as l2h;
@@ -269,8 +307,15 @@ fn l2(a: &Args) -> Result<bool, String> {
             let (Some(pp), Some(rp)) = (a.pos.get(2), a.pos.get(3)) else {
                 return Err("usage: l2 split-report PLAIN_SPOOL RUST_SPOOL".into());
             };
-            let (plain, tp) = read_spool_full(pp)?;
-            let (rust, tr) = read_spool_full(rp)?;
+            // --fn A,B: only those functions' cases (read record by record; for spools larger than memory)
+            let ((plain, tp), (rust, tr)) = match a.opts.get("fn") {
+                Some(k) => {
+                    let only: Vec<u32> =
+                        hook_indices(Some(k))?.iter().map(|&i| sa_hook::table::HOOKS[i].addr).collect();
+                    (read_spool_only(pp, &only)?, read_spool_only(rp, &only)?)
+                }
+                None => (read_spool_full(pp)?, read_spool_full(rp)?),
+            };
             let mut rep = sa_oracle::split::split_report(&plain, &rust);
             rep.trailers.extend(tp.map(|t| format!("plain: {t}")));
             rep.trailers.extend(tr.map(|t| format!("rust: {t}")));
@@ -325,7 +370,7 @@ fn l2(a: &Args) -> Result<bool, String> {
             print!("{}", l2h::show_case(c));
             Ok(true)
         }
-        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--timeline N] [--nesting] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
+        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--fn F,G] [--timeline N] [--nesting] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
     }
 }
 

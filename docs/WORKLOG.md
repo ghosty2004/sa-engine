@@ -582,3 +582,17 @@
   this is why ~half of the ports end NOCALLS; F2 report with all ports on Rust (no port lets its original
   body run). Main-session re-verification: sa-oracle lib 17/17, pause-restart coverage run (76 s)
   IDENTICAL.
+
+## 2026-11-10: STREAM harness work integrated (keycells, split fixes)
+- Agent: the "crash at frame 4,096" was the 0x410860 hook overwriting bytes a protection chunk reads as a
+  decode key (fault at 0x401E4C); new sa-hook keycells.rs redirects every protection reader of hooked code
+  bytes to a copy of the original dword, with a test that fails on any unlisted reader. The test caught a
+  new reader at the merge (0x40A4C3 reads PHYS hook 0x54D690), added by the main session (6 readers).
+  Other fixes: Foreign rule for per-process region addresses, split-report --fn streaming, port-l2.sh stops
+  on unhandled exceptions, colstore LoadAllBoundingBoxes call path.
+- Main-session verification: tests (sa-hook 39) + clippy host/i686; all ports on Rust IDENTICAL on grove
+  walk, pause-restart, world-cheats with `keycells: 6/6`. One plain run hit the known post-exit fault at
+  7BCF0729 (after the trace was complete).
+- States: STREAM verdicts with 0 mismatches AND 0 undeclared → 29 L2. Split PASS rows that list
+  undeclared writes are not L2 (PLAN §5); for consistency 11 CORE functions set to L2 earlier today from
+  split runs with undeclared writes were demoted to implemented. F1 = 499.
