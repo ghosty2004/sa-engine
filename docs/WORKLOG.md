@@ -641,3 +641,15 @@
   `move_part_zreg` for the two functions; ApplyForce/ApplyFrictionForce keep `move_part`.
 - Verified: `sa-oracle l1` 1,000,000 cases each, unicorn, 131,411 sNaN inputs decided by the CPU: PASS, 0
   mismatches for ApplyMoveForce-vec and ApplyFrictionMoveForce. clippy -D warnings, i686 build, sa-world tests OK.
+
+## 2026-11-11 SAMP-API design (agent; merged by main session, clippy + test re-run)
+- Read samp-rs (read only) and the SAMP-1/1D outputs; grouped every samp-rs access by feature.
+- `docs/samp/game-adapter.md`: GameAdapter (15 feature traits) / GameHooks (callbacks with typed call sites) /
+  SampHost / FileProvider; three backends (original exe default, phase A in-process, phase B native);
+  frame and threading contract (`&mut dyn` in frame callbacks, `&dyn` in mid-frame hooks); samp.dll patches as
+  `Limits`/`FeatureSet`/`Behaviour`/`StartupOptions`/`RuntimeToggle`; 12-step samp-rs migration that keeps the
+  original path default; engine port order cross-checked with samp-priority.csv (185 directly named functions,
+  132 in the priority list; ProcessOneCommand missing from it because the SCM counter detoured its entry).
+- `crates/sa-samp-api`: traits and types only, no dependencies. Verified: `cargo clippy -p sa-samp-api
+  --all-targets -- -D warnings` (host), same for `--target wasm32-unknown-unknown` and `--target
+  i686-pc-windows-gnu`, `cargo test -p sa-samp-api` (1 test), `RUSTDOCFLAGS=-D warnings cargo doc`.
