@@ -89,6 +89,8 @@ pub trait WorldState {
     fn set_gravity(&mut self, g: f32) -> GameResult<()>;
     /// Current area / interior (`CGame::currArea` 0xB72914, `GET_AREA_VISIBLE` 077E).
     fn area(&self) -> AreaCode;
+    /// `CGame::currArea` as the full `i32` it is in the game (samp-rs reads it as `i32`).
+    fn area_raw(&self) -> i32;
     /// `SET_AREA_VISIBLE` (04BB).
     fn set_area(&mut self, area: AreaCode) -> GameResult<()>;
     /// Stunt bonus enabled (SCM global 709, ScriptSpace + 0xB14 = 0xA4A474).
