@@ -198,6 +198,179 @@ pub fn account_for_ped_damage_stats(this: GPtr<u8>, ped: GPtr<u8>, _resp: GPtr<u
     }
 }
 
+
+orig! {
+    /// `CPed::Say(uint16 phrase, uint32 startTime, float volume, bool, bool, bool)` (0x5EFFE0)
+    fn ped_say(ped: GPtr<u8>, phrase: u32, start: u32, vol: f32, a: u32, b: u32, c: u32) -> u32 = thiscall 0x5EFFE0 => unported;
+    /// `CPedDamageResponseCalculator::ComputeWillKillPed(CPed*, CPedDamageResponse&, bool)` (0x4B3210)
+    fn compute_will_kill_ped_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) = thiscall 0x4B3210 => compute_will_kill_ped;
+    /// `CPedDamageResponseCalculator::AccountForPedDamageStats` (0x4AD430)
+    fn account_for_ped_damage_stats_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) = thiscall 0x4AD430 => account_for_ped_damage_stats;
+    /// `CPedDamageResponseCalculator::AccountForPedArmour` (0x4AD550)
+    fn account_for_ped_armour_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) = thiscall 0x4AD550 => account_for_ped_armour;
+    /// `CPedDamageResponseCalculator::ComputeWillForceDeath` (0x4AD610)
+    fn compute_will_force_death_call(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>) -> u8 = thiscall 0x4AD610 => compute_will_force_death;
+    /// `CPlayerPed::AnnoyPlayerPed(bool)` (0x60A040)
+    fn player_on_hit_60a040(p: GPtr<u8>, b: u32) = thiscall 0x60A040 => unported;
+    /// `CEventDamage::CEventDamage(CEntity*, uint32, eWeaponType, ePedPieceTypes, uint8, bool, bool)` (0x4AD830)
+    fn event_damage_ctor(e: GPtr<u8>, src: GPtr<u8>, t: u32, wt: u32, part: u32, dir: u32, a: u32, b: u32) = thiscall 0x4AD830 => unported;
+    /// `CEventDamage::~CEventDamage()` (0x4AD960)
+    fn event_damage_dtor(e: GPtr<u8>) = thiscall 0x4AD960 => unported;
+    /// `CPlayerPed::MakeGroupRespondToPlayerTakingDamage(CEventDamage&)` (0x60A110)
+    fn make_group_respond_to_player_taking_damage(p: GPtr<u8>, e: GPtr<u8>) = thiscall 0x60A110 => unported;
+    /// `CPedGroupMembership`-style notification of the damaging player's group (0x5F6A10, on group + 0x...)
+    fn group_notify_damaged(g: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5F6A10 => unported;
+}
+
+fn say(ped: GPtr<u8>, phrase: u32) {
+    ped_say(ped, phrase, 0, 1.0, 0, 0, 0);
+}
+
+/// `CPedDamageResponseCalculator::ComputeWillKillPed(CPed*, CPedDamageResponse&, bool speak)` (0x4B3210,
+/// `ret 0xC`). The player with the invulnerability switch 0x96916D takes no damage from weapon types
+/// < 0x2F. Otherwise `forceDeath` (+9) = `ComputeWillForceDeath`; with the switch 0x969173 weapon types
+/// 0/1/0x2E deal the whole health. Force death or `health - damage < 1.0` (unordered too) kills: +8 = 1,
+/// +0 = health, health = 0. Weapon 0x36 with `+0x10` set: health = `max(health - damage, 5.0)` (the x87
+/// difference kept unrounded for `+0 = old - new`), phrase 0x159 when speaking. Otherwise +8 = 0, +0 =
+/// damage, health -= damage; when speaking: phrase 0x165 for weapon 0x35, else 0x158 unless damage < 5.0
+/// and the old health > 10.0 (then 0x159). The original writes the old/new health into its first
+/// argument slot (stack-only, not reproduced).
+#[hook(addr = 0x4B3210, conv = thiscall, name = "CPedDamageResponseCalculator::ComputeWillKillPed", expect = "53 55 56 8B 74 24 10", this = "CPedDamageResponseCalculator")]
+pub fn compute_will_kill_ped(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) {
+    if ped_is_player(ped) != 0 && g::<u8>(0x96916D).read() != 0 && rd::<i32>(this, 0xC) < 0x2F {
+        return;
+    }
+    let old = rd::<f32>(ped, 0x540);
+    let fd = compute_will_force_death_call(this, ped, r);
+    wr::<u8>(r, 9, fd);
+    if g::<u8>(0x969173).read() != 0 && matches!(rd::<i32>(this, 0xC), 0 | 1 | 0x2E) {
+        wr::<u32>(this, 4, rd::<u32>(ped, 0x540));
+    }
+    let kill = |ped: GPtr<u8>, r: GPtr<u8>| {
+        wr::<u8>(r, 8, 1);
+        wr::<u32>(r, 0, rd::<u32>(ped, 0x540));
+        wr::<u32>(ped, 0x540, 0);
+    };
+    if rd::<u8>(r, 9) != 0 {
+        kill(ped, r);
+        return;
+    }
+    let five = f32::from_bits(0x40A0_0000);
+    if rd::<i32>(this, 0xC) == 0x36 && rd::<u8>(this, 0x10) != 0 {
+        wr::<u8>(r, 8, 0);
+        let mut v = x(rd::<f32>(ped, 0x540)).fsub_m(rd::<f32>(this, 4));
+        if !x(five).fcom(v).test_any(0x41) {
+            v = x(five);
+        }
+        wr::<f32>(ped, 0x540, v.to_f32());
+        wr::<f32>(r, 0, x(old).fsub(v).to_f32());
+        if speak as u8 != 0 {
+            say(ped, 0x159);
+        }
+        return;
+    }
+    if x(rd::<f32>(ped, 0x540)).fsub_m(rd::<f32>(this, 4)).fcom(X87::one()).test_any(1) {
+        kill(ped, r);
+        return;
+    }
+    wr::<u8>(r, 8, 0);
+    wr::<u32>(r, 0, rd::<u32>(this, 4));
+    let h = x(rd::<f32>(ped, 0x540)).fsub_m(rd::<f32>(this, 4)).to_f32();
+    wr::<f32>(ped, 0x540, h);
+    if speak as u8 == 0 {
+        return;
+    }
+    if rd::<i32>(this, 0xC) == 0x35 {
+        say(ped, 0x165);
+        return;
+    }
+    if !x(rd::<f32>(this, 4)).fcom(x(five)).test_parity(5)
+        && !x(old).fcom(x(10.0)).test_any(0x41)
+    {
+        say(ped, 0x159);
+    } else {
+        say(ped, 0x158);
+    }
+}
+
+/// `CPedDamageResponseCalculator::ComputeDamageResponse(CPed*, CPedDamageResponse&, bool speak)`
+/// (0x4B5AC0, `ret 0xC`). Nothing when the response is already computed (+0xA). Otherwise the response is
+/// reset (+0/+4 = 0, +8/+9 = 0, +0xA/+0xB = 1), damage stats, armour and `ComputeWillKillPed`; a damager
+/// that is the player ped or the player's vehicle hitting another ped for health+armour damage > 3.0
+/// counts a hit on the focused player's info (+0x140); a player victim calls `AnnoyPlayerPed(false)` on the player ped;
+/// a player victim hit by a ped gets a `CEventDamage` (Rust stack buffer, original ctor/dtor; the
+/// in-vehicle flag pushed as `(flags >> 8) & 0xFFFFFF01` as the original) for
+/// `MakeGroupRespondToPlayerTakingDamage`. With damage > 0: non-player victims of weapon types 4/8/9 get
+/// +0x72F = 200; the player victim stamps the time into the player info (+0xE4); +0x760 = weapon type
+/// byte; with a damager, the last-damage entity (+0x764, registered reference) and time (+0x768), and a
+/// damaging player ped notifies its group (0x5F6A10 on `0xC09928 + group * 0x2D4`). SEH frame not
+/// reproduced.
+#[hook(addr = 0x4B5AC0, conv = thiscall, name = "CPedDamageResponseCalculator::ComputeDamageResponse", expect = "64 A1 00 00 00 00", this = "CPedDamageResponseCalculator")]
+pub fn compute_damage_response(this: GPtr<u8>, ped: GPtr<u8>, r: GPtr<u8>, speak: u32) {
+    if rd::<u8>(r, 0xA) != 0 {
+        return;
+    }
+    wr::<u32>(r, 0, 0);
+    wr::<u32>(r, 4, 0);
+    wr::<u8>(r, 8, 0);
+    wr::<u8>(r, 9, 0);
+    wr::<u8>(r, 0xA, 1);
+    wr::<u8>(r, 0xB, 1);
+    account_for_ped_damage_stats_call(this, ped, r);
+    account_for_ped_armour_call(this, ped, r);
+    compute_will_kill_ped_call(this, ped, r, speak);
+    let three = f32::from_bits(0x4040_0000);
+    let src = rd::<GPtr<u8>>(this, 0);
+    if !src.is_null() {
+        let by_player = src == find_player_ped(-1) || rd::<GPtr<u8>>(this, 0) == find_player_vehicle(-1, 0);
+        if by_player
+            && src != ped
+            && !x(rd::<f32>(r, 0)).fadd_m(rd::<f32>(r, 4)).fcom(x(three)).test_any(0x41)
+        {
+            let i = usize::from(g::<u8>(PLAYER_IN_FOCUS).read()) * PLAYER_INFO_SIZE;
+            let c = g::<u32>(0xB7CED8 + i);
+            c.write(c.read().wrapping_add(1));
+        }
+    }
+    if ped == find_player_ped(-1) {
+        player_on_hit_60a040(find_player_ped(-1), 0);
+    }
+    if ped_is_player(ped) != 0 {
+        let src = rd::<GPtr<u8>>(this, 0);
+        if !src.is_null() && rd::<u8>(src, 0x36) & 7 == 3 {
+            let flag = (rd::<u32>(ped, 0x46C) >> 8) & 0xFFFF_FF01;
+            let mut ev = [0u32; sa_core::layouts::size::CEventDamage / 4];
+            let e = lp(&mut ev).cast::<u8>();
+            event_damage_ctor(e, src, 0, rd::<u32>(this, 0xC), rd::<u32>(this, 8), 0, 0, flag);
+            make_group_respond_to_player_taking_damage(ped, e);
+            event_damage_dtor(e);
+        }
+    }
+    if x(rd::<f32>(r, 0)).fadd_m(rd::<f32>(r, 4)).fcom(X87::zero()).test_any(0x41) {
+        return;
+    }
+    if ped_is_player(ped) == 0 && matches!(rd::<i32>(this, 0xC), 4 | 8 | 9) {
+        wr::<u8>(ped, 0x72F, 0xC8);
+    }
+    if ped == find_player_ped(-1) {
+        let i = usize::from(g::<u8>(PLAYER_IN_FOCUS).read()) * PLAYER_INFO_SIZE;
+        g::<u32>(0xB7CE7C + i).write(g::<u32>(0xB7CB84).read());
+    }
+    wr::<u8>(ped, 0x760, rd::<u8>(this, 0xC));
+    let src = rd::<GPtr<u8>>(this, 0);
+    if src.is_null() {
+        return;
+    }
+    wr::<GPtr<u8>>(ped, 0x764, src);
+    crate::ped::register_reference(src, ped.byte_add(0x764).cast());
+    wr::<u32>(ped, 0x768, g::<u32>(0xB7CB84).read());
+    let s = rd::<GPtr<u8>>(this, 0);
+    if rd::<u8>(s, 0x36) & 7 == 3 && ped_is_player(s) != 0 {
+        let grp = rd::<u32>(rd::<GPtr<u8>>(find_player_ped(-1), 0x480), 0x38);
+        group_notify_damaged(GPtr::from_addr((grp.wrapping_mul(0x2D4)).wrapping_add(0xC09928) as usize), ped);
+    }
+}
+
 // --- hook list (generated) ---
 
 pub const HOOKS: &[HookReg] = &[
@@ -205,4 +378,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_ACCOUNT_FOR_PED_ARMOUR,
     HOOK_COMPUTE_WILL_FORCE_DEATH,
     HOOK_ACCOUNT_FOR_PED_DAMAGE_STATS,
+    HOOK_COMPUTE_WILL_KILL_PED,
+    HOOK_COMPUTE_DAMAGE_RESPONSE,
 ];

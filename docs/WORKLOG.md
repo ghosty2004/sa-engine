@@ -929,3 +929,11 @@
   [S-0x1B4, S-0xC) at entry (original reads an uninitialised shot direction at 0x740DAC; ledger: original bug).
 - l1.rs: KNOWN_CPU_MISMATCHES (may only shrink) holds 0x7F1FD0 RwMatrixRotate, which already failed on master.
 - verify-all main-x87: IDENTICAL on all 11 recordings.
+
+## 2026-11-11 PED-2 and WORLD-2 integrated (main session)
+- PED-2 (a14c82d2): 56 ped functions (47 hooks). WORLD-2 (acc0cbbc): 495 WORLD functions (481 hooks: statics,
+  entity, object, CWorld, misc). WORLD-2's c-bug 2494 divergence is gone on top of X87's FireInstantHit scrub.
+- verify-all main-pw (both merged): IDENTICAL on all 11 recordings. States promoted from the verdict TSVs (only
+  exact L2 rows, minus whole-data-D extras); 3 WORLD-2 preserve hooks queued in PRESERVE_SPECS_PENDING.
+- Open (WORLD-2): ports calling CEntity::Constructor directly break split pairing (route through orig! per
+  ADR-001); GetHeading/GetRoll/FindPlayerHeading withdrawn until a 64-bit FPATAN model exists.

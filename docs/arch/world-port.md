@@ -620,3 +620,130 @@ the same state, so they are verified with the INF-17 split-run mode).
 | 0x856a80 | __dtor_g_waterCreatureMan | REA | 0 | — | deferred | static initialiser of a class outside part 1 (CReplay / gMatrixList / furniture / interior / break / water creatures) |  |
 | 0x856b20 | __dtor_CEscalators__aEscalators | REA | 0 | statics::dtor_escalators | implemented-needs-L2 | no call in the recordings (NOCALLS) | `__dtor_CEscalators__aEscalators` (0x856B20). |
 
+# PORT-WORLD-2: entity/object classes, more CWorld, interiors, statics (part 2)
+
+Scope: the WORLD rows (plus the UNK-game rows `catalog/unk-classification-proposal.csv` assigns to WORLD) that
+were not yet `implemented`/L1/L2/L3 (947 rows at the start), SA:MP-executed (`catalog/samp-priority.csv`)
+and leaves first. This pass ported **495 functions: 481 registered hooks, 11 functions too short to hook, and 3
+ports whose hooks were withdrawn** (below). Statics: 210 of the hooks. Per-function verdicts: `docs/arch/world-port-2-verdicts.tsv`
+(address, name, port, state, L2 mode, evidence). The main session sets `catalog/state.csv` from it.
+
+| state (verdicts file) | rows |
+|---|---|
+| L2 | 289 |
+| implemented-needs-L2 | 170 |
+| L2-split (undeclared writes to review) | 19 |
+| ported-unhookable | 11 |
+| implemented (L2 FAIL) | 3 |
+| implemented (hook withdrawn) | 3 |
+
+## Files (crate `sa-world`, module `world`; registered at the end of `hooks::MODULES`/`GLOBALS`)
+
+| file | contents |
+|---|---|
+| `statics2.rs` | 210 static initialisers: 204 header constants `fld [a]; (fmul\|fdiv\|fdivr) [b]...; fstp [g]; ret`, generated from the bytes (operands read from their addresses: `.rdata` constants by bit pattern, writable globals through `g()`; checked at generation: no operand set gives a different f32 at PC=53 than at PC=24), and the six manager/array constructors + `atexit` (`g_furnitureMan`, `g_interiorMan`, `g_breakMan`, `g_procObjMan`, `g_waterCreatureMan`, the 256 `Furniture_c` at 0xBAE1F8) |
+| `entity.rs` | `CEntity`, `CPlaceable`, `CDummy`, `CDummyPed`, `CBuilding`, `CBoundingBox`, `CSimpleTransform`/`TransformPoint`/`TransformVectors`, building/dummy pool `new`/`delete`, `CPtrListSingleLink`/`CPtrListDoubleLink` items, references (`RegisterReference`, `CleanUpOldReference`, `ResolveReferences`, `PruneReferences`), matrix list (`InitMatrixArray`, `AllocateMatrix`, `FreeStaticMatrix`, `RemoveMatrix`, `~CPlaceable`), lighting, RW object attach/detach/delete, bound centre/rect/on-screen/touching tests |
+| `object.rs` | `CObject` (ctors, `Init`, `Create*`, temp/mission object deletion, control-code list, ropes, doors, train crossing matrix, `Save`/`Load`, `Teleport`, lighting), `CDummyObject`, `CHandObject`, `CCutsceneObject` (lighting, `SetModelIndex`, car pipe atomics), object pool `new`/`delete`, `CObjectData::SetObjectData` |
+| `cworld2.rs` | `CWorld::Initialise`, `Add`, `Remove`, `CSector`/`CRepeatSector` ctor/dtor, `SetNextScanCode`, sector-list scans (`FindObjectsInRange`, `FindObjectsOfTypeInRange`, `FindNearestObjectOfType`, `FindObjectsIntersectingCube`, `FindMissionEntitiesIntersectingCube`, `CastShadow`, `TestForBuildingsOnTopOfEachOther`, `TestForUnusedModels`), `ClearPedsFromArea`, `ProcessPedsAfterPreRender`, `SetAllCarsCanBeDamaged`, `StopAllLawEnforcersInTheirTracks`, `CameraToIgnoreThisObject`, `FindUnsuspectingTargetCar`, `PrintCarChanges` |
+| `misc2.rs` | `CGarages` (camera zone / any-garage / hideout tests, `Init_AfterRestart`, sprayable, safe-house index, cars in hideout), `CSaveGarage` copy in/out, `CEntryExitManager` area codes / `DeleteOne` / burglary houses, `CEntryExit` frustum objects / stealables, `CPickups` removal / merge / control label, `CShopping` prices, stats, `CSetPieces`/`CSetPiece`, `CGameLogic` (riots, forbidden territories, `StopPlayerMovingFromDirection`), `CStats` (radio list, respawn, group members), interiors (`Interior_c`, `InteriorGroup_c`, `InteriorManager_c`), furniture (`Furniture_c`, `FurnitureItem`, `FurnitureSubGroup_c`, `FurnitureGroup_c`, `FurnitureManager_c`), `BreakObject_c`/`BreakManager_c`, `WaterCreature_c`/`WaterCreatureManager_c` |
+
+Hook lists: `tools/e2e/lists/world2-statics.txt` (210), `world2-l2.txt` (124 plain-L2 hooks = `world2-a-l2` +
+`world2-b-l2`), `world2-split.txt` (153 split hooks: `world2-a-split` + `world2-b-split` + the six
+constructor statics), `world2-split2.txt` (the split hooks still without a clean verdict after the first grove
+split run). New `l2-extras.txt` section "PORT-WORLD-2" (out-parameters, model info stores, sectors, references,
+matrix list, garages, set pieces, `atexit` list).
+
+## Conventions and findings
+
+- **Hook names** must be the catalogue's `procedures.csv` name (sa-hook test), so some hooks carry
+  `thunk_FUN_*`, `FUN_*` or "(missed by ghidra: data-code-immediate)" names; the verdicts file gives the class name.
+- **Preserved registers** (sa-hook `callers` test): `CBoundingBox::IsPointWithin` ECX,
+  `CGarages::FindSafeHouseIndexForGarageType` ECX+EDX, `CStats::FindMaxNumberOfGroupMembers` EDX.
+- **Non-HOODLUM `jmp` entries** (6-byte expect, trailing `90`): 0x404180, 0x43E1A0, 0x5630F0, 0x59F000,
+  0x59F110, 0x590DF0, 0x590E10, 0x590ED0, 0x597FF0, 0x6E3E50.
+- **Hooks withdrawn (FPATAN ST0).** `CPlaceable::GetHeading` 0x441DB0, `CPlaceable::GetRoll` 0x420B30 and
+  `FindPlayerHeading` 0x56E450 return the raw FPATAN result in ST0; sa-math models FPATAN at 53 bits (MATH-FPTAN
+  ledger), and L2 compares the full ST0: `GetHeading` had 15/22 mismatches in the low 11 significand bits on
+  grove (the f32 is identical). The ports stay as plain functions (callers that store an f32 may use them);
+  the hooks are not registered until an exact FPATAN model exists.
+- **Unhookable** (< 5 bytes: `ret`, `ret N`, `mov al,1; ret`, getters): `CEntity::AsXxx` 0x404350,
+  `CPlaceable::GetMatrix` raw 0x41BD80, `CEntity::ProcessControl` 0x403E40, `ProcessCollision` 0x403E50,
+  `ProcessShift` 0x403E60, `Teleport` 0x403E80, `SpecialEntityPreCollisionStuff` 0x403E90,
+  `FlagToDestroyWhenNextProcessed` 0x403EB0, `BreakManager_c::Init` 0x59E650, `BreakObject_c::~BreakObject_c`
+  0x59D180, `InteriorGroup_c::GetEntity` 0x594BD0.
+- **Direct calls between ports.** Several ports call other ports of the same module directly (e.g.
+  `CBuilding`/`CDummy` constructors → `CEntity::Constructor` → `CPlaceable::CPlaceable`) instead of through the
+  hooked entry (`orig!`). In a split run the inner call then is not a recorded case of its own, so the call
+  ordinals of plain and Rust runs differ (`CEntity::Constructor` DIVERGED; `CBuilding`/`CDummy::CDummy`/`CObject(CDummyObject*)` FAIL on the callee set: the Rust case lists `rand` as its own callee, the original case does not, by
+  pairing). Behaviour is unaffected (all-ports L3 identical), but per-function split evidence needs these calls
+  routed through `orig!` (decision below).
+- **Original bugs kept** (selection): `CDummy::IsDummyPointerValid` accepts index == size and never checks the
+  byte map; `CObject::IsObjectPointerValid*` have no null test; `SetRemapTexture` compares the whole dword with
+  -1; the list `AddItem`/`AddToControlCodeList` paths write through null on allocation failure; `~CPlaceable`
+  sets the matrix pointer to 0xB74240; `TransformFromObjectSpace-ref` returns the z bits / placement address in
+  EAX; `CanBeUsedToTakeCoverBehind` does not null-test the matrix; rope getters/setters do not check
+  `FindRope` for -1; `CDummyObject::UpdateFromObject` dereferences a null interior slot; `CObject(CDummyObject*)`
+  never writes +0x170; `CCutsceneObject::RemoveLighting` / `CObject::Create(int,bool)` ignore their bool;
+  `UpdateAnim` passes the whole shifted flags dword as "visible"; `FindPlayerHeading` reads `Players[-1]` for
+  id -1; `ResetAreaCodeForVisibleObjects` leaves the count at -1; `InteriorGroup_c::(De)ReferenceAnims` use
+  `this` as the anim block index for group types > 2; `Interior_c::GetNumEmptyTiles` never returns for
+  len <= 0; `SetTilesStatus` aborts on a tile 3 with status 3; `IsCarSprayable` excludes model -2 (unsigned
+  compare); the price-modifier remove (0x49ACD0) skips the last-entry copy when the count drops to <= 0;
+  `FindNearestObjectOfTypeSectorList` ignores its radius; `FurnitureManager_c::GetGroupId` has no ids 5–7;
+  `FindMaxNumberOfGroupMembers` skips 1. x87 order kept everywhere, including sNaN quieting on `fld`/`fstp` copies.
+- **Not reproduced (stack only / divergence candidates for the ledger):** SEH frames of the `CObject` ctors,
+  `Create*`, `CDummyObject` ctor, `ModifyMatrixForCrane`, `CHandObject::ProcessControl`, `Interior_c::Constructor`,
+  `FurnitureSubGroup_c` and `WaterCreatureManager_c` ctors; `CWorld::TestForUnusedModels`' 20000-int stack array
+  (and its unchecked model index); `CShopping::IncrementStat` for an index outside 0..5 (the original reads its
+  own stack, the port does nothing); EAX of void functions `InteriorGroup_c::RemovePed`,
+  `CopyGarageIntoSaveGarage`; bool returns set AL only where the original leaves other EAX bits
+  (`CanBeTargetted`, `DoesNotCollideWithFlyers`, `TreatAsPlayerForCollisions`, `HasInteriorHadStealDataSetup`).
+
+## Deferred rows
+
+| reason | rows |
+|---|---|
+| run-time protection chunks computing an address (need a measurement first, PLAN §4b) | `CEntity::UpdateRwMatrix` 0x446F90, `CEntity::Destructor` 0x535E90, `CGameLogic::Remove2ndPlayerIfPresent` 0x4413C0, `InteriorGroup_c::FindInteriorInfo` 0x594970, `InteriorManager_c::AreAnimsLoaded` 0x5980F0, and part 1's `IsPlayerUse2PlayerControls`, `ClearSkip`, `GetEntryExitIndex`, `AddEntryExitToStack`, `GetEntryExitToDisplayNameOf` |
+| CRT `floor`/loaders | `CEntity::LivesInThisNonOverlapSector` 0x533050 (CRT floor on doubles), `CObjectData::Initialise` 0x5B5360, `CShopping::FindSection` 0x49AE70, `CStats::LoadActionReactionStats`, `LoadStatUpdateConditions` |
+| render paths | `CObject::Render`, `CEntity::Render`/`RenderEffects`/`PreRender`, `CHandObject::Render`/`PreRender`, `CObject::PreRender`, `CCutsceneObject::PreRender`, `ProcessLightsForEntity`, `CalculateBBProjection`, `IsEntityOccluded`, `GetIsBoundingBoxOnScreen` |
+| large orchestrators (time box) | `CEntity::CreateRwObject`/`CreateEffects`/`DestroyEffects`/`Remove`/`Add-rect`, `~CObject`, `CObject::ProcessControl`/`ProcessControlLogic`/`ObjectDamage`/`ObjectFireDamage`/`Explode`/`DoBurnEffect`/`SpecialEntity*`, `CObjectData`/`CCutsceneObject::ProcessControl`, SAM site / train crossing / garage door, wind matrices, `CWorld::FindUnsuspectingTargetPed`, `SetCarsOnFire`, `SetPedsOnFire`, CWorld ProcessLineOfSight family, ClearArea*, FindGroundZ*, CClock/CWeather/CRopes/CStuntJumpManager remainder, `CReplay` (not started) |
+
+## Verification (lane 3, `SA_ROOT=/home/ghosty2004/sa-engine`, outputs `target/e2e/lane-3/port-l2-<tag>/`)
+
+Lane 3 was shared with other agents' runs (flock-serialised), so every run took 3-30 min.
+
+- **Statics** (`w2-st-cbug2`, c-bug, split, `SPLIT_PER_FRAME=20`): 210/210 split PASS (one call each, CRT
+  start-up), splito/splitr traces == plain; the six constructor statics had undeclared `atexit`
+  (`__onexitend/__onexitbegin` 0xC9D428) and manager-object writes, declared in `l2-extras.txt`, then
+  PASS with 0 undeclared on grove (`w2-sp-g2`).
+- **Plain L2** (`w2-l2-g`, grove, `world2-l2.txt` 124 hooks, `L2_PER_FRAME=20`): every called hook 0 mismatches,
+  0 undeclared (after the out-parameter / model-info-store extras found by the first run `w2-a-g`);
+  (b) l2 trace == plain and (c) rust == plain over 5200 frames. c-bug (`w2-cb-l2`, `L2_FROM=2300`,
+  `L2_PER_FRAME=50`): 0 mismatches/undeclared, (b) and (c) IDENTICAL over 3220 frames. 66 of the 124 got no call on grove.
+- **Split** (`w2-sp-g2`, `w2-sp2-g`, grove, `SPLIT_PER_FRAME` 3 / 2): the spool quota (1-1.5 GB; large windows of
+  sectors, reference tables, model info stores) is reached at frame ~260-320 during the load phase, so most
+  load-time split hooks end as COUNT/DIVERGED (plain and Rust call sequences cut at different points);
+  splito/splitr traces == plain on all 5200 frames. Clean PASS for the rest (see verdicts). Three FAILs are
+  callee-set mismatches from direct port-to-port calls (Conventions). `w2-sp-g` (first try, 2 GB quota at
+  frame 232, then the 20 GB free-disk guard skipped splitr) is not used.
+- **All-ports L3** (`tools/e2e/verify-all.sh w2-va1 3`, all 11 recordings, sequential on lane 3):
+  IDENTICAL on grove (5200), anim-input (3300), car-ai (5000), driving (4338), menus-hud (5700), pause-restart
+  (3700); air-water DIVERGED at 2742 (peds, player: the known pre-existing divergence, same frame and subsystems
+  as the base); **c-bug DIVERGED at frame 2494 (buildings)**, while the base commit (`main-reg`) is IDENTICAL on
+  c-bug, so this pass causes it (the same frame/subsystem as the backed-out X87-MODELS merge: an x87-sensitive
+  spot). Bisect so far (c-bug, `plain rust`, only the listed hooks on Rust): `world2-l2.txt` (124) IDENTICAL
+  (`w2-cb-l2`), `world2-a-split.txt` (93) IDENTICAL (`w2-cb-as`), `world2-b-split.txt` (54) IDENTICAL
+  (`w2-cb-bs`). Not yet run: the 210 statics alone, and the union (an interaction between groups, or with
+  the other crates' ports). police-gang, weapon-combat and world-cheats were still running at hand-back
+  (`/home/ghosty2004/sa-engine/target/verify-all/w2-va1/summary.txt`).
+- `cargo test -p sa-hook --lib --release` 50/50; `cargo test -p sa-world --release` 3/3;
+  `cargo clippy --workspace --all-targets -D warnings`, `--workspace --target i686-pc-windows-gnu`,
+  `-p sa-world --target wasm32-unknown-unknown`: clean.
+
+## Decisions needed
+
+- Route same-crate port-to-port calls through `orig!` (hooked entries) wherever the callee is itself a hook, so
+  split runs record the inner calls (ADR-001 already prescribes `orig!` for catalogued callees); until then the
+  constructor chains (`CBuilding`, `CDummy`, `CObject` ctors → `CEntity::Constructor` → `CPlaceable`) have no
+  clean split verdict.
+- An exact (64-bit) FPATAN model, or an accepted divergence, for the three withdrawn ST0-returning hooks.

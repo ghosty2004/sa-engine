@@ -1,0 +1,57 @@
+address	name	state	evidence
+0x5E0540		implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E4730	CPed::operator new-poolIndexed	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x6074A0	CPedIntelligence::operator new	L2	split-combat: PASS 127/127 compared, 0 mismatches, 0 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E8030	CPed::Constructor	implemented	split-combat: PASS 127/127 compared, 0 mismatches, 23 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E8620	CPed::Destructor	implemented	split-combat: PASS 99/99 compared, 0 mismatches, 99 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E8C80	CPed::`scalar deleting destructor'	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DDBE0	CCivilianPed::~CCivilianPed	implemented	split-combat: PASS 97/97 compared, 0 mismatches, 97 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DDC30	CCivilianPed::Destructor	implemented	split-combat: PASS 97/97 compared, 0 mismatches, 97 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DE3B0	CEmergencyPed::~CEmergencyPed	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DE3E0	CEmergencyPed::`scalar deleting destructor'	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DE0D0	CCopPed::Destructor	implemented	split-combat: PASS 4/4 compared, 0 mismatches, 4 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DE2C0	CCopPed::`scalar deleting destructor'	implemented	split-combat: PASS 4/4 compared, 0 mismatches, 4 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x6093B0	CPlayerPed::~CPlayerPed	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60A9A0	CPlayerPed::`scalar deleting destructor'	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DDB70	CCivilianPed::Constructor	implemented	split-combat: PASS 120/120 compared, 0 mismatches, 120 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DDC60	CCopPed::Constructor	implemented	split-combat: PASS 7/7 compared, 0 mismatches, 7 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E4880	CPed::SetModelIndex	implemented	split-combat: PASS 128/128 compared, 0 mismatches, 128 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E8A20	CPed::PreRender	L2	split-combat: PASS 150/150 compared, 0 mismatches, 0 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x553F00	CPed::SetupLighting	L2	split-combat: PASS 150/150 compared, 0 mismatches, 0 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E3990	CPed::RemoveWeaponModel	implemented	split-combat: PASS 150/150 compared, 0 mismatches, 117 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E5ED0	CPed::AddWeaponModel	implemented	split-combat: PASS 150/150 compared, 0 mismatches, 144 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E6080	CPed::GiveWeapon-	implemented	split-combat: PASS 139/139 compared, 0 mismatches, 13 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E8910	CPed::RequestDelayedWeapon	implemented	split-combat: PASS 150/150 compared, 0 mismatches, 1 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E89B0	CPed::GiveDelayedWeapon	implemented	split-combat: PASS 16/16 compared, 0 mismatches, 15 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5F0250	CPed::RemoveWeaponAnims	L2	split-combat: PASS 4/4 compared, 0 mismatches, 0 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x4B3210	CPedDamageResponseCalculator::ComputeWillKillPed	implemented	split-combat: PASS 13/13 compared, 0 mismatches, 7 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x4B5AC0	CPedDamageResponseCalculator::ComputeDamageResponse	implemented	split-combat: PASS 13/13 compared, 0 mismatches, 13 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x56E870	CPlayerInfo::MakePlayerSafe	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x56F330	CPlayerInfo::Clear	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x56E610	CPlayerInfo::WorkOutEnergyFromHunger	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x609830	CPlayerPed::UpdateCameraWeaponModes	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x609650	CPlayerPed::ReApplyMoveAnims	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60D790	CPlayerPed::SetupPlayerPed	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60B460	CPlayerPed::MakeChangesForNewWeapon-	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60A610	CPlayerPed::ControlButtonSprint	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60A8D0	CPlayerPed::HandlePlayerBreath	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60C520	CPlayerPed::SetPlayerMoveBlendRatio	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x6098F0	CPlayerPed::ProcessAnimGroups	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60D850	CPlayerPed::ProcessWeaponSwitch	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x60CD20	CPlayerPed::SetInitialState	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5DF910	CPed::SetPedPositionInCar	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E1B10	CPed::UpdatePosition	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E1FA0	CPed::ProcessBuoyancy	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E3C30	CPed::SpecialEntityPreCollisionStuff	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E3E90	CPed::SpecialEntityCalcCollisionSteps	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E4110	CPed::Teleport	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x5E4A00	CPed::SetMoveAnim	implemented	split-combat: no call; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc, 3500 frames, 17 subsystems)
+0x6097F0	CPlayerPed::ProcessPlayerWeapon	ported-unhookable	body `ret 4` (3 bytes) shorter than the 5-byte entry patch (sa-hook TooShort); plain Rust fn in player_ctrl.rs
+0x609490	CPlayerPed::SetMoveAnim	ported-unhookable	body `ret` (1 byte); plain Rust fn in player_ctrl.rs
+0x561FD0	CWanted::ResetPolicePursuit	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
+0x56E860	CPlayerInfo::CancelPlayerEnteringCars	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
+0x5DEBE0	CPed::Update	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
+0x5E01A0	CPed::UpdateStatEnteringVehicle	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
+0x5E01B0	CPed::UpdateStatLeavingVehicle	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
+0x5F0190	CPed::SpawnFlyingComponent	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
+0x4AD420	CPedDamageResponseCalculator::~CPedDamageResponseCalculator	unhookable	body is a bare `ret`/`ret N` (1-3 bytes) followed by padding: nothing to port, cannot be patched
