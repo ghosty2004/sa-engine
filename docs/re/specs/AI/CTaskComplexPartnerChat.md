@@ -30,3 +30,9 @@ s_ConversationLength i16 [0xB613E8].
 
 ## 0x684FC0 CTaskComplexPartnerChat::`scalar deleting destructor'  (catalogue: specified/REA, port level 3)
 - call 0x684320; `if (flags & 1) CTask::operator delete`; return this; `ret 4`.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x684E30 CTaskComplexPartnerChat::Clone  (catalogue: specified/REA, port level 4)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame.
+- Behaviour: `p = CTask::operator new(0x78)`; NULL -> 0; else return `CTaskComplexPartnerChat::CTaskComplexPartnerChat(p, this+0x14 (const char* command name buffer), this->+0x38 (partner), (u32)(u8)this->+0x58, this->+0x3C, (int32)(int8)this->+0x5B, (u32)(u8)this->+0x74, (u32)(u8)this->+0x75, CVector this->+0x40 (by value, 3 dwords pushed first))` 0x684290.

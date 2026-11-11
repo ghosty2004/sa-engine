@@ -41,3 +41,13 @@ DoTidyUp 0x660F60 (not in this group).
 - `__thiscall void (this, CPed* ped [esp+4])`, `ret 4`. If this+0xC (vehicle) != NULL: byte vehicle+0x42E &= 0xFE (clear a vehicle
   flag bit 0 - gr CVehicle flag at +0x42E, the "ped leaning on it" bit). If this+8 (m_pSubTask) != NULL:
   m_pSubTask->MakeAbortable(ped, 2, NULL) (vtable +0x18; result ignored).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x664590 CTaskGoToVehicleAndLean::CreateNextSubTask  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`; SEH frame. Fields: +0xC vehicle, +0x10 lean anim time/arg, +0x14 (u8) "lean" flag, +0x15 (u8) side flag.
+- Behaviour:
+  1. If `veh == NULL`: if `m_pSubTask` -> `m_pSubTask->MakeAbortable(ped, 2, NULL)` (vslot +0x18); return 0.
+  2. `t = m_pSubTask->GetTaskType()`. If `t == 0x387` (TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL): `R = veh->m_matrix->right` (+0..+8, no NULL check); if `+0x15 == 0` -> `R = -R` (each component fchs, f32 stores); `a = GetRadianAngleBetweenPoints(R.x, R.y, 0, 0)` 0x53CBE0 stored as f32; `CGeneral::LimitRadianAngle(a)` 0x53CB50 is called but its ST0 result is discarded (`fstp st(0)`, 0x664653) - original quirk, the UNLIMITED angle is used; `p = new(0x18)`; NULL -> 0; return `CTaskSimpleAchieveHeading(p, a, [0x86FC7C]=0.5f, [0x86FC80]=0.2f)` 0x667E20.
+  3. If `t == 0x386` (TASK_SIMPLE_ACHIEVE_HEADING) or `t == 0xCB` (TASK_SIMPLE_STAND_STILL): if `+0x14 != 0` -> `new(0x2C) CTaskLeanOnVehicle(veh, +0x10, 0)` 0x660F90; else `new(0x20) CTaskSimpleStandStill(500, false, false, 8.0f)` 0x62F310 (0 on allocation failure).
+  4. Otherwise `CTaskGoToVehicleAndLean::DoTidyUp(this, ped)` 0x660F60 and return 0.

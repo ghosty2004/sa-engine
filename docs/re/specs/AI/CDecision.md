@@ -47,3 +47,18 @@ Layout (gr Decision.h, size 0x3C): +0x00 m_Tasks[6] (i32 eTaskType), +0x18 m_Pro
 
 ## 0x600710 CDecision::HasResponse  (catalogue: specified/REA, port level 0)
 - `__thiscall bool ()`, `ret`: returns AL = 1 if any of the six dwords at this+0..+0x14 is != 200 (0xC8) (0x600714-0x600724), else AL = 0 (upper EAX bits = loop index).
+
+## 0x6042B0 CDecision::sub_6042B0  (catalogue: unknown/REA, port level 0)
+Catalogue name: CDecision::sub_6042B0, proposed: `CDecisionMakerTypes::HasResponseToAnyEvent(CPed* ped, const int32* eventTypes, int32 count)`
+(evidence: `this` = CDecisionMakerTypes::GetInstance() (caller 0x607C42-0x607C49); offsets match gr DecisionMakerTypes.h: +4 m_DecisionMakers[20]
+(CDecisionMaker 0x99C = 41 CDecision of 0x3C), +0xC034 m_EventIndices, +0xC1B4 m_DefaultRandomPedDecisionMaker, +0xCB50
+m_DefaultMissionPedDecisionMaker, +0xD4EC m_DefaultPlayerPedDecisionMaker).
+- Convention: `__thiscall bool (CDecisionMakerTypes* this, CPed* ped [esp+4], const int32* types [esp+8], int32 count [esp+0xC])`, `ret 0xC`, AL.
+- Behaviour: `dm = ped->m_pIntelligence->+0xB4` (m_nDecisionMakerType, i32). `found = false`; if `count <= 0` return false.
+  `for (k = 0; k < count && !found; k++)` (found tested at the loop top, 0x6042E0): `idx = this->m_EventIndices[types[k]]`;
+  decision `d` = dm == -2 ? `this + 0xD4EC + idx*0x3C` (player default) : dm == -1 ? (`ped->m_nCreatedBy (+0x484) == 2` ? `this + 0xCB50 +
+  idx*0x3C` (mission default) : `this + 0xC1B4 + idx*0x3C` (random default)) : `this + 4 + (dm*41 + idx)*0x3C`.
+  `found = any of d->m_Tasks[0..5]` (6 dwords at +0) `!= 0xC8` (200 TASK_NONE), scanning ascending and stopping at the first non-200.
+  Return found.
+- Note: no bounds checks on types[k] / idx. Caller 0x607A90 passes count 5 with only 4 initialised entries (see there).
+- gta-reversed: absent. Open questions: none.

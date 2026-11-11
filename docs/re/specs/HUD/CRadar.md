@@ -113,3 +113,15 @@
 - gta-reversed: plugin::Call stub only (Radar.cpp:1729). No gr reading aid exists for the airstrip animation.
 - Open questions: the upper 3 bytes of the height dword at 0x587B54 are garbage; this
   only matters if 0x584070 reads more than the low byte (not checked).
+
+## 0x584C00 CRadar::sub_584C00  (catalogue: unknown/REA, port level 9)
+Proposed: body of `CRadar::RemoveRadarSections` (0x584BF0 pushes EBX/ESI/EDI, the HOODLUM chunk 0x401C33 sets EBX = 0xBA8478 = gRadarTxdIds, and
+jumps here; this block pops them and returns for the caller).
+- Convention: continuation code - entered by `jmp` with EBX = &gRadarTxdIds[0][0] and EBX/ESI/EDI already pushed; ends with `pop edi; pop esi;
+  pop ebx; ret` (cdecl void () as seen from CRadar::RemoveRadarSections).
+- Globals: gRadarTxdIds 0xBA8478 (int32[12][12], row stride 0x30).
+- Behaviour: `for (x = 0; x < 12; x++)` (EBX = 0xBA8478 + 4x, loop while EBX < 0xBA84A8) `for (y = 0; y < 12; y++)` (EDI = EBX + 0x30*y):
+  the dead bounds checks `EBX in [0xBA8478, 0xBA84A4]`, `0 <= y <= 11` always pass; `id = gRadarTxdIds[y][x]`; if `id != -1`
+  `CStreaming::RemoveModel(id + 20000 /*0x4E20, TXD base*/)` 0x4089A0 (cdecl). Order: column-major (x outer).
+- gta-reversed: CRadar::RemoveRadarSections (Radar.cpp, hooked at 0x584BF0): check its loop order - removal order only matters for streaming
+  bookkeeping, not for the result. Open questions: none.

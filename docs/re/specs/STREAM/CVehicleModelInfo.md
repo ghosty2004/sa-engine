@@ -44,3 +44,15 @@ m_aUpgrades[18] (0x20 each: CVector pos +0, CQuaternion rot +0xC, i32 m_nParentC
   The f32 is loaded unchanged into ST0 (exact).
 - gta-reversed: VehicleModelInfo.h:458 `GetWheelSize(bool front)` inline - same.
 - Open questions: none.
+
+## 0x4C9580 CVehicleModelInfo::CVehicleStructure::operator delete  (catalogue: unknown/REA, port level 0)
+- Convention: `__cdecl void (void* p [esp+4])`, plain `ret`. Pool = CVehicleModelInfo::m_pInfoPool [0xB4E680] (CPool<CVehicleStructure>, element
+  0x314 bytes).
+- Behaviour: `i = (p - pool->objects) / 0x314` (signed magic-number division: `imul 0x532AE21D; sar edx,8; + sign`); `pool->flags[i] |= 0x80`;
+  if `i < pool->firstFree (+0xC)` `firstFree = i`. The 7-bit id is not changed.
+- gta-reversed: CPool::Delete via `operator delete` - same. Open questions: none.
+
+## 0x4C9840 CVehicleModelInfo::CVehicleStructure::scalar deleting destructor  (catalogue: unknown/REA, port level 8)
+- Convention: `__thiscall CVehicleStructure* (this, uint8 flags [esp+4])`, `ret 4`, returns this.
+- Behaviour: `~CVehicleStructure()` 0x4C7410; if `flags & 1`: the inlined pool delete of 0x4C9580 on `this` (free bit, firstFree update).
+- gta-reversed: compiler-generated - matches. Open questions: none.

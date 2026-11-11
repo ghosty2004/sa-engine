@@ -70,3 +70,12 @@
      0x6883D0. pd+0x84 = 0.
   4. Return result.
 - gta-reversed: not hooked at this address.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x6348E0 CTaskComplexUseMobilePhone::~CTaskComplexUseMobilePhone  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86E454` (0x6348E0); tail-jump to base dtor CTaskComplex::~CTaskComplex 0x61A3D0 (0x6348E6). No other member cleanup.
+
+## 0x6348F0 CTaskComplexUseMobilePhone::sub_6348F0 (proposed: CTaskComplexUseMobilePhone::RemovePhone (static helper))  (catalogue: unknown/REA, port level 15)
+- `__stdcall void (CPed* ped [esp+4])`, `ret 4` (ECX not used). Callers: CTaskComplexUseMobilePhone::MakeAbortable 0x634930, ControlSubTask 0x634D60.
+- Behaviour: `CPed::RemoveWeaponModel(ped, 0x14A)` 0x5E3990 (model 330 = MI cellphone, 0x6348FC); `CPed::SetCurrentWeapon(ped, ped->+0x70C (saved weapon type))` 0x5E6280 (0x63490A); `ped->+0x70C = 0x37` (55, sentinel "none", 0x63490F); `if ped->+0x480 (m_pPlayerData)` -> `m_pPlayerData->+0x85 = 0` (u8, 0x634923).

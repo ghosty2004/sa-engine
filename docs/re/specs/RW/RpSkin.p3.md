@@ -244,4 +244,119 @@ by 0xc. `dstNrm == NULL` exactly when `srcNrm == NULL` (caller 0x7c7e1c..0x7c7e3
     (0x7cb4fe), `RwMatrixMultiply(out + i*0x40, &tmp, &inv)` (0x7cb50e).
 - librw: skin.cpp (skinMatrices-style palette build) matches in structure (skinToBone * bone * inverse(atomic LTM))
   but has no LOCALSPACE 0x4000 shortcut variant in the same form; exe wins.
+## 0x7c69a0 cb_SKINPLUGIN_RwEngine_Close  (catalogue: specified/REA, port level 0)
+- `[0xc978c0] -= 1`; if it reached 0: `_rpSkinPipelinesDestroy()`, `RwFreeListDestroy([0xc978b8])`, `[0xc978b8] <- 0`,
+  `rwfree([0xc978b0])` (G+0x138), `[0xc978b0] <- 0` (0x7c69a5..0x7c69dd). Returns instance.
+- librw: skin.cpp has no engine close (absent).
+
+## 0x7c6be0 cb_SKINPLUGIN_RpGeometry_StreamGetSize  (catalogue: specified/REA, port level 0)
+- `skin = *(g + [0xc978a8])`; NULL -> 0. NATIVE -> `0x7c8830(g)` = 0 (0x7c6c22). Else `numBones*64 + numVertices*20 + numUsedBones + 4
+  + 0x7c8d40(skin)` (0x7c6bfc..0x7c6c1b).
+- librw: skin.cpp:getSizeSkin matches for the non-native layout.
+
+## 0x7c6c30 cb_SKINPLUGIN_RpGeometry_StreamWrite  (catalogue: specified/REA, port level 1)
+- `(s, len, g, off, size)`: skin NULL -> s. NATIVE -> `0x7c8840(s, g)` ? s : NULL. Else `RwStreamWriteInt32` of `numBones & 0xff |
+  numUsedBones(u8) << 8 | maxNumWeights(u8) << 16` (0x7c6c59..0x7c6c7c), raw `usedBones` (numUsedBones bytes), `RwStreamWriteInt32(
+  indices, numVertices*4)`, `RwStreamWriteReal(weights, numVertices*16)`, `RwStreamWriteReal(skinToBone, numBones*64)`, then
+  `0x7c8b50(s, skin)` (split data). Failures -> NULL; else s.
+- librw: skin.cpp:writeSkin matches in layout.
+
+## 0x7c72a0 cb_SKINPLUGIN_RpAtomic_StreamRead  (catalogue: specified/REA, port level 1)
+- Legacy (atomic-stored) skin reader `(s, len, a, off, size)`. `g = a->geometry`; if g already has a skin:
+  `RwStreamSkip(s, size)` - the `sizeInObject` argument (4), NOT the chunk length (0x7c74b4..0x7c74c4; kept) - return s or NULL.
+- Else `numBones = RwStreamReadInt32` (fail -> NULL); `nv = g->numVertices`; `skin = freeListAlloc([0xc978b8], 0x30116)` (no NULL
+  check), zeroed. If `numBones == 0`: `_rpSkinFindUsedBones(skin, NULL, NULL, buf, &cnt, nv)` and `used = cnt`; else `used =
+  numBones` (0x7c732a..0x7c7341). `_rpSkinAllocateData(skin, numBones, used, nv, buf, NULL, NULL, NULL)` (0x7c7357); failure ->
+  free the skin and continue with `skin = NULL` (crashes below; kept). `RwStreamSkip(s, 4)`; `RwStreamReadInt32(s, indices,
+  nv*4)`; `RwStreamReadReal(s, weights, nv*16)`; per bone `RwStreamSkip(s, 0xc)` + `RwStreamReadReal(s, &matrices[i], 0x40)`.
+  `maxNumWeights`: start 1; for each vertex raise it while the next weight dword is non-zero (cap 4, 0x7c742e..0x7c745f).
+  `_rpSkinFindUsedBones(skin, indices, weights, skin->usedBones, &skin->numUsedBones, nv)` (0x7c7470); if the geometry's skin
+  differs: `_rpSkinDeinitialize(g)` when one exists, set the extension, `_rpSkinInitialize(g)` (0x7c748d..0x7c749f). Return s.
+- librw: absent (librw ignores the old atomic skin chunk).
+
+## 0x7c7510 cb_SKINPLUGIN_RpAtomic_StreamGetSize  (catalogue: specified/REA, port level 0)
+- Returns 0 (0x7c7510).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c77a0 RpSkinDestroy  (catalogue: specified/REA, port level 1)
+- `rwfree(skin->data)` if set (0x7c77b2), `_rpSkinSplitDataDestroy(skin)`, `freeListFree([0xc978b8], skin)`; returns 0.
+- librw: skin.cpp Skin destroy matches in effect.
+
+## 0x7c7820 RpSkinIsSplit  (catalogue: specified/REA, port level 0)
+- Returns `skin->numMeshes (+0x28) != 0` (0x7c7826..0x7c782b).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c7880 RpSkinAtomicGetType  (catalogue: specified/REA, port level 0)
+- `p = a->pipeline (+0x6c)`; `p->pluginId == 0x116` ? `p->pluginData` : 0 (0x7c7884..0x7c7894; no NULL check of p).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c86f0 _rpSkinPipelinesDestroy  (catalogue: specified/REA, port level 0)
+- For the four pipeline slots 0xc978c4..0xc978d0: `_rxPipelineDestroy` and NULL if set (0x7c86f6..0x7c8714); returns 1.
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8830 sub_7c8830 (proposed: _rpSkinGeometryNativeSize)  (catalogue: unknown/REA, port level 0)
+- Returns 0.
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8840 sub_7c8840 (proposed: _rpSkinGeometryNativeWrite)  (catalogue: unknown/REA, port level 1)
+- `RwStream* (RwStream* s, const RpGeometry* g)`: `Header(s, 1, -0xc /*size field 0xfffffff4*/, 0x36003, 0xffff)` (0x7c8850; kept),
+  `RwStreamWriteInt32(&9 /*platform*/, 4)`, `RwStreamWriteInt32(skin, 4)` (writes `numBones`, 0x7c8894); returns ok ? s : NULL.
+- librw: absent (librw writes native skin through its own platform code).
+
+## 0x7c88b0 sub_7c88b0 (proposed: _rpSkinGeometryNativeRead)  (catalogue: unknown/REA, port level 1)
+- `RwStream* (RwStream* s, RpGeometry* g)`: `RwStreamFindChunk(s, 1, &len, &ver)` fail -> NULL; `ver` outside [0x34000, 0x36003] ->
+  `RwErrorSet({0x116, _rwerror(0x80000004)})`, NULL (0x7c88da..0x7c896a); `platform = ReadInt32` must be 9 else NULL; `skin =
+  freeListAlloc(0x30116)` zeroed; `RwStreamReadInt32(s, &skin->numBones, 4)` fail -> NULL (skin leaked);
+  `RpSkinGeometrySetSkin(g, skin)` (0x7c893f); return s.
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c89c0 sub_7c89c0 (proposed: _rpD3D9SkinAtomicCanUseVS)  (catalogue: unknown/REA, port level 0)
+- `RwBool (const RpAtomic* a)`: `[0xc978e0] == 0` -> 1; `[0xc978e4] == 0` -> 0; `skin = ext(a->geometry)`; NULL -> 0; return
+  `skin->+0x1c <= [0xc978e8]` (unsigned, 0x7c89e6..0x7c89f1).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8a40 _rpSkinGetMeshBoneRemapIndices  (catalogue: specified/REA, port level 0)
+- Returns `skin->+0x30` (0x7c8a44).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8a50 _rpSkinGetMeshBoneRLECount  (catalogue: specified/REA, port level 0)
+- Returns `skin->+0x34` (0x7c8a54).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8a60 _rpSkinGetMeshBoneRLE  (catalogue: specified/REA, port level 0)
+- Returns `skin->+0x38` (0x7c8a64).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8a70 _rpSkinSplitDataCreate  (catalogue: specified/REA, port level 0)
+- `RpSkin* (RpSkin* skin, u32 boneLimit, u32 numRemap, u32 numMeshes, u32 numRLE)`: free an old `+0x30` block; zero +0x24..+0x38;
+  `p = rwmalloc(numRemap + (numMeshes + numRLE)*2, 0x30116)` (0x7c8ac0); `skin+0x30 = p`; NULL -> return NULL. Zero it; `+0x24 =
+  boneLimit`, `+0x28 = numMeshes`, `+0x2c = numRLE`, `+0x34 = p + numRemap`, `+0x38 = p + numRemap + numMeshes*2`; return skin.
+- librw: skin.cpp split data matches in layout.
+
+## 0x7c8b50 sub_7c8b50 (proposed: _rpSkinSplitDataStreamWrite)  (catalogue: unknown/REA, port level 3)
+- `RwStream* (RwStream* s, const RpSkin* skin)`: `RwStreamWriteInt32(&boneLimit)`, `(&numMeshes)`, `(&numRLE)`; if `numMeshes`:
+  raw `RwStreamWrite(s, skin->+0x30, numBones + (numMeshes + numRLE)*2)` (0x7c8ba4..0x7c8bc1); failures -> NULL; else s.
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7c8d40 sub_7c8d40 (proposed: _rpSkinSplitDataStreamGetSize)  (catalogue: unknown/REA, port level 0)
+- `numMeshes == 0` -> 0xc; else `numBones + (numRLE + numMeshes)*2 + 0xc` (0x7c8d44..0x7c8d57).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7cb6a0 sub_7cb6a0 (proposed: _rpSkinBlendGenericReverse, unreferenced)  (catalogue: unknown/REA, port level 1)
+- No static callers. ebp frame `(i32 n, RwMatrixWeights* w, u32* idx, u8* mats /*RwMatrix format*/, RwV3d* dstPos, RwV3d* srcPos,
+  RwV3d* dstNrm, RwV3d* srcNrm, u32 stride)`. Walks the vertices from the LAST to the first (do-while on n, 0x7cb81c). Per vertex:
+  bone k = byte k of `idx[v]`; for k = 0..3 while the weight dword `w[v].k` compares signed `> 0` (0x7cb6e7 etc.): `0x7cb828`
+  (position) with ESI = -1 for k = 0 (store) and 0 for k > 0 (accumulate); if `dstNrm != NULL` also `0x7cb8b0` (normal). A vertex
+  whose w0 <= 0 keeps its old destination.
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7cb828 sub_7cb828 (proposed: _rpSkinBlendPointHelper)  (catalogue: unknown/REA, port level 0)
+- Register convention: EDX = src RwV3d*, EBX = RwMatrix*, EDI = f32* weight, EAX = dst, ESI = 0 accumulate / non-zero store.
+  `x = (((r.x*s.x + u.x*s.y) + a.x*s.z) + p.x) * w`, same for y (`r.y, u.y, a.y, p.y`) and z (0x7cb828..0x7cb87d). Accumulate:
+  `dst.k = x_k + dst.k`; store: `dst.k = x_k` (0x7cb87f..0x7cb8ac).
+- librw: no direct equivalent identified in librw (not compared line by line).
+
+## 0x7cb8b0 sub_7cb8b0 (proposed: _rpSkinBlendNormalHelper)  (catalogue: unknown/REA, port level 0)
+- As 0x7cb828 without the translation term (0x7cb8b0..0x7cb928).
+- librw: no direct equivalent identified in librw (not compared line by line).
 

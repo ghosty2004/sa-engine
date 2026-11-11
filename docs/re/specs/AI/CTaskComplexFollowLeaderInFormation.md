@@ -26,3 +26,19 @@ construction, move state), +0x24 f32/i32 (4th ctor arg, copied raw).
   - ped in vehicle (ped+0x46C & 0x100) and ped+0x58C (vehicle) != NULL: if the leader (this+0x10) is in a vehicle (leader+0x46C & 0x100)
     and leader+0x58C == ped's vehicle -> 0x2C5 (709, TASK_SIMPLE_CAR_DRIVE); else 0x2C0 (704, TASK_COMPLEX_LEAVE_CAR);
   - otherwise -> 0x38B (907, TASK_COMPLEX_SEEK_ENTITY).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x695B20 CTaskComplexFollowLeaderInFormation::sub_695B20 (proposed: CTaskComplexFollowLeaderInFormation::CTaskComplexFollowLeaderInFormation)  (catalogue: unknown/REA, port level 2)
+- Evidence: CTaskComplex ctor + vtable 0x870C3C (TASK_COMPLEX_FOLLOW_LEADER_IN_FORMATION). No callers (inlined elsewhere).
+- `__thiscall T* (this, CPedGroup* group [esp+4], CPed* leader [esp+8], a3 [esp+0xC], a4 [esp+0x10], float a5 [esp+0x14])`, `ret 0x14`; SEH frame.
+- Behaviour: CTaskComplex ctor 0x61A3B0; `+0xC = group; +0x24 = a5; vtbl = 0x870C3C; +0x10 = leader; +0x20 = 4`; `o = 0x611F20(&CTaskComplexFollowLeaderInFormation::ms_offsets 0xC196E8, a3, a4)` (thiscall, returns a pointer to a 2D offset); `+0x14 = o[0]; +0x18 = o[1]` (2 dwords); `+0x1C = 0`; `if leader` -> RegisterReference(leader, &+0x10) 0x571B70; return this.
+
+## 0x696820 CTaskComplexFollowLeaderInFormation::CreateNextSubTask  (catalogue: specified/REA, port level 6)
+- `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`. CreateSubTask = 0x6962A0 (thiscall (taskType, ped)).
+- Behaviour: `st = leader (+0x10)->m_nPedState (+0x534)` (read first; no NULL check on the leader). `t = m_pSubTask->GetTaskType()`:
+  - `t == 0x2C0` (TASK_COMPLEX_LEAVE_CAR) or `t == 0x2C5` (TASK_SIMPLE_CAR_DRIVE) or `t == 0xCB` (TASK_SIMPLE_STAND_STILL) -> `CreateSubTask(0x38B TASK_COMPLEX_SEEK_ENTITY, ped)`.
+  - `t == 0x38B` -> if `st == 1 || st == 0` -> `CreateSubTask(0xCB, ped)`; else `CreateSubTask(0x38B, ped)`.
+  - `t == 0xCA` (TASK_SIMPLE_PAUSE) -> `CreateSubTask(0xCA, ped)`.
+  - `t == 0x2BC` (TASK_COMPLEX_ENTER_CAR_AS_PASSENGER) -> return `this->CreateFirstSubTask(ped)` (vslot +0x24).
+  - anything else -> 0.

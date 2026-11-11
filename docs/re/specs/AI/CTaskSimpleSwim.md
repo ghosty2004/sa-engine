@@ -10,3 +10,8 @@
 
 ## 0x68B0E0 CTaskSimpleSwim::~CTaskSimpleSwim  (catalogue: specified/REA, port level 2)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskSimpleSwim::~CTaskSimpleSwim 0x688A00 (0x68B0E3); if `flags & 1` (0x68B0E8) calls CTask::operator delete 0x61A5B0 (this) (0x68B0F0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x870920 (CTaskSimpleSwim).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x68B050 CTaskSimpleSwim::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame. `p = CTask::operator new(0x64)`; if NULL return 0; else `CTaskSimpleSwim::CTaskSimpleSwim(p, &this->+0x14 (const CVector* pos), this->+0x20 (CPed*))` 0x688930; return its EAX.

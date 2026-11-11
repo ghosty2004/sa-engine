@@ -28,3 +28,9 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 - If ped bInVehicle (+0x46C bit 8): `new(0x60) CTaskSimpleCarDrive(ped->m_pVehicle (+0x58C), 0, 0)` 0x63C340 (0x62F936-0x62F95D) (0 if allocation failed).
 - Else `new(0x20)`: `CTaskSimple::CTaskSimple` 0x61A390 (base ctor), vtbl = 0x86DD2C, +8 = 0, +0xC = 0, +0x10 = 0, +0x14 u8 = 0, +0x15 u8 = 0, +0x18 u8 = 1, +0x19 u8 = 0,
   +0x1C f32 = 8.0f (immediate 0x41000000) (0x62F993-0x62F9B6) - an inlined stand-still/pause-type simple task (vtable 0x86DD2C). Returns it (0 if allocation failed).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5F6660 CTaskComplexBeStill::CTaskComplexBeStill  (catalogue: unknown/REA, port level 1)
+- `__thiscall CTaskComplexBeStill* (this)`, plain `ret`. No callers (inlined elsewhere).
+- Behaviour: `CTaskComplex::CTaskComplex(this)` 0x61A3B0 (0x5F6663); `vtbl = 0x86C7BC` (0x5F6668); return this.

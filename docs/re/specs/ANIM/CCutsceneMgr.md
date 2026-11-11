@@ -11,3 +11,11 @@ Written by RE-SPEC-2 group F from the 1.0 US disassembly (instruction addresses 
 - Behaviour: for each entry from the first while `entry.name != null`: if `_stricmp(name, entry.name) == 0` (0x8229B6, case-insensitive)
   return `(int16)entry.trackId` (0x5AFA85); not found -> return -1 (0x5AFA7F). The first entry is tested before the loop's null check
   only if its name pointer is non-null (0x5AFA50-0x5AFA5E).
+
+## 0x746070 CCutsceneMgr::sub_746070  (catalogue: unknown/REA, port level 0)
+Name correction: catalogue CCutsceneMgr::sub_746070 -> `IsForegroundApp()` (gr app/app.h:56; reads `isForeground` 0xC920EC, WinPlatform.h:43).
+- Convention: `__cdecl bool ()`, plain `ret`, AL.
+- Behaviour: `return *(u32*)0xC920EC != 0` - the FULL dword is tested (`mov eax,[0xC920EC]; test eax,eax; setne al`), upper 24 bits of EAX are
+  the dword's upper bytes (callers use AL only).
+- gta-reversed: `isForeground` is declared `bool` (1 byte); the original tests 4 bytes. The writer (window proc) stores a full dword, so no
+  behavioural difference in practice. Open questions: none.

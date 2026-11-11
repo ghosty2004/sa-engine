@@ -19,3 +19,14 @@ memory not cleared). Vtable 0x85A92C.
 - gta-reversed: `m_nType = 0x4100; m_InterpInfo.Allocate(7)` - Allocate writes `m_nCount = 7` as int16 (two bytes, also clears +0xF)
   and `m_Keys = g_fxMan.Allocate<uint16*>(7)` = GetMem(28, 4): same except the byte vs. word store (harmless: +0xF is not read
   by the original readers, which use `byte [+0xE]`). Open questions: none.
+
+## 0x4A66A0 FxInfoColourRange_c::Load  (catalogue: specified/REA, port level 0)
+- Convention: `__thiscall void (this, FILESTREAM file [esp+4], int32 version [esp+8])`, `ret 8`.
+- Behaviour: `this->m_InterpInfo (+8)` virtual Load (its vtable +4) `(file)`; version unused. Same code as FxInfoAttractLine_c::Load 0x4A5830.
+- gta-reversed: FxInfoColourRange_c Load - same. Open questions: none.
+
+## 0x4A66C0 FxInfoColourRange_c::GetValue  (catalogue: specified/REA, port level 1)
+- Convention: as FxInfoAttractLine_c::GetValue (`ret 0x18`), info = RenderInfo_t*.
+- Behaviour: `t = this->m_bTimeModeParticle (+6) ? mult : currentTime / len` (x87 `fld currentTime; fdiv len; fstp` to an f32 slot); `FxInterpInfoU255_c::GetVal(this+8, v[7], t)` 0x4A8800; bytes via _ftol (0x821B40) in this order: `+0 = v[0]`, `+1 = v[2]`,
+  `+2 = v[4]`, `+3 = v[6]` (m_Color1 r,g,b,a), `+4 = v[1]`, `+5 = v[3]`, `+6 = v[5]` (m_Color2 r,g,b); `+8 (m_nColorType) = 1` (RANGE).
+- gta-reversed: FxInfoColourRange.cpp - same. Open questions: none.

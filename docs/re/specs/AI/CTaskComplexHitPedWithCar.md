@@ -33,3 +33,20 @@
   vehicle+0x14, no NULL check). Negation is `fmul [0x858C1C]=-1.0f` per component, stored f32. side > 3 (unsigned): d is the
   UNINITIALISED stack local (original bug, keep). *out = d.
 - gta-reversed: not hooked at this address.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x6560E0 CTaskComplexHitPedWithCar::CreateSubTask  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* (this, int32 taskType [esp+4])`, `ret 4`; SEH frame (entry `nop; jmp` into a .HOODLUM stub). Fields: +0xC m_pVehicle, +0x10 m_fImpactSpeed, +0x14 m_nHitSide, +0x18 fall time, +0x1C m_vecMoveDir. Each `new` failure -> 0.
+- By taskType:
+  - `0x1F6` (TASK_COMPLEX_EVASIVE_STEP): `new(0x1C) CTaskComplexEvasiveStep(m_pVehicle, &m_vecMoveDir)` 0x6532D0.
+  - `0xC8` (TASK_NONE): `new(8) CTaskSimpleLeaveGroup()` 0x463540.
+  - `0xD0` (TASK_COMPLEX_FALL_AND_GET_UP): anim by `m_nHitSide` (jump table 0x6562E4): 0 -> 0x1A, 1 -> 0x19, 2 -> 0x18, 3 -> 0x1B; any other value -> the anim id is the taskType argument itself (0xD0; the code reloads the argument slot, original quirk); `new(0x18) CTaskComplexFallAndGetUp(anim, 0, +0x18)` 0x6786C0.
+  - `0x19E` (TASK_SIMPLE_HIT_BEHIND): `new(0x20) CTaskSimpleHitFromBehind()` 0x652EE0.
+  - `0x1FA` (TASK_SIMPLE_KILL_PED_WITH_CAR): `new(0x10) CTaskSimpleKillPedWithCar(m_pVehicle, m_fImpactSpeed)` 0x653C10.
+  - `0x1FB` (TASK_SIMPLE_HURT_PED_WITH_CAR): `new(0x14) CTaskSimpleHurtPedWithCar(m_pVehicle, m_fImpactSpeed)` 0x653EA0.
+  - `0x516` or anything else -> 0.
+
+## 0x656300 CTaskComplexHitPedWithCar::CreateFirstSubTask  (catalogue: specified/REA, port level 8)
+- `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`. Fields: +0xC m_pVehicle, +0x10 m_fImpactSpeed (float), +0x14 m_nHitSide, +0x1C m_vecMoveDir (CVector).
+- Behaviour: `m_nHitSide = CPedGeometryAnalyser::ComputePedHitSide(ped, m_pVehicle)` 0x5F3640 (cdecl). `k = CPed::IsPlayer(ped) ? [0x86F128]=20.0f : [0x86F120]=12.0f`; `fld k; fcomp [this+0x10]; test ah, 5; jp` (0x656334-0x65633E): if `k < m_fImpactSpeed` (C0 only) -> return `CreateSubTask(this, 0x1FA TASK_SIMPLE_KILL_PED_WITH_CAR)` 0x6560E0; greater/equal/unordered fall through. `if CTaskComplexHitPedWithCar::HitHurtsPed(this, ped)` 0x653AE0 -> return `CreateSubTask(0x1FB TASK_SIMPLE_HURT_PED_WITH_CAR)`. Else `m_vecMoveDir = *ComputeEvasiveStepMoveDir(&tmp, ped, m_pVehicle)` 0x653B40 (cdecl, returns CVector*; 3 dwords copied) and return `CreateSubTask(0x1F6 TASK_COMPLEX_EVASIVE_STEP)`.

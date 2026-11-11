@@ -37,3 +37,10 @@ m_animFlags, +0x60 m_nAnimId i16.
   If `m_pAnim == 0`: `a = GetAssociation(clump, true, hier)`; if a and `a->+0x38 != 0` return 1; else `StartAnim(ped)`.
   Return `flags & 1`.
 - gta-reversed: VMT hook, body plugin::Call.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x61AAA0 CTaskSimpleRunNamedAnim::FinishRunAnimMovePedCB  (catalogue: specified/REA, port level 1)
+- `static void __cdecl (CAnimBlendAssociation* assoc [esp+4], void* data [esp+8] = CTaskSimpleRunNamedAnim*)`, plain `ret`. Installed as a callback by CTaskSimpleRunNamedAnim::StartAnim 0x61BB10.
+- Behaviour: `node = assoc->GetNode(0)` 0x4CEB60 (thiscall, 0x61AAAA); `node->GetCurrentTranslation(&task->+0x50 (m_vecOffsetAtEnd), 0.0f)` 0x4CFC50 (second arg pushed as dword 0, 0x61AABB); `task->+0xC |= 0x40` (0x61AAC0); `assoc->m_Flags (+0x2E u16) |= 0x2000` (`or byte [+0x2F], 0x20`, 0x61AAC4). `if (assoc->m_Flags & 0x8) || assoc->m_nCallbackType (+0x30) == 2` (0x61AACC-0x61AAD7): `task->+0xC |= 1` (m_bIsFinished) and `task->m_pAnim (+8) = 0` (0x61AAE9-0x61AAF2). Else `assoc->SetDeleteCallback(CTaskSimpleAnim::FinishRunAnimCB 0x61A8A0, task)` 0x4CEBC0.
+- gta-reversed: hook commented out (TaskSimpleRunNamedAnim.cpp:13), no gr body.

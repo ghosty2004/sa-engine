@@ -18,3 +18,15 @@ Vtable 0x870754, type 0x4B2 (1202), size 0x74.
 
 ## 0x684F80 CTaskComplexPartnerDeal::`scalar deleting destructor'  (catalogue: specified/REA, port level 3)
 - call 0x684200 (complete dtor, catalogue unknown - proposed ~CTaskComplexPartnerDeal); `if (flags & 1) CTask::operator delete`; return this.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x682440 CTaskComplexPartnerDeal::GetPartnerSequence  (catalogue: specified/REA, port level 3)
+- `__thiscall CTaskComplexSequence* (this)`, plain `ret`; SEH frame. Caller: CTaskComplexPartner::CreateNextSubTask 0x683AD0 (virtual). Fields: +0x38 partner (CPed*), +0x58 (u8) lead-speaker flag.
+- Behaviour: `seq = new(0x40) CTaskComplexSequence()` 0x632BD0 (seq = NULL if the allocation fails; the AddTask calls below are then made on NULL - original bug). Two orders by `+0x58`:
+  - `+0x58 != 0`: `seq->AddTask(new(0x28) CTaskComplexTurnToFaceEntityOrCoord(partner (+0x38), [0x86FC7C]=0.5f, 0.02f (0x3CA3D70A)))` 0x66B890 / 0x632D10; `seq->AddTask(new(0x20) CTaskSimpleRunAnim(0x34, 0x11F, 4.0f, false))` 0x61A8B0.
+  - `+0x58 == 0`: same turn task, then `CTaskSimpleRunAnim(0x34, 0x120, 4.0f, false)`.
+  Each `new` that fails passes NULL to AddTask. Return seq.
+
+## 0x684200 CTaskComplexPartnerDeal::~CTaskComplexPartnerDeal  (catalogue: unknown/REA, port level 3)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x870754` (CTaskComplexPartnerDeal) (0x684200); tail-jump to base dtor CTaskComplexPartner::~CTaskComplexPartner 0x683A40 (0x684206). No other member cleanup.

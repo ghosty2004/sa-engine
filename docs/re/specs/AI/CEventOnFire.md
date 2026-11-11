@@ -21,3 +21,12 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 
 ## 0x5FF790 CEventOnFire::Clone  (catalogue: specified/REA, port level 2)
 - `__thiscall CEvent* ()`, `ret`, SEH: `p = CEvent::operator new(0xC)` 0x4B5620; null -> 0; else `CEvent::CEvent(p)` 0x4ABFC0, `p->vtbl = 0x86CCC0` (0x5FF7C8); return p.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5FF740 CEventOnFire::CEventOnFire  (catalogue: unknown/REA, port level 1)
+- `__thiscall CEventOnFire* (this)`, plain `ret`. No callers (inlined at the use sites; out-of-line copy).
+- Behaviour: `CEvent::CEvent(this)` 0x4ABFC0 (0x5FF743); `vtbl = 0x86CCC0` (0x5FF748); return this.
+
+## 0x5FF760 CEventOnFire::~CEventOnFire  (catalogue: unknown/REA, port level 1)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86CCC0` (CEventOnFire) (0x5FF760); tail-jump to base dtor FUN_004ac010 0x4AC010 (0x5FF766). No other member cleanup.

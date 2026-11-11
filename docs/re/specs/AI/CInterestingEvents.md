@@ -116,3 +116,10 @@ CEntity* entity}, stride 0xC), +0x60 m_nPriorities[29] (u8), +0x7E m_nDelays[29]
   50.0 where the original multiplies by 0.02 (then asserts against GetSectorX, so its asserts would fire); it uses m_pVehicle even when
   NULL (the original falls back to the ped); it reads the flag via `m_b1` (the original reads the absolute global). Otherwise it
   matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x602240 CInterestingEvents::sub_602240 (proposed: CPedIntelligence::AddInterestingEntity)  (catalogue: unknown/REA, port level 2)
+- Name correction: operates on `CPedIntelligence::m_apInterestingEntities[3]` (+0x288/+0x28C/+0x290; gr PedIntelligence.h:65, size 0x294), not on CInterestingEvents. No callers / data refs (dead out-of-line copy).
+- `__thiscall void (this: CPedIntelligence*, CEntity* entity [esp+4])`, `ret 4`.
+- Behaviour: shift the history down with reference bookkeeping, newest at index 0: for k = 2, 1 (esi = +0x290 then +0x28C, `ebx = 2` 0x60224B): `if e[k]` -> CleanUpOldReference(e[k], &e[k]) 0x571A00 (0x602257); `e[k] = e[k-1]` (0x602261); `if e[k]` -> RegisterReference(e[k], &e[k]) 0x571B70 (0x602266). Then `if e[0]` -> CleanUpOldReference(e[0], &e[0]) (0x602282); `e[0] = entity`; `if entity` -> RegisterReference(entity, &e[0]) (0x602292). e[2]'s old entity is dropped; no duplicate check.

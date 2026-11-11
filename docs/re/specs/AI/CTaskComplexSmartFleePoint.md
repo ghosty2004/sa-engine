@@ -68,3 +68,9 @@ m_hasFleePointChanged u8.
 ## 0x65CED0 CTaskComplexSmartFleePoint::Clone  (catalogue: specified/REA, port level 2)
 - Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x44) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplexSmartFleePoint::CTaskComplexSmartFleePoint(&this->m_vecFleePos (this+0x18), (u8)this+0x24, this+0x2C, this+0x28) 0x65BD20; return p.
 - gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x65C0C0 CTaskComplexSmartFleePoint::CreateNextSubTask  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`.
+- Behaviour: `t = m_pSubTask->GetTaskType()` then a cumulative `sub` chain (0x65C0CE-0x65C0DF): `t == 0xCB` (TASK_SIMPLE_STAND_STILL) -> return `CreateSubTask(this, 0xF4 TASK_COMPLEX_SEQUENCE, ped)` 0x65BE80; `t == 0xF4` -> return `CreateSubTask(0x516 TASK_FINISHED, ped)`; `t == 0x2CA` (TASK_COMPLEX_LEAVE_ANY_CAR) -> `this->+0x40 = ComputeFleeDir(this, ped)` 0x65BE40 (AL stored as u8) and return `CreateSubTask(0x390 TASK_COMPLEX_WANDER, ped)`; else return 0.

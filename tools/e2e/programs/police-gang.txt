@@ -1,0 +1,83 @@
+# CORPUS-1 police-gang corpus program (wanted levels, police, gang fights, death and hospital restarts):
+# the grove-walk start (CJ in the Idlewood alley, Ballas territory), a walk to the street, HESOYAM and
+# KJKSZPJ, R2 to the M4, targeted fire (r1 + circle) at the peds on the street: Ballas members shoot
+# back, police cars arrive; OSRBLHH twice (wanted level up to 5 stars), a run from the police (on foot,
+# into the backyards of East Los Santos), more fire from cover; the police kill CJ ("Wasted", ~frame
+# 2970) and he restarts at the Jefferson hospital with the health help boxes. The JQNTDMH (Rancher)
+# block at 2520 runs while CJ is cornered and he does not get in (the car chase is in menus-hud.txt,
+# which ends with a "Busted" in a car). After the hospital restart: SZCMAWO (suicide), a second
+# hospital restart, and a walk into Idlewood. Pad controls; cheats one key per two frames. Generated
+# from a compact source (one 'FRAME cheat WORD' line per cheat). Frames as in grove-walk.txt (40 ms of
+# virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300..1379 ly=-128           # walk out of the alley to the street
+1400 key=std:0x48            # HESOYAM
+1402 key=std:0x45
+1404 key=std:0x53
+1406 key=std:0x4F
+1408 key=std:0x59
+1410 key=std:0x41
+1412 key=std:0x4D
+1430 key=std:0x4B            # KJKSZPJ: weapons
+1432 key=std:0x4A
+1434 key=std:0x4B
+1436 key=std:0x53
+1438 key=std:0x5A
+1440 key=std:0x50
+1442 key=std:0x4A
+1460 r2
+1470 r2
+1480 r2
+1490 r2
+1500 r2                      # M4
+1520..1640 r1
+1540..1640 circle            # fire at the targeted ped
+1650..1700 rx=128            # turn the camera
+1720..1840 r1
+1740..1840 circle
+1860 key=std:0x4F            # OSRBLHH: wanted level +2
+1862 key=std:0x53
+1864 key=std:0x52
+1866 key=std:0x42
+1868 key=std:0x4C
+1870 key=std:0x48
+1872 key=std:0x48
+1900 key=std:0x4F            # OSRBLHH: wanted level +2
+1902 key=std:0x53
+1904 key=std:0x52
+1906 key=std:0x42
+1908 key=std:0x4C
+1910 key=std:0x48
+1912 key=std:0x48
+1950..2300 ly=-128 cross     # run from the police
+2100..2160 lx=128
+2300..2500 r1
+2320..2500 circle pulse
+2520 key=std:0x4A            # JQNTDMH: Rancher
+2522 key=std:0x51
+2524 key=std:0x4E
+2526 key=std:0x54
+2528 key=std:0x44
+2530 key=std:0x4D
+2532 key=std:0x48
+2550 triangle
+2590 triangle
+2650..3200 cross
+2800..2860 lx=-128
+2950..3000 lx=128
+3200..3300 square
+3310 triangle
+3350..3600 r1
+3370..3600 circle
+4200 key=std:0x53            # SZCMAWO
+4202 key=std:0x5A
+4204 key=std:0x43
+4206 key=std:0x4D
+4208 key=std:0x41
+4210 key=std:0x57
+4212 key=std:0x4F
+4800..5000 ly=-128
+end 5200

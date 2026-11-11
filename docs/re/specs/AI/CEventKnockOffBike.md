@@ -27,3 +27,9 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
   `(this+0x38 m_vehicle, &this+0xC m_moveSpeed, &this+0x18 m_collisionImpactVelocity, this+0x24 m_damageIntensity (raw f32), this+0x28 field_28 (raw f32),
   (int32)(int8)this+0x36 m_knockOffType (movsx), (u8)this+0x34 m_knockOffDirection, this+0x2C m_time, this+0x30 m_ped, this+0x35 & 1 (m_isVictimDriver),
   (this+0x35 & 2) >> 1 (m_forceKnockOff))`. Returns p. Note: knockOffType is sign-extended by the clone (0x4B75E2) but the ctor takes a byte; no effect.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x4B4AA0 CEventKnockOffBike::CEventKnockOffBike(const CEventKnockOffBike&)  (catalogue: unknown/REA, port level 3)
+- Name correction: behaves as `CEventKnockOffBike::operator=(const CEventKnockOffBike&)` (no vtable store, no base init): `__thiscall CEventKnockOffBike* (this, const CEventKnockOffBike* other [esp+4])`, `ret 4`. Caller: CEventHandler::ComputeKnockOffBikeResponse 0x4B9FF0.
+- Behaviour: `CEventKnockOffBike::From(this, other)` 0x4AFDD0 (0x4B4AA8); return this (0x4B4AAD).

@@ -4,7 +4,8 @@ All `__cdecl` unless stated. Pass-1 file `RwD3D9Device.md` (read-only) has the d
 COM vtable offsets used here: IDirect3D9 +0x2c CheckDeviceMultiSampleType. IDirect3DDevice9 +0xc TestCooperativeLevel,
 +0x40 Reset, +0x94 SetRenderTarget, +0x98 GetRenderTarget, +0x9c SetDepthStencilSurface, +0xa0 GetDepthStencilSurface,
 +0xb4 GetTransform, +0xcc SetLight, +0xd0 GetLight, +0xd4 LightEnable, +0x144 DrawPrimitive, +0x14c DrawPrimitiveUP,
-+0x150 DrawIndexedPrimitiveUP, +0x164 SetFVF, +0x178 SetVertexShaderConstantF, +0x1b0 SetPixelShaderConstantF;
++0x150 DrawIndexedPrimitiveUP, +0x164 SetFVF, +0x178 SetVertexShaderConstantF, +0x190 SetStreamSource, +0x1a0 SetIndices,
++0x1b4 SetPixelShaderConstantF; IDirect3DTexture9 / IDirect3DCubeTexture9 +0x48 GetSurfaceLevel / GetCubeMapSurface;
 IUnknown +0x8 Release.
 
 ## Layout: globals used in this file
@@ -43,6 +44,16 @@ Used twice in each of 0x7f8640 and 0x7f8a90 (identical sequences; addresses belo
   `node+0x8 == vb` (0x7f5aef): `node+0x4 inUse = 0`, `node+0xc owner = NULL` (0x7f5afc, 0x7f5aff). The D3D buffer is NOT
   released and the node stays in the list (it is reused by a later Create). No match / empty list: nothing.
 - librw: d3d/d3ddevice.cpp `removeDynamicVB` differs: librw releases the buffer and unlinks/frees the node.
+
+## 0x7f5ef0 _rwD3D9SetDepthStencilSurface  (catalogue: specified/REA, port level 0)
+- `void (IDirect3DSurface9* s)`: if `[0xc9808c] != s`: `[0xc9808c] = s`, `device->SetDepthStencilSurface(s)` (+0x9c, 0x7f5f0d; result
+  ignored). No reference counting.
+- librw: d3d/d3ddevice.cpp `setDepthSurface` matches.
+
+## 0x7f5f20 _rwD3D9SetRenderTarget  (catalogue: specified/REA, port level 0)
+- `RwBool (RwUInt32 index, IDirect3DSurface9* s)`: cache `[0xc98090 + 4*index]`; equal -> 1. Else store, `hr =
+  device->SetRenderTarget(index, s)` (+0x94); returns `hr >= 0`. The cache is updated before the call (also on failure).
+- librw: d3d/d3ddevice.cpp `setRenderTarget` matches (librw returns void).
 
 ## 0x7f8640 RwD3D9ChangeVideoMode  (catalogue: specified/REA, port level 3)
 - `RwBool (RwInt32 modeIndex)` (arg at [esp+0x5c] after `sub esp,0x48` + 4 pushes). Returns 1 except when the recovery Reset
@@ -88,4 +99,76 @@ Used twice in each of 0x7f8640 and 0x7f8a90 (identical sequences; addresses belo
   `hr < 0` -> recovery directly (0x7f8b86).
 - Recovery 0x7f8c65-0x7f8d5c: restore Present from the copy, `[0x8e2430] = old Selected`, `[0x8e2438] = old NonMask`
   (0x7f8c7a, 0x7f8c80); `Reset(&Present)`; `< 0` -> return 0 (0x7f8c93). Else block R (result ignored) and return 1.
+- librw: absent.
+
+## 0x7f9e80 RwD3D9GetCurrentD3DRenderTarget  (catalogue: specified/REA, port level 0)
+- `IDirect3DSurface9* (RwUInt32 index)`: returns `[0xc98090 + 4*index]` (no AddRef, no bounds check).
+- librw: absent.
+
+## 0x7f9e90 RwD3D9SetRenderTarget  (catalogue: specified/REA, port level 0)
+- `RwBool (RwUInt32 index, RwRaster* r)`. `surf = NULL`. If r != NULL: `ext = (r+0x0 parent raster) + [0xb4e9e0]` (the PARENT's D3D9
+  extension, 0x7f9ea0-0x7f9ea8); `tex = ext+0x0`; `b = u8 ext+0x9`; if `b & 0xf` (cube texture): `tex->GetCubeMapSurface(b >> 4 face, 0,
+  &surf)` (+0x48 with 3 args, 0x7f9ec6); else `tex->GetSurfaceLevel(0, &surf)` (+0x48 with 2 args). Results ignored.
+- Then as 0x7f5f20 with surf (cache 0xc98090, SetRenderTarget +0x94). If surf != NULL: `surf->Release()` (+0x8, 0x7f9f1c) (the device
+  keeps its own reference). Returns `hr >= 0`, or 1 when cached.
+- librw: absent (librw `setRenderSurfaces` works on cameras).
+- Open question: exact meaning of the ext+0x9 byte split (low nibble cube flag, high nibble face) is taken from the bytes only
+  (0x7f9eaa-0x7f9ebf); objects.md lists the extension without this sub-field. UNCLEAR naming.
+
+## 0x7f9f30 _rwD3D9SetFVF  (catalogue: specified/REA, port level 0)
+- `void (RwUInt32 fvf)`: if `[0x8e2440] != fvf`: `hr = device->SetFVF(fvf)` (+0x164); `[0x8e2440] = (hr >= 0) ? fvf : -1`;
+  `[0x8e2444]` last vertex declaration = -1 (0x7f9f60; SetFVF replaces the declaration).
+- librw: absent (librw uses vertex declarations only).
+
+## 0x7fa1f0 _rwD3D9DrawIndexedPrimitiveUP  (catalogue: specified/REA, port level 1)
+- `HRESULT (D3DPRIMITIVETYPE type, RwUInt32 minIndex, RwUInt32 numVertices, RwUInt32 primCount, const void* indices, const void*
+  vertices, RwUInt32 stride)`.
+- If stream-0 cache `{[0xc97bd8] vb, [0xc97bdc] offset, [0xc97be0] stride}` is not all zero: zero all three and
+  `device->SetStreamSource(0, NULL, 0, 0)` (+0x190, 0x7fa22a). If `[0x8e2450]` (last index buffer) != 0: set 0 and
+  `device->SetIndices(NULL)` (+0x1a0). `_rwD3D9RenderStateFlushCache` 0x7fc200.
+- Returns `device->DrawIndexedPrimitiveUP(type, minIndex, numVertices, primCount, indices, 0x65 D3DFMT_INDEX16, vertices, stride)`
+  (+0x150, 0x7fa27f): the raw HRESULT, not a bool.
+- librw: absent.
+
+## 0x7fa290 _rwD3D9DrawPrimitiveUP  (catalogue: specified/REA, port level 1)
+- `HRESULT (D3DPRIMITIVETYPE type, RwUInt32 primCount, const void* vertices, RwUInt32 stride)`: same stream-0 / index reset and flush
+  as 0x7fa1f0; returns `device->DrawPrimitiveUP(type, primCount, vertices, stride)` (+0x14c, 0x7fa30e).
+- librw: absent.
+
+## 0x7fa360 _rwD3D9DrawPrimitive  (catalogue: specified/REA, port level 1)
+- `HRESULT (D3DPRIMITIVETYPE type, RwUInt32 startVertex, RwUInt32 primCount)`: `_rwD3D9RenderStateFlushCache()`; returns
+  `device->DrawPrimitive(type, startVertex, primCount)` (+0x144).
+- librw: absent (librw d3d9render.cpp calls the device directly).
+
+## 0x7fa4f0 RwD3D9GetTransform  (catalogue: specified/REA, port level 0)
+- `void (RwUInt32 state, void* out)`: if out != NULL: `src = [0xc97c70 + 4*state]` (transform cache slot), or the identity matrix at
+  .rdata 0x8847a0 (`[0x8847a0] = 1.0f`, `[0x8847a4] = 0.0f`, `[0x8847b4] = 1.0f`) if the slot is NULL; copy 0x10 dwords (`rep movsd`, 0x7fa514). No device call.
+- librw: absent.
+
+## 0x7fa820 RwD3D9GetLight  (catalogue: specified/REA, port level 0)
+- `void (RwInt32 index, D3DLIGHT9* out)`: if `index < [0xc98084]` (signed `jge`): copy 0x1a dwords (0x68 bytes) from `LightsCache
+  [0xc98088] + index*0x6c` (index*0x6c via `*3`, `*9`, `*4`, 0x7fa839-0x7fa840); else zero-fill 0x1a dwords (0x7fa854).
+- librw: absent.
+
+## 0x7fac90 RwD3D9DeleteVertexShader  (catalogue: specified/REA, port level 0)
+- `void (IDirect3DVertexShader9* s)`: `s->Release()` (+0x8). No NULL check. EAX = Release result.
+- librw: d3d/d3ddevice.cpp `destroyVertexShader` matches.
+
+## 0x7faca0 _rwD3D9SetVertexShaderConstant  (catalogue: specified/REA, port level 0)
+- `HRESULT (RwUInt32 reg, const void* data, RwUInt32 count)`: `device->SetVertexShaderConstantF(reg, data, count)` (+0x178), no cache.
+- librw: absent (librw uses `d3ddevice->SetVertexShaderConstantF` inline).
+
+## 0x7facf0 RwD3D9DeletePixelShader  (catalogue: specified/REA, port level 0)
+- `void (IDirect3DPixelShader9* s)`: `s->Release()` (+0x8). No NULL check.
+- librw: d3d/d3ddevice.cpp `destroyPixelShader` matches.
+
+## 0x7fad00 _rwD3D9SetPixelShaderConstant  (catalogue: specified/REA, port level 0)
+- `HRESULT (RwUInt32 reg, const void* data, RwUInt32 count)`: `device->SetPixelShaderConstantF(reg, data, count)` (+0x1b4, 0x7fad17).
+- librw: absent.
+
+## 0x7fad90 RwD3D9CameraIsBBoxFullyInsideFrustum  (catalogue: specified/REA, port level 0)
+- `RwBool (const RwCamera* cam, const RwBBox* box /*sup +0, inf +0xc*/)`. For the 6 planes at cam+0x94 (stride 0x14): corner
+  `x = box[+0xc - 0xc*c0].x`, `y = box[+0x10 - 0xc*c1]`, `z = box[+0x14 - 0xc*c2]` with `c0..c2 = u8 plane+0x10..+0x12` (c = 0 -> inf,
+  1 -> sup; 0x7fada9-0x7fadd8). x87: `s = n.y*y; s = s + n.x*x; s = s + n.z*z` (0x7faddb-0x7fadeb); if `s > plane.distance` (no C0/C3,
+  0x7fadfd) -> return 0. All six pass -> 1. NaN passes.
 - librw: absent.

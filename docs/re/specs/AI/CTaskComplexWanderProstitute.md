@@ -41,3 +41,8 @@ Vtable 0x870148 (gr TaskComplexWanderProstitute.h): CTaskComplexWanderStandard (
 ## 0x673C80 CTaskComplexWanderProstitute::Clone  (catalogue: specified/REA, port level 3)
 - Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x3C) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplexWanderStandard::CTaskComplexWanderStandard(this+0xC, (u8)this+0x10, this+0x24 & 1) 0x48E4F0; vtbl = 0x870148 (CTaskComplexWanderProstitute); p+0x38 = 0; return p.
 - gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x6726F0 CTaskComplexWanderProstitute::~CTaskComplexWanderProstitute  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86FE84` (CTaskComplexWander) (0x6726F0); tail-jump to base dtor CTaskComplex::~CTaskComplex 0x61A3D0 (0x6726F6). No other member cleanup.

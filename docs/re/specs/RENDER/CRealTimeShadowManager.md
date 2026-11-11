@@ -58,3 +58,7 @@ CPhysical +0x44 m_vecMoveSpeed, +0x134 m_pShadowData; CPed +0x46C m_nPedFlags (b
   `!IsTypePed() || IsPlayer()` (the original applies it to everything except player-1 peds), and it returns when speed^2 < 0.09 (the
   original refuses when speed^2 > 0.09). The gr-deviations row (cpp:131, "Maybe wrong?", deviates=no) concerns that dead sketch only.
   Open questions: none.
+
+## 0x7067A0 CRealTimeShadowManager::~CRealTimeShadowManager  (catalogue: unknown/REA, port level 4)
+- `__thiscall void (this)`: `CShadowCamera::Destroy(this+0x4C)` 0x705400, then tail-jump `CShadowCamera::Destroy(this+0x44)`. Global dtor of
+  g_realTimeShadowMan (0x856AD0). gta-reversed: member dtors - same order. Open questions: none.

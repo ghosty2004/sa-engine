@@ -19,3 +19,11 @@ memory not cleared). Vtable 0x85A824.
 - gta-reversed: `m_nType = 0x1080; m_InterpInfo.Allocate(3)` - Allocate writes `m_nCount = 3` as int16 (two bytes, also clears +0xF)
   and `m_Keys = g_fxMan.Allocate<float*>(3)` = GetMem(12, 4): same except the byte vs. word store (harmless: +0xF is not read
   by the original readers, which use `byte [+0xE]`). Open questions: none.
+
+## 0x4A50A0 FxInfoEmPos_c::GetValue  (catalogue: specified/REA, port level 1)
+- Convention: `__thiscall void (FxInfoEmPos_c* this, float currentTime [esp+4], float mult, float totalTime, float len, bool useConst,
+  void* info [esp+0x18])`, `ret 0x18`. Local float buffer of 0x40 bytes.
+- Behaviour: `FxInterpInfoFloat_c::GetVal(this+8, values, currentTime)` 0x4A8470 (thiscall (float* out, float t)); then
+  `info->+0x44 = values[0]` (via `fld; fstp`, f32 -> f32), `info->+0x48 = values[1]`, `info->+0x4C = values[2]` (dword moves)
+  (EmissionInfo_t::m_Pos).
+- gta-reversed: Fx/Blueprints/FxInfoEmPos.cpp:13 - same. Open questions: none.

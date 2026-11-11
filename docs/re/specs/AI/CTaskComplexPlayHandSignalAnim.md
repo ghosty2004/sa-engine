@@ -32,3 +32,10 @@ Vtable 0x86D5DC, size 0x18. Layout (gr): +0xC m_animationId i32 (-1 = choose fro
 - If both bits 0 and 1: `if (ms_animBlock == -1) ms_animBlock = GetAnimationBlockIndex("ghands")`; if the block is loaded:
   `if (!(flags & 4)) { AddAnimBlockRef(ms_animBlock); flags |= 4 }`; else `RequestModel(ms_animBlock + 0x63E7, 8)`.
 - If `(flags & 4)` and `m_pSubTask->GetTaskType() == 0xCB`: return `CreateSubTask(0x1A9)`. Else return sub.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x61BA00 CTaskComplexPlayHandSignalAnim::Clone  (catalogue: specified/REA, port level 2)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame (handler 0x83F2BB). No direct callers (vtable slot 1).
+- Behaviour: `p = CTask::operator new(0x18)` 0x61A5A0 (cdecl); if p == NULL return 0 (0x61BA34). Read `a = this->+0x10`, `b = this->+0xC` first; `CTaskComplex::CTaskComplex(p)` 0x61A3B0; `p->+0x14 &= 0xF8` (bits 0-2 cleared, rest of that byte uninitialised heap data; 0x61BA4E); `p->vtbl = 0x86D5DC`; `p->+0xC = b`; `p->+0x10 = a`; return p.
+- gta-reversed: CTaskComplexPlayHandSignalAnim (+0xC m_animId, +0x10 m_fDropOffSpeed? per gr header) - the clone copies both raw dwords; gr's Clone constructs via ctor which may reinitialise other fields; the bytes only clear the three flag bits.

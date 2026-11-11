@@ -21,3 +21,9 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 
 ## 0x65DD70 CEventPassObject::Clone  (catalogue: specified/REA, port level 3)
 - `__thiscall CEvent* ()`, `ret`, SEH frame: `p = CEvent::operator new(0x14)` 0x4B5620 (cdecl, event pool, 0x65DD8B); if p == 0 return 0 (0x65DDA1); else `CEventPassObject::Constructor` 0x65DC70 on p with args (this+0xC, (u8)this+0x10 (zero-extended) (byte, mov)) (0x65DDAF) and return its EAX (the ctor returns p).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x65DCF0 CEventPassObject::~CEventPassObject  (catalogue: unknown/REA, port level 1)
+- Complete dtor, `__thiscall void (this)`, plain `ret`; SEH frame. Callers: scalar deleting dtor 0x65DDF0, CTaskComplexGangLeader::ControlSubTask 0x662370, CTaskComplexGangFollower::ControlSubTask 0x662A10 (stack instances).
+- Behaviour: `vtbl = 0x86F8B8` (EVENT_PASS_OBJECT); `if +0xC (giver)` -> CleanUpOldReference(+0xC entity, &this->+0xC) 0x571A00; CEvent base dtor 0x4AC010.

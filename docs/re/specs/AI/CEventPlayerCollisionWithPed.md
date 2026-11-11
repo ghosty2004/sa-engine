@@ -14,3 +14,8 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 - `__thiscall CEvent* ()`, `ret`, SEH: `p = CEvent::operator new(0x34)` 0x4B5620; null -> 0 (0x5FEED2). Else `CEventPedCollisionWithPed::Constructor` 0x4AC990 on p with
   args in order: ((u16)this+0xC zero-extended, (f32)this+0x10 (copied through `fld/fstp`), this+0x14 victim ped, &this+0x18, &this+0x24, (int16)this+0x30 sign-extended,
   (int16)this+0x32 sign-extended) (0x5FEED4-0x5FEEFA); then `p->vtbl = 0x86C9B0` (0x5FEEFF); return p.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5FEE80 CEventPlayerCollisionWithPed::~CEventPlayerCollisionWithPed  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C9B0` (CEventPlayerCollisionWithPed) (0x5FEE80); tail-jump to base dtor FUN_004aca70 0x4ACA70 (0x5FEE86). No other member cleanup.

@@ -41,3 +41,6 @@ stores start at +1), so the type byte written first survives. The block is not z
   (magic 0x06572ec3, `sar 6`, add sign bit). `CPools::ms_pVehiclePool` 0xb74494 is re-read for each.
 - gta-reversed: provided (ReplayBlockType.cpp:63), equivalent (`GetIndex + 1`).
 - Open questions: none.
+
+## 0x59CBA0 CReplay::sub_59CBA0 (proposed: vt_866db0 base-dtor body)  (catalogue: unknown/REA, port level 0)
+- `__thiscall void (this)`: `vtable = 0x866DB0`; `ret`. Called from vt_866db0::Play 0x59CD50 (inlined dtor of a stack object). Open questions: class of vtable 0x866DB0.

@@ -21,3 +21,8 @@ object stride 0xC4 (196). PED_ATTRACTOR_STEP = 9.
   truncation toward zero, 0x5EEC56-0x5EEC6E); `byteMap[idx] |= 0x80` (0x5EEC73); `if (idx < firstFree (+0xC)) firstFree = idx` (signed `jge`,
   0x5EEC76-0x5EEC7E).
 - gta-reversed: virtual dtor + pool operator delete - matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5EEC90 CPedStepAttractor::~CPedStepAttractor  (catalogue: unknown/REA, port level 3)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C62C` (0x5EEC90); tail-jump to base dtor CPedAttractor::Destructor 0x5EC410 (0x5EEC96). No other member cleanup.

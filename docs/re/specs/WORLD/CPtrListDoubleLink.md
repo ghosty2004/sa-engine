@@ -35,3 +35,7 @@ List: `+0 head` (node*). Node allocation: `0x5523c0` (`__cdecl void* (u32 size)`
   if (n->next) n->next->prev = n->prev; delete(n)`. Only the first matching node is removed.
 - gta-reversed: template code, equivalent.
 - Open questions: none.
+
+## 0x5630F0 CPtrListDoubleLink::~CPtrListDoubleLink  (catalogue: unknown/REA, port level 1)
+- Thunk: `jmp CPtrListDoubleLink::Flush` 0x552470 (this unchanged). Address used as the element dtor by CRepeatSector's vector-dtor 0x5631B0 and by 0x563190.
+- gta-reversed: `~CPtrListDoubleLink() { Flush(); }` - matches. Open questions: none.

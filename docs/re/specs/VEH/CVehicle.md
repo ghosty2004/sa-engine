@@ -147,3 +147,20 @@ BlowUpRCBuggy, ProcessDelayedExplosion, InflictDamage; others mostly have no dir
      L, R (and B if ride): if the association exists, `m_fBlendDelta = -8.0f`.
 - gta-reversed: `plugin::CallMethod` only (Vehicle.cpp:5928).
 - Open questions: the meaning of `TheCamera` byte +0x2F and camera modes 1/49 (names) - numeric behaviour is exact.
+
+## 0x6D0AF0 CVehicle::sub_6D0AF0  (catalogue: unknown/REA, port level 0)
+- `__thiscall bool (CVehicle* this)`, plain `ret`, AL: `return *(u32*)(this+0x9EC) == 0xC47A0000` (an INTEGER compare with the bit pattern
+  of -1000.0f - not a float compare: -1000.0f only, NaN/other encodings never match). Caller CVehicle::UpdateTrailerLink 0x6DFC50.
+- gta-reversed: absent. Open questions: name of field +0x9EC (a 'not set = -1000' sentinel float of the trailer/tow code).
+
+## 0x6E2D60 CVehicle::operator new(size_t,int32)  (catalogue: unknown/REA, port level 1)
+- `__cdecl void* (size_t size [esp+4], int32 handle [esp+8])`, plain `ret`. Callers: CReplay::PlayBackThisFrameInterpolation 0x45F380 (11),
+  CPools::LoadVehiclePool 0x5D2A20 (10).
+- Behaviour: `p = vehiclePool->objects + (handle >> 8) * 0xA18` (pool [0xB74494]) computed BEFORE `CreateAtRef(handle)` 0x6D5DD0; return p.
+  size unused.
+- gta-reversed: CVehicle::operator new(size_t, int32) - same. Open questions: none.
+
+## 0x6E2DD0 CVehicle::operator delete(void*,int32)  (catalogue: unknown/REA, port level 0)
+- `__cdecl void (void* p [esp+4], int32 /*unused*/)`, plain `ret`: inlined CPool<CVehicle>::Delete: `i = (p - objects) / 0xA18` (magic `0x6572EC3`,
+  `sar 6`); `flags[i] |= 0x80`; `if (i < firstFree) firstFree = i`. Pool [0xB74494].
+- gta-reversed: same. Open questions: none.

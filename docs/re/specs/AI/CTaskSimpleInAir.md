@@ -17,3 +17,8 @@ Vtable 0x8704D8 (gr TaskSimpleInAir.h, size 0x3C): +0x1C m_pAnim (CAnimBlendAsso
 - Calls the complete dtor 0x678D50 (0x67D343): see above. Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
   (test at 0x67D348, call at 0x67D350; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
 - gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x67C360 CTaskSimpleInAir::Clone  (catalogue: specified/REA, port level 2)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame. `p = CTask::operator new(0x3C)`; NULL -> 0; else return `CTaskSimpleInAir::CTaskSimpleInAir(p, (+0x24 & 1), (+0x24 >> 1) & 1, (+0x24 >> 2) & 1)` 0x678CD0 (each flag zero-extended to a dword; gr names: bUsingJumpGlide, bUsingFallGlide, bUsingClimbJump).

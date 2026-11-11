@@ -35,3 +35,9 @@
 ## 0x657AC0 CTaskSimpleEvasiveDive::ProcessPed  (catalogue: specified/REA, port level 14)
 - `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`, result AL. If +0xC (m_bFinished, u8) != 0 return 1. If +0x10 (m_pAnim) == NULL:
   this->StartAnim(ped) 0x655F20. Return 0.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x655F20 CTaskSimpleEvasiveDive::StartAnim  (catalogue: specified/REA, port level 13)
+- `__thiscall void (this, CPed* ped [esp+4])`, `ret 4`. Caller: CTaskSimpleEvasiveDive::ProcessPed 0x657AC0. Fields: +8 m_pVehicle, +0x10 m_pAnim.
+- Behaviour: `CPed::Say(ped, 0x4A, 0, 1.0f, 0, 0, 0)` 0x5EFFE0 (result ignored); `a = CAnimManager::BlendAnimation(ped->m_pRwClump, 0, 0x7F, 8.0f)` 0x4D4610; `m_pAnim = a`; `a->SetFinishCallback(CTaskSimpleEvasiveDive::FinishAnimEvasiveDiveCB 0x6536A0, this)` 0x4CEBE0. Then `if m_pVehicle != NULL && ped->m_nPedType (+0x598) == 6 (PED_TYPE_COP) && m_pVehicle->m_pDriver (+0x460) != NULL && CPed::IsPlayer(m_pVehicle->m_pDriver)`: `CWanted::RegisterCrime_Immediately(CWorld::FindPlayerWanted(-1) 0x56E230, 8, pedPos, ped, false)` 0x562430, then the same with crime type 9 (pedPos = matrix pos or placement, recomputed for each call). Crime ids 8 and 9 as raw values (gr eCrimeType names to be checked in the port's enum).

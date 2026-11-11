@@ -12,3 +12,8 @@ Vtable 0x8710D0. Layout = CEventVehicleDamage (gr EventVehicleDamage.h): CEventE
   `CEntity::CleanUpOldReference([+0x14], this+0x14)` 0x571A00; if [+0x18] != 0 same for +0x18; `vtbl = 0x85AB38`).
   Then `if (flags & 1) CEvent::operator delete(this)` 0x4B5630 (0x6A06D8-0x6A06E5).
 - gta-reversed: `= default` + base dtor - matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x6A0650 CEventVehicleDamageCollision::~CEventVehicleDamageCollision  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x8710D0` (CEventVehicleDamageCollision) (0x6A0650); tail-jump to base dtor FUN_004b1990 0x4B1990 (0x6A0656). No other member cleanup.

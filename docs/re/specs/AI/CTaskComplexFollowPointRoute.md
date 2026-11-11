@@ -8,3 +8,10 @@
   `test byte [esp+8],1` at +8, call at +0x10); return this (`ret 4` at +0x1B).
 - Complete dtor callee: 0x66E050 (catalogue unknown; proposed CTaskComplexFollowPointRoute::~CTaskComplexFollowPointRoute): SEH frame; `vtbl = 0x870078` (0x66E06D); if `m_pRoute` (+0x20, CPointRoute*) != 0 `CPointRoute::operator delete(m_pRoute)` 0x41B7D0 (cdecl; no dtor call, CPointRoute is POD; 0x66E073-0x66E088); then `CTaskComplex::~CTaskComplex` 0x61A3D0 (0x66E095). gr TaskComplexFollowPointRoute dtor `delete m_route` matches.
 - gta-reversed: compiler-generated (virtual dtor + pool operator delete); matches. Open questions: none.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x667720 CTaskComplexFollowPointRoute::sub_667720 (proposed: CPointRoute::Reverse)  (catalogue: unknown/REA, port level 0)
+- Name correction: in-place reversal of a CPointRoute (`u32 count @+0; CVector pts[8] @+4`, stride 0xC). Caller: CTaskComplexFollowPointRoute::GetSubTaskType 0x668FE0.
+- `__thiscall void (this: CPointRoute*)`, plain `ret`.
+- Behaviour: `j = count - 1`; if `(int32)j <= 0` return. `i = 0`; loop: swap `pts[i]` and `pts[j]` (3 dwords each via a stack temp); `i++; j--`; while `i < j` (signed).

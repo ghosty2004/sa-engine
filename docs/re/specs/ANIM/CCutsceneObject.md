@@ -15,3 +15,17 @@ Written by RE-SPEC-2 group F from the 1.0 US disassembly (instruction addresses 
   4. `CObject::SetIsStatic(false)` 0x5A0760.
   5. `m_nFlags &= ~0x08000000` (m_bBackfaceCulled off); `m_fContactSurfaceBrightness (+0x12C) = 0.5f`.
 - gta-reversed: `CutsceneObject.cpp:22` - same stores (order differs only between independent fields).
+
+## 0x5B1A80 CCutsceneObject::~CCutsceneObject  (catalogue: unknown/REA, port level 15)
+- Convention: `__thiscall void (this)`. `vtable = 0x868A60` (CCutsceneObject), then tail-jump to CObject::~CObject 0x59F660. Caller: the scalar
+  deleting destructor 0x5B1DE0.
+- gta-reversed: CCutsceneObject has no user dtor (`= default`) - matches. Open questions: none.
+
+## 0x5B1A90 CCutsceneObject::SetupCarPipeAtomicCB  (catalogue: unknown/REA, port level 3)
+- `__cdecl RpAtomic* (RpAtomic* a [esp+4], void* data)`, plain `ret`: `CCarFXRenderer::CustomCarPipeAtomicSetup(a)` 0x5D5B20; return a.
+  Caller SetupCarPipeAtomicsForClump 0x5B1AB0. gta-reversed: same. Open questions: none.
+
+## 0x5B1DE0 CCutsceneObject::`scalar deleting destructor'  (catalogue: specified/REA, port level 16)
+- Convention: `__thiscall CCutsceneObject* (this, uint8 flags [esp+4])`, `ret 4`, returns this.
+- Behaviour: `~CCutsceneObject()` 0x5B1A80; if `flags & 1` call the CObject pool `operator delete(this)` 0x5A1F20 (cdecl). Return this.
+- gta-reversed: compiler-generated - matches. Open questions: none.

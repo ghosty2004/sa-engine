@@ -49,3 +49,9 @@ m_NextNode (+0x1C area, +0x1E node), +0x24 flags (bit0 m_bWanderSensibly, bit3 "
 
 ## 0x66F4A0 CTaskComplexWander::~CTaskComplexWander  (catalogue: specified/REA, port level 3)
 - Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x669D20 thunk_FUN_0040387c (0x66F4A3); if `flags & 1` (0x66F4A8) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x66F4B0); returns this (0x66F4B8). Proposed name: `thunk_FUN_0040387c::`scalar deleting destructor'` (the complete dtor it calls is thunk_FUN_0040387c).
+
+## 0x669D20 CTaskComplexWander::sub_669D20  (catalogue: unknown/REA, port level 2)
+Proposed name: `CTaskComplexWander::~CTaskComplexWander` (vtable 0x86FE84 = gr CTaskComplexWander per catalog/data-tables.csv).
+- Convention: `__thiscall void (this)`. Code path: 0x669D20 `nop; jmp 0x40387C` (HOODLUM chunk: `vtable = 0x86FE84`; `jmp 0x669D26`) ->
+  `jmp CTaskComplex::~CTaskComplex` 0x61A3D0.
+- gta-reversed: `= default` - matches. Open questions: none.

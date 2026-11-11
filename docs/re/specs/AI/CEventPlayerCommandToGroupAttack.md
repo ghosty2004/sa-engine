@@ -18,3 +18,8 @@
 - `__thiscall`, `ret`, SEH: `p = CEvent::operator new(0x1C)` 0x4B5620; null -> 0; else `CEventPlayerCommandToGroup::Constructor(p, 0 /*command: EAX is 0 here,
   0x5F639A*/, this+0x18 target)` 0x4B23D0 (0x5F63A4-0x5F63AB), `p->vtbl = 0x86C710` (0x5F63B0); return p. Note: the command argument is the zeroed EAX (0), not
   this->m_command.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5F63F0 CEventPlayerCommandToGroupAttack::~CEventPlayerCommandToGroupAttack  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C710` (done in the .HOODLUM detour 0x40A472, entry `nop; jmp 0x40A472`), then tail-jump to the base dtor 0x4B2470 (CEventPlayerCommandToGroup complete dtor) (0x5F63F6). Caller: scalar deleting dtor 0x5F63D0.

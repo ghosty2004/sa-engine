@@ -28,3 +28,9 @@ Vtable 0x86C2B0. Layout (gr EventSoundQuiet.h): CEventEditableResponse (0x14), +
 
 ## 0x5DEAA0 CEventSoundQuiet::CanBeInterruptedBySameEvent  (catalogue: specified/REA, port level 0)
 - `__thiscall bool (0 stack args)`, `ret`: returns true (AL=1; upper EAX bits unchanged) (0x5DEAA0).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5DEB90 CEventSoundQuiet::sub_5DEB90 (proposed: CPedIntelligence scalar deleting destructor)  (catalogue: unknown/REA, port level 4)
+- Name correction: not a CEventSoundQuiet member - it calls `CPedIntelligence::Destructor` 0x607300 and `CPedIntelligence::operator delete` 0x6074E0 (pool free), i.e. the scalar deleting destructor of CPedIntelligence (no callers / data refs found: emitted out of line).
+- Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CPedIntelligence::Destructor 0x607300 (0x5DEB93); if `flags & 1` (0x5DEB98) calls delete 0x6074E0 (this) (0x5DEBA0, cdecl, caller pops); returns this in EAX.
