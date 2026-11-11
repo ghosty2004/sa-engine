@@ -44,3 +44,7 @@ Vtable 0x86FF3C (gr TaskComplexGoToAttractor.h, size 0x2C): +0xC m_Attractor (CP
      crash - original bug kept); `s = new CTaskSimpleSlideToCoord(&m_vecAttrPosn, m_fAttrHeading (raw dword), 0.5f)` (0x80); `seq->AddTask(s)`;
      return seq.
 - gta-reversed: `plugin::CallMethodAndReturn<0x670420>` - not reversed; spec from bytes.
+
+## 0x66D130 CTaskComplexGoToAttractor::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x2C) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else reads this+0x1C, +0x20 (saved, unused), +0xC, +0x28, +0x24 first; p->CTaskComplex::CTaskComplex() 0x61A3B0; p+0xC = this+0xC; vtbl = 0x86FF3C (CTaskComplexGoToAttractor); p+0x10..+0x1B = this+0x10..+0x1B (CVector, 3 dwords); p+0x24 = this+0x24; p+0x1C = this+0x1C; p+0x28 = this+0x28; p+0x20 = &p->+0x10 (pointer to the clone's own vector, 0x66D19C/0x66D1BF - NOT copied from this+0x20); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

@@ -40,3 +40,31 @@ m_hasFleePointChanged u8.
     `d = m_initalPos - pedPos` (both strict): `t = CreateSubTask(0xCB, ped)`.
 - Then if `m_moveState == 6` and `!IsLooking(ped)` and `GetRandomNumberInRange(0, 100) <= 5`: `g_ikChainMan.LookAt("TaskSmartFleePoint"
   0x86F770, ped, nullptr, 2000, -1, &m_fleePoint, false, 0.25f, 500, 3, false)`. Return t.
+
+## 0x65BDC0 CTaskComplexSmartFleePoint::MakeAbortable  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (this, CPed* ped, int32 priority, const CEvent* event)`, `ret 0xC`.
+- If priority == 0 (URGENT? value 0): +0x28 = -1; +0x34 = m_snTimeInMilliseconds [0xB7CB84]; +0x38 = -1; +0x3C = 1 (u8) (restart the
+  flee timer, gr m_Timer: start/interval/started). Then (always) return m_pSubTask (+8)->MakeAbortable(ped, priority, event)
+  (vtable +0x18; result of the sub task is returned unchanged).
+
+## 0x65BE00 CTaskComplexSmartFleePoint::SetDefaultTaskWanderDir  (catalogue: specified/REA, port level 1)
+- `__thiscall void (this, CPed* ped [esp+4])`, `ret 4`. t = ped->m_pIntelligence (+0x47C) -> +0x14 (task manager primary slot 4,
+  TASK_PRIMARY_DEFAULT); if t != NULL and t->GetTaskType() (vtable +0x10) == 0x390 (TASK_COMPLEX_WANDER): 0x669D50(t, this->m_pSubTask
+  (+8)) (thiscall on t, 1 arg; unnamed CTaskComplexWander helper that compares/copies the node-address fields +0x18.. from the given
+  wander task - proposed `CTaskComplexWander::UpdateDir(CTask*)`, UNCLEAR).
+
+## 0x65BE40 CTaskComplexSmartFleePoint::ComputeFleeDir  (catalogue: specified/REA, port level 2)
+- `__thiscall int32 (this, CPed* ped [esp+4])`, `ret 4`, returns EAX from CGeneral::GetNodeHeadingFromVector 0x53CDC0 (cdecl (x, y)).
+- p = ped->m_matrix (+0x14) ? &matrix->pos (+0x30) : &ped->placement.pos (+4). dy = p.y - this+0x1C (f32 fld/fsub/fstp) stored first,
+  then dx = p.x - this+0x18; call GetNodeHeadingFromVector(dx, dy) (pushed as two f32: [esp] = dx, [esp+4] = dy). this+0x18 is the
+  flee position (m_vecFleePos).
+
+## 0x65C3C0 CTaskComplexSmartFleePoint::SetFleePosition  (catalogue: specified/REA, port level 0)
+- `__thiscall void (this, const CVector* pos [esp+4], float safeDistance [esp+8], bool scream [esp+0xC])`, `ret 0xC`.
+- If this+0x18 != pos.x or +0x1C != pos.y or +0x20 != pos.z or +0x2C != safeDistance (each `fcomp; test ah,0x44; jp` = not equal
+  or NaN counts as different): +0x18/+0x1C/+0x20 = pos (raw dwords), +0x2C = safeDistance, +0x41 = 1 (u8, new-flee-pos flag),
+  +0x24 = scream. Else only +0x24 = scream.
+
+## 0x65CED0 CTaskComplexSmartFleePoint::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x44) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplexSmartFleePoint::CTaskComplexSmartFleePoint(&this->m_vecFleePos (this+0x18), (u8)this+0x24, this+0x2C, this+0x28) 0x65BD20; return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

@@ -81,3 +81,38 @@ CEntity* entity}, stride 0xC), +0x60 m_nPriorities[29] (u8), +0x7E m_nDelays[29]
 ## 0x856880 CInterestingEvents::Destructor  (catalogue: specified/REA, port level 1)
 - atexit-style `void ()` for the global instance at 0xC0B058: for 8 slots `p = 0xC0B060 + 12*i` (events[i].entity): if `*p` `CEntity::CleanUpOldReference(*p, p)` 0x571A00
   then `*p = 0` (0x856890-0x8568A6).
+
+## 0x605A30 CInterestingEvents::ScanForNearbyEntities  (catalogue: specified/REA, port level 6)
+- Convention: `__thiscall void (this = ECX: CInterestingEvents*)`, plain `ret`; frame `push ebp; mov ebp,esp; and esp,-8; sub esp,0x28`.
+- Callers: CGame::Process 0x53BEE0 (this = g_InterestingEvents 0xC0B058). Callees: CWorld::FindPlayerPed(-1) 0x56E210,
+  CVector::NormaliseAndMag 0x59C970 (returns ST0), CRT floor(double) 0x8219F0 + _ftol 0x821B40 (truncation of the floored value),
+  CWorld::ClearScanCodes 0x563470, CInterestingEvents::Add 0x602590 (thiscall on 0xC0B058, (type, entity)).
+- Globals: byte [0xC0B184] (= g_InterestingEvents+0x12C, read through the ABSOLUTE address, not this), CTimer::m_snTimeInMilliseconds
+  0xB7CB84, m_FrameCounter 0xB7CB4C, TheCamera.ActiveCam byte 0xB6F081 and cam Source vectors 0xB6F338 + 0x238*ActiveCam,
+  CWorld::ms_nCurrentScanCode 0xB7CD78 (u16, R/W), CWorld::ms_aRepeatSectors 0xB992B8 (16x16 entries of 3 list heads, stride 12:
+  +0 vehicles, +4 peds).
+- Fields: +0x130 last frame counter, +0x134 last scan time, +0x138 f32 radius, +0x13C CVector centre, +0x148 CVector direction.
+- Behaviour:
+  1. If ([0xC0B184] & 1) == 0 return. now = ms time; if now - this+0x134 < 500 (unsigned `jb`) return; this+0x134 = now.
+  2. player = FindPlayerPed(-1) (no NULL check). If this+0x130 != m_FrameCounter: this+0x130 = m_FrameCounter; c = camera Source;
+     p = player pos (matrix+0x30 or placement+4); dir (+0x148/+0x14C/+0x150) = (p.x - c.x, p.y - c.y, p.z - c.z) (each fsub stored
+     f32), then +0x150 = 0 (0x605B06); if dir.NormaliseAndMag() == 0.0f [0x858B50] (`test ah,0x44; jp`: NaN does not count as 0):
+     dir = player->matrix->forward (+0x10..+0x18 of the matrix; no NULL check on the matrix here). Then with r = +0x138: tx = r*dir.x
+     (stored f32), ty = r*dir.y (stored f32), tz = r*dir.z (kept in ST0); centre = (tx + p.x, ty + p.y, tz + p.z) (p re-fetched).
+  3. Sector bounds (each computed twice by the bytes, once for the test and once for the value): f(v) = _ftol(floor((double)(v *
+     [0x858B38]=0.02f + [0x858B34]=60.0f))) where v is built in x87 as (a - b) then *0.02 then +60, stored as a double for floor.
+     x0 = max(f(centre.x - r), 0) (`test eax,eax; jle` -> 0); y0 = max(f(centre.y - r), 0); x1 = min(f(r + centre.x), 0x77);
+     y1 = min(f(r + centre.y), 0x77) (`cmp eax,0x77; jge` -> 119). Note x1/y1 load r first then add the centre component.
+  4. Advance scan code: if ms_nCurrentScanCode >= 0xFFFF { ClearScanCodes(); code = 1 } else code+1; store; player+0x2C = code.
+  5. If y0 > y1 return. For y = y0..y1 (outer, 0x605E7E), for x = x0..x1 (inner): s = sector[((y & 15) << 4) + (x & 15)]:
+     - peds list (s+4), for each node (entity = node[0], next = node[1] read before processing): skip if ped+0x2C == code; else
+       ped+0x2C = code; skip if ped+0x530 (m_nPedState) == 0x37 (PEDSTATE_DEAD); e = (ped+0x46C & 0x100) && ped+0x58C != NULL ?
+       vehicle : ped; type = ped+0x598: 6 (COP) -> Add(5, e); 20 (CRIMINAL) -> Add(6, e); 22 (PROSTITUTE) -> Add(4, e); 7..16 (gangs)
+       -> Add(7, e); else nothing.
+     - vehicles list (s+0): skip if veh+0x2C == code; else veh+0x2C = code; skip if veh+0x40 & 0x20000000 (bRenderScorched);
+       skip if veh+0x460 (driver) == NULL; style = u8 veh+0x3B9 (autopilot driving style); skip if style == 0 or 6; else
+       Add(0xE = 14, veh).
+- gta-reversed: plugin::CallMethod stub plus an unexecuted draft (InterestingEvents.cpp:148). Draft errors vs bytes: it multiplies by
+  50.0 where the original multiplies by 0.02 (then asserts against GetSectorX, so its asserts would fire); it uses m_pVehicle even when
+  NULL (the original falls back to the ped); it reads the flag via `m_b1` (the original reads the absolute global). Otherwise it
+  matches.

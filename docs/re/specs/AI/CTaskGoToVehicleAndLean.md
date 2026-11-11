@@ -36,3 +36,8 @@ DoTidyUp 0x660F60 (not in this group).
 - `t = CalcTargetPos(&tmp, ped)`; `e = t - +0x18`; if `(e.x*e.x + e.y*e.y) + e.z*e.z > 0.010000001f [0x86CD7C]` (strict) -> TRY.
 - "gangs" anim block management on +0x14 (as CTaskGangHasslePed: ShouldLoadGangAnims, AddAnimBlockRef / RequestModel / RemoveAnimBlockRef).
   Return m_pSubTask.
+
+## 0x660F60 CTaskGoToVehicleAndLean::DoTidyUp  (catalogue: specified/REA, port level 0)
+- `__thiscall void (this, CPed* ped [esp+4])`, `ret 4`. If this+0xC (vehicle) != NULL: byte vehicle+0x42E &= 0xFE (clear a vehicle
+  flag bit 0 - gr CVehicle flag at +0x42E, the "ped leaning on it" bit). If this+8 (m_pSubTask) != NULL:
+  m_pSubTask->MakeAbortable(ped, 2, NULL) (vtable +0x18; result ignored).

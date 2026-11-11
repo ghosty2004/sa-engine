@@ -11,3 +11,10 @@
 
 ## 0x6378F0 CTaskSimpleDrownInCar::~CTaskSimpleDrownInCar  (catalogue: specified/REA, port level 2)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskSimpleDrownInCar::~CTaskSimpleDrownInCar 0x62FF60 (0x6378F3); if `flags & 1` (0x6378F8) calls CTask::operator delete 0x61A5B0 (this) (0x637900, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86DE54 (CTaskSimpleDrownInCar).
+
+## 0x62FF20 CTaskSimpleDrownInCar::CTaskSimpleDrownInCar  (catalogue: specified/REA, port level 1)
+- `__thiscall this ()`, plain `ret`: CTaskSimple::CTaskSimple() 0x61A390; vtbl = 0x86DE54; returns this.
+
+## 0x636010 CTaskSimpleDrownInCar::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x8) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskSimple::CTaskSimple() 0x61A390; vtbl = 0x86DE54 (CTaskSimpleDrownInCar); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

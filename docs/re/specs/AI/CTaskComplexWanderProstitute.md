@@ -37,3 +37,7 @@ Vtable 0x870148 (gr TaskComplexWanderProstitute.h): CTaskComplexWanderStandard (
 ## 0x674920 CTaskComplexWanderProstitute::CreateFirstSubTask  (catalogue: specified/REA, port level 8)
 - `__thiscall CTask* (this, CPed* ped [esp+4])`: single `jmp 0x6740E0` (CTaskComplexWander::CreateFirstSubTask; its `ret 4` returns). Slot 9 of 0x870148.
   gr TaskComplexWanderProstitute.h:14 - matches.
+
+## 0x673C80 CTaskComplexWanderProstitute::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x3C) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplexWanderStandard::CTaskComplexWanderStandard(this+0xC, (u8)this+0x10, this+0x24 & 1) 0x48E4F0; vtbl = 0x870148 (CTaskComplexWanderProstitute); p+0x38 = 0; return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

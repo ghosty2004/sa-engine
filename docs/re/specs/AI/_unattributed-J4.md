@@ -452,3 +452,322 @@ Unnamed functions of the J4 assignment. Each heading gives `sub_XXXXXX (proposed
 ## 0x6935B0 sub_6935b0 (proposed: CTaskSimplePickUpEntity::~CTaskSimplePickUpEntity (non-deleting dtor))  (catalogue: unknown/REA, port level 2)
 - Name proposal: CTaskSimplePickUpEntity::~CTaskSimplePickUpEntity (non-deleting dtor). Evidence: only caller 0x693590 is slot 0 (scalar deleting dtor) of vtable 0x870B50 (CTaskSimplePickUpEntity); callers (1): 0x693590 CTaskSimplePickUpEntity::~CTaskSimplePickUpEntity.
 - Tail-jump thunk (0x6935B0): `jmp FUN_00691630 0x691630` with all registers and stack args unchanged (same convention as the target).
+
+## 0x499440 vt_85a428::Clone (proposed: UNCLEAR task class with vtable 0x85A428 ::Clone)  (catalogue: unknown/REA, port level 3)
+- Name proposal: slot 1 (Clone) of the 15-slot task vtable 0x85A428 (slot 0 0x4994C0, slot 4 GetTaskType 0x499430); the class is not
+  identified (no gr reference to the vtable).
+- `__thiscall CTask* (this)`, plain `ret`, SEH frame. `sub = this->+0x28 ? this->+0x28->Clone() (vfunc +4) : 0`; `p = CTask::operator
+  new(0x50)`; if p: return `ctor 0x4993D0(p, this->+0xC (dword), (u8)this->+0x10, sub)` (thiscall, 3 stack args; 0x4993D0 is a jump
+  thunk into the .HOODLUM section 0x156E930). If the allocation fails return 0 (the cloned sub-object is leaked).
+
+## 0x4AB9B0 sub_4ab9b0 (proposed: CEventGroup::~CEventGroup (non-deleting))  (catalogue: unknown/REA, port level 1)
+- Name proposal: same body as the deleting dtor 0x4ABA20 without the delete; stores the CEventGroup vtable 0x85AAB0.
+- `__thiscall void (this)`, plain `ret`: `this->vtbl = 0x85AAB0`; `CEventGroup::Flush(this, false)` 0x4AB370 (push 0).
+
+## 0x4ABCA0 sub_4abca0 (proposed: CEventDamage::HasKilledPed)  (catalogue: unknown/REA, port level 0)
+- Name proposal: gr EventDamage.h:68 `//! @addr 0x4ABCA0 bool HasKilledPed() const { return m_damageResponse.m_bHealthZero &&
+  m_bAddToEventGroup; }`; called from CEventHandler::ComputeDamageResponse 0x4C02C4.
+- `__thiscall bool (this)`, plain `ret`: returns EAX = 1 if `this->+0x40 != 0` (m_damageResponse.m_bHealthZero) and `this->+0xC != 0`
+  (m_bAddToEventGroup), else EAX = 0 (full EAX written). Matches gr.
+
+## 0x4ADBF0 sub_4adbf0 (proposed: CEventDamage::IsSameEventForAI)  (catalogue: unknown/REA, port level 0)
+- Name proposal: gr EventDamage.h:65 `//! @addr 0x4ADBF0 IsSameEventForAI(const CEventDamage& o)`.
+- `__thiscall bool (this, const CEventDamage* o [esp+4])`, `ret 4`: returns AL = 1 if `this->+0x14 == o->+0x14` (source entity) and
+  `this->+0x1C == o->+0x1C` (weapon type), else AL = 0 (upper EAX = o pointer bits / stale). Matches gr.
+
+## 0x4AE250 vt_85ae88::GetLocalSoundLevel (proposed: CEventPotentialGetRunOver::GetLocalSoundLevel)  (catalogue: unknown/REA, port level 0)
+- Name proposal: slot 12 of event vtable 0x85AE88 whose GetEventType (0x4AE210) returns 12 = EVENT_POTENTIAL_GET_RUN_OVER.
+- `__thiscall float (this)`: `fld [0x858628]` = 100.0f; returns ST0 = 100.0f; plain `ret`.
+
+## 0x4AEB60 vt_85afe8::GetSourceEntity (proposed: CEventPedEnteredMyVehicle::GetSourceEntity)  (catalogue: unknown/REA, port level 0)
+- Name proposal: slot 10 of event vtable 0x85AFE8 (GetEventType 0x4AEB40 returns 17 = EVENT_PED_ENTERED_MY_VEHICLE).
+- `__thiscall CEntity* (this)`: returns `this->+0x14` (the ped that entered); plain `ret`.
+
+## 0x4AEB70 vt_85afe8::GetLocalSoundLevel (proposed: CEventPedEnteredMyVehicle::GetLocalSoundLevel)  (catalogue: unknown/REA, port level 0)
+- Name proposal: slot 12 of event vtable 0x85AFE8 (EVENT_PED_ENTERED_MY_VEHICLE).
+- `__thiscall float (this)`: returns ST0 = `[0x858B34]=60.0f`; plain `ret`.
+
+## 0x4AEC00 vt_85afe8::AffectsPed (proposed: CEventPedEnteredMyVehicle::AffectsPed)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 5 of event vtable 0x85AFE8 (EVENT_PED_ENTERED_MY_VEHICLE).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: returns AL = 1 iff `ped->IsAlive()` 0x5E0170 and `ped->+0x58C` (vehicle) != 0
+  and `ped->+0x46C & 0x100` (bInVehicle) and `ped->+0x58C == this->+0x18` (event vehicle) and `this->+0x14 != 0` (setne); else 0.
+  Checks in that order (short-circuit).
+
+## 0x4AEC50 sub_4aec50 (proposed: CEventRevived::CEventRevived)  (catalogue: unknown/REA, port level 0)
+- Name proposal: stores vtable 0x85B030 (GetEventType 0x4AEC70 returns 18 = EVENT_REVIVE) after the inlined CEvent base init.
+- `__thiscall CEvent* (this)`, plain `ret`: `this->+4 = 0` (m_nTimeActive), `this->+8 = 0` (u8 m_bValid), `this->vtbl = 0x85B030`;
+  returns this.
+
+## 0x4AECB0 vt_85b030::AffectsPed (proposed: CEventRevived::AffectsPed)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 5 of event vtable 0x85B030 (EVENT_REVIVE).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: if `ped->+0x484 == 2` (u8 m_nCreatedBy; 2 = mission ped) return
+  AL = 0; else return `ped->IsAlive() ? 0 : 1` (0x5E0170; `neg al; sbb eax,eax; inc eax` -> full EAX = 1 when not alive, 0 when alive).
+
+## 0x4AFC50 vt_85b298::AffectsPed (proposed: CEventVehicleThreat::AffectsPed)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 5 of event vtable 0x85B298 (its GetEventType identifies CEventVehicleThreat).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: returns AL = `ped->IsAlive()` 0x5E0170 != 0 (setne; upper EAX stale).
+
+## 0x4B0E60 vt_86cba0::AffectsPed (proposed: CEventHealthLow::AffectsPed)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 5 of event vtable 0x86CBA0 (its GetEventType identifies CEventHealthLow).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: returns AL = `ped->IsAlive()` 0x5E0170 != 0 (setne; upper EAX stale).
+
+## 0x4B0EA0 vt_86cc30::AffectsPed (proposed: CEventLowAngerAtPlayer::AffectsPed)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 5 of event vtable 0x86CC30 (its GetEventType identifies CEventLowAngerAtPlayer).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: returns AL = `ped->IsAlive()` 0x5E0170 != 0 (setne; upper EAX stale).
+
+## 0x4B0EC0 vt_86cc78::AffectsPed (proposed: CEventHighAngerAtPlayer::AffectsPed)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 5 of event vtable 0x86CC78 (its GetEventType identifies CEventHighAngerAtPlayer).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: returns AL = `ped->IsAlive()` 0x5E0170 != 0 (setne; upper EAX stale).
+
+## 0x4B1640 vt_8701a8::IsValid (proposed: CEventInteriorUseInfo::IsValid)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 14 of event vtable 0x8701A8 (GetEventType 0x674EE0 returns 81 = EVENT_INTERIOR_USE_INFO).
+- `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`: if ped != 0 return `ped->IsAlive()` 0x5E0170 (AL; EAX upper stale). Else return
+  EAX = 1 if `this->+8` (m_bValid) != 0 or `this->+4 (m_nTimeActive) <= this->GetLifeTime()` (vfunc +0xC; signed compare), else 0.
+
+## 0x4B5EA0 vt_85ae88::Destructor (proposed: CEventPotentialGetRunOver::~CEventPotentialGetRunOver)  (catalogue: unknown/REA, port level 2)
+- Name proposal: CEventPotentialGetRunOver::~CEventPotentialGetRunOver (scalar deleting). Evidence: slot 0 (scalar deleting dtor) of event vtable 0x85AE88; calls the non-deleting dtor 0x4AE270.
+- `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: `dtor 0x4AE270(this)`; if `flags & 1`: return the object to CEventPool `P = *(0xB744AC)` (ms_pEventPool): `idx = (this - P->+0) / 0x44` (signed division via the magic multiply 0x78787879, `sar 5`, rounding toward zero); `P->+4[idx] |= 0x80` (free flag); if `idx < P->+0xC` `P->+0xC = idx` (first-free hint). Returns this in EAX.
+
+## 0x4B6030 vt_85afe8::Destructor (proposed: CEventPedEnteredMyVehicle::~CEventPedEnteredMyVehicle)  (catalogue: unknown/REA, port level 2)
+- Name proposal: CEventPedEnteredMyVehicle::~CEventPedEnteredMyVehicle (scalar deleting). Evidence: slot 0 (scalar deleting dtor) of event vtable 0x85AFE8; calls the non-deleting dtor 0x4AEB90.
+- `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: `dtor 0x4AEB90(this)`; if `flags & 1`: return the object to CEventPool `P = *(0xB744AC)` (ms_pEventPool): `idx = (this - P->+0) / 0x44` (signed division via the magic multiply 0x78787879, `sar 5`, rounding toward zero); `P->+4[idx] |= 0x80` (free flag); if `idx < P->+0xC` `P->+0xC = idx` (first-free hint). Returns this in EAX.
+
+## 0x4B6080 vt_85b030::Destructor (proposed: CEventRevived::~CEventRevived)  (catalogue: unknown/REA, port level 2)
+- Name proposal: CEventRevived::~CEventRevived (scalar deleting). Evidence: slot 0 (scalar deleting dtor) of event vtable 0x85B030; calls the non-deleting dtor 0x4AECA0. ECX is not saved across the call: the code relies on the callee returning with ECX = this.
+- `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: `dtor 0x4AECA0(this)`; if `flags & 1`: return the object to CEventPool `P = *(0xB744AC)` (ms_pEventPool): `idx = (this - P->+0) / 0x44` (signed division via the magic multiply 0x78787879, `sar 5`, rounding toward zero); `P->+4[idx] |= 0x80` (free flag); if `idx < P->+0xC` `P->+0xC = idx` (first-free hint). Returns this in EAX.
+
+## 0x4B6350 vt_85b298::Destructor (proposed: CEventVehicleThreat::~CEventVehicleThreat)  (catalogue: unknown/REA, port level 2)
+- Name proposal: CEventVehicleThreat::~CEventVehicleThreat (scalar deleting). Evidence: slot 0 (scalar deleting dtor) of event vtable 0x85B298; calls the non-deleting dtor 0x4AFBF0.
+- `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: `dtor 0x4AFBF0(this)`; if `flags & 1`: return the object to CEventPool `P = *(0xB744AC)` (ms_pEventPool): `idx = (this - P->+0) / 0x44` (signed division via the magic multiply 0x78787879, `sar 5`, rounding toward zero); `P->+4[idx] |= 0x80` (free flag); if `idx < P->+0xC` `P->+0xC = idx` (first-free hint). Returns this in EAX.
+
+## 0x4B6F40 vt_85ae88::CloneEditable (proposed: CEventPotentialGetRunOver::CloneEditable)  (catalogue: unknown/REA, port level 3)
+- Name proposal: CEventPotentialGetRunOver::CloneEditable. Evidence: slot 16 (CloneEditable) of event vtable 0x85AE88.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEventPool::New(ms_pEventPool [0xB744AC])` 0x4B5570; if p ==
+  0 return 0; else return `ctor 0x4AE1A0(p, this->+0x14)` (thiscall).
+
+## 0x4B7170 vt_85afe8::CloneEditable (proposed: CEventPedEnteredMyVehicle::CloneEditable)  (catalogue: unknown/REA, port level 3)
+- Name proposal: CEventPedEnteredMyVehicle::CloneEditable. Evidence: slot 16 (CloneEditable) of event vtable 0x85AFE8.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEventPool::New(ms_pEventPool [0xB744AC])` 0x4B5570; if p ==
+  0 return 0; else return `ctor 0x4AEAC0(p, this->+0x14, this->+0x18, this->+0x1C)` (thiscall).
+
+## 0x4B71E0 vt_85b030::Clone (proposed: CEventRevived::Clone)  (catalogue: unknown/REA, port level 1)
+- Name proposal: slot 4 (Clone) of event vtable 0x85B030 (EVENT_REVIVE).
+- `__thiscall CEvent* (this)`, plain `ret`: `p = CEventPool::New(ms_pEventPool [0xB744AC])` 0x4B5570; if p: `p->+4 = 0; p->+8 = 0 (u8);
+  p->vtbl = 0x85B030`; return p (0 if the pool is full). `this` is not read.
+
+## 0x4B7520 vt_85b298::CloneEditable (proposed: CEventVehicleThreat::CloneEditable)  (catalogue: unknown/REA, port level 3)
+- Name proposal: CEventVehicleThreat::CloneEditable. Evidence: slot 16 (CloneEditable) of event vtable 0x85B298.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEventPool::New(ms_pEventPool [0xB744AC])` 0x4B5570; if p ==
+  0 return 0; else return `ctor 0x4AFB50(p, this->+0x14)` (thiscall).
+
+## 0x4B86C0 vt_85b8dc::Clone (proposed: CTaskSimpleOnEscalator::Clone)  (catalogue: unknown/REA, port level 2)
+- Name proposal: slot 1 of task vtable 0x85B8DC whose GetTaskType (0x4B8720) returns 1308 = TASK_SIMPLE_ON_ESCALATOR.
+- `__thiscall CTask* (this)`, plain `ret`, SEH frame: `p = CTask::operator new(0x20)` 0x61A5A0; if p: `CTaskSimpleStandStill::
+  CTaskSimpleStandStill(p, 0, true, false, 8.0f)` 0x62F310 (pushes 8.0f, 0, 1, 0), `p->vtbl = 0x85B8DC`; return p (0 on failure).
+  `this` is not read.
+
+## 0x623B10 sub_623b10 (proposed: CTaskSimpleFight::StartAnim(CPed* ped, int32 move))  (catalogue: unknown/REA, port level 9)
+- Name proposal: CTaskSimpleFight::StartAnim. Evidence: only caller CTaskSimpleFight::ProcessPed 0x629920; `this` is a CTaskSimpleFight
+  (fields +0x1C m_pAnim, +0x20 m_pIdleAnim, +0x24..+0x27 used as gr's m_nComboSet / m_nCurrentMove / m_nNextCommand / m_nLastCommand);
+  it is the function that blends every fight animation; gr declares `void StartAnim(CPed*, int32)` (2 stack args, matches `ret 8`).
+- `__thiscall void (this, CPed* ped [esp+4], int32 move [esp+8])`, `ret 8`. Callees: BlendAnimation 0x4D4610 (cdecl (clump, group, id,
+  f32 delta)), SetFinishCallback 0x4CEBE0 / SetDeleteCallback 0x4CEBC0 (callback 0x61DAE0 = the fight anim callback, data = this),
+  SetCurrentTime 0x4CEA80, CStats::GetFatAndMuscleModifier 0x559AF0, CPed::SetMoveState 0x5DEC00, CPed::IsPlayer 0x5DF8F0,
+  GetWeaponInfo 0x743C60, RemoveAnimBlockRef 0x4D3FD0, AddAnimBlockRef 0x4D3FB0, GetAnimBlockName 0x4D3A30, GetAnimationBlock 0x4D3940,
+  CStreaming::RequestModel 0x4087E0, CPedIntelligence::GetTaskDuck 0x6010A0, sub_61C9B0 (thiscall (this, ped)).
+- Combo data: `CD(k) = CTaskSimpleFight::m_aComboData[k - 4]` (0xC170D0, stride 0x88): +0 anim group, +0x44 ground-loop time
+  (0xC17114), byte +0x85 = high byte of the u16 flags (0xC17155). CPed: +0x18 clump, +0x480 m_pPlayerData, +0x4D4 m_nAnimGroup,
+  +0x534 m_nMoveState, +0x538 the following dword (gr m_nSwimmingMoveState), +0x5A0 weapons (stride 0x1C, +0 type), +0x718 active slot,
+  +0x72D fighting style. CAnimBlendAssociation: +0x18 blend amount, +0x1C blend delta, +0x20 current time, +0x24 speed, +0x2E flags byte.
+- END = `this->+0x27 = this->+0x26; this->+0x26 = 0; return`.
+- 1. If `move < 0` (signed dword compare, 0x623B19): `this->+0x26 = 0`; return (no +0x27 update).
+- 2. If m_pAnim: `m_pAnim->SetDeleteCallback(CDefaultAnimCallback 0x4D1390, 0)`; `m_pAnim = 0`.
+- 3. `cmd = (i8)this->+0x26`; if `(u32)cmd > 0x12` END. Byte table 0x624098 -> jump table 0x624084: cmd 0 -> IDLE, 1 and 15..18 ->
+  MOVE, 2 -> BLOCK, 3..10 -> PLAIN, 11..14 -> ATTACK.
+- ATTACK (0x623B59): `+0x25 = (i8)move`; `+0x14 = 1`; `a = BlendAnimation(ped->+0x18, CD(+0x24).group, 0xD6 + (i8)move, 8.0f)`; `m_pAnim = a`;
+  `a->SetFinishCallback(0x61DAE0, this)`. If `+0x25 == 3` and `a->+0x20 != 0.0f` (`test ah,0x44; jnp` skips only on equal; NaN sets
+  the time): `a->SetCurrentTime(CD(+0x24).+0x44)`. If `ped->+0x480`: `a->+0x24 = GetFatAndMuscleModifier(3)` (cdecl, ST0); if
+  `(i8)+0x25 < 4` `ped->SetMoveState(1)`. END.
+- IDLE (0x623C1C): `+0x24 = 0; +0x25 = 0; +0x14 = 0`. If `ped->+0x534 >= 4` and ped->IsPlayer(): `+8 = 1` (finished); END.
+  `k = GetWeaponInfo(ped weapon type of slot +0x718, 1)->+0x6E` (u8); if k == 4 `k = ped->+0x72D`.
+  If `!(CD(k).+0x85 & 4)`: `c = 4`. Else `g = CD(k).group`: if g == 0x21 `c = k`; else if g != `+0xC`: { if `+0xA`: RemoveAnimBlockRef(
+  (ms_aAnimAssocGroups[+0xC].+0 - 0xB5D4A0) >> 5) (groups at [0xB4EA34], stride 0x14); `+0xA = 0` }; `+0xC = g`; LOAD } else if `+0xA`
+  `c = k` else LOAD. LOAD (0x623CEC): `b = ms_aAnimAssocGroups[+0xC].+0` or, if 0, `GetAnimationBlock(GetAnimBlockName(+0xC))`;
+  `i = (b - 0xB5D4A0) >> 5`; if `b->+0x10` (loaded): AddAnimBlockRef(i); `+0xA = 1`; `c = k`; else `RequestModel(i + 0x63E7, 8)`; if
+  `+0x26` in 11..14 `+0x26 = 11`; `c = 4`.
+  `+0x24 = c` (0x623D33). If m_pIdleAnim == 0: `m_pIdleAnim = BlendAnimation(ped->+0x18, CD(c).group, 0xDF, 8.0f)` and
+  SetDeleteCallback(0x61DAE0, this). Else if `idle->+0x18 < 1.0f` and `idle->+0x1C <= 0.0f` (each `jp` exits on NaN):
+  `m_pIdleAnim = BlendAnimation(..., CD(c).group, 0xDF, 8.0f)` (no callback). If ped->IsPlayer(): `pd = ped->+0x480; pd->+0xC = 0;
+  pd->+0x10 = 0; sub_61C9B0(this, ped)`. Then `+0x24 = 0` (0x623E12, overwrites c) and END.
+- PLAIN (0x623E21, cmd 3..10): if ped->IsPlayer() END. `+0x14 = 0; +0x24 = 1`. cmd 7: `+0x25 = 0`, id 0x2D; cmd 9: `+0x25 = 2`, id 0x2E;
+  cmd 8: `+0x25 = 1`; cmd 10: `+0x25 = 2`; other: `+0x25 = cmd - 3`; for 3..6, 8, 10 the id is `0x29 + (i8)+0x25`.
+  `m_pAnim = BlendAnimation(ped->+0x18, 0, id, 8.0f)`. If `+0x26 == 3`: SetDeleteCallback(0x61DAE0, this); `a->+0x2E |= 4`. Else
+  `a->+0x2E &= ~2; a->+0x2E &= ~0x20; a->+0x2E |= 8`; SetFinishCallback(0x61DAE0, this). END.
+- BLOCK (0x623EF7, cmd 2): `+0x25 = 0; +0x14 = 0`; if `!(CD(+0x24).+0x85 & 2)` `+0x24 = 4`; `m_pAnim = BlendAnimation(ped->+0x18,
+  CD(+0x24).group, 0xDE, 8.0f)`; SetFinishCallback(0x61DAE0, this). END.
+- MOVE (0x623F68, cmd 1, 15..18): `pd = ped->+0x480`. If pd: `pd->+0xC = 0; pd->+0x10 = 0; sub_61C9B0(this, ped)`; cmd 0x11: `pd->+0x14 =
+  2.0f`; cmd 0x10: `pd->+0x14 = 1.0f`. If !pd: `ped->SetMoveState(cmd == 0x11 ? 6 : cmd == 0x10 ? 4 : 1)`; `ped->+0x538 = ped->+0x534`.
+  Anim (all `BlendAnimation(ped->+0x18, group, id, delta)`): 0x11 -> (m_nAnimGroup, 1, 8.0f); 0x10 -> (m_nAnimGroup, 0, 8.0f);
+  0xF -> (m_nAnimGroup, 3, 4.0f); 0x12 and `ped->+0x46C & 0x4000000` and `GetTaskDuck(1)` != 0 -> (0, 0x37, 4.0f); otherwise
+  (m_nAnimGroup, 3, 2.0f). Result not stored. Then if m_pIdleAnim `idle->+0x2E &= ~1` else `+8 = 1`. `+0x26 = 0x10`; END (so +0x27
+  becomes 0x10 for every MOVE command).
+- gta-reversed: absent (no hook). Open questions: the role of sub_61C9B0 (not specified here).
+
+## 0x6240B0 sub_6240b0 (proposed: CTaskSimpleFight::FightStrike(CPed* ped, CVector& pos))  (catalogue: unknown/REA, port level 19)
+- Name proposal: CTaskSimpleFight::FightStrike. Evidence: callers CTaskSimpleFight::ProcessPed 0x629920 and CTaskSimpleUseGun::ProcessPed
+  0x62A380 (pistol-whip); `this` = CTaskSimpleFight (+0x24 combo set, +0x25 current move, +0x1C m_pAnim); args (CPed*, CVector&) match gr's
+  `void FightStrike(CPed* ped, CVector& posn)`; it calls the three hit handlers 0x61CBA0 (ped), 0x61D0B0 (car), 0x61D400 (object)
+  (= gr FightHitPed / FightHitCar / FightHitObj by argument shapes) and 0x61D5F0 (FightSetUpCol(float)).
+- `__thiscall bool (this, CPed* ped [esp+4], CVector* pos [esp+8])`, `ret 8`, SEH frame, `sub esp,0x16C`. Returns AL = 0 always
+  (0x6246F7). `pos` is modified in place (see step 4). CD = `m_aComboData[this->+0x24 - 4]` (0xC170D0, stride 0x88): +0x30 fRadius[5]
+  (f32), byte `CD+0x50+move` = hit level of the move (move = (i8)this->+0x25), `fR = CD.fRadius[move]`.
+- Locals: `missed` byte = 1; `hitPed` = 0; object list `objs[16]` and its count `nObj` (i16) = 0; CMatrix `M` (copy of ped->m_matrix);
+  a second CMatrix local whose attach pointer/own flag (+0x40/+0x44) are zeroed at 0x62410F (inlined default ctor); both destroyed at
+  exit with CMatrix dtor 0x59ACD0.
+- 1. (0x6240D6) `GetWeaponInfo(active weapon type, 1)` 0x743C60 is called and the result is unused. If `ped == CWorld::FindPlayerPed(-1)`
+  0x56E210 and the active slot weapon type (`ped->+0x5A0 + 0x1C*(i8)ped->+0x718`) != 0: `CGlass::BreakGlassPhysically(*pos (by value),
+  fR)` 0x71CF50.
+- 2. `I = ped->m_pIntelligence (+0x47C)`. If ped->IsPlayer(): `CWorld::FindObjectsInRange(*pos, 5.0f, true, &nObj, 16, objs, false, false,
+  false, true, false)` 0x564A20. `FightSetUpCol(this, fR)` 0x61D5F0. `M = CMatrix(*ped->+0x14)` 0x59BCF0; `M.SetTranslateOnly(pos->x,
+  pos->y, pos->z)` 0x59AF80.
+- 3. Loop `i = 0; i < nObj + 32` (nObj re-read as i16 every iteration): `P = i < 16 ? I->+0x130[i] : 0` (ped), `V = 16 <= i < 32 ?
+  I->+0xA0[i] (i.e. I->+0xE0[i-16]) : 0` (vehicle), `O = i >= 32 ? objs[i-32] : 0`; `e` = the non-null one; e == 0 -> next.
+  - `r = ms_modelInfoPtrs[(i16)e->+0x22]->+0x14 (col model)->+0x24 (bounding sphere radius) + fR` (stored f32).
+  - P: if hit level >= 4 (unsigned byte compare) `r = fR*0.5f [0x858B8C] + r`. Eligible if `P->+0x1C & 1` (uses collision) or
+    `!P->IsAlive()` 0x5E0170 or (P in vehicle (+0x46C & 0x100) and `P->+0x58C` and `P->+0x58C->+0x590 == 9` (bike)); otherwise next.
+  - V: eligible only if `V->+0x590 == 0` (automobile). O: eligible only if `O->+0x1C & 1`. Otherwise next.
+  - `c = e->GetBoundCentre()` 0x534250. P: `dsq = (c.x-pos.x)^2 + (c.y-pos.y)^2` (2D; dx*dx + dy*dy). V/O: `dsq = dx*dx + dy*dy + dz*dz`.
+    If `!(dsq < r*r)` (`fcompp`, `test ah,5; jp`: >= and NaN) next.
+  - P (0x624393): `cd = CPedModelInfo::AnimatePedColModelSkinnedWorld(mi(P), P->+0x18)` 0x4C7170 `->+0x2C` (collision data); `tries = 0`.
+    SPHERES: for `j = 0 .. (i16)cd->+0 - 1`, sphere `s = cd->+8 + 0x14*j` (+0 centre, +0xC radius): `d = s.centre - *pos` (stored as a
+    local CVector D = (dx, dy, dz)); `dsq = dx*dx + dy*dy + dz*dz`; `t = s.r + fR`; if `dsq < t*t` (`test ah,5; jnp`): HIT.
+    No sphere hit: if hit level < 4 next entity. Else `f = ped->+0x14 forward (+0x10..+0x18)`: `pos->x += f.x*1.5f*fR`, `pos->y +=
+    f.y*1.5f*fR`, `pos->z += f.z*1.5f*fR` ([0x858CE8]=1.5f; products f.c*1.5 first, then *fR, stores in order x, y, z); `tries++`;
+    if tries < 2 repeat SPHERES else next entity (so the caller's pos can be pushed forward twice per ped).
+    HIT (0x6244CC): `h = sub_61CBA0(this, ped, P, pos, &D, 3)` (FightHitPed); if h != 0 `hitPed = h`; `missed = 0`; next entity.
+  - V/O (0x6244FC): if `e->+0x14 == 0`: `AllocateMatrix` 0x54F560 and `e->+4 .UpdateMatrix(e->+0x14)` 0x54F1B0. `n =
+    CCollision::ProcessColModels(&M, col1 [0xC17824], e->+0x14, e->GetColModel() 0x535300, CWorld::m_aTempColPts 0xB9ACD0, 0, 0, 0)`
+    0x4185C0. If n > 0: V -> `sub_61D0B0(this, ped, V, &cp.pos (0xB9ACD0), &cp.normal (0xB9ACE0), (u16)(u8)[0xB9ACF4], (u8)[0xB9ACF3])`
+    (FightHitCar; the u16 is pushed in a 32-bit slot whose upper half is stale); O -> `sub_61D400(this, ped, O, same args)` (FightHitObj).
+    `missed` is not cleared.
+- 4. After the loop (also reached directly when `nObj + 32 <= 0`): if missed and ped->IsPlayer(): local `CEventSoundQuiet(ped, 40.0f, -1,
+  &(0,0,0))` 0x5E05B0; `RwHelper::GetEventGlobalGroup()` 0x4ABA50 `->Add(&ev, false)` 0x4AB420; dtor 0x5DEA00.
+- 5. If `this->+0x24 == 7` and `this->+0x25 == 1` and m_pAnim: if `hitPed == 0` or `RpAnimBlendClumpGetAssociation(hitPed->+0x18, 0xDC)`
+  0x4D68B0 == 0: `m_pAnim->+0x1C = -4.0f`; `m_pAnim->+0x2E &= ~1`; `m_pAnim->+0x2E |= 4`.
+- 6. `ped->+0x720 = *pos` (3 dwords). Destroy both matrices, return 0.
+- gta-reversed: absent. Open questions: none on control flow; the meaning of I->+0x130 / +0xE0 lists is inferred (ped / vehicle
+  scanner entity arrays of CPedIntelligence).
+
+## 0x624710 sub_624710 (proposed: CTaskSimpleFight::ChooseAttackPlayer(CPed* ped))  (catalogue: unknown/REA, port level 8)
+- Name proposal: CTaskSimpleFight::ChooseAttackPlayer. Evidence: only caller CTaskSimpleFight::ProcessPed 0x629920 (4 sites); same
+  combo-flag logic as its sibling 0x624A40 (which is the AI variant: rand(), target wanted level), but this one has no randomness, uses
+  the command history (+0x26/+0x27) and turns the ped towards the nearest ped (player behaviour). gr declares `void ChooseAttackPlayer
+  (CPed*)`; the bytes return a value (gr signature is wrong).
+- `__thiscall int16 (this, CPed* ped [esp+4])`, `ret 4`; result in AX (on the normal path `mov ax, bp`, the upper half of EAX is stale;
+  the two early returns set the whole EAX to -1 / 3). Callees: CPed::SetMoveState 0x5DEC00, CPed::IsAlive 0x5E0170, sub_61D6F0
+  (thiscall (this, ped) -> bool; proposed CTaskSimpleFight::FindTargetOnGround: it calls CLocalisation::KickingWhenDown first).
+- Globals: `[0x8D2E48]` i32 (initial value 2, max chain count), `[0x8D2E8C]` f32 (initial 2.0, facing search range), both .data
+  (writable tunables; names unknown). `CDflags = byte at 0xC17154 + 0x88*(cs-4)` (low byte of CMeleeInfo flags), cs = (i8)this->+0x24.
+- 1. `noTarget = (this->+0x18 == 0)` (the `= 1` store is in the stub 0x40377E). `r = -1`; unless (`+0x26` in 11..14 and `cs >= 4`)
+  `r = 1`. `f = CDflags(cs)`; if `4 < cs <= 7` `f &= ped->+0x72E`. If r >= 0 (i.e. r == 1) go to FACE.
+- 2. If `this->+0x1C` (m_pAnim) and `+0x25 != 3` and `+0x25 != 4`:
+  - `ped->SetMoveState(1)`; `max = (f & 2) ? 2 : (f & 1) ? 1 : 0`. If `sub_61D6F0(ped)`: r = -1, FACE.
+  - If `+0x26 != +0x27`: if `(i8)+0x15 > [0x8D2E48]` go to SAME; else `+0x15 += 1`; `t = (i8)+0x25 - (i8)+0x27 + (i8)+0x26` (low byte);
+    `r = (t & 1) ? 0 : ((t & 2) ? 1 : 2)`; if `(i16)r <= (i16)max` FACE; else r = 0, FACE.
+  - SAME (0x62481A, also when +0x26 == +0x27): `r = (i8)+0x25 + 1`; if `r <= max` FACE; else r = -1, FACE.
+- 3. Else (no anim, or move 3/4): if `ped->+0x534 (m_nMoveState) > 4`: if `!(f & 8)` `+0x24 = 4`; r = 4; FACE.
+  If `sub_61D6F0(ped)`: if m_pAnim and `+0x26 != +0x27` return EAX = -1; else { if `!(f & 4)` `+0x24 = 4` else if target (+0x18) is a
+  ped ((+0x36 & 7) == 3) with `+0x46C & 0x4000000` (ducking) `+0x24 = 4` }; return EAX = 3 (no FACE).
+  Else `+0x15 = 0`; r = 0; FACE.
+- FACE (0x6248B4): if !noTarget return r. Else `best = -1000.0f`, `bestAbs = 1000.0f`; for i = 0..15: `p = ped->m_pIntelligence->+0x130[i]`;
+  skip if 0 or !p->IsAlive(). `P` = ped position (matrix pos if ped->+0x14 else +4), `Q` = p position. `d = Q - P`; `dsq = dz*dz + dy*dy
+  + dx*dx` (x87: dz^2, + dy^2, + dx^2); skip unless `dsq < R*R` with `R = [0x8D2E8C]` (fld R, fmul R, fcompp, `test ah,0x41; jne`).
+  `a = atan2(-(Q.x - P.x), Q.y - P.y)` (fpatan with ST1 = -(dx) (fchs), ST0 = dy); `diff = a - ped->+0x558` (m_fCurrentRotation);
+  if `diff > PI [0x858CB8]` `diff -= 2PI [0x858CBC]` else if `diff < -PI [0x858CC0]` `diff += 2PI`; `diff = fabs(diff)`; if `diff < bestAbs`
+  { bestAbs = diff; best = a } (both stored f32).
+  After the loop: if `best > -10.0f [0x859004]` (strict) `ped->+0x55C = best` (m_fAimingRotation). Return r.
+- gta-reversed: absent (declared only). Open questions: none.
+
+## 0x624A40 sub_624a40 (proposed: CTaskSimpleFight::ChooseAttackAI(CPed* ped))  (catalogue: unknown/REA, port level 8)
+- Name proposal: CTaskSimpleFight::ChooseAttackAI. Evidence: only caller CTaskSimpleFight::ProcessPed 0x629920; random attack selection
+  (rand) gated by the combo flags and the target player's wanted level; sibling of 0x624710 (player variant). gr declares `void
+  ChooseAttackAI(CPed*)` but the bytes return a value in AX.
+- `__thiscall int16 (this, CPed* ped [esp+4])`, `ret 4`; result in AX only (upper EAX stale).
+- 1. `cs = (i8)this->+0x24`; `f = byte 0xC17154 + 0x88*(cs-4)`; if `4 < cs <= 7` `f &= ped->+0x72E`.
+- 2. `r = (f32)rand() * [0x858C7C]=3.0518509e-05f` (rand 0x821B1E, full int, fild; stored f32 into the ped argument slot - ped is kept
+  in EDI).
+- 3. If `r > 0.8f [0x858C98]` (strict; NaN no) and `f & 2`: return 2 unless (`f & 0x40` and target `t = this->+0x18` is a ped
+  ((t->+0x36 & 7) == 3) with `t->+0x480 != 0` and `CPlayerPed::GetWantedLevel(t)` 0x41BE60 > 0 and `t->+0x540 > 20.0f [0x858BA4]`), in
+  which case go to step 5.
+- 4. Else: if `sub_61D6F0(this, ped)` (FindTargetOnGround) and `f & 4` return 3.
+- 5. If `r > 0.5f [0x858B8C]` and `f & 1` return 1; return 0.
+- gta-reversed: absent. Open questions: none.
+
+## 0x5E9850 sub_5e9850 (proposed: std::vector<CVector>::size)  (catalogue: unknown/REA, port level 0)
+- Name proposal: MSVC 7.1 STL vector layout (+4 _Myfirst, +8 _Mylast, +0xC _Myend; element size 12 via the magic divide 0x2AAAAAAB,
+  `sar 1`); only caller is the _Insert_n 0x5ED750 of the same vector, whose user is CPedShelterAttractor::GetDisplacement 0x5EF420.
+- `__thiscall uint32 (this)`, plain `ret`: returns 0 if `this->+4 == 0`, else `(this->+8 - this->+4) / 12` (signed division rounded
+  toward zero).
+
+## 0x5ED750 sub_5ed750 (proposed: std::vector<CVector>::_Insert_n)  (catalogue: unknown/REA, port level 6)
+- Name proposal: MSVC 7.1 `vector<CVector>::_Insert_n(iterator where, size_type count, const CVector& val)`; callers: insert 0x5EDE50.
+  Element size 12; max_size 0x15555555; layout as in 0x5E9850.
+- `__thiscall void (this, CVector* where [ebp+8], u32 count [ebp+0xC], const CVector* val [ebp+0x10])`, `ret 0xC`, EBP frame + SEH
+  (rollback/free on exception). `v = *val` is copied to a local first (aliasing-safe). `cap = first ? (end - first)/12 : 0`,
+  `size = first ? (last - first)/12 : 0`.
+- If count == 0 return. If `0x15555555 - size < count`: `_Xlen()` 0x5ECC30 (throws length_error) and return.
+- Reallocate if `cap < size + count`: `newcap = (0x15555555 - cap/2 < cap) ? 0 : cap + cap/2`; if `newcap < size + count` `newcap =
+  size() 0x5E9850 + count`. `p = operator new(newcap*12)` 0x82119A. `q = uninitialized_copy(first, where, p)` 0x5EAEA0;
+  `uninitialized_fill_n(q, count, v)` 0x5EB340; `uninitialized_copy(where, last, q + count)` 0x5EAEA0; `n = size + count` (old size
+  recomputed); `free(first)` 0x8214BD if non-null; `end = p + newcap`, `last = p + n`, `first = p`.
+- Else in place: `after = (last - where)/12`. If `after < count`: `_Ucopy(where, last, where + count)` 0x5EB9D0; `_Ufill(last, count -
+  after, v)` 0x5EC140; `last += count`; `fill(where, oldLast, v)` 0x5EB1E0. Else: `last = _Ucopy(last - count, last, last)`;
+  `copy_backward(where, oldLast - count, oldLast)` 0x5EB220; `fill(where, where + count, v)`.
+- Standard semantics; port as a Vec<CVector> insert with the same capacity growth (1.5x) if allocation identity matters.
+
+## 0x5EDE50 sub_5ede50 (proposed: std::vector<CVector>::insert(iterator, const CVector&))  (catalogue: unknown/REA, port level 7)
+- Name proposal: MSVC 7.1 single-element insert; caller push_back 0x5EE370.
+- `__thiscall CVector** (this, CVector** ret [esp+4], CVector* where [esp+8], const CVector* val [esp+0xC])`, `ret 0xC`.
+  `off = (first != 0 && size != 0) ? (where - first)/12 : 0`; `_Insert_n(where, 1, val)` 0x5ED750; `*ret = this->+4 (first, re-read) +
+  12*off`; returns ret in EAX.
+
+## 0x5EE370 sub_5ee370 (proposed: std::vector<CVector>::push_back)  (catalogue: unknown/REA, port level 8)
+- Name proposal: MSVC 7.1 push_back; only caller CPedShelterAttractor::GetDisplacement 0x5EF420.
+- `__thiscall void (this, const CVector* v [esp+4])`, `ret 4`. If `first != 0` and `size < capacity` (unsigned): `uninitialized_fill_n(
+  last, 1, v, ...)` 0x5EB340 (cdecl, 5 pushes: last, 1, v, this, v); `last += 12`. Else `insert(&tmp, last, v)` 0x5EDE50.
+
+## 0x5F13A0 sub_5f13a0 (proposed: CPointRoute::RemovePoint(int32 index))  (catalogue: unknown/REA, port level 0)
+- Name proposal: `this` = {int32 count at +0; CVector points[] at +4, stride 0xC} (gr CPointRoute layout); callers
+  CTaskComplexFollowPedFootsteps::ControlSubTask 0x695090 and ::CreateSubTask 0x695E40 (footstep route).
+- `__thiscall void (this, int32 i [esp+4])`, `ret 4`: for `k = i; k < count - 1; k++` (signed; count re-read each iteration):
+  `points[k] = points[k+1]` (3 dword copies); then `count -= 1` (always, even when i >= count). No bounds check (negative i is not
+  rejected).
+
+## 0x5FF490 vt_86cba0::CloneEditable (proposed: CEventHealthLow::CloneEditable)  (catalogue: unknown/REA, port level 2)
+- Name proposal: slot 16 (CloneEditable) of event vtable 0x86CBA0 whose GetEventType identifies CEventHealthLow.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEvent::operator new(0x14)` 0x4B5620; if p:
+  `CEventEditableResponse::CEventEditableResponse(p)` 0x4AC450, `p->vtbl = 0x86CBA0`; return p (0 on failure). `this` is not read (no
+  fields are copied, so the clone gets the default editable-response fields).
+
+## 0x5FF550 vt_86cbe8::CloneEditable (proposed: CEventHealthReallyLow::CloneEditable)  (catalogue: unknown/REA, port level 2)
+- Name proposal: slot 16 (CloneEditable) of event vtable 0x86CBE8 whose GetEventType identifies CEventHealthReallyLow.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEvent::operator new(0x14)` 0x4B5620; if p:
+  `CEventEditableResponse::CEventEditableResponse(p)` 0x4AC450, `p->vtbl = 0x86CBE8`; return p (0 on failure). `this` is not read (no
+  fields are copied, so the clone gets the default editable-response fields).
+
+## 0x5FF610 vt_86cc30::CloneEditable (proposed: CEventLowAngerAtPlayer::CloneEditable)  (catalogue: unknown/REA, port level 2)
+- Name proposal: slot 16 (CloneEditable) of event vtable 0x86CC30 whose GetEventType identifies CEventLowAngerAtPlayer.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEvent::operator new(0x14)` 0x4B5620; if p:
+  `CEventEditableResponse::CEventEditableResponse(p)` 0x4AC450, `p->vtbl = 0x86CC30`; return p (0 on failure). `this` is not read (no
+  fields are copied, so the clone gets the default editable-response fields).
+
+## 0x5FF6D0 vt_86cc78::CloneEditable (proposed: CEventHighAngerAtPlayer::CloneEditable)  (catalogue: unknown/REA, port level 2)
+- Name proposal: slot 16 (CloneEditable) of event vtable 0x86CC78 whose GetEventType identifies CEventHighAngerAtPlayer.
+- `__thiscall CEventEditableResponse* (this)`, plain `ret`, SEH frame: `p = CEvent::operator new(0x14)` 0x4B5620; if p:
+  `CEventEditableResponse::CEventEditableResponse(p)` 0x4AC450, `p->vtbl = 0x86CC78`; return p (0 on failure). `this` is not read (no
+  fields are copied, so the clone gets the default editable-response fields).
+
+## 0x609080 sub_609080 (proposed: CEventNewGangMember::~CEventNewGangMember (non-deleting))  (catalogue: unknown/REA, port level 1)
+- Name proposal: only caller is the scalar deleting dtor CEventNewGangMember::~CEventNewGangMember 0x609060; stores the vtable 0x86D0A0.
+- `__thiscall void (this)`, plain `ret`, SEH frame: `this->vtbl = 0x86D0A0`; if `this->+0xC` (member ped) != 0
+  `CEntity::CleanUpOldReference(this->+0xC, &this->+0xC)` 0x571A00; base dtor 0x4AC010 (CEvent::~CEvent: only `this->vtbl = 0x85AB38`).

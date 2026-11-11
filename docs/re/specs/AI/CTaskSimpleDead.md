@@ -78,3 +78,7 @@ counter, set to 200).
 
 ## 0x637930 CTaskSimpleDead::~CTaskSimpleDead  (catalogue: specified/REA, port level 2)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskSimpleDead::~CTaskSimpleDead 0x6305F0 (0x637933); if `flags & 1` (0x637938) calls CTask::operator delete 0x61A5B0 (this) (0x637940, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86DEA4 (CTaskSimpleDead).
+
+## 0x636100 CTaskSimpleDead::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x10) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else bit = (this+0xC >> 1) & 1, ped = this+8 read first; p->CTaskSimple::CTaskSimple() 0x61A390; p+0xC = (p+0xC & 0xF9) | (bit << 1) | 1 (bit0 set, bit1 copied, bit2 cleared, bits 3-7 uninitialised heap); vtbl = 0x86DEA4 (CTaskSimpleDead); p+8 = ped; return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

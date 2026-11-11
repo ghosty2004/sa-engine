@@ -55,3 +55,7 @@ Vtable 0x86EEB8.
 ## (sections below added by the lead for addresses the I3 writer left unwritten)
 Layout (gr, size 0x18): +8 m_pTargetVehicle, +0xC m_nTargetDoor, +0x10 m_bSwitchOffEngine, +0x11 m_bWarpingOutOfCar, +0x12
 m_bFallingOutOfCar, +0x13 m_bKnockedOffBike, +0x14 m_nDoorFlagsToClear u8, +0x15 m_nNumGettingInToClear u8.
+
+## 0x649F50 CTaskSimpleCarSetPedOut::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x18) 0x61A5A0 (cdecl); if p == NULL the constructor is skipped and EAX = 0 (see the trailing stores). Else p->CTaskSimpleCarSetPedOut(this+8, this+0xC, (u8)this+0x10) 0x6478B0; then outside the NULL check: p+0x11..+0x15 = this+0x11..+0x15 (5 bytes, in increasing order; NULL-write bug as 0x649D90); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

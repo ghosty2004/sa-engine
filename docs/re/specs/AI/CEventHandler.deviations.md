@@ -43,3 +43,29 @@ Row EventHandler.cpp:2523 (`if (!notsa::IsFixBugs() || m_Ped->m_pVehicle)`).
   -> `new(0x2C) CTaskComplexCarDriveMissionFleeScene(veh)` 0x4B8920; else -> `new(0x40) CTaskComplexSmartFleeEntity(veh, false,
   [0xC18CEC], 1000000 [0x86F674], 1000 [0x86F678], [0xC18CF0])` 0x65C430 - allocated even when veh is null (flee from a null entity).
 - Verdict: CONFIRMED (the original has no vehicle check before the SmartFlee allocation; gr skips it under FIX_BUGS). Class: keep-original.
+
+## 0x4C0170 CEventHandler::ComputeDamageResponse  (gr_deviations = 2)
+Common facts (bytes): `__thiscall (this = EDI after 0x4C0189, e = CEventDamage* [esp+4], tactive, tsimplest, abortedTask)`. At 0x4C01A6/0x4C01A9
+the raw fields `src = e->m_pSourceEntity (+0x14)` (EBX, also kept at [esp+0x10]) and `weapon = e->m_weaponType (+0x1C)` are cached; the
+virtual `GetSourceEntity()` is never called in this function.
+
+Row EventHandler.cpp:866 (`!e->m_bAddToEventGroup` path; gr calls `e->GetSourceEntity()`, comment: "Originally the code here used
+`e->m_pSourceEntity`"):
+- Original bytes: 0x4C01B4 `m_bAddToEventGroup (+0xC) == 0` -> history/IsSameEventForAI (0x4ADBF0) checks, FindActiveTaskByType(0x3EE)
+  0x681740 and IsPlayer 0x5DF8F0, then 0x4C0236: `if (src == 0) skip`; `if ((src->+0x36 & 7) != 3 /* not a ped */) skip`;
+  `ComputePersonalityResponseToDamage(e, src)` 0x4BF9B0 with the raw +0x14 pointer.
+- Verdict: CONFIRMED. CEventDamage::GetSourceEntity (gr EventDamage.cpp:237) returns the vehicle's driver when the source is a vehicle with
+  a driver; the original then sees a vehicle (type 2) and does NOT call ComputePersonalityResponseToDamage, gr calls it with the driver.
+- Class: keep-original.
+
+Row EventHandler.cpp:1054 (`if (!notsa::IsFixBugs() || eventSrcPed)`, comment "Original code just crashed at this point"):
+- Original bytes: 0x4C0338-0x4C0358: `srcPed = ((src->+0x36 & 7) == 3) ? src : 0` (EBP, xor at 0x4C033B). 0x4C03EC-0x4C0401: weapon in
+  {0x29 SPRAYCAN, 0x2A EXTINGUISHER, 0x11 TEARGAS} -> 0x4C0403 `mov ecx, [ebp+0x47C]` with no null check, then
+  CPedIntelligence::GetTaskUseGun 0x600F70 (called twice, 0x4C0409/0x4C041C), `task->+0x10 == 5` (PISTOLWHIP) -> skip the choke.
+- Verdict: CONFIRMED. With a non-ped source (vehicle, object, null-ped) and a choking weapon the original reads address 0x47C and faults;
+  gr's FIX_BUGS build skips the block. Non-FIX_BUGS gr matches the bytes.
+- Class: keep-original (the port reproduces the access through a null CPed*; decide the crash policy at port time).
+
+Extra (row EventHandler.cpp:882, catalogued deviates=no/assert): the bike/quad branch with `!m_bFallDown && !HasKilledPed()` (0x4C02BC-0x4C02CB)
+jumps to 0x4C0236, i.e. the same `src != 0 && src is a ped` guard as above; gr only `assert`s and calls ComputePersonalityResponseToDamage
+unconditionally in release builds. CONFIRMED (gr release differs for non-ped / null sources); keep-original.

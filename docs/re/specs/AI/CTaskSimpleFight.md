@@ -137,3 +137,39 @@ group (AssocGroupId i32, 0x21 = none), +0x10 m_nIdlePeriod u16, +0x12 m_nIdleCou
   0xB6F330; 0xB6F334 copied but unused). Then `+0x9 = 0` (0x62A084), return 0.
 - gta-reversed: plugin::Call (cpp:49). Open questions: exact semantics of the window tests in 7b (0x629D23-0x629D5B) are given above as compares
   (`test ah,5; jp` = "not less" / `test ah,1; je` = "not below"); the port should transcribe the compare chain literally.
+
+## 0x4ABDA0 CTaskSimpleFight::GetComboAnimGroupID  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`, plain `ret`. i = (int32)(int8)this+0x24 (m_nComboSet) - 4; if i < 0 then i = 0 (branchless `setl; dec; and`,
+  0x4ABDA4-0x4ABDAF); returns m_aComboData[i].m_nAnimGroup = dword [0xC170D0 + i*0x88] (no upper bound check).
+
+## 0x4ABDC0 CTaskSimpleFight::IsComboSet  (catalogue: specified/REA, port level 0)
+- `__thiscall bool ()`, plain `ret`, result AL (setne; upper EAX = 0 from movzx). i = max((int8)this+0x24 - 4, 0) as in 0x4ABDA0;
+  f = (u16)[0xC17154 + i*0x88] (CMeleeInfo +0x84 flags); m = 0x10 << (this+0x25 & 31) (`shl edx, cl` with CL = m_nCurrentMove byte;
+  x86 masks the count to 5 bits); returns (f & m) != 0.
+
+## 0x4ABDF0 CTaskSimpleFight::IsHitComboSet  (catalogue: specified/REA, port level 0)
+- `__thiscall bool ()`, plain `ret`, returns EAX = 0/1. c = (int8)this+0x25 (m_nCurrentMove); if c > 2 (signed) return 0
+  (0x4ABDF5). i = max((int8)this+0x24 - 4, 0); f = (u16)[0xC17154 + i*0x88]; return (f & (0x1000 << c)) != 0 ? 1 : 0.
+  Negative c: `shl` uses CL & 31, so c = -1 shifts by 31 (gives 0 for the 16-bit flags) - keep.
+
+## 0x622E40 CTaskSimpleFight::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x28) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskSimpleFight::CTaskSimpleFight(target = this+0x18, command = (int32)(int8)this+0x27 (m_nLastCommand), idlePeriod = (u32)(u16)this+0x10) 0x61C470; return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
+
+## 0x6239F0 CTaskSimpleFight::MakeAbortable  (catalogue: specified/REA, port level 9)
+- Convention: `__thiscall bool (this, CPed* ped [esp+4], int32 priority [esp+8], const CEvent* event [esp+0xC])`, `ret 0xC`, AL.
+- Behaviour:
+  1. If priority is neither 1 nor 2: +0x26 (m_nNextCommand, u8) = 1; return 0.
+  2. If event != NULL: p = event->vtable[+8]() (GetEventPriority); if p <= 0x1F return 0; if event->vtable[+8]() (called again) == 0x3C
+     return 0.
+  3. If +0x1C (m_pAnim) != NULL: if priority == 2: m_pAnim+0x1C (blend delta) = -1000.0f (imm 0xC47A0000); m_pAnim->SetDeleteCallback
+     (0x4D1390, NULL) 0x4CEBC0; +0x1C = 0.
+  4. If +0x20 (m_pIdleAnim) != NULL: SetDeleteCallback(0x4D1390, NULL) on it; a = +0x20; if a+0x18 (blend amount) > 0.0f [0x858B50]
+     (`test ah,0x41; jne` skip when <= 0 or NaN) and a+0x1C (blend delta) >= 0.0f (`test ah,1; jne` skip when < 0 or NaN):
+     CAnimManager::BlendAnimation(ped+0x18 (clump), ped+0x4D4 (anim group), 3, priority == 2 ? 1000.0f (0x447A0000) : 16.0f
+     (0x41800000)) 0x4D4610 (cdecl). Then +0x20 = 0.
+  5. If ped != NULL and ped->IsPlayer(): pd = ped+0x480 (player data); pd+0xC = 0; pd+0x10 = 0; this->0x61C9B0(ped) (unnamed thiscall
+     helper that fetches the fight strafe anims 0x29..0x2C of the ped clump and adjusts them from pd+0xC/+0x10; proposed
+     `CTaskSimpleFight::SetPlayerMoveAnim`, UNCLEAR).
+  6. +8 (m_bIsFinished) = 1; return 1.
+- gta-reversed: not hooked at this address.

@@ -9,3 +9,8 @@ Vtable 0x85BD30 (slot 0 = 0x4C62B0). Destructor 0x4C5750 (not in this assignment
 - Callees: `orig!(0x4C5750 CClumpModelInfo::~CClumpModelInfo)`, `orig!(0x8214BD operator delete)`.
 - Behaviour: ~CClumpModelInfo(this); if `(u8)flags & 1`: operator delete(this); return this.
 - Name evidence: slot-0 pattern (see CBaseModelInfo.md). Open questions: none.
+
+## 0x4C5750 CClumpModelInfo::~CClumpModelInfo  (catalogue: specified/REA, port level 0)
+- `__thiscall` (ECX = this), plain `ret`. Body: `this->vtable = 0x85BB9C` and return — the base-class (CBaseModelInfo) destructor is
+  empty/inlined to nothing, so only the vtable store remains. Callers: 0x4C5EF0 (fnref), CClumpModelInfo::`scalar deleting destructor'
+  0x4C62B0, CPedModelInfo::~CPedModelInfo 0x4C62F0 (eh-unwind), __dtor_CModelInfo__ms_clumpModelInfoStore 0x856290.

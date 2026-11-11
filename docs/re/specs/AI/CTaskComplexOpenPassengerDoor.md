@@ -8,3 +8,7 @@
 
 ## 0x643CC0 CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor  (catalogue: specified/REA, port level 4)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor 0x640420 (0x643CC3); if `flags & 1` (0x643CC8) calls CTask::operator delete 0x61A5B0 (this) (0x643CD0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86EB3C.
+
+## 0x6438E0 CTaskComplexOpenPassengerDoor::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x50) 0x61A5A0 (cdecl); if p == NULL the constructor is skipped and EAX = 0 (see the trailing stores). Else p->CTaskComplexEnterCar::CTaskComplexEnterCar(this+0xC, 0, 1, 0, 0) 0x63A220; p+0x1C = this+0x1C; vtbl = 0x86EB3C (CTaskComplexOpenPassengerDoor). Then outside the NULL check: p+0x24 = this+0x24 (NULL-write bug as 0x6437F0); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

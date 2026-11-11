@@ -64,3 +64,9 @@ false, false, 8.0f) : 0` (shared tail 0x683C4E).
 
 ## 0x684F60 CTaskComplexPartner::`scalar deleting destructor'  (catalogue: specified/REA, port level 3)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskComplexPartner::~CTaskComplexPartner 0x683A40 (0x684F63); if `flags & 1` (0x684F68) calls CTask::operator delete 0x61A5B0 (this) (0x684F70, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x870664 (CTaskComplexPartner).
+
+## 0x682370 CTaskComplexPartner::RemoveStreamedAnims  (catalogue: specified/REA, port level 2)
+- `__thiscall void ()`, plain `ret`. If byte +0x6E (m_bAnimsReferenced) == 0 return. Compare the first byte of the block name at
+  +0x5E with the first byte of the string at 0x858B54 (`repe cmpsb` with ECX = 1, i.e. one byte; 0x858B54 is an empty string, so
+  this tests "name is empty"); if they differ (non-empty name): CAnimManager::RemoveAnimBlockRef(CAnimManager::GetAnimationBlockIndex
+  (this+0x5E) 0x4D3990) 0x4D3FD0 (cdecl). Then +0x6E = 0.

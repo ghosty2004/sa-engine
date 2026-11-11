@@ -58,3 +58,7 @@ Vtable 0x86EE04. Layout (gr TaskSimpleCarSetPedInAsPassenger.h, size 0x20): +0x8
 - gta-reversed: cpp:35 `plugin::CallMethodAndReturn` - port from these bytes.
 - Open questions: semantic names of ped +0x558/+0x55C, ped vtable slot 23 (0x64B829), vehicle bytes +0x429/+0x42A bit 1 and +0x45C
   (behaviour above is complete without them).
+
+## 0x649D90 CTaskSimpleCarSetPedInAsPassenger::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x20) 0x61A5A0 (cdecl); if p == NULL the constructor is skipped and EAX = 0 (see the trailing stores). Else p->CTaskSimpleCarSetPedInAsPassenger(this+0x10, this+0x14, this+0x18) 0x646FE0; then outside the NULL check (0x649DDA): p+0x1C/+0x1D/+0x1E = this+0x1C/+0x1D/+0x1E (bytes). On allocation failure EAX = 0 and these writes hit 0x1C.. (original bug, keep); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
