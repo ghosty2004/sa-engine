@@ -807,3 +807,19 @@
 ## 2026-11-11 RE-SPEC-RW pass 2 (main session)
 - Agent aecf73c2 + 2 helpers: 17 files under docs/re/specs/RW/, +227 index rows; 21 helper claims re-read against the
   bytes, all correct. Details in ROADMAP RE-SPEC-RW. REA not used.
+
+## 2026-11-11 RE-SPEC-UNK (main session)
+- Agent a6e5e98f + 2 helpers: classification proposal for all 2,883 UNK-game functions and 2,141 specs in
+  docs/re/specs/<SUB>/_unk-*.md and _static-init-unk.md. Main session re-ran check_consts on those 58 files: 2,891
+  claims, 0 mismatches. Spot checks by the agent: 12 helper claims (1 in 50), all correct; ~180 pattern-generated
+  never-executed specs need byte checks when ported.
+- Findings: initialisers 0x84CED0/0x84CF80/0x84D0F0 read .bss nobody wrote yet (order bug or misattribution);
+  original bugs (0x5D02D0 adds 0x32000 to TotalProcessed, Resize 0x730020/0x730330 count > capacity, 0x5335E0 writes
+  to address 4 on pool null, 0x4A85C0 keys[-1]); catalogue extent errors: 0x72E860 folded into 0x855670, relocated
+  pieces 0x40210A→0x4048E0, 0x401C62→0x4A8DB0, 0x4096E1→0x4A9F70, 0x40A18C→0x4AB270, 0x406A96→0x4ACDD0,
+  0x401EE5→0x4CAD90, 0x401492→0x420A60, 0x71D780 tail at 0x71D78A missing; CAT-17: 0x40F700 CColModel::~CColModel,
+  0x4072E0 CWorld::IncrementCurrentScanCode, 0x46A5F0 not a destructor; 0x508930–0x509230 looks like a remote debug tool.
+
+## 2026-11-11 PORT-RW-1 integrated (main session)
+- Agent a385d5f8 + 2 helpers (lane 2): crate sa-rwcore, specs_rw.rs, docs/arch/rw-port.md + verdicts, lists, extras.
+  Merge (rwcore after audio); sa-hook lib 48, sa-rwcore tests, workspace clippy, i686 OK; all-ports IDENTICAL on 7.

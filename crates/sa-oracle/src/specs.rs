@@ -431,6 +431,9 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_hud_msg::all())
     .chain(crate::specs_cam::all())
     .chain(crate::specs_script::all())
+    .chain(crate::specs_rw::all())
+    .chain(crate::specs_rw_frame::all())
+    .chain(crate::specs_rw_stream::all())
     .collect()
 }
 

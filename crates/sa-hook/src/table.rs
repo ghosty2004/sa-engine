@@ -411,7 +411,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
 const LOCAL_N: usize = 19;
 /// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order), then
 /// sa-stream's (`sa_stream::hooks::ALL`), then sa-world's (`sa_world::hooks::ALL`), then sa-pop's
-/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's sa-cam's sa-ai's and sa-audio's.
+/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's sa-cam's sa-ai's sa-audio's and sa-rwcore's.
 pub const N: usize = LOCAL_N
     + sa_core::hooks::COUNT
     + sa_stream::hooks::COUNT
@@ -426,7 +426,8 @@ pub const N: usize = LOCAL_N
     + sa_hud::hooks::COUNT
     + sa_cam::hooks::COUNT
     + sa_ai::hooks::COUNT
-    + sa_audio::hooks::COUNT;
+    + sa_audio::hooks::COUNT
+    + sa_rwcore::hooks::COUNT;
 
 /// The hook table.
 pub static HOOKS: [HookSpec; N] = build();
@@ -575,6 +576,12 @@ const fn build() -> [HookSpec; N] {
     while i_audio < sa_audio::hooks::COUNT {
         out[base_audio + i_audio] = from_core(&sa_audio::hooks::ALL[i_audio]);
         i_audio += 1;
+    }
+    let base_rwcore = base_audio + sa_audio::hooks::COUNT;
+    let mut i_rwcore = 0;
+    while i_rwcore < sa_rwcore::hooks::COUNT {
+        out[base_rwcore + i_rwcore] = from_core(&sa_rwcore::hooks::ALL[i_rwcore]);
+        i_rwcore += 1;
     }
     out
 }
@@ -977,6 +984,7 @@ mod tests {
                 + sa_cam::hooks::COUNT
                 + sa_ai::hooks::COUNT
                 + sa_audio::hooks::COUNT
+                + sa_rwcore::hooks::COUNT
         );
         let ports = sa_core::hooks::ALL
             .iter()
@@ -992,7 +1000,8 @@ mod tests {
             .chain(sa_hud::hooks::ALL.iter())
             .chain(sa_cam::hooks::ALL.iter())
             .chain(sa_ai::hooks::ALL.iter())
-            .chain(sa_audio::hooks::ALL.iter());
+            .chain(sa_audio::hooks::ALL.iter())
+            .chain(sa_rwcore::hooks::ALL.iter());
         for (k, r) in ports.enumerate() {
             let h = &HOOKS[LOCAL_N + k];
             assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));

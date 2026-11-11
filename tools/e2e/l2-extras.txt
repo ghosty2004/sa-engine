@@ -3165,3 +3165,64 @@ CAESound::UpdateParameters@0x96592C:0xD0:RW
 # __ptlocinfo refcounts 0x8E2EC0 and 0x8E377C (see docs/arch/core-port.md, Ps::InitialiseLanguage);
 # CRT block, access D
 CText::Get@0x8E2C30:0xBB0:D
+# PORT-RW-1 (docs/arch/rw-port.md): output / input structures behind the RW math arguments
+# (RwMatrix 0x40, RwV3d 0xC, RwBBox 0x18); evidence: port-l2-rw-a-g4 spool (RwMatrixInvert wrote
+# 0xC9BC80.. through arg0, original and Rust alike).
+RwV3dNormalize@arg0:0xC:RW
+RwV3dNormalize@arg1:0xC:R
+RwV3dLength@arg0:0xC:R
+RwMatrixOptimize@arg0:0x40:RW
+RwMatrixUpdate@arg0:0x40:RW
+RwMatrixMultiply@arg0:0x40:RW
+RwMatrixMultiply@arg1:0x40:R
+RwMatrixMultiply@arg2:0x40:R
+RwMatrixRotateOneMinusCosineSine@arg0:0x40:RW
+RwMatrixRotateOneMinusCosineSine@arg1:0xC:R
+RwMatrixRotate@arg0:0x40:RW
+RwMatrixRotate@arg1:0xC:R
+RwMatrixInvert@arg0:0x40:RW
+RwMatrixInvert@arg1:0x40:R
+FUN_007f2160@arg0:0x40:RW
+FUN_007f2160@arg1:0x40:R
+RwMatrixScale@arg0:0x40:RW
+RwMatrixScale@arg1:0xC:R
+RwMatrixTranslate@arg0:0x40:RW
+RwMatrixTranslate@arg1:0xC:R
+RwMatrixTransform@arg0:0x40:RW
+RwMatrixTransform@arg1:0x40:R
+_rwMatrixDeterminant@arg0:0x40:R
+_rwMatrixOrthogonalError@arg0:0x40:R
+_rwMatrixNormalError@arg0:0x40:R
+RwBBoxCalculate@arg0:0x18:RW
+_rwSSE2V3dTransformPoint@arg0:0xC:RW
+_rwSSE2V3dTransformPoint@arg2:0x40:R
+_rwSSE2V3dTransformVector@arg0:0xC:RW
+_rwSSE2V3dTransformVector@arg2:0x40:R
+RwV3dTransformPoint@arg0:0xC:RW
+RwV3dTransformVector@arg0:0xC:RW
+# PORT-RW-1 freelists and module opens (split run port-l2-rw-mem-sg: the undeclared writes, original and
+# Rust alike, were the freelist structs (static ones live in .data), the global freelist list head
+# 0xC9A604 and the neighbour link it is inserted before, the RwGlobals memory function table).
+_rwFreeListAllocReal@arg0:0x24:RW
+_rwFreeListFreeReal@arg0:0x24:RW
+RwFreeListPurge@arg0:0x24:RW
+RwFreeListDestroy@arg0:0x24:RW
+RwFreeListDestroy@[arg0+0x1C]:8:RW
+RwFreeListDestroy@[arg0+0x20]:8:RW
+_rwFreeListCreateInternal@arg4:0x24:RW
+_rwFreeListCreateInternal@0xC9A604:8:RW
+_rwFreeListCreateInternal@[0xC9A604]:8:RW
+_rwFreeListCreate@0xC9A604:8:RW
+_rwFreeListCreate@[0xC9A604]:8:RW
+_rwMemoryOpen@0xC9A604:0x34:RW
+_rwMemoryOpen@[0xC97B24]+0x134:0x10:RW
+FUN_008082e0@0xC9A6C0:0x30:RW
+FUN_008082e0@0xC9A604:8:RW
+FUN_008082e0@[0xC9A604]:8:RW
+cb_MATRIXMODULE_RwEngine_Open@0xC97998:0x24:RW
+cb_MATRIXMODULE_RwEngine_Open@0xC9A604:8:RW
+cb_MATRIXMODULE_RwEngine_Open@[0xC9A604]:8:RW
+RwResourcesFreeResEntry@[arg0+0x10]:4:RW
+# the freelist-of-freelists (static at 0xC9A60C) the new RwFreeList struct is allocated from (rw-mem-sg2)
+_rwFreeListCreate@0xC9A60C:0x24:RW
+_rwFreeListCreateInternal@0xC9A60C:0x24:RW

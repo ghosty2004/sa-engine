@@ -1,0 +1,293 @@
+address	name	module	state	evidence
+0X749120	cb_RIGHTTORENDER_RpAtomic_StreamRead	atomic	implemented-needs-L2	split rw-b-sg: PASS 32 compared, 0 mismatches, 32 undeclared
+0X7491C0	AtomicDefaultRenderCallBack	atomic	implemented-needs-L2	split rw-b-sg: no call
+0X7491F0	_rpAtomicResyncInterpolatedSphere	atomic	L2	split rw-b-sg: PASS 44 compared, 0 mismatches, 0 undeclared
+0X749330	RpAtomicGetWorldBoundingSphere	atomic	implemented-needs-L2	split rw-b-sg: no call
+0X749760	cb_CLUMPMODULE_RwEngine_Open	clump	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X749830	_rpClumpRegisterExtensions	clump	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X749880	cb_CLUMP_RwCamera_Ctor	clump	L2	split rw-b-sg: PASS 5 compared, 0 mismatches, 0 undeclared
+0X7498A0	cb_CLUMP_RwCamera_Dtor	clump	implemented-needs-L2	split rw-b-sg: no call
+0X7498B0	cb_CLUMP_RpLight_Ctor	clump	L2	split rw-b-sg: PASS 16 compared, 0 mismatches, 0 undeclared
+0X7498D0	cb_CLUMP_RpLight_Dtor	clump	L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 0 undeclared
+0X7498E0	RpClumpGetNumAtomics	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749910	RpClumpGetNumLights	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749940	RpClumpGetNumCameras	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749B20	RpClumpRender	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749B70	RpClumpForAllAtomics	clump	implemented-needs-L2	split rw-b-sg: COUNT 268 compared, 0 mismatches, 228 undeclared; split rw-hot-sg: PASS-FP 354 compared, 0 mismatches, 313 undeclared
+0X749BB0	RpClumpForAllCameras	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749C00	RpClumpForAllLights	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749C50	RpAtomicCreate	atomic	implemented-needs-L2	split rw-b-sg: PASS 88 compared, 0 mismatches, 2 undeclared
+0X749D20	FUN_00749d20	atomic	L2	split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared
+0X749D40	RpAtomicSetGeometry	atomic	L2	split rw-b-sg: PASS 6 compared, 0 mismatches, 0 undeclared
+0X749DC0	RpAtomicDestroy	atomic	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X749E40	RpLightGetClump	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749E50	RwCameraGetClump	clump	implemented-needs-L2	split rw-b-sg: no call
+0X749E60	RpAtomicClone	atomic	L2	split rw-b-sg: PASS 74 compared, 0 mismatches, 0 undeclared
+0X749F70	RpClumpClone	clump	implemented-needs-L2	split rw-b-sg: PASS 42 compared, 0 mismatches, 17 undeclared
+0X74A1C0	_rpClumpRemoveAndDestroyLight	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74A200	_rpClumpRemoveAndDestroyCamera	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74A240	RpClumpSetCallBack	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74A260	_rpClumpDefaultCallBack	clump	ported-unhookable	keycells: address compared at 0x74A278; L3 all-ports IDENTICAL on 7 recordings (rwp2-*)
+0X74A270	RpClumpGetCallBack	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74A290	RpClumpCreate	clump	implemented-needs-L2	split rw-b-sg: PASS 58 compared, 0 mismatches, 4 undeclared
+0X74A310	RpClumpDestroy	clump	implemented-needs-L2	split rw-b-sg: PASS 30 compared, 0 mismatches, 13 undeclared
+0X74A490	RpClumpAddAtomic	clump	L2	split rw-b-sg: PASS 74 compared, 0 mismatches, 0 undeclared
+0X74A4C0	RpClumpRemoveAtomic	clump	L2	split rw-b-sg: PASS 11 compared, 0 mismatches, 0 undeclared
+0X74A4F0	RpClumpAddLight	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74A520	RpClumpRemoveLight	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74BDA0	RpAtomicRegisterPlugin	atomic	implemented-needs-L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared
+0X74BDD0	RpClumpRegisterPlugin	clump	implemented-needs-L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared
+0X74BE00	RpAtomicRegisterPluginStream	atomic	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X74BE30	RpAtomicSetStreamAlwaysCallBack	atomic	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X74BE50	RpAtomicSetStreamRightsCallBack	atomic	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X74BE70	RpClumpRegisterPluginStream	clump	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X74BEA0	RpClumpSetStreamAlwaysCallBack	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74BEC0	RpAtomicGetPluginOffset	atomic	L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 0 undeclared
+0X74BEE0	RpClumpGetPluginOffset	clump	implemented-needs-L2	split rw-b-sg: no call
+0X74BF20	RpAtomicSetFrame	atomic	L2	split rw-b-sg: PASS 27 compared, 0 mismatches, 0 undeclared
+0X74BFA0	cb_GEOMETRYMODULE_RwEngine_Open	geometry	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X74BFC0	cb_GEOMETRYMODULE_RwEngine_Close	geometry	implemented-needs-L2	split rw-b-sg: no call
+0X74C200	RpMorphTargetCalcBoundingSphere	geometry	implemented-needs-L2	split rw-b-sg: PASS 2 compared, 0 mismatches, 2 undeclared
+0X74C310	RpGeometryAddMorphTargets	geometry	L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 0 undeclared
+0X74C4D0	RpGeometryAddMorphTarget	geometry	implemented-needs-L2	split rw-b-sg: no call
+0X74C690	RpGeometryTriangleSetVertexIndices	geometry	L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 0 undeclared
+0X74C6C0	RpGeometryTriangleSetMaterial	geometry	L2	split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared
+0X74C720	RpGeometryTriangleGetVertexIndices	geometry	implemented-needs-L2	split rw-b-sg: no call
+0X74C760	RpGeometryTriangleGetMaterial	geometry	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X74C790	RpGeometryForAllMaterials	geometry	implemented-needs-L2	split rw-b-sg: PASS 68 compared, 0 mismatches, 5 undeclared
+0X74C7D0	RpGeometryLock	geometry	L2	split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared
+0X74C800	RpGeometryUnlock	geometry	L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 0 undeclared
+0X74CA60	RpGeometryForAllMeshes	geometry	implemented-needs-L2	split rw-b-sg: no call
+0X74CA90	RpGeometryCreate	geometry	L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 0 undeclared
+0X74CCB0	_rpGeometryAddRef	geometry	L2	split rw-b-sg: PASS 88 compared, 0 mismatches, 0 undeclared
+0X74CCC0	RpGeometryDestroy	geometry	L2	split rw-b-sg: PASS 66 compared, 0 mismatches, 0 undeclared
+0X74CD70	RpGeometryRegisterPlugin	geometry	implemented-needs-L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared
+0X74CDA0	RpGeometryRegisterPluginStream	geometry	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X74D190	RpGeometryStreamRead	geometry	implemented-needs-L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared
+0X74D8E0	cb_MATERIALMODULE_RwEngine_Open	material	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X74D950	cb_MATERIALMODULE_RwEngine_Close	material	implemented-needs-L2	split rw-b-sg: no call
+0X74D990	RpMaterialCreate	material	L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 0 undeclared
+0X74DA20	RpMaterialDestroy	material	L2	split rw-b-sg: PASS 39 compared, 0 mismatches, 0 undeclared
+0X74DA80	RpMaterialClone	material	implemented-needs-L2	split rw-b-sg: no call
+0X74DBC0	RpMaterialSetTexture	material	L2	split rw-b-sg: PASS 23 compared, 0 mismatches, 0 undeclared
+0X74DBF0	RpMaterialRegisterPlugin	material	implemented-needs-L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared
+0X74DC20	RpMaterialRegisterPluginStream	material	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X74DD30	RpMaterialStreamRead	material	implemented-needs-L2	split rw-b-sg: PASS 39 compared, 0 mismatches, 39 undeclared
+0X74E150	_rpMaterialListDeinitialize	material	implemented-needs-L2	split rw-b-sg: PASS 16 compared, 0 mismatches, 6 undeclared
+0X74E1B0	_rpMaterialListInitialize	material	L2	split rw-b-sg: PASS 37 compared, 0 mismatches, 0 undeclared
+0X74E2B0	_rpMaterialListGetMaterial	material	L2	split rw-b-sg: PASS 39 compared, 0 mismatches, 0 undeclared
+0X74E350	_rpMaterialListAppendMaterial	material	L2	split rw-b-sg: PASS 39 compared, 0 mismatches, 0 undeclared
+0X74E420	_rpMaterialListFindMaterialIndex	material	L2	split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared
+0X74E600	_rpMaterialListStreamRead	material	implemented-needs-L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared
+0X750DB0	cb_BINMESHPLUGIN_RpGeometry_StreamRead	mesh	implemented-needs-L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared
+0X751050	RpAtomicGetWorld	atomic	L2	split rw-b-sg: PASS 66 compared, 0 mismatches, 0 undeclared
+0X751910	RpWorldAddLight	light	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X751960	RpWorldRemoveLight	light	implemented-needs-L2	split rw-b-sg: no call
+0X751A70	RpLightSetRadius	light	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X751A90	RpLightSetColor	light	L2	split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared
+0X751D60	RpLightRegisterPlugin	light	implemented-needs-L2	split rw-b-sg: PASS 3 compared, 0 mismatches, 3 undeclared
+0X751F00	RpLightStreamRead	light	implemented-needs-L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 8 undeclared
+0X7520D0	RpLightDestroy	light	implemented-needs-L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 1 undeclared
+0X752110	RpLightCreate	light	L2	split rw-b-sg: PASS 16 compared, 0 mismatches, 0 undeclared
+0X7521A0	(missed by ghidra: data-code-immediate)	light	L2	split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared
+0X7521B0	cb_LIGHTMODULE_RwEngine_Close	light	implemented-needs-L2	split rw-b-sg: no call
+0X752210	_rpLightDestructor	light	implemented-needs-L2	split rw-b-sg: no call
+0X752270	cb_LIGHTMODULE_RwEngine_Open	light	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X758920	_rpMeshHeaderCreate	mesh	L2	split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared
+0X758940	_rpMeshClose	mesh	implemented-needs-L2	split rw-b-sg: no call
+0X758970	_rpMeshOpen	mesh	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X758A90	_rpBuildMeshCreate	mesh	L2	split rw-b-sg: PASS 13 compared, 0 mismatches, 0 undeclared
+0X758B80	_rpBuildMeshDestroy	mesh	L2	split rw-b-sg: PASS 13 compared, 0 mismatches, 0 undeclared
+0X758BC0	_rpMeshDestroy	mesh	L2	split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared
+0X758C00	_rpBuildMeshAddTriangle	mesh	L2	split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared
+0X758D30	_rpMeshHeaderForAllMeshes	mesh	L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 0 undeclared
+0X758EC0	_rpMeshRead	mesh	implemented-needs-L2	split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared
+0X75E2A0	RpAtomicSetDefaultPipeline	atomic	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X7EC780	cb_STREAMMODULE_RwEngine_Open	stream	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X7EC7E0	cb_STREAMMODULE_RwEngine_Close	stream	implemented-needs-L2	split rw-b-sg: no call
+0X7EC810	_rwStreamInitialize	stream	implemented-needs-L2	split rw-b-sg: PASS 43 compared, 0 mismatches, 43 undeclared
+0X7EC9D0	RwStreamRead	stream	implemented-needs-L2	split rw-b-sg: DIVERGED 0 compared, 0 mismatches, 0 undeclared
+0X7ECB30	RwStreamWrite	stream	implemented-needs-L2	split rw-b-sg: no call
+0X7ECD00	RwStreamSkip	stream	L2	split rw-b-sg: PASS 32 compared, 0 mismatches, 0 undeclared
+0X7ECE20	RwStreamClose	stream	implemented-needs-L2	split rw-b-sg: PASS 51 compared, 0 mismatches, 12 undeclared
+0X7ECEF0	RwStreamOpen	stream	implemented-needs-L2	split rw-b-sg: PASS 13 compared, 0 mismatches, 13 undeclared
+0X7ED0F0	_rwStreamReadChunkHeader	stream	implemented-needs-L2	split rw-b-sg: DIVERGED 0 compared, 0 mismatches, 0 undeclared
+0X7ED1E0	FUN_007ed1e0	stream	ported-unhookable	caller keeps ECX at 0x7ED5DE; L3 all-ports IDENTICAL on 7 recordings (rwp2-*)
+0X7ED2D0	RwStreamFindChunk	stream	implemented-needs-L2	split rw-b-sg: DIVERGED 31 compared, 0 mismatches, 31 undeclared
+0X7ED4A0	RwStreamReadInt16	stream	implemented-needs-L2	split rw-b-sg: no call
+0X7ED4F0	RwStreamReadReal	stream	implemented-needs-L2	split rw-b-sg: PASS 60 compared, 0 mismatches, 60 undeclared
+0X7ED540	RwStreamReadInt32	stream	implemented-needs-L2	split rw-b-sg: DIVERGED 0 compared, 0 mismatches, 0 undeclared
+0X7ED590	RwStreamReadChunkHeaderInfo	stream	implemented-needs-L2	split rw-b-sg: PASS 8 compared, 0 mismatches, 8 undeclared
+0X7ED5F0	_rwVectorSetMultFn	vector	L2	L2 rw-math-g: PASS 1/1 cases, 0 mismatches, 0 undeclared
+0X7ED9B0	RwV3dNormalize	vector	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/10059 cases, 0 mismatches, 0 undeclared
+0X7EDAC0	RwV3dLength	vector	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/5992 cases, 0 mismatches, 0 undeclared
+0X7EDB30	_rwSqrt	vector	L2	L1 RwSqrt 1,002,000 raw-bit cases PASS; L2 rw-math-g: PASS 1000/11804 cases, 0 mismatches, 0 undeclared
+0X7EDB90	_rwInvSqrt	vector	L2	L1 RwInvSqrt 1,002,000 raw-bit cases PASS; L2 rw-math-g: PASS 1000/1313 cases, 0 mismatches, 0 undeclared
+0X7EDD60	RwV3dTransformPoint	vector	L2	L2 rw-math-g: PASS 1000/343699 cases, 0 mismatches, 0 undeclared
+0X7EDD90	RwV3dTransformPoints	vector	implemented-needs-L2	L2 rw-math-g: FAIL 1000/98445 cases, 0 mismatches, 920 undeclared
+0X7EDDC0	RwV3dTransformVector	vector	L2	L2 rw-math-g: PASS 1000/1001 cases, 0 mismatches, 0 undeclared
+0X7EDDF0	RwV3dTransformVectors	vector	implemented-needs-L2	L2 rw-math-g: FAIL 114/114 cases, 0 mismatches, 113 undeclared
+0X7EDE90	cb_VECTORMODULE_RwEngine_Open	vector	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X7EE110	cb_CAMERAMODULE_RwEngine_Open	camera	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X7EE1A0	RwCameraSetViewOffset	camera	implemented-needs-L2	split rw-b-sg: no call
+0X7EE1D0	RwCameraSetNearClipPlane	camera	L2	split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared
+0X7EE200	_rwCameraUpdateZShiftScale	camera	ported-unhookable	RwCameraCreate keeps EDX; L3 all-ports IDENTICAL on 7 recordings (rwp2-*)
+0X7EE2A0	RwCameraSetFarClipPlane	camera	L2	split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared
+0X7EE2D0	RwCameraFrustumTestSphere	camera	implemented-needs-L2	split rw-b-sg: no call
+0X7EE3A0	RwCameraSetProjection	camera	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X7EE410	RwCameraSetViewWindow	camera	implemented-needs-L2	split rw-b-sg: COUNT 269 compared, 0 mismatches, 0 undeclared; split rw-hot-sg: COUNT 550 compared, 0 mismatches, 0 undeclared
+0X7EE450	RwCameraRegisterPlugin	camera	implemented-needs-L2	split rw-b-sg: PASS 2 compared, 0 mismatches, 2 undeclared
+0X7EE480	RwCameraGetPluginOffset	camera	implemented-needs-L2	split rw-b-sg: no call
+0X7EE4B0	RwCameraDestroy	camera	implemented-needs-L2	split rw-b-sg: no call
+0X7EE4F0	RwCameraCreate	camera	implemented-needs-L2	split rw-b-sg: PASS 5 compared, 0 mismatches, 1 undeclared
+0X7EE5A0	_rwCameraFrameSyncCB	camera	L2	split rw-hot-sg: PASS-FP 552 compared, 0 mismatches, 0 undeclared
+0X7EF1F0	FUN_007ef1f0	camera	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X7EF340	_rwCameraDefaultEndUpdate	camera	implemented-needs-L2	split rw-b-sg: COUNT 278 compared, 0 mismatches, 278 undeclared; split rw-hot-sg: COUNT 551 compared, 0 mismatches, 551 undeclared
+0X7EF370	_rwCameraDefaultBeginUpdate	camera	implemented-needs-L2	split rw-b-sg: COUNT 278 compared, 0 mismatches, 278 undeclared; split rw-hot-sg: COUNT 551 compared, 0 mismatches, 551 undeclared
+0X7EF450	RwIm3DTransform	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X7EF520	RwIm3DEnd	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X7EF550	RwIm3DRenderIndexedPrimitive	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X7EF6B0	RwIm3DRenderPrimitive	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X7EFAC0	RwIm3DSetTransformPipeline	im3d	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X7EFB10	RwIm3DSetRenderPipeline	im3d	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X7EFE20	cb_IMMEDIATEMODULE_RwEngine_Open	im3d	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X7EFEF0	cb_FRAMEMODULE_RwEngine_Open	frame	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X7EFF70	cb_FRAMEMODULE_RwEngine_Close	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7EFFB0	_rwFrameCloneAndLinkClones	frame	implemented-needs-L2	split rw-b-sg: PASS 48 compared, 0 mismatches, 19 undeclared
+0X7F0050	_rwFrameCloneRecurse	frame	implemented-needs-L2	split rw-b-sg: PASS 84 compared, 0 mismatches, 28 undeclared
+0X7F01A0	_rwFramePurgeClone	frame	L2	split rw-b-sg: PASS 42 compared, 0 mismatches, 0 undeclared
+0X7F0210	_rwSetHierarchyRoot	frame	ported-unhookable	callers keep ECX/EDX; L3 all-ports IDENTICAL on 7 recordings (rwp2-*)
+0X7F0250	RwFrameCloneHierarchy	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F0340	RwFrameDirty	frame	L2	split rw-b-sg: PASS 14 compared, 0 mismatches, 0 undeclared
+0X7F0360	_rwFrameInternalInit	frame	L2	split rw-b-sg: PASS 71 compared, 0 mismatches, 0 undeclared
+0X7F0410	RwFrameCreate	frame	L2	split rw-b-sg: PASS 71 compared, 0 mismatches, 0 undeclared
+0X7F0450	_rwFrameInit	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F05A0	RwFrameDestroy	frame	L2	split rw-b-sg: PASS 28 compared, 0 mismatches, 0 undeclared
+0X7F06F0	_rwFrameDeInit	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F0830	_rwFrameDestroyRecurse	frame	implemented-needs-L2	split rw-b-sg: PASS 56 compared, 0 mismatches, 8 undeclared
+0X7F08A0	RwFrameDestroyHierarchy	frame	implemented-needs-L2	split rw-b-sg: PASS 30 compared, 0 mismatches, 8 undeclared
+0X7F0910	RwFrameUpdateObjects	frame	L2	split rw-hot-sg: PASS-FP 554 compared, 0 mismatches, 0 undeclared
+0X7F0990	RwFrameGetLTM	frame	implemented-needs-L2	split rw-b-sg: COUNT 544 compared, 0 mismatches, 0 undeclared; split rw-hot-sg: COUNT 551 compared, 0 mismatches, 0 undeclared
+0X7F09B0	RwFrameGetRoot	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F09C0	RwFrameAddChildNoUpdate	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F0B00	RwFrameAddChild	frame	L2	split rw-b-sg: PASS 67 compared, 0 mismatches, 0 undeclared
+0X7F0CD0	RwFrameRemoveChild	frame	L2	split rw-b-sg: PASS 3 compared, 0 mismatches, 0 undeclared
+0X7F0DC0	RwFrameForAllChildren	frame	implemented-needs-L2	split rw-b-sg: COUNT 259 compared, 0 mismatches, 74 undeclared; split rw-hot-sg: PASS-FP 83 compared, 0 mismatches, 79 undeclared
+0X7F0E00	RwFrameCount	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F0E30	RwFrameTranslate	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F0ED0	RwFrameScale	frame	implemented-needs-L2	split rw-b-sg: no call
+0X7F0F70	RwFrameTransform	frame	L2	split rw-hot-sg: PASS-FP 350 compared, 0 mismatches, 0 undeclared
+0X7F1010	RwFrameRotate	frame	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X7F10B0	RwFrameSetIdentity	frame	L2	split rw-b-sg: PASS 3 compared, 0 mismatches, 0 undeclared
+0X7F1170	RwFrameOrthoNormalize	frame	L2	split rw-hot-sg: PASS-FP 351 compared, 0 mismatches, 0 undeclared
+0X7F1200	RwFrameForAllObjects	frame	L2	split rw-hot-sg: PASS-FP 58 compared, 0 mismatches, 0 undeclared
+0X7F1260	RwFrameRegisterPlugin	frame	implemented-needs-L2	split rw-b-sg: PASS 3 compared, 0 mismatches, 3 undeclared
+0X7F12C0	_rwMatrixSetMultFn	matrix	L2	L2 rw-math-g: PASS 1/1 cases, 0 mismatches, 0 undeclared
+0X7F1450	_rwMatrixDeterminant	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: FAIL 671/5805 cases, 0 mismatches, 0 undeclared
+0X7F14A0	_rwMatrixOrthogonalError	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/4799 cases, 0 mismatches, 0 undeclared
+0X7F1500	_rwMatrixNormalError	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/4799 cases, 0 mismatches, 0 undeclared
+0X7F16C0	cb_MATRIXMODULE_RwEngine_Open	matrix	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X7F17E0	RwMatrixOptimize	matrix	L2	L2 rw-math-g: PASS 1000/1485 cases, 0 mismatches, 0 undeclared
+0X7F18A0	RwMatrixUpdate	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/94807 cases, 0 mismatches, 0 undeclared
+0X7F18B0	RwMatrixMultiply	matrix	L2	L2 rw-math-g: PASS 1000/90361 cases, 0 mismatches, 0 undeclared
+0X7F1D00	RwMatrixRotateOneMinusCosineSine	matrix	implemented-needs-L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: FAIL 1000/1002 cases, 1000 mismatches, 0 undeclared
+0X7F1FD0	RwMatrixRotate	matrix	implemented-needs-L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: FAIL 1000/1006 cases, 336 mismatches, 0 undeclared
+0X7F2070	RwMatrixInvert	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/7150 cases, 0 mismatches, 0 undeclared
+0X7F2160	FUN_007f2160	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/3266 cases, 0 mismatches, 0 undeclared
+0X7F22C0	RwMatrixScale	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/1001 cases, 0 mismatches, 0 undeclared
+0X7F2450	RwMatrixTranslate	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/1001 cases, 0 mismatches, 0 undeclared
+0X7F25A0	RwMatrixTransform	matrix	implemented-needs-L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: FAIL 1000/1288 cases, 75 mismatches, 0 undeclared
+0X7F2A20	RwMatrixDestroy	matrix	implemented-needs-L2	split rw-mem-sg2: no call
+0X7F2A50	RwMatrixCreate	matrix	L2	split rw-mem-sg2: PASS 6 compared, 0 mismatches, 0 undeclared
+0X7F2BB0	RwEngineRegisterPlugin	plugin	implemented-needs-L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared
+0X7F2BE0	RwEngineGetPluginOffset	plugin	L2	split rw-b-sg: PASS 62 compared, 0 mismatches, 0 undeclared
+0X7F34D0	RwTextureSetFindCallBack	texture	L2	split rw-b-sg: PASS 15 compared, 0 mismatches, 0 undeclared
+0X7F34F0	RwTextureGetFindCallBack	texture	L2	split rw-b-sg: PASS 7 compared, 0 mismatches, 0 undeclared
+0X7F3500	RwTextureSetReadCallBack	texture	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X7F3520	RwTextureGetReadCallBack	texture	implemented-needs-L2	split rw-b-sg: no call
+0X7F3530	RwTextureSetMipmapping	texture	L2	split rw-b-sg: PASS 47 compared, 0 mismatches, 0 undeclared
+0X7F3550	RwTextureGetMipmapping	texture	L2	split rw-b-sg: PASS 38 compared, 0 mismatches, 0 undeclared
+0X7F3560	RwTextureSetAutoMipmapping	texture	L2	split rw-b-sg: PASS 47 compared, 0 mismatches, 0 undeclared
+0X7F3580	RwTextureGetAutoMipmapping	texture	L2	split rw-b-sg: PASS 38 compared, 0 mismatches, 0 undeclared
+0X7F3590	_rwTextureSetAutoMipMapState	texture	implemented-needs-L2	split rw-b-sg: no call
+0X7F35C0	_rwTextureGetAutoMipMapState	texture	implemented-needs-L2	split rw-b-sg: no call
+0X7F35D0	RwTextureSetRaster	texture	implemented-needs-L2	split rw-b-sg: no call
+0X7F3600	RwTexDictionaryCreate	texture	implemented-needs-L2	split rw-b-sg: PASS 31 compared, 0 mismatches, 2 undeclared
+0X7F36A0	RwTexDictionaryDestroy	texture	implemented-needs-L2	split rw-b-sg: PASS 14 compared, 0 mismatches, 12 undeclared
+0X7F3730	RwTexDictionaryForAllTextures	texture	implemented-needs-L2	split rw-b-sg: PASS 14 compared, 0 mismatches, 2 undeclared
+0X7F3770	RwTexDictionaryForAllTexDictionaries	texture	implemented-needs-L2	split rw-b-sg: no call
+0X7F37C0	RwTextureCreate	texture	L2	split rw-b-sg: PASS 53 compared, 0 mismatches, 0 undeclared
+0X7F3820	RwTextureDestroy	texture	implemented-needs-L2	split rw-b-sg: PASS 43 compared, 0 mismatches, 4 undeclared
+0X7F38A0	RwTextureSetName	texture	L2	split rw-b-sg: PASS 51 compared, 0 mismatches, 0 undeclared
+0X7F3910	RwTextureSetMaskName	texture	L2	split rw-b-sg: PASS 43 compared, 0 mismatches, 0 undeclared
+0X7F3980	RwTexDictionaryAddTexture	texture	L2	split rw-b-sg: PASS 43 compared, 0 mismatches, 0 undeclared
+0X7F39C0	RwTexDictionaryRemoveTexture	texture	L2	split rw-b-sg: PASS 2 compared, 0 mismatches, 0 undeclared
+0X7F39F0	RwTexDictionaryFindNamedTexture	texture	implemented-needs-L2	split rw-b-sg: DIVERGED 12 compared, 0 mismatches, 0 undeclared
+0X7F3A70	RwTexDictionarySetCurrent	texture	L2	split rw-b-sg: PASS 32 compared, 0 mismatches, 0 undeclared
+0X7F3A90	RwTexDictionaryGetCurrent	texture	L2	split rw-b-sg: PASS 46 compared, 0 mismatches, 0 undeclared
+0X7F3AC0	RwTextureRead	texture	implemented-needs-L2	split rw-b-sg: DIVERGED 12 compared, 0 mismatches, 0 undeclared
+0X7F3BB0	RwTextureRegisterPlugin	texture	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X7F3BE0	RwTextureGetPluginOffset	texture	implemented-needs-L2	split rw-b-sg: no call
+0X7F3C10	RwTexDictionaryRegisterPlugin	texture	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X7F3EA0	cb_TEXTUREMODULE_RwEngine_Open	texture	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X801970	_rwFreeListSetFlags	memory	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X801980	_rwFreeListCreate	memory	implemented-needs-L2	split rw-mem-sg2: PASS 17 compared, 0 mismatches, 1 undeclared
+0X8019B0	_rwFreeListCreateInternal	memory	implemented-needs-L2	split rw-mem-sg2: PASS 17 compared, 0 mismatches, 1 undeclared
+0X801B80	RwFreeListDestroy	memory	L2	split rw-mem-sg2: PASS 12 compared, 0 mismatches, 0 undeclared
+0X801C30	_rwFreeListAllocReal	memory	L2	split rw-mem-sg2: PASS 1000 compared, 0 mismatches, 0 undeclared
+0X801D50	_rwFreeListFreeReal	memory	L2	split rw-mem-sg2: PASS 1000 compared, 0 mismatches, 0 undeclared
+0X801E00	RwFreeListPurge	memory	L2	split rw-mem-sg2: PASS 8 compared, 0 mismatches, 0 undeclared
+0X801F90	RwFreeListPurgeAllFreeLists	memory	implemented-needs-L2	split rw-mem-sg2: PASS 3 compared, 0 mismatches, 3 undeclared
+0X801FD0	_rwMemoryOpen	memory	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X804550	RwTextureRegisterPluginStream	texture	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X8046E0	RwTextureStreamRead	texture	implemented-needs-L2	split rw-b-sg: PASS 38 compared, 0 mismatches, 38 undeclared
+0X804EF0	_rwObjectHasFrameSetFrame	frame	L2	split rw-b-sg: PASS 105 compared, 0 mismatches, 0 undeclared
+0X804F40	_rwObjectHasFrameReleaseFrame	frame	L2	split rw-b-sg: PASS 46 compared, 0 mismatches, 0 undeclared
+0X807570	RwFrameListSetAutoUpdate	frame	implemented-needs-L2	split rw-b-sg: no call
+0X807580	RwFrameRegisterPluginStream	frame	L2	split rw-b-sg: PASS 2 compared, 0 mismatches, 0 undeclared
+0X807720	_rwFrameListDeinitialize	frame	L2	split rw-b-sg: PASS 24 compared, 0 mismatches, 0 undeclared
+0X807970	_rwFrameListStreamRead	frame	implemented-needs-L2	split rw-b-sg: FAIL 24 compared, 1 mismatches, 24 undeclared
+0X807C80	FUN_00807c80	camera	ported-unhookable	single ret; L3 all-ports IDENTICAL on 7 recordings (rwp2-*)
+0X807C90	cb_RESOURCESMODULE_RwEngine_Open	memory	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X807DE0	RwResourcesFreeResEntry	memory	implemented-needs-L2	split rw-mem-sg2: PASS 150 compared, 0 mismatches, 150 undeclared
+0X807E50	_rwResourcesPurge	memory	L2	split rw-mem-sg2: PASS 1000 compared, 0 mismatches, 0 undeclared
+0X807ED0	RwResourcesAllocateResEntry	memory	L2	split rw-mem-sg2: PASS 746 compared, 0 mismatches, 0 undeclared
+0X8082E0	FUN_008082e0	memory	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X808470	_rwPluginRegistryGetPluginOffset	plugin	L2	split rw-b-sg: PASS 62 compared, 0 mismatches, 0 undeclared
+0X8084A0	_rwPluginRegistryAddPlugin	plugin	implemented-needs-L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared
+0X8086B0	_rwPluginRegistryDefaultConstructor	plugin	L2	split rw-b-sg: PASS 105 compared, 0 mismatches, 0 undeclared
+0X8086C0	_rwPluginRegistryDefaultDestructor	plugin	L2	split rw-b-sg: PASS 52 compared, 0 mismatches, 0 undeclared
+0X8086D0	_rwPluginRegistryDefaultCopyConstructor	plugin	L2	split rw-b-sg: PASS 74 compared, 0 mismatches, 0 undeclared
+0X8086E0	_rwPluginRegistryInitObject	plugin	implemented-needs-L2	split rw-b-sg: PASS 120 compared, 0 mismatches, 1 undeclared
+0X808740	_rwPluginRegistryDeInitObject	plugin	implemented-needs-L2	split rw-b-sg: PASS 80 compared, 0 mismatches, 1 undeclared
+0X808770	_rwPluginRegistryCopyObject	plugin	L2	split rw-b-sg: PASS 87 compared, 0 mismatches, 0 undeclared
+0X8088E0	_rwPluginRegistryAddPluginStream	plugin	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X808920	_rwPluginRegistryAddPlgnStrmlwysCB	plugin	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X808950	_rwPluginRegistryAddPlgnStrmRightsCB	plugin	L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared
+0X808980	_rwPluginRegistryReadDataChunks	plugin	implemented-needs-L2	split rw-b-sg: PASS 60 compared, 0 mismatches, 60 undeclared
+0X808AB0	_rwPluginRegistryInvokeRights	plugin	L2	split rw-b-sg: PASS 32 compared, 0 mismatches, 0 undeclared
+0X808B00	_rwPluginRegistryGetSize	plugin	implemented-needs-L2	split rw-b-sg: no call
+0X808B40	_rwPluginRegistryWriteDataChunks	plugin	implemented-needs-L2	split rw-b-sg: no call
+0X808C10	_rwPluginRegistrySkipDataChunks	plugin	implemented-needs-L2	split rw-b-sg: PASS 6 compared, 0 mismatches, 6 undeclared
+0X808F60	RwBBoxCalculate	matrix	L2	L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/1487 cases, 0 mismatches, 0 undeclared
+0X809550	_rwFrameSyncDirty	frame	implemented-needs-L2	split rw-b-sg: COUNT 278 compared, 0 mismatches, 0 undeclared; split rw-hot-sg: COUNT 551 compared, 0 mismatches, 0 undeclared
+0X809700	_rwFrameSyncDirtyLTM	frame	implemented-needs-L2	split rw-b-sg: COUNT 272 compared, 0 mismatches, 0 undeclared; split rw-hot-sg: COUNT 351 compared, 0 mismatches, 0 undeclared
+0X809780	_rwFrameSyncDirtyObjects	frame	implemented-needs-L2	split rw-b-sg: no call
+0X8097D0	_rwFrameSyncHierarchyLTM	frame	L2	split rw-hot-sg: PASS-FP 552 compared, 0 mismatches, 0 undeclared
+0X809850	_rwFrameSyncHierarchyLTMRecurse	frame	implemented-needs-L2	split rw-b-sg: no call
+0X80A0A0	_rwIm3DCreateTransformPipeline	im3d	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X80A110	_rwIm3DDestroyTransformPipeline	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X80A140	_rwIm3DDestroyRenderPipelines	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X80A1A0	_rwIm3DCreateRenderPipelines	im3d	implemented-needs-L2	split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared
+0X80A510	_rwStringStreamFindAndRead	stream	implemented-needs-L2	split rw-b-sg: DIVERGED 0 compared, 0 mismatches, 0 undeclared
+0X80D440	_rwSSE2V3dTransformPoints	matrix	implemented-needs-L2	L2 rw-math-g: FAIL 1000/97449 cases, 0 mismatches, 970 undeclared
+0X80D4E0	_rwSSE2V3dTransformVectors	matrix	implemented-needs-L2	L2 rw-math-g: NOCALLS 0/0 cases, 0 mismatches, 0 undeclared
+0X80D570	_rwSSE2V3dTransformPoint	matrix	L2	L2 rw-math-g: PASS 1000/342703 cases, 0 mismatches, 0 undeclared
+0X80D600	_rwSSE2V3dTransformVector	matrix	L2	L2 rw-math-g: PASS 1000/1001 cases, 0 mismatches, 0 undeclared
+0X80DFB0	_rwD3D9Im3DRenderClose	im3d	L2	split rw-b-sg: PASS 3 compared, 0 mismatches, 0 undeclared
+0X80E020	_rwD3D9Im3DRenderOpen	im3d	L2	split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared
+0X80E970	_rwD3D9ImmInstanceNode	im3d	implemented-needs-L2	split rw-b-sg: no call
+0X80FFE0	_rwResourcesArenaInit	memory	L2	split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared
+0X810040	_rwResourcesArenaFreeBlock	memory	L2	split rw-mem-sg2: PASS 150 compared, 0 mismatches, 0 undeclared
+0X8100C0	FUN_008100c0	memory	L2	split rw-mem-sg2: PASS 746 compared, 0 mismatches, 0 undeclared
+0X810140	FUN_00810140	memory	L2	split rw-mem-sg2: PASS 648 compared, 0 mismatches, 0 undeclared

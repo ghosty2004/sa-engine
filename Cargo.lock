@@ -1751,6 +1751,7 @@ dependencies = [
  "sa-oracle-format",
  "sa-ped",
  "sa-pop",
+ "sa-rwcore",
  "sa-script",
  "sa-stream",
  "sa-veh",
@@ -1823,6 +1824,7 @@ dependencies = [
  "sa-oracle-format",
  "sa-ped",
  "sa-pop",
+ "sa-rwcore",
  "sa-script",
  "sa-stream",
  "sa-veh",
@@ -1880,6 +1882,25 @@ dependencies = [
  "bytemuck",
  "sa-rw",
  "wgpu",
+]
+
+[[package]]
+name = "sa-rwcore"
+version = "0.1.0"
+dependencies = [
+ "sa-anim",
+ "sa-core",
+ "sa-hud",
+ "sa-input",
+ "sa-macros",
+ "sa-math",
+ "sa-ped",
+ "sa-pop",
+ "sa-script",
+ "sa-stream",
+ "sa-veh",
+ "sa-weapon",
+ "sa-world",
 ]
 
 [[package]]
