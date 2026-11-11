@@ -1,0 +1,190 @@
+group	address	name	recordings	per_run (verdict compared/plain/rust cases, mismatches, undeclared)	compared	mismatches	undeclared_cases	verdict
+AI	0x4ADFD0	CEventGroupEvent::CEventGroupEvent	grove,c-bug,weapon-combat	grove:PASS 266/266p/266r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 20/20p/20r m0 u0	586	0	0	PASS
+AI	0x4B5EF0	CEventPotentialWalkIntoVehicle::~CEventPotentialWalkIntoVehicle	grove,c-bug,weapon-combat	grove:NOCASES; c-bug:PASS 39/39p/39r m0 u0; weapon-combat:PASS 11/11p/11r m0 u0	50	0	0	PASS
+AI	0x4B6FB0	CEventPotentialWalkIntoVehicle::CloneEditable	grove,c-bug,weapon-combat	grove:NOCASES; c-bug:PASS 39/39p/39r m0 u0; weapon-combat:PASS-FP 11/11p/11r m0 u0	50	0	0	NOT-PASS (PASS-FP)
+AI	0x6040D0	CDecision::MakeDecision	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x606F80	CDecisionMakerTypes::MakeDecision-pedgroup-ptr	grove,c-bug,weapon-combat	grove:PASS 186/186p/186r m0 u0; c-bug:PASS 193/193p/193r m0 u0; weapon-combat:PASS 9/9p/9r m0 u0	388	0	0	PASS
+AI	0x608AE0	CAcquaintance::CAcquaintance	grove,c-bug,weapon-combat	grove:PASS 32/32p/32r m0 u0; c-bug:PASS 32/32p/32r m0 u0; weapon-combat:PASS 32/32p/32r m0 u0	96	0	0	PASS
+AI	0x61A150	CPlayerRelationshipRecorder::ClearRelationshipWithPlayer	grove,c-bug,weapon-combat	grove:PASS 187/187p/187r m0 u0; c-bug:PASS 123/123p/123r m0 u0; weapon-combat:PASS 131/131p/131r m0 u0	441	0	0	PASS
+AI	0x61A2E0	GetPlayerRelationshipRecorder	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x61A360	CTask::IsGoToTask	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x61A430	CTaskComplex::SetSubTask	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x61A6F0	CTaskSimpleAnim::~CTaskSimpleAnim	grove,c-bug,weapon-combat	grove:PASS 88/88p/88r m0 u0; c-bug:PASS 56/56p/56r m0 u0; weapon-combat:PASS 30/30p/30r m0 u0	174	0	0	PASS
+AI	0x61A8A0	CTaskSimpleAnim::FinishRunAnimCB	grove,c-bug,weapon-combat	grove:PASS 18/18p/18r m0 u0; c-bug:PASS 9/9p/9r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	31	0	0	PASS
+AI	0x61AE50	CTaskSimplePlayHandSignalAnim::CTaskSimplePlayHandSignalAnim	grove,c-bug,weapon-combat	grove:PASS 4/4p/4r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	14	0	0	PASS
+AI	0x61B4F0	CTaskComplexPlayHandSignalAnim::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	7	0	0	PASS
+AI	0x61B770	CTaskSimpleRunNamedAnim::Clone	grove,c-bug,weapon-combat	grove:PASS 16/16p/16r m0 u0; c-bug:PASS 8/8p/8r m0 u0; weapon-combat:PASS 8/8p/8r m0 u0	32	0	0	PASS
+AI	0x61B980	CTaskSimplePlayHandSignalAnim::Clone	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	7	0	0	PASS
+AI	0x61BAA0	CTaskSimpleAnim::~CTaskSimpleAnim	grove,c-bug,weapon-combat	grove:PASS 17/17p/17r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	26	0	0	PASS
+AI	0x61BEF0	CTaskSimpleAnim::~CTaskSimpleAnim	grove,c-bug,weapon-combat	grove:PASS 24/24p/24r m0 u0; c-bug:PASS 12/12p/12r m0 u0; weapon-combat:PASS 12/12p/12r m0 u0	48	0	0	PASS
+AI	0x61C0D0	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 2/2p/2r m0 u1	7	0	1	NOT-PASS (undeclared)
+AI	0x629060	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 1/1p/1r m0 u0; weapon-combat:NOCASES	2	0	0	PASS
+AI	0x6317C0	CTaskComplexObserveTrafficLights::~CTaskComplexObserveTrafficLights	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x6317E0	CTaskComplexObserveTrafficLights::CreateNextSubTask	grove,c-bug,weapon-combat	grove:PASS 6/6p/6r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	6	0	0	PASS
+AI	0x6318D0	CTaskComplexObserveTrafficLights::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x6318E0	CTaskComplexObserveTrafficLights::ControlSubTask	grove,c-bug,weapon-combat	grove:PASS 246/246p/246r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	246	0	0	PASS
+AI	0x631910	CTaskComplexObserveTrafficLightsAndAchieveHeading::CTaskComplexObserveTrafficLightsAndAchieveHeading	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x631980	CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x635CF0	CTaskSimpleStandStill::Clone	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 287/287p/287r m0 u0; weapon-combat:PASS 29/29p/29r m0 u0	616	0	0	PASS
+AI	0x637480	CTaskSimpleStandStill::~CTaskSimpleStandStill	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 270/270p/270r m0 u0	870	0	0	PASS
+AI	0x637A40	CTaskSimple::~CTaskSimple	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x637D90	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x637F60	CTaskComplexObserveTrafficLights::~CTaskComplexObserveTrafficLights	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x637F80	CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x638570	CTaskComplexUseEffect::~CTaskComplexUseEffect	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x6385B0	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x638A40	CTaskComplexSequence::CreateNextSubTask-V	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 30/30p/30r m0 u0	630	0	0	PASS
+AI	0x638A80	CTaskComplexBeInGroup::~CTaskComplexBeInGroup	grove,c-bug,weapon-combat	grove:PASS 25/25p/25r m0 u0; c-bug:PASS 10/10p/10r m0 u0; weapon-combat:PASS 8/8p/8r m0 u0	43	0	0	PASS
+AI	0x639330	CTaskSimpleIKManager::~CTaskSimpleIKManager	grove,c-bug,weapon-combat	grove:PASS 87/87p/87r m0 u0; c-bug:PASS 18/18p/18r m0 u0; weapon-combat:PASS 10/10p/10r m0 u0	115	0	0	PASS
+AI	0x639490	CTaskSimpleIKLookAt::~CTaskSimpleIKLookAt	grove,c-bug,weapon-combat	grove:PASS 87/87p/87r m0 u0; c-bug:PASS 13/13p/13r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	106	0	0	PASS
+AI	0x6394B0	CTaskSimpleIKPointArm::~CTaskSimpleIKPointArm	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 8/8p/8r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	16	0	0	PASS
+AI	0x639E20	CTaskComplexSequence::~CTaskComplexSequence	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 299/299p/299r m0 u0; weapon-combat:PASS 25/25p/25r m0 u0	624	0	0	PASS
+AI	0x63B970	CTaskComplexLeaveCar::~CTaskComplexLeaveCar	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 7/7p/7r m0 u0; weapon-combat:PASS-FP 7/7p/7r m0 u0	16	0	0	NOT-PASS (PASS-FP)
+AI	0x63BA00	FUN_0063ba00	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	12	0	0	PASS
+AI	0x63BAB0	FUN_0063bab0	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	12	0	0	PASS
+AI	0x63BAE0	FUN_0063bae0	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	12	0	0	PASS
+AI	0x63C500	CTaskSimpleCarDrive::TriggerIK	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x63C670	CTaskSimpleCarDrive::MakeAbortable	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 12/12p/12r m0 u0; weapon-combat:PASS 27/27p/27r m0 u0	42	0	0	PASS
+AI	0x63C770	CTaskSimpleCarDrive::SetPedPosition	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x63CB10	CTaskComplexCarDriveWander::CTaskComplexCarDriveWander	grove,c-bug,weapon-combat	grove:PASS 104/104p/104r m0 u0; c-bug:PASS 49/49p/49r m0 u0; weapon-combat:PASS 35/35p/35r m0 u0	188	0	0	PASS
+AI	0x63D100	FUN_0063d100	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:PASS 1/1p/1r m0 u0	2	0	0	PASS
+AI	0x63DD00	CTaskComplexCarDriveWander::Clone	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:NOCASES	5	0	0	PASS
+AI	0x6410E0	CTaskComplexLeaveCar::~CTaskComplexLeaveCar	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 7/7p/7r m0 u0; weapon-combat:PASS-FP 7/7p/7r m0 u0	16	0	0	NOT-PASS (PASS-FP)
+AI	0x641FC0	CTaskComplexLeaveCar::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 7/7p/7r m0 u0	13	0	0	PASS
+AI	0x6421B0	CTaskComplexLeaveCar::ControlSubTask	grove,c-bug,weapon-combat	grove:PASS 176/176p/176r m0 u0; c-bug:PASS 200/200p/200r m0 u0; weapon-combat:PASS 255/255p/255r m0 u0	631	0	0	PASS
+AI	0x6426E0	CTaskSimpleCarDrive::~CTaskSimpleCarDrive	grove,c-bug,weapon-combat	grove:PASS 223/223p/223r m0 u0; c-bug:PASS 102/102p/102r m0 u0; weapon-combat:PASS-FP 100/100p/100r m0 u0	425	0	0	NOT-PASS (PASS-FP)
+AI	0x643220	CTaskComplexCarDriveWander::~CTaskComplexCarDriveWander	grove,c-bug,weapon-combat	grove:PASS 100/100p/100r m0 u0; c-bug:PASS 45/45p/45r m0 u0; weapon-combat:PASS 32/32p/32r m0 u0	177	0	0	PASS
+AI	0x643240	CTaskComplexCarDriveWander::CreateSubTaskCannotGetInCar	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x6434F0	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:PASS 1/1p/1r m0 u0	2	0	0	PASS
+AI	0x643C60	CTaskComplexEnterCarAsDriver::~CTaskComplexEnterCarAsDriver	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 5/5p/5r m0 u0	8	0	0	PASS
+AI	0x646CF0	FUN_00646cf0	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	12	0	0	PASS
+AI	0x64B000	CTaskSimple::~CTaskSimple	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 1/1p/1r m0 u0	6	0	0	PASS
+AI	0x64B440	CTaskSimpleCarWaitToSlowDown::~CTaskSimpleCarWaitToSlowDown	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	12	0	0	PASS
+AI	0x64BDC0	CTaskSimple::~CTaskSimple	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0	12	0	0	PASS
+AI	0x64BF70	CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS-FP 6/6p/6r m0 u0	12	0	0	NOT-PASS (PASS-FP)
+AI	0x64D290	CTaskComplexGoToCarDoorAndStandStill::~CTaskComplexGoToCarDoorAndStandStill	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	7	0	0	PASS
+AI	0x653160	CTaskSimpleEvasiveStep::CTaskSimpleEvasiveStep	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x6531D0	CTaskSimpleEvasiveStep::~CTaskSimpleEvasiveStep	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x653290	CTaskSimpleEvasiveStep::FinishAnimEvasiveStepCB	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	13	0	0	PASS
+AI	0x6532D0	CTaskComplexEvasiveStep::CTaskComplexEvasiveStep	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x653350	CTaskComplexEvasiveStep::~CTaskComplexEvasiveStep	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x6534F0	CTaskComplexEvasiveStep::CreateNextSubTask	grove,c-bug,weapon-combat	grove:PASS 10/10p/10r m0 u0; c-bug:PASS 12/12p/12r m0 u0; weapon-combat:PASS 7/7p/7r m0 u0	29	0	0	PASS
+AI	0x653540	CTaskComplexEvasiveStep::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x6550D0	FUN_006550d0	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 7/7p/7r m0 u0; weapon-combat:PASS 7/7p/7r m0 u0	17	0	0	PASS
+AI	0x655E80	CTaskSimpleEvasiveStep::~CTaskSimpleEvasiveStep	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x655EE0	CTaskComplexEvasiveStep::~CTaskComplexEvasiveStep	grove,c-bug,weapon-combat	grove:PASS 5/5p/5r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	15	0	0	PASS
+AI	0x656E50	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 22/22p/22r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	31	0	0	PASS
+AI	0x657200	CTaskComplexWalkRoundObject::~CTaskComplexWalkRoundObject	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 7/7p/7r m0 u0; weapon-combat:PASS 7/7p/7r m0 u0	17	0	0	PASS
+AI	0x657B60	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:NOCASES; c-bug:PASS 25/25p/25r m0 u0; weapon-combat:PASS 7/7p/7r m0 u0	32	0	0	PASS
+AI	0x65D0C0	CTaskComplexWanderFlee::`scalar deleting destructor'	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 34/34p/34r m0 u0; weapon-combat:PASS 19/19p/19r m0 u0	54	0	0	PASS
+AI	0x65D260	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 34/34p/34r m0 u0; weapon-combat:PASS 19/19p/19r m0 u0	54	0	0	PASS
+AI	0x65D280	CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 35/35p/35r m0 u0; weapon-combat:PASS 19/19p/19r m0 u0	55	0	0	PASS
+AI	0x65DB70	CEventLeanOnVehicle::Clone	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 11/11p/11r m0 u0; weapon-combat:NOCASES	12	0	0	PASS
+AI	0x65DBF0	CEventLeanOnVehicle::~CEventLeanOnVehicle	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 22/22p/22r m0 u0; weapon-combat:NOCASES	24	0	0	PASS
+AI	0x65DC10	FUN_0065dc10	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 22/22p/22r m0 u0; weapon-combat:NOCASES	24	0	0	PASS
+AI	0x65EBB0	CTaskComplexGangFollower::Destructor	grove,c-bug,weapon-combat	grove:PASS 70/70p/70r m0 u0; c-bug:PASS 16/16p/16r m0 u0; weapon-combat:PASS 16/16p/16r m0 u0	102	0	0	PASS
+AI	0x65EC30	CTaskComplexGangFollower::MakeAbortable	grove,c-bug,weapon-combat	grove:PASS 213/213p/213r m0 u0; c-bug:PASS 42/42p/42r m0 u0; weapon-combat:PASS 42/42p/42r m0 u0	297	0	0	PASS
+AI	0x65ECB0	CTaskComplexGangFollower::Clone	grove,c-bug,weapon-combat	grove:PASS 37/37p/37r m0 u0; c-bug:PASS 8/8p/8r m0 u0; weapon-combat:PASS 8/8p/8r m0 u0	53	0	0	PASS
+AI	0x65EE90	FUN_0065ee90	grove,c-bug,weapon-combat	grove:PASS 35/35p/35r m0 u0; c-bug:PASS 8/8p/8r m0 u0; weapon-combat:PASS 8/8p/8r m0 u0	51	0	0	PASS
+AI	0x661F10	CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::~CTaskComplexSeekEntity	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 26/26p/26r m0 u0; weapon-combat:PASS 28/28p/28r m0 u0	354	0	0	PASS
+AI	0x6620D0	CTaskGangHasslePed::Clone	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:NOCASES	6	0	0	PASS
+AI	0x6621B0	CTaskGoToVehicleAndLean::Clone	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 22/22p/22r m0 u0; weapon-combat:NOCASES	25	0	0	PASS
+AI	0x662350	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 57/57p/57r m0 u0; c-bug:PASS 36/36p/36r m0 u0; weapon-combat:PASS 18/18p/18r m0 u0	111	0	0	PASS
+AI	0x6629F0	CTaskComplexGangFollower::~CTaskComplexGangFollower	grove,c-bug,weapon-combat	grove:PASS 70/70p/70r m0 u0; c-bug:PASS 16/16p/16r m0 u0; weapon-combat:PASS 16/16p/16r m0 u0	102	0	0	PASS
+AI	0x6642A0	CTaskGangHasslePed::~CTaskGangHasslePed	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 1/1p/1r m0 u0	8	0	0	PASS
+AI	0x6642C0	CTaskGangHasslePed::CreateNextSubTask	grove,c-bug,weapon-combat	grove:NOCASES; c-bug:PASS 269/269p/269r m0 u0; weapon-combat:PASS 3/3p/3r m0 u0	272	0	0	PASS
+AI	0x6644A0	CTaskSimple::~CTaskSimple	grove,c-bug,weapon-combat	grove:PASS 9/9p/9r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	16	0	0	PASS
+AI	0x6644C0	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 17/17p/17r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	24	0	0	PASS
+AI	0x6644E0	CTaskGoToVehicleAndLean::~CTaskGoToVehicleAndLean	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 22/22p/22r m0 u0; weapon-combat:NOCASES	25	0	0	PASS
+AI	0x667E20	CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading	grove,c-bug,weapon-combat	grove:PASS 11/11p/11r m0 u0; c-bug:PASS 43/43p/43r m0 u0; weapon-combat:PASS 17/17p/17r m0 u0	71	0	0	PASS
+AI	0x667E70	CTaskSimpleAchieveHeading::~CTaskSimpleAchieveHeading	grove,c-bug,weapon-combat	grove:PASS 78/78p/78r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 30/30p/30r m0 u0	408	0	0	PASS
+AI	0x668240	FUN_00668240	grove,c-bug,weapon-combat	grove:PASS 184/184p/184r m0 u0; c-bug:PASS 45/45p/45r m0 u0; weapon-combat:PASS 34/34p/34r m0 u0	263	0	0	PASS
+AI	0x668250	CTaskComplexGoToPointAndStandStill::SelectMoveState	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x669FB0	FUN_00669fb0	grove,c-bug,weapon-combat	grove:PASS 8/8p/8r m0 u0; c-bug:PASS 10/10p/10r m0 u0; weapon-combat:NOCASES	18	0	0	PASS
+AI	0x66AED0	CTaskComplexWanderStandard::WillChat	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x66AF60	CTaskComplexWanderStandard::SetNextMinScanTime	grove,c-bug,weapon-combat	grove:PASS 10/10p/10r m0 u0; c-bug:PASS 11/11p/11r m0 u0; weapon-combat:PASS 37/37p/37r m0 u0	58	0	0	PASS
+AI	0x66B150	(missed by ghidra: cat7-call)	grove,c-bug,weapon-combat	grove:PASS 6/6p/6r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:NOCASES	8	0	0	PASS
+AI	0x66B6C0	CTaskComplexGoToAttractor::CreateNextSubTask	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x66D6F0	CTaskSimpleGoToPoint::~CTaskSimpleGoToPoint	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 271/271p/271r m0 u0; weapon-combat:PASS 293/293p/293r m0 u0	864	0	0	PASS
+AI	0x66DB60	CTaskSimpleAchieveHeading::~CTaskSimpleAchieveHeading	grove,c-bug,weapon-combat	grove:PASS 78/78p/78r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 30/30p/30r m0 u0	408	0	0	PASS
+AI	0x66DB80	CTaskComplexGoToPointAndStandStill::~CTaskComplexGoToPointAndStandStill	grove,c-bug,weapon-combat	grove:PASS 184/184p/184r m0 u0; c-bug:PASS 45/45p/45r m0 u0; weapon-combat:PASS 34/34p/34r m0 u0	263	0	0	PASS
+AI	0x66E050	FUN_0066e050	grove,c-bug,weapon-combat	grove:PASS 26/26p/26r m0 u0; c-bug:PASS 39/39p/39r m0 u0; weapon-combat:PASS 28/28p/28r m0 u0	93	0	0	PASS
+AI	0x66F5C0	CTaskComplexWanderGang::CTaskComplexWanderGang	grove,c-bug,weapon-combat	grove:PASS 41/41p/41r m0 u0; c-bug:PASS 33/33p/33r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0	88	0	0	PASS
+AI	0x66F650	CTaskComplexWanderGang::~CTaskComplexWanderGang	grove,c-bug,weapon-combat	grove:PASS 34/34p/34r m0 u0; c-bug:PASS 33/33p/33r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0	81	0	0	PASS
+AI	0x66F680	CTaskComplexAvoidOtherPedWhileWandering::~CTaskComplexAvoidOtherPedWhileWandering	grove,c-bug,weapon-combat	grove:PASS 60/60p/60r m0 u0; c-bug:PASS 13/13p/13r m0 u0; weapon-combat:PASS 40/40p/40r m0 u0	113	0	0	PASS
+AI	0x670400	CTaskComplexGoToAttractor::~CTaskComplexGoToAttractor	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x670830	CTaskComplexTurnToFaceEntityOrCoord::~CTaskComplexTurnToFaceEntityOrCoord	grove,c-bug,weapon-combat	grove:PASS 99/99p/99r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 18/18p/18r m0 u0	417	0	0	PASS
+AI	0x671610	CTaskComplexFollowPointRoute::~CTaskComplexFollowPointRoute	grove,c-bug,weapon-combat	grove:PASS 26/26p/26r m0 u0; c-bug:PASS 39/39p/39r m0 u0; weapon-combat:PASS 28/28p/28r m0 u0	93	0	0	PASS
+AI	0x671730	CTaskComplexFollowNodeRoute::~CTaskComplexFollowNodeRoute	grove,c-bug,weapon-combat	grove:PASS 49/49p/49r m0 u0; c-bug:PASS 20/20p/20r m0 u0; weapon-combat:PASS 19/19p/19r m0 u0	88	0	0	PASS
+AI	0x672690	CTaskComplexWanderProstitute::CTaskComplexWanderProstitute	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x674920	CTaskComplexWanderProstitute::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	1	0	0	PASS
+AI	0x678CC0	FUN_00678cc0	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	6	0	0	PASS
+AI	0x678D50	CTaskSimpleInAir::~CTaskSimpleInAir	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	6	0	0	PASS
+AI	0x678EE0	CTaskSimpleLand::~CTaskSimpleLand	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	6	0	0	PASS
+AI	0x67CC10	CTaskComplexInAirAndLand::~CTaskComplexInAirAndLand	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	6	0	0	PASS
+AI	0x67D340	CTaskSimpleInAir::~CTaskSimpleInAir	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	6	0	0	PASS
+AI	0x67D360	CTaskSimpleLand::~CTaskSimpleLand	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 2/2p/2r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	6	0	0	PASS
+AI	0x681740	CTaskManager::FindActiveTaskByType	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x6822B0	(missed by ghidra: cat7-call)	grove,c-bug,weapon-combat	grove:PASS 80/80p/80r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:NOCASES	84	0	0	PASS
+AI	0x682310	CTaskComplexPartner::StreamRequiredAnims	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 249/249p/249r m0 u0; weapon-combat:PASS 54/54p/54r m0 u0	603	0	0	PASS
+AI	0x6823B0	CTaskComplexPartnerDeal::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	2	0	0	PASS
+AI	0x6823C0	CTaskComplexPartnerDeal::StreamRequiredAnims	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	300	0	0	PASS
+AI	0x682C60	CTaskComplexPartnerChat::MakeAbortable	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 4/4p/4r m0 u1; weapon-combat:NOCASES	5	0	1	NOT-PASS (undeclared)
+AI	0x6836F0	CTaskComplexBeInCouple::CTaskComplexBeInCouple	grove,c-bug,weapon-combat	grove:PASS 6/6p/6r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	14	0	0	PASS
+AI	0x683780	CTaskComplexBeInCouple::~CTaskComplexBeInCouple	grove,c-bug,weapon-combat	grove:PASS 6/6p/6r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	13	0	0	PASS
+AI	0x6837E0	CTaskComplexBeInCouple::CreateFirstSubTask	grove,c-bug,weapon-combat	grove:PASS 6/6p/6r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	14	0	0	PASS
+AI	0x6837F0	CTaskComplexBeInCouple::AbortArmIK	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 26/26p/26r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0	330	0	0	PASS
+AI	0x684320	CTaskComplexPartnerChat::~CTaskComplexPartnerChat	grove,c-bug,weapon-combat	grove:PASS 8/8p/8r m0 u0; c-bug:PASS 10/10p/10r m0 u0; weapon-combat:PASS 36/36p/36r m0 u0	54	0	0	PASS
+AI	0x6846D0	CTaskComplexChat::`scalar deleting destructor'	grove,c-bug,weapon-combat	grove:PASS 62/62p/62r m0 u0; c-bug:PASS 12/12p/12r m0 u0; weapon-combat:NOCASES	74	0	0	PASS
+AI	0x684760	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 1/1p/1r m0 u0	7	0	0	PASS
+AI	0x6847A0	CTaskComplexBeInCouple::~CTaskComplexBeInCouple	grove,c-bug,weapon-combat	grove:PASS 6/6p/6r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	13	0	0	PASS
+AI	0x6847C0	CTaskComplexBeInCouple::MakeAbortable	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:NOCASES	4	0	0	PASS
+AI	0x684D10	CTaskComplexPartnerDeal::Clone	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	2	0	0	PASS
+AI	0x684F80	CTaskComplexPartnerDeal::~CTaskComplexPartnerDeal	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:NOCASES; weapon-combat:NOCASES	3	0	0	PASS
+AI	0x684FC0	CTaskComplexPartnerChat::~CTaskComplexPartnerChat	grove,c-bug,weapon-combat	grove:PASS 8/8p/8r m0 u0; c-bug:PASS 10/10p/10r m0 u0; weapon-combat:PASS 36/36p/36r m0 u0	54	0	0	PASS
+AI	0x68B0C0	CTaskSimplePlayerOnFoot::~CTaskSimplePlayerOnFoot	grove,c-bug,weapon-combat	grove:PASS 3/3p/3r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 5/5p/5r m0 u0	13	0	0	PASS
+AI	0x68DAB0	CTaskComplex::~CTaskComplex	grove,c-bug,weapon-combat	grove:PASS 1/1p/1r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 1/1p/1r m0 u0	7	0	0	PASS
+AI	0x690C70	CTaskSimpleFacial	grove,c-bug,weapon-combat	grove:PASS 120/120p/120r m0 u0; c-bug:PASS 91/91p/91r m0 u0; weapon-combat:PASS 55/55p/55r m0 u0	266	0	0	PASS
+AI	0x690CB0	CTaskSimpleFacial::~CTaskSimpleFacial	grove,c-bug,weapon-combat	grove:PASS 117/117p/117r m0 u0; c-bug:PASS 91/91p/91r m0 u0; weapon-combat:PASS 55/55p/55r m0 u0	263	0	0	PASS
+AI	0x690D90	CTaskComplexFacial::~CTaskComplexFacial	grove,c-bug,weapon-combat	grove:PASS 189/189p/189r m0 u0; c-bug:PASS 127/127p/127r m0 u0; weapon-combat:PASS 135/135p/135r m0 u0	451	0	0	PASS
+AI	0x691630	FUN_00691630	grove,c-bug,weapon-combat	grove:PASS 30/30p/30r m0 u0; c-bug:PASS 17/17p/17r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0	61	0	0	PASS
+AI	0x692E30	CTaskSimpleFacial::~CTaskSimpleFacial	grove,c-bug,weapon-combat	grove:PASS 117/117p/117r m0 u0; c-bug:PASS 91/91p/91r m0 u0; weapon-combat:PASS 55/55p/55r m0 u0	263	0	0	PASS
+AI	0x692F90	CTaskComplexFacial::~CTaskComplexFacial	grove,c-bug,weapon-combat	grove:PASS 189/189p/189r m0 u0; c-bug:PASS 127/127p/127r m0 u0; weapon-combat:PASS 135/135p/135r m0 u0	451	0	0	PASS
+AI	0x692FD0	CTaskSimpleHoldEntity::~CTaskSimpleHoldEntity	grove,c-bug,weapon-combat	grove:PASS 30/30p/30r m0 u0; c-bug:PASS 17/17p/17r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0	61	0	0	PASS
+AI	0x6985E0	CTaskCategories::IsKillPedTask	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x698610	CTaskCategories::IsFollowPedTask	grove,c-bug,weapon-combat	grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0	900	0	0	PASS
+AI	0x698680	CTaskCategories::ComputeTaskCategory	grove,c-bug,weapon-combat	grove:PASS 23/23p/23r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 5/5p/5r m0 u0	34	0	0	PASS
+AI	0x6A06D0	CEventVehicleDamageCollision::~CEventVehicleDamageCollision	grove,c-bug,weapon-combat	grove:PASS 2/2p/2r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0	9	0	0	PASS
+WEAPON-PED	0x532010	CCrime::ReportCrime	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 45/45p/45r m0 u1; c-bug:PASS 3/3p/3r m0 u1; driving:PASS 20/20p/20r m0 u0; pause-restart:NOCASES; world-cheats:NOCASES; grove:NOCASES	68	0	2	NOT-PASS (undeclared)
+WEAPON-PED	0x539DD0	CFireManager::Shutdown	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:NOCASES; c-bug:NOCASES; driving:NOCASES; pause-restart:PASS 1/1p/1r m0 u0; world-cheats:NOCASES; grove:NOCASES	1	0	0	PASS
+WEAPON-PED	0x56E580	CPlayerInfo::KillPlayer	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 1/1p/1r m0 u1; c-bug:PASS 1/1p/1r m0 u1; driving:NOCASES; pause-restart:NOCASES; world-cheats:PASS 1/1p/1r m0 u1; grove:NOCASES	3	0	3	NOT-PASS (undeclared)
+WEAPON-PED	0x5DEBB0	CPed::Initialise	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 1/1p/1r m0 u1; c-bug:PASS 1/1p/1r m0 u1; driving:PASS 1/1p/1r m0 u1; pause-restart:PASS 2/2p/2r m0 u2; world-cheats:PASS 1/1p/1r m0 u1; grove:PASS 1/1p/1r m0 u1	7	0	7	NOT-PASS (undeclared)
+WEAPON-PED	0x5DEBF0	CPed::DeleteRwObject	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 1/1p/1r m0 u1; c-bug:PASS 1/1p/1r m0 u1; driving:PASS 1/1p/1r m0 u1; pause-restart:PASS 2/2p/2r m0 u2; world-cheats:PASS 1/1p/1r m0 u1; grove:PASS 1/1p/1r m0 u1	7	0	7	NOT-PASS (undeclared)
+WEAPON-PED	0x5E0270	CPed::ReleaseCoverPoint	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 18/18p/18r m0 u8; c-bug:PASS 4/4p/4r m0 u1; driving:NOCASES; pause-restart:NOCASES; world-cheats:PASS 3/3p/3r m0 u0; grove:NOCASES	25	0	9	NOT-PASS (undeclared)
+WEAPON-PED	0x608B00	CPedType::Shutdown	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:NOCASES; c-bug:NOCASES; driving:NOCASES; pause-restart:PASS 1/1p/1r m0 u0; world-cheats:NOCASES; grove:NOCASES	1	0	0	PASS
+WEAPON-PED	0x73A3E0	CWeapon::AddGunshell	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 135/135p/135r m0 u42; c-bug:PASS 147/147p/147r m0 u49; driving:PASS 45/45p/45r m0 u4; pause-restart:NOCASES; world-cheats:NOCASES; grove:NOCASES	327	0	95	NOT-PASS (undeclared)
+WEAPON-PED	0x73B550	CWeapon::DoBulletImpact	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 134/134p/134r m0 u0; c-bug:PASS 147/147p/147r m0 u0; driving:PASS 45/45p/45r m0 u0; pause-restart:NOCASES; world-cheats:NOCASES; grove:NOCASES	326	0	0	PASS
+WEAPON-PED	0x73A530	CWeapon::GenerateDamageEvent	weapon-combat,c-bug,driving,pause-restart,world-cheats,grove	weapon-combat:PASS 11/11p/11r m0 u0; c-bug:PASS 38/38p/38r m0 u0; driving:PASS 26/26p/26r m0 u0; pause-restart:NOCASES; world-cheats:NOCASES; grove:NOCASES	75	0	0	PASS
+SCRIPT	0x469F00	CRunningScript::Process	grove	grove:PASS 1000/1000p/1000r m0 u403	1000	0	403	NOT-PASS (undeclared)
+SCRIPT	0x465E60	CRunningScript::ProcessCommands0To99	grove	grove:PASS 1000/1000p/1000r m0 u1	1000	0	1	NOT-PASS (undeclared)
+CAM	0x50B930	CCamera::Restore	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x50BAB0	CCamera::RestoreWithJumpCut	grove	grove:PASS 2/2p/2r m0 u0	2	0	0	PASS
+CAM	0x50C7C0	CCamera::TakeControl	grove	grove:NOCASES	0	0	0	NOCASES
+CAM	0x50BDA0	CCamera::SetCameraDirectlyBehindForFollowPed_ForAPed_CamOnAString	grove	grove:NOCASES	0	0	0	NOCASES
+CAM	0x50BE30	CCamera::SetCameraDirectlyInFrontForFollowPed_ForAPed_CamOnAString	grove	grove:NOCASES	0	0	0	NOCASES
+CAM	0x515BD0	CCamera::UpdateSoundDistances	grove	grove:PASS 1000/1000p/1000r m0 u0	1000	0	0	PASS
+CAM	0x51A450	CCamera::Constructor	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x50AFA0	CCamera::CopyCameraMatrixToRWCam	grove	grove:PASS 1000/1000p/1000r m0 u0	1000	0	0	PASS
+CAM	0x5BC520	CCamera::Init	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x50C910	CCamera::TakeControlAttachToEntity	grove	grove:NOCASES	0	0	0	NOCASES
+CAM	0x514B80	CCamera::CalculateGroundHeight	grove	grove:PASS 1000/1000p/1000r m0 u0	1000	0	0	PASS
+CAM	0x51A5D0	CCamera::ConeCastCollisionResolve	grove	grove:PASS 1000/1000p/1000r m0 u0	1000	0	0	PASS
+CAM	0x50D860	CHandShaker::Reset	grove	grove:PASS 6/6p/6r m0 u0	6	0	0	PASS
+CAM	0x517330	CHandShaker::SetDefaults	grove	grove:PASS 6/6p/6r m0 u0	6	0	0	PASS
+CAM	0x5B24A0	CCamera::DeleteCutSceneCamDataMemory	grove	grove:PASS 2/2p/2r m0 u0	2	0	0	PASS
+CAM	0x84D6D0	__init_gHandShaker	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x84D700	__init_TheCamera	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x84D720	__init_gIdleCam	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x84D740	__init_preMirrorMat	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x84D750	__init_gpCamColVars	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS
+CAM	0x84D770	__init_g_b6fec0	grove	grove:PASS 1/1p/1r m0 u0	1	0	0	PASS

@@ -15,7 +15,10 @@
 //! the called function reads the register it is entered with ([`callee_effect`]: a thiscall's `this`,
 //! a fastcall's arguments; found by INF-20: ApplySpeed calls `ApplyMoveSpeed` then `ApplyTurnSpeed`
 //! without reloading ECX, 0x547D96/0x547D9B); the path steps over a callee that keeps the register
-//! and ends at one that may write it. Not counted as reads (the same rules as
+//! and ends at one that may write it. HARNESS-3: a callee whose hook declares `preserve` for the
+//! register is stepped over too (the register stays live across two consecutive hooked calls:
+//! LoadMeleeData 0x5BF1FD..0x5BF241), and bounded MSVC jump tables (`cmp r, N; ja; jmp [r*4+T]`) are
+//! followed instead of ending the path. Not counted as reads (the same rules as
 //! `tools/verify/regs_after.py`):
 //! - `xor r, r` / `sub r, r` (a write);
 //! - `lea r, [r]` (an alignment no-op);
@@ -365,6 +368,58 @@ fn after_frame_setup(exe: &crate::testexe::Exe, ip: u32) -> bool {
     false
 }
 
+/// Targets of a bounded MSVC jump table: `cmp r, N; ja DEFAULT; jmp [r*4+TABLE]` gives the N+1
+/// entries of TABLE (the `ja` path is followed as the conditional branch it is). FUN_005bd3b0
+/// (0x5BD3B0, `cmp eax, 7; ja 0x5BD3EB; jmp [eax*4+0x5BD3F4]`) returns through such a table without
+/// writing ECX, which LoadMeleeData relies on (0x5BF219..0x5BF241). Any other indirect jump: None.
+pub fn switch_targets(exe: &crate::testexe::Exe, i: &Instruction) -> Option<Vec<u32>> {
+    if i.mnemonic() != Mnemonic::Jmp
+        || i.op0_kind() != OpKind::Memory
+        || i.memory_base() != Register::None
+        || i.memory_index_scale() != 4
+        || i.memory_index() == Register::None
+    {
+        return None;
+    }
+    let ip = i.ip32();
+    let ja = if exe.bytes(ip.wrapping_sub(2), 1) == [0x77] {
+        ip - 2
+    } else if exe.bytes(ip.wrapping_sub(6), 2) == [0x0F, 0x87] {
+        ip - 6
+    } else {
+        return None;
+    };
+    let ja_i = decode_at(exe, ja);
+    if ja_i.next_ip32() != ip || ja_i.mnemonic() != Mnemonic::Ja {
+        return None;
+    }
+    // `cmp r, imm8` (3 bytes), `cmp eax, imm32` (5), `cmp r, imm32` (6)
+    let n = [3u32, 5, 6].into_iter().find_map(|len| {
+        let c = decode_at(exe, ja.wrapping_sub(len));
+        (c.next_ip32() == ja
+            && c.mnemonic() == Mnemonic::Cmp
+            && c.op0_kind() == OpKind::Register
+            && c.op0_register() == i.memory_index()
+            && matches!(c.op1_kind(), OpKind::Immediate8to32 | OpKind::Immediate32))
+        .then(|| c.immediate(1) as u32)
+    })?;
+    if n > 255 {
+        return None;
+    }
+    let table = i.memory_displacement32();
+    let b = exe.bytes(table, 4 * (n as usize + 1));
+    if b.len() != 4 * (n as usize + 1) {
+        return None;
+    }
+    let ts: Vec<u32> = b
+        .chunks(4)
+        .map(|w| u32::from_le_bytes([w[0], w[1], w[2], w[3]]))
+        .collect();
+    ts.iter()
+        .all(|&t| CODE.iter().any(|&(lo, hi)| (lo..hi).contains(&t)))
+        .then_some(ts)
+}
+
 /// [`Effect`] of the function at `entry` on `reg`, following its direct calls up to [`CALLEE_DEPTH`].
 /// Memoised in `memo` (a recursive call in progress counts as [`Effect::Clobbers`]).
 pub fn callee_effect(
@@ -448,6 +503,9 @@ pub fn callee_effect(
                     }
                 }
                 FlowControl::Return => {}
+                FlowControl::IndirectBranch if let Some(ts) = switch_targets(exe, &i) => {
+                    work.extend(ts.into_iter().map(|t| (t, steps + 1, false)))
+                }
                 // indirect calls and jumps, interrupts
                 _ => keeps = false,
             }
@@ -475,15 +533,23 @@ pub fn callee_effect(
 /// first reads ECX to load the vtable, which is reported by itself.
 pub fn uses_after(exe: &crate::testexe::Exe, starts: &[u32], site: u32) -> Vec<Use> {
     let mut memo = BTreeMap::new();
-    uses_after_memo(exe, starts, site, &mut memo)
+    uses_after_memo(exe, starts, site, &mut memo, &|_| None)
 }
 
-/// [`uses_after`] sharing the callee analysis across call sites.
+/// [`uses_after`] sharing the callee analysis across call sites. `hooked(t)` is the `preserve` mask
+/// of the hook at `t` (None: not hooked): a direct call on the path into a hook that declares it
+/// preserves a register is stepped over for that register even where [`callee_effect`] cannot
+/// prove that the original keeps it (HARNESS-3). The declaration is the evidence the original keeps
+/// it (its callers rely on it, checked by this scan), and the hook keeps it at run time; before,
+/// such a call ended the path and hid a use of the FIRST call's value behind the second call
+/// (CTaskSimpleFight::LoadMeleeData: `call 0x5BD360` at 0x5BF1FD, `call 0x5BD3B0` at 0x5BF219, ECX
+/// read at 0x5BF226; found only by an L3 rand divergence, PORT-AI).
 pub fn uses_after_memo(
     exe: &crate::testexe::Exe,
     starts: &[u32],
     site: u32,
     memo: &mut BTreeMap<(u32, Reg), Effect>,
+    hooked: &dyn Fn(u32) -> Option<u8>,
 ) -> Vec<Use> {
     let mut f = InstructionInfoFactory::new();
     let mut out: BTreeSet<Use> = BTreeSet::new();
@@ -527,7 +593,11 @@ pub fn uses_after_memo(
                     if *w != 0 {
                         continue;
                     }
-                    match callee_effect(exe, starts, t, reg, CALLEE_DEPTH, memo) {
+                    let effect = match callee_effect(exe, starts, t, reg, CALLEE_DEPTH, memo) {
+                        Effect::Clobbers if hooked(t).is_some_and(|m| m & reg.mask() != 0) => Effect::Keeps,
+                        e => e,
+                    };
+                    match effect {
                         Effect::Reads(at) => {
                             out.insert(Use {
                                 site,
@@ -542,6 +612,9 @@ pub fn uses_after_memo(
                     }
                 }
                 work.push((next, wc, wd, steps + 1));
+            }
+            FlowControl::IndirectBranch if let Some(ts) = switch_targets(exe, &i) => {
+                work.extend(ts.into_iter().map(|t| (t, wc, wd, steps + 1)))
             }
             // ret, indirect calls and jumps, interrupts: end of the path
             _ => {}
@@ -667,7 +740,9 @@ mod tests {
                 }
                 real += 1;
                 any = true;
-                for u in uses_after_memo(exe, &starts, s, &mut memo) {
+                for u in uses_after_memo(exe, &starts, s, &mut memo, &|a| {
+                    targets.contains(&a).then(|| preserved(a))
+                }) {
                     if preserved(t) & u.reg.mask() == 0 {
                         undeclared.push((t, u));
                     } else {
@@ -750,6 +825,81 @@ mod tests {
             callee_effect(&exe, &starts, 0x542E20, Reg::Ecx, CALLEE_DEPTH, &mut memo),
             Effect::Reads(0x542E24)
         );
+    }
+
+    /// Negative test (HARNESS-3): without its `preserve = "ecx"`, FUN_005bd360 (0x5BD360) is reported
+    /// at LoadMeleeData's 0x5BF1FD: ECX (the table row) stays live across that call AND the next one,
+    /// `call 0x5BD3B0` at 0x5BF219, until `mov [ecx+0xC1712C], edx` at 0x5BF226. The path reaches the
+    /// read only through the second callee, which the scan steps over because its hook declares
+    /// `preserve = "ecx"` and its body is a bounded jump table ([`switch_targets`]); before HARNESS-3
+    /// both ended the path, and only an L3 rand divergence found the bug (PORT-AI v4).
+    #[test]
+    fn ecx_kept_across_two_hooked_calls_is_flagged() {
+        let Some(exe) = crate::testexe::load() else { return };
+        let (_, undeclared) = scan(&exe, &|a| if a == 0x5BD360 { 0 } else { preserved(a) });
+        let flagged: Vec<(u32, u32)> = undeclared
+            .iter()
+            .filter(|(t, u)| *t == 0x5BD360 && u.reg == Reg::Ecx)
+            .map(|(_, u)| (u.site, u.at))
+            .collect();
+        assert!(flagged.contains(&(0x5BF1FD, 0x5BF226)), "{flagged:?}");
+        // the jump table alone already proves that the original 0x5BD3B0 keeps ECX
+        let starts = procedure_starts();
+        let mut memo = BTreeMap::new();
+        assert_eq!(
+            callee_effect(&exe, &starts, 0x5BD3B0, Reg::Ecx, CALLEE_DEPTH, &mut memo),
+            Effect::Keeps
+        );
+        assert_eq!(
+            switch_targets(&exe, &decode_at(&exe, 0x5BD3BA)).map(|t| t.len()),
+            Some(8)
+        );
+        // the hook's declaration alone (no jump table analysis) also carries the path over 0x5BD3B0
+        let mut memo = BTreeMap::new();
+        memo.insert((0x5BD3B0, Reg::Ecx), Effect::Clobbers);
+        let u = uses_after_memo(&exe, &starts, 0x5BF1FD, &mut memo, &|a| {
+            (a == 0x5BD3B0).then_some(sa_core::abi::PRESERVE_ECX)
+        });
+        assert!(u.iter().any(|x| x.reg == Reg::Ecx && x.at == 0x5BF226), "{u:?}");
+        // the gap itself: without either, the path ends at the second call
+        let u = uses_after_memo(&exe, &starts, 0x5BF1FD, &mut memo, &|_| None);
+        assert!(!u.iter().any(|x| x.reg == Reg::Ecx), "{u:?}");
+    }
+
+    /// Upper bound (HARNESS-3): uses that appear when EVERY hooked callee on a path is assumed to keep
+    /// ECX/EDX, beyond those the declared `preserve`s and the callee analysis already show. A hit
+    /// needs a look at the second callee (it may really write the register, then the later read sees
+    /// that value and the hook is fine): declare `preserve`, or exempt the site here with the
+    /// evidence. On 2026-11-11 (2936 hooks, 18752 sites) there were none.
+    #[test]
+    fn no_use_hides_behind_a_hooked_callee() {
+        let Some(exe) = crate::testexe::load() else { return };
+        let starts = procedure_starts();
+        let targets: BTreeSet<u32> = HOOKS.iter().map(|h| h.addr).collect();
+        let sites = call_sites(&exe, &targets);
+        let mut memo = BTreeMap::new();
+        let mut hits = Vec::new();
+        for (&t, ss) in &sites {
+            for &s in ss {
+                if !on_boundary(&exe, &starts, s) {
+                    continue;
+                }
+                let base = uses_after_memo(&exe, &starts, s, &mut memo, &|a| {
+                    targets.contains(&a).then(|| preserved(a))
+                });
+                for u in uses_after_memo(&exe, &starts, s, &mut memo, &|a| {
+                    targets.contains(&a).then_some(0xFF)
+                }) {
+                    if preserved(t) & u.reg.mask() == 0 && !base.contains(&u) {
+                        hits.push(format!(
+                            "{t:#x} <- {:#x}: {:?} at {:#x} `{}`",
+                            u.site, u.reg, u.at, u.text
+                        ));
+                    }
+                }
+            }
+        }
+        assert!(hits.is_empty(), "{hits:#?}");
     }
 
     /// The scan's exceptions on fixed code (the push-as-allocation sites the verifier listed).

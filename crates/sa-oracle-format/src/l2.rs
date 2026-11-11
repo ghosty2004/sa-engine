@@ -442,6 +442,10 @@ pub struct Case {
     /// (`window_pre` then holds the plain run's); unchanged bytes of a written word may differ
     /// between the two processes (OS object addresses).
     pub window_pre_rust: Vec<Write>,
+    /// Host only (not encoded), split-run: the argument-block addresses (`esp`) of the enclosing
+    /// recorded calls found in both runs, nearest first: (this record's run, the other run). In a
+    /// merged pair, (plain, rust). normalise.rs `Stack` classifies stack addresses by these frames.
+    pub frames: Vec<(u32, u32)>,
 }
 
 /// `leave` of a split-run record made in the plain run: `orig` holds the original's outcome.
@@ -793,13 +797,14 @@ impl Case {
                 })
                 .collect(),
         };
-        let mk = |o: &Outcome, esp: u32, foreign: &Vec<u32>| NormCtx {
+        let mk = |o: &Outcome, esp: u32, foreign: &Vec<u32>, frames: Vec<u32>| NormCtx {
             image: self.image,
             pools: pools.clone(),
             model_infos: Vec::new(),
             allocs: o.allocs.clone(),
             stack: self.stack,
             esp,
+            frames,
             foreign: foreign.clone(),
         };
         let merged = self.esp_rust != 0 || !self.foreign_rust.is_empty();
@@ -808,9 +813,15 @@ impl Case {
         } else {
             (self.esp, &self.foreign)
         };
+        let own: Vec<u32> = self.frames.iter().map(|f| f.0).collect();
+        let other: Vec<u32> = if merged {
+            self.frames.iter().map(|f| f.1).collect()
+        } else {
+            own.clone()
+        };
         (
-            mk(&self.orig, self.esp, &self.foreign),
-            mk(&self.rust, esp_r, f_r),
+            mk(&self.orig, self.esp, &self.foreign, own),
+            mk(&self.rust, esp_r, f_r, other),
         )
     }
 }
@@ -1269,6 +1280,7 @@ mod tests {
             foreign: Vec::new(),
             foreign_rust: Vec::new(),
             foreign_words: Vec::new(),
+            frames: Vec::new(),
             merged: false,
             window_pre_rust: Vec::new(),
         }

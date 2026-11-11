@@ -19,7 +19,7 @@
 //! post-call region bytes. Every byte range the normaliser excludes (original uninitialised data) is
 //! listed with both values when it actually differed (`excluded:` lines).
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
 use sa_oracle_format::l2::{self as fmt, Case, RegionKind};
@@ -63,6 +63,9 @@ pub struct FnResult {
     /// Watched-window words holding OS object addresses that differed between the runs (masked in the
     /// fingerprint; distinct addresses).
     pub foreign_words: std::collections::BTreeSet<u32>,
+    /// Watched-window words holding stack addresses that are not the same variable in both runs
+    /// (masked in the page hashes, compared by [`stack_word_diffs`]): "ADDR plain X rust Y" -> pairs.
+    pub stack_words: BTreeMap<String, usize>,
 }
 
 impl FnResult {
@@ -120,13 +123,63 @@ pub fn stack_delta(a: &Case, b: &Case) -> u32 {
     }
 }
 
-/// `v` of the rust run moved to the plain run's stack layout when it is a stack address.
+/// `v` of the rust run moved to the plain run's stack layout when it is a stack address: by the
+/// shift of the frame it lies in (normalise.rs `Stack`: above an enclosing recorded call, that call's
+/// shift; `b.frames` = (rust, plain) argument blocks), otherwise by the case's own shift `delta`.
 fn rebase(b: &Case, delta: u32, v: u32) -> u32 {
-    if delta != 0 && v >= b.stack.0 && v < b.stack.1 {
-        v.wrapping_add(delta)
-    } else {
-        v
+    if v < b.stack.0 || v >= b.stack.1 {
+        return v;
     }
+    let enclosing = b
+        .frames
+        .iter()
+        .filter(|f| f.0 != 0 && f.0 > b.esp && f.0 <= v)
+        .max_by_key(|f| f.0);
+    match enclosing {
+        Some(&(r, p)) if p != 0 => v - r + p,
+        _ => v.wrapping_add(delta),
+    }
+}
+
+/// Enclosing recorded calls of every case of one split-run spool (spool order = completion order,
+/// `seq` = entry order): case index -> indices of the cases it runs inside, nearest first.
+pub fn enclosing(spool: &[Case]) -> Vec<Vec<usize>> {
+    let mut out = vec![Vec::new(); spool.len()];
+    let mut done: Vec<(u32, usize)> = spool.iter().enumerate().map(|(i, c)| (c.seq, i)).collect();
+    done.sort_unstable();
+    let mut open: Vec<usize> = Vec::new(); // completion indices of the open outer cases
+    for &(_, i) in &done {
+        while open.last().is_some_and(|&end| end < i) {
+            open.pop();
+        }
+        out[i] = open.iter().rev().copied().collect();
+        open.push(i);
+    }
+    out
+}
+
+/// The pair with `frames` set (normalise.rs `Stack` frames, HARNESS-3): for each enclosing recorded
+/// call of the plain case (nearest first), its argument block in the plain run and that of the same
+/// call (function, ordinal) in the rust run when it encloses the rust case too (else 0). `a.frames`
+/// holds (plain, rust), `b.frames` (rust, plain). None when the plain case has no enclosing call.
+pub fn with_frames(a: &Case, b: &Case, a_enc: &[&Case], b_enc: &[&Case]) -> Option<(Case, Case)> {
+    if a_enc.is_empty() {
+        return None;
+    }
+    let frames: Vec<(u32, u32)> = a_enc
+        .iter()
+        .map(|x| {
+            let r = b_enc
+                .iter()
+                .find(|y| y.fn_addr == x.fn_addr && y.ordinal == x.ordinal)
+                .map_or(0, |y| y.esp);
+            (x.esp, r)
+        })
+        .collect();
+    let (mut a2, mut b2) = (a.clone(), b.clone());
+    b2.frames = frames.iter().map(|&(p, r)| (r, p)).collect();
+    a2.frames = frames;
+    Some((a2, b2))
 }
 
 /// The meaningful bits of stack argument word `k` of the hooked function at `fn_addr`: 0xFF / 0xFFFF
@@ -161,7 +214,9 @@ fn caller_stack(c: &Case, v: u32) -> bool {
 /// declared bytes are: the pointer argument is compared by the pointee (the region's bytes before
 /// the call, compared like every region), its writes are moved to the plain run's address, and every
 /// use is counted (`FnResult::stack_pointees`). A stack pointer without a declared pointee stays a
-/// difference (declare `HOOK@argN:SIZE:R` in tools/e2e/l2-extras.txt).
+/// difference (declare `HOOK@argN:SIZE:R` in tools/e2e/l2-extras.txt). A declared region at the SAME
+/// caller-frame address in both runs while the call's own argument block moved is listed too
+/// (plain = rust address): its writes are not moved by the call's shift.
 pub fn stack_pointees(a: &Case, b: &Case) -> Vec<(usize, u32, u32, u32)> {
     a.regions
         .iter()
@@ -170,14 +225,24 @@ pub fn stack_pointees(a: &Case, b: &Case) -> Vec<(usize, u32, u32, u32)> {
         .filter(|(_, (x, y))| {
             x.kind == y.kind
                 && matches!(x.kind, RegionKind::ArgPtr(_) | RegionKind::Extra)
-                && x.addr != y.addr
-                && !x.pre.is_empty()
-                && x.pre.len() == y.pre.len()
                 && caller_stack(a, x.addr)
                 && caller_stack(b, y.addr)
+                && if x.addr != y.addr {
+                    !x.pre.is_empty() && x.pre.len() == y.pre.len()
+                } else {
+                    // the same object in both runs while the call's own block moved (the frame
+                    // that holds it lies above a Rust caller of different size): its writes stay
+                    // where they are (HARNESS-3, FUN_00606060's task / facial out-parameters)
+                    stack_delta(a, b) != 0 && region_len(x) != 0 && region_len(x) == region_len(y)
+                }
         })
-        .map(|(i, (x, y))| (i, x.addr, y.addr, x.pre.len() as u32))
+        .map(|(i, (x, y))| (i, x.addr, y.addr, region_len(x)))
         .collect()
+}
+
+/// Bytes of a region: before the call, or after it for a write-only region.
+fn region_len(r: &fmt::Region) -> u32 {
+    r.pre.len().max(r.post_orig.len()) as u32
 }
 
 /// A rust-run address moved to the plain run's layout: into the plain run's pointee for a byte of a
@@ -387,23 +452,50 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
     (None, soft)
 }
 
+/// Stack-valued words of the static windows (masked in the page hashes by sa-hook and listed in
+/// `Case::foreign_words`, HARNESS-3) that are not equal through normalise.rs (`Stack` by frame):
+/// (address, plain value, rust value; None = not listed in that run). Reviewed volatile bytes
+/// (`INPUT_EXCLUSIONS`, e.g. gpColCache's stack buffers) are skipped as in the fingerprint.
+pub fn stack_word_diffs(a: &Case, b: &Case) -> Vec<(u32, Option<u32>, Option<u32>)> {
+    let (ca, cb) = input_ctx(a, b);
+    let fw = |c: &Case| -> BTreeMap<u32, u32> {
+        c.foreign_words
+            .chunks(2)
+            .filter(|p| p.len() == 2)
+            .map(|p| (p[0], p[1]))
+            .collect()
+    };
+    let (fa, fb) = (fw(a), fw(b));
+    let on_stack = |c: &Case, v: u32| c.esp != 0 && v >= c.stack.0 && v < c.stack.1;
+    let addrs: BTreeSet<u32> = fa.keys().chain(fb.keys()).copied().collect();
+    addrs
+        .into_iter()
+        .filter(|&addr| !(0..4).any(|k| normalise::input_excluded(addr + k)))
+        .filter_map(|addr| {
+            let (x, y) = (fa.get(&addr).copied(), fb.get(&addr).copied());
+            let stack = x.is_some_and(|v| on_stack(a, v)) || y.is_some_and(|v| on_stack(b, v));
+            let same =
+                x == y || matches!((x, y), (Some(x), Some(y)) if normalise::words_equal(x, &ca, y, &cb));
+            (stack && !same).then_some((addr, x, y))
+        })
+        .collect()
+}
+
 /// Pages of the static watched windows whose fingerprint differs before the call (state outside the
-/// declared read set), or None.
+/// declared read set), or None. A page with a [`stack_word_diffs`] word counts as differing.
 pub fn page_diff(a: &Case, b: &Case) -> Option<Vec<u32>> {
-    if a.page_hashes == b.page_hashes {
-        return None;
-    }
     if a.page_hashes.len() != b.page_hashes.len() {
         return Some(vec![u32::MAX]);
     }
-    Some(
-        a.page_hashes
-            .iter()
-            .zip(&b.page_hashes)
-            .filter(|(p, q)| p != q)
-            .map(|(p, _)| p.0)
-            .collect(),
-    )
+    let mut pages: BTreeSet<u32> = a
+        .page_hashes
+        .iter()
+        .zip(&b.page_hashes)
+        .filter(|(p, q)| p != q)
+        .map(|(p, _)| p.0)
+        .collect();
+    pages.extend(stack_word_diffs(a, b).into_iter().map(|w| w.0 & !0xFFF));
+    (!pages.is_empty()).then(|| pages.into_iter().collect())
 }
 
 /// The plain run's record with the rust run's outputs (the case `compare` understands). Post-region
@@ -585,6 +677,15 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
     }
     let key = |c: &Case| (c.fn_addr, c.ordinal);
     let rmap: BTreeMap<(u32, u32), &Case> = rust.iter().map(|c| (key(c), c)).collect();
+    // enclosing recorded calls (normalise.rs `Stack` frames), by (function, ordinal)
+    let enc_of = |spool: &[Case]| -> BTreeMap<(u32, u32), Vec<usize>> {
+        enclosing(spool)
+            .into_iter()
+            .enumerate()
+            .map(|(i, e)| (key(&spool[i]), e))
+            .collect()
+    };
+    let (penc, renc) = (enc_of(plain), enc_of(rust));
     let mut by_fn: BTreeMap<u32, FnResult> = BTreeMap::new();
     for c in plain.iter().chain(rust) {
         let e = by_fn.entry(c.fn_addr).or_insert_with(|| FnResult {
@@ -602,8 +703,18 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
     ordered.sort_by_key(|c| c.seq);
     let mut first_div: Option<(u32, String)> = None;
     for a in ordered {
-        let Some(b) = rmap.get(&key(a)) else {
+        let Some(&b) = rmap.get(&key(a)) else {
             continue;
+        };
+        let framed = with_frames(
+            a,
+            b,
+            &penc[&key(a)].iter().map(|&i| &plain[i]).collect::<Vec<_>>(),
+            &renc[&key(b)].iter().map(|&i| &rust[i]).collect::<Vec<_>>(),
+        );
+        let (a, b) = match &framed {
+            Some((x, y)) => (x, y),
+            None => (a, b),
         };
         if by_fn[&a.fn_addr].diverged.is_some() {
             if let (Some(d), _) = input_diff(a, b) {
@@ -642,6 +753,12 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
             continue;
         }
         e.soft_input_diffs += soft as usize;
+        for (addr, x, y) in stack_word_diffs(a, b) {
+            let v = |w: Option<u32>| w.map_or("-".into(), |w| format!("{w:#x}"));
+            *e.stack_words
+                .entry(format!("{addr:#x} plain {} rust {}", v(x), v(y)))
+                .or_default() += 1;
+        }
         if let Some(pages) = page_diff(a, b) {
             e.fingerprint_pairs += 1;
             if e.first_fingerprint.is_none() {
@@ -949,6 +1066,20 @@ pub fn print_report(rep: &Report) -> String {
                 if f.foreign_words.len() > 12 { ",…" } else { "" }
             );
         }
+        if !f.stack_words.is_empty() {
+            let v: Vec<String> = f
+                .stack_words
+                .iter()
+                .take(6)
+                .map(|(w, n)| format!("{w} x{n}"))
+                .collect();
+            let _ = writeln!(
+                s,
+                "    window words holding stack addresses of different variables (normalise.rs Stack by frame): {}{}",
+                v.join(", "),
+                if f.stack_words.len() > 6 { ", …" } else { "" }
+            );
+        }
         for v in rep.volatile_rules.get(&f.addr).into_iter().flatten() {
             let _ = writeln!(
                 s,
@@ -1210,6 +1341,122 @@ mod tests {
         p5[0].esp = 0x36EF00;
         r5[0].esp = 0x36EF00;
         assert!(split_report(&p5, &r5).fns[0].diverged.is_some());
+    }
+
+    /// HARNESS-3: a stack address in a static window that lies above an enclosing recorded call moved
+    /// by THAT call's shift (PORT-WEAPON-2 split-combat: CReferences 0xB9C4FC holds the address of a
+    /// `CEntity*` slot of DoBulletImpact's caller, plain 0x0036F06C rust 0x0036EF5C, 0x110 apart like
+    /// the DoBulletImpact calls; the GenerateDamageEvent calls inside it are 0x124 apart).
+    #[test]
+    fn stack_words_above_an_enclosing_call_compare_by_its_frame() {
+        let slot = 0xB9C4FC;
+        let inner = |leave: u8, esp: u32, v: u32| {
+            let mut c = case(leave, 0, 1, 0);
+            c.fn_addr = 0x73A530;
+            c.name = "CWeapon::GenerateDamageEvent".into();
+            c.esp = esp;
+            c.stack = (0x270000, 0x370000);
+            c.windows = vec![(0xB9B000, 0xB9D000)];
+            c.page_hashes = vec![(0xB9B000, 1), (0xB9C000, 2)];
+            c.window_pre = vec![Write {
+                addr: slot,
+                bytes: v.to_le_bytes().to_vec(),
+            }];
+            c.orig.writes = vec![Write {
+                addr: slot,
+                bytes: vec![0; 4],
+            }];
+            // masked in the fingerprint by sa-hook, listed with the OS object words
+            c.foreign_words = vec![slot, v];
+            c
+        };
+        let outer = |leave: u8, esp: u32| {
+            let mut c = case(leave, 0, 0, 0);
+            c.fn_addr = 0x73B550;
+            c.name = "CWeapon::DoBulletImpact".into();
+            c.esp = esp;
+            c.stack = (0x270000, 0x370000);
+            c
+        };
+        // spool order = completion order: the inner call completes first
+        let p = vec![inner(2, 0x36EE00, 0x36F06C), outer(2, 0x36F000)];
+        let r = vec![inner(3, 0x36EE00 - 0x124, 0x36EF5C), outer(3, 0x36F000 - 0x110)];
+        assert_eq!(enclosing(&p), vec![vec![1], vec![]]);
+        let rep = split_report(&p, &r);
+        let f = rep.fns.iter().find(|f| f.addr == 0x73A530).unwrap();
+        assert_eq!(f.verdict(), "PASS", "{f:?}");
+        assert_eq!(f.compared, 1);
+        // without the enclosing call (only the case's own shift): a different input
+        let rep = split_report(&p[..1], &r[..1]);
+        let f = &rep.fns[0];
+        assert!(
+            f.diverged
+                .as_ref()
+                .is_some_and(|d| d.2.starts_with("window byte")),
+            "{f:?}"
+        );
+        // another slot of the same frame: a different input
+        let mut r2 = r.clone();
+        r2[0].window_pre[0].bytes = 0x36EF60u32.to_le_bytes().to_vec();
+        let rep = split_report(&p, &r2);
+        assert!(
+            rep.fns
+                .iter()
+                .find(|f| f.addr == 0x73A530)
+                .unwrap()
+                .diverged
+                .is_some()
+        );
+        // a listed (fingerprint-masked) stack word at another offset: the page counts as differing
+        let mut r3 = r.clone();
+        r3[0].foreign_words[1] = 0x36EF60;
+        let rep = split_report(&p, &r3);
+        let f = rep.fns.iter().find(|f| f.addr == 0x73A530).unwrap();
+        assert_eq!(f.verdict(), "PASS-FP", "{f:?}");
+        assert_eq!(
+            f.fingerprint_pages.keys().copied().collect::<Vec<_>>(),
+            [0xB9C000]
+        );
+    }
+
+    /// HARNESS-3, FUN_00606060 (c-bug, x606c-cb): the task out-parameter points into a frame above
+    /// the Rust 0x606E70 at the same address in both runs (0x36FBA8) while the call's own block moved
+    /// +0x64; the rust write must stay at 0x36FBA8, not move to 0x36FC0C.
+    #[test]
+    fn out_parameter_at_the_same_address_is_not_moved() {
+        let mk = |leave: u8, esp: u32| {
+            let mut c = case(leave, 0, 0, 0);
+            c.esp = esp;
+            c.stack = (0x270000, 0x370000);
+            c.args = vec![0x1D, 0x36FBA8];
+            c.regions.push(Region {
+                addr: 0x36FBA8,
+                kind: RegionKind::Extra,
+                access: fmt::ACC_W,
+                readable: true,
+                pre: vec![],
+                post_orig: vec![0xFC, 0x01],
+                post_rust: vec![],
+            });
+            c.orig.writes.push(Write {
+                addr: 0x36FBA8,
+                bytes: vec![0xFC, 0x01],
+            });
+            c.window_pre.push(Write {
+                addr: 0x36FBA8,
+                bytes: vec![0, 0],
+            });
+            c
+        };
+        let p = vec![mk(2, 0x36FA00)];
+        let r = vec![mk(3, 0x36FA00 - 0x64)];
+        let f = &split_report(&p, &r).fns[0];
+        assert_eq!(f.verdict(), "PASS", "{f:?}");
+        // undeclared: the write is moved by the call's shift and compares at another address
+        let (mut p2, mut r2) = (p.clone(), r.clone());
+        p2[0].regions.pop();
+        r2[0].regions.pop();
+        assert_eq!(split_report(&p2, &r2).fns[0].verdict(), "FAIL");
     }
 
     /// A 1-byte parameter's stack word: only its low byte is an input (`bool dontCare` of

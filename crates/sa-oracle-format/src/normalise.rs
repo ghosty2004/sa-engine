@@ -12,7 +12,7 @@
 //! | model info | `Model { id, off }` | inside `CModelInfo::ms_modelInfoPtrs[id]` .. +0x20 (`CBaseModelInfo` size, layouts.csv) |
 //! | exe image | `Image { off }` | 0x400000 + off inside the image (symbol + offset; symbolised by the host report) |
 //! | OS object | `Foreign` | split-run only: one of the case's `foreign` values (a pointer into committed memory outside the image, the arena and the stack, i.e. Wine/D3D/DirectInput/DirectSound objects); no identity |
-//! | stack | `Stack { off }` | inside the thread's stack [limit, base) of a split-run case, off = value - the case's first-argument address (split-run only: `esp` is 0 elsewhere) |
+//! | stack | `Stack { frame, off }` | inside the thread's stack [limit, base) of a split-run case: in the frames above the nearest enclosing recorded call `frame` (1-based, [`NormCtx::frames`]) whose argument block lies at or below the value, off = value - that block; else `frame` 0 and off = value - the case's first-argument address (split-run only: `esp` is 0 elsewhere) |
 //! | anything else | `Raw(v)` | |
 //!
 //! Inside one process, pools, model infos and the image are at the same addresses for the original's
@@ -27,6 +27,20 @@
 //! stack 0x30 lower), every stack address below it moves by the same amount. A stack pointer is then
 //! compared by its distance from the call's own argument block, which identifies the same caller
 //! variable in both runs. `sa-oracle l2 split-report` counts the pairs compared with a stack shift.
+//!
+//! Stack frames of enclosing calls (HARNESS-3): the shift is not the same over the whole stack. Each
+//! Rust frame between two locations moves the lower one by its own size difference, so a stack
+//! address that lies in the frames ABOVE an enclosing recorded call (an ancestor whose own
+//! implementation is Rust in the rust run) moved by THAT call's shift, not by the current call's. The
+//! address of a `CEntity*` slot registered in `CReferences` (0xB9B9A8 `aRefs`) by a Rust
+//! `CWeapon::FireInstantHit` is seen by `CWeapon::GenerateDamageEvent` below the Rust
+//! `DoBulletImpact` (PORT-WEAPON-2 split-combat: 0xB9C4FC plain 0x0036F06C rust 0x0036EF5C, 0x110
+//! apart, while GenerateDamageEvent's own argument blocks were further apart). The split report
+//! gives each case the argument-block addresses of its enclosing recorded calls ([`NormCtx::frames`],
+//! index-aligned between the two runs; nearest first), and a stack address is classified by the
+//! frame it lies in: the enclosing call with the highest argument block at or below it, with the
+//! offset from that block. Two addresses are then equal when they are the same distance above the
+//! same enclosing call, which identifies the same variable of that call's callers in both runs.
 //!
 //! `Foreign` (split-run L2, INF-17; OS-assigned values): objects the OS / Wine / D3D allocate outside
 //! the determinism arena (IDirect3D9 0xC97C20, the depth-stencil surface 0xC97C2C, vertex
@@ -47,6 +61,8 @@ pub const NUM_MODEL_INFOS: u32 = 20000;
 /// `sizeof(CBaseModelInfo)` (catalog/layouts.csv).
 pub const BASE_MODEL_INFO_SIZE: u32 = 0x20;
 
+/// Normal form of a word (module table). `Stack::frame` 0: above the case's own argument block; k:
+/// above that of `NormCtx::frames[k - 1]`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Norm {
     Raw(u32),
@@ -54,7 +70,7 @@ pub enum Norm {
     Pool { pool: u8, slot: u32, off: u32 },
     Model { id: u32, off: u32 },
     Alloc { ordinal: u32, off: u32 },
-    Stack { off: u32 },
+    Stack { frame: u8, off: u32 },
     Foreign,
 }
 
@@ -71,11 +87,27 @@ pub struct NormCtx {
     /// Split-run: the thread's stack [limit, base) and the case's first-argument address (0: no class).
     pub stack: (u32, u32),
     pub esp: u32,
+    /// Split-run (host only): the argument-block addresses of the enclosing recorded calls of the
+    /// case in this run, index-aligned with the other run's context (the same ancestors); 0 = not
+    /// known in this run. Empty: only the case's own block (`esp`) is used.
+    pub frames: Vec<u32>,
     /// Split-run: this run's OS object addresses (sorted; empty: no class).
     pub foreign: Vec<u32>,
 }
 
 impl NormCtx {
+    /// Index into `frames` of the enclosing call whose callers' frames hold stack address `v`: the
+    /// one with the highest argument block at or below `v` (above the case's own block `esp`).
+    pub fn frame_of(&self, v: u32) -> Option<usize> {
+        self.frames
+            .iter()
+            .enumerate()
+            .take(254)
+            .filter(|&(_, &f)| f != 0 && f > self.esp && f <= v)
+            .max_by_key(|&(_, &f)| f)
+            .map(|(k, _)| k)
+    }
+
     pub fn normalise(&self, v: u32) -> Norm {
         for (i, &(a, n)) in self.allocs.iter().enumerate() {
             if v >= a && (v as u64) < a as u64 + n.max(1) as u64 {
@@ -110,8 +142,15 @@ impl NormCtx {
             return Norm::Foreign;
         }
         if self.esp != 0 && v >= self.stack.0 && v < self.stack.1 {
-            return Norm::Stack {
-                off: v.wrapping_sub(self.esp),
+            return match self.frame_of(v) {
+                Some(k) => Norm::Stack {
+                    frame: (k + 1) as u8,
+                    off: v - self.frames[k],
+                },
+                None => Norm::Stack {
+                    frame: 0,
+                    off: v.wrapping_sub(self.esp),
+                },
             };
         }
         if v >= self.image.0 && v < self.image.1 {
@@ -916,6 +955,7 @@ mod tests {
             allocs,
             stack: (0, 0),
             esp: 0,
+            frames: Vec::new(),
             foreign: Vec::new(),
         }
     }
@@ -954,11 +994,50 @@ mod tests {
         );
         (a.stack, a.esp) = ((0x270000, 0x370000), 0x36F1F0);
         (b.stack, b.esp) = ((0x270000, 0x370000), 0x36F1C0);
-        assert_eq!(a.normalise(0x36F208), Norm::Stack { off: 0x18 });
+        assert_eq!(a.normalise(0x36F208), Norm::Stack { frame: 0, off: 0x18 });
         assert!(words_equal(0x36F208, &a, 0x36F1D8, &b));
         assert!(!words_equal(0x36F208, &a, 0x36F1DC, &b), "different variable");
         assert!(!words_equal(0x36F208, &a, 0x5000, &b), "a non-stack value");
         assert!(!words_equal(0x1234, &a, 0x1235, &b));
+    }
+
+    /// HARNESS-3: a stack address above an enclosing recorded call moved by that call's shift. The
+    /// numbers of PORT-WEAPON-2 split-combat (docs/arch/weapon-ped-port.md): FireInstantHit's
+    /// `CEntity*` slot registered in CReferences, plain 0x0036F06C rust 0x0036EF5C (0x110 apart: the
+    /// shift of the enclosing DoBulletImpact call), seen by GenerateDamageEvent whose own argument
+    /// blocks are 0x124 apart (the Rust DoBulletImpact's frame is 0x14 larger).
+    #[test]
+    fn stack_addresses_above_an_enclosing_call_compare_by_its_frame() {
+        let mut a = ctx(vec![]);
+        let mut b = ctx(vec![]);
+        (a.stack, a.esp) = ((0x270000, 0x370000), 0x36EE00);
+        (b.stack, b.esp) = ((0x270000, 0x370000), 0x36EE00 - 0x124);
+        // only the case's own block: the slot is 0x110 apart, the blocks 0x124: different
+        assert!(!words_equal(0x36F06C, &a, 0x36EF5C, &b));
+        // DoBulletImpact's argument block (the enclosing recorded call) in each run
+        a.frames = vec![0x36F000];
+        b.frames = vec![0x36F000 - 0x110];
+        assert_eq!(a.normalise(0x36F06C), Norm::Stack { frame: 1, off: 0x6C });
+        assert!(words_equal(0x36F06C, &a, 0x36EF5C, &b));
+        assert!(
+            !words_equal(0x36F06C, &a, 0x36EF60, &b),
+            "another variable of that frame"
+        );
+        // below the enclosing block (the Rust DoBulletImpact's own frame): the case's own shift
+        assert_eq!(a.normalise(0x36EE10), Norm::Stack { frame: 0, off: 0x10 });
+        assert!(words_equal(0x36EE10, &a, 0x36EE10 - 0x124, &b));
+        assert!(!words_equal(0x36EE10, &a, 0x36EE10 - 0x110, &b));
+        // a block not known in one run, or a slot on different sides of the block: different
+        b.frames = vec![0];
+        assert!(!words_equal(0x36F06C, &a, 0x36EF5C, &b));
+        b.frames = vec![0x36EF60];
+        assert!(!words_equal(0x36F06C, &a, 0x36EF5C, &b));
+        // the nearest enclosing call is used (two levels)
+        a.frames = vec![0x36F000, 0x36F100];
+        b.frames = vec![0x36F000 - 0x110, 0x36F100 - 0x40];
+        assert!(words_equal(0x36F120, &a, 0x36F120 - 0x40, &b));
+        assert!(!words_equal(0x36F120, &a, 0x36F120 - 0x110, &b));
+        assert!(words_equal(0x36F06C, &a, 0x36EF5C, &b));
     }
 
     #[test]
