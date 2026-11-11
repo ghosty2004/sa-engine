@@ -783,3 +783,8 @@
 - Agent abe46fff + 2 helpers (lane 1): crate sa-cam, specs_cam.rs, docs/arch/cam-port.md + verdicts, lists, extras.
 - Merge: registration conflicts resolved with a scratch script (cam after hud); a duplicated `pub mod specs_core_util`
   from the merge removed. sa-hook lib 48, sa-cam tests, workspace clippy, i686 OK; all-ports IDENTICAL on 7 recordings.
+
+## 2026-11-11 PORT-AI-1 integrated (main session)
+- Agent a4ff952d + 2 helpers (lane 7): crate sa-ai, docs/arch/ai-port.md + verdicts, lists, extras section.
+- Merge (ai after cam); sa-hook lib 48, sa-ai 3, workspace clippy, i686 OK; all-ports IDENTICAL on all 7 recordings
+  (c-bug first). States: 199 → L2, 267 → implemented. F1 = 1420 / 15,479 (9.17 %).

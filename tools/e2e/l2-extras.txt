@@ -2624,3 +2624,46 @@ CCamera::ConeCastCollisionResolve@0xB742D8:0x154:RW
 # __init_TheCamera: the CCamera constructor's CCam::Init calls reset gIdleCam and CPad 0 +0x120.
 __init_TheCamera@0xB6FDA0:0x9C:RW
 __init_TheCamera@0xB73578:4:RW
+# PORT-AI-1 (docs/arch/ai-port.md). Task/event destructors run the original base destructors through orig!
+# (sub-task deletion, entity references, anim associations, IK chains, audio), identical in both runs of a
+# split pair. Every region below is a write the grove split run (ai-g-split, before these lines) reported
+# outside the declared set: CReferences::aRefs + pEmptyList (0xB9B9A8..0xBA176C), the IK chain manager
+# (0xC14E00..0xC15F80), and single bytes/words seen at 0x965510, 0xB1EAF0, 0xB5D6F2/0xB5DD72/0xB5DDB2 (anim
+# block reference counts), 0xB61C54 / 0xB63968 (audio), 0xB74238, 0xB74428, 0xB994C4, 0xB997C4.
+doc:ai-port@0xB9B9A8:0x5DC4:RW
+doc:ai-port@0xC14E00:0x1180:RW
+doc:ai-port@0x965510:0xC:RW
+doc:ai-port@0xB1EAF0:0x28:RW
+doc:ai-port@0xB5D6F2:1:RW
+doc:ai-port@0xB5DD72:1:RW
+doc:ai-port@0xB5DDB2:1:RW
+doc:ai-port@0xB61C54:0x1C:RW
+doc:ai-port@0xB63968:0x68:RW
+doc:ai-port@0xB74238:1:RW
+doc:ai-port@0xB74428:3:RW
+doc:ai-port@0xB994C4:1:RW
+doc:ai-port@0xB997C4:2:RW
+# PORT-AI-1 per-hook regions from the grove split run (ai-grove-sp0): out-parameters through stack arguments,
+# `this` of stack objects (CEventGroupEvent), and the globals the functions own: CDecisionMakerTypes slot
+# tables (0xC0AFE0..0xC0B030), CPedGroups::ms_activeGroups (0xC098D0), CInformFriendsEventQueue
+# (0xA9AFB8, 8 x 0xC), and the two anim-manager bytes a sub-task's MakeAbortable releases.
+CTaskComplex::MakeAbortable@0xB5D4B2:1:RW
+CTaskComplex::MakeAbortable@0xB5EB28:2:RW
+CDecisionMakerTypes::GetInstance@0xC0AFE0:0x50:RW
+CDecisionMakerTypes::AddDecisionMaker@0xC0AFE0:0x50:RW
+CDecisionMakerTypes::RemoveDecisionMaker@0xC0AFE0:0x50:RW
+FUN_0046fee0@arg0:0xC:W
+FUN_00665dc0@arg0:0xC:W
+CInformFriendsEventQueue::Add@0xA9AFB8:0x60:RW
+CEventGroupEvent::CEventGroupEvent@ecx:0x14:RW
+CEventGroupEvent::~CEventGroupEvent@ecx:0x14:RW
+FUN_005ec220@arg0:4:RW
+CPedGroups::AddGroup@0xC098D0:0x20:RW
+CPedGroups::Init@0xC098D0:0x20:RW
+CInterestingEvents::Constructor@ecx:0x158:RW
+CDecision::MakeDecision@arg6:2:W
+CDecision::MakeDecision@arg7:2:W
+FUN_00606060@arg7:2:W
+FUN_00606060@arg8:2:W
+CDecisionMakerTypes::MakeDecision-ped-ptr@arg9:2:W
+CDecisionMakerTypes::MakeDecision-ped-ptr@arg10:2:W

@@ -81,7 +81,7 @@ pub fn image_cached() -> Option<Arc<pe::Image>> {
 static HOOK_PRESERVE: OnceLock<std::collections::HashMap<u32, u8>> = OnceLock::new();
 
 /// The `#[hook(preserve = ...)]` registers of the port hooked at `addr` (sa-core, sa-stream, sa-world,
-/// sa-input and sa-anim registrations; `None` when no port is hooked there).
+/// sa-input, sa-anim and sa-ai registrations; `None` when no port is hooked there).
 pub fn hook_preserve(addr: u32) -> Option<u8> {
     HOOK_PRESERVE
         .get_or_init(|| {
@@ -98,6 +98,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .chain(sa_veh::hooks::ALL.iter())
                 .chain(sa_hud::hooks::ALL.iter())
                 .chain(sa_cam::hooks::ALL.iter())
+                .chain(sa_ai::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })
