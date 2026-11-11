@@ -45,6 +45,8 @@ RUN_TIMEOUT="${RUN_TIMEOUT:-900}"
 # Outputs next to OUT_TRACE: .log (sa-hook.log), .det (last det status), .cov.csv, .l2.spool(.txt).
 probe_main() {
     local name="$1" end="$2" modes="$3" out="$4"
+    # a mode list longer than one argument (Linux MAX_ARG_STRLEN) arrives as @UNIX_FILE (sa-oracle l3)
+    case "$modes" in @/*) modes="$(cat "${modes#@}")" || return 1 ;; esac
     # shellcheck source=lib.sh
     source "$HERE/lib.sh"
     if [ "${L3_LOCKED:-0}" != 1 ]; then
