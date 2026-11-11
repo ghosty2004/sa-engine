@@ -55,8 +55,8 @@ pub const MODULES: &[&[HookReg]] = &[
     script_things::HOOKS,
     crate::the_scripts_init::HOOKS,
     misc::HOOKS,
-    // script_search_lights::HOOKS (mvpk-script-2, full port of 0x4939F0) is not registered: the_scripts_init
-    // registers the same address (std6-script-1, partial with fallback); keep one of them.
+    // The full port of 0x4939F0 (mvpk-script-2) replaces the_scripts_init's partial (std6-script-1).
+    crate::script_search_lights::HOOKS,
     script_locate::HOOKS,
     crate::script_thing_index::HOOKS,
     crate::streamed_script_load::HOOKS,

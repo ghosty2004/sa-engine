@@ -489,23 +489,6 @@ pub fn add_script_to_list(this: GPtr<u8>, head: GPtr<u32>) {
     head.write(a);
 }
 
-/// `CTheScripts::ProcessAllSearchLights()` (0x4939F0), partial (ADR-002): the 8 search lights
-/// (0xA94D68, 0x7C each) are skipped while inactive (+0 byte 0) or without the "moving" bit (bit 7 of
-/// +3); when any light would move, the original body runs (the path-following and bulb / housing
-/// rotation, x87 `atan2` / normalisation, are not ported yet).
-#[hook(addr = 0x4939F0, conv = cdecl, name = "CTheScripts::ProcessAllSearchLights", expect = "83 EC 60 53 55 56 57 BE 80 4D A9 00", fallback,
-       unverified = "std6-script-1", route = "L2", hazards = "none", recs = "new-game",
-       note = "partial: lights that move run the original body")]
-pub fn process_all_search_lights() {
-    for i in 0..8 {
-        let b = 0xA94D68 + i * 0x7C;
-        if g::<u8>(b).read() != 0 && g::<u8>(b + 3).read() & 0x80 != 0 {
-            process_all_search_lights_original();
-            return;
-        }
-    }
-}
-
 /// `CTheScripts::ReinitialiseSwitchStatementData()` (stub 0x470370, body 0x156E5F0): the switch
 /// statement state cleared (0xA43F60 word, 0xA43F5C dword, 0xA43F58 byte, 0xA43F54 dword, 0xA43F50 word).
 #[hook(addr = 0x470370, conv = cdecl, name = "CTheScripts::ReinitialiseSwitchStatementData", expect = "E9 7B E2 0F 01",
@@ -645,7 +628,6 @@ pub fn clear_space_for_mission_entity(pos: GPtr<u8>, ours: GPtr<u8>) {
 pub const HOOKS: &[HookReg] = &[
     HOOK_CLEAR_SPACE_FOR_MISSION_ENTITY,
     HOOK_REINITIALISE_SWITCH_STATEMENT_DATA,
-    HOOK_PROCESS_ALL_SEARCH_LIGHTS,
     HOOK_START_TEST_SCRIPT,
     HOOK_IS_PLAYER_ON_A_MISSION,
     HOOK_ADD_SCRIPT_TO_LIST,

@@ -5,28 +5,28 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| gen2-anim-1 | 25 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 25 | 0 | 0 | 0 | 0 | L1-pure 1, L2 6, split 18 |
-| gen2-cam-1 | 1 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| gen2-coll-1 | 34 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 34 | 0 | 0 | 0 | 0 | L2 9, split 25 |
-| gen2-core-1 | 58 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 58 | 0 | 0 | 0 | 0 | L2 10, split 48 |
-| gen2-input-1 | 15 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 15 | 0 | 0 | 0 | 0 | split 15 |
-| gen2-ped-1 | 25 | PED, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 25 | 0 | 0 | 0 | 0 | L2 6, split 19 |
-| gen2-phys-1 | 7 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 7 | 0 | 0 | 0 | 0 | L2 1, split 6 |
-| gen2-pop-1 | 3 | POP, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| gen2-render-1 | 49 | RENDER, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 49 | 0 | 0 | 0 | 0 | L2 7, split 42 |
-| gen2-render-2 | 49 | RENDER, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 49 | 0 | 0 | 0 | 0 | split 49 |
-| gen2-render-3 | 49 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 49 | 0 | 0 | 0 | 0 | split 49 |
-| gen2-render-4 | 46 | RENDER, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 46 | 0 | 0 | 0 | 0 | L2 42, split 4 |
-| gen2-rw-1 | 57 | RW, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 3, L2 9, split 45 |
-| gen2-rw-2 | 57 | RW, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 4, L2 27, split 26 |
-| gen2-rw-3 | 57 | RW, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 1, L2 56 |
-| gen2-rw-4 | 57 | RW, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 5, L2 52 |
-| gen2-rw-5 | 54 | RW | 40b6300 | worktree-agent-a77af859541ac4b2c | 54 | 0 | 0 | 0 | 0 | L1-pure 5, L2 49 |
-| gen2-script-1 | 55 | SCRIPT, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 55 | 0 | 0 | 0 | 0 | L1-pure 4, L2 13, split 38 |
-| gen2-stream-1 | 54 | STREAM, UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 54 | 0 | 0 | 0 | 0 | L2 6, split 48 |
-| gen2-veh-1 | 19 | UNK-game, VEH | 40b6300 | worktree-agent-a77af859541ac4b2c | 19 | 0 | 0 | 0 | 0 | L1-pure 1, L2 17, split 1 |
-| gen2-weapon-1 | 53 | UNK-game | 40b6300 | worktree-agent-a77af859541ac4b2c | 53 | 0 | 0 | 0 | 0 | L2 1, split 52 |
-| gen2-world-1 | 28 | UNK-game, WORLD | 40b6300 | worktree-agent-a77af859541ac4b2c | 28 | 0 | 0 | 0 | 0 | L1-pure 1, L2 20, split 7 |
+| gen2-anim-1 | 25 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 25 | 0 | 0 | 0 | 0 | L1-pure 1, L2 6, split 18 |
+| gen2-cam-1 | 1 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| gen2-coll-1 | 34 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 34 | 0 | 0 | 0 | 0 | L2 9, split 25 |
+| gen2-core-1 | 58 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 58 | 0 | 0 | 0 | 0 | L2 10, split 48 |
+| gen2-input-1 | 15 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 15 | 0 | 0 | 0 | 0 | split 15 |
+| gen2-ped-1 | 25 | PED, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 25 | 0 | 0 | 0 | 0 | L2 6, split 19 |
+| gen2-phys-1 | 7 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 7 | 0 | 0 | 0 | 0 | L2 1, split 6 |
+| gen2-pop-1 | 3 | POP, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| gen2-render-1 | 49 | RENDER, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 49 | 0 | 0 | 0 | 0 | L2 7, split 42 |
+| gen2-render-2 | 49 | RENDER, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 49 | 0 | 0 | 0 | 0 | split 49 |
+| gen2-render-3 | 49 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 49 | 0 | 0 | 0 | 0 | split 49 |
+| gen2-render-4 | 46 | RENDER, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 46 | 0 | 0 | 0 | 0 | L2 42, split 4 |
+| gen2-rw-1 | 57 | RW, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 3, L2 9, split 45 |
+| gen2-rw-2 | 57 | RW, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 4, L2 27, split 26 |
+| gen2-rw-3 | 57 | RW, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 1, L2 56 |
+| gen2-rw-4 | 57 | RW, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 57 | 0 | 0 | 0 | 0 | L1-pure 5, L2 52 |
+| gen2-rw-5 | 54 | RW | ed288e8 | worktree-agent-a77af859541ac4b2c | 54 | 0 | 0 | 0 | 0 | L1-pure 5, L2 49 |
+| gen2-script-1 | 55 | SCRIPT, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 55 | 0 | 0 | 0 | 0 | L1-pure 4, L2 13, split 38 |
+| gen2-stream-1 | 54 | STREAM, UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 54 | 0 | 0 | 0 | 0 | L2 6, split 48 |
+| gen2-veh-1 | 19 | UNK-game, VEH | ed288e8 | worktree-agent-a77af859541ac4b2c | 19 | 0 | 0 | 0 | 0 | L1-pure 1, L2 17, split 1 |
+| gen2-weapon-1 | 53 | UNK-game | ed288e8 | worktree-agent-a77af859541ac4b2c | 53 | 0 | 0 | 0 | 0 | L2 1, split 52 |
+| gen2-world-1 | 28 | UNK-game, WORLD | ed288e8 | worktree-agent-a77af859541ac4b2c | 28 | 0 | 0 | 0 | 0 | L1-pure 1, L2 20, split 7 |
 | harness5-1 | 7 | AUDIO, RENDER | 909b776 | master | 7 | 0 | 0 | 0 | 0 | L1-pure 2, L2 5 |
 | mvpa-ai-1 | 21 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 2 | 19 | 0 | L2 21 |
 | mvpa-ai-2 | 23 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 0 | 23 | 0 | L2 23 |
@@ -222,7 +222,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std6-render-1 | 56 | RENDER, RW, UNK-game | 309d8fe | master | 56 | 0 | 0 | 0 | 0 | L1-pure 29, L2 27 |
 | std6-render-2 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
 | std6-rw-1 | 48 | RW, UNK-game | 309d8fe | master | 48 | 0 | 0 | 0 | 0 | L1-pure 15, L2 33 |
-| std6-script-1 | 8 | SCRIPT | 309d8fe | master | 8 | 0 | 0 | 0 | 0 | L1-pure 3, L2 5 |
+| std6-script-1 | 7 | SCRIPT | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L1-pure 3, L2 4 |
 | std6-stream-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
 | std6-veh-1 | 1 | VEH | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std6-world-1 | 3 | MATH, WORLD | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
@@ -5341,7 +5341,7 @@ SA_UNVERIFIED=std6-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-rw-1 $SA_ROOT
 
 ## std6-script-1
 
-8 hooks in sa-script; hazards: ax-al-return (1), entry-protection-read (1), heap-writes (3); recordings calling them: new-game (6), pause-restart (8).
+7 hooks in sa-script; hazards: ax-al-return (1), entry-protection-read (1), heap-writes (3); recordings calling them: new-game (5), pause-restart (7).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -5359,7 +5359,6 @@ SA_UNVERIFIED=std6-script-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-script-1 
 | 0x470370 | `CTheScripts::ReinitialiseSwitchStatementData` | written | L1-pure | none |
 | 0x486720 | `CTheScripts::ReadObjectNamesFromScript` | written | L2 | heap-writes |
 | 0x486B00 | `CTheScripts::ClearSpaceForMissionEntity` | written | L2 | heap-writes |
-| 0x4939F0 | `CTheScripts::ProcessAllSearchLights` | written | L2 | none |
 
 ## std6-stream-1
 
