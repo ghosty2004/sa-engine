@@ -313,7 +313,7 @@ fn air_spin(this: GPtr<u8>, i: i32, drive: bool, accel: f32) {
 /// The original writes `brake` and `traction` into its own argument slots (kept as locals here).
 #[hook(addr = 0x6a4ec0, conv = thiscall, name = "CAutomobile::ProcessCarWheelPair", this = "CAutomobile",
        expect = "55 8B EC 90 E9 A8 E9 D5 FF",
-       unverified = "vehbig-1", route = "L2", hazards = "x87-transcendental,stack-residue",
+       route = "L2", hazards = "x87-transcendental,stack-residue",
        recs = "driving,car-ai",
        note = "entry is `push ebp; mov ebp, esp; nop; jmp 0x403871` (frame setup in a protection fragment); fsin/fcos via X87, pow via orig::x87_binary(0x822130); brake/traction argument slots are rewritten by the original; ProcessWheel's wheel-id dword carries ECX garbage above the byte in the original (zero-extended here)")]
 #[allow(clippy::too_many_arguments)]

@@ -308,7 +308,7 @@ fn player_box_dist(gp: GPtr<u8>) -> X87 {
 /// `FindPlayerCoors` / `FindPlayerVehicle` reads.
 #[hook(addr = 0x44aa50, conv = thiscall, name = "CGarage::Update", this = "CGarage",
        expect = "81 EC E8 01 00 00 53",
-       unverified = "vehbig-2", route = "split", hazards = "heap-writes",
+       route = "split", hazards = "heap-writes",
        recs = "driving",
        note = "rand through at_site(0x44B36C); the PrtMult / colour locals live on the Rust stack")]
 pub fn garage_update(gp: GPtr<u8>, garage_id: i32) {

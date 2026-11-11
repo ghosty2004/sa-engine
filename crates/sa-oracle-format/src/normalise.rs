@@ -232,6 +232,32 @@ pub const RULE_FRAME_PADS: &str = "LightsCreate: pad1/pad2/pad3 of pDirect's fra
      uninitialised by RwFrameRotate inside RenderWare (stack residue; CORE-L2b l2all evidence: orig \
      1 / 0x7BCDAEA0 / 0x00460000, Rust 4 / 0x0036F294 / 0x03219A28)";
 
+/// `CBike::PreRender` (0x6BD090) and `CBmx::PreRender` (0x6C0810): both clear +0x5C8 and call
+/// `CBike::CalculateLeanMatrix` (0x6B7150), which rebuilds `m_mLeanMatrix` (CBike +0x5CC).
+pub const BIKE_PRERENDERS: [u32; 2] = [0x6BD090, 0x6C0810];
+/// The four pad words of `CBike::m_mLeanMatrix` (+0x5CC; CMatrix pads at +0x0C/+0x1C/+0x2C/+0x3C).
+const LEAN_MATRIX_PADS: [u32; 4] = [0x5CC + 0x0C, 0x5CC + 0x1C, 0x5CC + 0x2C, 0x5CC + 0x3C];
+
+pub const RULE_LEAN_MATRIX_PADS: &str = "CBike/CBmx::PreRender: the pads of CBike::m_mLeanMatrix (this+0x5CC + \
+     0x0C, 0x1C, 0x2C, 0x3C) are uninitialised stack residue: CalculateLeanMatrix (0x6B7150) does \
+     `m_mLeanMatrix = *m_matrix; m_mLeanMatrix *= rot` and CMatrix::operator*= (0x411A80) builds the \
+     product in operator*'s local (0x59BE30, right/up/at/pos written, pads never) and copies all 16 \
+     dwords back, so the pads hold whatever lay at that stack depth (the depth differs below a Rust \
+     PreRender). Split driving v5-vb1-drv, CBmx::PreRender ordinal 0 frame 318: +0x608 plain 0 rust \
+     0x0036EEC0. Only matrix copies read them; the vectors and +0x40/+0x44 stay compared";
+
+/// Input side of RULE_LEAN_MATRIX_PADS: the pads a Rust PreRender left in `this` are an input of the
+/// next PreRender / `CBike::ProcessControl` (0x6B9250) call on the same bike (split pass-r c-pr:
+/// CBike::PreRender ordinal 1, +0x608 plain 0 rust 0x0036EE80). Returns the `this`-relative byte ranges
+/// whose pre-call bytes `split.rs input_diff` masks in the `This` region of these functions.
+pub fn this_input_pads(fn_addr: u32) -> &'static [u32] {
+    if BIKE_PRERENDERS.contains(&fn_addr) || fn_addr == 0x6B9250 {
+        &LEAN_MATRIX_PADS
+    } else {
+        &[]
+    }
+}
+
 /// The word at `a` after the run (`orig` run or the Rust run), from any region of the case that
 /// holds memory after the call.
 fn post_word(c: &crate::l2::Case, a: u32, orig: bool) -> Option<u32> {
@@ -267,6 +293,17 @@ pub fn exclusions(c: &crate::l2::Case) -> Vec<Exclusion> {
                 rule: e.rule,
             });
         }
+    }
+    if BIKE_PRERENDERS.contains(&c.fn_addr) {
+        let this = c.regs_in[1];
+        for p in LEAN_MATRIX_PADS {
+            out.push(Exclusion {
+                addr: this.wrapping_add(p),
+                len: 4,
+                rule: RULE_LEAN_MATRIX_PADS,
+            });
+        }
+        return out;
     }
     if c.fn_addr != LIGHTS_CREATE {
         return out;
@@ -937,6 +974,37 @@ mod tests {
         assert_eq!(crate::l2::compare(&c).len(), 1);
         c.fn_addr = 0x5BA521;
         assert!(exclusions(&c).is_empty(), "other functions get no exclusion");
+    }
+
+    /// CBike/CBmx::PreRender: exactly the four lean matrix pads of `this` are excluded.
+    #[test]
+    fn bike_lean_matrix_pads_are_excluded_and_nothing_else() {
+        use crate::l2::{Case, Region, RegionKind};
+        let this = 0x20E7_55B0u32;
+        let post = vec![0u8; 0x814];
+        let mut c = Case {
+            fn_addr: 0x6C0810,
+            regions: vec![Region {
+                addr: this,
+                kind: RegionKind::This,
+                access: 3,
+                readable: true,
+                pre: post.clone(),
+                post_orig: post.clone(),
+                post_rust: post,
+            }],
+            ..Case::default()
+        };
+        c.regs_in[1] = this;
+        let addrs: Vec<u32> = exclusions(&c).iter().map(|x| x.addr - this).collect();
+        assert_eq!(addrs, vec![0x5D8, 0x5E8, 0x5F8, 0x608]);
+        // the observed pad difference is ignored, a position difference is not
+        c.regions[0].post_rust[0x608..0x60C].copy_from_slice(&0x0036_EEC0u32.to_le_bytes());
+        assert!(crate::l2::compare(&c).is_empty());
+        c.regions[0].post_rust[0x604] = 1;
+        assert_eq!(crate::l2::compare(&c).len(), 1);
+        c.fn_addr = 0x6B9250;
+        assert!(exclusions(&c).is_empty(), "CBike::ProcessControl gets no exclusion");
     }
 
     fn ctx(allocs: Vec<(u32, u32)>) -> NormCtx {

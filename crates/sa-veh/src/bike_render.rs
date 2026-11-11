@@ -182,7 +182,7 @@ fn suspension_display(
 /// (its rotation uses the rear radius); the light colour bytes come from a timer phase.
 #[hook(addr = 0x6bd090, conv = thiscall, name = "CBike::PreRender", this = "CBike",
        expect = "6A FF 68 21 83 84 00",
-       unverified = "vehbig-1", route = "L2", hazards = "x87-transcendental,uninit-locals",
+       route = "L2", hazards = "x87-transcendental,uninit-locals",
        recs = "driving",
        note = "fsin/fcos via X87, _CIasin via orig::x87_unary; stack CMatrix / RwMatrix locals zeroed")]
 pub fn bike_pre_render(this: GPtr<u8>) {
@@ -625,7 +625,7 @@ fn frames(this: GPtr<u8>, mi: GPtr<u8>, col: GPtr<u8>, l190: &mut StackMatrix) {
 /// +0x828.
 #[hook(addr = 0x6c0810, conv = thiscall, name = "CBmx::PreRender", this = "CBmx",
        expect = "6A FF 68 01 84 84 00",
-       unverified = "vehbig-1", route = "L2", hazards = "x87-transcendental,uninit-locals",
+       route = "L2", hazards = "x87-transcendental,uninit-locals",
        recs = "driving",
        note = "fsin/fcos/fpatan via X87, _CIasin via orig::x87_unary; stack CMatrix / RwMatrix locals zeroed")]
 pub fn bmx_pre_render(this: GPtr<u8>) {

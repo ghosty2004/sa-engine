@@ -276,7 +276,7 @@ fn wheel_on_shallow_water(this: GPtr<u8>, comp_off: isize) -> bool {
 /// the steer-limit colpoint has only its two surface bytes written (the rest is the Rust zero).
 #[hook(addr = 0x6b1880, conv = thiscall, name = "CAutomobile::ProcessControl", this = "CAutomobile",
        expect = "81 EC D8 00 00 00 53 55",
-       unverified = "vehbig-1", route = "split", hazards = "x87-transcendental,heap-writes,uninit-locals",
+       route = "split", hazards = "x87-transcendental,heap-writes,uninit-locals",
        recs = "driving,car-ai,grove-walk",
        note = "rand site 0x6B367E; _CIasin/_CIpow through orig::x87_unary/x87_binary; the bool dword arguments the original builds from stack residue (ProcessBoatControl's two flags, CalculateDriveAcceleration's cheat, StartShake's frequency, ProcessCarOnFireAndExplode's flag) are passed zero-extended; the steer-limit CColPoint is zeroed apart from its surface bytes")]
 pub fn automobile_process_control(this: GPtr<u8>) {

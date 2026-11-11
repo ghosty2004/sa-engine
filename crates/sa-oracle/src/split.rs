@@ -361,6 +361,17 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
                 // handle words of heap arrays (normalise::HEAP_HANDLES), each run at its own address
                 normalise::classify_case_handles(a, x.addr, &mut p);
                 normalise::classify_case_handles(b, y.addr, &mut q);
+                // reviewed residue words of `this` (normalise::this_input_pads)
+                if x.kind == RegionKind::This {
+                    for &off in normalise::this_input_pads(a.fn_addr) {
+                        for (buf, base, this) in [(&mut p, x.addr, a.regs_in[1]), (&mut q, y.addr, b.regs_in[1])] {
+                            let o = this.wrapping_add(off).wrapping_sub(base) as usize;
+                            if o + 4 <= buf.len() {
+                                buf[o..o + 4].fill(0);
+                            }
+                        }
+                    }
+                }
                 normalise::bytes_equal(x.addr, &p, &ca, &q, &cb).is_some()
             }
         };

@@ -179,7 +179,7 @@ impl StackMatrix {
 /// original (passed zero-extended here).
 #[hook(addr = 0x6aab50, conv = thiscall, name = "CAutomobile::PreRender", this = "CAutomobile",
        expect = "6A FF 90 E9 34 E1 D5 FF",
-       unverified = "vehbig-1", route = "L2", hazards = "x87-transcendental,uninit-locals",
+       route = "L2", hazards = "x87-transcendental,uninit-locals",
        recs = "driving,car-ai,grove-walk",
        note = "entry `push -1; nop; jmp 0x408c8c` (SEH setup in a protection fragment) and the light-bar timer read through the fragment 0x401740 (CTimer::m_snTimeInMilliseconds); fsin/fcos/fpatan via X87, _CIasin/_CIpow via orig; stack CMatrix locals zeroed")]
 pub fn automobile_pre_render(this: GPtr<u8>) {
