@@ -491,7 +491,7 @@ pub fn tri_plant_buffer_flush(this: GPtr<u8>) {
     let r = sa_core::orig::at_site(0x5D_B103, sa_core::crt::rand);
     grass_draw_tri_plants(this.byte_add(4), rd::<i32>(this, 0), models, 0);
     wr::<u32>(this, 0, 0);
-    sa_core::crt::srand(r as u32);
+    sa_core::orig::at_site(0x5D_B120, || sa_core::crt::srand(r as u32));
 }
 
 /// `CGrassRenderer::AddTriPlant(PPTriPlant*, uint32 pipeMode)` (0x5DB1D0, cdecl): a pipe mode change

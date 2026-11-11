@@ -418,7 +418,7 @@ fn to_physics_status(veh: GPtr<u8>) {
 pub fn pick_next_node_randomly(veh: GPtr<u8>) {
     let seed = rd::<u16>(veh, 0x45E);
     if seed != 0 {
-        sa_core::crt::srand(u32::from(seed));
+        sa_core::orig::at_site(0x42_DEA2, || sa_core::crt::srand(u32::from(seed)));
     }
     let old_cur = rd::<u32>(veh, 0x390);
     if path_nodes(area_of(old_cur)).is_null() {
@@ -811,7 +811,7 @@ pub fn pick_next_node_to_chase_car(veh: GPtr<u8>, dx: f32, dy: f32, dz: f32, _ta
     let mut res = [0xFFFFu32; 2];
     let seed = rd::<u16>(veh, 0x45E);
     if seed != 0 {
-        sa_core::crt::srand(u32::from(seed));
+        sa_core::orig::at_site(0x42_6F33, || sa_core::crt::srand(u32::from(seed)));
     }
     let prev = rd::<u32>(veh, 0x390);
     let s = rd::<u32>(veh, 0x394);
@@ -1006,7 +1006,7 @@ orig! {
 pub fn pick_next_node_to_follow_path(veh: GPtr<u8>) -> u8 {
     let seed = rd::<u16>(veh, 0x45E);
     if seed != 0 {
-        sa_core::crt::srand(u32::from(seed));
+        sa_core::orig::at_site(0x42_7760, || sa_core::crt::srand(u32::from(seed)));
     }
     let s0 = rd::<u32>(veh, 0x394);
     let count = veh.byte_add(0x418).cast::<i16>();
@@ -2068,7 +2068,7 @@ fn node_pos(n: GPtr<u8>) -> [f32; 3] {
 pub fn find_links_to_go_with_these_nodes(veh: GPtr<u8>) {
     let seed = rd::<u16>(veh, 0x45E);
     if seed != 0 {
-        sa_core::crt::srand(u32::from(seed));
+        sa_core::orig::at_site(0x42_B48D, || sa_core::crt::srand(u32::from(seed)));
     }
     let cur = rd::<u32>(veh, 0x390);
     let area = area_of(cur);
