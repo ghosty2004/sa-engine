@@ -886,3 +886,9 @@
   register-comparing spec. They are listed in PRESERVE_SPECS_PENDING (may only shrink; new offenders fail) and queued.
 - Verified: sa-hook lib 50, l1 preserve/routes tests, workspace clippy, i686 OK; verify-all main-reg IDENTICAL on grove
   and driving (c-bug pending).
+
+## 2026-11-11 AI-GEN integrated (main session)
+- Agent ae0179cf (lane 6): generator tools/gen/ai_patterns.py + crates/sa-ai/src/gen_*.rs, docs/arch/ai-gen.md + verdicts.
+- Merge: sa-ai hooks.rs/lib.rs conflicts combined; generator re-run on master (its output differed because AI-2/AI-3
+  were merged meanwhile; --check clean afterwards). verify-all main-aigen: IDENTICAL on all 10 recordings (air-water
+  excluded until its port fixes land).
