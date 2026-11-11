@@ -72,7 +72,7 @@ fn cam_dist(p: GPtr<u8>) -> X87 {
 /// windScale)`, `RwMatrixUpdate` and the atomic's render callback.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x5dad00, conv = cdecl, name = "CGrassRenderer::DrawTriPlants", expect = "83 EC 38 8B 44 24 40",
-       unverified = "renderbig2-4", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "FSQRT; srand + 8 rand sites; writes the plant atomics' frame matrices (RW heap)")]
 pub fn draw_tri_plants(plants: GPtr<u8>, count: i32, models: GPtr<u32>) -> u32 {
@@ -94,7 +94,8 @@ pub fn draw_tri_plants(plants: GPtr<u8>, count: i32, models: GPtr<u32>) -> u32 {
         let atomic = GPtr::<u8>::from_addr(g::<u32>(models.addr() + 4 * rd::<u16>(p, 0x30) as usize).read() as usize);
         let frame = rd::<GPtr<u8>>(atomic, 4);
         let m = frame.byte_add(0x10);
-        sa_core::crt::srand(ftol32(x(rd::<f32>(p, 0x48))) as u32);
+        let seed = ftol32(x(rd::<f32>(p, 0x48))) as u32;
+        sa_core::orig::at_site(0x5d_add2, || sa_core::crt::srand(seed));
         let a = rd::<u8>(p, 0x43);
         let alpha = if !jp(x(d), x(far), 0x5) {
             a

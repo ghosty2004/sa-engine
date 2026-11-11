@@ -151,7 +151,7 @@ fn font_scale() {
 /// shade `ftol((255 - frames * 255 / 10) * 0.65)` (gta-reversed omits the 0.65).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x721660, conv = cdecl, name = "CSpecialFX::Render2DFXs", expect = "A0 0C C7 C7 00 83 EC 28",
-       unverified = "renderbig2-4", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "rand() at 0x721B85 / 0x721B97 (lift camera only)")]
 pub fn render_2d_fxs() {
     if g::<u8>(VIDEO_CAM).read() != 0 {

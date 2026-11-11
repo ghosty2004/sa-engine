@@ -59,7 +59,7 @@ fn max_alpha(ret: u32) -> u32 {
 ///
 /// The original reuses its own argument slot as the `fild` temporary (stack only).
 #[hook(addr = 0x715f40, conv = cdecl, name = "CClouds::VolumetricClouds_Create", expect = "83 EC 3C 53 55 56 57",
-       unverified = "renderbig2-2", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "grove-walk",
        note = "rand() at 15 sites; writes its own argument slot (the fild temporary)")]
 pub fn volumetric_clouds_create(pos: GPtr<f32>) -> i32 {

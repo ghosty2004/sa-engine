@@ -78,7 +78,7 @@ fn draw_temp_quad() {
 /// (12,0) (10,1) (11,2) and the fixed quad x = 216, y -45..-39, z 1000..1006. Finally states (14,0)
 /// (6,1) (8,1) (1,0) (12,0) (10,5) (11,6).
 #[hook(addr = 0x726090, conv = cdecl, name = "CMirrors::RenderMirrorBuffer", expect = "A1 24 C7 C7 00",
-       unverified = "mvpg-render-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "fsqrt for the camera distance; writes the 2D vertices 0xC7C5A8.., TempBufferRenderVertices and aTempBufferIndices")]
 pub fn render_mirror_buffer() {

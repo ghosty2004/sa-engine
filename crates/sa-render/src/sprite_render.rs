@@ -31,7 +31,7 @@ const RW_ENGINE_INSTANCE: usize = 0xc9_7b24;
 /// shifts, low bytes). `RwIm2DRenderPrimitive(TRIFAN, maVertices, 4)`.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x70d000, conv = cdecl, name = "CSprite::RenderOneXLUSprite", expect = "83 EC 40 D9 44 24 44",
-       unverified = "renderbig2-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_one_xlu_sprite(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u8, gg: u8, b: u8, intensity: i16, recip_z: u32, alpha: u8, flip_u: u8, flip_v: u8) {
     let xl = x(px).fsub_m(w).to_f32();
     let xr = x(px).fadd_m(w).to_f32();

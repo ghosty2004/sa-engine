@@ -89,7 +89,7 @@ fn emit(light: GPtr<u8>, out: &[f32; 3], w: f32, h: f32, c: f32, s: f32, hmul: O
 /// Then `FlushSpriteBuffer` (a tail jump in the original).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x7002d0, conv = cdecl, name = "CPointLights::RenderFogEffect", expect = "A0 51 F8 B5 00 81 EC C8 00 00 00",
-       unverified = "renderbig2-2", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk,driving",
        note = "FSQRT; ProcessVerticalLine per grid point of beam lights")]
 pub fn render_fog_effect() {

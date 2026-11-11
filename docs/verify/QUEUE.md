@@ -78,8 +78,6 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpf-script-1 | 9 | SCRIPT | 7fd59f2 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
 | mvpf-veh-1 | 6 | VEH | 7fd59f2 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | mvpf-weapon-1 | 1 | WEAPON | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
-| mvpg-render-1 | 7 | RENDER | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| mvpg-rw-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | mvph-phys-1 | 2 | PHYS | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | mvph-script-1 | 7 | SCRIPT | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | mvph-world-1 | 1 | WORLD | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -144,20 +142,14 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | popw4-gang-1 | 11 | POP | 09ffb62 | master | 11 | 0 | 0 | 0 | 0 | L2 7, split 4 |
 | popw4-partial-1 | 4 | POP | 09ffb62 | master | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
 | popw4-pop-1 | 6 | POP | 09ffb62 | master | 6 | 0 | 0 | 0 | 0 | split 6 |
-| regconv-anim-1 | 1 | UNK-game | aab4ae3 | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| regconv-ped-1 | 3 | PED, UNK-game | aab4ae3 | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| regconv-render-1 | 7 | RENDER | aab4ae3 | worktree-agent-a77af859541ac4b2c | 6 | 0 | 0 | 1 | 0 | L2 7 |
-| regconv-rw-1 | 13 | RW, UNK-game | aab4ae3 | worktree-agent-a77af859541ac4b2c | 13 | 0 | 0 | 0 | 0 | L2 13 |
-| regconv-stream-1 | 2 | STREAM | aab4ae3 | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| renderbig-1 | 4 | RENDER | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| renderbig-2 | 2 | RENDER | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| renderbig-3 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| renderbig2-1 | 3 | RENDER, RW | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L2 2, split 1 |
-| renderbig2-2 | 5 | RENDER, UNK-game | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| renderbig2-3 | 2 | RENDER | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| renderbig2-4 | 3 | RENDER | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| renderbig2-5 | 2 | RENDER, WEAPON | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| renderbig2-6 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| regconv-anim-1 | 1 | UNK-game | 8d70493 | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| regconv-ped-1 | 3 | PED, UNK-game | 8d70493 | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| regconv-render-1 | 7 | RENDER | 8d70493 | worktree-agent-a77af859541ac4b2c | 6 | 0 | 0 | 1 | 0 | L2 7 |
+| regconv-rw-1 | 13 | RW, UNK-game | 8d70493 | worktree-agent-a77af859541ac4b2c | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| regconv-stream-1 | 2 | STREAM | 8d70493 | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| renderbig2-3 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| renderbig2-4 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| renderbig2-5 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | rw5-cam-1 | 1 | RW | f789a8e | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
 | rw5-core-1 | 31 | RW | f789a8e | master | 0 | 0 | 0 | 31 | 0 | L2 21, split 10 |
 | rw5-core-2 | 17 | RW | f789a8e | master | 0 | 0 | 0 | 17 | 0 | L2 9, L3-only 5, split 3 |
@@ -1718,42 +1710,6 @@ SA_UNVERIFIED=mvpf-weapon-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpf-weapon-1 
 |---|---|---|---|---|
 | 0x5BE670 | `CWeaponInfo::LoadWeaponData` | written | split | uninit-locals |
 
-## mvpg-render-1
-
-7 hooks in sa-render; hazards: heap-writes (7), x87-transcendental (5); recordings calling them: air-water (2), grove-walk (5), pause-restart (7).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpg-render-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpg-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpg-render-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpg-render-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x6ED9A0 | `CWaterLevel::RenderBoatWakes` | written | L2 | x87-transcendental,heap-writes |
-| 0x6FB630 | `CCoronas::RenderReflections` | written | L2 | heap-writes |
-| 0x6FBAA0 | `CCoronas::RenderSunReflection` | written | L2 | x87-transcendental,heap-writes |
-| 0x716C90 | `CClouds::MovingFogRender` | written | L2 | heap-writes |
-| 0x7241C0 | `CBrightLights::Render` | written | L2 | x87-transcendental,heap-writes |
-| 0x726090 | `CMirrors::RenderMirrorBuffer` | written | L2 | x87-transcendental,heap-writes |
-| 0x72AF70 | `CWeather::RenderRainStreaks` | written | L2 | x87-transcendental,heap-writes |
-
-## mvpg-rw-1
-
-1 hooks in sa-rwcore; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpg-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpg-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpg-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpg-rw-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x75F0B0 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
-
 ## mvph-phys-1
 
 2 hooks in sa-world; hazards: entry-protection-read (1); recordings calling them: driving (2), grove-walk (2), pause-restart (1).
@@ -2951,94 +2907,9 @@ SA_UNVERIFIED=regconv-stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-str
 | 0x72E140 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
 | 0x72E220 | `FUN_0072e220` | written | L2 | heap-writes |
 
-## renderbig-1
-
-4 hooks in sa-render; hazards: heap-writes (4), x87-transcendental (3); recordings calling them: grove-walk (4), pause-restart (4).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh renderbig-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=renderbig-1 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag renderbig-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x713950 | `CClouds::Render` | written | L2 | x87-transcendental,heap-writes |
-| 0x714650 | `CClouds::RenderSkyPolys` | written | L2 | x87-transcendental,heap-writes |
-| 0x7154B0 | `CClouds::RenderBottomFromHeight` | written | L2 | heap-writes |
-| 0x716380 | `CClouds::VolumetricCloudsRender` | written | L2 | x87-transcendental,heap-writes |
-
-## renderbig-2
-
-2 hooks in sa-render; hazards: heap-writes (2), uninit-locals (2), x87-transcendental (1); recordings calling them: air-water (1), grove-walk (2), pause-restart (2).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh renderbig-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=renderbig-2 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag renderbig-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x6EF650 | `CWaterLevel::RenderWater` | written | L2 | x87-transcendental,heap-writes,uninit-locals |
-| 0x6FAEC0 | `CCoronas::Render` | written | L2 | heap-writes,uninit-locals |
-
-## renderbig-3
-
-1 hooks in sa-render; hazards: heap-writes (1), x87-transcendental (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh renderbig-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=renderbig-3 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag renderbig-3
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x712810 | `CBirds::Render` | written | L2 | x87-transcendental,heap-writes |
-
-## renderbig2-1
-
-3 hooks in sa-render; hazards: heap-writes (2), uninit-locals (1); recordings calling them: driving (2), grove-walk (3), pause-restart (3).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh renderbig2-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=renderbig2-1 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag renderbig2-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x7046E0 | `CPostEffects::Render` | written | split | heap-writes |
-| 0x7077A0 | `RenderBuffer::StopStoring` | written | L2 | none |
-| 0x70A960 | `CShadows::RenderStoredShadows` | written | L2 | heap-writes,uninit-locals |
-
-## renderbig2-2
-
-5 hooks in sa-render; hazards: stack-residue (1), x87-transcendental (2); recordings calling them: driving (2), grove-walk (5), pause-restart (4).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh renderbig2-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=renderbig2-2 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag renderbig2-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x509760 | `FUN_00509760` | written | L2 | none |
-| 0x7002D0 | `CPointLights::RenderFogEffect` | written | L2 | x87-transcendental |
-| 0x70BDA0 | `CShadows::StoreShadowForVehicle` | written | L2 | x87-transcendental |
-| 0x70D000 | `CSprite::RenderOneXLUSprite` | written | L2 | none |
-| 0x715F40 | `CClouds::VolumetricClouds_Create` | written | L2 | stack-residue |
-
 ## renderbig2-3
 
-2 hooks in sa-render; hazards: heap-writes (1), uninit-locals (1), x87-transcendental (1); recordings calling them: driving (2), grove-walk (2), pause-restart (2).
+1 hooks in sa-render; hazards: heap-writes (1); recordings calling them: driving (1), grove-walk (1), pause-restart (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -3050,11 +2921,10 @@ SA_UNVERIFIED=renderbig2-3 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-3 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x7086B0 | `CShadows::CastShadowEntityXY` | written | L2 | heap-writes |
-| 0x71E5D0 | `COccluder::ProcessOneOccluder` | written | L2 | x87-transcendental,uninit-locals |
 
 ## renderbig2-4
 
-3 hooks in sa-render; hazards: heap-writes (1), x87-transcendental (1); recordings calling them: grove-walk (3), pause-restart (2).
+1 hooks in sa-render; hazards: none; recordings calling them: grove-walk (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -3065,13 +2935,11 @@ SA_UNVERIFIED=renderbig2-4 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-4 $S
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5DAD00 | `CGrassRenderer::DrawTriPlants` | written | L2 | x87-transcendental,heap-writes |
-| 0x721660 | `CSpecialFX::Render2DFXs` | written | L2 | none |
 | 0x7285B0 | `CSprite2d::Draw2DPolygon` | written | L2 | none |
 
 ## renderbig2-5
 
-2 hooks in sa-render; hazards: x87-transcendental (1); recordings calling them: grove-walk (1), pause-restart (1), weapon-combat (1).
+1 hooks in sa-render; hazards: none; recordings calling them: grove-walk (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -3083,22 +2951,6 @@ SA_UNVERIFIED=renderbig2-5 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-5 $S
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x70D320 | `CSprite::RenderOneXLUSprite_Triangle` | written | L2 | none |
-| 0x742CF0 | `CWeaponEffects::Render` | written | L2 | x87-transcendental |
-
-## renderbig2-6
-
-1 hooks in sa-render; hazards: heap-writes (1), uninit-locals (1); recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh renderbig2-6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=renderbig2-6 LANE=$LANE tools/e2e/port-l2.sh batch:renderbig2-6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag renderbig2-6
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x5DC8B0 | `CPlantMgr::_ProcessEntryCollisionDataSections_AddLocTris` | written | L2 | heap-writes,uninit-locals |
 
 ## rw5-cam-1
 

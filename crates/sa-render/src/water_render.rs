@@ -66,7 +66,7 @@ fn wake_width(age: f32, intensity: f32, half: f32) -> X87 {
 /// uses the unrounded distance, the per-segment ones its f32; the `i < 3` test uses the 16-bit
 /// counter's flags from before the x87 block.
 #[hook(addr = 0x6ED9A0, conv = cdecl, name = "CWaterLevel::RenderBoatWakes", expect = "55 8B EC 83 E4 F8 83 EC 58",
-       unverified = "mvpg-render-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "air-water",
        note = "fsqrt for the camera distance and segment length; RenderWakeSegment fills TempBufferRenderVertices / aTempBufferIndices; zeroes the two counts")]
 pub fn render_boat_wakes() {
@@ -319,7 +319,7 @@ orig! {
 /// `App::DefinedState` (tail call).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x6EF650, conv = cdecl, name = "CWaterLevel::RenderWater", expect = "83 EC 5C 53 55 56",
-       unverified = "renderbig-2", route = "L2", hazards = "x87-transcendental,heap-writes,uninit-locals",
+       route = "L2", hazards = "x87-transcendental,heap-writes,uninit-locals",
        recs = "grove-walk,air-water",
        note = "rand at 0x6EFA9C / 0x6EFAC3; FSIN/FCOS/FSQRT; the protection chunk 0x407EE4 (raster [0xC228B0]) is inlined; writes 0x8D3808..0x8D3834, 0xC21168..0xC21187, the triangle/quad flag bytes and the temp buffers; the outside-grid CRenPar upper bytes are stack residue")]
 pub fn render_water() {

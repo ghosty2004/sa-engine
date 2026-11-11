@@ -88,7 +88,7 @@ const SCENE_CAMERA: usize = 0xC1_703C;
 /// +0x18), w * size * 0.75, h * size * 2, r, g, b, 128, 1 / Scene.camera->farPlane, 255)`. Then
 /// `FlushSpriteBuffer` and states (10,5) (11,6) (12,0) (8,1) (6,1).
 #[hook(addr = 0x6FB630, conv = cdecl, name = "CCoronas::RenderReflections", expect = "D9 05 08 13 C8 00 83 EC 6C",
-       unverified = "mvpg-render-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        recs = "grove-walk",
        note = "writes the coronas' flags / heights (0xC3E058..) and the sprite buffer; allocates attached entities' matrices")]
 pub fn render_reflections() {
@@ -266,7 +266,7 @@ fn fbits(v: X87) -> u32 {
 /// and the second corona texture, then (8,1) (6,1) (10,5) (11,6) (14,0) (12,0) and both temp-buffer
 /// counts zeroed.
 #[hook(addr = 0x6FBAA0, conv = cdecl, name = "CCoronas::RenderSunReflection", expect = "A1 D0 9F B7 00 83 EC 60",
-       unverified = "mvpg-render-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "air-water",
        note = "fsin for the strip wobble; writes TempBufferRenderVertices / aTempBufferIndices and zeroes the counts")]
 pub fn render_sun_reflection() {
@@ -477,7 +477,7 @@ fn cr_rand_at(site: u32) -> i32 {
 /// Finally the sprite buffer is flushed (tail call); the render states are not restored.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x6FAEC0, conv = cdecl, name = "CCoronas::Render", expect = "81 EC B8 00 00 00",
-       unverified = "renderbig-2", route = "L2", hazards = "heap-writes,uninit-locals",
+       route = "L2", hazards = "heap-writes,uninit-locals",
        recs = "grove-walk",
        note = "rand at 0x6FB31E; writes the corona flag bytes (+0x34), the attached entities' matrices (AllocateMatrix) and the sprite buffer; the flare table pointer (ESI) starts as stack residue and survives across coronas")]
 pub fn coronas_render() {

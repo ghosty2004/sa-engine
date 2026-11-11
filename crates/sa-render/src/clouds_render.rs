@@ -81,7 +81,7 @@ const TIME_STEP: usize = 0xB7_CB5C;
 /// vertices and once more after the loop. Then the states are restored and `MovingFog_Update` runs
 /// (tail call). The corner temporaries start as the original's uninitialised stack slots (0 here).
 #[hook(addr = 0x716C90, conv = cdecl, name = "CClouds::MovingFogRender", expect = "D9 05 FC 12 C8 00 83 EC 60",
-       unverified = "mvpg-render-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        recs = "grove-walk",
        note = "writes TempBufferRenderVertices 0xC4D958.. (2046 x 0x24) and the fade 0x8D5798; tail-calls MovingFog_Update 0x716B10")]
 pub fn moving_fog_render() {
@@ -373,7 +373,7 @@ fn calc(inp: &mut [u32; 3], out: &mut [u32; 3], w: &mut f32, h: &mut f32) -> boo
 ///   `RwIm3DTransform(.., 2, NULL, 0x18)`, an indexed polyline (the two indices at 0x8D579C), `RwIm3DEnd`
 ///   (tail call).
 #[hook(addr = 0x713950, conv = cdecl, name = "CClouds::Render", expect = "83 EC 68 E8 48 8B E2 FF",
-       unverified = "renderbig-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "rand at 0x713EA4 / 0x713F7F; FSQRT+FPATAN camera roll; writes ms_cameraRoll 0xC6AA64, SunBlockedByClouds 0xC3E030, TempBufferRenderVertices 0xC4D958..0xC4D9A0 and the sprite buffer through its callees")]
 pub fn clouds_render() {
@@ -656,7 +656,7 @@ orig! {
 /// bytes gives it), and `CBrightLights::RenderOutGeometryBuffer` (tail call).
 #[allow(unused_variables, clippy::cognitive_complexity)]
 #[hook(addr = 0x714650, conv = cdecl, name = "CClouds::RenderSkyPolys", expect = "A1 3C F0 B6 00 83 EC 64",
-       unverified = "renderbig-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "FSIN/FCOS of the camera heading only without a camera matrix; fills TempBufferVertices/indices through SetUpOneSkyPoly and flushes through CBrightLights::RenderOutGeometryBuffer")]
 pub fn render_sky_polys() {
@@ -957,7 +957,7 @@ fn height(i: i32) -> f32 {
 /// Finally TEXTURERASTER NULL, VERTEXALPHA 0, ZWRITE 1, ZTEST 1.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x7154B0, conv = cdecl, name = "CClouds::RenderBottomFromHeight", expect = "83 EC 44 0F B7 05 04 C5 B7 00",
-       unverified = "renderbig-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        recs = "grove-walk",
        note = "writes the wind shift 0xC6E954, TempBufferRenderVertices 0xC4D958.. (112 x 0x24), TempBufferIndices 0xC4B958.., the counts 0xC4B950/0xC4B954 and the sprite buffer")]
 pub fn render_bottom_from_height() {
@@ -1228,7 +1228,7 @@ const CAM_FRONT: u32 = 0xB6_F9AC;
 /// (tail call).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x716380, conv = cdecl, name = "CClouds::VolumetricCloudsRender", expect = "A1 14 29 B7 00 83 EC 7C",
-       unverified = "renderbig-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "FSQRT distances; static guard 0xC6E974 bits 1/2 and statics 0xC6E958..0xC6E970; writes 0x8D5388, VolumetricCloudsUsedNum/MaxDistance, ms_vc positions/flags (0xC6AB64.., 0xC6AC18..), TempBufferRenderVertices; rand through GetRandomNumberInRange")]
 pub fn volumetric_clouds_render() {

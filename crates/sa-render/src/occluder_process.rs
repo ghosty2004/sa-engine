@@ -136,7 +136,7 @@ fn big_enough(max: usize, min: usize, screen: usize, frac: f32) -> bool {
 /// distance check.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x71e5d0, conv = thiscall, name = "COccluder::ProcessOneOccluder", this = "COccluder", expect = "6A FF 68 6F 8C 84 00",
-       unverified = "renderbig2-3", route = "L2", hazards = "x87-transcendental,uninit-locals",
+       route = "L2", hazards = "x87-transcendental,uninit-locals",
        recs = "grove-walk,driving",
        note = "FSQRT; SEH frame for the local CMatrix objects (not reproduced: nothing in them throws); the planar path with no zero size (unreachable) would read uninitialised vectors (the port uses zeros)")]
 pub fn process_one_occluder(this: GPtr<u8>, out: GPtr<u8>) -> u8 {

@@ -81,7 +81,7 @@ fn fild_u(v: u32) -> X87 {
 /// `CBrightLights::RenderOutGeometryBuffer`.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x712810, conv = cdecl, name = "CBirds::Render", expect = "64 A1 00 00 00 00",
-       unverified = "renderbig-3", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "FSIN/FCOS/FSQRT; SEH frame for the local CMatrix (not reproduced: nothing in it throws); writes TempBufferRenderVertices / aTempBufferIndices and both counts")]
 pub fn birds_render() {

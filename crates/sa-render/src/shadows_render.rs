@@ -59,7 +59,7 @@ const SECTORS: usize = 0xb7_d0b8;
 /// `RenderBuffer::StopStoring()` (0x7077A0): the pending indices get the stored vertex count added
 /// (u16), then both counts advance by the pending counts.
 #[hook(addr = 0x7077a0, conv = cdecl, name = "RenderBuffer::StopStoring", expect = "A1 54 B9 C4 00 8B 0D 10 04 C4 00",
-       unverified = "renderbig2-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_buffer_stop_storing() {
     let first = g::<i32>(TEMP_INDICES_STORED).read();
     let end = g::<i32>(PENDING_INDICES).read().wrapping_add(first);
@@ -177,7 +177,7 @@ fn water_vertex(sh: GPtr<u8>, vtx: GPtr<u8>, vx: f32, vy: f32, z: f32, inv_side:
 /// End states: VERTEXALPHA 0, ZWRITE 1, ZTEST 1, TEXTUREADDRESS wrap, CULL back; the count zeroed.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x70a960, conv = cdecl, name = "CShadows::RenderStoredShadows", expect = "55 8B EC 83 E4 F8",
-       unverified = "renderbig2-1", route = "L2", hazards = "heap-writes,uninit-locals",
+       route = "L2", hazards = "heap-writes,uninit-locals",
        recs = "grove-walk,driving",
        note = "writes TempBufferRenderVertices / aTempBufferIndices and both counts; the water pass uses the stack copy of the last batch's shadow position (stale across shadows); the unused byte passed to the Cast*SectorList calls is uninitialised stack")]
 pub fn render_stored_shadows() {
