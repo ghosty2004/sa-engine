@@ -1,0 +1,5 @@
+# PORT-AUDIO helper hooks rerun after the third extras round (undeclared only, 0 mismatches before)
+0x4F2C10
+0x503480
+0x4D6CC0
+0x4D6DA0

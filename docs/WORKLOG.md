@@ -788,3 +788,7 @@
 - Agent a4ff952d + 2 helpers (lane 7): crate sa-ai, docs/arch/ai-port.md + verdicts, lists, extras section.
 - Merge (ai after cam); sa-hook lib 48, sa-ai 3, workspace clippy, i686 OK; all-ports IDENTICAL on all 7 recordings
   (c-bug first). States: 199 → L2, 267 → implemented. F1 = 1420 / 15,479 (9.17 %).
+
+## 2026-11-11 PORT-AUDIO-1 integrated (main session)
+- Agent a3243295 + 2 helpers (lane 6): crate sa-audio, docs/arch/audio-port.md + verdicts, lists, extras. Merge (audio
+  after ai); sa-hook lib 48, sa-audio 3, workspace clippy, i686 OK; all-ports IDENTICAL on 7 recordings.

@@ -99,6 +99,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .chain(sa_hud::hooks::ALL.iter())
                 .chain(sa_cam::hooks::ALL.iter())
                 .chain(sa_ai::hooks::ALL.iter())
+                .chain(sa_audio::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })

@@ -601,6 +601,7 @@ mod tests {
             .chain(sa_hud::hooks::ALL.iter())
             .chain(sa_cam::hooks::ALL.iter())
             .chain(sa_ai::hooks::ALL.iter())
+            .chain(sa_audio::hooks::ALL.iter())
             .find(|r| r.addr == addr)
             .map_or(0, |r| r.preserve)
     }

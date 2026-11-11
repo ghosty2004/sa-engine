@@ -1,0 +1,31 @@
+[package]
+name = "sa-audio"
+version = "0.1.0"
+description = "AUDIO subsystem of gta_sa.exe 1.0 US (PORT-AUDIO): CAudioEngine, CAEAudioHardware wrappers, CAESound, CAESoundManager, the CAE*AudioEntity classes, CAERadioTrackManager logic, CAEAudioUtility, CAEAudioEnvironment, CAudioZones. Built on sa-core (ADR-001). Sound output (DirectSound, stream decoding) stays original in phase A. no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+sa-stream = { path = "../sa-stream" }
+sa-world = { path = "../sa-world" }
+
+[dev-dependencies]
+sa-pop = { path = "../sa-pop" }
+sa-script = { path = "../sa-script" }
+sa-weapon = { path = "../sa-weapon" }
+sa-ped = { path = "../sa-ped" }
+sa-input = { path = "../sa-input" }
+sa-anim = { path = "../sa-anim" }
+sa-veh = { path = "../sa-veh" }
+sa-hud = { path = "../sa-hud" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook); see sa-world.
+in-process = ["sa-core/in-process", "sa-stream/in-process", "sa-world/in-process"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }
