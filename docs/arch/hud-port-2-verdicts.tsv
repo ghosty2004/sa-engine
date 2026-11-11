@@ -1,0 +1,229 @@
+address	name	state	evidence
+0x541490	GetCurrentKeyPressed	implemented-needs-L2	no call in the runs
+0x571D90	CPlaceName::GetForMap	L2	L2 menus-hud: 638/638 PASS (0 mismatches, 0 undeclared)
+0x571F20	CPlaceName::Process	L2 (see FAIL)	L2 menus-hud: 1000/1001 FAIL (0 mismatches, 350 undeclared); L2 grove: 1000/1001 FAIL (0 mismatches, 350 undeclared); L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x5720C0	CZone::GetTranslatedName	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x572DB0	CPad::IsEscJustPressed	implemented-needs-L2	no call in the runs
+0x572E70	CPad::IsMouseRButtonPressed	L2	L2 menus-hud: 640/640 PASS (0 mismatches, 0 undeclared)
+0x572EC0	CMenuManager::LoadAllTextures	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x5730A0	CMenuManager::SwapTexturesRound	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x573260	CMenuManager::InitialiseChangedLanguageSettings	implemented-needs-L2	no call in the runs
+0x573330	CMenuManager::DoSettingsBeforeStartingAGame	implemented-needs-L2	no call in the runs
+0x573440	CMenuManager::CheckSliderMovement	implemented-needs-L2	no call in the runs
+0x573680	CMenuManager::SwitchToNewScreen	L2 (see FAIL)	L2 menus-hud: 16/16 FAIL (1 mismatches, 1 undeclared); split split-menus-hud: PASS 16 compared, 0 mismatches, 1 undeclared
+0x573840	CMenuManager::CheckFrontEndUpInput	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x5738B0	CMenuManager::CheckFrontEndDownInput	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x573920	CMenuManager::CheckFrontEndLeftInput	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x573990	CMenuManager::CheckFrontEndRightInput	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x573A00	CMenuManager::ScrollRadioStations	implemented-needs-L2	no call in the runs
+0x573A60	CMenuManager::SetFrontEndRenderStates	L2	split split-menus-hud: PASS 198 compared, 0 mismatches, 198 undeclared
+0x573AE0	CMenuManager::SetDefaultPreferences	L2	split split-menus-hud: PASS 2 compared, 0 mismatches, 1 undeclared
+0x573CD0	CMenuManager::HasLanguageChanged	implemented-needs-L2	no call in the runs
+0x573CF0	CMenuManager::ProcessStreaming	L2	split split-menus-hud: PASS 199 compared, 0 mismatches, 0 undeclared
+0x573E70	CMenuManager::GetNumberOfMenuOptions	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x573EE0	CMenuManager::DrawWindow	L2	split split-menus-hud: PASS 160 compared, 0 mismatches, 160 undeclared
+0x574010	CMenuManager::SmallMessageScreen	implemented-needs-L2	no call in the runs
+0x574350	CMenuManager::Constructor	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x5744D0	CMenuManager::Initialise	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x574630	CMenuManager::UnloadTextures	L2	split split-menus-hud: PASS 2 compared, 0 mismatches, 1 undeclared
+0x576AE0	CMenuManager::JumpToGenericMessageScreen	implemented-needs-L2	no call in the runs
+0x576B70	CMenuManager::CheckForMenuClosing	implemented-needs-L2	split split-menus-hud: COUNT 616 compared, 0 mismatches, 2 undeclared
+0x576FE0	CMenuManager::ProcessMenuOptions	implemented-needs-L2	split split-menus-hud: DIVERGED 0 compared, 0 mismatches, 0 undeclared
+0x578D60	CMenuManager::ProcessFileActions	L2	split split-menus-hud: PASS 199 compared, 0 mismatches, 0 undeclared
+0x579330	CMenuManager::MessageScreen	implemented-needs-L2	no call in the runs
+0x579440	CMenuManager::Destructor	implemented-needs-L2	no call in the runs
+0x57B440	CMenuManager::Process	implemented-needs-L2	split split-menus-hud: COUNT 616 compared, 0 mismatches, 3 undeclared
+0x57B480	CMenuManager::ProcessUserInput	implemented-needs-L2	split split-menus-hud: DIVERGED 0 compared, 0 mismatches, 0 undeclared
+0x57C290	CMenuManager::DrawFrontEnd	L2	split split-menus-hud: PASS 198 compared, 0 mismatches, 198 undeclared
+0x57C400	CPad::IsMouseWheelUpPressed	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x57C420	CPad::IsMouseWheelDownPressed	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x57C440	CPad::IsMouseBmx1Pressed	implemented-needs-L2	no call in the runs
+0x57C460	CPad::IsMouseBmx2Pressed	implemented-needs-L2	no call in the runs
+0x57C490	CMenuManager::SaveLoadFileError_SetUpErrorScreen	implemented-needs-L2	no call in the runs
+0x57C4F0	CMenuManager::CheckHover	L2	L2 menus-hud: 320/320 PASS (0 mismatches, 0 undeclared)
+0x57C520	CMenuManager::CentreMousePointer	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x57C660	CMenuManager::SaveSettings	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x57C8F0	CMenuManager::LoadSettings	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x57CD10	CMenuManager::SetHelperText	implemented-needs-L2	no call in the runs
+0x57CD30	CMenuManager::ResetHelperText	implemented-needs-L2	no call in the runs
+0x57CD50	CMenuManager::ProcessPCMenuOptions	L2	split split-menus-hud: PASS 2 compared, 0 mismatches, 0 undeclared
+0x57D520	CMenuManager::ProcessMissionPackNewGame	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x57D720	CMenuManager::CheckMissionPackValidMenu	implemented-needs-L2	no call in the runs
+0x57D860	CMenuManager::DrawQuitGameScreen	implemented-needs-L2	no call in the runs
+0x57DB20	CMenuManager::CheckCodesForControls	implemented-needs-L2	no call in the runs
+0x57E240	CMenuManager::DisplayHelperText	implemented-needs-L2	no call in the runs
+0x57E4D0	CMenuManager::CheckRedefineControlInput	L2	split split-menus-hud: PASS 199 compared, 0 mismatches, 0 undeclared
+0x5807C0	CMenuSystem::CheckForAccept	L1	L1 HudMenuCheckForAccept 1,002,000 PASS
+0x580800	CMenuSystem::InputStandardMenu	implemented-needs-L2	no call in the runs
+0x581C10	CMenuSystem::HighlightOneItem	L1	L1 HudMenuHighlightOneItem 1,002,000 PASS
+0x581D70	CMenuSystem::InsertOneMenuItemWithNumber	L1	L1 HudMenuInsertOneMenuItemWithNumber(+Null) 2 x 1,002,000 PASS
+0x581E00	CMenuSystem::InsertMenu	L1	L1 HudMenuInsertMenu 1,002,000 PASS
+0x582080	CMenuSystem::SetColumnOrientation	L1	L1 HudMenuSetColumnOrientation 1,002,000 PASS
+0x5820C0	CMenuSystem::SetActiveMenuItem	L1	L1 HudMenuSetActiveMenuItem 1,002,000 PASS
+0x5822B0	CMenuSystem::GetCarColourFromGrid	L1	L1 HudMenuGetCarColourFromGrid 1,002,000 PASS
+0x582300	CMenuSystem::CreateNewMenu	implemented-needs-L2	no call in the runs
+0x5825D0	CMenuSystem::Input	implemented-needs-L2	no call in the runs
+0x582630	CMenuSystem::Process	implemented-needs-L2	no call in the runs
+0x5827D0	CRadar::LoadTextures	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x583350	CRadar::LimitToMap	L2	L1 HudRadarLimitToMap(+Loaded, +LoadedBig) 3 x 1,003,364 cases 0 mismatches (INCOMPLETE only by signalling-NaN inputs); L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x5835A0	CRadar::TransformRadarPointToRealWorldSpace	L1	L1 HudRadarTransformRadarPointToRealWorldSpace 1,060,000 cases 0 mismatches (INCOMPLETE only by signalling-NaN inputs)
+0x583670	CRadar::CalculateCachedSinCos	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x583F40	CRadar::ShowRadarTrace	implemented-needs-L2	no call in the runs
+0x584070	CRadar::ShowRadarTraceWithHeight	implemented-needs-L2	no call in the runs
+0x584480	CRadar::ShowRadarMarker	implemented-needs-L2	no call in the runs
+0x584770	CRadar::GetRadarTraceColour	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x584850	CRadar::DrawRotatingRadarSprite	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 1000 undeclared; split split-menus-hud: PASS 169 compared, 0 mismatches, 0 undeclared
+0x584960	CRadar::DrawYouAreHereSprite	implemented-needs-L2	no call in the runs
+0x584B50	CRadar::RequestMapSection	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 17 undeclared; split split-menus-hud: PASS 1000 compared, 0 mismatches, 0 undeclared
+0x584BB0	CRadar::RemoveMapSection	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1000 compared, 0 mismatches, 0 undeclared
+0x584BF0	CRadar::RemoveRadarSections	implemented-needs-L2	no call in the runs
+0x584E00	CRadar::LineRadarBoxCollision	L2	L1 HudRadarLineRadarBoxCollision 1,060,000 cases 0 mismatches (INCOMPLETE only by signalling-NaN inputs); L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x585040	CRadar::ClipRadarPoly	L2	L1 HudRadarClipRadarPoly 1,060,000 cases 0 mismatches with the corners[-1] stack quirk modelled (INCOMPLETE only by signalling-NaN inputs); L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x5853D0	CRadar::DrawAreaOnRadar	implemented-needs-L2	no call in the runs
+0x585700	CRadar::DrawRadarMask	implemented-needs-L2	split split-menus-hud: COUNT 354 compared, 0 mismatches, 354 undeclared
+0x585940	CRadar::Shutdown	implemented-needs-L2	no call in the runs
+0x585960	CRadar::InitFrontEndMap	L2	L2 menus-hud: 640/640 PASS (0 mismatches, 0 undeclared)
+0x5859F0	CRadar::AddBlipToLegendList	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x585B20	CRadar::SetMapCentreToPlayerCoords	L2	L2 menus-hud: 2/2 PASS (0 mismatches, 0 undeclared); L2 grove: 1/1 PASS (0 mismatches, 0 undeclared)
+0x585BF0	CRadar::Draw3dMarkers	L2 (see FAIL)	L2 menus-hud: 1000/1001 FAIL (2 mismatches, 935 undeclared); split split-menus-hud: PASS 1000 compared, 0 mismatches, 935 undeclared
+0x585FF0	CRadar::DrawRadarSprite	implemented-needs-L2	split split-menus-hud: DIVERGED 39 compared, 0 mismatches, 39 undeclared
+0x586110	CRadar::DrawRadarSection	implemented-needs-L2	split split-menus-hud: COUNT 708 compared, 0 mismatches, 0 undeclared
+0x586520	CRadar::DrawRadarSectionMap	implemented-needs-L2	no call in the runs
+0x586650	CRadar::DrawRadarGangOverlay	implemented-needs-L2	split split-menus-hud: COUNT 354 compared, 0 mismatches, 0 undeclared
+0x586880	CRadar::DrawRadarMap	implemented-needs-L2	split split-menus-hud: COUNT 354 compared, 0 mismatches, 354 undeclared
+0x586B00	CRadar::DrawMap	implemented-needs-L2	split split-menus-hud: COUNT 354 compared, 0 mismatches, 354 undeclared
+0x586D60	CRadar::DrawCoordBlip	L2	split split-menus-hud: PASS 708 compared, 0 mismatches, 0 undeclared
+0x587D20	CRadar::SetupAirstripBlips	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x588050	CRadar::DrawBlips	implemented-needs-L2	split split-menus-hud: COUNT 353 compared, 0 mismatches, 353 undeclared
+0x588850	CHud::Shutdown	implemented-needs-L2	no call in the runs
+0x588880	CHud::ReInitialise	L2	L2 menus-hud: 1/1 PASS (0 mismatches, 0 undeclared); L2 grove: 1/1 PASS (0 mismatches, 0 undeclared)
+0x588BE0	CHud::SetHelpMessage	L2 (see FAIL)	L2 menus-hud: 23/23 FAIL (0 mismatches, 18 undeclared); L2 grove: 15/15 FAIL (0 mismatches, 12 undeclared); L2 menus-hud: 23/23 PASS (0 mismatches, 0 undeclared)
+0x588D40	CHud::SetHelpMessageStatUpdate	implemented-needs-L2	no call in the runs
+0x588E30	CHud::SetHelpMessageWithNumber	implemented-needs-L2	no call in the runs
+0x5890A0	CHud::RenderArmorBar	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 0 undeclared
+0x589190	CHud::RenderBreathBar	implemented-needs-L2	no call in the runs
+0x589270	CHud::RenderHealthBar	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 169 undeclared
+0x5893B0	CHud::DrawAmmo	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 1 undeclared
+0x58A160	CHud::DrawTripSkip	implemented-needs-L2	no call in the runs
+0x58A330	CHud::DrawRadar	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 169 undeclared
+0x58AA50	CHud::DrawAreaName	L2	split split-menus-hud: PASS 131 compared, 0 mismatches, 103 undeclared
+0x58AEA0	CHud::DrawVehicleName	L2 partial	split split-menus-hud: PASS 169 compared, 0 mismatches, 0 undeclared
+0x58B180	CHud::DrawMissionTimers	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 0 undeclared
+0x58B6E0	CHud::DrawHelpText	L2	split split-menus-hud: PASS 193 compared, 0 mismatches, 103 undeclared
+0x58C080	CHud::DrawScriptText	L2	split split-menus-hud: PASS 282 compared, 0 mismatches, 40 undeclared
+0x58C250	CHud::DrawSubtitles	L2	split split-menus-hud: PASS 194 compared, 0 mismatches, 0 undeclared
+0x58C6A0	CHud::DrawSuccessFailedMessage	L2	split split-menus-hud: PASS 193 compared, 0 mismatches, 0 undeclared
+0x58CA50	CHud::DrawBustedWastedMessage	L2	split split-menus-hud: PASS 193 compared, 0 mismatches, 0 undeclared
+0x58CC80	CHud::DrawOddJobMessage	L2	split split-menus-hud: PASS 281 compared, 0 mismatches, 0 undeclared
+0x58D240	CHud::DrawMissionTitle	L2	split split-menus-hud: PASS 281 compared, 0 mismatches, 0 undeclared
+0x58D490	CHud::DrawAfterFade	L2	split split-menus-hud: PASS-FP 479 compared, 0 mismatches, 459 undeclared
+0x58D580	CHud::DrawFadeState	implemented-needs-L2	no call in the runs
+0x58D7D0	CHud::DrawWeaponIcon	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 169 undeclared
+0x58D9A0	CHud::DrawWanted	L2	split split-menus-hud: PASS 169 compared, 0 mismatches, 0 undeclared
+0x58FAE0	CHud::Draw	L2	split split-menus-hud: PASS 193 compared, 0 mismatches, 193 undeclared
+0x58FDA0	CHudColours::Constructor	L2	L2 menus-hud: 1/1 PASS (0 mismatches, 0 undeclared); L2 grove: 1/1 PASS (0 mismatches, 0 undeclared)
+0x5BA690	CFont::Initialise	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x5BA850	CHud::Initialise	L2	split split-menus-hud: PASS 1 compared, 0 mismatches, 1 undeclared
+0x5D53C0	CRadar::Load	implemented-needs-L2	no call in the runs
+0x5D5860	CRadar::Save	implemented-needs-L2	no call in the runs
+0x69EA30	CMessages::ClearThisPrint	L2	L2 menus-hud: 3/3 PASS (0 mismatches, 0 undeclared)
+0x69EBE0	CMessages::ClearThisBigPrint	implemented-needs-L2	no call in the runs
+0x69ED80	CMessages::ClearThisPrintBigNow	L2	L2 menus-hud: 1/1 PASS (0 mismatches, 0 undeclared); L2 grove: 1/1 PASS (0 mismatches, 0 undeclared)
+0x69F490	CKeyArray::Load	L2	split split-menus-hud-1: DIVERGED 0 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 3 compared, 0 mismatches, 3 undeclared
+0x69F5D0	CData::Load	L2	split split-menus-hud-1: DIVERGED 0 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 3 compared, 0 mismatches, 3 undeclared
+0x69F670	CMissionTextOffsets::Load	L2	split split-menus-hud-1: DIVERGED 0 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 2 compared, 0 mismatches, 2 undeclared
+0x69F7E0	FUN_0069f7e0	L2	L2 menus-hud: 52/52 PASS (0 mismatches, 0 undeclared); L2 grove: 2/2 PASS (0 mismatches, 0 undeclared)
+0x69F940	CText::ReadChunkHeader	implemented-needs-L2	no call in the runs
+0x69F9A0	CText::LoadMissionPackText	implemented-needs-L2	no call in the runs
+0x69FBF0	CText::LoadMissionText	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x69FFA0	FUN_0069ffa0	implemented-needs-L2	no call in the runs
+0x69FFD0	FUN_0069ffd0	implemented-needs-L2	no call in the runs
+0x6A01A0	CText::Load	L2	split split-menus-hud-1: PASS 2 compared, 0 mismatches, 2 undeclared; split split-menus-hud: PASS 2 compared, 0 mismatches, 0 undeclared
+0x718630	GxtCharStrcat	L1	L1 HudGxtCharStrcat 1,002,000 PASS
+0x718660	GxtCharStrcpy	L2	L1 HudGxtCharStrcpy 1,002,000 PASS; L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x718690	FUN_00718690	L1	L1 HudGxtCharStrlen 1,002,000 PASS
+0x7187C0	CFont::LoadFontValues	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x7189B0	CFont::Shutdown	implemented-needs-L2	no call in the runs
+0x718A10	CFont::PrintChar	L2	split split-menus-hud-1: DIVERGED 0 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1000 compared, 0 mismatches, 900 undeclared
+0x718ED0	CFont::GetNextSpace	L1	L1 HudFontGetNextSpace 1,002,000 PASS
+0x718F00	CFont::ParseToken	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x719240	FUN_00719240	L2	L1 HudGxtStripTokens 1,002,000 PASS; L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x719670	CFont::GetScriptLetterSize	implemented-needs-L2	no call in the runs
+0x719840	CFont::RenderFontBuffer	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 715 undeclared; split split-menus-hud: PASS-FP 480 compared, 0 mismatches, 0 undeclared
+0x719B40	CFont::PrintString-ranged	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 1000 undeclared; split split-menus-hud: DIVERGED 198 compared, 0 mismatches, 1 undeclared
+0x71A210	CFont::DrawFonts	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 600 undeclared; split split-menus-hud: PASS-FP 479 compared, 0 mismatches, 0 undeclared
+0x71A220	CFont::ProcessCurrentString	implemented (FAIL)	split split-menus-hud-1: FAIL 1000 compared, 1000 mismatches, 572 undeclared; split split-menus-hud: FAIL 198 compared, 198 mismatches, 1 undeclared
+0x71A600	CFont::ProcessStringToDisplay	implemented-needs-L2	no call in the runs
+0x71A620	CFont::GetTextRect	L2	L2 menus-hud: 1000/1001 PASS (0 mismatches, 0 undeclared); L2 grove: 455/455 PASS (0 mismatches, 0 undeclared)
+0x71A700	CFont::PrintString-null-terminated	L2	split split-menus-hud-1: PASS 1000 compared, 0 mismatches, 922 undeclared; split split-menus-hud: DIVERGED 198 compared, 0 mismatches, 0 undeclared
+0x71A820	CFont::PrintStringFromBottom	L2	split split-menus-hud-1: PASS 160 compared, 0 mismatches, 160 undeclared; split split-menus-hud: PASS 103 compared, 0 mismatches, 0 undeclared
+0x84E110	__init_g_b72cac	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EBE0	__init_g_ba176c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EC00	__init_g_ba1770	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EC20	__init_g_ba1774	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EC40	__init_g_ba1778	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EC60	__init_g_ba177c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EC80	__init_g_ba1780	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84ED60	__init_g_ba671c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EDA0	__init_g_ba6730	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EDC0	__init_g_ba6734	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EDE0	__init_g_ba6738	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EE00	__init_g_ba673c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EE20	__init_g_ba6740	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EE60	__init_g_ba82c0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EE80	__init_g_ba82c4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EEA0	__init_g_ba82c8	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EEC0	__init_g_ba82cc	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EEE0	__init_g_ba82d0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EF00	__init_g_ba82d4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EF20	__init_g_ba82e4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EF40	__init_g_ba82e8	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EF60	__init_g_ba82ec	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EF80	__init_g_ba82f0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EFA0	__init_g_ba82f4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EFC0	__init_g_ba82f8	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84EFE0	__init_g_ba86bc	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F000	__init_g_ba86c0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F020	__init_g_ba86c4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F040	__init_g_ba86c8	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F060	__init_g_ba86cc	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F080	__init_g_ba86d0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F100	__init_g_bab1e4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F120	__init_g_bab1e8	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F140	__init_g_bab1ec	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F160	__init_g_bab1f0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F180	__init_g_bab1f4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x84F1A0	__init_g_bab1f8	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x8532A0	__init_g_c1a558	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x8532C0	__init_g_c1a55c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x8532E0	__init_g_c1a560	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x853300	__init_g_c1a564	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x853320	__init_g_c1a568	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x853340	__init_g_c1a56c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x853380	__init_g_c1aeb4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x853460	__init_TheText	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854C90	__init_g_c6e990	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854CB0	__init_g_c6e994	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854CD0	__init_g_c6e998	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854CF0	__init_g_c6e99c	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854D10	__init_g_c6e9a0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854D30	__init_g_c6e9a4	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854D80	__init_g_c71a58	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 0 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854DA0	__init_854da0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x854DB0	__init_854db0	L2	split split-menus-hud-1: PASS 1 compared, 0 mismatches, 1 undeclared; split split-menus-hud: PASS 1 compared, 0 mismatches, 0 undeclared
+0x856560	__dtor_FrontEndMenuManager	implemented-needs-L2	no call in the runs
+0x856570	__dtor_CRadar__ArrowBlipColour	implemented-needs-L2	no call in the runs
+0x856590	__dtor_CRadar__RadarBlipSprites	implemented-needs-L2	no call in the runs
+0x8565B0	__dtor_CHud__Sprites	implemented-needs-L2	no call in the runs
+0x8565D0	__dtor_HudColour	implemented-needs-L2	no call in the runs
+0x856A00	__dtor_TheText	implemented-needs-L2	no call in the runs
+0x856B40	__dtor_CFont__Sprite	implemented-needs-L2	no call in the runs
+0x856B60	__dtor_CFont__ButtonSprite	implemented-needs-L2	no call in the runs
+0x5822D0	CMenuSystem::Initialise	ported-unhookable	loop head at +3 (jb 0x5822EA -> 0x5822D3) inside the 5-byte patch; reached through orig!
+0x71A0E0	CFont::GetStringWidth	ported-unhookable	protection reads the entry dword 0x71A0E2 at 0x40641C (keycells READERS / patch_refs entry needed)
+0x856B80	__dtor_854da0	not-ported-unhookable	1 byte (ret): TooShort
+0x856B90	__dtor_854db0	not-ported-unhookable	1 byte (ret): TooShort
+0x43CE70	CRGBA destructor (empty)	not-ported-unhookable	1 byte (ret): TooShort
+0x43E0E0	identity cast getter	not-ported-unhookable	3 bytes (mov eax, ecx; ret): TooShort
+0x5733E0	CMenuManager::StretchX	ported-unhookable	callers keep EDX across the call (0x57804B, 0x5781B3, 0x57B906): needs preserve = "edx" + an L1 spec comparing EDX
+0x573410	CMenuManager::StretchY	ported-unhookable	same as StretchX

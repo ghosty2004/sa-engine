@@ -965,3 +965,11 @@
 - HARNESS-4: writer/verifier split (#[hook(unverified = BATCH, route, hazards, recs)], SA_UNVERIFIED selection,
   catalog/verify-queue.csv + docs/verify/QUEUE.md, tools/verify/{bisect-batch.sh,writer-gate.sh,queue.py},
   PLAN §5.1). Unverified hooks never change default behaviour (demo: broken unverified hook, default run IDENTICAL).
+
+## 2026-11-11 AI-6, HUD-2 and SCRIPT-3 integrated (main session)
+- AI-6 (af46d8d4): 85 hooks (CGroupEventHandler responses, gang/partner tasks). HUD-2 (a6712480): 224 HUD/menu/
+  font/text/radar ports, 21 L1 specs. SCRIPT-3 (aeb0a3fe): 14 of 25 ProcessCommands switches complete (982/1845
+  cases), all 119 SA:MP opcodes outside 0To99 in Rust, CMissionCleanup add/remove.
+- HUD-2's 17 orig! ST0 returns declared X87 broke the i686 build: converted to f64 `_st0` + X87 wrappers (+ f64
+  adapters where `=> target` is a Rust port). PRESERVE_SPECS_PENDING += 0x4637E0.
+- verify-all main-g2 (fresh DLL 3b33f75): IDENTICAL on all 11. States promoted (AI-6 40 L2, HUD-2 136 L2 + 11 L1).

@@ -7,7 +7,7 @@ use sa_core::mem::GlobalDesc;
 use crate::{
     cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100, cmd1200,
     cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200, cmd2300,
-    cmd2400, cmd2500, vm,
+    cmd2400, cmd2500, cleanup, vm,
 };
 
 /// Every module's registrations, in this order.
@@ -39,6 +39,7 @@ pub const MODULES: &[&[HookReg]] = &[
     cmd2300::HOOKS,
     cmd2400::HOOKS,
     cmd2500::HOOKS,
+    cleanup::HOOKS,
 ];
 
 /// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).
@@ -251,8 +252,25 @@ mod tests {
         }
     }
 
-    /// Partial switches (ADR-002): every switch hook takes the fallback, its `PORTED` list is
-    /// ascending and inside the switch's range, and every listed opcode has its own match arm.
+    /// The opcodes with a jump-table case in the switch starting at `lo` (`catalog/script-commands.csv`,
+    /// `orig_dispatch == case`; the other opcodes of the range reach the switch's default, -1).
+    fn jump_table_cases(lo: u16) -> BTreeSet<u16> {
+        let csv = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../catalog/script-commands.csv");
+        let text = std::fs::read_to_string(csv).unwrap();
+        text.lines()
+            .skip(1)
+            .filter_map(|l| {
+                let f: Vec<&str> = l.split(',').collect();
+                let op = u16::from_str_radix(f[0], 16).ok()?;
+                (op / 100 * 100 == lo && f.get(6) == Some(&"case")).then_some(op)
+            })
+            .collect()
+    }
+
+    /// Switch ports (ADR-002): every `PORTED` list is ascending, inside the switch's range and a subset
+    /// of its jump-table cases, and every listed opcode has its own match arm (and every arm is
+    /// listed). A switch whose hook has no fallback is complete: `PORTED` covers every jump-table case
+    /// and its last arm is the original default (`_ => return -1`).
     #[test]
     fn partial_switches_list_their_rust_cases() {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
@@ -262,19 +280,38 @@ mod tests {
                 .iter()
                 .find(|h| h.name == name)
                 .unwrap_or_else(|| panic!("{name} not hooked"));
-            assert!(h.set_original.is_some(), "{name}: not a fallback hook");
+            let complete = h.set_original.is_none();
             assert!(
                 ported.windows(2).all(|w| w[0] < w[1]),
                 "{name}: PORTED not ascending"
             );
+            let cases = jump_table_cases(*lo);
+            for op in *ported {
+                assert!(cases.contains(op), "{name}: {op:04X} in PORTED has no jump-table case");
+            }
+            if complete {
+                let missing: Vec<String> = cases
+                    .iter()
+                    .filter(|op| !ported.contains(op))
+                    .map(|op| std::format!("{op:04X}"))
+                    .collect();
+                assert!(missing.is_empty(), "{name}: no fallback but not ported: {missing:?}");
+            }
             let src: String = std::fs::read_to_string(dir.join(std::format!("cmd{lo}.rs"))).unwrap();
-            // Arms of the switch's `match command {` up to the fallback arm:
+            // Arms of the switch's `match command {` up to the last arm:
             // `0x00EC..=0x00F1 | 0x00FE => {`
             let body = src
                 .split("match command {")
                 .nth(1)
                 .unwrap_or_else(|| panic!("{name}: no match"));
-            let body = body.split("_ => fallback(").next().unwrap();
+            // A complete switch has no fallback call left; its last arm (`_ =>`) is the original
+            // default (-1, after the switch's common destructor tail where it has one).
+            if complete {
+                assert!(!src.contains("fallback("), "{name}: complete but still calls fallback");
+            }
+            let last = if complete { "_ =>" } else { "fallback(" };
+            assert!(body.contains(last), "{name}: no `{last}` arm");
+            let body = body.split(last).next().unwrap();
             let mut arms: Vec<(u32, u32)> = Vec::new();
             for l in body
                 .lines()

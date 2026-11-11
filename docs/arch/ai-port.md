@@ -1202,3 +1202,121 @@ with two other agents' runs through its lock. Lists: `tools/e2e/lists/ai4-all.tx
   `ComputePathNodes` / ctor, the walk-round creation/route rows, `GetSoundLevel`; SA:MP unexecuted: the Swim family,
   `ComputeDeathAnim`, `CalcForcesAndAnims`, `SetPedSafePosition`, GoToCarDoor `ControlSubTask` /
   `ComputeRouteToDoor`).
+## PORT-AI-6 (sixth pass: group event handler, gang, partner, leave-car-and-wander and wander tasks)
+
+Sixth pass (agent + 2 helpers, lane 1), on the `specified` rows of `catalog/state.csv` in the brief's order:
+every `CGroupEventHandler` response (plus the three `CEventHandler` partner responses and the four
+`CGroupEventHandler` rows the catalogue lists as `implemented` but no crate hooked: `ComputeStareResponse`,
+`ComputeDoDealResponse`, `ComputeGreetResponse`, `ComputeResponseSexyPed`), then the gang / partner tasks, then the
+remaining wander rows. Addresses hooked or documented by PORT-AI-4 (`worktree-agent-ae2e4ee4e63aaba4b`, still
+running) and PORT-AI-5 (`worktree-agent-a9f9bc730ad45bb9c`) were skipped (checked against both branches before and
+after porting). Ported from the 1.0 US bytes (objdump of the exe incl. the protection islands); gta-reversed and
+`docs/re/specs/AI` only as reading aids. **85 new hooks**, 1 ported-unhookable, 1 not ported. Per-function rows:
+`docs/arch/ai-port-6-verdicts.tsv`.
+
+| module | contents |
+|---|---|
+| `geh.rs` (lead) | `CGroupEventHandler`: `ComputeEventResponseTasks` and all 31 `Compute*Response` / `IsKillTaskAppropriate` functions; `CEventHandler::ComputeChatPartnerResponse` / `ComputeSignalAtPedResponse` / `ComputeCreatePartnerTaskResponse` (35 hooks) |
+| `gang6.rs` (helper A) | `CTaskComplexGangLeader` dtor / `ScanForStuff` / `TryToPassObject` / `ControlSubTask`, `CTaskComplexGangFollower` `ControlSubTask` / `CreateNextSubTask`, `CTaskGangHassleVehicle` ctor / `CreateFirstSubTask` / `CreateNextSubTask` / `GetTargetHeading` / `CalcTargetOffset`, `CTaskGangHasslePed` dtor, `CTaskComplexSignalAtPed` ctor / dtor, `CTaskComplexLeaveCarAndWander` (8) (22 hooks; `CTaskGangHassleVehicle::Destructor` 0x65FB60 ported, unhookable) |
+| `partner6.rs` (helper B) | `CTaskComplexPartner` `CreateFirstSubTask` / `CreateNextSubTask` / `RemoveStreamedAnims`, `CTaskComplexBeInCouple::ControlSubTask`, `CTaskComplexPartnerDeal/Greet/Chat/Shove` ctors, clones, `GetPartnerSequence`, `StreamRequiredAnims`, `CTaskComplexUsePairedAttractor` `Set/Clear/SeekPartnership`, `CTaskComplexAttractorPartnerWait` / `UseAttractorPartner` `Clone` / `CreateFirstSubTask`, `CTaskComplexWanderFlee` dtor, `CTaskComplexWander::GetDistSqOfClosestPathNodeToPed`, `CTaskComplexAvoidOtherPedWhileWandering::Clone`, `CTaskComplexWanderCriminal` `LookForCarsToSteal` / `ScanForStuff`, `CTaskComplexWanderProstitute::ScanForStuff` (28 hooks) |
+
+### Findings (from the bytes)
+
+- **`CGroupEventHandler` conventions**: every response is `cdecl`, returns a `CTaskAllocator*` (mostly 0) and builds
+  its response task on the stack, with an unused `CTaskSimpleNone` (vtable 0x859CFC) constructed before and destroyed
+  after every `CPedGroupIntelligence::SetTask`. Rust keeps both as zeroed locals with the original constructors /
+  destructors. `ComputeEventResponseTasks` dispatches on the base event type (jump table 0x5FC398 / index 0x5FC3E0).
+- **Where gta-reversed differs** (bytes kept): `ComputeResponseLeaderExitedCar` handles followers already sitting in
+  the leader's vehicle with that vehicle (gr skips them) and does not null-check the leader;
+  `ComputeResponseDamage` switches on the task id read *before* the "maybe kill threats" adjustment (the adjustment
+  only rewrites the event); `ComputeDoDealResponse` draws no rand before the look-ats; the `CTaskComplexLeaveAnyCar`
+  of `ComputeResponseNewGangMember` has +0x10 = 0, +0x11 = 1, the one of `ComputeResponseLeaderEnteredCar` +0x10 = 1,
+  +0x11 = 0. `ComputeResponseLeaderEnteredCar` (not reversed by gr): the two inlined `SetTask` copies call the two
+  `GetTaskType`s in opposite orders (primary pairs: the pair's first; default pairs: the sequence's first); kept.
+- **Bool arguments with garbage upper bytes**: the front-seat flag of `ComputeResponseLeaderEnteredCar` is a byte in
+  an uninitialised dword slot pushed whole, and `ComputeChatPartnerResponse` pushes its event-pointer argument slot
+  with only the low byte replaced; the constructors (0x63B320, 0x684290 -> 0x681E70) read the low byte only, so the
+  ports pass zero-extended values.
+- **Argument-slot writes not reproduced** (no caller reads them): `ComputeResponseNewGangMember`,
+  `ComputeResponseGather`, `ComputeWalkAlongsideResponse` (min distance), `ComputeMemberResponses` (loop counters),
+  `ComputeChatPartnerResponse`; tail jumps that rewrite the caller's argument slots (`ComputeResponsePedThreat` ->
+  `ComputeDrivebyResponse`, `ComputeResponseDraggedOutCar` -> `ComputeMemberResponses` / `...LeaderExitedCar`) are
+  plain calls.
+- **x87**: distance gates use the `X87` model in the original operand order (`(dx*dx + dy*dy) + dz*dz` from the
+  difference loads, or `z*z + y*y + x*x` of the stored `VectorSub` result in DoDeal / Greet); the minimum searches
+  compare against the stored f32 minimum (strict less, unordered never stores).
+- **RNG** (return addresses): `ComputeStareResponse` 0x5F9C85 (one per member), `ComputeHassleSexyPedResponse`
+  0x5FA06A (one per follower slot, null slots included), `ComputeFleePedResponse` 0x5FA1E5 (unused draw per member),
+  `ComputeResponseLeaderExitedCar` 0x5F92AF, `ComputeResponsLeaderQuitEnteringCar` 0x5F962D; everything else through
+  `GetRandomNumberInRange` 0x407180 (its own `rand` site). Helpers: 0x65E265, 0x66258B, 0x662956 (only after a
+  successful allocation), 0x66333C, 0x682870 / 0x68289A / 0x6828C4 / 0x6828F2 / 0x682920, 0x66B5C7 (unmasked),
+  0x67037A, 0x6727AD.
+- **Helper A (gang)**: `ScanForStuff` treats a timer that never started as due, has no `break` in the lean-on-vehicle
+  loop and checks the leader's 0x390 task instead of the scanned ped's (kept); its recruit path sends the script
+  command to the scanned ped's event group and calls `CPedGroup::Process` (gr differs). `TryToPassObject` tests
+  `IsPlayer` on the passing ped (kept). `GangFollower::CreateNextSubTask` writes the seek task's fields through a null
+  result when the pool is full (kept). `CTaskComplexSignalAtPed` ctor does not store its second argument (+0x10 = 0;
+  gr differs). `CTaskComplexLeaveCarAndWander::CreateNextSubTask` returns `CreateSubTask(0x516)`, always null (kept).
+  `GetTargetHeading` returns ST0 (`X87`). Open point: `TryToPassObject`'s distance local is zeroed where the original's
+  slot holds the pushed ECX (matters only if `GetClosestGroupPed` 0x5FACD0 can return non-null without writing it).
+- **Helper B (partner / wander)**: `CTaskComplexPartner::CreateNextSubTask` calls 0x66B150 on a null wander task when
+  the pool is full and refinds the partner task without a null check (kept); the four `GetPartnerSequence` ports call
+  `AddTask` on a null sequence / add null tasks when allocations fail (kept); `CTaskComplexPartnerChat::GetPartnerSequence`
+  replaces only the low 16 bits of the two time values with the conversation words at 0xB613F8 / 0xB613FA (`mov bx/bp`);
+  `SetPartnership` calls `RegisterReference` without a null check; `AvoidOtherPedWhileWandering::Clone` ORs its flag
+  into a null result when the pool is full (kept). Callee names taken from the bytes/specs only: 0x683340
+  (`CTaskComplexWaitForPed` ctor), 0x683840 (`GetSideOfPartner`), 0x681FE0 (`ComputeMeetingPositions`), 0x682CB0
+  (`CTaskComplexChat` ctor).
+- **Unhookable**: `CTaskGangHassleVehicle::Destructor` 0x65FB60 (INF-20: protection code `adc ecx, [0x65FB62]` at
+  0x401A26 reads the patched bytes; with the hook `every_hook_installs_on_the_exe`, keycells and patch_refs failed).
+- **Not ported**: `CTaskGangHassleVehicle::ControlSubTask` 0x6637C0 (~740 instructions: a stack `CTaskSimpleFight` and
+  `CMatrix`, the `CCollision::ProcessColModels` statics, `ApplyTurnForce` with by-value vectors, vehicle audio events;
+  never executed in the corpus; time box).
+- No `preserve=`, `footprint` or `fallback` in this pass (sa-hook `callers` test green).
+- **Build fix on master**: `crates/sa-veh/src/vehicle2.rs` declared two `orig!` ST0 returns as `X87` (16 bytes since
+  3064b95), which the phase-A return check rejects (i686 build broken at ee3477c); declared `f64` and converted with
+  `X87::from_f64_exact` (separate commit).
+
+### Verification (lane 1, `SA_ROOT=/home/ghosty2004/sa-engine`)
+
+Frozen source exports (`target/ai6src1` = working tree without gang6, `target/ai6src2` = `git archive` of cbcfcb7),
+`CARGO_TARGET_DIR=target/ai6b`, host sa-oracle rebuilt with each. Lists `tools/e2e/lists/ai6-{geh,gang,partner,all}.txt`
+(all 85 hooks in INF-17 split mode, `L2_MAX=150 SPLIT_PER_FRAME=4 SPLIT_STACKFILL=16384`, spool quota 2 GiB). Extras:
+section `PORT-AI-6` of `tools/e2e/l2-extras.txt` (`CPedGroups::ms_groups` for the 32 `CGroupEventHandler` hooks: the
+pair arrays `SetTask` writes; added after the first grove run, every undeclared byte of those hooks lay there).
+
+| run | build | result |
+|---|---|---|
+| split + list L3, 63 hooks (geh + partner), police-gang | v1 | 22 PASS, 0 FAIL, 0 mismatches, 0 undeclared; rust / splito / splitr == plain on 5200 frames |
+| split + list L3, 85 hooks, police-gang | v2 | 27 PASS, 0 FAIL, 0 mismatches; undeclared only in `GangLeader::ControlSubTask` (`g_fxMan` +0xC/+0x14) and `GangFollower::ControlSubTask` (`CStreaming::ms_aInfoForModel`): callee writes; traces == plain |
+| same, grove | v2 | 29 PASS, 4 DIVERGED, 0 FAIL, 0 mismatches; undeclared: the `CGroupEventHandler` hooks in `CPedGroups::ms_groups` (-> extras), `GangFollower::ControlSubTask` / `WanderCriminal::LookForCarsToSteal` in the collision statics; L3 IDENTICAL |
+| same, grove, with the extras | v2 | 29 PASS, 4 DIVERGED, 0 FAIL, 0 mismatches; undeclared only `GangFollower::ControlSubTask` and `LookForCarsToSteal` (collision statics 0x962044.., 0x965488, `ms_colModelCache`); L3 IDENTICAL |
+| same, c-bug / car-ai / driving / weapon-combat | v2 | 31/31/31/19 PASS, 1/3/4/0 DIVERGED, 0 FAIL, 0 mismatches; undeclared only callee regions (`g_fxMan`, `ms_aInfoForModel`, collision statics, `CAEPedSpeechAudioEntity::s_PedSpeechSlots` for `Partner::CreateFirstSubTask`, `ms_colModelCache` for `WanderProstitute::ScanForStuff`); L3 IDENTICAL on every frame |
+| all engine ports on Rust (`verify-all.sh ai6v2 1`), **L3** | v2 | **IDENTICAL on all 11 recordings** (grove 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276 frames; 17 subsystems incl. rand/randcalls) |
+
+- DIVERGED pairs are all constructors / destructors called by a Rust caller on its stack buffer (`this` differs:
+  `CTaskComplexSignalAtPed` ctor/dtor, `CTaskGangHasslePed` dtor, `CTaskComplexPartnerDeal` ctor, `PartnerGreet` ctor
+  / `Clone`), not port outputs.
+- `cargo test -p sa-ai` 13 pass; `cargo test --release -p sa-hook --lib` 51 pass (`every_hook_installs_on_the_exe`,
+  `matches_catalogue_and_exe`, `callers`, `patch_refs`); clippy `-D warnings` sa-ai host (all targets), i686
+  (`--features in-process`), wasm32.
+
+Agent states over the 87 rows (85 hooks + 1 unhookable + 1 not ported; the main session sets `catalog/state.csv`):
+
+| state | count | meaning here |
+|---|---|---|
+| L2 | 40 | split PASS, 0 mismatches, 0 undeclared writes in every run with cases, no FAIL |
+| L2-split | 5 | split PASS, 0 mismatches; undeclared writes by original callees (see Verification) |
+| implemented | 2 | hooked; split pairs DIVERGED only (Rust caller stack `this`), 0 mismatches |
+| implemented-needs-L2 | 38 | hooked, no call in the six split recordings |
+| ported-unhookable | 1 | 0x65FB60 (INF-20) |
+| deferred | 1 | 0x6637C0 not ported |
+
+### Open items (PORT-AI-6)
+
+- `CTaskGangHassleVehicle::ControlSubTask` 0x6637C0 not ported (see above); `CTaskGangHassleVehicle::Destructor` 0x65FB60
+  unhookable (INF-20).
+- 38 hooks got no call in the six split recordings (mostly vehicle-related group responses, leave-car-and-wander,
+  gang hassle vehicle, paired attractors): a recording with a recruited player group entering / leaving cars and
+  issuing commands would cover most `CGroupEventHandler` rows.
+- `TryToPassObject` distance-local open point (helper A, above).

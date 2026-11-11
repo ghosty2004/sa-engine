@@ -13,6 +13,7 @@ extern crate std;
 
 pub use sa_core::hook;
 
+pub mod cleanup;
 pub mod cmd0;
 pub mod cmd100;
 pub mod cmd1000;

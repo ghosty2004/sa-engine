@@ -14,7 +14,10 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 /// Opcodes with a Rust case, ascending.
-pub const PORTED: &[u16] = &[0x05C4, 0x05CA, 0x05CB, 0x05CD];
+pub const PORTED: &[u16] = &[
+    0x057B, 0x057D, 0x057F, 0x0585, 0x058D, 0x058E, 0x0591, 0x0592, 0x0596, 0x059B, 0x05B1, 0x05B2, 0x05B3,
+    0x05B5, 0x05B7, 0x05B8, 0x05C4, 0x05C6, 0x05CA, 0x05CB, 0x05CC, 0x05CD, 0x05CE, 0x05D0, 0x05D5,
+];
 
 /// `.rdata` 0x86E69C / 0x86E698: the default enter-car times (int 20000), read at run time as the original does.
 const ENTER_AS_PASSENGER_DEFAULT_TIME: usize = 0x86E69C;
@@ -133,6 +136,15 @@ pub fn process_commands_1400_to_1499(s: Scr, command: u32) -> i8 {
                 task_complex_leave_car_ctor(t, v, 0, 0, 1, 0)
             };
             give_ped_scripted_task(s, ped, t, command);
+        }
+        // 057B, 057D, 057F, 0585, 058D, 058E, 0591, 0592, 059B, 05B1, 05B2, 05B3, 05B5, 05B7, 05B8, 05C6, 05CC, 05CE,
+        // 05D0, 05D5 (0x490C0B): the jump table goes straight to the epilogue: 0 without reading the operands.
+        0x057B | 0x057D | 0x057F | 0x0585 | 0x058D | 0x058E | 0x0591 | 0x0592 | 0x059B | 0x05B1 => {}
+        0x05B2 | 0x05B3 | 0x05B5 | 0x05B7 | 0x05B8 | 0x05C6 | 0x05CC | 0x05CE | 0x05D0 | 0x05D5 => {}
+        // 0596 IS_PLAYER_IN_SHORTCUT_TAXI (0x48EE39): `CollectParameters(1)`; UpdateCompareFlag(false).
+        0x0596 => {
+            collect(s, 1);
+            set_flag(s, false);
         }
         _ => {
             return fallback(

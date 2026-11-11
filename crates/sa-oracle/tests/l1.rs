@@ -429,6 +429,8 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x4504F0, 0x4226F0, 0x43D9E0,
     // CAM-2 0x50E180, AI-5 CDecision::SetDefault, AI-4 FollowNodeRoute::GetSubTaskType; specs queued.
     0x50E180, 0x600530, 0x669650,
+    // SCRIPT-3: CMissionCleanup::AddEntityToList; spec queued.
+    0x4637E0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

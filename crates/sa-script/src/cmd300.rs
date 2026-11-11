@@ -1,6 +1,11 @@
-//! `CRunningScript::ProcessCommands300To399` (0x47C100): partial port (PORT-SCRIPT-2, ADR-002). Opcodes in [`PORTED`] run in Rust;
-//! every other opcode (and the default, -1) runs the original body through the fallback.
-//! Cases follow the 1.0 US bytes and `docs/re/specs/SCRIPT/commands/ProcessCommands300To399.md`.
+//! `CRunningScript::ProcessCommands300To399` (0x47C100): complete port (PORT-SCRIPT-2 partial, completed in
+//! PORT-SCRIPT-3). Every jump-table case is in [`PORTED`]; the other opcodes of the range reach the
+//! original default (-1). Cases follow the 1.0 US bytes and
+//! `docs/re/specs/SCRIPT/commands/ProcessCommands300To399.md`.
+//!
+//! The heading reads (0172/0174/0176) take `CPlaceable::GetHeading`'s FPATAN result in ST0 as f64 (53
+//! of 64 significand bits) before the 24-bit `fmul`; DRAW_SHADOW's FSIN/FCOS are modelled at 53 bits.
+//! Both accepted project-wide (double rounding can differ in the last f32 bit, not observed).
 //!
 //! No case of this switch returns 1; every ported case returns 0.
 
@@ -14,9 +19,10 @@ use sa_math::x87::X87;
 
 /// Opcodes with a Rust case, ascending.
 pub const PORTED: &[u16] = &[
-    0x0137, 0x014E, 0x014F, 0x0151, 0x0158, 0x0159, 0x015A, 0x015B, 0x015D, 0x015F, 0x0160, 0x0161, 0x0164,
-    0x0165, 0x0168, 0x0169, 0x016B, 0x016C, 0x016D, 0x016E, 0x0173, 0x0175, 0x017B, 0x0180, 0x0184, 0x0185,
-    0x0186, 0x0187, 0x0188, 0x018A, 0x018B, 0x018C, 0x018D, 0x018E, 0x018F,
+    0x0137, 0x014B, 0x014C, 0x014E, 0x014F, 0x0151, 0x0154, 0x0158, 0x0159, 0x015A, 0x015B, 0x015D, 0x015F,
+    0x0160, 0x0161, 0x0162, 0x0164, 0x0165, 0x0166, 0x0167, 0x0168, 0x0169, 0x016A, 0x016B, 0x016C, 0x016D,
+    0x016E, 0x016F, 0x0172, 0x0173, 0x0174, 0x0175, 0x0176, 0x0177, 0x0179, 0x017B, 0x0180, 0x0181, 0x0184,
+    0x0185, 0x0186, 0x0187, 0x0188, 0x0189, 0x018A, 0x018B, 0x018C, 0x018D, 0x018E, 0x018F,
 ];
 
 /// `.rdata` 0x858B50: 0.0f
@@ -37,6 +43,16 @@ const UPSIDE_DOWN_CARS: usize = 0xA4892C;
 const ONSCN_TIMER: usize = 0xBA1788;
 /// `CTheScripts::OnAMissionFlag` 0xA476AC.
 const ON_A_MISSION_FLAG: usize = 0xA476AC;
+/// `.rdata` 0x859F00: 0.015f (CREATE_CAR_GENERATOR's z lift)
+const K_0_015: u32 = 0x3C75_C28F;
+/// `.rdata` 0x858CDC: 0.001f (DO_FADE's ms to s)
+const K_0_001: u32 = 0x3A83_126F;
+/// `.rdata` 0x859878: 57.295776f (radians to degrees)
+const K_RAD2DEG: u32 = 0x4265_2EE0;
+/// `CTheCarGenerators::CarGeneratorArray` 0xC27AD0 (`CCarGenerator`, 0x20 bytes each).
+const CAR_GENERATORS: usize = 0xC27AD0;
+/// `CTheScripts::bScriptHasFadedOut` (byte) 0xA4448A.
+const SCRIPT_HAS_FADED_OUT: usize = 0xA4448A;
 
 orig! {
     /// `CRunningScript::CollectNextParameterWithoutIncreasingPC()` (0x464250)
@@ -100,6 +116,68 @@ orig! {
     fn set_ammo(p: GPtr<u8>, ty: u32, ammo: u32) = thiscall 0x5DF290 => unported;
     /// `CUpsideDownCarCheck::HasCarBeenUpsideDownForAWhile(int32)` (0x463940), AL
     fn has_car_been_upside_down_for_a_while(c: GPtr<u8>, h: i32) -> u8 = thiscall 0x463940 => unported;
+    /// `CTheCarGenerators::CreateCarGenerator(CVector, float angle, int32 model, int16 colour1, int16
+    /// colour2, uint8 forceSpawn, uint8 alarm, uint8 doorLock, uint16 minDelay, uint16 maxDelay, uint8
+    /// iplId, bool owned)` (0x6F31A0); the vector and floats as raw dwords, narrow values zero-extended
+    fn create_car_generator(x: u32, y: u32, z: u32, angle: u32, model: u32, c1: u32, c2: u32, force: u32, alarm: u32, lock: u32, min_delay: u32, max_delay: u32, ipl: u32, owned: u32) -> i32 = cdecl 0x6F31A0 => unported;
+    /// `CCarGenerator::SwitchOff()` (0x6F2E30)
+    fn car_generator_switch_off(g: GPtr<u8>) = thiscall 0x6F2E30 => unported;
+    /// `CCarGenerator::SwitchOn()` (0x6F32C0)
+    fn car_generator_switch_on(g: GPtr<u8>) = thiscall 0x6F32C0 => unported;
+    /// Unnamed thiscall on a `CCarGenerator` taking the count (0x47C0E0, a `.HOODLUM` stub; gr's
+    /// `SwitchOn(); m_nGenerateCount = count`)
+    fn car_generator_47c0e0(g: GPtr<u8>, count: u32) = thiscall 0x47C0E0 => unported;
+    /// `CTheZones::FindZone(const CVector*, uint64 label, eZoneType)` (0x572B80), the label as two
+    /// stack dwords, AL
+    fn find_zone(pos: GPtr<u32>, lo: u32, hi: u32, ty: u32) -> u8 = cdecl 0x572B80 => unported;
+    /// `CCamera::Fade(float time, int16 direction)` (0x50AC20), the float as its raw dword
+    fn camera_fade(cam: GPtr<u8>, time: u32, dir: u32) = thiscall 0x50AC20 => unported;
+    /// `CShadows::StoreShadowToBeRendered(uint8 type, CVector* pos, float frontX, float frontY, float
+    /// sideX, float sideY, int16 intensity, uint8 r, uint8 g, uint8 b)` (0x707930); floats as raw dwords
+    fn store_shadow_to_be_rendered(ty: u32, pos: GPtr<u32>, fx: u32, fy: u32, sx: u32, sy: u32, intensity: u32, r: u32, g: u32, b: u32) = cdecl 0x707930 => unported;
+    /// `CPlaceable::GetHeading()` (0x441DB0), ST0 (an FPATAN result: read as f64, i.e. 53 of its 64
+    /// significand bits, as sa-ai's car_exit does)
+    fn get_heading(e: GPtr<u8>) -> f64 = thiscall 0x441DB0 => unported;
+    /// `CEntity::UpdateRwFrame()` (0x532B00)
+    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
+    /// `CPhysical::GetHasCollidedWith(CEntity*)` (0x543540), AL
+    fn get_has_collided_with(p: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x543540 => unported;
+}
+
+/// The ped's vehicle when `m_nPedFlags` bit 8 (+0x46C) is set and `m_pVehicle` (+0x58C) != 0, else the
+/// ped (`GetPedOrItsVehicle`, inlined; no null check on the ped).
+fn ped_or_its_vehicle(ped: GPtr<u8>) -> GPtr<u8> {
+    if ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0 {
+        let v = ped.byte_add(0x58C).cast::<GPtr<u8>>().read();
+        if !v.is_null() {
+            return v;
+        }
+    }
+    ped
+}
+
+/// `CPlaceable::GetPosition()` inlined: `m_matrix` (+0x14) ? `&m_matrix->pos` (+0x30) : `&m_placement.pos`
+/// (+0x4), copied as three raw dwords.
+fn entity_pos(e: GPtr<u8>) -> [u32; 3] {
+    let m = e.byte_add(0x14).cast::<GPtr<u8>>().read();
+    let p = if m.is_null() { e.byte_add(0x4) } else { m.byte_add(0x30) }.cast::<u32>();
+    [p.read(), p.wrapping_index(1).read(), p.wrapping_index(2).read()]
+}
+
+/// The heading tail of 0174/0176 (0x47CC03): `fmul [57.295776]; fst local; fcomp [0.0]` (the compare
+/// on ST0), `+ 360` through the f32 local when below 0 (`test ah,5; jp`), then `fld local; fcomp
+/// [360.0]` and `- 360` when above (`test ah,0x41; jne`). The GetHeading ST0 is read as f64 (53 bits),
+/// then rounded to 24 bits by the `fmul` (accepted project-wide for FPATAN results).
+fn heading_deg_tail(h: f64) -> u32 {
+    let st = X87::from_f64_exact(h).fmul_m(f(K_RAD2DEG));
+    let mut v = st.to_f32();
+    if !st.fcom(X87::constant(K_ZERO)).test_parity(5) {
+        v = X87::from_f32(v).fadd_m(f(K_360)).to_f32();
+    }
+    if !X87::from_f32(v).fcom(X87::constant(K_360)).test_any(0x41) {
+        v = X87::from_f32(v).fsub_m(f(K_360)).to_f32();
+    }
+    v.to_bits()
 }
 
 /// A local `CVector` (three raw f32 dwords) as the pointer the original passes.
@@ -137,7 +215,7 @@ fn wrap_heading_deg(a: u32) -> X87 {
 }
 
 /// `CRunningScript::ProcessCommands300To399(int32 command)` (0x47C100, thiscall, `ret 4`): AL = 0 continue, 1 wait, -1 unknown.
-#[hook(addr = 0x47C100, conv = thiscall, name = "CRunningScript::ProcessCommands300To399", expect = "8B 44 24 04 83 EC 7C", this = "CRunningScript", fallback)]
+#[hook(addr = 0x47C100, conv = thiscall, name = "CRunningScript::ProcessCommands300To399", expect = "8B 44 24 04 83 EC 7C", this = "CRunningScript")]
 pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
     match command {
         // 0137 IS_CAR_MODEL (0x47C127): no null check; flag = (int16)m_nModelIndex (+0x22, `movsx`) == P1.
@@ -398,14 +476,185 @@ pub fn process_commands_300_to_399(s: Scr, command: u32) -> i8 {
             let b = has_car_been_upside_down_for_a_while(GPtr::from_addr(UPSIDE_DOWN_CARS), spi(0)) != 0;
             set_flag(s, b);
         }
-        _ => {
-            return fallback(
-                process_commands_300_to_399_original,
-                "CRunningScript::ProcessCommands300To399",
-                s,
-                command,
+        // 014B CREATE_CAR_GENERATOR (0x47C169): CollectParameters(12); z += 0.015 (`fld; fadd; fstp`
+        // through the local) when `z > -100` (`fcomp; test ah,0x41; jne`: ordered greater);
+        // P0 = CreateCarGenerator((x,y,z), P3, P4, (u16)P5, (u16)P6, (u8)P7, (u8)P8, (u8)P9, (u16)P10,
+        // (u16)P11, 0, 1); StoreParameters(1). gr: unregistered.
+        0x014B => {
+            collect(s, 12);
+            let (x, y) = (sp(0), sp(1));
+            let mut z = sp(2);
+            if !X87::from_f32(f(z)).fcom(X87::constant(K_MINUS_100)).test_any(0x41) {
+                z = X87::from_f32(f(z)).fadd_m(f(K_0_015)).to_f32().to_bits();
+            }
+            let h = create_car_generator(
+                x,
+                y,
+                z,
+                sp(3),
+                sp(4),
+                sp(5) & 0xFFFF,
+                sp(6) & 0xFFFF,
+                sp(7) & 0xFF,
+                sp(8) & 0xFF,
+                sp(9) & 0xFF,
+                sp(10) & 0xFFFF,
+                sp(11) & 0xFFFF,
+                0,
+                1,
+            );
+            set_sp(0, h as u32);
+            store(s, 1);
+        }
+        // 014C SWITCH_CAR_GENERATOR (0x47C22F): g = &CarGeneratorArray[(u16)P0]; P1 == 0 -> SwitchOff;
+        // P1 > 100 (signed) -> SwitchOn only; otherwise (negative included) the `.HOODLUM` thiscall
+        // 0x47C0E0(g, P1). gr: SwitchOn for any non-zero count, then the count when <= 100.
+        0x014C => {
+            collect(s, 2);
+            let g = GPtr::<u8>::from_addr(CAR_GENERATORS.wrapping_add(((sp(0) & 0xFFFF) << 5) as usize));
+            let n = spi(1);
+            if n == 0 {
+                car_generator_switch_off(g);
+            } else if n > 100 {
+                car_generator_switch_on(g);
+            } else {
+                car_generator_47c0e0(g, n as u32);
+            }
+        }
+        // 0154 IS_CHAR_IN_ZONE (0x47C310): no null check. The 8-byte label is read into a buffer, then
+        // copied byte by byte up to and including its NUL into a zeroed 8-byte local whose two dwords are
+        // passed by value: FindZone(&pos, lo, hi, 0), pos = the ped's vehicle position when in one, else
+        // the ped's. `CPed::IsPlayer()` is called and its result discarded (gr: no call). Divergence
+        // note: the label buffer is a zeroed 16-byte buffer (the original's is not cleared; for an
+        // 8-character label its copy loop runs on through stale stack bytes and past the 8-byte local
+        // into the label buffer, a dead write; the two dwords passed are the same).
+        0x0154 => {
+            collect(s, 1);
+            let ped = ped_at_ref(pool(PED_POOL), spi(0));
+            let mut buf = [0u8; 16];
+            read_text_label(s, GPtr::from_raw(buf.as_mut_ptr()), 8);
+            let mut zone = [0u8; 8];
+            for (d, &c) in zone.iter_mut().zip(buf.iter()) {
+                *d = c;
+                if c == 0 {
+                    break;
+                }
+            }
+            ped_is_player(ped);
+            let pos = entity_pos(ped_or_its_vehicle(ped));
+            let lo = u32::from_le_bytes([zone[0], zone[1], zone[2], zone[3]]);
+            let hi = u32::from_le_bytes([zone[4], zone[5], zone[6], zone[7]]);
+            let b = find_zone(vec_ptr(&pos), lo, hi, 0) != 0;
+            set_flag(s, b);
+        }
+        // 0162 ADD_BLIP_FOR_CHAR_OLD, 0166 DIM_BLIP, 0181 DECLARE_MISSION_FLAG_FOR_CONTACT, 0189
+        // ADD_BLIP_FOR_CONTACT_POINT (0x47D0E0, gr: unimplemented): straight to the epilogue, operands not
+        // read, return 0.
+        0x0162 | 0x0166 | 0x0181 | 0x0189 => {}
+        // 0167 ADD_BLIP_FOR_COORD_OLD (0x47C6AA): CollectParameters(5); -100 ground rule on z; discarded
+        // GetActualBlipArrayIndex of the output operand; P0 = SetCoordBlip(4 COORD, (x,y,z), P3, P4,
+        // m_szName) (no scale call); StoreParameters(1). gr: unregistered.
+        0x0167 => {
+            collect(s, 5);
+            let (x, y) = (sp(0), sp(1));
+            let z = ground_rule(x, y, sp(2));
+            get_actual_blip_array_index(collect_next(s));
+            let h = set_coord_blip(4, x, y, z, sp(3), sp(4), s.byte_add(8));
+            set_sp(0, h as u32);
+            store(s, 1);
+        }
+        // 016A DO_FADE (0x47C7C3): TheCamera.Fade(`fild P0; fmul [0.001]`, (u16)P1); then, with mission
+        // cleanup only, bScriptHasFadedOut = (P1 != 1) (the full dword compared).
+        0x016A => {
+            collect(s, 2);
+            let t = X87::from_i32(spi(0)).fmul_m(f(K_0_001)).to_f32().to_bits();
+            camera_fade(GPtr::from_addr(THE_CAMERA), t, sp(1) & 0xFFFF);
+            if uses_mission_cleanup(s) {
+                GPtr::<u8>::from_addr(SCRIPT_HAS_FADED_OUT).write(u8::from(sp(1) != 1));
+            }
+        }
+        // 016F DRAW_SHADOW (0x47C9DF): CollectParameters(10). When the angle P4 == 0 (`test ah,0x44;
+        // jp`: ordered equal) front = (P5, 0); else front = (`fcos(P4) * P5`, `fsin(P4) * P5`), each
+        // stored as f32 (FSIN/FCOS modelled at 53 bits, accepted project-wide).
+        // StoreShadowToBeRendered((u8)P0, &(P1,P2,P3), -front.y (`fchs` of the f32), front.x, front.x,
+        // front.y, (u16)P6, (u8)P7, (u8)P8, (u8)P9).
+        0x016F => {
+            collect(s, 10);
+            let pos = [sp(1), sp(2), sp(3)];
+            let a = X87::from_f32(spf(4));
+            let (fx, fy) = if !a.fcom(X87::constant(K_ZERO)).test_parity(0x44) {
+                (sp(5), 0)
+            } else {
+                (
+                    a.fcos().fmul_m(spf(5)).to_f32().to_bits(),
+                    a.fsin().fmul_m(spf(5)).to_f32().to_bits(),
+                )
+            };
+            let nfy = X87::from_f32(f(fy)).fchs().to_f32().to_bits();
+            store_shadow_to_be_rendered(
+                sp(0) & 0xFF,
+                vec_ptr(&pos),
+                nfy,
+                fx,
+                fx,
+                fy,
+                sp(6) & 0xFFFF,
+                sp(7) & 0xFF,
+                sp(8) & 0xFF,
+                sp(9) & 0xFF,
             );
         }
+        // 0172 GET_CHAR_HEADING (0x47CAA9): no null check; GetHeading of the ped's vehicle when in one,
+        // else of the ped (ST0 read as f64, FPATAN at 53 bits accepted), `fmul [57.295776]; fstp local`;
+        // `+ 360` when local < 0, `- 360` when local > 360 (each through the f32 local); P0 = local;
+        // StoreParameters(1).
+        0x0172 => {
+            collect(s, 1);
+            let e = ped_or_its_vehicle(ped_at_ref(pool(PED_POOL), spi(0)));
+            let mut v = X87::from_f64_exact(get_heading(e)).fmul_m(f(K_RAD2DEG)).to_f32();
+            if !X87::from_f32(v).fcom(X87::constant(K_ZERO)).test_parity(5) {
+                v = X87::from_f32(v).fadd_m(f(K_360)).to_f32();
+            }
+            if !X87::from_f32(v).fcom(X87::constant(K_360)).test_any(0x41) {
+                v = X87::from_f32(v).fsub_m(f(K_360)).to_f32();
+            }
+            set_sp(0, v.to_bits());
+            store(s, 1);
+        }
+        // 0174 GET_CAR_HEADING (0x47CBE1, gr: unregistered) / 0176 GET_OBJECT_HEADING (0x47CCCE, joins
+        // 0174 at 0x47CBFC): no null check; P0 = heading_deg_tail(GetHeading(e)); StoreParameters(1).
+        0x0174 | 0x0176 => {
+            collect(s, 1);
+            let e = if command == 0x0174 {
+                vehicle_at_ref(pool(VEHICLE_POOL), spi(0))
+            } else {
+                object_at_ref(pool(OBJECT_POOL), spi(0))
+            };
+            set_sp(0, heading_deg_tail(get_heading(e)));
+            store(s, 1);
+        }
+        // 0177 SET_OBJECT_HEADING (0x47CCEE): no null check; CWorld::Remove(obj); the heading wrapped in
+        // ST0 (as 0173) `* 0.017453292` to SetHeading; UpdateRwMatrix; UpdateRwFrame; CWorld::Add(obj).
+        0x0177 => {
+            collect(s, 2);
+            let obj = object_at_ref(pool(OBJECT_POOL), spi(0));
+            world_remove(obj);
+            let r = wrap_heading_deg(sp(1)).fmul_m(f(K_DEG2RAD)).to_f32();
+            set_heading(obj, r);
+            update_rw_matrix(obj);
+            update_rw_frame(obj);
+            world_add(obj);
+        }
+        // 0179 IS_CHAR_TOUCHING_OBJECT (0x47CD71): no null checks; both lookups first; flag =
+        // GetHasCollidedWith(ped's vehicle when in one, else the ped; obj) != 0.
+        0x0179 => {
+            collect(s, 2);
+            let ped = ped_at_ref(pool(PED_POOL), spi(0));
+            let obj = object_at_ref(pool(OBJECT_POOL), spi(1));
+            let b = get_has_collided_with(ped_or_its_vehicle(ped), obj) != 0;
+            set_flag(s, b);
+        }
+        _ => return -1,
     }
     0
 }

@@ -291,3 +291,107 @@ label has no NUL, the callee reads stale stack bytes).
 - Ported opcodes never executed in the four recordings have no L2 evidence (state `implemented`); SA:MP's
   own opcodes need a recording with SA:MP-like scripts (e.g. a corpus script running the SA:MP opcode set).
 - The undeclared-write policy for switch hooks (above).
+
+# PORT-SCRIPT-3: complete switches
+
+Goal: make whole switches Rust (every jump-table case), so the `fallback` flag can go and the switch can
+reach L2 as one function, then the SA:MP opcodes still on the fallback, then the non-switch functions.
+Work split: the main agent (400, 600, 800, the SA:MP cases in 1600/1700/2200, `cleanup.rs`, the test) and
+two helpers on disjoint switch files (200/300/700/1100/1300/1200 and 500/1000/900/100/1600/1700).
+
+## Mechanism for a complete switch
+
+- `PORTED` lists every opcode whose `orig_dispatch` is `case` in `catalog/script-commands.csv`; the hook has no
+  `fallback` flag (no trampoline cell, no `<fn>_original`), and the last arm of `match command` is the
+  original default: -1, after the switch's common tail where the default path runs one (800To899 runs
+  `~CMatrix` on its function-scope matrix, as every other path does).
+- `hooks::tests::partial_switches_list_their_rust_cases` reads the catalogue's jump-table cases: every
+  `PORTED` opcode must have a case; a hook without fallback must list all of them and must not call
+  `fallback(` anywhere. The arm parser takes the first `_ =>` after `match command {` as the switch's
+  last arm, so cases are written without a nested `_ =>` arm inside the switch body.
+- Cases the jump table sends straight to the epilogue (gr `nop`/`unimplemented`, e.g. 0329/032C/037E/0383,
+  02A4/02A5) are explicit arms that read no operand and return 0.
+
+## Decisions taken in this pass (reversible, for the main session)
+
+- **8-byte text labels** passed to a C-string callee (`CText::Get`, `GetGarageNumberByName`, `_stricmp`,
+  the inline strcpy loops of the menu commands): read into a zeroed 16-byte buffer. The original's stack
+  buffer is not cleared, so for an 8-character label the callee reads stale stack bytes after it. Same
+  ledger class as PORT-SCRIPT-2's zeroed text-label buffers; differs only for 8-character labels. This
+  unblocks 0299, 02B9, 02E4, 0360, 0361, 03B0, 03B1, 03D5, 03D6 (left on the fallback in pass 2) and
+  08D4/08DB.
+- **FPATAN/FSIN/FCOS** results reach Rust at 53 bits (`GetHeading` ST0 read as f64, `X87::fsin/fcos`):
+  the project-wide model (ROADMAP ledger, MATH-2; precedent sa-ai car_exit.rs). This unblocks 0174/0176,
+  02F6/02F7, 034D.
+- **Stack objects** (`CPedDamageResponseCalculator` + `CEventDamage` of 0321, the CTaskSimpleCarSetPedIn*
+  tasks, CMatrix/RwMatrix temporaries) are built on zeroed Rust buffers; SEH state stores are not ported.
+- **06D8 CREATE_MISSION_TRAIN**: the `first` out-parameter starts at 0. CreateMissionTrain (0x6F7550)
+  writes it on the first carriage whenever the type's config (`0x8D44F8 + 0x40*type`) starts with a
+  non-zero model id; all 16 configs in the exe image do (the table is only read: `catalog/rwsets.csv`).
+  An out-of-range type would leave the original's slot stale.
+- **Exact pushed dwords where cheap**: 06D8's direction (`setne dl` over EDX = P3) and 0321's in-vehicle
+  flag (`(flags >> 8) & 0xFFFFFF01`) are passed bit-exactly instead of 0/1.
+
+## Result
+
+982 of the 1,845 jump-table cases of the 25 partial switches are Rust (343 after PORT-SCRIPT-2; 639 new).
+14 switches are complete (no fallback): 100To199, 200To299, 300To399, 400To499, 500To599, 600To699,
+700To799, 800To899, 900To999, 1000To1099, 1100To1199, 1300To1399, 1600To1699, 2200To2299. All 119 SA:MP
+opcodes outside 0To99 are Rust (the last five: 0321, 066A, 06D8, 08D4, 08DB).
+
+| switch | Rust / cases | state |
+|---|---|---|
+| 1200To1299 | 71/73 | partial: 0503 CREATE_SWAT_ROPE passes `&[esp+0x6C]` to ClearSpaceForMissionEntity although the case never writes it (stale frame bytes, needs a measurement); 04B9 GET_CLOSEST_STRAIGHT_ROAD reads two `CNodeAddress` outputs whose high words (and an orientation float) are stale unless FindNodePairClosestToCoors 0x44FEE0 always writes them (check its bytes) |
+| 1400To1499 | 25/82 | partial (epilogue-only cases, 0596); the rest not attempted (time) |
+| 1700To1799 | 38/95 | partial (time) |
+| 1500, 1800..2100, 2300..2500 | unchanged since PORT-SCRIPT-2 | partial |
+
+Non-switch functions: `cleanup.rs` ports `CMissionCleanup::AddEntityToList` (stub 0x4637E0, `preserve = "ecx"`:
+the body never writes ECX) and `RemoveEntityFromList` (stub 0x4654B0). `FindFree` (0x4637C0) stays on the
+original: no caller, and its loop branches back to 0x4637C4 inside the bytes an entry patch would steal.
+The other ~79 non-switch functions (docs/re/specs/SCRIPT/) were not started.
+
+## Kept from the exe / divergence notes (per module docs and case comments)
+
+Every case comment names the case address and what the exe does where gta-reversed differs (unregistered or
+`unimplemented` handlers that the exe implements, missing null checks kept, operand-consuming nops,
+epilogue-only cases, bools and counters exactly as compiled). Ledger candidates, all of the classes already
+listed for PORT-SCRIPT-2 or decided above: zeroed text-label buffers (8-, 15-, 16-, 24-, 32- and 40-byte
+labels), `setcc` bools with stale upper bytes passed as 0/1, out-parameters the original leaves on its
+stack starting zeroed (03D3, 038A, 03B6, 04A5, 0339/0363/03B6 counts and lists), FPATAN/FSIN/FCOS at 53 bits,
+067A/067B/067D/067E pass a zeroed look-at vector where the original passes an unwritten stack vector
+(matters only if `TakeControlAttached` reads it with a target set).
+Unnamed callees called by address (conventions read from the call sites): 0x41BDD0, 0x463490, 0x47C0E0,
+0x45AFB0, 0x441130, 0x40FEC0, 0x40FE30, 0x48B570, 0x463370, 0x492CB0, 0x49BDD0, 0x49ACD0, 0x4082A0, 0x43EF00,
+0x6002F0, 0x4AF400.
+
+## Harness note
+
+`cargo test -p sa-hook --lib` passes 51/51 with `RUST_MIN_STACK=268435456`; with the default 2 MiB test-thread
+stack `table::tests::matches_catalogue_and_exe` overflows its stack in this build (the debug-mode `HOOKS`
+table). Not changed here (sa-hook is outside this task); decision for the main session.
+
+## Verification (lane 5, outputs `target/e2e/lane-5/port-l2-<tag>-<recording>/` of the worktree)
+
+Split runs (INF-17, `SPLIT_PER_FRAME=10 --max 300`, per-opcode lists in each run's `opcodes.txt`) by tag:
+`p3a` = 400To499 + 600To699 (snapshot 1), `p3b` = 800To899 (cmd800 as committed), `p3c` = 200/300/500/700/
+900/1000/1100/1600/1700/2200 as of snapshot 3 (1600/1700/2200 were partial then), `p3d` = 100/400/600/1300 +
+the two CMissionCleanup hooks, `p3g` = 900/1200/1400/1600/1700/2200 in their final state. Every split verdict
+so far is PASS or PASS-FP (0 mismatches, 0 DIVERGED/COUNT; the undeclared-write check fails on every switch as
+in PORT-SCRIPT-2 — no per-case write sets). Per switch and recording: `script-port-verdicts.tsv` (columns
+`rust_cases`, `complete`, `p3_split`, `p3_opcodes_pass`). The cleanup hooks compared 15 / 25 cases on the
+grove walk with 0 undeclared writes.
+A 19-hook split (`p3f`) was OOM-killed at the 6 GiB scope during `split-report` (19 hooks x 300 cases);
+split lists are kept at <= 10 hooks.
+`p3g` (the final state of 900/1200/1400/1600/1700/2200) ran on all 11 recordings: 6 PASS on each, 0
+mismatches. The other switches have split runs on 1-4 recordings (see the TSV).
+
+All-ports L3 (`tools/e2e/verify-all.sh p3script-final 5`, snapshot 5 = commit 0c3ce41): see
+`/home/ghosty2004/sa-engine/target/verify-all/p3script-final/summary.txt`: IDENTICAL on all 11 recordings,
+17 subsystems each (grove 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338,
+menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276 frames).
+
+Tests: `cargo test -p sa-script` 4/4 (`partial_switches_list_their_rust_cases` now checks the catalogue's
+jump-table cases and complete switches); `cargo test -p sa-hook --lib` 51/51 with `RUST_MIN_STACK=268435456`
+(see the harness note); clippy `-D warnings` clean for sa-script on host (all targets), i686 (`in-process`)
+and wasm32.
