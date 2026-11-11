@@ -106,3 +106,8 @@ int version (see docs/re/cat14-gr-deviations.md finding 1; gr's differs) - call 
   In step 2 the leader/non-leader asymmetry: exactly one of the two tasks must be leader. `side` is never 0, so m_prevSide
   starts at 0 -> first PointArm always preceded by AbortArmIK.
 - gta-reversed: plugin::Call (cpp:87) - not reversed. Open questions: none.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x6839C0 CTaskComplexBeInCouple::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* ()`, `ret`, SEH frame: `p = CTask::operator new(0x20)` 0x61A5A0 (cdecl, task pool, 0x6839DB); if p == 0 return 0 (0x6839F1); else `CTaskComplexBeInCouple::CTaskComplexBeInCouple` 0x6836F0 on p with args (this+0x10, (u8)this+0x14 (zero-extended) (byte, mov), (u8)this+0x15 (zero-extended) (byte, mov), (u8)this+0x16 (zero-extended) (byte, mov), this+0x18) (0x683A0F) and return its EAX (the ctor returns p).

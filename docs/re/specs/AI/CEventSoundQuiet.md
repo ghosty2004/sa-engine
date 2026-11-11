@@ -20,3 +20,11 @@ Vtable 0x86C2B0. Layout (gr EventSoundQuiet.h): CEventEditableResponse (0x14), +
 
 ## 0x5DEAD0 CEventSoundQuiet::GetEventPriority  (catalogue: specified/REA, port level 0)
 - `__thiscall int32 ()`: returns 8.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x5DEA70 CEventSoundQuiet::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x5DEA70).
+
+## 0x5DEAA0 CEventSoundQuiet::CanBeInterruptedBySameEvent  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (0 stack args)`, `ret`: returns true (AL=1; upper EAX bits unchanged) (0x5DEAA0).

@@ -11,6 +11,9 @@ Vtable 0x85A23C (gr TaskComplexWanderCriminal.h, size 0x38). CTaskComplexWander 
 - gta-reversed: TaskComplexWanderCriminal.cpp:5 (default radius 0.5f; timer default-constructed) - matches if CTaskTimer() zeroes and
   m_nMinNextScanTime is zeroed (the original zeroes it).
 
+## 0x48E6F0 CTaskComplexWanderCriminal::GetWanderType  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x3` (0x48E6F0); `ret` -> returns 3. Vtable: slot 11 (+0x2C) of vtable 0x85A23C.
+
 ## 0x48E700 CTaskComplexWanderCriminal::`scalar deleting destructor'  (catalogue name CTaskComplexWanderCriminal::~CTaskComplexWanderCriminal)  (catalogue: specified/REA, port level 4)
 - NAME CORRECTION: slot 0 of vtable 0x85A23C. `__thiscall this (uint32 flags [esp+4])`, `ret 4`, returns this (EAX).
 - Calls the complete dtor 0x48E720 (0x48E703): see next section. Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0

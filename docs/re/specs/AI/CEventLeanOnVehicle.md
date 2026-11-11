@@ -22,3 +22,11 @@ Vtable 0x86F878 (gr EventLeanOnVehicle.h, size 0x14): CEvent (0xC), +0xC m_vehic
 
 ## 0x65DE10 CEventLeanOnVehicle::GetEventPriority  (catalogue: specified/REA, port level 0)
 - `__thiscall int32 ()`: `mov eax,0xC; ret` -> 12. Slot 2. gr matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x65DB60 CEventLeanOnVehicle::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x65DB60).
+
+## 0x65DBE0 CEventLeanOnVehicle::AffectsPed  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (1 stack arg)`, `ret 4`: returns true (AL=1; upper EAX bits unchanged) (0x65DBE0).

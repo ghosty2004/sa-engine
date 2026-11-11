@@ -50,3 +50,21 @@ must make all those slots behave identically (they are one function in the origi
   0x4B563B-0x4B564F); `pool->byteMap[idx] |= 0x80` (free flag, 0x4B5654; the 7-bit id is kept); `if (idx < pool->firstFree)
   pool->firstFree = idx` (signed, 0x4B5657-0x4B565C). No null check (delete of nullptr would corrupt a flag; MSVC callers test first).
 - gta-reversed: `GetEventPool()->Delete(...)`, matches. Event object stride 0x44 (68).
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x420E90 CEvent::IsCriminalEvent  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (0 stack args)`, `ret`: returns false (AL=0; upper EAX bits unchanged) (0x420E90).
+
+## 0x420EB0 CEvent::GetLocalSoundLevel  (catalogue: specified/REA, port level 0)
+- `__thiscall float ()`, `ret`: returns ST0 = 0.0f [0x858B50] (0x420EB0).
+
+## 0x4ABFE0 CEvent::AffectsPed  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (1 stack arg)`, `ret 4`: returns true (AL=1; upper EAX bits unchanged) (0x4ABFE0).
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4B7C80 CEvent::~CEvent  (catalogue: specified/REA, port level 0)
+- Scalar deleting destructor of CEvent itself (vtable 0x85AB38 slot 0): `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`. `this->vtbl = 0x85AB38` (always,
+  0x4B7C86); if flags & 1: event-pool free inlined (pool = [0xB744AC]): `idx = (int32)(this - pool->m_pObjects) / 0x44` (magic 0x78787879 >> 5, 0x4B7C97-0x4B7CAA),
+  `m_byteMap[idx] |= 0x80`, `if (idx < pool->m_nFirstFree) pool->m_nFirstFree = idx` (0x4B7CB9-0x4B7CC1). Returns this.

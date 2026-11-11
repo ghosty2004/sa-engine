@@ -3,6 +3,15 @@
 Layout (gr TaskSimpleCarSetPedInAsDriver.h, size 0x1C): +0x8 m_bIsFinished, +0xC m_pAnim, +0x10 m_pTargetVehicle, +0x14 m_pUtility,
 +0x18 m_bWarpingInToCar (u8), +0x19 m_nDoorFlagsToClear (u8), +0x1A m_nNumGettingInToClear (u8).
 
+## 0x647150 CTaskSimpleCarSetPedInAsDriver::GetTaskType  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x32C` (0x647150); `ret` -> returns 812 (TASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER). Vtable: slot 4 (+0x10) of vtable 0x86EE28.
+
+## 0x647160 CTaskSimpleCarSetPedInAsDriver::MakeAbortable  (catalogue: specified/REA, port level 0)
+- `__thiscall bool`: returns false (0) in AL only (`xor al, al` 0x647160; upper EAX bits undefined), `ret 0xc` (12 bytes of stack args, ignored). Vtable: slot 6 (+0x18) of vtable 0x86EE28.
+
+## 0x64B930 CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver  (catalogue: specified/REA, port level 2)
+- Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor FUN_00647170 0x647170 (0x64B933); if `flags & 1` (0x64B938) calls CTask::operator delete 0x61A5B0 (this) (0x64B940, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86EE28.
+
 ## 0x64B950 CTaskSimpleCarSetPedInAsDriver::ProcessPed  (catalogue: specified/REA, port level 25)
 - `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`, always returns AL = 1. SEH (handler 0x843059). Locals: a CTaskSimpleCarSetPedOut
   (body [esp+0x10]), a CEventGroupEvent (body [esp+0x10]) and a CEventCopCarBeingStolen (body [esp+0x28]).

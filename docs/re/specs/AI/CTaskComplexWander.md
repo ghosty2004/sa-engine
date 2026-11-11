@@ -44,3 +44,8 @@ m_NextNode (+0x1C area, +0x1E node), +0x24 flags (bit0 m_bWanderSensibly, bit3 "
   - 0x2CF (DRIVE_TIMED): return `this->CreateFirstSubTask(ped)`.
   - other: 0.
 - gta-reversed: plugin::Call.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x66F4A0 CTaskComplexWander::~CTaskComplexWander  (catalogue: specified/REA, port level 3)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x669D20 thunk_FUN_0040387c (0x66F4A3); if `flags & 1` (0x66F4A8) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x66F4B0); returns this (0x66F4B8). Proposed name: `thunk_FUN_0040387c::`scalar deleting destructor'` (the complete dtor it calls is thunk_FUN_0040387c).

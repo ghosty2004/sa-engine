@@ -23,3 +23,14 @@ complete-object dtor, catalogue unknown/FUN_004af890): SEH frame; `this->vtbl = 
 - Evidence: only referenced from slot 0 of vtable 0x86CB58 (CEventSeenCop).
 - Same shape as 0x420FB0: call 0x5FF3A0 (`vtbl = 0x86CB58`, jmp 0x4AF890), then `if (flags & 1) CEvent::operator delete(this)`
   0x4B5630; return this; `ret 4` (0x5FF423-0x5FF43B).
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x420F00 CEventAcquaintancePed::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x420F00).
+
+## 0x420F20 CEventAcquaintancePed::CanBeInterruptedBySameEvent  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (0 stack args)`, `ret`: returns true (AL=1; upper EAX bits unchanged) (0x420F20).
+
+## 0x4B6300 CEventAcquaintancePed::~CEventAcquaintancePed  (catalogue: specified/REA, port level 2)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x4AF890 FUN_004af890 (unnamed complete dtor: stores vtbl 0x85B250 then 0x85AB38) (0x4B6304); if `flags & 1` (0x4B6309) frees the slot in the event pool `*(CPool*)[0xB744AC]` (ms_pEventPool; CEvent::operator delete inlined): `idx = (int32)(this - pool->m_pObjects) / 0x44` (signed magic division 0x78787879 >> 5, rounding toward zero, 0x4B6316-0x4B632E); `pool->m_byteMap[idx] |= 0x80` (0x4B6333); `if (idx < pool->m_nFirstFree) pool->m_nFirstFree = idx` (pool+0xC, signed `jge`, 0x4B6336-0x4B633E). Returns this. Element size 0x44.

@@ -7,6 +7,12 @@ Vtable 0x870148 (gr TaskComplexWanderProstitute.h): CTaskComplexWanderStandard (
 - Behaviour: `CTaskComplexWanderStandard::CTaskComplexWanderStandard(this, moveState, dir, bWanderSensibly)` 0x48E4F0 (args forwarded in order);
   `vtbl = 0x870148`; `+0x38 = 0` (0x6726A9-0x6726AF). gr TaskComplexWanderProstitute.cpp:5 - matches.
 
+## 0x6726C0 CTaskComplexWanderProstitute::GetWanderType  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x7` (0x6726C0); `ret` -> returns 7. Vtable: slot 11 (+0x2C) of vtable 0x870148.
+
+## 0x6726D0 CTaskComplexWanderProstitute::~CTaskComplexWanderProstitute  (catalogue: specified/REA, port level 3)
+- Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor FUN_006726f0 0x6726F0 (0x6726D3); if `flags & 1` (0x6726D8) calls CTask::operator delete 0x61A5B0 (this) (0x6726E0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x870148.
+
 ## 0x672700 CTaskComplexWanderProstitute::ScanForStuff  (catalogue: specified/REA, port level 40)
 - `__thiscall void (this, CPed* ped [esp+4])`, `ret 4`, SEH; one event local (CEventAcquaintancePed-sized) at [esp+0x14] after the pushes. Slot 12.
 - Callees: CTaskComplexWanderStandard::ScanForStuff 0x672600; CPedIntelligence::GetPedEntities 0x4893E0 (thiscall, returns &m_pedScanner.m_apEntities);

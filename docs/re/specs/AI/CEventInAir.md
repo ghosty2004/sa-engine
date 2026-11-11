@@ -16,3 +16,8 @@ Vtable 0x85B3C0, type 0x21 (33 EVENT_IN_AIR), size 0xC (no own members).
 ## 0x4B76A0 CEventInAir::Clone  (catalogue: specified/REA, port level 1)
 - `p = CEventPool::New(ms_pEventPool)` 0x4B5570; if p: `+4 = 0`, `+8 = 0` (byte), `vtbl = 0x85B3C0`; return p (or 0). No SEH (inlined
   trivial ctor). gr inline `new CEventInAir()` - same.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4B0CE0 CEventInAir::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x4B0CE0).

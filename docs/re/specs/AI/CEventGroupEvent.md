@@ -53,3 +53,17 @@ Vtable 0x85AE48 (catalogue data-tables lists it unnamed). Layout (gr EventGroupE
   If the pool is full the inner event is not cloned. If the inner Clone returns null, the group event holds a null m_event.
 - gta-reversed: EventGroupEvent.h:22 `new CEventGroupEvent(m_ped, m_event->Clone())` - C++ evaluation order: MSVC allocates
   first as well; matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4AE040 CEventGroupEvent::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x4AE040).
+
+## 0x4AE050 CEventGroupEvent::GetLocalSoundLevel  (catalogue: specified/REA, port level 0)
+- `__thiscall float ()`, `ret`: returns ST0 = 100.0f [0x858628] (0x4AE050).
+
+## 0x4AE060 CEventGroupEvent::GetEventPriority  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()` (ECX unused), `ret`: returns 41 (0x29) (0x4AE060).
+
+## 0x4AE0D0 CEventGroupEvent::AffectsPed  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (1 stack arg)`, `ret 4`: returns false (AL=0; upper EAX bits unchanged) (0x4AE0D0).

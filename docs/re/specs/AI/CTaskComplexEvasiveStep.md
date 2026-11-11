@@ -40,3 +40,8 @@ Vtable 0x86F218, task type 0x1F6 (502). Layout (gr, size 0x1C): CTaskComplex (0x
 
 ## 0x655EE0 CTaskComplexEvasiveStep::`scalar deleting destructor'  (catalogue: specified/REA, port level 3)
 - Slot 0 of 0x86F218: call 0x653350; `if (flags & 1) CTask::operator delete(this)` 0x61A5B0; return this; `ret 4`.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x655870 CTaskComplexEvasiveStep::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* ()`, `ret`, SEH frame: `p = CTask::operator new(0x1C)` 0x61A5A0 (cdecl, task pool, 0x65588B); if p == 0 return 0 (0x6558A1); else `CTaskComplexEvasiveStep::CTaskComplexEvasiveStep` 0x6532D0 on p with args (this+0x18, &this+0xC) (0x6558AD) and return its EAX (the ctor returns p).

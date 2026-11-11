@@ -42,3 +42,30 @@ Rows Cover.cpp:127 / :132 / :155 (FixBugs use-after-free handling):
   `new(0xC)`, item = building, prev = 0, pushed at the head; no RegisterReference (and a failed allocation writes through null at
   0x699D7D). No references are registered or cleaned for list items.
 - Verdict: CONFIRMED (x3; gr's FixBugs path registers/cleans references). Class: keep-original.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x698790 CCover::FindVectorFromFirstToMissingVertex  (gr_deviations = 1)
+Original bytes (`__cdecl CVector* (CVector* out [esp+4], const CColTriangle* tri [esp+8], const int32* pair [esp+0xC], const CVector* verts [esp+0x10])`, plain `ret`,
+returns EAX = out): v = tri->a (u16); if v == pair[0] or v == pair[1] then v = tri->b, and if that also matches pair[0]/pair[1] then v = tri->c (0x698794-0x6987B4);
+`*out = verts[v] - verts[pair[0]]`, x87 order z, y, x subtractions, stored x, y, z (0x6987BF-0x6987E4). No callers in the executable (catalogue callers = 0).
+Row Cover.cpp:345 (`NOTSA_UNUSED_FUNCTION()`):
+- Verdict: CONFIRMED (gr has no body; the original does), but the function is unreachable in the original (no call sites, no data references). Class: harmless.
+
+## 0x6987F0 CCover::CalculateHorizontalSize  (gr_deviations = 1)
+Original bytes: `__cdecl float (const CColTriangle* tri [esp+4], const CVector* verts [esp+8])`, `ret`, result in ST0 = `sqrt(dx*dx + dy*dy)` (0x6988C5-0x6988CF) of the
+x/y extents taken over the three vertices with min/max compare chains (0x698803-0x6988B6). No callers.
+Row Cover.cpp:247 (`NOTSA_UNREACHABLE("Unused")`):
+- Verdict: CONFIRMED (gr aborts), unreachable in the original. Class: harmless. (Body not specified further because it has no callers.)
+
+## 0x6988E0 CCover::Find2HighestPoints  (gr_deviations = 1)
+Original bytes (`__cdecl void (const CColTriangle* tri [esp+4], const CVector* verts [esp+8], int32* out1 [esp+0xC], int32* out2 [esp+0x10])`, `ret`): with za/zb/zc the
+vertex z values: if `za < zb` and `za < zc` (strict, `test ah,5; jp`) -> out1 = b, out2 = c (0x698921-0x698932); else if `zb < za` and `zb < zc` -> out1 = a, out2 = c
+(0x698957-0x698968); else out1 = a, out2 = b (0x69896C-0x69897D). No callers.
+Row Cover.cpp:276 (`NOTSA_UNREACHABLE("Unused")`):
+- Verdict: CONFIRMED (gr aborts), unreachable in the original. Class: harmless.
+
+## 0x698990 CCover::DoLineCheckWithinObject  (gr_deviations = 1)
+Original bytes: `__cdecl bool`, 266 instructions using `CVector::CrossProduct` 0x59C730 (3 sites) and constants [0x858624] / 0.0f [0x858B50]; no callers in the executable.
+Row Cover.cpp:252 (`NOTSA_UNREACHABLE("Unused")`):
+- Verdict: CONFIRMED (gr aborts), unreachable in the original. Class: harmless. (Body not specified: no call site can reach it.)

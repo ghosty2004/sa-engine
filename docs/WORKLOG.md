@@ -733,3 +733,11 @@
 - Merge: registration conflicts resolved (veh appended after anim). sa-hook lib 45, sa-veh 3 tests, workspace clippy,
   i686 build OK; all-ports IDENTICAL on six recordings incl. driving (4338).
 - States: 90 → L2, 124 → implemented. Decisions in ROADMAP PORT-VEH.
+
+## 2026-11-11 RE-SPEC-AI pass 2 (main session)
+- Agent a1d60d08 + 2 helpers: 920 AI rows. Main session re-ran check_consts over docs/re/specs/AI (all files): 0
+  mismatches. Caveats: helper B re-sorted sections of 13 pass-1 files (originals kept in the scratchpad ai2/hB/orig);
+  ~715 generated trivial sections are barely sampled. gr errors worth knowing for PORT-AI: CMeleeInfo layout
+  (+0x50 hitLevel[5], +0x55 damage[5], +0x48/+0x4C f32), CEventDeadPed::AffectsPed 400 > dist², CTaskComplexDie
+  drowning/DieInCar weapon, KnockOffBike ×1/70 and anim 0xF, CTaskSimpleUseGun::ProcessPed 3 inverted conditions,
+  Swim ProcessEffects matrix 3 and ×0.33333334, inlined rand()*3.0518509e-05f in 0x5E9600 family.
