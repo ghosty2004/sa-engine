@@ -49,6 +49,7 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpb_a5::HOOKS,
     // WRITER-MVP-F (unverified batches)
     crate::vehicle_collision_anims::HOOKS,
+    crate::vehicle_pre_collision::HOOKS,
     mvpd_v1::HOOKS,
     mvpd_v2::HOOKS,
     mvpd_v3::HOOKS,

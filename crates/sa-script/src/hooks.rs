@@ -9,7 +9,7 @@ use crate::{
     cmd1200, cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200,
     cmd2300, cmd2400, cmd2500, misc, script_brain_requests, script_brains, script_draw, script_init,
     script_objects, script_process, script_registries, script_resources, script_tables, script_tasks,
-    script_things, vm,
+    script_things, script_locate, vm,
 };
 
 /// Every module's registrations, in this order.
@@ -55,6 +55,12 @@ pub const MODULES: &[&[HookReg]] = &[
     script_things::HOOKS,
     crate::the_scripts_init::HOOKS,
     misc::HOOKS,
+    // script_search_lights::HOOKS (mvpk-script-2, full port of 0x4939F0) is not registered: the_scripts_init
+    // registers the same address (std6-script-1, partial with fallback); keep one of them.
+    script_locate::HOOKS,
+    crate::script_thing_index::HOOKS,
+    crate::streamed_script_load::HOOKS,
+    crate::script_entity_cleanup::HOOKS,
 ];
 
 /// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).

@@ -14,3 +14,4 @@ pub mod mvpd_coll;
 pub mod prim;
 pub mod shared;
 pub mod surface;
+pub mod camera_collision_scan;

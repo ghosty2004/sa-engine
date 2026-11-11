@@ -46,5 +46,6 @@ pub mod fileloader;
 pub mod modelinfo;
 pub mod img_size;
 pub mod object_instance;
+pub mod pool_new_stubs;
 
 pub mod std6_natives;

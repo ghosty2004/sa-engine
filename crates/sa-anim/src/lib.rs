@@ -30,6 +30,7 @@ pub mod building;
 pub mod clumpdata;
 pub mod common;
 pub mod cutscene;
+pub mod cutscene_postload;
 pub mod group;
 pub mod hierarchy;
 pub mod hooks;
@@ -45,3 +46,5 @@ pub mod anim_file_load;
 pub mod rp_anim_blend;
 
 pub mod std6_natives;
+pub mod offscreen_frame_update;
+pub mod cutscene_update;

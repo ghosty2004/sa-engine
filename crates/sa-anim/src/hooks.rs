@@ -33,11 +33,14 @@ pub const MODULES: &[&[HookReg]] = &[
     pedik::HOOKS,
     vehgroup::HOOKS,
     cutscene::HOOKS,
+    crate::cutscene_postload::HOOKS,
     building::HOOKS,
     statics::HOOKS,
     crate::mvpb_anim::HOOKS,
     crate::anim_file_load::HOOKS,
     crate::rp_anim_blend::HOOKS,
+    crate::offscreen_frame_update::HOOKS,
+    crate::cutscene_update::HOOKS,
 ];
 
 /// Every `#[native]` registration of this crate (phase B entries of ports that cannot be hooked).

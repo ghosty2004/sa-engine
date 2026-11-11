@@ -2378,8 +2378,265 @@ pub fn aop_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 8)
 }
 
+/// 1.05 (0x86FCC0): the margin added to the avoided group's sphere radius
+const K_AVOID_SPHERE_MARGIN: usize = 0x86FCC0;
+/// 1.0 (0x858624) and 0.0 (0x858B50)
+const K_AVOID_ONE: usize = 0x858624;
+const K_AVOID_ZERO: usize = 0x858B50;
+
+/// An entity's position (matrix +0x30, else the placement +4).
+fn avoid_entity_pos(e: GPtr<u8>) -> GPtr<u8> {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+}
+
+/// `CTaskComplexAvoidOtherPedWhileWandering::ComputeSphere(CColSphere& out, CPed** peds)` (0x66A320, thiscall, `ret 8`;
+/// `this` unused). x87. Over the 16 entries of `peds`: the centre is the f32 running sum of the present peds'
+/// positions times `1 / count` (register; no peds → 1/0); the radius `f32(sqrt(max) + 1.05)` where `max` starts at 0.0
+/// and becomes `f32(dy² + dx²)` of a ped (x/y from the centre, register differences) whose register value is above it.
+/// `out.Set(radius, centre, 0, 0, 0xFF)`. The original keeps each `dy² + dx²` in its own `peds` argument slot (popped by
+/// `ret 8`).
+#[hook(addr = 0x66a320, conv = thiscall, name = "CTaskComplexAvoidOtherPedWhileWandering::ComputeSphere",
+       expect = "83 EC 10 53 56 57", unverified = "mvpk-ai-3", route = "L2", hazards = "x87-transcendental,stack-residue",
+       recs = "grove-walk", note = "FSQRT of the squared spread; argument slot overwritten (see doc)")]
+pub fn avoid_other_ped_compute_sphere(_this: GPtr<u8>, out: GPtr<u8>, peds: GPtr<u8>) {
+    let mut sum = [0f32; 3];
+    let mut count = 0i32;
+    for i in 0..16isize {
+        let e = rd::<GPtr<u8>>(peds, 4 * i);
+        if e.is_null() {
+            continue;
+        }
+        count += 1;
+        let p = avoid_entity_pos(e);
+        for (k, s) in sum.iter_mut().enumerate() {
+            *s = x(*s).fadd_m(rd::<f32>(p, 4 * k as isize)).to_f32();
+        }
+    }
+    let inv = X87::from_i32(count).fdivr_m(g::<f32>(K_AVOID_ONE).read());
+    let mut centre = [x(sum[0]).fmul(inv).to_f32(), x(sum[1]).fmul(inv).to_f32(), x(sum[2]).fmul(inv).to_f32()];
+    let mut max = x(g::<f32>(K_AVOID_ZERO).read());
+    for i in 0..16isize {
+        let e = rd::<GPtr<u8>>(peds, 4 * i);
+        if e.is_null() {
+            continue;
+        }
+        let p = avoid_entity_pos(e);
+        let dx = x(rd::<f32>(p, 0)).fsub_m(centre[0]);
+        let dy = x(rd::<f32>(p, 4)).fsub_m(centre[1]);
+        let d2 = dy.fmul(dy).fadd(dx.fmul(dx));
+        if !d2.fcom(max).test_any(0x41) {
+            max = x(d2.to_f32());
+        }
+    }
+    let r = max.fsqrt().fadd_m(g::<f32>(K_AVOID_SPHERE_MARGIN).read()).to_f32();
+    col_sphere_set(out, r.to_bits(), GPtr::from_raw(centre.as_mut_ptr()).cast(), 0, 0, 0xFF);
+}
+
+orig! {
+    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** out)` (0x5696C0, ST0)
+    fn world_find_ground_z_for_3d_coord(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> f64 = cdecl 0x5696C0 => unported;
+    /// `CTaskComplexFollowNodeRoute::CanGoStraightThere(CPed*, const CVector& from, const CVector& to, float maxDist)`
+    /// (0x66EF20, `ret 0x10`; the distance as raw bits)
+    fn follow_node_can_go_straight_there(t: GPtr<u8>, ped: GPtr<u8>, from: GPtr<u8>, to: GPtr<u8>, max: u32) -> u8 = thiscall 0x66EF20 => unported;
+    /// `CPathFind::ComputeRoute(uint8 type, const CVector& from, const CVector& to, const CNodeAddress& hint, CNodeRoute&)`
+    /// (0x452760, `ret 0x14`)
+    fn path_find_compute_route(pf: GPtr<u8>, ty: u32, from: GPtr<u8>, to: GPtr<u8>, hint: GPtr<u8>, route: GPtr<u8>) = thiscall 0x452760 => unported;
+    /// `CPathNode::GetNodeCoors(CVector* out)` (0x667310, `ret 4`)
+    fn path_node_get_coors(node: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> = thiscall 0x667310 => unported;
+    /// `CVector::Difference(const CVector& a, const CVector& b)`: `this = a - b` (0x40FE00, `ret 8`)
+    fn vector_difference(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) = thiscall 0x40FE00 => unported;
+    /// `CVector::Magnitude()` (0x4082C0, ST0)
+    fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
+    /// `InteriorManager_c::GetPedsInteriorGroup(CPed*)` (0x598240, `ret 4`)
+    fn interior_get_peds_interior_group(m: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x598240 => unported;
+    /// `InteriorManager_c::GetPedsInterior(CPed*)` (0x598620, `ret 4`)
+    fn interior_get_peds_interior(m: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x598620 => unported;
+    /// `InteriorManager_c::GetVectorsInterior(const CVector&)` (0x5983D0, `ret 4`)
+    fn interior_get_vectors_interior(m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x5983D0 => unported;
+    /// `CPathFind::These2NodesAreAdjacent(CNodeAddress, CNodeAddress)` (0x44D230, `ret 8`)
+    fn path_find_these_2_nodes_are_adjacent(pf: GPtr<u8>, a: u32, b: u32) -> u8 = thiscall 0x44D230 => unported;
+    /// `CNodeRoute::Reverse()` (0x667900)
+    fn node_route_reverse(r: GPtr<u8>) = thiscall 0x667900 => unported;
+}
+
+/// `ThePaths` (0x96F050)
+const THE_PATHS_PN: usize = 0x96F050;
+/// `ThePaths.m_pPathNodes[area]` (0x96F854)
+const ROUTE_PATH_NODES: usize = 0x96F854;
+/// `CPathFind` the last node address `ComputeRoute` used (0x8A5F44)
+const PATH_LAST_NODE: usize = 0x8A5F44;
+/// `g_interiorMan` (0xBAF670)
+const INTERIOR_MANAGER: usize = 0xBAF670;
+/// 3.0 (0x858B3C) and 50.0 (0x858B40): the route-drop margins
+const K_PN_MARGIN: usize = 0x858B3C;
+const K_PN_FAR: usize = 0x858B40;
+/// 1.0 (0x858624)
+const K_PN_ONE: usize = 0x858624;
+
+/// The `CPathNode` of a node address (area +0 u16, index +2 u16; 0x1C bytes per node), or None for area 0xFFFF or an
+/// unloaded area.
+fn route_path_node(addr: u32) -> Option<GPtr<u8>> {
+    let area = addr & 0xFFFF;
+    if area == 0xFFFF {
+        return None;
+    }
+    let base = GPtr::<GPtr<u8>>::from_addr(ROUTE_PATH_NODES + 4 * area as usize).read();
+    if base.is_null() {
+        return None;
+    }
+    Some(base.byte_add((addr >> 16) as isize * 0x1C))
+}
+
+/// `CTaskComplexFollowNodeRoute::ComputePathNodes(const CPed*)` (0x66EFA0, thiscall, `ret 4`). x87.
+///
+/// The node route (+0x2C: count +0, node addresses +4) is emptied; `FindGroundZFor3DCoord(target x, y, z + 1, &found,
+/// NULL)` found → target z (+0x14) = f32(ground + 1). Unless `CanGoStraightThere(ped, ped position, target (+0xC),
+/// intelligence +0xCC)`: `ThePaths.ComputeRoute(1, ped position, target, +0x28, route)` and +0x28 = the dword at
+/// 0x8A5F44. Then with a route whose first node is loaded and flag +0x4C bit 0 clear: |ped z - target z| below the
+/// slack +0x24 → the route is dropped when `|first node - target|` (2D, `Magnitude`) is above `|target - ped|` (2D
+/// `Difference`, z zeroed) + 3 (f32 compares); else when `sqrt(dx² + dy²)` (target - first node, f32) is above
+/// `sqrt(a² + b²) + 50` (target - ped, register).
+///
+/// Outside an interior group: for each node i, its position (+1 to z; an unloaded node keeps the previous position:
+/// uninitialised before the first) and `CanGoStraightThere(ped, node, target, intelligence +0xCC)` → the route keeps
+/// i + 1 nodes when i + 1 is at most 8, and the scan ends. In one: the first node's position (+1 z); the ped's
+/// interior and the position's interior (`GetVectorsInterior`); the ped's interior: the same one or its node (+0x3F0)
+/// adjacent to the first node → keep; else the route is recomputed from the ped to the target via that node; else the
+/// position's interior: unless adjacent, recomputed from the target to the ped and reversed.
+///
+/// Last: +0x38 = the index of the node +0x34 in the route (0 when +0x34 is 0xFFFF or not found); a non-empty route →
+/// +0x34 = node[+0x38]. The original keeps several values in its own `ped` argument slot (popped by `ret 4`).
+#[hook(addr = 0x66efa0, conv = thiscall, name = "CTaskComplexFollowNodeRoute::ComputePathNodes", expect = "83 EC 20 53 55",
+       unverified = "mvpk-ai-3", route = "L2", hazards = "x87-transcendental,stack-residue,uninit-locals", recs = "grove-walk",
+       note = "an unloaded route node reuses the previous (initially uninitialised) position; FSQRT distances; argument slot overwritten")]
+#[allow(clippy::collapsible_if)]
+pub fn follow_node_route_compute_path_nodes(this: GPtr<u8>, ped: GPtr<u8>) {
+    let route = rd::<GPtr<u8>>(this, 0x2C);
+    wr::<u32>(route, 0, 0);
+    let mut found: u8 = 0;
+    let gz = world_find_ground_z_for_3d_coord(
+        rd::<u32>(this, 0xC),
+        rd::<u32>(this, 0x10),
+        x(rd::<f32>(this, 0x14)).fadd_m(g::<f32>(K_PN_ONE).read()).to_f32(),
+        GPtr::from_raw(&raw mut found),
+        0,
+    );
+    if found != 0 {
+        wr::<f32>(this, 0x14, X87::from_f64_exact(gz).fadd_m(g::<f32>(K_PN_ONE).read()).to_f32());
+    }
+    let target = this.byte_add(0xC);
+    let max_dist = || rd::<u32>(rd::<GPtr<u8>>(ped, 0x47C), 0xCC);
+    let paths = GPtr::from_addr(THE_PATHS_PN);
+    let md = max_dist();
+    if follow_node_can_go_straight_there(this, ped, avoid_entity_pos(ped), target, md) == 0 {
+        path_find_compute_route(paths, 1, avoid_entity_pos(ped), target, this.byte_add(0x28), rd::<GPtr<u8>>(this, 0x2C));
+        wr::<u32>(this, 0x28, g::<u32>(PATH_LAST_NODE).read());
+    }
+    // [S+0x18..0x20]: the node position local (uninitialised until written)
+    let mut s18 = [0f32; 3];
+    let mut s24 = [0f32; 3];
+    let pp = avoid_entity_pos(ped);
+    let route = rd::<GPtr<u8>>(this, 0x2C);
+    let not_below = x(rd::<f32>(pp, 8)).fsub_m(rd::<f32>(this, 0x14)).fabs().fcom(x(rd::<f32>(this, 0x24))).test_parity(5);
+    let first = || route_path_node(rd::<u32>(route, 4));
+    if !not_below {
+        if rd::<i32>(route, 0) > 0 && rd::<u8>(this, 0x4C) & 1 == 0 {
+            if let Some(node) = first() {
+                path_node_get_coors(node, GPtr::from_raw(s24.as_mut_ptr()).cast());
+                s18[0] = x(rd::<f32>(this, 0xC)).fsub_m(s24[0]).to_f32();
+                s18[1] = x(rd::<f32>(this, 0x10)).fsub_m(s24[1]).to_f32();
+                s18[2] = 0.0;
+                vector_difference(GPtr::from_raw(s24.as_mut_ptr()).cast(), target, pp);
+                s24[2] = 0.0;
+                let m1 = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(s18.as_mut_ptr()).cast())).to_f32();
+                let m2 = X87::from_f64_exact(vector_magnitude(GPtr::from_raw(s24.as_mut_ptr()).cast()))
+                    .fadd_m(g::<f32>(K_PN_MARGIN).read());
+                if !m2.fcom(x(m1)).test_parity(5) {
+                    wr::<u32>(rd::<GPtr<u8>>(this, 0x2C), 0, 0);
+                }
+            }
+        }
+    } else if rd::<i32>(route, 0) > 0 && rd::<u8>(this, 0x4C) & 1 == 0 {
+        if let Some(node) = first() {
+            path_node_get_coors(node, GPtr::from_raw(s24.as_mut_ptr()).cast());
+            s18[0] = x(rd::<f32>(this, 0xC)).fsub_m(s24[0]).to_f32();
+            s18[1] = x(rd::<f32>(this, 0x10)).fsub_m(s24[1]).to_f32();
+            let a = x(rd::<f32>(this, 0xC)).fsub_m(rd::<f32>(pp, 0));
+            let b = x(rd::<f32>(this, 0x10)).fsub_m(rd::<f32>(pp, 4));
+            let d1 = x(s18[0]).fmul_m(s18[0]).fadd(x(s18[1]).fmul_m(s18[1])).fsqrt();
+            let d2 = a.fmul(a).fadd(b.fmul(b)).fsqrt().fadd_m(g::<f32>(K_PN_FAR).read());
+            if !d2.fcom(d1).test_parity(5) {
+                wr::<u32>(route, 0, 0);
+            }
+        }
+    }
+    let im = GPtr::from_addr(INTERIOR_MANAGER);
+    if interior_get_peds_interior_group(im, ped).is_null() {
+        let mut i = 0;
+        while i < rd::<i32>(rd::<GPtr<u8>>(this, 0x2C), 0) {
+            let addr = rd::<u32>(rd::<GPtr<u8>>(this, 0x2C), 4 + 4 * i as isize);
+            if let Some(node) = route_path_node(addr) {
+                path_node_get_coors(node, GPtr::from_raw(s18.as_mut_ptr()).cast());
+            }
+            s18[2] = x(s18[2]).fadd_m(g::<f32>(K_PN_ONE).read()).to_f32();
+            let md = max_dist();
+            let ok = follow_node_can_go_straight_there(this, ped, GPtr::from_raw(s18.as_mut_ptr()).cast(), target, md);
+            i += 1;
+            if ok != 0 {
+                if i <= 8 {
+                    wr::<i32>(rd::<GPtr<u8>>(this, 0x2C), 0, i);
+                }
+                break;
+            }
+        }
+    } else {
+        let route = rd::<GPtr<u8>>(this, 0x2C);
+        let n0 = rd::<u32>(route, 4);
+        if rd::<u32>(route, 0) != 0 {
+            if let Some(node) = route_path_node(n0) {
+                let ped_int = interior_get_peds_interior(im, ped);
+                path_node_get_coors(node, GPtr::from_raw(s18.as_mut_ptr()).cast());
+                s18[2] = x(s18[2]).fadd_m(g::<f32>(K_PN_ONE).read()).to_f32();
+                let vec_int = interior_get_vectors_interior(im, GPtr::from_raw(s18.as_mut_ptr()).cast());
+                if !ped_int.is_null() {
+                    if ped_int != vec_int
+                        && path_find_these_2_nodes_are_adjacent(paths, rd::<u32>(route, 4), rd::<u32>(ped_int, 0x3F0)) == 0
+                    {
+                        wr::<u32>(rd::<GPtr<u8>>(this, 0x2C), 0, 0);
+                        path_find_compute_route(paths, 1, avoid_entity_pos(ped), target, ped_int.byte_add(0x3F0), rd::<GPtr<u8>>(this, 0x2C));
+                    }
+                } else if !vec_int.is_null()
+                    && path_find_these_2_nodes_are_adjacent(paths, rd::<u32>(route, 4), rd::<u32>(vec_int, 0x3F0)) == 0
+                {
+                    wr::<u32>(rd::<GPtr<u8>>(this, 0x2C), 0, 0);
+                    path_find_compute_route(paths, 1, target, avoid_entity_pos(ped), vec_int.byte_add(0x3F0), rd::<GPtr<u8>>(this, 0x2C));
+                    node_route_reverse(rd::<GPtr<u8>>(this, 0x2C));
+                }
+            }
+        }
+    }
+    let route = rd::<GPtr<u8>>(this, 0x2C);
+    wr::<u32>(this, 0x38, 0);
+    let n = rd::<i32>(route, 0);
+    if rd::<u16>(this, 0x34) != 0xFFFF {
+        for i in 0..n.max(0) {
+            let e = route.byte_add(4 + 4 * i as isize);
+            if rd::<u16>(e, 0) == rd::<u16>(this, 0x34) && rd::<u16>(e, 2) == rd::<u16>(this, 0x36) {
+                wr::<i32>(this, 0x38, i);
+                break;
+            }
+        }
+    }
+    if rd::<i32>(route, 0) > 0 {
+        wr::<u32>(this, 0x34, rd::<u32>(route, 4 + 4 * rd::<i32>(this, 0x38) as isize));
+    }
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_AVOID_OTHER_PED_COMPUTE_SPHERE,
+    HOOK_FOLLOW_NODE_ROUTE_COMPUTE_PATH_NODES,
     HOOK_FPR_GET_SUB_TASK_TYPE,
     HOOK_FPR_CREATE_TASK,
     HOOK_FPR_CREATE_FIRST_SUB_TASK,

@@ -742,8 +742,255 @@ pub fn object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     achieve_heading_ctor(tk, h.to_bits(), 0x3F80_0000, 0x3E4C_CCCD)
 }
 
+orig! {
+    /// `CVector::CrossProduct(CVector* out, const CVector* a, const CVector* b)` (0x59C730): `out = a × b`
+    fn vector_cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
+    /// `CWorld::ProcessLineOfSight(start, end, CColPoint&, CEntity*&, buildings, vehicles, peds, objects, dummies,
+    /// seeThrough, camera, shootThrough)` (0x56BA00)
+    fn world_process_line_of_sight(s: GPtr<u8>, e: GPtr<u8>, cp: GPtr<u8>, ent: GPtr<u8>, b: u32, v: u32, p: u32, o: u32, d: u32, st: u32, c: u32, sh: u32) -> u8 = cdecl 0x56BA00 => unported;
+}
+
+/// An entity's position (matrix +0x30, else the placement +4).
+fn entity_pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+}
+
+/// 1/32767 (0x858C7C): the `rand()` scale
+const K_RAND_SCALE: usize = 0x858C7C;
+/// 1.0 (0x858624)
+const K_ONE_F: usize = 0x858624;
+/// 0.5 (0x858B8C): the line start below the ped
+const K_HALF_F: usize = 0x858B8C;
+/// 0.35 (0x858F9C): the minimum free distance and the step back from the hit
+const K_CRAP_ROUTE_MARGIN: usize = 0x858F9C;
+
+/// `CTaskComplexWalkRoundBuildingAttempt::ComputeCrapRoute(const CPed&)` (0x656F80, thiscall, `ret 4`). x87; two direct
+/// `rand()` calls (return addresses 0x656F8E, 0x65701C).
+///
+/// `f = rand() * (1/32767) + 1`; `P = (f32(f * N.x), f32(f * N.y), f32(f * N.z))` with N = this +0x2C;
+/// `C = CrossProduct(N, (0, 0, 1))`; `h = 2 * rand() * (1/32767) - 1`; `Q = (f32(P.x + C.x*h), f32(P.y + f32(C.y*h)),
+/// P.z + f32(C.z*h))` (the z as a register value). `start = (ped x, ped y, f32(ped z - 0.5))`, `end = (f32(start.x +
+/// Q.x), f32(Q.y + ped y), f32(Q.z + (ped z - 0.5)))`; `ProcessLineOfSight(start, end, cp, ent, buildings only)`.
+/// No hit → `end` is the point. A hit: `d = f32(hit - start)` per component, `NormaliseAndMag(d)` below 0.35 (or
+/// NaN) → return without the flag; else the point is `(f32(hit.x - d.x*0.35), f32(hit.y - d.y*0.35), f32(hit.z -
+/// f32(d.z*0.35)))`. The point route (+0x10: count +0, 12-byte points +4) takes it when below 8 points; then flag
+/// +0x49 |= 8.
+#[hook(addr = 0x656f80, conv = thiscall, name = "CTaskComplexWalkRoundBuildingAttempt::ComputeCrapRoute",
+       expect = "81 EC 88 00 00 00", unverified = "mvpk-ai-2", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "rand() through at_site (0x656F8E, 0x65701C)")]
+pub fn building_attempt_compute_crap_route(this: GPtr<u8>, ped: GPtr<u8>) {
+    let k_rand = g::<f32>(K_RAND_SCALE).read();
+    let k_one = g::<f32>(K_ONE_F).read();
+    let r1 = sa_core::orig::at_site(0x656F8E, rand);
+    let f = X87::from_i32(r1).fmul_m(k_rand).fadd_m(k_one);
+    let n = this.byte_add(0x2C);
+    let mut up = [0f32, 0.0, 1.0];
+    let px = f.fmul_m(rd::<f32>(n, 0)).to_f32();
+    let py = f.fmul_m(rd::<f32>(n, 4)).to_f32();
+    let pz = f.fmul_m(rd::<f32>(n, 8)).to_f32();
+    let mut cross = [0f32; 3];
+    let out = vector_cross_product(GPtr::from_raw(cross.as_mut_ptr()).cast(), n, GPtr::from_raw(up.as_mut_ptr()).cast());
+    let c = [rd::<f32>(out, 0), rd::<f32>(out, 4), rd::<f32>(out, 8)];
+    let r2 = sa_core::orig::at_site(0x65701C, rand);
+    let h = X87::from_i32(r2).fmul_m(k_rand).fdouble().fsub_m(k_one);
+    let cxh = x(c[0]).fmul(h);
+    let cyh = x(c[1]).fmul(h).to_f32();
+    let czh = x(c[2]).fmul(h).to_f32();
+    let qx = x(px).fadd(cxh).to_f32();
+    let qy = x(py).fadd_m(cyh).to_f32();
+    let qz = x(pz).fadd_m(czh);
+    let pos = entity_pos_ptr(ped);
+    let pz5 = x(rd::<f32>(pos, 8)).fsub_m(g::<f32>(K_HALF_F).read());
+    let sy = rd::<f32>(pos, 4);
+    let mut start = [rd::<f32>(pos, 0), sy, pz5.to_f32()];
+    let mut end = [x(start[0]).fadd_m(qx).to_f32(), x(qy).fadd(x(sy)).to_f32(), qz.fadd(pz5).to_f32()];
+    let mut cp = [0u32; 11];
+    let mut ent: u32 = 0;
+    let hit = world_process_line_of_sight(
+        GPtr::from_raw(start.as_mut_ptr()).cast(),
+        GPtr::from_raw(end.as_mut_ptr()).cast(),
+        GPtr::from_raw(cp.as_mut_ptr()).cast(),
+        GPtr::from_raw(&raw mut ent).cast(),
+        1, 0, 0, 0, 0, 0, 0, 0,
+    );
+    let point = if hit == 0 {
+        end
+    } else {
+        let hp = [f32::from_bits(cp[0]), f32::from_bits(cp[1]), f32::from_bits(cp[2])];
+        let mut d = [
+            x(hp[0]).fsub_m(start[0]).to_f32(),
+            x(hp[1]).fsub_m(start[1]).to_f32(),
+            x(hp[2]).fsub_m(start[2]).to_f32(),
+        ];
+        let k = g::<f32>(K_CRAP_ROUTE_MARGIN).read();
+        let mag = vector_normalise_and_mag(GPtr::from_raw(d.as_mut_ptr()).cast());
+        if X87::from_f64_exact(mag).fcom(x(k)).c0() {
+            return;
+        }
+        let a = x(d[0]).fmul_m(k);
+        let b = x(d[1]).fmul_m(k);
+        let cz = x(d[2]).fmul_m(k).to_f32();
+        [x(hp[0]).fsub(a).to_f32(), x(hp[1]).fsub(b).to_f32(), x(hp[2]).fsub_m(cz).to_f32()]
+    };
+    let route = rd::<GPtr<u8>>(this, 0x10);
+    let count = rd::<i32>(route, 0);
+    if count < 8 {
+        let slot = route.byte_add(4 + count as isize * 12);
+        for (i, v) in point.iter().enumerate() {
+            wr::<f32>(slot, 4 * i as isize, *v);
+        }
+        wr::<i32>(route, 0, count + 1);
+    }
+    wr::<u8>(this, 0x49, rd::<u8>(this, 0x49) | 8);
+}
+
+orig! {
+    /// `CTaskComplexWalkRoundBuildingAttempt::ComputeMoveDir(CPed*, CVector* out)` (0x654B80, `ret 8`)
+    fn building_compute_move_dir_orig(t: GPtr<u8>, ped: GPtr<u8>, out: GPtr<u8>) = thiscall 0x654B80 => unported;
+    /// `CWorld::GetIsLineOfSightClear(start, end, buildings, vehicles, peds, objects, dummies, seeThrough,
+    /// ignoreSomeObjects)` (0x56A490)
+    fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bld: u32, veh: u32, ped: u32, obj: u32, dum: u32, see: u32, ign: u32) -> u8 = cdecl 0x56A490 => unported;
+    /// `CTaskComplexWalkRoundBuildingAttempt::ComputeCrapRoute(const CPed&)` (0x656F80, `ret 4`)
+    fn building_compute_crap_route_orig(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x656F80 => unported;
+    /// `CPointRoute::operator=(const CPointRoute&)` (0x63A040, `ret 4`)
+    fn point_route_assign(r: GPtr<u8>, src: GPtr<u8>) = thiscall 0x63A040 => unported;
+}
+
+/// 0.4 (0x858EE8) and 0.2 (0x858CC4): the random spread of the step around the building
+const K_ROUTE_SPREAD: usize = 0x858EE8;
+const K_ROUTE_SPREAD_HALF: usize = 0x858CC4;
+/// 0.7 (0x858CB0): the probe length along the normalised offset
+const K_ROUTE_PROBE: usize = 0x858CB0;
+
+/// Appends `p` (three dwords) to a point route (count +0, 12-byte points +4) when it holds fewer than 8.
+fn route_push(route: GPtr<u8>, p: &[f32; 3]) {
+    let n = rd::<i32>(route, 0);
+    if n < 8 {
+        let slot = route.byte_add(4 + n as isize * 12);
+        for (i, v) in p.iter().enumerate() {
+            wr::<f32>(slot, 4 * i as isize, *v);
+        }
+        wr::<i32>(route, 0, n + 1);
+    }
+}
+
+/// `CTaskComplexWalkRoundBuildingAttempt::ComputeRoute(const CPed&)` (0x657BA0, thiscall, `ret 4`). x87; one direct
+/// `rand()` per attempt (return address 0x657C47).
+///
+/// Route A (+0xC) is emptied; the attempt counter (+0x4A, i8) + 1 reaching 20 → unless flag +0x49 bit 3,
+/// `ComputeCrapRoute(ped)`; route A = route B (+0x10); flag bit 1; done. Else, `N2 = f32(2 * normal +0x2C)`; for i = 1
+/// and, with flag bit 0, -1 (i decreases by 2, else 3, while not below -1):
+/// `ComputeMoveDir(ped, &d)`; `f = rand() * (1/32767) * 0.4 - 0.2 + attempts`; `a = f32(i * (d.x * f) + normal.x *
+/// 0.35)`, `b = f32(f32(d.y * f) * i + f32(normal.y * 0.35))`, `c = f32(f32(normal.z * 0.35) + f32(f32(d.z * f) * i))`;
+/// `o = Normalise((a, b, c)) * 0.7` (f32 per component); `P = (f32(a + +0x20), f32(b + +0x24), f32(c + +0x28 - 0.5))`,
+/// `Q = P - o`, the ped's `V = (x, y, f32(z - 0.5))`. Buildings-only lines of sight: V→P blocked → blocked count + 1;
+/// P→target (+0x14) clear → route A += P, flag bit 1, done. Else `R = P - N2`, `W = Q - N2`; P→R and Q→W clear →
+/// (flag bit 3 clear: route B = (P, R), flag bit 3) and R→target clear → route A += P, R and flag bit 1 (the loop
+/// goes on). After the loop: first attempt and every probe blocked at V→P → attempts = 20.
+#[hook(addr = 0x657ba0, conv = thiscall, name = "CTaskComplexWalkRoundBuildingAttempt::ComputeRoute",
+       expect = "81 EC 88 00 00 00", unverified = "mvpk-ai-3", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "rand() through at_site (0x657C47); writes the task's point routes (task pool)")]
+pub fn building_attempt_compute_route(this: GPtr<u8>, ped: GPtr<u8>) {
+    let expected_blocked: i32 = if rd::<u8>(this, 0x49) & 1 != 0 { 2 } else { 1 };
+    wr::<u32>(rd::<GPtr<u8>>(this, 0xC), 0, 0);
+    let mut blocked = 0;
+    let attempts = rd::<i8>(this, 0x4A).wrapping_add(1);
+    wr::<i8>(this, 0x4A, attempts);
+    if attempts >= 0x14 {
+        if rd::<u8>(this, 0x49) & 8 == 0 {
+            building_compute_crap_route_orig(this, ped);
+        }
+        point_route_assign(rd::<GPtr<u8>>(this, 0xC), rd::<GPtr<u8>>(this, 0x10));
+        wr::<u8>(this, 0x49, rd::<u8>(this, 0x49) | 2);
+        return;
+    }
+    let n2 = [
+        x(rd::<f32>(this, 0x2C)).fdouble().to_f32(),
+        x(rd::<f32>(this, 0x30)).fdouble().to_f32(),
+        x(rd::<f32>(this, 0x34)).fdouble().to_f32(),
+    ];
+    let k_rand = g::<f32>(K_RAND_SCALE).read();
+    let k_margin = g::<f32>(K_CRAP_ROUTE_MARGIN).read();
+    let k_probe = g::<f32>(K_ROUTE_PROBE).read();
+    let half = g::<f32>(K_HALF_F).read();
+    let target = this.byte_add(0x14);
+    let mut i: i32 = 1;
+    loop {
+        let mut d = [0f32; 3];
+        building_compute_move_dir_orig(this, ped, GPtr::from_raw(d.as_mut_ptr()).cast());
+        let r = sa_core::orig::at_site(0x657C47, rand);
+        let f = X87::from_i32(r)
+            .fmul_m(k_rand)
+            .fmul_m(g::<f32>(K_ROUTE_SPREAD).read())
+            .fsub_m(g::<f32>(K_ROUTE_SPREAD_HALF).read())
+            .fadd(X87::from_i32(i32::from(rd::<i8>(this, 0x4A))));
+        let dxf = x(d[0]).fmul(f);
+        let dyf = x(d[1]).fmul(f).to_f32();
+        let dzf = x(d[2]).fmul(f).to_f32();
+        let fi = i as f32;
+        let ax = X87::from_i32(i).fmul(dxf);
+        let by = x(dyf).fmul_m(fi);
+        let cz = x(dzf).fmul_m(fi).to_f32();
+        let ny = x(rd::<f32>(this, 0x30)).fmul_m(k_margin).to_f32();
+        let nz = x(rd::<f32>(this, 0x34)).fmul_m(k_margin).to_f32();
+        let a = x(rd::<f32>(this, 0x2C)).fmul_m(k_margin).fadd(ax).to_f32();
+        let b = x(ny).fadd(by).to_f32();
+        let c = x(nz).fadd_m(cz).to_f32();
+        let mut o = [a, b, c];
+        vector_normalise(GPtr::from_raw(o.as_mut_ptr()).cast());
+        for v in o.iter_mut() {
+            *v = x(*v).fmul_m(k_probe).to_f32();
+        }
+        i -= if rd::<u8>(this, 0x49) & 1 != 0 { 2 } else { 3 };
+        let mut p = [
+            x(a).fadd_m(rd::<f32>(this, 0x20)).to_f32(),
+            x(b).fadd_m(rd::<f32>(this, 0x24)).to_f32(),
+            x(c).fadd_m(rd::<f32>(this, 0x28)).fsub_m(half).to_f32(),
+        ];
+        let mut q = [x(p[0]).fsub_m(o[0]).to_f32(), x(p[1]).fsub_m(o[1]).to_f32(), x(p[2]).fsub_m(o[2]).to_f32()];
+        let pp = entity_pos_ptr(ped);
+        let mut v = [rd::<f32>(pp, 0), rd::<f32>(pp, 4), x(rd::<f32>(pp, 8)).fsub_m(half).to_f32()];
+        let pv = |a: &mut [f32; 3]| -> GPtr<u8> { GPtr::from_raw(a.as_mut_ptr()).cast() };
+        if world_get_is_line_of_sight_clear(pv(&mut v), pv(&mut p), 1, 0, 0, 0, 0, 0, 0) == 0 {
+            blocked += 1;
+        } else if world_get_is_line_of_sight_clear(pv(&mut p), target, 1, 0, 0, 0, 0, 0, 0) != 0 {
+            route_push(rd::<GPtr<u8>>(this, 0xC), &p);
+            wr::<u8>(this, 0x49, rd::<u8>(this, 0x49) | 2);
+            return;
+        } else {
+            let mut rr = [x(p[0]).fsub_m(n2[0]).to_f32(), x(p[1]).fsub_m(n2[1]).to_f32(), x(p[2]).fsub_m(n2[2]).to_f32()];
+            let mut w = [x(q[0]).fsub_m(n2[0]).to_f32(), x(q[1]).fsub_m(n2[1]).to_f32(), x(q[2]).fsub_m(n2[2]).to_f32()];
+            if world_get_is_line_of_sight_clear(pv(&mut p), pv(&mut rr), 1, 0, 0, 0, 0, 0, 0) != 0
+                && world_get_is_line_of_sight_clear(pv(&mut q), pv(&mut w), 1, 0, 0, 0, 0, 0, 0) != 0
+            {
+                if rd::<u8>(this, 0x49) & 8 == 0 {
+                    let rb = rd::<GPtr<u8>>(this, 0x10);
+                    wr::<u32>(rb, 0, 0);
+                    route_push(rd::<GPtr<u8>>(this, 0x10), &p);
+                    route_push(rd::<GPtr<u8>>(this, 0x10), &rr);
+                    wr::<u8>(this, 0x49, rd::<u8>(this, 0x49) | 8);
+                }
+                if world_get_is_line_of_sight_clear(pv(&mut rr), target, 1, 0, 0, 0, 0, 0, 0) != 0 {
+                    route_push(rd::<GPtr<u8>>(this, 0xC), &p);
+                    route_push(rd::<GPtr<u8>>(this, 0xC), &rr);
+                    wr::<u8>(this, 0x49, rd::<u8>(this, 0x49) | 2);
+                }
+            }
+        }
+        if i < -1 {
+            break;
+        }
+    }
+    if rd::<i8>(this, 0x4A) == 1 && blocked == expected_blocked {
+        wr::<i8>(this, 0x4A, 0x14);
+    }
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_BUILDING_ATTEMPT_COMPUTE_ROUTE,
+    HOOK_BUILDING_ATTEMPT_COMPUTE_CRAP_ROUTE,
     HOOK_OBJECT_CONTROL_SUB_TASK,
     HOOK_BUILDING_CREATE_FIRST_SUB_TASK,
     HOOK_CAR_CREATE_FIRST_SUB_TASK,

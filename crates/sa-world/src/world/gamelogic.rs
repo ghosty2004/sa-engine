@@ -270,7 +270,27 @@ pub fn is_player_allowed_to_go_in_this_direction(ped: GPtr<u8>, dir_x: f32, dir_
     }
 }
 
+/// `CGameLogic::IsPlayerUse2PlayerControls(CPed*)` (stub 0x442020 → 0x156FF70, cdecl). AL = 0 without player 0's
+/// or player 1's ped; `n2PlayerPedInFocus` (0x8A5E50) == 2 → AL = 1; else AL = `ped != Players[focus].m_pPed`.
+/// EAX upper bytes: 0 (no ped), 0 (focus 2: EAX = 1), else those of `focus * 0x190`; the port returns AL
+/// zero-extended.
+#[hook(addr = 0x442020, conv = cdecl, name = "CGameLogic::IsPlayerUse2PlayerControls", expect = "E9 4B DF 12 01",
+       unverified = "mvpk-world-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk",
+       note = "the body reads n2PlayerPedInFocus through ([0x15605CC] - [0x4E37B4]); the port reads 0x8A5E50 (assumed no-CD VM value)")]
+pub fn is_player_use_2player_controls(ped: GPtr<u8>) -> u8 {
+    if g::<u32>(PLAYER0_PED).read() == 0 || g::<u32>(PLAYER1_PED).read() == 0 {
+        return 0;
+    }
+    let focus = g::<u32>(PLAYER_PED_IN_FOCUS_2).read();
+    if focus == 2 {
+        return 1;
+    }
+    let fp = g::<u32>((PLAYER0_PED as u32).wrapping_add(focus.wrapping_mul(0x190)) as usize).read();
+    u8::from(ped.addr() as u32 != fp)
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_IS_PLAYER_USE_2PLAYER_CONTROLS,
     HOOK_IS_PLAYER_ALLOWED_TO_GO_IN_THIS_DIRECTION,
     HOOK_INIT_AT_START_OF_GAME,
     HOOK_FORCE_DEATH_RESTART,

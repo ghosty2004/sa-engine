@@ -48,3 +48,7 @@ pub mod object_data;
 pub mod pickup_generate;
 pub mod static_matrix;
 pub mod zone_create;
+pub mod tree_wind;
+pub mod object_collision;
+pub mod x87_leaves;
+pub mod replay_vehicle_block;
