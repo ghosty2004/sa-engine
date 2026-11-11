@@ -74,6 +74,8 @@ static HASHES: Mutex<Vec<(u32, u32, [u64; COUNT])>> = Mutex::new(Vec::new());
 static DONE: AtomicBool = AtomicBool::new(false);
 static POOLS_LOGGED: AtomicBool = AtomicBool::new(false);
 static PERTURBED: Mutex<String> = Mutex::new(String::new());
+/// Harness pokes `(frame, address, byte)` of the program or the replayed recording's header.
+static POKES: Mutex<Vec<(u32, u32, u8)>> = Mutex::new(Vec::new());
 
 static SYNC_READS: AtomicU32 = AtomicU32::new(0);
 static OFFTHREAD_TIME: AtomicU32 = AtomicU32::new(0);
@@ -303,6 +305,22 @@ pub fn init(dir: &std::path::Path) -> bool {
     } else {
         None
     };
+    let pokes = match &source {
+        Some(Source::Program(p)) => p.pokes(),
+        Some(Source::Replay { rec, .. }) => match rec.header.get("pokes").map(sa_oracle_format::program::decode_pokes) {
+            Some(Ok(v)) => v,
+            Some(Err(e)) => {
+                log(&format!("oracle: recording pokes: {e}"));
+                Vec::new()
+            }
+            None => Vec::new(),
+        },
+        _ => Vec::new(),
+    };
+    if !pokes.is_empty() {
+        log(&format!("oracle: harness pokes {}", sa_oracle_format::program::encode_pokes(&pokes)));
+    }
+    *POKES.lock().unwrap_or_else(|e| e.into_inner()) = pokes;
     let mut cfg = cfg;
     if cfg.end_frame.is_none()
         && let Some(Source::Program(p)) = &source
@@ -1258,6 +1276,13 @@ pub fn on_boundary(f: u32) {
         if cfg.end_frame == Some(f) {
             finish(f);
         }
+        // Harness pokes of this boundary (after its hash, before its CTimer::Update).
+        for &(pf, addr, b) in POKES.lock().unwrap_or_else(|e| e.into_inner()).iter() {
+            if pf == f {
+                put(addr, &[b]);
+                log(&format!("oracle: frame {f}: poke {addr:#x} = {b:#x}"));
+            }
+        }
     }
 
     if DET.load(Ordering::Acquire) {
@@ -1315,6 +1340,10 @@ fn write_recording(path: &str, mut rec: Recording, last_frame: u32) -> String {
         && let Ok(s) = std::fs::read_to_string(p)
     {
         h.set("program", format!("{:016x}", fnv::hash(s.as_bytes())));
+    }
+    let pokes = POKES.lock().map(|p| p.clone()).unwrap_or_default();
+    if !pokes.is_empty() {
+        h.set("pokes", sa_oracle_format::program::encode_pokes(&pokes));
     }
     let dir = std::env::current_exe()
         .ok()
