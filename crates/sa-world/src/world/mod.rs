@@ -16,3 +16,9 @@ pub mod shopping;
 pub mod statics;
 pub mod stats;
 pub mod zones;
+// PORT-WORLD-2 (docs/arch/world-port.md, part 2)
+pub mod cworld2;
+pub mod entity;
+pub mod misc2;
+pub mod object;
+pub mod statics2;

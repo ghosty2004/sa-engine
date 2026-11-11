@@ -40,6 +40,12 @@ pub const MODULES: &[&[HookReg]] = &[
     physical::buoyancy::HOOKS,
     physical::buoyancy::HOOKS_2,
     physical::buoyancy::HOOKS_3,
+    // PORT-WORLD-2
+    world::statics2::HOOKS,
+    world::entity::HOOKS,
+    world::object::HOOKS,
+    world::cworld2::HOOKS,
+    world::misc2::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -70,6 +76,12 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     physical::attach::GLOBALS,
     physical::attach::GLOBALS_SPEED,
     physical::buoyancy::GLOBALS,
+    // PORT-WORLD-2
+    world::statics2::GLOBALS,
+    world::entity::GLOBALS,
+    world::object::GLOBALS,
+    world::cworld2::GLOBALS,
+    world::misc2::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

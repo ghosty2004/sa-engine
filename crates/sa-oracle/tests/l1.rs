@@ -422,6 +422,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x4B1F80,
     // PORT-VEH-2: GetVehicleAppearance, HeightAboveCeiling, SelectPlaneWeapon, GetPlaneNumGuns; specs queued.
     0x6D1080, 0x6D2600, 0x6D4900, 0x6D3F30,
+    // PORT-WORLD-2: CBoundingBox::IsPointWithin, CGarages::FindSafeHouseIndexForGarageType,
+    // CStats::FindMaxNumberOfGroupMembers; specs queued.
+    0x49C300, 0x4489F0, 0x559A50,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

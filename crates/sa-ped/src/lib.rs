@@ -29,3 +29,7 @@ pub mod player_info;
 pub mod player_ped;
 pub mod small;
 pub mod wanted;
+pub mod ped_life;
+pub mod ped_render;
+pub mod ped_physics;
+pub mod player_ctrl;

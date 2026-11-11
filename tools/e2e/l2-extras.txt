@@ -3428,3 +3428,158 @@ CBike::Render@0x8A4000:0x3FA000:D
 CVehicle::SetupRender@0x8A4000:0x3FA000:D
 # CVehicleRecording::RegisterRecordingFile: CVehicleRecording::StreamingArray (0x97D880, 475 x 0x10).
 CVehicleRecording::RegisterRecordingFile@0x97D880:0x1DB0:RW
+
+# PORT-PED-2 (sa-ped pass 2, split runs; docs/arch/ped-port-2.md): static regions the ped construction/destruction,
+# weapon and damage-response ports write through their original callees (from the weapon-combat split report
+# pp2-life-wc: anim blocks, model-info stores, references, conversations, groups, replay buffers, gMatrixList,
+# speech phrase memory, population counters), plus the CPedDamageResponse argument.
+CCivilianPed::Constructor@0xb5d4b0:0x4:RW
+CCivilianPed::Constructor@0xb4fc30:0x868:RW
+CCivilianPed::Constructor@0xb47948:0x415c:RW
+CCivilianPed::Constructor@0xc0ec3c:0x8:RW
+CCivilianPed::Constructor@0xc97984:0x4:RW
+CCivilianPed::Destructor@0x99efdc:0xa31a8:RW
+CCivilianPed::Destructor@0xb62da0:0x1c80:RW
+CCivilianPed::Destructor@0xb5d4b0:0x8c4:RW
+CCivilianPed::Destructor@0x9691d8:0x10:RW
+CCivilianPed::Destructor@0x969578:0x38:RW
+CCivilianPed::Destructor@0x9691cc:0x4:RW
+CCivilianPed::Destructor@0xb47948:0x415c:RW
+CCivilianPed::Destructor@0xb1e4d4:0xf4:RW
+CCivilianPed::Destructor@0xc09c00:0x2f4:RW
+CCivilianPed::Destructor@0xc0b1f4:0x4:RW
+CCivilianPed::Destructor@0xc0ec3c:0x4:RW
+CCivilianPed::Destructor@0xb9b9b8:0x13b0:RW
+CCivilianPed::Destructor@0x97fb88:0xc0b4:RW
+CCivilianPed::Destructor@0xb74380:0x4:RW
+CCivilianPed::~CCivilianPed@0x99efdc:0xa31a8:RW
+CCivilianPed::~CCivilianPed@0xb62da0:0x1c80:RW
+CCivilianPed::~CCivilianPed@0xb5d4b0:0x8c4:RW
+CCivilianPed::~CCivilianPed@0x9691d8:0x10:RW
+CCivilianPed::~CCivilianPed@0x969578:0x38:RW
+CCivilianPed::~CCivilianPed@0x9691cc:0x4:RW
+CCivilianPed::~CCivilianPed@0xb47948:0x415c:RW
+CCivilianPed::~CCivilianPed@0xb1e4d4:0xf4:RW
+CCivilianPed::~CCivilianPed@0xc09c00:0x2f4:RW
+CCivilianPed::~CCivilianPed@0xc0b1f4:0x4:RW
+CCivilianPed::~CCivilianPed@0xc0ec3c:0x4:RW
+CCivilianPed::~CCivilianPed@0xb9b9b8:0x13b0:RW
+CCivilianPed::~CCivilianPed@0x97fb88:0xc0b4:RW
+CCivilianPed::~CCivilianPed@0xb74380:0x4:RW
+CCopPed::Constructor@0xb5d4b0:0x4:RW
+CCopPed::Constructor@0xb4bd48:0x3c:RW
+CCopPed::Constructor@0xb1e31c:0x1bc:RW
+CCopPed::Constructor@0xc97984:0x4:RW
+CCopPed::Destructor@0x9e6494:0x42400:RW
+CCopPed::Destructor@0xb62e88:0x1784:RW
+CCopPed::Destructor@0xb5d4b0:0x4:RW
+CCopPed::Destructor@0xb4bd48:0x4:RW
+CCopPed::Destructor@0xb1e31c:0x1bc:RW
+CCopPed::Destructor@0xb9bad8:0x11c0:RW
+CCopPed::Destructor@0xb74380:0x4:RW
+CCopPed::Destructor@0xc15f20:0x4:RW
+CCopPed::`scalar deleting destructor'@0x9e6494:0x42400:RW
+CCopPed::`scalar deleting destructor'@0xb62e88:0x1784:RW
+CCopPed::`scalar deleting destructor'@0xb5d4b0:0x4:RW
+CCopPed::`scalar deleting destructor'@0xb4bd48:0x4:RW
+CCopPed::`scalar deleting destructor'@0xb1e31c:0x1bc:RW
+CCopPed::`scalar deleting destructor'@0xb9bad8:0x11c0:RW
+CCopPed::`scalar deleting destructor'@0xb74380:0x4:RW
+CCopPed::`scalar deleting destructor'@0xc15f20:0x4:RW
+CPed::AddWeaponModel@0xb1e31c:0x2ac:RW
+CPed::Constructor@0xc0ec3c:0x8:RW
+CPed::Destructor@0x99efdc:0xa31a8:RW
+CPed::Destructor@0xb62da0:0x1c80:RW
+CPed::Destructor@0xb5d4b0:0x8c4:RW
+CPed::Destructor@0x9691d8:0x10:RW
+CPed::Destructor@0x969578:0x38:RW
+CPed::Destructor@0x9691cc:0x4:RW
+CPed::Destructor@0xb47948:0x4404:RW
+CPed::Destructor@0xb1e31c:0x2ac:RW
+CPed::Destructor@0xc09c00:0x2f4:RW
+CPed::Destructor@0xc0b1f4:0x4:RW
+CPed::Destructor@0xc0ec3c:0x4:RW
+CPed::Destructor@0xb9b9b8:0x13b0:RW
+CPed::Destructor@0x97fb88:0xc0b4:RW
+CPed::Destructor@0xb74380:0x4:RW
+CPed::GiveDelayedWeapon@0x93b9d0:0x29ad0:RW
+CPed::GiveDelayedWeapon@0xb1e4d4:0xf4:RW
+CPed::GiveDelayedWeapon@0x8e67cc:0xf00:RW
+CPed::GiveWeapon-@0xb1e31c:0x2ac:RW
+CPed::RemoveWeaponModel@0xb1e31c:0x2ac:RW
+CPed::RequestDelayedWeapon@0xb1e4d4:0x4:RW
+CPed::RequestDelayedWeapon@0x8e67cc:0x4:RW
+CPed::SetModelIndex@0xb5d4b0:0x4:RW
+CPed::SetModelIndex@0xb4fc30:0x868:RW
+CPed::SetModelIndex@0xb47904:0x4448:RW
+CPed::SetModelIndex@0xc97984:0x4:RW
+CPedDamageResponseCalculator::ComputeDamageResponse@0xb61c54:0x88:RW
+CPedDamageResponseCalculator::ComputeDamageResponse@0xb6141c:0x84:RW
+CPedDamageResponseCalculator::ComputeDamageResponse@0xb9ba70:0x1168:RW
+CPedDamageResponseCalculator::ComputeWillKillPed@0xb61c54:0x88:RW
+CPedDamageResponseCalculator::ComputeWillKillPed@0xb6141c:0x84:RW
+CPedDamageResponseCalculator::ComputeDamageResponse@arg1:0xC:RW
+CPedDamageResponseCalculator::ComputeWillKillPed@arg1:0xC:RW
+# PORT-WORLD-2 static initialisers: the manager object each constructor builds (sizes from catalog/layouts.csv),
+# CRT __onexitend/__onexitbegin (0xC9D428/0xC9D42C, written by atexit 0x821D1E)
+__init_g_furnitureMan@0xBAB380:0x2078:D
+__init_g_furnitureMan@0xC9D428:0x8:D
+__init_g_interiorMan@0xBAF670:0x4758:D
+__init_g_interiorMan@0xC9D428:0x8:D
+__init_g_breakMan@0xBB4240:0x800:D
+__init_g_breakMan@0xC9D428:0x8:D
+__init_g_procObjMan@0xBB7CB0:0x4C14:D
+__init_g_procObjMan@0xC9D428:0x8:D
+__init_g_waterCreatureMan@0xC9D428:0x8:D
+__init_g_bae1f8@0xBAE1F8:0x1400:D
+__init_g_bae1f8@0xC9D428:0x8:D
+# PORT-WORLD-2 entity/object leaves: out-parameters (CVector 0xC, CRect 0x10)
+CPlaceable::GetRightDirection@arg0:0xC:RW
+CPlaceable::GetTopDirection@arg0:0xC:RW
+CPlaceable::GetAtDirection@arg0:0xC:RW
+TransformPoint@arg0:0xC:RW
+CEntity::TransformFromObjectSpace-ref@arg0:0xC:RW
+CEntity::TransformFromObjectSpace-ptr@arg0:0xC:RW
+CEntity::GetBoundCentre-ref@arg0:0xC:RW
+CEntity::GetBoundCentre-vec@arg0:0xC:RW
+CEntity::GetBoundRect@arg0:0x10:RW
+# SetupBigBuilding sets a flag in the entity's model info: the atomic..clump model info stores (0xAAE950..0xB1F650)
+CEntity::SetupBigBuilding@0xAAE950:0x70D00:RW
+# PORT-WORLD-2 split hooks: CStreaming::ms_rwObjectInstances header (0x9654F0), CReferences::aRefs/pEmptyList,
+# CPickups::aPickUps (references may point into it), world sectors, gMatrixList (+NUMMATRICES 0xB74238),
+# CGarages::aGarages (50 x 0xD8), CSetPieces::aSetPieces (210 x 0x20), model info stores 0xAAE950..0xB4C2D4
+CCutsceneObject::SetModelIndex@0x9654F0:0x34:RW
+CObject::CreateRwObject@0x9654F0:0x34:RW
+CObject@0x9654F0:0x34:RW
+CEntity::CleanUpOldReference-@0xB9B9A8:0x5DC4:RW
+CEntity::CleanUpOldReference-@0xBA1768:0x4:RW
+CEntity::CleanUpOldReference-@0x9788C0:0x4D80:RW
+CEntity::RegisterReference-@0xB9B9A8:0x5DC4:RW
+CEntity::RegisterReference-@0xBA1768:0x4:RW
+CEntity::RegisterReference-@0x9788C0:0x4D80:RW
+CEntity::ResolveReferences@0xB9B9A8:0x5DC4:RW
+CEntity::ResolveReferences@0xBA1768:0x4:RW
+CEntity::ResolveReferences@0x9788C0:0x4D80:RW
+CEntity::PruneReferences@0xB9B9A8:0x5DC4:RW
+CEntity::PruneReferences@0xBA1768:0x4:RW
+CEntity::PruneReferences@0x9788C0:0x4D80:RW
+CObject::`scalar deleting destructor'@0xB9B9A8:0x5DC4:RW
+CObject::`scalar deleting destructor'@0xBA1768:0x4:RW
+CObject::`scalar deleting destructor'@0x9788C0:0x4D80:RW
+CEntity::Add-void@0xB7D0B8:0x1C200:RW
+CPtrListDoubleLink::AddItem@0xB7D0B8:0x1C200:RW
+CWorld::Add@0xB7D0B8:0x1C200:RW
+CWorld::Remove@0xB7D0B8:0x1C200:RW
+CPlaceable::InitMatrixArray@0xB74288:0x1F8:RW
+CPlaceable::InitMatrixArray@0xB74238:0x4:RW
+FUN_0054f490@0xB74288:0x1F8:RW
+FUN_0054f490@0xB74238:0x4:RW
+CPlaceable::AllocateMatrix@0xB74288:0x1F8:RW
+CPlaceable::AllocateMatrix@0xB74238:0x4:RW
+CPlaceable::FreeStaticMatrix@0xB74288:0x1F8:RW
+CPlaceable::FreeStaticMatrix@0xB74238:0x4:RW
+CPlaceable::RemoveMatrix@0xB74288:0x1F8:RW
+CPlaceable::RemoveMatrix@0xB74238:0x4:RW
+CGarages::Init_AfterRestart@0x96C048:0x2A30:RW
+CSetPieces::AddOne@0xA95818:0x1A40:RW
+CEntity::DeleteRwObject@0xAAE950:0x9D984:RW
