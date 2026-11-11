@@ -7,12 +7,12 @@
 //! `B+0x48` becomes `1 - p`, the speed `B+0x38` becomes a clamp temporary, `B+0x44` holds the
 //! stick values and the player pointer, `B+0x50` the cosine of the output pitch), and the x87 stack runs
 //! on the [`Fpu`] machine instruction by instruction (which values are stored as f32 and which stay on
-//! the stack, operand order, compare masks). FSIN / FCOS / FPATAN use sa-math's f64 models; `_CIasin`
+//! the stack, operand order, compare masks). FSIN / FCOS / FPATAN use sa-math's 64-bit models; `_CIasin`
 //! and `_CIpow` run the original CRT code (`orig::x87_unary` / `x87_binary`), as in `CCam::Process`.
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::orig;
+use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
 use crate::camcol::{get_task_jet_pack, get_task_swim, get_using_parachute, vector_magnitude, vector_sub};
@@ -323,16 +323,11 @@ fn round_source(src: GPtr<u8>) {
 /// - the idle camera test is `(x*x + y*y) + z*z` of the move speed against 0.0001 with
 ///   `test ah, 0x41; jp` (NaN skips it).
 ///
-/// **Not hooked** (PORT-CAM-3 verify-all, decision for the main session): split L2 passes on grove and
-/// weapon-combat, but with this port on Rust car-ai diverges at frame 4982 and menus-hud at 5164 (camera).
-/// Split L2 from car-ai frame 4960 (`cam3-fp-ca`): the first mismatch (frame 4981) is the beta at cam+0xBC /
-/// `0x8CCE6C`, orig 0xA6F72C00 (-1.7e-15) vs Rust 0xA6E00000: `atan2(-front.x, front.y) - pi/2` cancels, so
-/// the bits of FPATAN's 64-bit result beyond sa-math's f64 model reach the f32. Hooking it needs a 64-bit
-/// FPATAN model (as the X87 work did for FPTAN / FYL2X). Ready attribute:
-/// `#[hook(addr = 0x522D40, conv = thiscall, name = "CCam::Process_FollowPed_SA", expect = "83 EC 7C 57 8B F9", this = "CCam")]`
-///
-/// Phase B entry (STD-6): natively there is no original to diverge from, so the port is registered.
-#[sa_core::native(addr = 0x522D40, conv = thiscall, name = "CCam::Process_FollowPed_SA")]
+/// PORT-CAM-3 left it unhooked: with sa-math's former 53-bit FPATAN, car-ai diverged at frame 4981 on the
+/// beta at cam+0xBC / `0x8CCE6C` (orig 0xA6F72C00 = -1.7e-15, Rust 0xA6E00000): `atan2(-front.x,
+/// front.y) - pi/2` cancels, so bits of FPATAN's 64-bit result reach the f32. X87-2 replaced the model
+/// with the 64-bit FPATAN / FSIN / FCOS models (`sa_math::x87`).
+#[hook(addr = 0x522D40, conv = thiscall, name = "CCam::Process_FollowPed_SA", expect = "83 EC 7C 57 8B F9", this = "CCam")]
 pub fn process_follow_ped_sa(
     this: GPtr<u8>,
     target: GPtr<u8>,
@@ -1490,7 +1485,7 @@ fn auto_pitch(this: GPtr<u8>, b: GPtr<u8>, f: &mut Fpu) {
 }
 
 /// Registrations of this module.
-pub const HOOKS: &[HookReg] = &[];
+pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_FOLLOW_PED_SA];
 
 /// Globals of this module (none: the statics are accessed by address).
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];

@@ -33,6 +33,8 @@ mod data_reads;
 #[cfg(test)]
 mod patch_refs;
 #[cfg(test)]
+mod regconv_check;
+#[cfg(test)]
 mod testexe;
 
 #[cfg(windows)]

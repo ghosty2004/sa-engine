@@ -665,7 +665,8 @@ matrix list, garages, set pieces, `atexit` list).
   `FindPlayerHeading` 0x56E450 return the raw FPATAN result in ST0; sa-math models FPATAN at 53 bits (MATH-FPTAN
   ledger), and L2 compares the full ST0: `GetHeading` had 15/22 mismatches in the low 11 significand bits on
   grove (the f32 is identical). The ports stay as plain functions (callers that store an f32 may use them);
-  the hooks are not registered until an exact FPATAN model exists.
+  the hooks are not registered until an exact FPATAN model exists. **X87-2 (2026-11-11):** re-hooked with the 64-bit
+  FPATAN model and 80-bit `X87` hook returns (`docs/arch/x87-2-verdicts.tsv`).
 - **Unhookable** (< 5 bytes: `ret`, `ret N`, `mov al,1; ret`, getters): `CEntity::AsXxx` 0x404350,
   `CPlaceable::GetMatrix` raw 0x41BD80, `CEntity::ProcessControl` 0x403E40, `ProcessCollision` 0x403E50,
   `ProcessShift` 0x403E60, `Teleport` 0x403E80, `SpecialEntityPreCollisionStuff` 0x403E90,
@@ -746,4 +747,4 @@ Lane 3 was shared with other agents' runs (flock-serialised), so every run took 
   split runs record the inner calls (ADR-001 already prescribes `orig!` for catalogued callees); until then the
   constructor chains (`CBuilding`, `CDummy`, `CObject` ctors → `CEntity::Constructor` → `CPlaceable`) have no
   clean split verdict.
-- An exact (64-bit) FPATAN model, or an accepted divergence, for the three withdrawn ST0-returning hooks.
+- ~~An exact (64-bit) FPATAN model, or an accepted divergence, for the three withdrawn ST0-returning hooks.~~ Done by X87-2.

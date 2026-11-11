@@ -934,10 +934,12 @@ fn build_regions(f: &Frame, i: usize, sig: &fmt::Sig, args: &[u32]) -> Vec<Regio
             _ => add(&mut regions, 0, 0, RegionKind::Extra, e.acc), // counted as unreadable
         }
     }
-    if sig.conv == fmt::Conv::Thiscall && sig.this_size > 0 {
+    if let Some(&this) = regs_in.get(sig.this_reg as usize)
+        && sig.this_size > 0
+    {
         add(
             &mut regions,
-            f.ecx,
+            this,
             sig.this_size,
             RegionKind::This,
             fmt::ACC_R | fmt::ACC_W,
@@ -1627,13 +1629,10 @@ fn run_split(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32, ordinal: u32, 
     record(case, i, t0, unreadable, false);
 }
 
-/// Pending ledger entry "GetATanOfXY raw FPATAN path": ST0 differs beyond f32 only.
-fn is_ledger(addr: u32, c: &Case, diffs: &[fmt::Diff]) -> bool {
-    addr == 0x53CC70
-        && diffs.iter().all(|d| d.field == "st0")
-        && c.orig.st.len() == 1
-        && c.rust.st.len() == 1
-        && fmt::ext_to_f32_bits(&c.orig.st[0]) == fmt::ext_to_f32_bits(&c.rust.st[0])
+/// Accepted-divergence (ledger) cases. None left: the last one, "GetATanOfXY raw FPATAN path" (ST0
+/// differing beyond f32), was closed by X87-2's 64-bit FPATAN model and 80-bit ST0 returns.
+fn is_ledger(_addr: u32, _c: &Case, _diffs: &[fmt::Diff]) -> bool {
+    false
 }
 
 fn args_str(args: &[u32]) -> String {

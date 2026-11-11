@@ -5,6 +5,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
+| harness5-1 | 7 | AUDIO, RENDER | d096685 | master | 7 | 0 | 0 | 0 | 0 | L1-pure 2, L2 5 |
 | mvpa-ai-1 | 21 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 2 | 19 | 0 | L2 21 |
 | mvpa-ai-2 | 23 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 0 | 23 | 0 | L2 23 |
 | mvpa-core-1 | 5 | CORE | 09ffb62 | master | 0 | 0 | 0 | 5 | 0 | L3-only 5 |
@@ -167,6 +168,28 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std6-stream-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
 | std6-veh-1 | 1 | VEH | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std6-world-1 | 3 | MATH, WORLD | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
+| x87-2-roll | 1 | WORLD | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+
+## harness5-1
+
+7 hooks in sa-audio, sa-render; hazards: heap-writes (1), preserved-regs (1), x87-transcendental (1); recordings calling them: driving (7), grove-walk (5), pause-restart (7).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh harness5-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=harness5-1 LANE=$LANE tools/e2e/port-l2.sh batch:harness5-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag harness5-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D9E50 | `CAEAudioUtility::AudioLog10` | written | L2 | x87-transcendental |
+| 0x5DBE40 | `CPlantMgr::_CalcDistanceSqrToEntity` | written | L2 | none |
+| 0x6FD7C0 | `CCustomCarPlateMgr::GetCharacterPositionInCharSet` | written | L1-pure | none |
+| 0x709CF0 | `CShadows::ShadowRenderTriangleCB` | written | L2 | heap-writes |
+| 0x70FA70 | `FUN_0070fa70` | written | L1-pure | preserved-regs |
+| 0x711160 | `FUN_00711160` | written | L2 | none |
+| 0x7111F0 | `FUN_007111f0` | written | L2 | none |
 
 ## mvpa-ai-1
 
@@ -3578,3 +3601,18 @@ SA_UNVERIFIED=std6-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-world-1 $S
 | 0x40EE70 | `CColBox::Set` | written | L1-pure | none |
 | 0x5BFBF0 | `FurnitureManager_c::GetSubGroupId` | written | L1-pure | none |
 | 0x5C00C0 | `FurnitureSubGroup_c::AddFurniture` | written | L2 | none |
+
+## x87-2-roll
+
+1 hooks in sa-world; hazards: x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh x87-2-roll $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=x87-2-roll LANE=$LANE tools/e2e/port-l2.sh batch:x87-2-roll $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag x87-2-roll
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x420B30 | `CPlaceable::GetRoll` | written | L2 | x87-transcendental |

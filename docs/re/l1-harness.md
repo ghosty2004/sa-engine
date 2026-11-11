@@ -134,8 +134,9 @@ range covers everything reachable from f32 inputs). Rules, all checked against t
   **SNaN memory operand loses to a QNaN register** (so register and `m32` forms differ: the API has
   `fadd`/`fadd_m` etc., and the ports follow the original's operand forms); invalid operations → the
   indefinite (0xFFC00000 as f32). FCHS flips a NaN's sign.
-- FPATAN is computed in f64 (`libm::atan2`, deterministic on every target) and not rounded to 24 bits
-  (PC does not apply to it on the CPU: e.g. `fpatan` under CW 0x7F returns `c90fdaa22168c235`).
+- FPATAN, FSIN, FCOS and FSINCOS return 64-bit significands and are not rounded to 24 bits (PC does not
+  apply to them on the CPU: e.g. `fpatan` under CW 0x7F returns `c90fdaa22168c235`); see the X87-2
+  section below.
 - No unsafe, no host-dependent float behaviour; `sa-math` builds for `wasm32-unknown-unknown`.
 
 ### FYL2X and FPTAN (X87-MODELS, 2026-11-11)
@@ -184,6 +185,60 @@ ecx; fmul [esp+8]; ret`) and compares the full ST0 of the product: 1,002,176 cas
 `AudioLog10` compares the stored f32: 1,001,088 cases, 0 mismatches (ST0 beyond f32 differs in 30,492
 — this generator puts a fifth of its inputs within 1/64 of 1.0, the model's weakest region).
 
+### FPATAN, FSIN, FCOS, FSINCOS (X87-2, 2026-11-11)
+
+Fitted against the CPU (native backend, Intel i7-14700F; P-core and E-core results are identical,
+checked with `taskset` on CPUs 2 and 22) from dumps of the 80-bit results (`tests/x87_trig.rs`:
+`X87_TRIG_DUMP` / `X87_TRIG_IN` write them for offline fitting with mpmath). The error of the CPU's
+result against the exact value is not noise: it is piecewise constant in table intervals, which gives
+the microcode's structure away.
+
+- **FPATAN** (`X87::fpatan`): `q = min(|y|,|x|) / max(|y|,|x|)` exact, `k = round(32 q)`.
+  `k < 2`: `t = trunc67(q)`, `a = atan(t)` (for `t < 2^-40` exactly `t`: the `-t^3/3` correction decides
+  64-bit ties for larger `t` only, measured over 2^-5 ... 2^-121). `k >= 2`: `t = trunc67((q - k/32) /
+  (1 + q k/32))`, `a = A[k] + trunc67(atan t)`, `A[k] = atan(k/32)` rounded to nearest at 67 bits (the
+  CPU's error is exactly these roundings: e.g. -0.051, +0.050, -0.087 x 2^-66 for k = 10, 11, 12).
+  `|y| <= |x|, x > 0`: round-to-nearest-64 of `a`; otherwise `a` is truncated to 67 bits and
+  `P/2 - a`, `P/2 + a` or `P - a` (`P` = pi rounded to 67 bits) is rounded to 64 bits; sign of y.
+  Special operands as the SDM (pi, pi/2, pi/4, 3pi/4 are the round-to-nearest 64-bit constants).
+- **FSIN/FCOS** (`X87::fsin`, `X87::fcos`): reduction by the 66-bit pi as before (exact remainder),
+  `|r| < 0.25` direct; else a table at the centre `c` of r's quarter-binade (`0.28125, 0.34375, ...,
+  0.9375`) with `sin c` and `cos c` rounded to nearest at 67 bits: `S cos t + C sin t` / `C cos t - S sin
+  t`, evaluated to ~100 bits, rounded to 64. The CPU's internal rounding of the polynomial terms
+  (residual noise growing with |t|) is not modelled. **FSINCOS** (`X87::fsincos`) = (FSIN, FCOS);
+  the CPU's FSINCOS values are not always identical to separate FSIN/FCOS (the measured rates differ
+  slightly), the model uses the same values.
+
+Measured (`cargo test --release -p sa-oracle --test x87_trig -- --include-ignored`; the 10^6 tests are
+`fpatan_model_vs_cpu_1m`, `trig_model_vs_cpu_1m`; f64 operands: edge values, the CMaths angle steps and
+multiples of pi/4 with neighbours, uniform game ranges, random bit patterns; results whose exponent is
+outside the f64 range minus 64 are skipped: an `X87` pair cannot hold them):
+
+| instruction | cases | 80-bit ST0 exact | stored f32 exact | before (53-bit f64 model) |
+|---|---|---|---|---|
+| FPATAN | 991,340 | 991,335 (99.9995%) | 100% | ~97.5% |
+| FSIN | 996,881 | 992,116 (99.52%) | 100% | ~98.1% |
+| FCOS | 1,000,000 | 994,966 (99.50%) | 100% | ~98.1% |
+| FSINCOS (cos) | 1,000,000 | 995,317 (99.53%) | 100% | — |
+| FSINCOS (sin) | 996,881 | 992,355 (99.55%) | 100% | — |
+
+Every difference is 1 ulp of the 64-bit significand. The 5 FPATAN ones are table cases where
+`atan(t)` lies within ~0.02 units of a 67-bit truncation boundary: the CPU's polynomial error (not
+modelled) decides them. Special operands (NaN, ±inf, ±0, |x| >= 2^63, |y| = |x|): 0 differences.
+
+L1 specs on the CPU with the models (200k generated + edges each, `--backend native`): GetATanOfXY,
+GetRadianAngleBetweenPoints, GetNodeHeadingFromVector, GetAngleBetweenPoints, CMatrix
+ConvertTo/FromEulerAngles, SetRotate{X,Y,Z}{,Only}, SetRotate, Rotate{X,Y,Z}, Rotate, BoneNode_c::EulerToQuat,
+CCurves::CalcCorrectedDist, CameraProcessVector{Track,Move}Linear (+ the new `...Eased` variants, which run
+the callees 0x50D350 / 0x50D430 on the eased path: before, 29,091 of 1.06M differed there), RwMatrixRotate:
+0 mismatches each. RwMatrixRotate left `KNOWN_CPU_MISMATCHES` (now empty).
+
+Hooks returning `X87` give back all 80 bits: `IntoAbi for X87` also stores the extended value in
+`sa_core::abi::ST0_EXT`, and the `#[hook]` entry wrapper (generated for every `X87`-returning hook;
+combined with `preserve`, `footprint` and `entry_eax` wrappers) does `fstp st(0); fld tbyte [ST0_EXT]`
+after the shim. sa-hook's hand-written `GetATanOfXY` entry does the same (`game::get_atan_of_xy_entry`).
+`orig!` declarations still read an ST0 result as f64 (rounded to 53 bits).
+
 ## Self-test: six ported functions (source: the 1.0 US bytes; gta-reversed for intent)
 
 | function | addr | conv | route | notes |
@@ -228,15 +283,12 @@ The equivalent mutant was first meant as a fault; the runner showed it is not on
 
 ## Divergences and limits
 
-- **`GetATanOfXY` raw FPATAN path** (x > 0, y > 0, |x| ≥ |y|): ST0 holds the CPU's 64-bit FPATAN result;
-  the port has 53 bits. The stored f32 matches in every case run; a caller that keeps using ST0 without
-  storing it could see a difference. Ledger: pending, until an x87-exact atan exists or the callers are
-  shown to store first.
-- **`LimitAngle` hang**: the original never returns for ±inf and |a| ≥ 2^33; `limit_angle` panics there
-  instead of spinning. Ledger: original UB / not reproducible.
-- FPATAN in the ports is f64: a CPU/port difference is possible when the exact value lies within about
-  2^-29 ulp of an f32 rounding boundary *and* the f64 value is on the other side. Not observed in
-  2.25·10^6 FPATAN cases.
+- **FPATAN / FSIN / FCOS raw 64-bit results** (X87-2): the models differ from the CPU in 1 ulp of the
+  64-bit significand for 5 in 10^6 FPATAN and ~0.5% of FSIN/FCOS operands; after rounding to f32 0 differences
+  in 10^6 each. A function returning or keeping the raw result (GetATanOfXY's raw path, GetHeading,
+  GetRoll, FindPlayerHeading) can show such a difference in its full ST0 (GetATanOfXY: 1 in 10^6 L1 cases).
+  Ledger: pending (accepted only for uses that round). The former `GetATanOfXY` ledger exception in
+  sa-hook's L2 (`l2win::is_ledger`) is gone: the hook returns 80 bits now.
 - **FYL2X / FPTAN raw 64-bit results** (`X87::fyl2x`, `X87::fptan`): a function that returns or keeps
   the raw result differs from the CPU in the last (64th) significand bit for 0.56% of AudioLog10 inputs
   (up to ~3% when inputs cluster within 1/64 of 1.0), 0.04% of general FYL2X operands and 4.1% of FPTAN

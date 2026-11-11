@@ -218,7 +218,9 @@ pub fn get_atan_of_xy() -> Spec {
         name: "CGeneral::GetATanOfXY",
         addr: 0x53CC70,
         ret: RetKind::St0,
-        // One path returns the raw FPATAN value (64-bit significand); the port has 53 bits there.
+        // One path returns the raw FPATAN value (64-bit significand). With X87-2's 64-bit model the
+        // full ST0 matches in all but 1 of 1,003,364 cases (1 ulp of 64 bits, case 331963 of seed
+        // 0x5A0001); the spec compares the f32 and reports the rest ("st0 beyond f32 differs").
         st0_exact: false,
         route: Route::L2 {
             reason: FPATAN_REASON,
@@ -433,6 +435,7 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_hud2_text::all())
     .chain(crate::specs_hud2_menu::all())
     .chain(crate::specs_hud3::all())
+    .chain(crate::specs_harness5::all())
     .chain(crate::specs_cam::all())
     .chain(crate::specs_script::all())
     .chain(crate::specs_rw::all())

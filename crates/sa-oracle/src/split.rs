@@ -297,13 +297,27 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
             false,
         );
     }
-    let used: &[usize] = match a.conv {
-        2 => &[1],    // thiscall: ECX
-        3 => &[1, 2], // fastcall: ECX, EDX
-        _ => &[],
+    // register conventions (HARNESS-5): every input register of the spec, compared over the bytes
+    // the original reads (AL / AX: the low byte / word)
+    let used: Vec<(usize, u32)> = match (crate::hook_regconv(a.fn_addr), a.conv) {
+        (Some(c), _) => (0..c.nargs as usize)
+            .filter_map(|i| {
+                let l = c.args[i];
+                l.reg().map(|r| (r, match l.width() {
+                    1 => 0xFF,
+                    2 => 0xFFFF,
+                    _ => u32::MAX,
+                }))
+            })
+            .collect(),
+        (None, 2) => vec![(1, u32::MAX)],                  // thiscall: ECX
+        (None, 3) => vec![(1, u32::MAX), (2, u32::MAX)], // fastcall: ECX, EDX
+        _ => Vec::new(),
     };
-    for &r in used {
-        if !normalise::words_equal(a.regs_in[r], &ca, b.regs_in[r], &cb) {
+    for &(r, m) in &used {
+        let (x, y) = (a.regs_in[r], b.regs_in[r]);
+        let same = if m == u32::MAX { normalise::words_equal(x, &ca, y, &cb) } else { x & m == y & m };
+        if !same {
             return (
                 Some(format!(
                     "{}: plain {:#x} rust {:#x}",

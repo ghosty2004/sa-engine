@@ -53,6 +53,8 @@ const RAND_RET_FLOAT: u32 = 0x4D9C56;
 const RAND_RET_PROB: u32 = 0x4D9C97;
 
 orig! {
+    /// `CAEAudioUtility::AudioLog10(float)` (0x4D9E50) as callers reach it (80-bit ST0 result)
+    pub fn call_audio_log10(v: f32) -> X87 = reg("args = stack") 0x4D9E50 => audio_log10;
     /// `FindPlayerPed(int32 playerId)` (0x56E210)
     pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => unported;
     /// `FindPlayerVehicle(int32 playerId, bool bIncludeRemote)` (0x56E0D0)
@@ -181,8 +183,13 @@ pub const AUDIO_LOG10_FLOOR: f32 = f32::from_bits(0xC0A0_0000);
 /// returned in ST0 (a wide [`X87`]). Every caller multiplies it by an f32 constant at PC=24 (20.0 or
 /// 10.0) right away; with the model that product is exact against the CPU (L1 spec `AudioLog10*c`,
 /// CPU-decided). The raw ST0 itself matches the CPU's in ~99.4% of inputs (1 ulp of the 64-bit
-/// significand otherwise, ledger), so this is not hooked: an `X87` hook return goes back as an f64
-/// (53 bits), and an 80-bit ST0 return would need an ABI extension (`AbiRet::St0` loads a qword).
+/// significand otherwise, ledger). Hooked with the register-convention spec `args = stack` (HARNESS-5),
+/// whose entry returns an `X87` result with all 80 bits (`fld tbyte`); Rust callers go through
+/// [`call_audio_log10`].
+#[hook(addr = 0x4D9E50, conv = reg("args = stack"), name = "CAEAudioUtility::AudioLog10",
+       expect = "D9 44 24 04 D8 1D 14 8C 85 00",
+       unverified = "harness5-1", route = "L2", hazards = "x87-transcendental", recs = "driving",
+       note = "80-bit ST0 result (HARNESS-5 reg conv); FYL2X model 1 ulp (64-bit) off in ~0.6% of inputs, ledger")]
 pub fn audio_log10(v: f32) -> X87 {
     let xv = X87::from_f32(v);
     if xv.fcom(X87::from_f32(AUDIO_LOG10_MIN)).c0() {
@@ -638,6 +645,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RESOLVE_PROBABILITY,
     HOOK_GET_PIECEWISE_LINEAR,
     HOOK_CONVERT_FROM_BYTES_TO_MS,
+    HOOK_AUDIO_LOG10,
     HOOK_CONVERT_FROM_MS_TO_BYTES,
     HOOK_CHANNEL_CONVERT_FROM_BYTES_TO_MS,
     HOOK_CHANNEL_CONVERT_FROM_MS_TO_BYTES,

@@ -110,6 +110,42 @@ fn calling_conventions() {
     assert_ne!(o.esp_delta, c.expected_esp_delta());
 }
 
+/// Entry registers of register-convention functions (HARNESS-5): EAX (instead of the call target),
+/// EBX, ESI, EDI and EBP reach the function on both backends, laid out by `Call::regconv` from a
+/// `sa_core::regconv` spec.
+#[test]
+fn register_entry_conventions() {
+    let Some(img) = img() else { return };
+    // add eax, ebx; add eax, esi; add eax, edi; add eax, ebp; add eax, [esp+4]; ret 4
+    let code = [
+        0x01, 0xD8, 0x01, 0xF0, 0x01, 0xF8, 0x01, 0xE8, 0x03, 0x44, 0x24, 0x04, 0xC2, 0x04, 0x00,
+    ];
+    let conv = sa_core::regconv::RegConv::parse("args = al ebx si edi ebp stack; pop");
+    let c = Call::regconv(PROBE, &conv, &[0x01, 0x10, 0x100, 0x1000, 0x10000, 0x100000], 0xFF00_0000);
+    assert_eq!((c.eax, c.ebx, c.esi, c.edi, c.ebp), (Some(0xFF00_0001), 0x10, 0xFF00_0100, 0x1000, 0x10000));
+    assert_eq!((c.conv, c.stack.clone()), (Conv::Stdcall, vec![0x100000]));
+    let want = [0xFF00_0001u32, 0x10, 0xFF00_0100, 0x1000, 0x10000, 0x100000]
+        .iter()
+        .fold(0u32, |a, &b| a.wrapping_add(b));
+    let without_eax = want.wrapping_sub(0xFF00_0001).wrapping_add(PROBE);
+    let (mut e, allow) = probe_emu(&img, &code);
+    let o = e.call(&c, &allow).unwrap();
+    assert_eq!((o.eax, o.esp_delta), (want, 0));
+    // without an entry EAX, EAX is the call target (as before)
+    let mut c2 = c.clone();
+    c2.eax = None;
+    assert_eq!(e.call(&c2, &allow).unwrap().eax, without_eax);
+    if sa_oracle::native::available() {
+        let mut p = vec![0xCCu8; 0x100];
+        p[..code.len()].copy_from_slice(&code);
+        let r = sa_oracle::native::run(&img, &[c, c2], Some(&p)).unwrap();
+        assert_eq!((r[0].eax, r[0].esp_delta), (want, 0), "native");
+        assert_eq!(r[1].eax, without_eax, "native");
+    } else {
+        eprintln!("note: native backend unavailable, native half skipped");
+    }
+}
+
 #[test]
 fn fpu_state_is_a_parameter() {
     let Some(img) = img() else { return };
@@ -265,7 +301,12 @@ fn routes_match_hazards() {
         );
         match s.route {
             Route::L1 => assert!(h.x87.is_empty(), "{} routed L1 but uses {:?}", s.name, h.x87),
-            Route::L2 { .. } => assert!(!h.x87.is_empty(), "{} routed L2 without a hazard", s.name),
+            // SSE in the scanned extent is a hazard of its own (the CPU must decide, see above)
+            Route::L2 { .. } => assert!(
+                !h.x87.is_empty() || h.sse.is_some(),
+                "{} routed L2 without a hazard",
+                s.name
+            ),
         }
     }
 }
@@ -313,11 +354,9 @@ fn l2_specs_pass_on_the_cpu() {
     }
 }
 
-/// Specs whose ports are known to differ from the CPU (ledger: FSIN/FCOS need the 64-bit model; the
-/// functions stay `implemented`). This list may only shrink.
-const KNOWN_CPU_MISMATCHES: &[u32] = &[
-    0x7F1FD0, // RwMatrixRotate: fsin/fcos 53-bit vs CPU reduction (WORKLOG 2026-11-11 PRESERVE-SPECS)
-];
+/// Specs whose ports are known to differ from the CPU (the functions stay `implemented`). This list
+/// may only shrink. Empty since X87-2 (RwMatrixRotate matches with the 64-bit FSIN/FCOS models).
+const KNOWN_CPU_MISMATCHES: &[u32] = &[];
 
 #[test]
 fn x87_model_matches_the_cpu_on_special_values() {

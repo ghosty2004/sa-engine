@@ -331,7 +331,9 @@ pub fn matrix_heading(m: GPtr<u8>) -> X87 {
 }
 
 /// `CPlaceable::GetHeading` (0x441DB0): the matrix heading, else the placement heading (ST0).
-/// Not registered: returns the raw FPATAN ST0, modelled at 53 bits (MATH-FPTAN); L2 compares the full ST0.
+/// Returns the raw FPATAN result: all 64 bits through `X87` (X87-2; WORLD-2 had withdrawn the hook
+/// while sa-math modelled FPATAN at 53 bits).
+#[hook(addr = 0x441DB0, conv = thiscall, name = "CPlaceable::GetHeading", expect = "8B 41 14 85 C0 74 0B", this = "CPlaceable")]
 pub fn get_heading(this: GPtr<u8>) -> X87 {
     let m = rd::<GPtr<u8>>(this, 0x14);
     if m.is_null() { x(rd(this, 0x10)) } else { matrix_heading(m) }
@@ -738,7 +740,8 @@ pub fn is_building_pointer_valid(p: GPtr<u8>) -> u8 {
 
 /// `CPlaceable::GetRoll` (0x420B30): `atan2(right.z, ±|right.xy|)` (negated when `up.z < 0`); 0.0
 /// without a matrix.
-/// Not registered: returns the raw FPATAN ST0, modelled at 53 bits (MATH-FPTAN); L2 compares the full ST0.
+/// Returns the raw FPATAN result: all 64 bits through `X87` (X87-2; WORLD-2 had withdrawn the hook).
+#[hook(addr = 0x420B30, conv = thiscall, name = "CPlaceable::GetRoll", expect = "8B 49 14 85 C9 74 33", this = "CPlaceable", unverified = "x87-2-roll", route = "L2", hazards = "x87-transcendental", note = "no call on grove, car-ai or driving")]
 pub fn get_roll(this: GPtr<u8>) -> X87 {
     let m = rd::<GPtr<u8>>(this, 0x14);
     if m.is_null() {
@@ -1841,4 +1844,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_UPDATE_ANIM,
     HOOK_ATTACH_TO_RW_OBJECT,
     HOOK_DELETE_RW_OBJECT,
+    HOOK_GET_HEADING,
+    HOOK_GET_ROLL,
 ];

@@ -51,6 +51,9 @@ pub struct PtrArg {
     pub size: u32,
 }
 
+/// [`Sig::this_reg`]: no `this` register.
+pub const NO_THIS: u8 = 0xFF;
+
 /// What the L2 oracle needs to call a function generically.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Sig {
@@ -61,6 +64,9 @@ pub struct Sig {
     /// `this` type (layouts.csv name) for thiscall; its size bounds the `this` snapshot.
     pub this_type: Option<&'static str>,
     pub this_size: u32,
+    /// Register holding `this` (0 EAX, 1 ECX, 2 EDX, 3 EBX, 4 ESI, 5 EDI, 6 EBP; [`NO_THIS`] none):
+    /// ECX for thiscall, argument 0's register for a register convention (HARNESS-5).
+    pub this_reg: u8,
     pub ptr_args: &'static [PtrArg],
     /// Stack argument words holding a 1-byte / 2-byte argument (bit k = word k; `HookReg::arg8`).
     pub arg8: u32,

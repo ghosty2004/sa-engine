@@ -11,6 +11,7 @@ use crate::{
     bullettraces, clouds, coronas, cullzones, fx, mirrors, occlusion, pointlights, posteffects, renderer,
     shadows, specialfx, sprite, sprite2d, weather,
 };
+use crate::harness5;
 use crate::{carplates, draw, glass, markers, rwplugins, stencilshadows, timecycle, waterlevel};
 use crate::{mvpa_fx1, mvpa_fx2, mvpa_render1, mvpa_render2, mvpa_render3};
 
@@ -35,6 +36,7 @@ pub const MODULES: &[&[HookReg]] = &[
     timecycle::HOOKS,
     markers::HOOKS,
     carplates::HOOKS,
+    harness5::HOOKS,
     glass::HOOKS,
     stencilshadows::HOOKS,
     mvpa_render1::HOOKS,
