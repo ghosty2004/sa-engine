@@ -226,8 +226,11 @@ The goal text states only the end condition. The next action is derived from the
 
 - Several game lanes may run at once (lanes 1–7; replays are CPU-bound since INF-19, each lane needs ~1.5–2 GB RAM; `e2e_disk_check` waits for ≥4 GB available memory before a run); real-time lanes rely on sa-hook's CdStreamSync lost-wake-up fix (INF-15, docs/re/lanes.md), without which any real-time run can hang on a loading screen (~7% of new-game loads). Create new lane prefixes only while no wineserver runs for `wine/prefix`. Lanes are separate Wine prefixes plus game copies (`wine/lane-N`, data symlinked read-only) and headless
   gamescope displays. Every lane run is wrapped in `flock target/locks/lane-N.lock`. Start with 3 lanes.
-- REA holds one binary at a time, so a single agent uses REA at any moment. Others use the exported
-  decompilation under `catalog/raw/`.
+- REA (revised 2026-11-11, measured: parallel queries on one open target all succeed): agents may query REA
+  concurrently, read-only, on the one target the main session keeps open (`re/gta/1.0-US/gta_sa.exe` with
+  `re/snapshots/gta_sa_1.0US.snapshot`). Agents never open another target, never call `close_binary`, and never
+  annotate in REA (a cancelled request re-imports the program and drops every session's annotations); names go
+  to the catalogue. objdump and `catalog/raw/` remain fine alternatives.
 - Shared crates (`sa-core`, `sa-math`, `sa-rw`, `sa-oracle`) must keep `cargo build --workspace` green after
   every edit.
 - Git: only the main session commits, after a green build and tests, with plain English messages and no
