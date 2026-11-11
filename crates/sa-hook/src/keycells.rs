@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 7] = [
+pub const READERS: [Reader; 8] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -100,6 +100,14 @@ pub const READERS: [Reader; 7] = [
         disp_off: 2,
         key: 0x6F4924,
         value: 0xFFD0_D17D,
+    },
+    // CCarAI::UpdateCarAI entry 0x41DA30 (PORT-POP-3: nop; jmp rel32): `xor ecx, [0x41DA32]` at 0x407284.
+    Reader {
+        at: 0x407284,
+        insn: [0x33, 0x0D, 0x32, 0xDA, 0x41, 0x00],
+        disp_off: 2,
+        key: 0x41DA32,
+        value: 0xFFFE_6212,
     },
 ];
 

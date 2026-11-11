@@ -1,0 +1,324 @@
+address	name	file	state	evidence
+0x7FC200	_rwD3D9RenderStateFlushCache	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC2D0	RwD3D9SetRenderState	d3d9state	L2	split rw4-sd: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC320	RwD3D9GetRenderState	d3d9state	implemented-needs-L2	split rw4-sd: DIVERGED 0 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC340	RwD3D9SetTextureStageState	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC3A0	RwD3D9GetTextureStageState	d3d9state	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC3C0	RwD3D9SetSamplerState	d3d9state	L2	split rw4-sc: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC400	RwD3D9GetSamplerState	d3d9state	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC430	RwD3D9SetMaterial	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 33 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC4A0	RwD3D9SetClipPlane	d3d9state	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FC4D0	RwD3D9SetSurfaceProperties	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FCAC0	_rwD3D9RenderStateOpen	d3d9state	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FD100	_rwD3D9RenderStateReset	d3d9state	L2	split rw4-sc: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FD810	_rwD3D9RWGetRenderState	d3d9state	implemented-needs-L2	split rw4-sd: COUNT 58 compared, 0 mismatches, 58 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDB80	FUN_007fdb80	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDC30	_rwD3D9RenderStateSrcBlend	d3d9state	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDC80	_rwD3D9RenderStateDestBlend	d3d9state	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDCD0	FUN_007fdcd0	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDE50	_rwD3D9GetCurrentTexture	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDE60	_rwD3D9SetMaxAnisotropy	d3d9state	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FDE70	RwD3D9SetTexture	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE0A0	_rwD3D9RenderStateVertexAlphaEnable	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE190	_rwD3D9RenderStateIsVertexAlphaEnable	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 25 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE1A0	FUN_007fe1a0	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE1F0	FUN_007fe1f0	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE240	FUN_007fe240	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE290	FUN_007fe290	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE2E0	FUN_007fe2e0	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE330	FUN_007fe330	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE380	FUN_007fe380	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE3D0	FUN_007fe3d0	d3d9state	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FE420	_rwD3D9RWSetRenderState	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FEA70	FUN_007fea70	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FEB70	FUN_007feb70	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FEC70	FUN_007fec70	d3d9state	L2	split rw4-sb: PASS 402 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FECC0	_rwD3D9RenderStateTextureBorderColor	d3d9state	L2	split rw4-sb: PASS 402 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FED00	FUN_007fed00	d3d9state	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FED70	FUN_007fed70	d3d9state	L2	split rw4-sb: PASS 19 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5EF0	_rwD3D9SetDepthStencilSurface	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5F20	_rwD3D9SetRenderTarget	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F84E0	RwD3D9EngineGetMaxMultiSamplingLevels	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F84F0	RwD3D9EngineSetMultiSamplingLevels	d3d9dev	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F8580	RwD3D9EngineSetRefreshRate	d3d9dev	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F8620	RwD3D9EngineSetMultiThreadSafe	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F8630	RwD3D9EngineSetSoftwareVertexProcessing	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9C20	_rwDeviceGetHandle	d3d9dev	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9C30	RwD3D9DeviceSupportsDXTTexture	d3d9dev	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9D30	RwD3D9SetStencilClear	d3d9dev	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9D40	RwD3D9GetStencilClear	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9D50	RwD3D9GetCurrentD3DDevice	d3d9dev	L2	split rw4-sc: PASS 5 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9E80	RwD3D9GetCurrentD3DRenderTarget	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9E90	RwD3D9SetRenderTarget	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9F30	_rwD3D9SetFVF	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9F70	_rwD3D9SetVertexDeclaration	d3d9dev	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9FB0	_rwD3D9SetVertexShader	d3d9dev	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F9FF0	_rwD3D9SetPixelShader	d3d9dev	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA030	RwD3D9SetStreamSource	d3d9dev	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA090	_rwD3D9SetStreams	d3d9dev	implemented-needs-L2	split rw4-sd: DIVERGED 0 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA1C0	_rwD3D9SetIndices	d3d9dev	L2	split rw4-sb: PASS 448 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA1F0	_rwD3D9DrawIndexedPrimitiveUP	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA290	_rwD3D9DrawPrimitiveUP	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA320	_rwD3D9DrawIndexedPrimitive	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA360	_rwD3D9DrawPrimitive	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA390	RwD3D9SetTransform	d3d9dev	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA4F0	RwD3D9GetTransform	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA520	RwD3D9SetTransformWorld	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA660	RwD3D9SetLight	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 33 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA820	RwD3D9GetLight	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA860	RwD3D9EnableLight	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 33 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FA8B0	FUN_007fa8b0	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 33 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAA30	RwD3D9CreateVertexDeclaration	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 19 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAC10	RwD3D9DeleteVertexDeclaration	d3d9dev	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAC60	RwD3D9CreateVertexShader	d3d9dev	implemented-needs-L2	split rw4-sd: PASS 2 compared, 0 mismatches, 2 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAC90	RwD3D9DeleteVertexShader	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FACA0	_rwD3D9SetVertexShaderConstant	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FACC0	RwD3D9CreatePixelShader	d3d9dev	implemented-needs-L2	split rw4-sd: PASS 1 compared, 0 mismatches, 1 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FACF0	RwD3D9DeletePixelShader	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAD00	_rwD3D9SetPixelShaderConstant	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAD20	RwD3D9GetCaps	d3d9dev	L2	split rw4-sb: PASS 29 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAD30	RwD3D9CameraIsSphereFullyInsideFrustum	d3d9dev	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAD90	RwD3D9CameraIsBBoxFullyInsideFrustum	d3d9dev	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAE20	_rwD3D9DeviceSetRestoreCallback	d3d9dev	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAE30	_rwD3D9DeviceGetRestoreCallback	d3d9dev	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4C9970	RwD3D9IndexBufferCreate	d3d9vb	implemented-needs-L2	split rw4-sd: PASS-FP 18 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5500	RwD3D9CreateVertexBuffer	d3d9vb	implemented-needs-L2	split rw4-sd: PASS-FP 18 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F56A0	RwD3D9DestroyVertexBuffer	d3d9vb	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F57F0	RwD3D9VertexBufferManagerChangeDefaultSize	d3d9vb	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5800	FUN_007f5800	d3d9vb	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5840	_rwD3D9DynamicVertexBufferRelease	d3d9vb	L2	split rw4-sc: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F58D0	_rwD3D9DynamicVertexBufferRestore	d3d9vb	implemented-needs-L2	split rw4-sd: FAIL 1 compared, 1 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5940	FUN_007f5940	d3d9vb	L2	split rw4-sd: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5A00	RwD3D9DynamicVertexBufferCreate	d3d9vb	implemented-needs-L2	split rw4-sd: PASS-FP 17 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5AE0	RwD3D9DynamicVertexBufferDestroy	d3d9vb	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5B10	RwD3D9DynamicVertexBufferLock	d3d9vb	implemented-needs-L2	split rw4-sd: PASS 100 compared, 0 mismatches, 100 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5C90	RwD3D9DynamicVertexBufferUnlock	d3d9vb	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5CB0	_rwD3D9VertexBufferManagerOpen	d3d9vb	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F5D20	_rwD3D9VertexBufferManagerClose	d3d9vb	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB480	_rwD3D9Im2DRenderOpen	im2d	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB5F0	_rwD3D9Im2DRenderClose	im2d	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB810	FUN_007fb810	im2d	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB650	_rwD3D9Im2DRenderLine	im2d	L2	split rw4-sc: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB8E0	_rwD3D9Im2DRenderTriangle	im2d	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FBB00	_rwD3D9Im2DRenderPrimitive	im2d	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FBD30	_rwD3D9Im2DRenderIndexedPrimitive	im2d	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x756D90	_rwD3D9EnableClippingIfNeeded	d3d9pipe	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x756DF0	_rxD3D9DefaultRenderCallback	d3d9pipe	implemented-needs-L2	split rw4-sd: DIVERGED 0 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x757380	RxD3D9AllInOneSetInstanceCallBack	d3d9pipe	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x757390	RxD3D9AllInOneGetInstanceCallBack	d3d9pipe	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7573A0	RxD3D9AllInOneSetReinstanceCallBack	d3d9pipe	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7573B0	RxD3D9AllInOneGetReinstanceCallBack	d3d9pipe	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7573C0	RxD3D9AllInOneSetLightingCallBack	d3d9pipe	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7573D0	RxD3D9AllInOneGetLightingCallBack	d3d9pipe	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7573E0	RxD3D9AllInOneSetRenderCallBack	d3d9pipe	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7573F0	RxD3D9AllInOneGetRenderCallBack	d3d9pipe	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x757400	_rxD3D9AtomicDefaultLightingCallback	d3d9pipe	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7575F0	_rwD3D9AtomicAllInOneNode	d3d9pipe	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 33 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x757890	_rwD3D9AtomicAllInOnePipelineInit	d3d9pipe	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x74E970	_rpD3D9AddDynamicGeometry	d3d9misc	implemented-needs-L2	split rw4-sd: PASS-FP 16 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x74E9E0	_rpD3D9RemoveDynamicGeometry	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x74EA80	_rpD3D9WorldRestoreCallback	d3d9misc	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x74EAD0	_rpCreateD3D9WorldSectorAllInOnePipe	d3d9misc	implemented-needs-L2	split rw4-sd: PASS 1 compared, 0 mismatches, 1 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x74EB40	_rpDestroyD3D9WorldSectorPipe	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x74EB80	_rpCreateD3D9AtomicAllInOnePipe	d3d9misc	implemented-needs-L2	split rw4-sd: PASS 1 compared, 0 mismatches, 1 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7522E0	_rpD3D9VertexDeclarationGetSize	d3d9misc	implemented-needs-L2	split rw4-sd: PASS-FP 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7522F0	_rpD3D9VertexDeclarationGetStride	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7588B0	RpD3D9GeometrySetUsageFlags	d3d9misc	L2	split rw4-sb: PASS 4 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7588D0	RpD3D9GeometryGetUsageFlags	d3d9misc	implemented-needs-L2	split rw4-sd: PASS-FP 29 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7588E0	RpD3D9WorldSectorSetUsageFlags	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x758900	RpD3D9WorldSectorGetUsageFlags	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x75E540	_rwD3D9WorldSectorAllInOnePipelineInit	d3d9misc	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x75E570	_rxD3D9WorldSectorDefaultLightingCallback	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x75EDD0	_rpD3D9GetNumConstantsUsed	d3d9misc	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x75EE60	_rpD3D9VertexShaderCachePurge	d3d9misc	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x761010	_rxD3D9VertexShaderDefaultGetMaterialShaderCallBack	d3d9misc	implemented-needs-L2	split rw4-sd: FAIL 25 compared, 1 mismatches, 25 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7EE370	RwCore::RwCameraShowRaster	d3d9misc	implemented-needs-L2	split rw4-sd: PASS 100 compared, 0 mismatches, 100 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x80E990	RxNodeDefinitionGetD3D9ImmInstance	d3d9misc	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x80E9A0	RxNodeDefinitionGetD3D9SubmitNoLight	d3d9misc	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAE40	RwRasterGetPluginOffset	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAE60	RwRasterGetCurrentContext	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAE80	RwRasterRenderScaled	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAEA0	RwRasterGetOffset	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAEE0	RwRasterClear	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAF50	RwRasterRenderFast	raster	implemented-needs-L2	split rw4-sc: PASS-FP 41 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAF90	RwRasterClearRect	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAFB0	RwRasterRender	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAFF0	RwRasterUnlockPalette	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB020	RwRasterDestroy	raster	implemented-needs-L2	split rw4-sd: PASS-FP 7 compared, 0 mismatches, 1 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB060	RwRasterPushContext	raster	implemented-needs-L2	split rw4-sd: COUNT 57 compared, 0 mismatches, 57 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB0B0	RwRasterRegisterPlugin	raster	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB0E0	RwRasterLockPalette	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB110	RwRasterPopContext	raster	implemented-needs-L2	split rw4-sd: COUNT 57 compared, 0 mismatches, 57 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB1A0	RwRasterShowRaster	raster	implemented-needs-L2	split rw4-sd: PASS 100 compared, 0 mismatches, 100 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB1D0	RwRasterSubRaster	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB310	cb_RASTERMODULE_RwEngine_Close	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB350	RwRasterSetFreeListCreateParams	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FB370	cb_RASTERMODULE_RwEngine_Open	raster	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4C9A60	cb_DEVICEMODULE_RwRaster_Ctor	raster	L2	split rw4-sb: PASS 32 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4C9A80	cb_DEVICEMODULE_RwRaster_Dtor	raster	L2	split rw4-sb: PASS 10 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4C9AB0	_rwD3D9RasterPluginAttach	raster	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4C9EA0	_rwD3D9RasterHasAlpha	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4C9F90	_rwD3D9RasterLock	raster	implemented-needs-L2	split rw4-sd: PASS-FP 37 compared, 0 mismatches, 37 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CA290	_rwD3D9RasterUnlock	raster	L2	split rw4-sb: PASS 32 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CA4E0	_rwD3D9RasterLockPalette	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CA540	_rwD3D9RasterUnlockPalette	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CB520	_rwD3D9SetRasterContext	raster	implemented-needs-L2	split rw4-sd: COUNT 57 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CB530	_rxD3D9VideoMemoryRasterListAdd	raster	L2	split rw4-sb: PASS 4 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CB5E0	_rxD3D9VideoMemoryRasterListDestroy	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CB640	_rxD3D9VideoMemoryRasterListRelease	raster	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBCB0	_rwD3D9RasterGetMipLevels	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBD40	_rwD3D9TextureSetRaster	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBD50	_rwD3D9RasterSubRaster	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBD80	_rwD3D9CheckValidZBufferFormat	raster	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBDE0	_rwD3D9CheckValidTextureFormat	raster	L2	split rw4-sb: PASS 35 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBE20	_rwD3D9CheckValidCameraTextureFormat	raster	L2	split rw4-sb: PASS 3 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBE80	_rwD3D9CheckValidZBufferTextureFormat	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBEE0	_rwD3D9CheckValidCubeTextureFormat	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBF20	_rwD3D9CheckValidCameraCubeTextureFormat	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CBFD0	_rwD3D9CheckAutoMipmapGenTextureFormat	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CC020	_rwD3D9CheckAutoMipmapGenCubeTextureFormat	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CC150	_rxD3D9VideoMemoryRasterListCreate	raster	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CC170	_rwD3D9RasterClose	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F3C00	RwTextureValidatePlugins	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F3C70	RwTextureSetMipmapGenerationCallBack	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F3C90	RwTextureGetMipmapGenerationCallBack	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F3CA0	RwTextureSetMipmapNameCallBack	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F3CC0	RwTextureGetMipmapNameCallBack	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F3CD0	RwTextureRasterGenerateMipmaps	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x804580	RwTextureSetStreamAlwaysCallBack	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8045A0	RwTextureStreamGetSize	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8045E0	RwTextureStreamWrite	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x804E60	_rwTextureChunkInfoRead	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x749020	cb_ANISOTPLUGIN_RwTexture_Ctor	raster	L2	split rw4-sb: PASS 32 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x749030	cb_ANISOTPLUGIN_RwTexture_Dtor	raster	L2	split rw4-sb: PASS 10 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x749040	cb_ANISOTPLUGIN_RwTexture_Copy	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x749060	cb_ANISOTPLUGIN_RwTexture_StreamRead	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7490B0	cb_ANISOTPLUGIN_RwTexture_StreamWrite	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7490F0	cb_ANISOTPLUGIN_RwTexture_StreamGetSize	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CD360	_rwD3D9NativeTextureGetSize	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CD4D0	_rwD3D9NativeTextureWrite	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x820C90	RwD3D9RasterIsCompressed	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x4CD820	_rwD3D9NativeTextureRead	raster	implemented-needs-L2	split rw4-sd: PASS-FP 33 compared, 0 mismatches, 33 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7F53D0	_rwTextureDefaultFindCallBack	raster	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8026E0	RwImageCreate	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x802740	RwImageDestroy	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8027A0	RwImageAllocatePixels	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x802860	RwImageFreePixels	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x802A20	RwImageMakeMask	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x803E30	RwImageGammaCorrect	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x804250	RwImageSetFromRaster	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x804290	RwRasterSetFromImage	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8042C0	RwImageFindRasterFormat	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8043F0	RwRasterRead	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8044E0	RwRasterReadMaskedRaster	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FEE20	_rwD3D9RGBToPixel	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FF070	_rwD3D9PixelToRGB	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FFF00	_rwD3D9ImageFindRasterFormat	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x802EA0	RwImageSetPath	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x80CD10	RwImageCreateResample	image	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C67F0	RpSkinSetFreeListCreateParams	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C78A0	_rpD3D9SkinVertexShaderMatrixUpdate	skin	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 1 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C6820	RpSkinPluginAttach	skin	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7520	RpSkinAtomicSetHAnimHierarchy	skin	L2	split rw4-sb: PASS 29 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7540	RpSkinAtomicGetHAnimHierarchy	skin	implemented-needs-L2	split rw4-sd: PASS-FP 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7550	RpSkinGeometryGetSkin	skin	L2	split rw4-sc: PASS 100 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7560	RpSkinGeometrySetSkin	skin	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C75B0	RpSkinCreate	skin	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C77A0	RpSkinDestroy	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C77E0	RpSkinGetNumBones	skin	L2	split rw4-sb: PASS 27 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C77F0	RpSkinGetVertexBoneWeights	skin	L2	split rw4-sb: PASS 22 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7800	RpSkinGetVertexBoneIndices	skin	L2	split rw4-sb: PASS 4 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7810	RpSkinGetSkinToBoneMatrices	skin	L2	split rw4-sb: PASS 27 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7820	RpSkinIsSplit	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7830	RpSkinAtomicSetType	skin	L2	split rw4-sb: PASS 2 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C7880	RpSkinAtomicGetType	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C86F0	_rpSkinPipelinesDestroy	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8740	_rpSkinInitialize	skin	L2	split rw4-sb: PASS 14 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8820	_rpSkinDeinitialize	skin	L2	split rw4-sb: PASS 4 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8980	_rpSkinPipelinesCreate	skin	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C89B0	_rpSkinAtomicSetPipeline	skin	L2	split rw4-sb: PASS 22 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8A40	_rpSkinGetMeshBoneRemapIndices	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8A50	_rpSkinGetMeshBoneRLECount	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8A60	_rpSkinGetMeshBoneRLE	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8A70	_rpSkinSplitDataCreate	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7C8B10	_rpSkinSplitDataDestroy	skin	L2	split rw4-sb: PASS 4 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7CB240	_rpD3D9SkinPipelineInit	skin	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7CB2A0	RxNodeDefinitionGetD3D9SkinAtomicAllInOne	skin	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7CB2B0	_rpD3D9SkinPipelineCreate	skin	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x810700	RpMatFXMaterialDataSetFreeListCreateParams	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x810AA0	RpMatFXPluginAttach	matfx	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x810CA0	_rpMatFXMaterialDataDestroyEffects	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811150	_rpMatFXMaterialFindEffect	matfx	L2	split rw4-sb: PASS 12 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811C00	RpMatFXAtomicEnableEffects	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811C30	RpMatFXAtomicQueryEffects	matfx	implemented-needs-L2	split rw4-sd: COUNT 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811C40	RpMatFXWorldSectorEnableEffects	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811C70	RpMatFXWorldSectorQueryEffects	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811C80	RpMatFXMaterialSetEffects	matfx	L2	split rw4-sb: PASS 12 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811E00	RpMatFXMaterialSetupBumpMap	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x811ED0	RpMatFXMaterialSetupEnvMap	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812040	RpMatFXMaterialSetupDualTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812140	RpMatFXMaterialGetEffects	matfx	L2	split rw4-sb: PASS 34 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812160	RpMatFXMaterialSetBumpMapTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812320	RpMatFXMaterialSetBumpMapFrame	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812380	RpMatFXMaterialSetBumpMapCoefficient	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8123E0	RpMatFXMaterialGetBumpMapBumpedTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812430	RpMatFXMaterialGetBumpMapTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812480	RpMatFXMaterialGetBumpMapFrame	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8124D0	RpMatFXMaterialGetBumpMapCoefficient	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812530	RpMatFXMaterialSetEnvMapTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8125B0	RpMatFXMaterialSetEnvMapFrame	matfx	L2	split rw4-sb: PASS 22 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812610	RpMatFXMaterialSetEnvMapFrameBufferAlpha	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812680	RpMatFXMaterialSetEnvMapCoefficient	matfx	L2	split rw4-sb: PASS 22 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8126F0	RpMatFXMaterialGetEnvMapTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812740	RpMatFXMaterialGetEnvMapFrame	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812790	RpMatFXMaterialGetEnvMapFrameBufferAlpha	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8127E0	RpMatFXMaterialGetEnvMapCoefficient	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812830	RpMatFXMaterialSetDualTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8128C0	RpMatFXMaterialSetDualBlendModes	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812930	RpMatFXMaterialGetDualTexture	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812980	RpMatFXMaterialGetDualBlendModes	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8129E0	RpMatFXMaterialSetUVTransformMatrices	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x812A50	RpMatFXMaterialGetUVTransformMatrices	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x815C20	_rpMatFXD3D9AtomicRenderCallback	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x815E60	_rpMatFXPipelinesCreate	matfx	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8160A0	_rpMatFXAtomicInstanceCallback	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x816120	_rpMatFXWorldSectorInstanceCallback	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x816190	_rpMatFXPipelinesDestroy	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x816260	_rpMatFXAtomicSetPipeline	matfx	L2	split rw4-sb: PASS 12 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x816270	_rpMatFXWorldSectorSetPipeline	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x8162F0	RpMatFXGetD3D9Pipeline	matfx	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x755B90	_rpD3D9LightRegisterPlugin	d3d9light	L2	split rw4-sc: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x755D20	RpD3D9LightSetAttenuationParams	d3d9light	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x755D50	RpD3D9LightGetAttenuationParams	d3d9light	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x755D80	_rwD3D9LightsOpen	d3d9light	L2	split rw4-sb: PASS 1 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x755FE0	_rwD3D9LightsClose	d3d9light	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x756070	_rwD3D9LightsGlobalEnable	d3d9light	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x756260	_rwD3D9LightDirectionalEnable	d3d9light	implemented-needs-L2	split rw4-sd: PASS-FP 33 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x756390	_rwD3D9LightLocalEnable	d3d9light	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x756600	_rwD3D9LightsEnable	d3d9light	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764650	_rwD3D9VSSetActiveWorldMatrix	d3d9vsmat	implemented-needs-L2	split rw4-sd: COUNT 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7646E0	_rwD3D9VSGetComposedTransformMatrix	d3d9vsmat	implemented-needs-L2	split rw4-sd: COUNT 58 compared, 0 mismatches, 58 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764730	_rwD3D9VSGetWorldViewTransposedMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764760	_rwD3D9VSGetWorldViewMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7647B0	_rwD3D9VSGetInverseWorldMatrix	d3d9vsmat	implemented-needs-L2	split rw4-sd: DIVERGED 0 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764890	_rwD3D9MatrixInvertOrthonormal	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764920	_rwD3D9VSGetWorldMultiplyMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764960	_rwD3D9VSGetWorldMultiplyTransposeMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7649D0	_rwD3D9VSGetWorldViewMultiplyTransposeMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764A70	_rwD3D9VSGetWorldNormalizedMultiplyTransposeMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764B50	_rwD3D9VSGetWorldNormalizedViewMultiplyTransposeMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764C60	_rwD3D9VSGetWorldNormalizedTransposeMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764D20	_rwD3D9VSGetProjectionTransposedMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764D30	_rwD3D9VSGetNormalInLocalSpace	d3d9vsmat	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 26 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764E70	_rwD3D9VSGetPointInLocalSpace	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x764F60	_rwD3D9VSGetRadiusInLocalSpace	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x761720	_rpD3D9VertexShaderUpdateLightsColors	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x761820	_rpD3D9VertexShaderUpdateMaterialColor	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7618B0	_rpD3D9VertexShaderUpdateFogData	d3d9vsmat	implemented-needs-L2	split rw4-sd: PASS-FP 58 compared, 0 mismatches, 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x761950	_rpD3D9VertexShaderUpdateMorphingCoef	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x761A10	_rpD3D9VertexShaderSetEnvMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x761B70	_rpD3D9VertexShaderSetBumpMatrix	d3d9vsmat	implemented-needs-L2	no case recorded in the split runs; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings
+0x7FAEC0	RwRasterUnlock	raster	ported-unhookable	sa-hook callers test false positive: a later callee reaches _alloca_probe 0x822085 whose push ecx is a save; harness fix needed
+0x7FB160	RwRasterGetNumLevels	raster	ported-unhookable	sa-hook callers test false positive: a later callee reaches _alloca_probe 0x822085 whose push ecx is a save; harness fix needed
+0x7FB230	RwRasterCreate	raster	ported-unhookable	sa-hook callers test false positive: a later callee reaches _alloca_probe 0x822085 whose push ecx is a save; harness fix needed
+0x7FB2D0	RwRasterLock	raster	ported-unhookable	sa-hook callers test false positive: a later callee reaches _alloca_probe 0x822085 whose push ecx is a save; harness fix needed

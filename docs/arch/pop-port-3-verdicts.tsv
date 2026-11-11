@@ -1,0 +1,141 @@
+address	name	file	state	evidence
+0x422760	CCarCtrl::ClitargetOrientationToLink	-	not-ported	too short (1 byte), not ported
+0x42a730	CCarCtrl::GetAIHeliToFlyInDirection	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x423790	CCarCtrl::SteerAIPlaneTowardsTargetCoors	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42f370	CCarCtrl::GetAIPlaneToDoDogFightAgainstPlayer	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x423880	CCarCtrl::SteerAIPlaneToCrashAndBurn	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x4238e0	CCarCtrl::SteerAIHeliToCrashAndBurn	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42acb0	CCarCtrl::SteerAIHeliFlyingAwayFromPlayer	crates/sa-pop/src/carctrl3.rs	L2	split police-gang (pop3A-pg5): PASS 2 cases, 0 mismatches, 0 undeclared
+0x4237f0	CCarCtrl::SteerAIPlaneToFollowEntity	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x429520	CCarCtrl::TestWhetherToFirePlaneGuns	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x4335e0	CCarCtrl::SteerAICarWithPhysicsTryingToBlockTarget	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca3): PASS 100 cases, 0 mismatches, 100 undeclared; split police-gang (pop3A-pg6): PASS 100 cases, 0 mismatches, 100 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x42a630	CCarCtrl::SteerAIHeliTowardsTargetCoors	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x429780	CCarCtrl::GetAIPlaneToAttackPlayer	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x426220	CCarCtrl::SlowCarDownForObject	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split grove (pop3A-gr7): PASS 1 cases, 0 mismatches, 1 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x42d680	CCarCtrl::WeaveThroughCarsSectorList<CPtrListDoubleLink<CPhysical*>>	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 4 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 7 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 0 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x42d950	CCarCtrl::WeaveThroughObjectsSectorList<CPtrListDoubleLink<CPhysical*>>	crates/sa-pop/src/carctrl3.rs	L2	split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 0 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 0 undeclared
+0x42d7e0	CCarCtrl::WeaveThroughPedsSectorList<CPtrListDoubleLink<CPhysical*>>	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 0 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 10 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 0 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x422370	CCarCtrl::FindGhostRoadHeight	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42ad30	CCarCtrl::SteerAIHeliToLand	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x429600	CCarCtrl::PossiblyFireHSMissile	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42d4f0	CCarCtrl::SlowCarDownForObjectsSectorList<CPtrListDoubleLink<CPhysical*>>	crates/sa-pop/src/carctrl3.rs	L2	split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 0 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 0 undeclared
+0x432420	CCarCtrl::SlowCarDownForCarsSectorList<CPtrListDoubleLink<CPhysical*>>	crates/sa-pop/src/carctrl3.rs	L2	split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 0 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 0 undeclared
+0x429890	CCarCtrl::GetAIPlaneToDoDogFight	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42f3c0	CCarCtrl::GetAIHeliToAttackPlayer	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42aad0	CCarCtrl::SteerAIHeliAsPoliceHeli	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 8 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x428be0	CCarCtrl::SteerAIBoatWithPhysicsHeadingForTarget	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42b270	CCarCtrl::FireHeliRocketsAtTarget	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x429300	CCarCtrl::TriggerDogFightMoves	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x428990	CCarCtrl::SteerAICarWithPhysicsTryingToBlockTarget_Stop	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split police-gang (pop3A-pg6): PASS 34 cases, 0 mismatches, 34 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x429090	CCarCtrl::SteerAIBoatWithPhysicsCirclingPlayer	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x425f70	CCarCtrl::TestCollisionBetween2MovingRects_OnlyFrontBumper	crates/sa-pop/src/carctrl3.rs	L2	split driving (pop3A-drX): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 0 undeclared; split car-ai (pop3A-caX): PASS 100 cases, 0 mismatches, 0 undeclared
+0x428de0	CCarCtrl::SteerAIBoatWithPhysicsAttackingPlayer	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x422b20	CCarCtrl::SteerAICarBlockingPlayerForwardAndBack	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x41b980	CAutoPilot::ModifySpeed	crates/sa-pop/src/carctrl3.rs	L2	split driving (pop3A-drX): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 0 undeclared; split car-ai (pop3A-caX): PASS 100 cases, 0 mismatches, 0 undeclared
+0x433ba0	CCarCtrl::SteerAICarParkParallel	-	not-ported	no time (762 bytes; constructs CTask objects inline, mission only)
+0x433ea0	CCarCtrl::SteerAICarParkPerpendicular	-	not-ported	no time (800 bytes; constructs CTask objects inline, mission only)
+0x426bc0	CCarCtrl::WeaveForObject	crates/sa-pop/src/carctrl3.rs	L2	split car-ai (pop3A-ca4): PASS 100 cases, 0 mismatches, 0 undeclared; split car-ai (pop3A-ca7): PASS 100 cases, 0 mismatches, 0 undeclared; split driving (pop3A-dr4): PASS 100 cases, 0 mismatches, 0 undeclared; split grove (pop3A-gr7): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg7): PASS 100 cases, 0 mismatches, 0 undeclared
+0x433280	CCarCtrl::SteerAICarWithPhysicsHeadingForTarget	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca4): PASS 100 cases, 0 mismatches, 100 undeclared; split car-ai (pop3A-ca7): PASS 100 cases, 0 mismatches, 100 undeclared; split driving (pop3A-dr4): PASS 100 cases, 0 mismatches, 100 undeclared; split police-gang (pop3A-pg7): PASS 100 cases, 0 mismatches, 100 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x42a750	CCarCtrl::SteerAIHeliToFollowEntity	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 8 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x434400	CCarCtrl::FindMaximumSpeedForThisCarInTraffic	crates/sa-pop/src/carctrl3.rs	L2	split driving (pop3A-drX): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 0 undeclared; split car-ai (pop3A-caX): PASS 100 cases, 0 mismatches, 0 undeclared
+0x42aeb0	CCarCtrl::SteerAIHeliToKeepEntityInView	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x42d0e0	CCarCtrl::SlowCarDownForOtherCar	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca4): PASS 100 cases, 0 mismatches, 52 undeclared; split car-ai (pop3A-ca7): PASS 100 cases, 0 mismatches, 52 undeclared; split driving (pop3A-dr4): PASS 100 cases, 0 mismatches, 54 undeclared; split grove (pop3A-gr7): PASS 100 cases, 0 mismatches, 54 undeclared; split police-gang (pop3A-pg7): PASS 100 cases, 0 mismatches, 53 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x425b30	CCarCtrl::TestCollisionBetween2MovingRects	crates/sa-pop/src/carctrl3.rs	L2	split driving (pop3A-drX): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 0 undeclared; split car-ai (pop3A-caX): PASS 100 cases, 0 mismatches, 0 undeclared
+0x423940	CCarCtrl::FlyAIHeliToTarget_FixedOrientation	-	not-ported	no time (1167 bytes; ProcessLineOfSight with CColPoint locals)
+0x432dd0	CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath	-	not-ported	no time (1177 bytes; vehicle recording arrays, mission 0x22 only)
+0x4336d0	CCarCtrl::SteerAICarTowardsPointInEscort	crates/sa-pop/src/carctrl3.rs	implemented-needs-L2	no sampled call in car-ai/driving/police-gang/grove split runs
+0x4325c0	CCarCtrl::FindAngleToWeaveThroughTraffic	crates/sa-pop/src/carctrl3.rs	L2	split driving (pop3A-drX): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 0 undeclared; split car-ai (pop3A-caX): PASS 100 cases, 0 mismatches, 0 undeclared
+0x426350	CCarCtrl::WeaveForOtherCar	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca7): PASS 100 cases, 0 mismatches, 12 undeclared; split grove (pop3A-gr7): PASS 100 cases, 0 mismatches, 62 undeclared; split police-gang (pop3A-pg7): PASS 100 cases, 0 mismatches, 0 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x437c20	CCarCtrl::SteerAICarWithPhysics	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split driving (pop3A-drX): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg5): PASS 100 cases, 0 mismatches, 2 undeclared; split car-ai (pop3A-caX): PASS 100 cases, 0 mismatches, 2 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x42ec90	CCarCtrl::DragCarToPoint	-	not-ported	no time (1748 bytes; CColPoint / stored-poly locals, ProcessVerticalLine)
+0x425440	CCarCtrl::SlowCarDownForPedsSectorList<CPtrListDoubleLink<CPhysical*>>	crates/sa-pop/src/carctrl3.rs	L2	split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 0 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 0 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 0 undeclared
+0x423000	CCarCtrl::FlyAIPlaneInCertainDirection	-	not-ported	no time (1938 bytes)
+0x428040	CCarCtrl::DealWithBend_Racing	-	not-ported	no time (2361 bytes; called only by the racing steering)
+0x429a70	CCarCtrl::FlyAIHeliInCertainDirection	-	not-ported	no time (2994 bytes; CWorld::ProcessLineOfSight with CColPoint locals)
+0x435830	CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing	-	not-ported	no time (3320 bytes; mission 0x21 racing, not in the corpus)
+0x434900	CCarCtrl::SteerAICarWithPhysicsFollowPath	crates/sa-pop/src/carctrl3.rs	L2-split (undeclared writes to review)	split car-ai (pop3A-ca3): PASS 100 cases, 0 mismatches, 100 undeclared; split driving (pop3A-dr3): PASS 100 cases, 0 mismatches, 100 undeclared; split police-gang (pop3A-pg6): PASS 100 cases, 0 mismatches, 100 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x436a90	CCarCtrl::SteerAICarWithPhysics_OnlyMission	crates/sa-pop/src/carctrl3.rs	partial-fallback	ADR-002: ported missions listed in PORTED doc comment, rest falls back; split car-ai (pop3A-ca2): PASS 100 cases, 0 mismatches, 100 undeclared; split driving (pop3A-dr2): PASS 100 cases, 0 mismatches, 100 undeclared; split police-gang (pop3A-pg2): PASS 100 cases, 0 mismatches, 100 undeclared; undeclared = writes through the out-pointer arguments into the caller frame (steer/gas/brake/handbrake, maxSpeed, weave limits) and callee writes (ThePaths / aNodesToBeCleared by path code, CReferences)
+0x421440	CCarCtrl::GetNewVehicleDependingOnCarModel	carctrl5.rs	L2-split (undeclared writes to review)	pop3B-s2/s4 split: police-gang 100/100, driving 64/64, car-ai 100/100, grove 100/100 compared, 0 mismatches; undeclared writes in every case (the vehicle construction: pool and model-info heap writes)
+0x424CE0	CCarCtrl::ChooseModel	carctrl5.rs	L2	pop3B-s2 police-gang 100/100 (0 mismatches, 0 undeclared); pop3B-s4 police-gang/driving/car-ai/grove 100/100 each, 0 mismatches, 0 undeclared (extra region arg0:4 passed through L2_EXTRA)
+0x424210	CCarCtrl::GenerateCarCreationCoors2	carctrl5.rs	L2	pop3B-s2 police-gang 100/100 (0 mismatches, 0 undeclared; extras arg9..arg12 and gString 0xB71670:0x40 through L2_EXTRA); s4 DIVERGED on all 4 (called from the Rust GenerateOneRandomCar: the out-coords buffer holds stale stack in the original); standalone pop3B-s5 driving/car-ai/grove 100/100 each, 0 mismatches, 0 undeclared
+0x424F80	CCarCtrl::PossiblyRemoveVehicle	carctrl5.rs	L2	pop3B-s2 police-gang 100/100; pop3B-s4 police-gang/driving/car-ai/grove 100/100 each; 0 mismatches, 0 undeclared
+0x430050	CCarCtrl::GenerateOneRandomCar	carctrl5.rs	L2-split (undeclared writes to review)	pop3B-s4 police-gang/driving/car-ai/grove 100/100 each, 0 mismatches, 1 undeclared case each (vehicle creation heap writes); rust trace IDENTICAL to plain on police-gang/driving/car-ai (grove: pop3B-r5 rust IDENTICAL over 5200 frames)
+0x42FBC0	CCarCtrl::ScriptGenerateOneEmergencyServicesCar	carctrl5.rs	implemented-needs-L2	no call in the 4 recordings (hooked, sa-hook tests pass)
+0x431F80	CCarCtrl::CreateCarForScript	carctrl5.rs	L2-split (undeclared writes to review)	pop3B-s4 driving/car-ai/grove 1/1 each, 0 mismatches, 1 undeclared (vehicle creation)
+0x4342A0	CCarCtrl::SetCoordsOfScriptCar	carctrl5.rs	implemented-needs-L2	no call in the 4 recordings
+0x42B7D0	CCarCtrl::GenerateOneEmergencyServicesCar	carctrl5.rs	ported-unhookable	protection reads its entry bytes as data (`mov ecx, [0x42B7D3]` at 0x403794); plain pub fn generate_one_emergency_services_car_port
+0x612710	CPopulation::AddPed	population3.rs	partial-fallback	ADR-002: fallback when cheat bytes 0x969140/0x96913E/0x96915C/0x96915D are set or type <4, 21, >31; split police-gang 100/100, driving 80/80, car-ai 100/100, grove 100/100, 0 mismatches, undeclared every case (ped construction)
+0x6110E0	CPopulation::PedMICanBeCreatedAtThisAttractor	population3.rs	L2	pop3B-s4 car-ai 2/2, grove 1/1, 0 mismatches, 0 undeclared
+0x614210	CPopulation::AddPedAtAttractor	population3.rs	L2-split (undeclared writes to review)	pop3B-s4 car-ai 2/2, grove 1/1, 0 mismatches, undeclared every case (ped creation, events)
+0x446610	CGangWars::Update	misc3.rs	partial-fallback	ADR-002: fallback when bGangWarsActive (0x96AB90) != 0; split 100/100 on all 4 recordings, 0 mismatches, 1 undeclared case each (UpdateTerritoryUnderControlPercentage zone writes)
+0x4629E0	CRoadBlocks::GenerateRoadBlocks	misc3.rs	partial-fallback	ADR-002: fallback when wanted+in vehicle or the frame's script road block is active; split 100/100 on all 4, 0 mismatches, 0 undeclared
+0x43CEC0	CDarkel::DrawMessages	misc3.rs	partial-fallback	ADR-002: fallback for frenzy status 1..4; split 100/100 on all 4, 0 mismatches, 0 undeclared
+0x6F32E0	CCarGenerator::CheckForBlockage	misc3.rs	L2	split police-gang 95/95, driving 26/26, car-ai 68/68, grove 25/25, 0 mismatches, 0 undeclared
+0x43DCD0	CDarkel::RegisterKillByPlayer	misc3.rs	L2-split (undeclared writes to review)	pop3B-s4 driving 5/5, 0 mismatches, 5 undeclared (stat / kill counter writes)
+0x6F34D0	CCarGenerator::DoInternalProcessing	misc3.rs	partial-fallback	ADR-002: fallback only for generators of model 0x24C (hotdog van; AddPed's 4th argument is the caller's EDI); split police-gang 100/100, driving 100/100, car-ai 70/70, grove 100/100, 0 mismatches, undeclared 18/14/62/17 (vehicle creation)
+0x445F50	CGangWars::StrengthenPlayerInfluenceInZone	misc3.rs	implemented-needs-L2	no call in the 4 recordings
+0x445B30	CGangWars::AttackWaveOvercome	misc3.rs	implemented-needs-L2	no call in the 4 recordings
+0x610F40	CPopulation::ChoosePolicePedOccupation	-	not-ported	too short (xor eax,eax; ret: 3 bytes), as pass 1
+0x611550	CPopulation::ChooseGangOccupation	-	not-ported	alias (lone jmp CGangs::ChooseGangPedModel, 5 bytes), as pass 1
+0x49CD40	CTagManager::GetAlpha-RpAtomic	-	not-ported	alias jump (5 bytes), as pass 1
+0x444530	CGangWars::TellGangMembersTo	-	not-ported	VM: calls the 0xCB73E0 protection VM (catalog/callgraph.csv)
+0x460DF0	CRoadBlocks::RegisterScriptRoadBlock	-	not-ported	VM: calls the 0xCB73E0 protection VM (catalog/callgraph.csv)
+0x452090	CPathFind::Find2NodesForCarCreation	-	not-ported	VM confirmed: body 0x156D150 does `mov eax, 0xCB73E0; jmp $+1` into `call eax` (0x156D1D5-0x156D1DB)
+0x44DF60	CPathFind::RemoveInteriorLinks	-	not-ported	VM confirmed: body 0x1562390 does `call eax` with eax = 0xCB73E0 (0x15623BB-0x15623BC)
+0x445C30	CGangWars::ReleasePedsInAttackWave	-	not-ported	VM confirmed: body 0x15609C0 ends `jmp 0xCB73E0` (0x1560A1D)
+0x42C2B0	CCarCtrl::CreatePoliceChase	-	not-ported	no time (no call in the 4 recordings)
+0x42C740	CCarCtrl::CreateConvoy	-	not-ported	no time (no call in the 4 recordings)
+0x614720	CPopulation::AddToPopulation	-	not-ported	no time (4.7 KB; called every frame in all 4 recordings)
+0x49DAB0	CTrafficLights::DisplayActualLight	-	not-ported	no time (2.9 KB; called every frame in all 4 recordings)
+0x612CD0	CPopulation::AddDeadPedInFrontOfCar	-	not-ported	no time (no call in the 4 recordings)
+0x6133F0	CPopulation::CreateWaitingCoppers	-	not-ported	no time (no call in the 4 recordings)
+0x613D60	CPopulation::PlaceCouple	-	not-ported	no time (no call in the 4 recordings)
+0x616470	CPopulation::PopulateInterior	-	not-ported	no time (no call in the 4 recordings)
+0x443B00	CGangWars::PickZoneToAttack	-	not-ported	no time (no call in the 4 recordings)
+0x444040	CGangWars::CheerVictory	-	not-ported	no time (no call in the 4 recordings)
+0x444300	CGangWars::StartDefensiveGangWar	-	not-ported	no time (no call in the 4 recordings)
+0x444810	CGangWars::CreateAttackWave	-	not-ported	no time (no call in the 4 recordings)
+0x4453D0	CGangWars::CreateDefendingGroup	-	not-ported	no time (no call in the 4 recordings)
+0x446050	CGangWars::StartOffensiveGangWar	-	not-ported	no time (no call in the 4 recordings)
+0x460EE0	CRoadBlocks::GetRoadBlockNodeInfo	-	not-ported	no time (no call in the 4 recordings)
+0x461020	CRoadBlocks::ClearSpaceForRoadBlockObject	-	not-ported	no time (no call in the 4 recordings)
+0x461170	CRoadBlocks::GenerateRoadBlockPedsForCar	-	not-ported	no time (no call in the 4 recordings)
+0x4619C0	CRoadBlocks::CreateRoadBlockBetween2Points	-	not-ported	no time (no call in the 4 recordings)
+0x422090	CCarCtrl::FindPathDirection	carctrl4.rs	L2	split pop3L-driving 100/100, pop3L-police-gang 100/100, pop3L2-grove 100/100, pop3-fpd (alone, driving) 40/40: 0 mismatches, 0 undeclared (sharp-turn out byte declared arg3); in the pop3-L3 batch runs one case (ordinal 32, frame 1053) shows a window difference next to the out byte (2-4/100), not reproduced alone or in the other batches: a Rust ancestor (UpdateCarOnRails) shifts the stack under the out byte (the layering effect helper A measured); the layered runs are clean
+0x42DAB0	CCarCtrl::IsThisAnAppropriateNode	carctrl4.rs	L2	split pop3L-ca, pop3L-driving, pop3L-police-gang: 100/100 each, 0 mismatches, 0 undeclared
+0x42DE80	CCarCtrl::PickNextNodeRandomly	carctrl4.rs	L2	split pop3L-ca, pop3L-driving, pop3L-police-gang: 100/100 each, 0 mismatches, 0 undeclared
+0x432B10	CCarCtrl::PickNextNodeAccordingStrategy	carctrl4.rs	L2	split pop3L-driving, pop3L-police-gang, pop3L2-grove 100/100 each, 0 mismatches, 0 undeclared (ThePaths / aNodesToBeCleared declared)
+0x426EF0	CCarCtrl::PickNextNodeToChaseCar	carctrl4.rs	L2	split pop3L2-car-ai 90/90, pop3L2-police-gang 100/100, pop3L-police-gang 100/100: 0 mismatches, 0 undeclared; footprint hook (reads its uninitialised node word from the snapshot)
+0x427740	CCarCtrl::PickNextNodeToFollowPath	carctrl4.rs	ported-unhookable	protection reads / calls its entry dwords as data (0x146C35E, 0x146C585 call [0x427744])
+0x60FBD0	CPopCycle::FindNewPedType	population2.rs	L2	split pop3L-ca, pop3L-driving, pop3L-police-gang 100/100 each, 0 mismatches, 0 undeclared (out-parameters declared); pass-2 mismatch not reproduced on the merged build (single hook police-gang 20/20, car-ai 20/20, all-pass-2-hooks car-ai 3/3)
+0x41CE30	CCarAI::GetCarToGoToCoors	carctrl4.rs	L2-split (undeclared writes to review)	split pop3L2-driving 100/100, 0 mismatches; 1 case with DoPathSearch writes (ThePaths, aNodesToBeCleared) through JoinCarWithRoadSystemGotoCoors, now declared in l2-extras (rerun pending)
+0x41CFB0	CCarAI::GetCarToGoToCoorsStraightLine	carctrl4.rs	implemented-needs-L2	no sampled call (car-ai, driving, police-gang, grove)
+0x41D0E0	CCarAI::GetCarToGoToCoorsAccurate	carctrl4.rs	ported-unhookable	protection calls through its entry dwords (call [0x41D0E0] at 0x1463AE5, 0x1463B0F, 0x146955E)
+0x41D210	CCarAI::GetCarToGoToCoorsRacing	carctrl4.rs	implemented-needs-L2	no sampled call
+0x41D350	CCarAI::GetCarToParkAtCoors	carctrl4.rs	implemented-needs-L2	no sampled call
+0x41CD00	CCarAI::EntitiesGoHeadOn	carctrl4.rs	L2	split pop3L2-car-ai, pop3L2-police-gang 100/100 each, 0 mismatches, 0 undeclared
+0x41BFA0	CCarAI::BackToCruisingIfNoWantedLevel	carctrl4.rs	L2	split pop3L2-car-ai, pop3L2-police-gang 100/100 each, 0 mismatches, 0 undeclared
+0x41D3D0	CCarAI::MellowOutChaseSpeed	carctrl4.rs	L2	split pop3L2-car-ai, pop3L2-police-gang 100/100 each, 0 mismatches, 0 undeclared
+0x41D660	CCarAI::MakeWayForCarWithSiren	carctrl4.rs	implemented-needs-L2	no sampled call
+0x41C070	CCarAI::AddPoliceCarOccupants	carctrl4.rs	L2-split (undeclared writes to review)	split car-ai 4/4, police-gang 6/6, driving 3/3, grove 5/5, 0 mismatches; undeclared writes are the ped / task creation callees' (model info refs, anims, sectors, references)
+0x41DA30	CCarAI::UpdateCarAI	carctrl4.rs	partial-fallback	ADR-002: non-law cars with mission 0/1 in Rust, the rest the original body; split car-ai, police-gang, driving, grove 100/100 each, 0 mismatches, 0 undeclared (cases include fallback calls); sa-hook key-cell reader added for 0x407284
+0x436540	CCarCtrl::UpdateCarOnRails	carctrl4.rs	L2-split (undeclared writes to review)	split pop3L3 car-ai, driving, police-gang, grove 100/100 each, 0 mismatches; 12 cases with collision-cache writes from DragCarToPoint
+0x42CE40	CCarCtrl::ScanForPedDanger	carctrl4.rs	L2	split pop3L3 car-ai, driving, police-gang, grove 100/100 each, 0 mismatches, 0 undeclared
+0x42B470	CCarCtrl::FindLinksToGoWithTheseNodes	carctrl4.rs	L2	split pop3L3 car-ai 17/17, driving 11/11, police-gang 39/39, grove 9/9; 0 mismatches, 0 undeclared
+0x42F5A0	CCarCtrl::JoinCarWithRoadSystem	carctrl4.rs	L2	split pop3L3 car-ai 16/16, driving 10/10, police-gang 39/39, grove 9/9; 0 mismatches, 0 undeclared
+0x432CB0	CCarCtrl::JoinCarWithRoadAccordingToMission	carctrl4.rs	implemented-needs-L2	no sampled call
+0x42BD20	CCarCtrl::FindNodesThisCarIsNearestTo	carctrl4.rs	L2	split pop3L3 car-ai 7/7, driving 5/5, police-gang 4/4; 0 mismatches, 0 undeclared; footprint hook (uninitialised node words from the snapshot)
+0x42FC40	CCarCtrl::ReconsiderRoute	carctrl4.rs	L2	split pop3L3 car-ai, driving, police-gang, grove 100/100 each, 0 mismatches, 0 undeclared
+0x42F870	CCarCtrl::JoinCarWithRoadSystemGotoCoors	-	not-ported	VM: ECX of RemoveBadStartNode comes from the 0xCB73E0 protection routine (0x156A57D-0x156A595)
+0x41C4A0	CCarAI::AddAmbulanceOccupants	-	not-ported	VM: calls 0xCB73E0
+0x41C600	CCarAI::AddFiretruckOccupants	-	not-ported	VM: reaches 0xCB73E0
+0x41C760	CCarAI::TellOccupantsToLeaveCar	-	not-ported	VM: reaches 0xCB73E0
+0x41CA40	CCarAI::FindPoliceBikeMissionForWantedLevel	-	not-ported	3 bytes (mov al, 0x2B; ret)
+0x421A40	CCarCtrl::ChooseGangCarModel	-	not-ported	alias jump
+0x43D1E0	CDarkel::ReadStatus	misc4.rs	implemented-needs-L2	no sampled call (entry_eax hook)
+0x43D6C0	CDarkel::QueryModelsKilledByPlayer	misc4.rs	implemented-needs-L2	no sampled call
+0x6EABA0	CWaterLevel::CreateBeachToy	misc4.rs	implemented-needs-L2	no sampled call in car-ai, driving, police-gang, grove (beaches)
+0x5D38C0	CTheCarGenerators::Save	misc4.rs	implemented-needs-L2	no sampled call
+0x5D39B0	CTheCarGenerators::Load	misc4.rs	implemented-needs-L2	no sampled call
+0x43D3B0	CDarkel::StartFrenzy	-	not-ported	no time (frenzies are not in the corpus)
+0x43D7A0	CDarkel::DealWithWeaponChangeAtEndOfFrenzy	-	not-ported	no time (frenzies are not in the corpus)

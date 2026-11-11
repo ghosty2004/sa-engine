@@ -23,7 +23,9 @@
 //! - `xor r, r` / `sub r, r` (a write);
 //! - `lea r, [r]` (an alignment no-op);
 //! - `push ecx` / `push edx` used as stack allocation: the pushed slot `[esp]` is written (dword,
-//!   write-only) before anything reads it or moves ESP (e.g. `push ecx; ...; fstp dword ptr [esp]`).
+//!   write-only) before anything reads it or moves ESP (e.g. `push ecx; ...; fstp dword ptr [esp]`);
+//! - `push ecx` / `push edx` that saves the register and gets it back (pop, `xchg [esp], r`, or
+//!   `mov r, [slot]` through an ESP copy as in `_alloca_probe` 0x822085).
 //!
 //! A site is only checked when the `E8` lies on an instruction boundary of a linear decode from the
 //! start of its containing catalogued procedure (otherwise the bytes are part of another instruction
@@ -90,23 +92,29 @@ fn decode_at(exe: &crate::testexe::Exe, ip: u32) -> Instruction {
 
 /// `push ecx`/`push edx` that does not hand the value on: the slot is overwritten (a whole-dword,
 /// write-only access) before anything reads it (MSVC reserves 4 bytes of locals or of an outgoing
-/// float argument this way), or it is popped back into the same register (a save/restore pair, as
-/// in the protection chunks). The slot is tracked on the straight-line code after the push
-/// (following direct `jmp`s) through pushes, pops, `add/sub esp, imm` and `mov r, esp` aliases. A
-/// direct conditional branch is followed both ways (up to [`ALLOC_BRANCHES`] deep), and the push is
-/// an allocation only when every path shows it: 0x58BAC5 in `CHud::DrawHelpText` (`push ecx` after
-/// `CFont::SetJustify`) reserves the float argument of `CFont::SetWrapx`, which each side of an x87
-/// compare (`fnstsw ax; test ah, 0x44; jnp`) stores with `fstp dword ptr [esp]`. A call, an indirect
-/// branch, another ESP write, a read of the slot or popping it elsewhere means "not shown".
+/// float argument this way), or the pushed register gets the value back (a save/restore pair: popped
+/// into the same register, `xchg [esp], r` as in the protection chunks, or `mov r, [slot]` as in
+/// `_alloca_probe` 0x822085, which restores ECX through an ESP copy after moving ESP). The slot is
+/// tracked on the straight-line code after the push (following direct `jmp`s) through pushes, pops,
+/// `add/sub esp, imm` and `mov r, esp` aliases; once ESP is written otherwise (`mov esp, ecx`) the slot
+/// stays reachable only through an alias. A direct conditional branch is followed both ways (up to
+/// [`ALLOC_BRANCHES`] deep), and the push is an allocation only when every path shows it: 0x58BAC5 in
+/// `CHud::DrawHelpText` (`push ecx` after `CFont::SetJustify`) reserves the float argument of
+/// `CFont::SetWrapx`, which each side of an x87 compare (`fnstsw ax; test ah, 0x44; jnp`) stores with
+/// `fstp dword ptr [esp]`. A state (address, slot, aliases) seen before adds nothing (a loop, such as
+/// `_alloca_probe`'s page walk, or two paths joining). A call, an indirect branch, an ESP write with
+/// no alias left, a read of the slot other than the restore, or popping it elsewhere means "not shown".
 fn push_is_allocation(exe: &crate::testexe::Exe, push: &Instruction) -> bool {
     let mut steps = 0;
+    let mut seen = Vec::new();
     alloc_path(
         exe,
         push.op0_register(),
         push.next_ip32(),
-        0,
+        Some(0),
         Vec::new(),
         &mut steps,
+        &mut seen,
         ALLOC_BRANCHES,
     )
 }
@@ -114,20 +122,31 @@ fn push_is_allocation(exe: &crate::testexe::Exe, push: &Instruction) -> bool {
 /// Conditional branches [`push_is_allocation`] follows on one path.
 const ALLOC_BRANCHES: u32 = 4;
 
-/// One path of [`push_is_allocation`] from `ip`: `slot` is the slot's offset from the current ESP,
-/// `alias` the registers holding a copy of ESP (with the slot's offset from them); `steps` counts
-/// the instructions of every path together (at most 48 per path, 192 in all).
+/// A state of [`alloc_path`]: address, slot offset from ESP, ESP aliases.
+type AllocState = (u32, Option<i64>, Vec<(Register, i64)>);
+
+/// One path of [`push_is_allocation`] from `ip`: `slot` is the slot's offset from the current ESP
+/// (`None` after an ESP write that is not a push/pop/`add/sub esp, imm`), `alias` the registers
+/// holding a copy of ESP (with the slot's offset from them); `steps` counts the instructions of every
+/// path together (at most 48 per path, 192 in all); `seen` the states already explored.
+#[allow(clippy::too_many_arguments)]
 fn alloc_path(
     exe: &crate::testexe::Exe,
     pushed: Register,
     mut ip: u32,
-    mut slot: i64,
+    mut slot: Option<i64>,
     mut alias: Vec<(Register, i64)>,
     steps: &mut u32,
+    seen: &mut Vec<AllocState>,
     branches: u32,
 ) -> bool {
     let mut f = InstructionInfoFactory::new();
     for _ in 0..48 {
+        let state = (ip, slot, alias.clone());
+        if seen.contains(&state) {
+            return true;
+        }
+        seen.push(state);
         *steps += 1;
         if *steps > 192 {
             return false;
@@ -150,17 +169,18 @@ fn alloc_path(
                     slot,
                     alias.clone(),
                     steps,
+                    seen,
                     branches - 1,
-                ) && alloc_path(exe, pushed, i.next_ip32(), slot, alias, steps, branches - 1);
+                ) && alloc_path(exe, pushed, i.next_ip32(), slot, alias, steps, seen, branches - 1);
             }
             _ => return false,
         }
-        if slot == 0 && i.code() == Code::Pop_r32 {
+        if slot == Some(0) && i.code() == Code::Pop_r32 {
             return i.op0_register() == pushed;
         }
         // `xchg [esp], r` with the pushed register: the register gets its value back (protection
         // chunks: `push edx; mov edx, ...; add edx, ...; xchg [esp], edx`)
-        if slot == 0
+        if slot == Some(0)
             && i.mnemonic() == Mnemonic::Xchg
             && i.op0_kind() == OpKind::Memory
             && i.memory_base() == Register::ESP
@@ -174,7 +194,11 @@ fn alloc_path(
         let info = f.info(&i);
         for m in info.used_memory() {
             let base_slot = if m.base() == Register::ESP {
-                slot
+                match slot {
+                    Some(s) => s,
+                    // ESP no longer has a known offset from the slot
+                    None => return false,
+                }
             } else if let Some(&(_, s)) = alias.iter().find(|a| a.0 == m.base()) {
                 s
             } else {
@@ -188,14 +212,22 @@ fn alloc_path(
             if hi <= base_slot || lo >= base_slot + 4 {
                 continue;
             }
-            return m.access() == OpAccess::Write && lo <= base_slot && hi >= base_slot + 4;
+            // `mov r, [slot]` into the pushed register: the save is restored
+            let restore = i.code() == Code::Mov_r32_rm32
+                && i.op0_register() == pushed
+                && m.access() == OpAccess::Read
+                && lo == base_slot
+                && hi == base_slot + 4;
+            return restore || (m.access() == OpAccess::Write && lo <= base_slot && hi >= base_slot + 4);
         }
         if i.mnemonic() == Mnemonic::Mov
             && i.op0_kind() == OpKind::Register
             && i.op1_kind() == OpKind::Register
             && i.op1_register() == Register::ESP
         {
-            alias.push((i.op0_register(), slot));
+            let Some(s) = slot else { return false };
+            alias.retain(|a| a.0 != i.op0_register());
+            alias.push((i.op0_register(), s));
             ip = i.next_ip32();
             continue;
         }
@@ -215,18 +247,26 @@ fn alloc_path(
                 u.register() == Register::ESP && matches!(u.access(), OpAccess::Write | OpAccess::ReadWrite)
             });
         if other_esp_write {
-            return false;
+            if alias.is_empty() {
+                return false;
+            }
+            slot = None;
+            ip = i.next_ip32();
+            continue;
         }
-        let delta = if esp_imm {
-            let v = i.immediate(1) as u32 as i32 as i64;
-            if i.mnemonic() == Mnemonic::Add { v } else { -v }
-        } else {
-            inc
-        };
-        slot -= delta;
-        if slot < 0 {
-            // released by `add esp` unread (a pop of it was handled above)
-            return esp_imm;
+        if let Some(s) = slot {
+            let delta = if esp_imm {
+                let v = i.immediate(1) as u32 as i32 as i64;
+                if i.mnemonic() == Mnemonic::Add { v } else { -v }
+            } else {
+                inc
+            };
+            let s = s - delta;
+            if s < 0 {
+                // released by `add esp` unread (a pop of it was handled above)
+                return esp_imm;
+            }
+            slot = Some(s);
         }
         ip = i.next_ip32();
     }
@@ -913,5 +953,27 @@ mod tests {
         assert!(push_is_allocation(&exe, &push));
         assert!(uses_after(&exe, &starts, 0x58BAB7).is_empty());
         assert!(uses_after(&exe, &starts, 0x58BAB1).is_empty());
+    }
+
+    /// A push that saves the register and restores it is not a read (PORT-RW-4 finding):
+    /// `_alloca_probe` 0x822085 is `push ecx; lea ecx, [esp+8]; ... (page walk loop) ...; mov eax, esp;
+    /// ...; mov esp, ecx; mov ecx, [eax]`: ECX comes back from the slot through the ESP copy in EAX
+    /// after ESP itself was moved. Before the fix every caller whose path reached it (RwRasterLock,
+    /// RwRasterUnlock, RwRasterCreate, RwRasterGetNumLevels callers) was reported as an ECX use.
+    #[test]
+    fn push_saved_and_restored_is_not_a_read() {
+        let Some(exe) = crate::testexe::load() else { return };
+        let push = decode_at(&exe, 0x822085);
+        assert_eq!((push.code(), push.op0_register()), (Code::Push_r32, Register::ECX));
+        assert!(push_is_allocation(&exe, &push));
+        let starts = procedure_starts();
+        let mut memo = BTreeMap::new();
+        assert!(!matches!(
+            callee_effect(&exe, &starts, 0x822085, Reg::Ecx, CALLEE_DEPTH, &mut memo),
+            Effect::Reads(_)
+        ));
+        // the restore the rule relies on
+        let pop = decode_at(&exe, 0x8220A6);
+        assert_eq!((pop.code(), pop.op0_register()), (Code::Mov_r32_rm32, Register::ECX));
     }
 }

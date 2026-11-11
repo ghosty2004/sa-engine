@@ -32,3 +32,10 @@ pub mod carctrl2;
 pub mod misc2;
 pub mod pathfind;
 pub mod population2;
+
+pub mod carctrl3;
+pub mod carctrl4;
+pub mod carctrl5;
+pub mod misc3;
+pub mod misc4;
+pub mod population3;

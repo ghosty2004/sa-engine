@@ -4,7 +4,10 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
-use crate::{engine, entities, hardware, ped, radio, sound, statics, utility, vehicle};
+use crate::{
+    engine, entities, gen_bodies, gen_ctors, gen_dtors, gen_leaves, gen_virtuals, hardware, ped, port2_a,
+    port2_b, radio, sound, statics, utility, vehicle,
+};
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -17,6 +20,13 @@ pub const MODULES: &[&[HookReg]] = &[
     ped::HOOKS,
     entities::HOOKS,
     statics::HOOKS,
+    gen_leaves::HOOKS,
+    gen_virtuals::HOOKS,
+    gen_ctors::HOOKS,
+    gen_dtors::HOOKS,
+    gen_bodies::HOOKS,
+    port2_a::HOOKS,
+    port2_b::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -30,6 +40,8 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     ped::GLOBALS,
     entities::GLOBALS,
     statics::GLOBALS,
+    port2_a::GLOBALS,
+    port2_b::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

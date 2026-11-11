@@ -154,6 +154,22 @@ pub fn stack_footprint(writes: &[(i32, Fp)]) {
     }
 }
 
+/// The byte the original would find at `entry ESP + off` (`-w <= off < 0`) in a `#[hook(..., footprint = w)]`
+/// port: the snapshot the wrapper took before the shim ran (an uninitialised local of the original reads
+/// the residue of earlier calls there). 0 when no footprint wrapper is active (direct Rust calls, host
+/// tests, phases B/C) or `off` is outside the window.
+pub fn footprint_residue_u8(off: i32, w: u32) -> u8 {
+    // SAFETY: main thread only (see FootprintCell); read while the wrapper is inside the shim.
+    #[allow(unsafe_code)]
+    let st = unsafe { &*FOOTPRINT.0.get() };
+    let i = w as i64 + i64::from(off);
+    if st.active == 0 || off >= 0 || i < 0 || w as usize > FOOTPRINT_WINDOW_MAX {
+        return 0;
+    }
+    let i = i as usize;
+    (st.snapshot[i / 4] >> (8 * (i % 4))) as u8
+}
+
 /// See [`ENTRY_EAX`].
 #[inline]
 pub fn entry_eax() -> u32 {

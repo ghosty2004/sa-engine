@@ -205,3 +205,146 @@ group's comment names the run whose undeclared writes it covers.
 ## Functions
 
 One row per hook (state and evidence per recording) in `docs/arch/audio-port-verdicts.tsv`.
+
+# PORT-AUDIO-2: second pass (generated ports + hand ports)
+
+Second pass over the AUDIO rows still `specified` after PORT-AUDIO-1 (529 + 9 `unknown`) and the 173 UNK rows
+`catalog/unk-classification-proposal.csv` assigns to AUDIO; SA:MP priority first (`catalog/samp-priority.csv`).
+Lead + 2 helpers in new files only: helper A `port2_a.rs` (radio, police scanner, script, frontend, cutscene /
+ambience managers, `CAudioEngine`, `CAESound` / `CAESoundManager`, `CAEAudioHardware` wrappers, the MP3 bank /
+track loaders' game-side lookups, `CAudioZones::SwitchAudioZone`, the 133 AUDIO static initialisers); helper B
+`port2_b.rs` (ped / ped speech / pedless speech / vehicle / weapon / global weapon / fire / collision / door /
+weather / water-cannon / twin-loop entity bodies). Per-function verdicts: `docs/arch/audio-port-2-verdicts.tsv`
+(column `origin`: `gen`, `hand-a`, `hand-b`).
+
+Totals: **370 `#[hook]` registrations** (75 generated, 219 helper A, 76 helper B) plus **26 ported without a
+hook** (13 generated, 3 A, 10 B). Sound output and decoding stay original (channels, stream thread, decoders,
+data streams, smooth-fade thread), as do `fyl2x` users (waiting for the X87 branch).
+
+## Generated ports (`tools/gen/audio_patterns.py` → `gen_{leaves,virtuals,ctors,dtors,bodies}.rs`)
+
+`audio_patterns.py` imports `tools/gen/ai_patterns.py` unchanged — AI-GEN's exact symbolic x86 interpreter,
+emitter, hookability rules and body-hash test (`docs/arch/ai-gen.md`) — and changes only the candidate set and
+the output: AUDIO + UNK-proposed-AUDIO rows minus every `#[hook(addr` in `crates/` (so the hand ports are never
+duplicated), PORT-AUDIO-1's unhooked ports, the out-of-scope classes and `EXCLUDE_ADDR`
+(`CAEAudioHardware::Service`, the thread `Start`s, `GetCurrentTimeInMS`, `AudioLog10`). Every body the
+interpreter executes completely is emitted; bodies outside AI-GEN's named families go to `gen_bodies.rs`.
+`--check` regenerates in memory and compares; `gen_check.rs` (sa-ai's) re-hashes every matched span against the
+exe in `cargo test -p sa-audio`; the generated modules are `#[rustfmt::skip]` so `--check` stays byte-exact.
+Report: `target/audio-gen/{report,rest}.tsv` (169 candidates left on this tree: x87 bodies, stack locals, loops, ...).
+Note: the candidate set excludes every address hooked anywhere in `crates/`, so `--check` must run on the same
+tree (it passes on this branch).
+
+AUDIO-specific generator rules, each found by a run:
+- `bool` members (`Can*`/`Is*`/`Has*`/`Does*`/`Will*`/`Are*`) return AL only, also when a path returns a
+  callee's EAX: `CAEPedSpeechAudioEntity::CanPedHoldConversation` returned `CanPedSayGlobalContext`'s upper EAX
+  bytes, which are its caller's leftovers (port-l2-a2gen-air-water: orig 0x850000, rust 0x4E5700).
+- Placeholder catalogue names (`(missed by ghidra: ...)`) are skipped: sa-hook's table test wants the catalogue
+  name as the hook name, which no hook list can carry.
+- `CAEPedSpeechAudioEntity::Constructor` 0x4E4F10 is skipped: caller 0x4E6072 reads EDX at 0x4E6077 (sa-hook
+  `callers` test; the first menus-hud rust run, before the exclusion, faulted there writing through EDX = 0).
+
+## Hand ports: conventions and findings (helpers' reports, checked by the runs)
+
+- Every expect re-decoded with objdump; no entry in `catalog/code-data-reads.csv`; every direct caller checked for
+  ECX/EDX kept across the call; the whole exe scanned for branches into entry+1..+4 (one hit,
+  `ReservePlayerConversationSpeechSlot` 0x4E3887 → 0x4E3872, left unhooked).
+- RNG: every draw the exe routes through `CAEAudioUtility::GetRandomNumberInRange` 0x4D9C10 / 0x4D9C50 /
+  `ResolveProbability` 0x4D9C80 goes through `orig!` to it (never CGeneral).
+- x87: f32 arithmetic where every intermediate is rounded by the 24-bit precision control; `ftol` through
+  sa-math `X87`. The 133 static initialisers (`fld; f{mul,div,sub}; fstp`, `fld a; fmul b; fdivr n; fstp`,
+  `push X; call atexit`) run under the CRT's PC=53 (product exact, computed in f64): they would mismatch if a
+  harness ever called them under PC=24.
+- Exe-vs-spec / gta-reversed differences (the exe wins): `GetVoiceForMood` draws `rand(0,1)` before reading
+  the mood, result `rand + 2*mood`, moods outside 0..9 get +10; `SetCJMood` keeps only moods 1/5/7/9 (else -1);
+  `DemandBankSlot` evicts the first slot 1..9 whose count is below slot 0's (not the minimum);
+  `CAEGlobalWeaponAudioEntity::UpdateParameters` addresses 0xB612F0.. directly, not through `this`;
+  `HandleLandingEvent` on water clamps a non-positive (or NaN) volume to 0, play position 0x32, sfx 6 for event
+  0x3A; `HandleSkateEvent` sfx = 7 + (event != 0x38); `WeaponReload` type 33 plays only for event 0x92 (volume
+  -6); `ReportWaterSplash` second sound speed 0.0; `PlayMiniGunFireSounds` 0x97 sound time-scale 0.0;
+  `GetSoundAndBankIDs` picks the candidate with the largest phrase-memory index when all are remembered;
+  `CanWePlayGlobalSpeechContext` pain contexts 0x154..0x166 use a per-entity next-play table at `this`+0xB4;
+  `ChooseDJBanterIndex`'s sunny branch tests `hours >= 8 && hours < 6` (never true; the forecast calls still
+  run); `ChooseTalkRadioShow` returns EAX = drawn index with the low byte replaced by the pick;
+  `TrackRadioStation` fails after 5 game hours / record total + 160 s / resumed type 6, elapsed ≥ 7000 ms,
+  station 12 queues `QueueUpTracksForStation(12, 4)` twice; police-scanner `PlayLoadedDialogue` searches from the
+  first *playing* slot; `CheckForStationRetuneDuringPause` continues only for a non-zero station byte +0xE9 or a
+  fully-off radio; `CalculateFrequency` randomises only when `0 < var < freq`; `GetMissionAudioPosition`
+  returns null only for bitwise (-1000,-1000,-1000) or an all-0.0 position; `CAEScriptAudioEntity::UpdateParameters`
+  plays bank sound 0x488 in the literal slot 3; `CAEAudioHardware::PlaySound` (not ported) accepts channel index
+  64 (`cmp cx,0x40; ja`). `UpdateAmbienceTrackAndVolume` 0x4D6E60 was not ported: it contains `fldlg2; fyl2x` at
+  0x4D6ED0 (its 9 spec differences remain to be listed with the X87 branch).
+- Stack `CAESound`s (`PlayDoorSound`, `PlayFireSounds`, `PlayWaterSounds`, `PlayLoadedSound`, police-scanner
+  `PlayLoadedDialogue`, script `PlayLoadedMissionAudio`): the original leaves the local uninitialised except
+  what `Initialise` writes and `RequestNewSound` copies it; the ports zero it. Same open item as PORT-AUDIO-1's
+  `CAESound::Initialise`; `ReportCollision` showed it in L2 (below) and is unhooked.
+
+### Not hooked (ported, reached through `orig!`)
+
+| address | function | reason |
+|---|---|---|
+| 0x4D8810, 0x4EF630, 0x4E6090, 0x4E60B0, 0x4E4120, 0x4E4130, 0x4E3CD0, 0x4E5F10, 0x4F4F00 | `GetNumAvailableChannels`, `GetVirtualChannelForPhysicalChannel`, pedless `GetAllocatedVoice` / `GetPedType`, speech `GetAllocatedVoice` / `GetPedType` / `GetVoice` / `CanWePlayGlobalSpeechContext`, `GetVehicleTypeForAudio` | AX-only results whose upper EAX is the caller's leftover on some paths (menus-hud L2: e.g. `GetVoice` orig 0x36000A rust 0xA, `CanWePlayGlobalSpeechContext` 92 cases); `AbiRet` has no AX kind, so L2 compares EAX |
+| 0x4DBA10 | `CAECollisionAudioEntity::ReportCollision` | stack `CAESound` garbage copied into AESoundManager (4..222 mismatching cases per recording) |
+| 0x4E52A0 | `CAEPedSpeechAudioEntity::ReleasePedConversation` | 1 case each on air-water, police-gang, grove: a sound's physical pointer stays set in the Rust run after `StopCurrentSpeech`; cause not found |
+| 0x4E3870 | `ReservePlayerConversationSpeechSlot` | loop branches back into the patched entry (0x4E3887 → 0x4E3872) |
+| 0x4DFB60 | MP3 request-queue reset | its only caller calls `LoadBankSlotFile` next without reloading ECX |
+| 13 generated | short entries (< 5 bytes), `AttachMissionAudioToPhysical` (protection read) | see the verdicts file |
+
+Not ported (helpers' reports): `fyl2x` users (`UpdateAmbienceTrackAndVolume`, `RescaleChannelVolumes`,
+`UpdateRadioVolumes`, weather `Service` / `UpdateParameters` / `AddAudioEvent`, `UpdateLoopingCollisionSound`,
+vehicle `UpdateParameters`, `AddAudioEvent-1`, 0x4DA510); protection entries (`CAEPedAudioEntity::AddAudioEvent`,
+`CAEExplosionAudioEntity::AddAudioEvent`, pass 1's list); `ProcessSpecialVehicle` (AL as an implicit callee input);
+the very large `CAEFrontendAudioEntity::AddAudioEvent` / `ProcessMissionAudioEvent` / `CAESoundManager::Service`;
+sound output, OS, user-track scan thread and file loading; the rest of the vehicle `Process*` / `Play*` bodies.
+
+## Verification
+
+Lane 7, `E2E_BIN` = snapshots of the release DLL (`target/e2e-bin/h5`, final `h6` = h5 minus the hooks unhooked
+above), `L2_PER_FRAME=10 L2_MAX=300`, `L2_EXTRA` = the audio singletons / statics as `D` for every hook (below).
+L2 list `tools/e2e/lists/audio2-all.txt` = `audio2-gen.txt` + `audio2-hand.txt` minus ten functions an L2 run
+cannot repeat (they loop on `CAEAudioHardware::Service` until the stream thread reports a track state, or build /
+tear down an audio singleton: `CAECutsceneTrackManager::PreloadCutsceneTrack`, `CAudioEngine::PreloadBeatTrack`
+/ `Reset` / `Constructor` / `Destructor` / `InitialisePostLoading`, `CAERadioTrackManager::Service`,
+`CAEAudioHardware::Constructor`, `CAESoundManager::Terminate`, `CAudioEngine::PreloadCutsceneTrack`); an h3 L2
+run that included them hung at frame 248 (13 s of CPU in 9 min); the list without them never hung. Those ten are
+judged by L3 only.
+
+- **L2 extras.** One RW line per hook and singleton made `SA_L2_EXTRA` 139 KB, longer than a Windows environment
+  variable (`/usr/bin/env: Argument list too long`, the l2 run reached 0 frames). The singletons and statics are
+  static memory inside the watched windows, so the runs pass them once for every hook as `D` through
+  `L2_EXTRA`:
+  `0xB5F8B8:0x1014:D,0xB62CB0:0x8CBC:D,0xB608D0:0x81C:D,0xB5F898:0x4:D,0xB6BC90:0x1FD8:D,0x8CB6F8:0x370:D,0x8AC15C:0x2C:D,0x8AE554:0x34:D,0xB613D0:0x984:D,0xB6B98C:0x3C:D,0xB61D78:0xEFC:D,0xB9B9A8:0x5DC4:D,0xBA1768:0x4:D`.
+  `tools/e2e/l2-extras.txt` section `PORT-AUDIO-2` holds the heap and per-hook regions: `this` (layouts.csv
+  class size) for every thiscall hook, the entity's `CEntity` head (`m_pReferences` +0x24) for ped / speech /
+  vehicle entity hooks (`[ecx+4]`; `CAEPedAudioEntity`: `[ecx+0x94]` = `m_pPed`) and for the physical argument
+  of `WeaponFire` / `WeaponReload` / `ProjectileFire` / `ReportCollision` (without it the Rust run linked its
+  reference node to the one the original run had just added: aRefs next-pointer mismatches), out-pointers by
+  argument, per-hook statics (`D`), the static initialisers' globals.
+- **Results** (`port-l2-a2-<rec>`: menus-hud and police-gang on h6, air-water, weapon-combat, driving and the
+  grove walk on h5): every run (b) l2 == plain and (c) rust == plain IDENTICAL on all frames, 17 subsystems.
+  Verdicts (370 hooks + 26 unhooked): **L2 230** (every run with cases: 0 mismatches, 0 undeclared; the
+  remaining FAIL lines are the `>= 300 cases` sampling check only), **implemented-needs-L2 138** (no call in
+  the six recordings — mission audio, scanner dialogue, user radio, script entity, destructors, `__dtor_*` —
+  plus the ten L2-excluded functions), **ported-unhookable 26**. The first runs found and fixed: the EDX
+  caller crash (0x4E4F10), `CanPedHoldConversation`'s AL result, the nine AX-only results (unhooked), the
+  missing entity / physical reference heads (`HandleFootstepEvent` 300 cases, `HandleLandingEvent`,
+  `WeaponFire`, `WeaponReload`), out-pointer and static declarations (`GetSoundBuffer`,
+  `GetCollisionSoundStatus`, `GetSoundAndBankIDs`, 0x4DEFE0, the two constructors), and unhooked
+  `ReportCollision` / `ReleasePedConversation`.
+- **verify-all** (`tools/e2e/verify-all.sh a2final 7`, every engine port on Rust, h6): **IDENTICAL on all 11** (grove 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276 frames; 17 subsystems).
+- Tests: `cargo test -p sa-audio` 10 pass (list complete/unique, globals, generated bodies match the exe);
+  `cargo test --release -p sa-hook --lib` 51 pass; clippy `-D warnings` sa-audio host (all targets), i686
+  (`--features in-process`) and wasm32 clean; `cargo fmt -p sa-audio --check` clean;
+  `cargo test --release -p sa-oracle --test l1`: 15 pass, 1 fails (`l2_specs_pass_on_the_cpu`:
+  `RwMatrixRotate` 0x7F1FD0, FSIN/FCOS on the native backend, 2476 mismatches; not AUDIO, not from this pass).
+
+### Open items / decisions needed
+
+- An `AbiRet::Ax` return kind (AX compared, upper EAX the caller's) in sa-core / sa-hook / sa-oracle would let
+  the nine AX-only functions above be hooked.
+- Stack `CAESound` locals: the original copies uninitialised stack bytes into AESoundManager. Either an L2/split
+  normaliser for the unwritten `CAESound` fields, or a decision that ports may zero them (ledger entry). Decides
+  `ReportCollision` and the six hooked `Play*` ports that build a stack sound.
+- `ReleasePedConversation` 1-case mismatch: investigate with a split run (`SPLIT_PER_FRAME ≤ 10`).
+- X87 `fyl2x`: unblocks `UpdateAmbienceTrackAndVolume` and the other users listed above.
+- Recordings with missions / cutscenes / scanner dialogue / user radio for the `implemented-needs-L2` rows.

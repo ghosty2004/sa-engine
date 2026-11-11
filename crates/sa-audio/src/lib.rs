@@ -25,8 +25,21 @@ pub mod hooks;
 
 pub mod engine;
 pub mod entities;
+#[rustfmt::skip] // generated (tools/gen/audio_patterns.py --check compares the files byte for byte)
+pub mod gen_bodies;
+mod gen_check;
+#[rustfmt::skip] // generated (tools/gen/audio_patterns.py --check compares the files byte for byte)
+pub mod gen_ctors;
+#[rustfmt::skip] // generated (tools/gen/audio_patterns.py --check compares the files byte for byte)
+pub mod gen_dtors;
+#[rustfmt::skip] // generated (tools/gen/audio_patterns.py --check compares the files byte for byte)
+pub mod gen_leaves;
+#[rustfmt::skip] // generated (tools/gen/audio_patterns.py --check compares the files byte for byte)
+pub mod gen_virtuals;
 pub mod hardware;
 pub mod ped;
+pub mod port2_a;
+pub mod port2_b;
 pub mod radio;
 pub mod sound;
 pub mod statics;

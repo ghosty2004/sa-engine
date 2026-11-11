@@ -1,0 +1,6 @@
+CCarCtrl::GetNewVehicleDependingOnCarModel
+CCarCtrl::ChooseModel
+CCarCtrl::GenerateCarCreationCoors2
+CCarCtrl::PossiblyRemoveVehicle
+CGangWars::Update
+CRoadBlocks::GenerateRoadBlocks

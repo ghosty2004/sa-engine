@@ -345,3 +345,115 @@ all 11 recordings). No row claims L3 (no per-hook hook-off runs).
   (best-node word in FindNodeClosestToCoors*, ComputeRoute locals, CPopCycle::Initialise sscanf locals);
   `LoadPed/CarGroups` stop at the 0x400 buffer end on a last line without newline (unreachable with the
   shipped files).
+
+# Pass 3 (PORT-POP-3)
+
+Third pass over the 139 POP rows still `specified` after pass 2, in the order of the brief: CCarCtrl driving
+AI, CPopulation, CGangWars::Update, CRoadBlocks::GenerateRoadBlocks, CTrafficLights, then the rest. The lead
+and two helpers worked in the same worktree on disjoint new modules; verification on lane 2 only.
+Per-function verdicts: `docs/arch/pop-port-3-verdicts.tsv` (140 rows: the 139 plus `CPopCycle::FindNewPedType`).
+
+| file | contents |
+|---|---|
+| `carctrl3.rs` (helper A) | the steering family: `SteerAICarWithPhysics` and its mission steering (`_OnlyMission` partial), FollowPath, HeadingForTarget, TryingToBlockTarget(_Stop), boats, helis, planes, FindMaximumSpeedForThisCarInTraffic, FindAngleToWeaveThroughTraffic, the Weave* and SlowCarDown* families, TestCollisionBetween2MovingRects*, FindGhostRoadHeight, `CAutoPilot::ModifySpeed`: 46 hooks |
+| `carctrl4.rs` (lead) | node pickers (FindPathDirection, IsThisAnAppropriateNode, PickNextNodeRandomly / AccordingStrategy / ToChaseCar, ToFollowPath unhookable), the CCarAI helpers (GetCarToGoTo* (Accurate unhookable), EntitiesGoHeadOn, BackToCruisingIfNoWantedLevel, MellowOutChaseSpeed, MakeWayForCarWithSiren, AddPoliceCarOccupants), `UpdateCarAI` (partial), UpdateCarOnRails, ScanForPedDanger, FindLinksToGoWithTheseNodes, JoinCarWithRoadSystem / AccordingToMission, FindNodesThisCarIsNearestTo, ReconsiderRoute: 26 hooks + 2 unhookable |
+| `carctrl5.rs`, `population3.rs`, `misc3.rs` (helper B) | GenerateOneRandomCar, GenerateCarCreationCoors2, ChooseModel, PossiblyRemoveVehicle, GetNewVehicleDependingOnCarModel, CreateCarForScript, the emergency-services generators (GenerateOneEmergencyServicesCar unhookable), SetCoordsOfScriptCar; `CPopulation::AddPed` (partial), AddPedAtAttractor, PedMICanBeCreatedAtThisAttractor; `CGangWars::Update` (partial), StrengthenPlayerInfluenceInZone, AttackWaveOvercome; `CRoadBlocks::GenerateRoadBlocks` (partial); `CDarkel::DrawMessages` (partial), RegisterKillByPlayer; `CCarGenerator::CheckForBlockage`, DoInternalProcessing (partial): 19 hooks + 1 unhookable |
+| `misc4.rs` (lead) | `CDarkel::ReadStatus` (entry_eax), QueryModelsKilledByPlayer, `CWaterLevel::CreateBeachToy`, `CTheCarGenerators::Save` / `Load` |
+
+Shared changes: `sa-core::abi::footprint_residue_u8` (the byte an uninitialised local of the original
+reads, from the footprint snapshot; used by PickNextNodeToChaseCar and FindNodesThisCarIsNearestTo);
+sa-hook `keycells::READERS` gains the UpdateCarAI entry reader (`xor ecx, [0x41DA32]` at 0x407284); the
+merge of PORT-POP-2 needed five `orig!` declarations in sa-pop / sa-veh to return ST0 as `f64` (the 16-byte
+X87 of master's 3064b95 cannot cross `orig!`; master did not build without this). `tools/e2e/l2-extras.txt`:
+out-parameters (FindNewPedType, FindPathDirection, FindNodesThisCarIsNearestTo, ChooseModel,
+GenerateCarCreationCoors2, AddPed) and the path-search regions (ThePaths 0x96F050, aNodesToBeCleared
+0x972CD0) of the callers of DoPathSearch.
+
+## ADR-002 partial ports (what runs the original)
+
+- `CCarAI::UpdateCarAI`: Rust for cars that are not law enforcers with mission 0 or 1 (ambient traffic, the
+  vast majority of calls); everything else the original body. The early returns (recording without
+  `bUseCarAI`, type 3) are Rust.
+- `SteerAICarWithPhysics_OnlyMission`: see the PORTED list in its doc comment (stopped, follow-path set,
+  racing, pre-recorded, heading, block-stop, heli / plane towards target, boats, dog fights).
+- `CPopulation::AddPed`: the original when one of the cheats 0x969140 / 0x96913E / 0x96915C / 0x96915D is on or
+  the ped type is < 4, 21 or > 31. `CGangWars::Update`: the original while a gang war is active.
+  `GenerateRoadBlocks`: the original when the player is wanted in a vehicle or this frame's script road
+  block is active. `CDarkel::DrawMessages`: the original for frenzy status 1..4. `DoInternalProcessing`:
+  the original for model 0x24C only (that path passes the caller's EDI to AddPed).
+
+## Findings worth knowing (bytes over gta-reversed / specs)
+
+- `UpdateCarAI`: the stuck test runs only for missions outside {0, 6, 0xB, 0x1B..0x20, 0x35} with a non-zero
+  cruise speed (gta-reversed inverts it); the speed multiplier snaps to its target when within one step
+  (gr keeps the old value); the mission 0x3B plane fallback also sets mission 0x16; type 3 vehicles always
+  return at entry; up.z < -0.7 sets temp action 1 (wait), not reverse.
+- `GetCarToGoToCoors`: missions 8 / 9 keep their mission while the *target* is within 5 of the stored
+  destination (gr tests the vehicle position).
+- `BackToCruisingIfNoWantedLevel` reaches FindPlayerPed through an obfuscated call (`[0x1560474] -
+  [0x638D32]` = 0x56E210).
+- `PickNextNodeToChaseCar` / `ToFollowPath` use opposite lane-count mappings; both kept. ChaseCar and
+  FindNodesThisCarIsNearestTo can store node words of uninitialised locals; the ports read them from the
+  footprint snapshot.
+- `UpdateCarOnRails`: the detour at 0x43654F tests +0x3DC, not StopCarIfNodesAreInvalid's result.
+- Helper A: TestCollisionBetween2MovingRects swaps the direction arguments; FindAngleToWeaveThroughTraffic
+  scans each sector twice and repeats until stable; SlowCarDownForPedsSectorList grows the bike half-width per
+  ped and uses `max(1, ...)`; the Predator fires on a signed turn < 0.15; FollowPath mission 8 / 0xC dots
+  with the position.
+- Helper B: GenerateCarCreationCoors2 accepts the point when `IsSphereVisible` is true (CCarCtrl.md has it
+  reversed); bike / BMX allocation failure sets +0x614 through a null pointer (kept); decoded constants
+  ScriptGenerateOneEmergencyServicesCar argument 0, StrengthenPlayerInfluenceInZone 1.0f, AttackWaveOvercome
+  pool 0xB74490.
+
+## FindNewPedType (pass-2 open item)
+
+Not reproduced on the merged build: alone on police-gang 20/20 and car-ai 20/20, with all pass-2 hooks on
+car-ai 3/3, and in the pass-3 batches on car-ai, driving and police-gang 100/100 each, 0 mismatches; with
+the out-parameters declared, 0 undeclared. The pass-2 build predates master's X87 / footprint / harness
+changes (3064b95, 100fb7a); the mismatch (`*outType = 4` vs 0 at the first case, caller 0x614A31) is
+consistent with the Rust and original runs reading different stack residue in a callee
+(ChooseCivilianOccupation runs at a different depth under the Rust caller), which the current stack fill /
+frame layout no longer exposes. Verdict L2.
+
+## Split testing of nested Rust callers
+
+A Rust caller passes pointers into its own frame; a sampled callee writing through such a pointer then
+appears with a shifted stack. Helper A measured false mismatches when a Rust ancestor of the sampled
+function was in the same list, and none with the lists layered by call depth (X / 2 / 3 / 4). The lead saw
+the same at one FindPathDirection case (ordinal 32, frame 1053) only in the batch that also had
+UpdateCarOnRails on Rust; alone and in the other batches it passes.
+
+## Not ported
+
+- VM (0xCB73E0): JoinCarWithRoadSystemGotoCoors 0x42F870, AddAmbulanceOccupants 0x41C4A0,
+  AddFiretruckOccupants 0x41C600, TellOccupantsToLeaveCar 0x41C760, TellGangMembersTo 0x444530,
+  RegisterScriptRoadBlock 0x460DF0, Find2NodesForCarCreation 0x452090, RemoveInteriorLinks 0x44DF60,
+  ReleasePedsInAttackWave 0x445C30.
+- Too short / aliases: ClitargetOrientationToLink, FindPoliceBikeMissionForWantedLevel, ChooseGangCarModel,
+  ChoosePolicePedOccupation, ChooseGangOccupation, `CTagManager::GetAlpha`.
+- No time (every-frame callers first): `CPopulation::AddToPopulation` 0x614720 and
+  `CTrafficLights::DisplayActualLight` 0x49DAB0 (both run every frame in the corpus), DragCarToPoint,
+  FlyAIHeliInCertainDirection (police heli), FlyAIHeliToTarget_FixedOrientation, FlyAIPlaneInCertainDirection,
+  FollowPreRecordedPath, FollowPath_Racing, DealWithBend_Racing, ParkParallel / ParkPerpendicular,
+  CreatePoliceChase, CreateConvoy, AddDeadPedInFrontOfCar, CreateWaitingCoppers, PlaceCouple, PopulateInterior,
+  the gang-war helpers (PickZoneToAttack, CheerVictory, Start*GangWar, CreateAttackWave, CreateDefendingGroup),
+  the road-block helpers, `CDarkel::StartFrenzy` / DealWithWeaponChangeAtEndOfFrenzy.
+
+## Verification (pass 3, lane 2)
+
+- Tests: `cargo test --release -p sa-hook --lib` 51 pass; `cargo test -p sa-pop` 3 pass; clippy `-D warnings`
+  for sa-pop host (all targets), i686 (`--features in-process`) and wasm32.
+- Split runs (SPLIT_STACKFILL=16384, `--max 100`, `--runs "plain split rust"`): lead lists `pop3-L`,
+  `pop3-L2`, `pop3-L3` on car-ai, driving, police-gang, grove; helper A lists `pop3-AX`, `A2`..`A7`; helper B
+  `pop3-B1`, `B2`, `B12`, `B3`, `B5`. Every `rust` and `splitr` trace was IDENTICAL to plain; every compared
+  case had 0 mismatches except the layering artefact above.
+- All-ports L3: `tools/e2e/verify-all.sh pop3 2` on the final build (commit 524fd5b): IDENTICAL on all 11
+  recordings (grove 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud
+  5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276), 17 subsystems.
+
+### Verdicts (pass 3)
+
+`docs/arch/pop-port-3-verdicts.tsv` (140 rows): **L2 30**, **L2-split with undeclared writes to review 20**
+(callee writes: construction, pools, references, collision cache; some declared since, reruns pending),
+**partial-fallback 7**, **implemented-needs-L2 36** (no sampled call in car-ai, driving, police-gang,
+grove), **ported-unhookable 3**, **not-ported 44**. No row claims L3 (no per-hook hook-off runs).
