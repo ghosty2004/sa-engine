@@ -139,3 +139,20 @@ E_RW_INVSTREAMTYPE (core codes, errcore.def index).
 
 ## Open questions
 - None.
+
+## 0x7ED0F0 _rwStreamReadChunkHeader  (catalogue: specified/REA, port level 2)
+(Appended by writer C, RE-SPEC-RW-2.)
+- Convention: `RwBool (RwStream* s, RwUInt32* type, RwUInt32* length, RwUInt32* version, RwUInt32* build)`; frame
+  `sub esp, 0x28`: raw 12-byte header at [esp+8], a `RwChunkHeaderInfo`-shaped local at [esp+0x14] (+0 type, +4 length,
+  +8 version, +0xc build), error struct at [esp+4]. Callers (5): RwStreamFindChunk, RwStreamReadChunkHeaderInfo,
+  _rwPluginRegistryReadDataChunks, _rwPluginRegistrySkipDataChunks, _rwStringStreamFindAndRead.
+- Behaviour:
+  1. `RwStreamRead(s, raw, 0xc)` (0x7ed0ff); result `!= 0xc` -> `RwErrorSet({1, _rwerror(0x8000001a)})` (pluginID 1 at
+     0x7ed111), return 0.
+  2. `info.type = raw[0]`, `info.length = raw[1]` (0x7ed13d/0x7ed14a); `id = raw[2]`. If `(id & 0xffff0000) == 0`
+     (0x7ed145): `info.version = id << 8`, `info.build = 0` (0x7ed150..0x7ed157). Else `info.version = (((id >> 14) & 0x3ff00)
+     + 0x30000) | ((id >> 16) & 0x3f)` and `info.build = id & 0xffff` (0x7ed161..0x7ed185).
+  3. `_rwChunkIsComplex(&info)` 0x7ed1e0 is called (0x7ed18e) and its result discarded.
+  4. Output stores, each only if the pointer is non-NULL, in this order: `*type` (0x7ed1a2), `*length` (0x7ed1b0), `*build`
+     (0x7ed1be), `*version` (0x7ed1cc). Return 1.
+- librw: base.cpp:readChunkHeaderInfo matches the decoding (librw has no isComplex call and returns a struct).
