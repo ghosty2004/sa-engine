@@ -6,27 +6,27 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
-| AI | 42 | 1335 | 1762 | 0 | 908 | 0 | 0 | 4047 | 22.4 |
-| UNK-game | 955 | 1067 | 179 | 1 | 681 | 0 | 0 | 2883 | 23.6 |
-| RW | 202 | 988 | 379 | 0 | 236 | 0 | 0 | 1805 | 13.1 |
-| WORLD | 19 | 406 | 313 | 21 | 159 | 0 | 0 | 918 | 17.3 |
+| AI | 42 | 1234 | 1863 | 0 | 908 | 0 | 0 | 4047 | 22.4 |
+| UNK-game | 856 | 1021 | 324 | 1 | 681 | 0 | 0 | 2883 | 23.6 |
+| RW | 202 | 898 | 469 | 0 | 236 | 0 | 0 | 1805 | 13.1 |
+| WORLD | 15 | 336 | 387 | 21 | 159 | 0 | 0 | 918 | 17.3 |
 | AUDIO | 5 | 291 | 234 | 0 | 312 | 0 | 0 | 842 | 37.1 |
-| RENDER | 15 | 450 | 229 | 12 | 126 | 0 | 0 | 832 | 15.1 |
-| VEH | 2 | 321 | 243 | 0 | 147 | 1 | 0 | 714 | 20.7 |
+| RENDER | 12 | 344 | 338 | 12 | 126 | 0 | 0 | 832 | 15.1 |
+| VEH | 2 | 287 | 277 | 0 | 147 | 1 | 0 | 714 | 20.7 |
 | STREAM | 0 | 9 | 205 | 70 | 269 | 0 | 0 | 553 | 48.6 |
 | POP | 5 | 0 | 295 | 0 | 130 | 0 | 0 | 430 | 30.2 |
 | PED | 5 | 30 | 171 | 20 | 144 | 2 | 0 | 372 | 39.2 |
 | HUD | 2 | 29 | 127 | 24 | 160 | 0 | 0 | 342 | 46.8 |
-| CORE | 1 | 26 | 116 | 56 | 106 | 14 | 0 | 319 | 37.6 |
-| ANIM | 0 | 18 | 112 | 34 | 101 | 0 | 0 | 265 | 38.1 |
+| CORE | 1 | 10 | 132 | 56 | 106 | 14 | 0 | 319 | 37.6 |
+| ANIM | 0 | 14 | 116 | 34 | 101 | 0 | 0 | 265 | 38.1 |
 | SCRIPT | 21 | 156 | 37 | 0 | 9 | 0 | 0 | 223 | 4.0 |
 | CAM | 5 | 54 | 68 | 5 | 86 | 0 | 0 | 218 | 39.4 |
-| WEAPON | 2 | 19 | 67 | 11 | 59 | 0 | 0 | 158 | 37.3 |
+| WEAPON | 1 | 19 | 68 | 11 | 59 | 0 | 0 | 158 | 37.3 |
 | INPUT | 0 | 0 | 43 | 81 | 31 | 0 | 0 | 155 | 20.0 |
-| COLL | 1 | 24 | 11 | 25 | 84 | 0 | 0 | 145 | 57.9 |
-| MATH | 0 | 16 | 1 | 89 | 4 | 2 | 0 | 112 | 5.4 |
-| PHYS | 0 | 11 | 25 | 6 | 31 | 0 | 0 | 73 | 42.5 |
-| CALLED-ONLY | 4 | 30 | 1 | 0 | 2 | 0 | 0 | 37 | 5.4 |
+| COLL | 1 | 9 | 26 | 25 | 84 | 0 | 0 | 145 | 57.9 |
+| MATH | 0 | 14 | 3 | 89 | 4 | 2 | 0 | 112 | 5.4 |
+| PHYS | 0 | 7 | 29 | 6 | 31 | 0 | 0 | 73 | 42.5 |
+| CALLED-ONLY | 4 | 24 | 7 | 0 | 2 | 0 | 0 | 37 | 5.4 |
 | SAVE | 2 | 34 | 0 | 0 | 0 | 0 | 0 | 36 | 0.0 |
 | X-eh-funclet | 0 | 0 | 0 | 0 | 0 | 0 | 3556 | 3556 | - |
 | X-d3dx9 | 0 | 0 | 0 | 0 | 0 | 0 | 955 | 955 | - |
@@ -36,11 +36,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 1288 | 5314 | 4618 | 455 | 3785 | 19 | 6683 | 22162 | 24.58 |
+| **total** | 1181 | 4820 | 5219 | 455 | 3785 | 19 | 6683 | 22162 | 24.58 |
 
-`specified` by source: REA 2568, gta-reversed 2746
+`specified` by source: REA 2394, gta-reversed 2426
 
-## Functions above `specified` (8877)
+## Functions above `specified` (9478)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
@@ -67,6 +67,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x404260 | CRect::Resize | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x404290 | CRect::IsPointInside- | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4042d0 | CRect::IsPointInside-Tolerance | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x404330 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x404350 |  | UNK-game | implemented | WORLD-2 ported; ported-unhookable | 2026-11-11 |
 | 0x4043e0 |  | UNK-game | L2 | L2 grove:1000/1057 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x404420 |  | UNK-game | L2 | L2 grove:1000/1001 (0 mismatches; 0 undeclared) | 2026-11-11 |
@@ -79,6 +80,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x404780 | CIplStore::GetNewIplEntityIndexArray | STREAM | L2 | STREAM-L2 (agent 2026-11-10, double-run all-frames): PASS, 0 mismatches, 0 undeclared (target/streaml2/h4/verdicts.tsv); main session: keycells merge, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x4047b0 | CIplStore::GetIplEntityIndexArray | STREAM | L2 | STREAM-L2 (agent 2026-11-10, double-run all-frames): PASS, 0 mismatches, 0 undeclared (target/streaml2/h4/verdicts.tsv); main session: keycells merge, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x404870 | CObjectPool::GetAt | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); agent-run sa-oracle l1 1M cases 0 mismatches, not yet accepted; L2 by INF-8 | 2026-11-05 |
+| 0x4048e0 |  | UNK-game | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x404910 | CPedPool::GetAtRef | CORE | L3 | CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches | 2026-11-05 |
 | 0x404a60 | CIplStore::GetIplName | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x404a90 | CIplStore::SetIsInterior | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -113,6 +115,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4068f0 | CdStream::CdStreamInitThread | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x406b70 | CdStream::CdStreamInit | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x406d50 | CVector::Magnitude2D | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x406d70 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x406da0 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x406e80 |  | UNK-game | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x406f50 | CPopulation::DoesCarGroupHaveModelId | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:466/466 PASS (0 mismatches, 0 undeclared); L2 pr:157/157 PASS (0 mismatches, 0 undeclared); L2 cheats:144/144 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x407100 | CStreaming::RequestTxdModel | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
@@ -159,6 +163,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x408000 | CStreaming::AddToLoadedVehiclesList | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4080f0 | CStreaming::RemoveCarModel | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=9 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x408230 |  | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 (sIG grove in-game 4/frame, sPR pause-restart, sAF all-frames 1000/frame; RemoveWindowAlphaCB targeted run rwa): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical on the grove walk; hook-off not run | 2026-11-07 |
+| 0x4082a0 |  | UNK-game | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x4082c0 | CVector::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x408340 | CTxdStore::GetTxd | STREAM | L2 | STREAM-L2 (2026-11-08): main-session port-l2.sh lane 2 batches sR301/sR302 (SA_L2_FROM=0, 1000/frame): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical; hook-off not run | 2026-11-08 |
 | 0x408370 | CTxdStore::GetParentTxdSlot | STREAM | L2 | STREAM-L2 (2026-11-08): main-session port-l2.sh lane 2 batches sR301/sR302 (SA_L2_FROM=0, 1000/frame): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical; hook-off not run | 2026-11-08 |
@@ -235,6 +240,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x40ee20 | CBox::Recalc | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40ee70 | CColBox::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40ef10 | CColLine::Set | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40ef50 | CColLine | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x40f030 | CCollisionData | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x40f070 | CCollisionData::RemoveCollisionVolumes | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x40f590 | CCollisionData::CalculateTrianglePlanes | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x40f5e0 | CCollisionData::GetTrianglePoint | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
@@ -242,6 +249,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x40f6a0 | CCollisionData::RemoveTrianglePlanes | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x40f6c0 | CCollisionData::SetLinkPtr | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x40f6e0 | CCollisionData::GetLinkPtr | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
+| 0x40f700 | CColModel | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x40f740 | CColModel::MakeMultipleAlloc | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x40f7c0 | CColModel::operator= | COLL | implemented | PORT-COLL (2026-11-07): Rust port in crates/sa-world; L1 10^6 native-backend re-run pending (target/collv/l1-native.txt); no L2 call in the corpus or below the case budget (docs/arch/coll-port.md) | 2026-11-07 |
 | 0x40f810 | CColModel::AllocateData-void | COLL | implemented | PORT-COLL (2026-11-07): Rust port in crates/sa-world; L1 10^6 native-backend re-run pending (target/collv/l1-native.txt); no L2 call in the corpus or below the case budget (docs/arch/coll-port.md) | 2026-11-07 |
@@ -257,6 +265,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x40fdb0 | CVector::DotProduct-v3d*v3d* | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x40fdd0 | CVector::Sum | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x40fe00 | CVector::Difference | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x40fe30 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x40fe60 | VectorSub | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x40fe90 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x40fec0 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x40ff20 | CColSphere::IntersectRay | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x410040 | CColSphere::IntersectPoint | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x410090 | CColSphere::IntersectSphere | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -286,10 +298,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4113d0 | CColStore::LoadAllBoundingBoxes | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4113f0 | CColStore::Initialise | STREAM | L2 | STREAM-L2 (agent 2026-11-10, split (INF-17)): PASS, 0 mismatches, 0 undeclared (target/streaml2/h4/verdicts.tsv); main session: keycells merge, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x4114d0 | CColStore::Shutdown | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x411590 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x411610 | CColTrianglePlane::GetNormal-Out | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CColTrianglePlaneGetNormal --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
 | 0x411660 | CColTrianglePlane::Set | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x411990 | CPlaceable::GetMatrix | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4119d0 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x411a00 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x411a80 | CMatrix::operator*= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x411bf0 |  | UNK-game | implemented | written, unverified (batch mvpb-coll-1); verification queue | 2026-11-11 |
 | 0x411e30 | CCollision::SortOutCollisionAfterLoad | COLL | implemented | PORT-COLL (2026-11-07): Rust port in crates/sa-world; L1 10^6 native-backend re-run pending (target/collv/l1-native.txt); no L2 call in the corpus or below the case budget (docs/arch/coll-port.md) | 2026-11-07 |
 | 0x411e70 | CCollision::TestSphereSphere | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x411ec0 | CCollision::CalculateColPointInsideBox | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
@@ -304,10 +320,13 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x412c70 | CCollision::TestLineBox_DW | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x413070 | CCollision::TestLineBox | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CCollisionTestLineBox --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
 | 0x413080 | CCollision::TestVerticalLineBox | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CCollisionTestVerticalLineBox --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
+| 0x413100 | CCollision::ProcessLineBox | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x4138d0 | CCollision::Test2DLineAgainst2DLine | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x413960 | CCollision::ProcessDiscCollision | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CCollisionProcessDiscCollision --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
+| 0x4140f0 | CCollision::ProcessLineTriangle | COLL | implemented | written, unverified (batch mvpc-coll-1); verification queue | 2026-11-11 |
 | 0x415230 | CCollision::GetBoundingBoxFromTwoSpheres | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x4152c0 | CCollision::IsThisVehicleSittingOnMe | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
+| 0x415320 | CCollision::CheckCameraCollisionPeds | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x4154a0 | CCollision::CheckPeds | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x415540 | CCollision::ResetMadeInvisibleObjects | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x415590 | CCollision::SphereCastVsBBox | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
@@ -322,18 +341,31 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x416330 | CCollision::CalculateTrianglePlanes-colData | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x416400 | CCollision::RemoveTrianglePlanes-colData | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x416450 | CCollision::ProcessSphereSphere | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
+| 0x4165b0 | CCollision::TestSphereTriangle | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
+| 0x416ba0 | CCollision::ProcessSphereTriangle | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x417470 | CCollision::TestLineSphere | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x417610 | CCollision::DistToLine | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
+| 0x417730 | CCollision::TestLineOfSight | COLL | implemented | written, unverified (batch mvpc-coll-1); verification queue | 2026-11-11 |
+| 0x417950 | CCollision::ProcessLineOfSight | COLL | implemented | written, unverified (batch mvpc-coll-1); verification queue | 2026-11-11 |
+| 0x417bf0 | CCollision::ProcessVerticalLine | COLL | implemented | written, unverified (batch mvpc-coll-1); verification queue | 2026-11-11 |
 | 0x417f20 | CCollision::SphereCastVsSphere | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x417fd0 | CCollision::ClosestPointOnLine | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CCollisionClosestPointOnLine --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
 | 0x418100 | CCollision::ClosestPointsOnPoly | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CCollisionClosestPointsOnPoly --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
 | 0x418150 | CCollision::ClosestPointOnPoly | COLL | L1 | PORT-COLL (2026-11-07): main-session sa-oracle l1 CCollisionClosestPointOnPoly --cases 1000000 (default backends: Unicorn + real CPU for SNaN cases, i7-14700F under Wine): 0 mismatches, PASS | 2026-11-07 |
+| 0x4181b0 | CCollision::SphereCastVsCaches | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x418580 | CCollision::CalculateTrianglePlanes-CColModelPtr | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x4185a0 | CCollision::RemoveTrianglePlanes-CColModelPtr | COLL | implemented | PORT-COLL (2026-11-07): Rust port in crates/sa-world; L1 10^6 native-backend re-run pending (target/collv/l1-native.txt); no L2 call in the corpus or below the case budget (docs/arch/coll-port.md) | 2026-11-07 |
+| 0x41a5a0 | CCollision::SphereVsEntity | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
+| 0x41a820 | CCollision::CheckCameraCollisionBuildings | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
+| 0x41ab20 | CCollision::CheckCameraCollisionObjects | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
+| 0x41ac40 | CCollision::BuildCacheOfCameraCollision | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
+| 0x41b000 | CCollision::CameraConeCastVsWorldCollision | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x41b360 | CTempColModels::Shutdown | COLL | implemented | PORT-COLL (2026-11-07): Rust port in crates/sa-world; L1 10^6 native-backend re-run pending (target/collv/l1-native.txt); no L2 call in the corpus or below the case budget (docs/arch/coll-port.md) | 2026-11-07 |
 | 0x41b5b0 | CPointRoutePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x41b660 | CPatrolRoutePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x41b710 | CNodeRoutePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x41b7c0 | CPointRoute::operator new | UNK-game | implemented | written, unverified (batch mvpa-world-3); verification queue | 2026-11-11 |
+| 0x41b7d0 | CPointRoute::operator delete | UNK-game | implemented | written, unverified (batch mvpa-world-3); verification queue | 2026-11-11 |
 | 0x41b860 | CNodeRoute::operator new | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x41b870 | CNodeRoute::operator delete | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x41b950 | CAutoPilot::RemoveOnePathNode | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -373,6 +405,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x41d3d0 | CCarAI::MellowOutChaseSpeed | POP | L2 | split pop3L2-car-ai; pop3L2-police-gang 100/100 each; 0 mismatches; 0 undeclared | 2026-11-11 |
 | 0x41d660 | CCarAI::MakeWayForCarWithSiren | POP | implemented | pop-port-3 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x41da30 | CCarAI::UpdateCarAI | POP | implemented | pop-port-3 ported; partial-fallback | 2026-11-11 |
+| 0x420800 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x420860 | CVector2D::Magnitude | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x420920 |  | UNK-game | L2 | split car-ai-final:100/100 (0 mismatches; 0 undeclared); split police-gang-c:21/200 (0 mismatches; 0 undeclared) DIVERGED later; all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x420950 |  | UNK-game | L2 | split car-ai-final:100/100 (0 mismatches; 0 undeclared); split police-gang-c:28/96 (0 mismatches; 0 undeclared) DIVERGED later; all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
@@ -385,6 +418,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x420b80 | CPlaceable::SetPosn-xyz | WORLD | L2 | L2 grove:59/95 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x420c40 | CCamera::IsSphereVisible- | CAM | implemented | PORT-CAM (2026-11-11): ported-unhookable; protection reads the entry bytes as data (push 0x420C46 at 0x14664CF); camctl::is_sphere_visible_with_matrix, reached through orig! by the Rust CCamera::IsSphereVisible (L2 PASS); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x420d40 | CCamera::IsSphereVisible | CAM | L2 | PORT-CAM (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cbug:1000/1001 PASS (0 mismatches, 0 undeclared); L2 wc:1000/1001 PASS (0 mismatches, 0 undeclared); L2 anim:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x420e30 | CTaskTimer::IsOutOfTime | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x420e70 | CEventAcquaintancePedHate::Constructor2 | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (6 undeclared); split pause-restart: PASS ? cases (2 undeclared); split world-cheats: PASS ? cases (1 undeclared); split anim-input: PASS ? cases (1 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x420e90 | CEvent::IsCriminalEvent | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x420ea0 | CEvent::ReportCriminalEvent | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (ret 4: body < 5 bytes); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -569,6 +603,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x43a660 | CCheat::DozerCheat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x43a670 | CCheat::StuntPlaneCheat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x43a680 | CCheat::MonsterTruckCheat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x43a7b0 | CConversations::Clear | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x43a840 | CConversations::StartSettingUpConversation | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x43a960 | CConversations::RemoveConversationForPed | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
+| 0x43aa40 | CConversations::EnableConversation | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x43aac0 | CConversations::IsConversationGoingOn | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
 | 0x43aae0 | CPedToPlayerConversations::Clear | AI | L2 | split ai5v3-s-rec: PASS 1 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 1 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 1 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x43ab90 | CPed::PedIsInvolvedInConversation | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x43ac40 | CConversationForPed::IsPlayerInPositionForConversation | AI | L2 | split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-police-gang: PASS 150 cases (0 mismatches; 0 u | 2026-11-11 |
@@ -627,6 +666,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x43e3b0 | CTaskSimpleUninterruptable::~CTaskSimpleUninterruptable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x43e3d0 |  | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x43e400 | CEntryExitManager::WeAreInInteriorTransition | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x43e460 | CEntryExit::IsInArea | WORLD | implemented | written, unverified (batch mvpb-world-7); verification queue | 2026-11-11 |
 | 0x43e690 | CEntryExit::RequestObjectsInFrustum | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x43e990 | CEntryExit::ProcessStealableObjects | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x43ea00 | CEntryExit::GetPositionRelativeToOutsideWorld | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
@@ -635,16 +675,22 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x43ed80 | CEntryExitManager::ResetAreaCodeForVisibleObjects | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x43ef00 | CEntryExitManager::GetEntryExit | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x43ef20 | CEntryExitManager::SetEntryExitFlag | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x43efd0 | CEntryExitManager::GetEntryExitIndex | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x43f050 | CEntryExitManager::LinkEntryExit | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x43f0a0 | CEntryExitManager::PostEntryExitsCreation | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x43f150 | CEntryExitManager::GetPositionRelativeToOutsideWorld | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x43f180 | CEntryExitManager::EnableBurglaryHouses | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x43f4b0 | CEntryExitManager::FindNearestEntryExit | WORLD | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
+| 0x43f880 | CEntryExitManager::Init | WORLD | implemented | written, unverified (batch mvpc-world-2); verification queue | 2026-11-11 |
 | 0x43f9b0 | CEntryExitManager::SetEnabledByName | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x43fd50 | CEntryExitManager::DeleteOne | WORLD | L2 | split grove: PASS 3 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x440c40 | CEntryExitManager::ShutdownForRestart | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x441130 | CPhysical::SetVelocity | PHYS | L1 | PORT-PHYS: sa-oracle l1 >=1M cases, 0 mismatches (main-session spot check PhysSetVelocity 1M PASS) | 2026-11-10 |
 | 0x441210 | CGameLogic::InitAtStartOfGame | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x441240 | CGameLogic::ForceDeathRestart | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x441290 | CGameLogic::StopPlayerMovingFromDirection | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x441390 | CGameLogic::IsCoopGameGoingOn | WORLD | L2 | INF-8 inf8-l2.sh: 1000 in-game cases, 0 mismatches, 0 undeclared writes | 2026-11-05 |
+| 0x441560 | CGameLogic::ClearSkip | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x4416c0 | CGameLogic::IsSkipWaitingForScriptToFadeIn | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x4416e0 | CGameLogic::IsPointWithinLineArea | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x441770 | CGameLogic::SetPlayerWantedLevelForForbiddenTerritories | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -686,6 +732,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x446570 | CGangWars::SetGangWarsActive | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4465f0 | CGangWars::SwitchGangWarsActive | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x446610 | CGangWars::Update | POP | implemented | pop-port-3 ported; partial-fallback | 2026-11-11 |
+| 0x446f90 | CEntity::UpdateRwMatrix | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
 | 0x447000 |  | UNK-game | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x447050 |  | UNK-game | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4470e0 | CGarage::CGarage | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
@@ -697,12 +744,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4476d0 | CGarages::ChangeGarageType | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x447720 |  | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x4479a0 | CGarages::IsCarSprayable | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4479f0 | CGarage::BuildRotatedDoorMatrix | WORLD | implemented | written, unverified (batch mvpb-world-6); verification queue | 2026-11-11 |
 | 0x447cb0 | CGarages::DeActivateGarage | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x447cd0 | CGarages::ActivateGarage | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x447d00 | CGarages::IsGarageOpen | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x447d30 | CGarages::IsGarageClosed | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x447d50 | CGarage::OpenThisGarage | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x447d70 | CGarage::CloseThisGarage | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x447d80 |  | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
 | 0x448650 | CGarages::CameraShouldBeOutside | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x4486c0 | CGarage::PlayerArrestedOrDied | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x448740 | CGarage::IsPointInsideGarage-CVector | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
@@ -714,10 +763,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x448af0 | CGarages::IsModelIndexADoor | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x448b30 | CGarages::AllRespraysCloseOrOpen | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x448b60 | CGarages::Init_AfterRestart | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x448be0 | CGarage::IsEntityEntirelyInside3D | WORLD | implemented | written, unverified (batch mvpb-world-6); verification queue | 2026-11-11 |
+| 0x448d30 | CGarage::IsEntityEntirelyOutside | WORLD | implemented | written, unverified (batch mvpb-world-3); verification queue | 2026-11-11 |
+| 0x448e50 |  | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
 | 0x449ba0 | CGarages::IsPointInAGarageCameraZone | WORLD | L2 | L2 grove:1000/1001 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x449c50 | CGarage::TidyUpGarage | WORLD | implemented | written, unverified (batch mvpb-world-3); verification queue | 2026-11-11 |
 | 0x449e60 | CGarages::PlayerArrestedOrDied | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44a210 | CGarages::CountCarsInHideoutGarage | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44a240 | CGarages::FindGarageForObject | WORLD | L2 | L2 grove:25/25 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x44a830 | CGarage::IsStaticPlayerCarEntirelyInside | WORLD | implemented | written, unverified (batch mvpb-world-6); verification queue | 2026-11-11 |
 | 0x44c8c0 | CGarages::Update | WORLD | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): WORLD split grove PASS compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; WORLD split pr PASS-FP compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=1; WORLD split cheats PASS-FP compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=1000; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x44ca90 | COnscreenCounterEntry::ProcessForDisplayCounter | HUD | implemented | PORT-HUD (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / anim / weapon; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x44cb00 | COnscreenCounterEntry::SetColourID | HUD | implemented | PORT-HUD (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / anim / weapon; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -744,6 +798,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x44d3e0 | CPathFind::ThisNodeHasToBeSwitchedOff | POP | L2 | split car-ai-final:4/4 (0 mismatches; 0 undeclared); split police-gang-c:8/8 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x44d400 | CPathFind::UnMarkAllRoadNodesAsDontWander | POP | L2 | split car-ai-final:1/1 (0 mismatches; 0 undeclared); split police-gang-c:0/1 (0 mismatches; 0 undeclared) COUNT (spool quota cut); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x44d480 | CPathFind::TestForPedTrafficLight | POP | L2 | split car-ai-final:4/4 (0 mismatches; 0 undeclared); split police-gang-c:3/4 (0 mismatches; 0 undeclared) DIVERGED later; all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
+| 0x44d520 | CAutomobile::HasCarStoppedBecauseOfLight | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x44d790 | CPathFind::TestCrossesRoad | POP | L2 | split car-ai-final:4/4 (0 mismatches; 0 undeclared); split police-gang-c:3/4 (0 mismatches; 0 undeclared) DIVERGED later; all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x44d830 | CPathFind::FindRegionForCoors | POP | L2 | split car-ai-final:100/100 (0 mismatches; 0 undeclared); split police-gang-c:9/200 (0 mismatches; 0 undeclared) DIVERGED later; all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x44d890 | CPathFind::FindXRegionForCoors | POP | implemented | POP-2 ported; implemented (split inputs diverged before a comparison) | 2026-11-11 |
@@ -837,6 +892,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x456a30 | CPickups::GetNewUniquePickupIndex | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x456d30 | CPickups::RemovePickUpsInArea | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x456de0 | CPickups::RemoveMissionPickUps | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
+| 0x456e60 | CPickups::ReInit | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x4573d0 | CPickups::RemovePickUp | WORLD | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): WORLD split grove PASS compared=54 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; WORLD split pr PASS compared=90 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; WORLD split cheats PASS-FP compared=56 mismatches=0 undeclared_cases=0 fingerprint_pairs=56; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x458de0 | CPickups::Update | WORLD | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): WORLD split grove PASS compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; WORLD split pr PASS-FP compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=1; WORLD split cheats PASS-FP compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=1000; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x459180 | CPed::CreateDeadPedPickupCoors- | PED | implemented | ped-port-3 ported; implemented | 2026-11-11 |
@@ -872,6 +928,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x45b050 | CAnimBlendAssocGroup::GetNumAnimations | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; ret / mov+ret shorter than the 5-byte entry patch; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x45b060 | CAnimBlendAssocGroup::GetAnimBlock | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; ret / mov+ret shorter than the 5-byte entry patch; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x45b110 | CPlayerInfo::~CPlayerInfo | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
+| 0x45bf90 | tReplayBmxBlock::MakeBmxUpdateData | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x45c070 | tReplayBikeBlock::MakeBikeUpdateData | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x45c750 | CReplay::StoreClothesDesc | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x45c940 | CReplay::StorePedUpdate | WORLD | implemented | written, unverified (batch mvpb-world-4); verification queue | 2026-11-11 |
+| 0x45d430 | CReplay::MarkEverythingAsNew | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
+| 0x45e220 | CReplay::Init | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
+| 0x45ebb0 | CReplay::RecordVehicleDeleted | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x45ec20 | CReplay::RecordPedDeleted | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x45ec90 | CReplay::EmptyReplayBuffer | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x460630 | CRestart::Initialise | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x460730 | CRestart::AddHospitalRestartPoint | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x460780 | CRestart::AddPoliceRestartPoint | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
@@ -928,6 +993,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x464700 | CRunningScript::GetIndexOfGlobalVariable | SCRIPT | implemented | PORT-SCRIPT-1 (2026-11-11): implemented-needs-L2; L2 grove NOCALLS / pr NOCALLS / cheats NOCALLS; L3 PASS; hook-off PASS; main-session all-ports IDENTICAL grove/c-bug/pause-restart | 2026-11-11 |
 | 0x464790 | CRunningScript::GetPointerToScriptVariable | SCRIPT | L2 | PORT-SCRIPT-1 (2026-11-11): L2; L2 grove PASS 1000/5158 / pr PASS 1000/1001 / cheats PASS 1000/1001; L3 PASS; hook-off PASS; main-session all-ports IDENTICAL grove/c-bug/pause-restart | 2026-11-11 |
 | 0x464da0 | CRunningScript::UpdatePC | SCRIPT | L2 | PORT-SCRIPT-1 (2026-11-11): L2; L2 grove PASS 1000/3184 / pr PASS 1000/1001 / cheats PASS 1000/1001; L3 PASS; hook-off PASS; main-session all-ports IDENTICAL grove/c-bug/pause-restart | 2026-11-11 |
+| 0x465040 |  | UNK-game | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x4650a0 | CDecisionMaker | UNK-game | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x4654b0 | CMissionCleanup::RemoveEntityFromList | SCRIPT | implemented | script-port ported; implemented | 2026-11-11 |
 | 0x4655e0 | CUpsideDownCarCheck::UpdateTimers | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -956,6 +1022,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x46ad50 | CTaskComplexSeekEntityStandard::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x46aef0 | CTaskSimple::~CTaskSimple | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x46af10 | CTaskSimpleSetCharDecisionMaker::Destructor | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub)); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x46af20 | CEntitySeekPosCalculatorStandard::ComputeEntitySeekPos | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x46b460 | CRunningScript::ProcessCommands1900To1999 | SCRIPT | implemented | script-port ported; implemented (partial) | 2026-11-11 |
 | 0x46d050 | CRunningScript::ProcessCommands1800To1899 | SCRIPT | implemented | script-port ported; implemented (partial) | 2026-11-11 |
 | 0x46eff0 | CTaskComplexSeekEntityStandard::CreateNextSubTask | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -1002,6 +1069,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x48dea0 | CTaskSimpleRunAnim::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x48deb0 | CTaskSimpleCower::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48df20 | CTaskSimpleCower::IsInterruptable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x48df30 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x48df60 | CTaskSimpleScratchHead::Clone | AI | implemented | PORT-AI-1 (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x48dfd0 | CTaskSimpleScratchHead::IsInterruptable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48dfe0 | CTaskSimpleUseAtm::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1024,12 +1092,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x48e390 | CTaskSimpleSay::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e420 | CTaskSimpleSay::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e430 | CTaskSimpleSay::MakeAbortable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x48e440 | CTaskSimpleSay::ProcessPed | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x48e4c0 | CTaskSimple::~CTaskSimple | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS-FP 3 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 27 cases (0 mismatches, 0 undeclared); split grove: PASS 3 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 62 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x48e4e0 | CTaskSimpleSay::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e4f0 | CTaskComplexWanderStandard | UNK-game | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e530 | CTaskComplexWanderStandard::Clone | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 10 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x48e5d0 | CTaskComplexWanderStandard::GetWanderType | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x48e5e0 | CTaskComplexWanderStandard::~CTaskComplexWanderStandard | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS-FP 59 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 50 cases (0 mismatches, 0 undeclared); split grove: PASS 59 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 62 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x48e600 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x48e610 | CTaskComplexWanderCriminal::CTaskComplexWanderCriminal | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 6 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x48e650 | CTaskComplexWanderCriminal::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e6f0 | CTaskComplexWanderCriminal::GetWanderType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1045,6 +1115,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x48e8e0 | CTaskSimpleAnim::~CTaskSimpleAnim | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e900 | CTaskSimpleCower::Destructor | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub)); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e910 | CTaskSimpleScratchHead::~CTaskSimpleScratchHead | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS-FP 22 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 2 cases (0 mismatches, 0 undeclared); split grove: PASS 22 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x48e930 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x48e940 | CTaskSimpleAnim::~CTaskSimpleAnim | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e960 | CTaskSimpleUseAtm::Destructor | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub)); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x48e970 | CTaskSimpleHandsUp::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1096,7 +1167,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x49b640 | CShopping::ShutdownForRestart | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x49bdd0 |  | UNK-game | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x49be70 | CShopping::IncrementStat | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x49c290 | CShopping::Init | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x49c300 | CBoundingBox::IsPointWithin | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x49c9a0 | Clear | UNK-game | implemented | written, unverified (batch mvpa-world-3); verification queue | 2026-11-11 |
 | 0x49ca50 | CStuntJumpManager::Init | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x49cb10 | CStuntJumpManager::ShutdownForRestart | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x49cb40 | CStuntJumpManager::AddOne | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
@@ -1108,6 +1181,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x49cce0 | CTagManager::IsTag | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x49cd30 | CTagManager::SetAlpha-RpAtomic | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x49cd40 | CTagManager::GetAlpha-RpAtomic | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
+| 0x49cd50 |  | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x49cda0 | CTagManager::GetPercentageTagged | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x49cde0 | CTagManager::UpdateNumTagged | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x49ce10 | CTagManager::SetupAtomic | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:3/3 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
@@ -1132,23 +1206,39 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x49dab0 | CTrafficLights::DisplayActualLight | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x49e620 | Fx_c::Constructor | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x49e640 | Fx_c::Update | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:210/210 PASS-FP (0 mismatches, 76 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x49e660 | Fx_c::InitStaticSystems | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x49ea40 | Fx_c::SetFxQuality | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:3/3 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x49ea50 | Fx_c::GetFxQuality | RENDER | implemented | PORT-RENDER-1 (2026-11-11): ported-not-hooked; entry < 5 bytes; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x49ea90 | Fx_c::Init | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a1070 | Fx_c::TriggerWaterSplash | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a11e0 | Fx_c::CreateEntityFx | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a1280 | Fx_c::DestroyEntityFx | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:11/11 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a1340 | CMaths::GetSinFast | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4a1360 | CMaths::GetCosFast | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4a13b0 | Fx_c::RenderBegin | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a1410 | Fx_c::RenderAddTri_ | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
+| 0x4a1600 | Fx_c::RenderEnd | RENDER | implemented | written, unverified (batch mvpa-render-3); verification queue | 2026-11-11 |
+| 0x4a1660 | Fx_c::RotateVecIntoVec | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x4a1780 | Fx_c::RotateVecAboutVec | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a18b0 | FxEmitterPrt_c::operator new[] | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a18d0 | FxEmitterBP_c::Constructor | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:20/20 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a21d0 | FxEmitterBP_c::UpdateParticle | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
 | 0x4a24d0 | FxEmitterBP_c::IsFxInfoPresent | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:322/322 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a2550 | FxEmitter_c::Init_Reversed | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxEmitterInit 1,002,000, 0 mismatches; L2 grove:93/93 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a2570 | FxEmitter_c::Reset_Reversed | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:136/136 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a2580 | FxEmitter_c::CreateParticle | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
 | 0x4a2b40 | FxEmitterBP_c::CreateInstance | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:32/32 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a2b90 | FxEmitter_c::`scalar deleting destructor' | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x4a2bb0 | FxEmitter_c::~FxEmitter_c | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
 | 0x4a2bc0 | FxEmitterBP_c::Update | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:300/300 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a3ea0 | FxEmitter_c::AddParticle_Reversed-matrix | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
+| 0x4a41e0 | FxEmitter_c::CreateParticles | RENDER | implemented | written, unverified (batch mvpc-fx-2); verification queue | 2026-11-11 |
+| 0x4a4460 | FxEmitter_c::Update_Reversed | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x4a4960 | FxInfoManager_c::ProcessEmissionInfo | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a4a10 | FxInfoManager_c::ProcessMovementInfo | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a4a80 | FxInfoManager_c::ProcessRenderInfo | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a4b40 | FxInfoEmRate_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a4b60 | FxInfoEmRate_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a4c20 | FxInfoEmSize_c::FxInfoEmSize_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a4c90 | FxInfoEmSize_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x4a4cb0 | FxInfoEmSize_c::GetValue | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -1173,11 +1263,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a51b0 | FxInfoEmRotation_c::FxInfoEmRotation_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a5220 | FxInfoEmRotation_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x4a5240 | FxInfoEmRotation_c::GetValue | UNK-game | L2 | l2 port-l2-r2e-l2: 1000/1001 PASS (0 mismatches; 0 undeclared) [fx/regular.rs] | 2026-11-11 |
+| 0x4a5270 |  | RENDER | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a52e0 | FxInfoNoise_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a5300 | FxInfoNoise_c::GetValue | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a5450 | FxInfoForce_c::FxInfoForce_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a54c0 | FxInfoForce_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a54e0 | FxInfoForce_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a5550 | FxInfoFriction_c::FxInfoFriction_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a55c0 | FxInfoFriction_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a55e0 | FxInfoFriction_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a5650 | FxInfoAttractPt_c::FxInfoAttractPt_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a56c0 | FxInfoAttractPt_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x4a57c0 | FxInfoAttractLine_c::FxInfoAttractLine_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -1186,10 +1280,13 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a59f0 | FxInfoGroundCollide_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x4a5a10 | FxInfoWind_c::FxInfoWind_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a5a80 | FxInfoWind_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a5aa0 | FxInfoWind_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a5b20 | FxInfoJitter_c::FxInfoJitter_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:8/8 PASS (0 mismatches, 8 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a5b90 | FxInfoJitter_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a5bb0 | FxInfoJitter_c::GetValue | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a5cb0 | FxInfoRotSpeed_c::FxInfoRotSpeed_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a5d20 | FxInfoRotSpeed_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a5d40 | FxInfoRotSpeed_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a5da0 | FxInfoFloat_c::FxInfoFloat_c | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:3/3 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a5df0 | FxInfoFloat_c::Load | UNK-game | L2 | split port-l2-r2f-sp: PASS 3 compared; 0 mismatches; 0 undeclared [fx/regular.rs] | 2026-11-11 |
 | 0x4a5e10 | FxInfoFloat_c::GetValue | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -1198,7 +1295,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a5e90 | FxInfoUnderwater_c::GetValue | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4a5ea0 | FxInfoColour_c::FxInfoColour_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a5f10 | FxInfoColour_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x4a5f30 | FxInfoColour_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a5fa0 | FxInfoSize_c::FxInfoSize_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a6010 | FxInfoSize_c::Load | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
+| 0x4a6030 | FxInfoSize_c::GetValue | UNK-game | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a60b0 | FxInfoSpriteRect_c::FxInfoSpriteRect_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:8/8 PASS (0 mismatches, 8 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a6120 | FxInfoSpriteRect_c::Load | UNK-game | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x4a61a0 | FxInfoHeatHaze_c::FxInfoHeatHaze_c | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:9/9 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -1276,12 +1376,16 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a7a40 | FxInfoColourBright_c::~FxInfoColourBright_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4a7a90 | FxInfoSmoke_c::~FxInfoSmoke_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4a7ab0 | FxInfoSmoke_c::~FxInfoSmoke_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4a7b00 | FxInfoManager_c::AddFxInfo | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a8440 | FxInterpInfoFloat_c::FxInterpInfoFloat_c | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxInterpInfoFloatCtor 1,002,000, 0 mismatches; split grove:20/20 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a8460 | FxInterpInfoFloat_c::~FxInterpInfoFloat_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4a8470 | FxInterpInfoFloat_c::GetVal | CALLED-ONLY | implemented | written, unverified (batch mvpa-fx-1); verification queue | 2026-11-11 |
 | 0x4a87d0 | FxInterpInfoU255_c::FxInterpInfoU255_c | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxInterpInfoU255Ctor 1,002,000, 0 mismatches; split grove:20/20 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a87f0 | FxInterpInfoU255_c::~FxInterpInfoU255_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4a8800 | FxInterpInfoU255_c::GetVal | CALLED-ONLY | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a8990 | FxInterpInfo32_c::FxInterpInfo32_c | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:20/20 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a89b0 | FxInterpInfo32_c::~FxInterpInfo32_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4a89c0 | FxInterpInfo32_c::GetVal | CALLED-ONLY | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4a8b50 | FxInterpInfo255_c::FxInterpInfo255_c | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:17/17 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a8b70 | FxInterpInfo255_c::~FxInterpInfo255_c | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4a8d10 |  | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -1297,6 +1401,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a9440 | FxManager_c::FxRwMatrixCreate | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxManagerFxRwMatrixCreate 1,002,000, 0 mismatches; split grove:300/300 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a9460 | FxManager_c::FxRwMatrixDestroy | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxManagerFxRwMatrixDestroy 1,002,000, 0 mismatches; split grove:300/300 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a9470 | FxManager_c::Constructor | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4a9500 | FxManager_c::ShouldCreate | RENDER | implemented | written, unverified (batch mvpa-fx-2); verification queue | 2026-11-11 |
+| 0x4a96b0 | FxManager_c::CreateFxSystem-3 | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x4a9810 | FxManager_c::DestroyFxSystem | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x4a98b0 | FxManager_c::DestroyAllFxSystems | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x4a98e0 | FxManager_c::Init | RENDER | implemented | written, unverified (batch mvpa-fx-2); verification queue | 2026-11-11 |
 | 0x4a9a80 | FxManager_c::Update | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:210/210 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a9be0 | FxManager_c::CreateFxSystem-4 | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:32/32 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a9c10 | FxMemoryPool_c::FxMemoryPool_c | RENDER | implemented | PORT-RENDER-1 (2026-11-11): ported-not-hooked; entry < 5 bytes; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -1306,6 +1415,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a9cf0 | FxPrimBP_c::FxPrimBP_c | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxPrimBPCtor 1,002,000, 0 mismatches; split grove:20/20 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a9f50 | FxPrim_c::Enable | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4a9f60 |  | UNK-game | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4aa030 | FxFrustumInfo_c::IsCollision | RENDER | implemented | written, unverified (batch mvpa-render-3); verification queue | 2026-11-11 |
 | 0x4aa0d0 | FxSystemBP_c::Constructor | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxSystemBPCtor 1,002,000, 0 mismatches; split grove:20/20 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa100 | FxSystemBP_c::operator new | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:20/20 PASS (0 mismatches, 20 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa130 | FxSystemBP_c::Update | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:300/300 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -1316,12 +1426,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4aa390 | FxSystem_c::Stop | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:11/11 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa3d0 | FxSystem_c::PlayAndKill | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa3f0 | FxSystem_c::Kill | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:11/11 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4aa440 | FxSystem_c::AddParticle-v3d | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x4aa610 | FxSystem_c::EnablePrim | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa630 | FxSystem_c::SetMatrix | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa660 | FxSystem_c::SetOffsetPos | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa6c0 | FxSystem_c::SetConstTime | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa6f0 | FxSystem_c::SetRateMult | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:90/90 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa730 | FxSystem_c::SetVelAdd | RENDER | L1 | PORT-RENDER-1 (2026-11-11): L1; L1 FxSystemSetVelAdd 1,002,000, 0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4aa750 | FxSystem_c::Init | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4aa840 | FxSystem_c::Exit | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:11/11 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa890 | FxSystem_c::CopyParentMatrix | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aa8c0 | FxSystem_c::GetCompositeMatrix | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -1330,6 +1442,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4aaad0 | FxSystem_c::GetBoundingSphereWld | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aaf00 | FxSystem_c::Constructor | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:32/32 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aaf30 | FxSystem_c::IsVisible | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:871/871 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4ab240 |  | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x4ab250 |  | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x4ab260 |  | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x4ab340 | CEventGroup::Constructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 105 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 107 compared (0 mismatches, 0 undeclared); split lead-c-bug: PASS 12 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4ab370 | CEventGroup::Flush | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); split lead-c-bug: PASS 94 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4ab420 | CEventGroup::Add- | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 18 undeclared); split ai2-freq-weapon-combat: PASS-FP 150 compared (0 mismatches, 20 undeclared); split lead-c-bug: PASS-FP 66 compared (0 mismatches, 30 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -1343,6 +1458,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4ab7c0 | CEventGroup::GetHighestPriorityEvent | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 150 compared (0 mismatches, 1 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 1 undeclared); split lead-c-bug: PASS 431 compared (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4ab840 | CEventGroup::HasScriptCommandOfTaskType | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 1 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 2 compared (0 mismatches, 0 undeclared); split lead-c-bug: PASS 1 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4ab8a0 | CEventGlobalGroup::AddEventsToGroup | AI | L2 | split ai4v5-grove: PASS 100 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x4ab980 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x4ab9b0 |  | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4ab9c0 | CEventGlobalGroup::AddEventsToPed | AI | L2 | split ai4v5-grove: PASS 100 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x4abac0 | CEventSource::ComputeEventSourceType | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -1354,8 +1470,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4abfe0 | CEvent::AffectsPed | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4abff0 | CEvent::AffectsPedGroup | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 40 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 393 cases (0 mismatches, 0 undeclared); l2 grove: PASS 31 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 17 cases (0 mismatches, 0 undeclared); l2 grove: PASS 31 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 40 cases (0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ac000 | CEvent::CanBeInterruptedBySameEvent | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4ac010 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x4ac020 | CEvent::IsValid | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 128 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4ac0d0 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x4ac1e0 | CInformFriendsEventQueue::Add | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 7 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 29 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4ac2a0 | CInformFriendsEventQueue::Flush | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x4ac2e0 | CInformFriendsEventQueue::Process | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x4ac350 | CInformGroupEvent::Constructor | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (2 undeclared); split c-bug: PASS ? cases (2 undeclared); split pause-restart: PASS ? cases (2 undeclared); split world-cheats: PASS ? cases (2 undeclared); split anim-input: PASS ? cases (2 undeclared); split weapon-combat: PASS ? cases (2 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4ac410 | CInformGroupEventQueue::Flush | AI | L2 | split ai5v3-s-rec: PASS 2 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 2 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 2 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x4ac450 | CEventEditableResponse::Constructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 33 compared (0 mismatches, 19 undeclared); split ai2-freq-weapon-combat: PASS 58 compared (0 mismatches, 30 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -1378,6 +1498,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4aca40 | CEventPedCollisionWithPed::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 620 cases (0 mismatches, 0 undeclared); l2 grove: PASS 823 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 611 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 363 cases (0 mismatches, 0 undeclared); l2 grove: PASS 823 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 u; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aca50 | CEventPedCollisionWithPed::GetLifeTime | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aca60 | CEventPedCollisionWithPed::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 509 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 321 cases (0 mismatches, 0 undeclared); l2 grove: PASS 357 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 248 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 157 cases (0 mismatches, 0 undeclared); l2 grove: PASS 357 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 509 cases (0 mismatches, 0 und; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4aca70 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4acad0 | CEventPedCollisionWithPed::TakesPriorityOver | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4acb10 | CEventPedCollisionWithPed::AffectsPed | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x4accf0 | CEventObjectCollision::Constructor | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
@@ -1392,6 +1513,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4acfc0 | CEventBuildingCollision::GetLifeTime | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4acfd0 | CEventBuildingCollision::CanBeInterruptedBySameEvent | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4acfe0 | CEventBuildingCollision::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 10 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 64 cases (0 mismatches, 0 undeclared); l2 grove: PASS 156 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 36 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 36 cases (0 mismatches, 0 undeclared); l2 grove: PASS 156 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 10 cases (0 mismatches, 0 undeclar; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4acff0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4ad050 | CEventBuildingCollision::TakesPriorityOver | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 27 cases (0 mismatches, 0 undeclared); split grove: PASS 59 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 12 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ad070 | CEventBuildingCollision::AffectsPed | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x4ad1e0 | CEventBuildingCollision::IsHeadOnCollision | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
@@ -1450,6 +1572,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4ae390 | CEventPotentialWalkIntoVehicle::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 274 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 298 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 26 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 274 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 298 cases (0 mismatches, 0 undeclared); l2 driving: PASS 457 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 26 cases (0 mismatches, 0 un; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ae3a0 | CEventPotentialWalkIntoVehicle::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4ae3b0 | CEventPotentialWalkIntoVehicle::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 37 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 68 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 4 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 37 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 68 cases (0 mismatches, 0 undeclared); l2 driving: PASS 68 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 4 cases (0 mismatches, 0 undeclare; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4ae3c0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4ae420 | CEventPotentialWalkIntoVehicle::AffectsPed | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4ae5c0 | CEventPotentialWalkIntoVehicle::TakesPriorityOver | AI | L2 | AI-GEN (2026-11-11): L2; l2 c-bug: PASS 12 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 7 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 5 cases (0 mismatches, 0 undeclared); l2 driving: PASS 22 cases (0 mismatches, 0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4ae5d0 | CEventPotentialWalkIntoObject::Constructor | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split c-bug: PASS ? cases (2 undeclared); split weapon-combat: PASS ? cases (3 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1462,6 +1585,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4ae770 | CEventPotentialWalkIntoPed::GetLifeTime | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ae780 | CEventPotentialWalkIntoPed::GetSourceEntity | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ae790 | CEventPotentialWalkIntoPed::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 974 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 620 cases (0 mismatches, 0 undeclared); l2 grove: PASS 685 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 254 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 257 cases (0 mismatches, 0 undeclared); l2 grove: PASS 685 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 974 cases (0 mismatches, 0 und; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4ae7a0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4ae800 | CEventPotentialWalkIntoPed::AffectsPed | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x4ae950 | CEventPotentialWalkIntoPed::TakesPriorityOver | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4ae990 | CEventVehicleHitAndRun::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1479,14 +1603,18 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4aec70 | vt_85b030::GetEventType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4aec80 | vt_85b030::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4aec90 | vt_85b030::GetEventPriority | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4aecd0 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x4aed30 | vt_85b070::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 220 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 90 cases (0 mismatches, 0 undeclared); l2 grove: PASS 133 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 32 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 224 cases (0 mismatches, 0 undeclared); l2 grove: PASS 133 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 220 cases (0 mismatches, 0 undec; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aed40 | vt_85b070::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4aed50 | vt_85b070::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 53 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 24 cases (0 mismatches, 0 undeclared); l2 grove: PASS 17 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 8 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 52 cases (0 mismatches, 0 undeclared); l2 grove: PASS 17 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 53 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4aed60 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x4aedc0 | vt_85b070::AffectsPed | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 13 cases (0 mismatches, 0 undeclared); split grove: PASS 13 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 55 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4aedf0 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x4aee60 | vt_85b0b0::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 688 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 330 cases (0 mismatches, 0 undeclared); l2 grove: PASS 439 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 108 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 391 cases (0 mismatches, 0 undeclared); l2 grove: PASS 439 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 688 cases (0 mismatches, 0 und; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aee70 | vt_85b0b0::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4aee80 | vt_85b0b0::GetSourceEntity | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4aee90 | vt_85b0b0::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 90 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 47 cases (0 mismatches, 0 undeclared); l2 grove: PASS 54 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 18 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 51 cases (0 mismatches, 0 undeclared); l2 grove: PASS 54 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 90 cases (0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4aeea0 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x4aef00 | vt_85b0b0::AffectsPed | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 37 cases (0 mismatches, 0 undeclared); split grove: PASS 49 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 41 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4af070 | vt_85b0f8::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 11 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 9 cases (0 mismatches, 0 undeclared); l2 grove: PASS 11 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 9 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4af080 | vt_85b0f8::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1512,6 +1640,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4af6e0 | CEventVehicleToSteal::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4af6f0 | CEventVehicleToSteal::GetEventPriority | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4af820 | CEventAcquaintancePed::Constructor | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (128 undeclared); split c-bug: PASS ? cases (136 undeclared); split pause-restart: PASS ? cases (124 undeclared); split world-cheats: PASS ? cases (127 undeclared); split anim-input: PASS ? cases (113 undeclared); split weapon-combat: PASS ? cases (145 undeclared); split dr; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4af890 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x4af8f0 | CEventAcquaintancePed::TakesPriorityOver | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4af970 | CEventAcquaintancePed::AffectsPedGroup | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x4afa30 | CEventAcquaintancePed::AffectsPed | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
@@ -1540,6 +1669,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b0a00 | CEventScriptCommand::Constructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 15 compared (0 mismatches, 15 undeclared); split ai2-freq-weapon-combat: PASS 9 compared (0 mismatches, 9 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4b0a30 | CEventScriptCommand::GetEventType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 155 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 63 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 67 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 73 cases (0 mismatches, 0 undeclared); l2 weap; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b0a40 | CEventScriptCommand::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4b0a50 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x4b0aa0 | CEventScriptCommand::CloneScriptTask | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: DIVERGED 6 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 9 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4b0ab0 | CEventScriptCommand::IsValid | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4b0af0 | CEventScriptCommand::AffectsPed | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: DIVERGED 6 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 9 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -1549,6 +1679,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b0cd0 | CEventInAir::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 756 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 18 cases (0 mismatches, 0 undeclared); l2 grove: PASS 18 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 36 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 27 cases (0 mismatches, 0 undeclared); l2 grove: PASS 18 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 756 cases (0 mismatches, 0 undeclar; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4b0ce0 | CEventInAir::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b0cf0 | CEventInAir::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 330 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 4 cases (0 mismatches, 0 undeclared); l2 grove: PASS 4 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 8 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 6 cases (0 mismatches, 0 undeclared); l2 grove: PASS 4 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 330 cases (0 mismatches, 0 undeclared); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4b0d00 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x4b0d10 | CEventVehicleDied::Constructor | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split driving: PASS ? cases (1 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b0d70 | CEventVehicleDied::GetEventType | AI | L2 | AI-GEN (2026-11-11): L2; l2 driving: PASS 50 cases (0 mismatches, 0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b0d80 | CEventVehicleDied::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1638,6 +1769,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b2440 | CEventPlayerCommandToGroup::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b2450 | CEventPlayerCommandToGroup::AffectsPed | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b2460 | CEventPlayerCommandToGroup::GetSourceEntity | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4b2470 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4b2520 | CEventPlayerCommandToGroup::TakesPriorityOver | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b2580 | CEventEscalator::AffectsPed | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b25e0 | CEventEscalator::TakesPriorityOver | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1647,6 +1779,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b2690 | CEventDanger::GetEventPriority | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b2700 | CEventDanger::GetSourceEntity | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b27b0 | CEventVehicleHitAndRun::IsCriminalEvent | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4b2850 | CEvent::GetSoundLevel | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
+| 0x4b29e0 | CInformGroupEvent::Process | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x4b2ae0 | CInformGroupEventQueue::Process | AI | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x4b2b00 | CEventEditableResponse::InformRespectedFriends | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4b2cd0 | CEventGunShot::AffectsPed | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -1755,6 +1889,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b7ba0 | CEventAreaCodes::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b7c10 | CEventDanger::CloneEditable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b7c80 | CEvent::~CEvent | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4b7cd0 | CInformGroupEventQueue::Add | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4b7df0 | CEventEditableResponse::InformGroup | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x4b8300 | CEventLeaderExitedCarAsDriver::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split anim-input: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b8320 | CEventLeaderExitedCarAsDriver::GetEventType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1777,10 +1912,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b88d0 | CTaskComplexUseClosestFreeScriptedAttractorSprint::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b88e0 | CTaskComplexUseClosestFreeScriptedAttractorSprint::~CTaskComplexUseClosestFreeScriptedAttractorSprint | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b8900 | CTaskComplexUseClosestFreeScriptedAttractorSprint::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x4b8b90 | CEventHandlerHistory::IsRespondingToEvent | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4b8ca0 | CEventHandlerHistory::GetCurrentEvent | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 300 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 300 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x4b8cc0 | CEventHandler::GetCurrentEventType | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x4b96d0 | CEventHandler::ComputeVehiclePotentialPassiveCollisionResponse | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4b98e0 | CEventHandler::ComputeChatPartnerResponse | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-police-gang PASS 21 compared 0 mismatches 0 undeclared; ai6v2-c-bug PASS 10 compared 0 mismatches 0 undeclared; ai6v2-car-ai PASS 46 compared 0 mismatches 0 undeclared;  | 2026-11-11 |
 | 0x4b99f0 | CEventHandler::ComputeSexyPedResponse | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 1 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4b9ff0 | CEventHandler::ComputeKnockOffBikeResponse | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-handler-driving: PASS 2 compared (0 mismatches, 2 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x4ba7c0 | CEventHandler::ComputeScriptCommandResponse | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4bb050 | CEventHandler::ComputeSignalAtPedResponse | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4bb130 | CEventHandler::ComputeCreatePartnerTaskResponse | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-police-gang PASS 2 compared 0 mismatches 0 undeclared; ai6v2-driving PASS 5 compared 0 mismatches 0 undeclared; ai6v2x-grove PASS 1 compared 0 mismatches 0 undeclared; v | 2026-11-11 |
 | 0x4bc370 | CEventHandler::IsTemporaryEvent | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 300 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 300 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -1788,6 +1927,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4bc4b0 | CEventHandlerHistory::RecordCurrentEvent | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 117 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 138 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 131 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 161 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4bc550 | CEventHandlerHistory::ClearAllEvents | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 2 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 2 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 1 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 2 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4bc580 | CEventHandlerHistory::TakesPriorityOverCurrentEvent | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 300 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 300 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x4bc600 | CEventHandler::SetEventResponseTask | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4bdb80 | CEventHandler::ComputePedCollisionWithPedResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4be7d0 | CEventHandler::ComputePedCollisionWithPlayerResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4c0170 | CEventHandler::ComputeDamageResponse | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 42 compared (0 mismatches, 17 undeclared); split ai2-freq-weapon-combat: PASS 13 compared (0 mismatches, 5 undeclared); split ai2-handler-driving: PASS 28 compared (0 mismatches, 11 undeclared); split ai2-handler-weapon-combat: PASS 13 compared (0 mismatches, 5 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -1795,6 +1935,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c2610 | CEventHandler::ComputePotentialPedCollideResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4c2fc0 | CEventHandler::ComputeVehicleDamageResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4c3820 | CEventHandler::FlushImmediately | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 3 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 3 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 2 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 3 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x4c3870 | CEventHandler::ComputeEventResponseTask-0 | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c3e80 | CEventHandler::Constructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 105 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 107 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 81 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 135 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4c3ec0 | CEventHandler::Destructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 73 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 79 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 69 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 114 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4c42f0 | CBaseModelInfo::SetHasBeenPreRendered | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
@@ -1898,6 +2039,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c5c20 | CModelInfo::IsBmxModel | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5c50 | CModelInfo::IsTrailerModel | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c5c80 | CModelInfo::IsVehicleModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c5cb0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5d10 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5d70 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5dd0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5e30 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5e90 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5ef0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4c5f50 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c6200 |  | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6210 | CAtomicModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c6230 | CDamageAtomicModelInfo::`scalar deleting destructor' | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -1919,6 +2068,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c6740 | CModelInfo::AddClumpModel | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c6770 | CModelInfo::AddVehicleModel | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c67a0 | CModelInfo::AddPedModel | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
+| 0x4c67d0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c6810 | CModelInfo::Initialise | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4c6c50 | CPedModelInfo::DeleteRwObject | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=4 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4c6d40 | CPedModelInfo::AddXtraAtomics | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -1929,12 +2079,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c7300 | CPedModelInfo::IncrementVoice | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c7340 | CPedModelInfo::SetClump | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=56 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4c73c0 | CVehicleModelInfo::GetNumDoors | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c7410 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c7470 | CVehicleModelInfo::ShutdownLightTexture | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c74b0 | CLinkedUpgradeList::AddUpgradeLink | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c74d0 | CLinkedUpgradeList::FindOtherUpgrade | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c7510 | CVehicleModelInfo::FindTextureCB | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c75a0 | CVehicleModelInfo::UseCommonVehicleTexDicationary | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c75c0 | CVehicleModelInfo::StopUsingCommonVehicleTexDicationary | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
+| 0x4c75e0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c7630 | CVehicleModelInfo::Init | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c7650 | CVehicleModelInfo::GetModelType | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c7660 | CVehicleModelInfo::GetAnimFileIndex | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
@@ -1997,6 +2149,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c9410 | CVehicleModelInfo::SetEnvironmentMapAtomicCB | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 all-frames batches sR0-sR2 (SA_L2_FROM=0, 1000/frame, spool drained): every call or >=1000 cases, 0 mismatches, 0 undeclared writes (sR0 l2 trace leaves plain at frame 202 because loader sampling changes heap allocation; per-case comparisons stay original vs Rust from the same restored state); all ports on Rust frame-identical; hook-off not run | 2026-11-07 |
 | 0x4c9430 | CVehicleModelInfo::SetEnvMapCoeffAtomicCB | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 (sIG grove in-game 4/frame, sPR pause-restart, sAF all-frames 1000/frame; RemoveWindowAlphaCB targeted run rwa): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical on the grove walk; hook-off not run | 2026-11-07 |
 | 0x4c9450 | CVehicleModelInfo::SetCarCustomPlate | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c94c0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c95c0 | CVehicleModelInfo::SetClump | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=31 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4c9680 | CVehicleModelInfo::CreateInstance | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=255 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4c97e0 | CVehicleModelInfo::DisableEnvMap | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
@@ -2064,10 +2217,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4cebe0 | CAnimBlendAssociation::SetFinishCallback | ANIM | L1 | PORT-ANIM-INPUT (2026-11-11): L1; sa-oracle l1 AnimAssocSetFinishCallback: 1,060,000 cases, 0 mismatches, PASS; in game: L2 grove:211/211, pr:52/52, cheats:69/69, anim-input:209/209 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4cec00 | CAnimBlendStaticAssociation::~CAnimBlendStaticAssociation | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:26 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:12 compared, 0 mismatches, 0 undeclared (PASS), cheats:16 compared, 0 mismatches, 0 undeclared (PASS), anim-input:35 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:6 compared, 0 mismatches, 0 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4cec20 | CAnimBlendStaticAssociation::Init | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:108 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:93 compared, 0 mismatches, 0 undeclared (PASS), cheats:112 compared, 0 mismatches, 0 undeclared (PASS), anim-input:97 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:63 compared, 0 mismatches, 0 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4cecf0 | CAnimBlendAssociation | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4ced50 | CAnimBlendAssociation::Init-0 | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:11 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:4 compared, 0 mismatches, 0 undeclared (PASS), cheats:4 compared, 0 mismatches, 0 undeclared (PASS), anim-input:9 compared, 0 mismatches, 0 undeclared (PASS-FP); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4cee40 | CAnimBlendAssociation::Init-1 | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4ceec0 | CAnimBlendAssociation::Init-2 | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:17 compared, 0 mismatches, 0 undeclared (DIVERGED), pr:200 compared, 0 mismatches, 0 undeclared (PASS), cheats:200 compared, 0 mismatches, 0 undeclared (PASS), anim-input:200 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:4 compared, 0 mismatches, 0 undeclared (DIVERGED), grove:463 compared, 0 mismatches, 0 undeclared (DIVERGED); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4cef60 | CAnimBlendStaticAssociation::Constructor2 | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4cefa0 | CAnimBlendAssociation | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4cefc0 | CAnimBlendAssociation::Constructor1-clump_hier | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:11 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:4 compared, 0 mismatches, 0 undeclared (PASS), cheats:4 compared, 0 mismatches, 0 undeclared (PASS), anim-input:9 compared, 0 mismatches, 0 undeclared (PASS-FP); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4cf020 | CAnimBlendAssociation::Constructor2-blend | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4cf080 | CAnimBlendAssociation::Constructor3-static_blend | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:13 compared, 0 mismatches, 13 undeclared (DIVERGED), pr:13 compared, 0 mismatches, 13 undeclared (DIVERGED), cheats:5 compared, 0 mismatches, 5 undeclared (DIVERGED), anim-input:13 compared, 0 mismatches, 13 undeclared (DIVERGED), grove:4 compared, 0 mismatches, 4 undeclared (DIVERGED), grove:463 compared, 0 mismatches, 463 undeclared (DIVERGED); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -2127,6 +2282,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d13a0 | CAnimBlendAssociation::UpdateTimeStep | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d13d0 | CAnimBlendAssociation::UpdateTime | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:200 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 0 undeclared (PASS), cheats:200 compared, 0 mismatches, 0 undeclared (PASS), anim-input:200 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:1000 compared, 0 mismatches, 0 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d1490 | CAnimBlendAssociation::UpdateBlend | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:200 compared, 0 mismatches, 2 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 2 undeclared (PASS), cheats:200 compared, 0 mismatches, 2 undeclared (PASS), anim-input:200 compared, 0 mismatches, 2 undeclared (PASS-FP), grove:1000 compared, 0 mismatches, 37 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4d1570 | RpAnimBlendNodeUpdateKeyFrames | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x4d1610 | CQuaternion::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x4d37a0 | CAnimBlendAssocGroup::IsCreated | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d3940 | CAnimManager::GetAnimationBlock- | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; entry bytes read as data by the protection (adc edi, [0x4D3940] at 0x156F054); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -2159,6 +2315,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d4410 | CAnimManager::BlendAnimation-hier | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:8 compared, 0 mismatches, 8 undeclared (PASS-FP), pr:4 compared, 0 mismatches, 4 undeclared (PASS), cheats:3 compared, 0 mismatches, 3 undeclared (PASS), anim-input:3 compared, 0 mismatches, 3 undeclared (PASS-FP); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d4610 | CAnimManager::BlendAnimation-id | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:200 compared, 0 mismatches, 98 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 92 undeclared (PASS), cheats:200 compared, 0 mismatches, 92 undeclared (PASS), anim-input:200 compared, 0 mismatches, 87 undeclared (PASS-FP), grove:118 compared, 0 mismatches, 45 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5620 | CAnimManager::LoadAnimFiles | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:1 compared, 0 mismatches, 1 undeclared (PASS-FP), pr:1 compared, 0 mismatches, 1 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), anim-input:1 compared, 0 mismatches, 1 undeclared (PASS-FP), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4d56f0 | ConvertBoneTag2BoneName | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x4d58a0 | ConvertPedNode2BoneTag | UNK-game | L2 | L2 grove:1000/1001 PASS (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x4d5980 | CPad::IsEnterJustPressed | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x4d59b0 | CPad::IsStandardKeyJustPressed | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
@@ -2173,6 +2330,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d5e60 | CCutsceneMgr::Shutdown | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5e80 | CCutsceneMgr::LoadCutsceneData | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split pr:2 compared, 0 mismatches, 2 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5ed0 | CCutsceneMgr::DeleteCutsceneData | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split pr:2 compared, 0 mismatches, 2 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4d6310 | ForAllFramesF | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
+| 0x4d6340 | ForAllFramesF | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
+| 0x4d6450 |  | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
+| 0x4d6510 | RpAnimBlendClumpInitSkinned | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
+| 0x4d66a0 |  | UNK-game | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x4d6ca0 | CAEAmbienceTrackManager::Reset | AUDIO | L2 | L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L2 menus-hud:1/1 PASS; L2 police-gang:1/1 PASS; L2 weapon-combat:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L | 2026-11-11 |
 | 0x4d6cc0 | CAEAmbienceTrackManager::StopAmbienceTrack | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 pause-restart:4/4 PASS (0 mismatches, 0 undeclared); L2 driving:2/2 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:2/2 PASS (0 mismatches, 0 undeclared); L2 world-cheats:2/2 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4d6cf0 | CAEAmbienceTrackManager::IsAmbienceTrackActive | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:2/2 PASS (0 mismatches, 0 undeclared); L2 driving:5/5 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:2/2 PASS (0 mismatches, 0 undeclared); L2 pause-restart:4/4 PASS (0 mismatches, 0 undeclared); L2 world-cheats:2/2 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -2452,6 +2614,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4ee940 | CAEScriptAudioEntity::ReportMissionAudioEvent-2 | AUDIO | implemented | PORT-AUDIO-1 (2026-11-11): implemented-needs-L2; no call in grove, driving, weapon-combat, pause-restart, world-cheats; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ee960 | CAEScriptAudioEntity::ReportMissionAudioEvent-1 | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4ee9a0 |  | UNK-game | L2 | L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L2 menus-hud:1/1 PASS; L2 police-gang:1/1 PASS; L2 weapon-combat:1/1 PASS; L2 air-water:1/1 PASS; L2 driving:1/1 PASS; L2 inf4:1/1 PASS; L | 2026-11-11 |
+| 0x4eea80 | approxEqual | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x4ef1a0 | CAESound::UnregisterWithPhysicalEntity | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4ef1c0 | CAESound::StopSound | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; split grove: COUNT; split driving: PASS; split weapon-combat: PASS; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4ef2b0 | CAESound::SetFlags | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:361/361 PASS (0 mismatches, 0 undeclared); L2 driving:247/247 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:213/213 PASS (0 mismatches, 0 undeclared); L2 pause-restart:104/104 PASS (0 mismatches, 0 undeclared); L2 world-cheats:112/112 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -2806,6 +2969,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x520190 | CCamera::CameraColDetAndReact | CAM | implemented | cam-port-2 ported; ported-not-hooked | 2026-11-11 |
 | 0x522c80 | CIdleCam::Process | CAM | L2 | split grove:1000 PASS-FP (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x526fc0 | CCam::Process | CAM | implemented | cam-port-2 ported; ported-not-hooked | 2026-11-11 |
+| 0x52cde0 | CClock::NormaliseGameClock | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x52cee0 | CClock::GetIsTimeInRange | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x52cf10 | CClock::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x52d150 | CClock::SetGameClock | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x52d1c0 | CControllerConfigManager::GetJoyButtonJustUp | INPUT | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; loop branches back into the patched entry bytes (sa-hook install test); L1 CcmGetJoyButtonJustUp: PASS (10^6 cases, 0 mismatches, 4 threads); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x52d1e0 | CControllerConfigManager::GetJoyButtonJustDown | INPUT | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; loop branches back into the patched entry bytes (sa-hook install test); L1 CcmGetJoyButtonJustDown: PASS (10^6 cases, 0 mismatches, 4 threads); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x52d200 | CControllerConfigManager::SaveSettings | INPUT | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:1 compared, 0 mismatches, 1 undeclared (PASS-FP), pr:3 compared, 0 mismatches, 3 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), anim-input:1 compared, 0 mismatches, 1 undeclared (PASS-FP), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -2911,19 +3078,26 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5334f0 | CEntity::TransformFromObjectSpace-ref | WORLD | L2 | L2 grove:1000/733323 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x533560 | CEntity::TransformFromObjectSpace-ptr | WORLD | L2 | L2 grove:161/161 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x5335e0 | CPtrListSingleLink::AddItem | UNK-game | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x533610 | CPtrListSingleLink::DeleteItem | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x533670 | CPtrListDoubleLink::AddItem | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x5336b0 | CPtrListDoubleLink::DeleteItem | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x533700 | CEntity::SetModelIndexNoCreate | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x533790 | CEntity::CreateEffects | WORLD | implemented | written, unverified (batch mvpe-ent-1); verification queue | 2026-11-11 |
+| 0x533bf0 | CEntity::DestroyEffects | WORLD | implemented | written, unverified (batch mvpc-world-2); verification queue | 2026-11-11 |
+| 0x533d30 | CEntity::CreateRwObject | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x533ed0 | CEntity::AttachToRwObject | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x533fb0 | CEntity::DetachFromRwObject | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x534030 | CEntity::DeleteRwObject | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x534120 | CEntity::GetBoundRect | WORLD | L2 | L2 grove:1000/190562 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x534250 | CEntity::GetBoundCentre-vec | WORLD | L2 | L2 grove:1000/3766 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x534290 | CEntity::GetBoundCentre-ref | WORLD | L2 | L2 grove:1000/1397 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x5342b0 | CEntity::RenderEffects | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x534310 | CEntity::Render | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
 | 0x5343f0 | CEntity::GetIsTouching-ent | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5344b0 | CEntity::GetIsTouching-vec | WORLD | L2 | L2 grove:1000/18788 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x534540 | CEntity::GetIsOnScreen | WORLD | L2 | L2 grove:1000/1056 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x535300 | CEntity::GetColModel | WORLD | L2 | L2 grove:1000/14853 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x535e90 | CEntity::Destructor | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
 | 0x535f00 | CEntity::UpdateAnim | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x536bc0 | CEntity::IsVisible | WORLD | L2 | L2 grove:1000/1001 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x536be0 | CEntity::GetDistanceFromCentreOfMassToBaseOfModel | WORLD | L2 | L2 grove:56/60 (0 mismatches; 0 undeclared) | 2026-11-11 |
@@ -2968,6 +3142,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5389e0 | CFileMgr::GetTotalSize | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x538a20 | CFileMgr::Tell | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x538a50 | CFileMgr::GetErrorReadWrite | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x538ad0 |  | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x538b30 | CFire::Initialise | WEAPON | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1,002,000 cases, 0 mismatches; L2 combat:60/60 (0 mismatches, 0 undeclared); L2 grove:60/60 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x538bb0 | CFireManager::Destructor | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x538bc0 | CFireManager::Init | WEAPON | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 combat:1/1 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:1/1 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -3003,10 +3178,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x53bb50 | CGame::InitialiseOnceBeforeRW | CORE | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): CORE split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; CORE split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x53bc30 | CGame::FinalShutdown | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x53bc60 | CGame::InitAfterLostFocus | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
+| 0x53bc80 | CGame::Initialise | CORE | implemented | written, unverified (batch mvpa-core-1); verification queue | 2026-11-11 |
+| 0x53bcf0 | CGame::ReInitGameObjectVariables | CORE | implemented | written, unverified (batch mvpa-core-2); verification queue | 2026-11-11 |
 | 0x53bed0 | CGame::ReloadIPLs | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53bee0 | CGame::Process | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x53c4a0 | CGame::CanSeeOutSideFromCurrArea | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x53c4b0 | CGame::CanSeeWaterFromCurrArea | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x53c500 | CGame::TidyUpMemory | CORE | L2 | INF-17 split-run L2 re-run by main session 2026-11-10 (lane 3, grove walk, group l): split-report PASS, splito/splitr traces IDENTICAL to plain over 5200 frames (target/e2e/lane-3/port-l2-split-l) | 2026-11-10 |
+| 0x53c550 | CGame::ShutDownForRestart | CORE | implemented | written, unverified (batch mvpa-core-2); verification queue | 2026-11-11 |
+| 0x53c680 | CGame::InitialiseWhenRestarting | CORE | implemented | written, unverified (batch mvpa-core-2); verification queue | 2026-11-11 |
 | 0x53c810 | CGame::DrasticTidyUpMemory | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x53cb00 | CGeneral::LimitAngle | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x53cb50 | CGeneral::LimitRadianAngle | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
@@ -3025,15 +3205,23 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x53d070 | CLoadMonitor::EndTimer | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x53d0b0 | CLoadMonitor::EndFrame | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x53d480 | CLoadMonitor::Render | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53d690 | App::DoRWStuffStartOfFrame | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
+| 0x53d7a0 | App::DoRWStuffStartOfFrame_Horizon | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x53d840 | App::DoRWStuffEndOfFrame | CORE | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): CORE split grove PASS-FP compared=2 mismatches=0 undeclared_cases=0 fingerprint_pairs=2; CORE split grove PASS compared=2 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x53d870 | App::PluginAttach | CORE | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): CORE split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; CORE split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x53d910 | Game::RwTerminate | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x53ded0 | CLoadingScreen::LoadingScreen | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=136 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x53df10 | Game::TheGame | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53df40 | Game::RenderScene | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x53e160 | Game::RenderDebugShit | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x53e170 | Game::RenderEffects | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
+| 0x53e230 | Game::Render2dStuff | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x53e530 | Game::RenderMenus | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x53e580 | Game::InitialiseGame | CORE | implemented | INF-17 split PASS (0 mismatches) but the split report lists undeclared writes, so not L2 under PLAN §5 (corrected by the main session 2026-11-10; extras to complete) | 2026-11-10 |
 | 0x53e600 | DoFade | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
+| 0x53e770 | Game::FrontendIdle | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
+| 0x53e8d0 |  | UNK-game | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
+| 0x53e920 | Game::Idle | CORE | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x53ed30 | TestModelIndices | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x53ed60 | CPad::~CPad | INPUT | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; lone `ret`: too short for the 5-byte entry patch; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x53edc0 | CPad::IsLeftShoulder1Pressed | INPUT | L1 | PORT-ANIM-INPUT (2026-11-11): L1; sa-oracle l1 PadIsLeftShoulder1Pressed: 10^6 cases, PASS, mismatches=0; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -3170,6 +3358,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x544a30 | CPhysical::Add | PHYS | L2 | PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x544c40 | CPhysical::ApplyAirResistance | PHYS | L2 | PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x5454c0 | CPhysical::ApplyFriction-self | PHYS | L2 | PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings | 2026-11-10 |
+| 0x546670 | CPhysical::ProcessShiftSectorList | PHYS | implemented | written, unverified (batch mvpe-phys-1); verification queue | 2026-11-11 |
 | 0x546d00 | CPhysical::ProcessEntityCollision | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x546db0 | CPhysical::PlacePhysicalRelativeToOtherPhysical | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x546ed0 | CPhysical::ApplyScriptCollision | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
@@ -3177,12 +3366,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x548320 | CPhysical::UnsetIsInSafePosition | PHYS | L2 | PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x5483d0 | CPhysical::ApplyFriction-void | PHYS | L2 | PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings | 2026-11-10 |
 | 0x5485e0 | CPhysical::ProcessControl | PHYS | L2 | PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings | 2026-11-10 |
+| 0x54ba60 | CPhysical::ProcessCollisionSectorList | PHYS | implemented | written, unverified (batch mvpe-phys-1); verification queue | 2026-11-11 |
+| 0x54cff0 | CPhysical::ProcessCollisionSectorList_SimpleCar | PHYS | implemented | written, unverified (batch mvpe-phys-1); verification queue | 2026-11-11 |
 | 0x54d570 | CPhysical::AttachEntityToEntity-vec | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x54d690 | CPhysical::AttachEntityToEntity-quat | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x54d920 | CPhysical::CheckCollision | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x54dab0 | CPhysical::CheckCollision_SimpleCar | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x54db10 | CPhysical::ProcessShift | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x54dec0 | CPhysical::TestCollision | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
+| 0x54dfb0 | CPhysical::ProcessCollision | PHYS | implemented | written, unverified (batch mvpe-phys-1); verification queue | 2026-11-11 |
 | 0x54e8f0 | CMatrixLink::Insert | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54e910 | CMatrixLink::Remove | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54e9d0 | CMatrixLinkList::AddToList1 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -3195,17 +3387,23 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x54eb50 | CMatrixLinkList::GetNumUsed2 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x54ece0 | TransformPoint | WORLD | L2 | L2 grove:1000/691742 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x54ee30 | TransformVectors | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x54eef0 | TransformPoints | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x54ef40 | CSimpleTransform::UpdateRwMatrix | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x54ef90 | CSimpleTransform::Invert | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x54efd0 | CPlaceable::ShutdownMatrixArray | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x54f010 | CPlaceable::FreeStaticMatrix | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x54f0c0 | CMatrixLink | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x54f0d0 | CMatrixLinkList::Init | MATH | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x54f1e0 |  | UNK-game | L2 | L2 grove:1000/59978 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x54f200 | CPlaceable::IsWithinArea-xy | WORLD | L2 | L2 grove:1000/1001 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x54f2b0 | CPlaceable::IsWithinArea-xyz | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x54f3a0 | CPlaceable::InitMatrixArray | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x54f3b0 | CPlaceable::RemoveMatrix | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x54f440 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x54f490 |  | UNK-game | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x54f560 | CPlaceable::AllocateMatrix | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x54f5d0 | CPlaceable::~CPlaceable | UNK-game | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x54f610 | CPlaceable::SetMatrix | WORLD | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
 | 0x54ff60 | CPools::GetPedRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x54ff90 | CPools::GetPed | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
 | 0x54ffc0 | CPools::GetVehicleRef | CORE | implemented | ARCH-1: sa-core #[hook] port (docs/arch/pilot-ports.md); host unit tests only; L2 by INF-8 | 2026-11-05 |
@@ -3237,6 +3435,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5521d0 | CPtrList::IsMemberOfList | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 driving: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 misma; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x552240 | CPtrNodeSingleLinkPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5522e0 | CPtrNodeDoubleLinkPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552400 | CPtrListSingleLink::Flush | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x552470 | CPtrListDoubleLink::Flush | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x5525a0 | CQuadTreeNode<T>::FindSector-rect | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x552640 | CQuadTreeNode<T>::FindSector-vec | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5526a0 | CQuadTreeNode<T>::InSector | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
@@ -3248,6 +3448,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x552a40 | CQuadTreeNode<T>::DeleteItem- | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vB,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x552a90 | CQuadTreeNode<T>::DeleteItem-rect | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x552af0 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x552b50 |  | UNK-game | implemented | written, unverified (batch mvpb-core-1); verification queue | 2026-11-11 |
 | 0x552c00 | CQuadTreeNode<T>::InitPool | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x552cd0 | CQuadTreeNode<T>::AddItem | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vB,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x5531c0 | CRenderer::Init | RENDER | implemented | PORT-RENDER-1 (2026-11-11): ported-not-hooked; 1-byte entry (ret); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -3295,6 +3496,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x555900 | CRenderer::ScanSectorList_RequestModels | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:39/39 PASS-FP (0 mismatches, 7 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x555960 | CRenderer::RequestObjectsInFrustum | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS-FP (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x555cb0 | CRenderer::RequestObjectsInDirection | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x555dc0 | CRopes::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x556000 | CRopes::FindRope | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x556070 | CRope::CreateHookObjectForRope | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x556780 | CRope::Remove | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x556b10 | CRopes::Shutdown | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x558d70 | CRopes::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x558de0 | CStats::GetStatID | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x558e30 | CStats::IsStatFloat | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x558e40 | CStats::GetStatValue--OG | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
@@ -3313,10 +3520,17 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5595f0 | CStats::CheckForThreshold | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x559630 | CStats::IsStatCapped | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x559730 | CStats::ProcessReactionStatsOnDecrement | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x559760 | CStats::CheckForStatsMessage | WORLD | implemented | written, unverified (batch mvpb-world-5); verification queue | 2026-11-11 |
+| 0x559860 | CStats::LoadStatUpdateConditions | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
+| 0x5599b0 | CStats::LoadActionReactionStats | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x559a50 | CStats::FindMaxNumberOfGroupMembers | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x559fa0 | CStats::DecrementStat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x55a070 | CStats::SetStatValue | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x55b900 | CStats::ProcessReactionStatsOnIncrement | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
+| 0x55bc50 | CStats::UpdateRespectStat | WORLD | implemented | written, unverified (batch mvpb-world-5); verification queue | 2026-11-11 |
+| 0x55bf20 | CStats::UpdateSexAppealStat | WORLD | implemented | written, unverified (batch mvpb-world-5); verification queue | 2026-11-11 |
+| 0x55c0c0 | CStats::Init | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
+| 0x55c180 | CStats::IncrementStat | WORLD | implemented | written, unverified (batch mvpb-world-5); verification queue | 2026-11-11 |
 | 0x55c410 | CStats::SetNewRecordStat | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x55c660 | CStats::UpdateStatsWhenSprinting | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x55c6f0 | CStats::UpdateStatsWhenRunning | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
@@ -3446,6 +3660,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5631e0 | CWorld::Initialise | WORLD | L2 | split grove: PASS 1 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x563220 | CWorld::Add | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x563280 | CWorld::Remove | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x5632b0 | CWorld::ProcessVerticalLineSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
 | 0x563390 | CWorld::CastShadowSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x563430 | CWorld::ProcessPedsAfterPreRender | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x563470 | CWorld::ClearScanCodes | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
@@ -3458,15 +3673,35 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x563fd0 | CWorld::FindPlayerSlotWithRemoteVehiclePointer | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x564000 | CWorld::FindPlayerSlotWithVehiclePointer | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x564040 |  | UNK-game | L2 | L2 grove:20/708 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x564360 | CWorld::ClearForRestart | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
+| 0x564500 | CWorld::ProcessVerticalLineSector | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x5647f0 | CWorld::ProcessAttachedEntities | WORLD | implemented | written, unverified (batch mvpb-world-2); verification queue | 2026-11-11 |
+| 0x564970 | CWorld::GetIsLineOfSightSectorListClear<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x564a20 | CWorld::FindObjectsInRange | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x564c70 | CWorld::FindObjectsOfTypeInRange | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
+| 0x564ed0 | CWorld::FindLodOfTypeInRange | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x565000 | CWorld::FindObjectsKindaCollidingSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
 | 0x5650e0 | CWorld::FindObjectsIntersectingCubeSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x565300 | CWorld::FindMissionEntitiesIntersectingCubeSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x565450 | CWorld::FindNearestObjectOfTypeSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x565cb0 | CWorld::RemoveFallenPeds | WORLD | implemented | written, unverified (batch mvpb-world-2); verification queue | 2026-11-11 |
+| 0x565e80 | CWorld::RemoveFallenCars | WORLD | implemented | written, unverified (batch mvpb-world-2); verification queue | 2026-11-11 |
+| 0x566140 | CWorld::TestSphereAgainstSectorList<CPtrListDoubleLink<CPhysical*>> | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
 | 0x566420 | CWorld::PrintCarChanges | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x566510 | CWorld::TestForUnusedModels- | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5667f0 | CWorld::ClearPedsFromArea | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5668f0 | CWorld::SetAllCarsCanBeDamaged | WORLD | L2 | L2 grove:8/8 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x566950 | CWorld::ExtinguishAllCarFiresInArea | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x566c10 | CWorld::StopAllLawEnforcersInTheirTracks | WORLD | L2 | L2 grove:1/1 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x566c90 | CWorld::FindUnsuspectingTargetCar | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x5674e0 | CWorld::ProcessVerticalLine | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x568ad0 | CWorld::GetIsLineOfSightSectorClear | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x568b80 | CWorld::FindObjectsKindaColliding | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x5696c0 | CWorld::FindGroundZFor3DCoord | WORLD | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
+| 0x569e20 | CWorld::TestSphereAgainstWorld | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x56a490 | CWorld::GetIsLineOfSightClear | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x56b5e0 | CWorld::ProcessLineOfSightSector | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
+| 0x56ba00 | CWorld::ProcessLineOfSight | WORLD | implemented | written, unverified (batch mvpc-world-1); verification queue | 2026-11-11 |
 | 0x56cde0 |  | UNK-game | L2 | split car-ai-final:2/2 (0 mismatches; 0 undeclared); split police-gang-a:16/16 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x56ce30 |  | UNK-game | L2 | split car-ai-final:1/1 (0 mismatches; 0 undeclared); split police-gang-a:1/1 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x56ce80 | CAccidentManager::ReportAccident | POP | L2 | PORT-POP (2026-11-11): L2; split cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
@@ -3524,6 +3759,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x56eab0 | CPlayerInfo::AddHealth | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x56eb30 | CPlayerInfo::StreamParachuteWeapon | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x56ec40 | CPlayerInfo::GivePlayerParachute | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
+| 0x56ef90 |  | WEAPON | implemented | written, unverified (batch mvpb-weapon-1); verification queue | 2026-11-11 |
 | 0x56f210 | CPlayerPedData::SetInitialState | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 combat:2/2 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:2/2 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x56f330 | CPlayerInfo::Clear | PED | implemented | PED-2 ported; implemented | 2026-11-11 |
 | 0x56f4e0 | CPlayerInfo::FindClosestCarSectorList | PED | implemented | ped-port-3 ported; implemented | 2026-11-11 |
@@ -3769,6 +4005,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5910e0 | FurnitureGroup_c::AddSubGroup | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x591130 | FurnitureGroup_c::GetFurniture | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x591170 | FurnitureGroup_c::GetRandomId | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x5911a0 | FurnitureManager_c::Exit | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x5911e0 | FurnitureManager_c::GetFurniture | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x591220 | FurnitureManager_c::GetRandomId | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5913b0 | Interior_c::GetFurnitureEntity | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -3794,6 +4031,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x595250 | InteriorGroup_c::ContainsInteriorType | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x597fe0 | InteriorGroup_c::Constructor | WORLD | L2 | L2 grove:8/8 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x597ff0 | InteriorGroup_c::Destructor | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x598010 | InteriorManager_c::Exit | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x598080 | InteriorManager_c::ActivatePeds | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x598180 | InteriorManager_c::SetEntryExitPtr | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x598240 | InteriorManager_c::GetPedsInteriorGroup | WORLD | L2 | L2 grove:193/193 (0 mismatches; 0 undeclared) | 2026-11-11 |
@@ -3807,6 +4045,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5984b0 | InteriorManager_c::ReturnInteriorToPool | WORLD | L2 | split grove: PASS 3 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x59a840 | CMatrix::ConvertToEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59aa40 | CMatrix::ConvertFromEulerAngles | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59ac90 | CMaths::InitMathsTables | MATH | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x59acd0 | CMatrix | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x59acf0 | CMatrix::Detach | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x59ad20 | CMatrix::UpdateMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x59ad70 | CMatrix::UpdateRwMatrix | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -3847,6 +4087,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x59c670 | CVector::FromMultiply | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x59c6d0 | CVector::FromMultiply3x3 | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x59c730 | CVector::CrossProduct-out | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
+| 0x59c790 | Multiply3x3 | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
+| 0x59c810 |  | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
 | 0x59c890 | CMatrix::operator*-Vec | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (CPU-decided, interim authority i7-14700F under Wine) | 2026-11-05 |
 | 0x59c910 | CVector::Normalise | MATH | L2 | INF-8 inf8-l2.sh: 1000 in-game cases (grove-walk replay), 0 mismatches, 0 undeclared writes | 2026-11-05 |
 | 0x59c970 | CVector::NormaliseAndMag | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
@@ -3856,10 +4098,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x59e650 | BreakManager_c::Init | WORLD | implemented | WORLD-2 ported; ported-unhookable | 2026-11-11 |
 | 0x59e670 | BreakManager_c::Update | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59e6a0 | BreakManager_c::Render | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x59e720 | BreakManager_c::ResetAll | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x59e9b0 | BreakManager_c::Add | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59ea00 | CDummyObject::CDummyObject | STREAM | L2 | STREAM-L2 (2026-11-08): main-session port-l2.sh lane 2 batches sR301/sR302 (SA_L2_FROM=0, 1000/frame): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical; hook-off not run | 2026-11-08 |
 | 0x59ea20 | CDummyObject::CDummyObject | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59eab0 | CDummyObject::~CDummyObject | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x59eac0 | CDummyObject::CreateObject | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x59eb50 | CDummyObject::`scalar deleting destructor' | WORLD | L2 | split grove: PASS 9 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x59eb70 | CDummyObject::UpdateFromObject | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59ec40 | CHandObject::ProcessControl | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -3867,9 +4111,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x59efe0 | CHandObject::`scalar deleting destructor' | UNK-game | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59f000 |  | UNK-game | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59f090 | CBaseModelInfo::IsBreakableStatuePart | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x59f0c0 | tColLighting::GetCurrentLighting | UNK-game | implemented | written, unverified (batch mvpb-coll-1); verification queue | 2026-11-11 |
 | 0x59f110 | CObject::CreateRwObject | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x59f120 | CObject::CanBeDeleted | WORLD | L2 | L2 grove:1000/1136 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x59f160 | CObject::SetRelatedDummy | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x59f180 | CObject::Render | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x59f200 | CObject::SetMatrixForTrainCrossing | WORLD | L2 | L2 grove:24/36 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x59f2d0 | CObject::TryToExplode | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59f300 | CObject::SetObjectTargettable | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -3886,6 +4132,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x59f5c0 | CObject::LockDoor | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59f840 | CObject::Init | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x59fd00 | CObject::GetLightingFromCollisionBelow | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x59fd50 | CObject::PreRender | WORLD | implemented | written, unverified (batch mvpc-world-2); verification queue | 2026-11-11 |
 | 0x5a0760 | CObject::SetIsStatic | WORLD | L2 | L2 grove:457/534 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x5a17b0 | CObject::Teleport | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5a1840 | CObject::TryToFreeUpTempObjects | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -3903,10 +4150,16 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5a1f20 | delete | UNK-game | L2 | split grove2: PASS 2 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x5a1f60 | CObject::Create-intbool | WORLD | L2 | split grove: PASS 7 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x5a2070 | CObject::Create-dummy | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x5a2130 | CObject::ProcessControl | WORLD | implemented | written, unverified (batch mvpe-ent-1); verification queue | 2026-11-11 |
 | 0x5a2b90 | CObject::IsObjectPointerValid_NotInWorld | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5a2bd0 | CObject::`scalar deleting destructor' | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x5a2c20 | CObject::IsObjectPointerValid | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5a2d00 | CObjectData::SetObjectData | WORLD | L2 | L2 grove:399/472 (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x5a2eb0 | ProcSurfaceInfo_c::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5a3140 | ProcObjectMan_c::LoadDataFile | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x5a3270 | ProcSurfaceInfo_c::Exit | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5a3ea0 | ProcObjectMan_c::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5a3ee0 | ProcObjectMan_c::Exit | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x5a40f0 | CProjectile::`scalar deleting destructor' | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5a4150 | Common::WriteRaster | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5a78f0 | CPedClothesDesc::Initialise | PED | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1002000 cases, 0 mismatches; L2 combat:1/1 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:1/1 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -3928,8 +4181,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5a82c0 | CClothes::RebuildPlayer | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; split-combat: DIVERGED 0/1 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: DIVERGED 0/1 compared, 0 mismatches; split-pr: DIVERGED 0/2 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5a8390 | CClothes::RebuildPlayerIfNeeded | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; split-combat: DIVERGED 0/2 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: DIVERGED 0/2 compared, 0 mismatches; split-pr: DIVERGED 0/2 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5afa50 | FindCutsceneAudioTrackId | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:1/1, pr:2/2, cheats:1/1, anim-input:1/1 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x5afad0 | CCutsceneMgr::HideRequestedObjects | ANIM | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x5b0130 | CCutsceneMgr::CalculateBoundingSphereRadiusCB | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b01e0 | CCutsceneMgr::UpdateCutsceneObjectBoundingBox | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:145/145, pr:780/780, cheats:145/145, anim-input:145/145 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x5b02a0 | CCutsceneMgr::CreateCutsceneObject | ANIM | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x5b0380 | CCutsceneMgr::AddCutsceneHead | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; entry shorter than the 5-byte patch before its ret; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b0390 | CCutsceneMgr::SetCutsceneAnim | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:6 compared, 0 mismatches, 6 undeclared (PASS-FP), pr:12 compared, 0 mismatches, 12 undeclared (PASS), cheats:6 compared, 0 mismatches, 6 undeclared (PASS), anim-input:6 compared, 0 mismatches, 6 undeclared (PASS-FP), grove:6 compared, 0 mismatches, 6 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b0420 | CCutsceneMgr::SetCutsceneAnimToLoop | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -3937,11 +4192,13 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5b0450 | CCutsceneMgr::AttachObjectToBone | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b0480 | CCutsceneMgr::AttachObjectToFrame | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b04b0 | CCutsceneMgr::AttachObjectToParent | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x5b04d0 | CCutsceneMgr::FinishCutscene | ANIM | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x5b0550 | CCutsceneMgr::GetCutsceneTimeInMilleseconds | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b0570 | CCutsceneMgr::HasCutsceneFinished | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:26/26, pr:150/150, cheats:26/26, anim-input:26/26 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b13f0 | CCutsceneMgr::LoadCutsceneData_overlay | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split pr:2 compared, 0 mismatches, 2 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b1460 | CCutsceneMgr::StartCutscene | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:1 compared, 0 mismatches, 1 undeclared (PASS-FP), pr:2 compared, 0 mismatches, 2 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), anim-input:1 compared, 0 mismatches, 1 undeclared (PASS-FP), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b1700 | CCutsceneMgr::SkipCutscene | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x5b19d0 | CCutsceneObject::CCutsceneObject | ANIM | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x5b1ab0 | CCutsceneObject::SetupCarPipeAtomicsForClump | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5b1b20 | CCutsceneObject::SetModelIndex | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x5b2090 |  | CAM | implemented | cam-port-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -4024,9 +4281,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5ba060 | CGame::ValidateVersion | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x5ba120 | CGame::D3DDeviceRestoreCallback | CORE | L2 | INF-17 split-run L2 re-run by main session 2026-11-10 (lane 3, grove walk, group l): split-report PASS, splito/splitr traces IDENTICAL to plain over 5200 frames (target/e2e/lane-3/port-l2-split-l) | 2026-11-10 |
 | 0x5ba160 | CGame::InitialiseEssentialsAfterRW | CORE | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): CORE split grove PASS compared=1 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
+| 0x5ba1a0 | CGame::Init2 | CORE | implemented | written, unverified (batch mvpa-core-1); verification queue | 2026-11-11 |
+| 0x5ba400 | CGame::Init3 | CORE | implemented | written, unverified (batch mvpa-core-1); verification queue | 2026-11-11 |
 | 0x5ba520 | Light::LightsCreate | CORE | L2 | INF-17 split-run L2 re-run by main session 2026-11-10 (lane 3, grove walk, group l): split-report PASS, splito/splitr traces IDENTICAL to plain over 5200 frames (target/e2e/lane-3/port-l2-split-l) | 2026-11-10 |
 | 0x5ba690 | CFont::Initialise | HUD | L2 | split split-menus-hud-1: PASS 1 compared; 0 mismatches; 1 undeclared; split split-menus-hud: PASS 1 compared; 0 mismatches; 0 undeclared | 2026-11-11 |
 | 0x5ba850 | CHud::Initialise | HUD | L2 | split split-menus-hud: PASS 1 compared; 0 mismatches; 1 undeclared | 2026-11-11 |
+| 0x5ba8c0 | CTempColModels::Initialise | COLL | implemented | written, unverified (batch mvpe-tempcol-1); verification queue | 2026-11-11 |
 | 0x5bb9f0 |  | AI | implemented | PORT-AI-1 (2026-11-11): deferred (file I/O + sscanf into stack buffers; not done in time); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5bbac0 | CTimeCycle::Initialise | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x5bc090 | CPopCycle::Initialise | POP | implemented | POP-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
@@ -4046,8 +4306,23 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5bf3d0 | cHandlingDataMgr::Initialise | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x5bf6b0 | CAnimManager::Initialise | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:1 compared, 0 mismatches, 1 undeclared (PASS-FP), pr:1 compared, 0 mismatches, 1 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), anim-input:1 compared, 0 mismatches, 1 undeclared (PASS-FP), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5bf750 | CWeaponInfo::Initialise | WEAPON | L2 | PORT-WEAPON-PED (2026-11-11): L2; split-combat: PASS-FP 1/1 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: PASS-FP 1/1 compared, 0 mismatches; split-pr: PASS-FP 2/2 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
+| 0x5bf840 | CGame::Init1 | CORE | implemented | written, unverified (batch mvpa-core-1); verification queue | 2026-11-11 |
+| 0x5bfa90 | CGame::InitialiseCoreDataAfterRW | CORE | implemented | written, unverified (batch mvpa-core-1); verification queue | 2026-11-11 |
 | 0x5bfb40 | FurnitureManager_c::GetGroupId | WORLD | L2 | L2 grove:6/6 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x5c0230 | FurnitureGroup_c::AddFurniture | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x5c0280 | FurnitureManager_c::LoadFurniture | WORLD | implemented | written, unverified (batch mvpc-world-2); verification queue | 2026-11-11 |
+| 0x5c0500 | InteriorManager_c::Init | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
+| 0x5c05f0 | FxSystemBP_c::Load | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c0a30 | FxEmitterBP_c::LoadTextures | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c0b70 | FxInfoManager_c::Load | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c16f0 | FxInterpInfoFloat_c::Load | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c18f0 | FxInterpInfoU255_c::Load | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c1b10 | FxInterpInfo32_c::Load | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c1d30 | FxInterpInfo255_c::Load | UNK-game | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c1f50 | FxManager_c::LoadFxSystemBP | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c2010 | FxPrimBP_c::Load | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c2420 | FxManager_c::LoadFxProject | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
+| 0x5c25f0 | FxEmitterBP_c::Load | RENDER | implemented | written, unverified (batch mvpc-fx-1); verification queue | 2026-11-11 |
 | 0x5d0880 | CPools::Save | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5d0890 | CPools::Load | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5d2830 | CObject::Save | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -4082,7 +4357,29 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5d54a0 | CIplStore::Load | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x5d5530 | CGangWars::Save | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5d5860 | CRadar::Save | HUD | implemented | hud-port-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x5d5b30 |  | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
 | 0x5d5db0 | CVehicleModelInfo::SetDirtTextures | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 (sIG grove in-game 4/frame, sPR pause-restart, sAF all-frames 1000/frame; RemoveWindowAlphaCB targeted run rwa): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical on the grove walk; hook-off not run | 2026-11-07 |
+| 0x5d8980 | IsEnvironmentMappingSupported | UNK-game | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5d8be0 | CustomEnvMapPipeMaterialData::FromBuffer | UNK-game | implemented | written, unverified (batch mvpa-render-3); verification queue | 2026-11-11 |
+| 0x5d9060 |  | UNK-game | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5d9110 |  | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x5d91b0 |  | UNK-game | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5d9260 |  | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x5d9300 |  | UNK-game | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5d93b0 |  | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x5dab00 | CGrassRenderer::GenPointInTriangle | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5dabb0 | CGrassRenderer::SetCurrentScanCode | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5db310 | CPlantMgr::UpdateAmbientColor | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5db3d0 | CPlantMgr::CalculateWindBending | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5db650 | CPlantMgr::SetPlantFriendlyFlagInAtomicMI | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5db6d0 | CPlantLocTri::Release | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5db7d0 | CPlantColEntEntry::AddEntry | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5db8a0 | CPlantColEntEntry::ReleaseEntry | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5dc210 | CPlantLocTri::GetPlantDensity | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5dcf30 | CPlantMgr::PreUpdateOnceForNewCameraPos | RENDER | implemented | written, unverified (batch mvpa-render-3); verification queue | 2026-11-11 |
+| 0x5dcfa0 | CPlantMgr::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5dd6c0 | CPlantSurfPropMgr::Initialise | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x5dd780 | CPlantMgr::ReloadConfig | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x5ddb70 | CCivilianPed::Constructor | PED | implemented | PED-2 ported; implemented | 2026-11-11 |
 | 0x5ddbe0 | CCivilianPed::~CCivilianPed | PED | implemented | PED-2 ported; implemented | 2026-11-11 |
 | 0x5ddbf0 | CCivilianPed::ProcessControl | PED | L2 | split wc3: PASS 150/150 compared; 0 mismatches; 0 undeclared; rust trace IDENTICAL; split driving: PASS 150/150 compared; 0 mismatches; 0 undeclared; rust trace IDENTICAL; split weapon-combat: PASS 15 | 2026-11-11 |
@@ -4110,6 +4407,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5de680 | CGangs::Initialise | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x5de8d0 | CAEPedAudioEntity::Constructor | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5de990 | CAEWeaponAudioEntity::Constructor | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x5dea00 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x5dea60 | CEventSoundQuiet::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 884 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches,; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5dea70 | CEventSoundQuiet::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5dea80 | CEventSoundQuiet::GetSourceEntity | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4239,10 +4537,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5e8be0 | CPed::GiveWeaponWhenJoiningGang | PED | implemented | ped-port-3 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5e8c80 | CPed::`scalar deleting destructor' | PED | implemented | PED-2 ported; implemented | 2026-11-11 |
 | 0x5e8cd0 | CPed::ProcessControl | PED | L2 | split wc3: PASS 150/150 compared; 0 mismatches; 0 undeclared; rust trace IDENTICAL; split driving: PASS 150/150 compared; 0 mismatches; 0 undeclared; rust trace IDENTICAL; split weapon-combat: PASS 15 | 2026-11-11 |
+| 0x5e95b0 | CPedTaskPair::Flush | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5e9680 | CPedShelterAttractor::IsAtHeadOfQueue | UNK-game | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5e9800 |  | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5eb530 | CPedAttractor::IsAtHeadOfQueue | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5eb690 | CPedAttractorManager::IsPedRegisteredWithEffect<CPedAttractor> | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5eb6f0 | CPedAttractorManager::FindAssociatedAttractor<CPedAttractor> | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x5ebb00 | CPedAttractorManager::HasEmptySlot | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ebba0 | CPedAttractorManager::HasQueueTailArrivedAtSlot | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ec220 |  | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4302,10 +4602,22 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5f0250 | CPed::RemoveWeaponAnims | PED | L2 | split-combat: PASS 4/4 compared; 0 mismatches; 0 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc; 3500 frames; 17 subsystems) | 2026-11-11 |
 | 0x5f02c0 | CPed::IsPedHeadAbovePos | PED | L2 | split PASS world-cheats (7 calls; all compared); 0 mismatches; 0 undeclared; no calls in the other 7 recordings; rust traces IDENTICAL (tag ped3A-world-cheats) | 2026-11-11 |
 | 0x5f0360 | CPed::KillPedWithCar | PED | implemented | ped-port-3 ported; specified | 2026-11-11 |
+| 0x5f1450 | CPedGeometryAnalyser::ComputeEntityHitSide-2 | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x5f1600 | CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f1670 | CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f1750 | CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f1890 | CPedGeometryAnalyser::ComputeRouteRoundSphere | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5f1b70 | CPedGeometryAnalyser::CanPedTargetPoint | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f1c40 | CPedGeometryAnalyser::CanPedTargetPed | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f1fa0 | CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5f3650 | CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x5f3660 | CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x5f3ac0 | CPedGeometryAnalyser::ComputeEntityHitSide-3 | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f3b70 | CPedGeometryAnalyser::ComputeClosestSurfacePoint-ped | AI | implemented | PORT-AI-1 (2026-11-11): deferred (low-confidence geometry; not settled in time); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5f3bc0 | CPedGeometryAnalyser::ComputeEntityHitSide-1 | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f3c20 | CPedGeometryAnalyser::ComputeEntityBoundingSphere | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x5f3dd0 | CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-2 | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5f6110 | CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-Entity | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f6260 | vt_86c6d0::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 55 cases (0 mismatches, 0 undeclared); l2 grove: PASS 10 cases (0 mismatches, 0 undeclared); l2 grove: PASS 10 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 55 cases (0 mismatches, 0 undeclared); l2 driving: PASS 103 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5f6270 | vt_86c6d0::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5f6280 | vt_86c6d0::Clone | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4317,11 +4629,17 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5f63d0 | CEventPlayerCommandToGroupAttack::~CEventPlayerCommandToGroupAttack | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5f6400 | CEventPlayerCommandToGroupAttack::GetEventPriority | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5f6410 | vt_86c6d0::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 18 cases (0 mismatches, 0 undeclared); l2 grove: PASS 3 cases (0 mismatches, 0 undeclared); l2 grove: PASS 3 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 18 cases (0 mismatches, 0 undeclared); l2 driving: PASS 33 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5f6450 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f6470 | CPedGroupDefaultTaskAllocatorFollowAnyMeans::GetType | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5f6480 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f64a0 | CPedGroupDefaultTaskAllocatorFollowLimited::GetType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5f64b0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f64d0 | CPedGroupDefaultTaskAllocatorStandStill::GetType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5f64e0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f6500 | CPedGroupDefaultTaskAllocatorChat::GetType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5f6510 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f6530 | CPedGroupDefaultTaskAllocatorRandom::GetType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5f6540 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5f6560 | CPedGroupDefaultTaskAllocatorSitInLeaderCar::GetType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5f65a0 | CTaskSimpleChat::CTaskSimpleChat | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 2 cases (0 mismatches, 0 undeclared); split grove: PASS 12 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5f65e0 | CTaskSimpleChat::Clone | AI | L2 | AI-GEN (2026-11-11): L2; split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -4340,6 +4658,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5f6950 | CPedGroupMembership::GetObjectForPedToHold | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 7 cases (0 mismatches, 0 undeclared); split grove: PASS 14 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 6 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5f69a0 | CPedGroupMembership::GetLeader | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5f69b0 | CPedGroupMembership::GetMember | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 70 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 53 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x5f69c0 | CPedGroupMembership::IsLeader | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x5f69e0 | CPedGroupMembership::IsFollower | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x5f6a10 | CPedGroupMembership::IsMember | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x5f6a50 | CPedGroupMembership::CountMembers | AI | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
@@ -4348,8 +4667,13 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5f6e90 | CPedGroupDefaultTaskAllocatorRandom::AllocateDefaultTasks | AI | L2 | split ai5v3-s-rec: PASS 25 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 25 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 20 cases (0 mismatches; 0 undeclare | 2026-11-11 |
 | 0x5f7200 | CPedGroupDefaultTaskAllocators::Get | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 4 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 4 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 4 cases (0 mismatches, 0 undeclared); l2 driving: PASS 4 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 5 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 4 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5f7250 | CPedGroupIntelligence::Constructor | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
+| 0x5f7340 | CPedGroupIntelligence::SetGroupDecisionMakerType | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f7350 | CPedGroupIntelligence::Flush | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f7470 | CPedGroupIntelligence::AddEvent- | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x5f7540 | CPedGroupIntelligence::SetTask | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 24 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x5f76c0 | CPedGroupIntelligence::ReportFinishedTask-Impl | AI | L2 | split ai5v3-s-rec: PASS 10 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 10 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared | 2026-11-11 |
+| 0x5f7760 | CPedGroupIntelligence::IsGroupResponding | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
+| 0x5f77a0 | CPedGroupIntelligence::IsCurrentEventValid | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x5f7800 | CPedGroupIntelligence::ComputeScriptCommandTasks | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5f7a00 | CGroupEventHandler::ComputeDrivebyResponse | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5f7a60 | CGroupEventHandler::IsKillTaskAppropriate | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-police-gang PASS 25 compared 0 mismatches 0 undeclared; ai6v2-c-bug PASS 39 compared 0 mismatches 0 undeclared; ai6v2-car-ai PASS 25 compared 0 mismatches 0 undeclared;  | 2026-11-11 |
@@ -4360,8 +4684,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5f7fb0 | CTaskSimpleAnim::~CTaskSimpleAnim | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS-FP 12 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 2 cases (0 mismatches, 0 undeclared); split grove: PASS 12 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5f7fd0 | CTaskSimpleChat::Destructor | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub)); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5f8020 | CPedGroupMembership::AddFollower | AI | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x5f80d0 | CPedGroupMembership::RemoveMember-ByMemIdx | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x5f85a0 | CPedGroupIntelligence::GetTaskMain | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
 | 0x5f8620 | CPedGroupIntelligence::GetTaskSecondary | AI | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
 | 0x5f8650 | CPedGroupIntelligence::GetTaskSecondarySlot | AI | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
+| 0x5f86f0 | CPedGroupIntelligence::ReportFinishedTask-Wrapper | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
+| 0x5f87a0 | CPedGroupIntelligence::ProcessIgnorePlayerGroup | AI | implemented | written, unverified (batch mvpb-ai-4); verification queue | 2026-11-11 |
 | 0x5f8900 | CGroupEventHandler::ComputeResponseLeaderEnteredCar | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5f90a0 | CGroupEventHandler::ComputeResponseLeaderExitedCar | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-car-ai PASS 1 compared 0 mismatches 0 undeclared; ai6v2-driving PASS 2 compared 0 mismatches 0 undeclared; verify-all ai6v2 (all engine ports on Rust; cbcfcb7): IDENTICA | 2026-11-11 |
 | 0x5f9530 | CGroupEventHandler::ComputeResponsLeaderQuitEnteringCar | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
@@ -4401,6 +4729,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5fc070 | CGroupEventHandler::ComputeResponseVehicleDamage | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5fc150 | CPedGroup::Constructor | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x5fc200 | CGroupEventHandler::ComputeEventResponseTasks | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-police-gang PASS 32 compared 0 mismatches 0 undeclared; ai6v2-c-bug PASS 74 compared 0 mismatches 0 undeclared; ai6v2-car-ai PASS 50 compared 0 mismatches 0 undeclared;  | 2026-11-11 |
+| 0x5fc440 | CPedGroupIntelligence::ComputeEventResponseTasks | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x5fc4a0 | CPedGroupIntelligence::Process | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5fc7e0 | CPedGroup::Process | AI | L2 | split ai5v3-s-rec: PASS 1 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 3 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 3 cases (0 mismatches; 0 undeclared); | 2026-11-11 |
 | 0x5fc800 | CPedGroups::Process | AI | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
@@ -4411,6 +4740,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5fdb60 | CPedIK::MoveLimb-normalized | ANIM | L1 | PORT-ANIM-INPUT (2026-11-11): L1; sa-oracle l1 PedIKMoveLimbNormalized: 10^6 cases, 0 mismatches (INCOMPLETE, only the SNaN cases unverified with the native backend off); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5fddb0 | CPedIK::RotateTorso | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5fdf90 | CPedIK::RotateTorsoForArm | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 anim-input:239/239 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x5fe9c0 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x5fed40 | CEventPedCollisionWithPlayer::Constructor | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (7 undeclared); split anim-input: PASS ? cases (53 undeclared); split weapon-combat: PASS ? cases (80 undeclared); split driving: PASS ? cases (21 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5fed90 | CEventPedCollisionWithPlayer::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 13 cases (0 mismatches, 0 undeclared); l2 grove: PASS 13 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5feda0 | CEventPedCollisionWithPlayer::Clone | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4422,12 +4752,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5fef80 | CEventScriptedAttractor::GetEventType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5fef90 | CEventScriptedAttractor::CloneEditable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5feff0 | CEventScriptedAttractor::~CEventScriptedAttractor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5ff030 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5ff040 | vt_86ca38::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff050 | vt_86ca38::CloneEditable | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 126 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff0b0 | vt_86ca38::Destructor | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 146 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5ff0f0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5ff100 | vt_86ca80::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 24 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 24 cases (0 mismatches, 0 undeclared); l2 grove: PASS 24 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 36 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 24 cases (0 mismatches, 0 undeclared); l2 grove: PASS 24 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 24 cases (0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff110 | vt_86ca80::CloneEditable | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 4 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff170 | vt_86ca80::Destructor | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 4 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5ff1b0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5ff1c0 | vt_86cac8::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 894 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 505 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 894 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff1d0 | vt_86cac8::CloneEditable | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 50 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff230 | vt_86cac8::Destructor | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 50 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4437,6 +4770,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5ff350 | CEventAcquaintancePedHateBadlyLit::CanBeInterruptedBySameEvent | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5ff360 | CEventAcquaintancePedHateBadlyLit::~CEventAcquaintancePedHateBadlyLit | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x5ff380 | CEventSeenCop::Constructor1 | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x5ff3a0 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x5ff3b0 | CEventSeenCop::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 246 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 468 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 323 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 995 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 246 cases (0 mismatches, 0 u; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff3c0 | CEventSeenCop::CloneEditable | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 14 cases (0 mismatches, 0 undeclared); split grove: PASS 94 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 29 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff420 | CEventAcquaintancePed::~CEventAcquaintancePed | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 14 cases (0 mismatches, 0 undeclared); split grove: PASS 100 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 37 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4471,16 +4805,20 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5ff8c0 | vt_86ca80::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 2 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 2 cases (0 mismatches, 0 undeclared); l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 3 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 2 cases (0 mismatches, 0 undeclared); l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 2 cases (0 mismatches, 0 undeclared); l2 c; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff8d0 | vt_86cac8::GetEventPriority | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 159 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 70 cases (0 mismatches, 0 undeclared); l2 grove: PASS 125 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 57 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 68 cases (0 mismatches, 0 undeclared); l2 grove: PASS 125 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 159 cases (0 mismatches, 0 undecl; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ff940 | CTaskSimpleCarDriveTimed::CTaskSimpleCarDriveTimed | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 2 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 7 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x5ff9d0 | CEntityScanner::Clear | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x5ffa20 | CEntityScanner::ScanForEntitiesInRange | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ffe60 | CVehicleScanner::ScanForVehiclesInRange | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5ffee0 |  | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5fff20 | CPedScanner::GetClosestPedInRange | UNK-game | implemented | ai-port-5 ported; ported-unhookable (mov eax,[ecx+0x4C]; ret: 4 bytes) | 2026-11-11 |
 | 0x5fff30 | CObjectScanner::ScanForObjectsInRange | UNK-game | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x600180 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-2); verification queue | 2026-11-11 |
 | 0x600530 | CDecision::SetDefault | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x600570 | CDecision::Set | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
+| 0x6006b0 | CDecision::From | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x6007a0 | CDecisionSimple::MakeDecision | AI | implemented | PORT-AI-1 (2026-11-11): implemented-needs-L2; split c-bug: DIVERGED 0 cases (0 mismatches, 0 undeclared); split grove: DIVERGED 0 cases (0 mismatches, 0 undeclared); split weapon-combat: DIVERGED 0 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x600840 | CDecisionMakerTypes::LoadEventIndices | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split c-bug: PASS-FP 1 cases (0 mismatches, 1 undeclared); split grove: PASS 1 cases (0 mismatches, 1 undeclared); split weapon-combat: PASS-FP 1 cases (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x6008a0 | CMentalState::Process | CALLED-ONLY | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
+| 0x600b50 | CPedIntelligence::SetPedDecisionMakerType | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x600bb0 | CPedIntelligence::SetPedDecisionMakerTypeInGroup | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x600bc0 | CPedIntelligence::RestorePedDecisionMakerType | AI | L2 | split ai5v3-s-rec: PASS 1 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 1 cases (0 mismatches; 0 undeclared); split ai5v4-s-police-gang: PASS-FP 3 cases (0 mismatches; 0 undecl | 2026-11-11 |
 | 0x600be0 | CPedIntelligence::SetHearingRange | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 2 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 1 compared (0 mismatches, 0 undeclared); split lead-c-bug: PASS 1 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -4522,8 +4860,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x602be0 | CEventEscalator::~CEventEscalator | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x602c00 | CPedStuckChecker::TestPedStuck | AI | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
 | 0x603480 | CEntityScanner::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x6034b0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-2); verification queue | 2026-11-11 |
+| 0x603a30 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x603bf0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x6040c0 | CDecision | UNK-game | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x6040d0 | CDecision::MakeDecision | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
+| 0x6042b0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x6043a0 | CDecisionMakerTypes::RemoveDecisionMaker | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 3 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 3 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x604500 | CCollisionEventScanner::ScanForCollisionEvents | CALLED-ONLY | implemented | ai-port-5 ported; ported-unregistered (split FAIL) | 2026-11-11 |
 | 0x605300 | CEventScanner::CEventScanner | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 127 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 127 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4533,6 +4875,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x605ec0 | CPedIntelligencePool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x606010 | CObjectScanner::CObjectScanner | UNK-game | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x606060 |  | AI | implemented | PORT-AI-1 (2026-11-11): ported-unregistered (split L2 FAIL, unresolved); split c-bug: FAIL 146 cases (146 mismatches, 146 undeclared); split grove: FAIL 72 cases (2 mismatches, 2 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x606ba0 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-2); verification queue | 2026-11-11 |
 | 0x606e70 | CDecisionMakerTypes::MakeDecision-ped-ptr | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x606f80 | CDecisionMakerTypes::MakeDecision-pedgroup-ptr | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 186/186p/186r m0 u0; c-bug:PASS 193/193p/193r m0 u0; weapon-combat:PASS 9/9p/9r m0 u0 | 2026-11-11 |
 | 0x607050 | CDecisionMakerTypes::AddDecisionMaker | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS 3 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 3 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4540,9 +4883,13 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x607300 | CPedIntelligence::Destructor | AI | L2 | split ai5v3-s-rec: PASS 84 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 91 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 111 cases (0 mismatches; 0 undeclar | 2026-11-11 |
 | 0x6073a0 | CPedIntelligence::ProcessFirst | AI | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
 | 0x6074a0 | CPedIntelligence::operator new | PED | L2 | split-combat: PASS 127/127 compared; 0 mismatches; 0 undeclared; all 47 PORT-PED-2 hooks on Rust: rust trace IDENTICAL on weapon-combat (pp2-all-wc; 3500 frames; 17 subsystems) | 2026-11-11 |
+| 0x6074e0 | delete | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
+| 0x607560 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-2); verification queue | 2026-11-11 |
 | 0x607a70 | CDecisionMakerTypesFileLoader::UnloadDecisionMaker | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 6 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 5 cases (0 mismatches; 0 undeclared); | 2026-11-11 |
+| 0x607a90 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-2); verification queue | 2026-11-11 |
 | 0x607d00 | CDecisionMakerTypesFileLoader::ReStart | AI | implemented | ai-port-5 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x607d30 | CDecisionMakerTypesFileLoader::LoadDecisionMaker-enum | AI | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
+| 0x607d80 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x607e30 | CEventScanner::ScanForEvents | AI | L2 | split ai4v5-grove: PASS 100 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x608260 | CPedIntelligence::Process | AI | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x608330 | CPedScriptedTaskRecordData::Constructor | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 1 compared (0 mismatches, 1 undeclared); split ai2-freq-weapon-combat: PASS 1 compared (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -4844,13 +5191,25 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x61a1d0 | CPlayerRelationshipRecorder::RecordRelationshipWithPlayer | CALLED-ONLY | L2 | split ai5v3-s-rec: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undeclare | 2026-11-11 |
 | 0x61a2e0 | GetPlayerRelationshipRecorder | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
 | 0x61a360 | CTask::IsGoToTask | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
+| 0x61a390 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x61a3a0 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x61a3b0 | CTaskComplex | UNK-game | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (2 undeclared); split c-bug: PASS ? cases (2 undeclared); split pause-restart: PASS ? cases (4 undeclared); split world-cheats: PASS ? cases (3 undeclared); split anim-input: PASS ? cases (2 undeclared); split weapon-combat: PASS ? cases (2 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x61a3d0 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x61a430 | CTaskComplex::SetSubTask | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
+| 0x61a500 | CTaskPool::New | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x61a5a0 | CTask::operator new | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x61a5b0 | CTask::operator delete | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x61a5e0 | vt_86d4a8::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x61a660 | CTask::~CTask | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x61a6f0 | CTaskSimpleAnim::~CTaskSimpleAnim | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 88/88p/88r m0 u0; c-bug:PASS 56/56p/56r m0 u0; weapon-combat:PASS 30/30p/30r m0 u0 | 2026-11-11 |
+| 0x61a790 | CTaskSimpleAnim::MakeAbortable | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x61a8a0 | CTaskSimpleAnim::FinishRunAnimCB | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 18/18p/18r m0 u0; c-bug:PASS 9/9p/9r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0 | 2026-11-11 |
+| 0x61a8b0 | CTaskSimpleRunAnim::Constructor | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x61a900 | CTaskSimpleRunAnim::Constructor2 | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x61a950 | CTaskSimpleRunAnim::StartAnim | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x61aa90 | CTaskSimpleRunNamedAnim::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x61abe0 | CTaskSimpleRunTimedAnim::Constructor-2 | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x61ac50 | CTaskSimpleRunTimedAnim::StartAnim | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x61ad00 | vt_86d594::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x61ae50 | CTaskSimplePlayHandSignalAnim::CTaskSimplePlayHandSignalAnim | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 4/4p/4r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0 | 2026-11-11 |
 | 0x61aea0 | CTaskSimplePlayHandSignalAnim::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 620 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 371 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 198 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 620 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 371 cases (0 mismatches, 0 undeclare; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4861,6 +5220,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x61b460 | CTaskComplexPlayHandSignalAnim::GetAnimIdForPed | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 4 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 3 cases (0 mismatches, 0 undeclared); l2 driving: PASS 12 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 2 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x61b4f0 | CTaskComplexPlayHandSignalAnim::CreateFirstSubTask | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0 | 2026-11-11 |
 | 0x61b570 | CTaskComplexPlayHandSignalAnim::CreateNextSubTask | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 3 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 3 cases (0 mismatches, 0 undeclared); l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1 cases (0 mismatches, 0 undeclared); l2 grove: PASS 2 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 3 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 3 cases (0 mismatches, 0 undeclared); l2 driving: ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x61b6d0 | CTaskSimpleRunAnim::Clone | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x61b770 | CTaskSimpleRunNamedAnim::Clone | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 16/16p/16r m0 u0; c-bug:PASS 8/8p/8r m0 u0; weapon-combat:PASS 8/8p/8r m0 u0 | 2026-11-11 |
 | 0x61b980 | CTaskSimplePlayHandSignalAnim::Clone | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 2/2p/2r m0 u0; c-bug:PASS 3/3p/3r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0 | 2026-11-11 |
 | 0x61ba00 | CTaskComplexPlayHandSignalAnim::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -4869,6 +5229,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x61bac0 | CTaskSimpleRunAnim::ProcessPed | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (3 undeclared); split c-bug: PASS ? cases (7 undeclared); split pause-restart: PASS ? cases (6 undeclared); split world-cheats: PASS ? cases (6 undeclared); split anim-input: PASS ? cases (2 undeclared); split weapon-combat: PASS ? cases (4 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x61bb10 | CTaskSimpleRunNamedAnim::StartAnim | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split grove: PASS-FP 8 cases (0 mismatches, 8 undeclared); split c-bug: PASS-FP 4 cases (0 mismatches, 4 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x61bbc0 | CTaskSimpleAnim::~CTaskSimpleAnim | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x61bbe0 | CTaskSimpleRunTimedAnim::ProcessPed | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x61bc80 | vt_86d594::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x61bd80 | CTaskSimplePlayHandSignalAnim::~CTaskSimplePlayHandSignalAnim | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split grove: PASS-FP 4 cases (0 mismatches, 0 undeclared); split grove: PASS-FP 4 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 6 cases (0 mismatches, 3 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x61bda0 | CTaskSimplePlayHandSignalAnim::ProcessPed | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (2 undeclared); split c-bug: PASS ? cases (3 undeclared); split world-cheats: PASS ? cases (1 undeclared); split anim-input: PASS ? cases (2 undeclared); split weapon-combat: PASS ? cases (2 undeclared); split driving: PASS ? cases (3 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5046,6 +5407,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x62f120 | CTaskSimpleHitByGunFromRight::IsInterruptable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x62f310 | CTaskSimpleStandStill::Constructor | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x62f350 | CTaskSimpleStandStill::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x62f360 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x62f370 | CTaskSimpleStandStill::ProcessPed | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x62f590 | CTaskSimpleSetStayInSamePlace::CTaskSimpleSetStayInSamePlace | SCRIPT | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x62f5b0 | CTaskSimpleSetStayInSamePlace::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5173,14 +5535,18 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x632c00 | CTaskComplexSequence::MakeAbortable | AI | L2 | split ai5v3-s-rec: PASS 10 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 17 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 1 cases (0 mismatches; 0 undeclared | 2026-11-11 |
 | 0x632c10 | CTaskComplexSequence::Flush | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 1 undeclared); split ai2-freq-weapon-combat: PASS 26 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x632c60 | CTaskComplexSequence::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x632c70 | CTaskComplexSequence::CreateNextSubTask-Internal | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x632d00 | CTaskComplexSequence::ControlSubTask | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 296 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x632d10 | CTaskComplexSequence::AddTask-0 | AI | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x632d90 | CTaskSequences::Init | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x632e50 | CTaskComplexBeInGroup::Constructor | AI | L2 | split ai5v3-s-rec: PASS 11 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 10 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 8 cases (0 mismatches; 0 undeclared);  | 2026-11-11 |
 | 0x632e90 | CTaskComplexBeInGroup::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x632ea0 | CTaskComplexBeInGroup::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x632eb0 | CTaskComplexBeInGroup::MakeAbortable | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (15 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x632f40 | CTaskComplexBeInGroup::CreateNextSubTask | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (14 undeclared); split c-bug: PASS ? cases (5 undeclared); split pause-restart: PASS ? cases (3 undeclared); split world-cheats: PASS ? cases (1 undeclared); split anim-input: PASS ? cases (7 undeclared); split weapon-combat: PASS ? cases (1 undeclared); split driving: PASS; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x632fb0 | CTaskComplexBeInGroup::CreateFirstSubTask | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x633010 | CTaskComplexBeInGroup::MonitorMainGroupTask | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
+| 0x6330b0 | CTaskComplexBeInGroup::MonitorSecondaryGroupTask | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
 | 0x6331a0 | CTaskComplexUsePairedAttractor::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6331d0 | CTaskComplexUsePairedAttractor::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6331e0 | CTaskComplexUsePairedAttractor::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5215,9 +5581,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6338e0 | CTaskSimpleIKManager::ProcessPed | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x633940 | CTaskSimpleIKManager::AddIKChainTask | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 20 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 9 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x6339b0 | CTaskSimpleIKManager::GetTaskAtSlot | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS-FP 150 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x633a90 | CTaskSimpleIKChain::Destructor | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x633c70 | CTaskSimpleIKChain::GetIKChain | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x633e00 | CTaskSimpleIKLookAt::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x633ee0 | CTaskSimpleIKLookAt::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x633ef0 | CTaskSimpleIKLookAt::Destructor- | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x634120 | CTaskSimpleIKLookAt::GetLookAtEntity | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x634130 | CTaskSimpleIKLookAt::GetLookAtOffset | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x634230 | CTaskSimpleIKPointArm::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5382,6 +5750,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x639f90 | CTaskComplexUseSequence::~CTaskComplexUseSequence | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x639fc0 | CVehicleAnimGroupData::GetGroupForAnim | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 anim-input:12/12 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x639fe0 | CVehicleAnimGroupData::UsesTruckDrivingAnims | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x63a040 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x63a110 | CEventLeaderQuitEnteringCarAsDriver::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x63a130 | CEventLeaderQuitEnteringCarAsDriver::GetEventType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x63a140 | CEventLeaderQuitEnteringCarAsDriver::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5421,12 +5790,20 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x63c240 | CTaskComplexScreamInCarThenLeave::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x63c2b0 | CTaskComplexScreamInCarThenLeave::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x63c2c0 | CTaskComplexScreamInCarThenLeave::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x63c340 | CTaskSimpleCarDrive::Constructor | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x63c450 | CTaskSimpleCarDrive::GetTaskType | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x63c460 | CTaskSimpleCarDrive::Destructor | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x63c500 | CTaskSimpleCarDrive::TriggerIK | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
 | 0x63c670 | CTaskSimpleCarDrive::MakeAbortable | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 3/3p/3r m0 u0; c-bug:PASS 12/12p/12r m0 u0; weapon-combat:PASS 27/27p/27r m0 u0 | 2026-11-11 |
 | 0x63c770 | CTaskSimpleCarDrive::SetPedPosition | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
+| 0x63c900 | CTaskSimpleCarDrive::UpdateBopping | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x63c940 | CTaskComplexCarDrive::Constructor_1 | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
+| 0x63ca40 | CTaskComplexCarDrive::Destructor | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x63cad0 | CTaskComplexCarDrive::Drive | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x63cae0 | CTaskComplexCarDrive::SetUpCar | AI | implemented | PORT-AI-3 (2026-11-11): implemented-needs-L2; no call in the split runs (car-ai, driving, grove, c-bug); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x63cb10 | CTaskComplexCarDriveWander::CTaskComplexCarDriveWander | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 104/104p/104r m0 u0; c-bug:PASS 49/49p/49r m0 u0; weapon-combat:PASS 35/35p/35r m0 u0 | 2026-11-11 |
 | 0x63cb40 | CTaskComplexCarDriveWander::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x63cb50 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x63cb60 | CTaskComplexCarDriveWander::SetUpCar | AI | L2 | PORT-AI-3 (2026-11-11): L2; split c-bug: PASS 48 cases (0 mismatches, 0 undeclared); split car-ai: PASS 63 cases (0 mismatches, 0 undeclared); split driving: PASS-FP 30 cases (0 mismatches, 0 undeclared); split grove: PASS 103 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x63cd20 | CTaskComplexCarDriveMission::SetUpCar | AI | implemented | PORT-AI-3 (2026-11-11): L2-split (undeclared writes to review); split c-bug: PASS 7 cases (0 mismatches, 0 undeclared); split car-ai: PASS 10 cases (0 mismatches, 1 undeclared); split driving: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x63cf00 | CTaskComplexDriveToPoint::SetUpCar | AI | L2 | PORT-AI-3 (2026-11-11): L2; split driving: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -5472,6 +5849,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x642370 | CTaskComplex::~CTaskComplex | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6424f0 | CTaskComplex::~CTaskComplex | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6426e0 | CTaskSimpleCarDrive::~CTaskSimpleCarDrive | AI | implemented | PORT-AI-1 (2026-11-11): implemented (split PASS-FP/DIVERGED only); split grove: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS-FP 150 cases (0 mismatches, 0 undeclared); split c-bug: PASS-FP 69 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x642760 | CTaskSimpleCarDrive::StartBopping | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
+| 0x6428c0 | CTaskSimpleCarDrive::ProcessHeadBopping | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
+| 0x642e70 | CTaskSimpleCarDrive::ProcessBopping | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x642fa0 | CTaskComplexCarDrive::CreateSubTask | AI | implemented | PORT-AI-3 (2026-11-11): L2-split (undeclared writes to review); split c-bug: PASS-FP 57 cases (0 mismatches, 57 undeclared); split car-ai: PASS 76 cases (0 mismatches, 74 undeclared); split driving: PASS-FP 32 cases (0 mismatches, 32 undeclared); split grove: PASS 106 cases (0 mismatches, 104 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x643200 | CTaskComplexCarDrive::CreateSubTaskCannotGetInCar | AI | implemented | PORT-AI-3 (2026-11-11): implemented-needs-L2; no call in the split runs (car-ai, driving, grove, c-bug); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x643220 | CTaskComplexCarDriveWander::~CTaskComplexCarDriveWander | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 100/100p/100r m0 u0; c-bug:PASS 45/45p/45r m0 u0; weapon-combat:PASS 32/32p/32r m0 u0 | 2026-11-11 |
@@ -5523,7 +5903,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6467f0 | CTaskSimpleCarGetIn::FinishAnimCarGetInCB | AI | L2 | PORT-AI-3 (2026-11-11): L2; split car-ai: PASS 2 cases (0 mismatches, 0 undeclared); split driving: PASS-FP 4 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x646ad0 | CTaskSimpleCarWaitToSlowDown::ProcessPed | AI | L2 | PORT-AI-3 (2026-11-11): L2; split c-bug: PASS 21 cases (0 mismatches, 0 undeclared); split car-ai: PASS 38 cases (0 mismatches, 0 undeclared); split driving: PASS 13 cases (0 mismatches, 0 undeclared); split grove: PASS 81 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x646cf0 |  | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 2/2p/2r m0 u0; c-bug:PASS 4/4p/4r m0 u0; weapon-combat:PASS 6/6p/6r m0 u0 | 2026-11-11 |
+| 0x646fe0 | CTaskSimpleCarSetPedInAsPassenger | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x647080 | CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split grove: PASS-FP 33 cases (0 mismatches, 33 undeclared); split c-bug: PASS-FP 13 cases (0 mismatches, 13 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x6470e0 | CTaskSimpleCarSetPedInAsDriver | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
+| 0x647170 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x6472f0 | CTaskSimpleCarGetOut::SetPedPosition | AI | implemented | PORT-AI-3 (2026-11-11): L2-split (undeclared writes to review); split c-bug: PASS 107 cases (0 mismatches, 56 undeclared); split car-ai: PASS 150 cases (0 mismatches, 87 undeclared); split driving: PASS 58 cases (0 mismatches, 15 undeclared); split grove: PASS 49 cases (0 mismatches, 14 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x647330 | CTaskSimpleCarGetOut::ComputeAnimID_ToHook | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split grove: PASS-FP 49 cases (0 mismatches, 49 undeclared); split c-bug: PASS-FP 107 cases (0 mismatches, 107 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x647480 | CTaskSimpleCarGetOut::FinishAnimCarGetOutCB | AI | L2 | PORT-AI-3 (2026-11-11): L2; split c-bug: PASS 4 cases (0 mismatches, 0 undeclared); split car-ai: PASS 8 cases (0 mismatches, 0 undeclared); split driving: PASS 2 cases (0 mismatches, 0 undeclared); split grove: PASS 2 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -5639,6 +6022,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x64fbb0 | CTaskUtilityLineUpPedWithCar::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x64fc00 | CTaskUtilityLineUpPedWithCar::Destructor | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x64fc10 | CTaskUtilityLineUpPedWithCar::GetLocalPositionToOpenCarDoor | AI | implemented | PORT-AI-3 (2026-11-11): deferred (time box); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x650280 | CCarEnterExit::SetPedInCarDirect | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x650a80 | CTaskUtilityLineUpPedWithCar::GetPositionToOpenCarDoor | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split grove: PASS-FP 94 cases (0 mismatches, 94 undeclared); split c-bug: PASS-FP 150 cases (0 mismatches, 150 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x651210 | CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel | VEH | L2 | L2 veh2-c-l2: 276/276 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6513a0 | CTaskUtilityLineUpPedWithCar::ProcessPed | AI | implemented | PORT-AI-3 (2026-11-11): deferred (time box); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -5684,6 +6068,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x653f10 | CTaskSimpleHurtPedWithCar::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x653f20 | CTaskSimpleHurtPedWithCar::MakeAbortable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x653f30 | CTaskSimpleHurtPedWithCar::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x6541b0 | CTaskComplexWalkRoundCar::Constructor | AI | implemented | written, unverified (batch mvpc-ai-3); verification queue | 2026-11-11 |
 | 0x654280 | CTaskComplexWalkRoundCar::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 537 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 1000 cases (0 mismatches, 0 undeclared); l2 driving: PASS 1000 cases (0 mismatches, 0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6542e0 | CTaskComplexWalkRoundCar::CreateRouteTask | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x654370 | CTaskComplexWalkRoundCar::ControlSubTask | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -5693,6 +6078,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x654950 | CTaskComplexWalkRoundBuildingAttempt::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6549d0 | CTaskComplexWalkRoundBuildingAttempt::MakeAbortable | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x654b80 | CTaskComplexWalkRoundBuildingAttempt::ComputeMoveDir | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
+| 0x654c80 | CTaskComplexWalkRoundBuildingAttempt::CreateSubTask | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x655020 | CTaskComplexWalkRoundObject::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6550c0 | CTaskComplexWalkRoundObject::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 914 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 80 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 286 cases (0 mismatches, 0 undeclared); l2 grove: PASS 914 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 80 cases (0 mismatches, 0 undec; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x6550d0 |  | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 3/3p/3r m0 u0; c-bug:PASS 7/7p/7r m0 u0; weapon-combat:PASS 7/7p/7r m0 u0 | 2026-11-11 |
@@ -5845,6 +6231,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x65d280 | CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 1/1p/1r m0 u0; c-bug:PASS 35/35p/35r m0 u0; weapon-combat:PASS 19/19p/19r m0 u0 | 2026-11-11 |
 | 0x65d2a0 | CTaskComplexFleeShooting::`scalar deleting destructor' | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x65d2c0 | CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x65da70 |  | UNK-game | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x65daf0 | CEventLeanOnVehicle::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x65db50 | CEventLeanOnVehicle::GetEventType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 59 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 370 cases (0 mismatches, 0 undeclared); l2 grove: PASS 852 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 99 cases (0 mismatches, 0 undeclared); l2 grove: PASS 852 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 59 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 370 cases (0 mismatches, 0 undeclared); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x65db60 | CEventLeanOnVehicle::GetLifeTime | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5903,6 +6290,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6608a0 | CTaskSimpleDoHandSignal::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 27 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 810 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 6 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 539 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 212 cases (0 mismatches, 0 undeclared); l2 driv; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6608b0 | CTaskSimpleDoHandSignal::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x660930 | CTaskSimpleDoHandSignal::MakeAbortable | AI | L2 | AI-GEN (2026-11-11): L2; l2 c-bug: PASS 5 cases (0 mismatches, 0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x660940 | CTaskSimpleDoHandSignal::ProcessPed | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
 | 0x660a30 | CTaskComplexSignalAtPed::Constructor | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-c-bug PASS 3 compared 0 mismatches 0 undeclared; ai6v2-car-ai DIVERGED 1 compared 0 mismatches 0 undeclared; ai6v2-driving PASS 2 compared 0 mismatches 0 undeclared; ai6 | 2026-11-11 |
 | 0x660aa0 | CTaskComplexSignalAtPed::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 202 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 454 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 12 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 424 cases (0 mismatches, 0 undeclared); l2 weapon-combat: PASS 788 cases (0 mismatches, 0 undeclared); l2 dr; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x660ab0 | CTaskComplexSignalAtPed::Destructor | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-c-bug PASS 3 compared 0 mismatches 0 undeclared; ai6v2-car-ai DIVERGED 1 compared 0 mismatches 0 undeclared; ai6v2-driving PASS 2 compared 0 mismatches 0 undeclared; ai6 | 2026-11-11 |
@@ -5911,6 +6299,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x660d80 | CTaskComplexSignalAtPed::ControlSubTask | AI | L2 | split ai5v3-s-rec: PASS 39 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS-FP 150 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 150 cases (0 mismatches; 0 undecla | 2026-11-11 |
 | 0x660e60 | CTaskGoToVehicleAndLean::Constructor | AI | implemented | AI-GEN (2026-11-11): L2-split (undeclared writes or PASS-FP/DIVERGED in some run); split grove: PASS ? cases (2 undeclared); split c-bug: PASS ? cases (11 undeclared); split pause-restart: PASS ? cases (1 undeclared); split anim-input: PASS ? cases (3 undeclared); split driving: PASS ? cases (6 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x660ed0 | CTaskGoToVehicleAndLean::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 127 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 678 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 67 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 127 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 678 cases (0 mismatches, 0 undeclare; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x660ee0 | CTaskGoToVehicleAndLean::Destructor | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x660f90 | CTaskLeanOnVehicle::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x661020 | CTaskLeanOnVehicle::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 driving: PASS 55 cases (0 mismatches, 0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x661030 | CTaskLeanOnVehicle::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -5960,6 +6349,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x664a80 | CTaskComplexGangJoinRespond::~CTaskComplexGangJoinRespond | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x664aa0 | CTaskComplexProstituteSolicit::~CTaskComplexProstituteSolicit | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x664ba0 | CTaskGangHassleVehicle::CreateFirstSubTask | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x664d40 | CTaskGoToVehicleAndLean::CreateFirstSubTask | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
+| 0x664e60 | CTaskGoToVehicleAndLean::ControlSubTask | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
 | 0x665080 | CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CreateNextSubTask | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x665270 |  | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x665600 | CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CreateFirstSubTask | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
@@ -5976,6 +6367,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x667ca0 | CTaskSimpleGoTo::QuitIK | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x667cd0 | CTaskSimpleGoToPoint::Constructor | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x667d40 | CTaskSimpleGoToPoint::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x667d50 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
 | 0x667d60 | CTaskSimpleGoToPoint::MakeAbortable | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x667e20 | CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 11/11p/11r m0 u0; c-bug:PASS 43/43p/43r m0 u0; weapon-combat:PASS 17/17p/17r m0 u0 | 2026-11-11 |
 | 0x667e60 | CTaskSimpleAchieveHeading::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6007,6 +6399,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x669650 | CTaskComplexFollowNodeRoute::GetSubTaskType | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x669690 | CTaskComplexFollowNodeRoute::CreateSubTask | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x6699e0 | CTaskComplexFollowNodeRoute::ComputeRoute | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
+| 0x669d20 |  | UNK-game | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x669da0 | CTaskComplexWander::UpdateDir | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x669ed0 | CTaskComplexWander::UpdatePathNodes | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x669f30 | CTaskComplexWander::ValidNodes | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
@@ -6074,6 +6467,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x66d1e0 | CTaskComplexGoToPointAnyMeans::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x66d250 | CTaskComplexTurnToFaceEntityOrCoord::Clone | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x66d3d0 | CTaskComplexInvestigateDisturbance::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x66d440 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x66d6d0 | CTaskSimpleGoTo::~CTaskSimpleGoTo | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x66d6f0 | CTaskSimpleGoToPoint::~CTaskSimpleGoToPoint | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 271/271p/271r m0 u0; weapon-combat:PASS 293/293p/293r m0 u0 | 2026-11-11 |
 | 0x66d710 | CTaskSimpleGoToPoint::ProcessPed | AI | implemented | ai-port-4 ported; L2-split | 2026-11-11 |
@@ -6097,12 +6491,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x66eb70 | CTaskComplexFollowNodeRoute::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x66ebe0 | CTaskComplexFollowNodeRoute::CalcGoToTaskType | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
 | 0x66ef20 | CTaskComplexFollowNodeRoute::CanGoStraightThere | AI | implemented | ai-port-4 ported; implemented | 2026-11-11 |
+| 0x66f450 | CTaskComplexWander::Constructor | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x66f4a0 | CTaskComplexWander::~CTaskComplexWander | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x66f4c0 | CTaskComplexWander::ScanForBlockedNode-1 | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x66f5c0 | CTaskComplexWanderGang::CTaskComplexWanderGang | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 41/41p/41r m0 u0; c-bug:PASS 33/33p/33r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0 | 2026-11-11 |
 | 0x66f630 | CTaskComplexWanderGang::GetWanderType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 2 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 10 cases (0 mismatches, 0 undeclared); l2 grove: PASS 8 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 4 cases (0 mismatches, 0 undeclared); l2 grove: PASS 8 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 2 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 10 cases (0 mismatches, 0 undeclared); l2 drivin; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x66f640 | CTaskComplexWanderGang::ScanForStuff | AI | implemented | PORT-AI-1 (2026-11-11): ported-unhookable (body is `ret 4`, 3 bytes); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x66f650 | CTaskComplexWanderGang::~CTaskComplexWanderGang | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 34/34p/34r m0 u0; c-bug:PASS 33/33p/33r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0 | 2026-11-11 |
+| 0x66f670 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x66f680 | CTaskComplexAvoidOtherPedWhileWandering::~CTaskComplexAvoidOtherPedWhileWandering | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 60/60p/60r m0 u0; c-bug:PASS 13/13p/13r m0 u0; weapon-combat:PASS 40/40p/40r m0 u0 | 2026-11-11 |
 | 0x66f6a0 | vt_86ff00::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x670100 | CTaskComplexWanderStandard::LookForGangMembers | AI | L2 | split ai4v5-grove: PASS 100 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
@@ -6353,6 +6749,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x683780 | CTaskComplexBeInCouple::~CTaskComplexBeInCouple | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 6/6p/6r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0 | 2026-11-11 |
 | 0x6837e0 | CTaskComplexBeInCouple::CreateFirstSubTask | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 6/6p/6r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0 | 2026-11-11 |
 | 0x6837f0 | CTaskComplexBeInCouple::AbortArmIK | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 26/26p/26r m0 u0; weapon-combat:PASS 4/4p/4r m0 u0 | 2026-11-11 |
+| 0x683840 |  | UNK-game | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x6838e0 | CTaskComplexWalkAlongsidePed::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x683950 | vt_8706f8::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6839c0 | CTaskComplexBeInCouple::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6383,8 +6780,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x684fa0 | CTaskComplexPartnerGreet::~CTaskComplexPartnerGreet | AI | L2 | AI-GEN (2026-11-11): L2; split anim-input: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x684fc0 | CTaskComplexPartnerChat::~CTaskComplexPartnerChat | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 8/8p/8r m0 u0; c-bug:PASS 10/10p/10r m0 u0; weapon-combat:PASS 36/36p/36r m0 u0 | 2026-11-11 |
 | 0x684fe0 | CTaskComplexPartnerShove::~CTaskComplexPartnerShove | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x685000 | CTaskComplexWalkAlongsidePed::CreateSubTask | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
+| 0x685630 | CTaskComplexWalkAlongsidePed::CreateFirstSubTask | AI | implemented | written, unverified (batch mvpb-ai-3); verification queue | 2026-11-11 |
 | 0x685680 | CTaskComplexWalkAlongsidePed::CreateNextSubTask | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x685700 | CWeaponInfo::GetCrouchReloadAnimationID | WEAPON | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1,002,000 cases, 0 mismatches; L2 combat:76/76 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
+| 0x685750 | CTaskSimplePlayerOnFoot::Constructor | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x6857c0 | CTaskSimplePlayerOnFoot::GetTaskType | AI | implemented | AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6857d0 | CTaskSimplePlayerOnFoot::Destructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x688930 | CTaskSimpleSwim::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6428,16 +6828,25 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x690c70 | CTaskSimpleFacial | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 120/120p/120r m0 u0; c-bug:PASS 91/91p/91r m0 u0; weapon-combat:PASS 55/55p/55r m0 u0 | 2026-11-11 |
 | 0x690ca0 | CTaskSimpleFacial::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x690cb0 | CTaskSimpleFacial::~CTaskSimpleFacial | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 117/117p/117r m0 u0; c-bug:PASS 91/91p/91r m0 u0; weapon-combat:PASS 55/55p/55r m0 u0 | 2026-11-11 |
+| 0x690cc0 | CTaskSimpleFacial::GetAnimId | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
+| 0x690d20 | CTaskComplexFacial::Constructor | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x690d80 | CTaskComplexFacial::GetTaskType | AI | L2 | AI-GEN (2026-11-11): L2; l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x690d90 | CTaskComplexFacial::~CTaskComplexFacial | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 189/189p/189r m0 u0; c-bug:PASS 127/127p/127r m0 u0; weapon-combat:PASS 135/135p/135r m0 u0 | 2026-11-11 |
+| 0x690da0 | CTaskComplexFacial::MakeAbortable | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
+| 0x690dc0 | CTaskComplexFacial::CreateNextSubTask | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
+| 0x690f30 | CTaskComplexFacial::CreateFirstSubTask | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
+| 0x690fc0 | CTaskComplexFacial::ControlSubTask | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x691230 | CTaskComplexFacial::SetRequest | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x691250 | CTaskComplexFacial::StopAll | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x691270 | CTaskSimpleAffectSecondaryBehaviour::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6912a0 | CTaskSimpleAffectSecondaryBehaviour::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6912b0 | CTaskSimpleAffectSecondaryBehaviour::MakeAbortable | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6912c0 |  | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x6913a0 | CTaskSimpleHoldEntity::Constructor-1 | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x691460 | CTaskSimpleHoldEntity::GetTaskType | AI | L2 | PORT-AI-1 (2026-11-11): L2; l2 anim-input: PASS 1000 cases (0 mismatches, 0 undeclared); l2 c-bug: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 pause-restart: PASS 1000 cases (0 mismatches, 0 undeclared); l2 world-cheats: PASS 1000 cases (0 mismatches, 0 undeclared); l2 grove: PASS 1000 cases (0 mismatches, 0 undeclared); l2 anim-input: PASS 1000 cases (0 mismatches; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x691630 |  | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 30/30p/30r m0 u0; c-bug:PASS 17/17p/17r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0 | 2026-11-11 |
 | 0x691720 | CTaskSimpleHoldEntity::PlayAnim | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x691740 | CTaskSimpleHoldEntity::FinishAnimHoldEntityCB | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x6917b0 | CTaskSimplePickUpEntity::Constructor-2 | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x691810 | CTaskSimplePickUpEntity::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x691870 | CTaskSimplePickUpEntity::Constructor-1 | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6458,10 +6867,13 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x692a90 | CTaskSimplePickUpEntity::Clone | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x692dd0 | CTaskSimple::~CTaskSimple | AI | L2 | AI-GEN (2026-11-11): L2; split c-bug: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x692e30 | CTaskSimpleFacial::~CTaskSimpleFacial | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 117/117p/117r m0 u0; c-bug:PASS 91/91p/91r m0 u0; weapon-combat:PASS 55/55p/55r m0 u0 | 2026-11-11 |
+| 0x692e50 | CTaskSimpleFacial::MakeAbortable | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x692e80 | CTaskSimpleFacial::ProcessPed | AI | implemented | PORT-AI-1 (2026-11-11): L2-split (undeclared writes to review); split grove: PASS-FP 150 cases (0 mismatches, 3 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x692f90 | CTaskComplexFacial::~CTaskComplexFacial | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 189/189p/189r m0 u0; c-bug:PASS 127/127p/127r m0 u0; weapon-combat:PASS 135/135p/135r m0 u0 | 2026-11-11 |
 | 0x692fb0 | CTaskSimple::~CTaskSimple | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x692fd0 | CTaskSimpleHoldEntity::~CTaskSimpleHoldEntity | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 30/30p/30r m0 u0; c-bug:PASS 17/17p/17r m0 u0; weapon-combat:PASS 14/14p/14r m0 u0 | 2026-11-11 |
+| 0x692ff0 | CTaskSimpleHoldEntity::StartAnim | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
+| 0x6930f0 | CTaskSimpleHoldEntity::DropEntity | AI | implemented | written, unverified (batch mvpb-ai-2); verification queue | 2026-11-11 |
 | 0x693590 | CTaskSimplePickUpEntity::~CTaskSimplePickUpEntity | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6935c0 | CTaskSimplePutDownEntity::~CTaskSimplePutDownEntity | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x6935f0 | vt_870b98::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6469,6 +6881,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6939f0 | CTaskSimpleDuck::SetMoveAnim | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-c-bug: PASS 220 compared (0 mismatches, 2 undeclared); split ai2-cbug-weapon-combat: PASS 12 compared (0 mismatches, 2 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x693bd0 | CTaskSimpleHoldEntity::MakeAbortable | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x694390 | CTaskSimpleDuck::ProcessPed | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-c-bug: PASS 363 compared (0 mismatches, 12 undeclared); split ai2-cbug-weapon-combat: PASS 224 compared (0 mismatches, 11 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x6946a0 | CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x694a30 | CTaskComplexFollowLeaderInFormation::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x694a40 | CTaskComplexFollowLeaderInFormation::Destructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x694aa0 | CTaskComplexFollowLeaderAnyMeans::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6524,7 +6937,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6985e0 | CTaskCategories::IsKillPedTask | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
 | 0x698610 | CTaskCategories::IsFollowPedTask | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 300/300p/300r m0 u0; c-bug:PASS 300/300p/300r m0 u0; weapon-combat:PASS 300/300p/300r m0 u0 | 2026-11-11 |
 | 0x698680 | CTaskCategories::ComputeTaskCategory | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 23/23p/23r m0 u0; c-bug:PASS 6/6p/6r m0 u0; weapon-combat:PASS 5/5p/5r m0 u0 | 2026-11-11 |
+| 0x698710 | CCover::Init | AI | implemented | written, unverified (batch mvpa-ai-1); verification queue | 2026-11-11 |
+| 0x698740 | CCover::RemoveCoverPointsForThisEntity | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x698f30 | CCover::AddCoverPoint | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x699120 | CCover::FindCoverPointsForThisBuilding | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
+| 0x699230 | CCover::ShouldThisBuildingHaveItsCoverPointsCreated | AI | implemented | written, unverified (batch mvpb-ai-1); verification queue | 2026-11-11 |
 | 0x6997e0 | CCover::Update | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x69bb50 | CTaskAllocator::ProcessGroup | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x69bb80 | CTaskAllocatorKillOnFoot::Constructor | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -6612,6 +7029,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6a29a0 | CAutomobile::ReduceHornCounter | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a29c0 | CAutomobile::ProcessControlCollisionCheck | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
 | 0x6a2ae0 | CAutomobile::ResetSuspension | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6a2b10 | CAutomobile::Render | VEH | implemented | written, unverified (batch mvpb-veh-3); verification queue | 2026-11-11 |
 | 0x6a2f00 | CAutomobile::CustomCarPlate_BeforeRenderingStart | VEH | L2 | split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6a2f30 | CAutomobile::CustomCarPlate_AfterRenderingStop | VEH | L2 | split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6a2f70 | CAutomobile::GetAllWheelsOffGround | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -6619,6 +7037,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6a3580 | CAutomobile::FixTyre | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a3740 | CAutomobile::SetTaxiLight | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a3760 | CAutomobile::SetAllTaxiLights | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6a3770 | CAutomobile::PlayCarHorn | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
+| 0x6a3820 | CAutomobile::PlayHornIfNecessary | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6a3850 | CAutomobile::IsRoomForPedToLeaveCar | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a44c0 | CAutomobile::KnockPedOutCar | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a47f0 | CAutomobile::DoBurstAndSoftGroundRatios | VEH | L2 | split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
@@ -6631,8 +7051,12 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6a63e0 | CAutomobile::IsDoorFullyOpenU32 | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a6470 | CAutomobile::IsDoorClosedU32 | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6a6500 | CAutomobile::IsDoorMissingU32 | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6a65d0 | CAutomobile::SetupSuspensionLines | VEH | implemented | written, unverified (batch mvpb-veh-6); verification queue | 2026-11-11 |
 | 0x6a6ae0 | CAutomobile::OpenDoor | VEH | implemented | VEH-2 ported; L2-split (undeclared writes to review); whole-data D extras | 2026-11-11 |
+| 0x6a8500 | CAutomobile::ProcessFlyingCarStuff | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6a9ca0 | CAutomobile::Teleport | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6a9d70 | CAutomobile::ProcessSwingingDoor | VEH | implemented | written, unverified (batch mvpb-veh-5); verification queue | 2026-11-11 |
+| 0x6adff0 | CAutomobile::ScanForCrimes | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
 | 0x6ae0d0 | CPed::MakeTyresMuddySectorList<CPtrListSingleLink<CPhysical*>> | PED | implemented | ped-port-3 ported; specified | 2026-11-11 |
 | 0x6b1330 | CAutomobile::`scalar deleting destructor' | VEH | implemented | VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match); whole-data D extras | 2026-11-11 |
 | 0x6b1350 | CAutomobile::SetBumperDamage | VEH | L2 | split veh2-b-split: 21/21 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
@@ -6660,12 +7084,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6b6620 | CBike::ProcessControlCollisionCheck | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
 | 0x6b6790 | CBike::GetAllWheelsOffGround | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6b67b0 | CBike::RemoveRefsToVehicle | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6b6950 | CBike::DoBurstAndSoftGroundRatios | VEH | implemented | written, unverified (batch mvpb-veh-4); verification queue | 2026-11-11 |
 | 0x6b7050 | CBike::Fix | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6b7130 | CBike::PlayHornIfNecessary | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6b7150 | CBike::CalculateLeanMatrix | VEH | implemented | VEH-2 ported; implemented | 2026-11-11 |
 | 0x6b7270 | CBike::IsRoomForPedToLeaveCar | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6b8940 | CBike::FindWheelWidth | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6b8950 | CBike::`scalar deleting destructor' | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
+| 0x6b8ec0 | CBike::VehicleDamage | VEH | implemented | written, unverified (batch mvpb-veh-4); verification queue | 2026-11-11 |
 | 0x6bde20 | CBike::Render | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
 | 0x6bf230 | CBike::GetCorrectedWorldDoorPosition | VEH | L2 | L2 veh2-b-l2: 141/141 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6bf400 | CBike::ProcessDrivingAnims | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -6727,6 +7153,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6c7c50 | CHeli::RenderAllHeliSearchLights | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6c7d20 | CMonsterTruck::SetUpWheelColModel | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6c7d30 | CMonsterTruck::BurstTyre | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6c8ae0 | CMonsterTruck::ProcessEntityCollision | VEH | implemented | written, unverified (batch mvpe-veh-1); verification queue | 2026-11-11 |
 | 0x6c8e20 | CPlane::Constructor | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6c9140 | CPlane::SetUpWheelColModel | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6c9150 | CPlane::BurstTyre | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -6741,9 +7168,15 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6cad90 | CPlane::InitPlaneGenerationAndRemoval | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6cadb0 | CPlane::`scalar deleting destructor' | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6cca50 | CPlane::CountPlanesAndHelis | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:127/127 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6ccaa0 | CPlane::AreWeInNoPlaneZone | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
+| 0x6ccc50 | CPlane::SwitchAmbientPlanes | VEH | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
 | 0x6cdc90 | CQuadBike::GetRideAnimData | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:3/3 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6ce280 | CQuadBike::ProcessDrivingAnims | VEH | implemented | written, unverified (batch mvpe-veh-1); verification queue | 2026-11-11 |
+| 0x6cffd0 | CTrailer::ProcessEntityCollision | VEH | implemented | written, unverified (batch mvpe-veh-1); verification queue | 2026-11-11 |
 | 0x6d0450 | cTransmission | UNK-game | implemented | VEH-2 ported; ported-unhookable | 2026-11-11 |
 | 0x6d0460 | cTransmission::InitGearRatios | VEH | L2 | L2 veh2-b-l2: 210/210 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
+| 0x6d0530 | cTransmission::CalculateGearForSimpleCar | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
+| 0x6d05e0 | cTransmission::CalculateDriveAcceleration | VEH | implemented | written, unverified (batch mvpb-veh-3); verification queue | 2026-11-11 |
 | 0x6d09e0 | CVehicleAnimGroupData::UsesKartDrivingAnims | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x6d0a10 | CAEVehicleAudioEntity::Destructor | AUDIO | L2 | L2 air-water:300/301 PASS; L2 driving:86/86 PASS; L2 inf4:246/246 PASS; L2 menus-hud:126/130 PASS; L2 police-gang:233/233 PASS; L2 weapon-combat:110/110 PASS; L3: verify-all a2final (h6) IDENTICAL on  | 2026-11-11 |
 | 0x6d0af0 |  | UNK-game | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -6762,6 +7195,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6d1080 | CVehicle::GetVehicleAppearance | VEH | L2 | L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6d10e0 | CVehicle::CustomCarPlate_TextureCreate | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
 | 0x6d1150 | CVehicle::CustomCarPlate_TextureDestroy | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6d1180 | CVehicle::CanBeDeleted | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6d1230 | CVehicle::ProcessWheelRotation | VEH | L2 | L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6d1340 | CVehicle::ProcessDelayedExplosion | VEH | L2 | split veh2-a-split: 1000/1000 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6d14d0 | CVehicle::AddPassenger-Fixed-Seat | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
@@ -6769,6 +7203,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6d16a0 | CVehicle::SetDriver | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
 | 0x6d1950 | CVehicle::RemoveDriver | VEH | implemented | VEH-2 ported; L2-split (undeclared writes to review); whole-data D extras | 2026-11-11 |
 | 0x6d1a50 | CVehicle::SetUpDriver | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
+| 0x6d1aa0 | CVehicle::SetupPassenger | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6d1bd0 | CVehicle::IsPassenger-Ped | VEH | L2 | L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6d1c00 | CVehicle::IsPassenger-ModelID | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6d1c40 | CVehicle::IsDriver-Ped | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:385/385 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -6807,6 +7242,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6d3060 | CVehicle::ClearGettingOutFlags | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:4/4 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6d3080 | CVehicle::SetWindowOpenFlag | VEH | L2 | split veh2-b-split: 1000/1000 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6d30b0 | CVehicle::ClearWindowOpenFlag | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x6d30e0 | CVehicle::SetVehicleUpgradeFlags | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6d3210 | CVehicle::ClearVehicleUpgradeFlags | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6d3370 | CVehicle::FindUpgradeCB | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6d33b0 | CVehicle::RemoveObjectsCB-Object | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -6863,18 +7299,24 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6d6a40 | CVehicle::SetModelIndex | VEH | implemented | VEH-2 ported; L2; whole-data D extras | 2026-11-11 |
 | 0x6d8470 | CVehicle::UsesSiren | VEH | L2 | L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6dba30 | CVehicle::SetComponentRotation | VEH | implemented | VEH-2 ported; ported-unhookable | 2026-11-11 |
+| 0x6dbbb0 | CVehicle::SetTransmissionRotation | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
 | 0x6dfb70 | CVehicle::GetTowHitchPos | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6dfbe0 | CVehicle::GetTowBarPos | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6e0950 | CVehicle::ProcessSirenAndHorn | VEH | L2 | L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
+| 0x6e0a50 | CVehicle::DoHeadLightEffect | VEH | implemented | written, unverified (batch mvpb-veh-3); verification queue | 2026-11-11 |
+| 0x6e1600 | CVehicle::DoHeadLightReflectionTwin | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
 | 0x6e1720 | CVehicle::DoHeadLightReflection | VEH | L2 | split veh2-c-split: 254/254 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
+| 0x6e1780 | CVehicle::DoTailLightEffect | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
 | 0x6e2a50 | CVehiclePool::New | VEH | L3 | CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches | 2026-11-05 |
 | 0x6e2b40 | CVehicle::Destructor | VEH | implemented | VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match) | 2026-11-11 |
 | 0x6e2d50 | new | UNK-game | L2 | split veh2-a-split: 21/21 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6e2d60 |  | UNK-game | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6e2d90 | delete | UNK-game | L2 | split veh2-a-split: 14/14 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6e2dd0 |  | UNK-game | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x6e3290 | CVehicle::AddVehicleUpgrade | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6e3400 | CVehicle::SetupUpgradesAfterLoad | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6e38a0 | CVehicle::`scalar deleting destructor' | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x6e38f0 | CVehicle::IsVehiclePointerValid | VEH | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
 | 0x6e3950 | CVehicle::ProcessWeapons | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6e3b00 | CVehicleAnimGroup::GetGroup | ANIM | L1 | PORT-ANIM-INPUT (2026-11-11): L1; L1 CPU-decided (native backend, i7-14700F): sa-oracle l1 VehAnimGroupGetGroup 10^6 + 60,000 edge cases, 0 mismatches (route L2: the CRT pow SSE2 path); in game: L2 grove:137/137, anim-input:712/712 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x6e3c80 | CVehicleAnimGroup::ComputeCriticalBlendTime | ANIM | L1 | PORT-ANIM-INPUT (2026-11-11): L1; sa-oracle l1 VehAnimGroupComputeCriticalBlendTime: 10^6 cases, 0 mismatches (INCOMPLETE, only the SNaN cases unverified with the native backend off); in game: L2 grove:47/47, anim-input:351/351 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -6883,6 +7325,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6e3e50 |  | UNK-game | L2 | L2 grove:20/708 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x6e3eb0 |  | UNK-game | L2 | L2 grove:1/1 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x6e3f90 | WaterCreatureManager_c::Init | WORLD | implemented | WORLD-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x6e3fd0 | WaterCreatureManager_c::Exit | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x6e4040 | WaterCreatureManager_c::GetRandomWaterCreatureId | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6e4510 | WaterCreatureManager_c::CanAddWaterCreatureAtPos | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6e5750 |  | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -6933,6 +7376,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6f2550 | CBoat::AddWakePoint | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6f2710 | CBoat::FillBoatList | VEH | L2 | L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6f2940 | CBoat::Constructor | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x6f2d30 | CSpecialPlateHandler::Find | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
+| 0x6f2d90 | CSpecialPlateHandler::Add | VEH | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
 | 0x6f2e30 | CCarGenerator::SwitchOff | POP | L2 | PORT-POP (2026-11-11): L2; L2 grove:133/133 PASS (0 mismatches, 0 undeclared); L2 pr:266/266 PASS (0 mismatches, 0 undeclared); L2 cheats:133/133 PASS (0 mismatches, 0 undeclared); main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
 | 0x6f2e40 | CCarGenerator::CalcNextGen | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6f2e50 | CCarGenerator::Setup | POP | implemented | PORT-POP (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / cheats; main-session all-ports L3 IDENTICAL on grove 5200, c-bug 3220, cheats 3276 | 2026-11-11 |
@@ -6970,6 +7415,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6f5370 | CTrainNode | UNK-game | L2 | L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6f54d0 | CTrain::~CTrain | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6f5570 | CTrain::PreRender | VEH | implemented | VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match) | 2026-11-11 |
+| 0x6f55c0 | CTrain::Render | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
+| 0x6f55d0 | CTrain::ReadAndInterpretTrackFile | VEH | implemented | written, unverified (batch mvpc-veh-1); verification queue | 2026-11-11 |
+| 0x6f5ba0 | CTrain::FindMaximumSpeedToStopAtStations | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6f5cd0 | CTrain::FindNumCarriagesPulled | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6f5cf0 | CTrain::TrainHitStuff<CPtrListSingleLink<CPhysical*>> | VEH | L2 | split veh2-c-split: 1000/1000 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6f5db0 | CTrain::DisableRandomTrains | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -6986,11 +7434,23 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6f6030 | CTrain::Constructor | VEH | implemented | VEH-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x6f6300 | CTrain::`scalar deleting destructor' | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6f6640 | CTrain::MarkSurroundingEntitiesForCollisionWithTrain | VEH | implemented | VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match) | 2026-11-11 |
+| 0x6f6b60 | CTrain::ReleaseMissionTrains | VEH | implemented | written, unverified (batch mvpa-world-2); verification queue | 2026-11-11 |
 | 0x6f6bd0 | CTrain::FindClosestTrackNode | VEH | L2 | L2 veh2-c-l2: 6/6 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x6f7440 | CTrain::InitTrains | VEH | implemented | VEH-2 ported; L2-split (undeclared writes to review) | 2026-11-11 |
+| 0x6f7550 | CTrain::CreateMissionTrain | VEH | implemented | written, unverified (batch mvpb-veh-5); verification queue | 2026-11-11 |
+| 0x6f9de0 | CPlantSurfPropMgr::GetSurfProperties | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x6f9eb0 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x6fa6d0 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x6fa790 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x6faa70 | CCoronas::Init | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x6fab00 | CCoronas::Shutdown | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x6fab30 | Light::GetDayNightBalance | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
+| 0x6fabf0 | CRegisteredCorona::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x6fadf0 | CCoronas::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x6fc180 | CCoronas::RegisterCorona-type | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x6fc4d0 | CCoronas::UpdateCoronaCoors | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x6fc580 | CCoronas::RegisterCorona-texture | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x6fc5a0 | CCoronas::DoSunAndMoon | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x6fd500 | CCustomCarPlateMgr::Initialise | RENDER | L2 | split port-l2-r2d-sp: PASS 1 compared; 0 mismatches; 0 undeclared [carplates.rs] | 2026-11-11 |
 | 0x6fd5b0 | CCustomCarPlateMgr::GeneratePlateText | RENDER | L2 | split port-l2-r2d-sp: PASS 14 compared; 0 mismatches; 0 undeclared [carplates.rs] | 2026-11-11 |
 | 0x6fd720 | CCustomCarPlateMgr::Shutdown | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7007,10 +7467,17 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6fe060 | CCustomCarPlateMgr::MaterialSetCarplateTextureCB | RENDER | L2 | split port-l2-r2d-sp: PASS 180 compared; 0 mismatches; 0 undeclared [carplates.rs] | 2026-11-11 |
 | 0x6fe0d0 | CCustomCarPlateMgr::AtomicSetCarplateTextureCB | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x6fe0f0 | CCustomCarPlateMgr::SetupClump | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x6fe120 | CCustomRoadsignMgr::Initialise | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x6feca0 | CCustomRoadsignMgr::CreateRoadsignTexture | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x6ff2d0 | CCustomRoadsignMgr::CreateRoadsignAtomic | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x6ff410 | CDraw::SetFOV | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x6ff420 | CDraw::CalculateAspectRatio | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x6ff8a0 | CPlayerSkin::Initialise | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; split-combat: PASS-FP 1/1 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: PASS-FP 1/1 compared, 0 mismatches; split-pr: PASS-FP 1/1 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x6ff8d0 | CPlayerSkin::Shutdown | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x6ffb40 | CPointLights::Init | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x6ffbb0 | CPointLights::GenerateLightsAffectingObject | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x6ffe70 | CPointLights::GetLightMultiplier | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x6fffe0 | CPointLights::RemoveLightsAffectingObject | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
 | 0x6ffff0 | CPointLights::ProcessVerticalLineUsingCache | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7000e0 | CPointLights::AddLight | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x700d70 | CPostEffects::ImmediateModeRenderStatesSet | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:31/31 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7019,12 +7486,26 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7034f0 | CPostEffects::IsVisionFXActive | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x704630 | CPostEffects::Initialise | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7046a0 | CPostEffects::Update | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:210/210 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x705400 | CShadowCamera::Destroy | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x7054c0 | CShadowCamera::SetFrustum | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x705520 | CShadowCamera::SetLight | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x705990 | CRealTimeShadow::Destroy | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x705b30 | CRealTimeShadowManager::ReturnRealTimeShadow | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x705b60 | CShadowCamera::Create | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x706460 | CRealTimeShadow::Create | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x706520 | CRealTimeShadow::SetupForThisEntity | RENDER | implemented | written, unverified (batch mvpa-render-3); verification queue | 2026-11-11 |
+| 0x706770 |  | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
 | 0x7067c0 | CRealTimeShadowManager::Init | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x706970 | CRealTimeShadowManager::GetRealTimeShadow | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x706a60 | CRealTimeShadowManager::Exit | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x706ba0 | CRealTimeShadowManager::DoShadowThisFrame | RENDER | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
+| 0x706cd0 | CShadows::Init | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x707460 | CShadows::SetRenderModeForShadowType | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x707670 | CStaticShadow::Free | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7076c0 | CShadows::CalcPedShadowValues | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x707770 | CShadows::TidyUpShadows | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:1/1 PASS-FP (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x707850 | CShadows::AffectColourWithLighting | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x707b40 | CShadows::StoreShadowForPedObject | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x707f40 | CShadows::UpdateStaticShadows | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:123/123 PASS-FP (0 mismatches, 123 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x70ce30 | CSprite::CalcScreenCoors | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x70cf20 | CSprite::FlushSpriteBuffer | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:300/300 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7045,6 +7526,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x711390 | CStencilShadows::Shutdown | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7113b0 | CStencilShadows::RenderStencilShadows | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x711d90 | CStencilShadows::Process | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x711ec0 | CBirds::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x712fa0 | CClouds::Shutdown | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x712ff0 | CClouds::Update | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x713060 | CClouds::SetUpOneSkyPoly | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; L2 grove:0/24535 FAIL (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7057,16 +7539,22 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7136e0 | CClouds::MovingFog_GetWind | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x713710 | CClouds::MovingFog_GetFirstFreeSlot | RENDER | implemented | PORT-RENDER-1 (2026-11-11): ported-unhookable; loop branches back into the patched entry (0x713712); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x713730 | CClouds::MovingFog_Delete | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7138d0 | CClouds::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x7170e0 | CCredits::Start | HUD | implemented | PORT-HUD (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / anim / weapon; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x717100 | CCredits::Stop | HUD | implemented | PORT-HUD (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / anim / weapon; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x717110 | CEscalator::Constructor | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x717130 | CEscalator::Destructor | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x7172d0 | CPlaneTrail::RegisterPoint | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x7174f0 | CPlaneTrails::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x717860 | CEscalator::SwitchOff | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x717900 | CEntity::RemoveEscalatorsForEntity | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x717940 | CEscalators::Shutdown | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x717c20 | CMovingThings::Shutdown | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x717c50 | CEscalators::Init | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x717c90 | CEscalators::AddOne | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x717d00 | CMovingThings::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x718580 | CEscalators::Update | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
+| 0x7185b0 | CMovingThings::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x718600 | Common::AsciiToGxtChar | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x718630 | GxtCharStrcat | HUD | L1 | hud-port-2 ported; L1 | 2026-11-11 |
 | 0x718660 | GxtCharStrcpy | UNK-game | L2 | L1 HudGxtCharStrcpy 1;002;000 PASS; L2 menus-hud: 1000/1001 PASS (0 mismatches; 0 undeclared) | 2026-11-11 |
@@ -7126,6 +7614,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x71c0d0 | CGlass::WasGlassHitByBullet | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x71c1a0 | CGlass::WindowRespondsToExplosion | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x71ce20 | CGlass::Render | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x71d4e0 | CGridRef::Init | WORLD | implemented | written, unverified (batch mvpa-world-1); verification queue | 2026-11-11 |
 | 0x71d5a0 | CGridRef::GetGridRefPositions-vec | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x71d5e0 | CGridRef::GetGridRefPositions- | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x71d650 | CGridRef::GetArtistBugstarID | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
@@ -7133,6 +7622,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x71d710 | CMBlur::MotionBlurOpen | CAM | implemented | PORT-CAM (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / wc / anim; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x71d720 | CMBlur::MotionBlurClose | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x71d730 | CMBlur::SetDrunkBlur | PED | implemented | ped-port-3 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x71d780 | CMBlur::ClearDrunkBlur | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
 | 0x71da00 | Common::CalcScreenCoors-VVff | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x71dab0 | Common::CalcScreenCoors-VV | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x71db30 |  | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
@@ -7147,6 +7637,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x71fa40 | CActiveOccluder::IsPointBehindOccluder | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7200b0 | COcclusion::IsPositionOccluded | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7201c0 | COcclusion::ProcessBeforeRendering | RENDER | L2 | l2 port-l2-r2c-l2: 1000/1001 PASS (0 mismatches; 0 undeclared) [occlusion.rs] | 2026-11-11 |
+| 0x7204e0 | CSkidmarks::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x720590 | CSkidmarks::Clear | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x7205c0 | CSkidmarks::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x720f60 | C3dMarker::C3dMarker | RENDER | L2 | l2 port-l2-r2d-l2: 32/32 PASS (0 mismatches; 0 undeclared) [markers.rs] | 2026-11-11 |
 | 0x720f70 | C3dMarker::~C3dMarker | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x720fb0 | C3dMarkers::User3dMarkerFindFirstFreeSlot | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7167,16 +7660,21 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x722710 | C3dMarkers::Shutdown | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7227b0 | C3dMarkers::Update | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x722870 | C3dMarkers::ForceRender | RENDER | L2 | l2 port-l2-r2d-l2: 1/1 PASS (0 mismatches; 0 undeclared) [markers.rs] | 2026-11-11 |
+| 0x722880 | CCheckpoints::Init | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x7230a0 | CMirrors::CreateBuffer | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x723240 | C3dMarkers::User3dMarkersDraw | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
+| 0x723390 | CSpecialFX::Shutdown | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x723c10 | CBulletTraces::Render | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x723fb0 | CBulletTraces::Update | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x724770 | CBrightLights::RegisterOne | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x724b60 | CShinyTexts::RegisterOne | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x724d40 | C3dMarker::UpdateZCoordinate | RENDER | L2 | l2 port-l2-r2d-l2: 1000/1001 PASS (0 mismatches; 0 undeclared) [markers.rs] | 2026-11-11 |
 | 0x724e10 | C3dMarker::SetZCoordinateIfNotUpToDate | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x724e40 | C3dMarkers::Init | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x725040 | C3dMarkers::Render | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x725120 | C3dMarkers::PlaceMarker | RENDER | implemented | RENDER-2 ported; implemented | 2026-11-11 |
 | 0x725ba0 | C3dMarkers::PlaceMarkerSet | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x7268f0 | CSpecialFX::Init | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x726aa0 | CSpecialFX::Update | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:211/211 PASS-FP (0 mismatches, 33 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x726ad0 | CSpecialFX::Render | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:123/123 PASS-FP (0 mismatches, 123 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x726af0 | CBulletTraces::AddTrace-Wrapper | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7204,6 +7702,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x727c10 | CSprite2d::DrawRect-CRGBA4 | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:2/2 PASS (0 mismatches, 2 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x727c50 | CSprite2d::DrawRectXLU | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x727cc0 | CSprite2d::DrawAnyRect | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x728200 | CSprite2d::AddToBuffer | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x728350 | CSprite2d::Draw-CRectCRGBA | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x728520 | CSprite2d::Draw-ffffffffCRGBA | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x728a90 | CAEWaterCannonAudioEntity::Constructor | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x728ab0 | CAEWaterCannonAudioEntity::~CAEWaterCannonAudioEntity | AUDIO | implemented | audio-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x728b10 | CWaterCannon::CWaterCannon | WEAPON | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1,002,000 cases, 0 mismatches; L2 combat:3/3 (0 mismatches, 0 undeclared); L2 grove:3/3 (0 mismatches, 0 undeclared); L2 cheats:3/3 (0 mismatches, 0 undeclared); L2 pr:3/3 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -7224,6 +7725,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x72a620 | CAEWeatherAudioEntity::CAEWeatherAudioEntity | AUDIO | L2 | PORT-AUDIO-1 (2026-11-11): L2; L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 driving:1/1 PASS (0 mismatches, 0 undeclared); L2 weapon-combat:1/1 PASS (0 mismatches, 0 undeclared); L2 pause-restart:1/1 PASS (0 mismatches, 0 undeclared); L2 world-cheats:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x72a640 | CWeather::UpdateWeatherRegion | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; L2 grove:315/315 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x72a790 | CWeather::SetWeatherToAppropriateTypeNow | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x72b630 | CWeather::UpdateInTunnelness | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x72c950 | CWindModifiers::FindWindModifier | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x72d6b0 | CCullZones::Init | RENDER | L2 | PORT-RENDER-1 (2026-11-11): L2; split grove:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x72d6d0 |  | UNK-game | implemented | cam-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x72d850 | CZoneDef::IsPointWithin | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
@@ -7262,7 +7765,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x72f480 | CMemoryMgr::InitScratchPad | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vB,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x72f4c0 | CMemoryMgr::MallocAlign- | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x72f4f0 | CMemoryMgr::FreeAlign | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
+| 0x72f9f0 | cb_RSNODENAME_RwFrame_Copy | UNK-game | implemented | written, unverified (batch mvpa-render-2); verification queue | 2026-11-11 |
 | 0x72fd90 | CGame::CameraDestroy | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x730830 | D3DResourceSystem::Init | CALLED-ONLY | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x730ac0 | D3DResourceSystem::SetUseD3DResourceBuffering | CALLED-ONLY | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x730e60 | RwTextureGtaStreamRead | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x730fc0 | RwTexDictionaryGtaStreamRead | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=259 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x731070 | RwTexDictionaryGtaStreamRead1 | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=4 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
@@ -7299,6 +7805,10 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x734640 | FlushObrsPrintfs | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x734650 | App::DefinedState | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x734750 | App::DefinedState2d | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vB,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
+| 0x734970 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x734ec0 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x734ed0 |  | UNK-game | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
+| 0x734fc0 | RpClumpGetBoundingSphere | CALLED-ONLY | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x7354e0 | Light::SetLightsWithTimeOfDayColour | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vA: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x735720 | Light::LightsEnable | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x735730 | Light::LightsDestroy | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
@@ -7454,6 +7964,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x746ed0 | CPad::GetMouseState | INPUT | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:200 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 0 undeclared (PASS), cheats:200 compared, 0 mismatches, 0 undeclared (PASS), anim-input:200 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:399 compared, 0 mismatches, 0 undeclared (COUNT); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x747000 |  | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x747020 | Input::EnumDevicesCallback | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x747200 | CGamma::SetGamma | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x747660 | VideoPlayer::Play | CORE | L2 | INF-17 split-run L2 re-run by main session 2026-11-10 (lane 3, grove walk, group l): split-report PASS, splito/splitr traces IDENTICAL to plain over 5200 frames (target/e2e/lane-3/port-l2-split-l) | 2026-11-10 |
 | 0x7477c0 |  | CORE | L2 | INF-17 split-run L2 re-run by main session 2026-11-10 (lane 3, grove walk, group l): split-report PASS, splito/splitr traces IDENTICAL to plain over 5200 frames (target/e2e/lane-3/port-l2-split-l) | 2026-11-10 |
 | 0x747820 | Win::GTATranslateKey | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
@@ -7467,6 +7978,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7490b0 | cb_ANISOTPLUGIN_RwTexture_StreamWrite | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7490f0 | cb_ANISOTPLUGIN_RwTexture_StreamGetSize | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x749120 | cb_RIGHTTORENDER_RpAtomic_StreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 32 compared, 0 mismatches, 32 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x749160 | cb_RIGHTTORENDER_RpAtomic_StreamWrite | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x7491c0 | AtomicDefaultRenderCallBack | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7491f0 | _rpAtomicResyncInterpolatedSphere | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 44 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x749330 | RpAtomicGetWorldBoundingSphere | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7502,6 +8014,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x74a4c0 | RpClumpRemoveAtomic | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 11 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74a4f0 | RpClumpAddLight | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74a520 | RpClumpRemoveLight | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x74a5b0 | RpAtomicStreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74a850 | RpAtomicStreamWrite | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74ae50 | _rpClumpGeometryListDestroy | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74afa0 | _rpClumpLightStreamGetSizeCB | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74afd0 | _rpClumpCameraStreamGetSizeCB | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74b000 | _rpClumpAtomicStreamGetSizeCB | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74b030 | RpAtomicStreamRead | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x74bd40 | _rpClumpChunkInfoRead | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x74bda0 | RpAtomicRegisterPlugin | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74bdd0 | RpClumpRegisterPlugin | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74be00 | RpAtomicRegisterPluginStream | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7530,7 +8050,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x74ccc0 | RpGeometryDestroy | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 66 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74cd70 | RpGeometryRegisterPlugin | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74cda0 | RpGeometryRegisterPluginStream | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x74ce20 | RpGeometryStreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x74d190 | RpGeometryStreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x74d810 | cb_RIGHTTORENDER_RpMaterial_StreamWrite | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x74d8e0 | cb_MATERIALMODULE_RwEngine_Open | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74d950 | cb_MATERIALMODULE_RwEngine_Close | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74d990 | RpMaterialCreate | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 8 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7542,9 +8064,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x74dd30 | RpMaterialStreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 39 compared, 0 mismatches, 39 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74e150 | _rpMaterialListDeinitialize | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 16 compared, 0 mismatches, 6 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74e1b0 | _rpMaterialListInitialize | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 37 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x74e1c0 | _rpMaterialListAlloc | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x74e2b0 | _rpMaterialListGetMaterial | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 39 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74e350 | _rpMaterialListAppendMaterial | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 39 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74e420 | _rpMaterialListFindMaterialIndex | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x74e450 | _rpMaterialListStreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x74e600 | _rpMaterialListStreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x74e970 | _rpD3D9AddDynamicGeometry | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x74e9e0 | _rpD3D9RemoveDynamicGeometry | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7552,12 +8076,19 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x74ead0 | _rpCreateD3D9WorldSectorAllInOnePipe | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x74eb40 | _rpDestroyD3D9WorldSectorPipe | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x74eb80 | _rpCreateD3D9AtomicAllInOnePipe | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x74fb80 | RpWorldForAllClumps | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
+| 0x74fbc0 | RpWorldForAllMaterials | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
+| 0x74fc70 | RpWorldForAllWorldSectors | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x750db0 | cb_BINMESHPLUGIN_RpGeometry_StreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x750e20 | cb_NATIVEDATAPLUGIN_RpGeometry_StreamRead | RW | implemented | written, unverified (batch rw5-native-1); verification queue | 2026-11-11 |
+| 0x750e70 | cb_NATIVEDATAPLUGIN_RpWorldSector_StreamRead | RW | implemented | written, unverified (batch rw5-native-1); verification queue | 2026-11-11 |
 | 0x751050 | RpAtomicGetWorld | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 66 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x751060 | RpAtomicForAllWorldSectors | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x751910 | RpWorldAddLight | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x751960 | RpWorldRemoveLight | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x751a70 | RpLightSetRadius | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x751a90 | RpLightSetColor | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x751d20 | RpLightSetConeAngle | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x751d60 | RpLightRegisterPlugin | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 3 compared, 0 mismatches, 3 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x751f00 | RpLightStreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 8 compared, 0 mismatches, 8 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7520d0 | RpLightDestroy | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 8 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7568,6 +8099,21 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x752270 | cb_LIGHTMODULE_RwEngine_Open | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7522e0 | _rpD3D9VertexDeclarationGetSize | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7522f0 | _rpD3D9VertexDeclarationGetStride | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x752320 | _rpD3D9VertexDeclarationInstWeights | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x752ad0 | _rpD3D9VertexDeclarationInstV3d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x7531b0 | _rpD3D9VertexDeclarationInstV3dComp | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x753b60 | _rpD3D9VertexDeclarationInstV3dMorph | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x7544e0 | _rpD3D9VertexDeclarationInstV2d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x754ae0 | _rpD3D9VertexDeclarationInstColor | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x754b40 | _rpD3D9VertexDeclarationInstIndices | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x754c80 | _rpD3D9VertexDeclarationInstIndicesRemap | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x754e20 | _rpD3D9VertexDeclarationInstTangent | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x7551f0 | _rpD3D9VertexDeclarationUnInstV3d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x7555e0 | _rpD3D9VertexDeclarationUnInstV2d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x755830 | _rpD3D9GetMinMaxValuesV3d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x7558f0 | _rpD3D9GetMinMaxValuesV2d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x755980 | _rpD3D9FindFormatV3d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x755aa0 | _rpD3D9FindFormatV2d | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
 | 0x755b90 | _rpD3D9LightRegisterPlugin | RW | L2 | split rw4-sc: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x755d20 | RpD3D9LightSetAttenuationParams | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x755d50 | RpD3D9LightGetAttenuationParams | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7590,10 +8136,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x757400 | _rxD3D9AtomicDefaultLightingCallback | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7575f0 | _rwD3D9AtomicAllInOneNode | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x757890 | _rwD3D9AtomicAllInOnePipelineInit | RW | L2 | split rw4-sb: PASS 2 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
+| 0x7578c0 | _rxD3D9DefaultInstanceCallback | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x758270 | _rxD3D9DefaultReinstanceCallback | RW | implemented | written, unverified (batch rw5-inst-1); verification queue | 2026-11-11 |
+| 0x7582e0 | RxNodeDefinitionGetD3D9AtomicAllInOne | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
 | 0x7588b0 | RpD3D9GeometrySetUsageFlags | RW | L2 | split rw4-sb: PASS 4 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x7588d0 | RpD3D9GeometryGetUsageFlags | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7588e0 | RpD3D9WorldSectorSetUsageFlags | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x758900 | RpD3D9WorldSectorGetUsageFlags | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x758910 | _rpMeshHeaderDestroy | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x758920 | _rpMeshHeaderCreate | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x758940 | _rpMeshClose | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x758970 | _rpMeshOpen | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7603,18 +8153,28 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x758c00 | _rpBuildMeshAddTriangle | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 12 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x758d30 | _rpMeshHeaderForAllMeshes | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 8 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x758ec0 | _rpMeshRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 36 compared, 0 mismatches, 36 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x759090 | _rpMeshSize | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x75e2a0 | RpAtomicSetDefaultPipeline | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x75e3f0 | _rwD3D9WorldSectorAllInOneNode | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
 | 0x75e540 | _rwD3D9WorldSectorAllInOnePipelineInit | RW | L2 | split rw4-sb: PASS 2 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x75e570 | _rxD3D9WorldSectorDefaultLightingCallback | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x75edd0 | _rpD3D9GetNumConstantsUsed | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x75ee60 | _rpD3D9VertexShaderCachePurge | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x75eed0 | _rpD3D9GetVertexShader | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
+| 0x760df0 | _rxD3D9VertexShaderDefaultBeginCallBack | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
 | 0x761010 | _rxD3D9VertexShaderDefaultGetMaterialShaderCallBack | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x761030 | _rxD3D9VertexShaderDefaultMeshRenderCallBack | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
 | 0x761720 | _rpD3D9VertexShaderUpdateLightsColors | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x761820 | _rpD3D9VertexShaderUpdateMaterialColor | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7618b0 | _rpD3D9VertexShaderUpdateFogData | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x761950 | _rpD3D9VertexShaderUpdateMorphingCoef | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x7619a0 | _rpD3DVertexShaderSetUVAnimMatrix | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
 | 0x761a10 | _rpD3D9VertexShaderSetEnvMatrix | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x761b70 | _rpD3D9VertexShaderSetBumpMatrix | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x7637f0 | _rpD3D9NativeDataGeometryStreamWrite | RW | implemented | written, unverified (batch rw5-native-1); verification queue | 2026-11-11 |
+| 0x763a80 | _rpD3D9NativeDataGeometryStreamRead | RW | implemented | written, unverified (batch rw5-native-1); verification queue | 2026-11-11 |
+| 0x763eb0 | _rpD3D9NativeDataGeometryStreamGetSize | RW | implemented | written, unverified (batch rw5-native-1); verification queue | 2026-11-11 |
+| 0x7645c0 | _rpD3D9NativeDataWorldSectorStreamGetSize | RW | implemented | written, unverified (batch rw5-native-1); verification queue | 2026-11-11 |
 | 0x764650 | _rwD3D9VSSetActiveWorldMatrix | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7646e0 | _rwD3D9VSGetComposedTransformMatrix | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x764730 | _rwD3D9VSGetWorldViewTransposedMatrix | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7670,6 +8230,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7ecef0 | RwStreamOpen | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 13 compared, 0 mismatches, 13 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ed0f0 | _rwStreamReadChunkHeader | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: DIVERGED 0 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ed1e0 |  | RW | implemented | PORT-RW-1 (2026-11-11): ported-unhookable; caller keeps ECX at 0x7ED5DE; L3 all-ports IDENTICAL on 7 recordings (rwp2-*); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7ed270 | _rwStreamWriteVersionedChunkHeader | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x7ed2d0 | RwStreamFindChunk | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: DIVERGED 31 compared, 0 mismatches, 31 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ed4a0 | RwStreamReadInt16 | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ed4f0 | RwStreamReadReal | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 60 compared, 0 mismatches, 60 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7685,12 +8246,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7eddc0 | RwV3dTransformVector | RW | L2 | PORT-RW-1 (2026-11-11): L2; L2 rw-math-g: PASS 1000/1001 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7eddf0 | RwV3dTransformVectors | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; L2 rw-math-g: FAIL 114/114 cases, 0 mismatches, 113 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ede90 | cb_VECTORMODULE_RwEngine_Open | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7ee0b0 | cb_CAMERAMODULE_RwEngine_Close | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x7ee110 | cb_CAMERAMODULE_RwEngine_Open | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ee1a0 | RwCameraSetViewOffset | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ee1d0 | RwCameraSetNearClipPlane | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ee200 | _rwCameraUpdateZShiftScale | RW | implemented | PORT-RW-1 (2026-11-11): ported-unhookable; RwCameraCreate keeps EDX; L3 all-ports IDENTICAL on 7 recordings (rwp2-*); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ee2a0 | RwCameraSetFarClipPlane | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-hot-sg: PASS-FP 352 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ee2d0 | RwCameraFrustumTestSphere | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7ee340 | RwCore::RwCameraClear | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x7ee370 | RwCore::RwCameraShowRaster | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7ee3a0 | RwCameraSetProjection | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7ee410 | RwCameraSetViewWindow | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: COUNT 269 compared, 0 mismatches, 0 undeclared; split rw-hot-sg: COUNT 550 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7708,6 +8271,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7ef6b0 | RwIm3DRenderPrimitive | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7efac0 | RwIm3DSetTransformPipeline | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7efb10 | RwIm3DSetRenderPipeline | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7efde0 | cb_IMMEDIATEMODULE_RwEngine_Close | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x7efe20 | cb_IMMEDIATEMODULE_RwEngine_Open | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7efef0 | cb_FRAMEMODULE_RwEngine_Open | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7eff70 | cb_FRAMEMODULE_RwEngine_Close | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7744,6 +8308,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7f1450 | _rwMatrixDeterminant | RW | L2 | PORT-RW-1 (2026-11-11): L2; L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: FAIL 671/5805 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f14a0 | _rwMatrixOrthogonalError | RW | L2 | PORT-RW-1 (2026-11-11): L2; L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/4799 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f1500 | _rwMatrixNormalError | RW | L2 | PORT-RW-1 (2026-11-11): L2; L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/4799 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7f1660 | cb_MATRIXMODULE_RwEngine_Close | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x7f16c0 | cb_MATRIXMODULE_RwEngine_Open | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f17e0 | RwMatrixOptimize | RW | L2 | PORT-RW-1 (2026-11-11): L2; L2 rw-math-g: PASS 1000/1485 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f18a0 | RwMatrixUpdate | RW | L2 | PORT-RW-1 (2026-11-11): L2; L1 1,060,000 cases 0 mismatches (SNaN cases unverified); L2 rw-math-g: PASS 1000/94807 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7759,6 +8324,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7f2a50 | RwMatrixCreate | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 6 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f2bb0 | RwEngineRegisterPlugin | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 4 compared, 0 mismatches, 4 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f2be0 | RwEngineGetPluginOffset | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 62 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7f2d80 | RwEngineGetTextureMemorySize | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
+| 0x7f2db0 | RwEngineGetMaxTextureSize | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
+| 0x7f2de0 | RwEngineSetFocus | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x7f34d0 | RwTextureSetFindCallBack | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 15 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f34f0 | RwTextureGetFindCallBack | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 7 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x7f3500 | RwTextureSetReadCallBack | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7794,6 +8362,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7f3cc0 | RwTextureGetMipmapNameCallBack | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7f3cd0 | RwTextureRasterGenerateMipmaps | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7f3ea0 | cb_TEXTUREMODULE_RwEngine_Open | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x7f40f0 | _rwTextureDefaultReadCallBack | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x7f53d0 | _rwTextureDefaultFindCallBack | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7f5500 | RwD3D9CreateVertexBuffer | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7f56a0 | RwD3D9DestroyVertexBuffer | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7815,6 +8384,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7f8580 | RwD3D9EngineSetRefreshRate | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x7f8620 | RwD3D9EngineSetMultiThreadSafe | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7f8630 | RwD3D9EngineSetSoftwareVertexProcessing | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x7f8640 | RwD3D9ChangeVideoMode | RW | implemented | written, unverified (batch rw5-cam-1); verification queue | 2026-11-11 |
+| 0x7f98d0 | _rwD3D9CameraEndUpdate | RW | implemented | written, unverified (batch rw5-cam-1); verification queue | 2026-11-11 |
 | 0x7f9c20 | _rwDeviceGetHandle | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x7f9c30 | RwD3D9DeviceSupportsDXTTexture | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x7f9d30 | RwD3D9SetStencilClear | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
@@ -7922,7 +8493,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7fed70 |  | RW | L2 | split rw4-sb: PASS 19 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x7fee20 | _rwD3D9RGBToPixel | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7ff070 | _rwD3D9PixelToRGB | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x7ff270 | _rwD3D9ImageGetRaster | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x7fff00 | _rwD3D9ImageFindRasterFormat | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x8001e0 | _rwD3D9RasterSetImage | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x801970 | _rwFreeListSetFlags | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x801980 | _rwFreeListCreate | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-mem-sg2: PASS 17 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x8019b0 | _rwFreeListCreateInternal | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-mem-sg2: PASS 17 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7932,12 +8505,18 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x801e00 | RwFreeListPurge | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 8 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x801f90 | RwFreeListPurgeAllFreeLists | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-mem-sg2: PASS 3 compared, 0 mismatches, 3 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x801fd0 | _rwMemoryOpen | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x8020a0 | _rwMemoryDefaultMalloc | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
+| 0x8020b0 | _rwMemoryDefaultRealloc | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
+| 0x8020d0 | _rwMemoryDefaultCalloc | RW | implemented | written, unverified (batch rw5-core-2); verification queue | 2026-11-11 |
 | 0x8026e0 | RwImageCreate | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x802740 | RwImageDestroy | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x8027a0 | RwImageAllocatePixels | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x802860 | RwImageFreePixels | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x802a20 | RwImageMakeMask | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x802af0 | RwImageApplyMask | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x802ea0 | RwImageSetPath | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x802fd0 | RwImageRead | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
+| 0x8035c0 | RwImageReadMaskedImage | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x803e30 | RwImageGammaCorrect | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x804250 | RwImageSetFromRaster | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x804290 | RwRasterSetFromImage | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -7949,12 +8528,17 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x8045a0 | RwTextureStreamGetSize | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x8045e0 | RwTextureStreamWrite | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x8046e0 | RwTextureStreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 38 compared, 0 mismatches, 38 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x804930 | RwTexDictionaryStreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x804990 | _rwTexDictionaryTextureGetSizeCB | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x804e60 | _rwTextureChunkInfoRead | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x804ef0 | _rwObjectHasFrameSetFrame | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 105 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x804f40 | _rwObjectHasFrameReleaseFrame | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 46 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x807570 | RwFrameListSetAutoUpdate | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x807580 | RwFrameRegisterPluginStream | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 2 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x8076a0 | _rwFrameListFlattenRecurse | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x8076e0 | _rwFrameListFindFrame | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x807720 | _rwFrameListDeinitialize | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 24 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x807750 | _rwFrameListStreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x807970 | _rwFrameListStreamRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: FAIL 24 compared, 1 mismatches, 24 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x807c80 |  | RW | implemented | PORT-RW-1 (2026-11-11): ported-unhookable; single ret; L3 all-ports IDENTICAL on 7 recordings (rwp2-*); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x807c90 | cb_RESOURCESMODULE_RwEngine_Open | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -7988,7 +8572,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x80a110 | _rwIm3DDestroyTransformPipeline | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x80a140 | _rwIm3DDestroyRenderPipelines | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x80a1a0 | _rwIm3DCreateRenderPipelines | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x80a350 | _rwStringCompareNoCase | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x80a3a0 | _rwStringToUpper | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x80a3d0 | _rwStringToLower | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x80a400 | _rwStringFindChar | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x80a420 | _rwStringFindCharReverse | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x80a450 | _rwStringDestroy | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x80a510 | _rwStringStreamFindAndRead | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: DIVERGED 0 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x80c600 | RwImageResample | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x80cd10 | RwImageCreateResample | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x80d440 | _rwSSE2V3dTransformPoints | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; L2 rw-math-g: FAIL 1000/97449 cases, 0 mismatches, 970 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x80d4e0 | _rwSSE2V3dTransformVectors | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; L2 rw-math-g: NOCALLS 0/0 cases, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -8005,8 +8596,16 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x810140 |  | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-mem-sg2: PASS 648 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x810700 | RpMatFXMaterialDataSetFreeListCreateParams | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x810aa0 | RpMatFXPluginAttach | RW | L2 | split rw4-sc: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
+| 0x810bb0 | cb_MATERIALEFFECTSPLUGIN_RwEngine_Close | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x810c60 | cb_MATERIALEFFECTSPLUGIN_RpMaterial_Dtor | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x810ca0 | _rpMatFXMaterialDataDestroyEffects | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x811150 | _rpMatFXMaterialFindEffect | RW | L2 | split rw4-sb: PASS 12 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
+| 0x811a60 | cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamWrite | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x811a90 | cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x811ae0 | cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x811b60 | cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamWrite | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x811b90 | cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamRead | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
+| 0x811be0 | cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamGetSize | RW | implemented | written, unverified (batch rw5-core-1); verification queue | 2026-11-11 |
 | 0x811c00 | RpMatFXAtomicEnableEffects | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x811c30 | RpMatFXAtomicQueryEffects | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x811c40 | RpMatFXWorldSectorEnableEffects | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -8045,6 +8644,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x816260 | _rpMatFXAtomicSetPipeline | RW | L2 | split rw4-sb: PASS 12 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x816270 | _rpMatFXWorldSectorSetPipeline | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x8162f0 | RpMatFXGetD3D9Pipeline | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x81e720 | _rwD3D9DecompressDXT1 | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
+| 0x820a10 | RwD3D9DDSTextureRead | RW | implemented | written, unverified (batch rw5-image-1); verification queue | 2026-11-11 |
 | 0x820c90 | RwD3D9RasterIsCompressed | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x8497a0 | __init_g_969058 | UNK-game | L2 | split c-bug:1/1 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x8497c0 | __init_g_96905c | UNK-game | L2 | split c-bug:1/1 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |

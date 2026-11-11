@@ -457,3 +457,53 @@ UpdateCarOnRails on Rust; alone and in the other batches it passes.
 (callee writes: construction, pools, references, collision cache; some declared since, reruns pending),
 **partial-fallback 7**, **implemented-needs-L2 36** (no sampled call in car-ai, driving, police-gang,
 grove), **ported-unhookable 3**, **not-ported 44**. No row claims L3 (no per-hook hook-off runs).
+
+# Pass 4 (WRITER-POP-4, writer/verifier split)
+
+Writer pass over pass 3's "not ported" list (minus the VM functions and the short aliases), every-frame
+functions first. No game lanes: every new hook is `unverified` (PLAN §5.1) and waits for a verifier. The lead
+and two helpers worked in the same worktree on disjoint new modules; `tools/e2e/l2-extras.txt` has the
+out-parameters and pool regions of every new port.
+
+| batch | file | hooks |
+|---|---|---|
+| `popw4-frame-1` | `misc6.rs`, `population4.rs` (lead) | `CTrafficLights::DisplayActualLight` (L2), `CPopulation::AddToPopulation` (split, footprint) |
+| `popw4-pop-1` | `population4.rs`, `carctrl7.rs` (lead) | PopulateInterior, CreateWaitingCoppers, PlaceCouple, AddDeadPedInFrontOfCar, `CCarCtrl::CreatePoliceChase`, CreateConvoy (all split) |
+| `popw4-drive-1` | `carctrl6.rs` (helper A) | FlyAIHeliInCertainDirection, FlyAIHeliToTarget_FixedOrientation, FlyAIPlaneInCertainDirection, SteerAICarParkParallel / Perpendicular, FollowPreRecordedPath, FollowPath_Racing, DragCarToPoint, DealWithBend_Racing (all L2) |
+| `popw4-gang-1` | `misc5.rs` (helper B) | PickZoneToAttack, CheerVictory, StartDefensiveGangWar, StartOffensiveGangWar, CreateDefendingGroup, CreateAttackWave (split, footprint, new keycells reader 0x403A92), GetRoadBlockNodeInfo, ClearSpaceForRoadBlockObject, GenerateRoadBlockPedsForCar (partial), `CDarkel::StartFrenzy`, DealWithWeaponChangeAtEndOfFrenzy |
+| `popw4-partial-1` | `misc3.rs`, `population3.rs` | `CDarkel::DrawMessages` completed (no fallback); `CPopulation::AddPed` cheat paths ported (fallback left for types < 4, 21, > 31); PedStreamedInForThisGang / PickStreamedInPedForThisGang back to unverified after the `model_loaded` fix |
+
+## Findings (bytes over gta-reversed / specs)
+
+- `AddToPopulation`: `FindNewPedType` can return 1 writing nothing, so the type / model locals are then the
+  stack residue of earlier calls (`[entry ESP - 0x10C]` / `- 0xE8`); the port reads them from the footprint
+  snapshot and records its final values. `PopulateInterior` has the same pattern (`- 0x14` / `- 0x18`, the
+  previous try's values within a call).
+- `PlaceCouple` is instruction for instruction the couple branch of `AddToPopulation` (shared `add_couple`).
+- `CreateWaitingCoppers` stores `z + 1` into its own argument slot (recorded as a footprint write); the cop
+  spot uses FSIN / FCOS of an 80-bit angle and the heading FPATAN.
+- `CreatePoliceChase` / `CreateConvoy`: the ground search starts at 1e9 and the "no ground" test is `> 1e9`,
+  so a car with no ground at all is placed at z = 1e9 + base distance (kept).
+- `DisplayActualLight`: corona radius `[0xB7C4E0] * 0.175`, colour factor `[0xB7C4E4] * 0.07`; the pedestrian
+  light state is `LightForPeds` inlined.
+- `CDarkel::DrawMessages`: the second `GetYPosBasedOnHealth` call gets the first one's result as its float and
+  player 1 (the result left on the stack becomes the next argument).
+- Helper A: FlyAIPlaneInCertainDirection's entry `E9` jumps to a no-CD fragment at 0x401961 (not .HOODLUM): the
+  hook's expect covers 8 bytes so it is installed inline. DragCarToPoint divides `L`, not `k1` as
+  CCarCtrl.p2.md says; DealWithBend_Racing's parallel shortcut needs `|dy|` non-zero or NaN (kept).
+- Helper B: `misc2::model_loaded` (pass 2) read the load state at 0x8E4CD0 + 0x10 although the bytes read
+  `[model * 20 + 0x8E4CD0]` (`m_nLoadState` of 0x8E4CC0): fixed; this changes the verified
+  PedStreamedInForThisGang 0x4439D0 and PickStreamedInPedForThisGang 0x443A20 (re-verify them).
+  CreateAttackWave: the jump-table default's local is the player ped pointer, the two weapon-type locals are the
+  uninitialised ones (footprint residue); Gang2's peds get type `Gang1 + 7` (kept).
+
+## Not ported (pass 4)
+
+- `CRoadBlocks::CreateRoadBlockBetween2Points` 0x4619C0 (about 4 KB with stack `CMatrix` locals, argument-slot
+  reuse and fires; no time).
+
+- Partial ports still with fallback: `UpdateCarAI` (law enforcers / other missions),
+  `SteerAICarWithPhysics_OnlyMission` (inline-steering missions), `CGangWars::Update` (active war state
+  machine), `GenerateRoadBlocks` (wanted-level road blocks), `CCarGenerator::DoInternalProcessing` (model 0x24C
+  passes the caller's EDI), `CRoadBlocks::GenerateRoadBlockPedsForCar` (seat offsets past its table), `AddPed`
+  (types < 4, 21, > 31).

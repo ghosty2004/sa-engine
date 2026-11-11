@@ -5018,3 +5018,137 @@ _rpSkinPipelinesCreate@0x8DED44:0x4:RW
 _rwD3D9RasterPluginAttach@0x8E2528:0x8:RW
 cb_RASTERMODULE_RwEngine_Open@0xC980B8:0x20:RW
 cb_RASTERMODULE_RwEngine_Open@0xC9A658:0x4:RW
+# WRITER-POP-4 (batches popw4-frame-1, popw4-pop-1, popw4-drive-1, popw4-gang-1)
+# WRITER-POP-4 lead (popw4-frame-1, popw4-pop-1): the entity matrix DisplayActualLight may allocate,
+# the pools the creating ports allocate from (ped 0xB74490, vehicle 0xB74494, object 0xB7449C, task 0xB744A8:
+# headers and byte maps), the vehicles the car ports modify
+CTrafficLights::DisplayActualLight@[arg0+0x14]:0x48:RW
+CPopulation::AddToPopulation@[0xB74490]:0x14:RW
+CPopulation::AddToPopulation@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPopulation::AddToPopulation@[0xB7449C]:0x14:RW
+CPopulation::AddToPopulation@[[0xB7449C]+4]:[[0xB7449C]+8]:RW
+CPopulation::AddToPopulation@[0xB744A8]:0x14:RW
+CPopulation::AddToPopulation@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CPopulation::PopulateInterior@[0xB74490]:0x14:RW
+CPopulation::PopulateInterior@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPopulation::CreateWaitingCoppers@[0xB74490]:0x14:RW
+CPopulation::CreateWaitingCoppers@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPopulation::CreateWaitingCoppers@[0xB74494]:0x14:RW
+CPopulation::CreateWaitingCoppers@[[0xB74494]+4]:[[0xB74494]+8]:RW
+CPopulation::CreateWaitingCoppers@[0xB744A8]:0x14:RW
+CPopulation::CreateWaitingCoppers@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CPopulation::PlaceCouple@[0xB74490]:0x14:RW
+CPopulation::PlaceCouple@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPopulation::PlaceCouple@[0xB744A8]:0x14:RW
+CPopulation::PlaceCouple@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CPopulation::AddDeadPedInFrontOfCar@arg1:0xA18:RW
+CPopulation::AddDeadPedInFrontOfCar@[0xB74490]:0x14:RW
+CPopulation::AddDeadPedInFrontOfCar@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CPopulation::AddDeadPedInFrontOfCar@[0xB744A8]:0x14:RW
+CPopulation::AddDeadPedInFrontOfCar@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CCarCtrl::CreatePoliceChase@arg0:0xA18:RW
+CCarCtrl::CreatePoliceChase@[0xB74490]:0x14:RW
+CCarCtrl::CreatePoliceChase@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CCarCtrl::CreatePoliceChase@[0xB74494]:0x14:RW
+CCarCtrl::CreatePoliceChase@[[0xB74494]+4]:[[0xB74494]+8]:RW
+CCarCtrl::CreatePoliceChase@[0xB744A8]:0x14:RW
+CCarCtrl::CreatePoliceChase@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CCarCtrl::CreateConvoy@arg0:0xA18:RW
+CCarCtrl::CreateConvoy@[0xB74490]:0x14:RW
+CCarCtrl::CreateConvoy@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CCarCtrl::CreateConvoy@[0xB74494]:0x14:RW
+CCarCtrl::CreateConvoy@[[0xB74494]+4]:[[0xB74494]+8]:RW
+CCarCtrl::CreateConvoy@[0xB744A8]:0x14:RW
+CCarCtrl::CreateConvoy@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+# WRITER-POP-4 helper A (carctrl6.rs, batch popw4-drive-1): extra L2 regions.
+# The vehicle object (arg0) is a vehicle pool entry (0xA18 bytes); the out-pointers are the callers' locals.
+
+# FlyAIHeliInCertainDirection: heli fields +0x98C..+0x9B8, move speed +0x44..+0x4C
+CCarCtrl::FlyAIHeliInCertainDirection@arg0:0xA18:RW
+# FlyAIHeliToTarget_FixedOrientation: heli fields +0x98C..+0x9AC
+CCarCtrl::FlyAIHeliToTarget_FixedOrientation@arg0:0xA18:RW
+# FlyAIPlaneInCertainDirection: plane fields +0x988..+0x9C0, +0x3BB; SetGearUp (+0x9CC, +0x98)
+CCarCtrl::FlyAIPlaneInCertainDirection@arg0:0xA18:RW
+
+# SteerAICarParkParallel / Perpendicular: vehicle fields (+0x3BA, +0x3D0, +0x3DC, +0x428), the four
+# out-pointers, and at the stop CTaskComplexLeaveAnyCar for every occupant: the task pool
+# (CPools::ms_pTaskPool 0xB744A8, 500 x 0x80) and the occupants' task managers (CPedIntelligence pool
+# 0xB744C0, 140 x 0x294; SetTask also deletes the replaced task)
+CCarCtrl::SteerAICarParkParallel@arg0:0xA18:RW
+CCarCtrl::SteerAICarParkParallel@arg1:4:W
+CCarCtrl::SteerAICarParkParallel@arg2:4:W
+CCarCtrl::SteerAICarParkParallel@arg3:4:W
+CCarCtrl::SteerAICarParkParallel@arg4:1:W
+CCarCtrl::SteerAICarParkParallel@[0xB744A8]:0x14:RW
+CCarCtrl::SteerAICarParkParallel@[[0xB744A8]]:0xFA00:RW
+CCarCtrl::SteerAICarParkParallel@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CCarCtrl::SteerAICarParkParallel@[[0xB744C0]]:0x16968:RW
+CCarCtrl::SteerAICarParkPerpendicular@arg0:0xA18:RW
+CCarCtrl::SteerAICarParkPerpendicular@arg1:4:W
+CCarCtrl::SteerAICarParkPerpendicular@arg2:4:W
+CCarCtrl::SteerAICarParkPerpendicular@arg3:4:W
+CCarCtrl::SteerAICarParkPerpendicular@arg4:1:W
+CCarCtrl::SteerAICarParkPerpendicular@[0xB744A8]:0x14:RW
+CCarCtrl::SteerAICarParkPerpendicular@[[0xB744A8]]:0xFA00:RW
+CCarCtrl::SteerAICarParkPerpendicular@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CCarCtrl::SteerAICarParkPerpendicular@[[0xB744C0]]:0x16968:RW
+
+# SteerAICarWithPhysicsFollowPreRecordedPath: vehicle (+0x3BA, +0x424), out-pointers,
+# CVehicleRecording::PlaybackIndex[16] (0x97D7C0)
+CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath@arg0:0xA18:RW
+CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath@arg1:4:W
+CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath@arg2:4:W
+CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath@arg3:4:W
+CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath@arg4:1:W
+CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath@0x97D7C0:0x40:RW
+
+# DragCarToPoint: vehicle fields (+0x1C, +0x3E1, +0x48C, +0x494, +0x4E4, +0x4E8, stored polys
+# +0x51C / +0x548, placement), its matrix ([arg0+0x14], 0x48 bytes)
+CCarCtrl::DragCarToPoint@arg0:0xA18:RW
+CCarCtrl::DragCarToPoint@[arg0+0x14]:0x48:RW
+
+# DealWithBend_Racing: the five out-pointers (outPos is a CVector2D, 8 bytes)
+CCarCtrl::DealWithBend_Racing@arg10:4:W
+CCarCtrl::DealWithBend_Racing@arg11:4:W
+CCarCtrl::DealWithBend_Racing@arg12:4:W
+CCarCtrl::DealWithBend_Racing@arg13:4:W
+CCarCtrl::DealWithBend_Racing@arg14:8:W
+
+# SteerAICarWithPhysicsFollowPath_Racing: vehicle, out-pointers, the path-search regions
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@arg0:0xA18:RW
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@arg1:4:W
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@arg2:4:W
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@arg3:4:W
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@arg4:1:W
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@0x96F050:0x3C80:RW
+CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing@0x972CD0:0x4E20:RW
+# helper B (popw4-gang-1) L2 extras, format of tools/e2e/l2-extras.txt
+# out-parameters
+CRoadBlocks::GetRoadBlockNodeInfo@arg1:4:W
+CRoadBlocks::GetRoadBlockNodeInfo@arg2:0xC:W
+# CDarkel: the local player ped and its CPlayerPedData (weapons, active slot, +0x20 slot byte); FindPlayerPed(1)
+# (co-op) is not declared
+CDarkel::StartFrenzy@[0xB7CD98]:0x7C4:RW
+CDarkel::StartFrenzy@[[0xB7CD98]+0x480]:0xAC:RW
+CDarkel::DealWithWeaponChangeAtEndOfFrenzy@[0xB7CD98]:0x7C4:RW
+CDarkel::DealWithWeaponChangeAtEndOfFrenzy@[[0xB7CD98]+0x480]:0xAC:RW
+# entity deletion / creation (split routes): pool headers and byte maps
+CRoadBlocks::ClearSpaceForRoadBlockObject@[0xB74490]:0x14:RW
+CRoadBlocks::ClearSpaceForRoadBlockObject@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CRoadBlocks::ClearSpaceForRoadBlockObject@[0xB74494]:0x14:RW
+CRoadBlocks::ClearSpaceForRoadBlockObject@[[0xB74494]+4]:[[0xB74494]+8]:RW
+CRoadBlocks::ClearSpaceForRoadBlockObject@[0xB7449C]:0x14:RW
+CRoadBlocks::ClearSpaceForRoadBlockObject@[[0xB7449C]+4]:[[0xB7449C]+8]:RW
+CRoadBlocks::GenerateRoadBlockPedsForCar@arg0:0xA18:RW
+CRoadBlocks::GenerateRoadBlockPedsForCar@[0xB74490]:0x14:RW
+CRoadBlocks::GenerateRoadBlockPedsForCar@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CGangWars::CreateDefendingGroup@[0xB74490]:0x14:RW
+CGangWars::CreateDefendingGroup@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CGangWars::CreateDefendingGroup@[0xB74494]:0x14:RW
+CGangWars::CreateDefendingGroup@[[0xB74494]+4]:[[0xB74494]+8]:RW
+CGangWars::CreateAttackWave@[0xB74490]:0x14:RW
+CGangWars::CreateAttackWave@[[0xB74490]+4]:[[0xB74490]+8]:RW
+CGangWars::CreateAttackWave@[0xB74494]:0x14:RW
+CGangWars::CreateAttackWave@[[0xB74494]+4]:[[0xB74494]+8]:RW
+# CGangWars::CheerVictory: CPed::Say writes the nearest group member (no static expression; the player's
+# group membership 0xC09928 + group * 0x2D4 lists it)

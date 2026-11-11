@@ -29,3 +29,6 @@ pub mod weapon;
 pub mod weapon_fire;
 pub mod weapon_impact;
 pub mod weapon_info;
+
+// WRITER-MVP-B (helper A)
+pub mod mvpb_a;

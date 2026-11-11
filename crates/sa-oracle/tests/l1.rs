@@ -433,6 +433,12 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x4637E0,
     // PORT-RW-4: RwD3D9SetRenderState preserve edx; spec queued.
     0x7FC2D0,
+    // WRITER-MVP-A (unverified batches mvpa-ai-1, mvpa-ai-2, mvpa-render-1, mvpa-render-2): CTaskSimple ctor
+    // 0x61A390, event dtor 0x4B0D00, CSprite2d::Draw 0x728350, FxManager_c::DestroyFxSystem 0x4A9810
+    // (preserve ecx); specs queued for the verifier.
+    0x61A390, 0x4B0D00, 0x728350, 0x4A9810,
+    // WRITER-MVP-C batch mvpc-render-1: FUN_006f9eb0 0x6F9EB0 (preserve ecx, caller 0x6FA740); spec queued.
+    0x6F9EB0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

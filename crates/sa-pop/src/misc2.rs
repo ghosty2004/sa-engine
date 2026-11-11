@@ -60,7 +60,7 @@ const PICK_STREAMED_INDEX: usize = 0x96ABD4;
 const NUM_PEDS_IN_GROUP: usize = 0xC0ECC0;
 /// `CPopulation::m_PedGroups` (u16[21] per group, 0xC0F358)
 const PED_GROUPS: usize = 0xC0F358;
-/// `CStreaming::ms_aInfoForModel` (0x14 each; +0x10 load state)
+/// `CStreaming::ms_aInfoForModel[0].m_nLoadState` (0x8E4CC0 + 0x10; 0x14 per model)
 const MODEL_INFO_STREAMING: usize = 0x8E4CD0;
 
 /// `rand() * (1/32767.5) * 0.9 * 1080000 + 648000` truncated by `_ftol` and stored back as an unsigned
@@ -243,13 +243,16 @@ fn group_count(grp: i32) -> i32 {
     i32::from(g::<i16>(NUM_PEDS_IN_GROUP.wrapping_add((grp * 2) as u32 as usize)).read())
 }
 
+/// `cmp byte [model*20 + 0x8E4CD0], 1` (0x443A06 / 0x443A68): the model's load state is LOADED.
 fn model_loaded(model: u32) -> bool {
-    g::<u8>(MODEL_INFO_STREAMING.wrapping_add((model * 20) as usize).wrapping_add(0x10)).read() == 1
+    g::<u8>(MODEL_INFO_STREAMING.wrapping_add((model * 20) as usize)).read() == 1
 }
 
 /// `CGangWars::PedStreamedInForThisGang(int32 gang)` (0x4439D0): any member of the gang's zone-0 group
 /// loaded.
-#[hook(addr = 0x4439D0, conv = cdecl, name = "CGangWars::PedStreamedInForThisGang", expect = "8B 44 24 04 8D 04 40")]
+#[hook(addr = 0x4439D0, conv = cdecl, name = "CGangWars::PedStreamedInForThisGang", expect = "8B 44 24 04 8D 04 40",
+       unverified = "popw4-partial-1", route = "L2", hazards = "none",
+       note = "model_loaded fixed (load state at 0x8E4CD0 + model * 20, not +0x10); re-verify")]
 pub fn ped_streamed_in_for_this_gang(gang: i32) -> u8 {
     let grp = gang_group(gang);
     let n = group_count(grp);
@@ -264,7 +267,9 @@ pub fn ped_streamed_in_for_this_gang(gang: i32) -> u8 {
 
 /// `CGangWars::PickStreamedInPedForThisGang(int32 gang, int32* outModel)` (0x443A20): walks the group from
 /// the rolling index + 1, writing every candidate to `*out`.
-#[hook(addr = 0x443A20, conv = cdecl, name = "CGangWars::PickStreamedInPedForThisGang", expect = "8B 44 24 04 53")]
+#[hook(addr = 0x443A20, conv = cdecl, name = "CGangWars::PickStreamedInPedForThisGang", expect = "8B 44 24 04 53",
+       unverified = "popw4-partial-1", route = "L2", hazards = "none",
+       note = "model_loaded fixed (load state at 0x8E4CD0 + model * 20, not +0x10); re-verify")]
 pub fn pick_streamed_in_ped_for_this_gang(gang: i32, out: GPtr<i32>) -> u8 {
     let mut grp = gang_group(gang);
     let mut n = group_count(grp);
