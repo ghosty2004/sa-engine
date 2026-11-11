@@ -913,3 +913,11 @@
 - Ledger (FSIN 53-bit model): RwMatrixRotate 0x7F1FD0 mismatches the CPU in 2,476 of 65,000 native cases (stays
   implemented); CCamera ease weight sin(x)+1 near -1 in 0x50D350/0x50D430 (~2.7% of cases) — both need the 64-bit
   fsin/fcos model (X87 work).
+
+## 2026-11-11 VEH-2 integrated (main session)
+- Agent ac9fab53: 299 remaining VEH functions ported (CVehicle, CAutomobile/CBike/CBmx/CBoat/CPlane/CHeli/CTrain,
+  CVehicleRecording, transmission, handling conversion, statics). Verdicts in docs/arch/veh-port-2-verdicts.tsv.
+- verify-all main-veh2: IDENTICAL on all 11 recordings. 172 → L2; 21 L2 verdicts whose extras declare the whole
+  .data/.bss stay implemented (policy), as do L2-split rows with undeclared writes or quota-cut case counts.
+- CVehicle::Save stays unregistered (F5 work). 4 protection-read hooks queued for keycells. 4 preserve hooks added to
+  PRESERVE_SPECS_PENDING (0x6D1080, 0x6D2600, 0x6D4900, 0x6D3F30).

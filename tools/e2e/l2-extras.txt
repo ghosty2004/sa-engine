@@ -3301,3 +3301,130 @@ CTaskSimpleCarJumpOut::ProcessPed@0xB62CB0:0x8CBC:D
 # CWorld::Players 0xB7CD98 (2 x 0x190); CReferences::aRefs 0xB9B9A8 (3,000 x 8) + pEmptyList 0xBA1768.
 CTaskSimpleCarJumpOut::ProcessPed@0xB7CD98:0x320:D
 CTaskSimpleCarJumpOut::ProcessPed@0xB9B9A8:0x5DC4:D
+# PORT-VEH-2 (docs/arch/veh-port.md, second pass). Evidence: driving.sarec, lane 4, port-l2-veh2-* runs:
+# the undeclared writes (original and Rust alike) listed per line.
+# GetCurrentAtomicObjectCB: the caller's out-parameter (a stack local).
+GetCurrentAtomicObjectCB@arg1:4:RW
+# Render paths: RenderWare / D3D9 render-state caches written by RwRenderStateSet and CEntity::Render.
+CVehicle::ResetAfterRender@0xC98B00:0x1B00:RW
+CVehicle::Render@0x8D12D8:0x44:RW
+CVehicle::Render@0x8E2400:0x180:RW
+CVehicle::Render@0xC88080:0x2C:RW
+CVehicle::Render@0xC92640:0xA0:RW
+CVehicle::Render@0xC97B70:0x2A90:RW
+# DeleteRwObject: model-info reference counts (CModelInfo::ms_vehicleModelInfoStore).
+CVehicle::DeleteRwObject@0xB1F650:0x282A4:RW
+# The static CColModel constructors: the objects themselves and the CColModel count 0xC9D428.
+__init_CVehicle__m_aSpecialColModel@0xC1CC78:0xC0:RW
+__init_CVehicle__m_aSpecialColModel@0xC9D428:4:RW
+__init_s_TestBladeCol@0xC1CD38:0x30:RW
+__init_s_TestBladeCol@0xC9D428:4:RW
+# Upgrade search callbacks: the result word at data + 4 (a caller's stack local).
+CVehicle::FindUpgradeCB@arg1+4:4:RW
+CVehicle::FindReplacementUpgradeCB@arg1+4:4:RW
+CVehicle::RemoveObjectsCB-Object@arg1:4:RW
+# Tow positions: the CVector behind the out pointer.
+CVehicle::GetTowHitchPos@arg0:0xC:RW
+CVehicle::GetTowBarPos@arg0:0xC:RW
+# PORT-VEH-2 helper (automobile2.rs, bike2.rs, transmission.rs).
+CAutomobile::CustomCarPlate_BeforeRenderingStart@[arg0+0x24]:4:RW
+CAutomobile::CustomCarPlate_BeforeRenderingStart@0xC1BFD8:4:RW
+CAutomobile::CustomCarPlate_AfterRenderingStop@[arg0+0x24]:4:RW
+CAutomobile::CustomCarPlate_AfterRenderingStop@0xC1BFD8:4:RW
+CAutomobile::GetComponentWorldPosition@arg1:0xC:RW
+CBike::GetCorrectedWorldDoorPosition@arg0:0xC:RW
+cTransmission::InitGearRatios@0xC1CB30:8:RW
+CAutomobile::ProcessControlCollisionCheck@[ecx+0x14]:0x48:RW
+CBike::ProcessControlCollisionCheck@[ecx+0x14]:0x48:RW
+# Collision drivers (ProcessControlCollisionCheck, CBmx::ProcessControl): CCollision::ms_colModelCache,
+# the static col points, audio/FX/reference side effects of the collision responses.
+CAutomobile::ProcessControlCollisionCheck@0x965900:0x3100:RW
+CAutomobile::ProcessControlCollisionCheck@0xB73700:0x200:RW
+CAutomobile::ProcessControlCollisionCheck@0xC1BFF8:0xB0:RW
+CAutomobile::ProcessControlCollisionCheck@0xB5F8B8:0x1014:RW
+CAutomobile::ProcessControlCollisionCheck@0xB62CB0:0x3000:RW
+CAutomobile::ProcessControlCollisionCheck@0xB6BC90:0x800:RW
+CAutomobile::ProcessControlCollisionCheck@0xA9AE80:0x40:RW
+CAutomobile::ProcessControlCollisionCheck@0xB9B9A8:0x5DC0:RW
+CAutomobile::ProcessControlCollisionCheck@0xC2B9C8:0xA000:RW
+CBike::ProcessControlCollisionCheck@0x965900:0x3100:RW
+CBike::ProcessControlCollisionCheck@0xB73700:0x200:RW
+CBike::ProcessControlCollisionCheck@0xC1BFF8:0xB0:RW
+CBike::ProcessControlCollisionCheck@0xB5F8B8:0x1014:RW
+CBike::ProcessControlCollisionCheck@0xB62CB0:0x3000:RW
+CBike::ProcessControlCollisionCheck@0xB6BC90:0x800:RW
+CBike::ProcessControlCollisionCheck@0xA9AE80:0x40:RW
+CBike::ProcessControlCollisionCheck@0xB9B9A8:0x5DC0:RW
+CBike::ProcessControlCollisionCheck@0xC2B9C8:0xA000:RW
+CBmx::ProcessControl@0x965900:0x3100:RW
+CBmx::ProcessControl@0xB73700:0x200:RW
+CBmx::ProcessControl@0xC1BFF8:0xB0:RW
+CBmx::ProcessControl@0xB5F8B8:0x1014:RW
+CBmx::ProcessControl@0xB62CB0:0x3000:RW
+CBmx::ProcessControl@0xB6BC90:0x800:RW
+CBmx::ProcessControl@0xA9AE80:0x40:RW
+CBmx::ProcessControl@0xB9B9A8:0x5DC0:RW
+CBmx::ProcessControl@0xC2B9C8:0xA000:RW
+# CBike::Render / CVehicle::SetupRender: RW / D3D9 render-state caches; SetupRender also the model infos and gRestoreEntries.
+CBike::Render@0x8D12D8:0x44:RW
+CBike::Render@0x8E2400:0x180:RW
+CBike::Render@0xC88080:0x2C:RW
+CBike::Render@0xC92640:0xA0:RW
+CBike::Render@0xC97B70:0x2A90:RW
+CVehicle::SetupRender@0xB1F650:0x282A4:RW
+CVehicle::SetupRender@0xB4DB00:0x200:RW
+CVehicle::SetupRender@0xC98B00:0x1B00:RW
+# PORT-VEH-2 helper (air2/boat2/train2/door2/handling2/enterexit2/checks2): writes outside `this` / the spec globals.
+cHandlingDataMgr::ConvertBikeDataToWorldUnits@arg0:0x34:RW
+cHandlingDataMgr::ConvertDataToGameUnits@arg0:0xE0:RW
+__init_gHandlingDataMgr@0xC2B9C8:0xC624:RW
+CTrain::FindClosestTrackNode@arg3:4:RW
+CTrain::InitTrains@0xC3800C:4:RW
+CTrain::MarkSurroundingEntitiesForCollisionWithTrain@0xB7CD78:2:RW
+CBoat::ProcessControlInputs@0xC1CC04:4:RW
+CVehicleRecording::RestoreInfoForMatrix@arg0:0x3C:RW
+CVehicleRecording::RestoreInfoForCar@[arg0+0x14]:0x3C:RW
+CVehicleRecording::RestoreInfoForCar@arg0+0x44:0x18:RW
+CVehicleRecording::RestoreInfoForCar@arg0+0x428:1:RW
+CVehicleRecording::RestoreInfoForCar@arg0+0x494:4:RW
+CVehicleRecording::RestoreInfoForCar@arg0+0x49C:8:RW
+CVehicleRecording::RestoreInfoForCar@arg0+0x614:1:RW
+CVehicleRecording::InterpolateInfoForCar@[arg0+0x14]:0x48:RW
+CVehicleRecording::InterpolateInfoForCar@arg0+0x44:0xC:RW
+CVehicleRecording::ChangeCarPlaybackToUseAI@arg0+0x36:1:RW
+CVehicleRecording::ChangeCarPlaybackToUseAI@arg0+0x3BA:1:RW
+CVehicleRecording::ChangeCarPlaybackToUseAI@arg0+0x40:4:RW
+CVehicleRecording::RenderLineSegment@arg0:4:RW
+CVehicleRecording::RenderLineSegment@0xC4B958:0x2000:RW
+CHeli::UpdateHelis@[0xC1C964]+0x3BA:1:RW
+CHeli::UpdateHelis@[0xC1C964]+0x9A8:0xC:RW
+CHeli::UpdateHelis@[0xC1C968]+0x3BA:1:RW
+CHeli::UpdateHelis@[0xC1C968]+0x9A8:0xC:RW
+# CVehicle::SpecialEntityCalcCollisionSteps: the two bool out-parameters.
+CVehicle::SpecialEntityCalcCollisionSteps@arg0:1:RW
+CVehicle::SpecialEntityCalcCollisionSteps@arg1:1:RW
+# Vehicle drivers with game-wide side effects (references, audio, replay buffers, model-info refcounts,
+# collision caches, render state; driving.sarec veh2-b split runs): whole .data/.bss, access D (as CFileLoader::LoadLevel).
+CAutomobile::Destructor@0x8A4000:0x3FA000:D
+CAutomobile::`scalar deleting destructor'@0x8A4000:0x3FA000:D
+CBike::`scalar deleting destructor'@0x8A4000:0x3FA000:D
+CBmx::`scalar deleting destructor'@0x8A4000:0x3FA000:D
+CBmx::~CBmx@0x8A4000:0x3FA000:D
+CBmx::Constructor@0x8A4000:0x3FA000:D
+CAutomobile::OpenDoor@0x8A4000:0x3FA000:D
+CAutomobile::SetDoorDamage@0x8A4000:0x3FA000:D
+CVehicle::SetUpDriver@0x8A4000:0x3FA000:D
+CVehicle::KillPedsInVehicle@0x8A4000:0x3FA000:D
+CVehicle::SetModelIndex@0x8A4000:0x3FA000:D
+CVehicle::SetDriver@0x8A4000:0x3FA000:D
+CVehicle::RemoveDriver@0x8A4000:0x3FA000:D
+CVehicle::RemovePassenger@0x8A4000:0x3FA000:D
+CVehicle::AddPassenger-Fixed-Seat@0x8A4000:0x3FA000:D
+CVehicle::CustomCarPlate_TextureCreate@0x8A4000:0x3FA000:D
+CAutomobile::ProcessControlCollisionCheck@0x8A4000:0x3FA000:D
+CBike::ProcessControlCollisionCheck@0x8A4000:0x3FA000:D
+CBmx::ProcessControl@0x8A4000:0x3FA000:D
+CBike::Render@0x8A4000:0x3FA000:D
+CVehicle::SetupRender@0x8A4000:0x3FA000:D
+# CVehicleRecording::RegisterRecordingFile: CVehicleRecording::StreamingArray (0x97D880, 475 x 0x10).
+CVehicleRecording::RegisterRecordingFile@0x97D880:0x1DB0:RW

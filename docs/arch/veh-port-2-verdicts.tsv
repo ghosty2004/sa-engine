@@ -1,0 +1,300 @@
+address	name	file	state	evidence
+0x4f4ca0	FUN_004f4ca0	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x4f4ce0	FUN_004f4ce0	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x5533d0	CVehicle::RemoveLighting	vehicle2	L2	split veh2-a-split: 457/457 PASS (0 mismatches, 0 undeclared)
+0x553f20	CVehicle::SetupLighting	vehicle2	L2	split veh2-a-split: 458/458 PASS (0 mismatches, 0 undeclared)
+0x6a0750	GetCurrentAtomicObjectCB	vehicle2	L2	L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x853df0	__init_s_TestBladeCol	vehicle2	L2-split (undeclared writes to review)	split veh2-a-split: 1/1 PASS (0 mismatches, 1 undeclared)
+0x853e10	__init_s_TestBladeColData	vehicle2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853dc0	__init_CVehicle__m_aSpecialColModel	vehicle2	L2-split (undeclared writes to review)	split veh2-a-split: 1/1 PASS (0 mismatches, 1 undeclared)
+0x6d29e0	CVehicle::UpdatePassengerList	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d0e60	CVehicle::Render	vehicle2	L2	split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d0e20	CVehicle::ResetAfterRender	vehicle2	L2	split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d8470	CVehicle::UsesSiren	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d2330	CVehicle::ChangeLawEnforcerState	vehicle2	L2	L2 veh2-b-l2: 16/16 PASS (0 mismatches, 0 undeclared)
+0x6d1bd0	CVehicle::IsPassenger-Ped	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6e2d50	new	vehicle2	L2	split veh2-a-split: 21/21 PASS (0 mismatches, 0 undeclared)
+0x6e2d90	delete	vehicle2	L2	split veh2-a-split: 14/14 PASS (0 mismatches, 0 undeclared)
+0x6d1d90	CVehicle::IsUpsideDown	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d1dd0	CVehicle::IsOnItsSide	vehicle2	L2	L2 veh2-a-l2: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6d2690	CVehicle::SetVehicleAtomicVisibilityCB-Object	vehicle2	implemented-needs-L2	no call in veh2-a-split
+0x6d1230	CVehicle::ProcessWheelRotation	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d34d0	CVehicle::RemoveAllUpgradesCB	vehicle2	L2	split veh2-a-split: 160/160 PASS (0 mismatches, 0 undeclared)
+0x6d3db0	CVehicle::PreRenderDriverAndPassengers	vehicle2	L2	split veh2-a-split: 459/459 PASS (0 mismatches, 0 undeclared)
+0x6d3d60	CVehicle::RenderDriverAndPassengers	vehicle2	L2	split veh2-a-split: 458/458 PASS (0 mismatches, 0 undeclared)
+0x6d2700	CVehicle::SetComponentVisibility	vehicle2	implemented-needs-L2	no call in veh2-a-split
+0x6d1080	CVehicle::GetVehicleAppearance	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d1340	CVehicle::ProcessDelayedExplosion	vehicle2	L2	split veh2-a-split: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d2570	CVehicle::ActivateBombWhenEntered	vehicle2	L2	split veh2-a-split: 245/245 PASS (0 mismatches, 0 undeclared)
+0x6d21f0	CVehicle::ProcessCarAlarm	vehicle2	L2	L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d6410	CVehicle::DeleteRwObject	vehicle2	L2-split (undeclared writes to review)	split veh2-a-split: 14/14 PASS (0 mismatches, 14 undeclared)
+0x6d6480	CVehicle::PreRender	vehicle2	L2	split veh2-a-split: 459/459 PASS (0 mismatches, 0 undeclared)
+0x6d2980	CVehicle::UpdateClumpAlpha	vehicle2	L2	split veh2-a-split: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d2a10	CVehicle::PickRandomPassenger	vehicle2	implemented-needs-L2	no call in veh2-a-split
+0x6d2600	CVehicle::HeightAboveCeiling	vehicle2	L2	L2 veh2-a-l2: 356/356 PASS (0 mismatches, 0 undeclared)
+0x6d10e0	CVehicle::CustomCarPlate_TextureCreate	vehicle2	L2	split veh2-c-split: 32/32 PASS (0 mismatches, 0 undeclared)
+0x6d5400	CVehicle::CanBeDriven	vehicle2	L2	L2 veh2-b-l2: 7/7 PASS (0 mismatches, 0 undeclared)
+0x6d6a40	CVehicle::SetModelIndex	vehicle2	L2	split veh2-c-split: 32/32 PASS (0 mismatches, 0 undeclared)
+0x6d1610	CVehicle::RemovePassenger	vehicle2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 1/1 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6d3210	CVehicle::ClearVehicleUpgradeFlags	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d4900	CVehicle::SelectPlaneWeapon	vehicle2	L2	L2 veh2-b-l2: 356/356 PASS (0 mismatches, 0 undeclared)
+0x6d3b80	CVehicle::UpdateWinch	vehicle2	L2	split veh2-b-split: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d1950	CVehicle::RemoveDriver	vehicle2	L2-split (undeclared writes to review)	split veh2-b-split: 4/4 PASS (0 mismatches, 4 undeclared)
+0x6d1c80	CVehicle::KillPedsInVehicle	vehicle2	L2-split (undeclared writes to review)	split veh2-b-split: 13/13 PASS (0 mismatches, 4 undeclared)
+0x6d0cf0	CVehicle::CalculateLightingFromCollision	vehicle2	L2	L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6e0950	CVehicle::ProcessSirenAndHorn	vehicle2	L2	L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d55c0	CVehicle::GetVehicleLightsStatus	vehicle2	L2	L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d64f0	CVehicle::SetupRender	vehicle2	L2	split veh2-c-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d1f30	CVehicle::CanPedStepOutCar	vehicle2	L2	L2 veh2-b-l2: 35/35 PASS (0 mismatches, 0 undeclared)
+0x6d16a0	CVehicle::SetDriver	vehicle2	L2	split veh2-c-split: 5/5 PASS (0 mismatches, 0 undeclared)
+0x6d0af0	FUN_006d0af0	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x856a30	__dtor_CVehicle__m_aSpecialColModel	vehicle2	implemented-needs-L2	not in an L2 list yet
+0x41bdd0	thunk_FUN_01567620	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6e2d60	FUN_006e2d60	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6e2dd0	FUN_006e2dd0	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d25d0	CVehicle::CarHasRoof	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3080	CVehicle::SetWindowOpenFlag	vehicle2	L2	split veh2-b-split: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d30b0	CVehicle::ClearWindowOpenFlag	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d3f30	CVehicle::GetPlaneNumGuns	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3c70	CVehicle::RemoveWinch	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d22f0	CVehicle::IsVehicleNormal	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d26d0	CVehicle::SetVehicleAtomicVisibilityCB-Frame	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d3420	CVehicle::RemoveObjectsCB-Frame	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d3ab0	CVehicle::RemoveAllUpgrades	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d0bc0	CVehicle::SetRemapTexDictionary	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d5d70	CVehicle::SetVehicleCreatedBy	vehicle2	L2	split veh2-b-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6d1c00	CVehicle::IsPassenger-ModelID	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3450	CVehicle::CopyObjectsCB	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d4090	CVehicle::GetFiringRateMultiplier	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d4010	CVehicle::SetFiringRateMultiplier	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3490	CVehicle::FindReplacementUpgradeCB	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3370	CVehicle::FindUpgradeCB	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d1a50	CVehicle::SetUpDriver	vehicle2	L2	split veh2-c-split: 4/4 PASS (0 mismatches, 0 undeclared)
+0x6d3a50	CVehicle::GetReplacementUpgrade	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d0b70	CVehicle::GetRemapIndex	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3ae0	CVehicle::GetSpareHasslePosId	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d3e00	CVehicle::GetPlaneGunsAutoAimAngle	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6d24f0	CVehicle::ActivateBomb	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d2460	CVehicle::ExtinguishCarFire	vehicle2	L2	split veh2-b-split: 6/6 PASS (0 mismatches, 0 undeclared)
+0x6d39e0	CVehicle::RemoveReplacementUpgrade	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d0c00	CVehicle::SetRemap	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d33b0	CVehicle::RemoveObjectsCB-Object	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d5cf0	CVehicle::CanPedLeanOut	vehicle2	L2	L2 veh2-b-l2: 39/39 PASS (0 mismatches, 0 undeclared)
+0x6dfb70	CVehicle::GetTowHitchPos	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6dfbe0	CVehicle::GetTowBarPos	vehicle2	implemented-needs-L2	no call in veh2-b-l2
+0x6e3400	CVehicle::SetupUpgradesAfterLoad	vehicle2	implemented-needs-L2	no call in veh2-b-split
+0x6d2bf0	CVehicle::MakeDirty	vehicle2	L2	L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d2030	CVehicle::CanPedJumpOutCar	vehicle2	L2	L2 veh2-b-l2: 3/3 PASS (0 mismatches, 0 undeclared)
+0x6d14d0	CVehicle::AddPassenger-Fixed-Seat	vehicle2	L2	split veh2-c-split: 2/2 PASS (0 mismatches, 0 undeclared)
+0x6d2740	CVehicle::ApplyBoatWaterResistance	vehicle2	implemented-needs-L2	no call in veh2-c-l2
+0x6d0e90	CVehicle::SpecialEntityCalcCollisionSteps	vehicle2	L2	L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6d5f10	CVehicle::Constructor	vehicle2	L2	split veh2-c-split: 32/32 PASS (0 mismatches, 0 undeclared)
+0x6e2b40	CVehicle::Destructor	vehicle2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 21/21 compared, 0 mismatches, 21 undeclared, COUNT (spool quota)
+0x6e3950	CVehicle::ProcessWeapons	vehicle2	implemented-needs-L2	no call in veh2-c-split
+0x6d2a80	CVehicle::AddDamagedVehicleParticles	vehicle2	L2	split veh2-c-split: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d2d50	CVehicle::AddWheelDirtAndWater	vehicle2	implemented-needs-L2	no call in veh2-c-split
+0x6e38a0	CVehicle::`scalar deleting destructor'	vehicle2	implemented-needs-L2	no call in veh2-c-split
+0x6e1720	CVehicle::DoHeadLightReflection	vehicle2	L2	split veh2-c-split: 254/254 PASS (0 mismatches, 0 undeclared)
+0x5d2900	CVehicle::Load	vehicle2	implemented-needs-L2	no call in veh2-c-split
+0x84a240	__init_g_97d648	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a2c0	__init_g_97d658	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a2e0	__init_g_97d65c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a320	__init_g_97f638	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a380	__init_g_97f644	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a3a0	__init_g_97f648	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852200	__init_g_c18c08	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852220	__init_g_c18c0c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852240	__init_g_c18c10	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852280	__init_g_c18c18	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8522a0	__init_g_c18c1c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8522c0	__init_g_c18c24	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8522e0	__init_g_c18c28	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852300	__init_g_c18c2c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852340	__init_g_c18c34	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852360	__init_g_c18c38	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853360	__init_g_c1aeb0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8533a0	__init_g_c1b328	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8533c0	__init_g_c1b32c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8533e0	__init_g_c1b330	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853420	__init_g_c1b338	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853440	__init_g_c1b33c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853480	__init_g_c1bfdc	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8534a0	__init_g_c1bfe0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8534c0	__init_g_c1bfe4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853520	__init_g_c1bff0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853580	__init_g_c1c808	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8535a0	__init_g_c1c80c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8535c0	__init_g_c1c810	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853640	__init_g_c1c824	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853660	__init_g_c1c828	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853680	__init_g_c1c82c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8536c0	__init_g_c1c834	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8536e0	__init_g_c1c838	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8537c0	__init_g_c1c878	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8537e0	__init_g_c1c87c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853800	__init_g_c1c880	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853840	__init_g_c1c888	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853860	__init_g_c1c88c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8538a0	__init_g_c1c974	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8538c0	__init_g_c1c978	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8538e0	__init_g_c1c97c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853920	__init_g_c1c984	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853940	__init_g_c1c988	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853960	__init_g_c1cac0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853980	__init_g_c1cac4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8539a0	__init_g_c1cac8	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8539e0	__init_g_c1cad0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853a00	__init_g_c1cad4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853a20	__init_g_c1cae4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853a40	__init_g_c1cae8	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853a60	__init_g_c1caec	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853aa0	__init_g_c1caf4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853ac0	__init_g_c1caf8	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853ae0	__init_g_c1cb00	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853b00	__init_g_c1cb04	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853b20	__init_g_c1cb08	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853b60	__init_g_c1cb10	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853b80	__init_g_c1cb14	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853ba0	__init_g_c1cb18	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853bc0	__init_g_c1cb1c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853be0	__init_g_c1cb20	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853c40	__init_g_c1cb2c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853c60	__init_g_c1cb44	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853c80	__init_g_c1cb48	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853cc0	__init_g_c1cb50	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853d00	__init_g_c1cc5c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853d20	__init_g_c1cc60	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853d40	__init_g_c1cc64	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853d80	__init_g_c1cc6c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853da0	__init_g_c1cc70	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853f30	__init_g_c228f4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853f50	__init_g_c228f8	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853f70	__init_g_c228fc	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853fb0	__init_g_c22904	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853fd0	__init_g_c22908	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854190	__init_g_c2b978	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8541b0	__init_g_c2b97c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8541d0	__init_g_c2b980	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854210	__init_g_c2b988	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854230	__init_g_c2b98c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854250	__init_g_c2b990	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854270	__init_g_c2b994	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854290	__init_g_c2b998	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8542d0	__init_g_c2b9a0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8542f0	__init_g_c2b9a4	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854310	__init_g_c2b9ac	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854330	__init_g_c2b9b0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x854370	__init_g_c2b9b8	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8543b0	__init_g_c2b9c0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a2a0	__init_g_97d654	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x84a360	__init_g_97f640	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852260	__init_g_c18c14	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x852320	__init_g_c18c30	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853400	__init_g_c1b334	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8534e0	__init_g_c1bfe8	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8535e0	__init_g_c1c814	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8536a0	__init_g_c1c830	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853820	__init_g_c1c884	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853900	__init_g_c1c980	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8539c0	__init_g_c1cacc	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853a80	__init_g_c1caf0	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853b40	__init_g_c1cb0c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853c00	__init_g_c1cb24	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853ca0	__init_g_c1cb4c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853d60	__init_g_c1cc68	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x853f90	__init_g_c22900	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8541f0	__init_g_c2b984	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x8542b0	__init_g_c2b99c	statics2	L2	split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6b1330	CAutomobile::`scalar deleting destructor'	automobile2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 19/19 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6a61e0	CAutomobile::Destructor	automobile2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 19/19 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6a2f00	CAutomobile::CustomCarPlate_BeforeRenderingStart	automobile2	L2	split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6a2f30	CAutomobile::CustomCarPlate_AfterRenderingStop	automobile2	L2	split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6a2210	CAutomobile::GetComponentWorldPosition	automobile2	implemented-needs-L2	no call in veh2-b-l2
+0x6c26a0	CDamageManager::GetCarNodeIndexFromPanel	automobile2	L2	L2 veh2-b-l2: 28/28 PASS (0 mismatches, 0 undeclared)
+0x6c26f0	CDamageManager::GetCarNodeIndexFromDoor	automobile2	L2	L2 veh2-b-l2: 84/84 PASS (0 mismatches, 0 undeclared)
+0x6a29c0	CAutomobile::ProcessControlCollisionCheck	automobile2	L2	split veh2-c-splitf: 22/22 PASS (0 mismatches, 0 undeclared)
+0x6b1350	CAutomobile::SetBumperDamage	automobile2	L2	split veh2-b-split: 21/21 PASS (0 mismatches, 0 undeclared)
+0x6b1480	CAutomobile::SetPanelDamage	automobile2	implemented-needs-L2	no call in veh2-b-split
+0x6b1600	CAutomobile::SetDoorDamage	automobile2	L2-split (undeclared writes to review)	split veh2-b-split: 23/23 PASS (0 mismatches, 20 undeclared)
+0x6a6ae0	CAutomobile::OpenDoor	automobile2	L2-split (undeclared writes to review)	split veh2-b-split: 242/242 PASS (0 mismatches, 6 undeclared)
+0x6a47f0	CAutomobile::DoBurstAndSoftGroundRatios	automobile2	L2	split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6d0b10	CRideAnimData::CRideAnimData	bike2	L2	L2 veh2-b-l2: 10/10 PASS (0 mismatches, 0 undeclared)
+0x6b8950	CBike::`scalar deleting destructor'	bike2	L2	split veh2-c-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6bf9d0	CBmx::~CBmx	bike2	L2	split veh2-c-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6c0570	CBmx::`scalar deleting destructor'	bike2	L2	split veh2-c-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6bf400	CBike::ProcessDrivingAnims	bike2	implemented-needs-L2	no call in veh2-b-splitf
+0x6bde20	CBike::Render	bike2	L2	split veh2-d-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6b7150	CBike::CalculateLeanMatrix	bike2	implemented	L2 veh2-b-l2: 1000 cases, 1000 mismatches on the lean-matrix flags word (+0x5D8) only; split veh2-c-splitf: same word. The original copies uninitialised stack (CMatrix::operator*= temp flags, 0x156FF00) into it; ledger candidate
+0x6bfa30	CBmx::ProcessControl	bike2	L2	split veh2-d-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6b6620	CBike::ProcessControlCollisionCheck	bike2	L2	split veh2-d-splitf: 6/6 PASS (0 mismatches, 0 undeclared)
+0x6bf820	CBmx::Constructor	bike2	L2	split veh2-c-split: 2/2 PASS (0 mismatches, 0 undeclared)
+0x6bf230	CBike::GetCorrectedWorldDoorPosition	bike2	L2	L2 veh2-b-l2: 141/141 PASS (0 mismatches, 0 undeclared)
+0x6c0590	CBmx::ProcessBunnyHop	bike2	L2	split veh2-b-splitf: 44/44 PASS (0 mismatches, 0 undeclared)
+0x6d0460	cTransmission::InitGearRatios	transmission	L2	L2 veh2-b-l2: 210/210 PASS (0 mismatches, 0 undeclared)
+0x6cab70	CPlane::Render	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c4340	CHeli::~CHeli	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c9160	CPlane::~CPlane	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c4810	CHeli::`scalar deleting destructor'	air2	implemented-needs-L2	no call in veh2-c-split
+0x6cadb0	CPlane::`scalar deleting destructor'	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c7c50	CHeli::RenderAllHeliSearchLights	air2	implemented-needs-L2	no call in veh2-c-split
+0x6cacb0	CPlane::OpenDoor	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c4400	CHeli::Render	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c4190	CHeli	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c8e20	CPlane::Constructor	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c9260	CPlane::ProcessControl	air2	implemented-needs-L2	no call in veh2-c-split
+0x6c79a0	CHeli::UpdateHelis	air2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 883/883 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6f00f0	CBoat::Destructor	boat2	implemented-needs-L2	no call in veh2-c-split
+0x6f1120	CBoat::`scalar deleting destructor'	boat2	implemented-needs-L2	no call in veh2-c-split
+0x6f2550	CBoat::AddWakePoint	boat2	implemented-needs-L2	no call in veh2-c-l2
+0x6f2940	CBoat::Constructor	boat2	implemented-needs-L2	no call in veh2-c-split
+0x6f2710	CBoat::FillBoatList	boat2	L2	L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6f0a10	CBoat::ProcessControlInputs	boat2	implemented-needs-L2	no call in veh2-c-l2
+0x6f5370	CTrainNode	train2	L2	L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6f54d0	CTrain::~CTrain	train2	implemented-needs-L2	no call in veh2-c-split
+0x6f6300	CTrain::`scalar deleting destructor'	train2	implemented-needs-L2	no call in veh2-c-split
+0x6f5570	CTrain::PreRender	train2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 147/147 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6f5cf0	CTrain::TrainHitStuff<CPtrListSingleLink<CPhysical*>>	train2	L2	split veh2-c-split: 1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6f5f80	CTrainNode::GetLightingFromCollision	train2	L2-split (undeclared writes to review)	split veh2-c-split: 1000/1000 PASS (0 mismatches, 17 undeclared)
+0x6f6bd0	CTrain::FindClosestTrackNode	train2	L2	L2 veh2-c-l2: 6/6 PASS (0 mismatches, 0 undeclared)
+0x6f7440	CTrain::InitTrains	train2	L2-split (undeclared writes to review)	split veh2-c-split: 1/1 PASS (0 mismatches, 1 undeclared)
+0x6f6640	CTrain::MarkSurroundingEntitiesForCollisionWithTrain	train2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 493/493 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6f6030	CTrain::Constructor	train2	L2-split (undeclared writes to review)	split veh2-c-split: 3/3 PASS (0 mismatches, 3 undeclared)
+0x6f4540	CDoor::ProcessImpact	door2	implemented-needs-L2	no call in veh2-c-split
+0x6f49a0	CBouncingPanel::ProcessPanel	door2	implemented-needs-L2	no call in veh2-c-split
+0x8543d0	__init_gHandlingDataMgr	handling2	L2	split veh2-c-split: 1/1 PASS (0 mismatches, 0 undeclared)
+0x6f5240	cHandlingDataMgr::ConvertBikeDataToWorldUnits	handling2	implemented-needs-L2	no call in veh2-c-l2
+0x6f5080	cHandlingDataMgr::ConvertDataToGameUnits	handling2	L2	L2 veh2-c-l2: 210/210 PASS (0 mismatches, 0 undeclared)
+0x64f720	CCarEnterExit::AddInCarAnim	enterexit2	L2-split (undeclared writes to review)	split veh2-c-split: 7/7 PASS (0 mismatches, 7 undeclared)
+0x64f540	CCarEnterExit::MakeUndraggedPassengerPedsLeaveCar	enterexit2	implemented-needs-L2	no call in veh2-c-split
+0x651210	CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel	enterexit2	L2	L2 veh2-c-l2: 276/276 PASS (0 mismatches, 0 undeclared)
+0x6d5e20	CAutoPilot::CAutoPilot	checks2	L2	split veh2-c-split: 32/32 PASS (0 mismatches, 0 undeclared)
+0x45a610	CVehicleRecording::SaveOrRetrieveDataForThisFrame	checks2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 882/882 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x459440	CVehicleRecording::StopPlaybackWithIndex	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a280	CVehicleRecording::StopPlaybackRecordedCar	checks2	implemented-needs-L2	no call in veh2-c-split
+0x459660	CVehicleRecording::SetPlaybackSpeed	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x4594c0	CVehicleRecording::IsPlaybackGoingOnForCar	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x459740	CVehicleRecording::PausePlaybackRecordedCar	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x459850	CVehicleRecording::UnpausePlaybackRecordedCar	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x459960	CVehicleRecording::RestoreInfoForMatrix	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x459a30	CVehicleRecording::RestoreInfoForCar	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x459b30	CVehicleRecording::InterpolateInfoForCar	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x45a360	CVehicleRecording::ChangeCarPlaybackToUseAI	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a4a0	CVehicleRecording::SkipToEndAndStopPlaybackRecordedCar	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a020	CVehicleRecording::RequestRecordingFile	checks2	implemented-needs-L2	no call in veh2-c-split
+0x459400	CVehicleRecording::ShutDown	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a160	CVehicleRecording::RemoveAllRecordingsThatArentUsed	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a0a0	CVehicleRecording::RemoveRecordingFile	checks2	implemented-needs-L2	no call in veh2-c-split
+0x459f80	CVehicleRecording::RegisterRecordingFile	checks2	L2	L2 veh2-d-l2: 426/426 PASS (0 mismatches, 0 undeclared)
+0x45a0f0	CVehicleRecording::SmoothRecording	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a8f0	CVehicleRecording::Load	checks2	implemented-needs-L2	no call in veh2-c-split
+0x45a1e0	CVehicleRecording::SetRecordingToPointClosestToCoors	checks2	implemented-needs-L2	no call in veh2-c-l2
+0x459d10	CVehicleRecording::SkipForwardInRecording	checks2	implemented-needs-L2	no call in veh2-c-split
+0x459f00	CVehicleRecording::RenderLineSegment	checks2	implemented-needs-L2	no call in veh2-c-split
+0x465680	CStuckCarCheck::Process	checks2	L2-split (spool quota: case counts differ after the cut, compared cases match)	split veh2-c-split: 884/884 compared, 0 mismatches, 0 undeclared, COUNT (spool quota)
+0x6d1e20	CVehicle::CanPedOpenLocks	vehicle2	ported-unhookable	protection reads the entry bytes (0x401B4F, 0x405BD6 read 0x6D1E24); vehicle2::can_ped_open_locks
+0x6dba30	CVehicle::SetComponentRotation	vehicle2	ported-unhookable	protection reads the entry bytes (0x156967D reads 0x6DBA32); vehicle2::set_component_rotation
+0x5d4760	CVehicle::Save	vehicle2	implemented (not registered)	original saves an uninitialised stack CVehicleSaveStructure (padding = stack garbage); port zeroes it; decision needed; vehicle2::save
+0x6b57a0	CBike::Destructor	bike2	ported-unhookable	protection reads the entry bytes (0x401571 reads 0x6B57A3); bike2::destructor
+0x6d0450	cTransmission::cTransmission	transmission	ported-unhookable	3 bytes (TooShort); transmission::constructor
+0x6d0b30	CRideAnimData::~CRideAnimData	bike2	ported-unhookable	1 byte (TooShort); bike2::ride_anim_data_destructor
+0x6f4040	CDoor::Process	door2	ported-unhookable	protection reads the entry bytes (0x4072EE reads 0x6F4043); door2::process

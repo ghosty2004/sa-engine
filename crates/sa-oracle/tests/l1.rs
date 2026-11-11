@@ -406,6 +406,8 @@ fn fsin_fcos_model_matches_the_cpu() {
 const PRESERVE_SPECS_PENDING: &[u32] = &[
     // AI-GEN generated dtor CEventFireNearby::~CEventFireNearby (preserve ecx); spec queued.
     0x4B1F80,
+    // PORT-VEH-2: GetVehicleAppearance, HeightAboveCeiling, SelectPlaneWeapon, GetPlaneNumGuns; specs queued.
+    0x6D1080, 0x6D2600, 0x6D4900, 0x6D3F30,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

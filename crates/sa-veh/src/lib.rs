@@ -31,3 +31,18 @@ pub mod heli;
 pub mod statics;
 pub mod train;
 pub mod vehicle;
+
+// PORT-VEH-2
+pub mod air2;
+pub mod automobile2;
+pub mod bike2;
+pub mod boat2;
+pub mod checks2;
+pub mod door2;
+pub mod enterexit2;
+pub mod handling2;
+pub mod misc;
+pub mod statics2;
+pub mod train2;
+pub mod transmission;
+pub mod vehicle2;

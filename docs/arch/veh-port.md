@@ -150,6 +150,102 @@ claims L3.
   expressible as an extras line); they run in split mode.
 - Hook-off (per-hook L3) runs.
 
+## Second pass (PORT-VEH-2)
+
+Agent + 2 helpers, 2026-11-11, lane 4. SA:MP-executed rows first (`catalog/samp-priority.csv`), then
+corpus-executed ones, then cheap leaves; per-function verdicts in `docs/arch/veh-port-2-verdicts.tsv`
+(generated from the port-l2 result tables of the runs below; the main session sets `catalog/state.csv`).
+
+Ported: **292 `#[hook]` registrations** in 13 new modules, plus 6 Rust functions that cannot be
+hooked and one that is deliberately not registered (`CVehicle::Save`, below).
+
+| file | contents |
+|---|---|
+| `vehicle2.rs` | `CVehicle` (97 hooks): passenger/driver bookkeeping (Set/RemoveDriver, Add/RemovePassenger, SetUpDriver, KillPedsInVehicle, PickRandomPassenger, IsPassenger*), render helpers (Render, ResetAfterRender, SetupRender, PreRender, (Pre)RenderDriverAndPassengers, SetComponentVisibility and its callbacks; every RW call stays `orig!`), lighting (SetupLighting, RemoveLighting, CalculateLightingFromCollision, GetVehicleLightsStatus), upgrades/remaps (RemoveAllUpgrades*, Find*UpgradeCB, SetRemap*, GetRemapIndex, SetupUpgradesAfterLoad), alarms/bombs/siren (ProcessCarAlarm, ActivateBomb*, ProcessDelayedExplosion, ProcessSirenAndHorn, UsesSiren), plane weapons (SelectPlaneWeapon, Get/SetFiringRateMultiplier, GetPlaneNumGuns, GetPlaneGunsAutoAimAngle, ProcessWeapons), physics helpers (ProcessWheelRotation, SpecialEntityCalcCollisionSteps, ApplyBoatWaterResistance, CanPedStep/JumpOutCar, MakeDirty, AddWheelDirtAndWater, AddDamagedVehicleParticles), the constructor, destructor, scalar deleting destructor, Load, the vehicle pool operator new/delete (both overloads) |
+| `statics2.rs` | the 109 `__init_g_*` initialisers RE-SPEC-UNK proposed as VEH (all `fld; (fmul|fdiv|fdivr)+; fstp`), generated from the bytes |
+| `automobile2.rs`, `bike2.rs`, `transmission.rs` | (helper A) CAutomobile/CBike/CBmx destructors and constructors, damage (SetBumper/Panel/DoorDamage), OpenDoor, ProcessControlCollisionCheck, DoBurstAndSoftGroundRatios, custom plates, CalculateLeanMatrix, CBmx::ProcessControl / ProcessBunnyHop, CDamageManager node indices, cTransmission::InitGearRatios, CRideAnimData |
+| `air2.rs`, `boat2.rs`, `train2.rs`, `door2.rs`, `handling2.rs`, `enterexit2.rs`, `checks2.rs` | (helper B) CHeli/CPlane/CBoat/CTrain constructors, destructors, Render/PreRender, UpdateHelis, CPlane::ProcessControl, CBoat::ProcessControlInputs / AddWakePoint / FillBoatList, train track helpers and InitTrains, CDoor::ProcessImpact, CBouncingPanel::ProcessPanel, cHandlingDataMgr::ConvertBikeDataToWorldUnits (CRT `_CIasin` through `x87_unary`) / ConvertDataToGameUnits / `__init_gHandlingDataMgr`, CCarEnterExit (AddInCarAnim, MakeUndraggedPassengerPedsLeaveCar, IsPathToDoorBlockedByVehicleCollisionModel), 23 CVehicleRecording playback functions, CStuckCarCheck::Process, CAutoPilot ctor |
+| `misc.rs` | empty (reserved) |
+
+### Not hooked
+
+- Protection code reads the entry bytes (installer/keycells/patch_refs tests): `CVehicle::CanPedOpenLocks`
+  0x6D1E20 (0x401B4F, 0x405BD6), `CVehicle::SetComponentRotation` 0x6DBA30 (0x156967D), `CBike::Destructor`
+  0x6B57A0 (0x401571), `CDoor::Process` 0x6F4040 (0x4072EE). Rust functions kept; a keycells redirect would
+  make them hookable (decision for the main session).
+- Shorter than 5 bytes: `cTransmission::cTransmission` 0x6D0450, `CRideAnimData::~CRideAnimData` 0x6D0B30
+  (Rust kept), and the 1-3 byte stubs already listed under Open items.
+- `CVehicle::Save` 0x5D4760: ported, deliberately not registered. The original builds its
+  `CVehicleSaveStructure` in an uninitialised stack buffer, so any byte `Construct` does not write reaches the
+  save file as stack garbage; the port's buffer is zeroed. Needs a decision (F5 byte-identical saves).
+- Skipped: `CVehicleRecording::StartPlaybackRecordedCar` 0x45A980 (its .HOODLUM body changes the free-slot
+  index through an obfuscated `call eax` fragment that could not be resolved from the bytes), the big
+  drivers (ProcessControl/ProcessControlInputs/ProcessSuspension/ProcessWheel/ProcessBikeWheel/PreRender/
+  VehicleDamage/FlyingControl/ProcessBoatControl, 550-3750 instructions each), DoTailLightEffect,
+  GetPlaneWeaponFiringStatus, KillPedsGettingInVehicle, DoVehicleLights and the remaining helper lists.
+
+### Findings and kept quirks
+
+- Callers keep registers: `GetVehicleAppearance` (ECX, EDX), `GetPlaneNumGuns` (ECX, EDX),
+  `HeightAboveCeiling` (EDX), `SelectPlaneWeapon` (EDX: ProcessWeapons reuses its fire flag after the call)
+  -> `preserve`.
+- `CustomCarPlate_TextureCreate` passes the plate type as its own argument slot's dword after storing the
+  byte into it (upper 3 bytes = the model-info pointer's), as ApplyDamage does; reproduced.
+- `RemoveWinch` looks the rope up with id `this + 0xA320` (UpdateWinch / the destructor use `this + 0x1D`);
+  kept.
+- `HeightAboveCeiling` (heli models): -1 between 950 and 1500, `(h - 1000) + 500` above; kept.
+- `UsesSiren`: 432 (rhino) false although it is a law-enforcement model; `CarHasRoof` false only for
+  handling flag 0x800 with both extras set.
+- The vehicle constructor's first `rand()` decides bit 3 of `+0x42C` by `rand * 3.05e-5 < 0` (never true);
+  the call is kept for the rand stream.
+- `ProcessWeapons` passes `GetPlaneWeaponFiringStatus`'s fire flag as a byte stored into an uninitialised
+  dword; the callee reads AL only.
+- `ApplyBoatWaterResistance` and `RemoveReplacementUpgrade` keep scratch values in their own argument slots
+  (caller stack); the ports use locals (the slot is dead after the call).
+- `CBike::CalculateLeanMatrix` (helper A): the stack `CMatrix`'s flags word is uninitialised in the original
+  and propagates into the lean matrix flags (+0x5D8) through `operator*=`; double-run L2 shows 1000
+  mismatches on exactly that word, split mode with `SPLIT_STACKFILL` compares equal stacks.
+- Helper B deviations (ledger candidates): `CTrain::FindClosestTrackNode` returns 0 where the original
+  returns an uninitialised stack slot when no node is within 99999.9; `CDoor::ProcessImpact` with a dirn
+  nibble above 5 uses (0,0,0) for the original's uninitialised direction; `IsPathToDoorBlocked...` passes
+  zeroed sphere surface bytes where the original passes stale stack.
+
+### Verification (lane 4, driving.sarec, 4338 frames)
+
+Lists `tools/e2e/lists/veh2-{l2,split,splitf}-{a,b,c}.txt`; `SA_ROOT=/home/ghosty2004/sa-engine LANE=4
+L2_PER_FRAME=1000`, split runs with `SPLIT_STACKFILL=16384`, `SPLIT_PER_FRAME=20` (per-frame render and
+collision hooks: 1) and `L2_SPOOL_MAX=3-4e9`; every run under `systemd-run --user --scope -p MemoryMax=12G`.
+New `tools/e2e/l2-extras.txt` lines (PORT-VEH-2 blocks) from the runs' undeclared writes; the heavy drivers
+(destructors, SetDriver/RemoveDriver/passengers, SetModelIndex, OpenDoor, SetDoorDamage, collision checks,
+render paths) declare the whole .data/.bss with access `D`, as `CFileLoader::LoadLevel` does.
+
+| run | result |
+|---|---|
+| `veh2-a-l2` (13) | (b), (c) IDENTICAL; 11 PASS; ChangeLawEnforcerState mismatched without `this = "CVehicle"` (double-run did not restore `this`; fixed, PASS in `veh2-b-l2`); GetCurrentAtomicObjectCB undeclared = caller's out-parameter (extras line, PASS in `veh2-b-l2`) |
+| `veh2-a-split` (129: the 109 initialisers + 20) | splito/splitr/rust IDENTICAL; 124 PASS, 0 FAIL, 2 COUNT (Render, ResetAfterRender: spool quota at frame 470), 3 NOCASES |
+| `veh2-b-l2` (33) | (b), (c) IDENTICAL; 0 mismatches except CBike::CalculateLeanMatrix (1000 mismatches, the uninitialised-stack flags word, above) |
+| `veh2-b-splitf` (12 per-frame hooks) | IDENTICAL; 11 PASS (Render, ResetAfterRender 1000/1000 with 0 undeclared), 1 NOCASES |
+| `veh2-b-split` (38) | IDENTICAL; 21 PASS, 17 NOCASES, 0 FAIL |
+| `veh2-c-l2` (19) | (b), (c) IDENTICAL; 0 mismatches; RegisterRecordingFile undeclared = StreamingArray (extras line added after the run) |
+| `veh2-c-splitf` (6, incl. CalculateLeanMatrix) | IDENTICAL; SetupRender and CAutomobile::ProcessControlCollisionCheck PASS with 0 undeclared; CalculateLeanMatrix FAIL (flags word) and the three bike hooks after it DIVERGED (their inputs carry that word; their `veh2-b` evidence stands) |
+| `veh2-c-split` (67) | IDENTICAL; 19 PASS, 9 COUNT (spool quota at frame ~1090; every compared case matches), 39 NOCASES, 0 FAIL |
+| `veh2-d-l2` (RegisterRecordingFile, with the StreamingArray line), `veh2-d-splitf` (CBike::Render, CBmx::ProcessControl, CBike::ProcessControlCollisionCheck without CalculateLeanMatrix) | all PASS, 0 mismatches, 0 undeclared; (b), (c), (e) IDENTICAL |
+| all ports on Rust (4175 hooks), `verify-all.sh veh2-va1/va2/va3 4` (11 recordings) | IDENTICAL on 10: grove walk 5200, anim-input 3300, c-bug 3220, car-ai 5000, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276 (va2 skipped 3 of them for the 20 GB disk guard, rerun as va3). air-water DIVERGED at 2742 (peds, player): pre-existing on this branch's base d59b638 (the same frame as main-x87; fixed on master by BISECT-AIRWATER, CTaskSimpleCarJumpOut::ProcessPed); with only the 292 PORT-VEH-2 hooks on Rust air-water is IDENTICAL (`veh2-bis2`) |
+
+Every per-list `rust` run (only that list's hooks on Rust) was frame-identical with the all-original trace
+on all 17 subsystems. No L2 mismatch remains except CalculateLeanMatrix.
+
+Verdict counts (292 hooks; `docs/arch/veh-port-2-verdicts.tsv`): **L2 186** (0 mismatches, 0 undeclared),
+L2-split with undeclared writes to review 11 (extras lines added from the reports, not re-run), L2-split with
+COUNT from the spool quota 9 (every compared case matches), implemented 1 (CalculateLeanMatrix),
+implemented-needs-L2 85 (no call in driving.sarec: heli/plane/boat/recording/upgrade paths; the other
+recordings were only run with all ports on Rust); plus 6 ported-unhookable and 1 not registered (Save).
+
+Checks: `cargo fmt -p sa-veh --check`; `cargo test -p sa-veh` (3); `cargo test --release -p sa-hook --lib`
+(50/50: installs, callers, keycells, patch_refs, catalogue names); clippy `-D warnings` for sa-veh host
+(all targets), i686 (`--features in-process`), wasm32, sa-hook i686, sa-oracle host.
+
+
 ## Functions
 
 | address | name | state | evidence |
