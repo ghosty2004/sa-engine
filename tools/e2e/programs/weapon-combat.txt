@@ -1,0 +1,53 @@
+# PORT-WEAPON-PED corpus program (sa-weapon / sa-ped): the grove-walk start, then the weapon cheat
+# KJKSZPJ (knife, desert eagle, sawn-off, tec9, M4, sniper rifle, flamethrower, grenades, fire
+# extinguisher) typed on the keyboard, then every weapon in turn: R2 (next weapon, one frame = just
+# down), R1 (target: auto-lock on the nearest ped) with circle (fire) held or pulsed, a camera turn
+# between weapons so shots hit peds, cars and buildings; the grenade is held and released (throw),
+# the flamethrower starts fires, the extinguisher sprays them. Recorded by tools/e2e/record-program.sh;
+# frames as in grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300..1379 ly=-128           # walk forward
+1400 key=std:0x4B            # KJKSZPJ
+1402 key=std:0x4A
+1404 key=std:0x4B
+1406 key=std:0x53
+1408 key=std:0x5A
+1410 key=std:0x50
+1412 key=std:0x4A
+1460 r2                      # knife
+1480..1560 ly=-128           # walk to the nearest ped
+1500..1560 r1
+1520..1560 circle pulse      # stab
+1600 r2                      # desert eagle
+1640..1760 r1
+1660..1760 circle pulse      # fire at the targeted ped
+1780..1820 mouse=12,0        # turn
+1840 r2                      # sawn-off
+1870..1990 r1
+1890..1990 circle pulse
+2010 r2                      # tec9
+2040..2160 r1
+2060..2160 circle            # automatic fire
+2170..2210 mouse=-15,0
+2220 r2                      # M4
+2250..2390 r1
+2270..2390 circle
+2400..2440 mouse=10,0
+2450 r2                      # sniper rifle
+2480 circle                  # one shot from the hip
+2520 r2                      # flamethrower
+2550..2680 r1
+2560..2680 circle            # flames: fires on the ground and on peds
+2700 r2                      # grenades
+2730..2760 circle            # hold ...
+2761..2800 ly=0              # ... release: throw
+2840..2880 mouse=-20,0
+2900..2930 circle            # second grenade
+2990 r2                      # fire extinguisher
+3010..3130 circle            # spray towards the fires
+3140..3240 ly=-128 cross     # run away
+3260..3400 ly=-128 mouse=6,0
+end 3500

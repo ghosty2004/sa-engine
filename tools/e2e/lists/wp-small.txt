@@ -1,0 +1,7 @@
+CPed::DisablePedSpeech
+CPed::DisablePedSpeechForScriptSpeech
+CPed::CanPedHoldConversation
+CPad::IsDPadUpPressed
+FUN_00609380
+FUN_004b1370
+CPed::CanWeRunAndFireWithWeapon

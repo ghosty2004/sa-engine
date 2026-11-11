@@ -1683,9 +1683,11 @@ dependencies = [
  "sa-core",
  "sa-math",
  "sa-oracle-format",
+ "sa-ped",
  "sa-pop",
  "sa-script",
  "sa-stream",
+ "sa-weapon",
  "sa-world",
  "windows-sys 0.61.2",
 ]
@@ -1722,9 +1724,11 @@ dependencies = [
  "sa-hook",
  "sa-math",
  "sa-oracle-format",
+ "sa-ped",
  "sa-pop",
  "sa-script",
  "sa-stream",
+ "sa-weapon",
  "sa-world",
  "unicorn-engine",
  "zstd",
@@ -1733,6 +1737,18 @@ dependencies = [
 [[package]]
 name = "sa-oracle-format"
 version = "0.1.0"
+
+[[package]]
+name = "sa-ped"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-stream",
+ "sa-weapon",
+ "sa-world",
+]
 
 [[package]]
 name = "sa-platform"
@@ -1804,6 +1820,17 @@ dependencies = [
  "sa-rw-wgpu",
  "sa-stream",
  "wgpu",
+]
+
+[[package]]
+name = "sa-weapon"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-stream",
+ "sa-world",
 ]
 
 [[package]]

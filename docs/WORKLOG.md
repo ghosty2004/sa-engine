@@ -705,3 +705,15 @@
 - CAT-17 proposals: scalar deleting destructors catalogued as ~X (vtable slot 0) in CTaskComplex.md/CTaskSimple.md
   tables; names 0x4ABCA0 CEventDamage::HasKilledPed, 0x5FFEE0 CEntityScanner::GetClosestEntityInRange, 0x606060
   CDecisionMaker::MakeDecision, 0x646CF0 CCarEnterExit::IsCarDoorInUse, 0x667310 CPathNode::GetNodeCoors, others in files.
+
+## 2026-11-11 PORT-WEAPON-PED integrated (main session)
+- Agent ac3e5c3c (lane 5) + helpers: crates sa-weapon (121 hooks) and sa-ped (217), docs/arch/weapon-ped-port.md,
+  tools/verify/hookscan.py, weapon-combat program/recording, l2-extras section.
+- Merge: conflicts with POP/SCRIPT registrations resolved (order core, stream, world, pop, script, weapon, ped). The
+  branch (based on a6ad91b, before keycells) had unregistered four protection-read hooks to avoid the 0x401E4C crash;
+  master's keycells redirect already fixes that crash, so the four stay registered (files restored to master).
+- Verified: sa-hook lib 45 (keycells, INF-20, callers), sa-weapon/sa-ped tests, clippy, i686 build; all-ports IDENTICAL
+  on grove 5200, weapon-combat 3500, pause-restart 3700, c-bug 3220. A first c-bug comparison "DIVERGED at 1421: pad"
+  was a harness artefact: the loop reused one --tag for several recordings, so a stale weapon-combat Rust trace was
+  compared; rerun alone and l3.sh both IDENTICAL. Rule: one --tag per recording.
+- States: 150 → L2, 31 → L1, 161 → implemented. F1 = 828 / 15,479 (5.35 %).
