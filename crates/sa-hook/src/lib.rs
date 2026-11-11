@@ -31,6 +31,8 @@ mod callers;
 #[cfg(test)]
 mod data_reads;
 #[cfg(test)]
+mod patch_refs;
+#[cfg(test)]
 mod testexe;
 
 #[cfg(windows)]

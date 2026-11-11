@@ -276,6 +276,8 @@ doc:stream-port@[[0x8E3FB0]+4]:0x100:RW
 doc:stream-port@[0x965520]:0x2EE0:RW
 # CdStream: gpCdStreams (CdStreamInit(5): 5 * 0x30 bytes) and the queue data ((5 + 1) * 4)
 doc:stream-port@[0x8E3FFC]:0xF0:RW
+# HARNESS-2: the pointer itself, so split-report finds gCdStreams' handle words (normalise.rs HEAP_HANDLES)
+doc:stream-port@0x8E3FFC:4:R
 doc:stream-port@[0x8E3FEC]:0x18:RW
 
 # STREAM-L2: globals of the per-function write sets that catalog/rwsets.csv only names by their base
@@ -1726,6 +1728,10 @@ CWanted::RemovePursuitCop-func@arg1:0x28:RW
 CWanted::RemovePursuitCop-func@arg2:1:RW
 CWanted::AddCrimeToQ@arg2:0xC:R
 CWanted::RegisterCrime@arg1:0xC:R
+# HARNESS-2: the `const CVector&` of these two lies in the (Rust) caller's frame; split-report compares a
+# caller-stack pointer argument by this declared pointee (split.rs stack_pointees)
+CWanted::RegisterCrime_Immediately@arg1:0xC:R
+CWanted::ReportCrimeNow@arg1:0xC:R
 CWanted::WorkOutPolicePresence@[0xB74490]:0x14:R
 CWanted::WorkOutPolicePresence@[[0xB74490]+4]:[[0xB74490]+8]:R
 CWanted::WorkOutPolicePresence@[0xB74494]:0x14:R

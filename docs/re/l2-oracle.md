@@ -217,6 +217,9 @@ a test, every use listed by `split-report`):
 | addresses of regions read through a pointer into OS-allocated memory (`[0x8E3FEC]:0x18`: the CdStream request queue's buffer, LocalAlloc'd in CdStreamInit) | sa-hook adds every region address to the case's `foreign` list when it lies in such memory; `split-report` then accepts two different `Foreign` region addresses as the same object (pre and post regions) and still compares their bytes; listed as `region address …` uses | STREAM-L2 split groups: `region Extra 0x2f3ab10 vs Extra 0x2fde1e8` at the first pair of every function of 5 of the 9 groups, the plain run's address changing between processes too (0x2f3ab10 / 0x2fde548); `l2 show` of sp-g04b: the 0x18-byte region after gpCdStreams |
 | stack addresses below a Rust ancestor | `Stack` class: compared by offset from the call's argument block; rust-run stack addresses rebased by the entry-ESP difference | SetVideoMode (Rust) above the RW file reads: whole stack 0x30 lower |
 | uninitialised original bytes | `exclusions()`: Light::LightsCreate RpLight alpha (+0x24) and pDirect's frame matrix pads | 0x5BA54E-0x5BA55E (RGB only), RpLightSetColor 0x751A90 copies 16 bytes; RwFrameRotate pads |
+| Win32 handle values (HARNESS-2): `gStreamSemaphore` 0x8E4004 and the streaming thread handle 0x8E4008, `gStreamFileHandles[32]` 0x8E4010..0x8E408F, the audio stream thread's `CAEStreamThread::m_nHandle` 0xB606CC; on the heap, gCdStreams' (`*0x8E3FFC`, 0x30-byte elements) semaphore +0x14 and hFile +0x18 | `OS_HANDLES` / `HEAP_HANDLES` (the heap array is found through the pointer global, declared as `doc:stream-port@0x8E3FFC:4:R`): each word is hashed and compared by its class (0, `INVALID_HANDLE_VALUE`, "a handle" = non-zero multiple of 4 below 0x10000, else the raw value): in the page fingerprint, in region bytes before and after the call, in window writes of merged pairs; raw values recorded per case | stores of CreateSemaphoreA / CreateThread / CreateFileA results at 0x406978, 0x4069C8, 0x406794 (+ CdStreamOpen), 0x4F16EE; PORT-WEAPON-PED c-split2..4 / g-split3 / w-split2 / p-split2: plain 0xE8 / 0xD0, rust 0xE4 / 0xCC from frame 201 (a one-handle shift, intermittent: equal in g-split2, hz-e1c, hz-e2g); hz-f3g (core list, grove): gCdStreams +0x14 plain 0xD4 rust 0xD0, +0x18 0xD0 / 0xCC from frame 0 |
+| known residue of a ported function (ledger item; HARNESS-2) | `RESIDUE`: excluded from the fingerprint and from every other function's merged comparison, kept for the writer's own: the skimmer's CVehicleModelInfo +0x40/+0x44/+0x48 (0xB2AC74, 10 bytes), written by LoadVehicleObject 0x5B6F30 | hz-e1c / hz-e2g window dumps (seq 14..1500): 0xB2AC78 plain `3333333fffff` rust `000000000000`, the only differing bytes of page 0xB2A000; STREAM-L2 frame 201 ordinal 60 |
+| pointer arguments into the caller's frames (a Rust caller lays its frame out differently; HARNESS-2) | `split.rs stack_pointees`: when both runs pass a pointer at or above the call's argument block and the pointee is DECLARED (`ArgPtr`, or an extra region `HOOK@argN:SIZE:R`) at that pointer, the argument and the region address compare by the pointee's bytes before the call; writes into the pointee move to the plain run's address; uses listed per function. An undeclared stack pointer stays a difference | CWanted::ReportCrimeNow / RegisterCrime_Immediately below a Rust CCrime::ReportCrime: `CVector*` plain 0x36EECC rust 0x36EE48 (c-split3), 0x36EEDC / 0x36EE58 (hz-e1c); extras `CWanted::ReportCrimeNow@arg1:0xC:R`, `CWanted::RegisterCrime_Immediately@arg1:0xC:R` |
 
 No rule normalises CRT descriptor numbers: they compared equal in every pair.
 
@@ -275,6 +278,36 @@ A hook on an entry read by anything other than an absolute memory operand (immed
 operands) cannot be redirected this way and is rejected by the install test. Not hooked yet but read:
 0x55C410 (at 0x4017B4), 0x563470 (0x4013A2), 0x572360 region (0x406A9E); a port of one of these needs a
 `READERS` entry (absolute reads: the install test says which).
+
+### References into the inside of a patched entry (HARNESS-2, from `tools/verify/hookscan.py`)
+
+`crates/sa-hook/src/patch_refs.rs`, test `nothing_references_the_inside_of_a_patched_entry`, over every
+registered hook and the whole image (complementing `data_reads.rs` and the installer's 0x400-byte
+forward branch scan): (1) every direct branch (`call`/`jmp`/`jcc`/`loop`/`jecxz`, rel8/rel32) in the
+code sections whose target lies strictly inside a patched range, confirmed on a linear decode of a
+catalogued code range (`catalog/extents.csv`; the no-CD junk after most `.HOODLUM` stubs decodes into
+"branches" nothing executes, e.g. 0x441135.. after `CPhysical::SetVelocity`'s stub, so bytes outside
+the catalogued ranges are listed as notes only); (2) every dword of the executable sections that is the
+32-bit immediate of an instruction there and points strictly inside a patch, or its displacement and a
+dword read there overlaps the changed bytes (`[entry - 3, end)` for inline hooks; the `E9` of a stub
+stays). Redirected `READERS` do not count. 2026-11-11: 0 offenders over every registered hook (master);
+258 branch candidates and 237 dwords outside catalogued code ranges listed as notes (the 10
+inside game `.text` checked by hand: SIB / opcode byte coincidences). Non-executable sections are not
+scanned (no relocation table; the 29 dwords found there were ASCII / UTF-16 text). Negative tests: a
+branch into a synthetic patch is found, the entry itself is not; 0x645602 (GetAnimDoorOffset+2, read as
+an immediate by the protection in the executable `.data`) is listed. hookscan's ECX/EDX check is
+`callers.rs` (path-following).
+
+## Stale traces (HARNESS-2)
+
+`winepath` right after `wineserver -k` sometimes printed nothing: `SA_DET_TRACE` was empty, sa-hook
+wrote its trace to the default `sa-trace.bin`, and `port-l2.sh` compared the trace an earlier run with
+the same tag had left (PORT-VEH `veh-d-split`: the `rust` and `splito` logs show `trace: None`; the
+compared `rust.trace` was 4 minutes older than the run and came from the DLL before the
+FuckCarCompletely fix, hence "rust diverges at frame 2614"). `lib.sh e2e_winpath` falls back to the
+lane prefix's `Z:` mapping; `port-l2.sh` deletes a run's old outputs before it starts and fails the run
+when sa-hook's log does not show the expected trace path; `l3.sh --probe` deletes its output trace
+first. `l3.sh` takes `L3_CACHE` (trace cache directory).
 
 ## Limits
 

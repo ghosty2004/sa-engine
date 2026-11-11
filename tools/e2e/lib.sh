@@ -101,6 +101,21 @@ e2e_lane_setup() {
     e2e_isolate_userfiles
 }
 
+# The Windows path of a Unix path (Z: = / in every lane prefix). `winepath` right after
+# `wineserver -k` sometimes prints nothing (it has to start a new Wine session): an empty
+# SA_DET_TRACE then made sa-hook write its trace to the default sa-trace.bin, and port-l2.sh compared
+# the stale trace a previous run with the same tag had left (PORT-VEH "rust diverges at frame 2614",
+# 2026-11-11). Falls back to the Z: mapping and never returns an empty string.
+e2e_winpath() {
+    local p
+    p="$(winepath -w "$1" 2> /dev/null)"
+    if [ -z "$p" ] && [ "$(readlink "$WINEPREFIX/dosdevices/z:" 2> /dev/null)" = / ]; then
+        case "$1" in /*) p="Z:${1//\//\\}" ;; esac
+    fi
+    [ -n "$p" ] || { echo "e2e: no Windows path for $1" >&2; return 1; }
+    printf '%s\n' "$p"
+}
+
 # Replace a top-level file in the lane game dir; never writes through a symlink into wine/gta-sa.
 e2e_put() { rm -f "$GTA_DIR/$2"; cp "$1" "$GTA_DIR/$2"; }
 
@@ -166,7 +181,7 @@ e2e_game_start() {
     (
         cd "$GTA_DIR" || exit 1
         exec env -u WAYLAND_DISPLAY DISPLAY="$E2E_DISPLAY" wine "$GTA_DIR/sa-launcher.exe" \
-            --gta "$(winepath -w "$GTA_DIR/gta_sa.exe")" --dll "$(winepath -w "$GTA_DIR/sa_hook.dll")" -- "$@"
+            --gta "$(e2e_winpath "$GTA_DIR/gta_sa.exe")" --dll "$(e2e_winpath "$GTA_DIR/sa_hook.dll")" -- "$@"
     ) > "$E2E_OUT/wine.log" 2>&1 &
     E2E_GAME_PID=$!
     e2e_say "launcher started (pid $E2E_GAME_PID), log $E2E_OUT/wine.log"

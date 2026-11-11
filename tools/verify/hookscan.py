@@ -11,7 +11,14 @@
    reads, and for ECX a following `call` reached before ECX is written (the callee may be a thiscall
    that receives the caller's ECX unchanged; check the callee by hand, PHYS ApplyMoveSpeed case).
    Paths end at ret/jmp/call; conditional branches are followed on the fall-through path only.
-`push ecx` (stack reservation) is not counted as a read. Run: SA_ROOT=<checkout holding re/> .venv/bin/python -I tools/verify/hookscan.py crates/<crate>/src ... (PORT-WEAPON-PED; proposed for sa-hook's install test, INF-20)
+`push ecx` (stack reservation) is not counted as a read. Run: SA_ROOT=<checkout holding re/> .venv/bin/python -I tools/verify/hookscan.py crates/<crate>/src ... (PORT-WEAPON-PED)
+
+Both checks now run as sa-hook tests over every registered hook (HARNESS-2): check 1 as
+`patch_refs::tests::nothing_references_the_inside_of_a_patched_entry` (crates/sa-hook/src/patch_refs.rs:
+immediates and displacements on decoded instructions of catalogued code ranges, all executable sections,
+plus every direct branch into a patched range from anywhere) next to `data_reads.rs` (protection reads,
+catalog/code-data-reads.csv); check 2 as `callers::tests::callers_reading_ecx_edx_after_a_hook_are_declared`
+(path-following). This script stays as a quick pre-registration scan of a crate's not yet registered hooks.
 """
 import re, sys, os, csv
 import pefile, capstone
