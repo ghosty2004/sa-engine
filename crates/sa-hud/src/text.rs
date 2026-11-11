@@ -140,9 +140,11 @@ pub fn key_array_search(this: GPtr<u8>, key: GPtr<u8>, found: GPtr<u8>) -> GPtr<
 /// gives the static 25-byte buffer 0xC1AEB8 filled from `sprintf(buf, "")` (bytes 1..24 are uninitialised
 /// stack in the original, zeros here).
 ///
-/// Not hooked: the protection reads the dword at 0x6A004D (covering the entry byte 0x6A0050) at 0xD723B1
-/// (`mov edx, [0x6A004D]`) and 0xD72411 (`sub edx, [0x6A004D]`); hooking needs two sa-hook keycells
-/// `READERS` entries first.
+/// The dword at 0x6A004D (covering the entry byte 0x6A0050) appears as an absolute operand at 0xD723B1
+/// (`mov edx, [0x6A004D]`) and 0xD72411 (`sub edx, [0x6A004D]`) only in decodes from the middle of
+/// `call 0x1243940` at 0xD723B0 / 0xD72410 (rel32 + `push 0`): not readers, so the hook needs no
+/// keycells entry.
+#[hook(addr = 0x6A0050, conv = thiscall, name = "CText::Get", expect = "83 EC 20 56 57")]
 pub fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> {
     let mut found = [0u8; 1];
     let fp = GPtr::from_raw(found.as_mut_ptr());
@@ -199,6 +201,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DATA_UNLOAD,
     HOOK_GET_NAME_OF_LOADED_MISSION_TEXT,
     HOOK_TEXT_UNLOAD,
+    HOOK_TEXT_GET,
     HOOK_TEXT_CONSTRUCTOR,
     HOOK_TEXT_DESTRUCTOR,
 ];

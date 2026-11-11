@@ -90,17 +90,45 @@ fn decode_at(exe: &crate::testexe::Exe, ip: u32) -> Instruction {
 /// float argument this way), or it is popped back into the same register (a save/restore pair, as
 /// in the protection chunks). The slot is tracked on the straight-line code after the push
 /// (following direct `jmp`s) through pushes, pops, `add/sub esp, imm` and `mov r, esp` aliases. A
-/// conditional branch, a call, another ESP write, a read of the slot or popping it elsewhere means
-/// "not shown".
+/// direct conditional branch is followed both ways (up to [`ALLOC_BRANCHES`] deep), and the push is
+/// an allocation only when every path shows it: 0x58BAC5 in `CHud::DrawHelpText` (`push ecx` after
+/// `CFont::SetJustify`) reserves the float argument of `CFont::SetWrapx`, which each side of an x87
+/// compare (`fnstsw ax; test ah, 0x44; jnp`) stores with `fstp dword ptr [esp]`. A call, an indirect
+/// branch, another ESP write, a read of the slot or popping it elsewhere means "not shown".
 fn push_is_allocation(exe: &crate::testexe::Exe, push: &Instruction) -> bool {
-    let pushed = push.op0_register();
+    let mut steps = 0;
+    alloc_path(
+        exe,
+        push.op0_register(),
+        push.next_ip32(),
+        0,
+        Vec::new(),
+        &mut steps,
+        ALLOC_BRANCHES,
+    )
+}
+
+/// Conditional branches [`push_is_allocation`] follows on one path.
+const ALLOC_BRANCHES: u32 = 4;
+
+/// One path of [`push_is_allocation`] from `ip`: `slot` is the slot's offset from the current ESP,
+/// `alias` the registers holding a copy of ESP (with the slot's offset from them); `steps` counts
+/// the instructions of every path together (at most 48 per path, 192 in all).
+fn alloc_path(
+    exe: &crate::testexe::Exe,
+    pushed: Register,
+    mut ip: u32,
+    mut slot: i64,
+    mut alias: Vec<(Register, i64)>,
+    steps: &mut u32,
+    branches: u32,
+) -> bool {
     let mut f = InstructionInfoFactory::new();
-    let mut ip = push.next_ip32();
-    // offset of the slot from the current ESP; registers holding a copy of ESP (with the slot's
-    // offset from them)
-    let mut slot: i64 = 0;
-    let mut alias: Vec<(Register, i64)> = Vec::new();
     for _ in 0..48 {
+        *steps += 1;
+        if *steps > 192 {
+            return false;
+        }
         let i = decode_at(exe, ip);
         if i.is_invalid() {
             return false;
@@ -110,6 +138,17 @@ fn push_is_allocation(exe: &crate::testexe::Exe, push: &Instruction) -> bool {
             FlowControl::UnconditionalBranch if i.op0_kind() == OpKind::NearBranch32 => {
                 ip = i.near_branch32();
                 continue;
+            }
+            FlowControl::ConditionalBranch if i.op0_kind() == OpKind::NearBranch32 && branches > 0 => {
+                return alloc_path(
+                    exe,
+                    pushed,
+                    i.near_branch32(),
+                    slot,
+                    alias.clone(),
+                    steps,
+                    branches - 1,
+                ) && alloc_path(exe, pushed, i.next_ip32(), slot, alias, steps, branches - 1);
             }
             _ => return false,
         }
@@ -730,5 +769,12 @@ mod tests {
         let push = decode_at(&exe, 0x58B3CA);
         assert_eq!(push.code(), Code::Push_r32);
         assert!(push_is_allocation(&exe, &push));
+        // CHud::DrawHelpText: `push ecx` after SetOrientation/SetJustify, stored on both sides of
+        // an x87 compare branch (`jnp` at 0x58BAE3), so neither call's ECX is used
+        let push = decode_at(&exe, 0x58BAC5);
+        assert_eq!(push.code(), Code::Push_r32);
+        assert!(push_is_allocation(&exe, &push));
+        assert!(uses_after(&exe, &starts, 0x58BAB7).is_empty());
+        assert!(uses_after(&exe, &starts, 0x58BAB1).is_empty());
     }
 }
