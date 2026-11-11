@@ -92,6 +92,7 @@ lockedSurface (0x4ca008), +0x10 D3DLOCKED_RECT {Pitch +0x10, pBits +0x14} (0x4ca
   The arg slots [esp+8] (raster) is reused as scratch (cType byte at 0x4c9fe7, cube byte 0x4ca00c, surface pointer 0x4ca0c4).
 - Decode: `level = (s8)(flags >> 8)` (`sar ecx, 8`, low byte kept, 0x4c9fc2/0x4c9fc8); `write = flags & 1` (0x4c9fc5);
   D3D lock flags = 0x800 (D3DLOCK_NOSYSLOCK) if write, else 0x8810 (NOSYSLOCK|READONLY|NO_DIRTY_UPDATE) (0x4c9fcc-0x4c9fda).
+> QA (2026-11-11): `level` is unsigned, not s8: the byte stored at 0x4c9fc8 is only ever zero-extended (`movzx ecx, cl` at 0x4ca005 and 0x4ca0c1 for the GetSurfaceLevel / GetCubeMapSurface Level argument, `movzx ecx, byte [esp+0x13]` at 0x4ca217 for the `sar` shift count at 0x4ca228/0x4ca22d, byte store to ext+0xb at 0x4ca25a). Read it as `level = (u8)(flags >> 8)`. Differs only for levels >= 0x80.
 - If `raster->cpPixels (+0x4) != NULL` return 0 (already locked, 0x4c9f98).
 - `ext = raster + [0xb4e9e0]` (0x4c9fb0); `top` = walk `raster->parent (+0x0)` until `top->parent == top` (0x4c9fb3-0x4c9fba);
   `topExt = top + [0xb4e9e0]`.

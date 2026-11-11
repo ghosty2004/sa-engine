@@ -233,6 +233,8 @@ the behaviour does not depend on it.
 | 0x84fcc0 | 0x8a4db0 | g[0xbb4a88] <- 0.277778f [0x858630] / 50.0f [0x866f44] | 0.00555556 | none (dead store) |
 | 0x854a00 | 0x8a5754 | g[0xc40424] <- 1.0f [0x858624] / (50.0f [0x87267c] * 50.0f [0x87267c]) | 0.0004 | 0x439f82 in 0x439f60 CCheat::CountrysideInvasionCheat |
 
+> QA (2026-11-11): row 0x854a00 (in the table above): the readers column is wrong. 0x439f82 is not a reference to the target global; it is `mov dword ptr [esp+8], 0xc5` at 0x439f80 / `mov dword ptr [esp+0xc], ...` (the 4 bytes 24 04 c4 00 straddle two stack-immediate stores). An instruction-level scan finds no reader outside the __xc initialisers, so this row is `none (dead store)` like its neighbours. Behaviour of the initialiser itself (operands, order, f32 result) is correct. (Placed after the table because a line inside a markdown table would break it.)
+
 ## Other initialisers and destructors
 
 ## 0x84e2e0 __init_gDummyMatrix  (catalogue: unknown/REA, port level 1)

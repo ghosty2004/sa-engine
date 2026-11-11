@@ -86,6 +86,7 @@ All functions are static (`__cdecl`, caller cleans). Offsets used throughout:
   0x8D2ED8 (f32 `.data`, image value 500.0f; gr labels the neighbour 0x8D2ED4 = 30.f). Constants: 0x858B50 = 0.0f,
   0x858FE4 = 1.5707964f, 0x858CB8 = 3.1415927f, 0x858CBC = 6.2831855f, 0x858CC0 = -3.1415927f, 0x858C54 = 4294967296.0f,
   0x858B88 = 0.0078125f, 0x858F34 = 0.75f, 0x859AB0 = 0.7853982f.
+> QA (2026-11-11): the gta-reversed label is wrong: the image value of the f32 at 0x8D2ED4 is 10.0f (bytes 00 00 20 41), not 30.f (TaskSimpleCarGetIn.cpp:133 comment). Read the value from the image if a port touches it.
 - Fields: ped +0x558 `m_fCurrentRotation`, +0x14/+0x04 position; vehicle +0x14 matrix, +0x10 heading,
   +0x490 m_pFire; CPad +0x10E `DisablePlayerControls` (u16).
 - Behaviour:

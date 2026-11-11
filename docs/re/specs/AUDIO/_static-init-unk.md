@@ -158,6 +158,8 @@ the behaviour does not depend on it.
 | 0x8502a0 | 0x8a4e6c | g[0xbd00f4] <- 0.277778f [0x858630] / 50.0f [0x868b3c] | 0.00555556 | none (dead store) |
 | 0x851600 | 0x8a50d0 | g[0xc0b1d8] <- 100.0f [0x858628] / 3.6f [0x86cf0c] | 27.777779 | 0x4e794d in 0x4e7940 CAEMFDecoder::GetStreamPlayTimeMs |
 
+> QA (2026-11-11): row 0x851600 (in the table above): the readers column is wrong. 0x4e794d is not a reference to the target global; it is `fdiv dword ptr [ecx+0xc0]` at 0x4e794d (opcode d8 b1, displacement 0xc0 - a field offset, not the global). An instruction-level scan finds no reader outside the __xc initialisers, so this row is `none (dead store)` like its neighbours. Behaviour of the initialiser itself (operands, order, f32 result) is correct. (Placed after the table because a line inside a markdown table would break it.)
+
 ## Other initialisers and destructors
 
 ## 0x84c1a0 __init_84c1a0  (catalogue: unknown/REA, port level 0)
