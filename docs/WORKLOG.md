@@ -770,3 +770,11 @@
 - Agent a186f35f + 2 helpers (lane 2). Merge: port-l2.sh wine.log fix duplicated master's (kept master's), l2-extras
   sections combined. sa-hook lib 48, sa-weapon/sa-core tests, workspace clippy, i686 OK; all-ports IDENTICAL on
   weapon-combat, c-bug, grove, driving, cheats, pause-restart, anim-input. 6 → L2, 8 → implemented. F1 = 1140 (7.36 %).
+
+## 2026-11-11 RE-SPEC-RW pass 1 (main session)
+- Agent a9f1509f + 2 helpers: docs/re/specs/RW/ (21 files, 370 rows; specs-index 3,659 lines). check_consts re-run by
+  the main session. Notable exe facts: sqrt/inv-sqrt are 12-bit table lookups; stream readers check version window
+  [0x34000, 0x36003] and read chunk len into fixed stack structs unclamped; RwD3D9SetTexture always sets
+  MAXANISOTROPY on stage 0; camera offset signs asymmetric. CAT-17 proposals: 0x7eede0 parallel frustum builder,
+  0x7ef1f0 _rwCameraBuildParallelViewMatrix, 0x7fdcd0 _rwD3D9RWSetRasterStage, 0x7f2160 _rwMatrixInvertGeneral;
+  RwStream rwOwned at +0x20 (fix docs/re/specs/STREAM/RwGtaStream.md).
