@@ -1,0 +1,167 @@
+# PORT-VEH corpus program (vehicles, sa-veh): the grove-walk start, then the BMX that waits next to CJ
+# after the intro (CBmx/CBike), a cheat-spawned Rancher (CAutomobile) driven into the Grove Street walls
+# (collisions, damage), a Bloodring Banger, CPKTNWT (every car blows up and burns), a quad (CQuadBike),
+# a Hunter (CHeli) lifted off and landed, and the Vortex (CPlane class) driven on the street.
+# Pad controls (the test setup runs the game in pad mode): triangle = enter/exit, cross = accelerate,
+# square = brake/reverse, lx = steer. Cheats are typed on the keyboard one key per two frames;
+# HESOYAM keeps CJ alive and ASNAEB clears the wanted level. Frames as in grove-walk.txt (40 ms each).
+# Generated; edit the timings here, they are relative to each block's start.
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1278 triangle                # get on the BMX next to CJ
+1290..1440 cross pulse       # pedal
+1350..1380 lx=-100           # steer left
+1400..1420 lx=100            # steer right
+1441..1470 square            # brake
+1480 triangle                # get off
+1520 key=std:0x48            # HESOYAM: health, armour, money
+1522 key=std:0x45
+1524 key=std:0x53
+1526 key=std:0x4F
+1528 key=std:0x59
+1530 key=std:0x41
+1532 key=std:0x4D
+1544 key=std:0x41            # ASNAEB: clear wanted level
+1546 key=std:0x53
+1548 key=std:0x4E
+1550 key=std:0x41
+1552 key=std:0x45
+1554 key=std:0x42
+1566 key=std:0x4A            # JQNTDMH: spawn a Rancher
+1568 key=std:0x51
+1570 key=std:0x4E
+1572 key=std:0x54
+1574 key=std:0x44
+1576 key=std:0x4D
+1578 key=std:0x48
+1600 triangle              # enter the Rancher
+1660..1860 cross            # accelerate
+1720..1760 lx=128        # steer right (into the walls)
+1800..1830 lx=-128      # steer left
+1861..1920 square        # brake, then reverse
+1890..1920 lx=128
+1921..2040 cross lx=-60  # accelerate again
+2041..2080 square        # brake
+2090 triangle              # leave the Rancher
+2140 key=std:0x48            # HESOYAM: repair
+2142 key=std:0x45
+2144 key=std:0x53
+2146 key=std:0x4F
+2148 key=std:0x59
+2150 key=std:0x41
+2152 key=std:0x4D
+2164 key=std:0x41            # ASNAEB: clear wanted level
+2166 key=std:0x53
+2168 key=std:0x4E
+2170 key=std:0x41
+2172 key=std:0x45
+2174 key=std:0x42
+2186 key=std:0x43            # CQZIJMB: spawn a Bloodring Banger
+2188 key=std:0x51
+2190 key=std:0x5A
+2192 key=std:0x49
+2194 key=std:0x4A
+2196 key=std:0x4D
+2198 key=std:0x42
+2220 triangle              # enter it
+2280..2430 cross            # accelerate
+2330..2370 lx=-128
+2431..2480 square        # brake
+2490 triangle              # leave it
+2540..2580 ly=-128 cross # run away from it
+2600 key=std:0x43            # CPKTNWT: blow up every car (wrecks burn)
+2602 key=std:0x50
+2604 key=std:0x4B
+2606 key=std:0x54
+2608 key=std:0x4E
+2610 key=std:0x57
+2612 key=std:0x54
+2714..2814 mouse=6,0     # look at the fire
+2824 key=std:0x48            # HESOYAM: health
+2826 key=std:0x45
+2828 key=std:0x53
+2830 key=std:0x4F
+2832 key=std:0x59
+2834 key=std:0x41
+2836 key=std:0x4D
+2848 key=std:0x41            # ASNAEB: clear wanted level
+2850 key=std:0x53
+2852 key=std:0x4E
+2854 key=std:0x41
+2856 key=std:0x45
+2858 key=std:0x42
+2870 key=std:0x41            # AKJJYGLC: spawn a quad
+2872 key=std:0x4B
+2874 key=std:0x4A
+2876 key=std:0x4A
+2878 key=std:0x59
+2880 key=std:0x47
+2882 key=std:0x4C
+2884 key=std:0x43
+2906 triangle              # get on the quad
+2966..3126 cross            # accelerate
+3006..3036 lx=128
+3066..3096 lx=-128
+3127..3166 square        # brake
+3176 triangle              # get off
+3206..3266 ly=-128 cross # run to an open spot
+3276 key=std:0x48            # HESOYAM: health
+3278 key=std:0x45
+3280 key=std:0x53
+3282 key=std:0x4F
+3284 key=std:0x59
+3286 key=std:0x41
+3288 key=std:0x4D
+3300 key=std:0x4F            # OHDUDE: spawn a Hunter
+3302 key=std:0x48
+3304 key=std:0x44
+3306 key=std:0x55
+3308 key=std:0x44
+3310 key=std:0x45
+3332 triangle              # enter the Hunter
+3402..3602 cross            # rotors up, lift off
+3552..3602 ly=-60        # pitch forward
+3603..3732 square        # descend, land
+3742 triangle              # leave the Hunter
+3782..3842 ly=128 cross # run to an open spot
+3852 key=std:0x48            # HESOYAM: health
+3854 key=std:0x45
+3856 key=std:0x53
+3858 key=std:0x4F
+3860 key=std:0x59
+3862 key=std:0x41
+3864 key=std:0x4D
+3876 key=std:0x41            # ASNAEB: clear wanted level
+3878 key=std:0x53
+3880 key=std:0x4E
+3882 key=std:0x41
+3884 key=std:0x45
+3886 key=std:0x42
+3898 key=std:0x4B            # KGGGDKP: spawn a Vortex
+3900 key=std:0x47
+3902 key=std:0x47
+3904 key=std:0x47
+3906 key=std:0x44
+3908 key=std:0x4B
+3910 key=std:0x50
+3932 triangle              # enter the Vortex
+3992..4142 cross            # accelerate
+4052..4082 lx=128
+4143..4182 square        # brake
+4192 triangle              # leave it
+4242 key=std:0x48            # HESOYAM: health
+4244 key=std:0x45
+4246 key=std:0x53
+4248 key=std:0x4F
+4250 key=std:0x59
+4252 key=std:0x41
+4254 key=std:0x4D
+4266 key=std:0x41            # ASNAEB: clear wanted level
+4268 key=std:0x53
+4270 key=std:0x4E
+4272 key=std:0x41
+4274 key=std:0x45
+4276 key=std:0x42
+end 4338

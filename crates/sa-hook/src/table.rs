@@ -383,7 +383,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
 const LOCAL_N: usize = 19;
 /// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order), then
 /// sa-stream's (`sa_stream::hooks::ALL`), then sa-world's (`sa_world::hooks::ALL`), then sa-pop's
-/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's and sa-anim's.
+/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's and sa-veh's.
 pub const N: usize = LOCAL_N
     + sa_core::hooks::COUNT
     + sa_stream::hooks::COUNT
@@ -393,7 +393,8 @@ pub const N: usize = LOCAL_N
     + sa_weapon::hooks::COUNT
     + sa_ped::hooks::COUNT
     + sa_input::hooks::COUNT
-    + sa_anim::hooks::COUNT;
+    + sa_anim::hooks::COUNT
+    + sa_veh::hooks::COUNT;
 
 /// The hook table.
 pub static HOOKS: [HookSpec; N] = build();
@@ -509,6 +510,12 @@ const fn build() -> [HookSpec; N] {
     while a < sa_anim::hooks::COUNT {
         out[base_anim + a] = from_core(&sa_anim::hooks::ALL[a]);
         a += 1;
+    }
+    let base_veh = base_anim + sa_anim::hooks::COUNT;
+    let mut v = 0;
+    while v < sa_veh::hooks::COUNT {
+        out[base_veh + v] = from_core(&sa_veh::hooks::ALL[v]);
+        v += 1;
     }
     out
 }
@@ -903,6 +910,7 @@ mod tests {
                 + sa_ped::hooks::COUNT
                 + sa_input::hooks::COUNT
                 + sa_anim::hooks::COUNT
+                + sa_veh::hooks::COUNT
         );
         let ports = sa_core::hooks::ALL
             .iter()
@@ -913,7 +921,8 @@ mod tests {
             .chain(sa_weapon::hooks::ALL.iter())
             .chain(sa_ped::hooks::ALL.iter())
             .chain(sa_input::hooks::ALL.iter())
-            .chain(sa_anim::hooks::ALL.iter());
+            .chain(sa_anim::hooks::ALL.iter())
+            .chain(sa_veh::hooks::ALL.iter());
         for (k, r) in ports.enumerate() {
             let h = &HOOKS[LOCAL_N + k];
             assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));

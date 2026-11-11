@@ -91,6 +91,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .chain(sa_ped::hooks::ALL.iter())
                 .chain(sa_input::hooks::ALL.iter())
                 .chain(sa_anim::hooks::ALL.iter())
+                .chain(sa_veh::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })

@@ -23,6 +23,7 @@ sa-weapon = { path = "../sa-weapon", features = ["in-process"] }
 sa-ped = { path = "../sa-ped", features = ["in-process"] }
 sa-input = { path = "../sa-input", features = ["in-process"] }
 sa-anim = { path = "../sa-anim", features = ["in-process"] }
+sa-veh = { path = "../sa-veh", features = ["in-process"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

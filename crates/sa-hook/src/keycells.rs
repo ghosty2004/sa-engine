@@ -41,7 +41,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 6] = [
+pub const READERS: [Reader; 7] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -89,6 +89,15 @@ pub const READERS: [Reader; 6] = [
         disp_off: 2,
         key: 0x4C4572,
         value: 0xFFF3_DCB8,
+    },
+    // CBouncingPanel::SetPanel entry 0x6F4920 (PORT-VEH), found by the test below: `adc ebp, [0x6F4924]`
+    // at 0x401635.
+    Reader {
+        at: 0x401635,
+        insn: [0x13, 0x2D, 0x24, 0x49, 0x6F, 0x00],
+        disp_off: 2,
+        key: 0x6F4924,
+        value: 0xFFD0_D17D,
     },
 ];
 
