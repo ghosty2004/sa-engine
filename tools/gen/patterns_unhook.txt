@@ -1,0 +1,3 @@
+# tools/gen/patterns.py: generated functions that are not registered as hooks (`ADDR reason`).
+0x41BF70 a call at 0x40248E targets 0x41BF79, inside the patched entry bytes (sa-hook `patch_refs`)
+0x748F50 l2 FAIL on grove: EAX orig 0x2001C401, rust 0x1 (low byte equal; upper EAX differs, cause not found; RwInt8 result)

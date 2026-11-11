@@ -47,3 +47,4 @@ pub mod rp_anim_blend;
 
 pub mod std6_natives;
 pub mod cutscene_update;
+pub mod generated;

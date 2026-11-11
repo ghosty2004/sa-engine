@@ -37,6 +37,7 @@ pub const MODULES: &[&[HookReg]] = &[
     menu3::HOOKS,
     credits::HOOKS,
     menu_ctrl::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

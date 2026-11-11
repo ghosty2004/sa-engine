@@ -52,3 +52,4 @@ pub mod twoplayer;
 
 pub mod std6_natives;
 pub mod camera_process;
+pub mod generated;

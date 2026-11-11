@@ -110,3 +110,4 @@ pub mod world_scan;
 pub mod plant_col_entity_cache;
 pub mod stencil_shadow_volumes;
 pub mod roadsign_text_raster;
+pub mod generated;

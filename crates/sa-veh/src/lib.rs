@@ -80,3 +80,4 @@ pub mod automobile_render;
 pub mod train_control;
 pub mod bike_control;
 pub mod bike_render;
+pub mod generated;

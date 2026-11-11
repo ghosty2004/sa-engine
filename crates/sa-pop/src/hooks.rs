@@ -35,6 +35,7 @@ pub const MODULES: &[&[HookReg]] = &[
     misc5::HOOKS,
     misc6::HOOKS,
     population4::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

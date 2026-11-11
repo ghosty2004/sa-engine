@@ -35,6 +35,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::port4_service::HOOKS,
     ped_events::HOOKS,
     crate::audio_data_stream::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

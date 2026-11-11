@@ -55,3 +55,4 @@ pub mod vehicle;
 pub mod audio_data_stream;
 
 pub mod std6_natives;
+pub mod generated;

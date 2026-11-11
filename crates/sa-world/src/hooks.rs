@@ -88,6 +88,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::entry_exit_add::HOOKS,
     world::pickup_generate::HOOKS,
     physical::pair_collision::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

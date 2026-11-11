@@ -73,3 +73,4 @@ pub use sa_macros::{hook, native};
 pub const PHASE_A: bool = cfg!(sa_phase_a);
 
 pub mod std6_natives;
+pub mod generated;

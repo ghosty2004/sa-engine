@@ -1,0 +1,56 @@
+# Generator exclusions: addresses registered (#[hook]/#[native]) on master, a worktree-agent-* branch
+# or an agent worktree, but not in this checkout. Regenerate: python3 -I tools/gen/inflight.py
+0x4042D0  # worktree-agent-a825eb3a8372b8c10
+0x411A80  # worktree-agent-a825eb3a8372b8c10
+0x45B160  # worktree-agent-a825eb3a8372b8c10
+0x45C440  # worktree agent-aec7f5b6ca90ad56e
+0x464BD0  # worktree-agent-a825eb3a8372b8c10
+0x464D70  # worktree-agent-a825eb3a8372b8c10
+0x465070  # worktree-agent-a825eb3a8372b8c10
+0x474800  # worktree-agent-a825eb3a8372b8c10
+0x485A50  # worktree-agent-a825eb3a8372b8c10
+0x4ABA50  # worktree-agent-a825eb3a8372b8c10
+0x4CAAE0  # worktree agent-a983e0662995167da
+0x4D1610  # worktree-agent-a825eb3a8372b8c10
+0x4D1680  # worktree-agent-a825eb3a8372b8c10
+0x4D2B90  # worktree-agent-a825eb3a8372b8c10
+0x4D34F0  # worktree-agent-a825eb3a8372b8c10
+0x4DF210  # worktree-agent-a825eb3a8372b8c10
+0x556B40  # worktree agent-aec7f5b6ca90ad56e
+0x57D8D0  # worktree-agent-ac5053bef3fa90fcc
+0x57DDE0  # worktree-agent-ac5053bef3fa90fcc
+0x57E6E0  # worktree-agent-ac5053bef3fa90fcc
+0x57EF50  # worktree-agent-ac5053bef3fa90fcc
+0x57F300  # worktree-agent-ac5053bef3fa90fcc
+0x59ACF0  # worktree-agent-a825eb3a8372b8c10
+0x59B6A0  # worktree agent-aec7f5b6ca90ad56e
+0x59B7E0  # worktree agent-aec7f5b6ca90ad56e
+0x59BAD0  # worktree-agent-a825eb3a8372b8c10
+0x5A41C0  # worktree agent-a825eb3a8372b8c10
+0x5A4220  # worktree agent-a825eb3a8372b8c10
+0x5A42B0  # worktree agent-a825eb3a8372b8c10
+0x5A44A0  # worktree agent-a825eb3a8372b8c10
+0x5A44C0  # worktree agent-a825eb3a8372b8c10
+0x5A4840  # worktree agent-a825eb3a8372b8c10
+0x5A48B0  # worktree agent-a825eb3a8372b8c10
+0x5A4940  # worktree agent-a825eb3a8372b8c10
+0x5A55A0  # worktree agent-a825eb3a8372b8c10
+0x5A56E0  # worktree agent-a825eb3a8372b8c10
+0x5A57B0  # worktree agent-a825eb3a8372b8c10
+0x5A5820  # worktree agent-a825eb3a8372b8c10
+0x5A59C0  # worktree agent-a825eb3a8372b8c10
+0x5A5BC0  # worktree agent-a825eb3a8372b8c10
+0x5A5F70  # worktree agent-a825eb3a8372b8c10
+0x5A6040  # worktree agent-a825eb3a8372b8c10
+0x5A6530  # worktree agent-a825eb3a8372b8c10
+0x5A69D0  # worktree agent-a825eb3a8372b8c10
+0x5DABC0  # worktree agent-aec7f5b6ca90ad56e
+0x5DAC00  # worktree agent-aec7f5b6ca90ad56e
+0x5FFA20  # worktree-agent-a825eb3a8372b8c10
+0x604500  # worktree agent-a2f522e2079bcc8af
+0x624710  # worktree agent-a38d9283f45e4edb6
+0x624A40  # worktree agent-a38d9283f45e4edb6
+0x645600  # worktree-agent-acb5cdcad9d0bd3d6
+0x685170  # worktree agent-a983e0662995167da
+0x698F30  # worktree-agent-a825eb3a8372b8c10
+0x6997E0  # worktree-agent-a825eb3a8372b8c10

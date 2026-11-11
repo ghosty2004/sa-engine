@@ -42,6 +42,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::matrix_ops::HOOKS,
     crate::matrix_rotate::HOOKS,
     crate::matrix_more::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).

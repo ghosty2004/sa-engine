@@ -33,6 +33,7 @@ pub const MODULES: &[&[HookReg]] = &[
     modelinfo::vehicle::HOOKS,
     modelinfo::model_info::HOOKS,
     modelinfo::model_indices::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).

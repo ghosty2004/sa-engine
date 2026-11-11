@@ -40,6 +40,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::anim_file_load::HOOKS,
     crate::rp_anim_blend::HOOKS,
     crate::cutscene_update::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every `#[native]` registration of this crate (phase B entries of ports that cannot be hooked).
