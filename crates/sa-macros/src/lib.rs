@@ -98,6 +98,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut expect: Option<Vec<u8>> = None;
     let mut this: Option<LitStr> = None;
     let mut preserve: Option<LitStr> = None;
+    let mut entry_eax = false;
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -114,19 +115,22 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             this = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("preserve") {
             preserve = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("entry_eax") {
+            entry_eax = true;
         } else {
-            return Err(meta.error("expected addr, conv, name, expect, this or preserve"));
+            return Err(meta.error("expected addr, conv, name, expect, this, preserve or entry_eax"));
         }
         Ok(())
     });
     parse_macro_input!(attr with parser);
     let f = parse_macro_input!(item as ItemFn);
-    match expand(f, addr, conv, name, expect, this, preserve) {
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn expand(
     f: ItemFn,
     addr: Option<u32>,
@@ -135,6 +139,7 @@ fn expand(
     expect: Option<Vec<u8>>,
     this: Option<LitStr>,
     preserve: Option<LitStr>,
+    entry_eax: bool,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -253,11 +258,33 @@ fn expand(
     // `n` stack argument words (each `push [esp + 4*(saved + n)]` copies the next lower word, the
     // displacement stays constant), call the shim (ECX/EDX still hold register arguments), drop the
     // copies for cdecl, pop, return as the original.
-    let (wrapper, entry) = if saved.is_empty() {
+    // `entry_eax`: the wrapper first stores the caller's EAX in `sa_core::abi::ENTRY_EAX`.
+    let (wrapper, entry) = if saved.is_empty() && entry_eax {
+        let wrap = format_ident!("__sa_hook_entry_eax_{}", fname);
+        let wrapper = quote! {
+            #[cfg(target_arch = "x86")]
+            #[doc(hidden)]
+            #[unsafe(naked)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+                ::core::arch::naked_asm!(
+                    "mov dword ptr [{slot}], eax",
+                    "jmp {inner}",
+                    slot = sym ::sa_core::abi::ENTRY_EAX,
+                    inner = sym #shim,
+                )
+            }
+        };
+        (wrapper, quote!(#wrap as usize))
+    } else if saved.is_empty() {
         (quote!(), quote!(#shim as usize))
     } else {
         let wrap = format_ident!("__sa_hook_preserve_{}", fname);
-        let mut lines: Vec<String> = saved.iter().map(|r| format!("push {r}")).collect();
+        let mut lines: Vec<String> = Vec::new();
+        if entry_eax {
+            lines.push("mov dword ptr [{slot}], eax".into());
+        }
+        lines.extend(saved.iter().map(|r| format!("push {r}")));
         lines.push(".rept {n}".into());
         lines.push("push dword ptr [esp + {d}]".into());
         lines.push(".endr".into());
@@ -268,6 +295,7 @@ fn expand(
         lines.extend(saved.iter().rev().map(|r| format!("pop {r}")));
         lines.push(if matches!(conv, Conv::Cdecl) { "ret".into() } else { "ret {b}".into() });
         let nsaved = saved.len() as u32;
+        let slot_op = if entry_eax { quote!(slot = sym ::sa_core::abi::ENTRY_EAX,) } else { quote!() };
         let wrapper = quote! {
             #[cfg(target_arch = "x86")]
             #[doc(hidden)]
@@ -280,6 +308,7 @@ fn expand(
                     d = const 4 * (#nsaved + #words as u32),
                     b = const 4 * (#words as u32),
                     inner = sym #shim,
+                    #slot_op
                 )
             }
         };

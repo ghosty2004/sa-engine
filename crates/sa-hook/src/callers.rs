@@ -595,6 +595,8 @@ mod tests {
             .chain(sa_script::hooks::ALL.iter())
             .chain(sa_weapon::hooks::ALL.iter())
             .chain(sa_ped::hooks::ALL.iter())
+            .chain(sa_input::hooks::ALL.iter())
+            .chain(sa_anim::hooks::ALL.iter())
             .find(|r| r.addr == addr)
             .map_or(0, |r| r.preserve)
     }

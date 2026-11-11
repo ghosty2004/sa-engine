@@ -419,6 +419,10 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_pop::all())
     .chain(crate::specs_weapon::all())
     .chain(crate::specs_ped::all())
+    .chain(crate::specs_input_pad::all())
+    .chain(crate::specs_input_ccm::all())
+    .chain(crate::specs_anim_a::all())
+    .chain(crate::specs_anim_b::all())
     .collect()
 }
 
