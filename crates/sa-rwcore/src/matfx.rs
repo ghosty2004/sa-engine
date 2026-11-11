@@ -902,8 +902,47 @@ pub fn rp_matfx_get_d3d9_pipeline(ty: u32) -> u32 {
     }
 }
 
+orig! {
+    /// `RwFreeListCreateAndPreallocateSpace(size, perBlock, align, n, space, hint)` (0x801B70)
+    fn engine_freelist_create(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
+    /// `_rpMatFXPipelinesCreate()` (0x815E60)
+    fn matfx_pipelines_create_call() -> u32 = cdecl 0x815E60 => rp_matfx_pipelines_create;
+}
+
+/// MatFX engine-module instance count.
+const MATFX_OPEN_COUNT: usize = 0xC9AB7C;
+
+/// `cb_MATERIALEFFECTSPLUGIN_RwEngine_Open(instance, offset, size)` (0x810BF0). On the first instance
+/// the material-data freelist (0x34-byte entries, `[0x8E29B8]` per block, `[0x8E29BC]`
+/// preallocated, space 0xC9AB50, hint 0x40120) -> 0xC9AB80 (NULL: returns NULL) and
+/// `_rpMatFXPipelinesCreate()` (0: returns 0). Counts the instance and returns it.
+#[hook(addr = 0x810BF0, conv = cdecl, name = "cb_MATERIALEFFECTSPLUGIN_RwEngine_Open", expect = "A1 7C AB C9 00 85 C0 75 37",
+       unverified = "std4-rxpipe-2", route = "L2", hazards = "heap-writes")]
+pub fn matfx_engine_open(instance: u32, _offset: u32, _size: u32) -> u32 {
+    if g::<u32>(MATFX_OPEN_COUNT).read() == 0 {
+        let fl = engine_freelist_create(
+            0x34,
+            g::<u32>(FL_PER_BLOCK).read(),
+            4,
+            g::<u32>(FL_PREALLOC).read(),
+            p8(0xC9AB50),
+            0x40120,
+        );
+        g::<u32>(MATFX_FREELIST).write(fl.addr() as u32);
+        if fl.is_null() {
+            return 0;
+        }
+        if matfx_pipelines_create_call() == 0 {
+            return 0;
+        }
+    }
+    g::<u32>(MATFX_OPEN_COUNT).write(g::<u32>(MATFX_OPEN_COUNT).read().wrapping_add(1));
+    instance
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_MATFX_ENGINE_OPEN,
     HOOK_RP_MATFX_MATERIAL_DATA_SET_FREE_LIST_CREATE_PARAMS,
     HOOK_RP_MATFX_PLUGIN_ATTACH,
     HOOK_RP_MATFX_MATERIAL_DATA_DESTROY_EFFECTS,

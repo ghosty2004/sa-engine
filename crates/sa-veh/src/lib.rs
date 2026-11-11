@@ -65,3 +65,17 @@ pub mod mvpd_v4;
 pub mod mvpd_v5;
 pub mod mvpd_v6;
 pub mod mvpd_v7;
+
+// WRITER-VEH-BIG (unverified batches)
+pub mod automobile_control;
+pub mod automobile_wheels;
+pub mod automobile_damage;
+pub mod automobile_ai;
+pub mod vehicle_lights;
+pub mod vehicle_wheel_particles;
+pub mod bmx_ai;
+pub mod car_enter_exit_offsets;
+pub mod automobile_render;
+pub mod train_control;
+pub mod bike_control;
+pub mod bike_render;

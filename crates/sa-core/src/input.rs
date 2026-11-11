@@ -731,8 +731,295 @@ pub fn defined_state_2d() {
     }
 }
 
+orig! {
+    // __MainWndProc's imports, through its own call sites
+    fn wp_release_capture() -> i32 = stdcall site 0x747F52 => unported;
+    fn wp_get_window_placement(hwnd: u32, wp: GPtr<u32>) -> i32 = stdcall site 0x747F62 => unported;
+    fn wp_send_message_a(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 = stdcall site 0x747F74 => unported;
+    fn wp_set_timer(hwnd: u32, id: u32, elapse: u32, func: u32) -> u32 = stdcall site 0x747FD3 => unported;
+    fn wp_show_cursor(show: i32) -> i32 = stdcall site 0x747FEB => unported;
+    fn wp_clip_cursor(rect: u32) -> i32 = stdcall site 0x748035 => unported;
+    fn wp_post_quit_message(code: i32) = stdcall site 0x748042 => unported;
+    fn wp_output_debug_string_a(s: GPtr<u8>) = stdcall site 0x74810F => unported;
+    fn wp_set_focus(hwnd: u32) -> u32 = stdcall site 0x74815E => unported;
+    fn wp_set_cursor(cursor: u32) -> u32 = stdcall site 0x7481D7 => unported;
+    fn wp_set_window_pos(hwnd: u32, after: u32, x: i32, y: i32, cx: i32, cy: i32, flags: u32) -> i32 = stdcall site 0x7482E5 => unported;
+    fn wp_set_capture(hwnd: u32) -> u32 = stdcall site 0x748301 => unported;
+    fn wp_def_window_proc_a(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 = stdcall site 0x748452 => unported;
+    /// `RsEventHandler(event, param)` (0x619B60)
+    fn wp_rs_event_handler(event: i32, param: u32) -> i32 = cdecl 0x619B60 => unported;
+    fn wp_pause_all_sounds(this: GPtr<u8>) = thiscall 0x507430 => unported;
+    fn wp_resume_all_sounds(this: GPtr<u8>) = thiscall 0x507440 => unported;
+    /// `CPad::Clear(bool, bool)` (bytes pushed as dwords)
+    fn wp_pad_clear(this: GPtr<u8>, a: u32, b: u32) = thiscall 0x541A70 => unported;
+    /// `WinInput` shutdown (0x747000)
+    fn wp_win_input_shutdown() -> i32 = cdecl 0x747000 => unported;
+    fn wp_init_after_lost_focus() = cdecl 0x53BC60 => unported;
+    fn wp_rw_d3d9_get_current_d3d_device() -> u32 = cdecl 0x7F9D50 => unported;
+    /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (+0x54)
+    fn wp_dev_set_gamma_ramp(dev: GPtr<u8>, swap: u32, flags: u32, ramp: u32) = stdcall vslot 0x54 => unported;
+    /// `IMediaControl::GetState(timeout, &state)` (+0x28)
+    fn wp_mc_get_state(mc: GPtr<u8>, timeout: u32, state: GPtr<u32>) -> i32 = stdcall vslot 0x28 => unported;
+    /// `IMediaControl::Pause()` (+0x20)
+    fn wp_mc_pause(mc: GPtr<u8>) -> i32 = stdcall vslot 0x20 => unported;
+    /// `IMediaControl::Run()` (+0x1C)
+    fn wp_mc_run(mc: GPtr<u8>) -> i32 = stdcall vslot 0x1C => unported;
+    fn wp_video_wait_state(state: i32) = cdecl 0x745F90 => unported;
+    fn wp_video_update_window() = cdecl 0x7466D0 => unported;
+    fn wp_video_on_graph_notify() = cdecl 0x745FB0 => unported;
+    fn wp_setup_back_buffer_vertex() = cdecl 0x7043D0 => unported;
+    fn wp_is_streaming_from_dvd(this: GPtr<u8>) -> u8 = thiscall 0x4D95C0 => unported;
+    fn wp_get_dvd_drive_letter(this: GPtr<u8>) -> u8 = thiscall 0x4D95D0 => unported;
+    fn wp_check_dvd(this: GPtr<u8>) -> u8 = thiscall 0x4D95E0 => unported;
+    fn wp_skip_cutscene() = cdecl 0x5B1700 => unported;
+    fn wp_no_disk_in_drive_message(this: GPtr<u8>) = thiscall 0x57C5E0 => unported;
+}
+
+/// `gGameState`.
+const GAME_STATE: usize = 0xC8D4C0;
+/// `RwInitialized`.
+const RW_INITIALIZED: usize = 0xC920E8;
+/// `ForegroundApp`.
+const FOREGROUND_APP: usize = 0x8D621C;
+/// `AEAudioHardware` (+0 `m_bInitialised`).
+const AE_AUDIO_HARDWARE: usize = 0xB5F8B8;
+
+fn g32(a: usize) -> GPtr<u32> {
+    GPtr::from_addr(a)
+}
+
+/// `CPad::GetPad(0)->Clear(false, true)` and the same for pad 1 (0x74800C / 0x74817E).
+fn clear_pads() {
+    wp_pad_clear(get_pad(0), 0, 1);
+    wp_pad_clear(get_pad(1), 0, 1);
+}
+
+/// `Win::__MainWndProc(hwnd, msg, wParam, lParam)` (0x747EB0, stdcall). Transcribed from the 1.0 US
+/// switch (three jump tables): `WM_DESTROY`/`WM_CLOSE` → `ClipCursor(NULL)`, the input shutdown
+/// (0x747000), `PostQuitMessage(0)`, 0; `WM_SIZE` → with RW initialised and both sizes > 0
+/// `RsEventHandler(rsCAMERASIZE, &{0, 0, w, h})`; when the camera changed both sizes 0xC9246C := 1,
+/// `ReleaseCapture`, and a maximised window gets `WM_WINDOWPOSCHANGED`, else 0xC9246C := 0; 0.
+/// `WM_ACTIVATE` → (deactivate: pause sounds, `ForegroundApp = 0`, `SetTimer(hwnd, 1, ftol(1000 /
+/// frameLimit))`, `rsACTIVATE(0)`; activate: resume sounds, `ShowCursor(FALSE)`, `rsACTIVATE(1)`,
+/// `ForegroundApp = 1`), both pads cleared, then `DefWindowProcA` (gta-reversed returns 0 here).
+/// `WM_SETFOCUS` → `CGame::InitAfterLostFocus`, `ForegroundApp = 1`, `DefWindowProcA`;
+/// `WM_KILLFOCUS` → `ForegroundApp = 0`, `DefWindowProcA`. `WM_ACTIVATEAPP` → the gamma ramp
+/// (saved / game) when it was changed, the intro/logo movie paused or resumed (game states 2, 4),
+/// in state 0 a deactivated fullscreen app sets 0xC920CC; both pads cleared; 0. `WM_TIMER`,
+/// `WM_MOUSEWHEEL` → 0. `WM_SETCURSOR` → `ShowCursor(FALSE)`, `SetCursor(NULL)`, `DefWindowProcA`.
+/// `WM_(SYS)KEYDOWN/UP` → `GTATranslateKey` into the `lParam` slot, `RsKeyboardEventHandler(rsKEYDOWN
+/// 0x1C / rsKEYUP 0x1D)`, for `VK_SHIFT` `GTATranslateShiftKey`; 0. `WM_MOUSEMOVE` → the menu's
+/// window mouse position (sign-extended words); 0. Button down → `SetCapture`, up → `ReleaseCapture`;
+/// 0. `WM_SIZING` → `rsIDLE(1)` when RW is initialised and the game is idle (state 9),
+/// `SetWindowPos(hwnd, HWND_TOP, 0, 0, w, h, SWP_NOMOVE)`, `CPostEffects::SetupBackBufferVertex`; 0.
+/// `WM_DEVICECHANGE` (`DBT_DEVICEREMOVECOMPLETE` of the audio DVD's volume) → the no-disc loop.
+/// `0x40D` (graph notify) in states 2/4 → `VideoPlayer::OnGraphNotify`. Everything else and the
+/// fall-throughs → `DefWindowProcA`.
+#[hook(addr = 0x747EB0, conv = stdcall, name = "Win::__MainWndProc", expect = "83 EC 3C 53 55",
+       unverified = "std4-win-1", route = "L3-only", hazards = "none", recs = "boot")]
+pub fn main_wnd_proc(hwnd: u32, msg: u32, wparam: u32, lparam: u32) -> i32 {
+    let def = || wp_def_window_proc_a(hwnd, msg, wparam, lparam);
+    match msg {
+        0x2 | 0x10 => {
+            wp_clip_cursor(0);
+            wp_win_input_shutdown();
+            wp_post_quit_message(0);
+            0
+        }
+        0x5 => {
+            let (w, h) = (lparam & 0xFFFF, lparam >> 16);
+            if g32(RW_INITIALIZED).read() == 0 || (h as i32) <= 0 || (w as i32) <= 0 {
+                return 0;
+            }
+            let mut rect = [0u32, 0, w, h];
+            wp_rs_event_handler(0, GPtr::<u32>::from_raw(rect.as_mut_ptr()).addr() as u32);
+            if rect[2] == w || rect[3] == h {
+                g32(0xC9246C).write(0);
+                return 0;
+            }
+            g32(0xC9246C).write(1);
+            wp_release_capture();
+            let mut wp = [0u32; 11];
+            wp_get_window_placement(hwnd, GPtr::from_raw(wp.as_mut_ptr()));
+            if wp[2] == 3 {
+                wp_send_message_a(hwnd, 0x47, 0, 0);
+            }
+            0
+        }
+        0x6 => {
+            let audio: GPtr<u8> = GPtr::from_addr(0xB6BC90);
+            let active = if wparam as u16 == 0 {
+                wp_pause_all_sounds(audio);
+                g32(FOREGROUND_APP).write(0);
+                let limit = GPtr::<i32>::from_addr(0xC1704C).read();
+                let elapse = sa_math::x87::X87::from_i32(limit).fdivr_m(1000.0).ftol() as u32;
+                wp_set_timer(hwnd, 1, elapse, 0);
+                wp_rs_event_handler(0x26, 0);
+                false
+            } else {
+                wp_resume_all_sounds(audio);
+                wp_show_cursor(0);
+                wp_rs_event_handler(0x26, 1);
+                true
+            };
+            if active {
+                g32(FOREGROUND_APP).write(1);
+            }
+            clear_pads();
+            def()
+        }
+        0x7 => {
+            wp_init_after_lost_focus();
+            g32(FOREGROUND_APP).write(1);
+            def()
+        }
+        0x8 => {
+            g32(FOREGROUND_APP).write(0);
+            def()
+        }
+        0x1C => {
+            let activating = wparam != 0;
+            if GPtr::<u8>::from_addr(0xC920C8).read() != 0 {
+                let dev = wp_rw_d3d9_get_current_d3d_device();
+                if dev != 0 {
+                    let ramp = if activating { 0xC8DAC8 } else { 0xC8D4C8 };
+                    wp_dev_set_gamma_ramp(GPtr::from_addr(dev as usize), 0, 1, ramp);
+                }
+            }
+            match g32(GAME_STATE).read() {
+                0 => {
+                    let ps = RS_PS.get();
+                    if wparam as u16 == 0 && ps.byte_add(8).cast::<u32>().read() != 0 {
+                        g32(0xC920CC).write(1);
+                    }
+                }
+                2 | 4 => {
+                    let mc: GPtr<u8> = GPtr::from_addr(g32(0xC920D8).read() as usize);
+                    let mut state = 0u32;
+                    wp_mc_get_state(mc, 10, GPtr::from_raw(&raw mut state));
+                    if wparam as u16 == 0 {
+                        if state == 2 && !mc.is_null() {
+                            if wp_mc_pause(mc) != 0 {
+                                wp_output_debug_string_a(crate::platform::rdata(0x874BB8));
+                            } else {
+                                wp_video_wait_state(1);
+                            }
+                        }
+                    } else {
+                        wp_video_update_window();
+                        if state != 2 && !mc.is_null() {
+                            if wp_mc_run(mc) != 0 {
+                                wp_output_debug_string_a(crate::platform::rdata(0x874BA0));
+                            } else {
+                                wp_video_wait_state(2);
+                                wp_set_focus(RS_PS.get().cast::<u32>().read());
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+            clear_pads();
+            0
+        }
+        0x113 | 0x20A => 0,
+        0x20 => {
+            wp_show_cursor(0);
+            wp_set_cursor(0);
+            def()
+        }
+        0x100 | 0x104 | 0x101 | 0x105 => {
+            let down = msg == 0x100 || msg == 0x104;
+            let mut ck: i32 = lparam as i32;
+            let ckp: GPtr<i32> = GPtr::from_raw(&raw mut ck);
+            if gta_translate_key(ckp, lparam, wparam) {
+                rs_keyboard_event_handler(if down { 0x1C } else { 0x1D }, ckp);
+            }
+            if wparam == 0x10 {
+                gta_translate_shift_key(ckp);
+            }
+            0
+        }
+        0x200 => {
+            g32(0xBA6828).write(lparam as u16 as i16 as i32 as u32);
+            g32(0xBA682C).write((lparam >> 16) as u16 as i16 as i32 as u32);
+            0
+        }
+        0x201 | 0x204 | 0x207 => {
+            wp_set_capture(hwnd);
+            0
+        }
+        0x202 | 0x205 | 0x208 => {
+            wp_release_capture();
+            0
+        }
+        0x214 => {
+            if g32(RW_INITIALIZED).read() != 0 && g32(GAME_STATE).read() == 9 {
+                wp_rs_event_handler(0x1A, 1);
+            }
+            let r: GPtr<i32> = GPtr::from_addr(lparam as usize);
+            let (l, t, rr, b) = (r.read(), r.byte_add(4).read(), r.byte_add(8).read(), r.byte_add(0xC).read());
+            wp_set_window_pos(hwnd, 0, 0, 0, rr.wrapping_sub(l), b.wrapping_sub(t), 2);
+            wp_setup_back_buffer_vertex();
+            0
+        }
+        0x219 => {
+            device_change(wparam, lparam);
+            def()
+        }
+        0x40D => {
+            let st = g32(GAME_STATE).read();
+            if st == 4 || st == 2 {
+                wp_video_on_graph_notify();
+            }
+            def()
+        }
+        _ => def(),
+    }
+}
+
+/// `__MainWndProc`'s `WM_DEVICECHANGE` branch (0x74834A): audio DVD removal.
+fn device_change(wparam: u32, lparam: u32) {
+    let hdr: GPtr<u8> = GPtr::from_addr(lparam as usize);
+    let ae: GPtr<u8> = GPtr::from_addr(AE_AUDIO_HARDWARE);
+    if wparam != 0x8004 || hdr.byte_add(4).cast::<u32>().read() != 2 || ae.read() == 0 {
+        return;
+    }
+    if wp_is_streaming_from_dvd(ae) == 0 || hdr.byte_add(0x10).read() & 1 == 0 {
+        return;
+    }
+    let letter = wp_get_dvd_drive_letter(ae);
+    if letter < b'A' {
+        return;
+    }
+    let bit = 1u32 << ((letter as u32).wrapping_sub(0x41) & 31);
+    if hdr.byte_add(0xC).cast::<u32>().read() & bit == 0 {
+        return;
+    }
+    wp_output_debug_string_a(crate::platform::rdata(0x874B84));
+    let code_pause: GPtr<u8> = GPtr::from_addr(0xB7CB48);
+    code_pause.write(1);
+    if GPtr::<u8>::from_addr(0xB5F851).read() == 1 {
+        wp_skip_cutscene();
+    }
+    let menu: GPtr<u8> = GPtr::from_addr(0xBA6748);
+    wp_no_disk_in_drive_message(menu);
+    let quit: GPtr<u8> = GPtr::from_addr(0xBA67A0);
+    while quit.read() == 0 {
+        if wp_check_dvd(ae) != 0 {
+            wp_output_debug_string_a(crate::platform::rdata(0x874B38));
+            code_pause.write(0);
+            return;
+        }
+        wp_no_disk_in_drive_message(menu);
+    }
+    wp_output_debug_string_a(crate::platform::rdata(0x874B58));
+}
+
+
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[
+    HOOK_MAIN_WND_PROC,
     HOOK_IS_ENTER_JUST_PRESSED,
     HOOK_IS_STANDARD_KEY_JUST_PRESSED,
     HOOK_IS_MENU_KEY_JUST_PRESSED,

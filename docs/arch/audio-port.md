@@ -348,3 +348,124 @@ judged by L3 only.
 - `ReleasePedConversation` 1-case mismatch: investigate with a split run (`SPLIT_PER_FRAME ≤ 10`).
 - X87 `fyl2x`: unblocks `UpdateAmbienceTrackAndVolume` and the other users listed above.
 - Recordings with missions / cutscenes / scanner dialogue / user radio for the `implemented-needs-L2` rows.
+
+# PORT-AUDIO-3: third pass (fyl2x users, vehicle / entity bodies, AX results, stack residue)
+
+Third pass over the AUDIO rows still `specified` after PORT-AUDIO-2 (192 in scope after removing the sound-output
+classes). Lead + 2 helpers in new files: lead `port3_lead.rs` (fyl2x users outside the vehicle / weather entities,
+radio, environment, utility, destructors, the AX-only getters), helper A `port3_veh.rs` (`CAEVehicleAudioEntity`),
+helper B `port3_ent.rs` (collision, ped, speech, weather, water cannon, twin loop). Per-function verdicts:
+`docs/arch/audio-port-3-verdicts.tsv` (198 rows: address, name, file, state, evidence; `L2` only with 0 mismatches and
+0 undeclared writes on every recording that called the function, from L2 runs or, where marked `split`, split runs).
+
+Totals: **99 hooks verified or registered this pass** (68 `L2`, 31 `implemented-needs-L2`: no call in the recordings),
+7 `ported-unhookable`, 3 `protection`, 89 `not-ported` (each with its reason: out of phase-A scope, entries shorter
+than the patch, placeholder catalogue names, deferred large bodies). The 99 include the nine AX-only getters and
+`ReleasePedConversation` (pass-2 ports now hooked) and the six pass-2 `Play*` ports re-verified with `peek` locals.
+
+## Infrastructure changes (this branch)
+
+- Merged PORT-AUDIO-2 (8e74eb0) and PORT-HUD-3's branch head (a220d7f: `sa_core::abi::Ax` return kind, `peek`
+  hook attribute). The two pass-2 `orig!` declarations returning X87 (`vector_magnitude_sqr`,
+  `GetSpeechContextVolumeOffset`) are `_st0 -> f64` wrappers (X87 is 16 bytes since the X87 branch).
+- `SA_L2_EXTRA` accepts `@FILE` like `SA_L2` / `SA_HOOK_MODE` (sa-hook `list_value`; port-l2.sh passes long values
+  through `e2e_list_env`).
+- `SA_L2_STACKFILL` now applies to L2 runs too, with `SA_L2_STACKFILL_VALUE` (port-l2.sh `L2_STACKFILL`,
+  `L2_STACKFILL_VALUE`): an L2 run calls the original and then the Rust port from sa-hook's invoker, so the stack
+  below the entry ESP holds harness residue that differs between the two calls; a fill makes both calls see the same
+  bytes. The PORT-AUDIO-3 runs use `0x2000` bytes of `0xA5A5A5A5`: a port that zeroed a local the original leaves
+  uninitialised still fails (a zero fill would hide it).
+
+## Decisions from the main session, outcome
+
+- **(a) Stack `CAESound` locals.** The six pass-2 ports that build a stack sound (`PlayDoorSound`, `PlayFireSounds`,
+  `PlayWaterSounds`, `CAEPedSpeechAudioEntity::PlayLoadedSound`, police-scanner `PlayLoadedDialogue`, script
+  `PlayLoadedMissionAudio`) no longer zero it: each hook has `peek = 0x80` and builds the local from the original's
+  stack residue (`port3_lead::stack_local`, the local is at entry ESP - 0x80 in all six, from the prologues). Helper A
+  used the same for every vehicle port whose local leaves fields unwritten on some path (`RequestNewPlayerCarEngineSound`,
+  `PlayAircraftSound`, `ProcessVehicle`'s cVehicleParams, `ProcessPlayerTrainBrakes`, `ProcessVehicleSirenAlarmHorn`).
+  `ReportCollision`: the pass-2 mismatches were **not** residue: the pass-2 port passed `speed` where
+  `UpdateLoopingCollisionSound` takes the position pointer (0x4DBCCE pushes `[esp+0x28]` = posn). Helper B re-ported
+  the collision functions from the bytes; the bytes of their stack sounds that the original never writes (+0x55,
+  +0x5A, +0x6A, +0x72) are not copied by `CAESound::operator=` and not read by the destructor, so they are dead and
+  the port may zero them. `ReportCollision` is L2 on all five recordings (300 cases each). The buggy pass-2 copy
+  is removed from `port2_b.rs`. No normaliser was added.
+- **(b) `ReleasePedConversation`.** Split runs (`SPLIT_PER_FRAME=10`): PASS on grove (4/4), air-water (7/7),
+  police-gang (1/1); split-report 0 undeclared. The one L2 case per recording is an L2 double-run artefact:
+  `StopCurrentSpeech` (original in both calls) changes heap state the snapshot does not restore (a sound's physical
+  reference: the Rust call leaves the sound's entity pointer set at 0xB63968 / 0xB63AC4 / 0xB63D7C because the original
+  call already unlinked the reference node). Declaring the slot owners' entity reference heads did not change it. The
+  port is hooked; state `L2` from the split runs. `CAEAudioHardware::RescaleChannelVolumes` behaves the same (one
+  L2-mode case at frame 276, the channel-count global 0xB5F898 decremented by the original's channel query; split
+  runs PASS 300/300 on grove and driving).
+- **(c) AX-only results.** PORT-HUD-3 landed `AbiRet::Ax` (bebbe76) and it was merged; the nine getters are hooked
+  through `Ax` wrappers in `port3_lead.rs` after checking every caller reads AX only (direct callers and the speech /
+  pedless vtable slots 0x10 / 0x18, used only by `RequestPedConversation`; `GetVirtualChannelForPhysicalChannel` has
+  no reference). L2 and split PASS where called (GetVoice, GetAllocatedVoice, CanWePlayGlobalSpeechContext,
+  GetVehicleTypeForAudio, GetNumAvailableChannels); the other four have no call in the recordings.
+
+## Lead ports (`port3_lead.rs`)
+
+- fyl2x users: `UpdateAmbienceTrackAndVolume` (sandstorm `lg2 * log2(S) * 20 - 6`; the box-zone `zonePos` local the
+  bytes never write is read from the residue with `peek`), `RescaleChannelVolumes` (CRT `_CIpow` through
+  `orig::x87_binary`, `AudioLog10` = `utility::audio_log10`), `UpdateRadioVolumes` (gta-reversed skips the duck volume
+  when `s_bForceAudible` is set; the bytes jump straight to it), plus `CheckForTrackConcatenation`, radio `Save` / `Load`,
+  `GetPositionRelativeToCamera` (writes `d.z` into its `pos` argument slot: reproduced with `footprint`),
+  `GetBankAndSoundFromScriptSlotAudioEvent` (same, slot 0), the speech constructor (`preserve = "edx"`: its pedless
+  caller keeps `this` in EDX), `~CAESound`, five destructors / forwarders.
+- `QueueUpTracksForStation` is ported but not hooked: its entry is a 5-byte `jmp` into the in-text detour 0x4020D0,
+  which sa-hook classifies as a `.HOODLUM` stub (table test). `CAESoundManager::RequestNewSound` cannot be hooked (its
+  loop branches back to entry + 4).
+- Deferred (next pass): `CAESoundManager::Service` (856 instructions), `CAEFrontendAudioEntity::AddAudioEvent` (1,712,
+  102 cases; ADR-002 partial port once the recordings' event ids are listed), `ProcessMissionAudioEvent` (2,382; no
+  recording plays mission audio).
+
+## Helper reports (summarised; details in the verdicts file)
+
+- Helper A: 45 vehicle hooks (35 L2 on driving / car-ai / air-water / police-gang, 10 no calls), `StaticService`
+  unhookable (1 byte), `AddAudioEvent-0` and `StaticGetPlayerVehicleAudioSettingsForRadio` protection; not ported:
+  `ProcessPlayerVehicleEngine`, the player / dummy prop, player heli and sea plane bodies. Exe-vs-gta-reversed:
+  ProcessSpecialVehicle's AL is not a callee input (the pass-2 note was wrong); RoadNoise frequency
+  `max(dist/72, 1)*0.5+0.75`; DummyStateTransition engine types; horn fade path and early return; hovercraft pedals
+  from its own argument slot; no `+0xA9` reset in train / boat re-requests; DummyJet has no 0.2 throttle floor;
+  DummyHeli smoothing 0.03 (double) below 0.63.
+- Helper B: 23 entity hooks (19 L2 on weapon-combat / grove / driving / police-gang / air-water, 4 no calls); 7 ported
+  but unhooked (two destructors whose entry bytes protection reads, a placeholder-named row, short entries); not
+  ported: `PlayGunSounds`, `ServiceAmbientGunFire`, `UpdateJetPack` (FSIN), weather `UpdateParameters` /
+  `AddAudioEvent`, `HandlePedHit`, three AX-result speech functions, data-stream / decoder internals. Extras that
+  matter: `CAEPedSpeechAudioEntity::Initialise@0xB478F8:0x49DC:D` (ped model-info store, `IncrementVoice`) and the
+  `gMatrixList` link array for `CAEGlobalWeaponAudioEntity::Constructor`. Exe findings: HandlePedJacked falls through
+  into a third slot-0x29 sound; PlayOneShotCollisionSound's two passes; looping collision speed sources and caps;
+  PlayTwinLoopSound's second sound at -100 dB with flags `| 0x24`.
+
+## Verification
+
+Lane 7 (flock'd), `L2_PER_FRAME=10 L2_MAX=300`, `L2_STACKFILL=0x2000 L2_STACKFILL_VALUE=0xA5A5A5A5`, the PORT-AUDIO-2
+singleton `D` regions through `L2_EXTRA`; per-hook regions in `tools/e2e/l2-extras.txt` section PORT-AUDIO-3; hook
+list `tools/e2e/lists/audio3-all.txt` (99). Runs: `port-l2-a3lead{2,3}-*` (grove, driving, air-water, menus-hud,
+police-gang, weapon-combat, car-ai), `a3ax-*` and `a3leadsp-*` (split), `a3veh-{3,5}-*`, `a3ent-{5,6}-*`. Every run:
+(b) l2 == plain and (c) rust == plain IDENTICAL on all frames, 17 subsystems.
+Tests: `cargo test -p sa-audio` 10 pass; `cargo test --release -p sa-hook --lib` 51 pass; clippy `-D warnings` sa-audio
+host (all targets) and i686 (`--features in-process`) clean; `cargo fmt -p sa-audio --check` clean;
+`tools/gen/audio_patterns.py --check` passes (165 candidates, 77 rest).
+
+**verify-all: not passed on this branch, cause outside AUDIO.** `verify-all.sh a3final1 7` (snapshot final1 = HEAD): the
+all-ports Rust run of the grove walk crashes at boot (`page fault ... at address 50000000`, 0 frames; the plain run
+passes); stopped after the first recording. All-ports Rust runs (inf4) with groups of hooks forced to the original
+(`target/a3/bisect*.sh`) bisect it to the 78 `CVehicleModelInfo` hooks of `sa-stream/src/modelinfo/vehicle.rs`:
+every AUDIO hook on the original still crashes, every sa-stream hook (or just `modelinfo/vehicle.rs`) on the
+original reaches all 5,200 frames. `vehicle.rs` is identical on master, whose verify-all (`main-g3`) passes; this
+branch's base is `c1a27ca WIP RENDER-2` (not on master, which has the final RENDER-2 8b77953) plus PORT-HUD-3's
+work-in-progress head, so the crash comes from code the vehicle model info ports call on this base, not from the
+AUDIO-3 ports. The integration into master should rerun verify-all there.
+
+### Open items / decisions needed
+
+- `unverified = "audio3-<n>"` (route / hazards) on the 31 hooks without L2 evidence: the attribute exists only on
+  master's sa-macros (not on this branch, which would not compile with it); add it when merging (list: the
+  `implemented-needs-L2` rows of the verdicts file).
+- Deferred bodies: `CAESoundManager::Service`, `CAEFrontendAudioEntity::AddAudioEvent`, `ProcessMissionAudioEvent`,
+  `ProcessPlayerVehicleEngine`, player/dummy prop, player heli / sea plane, `PlayGunSounds`, `ServiceAmbientGunFire`,
+  `UpdateJetPack`, weather `UpdateParameters` / `AddAudioEvent`, `HandlePedHit`.
+- Recordings with missions, RC vehicles, jets, sea planes, combines, golf carts, a player-driven train, stealth kills
+  and chainsaws for the `implemented-needs-L2` rows.

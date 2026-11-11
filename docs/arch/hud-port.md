@@ -321,3 +321,163 @@ include the 9 KB vertex buffer)). Lists: `tools/e2e/lists/hud2-l2-{a,b,c}.txt` (
   `RwMatrixRotate` 0x7F1FD0 on the native backend, an sa-rwcore spec).
 
 Verdicts per function: `docs/arch/hud-port-2-verdicts.tsv`.
+
+---
+
+# PORT-HUD-3: third pass (the remaining HUD rows) and the harness decisions
+
+Third pass over the HUD rows still `specified` after PORT-HUD-2 (29 rows) plus the two unknown HUD thunks.
+Lead plus two helpers (A: `CHud` / `CRadar` drawing and `PrintMap`; B: `CMenuManager` input and screens),
+disjoint new files. Same rules as the earlier passes (ADR-001, from the 1.0 US bytes, gta-reversed and
+`docs/re/specs/HUD/*.md` as reading aids, RenderWare / CSprite2d / CFont / audio / file IO stay `orig!`).
+Branch base: PORT-HUD-2 (`worktree-agent-a67124806e65588be`) merged into master `c1a27ca`.
+
+Ported: **31 functions, all hooked** (one partial: `AdditionalOptionInput`, ADR-002 `fallback`), plus 3
+earlier ports made hookable (`CFont::GetStringWidth`, `CMenuManager::StretchX` / `StretchY`).
+
+| file | contents |
+|---|---|
+| `hud_draw3.rs` (A) | `CHud::DrawPlayerInfo` 0x58EAF0, `DrawCrossHairs` 0x58E020, `DrawVitalStats` 0x589650 |
+| `radar_draw3.rs` (A) | `CRadar::DrawEntityBlip` 0x587000, `DrawLegend` 0x5828A0 |
+| `menu_map.rs` (A) | `CMenuManager::PrintMap` 0x575130 |
+| `menu_input.rs` (B) | `CMenuManager::UserInput` 0x57FD70, `AdditionalOptionInput` 0x5773D0 (partial: the map screen's pan / zoom / waypoint path runs the original body) |
+| `menu_draw.rs` (B) | `CMenuManager::DrawStandardMenus` 0x5794A0, `DrawBackground` 0x57B750, `PrintStats` 0x574900, `PrintBriefs` 0x576320, `PrintRadioStationList` 0x5746F0, `DisplaySlider` 0x576860, `DrawWindowedText` 0x578F50 |
+| `menu3.rs` | `CMenuSystem::DisplayStandardMenu` 0x580E00, `DisplayGridMenu` 0x5816E0, `InputGridMenu` 0x580BD0, `FillGridWithCarColours` 0x5820E0 |
+| `credits.rs`, `credits_table.rs` | `CCredits::Render` 0x53D5B0, `RenderCredits` 0x5A87F0, `PrintCreditText` 0x5A8660, `PrintCreditSpace` 0x5A87C0; the 707-step line / space table generated from the exe by `tools/gen/hud_credits.py` |
+| `menu_ctrl.rs` | `DIReleaseMouse` 0x746F70, 0x4410E0 (`CPad::IsDPadRightPressed`, a `.HOODLUM` stub), 0x745A70 (`jmp RwEngineGetNumVideoModes`) |
+
+Not ported (left in `specified`): `CMenuManager::DrawControllerScreenExtraText` 0x57D8D0,
+`DrawControllerBound` 0x57E6E0, `DrawControllerSetupScreen` 0x57F300, `RedefineScreenUserInput` 0x57EF50,
+`SaveStatsToFile` 0x57DDE0 (the controller-setup screens and the stats file; off the boot -> main menu ->
+start game path; `menu_ctrl.rs` is their intended home).
+
+Catalogue naming for the main session: 0x4410E0 = `CPad::IsDPadRightPressed` (same shape as 0x53EE60
+`IsDPadUpPressed`, offsets +0x16 / +0x46), 0x745A70 = a thunk to `RwEngineGetNumVideoModes`. Their hooks
+use the Ghidra names (`thunk_FUN_015667a0`, `thunk_FUN_007f2cc0`) as the catalogue test requires.
+
+## Harness decisions (implemented)
+
+- **(a) AX return kind.** `sa_core::abi::AbiRet::Ax` and the newtype `sa_core::abi::Ax(u16)` (EAX =
+  zero-extended AX); `sa-oracle-format` `Ret::Ax = 5` compares the low word only (L2 and split; unit
+  test in `l2.rs`); `sa-hook` maps it; L1 already had `ExpRet::Ax`. No `sa-macros` change was needed (the
+  return kind flows through `IntoAbi::RET`). `CFont::ProcessCurrentString` returns `Ax`. EAX[31:16] is
+  **not derivable** from the inputs: the original ends with `mov ax, [esp+0xC]` and the upper half is the
+  EAX residue of the last full write on the path (`RenderFontBuffer` / ranged `PrintString` /
+  `GetStringWidth` / `ParseToken` / `sprintf` returns, a `lea eax` stack address, float bits), i.e. of
+  callees that are themselves Rust ports. The port returns 0 there. **Ledger entry (proposed):**
+  `ProcessCurrentString` EAX[31:16] = 0 instead of callee residue; every consumer reads AX only
+  (`GetNumberLines` -> 0x5741FF / 0x57B24B / 0x58B7EA `movsx r32, ax`, 0x58C795 `cmp ax, 1`;
+  `GetTextRect` 0x71A6B4 `movzx eax, al`; the `PrintString`s discard it), so no behaviour depends on it.
+- **(b) `GetStringWidth` hookable.** `sa-hook` keycells `READERS` gets the protection read `mov ecx,
+  [0x71A0E2]` at 0x40641C (value 0xFFCE75D3); `patch_refs` / `data_reads` exclude listed readers already,
+  and the `or eax, 0x71A0E2` decode at 0x40641D is off-stream. `readers_match_the_exe`,
+  `every_code_key_read_of_a_hooked_range_is_redirected`, INF-20 `data_reads` and `patch_refs` stay green.
+- **(c) `StretchX` / `StretchY`** hooked with `preserve = "edx"` (entry 0x5733E0 = 5 `nop` + `jmp`; the
+  inline hook takes the `nop`s). L1 specs `HudMenuStretchX{640,1024,1366}`, `HudMenuStretchY{448,768,1080}`
+  (`specs_hud3.rs`, `RsGlobal.maximumWidth/Height` patched per spec, EDX compared): 1,000,058 cases each,
+  0 mismatches (INCOMPLETE only by the signalling-NaN inputs, as the other HUD specs); the
+  `preserved_registers_match_the_hook_registrations` test passes.
+- **(d) Uninitialised stack.** The original's residue is *read* here (not left behind), which
+  `footprint` (restore + record) does not model, and two of the functions nest (`DrawRadarGangOverlay`
+  -> `DrawAreaOnRadar` -> `ClipRadarPoly`), which `footprint`'s single state forbids. New hook attribute
+  **`#[hook(..., peek = N)]`** (`sa-macros`, `sa_core::abi::{PEEK, peek_entry_esp, peek_stack}`): a naked
+  wrapper copies the N bytes below the entry ESP and the entry ESP into a per-depth frame (8 levels,
+  N <= 0x200) before calling the shim; the port reads them only while its own frame is on top (`None` for
+  a direct Rust call, phases B/C, host tests). Applied:
+  - `ClipRadarPoly` (`peek = 4`): `corners[-1]` = `&inside[-1]` = `((entry ESP - 4) & !7) - 0x45` (the
+    original's `and esp, -8` frame); faithful in-process.
+  - `CPlaceName::Process` (`peek = 0x10`): the no-zone name = the dword at `entry ESP - 0x10`, which the
+    original never writes; faithful.
+  - `DrawAreaOnRadar` (`peek = 0xC0`): the `uv` buffer = 16 dwords from `entry ESP - 0xC0` (never written
+    before the map scaling); faithful.
+  - Ledger / not observable (argument-slot residue only; every callee reads the low byte): the alpha
+    upper bytes of `DrawCoordBlip` / `DrawRadarGangOverlay` (`CRGBA` constructor and
+    `ShowRadarTraceWithHeight` read bytes), the fade byte of `DisplayStandardMenu` / `DisplayGridMenu` to
+    `DrawWindow` (`colour as u8`), the orientation byte to `SetOrientation`, B's `ProcessUserInput` /
+    `ConstructStatLine` / `GetStatValue` arguments.
+  - **Divergence candidate (ledger)**: `CRadar::DrawEntityBlip`, airstrip blip at distance >= 500: the
+    original uses an uninitialised position local (residue of earlier callees deep in its own frame,
+    overwritten by its callees on that path, so not recoverable by `peek`); the port uses (0, 0, 0). Not
+    reached in the corpus.
+  - Verification note: the split runs pass `SPLIT_STACKFILL=4096` (zeroed stack below the invoker), so
+    both runs read the same residue; the plain all-ports L3 runs see the real residue.
+
+## Merges
+
+PORT-HUD-2's `orig!` declarations returning `X87` (16 bytes since the X87 change) broke the i686 build; this
+branch first fixed them locally (`*_st0 -> f64` plus `X87` wrappers), then merged master `3b33f75`, which
+carries the main session's equivalent fix: the sa-hud files keep this branch's version (same pattern, plus
+the PORT-HUD-3 changes), `sa-veh` / `sa-render` take master's. `sa-macros` keeps both `peek` and master's
+writer / verifier hints. Master was then rewritten; the final merge is master `32279fd` (sa-hud: this branch; `abi.rs`, `keycells.rs`
+(now 27 readers), sa-oracle `lib.rs` / `specs.rs`: master plus this branch's additions; master's new
+`footprint_residue_u8` reads a footprint snapshot but does not nest, which is why `peek` stays).
+
+## Findings (third pass)
+
+Each port's doc comment lists its byte findings and gta-reversed differences; the main ones:
+- `RenderCredits` is 599 `PrintCreditText` calls and 108 inlined spaces; the line offset advances by
+  `_ftol(float(offset) + scaleY * 20)` (gta-reversed: `(uint32)scaleY * 20`), spaces by
+  `_ftol(float(offset) + C)` with C = 37.5 / 25 / 12.5; the credits stop once `float(offset + H) - scroll <
+  -10`. `PrintCreditText` keeps `pos` and its CRGBAs in its own argument slots.
+- `FillGridWithCarColours` (gta-reversed: unreversed) compares each candidate with the taken colours *and*
+  the next, still black entry (within 15 per channel, exclusive), restarts the search at colour 0 for
+  every slot and takes colour 127 when nothing fits. `DisplayStandardMenu` accumulates column offsets
+  through `_ftol` with 16-bit truncation and shrinks the row scale from 0.52 by 0.05 until
+  `GetStringWidth` fits.
+- `DrawLegend`: sprites without a jump-table key pass the `y` argument as the text pointer (kept);
+  `DrawEntityBlip` calls `FindPlayerVehicle` 4 times without a null test (kept); `DrawCrossHairs` reads
+  address 0 for a TXD slot with a negative pool flag (kept, `black_box`); `PrintMap`: radar visibility in
+  the absolute globals 0xBA8270 / 0xBA8274, legend window `{95, y, 555, 100}`.
+- `UserInput`: screen 0x26 still runs the held left/right parts, slider repeat timers are globals
+  0xBA82B0 / 0xBA82B4; `DrawStandardMenus` reads the `GetNumberLines` x through the protection chunk
+  0x409B33 (`[0x15608E8] - [0x156B63F] - 1`, read at run time); `DrawBackground` shows errors through
+  `RsCameraBeginUpdate` + `SmallMessageScreen`, not `MessageScreen`.
+
+## Verification (third pass)
+
+Lane 7 (`SA_ROOT=/home/ghosty2004/sa-engine LANE=7`, binary snapshots `target/snap/h4` (pre-master-merge,
+identical HUD code) and `h5` (final), `L2_PER_FRAME=20`, `SPLIT_PER_FRAME` 1 or 2, `SPLIT_STACKFILL=4096`,
+`L2_SPOOL_MAX=1.5 GiB`). Lists: `tools/e2e/lists/hud3-h-l2.txt` (StretchX/Y, GetStringWidth, CPlaceName,
+plain L2), `hud3-a.txt` (credits, CMenuSystem, thunks, plain L2), `hud3-x-split.txt` (DIReleaseMouse,
+ProcessCurrentString and the `peek` hooks), `hud3-m1-split.txt` / `hud3-m2-split.txt` (CMenuManager),
+`hud3-d-split.txt` (CHud / CRadar drawing, PrintMap). Outputs: the worktree's
+`target/e2e/lane-7/port-l2-hud3-*` (spools deleted after the reports).
+
+- **L1**: the six `HudMenuStretch*` specs, 1,000,058 cases each, 0 mismatches (EDX compared).
+- **L2 / split**: **0 mismatches in every run** on menus-hud (5700 frames), the grove walk (5200) and
+  pause-restart (3700). Undeclared writes (callee writes: RenderWare / D3D9 caches, font / sprite / Im2D
+  buffers, audio front-end, aScreens, text buffers, the pools on a restart) were declared in
+  `tools/e2e/l2-extras.txt` (section `# PORT-HUD-3`) and the reruns show 0 undeclared
+  (`hud3-*-mh2`, `-gr`, `hud3-m1-pa2`, `hud3-d-gr2`, `-pa`). COUNT rows: the spool quota stopped splito and
+  splitr at different frames (0 mismatches on the compared cases), as in PORT-HUD-2. `DIReleaseMouse`
+  cannot run twice (COM `Release`): plain L2 crashed the first run, so it is verified in split only.
+  (b) l2 == plain, (c) rust == plain and (e) splito / splitr == plain on all frames in every run.
+- No call in the three recordings: the four `CCredits` functions, the four `CMenuSystem` ports (script
+  menus), 0x745A70, `DrawVitalStats`, `DrawWindowedText`, `PrintRadioStationList`, `DrawAreaOnRadar`
+  (its `peek` change) -> `implemented-needs-L2`.
+- Tests: `cargo test --release -p sa-hook --lib` 53 pass (after the master merge); `cargo test -p sa-hud` 3;
+  `sa-oracle-format` 27 (incl. the AX compare); `sa-oracle --test l1 preserved_registers_match_the_hook_registrations`
+  pass; clippy `-D warnings` sa-hud / sa-core / sa-macros / sa-oracle-format / sa-oracle host (all targets),
+  sa-hud i686 (`--features in-process`), sa-hook i686: clean.
+
+Verdicts per function: `docs/arch/hud-port-3-verdicts.tsv` (**20 L2, 13 implemented-needs-L2**, 0 failing).
+
+### All-ports finding: a Rust port reading GetStringWidth's entry bytes
+
+With every port on Rust the first all-ports runs crashed at start (EIP 0x4FFFFFFF / 0xA4309A) while the
+sa-hud hooks alone (`hud-all-3.txt`, 391 hooks on Rust, grove: IDENTICAL) and pure master were fine.
+Cause: sa-stream's `CVehicleModelInfo::UseCommonVehicleTexDicationary` port reproduces the protection
+chunk 0x406413 (`rol [0x1560810], cl = [0x71A0E2]`) by reading 0x71A0E2 live, i.e. code bytes of
+`CFont::GetStringWidth`'s entry, which this pass hooks; it computed a wrong `FindTextureCB` pointer. The
+port now uses the exe's dword (0xFFCE75D3) as a constant (`crates/sa-stream/src/modelinfo/vehicle.rs`).
+A scan of every crate's address literals found no other read inside a newly hooked entry. Rule for
+future hookability changes: keycells only redirect the original's readers; Rust ports that read code
+bytes need the same check (a test like `every_code_key_read_of_a_hooked_range_is_redirected` over the
+`globals!` declarations would catch it).
+
+**L3, all ports on Rust** (`VERIFY_NO_BUILD=1 SA_ROOT=/home/ghosty2004/sa-engine E2E_BIN=<snapshot of this
+branch's final build> tools/e2e/verify-all.sh hud3va3 7 <grove> <corpus/*.sarec>`, branch commit `7a3b4cf`
+incl. master `32279fd`): **IDENTICAL on all 11 recordings** (grove walk 5200, air-water 5800, anim-input
+3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200,
+weapon-combat 3500, world-cheats 3276 frames). Summary: the main repo's `target/verify-all/hud3va3/`.
+Note: `cargo test --release -p sa-stream` segfaults in `misc::tests::shadow_vertices` (not touched here).

@@ -220,7 +220,7 @@ orig! {
     /// `CRadar::TransformRadarPointToScreenSpace(CVector2D& out, const CVector2D& in)` (0x583480; preserves EDX)
     fn transform_radar_point_to_screen_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583480 => crate::radar::transform_radar_point_to_screen_space;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
-    fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_target_f64;
+    fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_st0_rust;
     /// `CRadar::CalculateBlipAlpha(float)` (0x583420)
     fn calculate_blip_alpha_call(dist: f32) -> u8 = cdecl 0x583420 => crate::radar::calculate_blip_alpha;
     /// `CRadar::HasThisBlipBeenRevealed(int32)` (0x583AF0)
@@ -733,10 +733,13 @@ fn area_rotate(dx: X87, dy: X87, dx_mem: Option<f32>) -> (f32, f32) {
 /// (left, bottom) are moved to radar space inline, clipped (`ClipRadarPoly`), mapped to the screen (scaled on
 /// the map) and drawn untextured as a fan. Byte findings: the inverse rotation back to world space is
 /// computed into a local and never used, and the `uv` buffer passed to `CSprite2d::SetVertices` is an
-/// uninitialised stack local (scaled in place on the map); the port passes a zero-filled buffer there, so
-/// the u/v words written to `CSprite2d::maVertices` differ from the original's stack garbage (untextured
-/// draw, raster 0).
-#[hook(addr = 0x5853D0, conv = cdecl, name = "CRadar::DrawAreaOnRadar", expect = "8A 44 24 0C 8B 4C 24 04")]
+/// uninitialised stack local (scaled in place on the map; untextured draw, raster 0). That buffer is
+/// `[esp+0x84]` at the `SetVertices` call (after `sub esp, 0x12C`, `push edi`, four render-state argument
+/// pushes and the colour argument), i.e. `entry ESP - 0xC0`,
+/// never written before the scaling (the clipped polygon starts at `entry ESP - 0x80`): the
+/// port starts from those words as they were at entry (`peek`, PORT-HUD-3); entered without its hook (a
+/// direct Rust call) it starts from zeros.
+#[hook(addr = 0x5853D0, conv = cdecl, name = "CRadar::DrawAreaOnRadar", expect = "8A 44 24 0C 8B 4C 24 04", peek = 0xC0)]
 pub fn draw_area_on_radar(rect: GPtr<f32>, colour: GPtr<u8>, in_menu: u8) {
     let rr = |i: isize| g::<f32>(RADAR_RECT + i as usize * 4).read();
     let rc = |i: isize| rd::<f32>(rect.cast(), i * 4);
@@ -785,6 +788,11 @@ pub fn draw_area_on_radar(rect: GPtr<f32>, colour: GPtr<u8>, in_menu: u8) {
     }
     let mut screen = [0f32; 16];
     let mut uv = [0f32; 16];
+    for (i, w) in uv.iter_mut().enumerate() {
+        if let Some(v) = sa_core::abi::peek_stack(0x5853D0, -0xC0 + 4 * i as i32) {
+            *w = f32::from_bits(v);
+        }
+    }
     let mut world = [0f32; 16];
     if n > 0 {
         let map = b(MENU_DRAWING_MAP);
@@ -1340,19 +1348,19 @@ pub fn show_radar_marker(px: u32, py: u32, pz: u32, colour: u32, radius: u32) {
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[HOOK_DRAW_RADAR_SPRITE, HOOK_DRAW_COORD_BLIP, HOOK_DRAW_MAP, HOOK_DRAW_RADAR_MAP, HOOK_DRAW_RADAR_SECTION_MAP, HOOK_DRAW_RADAR_MASK, HOOK_DRAW_RADAR_GANG_OVERLAY, HOOK_DRAW_AREA_ON_RADAR, HOOK_DRAW_RADAR_SECTION, HOOK_DRAW_3D_MARKERS, HOOK_SHOW_RADAR_TRACE_WITH_HEIGHT, HOOK_DRAW_BLIPS, HOOK_SHOW_RADAR_MARKER];
 
-/// Phase B target of `limit_radar_point_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`limit_radar_point_call`] as an ST0 value.
 #[allow(dead_code)]
-fn limit_radar_point_call_target_f64(p: GPtr<f32>) -> f64 {
+fn limit_radar_point_call_st0_rust(p: GPtr<f32>) -> f64 {
     crate::radar::limit_radar_point(p).to_f64()
 }
 
-/// `limit_radar_point_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`limit_radar_point_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn limit_radar_point_call(p: GPtr<f32>) -> X87 {
     X87::from_f64_exact(limit_radar_point_call_st0(p))
 }
 
-/// `find_player_heading_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`find_player_heading_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn find_player_heading(id: i32) -> X87 {
     X87::from_f64_exact(find_player_heading_st0(id))

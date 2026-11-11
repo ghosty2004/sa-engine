@@ -41,6 +41,7 @@ pub mod specs_hud_msg;
 pub mod specs_hud_radar;
 pub mod specs_hud2;
 pub mod specs_hud2_menu;
+pub mod specs_hud3;
 pub mod specs_hud2_text;
 pub mod specs_input_ccm;
 pub mod specs_input_pad;

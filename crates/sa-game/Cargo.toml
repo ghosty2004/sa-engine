@@ -1,0 +1,36 @@
+[package]
+name = "sa-game"
+version = "0.1.0"
+description = "Phase B entry point (PLAN §2, F10): initialises sa-platform natively (no Wine, no gta_sa.exe), binds the ported code's Win32/CRT/DirectInput declarations to it, and runs the ported boot and frame entry points, reporting every function on the path that is still original-only"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+default = ["gamepad"]
+gamepad = ["sa-platform/gamepad"]
+audio = ["sa-platform/audio"]
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-input = { path = "../sa-input" }
+sa-stream = { path = "../sa-stream" }
+sa-ports = { path = "../sa-ports" }
+sa-render = { path = "../sa-render" }
+sa-rwcore = { path = "../sa-rwcore" }
+sa-audio = { path = "../sa-audio" }
+sa-ai = { path = "../sa-ai" }
+sa-cam = { path = "../sa-cam" }
+sa-hud = { path = "../sa-hud" }
+sa-veh = { path = "../sa-veh" }
+sa-anim = { path = "../sa-anim" }
+sa-ped = { path = "../sa-ped" }
+sa-weapon = { path = "../sa-weapon" }
+sa-script = { path = "../sa-script" }
+sa-pop = { path = "../sa-pop" }
+sa-world = { path = "../sa-world" }
+sa-platform = { path = "../sa-platform" }
+sa-rw-wgpu = { path = "../sa-rw-wgpu" }
+wgpu = "29"
+png = "0.18"
+libc = "0.2"

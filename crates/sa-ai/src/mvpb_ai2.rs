@@ -76,7 +76,7 @@ orig! {
     /// `CPedGroupMembership::IsMember(const CPed*)` (0x5F6A10, `ret 4`)
     fn group_membership_is_member(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x5F6A10 => unported;
     /// `CGroupEventHandler::ComputeEventResponseTasks(const CPedGroupEvent*... )` (0x5FC200, cdecl, 2 args)
-    fn group_event_handler_compute(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x5FC200 => unported;
+    fn group_event_handler_compute(a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x5FC200 => unported;
     /// `CPedGroups::GetPedsGroup(const CPed*)` (0x5F7E80, cdecl)
     fn get_peds_group(p: GPtr<u8>) -> GPtr<u8> = cdecl 0x5F7E80 => unported;
     /// `CPedGroups::GetGroupId(CPedGroup*)` (0x5F7EE0, cdecl)
@@ -135,7 +135,7 @@ fn new_pause_5000() -> GPtr<u8> {
 /// `CTaskComplexFacial::MakeAbortable(CPed*, int32 prio, const CEvent*)` (0x690DA0, `ret 0xC`): only for priority 2
 /// (urgent), the sub-task's `MakeAbortable(ped, 2, event)` (tail jump); otherwise AL = 0.
 #[hook(addr = 0x690DA0, conv = thiscall, name = "CTaskComplexFacial::MakeAbortable", this = "CTaskComplexFacial",
-       expect = "83 7C 24 08 02", unverified = "mvpb-ai-2", route = "L2", hazards = "none")]
+       expect = "83 7C 24 08 02", route = "L2", hazards = "none")]
 pub fn task_complex_facial_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: u32, e: u32) -> u8 {
     if prio != 2 {
         return 0;
@@ -146,7 +146,7 @@ pub fn task_complex_facial_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: u
 /// `CTaskSimpleFacial::MakeAbortable(CPed*, int32, const CEvent*)` (0x692E50, `ret 0xC`): the running facial
 /// animation (`GetAnimId(+0x14)` in the ped's clump) gets blend delta -4; AL = 1 always.
 #[hook(addr = 0x692E50, conv = thiscall, name = "CTaskSimpleFacial::MakeAbortable", this = "CTaskSimpleFacial",
-       expect = "8B 41 14 50 E8 67 DE FF FF", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "8B 41 14 50 E8 67 DE FF FF", route = "L2", hazards = "heap-writes")]
 pub fn task_simple_facial_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, _prio: u32, _e: u32) -> u8 {
     let id = facial_get_anim_id(rd::<i32>(this, 0x14));
     let a = clump_get_association(rd::<GPtr<u8>>(ped, 0x18), id as u32);
@@ -159,7 +159,7 @@ pub fn task_simple_facial_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, _prio: u
 /// `CTaskSimpleFacial::GetAnimId(int32 type)` (0x690CC0, cdecl): 0..8 -> 0x9A, 0x9B, 0x9C, 0x9D, 0x9C, 0x9D, -1,
 /// 0xA0, 0xA1 (jump table 0x690CF8); anything else (unsigned > 8) -1.
 #[hook(addr = 0x690CC0, conv = cdecl, name = "CTaskSimpleFacial::GetAnimId", expect = "8B 44 24 04 83 F8 08",
-       unverified = "mvpb-ai-2", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn task_simple_facial_get_anim_id(ty: i32) -> i32 {
     match ty {
         0 => 0x9A,
@@ -177,7 +177,7 @@ pub fn task_simple_facial_get_anim_id(ty: i32) -> i32 {
 /// `CTaskSimpleFacial` (0x1C bytes inline: vtable 0x870AB8, +0x14 type, +0x18 = +0x1C duration); else after a
 /// `CTaskSimpleFacial` sub-task a 5 s pause; else when talking (+0xC) a facial of type 8 for 5 s; else a 5 s pause.
 #[hook(addr = 0x690DC0, conv = thiscall, name = "CTaskComplexFacial::CreateNextSubTask", this = "CTaskComplexFacial",
-       expect = "64 A1 00 00 00 00", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if ped_is_alive(ped) == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 2, 0) != 0 {
         return new_inline_pause();
@@ -216,7 +216,7 @@ pub fn task_complex_facial_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -
 /// `CTaskComplexFacial::CreateFirstSubTask(CPed*)` (0x690F30, `ret 4`): the player never talks (+0xC = 0); returns
 /// the inline 5 s simple task (vtable 0x85A278).
 #[hook(addr = 0x690F30, conv = thiscall, name = "CTaskComplexFacial::CreateFirstSubTask", this = "CTaskComplexFacial",
-       expect = "64 A1 00 00 00 00", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if ped_is_player(ped) != 0 {
         wr::<u8>(this, 0xC, 0);
@@ -231,7 +231,7 @@ pub fn task_complex_facial_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) 
 /// +8 = now, +0xC = +0x14), else a new `CTaskSimpleFacial(+0x10, +0x14)`; +0x10 = -1 either way. Otherwise the
 /// current sub-task.
 #[hook(addr = 0x690FC0, conv = thiscall, name = "CTaskComplexFacial::ControlSubTask", this = "CTaskComplexFacial",
-       expect = "64 A1 00 00 00 00", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if ped_is_alive(ped) == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 2, 0) != 0 {
         return new_inline_pause();
@@ -290,7 +290,7 @@ pub fn task_complex_facial_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GP
 /// +0x24 group, +0x36 flag), +0x2C = +0x30 = +0x38 = 0, +0x34 = 0, +0x35 = 1; a held entity gets flag 0x400 in +0x1C
 /// and a registered reference. Returns this.
 #[hook(addr = 0x6913A0, conv = thiscall, name = "CTaskSimpleHoldEntity::Constructor-1", this = "CTaskSimpleHoldEntity",
-       expect = "6A FF E9 AC 28 D7 FF", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes,entry-protection-read")]
+       expect = "6A FF E9 AC 28 D7 FF", route = "L2", hazards = "heap-writes,entry-protection-read")]
 #[allow(clippy::too_many_arguments)]
 pub fn hold_entity_ctor(
     this: GPtr<u8>,
@@ -342,7 +342,7 @@ pub fn hold_entity_ctor(
 /// z, and its RW matrix/frame updated. Finally the held-entity reference is released. Kept original detail: both
 /// `rand()` results are stored into the caller's first argument slot (not modelled).
 #[hook(addr = 0x6930F0, conv = thiscall, name = "CTaskSimpleHoldEntity::DropEntity", this = "CTaskSimpleHoldEntity",
-       expect = "6A FF E9 EE 41 D7 FF", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes",
+       expect = "6A FF E9 EE 41 D7 FF", route = "L2", hazards = "heap-writes",
        note = "rand() at 0x6931F2/0x693235; the original writes the rand values into its own (callee-popped) ped argument slot")]
 pub fn hold_entity_drop_entity(this: GPtr<u8>, ped: GPtr<u8>, add_event: u8) {
     let slot = this.byte_add(8);
@@ -459,7 +459,7 @@ pub fn hold_entity_drop_entity(this: GPtr<u8>, ped: GPtr<u8>, add_event: u8) {
 /// assoc +0x2E (and +0x2F for task type 0x133). The association (+0x38) gets `FinishAnimHoldEntityCB` as finish
 /// callback for task type 0x134, else as delete callback.
 #[hook(addr = 0x692FF0, conv = thiscall, name = "CTaskSimpleHoldEntity::StartAnim", this = "CTaskSimpleHoldEntity",
-       expect = "56 8B F1 8B 46 30", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "56 8B F1 8B 46 30", route = "L2", hazards = "heap-writes")]
 pub fn hold_entity_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let hier = rd::<GPtr<u8>>(this, 0x30);
     if !hier.is_null() {
@@ -504,7 +504,7 @@ pub fn hold_entity_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
 /// "disallow dropping" (+0x36) the anim becomes 0xBF / group 0 and +0x38 = 0; otherwise a put-down task (type 0x134)
 /// whose association still has blend amount > 0 releases the held entity; then +0x34 = 1 (finished), +0x38 = 0.
 #[hook(addr = 0x691740, conv = cdecl, name = "CTaskSimpleHoldEntity::FinishAnimHoldEntityCB",
-       expect = "56 8B 74 24 0C", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "56 8B 74 24 0C", route = "L2", hazards = "heap-writes")]
 pub fn hold_entity_finish_anim_cb(assoc: GPtr<u8>, t: GPtr<u8>) {
     if rd::<u8>(t, 0x36) != 0 {
         wr::<u32>(t, 0x20, 0xBF);
@@ -526,7 +526,7 @@ pub fn hold_entity_finish_anim_cb(assoc: GPtr<u8>, t: GPtr<u8>) {
 /// `CPedGroupIntelligence::IsGroupResponding` (0x5F7760): AL = 1 when any of the 8 ped task pairs has both ped and
 /// task set (+0xC/+0x10 at 0x14 stride) or any of the 8 secondary pairs (+0xAC/+0xB0).
 #[hook(addr = 0x5F7760, conv = thiscall, name = "CPedGroupIntelligence::IsGroupResponding", this = "CPedGroupIntelligence",
-       expect = "32 C0 33 D2 83 C1 10", unverified = "mvpb-ai-2", route = "L2", hazards = "none")]
+       expect = "32 C0 33 D2 83 C1 10", route = "L2", hazards = "none")]
 pub fn pgi_is_group_responding(this: GPtr<u8>) -> u8 {
     for i in 0..8isize {
         let e = this.byte_add(0x10 + 0x14 * i);
@@ -543,7 +543,7 @@ pub fn pgi_is_group_responding(this: GPtr<u8>) -> u8 {
 /// `CPedGroupIntelligence::IsCurrentEventValid` (0x5F77A0): AL = 0 only when the current event (+4) wraps an event
 /// of type 0x47 whose source entity is a ped that is a member of the group; else 1.
 #[hook(addr = 0x5F77A0, conv = thiscall, name = "CPedGroupIntelligence::IsCurrentEventValid", this = "CPedGroupIntelligence",
-       expect = "56 57 8B F9 8B 47 04", unverified = "mvpb-ai-2", route = "L2", hazards = "none")]
+       expect = "56 57 8B F9 8B 47 04", route = "L2", hazards = "none")]
 pub fn pgi_is_current_event_valid(this: GPtr<u8>) -> u8 {
     let ev = rd::<GPtr<u8>>(this, 4);
     if ev.is_null() {
@@ -567,10 +567,11 @@ pub fn pgi_is_current_event_valid(this: GPtr<u8>) -> u8 {
 }
 
 /// `CPedGroupIntelligence::ComputeEventResponseTasks` (0x5FC440): deletes and clears the 8 task slots at +0x10 and
-/// the 8 at +0xB0 (0x14 stride), then `CGroupEventHandler::ComputeEventResponseTasks(+4, +0)`.
+/// the 8 at +0xB0 (0x14 stride), then `CGroupEventHandler::ComputeEventResponseTasks(+4, +0)`, whose result (the
+/// task allocator) it returns in EAX: both callers (0x5FC694, 0x5FC75D) store EAX in `+0x294`.
 #[hook(addr = 0x5FC440, conv = thiscall, name = "CPedGroupIntelligence::ComputeEventResponseTasks", this = "CPedGroupIntelligence",
-       expect = "53 56 8B D9 57", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
-pub fn pgi_compute_event_response_tasks(this: GPtr<u8>) {
+       expect = "53 56 8B D9 57", route = "L2", hazards = "heap-writes")]
+pub fn pgi_compute_event_response_tasks(this: GPtr<u8>) -> GPtr<u8> {
     for base in [0x10isize, 0xB0] {
         for i in 0..8isize {
             let off = base + 0x14 * i;
@@ -581,13 +582,13 @@ pub fn pgi_compute_event_response_tasks(this: GPtr<u8>) {
             wr::<u32>(this, off, 0);
         }
     }
-    group_event_handler_compute(rd::<GPtr<u8>>(this, 4), rd::<GPtr<u8>>(this, 0));
+    group_event_handler_compute(rd::<GPtr<u8>>(this, 4), rd::<GPtr<u8>>(this, 0))
 }
 
 /// `CTaskGoToVehicleAndLean::Destructor` (0x660EE0): vtable 0x86FAC8; with the anim block referenced (+0x14) it
 /// releases the block named at 0x86F92C and clears +0x14; releases the vehicle (+0xC); `CTaskComplex` base dtor.
 #[hook(addr = 0x660EE0, conv = thiscall, name = "CTaskGoToVehicleAndLean::Destructor", this = "CTaskGoToVehicleAndLean",
-       expect = "6A FF 68 78 47 84 00", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "6A FF 68 78 47 84 00", route = "L2", hazards = "heap-writes")]
 pub fn go_to_vehicle_and_lean_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86FAC8);
     if rd::<u8>(this, 0x14) != 0 {
@@ -606,7 +607,7 @@ pub fn go_to_vehicle_and_lean_dtor(this: GPtr<u8>) {
 /// const SArray<CPedAttractor*>&)` (0x5EB6F0, `ret 0xC`): the first attractor of the array whose effect (+4) and
 /// entity (+8) match; 0 when none (count = (end - begin) >> 2, 0 for a null begin).
 #[hook(addr = 0x5EB6F0, conv = thiscall, name = "CPedAttractorManager::FindAssociatedAttractor<CPedAttractor>",
-       this = "CPedAttractorManager", expect = "8B 44 24 0C 8B 50 04", unverified = "mvpb-ai-2", route = "L2", hazards = "none")]
+       this = "CPedAttractorManager", expect = "8B 44 24 0C 8B 50 04", route = "L2", hazards = "none")]
 pub fn attractor_find_associated(_this: GPtr<u8>, fx: u32, ent: u32, arr: GPtr<u8>) -> u32 {
     let begin = rd::<u32>(arr, 4);
     let n = if begin == 0 { 0 } else { (rd::<u32>(arr, 8).wrapping_sub(begin) as i32) >> 2 };
@@ -624,7 +625,7 @@ pub fn attractor_find_associated(_this: GPtr<u8>, fx: u32, ent: u32, arr: GPtr<u
 /// group (`intelligence + 0x68`, `Add(event, false)`), the ped reference released; entries without a ped or just
 /// processed have their event deleted and time = -1. Entries still waiting are left alone.
 #[hook(addr = 0x4AC2E0, conv = cdecl, name = "CInformFriendsEventQueue::Process", expect = "53 56 57 BE BC AF A9 00",
-       unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn inform_friends_event_queue_process() {
     for i in 0..8usize {
         let e: GPtr<u8> = GPtr::from_addr(0xA9AFB8 + 0xC * i);
@@ -655,7 +656,7 @@ pub fn inform_friends_event_queue_process() {
 /// `CEventGroupEvent(ped, event->Clone())` is added to the group intelligence (+0x30) and destroyed; then the ped
 /// reference is released, the event deleted and the time reset to -1.
 #[hook(addr = 0x4B29E0, conv = thiscall, name = "CInformGroupEvent::Process", this = "CInformGroupEvent",
-       expect = "64 A1 00 00 00 00", unverified = "mvpb-ai-2", route = "L2", hazards = "heap-writes")]
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn inform_group_event_process(this: GPtr<u8>) {
     let ped = rd::<GPtr<u8>>(this, 0);
     if ped.is_null() {

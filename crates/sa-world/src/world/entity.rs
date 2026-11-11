@@ -239,11 +239,13 @@ pub fn pool_delete(pool: GPtr<u8>, p: GPtr<u8>, size: i32) {
 }
 
 /// `CEntity::AsXxx` identity cast (0x404350, `mov eax, ecx; ret`, 3 bytes). Ported, unhookable.
+#[sa_core::native(addr = 0x404350, conv = thiscall, name = "FUN_00404350")]
 pub fn as_xxx(this: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
 /// `CPlaceable::GetMatrix` (0x41BD80, `mov eax, [ecx+0x14]; ret`, 4 bytes). Ported, unhookable.
+#[sa_core::native(addr = 0x41BD80, conv = thiscall, name = "FUN_0041bd80")]
 pub fn placeable_get_matrix_raw(this: GPtr<u8>) -> GPtr<u8> {
     rd(this, 0x14)
 }

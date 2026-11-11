@@ -1,0 +1,6 @@
+# PORT-HUD-3 CMenuManager drawing helpers and print screens (split)
+0x578F50
+0x576860
+0x5746F0
+0x576320
+0x574900

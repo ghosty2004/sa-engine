@@ -75,7 +75,7 @@ orig! {
 /// conversations (0x9691D8, 0x1C stride) of this ped clears its first node recursively and is reset (node indices
 /// -1, ped and the two following fields 0).
 #[hook(addr = 0x43A960, conv = cdecl, name = "CConversations::RemoveConversationForPed", expect = "E9 5B 04 13 01",
-       unverified = "mvpb-ai-3", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn conversations_remove_for_ped(ped: GPtr<u8>) {
     for i in 0..14usize {
         let c: GPtr<u8> = GPtr::from_addr(0x9691E0 + 0x1C * i);
@@ -95,7 +95,7 @@ pub fn conversations_remove_for_ped(ped: GPtr<u8>) {
 /// `CConversations::IsConversationGoingOn` (0x43AAC0 -> .HOODLUM 0x1570080, cdecl): AL = 1 when any of the 14
 /// conversations has a non-zero status (+0x14).
 #[hook(addr = 0x43AAC0, conv = cdecl, name = "CConversations::IsConversationGoingOn", expect = "E9 BB 55 13 01",
-       unverified = "mvpb-ai-3", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn conversations_is_going_on() -> u8 {
     for i in 0..14usize {
         if rd::<u32>(GPtr::from_addr(0x9691EC + 0x1C * i), 0) != 0 {
@@ -110,7 +110,7 @@ pub fn conversations_is_going_on() -> u8 {
 /// (AL = 0); an existing one finishes the task when it is a hand signal (type 0x1AA), else it is asked to abort
 /// (prio 1) and AL = 0. Later runs finish when the slot is empty or holds anything but a hand signal.
 #[hook(addr = 0x660940, conv = thiscall, name = "CTaskSimpleDoHandSignal::ProcessPed",
-       expect = "64 A1 00 00 00 00", unverified = "mvpb-ai-3", route = "L2", hazards = "heap-writes")]
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn do_hand_signal_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if entity_get_is_on_screen(ped) == 0 {
         return 1;
@@ -143,7 +143,7 @@ pub fn do_hand_signal_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// lists in the order +0x14C, +0xC (stops at the first that reports), then +0xAC and +0x1EC unconditionally; AL is
 /// the first non-zero report or 0.
 #[hook(addr = 0x5F86F0, conv = thiscall, name = "CPedGroupIntelligence::ReportFinishedTask-Wrapper",
-       this = "CPedGroupIntelligence", expect = "53 55 8B 6C 24 0C", unverified = "mvpb-ai-3", route = "L2",
+       this = "CPedGroupIntelligence", expect = "53 55 8B 6C 24 0C", route = "L2",
        hazards = "heap-writes")]
 pub fn pgi_report_finished_task(this: GPtr<u8>, ped: GPtr<u8>, t: GPtr<u8>) -> u8 {
     let r = pgi_report_finished_task_impl(this, ped, t, this.byte_add(0x14C));
@@ -162,7 +162,7 @@ pub fn pgi_report_finished_task(this: GPtr<u8>, ped: GPtr<u8>, t: GPtr<u8>) -> u
 /// `CPedGroupIntelligence::GetTaskMain(const CPed*)` (0x5F85A0, `ret 4`): the task (+4) of the ped's entry in the
 /// first list (+0x14C, then +0xC, then +0x1EC; 8 entries of 0x14) that has one; 0 when none.
 #[hook(addr = 0x5F85A0, conv = thiscall, name = "CPedGroupIntelligence::GetTaskMain", this = "CPedGroupIntelligence",
-       expect = "53 8B 5C 24 08", unverified = "mvpb-ai-3", route = "L2", hazards = "none")]
+       expect = "53 8B 5C 24 08", route = "L2", hazards = "none")]
 pub fn pgi_get_task_main(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     for base in [0x14Cisize, 0xC, 0x1EC] {
         for i in 0..8isize {
@@ -188,7 +188,7 @@ fn group_of(this: GPtr<u8>) -> GPtr<u8> {
 /// finished and clears +0x20/+0x24; when the group's task changed, aborts the ped's task in the old slot (+0x24,
 /// prio 0) and, if the current slot's task aborts (prio 1) or is empty, stores task/slot and gives the ped a clone.
 #[hook(addr = 0x6330B0, conv = thiscall, name = "CTaskComplexBeInGroup::MonitorSecondaryGroupTask", this = "CTaskComplexBeInGroup",
-       expect = "51 53 55 56 8B D9", unverified = "mvpb-ai-3", route = "L2", hazards = "heap-writes")]
+       expect = "51 53 55 56 8B D9", route = "L2", hazards = "heap-writes")]
 pub fn be_in_group_monitor_secondary(this: GPtr<u8>, ped: GPtr<u8>) {
     let g = group_of(this);
     let task = pgi_get_task_secondary(g, ped);
@@ -227,7 +227,7 @@ pub fn be_in_group_monitor_secondary(this: GPtr<u8>, ped: GPtr<u8>) {
 /// group task (pointer +0x18 or type +0x1C) whose predecessor aborts is stored and its clone returned; otherwise the
 /// current sub-task (read on entry).
 #[hook(addr = 0x633010, conv = thiscall, name = "CTaskComplexBeInGroup::MonitorMainGroupTask", this = "CTaskComplexBeInGroup",
-       expect = "53 8B 5C 24 08", unverified = "mvpb-ai-3", route = "L2", hazards = "heap-writes")]
+       expect = "53 8B 5C 24 08", route = "L2", hazards = "heap-writes")]
 pub fn be_in_group_monitor_main(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let g = group_of(this);
     let sub = rd::<GPtr<u8>>(this, 8);
@@ -258,7 +258,7 @@ pub fn be_in_group_monitor_main(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 /// and `level - 10*log10(d*d) - 0.01*d`. Kept original details: the distance (f32) and the log are stored into the
 /// caller's (callee-popped) argument slots.
 #[hook(addr = 0x4B2850, conv = thiscall, name = "CEvent::GetSoundLevel", this = "CEvent", expect = "56 57 8B 7C 24 0C",
-       unverified = "mvpb-ai-3", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        note = "FYL2X (log10) result; writes f32 temporaries into its own argument slots (not modelled)")]
 pub fn event_get_sound_level(this: GPtr<u8>, ent: GPtr<u8>, pos: GPtr<u8>) -> X87 {
     if !ent.is_null() && v_get_source_entity(this).addr() != ent.addr() {
@@ -299,7 +299,7 @@ pub fn event_get_sound_level(this: GPtr<u8>, ent: GPtr<u8>, pos: GPtr<u8>) -> X8
 /// in +0x54 and +0x50 = 7 (written even when the allocation failed, as the original); 0xCB -> stand still (10 ms,
 /// 8.0); else 0.
 #[hook(addr = 0x685000, conv = thiscall, name = "CTaskComplexWalkAlongsidePed::CreateSubTask",
-       expect = "90 E9 9C C7 D7 FF", unverified = "mvpb-ai-3", route = "L2", hazards = "heap-writes,entry-protection-read")]
+       expect = "90 E9 9C C7 D7 FF", route = "L2", hazards = "heap-writes,entry-protection-read")]
 pub fn walk_alongside_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
     match ty {
         0x2C0 => {
@@ -349,7 +349,7 @@ pub fn walk_alongside_create_sub_task(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) ->
 /// `CTaskComplexWalkAlongsidePed::CreateFirstSubTask(CPed*)` (0x685630, `ret 4`): 0 without a target (+0xC); a ped
 /// sitting in a vehicle (+0x46C bit 0x100 and +0x58C) leaves it (0x2C0), else seeks the target (0x38B).
 #[hook(addr = 0x685630, conv = thiscall, name = "CTaskComplexWalkAlongsidePed::CreateFirstSubTask",
-       expect = "8B 41 0C 85 C0", unverified = "mvpb-ai-3", route = "L2", hazards = "heap-writes")]
+       expect = "8B 41 0C 85 C0", route = "L2", hazards = "heap-writes")]
 pub fn walk_alongside_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if rd::<u32>(this, 0xC) == 0 {
         return GPtr::NULL;
@@ -372,7 +372,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// `CTaskComplexGoToPointAndStandStill(4, target, 0.05, 2.0, false, true)`. Otherwise the sub-task (+8, if any) is
 /// asked to abort (prio 2) and 0 returned.
 #[hook(addr = 0x664D40, conv = thiscall, name = "CTaskGoToVehicleAndLean::CreateFirstSubTask", this = "CTaskGoToVehicleAndLean",
-       expect = "64 A1 00 00 00 00", unverified = "mvpb-ai-3", route = "L2", hazards = "heap-writes")]
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "heap-writes")]
 pub fn go_to_vehicle_and_lean_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let veh = rd::<GPtr<u8>>(this, 0xC);
     if !veh.is_null() {
@@ -414,7 +414,7 @@ pub fn go_to_vehicle_and_lean_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8
 /// the lean target moved more than sqrt(0.01), and the sub-task aborts (prio 1), `DoTidyUp` and 0. Otherwise loads
 /// (`ShouldLoadGangAnims`) or releases the lean anim block (0x86F92C, flag +0x14) and returns the sub-task.
 #[hook(addr = 0x664E60, conv = thiscall, name = "CTaskGoToVehicleAndLean::ControlSubTask", this = "CTaskGoToVehicleAndLean",
-       expect = "83 EC 18 56 8B F1", unverified = "mvpb-ai-3", route = "L2", hazards = "x87-transcendental,heap-writes",
+       expect = "83 EC 18 56 8B F1", route = "L2", hazards = "x87-transcendental,heap-writes",
        note = "fsqrt of the vehicle speed compared, not stored")]
 pub fn go_to_vehicle_and_lean_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let veh = rd::<GPtr<u8>>(this, 0xC);

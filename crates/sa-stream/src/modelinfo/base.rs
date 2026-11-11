@@ -164,32 +164,39 @@ pub fn set_is_lod(this: MiPtr, v: u32) {
 }
 
 /// `CBaseModelInfo::AsAtomicModelInfoPtr` (0x4C4A80): `xor eax, eax; ret` (unhookable: 3 bytes).
+#[sa_core::native(addr = 0x4C4A80, conv = thiscall, name = "CBaseModelInfo::AsAtomicModelInfoPtr")]
 pub fn as_atomic_model_info_ptr(_this: MiPtr) -> MiPtr {
     GPtr::NULL
 }
 
 /// `CBaseModelInfo::AsDamageAtomicModelInfoPtr` (0x4C4A90): null (unhookable).
+#[sa_core::native(addr = 0x4C4A90, conv = thiscall, name = "CBaseModelInfo::AsDamageAtomicModelInfoPtr")]
 pub fn as_damage_atomic_model_info_ptr(_this: MiPtr) -> MiPtr {
     GPtr::NULL
 }
 
 /// `CBaseModelInfo::AsLodAtomicModelInfoPtr` (0x4C4AA0): null (unhookable).
+#[sa_core::native(addr = 0x4C4AA0, conv = thiscall, name = "CBaseModelInfo::AsLodAtomicModelInfoPtr")]
 pub fn as_lod_atomic_model_info_ptr(_this: MiPtr) -> MiPtr {
     GPtr::NULL
 }
 
 /// `CBaseModelInfo::GetTimeInfo` (0x4C4AB0): null (unhookable).
+#[sa_core::native(addr = 0x4C4AB0, conv = thiscall, name = "CBaseModelInfo::GetTimeInfo")]
 pub fn get_time_info(_this: MiPtr) -> GPtr<u8> {
     GPtr::NULL
 }
 
 /// `CBaseModelInfo::SetAnimFile` (0x4C4AC0): `ret 4`, nothing (unhookable).
+#[sa_core::native(addr = 0x4C4AC0, conv = thiscall, name = "CBaseModelInfo::SetAnimFile")]
 pub fn set_anim_file(_this: MiPtr, _name: GPtr<u8>) {}
 
 /// `CBaseModelInfo::ConvertAnimFileIndex` (0x4C4AD0): `ret`, nothing (unhookable).
+#[sa_core::native(addr = 0x4C4AD0, conv = thiscall, name = "CBaseModelInfo::ConvertAnimFileIndex")]
 pub fn convert_anim_file_index(_this: MiPtr) {}
 
 /// `CBaseModelInfo::GetAnimFileIndex` (0x4C4AE0): -1 (unhookable: 4 bytes).
+#[sa_core::native(addr = 0x4C4AE0, conv = thiscall, name = "CBaseModelInfo::GetAnimFileIndex")]
 pub fn get_anim_file_index(_this: MiPtr) -> i32 {
     -1
 }

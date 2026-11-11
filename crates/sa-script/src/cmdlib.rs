@@ -19,11 +19,24 @@ pub use crate::vm::{
     store_parameters_call as store, update_compare_flag_call as flag,
 };
 
+/// Phase B exploration aid (never a port): a host handler sa-game installs for `SA_GAME_SCRIPT_SKIP`; it
+/// may consume an unported opcode (log it, skip its parameters) and return the switch result.
+pub static UNPORTED_OPCODE_HANDLER: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
+
 /// Runs the original switch body for an opcode without a Rust case (phase A), or panics naming the
-/// switch and the opcode (phases B/C: no original body).
+/// switch and the opcode (phases B/C: no original body; unless the exploration handler consumes it).
 #[inline]
 pub fn fallback(orig_body: fn(Scr, u32) -> i8, name: &str, s: Scr, command: u32) -> i8 {
     if !sa_core::orig::PHASE_A {
+        let h = UNPORTED_OPCODE_HANDLER.load(core::sync::atomic::Ordering::Relaxed);
+        if h != 0 {
+            // SAFETY: only ever set to a `fn(Scr, u32) -> Option<i8>` by sa-game.
+            #[allow(unsafe_code)]
+            let f: fn(Scr, u32) -> Option<i8> = unsafe { core::mem::transmute(h) };
+            if let Some(r) = f(s, command) {
+                return r;
+            }
+        }
         panic!("{name}: opcode {command:04X} is not ported (phases B/C have no original body)");
     }
     orig_body(s, command)

@@ -10,7 +10,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 /// Opcodes with a Rust case, ascending.
-pub const PORTED: &[u16] = &[0x09A2, 0x09BA];
+pub const PORTED: &[u16] = &[0x0997, 0x09A2, 0x09BA];
 
 /// `CHud::bScriptDontDisplayAreaName` 0xBAA3F8 (owned by the HUD; written by address as the original does).
 const SCRIPT_DONT_DISPLAY_AREA_NAME: usize = 0xBAA3F8;
@@ -24,12 +24,19 @@ orig! {
     fn clean_up_this_object(o: GPtr<u8>) = cdecl 0x4866C0 => unported;
     /// `RpClumpForAllAtomics(RpClump*, RpAtomicCallBack, void*)` (0x749B70)
     fn rp_clump_for_all_atomics(clump: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
+    /// `CStats::SetStatValue(stat, value)` (0x55A070)
+    fn set_stat_value(stat: u32, value: u32) = cdecl 0x55A070 => unported;
 }
 
 /// `CRunningScript::ProcessCommands2400To2499(int32 command)` (0x478000, thiscall, `ret 4`): AL = 0 continue, 1 wait, -1 unknown.
 #[hook(addr = 0x478000, conv = thiscall, name = "CRunningScript::ProcessCommands2400To2499", expect = "6A FF 64 A1 00 00 00 00", this = "CRunningScript", fallback)]
 pub fn process_commands_2400_to_2499(s: Scr, command: u32) -> i8 {
     match command {
+        // 0997 SET_MISSION_RESPECT_TOTAL (0x478EA4, STD-6): `CStats::SetStatValue(0xE4, (float)SP0)` (`fild`).
+        0x0997 => {
+            collect(s, 1);
+            set_stat_value(0xE4, sa_math::x87::X87::from_i32(spi(0)).to_f32().to_bits());
+        }
         // 09A2 REMOVE_OBJECT_ELEGANTLY (0x479107): `obj = OBJ(SP0)`; `CleanUpThisObject(obj)` (also when null); if obj:
         // `obj->m_pRwObject (+0x18)` -> `RpClumpForAllAtomics(rw, SetAtomicRendererCB, RenderFadingClumpCB)` (no type
         // check), then `+0x140 |= 0x400000`; with mission cleanup `RemoveEntityFromList(SP0, 3)`.

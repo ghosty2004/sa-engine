@@ -759,7 +759,7 @@ fn process_collision_ghost(this: Ent) {
 
 orig! {
     /// `CPhysical::ApplyCollision(CEntity*, CColPoint&, float&, float&)` (0x548680, AL)
-    pub fn apply_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x548680 => unported;
+    pub fn apply_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x548680 => crate::physical::pair_collision::apply_collision_2;
     /// `CPhysical::SetDamagedPieceRecord(float, CEntity*, CColPoint&, float)` (0x5428C0; the
     /// intensity as the dword the original pushes)
     pub fn set_damaged_piece_record_call(e: Ent, intensity: u32, other: Ent, cp: Ent, dist: f32)
@@ -912,7 +912,7 @@ pub fn process_collision_sector_list_simple_car(this: Ent, sector: Ent) -> u8 {
 
 orig! {
     /// `CPhysical::ApplySoftCollision(CPhysical*, CColPoint&, float&, float&)` (0x54A2C0, AL)
-    pub fn apply_soft_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x54A2C0 => unported;
+    pub fn apply_soft_collision_2(e: Ent, other: Ent, cp: Ent, d1: GPtr<f32>, d2: GPtr<f32>) -> u8 = thiscall 0x54A2C0 => crate::physical::pair_collision::apply_soft_collision_2;
     /// `CPhysical::ApplyCollisionAlt(CEntity*, CColPoint&, float&, CVector&, CVector&)` (0x544D50, AL)
     pub fn apply_collision_alt(e: Ent, other: Ent, cp: Ent, d: GPtr<f32>, move_: Ent, turn: Ent) -> u8 = thiscall 0x544D50 => unported;
     /// `CPhysical::ApplySoftCollision(CEntity*, CColPoint&, float&)` (0x543890, AL)

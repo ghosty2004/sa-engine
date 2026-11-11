@@ -19,9 +19,15 @@ impl NativeFs {
     pub fn new(root: impl Into<PathBuf>) -> io::Result<NativeFs> {
         let root = root.into();
         if !root.is_dir() {
-            return Err(io::Error::new(io::ErrorKind::NotFound, format!("{} is not a directory", root.display())));
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                format!("{} is not a directory", root.display()),
+            ));
         }
-        Ok(NativeFs { root, dirs: Mutex::new(HashMap::new()) })
+        Ok(NativeFs {
+            root,
+            dirs: Mutex::new(HashMap::new()),
+        })
     }
 
     pub fn root(&self) -> &Path {
@@ -48,9 +54,12 @@ impl NativeFs {
                     dirs.entry(cur.clone()).or_insert(l)
                 }
             };
-            let real = listing
-                .get(&c.to_ascii_lowercase())
-                .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, format!("{path}: no {c} in {}", cur.display())))?;
+            let real = listing.get(&c.to_ascii_lowercase()).ok_or_else(|| {
+                io::Error::new(
+                    io::ErrorKind::NotFound,
+                    format!("{path}: no {c} in {}", cur.display()),
+                )
+            })?;
             cur.push(real);
         }
         Ok(cur)
@@ -93,6 +102,60 @@ impl GameFs for NativeFs {
     fn exists(&self, path: &str) -> bool {
         self.resolve(path).is_ok_and(|p| p.exists())
     }
+    fn is_dir(&self, path: &str) -> bool {
+        self.resolve(path).is_ok_and(|p| p.is_dir())
+    }
+    fn write_file(&self, path: &str, data: &[u8]) -> io::Result<()> {
+        let p = self.resolve_for_create(path)?;
+        std::fs::write(&p, data)?;
+        self.forget(&p);
+        Ok(())
+    }
+    fn create_dir(&self, path: &str) -> io::Result<()> {
+        let p = self.resolve_for_create(path)?;
+        if !p.is_dir() {
+            std::fs::create_dir(&p)?;
+            self.forget(&p);
+        }
+        Ok(())
+    }
+    fn remove_file(&self, path: &str) -> io::Result<()> {
+        let p = self.resolve(path)?;
+        std::fs::remove_file(&p)?;
+        self.forget(&p);
+        Ok(())
+    }
+    fn list_dir(&self, path: &str) -> io::Result<Vec<String>> {
+        let mut v: Vec<String> = std::fs::read_dir(self.resolve(path)?)?
+            .flatten()
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .collect();
+        v.sort();
+        Ok(v)
+    }
+}
+
+impl NativeFs {
+    /// Like [`NativeFs::resolve`], but the last component may not exist yet: an existing entry
+    /// is matched case-insensitively, otherwise the name is used as written.
+    pub fn resolve_for_create(&self, path: &str) -> io::Result<PathBuf> {
+        let c = components(path);
+        let Some((last, dir)) = c.split_last() else {
+            return Ok(self.root.clone());
+        };
+        let parent = self.resolve(&dir.join("/"))?;
+        if let Ok(p) = self.resolve(path) {
+            return Ok(p);
+        }
+        Ok(parent.join(last))
+    }
+
+    /// Drops the cached listing of `p`'s directory (after a create/remove).
+    fn forget(&self, p: &Path) {
+        if let Some(d) = p.parent() {
+            self.dirs.lock().unwrap_or_else(|e| e.into_inner()).remove(d);
+        }
+    }
 }
 
 #[cfg(test)]
@@ -112,6 +175,13 @@ mod tests {
         f.read_at(2, &mut b).unwrap();
         assert_eq!(&b, b"js");
         assert!(!fs.exists("data/none"));
+        fs.create_dir("DATA/User Files").unwrap();
+        fs.write_file("data\\user files\\Save1.b", b"s").unwrap();
+        assert_eq!(std::fs::read(dir.join("Data/User Files/Save1.b")).unwrap(), b"s");
+        fs.write_file("DATA/USER FILES/SAVE1.B", b"t").unwrap();
+        assert_eq!(fs.list_dir("data/user files").unwrap(), vec!["Save1.b"]);
+        assert_eq!(fs.read("data/user files/save1.b").unwrap(), b"t");
+        assert!(fs.is_dir("data/USER FILES"));
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }

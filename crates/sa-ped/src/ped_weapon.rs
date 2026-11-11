@@ -22,7 +22,7 @@ orig! {
     /// `CPed::AddWeaponModel(int32 model)` (0x5E5ED0)
     pub fn add_weapon_model(p: GPtr<u8>, model: i32) = thiscall 0x5E5ED0 => unported;
     /// `CPed::RemoveGogglesModel` (0x5DF170)
-    pub fn remove_goggles_model(p: GPtr<u8>) = thiscall 0x5DF170 => unported;
+    pub fn remove_goggles_model(p: GPtr<u8>) = thiscall 0x5DF170 => remove_goggles_model_port;
     /// `CPed::AddGogglesModel(int32 model, bool& flag)` (0x5E3A90)
     pub fn add_goggles_model_call(p: GPtr<u8>, model: i32, flag: GPtr<u8>) = thiscall 0x5E3A90 => add_goggles_model;
     /// `CWeapon::Shutdown` (0x73A380)
@@ -43,7 +43,23 @@ orig! {
     pub fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
     /// `CWorld::Add(CEntity*)` (0x563220)
     pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
+    /// `CVisibilityPlugins::GetClumpModelInfo(RpClump*)` (0x732AC0)
+    pub fn get_clump_model_info(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x732AC0 => unported;
+    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
+    pub fn mi_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
+    /// `RwHelper::GetFirstAtomic(RpClump*)` (0x734820)
+    pub fn get_first_atomic(c: GPtr<u8>) -> GPtr<u8> = cdecl 0x734820 => unported;
+    /// `RpSkinGeometryGetSkin(RpGeometry*)` (0x7C7550)
+    pub fn rp_skin_geometry_get_skin(g: GPtr<u8>) -> GPtr<u8> = cdecl 0x7C7550 => unported;
+    /// `RpClumpForAllAtomics(RpClump*, callback, void*)` (0x749B70)
+    pub fn rp_clump_for_all_atomics(c: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8> = cdecl 0x749B70 => unported;
+    /// `RpClumpDestroy(RpClump*)` (0x74A310)
+    pub fn rp_clump_destroy(c: GPtr<u8>) -> i32 = cdecl 0x74A310 => unported;
 }
+
+/// The atomic callback `RemoveGogglesModel` passes to `RpClumpForAllAtomics` (0x734B90, the skinned
+/// atomic's anim removal).
+const ATOMIC_REMOVE_ANIM_FROM_SKIN_CB: u32 = 0x734B90;
 
 fn weapon(p: GPtr<u8>, slot: i32) -> GPtr<u8> {
     p.byte_add(0x5A0 + (slot as isize).wrapping_mul(0x1C))
@@ -213,6 +229,32 @@ pub fn add_goggles_model(this: GPtr<u8>, model: i32, flag: GPtr<u8>) {
     flag.write(1);
 }
 
+/// `CPed::RemoveGogglesModel()` (0x5DF170, thiscall; the +0x4FC load sits in the fragment 0x40151C):
+/// with a goggles clump (+0x4FC): `RemoveRef` on its model info (`GetClumpModelInfo`); when its first
+/// atomic's geometry (+0x18) is skinned, `RpClumpForAllAtomics(clump, 0x734B90, 0)`;
+/// `RpClumpDestroy(clump)`, +0x4FC = 0, and the goggles flag (+0x500) when set: `*flag = 0`, +0x500 = 0.
+/// Every use re-reads +0x4FC.
+#[hook(addr = 0x5df170, conv = thiscall, name = "CPed::RemoveGogglesModel", expect = "56 8B F1 90 E9 A3 23 E2 FF",
+       unverified = "mvpi-ped-1", route = "L2", hazards = "entry-protection-read,heap-writes",
+       recs = "grove-walk", note = "destroys the goggles clump (RW heap); 0x409AC8 reads entry bytes +4 (keycells)")]
+pub fn remove_goggles_model_port(this: GPtr<u8>) {
+    if rd::<GPtr<u8>>(this, 0x4FC).is_null() {
+        return;
+    }
+    mi_remove_ref(get_clump_model_info(rd::<GPtr<u8>>(this, 0x4FC)));
+    let a = get_first_atomic(rd::<GPtr<u8>>(this, 0x4FC));
+    if !a.is_null() && !rp_skin_geometry_get_skin(rd::<GPtr<u8>>(a, 0x18)).is_null() {
+        rp_clump_for_all_atomics(rd::<GPtr<u8>>(this, 0x4FC), ATOMIC_REMOVE_ANIM_FROM_SKIN_CB, 0);
+    }
+    rp_clump_destroy(rd::<GPtr<u8>>(this, 0x4FC));
+    let flag = rd::<GPtr<u8>>(this, 0x500);
+    wr::<u32>(this, 0x4FC, 0);
+    if !flag.is_null() {
+        flag.write(0);
+        wr::<u32>(this, 0x500, 0);
+    }
+}
+
 fn goggles_weapon(this: GPtr<u8>) -> Option<GPtr<u8>> {
     let w = weapon(this, info_slot(0x2D));
     let t = rd::<i32>(w, 0);
@@ -277,6 +319,7 @@ pub fn dress(this: GPtr<u8>) {
 // --- hook list (generated) ---
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_REMOVE_GOGGLES_MODEL_PORT,
     HOOK_SET_CURRENT_WEAPON_SLOT,
     HOOK_SET_CURRENT_WEAPON_TYPE,
     HOOK_CLEAR_WEAPON,

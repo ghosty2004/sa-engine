@@ -15,7 +15,7 @@
 //! | `SA_L2_LEAVE` | `orig` (default): the game continues with the original's results; `rust`: with Rust's |
 //! | `SA_L2_OUT` | spool file (default `l2.spool` next to gta_sa.exe); a text report goes to OUT + `.txt` |
 //! | `SA_L2_SPEC` | read/write-set spec (`sa-oracle l2 spec`); without it only `this`/pointer args are snapshotted |
-//! | `SA_L2_EXTRA` | extra regions `[HOOK@]ADDR:LEN[:R\|W\|RW],…` added to every enabled function's set, or only to HOOK's (name or address); ADDR and LEN are numbers or expressions evaluated at each case ([`Expr`]), e.g. `CPed::operator delete-anon@[[0xB74490]+4]:[[0xB74490]+8]:RW` |
+//! | `SA_L2_EXTRA` | extra regions `[HOOK@]ADDR:LEN[:R\|W\|RW],…` added to every enabled function's set, or only to HOOK's (name or address); ADDR and LEN are numbers or expressions evaluated at each case ([`Expr`]), e.g. `CPed::operator delete-anon@[[0xB74490]+4]:[[0xB74490]+8]:RW`; `@FILE` as for `SA_L2` |
 //! | `SA_L2_DROP` | spec globals to drop (`ADDR,…`; self-test of the rwset check) |
 //! | `SA_L2_WINDOW` | watched windows for undeclared writes: `data` (default: .data/.bss, _TEXT_HA, _rwdseg), `all` (every writable image section + the used part of the heap arena; slow), `none` |
 //! | `SA_L2_WINDOWS` | extra watched ranges `START-END,…` |
@@ -28,7 +28,7 @@
 //! hooks, ~52000 characters) arrives truncated, and a truncated list must never be read as a shorter one.
 //! | `SA_L2_SPOOL_MAX` | spool quota in bytes (default 2 GiB; suffixes `k`, `M`, `G`): at the quota sa-hook stops spooling, writes a trailer and logs it; cases compared before stay valid (INF-18) |
 //! | `SA_L2_DUMP_SEQ` | split-run diagnostic: case sequence numbers whose static windows are dumped to `SA_L2_OUT.seqN.win` (compare two dumps with `sa-oracle l2 dump-diff`) |
-//! | `SA_L2_STACKFILL` | split-run mode: bytes below the invoker's stack pointer zeroed before every sampled call (default 0 = off, at most 64 KiB), so original code reading uninitialised stack sees the same bytes in both runs |
+//! | `SA_L2_STACKFILL` | bytes below the invoker's stack pointer filled with `SA_L2_STACKFILL_VALUE` (default 0) before every sampled call (default 0 = off, at most 64 KiB), so original code reading uninitialised stack sees the same bytes in both runs (split runs; L2 runs with a non-zero pattern for `peek` ports) |
 //! | `SA_L2_SPLIT` | `orig` or `rust`: split-run mode (INF-17). Each sampled call runs ONE implementation (the original in the plain run, the Rust one in the rust run) and is recorded (inputs, outputs, OS probes, page hashes); `sa-oracle l2 split-report` compares two such runs call by call. Cases may nest |
 //!
 //! `SA_L2_EXTRA` entries may start with `post:` (address/length evaluated after the run with the exit
@@ -73,9 +73,11 @@ pub struct Config {
     /// Split-run diagnostic: case sequence numbers at which the static windows are dumped to
     /// `SA_L2_OUT.seqN.win` (`SA_L2_DUMP_SEQ`).
     pub dump_seq: Vec<u32>,
-    /// Split-run mode: bytes below the invoker's stack pointer zeroed before every sampled call
-    /// (`SA_L2_STACKFILL`, 0 = off, at most 64 KiB; WEAPON-FIX).
+    /// Bytes below the invoker's stack pointer filled before every sampled call (`SA_L2_STACKFILL`, 0 =
+    /// off, at most 64 KiB; WEAPON-FIX for split runs, PORT-AUDIO-3 for L2 runs).
     pub stack_fill: u32,
+    /// The fill dword (`SA_L2_STACKFILL_VALUE`, default 0).
+    pub stack_fill_value: u32,
 }
 
 /// Split-run mode: the implementation every sampled call runs (once) and is recorded with.
@@ -169,6 +171,7 @@ impl Default for Config {
             split: None,
             dump_seq: Vec::new(),
             stack_fill: 0,
+            stack_fill_value: 0,
         }
     }
 }
@@ -219,6 +222,7 @@ impl Config {
         c.from_frame = n("SA_L2_FROM", 0)?;
         c.stack = n("SA_L2_STACK", c.stack)?.min(0x10000);
         c.stack_fill = n("SA_L2_STACKFILL", 0)?.min(0x10000) & !3;
+        c.stack_fill_value = n("SA_L2_STACKFILL_VALUE", 0)?;
         c.leave_rust = match get("SA_L2_LEAVE").as_deref() {
             None | Some("") | Some("orig") => false,
             Some("rust") => true,
@@ -233,6 +237,7 @@ impl Config {
             Some(v) => return Err(format!("SA_L2_WINDOW: {v:?} (data|all|none)")),
         };
         if let Some(v) = get("SA_L2_EXTRA") {
+            let v = list_value(&v).map_err(|e| format!("SA_L2_EXTRA: {e}"))?;
             for e in v.split(',').map(str::trim).filter(|e| !e.is_empty()) {
                 c.extra.push(Extra::parse(e)?);
             }
@@ -464,7 +469,7 @@ pub fn mutants_from_env(get: &impl Fn(&str) -> Option<String>) -> Result<Vec<usi
     }
 }
 
-/// The value of a list variable (`SA_HOOK_MODE`, `SA_L2`): as is, or the contents of the file named after
+/// The value of a list variable (`SA_HOOK_MODE`, `SA_L2`, `SA_L2_EXTRA`): as is, or the contents of the file named after
 /// a leading `@` (for lists longer than the 32767-character limit of a Windows environment variable).
 pub fn list_value(v: &str) -> Result<String, String> {
     match v.trim().strip_prefix('@') {

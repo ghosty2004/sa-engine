@@ -210,6 +210,14 @@ fn keyboard_used() -> GPtr<u32> {
 pub mod call {
     use super::*;
     orig! {
+        /// `CDraw::CalculateAspectRatio()` (result in ST0)
+        pub fn draw_calculate_aspect_ratio() -> f64 = cdecl 0x6FF420 => unported;
+        pub fn font_set_alpha_fade(alpha: f32) = cdecl 0x719500 => unported;
+        pub fn visibility_plugins_set_render_ware_camera(camera: GPtr<u8>) = cdecl 0x7328C0 => unported;
+        pub fn rw_camera_clear(camera: GPtr<u8>, colour: GPtr<u8>, mode: i32) -> GPtr<u8> = cdecl 0x7EE340 => unported;
+        pub fn sprite2d_init_per_frame() = cdecl 0x727350 => unported;
+        /// `CSprite2d::DrawRect(const CRect&, const CRGBA&, const CRGBA&, const CRGBA&, const CRGBA&)`
+        pub fn sprite2d_draw_rect4(rect: GPtr<u8>, c1: GPtr<u8>, c2: GPtr<u8>, c3: GPtr<u8>, c4: GPtr<u8>) = cdecl 0x727C10 => unported;
         /// `Ps::psTimer` (0x745270)
         pub fn ps_timer() -> u32 = cdecl 0x745270 => super::ps_timer;
         /// `Ps::psWindowSetText` (0x7451B0)
@@ -235,7 +243,7 @@ pub mod call {
         /// `Ps::psGrabScreen` (0x7452B0)
         pub fn ps_grab_screen(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x7452B0 => super::ps_grab_screen;
         /// `Ps::psInitialize` (0x747420, deferred)
-        pub fn ps_initialize() -> i32 = cdecl 0x747420 => unported;
+        pub fn ps_initialize() -> i32 = cdecl 0x747420 => crate::psinit::ps_initialize;
         /// `Ps::psErrorMessage` (0x7451D0)
         pub fn ps_error_message(msg: GPtr<u8>) -> i32 = cdecl 0x7451D0 => super::ps_error_message;
         /// `Ps::psWarningMessage` (0x7451F0)
@@ -245,13 +253,53 @@ pub mod call {
         /// `Rs::RsInitialize` (0x619600)
         pub fn rs_initialize() -> i32 = cdecl 0x619600 => super::rs_initialize;
         /// `Rs::RsRwInitialize` (0x619C90, deferred)
-        pub fn rs_rw_initialize(param: GPtr<u8>) -> i32 = cdecl 0x619C90 => unported;
+        pub fn rs_rw_initialize(param: GPtr<u8>) -> i32 = cdecl 0x619C90 => super::rs_rw_initialize;
         /// `Rs::RsRwTerminate` (0x6195E0)
         pub fn rs_rw_terminate() = cdecl 0x6195E0 => super::rs_rw_terminate;
         /// `RsCameraShowRaster` (0x619440, a `jmp psCameraShowRaster`; not a CORE row of this port)
-        pub fn rs_camera_show_raster(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x619440 => super::ps_camera_show_raster;
-        /// `App::AppEventHandler` (0x53EC10, blocked: FPTAN)
-        pub fn app_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x53EC10 => unported;
+        pub fn rs_camera_show_raster(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x619440 => super::rs_camera_show_raster;
+        /// `Ps::psCameraShowRaster` (0x745240)
+        pub fn ps_camera_show_raster_call(camera: GPtr<u8>) -> GPtr<u8> = cdecl 0x745240 => super::ps_camera_show_raster;
+        /// `App::AppEventHandler` (0x53EC10)
+        pub fn app_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x53EC10 => super::app_event_handler;
+        /// `CameraSize(RwCamera*, RwRect*, float viewWindow, float aspectRatio)` (0x72FC70)
+        pub fn camera_size(camera: GPtr<u8>, rect: GPtr<u8>, view_window: f32, aspect: f32) = cdecl 0x72FC70 => crate::camerasize::camera_size;
+        /// `Input::AttachInputDevices` (0x744A20)
+        pub fn attach_input_devices() -> u32 = cdecl 0x744A20 => crate::input::attach_input_devices;
+        /// `Game::RwInitialize(void*)` (0x5BF390)
+        pub fn game_rw_initialize(param: GPtr<u8>) -> u32 = cdecl 0x5BF390 => crate::game::rw_initialize;
+        /// `Game::RwTerminate` (0x53D910)
+        pub fn game_rw_terminate() = cdecl 0x53D910 => crate::game::rw_terminate;
+        /// `CGame::InitialiseOnceBeforeRW` (0x53BB50)
+        pub fn initialise_once_before_rw() -> bool = cdecl 0x53BB50 => crate::game::initialise_once_before_rw;
+        /// `CGame::FinalShutdown` (0x53BC30)
+        pub fn final_shutdown() = cdecl 0x53BC30 => crate::game::final_shutdown;
+        /// `Game::Idle(void*)` (0x53E920)
+        pub fn game_idle(param: GPtr<u8>) = cdecl 0x53E920 => unported;
+        /// `Game::FrontendIdle` (0x53E770)
+        pub fn game_frontend_idle() = cdecl 0x53E770 => unported;
+        /// `App::PluginAttach` (0x53D870)
+        pub fn plugin_attach() -> i32 = cdecl 0x53D870 => super::plugin_attach;
+        /// `psGetMemoryFunctions` (0x745510)
+        pub fn ps_get_memory_functions() -> GPtr<[u32; 4]> = cdecl 0x745510 => super::ps_get_memory_functions;
+        /// `psInstallFileSystem` (0x745520)
+        pub fn ps_install_file_system() -> i32 = cdecl 0x745520 => super::ps_install_file_system;
+        /// `psNativeTextureSupport` (0x745530)
+        pub fn ps_native_texture_support() -> i32 = cdecl 0x745530 => super::ps_native_texture_support;
+        /// `RwEngineInit(const RwMemoryFunctions*, RwUInt32 initFlags, RwUInt32 resArenaSize)` (0x7F3170)
+        pub fn rw_engine_init(mem: GPtr<[u32; 4]>, flags: u32, arena: u32) -> i32 = cdecl 0x7F3170 => unported;
+        /// `RwEngineOpen(RwEngineOpenParams*)` (0x7F2F70)
+        pub fn rw_engine_open(params: GPtr<u32>) -> i32 = cdecl 0x7F2F70 => unported;
+        /// `RwEngineStart()` (0x7F2E70)
+        pub fn rw_engine_start() -> i32 = cdecl 0x7F2E70 => unported;
+        /// `RwTextureSetMipmapping(RwBool)` (0x7F3530)
+        pub fn rw_texture_set_mipmapping(enable: i32) -> i32 = cdecl 0x7F3530 => unported;
+        /// `RwTextureSetAutoMipmapping(RwBool)` (0x7F3560)
+        pub fn rw_texture_set_auto_mipmapping(enable: i32) -> i32 = cdecl 0x7F3560 => unported;
+        /// `RwD3D9GetCaps()` (0x7FAD20, `const D3DCAPS9*`)
+        pub fn rw_d3d9_get_caps() -> GPtr<u8> = cdecl 0x7FAD20 => unported;
+        /// `IDirect3DDevice9::GetDeviceCaps(D3DCAPS9*)`
+        pub fn d3d_device_get_device_caps(dev: GPtr<u32>, caps: GPtr<u8>) -> i32 = stdcall vslot 0x1C => unported;
         /// the handler stored in `RsGlobal.keyboard.inputEventHandler`
         pub fn keyboard_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl cell 0xC17060 => unported;
         /// `RsGlobal.mouse.inputEventHandler`
@@ -463,6 +511,12 @@ pub mod call {
         // Ps::psGrabScreen
         /// `RwD3D9GetCurrentD3DDevice` (0x7F9D50)
         pub fn rw_d3d9_get_current_d3d_device() -> u32 = cdecl 0x7F9D50 => unported;
+        /// `IDirect3DDevice9::SetGammaRamp(swapchain, flags, ramp)` (+0x54)
+        pub fn d3d_dev_set_gamma_ramp(dev: GPtr<u32>, swap: u32, flags: u32, ramp: GPtr<u8>) = stdcall vslot 0x54 => unported;
+        /// `IDirect3DDevice9::GetGammaRamp(swapchain, ramp)` (+0x58)
+        pub fn d3d_dev_get_gamma_ramp(dev: GPtr<u32>, swap: u32, ramp: GPtr<u8>) = stdcall vslot 0x58 => unported;
+        /// CRT `pow(double, double)` (0x8220F0, result in ST0)
+        pub fn crt_pow(x: f64, y: f64) -> f64 = cdecl 0x8220F0 => unported;
         /// `IDirect3DDevice9::GetDisplayMode` (+0x20)
         pub fn d3d_dev_get_display_mode(dev: GPtr<u32>, swap: u32, mode: GPtr<[u32; 4]>) -> i32 = stdcall vslot 0x20 => unported;
         /// `IDirect3DDevice9::GetFrontBufferData` (+0x84)
@@ -775,7 +829,38 @@ pub fn txd_store_plugin_attach() -> u8 {
     (off != -1) as u8
 }
 
+/// `cb_RSTXDPARENT_RwTexDictionary_Ctor` (0x731600): parent TXD slot = NULL (no offset check);
+/// returns the dictionary.
+#[hook(addr = 0x731600, conv = cdecl, name = "cb_RSTXDPARENT_RwTexDictionary_Ctor", expect = "8B 44 24 04 8B 0D 18 80 C8 00")]
+pub fn txd_parent_ctor(txd: GPtr<u8>, _off: i32, _size: i32) -> GPtr<u8> {
+    txd.byte_add(TXD_PLUGIN_OFFSET.get() as isize).cast::<u32>().write(0);
+    txd
+}
+
+/// `cb_RSTXDPARENT_RwTexDictionary_Dtor` (0x731620): returns the dictionary.
+#[hook(addr = 0x731620, conv = cdecl, name = "cb_RSTXDPARENT_RwTexDictionary_Dtor", expect = "8B 44 24 04 C3")]
+pub fn txd_parent_dtor(txd: GPtr<u8>, _off: i32, _size: i32) -> GPtr<u8> {
+    txd
+}
+
+/// `cb_RSTXDPARENT_RwTexDictionary_Copy` (0x731630): copies the parent dword; returns `dst`.
+#[hook(addr = 0x731630, conv = cdecl, name = "cb_RSTXDPARENT_RwTexDictionary_Copy", expect = "8B 0D 18 80 C8 00")]
+pub fn txd_parent_copy(dst: GPtr<u8>, src: GPtr<u8>, _off: i32, _size: i32) -> GPtr<u8> {
+    let off = TXD_PLUGIN_OFFSET.get() as isize;
+    let v = src.byte_add(off).cast::<u32>().read();
+    dst.byte_add(off).cast::<u32>().write(v);
+    dst
+}
+
+/// `RsCameraShowRaster(RwCamera*)` (0x619440): `jmp psCameraShowRaster` (0x745240). Not hookable: a
+/// 5-byte `jmp` entry is registered as a `.HOODLUM` stub, and this one targets `.text`.
+#[crate::native(addr = 0x619440, conv = cdecl, name = "RsCameraShowRaster")]
+pub fn rs_camera_show_raster(camera: GPtr<u8>) -> GPtr<u8> {
+    call::ps_camera_show_raster_call(camera)
+}
+
 /// `CreateDebugFont` (0x734610): a lone `ret` (not hookable).
+#[crate::native(addr = 0x734610, conv = cdecl, name = "CreateDebugFont")]
 pub fn create_debug_font() {}
 
 /// `DestroyDebugFont` (0x734620): a lone `ret` (not hookable).
@@ -1155,6 +1240,45 @@ pub fn enum_pads() -> i32 {
 
 // ----------------------------------------------------------------------------------- App --------
 
+/// `App::DoRWStuffStartOfFrame(TopRed, TopGreen, TopBlue, BottomRed, BottomGreen, BottomBlue,
+/// int16 Alpha)` (0x53D690, cdecl, bool in AL). `CDraw::CalculateAspectRatio` (ST0 popped),
+/// `CFont::SetAlphaFade(255.0)`, `CameraSize(Scene.camera, NULL, tan(ms_fFOV * [0x8631D4]),
+/// ms_fAspectRatio)` (`fmul` at PC=24, `fptan`), `CVisibilityPlugins::SetRenderWareCamera`,
+/// `RwCameraClear(camera, &top, rwCAMERACLEARZ)` with the colours `top = (TopRed, TopGreen, TopBlue,
+/// Alpha)` and `bottom = (BottomRed, BottomGreen, BottomBlue, Alpha)` (the low byte of Alpha);
+/// `RsCameraBeginUpdate` failing → 0. Then `CSprite2d::InitPerFrame` and, when Alpha (16 bits) is
+/// non-zero, `CSprite2d::DrawRect(CRect(0, height, width, 0), bottom, bottom, top, top)` with the
+/// screen size from `RsGlobal.maximumWidth/Height` (`fild`, stored as f32) → 1.
+///
+/// Not registered: 0x53D690 is hooked by sa-core mvpb_app.rs (verified) (duplicate port left unregistered when STD-5 merged both).
+pub fn do_rw_stuff_start_of_frame(tr: u32, tg: u32, tb: u32, br: u32, bg: u32, bb: u32, alpha: u32) -> bool {
+    let _ = call::draw_calculate_aspect_ratio();
+    call::font_set_alpha_fade(255.0);
+    let fov = GPtr::<f32>::from_addr(0x8D5038).read();
+    let x = X87::from_f32(fov).fmul_m(rdata::<f32>(0x8631D4).read());
+    let tan = x.fptan().map_or(x, |(t, _one)| t);
+    let a = alpha as u8;
+    let mut top = [tr as u8, tg as u8, tb as u8, a];
+    let mut bottom = [br as u8, bg as u8, bb as u8, a];
+    let aspect = GPtr::<f32>::from_addr(0xC3EFA4).read();
+    call::camera_size(SCENE_CAMERA.get(), GPtr::NULL, tan.to_f32(), aspect);
+    call::visibility_plugins_set_render_ware_camera(SCENE_CAMERA.get());
+    let top_p: GPtr<u8> = GPtr::from_raw(top.as_mut_ptr());
+    call::rw_camera_clear(SCENE_CAMERA.get(), top_p, 2);
+    if rs_camera_begin_update(SCENE_CAMERA.get()) == 0 {
+        return false;
+    }
+    call::sprite2d_init_per_frame();
+    if alpha as u16 != 0 {
+        let w = X87::from_i32(GPtr::<i32>::from_addr(0xC17044).read()).to_f32();
+        let h = X87::from_i32(GPtr::<i32>::from_addr(0xC17048).read()).to_f32();
+        let mut rect = [0.0f32, h, w, 0.0];
+        let bp: GPtr<u8> = GPtr::from_raw(bottom.as_mut_ptr());
+        call::sprite2d_draw_rect4(GPtr::from_raw(rect.as_mut_ptr()).cast(), bp, bp, top_p, top_p);
+    }
+    true
+}
+
 /// `App::DoRWStuffEndOfFrame` (0x53D840): `CDebug::DebugDisplayTextBuffer(); FlushObrsPrintfs();
 /// RwCameraEndUpdate(Scene.camera); RsCameraShowRaster(Scene.camera)`; the first `Scene.camera` read
 /// goes through the protection chunk at 0x4037CB ([`protected_cell`]).
@@ -1165,6 +1289,208 @@ pub fn do_rw_stuff_end_of_frame() {
     let cam = protected_cell(&PROT_EOF_A, &PROT_EOF_B, SCENE_CAMERA.ptr().cast());
     call::rw_camera_end_update(GPtr::from_addr(cam as usize));
     call::rs_camera_show_raster(SCENE_CAMERA.get());
+}
+
+/// `Rs::RsRwInitialize(void* displayID)` (0x619C90, cdecl): `RwEngineInit(psGetMemoryFunctions(), 0,
+/// 0x400000)` (0 → FALSE); `AppEventHandler(rsINITDEBUG)`; `psInstallFileSystem()`;
+/// `AppEventHandler(rsPLUGINATTACH)` and `(rsINPUTDEVICEATTACH)` (each: 0 → FALSE,
+/// `rsEVENTNOTPROCESSED` accepted). `RwEngineOpen({displayID})` (0 → `RwEngineTerm`, FALSE);
+/// `AppEventHandler(rsSELECTDEVICE, displayID)`, where not processed `psSelectDevice() != 0`; a
+/// zero result or a failed `RwEngineStart` → `RwEngineClose`, `RwEngineTerm`, FALSE. Then
+/// `AppEventHandler(rsREGISTERIMAGELOADER)`, `psNativeTextureSupport()`,
+/// `RwTextureSetMipmapping(TRUE)`, `RwTextureSetAutoMipmapping(FALSE)` → TRUE. The handler is
+/// called directly (0x53EC10), not through `RsEventHandler`.
+///
+/// Written by STD-2 for the native boot, not yet verified against the original (phase A).
+#[hook(addr = 0x619C90, conv = cdecl, name = "Rs::RsRwInitialize", expect = "51 68 00 00 40 00")]
+pub fn rs_rw_initialize(display_id: GPtr<u8>) -> i32 {
+    if call::rw_engine_init(call::ps_get_memory_functions(), 0, 0x40_0000) == 0 {
+        return 0;
+    }
+    call::app_event_handler(3, GPtr::NULL);
+    call::ps_install_file_system();
+    let r = call::app_event_handler(rs_event::PLUGIN_ATTACH, GPtr::NULL);
+    if r != 2 && r == 0 {
+        return 0;
+    }
+    let r = call::app_event_handler(rs_event::INPUT_DEVICE_ATTACH, GPtr::NULL);
+    if r != 2 && r == 0 {
+        return 0;
+    }
+    let mut open_params = [display_id.addr() as u32];
+    if call::rw_engine_open(GPtr::from_raw(open_params.as_mut_ptr())) == 0 {
+        call::rw_engine_term();
+        return 0;
+    }
+    let mut r = call::app_event_handler(0x17, display_id);
+    if r == 2 {
+        r = (call::ps_select_device() != 0) as i32;
+    }
+    if r == 0 || call::rw_engine_start() == 0 {
+        call::rw_engine_close();
+        call::rw_engine_term();
+        return 0;
+    }
+    call::app_event_handler(10, GPtr::NULL);
+    call::ps_native_texture_support();
+    call::rw_texture_set_mipmapping(1);
+    call::rw_texture_set_auto_mipmapping(0);
+    1
+}
+
+/// `CGamma::SetGamma(float gamma, bool force)` (0x747200, thiscall, `ret 8`). `gamma *= 0.7`
+/// ([0x858CB0], PC=24, stored back as f32); nothing when +0 (available) is 0; +0xC := gamma; when
+/// `gamma != +8` (or unordered) +8 := gamma, else only with `force`. With the device: `e = 1.0 - gamma + 0.2`
+/// ([0x858CC4]) as f32; on the first call (`0xC920C8` clear) the flag is set and the current
+/// ramp saved with `GetGammaRamp(0, 0xC8D4C8)`; then for i in 0..256 `ftol(pow((i + 1) / 256.0, e) *
+/// 65535.0)` (`fild`, `fmul [1/256]` at PC=24, CRT `pow` on doubles, `fmul qword [65535.0]`) into the
+/// three 256-word channels at 0xC8DEC8, 0xC8DCC8, 0xC8DAC8; `SetGammaRamp(0, 1, 0xC8DAC8)`.
+///
+/// Not registered: 0x747200 is hooked by sa-render mvpb_r1.rs (duplicate port left unregistered when STD-5 merged both).
+pub fn gamma_set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
+    let g = X87::from_f32(gamma).fmul_m(rdata::<f32>(0x858CB0).read()).to_f32();
+    if this.cast::<u32>().read() == 0 {
+        return;
+    }
+    let prev = this.byte_add(8).cast::<f32>();
+    this.byte_add(0xC).cast::<f32>().write(g);
+    if X87::from_f32(g).fcom(X87::from_f32(prev.read())).test_parity(0x44) {
+        prev.write(g);
+    } else if force as u8 == 0 {
+        return;
+    }
+    let dev = call::rw_d3d9_get_current_d3d_device();
+    if dev == 0 {
+        return;
+    }
+    let e = X87::one().fsub_m(g).fadd_m(rdata::<f32>(0x858CC4).read()).to_f32();
+    let changed = GPtr::<u8>::from_addr(0xC920C8);
+    if changed.read() == 0 {
+        changed.write(1);
+        let d = call::rw_d3d9_get_current_d3d_device();
+        call::d3d_dev_get_gamma_ramp(GPtr::from_addr(d as usize), 0, GPtr::from_addr(0xC8D4C8));
+    }
+    let k = rdata::<f32>(0x859AA0).read();
+    let scale = rdata::<f64>(0x874B00).read();
+    for i in 0..0x100u32 {
+        let x = X87::from_i32(i as i32 + 1).fmul_m(k).to_f64();
+        let p = X87::from_f64_exact(call::crt_pow(x, e as f64));
+        let v = (p.fmul(X87::from_f64_exact(scale)).ftol() as u32) as u16;
+        for base in [0xC8DEC8usize, 0xC8DCC8, 0xC8DAC8] {
+            GPtr::<u16>::from_addr(base + 2 * i as usize).write(v);
+        }
+    }
+    call::d3d_dev_set_gamma_ramp(GPtr::from_addr(dev as usize), 0, 1, GPtr::from_addr(0xC8DAC8));
+}
+
+/// `CGamma::Init()` (0x747180, thiscall): `m_bNotAvailable`-style flag at +0 := 1, +4 := 0.5,
+/// +8 := -1000.0, +0xC := 1000.0; `RwD3D9GetCurrentD3DDevice()->GetDeviceCaps(&caps)` (result
+/// ignored); clears bit 7 of the dword at `RwD3D9GetCaps() + 0xEC` when set; the flag := 0 when
+/// `caps.Caps2` has neither `D3DCAPS2_FULLSCREENGAMMA` (0x20000) nor `D3DCAPS2_CANCALIBRATEGAMMA`
+/// (0x100000). The `D3DCAPS9` local is uninitialised in the original when `GetDeviceCaps` fails
+/// (port: zero).
+///
+/// Written by STD-2 for the native boot, not yet verified against the original (phase A).
+#[hook(addr = 0x747180, conv = thiscall, name = "CGamma::Init", expect = "81 EC 30 01 00 00")]
+pub fn gamma_init(this: GPtr<u8>) {
+    this.cast::<u32>().write(1);
+    this.byte_add(4).cast::<u32>().write(0x3F00_0000);
+    this.byte_add(8).cast::<u32>().write(0xC47A_0000);
+    this.byte_add(0xC).cast::<u32>().write(0x447A_0000);
+    let mut caps = [0u32; 0x130 / 4];
+    let dev = GPtr::from_addr(call::rw_d3d9_get_current_d3d_device() as usize);
+    call::d3d_device_get_device_caps(dev, GPtr::from_raw(caps.as_mut_ptr()).cast());
+    let flags = call::rw_d3d9_get_caps().byte_add(0xEC).cast::<u32>();
+    let v = flags.read();
+    if v & 0x80 != 0 {
+        flags.write(v & !0x80);
+    }
+    let caps2 = caps[3];
+    let n = u32::from(caps2 & 0x2_0000 != 0) + u32::from(caps2 & 0x10_0000 != 0);
+    if n == 0 {
+        this.cast::<u32>().write(0);
+    }
+}
+
+/// `RsEventHandler`'s event codes (skeleton.h `RsEvent`) that `App::AppEventHandler` handles.
+pub mod rs_event {
+    pub const CAMERA_SIZE: i32 = 0;
+    pub const INPUT_DEVICE_ATTACH: i32 = 4;
+    pub const PLUGIN_ATTACH: i32 = 9;
+    pub const RW_INITIALIZE: i32 = 21;
+    pub const RW_TERMINATE: i32 = 22;
+    pub const INITIALIZE: i32 = 24;
+    pub const TERMINATE: i32 = 25;
+    pub const IDLE: i32 = 26;
+    pub const FRONTEND_IDLE: i32 = 27;
+    pub const ACTIVATE: i32 = 38;
+}
+
+/// `CDraw::ms_fFOV` (0x8D5038; declared by [`crate::common`]).
+const DRAW_FOV: u32 = 0x8D5038;
+/// The `.rdata` float `AppEventHandler` multiplies the FOV by (pi / 360: degrees to half-angle radians).
+const DEG_TO_HALF_RAD: u32 = 0x8631D4;
+
+/// `App::AppEventHandler(RsEvent, void*)` (0x53EC10, cdecl). A two-level jump table over events
+/// 0..=0x26 (the byte table at 0x53ED08 is reached through the no-CD chunk at 0x4018CE; checked
+/// against the bytes), others → `rsEVENTNOTPROCESSED` (2):
+/// - 0 `rsCAMERASIZE`: `CameraSize(Scene.camera, param, tan(ms_fFOV * [0x8631D4]), 4/3)`: `fmul`
+///   (PC=24), `fptan`, the pushed 1.0 popped, the tangent stored as f32; aspect 0x3FAAAAAB (the
+///   original's fixed 4:3, gta-reversed changes it) → 1;
+/// - 4: `AttachInputDevices()` → 1; 9: `PluginAttach() != 0`; 21: `Game::RwInitialize(param) != 0`;
+///   22: `Game::RwTerminate()` (the original pushes `param` to the argument-less function) → 1;
+/// - 24 `rsINITIALIZE`: `CGame::InitialiseOnceBeforeRW()` (result ignored), `RsInitialize() != 0`;
+/// - 25: `CGame::FinalShutdown()` → 1; 26: `Game::Idle(param)` → 1; 27: `Game::FrontendIdle()` → 1;
+///   38 `rsACTIVATE` → 1.
+///
+/// Written by STD-2 for the native boot, not yet verified against the original (phase A).
+#[hook(addr = 0x53EC10, conv = cdecl, name = "App::AppEventHandler", expect = "8B 44 24 04 83 F8 26")]
+pub fn app_event_handler(event: i32, param: GPtr<u8>) -> i32 {
+    use rs_event as e;
+    match event {
+        e::CAMERA_SIZE => {
+            let fov = GPtr::<f32>::from_addr(DRAW_FOV as usize).read();
+            let k = rdata::<f32>(DEG_TO_HALF_RAD).read();
+            let x = X87::from_f32(fov).fmul_m(k);
+            // |x| < 2^63 for any FOV the game sets; otherwise FPTAN leaves the operand (C2 set)
+            let tan = x.fptan().map_or(x, |(t, _one)| t);
+            call::camera_size(
+                SCENE_CAMERA.get(),
+                param,
+                tan.to_f32(),
+                f32::from_bits(0x3FAA_AAAB),
+            );
+            1
+        }
+        e::INPUT_DEVICE_ATTACH => {
+            call::attach_input_devices();
+            1
+        }
+        e::PLUGIN_ATTACH => (call::plugin_attach() != 0) as i32,
+        e::RW_INITIALIZE => (call::game_rw_initialize(param) != 0) as i32,
+        e::RW_TERMINATE => {
+            call::game_rw_terminate();
+            1
+        }
+        e::INITIALIZE => {
+            call::initialise_once_before_rw();
+            (call::rs_initialize() != 0) as i32
+        }
+        e::TERMINATE => {
+            call::final_shutdown();
+            1
+        }
+        e::IDLE => {
+            call::game_idle(param);
+            1
+        }
+        e::FRONTEND_IDLE => {
+            call::game_frontend_idle();
+            1
+        }
+        e::ACTIVATE => 1,
+        _ => 2,
+    }
 }
 
 /// `App::PluginAttach` (0x53D870): the RenderWare and game plugins in the original's order; the
@@ -1418,6 +1744,8 @@ pub fn ps_grab_screen(_camera: GPtr<u8>) -> GPtr<u8> {
 /// hookable). `RegisterClassA({CS_ 0x2000, __MainWndProc 0x747EB0, 0, 0, instance,
 /// LoadIconA(instance, 100), LoadCursorA(NULL, IDC_ARROW), NULL, NULL, AppClassName})`, the ATOM
 /// zero-extended.
+/// Phase B: the instance on the stack, as the `orig!` declarations (and WinMain's replay) pass it.
+#[crate::native(addr = 0x7486A0, conv = cdecl, name = "Win::Win32_InitApplication")]
 pub fn win32_init_application(instance: u32) -> u32 {
     let icon = call::load_icon_a(instance, 100);
     let cursor = call::load_cursor_a(0, 0x7F00);
@@ -1464,6 +1792,9 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_RS_EVENT_HANDLER,
     HOOK_MOTION_BLUR_CLOSE,
     HOOK_TXD_STORE_PLUGIN_ATTACH,
+    HOOK_TXD_PARENT_CTOR,
+    HOOK_TXD_PARENT_DTOR,
+    HOOK_TXD_PARENT_COPY,
     HOOK_SECUROM_DISPLAY_INIT,
     HOOK_IS_FOREGROUND_APP,
     HOOK_PS_WINDOW_SET_TEXT,
@@ -1493,6 +1824,9 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_INIT_USER_DIRECTORIES,
     HOOK_SECUROM_STATE_DISPLAY,
     HOOK_PS_GRAB_SCREEN,
+    HOOK_APP_EVENT_HANDLER,
+    HOOK_RS_RW_INITIALIZE,
+    HOOK_GAMMA_INIT,
 ];
 
 // Host tests use Rust-owned memory; a phase A build cannot run them.

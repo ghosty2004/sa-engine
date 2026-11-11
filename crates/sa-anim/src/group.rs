@@ -53,11 +53,13 @@ fn sa(g: GPtr<u8>, i: i32) -> GPtr<u8> {
 }
 
 /// `CAnimBlendAssocGroup::GetNumAnimations()` (0x45B050): `mov eax, [ecx+8]; ret` (not hookable).
+#[sa_core::native(addr = 0x45B050, conv = thiscall, name = "CAnimBlendAssocGroup::GetNumAnimations")]
 pub fn get_num_animations(this: GPtr<u8>) -> i32 {
     rd::<i32>(this, 8)
 }
 
 /// `CAnimBlendAssocGroup::GetAnimBlock()` (0x45B060): `mov eax, [ecx]; ret` (not hookable).
+#[sa_core::native(addr = 0x45B060, conv = thiscall, name = "CAnimBlendAssocGroup::GetAnimBlock")]
 pub fn get_anim_block(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 0)
 }

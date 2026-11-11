@@ -4122,6 +4122,7 @@ pub fn g_task_complex_extinguish_fires_clone_6977b0(_this: u32) -> u32 {
 
 /// `CEventVehicleDamageCollision::CloneEditable` (0x6A0670): clone, thiscall, `ret`; 34 instruction(s) matched.
 /// Not hookable: protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x141c1e6).
+#[sa_core::native(addr = 0x6A0670, conv = thiscall, name = "CEventVehicleDamageCollision::CloneEditable")]
 pub fn g_event_vehicle_damage_collision_clone_editable_6a0670(this: u32) -> u32 {
     let v1 = c_4b5620_c1(0x20);
     if v1 == 0 {

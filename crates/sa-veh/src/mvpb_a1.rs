@@ -154,7 +154,7 @@ pub fn set_ped_in_car_direct(ped: GPtr<u8>, veh: GPtr<u8>, door: i32, as_driver:
 /// docs/re/specs/PHYS/_unk-B.md): copies the two stack vectors into a local and re-pushes them to
 /// `CPhysical::ApplyTurnForce(force, point)` with the same `this`. No other effect.
 #[hook(addr = 0x65DA70, conv = thiscall, name = "FUN_0065da70", this = "CPhysical", expect = "83 EC 18 8B 44 24 28",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "none", note = "UNK-game (a CPhysical helper) kept in sa-veh; callers include CVehicle::AddPassenger")]
+       route = "L2", hazards = "none", note = "UNK-game (a CPhysical helper) kept in sa-veh; callers include CVehicle::AddPassenger")]
 pub fn physical_apply_turn_force_copy(this: GPtr<u8>, force: CVector, point: CVector) {
     apply_turn_force(this, force, point);
 }
@@ -255,7 +255,7 @@ fn upgrade_node(mi: GPtr<u8>) -> (u32, bool) {
 /// `m_anUpgrades` slots (+0x43A, i16): a slot equal to `replaced` gets the model (or -1 once placed),
 /// the first empty slot (0xFFFF) gets the model once.
 #[hook(addr = 0x6E3290, conv = thiscall, name = "CVehicle::AddVehicleUpgrade", this = "CVehicle", expect = "53 8B 5C 24 08 56",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "the original keeps the replaced upgrade in its own argument slot (entry esp+4) and leaves it there; the port uses a local")]
 pub fn add_vehicle_upgrade(this: GPtr<u8>, model: i32) -> i32 {
     let mut replaced = [-1i32; 1];
@@ -378,7 +378,7 @@ pub fn set_vehicle_upgrade_flags(this: GPtr<u8>, model: i32, node: u32, out: GPt
 /// 8 passengers (+0x464) that is a mission ped or not in state 0x32/0x37 gives false; then by
 /// `m_nCreatedBy` (+0x4A4, jump table 0x6D1220): 2 and 4 false, everything else true.
 #[hook(addr = 0x6D1180, conv = thiscall, name = "CVehicle::CanBeDeleted", this = "CVehicle", expect = "8A 81 85 04 00 00",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn can_be_deleted(this: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0x485) != 0 || rd::<u8>(this, 0x487) != 0 {
         return 0;
@@ -488,7 +488,7 @@ pub fn are_we_in_no_plane_zone() -> u8 {
 /// r < 2 -> counter 45; r 2..3 -> the driver (+0x460) with honk-at-car (+0x3DB bit 0) says 0x16, counter
 /// 45; r >= 4 -> the driver says 0x16 (`CPed::Say(0x16, 0, 1.0, 0, 0, 0)`).
 #[hook(addr = 0x6A3770, conv = thiscall, name = "CAutomobile::PlayCarHorn", this = "CAutomobile", expect = "56 8B F1 66 8B 86 5C 04 00 00",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "heap-writes,entry-protection-read")]
+       route = "L2", hazards = "heap-writes,entry-protection-read")]
 pub fn play_car_horn(this: GPtr<u8>) {
     let alarm = rd::<u16>(this, 0x45C);
     if alarm != 0 && alarm != 0xFFFF && rd::<u8>(this, 0x36) & 0xF8 != 0x28 {
@@ -521,7 +521,7 @@ pub fn play_car_horn(this: GPtr<u8>) {
 /// `CAutomobile::PlayHornIfNecessary()` (0x6A3820): with honk-at-car/ped (+0x3DB & 3) and not
 /// `HasCarStoppedBecauseOfLight()`: the virtual `PlayCarHorn` (vtable +0xD8, tail jump).
 #[hook(addr = 0x6A3820, conv = thiscall, name = "CAutomobile::PlayHornIfNecessary", this = "CAutomobile", expect = "56 8B F1 F6 86 DB 03 00 00 03",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn play_horn_if_necessary(this: GPtr<u8>) {
     if rd::<u8>(this, 0x3DB) & 3 != 0 && has_car_stopped_because_of_light_call(this) == 0 {
         play_car_horn_virtual(this);
@@ -575,7 +575,7 @@ fn link_has_light(addr: u32, want_area: impl Fn() -> u16, want_node: impl Fn() -
 /// else, with an ending route node (+0x398 area != 0xFFFF, loaded), the same over the ending node's
 /// links to the current node (+0x390/+0x392). Areas are not range-checked (as compiled).
 #[hook(addr = 0x44D520, conv = thiscall, name = "CAutomobile::HasCarStoppedBecauseOfLight", this = "CAutomobile", expect = "E9 9B 14 12 01",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn has_car_stopped_because_of_light(this: GPtr<u8>) -> u8 {
     let st = rd::<u8>(this, 0x36) >> 3;
     if st != 2 && st != 3 {
@@ -603,7 +603,7 @@ pub fn has_car_stopped_because_of_light(this: GPtr<u8>) -> u8 {
 /// flying-cars cheat (0x969160), a moving car (`|moveSpeed|` > 0, x87 sqrt of x² + y² + z²) and
 /// `CTimer::ms_fTimeStep` > 0: `FlyingControl(3, -9999.99, -9999.99, -9999.99, -9999.99)`.
 #[hook(addr = 0x6A8500, conv = thiscall, name = "CAutomobile::ProcessFlyingCarStuff", this = "CAutomobile", expect = "8A 41 36 C0 E8 03 84 C0",
-       unverified = "mvpb-veh-1", route = "L2", hazards = "x87-transcendental")]
+       route = "L2", hazards = "x87-transcendental")]
 pub fn process_flying_car_stuff(this: GPtr<u8>) {
     let st = rd::<u8>(this, 0x36) >> 3;
     if st != 0 && st != 8 && st != 3 {

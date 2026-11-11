@@ -249,6 +249,14 @@ pub fn get_ped_ref(ped: GPtr<PedSlot>) -> i32 {
     pool_ref(PED_POOL.get(), ped)
 }
 
+/// `CPool<CPed>::GetRef(ped)` (stub 0x4442D0, body 0x156CD40, thiscall on the pool): `index << 8 |
+/// the slot's flag byte` (STD-6).
+#[hook(addr = 0x4442D0, conv = thiscall, name = "thunk_FUN_0156cd40", expect = "E9 6B 8A 12 01",
+       unverified = "std6-core-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+pub fn ped_pool_get_ref(pool: GPtr<CPool<PedSlot>>, ped: GPtr<PedSlot>) -> i32 {
+    pool_ref(pool, ped)
+}
+
 /// `CPools::GetPed(ref)` (0x54FF90, cdecl).
 #[hook(addr = 0x54FF90, conv = cdecl, name = "CPools::GetPed", expect = "8B 4C 24 04 8B 15 90 44 B7 00")]
 pub fn get_ped(handle: i32) -> GPtr<PedSlot> {
@@ -436,4 +444,5 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_GET_VEHICLE,
     HOOK_GET_OBJECT_REF,
     HOOK_GET_OBJECT,
+    HOOK_PED_POOL_GET_REF,
 ];

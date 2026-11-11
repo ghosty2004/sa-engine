@@ -432,7 +432,85 @@ pub fn rw_d3d9_lights_enable(enable: u32, _unused: u32) -> i32 {
 }
 
 /// Every `#[hook]` of this module.
+/// `cb_LIGHTMODULE_RpLight_Ctor(light, offset, size)` (0x755BC0): with a light, its extension
+/// gets index -1, attenuation (1.0, 0.0, 5.0); returns the light (NULL for NULL). Written by STD-3,
+/// unverified.
+#[hook(addr = 0x755BC0, conv = cdecl, name = "cb_LIGHTMODULE_RpLight_Ctor", expect = "8B 44 24 04 85 C0")]
+pub fn light_ext_ctor(light: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
+    if light.is_null() {
+        return GPtr::NULL;
+    }
+    let e = light.byte_add(g::<i32>(LIGHT_EXT_OFFSET).read() as isize);
+    wr::<i32>(e, 0, -1);
+    wr::<u32>(e, 4, 0x3F80_0000);
+    wr::<u32>(e, 8, 0);
+    wr::<u32>(e, 0xC, 0x40A0_0000);
+    light
+}
+
+/// `cb_LIGHTMODULE_RpLight_Dtor(light, offset, size)` (0x755BF0): a light holding a D3D light
+/// index (>= 0) gives it back: when the free list already holds all but one of the handed-out
+/// indices the whole bookkeeping is reset (list freed); otherwise the index is appended (the list
+/// grows by 0x100 entries, hint 0x103050D). Returns the light. Written by STD-3, unverified.
+#[hook(addr = 0x755BF0, conv = cdecl, name = "cb_LIGHTMODULE_RpLight_Dtor", expect = "53 56 8B 74 24 0C")]
+pub fn light_ext_dtor(light: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
+    if light.is_null() {
+        return light;
+    }
+    let e = light.byte_add(g::<i32>(LIGHT_EXT_OFFSET).read() as isize);
+    let idx = rd::<i32>(e, 0);
+    if idx < 0 {
+        return light;
+    }
+    let used = g::<i32>(NEXT_INDEX).read();
+    let free = g::<i32>(FREE_COUNT).read();
+    if free >= used.wrapping_sub(1) {
+        g::<i32>(FREE_COUNT).write(0);
+        g::<i32>(FREE_CAP).write(0);
+        g::<i32>(NEXT_INDEX).write(0);
+        let l = g::<u32>(FREE_ARRAY).read();
+        if l != 0 {
+            rw_free(p8(l));
+            g::<u32>(FREE_ARRAY).write(0);
+        }
+        return light;
+    }
+    if free >= g::<i32>(FREE_CAP).read() {
+        let cap = g::<i32>(FREE_CAP).read().wrapping_add(0x100);
+        g::<i32>(FREE_CAP).write(cap);
+        let l = g::<u32>(FREE_ARRAY).read();
+        let n = if l == 0 {
+            rw_malloc((cap as u32).wrapping_mul(4), 0x103_050D)
+        } else {
+            rw_realloc(p8(l), (cap as u32) << 2, 0x103_050D)
+        };
+        g::<u32>(FREE_ARRAY).write(n.addr() as u32);
+    }
+    let l = p8(g::<u32>(FREE_ARRAY).read());
+    let f = g::<i32>(FREE_COUNT).read();
+    wr::<i32>(l, 4 * f as isize, idx);
+    g::<i32>(FREE_COUNT).write(f.wrapping_add(1));
+    light
+}
+
+/// `cb_LIGHTMODULE_RpLight_Copy(dst, src, offset, size)` (0x755CE0): with both lights, the 16
+/// extension bytes are copied; the result register is `dst` (EAX keeps the first argument).
+/// Written by STD-3, unverified.
+#[hook(addr = 0x755CE0, conv = cdecl, name = "cb_LIGHTMODULE_RpLight_Copy", expect = "8B 54 24 08 8B 44 24 04")]
+pub fn light_ext_copy(dst: GPtr<u8>, src: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
+    if !src.is_null() && !dst.is_null() {
+        let off = g::<i32>(LIGHT_EXT_OFFSET).read() as isize;
+        for i in 0..4 {
+            wr::<u32>(dst.byte_add(off), 4 * i, rd::<u32>(src.byte_add(off), 4 * i));
+        }
+    }
+    dst
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_LIGHT_EXT_CTOR,
+    HOOK_LIGHT_EXT_DTOR,
+    HOOK_LIGHT_EXT_COPY,
     HOOK_RP_D3D9_LIGHT_REGISTER_PLUGIN,
     HOOK_RP_D3D9_LIGHT_SET_ATTENUATION_PARAMS,
     HOOK_RP_D3D9_LIGHT_GET_ATTENUATION_PARAMS,

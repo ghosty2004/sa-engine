@@ -95,6 +95,7 @@ pub fn object_scanner_scan_for_objects_in_range(this: GPtr<u8>, ped: GPtr<u8>) {
 
 /// `CPedScanner::GetClosestPedInRange` (0x5FFF20): +0x4C.
 /// Not hookable: `mov eax, [ecx+0x4C]; ret` is 4 bytes.
+#[sa_core::native(addr = 0x5FFF20, conv = thiscall, name = "CPedScanner::GetClosestPedInRange")]
 pub fn ped_scanner_get_closest_ped_in_range(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x4C)
 }

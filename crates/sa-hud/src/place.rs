@@ -71,9 +71,12 @@ pub fn get_for_map(px: u32, py: u32) -> GPtr<u8> {
 /// frame timer, otherwise the timer counts down. The zone's translated name goes to
 /// `CHud::SetZoneName(name, false)`.
 ///
-/// Divergence: without a zone the original passes an uninitialised stack dword as the name (only stored
-/// by `SetZoneName` outside interiors when no zone name is shown); the port passes 0.
-#[hook(addr = 0x571F20, conv = thiscall, name = "CPlaceName::Process", expect = "0F B6 05 74 CD B7 00")]
+/// Without a zone the original passes an uninitialised stack dword as the name (`[esp]` after `pop esi`
+/// at 0x572016: the lowest dword of its 0x10-byte local area, `entry ESP - 0x10`, which it never writes;
+/// only stored by `SetZoneName` outside interiors when no zone name is shown). The port passes that
+/// dword as it was at entry (`peek`, PORT-HUD-3); entered without its hook (a direct Rust call) it
+/// passes 0.
+#[hook(addr = 0x571F20, conv = thiscall, name = "CPlaceName::Process", expect = "0F B6 05 74 CD B7 00", peek = 0x10)]
 pub fn process(this: GPtr<u8>) {
     let mut v = player_position();
     let zone = find_smallest_zone_for_position(GPtr::from_raw(v.as_mut_ptr()).cast(), 0);
@@ -105,7 +108,7 @@ pub fn process(this: GPtr<u8>) {
     }
     let z: GPtr<u8> = rd(this, 0);
     if z.is_null() {
-        set_zone_name(0, 0);
+        set_zone_name(sa_core::abi::peek_stack(0x571F20, -0x10).unwrap_or(0), 0);
     } else {
         let name = get_translated_name_call(z);
         set_zone_name(name.addr() as u32, 0);

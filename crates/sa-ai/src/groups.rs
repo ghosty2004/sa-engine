@@ -477,8 +477,140 @@ pub fn group_flush_port(this: GPtr<u8>) {
     wr::<u8>(this, 0x2D0, 0);
 }
 
+/// `CTaskComplexFollowLeaderInFormation::ms_offsets` (0xC196E8, 7 (x, y) float pairs)
+const FORMATION_OFFSETS: usize = 0xC196E8;
+
+orig! {
+    /// `CPed::Teleport(CVector, bool)` (vtable +0x38, `ret 0x10`; the vector by value)
+    fn v_ped_teleport(p: GPtr<u8>, x: u32, y: u32, z: u32, b: u32) = thiscall vslot 0x38 => unported;
+    /// `CEvent::GetEventType` (vtable +4)
+    fn v_event_type_tp(e: GPtr<u8>) -> i32 = thiscall vslot 0x4 => unported;
+    /// `CTask::MakeAbortable(CPed*, int32, const CEvent*)` (vtable +0x18, `ret 0xC`)
+    fn v_task_make_abortable_tp(t: GPtr<u8>, p: GPtr<u8>, prio: u32, e: u32) -> u8 = thiscall vslot 0x18 => unported;
+    /// `CCarEnterExit::ComputeTargetDoorToExit(const CVehicle*, const CPed*)` (0x64F110)
+    fn car_enter_exit_compute_target_door_to_exit(v: GPtr<u8>, p: GPtr<u8>) -> u32 = cdecl 0x64F110 => unported;
+    /// `CTaskSimpleCarSetPedOut::CTaskSimpleCarSetPedOut(CVehicle*, int32 door, bool)` (0x6478B0, `ret 0xC`)
+    fn car_set_ped_out_ctor_tp(t: GPtr<u8>, veh: GPtr<u8>, door: u32, b: u32) -> GPtr<u8> = thiscall 0x6478B0 => unported;
+    /// `CTaskSimpleCarSetPedOut::ProcessPed(CPed*)` (0x647D10, `ret 4`)
+    fn car_set_ped_out_process_ped_tp(t: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x647D10 => unported;
+    /// `CTaskSimpleCarSetPedOut` complete destructor (0x647950)
+    fn car_set_ped_out_dtor_tp(t: GPtr<u8>) = thiscall 0x647950 => unported;
+    /// `CPed::PositionAnyPedOutOfCollision()` (0x5E13C0)
+    fn ped_position_any_ped_out_of_collision(p: GPtr<u8>) = thiscall 0x5E13C0 => unported;
+}
+
+/// `CPedGroup::Teleport(const CVector&)` (0x5F7AD0, thiscall, `ret 4`). Leader (+0x28) alive → its
+/// `Teleport(pos, false)`. With a group event (+0x34) whose event (+0x10) is of type 0x4D → done (no event:
+/// go on). Leader set and not in a vehicle (+0x46C bit 8): every follower (+0xC, 7 slots) in a vehicle, not
+/// mission-created (+0x484 != 2) and alive is set out of its vehicle (+0x58C) by a stack
+/// `CTaskSimpleCarSetPedOut(veh, ComputeTargetDoorToExit(veh, ped), false)` with +0x11 = 1, `ProcessPed`,
+/// destructor. Then every alive follower k: `Teleport((f32(pos.x + off[k].x), f32(pos.y + off[k].y), pos.z),
+/// false)` (pos re-read for each), `PositionAnyPedOutOfCollision`, and the first set primary task of slots 0..2 (intelligence +4/+8/+0xC)
+/// `MakeAbortable(ped, 0, NULL)`.
+#[hook(addr = 0x5f7ad0, conv = thiscall, name = "CPedGroup::Teleport", expect = "6A FF 64 A1 00 00 00 00",
+       unverified = "mvpj-ai-4", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "moves peds (world lists, pool memory)")]
+pub fn group_teleport(this: GPtr<u8>, pos: GPtr<f32>) {
+    let rp = |i: i32| pos.wrapping_index(i).read();
+    let leader = rd::<GPtr<u8>>(this, 0x28);
+    if !leader.is_null() && ped_is_alive(leader) != 0 {
+        v_ped_teleport(leader, rp(0).to_bits(), rp(1).to_bits(), rp(2).to_bits(), 0);
+    }
+    let ge = rd::<GPtr<u8>>(this, 0x34);
+    if !ge.is_null() && v_event_type_tp(rd::<GPtr<u8>>(ge, 0x10)) == 0x4D {
+        return;
+    }
+    if !leader.is_null() && rd::<u32>(leader, 0x46C) & 0x100 == 0 {
+        for k in 0..7 {
+            let f = rd::<GPtr<u8>>(this, 0xC + k * 4);
+            if f.is_null() || rd::<u32>(f, 0x46C) & 0x100 == 0 || rd::<u8>(f, 0x484) == 2 || ped_is_alive(f) == 0 {
+                continue;
+            }
+            let veh = rd::<GPtr<u8>>(f, 0x58C);
+            let door = car_enter_exit_compute_target_door_to_exit(veh, f);
+            let mut obj = [0u32; 6];
+            let t: GPtr<u8> = GPtr::from_raw(obj.as_mut_ptr()).cast();
+            car_set_ped_out_ctor_tp(t, rd::<GPtr<u8>>(f, 0x58C), door, 0);
+            wr::<u8>(t, 0x11, 1);
+            car_set_ped_out_process_ped_tp(t, f);
+            car_set_ped_out_dtor_tp(t);
+        }
+    }
+    for k in 0..7 {
+        let f = rd::<GPtr<u8>>(this, 0xC + k * 4);
+        if f.is_null() || ped_is_alive(f) == 0 {
+            continue;
+        }
+        let off = g::<f32>(FORMATION_OFFSETS + k as usize * 8);
+        let (px, py, pz) = (rp(0), rp(1), rp(2));
+        let nx = x(px).fadd_m(off.read()).to_f32();
+        let ny = x(py).fadd_m(off.wrapping_index(1).read()).to_f32();
+        v_ped_teleport(f, nx.to_bits(), ny.to_bits(), pz.to_bits(), 0);
+        ped_position_any_ped_out_of_collision(f);
+        let intel = rd::<GPtr<u8>>(f, 0x47C);
+        let t = [4, 8, 0xC].into_iter().map(|o| rd::<GPtr<u8>>(intel, o)).find(|t| !t.is_null());
+        if let Some(t) = t {
+            v_task_make_abortable_tp(t, f, 0, 0);
+        }
+    }
+}
+
+orig! {
+    /// `CTaskComplexFollowLeaderInFormation::CTaskComplexFollowLeaderInFormation(CPedGroup*, CPed* leader, const
+    /// CVector2D& offset, float)` (0x6949A0, `ret 0x10`)
+    fn follow_leader_in_formation_ctor(t: GPtr<u8>, g: GPtr<u8>, leader: GPtr<u8>, off: GPtr<u8>, dist: u32) -> GPtr<u8> = thiscall 0x6949A0 => unported;
+    /// `CTaskComplexWanderGang::CTaskComplexWanderGang(int32 moveState, uint8 dir, int32 time, bool, float)`
+    /// (0x66F5C0, `ret 0x14`)
+    fn wander_gang_ctor_alloc(t: GPtr<u8>, ms: i32, dir: i32, time: i32, b: u32, f: u32) -> GPtr<u8> = thiscall 0x66F5C0 => unported;
+}
+
+/// `CPedGroupDefaultTaskAllocatorFollowLimited::AllocateDefaultTasks(CPedGroup*, CPed*)` (0x5F6C70, thiscall,
+/// `ret 8`). For each of the 7 follower slots of the group's intelligence (+0x21C, 0x14 bytes: +0 ped, +4 task):
+/// a ped equal to the given one (any ped when NULL) gets a new `CTaskComplexFollowLeaderInFormation(group,
+/// leader +0x28, &ms_offsets[i], 10.0)` (NULL when the pool is full). The leader slot (+0x2A8) likewise gets
+/// (+0x2AC) a new `CTaskComplexWanderGang(4, _ftol((rand() & 0xFFFF) * (1/32768) * 8), 5000, true, 0.5)` (rand
+/// at 0x5F6D47).
+///
+/// The original keeps the new tasks and the rand value in its own argument slots (popped by `ret 8`).
+#[hook(addr = 0x5f6c70, conv = thiscall, name = "CPedGroupDefaultTaskAllocatorFollowLimited::AllocateDefaultTasks",
+       expect = "64 A1 00 00 00 00 6A FF", unverified = "mvpj-ai-6", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       note = "draws one rand (site 0x5F6D47)")]
+pub fn follow_limited_allocate_default_tasks(_this: GPtr<u8>, group: GPtr<u8>, ped: GPtr<u8>) {
+    for i in 0..7isize {
+        let slot = group.byte_add(0x21C + i * 0x14);
+        let p = rd::<GPtr<u8>>(slot, 0);
+        if p.is_null() || (!ped.is_null() && p != ped) {
+            continue;
+        }
+        let t = task_new(0x28);
+        let r = if t.is_null() {
+            GPtr::NULL
+        } else {
+            let o = g::<u32>(FORMATION_OFFSETS + i as usize * 8);
+            let mut off = [o.read(), o.wrapping_index(1).read()];
+            follow_leader_in_formation_ctor(t, group, rd::<GPtr<u8>>(group, 0x28), GPtr::from_raw(off.as_mut_ptr()).cast(), 10f32.to_bits())
+        };
+        wr::<GPtr<u8>>(slot, 4, r);
+    }
+    let lp = rd::<GPtr<u8>>(group, 0x2A8);
+    if lp.is_null() || (!ped.is_null() && lp != ped) {
+        return;
+    }
+    let t = task_new(0x38);
+    let r = if t.is_null() {
+        GPtr::NULL
+    } else {
+        let rnd = sa_core::orig::at_site(0x5F6D47, rand) & 0xFFFF;
+        let dir = X87::from_i32(rnd).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x859000).read()).ftol() as u32 as i32;
+        wander_gang_ctor_alloc(t, 4, dir, 5000, 1, g::<u32>(0x86FCB0).read())
+    };
+    wr::<GPtr<u8>>(group, 0x2AC, r);
+}
+
 /// Every registration of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FOLLOW_LIMITED_ALLOCATE_DEFAULT_TASKS,
+    HOOK_GROUP_TELEPORT,
     HOOK_GROUP_CTOR,
     HOOK_PGI_CTOR_PORT,
     HOOK_MEMBERSHIP_ADD_MEMBER_PORT,

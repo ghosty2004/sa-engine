@@ -41,10 +41,12 @@ pub fn pre_render(this: GPtr<u8>) {
 }
 
 /// `CAnimatedBuilding::ProcessControl()` (0x537A30): `ret`. Not hookable (too short).
+#[sa_core::native(addr = 0x537A30, conv = thiscall, name = "CAnimatedBuilding::ProcessControl")]
 pub fn process_control(_this: GPtr<u8>) {}
 
 /// `CAnimatedBuilding::ProcessCollision()` (0x537A40): `m_nFlags (+0x1C) |= 0x20`
 /// (`bUsesCollision`... bit 5). Not hookable: 4-byte `or` then `ret` (5 bytes with the `ret`).
+#[sa_core::native(addr = 0x537A40, conv = thiscall, name = "CAnimatedBuilding::ProcessCollision")]
 pub fn process_collision(this: GPtr<u8>) {
     wr::<u32>(this, 0x1C, rd::<u32>(this, 0x1C) | 0x20);
 }

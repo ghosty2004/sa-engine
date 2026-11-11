@@ -1,0 +1,11 @@
+# PORT-HUD-3 lead ports (plain L2): credits, CMenuSystem grid / standard menus, DIReleaseMouse, thunks
+0x53D5B0
+0x5A8660
+0x5A87C0
+0x5A87F0
+0x580BD0
+0x5820E0
+0x5816E0
+0x580E00
+0x4410E0
+0x745A70

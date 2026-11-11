@@ -17,12 +17,14 @@ pub fn event_do_inform_vehicle_occupants_420ec0(_this: GPtr<u8>, _a0: u32) -> u8
 
 /// `CEventAcquaintancePed::GetSourceEntity` (0x420F10): `mov eax, dword ptr [ecx + 0x14]; ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x420F10, conv = thiscall, name = "CEventAcquaintancePed::GetSourceEntity")]
 pub fn event_acquaintance_ped_get_source_entity_420f10(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x14)
 }
 
 /// `CEventAcquaintancePedHate::GetEventType` (0x420F40): `mov eax, 0x24; ret` -> 36.
 /// Not hookable: protection code reads the patched bytes (`push 0x420F44` at 0x146747B, INF-20).
+#[sa_core::native(addr = 0x420F40, conv = thiscall, name = "CEventAcquaintancePedHate::GetEventType")]
 pub fn event_acquaintance_ped_hate_get_event_type_420f40(_this: GPtr<u8>) -> u32 {
     0x24
 }
@@ -35,36 +37,42 @@ pub fn event_acquaintance_ped_hate_get_event_priority_420fd0(_this: GPtr<u8>) ->
 
 /// `CTaskComplex::GetSubTask` (0x421190): `mov eax, dword ptr [ecx + 8]; ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x421190, conv = thiscall, name = "CTaskComplex::GetSubTask")]
 pub fn task_complex_get_sub_task_421190(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x8)
 }
 
 /// `CTaskComplex::IsSimple` (0x4211A0): `xor al, al; ret` -> false (AL).
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4211A0, conv = thiscall, name = "CTaskComplex::IsSimple")]
 pub fn task_complex_is_simple_4211a0(_this: GPtr<u8>) -> u8 {
     0
 }
 
 /// `CEvent::HasEditableResponse` (0x43E1E0): `xor al, al; ret` -> false (AL).
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x43E1E0, conv = thiscall, name = "CEvent::HasEditableResponse")]
 pub fn event_has_editable_response_43e1e0(_this: GPtr<u8>) -> u8 {
     0
 }
 
 /// `CEvent::GetSourceEntity` (0x43E1F0): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x43E1F0, conv = thiscall, name = "CEvent::GetSourceEntity")]
 pub fn event_get_source_entity_43e1f0(_this: GPtr<u8>) -> u32 {
     0
 }
 
 /// `CTaskSimple::GetSubTask` (0x43E300): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x43E300, conv = thiscall, name = "CTaskSimple::GetSubTask")]
 pub fn task_simple_get_sub_task_43e300(_this: GPtr<u8>) -> u32 {
     0
 }
 
 /// `CTaskSimple::IsSimple` (0x43E310): `mov al, 1; ret` -> true (AL).
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x43E310, conv = thiscall, name = "CTaskSimple::IsSimple")]
 pub fn task_simple_is_simple_43e310(_this: GPtr<u8>) -> u8 {
     1
 }
@@ -113,6 +121,7 @@ pub fn task_simple_run_anim_get_task_type_48dea0(this: GPtr<u8>) -> u32 {
 
 /// `CTaskComplexWanderStandard::GetWanderType` (0x48E5D0): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x48E5D0, conv = thiscall, name = "CTaskComplexWanderStandard::GetWanderType")]
 pub fn task_complex_wander_standard_get_wander_type_48e5d0(_this: GPtr<u8>) -> u32 {
     0
 }
@@ -131,6 +140,7 @@ pub fn event_affects_ped_group_4abff0(_this: GPtr<u8>, _a0: u32) -> u8 {
 
 /// `CEvent::CanBeInterruptedBySameEvent` (0x4AC000): `xor al, al; ret` -> false (AL).
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AC000, conv = thiscall, name = "CEvent::CanBeInterruptedBySameEvent")]
 pub fn event_can_be_interrupted_by_same_event_4ac000(_this: GPtr<u8>) -> u8 {
     0
 }
@@ -143,6 +153,7 @@ pub fn event_ped_collision_with_ped_get_event_type_4aca40(_this: GPtr<u8>) -> u3
 
 /// `CEventPedCollisionWithPed::GetLifeTime` (0x4ACA50): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ACA50, conv = thiscall, name = "CEventPedCollisionWithPed::GetLifeTime")]
 pub fn event_ped_collision_with_ped_get_life_time_4aca50(_this: GPtr<u8>) -> u32 {
     0
 }
@@ -173,12 +184,14 @@ pub fn event_building_collision_get_event_type_4acfb0(_this: GPtr<u8>) -> u32 {
 
 /// `CEventBuildingCollision::GetLifeTime` (0x4ACFC0): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ACFC0, conv = thiscall, name = "CEventBuildingCollision::GetLifeTime")]
 pub fn event_building_collision_get_life_time_4acfc0(_this: GPtr<u8>) -> u32 {
     0
 }
 
 /// `CEventBuildingCollision::CanBeInterruptedBySameEvent` (0x4ACFD0): `mov al, 1; ret` -> true (AL).
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ACFD0, conv = thiscall, name = "CEventBuildingCollision::CanBeInterruptedBySameEvent")]
 pub fn event_building_collision_can_be_interrupted_by_same_event_4acfd0(_this: GPtr<u8>) -> u8 {
     1
 }
@@ -227,12 +240,14 @@ pub fn event_potential_walk_into_ped_get_event_type_4ae760(_this: GPtr<u8>) -> u
 
 /// `CEventPotentialWalkIntoPed::GetLifeTime` (0x4AE770): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AE770, conv = thiscall, name = "CEventPotentialWalkIntoPed::GetLifeTime")]
 pub fn event_potential_walk_into_ped_get_life_time_4ae770(_this: GPtr<u8>) -> u32 {
     0
 }
 
 /// `CEventPotentialWalkIntoPed::GetSourceEntity` (0x4AE780): `mov eax, dword ptr [ecx + 0x20]; ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AE780, conv = thiscall, name = "CEventPotentialWalkIntoPed::GetSourceEntity")]
 pub fn event_potential_walk_into_ped_get_source_entity_4ae780(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x20)
 }
@@ -263,6 +278,7 @@ pub fn vt_85b0b0_get_event_type_4aee60(_this: GPtr<u8>) -> u32 {
 
 /// `vt_85b0b0::GetSourceEntity` (0x4AEE80): `mov eax, dword ptr [ecx + 0x14]; ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AEE80, conv = thiscall, name = "vt_85b0b0::GetSourceEntity")]
 pub fn vt_85b0b0_get_source_entity_4aee80(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x14)
 }
@@ -293,6 +309,7 @@ pub fn event_attractor_get_event_type_4af3d0(_this: GPtr<u8>) -> u32 {
 
 /// `CEventAttractor::GetEventPriority` (0x4AF3F0): `xor eax, eax; ret` -> 0.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AF3F0, conv = thiscall, name = "CEventAttractor::GetEventPriority")]
 pub fn event_attractor_get_event_priority_4af3f0(_this: GPtr<u8>) -> u32 {
     0
 }
@@ -323,12 +340,14 @@ pub fn event_sound_quiet_get_event_type_5dea60(_this: GPtr<u8>) -> u32 {
 
 /// `CEventSoundQuiet::GetSourceEntity` (0x5DEA80): `mov eax, dword ptr [ecx + 0x14]; ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5DEA80, conv = thiscall, name = "CEventSoundQuiet::GetSourceEntity")]
 pub fn event_sound_quiet_get_source_entity_5dea80(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x14)
 }
 
 /// `CEventSoundQuiet::GetLocalSoundLevel` (0x5DEA90): `fld dword ptr [ecx + 0x18]; ret` (ST0).
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5DEA90, conv = thiscall, name = "CEventSoundQuiet::GetLocalSoundLevel")]
 pub fn event_sound_quiet_get_local_sound_level_5dea90(this: GPtr<u8>) -> X87 {
     x(rd::<f32>(this, 0x18))
 }
@@ -425,6 +444,7 @@ pub fn vt_86cac8_get_event_priority_5ff8d0(_this: GPtr<u8>) -> u32 {
 
 /// `FUN_005ffee0` (0x5FFEE0): `mov eax, dword ptr [ecx + 0x4c]; ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FFEE0, conv = thiscall, name = "FUN_005ffee0")]
 pub fn fun_005ffee0_5ffee0(this: GPtr<u8>) -> u32 {
     rd::<u32>(this, 0x4c)
 }

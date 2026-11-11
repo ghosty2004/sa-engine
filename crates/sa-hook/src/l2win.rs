@@ -121,6 +121,10 @@ static INV_TMP: AtomicU32 = AtomicU32::new(0);
 /// direction at 0x740DAC) sees the same bytes in both runs instead of residue whose position depends on
 /// the Rust frames above it. 0 = off.
 pub(crate) static STACK_FILL_DWORDS: AtomicU32 = AtomicU32::new(0);
+/// The dword the stack fill writes (`SA_L2_STACKFILL_VALUE`, default 0). In L2 mode (original, then Rust
+/// on the same state) a non-zero pattern makes both runs see the same uninitialised stack without letting
+/// a port that zeroes a local the original leaves uninitialised pass (PORT-AUDIO-3: `peek` ports).
+pub(crate) static STACK_FILL_VALUE: AtomicU32 = AtomicU32::new(0);
 
 /// Shared entry of every hook's L2 stub (`push i; jmp l2_common`).
 #[unsafe(naked)]
@@ -190,7 +194,7 @@ unsafe extern "C" fn l2_invoke(inv: *mut Invoke) {
         "jz 8f",
         "push eax",
         "lea edi, [esp-4]",
-        "xor eax, eax",
+        "mov eax, [{fillv}]",
         "std",
         "rep stosd",
         "cld",
@@ -272,6 +276,7 @@ unsafe extern "C" fn l2_invoke(inv: *mut Invoke) {
         target = sym INV_TARGET,
         tmp = sym INV_TMP,
         fill = sym STACK_FILL_DWORDS,
+        fillv = sym STACK_FILL_VALUE,
     )
 }
 
@@ -471,11 +476,12 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
         ));
     }
     let hooks = c.hooks.clone();
-    if c.split.is_some() && c.stack_fill > 0 {
+    if c.stack_fill > 0 {
+        STACK_FILL_VALUE.store(c.stack_fill_value, Ordering::Release);
         STACK_FILL_DWORDS.store(c.stack_fill / 4, Ordering::Release);
         log(&format!(
-            "l2: split-run stack fill: {:#x} bytes below the invoker zeroed before every sampled call",
-            c.stack_fill
+            "l2: stack fill: {:#x} bytes below the invoker set to {:#x} before every sampled call",
+            c.stack_fill, c.stack_fill_value
         ));
     }
     let _ = CFG.set(c);

@@ -44,6 +44,7 @@ pub const STR_NT: u32 = 0x85BB94;
 pub const STR_DY: u32 = 0x85BB90;
 
 /// `CTimeInfo::GetTimeOn` (0x407320): `movzx eax, byte [ecx]` (unhookable: 4 bytes).
+#[sa_core::native(addr = 0x407320, conv = thiscall, name = "CTimeInfo::GetTimeOn")]
 pub fn get_time_on(this: TimeInfoPtr) -> u32 {
     this.read() as u32
 }
@@ -113,11 +114,13 @@ pub fn find_other_time_model(this: TimeInfoPtr, name: GPtr<u8>) -> GPtr<u8> {
 // ---------------------------------------------------------------------------- CTimeModelInfo ---
 
 /// `CTimeModelInfo::GetModelType` (0x4C5660): AL = 3 (unhookable).
+#[sa_core::native(addr = 0x4C5660, conv = thiscall, name = "CTimeModelInfo::GetModelType")]
 pub fn time_get_model_type(_this: MiPtr) -> u8 {
     3
 }
 
 /// `CTimeModelInfo::GetTimeInfo` (0x4C5670): `this + 0x20` (unhookable).
+#[sa_core::native(addr = 0x4C5670, conv = thiscall, name = "CTimeModelInfo::GetTimeInfo")]
 pub fn time_get_time_info(this: MiPtr) -> TimeInfoPtr {
     this.byte_add(0x20).cast()
 }
@@ -137,11 +140,13 @@ pub fn time_scalar_deleting_destructor(this: MiPtr, flags: u32) -> MiPtr {
 // ------------------------------------------------------------------------- CLodTimeModelInfo ---
 
 /// `CLodTimeModelInfo::GetModelType` (0x4C56C0, catalogue `vfunc_4`): AL = 3 (unhookable).
+#[sa_core::native(addr = 0x4C56C0, conv = thiscall, name = "CLodTimeModelInfo::GetModelType")]
 pub fn lod_time_get_model_type(_this: MiPtr) -> u8 {
     3
 }
 
 /// `CLodTimeModelInfo::GetTimeInfo` (0x4C56D0, catalogue `vfunc_5`): `this + 0x24` (unhookable).
+#[sa_core::native(addr = 0x4C56D0, conv = thiscall, name = "CLodTimeModelInfo::GetTimeInfo")]
 pub fn lod_time_get_time_info(this: MiPtr) -> TimeInfoPtr {
     this.byte_add(0x24).cast()
 }

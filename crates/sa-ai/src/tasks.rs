@@ -263,6 +263,7 @@ orig! {
 
 /// `CTaskComplexWanderGang::ScanForStuff(CPed*)` (0x66F640): `ret 4`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x66F640, conv = thiscall, name = "CTaskComplexWanderGang::ScanForStuff")]
 pub fn wander_gang_scan_for_stuff(_this: GPtr<u8>, _ped: GPtr<u8>) {}
 
 /// `CTaskComplexWanderProstitute::CreateFirstSubTask(CPed*)` (0x674920): tail jump to

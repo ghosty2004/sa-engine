@@ -88,7 +88,7 @@ fn model_info(e: GPtr<u8>) -> GPtr<u8> {
 /// distance from player 0's position (`FindPlayerCoors(-1)`) to the building's bound centre is less than the
 /// model's bounding-sphere radius + 30 (x87, PC24: `sqrt((dz*dz + dy*dy) + dx*dx)`); unordered gives false.
 #[hook(addr = 0x699230, conv = cdecl, name = "CCover::ShouldThisBuildingHaveItsCoverPointsCreated",
-       expect = "83 EC 18 56 57 8D 44 24 08", unverified = "mvpb-ai-1", route = "L2",
+       expect = "83 EC 18 56 57 8D 44 24 08", route = "L2",
        hazards = "x87-transcendental", note = "fsqrt result compared, not stored")]
 pub fn cover_should_building_have_cover_points(b: GPtr<u8>) -> u8 {
     let mut ploc = [0.0f32; 3];
@@ -108,7 +108,7 @@ pub fn cover_should_building_have_cover_points(b: GPtr<u8>) -> u8 {
 /// equals the argument releases its reference (when non-null), is marked unused, its entity cleared and the count
 /// decremented.
 #[hook(addr = 0x698740, conv = cdecl, name = "CCover::RemoveCoverPointsForThisEntity",
-       expect = "56 57 8B 7C 24 0C", unverified = "mvpb-ai-1", route = "L2", hazards = "none")]
+       expect = "56 57 8B 7C 24 0C", route = "L2", hazards = "none")]
 pub fn cover_remove_points_for_entity(e: GPtr<u8>) {
     for i in 0..100usize {
         let pt: GPtr<u8> = GPtr::from_addr(COVER_POINTS + 0x1C * i);
@@ -136,7 +136,7 @@ pub fn cover_remove_points_for_entity(e: GPtr<u8>) {
 /// the low byte of the caller's argument slot (the building pointer), and that whole dword is what is pushed as the
 /// last argument.
 #[hook(addr = 0x699120, conv = cdecl, name = "CCover::FindCoverPointsForThisBuilding",
-       expect = "83 EC 34 53 55 56", unverified = "mvpb-ai-1", route = "L2",
+       expect = "83 EC 34 53 55 56", route = "L2",
        hazards = "x87-transcendental", note = "FPATAN result scaled and truncated by _ftol; overwrites the low byte of its own argument slot")]
 pub fn cover_find_points_for_building(b: GPtr<u8>) {
     let mi = model_info(b);
@@ -173,7 +173,7 @@ pub fn cover_find_points_for_building(b: GPtr<u8>) {
 /// `CTaskComplexFacial::Constructor` (0x690D20): `CTaskComplex` base, vtable 0x870ADC, +0x10 = +0x18 = -1, +0xC =
 /// `(int)((rand() & 0xFFFF) * 3.0517578e-5 * 100) > 70`, +0xD = +0xE = 0. Returns this.
 #[hook(addr = 0x690D20, conv = thiscall, name = "CTaskComplexFacial::Constructor", this = "CTaskComplexFacial",
-       expect = "51 56 8B F1 E8 87 96 F8 FF", unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       expect = "51 56 8B F1 E8 87 96 F8 FF", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_ctor(this: GPtr<u8>) -> GPtr<u8> {
     task_complex_ctor(this);
     wr::<u32>(this, 0, 0x870ADC);
@@ -202,7 +202,7 @@ fn ref_dtor(this: GPtr<u8>, vt: u32, off: isize, last: u32) {
 
 /// `FUN_004af890` (0x4AF890): event destructor: vtable 0x85B250, releases the entity at +0x14, base vtable 0x85AB38.
 #[hook(addr = 0x4AF890, conv = thiscall, name = "FUN_004af890", expect = "6A FF 68 E8 9E 83 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn event_dtor_4af890(this: GPtr<u8>) {
     ref_dtor(this, 0x85B250, 0x14, 0x85AB38);
 }
@@ -210,7 +210,7 @@ pub fn event_dtor_4af890(this: GPtr<u8>) {
 /// `FUN_005dea00` (0x5DEA00): `CEventSoundQuiet` destructor: vtable 0x86C2B0, releases the entity at +0x14, then
 /// `CEventEditableResponse::~CEventEditableResponse`.
 #[hook(addr = 0x5DEA00, conv = thiscall, name = "FUN_005dea00", expect = "6A FF 68 08 D8 83 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn event_dtor_5dea00(this: GPtr<u8>) {
     ref_dtor(this, 0x86C2B0, 0x14, 0);
     editable_response_dtor(this);
@@ -219,7 +219,7 @@ pub fn event_dtor_5dea00(this: GPtr<u8>) {
 /// `FUN_004aedf0(CEntity*)` (0x4AEDF0, `ret 4`): event constructor: +4 = 0, +8 = 0 (byte), +0xC = 1 (byte),
 /// +0xE = 200 (word), +0x10 = -1 (word), vtable 0x85B0B0, +0x14 = entity (registered when non-null). Returns this.
 #[hook(addr = 0x4AEDF0, conv = thiscall, name = "FUN_004aedf0", expect = "6A FF 68 48 9D 83 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn event_ctor_4aedf0(this: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 4, 0);
     wr::<u8>(this, 8, 0);
@@ -237,7 +237,7 @@ pub fn event_ctor_4aedf0(this: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> {
 /// `FUN_004aeea0` (0x4AEEA0): destructor of the 0x4AEDF0 event: vtable 0x85B0B0, releases +0x14, base vtable
 /// 0x85AB38.
 #[hook(addr = 0x4AEEA0, conv = thiscall, name = "FUN_004aeea0", expect = "6A FF 68 68 9D 83 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn event_dtor_4aeea0(this: GPtr<u8>) {
     ref_dtor(this, 0x85B0B0, 0x14, 0x85AB38);
 }
@@ -270,7 +270,7 @@ pub fn event_dtor_4aed60(this: GPtr<u8>) {
 /// base, vtable 0x86EE28, +8 = 0 (byte), +0xC = 0, +0x10 = vehicle, +0x14 = second argument, +0x18..+0x1A = 0; the
 /// vehicle reference is registered when non-null. Returns this.
 #[hook(addr = 0x6470E0, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver", expect = "6A FF 68 E8 26 84 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn car_set_ped_in_as_driver_ctor(this: GPtr<u8>, veh: GPtr<u8>, a: u32) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0, 0x86EE28);
@@ -290,7 +290,7 @@ pub fn car_set_ped_in_as_driver_ctor(this: GPtr<u8>, veh: GPtr<u8>, a: u32) -> G
 /// `FUN_00647170` (0x647170): `CTaskSimpleCarSetPedInAsDriver` destructor: vtable 0x86EE28, releases the vehicle
 /// at +0x10, then the `CTaskSimple` base destructor.
 #[hook(addr = 0x647170, conv = thiscall, name = "FUN_00647170", expect = "6A FF 68 08 27 84 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn car_set_ped_in_as_driver_dtor(this: GPtr<u8>) {
     ref_dtor(this, 0x86EE28, 0x10, 0);
     task_simple_dtor(this);
@@ -300,7 +300,7 @@ pub fn car_set_ped_in_as_driver_dtor(this: GPtr<u8>) {
 /// `CTaskSimple` base, +0x14 = door, vtable 0x86EE04, +8 = 0 (byte), +0xC = 0, +0x10 = vehicle, +0x18 = third
 /// argument, +0x1C..+0x1E = 0; the vehicle reference is registered when non-null. Returns this.
 #[hook(addr = 0x646FE0, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger", expect = "6A FF E9 13 AC DB FF",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes,entry-protection-read")]
+       route = "L2", hazards = "heap-writes,entry-protection-read")]
 pub fn car_set_ped_in_as_passenger_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32, a: u32) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0x14, door);
@@ -322,7 +322,7 @@ pub fn car_set_ped_in_as_passenger_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32
 /// `CTaskComplex` base, +0xC = move state, +0x10 = direction byte, vtable 0x86FE84, +0x14 = fourth argument,
 /// +0x18 = +0x1C = 0xFFFF (words), +0x24 = (+0x24 & 0xF0) | (flag & 1), +0x20 = 0. Returns this.
 #[hook(addr = 0x66F450, conv = thiscall, name = "CTaskComplexWander::Constructor", this = "CTaskComplexWander",
-       expect = "56 8B F1 E8 58 AF FA FF", unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       expect = "56 8B F1 E8 58 AF FA FF", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_wander_ctor(this: GPtr<u8>, ms: u32, dir: u8, flag: u8, f: u32) -> GPtr<u8> {
     task_complex_ctor(this);
     wr::<u32>(this, 0xC, ms);
@@ -339,7 +339,7 @@ pub fn task_complex_wander_ctor(this: GPtr<u8>, ms: u32, dir: u8, flag: u8, f: u
 
 /// `CPedGroupMembership::IsLeader(const CPed*)` (0x5F69C0, `ret 4`): ped non-null and equal to the leader (+0x20).
 #[hook(addr = 0x5F69C0, conv = thiscall, name = "CPedGroupMembership::IsLeader", this = "CPedGroupMembership",
-       expect = "8B 44 24 04 85 C0", unverified = "mvpb-ai-1", route = "L2", hazards = "none")]
+       expect = "8B 44 24 04 85 C0", route = "L2", hazards = "none")]
 pub fn group_membership_is_leader(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     u32::from(!ped.is_null() && rd::<u32>(this, 0x20) == ped.addr() as u32)
 }
@@ -350,7 +350,7 @@ pub fn group_membership_is_leader(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
 /// current event (+8) the clone is stored; otherwise the new one must `BaseEventTakesPriorityOverBaseEvent` the
 /// current one, which is deleted and replaced by the clone. Returns AL = stored.
 #[hook(addr = 0x5F7470, conv = thiscall, name = "CPedGroupIntelligence::AddEvent-", this = "CPedGroupIntelligence",
-       expect = "56 8B 74 24 08 8B 06", unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       expect = "56 8B 74 24 08 8B 06", route = "L2", hazards = "heap-writes")]
 pub fn pgi_add_event(this: GPtr<u8>, ev: GPtr<u8>) -> u8 {
     if v_get_event_type(ev) != 0x2F {
         return 0;
@@ -396,7 +396,7 @@ pub fn pgi_add_event(this: GPtr<u8>, ev: GPtr<u8>) -> u8 {
 
 /// `FUN_0061a3a0` (0x61A3A0): `CTaskSimple` base destructor: vtable 0x86D48C.
 #[hook(addr = 0x61A3A0, conv = thiscall, name = "FUN_0061a3a0", expect = "C7 01 8C D4 86 00 C3",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn task_simple_dtor_61a3a0(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D48C);
 }
@@ -404,7 +404,7 @@ pub fn task_simple_dtor_61a3a0(this: GPtr<u8>) {
 /// `FUN_0061a3d0` (0x61A3D0): `CTaskComplex` base destructor: vtable 0x86D4CC, deletes the sub-task (+8) when set
 /// (scalar deleting destructor, flag 1), +8 = 0, vtable 0x86D48C.
 #[hook(addr = 0x61A3D0, conv = thiscall, name = "FUN_0061a3d0", expect = "6A FF 68 E8 F0 83 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn task_complex_dtor_61a3d0(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86D4CC);
     let s = rd::<GPtr<u8>>(this, 8);
@@ -417,7 +417,7 @@ pub fn task_complex_dtor_61a3d0(this: GPtr<u8>) {
 
 /// `FUN_0048e600` (0x48E600): complete destructor: vtable 0x85A200, then tail call of 0x669D20.
 #[hook(addr = 0x48E600, conv = thiscall, name = "FUN_0048e600", expect = "C7 01 00 A2 85 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn dtor_48e600(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85A200);
     dtor_669d20(this);
@@ -426,7 +426,7 @@ pub fn dtor_48e600(this: GPtr<u8>) {
 /// `FUN_0066f670` (0x66F670): `CTaskComplexWander` destructor: vtable 0x86FE84, then tail call of the
 /// `CTaskComplex` base destructor (0x61A3D0).
 #[hook(addr = 0x66F670, conv = thiscall, name = "FUN_0066f670", expect = "C7 01 84 FE 86 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn dtor_66f670(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86FE84);
     task_complex_dtor(this);
@@ -435,7 +435,7 @@ pub fn dtor_66f670(this: GPtr<u8>) {
 /// `FUN_005fe9c0(int32 pedType)` (0x5FE9C0, cdecl): 1 for the gang ped types 7..16 (signed compares), else 0 (the
 /// `return 1` path goes through the chunk at 0x401DFA).
 #[hook(addr = 0x5FE9C0, conv = cdecl, name = "FUN_005fe9c0", expect = "8B 44 24 04 83 F8 07",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn is_gang_ped_type(ty: i32) -> u32 {
     u32::from((7..=16).contains(&ty))
 }
@@ -471,7 +471,7 @@ orig! {
 /// `CTaskComplexFacial::StopAll` (0x691250): sets the stop flag (+0xE) when the sub-task (+8) is a
 /// `CTaskSimpleFacial` (type 0x12F).
 #[hook(addr = 0x691250, conv = thiscall, name = "CTaskComplexFacial::StopAll", this = "CTaskComplexFacial",
-       expect = "56 8B F1 8B 4E 08", unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       expect = "56 8B F1 8B 4E 08", route = "L2", hazards = "heap-writes")]
 pub fn task_complex_facial_stop_all(this: GPtr<u8>) {
     if v_get_task_type(rd::<GPtr<u8>>(this, 8)) == 0x12F {
         wr::<u8>(this, 0xE, 1);
@@ -481,7 +481,7 @@ pub fn task_complex_facial_stop_all(this: GPtr<u8>) {
 /// `CEntityScanner::Clear` (0x5FF9D0): releases and clears the 16 entity slots (+0xC) and the closest entity
 /// (+0x4C).
 #[hook(addr = 0x5FF9D0, conv = thiscall, name = "CEntityScanner::Clear", this = "CEntityScanner",
-       expect = "53 56 8B D9 57", unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       expect = "53 56 8B D9 57", route = "L2", hazards = "heap-writes")]
 pub fn entity_scanner_clear(this: GPtr<u8>) {
     for i in 0..16isize {
         let off = 0xC + 4 * i;
@@ -501,7 +501,7 @@ pub fn entity_scanner_clear(this: GPtr<u8>) {
 /// `FUN_004ab980` (0x4AB980): `CEventGroup` destructor body: vtable 0x85AAB0, then `CEventGroup::Flush(false)`;
 /// EAX is Flush's.
 #[hook(addr = 0x4AB980, conv = thiscall, name = "FUN_004ab980", expect = "6A 00 C7 01 B0 AA 85 00",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn event_group_dtor_4ab980(this: GPtr<u8>) -> u32 {
     wr::<u32>(this, 0, 0x85AAB0);
     event_group_flush(this, 0)
@@ -510,7 +510,7 @@ pub fn event_group_dtor_4ab980(this: GPtr<u8>) -> u32 {
 /// `delete` (0x6074E0, cdecl): frees a `CPedIntelligence` slot (0x294 bytes) of the pool at 0xB744C0: index =
 /// (p - objects) / 0x294 (signed), flag byte |= 0x80, first-free (+0xC) lowered to it.
 #[hook(addr = 0x6074E0, conv = cdecl, name = "delete", expect = "8B 4C 24 04 56",
-       unverified = "mvpb-ai-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn ped_intelligence_delete(p: GPtr<u8>) {
     let pool = rd::<GPtr<u8>>(GPtr::from_addr(0xB744C0), 0);
     let d = (p.addr() as u32).wrapping_sub(rd::<u32>(pool, 0)) as i32;

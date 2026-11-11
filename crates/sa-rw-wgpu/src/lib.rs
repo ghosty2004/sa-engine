@@ -12,6 +12,9 @@
 //! `CVisibilityPlugins::RenderEntity` set (gta-reversed, not yet measured on the original);
 //! what is *not* 1:1 is listed in `docs/arch/native-demo.md`.
 
+pub mod d3d9;
+pub mod sm;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 

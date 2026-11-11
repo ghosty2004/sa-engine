@@ -38,6 +38,8 @@ mod testexe;
 #[cfg(windows)]
 mod cdsync;
 #[cfg(windows)]
+mod crashlog;
+#[cfg(windows)]
 mod detaudio;
 #[cfg(windows)]
 mod detwin;

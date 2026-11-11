@@ -36,6 +36,16 @@ pub const MODULES: &[&[HookReg]] = &[
     building::HOOKS,
     statics::HOOKS,
     crate::mvpb_anim::HOOKS,
+    crate::anim_file_load::HOOKS,
+    crate::rp_anim_blend::HOOKS,
+];
+
+/// Every `#[native]` registration of this crate (phase B entries of ports that cannot be hooked).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[
+    crate::rp_anim_blend::NATIVE_RP_ANIM_BLEND_FRAME_GET_NAME,
+    crate::manager::NATIVE_GET_ANIMATION_BLOCK,
+    crate::rp_anim_blend::NATIVE_RP_ANIM_BLEND_CLUMP_GET_FIRST_ASSOCIATION,
+    crate::rp_anim_blend::NATIVE_RP_ANIM_BLEND_CLUMP_IS_INITIALIZED,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

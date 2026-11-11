@@ -959,6 +959,7 @@ pub fn g_task_simple_stand_still_make_abortable_4b8690(this: u32, _a0: u32, a1: 
 
 /// `CTaskSimplePlayHandSignalAnim::MakeAbortable` (0x61AF50): make-abortable, thiscall, `ret 12`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x61AF50, conv = thiscall, name = "CTaskSimplePlayHandSignalAnim::MakeAbortable")]
 pub fn g_task_simple_play_hand_signal_anim_make_abortable_61af50(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = c_61a790_t3(this, a0, a1, a2);
     v1 as u8
@@ -2082,6 +2083,7 @@ pub fn g_task_simple_ikchain_make_abortable_639450(this: u32, _a0: u32, a1: u32,
 
 /// `CTaskSimpleDieInCar::ProcessPed` (0x6398F0): virtual-leaf, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x6398F0, conv = thiscall, name = "CTaskSimpleDieInCar::ProcessPed")]
 pub fn g_task_simple_die_in_car_process_ped_6398f0(this: u32, a0: u32) -> u8 {
     let v1 = c_6397e0_t1(this, a0);
     v1 as u8

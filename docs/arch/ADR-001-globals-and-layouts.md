@@ -182,8 +182,10 @@ naked wrapper snapshots the `W` bytes below the entry ESP (`W` covers the whole 
 its callees use, e.g. 0x800, so no Rust frame survives), calls the shim, puts the snapshot back (slots
 the original never writes keep their earlier residue), applies the recorded writes, and returns with the
 shim's EAX/EDX/ECX/ST0. Limits: residue the original's callees leave deeper than the window, or that
-depends on their internal paths, is documented per port; footprint hooks are not reentrant (main thread,
-no nesting) and cannot be combined with `preserve`/`entry_eax`. Phases B/C: no wrapper, the call records
+depends on their internal paths, is documented per port; footprint hooks run on the main thread, may
+nest (each hook has its own state; `FOOTPRINT_CUR` names the innermost, PORT-CAM-3: `CCam::Process` calls
+original code that calls `RwV3dNormalize`) but must not recurse into themselves, and cannot be combined with
+`preserve`/`entry_eax`. Phases B/C: no wrapper, the call records
 nothing. Diagnose readers with `SA_COV_PEEK` (docs/re/l2-oracle.md).
 
 ## 6. Phase B/C path (what changes later, and what does not)

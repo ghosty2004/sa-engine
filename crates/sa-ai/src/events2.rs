@@ -1178,6 +1178,7 @@ fn editable_entity_ctor(this: GPtr<u8>, ent: GPtr<u8>, vtbl: u32) -> GPtr<u8> {
 /// protection stub that pushes the SEH handler): editable-response fields, `vtbl = 0x85B330`, the ped
 /// at +0x14 (registered when set).
 /// Not hookable: protection code reads the patched bytes (0x403A0D reads 0x4B0703).
+#[sa_core::native(addr = 0x4B0700, conv = thiscall, name = "CEventGunAimedAt::CEventGunAimedAt")]
 pub fn event_gun_aimed_at_ctor_4b0700(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     editable_entity_ctor(this, ped, 0x85B330)
 }

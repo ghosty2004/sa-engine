@@ -47,10 +47,12 @@ orig! {
 }
 
 /// `CMemoryMgr::Init` (0x72F3B0): empty (`ret`). Not hookable: a lone `ret` cannot be relocated.
+#[crate::native(addr = 0x72F3B0, conv = cdecl, name = "CMemoryMgr::Init")]
 pub fn init() {}
 
 /// 0x72F3C0: an empty function (`ret`) called once from WinMain (gta-reversed
 /// `nullsub_0x72F3C0`). Not hookable (lone `ret`).
+#[crate::native(addr = 0x72F3C0, conv = cdecl, name = "nullsub_0x72F3C0")]
 pub fn nullsub_72f3c0() {}
 
 /// `CMemoryMgr::Malloc(size)` (0x72F420, cdecl).

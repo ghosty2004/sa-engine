@@ -1,0 +1,11 @@
+# PORT-CAM-3 (parent) hooks verified in split mode (stack-footprint ports; state the original cannot run twice)
+0x526FC0
+0x5150E0
+0x520190
+0x527FA0
+0x5267C0
+0x526950
+0x526AE0
+0x526C80
+0x526E20
+0x50D930

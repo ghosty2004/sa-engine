@@ -756,6 +756,110 @@ pub fn rw_sse2_v3d_transform_vector(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -
 }
 
 /// Every `#[hook]` of this module.
+/// `RwMatrixOrthoNormalize(RwMatrix* dst, const RwMatrix* src)` (0x7F1920, a `jmp` to 0x7F1930;
+/// returns `dst`) (STD-6). On a stack copy of src's right R, up U, at A: each is scaled by
+/// `_rwInvSqrt` of its squared length (`(y*y + x*x) + z*z`). If an inverse length is not > 0 (R, then U,
+/// then A checked) that axis is rebuilt from the other two; otherwise the axis pair with the smallest
+/// `|dot|` (|A.U|, |A.R|, |U.R|, ties as the original's `test ah,5` compares) keeps its first member and
+/// the third axis is rebuilt: with (b, s, d) = the chosen triple, `d = s x b` normalised, then
+/// `s = b x d` normalised (`(x*x + y*y) + z*z` here). The matrix (position copied) goes to dst and its
+/// flags +0xC get `& ~0x20000 | 3`.
+#[sa_core::native(addr = 0x7F1920, conv = cdecl, name = "RwMatrixOrthoNormalize")]
+pub fn matrix_ortho_normalize(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
+    let inv = |v: X87| crate::vector::rw_inv_sqrt(v.to_f32());
+    let mut v = [[0f32; 3]; 3];
+    for (i, a) in v.iter_mut().enumerate() {
+        for (j, c) in a.iter_mut().enumerate() {
+            *c = rd::<f32>(src, (i * 0x10 + j * 4) as isize);
+        }
+    }
+    let pos: [u32; 3] = [rd(src, 0x30), rd(src, 0x34), rd(src, 0x38)];
+    let len2 = |a: &[f32; 3]| x(a[1]).fmul_m(a[1]).fadd(x(a[0]).fmul_m(a[0])).fadd(x(a[2]).fmul_m(a[2]));
+    let mut il = [X87::zero(); 3];
+    for i in 0..3 {
+        let k = inv(len2(&v[i]));
+        il[i] = k;
+        for c in v[i].iter_mut() {
+            *c = k.fmul_m(*c).to_f32();
+        }
+    }
+    let (ir, iu) = (il[0].to_f32(), il[1].to_f32());
+    let z = X87::zero();
+    let le = |a: X87| a.fcom(z).test_any(0x41);
+    const R: usize = 0;
+    const U: usize = 1;
+    const A: usize = 2;
+    let (b, s, d) = if le(x(ir)) {
+        (U, A, R)
+    } else if le(x(iu)) {
+        (A, R, U)
+    } else if le(il[2]) {
+        (R, U, A)
+    } else {
+        let dot = |p: usize, q: usize| {
+            x(v[p][1]).fmul_m(v[q][1]).fadd(x(v[p][0]).fmul_m(v[q][0])).fadd(x(v[p][2]).fmul_m(v[q][2]))
+        };
+        let abs32 = |t: X87| {
+            let f = t.to_f32();
+            if t.fcom(z).test_any(0x01) { -f } else { f }
+        };
+        let au = abs32(dot(A, U));
+        let ar = abs32(dot(A, R));
+        let ur = dot(U, R);
+        let ur = if ur.fcom(z).test_any(0x01) { ur.fchs() } else { ur };
+        if x(au).fcom(x(ar)).test_parity(0x05) {
+            if x(ar).fcom(ur).test_parity(0x05) { (R, U, A) } else { (A, R, U) }
+        } else if !x(au).fcom(ur).test_parity(0x05) {
+            (U, A, R)
+        } else {
+            (R, U, A)
+        }
+    };
+    let cross_norm = |v: &mut [[f32; 3]; 3], b: usize, s: usize, d: usize, b_first: bool| {
+        // d = s x b, element by element as the original forms them
+        let (bb, ss) = (v[b], v[s]);
+        let dx = x(ss[2]).fmul_m(bb[1]).fsub(x(ss[1]).fmul_m(bb[2]));
+        let dy = x(bb[2]).fmul_m(ss[0]).fsub(x(ss[2]).fmul_m(bb[0]));
+        let dz = if b_first {
+            x(ss[1]).fmul_m(bb[0]).fsub(x(bb[1]).fmul_m(ss[0]))
+        } else {
+            x(bb[1]).fmul_m(ss[0]).fsub(x(ss[1]).fmul_m(bb[0]))
+        };
+        v[d] = [dx.to_f32(), dy.to_f32(), dz.to_f32()];
+        let (fx, fy) = (v[d][0], v[d][1]);
+        let k = inv(x(fx).fmul_m(fx).fadd(x(fy).fmul_m(fy)).fadd(dz.fmul(dz)));
+        v[d][0] = k.fmul_m(v[d][0]).to_f32();
+        let ny = x(v[d][1]).fmul(k);
+        v[d][1] = ny.to_f32();
+        let nz = x(v[d][2]).fmul(k);
+        v[d][2] = nz.to_f32();
+        (ny, nz)
+    };
+    // d = s x b (0x7F1BAB)
+    let (ny, nz) = cross_norm(&mut v, b, s, d, true);
+    // s = b x d (0x7F1C13): x from the register copies of d.y / d.z, y / z from memory
+    let bb = v[b];
+    let sx = x(bb[2]).fmul(ny).fsub(x(bb[1]).fmul(nz));
+    let sy = x(v[d][2]).fmul_m(bb[0]).fsub(x(bb[2]).fmul_m(v[d][0]));
+    let sz = x(bb[1]).fmul_m(v[d][0]).fsub(x(v[d][1]).fmul_m(bb[0]));
+    v[s] = [sx.to_f32(), sy.to_f32(), sz.to_f32()];
+    let (fx, fy) = (v[s][0], v[s][1]);
+    let k = inv(x(fx).fmul_m(fx).fadd(x(fy).fmul_m(fy)).fadd(sz.fmul(sz)));
+    for c in v[s].iter_mut() {
+        *c = k.fmul_m(*c).to_f32();
+    }
+    for (i, a) in v.iter().enumerate() {
+        for (j, c) in a.iter().enumerate() {
+            wr::<f32>(dst, (i * 0x10 + j * 4) as isize, *c);
+        }
+    }
+    wr::<u32>(dst, 0x30, pos[0]);
+    wr::<u32>(dst, 0x34, pos[1]);
+    wr::<u32>(dst, 0x38, pos[2]);
+    wr::<u32>(dst, 0xC, (rd::<u32>(dst, 0xC) & !0x20000) | 3);
+    dst
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_RW_MATRIX_SET_MULT_FN,
     HOOK_RW_MATRIX_DETERMINANT,

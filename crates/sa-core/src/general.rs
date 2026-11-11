@@ -89,3 +89,63 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_GET_RANDOM_NUMBER_IN_RANGE_I32,
     HOOK_GET_RANDOM_NUMBER_IN_RANGE_F32,
 ];
+
+/// Phase B entries (STD-6) of the `CGeneral` math ports sa-hook installs itself in phase A (its local
+/// hooks `limit_radian_angle_hook`, `limit_angle_hook`, `get_radian_angle_between_points_hook`,
+/// `get_atan_of_xy_hook`, `solve_quadratic_hook`): the same sa-math functions, ST0 results as f64.
+pub mod math_natives {
+    use crate::mem::GPtr;
+    use sa_math::general as g;
+
+    /// `CGeneral::LimitRadianAngle(angle)` (0x53CB50, ST0).
+    #[crate::native(addr = 0x53CB50, conv = cdecl, name = "CGeneral::LimitRadianAngle")]
+    pub fn limit_radian_angle(angle: f32) -> f64 {
+        g::limit_radian_angle_x87(angle).to_f64()
+    }
+
+    /// `CGeneral::LimitAngle(angle)` (0x53CB00, ST0); the original never returns when the loop step
+    /// cannot move the value (see `limit_angle_checked`), and neither does this.
+    #[crate::native(addr = 0x53CB00, conv = cdecl, name = "CGeneral::LimitAngle")]
+    pub fn limit_angle(angle: f32) -> f64 {
+        match g::limit_angle_checked(angle) {
+            Some(v) => v.to_f64(),
+            None => loop {
+                core::hint::spin_loop();
+            },
+        }
+    }
+
+    /// `CGeneral::GetRadianAngleBetweenPoints(x1, y1, x2, y2)` (0x53CBE0, ST0).
+    #[crate::native(addr = 0x53CBE0, conv = cdecl, name = "CGeneral::GetRadianAngleBetweenPoints-")]
+    pub fn get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 {
+        g::get_radian_angle_between_points_x87(x1, y1, x2, y2).to_f64()
+    }
+
+    /// `CGeneral::GetATanOfXY(x, y)` (0x53CC70, ST0).
+    #[crate::native(addr = 0x53CC70, conv = cdecl, name = "CGeneral::GetATanOfXY")]
+    pub fn get_atan_of_xy(x: f32, y: f32) -> f64 {
+        g::get_atan_of_xy_x87(x, y).to_f64()
+    }
+
+    /// `CGeneral::SolveQuadratic(a, b, c, x1, x2)` (0x53CE30, bool in AL): `*x2` stored before `*x1`.
+    #[crate::native(addr = 0x53CE30, conv = cdecl, name = "CGeneral::SolveQuadratic")]
+    pub fn solve_quadratic(a: f32, b: f32, c: f32, x1: GPtr<f32>, x2: GPtr<f32>) -> u8 {
+        match g::solve_quadratic(a, b, c) {
+            Some((r1, r2)) => {
+                x2.write(r2);
+                x1.write(r1);
+                1
+            }
+            None => 0,
+        }
+    }
+
+    /// Every `#[native]` of this module.
+    pub const NATIVES: &[crate::abi::NativeReg] = &[
+        NATIVE_LIMIT_RADIAN_ANGLE,
+        NATIVE_LIMIT_ANGLE,
+        NATIVE_GET_RADIAN_ANGLE_BETWEEN_POINTS,
+        NATIVE_GET_ATAN_OF_XY,
+        NATIVE_SOLVE_QUADRATIC,
+    ];
+}

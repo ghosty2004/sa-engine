@@ -490,10 +490,10 @@ impl App {
             self.speed = (self.speed * 1.25f32.powf(input.wheel)).clamp(1.0, 2000.0);
         }
         let mut speed = self.speed;
-        if input.is_held(Key::ShiftLeft) {
+        if input.is_held(Key::ShiftLeft) || input.is_held(Key::ShiftRight) {
             speed *= 5.0;
         }
-        if input.is_held(Key::AltLeft) {
+        if input.is_held(Key::AltLeft) || input.is_held(Key::AltRight) {
             speed *= 0.2;
         }
         let (f, r) = (v.cam.dir(), v.cam.right());
@@ -514,7 +514,7 @@ impl App {
         if input.is_held(Key::Space) || input.is_held(Key::E) {
             add([0.0, 0.0, 1.0], 1.0);
         }
-        if input.is_held(Key::Q) || input.is_held(Key::ControlLeft) {
+        if input.is_held(Key::Q) || input.is_held(Key::ControlLeft) || input.is_held(Key::ControlRight) {
             add([0.0, 0.0, 1.0], -1.0);
         }
         for (p, m) in v.cam.pos.iter_mut().zip(mv) {
@@ -523,8 +523,8 @@ impl App {
         // time of day / weather
         for k in &input.pressed {
             match k {
-                Key::BracketLeft | Key::Minus => v.minutes = (v.minutes - 60.0).rem_euclid(1440.0),
-                Key::BracketRight | Key::Equal => v.minutes = (v.minutes + 60.0).rem_euclid(1440.0),
+                Key::BracketLeft | Key::Minus | Key::NumpadSubtract => v.minutes = (v.minutes - 60.0).rem_euclid(1440.0),
+                Key::BracketRight | Key::Equal | Key::NumpadAdd => v.minutes = (v.minutes + 60.0).rem_euclid(1440.0),
                 Key::T => self.time_flow = !self.time_flow,
                 Key::Comma => v.weather = (v.weather + v.num_weathers() - 1) % v.num_weathers(),
                 Key::Period => v.weather = (v.weather + 1) % v.num_weathers(),
@@ -666,7 +666,7 @@ fn main() {
             started: Instant::now(),
             total_frames: 0,
         };
-        let r = run_windowed(WindowConfig { title: "sa-viewer".into(), width: w, height: h }, &mut app);
+        let r = run_windowed(WindowConfig::new("sa-viewer", w, h), &mut app);
         match (r, app.error.take()) {
             (_, Some(e)) => Err(e),
             (Err(e), None) => Err(e),

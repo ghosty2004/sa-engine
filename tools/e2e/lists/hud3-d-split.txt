@@ -1,0 +1,7 @@
+# PORT-HUD-3 CHud / CRadar drawing and PrintMap (split)
+0x5828A0
+0x587000
+0x58EAF0
+0x58E020
+0x589650
+0x575130

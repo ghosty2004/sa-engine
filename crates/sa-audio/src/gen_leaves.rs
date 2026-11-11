@@ -55,6 +55,7 @@ pub fn g_caecutscene_track_manager_play_preloaded_cutscene_track_4dbe70(this: u3
 
 /// `CAEPedAudioEntity::PlayWindRush` (0x4E1170): empty, thiscall, `ret 8`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4E1170, conv = thiscall, name = "CAEPedAudioEntity::PlayWindRush")]
 pub fn g_caeped_audio_entity_play_wind_rush_4e1170(_this: u32, _a0: u32, _a1: u32) {
 }
 
@@ -84,6 +85,7 @@ pub fn g_caeped_speech_audio_entity_is_global_context_uber_important_4e46f0(_thi
 
 /// `CAEPedlessSpeechAudioEntity::AddScriptSayEvent` (0x4E6080): empty, thiscall, `ret 20`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4E6080, conv = thiscall, name = "CAEPedlessSpeechAudioEntity::AddScriptSayEvent")]
 pub fn g_caepedless_speech_audio_entity_add_script_say_event_4e6080(_this: u32, _a0: u32, _a1: u32, _a2: u32, _a3: u32, _a4: u32) {
 }
 
@@ -95,6 +97,7 @@ pub fn g_caepedless_speech_audio_entity_will_ped_chat_about_topic_4e60a0(_this: 
 
 /// `CAEPedlessSpeechAudioEntity::IsPedFemaleForAudio` (0x4E60C0): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4E60C0, conv = thiscall, name = "CAEPedlessSpeechAudioEntity::IsPedFemaleForAudio")]
 pub fn g_caepedless_speech_audio_entity_is_ped_female_for_audio_4e60c0(_this: u32) -> u8 {
     0 as u8
 }
@@ -107,6 +110,7 @@ pub fn g_caepolice_scanner_audio_entity_enable_scanner_4e6db0(_this: u32) {
 
 /// `CAERadioTrackManager::HasRadioRetuneJustStarted` (0x4E8370): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4E8370, conv = thiscall, name = "CAERadioTrackManager::HasRadioRetuneJustStarted")]
 pub fn g_caeradio_track_manager_has_radio_retune_just_started_4e8370(this: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 6));
     (v1 & 0xFF) as u8
@@ -114,12 +118,14 @@ pub fn g_caeradio_track_manager_has_radio_retune_just_started_4e8370(this: u32) 
 
 /// `CAERadioTrackManager::GetRadioStationListenTimes` (0x4E83E0): leaf, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4E83E0, conv = thiscall, name = "CAERadioTrackManager::GetRadioStationListenTimes")]
 pub fn g_caeradio_track_manager_get_radio_station_listen_times_4e83e0(this: u32) -> u32 {
     this.wrapping_add(0x18)
 }
 
 /// `CAERadioTrackManager::PlayRadioAnnouncement` (0x4E8400): empty, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4E8400, conv = thiscall, name = "CAERadioTrackManager::PlayRadioAnnouncement")]
 pub fn g_caeradio_track_manager_play_radio_announcement_4e8400(_this: u32, _a0: u32) {
 }
 
@@ -141,6 +147,7 @@ pub fn g_caetwin_loop_sound_entity_do_sounds_switch_this_frame_4f2ca0(this: u32)
 
 /// `CAEVehicleAudioEntity::StaticService` (0x4F4EC0): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4F4EC0, conv = thiscall, name = "CAEVehicleAudioEntity::StaticService")]
 pub fn g_caevehicle_audio_entity_static_service_4f4ec0(_this: u32) {
 }
 

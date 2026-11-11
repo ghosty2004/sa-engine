@@ -267,6 +267,7 @@ pub fn is_circle_pressed(this: GPtr<u8>) -> u32 {
 }
 
 /// `CPad::~CPad` (0x53ED60): a lone `ret` (not hookable).
+#[sa_core::native(addr = 0x53ED60, conv = thiscall, name = "CPad::~CPad")]
 pub fn destructor(_this: GPtr<u8>) {}
 
 // ------------------------------------------------------------------------- state classes ---
@@ -580,9 +581,11 @@ pub fn start_shake_train(this: GPtr<u8>, px: f32, py: f32) {
 }
 
 /// `CPad::ProcessPCSpecificStuff` (0x53FB40): `ret` (not hookable).
+#[sa_core::native(addr = 0x53FB40, conv = thiscall, name = "CPad::ProcessPCSpecificStuff")]
 pub fn process_pc_specific_stuff(_this: GPtr<u8>) {}
 
 /// `CPad::StopShaking(int16)` (0x53FB50): `ret 4` (not hookable).
+#[sa_core::native(addr = 0x53FB50, conv = thiscall, name = "CPad::StopShaking")]
 pub fn stop_shaking(_this: GPtr<u8>, _n: u32) {}
 
 /// `CPad::StopPadsShaking` (0x541D70): `ret` (not hookable).
@@ -945,6 +948,7 @@ pub fn get_exit_vehicle(this: GPtr<u8>) -> u8 {
 
 /// `CPad::ExitVehicleJustDown` (0x540120, AL; not hookable: its entry bytes are read as data by the
 /// protection at 0x156640F): Mode 2 `IsLeftShoulder1Pressed()`, else Triangle pressed.
+#[sa_core::native(addr = 0x540120, conv = thiscall, name = "CPad::ExitVehicleJustDown")]
 pub fn exit_vehicle_just_down(this: GPtr<u8>) -> u8 {
     if disabled(this) || byte_set(this, 0x119) {
         return 0;
@@ -1015,6 +1019,18 @@ pub fn get_accelerate_just_down(this: GPtr<u8>) -> u8 {
         0 | 2 => pressed(this, BUTTON_CROSS) as u8,
         1 => call_is_cross_pressed(this) as u8,
         3 => pressed(this, RIGHT_STICK_Y) as u8,
+        _ => 0,
+    }
+}
+
+/// `FUN_005404a0` (0x5404A0, AL; the cycle-camera "just down" the camera code reads): Mode 0/2/3 Select
+/// pressed, Mode 1 DPadUp pressed (jump table 0x5404DC), else 0 (STD-6).
+#[hook(addr = 0x5404A0, conv = thiscall, name = "FUN_005404a0", expect = "0F B7 81 0A 01 00 00", this = "CPad",
+       unverified = "std6-input-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+pub fn cycle_camera_just_down(this: GPtr<u8>) -> u8 {
+    match mode(this) {
+        0 | 2 | 3 => pressed(this, SELECT) as u8,
+        1 => pressed(this, DPAD_UP) as u8,
         _ => 0,
     }
 }
@@ -1795,6 +1811,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GET_MELEE_ATTACK,
     HOOK_MELEE_ATTACK_JUST_DOWN,
     HOOK_GET_ACCELERATE_JUST_DOWN,
+    HOOK_CYCLE_CAMERA_JUST_DOWN,
     HOOK_SUB_5404F0,
     HOOK_SUB_540530,
     HOOK_NEXT_STATION_JUST_UP,

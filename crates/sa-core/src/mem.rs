@@ -174,6 +174,15 @@ impl<T: GameData> Global<T> {
         }
         #[cfg(not(sa_phase_a))]
         {
+            #[cfg(target_pointer_width = "32")]
+            if crate::orig::registry::arena_contains(self.addr as usize, core::mem::size_of::<T>())
+            {
+                // Phase B as a 32-bit process with the legacy address arena mapped (sa-game): the
+                // global lives at its original address, so raw-address accesses (`GPtr::from_addr`)
+                // and `globals!` accesses see one copy. The arena starts with the exe image's
+                // initial values, which every `globals!` initial value must equal (sa-core test).
+                return GPtr::from_addr(self.addr as usize);
+            }
             GPtr::from_raw((self.store)())
         }
     }

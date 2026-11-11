@@ -1945,6 +1945,9 @@ pub fn rw_texture_default_find_callback(name: GPtr<u8>) -> GPtr<u8> {
     GPtr::NULL
 }
 
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[crate::matrix::NATIVE_MATRIX_ORTHO_NORMALIZE];
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_RW_RASTER_GET_PLUGIN_OFFSET,

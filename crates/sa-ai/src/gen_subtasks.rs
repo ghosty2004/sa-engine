@@ -1426,6 +1426,7 @@ pub fn g_task_complex_treat_accident_create_first_sub_task_65a8f0(this: u32, a0:
 
 /// `CTaskComplexWanderFlee::ControlSubTask` (0x65B380): subtask, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x65B380, conv = thiscall, name = "CTaskComplexWanderFlee::ControlSubTask")]
 pub fn g_task_complex_wander_flee_control_sub_task_65b380(this: u32, a0: u32) -> u32 {
     let v1 = c_674c30_t1(this, a0);
     v1
@@ -1480,6 +1481,7 @@ pub fn g_task_complex_smart_flee_point_create_next_sub_task_65c0c0(this: u32, a0
 
 /// `CTaskComplexFleeShooting::CreateNextSubTask` (0x65CA60): subtask, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x65CA60, conv = thiscall, name = "CTaskComplexFleeShooting::CreateNextSubTask")]
 pub fn g_task_complex_flee_shooting_create_next_sub_task_65ca60(this: u32, a0: u32) -> u32 {
     let v1 = c_65c680_t1(this, a0);
     v1
@@ -2025,6 +2027,7 @@ pub fn g_task_complex_jump_create_first_sub_task_67fd10(this: u32, a0: u32) -> u
 
 /// `CTaskComplexPartnerGreet::CreateFirstSubTask` (0x6825A0): subtask, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x6825A0, conv = thiscall, name = "CTaskComplexPartnerGreet::CreateFirstSubTask")]
 pub fn g_task_complex_partner_greet_create_first_sub_task_6825a0(this: u32, a0: u32) -> u32 {
     let v1 = c_681f20_t1(this, a0);
     v1

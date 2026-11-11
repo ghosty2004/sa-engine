@@ -218,8 +218,11 @@ culprits() { sed -n 's/^CULPRIT \({[^}]*}\).*/\1/p' "$OUT/$1.txt" | sort; }
 case "$MODE" in
     run)
         [ -n "$MUTANT" ] && export SA_L2_MUTANT="$MUTANT"
+        rm -f "$OUT/run.txt"
         l3 run --rust "$RUST" --hookoff "$HOOKOFF" ${FIXED:+--fixed "$FIXED"}
         rc=$?
+        # L3_REPORT_COPY: a private copy of run.txt, taken under the lane lock (bisect-batch.sh)
+        [ -n "${L3_REPORT_COPY:-}" ] && [ -f "$OUT/run.txt" ] && cp -f "$OUT/run.txt" "$L3_REPORT_COPY"
         check "L3 $RUST${MUTANT:+ (mutant $MUTANT)}" "$([ "$rc" = 0 ] && echo 1)" "$(grep -m1 '^L3 ' "$OUT/run.txt")"
         grep -E '^(FIXED|CULPRIT|  alone|  suggest|rest|HOOKOFF|probes)' "$OUT/run.txt" | tee -a "$SUMMARY"
         ;;

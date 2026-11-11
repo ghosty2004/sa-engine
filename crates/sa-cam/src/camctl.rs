@@ -3,7 +3,7 @@
 //! Ported from the 1.0 US bytes; gta-reversed `Camera.cpp` and `docs/re/specs/CAM/CCamera.md` as
 //! reading aids.
 
-use sa_core::abi::HookReg;
+use sa_core::abi::{Fp, HookReg, entry_residue, stack_footprint};
 use sa_core::mem::{GBool, GPtr};
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
@@ -113,6 +113,8 @@ orig! {
     pub fn vector_ne(a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x509760 => unported;
     /// `CMatrix::~CMatrix()` (0x59ACD0)
     pub fn matrix_dtor(m: GPtr<u8>) = thiscall 0x59ACD0 => unported;
+    /// `CCamera::CalculateMirroredMatrix(CVector n, float d, CMatrix* in, CMatrix* out)` (0x50B380)
+    pub fn calculate_mirrored_matrix_call(this: GPtr<u8>, nx: u32, ny: u32, nz: u32, d: u32, inp: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50B380 => calculate_mirrored_matrix_bits;
     /// `CCamera::CalculateFrustumPlanes(bool)` (0x514D60)
     pub fn calculate_frustum_planes(this: GPtr<u8>, for_mirror: u8) = thiscall 0x514D60 => calculate_frustum_planes_port;
     /// `CColSphere::Set(float radius, const CVector& centre, uint8 material, uint8 flags, uint8 lighting)` (0x40FD10)
@@ -260,6 +262,7 @@ pub fn render_motion_blur(this: GPtr<u8>) {
 /// Ported but **unhookable**: protection code reads its entry bytes as data (`push 0x420C46` at
 /// 0x14664CF; sa-hook `every_hook_installs_on_the_exe` rejects it). Its callers (incl. the Rust
 /// `is_sphere_visible`) reach it through `orig!`.
+#[sa_core::native(addr = 0x420C40, conv = thiscall, name = "CCamera::IsSphereVisible-")]
 pub fn is_sphere_visible_with_matrix(this: GPtr<u8>, c: GPtr<u8>, r: f32, m: GPtr<u8>) -> u8 {
     let mut p = [
         rd::<f32>(c, 0),
@@ -633,13 +636,53 @@ pub fn store_values_during_inter_pol(
 /// (f64 model, stored as f32). Finally `m_fCamFrontXNorm/YNorm` (+0xDC/+0xE0) = up.x/up.y normalised
 /// on the x87 (1.0 / 0 path when the length is 0: only +0xDC is set to 1.0 after the plain copies).
 ///
-/// Ported but **not hooked**: `Invert-2` builds its result in a stack local whose +0xC pad (the
-/// RwMatrix `flags` word, which `RwV3dTransformPoints` tests for the identity flag) it never writes, so
-/// `m_mMatInverse.flags` is uninitialised stack data of the caller's frame. The original's value comes
-/// from its own stack history (L2 pause-restart: orig 4, Rust run another value, 1000/1000 cases
-/// differ only there). Reproducing it needs a stack-faithful call or a normaliser decision.
-pub fn calculate_derived_values_port(this: GPtr<u8>, for_mirror: u8, oriented: u8) {
+/// `Invert-2` builds its result in the stack local `tmp` ([S-0x54, S-0xC), S = entry ESP) and never
+/// writes its +0xC word (the RwMatrix `flags`, which `RwV3dTransformPoints` tests for the identity flag),
+/// so `m_mMatInverse.flags` is whatever the caller's stack held there (PORT-CAM: pause-restart orig 4;
+/// PORT-CAM-2: on the grove walk the return address 0x527DB4 `CCam::Process` leaves). Nothing in this
+/// function writes `tmp` before the call (its pushes are above it, `Invert-2` runs below S-0x60), so the
+/// hook (PORT-CAM-3, `footprint`) starts `tmp` from the caller's residue (`entry_residue`); a direct Rust
+/// call (phase B/C, host) starts it zeroed. Footprint, from the disassembly (final values): the EH
+/// prologue's [S-4] = -1 (state 0 during the copy, -1 after), [S-8] = 0x83C778, [S-0xC] = `fs:[0]`;
+/// `tmp` after the destructor; ESI at [S-0x58]; [S-0x5C] = the `bForMirror` argument dword (last push,
+/// for `CalculateFrustumPlanes`), [S-0x60] = its return address 0x515140. Not reproduced: the callees'
+/// frames below S-0x60 (`Invert-2`'s, `CalculateFrustumPlanes`').
+#[hook(
+    addr = 0x5150E0,
+    conv = thiscall,
+    name = "CCamera::CalculateDerivedValues",
+    expect = "6A FF 68 78 C7 83 00",
+    this = "CCamera",
+    footprint = 0x1000
+)]
+pub fn calculate_derived_values_hook(this: GPtr<u8>, for_mirror: u32, oriented: u32) {
     let mut tmp = [0u32; 18];
+    for (i, w) in tmp.iter_mut().enumerate() {
+        if let Some(v) = entry_residue(-0x54 + 4 * i as i32) {
+            *w = v;
+        }
+    }
+    calculate_derived_values_in(this, for_mirror as u8, oriented as u8, &mut tmp);
+    let mut fp = [(0i32, Fp::Val(0)); 24];
+    fp[0] = (-4, Fp::Val(0xFFFF_FFFF));
+    fp[1] = (-8, Fp::Val(0x0083_C778));
+    fp[2] = (-0xC, Fp::Seh);
+    for (i, w) in tmp.iter().enumerate() {
+        fp[3 + i] = (-0x54 + 4 * i as i32, Fp::Val(*w));
+    }
+    fp[21] = (-0x58, Fp::Esi);
+    fp[22] = (-0x5C, Fp::Val(for_mirror));
+    fp[23] = (-0x60, Fp::Val(0x515140));
+    stack_footprint(&fp);
+}
+
+/// See [`calculate_derived_values_hook`] (`tmp` zeroed: no caller residue outside the wrapper).
+pub fn calculate_derived_values_port(this: GPtr<u8>, for_mirror: u8, oriented: u8) {
+    calculate_derived_values_in(this, for_mirror, oriented, &mut [0u32; 18]);
+}
+
+/// [`calculate_derived_values_hook`] with the `Invert-2` result local given (its initial contents).
+pub fn calculate_derived_values_in(this: GPtr<u8>, for_mirror: u8, oriented: u8, tmp: &mut [u32; 18]) {
     let t = GPtr::from_raw(tmp.as_mut_ptr()).cast::<u8>();
     let r = matrix_invert(t, this.byte_add(0x974));
     matrix_assign(this.byte_add(0xA4C), r);
@@ -1505,6 +1548,87 @@ pub fn take_control_attach_to_entity(
     find_player_ped(-1);
 }
 
+/// `CCamera::DealWithMirrorBeforeConstructRenderList(bool active, CVector n, float d, CMatrix* mat)`
+/// (0x50B510, `ret 0x18`): `m_bMirrorActive` (+0x970) = `active`; when set, `m_mMatMirror` (+0xADC) =
+/// `*mat` (`CMatrix::operator=`) or, for a null `mat`, `CalculateMirroredMatrix(n, d, &m_mCameraMatrix,
+/// &m_mMatMirror)`; then `m_mMatMirrorInverse` (+0xA94) = `Invert-2(m_mMatMirror)` through a temporary
+/// and its destructor, as `CalculateDerivedValues`.
+///
+/// The temporary `tmp` ([S-0x54, S-0xC), S = entry ESP) is the same uninitialised local as in
+/// `CalculateDerivedValues` (`Invert-2` copies its own never-written words into it, e.g. the RwMatrix
+/// flags); no code of this function writes it before (its callees run below S-0x60), so the hook starts
+/// it from the caller's residue (`entry_residue`). Footprint (final values, from the disassembly):
+/// [S-4] = -1 (0 during the copy), [S-8] = 0x83C758, [S-0xC] = `fs:[0]`, ESI / EDI at [S-0x58] /
+/// [S-0x5C]; on the active path `tmp` after the destructor and [S-0x60] = 0x50B5B5 (the destructor's
+/// return address). Not reproduced: the deeper argument / return-address slots and the callees' frames
+/// (later calls overwrite them in the original).
+#[hook(
+    addr = 0x50B510,
+    conv = thiscall,
+    name = "CCamera::DealWithMirrorBeforeConstructRenderList",
+    expect = "64 A1 00 00 00 00 6A FF",
+    this = "CCamera",
+    footprint = 0x1000
+)]
+pub fn deal_with_mirror_before_construct_render_list(
+    this: GPtr<u8>,
+    active: u32,
+    nx: u32,
+    ny: u32,
+    nz: u32,
+    d: u32,
+    mat: GPtr<u8>,
+) {
+    let mut tmp = [0u32; 18];
+    for (i, w) in tmp.iter_mut().enumerate() {
+        if let Some(v) = entry_residue(-0x54 + 4 * i as i32) {
+            *w = v;
+        }
+    }
+    let on = active as u8;
+    wr::<u8>(this, 0x970, on);
+    let mut fp = [(0i32, Fp::Val(0)); 24];
+    fp[0] = (-4, Fp::Val(0xFFFF_FFFF));
+    fp[1] = (-8, Fp::Val(0x0083_C758));
+    fp[2] = (-0xC, Fp::Seh);
+    fp[3] = (-0x58, Fp::Esi);
+    fp[4] = (-0x5C, Fp::Edi);
+    if on == 0 {
+        stack_footprint(&fp[..5]);
+        return;
+    }
+    let mirror = this.byte_add(0xADC);
+    if !mat.is_null() {
+        matrix_assign(mirror, mat);
+    } else {
+        calculate_mirrored_matrix_call(this, nx, ny, nz, d, this.byte_add(0x974), mirror);
+    }
+    let t = GPtr::from_raw(tmp.as_mut_ptr()).cast::<u8>();
+    let r = matrix_invert(t, mirror);
+    matrix_assign(this.byte_add(0xA94), r);
+    matrix_dtor(t);
+    for (i, w) in tmp.iter().enumerate() {
+        fp[5 + i] = (-0x54 + 4 * i as i32, Fp::Val(*w));
+    }
+    fp[23] = (-0x60, Fp::Val(0x50B5B5));
+    stack_footprint(&fp);
+}
+
+/// [`calculate_mirrored_matrix`] with the float arguments as their bits (phase B path of the `orig!`
+/// declaration).
+pub fn calculate_mirrored_matrix_bits(
+    this: GPtr<u8>,
+    nx: u32,
+    ny: u32,
+    nz: u32,
+    d: u32,
+    inp: GPtr<u8>,
+    out: GPtr<u8>,
+) {
+    let f = f32::from_bits;
+    calculate_mirrored_matrix(this, f(nx), f(ny), f(nz), f(d), inp, out);
+}
+
 /// `CCamera::CalculateMirroredMatrix(CVector n, float d, CMatrix* in, CMatrix* out)` (0x50B380, `ret
 /// 0x18`; `this` unused): reflects `in` in the plane `n . p = d`, transcribed instruction by instruction
 /// (which products are stored as f32 locals and which stay on the x87 stack): pos' = pos - n * 2(n.pos
@@ -1678,4 +1802,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CAMERA_INIT,
     HOOK_TAKE_CONTROL_ATTACH_TO_ENTITY,
     HOOK_CALCULATE_MIRRORED_MATRIX,
+    HOOK_CALCULATE_DERIVED_VALUES_HOOK,
+    HOOK_DEAL_WITH_MIRROR_BEFORE_CONSTRUCT_RENDER_LIST,
 ];

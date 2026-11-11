@@ -10,9 +10,14 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
 /// Opcodes with a Rust case, ascending.
-pub const PORTED: &[u16] = &[0x070A, 0x070D, 0x0713, 0x0729, 0x0750, 0x075A];
+pub const PORTED: &[u16] = &[0x070A, 0x070D, 0x0713, 0x0729, 0x0746, 0x0747, 0x0750, 0x075A];
 
 orig! {
+    /// `CPedType::GetPedFlag(type)` (0x608830), `SetPedTypeAsAcquaintance(acq, type, flag)` (0x608E20),
+    /// `ClearPedTypeAsAcquaintance(acq, type, flag)` (0x6089F0)
+    fn get_ped_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
+    fn set_ped_type_as_acquaintance(acq: u32, t: u32, flag: u32) = cdecl 0x608E20 => unported;
+    fn clear_ped_type_as_acquaintance(acq: u32, t: u32, flag: u32) = cdecl 0x6089F0 => unported;
     /// `CRunningScript::ReadTextLabelFromScript(char*, uint8)` (0x463D50)
     fn read_label(s: Scr, buf: GPtr<u8>, len: u32) = thiscall 0x463D50 => crate::vm::read_text_label_from_script;
     /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940)
@@ -76,6 +81,18 @@ pub fn process_commands_1800_to_1899(s: Scr, command: u32) -> i8 {
         }
         // 075A PLAY_OBJECT_ANIM (0x46E9FC)
         0x075A => play_object_anim(s),
+        // 0746 SET_RELATIONSHIP / 0747 CLEAR_RELATIONSHIP (0x46E450 / 0x46E482, STD-6): `flag =
+        // CPedType::GetPedFlag(SP2)`, then `SetPedTypeAsAcquaintance(SP0, SP1, flag)` /
+        // `ClearPedTypeAsAcquaintance(SP0, SP1, flag)`.
+        0x0746 | 0x0747 => {
+            collect(s, 3);
+            let flag = get_ped_flag(sp(2));
+            if command == 0x0746 {
+                set_ped_type_as_acquaintance(sp(0), sp(1), flag);
+            } else {
+                clear_ped_type_as_acquaintance(sp(0), sp(1), flag);
+            }
+        }
         _ => {
             return fallback(
                 process_commands_1800_to_1899_original,

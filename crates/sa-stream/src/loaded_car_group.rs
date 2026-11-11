@@ -74,7 +74,8 @@ pub fn clear(g: GPtr<CLoadedCarGroup>) {
 
 /// `CLoadedCarGroup::AddMember(model)` (0x611BB0, thiscall, `ret 4`): stores the low word of the
 /// argument into the first entry `< 0` (signed); nothing when all 23 are used.
-/// Not hookable: the loop branches back into the entry bytes (`jl 0x611BB2`).
+/// Not hookable: the loop branches back into the entry bytes (`jl 0x611BB2`); phase B entry (STD-6).
+#[sa_core::native(addr = 0x611BB0, conv = thiscall, name = "CLoadedCarGroup::AddMember")]
 pub fn add_member(g: GPtr<CLoadedCarGroup>, model: i32) {
     for i in 0..NUM_MODELS {
         if slot(g, i).read() < 0 {
@@ -110,7 +111,8 @@ pub fn get_member(g: GPtr<CLoadedCarGroup>, i: i32) -> i32 {
 }
 
 /// `CLoadedCarGroup::CountMembers()` (0x611C30, thiscall): the number of leading entries `>= 0`.
-/// Not hookable: the loop branches back into the entry bytes (`jl 0x611C34`).
+/// Not hookable: the loop branches back into the entry bytes (`jl 0x611C34`); phase B entry (STD-6).
+#[sa_core::native(addr = 0x611C30, conv = thiscall, name = "CLoadedCarGroup::CountMembers")]
 pub fn count_members(g: GPtr<CLoadedCarGroup>) -> i32 {
     let mut n = 0;
     while n < NUM_MODELS && slot(g, n).read() >= 0 {

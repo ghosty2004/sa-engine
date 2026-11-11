@@ -71,7 +71,7 @@ orig! {
 /// `CEntity::UpdateRwMatrix` (0x446F90 -> .HOODLUM 0x1569BF0): with an RW object, its parent frame's matrix
 /// (+0x10) is updated from the entity matrix (+0x14) or, without one, from the simple transform (+4).
 #[hook(addr = 0x446F90, conv = thiscall, name = "CEntity::UpdateRwMatrix", this = "CEntity", expect = "E9 5B 2C 12 01",
-       unverified = "mvpb-world-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn entity_update_rw_matrix(this: GPtr<u8>) {
     let rw = rd::<GPtr<u8>>(this, 0x18);
     if rw.is_null() {
@@ -89,7 +89,7 @@ pub fn entity_update_rw_matrix(this: GPtr<u8>) {
 /// `CEntity::RenderEffects` (0x5342B0): entities flagged with 2d effects (+0x1F bit 0) render every road-sign
 /// effect (type 7) of their model at the camera position (`TheCamera` entity matrix position or its vector).
 #[hook(addr = 0x5342B0, conv = thiscall, name = "CEntity::RenderEffects", this = "CEntity", expect = "F6 41 1F 01 74 53",
-       unverified = "mvpb-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn entity_render_effects(this: GPtr<u8>) {
     if rd::<u8>(this, 0x1F) & 1 == 0 {
         return;
@@ -240,7 +240,7 @@ pub fn replay_store_clothes_desc(desc: GPtr<u8>, out: GPtr<u8>) {
 /// `thunk_FUN_01569180(float margin)` (0x448E50 -> .HOODLUM 0x1569180, `ret 4`): `CGarage::IsEntityEntirelyOutside`
 /// for the player's vehicle when there is one, else for the player ped.
 #[hook(addr = 0x448E50, conv = thiscall, name = "thunk_FUN_01569180", this = "CGarage", expect = "E9 2B 03 12 01",
-       unverified = "mvpb-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn garage_is_player_entirely_outside(this: GPtr<u8>, margin: f32) -> u32 {
     if !find_player_vehicle(-1, 0).is_null() {
         let v = find_player_vehicle(-1, 0);
@@ -254,7 +254,7 @@ pub fn garage_is_player_entirely_outside(this: GPtr<u8>, margin: f32) -> u32 {
 /// `FUN_00447d80(float x, float y)` (0x447D80, `ret 8`, float in ST0): the squared 2D distance from the point to
 /// the garage's box (x range +0x28..+0x2C, y range +0x30..+0x34; 0 inside on an axis): `dy*dy + dx*dx` in x87.
 #[hook(addr = 0x447D80, conv = thiscall, name = "FUN_00447d80", this = "CGarage", expect = "D9 44 24 04 D8 59 28",
-       unverified = "mvpb-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn garage_dist_sq_to_box(this: GPtr<u8>, px: f32, py: f32) -> X87 {
     let axis = |v: f32, lo: f32, hi: f32| {
         if !x(v).fcom(x(lo)).test_parity(5) {

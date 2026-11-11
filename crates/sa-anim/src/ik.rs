@@ -151,7 +151,26 @@ orig! {
     pub fn entity_update_rp_hanim(e: GPtr<u8>) = thiscall 0x532B20 => unported;
     /// `CWorld::ClearScanCodes()` (0x563470)
     pub fn world_clear_scan_codes() = cdecl 0x563470 => unported;
+    /// `IKChainManager_c::CanAcceptLookAt(ped)` (0x6188B0, AL)
+    pub fn call_can_accept_look_at(this: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6188B0 => can_accept_look_at;
+    /// `CTask::operator new(uint32)` (0x61A5A0)
+    pub fn task_new(size: u32) -> GPtr<u8> = cdecl 0x61A5A0 => unported;
+    /// `CTaskSimpleIKManager::CTaskSimpleIKManager()` (0x6337F0): returns `this`
+    pub fn ik_manager_task_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x6337F0 => unported;
+    /// `CTaskManager::SetTaskSecondary(CTask*, slot)` (0x681B60)
+    pub fn task_manager_set_task_secondary(tm: GPtr<u8>, task: GPtr<u8>, slot: i32) = thiscall 0x681B60 => unported;
+    /// `CTaskSimpleIKManager::AddIKChainTask(CTaskSimpleIKChain*, slot)` (0x633940)
+    pub fn ik_manager_task_add_ik_chain_task(t: GPtr<u8>, task: GPtr<u8>, slot: i32) = thiscall 0x633940 => unported;
+    /// `CTaskSimpleIKLookAt::UpdateLookAtInfo(purpose, ped, entity, time, offsetBone, CVector offset (by
+    /// value), useTorso, speed, blendTime, priority)` (0x634050)
+    pub fn look_at_task_update_look_at_info(t: GPtr<u8>, purpose: u32, ped: GPtr<u8>, entity: u32, time: u32, bone: u32, ox: u32, oy: u32, oz: u32, use_torso: u32, speed: u32, blend: u32, priority: u32) = thiscall 0x634050 => unported;
+    /// `CTaskSimpleIKLookAt::CTaskSimpleIKLookAt(purpose, entity, time, offsetBone, CVector offset (by
+    /// value), useTorso, speed, blendTime, priority)` (0x633E00): returns `this`
+    pub fn look_at_task_ctor(t: GPtr<u8>, purpose: u32, entity: u32, time: u32, bone: u32, ox: u32, oy: u32, oz: u32, use_torso: u32, speed: u32, blend: u32, priority: u32) -> GPtr<u8> = thiscall 0x633E00 => unported;
 }
+
+/// The byte at 0xC1542C (unnamed in the catalogue): non-zero refuses every unforced look-at.
+const NO_LOOK_AT: usize = 0xC1542C;
 
 /// Phase B/C path of [`bone_get_speed`].
 pub fn bone_get_speed_host(this: GPtr<u8>) -> f64 {
@@ -219,6 +238,7 @@ pub fn set_offset_pos(this: GPtr<u8>, px: u32, py: u32, pz: u32) {
 
 /// `IKChain_c::GetPriority()` (0x617C50): `movsx eax, byte [+0x56]`. Not hookable: 5 bytes ending
 /// in `ret` (the steal would include the `ret`).
+#[sa_core::native(addr = 0x617C50, conv = thiscall, name = "IKChain_c::GetPriority")]
 pub fn get_priority(this: GPtr<u8>) -> i32 {
     i32::from(rd::<i8>(this, 0x56))
 }
@@ -875,7 +895,84 @@ pub fn can_accept_look_at(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     u8::from(rp_anim_blend_clump_get_association(rd::<GPtr<u8>>(ped, 0x18), 0x12E).is_null())
 }
 
+/// `IKChainManager_c::LookAt(purpose, ped, entity, time, offsetBone, CVector* offset, useTorso, speed,
+/// blendTime, priority, forceLookAt)` (0x618970, thiscall, `ret 0x2C`). Without `forceLookAt` (byte):
+/// returns when `CanAcceptLookAt(ped)` fails or the byte at 0xC1542C is set. The ped's secondary task 5
+/// (task manager = intelligence +0x47C, +4) is created when missing (`CTask::operator new(0x1C)`,
+/// `CTaskSimpleIKManager` constructor when the allocation is non-null, else null; `SetTaskSecondary(t,
+/// 5)`) and fetched again (no null check after that). The offset is `*offset` or zero. With a task in
+/// IK slot 0 (no type check): returns when `priority` < its signed priority byte +0x59; `useTorso` set
+/// and the task's +0x58 clear zeroes the low byte of `useTorso` (the other bytes of the pushed dword
+/// stay); `useTorso` clear and +0x58 set → `AbortLookAt(ped, 250)`; else `UpdateLookAtInfo(purpose, ped,
+/// entity, time, offsetBone, offset, useTorso, speed, blendTime, priority)`. Without one: `new(0x5C)`,
+/// `CTaskSimpleIKLookAt(purpose, entity, time, offsetBone, offset, useTorso, speed, blendTime,
+/// priority)` (null when the allocation fails) and `AddIKChainTask(t, 0)`.
+///
+/// Stack: the original stores both `operator new` results into its own `forceLookAt` argument slot
+/// (S+0x2C) and the cleared `useTorso` byte into its slot (S+0x1C); not reproduced. `speed` is passed
+/// through as raw bits.
+#[hook(addr = 0x618970, conv = thiscall, name = "IKChainManager_c::LookAt", expect = "6A FF 68 B6 F0 83 00",
+       unverified = "mvpi-anim-1", route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
+       note = "allocates CTaskSimpleIKManager / CTaskSimpleIKLookAt tasks (task pool)")]
+#[allow(clippy::too_many_arguments)]
+pub fn look_at(
+    this: GPtr<u8>,
+    purpose: u32,
+    ped: GPtr<u8>,
+    entity: u32,
+    time: u32,
+    bone: u32,
+    offset: GPtr<u32>,
+    use_torso: u32,
+    speed: u32,
+    blend: u32,
+    priority: i32,
+    force: u32,
+) {
+    if force as u8 == 0 && (call_can_accept_look_at(this, ped) == 0 || g::<u8>(NO_LOOK_AT).read() != 0) {
+        return;
+    }
+    let mut mgr = secondary_ik(ped);
+    if mgr.is_null() {
+        let mem = task_new(0x1C);
+        let t = if mem.is_null() { GPtr::NULL } else { ik_manager_task_ctor(mem) };
+        task_manager_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 5);
+        mgr = secondary_ik(ped);
+    }
+    let (ox, oy, oz) = if offset.is_null() {
+        (0, 0, 0)
+    } else {
+        (offset.read(), offset.wrapping_index(1).read(), offset.wrapping_index(2).read())
+    };
+    let la = ik_manager_task_get_task_at_slot(mgr, 0);
+    if !la.is_null() {
+        if priority < i32::from(rd::<i8>(la, 0x59)) {
+            return;
+        }
+        let task_torso = rd::<u8>(la, 0x58);
+        let mut torso = use_torso;
+        if torso as u8 != 0 {
+            if task_torso == 0 {
+                torso &= 0xFFFF_FF00;
+            }
+        } else if task_torso != 0 {
+            call_abort_look_at(this, ped, 0xFA);
+            return;
+        }
+        look_at_task_update_look_at_info(la, purpose, ped, entity, time, bone, ox, oy, oz, torso, speed, blend, priority as u32);
+        return;
+    }
+    let mem = task_new(0x5C);
+    let t = if mem.is_null() {
+        GPtr::NULL
+    } else {
+        look_at_task_ctor(mem, purpose, entity, time, bone, ox, oy, oz, use_torso, speed, blend, priority as u32)
+    };
+    ik_manager_task_add_ik_chain_task(mgr, t, 0);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_LOOK_AT,
     HOOK_EXIT,
     HOOK_SET_BLEND,
     HOOK_SET_OFFSET_BONE_TAG,

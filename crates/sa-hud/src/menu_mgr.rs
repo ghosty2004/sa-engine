@@ -255,10 +255,15 @@ pub fn is_mouse_bmx2_pressed() -> u8 {
 /// `CMenuManager::StretchX(float)` (0x5733E0, thiscall, `this` unused; entry = 5 `nop` + `jmp` into the
 /// `.text` chunk 0x4016C4): `x` when the width is 640, else `maxWidth * x * (1/640)` (ST0).
 ///
-/// Not hooked: callers keep EDX across the call (0x577FA6 / 0x578031 read it at 0x57804B), which
-/// sa-hook's callers test rejects without `preserve`.
+/// `preserve = "edx"` (PORT-HUD-3): callers keep EDX across the call (0x577FA6 / 0x578031 read it at
+/// 0x57804B); the original never writes EDX. L1 spec `HudMenuStretchX*` compares EDX.
+#[hook(addr = 0x5733E0, conv = thiscall, name = "CMenuManager::StretchX", expect = "90 90 90 90 90", preserve = "edx")]
 pub fn stretch_x(_this: GPtr<u8>, v: f32) -> X87 {
-    let w = g::<i32>(RS_MAX_WIDTH).read();
+    stretch_x_with(g::<i32>(RS_MAX_WIDTH).read(), v)
+}
+
+/// [`stretch_x`] with `RsGlobal.maximumWidth` as a parameter (L1 spec).
+pub fn stretch_x_with(w: i32, v: f32) -> X87 {
     if w == 0x280 {
         x(v)
     } else {
@@ -269,10 +274,15 @@ pub fn stretch_x(_this: GPtr<u8>, v: f32) -> X87 {
 /// `CMenuManager::StretchY(float)` (0x573410, thiscall, `this` unused): `y` when the height is 448, else
 /// `maxHeight * y * (1/448)` (ST0).
 ///
-/// Not hooked: callers keep EDX across the call (0x578106 / 0x578199 at 0x5781B3, 0x57B8E9 at
-/// 0x57B906).
+/// `preserve = "edx"` (PORT-HUD-3): callers keep EDX across the call (0x578106 / 0x578199 at 0x5781B3,
+/// 0x57B8E9 at 0x57B906); the original never writes EDX. L1 spec `HudMenuStretchY*` compares EDX.
+#[hook(addr = 0x573410, conv = thiscall, name = "CMenuManager::StretchY", expect = "81 3D 48 70 C1 00 C0 01 00 00", preserve = "edx")]
 pub fn stretch_y(_this: GPtr<u8>, v: f32) -> X87 {
-    let h = g::<i32>(RS_MAX_HEIGHT).read();
+    stretch_y_with(g::<i32>(RS_MAX_HEIGHT).read(), v)
+}
+
+/// [`stretch_y`] with `RsGlobal.maximumHeight` as a parameter (L1 spec).
+pub fn stretch_y_with(h: i32, v: f32) -> X87 {
     if h == 0x1C0 {
         x(v)
     } else {
@@ -1154,7 +1164,7 @@ orig! {
     /// `CMenuManager::ProcessStreaming(bool)` (0x573CF0, thiscall)
     pub fn process_streaming_call(this: GPtr<u8>, load_all: u32) = thiscall 0x573CF0 => process_streaming;
     /// `CMenuManager::UserInput()` (0x57FD70, thiscall)
-    pub fn user_input(this: GPtr<u8>) = thiscall 0x57FD70 => unported;
+    pub fn user_input(this: GPtr<u8>) = thiscall 0x57FD70 => crate::menu_input::user_input;
     /// `CMenuManager::ProcessFileActions()` (0x578D60, thiscall)
     pub fn process_file_actions(this: GPtr<u8>) = thiscall 0x578D60 => process_file_actions_port;
     /// `D3DResourceSystem::TidyUpD3DIndexBuffers(uint32)` (0x730740)
@@ -2207,9 +2217,9 @@ pub fn process_mission_pack_new_game_port(this: GPtr<u8>) {
 
 orig! {
     /// `CMenuManager::StretchX(float)` (0x5733E0, thiscall)
-    pub fn stretch_x_call_st0(this: GPtr<u8>, v: f32) -> f64 = thiscall 0x5733E0 => stretch_x_call_target_f64;
+    pub fn stretch_x_call_st0(this: GPtr<u8>, v: f32) -> f64 = thiscall 0x5733E0 => stretch_x_call_st0_rust;
     /// `CMenuManager::StretchY(float)` (0x573410, thiscall)
-    pub fn stretch_y_call_st0(this: GPtr<u8>, v: f32) -> f64 = thiscall 0x573410 => stretch_y_call_target_f64;
+    pub fn stretch_y_call_st0(this: GPtr<u8>, v: f32) -> f64 = thiscall 0x573410 => stretch_y_call_st0_rust;
     /// `CFont::PrintStringFromBottom(float, float, const GxtChar*)` (0x71A820)
     pub fn font_print_string_from_bottom(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A820 => crate::font_print::print_string_from_bottom;
 }
@@ -2410,7 +2420,7 @@ orig! {
     /// `CMenuManager::SetFrontEndRenderStates()` (0x573A60, thiscall)
     pub fn set_front_end_render_states_call(this: GPtr<u8>) = thiscall 0x573A60 => set_front_end_render_states;
     /// `CMenuManager::DrawBackground()` (0x57B750, thiscall)
-    pub fn draw_background(this: GPtr<u8>) = thiscall 0x57B750 => unported;
+    pub fn draw_background(this: GPtr<u8>) = thiscall 0x57B750 => crate::menu_draw::draw_background;
     /// `RsEventHandler(RsEvent, void*)` (0x619B60)
     pub fn rs_event_handler(event: i32, param: GPtr<u8>) -> i32 = cdecl 0x619B60 => sa_core::platform::rs_event_handler;
     /// `Win::MessageLoop()` (0x746870)
@@ -2844,6 +2854,8 @@ pub fn get_current_key_pressed(out: GPtr<u8>) -> GPtr<u8> {
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_STRETCH_X,
+    HOOK_STRETCH_Y,
     HOOK_IS_ESC_JUST_PRESSED,
     HOOK_IS_MOUSE_RBUTTON_PRESSED,
     HOOK_IS_MOUSE_WHEEL_UP_PRESSED,
@@ -2897,25 +2909,25 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CHECK_REDEFINE_CONTROL_INPUT_PORT,
 ];
 
-/// Phase B target of `stretch_x_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`stretch_x_call`] as an ST0 value.
 #[allow(dead_code)]
-fn stretch_x_call_target_f64(this: GPtr<u8>, v: f32) -> f64 {
+fn stretch_x_call_st0_rust(this: GPtr<u8>, v: f32) -> f64 {
     stretch_x(this, v).to_f64()
 }
 
-/// `stretch_x_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`stretch_x_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn stretch_x_call(this: GPtr<u8>, v: f32) -> X87 {
     X87::from_f64_exact(stretch_x_call_st0(this, v))
 }
 
-/// Phase B target of `stretch_y_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`stretch_y_call`] as an ST0 value.
 #[allow(dead_code)]
-fn stretch_y_call_target_f64(this: GPtr<u8>, v: f32) -> f64 {
+fn stretch_y_call_st0_rust(this: GPtr<u8>, v: f32) -> f64 {
     stretch_y(this, v).to_f64()
 }
 
-/// `stretch_y_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`stretch_y_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn stretch_y_call(this: GPtr<u8>, v: f32) -> X87 {
     X87::from_f64_exact(stretch_y_call_st0(this, v))

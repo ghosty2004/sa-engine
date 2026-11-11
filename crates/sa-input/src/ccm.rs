@@ -65,6 +65,23 @@ const RS_PS: usize = 0xC17054;
 /// the GO_FORWARD key: a `.HOODLUM` data word and the code bytes at 0x5DF174 (statically 0x3FB, `rsUP`).
 const PROT_KEY_A: usize = 0x15608DC;
 const PROT_KEY_B: usize = 0x5DF174;
+/// The GO_FORWARD key the no-CD chunk computes: `stc; mov ebx, [0x15608DC]; adc ebx, [0x5DF174]` =
+/// 0x1DDC6011 + 0xE223A3E9 + 1 = 0x3FB (`rsUP`) with the shipped 1.0 US bytes. Neither dword is
+/// written at run time (the only reference to 0x15608DC is that read, Ghidra xrefs; 0x5DF174 is
+/// `.text`). Phase B maps no code section (`.HOODLUM`, `.text`), so it uses the result; phase A
+/// reads the bytes as the original does.
+const PROT_GO_FORWARD: u32 = 0x3FB;
+
+fn prot_go_forward_key() -> u32 {
+    if sa_core::orig::PHASE_A {
+        g::<u32>(PROT_KEY_A)
+            .read()
+            .wrapping_add(g::<u32>(PROT_KEY_B).read())
+            .wrapping_add(1)
+    } else {
+        PROT_GO_FORWARD
+    }
+}
 
 sa_core::globals! {
     list GLOBALS;
@@ -224,6 +241,7 @@ fn text(addr: u32) -> GPtr<u8> {
 /// `GetJoyButtonJustUp()` (0x52D1C0): the first button `i` (0..15) whose new state lacks bit 7 while
 /// the old one has it, as `i + 1`; 0 when none.
 /// Not hookable (the loop branches back to 0x52D1C4, inside the 11 patched bytes): ported, not registered.
+#[sa_core::native(addr = 0x52D1C0, conv = thiscall, name = "CControllerConfigManager::GetJoyButtonJustUp")]
 pub fn get_joy_button_just_up(this: GPtr<u8>) -> u32 {
     for i in 0..16 {
         if rd::<u8>(this, 0x144 + i) & 0x80 == 0 && rd::<u8>(this, 0x34 + i) & 0x80 != 0 {
@@ -234,7 +252,9 @@ pub fn get_joy_button_just_up(this: GPtr<u8>) -> u32 {
 }
 
 /// `GetJoyButtonJustDown()` (0x52D1E0): new has bit 7, old has not.
-/// Not hookable (the loop branches back to 0x52D1E4, inside the 11 patched bytes): ported, not registered.
+/// Not hookable (the loop branches back to 0x52D1E4, inside the 11 patched bytes): phase B entry
+/// through `#[native]` (STD-3).
+#[sa_core::native(addr = 0x52D1E0, conv = thiscall, name = "CControllerConfigManager::GetJoyButtonJustDown")]
 pub fn get_joy_button_just_down(this: GPtr<u8>) -> u32 {
     for i in 0..16 {
         if rd::<u8>(this, 0x144 + i) & 0x80 != 0 && rd::<u8>(this, 0x34 + i) & 0x80 == 0 {
@@ -337,9 +357,11 @@ pub fn update_joy_in_config_menus_button_up(_this: GPtr<u8>, button: i32, pad_nu
 }
 
 /// `AffectControllerStateOn_ButtonDown_DebugStuff(key, type)` (0x52DC10): `ret 8` (not hookable).
+#[sa_core::native(addr = 0x52DC10, conv = thiscall, name = "CControllerConfigManager::AffectControllerStateOn_ButtonDown_DebugStuff")]
 pub fn affect_button_down_debug_stuff(_this: GPtr<u8>, _key: u32, _kind: i32) {}
 
 /// `AffectControllerStateOn_ButtonUp_DebugStuff(key, type)` (0x52DD80): `ret 8` (not hookable).
+#[sa_core::native(addr = 0x52DD80, conv = thiscall, name = "CControllerConfigManager::AffectControllerStateOn_ButtonUp_DebugStuff")]
 pub fn affect_button_up_debug_stuff(_this: GPtr<u8>, _key: u32, _kind: i32) {}
 
 /// `ClearSimButtonPressCheckers()` (0x52DD90): the 16 stick flag bytes +0x12D0..+0x12DF.
@@ -1320,7 +1342,7 @@ const DEFAULT_KEYS_B: [(i32, u32, i32); 25] = [
 #[hook(addr = 0x530640, conv = thiscall, name = "CControllerConfigManager::InitDefaultControlConfiguration", expect = "53 56 33 DB 53", this = "CControllerConfigManager")]
 pub fn init_default_control_configuration(this: GPtr<u8>) {
     let set = |a: i32, k: u32, t: i32| call_set_key(this, a, k, t);
-    let fwd = g::<u32>(PROT_KEY_A).read().wrapping_add(g::<u32>(PROT_KEY_B).read()).wrapping_add(1);
+    let fwd = prot_go_forward_key();
     set(4, fwd, 0);
     set(5, 0x3FC, 0);
     set(6, 0x3FD, 0);
@@ -1800,6 +1822,10 @@ pub fn reinit_controls() {
     }
 }
 
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_GET_JOY_BUTTON_JUST_DOWN];
+
+/// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_SAVE_SETTINGS,
     HOOK_INITIALISE_CONTROLLER_ACTION_NAME_ARRAY,

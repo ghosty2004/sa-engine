@@ -113,9 +113,11 @@ fn construct(this: GPtr<u8>, time_ms: u32) -> GPtr<u8> {
 }
 
 /// `CLoadMonitor::~CLoadMonitor()` (0x856430): empty (`ret`). Not hookable (lone `ret`).
+#[sa_core::native(addr = 0x856430, conv = thiscall, name = "CLoadMonitor::Destructor")]
 pub fn destructor(_this: GPtr<u8>) {}
 
 /// `CLoadMonitor::Render()` (0x53D480): empty (`ret`). Not hookable (lone `ret`).
+#[sa_core::native(addr = 0x53D480, conv = thiscall, name = "CLoadMonitor::Render")]
 pub fn render(_this: GPtr<u8>) {}
 
 /// `CLoadMonitor::BeginFrame()` (0x53D030, thiscall).

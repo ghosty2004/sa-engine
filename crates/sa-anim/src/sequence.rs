@@ -303,6 +303,7 @@ pub fn move_memory(this: GPtr<u8>) -> u8 {
 }
 
 /// `CAnimBlendSequence::Print()` (0x4D1180): `ret` (not hookable).
+#[sa_core::native(addr = 0x4D1180, conv = thiscall, name = "CAnimBlendSequence::Print")]
 pub fn print(_this: GPtr<u8>) {}
 
 /// `CAnimBlendSequence::RemoveQuaternionFlips()` (0x4D1190): for frames 1.., when the 4D dot product

@@ -56,22 +56,22 @@ orig! {
     /// `CMessages::InsertPlayerControlKeysInString(GxtChar*)` (0x69E160)
     pub fn insert_player_control_keys_call(s: GPtr<u8>) = cdecl 0x69E160 => crate::messages::insert_player_control_keys_in_string;
     /// `CFont::GetCharacterSize(uint8)` (0x719750)
-    pub fn get_character_size_call_st0(c: u32) -> f64 = cdecl 0x719750 => get_character_size_call_target_f64;
+    pub fn get_character_size_call_st0(c: u32) -> f64 = cdecl 0x719750 => get_character_size_call_st0_rust;
     /// `CFont::FindSubFontCharacter(uint8 c, uint8 style)` (0x7192C0)
     pub fn find_sub_font_character_call(c: u32, style: u32) -> u8 = cdecl 0x7192C0 => crate::font::find_sub_font_character_abi;
     /// `CFont::SetColor(CRGBA)` (0x719430)
     pub fn set_color_call(c: u32) = cdecl 0x719430 => crate::font::set_color;
     /// `CFont::GetScriptLetterSize(uint8)` (0x719670)
-    pub fn get_script_letter_size_call_st0(c: u32) -> f64 = cdecl 0x719670 => get_script_letter_size_call_target_f64;
+    pub fn get_script_letter_size_call_st0(c: u32) -> f64 = cdecl 0x719670 => get_script_letter_size_call_st0_rust;
     /// `CFont::GetStringWidth(const GxtChar*, bool full, bool scriptText)` (0x71A0E0)
-    pub fn get_string_width_call_st0(s: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => get_string_width_call_target_f64;
+    pub fn get_string_width_call_st0(s: GPtr<u8>, full: u32, script: u32) -> f64 = cdecl 0x71A0E0 => get_string_width_call_st0_rust;
     /// `CFont::ParseToken(const GxtChar*, CRGBA&, bool isBlip, char* out)` (0x718F00)
     pub fn parse_token_call(s: GPtr<u8>, color: GPtr<u8>, is_blip: u32, out: GPtr<u8>) -> GPtr<u8> = cdecl 0x718F00 => parse_token;
     /// `CFont::PrintString(float x, float y, const GxtChar* start, const GxtChar* end, float spacing)`
     /// (0x719B40)
     pub fn print_string_ranged_call(px: f32, py: f32, start: GPtr<u8>, end: GPtr<u8>, spacing: f32) = cdecl 0x719B40 => print_string_ranged;
     /// `CFont::ProcessCurrentString(bool print, float x, float y, const GxtChar*)` (0x71A220)
-    pub fn process_current_string_call(print: u32, px: f32, py: f32, text: GPtr<u8>) -> u16 = cdecl 0x71A220 => process_current_string;
+    pub fn process_current_string_call(print: u32, px: f32, py: f32, text: GPtr<u8>) -> u16 = cdecl 0x71A220 => process_current_string_ax;
     /// `CFont::GetTextRect(CRect*, float x, float y, const GxtChar*)` (0x71A620)
     pub fn get_text_rect_call(rect: GPtr<f32>, px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A620 => get_text_rect;
     /// `CFont::PrintString(float x, float y, const GxtChar*)` (0x71A700)
@@ -403,8 +403,10 @@ const WIDTH_BUF: usize = 0x800;
 /// (`GetCharacterSize`, or `GetScriptLetterSize` for script text, of `c - 0x20`) up to the end, or
 /// without `full` up to the first space or the second token / a token after a character. ST0.
 ///
-/// Not hooked: protection code reads the patched entry bytes as data (`mov ecx, [0x71A0E2]` at
-/// 0x40641C, an unlisted keycells reader); reached through [`get_string_width_call`].
+/// Protection code reads the patched entry bytes as data (`mov ecx, [0x71A0E2]` at 0x40641C): sa-hook's
+/// keycells `READERS` redirects that read to a cell holding the original dword (PORT-HUD-3), so the
+/// entry is hookable.
+#[hook(addr = 0x71A0E0, conv = cdecl, name = "CFont::GetStringWidth", expect = "90 E9 D3 75 CE FF")]
 pub fn get_string_width(text: GPtr<u8>, full: u32, script: u32) -> X87 {
     let full = full as u8 != 0;
     let script = script as u8 != 0;
@@ -475,8 +477,17 @@ const LINE_BUF: usize = 0x800;
 /// A colour token at a line start (`ParseToken` with `isBlip`) is carried to the next line by printing
 /// "~%c~" into `gString` and restarting from a stack copy. With `print` the saved text colour is set
 /// back at the end.
+///
+/// Return kind AX (`sa_core::abi::Ax`, PORT-HUD-3): the original ends with `mov ax, [esp+0xC]`, so
+/// EAX[31:16] is whatever its last full-EAX write left: the EAX residue of `RenderFontBuffer` (print),
+/// `PrintString` (ranged), `GetStringWidth`, `ParseToken`, `sprintf`, a stack address (`lea eax`) or a
+/// float's bits, depending on the path. That is not derivable from the inputs (it depends on callees'
+/// residues, some of them Rust ports); the port returns 0 there (divergence ledger, hud-port.md
+/// PORT-HUD-3). Every caller reads AX only: `GetNumberLines` / `ProcessStringToDisplay` pass EAX on and
+/// their callers (0x5741FF, 0x57B24B, 0x58B7EA `movsx r32, ax`; 0x58C795 `cmp ax, 1`), `GetTextRect`
+/// (0x71A6B4 `movzx eax, al`) and the `PrintString`s (discard it).
 #[hook(addr = 0x71A220, conv = cdecl, name = "CFont::ProcessCurrentString", expect = "81 EC 2C 01 00 00")]
-pub fn process_current_string(print: u32, px: f32, py: f32, text: GPtr<u8>) -> u16 {
+pub fn process_current_string(print: u32, px: f32, py: f32, text: GPtr<u8>) -> sa_core::abi::Ax {
     let print = print as u8 != 0;
     let mut buf = [0u8; LINE_BUF];
     let bufp = GPtr::from_raw(buf.as_mut_ptr());
@@ -638,7 +649,13 @@ pub fn process_current_string(print: u32, px: f32, py: f32, text: GPtr<u8>) -> u
     if print {
         set_color_call(saved_color);
     }
-    lines as u16
+    sa_core::abi::Ax(lines as u16)
+}
+
+/// [`process_current_string`]'s AX (the Rust path of `process_current_string_call`).
+#[allow(dead_code)]
+fn process_current_string_ax(print: u32, px: f32, py: f32, text: GPtr<u8>) -> u16 {
+    process_current_string(print, px, py, text).0
 }
 
 /// `CFont::ProcessStringToDisplay(float x, float y, const GxtChar*)` (0x71A600):
@@ -1117,7 +1134,7 @@ orig! {
     /// `CSprite2d::AddToBuffer(const CRect&, const CRGBA&, u1, v1, u2, v2, u3, v3, u4, v4)` (0x728200)
     pub fn sprite2d_add_to_buffer(rect: GPtr<u8>, colour: GPtr<u8>, u1: f32, v1: f32, u2: f32, v2: f32, u3: f32, v3: f32, u4: f32, v4: f32) = cdecl 0x728200 => unported;
     /// `CFont::GetLetterIdPropValue(uint8)` (0x718770)
-    pub fn get_letter_id_prop_value_call_st0(c: u32) -> f64 = cdecl 0x718770 => get_letter_id_prop_value_call_target_f64;
+    pub fn get_letter_id_prop_value_call_st0(c: u32) -> f64 = cdecl 0x718770 => get_letter_id_prop_value_call_st0_rust;
 }
 
 /// The `.rdata` constants of `PrintChar`.
@@ -1459,9 +1476,13 @@ pub fn load_font_values() {
     file_close(f);
 }
 
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[];
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_GXT_CHAR_STRCAT,
+    HOOK_GET_STRING_WIDTH,
     HOOK_GXT_CHAR_STRCPY,
     HOOK_GXT_CHAR_STRLEN,
     HOOK_GET_NEXT_SPACE,
@@ -1482,55 +1503,55 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_LOAD_FONT_VALUES,
 ];
 
-/// Phase B target of `get_character_size_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`get_character_size_call`] as an ST0 value.
 #[allow(dead_code)]
-fn get_character_size_call_target_f64(c: u32) -> f64 {
+fn get_character_size_call_st0_rust(c: u32) -> f64 {
     crate::font::get_character_size(c).to_f64()
 }
 
-/// `get_character_size_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`get_character_size_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn get_character_size_call(c: u32) -> X87 {
     X87::from_f64_exact(get_character_size_call_st0(c))
 }
 
-/// Phase B target of `get_script_letter_size_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`get_script_letter_size_call`] as an ST0 value.
 #[allow(dead_code)]
-fn get_script_letter_size_call_target_f64(c: u32) -> f64 {
+fn get_script_letter_size_call_st0_rust(c: u32) -> f64 {
     get_script_letter_size(c).to_f64()
 }
 
-/// `get_script_letter_size_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`get_script_letter_size_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn get_script_letter_size_call(c: u32) -> X87 {
     X87::from_f64_exact(get_script_letter_size_call_st0(c))
 }
 
-/// Phase B target of `get_string_width_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`get_string_width_call`] as an ST0 value.
 #[allow(dead_code)]
-fn get_string_width_call_target_f64(s: GPtr<u8>, full: u32, script: u32) -> f64 {
+fn get_string_width_call_st0_rust(s: GPtr<u8>, full: u32, script: u32) -> f64 {
     get_string_width(s, full, script).to_f64()
 }
 
-/// `get_string_width_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`get_string_width_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn get_string_width_call(s: GPtr<u8>, full: u32, script: u32) -> X87 {
     X87::from_f64_exact(get_string_width_call_st0(s, full, script))
 }
 
-/// `min_f_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`min_f_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn min_f(a: f32, b: f32) -> X87 {
     X87::from_f64_exact(min_f_st0(a, b))
 }
 
-/// Phase B target of `get_letter_id_prop_value_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`get_letter_id_prop_value_call`] as an ST0 value.
 #[allow(dead_code)]
-fn get_letter_id_prop_value_call_target_f64(c: u32) -> f64 {
+fn get_letter_id_prop_value_call_st0_rust(c: u32) -> f64 {
     crate::font::get_letter_id_prop_value(c).to_f64()
 }
 
-/// `get_letter_id_prop_value_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`get_letter_id_prop_value_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn get_letter_id_prop_value_call(c: u32) -> X87 {
     X87::from_f64_exact(get_letter_id_prop_value_call_st0(c))

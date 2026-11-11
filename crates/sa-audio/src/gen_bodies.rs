@@ -635,6 +635,7 @@ pub fn g_caescript_audio_entity_set_mission_audio_position_4ec0c0(this: u32, a0:
 
 /// `CAEScriptAudioEntity::AttachMissionAudioToPhysical` (0x4EC100): body, thiscall, `ret 8`; 20 instruction(s) matched.
 /// Not hookable: protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x40131d).
+#[sa_core::native(addr = 0x4EC100, conv = thiscall, name = "CAEScriptAudioEntity::AttachMissionAudioToPhysical")]
 pub fn g_caescript_audio_entity_attach_mission_audio_to_physical_4ec100(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = ((a0 & 0xFF) << 5);
     wr::<u32>(p(v1.wrapping_add(this)), 0x9C, a1);

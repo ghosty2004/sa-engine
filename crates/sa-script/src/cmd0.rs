@@ -52,7 +52,7 @@ orig! {
     /// `CCamera::CamShakeNoPos(CCamera*, float)` (0x50A970, cdecl)
     pub fn cam_shake_no_pos(cam: GPtr<u8>, strength: f32) = cdecl 0x50A970 => unported;
     /// `CTheScripts::StartNewScript(uint8* ip)` (0x464C20)
-    pub fn start_new_script(ip: GPtr<u8>) -> Scr = cdecl 0x464C20 => unported;
+    pub fn start_new_script(ip: GPtr<u8>) -> Scr = cdecl 0x464C20 => crate::script_brains::start_new_script;
     /// `CRunningScript::RemoveScriptFromList(CRunningScript**)` (0x464BD0)
     pub fn remove_script_from_list(s: Scr, list: GPtr<GPtr<u8>>) = thiscall 0x464BD0 => unported;
     /// `CRunningScript::AddScriptToList(CRunningScript**)` (0x464C00)

@@ -56,6 +56,19 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpd_v5::HOOKS,
     mvpd_v6::HOOKS,
     mvpd_v7::HOOKS,
+    // WRITER-VEH-BIG (unverified batches)
+    crate::automobile_control::HOOKS,
+    crate::automobile_wheels::HOOKS,
+    crate::automobile_damage::HOOKS,
+    crate::automobile_ai::HOOKS,
+    crate::vehicle_lights::HOOKS,
+    crate::vehicle_wheel_particles::HOOKS,
+    crate::bmx_ai::HOOKS,
+    crate::car_enter_exit_offsets::HOOKS,
+    crate::automobile_render::HOOKS,
+    crate::train_control::HOOKS,
+    crate::bike_control::HOOKS,
+    crate::bike_render::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -96,6 +109,18 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     mvpd_v5::GLOBALS,
     mvpd_v6::GLOBALS,
     mvpd_v7::GLOBALS,
+    crate::automobile_control::GLOBALS,
+    crate::automobile_wheels::GLOBALS,
+    crate::automobile_damage::GLOBALS,
+    crate::automobile_ai::GLOBALS,
+    crate::vehicle_lights::GLOBALS,
+    crate::vehicle_wheel_particles::GLOBALS,
+    crate::bmx_ai::GLOBALS,
+    crate::car_enter_exit_offsets::GLOBALS,
+    crate::automobile_render::GLOBALS,
+    crate::train_control::GLOBALS,
+    crate::bike_control::GLOBALS,
+    crate::bike_render::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

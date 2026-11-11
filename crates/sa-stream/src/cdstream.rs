@@ -380,17 +380,15 @@ pub fn cd_stream_remove_images() {
 /// `CreateFileA(name, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, flags | 0x10000001, 0)`,
 /// `strcpy` of the name; returns `slot << 24` (0 on INVALID_HANDLE_VALUE).
 ///
-/// Blocked (no hook): when the slot search ends at index 7, 15, 23 or 31 (the last of each unrolled
-/// group of eight) the original adds an offset computed by the protection VM (0xCB73E0 →
-/// [0x1422EA0], an expression-tree interpreter run on the stack); that value was not decoded, so the
-/// port stops there (needs a measurement with 8 open images).
+/// The slot search is unrolled by eight: a free slot at group offset `k` = 1..6 is `add esi, k`
+/// (0x1564AFA..0x1564B11); offset 7 (slots 7, 15, 23, 31) goes through the protection VM
+/// (0xCB73E0, descriptor 0x155FF5C) and adds its result instead. Taken as 7 by consistency (the
+/// compiler's `add esi, 7`, replaced by the protector; the shipped game opens more than eight
+/// streams, e.g. the SFX paks, which reach slot 7 on every boot); not decoded from the VM, needs L2.
 pub fn cd_stream_open(name: GPtr<u8>) -> u32 {
     let mut i = 0i32;
     while i < 32 {
         if handle_slot(i).read().is_null() {
-            if i % 8 == 7 {
-                panic!("CdStreamOpen: slot {i} comes from the protection VM (0xCB73E0), not decoded (blocked)");
-            }
             break;
         }
         i += 1;
@@ -416,6 +414,9 @@ pub fn cd_stream_open(name: GPtr<u8>) -> u32 {
 }
 
 /// [`cd_stream_open`] with the second argument CdStreamInit pushes (unused).
+/// Phase B entry of `CdStreamOpen(name, unused)` (0x4067B0; no hook: the slot search's
+/// protection-VM offset for slots 7/15/23/31 is taken as 7, not decoded).
+#[sa_core::native(addr = 0x4067B0, conv = cdecl, name = "CdStream::CdStreamOpen")]
 pub fn cd_stream_open_2(name: GPtr<u8>, _unused: i32) -> u32 {
     cd_stream_open(name)
 }
@@ -463,6 +464,7 @@ pub fn cd_stream_init_thread() {
 /// Deferred as a hook: 0x406A20 is sa-hook's own determinism-mode hook (`Id::CdStreamRead`, a
 /// synchronous read); two hooks cannot share the entry. sa-hook can call this port as its
 /// "original" once it is verified.
+#[sa_core::native(addr = 0x406A20, conv = cdecl, name = "CdStream::CdStreamRead")]
 pub fn cd_stream_read(id: i32, buf: GPtr<u8>, pos: u32, sectors: u32) -> i32 {
     let s = stream(id);
     let h = handle_slot((pos >> 24) as i32).read();

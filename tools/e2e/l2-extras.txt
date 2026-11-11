@@ -55,6 +55,11 @@ CEntryInfoNodePool::GetAt@[ecx+4]:[ecx+8]:RW
 CPtrNodeSingleLinkPool::New@[ecx+4]:[ecx+8]:RW
 CPtrNodeDoubleLinkPool::New@[ecx+4]:[ecx+8]:RW
 CPedIntelligencePool::New@[ecx+4]:[ecx+8]:RW
+# mvpb-core-1 pool instantiations (sa-core mvpb_app.rs): CPool<CQuadTreeNode>::New writes the byte map;
+# GetAtRef of the vehicle and object pools reads it
+FUN_00552b50@[ecx+4]:[ecx+8]:RW
+FUN_004048e0@[ecx+4]:[ecx+8]:R
+FUN_00465040@[ecx+4]:[ecx+8]:R
 CEntryInfoNode::operator new@[0xB7448C]:0x14:RW
 CEntryInfoNode::operator new@[[0xB7448C]+4]:[[0xB7448C]+8]:RW
 CEntryInfoNode::operator delete@[0xB7448C]:0x14:RW
@@ -923,6 +928,10 @@ Ps::psCameraShowRaster@0xC979C8:0x46B8:D
 # and RsCameraShowRaster (above): RW block, vertex declaration cache
 App::DoRWStuffEndOfFrame@0x8E2440:0x14:RW
 App::DoRWStuffEndOfFrame@0xC979C8:0x46B8:D
+# App::DoRWStuffStartOfFrame (mvpb-core-1): CameraSize, RwCameraClear and RsCameraBeginUpdate (as
+# Rs::RsCameraBeginUpdate above: vertex declaration cache / projection transform, RW block)
+App::DoRWStuffStartOfFrame@0x8E2440:0x58:RW
+App::DoRWStuffStartOfFrame@0xC979C8:0x46B8:D
 # CGame::DrasticTidyUpMemory -> D3DResourceSystem::TidyUpD3DTextures 0x7305E0: 0x730606 imul eax,eax,0x1C;
 # 0x730609 add eax,0xC87C68; 0x73061A / 0x73061D mov [eax+0x10] / [eax+0x14] (TextureBuffer[] entries,
 # 0x1C bytes each, up to the round-robin index at 0xC87FE0, 0x73064A)
@@ -4202,6 +4211,155 @@ CMenuManager::SwitchToNewScreen@0xB6F070:0x20:RW
 CMenuManager::SwitchToNewScreen@0xB6FC20:0x60:RW
 CRadar::Draw3dMarkers@0x9659B0:0x50:RW
 CRadar::Draw3dMarkers@0xC7DD50:0xC0:RW
+# PORT-HUD-3 (docs/arch/hud-port.md, third pass). Evidence: lane 7, port-l2-hud3-* runs: the undeclared writes
+# (original and Rust alike) listed per line.
+# ProcessCurrentString (split, menus-hud): RenderWare / D3D9 render-state caches written by the font render.
+CFont::ProcessCurrentString@0xC97BD8:4:RW
+CFont::ProcessCurrentString@0xC98100:0x20:RW
+CFont::ProcessCurrentString@0xC99860:0x20:RW
+# Split runs on menus-hud (port-l2-hud3-{x,m1,m2,d}-mh): callee writes (RenderWare / D3D9 render-state caches, font render
+# buffer and state, sprite / Im2D vertex buffers, audio front-end events, legend list, aScreens, text buffers).
+# CHud::DrawPlayerInfo: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aTempBufferIndices, gString, s_RenderFontBuffer
+CHud::DrawPlayerInfo@0xB71670:0x4:RW
+CHud::DrawPlayerInfo@0xC4B964:0x354:RW
+CHud::DrawPlayerInfo@0xC5F958:0x1F80:RW
+CHud::DrawPlayerInfo@0xC716B4:0x1F4:RW
+CHud::DrawPlayerInfo@0xC71AA0:0x2C:RW
+CHud::DrawPlayerInfo@0xC97B94:0x48:RW
+CHud::DrawPlayerInfo@0xC980E4:0xC:RW
+CHud::DrawPlayerInfo@0xC98B40:0x8:RW
+CHud::DrawPlayerInfo@0xC98EAC:0x44:RW
+CHud::DrawPlayerInfo@0xC9920C:0xA4:RW
+CHud::DrawPlayerInfo@0xC9A5EC:0x4:RW
+# CMenuManager::AdditionalOptionInput: AESoundManager, CRadar::ms_RadarTrace, FrontEndMenuManager
+CMenuManager::AdditionalOptionInput@0xB62DD8:0xAC:RW
+CMenuManager::AdditionalOptionInput@0xBA6774:0x4C:RW
+CMenuManager::AdditionalOptionInput@0xBA8E20:0x28:RW
+# CMenuManager::DisplaySlider: D3D9RestoreDeviceCallback, RwEngineInstance
+CMenuManager::DisplaySlider@0xC97B98:0x10:RW
+CMenuManager::DisplaySlider@0xC980E4:0x38:RW
+CMenuManager::DisplaySlider@0xC98EC4:0x34:RW
+CMenuManager::DisplaySlider@0xC99248:0x4:RW
+CMenuManager::DisplaySlider@0xC992A8:0x4:RW
+CMenuManager::DisplaySlider@0xC99864:0x10:RW
+CMenuManager::DisplaySlider@0xC9A4E8:0x24:RW
+# CMenuManager::DrawBackground: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
+CMenuManager::DrawBackground@0x8CE110:0xBC:RW
+CMenuManager::DrawBackground@0x8CE498:0xBC:RW
+CMenuManager::DrawBackground@0x8CFE34:0xB8:RW
+CMenuManager::DrawBackground@0x8D0460:0xBC:RW
+CMenuManager::DrawBackground@0xBA8318:0x8:RW
+CMenuManager::DrawBackground@0xC4B964:0x4EC:RW
+CMenuManager::DrawBackground@0xC5F958:0x2E60:RW
+CMenuManager::DrawBackground@0xC716B4:0x1F8:RW
+CMenuManager::DrawBackground@0xC71AA0:0x2C:RW
+CMenuManager::DrawBackground@0xC97B98:0x10:RW
+CMenuManager::DrawBackground@0xC980E4:0x38:RW
+CMenuManager::DrawBackground@0xC98B40:0x14:RW
+CMenuManager::DrawBackground@0xC98EAC:0x74:RW
+CMenuManager::DrawBackground@0xC9920C:0xF4:RW
+CMenuManager::DrawBackground@0xC99864:0x10:RW
+CMenuManager::DrawBackground@0xC9A4EC:0x20:RW
+CMenuManager::DrawBackground@0xC9A5EC:0x4:RW
+# CMenuManager::DrawStandardMenus: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, _rwD3D9LastIndexBufferUsed, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
+CMenuManager::DrawStandardMenus@0x8CE110:0xBC:RW
+CMenuManager::DrawStandardMenus@0x8CE498:0xBC:RW
+CMenuManager::DrawStandardMenus@0x8CFE34:0xB8:RW
+CMenuManager::DrawStandardMenus@0x8D0460:0xBC:RW
+CMenuManager::DrawStandardMenus@0x8E2450:0x4:RW
+CMenuManager::DrawStandardMenus@0xC4B964:0x4EC:RW
+CMenuManager::DrawStandardMenus@0xC5F958:0x2E60:RW
+CMenuManager::DrawStandardMenus@0xC716B4:0x1F8:RW
+CMenuManager::DrawStandardMenus@0xC71AA0:0x2C:RW
+CMenuManager::DrawStandardMenus@0xC97B98:0x10:RW
+CMenuManager::DrawStandardMenus@0xC980E4:0xC:RW
+CMenuManager::DrawStandardMenus@0xC98B40:0x8:RW
+CMenuManager::DrawStandardMenus@0xC98EC4:0x34:RW
+CMenuManager::DrawStandardMenus@0xC99248:0x4:RW
+CMenuManager::DrawStandardMenus@0xC992A8:0x4:RW
+CMenuManager::DrawStandardMenus@0xC9A4E8:0x24:RW
+# CMenuManager::PrintBriefs: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, gGxtString, s_RenderFontBuffer
+CMenuManager::PrintBriefs@0xC1B100:0x28:RW
+CMenuManager::PrintBriefs@0xC5F958:0x4440:RW
+CMenuManager::PrintBriefs@0xC716B4:0x1C0:RW
+CMenuManager::PrintBriefs@0xC71AA0:0x2C:RW
+CMenuManager::PrintBriefs@0xC97B98:0x10:RW
+CMenuManager::PrintBriefs@0xC980E4:0xC:RW
+CMenuManager::PrintBriefs@0xC98EC4:0x34:RW
+CMenuManager::PrintBriefs@0xC99248:0x4:RW
+CMenuManager::PrintBriefs@0xC992A8:0x4:RW
+CMenuManager::PrintBriefs@0xC9A4E8:0x24:RW
+# CMenuManager::PrintMap: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, s_RenderFontBuffer
+CMenuManager::PrintMap@0xBA8318:0x8:RW
+CMenuManager::PrintMap@0xC5F958:0x27D0:RW
+CMenuManager::PrintMap@0xC716B4:0x1E8:RW
+CMenuManager::PrintMap@0xC71AA0:0x2C:RW
+CMenuManager::PrintMap@0xC97B98:0x10:RW
+CMenuManager::PrintMap@0xC980E4:0x38:RW
+CMenuManager::PrintMap@0xC98EC4:0x34:RW
+CMenuManager::PrintMap@0xC99248:0x4:RW
+CMenuManager::PrintMap@0xC992A8:0x4:RW
+CMenuManager::PrintMap@0xC99864:0x10:RW
+CMenuManager::PrintMap@0xC9A4E8:0x24:RW
+# CMenuManager::PrintStats: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, TheText, aRadiosityVertexBuffer, aTempBufferIndices, gGxtString, gGxtString2, gString, gString2, s_RenderFontBuffer
+CMenuManager::PrintStats@0xB71510:0xC:RW
+CMenuManager::PrintStats@0xB71670:0x8:RW
+CMenuManager::PrintStats@0xC1AED8:0x1C:RW
+CMenuManager::PrintStats@0xC1B100:0x28:RW
+CMenuManager::PrintStats@0xC1BDD0:0x8:RW
+CMenuManager::PrintStats@0xC4BE50:0x378:RW
+CMenuManager::PrintStats@0xC5F958:0x4EC0:RW
+CMenuManager::PrintStats@0xC716B4:0x1F8:RW
+CMenuManager::PrintStats@0xC71AA0:0x2C:RW
+CMenuManager::PrintStats@0xC97B98:0x10:RW
+CMenuManager::PrintStats@0xC980E4:0xC:RW
+CMenuManager::PrintStats@0xC98B40:0x8:RW
+CMenuManager::PrintStats@0xC98EAC:0x4C:RW
+CMenuManager::PrintStats@0xC99218:0x34:RW
+CMenuManager::PrintStats@0xC992A8:0x4:RW
+CMenuManager::PrintStats@0xC9A4E8:0x24:RW
+# CMenuManager::UserInput: AEAudioHardware, AERadioTrackManager, AESmoothFadeThread, AESoundManager, AudioEngine, CAEPedSpeechAudioEntity::gGlobalSpeechContextNextPlayTime, CAEPoliceScannerAudioEntity::s_ScannerSlotFirst, CAEPo
+CMenuManager::UserInput@0x8CB7A4:0x40:RW
+CMenuManager::UserInput@0x8E2CA0:0x4:RW
+CMenuManager::UserInput@0xB5F9CC:0x4:RW
+CMenuManager::UserInput@0xB5FACC:0x4:RW
+CMenuManager::UserInput@0xB5FCE8:0x8:RW
+CMenuManager::UserInput@0xB5FF40:0x8:RW
+CMenuManager::UserInput@0xB608D8:0x20:RW
+CMenuManager::UserInput@0xB610E0:0x4:RW
+CMenuManager::UserInput@0xB61670:0x5A0:RW
+CMenuManager::UserInput@0xB61D24:0x24:RW
+CMenuManager::UserInput@0xB62D10:0x174:RW
+CMenuManager::UserInput@0xB6B960:0x8:RW
+CMenuManager::UserInput@0xB6BFBC:0x4:RW
+CMenuManager::UserInput@0xB6F078:0x4:RW
+CMenuManager::UserInput@0xB6FC24:0x4C:RW
+CMenuManager::UserInput@0xB71670:0x1C:RW
+CMenuManager::UserInput@0xB71A60:0x34:RW
+CMenuManager::UserInput@0xBA6774:0x4C:RW
+CMenuManager::UserInput@0xBA6804:0x8:RW
+CMenuManager::UserInput@0xBA68A4:0x4:RW
+CMenuManager::UserInput@0xBA8234:0x1C:RW
+CMenuManager::UserInput@0xBA8E20:0x28:RW
+# CRadar::DrawLegend: D3D9RestoreDeviceCallback, RwEngineInstance, s_RenderFontBuffer
+CRadar::DrawLegend@0xC716F0:0x64:RW
+CRadar::DrawLegend@0xC97B98:0x10:RW
+CRadar::DrawLegend@0xC980E4:0x4:RW
+CRadar::DrawLegend@0xC9A4EC:0x20:RW
+# DIReleaseMouse: PsGlobal
+DIReleaseMouse@[0xC17054]+0x1C:4:RW
+# pause-restart split (port-l2-hud3-m1-pa): the menu screens (aScreens, 43 x 0xE2), the Im2D index / vertex buffers
+# and, for UserInput (restart / quit through ProcessUserInput), the audio managers, the player and the pools.
+CMenuManager::DrawStandardMenus@0x8CE008:0x2600:RW
+CMenuManager::DrawStandardMenus@0xC4B950:0x1000:RW
+CMenuManager::DrawStandardMenus@0xC5F950:0x8000:RW
+CMenuManager::DrawBackground@0x8CE008:0x2600:RW
+CMenuManager::DrawBackground@0xC4B950:0x1000:RW
+CMenuManager::DrawBackground@0xC5F950:0x8000:RW
+CMenuManager::UserInput@0x8AC16C:8:RW
+CMenuManager::UserInput@0xB5F800:0x4800:RW
+CMenuManager::UserInput@0xB7CD78:4:RW
+CMenuManager::UserInput@0xB9C5B0:0xA80:RW
 
 # PORT-AUDIO-2 (docs/arch/audio-port.md): the audio singletons, sound-manager / hardware / smooth-fade state, PedSpeech /
 # vehicle / radio-history statics and CReferences::aRefs are static memory inside the watched windows; the AUDIO-2 runs
@@ -5547,3 +5705,558 @@ _rpD3D9GetMinMaxValuesV2d@arg2:8:RW
 _rpD3D9GetMinMaxValuesV2d@arg3:8:RW
 _rpD3D9GetMinMaxValuesV3d@arg2:0xC:RW
 _rpD3D9GetMinMaxValuesV3d@arg3:0xC:RW
+# PORT-HUD-3 (docs/arch/hud-port.md, third pass). Evidence: lane 7, port-l2-hud3-* runs: the undeclared writes
+# (original and Rust alike) listed per line.
+# ProcessCurrentString (split, menus-hud): RenderWare / D3D9 render-state caches written by the font render.
+CFont::ProcessCurrentString@0xC97BD8:4:RW
+CFont::ProcessCurrentString@0xC98100:0x20:RW
+CFont::ProcessCurrentString@0xC99860:0x20:RW
+# Split runs on menus-hud (port-l2-hud3-{x,m1,m2,d}-mh): callee writes (RenderWare / D3D9 render-state caches, font render
+# buffer and state, sprite / Im2D vertex buffers, audio front-end events, legend list, aScreens, text buffers).
+# CHud::DrawPlayerInfo: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aTempBufferIndices, gString, s_RenderFontBuffer
+CHud::DrawPlayerInfo@0xB71670:0x4:RW
+CHud::DrawPlayerInfo@0xC4B964:0x354:RW
+CHud::DrawPlayerInfo@0xC5F958:0x1F80:RW
+CHud::DrawPlayerInfo@0xC716B4:0x1F4:RW
+CHud::DrawPlayerInfo@0xC71AA0:0x2C:RW
+CHud::DrawPlayerInfo@0xC97B94:0x48:RW
+CHud::DrawPlayerInfo@0xC980E4:0xC:RW
+CHud::DrawPlayerInfo@0xC98B40:0x8:RW
+CHud::DrawPlayerInfo@0xC98EAC:0x44:RW
+CHud::DrawPlayerInfo@0xC9920C:0xA4:RW
+CHud::DrawPlayerInfo@0xC9A5EC:0x4:RW
+# CMenuManager::AdditionalOptionInput: AESoundManager, CRadar::ms_RadarTrace, FrontEndMenuManager
+CMenuManager::AdditionalOptionInput@0xB62DD8:0xAC:RW
+CMenuManager::AdditionalOptionInput@0xBA6774:0x4C:RW
+CMenuManager::AdditionalOptionInput@0xBA8E20:0x28:RW
+# CMenuManager::DisplaySlider: D3D9RestoreDeviceCallback, RwEngineInstance
+CMenuManager::DisplaySlider@0xC97B98:0x10:RW
+CMenuManager::DisplaySlider@0xC980E4:0x38:RW
+CMenuManager::DisplaySlider@0xC98EC4:0x34:RW
+CMenuManager::DisplaySlider@0xC99248:0x4:RW
+CMenuManager::DisplaySlider@0xC992A8:0x4:RW
+CMenuManager::DisplaySlider@0xC99864:0x10:RW
+CMenuManager::DisplaySlider@0xC9A4E8:0x24:RW
+# CMenuManager::DrawBackground: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
+CMenuManager::DrawBackground@0x8CE110:0xBC:RW
+CMenuManager::DrawBackground@0x8CE498:0xBC:RW
+CMenuManager::DrawBackground@0x8CFE34:0xB8:RW
+CMenuManager::DrawBackground@0x8D0460:0xBC:RW
+CMenuManager::DrawBackground@0xBA8318:0x8:RW
+CMenuManager::DrawBackground@0xC4B964:0x4EC:RW
+CMenuManager::DrawBackground@0xC5F958:0x2E60:RW
+CMenuManager::DrawBackground@0xC716B4:0x1F8:RW
+CMenuManager::DrawBackground@0xC71AA0:0x2C:RW
+CMenuManager::DrawBackground@0xC97B98:0x10:RW
+CMenuManager::DrawBackground@0xC980E4:0x38:RW
+CMenuManager::DrawBackground@0xC98B40:0x14:RW
+CMenuManager::DrawBackground@0xC98EAC:0x74:RW
+CMenuManager::DrawBackground@0xC9920C:0xF4:RW
+CMenuManager::DrawBackground@0xC99864:0x10:RW
+CMenuManager::DrawBackground@0xC9A4EC:0x20:RW
+CMenuManager::DrawBackground@0xC9A5EC:0x4:RW
+# CMenuManager::DrawStandardMenus: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, _rwD3D9LastIndexBufferUsed, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
+CMenuManager::DrawStandardMenus@0x8CE110:0xBC:RW
+CMenuManager::DrawStandardMenus@0x8CE498:0xBC:RW
+CMenuManager::DrawStandardMenus@0x8CFE34:0xB8:RW
+CMenuManager::DrawStandardMenus@0x8D0460:0xBC:RW
+CMenuManager::DrawStandardMenus@0x8E2450:0x4:RW
+CMenuManager::DrawStandardMenus@0xC4B964:0x4EC:RW
+CMenuManager::DrawStandardMenus@0xC5F958:0x2E60:RW
+CMenuManager::DrawStandardMenus@0xC716B4:0x1F8:RW
+CMenuManager::DrawStandardMenus@0xC71AA0:0x2C:RW
+CMenuManager::DrawStandardMenus@0xC97B98:0x10:RW
+CMenuManager::DrawStandardMenus@0xC980E4:0xC:RW
+CMenuManager::DrawStandardMenus@0xC98B40:0x8:RW
+CMenuManager::DrawStandardMenus@0xC98EC4:0x34:RW
+CMenuManager::DrawStandardMenus@0xC99248:0x4:RW
+CMenuManager::DrawStandardMenus@0xC992A8:0x4:RW
+CMenuManager::DrawStandardMenus@0xC9A4E8:0x24:RW
+# CMenuManager::PrintBriefs: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, gGxtString, s_RenderFontBuffer
+CMenuManager::PrintBriefs@0xC1B100:0x28:RW
+CMenuManager::PrintBriefs@0xC5F958:0x4440:RW
+CMenuManager::PrintBriefs@0xC716B4:0x1C0:RW
+CMenuManager::PrintBriefs@0xC71AA0:0x2C:RW
+CMenuManager::PrintBriefs@0xC97B98:0x10:RW
+CMenuManager::PrintBriefs@0xC980E4:0xC:RW
+CMenuManager::PrintBriefs@0xC98EC4:0x34:RW
+CMenuManager::PrintBriefs@0xC99248:0x4:RW
+CMenuManager::PrintBriefs@0xC992A8:0x4:RW
+CMenuManager::PrintBriefs@0xC9A4E8:0x24:RW
+# CMenuManager::PrintMap: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, s_RenderFontBuffer
+CMenuManager::PrintMap@0xBA8318:0x8:RW
+CMenuManager::PrintMap@0xC5F958:0x27D0:RW
+CMenuManager::PrintMap@0xC716B4:0x1E8:RW
+CMenuManager::PrintMap@0xC71AA0:0x2C:RW
+CMenuManager::PrintMap@0xC97B98:0x10:RW
+CMenuManager::PrintMap@0xC980E4:0x38:RW
+CMenuManager::PrintMap@0xC98EC4:0x34:RW
+CMenuManager::PrintMap@0xC99248:0x4:RW
+CMenuManager::PrintMap@0xC992A8:0x4:RW
+CMenuManager::PrintMap@0xC99864:0x10:RW
+CMenuManager::PrintMap@0xC9A4E8:0x24:RW
+# CMenuManager::PrintStats: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, TheText, aRadiosityVertexBuffer, aTempBufferIndices, gGxtString, gGxtString2, gString, gString2, s_RenderFontBuffer
+CMenuManager::PrintStats@0xB71510:0xC:RW
+CMenuManager::PrintStats@0xB71670:0x8:RW
+CMenuManager::PrintStats@0xC1AED8:0x1C:RW
+CMenuManager::PrintStats@0xC1B100:0x28:RW
+CMenuManager::PrintStats@0xC1BDD0:0x8:RW
+CMenuManager::PrintStats@0xC4BE50:0x378:RW
+CMenuManager::PrintStats@0xC5F958:0x4EC0:RW
+CMenuManager::PrintStats@0xC716B4:0x1F8:RW
+CMenuManager::PrintStats@0xC71AA0:0x2C:RW
+CMenuManager::PrintStats@0xC97B98:0x10:RW
+CMenuManager::PrintStats@0xC980E4:0xC:RW
+CMenuManager::PrintStats@0xC98B40:0x8:RW
+CMenuManager::PrintStats@0xC98EAC:0x4C:RW
+CMenuManager::PrintStats@0xC99218:0x34:RW
+CMenuManager::PrintStats@0xC992A8:0x4:RW
+CMenuManager::PrintStats@0xC9A4E8:0x24:RW
+# CMenuManager::UserInput: AEAudioHardware, AERadioTrackManager, AESmoothFadeThread, AESoundManager, AudioEngine, CAEPedSpeechAudioEntity::gGlobalSpeechContextNextPlayTime, CAEPoliceScannerAudioEntity::s_ScannerSlotFirst, CAEPo
+CMenuManager::UserInput@0x8CB7A4:0x40:RW
+CMenuManager::UserInput@0x8E2CA0:0x4:RW
+CMenuManager::UserInput@0xB5F9CC:0x4:RW
+CMenuManager::UserInput@0xB5FACC:0x4:RW
+CMenuManager::UserInput@0xB5FCE8:0x8:RW
+CMenuManager::UserInput@0xB5FF40:0x8:RW
+CMenuManager::UserInput@0xB608D8:0x20:RW
+CMenuManager::UserInput@0xB610E0:0x4:RW
+CMenuManager::UserInput@0xB61670:0x5A0:RW
+CMenuManager::UserInput@0xB61D24:0x24:RW
+CMenuManager::UserInput@0xB62D10:0x174:RW
+CMenuManager::UserInput@0xB6B960:0x8:RW
+CMenuManager::UserInput@0xB6BFBC:0x4:RW
+CMenuManager::UserInput@0xB6F078:0x4:RW
+CMenuManager::UserInput@0xB6FC24:0x4C:RW
+CMenuManager::UserInput@0xB71670:0x1C:RW
+CMenuManager::UserInput@0xB71A60:0x34:RW
+CMenuManager::UserInput@0xBA6774:0x4C:RW
+CMenuManager::UserInput@0xBA6804:0x8:RW
+CMenuManager::UserInput@0xBA68A4:0x4:RW
+CMenuManager::UserInput@0xBA8234:0x1C:RW
+CMenuManager::UserInput@0xBA8E20:0x28:RW
+# CRadar::DrawLegend: D3D9RestoreDeviceCallback, RwEngineInstance, s_RenderFontBuffer
+CRadar::DrawLegend@0xC716F0:0x64:RW
+CRadar::DrawLegend@0xC97B98:0x10:RW
+CRadar::DrawLegend@0xC980E4:0x4:RW
+CRadar::DrawLegend@0xC9A4EC:0x20:RW
+# DIReleaseMouse: PsGlobal
+DIReleaseMouse@[0xC17054]+0x1C:4:RW
+# CReplay::StorePedUpdate (mvpb-world-4): the 0x34-byte ped block at the replay write position
+# (buffer [0x97FB74] + offset [0x97FB70], both .data; the offset advances by 0x34)
+CReplay::StorePedUpdate@[0x97FB74]+[0x97FB70]:0x34:RW
+# PORT-CAM-3 helper B
+# CCam::Process_FollowCar_SA (plain l2 port-l2-cam3b-d1, driving): the vehicle camera tweak block
+# TheCamera+0xCF4..+0xD58 that InitCameraVehicleTweaks / ApplyVehicleCameraTweaks write (undeclared 0xB6FD1C..),
+# gpMadeInvisibleEntities[10] / gNumEntitiesSetInvisible of the collision passes (0x9655A1..), and
+# CReferences::aRefs of the entities they hide (0xB9C5E8..).
+CCam::Process_FollowCar_SA@0xB6FD1C:0x64:RW
+CCam::Process_FollowCar_SA@0x9655A0:0x28:RW
+CCam::Process_FollowCar_SA@0x9655DC:4:RW
+CCam::Process_FollowCar_SA@0xB9B9A8:0x5DC4:RW
+
+# PORT-CAM-3 helper A
+# CCam::Process_FollowPed_SA (split port-l2-cam3a-gs1, grove walk): gIdleCam (0xB6FDA0, 0x9C bytes) through
+# CIdleCam::Process (undeclared gIdleCam+0x90), CCollision::ms_colModelCache (0x96592C, CLinkList) and
+# CPlaceable's static matrix list gMatrixList (0xB74288) through the camera collision callees
+# (CameraColDetAndReact / ImproveNearClip; undeclared 0x96593C, 0xB74328).
+CCam::Process_FollowPed_SA@0xB6FDA0:0x9C:RW
+CCam::Process_FollowPed_SA@0x96592C:0x34:RW
+CCam::Process_FollowPed_SA@0xB74288:0x1F8:RW
+# CCamera::Find3rdPersonCamTargetVector: the caller's outSource / outTarget (stack arguments 4 and 5 after range and the
+# by-value muzzle).
+CCamera::Find3rdPersonCamTargetVector@arg4:0xC:W
+CCamera::Find3rdPersonCamTargetVector@arg5:0xC:W
+# CCam::LookBehind / CCam::LookRight: the same collision passes as Process_FollowCar_SA (ImproveNearClip /
+# CameraColDetAndReact hide entities): gpMadeInvisibleEntities, gNumEntitiesSetInvisible, CReferences::aRefs.
+CCam::LookBehind@0x9655A0:0x28:RW
+CCam::LookBehind@0x9655DC:4:RW
+CCam::LookBehind@0xB9B9A8:0x5DC4:RW
+CCam::LookRight@0x9655A0:0x28:RW
+CCam::LookRight@0x9655DC:4:RW
+CCam::LookRight@0xB9B9A8:0x5DC4:RW
+# CCamera::AvoidTheGeometry (split port-l2-cam3a-ps1, police-gang, ProcessPedsDeadBaby caller): the collision statics its
+# ProcessLineOfSight / TestSphereAgainstWorld callees write (0x9659B1.., ProcessColModels 0x967F41.. / 0x968941..),
+# gaTempSphereColPoints (0xB9B250..) and the WellBufferMe value / speed statics 0xB6EC38 / 0xB6EC3C.
+CCamera::AvoidTheGeometry@0x9659B0:0x40:D
+CCamera::AvoidTheGeometry@0x967F40:0x20:D
+CCamera::AvoidTheGeometry@0x968940:0x90:D
+CCamera::AvoidTheGeometry@0xB9B250:0x58:D
+CCamera::AvoidTheGeometry@0xB6EC38:8:RW
+# CCam::GetLookFromLampPostPos (split port-l2-cam3b-s-car-ai): the caller's out vector (arg3, stack) and
+# CCollision::ms_colModelCache with its links block, moved by the LOS tests (undeclared 0x965934.., 0x965990..).
+CCam::GetLookFromLampPostPos@arg3:0xC:W
+CCam::GetLookFromLampPostPos@0x96592C:0x74:RW
+CCam::GetLookFromLampPostPos@[0x96595C]:0x258:RW
+# PORT-CAM-3 (parent). Evidence: grove split cam3-s1 (lane 6): the undeclared writes, original and Rust alike.
+# CamControl: target reference hand-overs (CReferences::aRefs); CCam::Process / CameraColDetAndReact: the idle
+# ticker (gIdleCam+0x90), matrix allocation by CPlaceable::GetMatrix (gMatrixList), CCollision::ms_colModelCache.
+CCamera::CamControl@0xB9B9A8:0x5DC4:D
+CCamera::CamControl@0xB74288:0x1F8:D
+CCamera::CamControl@0x965900:0x3100:RW
+CCam::Process@0xB6FE30:4:RW
+CCam::Process@0xB74288:0x1F8:D
+CCam::Process@0x965900:0x3100:RW
+CCam::Process@0xB9B9A8:0x5DC4:D
+CCamera::CameraColDetAndReact@0xB74288:0x1F8:D
+CCamera::CameraColDetAndReact@0x965900:0x3100:RW
+# CCam::Process_AimWeapon (split port-l2-cam3a-ws1, weapon-combat): the quick-aim pitch it stores into the player's
+# CPlayerData +0x54, which is CWorld::Players[0] +0x58 (0xB7CDF0; m_pPlayerData points into the static array).
+CCam::Process_AimWeapon@0xB7CDF0:4:RW
+
+# WRITER-MVP-B mvpb-ai-1 / mvpb-ai-2 / mvpb-ai-5 (VERIFIER-4). Reference users: CEntity::RegisterReference /
+# CleanUpOldReference (0x571B70 / 0x571A00) write CReferences::aRefs + pEmptyList (0xB9B9A8..0xBA176B, .data) and
+# the entity's m_pReferences (+0x24, heap: declared so the L2 double run restores it; without it the second
+# RegisterReference links the reference to itself). Deleters / allocators: the task pool (CPools::ms_pTaskPool
+# 0xB744A8), the event pool (0xB744AC) and the task allocator pool (0xB744BC), header and byte map. `this` objects
+# are declared at their size so they are restored and compared, except the events, which callers also build on
+# the stack: their padding and unset fields hold caller stack residue that differs under Rust callers (split
+# DIVERGED on the input fingerprint of 0x4AF890 / 0x4AEDF0, +0x12 / +0x14 before the call), so they are `D`.
+FUN_004af890@ecx:0x18:D
+FUN_004af890@0xB9B9A8:0x5DC4:RW
+FUN_004af890@[ecx+0x14]+0x24:4:RW
+FUN_005dea00@ecx:0x24:D
+FUN_005dea00@0xB9B9A8:0x5DC4:RW
+FUN_005dea00@[ecx+0x14]+0x24:4:RW
+FUN_004aecd0@ecx:0x14:D
+FUN_004aecd0@0xB9B9A8:0x5DC4:RW
+FUN_004aecd0@arg1+0x24:4:RW
+FUN_004aed60@ecx:0x14:D
+FUN_004aed60@0xB9B9A8:0x5DC4:RW
+FUN_004aed60@[ecx+0x10]+0x24:4:RW
+FUN_004aedf0@ecx:0x18:D
+FUN_004aedf0@0xB9B9A8:0x5DC4:RW
+FUN_004aedf0@arg0+0x24:4:RW
+FUN_004aeea0@ecx:0x18:D
+FUN_004aeea0@0xB9B9A8:0x5DC4:RW
+FUN_004aeea0@[ecx+0x14]+0x24:4:RW
+CTaskSimpleCarSetPedInAsPassenger@ecx:0x20:RW
+CTaskSimpleCarSetPedInAsPassenger@0xB9B9A8:0x5DC4:RW
+CTaskSimpleCarSetPedInAsPassenger@arg0+0x24:4:RW
+CTaskSimpleCarSetPedInAsDriver@ecx:0x1C:RW
+CTaskSimpleCarSetPedInAsDriver@0xB9B9A8:0x5DC4:RW
+CTaskSimpleCarSetPedInAsDriver@arg0+0x24:4:RW
+FUN_00647170@ecx:0x1C:RW
+FUN_00647170@0xB9B9A8:0x5DC4:RW
+FUN_00647170@[ecx+0x10]+0x24:4:RW
+CEntityScanner::Clear@ecx:0x50:RW
+CEntityScanner::Clear@0xB9B9A8:0x5DC4:RW
+CEntityScanner::Clear@[ecx+0xc]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x10]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x14]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x18]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x1c]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x20]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x24]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x28]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x2c]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x30]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x34]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x38]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x3c]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x40]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x44]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x48]+0x24:4:RW
+CEntityScanner::Clear@[ecx+0x4c]+0x24:4:RW
+FUN_0061a3a0@ecx:4:RW
+FUN_0061a3d0@ecx:0xC:RW
+FUN_0061a3d0@0xB9B9A8:0x5DC4:RW
+FUN_0061a3d0@[0xB744A8]:0x14:RW
+FUN_0061a3d0@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+FUN_0066f670@ecx:0x28:RW
+FUN_0066f670@0xB9B9A8:0x5DC4:RW
+FUN_0066f670@[0xB744A8]:0x14:RW
+FUN_0066f670@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+FUN_0048e600@ecx:4:RW
+FUN_0048e600@0xB9B9A8:0x5DC4:RW
+FUN_0048e600@[0xB744A8]:0x14:RW
+FUN_0048e600@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CTaskComplexWander::Constructor@ecx:0x28:RW
+CTaskComplexFacial::StopAll@ecx:0x10:RW
+FUN_004ab980@ecx:0x48:RW
+FUN_004ab980@0xB9B9A8:0x5DC4:RW
+FUN_004ab980@[0xB744AC]:0x14:RW
+FUN_004ab980@[[0xB744AC]+4]:[[0xB744AC]+8]:RW
+CPedGroupIntelligence::AddEvent-@ecx:0xC:RW
+CPedGroupIntelligence::AddEvent-@0xB9B9A8:0x5DC4:RW
+CPedGroupIntelligence::AddEvent-@[0xB744AC]:0x14:RW
+CPedGroupIntelligence::AddEvent-@[[0xB744AC]+4]:[[0xB744AC]+8]:RW
+CInformFriendsEventQueue::Process@0xA9AFB8:0x60:RW
+CInformFriendsEventQueue::Process@0xB9B9A8:0x5DC4:RW
+CInformFriendsEventQueue::Process@[0xB744AC]:0x14:RW
+CInformFriendsEventQueue::Process@[[0xB744AC]+4]:[[0xB744AC]+8]:RW
+CInformGroupEvent::Process@0xB9B9A8:0x5DC4:RW
+CInformGroupEvent::Process@[0xB744AC]:0x14:RW
+CInformGroupEvent::Process@[[0xB744AC]+4]:[[0xB744AC]+8]:RW
+CTaskGoToVehicleAndLean::Destructor@ecx:0x18:RW
+CTaskGoToVehicleAndLean::Destructor@0xB9B9A8:0x5DC4:RW
+CTaskGoToVehicleAndLean::Destructor@[ecx+0xC]+0x24:4:RW
+CTaskComplexFacial::CreateNextSubTask@ecx:0x10:RW
+CTaskComplexFacial::CreateNextSubTask@[0xB744A8]:0x14:RW
+CTaskComplexFacial::CreateNextSubTask@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CTaskComplexFacial::CreateFirstSubTask@ecx:0x10:RW
+CTaskComplexFacial::CreateFirstSubTask@[0xB744A8]:0x14:RW
+CTaskComplexFacial::CreateFirstSubTask@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CTaskComplexFacial::ControlSubTask@ecx:0x10:RW
+CTaskComplexFacial::ControlSubTask@0xB9B9A8:0x5DC4:RW
+CTaskComplexFacial::ControlSubTask@[0xB744A8]:0x14:RW
+CTaskComplexFacial::ControlSubTask@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CTaskSimpleFacial::MakeAbortable@ecx:0x18:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@ecx:0x2D4:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@0xB9B9A8:0x5DC4:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@[0xB744A8]:0x14:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@[0xB744BC]:0x14:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@[[0xB744BC]+4]:[[0xB744BC]+8]:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@[0xB744AC]:0x14:RW
+CPedGroupIntelligence::ComputeEventResponseTasks@[[0xB744AC]+4]:[[0xB744AC]+8]:RW
+
+# FxSystem_c::AddParticle (CVector overload, 0x4AA440, mvpb-render-2; split only: the L2 double run adds each
+# particle twice to the heap particle lists and the FX update then loops): the prims' AddParticle takes particles
+# from g_fxMan's free particle list (FxManager_c 0xA9AE80 +0x1C..+0x27; split pause-restart undeclared
+# 0xA9AE9C+1..+3, 0xA9AEA4+1).
+FxSystem_c::AddParticle-v3d@0xA9AE9C:0xC:RW
+# CTaskSimpleHoldEntity (mvpb-ai-2): the constructor registers a reference to the held entity (arg0; split
+# pause-restart undeclared aRefs+0x170..+0xAA4), StartAnim adds a reference to the anim hierarchy it plays
+# (CAnimManager::ms_aAnimations 0xB4EA40, 2500 x 0x18; undeclared +0x177A..+0x2518) and its block
+# (CAnimManager::ms_aAnimBlocks 0xB5D4A0, 180 x 0x20; undeclared +0x12, +0x8D2).
+CTaskSimpleHoldEntity::Constructor-1@ecx:0x3C:RW
+CTaskSimpleHoldEntity::Constructor-1@0xB9B9A8:0x5DC4:RW
+CTaskSimpleHoldEntity::Constructor-1@arg0+0x24:4:RW
+CTaskSimpleHoldEntity::StartAnim@0xB4EA40:0xEA60:RW
+CTaskSimpleHoldEntity::StartAnim@0xB5D4A0:0x1680:RW
+# CCover::RemoveCoverPointsForThisEntity / FindCoverPointsForThisBuilding (mvpb-ai-1): cover points hold entity
+# references (split pause-restart undeclared aRefs+0x68..). The task destructors release the anim block of a
+# deleted subtask (FUN_0061a3d0 undeclared CAnimManager::ms_aAnimBlocks+0x8D2).
+CCover::RemoveCoverPointsForThisEntity@0xB9B9A8:0x5DC4:RW
+CCover::FindCoverPointsForThisBuilding@0xB9B9A8:0x5DC4:RW
+FUN_0061a3d0@0xB5D4A0:0x1680:RW
+FUN_0066f670@0xB5D4A0:0x1680:RW
+FUN_0048e600@0xB5D4A0:0x1680:RW
+# ... and both write the cover point table (CCover::m_NumPoints 0xC197A4 .. CCover::m_Points 0xC197C8, 100 x 0x1C;
+# split v4-ai1-split2 undeclared m_Points+0..): static memory in the watched windows, so `D`.
+CCover::RemoveCoverPointsForThisEntity@0xC197A4:0xB14:D
+CCover::FindCoverPointsForThisBuilding@0xC197A4:0xB14:D
+# CTaskGoToVehicleAndLean::Destructor (mvpb-ai-2): releases its anim block (split anim-input undeclared
+# CAnimManager::ms_aAnimBlocks+0x8D2).
+CTaskGoToVehicleAndLean::Destructor@0xB5D4A0:0x1680:RW
+# PORT-AUDIO-3 (docs/arch/audio-port.md): per-hook regions of the third AUDIO pass (lane 7, port-l2-a3{lead,veh,ent}-* runs).
+# The audio singletons/statics are passed once as `D` for every hook through L2_EXTRA (see the PORT-AUDIO-2 note).
+# lead (port3_lead.rs): out-pointers, CAESound, the speech ctor, the speech slot owners' entity heads (empty slots unreadable).
+CAEPedSpeechAudioEntity::ReleasePedConversation@[[0xB61C3C]+4]+0x24:4:RW
+CAEPedSpeechAudioEntity::ReleasePedConversation@[[0xB61C58]+4]+0x24:4:RW
+CAEPedSpeechAudioEntity::ReleasePedConversation@[[0xB61C74]+4]+0x24:4:RW
+CAEPedSpeechAudioEntity::ReleasePedConversation@[[0xB61C90]+4]+0x24:4:RW
+CAEPedSpeechAudioEntity::ReleasePedConversation@[[0xB61CAC]+4]+0x24:4:RW
+CAEPedSpeechAudioEntity::ReleasePedConversation@[[0xB61CC8]+4]+0x24:4:RW
+CAEAudioEnvironment::GetPositionRelativeToCamera-vec@arg0:0xC:RW
+CAEAudioUtility::GetBankAndSoundFromScriptSlotAudioEvent@arg1:4:RW
+CAEAudioUtility::GetBankAndSoundFromScriptSlotAudioEvent@arg2:4:RW
+CAESound@ecx:0x74:RW
+CAESound@[ecx+8]+0x24:4:RW
+CAEPedSpeechAudioEntity::Constructor@ecx:0x100:RW
+# helper A (port3_veh.rs): `this`, the entity head, the vehicle and cVehicleParams arguments, the bicycle statics.
+CAEVehicleAudioEntity::ProcessVehicle@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessVehicle@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::UpdateParameters@ecx:0x24C:RW
+CAEVehicleAudioEntity::UpdateParameters@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::AddAudioEvent-1@ecx:0x24C:RW
+CAEVehicleAudioEntity::AddAudioEvent-1@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessVehicleFlatTyre@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessVehicleFlatTyre@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessVehicleRoadNoise@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessVehicleRoadNoise@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessVehicleSkidding@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessVehicleSkidding@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayerAboutToExitVehicleAsDriver@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayerAboutToExitVehicleAsDriver@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessRainOnVehicle@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessRainOnVehicle@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::UpdateBoatSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::UpdateBoatSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::UpdateGenericVehicleSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::UpdateGenericVehicleSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessVehicleSirenAlarmHorn@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessVehicleSirenAlarmHorn@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessAircraft@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessAircraft@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlaySkidSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlaySkidSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayTrainBrakeSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayTrainBrakeSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayRoadNoiseSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayRoadNoiseSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayFlatTyreSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayFlatTyreSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayReverseSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayReverseSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::StartVehicleEngineSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::StartVehicleEngineSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::GetFreqForPlayerEngineSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::GetFreqForPlayerEngineSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayHornOrSiren@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayHornOrSiren@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessMovingParts@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessMovingParts@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::RequestNewPlayerCarEngineSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::RequestNewPlayerCarEngineSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyStateTransition@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyStateTransition@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayAircraftSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayAircraftSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::PlayBicycleSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::PlayBicycleSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessPlayerCombine@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessPlayerCombine@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummySeaPlane@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummySeaPlane@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyRCCar@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyRCCar@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyJet@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyJet@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyGolfCart@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyGolfCart@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessSpecialVehicle@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessSpecialVehicle@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessTrainTrackSound@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessTrainTrackSound@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessPlayerTrainBrakes@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessPlayerTrainBrakes@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyTrainEngine@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyTrainEngine@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyBicycle@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyBicycle@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessPlayerBicycle@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessPlayerBicycle@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyRCPlane@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyRCPlane@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyRCHeli@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyRCHeli@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessBoatEngine@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessBoatEngine@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyHovercraft@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyHovercraft@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessVehicle@arg0:0xA20:RW
+CAEVehicleAudioEntity::ProcessVehicleFlatTyre@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessVehicleRoadNoise@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessVehicleSkidding@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessRainOnVehicle@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessVehicleSirenAlarmHorn@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessAircraft@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::PlayHornOrSiren@[arg3+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessMovingParts@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyStateTransition@[arg2+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessPlayerCombine@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummySeaPlane@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyRCCar@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyJet@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyGolfCart@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessSpecialVehicle@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessTrainTrackSound@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessPlayerTrainBrakes@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyTrainEngine@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyBicycle@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessPlayerBicycle@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyRCPlane@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyRCHeli@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessBoatEngine@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyHovercraft@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::AddAudioEvent-1@arg1:0x28:RW
+CAEVehicleAudioEntity::UpdateParameters@arg0:0x74:RW
+CAEVehicleAudioEntity::ProcessDummyBicycle@0xB6BAC8:1:RW
+CAEVehicleAudioEntity::ProcessPlayerBicycle@0xB6BAC8:0xC:RW
+CAEVehicleAudioEntity::ProcessVehicle@0xB6BAC8:0xC:RW
+CAEVehicleAudioEntity::ProcessSpecialVehicle@0xB6BAC8:0xC:RW
+CAEVehicleAudioEntity::ProcessRainOnVehicle@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessVehicleSirenAlarmHorn@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessVehicleFlatTyre@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessVehicleRoadNoise@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessVehicleSkidding@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessMovingParts@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessPlayerCombine@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyRCCar@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyGolfCart@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessSpecialVehicle@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessTrainTrackSound@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessPlayerTrainBrakes@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyTrainEngine@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyBicycle@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessPlayerBicycle@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyRCPlane@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyRCHeli@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessBoatEngine@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyHovercraft@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessAircraft@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummySeaPlane@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyJet@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessGenericJet@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessGenericJet@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessPlayerJet@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessPlayerJet@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessAIProp@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessAIProp@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessAIHeli@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessAIHeli@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessGenericJet@[arg1+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessGenericJet@arg1:0x4C:RW
+CAEVehicleAudioEntity::ProcessPlayerJet@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessPlayerJet@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessAIProp@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessAIProp@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessAIHeli@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessAIHeli@arg0:0x4C:RW
+CAEVehicleAudioEntity::ProcessDummyHeli@ecx:0x24C:RW
+CAEVehicleAudioEntity::ProcessDummyHeli@[ecx+4]:0x28:RW
+CAEVehicleAudioEntity::ProcessDummyHeli@[arg0+0x10]:0xA20:RW
+CAEVehicleAudioEntity::ProcessDummyHeli@arg0:0x4C:RW
+# helper B (port3_ent.rs): `this`, entity heads, the ped model-info store (IncrementVoice), gMatrixList (CPhysical ctor).
+CAECollisionAudioEntity::UpdateLoopingCollisionSound@ecx:0x1978:RW
+CAECollisionAudioEntity::PlayLoopingCollisionSound@ecx:0x1978:RW
+CAECollisionAudioEntity::PlayOneShotCollisionSound@ecx:0x1978:RW
+CAECollisionAudioEntity::ReportCollision@ecx:0x1978:RW
+CAEPedAudioEntity::PlayShirtFlap@ecx:0x15C:RW
+CAEPedAudioEntity::PlayShirtFlap@[ecx+0x94]:0x28:RW
+CAEPedAudioEntity::Service@ecx:0x15C:RW
+CAEPedAudioEntity::Service@[ecx+0x94]:0x28:RW
+CAEWeatherAudioEntity::Service@ecx:0x80:RW
+CAEWeatherAudioEntity::Service@0x8CC30C:8:D
+CAEWeatherAudioEntity::Service@0xB6BB18:0x150:D
+CAEPedSpeechAudioEntity::StopCurrentSpeech@ecx:0x100:RW
+CAEPedSpeechAudioEntity::StopCurrentSpeech@[ecx+4]:0x28:RW
+CAEPedSpeechAudioEntity::Initialise@ecx:0x100:RW
+CAEGlobalWeaponAudioEntity::Constructor@ecx:0xA8:RW
+CAEWaterCannonAudioEntity::UpdateGenericWaterCannonSound@ecx:0xA0:RW
+CAETwinLoopSoundEntity::PlayTwinLoopSound@ecx:0xA8:RW
+CAECollisionAudioEntity::PlayBulletHitCollisionSound@ecx:0x1978:RW
+CAECollisionAudioEntity::ReportWaterSplash-for-physical@ecx:0x1978:RW
+CAECollisionAudioEntity::ReportWaterSplash-for-physical@arg0:0x28:RW
+CAEPedAudioEntity::HandlePedJacked@ecx:0x15C:RW
+CAEPedAudioEntity::HandlePedJacked@[ecx+0x94]:0x28:RW
+CAEWeaponAudioEntity::ReportStealthKill@ecx:0xA0:RW
+CAEWeaponAudioEntity::ReportStealthKill@arg1:0x28:RW
+CAEWeaponAudioEntity::ReportChainsawEvent@ecx:0xA0:RW
+CAEWeaponAudioEntity::ReportChainsawEvent@arg0:0x28:RW
+FUN_00506ba0@ecx:0x21C:RW
+CAEPedSpeechAudioEntity::Initialise@0xB478F8:0x49DC:D
+CAEGlobalWeaponAudioEntity::Constructor@[0xB74480]:0x127B0:RW
+CAEGlobalWeaponAudioEntity::Constructor@0xB74288:0x1F8:D
+CAEPedAudioEntity::TurnOnJetPack@ecx:0x15C:RW
+# mvpb-ai-3 (split v4-ai34 pause-restart): CConversations::RemoveConversationForPed clears the ped's conversation
+# and its node tree (CConversations statics 0x9691C4..: m_Conversations 0x9691D8 14 x 0x1C, m_aTempNodes, m_Nodes
+# 0x969570 50 x 0x18; static memory, `D`); ReportFinishedTask-Wrapper and CTaskComplexBeInGroup::MonitorMainGroupTask
+# release / register task and ped references (undeclared aRefs, pEmptyList).
+CConversations::RemoveConversationForPed@0x9691C4:0x85C:D
+CPedGroupIntelligence::ReportFinishedTask-Wrapper@0xB9B9A8:0x5DC4:RW
+CTaskComplexBeInGroup::MonitorMainGroupTask@0xB9B9A8:0x5DC4:RW
+# CVehicle::DoHeadLightEffect / DoTailLightEffect (mvpb-veh-2/3, split v4-veh26 driving): they register coronas
+# (CCoronas::aCoronas 0xC3E058, 64 x 0x3C, static: `D`), which hold a reference to the vehicle (aRefs, pEmptyList).
+CVehicle::DoHeadLightEffect@0xC3E058:0xF00:D
+CVehicle::DoHeadLightEffect@0xB9B9A8:0x5DC4:RW
+CVehicle::DoTailLightEffect@0xC3E058:0xF00:D
+CVehicle::DoTailLightEffect@0xB9B9A8:0x5DC4:RW
+# mvpb-ai-3 subtask creators (split v4-ai3b pause-restart): the created tasks register ped / vehicle references;
+# GoToVehicleAndLean::ControlSubTask also releases its anim block (ms_aAnimBlocks+0x8D2).
+CTaskGoToVehicleAndLean::ControlSubTask@0xB9B9A8:0x5DC4:RW
+CTaskGoToVehicleAndLean::ControlSubTask@0xB5D4A0:0x1680:RW
+CTaskComplexWalkAlongsidePed::CreateSubTask@0xB9B9A8:0x5DC4:RW
+CTaskComplexWalkAlongsidePed::CreateFirstSubTask@0xB9B9A8:0x5DC4:RW

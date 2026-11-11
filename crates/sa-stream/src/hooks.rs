@@ -10,12 +10,15 @@ use crate::modelinfo;
 /// work conflict-free).
 pub const MODULES: &[&[HookReg]] = &[
     crate::cdstream::HOOKS,
+    crate::img_size::HOOKS,
+    crate::object_instance::HOOKS,
     crate::streaming_info::HOOKS,
     crate::streaming::HOOKS,
     crate::colstore::HOOKS,
     crate::iplstore::HOOKS,
     crate::txdstore::HOOKS,
     crate::loaded_car_group::HOOKS,
+    crate::name_damage::HOOKS,
     crate::loading_screen::HOOKS,
     crate::rw_gta_stream::HOOKS,
     crate::misc::HOOKS,
@@ -29,6 +32,42 @@ pub const MODULES: &[&[HookReg]] = &[
     modelinfo::vehicle::HOOKS,
     modelinfo::model_info::HOOKS,
     modelinfo::model_indices::HOOKS,
+];
+
+/// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[
+    crate::cdstream::NATIVE_CD_STREAM_OPEN_2,
+    crate::loaded_car_group::NATIVE_ADD_MEMBER,
+    crate::loaded_car_group::NATIVE_COUNT_MEMBERS,
+    crate::cdstream::NATIVE_CD_STREAM_READ,
+    crate::modelinfo::clump::NATIVE_GET_BOUNDING_BOX,
+    crate::modelinfo::clump::NATIVE_GET_MODEL_TYPE,
+    crate::modelinfo::clump::NATIVE_GET_ANIM_FILE_INDEX,
+    crate::modelinfo::atomic::NATIVE_AS_ATOMIC_MODEL_INFO_PTR,
+    crate::modelinfo::atomic::NATIVE_GET_MODEL_TYPE,
+    crate::modelinfo::atomic::NATIVE_AS_DAMAGE_ATOMIC_MODEL_INFO_PTR,
+    crate::modelinfo::atomic::NATIVE_LOD_GET_MODEL_TYPE,
+    crate::modelinfo::atomic::NATIVE_AS_LOD_ATOMIC_MODEL_INFO_PTR,
+    crate::modelinfo::ped::NATIVE_GET_MODEL_TYPE,
+    crate::modelinfo::ped::NATIVE_ADD_XTRA_ATOMICS,
+    crate::modelinfo::ped::NATIVE_SET_FACE_TEXTURE,
+    crate::modelinfo::weapon::NATIVE_GET_MODEL_TYPE,
+    crate::modelinfo::time::NATIVE_GET_TIME_ON,
+    crate::modelinfo::time::NATIVE_TIME_GET_MODEL_TYPE,
+    crate::modelinfo::time::NATIVE_TIME_GET_TIME_INFO,
+    crate::modelinfo::time::NATIVE_LOD_TIME_GET_MODEL_TYPE,
+    crate::modelinfo::time::NATIVE_LOD_TIME_GET_TIME_INFO,
+    crate::modelinfo::base::NATIVE_AS_ATOMIC_MODEL_INFO_PTR,
+    crate::modelinfo::base::NATIVE_AS_DAMAGE_ATOMIC_MODEL_INFO_PTR,
+    crate::modelinfo::base::NATIVE_AS_LOD_ATOMIC_MODEL_INFO_PTR,
+    crate::modelinfo::base::NATIVE_GET_TIME_INFO,
+    crate::modelinfo::base::NATIVE_SET_ANIM_FILE,
+    crate::modelinfo::base::NATIVE_CONVERT_ANIM_FILE_INDEX,
+    crate::modelinfo::base::NATIVE_GET_ANIM_FILE_INDEX,
+    crate::modelinfo::vehicle::NATIVE_GET_MODEL_TYPE,
+    crate::modelinfo::vehicle::NATIVE_DELETE_VEHICLE_COLOUR_TEXTURES,
+    crate::streaming::NATIVE_REMOVE_UNUSED_MODELS_IN_LOADED_LIST,
+    crate::streaming::NATIVE_LOAD_INITIAL_VEHICLES,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

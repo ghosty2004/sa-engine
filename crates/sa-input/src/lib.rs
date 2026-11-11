@@ -28,3 +28,5 @@ pub mod common;
 pub mod hooks;
 pub mod pad;
 pub mod statics;
+
+pub mod std6_natives;

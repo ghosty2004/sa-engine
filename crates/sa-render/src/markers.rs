@@ -374,13 +374,13 @@ pub fn update_z_coordinate(this: GPtr<u8>, px: u32, py: u32, _pz: u32, z_dist: u
     }
     let z1 = f32_of(x(rd::<f32>(this, 0x38)).fadd_m(k(K_ONE)));
     let mut found = 0u32;
-    let gz = find_ground_z_for_3d_coord(
+    let gz = X87::from_f64_exact(find_ground_z_for_3d_coord_st0(
         rd::<u32>(this, 0x30),
         rd::<u32>(this, 0x34),
         z1,
         GPtr::from_raw(&mut found).cast(),
         0,
-    );
+    ));
     if found as u8 != 0 {
         let v = x(f32::from_bits(z_dist)).fmul_m(k(K_0_05));
         wr::<f32>(this, 0x38, f32_of(gz.fsub(v)));

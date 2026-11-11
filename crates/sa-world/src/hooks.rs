@@ -23,8 +23,10 @@ pub const MODULES: &[&[HookReg]] = &[
     world::escalators::HOOKS,
     world::gamelogic::HOOKS,
     world::garages::HOOKS,
+    world::garage_update::HOOKS,
     world::misc::HOOKS,
     world::pickups::HOOKS,
+    world::replay_playback::HOOKS,
     world::restart::HOOKS,
     world::shopping::HOOKS,
     world::statics::HOOKS,
@@ -64,6 +66,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::mvpb_stats::HOOKS,
     world::mvpb_world3::HOOKS,
     world::entity_prerender::HOOKS,
+    world::entity_lights::HOOKS,
     collision::sphere_cast::HOOKS,
     collision::col_models::HOOKS,
     physical::friction_attach::HOOKS,
@@ -73,6 +76,13 @@ pub const MODULES: &[&[HookReg]] = &[
     world::mvpd_w3::HOOKS,
     world::mvpd_w4::HOOKS,
     world::mvpd_w5::HOOKS,
+    world::object_data::HOOKS,
+    world::zone_create::HOOKS,
+    world::static_matrix::HOOKS,
+    world::garage_add::HOOKS,
+    world::entry_exit_add::HOOKS,
+    world::pickup_generate::HOOKS,
+    physical::pair_collision::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -173,11 +183,7 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize {
-                                exe[(raw + o) as usize]
-                            } else {
-                                0
-                            }
+                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
                         })
                         .collect(),
                 );

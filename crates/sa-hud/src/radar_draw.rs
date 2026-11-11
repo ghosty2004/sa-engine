@@ -392,11 +392,21 @@ orig! {
 /// the quad. Returns the vertex count.
 ///
 /// Original quirk kept: with no known side (-1) the corner walk starts at `corners[-1]`, which in the
-/// original is two stack locals (`&inside[-1]` and the `s2` output pointer); the port writes its own
-/// equivalents, i.e. different stack addresses (not reachable in the corpus so far).
-#[hook(addr = 0x585040, conv = cdecl, name = "CRadar::ClipRadarPoly", expect = "55 8B EC 83 E4 F8")]
+/// original is two stack locals: `&inside[-1]` and the `s2` output pointer. The first is an address in
+/// the original's frame (`push ebp; mov ebp, esp; and esp, -8; sub esp, 0x4C`, three pushes, `inside` at
+/// `[esp+0x14]`): `((entry ESP - 4) & !7) - 0x45`, which the port computes from its entry ESP (`peek`,
+/// PORT-HUD-3); entered without its hook (a direct Rust call) it uses its own `&inside[-1]`.
+#[hook(addr = 0x585040, conv = cdecl, name = "CRadar::ClipRadarPoly", expect = "55 8B EC 83 E4 F8", peek = 4)]
 pub fn clip_radar_poly(out: GPtr<u8>, inp: GPtr<u8>) -> i32 {
-    clip_radar_poly_with(out, inp, |inside_m1, slot| (inside_m1, slot.addr() as u32))
+    let entry = sa_core::abi::peek_entry_esp(0x585040);
+    clip_radar_poly_with(out, inp, move |inside_m1, slot| {
+        (entry.map_or(inside_m1, clip_radar_poly_inside_m1), slot.addr() as u32)
+    })
+}
+
+/// The original `ClipRadarPoly`'s `&inside[-1]` for an entry ESP (see [`clip_radar_poly`]).
+pub fn clip_radar_poly_inside_m1(entry_esp: u32) -> u32 {
+    (entry_esp.wrapping_sub(4) & !7).wrapping_sub(0x45)
 }
 
 /// [`clip_radar_poly`] with the `corners[-1]` words supplied by `quirk(&inside[-1], s2 slot)` (the L1
@@ -838,7 +848,7 @@ orig! {
     /// `CRadar::TransformRealWorldPointToRadarSpace(CVector2D&, const CVector2D&)` (0x583530)
     pub fn transform_real_world_point_to_radar_space_call(out: GPtr<f32>, inp: GPtr<f32>) = cdecl 0x583530 => crate::radar::transform_real_world_point_to_radar_space;
     /// `CRadar::LimitRadarPoint(CVector2D&)` (0x5832F0, ST0)
-    pub fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_target_f64;
+    pub fn limit_radar_point_call_st0(p: GPtr<f32>) -> f64 = cdecl 0x5832F0 => limit_radar_point_call_st0_rust;
 }
 
 /// `CTimer::m_snTimeInMillisecondsPauseMode`
@@ -1032,19 +1042,19 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SAVE,
 ];
 
-/// `find_player_heading_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`find_player_heading_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn find_player_heading(id: i32) -> X87 {
     X87::from_f64_exact(find_player_heading_st0(id))
 }
 
-/// Phase B target of `limit_radar_point_call_st0`: the port's ST0 result as f64.
+/// The Rust path of [`limit_radar_point_call`] as an ST0 value.
 #[allow(dead_code)]
-fn limit_radar_point_call_target_f64(p: GPtr<f32>) -> f64 {
+fn limit_radar_point_call_st0_rust(p: GPtr<f32>) -> f64 {
     crate::radar::limit_radar_point(p).to_f64()
 }
 
-/// `limit_radar_point_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`limit_radar_point_call_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 pub fn limit_radar_point_call(p: GPtr<f32>) -> X87 {
     X87::from_f64_exact(limit_radar_point_call_st0(p))

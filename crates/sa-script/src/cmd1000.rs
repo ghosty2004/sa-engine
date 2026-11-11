@@ -128,7 +128,7 @@ orig! {
     /// `CTheScripts::WipeLocalVariableMemoryForMissionScript()` (0x464BB0)
     fn wipe_local_variable_memory_for_mission_script() = cdecl 0x464BB0 => unported;
     /// `CTheScripts::StartNewScript(uint8* ip)` (0x464C20)
-    fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> = cdecl 0x464C20 => unported;
+    fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> = cdecl 0x464C20 => crate::script_brains::start_new_script;
     /// `CGameLogic::ClearSkip(bool)` (0x441560)
     fn clear_skip(b: u32) = cdecl 0x441560 => unported;
 }

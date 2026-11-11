@@ -52,7 +52,7 @@ const LAST: usize = 0xC1CB38;
 /// inertia1 = r. Finally the current gear's max velocity (scaled by the multiplier) limits it:
 /// `acc *= 1 - min(over / [0x8D3494], 1)` (stored to 0xC1CB38 again).
 #[hook(addr = 0x6D05E0, conv = thiscall, name = "cTransmission::CalculateDriveAcceleration", this = "cTransmission", expect = "8B 44 24 10 8B 10 89 15 40 CB C1 00",
-       unverified = "mvpb-veh-3", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        note = "the original reuses its own argument slots as locals (cheat slot gets 1.0f, wheels/inertia2 zeroed after a gear change); the port uses locals")]
 #[allow(clippy::too_many_arguments)]
 pub fn calculate_drive_acceleration(

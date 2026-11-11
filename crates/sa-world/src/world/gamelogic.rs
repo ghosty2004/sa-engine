@@ -4,7 +4,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
+use sa_math::x87::{Cmp, X87};
 
 use super::common::{g, rd, wr, x};
 use super::cworld::{PLAYERS, PLAYER_INFO_SIZE, PLAYER_IN_FOCUS};
@@ -43,8 +43,26 @@ sa_core::globals! {
 
 /// `TheCamera`
 const THE_CAMERA: usize = 0xB6F028;
+/// `CGameLogic::bLimitPlayerDistance` (u8)
+const LIMIT_PLAYER_DISTANCE: usize = 0x8A5E4A;
+/// `CGameLogic::MaxPlayerDistance` (f32)
+const MAX_PLAYER_DISTANCE: usize = 0x8A5E4C;
+/// `CGameLogic::n2PlayerPedInFocus` (u32)
+const PLAYER_PED_IN_FOCUS_2: usize = 0x8A5E50;
+/// `CWorld::Players[0].m_pPed` / `Players[1].m_pPed` (0x190-byte `CPlayerInfo`)
+const PLAYER0_PED: usize = 0xB7CD98;
+const PLAYER1_PED: usize = 0xB7CF28;
 
 orig! {
+    /// `CPed::GetTransformedBonePosition(RwV3d& inOut, uint32 bone, bool updateSkin)` (0x5E01C0)
+    pub fn ped_get_transformed_bone_position(ped: GPtr<u8>, v: GPtr<f32>, bone: u32, update: u32) = thiscall 0x5E01C0 => unported;
+    /// `CEntity::GetIsOnScreen()` (0x534540, AL)
+    pub fn entity_get_is_on_screen(e: GPtr<u8>) -> u8 = thiscall 0x534540 => unported;
+    /// `CCamera::GetGameCamPosition()` (0x50AE50)
+    pub fn camera_get_game_cam_position(cam: GPtr<u8>) -> GPtr<u8> = thiscall 0x50AE50 => unported;
+    /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
+    pub fn get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, b0: i32, b1: i32, b2: i32, b3: i32, b4: i32, b5: i32, b6: i32) -> u8
+        = cdecl 0x56A490 => unported;
     /// `CCamera::SetFadeColour(uint8, uint8, uint8)` (0x50BF00)
     pub fn camera_set_fade_colour(cam: GPtr<u8>, r: u32, gg: u32, b: u32) = thiscall 0x50BF00 => unported;
     /// `CCamera::Fade(float, int16)` (0x50AC20)
@@ -180,7 +198,80 @@ pub fn set_up_skip(px: u32, py: u32, pz: u32, heading: u32, after_mission: u32, 
     SKIP_TO_BE_FINISHED_BY_SCRIPT.set(by_script as u8);
 }
 
+/// The position of the ped at `cell`: its matrix's position when it has a matrix (+0x14), else the
+/// placement (+4).
+fn ped_pos(cell: usize) -> GPtr<f32> {
+    let p = g::<GPtr<u8>>(cell).read();
+    let m = rd::<GPtr<u8>>(p, 0x14);
+    if m.is_null() { p.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
+}
+
+/// `CGameLogic::IsPlayerAllowedToGoInThisDirection(CPed* ped, float dirX, float dirY, float dirZ, float
+/// distanceLimit)` (0x441E10, cdecl; the `Players[0].m_pPed` load sits in the fragment 0x40593E).
+/// Allowed (AL = 1) without player 0's or player 1's ped or with `bLimitPlayerDistance` (0x8A5E4A)
+/// clear. With `n2PlayerPedInFocus` (0x8A5E50) below 2: allowed for the focused player's ped; else the
+/// ped's bone 5 (offset (0, 0, 0.2), `GetTransformedBonePosition(.., 5, false)`) must be on screen
+/// (`GetIsOnScreen`) and in line of sight of `GetGameCamPosition()` (buildings and see-through: 1,0,0,0,0,1,0)
+/// or AL = 0. Then (x87): allowed when `MaxPlayerDistance` (0x8A5E4C) + `distanceLimit` is greater than
+/// the 2D distance between the two players (`fsqrt(dy*dy + dx*dx)`, player 0 - player 1). Otherwise the
+/// direction's dot product with (player 0 - player 1) (`dirZ*dz + dirY*dy`, then `+ dirX*dx`) decides:
+/// for player 0's ped allowed (EAX = 1) when it is below 0, else EAX = 0; for any other ped allowed
+/// when it is above 0 (NaN: refused). The early AL returns keep EAX's upper bytes (zero here).
+#[hook(addr = 0x441e10, conv = cdecl, name = "CGameLogic::IsPlayerAllowedToGoInThisDirection",
+       expect = "90 E9 28 3B FC FF", unverified = "mvpi-world-1", route = "L2", hazards = "ax-al-return,x87-transcendental",
+       recs = "grove-walk")]
+pub fn is_player_allowed_to_go_in_this_direction(ped: GPtr<u8>, dir_x: f32, dir_y: f32, dir_z: f32, limit: f32) -> u8 {
+    if g::<u32>(PLAYER0_PED).read() == 0
+        || g::<u32>(PLAYER1_PED).read() == 0
+        || g::<u8>(LIMIT_PLAYER_DISTANCE).read() == 0
+    {
+        return 1;
+    }
+    let focus = g::<u32>(PLAYER_PED_IN_FOCUS_2).read();
+    if focus < 2 {
+        let fp = g::<u32>((PLAYER0_PED as u32).wrapping_add(focus.wrapping_mul(0x190)) as usize).read();
+        if ped.addr() as u32 == fp {
+            return 1;
+        }
+        let mut bone = [0f32, 0.0, f32::from_bits(0x3E4C_CCCD)];
+        let bp = GPtr::from_raw(bone.as_mut_ptr());
+        ped_get_transformed_bone_position(ped, bp, 5, 0);
+        if entity_get_is_on_screen(ped) == 0 {
+            return 0;
+        }
+        let cam = camera_get_game_cam_position(GPtr::from_addr(THE_CAMERA));
+        if get_is_line_of_sight_clear(cam, bp.cast(), 1, 0, 0, 0, 0, 1, 0) == 0 {
+            return 0;
+        }
+    }
+    let p0 = ped_pos(PLAYER0_PED);
+    let p1 = ped_pos(PLAYER1_PED);
+    let dy = x(p0.wrapping_index(1).read()).fsub_m(p1.wrapping_index(1).read());
+    let dy2 = dy.fmul(x(p0.wrapping_index(1).read()).fsub_m(p1.wrapping_index(1).read()));
+    let dx = x(p0.read()).fsub_m(p1.read());
+    let dx2 = x(p0.read()).fsub_m(p1.read()).fmul(dx);
+    let dist = dy2.fadd(dx2).fsqrt();
+    let max = x(g::<f32>(MAX_PLAYER_DISTANCE).read()).fadd_m(limit);
+    if matches!(max.fcom(dist), Cmp::Greater) {
+        return 1;
+    }
+    let p1 = ped_pos(PLAYER1_PED);
+    let p0 = ped_pos(PLAYER0_PED);
+    let ddx = x(p0.read()).fsub_m(p1.read());
+    let ddy = x(p0.wrapping_index(1).read()).fsub_m(p1.wrapping_index(1).read());
+    let ddz = x(p0.wrapping_index(2).read()).fsub_m(p1.wrapping_index(2).read());
+    let sum = x(dir_z).fmul(ddz).fadd(x(dir_y).fmul(ddy));
+    let dot = ddx.fmul_m(dir_x).fadd(sum);
+    let c = dot.fcom(X87::zero());
+    if ped.addr() as u32 == g::<u32>(PLAYER0_PED).read() {
+        u8::from(matches!(c, Cmp::Less))
+    } else {
+        u8::from(matches!(c, Cmp::Greater))
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_IS_PLAYER_ALLOWED_TO_GO_IN_THIS_DIRECTION,
     HOOK_INIT_AT_START_OF_GAME,
     HOOK_FORCE_DEATH_RESTART,
     HOOK_IS_SKIP_WAITING_FOR_SCRIPT_TO_FADE_IN,

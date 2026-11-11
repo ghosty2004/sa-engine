@@ -147,9 +147,8 @@ pub fn spec_map_material_pool_new(this: GPtr<u8>) -> GPtr<u8> {
 /// `cb_RSNODENAME_RwFrame_Copy(void* dst, const void* src, int offset, int size)` (0x72F9F0, cdecl,
 /// the node-name frame plugin's copy callback): `strncpy(dst + gPluginOffset, src + gPluginOffset,
 /// 23)` with the plugin offset at 0xC87C5C; returns dst.
-#[hook(addr = 0x72F9F0, conv = cdecl, name = "cb_RSNODENAME_RwFrame_Copy", expect = "A1 5C 7C C8 00",
-       route = "L2", hazards = "heap-writes", recs = "grove-walk",
-       note = "writes the frame plugin data (heap)")]
+///
+/// Not registered: 0x72F9F0 is hooked by sa-render rwplugins.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 pub fn node_name_frame_copy(dst: GPtr<u8>, src: GPtr<u8>, _offset: u32, _size: u32) -> GPtr<u8> {
     let off = g::<i32>(0xC87C5C).read() as isize;
     crt_strncpy(dst.byte_add(off), src.byte_add(off), 0x17);
@@ -500,7 +499,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_ENV_MAP_MATERIAL_POOL_NEW,
     HOOK_ENV_MAP_ATOMIC_POOL_NEW,
     HOOK_SPEC_MAP_MATERIAL_POOL_NEW,
-    HOOK_NODE_NAME_FRAME_COPY,
     HOOK_POINT_LIGHTS_REMOVE_LIGHTS_AFFECTING_OBJECT,
     HOOK_FX_EMITTER_DESTRUCTOR,
     HOOK_FX_EMITTER_SCALAR_DELETING_DESTRUCTOR,
