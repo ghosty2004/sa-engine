@@ -104,7 +104,7 @@ fn respawn_axis(site: u32, front: usize, axis: usize) -> i32 {
 /// (14,0) (16,1) (10,5) (11,6) (12,1) (1,0), `RwIm3DTransform(.., NULL, 8)`, indexed line list, end,
 /// then (8,1) (6,1) (10,5) (11,6) (14,0) (12,0). Both temp-buffer counts end at 0.
 #[hook(addr = 0x72AF70, conv = cdecl, name = "CWeather::RenderRainStreaks", expect = "A0 48 CB B7 00 83 EC 2C",
-       unverified = "mvpg-render-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "fsqrt in CVector::Magnitude; rand at 0x72B1A6/1F4/243/361/394/3B7/3DA/4BA; allocates and writes the four streak arrays (heap), TempBufferRenderVertices and aTempBufferIndices")]
 pub fn render_rain_streaks() {

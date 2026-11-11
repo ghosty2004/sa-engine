@@ -6379,3 +6379,134 @@ CAutomobile::ProcessCarWheelPair@arg4:0x30:RW
 # CTrain::ProcessControl re-sectorises the moving train (CPhysical::RemoveAndAdd): CWorld::ms_aRepeatSectors
 # (split pause-restart v5-C-pr: 0xB99324..0xB99628, 0xB99E64).
 CTrain::ProcessControl@0xB992B8:0xC00:RW
+# VERIFIER-6 (renderbig / mvpg render batches, split v6-sA-grove / v6-sB-grove): the render passes write, through
+# the RenderWare Im3D / D3D9 callees, static memory only: aTempBufferIndices (0xC4B958, 4096 x 2),
+# TempBufferRenderVertices + aRadiosityVertexBuffer (0xC4D958..0xC61958; CGlass::ShatteredPolyVertexBuffer lies
+# inside), RwEngineInstance / _RwD3D9ActiveViewProjTransform / the D3D9 render-state caches (0xC97B80..0xC9AB40)
+# and _rwD3D9LastVertexDeclarationUsed / _rwD3D9LastIndexBufferUsed (0x8E2440..0x8E245F). Declared `D`: the
+# window writes are compared byte for byte anyway (that is how the vertex / index data each pass hands to
+# RwIm3DTransform / RwIm2DRenderIndexedPrimitive is checked), the lines only complete the write sets.
+CClouds::Render@0xC4B958:0x2000:D
+CClouds::Render@0xC4D958:0x14000:D
+CClouds::Render@0xC97B80:0x2FC0:D
+CClouds::Render@0x8E2440:0x20:D
+CClouds::RenderSkyPolys@0xC4B958:0x2000:D
+CClouds::RenderSkyPolys@0xC4D958:0x14000:D
+CClouds::RenderSkyPolys@0xC97B80:0x2FC0:D
+CClouds::RenderSkyPolys@0x8E2440:0x20:D
+CClouds::RenderBottomFromHeight@0xC4B958:0x2000:D
+CClouds::RenderBottomFromHeight@0xC4D958:0x14000:D
+CClouds::RenderBottomFromHeight@0xC97B80:0x2FC0:D
+CClouds::RenderBottomFromHeight@0x8E2440:0x20:D
+CClouds::VolumetricCloudsRender@0xC4B958:0x2000:D
+CClouds::VolumetricCloudsRender@0xC4D958:0x14000:D
+CClouds::VolumetricCloudsRender@0xC97B80:0x2FC0:D
+CClouds::VolumetricCloudsRender@0x8E2440:0x20:D
+CClouds::MovingFogRender@0xC4B958:0x2000:D
+CClouds::MovingFogRender@0xC4D958:0x14000:D
+CClouds::MovingFogRender@0xC97B80:0x2FC0:D
+CClouds::MovingFogRender@0x8E2440:0x20:D
+CWaterLevel::RenderWater@0xC4B958:0x2000:D
+CWaterLevel::RenderWater@0xC4D958:0x14000:D
+CWaterLevel::RenderWater@0xC97B80:0x2FC0:D
+CWaterLevel::RenderWater@0x8E2440:0x20:D
+CWaterLevel::RenderBoatWakes@0xC4B958:0x2000:D
+CWaterLevel::RenderBoatWakes@0xC4D958:0x14000:D
+CWaterLevel::RenderBoatWakes@0xC97B80:0x2FC0:D
+CWaterLevel::RenderBoatWakes@0x8E2440:0x20:D
+CCoronas::Render@0xC4B958:0x2000:D
+CCoronas::Render@0xC4D958:0x14000:D
+CCoronas::Render@0xC97B80:0x2FC0:D
+CCoronas::Render@0x8E2440:0x20:D
+CCoronas::RenderReflections@0xC4B958:0x2000:D
+CCoronas::RenderReflections@0xC4D958:0x14000:D
+CCoronas::RenderReflections@0xC97B80:0x2FC0:D
+CCoronas::RenderReflections@0x8E2440:0x20:D
+CCoronas::RenderSunReflection@0xC4B958:0x2000:D
+CCoronas::RenderSunReflection@0xC4D958:0x14000:D
+CCoronas::RenderSunReflection@0xC97B80:0x2FC0:D
+CCoronas::RenderSunReflection@0x8E2440:0x20:D
+CBirds::Render@0xC4B958:0x2000:D
+CBirds::Render@0xC4D958:0x14000:D
+CBirds::Render@0xC97B80:0x2FC0:D
+CBirds::Render@0x8E2440:0x20:D
+CBrightLights::Render@0xC4B958:0x2000:D
+CBrightLights::Render@0xC4D958:0x14000:D
+CBrightLights::Render@0xC97B80:0x2FC0:D
+CBrightLights::Render@0x8E2440:0x20:D
+CMirrors::RenderMirrorBuffer@0xC4B958:0x2000:D
+CMirrors::RenderMirrorBuffer@0xC4D958:0x14000:D
+CMirrors::RenderMirrorBuffer@0xC97B80:0x2FC0:D
+CMirrors::RenderMirrorBuffer@0x8E2440:0x20:D
+CWeather::RenderRainStreaks@0xC4B958:0x2000:D
+CWeather::RenderRainStreaks@0xC4D958:0x14000:D
+CWeather::RenderRainStreaks@0xC97B80:0x2FC0:D
+CWeather::RenderRainStreaks@0x8E2440:0x20:D
+CPostEffects::Render@0xC4B958:0x2000:D
+CPostEffects::Render@0xC4D958:0x14000:D
+CPostEffects::Render@0xC97B80:0x2FC0:D
+CPostEffects::Render@0x8E2440:0x20:D
+RenderBuffer::StopStoring@0xC4B958:0x2000:D
+RenderBuffer::StopStoring@0xC4D958:0x14000:D
+RenderBuffer::StopStoring@0xC97B80:0x2FC0:D
+RenderBuffer::StopStoring@0x8E2440:0x20:D
+CShadows::RenderStoredShadows@0xC4B958:0x2000:D
+CShadows::RenderStoredShadows@0xC4D958:0x14000:D
+CShadows::RenderStoredShadows@0xC97B80:0x2FC0:D
+CShadows::RenderStoredShadows@0x8E2440:0x20:D
+CShadows::CastShadowEntityXY@0xC4B958:0x2000:D
+CShadows::CastShadowEntityXY@0xC4D958:0x14000:D
+CShadows::CastShadowEntityXY@0xC97B80:0x2FC0:D
+CShadows::CastShadowEntityXY@0x8E2440:0x20:D
+CPointLights::RenderFogEffect@0xC4B958:0x2000:D
+CPointLights::RenderFogEffect@0xC4D958:0x14000:D
+CPointLights::RenderFogEffect@0xC97B80:0x2FC0:D
+CPointLights::RenderFogEffect@0x8E2440:0x20:D
+CSprite::RenderOneXLUSprite@0xC4B958:0x2000:D
+CSprite::RenderOneXLUSprite@0xC4D958:0x14000:D
+CSprite::RenderOneXLUSprite@0xC97B80:0x2FC0:D
+CSprite::RenderOneXLUSprite@0x8E2440:0x20:D
+CSprite::RenderOneXLUSprite_Triangle@0xC4B958:0x2000:D
+CSprite::RenderOneXLUSprite_Triangle@0xC4D958:0x14000:D
+CSprite::RenderOneXLUSprite_Triangle@0xC97B80:0x2FC0:D
+CSprite::RenderOneXLUSprite_Triangle@0x8E2440:0x20:D
+CGrassRenderer::DrawTriPlants@0xC4B958:0x2000:D
+CGrassRenderer::DrawTriPlants@0xC4D958:0x14000:D
+CGrassRenderer::DrawTriPlants@0xC97B80:0x2FC0:D
+CGrassRenderer::DrawTriPlants@0x8E2440:0x20:D
+CSpecialFX::Render2DFXs@0xC4B958:0x2000:D
+CSpecialFX::Render2DFXs@0xC4D958:0x14000:D
+CSpecialFX::Render2DFXs@0xC97B80:0x2FC0:D
+CSpecialFX::Render2DFXs@0x8E2440:0x20:D
+CSprite2d::Draw2DPolygon@0xC4B958:0x2000:D
+CSprite2d::Draw2DPolygon@0xC4D958:0x14000:D
+CSprite2d::Draw2DPolygon@0xC97B80:0x2FC0:D
+CSprite2d::Draw2DPolygon@0x8E2440:0x20:D
+CWeaponEffects::Render@0xC4B958:0x2000:D
+CWeaponEffects::Render@0xC4D958:0x14000:D
+CWeaponEffects::Render@0xC97B80:0x2FC0:D
+CWeaponEffects::Render@0x8E2440:0x20:D
+# CWaterLevel::RenderWater: the quad / triangle 'render this frame' flag bytes, cleared after drawing
+# (CWaterLevel::WaterQuads 0xC21C90, 301 x 0xA; WaterTriangles 0xC22854, 6 x 8)
+CWaterLevel::RenderWater@0xC21C90:0xBF4:D
+# CCoronas::Render: CCoronas::aCoronas (64 x 0x3C; the per-corona fade / offscreen state)
+CCoronas::Render@0xC3E058:0xF00:D
+# COccluder::ProcessOneOccluder: COcclusion::ActiveOccluders (28 x 0xAC; `out` points into it) and the
+# CenterOnScreen / OccluderCoorsOnScreen scratch
+COccluder::ProcessOneOccluder@0xC78610:0x12D0:D
+COccluder::ProcessOneOccluder@0xC79940:0x70:D
+# _rpD3D9VertexShaderGenerate (0x75F0B0, keyed by address: its catalogue name is shared; split v6-sA2-grove / v6-nc-pr): the shader text buffer 0xC93AF8 and the
+# D3DX assembler state after it up to its context pointer 0xC96438 (normalise.rs input exclusion), the CRT
+# __NLG_Destination block (0x8E2B80, written by the EH unwinder of the D3DX code), and `out` (the 8 bytes of
+# constant-register bases, in the caller's frame).
+0x75F0B0@0xC93AF8:0x2948:D
+0x75F0B0@0x8E2B80:0x10:D
+0x75F0B0@arg1:0x8:RW
+# CClouds::VolumetricClouds_Create (split v6-nc-pr): CClouds::ms_vc (0xC6AAB0; the cloud positions, sizes and flags)
+CClouds::VolumetricClouds_Create@0xC6AAB0:0x1270:D
+# CWeaponEffects::Render (split v6-nc-wc / v6-nc-drv): gCrossHair[2] (0xC8A838, 2 x 0x2C; the clear time is reset),
+# the crosshair change time 0xC8A890 / 0xC8A894 and gCrossHairFlashDist[2] (0xC8A8A0)
+CWeaponEffects::Render@0xC8A838:0x70:D
+# CWaterLevel::RenderWater (split v6-water-aw): its sea-bed / detailed segment callees fill CWaterLevel::ms_WaterFog
+# (0xC21188, up to CWaterLevel::NumWaterZonePolys 0xC215F0)
+CWaterLevel::RenderWater@0xC21188:0x468:D

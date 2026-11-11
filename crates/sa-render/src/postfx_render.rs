@@ -225,7 +225,7 @@ fn ftol8(v: X87) -> u8 {
 /// `s_WaitForOneFrame` (gr sets it).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x7046e0, conv = cdecl, name = "CPostEffects::Render", expect = "A0 CF 02 C4 00 83 EC 10",
-       unverified = "renderbig2-1", route = "split", hazards = "heap-writes",
+       route = "split", hazards = "heap-writes",
        recs = "grove-walk,driving",
        note = "camera end/begin update and a raster copy (RW heap, D3D); the photo path writes a JPEG file (fopen probe loop) and suspends the timer")]
 pub fn post_effects_render() {

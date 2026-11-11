@@ -115,8 +115,9 @@ modes() { # modes RUST_NAME... → SA_HOOK_MODE value: BASE_ORIG and listed sa-h
     done
     join_by , "${out[@]}"
 }
-# The extra regions (tools/e2e/l2-extras.txt) of the hooks in a list. `HOOK@REGION` lines apply to that
-# hook; `doc:DOC@REGION` lines to the hooks of a docs/arch/DOC.md function table: passed once without a
+# The extra regions (tools/e2e/l2-extras.txt) of the hooks in a list (names and addresses). `HOOK@REGION`
+# lines apply to that hook (HOOK = its name, or its address `0x75F0B0` as hook-names.py prints it, for the
+# names several hooks share such as `(missed by ghidra: cat7-call)`: sa-hook resolves a name to the first); `doc:DOC@REGION` lines to the hooks of a docs/arch/DOC.md function table: passed once without a
 # hook prefix (so they apply to every listed hook; a per-hook expansion for a few hundred hooks would
 # exceed the Windows environment limit) when at least one listed hook is in DOC.
 # L2_EXTRA (env) is appended as is (self-tests, e.g. the INF-18 quota test's huge region).
@@ -332,7 +333,7 @@ for run in $RUNS; do
             check "plain (all original) reached the end frame" "$(reached plain)" "$(trace_info "$OUT/plain.trace")"
             ;;
         l2)
-            ex="$(extras_for "$L2NAMES")"
+            ex="$(extras_for "$L2NAMES,$L2LIST")"
             note "l2 extra regions: ${ex:-none}"
             run_game l2 "$REPLAY" SA_HOOK_MODE="$(modes)" SA_L2="$L2LIST" "${L2COMMON[@]}" \
                 SA_L2_EXTRA="$ex" SA_L2_OUT="$(win "$DET/l2.spool")"
@@ -342,7 +343,7 @@ for run in $RUNS; do
             [ -n "$WALL" ] || continue
             WT="$(python3 -I "$HERE/hook-names.py" "$E2E_SCRIPT_ROOT" "$WALL")" || exit 2
             run_game l2all "$REPLAY" SA_HOOK_MODE="$(modes)" SA_L2="$(printf '%s\n' "$WT" | cut -f1 | paste -sd,)" \
-                "${L2COMMON[@]}" SA_L2_WINDOW=all SA_L2_EXTRA="$(extras_for "$(printf '%s\n' "$WT" | cut -f3 | paste -sd,)")" \
+                "${L2COMMON[@]}" SA_L2_WINDOW=all SA_L2_EXTRA="$(extras_for "$(printf '%s\n' "$WT" | cut -f1,3 | tr '\t' '\n' | paste -sd,)")" \
                 SA_L2_OUT="$(win "$DET/l2all.spool")"
             check "l2all reached the end frame" "$(reached l2all)" "$(trace_info "$OUT/l2all.trace")"
             ;;
@@ -355,7 +356,7 @@ for run in $RUNS; do
             check "rust reached the end frame" "$(reached rust)" "$(trace_info "$OUT/rust.trace")"
             ;;
         split)
-            ex="$(extras_for "$L2NAMES")"
+            ex="$(extras_for "$L2NAMES,$L2LIST")"
             note "split extra regions / OS probes: ${ex:-none}"
             for side in orig rust; do
                 run_game "split${side:0:1}" "$REPLAY" SA_HOOK_MODE="$(modes)" SA_L2="$L2LIST" "${SPLITCOMMON[@]}" \

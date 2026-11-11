@@ -65,7 +65,7 @@ fn wf(p: GPtr<u8>, off: isize, v: X87) {
 /// `RwIm3DTransform(.., NULL, 1)`, indexed triangle list, end) when it holds indices and the counts
 /// zeroed; then state (12,0) and `NumBrightLights = 0`.
 #[hook(addr = 0x7241C0, conv = cdecl, name = "CBrightLights::Render", expect = "A1 FC C6 C7 00 83 EC 0C",
-       unverified = "mvpg-render-1", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk",
        note = "fsin/fcos for the fans; rand at 0x724265; writes TempBufferRenderVertices / aTempBufferIndices")]
 pub fn render() {

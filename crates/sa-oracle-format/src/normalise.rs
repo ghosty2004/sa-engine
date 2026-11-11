@@ -497,6 +497,17 @@ pub const INPUT_EXCLUSIONS: &[InputExclusion] = &[
         rule: "raw time stamp counter (0xC92104/0xC92108): `rdtsc` at 0x746202, stored at \
                0x746204/0x74620A (not virtualised by determinism mode); CPU-assigned",
     },
+    InputExclusion {
+        addr: 0xC96438,
+        len: 4,
+        rule: "D3DX shader assembler: current context pointer (0xC96438). The statically linked D3DX \
+               assembler's init 0x772BB1 stores its `this` there (`mov [0xC96438], esi` at 0x772C0D, the \
+               only store) before its parse (0x772905 -> 0x771F9D reads it); every caller passes a \
+               stack-local context (`lea ecx,[ebp-0xb0]` at 0x76507D, the five sites 0x765083..0x765302 \
+               and 0x793418), so the word is a stale stack address between assemblies, its depth \
+               differing below a Rust caller (split v6-sA-grove, 0x75F0B0 ordinal 0 frame 1554: plain \
+               0x0036FA54 rust 0x0036FA00; VERIFIER-3 rw5v: _rpD3D9GetVertexShader)",
+    },
 ];
 
 // ------------------------------------------------------------------ OS handle words (HARNESS-2) ----
@@ -742,6 +753,13 @@ mod tests {
         // a page that starts inside the range
         let c = vec![1u8; 8];
         assert_eq!(&*fingerprint_bytes(0x8E31BE, &c), &[0, 0, 1, 1, 1, 1, 1, 1]);
+    }
+
+    /// The D3DX assembler context pointer: exactly its four bytes.
+    #[test]
+    fn d3dx_assembler_context_word_is_excluded_and_nothing_around_it() {
+        assert!((0xC96438..0xC9643C).all(input_excluded));
+        assert!(!input_excluded(0xC96437) && !input_excluded(0xC9643C));
     }
 
     /// ProcessColModels' static matrices: exactly the four pad words of each are excluded, the

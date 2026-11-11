@@ -155,7 +155,7 @@ pub fn plant_loc_tri_add(
 /// for a loc tri without plants, releases it again (slot cleared).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x5dc8b0, conv = cdecl, name = "CPlantMgr::_ProcessEntryCollisionDataSections_AddLocTris", expect = "81 EC E8 00 00 00",
-       unverified = "renderbig2-6", route = "L2", hazards = "heap-writes,uninit-locals",
+       route = "L2", hazards = "heap-writes,uninit-locals",
        recs = "grove-walk",
        note = "the plants / objects flags are pushed as dwords whose upper bytes are stack residue (Add reads bit 0); writes the entry's object array and loc-tri lists")]
 pub fn add_loc_tris(entry: GPtr<u8>, centre: GPtr<u8>, mask: i32, start: i32, end: i32) {

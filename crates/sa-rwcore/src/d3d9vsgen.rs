@@ -139,7 +139,7 @@ fn light_colour(t: &mut Text, lights: &mut u32, modulate: u32, reg: u32, i: u32)
 /// tables are indexed by the weight count (up to 7) past their four entries; the light countdown is
 /// compared unsigned; `*desc` and `out` bytes are re-read where the original re-reads them.
 #[hook(addr = 0x75F0B0, conv = cdecl, name = "(missed by ghidra: cat7-call)", expect = "83 EC 38 53 8B 5C 24 40",
-       unverified = "mvpg-rw-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "_rpD3D9VertexShaderGenerate; writes the text buffer 0xC93AF8 (up to its length) and out[0..8]; only called with shader caps (cache miss in _rpD3D9GetVertexShader)")]
 pub fn vertex_shader_generate(desc: GPtr<u32>, out: GPtr<u32>) -> u32 {
     let d: GPtr<u8> = desc.cast();

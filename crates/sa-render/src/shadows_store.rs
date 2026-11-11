@@ -96,7 +96,7 @@ fn model_tweak(m: i32) -> Tweak {
 /// player / bit-7 test and whose upper bytes are the earlier scale float's (an original quirk kept).
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x70bda0, conv = cdecl, name = "CShadows::StoreShadowForVehicle", expect = "83 EC 44 53 E8 07 3C 00 00",
-       unverified = "renderbig2-2", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk,driving",
        note = "FSQRT; the drawOnWater / drawOnBuildings dword carries the scale float's upper bytes")]
 pub fn store_shadow_for_vehicle(veh: GPtr<u8>, ty: u32) {

@@ -131,7 +131,7 @@ fn screen_size(pos: GPtr<u8>, out: &mut [f32; 3], w: &mut f32, h: &mut f32) -> b
 /// change time tracked in 0xC8A890 / 0xC8A894); `FUN_0056ef90(i)` for both `CWorld::Players`.
 #[allow(clippy::cognitive_complexity)]
 #[hook(addr = 0x742cf0, conv = cdecl, name = "CWeaponEffects::Render", expect = "A0 65 F0 B6 00 83 EC 58",
-       unverified = "renderbig2-5", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "weapon-combat",
        note = "FSIN/FCOS/FPATAN; the coloured ring passes the intensity with a stale EDX upper word (the port passes 0; the callee reads the low word)")]
 pub fn weapon_effects_render() {

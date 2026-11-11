@@ -11,7 +11,7 @@ use crate::common::{jp, rd, x};
 /// (`test ah, 0x44; jp`): any component not equal, or unordered, returns 1, otherwise 0 (EAX is fully
 /// 0 or 1; the original also leaves ECX = EAX and EDX = b).
 #[hook(addr = 0x509760, conv = cdecl, name = "FUN_00509760", expect = "8B 4C 24 04 D9 01",
-       unverified = "renderbig2-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn vector_not_equal(a: GPtr<u8>, b: GPtr<u8>) -> u32 {
     for off in [0, 4, 8] {
         if jp(x(rd::<f32>(a, off)), x(rd::<f32>(b, off)), 0x44) {
