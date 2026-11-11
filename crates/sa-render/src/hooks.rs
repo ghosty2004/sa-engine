@@ -103,6 +103,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::plant_col_entity_cache::HOOKS,
     crate::stencil_shadow_volumes::HOOKS,
     crate::roadsign_text_raster::HOOKS,
+    crate::generated::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

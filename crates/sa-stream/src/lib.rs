@@ -49,3 +49,4 @@ pub mod object_instance;
 pub mod pool_new_stubs;
 
 pub mod std6_natives;
+pub mod generated;

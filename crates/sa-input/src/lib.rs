@@ -30,3 +30,4 @@ pub mod pad;
 pub mod statics;
 
 pub mod std6_natives;
+pub mod generated;

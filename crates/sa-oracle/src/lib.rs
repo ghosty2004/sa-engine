@@ -36,6 +36,7 @@ pub mod specs_coll_prim;
 pub mod specs_coll_surface;
 pub mod specs_core;
 pub mod specs_core_util;
+pub mod specs_generated;
 pub mod specs_hud;
 pub mod specs_hud_msg;
 pub mod specs_hud_radar;

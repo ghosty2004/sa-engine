@@ -61,3 +61,4 @@ pub mod cmdlib;
 pub mod hooks;
 pub mod misc;
 pub mod vm;
+pub mod generated;

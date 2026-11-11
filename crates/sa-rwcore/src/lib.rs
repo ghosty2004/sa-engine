@@ -83,3 +83,4 @@ pub mod skin_stream;
 pub mod rw_helpers;
 pub mod hanim_hierarchy;
 pub mod hanim_update;
+pub mod generated;

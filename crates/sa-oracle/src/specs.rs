@@ -450,6 +450,7 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_veh::all())
     .chain(crate::specs_ai::all())
     .chain(crate::specs_audio::all())
+    .chain(crate::specs_generated::all())
     .collect()
 }
 

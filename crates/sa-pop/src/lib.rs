@@ -45,3 +45,4 @@ pub mod carctrl7;
 pub mod misc5;
 pub mod misc6;
 pub mod population4;
+pub mod generated;

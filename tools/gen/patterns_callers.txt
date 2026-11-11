@@ -1,0 +1,11 @@
+# tools/gen/patterns.py: generated hooks whose original callers read ECX/EDX after the call (sa-hook lib test
+# `callers_reading_ecx_edx_after_a_hook_are_declared`, UNDECLARED rows; tools/gen/patterns_callers.py).
+# patterns.py declares `preserve` when the original leaves the registers unchanged on every path,
+# and does not hook the function otherwise.
+0x45C850 ecx,edx
+0x464C00 ecx
+0x4E4F10 edx
+0x5733E0 edx
+0x573410 edx
+0x6C4760 edx
+0x7FC2D0 edx

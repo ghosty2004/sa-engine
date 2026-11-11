@@ -33,3 +33,4 @@ pub mod weapon_info;
 
 // WRITER-MVP-B (helper A)
 pub mod mvpb_a;
+pub mod generated;
