@@ -90,7 +90,7 @@ All engine ports on Rust (`tools/e2e/port-l2.sh ports REC --runs "plain rust"`, 
 
 | recording | result |
 |---|---|
-| air-water | **DIVERGED at frame 2742** (peds, player first; then objects 2744, rand and camera 2745, every other subsystem later). The bail-out from the flying Hunter is pressed at frame 2740 (AIYPWZQP typed at 2700-2714), so a port on the leave-heli-in-flight / parachute path differs from the original. Not investigated here. |
+| air-water | DIVERGED at frame 2742 on the CORPUS-1 build. Bisection (`l3.sh --rust ports`, after its mode-list fix) found two culprits: `CTaskSimpleCarJumpOut::ProcessPed` (0x64DD60; the port skipped the `_CIpow` factor update when the task has no anim yet, which the original runs: `je 0x64DDDA` at 0x64DD9C; frame 2742, peds/player) and `CStreaming::StreamOneNewCar` (0x40B4F0; its boat `rand()` was attributed to 0x1563BF1 instead of the return address 0x1563BF7; frame 4997, randcalls only). Both fixed: IDENTICAL over 5,800 frames. |
 | menus-hud | IDENTICAL over 5,700 frames |
 | police-gang | IDENTICAL over 5,200 frames |
 

@@ -15,6 +15,8 @@
 #   e2e_boot_to_menu SECS       press Space through the (movie-less) logo/intro states to the menu
 #   e2e_shot NAME               screenshot of the lane's display → target/e2e/lane-N/NAME.png
 #   e2e_key KEY... / e2e_keydown KEY / e2e_keyup KEY   xdotool keys on the lane's display only
+#   e2e_list_env VAR VALUE FILE print VAR=VALUE, or VAR=@<Windows path of FILE> with VALUE written to FILE
+#                               when it is too long for a Windows environment variable (SA_HOOK_MODE, SA_L2)
 #   e2e_cleanup                 stop the game (wineserver -k for the lane prefix only) and gamescope
 #
 # Isolation rules (CLAUDE.md, PLAN.md §8): nothing runs on the user's desktop (the game gets the
@@ -114,6 +116,22 @@ e2e_winpath() {
     fi
     [ -n "$p" ] || { echo "e2e: no Windows path for $1" >&2; return 1; }
     printf '%s\n' "$p"
+}
+
+# A Windows environment variable holds at most 32767 characters. Longer values arrive truncated: a
+# SA_HOOK_MODE over every port (~3700 hooks, ~52000 characters) then failed to parse at its cut-off last
+# entry, sa-hook ignored the whole variable and every port ran on the original, so an "all ports on Rust"
+# L3 probe silently compared the original with itself (BISECT-CARAI, 2026-11-11). sa-hook reads
+# SA_HOOK_MODE and SA_L2 from a file when the value is `@PATH`.
+e2e_list_env() { # e2e_list_env VAR VALUE FILE
+    if [ "${#2}" -le 30000 ]; then
+        printf '%s=%s\n' "$1" "$2"
+        return
+    fi
+    printf '%s\n' "$2" > "$3" || return 1
+    local w
+    w="$(e2e_winpath "$3")" || return 1
+    printf '%s=@%s\n' "$1" "$w"
 }
 
 # Replace a top-level file in the lane game dir; never writes through a symlink into wine/gta-sa.

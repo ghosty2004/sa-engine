@@ -2171,7 +2171,7 @@ pub fn stream_one_new_car() {
     if BOATS_NEEDED.get().get() {
         let boats = g::<u8>(LOADED_BOATS);
         let want = car_group_count_members(boats) < 2
-            || (car_group_count_members(boats) <= 2 && sa_core::orig::at_site(0x1563BF1, rand) & 7 == 3);
+            || (car_group_count_members(boats) <= 2 && sa_core::orig::at_site(0x1563BF7, rand) & 7 == 3);
         if want {
             model = car_ctrl_choose_car_model_to_load(0x1D);
         }

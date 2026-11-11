@@ -22,6 +22,10 @@
 //! | `SA_L2_STACK` | bytes of the caller's stack above the arguments to watch (default 1024) |
 //! | `SA_L2_MUTANT` | hooks whose Rust implementation is made deliberately wrong (self-test); also honoured without `SA_L2` (the L3 bisection self-test runs the mutant in plain Rust mode) |
 //! | `SA_HOOK_MODE` | start modes `NAME=orig\|rust\|l2,…` (independent of L2) |
+//!
+//! `SA_HOOK_MODE` and `SA_L2` also accept `@PATH`: the value is read from that file ([`list_value`]).
+//! A Windows environment variable holds at most 32767 characters; a mode list over every port (~3700
+//! hooks, ~52000 characters) arrives truncated, and a truncated list must never be read as a shorter one.
 //! | `SA_L2_SPOOL_MAX` | spool quota in bytes (default 2 GiB; suffixes `k`, `M`, `G`): at the quota sa-hook stops spooling, writes a trailer and logs it; cases compared before stay valid (INF-18) |
 //! | `SA_L2_DUMP_SEQ` | split-run diagnostic: case sequence numbers whose static windows are dumped to `SA_L2_OUT.seqN.win` (compare two dumps with `sa-oracle l2 dump-diff`) |
 //! | `SA_L2_STACKFILL` | split-run mode: bytes below the invoker's stack pointer zeroed before every sampled call (default 0 = off, at most 64 KiB), so original code reading uninitialised stack sees the same bytes in both runs |
@@ -198,7 +202,7 @@ impl Config {
             return Ok(None);
         };
         let mut c = Config {
-            hooks: hook_list(&list, "SA_L2")?,
+            hooks: hook_list(&list_value(&list).map_err(|e| format!("SA_L2: {e}"))?, "SA_L2")?,
             ..Config::default()
         };
         let n = |k: &str, d: u32| -> Result<u32, String> {
@@ -458,6 +462,15 @@ pub fn mutants_from_env(get: &impl Fn(&str) -> Option<String>) -> Result<Vec<usi
     }
 }
 
+/// The value of a list variable (`SA_HOOK_MODE`, `SA_L2`): as is, or the contents of the file named after
+/// a leading `@` (for lists longer than the 32767-character limit of a Windows environment variable).
+pub fn list_value(v: &str) -> Result<String, String> {
+    match v.trim().strip_prefix('@') {
+        Some(path) => std::fs::read_to_string(path.trim()).map_err(|e| format!("{path}: {e}")),
+        None => Ok(v.to_string()),
+    }
+}
+
 /// `SA_HOOK_MODE=NAME=orig|rust|l2,…`
 pub fn parse_hook_modes(v: &str) -> Result<Vec<(usize, Mode)>, String> {
     let mut out = Vec::new();
@@ -684,6 +697,25 @@ mod tests {
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect();
         move |k| m.get(k).cloned()
+    }
+
+    #[test]
+    fn list_values_from_a_file() {
+        // a list longer than a Windows environment variable can hold, passed as @FILE
+        let modes: Vec<String> = HOOKS.iter().map(|h| format!("{:#x}=rust", h.addr)).collect();
+        let modes = modes.join(",");
+        let path = std::env::temp_dir().join(format!("sa-hook-modes-{}.txt", std::process::id()));
+        std::fs::write(&path, &modes).unwrap();
+        let at = format!("@{}", path.display());
+        assert_eq!(list_value(&at).unwrap(), modes);
+        assert_eq!(parse_hook_modes(&list_value(&at).unwrap()).unwrap().len(), HOOKS.len());
+        assert_eq!(list_value("CVector::Normalise=rust").unwrap(), "CVector::Normalise=rust");
+        std::fs::write(&path, "CGeneral::LimitRadianAngle,0x59c910\n").unwrap();
+        let c = Config::from_env(env(&[("SA_L2", at.as_str())])).unwrap().unwrap();
+        assert_eq!(c.hooks.len(), 2);
+        std::fs::remove_file(&path).unwrap();
+        assert!(list_value(&at).is_err(), "a missing file is an error, never an empty list");
+        assert!(Config::from_env(env(&[("SA_L2", at.as_str())])).is_err());
     }
 
     #[test]

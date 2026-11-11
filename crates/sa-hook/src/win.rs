@@ -502,7 +502,10 @@ fn attach() {
     ));
     // Start modes (game threads are still suspended, so the stores take effect before any call).
     if let Ok(v) = std::env::var("SA_HOOK_MODE") {
-        match crate::l2::parse_hook_modes(&v) {
+        match crate::l2::list_value(&v)
+            .map_err(|e| format!("SA_HOOK_MODE: {e}"))
+            .and_then(|v| crate::l2::parse_hook_modes(&v))
+        {
             Ok(list) => {
                 for (i, m) in list {
                     table::set_mode_now(i, m);

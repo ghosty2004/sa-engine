@@ -12,7 +12,12 @@ CLI `sa-oracle coverage`), `crates/sa-hook/src/coverage.rs` (in-process first-hi
 CGeneral::LimitAngle, GetRadianAngleBetweenPoints, GetATanOfXY, SolveQuadratic, CVector::Normalise;
 after the ARCH-1 merge also every `Group::Port` hook, installed by the probes with
 `SA_HOOK_PORTS=orig`). A probe sets `SA_HOOK_MODE` for the whole universe: `ADDR=rust` for its set,
-`ADDR=orig` for the rest. The reference is the universe entirely on the original.
+`ADDR=orig` for the rest. The reference is the universe entirely on the original. `l3.sh` writes that
+list to a file and passes `SA_HOOK_MODE=@PATH`: a Windows environment variable holds at most 32767
+characters, and the list for the whole universe (3772 entries, ~60 KB, 2026-11-11) is longer. Before
+this, Wine cut the variable, sa-hook rejected the cut list and every probe ran all-original, so `l3.sh
+--rust ports` reported MATCH on recordings that diverge (air-water). A probe whose sa-hook log says the
+mode list was ignored now yields no trace.
 
 **Probe.** One determinism-mode replay of the recording from process start (`SA_DET=1`,
 `SA_DET_REPLAY`, `SA_DET_END=E`, `SA_DET_EXIT=1`), writing the per-frame, per-subsystem hash trace
