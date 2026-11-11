@@ -418,6 +418,7 @@ fn preserved_registers_match_the_hook_registrations() {
         .chain(sa_ped::hooks::ALL.iter())
         .chain(sa_hud::hooks::ALL.iter())
         .chain(sa_audio::hooks::ALL.iter())
+        .chain(sa_rwcore::hooks::ALL.iter())
         .filter(|r| r.preserve != 0)
     {
         assert!(
