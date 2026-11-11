@@ -1670,3 +1670,115 @@ CStreaming::Update@0xC87C60:0x384:D
 CStreaming::Update@0xC8E0C8:0x4000:D
 CStreaming::Update@0xC92470:0x5558:D
 CStreaming::Update@0xC979C8:0x46B8:D
+# PORT-WEAPON-PED (sa-weapon): entity fire pointers written by the fire starters / Extinguish
+CFireManager::StartFire-@arg0+0x730:4:RW
+CFireManager::StartFire-@arg0+0x490:4:RW
+CFireManager::StartFire-@arg0+0x164:4:RW
+CFireManager::StartScriptFire@arg1+0x730:4:RW
+CFireManager::StartScriptFire@arg1+0x490:4:RW
+CFire::Extinguish@[ecx+0x10]+0x730:4:RW
+CFire::Extinguish@[ecx+0x10]+0x490:4:RW
+
+# PORT-WEAPON-PED (sa-ped): CPed / CPlayerPedData / CPedIntelligence / pool / CPedType / CPedStats
+# regions read or written through pointers
+CPlayerPed::GetWantedLevel@[[ecx+0x480]]:0x29C:R
+CPlayerPed::Busted@[[ecx+0x480]]:0x29C:RW
+CPlayerPed::ClearAdrenaline@[ecx+0x480]:0xAC:RW
+CPlayerPed::DoesPlayerWantNewWeapon@[ecx+0x47C]:0x294:R
+CPlayerPed::PickWeaponAllowedFor2Player@[ecx+0x480]:0xAC:RW
+CPlayerPed::HandleSprintEnergy@[ecx+0x480]:0xAC:RW
+CPlayerPed::ResetPlayerBreath@[ecx+0x480]:0xAC:RW
+CPlayerPed::ForceGroupToAlwaysFollow@[ecx+0x480]:0xAC:RW
+CPlayerPed::ForceGroupToNeverFollow@[ecx+0x480]:0xAC:RW
+CPlayerPed::GetWeaponRadiusOnScreen@[ecx+0x480]:0xAC:R
+CPlayerPed::FindTargetPriority@arg0:0x79C:R
+CPlayerPed::CanIKReachThisTarget@[ecx+0x14]:0x48:R
+CPlayerPed::CanIKReachThisTarget@arg3:0x1C:R
+CPlayerPed::MakePlayerGroupDisappear@[ecx+0x480]:0xAC:R
+CPlayerPed::MakePlayerGroupReappear@[ecx+0x480]:0xAC:R
+CPlayerPed::PedCanBeTargettedVehicleWise@arg0:0x79C:R
+CPlayerPed::PedCanBeTargettedVehicleWise@[arg0+0x58C]:0x5A0:R
+CPed::SetPedStats@0xC0BBEC:4:R
+CPed::RestoreHeadingRate@[ecx+0x59C]:0x34:R
+CPed::RestoreHeadingRateCB@arg1:0x79C:RW
+CPed::RestoreHeadingRateCB@[arg1+0x59C]:0x34:R
+CPed::SetRadioStation@[ecx+0x58C]:0x5A0:RW
+CPed::ClearAimFlag@[ecx+0x480]:0xAC:RW
+CPed::SetCharCreatedBy@[ecx+0x47C]:0x294:RW
+CPed::SetCharCreatedBy@[ecx+0x59C]:0x34:R
+CPed::SetPedDefaultDecisionMaker@[ecx+0x47C]:0x294:RW
+CPed::SetPedDefaultDecisionMaker@[ecx+0x59C]:0x34:R
+CPed::WorkOutHeadingForMovingFirstPerson@[ecx+0x480]:0xAC:RW
+CPed::GetBikeRidingSkill@[ecx+0x480]:0xAC:R
+CPed::CanBeDeleted@[[0xB7CD98]+0x480]:0xAC:R
+CPed::TurnBody@[ecx+0x738]:0x48:R
+CPed::TurnBody@[[ecx+0x738]+0x14]:0x48:R
+CPed::CanSeeEntity@arg0:0x48:R
+CPed::CanSeeEntity@[arg0+0x14]:0x48:R
+CPed::SetCurrentWeapon-Slot@[ecx+0x480]:0xAC:RW
+CPed::ReplaceWeaponWhenExitingVehicle@[ecx+0x480]:0xAC:RW
+CPed::RemoveWeaponWhenEnteringVehicle@[ecx+0x480]:0xAC:RW
+CPed::Dress@[ecx+0x59C]:0x34:R
+CWanted::ComputePursuitCopToDisplace@arg1:0x28:R
+CWanted::CanCopJoinPursuit-func@arg2:0x28:RW
+CWanted::CanCopJoinPursuit-func@arg3:1:RW
+CWanted::RemovePursuitCop-func@arg1:0x28:RW
+CWanted::RemovePursuitCop-func@arg2:1:RW
+CWanted::AddCrimeToQ@arg2:0xC:R
+CWanted::RegisterCrime@arg1:0xC:R
+CWanted::WorkOutPolicePresence@[0xB74490]:0x14:R
+CWanted::WorkOutPolicePresence@[[0xB74490]+4]:[[0xB74490]+8]:R
+CWanted::WorkOutPolicePresence@[0xB74494]:0x14:R
+CWanted::WorkOutPolicePresence@[[0xB74494]+4]:[[0xB74494]+8]:R
+CCrime::ReportCrime@arg2:0x79C:R
+CCrime::ReportCrime@[[arg2+0x480]]:0x29C:RW
+CPlayerInfo::GetSpeed_Hook@[ecx]:0x79C:R
+CPlayerInfo::GetSpeed_Hook@arg0:0xC:W
+CPlayerInfo::GetPos_Hook@[ecx]:0x79C:R
+CPlayerInfo::GetPos_Hook@arg0:0xC:W
+CPlayerInfo::AddHealth@[ecx]:0x79C:RW
+CPlayerInfo::EvaluateCarPosition@arg3:4:RW
+CPlayerInfo::EvaluateCarPosition@arg4:4:RW
+CPlayerInfo::GivePlayerParachute@[ecx]:0x79C:RW
+CPlayerInfo::StreamParachuteWeapon@[ecx]:0x79C:R
+CPlayerPedData::AllocateData@[ecx]:0x29C:RW
+CPlayerPedData::AllocateData@[ecx+4]:0x78:RW
+CPedDamageResponseCalculator::AccountForPedArmour@arg0:0x79C:RW
+CPedDamageResponseCalculator::AccountForPedArmour@arg1:0xC:RW
+CPedDamageResponseCalculator::AccountForPedDamageStats@arg0:0x79C:R
+CPedDamageResponseCalculator::AccountForPedDamageStats@[arg0+0x59C]:0x34:R
+CPedDamageResponseCalculator::ComputeWillForceDeath@arg0:0x79C:R
+CClothes::RebuildPlayerIfNeeded@[[arg0+0x480]+4]:0x78:R
+CPedStats::GetPedStatType@[0xC0BBEC]:0x8BC:R
+CPedStats::FindIndexWithPedStat@[0xC0BBEC]:0x8BC:R
+CPedType::GetPedTypeAcquaintances-uint32@[0xC0BBE8]:0x280:R
+CPedType::ClearPedTypeAsAcquaintance@[0xC0BBE8]:0x280:RW
+CPedType::ClearPedTypeAcquaintances@[0xC0BBE8]:0x280:RW
+CPedType::SetPedTypeAsAcquaintance@[0xC0BBE8]:0x280:RW
+CCopPed::ClearCriminalsToKill@[ecx+0x7AC]:0x79C:RW
+# PORT-WEAPON-PED initialisers: the module arrays (rwsets lists them as indexed/unbounded): aBulletInfos
+# 0xC88740 (8 x 0x2C), aExplosions 0xC88950 (16 x 0x7C), ms_apProjectile 0xC89110 (32 x 4) + gaProjectileInfo
+# 0xC891A8 (32 x 0x24), the shot rand table 0xC89628 (20 x 4) + aShotInfos 0xC89690 (100 x 0x2C)
+CBulletInfo::Initialise@0xC88740:0x160:RW
+CExplosion::Initialise@0xC88950:0x7C0:RW
+CProjectileInfo::Initialise@0xC89110:0x80:RW
+CProjectileInfo::Initialise@0xC891A8:0x480:RW
+CShotInfo::Initialise@0xC89628:0x50:RW
+CShotInfo::Initialise@0xC89690:0x1130:RW
+# CWeapon::Initialise / Shutdown: CBaseModelInfo::AddRef/RemoveRef on the weapon model infos
+# (CModelInfo weapon store 0xB1E158: count + 51 x 0x28; ref count +0x1E)
+CWeapon::Initialise@0xB1E158:0x7FC:RW
+CWeapon::Shutdown@0xB1E158:0x7FC:RW
+# CWanted::SetWantedLevelNoDrop: writes 0xB7902C (CStats int stat block; via CStats::SetStatValue)
+CWanted::SetWantedLevelNoDrop@0xB7902C:4:RW
+# CPlayerPed wanted wrappers: the player's CWanted (heap, m_pPlayerData->m_pWanted, 0x29C) is written by the
+# callee (UpdateWantedLevel: +0x2C level, then IncrementStat(0x83, delta)); without the region the original
+# run's change was not undone and the Rust run saw delta 0 (w-cwl: CheatWantedLevel 2 mismatches)
+CPlayerPed::SetWantedLevel@[[ecx+0x480]]:0x29C:RW
+CPlayerPed::SetWantedLevelNoDrop@[[ecx+0x480]]:0x29C:RW
+CPlayerPed::CheatWantedLevel@[[ecx+0x480]]:0x29C:RW
+CPlayerPed::CheatWantedLevel@0xB7902C:4:RW
+CPlayerPed::SetWantedLevel@0xB7902C:4:RW
+CPlayerPed::SetWantedLevelNoDrop@0xB7902C:4:RW
+CWanted::CheatWantedLevel@0xB7902C:4:RW
+CWanted::SetWantedLevel@0xB7902C:4:RW

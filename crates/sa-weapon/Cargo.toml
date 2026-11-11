@@ -1,0 +1,25 @@
+[package]
+name = "sa-weapon"
+version = "0.1.0"
+description = "WEAPON subsystem of gta_sa.exe 1.0 US (PORT-WEAPON-PED): CWeapon, CWeaponInfo, projectiles, CBulletInfo, CShotInfo, CExplosion, CFire/CFireManager, CCreepingFire, water cannons, weapon effects. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+# byte-offset field helpers (`world::common`) and the Rust paths of WORLD/PHYS callees
+sa-world = { path = "../sa-world" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook). build.rs sets `cfg(sa_phase_a)` for this crate's tests.
+in-process = ["sa-core/in-process", "sa-world/in-process"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }
+
+[dev-dependencies]
+# the cross-crate hook/global uniqueness tests
+sa-stream = { path = "../sa-stream" }

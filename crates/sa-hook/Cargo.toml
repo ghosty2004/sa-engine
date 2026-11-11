@@ -19,6 +19,8 @@ sa-stream = { path = "../sa-stream", features = ["in-process"] }
 sa-world = { path = "../sa-world", features = ["in-process"] }
 sa-pop = { path = "../sa-pop", features = ["in-process"] }
 sa-script = { path = "../sa-script", features = ["in-process"] }
+sa-weapon = { path = "../sa-weapon", features = ["in-process"] }
+sa-ped = { path = "../sa-ped", features = ["in-process"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

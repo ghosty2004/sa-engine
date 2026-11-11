@@ -593,6 +593,8 @@ mod tests {
             .chain(sa_world::hooks::ALL.iter())
             .chain(sa_pop::hooks::ALL.iter())
             .chain(sa_script::hooks::ALL.iter())
+            .chain(sa_weapon::hooks::ALL.iter())
+            .chain(sa_ped::hooks::ALL.iter())
             .find(|r| r.addr == addr)
             .map_or(0, |r| r.preserve)
     }
