@@ -1,0 +1,31 @@
+[package]
+name = "sa-ai"
+version = "0.1.0"
+description = "AI subsystem of gta_sa.exe 1.0 US (PORT-AI-1): CTask* (simple and complex), CEvent*, CEventHandler/CEventGroup/CEventScanner, CPedIntelligence, CTaskManager, CPedGroup*, CDecisionMaker*, CAcquaintance, attractors. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+# byte-offset field helpers (`world::common`)
+sa-world = { path = "../sa-world" }
+
+[dev-dependencies]
+# the cross-crate "declared once" / "hooked once" tests
+sa-stream = { path = "../sa-stream" }
+sa-pop = { path = "../sa-pop" }
+sa-script = { path = "../sa-script" }
+sa-weapon = { path = "../sa-weapon" }
+sa-ped = { path = "../sa-ped" }
+sa-input = { path = "../sa-input" }
+sa-anim = { path = "../sa-anim" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook). build.rs sets `cfg(sa_phase_a)` for this crate's tests.
+in-process = ["sa-core/in-process", "sa-world/in-process"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }

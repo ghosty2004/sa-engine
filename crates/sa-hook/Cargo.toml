@@ -26,6 +26,7 @@ sa-anim = { path = "../sa-anim", features = ["in-process"] }
 sa-veh = { path = "../sa-veh", features = ["in-process"] }
 sa-hud = { path = "../sa-hud", features = ["in-process"] }
 sa-cam = { path = "../sa-cam", features = ["in-process"] }
+sa-ai = { path = "../sa-ai", features = ["in-process"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [

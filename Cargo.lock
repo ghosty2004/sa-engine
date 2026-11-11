@@ -1664,6 +1664,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
+name = "sa-ai"
+version = "0.1.0"
+dependencies = [
+ "sa-anim",
+ "sa-core",
+ "sa-input",
+ "sa-macros",
+ "sa-math",
+ "sa-ped",
+ "sa-pop",
+ "sa-script",
+ "sa-stream",
+ "sa-weapon",
+ "sa-world",
+]
+
+[[package]]
 name = "sa-anim"
 version = "0.1.0"
 dependencies = [
@@ -1704,6 +1721,7 @@ name = "sa-hook"
 version = "0.1.0"
 dependencies = [
  "iced-x86",
+ "sa-ai",
  "sa-anim",
  "sa-cam",
  "sa-core",
@@ -1773,6 +1791,7 @@ name = "sa-oracle"
 version = "0.1.0"
 dependencies = [
  "iced-x86",
+ "sa-ai",
  "sa-anim",
  "sa-cam",
  "sa-core",

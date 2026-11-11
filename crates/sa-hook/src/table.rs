@@ -411,7 +411,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
 const LOCAL_N: usize = 19;
 /// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order), then
 /// sa-stream's (`sa_stream::hooks::ALL`), then sa-world's (`sa_world::hooks::ALL`), then sa-pop's
-/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's and sa-cam's.
+/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's sa-cam's and sa-ai's.
 pub const N: usize = LOCAL_N
     + sa_core::hooks::COUNT
     + sa_stream::hooks::COUNT
@@ -424,7 +424,8 @@ pub const N: usize = LOCAL_N
     + sa_anim::hooks::COUNT
     + sa_veh::hooks::COUNT
     + sa_hud::hooks::COUNT
-    + sa_cam::hooks::COUNT;
+    + sa_cam::hooks::COUNT
+    + sa_ai::hooks::COUNT;
 
 /// The hook table.
 pub static HOOKS: [HookSpec; N] = build();
@@ -561,6 +562,12 @@ const fn build() -> [HookSpec; N] {
     while i_cam < sa_cam::hooks::COUNT {
         out[base_cam + i_cam] = from_core(&sa_cam::hooks::ALL[i_cam]);
         i_cam += 1;
+    }
+    let base_ai = base_cam + sa_cam::hooks::COUNT;
+    let mut i_ai = 0;
+    while i_ai < sa_ai::hooks::COUNT {
+        out[base_ai + i_ai] = from_core(&sa_ai::hooks::ALL[i_ai]);
+        i_ai += 1;
     }
     out
 }
@@ -961,6 +968,7 @@ mod tests {
                 + sa_veh::hooks::COUNT
                 + sa_hud::hooks::COUNT
                 + sa_cam::hooks::COUNT
+                + sa_ai::hooks::COUNT
         );
         let ports = sa_core::hooks::ALL
             .iter()
@@ -974,7 +982,8 @@ mod tests {
             .chain(sa_anim::hooks::ALL.iter())
             .chain(sa_veh::hooks::ALL.iter())
             .chain(sa_hud::hooks::ALL.iter())
-            .chain(sa_cam::hooks::ALL.iter());
+            .chain(sa_cam::hooks::ALL.iter())
+            .chain(sa_ai::hooks::ALL.iter());
         for (k, r) in ports.enumerate() {
             let h = &HOOKS[LOCAL_N + k];
             assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));
