@@ -170,7 +170,7 @@ orig! {
     /// `CColStore::HasCollisionLoaded(const CVector&, int32 area)` (0x410CE0)
     pub fn has_collision_loaded(p: GPtr<f32>, area: i32) -> u8 = cdecl 0x410CE0 => unported;
     /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** out)` (0x5696C0, ST0)
-    pub fn find_ground_z_for_3d_coord(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> X87 = cdecl 0x5696C0 => unported;
+    pub fn find_ground_z_for_3d_coord_st0(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> f64 = cdecl 0x5696C0 => unported;
     /// `CHudColours::GetRGB(CRGBA* ret, eHudColours)` (0x58FEA0, struct returned through `ret`)
     pub fn hud_get_rgb(this: GPtr<u8>, ret: GPtr<u8>, colour: u32) -> GPtr<u8> = thiscall 0x58FEA0 => unported;
     /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
@@ -1230,3 +1230,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INIT_MARKER_ARRAY,
     HOOK_DTOR_MARKER_ARRAY,
 ];
+
+/// `find_ground_z_for_3d_coord_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+pub fn find_ground_z_for_3d_coord(x: u32, y: u32, z: f32, found: GPtr<u8>, out: u32) -> X87 {
+    X87::from_f64_exact(find_ground_z_for_3d_coord_st0(x, y, z, found, out))
+}

@@ -226,7 +226,8 @@ fn install_one(i: usize, slot: u32, mode: Mode) -> Result<String, String> {
 }
 
 /// Installs every Core hook, the Oracle group too when `oracle` is set, and the engine ports as
-/// `ports` says (`SA_HOOK_PORTS`, see `PortPlan`). Returns (installed, wanted).
+/// `ports` says (`SA_HOOK_PORTS`, see `PortPlan`); an unverified port only when it is selected
+/// (`table::enabled`, see [`select_unverified`]). Returns (installed, wanted).
 fn install_all(oracle: bool, ports: &PortPlan) -> (usize, usize) {
     // SAFETY: plain allocation of an executable block for thunks and trampolines.
     let block = unsafe {
@@ -243,7 +244,9 @@ fn install_all(oracle: bool, ports: &PortPlan) -> (usize, usize) {
     }
     let (mut ok, mut wanted) = (0, 0);
     for (i, h) in HOOKS.iter().enumerate() {
-        if (h.group == Group::Oracle && !oracle) || (h.group == Group::Port && !ports.installs()) {
+        if (h.group == Group::Oracle && !oracle)
+            || (h.group == Group::Port && (!ports.installs() || !table::enabled(i)))
+        {
             continue;
         }
         wanted += 1;
@@ -469,6 +472,42 @@ pub extern "system" fn DllMain(hinst: HINSTANCE, reason: u32, _reserved: *mut c_
     TRUE
 }
 
+/// Selects the unverified ports this run uses (docs/PLAN.md "Writer/verifier split"): `SA_UNVERIFIED`
+/// plus every hook named in an `SA_HOOK_PORTS` list, `SA_HOOK_MODE` or `SA_L2`. The others stay
+/// uninstalled, so the original runs there exactly as without them.
+fn select_unverified(ports: &PortPlan) {
+    match table::select_unverified_from_env() {
+        Ok(n) if n > 0 => log(&format!("SA_UNVERIFIED: {n} unverified hooks selected")),
+        Ok(_) => {}
+        Err(e) => log(&format!("SA_UNVERIFIED ignored: {e}")),
+    }
+    if let PortPlan::Rust(ids) = ports {
+        ids.iter().for_each(|&i| table::select(i));
+    }
+    if let Ok(v) = std::env::var("SA_HOOK_MODE")
+        && let Ok(list) = crate::l2::list_value(&v).and_then(|v| crate::l2::parse_hook_modes(&v))
+    {
+        list.iter().for_each(|&(i, _)| table::select(i));
+    }
+    if let Ok(v) = std::env::var("SA_L2")
+        && let Ok(list) = crate::l2::list_value(&v).and_then(|v| crate::l2::hook_list(&v, "SA_L2"))
+    {
+        list.iter().for_each(|&i| table::select(i));
+    }
+    let (all, on): (Vec<usize>, Vec<usize>) = (
+        (0..HOOKS.len()).filter(|&i| table::batch(i).is_some()).collect(),
+        (0..HOOKS.len()).filter(|&i| table::batch(i).is_some() && table::enabled(i)).collect(),
+    );
+    if !all.is_empty() {
+        log(&format!(
+            "unverified ports: {} of {} selected (batches {:?}); the others are not installed",
+            on.len(),
+            all.len(),
+            table::batches()
+        ));
+    }
+}
+
 fn attach() {
     let _ = START.set(Instant::now());
     let dir = std::env::current_exe()
@@ -493,6 +532,7 @@ fn attach() {
             PortPlan::Off
         }
     };
+    select_unverified(&ports);
     crate::keycells::install();
     let (ok, wanted) = install_all(oracle, &ports);
     crate::cdsync::install();

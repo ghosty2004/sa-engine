@@ -1335,7 +1335,7 @@ pub fn interior_get_tile_centre(this: GPtr<u8>, tx: f32, ty: f32, out: GPtr<f32>
 #[hook(addr = 0x5948C0, conv = thiscall, name = "InteriorGroup_c::GetRandomInterior", expect = "83 EC 08 56 8B F1", this = "InteriorGroup_c")]
 pub fn interior_group_get_random_interior(this: GPtr<u8>) -> GPtr<u8> {
     let count = i32::from(rd::<i8>(this, 0xF));
-    let r = sa_core::crt::rand() & 0xFFFF;
+    let r = sa_core::orig::at_site(0x5948D4, sa_core::crt::rand) & 0xFFFF;
     let k = ftol32(xi(r).fmul_m(f32::from_bits(0x3800_0000)).fmul(xi(count)));
     let mut seen = 0;
     for s in 0..8 {
@@ -1637,10 +1637,11 @@ pub fn interior_group_dereference_anims(this: GPtr<u8>) {
 #[hook(addr = 0x591B20, conv = thiscall, name = "Interior_c::GetRandomTile", expect = "51 53 8B 5C 24 0C", this = "Interior_c")]
 pub fn interior_get_random_tile(this: GPtr<u8>, status: i32, out_x: GPtr<i32>, out_y: GPtr<i32>) {
     let k = f32::from_bits(0x3800_0000);
-    let draw = |n: i32| ftol32(xi(sa_core::crt::rand() & 0xFFFF).fmul_m(k).fmul(xi(n)));
+    // The two `rand` calls return to 0x591B3A and 0x591B68 (randcalls trace key).
+    let draw = |site: u32, n: i32| ftol32(xi(sa_core::orig::at_site(site, sa_core::crt::rand) & 0xFFFF).fmul_m(k).fmul(xi(n)));
     loop {
-        let tx = draw(i32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 2)));
-        let ty = draw(i32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 3)));
+        let tx = draw(0x591B3A, i32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 2)));
+        let ty = draw(0x591B68, i32::from(rd::<u8>(rd::<GPtr<u8>>(this, 0x14), 3)));
         let info = rd::<GPtr<u8>>(this, 0x14);
         let t = if tx >= i32::from(rd::<u8>(info, 2)) || ty >= i32::from(rd::<u8>(info, 3)) || tx < 0 || ty < 0 {
             1
@@ -1877,9 +1878,10 @@ pub fn populate_favorite_radio_station_list() -> u8 {
     all_zero
 }
 
-/// `(rand() & 0xFFFF) * (1/32768) * k`, truncated by `_ftol`.
-fn rand_times(k: f32) -> i32 {
-    let r = sa_core::crt::rand() & 0xFFFF;
+/// `(rand() & 0xFFFF) * (1/32768) * k`, truncated by `_ftol`; `site` is the original return address of the
+/// `rand` call (sa-hook's rand hook keys the randcalls trace on it).
+fn rand_times(site: u32, k: f32) -> i32 {
+    let r = sa_core::orig::at_site(site, sa_core::crt::rand) & 0xFFFF;
     ftol32(xi(r).fmul_m(f32::from_bits(0x3800_0000)).fmul_m(k))
 }
 
@@ -1887,12 +1889,12 @@ fn rand_times(k: f32) -> i32 {
 /// `rand * 3`, below 90 `3 - rand * -2`, else 5 + (p >= 97). Each draw is `(rand() & 0xFFFF) / 32768`.
 #[hook(addr = 0x6E4040, conv = thiscall, name = "WaterCreatureManager_c::GetRandomWaterCreatureId", expect = "51 E8 D8 DA 13 00")]
 pub fn get_random_water_creature_id(_this: GPtr<u8>) -> i32 {
-    let p = rand_times(100.0);
+    let p = rand_times(0x6E4046, 100.0);
     if p < 0x50 {
-        return rand_times(3.0);
+        return rand_times(0x6E406E, 3.0);
     }
     if p < 0x5A {
-        return 3i32.wrapping_sub(rand_times(-2.0));
+        return 3i32.wrapping_sub(rand_times(0x6E4099, -2.0));
     }
     5 + (p >= 0x61) as i32
 }

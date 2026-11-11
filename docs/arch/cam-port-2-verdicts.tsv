@@ -1,0 +1,62 @@
+address	name	state	evidence
+0x4D58A0	ConvertPedNode2BoneTag	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x50A0A0	FUN_0050a0a0	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x50A120	FUN_0050a120	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x50E180	FUN_0050e180	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared)
+0x50E470	(missed by ghidra: data-code-immediate)	L2	L2 grove:5/5 PASS (0 mismatches, 0 undeclared)
+0x5097B0	(missed by ghidra: data-code-immediate)	L2	L2 grove:5/5 PASS (0 mismatches, 0 undeclared)
+0x72D6D0	FUN_0072d6d0	implemented-needs-L2	no call in grove
+0x509CA0	FUN_00509ca0	implemented-needs-L2	no call in grove
+0x63A380	FUN_0063a380	implemented-needs-L2	no call in grove
+0x5B2090	FUN_005b2090	implemented-needs-L2	no call in grove
+0x5B2330	FUN_005b2330	implemented-needs-L2	no call in grove
+0x5B25F0	CCam::Process_FlyBy	L2	L2 grove:28/28 PASS (0 mismatches, 0 undeclared)
+0x43C900	CCurves::CalcCurvePoint	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x50A870	CCamera::~CCamera	implemented-needs-L2	no call in grove
+0x514010	CCamera	implemented-needs-L2	no call in grove
+0x8563B0	__dtor_gHandShaker	implemented-needs-L2	no call in grove
+0x8563E0	__dtor_preMirrorMat	implemented-needs-L2	no call in grove
+0x8563F0	__dtor_g_b6fec0	implemented-needs-L2	no call in grove
+0x856410	__dtor_TheCamera	implemented-needs-L2	no call in grove
+0x512B10	CCam::Process_AttachedCam	implemented-needs-L2	no call in grove
+0x50C360	CCamera::UpdateTargetEntity	implemented	split grove:973/1000 compared DIVERGED (0 mismatches, 0 undeclared); DIVERGED = input divergence at m_mMatInverse.flags (0xB6FA80) caused by CCam::Process on Rust in that run (since unhooked); rerun split pending
+0x516B20	CCamera::ImproveNearClip	implemented	split grove:973/1000 compared DIVERGED (0 mismatches, 0 undeclared); DIVERGED = input divergence at m_mMatInverse.flags (0xB6FA80) caused by CCam::Process on Rust in that run (since unhooked); rerun split pending
+0x51D470	CCam::Process_Fixed	implemented-needs-L2	no call in grove
+0x522C80	CIdleCam::Process	L2	split grove:1000 PASS-FP (0 mismatches, 0 undeclared)
+0x51D3E0	CIdleCam::Run	implemented-needs-L2	no call in grove
+0x514860	CCamera::DrawBordersForWideScreen	L2	split grove:25 PASS (0 mismatches, 0 undeclared)
+0x5B24D0	CCamera::LoadPathSplines	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D5F0	__init_g_b6eba0	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D610	__init_g_b6ec88	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D630	__init_g_b6ec8c	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D650	__init_g_b6ec90	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D670	__init_g_b6ec94	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D690	__init_g_b6ec98	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x84D6B0	__init_g_b6ec9c	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x850060	__init_g_bc405c	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x850080	__init_g_bc4060	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x8500A0	__init_g_bc4064	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x8500C0	__init_g_bc4068	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x8500E0	__init_g_bc406c	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x850100	__init_g_bc4070	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x854FD0	__init_g_c73c4c	L2	split grove:1 PASS (0 mismatches, 0 undeclared)
+0x515200	CCamera::StartTransition	implemented-needs-L2	no call in grove
+0x516560	CCamera::ProcessShake-float	implemented-needs-L2	no call in grove
+0x519250	CCam::ProcessPedsDeadBaby	implemented-needs-L2	no call in grove
+0x517500	CCam::Process_SpecialFixedForSyphon	implemented-needs-L2	no call in grove
+0x517770	CIdleCam::IsTargetValid	implemented-needs-L2	no call in grove
+0x526FC0	CCam::Process	ported-not-hooked	split grove:1000 PASS (0 mismatches, 446 undeclared: 0xB6FE30.., gIdleCam ticker); not hooked: its Rust frame changes the stale m_mMatInverse.flags word CalculateDerivedValues reads (decision needed)
+0x520190	CCamera::CameraColDetAndReact	ported-not-hooked	uninitialised local dist reaches gCurDistForCam/*source when source == target (decision needed)
+0x50A280	CIdleCam::SetTarget	ported-unhookable	protection reads its entry bytes (sbb ebx,[0x50A281] at 0x4039BB)
+0x514030	CCamera::AvoidTheGeometry	not-ported	FPTAN at 0x5143D1 (waits for X87 branch)
+0x50ADE0	CCamera::GetFading	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x50AE10	CCamera::Get_Just_Switched_Status	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x5097C0	ret	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x5097D0	ret	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x509800	ret	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x50E080	ret	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x71D700	CMBlur::MotionBlurRender	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x50AF90	CCamera::InitialiseCameraForDebugMode	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x50B880	CCamera::ProcessObbeCinemaCameraPed	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x43C600	CCurves::TestCurves	unhookable-too-short	body shorter than the 5-byte patch before ret
+0x8563D0	__dtor_gIdleCam	unhookable-too-short	body shorter than the 5-byte patch before ret

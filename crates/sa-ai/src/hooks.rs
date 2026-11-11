@@ -29,10 +29,27 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::gen_clones::HOOKS,
     crate::gen_dtors::HOOKS,
     crate::gen_subtasks::HOOKS,
+    crate::intelrest::HOOKS,
+    crate::groups::HOOKS,
+    crate::decisions::HOOKS,
+    crate::smallai5::HOOKS,
+    crate::conversation::HOOKS,
+    crate::stuck::HOOKS,
+    crate::collscan::HOOKS,
+    crate::fighthelp::HOOKS,
+    crate::killtasks::HOOKS,
+    crate::gangtasks::HOOKS,
+    crate::walk::HOOKS,
+    crate::fall::HOOKS,
+    crate::flee::HOOKS,
+    crate::events2::HOOKS,
+    crate::wander::HOOKS,
+    crate::walkround::HOOKS,
+    crate::seek::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
-pub const GLOBALS: &[&[GlobalDesc]] = &[crate::misc::GLOBALS];
+pub const GLOBALS: &[&[GlobalDesc]] = &[crate::misc::GLOBALS, crate::conversation::GLOBALS, crate::collscan::GLOBALS];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
     let (mut n, mut i) = (0, 0);

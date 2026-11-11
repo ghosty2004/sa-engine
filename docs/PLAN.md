@@ -171,6 +171,26 @@ x87: the game runs with the x87 precision control set to 24 bits by D3D9. Rust u
 function whose L1/L2 shows a precision divergence gets an explicit `sa_math::x87` implementation, never a
 tolerance.
 
+### 5.1 Writer/verifier split (user, 2026-11-11)
+
+Porting is split between WRITER agents (write ports, no game lanes) and VERIFIER agents (verify on lanes,
+one batch at a time). Procedure and tools: `docs/verify/HOWTO.md`; queue: `docs/verify/QUEUE.md`.
+
+- **Unverified code never changes default master behaviour.** A port registered
+  `#[hook(unverified = "BATCH", route = ..., hazards = ...)]` is compiled and in `sa_ports::ALL` (every
+  table/callers/patch_refs/keycells/INF-20 test checks it), but phase A installs it only when a run
+  selects it (`SA_UNVERIFIED=all|BATCH|@FILE`, or the hook named in `SA_HOOK_MODE`/`SA_L2`). Every
+  all-ports run runs the verified set only. Phases B/C use unverified ports like any other.
+- **Writers:** every new hook is `unverified` with a batch id (one batch = one writer commit or ≤ ~60
+  hooks of one subsystem) and the hints `route` (L1-pure | L2 | split | L3-only) and `hazards`; they pass
+  `tools/verify/writer-gate.sh` (builds host/i686/wasm32, clippy -D warnings, sa-hook lib tests, sa-oracle
+  l1 tests, the hook check, L1 runs of L1-pure hooks) and regenerate the queue (`tools/verify/queue.py`).
+- **Verifiers:** take one batch at a time, run it on top of the verified set
+  (`tools/verify/bisect-batch.sh`, which narrows a divergence to the batch and then to the hook), L2 or
+  split per hook, and promote by removing `unverified` only after L2/split evidence (L1 for L1-pure) and
+  an all-ports run (`verify-all.sh`) IDENTICAL on all recordings with the promoted hooks in the default
+  set. Failed hooks go back to the writer queue (status `failed`, the bisect output as evidence).
+
 ---
 
 ## 6. Corpus

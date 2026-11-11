@@ -427,6 +427,8 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x49C300, 0x4489F0, 0x559A50,
     // PORT-POP-2: CountNeighboursToBeSwitchedOff, FindIntersection2Lines, CheckDamagedWeaponType; specs queued.
     0x4504F0, 0x4226F0, 0x43D9E0,
+    // CAM-2 0x50E180, AI-5 CDecision::SetDefault, AI-4 FollowNodeRoute::GetSubTaskType; specs queued.
+    0x50E180, 0x600530, 0x669650,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
