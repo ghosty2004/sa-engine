@@ -185,3 +185,5 @@ wasm32-unknown-unknown`).
   phase A is possible later.
 - `orig::import_at_call_site` asserts the `FF 15` opcode at runtime on every call; a site table checked
   once at attach would be cheaper.
+- Partial ports (2026-11-11): `#[hook(..., fallback)]` gives a port a callable original body for the
+  paths it has not ported (the original-mode trampoline). See `ADR-002-partial-ports.md`.

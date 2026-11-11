@@ -23,6 +23,14 @@
 //! registers, copies the stack arguments, calls the shim, pops the registers and returns with the
 //! original convention (`ret` / `ret 4*n`). The shim's result registers (EAX, ST0) pass through.
 //!
+//! `fallback` (or `fallback = true`; ADR-002): a partial port. The macro also emits a cell that sa-hook
+//! fills at install with the original entry (the relocated-prologue trampoline, or a `.HOODLUM` stub's
+//! old target; `HookReg::set_original`) and `pub fn <fn>_original(args) -> R`, which calls that entry
+//! with the original convention under the game's MXCSR (`abi::call_original`). The port calls it for
+//! the paths it has not ported. Phases B/C have no original body: `<fn>_original` panics there (or
+//! runs a host stand-in registered for `<module>::<fn>_original`). `R` must be its own ABI type
+//! (integers, pointers, `()`), checked at compile time.
+//!
 //! Generated paths start with `::sa_core`, so the crate that uses `#[hook]` must have `sa_core` in
 //! scope (sa-core itself declares `extern crate self as sa_core`).
 
@@ -99,6 +107,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut this: Option<LitStr> = None;
     let mut preserve: Option<LitStr> = None;
     let mut entry_eax = false;
+    let mut fallback = false;
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -117,14 +126,23 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             preserve = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("entry_eax") {
             entry_eax = true;
+        } else if meta.path.is_ident("fallback") {
+            fallback = if meta.input.peek(syn::Token![=]) {
+                let v: syn::LitBool = meta.value()?.parse()?;
+                v.value
+            } else {
+                true
+            };
         } else {
-            return Err(meta.error("expected addr, conv, name, expect, this, preserve or entry_eax"));
+            return Err(
+                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax or fallback")
+            );
         }
         Ok(())
     });
     parse_macro_input!(attr with parser);
     let f = parse_macro_input!(item as ItemFn);
-    match expand(f, addr, conv, name, expect, this, preserve, entry_eax) {
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -140,6 +158,7 @@ fn expand(
     this: Option<LitStr>,
     preserve: Option<LitStr>,
     entry_eax: bool,
+    fallback: bool,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -293,9 +312,17 @@ fn expand(
             lines.push("add esp, {b}".into());
         }
         lines.extend(saved.iter().rev().map(|r| format!("pop {r}")));
-        lines.push(if matches!(conv, Conv::Cdecl) { "ret".into() } else { "ret {b}".into() });
+        lines.push(if matches!(conv, Conv::Cdecl) {
+            "ret".into()
+        } else {
+            "ret {b}".into()
+        });
         let nsaved = saved.len() as u32;
-        let slot_op = if entry_eax { quote!(slot = sym ::sa_core::abi::ENTRY_EAX,) } else { quote!() };
+        let slot_op = if entry_eax {
+            quote!(slot = sym::sa_core::abi::ENTRY_EAX,)
+        } else {
+            quote!()
+        };
         let wrapper = quote! {
             #[cfg(target_arch = "x86")]
             #[doc(hidden)]
@@ -314,8 +341,53 @@ fn expand(
         };
         (wrapper, quote!(#wrap as usize))
     };
+    // `fallback` (ADR-002): a cell the installer fills with the original entry (trampoline), and
+    // `<fn>_original(args)` calling it with the original convention under the game's MXCSR
+    // (`__orig_body!`, i.e. `call_original`). Phases B/C: the `unported` panic (or a host stand-in
+    // registered for `<module>::<fn>_original`).
+    let (fallback_items, set_original) = if fallback {
+        let cell = format_ident!("__SA_HOOK_ORIGINAL_{}", upper);
+        let ofn = format_ident!("{}_original", fname);
+        let conv_id = Ident::new(
+            match conv {
+                Conv::Cdecl => "cdecl",
+                Conv::Stdcall => "stdcall",
+                Conv::Thiscall => "thiscall",
+                Conv::Fastcall => "fastcall",
+            },
+            Span::call_site(),
+        );
+        let odoc = format!(
+            "Runs the original body of `{}` ({addr:#x}) for a path this port does not implement \
+             (ADR-002 fallback). Phase A only; phases B/C panic.",
+            name.value()
+        );
+        (
+            quote! {
+                #[doc(hidden)]
+                #[allow(dead_code)]
+                static #cell: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(0);
+
+                // A fallback returns the original's raw result: only types whose ABI value is the
+                // type itself (integers, pointers, `()`) are allowed.
+                const _: fn(#ret) -> <#ret as ::sa_core::abi::IntoAbi>::Abi = |x| x;
+
+                #[doc = #odoc]
+                #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments, clippy::unused_unit)]
+                pub fn #ofn(#(#args: #tys),*) -> #ret {
+                    ::sa_core::__orig_body!(unported #ofn, #conv_id,
+                        (::sa_core::orig::fallback_entry(&#cell, #name)), (#(#args: #tys),*) -> #ret)
+                }
+            },
+            quote!(Some(|a: u32| #cell.store(a, ::core::sync::atomic::Ordering::Release))),
+        )
+    } else {
+        (quote!(), quote!(None))
+    };
     Ok(quote! {
         #f
+
+        #fallback_items
 
         #[doc(hidden)]
         static #calls: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(0);
@@ -355,6 +427,7 @@ fn expand(
             this_type: #this_type,
             this_size: #this_size,
             preserve: #mask,
+            set_original: #set_original,
         };
     })
 }
