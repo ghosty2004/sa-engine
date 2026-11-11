@@ -973,3 +973,15 @@
 - HUD-2's 17 orig! ST0 returns declared X87 broke the i686 build: converted to f64 `_st0` + X87 wrappers (+ f64
   adapters where `=> target` is a Rust port). PRESERVE_SPECS_PENDING += 0x4637E0.
 - verify-all main-g2 (fresh DLL 3b33f75): IDENTICAL on all 11. States promoted (AI-6 40 L2, HUD-2 136 L2 + 11 L1).
+
+## 2026-11-11 AUDIO-2, PED-3, POP-3, RW-4 (+ RW-5 unverified) integrated (main session)
+- AUDIO-2 (aead9c69): 370 audio hooks. PED-3 (a074427b): 63 ped drivers (ProcessControl family, CPlayerInfo::Process,
+  ped collision, player targeting). POP-3 (aa84c63d): 96 POP functions (car AI, population, gangs; 7 partial
+  ports with ADR-002 fallback). PORT-RW-4 (afaf8637): 323 RW D3D9 driver/raster/skin/MatFX functions. WRITER-RW-5
+  (a15b5ca1): callers-test fix for register save/restore, 94 unverified RW hooks (off by default).
+- Two more X87 orig! returns (path-qualified `crate::common::X87` in sa-audio) converted to f64 adapters.
+  POP-3's pathfind.rs taken whole (same ST0 fix). PRESERVE_SPECS_PENDING += 0x7FC2D0.
+- verify-all main-g3 (fresh DLL): IDENTICAL on all 11. States promoted from the four verdict TSVs.
+- Process: the shared scratchpad collided (VERIFIER-3 overwrote the main session's union.sh); the main session's
+  helpers now live in scratchpad/main/, agents use their own subfolders.
+- MOD-1 (mod support) added to the ROADMAP as nice-to-have after the native MVP.

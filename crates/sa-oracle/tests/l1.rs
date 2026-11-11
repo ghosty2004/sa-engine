@@ -431,6 +431,8 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x50E180, 0x600530, 0x669650,
     // SCRIPT-3: CMissionCleanup::AddEntityToList; spec queued.
     0x4637E0,
+    // PORT-RW-4: RwD3D9SetRenderState preserve edx; spec queued.
+    0x7FC2D0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

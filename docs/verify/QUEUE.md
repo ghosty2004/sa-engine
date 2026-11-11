@@ -3,7 +3,219 @@
 Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Procedure and tools:
 [HOWTO.md](HOWTO.md). Per-hook rows with the exact commands: `catalog/verify-queue.csv`.
 
-The queue is empty: every registered port is verified.
-
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
+| rw5-cam-1 | 2 | RW | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 1, L3-only 1 |
+| rw5-core-1 | 33 | RW | uncommitted | master | 33 | 0 | 0 | 0 | 0 | L2 22, split 11 |
+| rw5-core-2 | 17 | RW | uncommitted | master | 17 | 0 | 0 | 0 | 0 | L2 9, L3-only 5, split 3 |
+| rw5-image-1 | 9 | RW | uncommitted | master | 9 | 0 | 0 | 0 | 0 | L2 5, split 4 |
+| rw5-inst-1 | 17 | RW | uncommitted | master | 17 | 0 | 0 | 0 | 0 | L2 16, split 1 |
+| rw5-native-1 | 6 | RW | uncommitted | master | 6 | 0 | 0 | 0 | 0 | L2 2, split 4 |
+| rw5-node-1 | 6 | RW | uncommitted | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| rw5-raster | 4 | RW | uncommitted | master | 4 | 0 | 0 | 0 | 0 | L2 2, split 2 |
+
+## rw5-cam-1
+
+2 hooks in sa-rwcore; hazards: uninit-locals (1); recordings calling them: grove-walk (2), menus-hud (1), pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-cam-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-cam-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-cam-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-cam-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7F8640 | `RwD3D9ChangeVideoMode` | written | L3-only | none |
+| 0x7F98D0 | `_rwD3D9CameraEndUpdate` | written | L2 | uninit-locals |
+
+## rw5-core-1
+
+33 hooks in sa-rwcore; hazards: heap-writes (11), uninit-locals (2); recordings calling them: grove-walk (33), pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-core-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x749160 | `cb_RIGHTTORENDER_RpAtomic_StreamWrite` | written | split | none |
+| 0x74A5B0 | `RpAtomicStreamGetSize` | written | L2 | none |
+| 0x74A850 | `RpAtomicStreamWrite` | written | split | uninit-locals |
+| 0x74AE50 | `_rpClumpGeometryListDestroy` | written | L2 | heap-writes |
+| 0x74AFA0 | `_rpClumpLightStreamGetSizeCB` | written | L2 | heap-writes |
+| 0x74AFD0 | `_rpClumpCameraStreamGetSizeCB` | written | L2 | heap-writes |
+| 0x74B000 | `_rpClumpAtomicStreamGetSizeCB` | written | L2 | heap-writes |
+| 0x74B030 | `RpAtomicStreamRead` | written | split | uninit-locals |
+| 0x74BD40 | `_rpClumpChunkInfoRead` | written | split | none |
+| 0x74CE20 | `RpGeometryStreamGetSize` | written | L2 | none |
+| 0x74D810 | `cb_RIGHTTORENDER_RpMaterial_StreamWrite` | written | split | none |
+| 0x74E1C0 | `_rpMaterialListAlloc` | written | L2 | none |
+| 0x74E450 | `_rpMaterialListStreamGetSize` | written | L2 | none |
+| 0x7ED270 | `_rwStreamWriteVersionedChunkHeader` | written | split | none |
+| 0x804930 | `RwTexDictionaryStreamGetSize` | written | L2 | none |
+| 0x804990 | `_rwTexDictionaryTextureGetSizeCB` | written | L2 | heap-writes |
+| 0x8076A0 | `_rwFrameListFlattenRecurse` | written | L2 | heap-writes |
+| 0x8076E0 | `_rwFrameListFindFrame` | written | L2 | none |
+| 0x807750 | `_rwFrameListStreamGetSize` | written | L2 | none |
+| 0x80A350 | `_rwStringCompareNoCase` | written | L2 | none |
+| 0x80A3A0 | `_rwStringToUpper` | written | L2 | heap-writes |
+| 0x80A3D0 | `_rwStringToLower` | written | L2 | heap-writes |
+| 0x80A400 | `_rwStringFindChar` | written | L2 | none |
+| 0x80A420 | `_rwStringFindCharReverse` | written | L2 | none |
+| 0x80A450 | `_rwStringDestroy` | written | L2 | heap-writes |
+| 0x810BB0 | `cb_MATERIALEFFECTSPLUGIN_RwEngine_Close` | written | split | heap-writes |
+| 0x810C60 | `cb_MATERIALEFFECTSPLUGIN_RpMaterial_Dtor` | written | L2 | heap-writes |
+| 0x811A60 | `cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamWrite` | written | split | none |
+| 0x811A90 | `cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead` | written | split | none |
+| 0x811AE0 | `cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamGetSize` | written | L2 | none |
+| 0x811B60 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamWrite` | written | split | none |
+| 0x811B90 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamRead` | written | split | none |
+| 0x811BE0 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_StreamGetSize` | written | L2 | none |
+
+## rw5-core-2
+
+17 hooks in sa-rwcore; hazards: heap-writes (4), uninit-locals (2), x87-transcendental (1); recordings calling them: grove-walk (17), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-core-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-core-2 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-core-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-core-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x74FB80 | `RpWorldForAllClumps` | written | L2 | none |
+| 0x74FBC0 | `RpWorldForAllMaterials` | written | L2 | none |
+| 0x74FC70 | `RpWorldForAllWorldSectors` | written | L2 | none |
+| 0x751060 | `RpAtomicForAllWorldSectors` | written | L2 | none |
+| 0x751D20 | `RpLightSetConeAngle` | written | L2 | x87-transcendental |
+| 0x758910 | `_rpMeshHeaderDestroy` | written | L2 | heap-writes |
+| 0x759090 | `_rpMeshSize` | written | L2 | none |
+| 0x7EE0B0 | `cb_CAMERAMODULE_RwEngine_Close` | written | split | heap-writes |
+| 0x7EE340 | `RwCore::RwCameraClear` | written | L3-only | none |
+| 0x7EFDE0 | `cb_IMMEDIATEMODULE_RwEngine_Close` | written | split | heap-writes |
+| 0x7F1660 | `cb_MATRIXMODULE_RwEngine_Close` | written | split | heap-writes |
+| 0x7F2D80 | `RwEngineGetTextureMemorySize` | written | L2 | uninit-locals |
+| 0x7F2DB0 | `RwEngineGetMaxTextureSize` | written | L2 | uninit-locals |
+| 0x7F2DE0 | `RwEngineSetFocus` | written | L3-only | none |
+| 0x8020A0 | `_rwMemoryDefaultMalloc` | written | L3-only | none |
+| 0x8020B0 | `_rwMemoryDefaultRealloc` | written | L3-only | none |
+| 0x8020D0 | `_rwMemoryDefaultCalloc` | written | L3-only | none |
+
+## rw5-image-1
+
+9 hooks in sa-rwcore; hazards: heap-writes (9), uninit-locals (2); recordings calling them: grove-walk (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-image-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-image-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-image-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-image-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7F40F0 | `_rwTextureDefaultReadCallBack` | written | split | heap-writes,uninit-locals |
+| 0x7FF270 | `_rwD3D9ImageGetRaster` | written | L2 | heap-writes |
+| 0x8001E0 | `_rwD3D9RasterSetImage` | written | L2 | heap-writes,uninit-locals |
+| 0x802AF0 | `RwImageApplyMask` | written | L2 | heap-writes |
+| 0x802FD0 | `RwImageRead` | written | split | heap-writes |
+| 0x8035C0 | `RwImageReadMaskedImage` | written | split | heap-writes |
+| 0x80C600 | `RwImageResample` | written | L2 | heap-writes |
+| 0x81E720 | `_rwD3D9DecompressDXT1` | written | L2 | heap-writes |
+| 0x820A10 | `RwD3D9DDSTextureRead` | written | split | heap-writes |
+
+## rw5-inst-1
+
+17 hooks in sa-rwcore; hazards: heap-writes (13), uninit-locals (2); recordings calling them: pause-restart (9).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-inst-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-inst-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-inst-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag rw5-inst-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x752320 | `_rpD3D9VertexDeclarationInstWeights` | written | L2 | heap-writes |
+| 0x752AD0 | `_rpD3D9VertexDeclarationInstV3d` | written | L2 | heap-writes |
+| 0x7531B0 | `_rpD3D9VertexDeclarationInstV3dComp` | written | L2 | heap-writes |
+| 0x753B60 | `_rpD3D9VertexDeclarationInstV3dMorph` | written | L2 | heap-writes |
+| 0x7544E0 | `_rpD3D9VertexDeclarationInstV2d` | written | L2 | heap-writes |
+| 0x754AE0 | `_rpD3D9VertexDeclarationInstColor` | written | L2 | heap-writes |
+| 0x754B40 | `_rpD3D9VertexDeclarationInstIndices` | written | L2 | heap-writes |
+| 0x754C80 | `_rpD3D9VertexDeclarationInstIndicesRemap` | written | L2 | heap-writes |
+| 0x754E20 | `_rpD3D9VertexDeclarationInstTangent` | written | L2 | heap-writes,uninit-locals |
+| 0x7551F0 | `_rpD3D9VertexDeclarationUnInstV3d` | written | L2 | heap-writes |
+| 0x7555E0 | `_rpD3D9VertexDeclarationUnInstV2d` | written | L2 | heap-writes |
+| 0x755830 | `_rpD3D9GetMinMaxValuesV3d` | written | L2 | none |
+| 0x7558F0 | `_rpD3D9GetMinMaxValuesV2d` | written | L2 | none |
+| 0x755980 | `_rpD3D9FindFormatV3d` | written | L2 | none |
+| 0x755AA0 | `_rpD3D9FindFormatV2d` | written | L2 | none |
+| 0x7578C0 | `_rxD3D9DefaultInstanceCallback` | written | split | heap-writes,uninit-locals |
+| 0x758270 | `_rxD3D9DefaultReinstanceCallback` | written | L2 | heap-writes |
+
+## rw5-native-1
+
+6 hooks in sa-rwcore; hazards: heap-writes (4); recordings calling them: grove-walk (6).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-native-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-native-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-native-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-native-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x750E20 | `cb_NATIVEDATAPLUGIN_RpGeometry_StreamRead` | written | split | heap-writes |
+| 0x750E70 | `cb_NATIVEDATAPLUGIN_RpWorldSector_StreamRead` | written | split | heap-writes |
+| 0x7637F0 | `_rpD3D9NativeDataGeometryStreamWrite` | written | split | heap-writes |
+| 0x763A80 | `_rpD3D9NativeDataGeometryStreamRead` | written | split | heap-writes |
+| 0x763EB0 | `_rpD3D9NativeDataGeometryStreamGetSize` | written | L2 | none |
+| 0x7645C0 | `_rpD3D9NativeDataWorldSectorStreamGetSize` | written | L2 | none |
+
+## rw5-node-1
+
+6 hooks in sa-rwcore; hazards: heap-writes (3); recordings calling them: grove-walk (6), pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-node-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-node-1 LANE=$LANE tools/e2e/port-l2.sh batch:rw5-node-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-node-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7582E0 | `RxNodeDefinitionGetD3D9AtomicAllInOne` | written | L2 | none |
+| 0x75E3F0 | `_rwD3D9WorldSectorAllInOneNode` | written | L2 | heap-writes |
+| 0x75EED0 | `_rpD3D9GetVertexShader` | written | L2 | heap-writes |
+| 0x760DF0 | `_rxD3D9VertexShaderDefaultBeginCallBack` | written | L2 | heap-writes |
+| 0x761030 | `_rxD3D9VertexShaderDefaultMeshRenderCallBack` | written | L2 | none |
+| 0x7619A0 | `_rpD3DVertexShaderSetUVAnimMatrix` | written | L2 | none |
+
+## rw5-raster
+
+4 hooks in sa-rwcore; hazards: heap-writes (2); recordings calling them: grove-walk (4), pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh rw5-raster $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=rw5-raster LANE=$LANE tools/e2e/port-l2.sh batch:rw5-raster $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag rw5-raster
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7FAEC0 | `RwRasterUnlock` | written | L2 | none |
+| 0x7FB160 | `RwRasterGetNumLevels` | written | L2 | none |
+| 0x7FB230 | `RwRasterCreate` | written | split | heap-writes |
+| 0x7FB2D0 | `RwRasterLock` | written | split | heap-writes |

@@ -311,6 +311,100 @@ CProjectileInfo::Update 150/150, AddExplosion 1/1), 0 PASS-FP, both split traces
 branch's sa-hook (`port-l2.sh ports REC --runs "plain rust"`, 3,495 hooks, lane 1, tags `p-*`): IDENTICAL on every frame
 and all 17 subsystems on weapon-combat, c-bug, driving, world-cheats, pause-restart, anim-input and the grove walk.
 
+## Pass 3 (PORT-PED-3, 2026-11-11)
+
+Scope: the PED rows still `specified` after PORT-PED-2 (branch `worktree-agent-a14c82d2abef1dfd9`, not merged; none of its
+47 functions is duplicated here): the ped process drivers and what they call. Agent + 2 helpers on disjoint new modules,
+every game run on lane 3. Verdicts per function (agent and both helpers, one row each): `docs/arch/ped-port-3-verdicts.tsv`. Hook lists `tools/e2e/lists/ped3-agent.txt` (`ped3-agent-norender.txt`
+= the same without `CPed::Render`), `ped3-A*.txt`, `ped3-B*.txt`; extra regions: the three `PORT-PED-3` sections of
+`tools/e2e/l2-extras.txt`.
+
+| module | contents |
+|---|---|
+| `ped_control.rs` (agent) | `CPed::ProcessControl` 0x5E8CD0, `CCivilianPed::ProcessControl` 0x5DDBF0, `CCopPed::ProcessControl` 0x5DE160, `CEmergencyPed::ProcessControl` 0x5DE400, `CCopPed::AddCriminalToKill` 0x5DDEB0, `CPed::CalculateNewVelocity` 0x5E4C50, `DoFootLanded` 0x5E5380 (with the register-argument helpers 0x5E3630 / 0x5E37C0 as plain Rust functions), `PlayFootSteps` 0x5E57F0, `CPlayerPed::ProcessControl` 0x60EA90, `CPed::Render` 0x5E7680, `CPed::PreRenderAfterTest` 0x5E65A0, `CPlayerInfo::Process` 0x56F8D0 |
+| `ped_misc3.rs` (agent) | `CAEPedWeaponAudioEntity::Initialise` 0x4E6AA0 / `Service` 0x4E6AE0, `CPed::SayScript` 0x5EFFB0, `CPed::Say` 0x5EFFE0, `CMBlur::SetDrunkBlur` 0x71D730, `CPed::GetWalkAnimSpeed` 0x5E04B0, `SetAimFlag-Heading` 0x5E8830, `FlagToDestroyWhenNextProcessed` 0x5E7B70, `GiveWeaponAtStartOfFight` 0x5E8AB0, `GiveWeaponWhenJoiningGang` 0x5E8BE0, `CreateDeadPedPickupCoors-` 0x459180, `CreateDeadPedWeaponPickups` 0x4591D0 |
+| `ped_coll.rs` (helper A) | `DropEntityThatThisPedIsHolding` 0x5E0360, `IsPedHeadAbovePos` 0x5F02C0, `GetTransformedBonePosition` 0x5E01C0, `GetBonePosition-Original` 0x5E4280, `DoesLOSBulletHitPed` 0x5F01A0, `DoGunFlash` 0x5DF340, `SetGunFlashAlpha` 0x5DF400, `CPedPlacement::IsPositionClearForPed-OG` 0x616860 / `IsPositionClearOfCars-Ped` 0x616A40 / `FindZCoorForPed` 0x616920, `AttachPedToBike` 0x5E7E60, `AttachPedToEntity` 0x5E7CB0, `DettachPedFromEntity` 0x5E7EC0, `GiveObjectToPedToHold` 0x5E4390, `SortPeds` 0x5E17E0, `OurPedCanSeeThisEntity` 0x5E1660, `DeadPedMakesTyresBloody` 0x6B4200, `PositionAnyPedOutOfCollision` 0x5E13C0, `PositionAttachedPed` 0x5DFDF0, `ShoulderBoneRotation` 0x5DF560, `PositionPedOutOfCollision` 0x5E0820 (21 hooks) |
+| `player_target.rs` (helper B) | `CPlayerPed::DisbandPlayerGroup` 0x60A0A0, `MakeGroupRespondToPlayerTakingDamage` 0x60A110, `PlayerWantsToAttack` 0x60CC50, `LOSBlockedBetweenPeds` 0x60B550, `DoesTargetHaveToBeBroken` 0x60C0C0, `EvaluateNeighbouringTarget` 0x60D1C0, `EvaluateTarget` 0x60D020, `FindPedToAttack` 0x60C5F0, `ProcessGroupBehaviour` 0x60D350, `TellGroupToStartFollowingPlayer` 0x60A1D0, `KeepAreaAroundPlayerClear` 0x60C1E0, `MakeThisPedJoinOurGroup` 0x60C840, `Compute3rdPersonMouseTarget` 0x60B650, `DrawTriangleForMouseRecruitPed` 0x60BA80, `FindWeaponLockOnTarget` 0x60DC50, `SetRealMoveAnim` 0x60A9C0, `CPlayerInfo::FindClosestCarSectorList` 0x56F4E0, `FindObjectToSteal` 0x56DBD0 (18 hooks); `FindNextWeaponLockOnTarget` 0x60E530 ported, not registered (INF-20: protection reads `[0x60E533]` at 0x401E55, 0x406405, 0x1566A2D) |
+
+Findings (the bytes win over the specs and gta-reversed; kept as the original has them):
+- `CPlayerInfo::Process`: the chase-value position sample is taken when `time / 20000` changes (`mul 0xD1B71759; shr edx,
+  14` at 0x5715A9); `CPlayerInfo.md` says 10000. Found by the police-gang split run (frame 2451: the original keeps the saved
+  position 0xB9B994, a `/ 10000` port sampled it; the player trace diverged at frame 2702). Spec correction for the RE slot.
+- `CPlayerInfo::Process` block 2: the parachute stream test skips on NaN (`test ah, 1; jne`), the spec says NaN passes.
+- `CEmergencyPed::ProcessControl`: only type 19 tail-calls `IsPedInControl` (`sub eax, 0x12; je ret; dec eax; jne ret`); the
+  spec says 18 or 19.
+- `CPlayerPed::ProcessControl` (gta-reversed differs): returns right after `CPed::ProcessControl` when postponed (gr tests
+  `bCanPointGunAtTarget`); minigun spin uses skill 1 info and spins down also when the use-gun anim is past its loop end;
+  vehicles/objects set the marker colour from health * 0.001f, other entity types skip the clamp with 1.0f; the colour is the
+  x87 lerp `ftol((1-c)*255 + c*0)` etc.; the stand-still timer uses the 2D speed; the water cover adds the bounding box to
+  `pos.z` (not `pos.z + 1.5f`).
+- `CPed::PreRenderAfterTest` (gta-reversed differs): high-quality shadows only for FX quality 3 or (2 and ped type 0); the
+  low-quality path stores the dummy shadow without the `m_pShadowData` test; dead peds use the ducking flag for the real-time
+  shadow; only clothes model key 0 is compared with "vest"/"torso"; the open-top driving speed is the dot product of the
+  move speed with the forward vector; the wobble rotates bones 302/301 for non-players; the earthquake swing is multiplied
+  by 0.0025f; rain splash z offset `radius * 0.75f`.
+- `CPed::Render`: render state 0x1E is restored only on the normal exit (the in-vehicle invisible exits skip it).
+- `CPed::DoFootLanded`: `CWaterLevel::GetWaterLevel` writes the level into the original's own `leftFoot` argument slot
+  (stack-only, not reproduced). `PlayFootSteps` passes the `makeWobble` dword whose upper bytes are uninitialised stack in the
+  original (the callee reads the byte).
+
+Not ported by the agent (reason):
+- Save/Load (`CPed::Save/Load` 0x5D5730/0x5D4640, `CPlayerPed::Save/Load` 0x5D57E0/0x5D46E0, `CPlayerInfo::Save/Load`
+  0x5D3AC0/0x5D3B00, `CPedType::Save/Load` 0x5D3CD0/0x5D3D10): the save structures are stack locals the original fills only
+  partly (`CPlayerPed::Save` stores a byte into a dword slot; the padding is stack residue) and writes whole into the save
+  buffer; needs a residue decision (ledger) and a save/load recording; no corpus call.
+- Start-up loaders (`CPedStats::Initialise` 0x5BF9D0, `LoadPedStats` 0x5BB890, `CPedType::Initialise` 0x608E40,
+  `LoadPedData` 0x608B30, `CClothes::LoadClothesFile` 0x5A7B30) and `CPlayerSkin::GetSkinTexture` 0x6FFA10 /
+  `RenderFrontendSkinEdit` 0x6FF900 (frontend only): time box.
+- Unhookable: `CBridge::ThisIsABridgeObjectMovingUp` 0x41BCB0 (`xor al, al; ret`, 3 bytes); `CWanted::ClearQdCrimes`
+  0x561FE0 (INF-20: protection reads its entry, `adc edi, [0x561FE3]` at 0x401409).
+- Protection-computed entries (PLAN 4b): `PedIsReadyForConversation` 0x43ABA0, `CreateDeadPedMoney` 0x4590F0,
+  `GetIsWearingBalaclava` 0x5A7950, `GetDefaultPlayerMotionGroup` 0x5A81B0, `IsPointerValid` 0x5E4220; `RemoveGogglesModel`
+  0x5DF170 (protection-read entry).
+
+Helper findings (details in the verdict rows):
+- `PositionPedOutOfCollision` (helper A): `CPed.md` candidates c/d are wrong; the bytes use `V + forward * (B.min.y - 0.355f)`
+  and `V + forward * (B.max.y + 0.355f)` (the spec says `right * min.x / max.x`). Spec correction for the RE slot.
+- Not ported by helper A: `MakeTyresMuddySectorList` 0x6AE0D0 (reads an uninitialised stack local `bike` [esp+0x14] when the
+  first qualifying vehicle is neither class 0 nor 9: needs a residue decision, PLAN 4b); `KillPedWithCar` 0x5F0360 and
+  `ProcessEntityCollision` 0x5E2530 (time box; specs read).
+- Helper B: `FindNextWeaponLockOnTarget` 0x60E530 ported but not registered (INF-20); the lock-on, recruiting and
+  disbanding paths have no corpus call (gamepad lock-on / recruit recordings would cover 10 rows).
+
+Verification (lane 3; `SA_ROOT=/home/ghosty2004/sa-engine L2_MAX=150 SPLIT_PER_FRAME=2 SPLIT_STACKFILL=16384
+L2_SPOOL_MAX=6G port-l2.sh @LIST REC --runs "plain rust split"`; spools deleted after each run, `summary.txt`,
+`results.tsv`, `split-report.txt` kept under the worktree's `target/e2e/lane-3/port-l2-<tag>/`):
+- Agent: `ped3-wc3` (weapon-combat, all 24 agent hooks), `ped3b-{driving,weapon-combat}` (same list), then with
+  `ped3-agent-norender.txt` `ped3c-{police-gang,weapon-combat,air-water,anim-input,car-ai,c-bug}`: rust trace and splitr
+  trace IDENTICAL on every frame and all 17 subsystems in every final run. `CPed::Render` is run apart because its split
+  calls leave a different stack address at 0xC96438 (D3D code 0x772C0D), which made every later hook of the same run
+  PASS-FP (input difference on page 0xC96000); without it the other hooks are PASS.
+- Found and fixed during verification: `CPlayerInfo::Process` sampled the chase position every 10 s instead of 20 s
+  (police-gang `player` divergence at frame 2702, car-ai at 2202; located with `L2_FROM=2690`, then a 2400-case split run
+  from frame 320 (`ped3-pi-pg2`: first mismatch frame 2451, 0xB9B994), then a window dump (`SPLIT_DUMP_SEQ=0`,
+  `ped3-pi-pg3`: prev 89960 / now 90000 ms). After the fix police-gang and car-ai are IDENTICAL and Process is PASS 150/150
+  on five recordings.
+- Helpers: helper A `ped3A-{weapon-combat,police-gang-2,driving-2,car-ai-2,air-water,world-cheats,anim-input,c-bug}`,
+  helper B `ped3B-*` (tags in the verdict rows); every final run's rust trace IDENTICAL.
+- Build/tests: `cargo test --release -p sa-hook --lib` 51/51; `cargo test --release -p sa-ped` pass; clippy `-D warnings`
+  clean for sa-ped host (all targets), i686 `--features in-process` and wasm32.
+- All-ports L3 (`tools/e2e/verify-all.sh ped3-va 3`, every engine-crate port on Rust including the 63 PED-3 hooks):
+  **IDENTICAL on every frame and all 17 subsystems on all 11 recordings** (grove walk 5200, air-water 5800, anim-input
+  3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500,
+  world-cheats 3276); summary `target/verify-all/ped3-va/summary.txt` of the main checkout.
+
+States (agent proposal, `ped-port-3-verdicts.tsv`): L2 35, implemented 6, implemented-needs-L2 22, ported-unhookable 1,
+unhookable 2, not ported (left `specified`) 3 in the helper table plus the agent's list above.
+
+Ledger proposals (pending):
+- `CPed::Render`: the D3D state word 0xC96438 receives the address of a stack object during the Rust Render (frame depth
+  differs from the original); no reader found besides the D3D code that sets it.
+- `CPed::CreateDeadPedWeaponPickups`: stack addresses copied into the temp col-model block (0x967F50) by its callees
+  differ by the Rust frame depth.
+- Stack-only (argument-slot scratch, SEH frames): DoFootLanded (water level into `leftFoot`), the helpers' functions listed
+  in their rows; `PlayFootSteps` passes the `makeWobble` dword with zero upper bytes (the original's are stack residue; the
+  callee reads the byte).
+
 ## Ledger proposals
 
 *pending*

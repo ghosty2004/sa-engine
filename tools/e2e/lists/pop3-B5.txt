@@ -1,0 +1,2 @@
+CCarCtrl::GenerateCarCreationCoors2
+CCarCtrl::CreateCarForScript

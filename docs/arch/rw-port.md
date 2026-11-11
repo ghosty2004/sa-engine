@@ -250,3 +250,341 @@ DLL), outputs in the worktree's `target/e2e/lane-2/port-l2-<tag>`; lists `tools/
   Im2D.
 - Phase B: freelist calls in helper modules still use `=> unported` paths for some freelist functions;
   point them at `memory.rs` when phase B starts.
+
+# PORT-RW-4: D3D9 driver layer, rasters, images, RpSkin / RpMatFX (crate `sa-rwcore`)
+
+Agent + 2 helpers, 2026-11-11, from the 1.0 US bytes (objdump of the exe; the RW-1/2/3 specs as reading
+aids). D3D9 COM methods are called through `orig!` `stdcall vslot OFF` with the original arguments in the
+original order, so the D3D9 call stream (F7) is unchanged; every other callee goes through `orig!` by
+address (callbacks through their stored pointers with `cdecl dyn`). Driver state (render-state caches,
+stream/shader/declaration caches, light and transform caches, Im2D and VB-manager state) is accessed raw
+through named constants; no new `globals!` declarations. Verdicts: `docs/arch/rw-port-4-verdicts.tsv`.
+
+| file | contents |
+|---|---|
+| `d3d9state.rs` | render-state / texture-stage / sampler caches and flush, Open / Reset, `RwD3D9SetTexture`, `_rwD3D9SetTextureInternal`, materials and surface properties, `_rwD3D9RWSet/GetRenderState` and every RW render-state handler (z, stencil, shade, cull, blend, border, filter, vertex alpha), `_rwD3D9ClampRasterSize` (37) |
+| `d3d9dev.rs` | FVF / declaration / shader / stream / index caches, the four draw wrappers, transforms and world matrix, light cache, vertex declarations and shaders, render targets, frustum tests, engine multisampling / refresh rate settings, the device cache reset at 0x7F9D50 (45) |
+| `d3d9vb.rs` | static VB manager (per-stride free blocks), dynamic VBs and the four rotating Im buffers, `RwD3D9IndexBufferCreate` (14) |
+| `im2d.rs` | Im2D open / close / line / triangle / primitive / indexed primitive and its render-state setup (7) |
+| `d3d9pipe.rs` | atomic all-in-one node, default render and lighting callbacks, callback setters / getters, clipping (13) |
+| `d3d9misc.rs` | dynamic-geometry list, world restore callback, default pipelines, declaration sizes, usage flags, world-sector init / lighting, VS cache purge / constant count, `RwCameraShowRaster`, node getters (20) |
+| `raster.rs`, `image.rs` | helper A: RwRaster API and module, D3D9 raster driver (lock/unlock, palettes, VM raster list, format checks, native texture read/write/size), texture leftovers, anisotropy plugin; RwImage and the image/raster conversions (65 + 16) |
+| `skin.rs`, `matfx.rs`, `d3d9light.rs`, `d3d9vsmat.rs` | helper B: RpSkin (29), RpMatFX (42), D3D9 lights (9), vertex-shader matrices / constants (22) |
+
+## Findings (bytes vs specs; bugs kept)
+
+- `RwD3D9SetRenderState` leaves EDX untouched and its callers in `_rwD3D9RenderStateOpen` (0x7FCEBE..)
+  and `_rwD3D9RWSetRenderState` (0x7FE99F) keep EDX across it: hooked with `preserve = "edx"`; no
+  register-comparing spec yet (**listed for the main session**).
+- `RwD3D9SetSurfaceProperties`: the key compares are integer compares (not float), and the
+  "ambient == 1.0" test is `cmp dword, 0x3F800000`; only the material words the original writes are
+  written (diffuse alpha, specular and the ambient/emissive alphas keep their old values).
+- `RwD3D9SetTexture`: the anisotropy cache / `SetSamplerState(MAXANISOTROPY)` is always stage 0 whatever
+  the stage (original quirk); filter changes send MIN/MAG/MIP without comparing.
+- `_rwD3D9RenderStateZTestEnable` (0x7FEA70) implements ZWRITEENABLE and 0x7FEB70 implements ZTESTENABLE
+  (rw-names swapped; registered under their FUN_ names).
+- `_rwD3D9RWSetRenderState` FOGTYPE with table fog stores RS 0x23 unconditionally (no compare) and
+  FOGDENSITY compares on the x87 (unordered = changed); FOGTYPE / FOGDENSITY / `_rwD3D9EnableClippingIfNeeded`
+  and `_rxD3D9DefaultRenderCallback` reuse their own argument slots as locals (not reproduced; their
+  callers pop the arguments).
+- `_rwD3D9ClampRasterSize`: power-of-two rounding of 0 gives 0x80000000, a negative size never
+  terminates (kept).
+- `_rwD3D9DrawIndexedPrimitiveUP` / `DrawPrimitiveUP` unbind stream 0 and the index buffer before the
+  flush; `RwD3D9SetTransform(state, NULL)` uses the identity and sets the world-is-identity flag for
+  WORLD; `RwD3D9SetTransformWorld` leaves the w column of its staging matrix to its static values.
+- `RwD3D9CreateVertexDeclaration` keeps an unchecked `rwmalloc` copy of the elements; a released cached
+  declaration is re-created on the next hit; `RwD3D9DeleteVertexDeclaration` clears the slot only when
+  `Release` returns 0.
+- `RwD3D9DynamicVertexBufferCreate` treats any non-zero HRESULT as failure and leaves a new descriptor
+  with uninitialised fields in the list (kept). `RwD3D9EngineSetRefreshRate` reads the mode of a failed
+  `EnumAdapterModes` (original: stack garbage; port: zeros).
+- Im2D: the own vertex buffer exists only without hardware T&L and with more than 8 MB texture memory;
+  indexed primitives with more indices than vertices go through the index buffer (at most 0x2710
+  indices, else 0 after the vertices were written), otherwise the vertices are expanded.
+- 0x7F9D50 (catalogue `RwD3D9GetCurrentD3DDevice`) is the device cache reset (render targets, caches,
+  transform freelist, world identity block, lights) that returns the device.
+- Helper A / B findings: see their sections below.
+
+### Helper A (rasters, images, textures)
+
+- Ported but unhooked: `RwRasterUnlock` 0x7FAEC0, `RwRasterGetNumLevels` 0x7FB160, `RwRasterCreate`
+  0x7FB230, `RwRasterLock` 0x7FB2D0: sa-hook's callers test flags their callers because a later callee
+  reaches `_alloca_probe` 0x822085, whose `push ecx` is a save (test false positive; **harness fix
+  needed**, then the four `#[hook]` lines can be restored).
+- Not ported: the D3D9 raster render / clear / destroy / create / convert functions that call internal
+  helpers with register arguments (EAX/EDX/ECX/ESI: 0x4CAE40, 0x4CAE60, 0x4CAE80, 0x4CB4C0, 0x4CB4E0,
+  0x4CBB00, 0x4CCE60, 0x4CD250) and the ESI-entry functions 0x4CAEA0, 0x4CB560 (not hookable with the
+  current ABI); 0x4CC970 (jumps into the protection stub 0x4059B5); 0x7F3AA0 (tail `jmp eax`, argument
+  count undecidable); out of time: 0x7F40F0, 0x7FF270, 0x8001E0, 0x802AF0, 0x802FD0, 0x8035C0, 0x803FE0,
+  0x80C600, 0x81E720, 0x81F360, 0x820A10.
+- Kept bugs: failed LockRect leaks the level surface (`_rwD3D9RasterLock`); the swap chain pointer is not
+  cleared after release (VM list release); a failed native-texture write leaves the raster locked; the
+  default find callback abandons a dictionary at a NULL-texture name match; `RwRasterPush/PopContext`
+  have no bounds checks. Divergence: `RwRasterRead` failure path when the driver's format search fails
+  (original uses an uninitialised depth word, the port 0). The anisotropy Dtor 0x749030 is a 5-byte hook
+  whose steal includes its `ret` (accepted by the installer tests).
+
+### Helper B (skin, MatFX, D3D9 lights, VS matrices)
+
+- Not ported: `_rpD3D9SkinAllInOneNode` 0x7C7B90 (~1000 instructions).
+- `RwD3D9VSGetRadiusInLocalSpace` calls `_rwInvSqrt` (0x7EDB90), not `_rwSqrt` (kept); EAX is undefined
+  on some paths of `GetInverseWorldMatrix` / `GetRadiusInLocalSpace` (ported as void).
+- `_rpD3D9VertexShaderUpdateFogData` with fog mode 0 uploads 4 uninitialised stack floats (port: zeros;
+  ledger candidate).
+- `_rwD3D9LightLocalEnable` with radius 0 returns 0 after allocating the light index; spot theta/phi
+  rule; `_rwD3D9LightsEnable(0)` leaves both lists alone.
+- `RpSkinCreate` no NULL check; `_rpSkinInitialize` sorts weights by signed integer compares of the float
+  bits; MatFX effect searches return NULL that the setters dereference; `SetBumpMapTexture` name buffer
+  interleave (30 of 32 bytes); MatFX instance callbacks are do-while over `numMeshes` (0 wraps).
+
+## PORT-RW-4 verification (lane 4, `SA_ROOT=/home/ghosty2004/sa-engine`)
+
+319 hooks (list `tools/e2e/lists/rw4-all.txt`), 4 ported-unhookable. Split runs on the grove walk
+(`SPLIT_STACKFILL=16384`, spool quota 1-1.5 GB):
+
+| run | hooks | result |
+|---|---|---|
+| `rw4-sb` (`SPLIT_PER_FRAME=2`, max 1000) | all 319 | splito / splitr traces IDENTICAL with plain (5200 frames); quota at frame 260; 85 PASS, 2 FAIL, 2 DIVERGED, 21 COUNT, rest no case |
+| `rw4-sc` (max 100) | 259 not yet clean, with the new extras | IDENTICAL; quota at frame 334 (raster render wrappers); found two port bugs: the frustum tests had the plane test inverted (0x7FAD30 / 0x7FAD90), and `RwD3D9SetRenderState` must return `state` in EAX (`_rwD3D9LightsEnable` tail-returns it) — both fixed |
+| `rw4-sd` (`SPLIT_PER_FRAME=1`, max 100, final build) | 221 not yet clean + the changed hooks | IDENTICAL; frustum tests / clipping / all-in-one node / lights enable now 0 mismatches (PASS-FP); quota at frame 351 |
+| all ports on Rust, final build: `verify-all.sh rw4-va 4` + `rw4-va2` (air-water, first attempt skipped by the 20 GB disk guard) | every engine port | **IDENTICAL on all 11 recordings**: grove 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276 |
+
+Verdicts (`docs/arch/rw-port-4-verdicts.tsv`): **L2 97** (split PASS, 0 mismatches, 0 undeclared), 
+**implemented-needs-L2 222**, **ported-unhookable 4**. The 222: no case before the spool quota (most
+load-time functions: plugin attach, pipelines, images, MatFX/skin setters), PASS-FP / COUNT / DIVERGED
+(inputs on a Rust caller's stack, or fingerprint pairing), and these open items:
+
+- `_rwD3D9DynamicVertexBufferRestore` 0x7F58D0 / `FUN_007f5940`: the only difference is the
+  `IDirect3DVertexBuffer9*` at 0xC97BB8 (a different D3D object address per process) — needs the
+  OS-object normaliser for 0xC97BB8 (harness).
+- `_rxD3D9VertexShaderDefaultGetMaterialShaderCallBack` 0x761010: its callee writes the stack-address
+  cell 0xC96438 (the RW-1 stack-address class).
+- Undeclared writes remain for `_rwD3D9RasterLock`, `_rwD3D9NativeTextureRead` (caller-stack bytes),
+  the pipeline creators, `_rwD3D9AtomicAllInOneNode`, VS matrix getters (out-parameters on the stack).
+- Extras added (`tools/e2e/l2-extras.txt`, PORT-RW-4 block): 20 `doc:rw-port@` lines for the driver
+  tables (each one driver table, not a whole section) and per-hook static cells for the helper modules.
+
+## PORT-RW-4 decisions needed / items for the main session
+
+- `RwD3D9SetRenderState` 0x7FC2D0 has `preserve = "edx"` without a register-comparing L1 spec.
+- sa-hook callers test: `_alloca_probe` 0x822085 `push ecx` treated as a read (blocks 4 raster hooks).
+- Normaliser for the Im vertex-buffer pointer 0xC97BB8 (OS object address).
+- Split-run spool records of the raster and VS functions are large (100-260 KB); a further split run per
+  load-time group (images / skin / MatFX / pipelines) with a small `--max` is needed for their L2.
+- Build fix carried in this branch: `crates/sa-veh/src/vehicle2.rs` declared two `orig!` ST0 results as
+  `X87` (compile error on i686 at the base commit); now `f64` + `X87::from_f64_exact` at the call sites.
+
+### Driver hooks (PORT-RW-4 agent; `doc:rw-port` extras apply to these rows)
+
+| address | name | file |
+|---|---|---|
+| 0x7FC200 | _rwD3D9RenderStateFlushCache | d3d9state.rs |
+| 0x7FC2D0 | RwD3D9SetRenderState | d3d9state.rs |
+| 0x7FC320 | RwD3D9GetRenderState | d3d9state.rs |
+| 0x7FC340 | RwD3D9SetTextureStageState | d3d9state.rs |
+| 0x7FC3A0 | RwD3D9GetTextureStageState | d3d9state.rs |
+| 0x7FC3C0 | RwD3D9SetSamplerState | d3d9state.rs |
+| 0x7FC400 | RwD3D9GetSamplerState | d3d9state.rs |
+| 0x7FC430 | RwD3D9SetMaterial | d3d9state.rs |
+| 0x7FC4A0 | RwD3D9SetClipPlane | d3d9state.rs |
+| 0x7FC4D0 | RwD3D9SetSurfaceProperties | d3d9state.rs |
+| 0x7FCAC0 | _rwD3D9RenderStateOpen | d3d9state.rs |
+| 0x7FD100 | _rwD3D9RenderStateReset | d3d9state.rs |
+| 0x7FD810 | _rwD3D9RWGetRenderState | d3d9state.rs |
+| 0x7FDB80 | FUN_007fdb80 | d3d9state.rs |
+| 0x7FDC30 | _rwD3D9RenderStateSrcBlend | d3d9state.rs |
+| 0x7FDC80 | _rwD3D9RenderStateDestBlend | d3d9state.rs |
+| 0x7FDCD0 | FUN_007fdcd0 | d3d9state.rs |
+| 0x7FDE50 | _rwD3D9GetCurrentTexture | d3d9state.rs |
+| 0x7FDE60 | _rwD3D9SetMaxAnisotropy | d3d9state.rs |
+| 0x7FDE70 | RwD3D9SetTexture | d3d9state.rs |
+| 0x7FE0A0 | _rwD3D9RenderStateVertexAlphaEnable | d3d9state.rs |
+| 0x7FE190 | _rwD3D9RenderStateIsVertexAlphaEnable | d3d9state.rs |
+| 0x7FE1A0 | FUN_007fe1a0 | d3d9state.rs |
+| 0x7FE1F0 | FUN_007fe1f0 | d3d9state.rs |
+| 0x7FE240 | FUN_007fe240 | d3d9state.rs |
+| 0x7FE290 | FUN_007fe290 | d3d9state.rs |
+| 0x7FE2E0 | FUN_007fe2e0 | d3d9state.rs |
+| 0x7FE330 | FUN_007fe330 | d3d9state.rs |
+| 0x7FE380 | FUN_007fe380 | d3d9state.rs |
+| 0x7FE3D0 | FUN_007fe3d0 | d3d9state.rs |
+| 0x7FE420 | _rwD3D9RWSetRenderState | d3d9state.rs |
+| 0x7FEA70 | FUN_007fea70 | d3d9state.rs |
+| 0x7FEB70 | FUN_007feb70 | d3d9state.rs |
+| 0x7FEC70 | FUN_007fec70 | d3d9state.rs |
+| 0x7FECC0 | _rwD3D9RenderStateTextureBorderColor | d3d9state.rs |
+| 0x7FED00 | FUN_007fed00 | d3d9state.rs |
+| 0x7FED70 | FUN_007fed70 | d3d9state.rs |
+| 0x7F5EF0 | _rwD3D9SetDepthStencilSurface | d3d9dev.rs |
+| 0x7F5F20 | _rwD3D9SetRenderTarget | d3d9dev.rs |
+| 0x7F84E0 | RwD3D9EngineGetMaxMultiSamplingLevels | d3d9dev.rs |
+| 0x7F84F0 | RwD3D9EngineSetMultiSamplingLevels | d3d9dev.rs |
+| 0x7F8580 | RwD3D9EngineSetRefreshRate | d3d9dev.rs |
+| 0x7F8620 | RwD3D9EngineSetMultiThreadSafe | d3d9dev.rs |
+| 0x7F8630 | RwD3D9EngineSetSoftwareVertexProcessing | d3d9dev.rs |
+| 0x7F9C20 | _rwDeviceGetHandle | d3d9dev.rs |
+| 0x7F9C30 | RwD3D9DeviceSupportsDXTTexture | d3d9dev.rs |
+| 0x7F9D30 | RwD3D9SetStencilClear | d3d9dev.rs |
+| 0x7F9D40 | RwD3D9GetStencilClear | d3d9dev.rs |
+| 0x7F9D50 | RwD3D9GetCurrentD3DDevice | d3d9dev.rs |
+| 0x7F9E80 | RwD3D9GetCurrentD3DRenderTarget | d3d9dev.rs |
+| 0x7F9E90 | RwD3D9SetRenderTarget | d3d9dev.rs |
+| 0x7F9F30 | _rwD3D9SetFVF | d3d9dev.rs |
+| 0x7F9F70 | _rwD3D9SetVertexDeclaration | d3d9dev.rs |
+| 0x7F9FB0 | _rwD3D9SetVertexShader | d3d9dev.rs |
+| 0x7F9FF0 | _rwD3D9SetPixelShader | d3d9dev.rs |
+| 0x7FA030 | RwD3D9SetStreamSource | d3d9dev.rs |
+| 0x7FA090 | _rwD3D9SetStreams | d3d9dev.rs |
+| 0x7FA1C0 | _rwD3D9SetIndices | d3d9dev.rs |
+| 0x7FA1F0 | _rwD3D9DrawIndexedPrimitiveUP | d3d9dev.rs |
+| 0x7FA290 | _rwD3D9DrawPrimitiveUP | d3d9dev.rs |
+| 0x7FA320 | _rwD3D9DrawIndexedPrimitive | d3d9dev.rs |
+| 0x7FA360 | _rwD3D9DrawPrimitive | d3d9dev.rs |
+| 0x7FA390 | RwD3D9SetTransform | d3d9dev.rs |
+| 0x7FA4F0 | RwD3D9GetTransform | d3d9dev.rs |
+| 0x7FA520 | RwD3D9SetTransformWorld | d3d9dev.rs |
+| 0x7FA660 | RwD3D9SetLight | d3d9dev.rs |
+| 0x7FA820 | RwD3D9GetLight | d3d9dev.rs |
+| 0x7FA860 | RwD3D9EnableLight | d3d9dev.rs |
+| 0x7FA8B0 | FUN_007fa8b0 | d3d9dev.rs |
+| 0x7FAA30 | RwD3D9CreateVertexDeclaration | d3d9dev.rs |
+| 0x7FAC10 | RwD3D9DeleteVertexDeclaration | d3d9dev.rs |
+| 0x7FAC60 | RwD3D9CreateVertexShader | d3d9dev.rs |
+| 0x7FAC90 | RwD3D9DeleteVertexShader | d3d9dev.rs |
+| 0x7FACA0 | _rwD3D9SetVertexShaderConstant | d3d9dev.rs |
+| 0x7FACC0 | RwD3D9CreatePixelShader | d3d9dev.rs |
+| 0x7FACF0 | RwD3D9DeletePixelShader | d3d9dev.rs |
+| 0x7FAD00 | _rwD3D9SetPixelShaderConstant | d3d9dev.rs |
+| 0x7FAD20 | RwD3D9GetCaps | d3d9dev.rs |
+| 0x7FAD30 | RwD3D9CameraIsSphereFullyInsideFrustum | d3d9dev.rs |
+| 0x7FAD90 | RwD3D9CameraIsBBoxFullyInsideFrustum | d3d9dev.rs |
+| 0x7FAE20 | _rwD3D9DeviceSetRestoreCallback | d3d9dev.rs |
+| 0x7FAE30 | _rwD3D9DeviceGetRestoreCallback | d3d9dev.rs |
+| 0x4C9970 | RwD3D9IndexBufferCreate | d3d9vb.rs |
+| 0x7F5500 | RwD3D9CreateVertexBuffer | d3d9vb.rs |
+| 0x7F56A0 | RwD3D9DestroyVertexBuffer | d3d9vb.rs |
+| 0x7F57F0 | RwD3D9VertexBufferManagerChangeDefaultSize | d3d9vb.rs |
+| 0x7F5800 | FUN_007f5800 | d3d9vb.rs |
+| 0x7F5840 | _rwD3D9DynamicVertexBufferRelease | d3d9vb.rs |
+| 0x7F58D0 | _rwD3D9DynamicVertexBufferRestore | d3d9vb.rs |
+| 0x7F5940 | FUN_007f5940 | d3d9vb.rs |
+| 0x7F5A00 | RwD3D9DynamicVertexBufferCreate | d3d9vb.rs |
+| 0x7F5AE0 | RwD3D9DynamicVertexBufferDestroy | d3d9vb.rs |
+| 0x7F5B10 | RwD3D9DynamicVertexBufferLock | d3d9vb.rs |
+| 0x7F5C90 | RwD3D9DynamicVertexBufferUnlock | d3d9vb.rs |
+| 0x7F5CB0 | _rwD3D9VertexBufferManagerOpen | d3d9vb.rs |
+| 0x7F5D20 | _rwD3D9VertexBufferManagerClose | d3d9vb.rs |
+| 0x7FB480 | _rwD3D9Im2DRenderOpen | im2d.rs |
+| 0x7FB5F0 | _rwD3D9Im2DRenderClose | im2d.rs |
+| 0x7FB810 | FUN_007fb810 | im2d.rs |
+| 0x7FB650 | _rwD3D9Im2DRenderLine | im2d.rs |
+| 0x7FB8E0 | _rwD3D9Im2DRenderTriangle | im2d.rs |
+| 0x7FBB00 | _rwD3D9Im2DRenderPrimitive | im2d.rs |
+| 0x7FBD30 | _rwD3D9Im2DRenderIndexedPrimitive | im2d.rs |
+| 0x756D90 | _rwD3D9EnableClippingIfNeeded | d3d9pipe.rs |
+| 0x756DF0 | _rxD3D9DefaultRenderCallback | d3d9pipe.rs |
+| 0x757380 | RxD3D9AllInOneSetInstanceCallBack | d3d9pipe.rs |
+| 0x757390 | RxD3D9AllInOneGetInstanceCallBack | d3d9pipe.rs |
+| 0x7573A0 | RxD3D9AllInOneSetReinstanceCallBack | d3d9pipe.rs |
+| 0x7573B0 | RxD3D9AllInOneGetReinstanceCallBack | d3d9pipe.rs |
+| 0x7573C0 | RxD3D9AllInOneSetLightingCallBack | d3d9pipe.rs |
+| 0x7573D0 | RxD3D9AllInOneGetLightingCallBack | d3d9pipe.rs |
+| 0x7573E0 | RxD3D9AllInOneSetRenderCallBack | d3d9pipe.rs |
+| 0x7573F0 | RxD3D9AllInOneGetRenderCallBack | d3d9pipe.rs |
+| 0x757400 | _rxD3D9AtomicDefaultLightingCallback | d3d9pipe.rs |
+| 0x7575F0 | _rwD3D9AtomicAllInOneNode | d3d9pipe.rs |
+| 0x757890 | _rwD3D9AtomicAllInOnePipelineInit | d3d9pipe.rs |
+| 0x74E970 | _rpD3D9AddDynamicGeometry | d3d9misc.rs |
+| 0x74E9E0 | _rpD3D9RemoveDynamicGeometry | d3d9misc.rs |
+| 0x74EA80 | _rpD3D9WorldRestoreCallback | d3d9misc.rs |
+| 0x74EAD0 | _rpCreateD3D9WorldSectorAllInOnePipe | d3d9misc.rs |
+| 0x74EB40 | _rpDestroyD3D9WorldSectorPipe | d3d9misc.rs |
+| 0x74EB80 | _rpCreateD3D9AtomicAllInOnePipe | d3d9misc.rs |
+| 0x7522E0 | _rpD3D9VertexDeclarationGetSize | d3d9misc.rs |
+| 0x7522F0 | _rpD3D9VertexDeclarationGetStride | d3d9misc.rs |
+| 0x7588B0 | RpD3D9GeometrySetUsageFlags | d3d9misc.rs |
+| 0x7588D0 | RpD3D9GeometryGetUsageFlags | d3d9misc.rs |
+| 0x7588E0 | RpD3D9WorldSectorSetUsageFlags | d3d9misc.rs |
+| 0x758900 | RpD3D9WorldSectorGetUsageFlags | d3d9misc.rs |
+| 0x75E540 | _rwD3D9WorldSectorAllInOnePipelineInit | d3d9misc.rs |
+| 0x75E570 | _rxD3D9WorldSectorDefaultLightingCallback | d3d9misc.rs |
+| 0x75EDD0 | _rpD3D9GetNumConstantsUsed | d3d9misc.rs |
+| 0x75EE60 | _rpD3D9VertexShaderCachePurge | d3d9misc.rs |
+| 0x761010 | _rxD3D9VertexShaderDefaultGetMaterialShaderCallBack | d3d9misc.rs |
+| 0x7EE370 | RwCore::RwCameraShowRaster | d3d9misc.rs |
+| 0x80E990 | RxNodeDefinitionGetD3D9ImmInstance | d3d9misc.rs |
+| 0x80E9A0 | RxNodeDefinitionGetD3D9SubmitNoLight | d3d9misc.rs |
+
+# PORT-RW-5: writer pass (unverified batches)
+
+WRITER-RW-5 + 2 helpers, 2026-11-11, from the 1.0 US bytes, under the writer/verifier split (docs/PLAN.md
+§5.1): every hook below is `#[hook(unverified = ...)]` and is installed only when a run selects its
+batch (docs/verify/QUEUE.md). Same conventions as PORT-RW-4 (D3D9 COM calls through `orig!` `stdcall
+vslot` in the original argument order; every other callee through `orig!`; argument slots the original
+reuses as locals are not reproduced, since the callers pop them).
+
+| batch | file | contents |
+|---|---|---|
+| `rw5-raster` | `raster.rs` | the four raster hooks RW-4 left unhooked (RwRasterUnlock / GetNumLevels / Create / Lock), after the callers-test fix |
+| `rw5-node-1` | `d3d9node.rs` | world-sector all-in-one node, atomic node-definition getter, `_rpD3D9GetVertexShader` (VS cache), default VS begin / mesh render callbacks, UV-anim matrix upload |
+| `rw5-native-1` | `d3d9native.rs` | native-data geometry stream read / write / size, world-sector size, the plugin's two stream-read callbacks |
+| `rw5-cam-1` | `d3d9cam.rs` | `_rwD3D9CameraEndUpdate`, `RwD3D9ChangeVideoMode` |
+| `rw5-image-1` | `image2.rs` (helper B) | `_rwTextureDefaultReadCallBack`, `_rwD3D9ImageGetRaster`, `_rwD3D9RasterSetImage`, `RwImageApplyMask`, `RwImageRead`, `RwImageReadMaskedImage`, `RwImageResample`, `_rwD3D9DecompressDXT1`, `RwD3D9DDSTextureRead` |
+| `rw5-core-1` | `core5.rs` | versioned chunk header, atomic / geometry / material-list / texture-dictionary / frame-list stream sizes and small readers / writers, rights-to-render writers, string helpers, MatFX engine close / material dtor / atomic and sector stream callbacks |
+| `rw5-inst-1` | `d3d9inst.rs` (helper A) | the vertex-declaration instancing family 0x752320..0x755AA0 and the default instance / reinstance callbacks |
+| `rw5-core-2` | `core5.rs` | world / atomic iterators, `RpLightSetConeAngle`, mesh header destroy / size, camera / matrix / immediate module close, `RwCameraClear`, engine getters / focus, the default CRT memory wrappers |
+
+## Harness fix (sa-hook callers test)
+
+`push ecx` / `push edx` that saves the register and gets it back is not a read: besides pop and
+`xchg [esp], r`, a `mov r, [slot]` into the pushed register counts as the restore, the slot stays
+tracked through ESP aliases after an ESP write that has an alias (`_alloca_probe` 0x822085: `push ecx;
+...; mov eax, esp; ...; mov esp, ecx; mov ecx, [eax]`), and a state (address, slot, aliases) seen before
+is covered (its page-walk loop). Unit test `push_saved_and_restored_is_not_a_read`.
+
+## Findings (bugs kept)
+
+- `_rpD3D9GetVertexShader`: a full cache (0x100) overwrites the entry with the smallest frame stamp in
+  place, breaking the sorted order the binary search relies on.
+- `_rxD3D9VertexShaderDefaultBeginCallBack`: `RwRenderStateGet(FOGTYPE)` writes into the original's
+  own `desc` argument slot (port: a local initialised with the slot's value).
+- Native-data geometry write: on any failure the meshes keep material indices instead of pointers.
+  Read: no NULL check on the entry allocation; after one stream succeeded, a failed vertex-buffer
+  creation of the next still locks / reads it; the baseIndex loops are do-whiles over `numMeshes`.
+- `RwD3D9ChangeVideoMode`: `SetWindowPos` gets the bottom as `y` (ignored: SWP_NOMOVE).
+- `_rwD3D9CameraEndUpdate`: a failed surface query leaves the surface local uninitialised (port 0).
+- `RpAtomicStreamWrite` / `RpAtomicStreamRead` / the two engine getters: uninitialised stack words
+  passed to the callee (port 0; hazard `uninit-locals`).
+- `RpWorldForAllWorldSectors` reads the never-written stack slot 0 after the last sector.
+- Helper B (images): `_rwD3D9ImageGetRaster` returns 1 after its format errors; `_rwD3D9RasterSetImage`
+  does not check the resample result, leaks the image when a lock fails and keeps the pixel lock when
+  the palette lock fails, a 16-bit raster with a 4-bit image indexes a 16-entry table with the whole
+  pixel byte (stack garbage in the original, zeros in the port); `_rwTextureDefaultReadCallBack` points
+  the image palette at a stack buffer; `RwImageApplyMask` writes through NULL when its helpers fail
+  (kept as the crash); `RwD3D9DDSTextureRead` ignores `maskName`, its 256-byte path buffer has no bound,
+  and a failed `RwTextureCreate` leaks the raster. `RwImageResample` follows the x87 sequence under
+  PC=24 (only final values, not the scratch slots).
+- Helper A (instancing): GetMinMaxValues skip the last element (the loop starts at 0 and runs n-1
+  times), a value that lowers min is not tested against max, NaN never updates; InstWeights FLOAT3
+  copies 16 bytes; the block copies have no `n` test (negative n wraps); UnInst decodes USHORT*N with
+  `movsx`; InstTangent has no zero-length guard and odd strip triangles swap A and C; the default
+  instance callback's single-stream `offset / stride` faults on stride 0 (Rust panics). Float→int is
+  `fistp` under the game's control word (`fist` helper: round to nearest even, invalid → 0x80000000).
+
+## Not done / skipped
+
+| address | function | reason |
+|---|---|---|
+| 0x7C7B90 | `_rpD3D9SkinAllInOneNode` | ~1000 instructions; not reached in the time budget |
+| 0x761170 | `_rxD3D9VertexShaderDefaultLightingCallBack` | ~670 instructions with FCOS and four helper calls; not reached |
+| 0x761000 | `_rxD3D9VertexShaderDefaultEndCallBack` | a single `ret` (too short to hook) |
+| 0x75E5E0 | `_rxD3D9WorldSectorDefaultInstanceCallback` | helper A ran out of time |
+| 0x81F360 | `RwD3D9RasterStreamReadDDS` | ~1800 instructions, 66 calls; not reached (helper B) |
+| 0x763F20, 0x7641C0 | native-data world-sector stream write / read | not reached (same shape as the geometry pair, with the world's material list) |
+| 0x7F5F70 | `D3D9System` | 23-way switch, 2 KB, 0x470-byte frame; not reached |
+| 0x7F8F20 | `_rwD3D9CameraBeginUpdate` | 2.4 KB; not reached |
+| 0x80E270 | `_rwD3D9ImmRenderPrimitiveNode` | not reached |
+| 0x7590E0 | `_rpMeshGetNextSerialNumber` | 16-bit return with the caller's upper EAX bits (`ax-al-return`); left for an `entry_eax` port |
+| 0x75E9F0, 0x803FE0 | node getter, `RwImageSetGamma` | taken by another branch (worktree-agent-a4f0…, …a76f…) |
+
+Register-entry functions: none in these groups (no `entry_eax` / ESI ports needed).

@@ -33,3 +33,7 @@ pub mod ped_life;
 pub mod ped_render;
 pub mod ped_physics;
 pub mod player_ctrl;
+pub mod ped_control;
+pub mod ped_misc3;
+pub mod ped_coll;
+pub mod player_target;

@@ -1,0 +1,3 @@
+CPopulation::AddPed
+CCarGenerator::CheckForBlockage
+CDarkel::DrawMessages

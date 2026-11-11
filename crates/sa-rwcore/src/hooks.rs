@@ -8,6 +8,8 @@ use crate::{
     atomic, camera, clump, engine, frame, geometry, im3d, light, material, matrix, memory, mesh, plugin,
     stream, texture, vector,
 };
+use crate::{d3d9misc, d3d9pipe, d3d9dev, d3d9state, d3d9vb, image, im2d, matfx, raster, skin};
+use crate::{core5, d3d9cam, d3d9inst, d3d9light, d3d9native, d3d9node, d3d9vsmat, image2};
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -27,6 +29,24 @@ pub const MODULES: &[&[HookReg]] = &[
     engine::HOOKS,
     mesh::HOOKS,
     light::HOOKS,
+    d3d9state::HOOKS,
+    d3d9dev::HOOKS,
+    d3d9vb::HOOKS,
+    d3d9pipe::HOOKS,
+    d3d9misc::HOOKS,
+    im2d::HOOKS,
+    raster::HOOKS,
+    image::HOOKS,
+    skin::HOOKS,
+    matfx::HOOKS,
+    d3d9light::HOOKS,
+    d3d9vsmat::HOOKS,
+    d3d9node::HOOKS,
+    d3d9native::HOOKS,
+    d3d9cam::HOOKS,
+    image2::HOOKS,
+    core5::HOOKS,
+    d3d9inst::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -47,6 +67,24 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     engine::GLOBALS,
     mesh::GLOBALS,
     light::GLOBALS,
+    d3d9state::GLOBALS,
+    d3d9dev::GLOBALS,
+    d3d9vb::GLOBALS,
+    d3d9pipe::GLOBALS,
+    d3d9misc::GLOBALS,
+    im2d::GLOBALS,
+    raster::GLOBALS,
+    image::GLOBALS,
+    skin::GLOBALS,
+    matfx::GLOBALS,
+    d3d9light::GLOBALS,
+    d3d9vsmat::GLOBALS,
+    d3d9node::GLOBALS,
+    d3d9native::GLOBALS,
+    d3d9cam::GLOBALS,
+    image2::GLOBALS,
+    core5::GLOBALS,
+    d3d9inst::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

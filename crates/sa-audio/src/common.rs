@@ -1,9 +1,10 @@
 //! Helpers shared by the PORT-AUDIO modules: raw field access (sa-world's), x87 shorthands, the audio
 //! singletons' addresses and the calls several modules make.
 
-use sa_core::mem::GPtr;
+pub use sa_core::mem::GPtr;
 use sa_core::orig;
 
+pub use sa_math::x87::X87;
 pub use sa_world::world::common::{at, f32_of, ftol32, g, rd, wr, x, xi};
 
 /// `AudioEngine` (`CAudioEngine`, 0xB6BC90)
