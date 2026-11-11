@@ -18,7 +18,7 @@ use sa_math::x87::X87;
 
 /// Opcodes with a Rust case, ascending.
 pub const PORTED: &[u16] = &[
-    0x04B0, 0x04B1, 0x04B2, 0x04B3, 0x04B4, 0x04B5, 0x04B6, 0x04B7, 0x04B8, 0x04BA, 0x04BB, 0x04BC, 0x04BD,
+    0x04B0, 0x04B1, 0x04B2, 0x04B3, 0x04B4, 0x04B5, 0x04B6, 0x04B7, 0x04B8, 0x04B9, 0x04BA, 0x04BB, 0x04BC, 0x04BD,
     0x04BE, 0x04BF, 0x04C0, 0x04C1, 0x04C4, 0x04C5, 0x04C7, 0x04C8, 0x04CE, 0x04D0, 0x04D1, 0x04D2, 0x04D3,
     0x04D5, 0x04D6, 0x04D7, 0x04D8, 0x04D9, 0x04DA, 0x04DB, 0x04DD, 0x04DF, 0x04E0, 0x04E1, 0x04E2, 0x04E3,
     0x04E4, 0x04E5, 0x04E6, 0x04E7, 0x04E9, 0x04EA, 0x04EB, 0x04ED, 0x04EE, 0x04EF, 0x04F0, 0x04F1, 0x04F4,
@@ -95,6 +95,9 @@ orig! {
     /// `CPathFind::FindNthNodeClosestToCoors(CVector, uint8 type, float maxDist, bool, bool, int32 n,
     /// bool, bool, CNodeAddress*)` (0x44F8C0), the `CNodeAddress` through the hidden pointer (EAX)
     fn find_nth_node_closest_to_coors(paths: GPtr<u8>, out: GPtr<u32>, x: u32, y: u32, z: u32, ty: u32, max: u32, a: u32, b: u32, n: u32, c: u32, d: u32, e: u32) -> GPtr<u32> = thiscall 0x44F8C0 => unported;
+    /// `CPathFind::FindNodePairClosestToCoors(CVector, uint8 type, CNodeAddress* n1, CNodeAddress* n2, float*
+    /// orientation, float minDist, float maxDist, bool, bool, bool)` (0x44FEE0, `ret 0x30`), raw dwords
+    fn find_node_pair_closest_to_coors(paths: GPtr<u8>, x: u32, y: u32, z: u32, ty: u32, n1: GPtr<u32>, n2: GPtr<u32>, orient: GPtr<u32>, min: u32, max: u32, a: u32, b: u32, c: u32) = thiscall 0x44FEE0 => unported;
     /// `CPathFind::FindNodeCoorsForScript(CNodeAddress, bool* found)` (0x4505E0), hidden-pointer vector
     fn find_node_coors_for_script(paths: GPtr<u8>, out: GPtr<u32>, addr: u32, found: GPtr<u8>) -> GPtr<u32> = thiscall 0x4505E0 => unported;
     /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector*, float radius,
@@ -286,6 +289,68 @@ pub fn process_commands_1200_to_1299(s: Scr, command: u32) -> i8 {
             let m = if command == 0x04BD { 0x08 } else { 0x10 };
             let b = v.read();
             v.write(if sp(1) != 0 { b | m } else { b & !m });
+            0
+        }
+        // 04B9 GET_CLOSEST_STRAIGHT_ROAD (0x48B7B5, gr: unregistered): CollectParameters(5);
+        // `ThePaths.FindNodePairClosestToCoors((P0,P1,P2), 0, &n1, &n2, &d, P3, P4, 1, 1, 0)`; n1.areaId (low
+        // word) == 0xFFFF -> fail; else P0..2 = FindNodeCoorsForScript(n1, null), c2 = FindNodeCoorsForScript(n2,
+        // &found); found -> P3..5 = c2, P6 = d, flag 1; fail -> P0..6 = 0, flag 0; StoreParameters(7),
+        // UpdateCompareFlag. The prologue's `n1 = n2 = 0xFFFF` (low words) and the stale high words / `d` never
+        // reach an output: 0x44FEE0 has two exits, the success one (0x4501AA..0x4502E0) writes n1, n2 and the
+        // orientation as whole dwords, the failure one (0x450300) writes n1.low = n2.low = 0xFFFF and d = 0, and
+        // the case reads n2 and d only after n1.low != 0xFFFF; 0x4505E0 writes `*found` on both of its paths.
+        0x04B9 => {
+            collect(s, 5);
+            let paths = GPtr::<u8>::from_addr(THE_PATHS);
+            let mut n1 = [0xFFFFu32; 1];
+            let mut n2 = [0xFFFFu32; 1];
+            let mut d = [0u32; 1];
+            find_node_pair_closest_to_coors(
+                paths,
+                sp(0),
+                sp(1),
+                sp(2),
+                0,
+                GPtr::from_raw(n1.as_mut_ptr()),
+                GPtr::from_raw(n2.as_mut_ptr()),
+                GPtr::from_raw(d.as_mut_ptr()),
+                sp(3),
+                sp(4),
+                1,
+                1,
+                0,
+            );
+            let mut ok = false;
+            if n1[0] & 0xFFFF != 0xFFFF {
+                let mut c1 = [0u32; 3];
+                find_node_coors_for_script(paths, GPtr::from_raw(c1.as_mut_ptr()), n1[0], GPtr::NULL);
+                set_sp(0, c1[0]);
+                set_sp(1, c1[1]);
+                set_sp(2, c1[2]);
+                let mut c2 = [0u32; 3];
+                let mut found = [0u8; 1];
+                let r = find_node_coors_for_script(
+                    paths,
+                    GPtr::from_raw(c2.as_mut_ptr()),
+                    n2[0],
+                    GPtr::from_raw(found.as_mut_ptr()),
+                );
+                let c2 = [r.read(), r.wrapping_index(1).read(), r.wrapping_index(2).read()];
+                if found[0] != 0 {
+                    set_sp(3, c2[0]);
+                    set_sp(4, c2[1]);
+                    set_sp(5, c2[2]);
+                    set_sp(6, d[0]);
+                    ok = true;
+                }
+            }
+            if !ok {
+                for i in 0..7 {
+                    set_sp(i, 0);
+                }
+            }
+            store(s, 7);
+            set_flag(s, ok);
             0
         }
         // 04BA SET_CAR_FORWARD_SPEED (0x48B900, gr: unregistered): no null checks (`m_matrix` neither);

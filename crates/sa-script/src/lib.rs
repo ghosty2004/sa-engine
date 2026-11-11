@@ -54,4 +54,5 @@ pub mod cmd800;
 pub mod cmd900;
 pub mod cmdlib;
 pub mod hooks;
+pub mod misc;
 pub mod vm;
