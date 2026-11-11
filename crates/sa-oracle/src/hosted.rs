@@ -237,3 +237,90 @@ pub fn expect_allocator(addr: u32) {
     set::<Alloc>("sa_stream::misc::operator_new", new_scalar);
     ALLOC.with(|c| c.set(addr));
 }
+
+/// A host copy of a scratch image in which some 32-bit pointer fields are widened to 8-byte host
+/// pointers, so that a port reading `GPtr` fields (`m_matrix`, `m_pHandling`, a task's entity) runs
+/// on it (the preserve specs of VER-2).
+///
+/// A widened field covers the 4 bytes after it on the host: the port must neither read those as
+/// another field nor write any of the 8 bytes (they are restored from the scratch image when the
+/// copy is finished). A guest pointer of 0 stays null; any other is mapped relative to the scratch
+/// base (pointers below or above the image, `this - offset` style, keep their distance).
+pub struct Widened {
+    view: View,
+    saved: Vec<(usize, [u8; 8])>,
+}
+
+impl Widened {
+    pub fn new(mem: &[u8; SCRATCH_LEN], ptrs: &[usize]) -> Widened {
+        let mut w = Widened {
+            view: View::new(mem, 0),
+            saved: Vec::new(),
+        };
+        for &o in ptrs {
+            assert!(o + 8 <= SCRATCH_LEN, "widened field {o:#x} outside scratch");
+            let g = word(mem, o);
+            let h = if g == 0 { 0 } else { w.at(g).addr() as u64 };
+            w.saved.push((o, mem[o..o + 8].try_into().unwrap()));
+            // SAFETY: o + 8 <= SCRATCH_LEN: inside the view's scratch image.
+            unsafe { w.view.scratch().add(o).cast::<u64>().write_unaligned(h) };
+        }
+        w
+    }
+
+    /// The host pointer for guest address `g` (relative to the scratch base).
+    pub fn at(&mut self, g: u32) -> GPtr<u8> {
+        let d = g.wrapping_sub(SCRATCH) as i32 as isize;
+        GPtr::from_raw(self.view.scratch().wrapping_offset(d))
+    }
+
+    /// Restores the widened fields and writes the image back to `mem` (canaries checked).
+    pub fn finish(mut self, mem: &mut [u8; SCRATCH_LEN]) {
+        let mut img = self.view.image();
+        for (o, b) in &self.saved {
+            img[*o..*o + 8].copy_from_slice(b);
+        }
+        *mem = img;
+    }
+}
+
+/// Maps `len` bytes of zeroed host memory at the fixed host address `addr` (page aligned) once per
+/// process and returns it; a later call for a range inside an earlier mapping returns that memory.
+/// For absolute game addresses a port reads on the host (`g::<T>(addr)` of a global without phase B
+/// storage) and for host pointers whose 64-bit value must have a given shape. Callers hold
+/// [`crate::host_globals`] while they use the memory. Panics when the range is taken.
+pub fn fixed_map(addr: usize, len: usize) -> *mut u8 {
+    use std::sync::Mutex;
+    static MAPS: Mutex<Vec<(usize, usize)>> = Mutex::new(Vec::new());
+    unsafe extern "C" {
+        fn mmap(addr: *mut u8, len: usize, prot: i32, flags: i32, fd: i32, off: i64) -> *mut u8;
+    }
+    const PROT_RW: i32 = 0x3;
+    const MAP_PRIVATE_ANON: i32 = 0x02 | 0x20;
+    const MAP_FIXED_NOREPLACE: i32 = 0x10_0000;
+    let mut maps = MAPS.lock().unwrap_or_else(|e| e.into_inner());
+    if maps.iter().any(|&(a, l)| addr >= a && addr + len <= a + l) {
+        return core::ptr::with_exposed_provenance_mut(addr);
+    }
+    assert_eq!(addr % 0x1000, 0, "fixed_map: {addr:#x} not page aligned");
+    let len = len.div_ceil(0x1000) * 0x1000;
+    // SAFETY: an anonymous private mapping at a free (NOREPLACE) fixed address; nothing else is
+    // affected. The memory is never unmapped.
+    let p = unsafe {
+        mmap(
+            core::ptr::without_provenance_mut(addr),
+            len,
+            PROT_RW,
+            MAP_PRIVATE_ANON | MAP_FIXED_NOREPLACE,
+            -1,
+            0,
+        )
+    };
+    assert_eq!(
+        p as usize, addr,
+        "fixed_map: cannot map {addr:#x}+{len:#x} on the host"
+    );
+    let _ = p.expose_provenance();
+    maps.push((addr, len));
+    p
+}

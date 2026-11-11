@@ -349,6 +349,8 @@ pub fn all() -> Vec<Spec> {
             shape_keys(v, l, 0, Some(1));
             shape_state(v, l, 1);
         })
+        // its callers keep `this` in ECX across the call (VER-2)
+        .preserve(sa_core::abi::PRESERVE_ECX)
         .rust(|c| {
             let (k, t, st) = (c.i(1), c.i(2) as i32, tp(c, 1));
             ccm::affect_button_down_first_person_only(this_at(c, ACTIONS), k, t, st);

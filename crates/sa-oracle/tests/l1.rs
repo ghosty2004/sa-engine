@@ -399,12 +399,13 @@ fn fsin_fcos_model_matches_the_cpu() {
     }
 }
 
-/// Hooks registered with `preserve` before this test covered every port crate (2026-11-11, sa-ports): their
-/// register-comparing L1 specs are still to be written (queued). The list may only shrink; a new hook that
-/// preserves registers without a spec fails the test.
+/// Hooks registered with `preserve` whose register-comparing L1 spec is still to be written. The 15
+/// hooks listed here when this test started covering every port crate (2026-11-11, sa-ports) all have
+/// specs now (specs_cam, specs_input_ccm, specs_veh, specs_ai). The list may only shrink; a new hook
+/// that preserves registers without a spec fails the test.
 const PRESERVE_SPECS_PENDING: &[u32] = &[
-    0x52F9E0, 0x64F1E0, 0x6CAC20, 0x50ADF0, 0x50AB50, 0x516440, 0x5164A0, 0x50A3B0, 0x509BE0, 0x5F7200,
-    0x61B460, 0x668250, 0x5BD3B0, 0x5BD360, 0x6458A0,
+    // AI-GEN generated dtor CEventFireNearby::~CEventFireNearby (preserve ecx); spec queued.
+    0x4B1F80,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
