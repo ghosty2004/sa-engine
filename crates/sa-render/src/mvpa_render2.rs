@@ -122,7 +122,7 @@ fn env_map_pool_new(this: GPtr<u8>, elem: i32) -> GPtr<u8> {
 /// `CPool<CustomEnvMapPipeMaterialData>::New()` (0x5D9110): 12-byte objects; see [`env_map_pool_new`].
 /// The wrap step runs through the protection chunk 0x401F94 (stores firstFree = 0).
 #[hook(addr = 0x5D9110, conv = thiscall, name = "FUN_005d9110", expect = "8B 51 08 56 32 C0",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the pool's flag array (heap)")]
 pub fn env_map_material_pool_new(this: GPtr<u8>) -> GPtr<u8> {
     env_map_pool_new(this, 12)
@@ -130,7 +130,7 @@ pub fn env_map_material_pool_new(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPool<CustomEnvMapPipeAtomicData>::New()` (0x5D9260): 12-byte objects; see [`env_map_pool_new`].
 #[hook(addr = 0x5D9260, conv = thiscall, name = "FUN_005d9260", expect = "8B 51 08 56 32 C0",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the pool's flag array (heap)")]
 pub fn env_map_atomic_pool_new(this: GPtr<u8>) -> GPtr<u8> {
     env_map_pool_new(this, 12)
@@ -138,7 +138,7 @@ pub fn env_map_atomic_pool_new(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPool<CustomSpecMapPipeMaterialData>::New()` (0x5D93B0): 8-byte objects; see [`env_map_pool_new`].
 #[hook(addr = 0x5D93B0, conv = thiscall, name = "FUN_005d93b0", expect = "8B 51 08 56 32 C0",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the pool's flag array (heap)")]
 pub fn spec_map_material_pool_new(this: GPtr<u8>) -> GPtr<u8> {
     env_map_pool_new(this, 8)
@@ -148,7 +148,7 @@ pub fn spec_map_material_pool_new(this: GPtr<u8>) -> GPtr<u8> {
 /// the node-name frame plugin's copy callback): `strncpy(dst + gPluginOffset, src + gPluginOffset,
 /// 23)` with the plugin offset at 0xC87C5C; returns dst.
 #[hook(addr = 0x72F9F0, conv = cdecl, name = "cb_RSNODENAME_RwFrame_Copy", expect = "A1 5C 7C C8 00",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the frame plugin data (heap)")]
 pub fn node_name_frame_copy(dst: GPtr<u8>, src: GPtr<u8>, _offset: u32, _size: u32) -> GPtr<u8> {
     let off = g::<i32>(0xC87C5C).read() as isize;
@@ -160,14 +160,14 @@ pub fn node_name_frame_copy(dst: GPtr<u8>, src: GPtr<u8>, _offset: u32, _size: u
 /// (Scene.world)`; the entry jumps into the protection chunk 0x401C11, which decodes the address
 /// 0xC17038 (`Scene.world`) and loads it.
 #[hook(addr = 0x6FFFE0, conv = cdecl, name = "CPointLights::RemoveLightsAffectingObject", expect = "E9 2C 1C D0 FF 50",
-       unverified = "mvpa-render-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn point_lights_remove_lights_affecting_object() {
     remove_extra_directional_lights(g::<GPtr<u8>>(0xC17038).read());
 }
 
 /// `FxEmitter_c::~FxEmitter_c()` (0x4A2BB0, thiscall): a tail jump to `FxPrim_c::~FxPrim_c()`.
 #[hook(addr = 0x4A2BB0, conv = thiscall, name = "FxEmitter_c::~FxEmitter_c", expect = "E9 8B 73 00 00 90",
-       unverified = "mvpa-render-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn fx_emitter_destructor(this: GPtr<u8>) {
     fx_prim_destructor(this);
 }
@@ -175,7 +175,7 @@ pub fn fx_emitter_destructor(this: GPtr<u8>) {
 /// `FxEmitter_c::`scalar deleting destructor'(u8 flags)` (0x4A2B90, thiscall, `ret 4`): the destructor,
 /// `free(this)` when bit 0 of the flags is set; returns this.
 #[hook(addr = 0x4A2B90, conv = thiscall, name = "FxEmitter_c::`scalar deleting destructor'", expect = "56 8B F1 E8 18 00 00 00",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "frees the emitter (heap)")]
 pub fn fx_emitter_scalar_deleting_destructor(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
     fx_emitter_destructor_call(this);
@@ -204,7 +204,7 @@ pub fn fx_emitter_update(this: GPtr<u8>, curr_time: u32, time_step: u32) {
 /// `CMBlur::ClearDrunkBlur()` (0x71D780): `Drunkness (0xB7CB64) = 1.0f` (in the protection chunk
 /// 0x401190, which returns to 0x71D78A) and `0xC73C58 = 0`. The entry is five NOPs.
 #[hook(addr = 0x71D780, conv = cdecl, name = "CMBlur::ClearDrunkBlur", expect = "90 90 90 90 90 E9 06 3A CE FF",
-       unverified = "mvpa-render-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn mblur_clear_drunk_blur() {
     g::<u32>(0xB7CB64).write(0x3F80_0000);
     g::<u32>(0xC73C58).write(0);
@@ -213,7 +213,7 @@ pub fn mblur_clear_drunk_blur() {
 /// `CRealTimeShadowManager::CRealTimeShadowManager()` (0x706770, thiscall, run by a static
 /// initialiser): +0x44..+0x50 = 0, bytes +0/+1 = 0, the 16 shadow pointers (+4) = NULL; returns this.
 #[hook(addr = 0x706770, conv = thiscall, name = "FUN_00706770", expect = "8B D1 33 C0 89 42 44",
-       unverified = "mvpa-render-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "static constructor of g_realTimeShadowMan (runs once at startup)")]
 pub fn real_time_shadow_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
     for o in [0x44, 0x48, 0x4C, 0x50] {
@@ -232,7 +232,7 @@ pub fn real_time_shadow_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// The car env-map pipe's atomic setup callback (0x5D5B30, cdecl, reached through a data reference):
 /// returns `CCustomCarEnvMapPipeline::CustomPipeAtomicSetup(atomic)`.
 #[hook(addr = 0x5D5B30, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "8B 44 24 04 50 E8 D6 4A 00 00",
-       unverified = "mvpa-render-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn car_env_map_atomic_setup_cb(atomic: GPtr<u8>) -> GPtr<u8> {
     custom_pipe_atomic_setup(atomic)
 }
@@ -242,7 +242,7 @@ pub fn car_env_map_atomic_setup_cb(atomic: GPtr<u8>) -> GPtr<u8> {
 /// destroyed; the texture (+4) gets a NULL raster, is destroyed and +4 = NULL; `RwCameraDestroy`;
 /// +0 = NULL.
 #[hook(addr = 0x705400, conv = thiscall, name = "CShadowCamera::Destroy", expect = "56 8B F1 8B 06 85 C0",
-       unverified = "mvpa-render-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "destroys RW camera/frame/raster/texture objects")]
 pub fn shadow_camera_destroy(this: GPtr<u8>) {
     let cam = rd::<GPtr<u8>>(this, 0);
@@ -274,7 +274,7 @@ pub fn shadow_camera_destroy(this: GPtr<u8>) {
 /// `+0 = NULL` (stored in the protection chunk 0x401CD6), `+0x24 = -1`; with a light (+0x28): its frame
 /// detached and destroyed, `RpLightDestroy`, +0x28 = NULL.
 #[hook(addr = 0x705990, conv = thiscall, name = "CRealTimeShadow::Destroy", expect = "56 8B F1 8D 4E 08",
-       unverified = "mvpa-render-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "destroys RW objects")]
 pub fn real_time_shadow_destroy(this: GPtr<u8>) {
     shadow_camera_destroy_call(this.byte_add(8));
@@ -296,7 +296,7 @@ pub fn real_time_shadow_destroy(this: GPtr<u8>) {
 /// each, not pos) of the light's frame modelling matrix (frame +0x10) into the camera's frame
 /// modelling matrix, `RwMatrixUpdate`, `RwFrameUpdateObjects`; returns the camera (+0).
 #[hook(addr = 0x705520, conv = thiscall, name = "CShadowCamera::SetLight", expect = "8B 54 24 04 53 55 56",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the camera frame matrix (heap)")]
 pub fn shadow_camera_set_light(this: GPtr<u8>, light: GPtr<u8>) -> GPtr<u8> {
     let frame = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 4);
@@ -314,7 +314,7 @@ pub fn shadow_camera_set_light(this: GPtr<u8>, light: GPtr<u8>) -> GPtr<u8> {
 /// clip `size * 0.001f` (x87, stored as f32), view window (size, size) from a stack `RwV2d`; returns
 /// the camera (+0).
 #[hook(addr = 0x7054C0, conv = thiscall, name = "CShadowCamera::SetFrustum", expect = "83 EC 08 D9 44 24 0C",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the RW camera (heap)")]
 pub fn shadow_camera_set_frustum(this: GPtr<u8>, size: u32) -> GPtr<u8> {
     let s = f32::from_bits(size);
@@ -337,7 +337,7 @@ pub fn shadow_camera_set_frustum(this: GPtr<u8>, size: u32) -> GPtr<u8> {
 /// (queried again) with onlyPed: an existing shadow (+0x134) gets byte +4 = 1, otherwise
 /// `GetRealTimeShadow(entity)`.
 #[hook(addr = 0x706BA0, conv = thiscall, name = "CRealTimeShadowManager::DoShadowThisFrame", expect = "53 56 8B 74 24 0C",
-       unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the entity's shadow object (heap)")]
 pub fn real_time_shadow_manager_do_shadow_this_frame(this: GPtr<u8>, e: GPtr<u8>) {
     let ped = rd::<u8>(e, 0x36) & 7 == 3 && rd::<u32>(e, 0x598) == 0;
@@ -395,7 +395,7 @@ pub fn fx_manager_destroy_fx_system(this: GPtr<u8>, sys: GPtr<u8>) {
 /// palette)` (0x6FF2D0, cdecl): every NULL line is replaced by a 16-byte stack string `" "` (a space
 /// and 15 zero bytes); returns `CreateRoadsignAtomicA` with the same arguments.
 #[hook(addr = 0x6FF2D0, conv = cdecl, name = "CCustomRoadsignMgr::CreateRoadsignAtomic", expect = "83 EC 10 33 C0",
-       unverified = "mvpa-render-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_arguments)]
 pub fn custom_roadsign_create_roadsign_atomic(
     a0: u32,
@@ -420,7 +420,7 @@ pub fn custom_roadsign_create_roadsign_atomic(
 /// type 5) stored at camera+0x60 and wrapped in a texture (+4, addressing 0x33, filter 2); parallel
 /// projection; returns the camera. Any failure: `Destroy()`, NULL.
 #[hook(addr = 0x705B60, conv = thiscall, name = "CShadowCamera::Create", expect = "56 57 8B F1 8B 4C 24 0C",
-       unverified = "mvpa-render-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "creates RW camera/frame/raster/texture objects")]
 pub fn shadow_camera_create(this: GPtr<u8>, n: u32) -> GPtr<u8> {
     let size = 1i32 << (n & 31);
@@ -463,7 +463,7 @@ pub fn shadow_camera_create(this: GPtr<u8>, n: u32) -> GPtr<u8> {
 /// isBlurred, +0x20 drawMoreBlur; when blurred the blur camera (+0x14) `Create(6)`; either camera failing
 /// → `Destroy()`, AL = 0; else `SetLight` on the camera, AL = 1. The only caller ignores the result.
 #[hook(addr = 0x706460, conv = thiscall, name = "CRealTimeShadow::Create", expect = "83 EC 10 56 6A 01",
-       unverified = "mvpa-render-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "creates RW light/camera objects")]
 pub fn real_time_shadow_create(this: GPtr<u8>, blurred: u32, passes: u32, more_blur: u32) -> u8 {
     let light = rp_light_create(1);

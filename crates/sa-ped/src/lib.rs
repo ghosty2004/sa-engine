@@ -37,3 +37,5 @@ pub mod ped_control;
 pub mod ped_misc3;
 pub mod ped_coll;
 pub mod player_target;
+pub mod ped_entity_collision;
+pub mod ped_type_init;

@@ -46,7 +46,7 @@ const FIRE_TYPE_NAMES: [&[u8]; 6] =
 
 orig! {
     /// `CWeaponInfo::LoadWeaponData()` (0x5BE670)
-    pub fn load_weapon_data() = cdecl 0x5BE670 => unported;
+    pub fn load_weapon_data() = cdecl 0x5BE670 => crate::weapon_data::load_weapon_data;
 }
 
 /// `repe cmpsb` of `n = name.len()` bytes: equal iff every byte matches (stops at the first mismatch).

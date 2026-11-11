@@ -69,7 +69,7 @@ orig! {
     /// (0x40FD10, thiscall, `ret 0x14`)
     fn col_sphere_set(sp: GPtr<u8>, radius: f32, centre: GPtr<u8>, material: u8, piece: u8, light: u8) = thiscall 0x40FD10 => unported;
     /// `CCollision::SphereCastVsEntity(const CColSphere&, const CColSphere&, CEntity*)` (0x419F00, AL)
-    fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x419F00 => unported;
+    fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 = cdecl 0x419F00 => super::sphere_cast::sphere_cast_vs_entity;
     /// `CCollision::IsThisVehicleSittingOnMe(CVehicle*, CVehicle*)` (0x4152C0, AL)
     fn is_this_vehicle_sitting_on_me(veh: GPtr<u8>, on_me: GPtr<u8>) -> u8 = cdecl 0x4152C0 => super::prim::is_this_vehicle_sitting_on_me;
     /// `CCollision::TestSphereSphere(const CColSphere&, const CColSphere&)` (0x411E70, AL)
@@ -125,7 +125,7 @@ orig! {
     /// `CCollision::SphereCastVersusVsPoly(CColSphere*, CColSphere*, CColTriangle*, CColTrianglePlane*,
     /// CompressedVector*)` (0x415CF0, AL)
     fn sphere_cast_versus_vs_poly(a: GPtr<u8>, b: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, verts: GPtr<u8>) -> u8
-        = cdecl 0x415CF0 => unported;
+        = cdecl 0x415CF0 => super::sphere_cast::sphere_cast_versus_vs_poly;
 }
 
 /// f32 constant at `addr`.

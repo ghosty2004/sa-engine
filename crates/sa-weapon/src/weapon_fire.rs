@@ -156,7 +156,7 @@ orig! {
     pub fn surface_is_glass(si: GPtr<u8>, id: u32) -> u32 = thiscall 0x55E790 => unported;
     /// `CCollision::TestLineTriangle(const CColLine&, const CompressedVector*, const CColTriangle&,
     /// const CColTrianglePlane&)` (0x413AC0)
-    pub fn test_line_triangle(line: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 = cdecl 0x413AC0 => unported;
+    pub fn test_line_triangle(line: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 = cdecl 0x413AC0 => sa_world::collision::mvpd_coll::test_line_triangle;
     /// `CDamageManager::ProgressPanelDamage(ePanels)` (0x6C23C0, thiscall)
     pub fn progress_panel_damage(dm: GPtr<u8>, panel: u32) -> u8 = thiscall 0x6C23C0 => unported;
     /// `CDamageManager::GetPanelStatus(ePanels)` (0x6C2180, thiscall)

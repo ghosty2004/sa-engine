@@ -6,8 +6,9 @@ use sa_core::mem::GlobalDesc;
 
 use crate::{
     air2, automobile, automobile2, bike, bike2, boat, boat2, checks, checks2, damage, door, door2, enterexit,
-    enterexit2, handling, handling2, heli, misc, mvpb_a1, mvpb_a2, mvpb_a3, mvpb_a4, mvpb_a5, statics, statics2, train, train2, transmission, vehicle,
-    vehicle2,
+    enterexit2, handling, handling2, heli, misc, mvpb_a1, mvpb_a2, mvpb_a3, mvpb_a4, mvpb_a5, mvpd_v1,
+    mvpd_v2, mvpd_v3, mvpd_v4, mvpd_v5, mvpd_v6, mvpd_v7, statics, statics2, train, train2, transmission,
+    vehicle, vehicle2,
 };
 
 /// Every module's registrations, in this order.
@@ -46,6 +47,15 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpb_a3::HOOKS,
     mvpb_a4::HOOKS,
     mvpb_a5::HOOKS,
+    // WRITER-MVP-F (unverified batches)
+    crate::vehicle_collision_anims::HOOKS,
+    mvpd_v1::HOOKS,
+    mvpd_v2::HOOKS,
+    mvpd_v3::HOOKS,
+    mvpd_v4::HOOKS,
+    mvpd_v5::HOOKS,
+    mvpd_v6::HOOKS,
+    mvpd_v7::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -79,6 +89,13 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     mvpb_a3::GLOBALS,
     mvpb_a4::GLOBALS,
     mvpb_a5::GLOBALS,
+    mvpd_v1::GLOBALS,
+    mvpd_v2::GLOBALS,
+    mvpd_v3::GLOBALS,
+    mvpd_v4::GLOBALS,
+    mvpd_v5::GLOBALS,
+    mvpd_v6::GLOBALS,
+    mvpd_v7::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
@@ -143,7 +160,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );

@@ -35,7 +35,7 @@ orig! {
 /// each of them added to the free particle list (+0x1C); AL = 1. The SEH frame of the original only
 /// covers the construction (nothing throws).
 #[hook(addr = 0x4A98E0, conv = thiscall, name = "FxManager_c::Init", expect = "6A FF 68 CB 98 83 00",
-       unverified = "mvpa-fx-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "one-time initialiser: allocates the particle array and matrices")]
 pub fn fx_manager_init(this: GPtr<u8>) -> u8 {
     fx_memory_pool_init(this.byte_add(0xAC));

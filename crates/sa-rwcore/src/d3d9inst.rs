@@ -269,7 +269,7 @@ fn put_v3(ty: u32, d: u32, c: [u32; 3]) {
 /// `c = rnd(w2*511)&0x3FF`, `((c << 10 | b) << 10) | (0x1FF - c - b)` (low term not masked). Returns the
 /// element size of `type`.
 #[hook(addr = 0x752320, conv = cdecl, name = "_rpD3D9VertexDeclarationInstWeights", expect = "8B 44 24 04 83 EC 10",
-       unverified = "rw5-inst-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "writes into a locked vertex buffer (skin instancing); reuses its argument slots as temporaries")]
 pub fn inst_weights(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 {
     if ty <= 0xE && n > 0 {
@@ -379,7 +379,7 @@ pub fn inst_weights(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 {
 /// USHORT2N / USHORT4N `rnd(*65535)` (4th 0xFFFF); UDEC3 `fist`, DEC3N `rnd(*511)`, packed
 /// `(z << 20 | y << 10 | x)` of the low 10 bits. Returns the element size of `type` (also for 0xF/0x10).
 #[hook(addr = 0x752AD0, conv = cdecl, name = "_rpD3D9VertexDeclarationInstV3d", expect = "51 53 55 8B 6C 24 10",
-       unverified = "rw5-inst-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "writes into a locked vertex buffer; reuses its argument slots as temporaries")]
 pub fn inst_v3d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 {
     if ty > 0xE {
@@ -470,7 +470,7 @@ pub fn inst_v3d_morph(ty: u32, dst: u32, a: u32, b: u32, t: f32, n: i32, stride:
 /// 1}; SHORT2 / SHORT4 {u, v[, 0, 1]}; UBYTE4N {rnd u, rnd v, 0, 0xFF}; SHORT*N / USHORT*N {u, v[, 0,
 /// 0x7FFF / 0xFFFF]}; UDEC3 / DEC3N `(v&0x3FF) << 10 | (u&0x3FF)`. Returns the element size.
 #[hook(addr = 0x7544E0, conv = cdecl, name = "_rpD3D9VertexDeclarationInstV2d", expect = "53 55 8B 6C 24 0C",
-       unverified = "rw5-inst-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "writes into a locked vertex buffer; reuses its argument slots as temporaries")]
 pub fn inst_v2d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 {
     if ty > 0xE {
@@ -549,7 +549,7 @@ pub fn inst_v2d(ty: u32, dst: u32, src: u32, n: i32, stride: u32) -> u32 {
 /// (`a << 24 | r << 16 | g << 8 | b`) and ANDs the alphas; returns 1 when some alpha is below 0xFF (0 for
 /// `n <= 0`). No type argument.
 #[hook(addr = 0x754AE0, conv = cdecl, name = "_rpD3D9VertexDeclarationInstColor", expect = "56 8B 74 24 08 57",
-       unverified = "rw5-inst-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "writes into a locked vertex buffer")]
 pub fn inst_color(dst: u32, src: u32, n: i32, stride: u32) -> u32 {
     let mut alpha = 0xFFu8;
@@ -613,7 +613,7 @@ fn inst_indices_impl(ty: u32, dst: u32, src: u32, n: i32, stride: u32, map: impl
 /// `_rpD3D9VertexDeclarationInstIndicesRemap` (0x754C80): as [`inst_indices`] with every index byte
 /// mapped through `remap[]` (`remap[s_i]`). Returns the element size of `type`.
 #[hook(addr = 0x754C80, conv = cdecl, name = "_rpD3D9VertexDeclarationInstIndicesRemap", expect = "8B 54 24 04 8B 44 24 0C",
-       unverified = "rw5-inst-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "writes into a locked vertex buffer")]
 pub fn inst_indices_remap(ty: u32, dst: u32, src: u32, remap: u32, n: i32, stride: u32) -> u32 {
     inst_indices_impl(ty, dst, src, n, stride, |v| r8(remap.wrapping_add(u32::from(v))));
@@ -966,7 +966,7 @@ pub fn get_min_max_values_v3d(v: GPtr<u8>, n: i32, min: GPtr<u8>, max: GPtr<u8>)
 /// `_rpD3D9GetMinMaxValuesV2d` (0x7558F0): as [`get_min_max_values_v3d`] for RwV2d (x, y; stride 8;
 /// the last element is never examined).
 #[hook(addr = 0x7558F0, conv = cdecl, name = "_rpD3D9GetMinMaxValuesV2d", expect = "8B 4C 24 04 8B 54 24 0C",
-       unverified = "rw5-inst-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn get_min_max_values_v2d(uv: GPtr<u8>, n: i32, min: GPtr<u8>, max: GPtr<u8>) {
     min_max(uv, n, min, max, 2);
 }
@@ -1022,7 +1022,7 @@ pub fn find_format_v3d(v: GPtr<u8>, n: i32) -> u32 {
 /// `max.k > 1.0` or NaN -> 1; all `min.k >= 0`: DeclTypes bit 4 (USHORT2N) -> 0xB, else bit 7 -> 0xE
 /// else 4 (D3DCOLOR); else all `min.k >= -1`: bit 2 (SHORT2N) -> 9, else bit 7 -> 0xE, else 1; else 1.
 #[hook(addr = 0x755AA0, conv = cdecl, name = "_rpD3D9FindFormatV2d", expect = "8B 54 24 08 83 EC 10",
-       unverified = "rw5-inst-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn find_format_v2d(uv: GPtr<u8>, n: i32) -> u32 {
     let mut min = [0u32; 2];
     let mut max = [0u32; 2];
@@ -1170,7 +1170,7 @@ fn for_each_instance(h: u32, mut f: impl FnMut(u32)) {
 /// leaves the original's element array uninitialised (port: zeros). The element searches are
 /// unbounded, as in the original.
 #[hook(addr = 0x7578C0, conv = cdecl, name = "_rxD3D9DefaultInstanceCallback", expect = "55 8B EC 83 E4 F8",
-       unverified = "rw5-inst-1", route = "split", hazards = "heap-writes,uninit-locals",
+       route = "split", hazards = "heap-writes,uninit-locals",
        note = "first instance creates/destroys vertex buffers and a vertex declaration (D3D objects): not repeatable; reinstance locks and rewrites the streams")]
 pub fn default_instance_callback(object: u32, h: u32, reinstance: u32) -> u32 {
     let geo = r32(object + 0x18);
@@ -1435,8 +1435,8 @@ pub fn default_instance_callback(object: u32, h: u32, reinstance: u32) -> u32 {
 /// and the result are ignored), the old value restored; returns 1. One morph target: with an instance
 /// callback, `instanceCb(object, res + 0x18, 1) != 0`; without one 1.
 #[hook(addr = 0x758270, conv = cdecl, name = "_rxD3D9DefaultReinstanceCallback", expect = "8B 4C 24 04 57",
-       unverified = "rw5-inst-1", route = "L2", hazards = "heap-writes",
-       note = "the nested instance callback locks and rewrites the atomic's vertex streams")]
+       route = "split", hazards = "heap-writes,uninit-locals",
+       note = "the nested instance callback locks and rewrites the atomic's vertex streams; it runs 0x7578C0 directly, so a double run (l2) re-instances: split only (VERIFIER-3)")]
 pub fn default_reinstance_callback(object: u32, res: u32, cb: u32) -> u32 {
     let geo = r32(object + 0x18);
     if r32(geo + 0x18) != 1 {

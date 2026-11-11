@@ -158,9 +158,15 @@ mod tests {
     #[test]
     fn redirected_operands_are_not_read_as_data() {
         let Some(exe) = crate::testexe::load() else { return };
+        // Dwords that only look like such pointers: (where, value). 0x420AE1 is the rel32 of
+        // `jmp 0x821B11` at 0x420AE0, equal to 0x40102C by coincidence (MVP-F reader 0x40102D).
+        const COINCIDENCES: [(u32, u32); 1] = [(0x420AE1, 0x40102C)];
         for (va, data) in exe.code_sections() {
             for p in 0..data.len().saturating_sub(3) {
                 let v = u32::from_le_bytes([data[p], data[p + 1], data[p + 2], data[p + 3]]);
+                if COINCIDENCES.contains(&(va + p as u32, v)) {
+                    continue;
+                }
                 for r in READERS {
                     let lo = r.at + r.disp_off as u32;
                     assert!(

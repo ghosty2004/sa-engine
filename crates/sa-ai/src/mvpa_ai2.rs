@@ -283,7 +283,7 @@ pub fn event_handler_history_is_responding_to_event(this: GPtr<u8>, ty: i32) -> 
 /// upper EAX bits untouched) when not started (+8); when the reset flag (+9) is set, start (+0) = now and the flag is
 /// cleared; then 1 when `now >= start + interval (+4)` (unsigned), else 0 (full EAX).
 #[hook(addr = 0x420E30, conv = thiscall, name = "CTaskTimer::IsOutOfTime", expect = "E9 9B C7 14 01",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk")]
 pub fn task_timer_is_out_of_time(this: GPtr<u8>) -> u32 {
     if rd::<u8>(this, 8) == 0 {
         return 0;
@@ -324,14 +324,14 @@ pub fn seek_pos_xy_offset(this: GPtr<u8>, ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<
 
 /// `CTaskSimpleCarDrive::GetTaskType` (0x63C450): 709.
 #[hook(addr = 0x63C450, conv = thiscall, name = "CTaskSimpleCarDrive::GetTaskType", expect = "B8 C5 02 00 00",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "none", recs = "driving")]
+       route = "L2", hazards = "none", recs = "driving")]
 pub fn car_drive_get_task_type(_this: GPtr<u8>) -> u32 {
     0x2C5
 }
 
 /// `CTaskComplexCarDrive::Drive` (0x63CAD0, `ret 4`): returns +8 (the argument is ignored).
 #[hook(addr = 0x63CAD0, conv = thiscall, name = "CTaskComplexCarDrive::Drive", expect = "8B 41 08 C2 04 00",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "none", recs = "driving")]
+       route = "L2", hazards = "none", recs = "driving")]
 pub fn complex_car_drive_drive(this: GPtr<u8>, _ped: u32) -> u32 {
     rd::<u32>(this, 8)
 }
@@ -339,7 +339,7 @@ pub fn complex_car_drive_drive(this: GPtr<u8>, _ped: u32) -> u32 {
 /// `CTaskSimpleCarDrive::UpdateBopping` (0x63C900): with e = now - start (+0x20) and the period +0x28: +0x2C =
 /// `(float)(e % period) / period` (fild/fidiv, f32) and +0x30 = `(e / period) % 2` (C remainder, signed).
 #[hook(addr = 0x63C900, conv = thiscall, name = "CTaskSimpleCarDrive::UpdateBopping", expect = "83 EC 08 A1 84 CB B7 00",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "driving")]
+       route = "L2", hazards = "heap-writes", recs = "driving")]
 pub fn car_drive_update_bopping(this: GPtr<u8>) {
     let e = g::<i32>(TIME_MS).read().wrapping_sub(rd::<i32>(this, 0x20));
     let period = rd::<i32>(this, 0x28);
@@ -391,7 +391,7 @@ pub fn car_drive_process_bopping(this: GPtr<u8>, ped: GPtr<u8>, flag: u32) {
 /// (0x61A8B0, `ret 0x10`): `CTaskSimple` base; flag byte +0xC bit 2 = hold (bits 0..1 and 3..7 kept), +0x14 anim,
 /// +8 = 0, vtable 0x86D528, +0x10 group, +0x18 blend delta, word +0x1C = 400 (task type). Returns this.
 #[hook(addr = 0x61A8B0, conv = thiscall, name = "CTaskSimpleRunAnim::Constructor", expect = "56 8B F1 E8 D8 FA FF FF",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn run_anim_ctor(this: GPtr<u8>, group: u32, anim: u32, delta: u32, hold: u8) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u8>(this, 0xC, ((hold & 1) << 2) | (rd::<u8>(this, 0xC) & 0xF8));
@@ -408,7 +408,7 @@ pub fn run_anim_ctor(this: GPtr<u8>, group: u32, anim: u32, delta: u32, hold: u8
 /// bool holdLastFrame)` (0x61A900, `ret 0x18`): as the 4-argument constructor with the word task type (+0x1C) from
 /// the fourth argument; the name is unused.
 #[hook(addr = 0x61A900, conv = thiscall, name = "CTaskSimpleRunAnim::Constructor2", expect = "56 8B F1 E8 88 FA FF FF",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn run_anim_ctor2(this: GPtr<u8>, group: u32, anim: u32, delta: u32, ty: u32, _name: u32, hold: u8) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u8>(this, 0xC, ((hold & 1) << 2) | (rd::<u8>(this, 0xC) & 0xF8));
@@ -606,7 +606,7 @@ pub fn simple_car_drive_dtor(this: GPtr<u8>) {
 /// `CAnimManager::GetAnimationBlockIndex("ped" name at 0x86D1EC)`, +0x14 = 0, +0xC = `CTimer::m_FrameCounter`
 /// (0xB7CB4C), +0x10 = 0, +0x18 = 0. Returns this.
 #[hook(addr = 0x685750, conv = thiscall, name = "CTaskSimplePlayerOnFoot::Constructor", expect = "6A FF 68 18 6B 84 00",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn player_on_foot_ctor(this: GPtr<u8>) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0, 0x8708EC);

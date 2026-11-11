@@ -58,10 +58,15 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpb_ai2::HOOKS,
     crate::mvpb_ai3::HOOKS,
     crate::mvpb_ai4::HOOKS,
+    crate::attractor_scanner::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
-pub const GLOBALS: &[&[GlobalDesc]] = &[crate::misc::GLOBALS, crate::conversation::GLOBALS, crate::collscan::GLOBALS];
+pub const GLOBALS: &[&[GlobalDesc]] = &[
+    crate::misc::GLOBALS,
+    crate::conversation::GLOBALS,
+    crate::collscan::GLOBALS,
+];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
     let (mut n, mut i) = (0, 0);
@@ -125,7 +130,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );

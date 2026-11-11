@@ -447,7 +447,7 @@ pub fn col_model_dtor(this: GPtr<u8>) {
 /// the first, pushed after the free-list head (+0x150): `l.next (+0x50) = head.next`, `head.next.prev
 /// (+0x4C) = l`, `l.prev = head`, `head.next = l`.
 #[hook(addr = 0x54F0D0, conv = thiscall, name = "CMatrixLinkList::Init", expect = "64 A1 00 00 00 00",
-       unverified = "mvpa-math-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "one-time init: allocates the matrix array")]
 pub fn matrix_link_list_init(this: GPtr<u8>, count: i32) {
     let size = count.wrapping_mul(0x54);

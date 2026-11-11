@@ -48,7 +48,7 @@ orig! {
     /// `CVisibilityPlugins::SetClumpAlpha(RpClump*, int32)` (0x732B00)
     fn set_clump_alpha(c: GPtr<u8>, a: i32) = cdecl 0x732B00 => unported;
     /// `CEntity::PreRender()` (0x535FA0)
-    fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => unported;
+    fn entity_pre_render(e: GPtr<u8>) = thiscall 0x535FA0 => crate::world::entity_prerender::pre_render;
     /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70, `ret 4`)
     fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
     /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40, `ret 4`)

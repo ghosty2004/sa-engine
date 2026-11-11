@@ -5,8 +5,8 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
 use crate::collision;
-use crate::world;
 use crate::physical;
+use crate::world;
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -63,6 +63,16 @@ pub const MODULES: &[&[HookReg]] = &[
     collision::mvpb_coll::HOOKS,
     world::mvpb_stats::HOOKS,
     world::mvpb_world3::HOOKS,
+    world::entity_prerender::HOOKS,
+    collision::sphere_cast::HOOKS,
+    collision::col_models::HOOKS,
+    physical::friction_attach::HOOKS,
+    world::mvpd_w1::HOOKS,
+    collision::mvpd_coll::HOOKS,
+    world::mvpd_w2::HOOKS,
+    world::mvpd_w3::HOOKS,
+    world::mvpd_w4::HOOKS,
+    world::mvpd_w5::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -163,7 +173,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );

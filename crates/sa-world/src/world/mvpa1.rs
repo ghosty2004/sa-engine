@@ -173,7 +173,7 @@ fn pool_slot(pool: GPtr<u8>, i: i32, size: i32) -> Option<GPtr<u8>> {
 /// replay's "already recorded" flag) of every used, non-null slot, then the vehicle pool (last slot
 /// down; the byte-map bit tested with `test byte, 0x80`) clearing bit 2 of byte +0x42B.
 #[hook(addr = 0x45D430, conv = cdecl, name = "CReplay::MarkEverythingAsNew", expect = "90 E9 9F 84 FA FF",
-       unverified = "mvpa-world-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn mark_everything_as_new() {
     let peds = g::<GPtr<u8>>(PED_POOL).read();
     let mut i = rd::<i32>(peds, 8);
@@ -202,7 +202,7 @@ pub fn mark_everything_as_new() {
 /// `Buffers[0]` (0x97FB88) with `BufferStatus[0] = 2` (recording), clears `Buffers[0][0]`, sets
 /// `bReplayEnabled` (0x8A6160) and tail-calls `MarkEverythingAsNew`.
 #[hook(addr = 0x45E220, conv = cdecl, name = "CReplay::Init", expect = "33 C0 33 C9 90",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn replay_init() {
     g::<u32>(0x97FB7C).write(0); // BufferStatus[0..4] (dword)
     g::<u32>(0x97FB70).write(0); // Record.m_nOffset
@@ -233,7 +233,7 @@ pub fn replay_init() {
 /// `Record.m_bSlot = 0`, `Record.m_pBase = Buffers[0]`, `BufferStatus[0] = 2`, `Buffers[0][0] = 0` and a
 /// tail call of `MarkEverythingAsNew`.
 #[hook(addr = 0x45EC90, conv = cdecl, name = "CReplay::EmptyReplayBuffer", expect = "80 3D 88 30 A4 00 01",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn empty_replay_buffer() {
     if g::<u8>(0xA43088).read() == 1 {
         return;
@@ -252,7 +252,7 @@ pub fn empty_replay_buffer() {
 /// at 0xA972A0 (`ms_keys`/... the item tables), zero dwords 0xA9A7CC, 0xA9A7D0, 0xA9A310 (`ms_numPrices`,
 /// `ms_numPriceModifiers`, `ms_numItemsInShop`) and byte 0xA97298, then a tail call of `LoadStats`.
 #[hook(addr = 0x49C290, conv = cdecl, name = "CShopping::Init", expect = "57 33 C0 B9 30 02 00 00",
-       unverified = "mvpa-world-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "tail-calls CShopping::LoadStats (file reads: shopping.dat)")]
 pub fn shopping_init() {
     for i in 0..0x230 {
@@ -271,7 +271,7 @@ pub fn shopping_init() {
 /// `BreakManager_c::ResetAll()` (0x59E720, thiscall): for each of the 64 `BreakObject_c` (0x20 bytes,
 /// from `this`), `Exit()` when its byte +1 (in use) is set.
 #[hook(addr = 0x59E720, conv = thiscall, name = "BreakManager_c::ResetAll", expect = "56 57 8B F1 BF 40 00 00 00",
-       this = "BreakManager_c", unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "BreakManager_c", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn break_manager_reset_all(this: GPtr<u8>) {
     let mut o = this;
     for _ in 0..64 {
@@ -325,7 +325,7 @@ pub fn interior_manager_exit(this: GPtr<u8>) {
 /// shares no bit with the low byte of `disabledFlags`, and whose name matches `name` (`_strnicmp`, 8).
 /// -1 when none.
 #[hook(addr = 0x43EFD0, conv = cdecl, name = "CEntryExitManager::GetEntryExitIndex", expect = "53 55 56 57 90",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn get_entry_exit_index(name: GPtr<u8>, enabled: u32, disabled: u32) -> i32 {
     let pool = g::<GPtr<u8>>(ENTRY_EXIT_POOL).read();
     let mut i = rd::<i32>(pool, 8);
@@ -353,7 +353,7 @@ pub fn get_entry_exit_index(name: GPtr<u8>, enabled: u32, disabled: u32) -> i32 
 /// 0.5 s fade in starts (`Fade(0.5f, FADE_IN = 1)`); then `SkipState = 0` and pad 0's byte +0x10F loses bit
 /// 0 (`bDisablePlayerEnterCar`... the skip's control lock).
 #[hook(addr = 0x441560, conv = cdecl, name = "CGameLogic::ClearSkip", expect = "E9 0B FD 11 01",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clear_skip(after_mission: u32) {
     let state = g::<u32>(SKIP_STATE).read();
     if after_mission as u8 != 0 && state == 4 {
@@ -373,7 +373,7 @@ pub fn clear_skip(after_mission: u32) {
 /// else placement +4) satisfies `radius * radius > (z-pz)^2 + (y-py)^2 + (x-px)^2` (x87, that operand
 /// order; NaN fails), `ExtinguishCarFire()`.
 #[hook(addr = 0x566950, conv = cdecl, name = "CWorld::ExtinguishAllCarFiresInArea", expect = "83 EC 10 E9 95 B6 E9 FF",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn extinguish_all_car_fires_in_area(px: f32, py: f32, pz: f32, radius: f32) {
     let pool = g::<GPtr<u8>>(VEHICLE_POOL).read();
     let size = rd::<i32>(pool, 8);
@@ -455,7 +455,7 @@ fn model_info(model: i32) -> GPtr<u8> {
 /// original reads the byte at address 4 (`xor eax, eax; movzx ax, [eax+4]`, an access violation),
 /// kept.
 #[hook(addr = 0x49CD50, conv = cdecl, name = "FUN_0049cd50", expect = "8B 4C 24 04 8B 51 18",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "no catalogue name; the not-found path faults like the original")]
 pub fn tag_manager_setup_atomic(e: GPtr<u8>) {
     let atomic = rd::<GPtr<u8>>(e, 0x18);
@@ -480,7 +480,7 @@ pub fn tag_manager_setup_atomic(e: GPtr<u8>) {
 /// `ceilf`-style helper (0x538AD0, cdecl; called by `CObject::SpecialEntityCalcCollisionSteps`): the
 /// float argument widened to a double, CRT `ceil` (0x823820), the double result left in ST0 unrounded.
 #[hook(addr = 0x538AD0, conv = cdecl, name = "FUN_00538ad0", expect = "D9 44 24 04 83 EC 08",
-       unverified = "mvpa-world-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "no catalogue name; ceil of an f32 is exact in a double; pure (L1 spec not written)")]
 pub fn ceil_f(v: f32) -> X87 {
     X87::from_f64_exact(crt_ceil(f64::from(v)))
@@ -610,7 +610,7 @@ pub fn entity_create_rw_object(this: GPtr<u8>) {
 /// a free slot gives a null link, then dereferenced like the original); the target gets the reverse link
 /// when it has none, time on (+0x34) = 0 and time off (+0x35) = 24.
 #[hook(addr = 0x43F0A0, conv = cdecl, name = "CEntryExitManager::PostEntryExitsCreation", expect = "E9 1B 41 12 01",
-       unverified = "mvpa-world-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn post_entry_exits_creation() {
     let pool = g::<GPtr<u8>>(ENTRY_EXIT_POOL).read();
     let mut i = rd::<i32>(pool, 8);
@@ -687,7 +687,7 @@ pub fn pickups_re_init() {
 /// Letter and number start at 0 and keep their previous values when a line does not set them; the name
 /// buffer starts uninitialised in the original (here zeroed).
 #[hook(addr = 0x71D4E0, conv = cdecl, name = "CGridRef::Init", expect = "83 EC 28 56 68 54 8B 85 00",
-       unverified = "mvpa-world-1", route = "split", hazards = "uninit-locals", recs = "grove-walk",
+       route = "split", hazards = "uninit-locals", recs = "grove-walk",
        note = "file reads (GRIDREF.DAT)")]
 pub fn grid_ref_init() {
     let mut letter = [0u8; 4];
@@ -771,7 +771,7 @@ pub fn stats_init() {
 /// original (value at +0, id at +4, name from +8; id/value start at 0 and keep the previous line's values
 /// when a line does not set them).
 #[hook(addr = 0x5599B0, conv = cdecl, name = "CStats::LoadActionReactionStats", expect = "83 EC 58 56 68 54 8B 85 00",
-       unverified = "mvpa-world-1", route = "split", hazards = "uninit-locals", recs = "grove-walk",
+       route = "split", hazards = "uninit-locals", recs = "grove-walk",
        note = "file reads (AR_STATS.DAT)")]
 pub fn load_action_reaction_stats() {
     let mut frame = [0u8; 0x58];
@@ -802,7 +802,7 @@ pub fn load_action_reaction_stats() {
 /// byte +2 = 0, byte +3 = 0 for "lessthan" / 1 for "morethan" (unchanged otherwise; 9-byte compares),
 /// dword +4 = value, message copied from +8. The count is stored at the end.
 #[hook(addr = 0x559860, conv = cdecl, name = "CStats::LoadStatUpdateConditions", expect = "55 8B EC 83 E4 F8",
-       unverified = "mvpa-world-1", route = "split", hazards = "uninit-locals", recs = "grove-walk",
+       route = "split", hazards = "uninit-locals", recs = "grove-walk",
        note = "file reads (STATDISP.DAT); writes the 0xB78200 table")]
 pub fn load_stat_update_conditions() {
     let mut frame = [0u8; 0x64];
@@ -855,7 +855,7 @@ pub fn load_stat_update_conditions() {
 /// `g_furnitureMan.LoadFurniture()`; dwords +0x473C, +0x42A4, +0x43A8 = 0, +0x472C..+0x4738 =
 /// 0x01010101, +0x4754 = 0xFFFD40E0. Returns true with EAX = 0x01010101 (`mov al, 1` over that value).
 #[hook(addr = 0x5C0500, conv = thiscall, name = "InteriorManager_c::Init", expect = "53 55 56 8B F1",
-       this = "InteriorManager_c", unverified = "mvpa-world-1", route = "split", hazards = "none", recs = "grove-walk",
+       this = "InteriorManager_c", route = "split", hazards = "none", recs = "grove-walk",
        note = "one-time init; LoadFurniture reads furnitur.dat")]
 pub fn interior_manager_init(this: GPtr<u8>) -> u32 {
     wr::<u8>(this, 0x4750, 0);
@@ -903,7 +903,7 @@ pub fn interior_manager_init(this: GPtr<u8>) -> u32 {
 /// the dword 0x96A7D4 is set: `ResetAreaCodeForVisibleObjects()`, 0x96A7CC = 0 and 0x96A7D4 = 0; finally
 /// `ms_entryExitStackPosn` (0x96A7C4) = 0 and byte 0x96A7C8 = 0.
 #[hook(addr = 0x440C40, conv = cdecl, name = "CEntryExitManager::ShutdownForRestart", expect = "E9 0B 69 12 01",
-       unverified = "mvpa-world-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn entry_exit_shutdown_for_restart() {
     let pool = g::<GPtr<u8>>(ENTRY_EXIT_POOL).read();
     let mut i = rd::<i32>(pool, 8);

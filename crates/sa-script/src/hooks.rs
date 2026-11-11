@@ -7,7 +7,7 @@ use sa_core::mem::GlobalDesc;
 use crate::{
     cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100, cmd1200,
     cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200, cmd2300,
-    cmd2400, cmd2500, cleanup, vm,
+    cmd2400, cmd2500, cleanup, script_init, vm,
 };
 
 /// Every module's registrations, in this order.
@@ -40,6 +40,7 @@ pub const MODULES: &[&[HookReg]] = &[
     cmd2400::HOOKS,
     cmd2500::HOOKS,
     cleanup::HOOKS,
+    script_init::HOOKS,
 ];
 
 /// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).
