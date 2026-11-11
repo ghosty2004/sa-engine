@@ -163,7 +163,7 @@ wineserver -k 2> /dev/null || true
 
 DET="$GTA_DIR/det"
 mkdir -p "$DET"
-win() { winepath -w "$1"; }
+win() { e2e_winpath "$1"; }
 "$ORACLE" l2 spec --out "$OUT/l2.spec" > /dev/null || exit 1
 # The spec comes from the host sa-oracle's hook table: a host binary older than the DLL has no entry
 # for newer hooks, so their globals would be missing and every write to them reported as undeclared
@@ -183,6 +183,12 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     # The previous run's Wine log (possibly with its exit-time fault) must not be read as this run's
     # crash before e2e_game_start truncates it.
     rm -f "$E2E_OUT/wine.log"
+    # Outputs of an earlier run with the same tag must never be compared as this run's (PORT-VEH
+    # 2026-11-11: a run whose SA_DET_TRACE was empty left the previous run's rust.trace in place).
+    rm -f "$OUT/$name.trace" "$OUT/$name.spool" "$OUT/$name.spool.txt" "$OUT/$name".spool.seq*.win "$OUT/$name.log" \
+        "$OUT/$name.det" "$OUT/$name.wine.log" "$OUT/$name.wine-exitfault.txt" "$OUT/plain-vs-$name.txt"
+    local wtrace
+    wtrace="$(win "$DET/$name.trace")" || { check "run $name: Windows path of the trace" 0 "e2e_winpath failed"; return; }
     local drain=""
     if [ "${L2_SPOOL_DISCARD:-0}" = 1 ]; then
         # the binary spool (several MB per case) goes to a FIFO that is drained; verdicts stay in the
@@ -190,7 +196,7 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
         mkfifo "$DET/$name.spool" && { cat "$DET/$name.spool" > /dev/null & drain=$!; }
     fi
     (
-        export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$(win "$DET/$name.trace")" SA_HOOK_PORTS=orig
+        export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$wtrace" SA_HOOK_PORTS=orig
         for kv in "$@"; do export "${kv?}"; done
         e2e_game_start
         wait "$E2E_GAME_PID"
@@ -236,6 +242,11 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
         [ -f "$f" ] && mv -f "$f" "$OUT/"
     done
     printf '%s\n' "$last" > "$OUT/$name.det"
+    # sa-hook logs the trace path it opened: it must be this run's (an empty SA_DET_TRACE falls back to
+    # sa-trace.bin in the game dir)
+    if ! grep -qF "oracle: trace $wtrace" "$OUT/$name.log" 2> /dev/null; then
+        check "run $name: sa-hook wrote its trace to $wtrace" 0 "$(grep -m1 -o 'oracle: trace .*' "$OUT/$name.log" 2> /dev/null)"
+    fi
     e2e_say "run $name finished in $(($(date +%s) - start)) s"
     q="$(sed -n 's/.*l2: \(spool quota reached for [^ ]*\).*/\1/p' "$OUT/$name.log" 2> /dev/null | head -1)"
     if [ -n "$q" ]; then

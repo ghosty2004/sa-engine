@@ -220,6 +220,14 @@ pub fn exclusions(c: &crate::l2::Case) -> Vec<Exclusion> {
                 rule: e.rule,
             });
         }
+        // known residue: excluded for every function but its writer
+        for e in RESIDUE.iter().filter(|e| e.writer != c.fn_addr) {
+            out.push(Exclusion {
+                addr: e.addr,
+                len: e.len,
+                rule: e.rule,
+            });
+        }
     }
     if c.fn_addr != LIGHTS_CREATE {
         return out;
@@ -343,17 +351,61 @@ pub const INPUT_EXCLUSIONS: &[InputExclusion] = &[
                0x41B016-0x41B028) before any use; the value is a stack depth, which differs below a \
                Rust ancestor (InitialiseGame: plain 0x0036E960 rust 0x0036E950)",
     },
-    InputExclusion { addr: COL_MATRICES[0] + 0x0C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[0] + 0x1C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[0] + 0x2C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[0] + 0x3C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[1] + 0x0C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[1] + 0x1C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[1] + 0x2C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: COL_MATRICES[1] + 0x3C, len: 4, rule: RULE_COL_MATRIX_PADS },
-    InputExclusion { addr: CAMERA_MAT_INVERSE + 0x1C, len: 4, rule: RULE_CAMERA_MAT_INVERSE_PADS },
-    InputExclusion { addr: CAMERA_MAT_INVERSE + 0x2C, len: 4, rule: RULE_CAMERA_MAT_INVERSE_PADS },
-    InputExclusion { addr: CAMERA_MAT_INVERSE + 0x3C, len: 4, rule: RULE_CAMERA_MAT_INVERSE_PADS },
+    InputExclusion {
+        addr: COL_MATRICES[0] + 0x0C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[0] + 0x1C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[0] + 0x2C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[0] + 0x3C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[1] + 0x0C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[1] + 0x1C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[1] + 0x2C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: COL_MATRICES[1] + 0x3C,
+        len: 4,
+        rule: RULE_COL_MATRIX_PADS,
+    },
+    InputExclusion {
+        addr: CAMERA_MAT_INVERSE + 0x1C,
+        len: 4,
+        rule: RULE_CAMERA_MAT_INVERSE_PADS,
+    },
+    InputExclusion {
+        addr: CAMERA_MAT_INVERSE + 0x2C,
+        len: 4,
+        rule: RULE_CAMERA_MAT_INVERSE_PADS,
+    },
+    InputExclusion {
+        addr: CAMERA_MAT_INVERSE + 0x3C,
+        len: 4,
+        rule: RULE_CAMERA_MAT_INVERSE_PADS,
+    },
     InputExclusion {
         addr: 0x8E2B8C,
         len: 4,
@@ -371,26 +423,223 @@ pub const INPUT_EXCLUSIONS: &[InputExclusion] = &[
     },
 ];
 
-/// `page` (at `addr`) with the excluded input bytes zeroed (a copy only when one lies inside).
+// ------------------------------------------------------------------ OS handle words (HARNESS-2) ----
+//
+// Words that hold Win32 handle values (kernel object handles: semaphore, thread, files). Two processes
+// number their handles differently as soon as one of them has opened one handle more (observed in the
+// PORT-WEAPON-PED split runs c-split2..4, g-split3, w-split2, p-split2: gStreamSemaphore plain 0xE8 rust
+// 0xE4, gStreamFileHandles[0] plain 0xD0 rust 0xCC, in every pair from frame 201; the same list was
+// identical in g-split2 and in HARNESS-2's hz-e1c). They are not excluded: each word is compared by its
+// class (0, INVALID_HANDLE_VALUE, or "a handle": non-zero, a multiple of 4, below 0x10000, as NT and
+// Wine hand them out), so a port that stores no handle, a different sentinel or a pointer still
+// differs. The page fingerprint hashes the class, the merged comparison compares the class, and the
+// raw values are recorded per case (`Case::volatile`) and listed by `split-report`.
+
+/// One range of handle words (4-aligned dwords).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HandleWords {
+    pub addr: u32,
+    pub len: u32,
+    pub rule: &'static str,
+}
+
+pub const OS_HANDLES: &[HandleWords] = &[
+    HandleWords {
+        addr: 0x8E4004,
+        len: 8,
+        rule: "CdStream gStreamSemaphore (0x8E4004) and the streaming thread handle (0x8E4008): \
+               CdStreamInitThread (0x4068F0) stores the CreateSemaphoreA result at 0x406978 \
+               (`mov [0x8E4004], eax` after `call ebx`) and the CreateThread result (`call [0x8580B4]`, \
+               lpThreadId = 0x8E4000) at 0x4069C8; OS handles (observed 0xE8 / 0xE4)",
+    },
+    HandleWords {
+        addr: 0x8E4010,
+        len: 0x80,
+        rule: "CdStream gStreamFileHandles[32] (0x8E4010..0x8E408F; next global 0x8E4090): the CreateFileA \
+               results of CdStreamOpen (0x4067B0) / the reopen loop (`mov [edi*4+0x8E4010], eax` at \
+               0x406794), zeroed by CdStreamRemoveImages / CdStreamShutdown (0x4068CD, 0x4066EA after \
+               CloseHandle); OS handles (observed 0xD0 / 0xCC)",
+    },
+    HandleWords {
+        addr: 0xB606CC,
+        len: 4,
+        rule: "CAEStreamThread::m_nHandle of the audio stream thread object 0xB606CC (sa-hook det status \
+               `audio stream_thread=0xb606cc`): CAEStreamThread::Initialise (0x4F1680) calls CreateThread \
+               (0x4F16E6, lpThreadId = this+4 = 0xB606D0, already an input exclusion) and stores the \
+               handle at 0x4F16EE (`mov [esi], eax`); the only handle-valued word of page 0xB60000 besides \
+               the excluded 0xB606D0 / 0xB608D0 / 0xB608D4 (hz-e2g window dump seq 1500: 0x1E8 in both \
+               runs). Page 0xB60000 is the second page the PORT-WEAPON-PED PASS-FP runs listed, always \
+               together with the 0x8E4000 handle shift",
+    },
+];
+
+/// Handle fields of a heap array that a global points to (compared by class like [`OS_HANDLES`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HeapHandles {
+    /// The global holding the array's address (must be in the case: a spec global or an extra region).
+    pub ptr: u32,
+    pub stride: u32,
+    /// Offsets of the handle words inside one element.
+    pub fields: &'static [u32],
+    pub rule: &'static str,
+}
+
+pub const HEAP_HANDLES: &[HeapHandles] = &[HeapHandles {
+    ptr: 0x8E3FFC,
+    stride: 0x30,
+    fields: &[0x14, 0x18],
+    rule: "gCdStreams (*0x8E3FFC, LocalAlloc'd by CdStreamInit, 0x30-byte CdStream elements, gta-reversed \
+           CdStreamInfo.h): +0x14 the request semaphore, +0x18 hFile; OS handles. HARNESS-2 hz-f3g (core \
+           split list, grove): the extra region [0x8E3FFC]:0xF0 differed at +0x14 plain 0xD4 rust 0xD0 and \
+           +0x18 plain 0xD0 rust 0xCC before every pair from frame 0 (the one-handle shift)",
+}];
+
+/// The heap handle words of `c`'s region at `addr` (the region must start at the array, i.e. at the
+/// value the case holds for the pointer global): absolute word addresses.
+pub fn heap_handle_words(c: &crate::l2::Case, addr: u32, len: usize) -> Vec<u32> {
+    let mut out = Vec::new();
+    for h in HEAP_HANDLES {
+        let p = c.regions.iter().filter(|r| r.readable).find_map(|r| {
+            let o = h.ptr.checked_sub(r.addr)? as usize;
+            let b = r.pre.get(o..o + 4)?;
+            Some(u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+        });
+        if p != Some(addr) || addr == 0 {
+            continue;
+        }
+        let mut base = 0u32;
+        while (base as usize) < len {
+            for &f in h.fields {
+                if (base + f) as usize + 4 <= len {
+                    out.push(addr + base + f);
+                }
+            }
+            base += h.stride;
+        }
+    }
+    out
+}
+
+/// [`classify_handles`] plus the heap handle words of `c` inside `b` (at `addr`).
+pub fn classify_case_handles(c: &crate::l2::Case, addr: u32, b: &mut [u8]) {
+    classify_handles(addr, b);
+    for w in heap_handle_words(c, addr, b.len()) {
+        let o = (w - addr) as usize;
+        let v = handle_class(u32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]));
+        b[o..o + 4].copy_from_slice(&v.to_le_bytes());
+    }
+}
+
+/// The class of a handle word: 0, INVALID_HANDLE_VALUE, 4 for any plausible handle, else the value.
+pub fn handle_class(v: u32) -> u32 {
+    match v {
+        0 | u32::MAX => v,
+        _ if v & 3 == 0 && v < 0x10000 => 4,
+        _ => v,
+    }
+}
+
+/// The handle-word range holding `a`, if any.
+pub fn os_handle_at(a: u32) -> Option<&'static HandleWords> {
+    OS_HANDLES.iter().find(|h| a.wrapping_sub(h.addr) < h.len)
+}
+
+/// Every handle word of `b` (at `addr`, whole aligned words inside `b` only) replaced by its class.
+pub fn classify_handles(addr: u32, b: &mut [u8]) {
+    for h in OS_HANDLES {
+        let mut w = h.addr;
+        while w < h.addr + h.len {
+            if w >= addr && (w - addr) as usize + 4 <= b.len() {
+                let o = (w - addr) as usize;
+                let c = handle_class(u32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]));
+                b[o..o + 4].copy_from_slice(&c.to_le_bytes());
+            }
+            w += 4;
+        }
+    }
+}
+
+// ------------------------------------------------------------------ known residue (HARNESS-2) -------
+//
+// Bytes that an ORIGINAL function leaves as uninitialised stack residue and its port writes as 0 (a
+// divergence-ledger item, PLAN §5): the bytes differ between a split run's plain and rust process from
+// the moment the port has run. They are excluded from the page fingerprint and from the comparison of
+// every OTHER function's outputs (which only see them as unrelated state); the writer's own comparison
+// keeps them, so the ledger difference stays visible there.
+
+/// One residue range and the function that writes it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Residue {
+    pub addr: u32,
+    pub len: u32,
+    /// The function whose own comparison keeps the bytes.
+    pub writer: u32,
+    pub rule: &'static str,
+}
+
+/// `CModelInfo::ms_vehicleModelInfoStore` (0xB1F650: count, then CVehicleModelInfo[] of 0x308 bytes).
+pub const VEHICLE_MODEL_INFO_STORE: u32 = 0xB1F650;
+/// The skimmer's slot (vehicles.ide id 460, the 61st vehicle line: store index 60 = LoadVehicleObject's
+/// call ordinal 60 at frame 201).
+pub const SKIMMER_MODEL_INFO: u32 = VEHICLE_MODEL_INFO_STORE + 4 + 60 * 0x308;
+
+pub const RESIDUE: &[Residue] = &[Residue {
+    addr: SKIMMER_MODEL_INFO + 0x40,
+    len: 10,
+    writer: 0x5B6F30,
+    rule: "CFileLoader::LoadVehicleObject (0x5B6F30), skimmer (vehicles.ide 460, 11 fields): the original \
+           stores uninitialised locals as m_fWheelSizeFront / m_fWheelSizeRear / the wheel model index \
+           (CVehicleModelInfo +0x40, +0x44, int16 +0x48 = 0xB2AC74..0xB2AC7D), the port writes 0 \
+           (ledger: STREAM-L2 frame 201 ordinal 60: +0x40 = 8, +0x44 = 0x0036F144; HARNESS-2 hz-e1c \
+           window dumps seq 14..1500: 0xB2AC78 plain 3333333fffff rust 000000000000, the only \
+           differing bytes of page 0xB2A000)",
+}];
+
+/// `page` (at `addr`) with the excluded input bytes zeroed and the handle words replaced by their
+/// class (a copy only when one lies inside).
 pub fn fingerprint_bytes(addr: u32, page: &[u8]) -> std::borrow::Cow<'_, [u8]> {
     let end = addr as u64 + page.len() as u64;
-    let hit: Vec<&InputExclusion> = INPUT_EXCLUSIONS
+    let overlaps = |a: u32, n: u32| (a as u64) < end && a as u64 + n as u64 > addr as u64;
+    let zero: Vec<(u32, u32)> = INPUT_EXCLUSIONS
         .iter()
-        .filter(|e| (e.addr as u64) < end && e.addr as u64 + e.len as u64 > addr as u64)
+        .map(|e| (e.addr, e.len))
+        .chain(RESIDUE.iter().map(|e| (e.addr, e.len)))
+        .filter(|&(a, n)| overlaps(a, n))
         .collect();
-    if hit.is_empty() {
+    let handles = OS_HANDLES.iter().any(|h| overlaps(h.addr, h.len));
+    if zero.is_empty() && !handles {
         return std::borrow::Cow::Borrowed(page);
     }
     let mut v = page.to_vec();
-    for e in hit {
-        for k in 0..e.len {
-            let a = e.addr as u64 + k as u64;
+    for (ea, en) in zero {
+        for k in 0..en {
+            let a = ea as u64 + k as u64;
             if a >= addr as u64 && a < end {
                 v[(a - addr as u64) as usize] = 0;
             }
         }
     }
+    if handles {
+        classify_handles(addr, &mut v);
+    }
     std::borrow::Cow::Owned(v)
+}
+
+/// Every reviewed input range whose raw bytes a split-run case records (`Case::volatile`), in a fixed
+/// order: the input exclusions, the handle words, the residue ranges.
+pub fn volatile_ranges() -> Vec<(u32, u32, &'static str)> {
+    INPUT_EXCLUSIONS
+        .iter()
+        .map(|e| (e.addr, e.len, e.rule))
+        .chain(OS_HANDLES.iter().map(|e| (e.addr, e.len, e.rule)))
+        .chain(RESIDUE.iter().map(|e| (e.addr, e.len, e.rule)))
+        .collect()
+}
+
+/// Byte `a` is zeroed in every split-run input comparison (input exclusion or residue).
+pub fn input_excluded(a: u32) -> bool {
+    INPUT_EXCLUSIONS.iter().any(|e| a.wrapping_sub(e.addr) < e.len)
+        || RESIDUE.iter().any(|e| a.wrapping_sub(e.addr) < e.len)
 }
 
 #[cfg(test)]
@@ -408,7 +657,10 @@ mod tests {
         b[0x1C0] = 1;
         assert_ne!(fingerprint_bytes(0x8E3000, &a), fingerprint_bytes(0x8E3000, &b));
         // another page: untouched
-        assert!(matches!(fingerprint_bytes(0x8E5000, &a), std::borrow::Cow::Borrowed(_)));
+        assert!(matches!(
+            fingerprint_bytes(0x8E5000, &a),
+            std::borrow::Cow::Borrowed(_)
+        ));
         // the streaming thread id at the start of the next page is excluded too
         assert_eq!(&fingerprint_bytes(0x8E4000, &a)[..8], &[0, 0, 0, 0, 7, 7, 7, 7]);
         // a page that starts inside the range
@@ -427,10 +679,12 @@ mod tests {
                 got.push(a);
             }
         }
-        let want: Vec<u32> = [0x96894C, 0x96895C, 0x96896C, 0x96897C, 0x968994, 0x9689A4, 0x9689B4, 0x9689C4]
-            .iter()
-            .flat_map(|&w| w..w + 4)
-            .collect();
+        let want: Vec<u32> = [
+            0x96894C, 0x96895C, 0x96896C, 0x96897C, 0x968994, 0x9689A4, 0x9689B4, 0x9689C4,
+        ]
+        .iter()
+        .flat_map(|&w| w..w + 4)
+        .collect();
         assert_eq!(got, want);
         // the page fingerprint ignores them (the reported pairs: 0x96896C, 0x96894C) ...
         let page = 0x968000;
@@ -450,13 +704,156 @@ mod tests {
     #[test]
     fn camera_mat_inverse_pads_are_excluded_and_nothing_else() {
         let excluded = |a: u32| INPUT_EXCLUSIONS.iter().any(|e| a.wrapping_sub(e.addr) < e.len);
-        let got: Vec<u32> = (CAMERA_MAT_INVERSE..CAMERA_MAT_INVERSE + 0x48).filter(|&a| excluded(a)).collect();
-        let want: Vec<u32> = [0xB6FA90, 0xB6FAA0, 0xB6FAB0].iter().flat_map(|&w| w..w + 4).collect();
+        let got: Vec<u32> = (CAMERA_MAT_INVERSE..CAMERA_MAT_INVERSE + 0x48)
+            .filter(|&a| excluded(a))
+            .collect();
+        let want: Vec<u32> = [0xB6FA90, 0xB6FAA0, 0xB6FAB0]
+            .iter()
+            .flat_map(|&w| w..w + 4)
+            .collect();
         assert_eq!(got, want);
         assert!(!excluded(0xB6FA80) && !excluded(0xB6FAA4));
         // __NLG_Destination: only the frame word, not the signature/code/info words
         let got: Vec<u32> = (0x8E2B80..0x8E2B90).filter(|&a| excluded(a)).collect();
         assert_eq!(got, (0x8E2B8C..0x8E2B90).collect::<Vec<u32>>());
+    }
+
+    /// gStreamSemaphore / thread handle / gStreamFileHandles: hashed and compared by class, nothing
+    /// around them.
+    #[test]
+    fn os_handle_words_compare_by_class() {
+        assert_eq!(handle_class(0xE8), handle_class(0xE4));
+        assert_ne!(handle_class(0xE8), handle_class(0));
+        assert_ne!(handle_class(0xE8), handle_class(u32::MAX));
+        assert_ne!(handle_class(0xE8), handle_class(0xE9), "not a multiple of 4");
+        assert_ne!(
+            handle_class(0xE8),
+            handle_class(0x0036_EE48),
+            "a pointer is not a handle"
+        );
+        let covered: Vec<u32> = (0x8E3FFC..0x8E4098)
+            .filter(|&a| os_handle_at(a).is_some())
+            .collect();
+        assert_eq!(
+            covered,
+            (0x8E4004..0x8E400C)
+                .chain(0x8E4010..0x8E4090)
+                .collect::<Vec<u32>>()
+        );
+        let covered: Vec<u32> = (0xB60600..0xB60900)
+            .filter(|&a| os_handle_at(a).is_some())
+            .collect();
+        assert_eq!(covered, (0xB606CC..0xB606D0).collect::<Vec<u32>>());
+        // the page fingerprint: plain 0xE8/0xD0, rust 0xE4/0xCC (PORT-WEAPON-PED c-split3) hash alike
+        let mut a = vec![0u8; 4096];
+        a[0..4].copy_from_slice(&0x1DCu32.to_le_bytes()); // gStreamingThreadId (excluded)
+        let mut b = a.clone();
+        a[4..8].copy_from_slice(&0xE8u32.to_le_bytes());
+        b[4..8].copy_from_slice(&0xE4u32.to_le_bytes());
+        a[0x10..0x14].copy_from_slice(&0xD0u32.to_le_bytes());
+        b[0x10..0x14].copy_from_slice(&0xCCu32.to_le_bytes());
+        assert_eq!(fingerprint_bytes(0x8E4000, &a), fingerprint_bytes(0x8E4000, &b));
+        // a closed handle (0) against an open one, and the next global (0x8E4090), still differ
+        b[0x14..0x18].copy_from_slice(&0xC8u32.to_le_bytes());
+        assert_ne!(fingerprint_bytes(0x8E4000, &a), fingerprint_bytes(0x8E4000, &b));
+        b[0x14..0x18].copy_from_slice(&[0; 4]);
+        b[0x90] = 1;
+        assert_ne!(fingerprint_bytes(0x8E4000, &a), fingerprint_bytes(0x8E4000, &b));
+        // merged split-run outputs: a region over the handles compares by class too
+        use crate::l2::{Case, Region, RegionKind};
+        let mut c = Case {
+            fn_addr: 0x4067B0,
+            merged: true,
+            regions: vec![Region {
+                addr: 0x8E4010,
+                kind: RegionKind::Global { exact: false },
+                access: 3,
+                readable: true,
+                pre: vec![0; 8],
+                post_orig: [0xD0u32, 0].iter().flat_map(|w| w.to_le_bytes()).collect(),
+                post_rust: [0xCCu32, 0].iter().flat_map(|w| w.to_le_bytes()).collect(),
+            }],
+            ..Case::default()
+        };
+        assert!(crate::l2::compare(&c).is_empty());
+        c.regions[0].post_rust[4] = 0xC8;
+        assert_eq!(
+            crate::l2::compare(&c).len(),
+            1,
+            "a handle where the original left 0"
+        );
+        c.regions[0].post_rust[4] = 0;
+        c.merged = false;
+        assert_eq!(crate::l2::compare(&c).len(), 1, "in-process L2 compares raw");
+    }
+
+    /// gCdStreams' semaphore and file handles (heap, *0x8E3FFC): by class, only when the case holds the
+    /// pointer and the region starts at the array.
+    #[test]
+    fn heap_handle_words_follow_the_pointer() {
+        use crate::l2::{Case, Region, RegionKind};
+        let reg = |addr: u32, pre: Vec<u8>| Region {
+            addr,
+            kind: RegionKind::Extra,
+            access: 3,
+            readable: true,
+            post_orig: pre.clone(),
+            post_rust: pre.clone(),
+            pre,
+        };
+        let arr = 0x0348_E048u32;
+        let c = Case {
+            regions: vec![reg(0x8E3FFC, arr.to_le_bytes().to_vec()), reg(arr, vec![0; 0xF0])],
+            ..Case::default()
+        };
+        let w = heap_handle_words(&c, arr, 0xF0);
+        assert_eq!(w.len(), 10);
+        assert_eq!(&w[..4], &[arr + 0x14, arr + 0x18, arr + 0x44, arr + 0x48]);
+        assert!(heap_handle_words(&c, arr + 4, 0xF0).is_empty(), "another region");
+        let mut a = vec![0u8; 0xF0];
+        let mut b = a.clone();
+        a[0x14..0x1C].copy_from_slice(&[0xD4, 0, 0, 0, 0xD0, 0, 0, 0]);
+        b[0x14..0x1C].copy_from_slice(&[0xD0, 0, 0, 0, 0xCC, 0, 0, 0]);
+        classify_case_handles(&c, arr, &mut a);
+        classify_case_handles(&c, arr, &mut b);
+        assert_eq!(a, b);
+        b[0x10] = 1; // status: still compared
+        assert_ne!(a, b);
+        let no_ptr = Case {
+            regions: vec![reg(arr, vec![0; 0xF0])],
+            ..Case::default()
+        };
+        assert!(heap_handle_words(&no_ptr, arr, 0xF0).is_empty());
+    }
+
+    /// The skimmer residue: only those 10 bytes, excluded for every function but LoadVehicleObject.
+    #[test]
+    fn skimmer_residue_is_narrow_and_kept_for_its_writer() {
+        assert_eq!(SKIMMER_MODEL_INFO + 0x44, 0xB2AC78, "hz-e1c dump address");
+        let ex: Vec<u32> = (0xB2AC00..0xB2AD00).filter(|&a| input_excluded(a)).collect();
+        assert_eq!(ex, (0xB2AC74..0xB2AC7E).collect::<Vec<u32>>());
+        let mut a = vec![0u8; 4096];
+        let mut b = a.clone();
+        a[0xC78..0xC7E].copy_from_slice(&[0x33, 0x33, 0x33, 0x3F, 0xFF, 0xFF]);
+        assert_eq!(fingerprint_bytes(0xB2A000, &a), fingerprint_bytes(0xB2A000, &b));
+        b[0xC7E] = 1; // the next field
+        assert_ne!(fingerprint_bytes(0xB2A000, &a), fingerprint_bytes(0xB2A000, &b));
+        let mut c = crate::l2::Case {
+            merged: true,
+            fn_addr: 0x5B6F30,
+            ..Default::default()
+        };
+        assert!(
+            !exclusions(&c).iter().any(|e| e.addr == 0xB2AC74),
+            "the writer keeps them"
+        );
+        c.fn_addr = 0x5E4500;
+        assert!(exclusions(&c).iter().any(|e| e.addr == 0xB2AC74 && e.len == 10));
+        c.merged = false;
+        assert!(
+            !exclusions(&c).iter().any(|e| e.addr == 0xB2AC74),
+            "split-run pairs only"
+        );
     }
 
     #[test]
@@ -472,7 +869,11 @@ mod tests {
             kind,
             access: 3,
             readable: true,
-            pre: if kind == RegionKind::Post { vec![] } else { vec![0; post.len()] },
+            pre: if kind == RegionKind::Post {
+                vec![]
+            } else {
+                vec![0; post.len()]
+            },
             post_orig: post.clone(),
             post_rust: post,
         };
@@ -486,7 +887,10 @@ mod tests {
         };
         let e = exclusions(&c);
         let addrs: Vec<u32> = e.iter().map(|x| x.addr).collect();
-        assert_eq!(addrs, vec![0x2000_0124, 0x2000_0024, 0x3000_002C, 0x3000_003C, 0x3000_004C]);
+        assert_eq!(
+            addrs,
+            vec![0x2000_0124, 0x2000_0024, 0x3000_002C, 0x3000_003C, 0x3000_004C]
+        );
         // alpha differs, everything else equal: identical after exclusion; a red difference is not
         c.regions[1].post_rust[0x24] = 0x50;
         assert!(crate::l2::compare(&c).is_empty());
@@ -544,7 +948,10 @@ mod tests {
     fn stack_pointers_compare_by_offset_from_the_call() {
         let mut a = ctx(vec![]);
         let mut b = ctx(vec![]);
-        assert!(!words_equal(0x36F208, &a, 0x36F1D8, &b), "no stack class without esp");
+        assert!(
+            !words_equal(0x36F208, &a, 0x36F1D8, &b),
+            "no stack class without esp"
+        );
         (a.stack, a.esp) = ((0x270000, 0x370000), 0x36F1F0);
         (b.stack, b.esp) = ((0x270000, 0x370000), 0x36F1C0);
         assert_eq!(a.normalise(0x36F208), Norm::Stack { off: 0x18 });
@@ -558,14 +965,23 @@ mod tests {
     fn foreign_objects_are_equal_only_to_foreign_objects() {
         let mut a = ctx(vec![]);
         let mut b = ctx(vec![]);
-        assert!(!words_equal(0x0301_A530, &a, 0x0301_A340, &b), "no class without the lists");
+        assert!(
+            !words_equal(0x0301_A530, &a, 0x0301_A340, &b),
+            "no class without the lists"
+        );
         a.foreign = vec![0x0301_A530, 0x05F0_C5E0];
         b.foreign = vec![0x0301_A340];
         assert_eq!(a.normalise(0x0301_A530), Norm::Foreign);
         assert!(words_equal(0x0301_A530, &a, 0x0301_A340, &b));
         assert!(!words_equal(0x0301_A530, &a, 0, &b), "an OS object vs null");
-        assert!(!words_equal(0x0301_A531, &a, 0x0301_A340, &b), "not in the plain run's list");
-        assert!(!words_equal(0x0301_A530, &a, 0x00B7_CD98, &b), "an OS object vs a game global");
+        assert!(
+            !words_equal(0x0301_A531, &a, 0x0301_A340, &b),
+            "not in the plain run's list"
+        );
+        assert!(
+            !words_equal(0x0301_A530, &a, 0x00B7_CD98, &b),
+            "an OS object vs a game global"
+        );
     }
 
     #[test]

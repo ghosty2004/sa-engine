@@ -6,6 +6,8 @@ use std::path::PathBuf;
 
 pub struct Exe {
     sections: Vec<(u32, Vec<u8>)>,
+    /// IMAGE_SCN_MEM_EXECUTE per section.
+    exec: Vec<bool>,
 }
 
 fn u16_at(d: &[u8], o: usize) -> u16 {
@@ -34,6 +36,7 @@ pub fn load() -> Option<Exe> {
     let opt = u16_at(&d, pe + 20) as usize;
     let base = u32_at(&d, pe + 24 + 28);
     let mut sections = Vec::new();
+    let mut exec = Vec::new();
     for s in 0..nsec {
         let h = pe + 24 + opt + s * 40;
         let (vsize, va, rsize, raw) = (
@@ -46,8 +49,9 @@ pub fn load() -> Option<Exe> {
         let n = (rsize as usize).min(d.len().saturating_sub(raw as usize));
         bytes[..n].copy_from_slice(&d[raw as usize..raw as usize + n]);
         sections.push((base + va, bytes));
+        exec.push(u32_at(&d, h + 36) & 0x2000_0000 != 0);
     }
-    Some(Exe { sections })
+    Some(Exe { sections, exec })
 }
 
 impl Exe {
@@ -60,6 +64,16 @@ impl Exe {
             }
         }
         &[]
+    }
+
+    /// The executable sections of the image (`IMAGE_SCN_MEM_EXECUTE`: the code sections plus the
+    /// no-CD build's executable `.data` at 0x1301000 and others): (virtual address, bytes).
+    pub fn exec_sections(&self) -> impl Iterator<Item = (u32, &[u8])> {
+        self.sections
+            .iter()
+            .zip(&self.exec)
+            .filter(|(_, x)| **x)
+            .map(|((va, b), _)| (*va, b.as_slice()))
     }
 
     /// The sections that hold code: game `.text` (0x401000), the no-CD `.text` and `.HOODLUM` (by

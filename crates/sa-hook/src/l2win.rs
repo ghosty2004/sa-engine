@@ -1541,9 +1541,9 @@ fn run_split(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32, ordinal: u32, 
             && !(stack.0..stack.1).contains(&v)
     };
     let page_hashes = snap.page_hashes(nstatic, &mask, &fm, &mut foreign_words);
-    let volatile: Vec<Write> = sa_oracle_format::normalise::INPUT_EXCLUSIONS
-        .iter()
-        .filter_map(|e| mem_read(e.addr, e.len as usize).map(|bytes| Write { addr: e.addr, bytes }))
+    let volatile: Vec<Write> = sa_oracle_format::normalise::volatile_ranges()
+        .into_iter()
+        .filter_map(|(addr, len, _)| mem_read(addr, len as usize).map(|bytes| Write { addr, bytes }))
         .collect();
     if c.dump_seq.contains(&seq) {
         let out = c.out.clone().unwrap_or_else(|| "l2.spool".into());

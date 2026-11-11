@@ -758,3 +758,10 @@
   port-l2.sh stale wine.log fix (taken earlier for the SCRIPT-2 reruns).
 - Merge: registration conflicts resolved (hud after veh). sa-hook lib 45, sa-hud 3, workspace clippy, i686 OK;
   all-ports IDENTICAL on all 7 recordings. States: 78 → L2, 14 → L1, 56 → implemented. F1 = 1128 (7.29 %).
+
+## 2026-11-11 HARNESS-2 integrated (main session)
+- Agent abbb4a8e (lane 5): see ROADMAP HARNESS-2. Merge conflicts: HookReg fields (`set_original` from ADR-002 and
+  `arg8`/`arg16`) and port-l2.sh (wine.log fix + stale-output cleanup) combined. sa-hook lib 48, sa-oracle lib 19,
+  sa-oracle-format 26, workspace clippy, i686 build OK; all-ports IDENTICAL on grove, weapon-combat, driving.
+- States: 6 → L2 from the agent's split reruns (PASS, compared > 0, 0 mismatches, 0 undeclared in every run).
+  F1 = 1134 / 15,479 (7.33 %). Note: the core split-report needs ~9 GB RAM (use MemoryMax ≥ 12G).

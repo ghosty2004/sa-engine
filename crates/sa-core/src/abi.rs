@@ -45,6 +45,11 @@ pub struct HookReg {
     /// trampoline, or a `.HOODLUM` stub's old target) here before patching, so the port can call the
     /// original body for the paths it has not ported (`<fn>_original`). `None` for whole-function ports.
     pub set_original: Option<fn(u32)>,
+    /// Stack argument words (bit k = word k) holding a 1-byte (`u8`/`i8`/`bool`) resp. 2-byte argument:
+    /// the original's callers leave the upper bytes of such a slot undefined (MSVC pushes a whole
+    /// register), so split-run L2 compares only the argument's own bytes (HARNESS-2).
+    pub arg8: u32,
+    pub arg16: u32,
 }
 
 /// EAX as the caller left it at the entry of the last `#[hook(entry_eax)]` port (PORT-ANIM-INPUT).
@@ -98,6 +103,15 @@ pub enum AbiRet {
 /// 32-bit stack words an argument of type `T` occupies.
 pub const fn stack_words<T>() -> u8 {
     core::mem::size_of::<T>().div_ceil(4) as u8
+}
+
+/// Bit `word` when an argument of type `T` (at stack word `word`) is `bytes` wide, else 0.
+pub const fn narrow_bit<T>(word: u8, bytes: usize) -> u32 {
+    if core::mem::size_of::<T>() == bytes && word < 32 {
+        1u32 << word
+    } else {
+        0
+    }
 }
 
 impl HookReg {

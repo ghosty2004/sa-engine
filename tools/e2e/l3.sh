@@ -24,7 +24,7 @@
 #
 # Every game run holds the lane lock (and target/locks/game.lock with L3_GAME_LOCK=1).
 # Env: LANE (default 3), SA_ROOT (checkout holding wine/; set it from a worktree), RUN_TIMEOUT (s per
-# run, default 900). Build first:
+# run, default 900), L3_CACHE (trace cache directory, default sa-oracle's target/l3/cache). Build first:
 #   cargo build --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook
 #   cargo build --release -p sa-oracle-format -p sa-oracle
 # Output: target/e2e/lane-N/l3/ (reports, probe traces and logs, summary.txt). Exit 0 = all passed.
@@ -57,9 +57,10 @@ probe_main() {
     mkdir -p "$DET" "$(dirname "$out")"
     [ -n "${L3_REC:-}" ] && [ -s "$L3_REC" ] || { echo "l3 probe: L3_REC not set" >&2; return 1; }
     cmp -s "$L3_REC" "$DET/l3.sarec" || cp -f "$L3_REC" "$DET/l3.sarec"
-    win() { winepath -w "$1"; }
+    win() { e2e_winpath "$1"; }
     wineserver -k 2> /dev/null || true
-    rm -f "$DET/$name".* "$GTA_DIR/sa-hook.log"
+    # never leave an earlier probe's trace at OUT (it would be read as this run's)
+    rm -f "$DET/$name".* "$GTA_DIR/sa-hook.log" "$out"
     (
         export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$(win "$DET/$name.trace")" SA_DET_REPLAY="$(win "$DET/l3.sarec")"
         # Engine-crate ports are installed in original mode (L3_HOOK_PORTS overrides SA_HOOK_PORTS; set
@@ -193,7 +194,7 @@ l3() {
     local name="$1"
     shift
     "$ORACLE" l3 --rec "$REC" --runner "$SELF --probe" --exe "$EXE" --dll "$DLL" --margin "$MARGIN" \
-        --work "$OUT/probes" --report "$OUT/$name.txt" "$@" 2>&1 | tee "$OUT/$name.log"
+        --work "$OUT/probes" ${L3_CACHE:+--cache "$L3_CACHE"} --report "$OUT/$name.txt" "$@" 2>&1 | tee "$OUT/$name.log"
     return "${PIPESTATUS[0]}"
 }
 culprits() { sed -n 's/^CULPRIT \({[^}]*}\).*/\1/p' "$OUT/$1.txt" | sort; }

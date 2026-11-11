@@ -88,6 +88,8 @@ const fn sig(conv: Conv, args: u8, ret: Ret) -> Option<Sig> {
         this_type: None,
         this_size: 0,
         ptr_args: &[],
+        arg8: 0,
+        arg16: 0,
     })
 }
 
@@ -375,6 +377,8 @@ const LOCAL: [HookSpec; LOCAL_N] = [
             this_size: 0,
             // float* x1, float* x2
             ptr_args: &[PtrArg { arg: 3, size: 4 }, PtrArg { arg: 4, size: 4 }],
+            arg8: 0,
+            arg16: 0,
         }),
     },
     HookSpec {
@@ -398,6 +402,8 @@ const LOCAL: [HookSpec; LOCAL_N] = [
             // sizeof(CVector) = 0xC (catalog/layouts.csv)
             this_size: 0xC,
             ptr_args: &[],
+            arg8: 0,
+            arg16: 0,
         }),
     },
 ];
@@ -443,6 +449,8 @@ const fn sig_of(r: &sa_core::abi::HookReg) -> Sig {
         this_type: r.this_type,
         this_size: r.this_size,
         ptr_args: &[],
+        arg8: r.arg8,
+        arg16: r.arg16,
     }
 }
 
@@ -978,5 +986,11 @@ mod tests {
         assert_eq!((s.args, s.ret), (0, Ret::Al));
         let s = HOOKS[find("CTimer::UpdateVariables").unwrap()].sig.unwrap();
         assert_eq!((s.args, s.ret), (1, Ret::Void));
+        // 1-byte stack arguments (HARNESS-2, split-run inputs): RegisterCrime_Immediately(int,
+        // CVector*, CPed*, bool) has `bool` in word 3
+        let s = HOOKS[find("CWanted::RegisterCrime_Immediately").unwrap()]
+            .sig
+            .unwrap();
+        assert_eq!((s.arg8, s.arg16), (0b1000, 0));
     }
 }

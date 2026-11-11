@@ -55,6 +55,9 @@ pub struct FnResult {
     pub volatile_addrs: BTreeMap<u32, usize>,
     /// Compared pairs whose stacks were shifted (normalise.rs `Stack` class in use): delta -> pairs.
     pub stack_shifts: BTreeMap<i64, usize>,
+    /// Compared pairs with a pointer argument into the caller's frames compared by its declared
+    /// pointee ([`stack_pointees`]): "argN plain ADDR rust ADDR +LEN" of the first use -> pairs.
+    pub stack_pointees: BTreeMap<String, usize>,
     /// Uses of the `Foreign` class (OS object addresses differing raw): location -> pairs.
     pub foreign_uses: BTreeMap<String, usize>,
     /// Watched-window words holding OS object addresses that differed between the runs (masked in the
@@ -126,6 +129,66 @@ fn rebase(b: &Case, delta: u32, v: u32) -> u32 {
     }
 }
 
+/// The meaningful bits of stack argument word `k` of the hooked function at `fn_addr`: 0xFF / 0xFFFF
+/// for a 1- / 2-byte parameter of its port (`#[hook]` signature, `HookReg::arg8` / `arg16`), else all.
+/// The original's callers leave the upper bytes of such a slot undefined: CCrime::ReportCrime pushes
+/// `bool dontCare` for CWanted::RegisterCrime_Immediately as a whole word holding stack residue
+/// (plain 0x0036EF00, rust 0: hz-f1c), and the callee reads only the low byte.
+pub fn arg_widths(fn_addr: u32) -> impl Fn(usize) -> u32 {
+    let sig = sa_hook::table::HOOKS
+        .iter()
+        .find(|h| h.addr == fn_addr)
+        .and_then(|h| h.sig);
+    move |k: usize| match sig {
+        Some(s) if k < 32 && s.arg8 >> k & 1 != 0 => 0xFF,
+        Some(s) if k < 32 && s.arg16 >> k & 1 != 0 => 0xFFFF,
+        _ => u32::MAX,
+    }
+}
+
+/// `v` points into the caller's frames of case `c`: the thread's stack at or above the call's own
+/// argument block (`esp`).
+fn caller_stack(c: &Case, v: u32) -> bool {
+    c.esp != 0 && v >= c.esp && v >= c.stack.0 && v < c.stack.1
+}
+
+/// Declared pointee regions (`ArgPtr`, or an extra region such as `HOOK@arg1:0xC:R`) that lie in the
+/// caller's frames in BOTH runs at different places: (region index, plain address, rust address,
+/// length). A Rust caller lays out its frame differently from the original (CCrime::ReportCrime on
+/// Rust passes `&pos` = 0x36EE48 where the original passes 0x36EECC to CWanted::ReportCrimeNow /
+/// RegisterCrime_Immediately, PORT-WEAPON-PED c-split2..4), so neither the raw address nor its offset
+/// from the call (`Stack` class) identifies the object. Such a pair is the same input when its
+/// declared bytes are: the pointer argument is compared by the pointee (the region's bytes before
+/// the call, compared like every region), its writes are moved to the plain run's address, and every
+/// use is counted (`FnResult::stack_pointees`). A stack pointer without a declared pointee stays a
+/// difference (declare `HOOK@argN:SIZE:R` in tools/e2e/l2-extras.txt).
+pub fn stack_pointees(a: &Case, b: &Case) -> Vec<(usize, u32, u32, u32)> {
+    a.regions
+        .iter()
+        .zip(&b.regions)
+        .enumerate()
+        .filter(|(_, (x, y))| {
+            x.kind == y.kind
+                && matches!(x.kind, RegionKind::ArgPtr(_) | RegionKind::Extra)
+                && x.addr != y.addr
+                && !x.pre.is_empty()
+                && x.pre.len() == y.pre.len()
+                && caller_stack(a, x.addr)
+                && caller_stack(b, y.addr)
+        })
+        .map(|(i, (x, y))| (i, x.addr, y.addr, x.pre.len() as u32))
+        .collect()
+}
+
+/// A rust-run address moved to the plain run's layout: into the plain run's pointee for a byte of a
+/// [`stack_pointees`] region, otherwise by the stack shift ([`rebase`]).
+fn to_plain(b: &Case, delta: u32, pointees: &[(usize, u32, u32, u32)], v: u32) -> u32 {
+    match pointees.iter().find(|p| v.wrapping_sub(p.2) < p.3) {
+        Some(p) => p.1 + (v - p.2),
+        None => rebase(b, delta, v),
+    }
+}
+
 /// `b` (at `addr`) with the reviewed volatile input bytes (normalise::INPUT_EXCLUSIONS) zeroed; the raw
 /// values are compared and reported apart (`Case::volatile`).
 fn mask_volatile(addr: u32, b: &[u8]) -> Vec<u8> {
@@ -155,11 +218,14 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
     }
     let (ca, cb) = input_ctx(a, b);
     let delta = stack_delta(a, b);
+    let pointees = stack_pointees(a, b);
+    let pointee = |x: u32, y: u32| pointees.iter().any(|p| p.1 == x && p.2 == y);
+    let width = arg_widths(a.fn_addr);
     if a.args.len() != b.args.len()
-        || a.args
-            .iter()
-            .zip(&b.args)
-            .any(|(&x, &y)| !normalise::words_equal(x, &ca, y, &cb))
+        || a.args.iter().zip(&b.args).enumerate().any(|(k, (&x, &y))| {
+            let m = width(k);
+            !(m != u32::MAX && x & m == y & m) && !normalise::words_equal(x, &ca, y, &cb) && !pointee(x, y)
+        })
     {
         return (
             Some(format!("args: plain {:x?} rust {:x?}", a.args, b.args)),
@@ -210,7 +276,8 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
         if x.kind != y.kind
             || (x.has_pre_memory()
                 && x.addr != rebase(b, delta, y.addr)
-                && !normalise::words_equal(x.addr, &ca, y.addr, &cb))
+                && !normalise::words_equal(x.addr, &ca, y.addr, &cb)
+                && !pointee(x.addr, y.addr))
         {
             return (
                 Some(format!(
@@ -225,7 +292,10 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
             // A write-only region's bytes before the call are not an input (caller's scratch buffer).
             _ if x.access == fmt::ACC_W => false,
             _ => {
-                let (p, q) = (mask_volatile(x.addr, &x.pre), mask_volatile(x.addr, &y.pre));
+                let (mut p, mut q) = (mask_volatile(x.addr, &x.pre), mask_volatile(x.addr, &y.pre));
+                // handle words of heap arrays (normalise::HEAP_HANDLES), each run at its own address
+                normalise::classify_case_handles(a, x.addr, &mut p);
+                normalise::classify_case_handles(b, y.addr, &mut q);
                 normalise::bytes_equal(x.addr, &p, &ca, &q, &cb).is_some()
             }
         };
@@ -258,10 +328,11 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
         .window_pre
         .iter()
         .flat_map(|w| {
+            let pointees = &pointees;
             w.bytes
                 .iter()
                 .enumerate()
-                .map(move |(k, &v)| (rebase(b, delta, w.addr + k as u32), v))
+                .map(move |(k, &v)| (to_plain(b, delta, pointees, w.addr + k as u32), v))
         })
         .collect();
     let pre_a: BTreeMap<u32, u8> = a
@@ -280,12 +351,7 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
             .iter()
             .any(|&r| at >= r.0 && at < r.1 && is_static_window(a, r));
         let Some(&u) = pre_b.get(&at) else { continue };
-        if !st
-            || u == v
-            || normalise::INPUT_EXCLUSIONS
-                .iter()
-                .any(|e| at.wrapping_sub(e.addr) < e.len)
-        {
+        if !st || u == v || normalise::input_excluded(at) {
             continue;
         }
         // The aligned word, when both runs have all four bytes: compared through the normaliser
@@ -300,7 +366,9 @@ pub fn input_diff(a: &Case, b: &Case) -> (Option<String>, bool) {
             ]))
         };
         if let (Some(x), Some(y)) = (word(&pre_a), word(&pre_b))
-            && normalise::words_equal(x, &ca, y, &cb)
+            && (normalise::words_equal(x, &ca, y, &cb)
+                || (normalise::os_handle_at(ws).is_some()
+                    && normalise::handle_class(x) == normalise::handle_class(y)))
         {
             continue;
         }
@@ -360,10 +428,14 @@ pub fn merge(a: &Case, b: &Case) -> (Case, Option<String>) {
         c.stack = (a.stack.0.min(b.stack.0), a.stack.1.max(b.stack.1));
     }
     c.rust = rust_out;
-    // The rust run's stack-located writes, moved to the plain run's stack layout.
-    for w in c.rust.writes.iter_mut() {
-        w.addr = rebase(b, delta, w.addr);
-    }
+    // The rust run's stack-located writes, moved to the plain run's stack layout (bytes of a caller's
+    // stack object passed by pointer: to the plain run's object).
+    let pointees = stack_pointees(a, b);
+    c.rust.writes = moved_writes(
+        &c.rust.writes,
+        |v| to_plain(b, delta, &pointees, v),
+        !pointees.is_empty(),
+    );
     let mut post_addr = None;
     let (ca, cb) = (a.norm_ctx().0, b.norm_ctx().0);
     for (x, y) in c.regions.iter_mut().zip(&b.regions) {
@@ -381,15 +453,34 @@ pub fn merge(a: &Case, b: &Case) -> (Case, Option<String>) {
     }
     // each run's bytes before the call (the rust run's moved to the plain run's stack layout)
     c.window_pre = a.window_pre.clone();
-    c.window_pre_rust = b
-        .window_pre
-        .iter()
-        .map(|w| fmt::Write {
-            addr: rebase(b, delta, w.addr),
-            bytes: w.bytes.clone(),
-        })
-        .collect();
+    c.window_pre_rust = moved_writes(
+        &b.window_pre,
+        |v| to_plain(b, delta, &pointees, v),
+        !pointees.is_empty(),
+    );
     (c, post_addr)
+}
+
+/// `ws` with every address moved by `f`: whole records, or byte by byte when `bytewise` (a record
+/// may straddle a moved stack object).
+fn moved_writes(ws: &[fmt::Write], f: impl Fn(u32) -> u32, bytewise: bool) -> Vec<fmt::Write> {
+    if !bytewise {
+        return ws
+            .iter()
+            .map(|w| fmt::Write {
+                addr: f(w.addr),
+                bytes: w.bytes.clone(),
+            })
+            .collect();
+    }
+    ws.iter()
+        .flat_map(|w| {
+            w.bytes.iter().enumerate().map(|(k, &v)| fmt::Write {
+                addr: f(w.addr + k as u32),
+                bytes: vec![v],
+            })
+        })
+        .collect()
 }
 
 /// Words that differ raw but are equal through the `Foreign` class (OS object addresses): where.
@@ -592,6 +683,15 @@ pub fn split_report(plain: &[Case], rust: &[Case]) -> Report {
                 }
             }
         }
+        for (i, x, y, n) in stack_pointees(a, b) {
+            let what = match a.regions[i].kind {
+                RegionKind::ArgPtr(k) => format!("*arg{k}"),
+                _ => format!("extra region {i}"),
+            };
+            *e.stack_pointees
+                .entry(format!("{what} (plain {x:#x} rust {y:#x}, {n} bytes)"))
+                .or_default() += 1;
+        }
         let (m, post_addr) = merge(a, b);
         for u in foreign_uses(a, b, &m) {
             *e.foreign_uses.entry(u).or_default() += 1;
@@ -752,6 +852,20 @@ pub fn print_report(rep: &Report) -> String {
             e.addr, e.len, e.rule
         );
     }
+    for e in normalise::OS_HANDLES {
+        let _ = writeln!(
+            s,
+            "OS handle words compared by class (reviewed, normalise.rs) {:#x}+{}: {}",
+            e.addr, e.len, e.rule
+        );
+    }
+    for e in normalise::RESIDUE {
+        let _ = writeln!(
+            s,
+            "known residue excluded except for its writer {:#x} (reviewed, normalise.rs) {:#x}+{}: {}",
+            e.writer, e.addr, e.len, e.rule
+        );
+    }
     for f in &rep.fns {
         let _ = writeln!(
             s,
@@ -793,6 +907,16 @@ pub fn print_report(rep: &Report) -> String {
                 s,
                 "    stack shifted (rust vs plain; stack pointers compared by offset, normalise.rs Stack): {}",
                 v.join(", ")
+            );
+        }
+        if !f.stack_pointees.is_empty() {
+            let n: usize = f.stack_pointees.values().sum();
+            let v: Vec<String> = f.stack_pointees.keys().take(4).cloned().collect();
+            let _ = writeln!(
+                s,
+                "    pointer arguments into the caller's frames compared by their declared pointee (split.rs stack_pointees), {n} use(s): {}{}",
+                v.join(", "),
+                if f.stack_pointees.len() > 4 { ", …" } else { "" }
             );
         }
         if !f.foreign_uses.is_empty() {
@@ -1025,5 +1149,88 @@ mod tests {
         assert_eq!(rep.fns[0].verdict(), "COUNT");
         // wrong spool kind
         assert!(!split_report(&r, &p).errors.is_empty());
+    }
+
+    /// A pointer argument into a Rust caller's frame (CWanted::ReportCrimeNow's `CVector*`, plain
+    /// 0x36EECC, rust 0x36EE48 with a different frame layout): compared by its declared pointee.
+    #[test]
+    fn stack_pointer_arguments_compare_by_pointee() {
+        let mk = |leave: u8, esp: u32, pos: u32| {
+            let mut c = case(leave, 0, 0, 0x8E2C30);
+            c.esp = esp;
+            c.stack = (0x270000, 0x370000);
+            c.args = vec![15, pos, 0];
+            c.regions.push(Region {
+                addr: pos,
+                kind: RegionKind::Extra,
+                access: 1,
+                readable: true,
+                pre: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                post_orig: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                post_rust: vec![],
+            });
+            // the callee writes the pointee's second dword (through the pointer)
+            c.orig.writes.push(Write {
+                addr: pos + 4,
+                bytes: vec![0x42],
+            });
+            c.window_pre.push(Write {
+                addr: pos + 4,
+                bytes: vec![5],
+            });
+            c
+        };
+        let p = vec![mk(2, 0x36EE00, 0x36EECC)];
+        let r = vec![mk(3, 0x36EDE0, 0x36EE48)];
+        let rep = split_report(&p, &r);
+        let f = &rep.fns[0];
+        assert_eq!(f.verdict(), "PASS", "{f:?}");
+        assert_eq!(f.stack_pointees.values().sum::<usize>(), 1);
+        assert!(print_report(&rep).contains("compared by their declared pointee"));
+        // the pointee differs before the call: a different input
+        let mut r2 = r.clone();
+        r2[0].regions[1].pre[0] = 9;
+        assert!(split_report(&p, &r2).fns[0].diverged.is_some());
+        // the write through the pointer differs: a mismatch
+        let mut r3 = r.clone();
+        r3[0].orig.writes.last_mut().unwrap().bytes[0] = 0x43;
+        assert_eq!(split_report(&p, &r3).fns[0].verdict(), "FAIL");
+        // no declared pointee: the addresses stay different inputs
+        let (mut p4, mut r4) = (p.clone(), r.clone());
+        p4[0].regions.pop();
+        r4[0].regions.pop();
+        let rep = split_report(&p4, &r4);
+        assert!(
+            rep.fns[0].diverged.as_ref().unwrap().2.starts_with("args"),
+            "{:?}",
+            rep.fns[0]
+        );
+        // a pointer below the call (not the caller's frames) is not a pointee pair
+        let (mut p5, mut r5) = (p.clone(), r.clone());
+        p5[0].esp = 0x36EF00;
+        r5[0].esp = 0x36EF00;
+        assert!(split_report(&p5, &r5).fns[0].diverged.is_some());
+    }
+
+    /// A 1-byte parameter's stack word: only its low byte is an input (`bool dontCare` of
+    /// CWanted::RegisterCrime_Immediately, pushed with stack residue in the upper bytes by the original).
+    #[test]
+    fn narrow_arguments_compare_their_own_bytes() {
+        let w = arg_widths(0x562430);
+        assert_eq!((w(0), w(1), w(2), w(3)), (u32::MAX, u32::MAX, u32::MAX, 0xFF));
+        let mk = |leave: u8, dont_care: u32| {
+            let mut c = case(leave, 0, 0, 0x8E2C30);
+            c.fn_addr = 0x562430;
+            c.args = vec![15, 0x1000, 0x2000, dont_care];
+            c
+        };
+        let rep = split_report(&[mk(2, 0x0036_EF00)], &[mk(3, 0)]);
+        assert_eq!(rep.fns[0].verdict(), "PASS", "{:?}", rep.fns[0]);
+        let rep = split_report(&[mk(2, 0x0036_EF01)], &[mk(3, 0)]);
+        assert!(rep.fns[0].diverged.is_some(), "the byte itself differs");
+        // a 4-byte argument stays compared whole
+        let mut x = mk(2, 0);
+        x.args[0] = 0x100 + 15;
+        assert!(split_report(&[x], &[mk(3, 0)]).fns[0].diverged.is_some());
     }
 }

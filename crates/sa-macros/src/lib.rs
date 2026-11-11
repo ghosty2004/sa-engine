@@ -273,6 +273,31 @@ fn expand(
         .map(|r| if *r == "ecx" { 1u8 } else { 2u8 })
         .fold(0, |a, b| a | b);
     let words = quote!((0u8 #(+ ::sa_core::abi::stack_words::<#stack_tys>())*));
+    // the i686 stack word of each stack argument: the sum of the words before it. Pointer-sized
+    // types are one word on i686 whatever the host's pointer size (the host build of the hook table
+    // is what `sa-oracle` reads).
+    let i686_words: Vec<_> = stack_tys
+        .iter()
+        .map(|t| {
+            let s = quote!(#t).to_string().replace(' ', "");
+            let ptr = ["GPtr<", "*", "&", "fn(", "Option<fn", "extern", "usize", "isize"]
+                .iter()
+                .any(|p| s.starts_with(p));
+            if ptr {
+                quote!(1u8)
+            } else {
+                quote!(::sa_core::abi::stack_words::<#t>())
+            }
+        })
+        .collect();
+    let offsets: Vec<_> = (0..stack_tys.len())
+        .map(|i| {
+            let before = &i686_words[..i];
+            quote!((0u8 #(+ #before)*))
+        })
+        .collect();
+    let arg8 = quote!((0u32 #(| ::sa_core::abi::narrow_bit::<#stack_tys>(#offsets, 1))*));
+    let arg16 = quote!((0u32 #(| ::sa_core::abi::narrow_bit::<#stack_tys>(#offsets, 2))*));
     // The naked wrapper (entry when registers are preserved): push the saved registers, copy the
     // `n` stack argument words (each `push [esp + 4*(saved + n)]` copies the next lower word, the
     // displacement stays constant), call the shim (ECX/EDX still hold register arguments), drop the
@@ -428,6 +453,8 @@ fn expand(
             this_size: #this_size,
             preserve: #mask,
             set_original: #set_original,
+            arg8: #arg8,
+            arg16: #arg16,
         };
     })
 }

@@ -59,6 +59,9 @@ pub struct Sig {
     pub this_type: Option<&'static str>,
     pub this_size: u32,
     pub ptr_args: &'static [PtrArg],
+    /// Stack argument words holding a 1-byte / 2-byte argument (bit k = word k; `HookReg::arg8`).
+    pub arg8: u32,
+    pub arg16: u32,
 }
 
 impl Sig {
@@ -277,7 +280,12 @@ impl FileProbe {
             Some((pos, size, path)) => format!("{path:?} pos {pos} size {size}"),
             None => "no OS file".into(),
         };
-        format!("fd {} osfile {:#x} {os} FILE {}", self.fd, self.osfile, hex(&self.file))
+        format!(
+            "fd {} osfile {:#x} {os} FILE {}",
+            self.fd,
+            self.osfile,
+            hex(&self.file)
+        )
     }
 }
 
@@ -322,7 +330,10 @@ impl Region {
     }
     /// Memory region whose `pre` bytes are the memory at `addr` (not a post-only or OS region).
     pub fn has_pre_memory(&self) -> bool {
-        !matches!(self.kind, RegionKind::Post | RegionKind::Os(_) | RegionKind::Decl(_))
+        !matches!(
+            self.kind,
+            RegionKind::Post | RegionKind::Os(_) | RegionKind::Decl(_)
+        )
     }
     /// Declared as written (bytes changed here are inside the write set).
     pub fn declared_write(&self) -> bool {
@@ -703,7 +714,10 @@ impl Case {
             let (access, readable, mut pre) = (r.u8()?, r.u8()? != 0, r.bytes()?);
             let kind = match kind {
                 RegionKind::Decl(_) => {
-                    let b: [u8; 4] = pre.as_slice().try_into().map_err(|_| "bad declared region length".to_string())?;
+                    let b: [u8; 4] = pre
+                        .as_slice()
+                        .try_into()
+                        .map_err(|_| "bad declared region length".to_string())?;
                     pre = Vec::new();
                     RegionKind::Decl(u32::from_le_bytes(b))
                 }
@@ -794,7 +808,10 @@ impl Case {
         } else {
             (self.esp, &self.foreign)
         };
-        (mk(&self.orig, self.esp, &self.foreign), mk(&self.rust, esp_r, f_r))
+        (
+            mk(&self.orig, self.esp, &self.foreign),
+            mk(&self.rust, esp_r, f_r),
+        )
     }
 }
 
@@ -1047,6 +1064,10 @@ pub fn compare(c: &Case) -> Vec<Diff> {
                 }
             }
         }
+        // split-run pairs: OS handle words compare by class (normalise::OS_HANDLES)
+        if c.merged {
+            normalise::classify_case_handles(c, addr, &mut v);
+        }
         v
     };
     for reg in &c.regions {
@@ -1106,6 +1127,12 @@ pub fn compare(c: &Case) -> Vec<Diff> {
             let ws = a & !3;
             let word = |m| u32::from_le_bytes([get(m, ws), get(m, ws + 1), get(m, ws + 2), get(m, ws + 3)]);
             if normalise::words_equal(word(&wo), &ca, word(&wr), &cb) {
+                continue;
+            }
+            if c.merged
+                && normalise::os_handle_at(ws).is_some()
+                && normalise::handle_class(word(&wo)) == normalise::handle_class(word(&wr))
+            {
                 continue;
             }
             bad = Some(a);
@@ -1259,10 +1286,22 @@ mod tests {
             post_orig: Vec::new(),
             post_rust: Vec::new(),
         });
-        c.orig.writes.push(Write { addr: 0xB7CC10, bytes: vec![1, 2] });
-        c.rust.writes.push(Write { addr: 0xB7CC10, bytes: vec![1, 2] });
-        c.orig.writes.push(Write { addr: 0xB7CD00, bytes: vec![3] });
-        c.rust.writes.push(Write { addr: 0xB7CD00, bytes: vec![3] });
+        c.orig.writes.push(Write {
+            addr: 0xB7CC10,
+            bytes: vec![1, 2],
+        });
+        c.rust.writes.push(Write {
+            addr: 0xB7CC10,
+            bytes: vec![1, 2],
+        });
+        c.orig.writes.push(Write {
+            addr: 0xB7CD00,
+            bytes: vec![3],
+        });
+        c.rust.writes.push(Write {
+            addr: 0xB7CD00,
+            bytes: vec![3],
+        });
         let d = Case::decode(&c.encode()).unwrap();
         assert_eq!(d.regions.last().unwrap().kind, RegionKind::Decl(0x100));
         assert!(d.regions.last().unwrap().pre.is_empty());
@@ -1306,7 +1345,11 @@ mod tests {
         let b = s.encode();
         assert!(b.len() > plain.len());
         assert_eq!(Case::decode(&b).unwrap(), s);
-        assert_eq!(Case::decode(&plain).unwrap(), c, "plain cases keep their old encoding");
+        assert_eq!(
+            Case::decode(&plain).unwrap(),
+            c,
+            "plain cases keep their old encoding"
+        );
         let mut s2 = s.clone();
         s2.seq = 7;
         assert_eq!(s2.content_id(), s.content_id(), "seq is provenance");
