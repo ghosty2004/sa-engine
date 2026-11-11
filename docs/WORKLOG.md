@@ -860,3 +860,10 @@
 - Spec files from RW-3 (811 rows) and FINAL (565 rows) committed after check_consts on all changed files. FINAL's
   RENDER/CCustomCarEnvMapPipeline.md duplicates RW-3's 0x5D8590/0x5DA790 (unindexed cross-reference, kept).
 - CORPUS-1 programs and docs/e2e/corpus.md taken from its branch; recordings live in target/e2e/corpus (local).
+
+## 2026-11-11 X87-MODELS merge backed out (main session)
+- Squash-merged X87-MODELS (wide X87 values, fyl2x/fptan models, 5 AUDIO hooks re-registered); tests/clippy/i686 green,
+  but verify-all (main-x87) DIVERGED on 6 of 11 recordings: anim-input 2409, car-ai 2431, weapon-combat 2373,
+  world-cheats 2112 (objects, pools, world), c-bug 2494 (buildings), air-water 2742 (known). A baseline build of master
+  in a separate worktree (base-x87chk) was IDENTICAL on world-cheats, weapon-combat and anim-input → the merge causes
+  it. Staged files restored to master (only the merge's own files); not committed. Sent back to the agent.
