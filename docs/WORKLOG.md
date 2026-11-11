@@ -741,3 +741,14 @@
   (+0x50 hitLevel[5], +0x55 damage[5], +0x48/+0x4C f32), CEventDeadPed::AffectsPed 400 > dist², CTaskComplexDie
   drowning/DieInCar weapon, KnockOffBike ×1/70 and anim 0xF, CTaskSimpleUseGun::ProcessPed 3 inverted conditions,
   Swim ProcessEffects matrix 3 and ×0.33333334, inlined rand()*3.0518509e-05f in 0x5E9600 family.
+
+## 2026-11-11 PORT-SCRIPT-2 integrated (main session)
+- Agent a7b97b06 + 2 helpers: ADR-002 partial ports (docs/arch/ADR-002-partial-ports.md), 343 opcodes, split tooling.
+- Merge: sa-macros conflict (entry_eax from ANIM-INPUT vs fallback) combined; sa-hook lib 45, script/macros/core
+  tests, workspace clippy, i686 build OK.
+- All-ports L3: first batch left 3 recordings without a Rust trace — the stale wine.log bug PORT-HUD found
+  (port-l2.sh read the previous run's exit fault as a crash and killed the next run). Took that fix from the HUD
+  branch; rerun IDENTICAL on weapon-combat 3500, driving 4338, cheats 3276; grove, c-bug, pause-restart, anim-input
+  IDENTICAL in the first batch. No state changes (partial switches stay implemented). Decisions in ROADMAP.
+- Known red: sa-oracle `--test l1` preserved_registers_match_the_hook_registrations (sa-script ECX preserves without
+  specs) — next small task.

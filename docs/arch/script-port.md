@@ -115,7 +115,7 @@ All runs on lane 4 (`SA_ROOT=/home/ghosty2004/sa-engine LANE=4`), outputs under
   `port_hooks_follow_the_local_ones`); clippy `-D warnings`: sa-script host (all targets), i686
   (`in-process`), wasm32; sa-hook i686; sa-oracle host.
 
-## Switches not ported (decision needed)
+## Switches not ported (PORT-SCRIPT-1 state; superseded by "PORT-SCRIPT-2" below)
 
 The 120 SA:MP opcodes live in 26 of the 27 switches (all except `ProcessCommands2600To2699`). A switch is
 replaced as a whole function, so porting them means porting the 26 whole switches:
@@ -182,11 +182,112 @@ replacement until every case is ported (needs a decision, ADR-001 change).
   declared region (START_NEW_SCRIPT/TERMINATE move scripts, CREATE_PLAYER creates a task), so the switch
   and `Process` should be verified with split runs (`--runs "plain split"`, INF-17) instead. Not run in
   this pass.
-- `Process` has no L2 evidence (it runs every command of a script; split run needed); L3 + hook-off only.
-- Hook-off of CollectParameters: rerun (missing trace file, see above).
+- `Process` has no L2 evidence (it runs every command of a script; split run needed); L3 + hook-off only. Done in PORT-SCRIPT-2: split PASS (grove, 1000 pairs).
+- Hook-off of CollectParameters: rerun (missing trace file, see above). Done in PORT-SCRIPT-2: IDENTICAL over 5200 frames.
 - 4 hooks without calls in the three recordings (GetPointerToLocalVariable, GetPointerToLocalArrayElement,
   GetIndexOfGlobalVariable, ProcessOneCommand — the last one has no caller in the exe at all; sa-hook's
   `SA_COV_SCM` coverage detour also targets 0x469EB0's first instruction, the two must not be used together).
 - The 25 switches not ported (above), and with them the SA:MP opcodes outside 0To99 (0053 CREATE_PLAYER is
   in 0To99 and ported).
 - Catalogue rows: the main session sets `catalog/state.csv` from the TSV (agent did not edit it).
+
+# PORT-SCRIPT-2: partial switch ports (ADR-002)
+
+Decision (main session, ROADMAP PORT-SCRIPT): the 25 remaining `ProcessCommandsXToY` switches are ported
+case by case with a fallback to the original body for unported cases, SA:MP opcodes first. Mechanism:
+`docs/arch/ADR-002-partial-ports.md` (`#[hook(..., fallback)]`, `<fn>_original` = the original-mode
+trampoline; phases B/C panic naming switch and opcode). Verdicts: `docs/arch/script-port-verdicts.tsv`
+(one row per switch: ported cases / cases, SA:MP opcodes ported, split verdict per recording, the ported
+opcodes with split PASS evidence).
+
+## Layout
+
+| file | contents |
+|---|---|
+| `cmdlib.rs` | `fallback(orig, NAME, s, cmd)`, `ScriptParams` helpers (`sp`/`spi`/`spf`/`set_sp`), `set_flag`, `fld_fst`, pool getters and common `orig!` declarations, the shared short-range coordinate blip (04CE/0570) |
+| `cmd100.rs` … `cmd2500.rs` | one partial switch each: `PORTED` (ascending opcodes with a Rust case), the `#[hook(..., fallback)]` switch, cases as private functions or inline arms, each with opcode, name, case address and the deviations kept from the exe |
+| `hooks.rs` | `PARTIAL` (switch, `PORTED`); test `partial_switches_list_their_rust_cases` (every switch is a fallback hook, every listed opcode has an arm of the switch's `match command`, every arm is listed) |
+
+## Cases ported
+
+343 opcodes in the 25 switches (opcodes with a jump-table case: 1,845; `PORTED` per switch in the TSV).
+SA:MP (`docs/samp/scm-opcodes-dynamic.csv`, 120 opcodes = the samp-rs list + the dynamic measurement):
+114 of the 119 outside `ProcessCommands0To99` (0053 was ported in pass 1). Not ported (fallback):
+
+| opcode | case | why |
+|---|---|---|
+| 0321 EXPLODE_CHAR_HEAD | 0x48135B | builds `CPedDamageResponseCalculator` + `CEventDamage` on the stack with SEH state |
+| 066A CREATE_FX_SYSTEM_ON_CHAR_WITH_DIRECTION | 0x494A6E | 32-byte label, an `fcom` result kept on the x87 stack across branches, stack matrix temporaries |
+| 06D8 CREATE_MISSION_TRAIN | 0x497F85 | result is an out-parameter `CTrain::CreateMissionTrain` (0x6F7550, not reversed) writes only inside its carriage loop: not confirmed it is always written |
+| 08D4 CREATE_MENU, 08DB SET_MENU_COLUMN | 0x475500, 0x4756B4 | strcpy-style loop over 8-byte labels without NUL reads/writes stale stack bytes |
+
+Other cases left on the fallback on purpose: 0174/0176 (`CPlaceable::GetHeading` returns a raw FPATAN
+ST0, not exact through f64), 02F6/02F7 (FSIN/FCOS), the 8-byte text-label cases passed to
+`TheText.Get`/`GetGarageNumberByName` (0299, 02B9, 02E4, 0360, 0361, 03B0, 03B1, 03D5, 03D6: an 8-character
+label has no NUL, the callee reads stale stack bytes).
+
+## Divergences from gta-reversed kept (the exe wins)
+
+- 0159 POINT_CAMERA_AT_CHAR: the exe passes nullptr to `TakeControl` for a player, the ped otherwise (gr: reversed).
+- 01B9 SET_CURRENT_CHAR_WEAPON: P1 == 0 selects slot 0 directly (gr loops and ends on the last slot holding type 0).
+- 036A/0430: `m_bIsWarpingPedIntoCar` is set after the task constructor; 0430 computes the door only for seat >= 0 (signed).
+- 02CE GET_GROUND_Z_FOR_3D_COORD: a pointer to a local bool is passed as `outResult` (gr: nullptr).
+- 0173 SET_CHAR_HEADING: one wrap in ST0 (+360 when < 0, -360 when > 360); "in vehicle" tested inline (+0x46C bit 8, +0x58C).
+- 01A1..01AA, 01AB/01AC, 01AD..01B0, 0202..0207, 0471..0476: gr `unimplemented`, the exe calls the
+  `*AreaCheckCommand`/`Locate*Command` helpers with the command.
+- 0936: duration is `fild SP6` (gr reads a float); 07FE: gr's registration is commented out, the exe has the case;
+  0920/0936: `(&SP3..5, &SP0..2)` argument order (matches gr's swapped names).
+- Original bugs kept: 0296 decrements ScriptParams[0] in place; 041E rewrites P0 11 → 12 and increments only the
+  low byte of the radio channel; 0180 skips the operand type byte unchecked; 04D7/053F/04EE do not null-check.
+- 05CA/05CB copy the dword at 0x8D237C (unnamed) into the task and reset it to 6.
+- 1700To1799 stores through the protection stub 0x4021A4 (`mov [[0x1560728] + [0x5D720D] + 1], eax`), decoded
+  from the image: 0xA43C78 = ScriptParams[0]; ported as `SP0 = eax`. Valid while 0x5D720D's bytes are unhooked
+  (INF-20 scan covers it).
+
+## Divergence notes (ledger candidates)
+
+- Text-label buffers (04ED, 04EE, 075A): the original's stack buffer is not cleared before
+  `ReadTextLabelFromScript`; the port's starts zeroed (075A: one extra zero byte). Differs only for a label
+  that leaves its terminator to stale stack bytes (not observed).
+- Bools pushed with stale upper bytes (06BD, 0920, 0936, 0713, the UpdateCompareFlag `setcc` forms) are
+  passed as 0/1; the callees read the low byte (checked for 0x6217D0 and UpdateCompareFlag).
+- Dead stack writes not ported: EH state slots, `operator new` result slots, flag/temp bytes in the
+  command-argument slot, the 700To799 prologue's `[esp+0x54] = 0`.
+- 800To899: every path ends at the common tail that runs `~CMatrix` (0x59ACD0) on a frame matrix the prologue
+  zeroes; ported cases call `~CMatrix` on a zeroed local to keep the callee sequence (no-op with zeroed fields).
+- 036A/0430 build their task on the Rust stack (0x1C/0x20 bytes) as the original builds it on its frame.
+
+## Verification (lane 4, worktree outputs `target/e2e/lane-4/port-l2-<tag>/`)
+
+- **Mechanism, all fallback** (`s2-fb-grove`, the 25 switch hooks with no Rust case, all 40 SCRIPT hooks on
+  Rust): L3 IDENTICAL over 5200 frames, 17 subsystems.
+- **All-ports L3** (`port-l2.sh ports`, 1,306 hooks incl. the 40 SCRIPT hooks with the 343 Rust cases):
+  grove (`s3-ports-rec`) 5200, pause-restart 3700, world-cheats 3276, c-bug 3220 frames: all IDENTICAL.
+- **Split runs** (INF-17) of the 25 switches, `SPLIT_PER_FRAME=2 --max 300`, per recording (`s3-split-*`):
+  see the TSV (verdict per switch and recording) and `opcodes.txt` in each run directory
+  (`tools/e2e/split-opcodes.py`: opcodes of the recorded calls; `*` = Rust case). A ported opcode is PASS
+  when it appears in a switch whose split verdict is PASS. Result: all 25 switches SPLIT PASS on all four
+  recordings (100 verdicts, up to 300 pairs each, 0 mismatches, no DIVERGED/COUNT). 60 ported opcodes
+  were executed and compared, 31 of them SA:MP opcodes: 00A5 00BE 00C0 0107 015F 0160 0164 0173 0175 018B
+  01B4 01F0 01F5 0213 0247 0248 02A3 02A7 02A8 02EB 0373 0453 04BB 04CE 04E4 0570 060B 070D 077E 0925 09BA.
+  The other 83 ported SA:MP opcodes were not executed by the recordings (L3 only).
+- **Split runs of `Process` and `ProcessCommands0To99`** (`s2-split-vm`, grove): both SPLIT PASS, 1000 pairs
+  compared each, 0 mismatches; 0To99's pairs cover 0001 0002 0004 0005 0015 001A 004D 0053.
+- **Hook-off of CollectParameters** (`s2-hookoff-cp`, `HOOKOFF_ONLY=0x464080`, every other SCRIPT hook on
+  Rust): IDENTICAL over 5200 frames (pass 1's missing trace is resolved).
+- **Undeclared writes**: every split run of a switch (and of `Process`, 0To99) reports writes outside the
+  declared sets (`FAIL (e) split-report: 0 undeclared writes`): a switch reaches every subsystem through its
+  cases, and `catalog/rwsets.csv` + `l2-extras.txt` declare only the script globals. The outputs (regions,
+  window writes, registers, callee sequence) are compared regardless; the undeclared check would need a
+  write set per case (or a `D` region over `.data/.bss`, which makes it vacuous as for the L2-EXTRAS
+  orchestrators). Decision for the main session.
+- Tests: `cargo test -p sa-hook --lib` 45/45 (INF-20 install scan, keycells, callers incl. the 25 new hooks);
+  `cargo test -p sa-script` 4/4; clippy `-D warnings` clean: sa-script host (all targets), i686
+  (`in-process`), wasm32; sa-hook i686; sa-oracle, sa-macros, sa-core host.
+
+## Open items (PORT-SCRIPT-2)
+
+- The 5 SA:MP opcodes above and ~1,500 non-SA:MP cases remain on the fallback; no switch is fully ported.
+- Ported opcodes never executed in the four recordings have no L2 evidence (state `implemented`); SA:MP's
+  own opcodes need a recording with SA:MP-like scripts (e.g. a corpus script running the SA:MP opcode set).
+- The undeclared-write policy for switch hooks (above).

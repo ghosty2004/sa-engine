@@ -4,10 +4,71 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
-use crate::{cmd0, vm};
+use crate::{
+    cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100, cmd1200,
+    cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200, cmd2300,
+    cmd2400, cmd2500, vm,
+};
 
 /// Every module's registrations, in this order.
-pub const MODULES: &[&[HookReg]] = &[vm::HOOKS, cmd0::HOOKS];
+pub const MODULES: &[&[HookReg]] = &[
+    vm::HOOKS,
+    cmd0::HOOKS,
+    cmd100::HOOKS,
+    cmd200::HOOKS,
+    cmd300::HOOKS,
+    cmd400::HOOKS,
+    cmd500::HOOKS,
+    cmd600::HOOKS,
+    cmd700::HOOKS,
+    cmd800::HOOKS,
+    cmd900::HOOKS,
+    cmd1000::HOOKS,
+    cmd1100::HOOKS,
+    cmd1200::HOOKS,
+    cmd1300::HOOKS,
+    cmd1400::HOOKS,
+    cmd1500::HOOKS,
+    cmd1600::HOOKS,
+    cmd1700::HOOKS,
+    cmd1800::HOOKS,
+    cmd1900::HOOKS,
+    cmd2000::HOOKS,
+    cmd2100::HOOKS,
+    cmd2200::HOOKS,
+    cmd2300::HOOKS,
+    cmd2400::HOOKS,
+    cmd2500::HOOKS,
+];
+
+/// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).
+pub const PARTIAL: &[(u16, &[u16])] = &[
+    (100, cmd100::PORTED),
+    (200, cmd200::PORTED),
+    (300, cmd300::PORTED),
+    (400, cmd400::PORTED),
+    (500, cmd500::PORTED),
+    (600, cmd600::PORTED),
+    (700, cmd700::PORTED),
+    (800, cmd800::PORTED),
+    (900, cmd900::PORTED),
+    (1000, cmd1000::PORTED),
+    (1100, cmd1100::PORTED),
+    (1200, cmd1200::PORTED),
+    (1300, cmd1300::PORTED),
+    (1400, cmd1400::PORTED),
+    (1500, cmd1500::PORTED),
+    (1600, cmd1600::PORTED),
+    (1700, cmd1700::PORTED),
+    (1800, cmd1800::PORTED),
+    (1900, cmd1900::PORTED),
+    (2000, cmd2000::PORTED),
+    (2100, cmd2100::PORTED),
+    (2200, cmd2200::PORTED),
+    (2300, cmd2300::PORTED),
+    (2400, cmd2400::PORTED),
+    (2500, cmd2500::PORTED),
+];
 
 /// Every module's globals (initial values checked against the exe image by a test).
 pub const GLOBALS: &[&[GlobalDesc]] = &[vm::GLOBALS, cmd0::GLOBALS];
@@ -151,7 +212,10 @@ mod tests {
                 n += count_hooks(&p);
             } else if p.extension().is_some_and(|x| x == "rs") && p.file_name().unwrap() != "hooks.rs" {
                 let s: String = std::fs::read_to_string(&p).unwrap();
-                n += s.lines().filter(|l| l.trim_start().starts_with("#[hook(")).count();
+                n += s
+                    .lines()
+                    .filter(|l| l.trim_start().starts_with("#[hook("))
+                    .count();
             }
         }
         n
@@ -162,7 +226,11 @@ mod tests {
     #[test]
     fn list_is_complete_and_unique() {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        assert_eq!(count_hooks(&dir), COUNT, "a #[hook] is missing from a module's HOOKS");
+        assert_eq!(
+            count_hooks(&dir),
+            COUNT,
+            "a #[hook] is missing from a module's HOOKS"
+        );
         let addrs: BTreeSet<u32> = ALL.iter().map(|h| h.addr).collect();
         assert_eq!(addrs.len(), COUNT);
         for h in sa_core::hooks::ALL
@@ -170,12 +238,76 @@ mod tests {
             .chain(sa_stream::hooks::ALL.iter())
             .chain(sa_world::hooks::ALL.iter())
         {
-            assert!(!addrs.contains(&h.addr), "{} hooked by another engine crate too", h.name);
+            assert!(
+                !addrs.contains(&h.addr),
+                "{} hooked by another engine crate too",
+                h.name
+            );
         }
         for h in ALL {
             #[cfg(not(target_arch = "x86"))]
             assert_eq!((h.entry)(), 0, "no shims off x86");
             assert_eq!((h.calls)(), 0);
+        }
+    }
+
+    /// Partial switches (ADR-002): every switch hook takes the fallback, its `PORTED` list is
+    /// ascending and inside the switch's range, and every listed opcode has its own match arm.
+    #[test]
+    fn partial_switches_list_their_rust_cases() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        for (lo, ported) in PARTIAL {
+            let name = std::format!("CRunningScript::ProcessCommands{lo}To{}", lo + 99);
+            let h = ALL
+                .iter()
+                .find(|h| h.name == name)
+                .unwrap_or_else(|| panic!("{name} not hooked"));
+            assert!(h.set_original.is_some(), "{name}: not a fallback hook");
+            assert!(
+                ported.windows(2).all(|w| w[0] < w[1]),
+                "{name}: PORTED not ascending"
+            );
+            let src: String = std::fs::read_to_string(dir.join(std::format!("cmd{lo}.rs"))).unwrap();
+            // Arms of the switch's `match command {` up to the fallback arm:
+            // `0x00EC..=0x00F1 | 0x00FE => {`
+            let body = src
+                .split("match command {")
+                .nth(1)
+                .unwrap_or_else(|| panic!("{name}: no match"));
+            let body = body.split("_ => fallback(").next().unwrap();
+            let mut arms: Vec<(u32, u32)> = Vec::new();
+            for l in body
+                .lines()
+                .map(str::trim_start)
+                .filter(|l| l.starts_with("0x") && l.contains("=>"))
+            {
+                for alt in l.split("=>").next().unwrap().split('|') {
+                    let mut it = alt.trim().split("..=");
+                    let a = u32::from_str_radix(it.next().unwrap().trim_start_matches("0x"), 16).unwrap();
+                    let b = it.next().map_or(a, |b| {
+                        u32::from_str_radix(b.trim().trim_start_matches("0x"), 16).unwrap()
+                    });
+                    arms.push((a, b));
+                }
+            }
+            for &op in *ported {
+                assert!(
+                    (*lo..*lo + 100).contains(&op),
+                    "{name}: {op:04X} outside the switch"
+                );
+                assert!(
+                    arms.iter().any(|&(a, b)| (a..=b).contains(&u32::from(op))),
+                    "{name}: {op:04X} listed in PORTED without a match arm"
+                );
+            }
+            for &(a, b) in &arms {
+                for op in a..=b {
+                    assert!(
+                        ported.contains(&(op as u16)),
+                        "{name}: arm {op:04X} missing from PORTED"
+                    );
+                }
+            }
         }
     }
 }

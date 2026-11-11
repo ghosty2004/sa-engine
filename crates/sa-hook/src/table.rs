@@ -73,6 +73,9 @@ pub struct HookSpec {
     /// Mode at attach.
     pub start_rust: bool,
     pub group: Group,
+    /// Fallback hooks (ADR-002): receives the original entry (trampoline or old stub target) at install,
+    /// so the port can run the original body for the paths it has not ported.
+    pub set_original: Option<fn(u32)>,
     /// Calling signature for the L2 oracle (None: L2 not supported for this hook).
     pub sig: Option<Sig>,
 }
@@ -102,6 +105,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: true,
         start_rust: true,
         group: Group::Core,
+        set_original: None,
         sig: sig(Conv::Cdecl, 0, Ret::Void),
     },
     HookSpec {
@@ -116,6 +120,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Core,
+        set_original: None,
         sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
@@ -130,6 +135,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Core,
+        set_original: None,
         sig: sig(Conv::Cdecl, 0, Ret::Eax),
     },
     HookSpec {
@@ -144,6 +150,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -158,6 +165,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -172,6 +180,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -186,6 +195,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -200,6 +210,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     // The CRT heap (VC7.1 static CRT): every allocation path ends in one of these. In determinism
@@ -216,6 +227,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -229,6 +241,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -242,6 +255,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -255,6 +269,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -268,6 +283,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     HookSpec {
@@ -282,6 +298,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: true,
         group: Group::Oracle,
+        set_original: None,
         sig: None,
     },
     // sa-math ports (L1-verified). Installed in original mode; `SA_HOOK_MODE` / `hook NAME rust|l2`
@@ -298,6 +315,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
+        set_original: None,
         sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
@@ -315,6 +333,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
+        set_original: None,
         sig: sig(Conv::Cdecl, 4, Ret::St0),
     },
     HookSpec {
@@ -329,6 +348,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
+        set_original: None,
         sig: sig(Conv::Cdecl, 2, Ret::St0),
     },
     HookSpec {
@@ -346,6 +366,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
+        set_original: None,
         sig: Some(Sig {
             conv: Conv::Cdecl,
             args: 5,
@@ -368,6 +389,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         frame_boundary: false,
         start_rust: false,
         group: Group::Core,
+        set_original: None,
         sig: Some(Sig {
             conv: Conv::Thiscall,
             args: 0,
@@ -439,6 +461,7 @@ const fn from_core(r: &sa_core::abi::HookReg) -> HookSpec {
         frame_boundary: false,
         start_rust: false,
         group: Group::Port,
+        set_original: r.set_original,
         sig: Some(sig_of(r)),
     }
 }
@@ -619,6 +642,9 @@ pub fn target_slot(i: usize) -> usize {
 /// Called once per hook by the installer before the entry is patched.
 pub fn set_installed(i: usize, original: u32, mode: Mode) {
     ORIGINAL[i].store(original, Ordering::Release);
+    if let Some(f) = HOOKS[i].set_original {
+        f(original);
+    }
     TARGET[i].store(target_for(i, mode), Ordering::Release);
     INSTALLED[i].store(1, Ordering::Release);
 }

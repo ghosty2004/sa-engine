@@ -387,12 +387,19 @@ fn l2(a: &Args) -> Result<bool, String> {
             } else {
                 sa_oracle_format::l2::parse_spool(&b)?
             };
+            if a.pos.get(3).map(String::as_str) == Some("heads") {
+                // One line per case (function, frame, caller, registers, stack arguments).
+                for c in &cases {
+                    println!("{}", l2h::show_case(c).lines().next().unwrap_or(""));
+                }
+                return Ok(true);
+            }
             let n: usize = a.pos.get(3).and_then(|s| s.parse().ok()).unwrap_or(0);
             let c = cases.get(n).ok_or("no such case")?;
             print!("{}", l2h::show_case(c));
             Ok(true)
         }
-        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--fn F,G] [--timeline N] [--nesting] [--undeclared] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N]".into()),
+        _ => Err("usage: l2 spec [--hooks A,B] [--out F] | ingest SPOOL | report SPOOL | split-report PLAIN RUST [--fn F,G] [--timeline N] [--nesting] [--undeclared] | dump-diff A B | replay [--fn F] [--mutant F] | show SPOOL [N|heads]".into()),
     }
 }
 

@@ -32,6 +32,23 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 static SITE: AtomicU32 = AtomicU32::new(0);
 
+/// True in phase A (in-process with the original exe): only there does a fallback hook's
+/// `<fn>_original` reach original code (ADR-002). Ports use it to panic with their own context
+/// (e.g. the opcode of an unported script command) before calling a fallback in phases B/C.
+pub const PHASE_A: bool = cfg!(sa_phase_a);
+
+/// The original entry recorded by sa-hook for a `#[hook(fallback)]` port (ADR-002): the trampoline
+/// (relocated prologue + `jmp` back) or a `.HOODLUM` stub's old target. Panics when the hook was not
+/// installed: a fallback runs only below the hook's own shim, which exists only once installed.
+#[doc(hidden)]
+#[inline]
+pub fn fallback_entry(cell: &AtomicU32, name: &str) -> usize {
+    match cell.load(Ordering::Acquire) {
+        0 => panic!("{name}: fallback to the original body before the hook was installed"),
+        a => a as usize,
+    }
+}
+
 /// Runs `f` with `ret_addr` recorded as the original return address of the call it makes.
 ///
 /// Calls from Rust to an original function have a Rust return address. Where an observer keys on the

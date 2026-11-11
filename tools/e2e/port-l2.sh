@@ -19,7 +19,8 @@
 #   l2all    (only with --window-all HOOKS) L2 on those hooks with SA_L2_WINDOW=all: the used heap arena
 #            is watched too, so writes to heap memory outside the declared regions are reported
 #   rust     every listed hook on Rust (`ports`: SA_HOOK_PORTS=rust; otherwise SA_HOOK_MODE=NAME=rust)
-#   hookoff  (opt-in, one run per hook) every listed hook on Rust except that one (PLAN §5 L3 hook-off)
+#   hookoff  (opt-in, one run per hook) every listed hook on Rust except that one (PLAN §5 L3 hook-off);
+#            HOOKOFF_ONLY=0xADDR,… limits it to those hooks
 #   split    (opt-in, INF-17) two split-run recordings: `splito` (SA_L2_SPLIT=orig: every sampled call of
 #            the listed hooks runs the original ONCE and is recorded) and `splitr` (SA_L2_SPLIT=rust: the
 #            Rust implementations); `sa-oracle l2 split-report` pairs the calls by (function, ordinal),
@@ -179,6 +180,9 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
         return
     fi
     rm -f "$DET/$name.trace" "$DET/$name.spool" "$DET/$name.spool.txt" "$DET/$name".spool.seq*.win "$GTA_DIR/sa-hook.log"
+    # The previous run's Wine log (possibly with its exit-time fault) must not be read as this run's
+    # crash before e2e_game_start truncates it.
+    rm -f "$E2E_OUT/wine.log"
     local drain=""
     if [ "${L2_SPOOL_DISCARD:-0}" = 1 ]; then
         # the binary spool (several MB per case) goes to a FIFO that is drained; verdicts stay in the
@@ -327,6 +331,10 @@ for run in $RUNS; do
             ;;
         hookoff)
             for k in "${!NAMES[@]}"; do
+                # HOOKOFF_ONLY=ADDR,… (hex as listed in results.tsv): only those hooks' hook-off runs.
+                if [ -n "${HOOKOFF_ONLY:-}" ] && ! grep -qix "$(printf '0x%x' "${ADDRS[$k]}")" <<< "${HOOKOFF_ONLY//,/$'\n'}"; then
+                    continue
+                fi
                 others=()
                 for j in "${!NAMES[@]}"; do [ "$j" = "$k" ] || others+=("${NAMES[$j]}"); done
                 run_game "hookoff-$k" "$REPLAY" SA_HOOK_MODE="$(modes "${others[@]}")"

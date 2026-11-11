@@ -41,6 +41,10 @@ pub struct HookReg {
     /// clobber them ([`PRESERVE_ECX`] | [`PRESERVE_EDX`]): original callers that rely on the original
     /// leaving them alone (whole-program-optimised call sites, `#[hook(preserve = "edx")]`).
     pub preserve: u8,
+    /// `#[hook(fallback)]` (ADR-002): the installer passes the original entry (the relocated-prologue
+    /// trampoline, or a `.HOODLUM` stub's old target) here before patching, so the port can call the
+    /// original body for the paths it has not ported (`<fn>_original`). `None` for whole-function ports.
+    pub set_original: Option<fn(u32)>,
 }
 
 /// EAX as the caller left it at the entry of the last `#[hook(entry_eax)]` port (PORT-ANIM-INPUT).

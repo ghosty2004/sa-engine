@@ -273,7 +273,9 @@ pub fn collect_next_parameter_without_increasing_pc(s: Scr) -> i32 {
         }
         3 => {
             let loc = read_ip::<u16>(s);
-            get_pointer_to_local_variable_call(s, i32::from(loc)).cast::<i32>().read()
+            get_pointer_to_local_variable_call(s, i32::from(loc))
+                .cast::<i32>()
+                .read()
         }
         4 => read_ip::<u8>(s) as i8 as i32,
         5 => read_ip::<u16>(s) as i16 as i32,
@@ -543,7 +545,11 @@ fn update_pc_target(s: Scr, new_ip: i32) -> GPtr<u8> {
 #[hook(addr = 0x4859D0, conv = thiscall, name = "CRunningScript::UpdateCompareFlag", expect = "8A 81 D2 00 00 00", this = "CRunningScript", preserve = "ecx")]
 pub fn update_compare_flag(s: Scr, state: u32) {
     let arg = state as u8;
-    let v = if rd::<u8>(s, NOT_FLAG) != 0 { u8::from(arg == 0) } else { arg };
+    let v = if rd::<u8>(s, NOT_FLAG) != 0 {
+        u8::from(arg == 0)
+    } else {
+        arg
+    };
     let st = rd::<u16>(s, AND_OR_STATE);
     if st == 0 {
         wr(s, COND_RESULT, v);
@@ -564,7 +570,11 @@ fn dispatch(s: Scr) -> i8 {
     let w = read_ip::<u16>(s);
     wr(s, NOT_FLAG, (w >> 15) as u8);
     let id = i32::from(w & 0x7FFF);
-    let f = COMMAND_HANDLERS.ptr().cast::<u32>().wrapping_index(id / 100).read();
+    let f = COMMAND_HANDLERS
+        .ptr()
+        .cast::<u32>()
+        .wrapping_index(id / 100)
+        .read();
     call_command_handler(f, s, id)
 }
 

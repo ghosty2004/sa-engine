@@ -22,9 +22,9 @@ use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
 use crate::vm::{
-    self, Scr, collect_parameters_call as collect, get_pointer_to_script_variable_call as var_ptr,
-    param, read_parameters_for_newly_started_script_call, ss, store_parameters_call, update_compare_flag_call as flag,
-    update_pc_call,
+    self, Scr, collect_parameters_call as collect, get_pointer_to_script_variable_call as var_ptr, param,
+    read_parameters_for_newly_started_script_call, ss, store_parameters_call,
+    update_compare_flag_call as flag, update_pc_call,
 };
 
 sa_core::globals! {
@@ -346,7 +346,10 @@ pub fn process_commands_0_to_99(s: Scr, command: u32) -> i8 {
             let d = s.byte_add(vm::STACK_DEPTH).cast::<u16>();
             let depth = d.read();
             let ip = s.byte_add(vm::IP).cast::<u32>().read();
-            s.byte_add(vm::IP_STACK).cast::<u32>().wrapping_index(i32::from(depth)).write(ip);
+            s.byte_add(vm::IP_STACK)
+                .cast::<u32>()
+                .wrapping_index(i32::from(depth))
+                .write(ip);
             d.write(depth.wrapping_add(1));
             update_pc_call(s, sp0() as i32);
         }
@@ -355,7 +358,11 @@ pub fn process_commands_0_to_99(s: Scr, command: u32) -> i8 {
             let d = s.byte_add(vm::STACK_DEPTH).cast::<u16>();
             let depth = d.read().wrapping_sub(1);
             d.write(depth);
-            let ip = s.byte_add(vm::IP_STACK).cast::<u32>().wrapping_index(i32::from(depth)).read();
+            let ip = s
+                .byte_add(vm::IP_STACK)
+                .cast::<u32>()
+                .wrapping_index(i32::from(depth))
+                .read();
             s.byte_add(vm::IP).cast::<u32>().write(ip);
         }
         // LINE: 6 parameters skipped (gta-reversed leaves them unread)
@@ -408,7 +415,10 @@ fn pair(k: u32) -> (i32, i32) {
 #[inline]
 fn idiv(a: u32, b: u32) -> u32 {
     let (a, b) = (a as i32, b as i32);
-    assert!(b != 0 && !(a == i32::MIN && b == -1), "ProcessCommands0To99: idiv fault");
+    assert!(
+        b != 0 && !(a == i32::MIN && b == -1),
+        "ProcessCommands0To99: idiv fault"
+    );
     (a / b) as u32
 }
 
@@ -424,7 +434,11 @@ fn create_player(s: Scr) {
         load_all_requested_models(1);
     }
     setup_player_ped(idx);
-    let slot = sa_core::pools::PLAYER0_PED.ptr().cast::<u8>().byte_add(idx.wrapping_mul(0x190) as isize).cast::<GPtr<u8>>();
+    let slot = sa_core::pools::PLAYER0_PED
+        .ptr()
+        .cast::<u8>()
+        .byte_add(idx.wrapping_mul(0x190) as isize)
+        .cast::<GPtr<u8>>();
     set_char_created_by(slot.read(), 2);
     deactivate_player_ped(idx);
     let x = param(1).read();
@@ -443,7 +457,11 @@ fn create_player(s: Scr) {
     param(0).write(idx as u32);
     store_parameters_call(s, 1);
     let t = task_new(0x1C);
-    let t = if t.is_null() { GPtr::NULL } else { task_simple_player_on_foot_ctor(t) };
+    let t = if t.is_null() {
+        GPtr::NULL
+    } else {
+        task_simple_player_on_foot_ctor(t)
+    };
     let intel = slot.read().byte_add(0x47C).cast::<GPtr<u8>>().read();
     task_manager_set_task(intel.byte_add(4), t, 4, 0);
 }
