@@ -83,3 +83,70 @@ Task types: 0x4B7 GANG_FOLLOWER (f, FindTaskByType), 0x395 AVOID_OTHER_PED_WHILE
   inPlayerGroup and !plMoving -> END. Else: `v = (-plf.y, plf.x, 0)`, Normalise, R = EvasiveStep(pl, &v) (or 0) -> store and return.
 - END: `m_EventResponseTask = R`. (No anger increment in this function.) The epilogue is reached through an obfuscated jump (0x40399B).
 - gta-reversed: `.Reversed = false`. Confidence medium (as above).
+
+## 0x4B9FF0 CEventHandler::ComputeKnockOffBikeResponse  (catalogue: specified/REA, port level 26)
+- `__thiscall void (this: CEventHandler*, CEvent* e [esp+4], CTask* tactive [+8], CTask* tsimplest [+0xC])`, `ret 0xC`; SEH frame
+  (the `push handler` is obfuscated through the stub 0x40749C, no behaviour), `sub esp,0xC4`. tactive/tsimplest are unused.
+  P = `this->m_Ped` (+0, re-read from `[esi]` at every use). Callers: ComputeVehicleDiedResponse 0x4BA8B0, ComputeVehicleOnFireResponse
+  0x4BB2E0, ComputeDamageResponse 0x4C0170, ComputeEventResponseTask 0x4C3870.
+- Locals: `K` = CEventKnockOffBike at esp+0x54 (default ctor 0x4AFC70 at 0x4BA017, dtor 0x4AFE70 at exit 0x4BA785); `ev` (ebp) = the
+  knock-off event used below, initialised to 0 (0x4BA015).
+- CEventKnockOffBike layout used (gr EventKnockOffBike.h, verified by the 11-arg ctor 0x4AFCF0): +0xC moveSpeed, +0x18 collision
+  impact velocity, +0x24 damage intensity, +0x28 field_28, +0x2C time, +0x30 m_ped (the knocker), +0x34 direction (i8), +0x35 bit0
+  isVictimDriver, +0x36 knockOffType (u8), +0x38 vehicle. CEventDamage (gr EventDamage.h, size 0x44): +0x1C weaponType, +0x24 direction,
+  +0x38 m_damageResponse.
+- 1. Event type (virtual slot +4 GetEventType, called again for each compare):
+  - == 8 (EVENT_KNOCK_OFF_BIKE) (0x4BA031): `ev = e` (0x4BA056). Build local CEventDamage D (esp+0x90) = ctor 0x4AD830(source = e->+0x38,
+    time = CTimer::m_snTimeInMilliseconds [0xB7CB84], weapon 0x36 (54 WEAPON_FALL), piece 3 (TORSO), direction 2, a7 = 1, inVehicle = 0).
+    If `D.AffectsPed(P)` 0x4B35A0: CPedDamageResponseCalculator C (esp+0x34) ctor 0x4AD3F0(e->+0x38, damage = e->+0x28 (f32 bits passed
+    through), 0x36, 3, true); `C.ComputeDamageResponse(P, &D.+0x38, true)` 0x4B5AC0; C dtor 0x4AD420. D dtor 0x4AD960 (~CEventDamage:
+    vtable 0x85AD78, CleanUpOldReference on +0x14, base vtable 0x85AB38). Go to step 2.
+  - == 9 (EVENT_DAMAGE) (0x4BA0DE): V = P->+0x58C (m_pVehicle, no null check). `ms = (V->+0x44*0.75, V->+0x48*0.75, V->+0x4C*0.75)` with
+    [0x858F34]=0.75f; the x87 order is z first (0x4BA0EF), then y, then x, stored x,y,z. `dir = e->+0x24` (u8). `M` = P->+0x14 (matrix,
+    no null check). Collision vector `cv`:
+    dir 0: `(M.fwd.x*-1, M.fwd.y*-1, M.fwd.z*-1)` (fwd = +0x10..+0x18, multiplied by [0x858C1C]=-1.0f, not fchs; z,y,x load order);
+    dir 1: `M.right` (+0..+8) copied; dir 2: `M.fwd` copied; any other value: `0x40FE90(&tmp, -1.0f, &M.right)` (tmp = -1.0f * right,
+    component order z,y,x computed, stored x,y,z) and copied.
+    Temporary T (esp+0x90) = CEventKnockOffBike 11-arg ctor 0x4AFCF0(V, &ms, &cv, 50.0f, 0.0f, knockOffType = (u8)e->+0x1C (the damage
+    weapon type), direction = dir, time 0, ped 0, isVictimDriver 0, force 0). Go to COPY.
+  - == 0x23 (EVENT_VEHICLE_DIED) or == 0x4F (EVENT_VEHICLE_ON_FIRE) (0x4BA20C/0x4BA218): ms as in the damage case (0x4BA221-0x4BA24E,
+    same order). `dir = _ftol2(((rand() 0x821B1E & 0xFFFF) as i32 -> f) * [0x858B14]=3.0517578e-05f * [0x858B90]=4.0f)` (0x821B40,
+    truncation; fild of the masked int, so dir is 0..3). cv as in the damage case but selected by `dir` (0, 1, 2, else -1*right).
+    T = ctor 0x4AFCF0(V, &ms, &cv, 50.0f, 0.0f, knockOffType 0x33 (51, EXPLOSION), dir, 0, 0, 0, 0). Go to COPY.
+  - any other type: jump to step 2 with ev = 0 -> null dereference at 0x4BA364 (original bug; callers only pass the 4 types above).
+  - COPY (0x4BA342): `K = T` via 0x4B4AA0 (operator=, calls CEventKnockOffBike::From 0x4AFDD0); T dtor 0x4AFE70; `ev = &K`.
+- 2. (0x4BA364) `veh = ev->+0x38`, `downTime = ev->+0x2C`. If veh == 0 -> EXIT. If P is not one of veh->+0x460 (driver), +0x464, +0x468,
+  +0x46C (passengers 0-2) (checked in that order) -> EXIT.
+- 3. `g_InterestingEvents.Add(16, P)` 0x602590 (this = 0xC0B058). If `!ev->SetPedSafePosition(P)` 0x4B4AC0: if `P->+0x46C & 0x100`
+  (bInVehicle) then `P->+0x1C &= ~1` (CEntity flag bit 0, bUsesCollision) (0x4BA765-0x4BA772); EXIT.
+- 4. `ev->SetPedOutCar(P)` 0x4AFF60; `anim = ev->CalcForcesAndAnims(P)` 0x4B0020; `kt = ev->+0x36`.
+  - kt == 0x35 (53) (0x4BA3D6): `P->+0x46C &= ~1`; `&= ~2`; `|= 0x200` (bIsInTheAir); `P->+0x40 |= 0x100`; `P->+0x40 |= 0x8000000` (each
+    a separate read-modify-write, P re-read). If `P->m_fHealth (+0x540) > 0.0f [0x858B50]` (fcomp; `test ah,0x41; jne` -> NaN, ==0 and <0
+    take the die branch): `this->+0x24 = new(0x10) ? CTaskComplexInAirAndLand(0, 0) 0x678C80 : 0`; else `this->+0x24 = new(0x28) ?
+    CTaskComplexDie(weapon = (i8)kt sign-extended, animGroup 0, anim, blendDelta 4.0f, animSpeed 0.0f, 0, 0, 0, 0) 0x630040 : 0`.
+    Go to DRAG.
+  - else if NOT (`P->+0x540 > 0.0f` or unordered) (0x4BA4B4: `test ah,0x41; jp` -> the jump to ALIVE is taken for >0 and NaN):
+    DEAD: if anim == 0xBF: switch on `(i8)ev->+0x34` via jump table 0x4BA7A8 (unsigned compare with 3, so negatives keep anim):
+    0 -> anim = 0x6A; 1, 2 -> anim = 0x19; 3 -> anim = 0x1B. `this->+0x24 = new(0x28) ? CTaskComplexDie((i8)kt, 0, anim, 4.0f, 0.0f, 0, 0,
+    0, 0) : 0`; `P->+0x46C &= ~1`; go to BIKEFLAG.
+  - ALIVE (0x4BA557): if kt == 0 go to DRAG (no response task written). Else `this->+0x24 = new(0x18) ? CTaskComplexFallAndGetUp(anim,
+    0, downTime) 0x6786C0 : 0`. `g = CPedGroups::GetPedsGroup(P)` 0x5F7E80; if g: `m = g+8` (membership):
+    - if `m.IsLeader(P)` 0x5F69C0 or `ev->+0x35 & 1`: if `m.IsLeader(P)` (called again): `le = CEvent::new(0x14) ?
+      CEventLeaderExitedCarAsDriver() 0x4B8300 : 0`; local CEventGroupEvent G(P, le) 0x4ADFD0; `(g+0x30)->AddEvent(&G)` 0x5F7470
+      (CPedGroupIntelligence); G dtor 0x4AE070.
+    - else `L = m.GetLeader()` 0x5F69A0; if L and `L->+0x46C & 0x100` and `L->m_pIntelligence(+0x47C)->+0x68.GetEventOfType(8)` 0x4AB650
+      == 0: `seq = new(0x40) ? CTaskComplexSequence() 0x632BD0 : 0`; `seq->AddTask(this->+0x24)` 0x632D10; `seq->AddTask(new(0x50) ?
+      CTaskComplexEnterCarAsPassenger(veh, 0, true) 0x640340 : 0)`; `this->+0x24 = seq`. (If the 0x40 allocation fails AddTask runs
+      with this = 0: original bug, unreachable in practice.)
+    Then (also when g == 0) `P->+0x46C &= ~1` (0x4BA6F8). Go to DRAG.
+  - DRAG (0x4BA701): `k = ev->+0x30`; if k == 0 go to BIKEFLAG. Else local CEventDraggedOutCar E(veh, k, ev->+0x35 & 1) 0x4AD250;
+    `P->m_pIntelligence(+0x47C)->m_eventGroup(+0x68).Add(&E, true)` 0x4AB420; if `veh->+0x590 == 9` (bike) `veh->+0x614 |= 0x10`;
+    E dtor 0x4AD330; EXIT.
+  - BIKEFLAG (0x4BA53E): if `veh->+0x590 == 9` `veh->+0x614 &= 0xEF`; EXIT.
+- EXIT (0x4BA776): K dtor 0x4AFE70, restore SEH, `ret 0xC`.
+- Allocations: CTask::operator new 0x61A5A0 (cdecl, size pushed), CEvent::operator new 0x4B5620.
+- Notes: in the EVENT_KNOCK_OFF_BIKE case the damage is applied before the vehicle/occupant checks and `ev` is the caller's event (not
+  the copy K); K stays default-constructed and is destroyed at exit.
+- gta-reversed: plugin::CallMethod stub only (EventHandler.cpp:1469).
+- Open questions: the meaning of P->+0x40 bits 0x100 / 0x8000000 (CPhysical flag word; gr bitfield names not verified) - behaviour is
+  fully determined by the masks.

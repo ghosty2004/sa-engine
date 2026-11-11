@@ -27,3 +27,9 @@ Vtable 0x859E50 (gr TaskSimpleCarDriveTimed.h, size 0x70): CTaskSimpleCarDrive (
 - Behaviour: `CTaskSimpleCarDrive::CTaskSimpleCarDrive(this, vehicle, 0, 0)` 0x63C340 (0x5FF946-0x5FF94D); `vtbl = 0x859E50`; `+0x60 = time`;
   timer `+0x64 = 0, +0x68 = 0, +0x6C = 0, +0x6D = 0` (0x5FF956-0x5FF968).
 - gta-reversed: TaskSimpleCarDriveTimed.cpp:10 `CTaskSimpleCarDrive(vehicle, nullptr, false)` - matches.
+
+## 0x46F570 CTaskSimpleCarDriveTimed::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* (this)`, plain `ret`, SEH frame. `p = CTask::operator new(0x70)`; if p == 0 return 0. Else
+  `CTaskSimpleCarDrive::CTaskSimpleCarDrive(p, this->+8 (vehicle), 0, 0)` 0x63C340 (stack args pushed: vehicle, 0, 0); then
+  `p->+0x60 = this->+0x60` (the time limit, read before the ctor call), `p->vtbl = 0x859E50`, `p->+0x64 = 0`, `p->+0x68 = 0`,
+  `p->+0x6C = 0` (u8), `p->+0x6D = 0` (u8); return p.

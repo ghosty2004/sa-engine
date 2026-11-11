@@ -8,3 +8,7 @@
 
 ## 0x6374A0 CTaskSimpleSetStayInSamePlace::~CTaskSimpleSetStayInSamePlace  (catalogue: specified/REA, port level 2)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor FUN_0062f5d0 0x62F5D0 (0x6374A3); if `flags & 1` (0x6374A8) calls CTask::operator delete 0x61A5B0 (this) (0x6374B0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86DD50.
+
+## 0x635BD0 CTaskSimpleSetStayInSamePlace::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0xC) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskSimple::CTaskSimple() 0x61A390; p+8 = this+8 (u8); vtbl = 0x86DD50 (CTaskSimpleSetStayInSamePlace); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

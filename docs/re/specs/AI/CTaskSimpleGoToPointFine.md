@@ -5,3 +5,6 @@
 
 ## 0x6634E0 CTaskSimpleGoToPointFine::~CTaskSimpleGoToPointFine  (catalogue: specified/REA, port level 3)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor FUN_0065eef0 0x65EEF0 (0x6634E3); if `flags & 1` (0x6634E8) calls CTask::operator delete 0x61A5B0 (this) (0x6634F0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86F964 (CTaskSimpleGoToPointFine).
+
+## 0x65F3A0 CTaskSimpleGoToPointFine::SetMoveRatio  (catalogue: specified/REA, port level 0)
+- `__thiscall void (this, float ratio [esp+4])`, `ret 4`: this+0x20 = ratio (raw dword copy, no clamp).

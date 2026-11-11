@@ -218,3 +218,96 @@ CShadows::CastShadowEntityXY 0x7086B0 is not specified in this file yet (see the
   3. Then (still inside the every-4th-frame block) every shadow with `type == 7` becomes `type = 5`.
 - gta-reversed: raw call. Open questions: none.
 
+
+## 0x7086B0 CShadows::CastShadowEntityXY  (catalogue: specified/REA, port level 6)
+(RE-SPEC-FINAL; supersedes the "not specified yet" note in this file's header.)
+- Convention: `__cdecl void (CEntity* e [esp+4], float aX [+8], float aY [+0xC], float bX [+0x10], float bY [+0x14], CVector* posn [+0x18],
+  float frontX [+0x1C], float frontY [+0x20], float sideX [+0x24], float sideY [+0x28], int16 intensity [+0x2C], u8 r [+0x30], u8 g [+0x34],
+  u8 b [+0x38], float zDistance [+0x3C], float scale [+0x40], CPolyBunch** pp [+0x44], u8* pDayNight [+0x48], int shadowType [+0x4C])`,
+  plain `ret`. Frame: `sub esp,0x74` + 4 pushes, so inside the body arg k (1-based) is at `[esp + 0x84 + 4k]` (e = [esp+0x88], posn = [esp+0x9C],
+  frontX [0xA0], frontY [0xA4], sideX [0xA8], sideY [0xAC], intensity [0xB0], r/g/b [0xB4/0xB8/0xBC], zDistance [0xC0], scale [0xC4],
+  pp [0xC8], pDayNight [0xCC], shadowType [0xD0]). **The four corner args aX/aY/bX/bY are never read** (no access to [esp+0x8C..0x98]).
+- Callers: CastPlayerShadowSectorList 0x70A470, CastShadowSectorList 0x70A630. Callees: CCollision::CalculateTrianglePlanes(CColModel*)
+  0x418580, CPlaceable::AllocateMatrix 0x54F560 + CSimpleTransform::UpdateMatrix 0x54F1B0 ("ensure matrix", 16 sites; only the first can
+  allocate), CCollisionData::GetTrianglePoint 0x40F5E0 (thiscall on colData: `(CVector* out, int vertexIndex)`, x3), RwIm3DTransform 0x7EF450,
+  RwIm3DRenderIndexedPrimitive 0x7EF550, RwIm3DEnd 0x7EF520, CShadows::AffectColourWithLighting 0x707850, RenderBuffer::StopStoring
+  0x7077A0, `_ftol` 0x821B40.
+- Globals (all .data, scratch, zero-initialised): guard dword 0xC4B8C8; quad corners `Q[4]` = CVector array 0xC4B898 (stride 0xC; only x,y
+  written: Q0 0xC4B898/0xC4B89C, Q1 0xC4B8A4/0xC4B8A8, Q2 0xC4B8B0/0xC4B8B4, Q3 0xC4B8BC/0xC4B8C0); clip buffer A: positions 0xC4B7A8
+  (CVector[], stride 0xC), uv 0xC4B6B8 (stride 0xC, u at +0, v at +4); clip buffer B: positions 0xC4B820, uv 0xC4B730 (same layout; B.z at
+  0xC4B828 + 0xC*k). Render buffer: uiTempBufferVerticesStored 0xC4B950, uiTempBufferIndicesStored 0xC4B954, aTempBufferIndices 0xC4B958
+  (u16), TempVertexBuffer 0xC4D958 (RwIm3DVertex 0x24: +0 x, +4 y, +8 z, +0x18 colour dword, +0x1C u, +0x20 v), s_IndicesToBeStored
+  0xC40410, s_VerticesToBeStored 0xC40414, g_ShadowVertices 0xC403A8 (u16 fan index table), CShadows::pEmptyBunchList 0xC403D8,
+  CModelInfo::ms_modelInfoPtrs 0xA9B0C8.
+- Data layouts: CColModel* = modelInfo+0x14; colData = colModel+0x2C. CCollisionData: +4 numTriangles (i16, read with movsx), +7 flags (bit 1 =
+  bHasFaceGroups), +0x18 m_pTriangles (CColTriangle 8 bytes: u16 vA/vB/vC at +0/+2/+4, +7 light byte), +0x1C m_pTrianglePlanes (10 bytes:
+  i16 normal x/y/z at +0/+2/+4). Face groups (only when flag bit 1): count = dword at `m_pTriangles - 4`; group k (k = 0..count-1) is at
+  `m_pTriangles - 4 - 0x1C*(k+1)` (so k = 0 is the group nearest the count dword; 0x708B81-0x708B86): +0 min (x,y,z), +0xC max (x,y,z),
+  +0x18 first (i16), +0x1A last (i16, inclusive). CPolyBunch: +0 CVector pos[7], +0x54 next, +0x58 numVerts (i16), +0x5A u8 u[7], +0x61 u8 v[7].
+  Entity matrix M = e->m_matrix (+0x14): right +0, up +0x10, pos +0x30 (placement pos e+4 when null; never null after the first ensure).
+- Behaviour:
+  1. Static-local guard (0x7086B0-0x7086D7): `if !(g & 1) g |= 1; if !(g & 2) g |= 2; if !(g & 4) g |= 4` on [0xC4B8C8] (trivial ctors,
+     nothing else runs).
+  2. `cm = ms_modelInfoPtrs[(i16)e->m_nModelIndex]->m_pColModel`; `cd = cm->m_pColData`; return if `cd == null` or `cd->numTriangles == 0`
+     (u16 compare, 0x708702). `CalculateTrianglePlanes(cm)`. Ensure matrix.
+  3. Project the shadow box into entity-local XY (each value stored f32; operand order as loaded, all `a*b + c*d` sums are commutative):
+     `fR = frontY*M.right.y + frontX*M.right.x` [esp+0x30] (0x708751-0x708768); `fU = frontX*M.up.x + frontY*M.up.y` [esp+0x2C];
+     `sR = sideY*M.right.y + sideX*M.right.x` [esp+0x24]; `sU = sideX*M.up.x + sideY*M.up.y` [esp+0x20]; `dx = posn.x - M.pos.x`,
+     `dy = posn.y - M.pos.y` (stored); `cR = dy*M.right.y + dx*M.right.x` (stored); `cU = dy*M.up.y + dx*M.up.x` (x87 only, 0x708903-0x708911).
+     Corners (0x708913-0x708991): `Q0 = ((cR + fR) - sR, (fU + cU) - sU)`, `Q1 = ((cR + sR) + fR, (sU + cU) + fU)`,
+     `Q2 = (sR + (cR - fR), ((cU - fU) + sU))`, `Q3 = ((cR - fR) - sR, (cU - fU) - sU)` (the `cR - fR` and `cU - fU` partials are computed
+     once; `cU - fU` is rounded to f32 through a store at 0x708971, `cR - fR` stays in x87).
+     `dz = posn.z - M.pos.z` [esp+0x2C] (0x7089A6).
+  4. Local bounding rectangle (0x7089B0-0x708B3C), with `lt(a,b)` = strict `a < b` (NaN false):
+     `minX = lt(m01, m23) ? m01 : m23` where `m23 = lt(Q2.x, Q3.x) ? Q2.x : Q3.x` and `m01 = lt(Q0.x, Q1.x) ? Q0.x : Q1.x`;
+     `maxX` the same with strict `>`; `minY`, `maxY` the same on the y components. (Ties take the second operand.)
+  5. Groups: `nGroups = (cd->flags & 2) ? *(i32*)(m_pTriangles - 4) : 1`; if `nGroups <= 0` return. For g = 0 .. nGroups-1:
+     - with face groups: skip the group unless `maxX > grp.min.x` && `minX < grp.max.x` && `maxY > grp.min.y` && `minY < grp.max.y`
+       (strict, tested in this order 0x708B89-0x708BC6; no z test); range `i = grp.first .. grp.last` (inclusive; both movsx);
+     - without: range `i = 0 .. (i16)cd->numTriangles - 1` (re-read each group).
+  6. Per triangle i (counter at [esp+0x34], colData pointer re-read from [esp+0x28]):
+     a. `nz = (float)plane[i].normal.z * 0.000244140625f [0x858BFC]`; skip unless `|nz| > 0.1f [0x858B1C]` (strict, 0x708C11-0x708C24).
+     b. `V0, V1, V2 = GetTrianglePoint(tri.vA / vB / vC)` (model space) into [esp+0x54], [esp+0x60], [esp+0x6C].
+     c. Overlap rejects, each "skip unless any of V0, V1, V2 (in this order, short-circuit) satisfies": `V.x > minX`; `V.x < maxX`;
+        `V.y > minY`; `V.y < maxY`; `V.z < dz`; then `zLow = dz - zDistance` (stored f32 [esp+0x30], 0x708D64) and `V.z > zLow`
+        (all strict; 0x708C6F-0x708D9E).
+     d. Clip the quad against the triangle (Sutherland-Hodgman, three passes). Init (0x708DA4-0x708E61): `A[0..3].xy = Q0..Q3` (z not
+        written), `Auv[0..3] = (0,0), (1,0), (1,1), (0,1)` (stores 0 / 0x3F800000). For a pass with edge P->R and input X (n points) into
+        output Y: `ex = R.x - P.x`, `ey = R.y - P.y` (x87); `side(p) = (p.x - P.x)*ey - (p.y - P.y)*ex` (product order exactly so; the value
+        is stored f32 to [esp+0x14] before the compare). State s = 0, count m = 0; for j = 0 .. n-1 with `d = side(X[j])`:
+        - `d > 0.0f [0x858B50]` (inside): if s == 2 emit `I(X[j-1], X[j])`; then emit `X[j]` (copy xy and uv); s = 1.
+        - else (d <= 0 or NaN): if s == 1 emit `I(X[j-1], X[j])`; s = 2.
+        Closing edge: `d0 = side(X[0])` (stored); emit `I(X[n-1], X[0])` if `(d0 > 0 && s == 2) || (d0 <= 0 && d0 not NaN && s == 1)`
+        (0x709034-0x709058: the second test uses `test ah,0x41; jp`, so NaN does not emit here, unlike in the loop).
+        `I(p, c)` with `dp = side(p)` recomputed and `d` the current point's stored value: `t = |dp| / (|d| + |dp|)` (fabs of both; the
+        division is `|dp|` over the sum), `s1 = 1.0f [0x858624] - t`; output `uv = (s1*p.u + t*c.u, s1*p.v + t*c.v)`, `xy = (t*c.x +
+        s1*p.x, t*c.y + s1*p.y)` (each pair summed once, commutative; values stored f32 per component). Only x, y, u, v are written; z
+        stays whatever the buffer held.
+        Passes: 1) edge V0->V1, A (n = 4; closing uses A[3] explicitly, 0x70905E) -> B; 2) edge V1->V2, B (n1) -> A; 3) edge V2->V0,
+        A (n2) -> B (n3). If a pass's input count is 0 its loop is skipped and its closing test runs with s = 0, so it never emits
+        (the x87 still holds the previous pass's ex/ey; harmless). So only points with side > 0 for all three edges survive, i.e. the
+        triangle must have the winding for which its interior is on the positive side of `side()` for V0->V1->V2; triangles of the other
+        winding produce nothing.
+     e. If `n3 < 3` skip the triangle (0x7096A0).
+     f. Height from the triangle plane (0x7096A9-0x7097DD): `nx = (float)plane.x * 2^-12`, `ny = (float)plane.y * 2^-12` (stored f32),
+        `nz` likewise (x87); `D = (V0.z*nz + ny*V0.y) + nx*V0.x` (stored f32 [esp+0x14]); `r = -1.0f [0x858C1C] / nz`; for k = 0 .. n3-1:
+        `B[k].z = ((ny*B[k].y + nx*B[k].x) - D) * r` (the loop is unrolled by 4; same arithmetic for every k).
+     g. To world (0x709800-0x7098D5), per k, ensure matrix each time: `x0 = B[k].x` (saved), `B[k].x = (M.up.x*B[k].y + M.right.x*x0) +
+        M.pos.x`; `B[k].y = (M.up.y*B[k].y + x0*M.right.y) + M.pos.y`; `B[k].z = M.pos.z + B[k].z`. (No `at` axis and no rotation of z:
+        assumes an upright entity; the callers require at.z > 0.97.)
+     h. `*pDayNight = triangle[i].light` (byte +7 of the CColTriangle, 0x7098DB-0x7098F1); written before the paths below.
+     i. If `pp != null` (poly-bunch path, 0x709902): `bunch = pEmptyBunchList`; if null skip the triangle; `pEmptyBunchList = bunch->next`;
+        `bunch->next = *pp; *pp = bunch` (push front); `bunch->numVerts = (i16)n3`; for k: `pos[k] = B[k]` (3 dwords), `u[k] = (u8)_ftol(Buv[k].u
+        * 200.0f [0x858A48])`, `v[k] = (u8)_ftol(Buv[k].v * 200.0f)`. `scale`, intensity and colours are not used on this path.
+     j. Else (immediate path, 0x70998C): `nIdx = 3*n3 - 6`. If `indicesStored + nIdx >= 0x1000` flush; then if `verticesStored + n3 >= 0x800`
+        flush. Flush = `if (verticesStored != 0 && RwIm3DTransform(TempVertexBuffer, verticesStored, null, 1) != null)
+        { RwIm3DRenderIndexedPrimitive(3 /*TRILIST*/, aTempBufferIndices, indicesStored); RwIm3DEnd(); }` then both counters = 0.
+        `s_IndicesToBeStored = nIdx; s_VerticesToBeStored = n3`. `AffectColourWithLighting(shadowType, *pDayNight, r, g, b, &o1, &o2, &o3)`
+        (locals [esp+0x11..0x13]); `colour = ((((i32)intensity << 8 | o1) << 8 | o2) << 8) | o3` (intensity sign-extended, only its low byte
+        survives as the top byte). Vertices at `TempVertexBuffer + 0x24*verticesStored`, k = 0 .. n3-1: `x = B[k].x`, `y = B[k].y`,
+        `z = B[k].z + 0.06f [0x859934]`, `colour`, `u = scale * Buv[k].u`, `v = scale * Buv[k].v` (normal fields not written). Then copy
+        nIdx u16 from g_ShadowVertices to `aTempBufferIndices + indicesStored` (rep movsd + movsw) and call `RenderBuffer::StopStoring()`.
+- Edge cases: the two paths differ in uv scale (200 fixed vs `scale`); a group/triangle range with first > last does nothing; NaN corners make the
+  min/max picks take the second operand; `*pDayNight` is overwritten for every surviving triangle (the last one wins).
+- gta-reversed: raw call only (Shadows.cpp:649); no reference code. Open questions: none for behaviour. Clip-buffer z lanes are never
+  initialised by this function (they are overwritten in step f before use).

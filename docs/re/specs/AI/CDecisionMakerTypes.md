@@ -53,3 +53,13 @@ instance pointer 0xC0B030. Ped: +0x47C intelligence (+0xB4 ped decision-maker ty
   `CDecision::From(&m_DecisionMakers[i].decisions[k], &src->decisions[k])` 0x6006B0 (thiscall on the destination);
   `m_NoOfDecisionMakers++`; return i.
 - gr: `.Reversed = false`.
+
+## 0x604490 CDecisionMakerTypes::FlushDecisionMakerEventResponse  (catalogue: specified/REA, port level 1)
+- `__thiscall void (this, int32 dm [esp+4], int32 eventType [esp+8])`, `ret 8`. `k = ((int32*)(this + 0xC034))[eventType]` (event -> decision
+  index table); `CDecision::SetDefault(this + 4 + 0x3C*(k + 0x29*dm))` 0x600530 (decision makers of 0x29 decisions x 0x3C bytes, starting
+  at +4). No bounds checks. Caller: CRunningScript::ProcessCommands1800To1899.
+
+## 0x6044C0 CDecisionMakerTypes::AddEventResponse  (catalogue: specified/REA, port level 1)
+- `__thiscall void (this, int32 dm [esp+4], int32 eventType [esp+8], int32 taskId [esp+0xC], float* probs [esp+0x10], uint8* flags
+  [esp+0x14])`, `ret 0x14`. `k = ((int32*)(this + 0xC034))[eventType]`; `CDecision::Add(this + 4 + 0x3C*(k + 0x29*dm), taskId, probs,
+  flags)` 0x600600 (thiscall, the three trailing arguments forwarded unchanged). No bounds checks.

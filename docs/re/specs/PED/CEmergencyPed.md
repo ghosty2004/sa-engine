@@ -18,3 +18,7 @@ Written by RE-SPEC-2 group F from the 1.0 US disassembly (instruction addresses 
   6. if `m_nPedType (+0x598)` is 18 (MEDIC) or 19 (FIREMAN): tail-jump `CPed::IsPedInControl()` 0x5E3960 (result ignored; the medic /
      fireman AI of earlier games is compiled out). Otherwise return.
 - gta-reversed: CEmergencyPed::ProcessControl is not reversed there; port from the bytes (keep both Update calls and the null owner).
+
+## 0x5DE3B0 CEmergencyPed::~CEmergencyPed  (catalogue: specified/REA, port level 16)
+- `__thiscall` (ECX = this), body: `this->vtable = 0x86C200`, then tail-jump to CPed::~CPed 0x5E8620 (ECX unchanged). Caller:
+  CEmergencyPed::`scalar deleting destructor' 0x5DE3E0.

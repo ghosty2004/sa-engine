@@ -458,7 +458,7 @@ precision; arithmetic is at the in-game 24-bit precision control.
     `v->m_nModelIndex == 432` (Rhino) -> false; `W = Multiply3x3(v->m_matrix, (-1.4f, -2.3f, 0.3f))` (bits 0xBFB33333,
     0xC0133333, 0x3E99999A), `W += vPos`; `if (!GetIsLineOfSightClear(vPos, W, true, false x6)) return false`;
     `TakeControl(v, 14 /*WHEELCAM*/, 2, 2); return true`.
-  - 1: boatSkipF; position pattern k = 20.0 [0x858BA4], q = 3.0 [0x858B3C] (-3.0 [0x859024]); ground fix:
+  - 1: boatSkipF; position pattern k = 20.0 [0x858BA4], q = +3.0 [0x858B3C] (S.y*q, fmul at 0x51E722), -q = -3.0 [0x859024] (S.x*(-q), fmul at 0x51E72C; re-checked: [0x858B3C] holds +3.0f, not -3.0); ground fix:
     `g = FindGroundZFor3DCoord(C.x, C.y, C.z + 5.0f, &f, nullptr)`; if f `C.z = g + 1.5f` [0x858CE8]; else
     `r = FindRoofZFor3DCoord(C.x, C.y, C.z - 5.0f, &f)`; if f `C.z = r + 1.5f`. `!LOS(P, C) -> false`;
     if `|V| > 40` and moving -> false; if `|V| < 4.5` -> false; `fixed(C); return !uw()`.
@@ -1094,3 +1094,15 @@ and must be re-checked with `tools/specs/dis.py 0x52B730` when porting (confiden
   i.e. gr calls the original with an unset stack argument - a gr bug, irrelevant for the port.
 - Open questions: none.
 
+
+## 0x50A870 CCamera::~CCamera  (catalogue: specified/REA, port level 2)
+- `__thiscall` (ECX = this → ESI), plain `ret`; SEH frame with unwind states 8..0. Callers: CCamera::`scalar deleting destructor' 0x514010,
+  __dtor_TheCamera 0x856410 (tail call).
+- Behaviour (exact order; destructors run in reverse member order):
+  1. `this->vtable = 0x8630E8` (CCamera vtable); `this+0x14 = 0` (the CPlaceable matrix pointer, 0x50A8AB).
+  2. `eh vector destructor iterator` 0x821E02 (stdcall: arr, elemSize, count, dtor; descending) on `this+0xCF4`, 0x10, 5, dtor 0x509800.
+  3. `CMatrix::~CMatrix` 0x59ACD0 (thiscall) on this+0xADC, +0xA94, +0xA4C, +0xA04, +0x9BC, +0x974, in that order.
+  4. 0x821E02 on `this+0x960`, 4, 4, dtor 0x5097C0; then on `this+0x174` (Cams[3]), 0x238, 3, dtor 0x5097D0 (CCam dtor).
+  5. Base destructor 0x54F490 (CPlaceable dtor, uncatalogued name: sets vtable 0x863C40; because +0x14 was zeroed in step 1 its
+     `CPlaceable::RemoveMatrix` 0x54F3B0 / `[0xB74238]--` branch is skipped; then `+0x14 = 0xB74240`).
+- gta-reversed: catalogue REA (named by CAT-17 correction, high).

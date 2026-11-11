@@ -56,3 +56,7 @@ Vtable 0x85A23C (gr TaskComplexWanderCriminal.h, size 0x38). CTaskComplexWander 
 - gta-reversed: TaskComplexWanderCriminal.cpp:8 is `plugin::CallMethod` followed by dead draft code; the draft uses
   `CGeneral::GetRandomNumberInRange(0.0f, 30000.0f)` (float helper, `30000*t`) where the original inlines `-trunc((r/32768) * -30000)` - row
   TaskComplexWanderCriminal.cpp:19 rng-helper: CONFIRMED deviation in the (unused) draft; port the original.
+
+## 0x48E650 CTaskComplexWanderCriminal::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x38) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplexWander::CTaskComplexWander(this+0xC (i32), this+0x10 (u8), this+0x24 & 1 (byte, `and ecx,0xffffff01`), [0x86FCB0]=0.5f (raw dword)) 0x66F450; then vtbl = 0x85A23C (CTaskComplexWanderCriminal); +0x28 = 0; +0x2C = 0; +0x30 = 0 (u8); +0x31 = 0 (u8); +0x34 = 0 (stores in this order, 0x48E6A8-0x48E6BB). Unlike gr, no source field beyond the wander base is copied; return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

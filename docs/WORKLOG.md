@@ -823,3 +823,7 @@
 ## 2026-11-11 PORT-RW-1 integrated (main session)
 - Agent a385d5f8 + 2 helpers (lane 2): crate sa-rwcore, specs_rw.rs, docs/arch/rw-port.md + verdicts, lists, extras.
   Merge (rwcore after audio); sa-hook lib 48, sa-rwcore tests, workspace clippy, i686 OK; all-ports IDENTICAL on 7.
+
+## 2026-11-11 RE-SPEC-UNK + RE-SPEC-REST specs committed (main session)
+- 146 changed/new spec files under docs/re/specs (UNK classification specs, REST specs, AI appendices); check_consts over
+  all of them: 2,949 claims, 0 mismatches. RE-SPEC-FINAL / RW-3 / SPEC-QA run concurrently and may append later.

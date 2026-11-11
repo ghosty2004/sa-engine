@@ -26,3 +26,7 @@ Vtable 0x859C80 (gr TaskComplexWanderCop.cpp:9). Layout (gr TaskComplexWanderCop
   subclass, not in this group).
 - gta-reversed: dtor body `delete m_pGoToPointAndStandStillTask;` (cpp:33) matches the bytes; only the address labels are swapped
   (gr says ctor = 0x460D80, dtor = 0x460D60). Open questions: identity of the class with vtable 0x85A428 (0x4994E0).
+
+## 0x460CE0 CTaskComplexWanderCop::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x50) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplexWanderCop::CTaskComplexWanderCop(moveState = this+0xC (i32), wanderDir = this+0x10 (u8 zero-extended)) 0x460C80 (thiscall, 2 args); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

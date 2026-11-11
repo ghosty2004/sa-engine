@@ -49,3 +49,7 @@ Layout (gr TaskSimpleCarSetPedInAsDriver.h, size 0x1C): +0x8 m_bIsFinished, +0xC
 - gta-reversed: TaskSimpleCarSetPedInAsDriver ProcessPed is not reversed (plugin call / absent): port from these bytes.
 - Open questions: names of ped +0x558/+0x55C, ped vtable slot 23 (0x64BBD6), vehicle bytes +0x428/+0x429/+0x42A/+0x42D, +0x45C,
   +0x594 == 6 and group +0x34 (0x64BAEA); behaviour above is complete without them.
+
+## 0x649E00 CTaskSimpleCarSetPedInAsDriver::Clone  (catalogue: specified/REA, port level 3)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x1C) 0x61A5A0 (cdecl); if p == NULL the constructor is skipped and EAX = 0 (see the trailing stores). Else p->CTaskSimpleCarSetPedInAsDriver(this+0x10, this+0x14) 0x6470E0; then outside the NULL check: p+0x18/+0x19/+0x1A = this+0x18/+0x19/+0x1A (bytes; NULL-write bug as 0x649D90); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

@@ -8,3 +8,7 @@
 
 ## 0x664A80 CTaskComplexGangJoinRespond::~CTaskComplexGangJoinRespond  (catalogue: specified/REA, port level 3)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskComplexGangJoinRespond::Destructor 0x661720 (0x664A83); if `flags & 1` (0x664A88) calls CTask::operator delete 0x61A5B0 (this) (0x664A90, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86FB5C (CTaskComplexGangJoinRespond).
+
+## 0x662290 CTaskComplexGangJoinRespond::Clone  (catalogue: specified/REA, port level 2)
+- Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x14) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskComplex::CTaskComplex() 0x61A3B0; p+0xC = this+0xC (u8); vtbl = 0x86FB5C (CTaskComplexGangJoinRespond); p+0xD = 0 (u8); return p.
+- gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.

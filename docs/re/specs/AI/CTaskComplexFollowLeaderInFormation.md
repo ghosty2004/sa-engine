@@ -18,3 +18,11 @@ construction, move state), +0x24 f32/i32 (4th ctor arg, copied raw).
 
 ## 0x695BC0 CTaskComplexFollowLeaderInFormation::~CTaskComplexFollowLeaderInFormation  (catalogue: specified/REA, port level 3)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskComplexFollowLeaderInFormation::Destructor 0x694A40 (0x695BC3); if `flags & 1` (0x695BC8) calls CTask::operator delete 0x61A5B0 (this) (0x695BD0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x870C3C (CTaskComplexFollowLeaderInFormation).
+
+## 0x6968E0 CTaskComplexFollowLeaderInFormation::CreateFirstSubTask  (catalogue: specified/REA, port level 5)
+- `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`. Calls 0x6962A0 (thiscall `CTask* (int32 taskType, CPed* ped)`, catalogue
+  `thunk_FUN_00401913`; proposed name `CTaskComplexFollowLeaderInFormation::CreateSubTask`, evidence: the only callee, takes a task id
+  and the ped, result returned unchanged) with:
+  - ped in vehicle (ped+0x46C & 0x100) and ped+0x58C (vehicle) != NULL: if the leader (this+0x10) is in a vehicle (leader+0x46C & 0x100)
+    and leader+0x58C == ped's vehicle -> 0x2C5 (709, TASK_SIMPLE_CAR_DRIVE); else 0x2C0 (704, TASK_COMPLEX_LEAVE_CAR);
+  - otherwise -> 0x38B (907, TASK_COMPLEX_SEEK_ENTITY).
