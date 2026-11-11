@@ -1025,7 +1025,10 @@ mod tests {
         // SAFETY: as above.
         let r = unsafe { raw::call_unary(sa_core_test_ci_sqrt as *const () as usize, q) };
         assert_eq!(r.to_bits(), 0x7FF8_0000_0000_1234);
-        assert!(std::panic::catch_unwind(|| x87_unary(0x821E70, 0.5)).is_err());
+        // Host: libm stands in for _CIasin/_CIacos; any other intrinsic address is unported.
+        assert_eq!(x87_unary(0x821E70, 0.5), sa_math::libm::asin(0.5));
+        assert_eq!(x87_unary(0x822380, 0.5), sa_math::libm::acos(0.5));
+        assert!(std::panic::catch_unwind(|| x87_unary(0x401000, 0.5)).is_err());
         assert_eq!(fpu_top(), top);
     }
 
