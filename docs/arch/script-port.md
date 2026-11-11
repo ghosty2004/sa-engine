@@ -482,3 +482,18 @@ Opcodes gr marks `unimplemented`/nop that the exe implements or ends with 0 are 
   (menus-hud included), `target/verify-all/p4script-merged/summary.txt` in the main checkout.
 - Tests: `cargo test -p sa-script` 4/4; `cargo test -p sa-hook --lib` 53/53 (`RUST_MIN_STACK=268435456`); clippy
   `-D warnings` clean for sa-script host (all targets) and i686 (`in-process`).
+
+## Integration onto master (INTEGRATE-SCRIPT4)
+
+- The PORT-SCRIPT-4 sa-script delta (its branch since the PORT-SCRIPT-3 merge, without the unrelated
+  HUD/AI work it had merged from an older master) was applied onto master after STD-4/5/6, HUD-3 and the
+  writer batches. Master had meanwhile added STD-6 cases to the then-partial switches: 0623-062A
+  (1500), 0746/0747 (1800) and 0997 (2400). PORT-SCRIPT-4's complete switches already contain equivalent
+  cases (same callees, same `fild` conversions, same `DisplayScriptStatUpdateMessage` states), so each
+  opcode keeps one implementation, PORT-SCRIPT-4's; the `fallback` flags of those switches are gone
+  (this also fixes `partial_switches_list_their_rust_cases`, which failed on master for 1500). Fallback
+  flags remain only on 1200 (0503) and 2500 (09C6/09D3).
+- Verification: `cargo test -p sa-script --lib` 4/4, `cargo test -p sa-hook --lib` 58/58,
+  `sa-oracle --test l1 preserved_registers` PASS, clippy `-D warnings` clean (host all targets and i686
+  `in-process`), `verify-all.sh s4int-2 4,5` (DLL built from commit 30cc282): IDENTICAL on all 12
+  recordings (`target/verify-all/s4int-2/summary.txt` in the main checkout).
