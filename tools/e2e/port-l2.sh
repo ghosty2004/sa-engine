@@ -26,7 +26,9 @@
 #            Rust implementations); `sa-oracle l2 split-report` pairs the calls by (function, ordinal),
 #            checks that their inputs are identical and compares the outputs (for functions that cannot
 #            run twice on the same OS state; docs/re/l2-oracle.md). SPLIT_PER_FRAME (default 1000);
-#            SPLIT_DUMP_SEQ=N,… dumps the watched windows at those cases (`sa-oracle l2 dump-diff`)
+#            SPLIT_DUMP_SEQ=N,… dumps the watched windows at those cases (`sa-oracle l2 dump-diff`);
+#            SPLIT_STACKFILL=BYTES zeroes that much stack below the invoker before every sampled call
+#            (SA_L2_STACKFILL: original callees that read uninitialised stack see the same bytes in both runs)
 # and checks:
 #   (a) per hook: >= MAX cases or every call compared, 0 mismatches, 0 undeclared writes; a hook that
 #       got no call in the run is reported as NOCALLS (not a failure, but no evidence either)
@@ -43,7 +45,8 @@
 # L2_FROM (first frame sampled, SA_L2_FROM; l2 and split runs),
 # L2_SPOOL_MAX (bytes, default sa-hook's 2 GiB), L2_EXTRA (extra regions appended to every run's
 # SA_L2_EXTRA), RUN_TIMEOUT (s, default 1500),
-# L2_SPOOL_DISCARD=1 (drain the binary spool through a FIFO: no host report, bounded disk use).
+# L2_SPOOL_DISCARD=1 (drain the binary spool through a FIFO: no host report, bounded disk use),
+# SA_COV (+ SA_COV_CAP, SA_COV_PEEK; sa-hook coverage.rs) passed through, each run writing OUT/NAME.cov.csv.
 # Build first (see inf8-l2.sh). Output: target/e2e/lane-N/port-l2[-TAG]/ with summary.txt and
 # results.tsv (one row per hook: addr name calls cases mismatches undeclared_cases l2 l3).
 # Exit 0 = no failure (NOCALLS rows do not fail the run).
@@ -199,6 +202,8 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     (
         export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$wtrace" SA_HOOK_PORTS=orig
         for kv in "$@"; do export "${kv?}"; done
+        # diagnostic coverage (SA_COV points file): one output per run
+        [ -n "${SA_COV:-}" ] && export SA_COV_OUT="$(win "$OUT/$name.cov.csv")"
         e2e_game_start
         wait "$E2E_GAME_PID"
     ) &
@@ -286,6 +291,7 @@ L2COMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${L2_PER_FRAME:-4}" SA_L2_SPEC="$(wi
 SPLITCOMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${SPLIT_PER_FRAME:-1000}" SA_L2_SPEC="$(win "$DET/l2.spec")")
 [ -n "${L2_SPOOL_MAX:-}" ] && SPLITCOMMON+=(SA_L2_SPOOL_MAX="$L2_SPOOL_MAX")
 [ -n "${SPLIT_DUMP_SEQ:-}" ] && SPLITCOMMON+=(SA_L2_DUMP_SEQ="$SPLIT_DUMP_SEQ")
+[ -n "${SPLIT_STACKFILL:-}" ] && SPLITCOMMON+=(SA_L2_STACKFILL="$SPLIT_STACKFILL")
 [ -n "${L2_FROM:-}" ] && SPLITCOMMON+=(SA_L2_FROM="$L2_FROM") && L2COMMON+=(SA_L2_FROM="$L2_FROM")
 
 for run in $RUNS; do

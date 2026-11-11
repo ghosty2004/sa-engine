@@ -262,9 +262,64 @@ Ledger proposals (pass 2, pending):
 - Stack-only (argument-slot temporaries, SEH frames) in FireSniper, FireInstantHitFromCar(2), FireM16_1stPerson,
   DoBulletImpact, CBulletInfo::Update, CFireManager::Update (dead accumulator), CFire::ProcessFire.
 
+## WEAPON-FIX (2026-11-11): the c-bug split divergence at frame 2494
+
+HARNESS-3 saw a split run (list `CWeapon::Fire`, `DoBulletImpact`, `GenerateDamageEvent`, everything else original)
+diverge from the plain trace on c-bug at frame 2494 (buildings), with `CWeapon::Fire` FAIL at frame 2493 on
+`CCollision::ms_colModelCache+0xf4` (0x965A20) and `gMatrixList+0x50` (0xB742D8). Reproduced on lane 1
+(`L2_FROM=2400 SPLIT_PER_FRAME=20 --max 3000`, tag `wf-cb1`): Fire FAIL 1/4 at ordinal 3, frame 2493, DoBulletImpact
+DIVERGED at ordinal 3 (input 0x965A20 plain 00 rust 01), splitr trace DIVERGED at 2494 (buildings); the `rust` run
+(no split) IDENTICAL.
+
+**Root cause: an uninitialised read in the original `CWeapon::FireInstantHit` (0x73FB10), not a port bug.**
+- The call at frame 2493 is a non-player ped (0x20E3570C) firing at the player with `forceAim` 0 and the IK flag
+  `[ped+0x528] & 1` clear: 0x73FDF2/0x73FE04 jump straight to 0x740B71, skipping the line-of-sight block that
+  writes the shot direction local `[esp+0x6C..0x77]` (0x73FD22). DoBulletImpact gets victim 0 (seen in the spool).
+- 0x740DAC..0x740DF8 computes the gunshell position `[esp+0x44] = muzzle [esp+0x78] - dir [esp+0x6C] *
+  [esp+0x1C]` from that never-written local and passes it to `CWeapon::AddGunshell` (0x740E35 → 0x73A3E0 → FX
+  particle). The gunshell FX has ground collision (`FxInfoGroundCollide_c::GetValue` 0x4A7100 calls
+  `CWorld::ProcessVerticalLine` 0x5674E0), so the residue decides where a vertical line is tested.
+- Measured with `SA_COV_PEEK=740dac` (tag `wf-peek`, the 0x30 dwords above ESP at 0x740DAC on every pass): the
+  passes through that point up to frame 2494 read the same direction in plain, splito and splitr except three. Passes
+  32 and 33 (before `L2_FROM`, so splitr ran the Rust Fire unsampled, as in a `rust` run) took the uninitialised
+  path too: plain/splito read `00b414ec bf737738 bfca8a43`, splitr `20e7ced0 00000001 0000007f`, without a visible
+  effect. At frame 2493 (pass 77) the three runs read three different residues: plain `00b2057c bf5645a0 bfd1e0ac` (ESP 0x36FA6C),
+  splito `07c50000 000005a0 07270001` (ESP 0x36EEE8, below the split invoker), splitr `450d0f09 c49da830 41c36a03`
+  = (2257, -1261, 24.4) (ESP 0x36EDD8: the Rust Fire frame is 0x110 deeper than the original's). Only splitr's
+  residue moves the gunshell metres away.
+- Window dumps around the call (`SPLIT_DUMP_SEQ=6,7`, tag `wf-cb2`; seq 6 = Fire ordinal 3, seq 7 = the nested
+  DoBulletImpact): between Fire's entry and the DoBulletImpact call the plain run cleared 0x965A20 (a
+  `CCollision::ProcessVerticalLine` 0x417BF0 that hit no triangle, the static `CStoredCollPoly` 0x9659FC + 0x24),
+  the rust run instead changed `gMatrixList` +0x50/+0x1A0; coverage counters up to frame 2495 (tag `wf-cov2`,
+  every call site of 0x5674E0 / 0x54F560 armed) show the same number of `CWorld::ProcessVerticalLine` calls but
+  `ProcessVerticalLineSectorList<CPhysical>` (0x5632B0) making 22 fewer `CCollision::ProcessVerticalLine` calls
+  (0x563332) and 2 more `AllocateMatrix` calls (0x5632FE): the same line test in other sectors.
+- A first coverage run that armed every instruction of FireInstantHit (`wf-cov`) made the divergence disappear: the
+  trap handler rewrites stack residue, a further sign that the outcome depends on stack bytes only.
+
+Consequences: the Fire port is faithful (re-read against 0x742300..0x742A0B, both jump tables and the stats table
+0x742A58); with the Fire family on Rust the all-ports L3 runs stay IDENTICAL only because the different residue a
+Rust Fire leaves at that depth happens to be harmless in the corpus (passes 32/33 above). A port of FireInstantHit must decide what that direction is (ledger
+item below); until then any change of stack depth above it (a Rust caller, the split invoker, a debugger) can move
+the gunshell. **Harness fix:** split runs can now zero the stack below the invoker before every sampled call
+(`SA_L2_STACKFILL` / `SPLIT_STACKFILL=BYTES`, sa-hook `l2_invoke`, off by default), so original callees that read
+uninitialised stack see the same bytes in both runs. With `SPLIT_STACKFILL=16384`: the three-hook c-bug run
+(`wf-fill`) PASS 74/74 (Fire), 74/74 (DoBulletImpact), 29/29 (GenerateDamageEvent), splitr trace IDENTICAL over
+3220 frames; `wp2-all.txt` on weapon-combat (`wp2-fill-weapon-combat`, `L2_MAX=150 SPLIT_PER_FRAME=2`): 7 PASS
+(Fire 135/135, DoBulletImpact 134/134, GenerateDamageEvent 11/11, CBulletInfo::Update, CFireManager::Update,
+CProjectileInfo::Update 150/150, AddExplosion 1/1), 0 PASS-FP, both split traces IDENTICAL. All-ports L3 with this
+branch's sa-hook (`port-l2.sh ports REC --runs "plain rust"`, 3,495 hooks, lane 1, tags `p-*`): IDENTICAL on every frame
+and all 17 subsystems on weapon-combat, c-bug, driving, world-cheats, pause-restart, anim-input and the grove walk.
+
 ## Ledger proposals
 
 *pending*
+- WEAPON (WEAPON-FIX): `CWeapon::FireInstantHit` 0x73FB10 reads its shot-direction local `[esp+0x6C]` uninitialised
+  on the path 0x73FE04 → 0x740B71 (ped firer with a target, IK flag clear, `forceAim` 0) to place the gunshell
+  (0x740DAC → `AddGunshell` 0x740E35); the gunshell's ground-collision FX tests a vertical line there. The value is
+  stack residue that depends on the frames above (measured: three different values in plain / split-orig /
+  split-rust at c-bug frame 2493). Not reproducible by any port; proposal: accept, and have the future
+  FireInstantHit port document the value it uses.
 - WEAPON: `EvaluateTargetForHeatSeekingMissile`, `PickTargetForHeatSeekingMissile`, `CWeapon::Update` (reload
   state) and `CCreepingFire::TryToStartFireAtCoors` write intermediate values into their own stack argument
   slots in the original; the ports do not (stack-only, invisible to callers; L2 compares argument words, so a

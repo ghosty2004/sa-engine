@@ -116,6 +116,11 @@ const MAX_ARGS: usize = 16;
 static INV_TARGET: AtomicU32 = AtomicU32::new(0);
 static INV_CUR: AtomicU32 = AtomicU32::new(0);
 static INV_TMP: AtomicU32 = AtomicU32::new(0);
+/// `SA_L2_STACKFILL` (split-run mode): dwords below the invoker's stack pointer zeroed right before every
+/// sampled call, so original code that reads uninitialised stack (e.g. `CWeapon::FireInstantHit`'s gunshell
+/// direction at 0x740DAC) sees the same bytes in both runs instead of residue whose position depends on
+/// the Rust frames above it. 0 = off.
+pub(crate) static STACK_FILL_DWORDS: AtomicU32 = AtomicU32::new(0);
 
 /// Shared entry of every hook's L2 stub (`push i; jmp l2_common`).
 #[unsafe(naked)]
@@ -178,6 +183,19 @@ unsafe extern "C" fn l2_invoke(inv: *mut Invoke) {
         "mov eax, [esp+20]",
         "mov [{cur}], eax",
         "mov [eax], esp",
+        // optional stack fill (STACK_FILL_DWORDS): zero downwards from the current ESP, so the guard
+        // page is touched in order
+        "mov ecx, [{fill}]",
+        "test ecx, ecx",
+        "jz 8f",
+        "push eax",
+        "lea edi, [esp-4]",
+        "xor eax, eax",
+        "std",
+        "rep stosd",
+        "cld",
+        "pop eax",
+        "8:",
         "mov ecx, [eax+4]",
         "2:",
         "test ecx, ecx",
@@ -253,6 +271,7 @@ unsafe extern "C" fn l2_invoke(inv: *mut Invoke) {
         cur = sym INV_CUR,
         target = sym INV_TARGET,
         tmp = sym INV_TMP,
+        fill = sym STACK_FILL_DWORDS,
     )
 }
 
@@ -452,6 +471,10 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
         ));
     }
     let hooks = c.hooks.clone();
+    if c.split.is_some() && c.stack_fill > 0 {
+        STACK_FILL_DWORDS.store(c.stack_fill / 4, Ordering::Release);
+        log(&format!("l2: split-run stack fill: {:#x} bytes below the invoker zeroed before every sampled call", c.stack_fill));
+    }
     let _ = CFG.set(c);
     // INF-10 coverage arms its breakpoints here: this runs after every hook and determinism patch is
     // installed and before the game's threads resume (kept out of win.rs, see coverage.rs).

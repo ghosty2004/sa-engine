@@ -15,6 +15,7 @@
 //! | `SA_COV_OUT` | output CSV (`address,hits`, every armed point), default `coverage.csv` next to gta_sa.exe; rewritten every 10 s and at the end frame |
 //! | `SA_COV_CAP` | traps counted per point (default 1 = first hit only) |
 //! | `SA_COV_SCM` | output CSV of SCM opcodes executed (`opcode,count`), written with the hits (SAMP-1D) |
+//! | `SA_COV_PEEK` | points (hex, comma-separated) whose every trap logs the registers and the 0x30 dwords above ESP (stack residue diagnostics; use with `SA_COV_CAP` > 1) |
 //!
 //! `SA_COV_SCM` detours `CRunningScript::ProcessOneCommand` (0x469EB0): a stub counts the command
 //! word at `m_pCurrentIP` (`& 0x7FFF`, the high bit is the negation flag) in a 32768-entry table, runs
@@ -237,6 +238,19 @@ mod imp {
         }
     }
 
+    /// `SA_COV_PEEK`: points (hex, comma-separated) at which every trap logs the registers and the
+    /// 0x30 dwords above ESP (diagnostics of stack residue read by original code; WEAPON-FIX).
+    fn peek_points() -> &'static [u32] {
+        static PEEK: std::sync::OnceLock<Vec<u32>> = std::sync::OnceLock::new();
+        PEEK.get_or_init(|| {
+            std::env::var("SA_COV_PEEK")
+                .unwrap_or_default()
+                .split(',')
+                .filter_map(|a| u32::from_str_radix(a.trim().trim_start_matches("0x"), 16).ok())
+                .collect()
+        })
+    }
+
     unsafe extern "system" fn handler(info: *mut EXCEPTION_POINTERS) -> i32 {
         // SAFETY: the OS passes valid exception and context records.
         let (rec, ctx) = unsafe { (&*(*info).ExceptionRecord, &mut *(*info).ContextRecord) };
@@ -259,6 +273,18 @@ mod imp {
                     return CONTINUE_SEARCH;
                 };
                 let n = s.hits[i].fetch_add(1, Ordering::Relaxed) + 1;
+                {
+                    if peek_points().contains(&s.addrs[i]) {
+                        let esp = ctx.Esp;
+                        let mut t = format!("peek {:#x} n={n} esp={esp:#x} eax={:#x} ecx={:#x} edx={:#x} ebx={:#x} esi={:#x} edi={:#x}:", s.addrs[i], ctx.Eax, ctx.Ecx, ctx.Edx, ctx.Ebx, ctx.Esi, ctx.Edi);
+                        for k in 0..0x30u32 {
+                            // SAFETY: diagnostic read of the live thread stack above ESP.
+                            let v = unsafe { core::ptr::read_volatile((esp + 4 * k) as usize as *const u32) };
+                            t.push_str(&format!(" {v:08x}"));
+                        }
+                        log(&t);
+                    }
+                }
                 if n == 1 {
                     let k = LAST_N.fetch_add(1, Ordering::Relaxed) as usize;
                     LAST[k % RING].store(s.addrs[i], Ordering::Relaxed);
