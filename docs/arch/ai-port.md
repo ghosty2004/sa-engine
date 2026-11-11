@@ -623,3 +623,100 @@ Recordings (SA_ROOT=/home/ghosty2004/sa-engine): grove `target/e2e/lane-2/inf4/r
 | 0x853240 | __init_g_c1a43c | sa_ai::misc::init_g_c1a43c | L2-split (undeclared writes to review) | split grove: PASS 1 cases (0 mismatches, 1 undeclared) |  |
 | 0x853260 | __init_g_c1a45c | sa_ai::misc::init_g_c1a45c | L2-split (undeclared writes to review) | split grove: PASS 1 cases (0 mismatches, 1 undeclared) |  |
 | 0x853280 | __init_g_c1a4dc | sa_ai::misc::init_g_c1a4dc | L2-split (undeclared writes to review) | split grove: PASS 1 cases (0 mismatches, 1 undeclared) |  |
+
+# PORT-AI-3: vehicle entry, exit and driving tasks (crate `sa-ai`)
+
+Third AI pass (agent + 2 helpers, lane 4): the vehicle task family, SA:MP-priority rows first (entering and leaving
+vehicles, passengers, `catalog/samp-priority.csv` hits). Same rules as PORT-AI-1 (ADR-001; the 1.0 US bytes win over
+gta-reversed and the specs). Constructors, destructors, `Clone` and constant getters were skipped: AI-GEN generates
+them. Per-function verdicts: `docs/arch/ai-port-3-verdicts.tsv`.
+
+| module | contents |
+|---|---|
+| `car_enter.rs` | `CTaskSimpleCarAlign` / `OpenDoorFromOutside` / `GetIn` / `CloseDoorFromInside` / `CloseDoorFromOutside` (`ProcessPed`, `StartAnim`, `SetPedPosition`, finish-anim callbacks, `ComputeAnimID`), `CTaskSimpleCarAlign::FixHeading`, `CTaskSimpleCarSetPedInAsDriver` / `AsPassenger::ProcessPed`, `CTaskComplexEnterCar` helpers (`SetVehicleFlags`, `PrepareVehicleForPedEnter`, `PreparePedForVehicleEnter`, `CreateTaskUtilityLineUpPedWithCar`), `CTaskComplexGoToCarDoorAndStandStill::IsVehicleInRange` (30 hooks) |
+| `car_exit.rs` | `CTaskComplexLeaveCar` (`CreateSubTask`, `CreateNextSubTask`, `MakeAbortable`), `CTaskSimpleCarGetOut` / `CarJumpOut` (`ProcessPed`, `StartAnim`, `SetPedPosition`, callback, `ComputeAnimID`, `MakeAbortable`), `CTaskSimpleCarSetPedOut::ProcessPed` / `PositionPedOutOfCollision`, `CTaskSimpleCarWaitToSlowDown::ProcessPed` (15 hooks) |
+| `car_drive.rs` | `CTaskComplexCarDrive` (`CreateSubTask`, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`, `CreateSubTaskCannotGetInCar`), the `SetUpCar` family (`CarDrive`, `CarDriveWander`, `CarDriveMission`, `DriveToPoint`), `CTaskComplexDriveToPoint::Drive` (10 hooks) |
+
+## Conventions and findings
+
+- **Original behaviour kept**: several `ComputeAnimID` callers pass an argument slot of their own frame as the
+  anim-id out-parameter; for doors outside 8..11 the callee writes nothing, so the "anim id" is the task or ped
+  pointer that was in that slot (0x646020, 0x646490, 0x64B080, 0x64DA90, 0x64B2D0, 0x64BDE0, 0x64DC70, 0x64DD60); the
+  ports reproduce the slot's value. 0x64B080 passes the ped pointer as the pad when ped +0x598 is neither 0 nor 1.
+  0x64D710 passes the bit pattern of the anim time as the door component for doors outside 8..11. 0x63AB90 passes
+  the ped-slot dword with only its low byte replaced to the second `SetGettingInFlags`. 0x645CB0 does not scale
+  w.z, subtracts w twice and calls `GetTopDirection` four times. 0x641100: priority 0 returns false, the dead
+  0xD4 -> 0x2CF retest keeps its extra `GetTaskType` call, the jump-out sub-cases return false after blending anim
+  0x7D. 0x64DD60 writes ped +0x128 = vehicle without `RegisterReference`. 0x647590 and the boat path of 0x6479B0 use
+  matrices without null checks. 0x645420 (`DriveToPoint::Drive`) returns the sub-task read at entry for a mode > 3
+  (the default branch keeps that stale value). `CTaskComplexCarDrive::CreateSubTask` / `CreateNextSubTask` return
+  null for unknown types (gta-reversed aborts).
+- **Stack objects / uninitialised locals**: zeroed Rust buffers (0x64BF00 anim local; 0x64AD90, 0x64AFB0, the
+  instant-open paths of 0x64D710 / 0x64D9A0; the stack `CTaskSimpleCarCloseDoorFromOutside` 0x1C and
+  `CTaskSimpleCarSetPedOut` 0x18 objects of 0x641100; the unread `CUpsideDownCarCheck` of 0x645100; the
+  `CEventGroupEvent` / `CEventCopCarBeingStolen` buffers of car_enter.rs are larger than the original frames).
+- **Protection-island entries**: 0x641530 (`nop; jmp 0x40181E`, hooked with `expect = "90 E9 E8 02 DC FF"`) and
+  0x64B5D0 (`push -1; nop; jmp 0x401DB5`, the island loads `fs:[0]` and returns to 0x64B5D8; `expect = "6A FF 90 E9
+  DD 67 DB FF"`). Neither island computes a target at run time.
+- **Preserved registers**: 0x6458A0 `preserve = "ecx"` (callers 0x64A92C and 0x64D44D read ECX after the call; the
+  sa-hook `callers` test found it).
+- **RNG**: none of the 55 ported functions call `rand()` or `GetRandomNumberInRange` (the `TriggerIK` draws were
+  ported in PORT-AI-1).
+- **Not checked against a measurement** (names / argument layouts read from the bytes only): vehicle vtable slots
+  +0x6C, +0x70, +0x74, +0x8C, +0x94, +0xDC, +0xE4, +0xE8; entity vtable +0x34; 0x646CF0 writes single bytes through
+  its two out-pointers; 0x63BA00 / 0x63BAB0 / 0x63BAE0 names from the spec (catalogue unnamed).
+
+## New recording: `car-ai.sarec`
+
+`tools/e2e/programs/car-ai.txt` (recorded on lane 4 in determinism mode, replay == record over 5000 frames, saved as
+`$SA_ROOT/target/e2e/corpus/car-ai.sarec`). Checked from screenshots: CJ walks to the street, jacks a taxi that stops
+next to him (frame ~1600), the taxi driver drags him back out (~1750-1900), Ballas join the fight and CJ is wasted
+(~2350); after the hospital respawn a cheat Rancher is driven off with two wanted stars while police cars, a bike
+cop and cops on foot respond (3400-5000). Not covered: no Grove member was in reach to recruit at the start of a
+new game (and recruiting may not be unlocked yet), so there is no player-group passenger; the police did not drag
+CJ out of the Rancher before the end (it stopped on a lawn they did not reach). An earlier attempt confirmed police
+drag-out + arrest when CJ sits in a stopped car on the street with two stars; it was not kept because the jacking
+part was missing.
+
+## Verification (commands, results)
+
+Lane 4 (`SA_ROOT=/home/ghosty2004/sa-engine LANE=4`, `systemd-run --user --scope -p MemoryMax=12G`), from frozen
+source exports (`git archive` into `target/v1src` = 96902a4 with 55 hooks, `target/v2src` = 296c723 with 53 hooks).
+List: `tools/e2e/lists/ai3-split.txt` (the 55 v1 hooks; every one writes or calls, so all ran in INF-17 split mode,
+`L2_MAX=150 SPLIT_PER_FRAME=4`). Recordings: car-ai (new, 5000 frames), driving (4338), grove `lane-2/inf4/rec.sarec`
+(5200), c-bug (3220) for split; plus pause-restart (3700), world-cheats (3276), anim-input (3300), weapon-combat
+(3500) for L3.
+
+| run | build | result |
+|---|---|---|
+| all engine ports on Rust (`port-l2.sh ports REC --runs "plain rust"`), **L3** | v1 | IDENTICAL on all 17 subsystems and every frame on driving, grove, c-bug, pause-restart, world-cheats, anim-input, weapon-combat. **car-ai: DIVERGED at frame 2363, `buildings` only** (every other subsystem incl. rand/randcalls identical to the end) |
+| car-ai bisection, `--runs "plain rust"` with a hook list | v1 | the 55 new hooks alone: IDENTICAL; every other port (2917) alone: IDENTICAL; every port as a list (2972, list mode): IDENTICAL; `ports` mode again: DIVERGED at 2363 (reproducible) |
+| car-ai `ports` mode on the parent commit 73ec3b0 (no PORT-AI-3 code) | v0 | **DIVERGED at 2363, `buildings`**: the divergence predates this pass. `ports` mode differs from list mode in that sa-hook's own pre-ARCH-1 hooks (`Ps::psInstallFileSystem`, CIplStore, CdStream, pools ...) are installed in Rust mode from process start (`rust.log` install lines); frame 2363 is CJ's death and hospital respawn (a new area streams in) |
+| all engine ports on Rust, **L3** | v2 | IDENTICAL on driving, grove, c-bug, pause-restart, world-cheats, anim-input, weapon-combat; car-ai `ports` mode DIVERGED at 2363 `buildings` as at 73ec3b0; car-ai with every port as a list (2970 hooks): IDENTICAL over 5000 frames |
+| split `ai3-split.txt` | v1 | splito/splitr traces == plain on every frame on all four recordings. Verdicts per row in `ai-port-3-verdicts.tsv`. DIVERGED (inputs differ) only for the two `ComputeAnimID` pairs whose pointer arguments point into the Rust caller's stack. FAIL: 0x6479B0 and 0x647D10 on all four recordings (window writes from 0x967F50 on, in the `CCollision::ProcessColModels` statics 0x967F40.., differ: orig `0x0036E614`, a stack address, rust `0x00xx0001`, and the two write a different number of bytes), and 0x6419F0 on c-bug only (2 of 19 cases: 0x967F50 holds a stack address that differs by exactly 0x40, the Rust caller's deeper stack: a normaliser gap, not a logic difference) |
+
+- 0x6479B0 / 0x647D10 were unregistered (v2, 296c723) and stay `ported-unregistered`; the cause is not resolved
+  (open item below).
+- Undeclared writes (the 26 `L2-split` rows) are all in regions written by original callees: `CReferences::aRefs`
+  (0xB9B9A8..), the collision statics 0x965961.. / 0x9659FD.., anim/audio entity bytes 0xB4E...-0xB5D4B2,
+  0xB1E4D4. No `l2-extras` section was added for PORT-AI-3 (the `doc:ai-port@` lines apply to the PORT-AI-1 table only).
+- `cargo test -p sa-ai` 3 pass; `cargo test --release -p sa-hook --lib` 48 pass (`every_hook_installs_on_the_exe`,
+  `matches_catalogue_and_exe`, `callers` (it found 0x6458A0's ECX), `patch_refs`); clippy `-D warnings`: sa-ai host
+  (all targets), i686 (`--features in-process`), wasm32; sa-hook i686.
+
+## Open items
+
+- car-ai frame 2363 `buildings` divergence in `ports` mode (pre-existing at 73ec3b0; list mode identical): bisect over
+  sa-hook's local hooks (harness slot).
+- 0x6479B0 / 0x647D10 split FAIL at 0x967F50 (`CCollision::ProcessColModels` statics): find what writes there, then
+  either fix the port or add a normaliser rule; 0x6419F0's c-bug FAIL is the stack-address case of the same static.
+- Not ported: `CTaskComplexEnterCar` sub-task creation/control (0x643A60, 0x63E990, 0x63E040, 0x63A890, 0x63F970),
+  `CTaskComplexGoToCarDoorAndStandStill` sub-tasks (0x64A5F0, 0x64A820, 0x64D2B0, 0x64D440),
+  `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 / `GetLocalPositionToOpenCarDoor` 0x64FC10, 0x6477F0
+  (`vt_86ee94::ProcessPed`, the passenger-slot bug), `CTaskSimpleCarDrive::ProcessPed` 0x644470 / `ProcessBopping`
+  0x642E70, the dragged-out / drag-ped-from-car family, `CTaskSimpleCarFallOut`, `ForcePedOut`, `LeaveCarAndWander` /
+  `AndFlee` / `AndDie`, die-in-car, chase / flee in vehicles, `CTaskComplexDestroyCar*`, `CTaskComplexDriveFireTruck`,
+  `CTaskComplexCopInCar`, `CTaskComplexWanderMedic`, `CTaskComplexDrivePointRoute`, `IsTargetBlocked` (0x6452C0, 0x6432A0).
+- 7 hooks got no call in the four split recordings (the `CTaskSimpleCarJumpOut` family,
+  `CTaskComplexCarDrive::SetUpCar`, `CreateSubTaskCannotGetInCar`).
+- car-ai has no recruited group passenger and no police drag-out (see above).

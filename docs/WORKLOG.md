@@ -845,3 +845,7 @@
 - Agent a456341d (lane 7): see ROADMAP HARNESS-3. Clean squash merge; sa-hook lib 50, sa-oracle lib 21,
   sa-oracle-format 27, workspace clippy, i686 OK; all-ports IDENTICAL on grove, c-bug, weapon-combat.
 - Promoted to L2 the rerun rows with verdict PASS, compared > 0, 0 mismatches, 0 undeclared (CWeapon::Fire held back).
+
+## 2026-11-11 PORT-AI-3 integrated (main session)
+- Agent a8de4982 + 2 helpers (lane 4). Clean merge; sa-hook lib 50, sa-ai tests, clippy, i686 OK; all-ports
+  IDENTICAL on the 7 older recordings (car-ai divergence predates the pass; bisect running).
