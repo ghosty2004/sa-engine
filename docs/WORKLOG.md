@@ -803,3 +803,7 @@
 - Workspace tests: only verifier_l1 `verifier_unicorn_agrees_with_cpu_outside_snan` fails on
   CMessages::InsertStringInString (Unicorn loses EFLAGS across rep movsb, known L1 harness bug).
 - Main session: sa-hook lib 48, clippy, i686 OK; all-ports IDENTICAL on grove, c-bug, pause-restart.
+
+## 2026-11-11 RE-SPEC-RW pass 2 (main session)
+- Agent aecf73c2 + 2 helpers: 17 files under docs/re/specs/RW/, +227 index rows; 21 helper claims re-read against the
+  bytes, all correct. Details in ROADMAP RE-SPEC-RW. REA not used.
