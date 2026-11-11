@@ -4,7 +4,10 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
-use crate::{font, hud, menu, messages, radar, statics, text, timer};
+use crate::{
+    font, font_print, hud, hud_draw, menu, menu2, menu_mgr, messages, place, radar, radar_draw, radar_draw2, statics, statics2,
+    text, text_load, timer,
+};
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -16,6 +19,15 @@ pub const MODULES: &[&[HookReg]] = &[
     timer::HOOKS,
     menu::HOOKS,
     statics::HOOKS,
+    font_print::HOOKS,
+    hud_draw::HOOKS,
+    radar_draw::HOOKS,
+    text_load::HOOKS,
+    menu_mgr::HOOKS,
+    statics2::HOOKS,
+    menu2::HOOKS,
+    radar_draw2::HOOKS,
+    place::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -28,6 +40,15 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     timer::GLOBALS,
     menu::GLOBALS,
     statics::GLOBALS,
+    font_print::GLOBALS,
+    hud_draw::GLOBALS,
+    radar_draw::GLOBALS,
+    text_load::GLOBALS,
+    menu_mgr::GLOBALS,
+    statics2::GLOBALS,
+    menu2::GLOBALS,
+    radar_draw2::GLOBALS,
+    place::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

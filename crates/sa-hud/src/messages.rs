@@ -816,6 +816,119 @@ pub fn add_big_message_q(text: GPtr<u8>, time: u32, style: u32) {
     set_message(big(style, i), text, 0, time, NO_NUMS, GPtr::NULL, None);
 }
 
+/// The inlined string test of `ClearThisPrint` / `ClearThisBigPrint`: the first bytes are compared by the
+/// caller; then `text[k+1]` against `p[k+1]` until both are 0 (match) or they differ. Like the original it
+/// reads one byte past two empty strings.
+fn same_text_after_first(p: GPtr<u8>, text: GPtr<u8>) -> bool {
+    let mut k = 1isize;
+    loop {
+        let c = text.byte_add(k).read();
+        let d = p.byte_add(k).read();
+        if c == 0 && d == 0 {
+            return true;
+        }
+        if d != c {
+            return false;
+        }
+        k += 1;
+    }
+}
+
+/// Removes entry `i` of a queue of `n` entries at `first` (stride 0x30): its text is cleared, the used
+/// entries after it move up one (`rep movsd` of 12 dwords, stopping at the first empty one or at `n - 1`),
+/// and the slot after the last moved entry is cleared.
+fn remove_entry(first: GPtr<u8>, i: i32, n: i32) {
+    let at = |k: i32| first.byte_add(k as isize * 0x30);
+    wr::<u32>(at(i), 0, 0);
+    let mut k = i;
+    while k < n - 1 {
+        let next = at(k + 1);
+        if rd::<u32>(next, 0) == 0 {
+            break;
+        }
+        for w in 0..12 {
+            let v = rd::<u32>(next, w * 4);
+            wr::<u32>(at(k), w * 4, v);
+        }
+        k += 1;
+    }
+    wr::<u32>(at(k), 0, 0);
+}
+
+/// `CMessages::ClearThisPrint(const char*)` (0x69EA30): removes the first brief whose text equals `text`
+/// (the scan stops at the first empty slot), repeating while one was found. Removing entry 0 restarts the
+/// new first entry's clock and sends it to `AddToPreviousBriefArray` when it is flagged.
+#[hook(addr = 0x69EA30, conv = cdecl, name = "CMessages::ClearThisPrint", expect = "51 53 55 8B 6C 24 10")]
+pub fn clear_this_print(text: GPtr<u8>) {
+    loop {
+        let mut found = None;
+        for i in 0..8 {
+            let p: GPtr<u8> = rd(brief(i), 0);
+            if p.is_null() {
+                break;
+            }
+            if p.read() == text.read() && same_text_after_first(p, text) {
+                found = Some(i);
+                break;
+            }
+        }
+        let Some(i) = found else { return };
+        remove_entry(brief(0), i, 8);
+        if i == 0 {
+            wr::<u32>(brief(0), 0xC, TIME_MS.get());
+            let m = brief(0);
+            if rd::<u32>(m, 0) != 0 && rd::<u8>(m, 0x2C) != 0 {
+                brief0_to_previous();
+            }
+        }
+    }
+}
+
+/// `CMessages::ClearThisBigPrint(const char*)` (0x69EBE0): removes the first big message (styles 0..6,
+/// four entries each, empty slots skipped) whose text equals `text`, repeating while one was found.
+/// Removing a style's entry 0 restarts the new first entry's clock.
+#[hook(addr = 0x69EBE0, conv = cdecl, name = "CMessages::ClearThisBigPrint", expect = "51 53 55 56 57")]
+pub fn clear_this_big_print(text: GPtr<u8>) {
+    loop {
+        let mut found = None;
+        'scan: for s in 0..7u32 {
+            for j in 0..4 {
+                let p: GPtr<u8> = rd(big(s, j), 0);
+                if !p.is_null() && p.read() == text.read() && same_text_after_first(p, text) {
+                    found = Some((s, j));
+                    break 'scan;
+                }
+            }
+        }
+        let Some((s, j)) = found else { return };
+        remove_entry(big(s, 0), j, 4);
+        if j == 0 {
+            wr::<u32>(big(s, 0), 0xC, TIME_MS.get());
+        }
+    }
+}
+
+/// `CHud::BigMessageX[7]` (f32) and `CHud::m_BigMessage[7][128]`, written by `ClearThisPrintBigNow`.
+const HUD_BIG_MESSAGE_X: usize = 0xBAA3DC;
+const HUD_BIG_MESSAGE: usize = 0xBAACC0;
+
+orig! {
+    /// `CMessages::ClearThisBigPrint(const char*)` (0x69EBE0)
+    pub fn clear_this_big_print_call(text: GPtr<u8>) = cdecl 0x69EBE0 => clear_this_big_print;
+}
+
+/// `CMessages::ClearThisPrintBigNow(eMessageStyle)` (0x69ED80): clears the style's first text (if any)
+/// through `ClearThisBigPrint`, then `BigMessageX[style] = 0` and `m_BigMessage[style][0] = 0`.
+#[hook(addr = 0x69ED80, conv = cdecl, name = "CMessages::ClearThisPrintBigNow", expect = "56 8B 74 24 08")]
+pub fn clear_this_print_big_now(style: u32) {
+    let t: GPtr<u8> = rd(big(style, 0), 0);
+    if !t.is_null() {
+        clear_this_big_print_call(t);
+    }
+    g::<u32>(HUD_BIG_MESSAGE_X + style.wrapping_mul(4) as usize).write(0);
+    g::<u8>(HUD_BIG_MESSAGE + (style << 7) as usize).write(0);
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_GET_STRING_LENGTH,
@@ -843,4 +956,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_ADD_MESSAGE_JUMP,
     HOOK_ADD_BIG_MESSAGE,
     HOOK_ADD_BIG_MESSAGE_Q,
+    HOOK_CLEAR_THIS_PRINT,
+    HOOK_CLEAR_THIS_BIG_PRINT,
+    HOOK_CLEAR_THIS_PRINT_BIG_NOW,
 ];

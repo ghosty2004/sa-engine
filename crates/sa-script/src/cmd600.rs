@@ -1,6 +1,11 @@
-//! `CRunningScript::ProcessCommands600To699` (0x47F370): partial port (PORT-SCRIPT-2, ADR-002). Opcodes in [`PORTED`] run in Rust;
-//! every other opcode (and the default, -1) runs the original body through the fallback.
-//! Cases follow the 1.0 US bytes and `docs/re/specs/SCRIPT/commands/ProcessCommands600To699.md`.
+//! `CRunningScript::ProcessCommands600To699` (0x47F370): complete port (PORT-SCRIPT-2 partial, completed in
+//! PORT-SCRIPT-3). Every jump-table case is in [`PORTED`]; the other opcodes of the range reach the
+//! original default (-1). Cases follow the 1.0 US bytes and
+//! `docs/re/specs/SCRIPT/commands/ProcessCommands600To699.md`.
+//!
+//! Divergence note (0299/02B9): the 8-byte garage name is read into a zeroed 16-byte buffer; the
+//! original's buffer (`[esp+0x18]`) is not cleared, so an 8-character name without a terminator is
+//! followed by stale stack bytes in `GetGarageNumberByName`. Differs only for 8-character names.
 
 #[allow(unused_imports)]
 use crate::cmdlib::*;
@@ -12,8 +17,15 @@ use sa_math::x87::X87;
 
 /// Opcodes with a Rust case, ascending.
 pub const PORTED: &[u16] = &[
-    0x0293, 0x0294, 0x0296, 0x0297, 0x0298, 0x02A0, 0x02A3, 0x02A7, 0x02A8, 0x02A9, 0x02AA, 0x02AB, 0x02AC,
+    0x0293, 0x0294, 0x0296, 0x0297, 0x0298, 0x0299, 0x029B, 0x02A0, 0x02A3, 0x02A4, 0x02A5, 0x02A7, 0x02A8,
+    0x02A9, 0x02AA, 0x02AB, 0x02AC, 0x02B9,
 ];
+
+/// `CModelInfo::ms_modelInfoPtrs` 0xA9B0C8.
+const MODEL_INFO_PTRS: usize = 0xA9B0C8;
+/// `CTheScripts::UsedObjectArray[0].nModelIndex` as the negative-model lookup addresses it
+/// (`0xA44B88 - id*0x1C`, id < 0).
+const USED_OBJECT_MODEL: usize = 0xA44B88;
 
 /// `CTheScripts::ScriptResourceManager` 0xA485A8.
 const SCRIPT_RESOURCE_MANAGER: usize = 0xA485A8;
@@ -47,6 +59,96 @@ orig! {
     fn set_coord_blip(ty: i32, x: u32, y: u32, z: u32, colour: u32, display: u32, name: GPtr<u8>) -> i32 = cdecl 0x583820 => unported;
     /// `CRadar::SetBlipSprite(int32, int32)` (0x583D70)
     fn set_blip_sprite(h: i32, sprite: i32) = cdecl 0x583D70 => unported;
+    /// `CGarages::GetGarageNumberByName(const char*)` (0x447680), AX
+    fn get_garage_number_by_name(name: GPtr<u8>) -> u16 = cdecl 0x447680 => unported;
+    /// `CGarages::ActivateGarage(int16)` (0x447CD0)
+    fn activate_garage(n: i32) = cdecl 0x447CD0 => unported;
+    /// `CGarages::DeActivateGarage(int16)` (0x447CB0)
+    fn deactivate_garage(n: i32) = cdecl 0x447CB0 => unported;
+    /// `CObject::Create(int32 model, bool)` (0x5A1F60)
+    fn object_create(model: i32, flag: i32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
+    /// `CPlaceable::SetPosn(float, float, float)` (0x420B80), floats as raw dwords
+    fn set_posn(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x420B80 => unported;
+    /// `CPlaceable::SetOrientation(float, float, float)` (0x439A80)
+    fn set_orientation(e: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x439A80 => unported;
+    /// `CEntity::UpdateRwMatrix()` (0x446F90)
+    fn update_rw_matrix(e: GPtr<u8>) = thiscall 0x446F90 => unported;
+    /// `CEntity::UpdateRwFrame()` (0x532B00)
+    fn update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
+    /// `CBaseModelInfo` virtual slot 3 (+0x0C, `AsLodAtomicModelInfoPtr`)
+    fn model_info_vslot_0c(mi: GPtr<u8>) -> GPtr<u8> = thiscall vslot 0x0C => unported;
+    /// `CEntity::SetupBigBuilding()` (0x533150)
+    fn setup_big_building(e: GPtr<u8>) = thiscall 0x533150 => unported;
+    /// `CTheScripts::ClearSpaceForMissionEntity(const CVector&, CEntity*)` (0x486B00)
+    fn clear_space_for_mission_entity(pos: GPtr<u32>, e: GPtr<u8>) = cdecl 0x486B00 => unported;
+}
+
+/// 0299 ACTIVATE_GARAGE / 02B9 DEACTIVATE_GARAGE body: `ReadTextLabelFromScript(buf, 8)`;
+/// `n = (int16)GetGarageNumberByName(buf)` (`movsx`); `n >= 0` → (De)ActivateGarage(n).
+fn garage_by_name(s: Scr, activate: bool) {
+    let mut buf = [0u8; 16];
+    let b = GPtr::from_raw(buf.as_mut_ptr());
+    read_text_label(s, b, 8);
+    let n = i32::from(get_garage_number_by_name(b) as i16);
+    if n >= 0 {
+        if activate {
+            activate_garage(n);
+        } else {
+            deactivate_garage(n);
+        }
+    }
+}
+
+/// 029B CREATE_OBJECT_NO_OFFSET (0x47F4F1): as 0107 CREATE_OBJECT without the base-of-model offset.
+/// `model < 0` → `UsedObjectArray[-model]`; `mi->m_nAlpha = 0xFF`; `CObject::Create(model, false)`
+/// (no null check); object type 2 (mission) for a non-external script, else 6; `fld z; fst; fcomp
+/// -100.0`: z = ground z when `z <= -100` (ordered); SetPosn(x, y, z), SetOrientation(0, 0, 0),
+/// UpdateRwMatrix, UpdateRwFrame, SetupBigBuilding when the model info is a LOD atomic;
+/// ClearSpaceForMissionEntity(&(x, y, z)), CWorld::Add, P0 = GetRef, StoreParameters(1), mission
+/// cleanup type 3. x and y are passed as raw dwords (`mov` loads); z went through `fld`/`fst`.
+fn create_object_no_offset(s: Scr) {
+    collect(s, 4);
+    let mut model = spi(0);
+    if model < 0 {
+        model =
+            GPtr::<i32>::from_addr(USED_OBJECT_MODEL.wrapping_sub(model.wrapping_mul(0x1C) as u32 as usize))
+                .read();
+    }
+    let mi =
+        GPtr::<GPtr<u8>>::from_addr(MODEL_INFO_PTRS.wrapping_add((model as u32).wrapping_mul(4) as usize))
+            .read();
+    mi.byte_add(0x0C).write(0xFF);
+    let obj = object_create(model, 0);
+    let ty = if s.byte_add(0xC7).read() == 0 && s.byte_add(0xC9).read() == 0xFF {
+        2
+    } else {
+        6
+    };
+    obj.byte_add(0x13C).write(ty);
+    let st = X87::from_f32(f(sp(3)));
+    let (x, y) = (sp(1), sp(2));
+    let mut z = st.to_f32().to_bits();
+    if !st.fcom(X87::constant(K_MINUS_100)).test_parity(0x41) {
+        z = X87::from_f64_exact(find_ground_z_for_coord(x, y))
+            .to_f32()
+            .to_bits();
+    }
+    set_posn(obj, x, y, z);
+    set_orientation(obj, 0, 0, 0);
+    update_rw_matrix(obj);
+    update_rw_frame(obj);
+    if !model_info_vslot_0c(mi).is_null() {
+        setup_big_building(obj);
+    }
+    let mut pos = [x, y, z];
+    clear_space_for_mission_entity(GPtr::from_raw(pos.as_mut_ptr()), obj);
+    world_add(obj);
+    let h = object_get_ref(pool(OBJECT_POOL), obj);
+    set_sp(0, h as u32);
+    store(s, 1);
+    if uses_mission_cleanup(s) {
+        mission_cleanup_add(GPtr::from_addr(MISSION_CLEANUP), spi(0), 3);
+    }
 }
 
 /// 02A7 / 02A8 body: `fld z; fst local; fcomp -100.0; test ah,0x41; jp`: when `z <= -100` (ordered)
@@ -89,7 +191,7 @@ fn set_proofs(e: GPtr<u8>) {
 }
 
 /// `CRunningScript::ProcessCommands600To699(int32 command)` (0x47F370, thiscall, `ret 4`): AL = 0 continue, 1 wait, -1 unknown.
-#[hook(addr = 0x47F370, conv = thiscall, name = "CRunningScript::ProcessCommands600To699", expect = "8B 44 24 04 83 EC 2C", this = "CRunningScript", fallback)]
+#[hook(addr = 0x47F370, conv = thiscall, name = "CRunningScript::ProcessCommands600To699", expect = "8B 44 24 04 83 EC 2C", this = "CRunningScript")]
 pub fn process_commands_600_to_699(s: Scr, command: u32) -> i8 {
     match command {
         // 0293 GET_CONTROLLER_MODE (0x47F399): P0 = 0; StoreParameters(1).
@@ -130,6 +232,10 @@ pub fn process_commands_600_to_699(s: Scr, command: u32) -> i8 {
             set_sp(0, i32::from(n as i16) as u32);
             store(s, 1);
         }
+        // 0299 ACTIVATE_GARAGE (0x47F4B6)
+        0x0299 => garage_by_name(s, true),
+        // 029B CREATE_OBJECT_NO_OFFSET (0x47F4F1)
+        0x029B => create_object_no_offset(s),
         // 02A0 IS_CHAR_STOPPED (0x47F63A): flag = CTheScripts::IsPedStopped(GetAtRef(P0)) != 0.
         0x02A0 => {
             collect(s, 1);
@@ -146,6 +252,9 @@ pub fn process_commands_600_to_699(s: Scr, command: u32) -> i8 {
                 set_wide_screen_off(cam);
             }
         }
+        // 02A4 ADD_SPRITE_BLIP_FOR_CAR / 02A5 ADD_SPRITE_BLIP_FOR_CHAR: the jump table sends both to the
+        // "return 0" epilogue 0x47F9A1 (no operand read; gr: unimplemented, -1).
+        0x02A4 | 0x02A5 => {}
         // 02A7 ADD_SPRITE_BLIP_FOR_CONTACT_POINT (0x47F6BD): SetCoordBlip(5 CONTACT_POINT, .., colour 2, 3).
         0x02A7 => sprite_blip_for_coord(s, 5, 2),
         // 02A8 ADD_SPRITE_BLIP_FOR_COORD (0x47F75D): SetCoordBlip(4 COORD, .., colour 5, 3).
@@ -171,14 +280,9 @@ pub fn process_commands_600_to_699(s: Scr, command: u32) -> i8 {
             collect(s, 6);
             set_proofs(vehicle_at_ref(pool(VEHICLE_POOL), spi(0)));
         }
-        _ => {
-            return fallback(
-                process_commands_600_to_699_original,
-                "CRunningScript::ProcessCommands600To699",
-                s,
-                command,
-            );
-        }
+        // 02B9 DEACTIVATE_GARAGE (0x47F976)
+        0x02B9 => garage_by_name(s, false),
+        _ => return -1,
     }
     0
 }

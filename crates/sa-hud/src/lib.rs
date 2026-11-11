@@ -27,3 +27,13 @@ pub mod radar;
 pub mod statics;
 pub mod text;
 pub mod timer;
+
+pub mod font_print;
+pub mod hud_draw;
+pub mod menu2;
+pub mod menu_mgr;
+pub mod radar_draw;
+pub mod place;
+pub mod radar_draw2;
+pub mod statics2;
+pub mod text_load;

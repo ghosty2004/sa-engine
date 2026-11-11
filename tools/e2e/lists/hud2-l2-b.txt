@@ -1,0 +1,12 @@
+# PORT-HUD-2 hooks verified with plain L2, second batch: SetMapCentreToPlayerCoords, CHud help setters,
+# ReInitialise, CHudColours constructor
+0x585B20
+0x588BE0
+0x588D40
+0x588E30
+0x588880
+0x58FDA0
+0x5720C0
+0x571D90
+0x571F20
+0x581C10
