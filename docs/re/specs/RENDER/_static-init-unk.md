@@ -187,6 +187,8 @@ the behaviour does not depend on it.
 | 0x855530 | 0x8a58b4 | g[0xc81454] <- 0.005f [0x872a90] * 0.0625f [0x858620] | 0.0003125 | none (dead store) |
 | 0x855550 | 0x8a58b8 | g[0xc815bc] <- 0.005f [0x872a94] * 0.0625f [0x858620] | 0.0003125 | none (dead store) |
 
+> QA (2026-11-11): row 0x850ac0 (in the table above): the readers column is wrong. 0x720c3d is not a reference to the target global; it is `fstp dword ptr [ecx+edx*4+0xc0]` at 0x720c3c (the bytes d8 b1 c0 00 at 0x720c3d are its displacement and the next opcode, not an absolute operand). An instruction-level scan finds no reader outside the __xc initialisers, so this row is `none (dead store)` like its neighbours. Behaviour of the initialiser itself (operands, order, f32 result) is correct. (Placed after the table because a line inside a markdown table would break it.)
+
 ## Other initialisers and destructors
 
 ## 0x84b5d0 __init_g_fx  (catalogue: unknown/REA, port level 2)

@@ -832,3 +832,11 @@
 - Agent ac7bd72f + 2 helpers (lane 1): crate sa-render, docs/arch/render-port.md + verdicts, lists, extras. Merge
   (render after rwcore); sa-hook lib 48, sa-render tests, workspace clippy, i686 OK; all-ports IDENTICAL on 7.
 - Also: CWeapon::Fire 0x742300 demoted L2 → implemented (HARNESS-3 found a c-bug split mismatch; WEAPON-FIX on it).
+
+## 2026-11-11 SPEC-QA (main session)
+- Agent a1c883e1 + helpers re-derived ~4,000 generated spec sections and 2,880 initialiser rows from the bytes; full
+  report docs/re/specs/QA-2026-11-11.md. No error that would change a port's behaviour. Corrections appended as
+  `> QA (2026-11-11)` notes: 10 attractor scalar-deleting dtors name the wrong pool (0xB744C4 is ms_pPedAttractorPool),
+  RwD3D9RasterLock level is u8 not s8, 4 wrong "readers" cells, gr's 0x8D2ED4 "30.f" is 10.0f in the image. The
+  suspected init-order bug at 0x84CED0/0x84CF80/0x84D0F0 is intended (zero-initialised VolMax/VolMin).
+  Hand-written sample: 2 MINOR in 58 (~3 %), 0 WRONG → ports must still re-read conditions and signedness.

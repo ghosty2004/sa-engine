@@ -84,6 +84,8 @@ the behaviour does not depend on it.
 | 0x855ec0 | 0x8a59e8 | g[0xc8cde0] <- g[0xc8cdcc] (= 0.0004, set by an earlier initialiser) * 10.0f [0x85862c] | 0.0039999997 | none (dead store) |
 | 0x855ee0 | 0x8a59ec | g[0xc8cddc] <- 0.277778f [0x858630] / 50.0f [0x872eac] | 0.00555556 | none (dead store) |
 
+> QA (2026-11-11): row 0x84d9b0 (in the table above): the readers column is wrong. 0x155e135 is not a reference to the target global; it is the middle of `xor eax, dword ptr [0x15008149]` at 0x155e131 (a .HOODLUM byte run, not a reference). An instruction-level scan finds no reader outside the __xc initialisers, so this row is `none (dead store)` like its neighbours. Behaviour of the initialiser itself (operands, order, f32 result) is correct. (Placed after the table because a line inside a markdown table would break it.)
+
 ## Other initialisers and destructors
 
 ## 0x84e010 __init_g_LoadMonitor  (catalogue: unknown/REA, port level 1)
