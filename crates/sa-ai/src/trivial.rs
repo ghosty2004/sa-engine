@@ -461,7 +461,12 @@ pub fn task_complex_observe_traffic_lights_get_task_type_6317b0(_this: GPtr<u8>)
 
 /// `CTaskComplexObserveTrafficLights::MakeAbortable` (0x6317D0): `mov al, 1; ret 12` -> true (AL).
 #[hook(addr = 0x6317D0, conv = thiscall, name = "CTaskComplexObserveTrafficLights::MakeAbortable", expect = "B0 01 C2 0C 00")]
-pub fn task_complex_observe_traffic_lights_make_abortable_6317d0(_this: GPtr<u8>, _a0: u32, _a1: u32, _a2: u32) -> u8 {
+pub fn task_complex_observe_traffic_lights_make_abortable_6317d0(
+    _this: GPtr<u8>,
+    _a0: u32,
+    _a1: u32,
+    _a2: u32,
+) -> u8 {
     1
 }
 

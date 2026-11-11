@@ -206,8 +206,17 @@ fn compute_anim_id_by_door(this: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u8>, ids:
 #[hook(addr = 0x645C70, conv = thiscall, name = "CTaskSimpleCarAlign::SetPedPosition", expect = "83 EC 0C 56 8B F1")]
 pub fn car_align_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let mut v = [0u32; 3];
-    car_enter_exit_get_position_to_open_car_door(slot(&mut v), rd::<GPtr<u8>>(this, 0x10), rd::<u32>(this, 0x20));
-    line_up_process_ped(rd::<GPtr<u8>>(this, 0x24), ped, rd::<GPtr<u8>>(this, 0x10), rd::<GPtr<u8>>(this, 0xC));
+    car_enter_exit_get_position_to_open_car_door(
+        slot(&mut v),
+        rd::<GPtr<u8>>(this, 0x10),
+        rd::<u32>(this, 0x20),
+    );
+    line_up_process_ped(
+        rd::<GPtr<u8>>(this, 0x24),
+        ped,
+        rd::<GPtr<u8>>(this, 0x10),
+        rd::<GPtr<u8>>(this, 0xC),
+    );
     1
 }
 
@@ -223,7 +232,12 @@ pub fn car_align_finish_anim_cb(_anim: GPtr<u8>, task: GPtr<u8>) {
 /// `ProcessPed(ped, veh +0x10, anim +0xC)`; true.
 #[hook(addr = 0x645F80, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::SetPedPosition", expect = "8B 41 0C 8B 51 10")]
 pub fn open_door_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    line_up_process_ped(rd::<GPtr<u8>>(this, 0x1C), ped, rd::<GPtr<u8>>(this, 0x10), rd::<GPtr<u8>>(this, 0xC));
+    line_up_process_ped(
+        rd::<GPtr<u8>>(this, 0x1C),
+        ped,
+        rd::<GPtr<u8>>(this, 0x10),
+        rd::<GPtr<u8>>(this, 0xC),
+    );
     1
 }
 
@@ -246,14 +260,26 @@ pub fn open_door_finish_anim_cb(_anim: GPtr<u8>, task: GPtr<u8>) {
     wr::<u32>(task, 0xC, 0);
     wr::<u8>(task, 8, 1);
     open_door_compute_anim_id_orig(task, slot(&mut group), slot(&mut anim));
-    v_veh_process_open_door(rd::<GPtr<u8>>(task, 0x10), GPtr::NULL, rd::<u32>(task, 0x14), group, anim, 1.0);
+    v_veh_process_open_door(
+        rd::<GPtr<u8>>(task, 0x10),
+        GPtr::NULL,
+        rd::<u32>(task, 0x14),
+        group,
+        anim,
+        1.0,
+    );
 }
 
 /// `CTaskSimpleCarCloseDoorFromInside::SetPedPosition(CPed*)` (0x6463F0): line-up utility (+0x18)
 /// `ProcessPed(ped, veh +0x10, anim +0xC)`; true.
 #[hook(addr = 0x6463F0, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::SetPedPosition", expect = "8B 41 0C 8B 51 10")]
 pub fn close_inside_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    line_up_process_ped(rd::<GPtr<u8>>(this, 0x18), ped, rd::<GPtr<u8>>(this, 0x10), rd::<GPtr<u8>>(this, 0xC));
+    line_up_process_ped(
+        rd::<GPtr<u8>>(this, 0x18),
+        ped,
+        rd::<GPtr<u8>>(this, 0x10),
+        rd::<GPtr<u8>>(this, 0xC),
+    );
     1
 }
 
@@ -277,7 +303,14 @@ pub fn close_inside_finish_anim_cb(_anim: GPtr<u8>, task: GPtr<u8>) {
         let mut group = 0u32;
         let mut anim = task.addr() as u32;
         close_inside_compute_anim_id_orig(task, slot(&mut group), slot(&mut anim));
-        v_veh_process_open_door(rd::<GPtr<u8>>(task, 0x10), GPtr::NULL, rd::<u32>(task, 0x14), group, anim, 1.0);
+        v_veh_process_open_door(
+            rd::<GPtr<u8>>(task, 0x10),
+            GPtr::NULL,
+            rd::<u32>(task, 0x14),
+            group,
+            anim,
+            1.0,
+        );
     }
     let a = rd::<GPtr<u8>>(task, 0xC);
     if !a.is_null() {
@@ -290,7 +323,12 @@ pub fn close_inside_finish_anim_cb(_anim: GPtr<u8>, task: GPtr<u8>) {
 /// `ProcessPed(ped, veh +0x10, anim +0xC)`; true.
 #[hook(addr = 0x6465E0, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::SetPedPosition", expect = "8B 41 0C 8B 51 10")]
 pub fn close_outside_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    line_up_process_ped(rd::<GPtr<u8>>(this, 0x18), ped, rd::<GPtr<u8>>(this, 0x10), rd::<GPtr<u8>>(this, 0xC));
+    line_up_process_ped(
+        rd::<GPtr<u8>>(this, 0x18),
+        ped,
+        rd::<GPtr<u8>>(this, 0x10),
+        rd::<GPtr<u8>>(this, 0xC),
+    );
     1
 }
 
@@ -306,7 +344,12 @@ pub fn close_outside_finish_anim_cb(_anim: GPtr<u8>, task: GPtr<u8>) {
 /// veh +0x18, anim +0xC)`; true.
 #[hook(addr = 0x6467A0, conv = thiscall, name = "CTaskSimpleCarGetIn::SetPedPosition", expect = "8B 41 0C 8B 51 18")]
 pub fn get_in_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    line_up_process_ped(rd::<GPtr<u8>>(this, 0x20), ped, rd::<GPtr<u8>>(this, 0x18), rd::<GPtr<u8>>(this, 0xC));
+    line_up_process_ped(
+        rd::<GPtr<u8>>(this, 0x20),
+        ped,
+        rd::<GPtr<u8>>(this, 0x18),
+        rd::<GPtr<u8>>(this, 0xC),
+    );
     1
 }
 
@@ -346,7 +389,10 @@ pub fn car_align_fix_heading(this: GPtr<u8>, ped: GPtr<u8>) {
     }
     let mut tl = [0f32; 3];
     let dot = |v: &[f32; 3], t: GPtr<u8>| {
-        x(v[2]).fmul_m(rd::<f32>(t, 8)).fadd(x(v[1]).fmul_m(rd::<f32>(t, 4))).fadd(x(v[0]).fmul_m(rd::<f32>(t, 0)))
+        x(v[2])
+            .fmul_m(rd::<f32>(t, 8))
+            .fadd(x(v[1]).fmul_m(rd::<f32>(t, 4)))
+            .fadd(x(v[0]).fmul_m(rd::<f32>(t, 0)))
     };
     let t = placeable_get_top_direction(ped, slot(&mut tl));
     let d = dot(&v, t);
@@ -363,7 +409,9 @@ pub fn car_align_fix_heading(this: GPtr<u8>, ped: GPtr<u8>) {
     let t = placeable_get_top_direction(ped, slot(&mut v));
     let a = f32_of(x(rd::<f32>(t, 0)).fsub_m(w[0]).fsub_m(w[0]));
     let b = f32_of(x(rd::<f32>(t, 4)).fsub_m(w[1]).fsub_m(w[1]));
-    let ang = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(a, b, 0.0, 0.0)));
+    let ang = f32_of(X87::from_f64_exact(general_get_radian_angle_between_points(
+        a, b, 0.0, 0.0,
+    )));
     let h = f32_of(X87::from_f64_exact(general_limit_radian_angle(ang)));
     wr::<f32>(ped, 0x55C, h);
     wr::<f32>(ped, 0x558, h);
@@ -380,9 +428,17 @@ pub fn car_align_fix_heading(this: GPtr<u8>, ped: GPtr<u8>) {
 #[hook(addr = 0x64AC00, conv = thiscall, name = "CTaskSimpleCarAlign::StartAnim", expect = "83 EC 0C 53 56")]
 pub fn car_align_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut v = [0f32; 3];
-    car_enter_exit_get_position_to_open_car_door(slot(&mut v), rd::<GPtr<u8>>(this, 0x10), rd::<u32>(this, 0x20));
+    car_enter_exit_get_position_to_open_car_door(
+        slot(&mut v),
+        rd::<GPtr<u8>>(this, 0x10),
+        rd::<u32>(this, 0x20),
+    );
     let m = rd::<GPtr<u8>>(ped, 0x14);
-    let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+    let pos = if m.is_null() {
+        ped.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    };
     let zero = g::<f32>(0x858B50).read();
     let mut dz = x(v[2]).fsub_m(rd::<f32>(pos, 8));
     if !dz.fcom(x(zero)).test_parity(5) {
@@ -481,7 +537,10 @@ pub fn close_outside_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         let input = if rd::<u16>(pad, 0x10E) != 0 || rd::<i32>(rd::<GPtr<u8>>(this, 0x10), 0x4F8) == 6 {
             false
         } else {
-            pad_get_target(pad) != 0 || [0isize, 2, 0x10, 0x12, 0x14, 0x16].iter().any(|&o| rd::<u16>(pad, o) != 0)
+            pad_get_target(pad) != 0
+                || [0isize, 2, 0x10, 0x12, 0x14, 0x16]
+                    .iter()
+                    .any(|&o| rd::<u16>(pad, o) != 0)
         };
         let finish = input || rd::<u32>(rd::<GPtr<u8>>(this, 0x10), 0x490) != 0 || engine_bad;
         if finish {
@@ -525,7 +584,8 @@ pub fn get_in_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let mut group = vehicle_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x18)), anim);
     if group == 0x6B
         && rd::<i32>(this, 0x1C) == 0xA
-        && (v_veh_slot_94(rd::<GPtr<u8>>(this, 0x18), 0xA) != 0 || v_veh_slot_8c(rd::<GPtr<u8>>(this, 0x18), rd::<u32>(this, 0x1C)) == 0)
+        && (v_veh_slot_94(rd::<GPtr<u8>>(this, 0x18), 0xA) != 0
+            || v_veh_slot_8c(rd::<GPtr<u8>>(this, 0x18), rd::<u32>(this, 0x1C)) == 0)
     {
         group = 0x58;
     }
@@ -575,7 +635,14 @@ pub fn open_door_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let mut anim = 0u32;
         let mut group = 0u32;
         open_door_compute_anim_id_orig(this, slot(&mut group), slot(&mut anim));
-        v_veh_process_open_door(rd::<GPtr<u8>>(this, 0x10), ped, rd::<u32>(this, 0x14), group, anim, 1.0);
+        v_veh_process_open_door(
+            rd::<GPtr<u8>>(this, 0x10),
+            ped,
+            rd::<u32>(this, 0x14),
+            group,
+            anim,
+            1.0,
+        );
         return 1;
     }
     if rd::<u32>(this, 0xC) == 0 {
@@ -585,7 +652,12 @@ pub fn open_door_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let v = rd::<GPtr<u8>>(this, 0x10);
         if !v.is_null() {
             let d = rd::<GPtr<u8>>(v, 0x460);
-            if !d.is_null() && ped_is_player(d) != 0 && rd::<u8>(this, 0x18) != 0 && !ped.is_null() && rd::<i32>(ped, 0x598) == 6 {
+            if !d.is_null()
+                && ped_is_player(d) != 0
+                && rd::<u8>(this, 0x18) != 0
+                && !ped.is_null()
+                && rd::<i32>(ped, 0x598) == 6
+            {
                 let d = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x10), 0x460);
                 wr::<u32>(d, 0x474, rd::<u32>(d, 0x474) & 0xFBFF_FFFF);
                 wr::<u8>(this, 0x19, 1);
@@ -606,7 +678,10 @@ pub fn open_door_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             3 => 4,
             _ => t.to_bits(),
         };
-        let r = x(t).fdiv_m(total).fsubr_m(g::<f32>(0x858624).read()).fmul_m(rd::<f32>(this, 0x20));
+        let r = x(t)
+            .fdiv_m(total)
+            .fsubr_m(g::<f32>(0x858624).read())
+            .fmul_m(rd::<f32>(this, 0x20));
         v_veh_open_door(veh, ped, door, comp, f32_of(r), 0);
         return 0;
     }
@@ -614,7 +689,14 @@ pub fn open_door_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let group = vehicle_anim_group_get_group(rec, id);
     let a = rd::<GPtr<u8>>(this, 0xC);
     let t = f32_of(x(rd::<f32>(a, 0x20)));
-    v_veh_process_open_door(rd::<GPtr<u8>>(this, 0x10), ped, rd::<u32>(this, 0x14), group, rd::<i16>(a, 0x2C) as i32 as u32, t);
+    v_veh_process_open_door(
+        rd::<GPtr<u8>>(this, 0x10),
+        ped,
+        rd::<u32>(this, 0x14),
+        group,
+        rd::<i16>(a, 0x2C) as i32 as u32,
+        t,
+    );
     0
 }
 
@@ -636,7 +718,14 @@ pub fn close_inside_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let mut anim = 0u32;
         let mut group = 0u32;
         close_inside_compute_anim_id_orig(this, slot(&mut group), slot(&mut anim));
-        v_veh_process_open_door(rd::<GPtr<u8>>(this, 0x10), ped, rd::<u32>(this, 0x14), group, anim, 1.0);
+        v_veh_process_open_door(
+            rd::<GPtr<u8>>(this, 0x10),
+            ped,
+            rd::<u32>(this, 0x14),
+            group,
+            anim,
+            1.0,
+        );
         return 1;
     }
     if rd::<u32>(this, 0xC) == 0 {
@@ -656,7 +745,14 @@ fn process_open_door_from_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     let group = vehicle_anim_group_get_group(veh_anim_group(rd::<GPtr<u8>>(this, 0x10)), id);
     let a = rd::<GPtr<u8>>(this, 0xC);
     let t = f32_of(x(rd::<f32>(a, 0x20)));
-    v_veh_process_open_door(rd::<GPtr<u8>>(this, 0x10), ped, rd::<u32>(this, 0x14), group, rd::<i16>(a, 0x2C) as i32 as u32, t);
+    v_veh_process_open_door(
+        rd::<GPtr<u8>>(this, 0x10),
+        ped,
+        rd::<u32>(this, 0x14),
+        group,
+        rd::<i16>(a, 0x2C) as i32 as u32,
+        t,
+    );
 }
 
 /// `CTaskSimpleCarCloseDoorFromOutside::ProcessPed(CPed*)` (0x64DA90). True when finished (+8), without a
@@ -682,7 +778,14 @@ pub fn close_outside_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let mut anim = ped.addr() as u32;
     close_outside_compute_anim_id_orig(this, slot(&mut group), slot(&mut anim));
     let t = f32_of(x(rd::<f32>(rd::<GPtr<u8>>(this, 0xC), 0x20)));
-    v_veh_process_open_door(rd::<GPtr<u8>>(this, 0x10), ped, rd::<u32>(this, 0x14), group, anim, t);
+    v_veh_process_open_door(
+        rd::<GPtr<u8>>(this, 0x10),
+        ped,
+        rd::<u32>(this, 0x14),
+        group,
+        anim,
+        t,
+    );
     0
 }
 
@@ -729,9 +832,15 @@ pub fn get_in_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if lim.fcom(x(rd::<f32>(a, 0x20))).test_parity(5) {
         return 0;
     }
-    let f = x(g::<f32>(0xB7CB5C).read()).fmul_m(rd::<f32>(veh, 0x8C)).fmul_m(g::<f32>(0x8D2ED0).read());
+    let f = x(g::<f32>(0xB7CB5C).read())
+        .fmul_m(rd::<f32>(veh, 0x8C))
+        .fmul_m(g::<f32>(0x8D2ED0).read());
     let mut out = [0u32; 3];
-    let r = vector_scale(slot(&mut out), f32_of(f), rd::<GPtr<u8>>(veh, 0x14).byte_add(0x10));
+    let r = vector_scale(
+        slot(&mut out),
+        f32_of(f),
+        rd::<GPtr<u8>>(veh, 0x14).byte_add(0x10),
+    );
     physical_apply_move_force(veh, rd::<u32>(r, 0), rd::<u32>(r, 4), rd::<u32>(r, 8));
     0
 }
@@ -780,7 +889,11 @@ fn throw_out_occupant(this: GPtr<u8>, ped: GPtr<u8>, occ: impl Fn() -> GPtr<u8>)
 fn warp_ped_to_vehicle(this: GPtr<u8>, ped: GPtr<u8>) {
     let v = rd::<GPtr<u8>>(this, 0x10);
     let vm = rd::<GPtr<u8>>(v, 0x14);
-    let src = if vm.is_null() { v.byte_add(4) } else { vm.byte_add(0x30) };
+    let src = if vm.is_null() {
+        v.byte_add(4)
+    } else {
+        vm.byte_add(0x30)
+    };
     let p = [rd::<f32>(src, 0), rd::<f32>(src, 4), rd::<f32>(src, 8)];
     for (i, c) in (0isize..).zip(p) {
         let pm = rd::<GPtr<u8>>(ped, 0x14);
@@ -847,7 +960,11 @@ pub fn set_ped_in_as_driver_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let grp = ped_groups_get_peds_group(ped);
     if !grp.is_null() && group_membership_is_leader(grp.byte_add(8), ped) != 0 && rd::<u32>(grp, 0x34) == 0 {
         let e = event_new(0x18);
-        let ev = if e.is_null() { GPtr::NULL } else { event_leader_entered_car_as_driver_ctor(e, rd::<GPtr<u8>>(this, 0x10)) };
+        let ev = if e.is_null() {
+            GPtr::NULL
+        } else {
+            event_leader_entered_car_as_driver_ctor(e, rd::<GPtr<u8>>(this, 0x10))
+        };
         let mut ge = [0u32; 6];
         let gp = slot(&mut ge);
         event_group_event_ctor(gp, ped, ev);
@@ -860,7 +977,15 @@ pub fn set_ped_in_as_driver_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     set_ped_in_ped_state(this, ped);
     let v = rd::<GPtr<u8>>(this, 0x10);
     let b = rd::<u8>(v, 0x428);
-    wr::<u8>(v, 0x428, if rd::<u8>(v, 0x42D) & 2 == 0 { b | 0x10 } else { b & 0xEF });
+    wr::<u8>(
+        v,
+        0x428,
+        if rd::<u8>(v, 0x42D) & 2 == 0 {
+            b | 0x10
+        } else {
+            b & 0xEF
+        },
+    );
     ped_set_ped_state(ped, 0x32);
     let player = ped_is_player(ped) != 0;
     let v = rd::<GPtr<u8>>(this, 0x10);
@@ -868,7 +993,11 @@ pub fn set_ped_in_as_driver_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     if player {
         wr::<u8>(v, 0x36, st & 7);
     } else if st & 0xF8 != 0x10 || rd::<u8>(ped, 0x484) == 2 {
-        wr::<u8>(v, 0x36, (st & 7) | if rd::<i32>(v, 0x594) == 6 { 0x38 } else { 0x18 });
+        wr::<u8>(
+            v,
+            0x36,
+            (st & 7) | if rd::<i32>(v, 0x594) == 6 { 0x38 } else { 0x18 },
+        );
     }
     let f = rd::<u8>(this, 0x19);
     if f != 0 {
@@ -973,10 +1102,19 @@ pub fn set_ped_in_as_passenger_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 
     car_enter_exit_remove_get_in_anims(ped);
     car_enter_exit_add_in_car_anim(rd::<GPtr<u8>>(this, 0x10), ped, 0);
     if rd::<u8>(this, 0x1C) == 0 {
-        line_up_process_ped(rd::<GPtr<u8>>(this, 0x18), ped, rd::<GPtr<u8>>(this, 0x10), GPtr::NULL);
+        line_up_process_ped(
+            rd::<GPtr<u8>>(this, 0x18),
+            ped,
+            rd::<GPtr<u8>>(this, 0x10),
+            GPtr::NULL,
+        );
     }
     let t = task_new(0x60);
-    let t = if t.is_null() { GPtr::NULL } else { car_drive_simple_ctor(t, rd::<GPtr<u8>>(this, 0x10), rd::<u32>(this, 0x18), 0) };
+    let t = if t.is_null() {
+        GPtr::NULL
+    } else {
+        car_drive_simple_ctor(t, rd::<GPtr<u8>>(this, 0x10), rd::<u32>(this, 0x18), 0)
+    };
     tm_set_task(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4, 0);
     1
 }
@@ -1049,15 +1187,27 @@ pub fn enter_car_prepare_ped_for_vehicle_enter(_this: GPtr<u8>, ped: GPtr<u8>) {
 #[hook(addr = 0x63ACC0, conv = thiscall, name = "CTaskComplexEnterCar::CreateTaskUtilityLineUpPedWithCar", expect = "64 A1 00 00 00 00")]
 pub fn enter_car_create_task_utility_line_up_ped_with_car(this: GPtr<u8>, ped: GPtr<u8>) {
     let m = rd::<GPtr<u8>>(ped, 0x14);
-    let pp = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+    let pp = if m.is_null() {
+        ped.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    };
     let mut out = [0u32; 3];
-    let r = car_enter_exit_get_position_to_open_car_door(slot(&mut out), rd::<GPtr<u8>>(this, 0xC), rd::<u32>(this, 0x14));
+    let r = car_enter_exit_get_position_to_open_car_door(
+        slot(&mut out),
+        rd::<GPtr<u8>>(this, 0xC),
+        rd::<u32>(this, 0x14),
+    );
     let mut off = [0f32; 3];
     for (i, o) in (0isize..).zip(off.iter_mut()) {
         *o = f32_of(x(rd::<f32>(r, i * 4)).fsub_m(rd::<f32>(pp, i * 4)));
     }
     let t = operator_new(0x1C);
-    let u = if t.is_null() { GPtr::NULL } else { line_up_ped_with_car_ctor(t, slot(&mut off), 0x258, 0, rd::<u32>(this, 0x14)) };
+    let u = if t.is_null() {
+        GPtr::NULL
+    } else {
+        line_up_ped_with_car_ctor(t, slot(&mut off), 0x258, 0, rd::<u32>(this, 0x14))
+    };
     wr::<GPtr<u8>>(this, 0x38, u);
 }
 
@@ -1068,9 +1218,17 @@ pub fn enter_car_create_task_utility_line_up_ped_with_car(this: GPtr<u8>, ped: G
 pub fn go_to_car_door_is_vehicle_in_range(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     let v = rd::<GPtr<u8>>(this, 0xC);
     let vm = rd::<GPtr<u8>>(v, 0x14);
-    let vp = if vm.is_null() { v.byte_add(4) } else { vm.byte_add(0x30) };
+    let vp = if vm.is_null() {
+        v.byte_add(4)
+    } else {
+        vm.byte_add(0x30)
+    };
     let pm = rd::<GPtr<u8>>(ped, 0x14);
-    let pp = if pm.is_null() { ped.byte_add(4) } else { pm.byte_add(0x30) };
+    let pp = if pm.is_null() {
+        ped.byte_add(4)
+    } else {
+        pm.byte_add(0x30)
+    };
     let dx = x(rd::<f32>(vp, 0)).fsub_m(rd::<f32>(pp, 0));
     let dy = x(rd::<f32>(vp, 4)).fsub_m(rd::<f32>(pp, 4));
     let dz = x(rd::<f32>(vp, 8)).fsub_m(rd::<f32>(pp, 8));

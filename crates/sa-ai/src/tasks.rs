@@ -362,7 +362,10 @@ pub fn evasive_step_finish_anim_cb(_anim: GPtr<u8>, task: GPtr<u8>) {
     let a = rd::<GPtr<u8>>(task, 0x10);
     wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 4);
     let a = rd::<GPtr<u8>>(task, 0x10);
-    if !x(rd::<f32>(a, 0x1C)).fcom(x(g::<f32>(0x858B50).read())).test_any(0x01) {
+    if !x(rd::<f32>(a, 0x1C))
+        .fcom(x(g::<f32>(0x858B50).read()))
+        .test_any(0x01)
+    {
         wr::<u32>(a, 0x1C, 0xC080_0000);
     }
     wr::<u8>(task, 0xC, 1);
@@ -504,7 +507,9 @@ pub fn car_drive_timed_ctor(this: GPtr<u8>, veh: u32, time: u32) -> GPtr<u8> {
 /// the sub-task.
 #[hook(addr = 0x6318E0, conv = thiscall, name = "CTaskComplexObserveTrafficLights::ControlSubTask", expect = "56 8B F1 E8 18 BB E6 FF")]
 pub fn observe_traffic_lights_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
-    if traffic_lights_light_for_peds() == 0 && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 0, GPtr::NULL) != 0 {
+    if traffic_lights_light_for_peds() == 0
+        && v_make_abortable(rd::<GPtr<u8>>(this, 8), ped, 0, GPtr::NULL) != 0
+    {
         return GPtr::NULL;
     }
     rd::<GPtr<u8>>(this, 8)
@@ -518,7 +523,8 @@ pub fn go_to_attractor_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GP
     let attr = rd::<GPtr<u8>>(this, 0xC);
     let m = get_ped_attractor_manager();
     attractor_manager_broadcast_arrival(m, ped, attr);
-    if rd::<u32>(ped, 0x474) & 0x200000 != 0 && attractor_get_head_of_queue(rd::<GPtr<u8>>(this, 0xC)) != ped {
+    if rd::<u32>(ped, 0x474) & 0x200000 != 0 && attractor_get_head_of_queue(rd::<GPtr<u8>>(this, 0xC)) != ped
+    {
         wr::<u32>(ped, 0x474, rd::<u32>(ped, 0x474) & 0xFFDF_FFFF);
     }
     GPtr::NULL
@@ -923,7 +929,13 @@ pub fn gang_hassle_ped_clone(this: GPtr<u8>) -> GPtr<u8> {
     if t.is_null() {
         return GPtr::NULL;
     }
-    gang_hassle_ped_ctor(t, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10), rd::<u32>(this, 0x14), rd::<u32>(this, 0x18))
+    gang_hassle_ped_ctor(
+        t,
+        rd::<u32>(this, 0xC),
+        rd::<u32>(this, 0x10),
+        rd::<u32>(this, 0x14),
+        rd::<u32>(this, 0x18),
+    )
 }
 
 /// `CTaskSimpleSitIdle::StartAnim(CPed*)` (0x631260): +0x14 = now, +0x18 = +0xC, +0x1C = 1; blends anim
@@ -978,9 +990,19 @@ pub fn partner_stream_required_anims(this: GPtr<u8>) {
 /// else +4) to the go-to task's target (+0xC/+0x10); `goTo->+8` = 4 when strictly below walkRadius²,
 /// else 6 when strictly below runRadius², else 7 (equal/NaN take the larger state).
 #[hook(addr = 0x668250, conv = thiscall, name = "CTaskComplexGoToPointAndStandStill::SelectMoveState", expect = "8B 4C 24 08 8B 41 14", preserve = "edx")]
-pub fn go_to_point_and_stand_still_select_move_state(_this: GPtr<u8>, go_to: GPtr<u8>, ped: GPtr<u8>, walk: f32, run: f32) {
+pub fn go_to_point_and_stand_still_select_move_state(
+    _this: GPtr<u8>,
+    go_to: GPtr<u8>,
+    ped: GPtr<u8>,
+    walk: f32,
+    run: f32,
+) {
     let m = rd::<GPtr<u8>>(ped, 0x14);
-    let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+    let pos = if m.is_null() {
+        ped.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    };
     let dx = x(rd::<f32>(pos, 0)).fsub_m(rd::<f32>(go_to, 0xC));
     let dy = x(rd::<f32>(pos, 4)).fsub_m(rd::<f32>(go_to, 0x10));
     let d2 = dx.fmul(dx).fadd(dy.fmul(dy));
@@ -1012,7 +1034,15 @@ pub fn play_hand_signal_anim_clone(this: GPtr<u8>) -> GPtr<u8> {
 /// base, +0xC = entity, +0x1C = a3, +0x20 = a2, byte +0x24 = a1, +0x28 = a4, +0x2C = a5, vtable 0x86F784,
 /// +0x30 = 7, +0x34 = +0x38 = 0, bytes +0x3C/+0x3D = 0; registers the entity reference when non-null.
 #[hook(addr = 0x65C430, conv = thiscall, name = "CTaskComplexSmartFleeEntity::Constructor", expect = "6A FF 68 28 40 84 00")]
-pub fn smart_flee_entity_ctor(this: GPtr<u8>, a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32) -> GPtr<u8> {
+pub fn smart_flee_entity_ctor(
+    this: GPtr<u8>,
+    a0: u32,
+    a1: u8,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+    a5: u32,
+) -> GPtr<u8> {
     task_complex_ctor(this);
     wr::<u32>(this, 0xC, a0);
     wr::<u32>(this, 0x1C, a3);
@@ -1072,7 +1102,8 @@ pub fn simple_anim_dtor(this: GPtr<u8>) {
         if rd::<u8>(this, 0xC) & 4 == 0 {
             let a = rd::<GPtr<u8>>(this, 8);
             let k = x(g::<f32>(0x858B50).read());
-            if !x(rd::<f32>(a, 0x18)).fcom(k).test_any(0x41) && !x(rd::<f32>(a, 0x1C)).fcom(k).test_any(0x01) {
+            if !x(rd::<f32>(a, 0x18)).fcom(k).test_any(0x41) && !x(rd::<f32>(a, 0x1C)).fcom(k).test_any(0x01)
+            {
                 wr::<u32>(a, 0x1C, 0xC080_0000);
             }
         }
@@ -1149,7 +1180,8 @@ pub fn wander_standard_will_chat(_this: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u
 /// event group (intelligence +0x68, `Add(event, false)`); the byte is restored. Then `AbortArmIK(ped)`; true.
 #[hook(addr = 0x6847C0, conv = thiscall, name = "CTaskComplexBeInCouple::MakeAbortable", expect = "57 8B F9 8B 47 10")]
 pub fn be_in_couple_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, _priority: i32, event: GPtr<u8>) -> u8 {
-    if !rd::<GPtr<u8>>(this, 0x10).is_null() && !event.is_null() && v_event_has_editable_response(event) != 0 {
+    if !rd::<GPtr<u8>>(this, 0x10).is_null() && !event.is_null() && v_event_has_editable_response(event) != 0
+    {
         let bl = rd::<u8>(event, 0xC);
         wr::<u8>(event, 0xC, 0);
         if v_event_get_type(event) == 9 || v_event_get_type(event) == 0x1F || v_event_get_type(event) == 0xF {
@@ -1194,7 +1226,11 @@ pub fn partner_deal_clone(this: GPtr<u8>) -> GPtr<u8> {
     if t.is_null() {
         return GPtr::NULL;
     }
-    let (vx, vy, vz) = (rd::<u32>(this, 0x40), rd::<u32>(this, 0x44), rd::<u32>(this, 0x48));
+    let (vx, vy, vz) = (
+        rd::<u32>(this, 0x40),
+        rd::<u32>(this, 0x44),
+        rd::<u32>(this, 0x48),
+    );
     let a3 = rd::<u32>(this, 0x3C);
     let a2 = u32::from(rd::<u8>(this, 0x58));
     let a1 = rd::<u32>(this, 0x38);
@@ -1211,7 +1247,11 @@ pub fn gang_follower_clone(this: GPtr<u8>) -> GPtr<u8> {
         GPtr::NULL
     } else {
         let a6 = rd::<u32>(this, 0x38);
-        let (vx, vy, vz) = (rd::<u32>(this, 0x20), rd::<u32>(this, 0x24), rd::<u32>(this, 0x28));
+        let (vx, vy, vz) = (
+            rd::<u32>(this, 0x20),
+            rd::<u32>(this, 0x24),
+            rd::<u32>(this, 0x28),
+        );
         let a2 = u32::from(rd::<u8>(this, 0x3C));
         gang_follower_ctor(t, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10), a2, vx, vy, vz, a6)
     };
@@ -1496,7 +1536,12 @@ pub fn run_named_anim_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
     if fl & 8 == 0 {
         wr::<u32>(this, 0x5C, fl | 4);
     }
-    let a = anim_blend_animation_hier(rd::<u32>(ped, 0x18), rd::<u32>(this, 0x3C), rd::<u32>(this, 0x5C), rd::<u32>(this, 0x38));
+    let a = anim_blend_animation_hier(
+        rd::<u32>(ped, 0x18),
+        rd::<u32>(this, 0x3C),
+        rd::<u32>(this, 0x5C),
+        rd::<u32>(this, 0x38),
+    );
     let b = rd::<u8>(this, 0xC);
     wr::<GPtr<u8>>(this, 8, a);
     if b & 0x20 != 0 {
@@ -1597,7 +1642,9 @@ pub fn facial_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             return 1;
         }
         let r = sa_core::orig::at_site(0x692EC3, rand) & 0xFFFF;
-        let v = xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x858628).read());
+        let v = xi(r)
+            .fmul_m(g::<f32>(0x858B14).read())
+            .fmul_m(g::<f32>(0x858628).read());
         if ftol32(v) < 0x28 {
             let r = sa_core::orig::at_site(0x692EEB, rand);
             let s = xi(r)
@@ -1641,14 +1688,31 @@ pub fn car_drive_trigger_ik(this: GPtr<u8>, ped: GPtr<u8>) {
         return;
     }
     let ik = GPtr::<u8>::from_addr(0xC15448);
-    let look = |target: GPtr<u8>, bone: i32| ik_look_at(ik, 0x86E928, ped, target, 0xBB8, bone, 0, 0, 0x3E80_0000, 0x1F4, 3, 0);
+    let look = |target: GPtr<u8>, bone: i32| {
+        ik_look_at(
+            ik,
+            0x86E928,
+            ped,
+            target,
+            0xBB8,
+            bone,
+            0,
+            0,
+            0x3E80_0000,
+            0x1F4,
+            3,
+            0,
+        )
+    };
     match rd::<u8>(veh, 0x3BA) {
         2..=6 => {
             if ik_is_looking(ik, ped) != 0 {
                 return;
             }
             let r = sa_core::orig::at_site(0x63C5DC, rand) & 0xFFFF;
-            let v = xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x858628).read());
+            let v = xi(r)
+                .fmul_m(g::<f32>(0x858B14).read())
+                .fmul_m(g::<f32>(0x858628).read());
             if ftol32(v) >= 5 {
                 return;
             }
@@ -1769,11 +1833,19 @@ pub fn run_named_anim_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         let mut v = [0f32; 3];
         let vp: GPtr<u8> = GPtr::from_raw(&mut v as *mut [f32; 3]).cast();
         ped_get_bone_position(ped, vp, 3, 0);
-        if x(rd::<f32>(this, 0x38)).fcom(x(g::<f32>(0x858628).read())).test_any(0x41) || a.is_null() {
+        if x(rd::<f32>(this, 0x38))
+            .fcom(x(g::<f32>(0x858628).read()))
+            .test_any(0x41)
+            || a.is_null()
+        {
             return 1;
         }
         let m = rd::<GPtr<u8>>(ped, 0x14);
-        let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+        let pos = if m.is_null() {
+            ped.byte_add(4)
+        } else {
+            m.byte_add(0x30)
+        };
         let dx = x(rd::<f32>(pos, 0)).fsub_m(rd::<f32>(vp, 0));
         let dy = x(rd::<f32>(pos, 4)).fsub_m(rd::<f32>(vp, 4));
         let dz = x(rd::<f32>(pos, 8)).fsub_m(rd::<f32>(vp, 8));
@@ -1906,7 +1978,13 @@ pub fn car_get_out_compute_anim_id(this: GPtr<u8>, group: GPtr<u8>, anim: GPtr<u
 /// `Multiply3x3`, plus the vehicle position (matrix +0x30, else +4), each component rounded to f32; the local
 /// matrix is destroyed; returns `out`. Locals live in a Rust buffer.
 #[hook(addr = 0x650A80, conv = thiscall, name = "CTaskUtilityLineUpPedWithCar::GetPositionToOpenCarDoor", expect = "6A FF 68 68 32 84 00")]
-pub fn line_up_get_position_to_open_car_door(this: GPtr<u8>, out: GPtr<u8>, veh: GPtr<u8>, t: u32, a: u32) -> GPtr<u8> {
+pub fn line_up_get_position_to_open_car_door(
+    this: GPtr<u8>,
+    out: GPtr<u8>,
+    veh: GPtr<u8>,
+    t: u32,
+    a: u32,
+) -> GPtr<u8> {
     let mut mbuf = [0u32; 0x12];
     let mp: GPtr<u8> = GPtr::from_raw(&mut mbuf as *mut [u32; 0x12]).cast();
     let mut tmp = [0u32; 3];
@@ -1925,7 +2003,11 @@ pub fn line_up_get_position_to_open_car_door(this: GPtr<u8>, out: GPtr<u8>, veh:
         wr::<u32>(lp, i * 4, rd::<u32>(r, i * 4));
     }
     let m = rd::<GPtr<u8>>(veh, 0x14);
-    let pos = if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) };
+    let pos = if m.is_null() {
+        veh.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    };
     let p = [rd::<f32>(pos, 0), rd::<f32>(pos, 4), rd::<f32>(pos, 8)];
     for (i, pv) in (0isize..).zip(p) {
         let s = x(pv).fadd_m(rd::<f32>(lp, i * 4));
@@ -1944,7 +2026,13 @@ pub fn line_up_get_position_to_open_car_door(this: GPtr<u8>, out: GPtr<u8>, veh:
 /// (0x14 bytes), others `CTaskSimpleCarDriveTimed(veh, +0x14)` (0x70 bytes). Null when the pool is full.
 #[hook(addr = 0x641FC0, conv = thiscall, name = "CTaskComplexLeaveCar::CreateFirstSubTask", expect = "64 A1 00 00 00 00")]
 pub fn leave_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
-    let pause = |t: GPtr<u8>| if t.is_null() { GPtr::NULL } else { simple_pause_ctor(t, -1) };
+    let pause = |t: GPtr<u8>| {
+        if t.is_null() {
+            GPtr::NULL
+        } else {
+            simple_pause_ctor(t, -1)
+        }
+    };
     if (rd::<i32>(ped, 0x530) == 0x3F || rd::<u8>(ped, 0x474) & 0x40 != 0) && ped_is_player(ped) != 0 {
         return pause(task_new(0x18));
     }
@@ -1956,7 +2044,11 @@ pub fn leave_car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
         let grp = ped_groups_get_peds_group(ped);
         if !grp.is_null() && group_membership_is_leader(grp.byte_add(8), ped) != 0 {
             let e = event_new(0x14);
-            let ev = if e.is_null() { GPtr::NULL } else { event_leader_exited_car_as_driver_ctor(e) };
+            let ev = if e.is_null() {
+                GPtr::NULL
+            } else {
+                event_leader_exited_car_as_driver_ctor(e)
+            };
             let mut ge = [0u32; 5];
             let gp: GPtr<u8> = GPtr::from_raw(&mut ge as *mut [u32; 5]).cast();
             event_group_event_ctor(gp, ped, ev);

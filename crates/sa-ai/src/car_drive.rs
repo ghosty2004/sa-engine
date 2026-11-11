@@ -154,7 +154,11 @@ pub fn drive_to_point_set_up_car(this: GPtr<u8>) {
     let veh = rd::<GPtr<u8>>(this, 0xC);
     save_autopilot(this, veh);
     if x(rd::<f32>(this, 0x10)).fcom(x(g::<f32>(0x858B50).read())) == sa_math::x87::Cmp::Greater {
-        wr::<u8>(rd::<GPtr<u8>>(this, 0xC), 0x3D0, ftol32(x(rd::<f32>(this, 0x10))) as u8);
+        wr::<u8>(
+            rd::<GPtr<u8>>(this, 0xC),
+            0x3D0,
+            ftol32(x(rd::<f32>(this, 0x10))) as u8,
+        );
     }
     wr::<u8>(rd::<GPtr<u8>>(this, 0xC), 0x3B9, rd::<u8>(this, 0x18));
     wr::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x3AC, g::<u32>(TIME_MS).read());
@@ -173,20 +177,36 @@ pub fn car_drive_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
     match ty {
         0x2BC => {
             let t = task_new(0x50);
-            if t.is_null() { GPtr::NULL } else { enter_car_as_passenger_ctor(t, veh(), 0, 0) }
+            if t.is_null() {
+                GPtr::NULL
+            } else {
+                enter_car_as_passenger_ctor(t, veh(), 0, 0)
+            }
         }
         0x2BD => {
             let t = task_new(0x50);
-            if t.is_null() { GPtr::NULL } else { enter_car_as_driver_ctor(t, veh()) }
+            if t.is_null() {
+                GPtr::NULL
+            } else {
+                enter_car_as_driver_ctor(t, veh())
+            }
         }
         0x2C5 => {
             v_set_up_car(this);
             let t = task_new(0x60);
-            if t.is_null() { GPtr::NULL } else { car_drive_simple_ctor(t, veh(), 0, 0) }
+            if t.is_null() {
+                GPtr::NULL
+            } else {
+                car_drive_simple_ctor(t, veh(), 0, 0)
+            }
         }
         0x2CA => {
             let t = task_new(0x14);
-            if t.is_null() { GPtr::NULL } else { leave_any_car_ctor(t, 0, 1, 0) }
+            if t.is_null() {
+                GPtr::NULL
+            } else {
+                leave_any_car_ctor(t, 0, 1, 0)
+            }
         }
         0x2CD => {
             let t = task_new(0xC);
@@ -203,7 +223,11 @@ pub fn car_drive_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
                 return GPtr::NULL;
             }
             let m = rd::<GPtr<u8>>(ped, 0x14);
-            let pos = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+            let pos = if m.is_null() {
+                ped.byte_add(4)
+            } else {
+                m.byte_add(0x30)
+            };
             create_car_and_get_in_ctor(t, pos, rd::<u32>(this, 0x14))
         }
         0x390 => wander_get_wander_task_by_ped_type(ped),
@@ -294,7 +318,11 @@ pub fn car_drive_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8
         return if flag() { sub(0x2CD) } else { GPtr::NULL };
     }
     if ped_in_vehicle(ped) {
-        return sub(if rd::<GPtr<u8>>(ped, 0x58C) == veh { 0x2C5 } else { 0x2CA });
+        return sub(if rd::<GPtr<u8>>(ped, 0x58C) == veh {
+            0x2C5
+        } else {
+            0x2CA
+        });
     }
     if rd::<i32>(veh, 0x590) != 9 {
         let mut check = [0u32; 12];
@@ -339,7 +367,11 @@ pub fn drive_to_point_drive(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let sub = rd::<GPtr<u8>>(this, 8);
     let veh = rd::<GPtr<u8>>(this, 0xC);
     let m = rd::<GPtr<u8>>(veh, 0x14);
-    let pos = if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) };
+    let pos = if m.is_null() {
+        veh.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    };
     let dx = x(rd::<f32>(this, 0x24)).fsub_m(rd::<f32>(pos, 0));
     let dy = x(rd::<f32>(this, 0x28)).fsub_m(rd::<f32>(pos, 4));
     let dz = x(rd::<f32>(this, 0x2C)).fsub_m(rd::<f32>(pos, 8));

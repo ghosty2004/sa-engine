@@ -105,7 +105,11 @@ pub fn event_is_valid_4ac020(this: GPtr<u8>, _ped: GPtr<u8>) -> u32 {
     if rd::<u8>(this, 8) != 0 {
         return 1;
     }
-    if rd::<i32>(this, 4) > ev_get_life_time(this) { 0 } else { 1 }
+    if rd::<i32>(this, 4) > ev_get_life_time(this) {
+        0
+    } else {
+        1
+    }
 }
 
 /// `CEventBuildingCollision::TakesPriorityOver(const CEvent&)` (0x4AD050): the event types differ
@@ -378,14 +382,22 @@ orig! {
 #[hook(addr = 0x4B7280, conv = thiscall, name = "vt_85b0b0::CloneEditable", expect = "6A FF 68 7B A5 83 00")]
 pub fn vt_85b0b0_clone_editable_4b7280(this: GPtr<u8>) -> GPtr<u8> {
     let e = event_pool_new(event_pool());
-    if e.is_null() { GPtr::NULL } else { ctor_4aedf0(e, rd::<u32>(this, 0x14)) }
+    if e.is_null() {
+        GPtr::NULL
+    } else {
+        ctor_4aedf0(e, rd::<u32>(this, 0x14))
+    }
 }
 
 /// `vt_85b0f8::Clone` (0x4B72F0): inlined `operator new`, `FUN_004af010(e, this[+0xC])`.
 #[hook(addr = 0x4B72F0, conv = thiscall, name = "vt_85b0f8::Clone", expect = "6A FF 68 9B A5 83 00")]
 pub fn vt_85b0f8_clone_4b72f0(this: GPtr<u8>) -> GPtr<u8> {
     let e = event_pool_new(event_pool());
-    if e.is_null() { GPtr::NULL } else { ctor_4af010(e, rd::<u32>(this, 0xC)) }
+    if e.is_null() {
+        GPtr::NULL
+    } else {
+        ctor_4af010(e, rd::<u32>(this, 0xC))
+    }
 }
 
 /// The `CEventAcquaintancePed`-derived `CloneEditable`s: `operator new(0x18)`, base ctor with the
@@ -445,7 +457,11 @@ pub fn event_group_event_clone_4b6ee0(this: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x4B6FB0, conv = thiscall, name = "CEventPotentialWalkIntoVehicle::CloneEditable", expect = "6A FF 68 BB A4 83 00")]
 pub fn event_potential_walk_into_vehicle_clone_editable_4b6fb0(this: GPtr<u8>) -> GPtr<u8> {
     let e = event_pool_new(event_pool());
-    if e.is_null() { GPtr::NULL } else { walk_into_vehicle_ctor(e, rd::<u32>(this, 0x14), rd::<u32>(this, 0x18)) }
+    if e.is_null() {
+        GPtr::NULL
+    } else {
+        walk_into_vehicle_ctor(e, rd::<u32>(this, 0x14), rd::<u32>(this, 0x18))
+    }
 }
 
 /// `vt_85b070::Clone` (0x4B7210): inlined `operator new`; `FUN_004aecd0(e, (u8)+0xC, +0x10)`.
@@ -462,7 +478,11 @@ pub fn vt_85b070_clone_4b7210(this: GPtr<u8>) -> GPtr<u8> {
 #[hook(addr = 0x65DB70, conv = thiscall, name = "CEventLeanOnVehicle::Clone", expect = "6A FF 68 BB 42 84 00")]
 pub fn event_lean_on_vehicle_clone_65db70(this: GPtr<u8>) -> GPtr<u8> {
     let e = event_new(0x14);
-    if e.is_null() { GPtr::NULL } else { lean_on_vehicle_ctor(e, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10)) }
+    if e.is_null() {
+        GPtr::NULL
+    } else {
+        lean_on_vehicle_ctor(e, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10))
+    }
 }
 
 /// `CEventPotentialWalkIntoPed::CloneEditable` (0x4B7090): inlined `operator new`; ctor(+0x20, &+0x14, +0x24).
@@ -472,7 +492,12 @@ pub fn event_potential_walk_into_ped_clone_editable_4b7090(this: GPtr<u8>) -> GP
     if e.is_null() {
         return GPtr::NULL;
     }
-    walk_into_ped_ctor(e, rd::<u32>(this, 0x20), this.byte_add(0x14), rd::<u32>(this, 0x24))
+    walk_into_ped_ctor(
+        e,
+        rd::<u32>(this, 0x20),
+        this.byte_add(0x14),
+        rd::<u32>(this, 0x24),
+    )
 }
 
 /// `vt_86c6d0::Clone` (0x5F6280): `operator new(0x1C)`; `FUN_005f6190(e, +0xC, +0x10, (u8)+0x14, +0x18)`.
@@ -482,7 +507,13 @@ pub fn vt_86c6d0_clone_5f6280(this: GPtr<u8>) -> GPtr<u8> {
     if e.is_null() {
         return GPtr::NULL;
     }
-    ctor_5f6190(e, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10), u32::from(rd::<u8>(this, 0x14)), rd::<u32>(this, 0x18))
+    ctor_5f6190(
+        e,
+        rd::<u32>(this, 0xC),
+        rd::<u32>(this, 0x10),
+        u32::from(rd::<u8>(this, 0x14)),
+        rd::<u32>(this, 0x18),
+    )
 }
 
 /// `CEventObjectCollision::Clone` (0x4B6CC0): inlined `operator new`;
@@ -705,7 +736,11 @@ pub fn event_handler_compute_sexy_ped_response_4b99f0(this: GPtr<u8>, ev: GPtr<u
         0xC8 => wr::<u32>(this, 0x24, 0),
         0x4BC => {
             let t = task_new(0x2C);
-            let r = if t.is_null() { GPtr::NULL } else { gang_hassle_ped_ctor(t, ped, 0, 10000, 30000) };
+            let r = if t.is_null() {
+                GPtr::NULL
+            } else {
+                gang_hassle_ped_ctor(t, ped, 0, 10000, 30000)
+            };
             wr::<u32>(this, 0x24, r.addr() as u32);
         }
         _ => {}
@@ -743,7 +778,14 @@ pub fn inform_friends_event_queue_add_4ac1e0(ped: GPtr<u8>, ev: GPtr<u8>) -> u8 
     }
     wr::<u32>(e, 4, ev.addr() as u32);
     let d = ftol32(x(f).fmul_m(-500.0));
-    wr::<u32>(e, 8, g::<u32>(0xB7CB84).read().wrapping_sub(d as u32).wrapping_add(0x12C));
+    wr::<u32>(
+        e,
+        8,
+        g::<u32>(0xB7CB84)
+            .read()
+            .wrapping_sub(d as u32)
+            .wrapping_add(0x12C),
+    );
     1
 }
 
