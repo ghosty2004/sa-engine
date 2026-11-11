@@ -3583,3 +3583,103 @@ CPlaceable::RemoveMatrix@0xB74238:0x4:RW
 CGarages::Init_AfterRestart@0x96C048:0x2A30:RW
 CSetPieces::AddOne@0xA95818:0x1A40:RW
 CEntity::DeleteRwObject@0xAAE950:0x9D984:RW
+
+# PORT-RENDER-2 (docs/arch/render-port.md, pass 2). Evidence: grove walk, lane 1, port-l2-r2l2-g (undeclared
+# writes seen identically on the original and the Rust side).
+# COcclusion::ProcessBeforeRendering: the occluder list links (aOccluders[1000] x 0x12, m_nNextIndex at +0x10;
+# undeclared 0xC77544..0xC77911) and the corner flags its ProcessOneOccluder calls set (0xC73CB1..0xC73CB7).
+COcclusion::ProcessBeforeRendering@0xC73FA0:0x4650:W
+COcclusion::ProcessBeforeRendering@0xC73CB0:0x10:W
+# CStencilShadows::UpdateHierarchy(from, to, obj): the two list heads (0xC6A168 / 0xC6A16C) and the links of
+# the objects m_StencilShadowObjects[64] x 0x1C (undeclared 0xC6A1AC..).
+CStencilShadows::UpdateHierarchy@0xC6A168:8:W
+CStencilShadows::UpdateHierarchy@0xC6A198:0x700:W
+# COcclusion::ProcessBeforeRendering: what its nested original ProcessOneOccluder calls write (port-l2-r2b-l2,
+# undeclared on both sides): aActiveOccluders[28] x 0xAC (0xC78611..), CenterOnScreen (0xC79944..) and the
+# projected corners aCoors (0xC79951..0xC7999F).
+COcclusion::ProcessBeforeRendering@0xC78610:0x12D0:W
+COcclusion::ProcessBeforeRendering@0xC79940:0xC:W
+COcclusion::ProcessBeforeRendering@0xC79950:0x60:W
+# COccluder::ProcessLineSegment(c1, c2, occl): the active occluder it appends a line to (stack arg2; undeclared
+# 0xC78610.. in port-l2-r2b-l2).
+COccluder::ProcessLineSegment@arg2:0xAC:W
+# COcclusion::AddOne: the occluder written at index NumOccludersOnMap / NumInteriorOccludersOnMap (rwsets names
+# element 0 only; port-l2-r2c-l2 undeclared 0xC73FB2.. on both sides).
+COcclusion::AddOne@0xC73FA0:0x4650:W
+COcclusion::AddOne@0xC73CC8:0x2D0:W
+# CWaterLevel (PORT-RENDER-2, helper A): out parameters (caller stack / caller objects) and the Im3D temp buffers
+# the sea-bed renderers fill (TempBufferVertices 2048 x 0x24, TempBufferIndices 4096 x u16, the two counters).
+CWaterLevel::CalculateWavesOnlyForCoordinate2@arg4:4:W
+CWaterLevel::CalculateWavesOnlyForCoordinate@arg4:4:W
+CWaterLevel::CalculateWavesOnlyForCoordinate@arg5:4:W
+CWaterLevel::CalculateWavesOnlyForCoordinate@arg6:4:W
+CWaterLevel::CalculateWavesOnlyForCoordinate@arg7:0xC:W
+CWaterLevel::AddWaveToResult@arg2:4:W
+FUN_006e5bb0@arg4:4:W
+FUN_006e5e90@arg4:4:W
+FUN_006e5e90@arg5:4:W
+FUN_006e5e90@arg6:4:W
+CWaterLevel::GetWaterLevelNoWaves@arg3:4:W
+CWaterLevel::GetWaterLevelNoWaves@arg4:4:W
+CWaterLevel::GetWaterLevelNoWaves@arg5:4:W
+CWaterLevel::GetWaterLevel-@arg3:4:W
+FUN_006ea8a0@arg1:4:W
+FUN_006ea8a0@arg2:2:W
+CWaterLevel::GetWaterDepth@arg1:4:W
+CWaterLevel::GetWaterDepth@arg2:4:W
+CWaterLevel::GetWaterDepth@arg3:4:W
+FUN_006e8550@arg2:4:W
+FUN_006e6870@0xC4D958:0x12000:W
+FUN_006e6870@0xC4B950:0x2008:W
+FUN_006e6a10@0xC4D958:0x12000:W
+FUN_006e6a10@0xC4B950:0x2008:W
+CWaterLevel::FindNearestWaterAndItsFlow@0xB6F10C:8:W
+# CTimeCycle / C3dMarkers / CCustomCarPlateMgr (PORT-RENDER-2, helper B): out parameters, m_CurrentColours
+# (0xB7C4A0, declared piecewise by other crates), the CColourSet `this`, the caller's position z of PlaceMarker*.
+CTimeCycle::FindTimeCycleBox@arg3:4:W
+CTimeCycle::FindTimeCycleBox@arg4:4:W
+CTimeCycle::CalcColoursForPoint@arg3:0xAC:W
+CTimeCycle::SetConstantParametersForPostFX@0xB7C4A0:0xAC:W
+CTimeCycle::Update@0xB7C4A0:0xAC:W
+CColourSet::Constructor@ecx:0xAC:W
+CColourSet::Interpolate@ecx:0xAC:W
+C3dMarker::Render@0x8D5E44:1:W
+C3dMarkers::PlaceMarker@arg2:0xC:W
+C3dMarkers::PlaceMarkerCone@arg1:0xC:W
+C3dMarkers::PlaceMarkerSet@arg2:0xC:W
+CCustomCarPlateMgr::GeneratePlateText@arg0:0xC:W
+# PORT-RENDER-2 (port-l2-r2d-l2, grove): undeclared writes identical on the original and the Rust side. FX GetValue: the caller info struct (stack arg5).
+FxInfoEmSize_c::GetValue@arg5:0x70:W
+FxInfoEmSpeed_c::GetValue@arg5:0x70:W
+FxInfoEmDir_c::GetValue@arg5:0x70:W
+FxInfoEmAngle_c::GetValue@arg5:0x70:W
+FxInfoEmLife_c::GetValue@arg5:0x70:W
+FxInfoEmWeather_c::GetValue@arg5:0x70:W
+FxInfoEmRotation_c::GetValue@arg5:0x70:W
+FxInfoFloat_c::GetValue@arg5:0x70:W
+FxInfoUnderwater_c::GetValue@arg5:0x70:W
+FxInfoHeatHaze_c::GetValue@arg5:0x70:W
+FxInfoSelfLit_c::GetValue@arg5:0x70:W
+FxInfoEmPos_c::GetValue@arg5:0x70:W
+# FUN_006e5bb0 (quad water level): its two nullable out floats.
+FUN_006e5bb0@arg5:4:W
+FUN_006e5bb0@arg6:4:W
+# CWaterLevel block grid / quad / vertex / poly-combo tables written at computed indices (rwsets names element 0).
+CWaterLevel::BlockHit@0xC21C90:0xBC2:W
+CWaterLevel::ScanThroughBlocks@0xC214D0:0x120:W
+CWaterLevel::ScanThroughBlocks@0xC21C90:0xBC2:W
+CWaterLevel::AddWaterLevelVertex@0xC22910:0x4FC4:W
+CWaterLevel::FillQuadsAndTrianglesList@0xC215F8:0x578:W
+CWaterLevel::FillQuadsAndTrianglesList@0xC21B70:0x120:W
+CWaterLevel::FillQuadsAndTrianglesList@0xC21C90:0xBC2:W
+CWaterLevel::FillQuadsAndTrianglesList@0xC22854:0x30:W
+CWaterLevel::FillQuadsAndTrianglesList@0xC22884:0xC:W
+# CTimeCycle: the box written at index m_NumBoxes, the shadow value tables (0xB79E50, 6 x 16 floats + index).
+CTimeCycle::AddOne@0xB7C550:0x320:W
+CTimeCycle::Update@0xB79E50:0x184:W
+CTimeCycle::CalcColoursForPoint@0xB79E50:0x184:W
+# CStencilShadows::Render(CRGBA*): the colour pointer (a Rust caller passes a Rust stack address; compared by pointee; split port-l2-r2d-sp DIVERGED at seq 1140 on the pointer).
+CStencilShadows::Render@arg0:4:W
+# CTimeCycle::Update / CalcColoursForPoint: m_VectorToSun[16] (0xB7CA50, CVector x 16; undeclared 0xB7CA51.. in port-l2-r2e-l2).
+CTimeCycle::Update@0xB7CA50:0xC0:W
+CTimeCycle::CalcColoursForPoint@0xB7CA50:0xC0:W

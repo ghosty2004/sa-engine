@@ -8,6 +8,7 @@ use crate::{
     bullettraces, clouds, coronas, cullzones, fx, mirrors, occlusion, pointlights, posteffects, renderer,
     shadows, specialfx, sprite, sprite2d, weather,
 };
+use crate::{carplates, glass, markers, stencilshadows, timecycle, waterlevel};
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -26,6 +27,12 @@ pub const MODULES: &[&[HookReg]] = &[
     mirrors::HOOKS,
     posteffects::HOOKS,
     fx::HOOKS,
+    waterlevel::HOOKS,
+    timecycle::HOOKS,
+    markers::HOOKS,
+    carplates::HOOKS,
+    glass::HOOKS,
+    stencilshadows::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -45,6 +52,12 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     mirrors::GLOBALS,
     posteffects::GLOBALS,
     fx::GLOBALS,
+    waterlevel::GLOBALS,
+    timecycle::GLOBALS,
+    markers::GLOBALS,
+    carplates::GLOBALS,
+    glass::GLOBALS,
+    stencilshadows::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

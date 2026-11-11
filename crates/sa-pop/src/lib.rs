@@ -26,3 +26,9 @@ pub mod misc;
 pub mod popcycle;
 pub mod population;
 pub mod statics;
+pub mod statics_gen;
+
+pub mod carctrl2;
+pub mod misc2;
+pub mod pathfind;
+pub mod population2;

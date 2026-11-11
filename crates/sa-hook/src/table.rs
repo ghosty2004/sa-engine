@@ -757,6 +757,16 @@ mod tests {
     /// The entry bytes, names and kinds agree with the catalogue and the real exe (when present).
     #[test]
     fn matches_catalogue_and_exe() {
+        // The debug-mode HOOKS table no longer fits the default 2 MiB test-thread stack.
+        std::thread::Builder::new()
+            .stack_size(256 << 20)
+            .spawn(matches_catalogue_and_exe_body)
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+
+    fn matches_catalogue_and_exe_body() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let csv = std::fs::read_to_string(root.join("catalog/functions.csv")).unwrap();
         let procs = std::fs::read_to_string(root.join("catalog/procedures.csv")).unwrap();

@@ -1688,6 +1688,59 @@ pub fn request_objects_in_frustum(transform: GPtr<u8>, flags: i32) {
     world_scan(GPtr::from_raw(pts.as_mut_ptr()), 3, 0x555900);
 }
 
+orig! {
+    /// `RwMatrixRotate(RwMatrix*, const RwV3d* axis, float angle, RwOpCombineType)` (0x7F1FD0); the
+    /// angle as a raw dword
+    pub fn rw_matrix_rotate(m: GPtr<f32>, axis: GPtr<f32>, angle: u32, combine: u32) -> GPtr<f32> = cdecl 0x7F1FD0 => unported;
+    /// `RwMatrixTranslate(RwMatrix*, const RwV3d*, RwOpCombineType)` (0x7F2450)
+    pub fn rw_matrix_translate(m: GPtr<f32>, v: GPtr<u8>, combine: u32) -> GPtr<f32> = cdecl 0x7F2450 => unported;
+    /// `CRenderer::RequestObjectsInFrustum(RwMatrix*, int32)` (0x555960)
+    pub fn call_request_objects_in_frustum(m: GPtr<f32>, flags: i32) = cdecl 0x555960 => request_objects_in_frustum_f32;
+}
+
+/// `request_objects_in_frustum` with an `f32` matrix pointer (the phase B/C path of the `orig!` call).
+pub fn request_objects_in_frustum_f32(m: GPtr<f32>, flags: i32) {
+    request_objects_in_frustum(m.cast(), flags);
+}
+
+/// `CRenderer::RequestObjectsInDirection(const CVector& posn, float angle)` (0x555CB0): an identity
+/// stack RwMatrix rotated 90 degrees about x (`rwCOMBINEREPLACE`), then by `angle * 57.295776 + 180`
+/// degrees about z (`rwCOMBINEPOSTCONCAT`), translated to `posn` (post-concat), and passed to
+/// `RequestObjectsInFrustum` with the constant streaming flags 0x20 (a third argument, if any caller
+/// passes one, is not read). The original's matrix flags word is uninitialised stack ORed with 0x20003
+/// and its three pad words are uninitialised; the port uses 0x20003 and zero pads (stack only; see
+/// render-port.md).
+#[hook(addr = 0x555CB0, conv = cdecl, name = "CRenderer::RequestObjectsInDirection", expect = "83 EC 58 8B 4C 24 24")]
+pub fn request_objects_in_direction(posn: GPtr<u8>, angle: f32) {
+    let one = 1.0f32;
+    let mut axes = [one, 0.0, 0.0, 0.0, 0.0, one];
+    let mut m = [
+        one,
+        0.0,
+        0.0,
+        f32::from_bits(0x20003),
+        0.0,
+        one,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        one,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+    ];
+    let mp = GPtr::<f32>::from_raw(m.as_mut_ptr());
+    let ap = GPtr::<f32>::from_raw(axes.as_mut_ptr());
+    rw_matrix_rotate(mp, ap, 0x42B4_0000, 0);
+    let deg = x(angle).fmul_m(k(0x4265_2EE0)).fadd_m(k(0x4334_0000)).to_f32();
+    rw_matrix_rotate(mp, ap.wrapping_index(3), deg.to_bits(), 2);
+    rw_matrix_translate(mp, posn, 2);
+    call_request_objects_in_frustum(mp, 0x20);
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_RENDER_FADING_IN_ENTITIES,
@@ -1721,4 +1774,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SCAN_WORLD_PORT,
     HOOK_GET_OBJECTS_IN_FRUSTUM,
     HOOK_REQUEST_OBJECTS_IN_FRUSTUM,
+    HOOK_REQUEST_OBJECTS_IN_DIRECTION,
 ];
