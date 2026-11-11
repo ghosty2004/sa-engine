@@ -54,6 +54,55 @@ orig! {
     pub fn set_world_on_fire(x: f32, y: f32, z: f32, r: f32, e: GPtr<u8>) = cdecl 0x56B910 => unported;
     /// `CVector::Normalise()` (0x59C910, thiscall)
     pub fn normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
+    /// `CWorld::ProcessLineOfSight(start, end, colPoint, entity, buildings, vehicles, peds, objects, dummies,
+    /// seeThrough, camera, shootThrough)` (0x56BA00)
+    pub fn process_line_of_sight(a: GPtr<u8>, b: GPtr<u8>, cp: GPtr<u8>, e: GPtr<u8>, bd: u8, vh: u8, pd: u8, ob: u8, du: u8, st: u8, cam: u8, sh: u8) -> u8 = cdecl 0x56BA00 => unported;
+    /// `CWeapon::CheckForShootingVehicleOccupant(CEntity**, CColPoint*, eWeaponType, const CVector&, const CVector&)` (0x73F480)
+    pub fn check_for_shooting_vehicle_occupant(e: GPtr<u8>, cp: GPtr<u8>, ty: i32, a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x73F480 => unported;
+    /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, returns out)
+    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
+    /// `operator*(CVector* out, float, const CVector*)` (0x40FE90, returns out)
+    pub fn vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
+    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* commitedBy)` (0x532010)
+    pub fn report_crime(ty: i32, victim: GPtr<u8>, by: GPtr<u8>) = cdecl 0x532010 => unported;
+    /// `CLocalisation::Blood()` (0x56D230)
+    pub fn localisation_blood() -> u8 = cdecl 0x56D230 => unported;
+    /// `Fx_c::AddBlood(CVector& pos, CVector& dir, int32 count, float brightness)` (0x49EB00, thiscall)
+    pub fn fx_add_blood(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, n: i32, b: f32) = thiscall 0x49EB00 => unported;
+    /// `RpAnimBlendClumpGetFirstAssociation(RpClump*, uint32 flags)` (0x4D6A70)
+    pub fn clump_get_first_association(clump: GPtr<u8>, flags: u32) -> GPtr<u8> = cdecl 0x4D6A70 => unported;
+    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
+    pub fn blend_animation(clump: GPtr<u8>, group: i32, id: i32, delta: f32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
+    /// `CAnimBlendAssociation::SetCurrentTime(float)` (0x4CEA80, thiscall)
+    pub fn assoc_set_current_time(a: GPtr<u8>, t: f32) = thiscall 0x4CEA80 => unported;
+    /// `CVehicle::BurstTyre(uint8 component, bool)` (vtable +0xB0, thiscall; the dword holding the piece byte is pushed)
+    pub fn vehicle_burst_tyre(veh: GPtr<u8>, piece: u32, b: u8) = thiscall vslot 0xB0 => unported;
+    /// `Fx_c::AddTyreBurst(CVector& pos, CVector& vel)` (0x49F300, thiscall)
+    pub fn fx_add_tyre_burst(fx: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>) = thiscall 0x49F300 => unported;
+    /// `CVehicle::InflictDamage(CEntity* damager, eWeaponType, float damage, CVector coords)` (0x6D7C90, thiscall)
+    pub fn vehicle_inflict_damage(veh: GPtr<u8>, by: GPtr<u8>, ty: i32, dmg: f32, x: f32, y: f32, z: f32) = thiscall 0x6D7C90 => unported;
+    /// `CCamera::IsSphereVisible(const CVector& center, float radius)` (0x420D40, thiscall)
+    pub fn camera_is_sphere_visible(cam: GPtr<u8>, c: GPtr<u8>, r: f32) -> u8 = thiscall 0x420D40 => unported;
+    /// `tColLighting::GetCurrentLighting(float)` (0x59F0C0, cdecl with the dword holding the lighting byte pushed; ST0)
+    pub fn col_lighting_get_current(l: u32, scale: f32) -> f64 = cdecl 0x59F0C0 => unported;
+    /// `Fx_c::AddBulletImpact(CVector& pos, CVector& dir, int32 surface, int32 count, float brightness)` (0x49F3D0, thiscall)
+    pub fn fx_add_bullet_impact(fx: GPtr<u8>, pos: GPtr<u8>, dir: GPtr<u8>, surface: u32, n: i32, b: f32) = thiscall 0x49F3D0 => unported;
+    /// `CObject::ObjectDamage(float, const CVector* pos, const CVector* dir, CEntity*, eWeaponType)` (0x5A0D90, thiscall)
+    pub fn object_damage(obj: GPtr<u8>, dmg: f32, pos: GPtr<u8>, dir: GPtr<u8>, by: GPtr<u8>, ty: i32) = thiscall 0x5A0D90 => unported;
+    /// `CEntity::GetIsStatic()` (0x4633E0, thiscall)
+    pub fn entity_get_is_static(e: GPtr<u8>) -> u8 = thiscall 0x4633E0 => unported;
+    /// `CEntity::SetIsStatic(bool)` (vtable +0x10, thiscall)
+    pub fn entity_set_is_static(e: GPtr<u8>, b: u8) = thiscall vslot 0x10 => unported;
+    /// `CPhysical::AddToMovingList()` (0x542800, thiscall)
+    pub fn physical_add_to_moving_list(e: GPtr<u8>) = thiscall 0x542800 => unported;
+    /// `CPhysical::ApplyMoveForce(CVector force)` (0x5429F0, thiscall)
+    pub fn physical_apply_move_force(e: GPtr<u8>, x: f32, y: f32, z: f32) = thiscall 0x5429F0 => unported;
+    /// `CAudioEngine::ReportBulletHit(CEntity*, eSurfaceType, const CVector&, float angle)` (0x506EC0, thiscall)
+    pub fn audio_report_bullet_hit(ae: GPtr<u8>, e: GPtr<u8>, surface: u32, pos: GPtr<u8>, angle: f32) = thiscall 0x506EC0 => unported;
+    /// `CGlass::WasGlassHitByBullet(CEntity*, CVector)` (0x71C0D0)
+    pub fn glass_was_hit_by_bullet(e: GPtr<u8>, x: f32, y: f32, z: f32) = cdecl 0x71C0D0 => unported;
+    /// `CHeli::TestSniperCollision(CVector* start, CVector* end)` (0x6C6890)
+    pub fn heli_test_sniper_collision(a: GPtr<u8>, b: GPtr<u8>) = cdecl 0x6C6890 => unported;
 }
 
 pub fn bullet(i: usize) -> GPtr<u8> {
@@ -378,6 +427,254 @@ fn shot_hit_peds(s: GPtr<u8>, info: GPtr<u8>) {
     }
 }
 
+/// `g_fx` (Fx_c)
+const G_FX: usize = 0xA9AE00;
+/// `TheCamera`
+const THE_CAMERA: usize = 0xB6F028;
+/// `AudioEngine`
+const AUDIO_ENGINE: usize = 0xB6BC90;
+/// `CWorld::pIgnoreEntity`
+const IGNORE_ENTITY: usize = 0xB7CD68;
+/// `CWorld::bIncludeBikers`, `bIncludeCarTyres`, `bIncludeDeadPeds` (write order of the original)
+const INCLUDE_FLAGS: [usize; 3] = [0xB7CD71, 0xB7CD70, 0xB7CD6F];
+/// `PlayerSniperBulletStart` / `PlayerSniperBulletEnd`
+const SNIPER_START: usize = 0xC888A0;
+const SNIPER_END: usize = 0xC888AC;
+/// The CRT's `_CIasin` (0x821E70; operand and result in ST0). The bytes compute
+/// `fpatan(x, sqrt((1+x)(1-x)))`, i.e. asin (gta-reversed: `asin`). It keeps the caller's precision
+/// control (`fldcw (cw & 0x300) | 0x7F`), so under the game's 24-bit precision its result is exact as a
+/// double and [`sa_core::orig::x87_unary`] returns it unchanged. Its |x| = 1 path returns the 80-bit
+/// constant pi/2, which `x87_unary` rounds to a double; `pi/2 * 57.29578f` rounds to the same f32
+/// (89.99999237) from both (checked with exact rationals).
+const CI_ASIN: usize = 0x821E70;
+
+/// `CBulletInfo::Update()` (0x7360D0), ported from the 1.0 US bytes. Differences from gta-reversed
+/// (the original is kept):
+/// - an expired bullet (`(float)now > destroyTime`) is marked inactive but still moved and tested this
+///   frame (gr `continue`s);
+/// - the hit entity that `ProcessLineOfSight` fills is ONE local for the whole loop, zeroed once at
+///   entry, and a bullet is deactivated at the end of its step iff it is non-null (so a later bullet
+///   sees an earlier bullet's hit whenever `ProcessLineOfSight` leaves the value alone);
+/// - only x and y are bounds-checked (`-3000 < v < 3000`, NaN passes);
+/// - the step `t = timeStep * 0.5f` stays on the x87 stack: x = `t*vx + px` in extended precision,
+///   y and z round `t*v` to f32 first;
+/// - both `IsSphereVisible` calls take the collision point (gr: the normal);
+/// - the dead-ped hit animation sets the association flags to `(f & 0xFFF7) | 1`;
+/// - the sniper dot product is `(nx*dx + nz*dz) + ny*dy`, compared with 0 in extended precision; its
+///   f32 copy goes to asin; the angle is `asin(-dot) * 57.29578f`.
+///
+/// Stack-only differences: `GetCurrentLighting` and the vehicle damage path write their own argument /
+/// scratch slots (not reproduced).
+#[hook(addr = 0x7360D0, conv = cdecl, name = "CBulletInfo::Update", expect = "81 EC 90 00 00 00")]
+pub fn bullet_update() {
+    let mut hit: GPtr<u8> = GPtr::NULL;
+    for i in 0..NUM_BULLETS {
+        bullet_step(bullet(i), &mut hit);
+    }
+}
+
+fn bullet_step(b: GPtr<u8>, hit: &mut GPtr<u8>) {
+    let c = rp(b, 4);
+    if !c.is_null() && etype(c) == 3 && ped_is_pointer_valid(c) == 0 {
+        wp(b, 4, GPtr::NULL);
+    }
+    if rb(b, 0xC) == 0 {
+        return;
+    }
+    let now = time_ms();
+    let mut f = Fpu::new();
+    f.fild(now as i32);
+    if (now as i32) < 0 {
+        f.fadd_m(cf(0x4F80_0000));
+    }
+    f.fcomp_m(rf(b, 8));
+    if !f.jne(0x41) {
+        wb(b, 0xC, 0);
+    }
+    let t = x(time_step()).fmul_m(cf(0x3F00_0000));
+    let old = rv(b, 0x10);
+    let mut oldpos: [f32; 3] = old;
+    let ty_ = t.fmul_m(rf(b, 0x20)).to_f32();
+    let tz = t.fmul_m(rf(b, 0x24)).to_f32();
+    let mut newpos: [f32; 3] = [
+        t.fmul_m(rf(b, 0x1C)).fadd_m(old[0]).to_f32(),
+        x(ty_).fadd_m(rf(b, 0x14)).to_f32(),
+        x(tz).fadd_m(rf(b, 0x18)).to_f32(),
+    ];
+    // x, then y: out iff `v <= -3000` (`test ah, 0x41; jnp`) or `!(v < 3000)` (`test ah, 1; je`; NaN
+    // sets C0 and stays in)
+    for v in [newpos[0], newpos[1]] {
+        if !x(v).fcom(X87::constant(0xC53B_8000)).test_parity(0x41) || !x(v).fcom(X87::constant(0x453B_8000)).test_any(0x01) {
+            wb(b, 0xC, 0);
+            return;
+        }
+    }
+    let ty = ru(b, 0) as i32;
+    g::<GPtr<u8>>(IGNORE_ENTITY).write(rp(b, 4));
+    for a in INCLUDE_FLAGS {
+        g::<u8>(a).write(1);
+    }
+    let mut cp = [0u8; 0x2C];
+    let (oldp, newp, cpp) = (lp(&mut oldpos).cast::<u8>(), lp(&mut newpos).cast::<u8>(), lp(&mut cp).cast::<u8>());
+    if process_line_of_sight(oldp, newp, cpp, lp(hit).cast(), 1, 1, 1, 1, 1, 0, 0, 1) != 0 {
+        bullet_hit(b, ty, hit, cpp, oldp, newp);
+    }
+    for a in INCLUDE_FLAGS {
+        g::<u8>(a).write(0);
+    }
+    g::<GPtr<u8>>(IGNORE_ENTITY).write(GPtr::NULL);
+    let np = rv(newp, 0);
+    if ru(b, 0) == 0x22 {
+        wv(g(SNIPER_START), 0, rv(b, 0x10));
+        wv(g(SNIPER_END), 0, np);
+        heli_test_sniper_collision(g(SNIPER_START), g(SNIPER_END));
+    }
+    wv(b, 0x10, np);
+    if !hit.is_null() {
+        wb(b, 0xC, 0);
+    }
+}
+
+/// The hit handling of [`bullet_update`] (0x736257..0x736779). `cpp` = the local `CColPoint` (point
+/// +0, normal +0x10, surfaceB +0x23, pieceB +0x24, lightingB +0x25); the dwords at +0x23 / +0x24 /
+/// +0x25 are pushed whole where the original pushes them.
+fn bullet_hit(b: GPtr<u8>, ty: i32, hit: &mut GPtr<u8>, cpp: GPtr<u8>, oldp: GPtr<u8>, newp: GPtr<u8>) {
+    let fx = g::<u8>(G_FX);
+    let normal = cpp.byte_add(0x10);
+    check_for_shooting_vehicle_occupant(lp(hit).cast(), cpp, ty, oldp, newp);
+    let e = *hit;
+    let impact = || {
+        if camera_is_sphere_visible(g(THE_CAMERA), cpp, 1.0) != 0 {
+            let l = st0(col_lighting_get_current(ru(cpp, 0x25), 0.5)).to_f32();
+            fx_add_bullet_impact(fx, cpp, normal, u32::from(rb(cpp, 0x23)), 8, l);
+        }
+    };
+    let set_new_to_point = || wv(newp, 0, rv(cpp, 0));
+    let attached_to = |e: GPtr<u8>| {
+        let c = rp(b, 4);
+        !c.is_null() && etype(c) == 3 && rp(c, 0xFC) == e
+    };
+    match etype(e) {
+        3 => {
+            let state = ru(e, 0x530);
+            if state != 0x36 && state != 0x37 && e != rp(b, 4) {
+                let m = rp(e, 0x14);
+                let pos = if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) };
+                let mut d = [0f32; 3];
+                vector_sub(lp(&mut d).cast(), pos, cpp);
+                let mut d2 = [d[0], d[1]];
+                let dir = ped_get_local_direction(e, lp(&mut d2).cast());
+                let dmg = i32::from(rh(b, 0x28) as i16);
+                generate_damage_event(e, rp(b, 4), ty, dmg, i32::from(rb(cpp, 0x24)), i32::from(dir as u8));
+                let crime = if ru(e, 0x598) == 6 { 5 } else { 4 };
+                report_crime(crime, *hit, rp(b, 4));
+                set_new_to_point();
+            }
+            if localisation_blood() != 0 {
+                fx_add_blood(fx, cpp, normal, 8, rf(e, 0x12C));
+                if ru(e, 0x530) == 0x37 {
+                    let id = if clump_get_first_association(rp(e, 0x18), 0x800).is_null() { 0x24 } else { 0x27 };
+                    let assoc = blend_animation(rp(e, 0x18), 0, id, 8.0);
+                    if !assoc.is_null() {
+                        assoc_set_current_time(assoc, 0.0);
+                        wh(assoc, 0x2E, (rh(assoc, 0x2E) & 0xFFF7) | 1);
+                    }
+                }
+                set_new_to_point();
+            }
+        }
+        2 => {
+            if !attached_to(e) {
+                let piece = rb(cpp, 0x24);
+                if (0xD..=0x10).contains(&piece) {
+                    vehicle_burst_tyre(e, ru(cpp, 0x24), 1);
+                    fx_add_tyre_burst(fx, cpp, normal);
+                } else {
+                    let p = rv(cpp, 0);
+                    let dmg = xi(i32::from(rh(b, 0x28) as i16)).to_f32();
+                    vehicle_inflict_damage(e, rp(b, 4), ru(b, 0) as i32, dmg, p[0], p[1], p[2]);
+                    if ru(b, 0) == 0x25 {
+                        start_fire_target(g(crate::fire::FIRE_MANAGER), *hit, rp(b, 4), cf(0x3F4C_CCCD), 1, 7000, 100);
+                    } else {
+                        impact();
+                    }
+                }
+            }
+        }
+        _ => {
+            impact();
+            let e = *hit;
+            if !attached_to(e) {
+                let creator = rp(b, 4);
+                match etype(e) {
+                    4 => object_hit(b, e, creator, cpp, normal),
+                    1 if !creator.is_null() && etype(creator) == 3 => {
+                        let pd = rp(creator, 0x480);
+                        if !pd.is_null() {
+                            wu(pd, 0x9C, i32::from(rh(e, 0x22) as i16) as u32);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    let e = *hit;
+    if ru(b, 0) == 0x22 {
+        let o = rv(oldp, 0);
+        let n = rv(newp, 0);
+        let mut d = [x(n[0]).fsub_m(o[0]).to_f32(), x(n[1]).fsub_m(o[1]).to_f32(), x(n[2]).fsub_m(o[2]).to_f32()];
+        normalise(lp(&mut d).cast());
+        let nv = rv(normal, 0);
+        let dot = x(nv[0]).fmul_m(d[0]).fadd(x(nv[2]).fmul_m(d[2])).fadd(x(nv[1]).fmul_m(d[1]));
+        let dot32 = dot.to_f32();
+        // `fcomp 0.0; test ah, 5; jp` skips unless C0 alone (dot < 0)
+        if !dot.fcom(X87::zero()).test_parity(0x05) {
+            let a = st0(sa_core::orig::x87_unary(CI_ASIN, x(dot32).fchs().to_f64()));
+            let angle = a.fmul_m(cf(0x4265_2EE0)).to_f32();
+            audio_report_bullet_hit(g(AUDIO_ENGINE), e, ru(cpp, 0x23), cpp, angle);
+        }
+    }
+    let p = rv(cpp, 0);
+    glass_was_hit_by_bullet(e, p[0], p[1], p[2]);
+}
+
+/// The object branch of the hit handling (0x736576..0x736697).
+fn object_hit(b: GPtr<u8>, o: GPtr<u8>, creator: GPtr<u8>, cpp: GPtr<u8>, normal: GPtr<u8>) {
+    let ty = ru(b, 0) as i32;
+    if rb(o, 0x144) >= 200 {
+        let info = rp(o, 0x160);
+        match ru(info, 0x48) {
+            1 => object_damage(o, 151.0, cpp, normal, creator, ty),
+            2 => object_damage(o, x(rf(info, 0x34)).fmul_m(cf(0x4317_0000)).to_f32(), cpp, normal, creator, ty),
+            _ => {}
+        }
+        object_damage(o, 50.0, cpp, normal, rp(b, 4), ru(b, 0) as i32);
+        return;
+    }
+    if rb(o, 0x40) & 4 == 0 {
+        let info = rp(o, 0x160);
+        // `fcomp 99.9f; test ah, 5; jp`: only `< 99.9` continues
+        if !x(rf(info, 0x18)).fcom(X87::constant(0x42C7_CCCD)).test_parity(0x05) {
+            if entity_get_is_static(o) != 0 {
+                // `fcomp 0.0; test ah, 0x41; jp`: `<= 0` continues
+                if !x(rf(info, 0x14)).fcom(X87::zero()).test_parity(0x41) {
+                    entity_set_is_static(o, 0);
+                    physical_add_to_moving_list(o);
+                }
+            }
+            if entity_get_is_static(o) == 0 {
+                let mut f = [0f32; 3];
+                vector_scale(lp(&mut f).cast(), cf(0xC0F0_0000), normal);
+                physical_apply_move_force(o, f[0], f[1], f[2]);
+            }
+            object_damage(o, 50.0, cpp, normal, rp(b, 4), ru(b, 0) as i32);
+            return;
+        }
+    }
+    object_damage(o, 50.0, cpp, normal, creator, ty);
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_BULLET_INITIALISE,
     HOOK_ADD_BULLET,
@@ -385,4 +682,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_ADD_SHOT,
     HOOK_GET_FLAME_THROWER_SHOT_POSN,
     HOOK_SHOT_UPDATE,
+    HOOK_BULLET_UPDATE,
 ];

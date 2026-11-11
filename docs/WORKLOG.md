@@ -765,3 +765,8 @@
   sa-oracle-format 26, workspace clippy, i686 build OK; all-ports IDENTICAL on grove, weapon-combat, driving.
 - States: 6 → L2 from the agent's split reruns (PASS, compared > 0, 0 mismatches, 0 undeclared in every run).
   F1 = 1134 / 15,479 (7.33 %). Note: the core split-report needs ~9 GB RAM (use MemoryMax ≥ 12G).
+
+## 2026-11-11 PORT-WEAPON-2 integrated (main session)
+- Agent a186f35f + 2 helpers (lane 2). Merge: port-l2.sh wine.log fix duplicated master's (kept master's), l2-extras
+  sections combined. sa-hook lib 48, sa-weapon/sa-core tests, workspace clippy, i686 OK; all-ports IDENTICAL on
+  weapon-combat, c-bug, grove, driving, cheats, pause-restart, anim-input. 6 → L2, 8 → implemented. F1 = 1140 (7.36 %).

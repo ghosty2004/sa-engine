@@ -38,7 +38,7 @@ orig! {
     /// `CCreepingFire::TryToStartFireAtCoors(CVector, int8, bool, bool, float)` (0x53A450)
     pub fn try_to_start_fire_at_coors(x: f32, y: f32, z: f32, gens: i8, a: u8, script: u8, zdist: f32) -> u8 = cdecl 0x53A450 => crate::fire::try_to_start_fire_at_coors;
     /// `CExplosion::AddExplosion(...)` (0x736A50)
-    pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, invisible: u8) = cdecl 0x736A50 => unported;
+    pub fn add_explosion_call(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, x: f32, y: f32, z: f32, life: u32, sound: u8, shake: f32, invisible: u8) -> u8 = cdecl 0x736A50 => add_explosion;
     /// `CWorld::SetPedsOnFire(float x, y, z, float radius, CEntity*)` (0x565610)
     pub fn set_peds_on_fire(x: u32, y: u32, z: u32, r: f32, e: GPtr<u8>) = cdecl 0x565610 => unported;
     /// `CWorld::SetCarsOnFire(...)` (0x5659F0)
@@ -271,7 +271,7 @@ pub fn update() {
                     let victim = rp(e, 0x1C);
                     if !victim.is_null() {
                         let vp = rv(pos_ptr(victim), 0);
-                        add_explosion(victim, rp(e, 0x18), 2, vp[0], vp[1], vp[2], 0, 1, -1.0, 0);
+                        add_explosion_call(victim, rp(e, 0x18), 2, vp[0], vp[1], vp[2], 0, 1, -1.0, 0);
                     }
                 }
             }
@@ -331,7 +331,389 @@ pub fn update() {
     }
 }
 
+orig! {
+    /// `FindPlayerPed(int32)` (0x56E210)
+    pub fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
+    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00, thiscall)
+    pub fn clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
+    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, thiscall)
+    pub fn register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
+    /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** e)` (0x5696C0, ST0)
+    pub fn find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, found: GPtr<u8>, e: GPtr<u8>) -> f64 = cdecl 0x5696C0 => unported;
+    /// `CWaterLevel::GetWaterLevelNoWaves(float x, float y, float z, float* level, float*, float*)` (0x6E8580)
+    pub fn get_water_level_no_waves(x: f32, y: f32, z: f32, level: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x6E8580 => unported;
+    /// `operator-(const CVector&, const CVector&)` (0x40FE60, returns into `out`)
+    pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
+    /// `CAEExplosionAudioEntity::AddAudioEvent(int32 event, CVector& pos, float volume)` (0x4DCBE0, thiscall)
+    pub fn explosion_audio_add_event(ae: GPtr<u8>, ev: i32, pos: GPtr<u8>, vol: f32) = thiscall 0x4DCBE0 => unported;
+    /// `CCrime::ReportCrime(eCrimeType, CEntity* victim, CPed* criminal)` (0x532010)
+    pub fn report_crime(ty: i32, victim: GPtr<u8>, criminal: GPtr<u8>) = cdecl 0x532010 => unported;
+    /// `CInterestingEvents::Add(EType, CEntity*)` (0x602590, thiscall)
+    pub fn interesting_events_add(this: GPtr<u8>, ty: i32, e: GPtr<u8>) = thiscall 0x602590 => unported;
+    /// `CStats::IncrementStat(eStats, float)` (0x55C180)
+    pub fn stats_increment_stat(stat: u32, v: f32) = cdecl 0x55C180 => unported;
+    /// `CShadows::AddPermanentShadow(uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
+    /// float sideX, float sideY, int16 intensity, uint8 r, g, b, float drawDistance, uint32 time,
+    /// float upDistance)` (0x706F60); small integers as pushed words
+    #[allow(clippy::too_many_arguments)]
+    pub fn add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, intensity: u32, r: u32, g: u32, b: u32, dist: f32, time: u32, up: f32) = cdecl 0x706F60 => unported;
+    /// `CCamera::CamShake(float strength, float x, float y, float z)` (0x50A9F0, thiscall); raw position words
+    pub fn cam_shake(cam: GPtr<u8>, strength: f32, x: u32, y: u32, z: u32) = thiscall 0x50A9F0 => unported;
+    /// `CPad::GetPad(int32)` (0x53FB70)
+    pub fn pad_get_pad(id: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
+    /// `CPad::StartShake_Distance(int16 time, uint8 freq, float x, y, z)` (0x53F9A0, thiscall); raw words
+    pub fn pad_start_shake_distance(pad: GPtr<u8>, time: u32, freq: u32, x: u32, y: u32, z: u32) = thiscall 0x53F9A0 => unported;
+    /// `CGameLogic::IsCoopGameGoingOn()` (0x441390)
+    pub fn is_coop_game_going_on() -> u8 = cdecl 0x441390 => unported;
+}
+
+/// `g_fxMan`
+const FX_MAN: usize = 0xA9AE80;
+/// `CAEExplosionAudioEntity` of `CExplosion` (0xC888D0)
+const EXPLOSION_AUDIO: usize = 0xC888D0;
+/// `g_InterestingEvents`
+const INTERESTING_EVENTS: usize = 0xC0B058;
+/// `TheCamera`
+const THE_CAMERA: usize = 0xB6F028;
+/// `CModelInfo::ms_modelInfoPtrs`
+const MODEL_INFO_PTRS: usize = 0xA9B0C8;
+/// fx names in `.rdata`
+const FX_SMALL: usize = 0x872BB8;
+const FX_MOLOTOV: usize = 0x872BA4;
+const FX_MEDIUM: usize = 0x872B90;
+const FX_LARGE: usize = 0x872B80;
+const FX_TINY: usize = 0x872B70;
+/// `1 / 32767` (0x858C7C)
+const RAND_K: u32 = 0x3800_0100;
+
+/// The free-slot scan of `AddExplosion`: slot 0 when its active byte (+0x28) is 0, else `while (p <
+/// &a[16].active) { c = p[next]; p = next; i++; if (!c) break; }`, which reads the active byte one element
+/// past the array (0xC89138) when every slot is in use (original out-of-bounds read).
+fn first_free() -> usize {
+    let a0 = explosion(0).byte_add(0x28);
+    if a0.read() == 0 {
+        return 0;
+    }
+    let mut i = 0;
+    while i < NUM_EXPLOSIONS {
+        let c = a0.byte_add(((i + 1) * EXPLOSION_SIZE) as isize).read();
+        i += 1;
+        if c == 0 {
+            break;
+        }
+    }
+    i
+}
+
+/// `rand() * (1/32767)` as the x87 value (`fild; fmul [0x858C7C]`).
+fn rand_unit(site: u32) -> X87 {
+    xi(sa_core::orig::at_site(site, rand)).fmul_m(cf(RAND_K))
+}
+
+/// The fx matrix of `victim` (`RwFrame` modelling matrix: `[[victim+0x18]+4] + 0x10`), or null when the
+/// entity has no RW object or frame (the original then skips the fx).
+fn victim_matrix(victim: GPtr<u8>) -> GPtr<u8> {
+    let rw = rp(victim, 0x18);
+    if rw.is_null() {
+        return GPtr::NULL;
+    }
+    let m = rp(rw, 4).byte_add(0x10);
+    if m.is_null() { GPtr::NULL } else { m }
+}
+
+/// `CExplosion::AddExplosion(CEntity* victim, CEntity* creator, eExplosionType type, CVector pos, uint32
+/// lifetime, bool makeSound, float camShake, bool invisible)` (0x736A50, cdecl, AL result). Follows the
+/// bytes (gta-reversed `Explosion.cpp` and `CExplosion.deviations.md` as reading aids):
+///
+/// - created by player 0's ped: the focused player's info +0x140 += 5 and +0x148 += 7.0 (through the
+///   protection chunk 0x40A13B, which loads `PlayerInFocus`);
+/// - the first free slot (see [`first_free`]); none: false;
+/// - type, pos, radius 1.0, +0x34 0, +0x38 0, +0x24 1.0; creator into +0x18 and victim into +0x1C with
+///   `CleanUpOldReference` / `RegisterReference`; active 1, counter 1, sound, fuel timer 0;
+/// - three fuel jets: jet 0 always, jets 1, 2 only when `rand() < 0x3FFF` (else speed 0): direction
+///   `(2r-1, 2r-1, r*0.8+0.2)`, speed `r*1.5+0.5`, offset `r*10+20` (r = `rand()/32767`, five calls in
+///   that order, x87 then stored as f32);
+/// - trigger time `now + lifetime` (0 for no lifetime);
+/// - by type: radius / +0x34 (0 / 0 when invisible), end time `(float)(uint32)(now + lifetime + d)`,
+///   rate 0.5, fx: grenade, rocket (weak rocket: +0x34 200, +0x24 0.2 even when invisible), small
+///   "explosion_small"; molotov: ground z under `z + 3` replaces z when found, below the water level the
+///   explosion is marked (no fx, deactivated at the end), "explosion_molotov" with sound volume -36;
+///   car / quick car: created time, crime 0x11 for the victim, "explosion_medium" at the vehicle model's
+///   dummy +0x54 (needs a victim); boat / aircraft / tank fire: "explosion_large" (boat/aircraft also the
+///   created time); mine: ground z under `z + 4` computed and discarded, sound only; object: sound only;
+///   tiny "explosion_tiny". With a victim the fx is placed at `pos - victimPos` in the victim's frame
+///   matrix and skipped when the victim has no RW object/frame; the sound (`AddAudioEvent(0x81)`) plays
+///   only with `makeSound` and a created fx (mine/object: without fx);
+/// - interesting event 0x1B for the victim; in water: inactive, false;
+/// - fires: molotov `(rand() - 2) & 3`, rocket / weak rocket / object `(rand() + 1) & 3` fires around
+///   the position (fires after the first moved by `r*8 - 4` in x then y), each where the ground (under
+///   `z + 3`) is found within 10.0 of the explosion z: `StartFire(pos, 0.8, i != 0, creator,
+///   _ftol(r*0.4*7000 + 5600), 3, 1)`; with any fire a player-0 ped creator increments stat 0xD8;
+/// - permanent shadow at `pos + (0, 0, 5)`; with +0x34 != 0 (or NaN) and no trigger time
+///   `CWorld::TriggerExplosion` now; camera shake `camShake` (-1.0: 0.2 for molotov, 0.6 else), and
+///   except for molotov pad shakes for pad 0 and, in a coop game, pad 1; true.
+///
+/// Kept original: the out-of-bounds active-byte read when full; the weak-rocket fields set even for
+/// invisible explosions; the mine's discarded ground probe; positions written back into the `pos`
+/// argument (molotov ground z) are used by everything after. Not reproduced: the `StartFire` bool word's
+/// upper bytes (ECX left by `_ftol`; the callee reads the byte).
+#[hook(addr = 0x736A50, conv = cdecl, name = "CExplosion::AddExplosion", expect = "83 EC 1C 53 55 56 57")]
+#[allow(clippy::too_many_arguments)]
+pub fn add_explosion(victim: GPtr<u8>, creator: GPtr<u8>, ty: i32, px: f32, py: f32, pz: f32, life: u32, sound: u8, shake: f32, invisible: u8) -> u8 {
+    let mut in_water: u8 = 0;
+    let mut pos = [px, py, pz];
+    let posp: GPtr<u8> = lp(&mut pos).cast();
+    let mut shake = shake;
+    if creator == find_player_ped(-1) {
+        let n = usize::from(g::<u8>(0xB7CD74).read()) * 0x190;
+        let c = g::<u32>(0xB7CED8 + n);
+        c.write(c.read().wrapping_add(5));
+        let f = g::<f32>(0xB7CEE0 + n);
+        f.write(x(f.read()).fadd_m(7.0).to_f32());
+    }
+    let slot = first_free();
+    if slot == NUM_EXPLOSIONS {
+        return 0;
+    }
+    let e = explosion(slot);
+    wu(e, 0, ty as u32);
+    wv_bits(e, 4, [px.to_bits(), py.to_bits(), pz.to_bits()]);
+    wu(e, 0x10, 0x3F80_0000);
+    wu(e, 0x34, 0);
+    wu(e, 0x38, 0);
+    wu(e, 0x24, 0x3F80_0000);
+    for (off, ent) in [(0x18isize, creator), (0x1C, victim)] {
+        let old = rp(e, off);
+        if !old.is_null() {
+            clean_up_old_reference(old, e.byte_add(off));
+        }
+        wp(e, off, ent);
+        if !ent.is_null() {
+            register_reference(ent, e.byte_add(off));
+        }
+    }
+    wb(e, 0x28, 1);
+    wb(e, 0x29, 1);
+    wb(e, 0x2A, sound);
+    wu(e, 0x3C, 0);
+    for i in 0..3isize {
+        let speed = 0x64 + 4 * i;
+        let dir = 0x40 + 0xC * i;
+        if i != 0 && sa_core::orig::at_site(0x736B59, rand) >= 0x3FFF {
+            wu(e, speed, 0);
+            continue;
+        }
+        let r = rand_unit(0x736B71);
+        wf(e, dir, r.fadd(r).fsub_m(1.0).to_f32());
+        let r = rand_unit(0x736B8F);
+        wf(e, dir + 4, r.fadd(r).fsub_m(1.0).to_f32());
+        wf(e, dir + 8, rand_unit(0x736BAC).fmul_m(cf(0x3F4C_CCCD)).fadd_m(cf(0x3E4C_CCCD)).to_f32());
+        wf(e, speed, rand_unit(0x736BCE).fmul_m(1.5).fadd_m(0.5).to_f32());
+        wf(e, speed + 0xC, rand_unit(0x736BF0).fmul_m(10.0).fadd_m(20.0).to_f32());
+    }
+    let now = time_ms();
+    wu(e, 0x30, if life != 0 { now.wrapping_add(life) } else { 0 });
+
+    let set_size = |r10: u32, r34: u32| {
+        if invisible != 0 {
+            wu(e, 0x10, 0);
+            wu(e, 0x34, 0);
+        } else {
+            wu(e, 0x10, r10);
+            wu(e, 0x34, r34);
+        }
+    };
+    let end_time = |d: u32| wf(e, 0x20, u32_x87(now.wrapping_add(life).wrapping_add(d)).to_f32());
+    let created = || wf(e, 0x2C, xi(time_ms() as i32).to_f32());
+    // (fx name, volume, at the vehicle dummy) or no fx
+    let mut fx: Option<(usize, f32)> = None;
+    let mut dummy = false;
+    let mut sound_only = false;
+    match ty {
+        0 | 11 | 12 => {
+            if ty == 0 {
+                set_size(0x4110_0000, 0x4396_0000);
+            } else {
+                set_size(0x4040_0000, 0x42B4_0000);
+            }
+            end_time(0x2EE);
+            wu(e, 0x14, 0x3F00_0000);
+            fx = Some((if ty == 12 { FX_TINY } else { FX_SMALL }, 0.0));
+        }
+        1 => {
+            wu(e, 0x34, 0);
+            wu(e, 0x10, if invisible != 0 { 0 } else { 0x40C0_0000 });
+            end_time(0xBB8);
+            wu(e, 0x14, 0x3F00_0000);
+            let mut found = [0u8; 1];
+            let gz = st0(find_ground_z_for_3d_coord(pos[0], pos[1], x(pos[2]).fadd_m(3.0).to_f32(), lp(&mut found).cast(), GPtr::NULL));
+            if found[0] != 0 {
+                pos[2] = gz.to_f32();
+            }
+            let mut level = [0f32; 1];
+            if get_water_level_no_waves(pos[0], pos[1], pos[2], lp(&mut level).cast(), GPtr::NULL, GPtr::NULL) != 0 && {
+                let mut f = Fpu::new();
+                f.fld(pos[2]);
+                f.fcomp_m(level[0]);
+                !f.jp(5)
+            } {
+                in_water = 1;
+            } else {
+                fx = Some((FX_MOLOTOV, -36.0));
+            }
+        }
+        2 | 3 => {
+            set_size(0x4120_0000, 0x4396_0000);
+            end_time(0x2EE);
+            wu(e, 0x14, 0x3F00_0000);
+            if ty == 3 {
+                wu(e, 0x34, 0x4348_0000);
+                wu(e, 0x24, 0x3E4C_CCCD);
+            }
+            fx = Some((FX_SMALL, 0.0));
+        }
+        4 | 5 => {
+            set_size(0x4110_0000, 0x4396_0000);
+            end_time(0x109A);
+            created();
+            wu(e, 0x14, 0x3F00_0000);
+            let v = rp(e, 0x1C);
+            if !v.is_null() {
+                report_crime(0x11, v, GPtr::NULL);
+            }
+            if !rp(e, 0x1C).is_null() {
+                fx = Some((FX_MEDIUM, 0.0));
+                dummy = true;
+            }
+        }
+        6 | 7 | 10 => {
+            if ty == 10 {
+                set_size(0x4120_0000, 0x4316_0000);
+                end_time(0x2EE);
+            } else {
+                set_size(0x41C8_0000, 0x4416_0000);
+                end_time(0xBB8);
+                created();
+            }
+            wu(e, 0x14, 0x3F00_0000);
+            fx = Some((FX_LARGE, 0.0));
+        }
+        8 | 9 => {
+            set_size(0x4120_0000, 0x4316_0000);
+            end_time(0x2EE);
+            if ty == 8 {
+                wu(e, 0x14, 0x3F00_0000);
+                find_ground_z_for_3d_coord(pos[0], pos[1], x(pos[2]).fadd_m(4.0).to_f32(), GPtr::NULL, GPtr::NULL);
+            } else {
+                wu(e, 0x14, 0x3F00_0000);
+            }
+            sound_only = true;
+        }
+        _ => {}
+    }
+    if sound_only && rb(e, 0x2A) != 0 {
+        explosion_audio_add_event(g(EXPLOSION_AUDIO), 0x81, e.byte_add(4), 0.0);
+    }
+    if let Some((name, vol)) = fx {
+        let mut rel = [0u32; 3];
+        let relp: GPtr<u8> = lp(&mut rel).cast();
+        let sys = if dummy {
+            // the vehicle model's dummy position, then the RW checks of the victim argument
+            let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + (i32::from(rh(rp(e, 0x1C), 0x22) as i16) as usize).wrapping_mul(4)).read();
+            wv_bits(relp, 0, rv_bits(rp(mi, 0x5C), 0x54));
+            let m = victim_matrix(victim);
+            if m.is_null() { GPtr::NULL } else { create_fx_system(g(FX_MAN), g(FX_MEDIUM), relp, m, 0) }
+        } else if !victim.is_null() {
+            let m = victim_matrix(victim);
+            if m.is_null() {
+                GPtr::NULL
+            } else {
+                vector_sub(relp, posp, pos_ptr(victim));
+                create_fx_system(g(FX_MAN), g(name), relp, m, 0)
+            }
+        } else {
+            create_fx_system(g(FX_MAN), g(name), posp, GPtr::NULL, 0)
+        };
+        if !sys.is_null() {
+            if rb(e, 0x2A) != 0 {
+                explosion_audio_add_event(g(EXPLOSION_AUDIO), 0x81, e.byte_add(4), vol);
+            }
+            fx_play_and_kill(sys);
+        }
+    }
+    if !victim.is_null() {
+        interesting_events_add(g(INTERESTING_EVENTS), 0x1B, victim);
+    }
+    if in_water != 0 {
+        wb(e, 0x28, 0);
+        return 0;
+    }
+    let fires = match ty {
+        1 => Some(sa_core::orig::at_site(0x7372B0, rand).wrapping_sub(2) & 3),
+        2 | 3 | 9 => Some(sa_core::orig::at_site(0x7372BA, rand).wrapping_add(1) & 3),
+        _ => None,
+    };
+    if let Some(n) = fires.filter(|&n| n != 0) {
+        for i in 0..n {
+            let mut t = rv(e, 4);
+            if i != 0 {
+                t[0] = rand_unit(0x7372F4).fmul_m(8.0).fadd_m(t[0]).fsub_m(4.0).to_f32();
+                t[1] = rand_unit(0x73731B).fmul_m(8.0).fadd_m(t[1]).fsub_m(4.0).to_f32();
+            }
+            let mut found = [0u8; 1];
+            t[2] = st0(find_ground_z_for_3d_coord(t[0], t[1], x(t[2]).fadd_m(3.0).to_f32(), lp(&mut found).cast(), GPtr::NULL)).to_f32();
+            if found[0] == 0 {
+                continue;
+            }
+            let mut f = Fpu::new();
+            f.fld(t[2]);
+            f.fsub_m(rf(e, 0xC));
+            f.fabs();
+            f.fcomp_m(10.0);
+            if f.jp(5) {
+                continue;
+            }
+            let s = rand_unit(0x73738B).fmul_m(cf(0x3ECC_CCCE)).fmul_m(7000.0).fadd_m(5600.0);
+            let time = ftol32(s) as u32;
+            crate::fire::start_fire_no_target_call(g(0xB71F80), t[0], t[1], t[2], cf(0x3F4C_CCCD), u8::from(i != 0), rp(e, 0x18), time, 3, 1);
+        }
+        if !creator.is_null() && etype(creator) == 3 && ru(creator, 0x598) == 0 {
+            stats_increment_stat(0xD8, 1.0);
+        }
+    }
+    let mut sp = [pos[0], pos[1], x(pos[2]).fadd_m(5.0).to_f32()];
+    add_permanent_shadow(1, g::<u32>(0xC403E8).read(), lp(&mut sp).cast(), 8.0, 0.0, 0.0, -8.0, 0xC8, 0, 0, 0, 10.0, 0x7530, 1.0);
+    let mut f = Fpu::new();
+    f.fld(rf(e, 0x34));
+    f.fcomp_m(0.0);
+    if f.jp(0x44) && ru(e, 0x30) == 0 {
+        let flag = u32::from(matches!(ty, 2 | 5 | 8 | 9 | 10));
+        trigger_explosion(posp, ru(e, 0x10), ru(e, 0x34), victim, creator, flag, ru(e, 0x24));
+    }
+    let mut f = Fpu::new();
+    f.fld(-1.0);
+    f.fcomp_m(shake);
+    let p = rv_bits(posp, 0);
+    if ty == 1 {
+        if !f.jp(0x44) {
+            shake = cf(0x3E4C_CCCD);
+        }
+        cam_shake(g(THE_CAMERA), shake, p[0], p[1], p[2]);
+        return 1;
+    }
+    if !f.jp(0x44) {
+        shake = cf(0x3F19_999A);
+    }
+    cam_shake(g(THE_CAMERA), shake, p[0], p[1], p[2]);
+    pad_start_shake_distance(pad_get_pad(0), 0x12C, 0x80, p[0], p[1], p[2]);
+    if is_coop_game_going_on() != 0 {
+        pad_start_shake_distance(pad_get_pad(1), 0x12C, 0x80, p[0], p[1], p[2]);
+    }
+    1
+}
+
 pub const HOOKS: &[HookReg] = &[
+
     HOOK_CLEAR_ALL_EXPLOSIONS,
     HOOK_INITIALISE,
     HOOK_GET_EXPLOSION_ACTIVE_COUNTER,
@@ -342,4 +724,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TEST_FOR_EXPLOSION_IN_AREA,
     HOOK_REMOVE_ALL_EXPLOSIONS_IN_AREA,
     HOOK_UPDATE,
+    HOOK_ADD_EXPLOSION,
 ];

@@ -885,8 +885,527 @@ pub fn start_fire_target(this: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, _s
     fi
 }
 
+// ---- CFireManager::Update (PORT-WEAPON-2) --------------------------------------------------------
+
+orig! {
+    /// `CFire::ProcessFire()` (0x53A570, thiscall)
+    pub fn process_fire_call(fire: GPtr<u8>) = thiscall 0x53A570 => process_fire;
+    /// `CGameLogic::LaRiotsActiveHere()` (0x441C10)
+    pub fn la_riots_active_here() -> u8 = cdecl 0x441C10 => unported;
+    /// `CWorld::FindGroundZFor3DCoord(CVector, bool*, CEntity**)` (0x5696C0, ST0)
+    pub fn find_ground_z_for_3d_coord(x: f32, y: f32, z: f32, hit: GPtr<u8>, e: GPtr<GPtr<u8>>) -> f64 = cdecl 0x5696C0 => unported;
+    /// `CVector::Normalise()` (0x59C910, thiscall)
+    pub fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
+    /// CRT `ceil(double)` (0x823820, ST0)
+    pub fn crt_ceil(v: f64) -> f64 = cdecl 0x823820 => unported;
+    /// `CShadows::StoreStaticShadow(uint32 id, uint8 type, RwTexture*, const CVector*, float frontX, float frontY,
+    /// float sideX, float sideY, int16 intensity, uint8 r, g, b, float zDistance, float scale, float drawDistance,
+    /// bool temporary, float upDistance)` (0x70BA00; every argument a pushed dword)
+    pub fn store_static_shadow(id: u32, ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, intensity: u32, r: u32, g: u32, b: u32, zd: f32, scale: f32, dd: f32, temp: u32, up: f32) -> u8 = cdecl 0x70BA00 => unported;
+    /// `CCoronas::RegisterCorona(uint32 id, CEntity*, uint8 r, g, b, a, const CVector&, float radius, float farClip,
+    /// eCoronaType, eCoronaFlareType, eCoronaReflType, eCoronaLOSCheck, eCoronaTrail, float normalAngle, bool neonFade,
+    /// float pullTowardsCam, bool fullBrightAtStart, float fadeSpeed, bool onlyFromBelow, bool reflectionDelay)`
+    /// (0x6FC580; every argument a pushed dword)
+    pub fn register_corona(id: u32, e: u32, r: u32, g: u32, b: u32, a: u32, pos: GPtr<u8>, radius: f32, far: f32, ty: u32, flare: u32, refl: u32, los: u32, trail: u32, normal_angle: f32, neon: u32, pull: f32, bright: u32, fade: f32, below: u32, delay: u32) = cdecl 0x6FC580 => unported;
+}
+
+/// `CReplay::Mode`
+const REPLAY_MODE: usize = 0xA43088;
+/// `CTimer::m_snPreviousTimeInMilliseconds`
+const PREV_TIME_MS: usize = 0xB7CB78;
+/// `TheCamera` matrix pointer / placement / heading / right vector
+const CAM_MATRIX: usize = 0xB6F03C;
+const CAM_PLACEMENT: usize = 0xB6F02C;
+const CAM_HEADING: usize = 0xB6F038;
+const CAM_RIGHT: usize = 0xB6F99C;
+/// `gpShadowExplosionTex`
+const SHADOW_EXPLOSION_TEX: usize = 0xC403F4;
+/// The fire glow base colour bytes (r, g, b)
+const FIRE_COLOUR: usize = 0x8CCFF0;
+/// "riot_smoke"
+const RIOT_SMOKE: usize = 0x863A54;
+
+fn cam_matrix_pos() -> GPtr<u8> {
+    let m = g::<GPtr<u8>>(CAM_MATRIX).read();
+    if m.is_null() { g(CAM_PLACEMENT) } else { m.byte_add(0x30) }
+}
+
+/// `(int)((float)colour[i] * m)` as the original computes it: `fild` of the byte, `fmul` by the f32
+/// multiplier, `_ftol2`.
+fn colour(i: usize, m: f32) -> u32 {
+    ftol32(xi(i32::from(g::<u8>(FIRE_COLOUR + i).read())).fmul_m(m)) as u32
+}
+
+/// `CFireManager::Update()` (0x53AF00), ported from the 1.0 US bytes. Kept from the original
+/// (`docs/re/specs/WEAPON/CFireManager.deviations.md`): the riot block's inline random formulas (two raw
+/// `rand()`s), its gates (`hitEntity && (hitEntity->+0x1E & 1) && hit && z > 0.5f`), the direction
+/// `point - camera` (gr: camera - point) compared with the f64 0.2; the group search (strongest =
+/// first strictly greater strength than the running best, which starts at -1.0 on the x87 stack;
+/// group = unvisited active fires with `sqrt(dx*dx + dy*dy) < 6.0`); the shadow's front/side
+/// vectors `(1.2*d, 0)` / `(0, -1.2*d)` (gr: `-1.2*d` front, `1.2*d` side); the colour multipliers
+/// `rand()*(1/32767)*0.39999998f + 0.6f` and `* 0.8f`; the corona offsets (x and y of the camera
+/// offset and of the right vector in extended precision, z rounded to f32 first).
+/// Not reproduced (stack-only): the dead accumulator `+= pos * ceil(strength)` (the multiplications
+/// cannot fault and the locals are never read); the stack scratch slots.
+#[hook(addr = 0x53AF00, conv = thiscall, name = "CFireManager::Update", expect = "55 8B EC 83 E4 F8", this = "CFireManager")]
+pub fn manager_update(this: GPtr<u8>) {
+    if g::<u8>(REPLAY_MODE).read() == 1 {
+        return;
+    }
+    for i in 0..NUM_FIRES {
+        let f = fire(this, i);
+        if rb(f, 0) & 1 != 0 {
+            process_fire_call(f);
+        }
+    }
+    if la_riots_active_here() != 0 && g::<u32>(PREV_TIME_MS).read() / 500 != time_ms() / 500 {
+        riot(this);
+    }
+    let mut visited = [false; NUM_FIRES];
+    let mut n = (0..NUM_FIRES).filter(|&i| rb(fire(this, i), 0) & 1 != 0).count() as i32;
+    while n > 0 {
+        // strongest unvisited active fire
+        let mut best = X87::constant(0xBF80_0000);
+        let mut idx: isize = -1;
+        for (i, &v) in visited.iter().enumerate() {
+            let f = fire(this, i);
+            if !v && rb(f, 0) & 1 != 0 && !best.fcom(x(rf(f, 0x1C))).test_parity(0x05) {
+                best = x(rf(f, 0x1C));
+                idx = i as isize;
+            }
+        }
+        // original out-of-bounds when nothing beat -1.0: fire[-1]
+        let s = this.byte_add(idx * FIRE_SIZE as isize);
+        let mut sum = 0f32;
+        let mut ceil_sum = 0i32;
+        for (i, v) in visited.iter_mut().enumerate() {
+            let f = fire(this, i);
+            if *v || rb(f, 0) & 1 == 0 {
+                continue;
+            }
+            let dx = x(rf(f, 4)).fsub_m(rf(s, 4));
+            let dy = x(rf(f, 8)).fsub_m(rf(s, 8));
+            let d = dx.fmul(dx).fadd(dy.fmul(dy)).fsqrt();
+            if d.fcom(X87::constant(0x40C0_0000)).test_parity(0x05) {
+                continue;
+            }
+            sum = x(sum).fadd_m(rf(f, 0x1C)).to_f32();
+            ceil_sum = ceil_sum.wrapping_add(ftol32(st0(crt_ceil(f64::from(rf(f, 0x1C))))));
+            n -= 1;
+            *v = true;
+        }
+        // `fcomp 4.0; test ah, 0x41; jne`: only `sum > 4` continues
+        if x(sum).fcom(X87::constant(0x4080_0000)).test_any(0x41) || ceil_sum == 0 {
+            continue;
+        }
+        fire_glow(s, sum);
+    }
+}
+
+/// The shadow and corona part of [`manager_update`] for the group around fire `s` (0x53B565..0x53BAAA).
+fn fire_glow(s: GPtr<u8>, sum: f32) {
+    let t = x(sum).fsub_m(cf(0x40C0_0000)).fadd_m(cf(0x4040_0000));
+    // `fld 7.0; fcomp st1; test ah, 5; jp`: 7.0 when `7 < t`, else t
+    let dir = if X87::constant(0x40E0_0000).fcom(t).test_parity(0x05) { t.to_f32() } else { 7.0 };
+    let r = sa_core::orig::at_site(0x53B599, rand);
+    let m = xi(r).fmul_m(cf(0x3800_0100)).fmul_m(cf(0x3ECC_CCCC)).fadd_m(cf(0x3F19_999A)).to_f32();
+    let p = rv(s, 4);
+    let mut pos = [p[0], p[1], x(p[2]).fadd_m(5.0).to_f32()];
+    let (b, gr, rr) = (colour(2, m), colour(1, m), colour(0, m));
+    let tex = g::<u32>(SHADOW_EXPLOSION_TEX).read();
+    let front = x(dir).fmul_m(cf(0x3F99_999A)).to_f32();
+    let side = x(dir).fmul_m(cf(0xBF99_999A)).to_f32();
+    store_static_shadow(s.addr() as u32, 2, tex, lp(&mut pos).cast(), front, 0.0, 0.0, side, 0, rr, gr, b, 10.0, 1.0, 40.0, 0, 0.0);
+    // `fcomp 6.0; test ah, 0x41; jne`: only `sum > 6` continues
+    if x(sum).fcom(X87::constant(0x40C0_0000)).test_any(0x41) {
+        return;
+    }
+    let m2 = x(m).fmul_m(cf(0x3F4C_CCCD)).to_f32();
+    let mut pt = [p[0], p[1], x(p[2]).fadd_m(cf(0x4026_6666)).to_f32()];
+    let c = rv(cam_matrix_pos(), 0);
+    let mut d = [x(c[0]).fsub_m(pt[0]).to_f32(), x(c[1]).fsub_m(pt[1]).to_f32(), x(c[2]).fsub_m(pt[2]).to_f32()];
+    vector_normalise(lp(&mut d).cast());
+    let k = cf(0x4060_0000);
+    let oz = x(d[2]).fmul_m(k).to_f32();
+    pt[0] = x(d[0]).fmul_m(k).fadd_m(pt[0]).to_f32();
+    pt[1] = x(d[1]).fmul_m(k).fadd_m(pt[1]).to_f32();
+    pt[2] = x(oz).fadd_m(pt[2]).to_f32();
+    let radius = x(dir).fmul_m(0.5).to_f32();
+    let id = s.addr() as u32;
+    let corona = |pt: &mut [f32; 3], id: u32, flare: u32| {
+        let (b, g_, r) = (colour(2, m2), colour(1, m2), colour(0, m2));
+        register_corona(id, 0, r, g_, b, 0xFF, lp(pt).cast(), radius, 70.0, 1, flare, 0, 0, 0, 0.0, 0, 1.5, 0, 15.0, 0, 0);
+    };
+    corona(&mut pt, id, 2);
+    pt[2] = x(pt[2]).fadd_m(2.0).to_f32();
+    corona(&mut pt, id.wrapping_add(1), 0);
+    pt[2] = x(pt[2]).fsub_m(2.0).to_f32();
+    let cr = rv(g(CAM_RIGHT), 0);
+    let mut rt = [cr[0], cr[1], 0.0f32];
+    vector_normalise(lp(&mut rt).cast());
+    let r2z = x(rt[2]).fdouble().to_f32();
+    pt[0] = x(rt[0]).fdouble().fadd_m(pt[0]).to_f32();
+    pt[1] = x(rt[1]).fdouble().fadd_m(pt[1]).to_f32();
+    pt[2] = x(r2z).fadd_m(pt[2]).to_f32();
+    corona(&mut pt, id.wrapping_add(2), 0);
+    let r4z = x(rt[2]).fmul_m(4.0).to_f32();
+    pt[0] = x(pt[0]).fsub(x(rt[0]).fmul_m(4.0)).to_f32();
+    pt[1] = x(pt[1]).fsub(x(rt[1]).fmul_m(4.0)).to_f32();
+    pt[2] = x(pt[2]).fsub_m(r4z).to_f32();
+    corona(&mut pt, id.wrapping_add(3), 0);
+}
+
+/// The LA riots block of [`manager_update`] (0x53AF75..0x53B179).
+fn riot(this: GPtr<u8>) {
+    let r1 = sa_core::orig::at_site(0x53AF7A, rand);
+    let a = xi(r1).fmul_m(cf(0x3800_0100)).fmul_m(cf(0x40C9_0FDB)).to_f32();
+    let r2 = sa_core::orig::at_site(0x53AF97, rand);
+    let d = xi(r2).fmul_m(cf(0x3800_0100)).fmul_m(25.0).fadd_m(35.0);
+    let sx = x(a).fsin().fmul(d).to_f32();
+    let cy = x(a).fcos().fmul(d).to_f32();
+    let c = rv(cam_matrix_pos(), 0);
+    let mut pt = [x(sx).fadd_m(c[0]).to_f32(), x(cy).fadd_m(c[1]).to_f32(), x(c[2]).fadd_m(10.0).to_f32()];
+    let mut hit_entity: GPtr<u8> = GPtr::NULL;
+    let mut hit = 0u8;
+    pt[2] = st0(find_ground_z_for_3d_coord(pt[0], pt[1], pt[2], lp(&mut hit), lp(&mut hit_entity))).to_f32();
+    let c = rv(cam_matrix_pos(), 0);
+    let mut dir = [x(pt[0]).fsub_m(c[0]).to_f32(), x(pt[1]).fsub_m(c[1]).to_f32(), x(pt[2]).fsub_m(c[2]).to_f32()];
+    vector_normalise(lp(&mut dir).cast());
+    let m = g::<GPtr<u8>>(CAM_MATRIX).read();
+    let fwd = if m.is_null() {
+        let h = g::<f32>(CAM_HEADING).read();
+        [x(h).fsin().fchs().to_f32(), x(h).fcos().to_f32(), 0.0]
+    } else {
+        rv(m, 0x10)
+    };
+    if hit_entity.is_null() || rb(hit_entity, 0x1E) & 1 == 0 || hit == 0 {
+        return;
+    }
+    // `fcomp 0.5; test ah, 0x41; jne`: only `z > 0.5` continues
+    if x(pt[2]).fcom(X87::constant(0x3F00_0000)).test_any(0x41) {
+        return;
+    }
+    let dot = x(fwd[2]).fmul_m(dir[2]).fadd(x(fwd[1]).fmul_m(dir[1])).fadd(x(fwd[0]).fmul_m(dir[0]));
+    // `fcomp qword 0.2; test ah, 0x41; je`: smoke when `dot > 0.2`
+    let smoke = !dot.fcom(X87::from_f64_exact(0.2)).test_any(0x41) || sa_core::orig::at_site(0x53B112, rand) < 0x3FFF;
+    if smoke {
+        let fx = create_fx_system(g(FX_MAN), g(RIOT_SMOKE), lp(&mut pt).cast(), GPtr::NULL, 1);
+        if !fx.is_null() {
+            fx_play_and_kill(fx);
+        }
+    } else {
+        let size = st0(sa_core::orig::at_site(0x53B135, || random_float(0.5, 2.5))).to_f32();
+        start_fire_no_target_call(this, pt[0], pt[1], pt[2], size, 1, GPtr::NULL, 30000, 5, 1);
+    }
+}
+
+// ---- CFire::ProcessFire (PORT-WEAPON-2) ------------------------------------------------------------
+
+orig! {
+    /// `CFireManager::StartFire(CEntity* target, CEntity* creator, float, uint8, uint32 time, int8 gens)` (0x53A050)
+    pub fn start_fire_target_call(man: GPtr<u8>, target: GPtr<u8>, creator: GPtr<u8>, size: f32, unk: u8, time: u32, gens: i8) -> GPtr<u8> = thiscall 0x53A050 => start_fire_target;
+    /// `CPed::IsAlive()` (0x5E0170, thiscall)
+    pub fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
+    /// `CVehicle::InflictDamage(CEntity*, eWeaponType, float, CVector)` (0x6D7C90, thiscall)
+    pub fn pf_vehicle_inflict_damage(veh: GPtr<u8>, by: GPtr<u8>, ty: i32, dmg: f32, x: f32, y: f32, z: f32) = thiscall 0x6D7C90 => unported;
+    /// `CPlaceable::GetMatrix()` (0x411990, thiscall)
+    pub fn placeable_get_matrix(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x411990 => unported;
+    /// `operator*(CVector* out, const CMatrix&, const CVector&)` (0x59C890, returns out)
+    pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
+    /// `FxSystem_c::SetOffsetPos(CVector*)` (0x4AA660, thiscall)
+    pub fn fx_set_offset_pos(fx: GPtr<u8>, v: GPtr<u8>) = thiscall 0x4AA660 => unported;
+    /// `FindPlayerVehicle(int32, bool)` (0x56E0D0)
+    pub fn find_player_vehicle(id: i32, b: u32) -> GPtr<u8> = cdecl 0x56E0D0 => unported;
+    /// `CPlayerPed::DoStuffToGoOnFire()` (0x60A020, thiscall)
+    pub fn do_stuff_to_go_on_fire(ped: GPtr<u8>) = thiscall 0x60A020 => unported;
+    /// `CVehicle::FindTyreNearestPoint(float x, float y)` (0x6D7BC0, thiscall; EAX)
+    pub fn find_tyre_nearest_point(veh: GPtr<u8>, x: f32, y: f32) -> u32 = thiscall 0x6D7BC0 => unported;
+    /// `CVehicle::BurstTyre(uint8, bool)` (vtable +0xB0; the whole EAX dword is pushed)
+    pub fn pf_burst_tyre(veh: GPtr<u8>, piece: u32, b: u32) = thiscall vslot 0xB0 => unported;
+    /// `CObject::ObjectFireDamage(float, CEntity*)` (0x5A1580, thiscall)
+    pub fn object_fire_damage(obj: GPtr<u8>, dmg: f32, by: GPtr<u8>) = thiscall 0x5A1580 => unported;
+    /// `CCreepingFire::TryToStartFireAtCoors(CVector, int8 gens, bool, bool script, float zDist)` (0x53A450; dwords as pushed)
+    pub fn try_to_start_fire_at_coors_call(x: f32, y: f32, z: f32, gens: u32, a: u32, script: u32, zd: f32) -> u8 = cdecl 0x53A450 => unported;
+    /// `VectorSub(CVector* out, const CVector*, const CVector*)` (0x40FE60)
+    pub fn pf_vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE60 => unported;
+    /// `operator*(CVector* out, float, const CVector*)` (0x40FE90)
+    pub fn pf_vector_scale(out: GPtr<u8>, k: f32, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE90 => unported;
+    /// `operator+(CVector* out, const CVector*, const CVector*)` (0x40FE30)
+    pub fn pf_vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x40FE30 => unported;
+    /// `CVector::Magnitude()` (0x4082C0, thiscall, ST0)
+    pub fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x4082C0 => unported;
+    /// `FxSystem_c::SetConstTime(bool, float)` (0x4AA6C0, thiscall)
+    pub fn pf_fx_set_const_time(fx: GPtr<u8>, b: u32, t: f32) = thiscall 0x4AA6C0 => unported;
+    /// `CPointLights::AddLight(type, CVector pos, CVector dir, radius, r, g, b, fog, shadows, attachedTo)` (0x7000E0)
+    pub fn point_lights_add_light(ty: u32, px: f32, py: f32, pz: f32, dx: f32, dy: f32, dz: f32, radius: f32, r: f32, g: f32, b: f32, fog: u32, shadows: u32, attached: u32) = cdecl 0x7000E0 => unported;
+}
+
+/// `CPools::ms_pVehiclePool` / `ms_pObjectPool`
+const VEHICLE_POOL: usize = 0xB74494;
+const OBJECT_POOL: usize = 0xB7449C;
+/// `CModelInfo::ms_modelInfoPtrs`
+const MODEL_INFO_PTRS: usize = 0xA9B0C8;
+
+fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
+    let m = rp(e, 0x14);
+    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+}
+
+/// `sqrt((dz*dz + dy*dy) + dx*dx)` of `p - fire.pos` as the pool loops compute it (x87).
+fn dist3(p: GPtr<u8>, f: GPtr<u8>) -> X87 {
+    let dx = x(rf(p, 0)).fsub_m(rf(f, 4));
+    let dy = x(rf(p, 4)).fsub_m(rf(f, 8));
+    let dz = x(rf(p, 8)).fsub_m(rf(f, 0xC));
+    dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt()
+}
+
+/// Walks a pool from slot `size - 1` down to 0 (the original order), calling `f` on every used slot.
+fn pool_desc(pool_cell: usize, stride: usize, mut f: impl FnMut(GPtr<u8>)) {
+    let pool = g::<GPtr<u8>>(pool_cell).read();
+    let n = ru(pool, 8) as usize;
+    for i in (0..n).rev() {
+        if (rb(rp(pool, 4), i as isize) as i8) < 0 {
+            continue;
+        }
+        let e = rp(pool, 0).byte_add((i * stride) as isize);
+        if e.is_null() {
+            continue;
+        }
+        f(e);
+    }
+}
+
+/// `CFire::ProcessFire()` (0x53A570), ported from the 1.0 US bytes. Kept from the original
+/// (`docs/re/specs/WEAPON/CFire.deviations.md` and this port's reading of the bytes):
+/// - strength: `n = min3(s + ts*0.002)` is stored, then the OLD strength is written back when
+///   `(int)s != (int)n` (both `_ftol2` on the x87 values);
+/// - a ped's fire sets a fire-truck-free automobile's health to 75 (`+0x590 == 0`, model != 407);
+/// - vehicle pool and object pool walked from the last slot down; vehicles already on fire and fire
+///   trucks skipped; the non-BMX `StartFire` passes 0 generations; distances `sqrt((dz²+dy²)+dx²)`;
+/// - creeping fire: `(int8)gens > 0`, `rand() & 0x7F == 0`, fewer than 25 active fires; the first random
+///   value goes to y, `dir` is normalised, z gets `+ 2.0f`, `gens - 1` and the script flag are passed;
+/// - merging a weak nearby fire: index `ftol((rand() & 0xFFFF) * (1/32768) * 60)`, the merged position
+///   `0.7*this + 0.3*other` is written to THIS fire, generations become the signed MIN, the burn time
+///   `max(old, now + 7000)` (unsigned);
+/// - the FX const time is `min(frac(s), (u32)(burn - now) * 0.00028571428f)`;
+/// - the removal test compares `(float)removalDistance > sqrt(dy² + dx²)` (2D, camera - fire).
+///
+/// Not reproduced (stack-only): the stack temporaries the original reuses.
+#[hook(addr = 0x53A570, conv = thiscall, name = "CFire::ProcessFire", expect = "83 EC 2C 53 55 56", this = "CFire")]
+pub fn process_fire(this: GPtr<u8>) {
+    // strength
+    let s = x(rf(this, 0x1C));
+    let n = x(time_step()).fmul_m(cf(0x3B03_126F)).fadd_m(rf(this, 0x1C));
+    let n = if X87::constant(0x4040_0000).fcom(n).test_parity(0x05) { n } else { X87::constant(0x4040_0000) };
+    wf(this, 0x1C, n.to_f32());
+    if ftol32(s) != ftol32(n) {
+        wf(this, 0x1C, s.to_f32());
+    }
+    let e = rp(this, 0x10);
+    if !e.is_null() {
+        wv(this, 4, rv(entity_pos(e), 0));
+        match etype(e) {
+            3 => {
+                if rp(e, 0x730) != this {
+                    extinguish_call(this);
+                    return;
+                }
+                let st = ru(e, 0x530);
+                if st == 0x36 || st == 0x37 {
+                    wf(this, 0xC, x(rf(this, 0xC)).fsub_m(1.0).to_f32());
+                }
+                let veh = rp(e, 0x58C);
+                if ru(e, 0x46C) & 0x100 != 0 && !veh.is_null() {
+                    if rh(veh, 0x22) != 0x197 && ru(veh, 0x590) == 0 {
+                        wf(veh, 0x4C0, 75.0);
+                    }
+                } else if ped_is_player(e) == 0 && ped_is_alive(e) == 0 {
+                    wu(e, 0x40, ru(e, 0x40) | 0x2000_0000);
+                }
+            }
+            2 => {
+                if rp(e, 0x490) != this {
+                    extinguish_call(this);
+                    return;
+                }
+                if rb(this, 0) & 2 == 0 {
+                    let dmg = x(time_step()).fmul_m(cf(0x3F99_999A)).to_f32();
+                    pf_vehicle_inflict_damage(e, rp(this, 0x14), 0x25, dmg, 0.0, 0.0, 0.0);
+                }
+                let v = rp(this, 0x10);
+                if ru(v, 0x590) == 0 {
+                    let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + 4 * (i32::from(rh(v, 0x22) as i16) as usize)).read();
+                    let d = rv(rp(mi, 0x5C), 0);
+                    let mut local = [d[0], d[1], x(d[2]).fadd_m(cf(0x3E19_999A)).to_f32()];
+                    let lp_ = lp(&mut local).cast::<u8>();
+                    let m = placeable_get_matrix(v);
+                    let mut out = [0f32; 3];
+                    let r = matrix_mul_vec(lp(&mut out).cast(), m, lp_);
+                    wv(this, 4, rv(r, 0));
+                }
+            }
+            _ => {}
+        }
+        let fx = rp(this, 0x24);
+        if !fx.is_null() {
+            let t2 = x(time_step()).fdouble();
+            let mv = rv(rp(this, 0x10), 0x44);
+            let oy = t2.fmul_m(mv[1]).to_f32();
+            let oz = t2.fmul_m(mv[2]).to_f32();
+            let p = rv(this, 4);
+            let mut out = [t2.fmul_m(mv[0]).fadd_m(p[0]).to_f32(), x(oy).fadd_m(p[1]).to_f32(), x(oz).fadd_m(p[2]).to_f32()];
+            fx_set_offset_pos(fx, lp(&mut out).cast());
+        }
+    }
+    let creator = || rp(this, 0x14);
+    let fm = g::<u8>(FIRE_MANAGER);
+    // the player
+    let e = rp(this, 0x10);
+    if (e.is_null() || etype(e) != 2)
+        && find_player_vehicle(-1, 0).is_null()
+        && rp(find_player_ped(-1), 0x730).is_null()
+        && ru(find_player_ped(-1), 0x40) & 0x80000 == 0
+        && rp(find_player_ped(-1), 0xFC).is_null()
+    {
+        let mut d = [0f32; 3];
+        pf_vector_sub(lp(&mut d).cast(), entity_pos(find_player_ped(-1)), this.byte_add(4));
+        let q = x(d[0]).fmul_m(d[0]).fadd(x(d[2]).fmul_m(d[2])).fadd(x(d[1]).fmul_m(d[1]));
+        if !q.fcom(X87::constant(0x3F99_999A)).test_parity(0x05) {
+            do_stuff_to_go_on_fire(find_player_ped(-1));
+            let c = creator();
+            start_fire_target_call(fm, find_player_ped(-1), c, cf(0x3F4C_CCCD), 1, 7000, 100);
+        }
+    }
+    // vehicles
+    if sa_core::orig::at_site(0x53A8CA, rand) & 0x1F == 0 {
+        pool_desc(VEHICLE_POOL, 0xA18, |v| {
+            if !rp(v, 0x490).is_null() || rh(v, 0x22) == 0x197 {
+                return;
+            }
+            if dist3(entity_pos(v), this).fcom(X87::constant(0x4000_0000)).test_parity(0x05) {
+                return;
+            }
+            if ru(v, 0x594) == 10 {
+                do_stuff_to_go_on_fire(find_player_ped(-1));
+                let c = creator();
+                start_fire_target_call(fm, find_player_ped(-1), c, cf(0x3F4C_CCCD), 1, 7000, 100);
+                let t = find_tyre_nearest_point(v, rf(this, 4), rf(this, 8));
+                pf_burst_tyre(v, (t & 0xFFFF_FF00) | u32::from((t as u8).wrapping_add(0xD)), 0);
+            } else {
+                start_fire_target_call(fm, v, creator(), cf(0x3F4C_CCCD), 1, 7000, 0);
+            }
+        });
+    }
+    // objects
+    if sa_core::orig::at_site(0x53AA0A, rand) & 3 == 0 {
+        pool_desc(OBJECT_POOL, 0x19C, |o| {
+            if dist3(entity_pos(o), this).fcom(X87::constant(0x4040_0000)).test_parity(0x05) {
+                return;
+            }
+            object_fire_damage(o, x(time_step()).fmul_m(8.0).to_f32(), creator());
+        });
+    }
+    // creeping fire
+    if (rb(this, 0x20) as i8) > 0 && sa_core::orig::at_site(0x53AABB, rand) & 0x7F == 0 {
+        let active = (0..NUM_FIRES).filter(|&i| rb(fire(fm, i), 0) & 1 != 0).count();
+        if active < 25 {
+            let t1 = xi(sa_core::orig::at_site(0x53AB3E, rand)).fmul_m(cf(0x3800_0100)).to_f32();
+            let dxv = xi(sa_core::orig::at_site(0x53AB55, rand)).fmul_m(cf(0x3800_0100)).fdouble().fsub_m(1.0).to_f32();
+            let mut dir = [dxv, x(t1).fdouble().fsub_m(1.0).to_f32(), 0.0f32];
+            vector_normalise(lp(&mut dir).cast());
+            let d = xi(sa_core::orig::at_site(0x53AB95, rand)).fmul_m(cf(0x3800_0100)).fadd_m(2.0);
+            let script = u32::from(rb(this, 0) >> 1) & 1;
+            let gens = u32::from(rb(this, 0x20).wrapping_sub(1));
+            let ty = x(dir[1]).fmul(d).to_f32();
+            let tz = d.fmul_m(dir[2]).to_f32();
+            let p = rv(this, 4);
+            let vx = x(dir[0]).fmul(d).fadd_m(p[0]).to_f32();
+            let vy = x(ty).fadd_m(p[1]).to_f32();
+            let vz = x(tz).fadd_m(p[2]).fadd_m(2.0).to_f32();
+            try_to_start_fire_at_coors_call(vx, vy, vz, gens, 0, script, 10.0);
+        }
+    }
+    // merge a weak nearby fire
+    if !x(rf(this, 0x1C)).fcom(X87::constant(0x4000_0000)).test_parity(0x41)
+        && rb(this, 0x20) != 0
+        && sa_core::orig::at_site(0x53AC46, rand) & 0xF == 0
+    {
+        let r = sa_core::orig::at_site(0x53AC53, rand) & 0xFFFF;
+        let idx = ftol32(xi(r).fmul_m(cf(0x3800_0000)).fmul_m(60.0));
+        let other = fm.byte_add(idx as isize * FIRE_SIZE as isize);
+        let fl = rb(other, 0);
+        if other != this
+            && fl & 1 != 0
+            && fl & 2 == 0
+            && !x(rf(other, 0x1C)).fcom(X87::one()).test_parity(0x41)
+        {
+            let mut d = [0f32; 3];
+            let dp = lp(&mut d).cast::<u8>();
+            pf_vector_sub(dp, this.byte_add(4), other.byte_add(4));
+            if !st0(vector_magnitude(dp)).fcom(X87::constant(0x4060_0000)).test_parity(0x05) {
+                let (mut a, mut b, mut out) = ([0f32; 3], [0f32; 3], [0f32; 3]);
+                let ap = pf_vector_scale(lp(&mut a).cast(), cf(0x3E99_999A), other.byte_add(4));
+                let bp = pf_vector_scale(lp(&mut b).cast(), cf(0x3F33_3333), this.byte_add(4));
+                let r = pf_vector_add(lp(&mut out).cast(), bp, ap);
+                let s1 = x(rf(this, 0x1C)).fadd_m(1.0).to_f32();
+                wv(this, 4, rv(r, 0));
+                wf(this, 0x1C, s1);
+                let t = time_ms().wrapping_add(7000);
+                let old = ru(this, 0x18);
+                wu(this, 0x18, if old > t { old } else { t });
+                create_fx_sys_for_strength_call(this, this.byte_add(4), GPtr::NULL);
+                let (og, tg) = (rb(other, 0x20) as i8, rb(this, 0x20) as i8);
+                wb(this, 0x20, if tg >= og { og as u8 } else { tg as u8 });
+                extinguish_call(other);
+            }
+        }
+    }
+    // FX const time
+    let fx = rp(this, 0x24);
+    if !fx.is_null() {
+        let s = x(rf(this, 0x1C));
+        let frac = s.fsub(xi(ftol32(s)));
+        let diff = ru(this, 0x18).wrapping_sub(time_ms());
+        let mut k = xi(diff as i32);
+        if (diff as i32) < 0 {
+            k = k.fadd_m(cf(0x4F80_0000));
+        }
+        let k = k.fmul_m(cf(0x3995_CBEC)).to_f32();
+        let v = if frac.fcom(x(k)).test_parity(0x05) { k } else { frac.to_f32() };
+        pf_fx_set_const_time(fx, 1, v);
+    }
+    // light, or burn down
+    let now = time_ms();
+    let light = if now < ru(this, 0x18) {
+        let c = rv(cam_matrix_pos(), 0);
+        let dx = x(c[0]).fsub_m(rf(this, 4));
+        let dy = x(c[1]).fsub_m(rf(this, 8));
+        let dist = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();
+        // `fild removal; fcompp; test ah, 0x41; je`: light when removal > dist
+        !xi(i32::from(rb(this, 0x21))).fcom(dist).test_any(0x41) || rb(this, 0) & 2 != 0
+    } else {
+        rb(this, 0) & 2 != 0
+    };
+    if light {
+        let r = (sa_core::orig::at_site(0x53AE36, rand) & 0x7F) as i16;
+        let c = xi(i32::from(r)).fmul_m(cf(0x3B00_0000)).to_f32();
+        let p = rv(this, 4);
+        point_lights_add_light(0, p[0], p[1], p[2], 0.0, 0.0, 0.0, 8.0, c, c, 0.0, 0, 0, 0);
+        return;
+    }
+    if !x(rf(this, 0x1C)).fcom(X87::one()).test_parity(0x41) {
+        extinguish_call(this);
+        return;
+    }
+    wf(this, 0x1C, x(rf(this, 0x1C)).fsub_m(1.0).to_f32());
+    wu(this, 0x18, time_ms().wrapping_add(7000));
+    create_fx_sys_for_strength_call(this, this.byte_add(4), GPtr::NULL);
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_INITIALISE,
+    HOOK_MANAGER_UPDATE,
+    HOOK_PROCESS_FIRE,
     HOOK_CONSTRUCTOR,
     HOOK_EXTINGUISH,
     HOOK_CREATE_FX_SYS_FOR_STRENGTH,

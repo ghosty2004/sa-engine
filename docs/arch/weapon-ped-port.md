@@ -165,6 +165,103 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
   sa-hook i686, sa-weapon, sa-ped, sa-world wasm32; `cargo build --release --target i686-pc-windows-gnu -p
   sa-hook -p sa-launcher` OK.
 
+## Pass 2 (PORT-WEAPON-2, 2026-11-11)
+
+Scope: the WEAPON functions pass 1 deferred, in SA:MP order (bullets, shots, explosions first). Agent + 2 helpers
+(disjoint files: `weapon_fire.rs`/`weapon.rs`; `weapon_impact.rs`/`projectile.rs`/`explosion.rs`), all game runs on
+lane 2 by the agent. Verdicts per function: `docs/arch/weapon-port-2-verdicts.tsv`.
+
+New infrastructure:
+- **`sa_core::orig::x87_unary(addr, st0) -> f64`** (twin of `x87_binary`) for the CRT's unary `_CI*` intrinsics
+  (operand and result in ST0). The calling sequence lives in `sa_core::orig::raw::call_unary` (x86 and x86_64:
+  `fld qword; call; fstp qword`, the output pointer kept on the stack across the call) so that a host test
+  (`orig::tests::x87_unary_calling_sequence`) runs it against hand-written intrinsics: results, signed zero, NaN
+  payload and a balanced FPU stack (status-word TOP before = after). Phases B/C panic like `x87_binary`.
+- **0x821E70 is `_CIasin`, not acos**: its body computes `fpatan(x, sqrt((1+x)(1-x)))` and range-checks `|x| <= 1`
+  (gta-reversed calls `asin`). It sets `fldcw (cw & 0x300) | 0x7F`, i.e. keeps the caller's precision control, so
+  under the game's 24-bit precision its result is exact as a double. Its `|x| = 1` path returns the 80-bit
+  constant pi/2; `x87_unary` rounds that to a double, and `pi/2 * 57.29578f` (the only use, `CBulletInfo::Update` /
+  `DoBulletImpact`) rounds to the same f32 89.99999237 from both (checked with exact rationals).
+- **Harness fix** (`tools/e2e/port-l2.sh`): `wine.log` is truncated before each run. The crash check greps it
+  before the background launcher has truncated it, so a fault left by the previous run's process exit (seen on
+  lane 2: `page fault ... at 7BCF0729` after `oracle: exiting`) ended the next run at once; the `rust` run of
+  `bu-c`/`m1-c` produced no trace (`PASS rust reached the end frame: 0 frames`, a false PASS). For the harness owner.
+- Split-run regions: section `PORT-WEAPON-2` of `tools/e2e/l2-extras.txt` (one block for all 13 hooks: the written
+  parts of the audio .bss, collision caches, CReferences, bullet traces, point lights, permanent shadows, pads, stats,
+  players, inform-group queue, g_fx/g_fxMan, pellet col model, explosion array, camera, anim statics). Declaring the
+  whole audio block 0xB5F000..0xB6F000 made every pair DIVERGED (OS handles / heap pointers at 0xB606C4), so only
+  the written ranges are declared. Hook list: `tools/e2e/lists/wp2-all.txt`.
+
+Ported (14 functions, 13 hooks):
+
+| function | file | notes (original kept; gta-reversed differs) |
+|---|---|---|
+| `CBulletInfo::Update` 0x7360D0 | bullet_shot.rs | expired bullet still moved/tested this frame; ONE hit-entity local for the whole loop (zeroed at entry, deactivates any later bullet that ProcessLineOfSight leaves it set for); only x/y bounds-checked; x step in extended precision; `IsSphereVisible(point)`; dead-ped anim flags `(f & 0xFFF7) | 1`; sniper `asin` via `x87_unary` |
+| `CFireManager::Update` 0x53AF00 | fire.rs | riot block (raw rand formulas, ground/hit gates, `point - camera`, f64 0.2); strongest = first strictly greater than -1.0 (x87); shadow front `(1.2d, 0)` side `(0, -1.2d)`; colour `rand*(1/32767)*0.39999998+0.6`; corona offsets x/y extended, z rounded; dead `pos*ceil(strength)` accumulator not reproduced (stack-only) |
+| `CFire::ProcessFire` 0x53A570 | fire.rs | strength `min3(s + ts*0.002)` stored, the OLD value written back when the integer parts differ; pools walked downwards; non-BMX StartFire with 0 generations; creeping-fire y gets the first rand, dir normalised, z + 2, `gens - 1`; merge writes `0.7*this + 0.3*other` into THIS fire, generations = signed MIN, burn `max(old, now+7000)`; FX const time `min(frac, (burn-now)/3500)`; removal test 2D |
+| `CWeapon::Fire` 0x742300 | weapon_fire.rs | (helper) unhandled types count as fired when the low byte of `targetPosn` is non-zero; TakePhotograph gets the muzzle pointer; detonator always decrements; player reload quartered with 0xB7CEE5 |
+| `CWeapon::FireSniper` 0x73AAC0 | weapon_fire.rs | (helper) GetWeaponInfo result discarded; counter 0x8D4B60 `(n+1)&7`; events built on the Rust stack through the original ctors/dtors |
+| `CWeapon::FireM16_1stPerson` 0x741C00 | weapon_fire.rs | (helper) both gr deviations kept (`(rand() & 0x7F) - 64`); shake frequency dword's upper bytes from the reused slot |
+| `CWeapon::FireInstantHitFromCar2` 0x73CBA0 | weapon_fire.rs | (helper) ReportCrime against the player whoever fires; silenced flag pushed as 0/1 (original: CL with stale upper ECX bytes; the ctor reads the byte) |
+| `CWeapon::FireInstantHitFromCar` 0x73EC40 | weapon_fire.rs | (helper) DoDriveByAutoAiming always gets the player as owner; six rand() sites attributed |
+| `CWeapon::CheckForShootingVehicleOccupant` 0x73F480 | weapon_fire.rs | (helper) ported, **not registered**: INF-20 reader `mov ecx, [0x73F482]` at 0x1567062 (.HOODLUM, followed by `rol edi, cl`); `catalog/code-data-reads.csv` has it with chunk = 0 (sweep decode) and sa-hook's `readers_match_the_exe_and_the_table` accepts keycells readers only with chunk = 1 |
+| `CWeapon::GenerateDamageEvent` 0x73A530 | weapon_impact.rs | (helper) `GetWeaponInfo(type,1)->m_nWeaponFire` for every type; BlendAnimation result not null-checked; anim id 0xC0 gives false |
+| `CWeapon::DoBulletImpact` 0x73B550 | weapon_impact.rs | (helper) `#else` stats condition, firedBy dereferenced without null check; objects with damage effect < 200 get the push AND `ObjectDamage(50)`; pad shake from three FindPlayerPed calls |
+| `CExplosion::AddExplosion` 0x736A50 | explosion.rs | (helper) free-slot scan reads one element past the array when full; weak-rocket fields set for invisible explosions; mine ground probe discarded; molotov writes ground z back into its argument; 9 rand sites; jump tables transcribed from the EXE |
+| `CProjectileInfo::RemoveProjectile` 0x7388F0 | projectile.rs | (helper) explosion type/owner per weapon type as the spec |
+| `CProjectileInfo::Update` 0x738B20 | projectile.rs | (helper) heat-seeker turn boost keyed on the TARGET's speed (`CProjectileInfo.md` says missile; EBX = target at 0x73958B); reads the deleted object after RemoveProjectile and writes +0x1C into it on the molotov path (kept) |
+
+Not ported in pass 2 (reason):
+- `CWeapon::FireInstantHit` 0x73FB10: the early-exit path (ped firer with target, IK flag clear, forceAim 0) passes an
+  uninitialised stack `dir` to `Fx_c::TriggerGunshot` and an uninitialised `CColPoint` to `DoBulletImpact`; needs a
+  runtime measurement of those stack bytes at 0x740B71 (PLAN 4b), then the 1,700-instruction port.
+- `CWeapon::FireAreaEffect` 0x73E800: `fptan` at 0x73E9CE; `sa_math::x87` has no `fptan` model (needs an `X87::ftan`
+  checked by sa-oracle first).
+- `CWeapon::FireProjectile` 0x741360, `CProjectileInfo::AddProjectile` 0x737C80 (entry jumps into protection code at
+  0x401C3D: hookability to be checked), `CWeaponInfo::LoadWeaponData` 0x5BE670, the aiming helpers (DoDoomAiming,
+  DoTankDoomAiming, DoDriveByAutoAiming, FindNearestTargetEntityWithScreenCoors), FireOneInstantHitRound,
+  SetUpPelletCol, TakePhotograph, CWaterLevel 0x6E61B0: time box.
+
+Verification (lane 2, `SA_ROOT=/home/ghosty2004/sa-engine`, `L2_MAX=150 SPLIT_PER_FRAME=2 L2_SPOOL_MAX=6G`,
+`port-l2.sh @tools/e2e/lists/wp2-all.txt REC --runs "plain rust split" --tag ...`, outputs under the worktree's
+`target/e2e/lane-2/port-l2-<tag>/`):
+
+- **All-ports L3** (`port-l2.sh ports REC --runs "plain rust"`, every engine-crate port on Rust, 2,242 hooks installed,
+  tags `p-*`): **IDENTICAL on every frame and all 17 subsystems** on weapon-combat (3500), c-bug (3220), driving
+  (4338), world-cheats (3276), pause-restart (3700), anim-input (3300) and the grove walk (5200). The c-bug
+  sequence (fire, crouch, fire) stays frame-exact with the whole Fire family on Rust.
+- **Pass 2 list on Rust only** (`--runs "plain rust split"`, 13 hooks): rust trace IDENTICAL on weapon-combat
+  (`w5-c`), c-bug (`w5-cb`), driving (`w5-d`), grove (`w5-g`), world-cheats (`w5-w`); splito/splitr traces == plain
+  on every run.
+- **Split-run L2** (`w5-c`, `w5-cb`, `w6-d` (driving, after the last region additions), `w5-g`, `w5-w`):
+  0 mismatches in every compared pair, 0 undeclared writes in the final runs. Per hook (cases compared / recorded):
+  CBulletInfo::Update PASS 150/150 on all five (the corpus has no active bullet: only the empty-slot path is
+  exercised); CFireManager::Update PASS 150/150 on all five; CProjectileInfo::Update PASS 150/150 on all five;
+  CWeapon::Fire PASS 135 (combat), 147 (c-bug), 45 (driving); CFire::ProcessFire PASS 150/150 (driving);
+  CExplosion::AddExplosion PASS 1/1 (combat), 2/2 (driving); CWeapon::DoBulletImpact PASS-FP 134 / 147 / 45 (the
+  CReferences pages differ before the call: reference slots on the stack of a Rust caller, `+0x110` stack shift);
+  CWeapon::GenerateDamageEvent DIVERGED (3 of 11 compared on combat, 0 of 38 / 26 on c-bug / driving): the input
+  difference is always in CReferences (0xB9C4FC plain 0x0036F06C rust 0x0036EF5C: the address of a `CEntity*` slot
+  on the stack of the Rust DoBulletImpact, registered as a reference). No pair whose inputs matched had a mismatch.
+  Harness proposal: a Stack normaliser class for CReferences `m_ppEntity` values that point below a Rust caller.
+  No call in the corpus (implemented-needs-L2): FireSniper, FireM16_1stPerson, FireInstantHitFromCar(2) (no drive-by
+  or sniper shot in the recordings; the weapon-combat sniper segment fires through FireInstantHit), RemoveProjectile.
+- Earlier runs, for the record: `bu-c`/`m1-c` (first two ports; their `rust` runs were cut by the wine.log race,
+  see above), `w2-c` (undeclared CWeapon::Fire writes, which led to the region block), `w3-c` (whole audio block
+  declared: 6 DIVERGED), `w4-c` (explosion/camera/anim/bullet-trace writes).
+- `cargo test --release -p sa-weapon -p sa-core` green (incl. `orig::tests::x87_unary_calling_sequence`);
+  `cargo test --release -p sa-hook --lib` 45/45 (install, catalogue, callers, port_hooks, keycells, data_reads);
+  clippy `-D warnings`: sa-weapon, sa-core, sa-oracle host (all targets), sa-hook + sa-weapon + sa-core i686
+  (`--features sa-weapon/in-process`), sa-weapon + sa-core wasm32.
+
+Ledger proposals (pass 2, pending):
+- `CWeapon::FireInstantHitFromCar2`: the silenced flag is pushed as 0/1; the original pushes ECX with only CL set
+  (upper bytes left by ReportCrime). Invisible if CEventGunShot's constructor reads only the byte (to confirm).
+- `CExplosion::AddExplosion`: the StartFire bool word's upper bytes (ECX after `_ftol`) are not reproduced.
+- `GenerateDamageEvent`: upper EAX bits not reproduced (callers read AL).
+- Stack-only (argument-slot temporaries, SEH frames) in FireSniper, FireInstantHitFromCar(2), FireM16_1stPerson,
+  DoBulletImpact, CBulletInfo::Update, CFireManager::Update (dead accumulator), CFire::ProcessFire.
+
 ## Ledger proposals
 
 *pending*
@@ -251,8 +348,8 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
 | 0x53A050 | CFireManager::StartFire- | WEAPON | thiscall | sa_weapon::fire::start_fire_target | implemented | split-combat: PASS-FP 1/1 compared, 0 mismatches |  |
 | 0x53A270 | CFireManager::StartScriptFire | WEAPON | thiscall | sa_weapon::fire::start_script_fire | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x53A450 | CCreepingFire::TryToStartFireAtCoors | WEAPON | cdecl | sa_weapon::fire::try_to_start_fire_at_coors | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | ProcessVerticalLine writes the hit entity into the caller argument slot of x (not reproduced; L2 argument words may differ) |
-| 0x53A570 | CFire::ProcessFire | WEAPON | — | — | deferred |  | CFire::ProcessFire: 738 insns (2 gr deviations), spreads fires, damages entities, audio; next pass |
-| 0x53AF00 | CFireManager::Update | WEAPON | — | — | deferred |  | CFireManager::Update: 795 insns (4 gr deviations), fire spreading/audio/explosions; next pass |
+| 0x53A570 | CFire::ProcessFire | WEAPON | thiscall | sa_weapon::fire::process_fire | L2 | split-combat: no call; split-c-bug: no call; split-driving: PASS 150/150 compared, 0 mismatches; split-grove: no call; split-cheats: no call | pass 2 |
+| 0x53AF00 | CFireManager::Update | WEAPON | thiscall | sa_weapon::fire::manager_update | L2 | split-combat: PASS 150/150 compared, 0 mismatches; split-c-bug: PASS 150/150 compared, 0 mismatches; split-driving: PASS 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS 150/150 compared, 0 mismatches | pass 2 |
 | 0x53EE60 | CPad::IsDPadUpPressed | PED | thiscall | sa_ped::small::is_dpad_up_pressed | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | impl-1 |
 | 0x5533B0 | CPed::RemoveLighting | PED | thiscall | sa_ped::ped::remove_lighting | L2 | split-combat: PASS-FP 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS-FP 150/150 compared, 0 mismatches; split-pr: PASS-FP 150/150 compared, 0 mismatches |  |
 | 0x553F00 | CPed::SetupLighting | PED | — | — | deferred |  | not ported in this pass: render/anim/collision-heavy body (RW, anim blend, bones); dedicated pass |
@@ -623,7 +720,7 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
 | 0x735FD0 | CBulletInfo::Initialise | WEAPON | cdecl | sa_weapon::bullet_shot::bullet_initialise | L2 | L2 combat:1/1 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:1/1 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared) |  |
 | 0x736000 | CBulletInfo::Shutdown | WEAPON | — | — | deferred |  | CBulletInfo::Shutdown: 1-byte body (ret): nothing to port, not hookable (excluded from hooking) |
 | 0x736010 | CBulletInfo::AddBullet | WEAPON | cdecl | sa_weapon::bullet_shot::add_bullet | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | reads the active byte one element past the 8 bullets when all are in use (original OOB read kept) |
-| 0x7360D0 | CBulletInfo::Update | WEAPON | — | — | deferred |  | CBulletInfo::Update: 567 insns; its sniper branch calls the CRT unary x87 intrinsic 0x821E70 (acos on ST0), which needs a sa_core::orig::x87_unary twin of x87_binary (sa-core change); port after that |
+| 0x7360D0 | CBulletInfo::Update | WEAPON | cdecl | sa_weapon::bullet_shot::bullet_update | L2 | split-combat: PASS 150/150 compared, 0 mismatches; split-c-bug: PASS 150/150 compared, 0 mismatches; split-driving: PASS 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS 150/150 compared, 0 mismatches | pass 2 |
 | 0x736840 | CExplosion::ClearAllExplosions | WEAPON | cdecl | sa_weapon::explosion::clear_all_explosions | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | inner loop writes three fixed addresses each iteration (original bug kept) |
 | 0x7368F0 | CExplosion::Shutdown | WEAPON | — | — | deferred |  | CExplosion::Shutdown: 1-byte body (ret): nothing to port, not hookable |
 | 0x736900 | CExplosion::GetExplosionActiveCounter | WEAPON | cdecl | sa_weapon::explosion::get_explosion_active_counter | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
@@ -634,17 +731,17 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
 | 0x736950 | CExplosion::TestForExplosionInArea | WEAPON | cdecl | sa_weapon::explosion::test_for_explosion_in_area | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x7369E0 | CExplosion::RemoveAllExplosionsInArea | WEAPON | cdecl | sa_weapon::explosion::remove_all_explosions_in_area | L2 | L2 combat:5/5 (0 mismatches, 0 undeclared); L2 grove:2/2 (0 mismatches, 0 undeclared); L2 cheats:5/5 (0 mismatches, 0 undeclared); L2 pr:4/4 (0 mismatches, 0 undeclared) |  |
 | 0x736A40 | CExplosion::Initialise | WEAPON | cdecl | sa_weapon::explosion::initialise | L2 | L2 combat:1/1 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:1/1 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared) |  |
-| 0x736A50 | CExplosion::AddExplosion | WEAPON | — | — | deferred |  | CExplosion::AddExplosion: 871 insns (7 gr deviations), damage/fire/shake/audio; next pass |
+| 0x736A50 | CExplosion::AddExplosion | WEAPON | cdecl | sa_weapon::explosion::add_explosion | L2 | split-combat: PASS 1/1 compared, 0 mismatches; split-c-bug: no call; split-driving: PASS 2/2 compared, 0 mismatches; split-grove: no call; split-cheats: no call | pass 2 |
 | 0x737620 | CExplosion::Update | WEAPON | cdecl | sa_weapon::explosion::update | L2 | split-combat: PASS-FP 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS-FP 150/150 compared, 0 mismatches; split-pr: PASS-FP 150/150 compared, 0 mismatches | gr deviations kept: GRN helper formula, first random value to y, VICTIM position, z+2; TriggerExplosion false flag = type dword with AL cleared; rand() attributed to 0x73771C |
 | 0x737B40 | CProjectileInfo::Initialise | WEAPON | cdecl | sa_weapon::projectile::initialise | L2 | L2 combat:1/1 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:1/1 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared) |  |
 | 0x737B80 | CProjectileInfo::RemoveFXSystem | WEAPON | thiscall | sa_weapon::projectile::remove_fx_system | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x737BC0 | CProjectileInfo::Shutdown | WEAPON | cdecl | sa_weapon::projectile::shutdown | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x737BF0 | CProjectileInfo::GetProjectileInfo | WEAPON | cdecl | sa_weapon::projectile::get_projectile_info | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x737C00 | CProjectileInfo::RemoveNotAdd | WEAPON | cdecl | sa_weapon::projectile::remove_not_add | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
-| 0x737C80 | CProjectileInfo::AddProjectile | WEAPON | — | — | deferred |  | CProjectileInfo::AddProjectile: 764 insns, CProjectile creation (pool New, CWorld::Add, fx, physics setup); next pass |
+| 0x737C80 | CProjectileInfo::AddProjectile | WEAPON | — | — | deferred |  | pass 2: not ported; entry `6A FF E9` jumps into protection code at 0x401C3D (hookability to check first); time box |
 | 0x738860 | CProjectileInfo::RemoveDetonatorProjectiles | WEAPON | cdecl | sa_weapon::projectile::remove_detonator_projectiles | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
-| 0x7388F0 | CProjectileInfo::RemoveProjectile | WEAPON | — | — | deferred |  | CProjectileInfo::RemoveProjectile: 204 insns, explosion + fx + pool removal; next pass |
-| 0x738B20 | CProjectileInfo::Update | WEAPON | — | — | deferred |  | CProjectileInfo::Update: 976 insns, projectile physics/collision/explosions; next pass |
+| 0x7388F0 | CProjectileInfo::RemoveProjectile | WEAPON | cdecl | sa_weapon::projectile::remove_projectile | implemented-needs-L2 | split-combat: no call; split-c-bug: no call; split-driving: no call; split-grove: no call; split-cheats: no call | pass 2 |
+| 0x738B20 | CProjectileInfo::Update | WEAPON | cdecl | sa_weapon::projectile::update | L2 | split-combat: PASS 150/150 compared, 0 mismatches; split-c-bug: PASS 150/150 compared, 0 mismatches; split-driving: PASS 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS 150/150 compared, 0 mismatches | pass 2 |
 | 0x739860 | CProjectileInfo::IsProjectileInRange | WEAPON | cdecl | sa_weapon::projectile::is_projectile_in_range | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x7399B0 | CProjectileInfo::RemoveAllProjectiles | WEAPON | cdecl | sa_weapon::projectile::remove_all_projectiles | L2 | split-combat: PASS-FP 5/5 compared, 0 mismatches; split-grove: PASS 2/2 compared, 0 mismatches; split-cheats: PASS-FP 5/5 compared, 0 mismatches; split-pr: PASS-FP 5/5 compared, 0 mismatches |  |
 | 0x739A40 | CProjectileInfo::RemoveIfThisIsAProjectile | WEAPON | cdecl | sa_weapon::projectile::remove_if_this_is_a_projectile | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
@@ -660,9 +757,9 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
 | 0x73A360 | CWeapon::UpdateWeapons | WEAPON | cdecl | sa_weapon::weapon::update_weapons | L2 | split-combat: PASS-FP 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS-FP 150/150 compared, 0 mismatches; split-pr: PASS-FP 150/150 compared, 0 mismatches |  |
 | 0x73A380 | CWeapon::Shutdown | WEAPON | thiscall | sa_weapon::weapon::shutdown | L2 | L2 combat:1000/1001 (0 mismatches, 0 undeclared); L2 grove:1000/1001 (0 mismatches, 0 undeclared); L2 cheats:1000/1001 (0 mismatches, 0 undeclared); L2 pr:962/962 (0 mismatches, 0 undeclared) |  |
 | 0x73A3E0 | CWeapon::AddGunshell | WEAPON | thiscall | sa_weapon::weapon::add_gunshell | implemented | split-combat: PASS-FP 135/135 compared, 0 mismatches | extra discarded GetRandomNumberInRange(-20, 20) kept (spec CONFIRMED); original sum order (z²+x²)+y² |
-| 0x73A530 | CWeapon::GenerateDamageEvent | WEAPON | — | — | deferred |  | CWeapon::GenerateDamageEvent: 281 insns, creates CEventDamage and drives AI events (deferred: AI tasks/events) |
+| 0x73A530 | CWeapon::GenerateDamageEvent | WEAPON | cdecl | sa_weapon::weapon_impact::generate_damage_event | implemented | split-combat: DIVERGED 3/11 compared, 0 mismatches; split-c-bug: DIVERGED 0/38 compared, 0 mismatches; split-driving: DIVERGED 0/26 compared, 0 mismatches; split-grove: no call; split-cheats: no call | pass 2; DIVERGED pairs: CReferences (0xB9B9A8..) holds stack addresses of reference slots below a Rust caller (plain 0x0036F06C / rust 0x0036EF5C); harness Stack-class gap, no pair with equal inputs mismatched |
 | 0x73A8D0 | CWeapon::LaserScopeDot | WEAPON | — | — | deferred |  | CWeapon::LaserScopeDot: no callers in 1.0 US (dead); 145 insns with corona registration; low priority |
-| 0x73AAC0 | CWeapon::FireSniper | WEAPON | — | — | deferred |  | CWeapon::FireSniper: 287 insns, camera + projectile/instant-hit fire; next pass (Fire family) |
+| 0x73AAC0 | CWeapon::FireSniper | WEAPON | thiscall | sa_weapon::weapon_fire::fire_sniper | implemented-needs-L2 | split-combat: no call; split-c-bug: no call; split-driving: no call; split-grove: no call; split-cheats: no call | pass 2 |
 | 0x73AEB0 | CWeapon::Reload | WEAPON | thiscall | sa_weapon::weapon::reload | L2 | L2 combat:150/150 (0 mismatches, 0 undeclared); L2 grove:206/206 (0 mismatches, 0 undeclared); L2 cheats:118/118 (0 mismatches, 0 undeclared); L2 pr:93/93 (0 mismatches, 0 undeclared) |  |
 | 0x73AF00 | CWeapon::FireOneInstantHitRound | WEAPON | — | — | deferred |  | CWeapon::FireOneInstantHitRound: 228 insns, Fire family; next pass |
 | 0x73B1C0 | CWeapon::IsTypeMelee | WEAPON | thiscall | sa_weapon::weapon::is_type_melee | L2 | L2 combat:1000/1001 (0 mismatches, 0 undeclared); L2 cheats:131/131 (0 mismatches, 0 undeclared) |  |
@@ -675,10 +772,10 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
 | 0x73B380 | CWeapon::TargetWeaponRangeMultiplier | WEAPON | cdecl | sa_weapon::weapon::target_weapon_range_multiplier | L2 | L2 combat:95/95 (0 mismatches, 0 undeclared) |  |
 | 0x73B430 | CWeapon::Constructor | WEAPON | thiscall | sa_weapon::weapon::constructor | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x73B4A0 | CWeapon::Initialise | WEAPON | thiscall | sa_weapon::weapon::initialise | L2 | L2 combat:33/33 (0 mismatches, 0 undeclared); L2 grove:46/46 (0 mismatches, 0 undeclared); L2 cheats:50/50 (0 mismatches, 0 undeclared); L2 pr:22/22 (0 mismatches, 0 undeclared) |  |
-| 0x73B550 | CWeapon::DoBulletImpact | WEAPON | — | — | deferred |  | CWeapon::DoBulletImpact: 938 insns (7 gr deviations), damage events and fx; next pass |
+| 0x73B550 | CWeapon::DoBulletImpact | WEAPON | thiscall | sa_weapon::weapon_impact::do_bullet_impact | implemented | split-combat: PASS-FP 134/134 compared, 0 mismatches; split-c-bug: PASS-FP 147/147 compared, 0 mismatches; split-driving: PASS-FP 45/45 compared, 0 mismatches; split-grove: no call; split-cheats: no call | pass 2; PASS-FP: the CReferences pages differ before the call (stack addresses, as GenerateDamageEvent); 0 mismatches |
 | 0x73C1F0 | CWeapon::TakePhotograph | WEAPON | — | — | deferred |  | CWeapon::TakePhotograph: 389 insns, ped/object pool scans with line-of-sight and screen tests; next pass |
 | 0x73C710 | CWeapon::SetUpPelletCol | WEAPON | — | — | deferred |  | CWeapon::SetUpPelletCol: 329 insns, CColModel allocation + shotgun pellet geometry with rand; next pass |
-| 0x73CBA0 | CWeapon::FireInstantHitFromCar2 | WEAPON | — | — | deferred |  | CWeapon::FireInstantHitFromCar2: 153 insns, Fire family; next pass |
+| 0x73CBA0 | CWeapon::FireInstantHitFromCar2 | WEAPON | thiscall | sa_weapon::weapon_fire::fire_instant_hit_from_car2 | implemented-needs-L2 | split-combat: no call; split-c-bug: no call; split-driving: no call; split-grove: no call; split-cheats: no call | pass 2 |
 | 0x73CDC0 | CWeapon::DoDoomAiming | WEAPON | — | — | deferred |  | CWeapon::DoDoomAiming: 354 insns, target search with angle tests; next pass |
 | 0x73D1E0 | CWeapon::DoTankDoomAiming | WEAPON | — | — | deferred |  | CWeapon::DoTankDoomAiming: 435 insns, target search over pools with camera/screen projections; next pass |
 | 0x73D720 | CWeapon::DoDriveByAutoAiming | WEAPON | — | — | deferred |  | CWeapon::DoDriveByAutoAiming: 371 insns, target search + CalcScreenCoors; next pass |
@@ -687,15 +784,15 @@ world lists: INF-17 split-run mode), `wp-small.txt` (the small ports added last)
 | 0x73E240 | CWeapon::FindNearestTargetEntityWithScreenCoors | WEAPON | — | — | deferred |  | CWeapon::FindNearestTargetEntityWithScreenCoors: 248 insns, screen-space target search; next pass |
 | 0x73E560 | CWeapon::EvaluateTargetForHeatSeekingMissile | WEAPON | cdecl | sa_weapon::weapon::evaluate_target_for_heat_seeking_missile | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | the original stores d and l into its own argument slots 0/1 (not reproduced; L2 argument words may differ) |
 | 0x73E690 | CWeapon::DoWeaponEffect | WEAPON | thiscall | sa_weapon::weapon::do_weapon_effect | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | passes the .rdata fx name instead of the stack copy (same characters) |
-| 0x73E800 | CWeapon::FireAreaEffect | WEAPON | — | — | deferred |  | CWeapon::FireAreaEffect: 318 insns, Fire family; next pass |
-| 0x73EC40 | CWeapon::FireInstantHitFromCar | WEAPON | — | — | deferred |  | CWeapon::FireInstantHitFromCar: 567 insns, Fire family; next pass |
-| 0x73F480 | CWeapon::CheckForShootingVehicleOccupant | WEAPON | — | — | deferred |  | CWeapon::CheckForShootingVehicleOccupant: 326 insns, Fire family; next pass |
+| 0x73E800 | CWeapon::FireAreaEffect | WEAPON | — | — | deferred |  | pass 2: not ported; `fptan` at 0x73E9CE has no sa_math::x87 model (needs X87::ftan with an sa-oracle check) |
+| 0x73EC40 | CWeapon::FireInstantHitFromCar | WEAPON | thiscall | sa_weapon::weapon_fire::fire_instant_hit_from_car | implemented-needs-L2 | split-combat: no call; split-c-bug: no call; split-driving: no call; split-grove: no call; split-cheats: no call | pass 2 |
+| 0x73F480 | CWeapon::CheckForShootingVehicleOccupant | WEAPON | cdecl | sa_weapon::weapon_fire::check_for_shooting_vehicle_occupant | ported-unhookable |  | pass 2: INF-20 reader `mov ecx, [0x73F482]` at 0x1567062 has chunk = 0 in catalog/code-data-reads.csv; sa-hook's data_reads test accepts keycells readers only with chunk = 1 |
 | 0x73F910 | CWeapon::PickTargetForHeatSeekingMissile | WEAPON | cdecl | sa_weapon::weapon::pick_target_for_heat_seeking_missile | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | the original writes origin+dir*5 over its own origin arguments (not reproduced; L2 argument words may differ) |
 | 0x73FA20 | CWeapon::FireFromCar | WEAPON | thiscall | sa_weapon::weapon::fire_from_car | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
-| 0x73FB10 | CWeapon::FireInstantHit | WEAPON | — | — | deferred |  | CWeapon::FireInstantHit: 1716 insns, Fire family core; next pass |
-| 0x741360 | CWeapon::FireProjectile | WEAPON | — | — | deferred |  | CWeapon::FireProjectile: 681 insns, Fire family; next pass |
-| 0x741C00 | CWeapon::FireM16_1stPerson | WEAPON | — | — | deferred |  | CWeapon::FireM16_1stPerson: 282 insns (2 gr deviations), Fire family; next pass |
-| 0x742300 | CWeapon::Fire | WEAPON | — | — | deferred |  | CWeapon::Fire: 593 insns, the Fire dispatcher (drives tasks/events through its callees); next pass |
+| 0x73FB10 | CWeapon::FireInstantHit | WEAPON | — | — | deferred |  | pass 2: not ported; the early-exit path passes an uninitialised stack `dir` to Fx_c::TriggerGunshot and an uninitialised CColPoint to DoBulletImpact: needs a runtime measurement of those bytes at 0x740B71 (PLAN 4b) |
+| 0x741360 | CWeapon::FireProjectile | WEAPON | — | — | deferred |  | pass 2: not ported (time box); entry stub `push -1; jmp 0x403C19` |
+| 0x741C00 | CWeapon::FireM16_1stPerson | WEAPON | thiscall | sa_weapon::weapon_fire::fire_m16_1st_person | implemented-needs-L2 | split-combat: no call; split-c-bug: no call; split-driving: no call; split-grove: no call; split-cheats: no call | pass 2 |
+| 0x742300 | CWeapon::Fire | WEAPON | thiscall | sa_weapon::weapon_fire::fire | L2 | split-combat: PASS 135/135 compared, 0 mismatches; split-c-bug: PASS 147/147 compared, 0 mismatches; split-driving: PASS 45/45 compared, 0 mismatches; split-grove: no call; split-cheats: no call | pass 2 |
 | 0x742AB0 | CWeaponEffects::Init | WEAPON | cdecl | sa_weapon::effects::init | L2 | split-combat: PASS-FP 1/1 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: PASS-FP 1/1 compared, 0 mismatches; split-pr: PASS-FP 2/2 compared, 0 mismatches |  |
 | 0x742B80 | CWeaponEffects::Shutdown | WEAPON | cdecl | sa_weapon::effects::shutdown | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat |  |
 | 0x742BD0 | CWeaponEffects::IsLockedOn | WEAPON | cdecl | sa_weapon::effects::is_locked_on | implemented-needs-L2 | no call in grove walk / pause-restart / world-cheats / weapon-combat | returns _ftol EAX (EDX of _ftol not reproduced) |
