@@ -87,3 +87,10 @@ itself, so unported cases and the default (-1) behave exactly as with the hook o
   the port. The cell inside the port's crate needs no dependency and no lookup.
 - Re-dispatching unported opcodes through the jump table address (jumping into the middle of the
   original body): would skip its prologue/SEH frame; rejected.
+
+## 6. Ports whose stack residue original code reads (2026-11-11)
+
+A port is not complete while original code that runs after it reads its stack residue and the port
+leaves a different one: register it with `footprint` and reproduce the original's writes below its
+entry ESP (ADR-001 §5b, `sa_core::abi::stack_footprint`). First user: `RwV3dNormalize` 0x7ED9B0
+(sa-rwcore), read by `CWeapon::FireInstantHit` 0x73FB10 at 0x740DAC (c-bug).

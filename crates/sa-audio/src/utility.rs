@@ -171,6 +171,26 @@ pub fn ms_to_bytes(ms: u32, freq: u32, channels: u16) -> u32 {
     (b.wrapping_rem(d)).wrapping_add(b) as u32
 }
 
+/// `AudioLog10`'s threshold (0x858C14, `.rdata`): 1e-5.
+pub const AUDIO_LOG10_MIN: f32 = f32::from_bits(0x3727_C5AC);
+/// `AudioLog10`'s result below the threshold (0x858FC8, `.rdata`): -5.0.
+pub const AUDIO_LOG10_FLOOR: f32 = f32::from_bits(0xC0A0_0000);
+
+/// `CAEAudioUtility::AudioLog10(float)` (0x4D9E50): `fld x; fcomp [1e-5]; fnstsw; test ah, 1` -- below
+/// the threshold or NaN the constant -5.0, else `fldlg2; fld x; fyl2x`, whose full 64-bit result is
+/// returned in ST0 (a wide [`X87`]). Every caller multiplies it by an f32 constant at PC=24 (20.0 or
+/// 10.0) right away; with the model that product is exact against the CPU (L1 spec `AudioLog10*c`,
+/// CPU-decided). The raw ST0 itself matches the CPU's in ~99.4% of inputs (1 ulp of the 64-bit
+/// significand otherwise, ledger), so this is not hooked: an `X87` hook return goes back as an f64
+/// (53 bits), and an 80-bit ST0 return would need an ABI extension (`AbiRet::St0` loads a qword).
+pub fn audio_log10(v: f32) -> X87 {
+    let xv = X87::from_f32(v);
+    if xv.fcom(X87::from_f32(AUDIO_LOG10_MIN)).c0() {
+        return X87::from_f32(AUDIO_LOG10_FLOOR);
+    }
+    X87::lg2().fyl2x(xv)
+}
+
 /// `CAEAudioUtility::ConvertFromBytesToMS(uint32 bytes, uint32 freq, uint16 channels)` (0x4D9EF0).
 #[hook(addr = 0x4D9EF0, conv = cdecl, name = "CAEAudioUtility::ConvertFromBytesToMS", expect = "8B 44 24 04 DB 44 24 04")]
 pub fn convert_from_bytes_to_ms(bytes: u32, freq: u32, channels: u16) -> u32 {

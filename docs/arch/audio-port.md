@@ -93,7 +93,7 @@ registrations. `tools/e2e/l2-extras.txt` section `# PORT-AUDIO` (below), lists `
 | 0x4F6000 / 0x4F5F30 | `GetVehicleNonDriveWheelSkidValue` / `GetVehicleDriveWheelSkidValue` | callers keep EDX (0x4F9062, 0x4F907D / 0x4F9094) |
 | 0x4F5D00 | `CAEVehicleAudioEntity::GetVolForPlayerEngineSound` | ten callers keep ECX (0x4FBE51, ...) |
 | 0x4F5C60 / 0x4F60B0 | `GetFreqForIdle` / `GetBaseVolumeForBicycleTyre` | their loops branch back to entry+2, inside the patch |
-| 0x4F6150, 0x4F51F0, 0x4F53D0, 0x4FA0C0, 0x4F8DF0 | `GetFlyingMetalVolume`, `GetVolumeForDummyIdle`, `GetVolumeForDummyRev`, `ProcessBoatMovingOverWater`, `ProcessReverseGear` | the original multiplies `AudioLog10`'s full-precision ST0 (`fyl2x`) directly; the port rounds it to f32 first. While hooked: 1-ulp ST0 mismatches (`GetVolumeForDummyIdle` 30/1001, `...Rev` 4/1001 on grove, `port-l2-ab-g`). Unhooked; needs an `X87` `fyl2x` model in sa-math (also blocks `AudioLog10` 0x4D9E50, `CAEAudioUtility::StaticInitialise`, `CAERadioTrackManager::UpdateRadioVolumes`) |
+| 0x4F6150, 0x4F51F0, 0x4F53D0, 0x4FA0C0, 0x4F8DF0 | `GetFlyingMetalVolume`, `GetVolumeForDummyIdle`, `GetVolumeForDummyRev`, `ProcessBoatMovingOverWater`, `ProcessReverseGear` | **hooked again (X87-MODELS, 2026-11-11), L2 pending**: the port now multiplies `utility::audio_log10`'s full 64-bit FYL2X result (`X87::fyl2x` model) as the original does; the AudioLog10-times-constant composite is exact against the CPU on 10^6 cases (L1 spec `AudioLog10*c`). Before: the port rounded AudioLog10 to f32 first (1-ulp ST0 mismatches, `GetVolumeForDummyIdle` 30/1001, `...Rev` 4/1001 on grove, `port-l2-ab-g`) |
 
 Not hookable and not ported: entries below 5 bytes — `CAERadioTrackManager::HasRadioRetuneJustStarted`
 0x4E8370 and `GetRadioStationListenTimes` 0x4E83E0 (4 bytes), `CAEStreamThread::CAEStreamThread` 0x4F11D0
@@ -185,7 +185,12 @@ group's comment names the run whose undeclared writes it covers.
 
 ## Open items
 
-- `X87` `fyl2x` (log) model in sa-math: unblocks `AudioLog10` and the five unhooked vehicle functions.
+- Done (X87-MODELS): `X87::fyl2x` model; `utility::audio_log10` returns the wide ST0 and the five vehicle
+  functions are hooked again (need L2 on a game lane). `AudioLog10` 0x4D9E50 itself stays unhooked: its
+  raw ST0 matches the CPU in ~99.4% only (1 ulp of 64 otherwise), and an `X87` hook return goes back
+  through `fld qword` (53 bits); hooking it needs an 80-bit `AbiRet` (shim ends with `fld tbyte`).
+  `CAEAudioUtility::StaticInitialise` and `CAERadioTrackManager::UpdateRadioVolumes` can now use
+  `audio_log10` the same way.
 - The ECX/EDX-preserving callers above: hookable with `preserve` once L1 specs comparing the registers
   exist (L1 cannot run functions that write globals; most of these read entity state).
 - L1 for the pure conversions: `CAEAudioUtility::ConvertFromBytesToMS` / `ConvertFromMSToBytes` ran

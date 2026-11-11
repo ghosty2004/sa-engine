@@ -64,7 +64,7 @@ orig! {
     /// `RwStreamRead(stream, buf, len)` (0x7EC9D0)
     fn rw_stream_read_call(s: GPtr<u8>, buf: GPtr<u8>, len: u32) -> u32 = cdecl 0x7EC9D0 => crate::stream::rw_stream_read;
     /// `_rwSqrt(x)` (0x7EDB30), result in ST0
-    fn rw_sqrt(v: f32) -> X87 = cdecl 0x7EDB30 => crate::vector::rw_sqrt;
+    fn rw_sqrt(v: f32) -> f64 = cdecl 0x7EDB30 => crate::vector::rw_sqrt_f64;
     /// `RpLightCreate(type)` (0x752110)
     fn rp_light_create_call(ty: u32) -> GPtr<u8> = cdecl 0x752110 => rp_light_create;
 }
@@ -185,7 +185,7 @@ pub fn rp_light_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     if vp.read() < 0x30300 {
         let m = rd::<f32>(sp, 0x10);
         let t = f32_of(x(m).fmul_m(m).fadd_m(ONE).fdivr_m(ONE));
-        wr::<f32>(l, 0x28, f32_of(rw_sqrt(t).fchs()));
+        wr::<f32>(l, 0x28, f32_of(X87::from_f64_exact(rw_sqrt(t)).fchs()));
     } else {
         wr::<u32>(l, 0x28, rd::<u32>(sp, 0x10));
     }

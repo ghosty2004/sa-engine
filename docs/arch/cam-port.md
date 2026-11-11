@@ -184,7 +184,7 @@ Verdict counts (130 hooks + 3 not hooked): **L1 5**, **L2 81**, **implemented-ne
   `LerpFOV`, shakes), cut-scene / mirror / cooperative-mode paths, `CIdleCam` (idle camera after 90 s), some
   `CCam` leaves. Needs recordings that reach them (mission scripts, idle, mirrors, vehicles with
   `CameraVehicleModeSpecialCases`).
-- Not ported (FPTAN, not modelled by sa-math): `Find3rdPersonQuickAimPitch`, `Find3rdPersonCamTargetVector`.
+- Not ported (FPTAN, not modelled by sa-math): `Find3rdPersonQuickAimPitch`, `Find3rdPersonCamTargetVector`. **Unblocked (X87-MODELS, 2026-11-11):** `X87::fptan` / `Fpu::fptan` model, CPU-checked (stored f32 exact in 10^6 cases, full 80-bit ST0 in 95.9%, else 1 ulp of 64; docs/re/l1-harness.md).
   `DealWithMirrorBeforeConstructRenderList` has the same uninitialised-pad issue as `CalculateDerivedValues`.
 - The large processors (`CCamera::Process`, `CamControl`, `TryToStartNewCamMode`, `CCam::Process_*`,
   `CameraColDetAndReact`, `ImproveNearClip`, `AvoidTheGeometry`, `StartTransition`, `UpdateTargetEntity`),

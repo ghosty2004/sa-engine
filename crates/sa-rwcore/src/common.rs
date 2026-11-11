@@ -98,12 +98,20 @@ unsafe impl GameData for RwError {}
 
 /// `RwErrorSet({1, _rwerror(code)})` as the originals build it on their stack.
 pub fn error1(code: u32) {
+    error1_code(code);
+}
+
+/// [`error1`], returning `_rwerror(code)` (the value the original leaves in its stack-built RwError,
+/// for [`sa_core::abi::stack_footprint`]).
+pub fn error1_code(code: u32) -> u32 {
     let mut e = RwError {
         plugin_id: 1,
         error_code: 0,
     };
-    e.error_code = rw_error1(code) as i32;
+    let c = rw_error1(code);
+    e.error_code = c as i32;
     rw_error_set(GPtr::from_raw(&mut e));
+    c
 }
 
 /// `RwErrorSet({1, _rwerror(code, a)})`.

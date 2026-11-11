@@ -16,3 +16,4 @@ pub mod quaternion;
 pub mod rect;
 pub mod vector;
 pub mod x87;
+mod x87_wide;

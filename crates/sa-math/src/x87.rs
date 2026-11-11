@@ -33,7 +33,20 @@
 //! difference changes that rounding only when the exact value lies within 2^-29 ulp of a rounding
 //! boundary. A function that *returns* a raw FPATAN result leaves 64 bits in ST0, which this type cannot
 //! reproduce (see `GetATanOfXY` in `docs/re/l1-harness.md`).
+//!
+//! FYL2X and FPTAN ([`X87::fyl2x`], [`X87::fptan`]) do return 64-bit significands: such "wide" values
+//! are held exactly as an f64 pair, and arithmetic on them is exact integer arithmetic rounded once (see
+//! [`X87`]). Their models match the CPU's full 80-bit result in ~99.4% (FYL2X) / ~95.9% (FPTAN) of
+//! cases and are 1 ulp of 64 bits off otherwise; every stored f32 matched (measured, l1-harness.md).
 
+use crate::x87_wide::{self, Big, Dd};
+
+/// The CPU's 80-bit constants (round to nearest), as (significand, biased exponent).
+const LG2_EXT: (u64, u16) = (0x9A20_9A84_FBCF_F799, 0x3FFD);
+const LN2_EXT: (u64, u16) = (0xB172_17F7_D1CF_79AC, 0x3FFE);
+const L2E_EXT: (u64, u16) = (0xB8AA_3B29_5C17_F0BC, 0x3FFF);
+const L2T_EXT: (u64, u16) = (0xD49A_784B_CD1B_8AFE, 0x4000);
+const PI_EXT: (u64, u16) = (0xC90F_DAA2_2168_C235, 0x4000);
 use core::cmp::Ordering;
 
 /// f64 bits of the x87 indefinite QNaN (sign 1, quiet bit only).
@@ -42,8 +55,12 @@ const QUIET: u64 = 1 << 51;
 const FRAC: u64 = (1 << 52) - 1;
 
 /// One x87 register value under precision control 24 (see the module docs).
+///
+/// The value is `.0 + .1` exactly: `.0` is the value rounded to 53 bits and `.1` the (exact) rest,
+/// which is non-zero only for the 64-bit results of FYL2X and FPTAN ("wide" values). Arithmetic on a
+/// wide value is computed exactly in integers (`x87_wide`), then rounded as the x87 rounds.
 #[derive(Clone, Copy, Debug)]
-pub struct X87(f64);
+pub struct X87(f64, f64);
 
 /// Result of an x87 compare (FCOM/FCOMP): condition codes C3/C2/C0.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -188,15 +205,80 @@ enum Op {
 }
 
 impl X87 {
+    /// A narrow value (at most 53 significant bits).
+    const fn n(v: f64) -> X87 {
+        X87(v, 0.0)
+    }
+
+    /// True for a value with more than 53 significant bits (see the type docs).
+    pub fn is_wide(self) -> bool {
+        self.1 != 0.0
+    }
+
+    /// The exact value of a finite register value.
+    fn big(self) -> Big {
+        Big::from_pair(self.0, self.1)
+    }
+
+    /// A register value from an exact `Big` with at most 64 significant bits (non-zero).
+    fn from_big_exact(b: Big) -> X87 {
+        let (neg, e, m) = b.norm64();
+        // hi = m rounded to 53 bits (nearest-even), lo = the exact rest (at most 11 bits)
+        let hi = Big {
+            neg,
+            e,
+            m: m as u128,
+            sticky: false,
+        }
+        .round(53, None);
+        let hv = hi.to_f64();
+        let rest = (m as i128) - ((hi.m as i128) << (hi.e - e) as u32);
+        let lv = libm::scalbn(rest as f64, e);
+        // a value that fits 53 bits is narrow: lo is +0.0 (never -0.0)
+        X87(hv, if neg && rest != 0 { -lv } else { lv })
+    }
+
+    /// A finite value rounded to nearest-even with a 64-bit significand (a transcendental result).
+    fn from_big64(b: Big) -> X87 {
+        if b.m == 0 {
+            return X87::n(if b.neg { -0.0 } else { 0.0 });
+        }
+        X87::from_big_exact(b.round(64, None))
+    }
+
+    /// `fld tbyte` of a finite or special 80-bit value (unnormals and pseudo-denormals are not
+    /// modelled). Values outside the f64 exponent range are not modelled either.
+    pub fn from_ext(b: [u8; 10]) -> X87 {
+        let m = u64::from_le_bytes(b[..8].try_into().unwrap());
+        let se = u16::from_le_bytes([b[8], b[9]]);
+        let neg = se >> 15 != 0;
+        let e = i32::from(se & 0x7FFF);
+        let sign = (neg as u64) << 63;
+        if e == 0x7FFF {
+            // infinity, or a NaN with the top 52 fraction bits (the f64 layout keeps those)
+            let frac = (m << 1) >> 12;
+            return X87::n(f64::from_bits(sign | (0x7FF << 52) | frac));
+        }
+        if m == 0 {
+            return X87::n(f64::from_bits(sign));
+        }
+        X87::from_big_exact(Big {
+            neg,
+            e: e.max(1) - 16383 - 63,
+            m: m as u128,
+            sticky: false,
+        })
+    }
+
     /// `fld dword`: exact for every f32; a signalling NaN is quieted (payload kept).
     pub fn from_f32(v: f32) -> X87 {
         let b = v.to_bits();
         if v.is_nan() {
             let sign = ((b >> 31) as u64) << 63;
             let frac = ((b & 0x7F_FFFF) as u64) << 29;
-            return X87(f64::from_bits(sign | (0x7FF << 52) | frac | QUIET));
+            return X87::n(f64::from_bits(sign | (0x7FF << 52) | frac | QUIET));
         }
-        X87(f64::from(v))
+        X87::n(f64::from(v))
     }
 
     /// A constant loaded from the exe's `.rdata` (always finite).
@@ -206,12 +288,12 @@ impl X87 {
 
     /// `fld1`
     pub fn one() -> X87 {
-        X87(1.0)
+        X87::n(1.0)
     }
 
     /// `fldz`
     pub fn zero() -> X87 {
-        X87(0.0)
+        X87::n(0.0)
     }
 
     /// `fst dword`: round to f32 (nearest-even, f32 subnormals and overflow per IEEE); NaN keeps sign
@@ -223,16 +305,29 @@ impl X87 {
             let frac = ((b & FRAC) >> 29) as u32;
             return f32::from_bits(sign | 0x7F80_0000 | frac);
         }
+        if self.is_wide() {
+            // one rounding of the exact value (f32 subnormals: grid 2^-149; 2^128 becomes inf)
+            return self.big().round(24, Some(-149)).to_f64() as f32;
+        }
         self.0 as f32
     }
 
-    /// The register value as f64 (exact; NaN payload in the f64 layout).
+    /// The register value as f64 (exact for narrow values, rounded to 53 bits for wide ones; NaN
+    /// payload in the f64 layout).
     pub fn to_f64(self) -> f64 {
         self.0
     }
 
     /// The 80-bit extended encoding of this value (what `fstp tbyte` writes).
     pub fn to_ext(self) -> [u8; 10] {
+        if self.is_wide() {
+            let (neg, e, m) = self.big().norm64();
+            let mut out = [0u8; 10];
+            out[..8].copy_from_slice(&m.to_le_bytes());
+            let se = ((neg as u16) << 15) | (e + 63 + 16383) as u16;
+            out[8..].copy_from_slice(&se.to_le_bytes());
+            return out;
+        }
         let b = self.0.to_bits();
         let sign = ((b >> 63) as u16) << 15;
         let exp = ((b >> 52) & 0x7FF) as u16;
@@ -262,7 +357,7 @@ impl X87 {
     }
 
     fn quiet(self) -> X87 {
-        X87(f64::from_bits(self.0.to_bits() | QUIET))
+        X87::n(f64::from_bits(self.0.to_bits() | QUIET))
     }
 
     /// Two quiet NaNs: larger significand, ties to the positive one.
@@ -292,17 +387,23 @@ impl X87 {
     }
 
     fn indefinite() -> X87 {
-        X87(f64::from_bits(INDEFINITE))
+        X87::n(f64::from_bits(INDEFINITE))
     }
 
     fn arith(self, op: Op, src: Src) -> X87 {
         if let Some(n) = self.nan_of(src) {
             return n;
         }
-        let b = match src {
-            Src::Reg(x) => x.0,
-            Src::Mem(m) => f64::from(m),
+        let bx = match src {
+            Src::Reg(x) => x,
+            Src::Mem(m) => X87::from_f32(m),
         };
+        if (self.is_wide() || bx.is_wide())
+            && let Some(v) = self.arith_wide(op, bx)
+        {
+            return v;
+        }
+        let b = bx.0;
         let (x, y) = match op {
             Op::SubR | Op::DivR => (b, self.0),
             _ => (self.0, b),
@@ -353,7 +454,45 @@ impl X87 {
                 (q, e)
             }
         };
-        X87(round24_exact(r, e))
+        X87::n(round24_exact(r, e))
+    }
+
+    /// `arith` with a wide operand: exact, then rounded to 24 bits. `None` for the zero and infinity
+    /// operand cases, whose results do not depend on the low part (the narrow path handles them).
+    fn arith_wide(self, op: Op, b: X87) -> Option<X87> {
+        let (x, y) = match op {
+            Op::SubR | Op::DivR => (b, self),
+            _ => (self, b),
+        };
+        let special = |v: X87| v.0 == 0.0 || v.0.is_infinite();
+        let r = match op {
+            Op::Add | Op::Sub | Op::SubR => {
+                let y = if matches!(op, Op::Add) { y } else { y.fchs() };
+                if x.0.is_infinite() || y.0.is_infinite() {
+                    return None;
+                }
+                if y.0 == 0.0 {
+                    x.big()
+                } else if x.0 == 0.0 {
+                    y.big()
+                } else {
+                    Big::add(x.big(), y.big())
+                }
+            }
+            Op::Mul => {
+                if special(x) || special(y) {
+                    return None;
+                }
+                Big::mul(x.big(), y.big())
+            }
+            Op::Div | Op::DivR => {
+                if special(x) || special(y) {
+                    return None;
+                }
+                Big::div(x.big(), y.big())
+            }
+        };
+        Some(X87::n(r.round(24, None).to_f64()))
     }
 
     /// FADD with a register operand (PC=24).
@@ -414,18 +553,24 @@ impl X87 {
         if self.0 < 0.0 {
             return X87::indefinite();
         }
+        if self.is_wide() {
+            return X87::n(Big::sqrt(self.big()).round(24, None).to_f64());
+        }
         let s = libm::sqrt(self.0);
         let e = if s.is_finite() {
             libm::fma(-s, s, self.0)
         } else {
             0.0
         };
-        X87(round24_exact(s, e))
+        X87::n(round24_exact(s, e))
     }
 
     /// FCHS (also flips the sign of a NaN).
     pub fn fchs(self) -> X87 {
-        X87(f64::from_bits(self.0.to_bits() ^ (1 << 63)))
+        X87(
+            f64::from_bits(self.0.to_bits() ^ (1 << 63)),
+            if self.1 != 0.0 { -self.1 } else { 0.0 },
+        )
     }
 
     /// FPATAN with ST1 = `y` (self) and ST0 = `x`: atan2(y, x), *not* rounded to 24 bits (PC does not
@@ -434,22 +579,165 @@ impl X87 {
         if let Some(n) = self.nan_of(Src::Reg(x)) {
             return n;
         }
-        X87(libm::atan2(self.0, x.0))
+        X87::n(libm::atan2(self.0, x.0))
     }
 
     /// A register value from an f64 that the x87 holds exactly (e.g. `fld qword` of an integral double).
     pub fn from_f64_exact(v: f64) -> X87 {
-        X87(v)
+        X87::n(v)
     }
 
     /// `fild dword`: exact (an i32 always fits the 64-bit significand, and an f64).
     pub fn from_i32(v: i32) -> X87 {
-        X87(f64::from(v))
+        X87::n(f64::from(v))
     }
 
     /// `fadd st, st` (doubling: exact unless it overflows the modelled range).
     pub fn fdouble(self) -> X87 {
         self.fadd(self)
+    }
+
+    fn ext_const((m, e): (u64, u16)) -> X87 {
+        let mut b = [0u8; 10];
+        b[..8].copy_from_slice(&m.to_le_bytes());
+        b[8..].copy_from_slice(&e.to_le_bytes());
+        X87::from_ext(b)
+    }
+    /// `fldlg2` (log10 2, 64 bits, round to nearest).
+    pub fn lg2() -> X87 {
+        X87::ext_const(LG2_EXT)
+    }
+    /// `fldln2` (ln 2).
+    pub fn ln2() -> X87 {
+        X87::ext_const(LN2_EXT)
+    }
+    /// `fldl2e` (log2 e).
+    pub fn l2e() -> X87 {
+        X87::ext_const(L2E_EXT)
+    }
+    /// `fldl2t` (log2 10).
+    pub fn l2t() -> X87 {
+        X87::ext_const(L2T_EXT)
+    }
+    /// `fldpi`.
+    pub fn pi() -> X87 {
+        X87::ext_const(PI_EXT)
+    }
+
+    /// `fabs` (clears the sign, NaNs included).
+    pub fn fabs(self) -> X87 {
+        if self.0.is_sign_negative() {
+            self.fchs()
+        } else {
+            self
+        }
+    }
+
+    /// FYL2X with ST1 = `y` (self) and ST0 = `x`: `y * log2(x)`, not affected by PC (64-bit result).
+    ///
+    /// Model of the CPU (measured on an Intel i7-14700F by `sa-oracle`, see `docs/re/l1-harness.md`):
+    /// `log2(x)` is evaluated to ~104 bits, **truncated (toward zero) to 67 significant bits**, then
+    /// multiplied exactly by `y` and rounded to nearest with a 64-bit significand. It matches the CPU's
+    /// full 80-bit result in about 99.3% of cases; the rest differ by 1 ulp of the 64-bit significand
+    /// (see the ledger). Special operands follow the SDM table: NaN rules as the arithmetic ops, `x < 0`
+    /// (incl. -inf) → indefinite, `x = ±0` → ∓inf·sign(y) (`y = 0`: indefinite), `x = +inf` → ±inf by
+    /// the sign of y (`y = 0`: indefinite), `x = 1` → ±0 by the sign of y (`y = ±inf`: indefinite).
+    pub fn fyl2x(self, x: X87) -> X87 {
+        let y = self;
+        if let Some(n) = y.nan_of(Src::Reg(x)) {
+            return n;
+        }
+        let (xv, yv) = (x.0, y.0);
+        let yneg = yv.is_sign_negative();
+        let inf = |neg: bool| X87::n(if neg { f64::NEG_INFINITY } else { f64::INFINITY });
+        let zero = |neg: bool| X87::n(if neg { -0.0 } else { 0.0 });
+        if xv < 0.0 {
+            return X87::indefinite();
+        }
+        if xv == 0.0 {
+            return if yv == 0.0 { X87::indefinite() } else { inf(!yneg) };
+        }
+        if xv.is_infinite() {
+            return if yv == 0.0 { X87::indefinite() } else { inf(yneg) };
+        }
+        if xv == 1.0 && x.1 == 0.0 {
+            return if yv.is_infinite() {
+                X87::indefinite()
+            } else {
+                zero(yneg)
+            };
+        }
+        let l = x87_wide::log2_dd(x.0, x.1);
+        let lneg = l.h < 0.0;
+        if yv.is_infinite() {
+            return inf(yneg != lneg);
+        }
+        if yv == 0.0 {
+            return zero(yneg != lneg);
+        }
+        let l67 = Big::from_pair(l.h, l.l).truncate(67);
+        X87::from_big64(Big::mul_wide(y.big(), l67))
+    }
+
+    /// FPTAN: returns `(ST1, ST0)` after the instruction: `tan(x)` (not affected by PC, 64-bit result)
+    /// and the pushed 1.0; for a NaN or infinite operand both are the NaN result (measured: the CPU
+    /// pushes the NaN, not 1.0). `None` when `|x| >= 2^63`: the CPU sets C2 and leaves the operand
+    /// unchanged (nothing pushed).
+    ///
+    /// Model: the argument is reduced against the CPU's 66-bit pi exactly as for [`X87::fcos`]
+    /// (`k = round(x / (P/2))`, `r = x - k*P/2`), `tan(r)` (k even) or `-1/tan(r)` (k odd) is evaluated
+    /// to ~104 bits and rounded to nearest with a 64-bit significand. It matches the CPU's full 80-bit
+    /// result in about 95% of cases; the rest differ by 1 ulp of the 64-bit significand, always
+    /// where the exact value lies within ~0.1 ulp of a rounding boundary (see the ledger). NaN → the
+    /// quieted NaN, ±inf → the indefinite, ±0 → ±0.
+    pub fn fptan(self) -> Option<(X87, X87)> {
+        let x = self.0;
+        if x.is_nan() {
+            return Some((self.quiet(), self.quiet()));
+        }
+        if x.is_infinite() {
+            return Some((X87::indefinite(), X87::indefinite()));
+        }
+        Some((self.ftan()?, X87::one()))
+    }
+
+    /// The FPTAN result for a finite operand (`None` when `|x| >= 2^63`).
+    fn ftan(self) -> Option<X87> {
+        let x = self.0;
+        if x == 0.0 {
+            return Some(self);
+        }
+        let neg = x < 0.0;
+        let a = self.fabs();
+        let (_, e, m) = a.big().norm64();
+        if e >= 0 {
+            return None; // |x| >= 2^63
+        }
+        let (odd, r) = if a.0 < 0.78 {
+            (false, Dd { h: a.0, l: a.1 })
+        } else {
+            // x / (P/2) = m * 2^(e+65) / PI66, 1 <= e + 65 <= 64
+            let n = u128::from(m) << (e + 65) as u32;
+            let mut k = n / PI66;
+            let rem = n % PI66;
+            let (neg_r, rem) = if 2 * rem > PI66 {
+                k += 1;
+                (true, PI66 - rem)
+            } else {
+                (false, rem)
+            };
+            let h = rem as f64;
+            let l = (rem as i128 - h as i128) as f64;
+            let r = Dd { h, l }.scale(-65);
+            (k & 1 == 1, if neg_r { r.neg() } else { r })
+        };
+        let t = x87_wide::tan_dd(r);
+        let t = if odd { Dd::new(-1.0).div(t) } else { t };
+        let t = if neg { t.neg() } else { t };
+        if t.h == 0.0 {
+            return Some(X87::n(t.h));
+        }
+        Some(X87::from_big64(Big::from_pair(t.h, t.l)))
     }
 
     /// FSIN (not affected by PC). See [`X87::fcos`] for the model.
@@ -492,7 +780,7 @@ impl X87 {
             _ => -cr,
         };
         // sin is odd, cos is even
-        X87(if !cos && x.is_sign_negative() { -v } else { v })
+        X87::n(if !cos && x.is_sign_negative() { -v } else { v })
     }
 
     /// MSVC `_ftol2` (0x821B40), which the game calls for every float-to-int conversion: truncation of
@@ -502,7 +790,18 @@ impl X87 {
     pub fn ftol(self) -> u64 {
         let v = self.0;
         // fistp qword (RC = nearest)
-        let r: u64 = if v.is_nan() || v.abs() >= 9_223_372_036_854_775_808.0 {
+        let r: u64 = if self.is_wide() {
+            // the exact value rounded to an integer (nearest-even), then the fistp range check
+            let b = self.big().round(128, Some(0));
+            let mag = if b.e >= 64 { u128::MAX } else { b.m << b.e as u32 };
+            if (!b.neg && mag >= 1 << 63) || (b.neg && mag > 1 << 63) {
+                0x8000_0000_0000_0000
+            } else if b.neg {
+                (mag as u64).wrapping_neg()
+            } else {
+                mag as u64
+            }
+        } else if v.is_nan() || v.abs() >= 9_223_372_036_854_775_808.0 {
             0x8000_0000_0000_0000 // also the exact encoding of -2^63
         } else {
             libm::rint(v) as i64 as u64
@@ -513,7 +812,18 @@ impl X87 {
             return r;
         }
         // fsubp: v - r (PC=24), stored as f32
-        let d = self.fsub(X87(r as i64 as f64)).to_f32().to_bits();
+        let ri = r as i64;
+        let rx = if ri == 0 {
+            X87::zero()
+        } else {
+            X87::from_big_exact(Big {
+                neg: ri < 0,
+                e: 0,
+                m: u128::from(ri.unsigned_abs()),
+                sticky: false,
+            })
+        };
+        let d = self.fsub(rx).to_f32().to_bits();
         let (mut lo, mut hi) = (lo, hi);
         if (sign_bits as i32) < 0 {
             // xor ecx, 80000000h; add ecx, 7FFFFFFFh; adc eax, 0; adc edx, 0
@@ -533,7 +843,11 @@ impl X87 {
 
     /// FCOM/FCOMP: compare `self` (ST0) with `o`.
     pub fn fcom(self, o: X87) -> Cmp {
-        match self.0.partial_cmp(&o.0) {
+        let ord = match self.0.partial_cmp(&o.0) {
+            Some(Ordering::Equal) => self.1.partial_cmp(&o.1),
+            r => r,
+        };
+        match ord {
             None => Cmp::Unordered,
             Some(Ordering::Less) => Cmp::Less,
             Some(Ordering::Equal) => Cmp::Equal,
@@ -543,7 +857,7 @@ impl X87 {
 
     /// Bit-exact identity (NaN payloads included).
     pub fn same(self, o: X87) -> bool {
-        self.0.to_bits() == o.0.to_bits()
+        self.0.to_bits() == o.0.to_bits() && self.1.to_bits() == o.1.to_bits()
     }
 }
 
@@ -635,6 +949,48 @@ mod tests {
         assert_eq!(t(-1e10), -10_000_000_000);
         assert_eq!(X87::from_f32(f32::NAN).ftol(), 0x8000_0000_0000_0000);
         assert_eq!(X87::from_f32(1e30).ftol(), 0x8000_0000_0000_0000);
+    }
+
+    #[test]
+    fn wide_values() {
+        let lg2 = X87::lg2();
+        assert!(lg2.is_wide());
+        assert_eq!(
+            lg2.to_ext(),
+            [0x99, 0xF7, 0xCF, 0xFB, 0x84, 0x9A, 0x20, 0x9A, 0xFD, 0x3F]
+        );
+        assert_eq!(X87::from_ext(lg2.to_ext()).to_ext(), lg2.to_ext());
+        assert_eq!(lg2.to_f32().to_bits(), 0x3E9A_209B);
+        // log10(10) = lg2 * log2(10): 1.0 rounded to f32, and within an ulp of 1 at 64 bits
+        let l = lg2.fyl2x(X87::from_f32(10.0));
+        assert_eq!(l.to_f32(), 1.0);
+        assert_eq!(l.fmul_m(20.0).to_f32(), 20.0);
+        // log2 of powers of two is exact
+        assert_eq!(X87::one().fyl2x(X87::from_f32(8.0)).to_f32(), 3.0);
+        assert!(!X87::one().fyl2x(X87::from_f32(8.0)).is_wide());
+        // special operands
+        let bits = |v: X87| v.to_f32().to_bits();
+        assert_eq!(bits(X87::one().fyl2x(X87::from_f32(-1.0))), 0xFFC0_0000);
+        assert_eq!(bits(X87::one().fyl2x(X87::zero())), 0xFF80_0000);
+        assert_eq!(bits(X87::one().fchs().fyl2x(X87::zero())), 0x7F80_0000);
+        assert_eq!(bits(X87::one().fyl2x(X87::one())), 0);
+        assert_eq!(bits(X87::one().fchs().fyl2x(X87::one())), 0x8000_0000);
+        // fptan
+        let (t, one) = X87::from_f32(0.5).fptan().unwrap();
+        assert!(one.same(X87::one()));
+        assert_eq!(t.to_f32(), libm::tanf(0.5));
+        assert!(X87::from_f32(1e19).fptan().is_none());
+        assert_eq!(bits(X87::from_f32(-0.0).fptan().unwrap().0), 0x8000_0000);
+        let (a, b) = X87::from_f32(f32::INFINITY).fptan().unwrap();
+        assert_eq!((bits(a), bits(b)), (0xFFC0_0000, 0xFFC0_0000));
+        // wide arithmetic: compare, negate, sign of exact cancellation
+        assert_eq!(
+            t.fcom(X87::from_f64_exact(t.to_f64())),
+            if t.1 > 0.0 { Cmp::Greater } else { Cmp::Less }
+        );
+        assert_eq!(bits(t.fsub(t)), 0);
+        assert_eq!(t.fchs().to_f32(), -t.to_f32());
+        assert_eq!(t.fabs().fchs().fabs().to_ext(), t.to_ext());
     }
 
     #[test]

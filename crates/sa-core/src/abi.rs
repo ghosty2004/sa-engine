@@ -62,6 +62,93 @@ pub struct HookReg {
 /// [`set_entry_eax`] stored (L1 specs set the value their harness passes: the call target address).
 pub static ENTRY_EAX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 
+/// One value of a [`stack_footprint`] write.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Fp {
+    /// a value the port computed
+    Val(u32),
+    /// the caller's ESI / EDI / EBX / EBP (callee-saved: the values the original pushed)
+    Esi,
+    Edi,
+    Ebx,
+    Ebp,
+    /// the address `entry ESP + offset` (e.g. a pushed pointer to one of the original's locals)
+    Addr(i32),
+}
+
+/// Most writes one call records (see [`stack_footprint`]).
+pub const FOOTPRINT_MAX: usize = 16;
+/// Largest snapshot window below the entry ESP, bytes (see [`stack_footprint`]).
+pub const FOOTPRINT_WINDOW_MAX: usize = 0x1000;
+
+/// State shared with the naked `footprint` entry wrapper of `#[hook]` (field offsets are part of
+/// the wrapper's code: count 0, active 4, scratch 8 (EAX, EDX, ECX, ESI, EDI, spare), entries 32 as
+/// [offset, kind, value] triples (kinds 0 value, 1 esi, 2 edi, 3 ebx, 4 ebp, 5 entry ESP + value),
+/// snapshot 224).
+#[repr(C)]
+#[doc(hidden)]
+pub struct FootprintState {
+    pub count: u32,
+    pub active: u32,
+    pub scratch: [u32; 6],
+    pub entries: [[u32; 3]; FOOTPRINT_MAX],
+    pub snapshot: [u32; FOOTPRINT_WINDOW_MAX / 4],
+}
+
+#[doc(hidden)]
+pub struct FootprintCell(pub core::cell::UnsafeCell<FootprintState>);
+// SAFETY: written only by the game's main thread (the hooked functions run there, ADR-001 §3 rule 3)
+// and by the naked wrapper around those calls.
+unsafe impl Sync for FootprintCell {}
+
+const _: () = assert!(core::mem::offset_of!(FootprintState, entries) == 32);
+const _: () = assert!(core::mem::offset_of!(FootprintState, snapshot) == 224);
+
+/// See [`stack_footprint`].
+#[doc(hidden)]
+pub static FOOTPRINT: FootprintCell = FootprintCell(core::cell::UnsafeCell::new(FootprintState {
+    count: 0,
+    active: 0,
+    scratch: [0; 6],
+    entries: [[0; 3]; FOOTPRINT_MAX],
+    snapshot: [0; FOOTPRINT_WINDOW_MAX / 4],
+}));
+
+/// The stack residue the original leaves (ADR-001 §5b): original code that runs later may read
+/// uninitialised stack slots, and so depend on what an earlier callee left below its entry ESP.
+/// A port registered with `#[hook(..., footprint = W)]` runs behind a naked wrapper that snapshots
+/// the `W` bytes below the entry ESP (`W` must cover the whole depth the Rust shim and its callees
+/// use, so none of their frames survive), calls the shim, puts the snapshot back (the original
+/// leaves the slots it never writes as they were), then applies the writes the port recorded here, in
+/// order: `(offset from the entry ESP, value)` (negative = below the return address; 4, 8, ... =
+/// the argument slots). The port lists every slot the original writes on the path it took (derived
+/// from the disassembly). Recorded only while that wrapper is active (a direct Rust call or a host
+/// test records nothing); not reentrant (a footprint hook must not call another one). Phases B/C:
+/// no wrapper, no effect.
+pub fn stack_footprint(writes: &[(i32, Fp)]) {
+    // SAFETY: main thread only (see FootprintCell); the wrapper is not running between its call
+    // and return of the shim, which is where this executes.
+    #[allow(unsafe_code)]
+    let st = unsafe { &mut *FOOTPRINT.0.get() };
+    if st.active == 0 {
+        return;
+    }
+    for &(off, v) in writes {
+        let n = st.count as usize;
+        assert!(n < FOOTPRINT_MAX, "stack_footprint: more than {FOOTPRINT_MAX} writes");
+        let (kind, val) = match v {
+            Fp::Val(x) => (0, x),
+            Fp::Esi => (1, 0),
+            Fp::Edi => (2, 0),
+            Fp::Ebx => (3, 0),
+            Fp::Ebp => (4, 0),
+            Fp::Addr(o) => (5, o as u32),
+        };
+        st.entries[n] = [off as u32, kind, val];
+        st.count += 1;
+    }
+}
+
 /// See [`ENTRY_EAX`].
 #[inline]
 pub fn entry_eax() -> u32 {
