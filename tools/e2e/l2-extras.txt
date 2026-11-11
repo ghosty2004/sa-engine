@@ -3226,3 +3226,52 @@ RwResourcesFreeResEntry@[arg0+0x10]:4:RW
 # the freelist-of-freelists (static at 0xC9A60C) the new RwFreeList struct is allocated from (rw-mem-sg2)
 _rwFreeListCreate@0xC9A60C:0x24:RW
 _rwFreeListCreateInternal@0xC9A60C:0x24:RW
+
+# PORT-RENDER (docs/arch/render-port.md). Evidence: grove walk, lane 1, port-l2-rl2-g (undeclared writes).
+# CClouds::VolumetricClouds_Delete(slot): the slot's in-use byte of ms_vc (undeclared 0xC6AAB5..0xC6AAB8).
+CClouds::VolumetricClouds_Delete@0xC6AAB0+arg0:1:W
+# CSprite::CalcScreenCoors: the caller's out vector and the two out floats (stack, 0x36FCA8..).
+CSprite::CalcScreenCoors@arg1:0xC:W
+CSprite::CalcScreenCoors@arg2:4:W
+CSprite::CalcScreenCoors@arg3:4:W
+# CSprite::Set4Vertices2D-*: the caller's 4 RwD3D9Vertex (0x1C each; undeclared 0xC5F958..).
+CSprite::Set4Vertices2D-CRect@arg0:0x70:W
+CSprite::Set4Vertices2D-1@arg0:0x70:W
+CSprite2d::SetVertices-RwD3D9Vertex@arg0:0x70:W
+# CSprite2d::SetVertices-iffCRGBA / SetMaskVertices: CSprite2d::maVertices 0xC80468 (undeclared up to 0xC804AC).
+CSprite2d::SetVertices-iffCRGBA@0xC80468:0x70:W
+CSprite2d::SetMaskVertices@0xC80468:0x70:W
+# Render-state setters through RwEngineInstance+0x20: the RW D3D9 driver statics (render-state caches,
+# undeclared 0xC9893C..0xC9A510), declared as the L2-EXTRAS block does.
+CPostEffects::ImmediateModeRenderStatesSet@0xC979C8:0x46B8:D
+CPostEffects::ImmediateModeRenderStatesReStore@0xC979C8:0x46B8:D
+CSprite2d::SetRenderState@0xC979C8:0x46B8:D
+CShadows::SetRenderModeForShadowType@0xC979C8:0x46B8:D
+# CShadows::CalcPedShadowValues: six float out-parameters (caller stack 0x36FD28..).
+CShadows::CalcPedShadowValues@arg3:4:W
+CShadows::CalcPedShadowValues@arg4:4:W
+CShadows::CalcPedShadowValues@arg5:4:W
+CShadows::CalcPedShadowValues@arg6:4:W
+CShadows::CalcPedShadowValues@arg7:4:W
+CShadows::CalcPedShadowValues@arg8:4:W
+# CCullZones::Add*Zone: the zone written at index count of its array (rwsets names element 0 only).
+CCullZones::AddTunnelAttributeZone@0xC81C80:0x2D0:W
+CCullZones::AddMirrorAttributeZone@0xC815C0:0x6C0:W
+CCullZones::AddCullZone@0xC81F50:0x5B68:W
+# CPointLights::AddLight: aLights[NumLights] (32 x 0x30; undeclared 0xC3F0E1..).
+CPointLights::AddLight@0xC3F0E0:0x600:W
+# CRenderer::AddToLodRenderList: the entry at *ms_pLodRenderList (PC_Scratch 0xC8E0E0..).
+CRenderer::AddToLodRenderList@[0xB745D0]:8:W
+# FxInfoManager_c::ProcessMovementInfo: the caller's movement-info out struct (stack).
+FxInfoManager_c::ProcessMovementInfo@arg5:0x2C:W
+# CRenderer::SetupEntityVisibility / SetupBigBuildingVisibility: the caller's distance local (`float&`);
+# declared so a Rust caller's stack pointer is compared by pointee (split port-l2-rsp-g DIVERGED at
+# seq 3600: plain 0x36D9E8 vs rust 0x36D7EC).
+CRenderer::SetupEntityVisibility@arg1:4:W
+CRenderer::SetupBigBuildingVisibility@arg1:4:W
+# CSprite2d::SetMaskVertices(n, ...): up to n vertices of maVertices (RwD3D9Vertex[8]; port-l2-rl2b-g
+# undeclared 0xC804D8..0xC80507 beyond the first four).
+CSprite2d::SetMaskVertices@0xC80468:0xE0:W
+# FxSystemBP_c::SetBoundingSphere: the bounding sphere is allocated from the FX blueprint pool; its
+# position word (undeclared 0xA9AF34..0xA9AF36, port-l2-rl2b-g).
+FxSystemBP_c::SetBoundingSphere@0xA9AF2C:0xC:RW

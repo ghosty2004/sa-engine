@@ -1,0 +1,22 @@
+# PORT-RENDER: CRenderer split hooks (rerun with the pointer-argument extras)
+CRenderer::RenderFadingInEntities
+CRenderer::RenderFadingInUnderwaterEntities
+CRenderer::RenderOneRoad
+CRenderer::RenderOneNonRoad
+CRenderer::RenderRoads
+CRenderer::RenderEverythingBarRoads
+CRenderer::RenderFirstPersonVehicle
+CRenderer::PreRender
+CRenderer::ProcessLodRenderLists
+CRenderer::SetupMapEntityVisibility
+CRenderer::SetupEntityVisibility
+CRenderer::SetupBigBuildingVisibility
+CRenderer::ScanSectorList
+CRenderer::ScanBigBuildingList
+CRenderer::ScanPtrList_RequestModels<CPtrListSingleLink<CPhysical*>>
+CRenderer::ScanSectorList_RequestModels
+CRenderer::ConstructRenderList
+CRenderer::ScanWorld
+CRenderer::GetObjectsInFrustum
+CRenderer::RequestObjectsInFrustum
+CRenderer::AddEntityToRenderList

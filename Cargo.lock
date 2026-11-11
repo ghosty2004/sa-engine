@@ -1751,6 +1751,7 @@ dependencies = [
  "sa-oracle-format",
  "sa-ped",
  "sa-pop",
+ "sa-render",
  "sa-rwcore",
  "sa-script",
  "sa-stream",
@@ -1824,6 +1825,7 @@ dependencies = [
  "sa-oracle-format",
  "sa-ped",
  "sa-pop",
+ "sa-render",
  "sa-rwcore",
  "sa-script",
  "sa-stream",
@@ -1864,6 +1866,18 @@ dependencies = [
  "sa-core",
  "sa-macros",
  "sa-math",
+ "sa-stream",
+ "sa-world",
+]
+
+[[package]]
+name = "sa-render"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-pop",
  "sa-stream",
  "sa-world",
 ]

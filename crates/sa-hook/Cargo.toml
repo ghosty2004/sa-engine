@@ -29,6 +29,7 @@ sa-cam = { path = "../sa-cam", features = ["in-process"] }
 sa-ai = { path = "../sa-ai", features = ["in-process"] }
 sa-audio = { path = "../sa-audio", features = ["in-process"] }
 sa-rwcore = { path = "../sa-rwcore", features = ["in-process"] }
+sa-render = { path = "../sa-render", features = ["in-process"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [
