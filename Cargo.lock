@@ -1694,6 +1694,7 @@ dependencies = [
  "iced-x86",
  "sa-anim",
  "sa-core",
+ "sa-hud",
  "sa-input",
  "sa-math",
  "sa-oracle-format",
@@ -1705,6 +1706,19 @@ dependencies = [
  "sa-weapon",
  "sa-world",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "sa-hud"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-pop",
+ "sa-script",
+ "sa-stream",
+ "sa-world",
 ]
 
 [[package]]
@@ -1749,6 +1763,7 @@ dependencies = [
  "sa-anim",
  "sa-core",
  "sa-hook",
+ "sa-hud",
  "sa-input",
  "sa-math",
  "sa-oracle-format",

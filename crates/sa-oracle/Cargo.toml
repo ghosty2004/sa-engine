@@ -26,6 +26,7 @@ sa-ped = { path = "../sa-ped" }
 sa-input = { path = "../sa-input" }
 sa-anim = { path = "../sa-anim" }
 sa-veh = { path = "../sa-veh" }
+sa-hud = { path = "../sa-hud" }
 
 # Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
 [target.'cfg(not(windows))'.dependencies]

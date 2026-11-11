@@ -1,0 +1,25 @@
+[package]
+name = "sa-hud"
+version = "0.1.0"
+description = "HUD subsystem of gta_sa.exe 1.0 US (PORT-HUD): CHud, CHudColours, CRadar, CFont, CMessages, CText/CKeyArray, COnscreenTimer, CMenuSystem, CLocalisation, CUserDisplay. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+sa-stream = { path = "../sa-stream" }
+sa-world = { path = "../sa-world" }
+
+[dev-dependencies]
+sa-pop = { path = "../sa-pop" }
+sa-script = { path = "../sa-script" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook); see sa-world.
+in-process = ["sa-core/in-process", "sa-stream/in-process", "sa-world/in-process"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }

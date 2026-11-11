@@ -33,6 +33,9 @@ pub mod specs_coll_prim;
 pub mod specs_coll_surface;
 pub mod specs_core;
 pub mod specs_core_util;
+pub mod specs_hud;
+pub mod specs_hud_msg;
+pub mod specs_hud_radar;
 pub mod specs_input_ccm;
 pub mod specs_input_pad;
 pub mod specs_ped;
@@ -92,6 +95,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .chain(sa_input::hooks::ALL.iter())
                 .chain(sa_anim::hooks::ALL.iter())
                 .chain(sa_veh::hooks::ALL.iter())
+                .chain(sa_hud::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })

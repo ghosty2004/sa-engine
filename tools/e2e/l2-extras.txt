@@ -2153,3 +2153,117 @@ CBoat::GetBoatAtomicObjectCB@arg1:4:RW
 # CDamageManager::GetComponentGroup: the two out-parameters (ApplyDamage passes its own argument slots).
 CDamageManager::GetComponentGroup@arg1:4:RW
 CDamageManager::GetComponentGroup@arg2:1:RW
+
+# PORT-HUD (docs/arch/hud-port.md). Evidence: grove walk, lane 6, port-l2-hud-a-g (l2) and port-l2-hud-as-g
+# (split): the undeclared writes (original and Rust alike) listed per line.
+# CHud::SetMessage: m_Message[400] (0xBAB041+18), the terminator may land one past it (0xBAB1D0).
+CHud::SetMessage@0xBAB040:0x191:RW
+# CHud::GetRidOfAllHudMessages: the three help buffers (0xBAA7A1+148) and the big messages it clears.
+CHud::GetRidOfAllHudMessages@0xBAA480:0x4B0:RW
+CHud::GetRidOfAllHudMessages@0xBAACC0:0x380:RW
+CHud::GetRidOfAllHudMessages@0xBAB040:0x190:RW
+# CHudColours::GetRGB/GetRGBA: the CRGBA behind the hidden return pointer (caller stack, 0x36FB60+4).
+CHudColours::GetRGB@arg0:4:RW
+CHudColours::GetRGBA@arg0:4:RW
+# CUserDisplay::Init: COnscreenTimer::Init on CUserDisplay::OnscnTimer (0xBA17C1.., 0xBA18D3).
+CUserDisplay::Init@0xBA1788:0x154:RW
+# CUserDisplay::Process: CPlaceName::Process on CUserDisplay::PlaceName (0xBA18F5+2, timer 0xBA18F8).
+CUserDisplay::Process@0xBA18F4:8:RW
+# CFont::GetNumberLines: CFont::ProcessCurrentString's static at 0xB71670 (0xB71671+3).
+CFont::GetNumberLines@0xB71670:4:RW
+# HUD static initialisers: the CRT atexit/onexit byte 0xC9D428 written by _atexit; the constructed objects.
+__init_CHud__Sprites@0xC9D428:1:RW
+__init_CFont__Sprite@0xC9D428:1:RW
+__init_CFont__ButtonSprite@0xC9D428:1:RW
+__init_CRadar__RadarBlipSprites@0xC9D428:1:RW
+__init_CRadar__ArrowBlipColour@0xC9D428:1:RW
+__init_HudColour@0xC9D428:1:RW
+__init_HudColour@0xBAB22C:0x3C:RW
+# __init_FrontEndMenuManager: the CMenuManager object (0x1B78, layouts.csv; writes up to +0x1B00) and the
+# constructor's side effects on AERadioTrackManager+4..7 (0x8CB6FC) and g_fx+0x54 (0xA9AE54).
+__init_FrontEndMenuManager@0xC9D428:1:RW
+__init_FrontEndMenuManager@0xBA6748:0x1B78:RW
+__init_FrontEndMenuManager@0x8CB6FC:4:RW
+__init_FrontEndMenuManager@0xA9AE54:1:RW
+# CRadar (grove walk, lane 6, port-l2-hud-r-g): ms_RadarTrace[175] (0xBA86F0, 0x28 each) written at computed
+# slots (0xBA873C.., 0xBA8DF4..); Initialise also fills gRadarTextures[144] (0xBA8478); the CVector2D / corner
+# outputs behind the pointer arguments (caller stack 0x36FCAC+8, 0x36FB78+0x20); the clipped tile coordinates.
+CRadar::ChangeBlipColour@0xBA86F0:0x1B58:RW
+CRadar::SetBlipSprite@0xBA86F0:0x1B58:RW
+CRadar::ChangeBlipDisplay@0xBA86F0:0x1B58:RW
+CRadar::ChangeBlipScale@0xBA86F0:0x1B58:RW
+CRadar::ChangeBlipBrightness@0xBA86F0:0x1B58:RW
+CRadar::SetBlipFriendly@0xBA86F0:0x1B58:RW
+CRadar::SetBlipAlwaysDisplayInZoom@0xBA86F0:0x1B58:RW
+CRadar::SetBlipFade@0xBA86F0:0x1B58:RW
+CRadar::SetCoordBlipAppearance@0xBA86F0:0x1B58:RW
+CRadar::SetBlipEntryExit@0xBA86F0:0x1B58:RW
+CRadar::ClearActualBlip-OG@0xBA86F0:0x1B58:RW
+CRadar::ClearBlip@0xBA86F0:0x1B58:RW
+CRadar::ClearBlipForEntity-OG@0xBA86F0:0x1B58:RW
+CRadar::GetNewUniqueBlipIndex@0xBA86F0:0x1B58:RW
+CRadar::SetCoordBlip@0xBA86F0:0x1B58:RW
+CRadar::SetShortRangeCoordBlip@0xBA86F0:0x1B58:RW
+CRadar::SetEntityBlip@0xBA86F0:0x1B58:RW
+CRadar::Initialise@0xBA86F0:0x1B58:RW
+CRadar::Initialise@0xBA8478:0x240:RW
+CRadar::LimitRadarPoint@arg0:8:RW
+CRadar::TransformRealWorldPointToRadarSpace@arg0:8:RW
+CRadar::TransformRadarPointToScreenSpace@arg0:8:RW
+CRadar::GetTextureCorners@arg2:0x20:RW
+CRadar::ClipRadarTileCoords@arg0:4:RW
+CRadar::ClipRadarTileCoords@arg1:4:RW
+# CMessages / COnscreenTimer / CText (grove walk, lane 6, port-l2-hud-m-g and port-l2-hud-s-g): the message
+# queues BriefMessages 0xC1A7F0 (0xC1A7F0+4), BigMessages 0xC1A970, PreviousBriefs 0xC1A570 (0xC1A591..),
+# the destination buffers behind the pointer arguments (StringCopy: ControlsManager action names 0xB703BC+40n
+# and caller stack; InsertNumberInString arg7, InsertPlayerControlKeysInString arg0: caller stack, 0x190 =
+# the GXT line buffer size), the CHud buffers written through CHud::GetRidOfAllHudMessages / SetMessage
+# (0xBAA7A1+148, 0xBAB041+18), the on-screen timer object 0xBA1788 (0xBA17C1..0xBA18D3) and TheText 0xC1B340.
+CMessages::StringCopy@arg0:0x190:RW
+CMessages::InsertNumberInString@arg7:0x190:RW
+CMessages::InsertPlayerControlKeysInString@arg0:0x190:RW
+CMessages::ClearMessages@0xC1A7F0:0x180:RW
+CMessages::ClearMessages@0xC1A970:0x540:RW
+CMessages::Init@0xC1A7F0:0x180:RW
+CMessages::Init@0xC1A970:0x540:RW
+CMessages::ClearAllMessagesDisplayedByGame@0xC1A7F0:0x180:RW
+CMessages::ClearAllMessagesDisplayedByGame@0xC1A970:0x540:RW
+CMessages::Process@0xC1A7F0:0x180:RW
+CMessages::Process@0xC1A970:0x540:RW
+CMessages::AddToPreviousBriefArray@0xC1A570:0x280:RW
+CMessages::ClearPreviousBriefArray@0xC1A570:0x280:RW
+CMessages::Init@0xC1A570:0x280:RW
+CMessages::ClearAllMessagesDisplayedByGame@0xC1A570:0x280:RW
+CMessages::AddMessageJump@0xC1A570:0x280:RW
+CMessages::AddMessageQ@0xC1A570:0x280:RW
+CMessages::AddMessageWithNumberQ@0xC1A570:0x280:RW
+CMessages::AddMessageWithStringQ@0xC1A570:0x280:RW
+CMessages::AddMessageJumpQWithNumber@0xC1A570:0x280:RW
+CMessages::AddMessageJumpQWithString@0xC1A570:0x280:RW
+CMessages::ClearSmallMessagesOnly@0xC1A7F0:0x180:RW
+CMessages::AddMessageJump@0xC1A7F0:0x180:RW
+CMessages::AddMessageQ@0xC1A7F0:0x180:RW
+CMessages::AddMessageWithNumberQ@0xC1A7F0:0x180:RW
+CMessages::AddMessageWithStringQ@0xC1A7F0:0x180:RW
+CMessages::AddMessageJumpQWithNumber@0xC1A7F0:0x180:RW
+CMessages::AddMessageJumpQWithString@0xC1A7F0:0x180:RW
+CMessages::AddBigMessage@0xC1A970:0x540:RW
+CMessages::AddBigMessageQ@0xC1A970:0x540:RW
+CMessages::AddBigMessageWithNumber@0xC1A970:0x540:RW
+CMessages::AddBigMessageWithNumberQ@0xC1A970:0x540:RW
+CMessages::ClearAllMessagesDisplayedByGame@0xBAA480:0x4B0:RW
+CMessages::Display@0xBAA480:0x4B0:RW
+CMessages::ClearAllMessagesDisplayedByGame@0xBAACC0:0x380:RW
+CMessages::Display@0xBAACC0:0x380:RW
+CMessages::ClearAllMessagesDisplayedByGame@0xBAB040:0x191:RW
+CMessages::Display@0xBAB040:0x191:RW
+COnscreenTimer::Init@0xBA1788:0x154:RW
+CText::Unload@ecx:0xA90:RW
+CText::Constructor@ecx:0xA90:RW
+# CRadar::StreamRadarSections (split, port-l2-hud-s-g): CStreaming::RequestModel / RemoveModel on the radar
+# tiles (models 20000+): ms_aInfoForModel links (0x8EB18A, 0x955754.., 0x965488) and the D3D texture
+# buffer entries (0xC87C94, 0xC87C98), as the CStreaming lines above.
+CRadar::StreamRadarSections-xy@0x8E4CC0:0x80864:RW
+CRadar::StreamRadarSections-xy@0xC87C68:0x37C:RW
+CRadar::StreamRadarSections-vec@0x8E4CC0:0x80864:RW
+CRadar::StreamRadarSections-vec@0xC87C68:0x37C:RW
