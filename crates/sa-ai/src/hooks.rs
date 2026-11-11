@@ -49,6 +49,15 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::geh::HOOKS,
     crate::gang6::HOOKS,
     crate::partner6::HOOKS,
+    crate::mvpa_ai1::HOOKS,
+    crate::mvpa_ai2::HOOKS,
+    crate::mvpc_ai1::HOOKS,
+    crate::mvpc_ai2::HOOKS,
+    crate::mvpc_ai3::HOOKS,
+    crate::mvpb_ai::HOOKS,
+    crate::mvpb_ai2::HOOKS,
+    crate::mvpb_ai3::HOOKS,
+    crate::mvpb_ai4::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

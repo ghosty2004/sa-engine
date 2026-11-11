@@ -178,18 +178,149 @@ pub fn check_for_blockage(this: GPtr<u8>, model: i32) -> u8 {
     0
 }
 
-/// `CDarkel::DrawMessages()` (0x43CEC0), partial port (ADR-002 fallback). PORTED: the exits drawing nothing:
-/// byte 0xA43088 == 1 or frenzy `Status` (0x96A704, u16) not in 1..=4.
-/// NOT PORTED (fallback to the whole original, decided at entry from the same two reads): statuses 1..4 (the
-/// big messages and the timer / kill counter HUD).
-#[hook(addr = 0x43CEC0, conv = cdecl, name = "CDarkel::DrawMessages", expect = "A0 88 30 A4 00", fallback)]
+orig! {
+    /// `CMessages::AddBigMessage(const GxtChar*, uint32, eMessageStyle)` (0x69F2B0)
+    fn add_big_message(text: GPtr<u8>, time: u32, style: u32) = cdecl 0x69F2B0 => unported;
+    /// `CText::Get(const char*)` (0x6A0050, on `TheText` 0xC1B340)
+    fn text_get(this: GPtr<u8>, key: GPtr<u8>) -> GPtr<u8> = thiscall 0x6A0050 => unported;
+    /// `CFont::SetProportional(bool)` (0x7195B0)
+    fn font_set_proportional(b: u32) = cdecl 0x7195B0 => unported;
+    /// `CFont::SetBackground(bool, bool)` (0x7195C0)
+    fn font_set_background(a: u32, b: u32) = cdecl 0x7195C0 => unported;
+    /// `CFont::SetScale(float, float)` (0x719380)
+    fn font_set_scale(w: f32, h: f32) = cdecl 0x719380 => unported;
+    /// `CFont::SetOrientation(eFontAlignment)` (0x719610)
+    fn font_set_orientation(o: u32) = cdecl 0x719610 => unported;
+    /// `CFont::SetRightJustifyWrap(float)` (0x7194F0)
+    fn font_set_right_justify_wrap(v: u32) = cdecl 0x7194F0 => unported;
+    /// `CFont::SetFontStyle(eFontStyle)` (0x719490)
+    fn font_set_font_style(s: u32) = cdecl 0x719490 => unported;
+    /// `CFont::SetWrapx(float)` (0x7194D0)
+    fn font_set_wrapx(v: f32) = cdecl 0x7194D0 => unported;
+    /// `CFont::SetEdge(int8)` (0x719590)
+    fn font_set_edge(v: u32) = cdecl 0x719590 => unported;
+    /// `CRGBA::CRGBA(uint8, uint8, uint8, uint8)` (0x7170C0)
+    fn rgba_ctor(this: GPtr<u32>, r: u32, gg: u32, b: u32, a: u32) -> GPtr<u32> = thiscall 0x7170C0 => unported;
+    /// `CFont::SetDropColor(CRGBA)` (0x719510)
+    fn font_set_drop_color(c: u32) = cdecl 0x719510 => unported;
+    /// `CHudColours::GetRGB(CRGBA* out, uint8)` (0x58FEA0, on `HudColour` 0xBAB22C)
+    fn hud_colours_get_rgb(this: GPtr<u8>, out: GPtr<u32>, colour: u32) -> GPtr<u32> = thiscall 0x58FEA0 => unported;
+    /// `CFont::SetColor(CRGBA)` (0x719430)
+    fn font_set_color(c: u32) = cdecl 0x719430 => unported;
+    /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
+    fn get_y_pos_based_on_health(player: u32, y: f32, offset: u32) -> f64 = cdecl 0x588B60 => unported;
+    /// CRT `sprintf` (0x821BB5) with two int arguments
+    fn sprintf2(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32, b: u32) -> i32 = cdecl 0x821BB5 => unported;
+    /// CRT `sprintf` (0x821BB5) with one int argument
+    fn sprintf1(buf: GPtr<u8>, fmt: GPtr<u8>, a: u32) -> i32 = cdecl 0x821BB5 => unported;
+    /// `AsciiToGxtChar(const char*, GxtChar*)` (0x718600)
+    fn ascii_to_gxt_char(s: GPtr<u8>, out: GPtr<u8>) = cdecl 0x718600 => unported;
+    /// `CFont::PrintString(float, float, const GxtChar*)` (0x71A700)
+    fn font_print_string(px: f32, py: f32, text: GPtr<u8>) = cdecl 0x71A700 => unported;
+}
+
+/// `GetYPosBasedOnHealth(1, GetYPosBasedOnHealth(focusPlayer, y, 12), 12)` stored f32 (the first result is the
+/// second call's float argument, left in place on the stack).
+fn darkel_y(y: f32) -> f32 {
+    let pif = u32::from(g::<u8>(0xB7CD74).read());
+    let r = X87::from_f64_exact(get_y_pos_based_on_health(pif, y, 0xC)).to_f32();
+    X87::from_f64_exact(get_y_pos_based_on_health(1, r, 0xC)).to_f32()
+}
+
+/// `RsGlobal.width - RsGlobal.width * 0.0015625 * 32` (80-bit) as the f32 x of the HUD texts.
+fn darkel_text_x() -> f32 {
+    let w = xi(g::<i32>(0xC17044).read());
+    w.fsub(x(f32::from_bits(0x3ACC_CCCD)).fmul(w).fmul_m(32.0))
+        .to_f32()
+}
+
+/// `CDarkel::DrawMessages()` (0x43CEC0), from the bytes. Nothing when byte 0xA43088 == 1 or frenzy `Status`
+/// (0x96A704, u16) is not 1..4 (jump table 0x43D1D0); status 3 draws nothing (verified behaviour of the former
+/// partial port). Status 2 (passed): with byte 0x969A4A set and less than 5000 ms since `TimeOfFrenzyStart`
+/// (0x96A6E0), the big message `TheText.Get(0x859500)` for 3000 ms. Statuses 1 and 4: the start message
+/// (0x96A6D0, when set) for 3000 ms while `now - start` is < 8000 ms (with 0x969A4A: 3000..11000 ms); then the
+/// font state (proportional, no background, scale `(w * 0.0015625 * 0.5, h * 0.0022321)`, alignment 2, style 2,
+/// wrap `w * 0.0015625 * 640`, edge 2, drop colour black, HUD colour 4), the two y positions (`h * 0.0022321 *
+/// 148` and `* 148 + * 20`, each through `GetYPosBasedOnHealth(focus, ., 12)` then `(1, ., 12)`, both moved down
+/// by `h * 0.0022321 * 72` when player 2 exists), the timer `"%d:%02d"` of `TimeLimit - now + start` (shown when
+/// above 4000 ms or on odd frames; only with `TimeLimit >= 0`) and the kills left `"%d"` (negative shown as 0),
+/// printed right-aligned at `w - w * 0.0015625 * 32`.
+#[hook(addr = 0x43CEC0, conv = cdecl, name = "CDarkel::DrawMessages", expect = "A0 88 30 A4 00",
+       unverified = "popw4-partial-1", route = "L2", hazards = "none",
+       note = "completed partial port: statuses 1, 2, 4 are new (frenzy HUD); the 0xA43088 / status exits were verified")]
 pub fn darkel_draw_messages() {
     if g::<u8>(0xA43088).read() == 1 {
         return;
     }
-    if (1..=4).contains(&g::<u16>(0x96A704).read()) {
-        darkel_draw_messages_original();
+    let status = g::<u16>(0x96A704).read();
+    let now = g::<u32>(0xB7CB84).read();
+    let start = g::<u32>(0x96A6E0).read();
+    let flag = g::<u8>(0x969A4A).read() != 0;
+    match status {
+        2 => {
+            if flag && now.wrapping_sub(start) < 0x1388 {
+                add_big_message(text_get(g::<u8>(0xC1B340), g::<u8>(0x859500)), 0xBB8, 0);
+            }
+            return;
+        }
+        1 | 4 => {}
+        _ => return,
     }
+    let t = now.wrapping_sub(start);
+    let show = if flag {
+        (0xBB8..0x2AF8).contains(&t)
+    } else {
+        t < 0x1F40
+    };
+    let msg = g::<GPtr<u8>>(0x96A6D0).read();
+    if show && !msg.is_null() {
+        add_big_message(msg, 0xBB8, 0);
+    }
+    let w = || xi(g::<i32>(0xC17044).read());
+    let h = || xi(g::<i32>(0xC17048).read()).fmul_m(f32::from_bits(0x3B12_4925));
+    font_set_proportional(1);
+    font_set_background(0, 0);
+    font_set_scale(
+        w().fmul_m(f32::from_bits(0x3ACC_CCCD)).fmul_m(0.5).to_f32(),
+        h().to_f32(),
+    );
+    font_set_orientation(2);
+    font_set_right_justify_wrap(0);
+    font_set_font_style(2);
+    font_set_wrapx(w().fmul_m(f32::from_bits(0x3ACC_CCCD)).fmul_m(640.0).to_f32());
+    font_set_edge(2);
+    let mut rgba = [0u32; 2];
+    let c = rgba_ctor(GPtr::from_raw(rgba.as_mut_ptr()), 0, 0, 0, 0xFF);
+    font_set_drop_color(c.read());
+    let mut col = [0u32; 2];
+    let c = hud_colours_get_rgb(g::<u8>(0xBAB22C), GPtr::from_raw(col.as_mut_ptr()), 4);
+    font_set_color(c.read());
+    let mut y0 = darkel_y(h().fmul_m(148.0).to_f32());
+    let hh = h();
+    let mut y1 = darkel_y(x(148.0).fmul(hh).fadd(hh.fmul_m(20.0)).to_f32());
+    if g::<u32>(0xB7CF28).read() != 0 {
+        let off = h().fmul_m(72.0);
+        y0 = x(y0).fadd(off).to_f32();
+        y1 = off.fadd_m(y1).to_f32();
+    }
+    let limit = g::<i32>(0x96A6E8).read();
+    if limit >= 0 {
+        let left = (limit as u32).wrapping_sub(now).wrapping_add(start);
+        sprintf2(
+            g::<u8>(0xB71670),
+            g::<u8>(0x859510),
+            left / 60000,
+            (left % 60000) / 1000,
+        );
+        ascii_to_gxt_char(g::<u8>(0xB71670), g::<u8>(0xC1B100));
+        if left > 0xFA0 || g::<u8>(0xB7CB4C).read() & 1 != 0 {
+            font_print_string(darkel_text_x(), y0, g::<u8>(0xC1B100));
+        }
+    }
+    let kills = g::<i32>(0x96A6EC).read().max(0);
+    sprintf1(g::<u8>(0xB71670), g::<u8>(0x859508), kills as u32);
+    ascii_to_gxt_char(g::<u8>(0xB71670), g::<u8>(0xC1B100));
+    font_print_string(darkel_text_x(), y1, g::<u8>(0xC1B100));
 }
 
 /// `CDarkel::RegisterKillByPlayer(const CPed* ped, eWeaponType weapon, bool headShot, int32 playerId)` (0x43DCD0):

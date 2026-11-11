@@ -20,5 +20,16 @@ pub mod zones;
 pub mod cworld2;
 pub mod entity;
 pub mod misc2;
+pub mod mvpb_world;
+pub mod mvpb_world2;
+pub mod mvpb_stats;
+pub mod mvpb_world3;
 pub mod object;
 pub mod statics2;
+// WRITER-MVP-A (unverified batches)
+pub mod mvpa1;
+pub mod mvpa_math;
+pub mod mvpa2;
+pub mod mvpc_world1;
+pub mod mvpc_world2;
+pub mod mvpe_ent1;

@@ -42,3 +42,13 @@ pub mod markers;
 pub mod stencilshadows;
 pub mod timecycle;
 pub mod waterlevel;
+
+pub mod mvpa_render1;
+pub mod mvpa_render2;
+pub mod mvpa_fx1;
+pub mod mvpa_render3;
+pub mod mvpa_fx2;
+pub mod mvpc_fx1;
+pub mod mvpc_fx2;
+pub mod mvpc_render1;
+pub mod mvpb_r1;

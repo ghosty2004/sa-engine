@@ -18,6 +18,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::water_cannon::HOOKS,
     crate::effects::HOOKS,
     crate::statics::HOOKS,
+    crate::mvpb_a::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -33,6 +34,7 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     crate::water_cannon::GLOBALS,
     crate::effects::GLOBALS,
     crate::statics::GLOBALS,
+    crate::mvpb_a::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

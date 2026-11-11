@@ -46,6 +46,23 @@ pub const MODULES: &[&[HookReg]] = &[
     world::object::HOOKS,
     world::cworld2::HOOKS,
     world::misc2::HOOKS,
+    // WRITER-MVP-A (unverified batches)
+    world::mvpa1::HOOKS,
+    world::mvpa_math::HOOKS,
+    world::mvpa2::HOOKS,
+    // WRITER-MVP-C (unverified batches)
+    collision::mvpc_coll1::HOOKS,
+    world::mvpc_world1::HOOKS,
+    world::mvpc_world2::HOOKS,
+    world::mvpe_ent1::HOOKS,
+    collision::mvpe_tempcol::HOOKS,
+    collision::mvpe_coll1::HOOKS,
+    physical::mvpe_phys1::HOOKS,
+    world::mvpb_world::HOOKS,
+    world::mvpb_world2::HOOKS,
+    collision::mvpb_coll::HOOKS,
+    world::mvpb_stats::HOOKS,
+    world::mvpb_world3::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

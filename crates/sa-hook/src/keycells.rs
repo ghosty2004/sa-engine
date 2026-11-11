@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 8] = [
+pub const READERS: [Reader; 20] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -108,6 +108,103 @@ pub const READERS: [Reader; 8] = [
         disp_off: 2,
         key: 0x41DA32,
         value: 0xFFFE_6212,
+    },
+    // CGangWars::CreateAttackWave entry 0x444810 (WRITER-POP-4: push -1; jmp rel32): `adc edi, [0x444813]`
+    // at 0x403A92.
+    Reader {
+        at: 0x403A92,
+        insn: [0x13, 0x3D, 0x13, 0x48, 0x44, 0x00],
+        disp_off: 2,
+        key: 0x444813,
+        value: 0xFFFC_22C2,
+    },
+    // MVP-C batches: CDraw::SetFOV entry 0x6FF410 (`sbb edx, [0x6FF415]` at 0x401375),
+    // CTaskComplexWalkRoundCar::Constructor entry 0x6541B0 (`xor ecx, [0x6541B2]` at 0x40153B,
+    // `add edx, [0x6541B2]` at 0x401591), CTaskSimpleIKChain::~CTaskSimpleIKChain entry 0x633A90
+    // (`add ebp, [0x633A93]` at 0x156BA30), found by the test below.
+    Reader {
+        at: 0x401375,
+        insn: [0x1B, 0x15, 0x15, 0xF4, 0x6F, 0x00],
+        disp_off: 2,
+        key: 0x6FF415,
+        value: 0xFFD0_1C0C,
+    },
+    Reader {
+        at: 0x40153B,
+        insn: [0x33, 0x0D, 0xB2, 0x41, 0x65, 0x00],
+        disp_off: 2,
+        key: 0x6541B2,
+        value: 0xDACE_F1E9,
+    },
+    Reader {
+        at: 0x401591,
+        insn: [0x03, 0x15, 0xB2, 0x41, 0x65, 0x00],
+        disp_off: 2,
+        key: 0x6541B2,
+        value: 0xDACE_F1E9,
+    },
+    Reader {
+        at: 0x156BA30,
+        insn: [0x03, 0x2D, 0x93, 0x3A, 0x63, 0x00],
+        disp_off: 2,
+        key: 0x633A93,
+        value: 0xFFDC_E7C5,
+    },
+    // CCarEnterExit::SetPedInCarDirect entry 0x650280 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x40106E,
+        insn: [0x13, 0x1D, 0x81, 0x02, 0x65, 0x00],
+        disp_off: 2,
+        key: 0x650281,
+        value: 0xDB65_6CE9,
+    },
+    // CTaskSimpleCarSetPedInAsPassenger entry 0x646FE0 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x4019C0,
+        insn: [0x1B, 0x05, 0xE2, 0x6F, 0x64, 0x00],
+        disp_off: 2,
+        key: 0x646FE2,
+        value: 0xDBAC_13E9,
+    },
+    // CTaskSimpleHoldEntity::Constructor-1 entry 0x6913A0 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x40686C,
+        insn: [0x1B, 0x05, 0xA2, 0x13, 0x69, 0x00],
+        disp_off: 2,
+        key: 0x6913A2,
+        value: 0xD728_ACE9,
+    },
+    // CEntity::Destructor entry 0x535E90 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x40744B,
+        insn: [0x33, 0x0D, 0x93, 0x5E, 0x53, 0x00],
+        disp_off: 2,
+        key: 0x535E93,
+        value: 0xFFED_10BE,
+    },
+    // CTaskComplexWalkAlongsidePed::CreateSubTask entry 0x685000 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x40A173,
+        insn: [0x13, 0x15, 0x02, 0x50, 0x68, 0x00],
+        disp_off: 2,
+        key: 0x685002,
+        value: 0xFFD7_C79C,
+    },
+    // CPlaneTrail::RegisterPoint entry 0x7172D0 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x1562826,
+        insn: [0x13, 0x15, 0xD2, 0x72, 0x71, 0x00],
+        disp_off: 2,
+        key: 0x7172D2,
+        value: 0xCF01_AEE9,
+    },
+    // CTaskSimpleCarSetPedInAsPassenger entry 0x646FE0 (WRITER-MVP-B), found by the test below.
+    Reader {
+        at: 0x156710A,
+        insn: [0x1B, 0x35, 0xE2, 0x6F, 0x64, 0x00],
+        disp_off: 2,
+        key: 0x646FE2,
+        value: 0xDBAC_13E9,
     },
 ];
 

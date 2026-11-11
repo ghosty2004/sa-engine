@@ -6,7 +6,7 @@ use sa_core::mem::GlobalDesc;
 
 use crate::{
     air2, automobile, automobile2, bike, bike2, boat, boat2, checks, checks2, damage, door, door2, enterexit,
-    enterexit2, handling, handling2, heli, misc, statics, statics2, train, train2, transmission, vehicle,
+    enterexit2, handling, handling2, heli, misc, mvpb_a1, mvpb_a2, mvpb_a3, mvpb_a4, mvpb_a5, statics, statics2, train, train2, transmission, vehicle,
     vehicle2,
 };
 
@@ -37,6 +37,15 @@ pub const MODULES: &[&[HookReg]] = &[
     handling2::HOOKS,
     enterexit2::HOOKS,
     checks2::HOOKS,
+    // WRITER-MVP-C (unverified batches)
+    crate::mvpc_veh1::HOOKS,
+    // WRITER-MVP-E (unverified batches)
+    crate::mvpe_veh1::HOOKS,
+    mvpb_a1::HOOKS,
+    mvpb_a2::HOOKS,
+    mvpb_a3::HOOKS,
+    mvpb_a4::HOOKS,
+    mvpb_a5::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -65,6 +74,11 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     handling2::GLOBALS,
     enterexit2::GLOBALS,
     checks2::GLOBALS,
+    mvpb_a1::GLOBALS,
+    mvpb_a2::GLOBALS,
+    mvpb_a3::GLOBALS,
+    mvpb_a4::GLOBALS,
+    mvpb_a5::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

@@ -28,6 +28,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::video::HOOKS,
     crate::light::HOOKS,
     crate::game::HOOKS,
+    crate::mvpa_game::HOOKS,
+    crate::mvpa_game2::HOOKS,
+    crate::mvpb_app::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

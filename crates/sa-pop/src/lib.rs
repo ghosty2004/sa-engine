@@ -39,3 +39,9 @@ pub mod carctrl5;
 pub mod misc3;
 pub mod misc4;
 pub mod population3;
+
+pub mod carctrl6;
+pub mod carctrl7;
+pub mod misc5;
+pub mod misc6;
+pub mod population4;

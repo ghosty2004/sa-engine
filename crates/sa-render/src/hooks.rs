@@ -9,6 +9,10 @@ use crate::{
     shadows, specialfx, sprite, sprite2d, weather,
 };
 use crate::{carplates, glass, markers, stencilshadows, timecycle, waterlevel};
+use crate::{mvpa_fx1, mvpa_fx2, mvpa_render1, mvpa_render2, mvpa_render3};
+use crate::mvpc_fx1;
+use crate::mvpc_fx2;
+use crate::mvpc_render1;
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -33,6 +37,15 @@ pub const MODULES: &[&[HookReg]] = &[
     carplates::HOOKS,
     glass::HOOKS,
     stencilshadows::HOOKS,
+    mvpa_render1::HOOKS,
+    mvpa_render2::HOOKS,
+    mvpa_fx1::HOOKS,
+    mvpa_render3::HOOKS,
+    mvpa_fx2::HOOKS,
+    mvpc_fx1::HOOKS,
+    mvpc_fx2::HOOKS,
+    mvpc_render1::HOOKS,
+    crate::mvpb_r1::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

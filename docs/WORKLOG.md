@@ -985,3 +985,14 @@
 - Process: the shared scratchpad collided (VERIFIER-3 overwrote the main session's union.sh); the main session's
   helpers now live in scratchpad/main/, agents use their own subfolders.
 - MOD-1 (mod support) added to the ROADMAP as nice-to-have after the native MVP.
+
+## 2026-11-11 Writers integrated (main session): POP-4, WRITER-MVP-A/B/C/E (unverified, off by default)
+- 637 unverified hooks now on master in the verification queue (catalog/verify-queue.csv); 601 catalogue rows move
+  from specified to implemented with evidence "written, unverified (batch …)". They are installed only when selected
+  with SA_UNVERIFIED, so default behaviour is unchanged.
+- POP-4 also fixes a POP-2 bug in misc2::model_loaded (load state read 0x10 too far; [model*20 + 0x8E4CD0]); the two
+  gang-ped hooks depending on it went back to unverified.
+- keycells READERS merged to 20 entries (POP-3, POP-4, MVP-B, MVP-C).
+- verify-all main-g4 (fresh DLL): IDENTICAL on all 11.
+- Rules from the user today: sub-agents start no agents at all (PLAN updated); new files are named after their
+  content, never after writer/batch (the 27 mvp*-named files will be renamed once their batches are verified).

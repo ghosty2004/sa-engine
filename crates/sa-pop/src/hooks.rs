@@ -5,8 +5,9 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
 use crate::{
-    carctrl, carctrl2, carctrl3, carctrl4, carctrl5, cargen, gangs, misc, misc2, misc3, misc4, pathfind, popcycle,
-    population, population2, population3, statics, statics_gen,
+    carctrl, carctrl2, carctrl3, carctrl4, carctrl5, carctrl6, carctrl7, cargen, gangs, misc, misc2, misc3,
+    misc4, misc5, misc6, pathfind, popcycle, population, population2, population3, population4, statics,
+    statics_gen,
 };
 
 /// Every module's registrations, in this order.
@@ -29,6 +30,11 @@ pub const MODULES: &[&[HookReg]] = &[
     population3::HOOKS,
     misc3::HOOKS,
     misc4::HOOKS,
+    carctrl6::HOOKS,
+    carctrl7::HOOKS,
+    misc5::HOOKS,
+    misc6::HOOKS,
+    population4::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -49,6 +55,11 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     population3::GLOBALS,
     misc3::GLOBALS,
     misc4::GLOBALS,
+    carctrl6::GLOBALS,
+    carctrl7::GLOBALS,
+    misc5::GLOBALS,
+    misc6::GLOBALS,
+    population4::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

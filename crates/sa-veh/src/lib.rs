@@ -42,7 +42,16 @@ pub mod door2;
 pub mod enterexit2;
 pub mod handling2;
 pub mod misc;
+pub mod mvpc_veh1;
+pub mod mvpe_veh1;
 pub mod statics2;
 pub mod train2;
 pub mod transmission;
 pub mod vehicle2;
+
+// WRITER-MVP-B (helper A)
+pub mod mvpb_a1;
+pub mod mvpb_a2;
+pub mod mvpb_a3;
+pub mod mvpb_a4;
+pub mod mvpb_a5;

@@ -121,7 +121,10 @@ mod tests {
                     && t.kind == "mem-abs"
                     && t.target == r.key
                     && t.disp_off == r.disp_off
-                    && t.chunk),
+                    // in line: a recognised protection chunk, or (e.g. the `.HOODLUM` dispatcher at
+                    // 0x156BA29, `push ebp; mov ebp, [k]; add ebp, [0x633A93]; xchg [esp], ebp`) a
+                    // linear-sweep decode, which keycells.rs treats as a reader as well
+                    && (t.chunk || t.sweep)),
                 "{:#x} is not a protection read in catalog/code-data-reads.csv",
                 r.at
             );

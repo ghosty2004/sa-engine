@@ -4,7 +4,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 
-use crate::common::{g, jne_mask, jp5, model_info, rd, wr, x};
+use crate::common::{g, jne_mask, jp5, model_info, rand_at, rd, wr, x};
 
 /// Globals owned by this module: none.
 pub const GLOBALS: &[GlobalDesc] = &[];
@@ -83,19 +83,20 @@ fn give_weapon(ped: GPtr<u8>, w: u32) {
 /// draw: < 33 / < 50 / < 66 depending on which slots are set). Then position (matrix or placement),
 /// `SetOrientation(0, 0, 0)`, `CWorld::Add`, and with `makeWander` the wander task (cops: `CTaskComplexWanderCop
 /// (4, rand 0..8)` primary + `CTaskSimpleStandStill(0, true, false, 8.0)` secondary; others
-/// `GetWanderTaskByPedType`). NOT PORTED (fallback to the whole original, decided at entry): any of the cheat
-/// bytes 0x969140, 0x96913E, 0x96915C, 0x96915D set (armed civilians, gang weapons, angry peds, ped riot event
-/// paths) and types < 4, 21, > 31 (the original uses its `makeWander` argument as the ped pointer there).
-#[hook(addr = 0x612710, conv = cdecl, name = "CPopulation::AddPed", expect = "90 E9 AD F1 DE FF", fallback)]
+/// `GetWanderTaskByPedType`). Cheat paths (WRITER-POP-4, new and unverified): 0x969140 / 0x96913E arm types 4 / 5
+/// with `rand() % 5` (rand 0x61279C) → 0x16, 5, 0x19, 0x1F, 0x23; 0x96915C gives type 0xD weapon 8 instead of the
+/// gang draws; with `makeWander`, 0x96915D gives type 0x16 an event about the player (0x4AEDF0, type word 0x4BC)
+/// and `GetRandomNumberInRange(10, 14)` without ammo, and 0x96913E sends a hate-acquaintance event (vtable
+/// 0x858E68, type word 0x3E8) about the nearest other ped of the pool (its own `type` argument slot holds the
+/// best distance in the original; callers only pop it, not reproduced). NOT PORTED (fallback to the whole
+/// original, decided at entry): types < 4, 21, > 31 (the original uses its `makeWander` argument slot as the ped
+/// pointer there).
+#[hook(addr = 0x612710, conv = cdecl, name = "CPopulation::AddPed", expect = "90 E9 AD F1 DE FF", fallback,
+       unverified = "popw4-partial-1", route = "split", hazards = "heap-writes",
+       note = "partial port widened: the cheat paths (0x969140 / 0x96913E / 0x96915C / 0x96915D) are new; the non-cheat paths were verified in pass 3")]
 pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8> {
     let cheat = |a: usize| g::<u8>(a).read() != 0;
-    if cheat(0x969140)
-        || cheat(0x96913E)
-        || cheat(0x96915C)
-        || cheat(0x96915D)
-        || !(4..=31).contains(&ty)
-        || ty == 21
-    {
+    if !(4..=31).contains(&ty) || ty == 21 {
         return add_ped_original(ty, model, pos, make_wander);
     }
     let ped = match ty {
@@ -120,7 +121,23 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
             }
         }
     };
-    if (7..=16).contains(&ty) && random_int_in_range(0, 100) < 0x21 {
+    if (ty == 4 || ty == 5) && (cheat(0x969140) || cheat(0x96913E)) {
+        // armed civilians: `rand() % 5` (idiv) through the jump table 0x612CB4
+        let weapon = match rand_at(0x61279C) % 5 {
+            0 => 0x16,
+            1 => 5,
+            2 => 0x19,
+            3 => 0x1F,
+            4 => 0x23,
+            _ => u32::from(make_wander),
+        };
+        if weapon != 0 {
+            give_weapon(ped, weapon);
+        }
+    }
+    if ty == 0xD && cheat(0x96915C) {
+        give_weapon(ped, 8);
+    } else if (7..=16).contains(&ty) && random_int_in_range(0, 100) < 0x21 {
         let r = random_int_in_range(0, 100);
         let off = ((ty - 7) * 16) as usize;
         let w = |a: usize| g::<u32>(a + off).read();
@@ -184,7 +201,84 @@ pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8>
         let t = get_wander_task_by_ped_type(ped);
         task_manager_set_task(intel.byte_add(4), t, 4, 0);
     }
+    if cheat(0x96915D) && ty == 0x16 {
+        // 0x612AFA: an event about the player (type word 0x4BC) and a weapon 10..13 with no ammo
+        let mut ev = [0u32; 16];
+        let evp = GPtr::from_raw(ev.as_mut_ptr());
+        event_player_ctor(evp, find_player_ped(-1));
+        wr::<u16>(evp.cast(), 0xE, 0x4BC);
+        event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast(), 0);
+        let w = random_int_in_range(0xA, 0xE) as u32;
+        ped_give_delayed_weapon(ped, w, 0);
+        ped_set_current_weapon_type(ped, w);
+        event_player_dtor(evp);
+    }
+    if cheat(0x96913E) {
+        // 0x612B6B: the nearest other ped of the pool (descending slots, squared 3D distance, `jp` keeps the
+        // first of equals) gets a hate-acquaintance event (vtable 0x858E68, type word 0x3E8). The original keeps
+        // the best distance in its own `type` argument slot (callers only pop it; not reproduced).
+        let pool = g::<GPtr<u8>>(0xB74490).read();
+        let flags = rd::<GPtr<u8>>(pool, 4);
+        let mut best = GPtr::<u8>::NULL;
+        let mut best_d = 0f32;
+        let mut i = rd::<i32>(pool, 8);
+        while i != 0 {
+            i -= 1;
+            if flags.byte_add(i as isize).read() & 0x80 != 0 {
+                continue;
+            }
+            let other = rd::<GPtr<u8>>(g::<GPtr<u8>>(0xB74490).read(), 0).byte_add(i as isize * 0x7C4);
+            if other.is_null() || other == ped {
+                continue;
+            }
+            let c = ped_pos(other);
+            let a = ped_pos(ped);
+            let dz = x(a.wrapping_index(2).read()).fsub_m(c.wrapping_index(2).read());
+            let dy = x(a.wrapping_index(1).read()).fsub_m(c.wrapping_index(1).read());
+            let dx = x(a.read()).fsub_m(c.read());
+            let d = dx.fmul(dx).fadd(dy.fmul(dy)).fadd(dz.fmul(dz));
+            if best.is_null() || !d.fcom(x(best_d)).test_parity(5) {
+                best_d = d.to_f32();
+                best = other;
+            }
+        }
+        if !best.is_null() {
+            let mut ev = [0u32; 8];
+            let evp = GPtr::from_raw(ev.as_mut_ptr());
+            event_acquaintance_ped_ctor(evp, best);
+            evp.write(0x0085_8E68);
+            wr::<u16>(evp.cast(), 0xE, 0x3E8);
+            event_group_add(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x68), evp.cast(), 0);
+            evp.write(0x0085_8E68);
+            event_acquaintance_ped_dtor(evp);
+        }
+    }
     ped
+}
+
+/// `m_matrix ? &m_matrix->pos : &placement.pos`.
+fn ped_pos(e: GPtr<u8>) -> GPtr<f32> {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() {
+        e.byte_add(4).cast()
+    } else {
+        m.byte_add(0x30).cast()
+    }
+}
+
+orig! {
+    /// `rand()` call sites go through `crate::common::rand_at`; `CWorld::FindPlayerPed(int32)` (0x56E210)
+    fn find_player_ped(id: i32) -> GPtr<u8> = cdecl 0x56E210 => sa_world::world::cworld::find_player_ped_port;
+    /// The event constructor at 0x4AEDF0 (thiscall, `(CPed*)`), used by AddPed's ped-riot cheat path
+    fn event_player_ctor(this: GPtr<u32>, ped: GPtr<u8>) -> GPtr<u32> = thiscall 0x4AEDF0 => unported;
+    /// Its destructor (0x4AEEA0)
+    fn event_player_dtor(this: GPtr<u32>) = thiscall 0x4AEEA0 => unported;
+    /// `CPed::SetCurrentWeapon(eWeaponType)` (0x5E6280)
+    fn ped_set_current_weapon_type(ped: GPtr<u8>, w: u32) = thiscall 0x5E6280 => unported;
+    /// `CEventAcquaintancePed::CEventAcquaintancePed(CPed*)` (0x4AF820)
+    fn event_acquaintance_ped_ctor(this: GPtr<u32>, ped: GPtr<u8>) -> GPtr<u32> = thiscall 0x4AF820 => unported;
+    /// `CEventAcquaintancePed::~CEventAcquaintancePed()` (0x4AF890)
+    fn event_acquaintance_ped_dtor(this: GPtr<u32>) = thiscall 0x4AF890 => unported;
 }
 
 /// `_stricmp(name, s) == 0` against a string of the exe.

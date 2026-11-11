@@ -83,7 +83,7 @@ orig! {
     /// `FxManager_c::FindFxSystemBP(const char*)` (0x4A9360)
     pub fn find_fx_system_bp(this: GPtr<u8>, name: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9360 => fx_manager_find_fx_system_bp;
     /// `FxManager_c::CreateFxSystem(FxSystemBP_c*, RwMatrix*, RwMatrix*, bool)` (0x4A96B0)
-    pub fn create_fx_system_bp(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore_bounds: u32) -> GPtr<u8> = thiscall 0x4A96B0 => unported;
+    pub fn create_fx_system_bp(this: GPtr<u8>, bp: GPtr<u8>, m: GPtr<u8>, parent: GPtr<u8>, ignore_bounds: u32) -> GPtr<u8> = thiscall 0x4A96B0 => crate::mvpc_fx1::create_fx_system_bp;
     /// `FxManager_c::GetFrustumInfo()` (0x4A9130)
     pub fn get_frustum_info(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x4A9130 => fx_manager_get_frustum_info;
     /// `FxMemoryPool_c::GetMem(int32 size, int32 align)` (0x4A9CA0)
@@ -151,7 +151,7 @@ orig! {
     /// `FxManager_c::Init()` (0x4A98E0)
     pub fn fx_manager_init(this: GPtr<u8>) = thiscall 0x4A98E0 => unported;
     /// `FxManager_c::LoadFxProject(const char*)` (0x5C2420)
-    pub fn load_fx_project(this: GPtr<u8>, path: GPtr<u8>) = thiscall 0x5C2420 => unported;
+    pub fn load_fx_project(this: GPtr<u8>, path: GPtr<u8>) -> u8 = thiscall 0x5C2420 => crate::mvpc_fx1::load_fx_project;
     /// `FxManager_c::SetWindData(CVector*, float*)` (0x4A93E0)
     pub fn set_wind_data(this: GPtr<u8>, dir: u32, strength: u32) = thiscall 0x4A93E0 => fx_manager_set_wind_data;
     /// `FxManager_c::CalcFrustumInfo(RwCamera*)` (0x4A9140)
@@ -167,7 +167,7 @@ orig! {
     /// `FxManager_c::ReturnParticle(FxEmitterPrt_c*)` (0x4A93B0)
     pub fn return_particle(this: GPtr<u8>, prt: GPtr<u8>) = thiscall 0x4A93B0 => fx_manager_return_particle;
     /// `Fx_c::InitStaticSystems()` (0x49E660)
-    pub fn init_static_systems(this: GPtr<u8>) = thiscall 0x49E660 => unported;
+    pub fn init_static_systems(this: GPtr<u8>) = thiscall 0x49E660 => crate::mvpc_fx1::fx_init_static_systems;
     /// `FxSystemBP_c::Update(float)` (0x4AA130)
     pub fn system_bp_update(this: GPtr<u8>, dt: u32) -> u32 = thiscall 0x4AA130 => fx_system_bp_update;
     /// `FxSystem_c::Update(RwCamera*, float)` (0x4AAF70)

@@ -35,6 +35,7 @@ pub const MODULES: &[&[HookReg]] = &[
     cutscene::HOOKS,
     building::HOOKS,
     statics::HOOKS,
+    crate::mvpb_anim::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

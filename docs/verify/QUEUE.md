@@ -5,14 +5,1382 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| rw5-cam-1 | 2 | RW | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 1, L3-only 1 |
-| rw5-core-1 | 33 | RW | uncommitted | master | 33 | 0 | 0 | 0 | 0 | L2 22, split 11 |
-| rw5-core-2 | 17 | RW | uncommitted | master | 17 | 0 | 0 | 0 | 0 | L2 9, L3-only 5, split 3 |
-| rw5-image-1 | 9 | RW | uncommitted | master | 9 | 0 | 0 | 0 | 0 | L2 5, split 4 |
-| rw5-inst-1 | 17 | RW | uncommitted | master | 17 | 0 | 0 | 0 | 0 | L2 16, split 1 |
-| rw5-native-1 | 6 | RW | uncommitted | master | 6 | 0 | 0 | 0 | 0 | L2 2, split 4 |
-| rw5-node-1 | 6 | RW | uncommitted | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| rw5-raster | 4 | RW | uncommitted | master | 4 | 0 | 0 | 0 | 0 | L2 2, split 2 |
+| mvpa-ai-1 | 39 | AI, UNK-game | 82373da | master | 39 | 0 | 0 | 0 | 0 | L2 33, split 6 |
+| mvpa-ai-2 | 30 | AI, UNK-game | 82373da | master | 30 | 0 | 0 | 0 | 0 | L2 30 |
+| mvpa-core-1 | 5 | CORE | 82373da | master | 5 | 0 | 0 | 0 | 0 | L3-only 5 |
+| mvpa-core-2 | 3 | CORE | 82373da | master | 3 | 0 | 0 | 0 | 0 | L3-only 3 |
+| mvpa-fx-1 | 10 | CALLED-ONLY, RENDER, UNK-game | 82373da | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
+| mvpa-fx-2 | 2 | RENDER | 82373da | master | 2 | 0 | 0 | 0 | 0 | L2 1, split 1 |
+| mvpa-math-1 | 26 | MATH, UNK-game | 82373da | master | 26 | 0 | 0 | 0 | 0 | L2 24, split 2 |
+| mvpa-render-1 | 31 | CALLED-ONLY, RENDER, UNK-game | 82373da | master | 31 | 0 | 0 | 0 | 0 | L2 20, split 11 |
+| mvpa-render-2 | 20 | RENDER, UNK-game | 82373da | master | 20 | 0 | 0 | 0 | 0 | L2 15, split 5 |
+| mvpa-render-3 | 5 | RENDER, UNK-game | 82373da | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| mvpa-world-1 | 25 | WORLD | 82373da | master | 25 | 0 | 0 | 0 | 0 | L2 19, split 6 |
+| mvpa-world-2 | 7 | VEH, WORLD | 82373da | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| mvpa-world-3 | 3 | UNK-game | 82373da | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpb-ai-1 | 26 | AI, UNK-game | uncommitted | master | 26 | 0 | 0 | 0 | 0 | L2 26 |
+| mvpb-ai-2 | 17 | AI | uncommitted | master | 17 | 0 | 0 | 0 | 0 | L2 17 |
+| mvpb-ai-3 | 12 | AI | uncommitted | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
+| mvpb-ai-4 | 1 | AI | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpb-anim-1 | 11 | ANIM, UNK-game | uncommitted | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
+| mvpb-coll-1 | 2 | UNK-game | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpb-core-1 | 13 | CORE, UNK-game | uncommitted | master | 13 | 0 | 0 | 0 | 0 | L2 6, L3-only 7 |
+| mvpb-render-1 | 32 | RENDER | uncommitted | master | 32 | 0 | 0 | 0 | 0 | L2 27, L3-only 4, split 1 |
+| mvpb-veh-1 | 13 | UNK-game, VEH | uncommitted | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| mvpb-veh-2 | 6 | VEH | uncommitted | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpb-veh-3 | 3 | VEH | uncommitted | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpb-veh-4 | 2 | VEH | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpb-veh-5 | 2 | VEH | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpb-veh-6 | 1 | VEH | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpb-weapon-1 | 1 | WEAPON | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpb-world-1 | 13 | WORLD | uncommitted | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| mvpb-world-2 | 3 | WORLD | uncommitted | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpb-world-3 | 2 | WORLD | uncommitted | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpb-world-4 | 1 | WORLD | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpb-world-5 | 4 | WORLD | uncommitted | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpb-world-6 | 3 | WORLD | uncommitted | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpb-world-7 | 1 | WORLD | uncommitted | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpc-ai-1 | 28 | AI, UNK-game | 82373da | master | 28 | 0 | 0 | 0 | 0 | L2 17, split 11 |
+| mvpc-ai-2 | 5 | UNK-game | 82373da | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| mvpc-ai-3 | 10 | AI, UNK-game | 82373da | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
+| mvpc-coll-1 | 4 | COLL | 82373da | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpc-fx-1 | 27 | CALLED-ONLY, RENDER, UNK-game | 82373da | master | 27 | 0 | 0 | 0 | 0 | L2 12, split 15 |
+| mvpc-fx-2 | 5 | RENDER | 82373da | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| mvpc-render-1 | 19 | CALLED-ONLY, RENDER, UNK-game | 82373da | master | 19 | 0 | 0 | 0 | 0 | L2 11, L3-only 1, split 7 |
+| mvpc-veh-1 | 1 | VEH | 82373da | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvpc-world-1 | 13 | WORLD | 82373da | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| mvpc-world-2 | 4 | WORLD | 82373da | master | 4 | 0 | 0 | 0 | 0 | L2 2, split 2 |
+| mvpe-coll-1 | 10 | COLL | 82373da | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
+| mvpe-ent-1 | 2 | WORLD | 82373da | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpe-phys-1 | 4 | PHYS | 82373da | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpe-tempcol-1 | 1 | COLL | 82373da | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvpe-veh-1 | 3 | VEH | 82373da | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| popw4-drive-1 | 9 | POP | 4171ee0 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| popw4-frame-1 | 2 | POP | 4171ee0 | master | 2 | 0 | 0 | 0 | 0 | L2 1, split 1 |
+| popw4-gang-1 | 11 | POP | 4171ee0 | master | 11 | 0 | 0 | 0 | 0 | L2 7, split 4 |
+| popw4-partial-1 | 4 | POP | 4171ee0 | master | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
+| popw4-pop-1 | 6 | POP | 4171ee0 | master | 6 | 0 | 0 | 0 | 0 | split 6 |
+| rw5-cam-1 | 2 | RW | f789a8e | master | 2 | 0 | 0 | 0 | 0 | L2 1, L3-only 1 |
+| rw5-core-1 | 33 | RW | f789a8e | master | 33 | 0 | 0 | 0 | 0 | L2 22, split 11 |
+| rw5-core-2 | 17 | RW | f789a8e | master | 17 | 0 | 0 | 0 | 0 | L2 9, L3-only 5, split 3 |
+| rw5-image-1 | 9 | RW | f789a8e | master | 9 | 0 | 0 | 0 | 0 | L2 5, split 4 |
+| rw5-inst-1 | 17 | RW | f789a8e | master | 17 | 0 | 0 | 0 | 0 | L2 16, split 1 |
+| rw5-native-1 | 6 | RW | f789a8e | master | 6 | 0 | 0 | 0 | 0 | L2 2, split 4 |
+| rw5-node-1 | 6 | RW | f789a8e | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| rw5-raster | 4 | RW | f789a8e | master | 4 | 0 | 0 | 0 | 0 | L2 2, split 2 |
+
+## mvpa-ai-1
+
+39 hooks in sa-ai; hazards: ax-al-return (1), heap-writes (19), preserved-regs (2); recordings calling them: driving (1), grove-walk (39), pause-restart (39).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-ai-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43A7B0 | `CConversations::Clear` | written | L2 | none |
+| 0x4AC010 | `FUN_004ac010` | written | L2 | heap-writes |
+| 0x4AC2A0 | `CInformFriendsEventQueue::Flush` | written | L2 | none |
+| 0x4B0A50 | `FUN_004b0a50` | written | L2 | heap-writes |
+| 0x4B0D00 | `FUN_004b0d00` | written | L2 | heap-writes,preserved-regs |
+| 0x5E95B0 | `CPedTaskPair::Flush` | written | L2 | heap-writes |
+| 0x5F1600 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached` | written | L2 | none |
+| 0x5F1670 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached` | written | L2 | none |
+| 0x5F1750 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached` | written | L2 | none |
+| 0x5F1B70 | `CPedGeometryAnalyser::CanPedTargetPoint` | written | L2 | ax-al-return |
+| 0x5F1C40 | `CPedGeometryAnalyser::CanPedTargetPed` | written | L2 | none |
+| 0x5F3AC0 | `CPedGeometryAnalyser::ComputeEntityHitSide-3` | written | L2 | none |
+| 0x5F3BC0 | `CPedGeometryAnalyser::ComputeEntityHitSide-1` | written | L2 | none |
+| 0x5F6110 | `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox-Entity` | written | L2 | none |
+| 0x5F6450 | `FUN_005f6450` | written | split | none |
+| 0x5F6480 | `FUN_005f6480` | written | split | none |
+| 0x5F64B0 | `FUN_005f64b0` | written | split | none |
+| 0x5F64E0 | `FUN_005f64e0` | written | split | none |
+| 0x5F6510 | `FUN_005f6510` | written | split | none |
+| 0x5F6540 | `FUN_005f6540` | written | split | none |
+| 0x5F7340 | `CPedGroupIntelligence::SetGroupDecisionMakerType` | written | L2 | none |
+| 0x5F7350 | `CPedGroupIntelligence::Flush` | written | L2 | none |
+| 0x5F80D0 | `CPedGroupMembership::RemoveMember-ByMemIdx` | written | L2 | heap-writes |
+| 0x5FF030 | `FUN_005ff030` | written | L2 | heap-writes |
+| 0x5FF0F0 | `FUN_005ff0f0` | written | L2 | heap-writes |
+| 0x5FF1B0 | `FUN_005ff1b0` | written | L2 | heap-writes |
+| 0x5FF3A0 | `FUN_005ff3a0` | written | L2 | heap-writes |
+| 0x6006B0 | `CDecision::From` | written | L2 | heap-writes |
+| 0x600B50 | `CPedIntelligence::SetPedDecisionMakerType` | written | L2 | heap-writes |
+| 0x61A390 | `FUN_0061a390` | written | L2 | heap-writes,preserved-regs |
+| 0x61A500 | `CTaskPool::New` | written | L2 | heap-writes |
+| 0x61A5A0 | `CTask::operator new` | written | L2 | heap-writes |
+| 0x61A5B0 | `CTask::operator delete` | written | L2 | heap-writes |
+| 0x62F360 | `FUN_0062f360` | written | L2 | heap-writes |
+| 0x632D90 | `CTaskSequences::Init` | written | L2 | none |
+| 0x633EF0 | `CTaskSimpleIKLookAt::Destructor-` | written | L2 | heap-writes |
+| 0x63CB50 | `FUN_0063cb50` | written | L2 | heap-writes |
+| 0x667D50 | `FUN_00667d50` | written | L2 | heap-writes |
+| 0x698710 | `CCover::Init` | written | L2 | none |
+
+## mvpa-ai-2
+
+30 hooks in sa-ai; hazards: ax-al-return (4), heap-writes (23); recordings calling them: driving (7), grove-walk (23), pause-restart (30).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-ai-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-ai-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpa-ai-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x420E30 | `CTaskTimer::IsOutOfTime` | written | L2 | heap-writes,ax-al-return |
+| 0x46AF20 | `CEntitySeekPosCalculatorStandard::ComputeEntitySeekPos` | written | L2 | heap-writes |
+| 0x4ACA70 | `FUN_004aca70` | written | L2 | heap-writes |
+| 0x4ACFF0 | `FUN_004acff0` | written | L2 | heap-writes |
+| 0x4AE3C0 | `FUN_004ae3c0` | written | L2 | heap-writes |
+| 0x4AE7A0 | `FUN_004ae7a0` | written | L2 | heap-writes |
+| 0x4B2470 | `FUN_004b2470` | written | L2 | heap-writes |
+| 0x4B8B90 | `CEventHandlerHistory::IsRespondingToEvent` | written | L2 | ax-al-return |
+| 0x4B8CC0 | `CEventHandler::GetCurrentEventType` | written | L2 | none |
+| 0x5F1450 | `CPedGeometryAnalyser::ComputeEntityHitSide-2` | written | L2 | none |
+| 0x5F3660 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes` | written | L2 | none |
+| 0x61A790 | `CTaskSimpleAnim::MakeAbortable` | written | L2 | heap-writes,ax-al-return |
+| 0x61A8B0 | `CTaskSimpleRunAnim::Constructor` | written | L2 | heap-writes |
+| 0x61A900 | `CTaskSimpleRunAnim::Constructor2` | written | L2 | heap-writes |
+| 0x61A950 | `CTaskSimpleRunAnim::StartAnim` | written | L2 | heap-writes |
+| 0x61ABE0 | `CTaskSimpleRunTimedAnim::Constructor-2` | written | L2 | heap-writes |
+| 0x61AC50 | `CTaskSimpleRunTimedAnim::StartAnim` | written | L2 | heap-writes |
+| 0x61BBE0 | `CTaskSimpleRunTimedAnim::ProcessPed` | written | L2 | heap-writes,ax-al-return |
+| 0x63A040 | `FUN_0063a040` | written | L2 | heap-writes |
+| 0x63C340 | `CTaskSimpleCarDrive::Constructor` | written | L2 | heap-writes |
+| 0x63C450 | `CTaskSimpleCarDrive::GetTaskType` | written | L2 | none |
+| 0x63C460 | `CTaskSimpleCarDrive::Destructor` | written | L2 | heap-writes |
+| 0x63C900 | `CTaskSimpleCarDrive::UpdateBopping` | written | L2 | heap-writes |
+| 0x63CA40 | `CTaskComplexCarDrive::Destructor` | written | L2 | heap-writes |
+| 0x63CAD0 | `CTaskComplexCarDrive::Drive` | written | L2 | none |
+| 0x642E70 | `CTaskSimpleCarDrive::ProcessBopping` | written | L2 | heap-writes |
+| 0x654C80 | `CTaskComplexWalkRoundBuildingAttempt::CreateSubTask` | written | L2 | heap-writes |
+| 0x669D20 | `thunk_FUN_0040387c` | written | L2 | heap-writes |
+| 0x685750 | `CTaskSimplePlayerOnFoot::Constructor` | written | L2 | heap-writes |
+| 0x6946A0 | `CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos` | written | L2 | none |
+
+## mvpa-core-1
+
+5 hooks in sa-core; hazards: ax-al-return (5); recordings calling them: grove-walk (5), pause-restart (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-core-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x53BC80 | `CGame::Initialise` | written | L3-only | ax-al-return |
+| 0x5BA1A0 | `CGame::Init2` | written | L3-only | ax-al-return |
+| 0x5BA400 | `CGame::Init3` | written | L3-only | ax-al-return |
+| 0x5BF840 | `CGame::Init1` | written | L3-only | ax-al-return |
+| 0x5BFA90 | `CGame::InitialiseCoreDataAfterRW` | written | L3-only | ax-al-return |
+
+## mvpa-core-2
+
+3 hooks in sa-core; hazards: uninit-locals (1); recordings calling them: grove-walk (3), pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-core-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-core-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-core-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-core-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x53BCF0 | `CGame::ReInitGameObjectVariables` | written | L3-only | none |
+| 0x53C550 | `CGame::ShutDownForRestart` | written | L3-only | none |
+| 0x53C680 | `CGame::InitialiseWhenRestarting` | written | L3-only | uninit-locals |
+
+## mvpa-fx-1
+
+10 hooks in sa-render; hazards: heap-writes (9), x87-transcendental (1); recordings calling them: grove-walk (10), pause-restart (10).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-fx-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-fx-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-fx-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A4B60 | `FxInfoEmRate_c::GetValue` | written | L2 | heap-writes |
+| 0x4A5270 | `FUN_004a5270` | written | L2 | heap-writes |
+| 0x4A54E0 | `FxInfoForce_c::GetValue` | written | L2 | heap-writes |
+| 0x4A55E0 | `FxInfoFriction_c::GetValue` | written | L2 | x87-transcendental,heap-writes |
+| 0x4A5AA0 | `FxInfoWind_c::GetValue` | written | L2 | heap-writes |
+| 0x4A5D40 | `FxInfoRotSpeed_c::GetValue` | written | L2 | heap-writes |
+| 0x4A5F30 | `FxInfoColour_c::GetValue` | written | L2 | heap-writes |
+| 0x4A6010 | `FxInfoSize_c::Load` | written | split | none |
+| 0x4A6030 | `FxInfoSize_c::GetValue` | written | L2 | heap-writes |
+| 0x4A8470 | `FxInterpInfoFloat_c::GetVal` | written | L2 | heap-writes |
+
+## mvpa-fx-2
+
+2 hooks in sa-render; hazards: heap-writes (1); recordings calling them: grove-walk (2), pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-fx-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-fx-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-fx-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-fx-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A9500 | `FxManager_c::ShouldCreate` | written | L2 | none |
+| 0x4A98E0 | `FxManager_c::Init` | written | split | heap-writes |
+
+## mvpa-math-1
+
+26 hooks in sa-world; hazards: heap-writes (5), preserved-regs (8), stack-residue (2), x87-transcendental (2); recordings calling them: grove-walk (26), pause-restart (26).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-math-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-math-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-math-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-math-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x404330 | `FUN_00404330` | written | L2 | none |
+| 0x406D70 | `FUN_00406d70` | written | L2 | preserved-regs |
+| 0x406DA0 | `FUN_00406da0` | written | L2 | preserved-regs |
+| 0x40EF50 | `CColLine` | written | L2 | preserved-regs |
+| 0x40F030 | `CCollisionData` | written | L2 | preserved-regs |
+| 0x40F700 | `CColModel` | written | L2 | heap-writes |
+| 0x40FE30 | `FUN_0040fe30` | written | L2 | none |
+| 0x40FE60 | `VectorSub` | written | L2 | none |
+| 0x40FE90 | `FUN_0040fe90` | written | L2 | none |
+| 0x40FEC0 | `FUN_0040fec0` | written | L2 | none |
+| 0x411590 | `FUN_00411590` | written | L2 | stack-residue |
+| 0x4119D0 | `FUN_004119d0` | written | L2 | stack-residue |
+| 0x411A00 | `FUN_00411a00` | written | L2 | preserved-regs |
+| 0x420800 | `FUN_00420800` | written | L2 | none |
+| 0x4EEA80 | `approxEqual` | written | L2 | none |
+| 0x533610 | `CPtrListSingleLink::DeleteItem` | written | L2 | heap-writes |
+| 0x54EF40 | `CSimpleTransform::UpdateRwMatrix` | written | L2 | x87-transcendental,preserved-regs |
+| 0x54F0C0 | `CMatrixLink` | written | L2 | preserved-regs |
+| 0x54F0D0 | `CMatrixLinkList::Init` | written | split | heap-writes |
+| 0x54F440 | `FUN_0054f440` | written | split | preserved-regs |
+| 0x552400 | `CPtrListSingleLink::Flush` | written | L2 | heap-writes |
+| 0x552470 | `CPtrListDoubleLink::Flush` | written | L2 | heap-writes |
+| 0x59AC90 | `CMaths::InitMathsTables` | written | L2 | x87-transcendental |
+| 0x59ACD0 | `CMatrix` | written | L2 | none |
+| 0x59C790 | `Multiply3x3` | written | L2 | none |
+| 0x59C810 | `FUN_0059c810` | written | L2 | none |
+
+## mvpa-render-1
+
+31 hooks in sa-render; hazards: heap-writes (11), preserved-regs (1); recordings calling them: grove-walk (31), pause-restart (31).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-render-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A98B0 | `FxManager_c::DestroyAllFxSystems` | written | L2 | heap-writes |
+| 0x52CDE0 | `CClock::NormaliseGameClock` | written | L2 | none |
+| 0x52CEE0 | `CClock::GetIsTimeInRange` | written | L2 | none |
+| 0x52D150 | `CClock::SetGameClock` | written | L2 | none |
+| 0x555DC0 | `CRopes::Init` | written | L2 | none |
+| 0x556780 | `CRope::Remove` | written | L2 | heap-writes |
+| 0x556B10 | `CRopes::Shutdown` | written | L2 | heap-writes |
+| 0x5A2EB0 | `ProcSurfaceInfo_c::Init` | written | L2 | none |
+| 0x5A3270 | `ProcSurfaceInfo_c::Exit` | written | L2 | heap-writes |
+| 0x5A3EA0 | `ProcObjectMan_c::Init` | written | split | none |
+| 0x5A3EE0 | `ProcObjectMan_c::Exit` | written | L2 | heap-writes |
+| 0x5D8980 | `IsEnvironmentMappingSupported` | written | L2 | none |
+| 0x5D9060 | `FUN_005d9060` | written | split | heap-writes |
+| 0x5D91B0 | `FUN_005d91b0` | written | split | heap-writes |
+| 0x5D9300 | `FUN_005d9300` | written | split | heap-writes |
+| 0x5DD6C0 | `CPlantSurfPropMgr::Initialise` | written | split | none |
+| 0x6F9DE0 | `CPlantSurfPropMgr::GetSurfProperties` | written | L2 | none |
+| 0x6FE120 | `CCustomRoadsignMgr::Initialise` | written | split | heap-writes |
+| 0x706A60 | `CRealTimeShadowManager::Exit` | written | split | heap-writes |
+| 0x711EC0 | `CBirds::Init` | written | L2 | none |
+| 0x7138D0 | `CClouds::Init` | written | split | none |
+| 0x717C20 | `CMovingThings::Shutdown` | written | L2 | heap-writes |
+| 0x717D00 | `CMovingThings::Init` | written | L2 | none |
+| 0x7204E0 | `CSkidmarks::Init` | written | split | none |
+| 0x720590 | `CSkidmarks::Clear` | written | L2 | none |
+| 0x722880 | `CCheckpoints::Init` | written | L2 | none |
+| 0x723390 | `CSpecialFX::Shutdown` | written | split | none |
+| 0x728200 | `CSprite2d::AddToBuffer` | written | L2 | none |
+| 0x728350 | `CSprite2d::Draw-CRectCRGBA` | written | L2 | preserved-regs |
+| 0x730830 | `D3DResourceSystem::Init` | written | split | none |
+| 0x730AC0 | `D3DResourceSystem::SetUseD3DResourceBuffering` | written | L2 | none |
+
+## mvpa-render-2
+
+20 hooks in sa-render; hazards: heap-writes (13), preserved-regs (1); recordings calling them: grove-walk (20), pause-restart (20).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-render-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-render-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-render-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-render-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A2B90 | `FxEmitter_c::`scalar deleting destructor'` | written | L2 | heap-writes |
+| 0x4A2BB0 | `FxEmitter_c::~FxEmitter_c` | written | L2 | none |
+| 0x4A4460 | `FxEmitter_c::Update_Reversed` | written | L2 | none |
+| 0x4A9810 | `FxManager_c::DestroyFxSystem` | written | L2 | heap-writes,preserved-regs |
+| 0x5D5B30 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
+| 0x5D9110 | `FUN_005d9110` | written | L2 | heap-writes |
+| 0x5D9260 | `FUN_005d9260` | written | L2 | heap-writes |
+| 0x5D93B0 | `FUN_005d93b0` | written | L2 | heap-writes |
+| 0x6FF2D0 | `CCustomRoadsignMgr::CreateRoadsignAtomic` | written | L2 | none |
+| 0x6FFFE0 | `CPointLights::RemoveLightsAffectingObject` | written | L2 | none |
+| 0x705400 | `CShadowCamera::Destroy` | written | split | heap-writes |
+| 0x7054C0 | `CShadowCamera::SetFrustum` | written | L2 | heap-writes |
+| 0x705520 | `CShadowCamera::SetLight` | written | L2 | heap-writes |
+| 0x705990 | `CRealTimeShadow::Destroy` | written | split | heap-writes |
+| 0x705B60 | `CShadowCamera::Create` | written | split | heap-writes |
+| 0x706460 | `CRealTimeShadow::Create` | written | split | heap-writes |
+| 0x706770 | `FUN_00706770` | written | split | none |
+| 0x706BA0 | `CRealTimeShadowManager::DoShadowThisFrame` | written | L2 | heap-writes |
+| 0x71D780 | `CMBlur::ClearDrunkBlur` | written | L2 | none |
+| 0x72F9F0 | `cb_RSNODENAME_RwFrame_Copy` | written | L2 | heap-writes |
+
+## mvpa-render-3
+
+5 hooks in sa-render; hazards: ax-al-return (1), heap-writes (4); recordings calling them: grove-walk (5), pause-restart (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-render-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-render-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-render-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-render-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A1600 | `Fx_c::RenderEnd` | written | L2 | none |
+| 0x4AA030 | `FxFrustumInfo_c::IsCollision` | written | L2 | heap-writes |
+| 0x5D8BE0 | `CustomEnvMapPipeMaterialData::FromBuffer` | written | L2 | heap-writes |
+| 0x5DCF30 | `CPlantMgr::PreUpdateOnceForNewCameraPos` | written | L2 | ax-al-return,heap-writes |
+| 0x706520 | `CRealTimeShadow::SetupForThisEntity` | written | L2 | heap-writes |
+
+## mvpa-world-1
+
+25 hooks in sa-world; hazards: heap-writes (10), uninit-locals (3); recordings calling them: grove-walk (25), pause-restart (25).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-world-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-world-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-world-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43EFD0 | `CEntryExitManager::GetEntryExitIndex` | written | L2 | none |
+| 0x43F0A0 | `CEntryExitManager::PostEntryExitsCreation` | written | L2 | heap-writes |
+| 0x440C40 | `CEntryExitManager::ShutdownForRestart` | written | L2 | heap-writes |
+| 0x441560 | `CGameLogic::ClearSkip` | written | L2 | none |
+| 0x456E60 | `CPickups::ReInit` | written | L2 | heap-writes |
+| 0x45D430 | `CReplay::MarkEverythingAsNew` | written | L2 | heap-writes |
+| 0x45E220 | `CReplay::Init` | written | L2 | none |
+| 0x45EC90 | `CReplay::EmptyReplayBuffer` | written | L2 | none |
+| 0x49C290 | `CShopping::Init` | written | split | none |
+| 0x49CD50 | `FUN_0049cd50` | written | L2 | none |
+| 0x533D30 | `CEntity::CreateRwObject` | written | L2 | heap-writes |
+| 0x538AD0 | `FUN_00538ad0` | written | L2 | none |
+| 0x559860 | `CStats::LoadStatUpdateConditions` | written | split | uninit-locals |
+| 0x5599B0 | `CStats::LoadActionReactionStats` | written | split | uninit-locals |
+| 0x55C0C0 | `CStats::Init` | written | split | none |
+| 0x564360 | `CWorld::ClearForRestart` | written | L2 | heap-writes |
+| 0x566950 | `CWorld::ExtinguishAllCarFiresInArea` | written | L2 | none |
+| 0x5911A0 | `FurnitureManager_c::Exit` | written | L2 | heap-writes |
+| 0x598010 | `InteriorManager_c::Exit` | written | L2 | heap-writes |
+| 0x59E720 | `BreakManager_c::ResetAll` | written | L2 | none |
+| 0x59EAC0 | `CDummyObject::CreateObject` | written | L2 | heap-writes |
+| 0x59F180 | `CObject::Render` | written | L2 | none |
+| 0x5C0500 | `InteriorManager_c::Init` | written | split | none |
+| 0x6E3FD0 | `WaterCreatureManager_c::Exit` | written | L2 | heap-writes |
+| 0x71D4E0 | `CGridRef::Init` | written | split | uninit-locals |
+
+## mvpa-world-2
+
+7 hooks in sa-world; hazards: heap-writes (3), stack-residue (2), x87-transcendental (2); recordings calling them: grove-walk (7), pause-restart (7).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-world-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43F4B0 | `CEntryExitManager::FindNearestEntryExit` | written | L2 | x87-transcendental,stack-residue |
+| 0x54F610 | `CPlaceable::SetMatrix` | written | L2 | x87-transcendental,heap-writes |
+| 0x5696C0 | `CWorld::FindGroundZFor3DCoord` | written | L2 | stack-residue |
+| 0x6CCC50 | `CPlane::SwitchAmbientPlanes` | written | L2 | heap-writes |
+| 0x6E38F0 | `CVehicle::IsVehiclePointerValid` | written | L2 | none |
+| 0x6F2D90 | `CSpecialPlateHandler::Add` | written | L2 | none |
+| 0x6F6B60 | `CTrain::ReleaseMissionTrains` | written | L2 | heap-writes |
+
+## mvpa-world-3
+
+3 hooks in sa-world; hazards: heap-writes (3); recordings calling them: grove-walk (3), pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpa-world-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpa-world-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpa-world-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpa-world-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x41B7C0 | `CPointRoute::operator new` | written | L2 | heap-writes |
+| 0x41B7D0 | `CPointRoute::operator delete` | written | L2 | heap-writes |
+| 0x49C9A0 | `Clear` | written | L2 | heap-writes |
+
+## mvpb-ai-1
+
+26 hooks in sa-ai; hazards: entry-protection-read (1), heap-writes (19), x87-transcendental (2); recordings calling them: pause-restart (26).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-ai-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-ai-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-ai-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x48E600 | `FUN_0048e600` | written | L2 | heap-writes |
+| 0x4AB980 | `FUN_004ab980` | written | L2 | heap-writes |
+| 0x4AECD0 | `FUN_004aecd0` | written | L2 | heap-writes |
+| 0x4AED60 | `FUN_004aed60` | written | L2 | heap-writes |
+| 0x4AEDF0 | `FUN_004aedf0` | written | L2 | heap-writes |
+| 0x4AEEA0 | `FUN_004aeea0` | written | L2 | heap-writes |
+| 0x4AF890 | `FUN_004af890` | written | L2 | heap-writes |
+| 0x5DEA00 | `FUN_005dea00` | written | L2 | heap-writes |
+| 0x5F69C0 | `CPedGroupMembership::IsLeader` | written | L2 | none |
+| 0x5F7470 | `CPedGroupIntelligence::AddEvent-` | written | L2 | heap-writes |
+| 0x5FE9C0 | `FUN_005fe9c0` | written | L2 | none |
+| 0x5FF9D0 | `CEntityScanner::Clear` | written | L2 | heap-writes |
+| 0x6074E0 | `delete` | written | L2 | none |
+| 0x61A3A0 | `FUN_0061a3a0` | written | L2 | heap-writes |
+| 0x61A3D0 | `FUN_0061a3d0` | written | L2 | heap-writes |
+| 0x646FE0 | `CTaskSimpleCarSetPedInAsPassenger` | written | L2 | heap-writes,entry-protection-read |
+| 0x6470E0 | `CTaskSimpleCarSetPedInAsDriver` | written | L2 | heap-writes |
+| 0x647170 | `FUN_00647170` | written | L2 | heap-writes |
+| 0x66F450 | `CTaskComplexWander::Constructor` | written | L2 | heap-writes |
+| 0x66F670 | `FUN_0066f670` | written | L2 | heap-writes |
+| 0x683840 | `FUN_00683840` | written | L2 | none |
+| 0x690D20 | `CTaskComplexFacial::Constructor` | written | L2 | heap-writes |
+| 0x691250 | `CTaskComplexFacial::StopAll` | written | L2 | heap-writes |
+| 0x698740 | `CCover::RemoveCoverPointsForThisEntity` | written | L2 | none |
+| 0x699120 | `CCover::FindCoverPointsForThisBuilding` | written | L2 | x87-transcendental |
+| 0x699230 | `CCover::ShouldThisBuildingHaveItsCoverPointsCreated` | written | L2 | x87-transcendental |
+
+## mvpb-ai-2
+
+17 hooks in sa-ai; hazards: entry-protection-read (1), heap-writes (12); recordings calling them: pause-restart (17).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-ai-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-ai-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-ai-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4AC2E0 | `CInformFriendsEventQueue::Process` | written | L2 | heap-writes |
+| 0x4B29E0 | `CInformGroupEvent::Process` | written | L2 | heap-writes |
+| 0x5EB6F0 | `CPedAttractorManager::FindAssociatedAttractor<CPedAttractor>` | written | L2 | none |
+| 0x5F7760 | `CPedGroupIntelligence::IsGroupResponding` | written | L2 | none |
+| 0x5F77A0 | `CPedGroupIntelligence::IsCurrentEventValid` | written | L2 | none |
+| 0x5FC440 | `CPedGroupIntelligence::ComputeEventResponseTasks` | written | L2 | heap-writes |
+| 0x660EE0 | `CTaskGoToVehicleAndLean::Destructor` | written | L2 | heap-writes |
+| 0x690CC0 | `CTaskSimpleFacial::GetAnimId` | written | L2 | none |
+| 0x690DA0 | `CTaskComplexFacial::MakeAbortable` | written | L2 | none |
+| 0x690DC0 | `CTaskComplexFacial::CreateNextSubTask` | written | L2 | heap-writes |
+| 0x690F30 | `CTaskComplexFacial::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x690FC0 | `CTaskComplexFacial::ControlSubTask` | written | L2 | heap-writes |
+| 0x6913A0 | `CTaskSimpleHoldEntity::Constructor-1` | written | L2 | heap-writes,entry-protection-read |
+| 0x691740 | `CTaskSimpleHoldEntity::FinishAnimHoldEntityCB` | written | L2 | heap-writes |
+| 0x692E50 | `CTaskSimpleFacial::MakeAbortable` | written | L2 | heap-writes |
+| 0x692FF0 | `CTaskSimpleHoldEntity::StartAnim` | written | L2 | heap-writes |
+| 0x6930F0 | `CTaskSimpleHoldEntity::DropEntity` | written | L2 | heap-writes |
+
+## mvpb-ai-3
+
+12 hooks in sa-ai; hazards: entry-protection-read (1), heap-writes (8), x87-transcendental (2); recordings calling them: pause-restart (12).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-ai-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-ai-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-ai-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43A960 | `CConversations::RemoveConversationForPed` | written | L2 | none |
+| 0x43AAC0 | `CConversations::IsConversationGoingOn` | written | L2 | none |
+| 0x4B2850 | `CEvent::GetSoundLevel` | written | L2 | x87-transcendental |
+| 0x5F85A0 | `CPedGroupIntelligence::GetTaskMain` | written | L2 | none |
+| 0x5F86F0 | `CPedGroupIntelligence::ReportFinishedTask-Wrapper` | written | L2 | heap-writes |
+| 0x633010 | `CTaskComplexBeInGroup::MonitorMainGroupTask` | written | L2 | heap-writes |
+| 0x6330B0 | `CTaskComplexBeInGroup::MonitorSecondaryGroupTask` | written | L2 | heap-writes |
+| 0x660940 | `CTaskSimpleDoHandSignal::ProcessPed` | written | L2 | heap-writes |
+| 0x664D40 | `CTaskGoToVehicleAndLean::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x664E60 | `CTaskGoToVehicleAndLean::ControlSubTask` | written | L2 | x87-transcendental,heap-writes |
+| 0x685000 | `CTaskComplexWalkAlongsidePed::CreateSubTask` | written | L2 | heap-writes,entry-protection-read |
+| 0x685630 | `CTaskComplexWalkAlongsidePed::CreateFirstSubTask` | written | L2 | heap-writes |
+
+## mvpb-ai-4
+
+1 hooks in sa-ai; hazards: heap-writes (1); recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-ai-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-ai-4 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-ai-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-ai-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5F87A0 | `CPedGroupIntelligence::ProcessIgnorePlayerGroup` | written | L2 | heap-writes |
+
+## mvpb-anim-1
+
+11 hooks in sa-anim; hazards: heap-writes (7); recordings calling them: pause-restart (11).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-anim-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-anim-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-anim-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D1570 | `RpAnimBlendNodeUpdateKeyFrames` | written | L2 | heap-writes |
+| 0x4D56F0 | `ConvertBoneTag2BoneName` | written | L2 | none |
+| 0x4D6310 | `ForAllFramesF` | written | L2 | none |
+| 0x4D6340 | `ForAllFramesF` | written | L2 | none |
+| 0x4D6450 | `FUN_004d6450` | written | L2 | none |
+| 0x4D6510 | `RpAnimBlendClumpInitSkinned` | written | L2 | heap-writes |
+| 0x4D66A0 | `FUN_004d66a0` | written | L2 | heap-writes |
+| 0x5AFAD0 | `CCutsceneMgr::HideRequestedObjects` | written | L2 | heap-writes |
+| 0x5B02A0 | `CCutsceneMgr::CreateCutsceneObject` | written | L2 | heap-writes |
+| 0x5B04D0 | `CCutsceneMgr::FinishCutscene` | written | L2 | heap-writes |
+| 0x5B19D0 | `CCutsceneObject::CCutsceneObject` | written | L2 | heap-writes |
+
+## mvpb-coll-1
+
+2 hooks in sa-world; hazards: none; recordings calling them: pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-coll-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-coll-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-coll-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-coll-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x411BF0 | `thunk_FUN_01563610` | written | L2 | none |
+| 0x59F0C0 | `tColLighting::GetCurrentLighting` | written | L2 | none |
+
+## mvpb-core-1
+
+13 hooks in sa-core; hazards: heap-writes (1), uninit-locals (1), x87-transcendental (4); recordings calling them: grove-walk (9), pause-restart (13).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-core-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-core-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-core-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4048E0 | `FUN_004048e0` | written | L2 | none |
+| 0x4082A0 | `thunk_FUN_01566860` | written | L2 | none |
+| 0x465040 | `FUN_00465040` | written | L2 | none |
+| 0x53BEE0 | `CGame::Process` | written | L3-only | none |
+| 0x53D690 | `App::DoRWStuffStartOfFrame` | written | L2 | x87-transcendental |
+| 0x53D7A0 | `App::DoRWStuffStartOfFrame_Horizon` | written | L3-only | x87-transcendental |
+| 0x53DF40 | `Game::RenderScene` | written | L3-only | none |
+| 0x53E170 | `Game::RenderEffects` | written | L3-only | none |
+| 0x53E230 | `Game::Render2dStuff` | written | L3-only | uninit-locals |
+| 0x53E770 | `Game::FrontendIdle` | written | L3-only | x87-transcendental |
+| 0x53E8D0 | `FUN_0053e8d0` | written | L2 | heap-writes |
+| 0x53E920 | `Game::Idle` | written | L3-only | x87-transcendental |
+| 0x552B50 | `FUN_00552b50` | written | L2 | none |
+
+## mvpb-render-1
+
+32 hooks in sa-render; hazards: entry-protection-read (1), heap-writes (9), x87-transcendental (5); recordings calling them: driving (1), grove-walk (16), pause-restart (32).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-render-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-render-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-render-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4AA440 | `FxSystem_c::AddParticle-v3d` | written | L2 | heap-writes |
+| 0x52CF10 | `CClock::Update` | written | L2 | none |
+| 0x54EEF0 | `TransformPoints` | written | L2 | heap-writes |
+| 0x556000 | `CRopes::FindRope` | written | L2 | none |
+| 0x556070 | `CRope::CreateHookObjectForRope` | written | L2 | heap-writes |
+| 0x558D70 | `CRopes::Update` | written | L3-only | none |
+| 0x5DAB00 | `CGrassRenderer::GenPointInTriangle` | written | L2 | none |
+| 0x5DABB0 | `CGrassRenderer::SetCurrentScanCode` | written | L2 | none |
+| 0x5DB310 | `CPlantMgr::UpdateAmbientColor` | written | L2 | none |
+| 0x5DB3D0 | `CPlantMgr::CalculateWindBending` | written | L2 | x87-transcendental |
+| 0x5DB650 | `CPlantMgr::SetPlantFriendlyFlagInAtomicMI` | written | L2 | heap-writes |
+| 0x5DB6D0 | `CPlantLocTri::Release` | written | L2 | heap-writes |
+| 0x5DB7D0 | `CPlantColEntEntry::AddEntry` | written | L2 | heap-writes |
+| 0x5DB8A0 | `CPlantColEntEntry::ReleaseEntry` | written | L2 | heap-writes |
+| 0x5DC210 | `CPlantLocTri::GetPlantDensity` | written | L2 | x87-transcendental |
+| 0x5DCFA0 | `CPlantMgr::Update` | written | L3-only | none |
+| 0x6FABF0 | `CRegisteredCorona::Update` | written | L2 | none |
+| 0x6FADF0 | `CCoronas::Update` | written | L3-only | none |
+| 0x6FC180 | `CCoronas::RegisterCorona-type` | written | L2 | x87-transcendental,heap-writes |
+| 0x6FC4D0 | `CCoronas::UpdateCoronaCoors` | written | L2 | none |
+| 0x6FC580 | `CCoronas::RegisterCorona-texture` | written | L2 | none |
+| 0x6FC5A0 | `CCoronas::DoSunAndMoon` | written | L2 | none |
+| 0x6FF420 | `CDraw::CalculateAspectRatio` | written | L2 | none |
+| 0x705B30 | `CRealTimeShadowManager::ReturnRealTimeShadow` | written | L2 | heap-writes |
+| 0x707850 | `CShadows::AffectColourWithLighting` | written | L2 | none |
+| 0x7172D0 | `CPlaneTrail::RegisterPoint` | written | L2 | entry-protection-read |
+| 0x7174F0 | `CPlaneTrails::Update` | written | L2 | x87-transcendental |
+| 0x7185B0 | `CMovingThings::Update` | written | L3-only | none |
+| 0x7205C0 | `CSkidmarks::Update` | written | L2 | none |
+| 0x728520 | `CSprite2d::Draw-ffffffffCRGBA` | written | L2 | none |
+| 0x72B630 | `CWeather::UpdateInTunnelness` | written | L2 | x87-transcendental |
+| 0x747200 | `CGamma::SetGamma` | written | split | none |
+
+## mvpb-veh-1
+
+13 hooks in sa-veh; hazards: entry-protection-read (2), heap-writes (5), x87-transcendental (2); recordings calling them: pause-restart (13).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-veh-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-veh-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x44D520 | `CAutomobile::HasCarStoppedBecauseOfLight` | written | L2 | none |
+| 0x650280 | `CCarEnterExit::SetPedInCarDirect` | written | L2 | heap-writes,entry-protection-read |
+| 0x65DA70 | `FUN_0065da70` | written | L2 | none |
+| 0x6A3770 | `CAutomobile::PlayCarHorn` | written | L2 | heap-writes,entry-protection-read |
+| 0x6A3820 | `CAutomobile::PlayHornIfNecessary` | written | L2 | none |
+| 0x6A8500 | `CAutomobile::ProcessFlyingCarStuff` | written | L2 | x87-transcendental |
+| 0x6CCAA0 | `CPlane::AreWeInNoPlaneZone` | written | L2 | x87-transcendental |
+| 0x6D1180 | `CVehicle::CanBeDeleted` | written | L2 | none |
+| 0x6D1AA0 | `CVehicle::SetupPassenger` | written | L2 | heap-writes |
+| 0x6D30E0 | `CVehicle::SetVehicleUpgradeFlags` | written | L2 | heap-writes |
+| 0x6E3290 | `CVehicle::AddVehicleUpgrade` | written | L2 | heap-writes |
+| 0x6F2D30 | `CSpecialPlateHandler::Find` | written | L2 | none |
+| 0x6F5BA0 | `CTrain::FindMaximumSpeedToStopAtStations` | written | L2 | none |
+
+## mvpb-veh-2
+
+6 hooks in sa-veh; hazards: x87-transcendental (3); recordings calling them: pause-restart (6).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-veh-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-veh-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-veh-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6ADFF0 | `CAutomobile::ScanForCrimes` | written | L2 | none |
+| 0x6D0530 | `cTransmission::CalculateGearForSimpleCar` | written | L2 | none |
+| 0x6DBBB0 | `CVehicle::SetTransmissionRotation` | written | L2 | x87-transcendental |
+| 0x6E1600 | `CVehicle::DoHeadLightReflectionTwin` | written | L2 | x87-transcendental |
+| 0x6E1780 | `CVehicle::DoTailLightEffect` | written | L2 | x87-transcendental |
+| 0x6F55C0 | `CTrain::Render` | written | L2 | none |
+
+## mvpb-veh-3
+
+3 hooks in sa-veh; hazards: heap-writes (1), x87-transcendental (1); recordings calling them: pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-veh-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-veh-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-veh-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A2B10 | `CAutomobile::Render` | written | L2 | heap-writes |
+| 0x6D05E0 | `cTransmission::CalculateDriveAcceleration` | written | L2 | none |
+| 0x6E0A50 | `CVehicle::DoHeadLightEffect` | written | L2 | x87-transcendental |
+
+## mvpb-veh-4
+
+2 hooks in sa-veh; hazards: heap-writes (2); recordings calling them: pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-veh-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-veh-4 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-veh-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6B6950 | `CBike::DoBurstAndSoftGroundRatios` | written | L2 | heap-writes |
+| 0x6B8EC0 | `CBike::VehicleDamage` | written | L2 | heap-writes |
+
+## mvpb-veh-5
+
+2 hooks in sa-veh; hazards: heap-writes (2), x87-transcendental (1); recordings calling them: pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-veh-5 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-veh-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-5 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-veh-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A9D70 | `CAutomobile::ProcessSwingingDoor` | written | L2 | heap-writes,x87-transcendental |
+| 0x6F7550 | `CTrain::CreateMissionTrain` | written | L2 | heap-writes |
+
+## mvpb-veh-6
+
+1 hooks in sa-veh; hazards: heap-writes (1), x87-transcendental (1); recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-veh-6 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-veh-6 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-veh-6 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-veh-6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A65D0 | `CAutomobile::SetupSuspensionLines` | written | L2 | heap-writes,x87-transcendental |
+
+## mvpb-weapon-1
+
+1 hooks in sa-weapon; hazards: x87-transcendental (1); recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-weapon-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-weapon-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-weapon-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-weapon-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x56EF90 | `FUN_0056ef90` | written | L2 | x87-transcendental |
+
+## mvpb-world-1
+
+13 hooks in sa-world; hazards: entry-protection-read (1), heap-writes (3); recordings calling them: pause-restart (13).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x446F90 | `CEntity::UpdateRwMatrix` | written | L2 | heap-writes |
+| 0x447D80 | `FUN_00447d80` | written | L2 | none |
+| 0x448E50 | `thunk_FUN_01569180` | written | L2 | none |
+| 0x45BF90 | `tReplayBmxBlock::MakeBmxUpdateData` | written | L2 | none |
+| 0x45C070 | `tReplayBikeBlock::MakeBikeUpdateData` | written | L2 | none |
+| 0x45C750 | `CReplay::StoreClothesDesc` | written | L2 | none |
+| 0x45EBB0 | `CReplay::RecordVehicleDeleted` | written | L2 | none |
+| 0x45EC20 | `CReplay::RecordPedDeleted` | written | L2 | none |
+| 0x5342B0 | `CEntity::RenderEffects` | written | L2 | none |
+| 0x534310 | `CEntity::Render` | written | L2 | heap-writes |
+| 0x535E90 | `CEntity::Destructor` | written | L2 | heap-writes,entry-protection-read |
+| 0x564A20 | `CWorld::FindObjectsInRange` | written | L2 | none |
+| 0x564C70 | `CWorld::FindObjectsOfTypeInRange` | written | L2 | none |
+
+## mvpb-world-2
+
+3 hooks in sa-world; hazards: heap-writes (3); recordings calling them: pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5647F0 | `CWorld::ProcessAttachedEntities` | written | L2 | heap-writes |
+| 0x565CB0 | `CWorld::RemoveFallenPeds` | written | L2 | heap-writes |
+| 0x565E80 | `CWorld::RemoveFallenCars` | written | L2 | heap-writes |
+
+## mvpb-world-3
+
+2 hooks in sa-world; hazards: heap-writes (2); recordings calling them: pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x448D30 | `CGarage::IsEntityEntirelyOutside` | written | L2 | heap-writes |
+| 0x449C50 | `CGarage::TidyUpGarage` | written | L2 | heap-writes |
+
+## mvpb-world-4
+
+1 hooks in sa-world; hazards: none; recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-4 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x45C940 | `CReplay::StorePedUpdate` | written | L2 | none |
+
+## mvpb-world-5
+
+4 hooks in sa-world; hazards: heap-writes (3), x87-transcendental (1); recordings calling them: grove-walk (1), pause-restart (4).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-5 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-5 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x559760 | `CStats::CheckForStatsMessage` | written | L2 | none |
+| 0x55BC50 | `CStats::UpdateRespectStat` | written | L2 | heap-writes |
+| 0x55BF20 | `CStats::UpdateSexAppealStat` | written | L2 | x87-transcendental,heap-writes |
+| 0x55C180 | `CStats::IncrementStat` | written | L2 | heap-writes |
+
+## mvpb-world-6
+
+3 hooks in sa-world; hazards: heap-writes (2), x87-transcendental (1); recordings calling them: pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-6 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-6 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-6 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4479F0 | `CGarage::BuildRotatedDoorMatrix` | written | L2 | x87-transcendental,heap-writes |
+| 0x448BE0 | `CGarage::IsEntityEntirelyInside3D` | written | L2 | heap-writes |
+| 0x44A830 | `CGarage::IsStaticPlayerCarEntirelyInside` | written | L2 | none |
+
+## mvpb-world-7
+
+1 hooks in sa-world; hazards: none; recordings calling them: pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpb-world-7 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpb-world-7 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-world-7 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpb-world-7
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43E460 | `CEntryExit::IsInArea` | written | L2 | none |
+
+## mvpc-ai-1
+
+28 hooks in sa-ai; hazards: heap-writes (13), stack-residue (2); recordings calling them: grove-walk (28), pause-restart (28).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-ai-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43A840 | `CConversations::StartSettingUpConversation` | written | L2 | none |
+| 0x43AA40 | `CConversations::EnableConversation` | written | L2 | none |
+| 0x48DF30 | `thunk_FUN_01562470` | written | L2 | heap-writes |
+| 0x48E930 | `thunk_FUN_0061a6f0` | written | L2 | heap-writes |
+| 0x4B7CD0 | `CInformGroupEventQueue::Add` | written | L2 | heap-writes |
+| 0x4B96D0 | `CEventHandler::ComputeVehiclePotentialPassiveCollisionResponse` | written | L2 | heap-writes,stack-residue |
+| 0x4BA7C0 | `CEventHandler::ComputeScriptCommandResponse` | written | L2 | heap-writes |
+| 0x4BC600 | `CEventHandler::SetEventResponseTask` | written | L2 | heap-writes |
+| 0x4C3870 | `CEventHandler::ComputeEventResponseTask-0` | written | L2 | heap-writes |
+| 0x4C5CB0 | `FUN_004c5cb0` | written | split | none |
+| 0x4C5D10 | `FUN_004c5d10` | written | split | none |
+| 0x4C5D70 | `FUN_004c5d70` | written | split | none |
+| 0x4C5DD0 | `FUN_004c5dd0` | written | split | none |
+| 0x4C5E30 | `FUN_004c5e30` | written | split | none |
+| 0x4C5E90 | `FUN_004c5e90` | written | split | none |
+| 0x4C5EF0 | `FUN_004c5ef0` | written | split | none |
+| 0x4C5F50 | `FUN_004c5f50` | written | split | none |
+| 0x4C67D0 | `FUN_004c67d0` | written | split | none |
+| 0x4C7410 | `FUN_004c7410` | written | L2 | heap-writes |
+| 0x4C75E0 | `FUN_004c75e0` | written | split | heap-writes |
+| 0x4C94C0 | `FUN_004c94c0` | written | L2 | heap-writes |
+| 0x4CECF0 | `CAnimBlendAssociation` | written | L2 | heap-writes |
+| 0x4CEFA0 | `CAnimBlendAssociation` | written | L2 | heap-writes |
+| 0x5F3650 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners` | written | L2 | none |
+| 0x603A30 | `FUN_00603a30` | written | L2 | none |
+| 0x6042B0 | `FUN_006042b0` | written | L2 | none |
+| 0x607D80 | `FUN_00607d80` | written | L2 | heap-writes,stack-residue |
+| 0x66D440 | `FUN_0066d440` | written | split | none |
+
+## mvpc-ai-2
+
+5 hooks in sa-ai; hazards: heap-writes (4), stack-residue (2), uninit-locals (1); recordings calling them: grove-walk (5), pause-restart (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-ai-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-ai-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-ai-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x600180 | `FUN_00600180` | written | L2 | none |
+| 0x6034B0 | `FUN_006034b0` | written | L2 | heap-writes,stack-residue |
+| 0x606BA0 | `FUN_00606ba0` | written | L2 | heap-writes |
+| 0x607560 | `FUN_00607560` | written | L2 | heap-writes,stack-residue |
+| 0x607A90 | `FUN_00607a90` | written | L2 | uninit-locals,heap-writes |
+
+## mvpc-ai-3
+
+10 hooks in sa-ai; hazards: entry-protection-read (2), heap-writes (9), stack-residue (4), x87-transcendental (2); recordings calling them: driving (2), grove-walk (8), pause-restart (10).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-ai-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-ai-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag mvpc-ai-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x48E440 | `CTaskSimpleSay::ProcessPed` | written | L2 | heap-writes |
+| 0x5F3C20 | `CPedGeometryAnalyser::ComputeEntityBoundingSphere` | written | L2 | x87-transcendental,stack-residue |
+| 0x603BF0 | `FUN_00603bf0` | written | L2 | heap-writes,stack-residue |
+| 0x61B6D0 | `CTaskSimpleRunAnim::Clone` | written | L2 | heap-writes |
+| 0x632C70 | `CTaskComplexSequence::CreateNextSubTask-Internal` | written | L2 | heap-writes |
+| 0x633A90 | `CTaskSimpleIKChain::Destructor` | written | L2 | heap-writes,entry-protection-read |
+| 0x63C940 | `CTaskComplexCarDrive::Constructor_1` | written | L2 | heap-writes |
+| 0x642760 | `CTaskSimpleCarDrive::StartBopping` | written | L2 | heap-writes,stack-residue |
+| 0x6428C0 | `CTaskSimpleCarDrive::ProcessHeadBopping` | written | L2 | x87-transcendental,stack-residue,heap-writes |
+| 0x6541B0 | `CTaskComplexWalkRoundCar::Constructor` | written | L2 | heap-writes,entry-protection-read |
+
+## mvpc-coll-1
+
+4 hooks in sa-world; hazards: stack-residue (3), uninit-locals (1); recordings calling them: driving (4), grove-walk (4), pause-restart (4).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-coll-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-coll-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-coll-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-coll-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4140F0 | `CCollision::ProcessLineTriangle` | written | L2 | stack-residue |
+| 0x417730 | `CCollision::TestLineOfSight` | written | L2 | none |
+| 0x417950 | `CCollision::ProcessLineOfSight` | written | L2 | stack-residue |
+| 0x417BF0 | `CCollision::ProcessVerticalLine` | written | L2 | stack-residue,uninit-locals |
+
+## mvpc-fx-1
+
+27 hooks in sa-render; hazards: ax-al-return (7), heap-writes (24), stack-residue (5), uninit-locals (1); recordings calling them: grove-walk (27), pause-restart (27).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-fx-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-fx-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-fx-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-fx-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x49E660 | `Fx_c::InitStaticSystems` | written | split | heap-writes |
+| 0x4A11E0 | `Fx_c::CreateEntityFx` | written | L2 | heap-writes |
+| 0x4A1660 | `Fx_c::RotateVecIntoVec` | written | L2 | heap-writes |
+| 0x4A1780 | `Fx_c::RotateVecAboutVec` | written | L2 | stack-residue,heap-writes |
+| 0x4A4960 | `FxInfoManager_c::ProcessEmissionInfo` | written | L2 | heap-writes |
+| 0x4A4A80 | `FxInfoManager_c::ProcessRenderInfo` | written | L2 | heap-writes |
+| 0x4A5300 | `FxInfoNoise_c::GetValue` | written | L2 | heap-writes,stack-residue |
+| 0x4A5BB0 | `FxInfoJitter_c::GetValue` | written | L2 | heap-writes,stack-residue |
+| 0x4A7B00 | `FxInfoManager_c::AddFxInfo` | written | L2 | heap-writes |
+| 0x4A8800 | `FxInterpInfoU255_c::GetVal` | written | L2 | heap-writes,stack-residue |
+| 0x4A89C0 | `FxInterpInfo32_c::GetVal` | written | L2 | heap-writes,stack-residue |
+| 0x4A96B0 | `FxManager_c::CreateFxSystem-3` | written | L2 | heap-writes |
+| 0x4AA750 | `FxSystem_c::Init` | written | L2 | heap-writes,ax-al-return |
+| 0x4AB240 | `thunk_FUN_008232d8` | written | split | none |
+| 0x4AB250 | `thunk_FUN_005389b0` | written | split | ax-al-return |
+| 0x4AB260 | `_fclose` | written | split | none |
+| 0x5C05F0 | `FxSystemBP_c::Load` | written | split | heap-writes,uninit-locals,ax-al-return |
+| 0x5C0A30 | `FxEmitterBP_c::LoadTextures` | written | split | heap-writes,ax-al-return |
+| 0x5C0B70 | `FxInfoManager_c::Load` | written | split | heap-writes |
+| 0x5C16F0 | `FxInterpInfoFloat_c::Load` | written | split | heap-writes |
+| 0x5C18F0 | `FxInterpInfoU255_c::Load` | written | split | heap-writes |
+| 0x5C1B10 | `FxInterpInfo32_c::Load` | written | split | heap-writes |
+| 0x5C1D30 | `FxInterpInfo255_c::Load` | written | split | heap-writes |
+| 0x5C1F50 | `FxManager_c::LoadFxSystemBP` | written | split | heap-writes |
+| 0x5C2010 | `FxPrimBP_c::Load` | written | split | heap-writes,ax-al-return |
+| 0x5C2420 | `FxManager_c::LoadFxProject` | written | split | heap-writes,ax-al-return |
+| 0x5C25F0 | `FxEmitterBP_c::Load` | written | split | heap-writes,ax-al-return |
+
+## mvpc-fx-2
+
+5 hooks in sa-render; hazards: ax-al-return (1), heap-writes (4), stack-residue (2), x87-transcendental (1); recordings calling them: grove-walk (5), pause-restart (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-fx-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-fx-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-fx-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-fx-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A1410 | `Fx_c::RenderAddTri_` | written | L2 | none |
+| 0x4A21D0 | `FxEmitterBP_c::UpdateParticle` | written | L2 | stack-residue,heap-writes,ax-al-return |
+| 0x4A2580 | `FxEmitter_c::CreateParticle` | written | L2 | x87-transcendental,stack-residue,heap-writes |
+| 0x4A3EA0 | `FxEmitter_c::AddParticle_Reversed-matrix` | written | L2 | heap-writes |
+| 0x4A41E0 | `FxEmitter_c::CreateParticles` | written | L2 | heap-writes |
+
+## mvpc-render-1
+
+19 hooks in sa-render; hazards: ax-al-return (2), entry-protection-read (1), heap-writes (3), preserved-regs (1), stack-residue (1), uninit-locals (2), x87-transcendental (6); recordings calling them: grove-walk (19), pause-restart (19).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-render-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4AC0D0 | `(missed by ghidra: data-code-immediate)` | written | split | none |
+| 0x5A3140 | `ProcObjectMan_c::LoadDataFile` | written | split | heap-writes,uninit-locals |
+| 0x5DD780 | `CPlantMgr::ReloadConfig` | written | split | ax-al-return |
+| 0x6F9EB0 | `FUN_006f9eb0` | written | L2 | preserved-regs |
+| 0x6FA6D0 | `(missed by ghidra: data-code-immediate)` | written | split | none |
+| 0x6FA790 | `(missed by ghidra: data-code-immediate)` | written | split | none |
+| 0x6FECA0 | `CCustomRoadsignMgr::CreateRoadsignTexture` | written | L2 | heap-writes |
+| 0x6FF410 | `CDraw::SetFOV` | written | L2 | entry-protection-read |
+| 0x6FFBB0 | `CPointLights::GenerateLightsAffectingObject` | written | L2 | x87-transcendental,heap-writes |
+| 0x706CD0 | `CShadows::Init` | written | split | none |
+| 0x707B40 | `CShadows::StoreShadowForPedObject` | written | L2 | x87-transcendental,uninit-locals |
+| 0x724770 | `CBrightLights::RegisterOne` | written | L2 | x87-transcendental |
+| 0x724B60 | `CShinyTexts::RegisterOne` | written | L2 | x87-transcendental |
+| 0x7268F0 | `CSpecialFX::Init` | written | split | none |
+| 0x72C950 | `CWindModifiers::FindWindModifier` | written | L2 | x87-transcendental,ax-al-return |
+| 0x734970 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
+| 0x734EC0 | `FUN_00734ec0` | written | L3-only | none |
+| 0x734ED0 | `(missed by ghidra: data-code-immediate)` | written | L2 | x87-transcendental |
+| 0x734FC0 | `RpClumpGetBoundingSphere` | written | L2 | stack-residue |
+
+## mvpc-veh-1
+
+1 hooks in sa-veh; hazards: heap-writes (1), uninit-locals (1); recordings calling them: grove-walk (1), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-veh-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-veh-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-veh-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6F55D0 | `CTrain::ReadAndInterpretTrackFile` | written | split | heap-writes,uninit-locals |
+
+## mvpc-world-1
+
+13 hooks in sa-world; hazards: stack-residue (4); recordings calling them: driving (12), grove-walk (13), pause-restart (13).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-world-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-world-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-world-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5632B0 | `CWorld::ProcessVerticalLineSectorList<CPtrListDoubleLink<CPhysical*>>` | written | L2 | none |
+| 0x564500 | `CWorld::ProcessVerticalLineSector` | written | L2 | none |
+| 0x564970 | `CWorld::GetIsLineOfSightSectorListClear<CPtrListDoubleLink<CPhysical*>>` | written | L2 | none |
+| 0x564ED0 | `CWorld::FindLodOfTypeInRange` | written | L2 | stack-residue |
+| 0x565000 | `CWorld::FindObjectsKindaCollidingSectorList<CPtrListDoubleLink<CPhysical*>>` | written | L2 | none |
+| 0x566140 | `CWorld::TestSphereAgainstSectorList<CPtrListDoubleLink<CPhysical*>>` | written | L2 | none |
+| 0x5674E0 | `CWorld::ProcessVerticalLine` | written | L2 | stack-residue |
+| 0x568AD0 | `CWorld::GetIsLineOfSightSectorClear` | written | L2 | none |
+| 0x568B80 | `CWorld::FindObjectsKindaColliding` | written | L2 | none |
+| 0x569E20 | `CWorld::TestSphereAgainstWorld` | written | L2 | none |
+| 0x56A490 | `CWorld::GetIsLineOfSightClear` | written | L2 | stack-residue |
+| 0x56B5E0 | `CWorld::ProcessLineOfSightSector` | written | L2 | none |
+| 0x56BA00 | `CWorld::ProcessLineOfSight` | written | L2 | stack-residue |
+
+## mvpc-world-2
+
+4 hooks in sa-world; hazards: heap-writes (2), uninit-locals (1); recordings calling them: driving (2), grove-walk (4), pause-restart (4).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpc-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpc-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpc-world-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpc-world-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43F880 | `CEntryExitManager::Init` | written | split | heap-writes |
+| 0x533BF0 | `CEntity::DestroyEffects` | written | L2 | none |
+| 0x59FD50 | `CObject::PreRender` | written | L2 | none |
+| 0x5C0280 | `FurnitureManager_c::LoadFurniture` | written | split | heap-writes,uninit-locals |
+
+## mvpe-coll-1
+
+10 hooks in sa-world; hazards: heap-writes (2), stack-residue (4), uninit-locals (5), x87-transcendental (3); recordings calling them: driving (10), grove-walk (10), pause-restart (9).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpe-coll-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpe-coll-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-coll-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpe-coll-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x413100 | `CCollision::ProcessLineBox` | written | L2 | stack-residue,uninit-locals |
+| 0x415320 | `CCollision::CheckCameraCollisionPeds` | written | L2 | stack-residue,heap-writes |
+| 0x4165B0 | `CCollision::TestSphereTriangle` | written | L2 | x87-transcendental |
+| 0x416BA0 | `CCollision::ProcessSphereTriangle` | written | L2 | x87-transcendental,uninit-locals |
+| 0x4181B0 | `CCollision::SphereCastVsCaches` | written | L2 | uninit-locals,heap-writes |
+| 0x41A5A0 | `CCollision::SphereVsEntity` | written | split | uninit-locals |
+| 0x41A820 | `CCollision::CheckCameraCollisionBuildings` | written | L2 | stack-residue |
+| 0x41AB20 | `CCollision::CheckCameraCollisionObjects` | written | L2 | stack-residue |
+| 0x41AC40 | `CCollision::BuildCacheOfCameraCollision` | written | L2 | x87-transcendental |
+| 0x41B000 | `CCollision::CameraConeCastVsWorldCollision` | written | L2 | uninit-locals |
+
+## mvpe-ent-1
+
+2 hooks in sa-world; hazards: heap-writes (2), x87-transcendental (2); recordings calling them: grove-walk (2), pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpe-ent-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpe-ent-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-ent-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpe-ent-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x533790 | `CEntity::CreateEffects` | written | L2 | x87-transcendental,heap-writes |
+| 0x5A2130 | `CObject::ProcessControl` | written | L2 | x87-transcendental,heap-writes |
+
+## mvpe-phys-1
+
+4 hooks in sa-world; hazards: stack-residue (1); recordings calling them: driving (4), grove-walk (3), pause-restart (4).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpe-phys-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpe-phys-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-phys-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag mvpe-phys-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x546670 | `CPhysical::ProcessShiftSectorList` | written | L2 | none |
+| 0x54BA60 | `CPhysical::ProcessCollisionSectorList` | written | L2 | none |
+| 0x54CFF0 | `CPhysical::ProcessCollisionSectorList_SimpleCar` | written | L2 | stack-residue |
+| 0x54DFB0 | `CPhysical::ProcessCollision` | written | L2 | none |
+
+## mvpe-tempcol-1
+
+1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpe-tempcol-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpe-tempcol-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-tempcol-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpe-tempcol-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5BA8C0 | `CTempColModels::Initialise` | written | split | heap-writes |
+
+## mvpe-veh-1
+
+3 hooks in sa-veh; hazards: stack-residue (1); recordings calling them: driving (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh mvpe-veh-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=mvpe-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpe-veh-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag mvpe-veh-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6C8AE0 | `CMonsterTruck::ProcessEntityCollision` | written | L2 | stack-residue |
+| 0x6CE280 | `CQuadBike::ProcessDrivingAnims` | written | L2 | none |
+| 0x6CFFD0 | `CTrailer::ProcessEntityCollision` | written | L2 | none |
+
+## popw4-drive-1
+
+9 hooks in sa-pop; hazards: heap-writes (8), x87-transcendental (9); recordings calling them: air-water (3), car-ai (6), driving (6), pause-restart (1), police-gang (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh popw4-drive-1 $SA_ROOT/target/e2e/corpus/car-ai.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=popw4-drive-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-drive-1 $SA_ROOT/target/e2e/corpus/car-ai.sarec --runs "plain l2 rust" --tag popw4-drive-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x423000 | `CCarCtrl::FlyAIPlaneInCertainDirection` | written | L2 | heap-writes,x87-transcendental |
+| 0x423940 | `CCarCtrl::FlyAIHeliToTarget_FixedOrientation` | written | L2 | heap-writes,x87-transcendental |
+| 0x428040 | `CCarCtrl::DealWithBend_Racing` | written | L2 | x87-transcendental |
+| 0x429A70 | `CCarCtrl::FlyAIHeliInCertainDirection` | written | L2 | heap-writes,x87-transcendental |
+| 0x42EC90 | `CCarCtrl::DragCarToPoint` | written | L2 | heap-writes,x87-transcendental |
+| 0x432DD0 | `CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath` | written | L2 | heap-writes,x87-transcendental |
+| 0x433BA0 | `CCarCtrl::SteerAICarParkParallel` | written | L2 | heap-writes,x87-transcendental |
+| 0x433EA0 | `CCarCtrl::SteerAICarParkPerpendicular` | written | L2 | heap-writes,x87-transcendental |
+| 0x435830 | `CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing` | written | L2 | heap-writes,x87-transcendental |
+
+## popw4-frame-1
+
+2 hooks in sa-pop; hazards: heap-writes (2), stack-residue (1), uninit-locals (1), x87-transcendental (1); recordings calling them: car-ai (2), driving (2), grove-walk (2), pause-restart (2), police-gang (2), world-cheats (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh popw4-frame-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=popw4-frame-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-frame-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag popw4-frame-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x49DAB0 | `CTrafficLights::DisplayActualLight` | written | L2 | heap-writes |
+| 0x614720 | `CPopulation::AddToPopulation` | written | split | heap-writes,uninit-locals,stack-residue,x87-transcendental |
+
+## popw4-gang-1
+
+11 hooks in sa-pop; hazards: entry-protection-read (1), heap-writes (7), stack-residue (1), uninit-locals (1), x87-transcendental (4); recordings calling them: grove (8), police-gang (9).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh popw4-gang-1 $SA_ROOT/target/e2e/corpus/police-gang.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=popw4-gang-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-gang-1 $SA_ROOT/target/e2e/corpus/police-gang.sarec --runs "plain l2 rust" --tag popw4-gang-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43D3B0 | `CDarkel::StartFrenzy` | written | L2 | heap-writes |
+| 0x43D7A0 | `CDarkel::DealWithWeaponChangeAtEndOfFrenzy` | written | L2 | heap-writes |
+| 0x443B00 | `CGangWars::PickZoneToAttack` | written | L2 | x87-transcendental |
+| 0x444040 | `CGangWars::CheerVictory` | written | L2 | heap-writes |
+| 0x444300 | `CGangWars::StartDefensiveGangWar` | written | L2 | x87-transcendental |
+| 0x444810 | `CGangWars::CreateAttackWave` | written | split | heap-writes,uninit-locals,stack-residue,x87-transcendental,entry-protection-read |
+| 0x4453D0 | `CGangWars::CreateDefendingGroup` | written | split | heap-writes,x87-transcendental |
+| 0x446050 | `CGangWars::StartOffensiveGangWar` | written | L2 | none |
+| 0x460EE0 | `CRoadBlocks::GetRoadBlockNodeInfo` | written | L2 | none |
+| 0x461020 | `CRoadBlocks::ClearSpaceForRoadBlockObject` | written | split | heap-writes |
+| 0x461170 | `CRoadBlocks::GenerateRoadBlockPedsForCar` | written | split | heap-writes |
+
+## popw4-partial-1
+
+4 hooks in sa-pop; hazards: heap-writes (1); recordings calling them: pause-restart (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh popw4-partial-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=popw4-partial-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-partial-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag popw4-partial-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43CEC0 | `CDarkel::DrawMessages` | written | L2 | none |
+| 0x4439D0 | `CGangWars::PedStreamedInForThisGang` | written | L2 | none |
+| 0x443A20 | `CGangWars::PickStreamedInPedForThisGang` | written | L2 | none |
+| 0x612710 | `CPopulation::AddPed` | written | split | heap-writes |
+
+## popw4-pop-1
+
+6 hooks in sa-pop; hazards: heap-writes (6), stack-residue (2), uninit-locals (1), x87-transcendental (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh popw4-pop-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=popw4-pop-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-pop-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag popw4-pop-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x42C2B0 | `CCarCtrl::CreatePoliceChase` | written | split | heap-writes |
+| 0x42C740 | `CCarCtrl::CreateConvoy` | written | split | heap-writes |
+| 0x612CD0 | `CPopulation::AddDeadPedInFrontOfCar` | written | split | heap-writes,x87-transcendental |
+| 0x6133F0 | `CPopulation::CreateWaitingCoppers` | written | split | heap-writes,x87-transcendental,stack-residue |
+| 0x613D60 | `CPopulation::PlaceCouple` | written | split | heap-writes,x87-transcendental |
+| 0x616470 | `CPopulation::PopulateInterior` | written | split | heap-writes,uninit-locals,stack-residue |
 
 ## rw5-cam-1
 

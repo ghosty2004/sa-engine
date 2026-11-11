@@ -35,6 +35,7 @@ pub mod hierarchy;
 pub mod hooks;
 pub mod ik;
 pub mod manager;
+pub mod mvpb_anim;
 pub mod node;
 pub mod pedik;
 pub mod sequence;
