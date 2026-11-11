@@ -411,17 +411,17 @@ pub fn process_commands_100_to_199(s: Scr, command: u32) -> i8 {
         // `fmul 1/65536`, `fstp a`. gr: unregistered.
         0x0098 => {
             let a = var_ptr(s, 2);
-            crt_rand();
-            crt_rand();
-            crt_rand();
-            let r = crt_rand();
+            sa_core::orig::at_site(0x4674F4, crt_rand);
+            sa_core::orig::at_site(0x4674F9, crt_rand);
+            sa_core::orig::at_site(0x4674FE, crt_rand);
+            let r = sa_core::orig::at_site(0x467503, crt_rand);
             a.write(X87::from_i32(r as i32).fmul_m(f(K_INV_65536)).to_f32().to_bits());
             0
         }
         // 0099 GENERATE_RANDOM_INT (0x467528): `*var(2) = rand()`.
         0x0099 => {
             let a = var_ptr(s, 2);
-            a.write(crt_rand());
+            a.write(sa_core::orig::at_site(0x467538, crt_rand));
             0
         }
         // 009B DELETE_CHAR (0x467789): RemoveThisPed(PedPool.GetAtRef(P0)); with mission cleanup

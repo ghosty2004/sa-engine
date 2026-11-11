@@ -395,3 +395,90 @@ Tests: `cargo test -p sa-script` 4/4 (`partial_switches_list_their_rust_cases` n
 jump-table cases and complete switches); `cargo test -p sa-hook --lib` 51/51 with `RUST_MIN_STACK=268435456`
 (see the harness note); clippy `-D warnings` clean for sa-script on host (all targets), i686 (`in-process`)
 and wasm32.
+
+# PORT-SCRIPT-4: the remaining switches
+
+Work split: the main agent (1200, 1400, 1700, the non-switch `misc.rs`, merges and verification) and two helpers on
+disjoint switch files (1800/1900/2000/2100 and 2300/2400/2500/1500). Built on PORT-SCRIPT-3 (merged first) and on
+the sa-veh i686 build fix 907f2c3 (cherry-picked: master ee3477c does not build sa-hook for i686 after the X87
+widening).
+
+## Result
+
+| switch | Rust / cases | state |
+|---|---|---|
+| 1200To1299 | 72/73 | partial: 0503 CREATE_SWAT_ROPE stays on the fallback (below) |
+| 1400To1499 | 82/82 | complete |
+| 1500To1599 | 94/94 | complete |
+| 1700To1799 | 95/95 | complete |
+| 1800To1899 | 95/95 | complete |
+| 1900To1999 | 99/99 | complete |
+| 2000To2099 | 92/92 | complete |
+| 2100To2199 | 98/98 | complete |
+| 2300To2399 | 100/100 | complete |
+| 2400To2499 | 100/100 | complete (the catalogue extent stops at the case jump 0x478037; the body runs to 0x479AF6, table 0x479AFC, nested table 0x479C8C for 096D) |
+| 2500To2599 | 95/97 | partial: 09C6/09D3 stay on the fallback (below) |
+
+With PORT-SCRIPT-3's 14, 23 of the 25 `ProcessCommandsXToY` switches are complete (2600To2699 was never in
+scope). Every case of the 25 switches except 0503, 09C6 and 09D3 is Rust.
+
+Non-switch functions (`misc.rs`): `CBoundingBox::SetMinMax` (stub 0x470100), `CTheScripts::MoveSearchLightBetweenTwoPoints`
+(0x493360), `MoveSearchLightToEntity` (stub 0x493420), `MoveSearchLightToPointAndStop` (stub 0x493480). The other
+~75 `specified` non-switch functions were not started.
+
+## Decisions needed
+
+- **0503 CREATE_SWAT_ROPE** (case 0x48C863): the case passes `&[esp+0x6C]` (the switch frame's base + 0x6C) to
+  `ClearSpaceForMissionEntity` 0x486B00 as the position, and nothing in the case or the prologue writes that slot
+  (checked in the bytes: the case writes only `[esp+0x18..0x20]` (the rope position) and `[esp+0x40]`; the callees
+  0x558D10, 0x612710, 0x659410, 0x681AF0, 0x608540, 0x6083E0, 0x5E47E0, 0x62F310 all run below the frame and take no
+  pointer to it). 0x486B00 uses the vector as the centre of `CWorld::FindObjectsKindaColliding` and then tests the
+  candidates against the new ped's real collision, so the stale bytes decide which entities near the ped are
+  cleared. The value is whatever the previous frame at that stack depth (an earlier switch call from `Process`) left
+  there, which a Rust switch cannot reproduce. A CPU measurement cannot settle it either (no recording runs 0503 and
+  the value depends on the history). Options: keep the case on the fallback (current; exact in phase A), or a ledger
+  entry passing the rope position (gr intent) or a zero vector for phase B.
+- **04B9 GET_CLOSEST_STRAIGHT_ROAD** (0x48B7B5): decided statically, ported. `FindNodePairClosestToCoors` 0x44FEE0 has
+  two exits: success (0x4501AA..0x4502E0) writes n1, n2 and the orientation as whole dwords, failure (0x450300) writes
+  `n1.low = n2.low = 0xFFFF` and `orientation = 0`; the case reads n2 and the orientation only after
+  `n1.low != 0xFFFF`. `FindNodeCoorsForScript` 0x4505E0 writes `*found` and the vector on both of its paths
+  (0x450611/0x45075C). No stale byte reaches an output.
+- **09C6 / 09D3** (2500, case 0x47BF2B, the empty `xor al,al`): SA:MP rewrites their jump-table entries
+  (0x47BF54 / 0x47BF88) to install its own opcodes (`docs/samp/game-adapter.md`, SAMP-1); only the original body
+  dispatches through the patched table, so a complete Rust switch would turn SA:MP's custom opcodes into no-ops.
+  Options: accept 95/97, or give the game adapter a Rust hook for custom opcodes and then close the switch.
+
+## Kept from the exe / ledger candidates
+
+No new class; all fit the PORT-SCRIPT-2/3 decisions: zeroed text-label buffers (8, 9, 15, 16, 18, 24-byte labels;
+09A4/0A18 have adjacent 8-byte buffers, so an 8-character label reads into the next one in the original), zeroed stack
+objects and out-parameters (e.g. 0755 patrol record, 07C4/07C6 matrices, 0814 bounding boxes, 0851/0621/0630/0631
+`CEventScriptCommand`s, 0889, 092E, 094C, 0985, 09DA, 0A08, 06AE's decision-maker name), `setcc` bools as 0/1 with
+exact dwords where cheap, FPATAN/FSIN/FCOS at 53 bits (0604, 061D, 0731, 077D, 05A4 `_CIacos` modelled as sa-anim's
+`ci_acos`, 06BE GetCarRoll, 06F8 node orientation). Original bugs kept are listed in the case comments (e.g. 05BC
+writes `t+0x10` without a null check, 06A8 writes the task fields unchecked, 0985/098B/098C/0982/099F/099C/0926
+quirks, `RegisterReference` with `this = 0` in 0710/0726/0727/0780, unchecked upper bounds 076B/076D/07F3/0760).
+Opcodes gr marks `unimplemented`/nop that the exe implements or ends with 0 are noted per case.
+
+## Verification (lane 5, outputs `target/e2e/lane-5/port-l2-<tag>-<recording>/` of the worktree)
+
+- **Split runs** (`SPLIT_PER_FRAME=10 --max 300`, `opcodes.txt` per run): `p4a` = 1200/1400/1700 (grove, before the
+  helpers' merge); `p4b` = 1200, 1400, 1500, 1700, 1800, 1900, 2000, 2100, 2300, 2400 (10 hooks) and `p4c` = 2500 +
+  the four `misc.rs` hooks, both on all 11 recordings after the 1500 fix below.
+  Every switch: SPLIT PASS on 11/11 recordings, 0 mismatches, no DIVERGED/COUNT, splitr trace IDENTICAL to the
+  all-original trace. `CBoundingBox::SetMinMax`: PASS 11/11. The three search light movers: no call in any
+  recording (state `implemented`). The undeclared-write check fails on every switch as before (no per-case write
+  sets). Opcodes with a Rust case compared in PASS runs are listed per switch in `script-port-verdicts.tsv`
+  (`p4_opcodes_pass`).
+- **Bug found by the first p4b run**: the grove walk crashed at trace frame 3328 with 1500To1599 on Rust (bisected
+  to the switch, then by running cases on the fallback): 05DE TASK_WANDER_STANDARD and the 0621 wander tasks
+  pushed two arguments to `CTaskComplexWanderStandard/Criminal` constructors that take three (`push 1` before the
+  random call; the callees `ret 0xC`), corrupting the stack. Fixed (third argument 1). A `ret N` vs declared-argument
+  check over every `orig!` thiscall/stdcall declaration of the crate found no other mismatch.
+- **All-ports L3** (`verify-all.sh p4script-final 5`, before the master merge): IDENTICAL on 10 of 11 recordings;
+  menus-hud crashed in the rust run before frame 1 (page fault at 0x7F9A3C, 26 s after start; earlier verify-all
+  runs of other agents show the same recording failing intermittently without a comparison line). After merging
+  master (commit 354cea0, DLL built from it): `verify-all.sh p4script-merged 5`: IDENTICAL on all 11 recordings
+  (menus-hud included), `target/verify-all/p4script-merged/summary.txt` in the main checkout.
+- Tests: `cargo test -p sa-script` 4/4; `cargo test -p sa-hook --lib` 53/53 (`RUST_MIN_STACK=268435456`); clippy
+  `-D warnings` clean for sa-script host (all targets) and i686 (`in-process`).

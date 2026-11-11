@@ -7,7 +7,7 @@ use sa_core::mem::GlobalDesc;
 use crate::{
     cleanup, cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100,
     cmd1200, cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200,
-    cmd2300, cmd2400, cmd2500, script_brain_requests, script_brains, script_draw, script_init,
+    cmd2300, cmd2400, cmd2500, misc, script_brain_requests, script_brains, script_draw, script_init,
     script_objects, script_process, script_registries, script_resources, script_tables, script_tasks,
     script_things, vm,
 };
@@ -54,6 +54,7 @@ pub const MODULES: &[&[HookReg]] = &[
     script_tasks::HOOKS,
     script_things::HOOKS,
     crate::the_scripts_init::HOOKS,
+    misc::HOOKS,
 ];
 
 /// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).
