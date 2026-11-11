@@ -276,7 +276,10 @@ mod imp {
                 {
                     if peek_points().contains(&s.addrs[i]) {
                         let esp = ctx.Esp;
-                        let mut t = format!("peek {:#x} n={n} esp={esp:#x} eax={:#x} ecx={:#x} edx={:#x} ebx={:#x} esi={:#x} edi={:#x}:", s.addrs[i], ctx.Eax, ctx.Ecx, ctx.Edx, ctx.Ebx, ctx.Esi, ctx.Edi);
+                        let mut t = format!(
+                            "peek {:#x} n={n} esp={esp:#x} eax={:#x} ecx={:#x} edx={:#x} ebx={:#x} esi={:#x} edi={:#x}:",
+                            s.addrs[i], ctx.Eax, ctx.Ecx, ctx.Edx, ctx.Ebx, ctx.Esi, ctx.Edi
+                        );
                         for k in 0..0x30u32 {
                             // SAFETY: diagnostic read of the live thread stack above ESP.
                             let v = unsafe { core::ptr::read_volatile((esp + 4 * k) as usize as *const u32) };

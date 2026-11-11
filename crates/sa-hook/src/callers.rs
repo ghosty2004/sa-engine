@@ -699,23 +699,8 @@ mod tests {
 
     /// Registers each hook preserves (`#[hook(preserve = ...)]`; sa-hook's own hooks preserve none).
     fn preserved(addr: u32) -> u8 {
-        sa_core::hooks::ALL
+        sa_ports::ALL
             .iter()
-            .chain(sa_stream::hooks::ALL.iter())
-            .chain(sa_world::hooks::ALL.iter())
-            .chain(sa_pop::hooks::ALL.iter())
-            .chain(sa_script::hooks::ALL.iter())
-            .chain(sa_weapon::hooks::ALL.iter())
-            .chain(sa_ped::hooks::ALL.iter())
-            .chain(sa_input::hooks::ALL.iter())
-            .chain(sa_anim::hooks::ALL.iter())
-            .chain(sa_veh::hooks::ALL.iter())
-            .chain(sa_hud::hooks::ALL.iter())
-            .chain(sa_cam::hooks::ALL.iter())
-            .chain(sa_ai::hooks::ALL.iter())
-            .chain(sa_audio::hooks::ALL.iter())
-            .chain(sa_rwcore::hooks::ALL.iter())
-            .chain(sa_render::hooks::ALL.iter())
             .find(|r| r.addr == addr)
             .map_or(0, |r| r.preserve)
     }

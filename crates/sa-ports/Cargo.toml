@@ -1,0 +1,29 @@
+[package]
+name = "sa-ports"
+version = "0.1.0"
+description = "The single registry of every engine crate's #[hook] ports, in table order. Adding a port crate = one dependency line + one CRATES entry here."
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# One line per port crate (keep in CRATES order).
+sa-core = { path = "../sa-core" }
+sa-stream = { path = "../sa-stream" }
+sa-world = { path = "../sa-world" }
+sa-pop = { path = "../sa-pop" }
+sa-script = { path = "../sa-script" }
+sa-weapon = { path = "../sa-weapon" }
+sa-ped = { path = "../sa-ped" }
+sa-input = { path = "../sa-input" }
+sa-anim = { path = "../sa-anim" }
+sa-veh = { path = "../sa-veh" }
+sa-hud = { path = "../sa-hud" }
+sa-cam = { path = "../sa-cam" }
+sa-ai = { path = "../sa-ai" }
+sa-audio = { path = "../sa-audio" }
+sa-rwcore = { path = "../sa-rwcore" }
+sa-render = { path = "../sa-render" }
+
+[features]
+in-process = ["sa-core/in-process", "sa-stream/in-process", "sa-world/in-process", "sa-pop/in-process", "sa-script/in-process", "sa-weapon/in-process", "sa-ped/in-process", "sa-input/in-process", "sa-anim/in-process", "sa-veh/in-process", "sa-hud/in-process", "sa-cam/in-process", "sa-ai/in-process", "sa-audio/in-process", "sa-rwcore/in-process", "sa-render/in-process"]

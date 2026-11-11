@@ -877,3 +877,12 @@
   array 0x967F40 element 0 surface bytes from residue; writer of the source sphere unknown; no rule yet.
 - Merge conflicts (port-l2.sh, l2-oracle.md) combined; sa-hook lib 50, clippy, i686 OK; all-ports IDENTICAL on grove,
   c-bug.
+
+## 2026-11-11 Single port registry sa-ports (main session)
+- New crate sa-ports: CRATES (16 port crates in table order), COUNT, ALL (const concat). sa-hook table.rs (N and
+  build), callers.rs, sa-oracle hook_preserve and tests/l1.rs now read sa_ports::ALL — adding a crate is one
+  Cargo line + one CRATES line. PLAN rule added.
+- The L1 preserve test used to chain only 9 crates; over all 16 it found 15 older hooks with `preserve` but no
+  register-comparing spec. They are listed in PRESERVE_SPECS_PENDING (may only shrink; new offenders fail) and queued.
+- Verified: sa-hook lib 50, l1 preserve/routes tests, workspace clippy, i686 OK; verify-all main-reg IDENTICAL on grove
+  and driving (c-bug pending).

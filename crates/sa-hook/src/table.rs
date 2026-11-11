@@ -409,26 +409,9 @@ const LOCAL: [HookSpec; LOCAL_N] = [
 ];
 
 const LOCAL_N: usize = 19;
-/// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order), then
-/// sa-stream's (`sa_stream::hooks::ALL`), then sa-world's (`sa_world::hooks::ALL`), then sa-pop's
-/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's sa-cam's sa-ai's sa-audio's sa-rwcore's and sa-render's.
-pub const N: usize = LOCAL_N
-    + sa_core::hooks::COUNT
-    + sa_stream::hooks::COUNT
-    + sa_world::hooks::COUNT
-    + sa_pop::hooks::COUNT
-    + sa_script::hooks::COUNT
-    + sa_weapon::hooks::COUNT
-    + sa_ped::hooks::COUNT
-    + sa_input::hooks::COUNT
-    + sa_anim::hooks::COUNT
-    + sa_veh::hooks::COUNT
-    + sa_hud::hooks::COUNT
-    + sa_cam::hooks::COUNT
-    + sa_ai::hooks::COUNT
-    + sa_audio::hooks::COUNT
-    + sa_rwcore::hooks::COUNT
-    + sa_render::hooks::COUNT;
+/// All hooks: sa-hook's own, then every engine-crate port in `sa_ports::ALL` order (the single registry:
+/// add a port crate there, not here).
+pub const N: usize = LOCAL_N + sa_ports::COUNT;
 
 /// The hook table.
 pub static HOOKS: [HookSpec; N] = build();
@@ -488,107 +471,9 @@ const fn build() -> [HookSpec; N] {
         i += 1;
     }
     let mut j = 0;
-    while j < sa_core::hooks::COUNT {
-        out[LOCAL_N + j] = from_core(&sa_core::hooks::ALL[j]);
+    while j < sa_ports::COUNT {
+        out[LOCAL_N + j] = from_core(&sa_ports::ALL[j]);
         j += 1;
-    }
-    let mut k = 0;
-    while k < sa_stream::hooks::COUNT {
-        out[LOCAL_N + sa_core::hooks::COUNT + k] = from_core(&sa_stream::hooks::ALL[k]);
-        k += 1;
-    }
-    let mut w = 0;
-    while w < sa_world::hooks::COUNT {
-        out[LOCAL_N + sa_core::hooks::COUNT + sa_stream::hooks::COUNT + w] =
-            from_core(&sa_world::hooks::ALL[w]);
-        w += 1;
-    }
-    let mut p = 0;
-    while p < sa_pop::hooks::COUNT {
-        out[LOCAL_N + sa_core::hooks::COUNT + sa_stream::hooks::COUNT + sa_world::hooks::COUNT + p] =
-            from_core(&sa_pop::hooks::ALL[p]);
-        p += 1;
-    }
-    let mut c = 0;
-    while c < sa_script::hooks::COUNT {
-        out[LOCAL_N
-            + sa_core::hooks::COUNT
-            + sa_stream::hooks::COUNT
-            + sa_world::hooks::COUNT
-            + sa_pop::hooks::COUNT
-            + c] = from_core(&sa_script::hooks::ALL[c]);
-        c += 1;
-    }
-    let base_weapon = LOCAL_N
-        + sa_core::hooks::COUNT
-        + sa_stream::hooks::COUNT
-        + sa_world::hooks::COUNT
-        + sa_pop::hooks::COUNT
-        + sa_script::hooks::COUNT;
-    let mut w2 = 0;
-    while w2 < sa_weapon::hooks::COUNT {
-        out[base_weapon + w2] = from_core(&sa_weapon::hooks::ALL[w2]);
-        w2 += 1;
-    }
-    let base_ped = base_weapon + sa_weapon::hooks::COUNT;
-    let mut q = 0;
-    while q < sa_ped::hooks::COUNT {
-        out[base_ped + q] = from_core(&sa_ped::hooks::ALL[q]);
-        q += 1;
-    }
-    let base_input = base_ped + sa_ped::hooks::COUNT;
-    let mut i2 = 0;
-    while i2 < sa_input::hooks::COUNT {
-        out[base_input + i2] = from_core(&sa_input::hooks::ALL[i2]);
-        i2 += 1;
-    }
-    let base_anim = base_input + sa_input::hooks::COUNT;
-    let mut a = 0;
-    while a < sa_anim::hooks::COUNT {
-        out[base_anim + a] = from_core(&sa_anim::hooks::ALL[a]);
-        a += 1;
-    }
-    let base_veh = base_anim + sa_anim::hooks::COUNT;
-    let mut v = 0;
-    while v < sa_veh::hooks::COUNT {
-        out[base_veh + v] = from_core(&sa_veh::hooks::ALL[v]);
-        v += 1;
-    }
-    let base_hud = base_veh + sa_veh::hooks::COUNT;
-    let mut h2 = 0;
-    while h2 < sa_hud::hooks::COUNT {
-        out[base_hud + h2] = from_core(&sa_hud::hooks::ALL[h2]);
-        h2 += 1;
-    }
-    let base_cam = base_hud + sa_hud::hooks::COUNT;
-    let mut i_cam = 0;
-    while i_cam < sa_cam::hooks::COUNT {
-        out[base_cam + i_cam] = from_core(&sa_cam::hooks::ALL[i_cam]);
-        i_cam += 1;
-    }
-    let base_ai = base_cam + sa_cam::hooks::COUNT;
-    let mut i_ai = 0;
-    while i_ai < sa_ai::hooks::COUNT {
-        out[base_ai + i_ai] = from_core(&sa_ai::hooks::ALL[i_ai]);
-        i_ai += 1;
-    }
-    let base_audio = base_ai + sa_ai::hooks::COUNT;
-    let mut i_audio = 0;
-    while i_audio < sa_audio::hooks::COUNT {
-        out[base_audio + i_audio] = from_core(&sa_audio::hooks::ALL[i_audio]);
-        i_audio += 1;
-    }
-    let base_rwcore = base_audio + sa_audio::hooks::COUNT;
-    let mut i_rwcore = 0;
-    while i_rwcore < sa_rwcore::hooks::COUNT {
-        out[base_rwcore + i_rwcore] = from_core(&sa_rwcore::hooks::ALL[i_rwcore]);
-        i_rwcore += 1;
-    }
-    let base_render = base_rwcore + sa_rwcore::hooks::COUNT;
-    let mut i_render = 0;
-    while i_render < sa_render::hooks::COUNT {
-        out[base_render + i_render] = from_core(&sa_render::hooks::ALL[i_render]);
-        i_render += 1;
     }
     out
 }
@@ -976,41 +861,9 @@ mod tests {
     fn port_hooks_follow_the_local_ones() {
         assert_eq!(
             N,
-            LOCAL_N
-                + sa_core::hooks::COUNT
-                + sa_stream::hooks::COUNT
-                + sa_world::hooks::COUNT
-                + sa_pop::hooks::COUNT
-                + sa_script::hooks::COUNT
-                + sa_weapon::hooks::COUNT
-                + sa_ped::hooks::COUNT
-                + sa_input::hooks::COUNT
-                + sa_anim::hooks::COUNT
-                + sa_veh::hooks::COUNT
-                + sa_hud::hooks::COUNT
-                + sa_cam::hooks::COUNT
-                + sa_ai::hooks::COUNT
-                + sa_audio::hooks::COUNT
-                + sa_rwcore::hooks::COUNT
-                + sa_render::hooks::COUNT
+            LOCAL_N + sa_ports::CRATES.iter().map(|c| c.len()).sum::<usize>()
         );
-        let ports = sa_core::hooks::ALL
-            .iter()
-            .chain(sa_stream::hooks::ALL.iter())
-            .chain(sa_world::hooks::ALL.iter())
-            .chain(sa_pop::hooks::ALL.iter())
-            .chain(sa_script::hooks::ALL.iter())
-            .chain(sa_weapon::hooks::ALL.iter())
-            .chain(sa_ped::hooks::ALL.iter())
-            .chain(sa_input::hooks::ALL.iter())
-            .chain(sa_anim::hooks::ALL.iter())
-            .chain(sa_veh::hooks::ALL.iter())
-            .chain(sa_hud::hooks::ALL.iter())
-            .chain(sa_cam::hooks::ALL.iter())
-            .chain(sa_ai::hooks::ALL.iter())
-            .chain(sa_audio::hooks::ALL.iter())
-            .chain(sa_rwcore::hooks::ALL.iter())
-            .chain(sa_render::hooks::ALL.iter());
+        let ports = sa_ports::ALL.iter();
         for (k, r) in ports.enumerate() {
             let h = &HOOKS[LOCAL_N + k];
             assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));

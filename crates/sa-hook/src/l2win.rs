@@ -473,7 +473,10 @@ pub fn init(dir: &std::path::Path) -> Vec<usize> {
     let hooks = c.hooks.clone();
     if c.split.is_some() && c.stack_fill > 0 {
         STACK_FILL_DWORDS.store(c.stack_fill / 4, Ordering::Release);
-        log(&format!("l2: split-run stack fill: {:#x} bytes below the invoker zeroed before every sampled call", c.stack_fill));
+        log(&format!(
+            "l2: split-run stack fill: {:#x} bytes below the invoker zeroed before every sampled call",
+            c.stack_fill
+        ));
     }
     let _ = CFG.set(c);
     // INF-10 coverage arms its breakpoints here: this runs after every hook and determinism patch is

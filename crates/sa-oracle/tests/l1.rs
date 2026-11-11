@@ -399,6 +399,14 @@ fn fsin_fcos_model_matches_the_cpu() {
     }
 }
 
+/// Hooks registered with `preserve` before this test covered every port crate (2026-11-11, sa-ports): their
+/// register-comparing L1 specs are still to be written (queued). The list may only shrink; a new hook that
+/// preserves registers without a spec fails the test.
+const PRESERVE_SPECS_PENDING: &[u32] = &[
+    0x52F9E0, 0x64F1E0, 0x6CAC20, 0x50ADF0, 0x50AB50, 0x516440, 0x5164A0, 0x50A3B0, 0x509BE0, 0x5F7200,
+    0x61B460, 0x668250, 0x5BD3B0, 0x5BD360, 0x6458A0,
+];
+
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
 /// whose `#[hook(preserve = ...)]` covers them, and every hook that preserves registers has a spec
 /// that compares them.
@@ -409,25 +417,17 @@ fn preserved_registers_match_the_hook_registrations() {
         let p = sa_oracle::hook_preserve(s.addr).unwrap_or_else(|| panic!("{}: no hook", s.key));
         assert_eq!(p & s.preserve, s.preserve, "{}: hook preserves {p:#x}", s.key);
     }
-    for r in sa_core::hooks::ALL
+    let missing: Vec<String> = sa_ports::ALL
         .iter()
-        .chain(sa_stream::hooks::ALL.iter())
-        .chain(sa_world::hooks::ALL.iter())
-        .chain(sa_script::hooks::ALL.iter())
-        .chain(sa_weapon::hooks::ALL.iter())
-        .chain(sa_ped::hooks::ALL.iter())
-        .chain(sa_hud::hooks::ALL.iter())
-        .chain(sa_audio::hooks::ALL.iter())
-        .chain(sa_rwcore::hooks::ALL.iter())
-        .chain(sa_render::hooks::ALL.iter())
         .filter(|r| r.preserve != 0)
-    {
-        assert!(
-            all.iter().any(|s| s.addr == r.addr && s.preserve == r.preserve),
-            "{} ({:#x}) preserves {:#x} without a spec comparing it",
-            r.name,
-            r.addr,
-            r.preserve
-        );
-    }
+        .filter(|r| !PRESERVE_SPECS_PENDING.contains(&r.addr))
+        .filter(|r| !all.iter().any(|s| s.addr == r.addr && s.preserve == r.preserve))
+        .map(|r| format!("{} ({:#x}) preserves {:#x}", r.name, r.addr, r.preserve))
+        .collect();
+    assert!(
+        missing.is_empty(),
+        "{} hooks preserve registers without a spec comparing them:\n{}",
+        missing.len(),
+        missing.join("\n")
+    );
 }
