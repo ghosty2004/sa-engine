@@ -921,3 +921,11 @@
   .data/.bss stay implemented (policy), as do L2-split rows with undeclared writes or quota-cut case counts.
 - CVehicle::Save stays unregistered (F5 work). 4 protection-read hooks queued for keycells. 4 preserve hooks added to
   PRESERVE_SPECS_PENDING (0x6D1080, 0x6D2600, 0x6D4900, 0x6D3F30).
+
+## 2026-11-11 X87 integrated (main session)
+- Agent a746e68d: sa_math::x87 models FYL2X/FPTAN with 64-bit results (AudioLog10 users hooked); orig! FFI keeps
+  X87 out of returns (compile-time width guard); #[hook(footprint = W)] + sa_core::abi::stack_footprint for ports
+  whose stack residue original code reads (first: RwV3dNormalize); determinism mode zeroes FireInstantHit's frame
+  [S-0x1B4, S-0xC) at entry (original reads an uninitialised shot direction at 0x740DAC; ledger: original bug).
+- l1.rs: KNOWN_CPU_MISMATCHES (may only shrink) holds 0x7F1FD0 RwMatrixRotate, which already failed on master.
+- verify-all main-x87: IDENTICAL on all 11 recordings.

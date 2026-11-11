@@ -138,6 +138,52 @@ range covers everything reachable from f32 inputs). Rules, all checked against t
   (PC does not apply to it on the CPU: e.g. `fpatan` under CW 0x7F returns `c90fdaa22168c235`).
 - No unsafe, no host-dependent float behaviour; `sa-math` builds for `wasm32-unknown-unknown`.
 
+### FYL2X and FPTAN (X87-MODELS, 2026-11-11)
+
+Both return a 64-bit significand whatever the precision control. `X87` holds such "wide" values as an
+exact f64 pair (`hi` = the value rounded to 53 bits, `lo` = the rest); every op that meets a wide
+operand is computed exactly in integers (`sa_math::x87_wide::Big`) and rounded once, as the CPU does
+(narrow values keep the old f64 path, unchanged). `to_ext`/`from_ext` carry all 64 bits; `fldlg2`,
+`fldln2`, `fldl2e`, `fldl2t`, `fldpi` are the CPU's round-to-nearest constants. The `Fpu` stack machine
+(`sa_world::collision::fpu`) has `fldlg2`/`fldln2`/`fldl2e`/`fldpi`, `fyl2x`, `fptan`.
+
+Models (the CPU's microcode is not reproducible exactly; these are the best simple models found, by
+fitting exploration data with mpmath):
+- **FYL2X** `y * log2(x)`: `log2(x)` in double-double (~104 bits), **truncated toward zero to 67
+  significant bits**, times `y` exactly, rounded to nearest at 64 bits. (Correct rounding of the exact
+  `y*log2 x` matches only 93%; truncation to 66/68 bits 94%/96%.) Special operands as the SDM table:
+  `x<0` → indefinite, `x=±0` → `-sign(y)·inf` (`y=0`: indefinite), `x=+inf` → `sign(y)·inf` (`y=0`:
+  indefinite), `x=1` → `sign(y)·0` (`y=±inf`: indefinite); NaNs as the arithmetic ops.
+- **FPTAN**: the 66-bit-pi quadrant reduction of FSIN/FCOS (`r = x - k·P/2` exact), `tan(r)` or
+  `-1/tan(r)` (k odd) in double-double, rounded to nearest at 64 bits; 1.0 is pushed. `|x| >= 2^63`:
+  nothing happens (C2). **A NaN or infinite operand pushes the NaN result, not 1.0** (measured; both
+  ST0 and ST1 are the NaN / the indefinite).
+
+Measured on the CPU (Intel i7-14700F, native backend; `fyl2x_fptan_model_vs_cpu_1m`, 10^6 cases each
+plus ~900 edge values, and the 100k version in the normal test run):
+
+| instruction / use | cases | 80-bit ST0 exact | stored f32 exact | worst |
+|---|---|---|---|---|
+| `fldlg2; fld x; fyl2x` (AudioLog10, x ≥ 1e-5 mostly) | 1,000,000 | 994,423 (99.44%) | 100% | 1 ulp of 64 |
+| `fyl2x` y·log2 x, random y, x | 1,000,000 | 999,608 (99.96%) | 100% | 1 ulp of 64 |
+| `fptan` | 1,000,000 | 958,654 (95.87%) | 100% | 1 ulp of 64 |
+| `fptan` pushed value | 1,000,000 | 100% | 100% | — |
+| AudioLog10(x) · 20.0 / 10.0 at PC=24 (what every caller does) | 1,000,000 | 100% | 100% | — |
+| PC=53 and PC=64 (same models) | 40,000 each | 99.2% / 95.8% | — | 1 ulp of 64 |
+
+Special operands (NaN, ±inf, ±0, subnormals, 1, |x| ≥ 2^63, the AudioLog10 threshold): 0 differences.
+The inexact cases are where the exact value lies close to a 64-bit rounding boundary (FPTAN: within
+~0.1 ulp; FYL2X: mostly for x near 1, where the CPU's log2 has fewer correct bits than the 67-bit model
+assumes). A difference of 1 ulp in the 64th bit changes a later PC=24 result only when the exact
+product lies within ~2^-40 relative of a 24-bit tie: never seen (0 in 10^6 composite cases, and the
+stored f32 matched in all 4·10^6 cases).
+
+L1 specs (`specs_audio.rs`, CPU-decided): `AudioLog10*c` runs the original AudioLog10 through a
+caller-shaped wrapper patched into its own `nop` padding (0x4D9E71: `push [esp+4]; call 0x4D9E50; pop
+ecx; fmul [esp+8]; ret`) and compares the full ST0 of the product: 1,002,176 cases, 0 mismatches.
+`AudioLog10` compares the stored f32: 1,001,088 cases, 0 mismatches (ST0 beyond f32 differs in 30,492
+— this generator puts a fifth of its inputs within 1/64 of 1.0, the model's weakest region).
+
 ## Self-test: six ported functions (source: the 1.0 US bytes; gta-reversed for intent)
 
 | function | addr | conv | route | notes |
@@ -191,6 +237,11 @@ The equivalent mutant was first meant as a fault; the runner showed it is not on
 - FPATAN in the ports is f64: a CPU/port difference is possible when the exact value lies within about
   2^-29 ulp of an f32 rounding boundary *and* the f64 value is on the other side. Not observed in
   2.25·10^6 FPATAN cases.
+- **FYL2X / FPTAN raw 64-bit results** (`X87::fyl2x`, `X87::fptan`): a function that returns or keeps
+  the raw result differs from the CPU in the last (64th) significand bit for 0.56% of AudioLog10 inputs
+  (up to ~3% when inputs cluster within 1/64 of 1.0), 0.04% of general FYL2X operands and 4.1% of FPTAN
+  operands; never more than 1 ulp. After rounding to f32, or after the PC=24 multiply every AudioLog10
+  caller does, 0 differences in 10^6 cases each. Ledger: pending (accepted only for uses that round).
 - Memory: one Unicorn instance per worker thread (~25 MB; threads capped at 16, tests use 4), cases in
   blocks of 250,000; `l1 <fn> --cases 1000000` peaks at ~750 MB RSS, `fidelity --cases 20000` at ~1.3 GB
   (probe rows are run in chunks of ≤ 200k calls; all at once it was 2.7 GB and, together with other

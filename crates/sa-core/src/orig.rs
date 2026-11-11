@@ -351,12 +351,30 @@ macro_rules! orig {
     };
 }
 
+/// Phase A: an `orig!` return type must be what the original returns in registers (at most 8 bytes:
+/// EAX, EDX:EAX or ST0). A larger Rust type (e.g. `sa_math::x87::X87`, 16 bytes) would be returned
+/// through a hidden pointer and read garbage: declare `f64` for an ST0 result and convert.
+#[cfg(sa_phase_a)]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_ret_check {
+    ($r:ty) => {
+        const {
+            assert!(
+                ::core::mem::size_of::<$r>() <= 8,
+                "orig! return type wider than a register pair (declare f64 for an ST0 result)"
+            )
+        }
+    };
+}
+
 /// Phase A: call the original address with the original convention.
 #[cfg(sa_phase_a)]
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __orig_body {
     ($kind:ident $what:path, cdecl, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        $($crate::__orig_ret_check!($r);)?
         #[allow(unsafe_code)]
         let f = unsafe {
             ::core::mem::transmute::<usize, unsafe extern "C" fn($($t),*) $(-> $r)?>($addr)
@@ -365,6 +383,7 @@ macro_rules! __orig_body {
         $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
     ($kind:ident $what:path, stdcall, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        $($crate::__orig_ret_check!($r);)?
         #[allow(unsafe_code)]
         let f = unsafe {
             ::core::mem::transmute::<usize, unsafe extern "stdcall" fn($($t),*) $(-> $r)?>($addr)
@@ -373,6 +392,7 @@ macro_rules! __orig_body {
         $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
     ($kind:ident $what:path, thiscall, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        $($crate::__orig_ret_check!($r);)?
         #[allow(unsafe_code)]
         let f = unsafe {
             ::core::mem::transmute::<usize, unsafe extern "thiscall" fn($($t),*) $(-> $r)?>($addr)
@@ -381,6 +401,7 @@ macro_rules! __orig_body {
         $crate::abi::call_original(|| unsafe { f($($a),*) })
     }};
     ($kind:ident $what:path, fastcall, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        $($crate::__orig_ret_check!($r);)?
         #[allow(unsafe_code)]
         let f = unsafe {
             ::core::mem::transmute::<usize, unsafe extern "fastcall" fn($($t),*) $(-> $r)?>($addr)

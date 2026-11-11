@@ -525,7 +525,63 @@ fn patch_time_sites() -> Result<usize, String> {
         log(&format!("oracle: wait site {site:#x} {what}"));
     }
     crate::detaudio::patch_sites(cell(&CELL_QPC))?;
-    Ok(iat_sites.len() + wait_sites.len() + 3)
+    patch_fire_instant_hit_scrub()?;
+    Ok(iat_sites.len() + wait_sites.len() + 4)
+}
+
+// ------------------------------------------------------------------ FireInstantHit scrub -------
+
+/// `CWeapon::FireInstantHit` (0x73FB10) entry bytes: `push -1; push 0x848EBB` (SEH frame start).
+const FIH_ENTRY: [u8; 7] = [0x6A, 0xFF, 0x68, 0xBB, 0x8E, 0x84, 0x00];
+
+/// Determinism mode: zeroes `CWeapon::FireInstantHit`'s stack frame before its original body runs,
+/// in every run (plain, rust, l2, split), whatever the hook modes.
+///
+/// The original reads an uninitialised local on the NPC no-aim path: 0x73FDF2/0x73FE04 jump to
+/// 0x740B71, skipping the line-of-sight block (0x73FD22) that writes the shot direction
+/// `[esp+0x6C..0x77]`, and 0x740DAC uses it for the gunshell position (`AddGunshell` 0x73A3E0, whose
+/// FX ground collision tests a vertical line there). Its value is whatever an earlier call left at
+/// that depth, so it depends on the callers' frames (a Rust caller runs FireInstantHit 0x254 bytes
+/// deeper on c-bug) — ledger: original bug, made deterministic here. Frame from the prologue (S =
+/// entry ESP): `push -1; push handler; push fs:[0]` (S-4..S-0xC), `sub esp, 0x198` (locals
+/// [S-0x1A4, S-0xC)), `push ebx/ebp/esi/edi` ([S-0x1B4, S-0x1A4)); the body runs at ESP = S-0x1B4,
+/// so the direction is [S-0x148, S-0x13C). The stub zeroes [S-0x1B4, S-0xC) (its own three pushes
+/// sit at S-4..S-0xC, which the prologue's pushes overwrite), runs the two displaced pushes and jumps
+/// to 0x73FB17.
+#[unsafe(naked)]
+unsafe extern "C" fn fire_instant_hit_scrub() {
+    std::arch::naked_asm!(
+        "push edi",
+        "push ecx",
+        "push eax",
+        "lea edi, [esp + 12 - 0x1B4]",
+        "mov ecx, 0x6A",
+        "xor eax, eax",
+        "rep stosd",
+        "pop eax",
+        "pop ecx",
+        "pop edi",
+        "push -1",
+        "push 0x848EBB",
+        "push 0x73FB17",
+        "ret",
+    )
+}
+
+fn patch_fire_instant_hit_scrub() -> Result<(), String> {
+    let site = 0x73FB10u32;
+    let cur = win::read(site, 7).ok_or_else(|| format!("{site:#x} not readable"))?;
+    if cur != FIH_ENTRY[..] {
+        return Err(format!("{site:#x} (CWeapon::FireInstantHit entry): unexpected bytes {cur:02x?}"));
+    }
+    let target = fire_instant_hit_scrub as *const () as usize as u32;
+    let rel = x86::rel32_to(site, 5, target);
+    let mut b = vec![0xE9];
+    b.extend_from_slice(&rel.to_le_bytes());
+    b.extend_from_slice(&[0x90, 0x90]);
+    win::patch(site, &b)?;
+    log("oracle: CWeapon::FireInstantHit 0x73FB10 entry -> frame zeroed (uninitialised gunshell direction)");
+    Ok(())
 }
 
 /// Replaces the post-loop `GetCurrentTimeInCycles()` of `Game::Idle` (0x53E94F), whose quotient

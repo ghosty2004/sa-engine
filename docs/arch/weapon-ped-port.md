@@ -216,7 +216,7 @@ Not ported in pass 2 (reason):
   uninitialised stack `dir` to `Fx_c::TriggerGunshot` and an uninitialised `CColPoint` to `DoBulletImpact`; needs a
   runtime measurement of those stack bytes at 0x740B71 (PLAN 4b), then the 1,700-instruction port.
 - `CWeapon::FireAreaEffect` 0x73E800: `fptan` at 0x73E9CE; `sa_math::x87` has no `fptan` model (needs an `X87::ftan`
-  checked by sa-oracle first).
+  checked by sa-oracle first). **Unblocked (X87-MODELS, 2026-11-11):** `X87::fptan` / `Fpu::fptan` model, CPU-checked (stored f32 exact in 10^6 cases, full 80-bit ST0 in 95.9%, else 1 ulp of 64; docs/re/l1-harness.md).
 - `CWeapon::FireProjectile` 0x741360, `CProjectileInfo::AddProjectile` 0x737C80 (entry jumps into protection code at
   0x401C3D: hookability to be checked), `CWeaponInfo::LoadWeaponData` 0x5BE670, the aiming helpers (DoDoomAiming,
   DoTankDoomAiming, DoDriveByAutoAiming, FindNearestTargetEntityWithScreenCoors), FireOneInstantHitRound,

@@ -167,6 +167,25 @@ where FTZ would flush subnormal results (e.g. `X87::to_f32` of an f32-subnormal 
 so a port leaves MXCSR as the x87 original would. Hooks written before ARCH-1 (`sa-hook/src/game.rs`) do
 not use the guard; sa-math functions called from them run under FTZ.
 
+### 5b. Stack residue read by original code (`footprint`, 2026-11-11)
+
+Original code sometimes reads uninitialised stack slots, so its behaviour depends on what an earlier
+callee left below its entry ESP (e.g. `CWeapon::FireInstantHit` 0x73FB10 passes a never-written shot
+direction local to `AddGunshell`; on c-bug frame 2494 that slot holds `RwV3dNormalize`'s residue, and a
+Rust shim leaves a frame-layout-dependent one: changing `X87` from 8 to 16 bytes moved the divergence).
+Rule: when such a reader is found, the port of the callee whose residue it reads is registered with
+`#[hook(..., footprint = W)]` and calls `sa_core::abi::stack_footprint(&[(offset, value), ...])`,
+1:1 from the disassembly: every slot the original writes, relative to the entry ESP (negative = below
+the return address, positive = argument slots), in the original's order, with `Fp::Esi`/`Edi`/`Ebx`/
+`Ebp` for pushed callee-saved registers and `Fp::Addr(o)` for pushed addresses of its own locals. The
+naked wrapper snapshots the `W` bytes below the entry ESP (`W` covers the whole depth the Rust shim and
+its callees use, e.g. 0x800, so no Rust frame survives), calls the shim, puts the snapshot back (slots
+the original never writes keep their earlier residue), applies the recorded writes, and returns with the
+shim's EAX/EDX/ECX/ST0. Limits: residue the original's callees leave deeper than the window, or that
+depends on their internal paths, is documented per port; footprint hooks are not reentrant (main thread,
+no nesting) and cannot be combined with `preserve`/`entry_eax`. Phases B/C: no wrapper, the call records
+nothing. Diagnose readers with `SA_COV_PEEK` (docs/re/l2-oracle.md).
+
 ## 6. Phase B/C path (what changes later, and what does not)
 
 Unchanged: every port's source, every `globals!`/`orig!`/`#[hook]` line. Changes: `__global_store!`

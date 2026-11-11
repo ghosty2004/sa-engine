@@ -148,6 +148,26 @@ Not injected: Pads[1] temps (a second player's joystick), the absolute cursor po
 from Windows (`FrontEndMenuManager` mouse position; the headless cursor does not move, menu navigation in
 the corpus is keyboard only).
 
+## 5b. Uninitialised stack reads of the original (2026-11-11)
+
+Some original functions read stack locals they never wrote, so their result depends on the residue of
+earlier calls at that depth, which differs whenever a caller is a Rust port with another frame size. Where
+such a read changes the game state, determinism mode makes it deterministic in every run (plain, rust,
+l2, split), independent of the hook modes:
+
+- `CWeapon::FireInstantHit` 0x73FB10: on the NPC no-aim path (0x73FDF2/0x73FE04 → 0x740B71, skipping
+  the line-of-sight block 0x73FD22) it reads the never-written shot direction `[esp+0x6C..0x77]` at
+  0x740DAC and passes the gunshell position built from it to `AddGunshell` 0x73A3E0, whose FX ground
+  collision tests a vertical line there (c-bug frame 2494: a different building). Determinism mode
+  patches the entry (`detwin::fire_instant_hit_scrub`): the frame `[S-0x1B4, S-0xC)` (locals plus the
+  saved-register slots; S = entry ESP, from the prologue `push -1; push handler; push fs:[0]; sub esp,
+  0x198; push ebx/ebp/esi/edi`) is zeroed before the original body runs, so the direction reads (0, 0,
+  0). Ledger: original bug; its value in the original depends on stack residue; determinism mode zeroes
+  it in all runs (a port of FireInstantHit must document what it uses).
+
+Ports whose own residue is read by original code reproduce it instead (`#[hook(footprint = W)]`,
+ADR-001 §5b, first: `RwV3dNormalize` 0x7ED9B0).
+
 ## 6. Evidence (acceptance run, lane 2, 2026-11-05)
 
 `tools/e2e/inf4-determinism.sh` with `tools/e2e/programs/grove-walk.txt` (boot, menu, new game, intro

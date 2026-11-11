@@ -13,6 +13,7 @@ use crate::common::{
     AE_SOUND_MANAGER, ae_random_int, audio_engine, audio_hardware, ftol32, g, rd, wr, x, xi,
 };
 use crate::entities::load_sound_bank;
+use crate::utility::audio_log10;
 use sa_core::timer::TIME_MS;
 
 sa_core::globals! {
@@ -152,8 +153,6 @@ orig! {
     /// `CAudioEngine::StartRadio(tVehicleAudioSettings*)` (0x507DF0)
     pub fn engine_start_radio(engine: GPtr<u8>, settings: GPtr<u8>) = thiscall 0x507DF0 => unported;
     /// `CAudioEngine::StopRadio(tVehicleAudioSettings*, bool)` (0x506F70)
-    /// `CAEAudioUtility::AudioLog10(float)` (0x4D9E50)
-    pub fn audio_log10_bits(v: u32) -> f32 = cdecl 0x4D9E50 => unported;
     /// `CAEAudioUtility::GetPiecewiseLinear(float, int16, const float (*)[2])` (0x4D9D90)
     pub fn get_piecewise_linear(v: u32, n: u32, table: GPtr<u8>) -> f32 = cdecl 0x4D9D90 => unported;
     /// `CAESoundManager::CancelSoundsInBankSlot(int16 slot, bool)` (0x4EFC60)
@@ -481,7 +480,8 @@ pub fn static_initialise() {
 /// `CAEVehicleAudioEntity::GetFlyingMetalVolume(CPhysical*)` (0x4F6150): `min(|velocity|^2, 0.5625)`
 /// (x87 `(x*x + y*y) + z*z`, NaN -> 0.5625) * 1.777..; -100.0 below 1e-10, else
 /// `AudioLog10(f32(v)) * 10`. `this` is unused.
-/// Not hooked: the original multiplies `CAEAudioUtility::AudioLog10`'s full-precision ST0 (fyl2x) directly; the port rounds it to f32 first (1-ulp ST0 mismatches in L2, port-l2-ab-g). Needs an X87 fyl2x model in sa-math.
+/// `AudioLog10`'s full 64-bit FYL2X result is multiplied directly, as the original does ([`audio_log10`]).
+#[hook(addr = 0x4F6150, conv = thiscall, name = "CAEVehicleAudioEntity::GetFlyingMetalVolume", expect = "8B 4C 24 04 D9 41 58")]
 pub fn get_flying_metal_volume(_this: GPtr<u8>, phys: GPtr<u8>) -> X87 {
     let sq = || {
         let (vx, vy, vz) = (
@@ -502,7 +502,7 @@ pub fn get_flying_metal_volume(_this: GPtr<u8>, phys: GPtr<u8>) -> X87 {
     if !v.fcom(x(g::<f32>(FLYING_METAL_MIN).read())).test_parity(0x05) {
         return x(g::<f32>(FLT_M100).read());
     }
-    x(audio_log10(stored)).fmul_m(g::<f32>(FLT_10).read())
+    audio_log10(stored).fmul_m(g::<f32>(FLT_10).read())
 }
 
 /// `CAEVehicleAudioEntity::GetHornState(bool* out, cVehicleParams&)` (0x4F61E0): no horn for wrecked
@@ -545,11 +545,6 @@ pub fn get_horn_state(this: GPtr<u8>, out: GPtr<u8>, params: GPtr<u8>) {
         .wrapping_sub(rd::<u32>(v, 0x514));
     let on = g::<u8>((HORN_PATTERNS as u32).wrapping_add(idx) as usize).read();
     out.write((on != 0) as u8);
-}
-
-/// `AudioLog10` of an f32 passed by its bits (no float round trip in the argument).
-fn audio_log10(v: f32) -> f32 {
-    audio_log10_bits(v.to_bits())
 }
 
 /// The shared clamp of the dummy frequency ratio: `t < 0` -> 0.0, `t >= 1` or NaN -> 1.0.
@@ -639,14 +634,15 @@ fn dummy_vol_tail(this: GPtr<u8>, st0: X87, vol: f32) -> X87 {
 /// `AudioLog10(f32(GetPiecewiseLinear(fwd, 5, curve))) * [0x858BA4]`
 fn dummy_curve_db(fwd: u32, curve: usize) -> X87 {
     let pl = get_piecewise_linear(fwd, 5, g(curve));
-    x(audio_log10(pl)).fmul_m(g::<f32>(FLT_8BA4).read())
+    audio_log10(pl).fmul_m(g::<f32>(FLT_8BA4).read())
 }
 
 /// `CAEVehicleAudioEntity::GetVolumeForDummyIdle(float ratio, float fwd)` (0x4F51F0): model 0x1C9 gives
 /// `base - [0x858CA4]`; else `clamp01(ratio / div) * range + base` (f32) plus, for audio type 2
 /// (+0xA9), the dB of the forward curve, otherwise `AudioLog10(fwd) * 10` when `fwd <= [0x862CD0]`
 /// (or NaN) else 0.0; then the common tail.
-/// Not hooked: the original multiplies `CAEAudioUtility::AudioLog10`'s full-precision ST0 (fyl2x) directly; the port rounds it to f32 first (1-ulp ST0 mismatches in L2, port-l2-ab-g). Needs an X87 fyl2x model in sa-math.
+/// `AudioLog10`'s full 64-bit FYL2X result is multiplied directly, as the original does ([`audio_log10`]).
+#[hook(addr = 0x4F51F0, conv = thiscall, name = "CAEVehicleAudioEntity::GetVolumeForDummyIdle", expect = "56 8B F1 8B 46 04")]
 pub fn get_volume_for_dummy_idle(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
     let veh: GPtr<u8> = g(rd::<u32>(this, 4) as usize);
     if rd::<u16>(veh, 0x22) == 0x1C9 {
@@ -660,7 +656,7 @@ pub fn get_volume_for_dummy_idle(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
     let st0 = if rd::<u8>(this, 0xA9) == 2 {
         dummy_curve_db(fwd.to_bits(), DUMMY_IDLE_VOL_CURVE)
     } else if x(fwd).fcom(x(g::<f32>(FLT_2CD0).read())).test_any(0x41) {
-        x(audio_log10(fwd)).fmul_m(g::<f32>(FLT_10).read())
+        audio_log10(fwd).fmul_m(g::<f32>(FLT_10).read())
     } else {
         x(g::<f32>(FLT_0).read())
     };
@@ -671,7 +667,8 @@ pub fn get_volume_for_dummy_idle(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
 /// `clamp01((ratio - off) / (1 - off)) * range + base` (f32) plus, for audio type 2 (+0xA9), the dB of
 /// the forward curve when `fwd <= 0.99` (or NaN) else 0.0, otherwise `AudioLog10(f32(1 - fwd)) * 10`;
 /// then the common tail.
-/// Not hooked: the original multiplies `CAEAudioUtility::AudioLog10`'s full-precision ST0 (fyl2x) directly; the port rounds it to f32 first (1-ulp ST0 mismatches in L2, port-l2-ab-g). Needs an X87 fyl2x model in sa-math.
+/// `AudioLog10`'s full 64-bit FYL2X result is multiplied directly, as the original does ([`audio_log10`]).
+#[hook(addr = 0x4F53D0, conv = thiscall, name = "CAEVehicleAudioEntity::GetVolumeForDummyRev", expect = "D9 44 24 04 56 D8 25 F4 BB 8C 00")]
 pub fn get_volume_for_dummy_rev(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
     let off = g::<f32>(DUMMY_REV_RATIO_OFFSET).read();
     let num = x(ratio).fsub_m(off);
@@ -690,7 +687,7 @@ pub fn get_volume_for_dummy_rev(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
         }
     } else {
         let a = x(g::<f32>(FLT_1).read()).fsub_m(fwd).to_f32();
-        x(audio_log10(a)).fmul_m(g::<f32>(FLT_10).read())
+        audio_log10(a).fmul_m(g::<f32>(FLT_10).read())
     };
     dummy_vol_tail(this, st0, vol)
 }
@@ -892,7 +889,8 @@ pub fn get_accel_and_brake(this: GPtr<u8>, params: GPtr<u8>) {
 /// (vehicle +0x5AC bit 0) and the ratio >= 1e-5 (or NaN), then `AudioLog10(ratio) * [0x858BA4]` + the
 /// type-6 / other offset; frequency `f32(ratio * 0.2 + 0.8)`; with `UnderWaterness >= 0.5` (or NaN)
 /// frequency *= 0.185 and volume += 6 (each stored as f32); then `UpdateBoatSound(6, 2, 3, ..)`.
-/// Not hooked: the original multiplies `CAEAudioUtility::AudioLog10`'s full-precision ST0 (fyl2x) directly; the port rounds it to f32 first (1-ulp ST0 mismatches in L2, port-l2-ab-g). Needs an X87 fyl2x model in sa-math.
+/// `AudioLog10`'s full 64-bit FYL2X result is multiplied directly, as the original does ([`audio_log10`]).
+#[hook(addr = 0x4FA0C0, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessBoatMovingOverWater", expect = "51 8B 44 24 08 D9 40 1C")]
 pub fn process_boat_moving_over_water(this: GPtr<u8>, params: GPtr<u8>) {
     let gf = |a: usize| g::<f32>(a).read();
     let abs = f32::from_bits(rd::<u32>(params, 0x1C) & 0x7FFF_FFFF);
@@ -909,10 +907,7 @@ pub fn process_boat_moving_over_water(this: GPtr<u8>, params: GPtr<u8>) {
         } else {
             BOAT_VOL_OTHER
         };
-        vol = x(audio_log10(ratio))
-            .fmul_m(gf(FLT_8BA4))
-            .fadd_m(gf(off))
-            .to_f32();
+        vol = audio_log10(ratio).fmul_m(gf(FLT_8BA4)).fadd_m(gf(off)).to_f32();
     }
     let mut freq = x(ratio)
         .fmul_m(gf(BOAT_FREQ_MULT))
@@ -931,7 +926,8 @@ pub fn process_boat_moving_over_water(this: GPtr<u8>, params: GPtr<u8>) {
 /// audio (+0x964, first scaled by 0.4 when +0x962 is set); its absolute value gives `speed = f32(0.2 * t
 /// + 0.75)` and, above 0.0, `volume = f32(AudioLog10(f32 t) * [0x858BA4] - 6)`; sfx 0x13 while
 /// reversing (gas < 0) else 0x14. Otherwise sfx -1, speed 1.0, volume -100. Then `PlayReverseSound`.
-/// Not hooked: the original multiplies `CAEAudioUtility::AudioLog10`'s full-precision ST0 (fyl2x) directly; the port rounds it to f32 first (1-ulp ST0 mismatches in L2, port-l2-ab-g). Needs an X87 fyl2x model in sa-math.
+/// `AudioLog10`'s full 64-bit FYL2X result is multiplied directly, as the original does ([`audio_log10`]).
+#[hook(addr = 0x4F8DF0, conv = thiscall, name = "CAEVehicleAudioEntity::ProcessReverseGear", expect = "83 EC 08 8B 54 24 0C")]
 pub fn process_reverse_gear(this: GPtr<u8>, params: GPtr<u8>) {
     let gf = |a: usize| g::<f32>(a).read();
     let mut sfx: u32 = 0xFFFF_FFFF;
@@ -969,7 +965,7 @@ pub fn process_reverse_gear(this: GPtr<u8>, params: GPtr<u8>) {
             .to_bits();
         let d = X87::from_f64_exact(f64::from_bits(g::<u64>(DBL_0).read()));
         if !t.fcom(d).test_any(0x41) {
-            vol = x(audio_log10(t_f32))
+            vol = audio_log10(t_f32)
                 .fmul_m(gf(FLT_8BA4))
                 .fadd_m(gf(REVERSE_VOL_OFFSET))
                 .to_f32()
@@ -1188,4 +1184,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GET_HORN_STATE,
     HOOK_TURN_ON_RADIO_FOR_VEHICLE,
     HOOK_TURN_OFF_RADIO_FOR_VEHICLE,
+    HOOK_GET_FLYING_METAL_VOLUME,
+    HOOK_GET_VOLUME_FOR_DUMMY_IDLE,
+    HOOK_GET_VOLUME_FOR_DUMMY_REV,
+    HOOK_PROCESS_BOAT_MOVING_OVER_WATER,
+    HOOK_PROCESS_REVERSE_GEAR,
 ];

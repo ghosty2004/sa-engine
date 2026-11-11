@@ -10,7 +10,7 @@ session sets `catalog/state.csv`):
 | `implemented-needs-L2` | 191 | Rust port registered with `#[hook]`; reads/writes game globals or calls other functions, so it needs CORE-L2 in game. The row gives the L2 signature (conv, `this` type, return kind) |
 | `ported-unhookable` | 23 | Rust port without a hook: the entry cannot be patched (a lone `ret`; a branch back into the first 5 bytes; an argument in EAX/ESI that no supported convention carries). Phase B uses the Rust function; phase A keeps the original |
 | `deferred` | 25 | orchestrators (CGame init/shutdown/process, Game::Idle/Render*, WinMain, psInitialize, …), `CTimer::Update` (sa-hook's frame-boundary hook), and the mis-split row 0x7487CF |
-| `blocked` | 3 | `App::DoRWStuffStartOfFrame(_Horizon)` and `App::AppEventHandler` use FPTAN, for which sa-math has no CPU-checked model (Unicorn is unfaithful for it, docs/re/l1-harness.md) |
+| `blocked` | 3 | `App::DoRWStuffStartOfFrame(_Horizon)` and `App::AppEventHandler` use FPTAN, for which sa-math has no CPU-checked model (Unicorn is unfaithful for it, docs/re/l1-harness.md). **Unblocked (X87-MODELS, 2026-11-11):** `X87::fptan` / `Fpu::fptan` model, CPU-checked (stored f32 exact in 10^6 cases, full 80-bit ST0 in 95.9%, else 1 ulp of 64; docs/re/l1-harness.md). |
 
 Ported = 270 (L1 + needs-L2 + unhookable). Sources: the 1.0 US disassembly (capstone over the exe, extents
 from `catalog/extents.csv`, `.HOODLUM` bodies and protection chunks followed) and the Ghidra decompilation of

@@ -10,13 +10,13 @@
 //! sqrt = `T[i] + ((b' >> 1) & 0x3FC00000)`, inverse = `U[i] + ((!b' >> 1) & 0x3FC00000)` (wrapping
 //! u32 adds, no sign or NaN handling).
 
-use sa_core::abi::HookReg;
+use sa_core::abi::{Fp, HookReg, stack_footprint};
 use sa_core::light::RwV3d;
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{error1, error2, f32_of, g, module, p8, rd, rw_malloc, wr, x};
+use crate::common::{error1_code, error2, f32_of, g, module, p8, rd, rw_malloc, wr, x};
 use crate::layout::modules::VECTOR;
 
 /// `0.0f` at 0x858B50 (compare constant of `RwV3dNormalize`).
@@ -86,6 +86,12 @@ pub fn rw_sqrt(v: f32) -> X87 {
     rw_sqrt_in(sqrt_table(), v)
 }
 
+/// [`rw_sqrt`] as the f64 the original's ST0 return becomes (the type `orig!` declarations use: an
+/// `X87` is not an FFI return type).
+pub fn rw_sqrt_f64(v: f32) -> f64 {
+    rw_sqrt(v).to_f64()
+}
+
 pub fn rw_sqrt_in(t: GPtr<u32>, v: f32) -> X87 {
     x(f32::from_bits(sqrt_lookup_in(t, v.to_bits())))
 }
@@ -113,13 +119,46 @@ pub fn rw_v3d_length_in(t: GPtr<u32>, v: GPtr<RwV3d>) -> X87 {
 
 /// `RwV3dNormalize(out, in)` (0x7ED9B0): returns the table length; `out = in * invSqrt` (x written
 /// before y/z are read); `RwErrorSet(E_RW_ZEROLENGTH)` when the length compares `<= 0` (a NaN length
-/// does not set it: `test ah, 0x41; jp` skips on unordered). The original stores `f32(s)` over its `in`
-/// argument slot (not reproduced).
-#[hook(addr = 0x7ED9B0, conv = cdecl, name = "RwV3dNormalize", expect = "83 EC 0C 8B 44 24 14")]
+/// does not set it: `test ah, 0x41; jp` skips on unordered).
+///
+/// Stack footprint (`footprint`, ADR-001 §5b): original code reads this function's stack residue
+/// (CWeapon::FireInstantHit 0x73FB10 passes an uninitialised local to AddGunshell; c-bug frame 2494),
+/// so the hook leaves what the original leaves, relative to the entry ESP S (from the disassembly):
+/// `sub esp, 0xC; push esi` → [S-0x10] = esi; `fst [esp+4]` → [S-0xC] = f32(s), then (s != 0, after
+/// `push edi` → [S-0x14] = edi) the sqrt table value; `fstp [esp+0x18]` → the `in` argument slot
+/// [S+8] = f32(s), then (s != 0) the inverse-sqrt table value. Error path (`add esp` restored, ESI
+/// popped): `push 0x19` → [S-0x10]; `mov [esp+8], 1` → [S-8]; `call _rwerror` (ret 0x7EDAA6 at
+/// [S-0x14], its frame below); `mov [esp+0xC], eax` → [S-4] = the code; `push &err` → [S-0x14] = S-8;
+/// `call RwErrorSet` → [S-0x18] = 0x7EDAB4, and RwErrorSet's `push esi` → [S-0x1C] = the caller's
+/// ESI. Not reproduced: deeper residue of the error path's callees ([S-0x20] and below; RwErrorSet
+/// pushes EDI there on one of its paths, _rwerror's frame is overwritten except below that). The
+/// 0x800-byte window covers the Rust shim's depth: below S only the slots above remain changed.
+#[hook(addr = 0x7ED9B0, conv = cdecl, name = "RwV3dNormalize", expect = "83 EC 0C 8B 44 24 14", footprint = 0x800)]
 pub fn rw_v3d_normalize(out: GPtr<RwV3d>, inp: GPtr<RwV3d>) -> X87 {
+    let s = f32_of(len_sq(inp.read())).to_bits();
     let (len, err) = rw_v3d_normalize_in(sqrt_table(), inv_sqrt_table(), out, inp);
+    let (len_bits, r_bits) = if s == 0 {
+        (0, 0)
+    } else {
+        (len.to_f32().to_bits(), inv_sqrt_lookup_in(inv_sqrt_table(), s))
+    };
+    let fp = [(-0x10, Fp::Esi), (-0xC, Fp::Val(len_bits)), (8, Fp::Val(r_bits))];
+    if s == 0 {
+        stack_footprint(&fp);
+    } else {
+        stack_footprint(&[(-0x14, Fp::Edi)]);
+        stack_footprint(&fp);
+    }
     if err {
-        error1(0x19);
+        let code = error1_code(0x19);
+        stack_footprint(&[
+            (-0x10, Fp::Val(0x19)),
+            (-8, Fp::Val(1)),
+            (-4, Fp::Val(code)),
+            (-0x14, Fp::Addr(-8)),
+            (-0x18, Fp::Val(0x7EDAB4)),
+            (-0x1C, Fp::Esi),
+        ]);
     }
     len
 }

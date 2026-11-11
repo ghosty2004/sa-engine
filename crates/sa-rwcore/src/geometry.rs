@@ -52,7 +52,7 @@ orig! {
     /// `RwBBoxCalculate(box, verts, n)` (0x808F60)
     fn rw_bbox_calculate(bx: GPtr<u8>, verts: GPtr<u8>, n: i32) -> GPtr<u8> = cdecl 0x808F60 => crate::matrix::rw_bbox_calculate;
     /// `_rwSqrt(x)` (0x7EDB30), result in ST0
-    fn rw_sqrt(v: f32) -> X87 = cdecl 0x7EDB30 => crate::vector::rw_sqrt;
+    fn rw_sqrt(v: f32) -> f64 = cdecl 0x7EDB30 => crate::vector::rw_sqrt_f64;
     /// `RwResourcesFreeResEntry(entry)` (0x807DE0)
     fn rw_resources_free_res_entry(e: GPtr<u8>) -> u32 = cdecl 0x807DE0 => unported;
     /// `_rpMeshDestroy(header)` (0x758BC0)
@@ -159,7 +159,7 @@ pub fn rp_morph_target_calc_bounding_sphere(mt: GPtr<u8>, out: GPtr<u8>) -> GPtr
             }
         }
         if !x(max_d2).fcom(x(ZERO)).test_any(0x41) {
-            max_d2 = f32_of(rw_sqrt(max_d2));
+            max_d2 = f32_of(X87::from_f64_exact(rw_sqrt(max_d2)));
         }
     }
     wr::<f32>(out, 0, cx);

@@ -185,8 +185,43 @@ impl Fpu {
     }
     /// `fabs` (clears the sign, NaNs included).
     pub fn fabs(&mut self) {
-        let b = self.st(0).to_f64().to_bits() & !(1u64 << 63);
-        self.set(0, X87::from_f64_exact(f64::from_bits(b)));
+        let v = self.st(0).fabs();
+        self.set(0, v);
+    }
+    /// `fldlg2` (64-bit log10 2)
+    pub fn fldlg2(&mut self) {
+        self.push(X87::lg2());
+    }
+    /// `fldln2`
+    pub fn fldln2(&mut self) {
+        self.push(X87::ln2());
+    }
+    /// `fldl2e`
+    pub fn fldl2e(&mut self) {
+        self.push(X87::l2e());
+    }
+    /// `fldpi`
+    pub fn fldpi(&mut self) {
+        self.push(X87::pi());
+    }
+    /// `fyl2x`: `st1 = st1 * log2(st0)`, pop (64-bit result, see [`X87::fyl2x`]).
+    pub fn fyl2x(&mut self) {
+        let v = self.st(1).fyl2x(self.st(0));
+        self.set(1, v);
+        self.pop();
+    }
+    /// `fptan`: `st0 = tan(st0)`, then push 1.0 (64-bit result; NaN operands push the NaN, see
+    /// [`X87::fptan`]). For `|st0| >= 2^63` the CPU sets C2 and changes nothing; this returns false
+    /// then.
+    pub fn fptan(&mut self) -> bool {
+        match self.st(0).fptan() {
+            Some((t, pushed)) => {
+                self.set(0, t);
+                self.push(pushed);
+                true
+            }
+            None => false,
+        }
     }
     pub fn fsqrt(&mut self) {
         let v = self.st(0).fsqrt();

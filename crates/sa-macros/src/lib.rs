@@ -23,6 +23,10 @@
 //! registers, copies the stack arguments, calls the shim, pops the registers and returns with the
 //! original convention (`ret` / `ret 4*n`). The shim's result registers (EAX, ST0) pass through.
 //!
+//! `footprint = W` (ADR-001 §5b): original code reads this function's stack residue. The entry is a
+//! naked wrapper that snapshots the W bytes (≤ 0x1000, covering the shim's whole stack depth) below the entry ESP, calls the shim, restores
+//! the snapshot and applies the writes the port recorded with `sa_core::abi::stack_footprint`.
+//!
 //! `fallback` (or `fallback = true`; ADR-002): a partial port. The macro also emits a cell that sa-hook
 //! fills at install with the original entry (the relocated-prologue trampoline, or a `.HOODLUM` stub's
 //! old target; `HookReg::set_original`) and `pub fn <fn>_original(args) -> R`, which calls that entry
@@ -108,6 +112,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut preserve: Option<LitStr> = None;
     let mut entry_eax = false;
     let mut fallback = false;
+    let mut footprint: Option<u32> = None;
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -124,6 +129,13 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             this = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("preserve") {
             preserve = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("footprint") {
+            let v: LitInt = meta.value()?.parse()?;
+            let w = v.base10_parse::<u32>()?;
+            if w % 4 != 0 || w == 0 || w > 0x1000 {
+                return Err(syn::Error::new(v.span(), "footprint: a multiple of 4, at most 0x1000"));
+            }
+            footprint = Some(w);
         } else if meta.path.is_ident("entry_eax") {
             entry_eax = true;
         } else if meta.path.is_ident("fallback") {
@@ -135,14 +147,14 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
         } else {
             return Err(
-                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax or fallback")
+                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax, fallback or footprint")
             );
         }
         Ok(())
     });
     parse_macro_input!(attr with parser);
     let f = parse_macro_input!(item as ItemFn);
-    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback) {
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -159,6 +171,7 @@ fn expand(
     preserve: Option<LitStr>,
     entry_eax: bool,
     fallback: bool,
+    footprint: Option<u32>,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -303,7 +316,117 @@ fn expand(
     // displacement stays constant), call the shim (ECX/EDX still hold register arguments), drop the
     // copies for cdecl, pop, return as the original.
     // `entry_eax`: the wrapper first stores the caller's EAX in `sa_core::abi::ENTRY_EAX`.
-    let (wrapper, entry) = if saved.is_empty() && entry_eax {
+    if footprint.is_some() && (!saved.is_empty() || entry_eax) {
+        return Err(syn::Error::new(span, "footprint cannot be combined with preserve or entry_eax"));
+    }
+    let (wrapper, entry) = if let Some(w) = footprint {
+        // `footprint = W` (ADR-001 §5b, `sa_core::abi::stack_footprint`): snapshot the W bytes below
+        // the entry ESP, copy the stack arguments, call the shim, put the snapshot back, apply the
+        // port's recorded writes relative to the entry ESP, return as the original. EAX/EDX/ECX and
+        // the x87 stack pass through (kept in the state's scratch words meanwhile).
+        let wrap = format_ident!("__sa_hook_footprint_{}", fname);
+        let mut l: Vec<String> = [
+            "mov dword ptr [{fp}], 0",
+            "mov dword ptr [{fp} + 4], 1",
+            // snapshot [S - W, S) (ECX/EDX may carry register arguments: kept meanwhile)
+            "mov dword ptr [{fp} + 16], ecx",
+            "mov dword ptr [{fp} + 20], esi",
+            "mov dword ptr [{fp} + 24], edi",
+            "lea esi, [esp - {w}]",
+            "lea edi, [{fp} + 224]",
+            "mov ecx, {w4}",
+            "rep movsd",
+            "mov ecx, dword ptr [{fp} + 16]",
+            "mov esi, dword ptr [{fp} + 20]",
+            "mov edi, dword ptr [{fp} + 24]",
+            ".rept {n}",
+            "push dword ptr [esp + {d}]",
+            ".endr",
+            "call {inner}",
+        ]
+        .map(String::from)
+        .to_vec();
+        if matches!(conv, Conv::Cdecl) {
+            l.push("add esp, {b}".into());
+        }
+        // ESP is the entry ESP again
+        l.extend(
+            [
+                "mov dword ptr [{fp} + 8], eax",
+                "mov dword ptr [{fp} + 12], edx",
+                "mov dword ptr [{fp} + 16], ecx",
+                "mov dword ptr [{fp} + 20], esi",
+                "mov dword ptr [{fp} + 24], edi",
+                "mov dword ptr [{fp} + 4], 0",
+                "lea esi, [{fp} + 224]",
+                "lea edi, [esp - {w}]",
+                "mov ecx, {w4}",
+                "rep movsd",
+                "mov esi, dword ptr [{fp} + 20]",
+                "mov edi, dword ptr [{fp} + 24]",
+                "xor ecx, ecx",
+                "2:",
+                "cmp ecx, dword ptr [{fp}]",
+                "jae 9f",
+                "lea eax, [ecx + ecx*2]",
+                "mov edx, dword ptr [{fp} + eax*4 + 40]",
+                "cmp dword ptr [{fp} + eax*4 + 36], 1",
+                "jne 3f",
+                "mov edx, esi",
+                "3:",
+                "cmp dword ptr [{fp} + eax*4 + 36], 2",
+                "jne 4f",
+                "mov edx, edi",
+                "4:",
+                "cmp dword ptr [{fp} + eax*4 + 36], 3",
+                "jne 5f",
+                "mov edx, ebx",
+                "5:",
+                "cmp dword ptr [{fp} + eax*4 + 36], 4",
+                "jne 6f",
+                "mov edx, ebp",
+                "6:",
+                "cmp dword ptr [{fp} + eax*4 + 36], 5",
+                "jne 7f",
+                "add edx, esp",
+                "7:",
+                "mov eax, dword ptr [{fp} + eax*4 + 32]",
+                "mov dword ptr [esp + eax], edx",
+                "inc ecx",
+                "jmp 2b",
+                "9:",
+                "mov dword ptr [{fp}], 0",
+                "mov eax, dword ptr [{fp} + 8]",
+                "mov edx, dword ptr [{fp} + 12]",
+                "mov ecx, dword ptr [{fp} + 16]",
+            ]
+            .map(String::from),
+        );
+        l.push(if matches!(conv, Conv::Cdecl) {
+            "ret".into()
+        } else {
+            "ret {b}".into()
+        });
+        let wrapper = quote! {
+            #[cfg(target_arch = "x86")]
+            #[doc(hidden)]
+            #[unsafe(naked)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+                ::core::arch::naked_asm!(
+                    #(#l),*,
+                    n = const #words as u32,
+                    d = const 4 * (#words as u32),
+                    b = const 4 * (#words as u32),
+                    w = const #w,
+                    w4 = const #w / 4,
+                    inner = sym #shim,
+                    fp = sym ::sa_core::abi::FOOTPRINT,
+                )
+            }
+        };
+        (wrapper, quote!(#wrap as usize))
+    } else if saved.is_empty() && entry_eax {
         let wrap = format_ident!("__sa_hook_entry_eax_{}", fname);
         let wrapper = quote! {
             #[cfg(target_arch = "x86")]

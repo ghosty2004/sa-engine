@@ -29,6 +29,7 @@ pub mod specs;
 pub mod specs_ai;
 pub mod specs_anim_a;
 pub mod specs_anim_b;
+pub mod specs_audio;
 pub mod specs_cam;
 pub mod specs_coll_data;
 pub mod specs_coll_prim;
