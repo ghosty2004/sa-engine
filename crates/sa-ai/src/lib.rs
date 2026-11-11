@@ -23,5 +23,8 @@ pub mod dtors;
 pub mod events;
 pub mod hooks;
 pub mod misc;
+pub mod car_drive;
+pub mod car_enter;
+pub mod car_exit;
 pub mod tasks;
 pub mod trivial;

@@ -1,0 +1,69 @@
+# PORT-AI-3 corpus program (vehicle AI, sa-ai car tasks): the grove-walk start, CJ walks out to the street,
+# jacks a taxi that stops next to him (the driver drags him back out; Ballas join the fight and CJ is wasted),
+# then after the hospital respawn spawns a Rancher, raises the wanted level (TURNUPTHEHEAT) and drives off
+# while police cars, a bike cop and cops on foot respond. (No Grove member was in reach to recruit at the
+# start of a new game, so passenger tasks come from the traffic and police cars only.)
+# Pad controls (the test setup runs the game in pad mode): triangle = enter/exit, cross = accelerate /
+# sprint, square = brake/reverse, lx/ly = steer/move. Cheats are typed on the keyboard one key per two
+# frames; HESOYAM restores health. Frames as in grove-walk.txt (40 ms each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1290..1400 ly=-128           # walk out of the alley to the street
+1410 key=std:0x48            # HESOYAM: health, armour, money
+1412 key=std:0x45
+1414 key=std:0x53
+1416 key=std:0x4F
+1418 key=std:0x59
+1420 key=std:0x41
+1422 key=std:0x4D
+1440..1470 lx=128            # turn right, along the road
+1570 triangle                # jack the taxi stopped next to CJ
+1680..1820 cross             # drive away
+1821..1880 square            # stop
+1890 key=std:0x54            # TURNUPTHEHEAT: two wanted stars, the police come and drag CJ out
+1892 key=std:0x55
+1894 key=std:0x52
+1896 key=std:0x4E
+1898 key=std:0x55
+1900 key=std:0x50
+1902 key=std:0x54
+1904 key=std:0x48
+1906 key=std:0x45
+1908 key=std:0x48
+1910 key=std:0x45
+1912 key=std:0x41
+1914 key=std:0x54
+3200 key=std:0x48            # HESOYAM after the hospital respawn
+3202 key=std:0x45
+3204 key=std:0x53
+3206 key=std:0x4F
+3208 key=std:0x59
+3210 key=std:0x41
+3212 key=std:0x4D
+3230 key=std:0x4A            # JQNTDMH: spawn a Rancher
+3232 key=std:0x51
+3234 key=std:0x4E
+3236 key=std:0x54
+3238 key=std:0x44
+3240 key=std:0x4D
+3242 key=std:0x48
+3270 triangle                # enter it
+3330..3500 cross             # drive away
+3340 key=std:0x54            # TURNUPTHEHEAT: police chase
+3342 key=std:0x55
+3344 key=std:0x52
+3346 key=std:0x4E
+3348 key=std:0x55
+3350 key=std:0x50
+3352 key=std:0x54
+3354 key=std:0x48
+3356 key=std:0x45
+3358 key=std:0x48
+3360 key=std:0x45
+3362 key=std:0x41
+3364 key=std:0x54
+3501..3750 cross lx=-60
+3751..3800 square            # stop, the police drag CJ out
+end 5000
