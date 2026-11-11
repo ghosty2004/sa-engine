@@ -792,3 +792,14 @@
 ## 2026-11-11 PORT-AUDIO-1 integrated (main session)
 - Agent a3243295 + 2 helpers (lane 6): crate sa-audio, docs/arch/audio-port.md + verdicts, lists, extras. Merge (audio
   after ai); sa-hook lib 48, sa-audio 3, workspace clippy, i686 OK; all-ports IDENTICAL on 7 recordings.
+
+## 2026-11-11 FIXUP integrated (main session)
+- Agent a34e4dbd (lane 4): specs_script.rs (10 ECX-preserving VM hooks, 1,002,000 Unicorn + 202,000 native cases each,
+  0 mismatches; RetKind::Ax); `sa-oracle --test l1` green again (16/16, re-run by the main session after the merge).
+- CText::Get 0x6A0050 hooked: the two "protection readers" from PORT-HUD were mis-decodes inside `call 0x1243940`
+  (not added to keycells); code_data_reads.py now lists dwords starting up to 3 bytes before an entry; keycells test
+  skips rows that are neither chunk nor sweep. SetJustify/SetOrientation hooked after callers.rs follows x87
+  branches for slot-reserving pushes. 3 → L2.
+- Workspace tests: only verifier_l1 `verifier_unicorn_agrees_with_cpu_outside_snan` fails on
+  CMessages::InsertStringInString (Unicorn loses EFLAGS across rep movsb, known L1 harness bug).
+- Main session: sa-hook lib 48, clippy, i686 OK; all-ports IDENTICAL on grove, c-bug, pause-restart.

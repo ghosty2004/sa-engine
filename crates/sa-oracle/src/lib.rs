@@ -42,6 +42,7 @@ pub mod specs_input_pad;
 pub mod specs_ped;
 pub mod specs_phys;
 pub mod specs_pop;
+pub mod specs_script;
 pub mod specs_stream_a;
 pub mod specs_stream_b;
 pub mod specs_stream_c;

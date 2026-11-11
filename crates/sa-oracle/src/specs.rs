@@ -16,6 +16,8 @@ pub enum RetKind {
     St0,
     /// bool in AL (x87 stack empty)
     Al,
+    /// 16-bit integer in AX (x87 stack empty; the upper half of EAX is not part of the result)
+    Ax,
     /// 32-bit integer or pointer in EAX (x87 stack empty)
     Eax,
     /// nothing (x87 stack empty)
@@ -36,6 +38,7 @@ pub enum Route {
 pub enum ExpRet {
     St0 { f32: u32, ext: [u8; 10] },
     Al(u8),
+    Ax(u16),
     Eax(u32),
     Void,
 }
@@ -427,6 +430,7 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_hud_radar::all())
     .chain(crate::specs_hud_msg::all())
     .chain(crate::specs_cam::all())
+    .chain(crate::specs_script::all())
     .collect()
 }
 

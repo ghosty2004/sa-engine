@@ -341,6 +341,14 @@ pub fn compare(
                 return Err(("al".into(), format!("orig al={} | rust al={al}", o.eax & 0xFF)));
             }
         }
+        ExpRet::Ax(ax) => {
+            if (o.eax & 0xFFFF) as u16 != *ax {
+                return Err((
+                    "eax".into(),
+                    format!("orig ax={:#x} | rust ax={ax:#x}", o.eax & 0xFFFF),
+                ));
+            }
+        }
         ExpRet::Eax(v) => {
             if o.eax != *v {
                 return Err(("eax".into(), format!("orig eax={:#x} | rust eax={v:#x}", o.eax)));
@@ -384,6 +392,7 @@ fn observable(spec: &Spec, field: &str) -> bool {
 fn eax_mask(spec: &Spec) -> u32 {
     match spec.ret {
         RetKind::Al => 0xFF,
+        RetKind::Ax => 0xFFFF,
         RetKind::Eax => 0xFFFF_FFFF,
         _ => 0,
     }

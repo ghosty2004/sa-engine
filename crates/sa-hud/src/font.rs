@@ -244,16 +244,17 @@ pub fn set_background_color(c: u32) {
     d_wr(det::BACKGROUND_COLOR, c);
 }
 
-/// `CFont::SetJustify(bool)` (0x719600). Not hooked: `CHud::DrawHelpText` pushes ECX at 0x58BAC5 after
-/// `SetOrientation` / `SetJustify` (a stack-slot reservation that sa-hook's callers test cannot prove
-/// through the following x87 branches), so a hook would need `preserve = "ecx"`, and a preserving hook
-/// needs an L1 spec comparing ECX, which cannot run a function that writes globals.
+/// `CFont::SetJustify(bool)` (0x719600). `CHud::DrawHelpText` pushes ECX at 0x58BAC5 after
+/// `SetOrientation` / `SetJustify`; that is a stack-slot reservation (sa-hook's callers test follows
+/// the x87 branches after it), so no caller uses the ECX these leave.
+#[hook(addr = 0x719600, conv = cdecl, name = "CFont::SetJustify", expect = "8A 44 24 04 A2 78 1A C7 00")]
 pub fn set_justify(v: u32) {
     d_wr(det::JUSTIFY, v as u8);
 }
 
 /// `CFont::SetOrientation(eFontAlignment)` (0x719610): 0 centre, 1 left, 2 right; other values store
-/// nothing. Not hooked, as `SetJustify`; besides, the original leaves ECX = 0, which `preserve` cannot model.
+/// nothing. The original leaves ECX = 0; no caller reads it (see [`set_justify`]).
+#[hook(addr = 0x719610, conv = cdecl, name = "CFont::SetOrientation", expect = "0F B6 44 24 04")]
 pub fn set_orientation(v: u32) {
     match v as u8 {
         0 => {
@@ -419,6 +420,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SET_PROPORTIONAL,
     HOOK_SET_BACKGROUND,
     HOOK_SET_BACKGROUND_COLOR,
+    HOOK_SET_JUSTIFY,
+    HOOK_SET_ORIENTATION,
     HOOK_INIT_PER_FRAME,
     HOOK_GET_LETTER_ID_PROP_VALUE,
     HOOK_FIND_SUB_FONT_CHARACTER,

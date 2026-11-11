@@ -11,7 +11,8 @@ table.
 
 Scan: every executable section of the image (game `.text`, `_rwcseg`, the no-CD `.text` at 0xCB1000,
 `.init`, the executable `.data` at 0x1301000 and `.HOODLUM`). At every offset whose dword lies in the
-first WINDOW bytes of a catalogued function entry (`catalog/procedures.csv`), each instruction that
+first WINDOW bytes of a catalogued function entry (`catalog/procedures.csv`), or starts up to 3 bytes
+before one (`entry_off` < 0, overlapping its first bytes), each instruction that
 decodes from up to 10 bytes before and contains that dword as its displacement or immediate is a
 candidate:
 
@@ -75,6 +76,11 @@ def main():
         nxt = entries[i + 1] if i + 1 < len(entries) else HI
         for o in range(min(WINDOW, nxt - e)):
             window[e + o] = (e, o)
+    # dwords that start up to 3 bytes before an entry also cover its first bytes (0xD723B1 reads the
+    # dword at 0x6A004D: three alignment `nop`s and the first byte of CText::Get); entry_off < 0
+    for e in entries:
+        for o in (-3, -2, -1):
+            window.setdefault(e + o, (e, o))
 
     def in_line(s, a):
         for i in mdq.disasm(img[s - base:a - base + 16], s):

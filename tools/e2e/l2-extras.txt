@@ -3160,3 +3160,8 @@ CAETwinLoopSoundEntity::SwapSounds@0xB62CB0:0x8CBC:RW
 CAEWeaponAudioEntity::Terminate@0xB62CB0:0x8CBC:RW
 # CAESound::UpdateParameters (vtable call into an entity's UpdateParameters): static data after CCollision::ms_colModelCache up to +0xCD (split abs-g/abs-dr undeclared 0x9659B2..0x9659F8)
 CAESound::UpdateParameters@0x96592C:0xD0:RW
+# CText::Get: the thread's first locale-aware CRT call (CKeyGen::GetUppercaseKey via CKeyArray::Search,
+# 0x6A03BC caller at frame 0) runs __updatetlocinfo (0x825456 -> 0x82524D), which increments the
+# __ptlocinfo refcounts 0x8E2EC0 and 0x8E377C (see docs/arch/core-port.md, Ps::InitialiseLanguage);
+# CRT block, access D
+CText::Get@0x8E2C30:0xBB0:D

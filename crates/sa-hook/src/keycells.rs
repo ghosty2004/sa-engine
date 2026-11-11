@@ -22,7 +22,9 @@
 //! original ones whatever the hooks write; nothing else changes. [`READERS`] is complete for every
 //! hook of the table: the test `every_code_key_read_of_a_hooked_range_is_redirected` scans the
 //! exe's code sections for absolute memory reads of a hooked entry's bytes and fails on a reader that is
-//! not listed. `SA_KEYCELLS=0` keeps the original operands (to reproduce the crash).
+//! not listed. Decodes from the middle of another instruction (rows of `catalog/code-data-reads.csv`
+//! flagged neither `chunk` nor `sweep`) are not readers, and redirecting one would corrupt the
+//! instruction it lies in. `SA_KEYCELLS=0` keeps the original operands (to reproduce the crash).
 
 /// One reader: an instruction whose absolute memory operand reads code bytes as data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -192,6 +194,16 @@ mod tests {
                 keys.insert(k, h.addr);
             }
         }
+        // Decodes that start inside another instruction are not readers: the rows of
+        // catalog/code-data-reads.csv that lie neither in a protection chunk nor on a linear sweep
+        // (the same criterion as `data_reads::unredirected`). E.g. `mov edx, [0x6A004D]` "at"
+        // 0xD723B1 / `sub edx, [0x6A004D]` "at" 0xD72411 (CText::Get's first byte) are the rel32 of
+        // `call 0x1243940` at 0xD723B0 / 0xD72410 and the following `push 0`.
+        let off_stream: std::collections::BTreeSet<(u32, u32)> = crate::data_reads::rows()
+            .into_iter()
+            .filter(|r| !r.chunk && !r.sweep)
+            .map(|r| (r.reader, r.target))
+            .collect();
         let mut found: BTreeMap<u32, (u32, u32)> = BTreeMap::new();
         for (va, data) in exe.code_sections() {
             for p in 0..data.len().saturating_sub(3) {
@@ -209,7 +221,7 @@ mod tests {
                         && i.memory_base() == Register::None
                         && i.memory_index() == Register::None
                         && i.memory_displacement32() == v;
-                    if absolute {
+                    if absolute && !off_stream.contains(&(ip, v)) {
                         found.insert(ip, (v, hook));
                     }
                 }
