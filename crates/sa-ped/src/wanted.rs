@@ -948,6 +948,18 @@ pub fn report_crime(ty: i32, victim: GPtr<u8>, offender: GPtr<u8>) {
     }
 }
 
+/// `CWanted::ClearQdCrimes()` (0x561FE0, thiscall; batch `mvpl-ped-1`): `EAX = this + 0x34`, `ECX = 16` (set in the
+/// in-text fragment 0x404CD2), then the loop `FUN_00561ff0` zeroes the type dword of each of the 16 queued crimes
+/// (stride 0x1C). The original returns with EAX past the last crime and ECX = 0 (no caller reads them).
+#[hook(addr = 0x561fe0, conv = thiscall, name = "CWanted::ClearQdCrimes", expect = "8D 41 34 E9 EA 2C EA FF",
+       unverified = "mvpl-ped-1", route = "L2", hazards = "entry-protection-read", recs = "grove-walk",
+       note = "the entry jumps through the fragment 0x404CD2 (mov ecx, 0x10) into the loop at 0x561FF0; the protection reads the entry jmp at 0x401409 (keycells)")]
+pub fn clear_qd_crimes(this: GPtr<u8>) {
+    for i in 0..16 {
+        wr::<u32>(this, CRIMES + i * CRIME_SIZE, 0);
+    }
+}
+
 // --- hook list (generated) ---
 
 pub const HOOKS: &[HookReg] = &[
@@ -984,4 +996,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_UPDATE_CRIMES_Q,
     HOOK_UPDATE,
     HOOK_REPORT_CRIME,
+    HOOK_CLEAR_QD_CRIMES,
 ];

@@ -971,7 +971,72 @@ pub fn look_at(
     ik_manager_task_add_ik_chain_task(mgr, t, 0);
 }
 
+orig! {
+    /// `CTaskSimpleIKPointArm::UpdatePointArmInfo(purpose, entity, offsetBone, CVector offset (by value), speed,
+    /// blendTime)` (0x634370, `ret 0x20`)
+    pub fn point_arm_task_update_info(t: GPtr<u8>, purpose: u32, entity: u32, bone: u32, ox: u32, oy: u32, oz: u32, speed: u32, blend: u32) = thiscall 0x634370 => unported;
+    /// `CTaskSimpleIKPointArm::CTaskSimpleIKPointArm(purpose, arm, entity, offsetBone, CVector offset (by value),
+    /// speed, blendTime)` (0x634150, `ret 0x24`): returns `this`
+    pub fn point_arm_task_ctor(t: GPtr<u8>, purpose: u32, arm: u32, entity: u32, bone: u32, ox: u32, oy: u32, oz: u32, speed: u32, blend: u32) -> GPtr<u8> = thiscall 0x634150 => unported;
+}
+
+/// `IKChainManager_c::PointArm(purpose, arm, ped, entity, offsetBone, CVector* offset, speed, blendTime, range)`
+/// (0x618B60, thiscall, `ret 0x24`; the entry is `nop; jmp 0x405A03`, a chunk loading `fs:[0]` for the SEH frame).
+/// `CanAccept(ped, range)` false → nothing. The ped's secondary IK manager task (slot 5) is created when missing
+/// (`CTask::operator new(0x1C)`, its constructor or NULL, `SetTaskSecondary(task, 5)`, then fetched again). The offset
+/// is `*offset` or zero. The task in slot `arm + 1` (any task: no type check) gets `UpdatePointArmInfo(purpose,
+/// entity, offsetBone, offset, speed, blendTime)`; without one a new `CTaskSimpleIKPointArm(purpose, arm, entity,
+/// offsetBone, offset, speed, blendTime)` (`operator new(0x5C)`, NULL when that fails) goes to
+/// `AddIKChainTask(task, arm + 1)`. The original keeps `arm + 1` in its own `range` argument slot. Speed, blend time
+/// and range pass through as raw bits.
+#[hook(addr = 0x618b60, conv = thiscall, name = "IKChainManager_c::PointArm", expect = "90 E9 9D CE DE FF",
+       unverified = "mvpl-anim-1", route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk",
+       note = "allocates CTaskSimpleIKManager / CTaskSimpleIKPointArm tasks (task pool); the range argument slot holds the IK slot")]
+#[allow(clippy::too_many_arguments)]
+pub fn point_arm(
+    this: GPtr<u8>,
+    purpose: u32,
+    arm: i32,
+    ped: GPtr<u8>,
+    entity: u32,
+    bone: u32,
+    offset: GPtr<u32>,
+    speed: u32,
+    blend: u32,
+    range: u32,
+) {
+    if call_can_accept(this, ped, f32::from_bits(range)) == 0 {
+        return;
+    }
+    let mut mgr = secondary_ik(ped);
+    if mgr.is_null() {
+        let mem = task_new(0x1C);
+        let t = if mem.is_null() { GPtr::NULL } else { ik_manager_task_ctor(mem) };
+        task_manager_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 5);
+        mgr = secondary_ik(ped);
+    }
+    let (ox, oy, oz) = if offset.is_null() {
+        (0, 0, 0)
+    } else {
+        (offset.read(), offset.wrapping_index(1).read(), offset.wrapping_index(2).read())
+    };
+    let slot = arm.wrapping_add(1);
+    let pa = ik_manager_task_get_task_at_slot(mgr, slot);
+    if !pa.is_null() {
+        point_arm_task_update_info(pa, purpose, entity, bone, ox, oy, oz, speed, blend);
+        return;
+    }
+    let mem = task_new(0x5C);
+    let t = if mem.is_null() {
+        GPtr::NULL
+    } else {
+        point_arm_task_ctor(mem, purpose, arm as u32, entity, bone, ox, oy, oz, speed, blend)
+    };
+    ik_manager_task_add_ik_chain_task(mgr, t, slot);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_POINT_ARM,
     HOOK_LOOK_AT,
     HOOK_EXIT,
     HOOK_SET_BLEND,

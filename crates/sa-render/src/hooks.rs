@@ -55,6 +55,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpd_r4::HOOKS,
     crate::mvpd_r5::HOOKS,
     crate::quaternion::HOOKS,
+    crate::transform_vectors::HOOKS,
+    crate::pole_shadow::HOOKS,
     crate::render_lists::HOOKS,
     crate::mvpd_unk::HOOKS,
     rwplugins::HOOKS,
@@ -82,6 +84,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::postfx_render::HOOKS,
     crate::shadows_render::HOOKS,
     crate::plant_loc_tris::HOOKS,
+    crate::fx_interp_integral::HOOKS,
+    crate::render_tail_leaves::HOOKS,
     crate::weapon_effects_render::HOOKS,
     crate::specialfx_render::HOOKS,
     crate::grass_render::HOOKS,
@@ -92,6 +96,14 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::clouds_create::HOOKS,
     crate::vector_compare::HOOKS,
     crate::sprite_render::HOOKS,
+    crate::list_item_dtor::HOOKS,
+    crate::world_scan::HOOKS,
+    crate::plant_loc_tri_add::HOOKS,
+    crate::plant_col_entity_cache::HOOKS,
+    crate::shadow_cast_entity_xyz::HOOKS,
+    crate::stencil_shadow_volumes::HOOKS,
+    crate::stencil_shadow_register::HOOKS,
+    crate::roadsign_text_raster::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -155,7 +167,7 @@ pub const ALL: &[HookReg] = &ALL_ARRAY;
 /// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
 /// phase A); `sa_ports::NATIVES` lists each of these.
 pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] =
-    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES];
+    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES, crate::short_leaf_natives::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 

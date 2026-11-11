@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 30] = [
+pub const READERS: [Reader; 32] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -287,6 +287,24 @@ pub const READERS: [Reader; 30] = [
         disp_off: 2,
         key: 0x5DF174,
         value: 0xE223_A3E9,
+    },
+    // Batch mvpl-ped-1: CWanted::ClearQdCrimes entry 0x561FE0 (`lea eax, [ecx+0x34]; jmp 0x404CD2`):
+    // `adc edi, [0x561FE3]` at 0x401409 (the jmp's rel32 and its opcode byte).
+    Reader {
+        at: 0x401409,
+        insn: [0x13, 0x3D, 0xE3, 0x1F, 0x56, 0x00],
+        disp_off: 2,
+        key: 0x561FE3,
+        value: 0xEA2C_EAE9,
+    },
+    // Batch mvpl-audio-1: CAEPedAudioEntity::~CAEPedAudioEntity entry 0x5DE920 (`push -1; jmp 0x4084CA`):
+    // `adc ebx, [0x5DE923]` at 0x402195.
+    Reader {
+        at: 0x402195,
+        insn: [0x13, 0x1D, 0x23, 0xE9, 0x5D, 0x00],
+        disp_off: 2,
+        key: 0x5DE923,
+        value: 0xFFE2_9BA3,
     },
 ];
 

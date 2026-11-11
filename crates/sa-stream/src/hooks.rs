@@ -23,6 +23,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::rw_gta_stream::HOOKS,
     crate::misc::HOOKS,
     crate::fileloader::HOOKS,
+    crate::pool_new_stubs::HOOKS,
     modelinfo::base::HOOKS,
     modelinfo::atomic::HOOKS,
     modelinfo::time::HOOKS,

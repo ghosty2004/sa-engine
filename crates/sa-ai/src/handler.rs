@@ -1180,8 +1180,267 @@ pub fn handler_handle_events(this: GPtr<u8>) {
     he_group_reorganise(eg);
 }
 
+orig! {
+    /// `CEventBuildingCollision::IsHeadOnCollision(CPed*)` (0x4AD1E0, `ret 4`)
+    fn building_collision_is_head_on(e: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x4AD1E0 => unported;
+    /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0, `ret 4`)
+    fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
+    /// `CTaskCategories::ComputeTaskCategory(CTask*)` (0x698680)
+    fn task_categories_compute(t: GPtr<u8>) -> i32 = cdecl 0x698680 => unported;
+    /// `CEventBuildingCollision::CanTreatBuildingAsObject(CBuilding*)` (0x4B3120)
+    fn building_collision_can_treat_as_object(b: GPtr<u8>) -> u8 = cdecl 0x4B3120 => unported;
+    /// `CTask::IsGoToTask(CTask*)` (0x61A360)
+    fn task_is_go_to_task(t: GPtr<u8>) -> u8 = cdecl 0x61A360 => unported;
+    /// `CGeneral::GetRandomNumberInRange(int32, int32)` (0x407180)
+    fn general_random_int_in_range(lo: i32, hi: i32) -> i32 = cdecl 0x407180 => unported;
+    /// `CPedGeometryAnalyser::CanPedJumpObstacle(const CPed&, const CEntity&, const CVector& pos, const CVector&
+    /// normal)` (0x5F32D0)
+    fn geometry_can_ped_jump_obstacle(ped: GPtr<u8>, e: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> u8 = cdecl 0x5F32D0 => unported;
+    /// `CPedGeometryAnalyser::CanPedTargetPed(CPed&, CPed&, bool)` (0x5F1C40)
+    fn geometry_can_ped_target_ped(a: GPtr<u8>, b: GPtr<u8>, c: u32) -> u8 = cdecl 0x5F1C40 => unported;
+    /// `CTaskComplexWalkRoundObject::CTaskComplexWalkRoundObject(int32 moveState, const CVector&, CEntity*)` (0x655020,
+    /// `ret 0xC`)
+    fn walk_round_object_ctor(t: GPtr<u8>, ms: i32, target: GPtr<u8>, obj: GPtr<u8>) -> GPtr<u8> = thiscall 0x655020 => unported;
+    /// `CTaskSimpleHitHead::CTaskSimpleHitHead()` (0x653060)
+    fn hit_head_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x653060 => unported;
+    /// `CTaskComplexWalkRoundBuildingAttempt(int32, const CVector& target, const CVector&, const CVector&, bool)`
+    /// (0x654740, `ret 0x14`; the bool goes as a whole dword)
+    fn walk_round_building_ctor_pos(t: GPtr<u8>, ms: i32, target: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, head_on: u32) -> GPtr<u8> = thiscall 0x654740 => unported;
+    /// `CTaskComplexWalkRoundBuildingAttempt(int32, CEntity*, const CVector& offset, const CVector&, const CVector&,
+    /// bool)` (0x654840, `ret 0x18`)
+    fn walk_round_building_ctor_entity(t: GPtr<u8>, ms: i32, e: GPtr<u8>, off: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>, head_on: u32) -> GPtr<u8> = thiscall 0x654840 => unported;
+    /// `CTaskComplexMoveBackAndJump::CTaskComplexMoveBackAndJump()` (0x655340)
+    fn move_back_and_jump_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x655340 => unported;
+    /// `CTaskComplexJump::CTaskComplexJump(eForceClimb)` (0x67A030, `ret 4`)
+    fn complex_jump_ctor(t: GPtr<u8>, climb: u32) -> GPtr<u8> = thiscall 0x67A030 => unported;
+    /// `CPedGroups::IsInPlayersGroup(CPed*)` (0x5F7F10)
+    fn ped_groups_is_in_players_group(p: GPtr<u8>) -> u8 = cdecl 0x5F7F10 => unported;
+    /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector&, float&, uint8&, bool)` (0x6803A0)
+    fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, heading: GPtr<u8>, surf: GPtr<u8>, launch: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
+    /// `CTaskSimpleClimb::CTaskSimpleClimb(CEntity*, const CVector&, float, uint8, eClimbHeights, bool)` (0x67A110,
+    /// `ret 0x18`; the surface and height go as whole dwords)
+    fn climb_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, heading: u32, surf: u32, height: u32, force: u32) -> GPtr<u8> = thiscall 0x67A110 => unported;
+    /// `IKChainManager_c::IsLooking(CPed*)` (0x6181A0, `ret 4`)
+    fn ik_is_looking(m: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x6181A0 => unported;
+    /// `IKChainManager_c::LookAt(const char*, CPed*, CEntity*, int32 time, int32 bone, RwV3d*, bool, float, int32,
+    /// int32, bool)` (0x618970, `ret 0x2C`)
+    fn ik_look_at(m: GPtr<u8>, name: u32, ped: GPtr<u8>, target: GPtr<u8>, time: i32, bone: i32, pos: u32, b: u32, speed: u32, blend: i32, prio: i32, b2: u32) = thiscall 0x618970 => unported;
+    /// `CTaskManager::GetTaskSecondary(int32)` (0x681810, `ret 4`)
+    fn tm_get_task_secondary(tm: GPtr<u8>, i: u32) -> GPtr<u8> = thiscall 0x681810 => unported;
+}
+
+/// `g_ikChainMan` (0xC15448)
+const IK_CHAIN_MANAGER: usize = 0xC15448;
+/// "CompBldgCollResp" (0x85BA88)
+const S_COMP_BLDG_COLL_RESP: u32 = 0x85BA88;
+/// cos 45° (0x86C8F4): the standing ped's floor-like collision limit
+const K_BUILDING_COLLISION_FLOOR: usize = 0x86C8F4;
+/// `CTaskSimpleClimb::ms_fMinForStretchGrab` (0x8D2F34)
+const CLIMB_MIN_FOR_STRETCH_GRAB: usize = 0x8D2F34;
+/// `CTaskComplexGangFollower::ms_bUseClimbing` (0x8D2EDC, dword)
+const GANG_FOLLOWER_USE_CLIMBING: usize = 0x8D2EDC;
+
+/// An entity's position (matrix +0x30, else the placement +4).
+fn entity_pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+}
+
+/// `CEventHandler::ComputeBuildingCollisionResponse(CEventBuildingCollision*, CTask* active, CTask* simplest)` (0x4BF2B0,
+/// thiscall, `ret 0xC`). Writes the response task to this +0x24 only where stated.
+///
+/// Nothing (no write) without `active`, without the event's building (+0x14) or with move state (+0xE, i16) 1. Else
+/// `headOn = IsHeadOnCollision(ped)`; the ped's tasks `kill` (0x3E8), `seek` (0x38B) and `enterCar` (0x2CE)
+/// (`FindTaskByType`); `active->GetTaskType()` and `ComputeTaskCategory(active)` (results unused).
+///
+/// - `CanTreatBuildingAsObject(building)`: `simplest` a go-to task → `CTaskComplexWalkRoundObject(ms, simplest +0xC,
+///   building)`; else no write.
+/// - `r = GetRandomNumberInRange(0, 0x400)`, `rare = (r & 0xF) == 0xF`; `goto = IsGoToTask(simplest) ? simplest : 0`.
+///   Standing (ped +0x46C bit 0) and the event's +0x20 above cos 45° (0x86C8F4) → NULL.
+/// - No `goto` and (no `kill` or no kill target +0x10): `headOn`, `!CanPedJumpObstacle(ped, building, +0x18, +0x24)`
+///   and ms above 4 → `CTaskSimpleHitHead`, else NULL.
+/// - Target point: the kill target's position, else `goto +0xC`.
+/// - Head-on: no seek, no kill, no enterCar and not `rare` → `WalkRoundBuildingAttempt(ms, point, +0x24, +0x18,
+///   headOn)`. Else `CanPedJumpObstacle` → ms above 4 ? `CTaskComplexMoveBackAndJump` : `CTaskComplexJump(0)`. Else a
+///   kill task: no target → NULL; `CanPedTargetPed(ped, target, true)` → NULL; else `WalkRoundBuildingAttempt(ms,
+///   target, &zero, +0x24, +0x18, headOn)`. Else the entity: the seek task's +0xC, else the enterCar task's car (+0xC,
+///   none → no write) driver (+0x460), else (no enterCar) `WalkRoundBuildingAttempt(ms, point, ...)`; no entity → no
+///   write. `ms_bUseClimbing` and `IsInPlayersGroup(ped)` and `TestForClimb(ped, &pos, &heading, &surface, true)` →
+///   `CTaskSimpleClimb(entity, &pos, heading, surface, height, true)` with height 1, or 2 when `pos.z - ped z` is
+///   below `ms_fMinForStretchGrab`. A ped entity: unless `g_ikChainMan.IsLooking(ped)`, `LookAt("CompBldgCollResp",
+///   ped, entity, 3000, 5, NULL, true, 0.25, 500, 3, false)`; `GetTaskSecondary(2)` (unused). Then
+///   `WalkRoundBuildingAttempt(ms, entity, &zero, +0x24, +0x18, headOn)`.
+/// - Not head-on (headOn = 0): a kill task with a target → `(ms, target, &zero, ...)`, without → `(ms, point, ...)`;
+///   else a seek task: its entity → `(ms, entity, &zero, ...)`, else `(ms, point, ...)`; else `(ms, point, ...)`.
+///
+/// Every `operator new` returning NULL writes NULL. The original passes several byte values as whole stack dwords:
+/// `headOn` (a byte over an uninitialised local), the climb surface (a byte over the `active` argument slot, whose low byte first held `rare`) and
+/// height (a byte over the `simplest` argument slot); the port passes `headOn` zero-extended and the other two with
+/// the argument pointers' upper bytes, as the original. It keeps the move state, the new task and the climb data in
+/// its own argument slots.
+#[hook(addr = 0x4bf2b0, conv = thiscall, name = "CEventHandler::ComputeBuildingCollisionResponse", expect = "6A FF 68 FA B4 83 00",
+       this = "CEventHandler", unverified = "mvpk-ai-2", route = "L2", hazards = "stack-residue,uninit-locals",
+       recs = "grove-walk", note = "the headOn dword pushed to the WalkRoundBuildingAttempt constructors has uninitialised upper bytes (see doc)")]
+pub fn event_handler_compute_building_collision_response(this: GPtr<u8>, e: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) {
+    if active.is_null() {
+        return;
+    }
+    let building = rd::<GPtr<u8>>(e, 0x14);
+    if building.is_null() {
+        return;
+    }
+    let ped = rd::<GPtr<u8>>(this, 0);
+    let head_on = building_collision_is_head_on(e, ped);
+    let ms = i32::from(rd::<i16>(e, 0xE));
+    if ms == 1 {
+        return;
+    }
+    let normal = e.byte_add(0x24);
+    let pos = e.byte_add(0x18);
+    let intel = |p: GPtr<u8>| rd::<GPtr<u8>>(p, 0x47C);
+    let kill = intel_find_task_by_type(intel(rd::<GPtr<u8>>(this, 0)), 0x3E8);
+    let seek = intel_find_task_by_type(intel(rd::<GPtr<u8>>(this, 0)), 0x38B);
+    let enter_car = intel_find_task_by_type(intel(rd::<GPtr<u8>>(this, 0)), 0x2CE);
+    v_task_type(active);
+    task_categories_compute(active);
+    let set = |t: GPtr<u8>| wr::<GPtr<u8>>(this, 0x24, t);
+    if building_collision_can_treat_as_object(building) != 0 {
+        if task_is_go_to_task(simplest) == 0 {
+            return;
+        }
+        let t = task_new(0x54);
+        set(if t.is_null() { t } else { walk_round_object_ctor(t, ms, simplest.byte_add(0xC), building) });
+        return;
+    }
+    let rare = (general_random_int_in_range(0, 0x400) & 0xF) == 0xF;
+    let goto = if task_is_go_to_task(simplest) != 0 { simplest } else { GPtr::NULL };
+    let ped = rd::<GPtr<u8>>(this, 0);
+    if rd::<u8>(ped, 0x46C) & 1 != 0 && !x(rd::<f32>(e, 0x20)).fcom(x(g::<f32>(K_BUILDING_COLLISION_FLOOR).read())).test_any(0x41) {
+        set(GPtr::NULL);
+        return;
+    }
+    let kill_target = |k: GPtr<u8>| rd::<GPtr<u8>>(k, 0x10);
+    if goto.is_null() && (kill.is_null() || kill_target(kill).is_null()) {
+        if head_on != 0
+            && geometry_can_ped_jump_obstacle(ped, building, pos, normal) == 0
+            && ms > 4
+        {
+            let t = task_new(0x10);
+            set(if t.is_null() { t } else { hit_head_ctor(t) });
+        } else {
+            set(GPtr::NULL);
+        }
+        return;
+    }
+    let mut point = [0u32; 3];
+    let src = if !kill.is_null() && !kill_target(kill).is_null() {
+        entity_pos_ptr(kill_target(kill))
+    } else {
+        goto.byte_add(0xC)
+    };
+    for (i, p) in point.iter_mut().enumerate() {
+        *p = rd::<u32>(src, 4 * i as isize);
+    }
+    let point_p: GPtr<u8> = GPtr::from_raw(point.as_mut_ptr()).cast();
+    let mut zero = [0u32; 3];
+    let zero_p: GPtr<u8> = GPtr::from_raw(zero.as_mut_ptr()).cast();
+    let hon = u32::from(head_on);
+    let walk_round_point = |hon: u32| {
+        let t = task_new(0x4C);
+        if t.is_null() { t } else { walk_round_building_ctor_pos(t, ms, point_p, normal, pos, hon) }
+    };
+    let walk_round_entity = |ent: GPtr<u8>, hon: u32| {
+        let t = task_new(0x4C);
+        if t.is_null() { t } else { walk_round_building_ctor_entity(t, ms, ent, zero_p, normal, pos, hon) }
+    };
+    if head_on == 0 {
+        if !kill.is_null() {
+            let target = kill_target(kill);
+            set(if target.is_null() { walk_round_point(0) } else { walk_round_entity(target, 0) });
+        } else if !seek.is_null() {
+            let ent = rd::<GPtr<u8>>(seek, 0xC);
+            set(if ent.is_null() { walk_round_point(0) } else { walk_round_entity(ent, 0) });
+        } else {
+            set(walk_round_point(0));
+        }
+        return;
+    }
+    if seek.is_null() && kill.is_null() && enter_car.is_null() && !rare {
+        set(walk_round_point(hon));
+        return;
+    }
+    if geometry_can_ped_jump_obstacle(ped, building, pos, normal) != 0 {
+        if ms > 4 {
+            let t = task_new(0xC);
+            set(if t.is_null() { t } else { move_back_and_jump_ctor(t) });
+        } else {
+            let t = task_new(0x14);
+            set(if t.is_null() { t } else { complex_jump_ctor(t, 0) });
+        }
+        return;
+    }
+    if !kill.is_null() {
+        let target = kill_target(kill);
+        if target.is_null() || geometry_can_ped_target_ped(rd::<GPtr<u8>>(this, 0), target, 1) != 0 {
+            set(GPtr::NULL);
+            return;
+        }
+        set(walk_round_entity(target, hon));
+        return;
+    }
+    let ent = if !seek.is_null() {
+        rd::<GPtr<u8>>(seek, 0xC)
+    } else if !enter_car.is_null() {
+        let car = rd::<GPtr<u8>>(enter_car, 0xC);
+        if car.is_null() {
+            return;
+        }
+        rd::<GPtr<u8>>(car, 0x460)
+    } else {
+        set(walk_round_point(hon));
+        return;
+    };
+    if ent.is_null() {
+        return;
+    }
+    if g::<u32>(GANG_FOLLOWER_USE_CLIMBING).read() != 0 && ped_groups_is_in_players_group(rd::<GPtr<u8>>(this, 0)) != 0 {
+        let mut climb_pos = [0f32; 3];
+        let mut heading = seek.addr() as u32;
+        let mut surface = (active.addr() as u32 & 0xFFFF_FF00) | u32::from(rare);
+        let climb_ent = climb_test_for_climb(
+            rd::<GPtr<u8>>(this, 0),
+            GPtr::from_raw(climb_pos.as_mut_ptr()).cast(),
+            GPtr::from_raw(&raw mut heading).cast(),
+            GPtr::from_raw(&raw mut surface).cast(),
+            1,
+        );
+        if !climb_ent.is_null() {
+            let pz = rd::<f32>(entity_pos_ptr(rd::<GPtr<u8>>(this, 0)), 8);
+            let below = !x(climb_pos[2]).fsub_m(pz).fcom(x(g::<f32>(CLIMB_MIN_FOR_STRETCH_GRAB).read())).test_parity(5);
+            let height = (simplest.addr() as u32 & 0xFFFF_FF00) | if below { 2 } else { 1 };
+            let t = task_new(0x30);
+            set(if t.is_null() {
+                t
+            } else {
+                climb_ctor(t, climb_ent, GPtr::from_raw(climb_pos.as_mut_ptr()).cast(), heading, surface, height, 1)
+            });
+            return;
+        }
+    }
+    if rd::<u8>(ent, 0x36) & 7 == 3 {
+        let ped = rd::<GPtr<u8>>(this, 0);
+        if ik_is_looking(GPtr::from_addr(IK_CHAIN_MANAGER), ped) == 0 {
+            ik_look_at(GPtr::from_addr(IK_CHAIN_MANAGER), S_COMP_BLDG_COLL_RESP, rd::<GPtr<u8>>(this, 0), ent, 3000, 5, 0, 1,
+                       0x3E80_0000, 500, 3, 0);
+        }
+        tm_get_task_secondary(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0), 0x47C).byte_add(4), 2);
+    }
+    set(walk_round_entity(ent, hon));
+}
+
 /// Every registration of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_EVENT_HANDLER_COMPUTE_BUILDING_COLLISION_RESPONSE,
     HOOK_HANDLER_HANDLE_EVENTS,
     HOOK_EVENT_HANDLER_COMPUTE_DAMAGE_RESPONSE,
     HOOK_EVENT_HANDLER_COMPUTE_KNOCK_OFF_BIKE_RESPONSE,

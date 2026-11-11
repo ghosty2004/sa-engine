@@ -58,6 +58,15 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::anim_tasks::HOOKS,
     crate::ped_geometry::HOOKS,
     crate::player_on_foot::HOOKS,
+    crate::car_drive_ped::HOOKS,
+    crate::vehicle_collision_scan::HOOKS,
+    crate::fire_scan::HOOKS,
+    crate::walk_into_ped_scan::HOOKS,
+    crate::walk_into_object_scan::HOOKS,
+    crate::attractor_range_scan::HOOKS,
+    crate::wander_chat_scan::HOOKS,
+    crate::seek_entity_dtor::HOOKS,
+    crate::conversation_ready::HOOKS,
     crate::ik_tasks::HOOKS,
     crate::hold_entity::HOOKS,
     crate::mvpb_ai::HOOKS,
@@ -65,6 +74,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpb_ai3::HOOKS,
     crate::mvpb_ai4::HOOKS,
     crate::attractor_scanner::HOOKS,
+    crate::hold_entity_process::HOOKS,
+    crate::ped_group_random_place::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

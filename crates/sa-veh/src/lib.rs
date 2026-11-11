@@ -45,6 +45,7 @@ pub mod misc;
 pub mod mvpc_veh1;
 pub mod mvpe_veh1;
 pub mod vehicle_collision_anims;
+pub mod vehicle_pre_collision;
 pub mod statics2;
 pub mod train2;
 pub mod transmission;

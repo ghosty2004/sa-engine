@@ -23,7 +23,7 @@ orig! {
     pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => unported;
     /// `FxInterpInfoFloat_c::GetVal(int index, float t0, float t1)` (0x4A85C0): the second overload,
     /// result in ST0
-    pub fn interp_float_get_val2(this: GPtr<u8>, index: i32, t0: u32, t1: u32) -> f64 = thiscall 0x4A85C0 => unported;
+    pub fn interp_float_get_val2(this: GPtr<u8>, index: i32, t0: u32, t1: u32) -> f64 = thiscall 0x4A85C0 => crate::fx_interp_integral::interp_float_get_val_range_host;
 }
 
 /// The key time of the GetValue functions: `mult` with byte +6 set, else `(float)(currTime / totalTime)`.

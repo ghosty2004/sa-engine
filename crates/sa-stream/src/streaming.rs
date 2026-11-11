@@ -1913,6 +1913,137 @@ fn car_group_count(group: i32) -> i32 {
     g::<i16>(CAR_GROUP_COUNT).wrapping_index(group).read() as i32
 }
 
+orig! {
+    /// `CPopCycle::PickPedMIToStreamInForCurrentZone()` (0x60FFD0)
+    fn pop_cycle_pick_ped_mi_to_stream_in_for_current_zone() -> i32 = cdecl 0x60FFD0 => unported;
+}
+
+/// `ms_pedsLoaded[i]` without a bounds check (the original indexes it with unchecked counters).
+fn peds_loaded(i: i32) -> GPtr<i32> {
+    PEDS_LOADED.ptr().cast::<i32>().wrapping_index(i)
+}
+
+/// `CStreaming::StreamZoneModels(const CVector&)` (0x40A560, cdecl; the argument is unused). Nothing without
+/// `CPopCycle::m_pCurrZoneInfo` or when `CCheat::IsZoneStreamingAllowed()` returns non-zero.
+///
+/// - Zone population type (`zone +0xF & 0x1F`) differs from `ms_currentZoneType`: every `ms_pedsLoaded` slot
+///   `>= 0` → `SetModelIsDeletable(m)`, `SetModelIsDeletable(txd(m) + 20000)` (the slot re-read), slot = -1;
+///   `ms_numPedsLoaded = 0`, `ms_currentZoneType` = the type (zone re-read); for i in 0..max(old count, 4):
+///   `m = PickPedMIToStreamInForCurrentZone()`, negative → slot i = -1, else `RequestModel(m, 10)`, info flag 2
+///   cleared, slot i = m, count + 1 (slot index unchecked). The load timer (0x9654CC) = 299 (300 then the
+///   shared decrement: gta-reversed writes 300).
+/// - Same type: timer `>= 0` → timer - 1. Else the first slot that is -1 or whose model has no references
+///   (+8, i16), none of 8 → nothing; `m = Pick...()`, equal to that slot's model or negative → nothing; else
+///   `RequestModel(m, 10)`, flag 2 cleared; with 8 peds loaded the slot's model and its TXD
+///   `SetModelIsDeletable` and the slot = -1, else count + 1; the first negative slot (unbounded scan) = m;
+///   timer = 300.
+/// - Gangs: the gang timer (0x9654D0) `>= 0` → timer - 1. Else timer = 550, `cur = CurrentGangMemberToLoad`,
+///   `next = cur + 1`, `any = next % 21` (stored as the new `CurrentGangMemberToLoad`); per gang 0..9 in
+///   `ms_loadedGangs` (i16 bit test): group = 0x8D2618[gang * 3], `n` = its ped count (i16; the four
+///   remainders `cur % n`, `next % n`, `any % n`, `(any + 1) % n` are taken before the `n <= 0` test, so `n ==
+///   0` faults: original); slot in {cur, next} and not in {any, any + 1} → model and TXD deletable
+///   (`SetModelIsDeletable` inlined); slot not in {cur, next} but in {any, any + 1} → `RequestModel(model, 2)`.
+#[hook(addr = 0x40a560, conv = cdecl, name = "CStreaming::StreamZoneModels", expect = "83 EC 24 56 90",
+       unverified = "mvpk-stream-1", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "the entry fragment 0x40145A computes the CPopCycle::m_pCurrZoneInfo address as ror([0x1560638], [0x727B61]); the port reads 0xC0BC68 (assumed no-CD VM value, as the image resolves it)")]
+pub fn stream_zone_models(_pos: GPtr<f32>) {
+    let zi = g::<GPtr<u8>>(POP_CURR_ZONE_INFO).read();
+    if zi.is_null() || cheat_is_zone_streaming_allowed() != 0 {
+        return;
+    }
+    let mut zone_changed_or_spent = false;
+    if (zi.byte_add(0xF).read() & 0x1F) as i32 != CURRENT_ZONE_TYPE.get() {
+        let old = NUM_PEDS_LOADED.get();
+        for i in 0..8 {
+            let s = peds_loaded(i);
+            if s.read() >= 0 {
+                call_set_model_is_deletable(s.read());
+                call_set_model_is_deletable(mi_txd(mi(s.read())) + RESOURCE_ID_TXD);
+                s.write(-1);
+            }
+        }
+        NUM_PEDS_LOADED.set(0);
+        CURRENT_ZONE_TYPE.set((g::<GPtr<u8>>(POP_CURR_ZONE_INFO).read().byte_add(0xF).read() & 0x1F) as i32);
+        let n = old.max(4);
+        for i in 0..n {
+            let m = pop_cycle_pick_ped_mi_to_stream_in_for_current_zone();
+            if m < 0 {
+                peds_loaded(i).write(-1);
+            } else {
+                call_request_model(m, 10);
+                set_flags(m, flags(m) & 0xFD);
+                peds_loaded(i).write(m);
+                NUM_PEDS_LOADED.set(NUM_PEDS_LOADED.get().wrapping_add(1));
+            }
+        }
+        TIME_BEFORE_NEXT_LOAD.set(299);
+        zone_changed_or_spent = true;
+    } else if TIME_BEFORE_NEXT_LOAD.get() >= 0 {
+        TIME_BEFORE_NEXT_LOAD.set(TIME_BEFORE_NEXT_LOAD.get().wrapping_sub(1));
+        zone_changed_or_spent = true;
+    }
+    if !zone_changed_or_spent {
+        let mut k = 0;
+        let mut cur = 0;
+        while k < 8 {
+            cur = peds_loaded(k).read();
+            if cur == -1 || mi_refs(mi(cur)) == 0 {
+                break;
+            }
+            k += 1;
+        }
+        if k != 8 {
+            let m = pop_cycle_pick_ped_mi_to_stream_in_for_current_zone();
+            if m != cur && m >= 0 {
+                call_request_model(m, 10);
+                set_flags(m, flags(m) & 0xFD);
+                if NUM_PEDS_LOADED.get() == 8 {
+                    call_set_model_is_deletable(cur);
+                    call_set_model_is_deletable(mi_txd(mi(cur)) + RESOURCE_ID_TXD);
+                    peds_loaded(k).write(-1);
+                } else {
+                    NUM_PEDS_LOADED.set(NUM_PEDS_LOADED.get().wrapping_add(1));
+                }
+                let mut j = 0;
+                while peds_loaded(j).read() >= 0 {
+                    j += 1;
+                }
+                peds_loaded(j).write(m);
+                TIME_BEFORE_NEXT_LOAD.set(300);
+            }
+        }
+    }
+    let t = TIME_BEFORE_NEXT_GANG_LOAD.get();
+    if t >= 0 {
+        TIME_BEFORE_NEXT_GANG_LOAD.set(t.wrapping_sub(1));
+        return;
+    }
+    let cur = CURRENT_GANG_MEMBER_TO_LOAD.get();
+    let next = cur.wrapping_add(1);
+    let any = next.wrapping_rem(21);
+    TIME_BEFORE_NEXT_GANG_LOAD.set(550);
+    CURRENT_GANG_MEMBER_TO_LOAD.set(any);
+    for gang in 0..10 {
+        if (LOADED_GANGS.get() as i16 as i32) & (1 << gang) == 0 {
+            continue;
+        }
+        let group = group_id(GANG_GROUP_IDS, 3 * gang);
+        let n = ped_group_count(group);
+        let (cs, ns) = (cur.wrapping_rem(n), next.wrapping_rem(n));
+        let (s1, s2) = (any.wrapping_rem(n), any.wrapping_add(1).wrapping_rem(n));
+        for slot in 0..n {
+            if slot == cs || slot == ns {
+                if slot != s1 && slot != s2 {
+                    set_model_is_deletable_inl(ped_group_model(group, slot));
+                    set_model_is_deletable_inl(mi_txd(mi(ped_group_model(group, slot))) + RESOURCE_ID_TXD);
+                }
+            } else if slot == s1 || slot == s2 {
+                call_request_model(ped_group_model(group, slot), 2);
+            }
+        }
+    }
+}
+
 /// `CStreaming::StreamZoneModels_Gangs(const CVector&)` (0x40AA10; gr-deviations `Streaming.cpp:3642`
 /// etc., keep-original). Gang bits from the zone's 10 gang densities (+ all 8 low bits with the gang
 /// cheat 0x96915B), `CGangWars::TellStreamingWhichGangsAreNeeded`; when the mask changed: per gang,
@@ -4329,9 +4460,7 @@ pub fn load() -> bool {
 // Not ported (deferred), always the original through `orig!`:
 // - 0x40D3F0 `CStreaming::AddModelsToRequestList` (297 instructions of camera/frustum x87 maths over
 //   sector rings; needs a byte-level pass with CPU-checked x87),
-// - 0x40D7C0 `CStreaming::DeleteRwObjectsBehindCamera` (738 instructions, same),
-// - 0x40A560 `CStreaming::StreamZoneModels` (347 instructions; its entry chunk 0x40145A computes a
-//   pointer with `ror [0x1560638], [0x727B61]`).
+// - 0x40D7C0 `CStreaming::DeleteRwObjectsBehindCamera` (738 instructions, same).
 
 /// Every `#[hook]` of this module, in source order.
 pub const HOOKS: &[HookReg] = &[
@@ -4380,6 +4509,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_STREAM_COP_MODELS,
     HOOK_STREAM_AMBULANCE_AND_MEDIC,
     HOOK_STREAM_FIRE_ENGINE_AND_FIREMAN,
+    HOOK_STREAM_ZONE_MODELS,
     HOOK_STREAM_ZONE_MODELS_GANGS,
     HOOK_RECLASSIFY_LOADED_CARS,
     HOOK_REMOVE_CURRENT_ZONES_MODELS,
