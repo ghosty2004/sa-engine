@@ -1,0 +1,40 @@
+# Addresses AI-GEN (tools/gen/ai_patterns.py) must not generate: ported by other agents on their branches
+# (AI-2 worktree-agent-aff5c5403833f5ddb, AI-3 worktree-agent-a8de4982a02b38140), not yet on this branch.
+# One address per line; '#' starts a comment.
+# main-session list (2026-11-11)
+0x61DF20
+0x692020
+0x61C520
+0x633820
+0x61DE60
+0x61C470
+0x691FC0
+0x48E750
+0x4AC450
+0x4B0A00
+0x632BD0
+0x6337F0
+0x608330
+0x4AB340
+0x6816A0
+0x4C3E80
+0x61DF30
+0x624DA0
+0x61C530
+0x6239D0
+0x692030
+0x6939D0
+0x633830
+0x6816D0
+0x4C3EC0
+0x600BE0
+0x600BF0
+0x608520
+0x5F69B0
+0x6339B0
+0x4AC490
+0x4B0AA0
+0x48E810
+# found in those worktrees' crates/sa-ai/src (hooks and doc lines), 2026-11-11
+0x4B0AF0
+0x608390
