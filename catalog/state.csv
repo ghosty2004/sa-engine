@@ -1129,7 +1129,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x41bd50,,UNK-game,unknown,REA,"unnamed (class game); low-confidence name hint: sub_41bd50_from_CAutomobile__ProcessCarWheelPair (names-extra hint-caller, low)",2026-11-05,0,
 0x41bd80,,UNK-game,unknown,REA,"unnamed (class game); low-confidence name hint: sub_41bd80_from_CAutomobile__ProcessCarWheelPair (names-extra hint-caller, low)",2026-11-05,0,
 0x41bd90,CGeneral::GetRandomNumberInRange<float>-,MATH,L3,gta-reversed,"CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches",2026-11-05,1,
-0x41bdd0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
+0x41bdd0,,UNK-game,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x41be60,CPlayerPed::GetWantedLevel,PED,L2,gta-reversed,"PORT-WEAPON-PED (2026-11-11): L2; L2 combat:1000/1001 (0 mismatches, 0 undeclared); L2 grove:1000/1001 (0 mismatches, 0 undeclared); L2 cheats:1000/1001 (0 mismatches, 0 undeclared); L2 pr:1000/1001 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart",2026-11-11,0,
 0x41bf10,CTaskComplexSequence::Contains,AI,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x41bf50,CCarAI::FindSwitchDistanceClose,POP,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -1828,33 +1828,33 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x459350,CMatrix::Scale,MATH,L1,gta-reversed,"MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn)",2026-11-05,0,
 0x459358,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x459390,CVehicleRecording::Init,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x459400,CVehicleRecording::ShutDown,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459440,CVehicleRecording::StopPlaybackWithIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x4594c0,CVehicleRecording::IsPlaybackGoingOnForCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x459400,CVehicleRecording::ShutDown,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459440,CVehicleRecording::StopPlaybackWithIndex,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x4594c0,CVehicleRecording::IsPlaybackGoingOnForCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x4595a0,CVehicleRecording::IsPlaybackPausedForCar,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x459660,CVehicleRecording::SetPlaybackSpeed,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459740,CVehicleRecording::PausePlaybackRecordedCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459850,CVehicleRecording::UnpausePlaybackRecordedCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459960,CVehicleRecording::RestoreInfoForMatrix,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459a30,CVehicleRecording::RestoreInfoForCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459b30,CVehicleRecording::InterpolateInfoForCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459d10,CVehicleRecording::SkipForwardInRecording,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x459f00,CVehicleRecording::RenderLineSegment,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x459660,CVehicleRecording::SetPlaybackSpeed,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459740,CVehicleRecording::PausePlaybackRecordedCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459850,CVehicleRecording::UnpausePlaybackRecordedCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459960,CVehicleRecording::RestoreInfoForMatrix,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459a30,CVehicleRecording::RestoreInfoForCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459b30,CVehicleRecording::InterpolateInfoForCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x459d10,CVehicleRecording::SkipForwardInRecording,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
+0x459f00,CVehicleRecording::RenderLineSegment,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x459f70,CVehicleRecording::Render,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x459f80,CVehicleRecording::RegisterRecordingFile,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x459f80,CVehicleRecording::RegisterRecordingFile,VEH,L2,gta-reversed,"L2 veh2-d-l2: 426/426 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x459ff0,CVehicleRecording::FindIndexWithFileNameNumber,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x45a020,CVehicleRecording::RequestRecordingFile,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x45a020,CVehicleRecording::RequestRecordingFile,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x45a060,CVehicleRecording::HasRecordingFileBeenLoaded,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x45a0a0,CVehicleRecording::RemoveRecordingFile,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a0f0,CVehicleRecording::SmoothRecording,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a160,CVehicleRecording::RemoveAllRecordingsThatArentUsed,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x45a0a0,CVehicleRecording::RemoveRecordingFile,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x45a0f0,CVehicleRecording::SmoothRecording,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x45a160,CVehicleRecording::RemoveAllRecordingsThatArentUsed,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x45a1b0,CVehicleRecording::InitAtStartOfGame,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x45a1e0,CVehicleRecording::SetRecordingToPointClosestToCoors,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a280,CVehicleRecording::StopPlaybackRecordedCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a360,CVehicleRecording::ChangeCarPlaybackToUseAI,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a4a0,CVehicleRecording::SkipToEndAndStopPlaybackRecordedCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a610,CVehicleRecording::SaveOrRetrieveDataForThisFrame,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x45a8f0,CVehicleRecording::Load,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x45a1e0,CVehicleRecording::SetRecordingToPointClosestToCoors,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x45a280,CVehicleRecording::StopPlaybackRecordedCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x45a360,CVehicleRecording::ChangeCarPlaybackToUseAI,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x45a4a0,CVehicleRecording::SkipToEndAndStopPlaybackRecordedCar,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x45a610,CVehicleRecording::SaveOrRetrieveDataForThisFrame,VEH,implemented,gta-reversed,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match)",2026-11-11,0,
+0x45a8f0,CVehicleRecording::Load,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x45a980,CVehicleRecording::StartPlaybackRecordedCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x45ab10,CRemote::GivePlayerRemoteControlledCar,CALLED-ONLY,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
 0x45ad40,,SCRIPT,unknown,REA,"unnamed (class game); low-confidence name hint: sub_45ad40_from_CRunningScript__ProcessCommands1800To1899 (names-extra hint-caller, low)",2026-11-05,0,
@@ -2025,7 +2025,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x4652d0,CMissionCleanup::CheckIfCollisionHasLoadedForMissionObjects,SCRIPT,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-addr-comment (medium)",2026-11-05,0,
 0x4654b0,CMissionCleanup::RemoveEntityFromList,SCRIPT,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (medium),2026-11-05,0,
 0x4655e0,CUpsideDownCarCheck::UpdateTimers,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x465680,CStuckCarCheck::Process,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x465680,CStuckCarCheck::Process,VEH,implemented,gta-reversed,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match)",2026-11-11,0,
 0x465970,CStuckCarCheck::AddCarToCheck,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x465a40,CTheScripts::RemoveScriptTextureDictionary,SCRIPT,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x465a47,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
@@ -4629,8 +4629,8 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x4f4696,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x4f4a20,CAEUserRadioTrackManager::WriteUserTracksThread,AUDIO,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x4f4ba0,CAEUserRadioTrackManager::ScanUserTracks,AUDIO,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x4f4ca0,,UNK-game,unknown,REA,"unnamed (class game); low-confidence name hint: sub_4f4ca0_from_CAutomobile__ProcessCarWheelPair (names-extra hint-caller, low)",2026-11-05,0,
-0x4f4ce0,,VEH,unknown,REA,unnamed (class game),2026-11-05,0,
+0x4f4ca0,,UNK-game,L2,REA,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x4f4ce0,,VEH,L2,REA,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x4f4d10,CAEVehicleAudioEntity::RequestBankSlot,AUDIO,L2,gta-reversed,PORT-AUDIO-1 (2026-11-11): L2; split grove: PASS; split driving: PASS; split weapon-combat: PASS; main-session all-ports IDENTICAL on 7 recordings,2026-11-11,0,
 0x4f4df0,CAEVehicleAudioEntity::StoppedUsingBankSlot,AUDIO,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x4f4e30,CAEVehicleAudioEntity::DoesBankSlotContainThisBank,AUDIO,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -5802,7 +5802,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x553370,CEntity::RemoveLighting,WORLD,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x553390,CRenderer::RemoveVehiclePedLights,RENDER,implemented,gta-reversed,PORT-RENDER-1 (2026-11-11): implemented-needs-L2; no case in the runs (NOCALLS / NOCASES); main-session all-ports IDENTICAL on 7 recordings,2026-11-11,0,
 0x5533b0,CPed::RemoveLighting,PED,L2,gta-reversed,"PORT-WEAPON-PED (2026-11-11): L2; split-combat: PASS-FP 150/150 compared, 0 mismatches; split-grove: PASS 150/150 compared, 0 mismatches; split-cheats: PASS-FP 150/150 compared, 0 mismatches; split-pr: PASS-FP 150/150 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart",2026-11-11,0,
-0x5533d0,CVehicle::RemoveLighting,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x5533d0,CVehicle::RemoveLighting,VEH,L2,gta-reversed,"split veh2-a-split: 457/457 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x5533f0,CCutsceneObject::RemoveLighting,WORLD,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x5534b0,CRenderer::AddEntityToRenderList,RENDER,implemented,gta-reversed,"PORT-RENDER-1 (2026-11-11): implemented; split grove:300/300 PASS-FP (0 mismatches, 233 undeclared); main-session all-ports IDENTICAL on 7 recordings",2026-11-11,0,
 0x5534c0,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
@@ -5824,7 +5824,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x553e40,CRenderer::SetupLightingForEntity,RENDER,implemented,gta-reversed,PORT-RENDER-1 (2026-11-11): ported-unhookable; protection reads 0x553E45 (0x403C1B); main-session all-ports IDENTICAL on 7 recordings,2026-11-11,0,
 0x553e49,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x553f00,CPed::SetupLighting,PED,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x553f20,CVehicle::SetupLighting,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x553f20,CVehicle::SetupLighting,VEH,L2,gta-reversed,"split veh2-a-split: 458/458 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x553f40,CCutsceneObject::SetupLighting,WORLD,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x553f60,CRenderer::SetupMapEntityVisibility,RENDER,implemented,gta-reversed,"PORT-RENDER-1 (2026-11-11): implemented; split grove:300/300 PASS-FP (0 mismatches, 31 undeclared); main-session all-ports IDENTICAL on 7 recordings",2026-11-11,0,
 0x554230,CRenderer::SetupEntityVisibility,RENDER,implemented,gta-reversed,"PORT-RENDER-1 (2026-11-11): implemented; split grove:300/300 FAIL (6 mismatches, 31 undeclared); main-session all-ports IDENTICAL on 7 recordings",2026-11-11,0,
@@ -7332,7 +7332,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x5d28b0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
 0x5d28d0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
 0x5d28f0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
-0x5d2900,CVehicle::Load,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x5d2900,CVehicle::Load,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x5d2980,CAutomobile::Load,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x5d29a0,CStreaming::Save,STREAM,implemented,gta-reversed,PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md),2026-11-05,0,
 0x5d29e0,CStreaming::Load,STREAM,implemented,gta-reversed,PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md),2026-11-05,0,
@@ -7379,7 +7379,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x5d44b0,CPedSaveStructure::Extract,SAVE,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
 0x5d4640,CPed::Load,PED,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x5d46e0,CPlayerPed::Load,PED,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x5d4760,CVehicle::Save,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x5d4760,CVehicle::Save,VEH,implemented,gta-reversed,VEH-2 ported; implemented (not registered),2026-11-11,0,
 0x5d47e0,CAutomobile::Save,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x5d4800,CPools::SaveVehiclePool,CORE,implemented,REA,PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md),2026-11-05,0,
 0x5d4940,CPools::SaveObjectPool,CORE,implemented,REA,PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md),2026-11-05,0,
@@ -10206,12 +10206,12 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x64f190,CCarEnterExit::ComputeTargetDoorToEnterAsPassenger,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:44/44 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x64f1e0,CCarEnterExit::ComputePassengerIndexFromCarDoor,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:31/31 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x64f240,CCarEnterExit::IsPlayerToQuitCarEnter,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x64f540,CCarEnterExit::MakeUndraggedPassengerPedsLeaveCar,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
+0x64f540,CCarEnterExit::MakeUndraggedPassengerPedsLeaveCar,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x64f600,CCarEnterExit::MakeUndraggedDriverPedLeaveCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x64f680,CCarEnterExit::RemoveCarSitAnim,VEH,implemented,gta-reversed,"PORT-VEH (2026-11-11): L2-split (undeclared writes to review); split drv:10/10 PASS (0 mismatches, 6 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x64f68d,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x64f6e0,CCarEnterExit::RemoveGetInAnims,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; split drv:48/48 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x64f720,CCarEnterExit::AddInCarAnim,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x64f720,CCarEnterExit::AddInCarAnim,VEH,implemented,gta-reversed,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,
 0x64f860,CCarEnterExit::SetAnimOffsetForEnterOrExitVehicle,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x64fbb0,CTaskUtilityLineUpPedWithCar::Constructor,AI,L2,gta-reversed,"AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split anim-input: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings",2026-11-11,0,
 0x64fc00,CTaskUtilityLineUpPedWithCar::Destructor,AI,implemented,gta-reversed,"AI-GEN (2026-11-11): ported-unhookable (the body up to its `ret` is shorter than the 5-byte patch); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings",2026-11-11,0,
@@ -10225,7 +10225,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x650bb0,CCarEnterExit::GetNearestCarPassengerDoor,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x650bbf,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6510d0,CCarEnterExit::IsVehicleStealable,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x651210,CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x651210,CCarEnterExit::IsPathToDoorBlockedByVehicleCollisionModel,VEH,L2,gta-reversed,"L2 veh2-c-l2: 276/276 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6513a0,CTaskUtilityLineUpPedWithCar::ProcessPed,AI,implemented,REA,PORT-AI-3 (2026-11-11): deferred (time box); ; main-session all-ports IDENTICAL on 7 recordings,2026-11-11,0,
 0x65188d,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6528f0,CCarEnterExit::GetNearestCarDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -11794,13 +11794,13 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6a0670,CEventVehicleDamageCollision::CloneEditable,AI,implemented,gta-reversed,"AI-GEN (2026-11-11): ported-unhookable (protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x141c1e6)); ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings",2026-11-11,0,
 0x6a06d0,CEventVehicleDamageCollision::~CEventVehicleDamageCollision,AI,L2,REA,"HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 2/2p/2r m0 u0; c-bug:PASS 5/5p/5r m0 u0; weapon-combat:PASS 2/2p/2r m0 u0",2026-11-11,0,
 0x6a06f0,CVehicleModelInfo::GetWheelSize,STREAM,L1,REA,"PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md)",2026-11-05,0,
-0x6a0750,GetCurrentAtomicObjectCB,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
+0x6a0750,GetCurrentAtomicObjectCB,UNK-game,L2,REA,"L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6a0770,CAutomobile::SetupModelNodes,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a07a0,CAutomobile::HydraulicControl,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a1460,CAutomobile::UpdateMovingCollision,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a1ed0,CAutomobile::AddMovingCollisionSpeed,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a2150,CAutomobile::GetMovingCollisionOffset,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6a2210,CAutomobile::GetComponentWorldPosition,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6a2210,CAutomobile::GetComponentWorldPosition,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6a2250,CAutomobile::IsComponentPresent,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6a2270,CAutomobile::GetDooorAngleOpenRatio,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:39/39 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6a2290,CAutomobile::IsDoorReady,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
@@ -11815,11 +11815,11 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6a2530,CAutomobile::SetRandomDamage,VEH,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,6,
 0x6a27f0,CAutomobile::SetTotalDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
 0x6a29a0,CAutomobile::ReduceHornCounter,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6a29c0,CAutomobile::ProcessControlCollisionCheck,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6a29c0,CAutomobile::ProcessControlCollisionCheck,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,1,
 0x6a2ae0,CAutomobile::ResetSuspension,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6a2b10,CAutomobile::Render,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
-0x6a2f00,CAutomobile::CustomCarPlate_BeforeRenderingStart,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6a2f30,CAutomobile::CustomCarPlate_AfterRenderingStop,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6a2f00,CAutomobile::CustomCarPlate_BeforeRenderingStart,VEH,L2,gta-reversed,"split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6a2f30,CAutomobile::CustomCarPlate_AfterRenderingStop,VEH,L2,gta-reversed,"split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6a2f70,CAutomobile::GetAllWheelsOffGround,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6a2f80,CAutomobile::DebugCode,VEH,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
 0x6a3030,CAutomobile::RemoveRefsToVehicle,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
@@ -11848,7 +11848,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6a44d0,CAutomobile::PopBootUsingPhysics,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6a4520,CAutomobile::CloseAllDoors,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a45c0,CAutomobile::DoHoverSuspensionRatios,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6a47f0,CAutomobile::DoBurstAndSoftGroundRatios,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6a47f0,CAutomobile::DoBurstAndSoftGroundRatios,VEH,L2,gta-reversed,"split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
 0x6a4af0,CAutomobile::DoSoftGroundResistance,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a4ec0,CAutomobile::ProcessCarWheelPair,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a4ec9,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
@@ -11856,7 +11856,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6a6050,CAutomobile::GetCarPitch,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a6090,CAutomobile::FindWheelWidth,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:770/770 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6a6140,CAutomobile::IsInAir,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6a61e0,CAutomobile::Destructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6a61e0,CAutomobile::Destructor,VEH,implemented,gta-reversed,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match); whole-data D extras",2026-11-11,0,
 0x6a61e7,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6a6280,CVehicle::GetRideAnimData,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6a6290,CVehicle::FlagToDestroyWhenNextProcessed,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
@@ -11869,7 +11869,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6a6500,CAutomobile::IsDoorMissingU32,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6a6590,CAutomobile::SetModelIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a65d0,CAutomobile::SetupSuspensionLines,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6a6ae0,CAutomobile::OpenDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6a6ae0,CAutomobile::OpenDoor,VEH,implemented,gta-reversed,VEH-2 ported; L2-split (undeclared writes to review); whole-data D extras,2026-11-11,0,
 0x6a6dc0,CAutomobile::dmgDrawCarCollidingParticles,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a7090,CAutomobile::ProcessCarOnFireAndExplode,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6a7650,CAutomobile::VehicleDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,6,
@@ -11906,11 +11906,11 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6b0690,CAutomobile::DoHeliDustEffect,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,3,
 0x6b0a90,CAutomobile::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6b0a97,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6b1330,CAutomobile::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
-0x6b1350,CAutomobile::SetBumperDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6b1330,CAutomobile::`scalar deleting destructor',VEH,implemented,REA,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match); whole-data D extras",2026-11-11,0,
+0x6b1350,CAutomobile::SetBumperDamage,VEH,L2,gta-reversed,"split veh2-b-split: 21/21 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
 0x6b1361,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6b1480,CAutomobile::SetPanelDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6b1600,CAutomobile::SetDoorDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6b1480,CAutomobile::SetPanelDamage,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
+0x6b1600,CAutomobile::SetDoorDamage,VEH,implemented,gta-reversed,VEH-2 ported; L2-split (undeclared writes to review); whole-data D extras,2026-11-11,0,
 0x6b1880,CAutomobile::ProcessControl,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6b3780,CAutomobile::BlowUpCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6b3bb0,CAutomobile::BlowUpCarCutSceneNoExtras,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -11920,7 +11920,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6b4410,CAutomobile::SetTowLink,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6b45e0,CAutomobile::RcbanditCheckHitWheels,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6b4800,CAutomobile::ProcessAI,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6b57a0,CBike::Destructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6b57a0,CBike::Destructor,VEH,implemented,gta-reversed,VEH-2 ported; ported-unhookable,2026-11-11,0,
 0x6b57a7,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6b5820,CVehicle::OpenDoor,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6b5830,CVehicle::GetDooorAngleOpenRatioU32,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
@@ -11949,7 +11949,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6b5f50,CBike::SetRemoveAnimFlags,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6b5f90,CBike::ReduceHornCounter,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6b5fb0,CBike::ProcessBuoyancy,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6b6620,CBike::ProcessControlCollisionCheck,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6b6620,CBike::ProcessControlCollisionCheck,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6b6740,CBike::ResetSuspension,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6b6790,CBike::GetAllWheelsOffGround,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6b67a0,CBike::DebugCode,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -11961,14 +11961,14 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6b7070,CBike::SetupDamageAfterLoad,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6b7080,CBike::PlayCarHorn,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6b7130,CBike::PlayHornIfNecessary,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6b7150,CBike::CalculateLeanMatrix,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6b7150,CBike::CalculateLeanMatrix,VEH,implemented,gta-reversed,VEH-2 ported; implemented,2026-11-11,0,
 0x6b7156,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6b7270,CBike::IsRoomForPedToLeaveCar,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6b7280,CBike::ProcessRiderAnims,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6b7f90,CBike::FixHandsToBars,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6b8200,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6b8940,CBike::FindWheelWidth,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6b8950,CBike::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6b8950,CBike::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6b8970,CBike::SetModelIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6b89b0,CBike::SetupSuspensionLines,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6b8ec0,CBike::VehicleDamage,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
@@ -11976,27 +11976,27 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6bc930,CBike::ProcessAI,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6bcfc0,CBike::Teleport,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6bd090,CBike::PreRender,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6bde20,CBike::Render,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6bde20,CBike::Render,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6bdea0,CBike::ProcessEntityCollision,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
 0x6be310,CBike::ProcessControlInputs,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6bea10,CBike::BlowUpCar,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6beb20,CBike::BurstTyre,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6beeb0,CBike::PlaceOnRoadProperly,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6bf230,CBike::GetCorrectedWorldDoorPosition,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6bf400,CBike::ProcessDrivingAnims,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6bf230,CBike::GetCorrectedWorldDoorPosition,VEH,L2,REA,"L2 veh2-b-l2: 141/141 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6bf400,CBike::ProcessDrivingAnims,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6bf430,CBike::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6bf437,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6bf820,CBmx::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6bf820,CBmx::Constructor,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6bf9b0,CBmx::SetUpWheelColModel,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6bf9c0,CBmx::BurstTyre,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6bf9d0,CBmx::~CBmx,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (high),2026-11-05,0,
-0x6bfa30,CBmx::ProcessControl,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6bf9d0,CBmx::~CBmx,VEH,implemented,REA,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
+0x6bfa30,CBmx::ProcessControl,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6bfb50,CBmx::ProcessDrivingAnims,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6c0390,CBmx::LaunchBunnyHopCB,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6c0550,CBmx::FindWheelWidth,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6c0560,CBmx::BlowUpCar,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (high),2026-11-05,0,
-0x6c0570,CBmx::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
-0x6c0590,CBmx::ProcessBunnyHop,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6c0570,CBmx::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
+0x6c0590,CBmx::ProcessBunnyHop,VEH,L2,gta-reversed,"split veh2-b-splitf: 44/44 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6c0810,CBmx::PreRender,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6c1470,CBmx::ProcessAI,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6c2040,CDamageManager::GetComponentGroup,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:4/4 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
@@ -12022,8 +12022,8 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6c2460,CDamageManager::ProgressAeroplaneDamage,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6c24b0,CDamageManager::ApplyDamage,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; split drv:4/4 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6c25d0,CDamageManager::FuckCarCompletely,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; split drv:13/13 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,1,
-0x6c26a0,CDamageManager::GetCarNodeIndexFromPanel,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6c26f0,CDamageManager::GetCarNodeIndexFromDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6c26a0,CDamageManager::GetCarNodeIndexFromPanel,VEH,L2,gta-reversed,"L2 veh2-b-l2: 28/28 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6c26f0,CDamageManager::GetCarNodeIndexFromDoor,VEH,L2,gta-reversed,"L2 veh2-b-l2: 84/84 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
 0x6c2740,cBuoyancy::cBuoyancy,PHYS,L1,REA,"PORT-PHYS: sa-oracle l1 >=1M cases, 0 mismatches (main-session spot check PhysSetVelocity 1M PASS)",2026-11-10,0,
 0x6c2750,cBuoyancy::CalcBuoyancyForce,PHYS,implemented,gta-reversed,"PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run)",2026-11-10,0,
 0x6c2810,cBuoyancy::FindWaterLevel,PHYS,implemented,gta-reversed,"PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run)",2026-11-10,0,
@@ -12036,12 +12036,12 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6c3b00,cBuoyancy::SimpleCalcBuoyancy,PHYS,implemented,gta-reversed,"PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run)",2026-11-10,0,
 0x6c3ef0,cBuoyancy::ProcessBuoyancy,PHYS,L2,gta-reversed,"PORT-PHYS: L2 (double-run or split, every call / >=1000 cases, 0 mismatches, 0 undeclared; docs/arch/phys-port.md); main-session re-run 2026-11-10 lane 3: phys-sec + split s1-s5 confirmed, all ports IDENTICAL on 3 recordings",2026-11-10,0,
 0x6c4130,,VEH,unknown,REA,"unnamed (class game); low-confidence name hint: sub_6c4130_from_CPlane__DoPlaneGenerationAndRemoval (names-extra hint-caller, low)",2026-11-05,0,
-0x6c4190,CHeli,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,1,
+0x6c4190,CHeli,UNK-game,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
 0x6c4197,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6c4320,CHeli::SetUpWheelColModel,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6c4330,CHeli::BurstTyre,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6c4340,CHeli::~CHeli,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (high),2026-11-05,0,
-0x6c4400,CHeli::Render,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6c4340,CHeli::~CHeli,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6c4400,CHeli::Render,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6c4530,CHeli::Fix,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6c4550,CHeli::SetupDamageAfterLoad,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6c4560,CHeli::InitHelis,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
@@ -12051,7 +12051,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6c4750,CHeli::SpecialHeliPreRender,VEH,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
 0x6c4760,CHeli::FindSwatPositionRelativeToHeli,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-addr-comment (high)",2026-11-05,0,
 0x6c4800,CHeli::SwitchPoliceHelis,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6c4810,CHeli::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6c4810,CHeli::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6c4830,CHeli::ProcessControlInputs,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
 0x6c4e60,CHeli::ProcessFlyingCarStuff,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
 0x6c5420,CHeli::PreRender,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
@@ -12061,8 +12061,8 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6c69c0,CHeli::SendDownSwat,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
 0x6c6d30,CHeli::BlowUpCar,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
 0x6c7050,CHeli::ProcessControl,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-wrapper (high)",2026-11-05,0,
-0x6c79a0,CHeli::UpdateHelis,VEH,specified,REA,"named, called from gta-reversed only (plugin::Call / thunk); name from cat6:src-addr-comment (high)",2026-11-05,0,
-0x6c7c50,CHeli::RenderAllHeliSearchLights,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6c79a0,CHeli::UpdateHelis,VEH,implemented,REA,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match)",2026-11-11,0,
+0x6c7c50,CHeli::RenderAllHeliSearchLights,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6c7d10,CMonsterTruck::~CMonsterTruck,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6c7d20,CMonsterTruck::SetUpWheelColModel,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6c7d30,CMonsterTruck::BurstTyre,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
@@ -12077,22 +12077,22 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6c8ae0,CMonsterTruck::ProcessEntityCollision,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6c8d60,CMonsterTruck::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6c8d67,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6c8e20,CPlane::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6c8e20,CPlane::Constructor,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
 0x6c9140,CPlane::SetUpWheelColModel,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6c9150,CPlane::BurstTyre,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6c9160,CPlane::~CPlane,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (high),2026-11-05,0,
-0x6c9260,CPlane::ProcessControl,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
+0x6c9160,CPlane::~CPlane,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6c9260,CPlane::ProcessControl,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6c94a0,CPlane::PreRender,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6ca63e,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6cab70,CPlane::Render,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6cab70,CPlane::Render,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6cab90,CPlane::IsAlreadyFlying,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6cabb0,CPlane::Fix,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6cac10,CPlane::SetupDamageAfterLoad,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6cac20,CPlane::SetGearUp,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6cac70,CPlane::SetGearDown,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6cacb0,CPlane::OpenDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6cacb0,CPlane::OpenDoor,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
 0x6cad90,CPlane::InitPlaneGenerationAndRemoval,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6cadb0,CPlane::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6cadb0,CPlane::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6cadd0,CPlane::ProcessControlInputs,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6cb4f9,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6cb7c0,CPlane::ProcessFlyingCarStuff,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
@@ -12135,140 +12135,140 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6cffd0,CTrailer::ProcessEntityCollision,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
 0x6d03a0,CTrailer::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d03a7,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6d0450,cTransmission,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
-0x6d0460,cTransmission::InitGearRatios,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d0450,cTransmission,UNK-game,implemented,REA,VEH-2 ported; ported-unhookable,2026-11-11,0,
+0x6d0460,cTransmission::InitGearRatios,VEH,L2,gta-reversed,"L2 veh2-b-l2: 210/210 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d0530,cTransmission::CalculateGearForSimpleCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d0590,cTransmission::DisplayGearRatios,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d05e0,cTransmission::CalculateDriveAcceleration,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d09e0,CVehicleAnimGroupData::UsesKartDrivingAnims,ANIM,implemented,gta-reversed,PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats,2026-11-11,0,
 0x6d0a10,CAEVehicleAudioEntity::Destructor,AUDIO,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6d0af0,,UNK-game,unknown,REA,"unnamed (class game); low-confidence name hint: sub_6d0af0_from_CVehicle__UpdateTrailerLink (names-extra hint-caller, low)",2026-11-05,0,
-0x6d0b10,CRideAnimData::CRideAnimData,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (high),2026-11-05,1,
-0x6d0b30,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
+0x6d0af0,,UNK-game,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d0b10,CRideAnimData::CRideAnimData,UNK-game,L2,REA,"L2 veh2-b-l2: 10/10 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
+0x6d0b30,,UNK-game,implemented,REA,VEH-2 ported; ported-unhookable,2026-11-11,0,
 0x6d0b40,CVehicle::Shutdown,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6d0b70,CVehicle::GetRemapIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d0bc0,CVehicle::SetRemapTexDictionary,VEH,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
-0x6d0c00,CVehicle::SetRemap,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d0b70,CVehicle::GetRemapIndex,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d0bc0,CVehicle::SetRemapTexDictionary,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d0c00,CVehicle::SetRemap,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d0c13,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6d0ca0,CVehicle::SetCollisionLighting,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:19/19 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d0cc0,CVehicle::UpdateLightingFromStoredPolys,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6d0cf0,CVehicle::CalculateLightingFromCollision,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d0e20,CVehicle::ResetAfterRender,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d0e60,CVehicle::Render,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d0e90,CVehicle::SpecialEntityCalcCollisionSteps,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1080,CVehicle::GetVehicleAppearance,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d10e0,CVehicle::CustomCarPlate_TextureCreate,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d0cf0,CVehicle::CalculateLightingFromCollision,VEH,L2,gta-reversed,"L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d0e20,CVehicle::ResetAfterRender,VEH,L2,gta-reversed,"split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d0e60,CVehicle::Render,VEH,L2,gta-reversed,"split veh2-b-splitf: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d0e90,CVehicle::SpecialEntityCalcCollisionSteps,VEH,L2,gta-reversed,"L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d1080,CVehicle::GetVehicleAppearance,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d10e0,CVehicle::CustomCarPlate_TextureCreate,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6d1150,CVehicle::CustomCarPlate_TextureDestroy,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d1180,CVehicle::CanBeDeleted,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1230,CVehicle::ProcessWheelRotation,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d1230,CVehicle::ProcessWheelRotation,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d1280,CVehicle::CanVehicleBeDamaged,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1340,CVehicle::ProcessDelayedExplosion,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d1340,CVehicle::ProcessDelayedExplosion,VEH,L2,gta-reversed,"split veh2-a-split: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d13a0,CVehicle::AddPassenger-Auto-Seat,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d14d0,CVehicle::AddPassenger-Fixed-Seat,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1610,CVehicle::RemovePassenger,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6d14d0,CVehicle::AddPassenger-Fixed-Seat,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
+0x6d1610,CVehicle::RemovePassenger,VEH,implemented,gta-reversed,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match); whole-data D extras",2026-11-11,1,
 0x6d1622,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6d16a0,CVehicle::SetDriver,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1950,CVehicle::RemoveDriver,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1a50,CVehicle::SetUpDriver,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d16a0,CVehicle::SetDriver,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
+0x6d1950,CVehicle::RemoveDriver,VEH,implemented,gta-reversed,VEH-2 ported; L2-split (undeclared writes to review); whole-data D extras,2026-11-11,0,
+0x6d1a50,CVehicle::SetUpDriver,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6d1aa0,CVehicle::SetupPassenger,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1bd0,CVehicle::IsPassenger-Ped,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1c00,CVehicle::IsPassenger-ModelID,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d1bd0,CVehicle::IsPassenger-Ped,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d1c00,CVehicle::IsPassenger-ModelID,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d1c40,CVehicle::IsDriver-Ped,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:385/385 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d1c60,CVehicle::IsDriver-ModelID,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6d1c80,CVehicle::KillPedsInVehicle,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1d90,CVehicle::IsUpsideDown,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1dd0,CVehicle::IsOnItsSide,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1e20,CVehicle::CanPedOpenLocks,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d1c80,CVehicle::KillPedsInVehicle,VEH,implemented,gta-reversed,VEH-2 ported; L2-split (undeclared writes to review); whole-data D extras,2026-11-11,0,
+0x6d1d90,CVehicle::IsUpsideDown,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d1dd0,CVehicle::IsOnItsSide,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d1e20,CVehicle::CanPedOpenLocks,VEH,implemented,gta-reversed,VEH-2 ported; ported-unhookable,2026-11-11,0,
 0x6d1e29,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6d1e60,CVehicle::CanDoorsBeDamaged,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:79/79 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d1e80,CVehicle::CanPedEnterCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d1f30,CVehicle::CanPedStepOutCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2030,CVehicle::CanPedJumpOutCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d21f0,CVehicle::ProcessCarAlarm,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d1f30,CVehicle::CanPedStepOutCar,VEH,L2,gta-reversed,"L2 veh2-b-l2: 35/35 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d2030,CVehicle::CanPedJumpOutCar,VEH,L2,gta-reversed,"L2 veh2-b-l2: 3/3 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d21f0,CVehicle::ProcessCarAlarm,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d2250,CVehicle::DestroyVehicleAndDriverAndPassengers,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d22f0,CVehicle::IsVehicleNormal,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2330,CVehicle::ChangeLawEnforcerState,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d22f0,CVehicle::IsVehicleNormal,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d2330,CVehicle::ChangeLawEnforcerState,VEH,L2,gta-reversed,"L2 veh2-b-l2: 16/16 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d2370,CVehicle::IsLawEnforcementVehicle,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6d2460,CVehicle::ExtinguishCarFire,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d24f0,CVehicle::ActivateBomb,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2570,CVehicle::ActivateBombWhenEntered,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d25d0,CVehicle::CarHasRoof,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2600,CVehicle::HeightAboveCeiling,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6d2690,CVehicle::SetVehicleAtomicVisibilityCB-Object,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d26d0,CVehicle::SetVehicleAtomicVisibilityCB-Frame,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2700,CVehicle::SetComponentVisibility,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d2460,CVehicle::ExtinguishCarFire,VEH,L2,gta-reversed,"split veh2-b-split: 6/6 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d24f0,CVehicle::ActivateBomb,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d2570,CVehicle::ActivateBombWhenEntered,VEH,L2,gta-reversed,"split veh2-a-split: 245/245 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d25d0,CVehicle::CarHasRoof,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d2600,CVehicle::HeightAboveCeiling,VEH,L2,gta-reversed,"L2 veh2-a-l2: 356/356 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
+0x6d2690,CVehicle::SetVehicleAtomicVisibilityCB-Object,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d26d0,CVehicle::SetVehicleAtomicVisibilityCB-Frame,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d2700,CVehicle::SetComponentVisibility,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d271a,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6d2740,CVehicle::ApplyBoatWaterResistance,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d2740,CVehicle::ApplyBoatWaterResistance,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d2950,CVehicle::SetCompAlphaCB,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d2960,CVehicle::SetComponentAtomicAlpha,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; split drv:1000/1000 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6d2980,CVehicle::UpdateClumpAlpha,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d29e0,CVehicle::UpdatePassengerList,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2a10,CVehicle::PickRandomPassenger,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6d2a80,CVehicle::AddDamagedVehicleParticles,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2bf0,CVehicle::MakeDirty,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d2d50,CVehicle::AddWheelDirtAndWater,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6d2980,CVehicle::UpdateClumpAlpha,VEH,L2,gta-reversed,"split veh2-a-split: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d29e0,CVehicle::UpdatePassengerList,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d2a10,CVehicle::PickRandomPassenger,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
+0x6d2a80,CVehicle::AddDamagedVehicleParticles,VEH,L2,gta-reversed,"split veh2-c-split: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d2bf0,CVehicle::MakeDirty,VEH,L2,gta-reversed,"L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d2d50,CVehicle::AddWheelDirtAndWater,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,1,
 0x6d3000,CVehicle::SetGettingInFlags,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:7/7 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d3020,CVehicle::SetGettingOutFlags,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:2/2 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d3040,CVehicle::ClearGettingInFlags,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:11/11 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6d304a,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6d3060,CVehicle::ClearGettingOutFlags,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:4/4 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6d3080,CVehicle::SetWindowOpenFlag,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d30b0,CVehicle::ClearWindowOpenFlag,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d3080,CVehicle::SetWindowOpenFlag,VEH,L2,gta-reversed,"split veh2-b-split: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d30b0,CVehicle::ClearWindowOpenFlag,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d30e0,CVehicle::SetVehicleUpgradeFlags,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3210,CVehicle::ClearVehicleUpgradeFlags,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d3210,CVehicle::ClearVehicleUpgradeFlags,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d3300,CVehicle::RemoveUpgradeCB,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3370,CVehicle::FindUpgradeCB,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d33b0,CVehicle::RemoveObjectsCB-Object,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6d3420,CVehicle::RemoveObjectsCB-Frame,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3450,CVehicle::CopyObjectsCB,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3490,CVehicle::FindReplacementUpgradeCB,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d34d0,CVehicle::RemoveAllUpgradesCB,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d3370,CVehicle::FindUpgradeCB,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d33b0,CVehicle::RemoveObjectsCB-Object,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3420,CVehicle::RemoveObjectsCB-Frame,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3450,CVehicle::CopyObjectsCB,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3490,CVehicle::FindReplacementUpgradeCB,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d34d0,CVehicle::RemoveAllUpgradesCB,VEH,L2,gta-reversed,"split veh2-a-split: 160/160 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d3510,CVehicle::CreateUpgradeAtomic,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d3630,CVehicle::RemoveUpgrade,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3650,CVehicle::GetUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d3700,CVehicle::CreateReplacementAtomic,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d3830,CVehicle::AddReplacementUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d3853,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6d39e0,CVehicle::RemoveReplacementUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3a50,CVehicle::GetReplacementUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3ab0,CVehicle::RemoveAllUpgrades,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3ae0,CVehicle::GetSpareHasslePosId,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d39e0,CVehicle::RemoveReplacementUpgrade,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3a50,CVehicle::GetReplacementUpgrade,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3ab0,CVehicle::RemoveAllUpgrades,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3ae0,CVehicle::GetSpareHasslePosId,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d3b30,CVehicle::SetHasslePosId,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3b60,CVehicle::InitWinch,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6d3b80,CVehicle::UpdateWinch,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3c70,CVehicle::RemoveWinch,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
+0x6d3b80,CVehicle::UpdateWinch,VEH,L2,gta-reversed,"split veh2-b-split: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d3c70,CVehicle::RemoveWinch,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,2,
 0x6d3cb0,CVehicle::ReleasePickedUpEntityWithWinch,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3cd0,CVehicle::PickUpEntityWithWinch,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3cf0,CVehicle::QueryPickedUpEntityWithWinch,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3d10,CVehicle::GetRopeHeightForHeli,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3d30,CVehicle::SetRopeHeightForHeli,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d3d50,CVehicle::FindWheelWidth,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6d3d60,CVehicle::RenderDriverAndPassengers,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3db0,CVehicle::PreRenderDriverAndPassengers,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3e00,CVehicle::GetPlaneGunsAutoAimAngle,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d3f30,CVehicle::GetPlaneNumGuns,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d4010,CVehicle::SetFiringRateMultiplier,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d4090,CVehicle::GetFiringRateMultiplier,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d3d60,CVehicle::RenderDriverAndPassengers,VEH,L2,gta-reversed,"split veh2-a-split: 458/458 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d3db0,CVehicle::PreRenderDriverAndPassengers,VEH,L2,gta-reversed,"split veh2-a-split: 459/459 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d3e00,CVehicle::GetPlaneGunsAutoAimAngle,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d3f30,CVehicle::GetPlaneNumGuns,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d4010,CVehicle::SetFiringRateMultiplier,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6d4090,CVehicle::GetFiringRateMultiplier,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6d40e0,CVehicle::GetPlaneGunsRateOfFire,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d4290,CVehicle::GetPlaneGunsPosition,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d4453,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6d4590,CVehicle::GetPlaneOrdnanceRateOfFire,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d46e0,CVehicle::GetPlaneOrdnancePosition,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d4900,CVehicle::SelectPlaneWeapon,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6d4900,CVehicle::SelectPlaneWeapon,VEH,L2,gta-reversed,"L2 veh2-b-l2: 356/356 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
 0x6d4ad0,CVehicle::DoPlaneGunFireFX,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d4d30,CVehicle::FirePlaneGuns,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6d5110,CVehicle::FireUnguidedMissile,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d5400,CVehicle::CanBeDriven,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d5400,CVehicle::CanBeDriven,VEH,L2,gta-reversed,"L2 veh2-b-l2: 7/7 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d5490,CVehicle::ReactToVehicleDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6d55c0,CVehicle::GetVehicleLightsStatus,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6d55c0,CVehicle::GetVehicleLightsStatus,VEH,L2,gta-reversed,"L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,1,
 0x6d56b0,CVehicle::GetDooorAngleOpenRatio,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d56c0,CVehicle::ProcessOpenDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
-0x6d5cf0,CVehicle::CanPedLeanOut,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d5cf0,CVehicle::CanPedLeanOut,VEH,L2,gta-reversed,"L2 veh2-b-l2: 39/39 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d5cf6,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6d5d70,CVehicle::SetVehicleCreatedBy,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d5d70,CVehicle::SetVehicleCreatedBy,VEH,L2,gta-reversed,"split veh2-b-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d5dd0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
-0x6d5e20,CAutoPilot::CAutoPilot,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:src-addr-comment (high),2026-11-05,0,
-0x6d5f10,CVehicle::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d5e20,CAutoPilot::CAutoPilot,VEH,L2,REA,"split veh2-c-split: 32/32 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d5f10,CVehicle::Constructor,VEH,L2,gta-reversed,"split veh2-c-split: 32/32 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d6270,CVehicle::ProcessControlCollisionCheck,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6d6280,CVehicle::ProcessControlInputs,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6d6290,CVehicle::GetComponentWorldPosition,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
@@ -12294,24 +12294,24 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6d63d0,CVehicle::GetNumContactWheels,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6d63e0,CVehicle::VehicleDamage,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6d63f0,CVehicle::GetHeightAboveRoad,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6d6410,CVehicle::DeleteRwObject,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d6480,CVehicle::PreRender,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d64f0,CVehicle::SetupRender,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d6410,CVehicle::DeleteRwObject,VEH,implemented,gta-reversed,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,
+0x6d6480,CVehicle::PreRender,VEH,L2,gta-reversed,"split veh2-a-split: 459/459 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6d64f0,CVehicle::SetupRender,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6d6640,CVehicle::SpecialEntityPreCollisionStuff,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6d6a40,CVehicle::SetModelIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d6a40,CVehicle::SetModelIndex,VEH,implemented,gta-reversed,VEH-2 ported; L2; whole-data D extras,2026-11-11,0,
 0x6d6c00,CVehicle::ProcessWheel,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,3,
 0x6d73b0,CVehicle::ProcessBikeWheel,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,3,
 0x6d7bc0,CVehicle::FindTyreNearestPoint,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d7c90,CVehicle::InflictDamage,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6d7c97,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6d82f0,CVehicle::KillPedsGettingInVehicle,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6d8470,CVehicle::UsesSiren,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6d8470,CVehicle::UsesSiren,VEH,L2,gta-reversed,"L2 veh2-a-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6d84d0,CVehicle::IsSphereTouchingVehicle,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d85f0,CVehicle::FlyingControl,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6d85f6,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6daf00,CVehicle::BladeColSectorList<CPtrListSingleLink<CEntity*>>,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,3,
 0x6daf07,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6dba30,CVehicle::SetComponentRotation,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6dba30,CVehicle::SetComponentRotation,VEH,implemented,gta-reversed,VEH-2 ported; ported-unhookable,2026-11-11,1,
 0x6dba36,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6dbbb0,CVehicle::SetTransmissionRotation,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6dbce0,CVehicle::ProcessBoatControl,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -12326,40 +12326,40 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6df4a0,CVehicle::ProcessDrivingAnims,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6df930,CVehicle::RemoveVehicleUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6dfa20,CVehicle::AddUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6dfb70,CVehicle::GetTowHitchPos,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6dfbe0,CVehicle::GetTowBarPos,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6dfb70,CVehicle::GetTowHitchPos,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6dfbe0,CVehicle::GetTowBarPos,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6dfc50,CVehicle::UpdateTrailerLink,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6dfc5d,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6e0050,CVehicle::UpdateTractorLink,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e0400,CVehicle::ScanAndMarkTargetForHeatSeekingMissile,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
 0x6e05c0,CVehicle::FireHeatSeakingMissile,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e07e0,CVehicle::PossiblyDropFreeFallBombForPlayer,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6e0950,CVehicle::ProcessSirenAndHorn,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6e0950,CVehicle::ProcessSirenAndHorn,VEH,L2,gta-reversed,"L2 veh2-b-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6e0968,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6e0a50,CVehicle::DoHeadLightEffect,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e0e20,CVehicle::DoHeadLightBeam,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e1440,CVehicle::DoHeadLightReflectionSingle,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e1600,CVehicle::DoHeadLightReflectionTwin,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6e1720,CVehicle::DoHeadLightReflection,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6e1720,CVehicle::DoHeadLightReflection,VEH,L2,gta-reversed,"split veh2-c-split: 254/254 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6e1780,CVehicle::DoTailLightEffect,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e1793,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6e1a60,CVehicle::DoVehicleLights,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,3,
 0x6e2900,CVehicle::FillVehicleWithPeds,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6e2a50,CVehiclePool::New,VEH,L3,gta-reversed,"CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches",2026-11-05,0,
-0x6e2b40,CVehicle::Destructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6e2b40,CVehicle::Destructor,VEH,implemented,gta-reversed,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match)",2026-11-11,0,
 0x6e2b47,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6e2d50,new,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
-0x6e2d60,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
-0x6e2d90,delete,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
-0x6e2dd0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
+0x6e2d50,new,UNK-game,L2,REA,"split veh2-a-split: 21/21 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6e2d60,,UNK-game,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6e2d90,delete,UNK-game,L2,REA,"split veh2-a-split: 14/14 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6e2dd0,,UNK-game,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6e2e50,CVehicle::DoBladeCollision,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e3290,CVehicle::AddVehicleUpgrade,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6e3400,CVehicle::SetupUpgradesAfterLoad,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6e3400,CVehicle::SetupUpgradesAfterLoad,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6e3440,CVehicle::GetPlaneWeaponFiringStatus,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6e38a0,CVehicle::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6e38a0,CVehicle::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6e38f0,CVehicle::IsVehiclePointerValid,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6e38f7,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6e3950,CVehicle::ProcessWeapons,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6e3950,CVehicle::ProcessWeapons,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6e3b00,CVehicleAnimGroup::GetGroup,ANIM,L1,gta-reversed,"PORT-ANIM-INPUT (2026-11-11): L1; L1 CPU-decided (native backend, i7-14700F): sa-oracle l1 VehAnimGroupGetGroup 10^6 + 60,000 edge cases, 0 mismatches (route L2: the CRT pow SSE2 path); in game: L2 grove:137/137, anim-input:712/712 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats",2026-11-11,1,
 0x6e3c80,CVehicleAnimGroup::ComputeCriticalBlendTime,ANIM,L1,gta-reversed,"PORT-ANIM-INPUT (2026-11-11): L1; sa-oracle l1 VehAnimGroupComputeCriticalBlendTime: 10^6 cases, 0 mismatches (INCOMPLETE, only the SNaN cases unverified with the native backend off); in game: L2 grove:47/47, anim-input:351/351 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats",2026-11-11,0,
 0x6e3d10,CVehicleAnimGroup::ComputeAnimDoorOffsets,ANIM,implemented,gta-reversed,"PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:200 compared, 0 mismatches, 1 undeclared (PASS-FP), anim-input:200 compared, 0 mismatches, 2 undeclared (PASS-FP); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats",2026-11-11,1,
@@ -12434,14 +12434,14 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6ef650,CWaterLevel::RenderWater,RENDER,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6ef673,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6f00d0,CBoat::GetBoatAtomicObjectCB,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6f00f0,CBoat::Destructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6f00f0,CBoat::Destructor,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f0190,CBoat::ProcessOpenDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f01a0,CBoat::SetupModelNodes,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f01d0,CBoat::GetComponentWorldPosition,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f0200,CBoat::IsComponentPresent,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6f0210,CBoat::Render,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f0712,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6f0a10,CBoat::ProcessControlInputs,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6f0a10,CBoat::ProcessControlInputs,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f0d00,CBoat::DebugCode,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f0d90,CBoat::DisplayHandlingData,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f0de0,CBoat::ModifyHandlingValue,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
@@ -12449,15 +12449,15 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6f0e80,CBoat::IsSectorAffectedByWake,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f0f50,CBoat::IsVertexAffectedByWake,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f10c0,CBoat::CheckForSkippingCalculations,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6f1120,CBoat::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6f1120,CBoat::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f1140,CBoat::SetModelIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f1180,CBoat::PreRender,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f1770,CBoat::ProcessControl,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f20e0,CBoat::Teleport,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f21b0,CBoat::BlowUpCar,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6f2550,CBoat::AddWakePoint,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6f2710,CBoat::FillBoatList,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,3,
-0x6f2940,CBoat::Constructor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6f2550,CBoat::AddWakePoint,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
+0x6f2710,CBoat::FillBoatList,VEH,L2,gta-reversed,"L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,3,
+0x6f2940,CBoat::Constructor,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f2947,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6f2d10,CSpecialPlateHandler::Init,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f2d30,CSpecialPlateHandler::Find,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -12481,9 +12481,9 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6f3fe0,CCranes::UpdateCranes,WORLD,implemented,gta-reversed,"PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md",2026-11-10,0,
 0x6f3ff0,CCranes::IsThisCarBeingCarriedByAnyCrane,WORLD,implemented,gta-reversed,"PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md",2026-11-10,0,
 0x6f4000,CCranes::IsThisCarBeingTargettedByAnyCrane,WORLD,implemented,gta-reversed,"PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md",2026-11-10,0,
-0x6f4040,CDoor::Process,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
+0x6f4040,CDoor::Process,VEH,implemented,gta-reversed,VEH-2 ported; ported-unhookable,2026-11-11,1,
 0x6f4047,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6f4540,CDoor::ProcessImpact,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,2,
+0x6f4540,CDoor::ProcessImpact,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,2,
 0x6f4790,CDoor::Open,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:245/245 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6f47e0,CDoor::GetAngleOpenRatio,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6f4800,CDoor::IsClosed,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:242/242 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
@@ -12491,21 +12491,21 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6f4910,CBouncingPanel::ResetPanel,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6f4920,CBouncingPanel::SetPanel,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6f4928,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
-0x6f49a0,CBouncingPanel::ProcessPanel,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6f49a0,CBouncingPanel::ProcessPanel,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f4f30,cHandlingDataMgr::FindExactWord,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:259/259 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6f4fa0,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
 0x6f4fd0,cHandlingDataMgr::GetHandlingId,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:212/212 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,1,
 0x6f5010,cHandlingDataMgr::ConvertDataToWorldUnits,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
-0x6f5080,cHandlingDataMgr::ConvertDataToGameUnits,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6f5240,cHandlingDataMgr::ConvertBikeDataToWorldUnits,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6f5080,cHandlingDataMgr::ConvertDataToGameUnits,VEH,L2,gta-reversed,"L2 veh2-c-l2: 210/210 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
+0x6f5240,cHandlingDataMgr::ConvertBikeDataToWorldUnits,VEH,implemented,gta-reversed,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f5290,cHandlingDataMgr::ConvertBikeDataToGameUnits,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:13/13 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6f52d0,cHandlingDataMgr::GetFlyingPointer,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:90/90 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
 0x6f5300,cHandlingDataMgr::GetBoatPointer,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:12/12 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6f5370,CTrainNode,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
+0x6f5370,CTrainNode,UNK-game,L2,REA,"L2 veh2-c-l2: 1000/1001 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6f5440,CTrainNode::GetPosn,VEH,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
-0x6f54d0,CTrain::~CTrain,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6f54d0,CTrain::~CTrain,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f5530,CTrain::SetModelIndex,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
-0x6f5570,CTrain::PreRender,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6f5570,CTrain::PreRender,VEH,implemented,REA,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match)",2026-11-11,0,
 0x6f55c0,CTrain::Render,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6f55d0,CTrain::ReadAndInterpretTrackFile,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f58d0,CTrain::Shutdown,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -12517,7 +12517,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6f59e0,CTrain::FindCoorsFromPositionOnTrack,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f5ba0,CTrain::FindMaximumSpeedToStopAtStations,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f5cd0,CTrain::FindNumCarriagesPulled,VEH,L2,gta-reversed,"PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,
-0x6f5cf0,CTrain::TrainHitStuff<CPtrListSingleLink<CPhysical*>>,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
+0x6f5cf0,CTrain::TrainHitStuff<CPtrListSingleLink<CPhysical*>>,VEH,L2,REA,"split veh2-c-split: 1000/1000 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6f5d15,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6f5d80,CTrain::OpenTrainDoor,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f5d90,CTrain::AddPassenger,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
@@ -12533,17 +12533,17 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6f5ee0,CTrain::IsRoomForPedToLeaveCar,VEH,implemented,REA,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6f5ef0,CTrain::FindSideStationIsOn,VEH,implemented,gta-reversed,PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats,2026-11-11,0,
 0x6f5f00,CTrain::FindNextStationPositionInDirection,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6f5f80,CTrainNode::GetLightingFromCollision,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game),2026-11-05,0,
-0x6f6030,CTrain::Constructor,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6f6300,CTrain::`scalar deleting destructor',VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
+0x6f5f80,CTrainNode::GetLightingFromCollision,UNK-game,implemented,REA,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,
+0x6f6030,CTrain::Constructor,VEH,implemented,REA,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,
+0x6f6300,CTrain::`scalar deleting destructor',VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,
 0x6f6320,CTrain::IsInTunnel,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
 0x6f6370,CTrain::OpenDoor,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
-0x6f6640,CTrain::MarkSurroundingEntitiesForCollisionWithTrain,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,0,
+0x6f6640,CTrain::MarkSurroundingEntitiesForCollisionWithTrain,VEH,implemented,gta-reversed,"VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match)",2026-11-11,0,
 0x6f6850,CTrain::RemoveRandomPassenger,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f6a20,CTrain::RemoveMissionTrains,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6f6aa0,CTrain::RemoveAllTrains,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
 0x6f6b60,CTrain::ReleaseMissionTrains,VEH,specified,gta-reversed,"gta-reversed hook, reversed",2026-11-05,1,
-0x6f6bd0,CTrain::FindClosestTrackNode,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
+0x6f6bd0,CTrain::FindClosestTrackNode,VEH,L2,REA,"L2 veh2-c-l2: 6/6 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,
 0x6f6cc0,CTrain::FindPositionOnTrackFromCoors,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f6cce,,X-mis-split,excluded,,CAT-5 class excluded:mis-split,2026-11-05,0,
 0x6f7090,CTrain::FindNearestTrain,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
@@ -12551,7 +12551,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x6f7190,CTrain::Teleport,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from correction (high),2026-11-07,0,
 0x6f7260,CTrain::IsNextStationAllowed,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f72f0,CTrain::SkipToNextAllowedStation,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
-0x6f7440,CTrain::InitTrains,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
+0x6f7440,CTrain::InitTrains,VEH,implemented,REA,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,
 0x6f7550,CTrain::CreateMissionTrain,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f7900,CTrain::DoTrainGenerationAndRemoval,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
 0x6f8170,CTrain::AddNearbyPedAsRandomPassenger,VEH,specified,REA,"gta-reversed hook, not reversed (.Reversed = false)",2026-11-05,0,
@@ -20492,18 +20492,18 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x84a1e0,__init_g_977bdc,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x84a200,__init_g_977be0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x84a220,__init_g_977be8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x84a240,__init_g_97d648,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x84a240,__init_g_97d648,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x84a260,__init_g_97d64c,WORLD,L2,REA,"PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL",2026-11-10,0,init
 0x84a280,__init_g_97d650,WORLD,L2,REA,"PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL",2026-11-10,0,init
-0x84a2a0,__init_g_97d654,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x84a2c0,__init_g_97d658,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x84a2e0,__init_g_97d65c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x84a2a0,__init_g_97d654,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x84a2c0,__init_g_97d658,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x84a2e0,__init_g_97d65c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x84a300,__init_g_97f634,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x84a320,__init_g_97f638,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x84a320,__init_g_97f638,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x84a340,__init_g_97f63c,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x84a360,__init_g_97f640,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x84a380,__init_g_97f644,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x84a3a0,__init_g_97f648,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x84a360,__init_g_97f640,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x84a380,__init_g_97f644,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x84a3a0,__init_g_97f648,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x84a3c0,__init_g_97f64c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x84a3e0,__init_g_97f650,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x84a400,__init_g_97f654,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
@@ -21509,18 +21509,18 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x8521a0,__init_g_c18bfc,AI,L2,REA,"PORT-AI-1 (2026-11-11): L2; split grove: PASS 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings",2026-11-11,0,init
 0x8521c0,__init_g_c18c00,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x8521e0,__init_g_c18c04,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852200,__init_g_c18c08,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852220,__init_g_c18c0c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852240,__init_g_c18c10,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852260,__init_g_c18c14,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852280,__init_g_c18c18,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8522a0,__init_g_c18c1c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8522c0,__init_g_c18c24,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8522e0,__init_g_c18c28,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852300,__init_g_c18c2c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852320,__init_g_c18c30,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852340,__init_g_c18c34,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x852360,__init_g_c18c38,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x852200,__init_g_c18c08,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852220,__init_g_c18c0c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852240,__init_g_c18c10,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852260,__init_g_c18c14,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852280,__init_g_c18c18,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8522a0,__init_g_c18c1c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8522c0,__init_g_c18c24,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8522e0,__init_g_c18c28,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852300,__init_g_c18c2c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852320,__init_g_c18c30,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852340,__init_g_c18c34,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x852360,__init_g_c18c38,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x852380,__init_g_c18c84,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x8523a0,__init_g_c18c88,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x8523c0,__init_g_c18c8c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
@@ -21652,91 +21652,91 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x853300,__init_g_c1a564,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853320,__init_g_c1a568,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853340,__init_g_c1a56c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853360,__init_g_c1aeb0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853360,__init_g_c1aeb0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853380,__init_g_c1aeb4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8533a0,__init_g_c1b328,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8533c0,__init_g_c1b32c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8533e0,__init_g_c1b330,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853400,__init_g_c1b334,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853420,__init_g_c1b338,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853440,__init_g_c1b33c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x8533a0,__init_g_c1b328,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8533c0,__init_g_c1b32c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8533e0,__init_g_c1b330,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853400,__init_g_c1b334,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853420,__init_g_c1b338,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853440,__init_g_c1b33c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853460,__init_TheText,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853480,__init_g_c1bfdc,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8534a0,__init_g_c1bfe0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8534c0,__init_g_c1bfe4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8534e0,__init_g_c1bfe8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853480,__init_g_c1bfdc,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8534a0,__init_g_c1bfe0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8534c0,__init_g_c1bfe4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8534e0,__init_g_c1bfe8,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853500,__init_g_c1bfec,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x853520,__init_g_c1bff0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853520,__init_g_c1bff0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853540,__init_g_c1c208,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x853580,__init_g_c1c808,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8535a0,__init_g_c1c80c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8535c0,__init_g_c1c810,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8535e0,__init_g_c1c814,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853580,__init_g_c1c808,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8535a0,__init_g_c1c80c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8535c0,__init_g_c1c810,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8535e0,__init_g_c1c814,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853600,__init_g_c1c818,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
 0x853620,__init_g_c1c81c,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x853640,__init_g_c1c824,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853660,__init_g_c1c828,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853680,__init_g_c1c82c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8536a0,__init_g_c1c830,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8536c0,__init_g_c1c834,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8536e0,__init_g_c1c838,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853640,__init_g_c1c824,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853660,__init_g_c1c828,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853680,__init_g_c1c82c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8536a0,__init_g_c1c830,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8536c0,__init_g_c1c834,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8536e0,__init_g_c1c838,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853700,__init_g_c1c840,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853720,__init_g_c1c844,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853740,__init_g_c1c848,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853760,__init_g_c1c84c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853780,__init_g_c1c850,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x8537a0,__init_g_c1c854,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8537c0,__init_g_c1c878,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8537e0,__init_g_c1c87c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853800,__init_g_c1c880,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853820,__init_g_c1c884,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853840,__init_g_c1c888,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853860,__init_g_c1c88c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x8537c0,__init_g_c1c878,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8537e0,__init_g_c1c87c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853800,__init_g_c1c880,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853820,__init_g_c1c884,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853840,__init_g_c1c888,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853860,__init_g_c1c88c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853880,__init_mod_Buoyancy,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8538a0,__init_g_c1c974,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8538c0,__init_g_c1c978,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8538e0,__init_g_c1c97c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853900,__init_g_c1c980,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853920,__init_g_c1c984,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853940,__init_g_c1c988,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853960,__init_g_c1cac0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853980,__init_g_c1cac4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8539a0,__init_g_c1cac8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8539c0,__init_g_c1cacc,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8539e0,__init_g_c1cad0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853a00,__init_g_c1cad4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853a20,__init_g_c1cae4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853a40,__init_g_c1cae8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853a60,__init_g_c1caec,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853a80,__init_g_c1caf0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853aa0,__init_g_c1caf4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853ac0,__init_g_c1caf8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853ae0,__init_g_c1cb00,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853b00,__init_g_c1cb04,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853b20,__init_g_c1cb08,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853b40,__init_g_c1cb0c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853b60,__init_g_c1cb10,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853b80,__init_g_c1cb14,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853ba0,__init_g_c1cb18,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853bc0,__init_g_c1cb1c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853be0,__init_g_c1cb20,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853c00,__init_g_c1cb24,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x8538a0,__init_g_c1c974,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8538c0,__init_g_c1c978,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8538e0,__init_g_c1c97c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853900,__init_g_c1c980,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853920,__init_g_c1c984,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853940,__init_g_c1c988,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853960,__init_g_c1cac0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853980,__init_g_c1cac4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8539a0,__init_g_c1cac8,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8539c0,__init_g_c1cacc,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8539e0,__init_g_c1cad0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853a00,__init_g_c1cad4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853a20,__init_g_c1cae4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853a40,__init_g_c1cae8,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853a60,__init_g_c1caec,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853a80,__init_g_c1caf0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853aa0,__init_g_c1caf4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853ac0,__init_g_c1caf8,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853ae0,__init_g_c1cb00,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853b00,__init_g_c1cb04,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853b20,__init_g_c1cb08,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853b40,__init_g_c1cb0c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853b60,__init_g_c1cb10,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853b80,__init_g_c1cb14,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853ba0,__init_g_c1cb18,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853bc0,__init_g_c1cb1c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853be0,__init_g_c1cb20,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853c00,__init_g_c1cb24,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853c20,__init_g_c1cb28,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x853c40,__init_g_c1cb2c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853c60,__init_g_c1cb44,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853c80,__init_g_c1cb48,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853ca0,__init_g_c1cb4c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853cc0,__init_g_c1cb50,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853c40,__init_g_c1cb2c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853c60,__init_g_c1cb44,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853c80,__init_g_c1cb48,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853ca0,__init_g_c1cb4c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853cc0,__init_g_c1cb50,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853ce0,__init_g_c1cb54,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x853d00,__init_g_c1cc5c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853d20,__init_g_c1cc60,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853d40,__init_g_c1cc64,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853d60,__init_g_c1cc68,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853d80,__init_g_c1cc6c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853da0,__init_g_c1cc70,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853dc0,__init_CVehicle__m_aSpecialColModel,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853df0,__init_s_TestBladeCol,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853e10,__init_s_TestBladeColData,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853d00,__init_g_c1cc5c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853d20,__init_g_c1cc60,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853d40,__init_g_c1cc64,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853d60,__init_g_c1cc68,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853d80,__init_g_c1cc6c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853da0,__init_g_c1cc70,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853dc0,__init_CVehicle__m_aSpecialColModel,VEH,implemented,REA,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,init
+0x853df0,__init_s_TestBladeCol,VEH,implemented,REA,VEH-2 ported; L2-split (undeclared writes to review),2026-11-11,0,init
+0x853e10,__init_s_TestBladeColData,VEH,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853e20,__init_CVehicleAnimGroupData__m_vehicleAnimGroups,ANIM,implemented,REA,"PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:1 compared, 0 mismatches, 1 undeclared (PASS), pr:1 compared, 0 mismatches, 1 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), anim-input:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats",2026-11-11,0,init
 0x853e50,__init_g_c1df18,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853e70,__init_g_c1df1c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
@@ -21745,12 +21745,12 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x853ed0,__init_g_c1df28,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853ef0,__init_g_c1df2c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x853f10,__init_g_waterCreatureMan,WORLD,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853f30,__init_g_c228f4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853f50,__init_g_c228f8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853f70,__init_g_c228fc,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853f90,__init_g_c22900,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853fb0,__init_g_c22904,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x853fd0,__init_g_c22908,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x853f30,__init_g_c228f4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853f50,__init_g_c228f8,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853f70,__init_g_c228fc,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853f90,__init_g_c22900,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853fb0,__init_g_c22904,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x853fd0,__init_g_c22908,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x853ff0,__init_g_c279b4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x854010,__init_g_c279b8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x854030,__init_g_c279bc,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
@@ -21764,25 +21764,25 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x854130,__init_g_c2b95c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x854150,__init_g_c2b960,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x854170,__init_g_c2b964,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854190,__init_g_c2b978,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8541b0,__init_g_c2b97c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8541d0,__init_g_c2b980,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8541f0,__init_g_c2b984,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854210,__init_g_c2b988,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854230,__init_g_c2b98c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854250,__init_g_c2b990,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854270,__init_g_c2b994,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854290,__init_g_c2b998,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8542b0,__init_g_c2b99c,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8542d0,__init_g_c2b9a0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8542f0,__init_g_c2b9a4,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854310,__init_g_c2b9ac,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x854330,__init_g_c2b9b0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x854190,__init_g_c2b978,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8541b0,__init_g_c2b97c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8541d0,__init_g_c2b980,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8541f0,__init_g_c2b984,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854210,__init_g_c2b988,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854230,__init_g_c2b98c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854250,__init_g_c2b990,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854270,__init_g_c2b994,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854290,__init_g_c2b998,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8542b0,__init_g_c2b99c,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8542d0,__init_g_c2b9a0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8542f0,__init_g_c2b9a4,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854310,__init_g_c2b9ac,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x854330,__init_g_c2b9b0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x854350,__init_g_c2b9b4,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x854370,__init_g_c2b9b8,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x854370,__init_g_c2b9b8,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x854390,__init_g_c2b9bc,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
-0x8543b0,__init_g_c2b9c0,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
-0x8543d0,__init_gHandlingDataMgr,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
+0x8543b0,__init_g_c2b9c0,UNK-game,L2,REA,"split veh2-a-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
+0x8543d0,__init_gHandlingDataMgr,VEH,L2,REA,"split veh2-c-split: 1/1 PASS (0 mismatches, 0 undeclared)",2026-11-11,0,init
 0x854410,__init_g_c3804c,VEH,L2,REA,"PORT-VEH (2026-11-11): L2; split drv:1/1 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats",2026-11-11,0,init
 0x854430,__init_g_c38050,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
 0x854450,__init_g_c38054,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:init (high),2026-11-05,0,init
@@ -22128,7 +22128,7 @@ address,name,subsystem,state,source,evidence,updated,gr_deviations,role
 0x856a00,__dtor_TheText,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:dtor (high),2026-11-05,0,dtor
 0x856a10,,UNK-game,unknown,REA,unnamed (class game),2026-11-05,0,
 0x856a20,__dtor_mod_Buoyancy,UNK-game,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:dtor (high),2026-11-05,0,dtor
-0x856a30,__dtor_CVehicle__m_aSpecialColModel,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:dtor (high),2026-11-05,0,dtor
+0x856a30,__dtor_CVehicle__m_aSpecialColModel,VEH,implemented,REA,VEH-2 ported; implemented-needs-L2,2026-11-11,0,dtor
 0x856a50,__dtor_s_TestBladeCol,VEH,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:dtor (high),2026-11-05,0,dtor
 0x856a60,__dtor_CVehicleAnimGroupData__m_vehicleAnimGroups,ANIM,implemented,REA,PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats,2026-11-11,0,dtor
 0x856a80,__dtor_g_waterCreatureMan,WORLD,specified,REA,named by CAT-5/CAT-12 (class game); name from cat6:dtor (high),2026-11-05,0,dtor

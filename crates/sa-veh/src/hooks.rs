@@ -5,7 +5,9 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
 use crate::{
-    automobile, bike, boat, checks, damage, door, enterexit, handling, heli, statics, train, vehicle,
+    air2, automobile, automobile2, bike, bike2, boat, boat2, checks, checks2, damage, door, door2, enterexit,
+    enterexit2, handling, handling2, heli, misc, statics, statics2, train, train2, transmission, vehicle,
+    vehicle2,
 };
 
 /// Every module's registrations, in this order.
@@ -22,6 +24,19 @@ pub const MODULES: &[&[HookReg]] = &[
     boat::HOOKS,
     checks::HOOKS,
     statics::HOOKS,
+    vehicle2::HOOKS,
+    statics2::HOOKS,
+    misc::HOOKS,
+    automobile2::HOOKS,
+    bike2::HOOKS,
+    transmission::HOOKS,
+    air2::HOOKS,
+    boat2::HOOKS,
+    train2::HOOKS,
+    door2::HOOKS,
+    handling2::HOOKS,
+    enterexit2::HOOKS,
+    checks2::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -37,6 +52,19 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     boat::GLOBALS,
     checks::GLOBALS,
     statics::GLOBALS,
+    vehicle2::GLOBALS,
+    statics2::GLOBALS,
+    misc::GLOBALS,
+    automobile2::GLOBALS,
+    bike2::GLOBALS,
+    transmission::GLOBALS,
+    air2::GLOBALS,
+    boat2::GLOBALS,
+    train2::GLOBALS,
+    door2::GLOBALS,
+    handling2::GLOBALS,
+    enterexit2::GLOBALS,
+    checks2::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
