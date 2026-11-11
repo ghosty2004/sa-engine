@@ -1,0 +1,215 @@
+address	name	state	evidence
+0x6A2460	CAutomobile::ClearHeliOrientation	implemented-needs-L2	no call in the recordings run
+0x6A2450	CAutomobile::SetHeliOrientation	implemented-needs-L2	no call in the recordings run
+0x6A3850	CAutomobile::IsRoomForPedToLeaveCar	implemented-needs-L2	no call in the recordings run
+0x6A44C0	CAutomobile::KnockPedOutCar	implemented-needs-L2	no call in the recordings run
+0x6A62A0	CAutomobile::GetNumContactWheels	implemented-needs-L2	no call in the recordings run
+0x6A2F70	CAutomobile::GetAllWheelsOffGround	implemented-needs-L2	no call in the recordings run
+0x6A62B0	CAutomobile::GetHeightAboveRoad	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6A3760	CAutomobile::SetAllTaxiLights	implemented-needs-L2	no call in the recordings run
+0x6A3740	CAutomobile::SetTaxiLight	implemented-needs-L2	no call in the recordings run
+0x6A2250	CAutomobile::IsComponentPresent	implemented-needs-L2	no call in the recordings run
+0x6A29A0	CAutomobile::ReduceHornCounter	implemented-needs-L2	no call in the recordings run
+0x6A3030	CAutomobile::RemoveRefsToVehicle	implemented-needs-L2	no call in the recordings run
+0x6A2AE0	CAutomobile::ResetSuspension	implemented-needs-L2	no call in the recordings run
+0x6A2270	CAutomobile::GetDooorAngleOpenRatio	L2	L2 drv:39/39 PASS (0 mismatches, 0 undeclared)
+0x6A2310	CAutomobile::IsDoorClosed	implemented-needs-L2	no call in the recordings run
+0x6A2330	CAutomobile::IsDoorMissing	L2	L2 drv:396/396 PASS (0 mismatches, 0 undeclared)
+0x6A2290	CAutomobile::IsDoorReady	implemented-needs-L2	no call in the recordings run
+0x6A22D0	CAutomobile::IsDoorFullyOpen	implemented-needs-L2	no call in the recordings run
+0x6A6350	CAutomobile::IsDoorReadyU32	implemented-needs-L2	no call in the recordings run
+0x6A63E0	CAutomobile::IsDoorFullyOpenU32	implemented-needs-L2	no call in the recordings run
+0x6A6470	CAutomobile::IsDoorClosedU32	implemented-needs-L2	no call in the recordings run
+0x6A6500	CAutomobile::IsDoorMissingU32	implemented-needs-L2	no call in the recordings run
+0x6A62C0	CAutomobile::GetDooorAngleOpenRatioU32	L2	L2 drv:2/2 PASS (0 mismatches, 0 undeclared)
+0x6A2350	CAutomobile::IsOpenTopCar	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6A6090	CAutomobile::FindWheelWidth	L2	L2 drv:770/770 PASS (0 mismatches, 0 undeclared)
+0x6A3580	CAutomobile::FixTyre	implemented-needs-L2	no call in the recordings run
+0x6A9CA0	CAutomobile::Teleport	implemented-needs-L2	no call in the recordings run
+0x6CDC90	CQuadBike::GetRideAnimData	L2	L2 drv:3/3 PASS (0 mismatches, 0 undeclared)
+0x6C7D20	CMonsterTruck::SetUpWheelColModel	implemented-needs-L2	no call in the recordings run
+0x6C7D30	CMonsterTruck::BurstTyre	implemented-needs-L2	no call in the recordings run
+0x6B58A0	CBike::GetNumContactWheels	implemented-needs-L2	no call in the recordings run
+0x6B6790	CBike::GetAllWheelsOffGround	implemented-needs-L2	no call in the recordings run
+0x6B58B0	CBike::GetHeightAboveRoad	L2	L2 drv:33/33 PASS (0 mismatches, 0 undeclared)
+0x6B58C0	CBike::GetRideAnimData	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6B58E0	CBike::IsDoorReady	implemented-needs-L2	no call in the recordings run
+0x6B58F0	CBike::IsDoorFullyOpen	implemented-needs-L2	no call in the recordings run
+0x6B5900	CBike::IsDoorClosed	implemented-needs-L2	no call in the recordings run
+0x6B5910	CBike::IsDoorMissing	implemented-needs-L2	no call in the recordings run
+0x6B5920	CBike::IsDoorReadyU32	implemented-needs-L2	no call in the recordings run
+0x6B5930	CBike::IsDoorFullyOpenU32	implemented-needs-L2	no call in the recordings run
+0x6B5940	CBike::IsDoorClosedU32	implemented-needs-L2	no call in the recordings run
+0x6B5950	CBike::IsDoorMissingU32	implemented-needs-L2	no call in the recordings run
+0x6B7270	CBike::IsRoomForPedToLeaveCar	implemented-needs-L2	no call in the recordings run
+0x6B5F40	CBike::KnockOffRider	implemented-needs-L2	no call in the recordings run
+0x6B8940	CBike::FindWheelWidth	implemented-needs-L2	no call in the recordings run
+0x6B59E0	CBike::IsComponentPresent	implemented-needs-L2	no call in the recordings run
+0x6B7130	CBike::PlayHornIfNecessary	implemented-needs-L2	no call in the recordings run
+0x6B5F90	CBike::ReduceHornCounter	implemented-needs-L2	no call in the recordings run
+0x6B7050	CBike::Fix	implemented-needs-L2	no call in the recordings run
+0x6B67B0	CBike::RemoveRefsToVehicle	implemented-needs-L2	no call in the recordings run
+0x6BF9B0	CBmx::SetUpWheelColModel	implemented-needs-L2	no call in the recordings run
+0x6BF9C0	CBmx::BurstTyre	implemented-needs-L2	no call in the recordings run
+0x6C0550	CBmx::FindWheelWidth	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6F0200	CBoat::IsComponentPresent	implemented-needs-L2	no call in the recordings run
+0x6F00D0	CBoat::GetBoatAtomicObjectCB	implemented-needs-L2	no call in the recordings run
+0x6F0DE0	CBoat::ModifyHandlingValue	implemented-needs-L2	no call in the recordings run
+0x6F10C0	CBoat::CheckForSkippingCalculations	implemented-needs-L2	no call in the recordings run
+0x459390	CVehicleRecording::Init	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x45A1B0	CVehicleRecording::InitAtStartOfGame	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x459FF0	CVehicleRecording::FindIndexWithFileNameNumber	implemented-needs-L2	no call in the recordings run
+0x45A060	CVehicleRecording::HasRecordingFileBeenLoaded	implemented-needs-L2	no call in the recordings run
+0x4595A0	CVehicleRecording::IsPlaybackPausedForCar	implemented-needs-L2	no call in the recordings run
+0x4639E0	CStuckCarCheck::Init	L2	L2 drv:2/2 PASS (0 mismatches, 0 undeclared)
+0x463970	CStuckCarCheck::ResetArrayElement	implemented-needs-L2	no call in the recordings run
+0x463C40	CStuckCarCheck::ClearStuckFlagForCar	implemented-needs-L2	no call in the recordings run
+0x463C00	CStuckCarCheck::HasCarBeenStuckForAWhile	implemented-needs-L2	no call in the recordings run
+0x463C70	CStuckCarCheck::IsCarInStuckCarArray	implemented-needs-L2	no call in the recordings run
+0x463830	CUpsideDownCarCheck::IsCarUpsideDown-vehicle	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x4655E0	CUpsideDownCarCheck::UpdateTimers	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x4638D0	CUpsideDownCarCheck::AddCarToCheck	implemented-needs-L2	no call in the recordings run
+0x463910	CUpsideDownCarCheck::RemoveCarFromCheck	implemented-needs-L2	no call in the recordings run
+0x463940	CUpsideDownCarCheck::HasCarBeenUpsideDownForAWhile	implemented-needs-L2	no call in the recordings run
+0x572040	CCurrentVehicle::Process	L2	split drv:1000/1000 PASS (0 mismatches, 0 undeclared)
+0x5BD420	CVehicleAnimGroup::CVehicleAnimGroup	L2	L2 drv:60/60 PASS (0 mismatches, 0 undeclared)
+0x6A0520	CDamageManager::Init	implemented-needs-L2	no call in the recordings run
+0x6C20E0	CDamageManager::ResetDamageStatus	L2	L2 drv:83/83 PASS (0 mismatches, 0 undeclared)
+0x6A04E0	CDamageManager::ResetDamageStatusAndWheelDamage	implemented-needs-L2	no call in the recordings run
+0x6C22C0	CDamageManager::GetEngineStatus	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6C22A0	CDamageManager::SetEngineStatus	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6C23B0	CDamageManager::ProgressEngineDamage	implemented-needs-L2	no call in the recordings run
+0x6C21B0	CDamageManager::GetWheelStatus	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6C21A0	CDamageManager::SetWheelStatus	L2	L2 drv:4/4 PASS (0 mismatches, 0 undeclared)
+0x6C2440	CDamageManager::ProgressWheelDamage	implemented-needs-L2	no call in the recordings run
+0x6C2230	CDamageManager::GetDoorStatus	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6C21C0	CDamageManager::SetDoorStatus-	L2	L2 drv:26/26 PASS (0 mismatches, 0 undeclared)
+0x6C2250	CDamageManager::GetDoorStatus_Component	L2	L2 drv:47/47 PASS (0 mismatches, 0 undeclared)
+0x6C21E0	CDamageManager::SetDoorStatus_Component	L2	L2 drv:3/3 PASS (0 mismatches, 0 undeclared)
+0x6C2130	CDamageManager::GetLightStatus	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6C2100	CDamageManager::SetLightStatus	implemented-needs-L2	no call in the recordings run
+0x6C2180	CDamageManager::GetPanelStatus	L2	L2 drv:236/236 PASS (0 mismatches, 0 undeclared)
+0x6C2150	CDamageManager::SetPanelStatus	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6C2300	CDamageManager::GetAeroplaneCompStatus	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6C22D0	CDamageManager::SetAeroplaneCompStatus	implemented-needs-L2	no call in the recordings run
+0x6C2460	CDamageManager::ProgressAeroplaneDamage	implemented-needs-L2	no call in the recordings run
+0x6C23C0	CDamageManager::ProgressPanelDamage	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6C2320	CDamageManager::ProgressDoorDamage	L2	split drv:3/3 PASS (0 mismatches, 0 undeclared)
+0x6C2040	CDamageManager::GetComponentGroup	L2	L2 drv:4/4 PASS (0 mismatches, 0 undeclared)
+0x6C25D0	CDamageManager::FuckCarCompletely	L2	split drv:13/13 PASS (0 mismatches, 0 undeclared)
+0x6C24B0	CDamageManager::ApplyDamage	L2	split drv:4/4 PASS (0 mismatches, 0 undeclared)
+0x6F4790	CDoor::Open	L2	L2 drv:245/245 PASS (0 mismatches, 0 undeclared)
+0x6F47E0	CDoor::GetAngleOpenRatio	implemented-needs-L2	no call in the recordings run
+0x6F4800	CDoor::IsClosed	L2	L2 drv:242/242 PASS (0 mismatches, 0 undeclared)
+0x6F4820	CDoor::IsFullyOpen	implemented-needs-L2	no call in the recordings run
+0x6F4910	CBouncingPanel::ResetPanel	implemented-needs-L2	no call in the recordings run
+0x6F4920	CBouncingPanel::SetPanel	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x64EEC0	CCarEnterExit::IsVehicleHealthy	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x64EEE0	CCarEnterExit::IsPedHealthy	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x64ED90	CCarEnterExit::IsCarDoorReady	L2	L2 drv:6/6 PASS (0 mismatches, 0 undeclared)
+0x64EE10	CCarEnterExit::CarHasDoorToClose	L2	L2 drv:45/45 PASS (0 mismatches, 0 undeclared)
+0x64EDD0	CCarEnterExit::CarHasDoorToOpen	L2	L2 drv:9/9 PASS (0 mismatches, 0 undeclared)
+0x64EE70	CCarEnterExit::CarHasPartiallyOpenDoor	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x64EE50	CCarEnterExit::CarHasOpenableDoor	L2	L2 drv:3/3 PASS (0 mismatches, 0 undeclared)
+0x64EF00	CCarEnterExit::IsCarQuickJackPossible	L2	L2 drv:4/4 PASS (0 mismatches, 0 undeclared)
+0x64F190	CCarEnterExit::ComputeTargetDoorToEnterAsPassenger	L2	L2 drv:44/44 PASS (0 mismatches, 0 undeclared)
+0x64F1E0	CCarEnterExit::ComputePassengerIndexFromCarDoor	L2	L2 drv:31/31 PASS (0 mismatches, 0 undeclared)
+0x64E550	CCarEnterExit::ComputeDoorFlag	L2	L2 drv:11/11 PASS (0 mismatches, 0 undeclared)
+0x64E610	CCarEnterExit::ComputeOppositeDoorFlag	implemented-needs-L2	no call in the recordings run
+0x64F110	CCarEnterExit::ComputeTargetDoorToExit	L2	L2 drv:59/59 PASS (0 mismatches, 0 undeclared)
+0x64EF70	CCarEnterExit::IsCarSlowJackRequired	L2	L2 drv:5/5 PASS (0 mismatches, 0 undeclared)
+0x64F070	CCarEnterExit::ComputeSlowJackedPed	L2	L2 drv:3/3 PASS (0 mismatches, 0 undeclared)
+0x64EC90	CCarEnterExit::IsCarDoorInUse	L2	L2 drv:6/6 PASS (0 mismatches, 0 undeclared)
+0x64F6E0	CCarEnterExit::RemoveGetInAnims	L2	split drv:48/48 PASS (0 mismatches, 0 undeclared)
+0x64F680	CCarEnterExit::RemoveCarSitAnim	L2-split (undeclared writes to review)	split drv:10/10 PASS (0 mismatches, 6 undeclared)
+0x6A0480	cHandlingDataMgr::HasFrontWheelDrive	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6A04B0	cHandlingDataMgr::HasRearWheelDrive	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6F5300	cHandlingDataMgr::GetBoatPointer	L2	L2 drv:12/12 PASS (0 mismatches, 0 undeclared)
+0x6F52D0	cHandlingDataMgr::GetFlyingPointer	L2	L2 drv:90/90 PASS (0 mismatches, 0 undeclared)
+0x6F5290	cHandlingDataMgr::ConvertBikeDataToGameUnits	L2	L2 drv:13/13 PASS (0 mismatches, 0 undeclared)
+0x6F4FD0	cHandlingDataMgr::GetHandlingId	L2	L2 drv:212/212 PASS (0 mismatches, 0 undeclared)
+0x6F4F30	cHandlingDataMgr::FindExactWord	L2	L2 drv:259/259 PASS (0 mismatches, 0 undeclared)
+0x6F5010	cHandlingDataMgr::ConvertDataToWorldUnits	implemented-needs-L2	no call in the recordings run
+0x5BF3D0	cHandlingDataMgr::Initialise	implemented-needs-L2	no call in the recordings run
+0x6C4560	CHeli::InitHelis	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6C45B0	CHeli::AddHeliSearchLight	implemented-needs-L2	no call in the recordings run
+0x6C4650	CHeli::Pre_SearchLightCone	implemented-needs-L2	no call in the recordings run
+0x6C46E0	CHeli::Post_SearchLightCone	implemented-needs-L2	no call in the recordings run
+0x6C4800	CHeli::SwitchPoliceHelis	implemented-needs-L2	no call in the recordings run
+0x6C4320	CHeli::SetUpWheelColModel	implemented-needs-L2	no call in the recordings run
+0x6C4330	CHeli::BurstTyre	implemented-needs-L2	no call in the recordings run
+0x6C4550	CHeli::SetupDamageAfterLoad	implemented-needs-L2	no call in the recordings run
+0x6C4530	CHeli::Fix	implemented-needs-L2	no call in the recordings run
+0x6C9140	CPlane::SetUpWheelColModel	implemented-needs-L2	no call in the recordings run
+0x6C9150	CPlane::BurstTyre	implemented-needs-L2	no call in the recordings run
+0x6CAC10	CPlane::SetupDamageAfterLoad	implemented-needs-L2	no call in the recordings run
+0x6CAB90	CPlane::IsAlreadyFlying	implemented-needs-L2	no call in the recordings run
+0x6CAD90	CPlane::InitPlaneGenerationAndRemoval	implemented-needs-L2	no call in the recordings run
+0x6CAC20	CPlane::SetGearUp	implemented-needs-L2	no call in the recordings run
+0x6CAC70	CPlane::SetGearDown	implemented-needs-L2	no call in the recordings run
+0x6CCA50	CPlane::CountPlanesAndHelis	L2	L2 drv:127/127 PASS (0 mismatches, 0 undeclared)
+0x84A300	__init_g_97f634	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x84A340	__init_g_97f63c	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x853500	__init_g_c1bfec	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x853600	__init_g_c1c818	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x853620	__init_g_c1c81c	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x853C20	__init_g_c1cb28	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x853CE0	__init_g_c1cb54	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x8540B0	__init_fTimeMult	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x854390	__init_g_c2b9bc	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x854410	__init_g_c3804c	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x854350	__init_g_c2b9b4	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x853540	__init_g_c1c208	L2	split drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6F5DB0	CTrain::DisableRandomTrains	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6F5CD0	CTrain::FindNumCarriagesPulled	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6F5DC0	CTrain::RemoveOneMissionTrain	implemented-needs-L2	no call in the recordings run
+0x6F5DF0	CTrain::ReleaseOneMissionTrain	implemented-needs-L2	no call in the recordings run
+0x6F5E20	CTrain::SetTrainSpeed	L2	L2 drv:2/2 PASS (0 mismatches, 0 undeclared)
+0x6F5E50	CTrain::SetTrainCruiseSpeed	implemented-needs-L2	no call in the recordings run
+0x6F5E70	CTrain::FindCaboose	implemented-needs-L2	no call in the recordings run
+0x6F5E90	CTrain::FindEngine	implemented-needs-L2	no call in the recordings run
+0x6F5EB0	CTrain::FindCarriage	implemented-needs-L2	no call in the recordings run
+0x6F5EF0	CTrain::FindSideStationIsOn	implemented-needs-L2	no call in the recordings run
+0x6F5EE0	CTrain::IsRoomForPedToLeaveCar	implemented-needs-L2	no call in the recordings run
+0x6B5830	CVehicle::GetDooorAngleOpenRatioU32	implemented-needs-L2	no call in the recordings run
+0x6D56B0	CVehicle::GetDooorAngleOpenRatio	implemented-needs-L2	no call in the recordings run
+0x6D3D50	CVehicle::FindWheelWidth	implemented-needs-L2	no call in the recordings run
+0x6B5880	CVehicle::SetTowLink	implemented-needs-L2	no call in the recordings run
+0x6D62A0	CVehicle::IsComponentPresent	implemented-needs-L2	no call in the recordings run
+0x6D62B0	CVehicle::IsDoorReady	implemented-needs-L2	no call in the recordings run
+0x6D62C0	CVehicle::IsDoorFullyOpen	implemented-needs-L2	no call in the recordings run
+0x6D62D0	CVehicle::IsDoorClosed	implemented-needs-L2	no call in the recordings run
+0x6D62E0	CVehicle::IsDoorMissing	implemented-needs-L2	no call in the recordings run
+0x6D62F0	CVehicle::IsDoorReadyU32	implemented-needs-L2	no call in the recordings run
+0x6D6300	CVehicle::IsDoorFullyOpenU32	implemented-needs-L2	no call in the recordings run
+0x6D6310	CVehicle::IsDoorClosedU32	implemented-needs-L2	no call in the recordings run
+0x6D6320	CVehicle::IsDoorMissingU32	implemented-needs-L2	no call in the recordings run
+0x6D6350	CVehicle::SetUpWheelColModel	implemented-needs-L2	no call in the recordings run
+0x6D6360	CVehicle::BurstTyre	implemented-needs-L2	no call in the recordings run
+0x6D6370	CVehicle::IsRoomForPedToLeaveCar	implemented-needs-L2	no call in the recordings run
+0x6D63D0	CVehicle::GetNumContactWheels	implemented-needs-L2	no call in the recordings run
+0x6D63F0	CVehicle::GetHeightAboveRoad	L2	L2 drv:1/1 PASS (0 mismatches, 0 undeclared)
+0x6B5860	CVehicle::AddMovingCollisionSpeed	implemented-needs-L2	no call in the recordings run
+0x6D3000	CVehicle::SetGettingInFlags	L2	L2 drv:7/7 PASS (0 mismatches, 0 undeclared)
+0x6D3020	CVehicle::SetGettingOutFlags	L2	L2 drv:2/2 PASS (0 mismatches, 0 undeclared)
+0x6D3040	CVehicle::ClearGettingInFlags	L2	L2 drv:11/11 PASS (0 mismatches, 0 undeclared)
+0x6D3060	CVehicle::ClearGettingOutFlags	L2	L2 drv:4/4 PASS (0 mismatches, 0 undeclared)
+0x6D3B60	CVehicle::InitWinch	implemented-needs-L2	no call in the recordings run
+0x6D3B30	CVehicle::SetHasslePosId	implemented-needs-L2	no call in the recordings run
+0x6D2950	CVehicle::SetCompAlphaCB	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6D2960	CVehicle::SetComponentAtomicAlpha	L2	split drv:1000/1000 PASS (0 mismatches, 0 undeclared)
+0x6D1C40	CVehicle::IsDriver-Ped	L2	L2 drv:385/385 PASS (0 mismatches, 0 undeclared)
+0x6D1C60	CVehicle::IsDriver-ModelID	implemented-needs-L2	no call in the recordings run
+0x6D2370	CVehicle::IsLawEnforcementVehicle	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6D1E60	CVehicle::CanDoorsBeDamaged	L2	L2 drv:79/79 PASS (0 mismatches, 0 undeclared)
+0x6D0CA0	CVehicle::SetCollisionLighting	L2	L2 drv:19/19 PASS (0 mismatches, 0 undeclared)
+0x6D0CC0	CVehicle::UpdateLightingFromStoredPolys	L2	L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared)
+0x6D1150	CVehicle::CustomCarPlate_TextureDestroy	implemented-needs-L2	no call in the recordings run
+0x6D3CF0	CVehicle::QueryPickedUpEntityWithWinch	implemented-needs-L2	no call in the recordings run
+0x6D3D10	CVehicle::GetRopeHeightForHeli	implemented-needs-L2	no call in the recordings run
+0x6D3D30	CVehicle::SetRopeHeightForHeli	implemented-needs-L2	no call in the recordings run
+0x6D3CB0	CVehicle::ReleasePickedUpEntityWithWinch	implemented-needs-L2	no call in the recordings run
+0x6D3CD0	CVehicle::PickUpEntityWithWinch	implemented-needs-L2	no call in the recordings run
+0x6D3630	CVehicle::RemoveUpgrade	implemented-needs-L2	no call in the recordings run
+0x6D0B40	CVehicle::Shutdown	implemented-needs-L2	no call in the recordings run
+0x6F0E20	CBoat::PruneWakeTrail	ported-unhookable	loop branch at 0x6F0E5F lands inside the patch range (installer rejects); boat::prune_wake_trail

@@ -1701,6 +1701,7 @@ dependencies = [
  "sa-pop",
  "sa-script",
  "sa-stream",
+ "sa-veh",
  "sa-weapon",
  "sa-world",
  "windows-sys 0.61.2",
@@ -1755,6 +1756,7 @@ dependencies = [
  "sa-pop",
  "sa-script",
  "sa-stream",
+ "sa-veh",
  "sa-weapon",
  "sa-world",
  "unicorn-engine",
@@ -1833,6 +1835,18 @@ dependencies = [
  "sa-core",
  "sa-macros",
  "sa-math",
+]
+
+[[package]]
+name = "sa-veh"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-pop",
+ "sa-stream",
+ "sa-world",
 ]
 
 [[package]]

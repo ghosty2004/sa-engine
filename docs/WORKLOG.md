@@ -726,3 +726,10 @@
   failed on 2 hooks; fixed as in ROADMAP. sa-hook lib 45, sa-anim/sa-input/sa-core/sa-macros tests, workspace clippy
   -D warnings, i686 build OK; all-ports IDENTICAL on six recordings (grove run: known post-exit fault 7BCF0729).
 - States: 132 → L2, 115 → L1, 155 → implemented. F1 = 960 / 15,479 (6.20 %).
+
+## 2026-11-11 PORT-VEH integrated (main session)
+- Agent a65cade7 (lane 7) + helpers: crate sa-veh, docs/arch/veh-port.md + verdicts, driving program/recording,
+  keycells reader 0x401635, lists, l2-extras section.
+- Merge: registration conflicts resolved (veh appended after anim). sa-hook lib 45, sa-veh 3 tests, workspace clippy,
+  i686 build OK; all-ports IDENTICAL on six recordings incl. driving (4338).
+- States: 90 → L2, 124 → implemented. Decisions in ROADMAP PORT-VEH.

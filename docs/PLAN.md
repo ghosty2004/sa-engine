@@ -65,7 +65,7 @@ Crates (created when their milestone starts; names are fixed now):
 | `sa-stream` | CdStream, CStreaming, CFileLoader, IPL/TXD/COL stores, model infos | all |
 | `sa-world` | CWorld, entities, CPhysical, collision, zones, clock, weather, water, paths, interiors, garages, pickups, objects | all |
 | `sa-anim` | anim manager, blend associations, IK, bones | all |
-| `sa-ped` / `sa-vehicle` / `sa-weapon` | peds and player, vehicles of all classes, weapons/projectiles/explosions/fire | all |
+| `sa-ped` / `sa-veh` / `sa-weapon` | peds and player, vehicles of all classes, weapons/projectiles/explosions/fire | all |
 | `sa-ai` | tasks, events, decision makers, ped intelligence, groups, attractors, conversations | all |
 | `sa-pop` | population, cargens, car control/traffic, roadblocks, gangs, gang wars | all |
 | `sa-script` | CTheScripts, CRunningScript, all command handlers | all |
