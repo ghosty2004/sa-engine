@@ -411,7 +411,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
 const LOCAL_N: usize = 19;
 /// All hooks: sa-hook's own, then every port registered by sa-core (in `sa_core::hooks::ALL` order), then
 /// sa-stream's (`sa_stream::hooks::ALL`), then sa-world's (`sa_world::hooks::ALL`), then sa-pop's
-/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's sa-cam's sa-ai's sa-audio's and sa-rwcore's.
+/// (`sa_pop::hooks::ALL`), sa-script's, sa-weapon's, sa-ped's, sa-input's, sa-anim's, sa-veh's, sa-hud's sa-cam's sa-ai's sa-audio's sa-rwcore's and sa-render's.
 pub const N: usize = LOCAL_N
     + sa_core::hooks::COUNT
     + sa_stream::hooks::COUNT
@@ -427,7 +427,8 @@ pub const N: usize = LOCAL_N
     + sa_cam::hooks::COUNT
     + sa_ai::hooks::COUNT
     + sa_audio::hooks::COUNT
-    + sa_rwcore::hooks::COUNT;
+    + sa_rwcore::hooks::COUNT
+    + sa_render::hooks::COUNT;
 
 /// The hook table.
 pub static HOOKS: [HookSpec; N] = build();
@@ -582,6 +583,12 @@ const fn build() -> [HookSpec; N] {
     while i_rwcore < sa_rwcore::hooks::COUNT {
         out[base_rwcore + i_rwcore] = from_core(&sa_rwcore::hooks::ALL[i_rwcore]);
         i_rwcore += 1;
+    }
+    let base_render = base_rwcore + sa_rwcore::hooks::COUNT;
+    let mut i_render = 0;
+    while i_render < sa_render::hooks::COUNT {
+        out[base_render + i_render] = from_core(&sa_render::hooks::ALL[i_render]);
+        i_render += 1;
     }
     out
 }
@@ -985,6 +992,7 @@ mod tests {
                 + sa_ai::hooks::COUNT
                 + sa_audio::hooks::COUNT
                 + sa_rwcore::hooks::COUNT
+                + sa_render::hooks::COUNT
         );
         let ports = sa_core::hooks::ALL
             .iter()
@@ -1001,7 +1009,8 @@ mod tests {
             .chain(sa_cam::hooks::ALL.iter())
             .chain(sa_ai::hooks::ALL.iter())
             .chain(sa_audio::hooks::ALL.iter())
-            .chain(sa_rwcore::hooks::ALL.iter());
+            .chain(sa_rwcore::hooks::ALL.iter())
+            .chain(sa_render::hooks::ALL.iter());
         for (k, r) in ports.enumerate() {
             let h = &HOOKS[LOCAL_N + k];
             assert_eq!((h.addr, h.name, h.expect), (r.addr, r.name, r.expect));

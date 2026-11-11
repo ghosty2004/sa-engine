@@ -42,6 +42,9 @@ pub mod specs_input_pad;
 pub mod specs_ped;
 pub mod specs_phys;
 pub mod specs_pop;
+pub mod specs_render;
+pub mod specs_render_a;
+pub mod specs_render_b;
 pub mod specs_rw;
 pub mod specs_rw_frame;
 pub mod specs_rw_stream;
@@ -105,6 +108,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .chain(sa_ai::hooks::ALL.iter())
                 .chain(sa_audio::hooks::ALL.iter())
                 .chain(sa_rwcore::hooks::ALL.iter())
+                .chain(sa_render::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })

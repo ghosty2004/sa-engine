@@ -32,6 +32,7 @@ sa-ai = { path = "../sa-ai" }
 sa-audio = { path = "../sa-audio" }
 # RW core ports (PORT-RW-1).
 sa-rwcore = { path = "../sa-rwcore" }
+sa-render = { path = "../sa-render" }
 
 # Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
 [target.'cfg(not(windows))'.dependencies]

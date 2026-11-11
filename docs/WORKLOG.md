@@ -827,3 +827,8 @@
 ## 2026-11-11 RE-SPEC-UNK + RE-SPEC-REST specs committed (main session)
 - 146 changed/new spec files under docs/re/specs (UNK classification specs, REST specs, AI appendices); check_consts over
   all of them: 2,949 claims, 0 mismatches. RE-SPEC-FINAL / RW-3 / SPEC-QA run concurrently and may append later.
+
+## 2026-11-11 PORT-RENDER-1 integrated (main session)
+- Agent ac7bd72f + 2 helpers (lane 1): crate sa-render, docs/arch/render-port.md + verdicts, lists, extras. Merge
+  (render after rwcore); sa-hook lib 48, sa-render tests, workspace clippy, i686 OK; all-ports IDENTICAL on 7.
+- Also: CWeapon::Fire 0x742300 demoted L2 → implemented (HARNESS-3 found a c-bug split mismatch; WEAPON-FIX on it).
