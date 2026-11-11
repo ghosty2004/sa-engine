@@ -40,6 +40,7 @@
 #   every run (>= 20 GB free on /home)
 #
 # Env: LANE (default 2), SA_ROOT, L2_PER_FRAME (default 4), SPLIT_PER_FRAME (default 1000),
+# L2_FROM (first frame sampled, SA_L2_FROM; l2 and split runs),
 # L2_SPOOL_MAX (bytes, default sa-hook's 2 GiB), L2_EXTRA (extra regions appended to every run's
 # SA_L2_EXTRA), RUN_TIMEOUT (s, default 1500),
 # L2_SPOOL_DISCARD=1 (drain the binary spool through a FIFO: no host report, bounded disk use).
@@ -285,6 +286,7 @@ L2COMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${L2_PER_FRAME:-4}" SA_L2_SPEC="$(wi
 SPLITCOMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${SPLIT_PER_FRAME:-1000}" SA_L2_SPEC="$(win "$DET/l2.spec")")
 [ -n "${L2_SPOOL_MAX:-}" ] && SPLITCOMMON+=(SA_L2_SPOOL_MAX="$L2_SPOOL_MAX")
 [ -n "${SPLIT_DUMP_SEQ:-}" ] && SPLITCOMMON+=(SA_L2_DUMP_SEQ="$SPLIT_DUMP_SEQ")
+[ -n "${L2_FROM:-}" ] && SPLITCOMMON+=(SA_L2_FROM="$L2_FROM") && L2COMMON+=(SA_L2_FROM="$L2_FROM")
 
 for run in $RUNS; do
     case "$run" in

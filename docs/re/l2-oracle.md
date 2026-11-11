@@ -298,6 +298,72 @@ branch into a synthetic patch is found, the entry itself is not; 0x645602 (GetAn
 an immediate by the protection in the executable `.data`) is listed. hookscan's ECX/EDX check is
 `callers.rs` (path-following).
 
+### ECX/EDX live across two consecutive hooked calls (HARNESS-3)
+
+`CTaskSimpleFight::LoadMeleeData` keeps its table row in ECX across `call 0x5BD360` (0x5BF1FD) AND
+`call 0x5BD3B0` (0x5BF219), and reads it at 0x5BF226 (`mov [ecx+0xC1712C], edx`). `callers.rs` ended the
+path at the second call because `callee_effect(0x5BD3B0)` met its jump table (`jmp [eax*4+0x5BD3F4]`) and
+answered `Clobbers`, so only an L3 rand divergence found that 0x5BD360 needs `preserve = "ecx"` (PORT-AI
+v4). Now the path steps over a direct call (1) into a hook that declares `preserve` for the register (the
+declaration is the evidence that the original keeps it, and the hook keeps it at run time), and (2) the
+callee analysis and the path follow bounded MSVC jump tables (`cmp r, N; ja; jmp [r*4+T]`,
+`switch_targets`), which alone already proves that 0x5BD3B0 keeps ECX. Tests:
+`ecx_kept_across_two_hooked_calls_is_flagged` (negative: 0x5BD360 without its `preserve` is reported at
+0x5BF1FD → 0x5BF226, by the hook declaration alone and by the jump table alone; without both the path
+ends, the old gap) and `no_use_hides_behind_a_hooked_callee` (upper bound: assuming EVERY hooked callee
+keeps ECX/EDX adds no use beyond the declared ones). On 2026-11-11 (2936 hooks, 18752 call sites) every
+registered hook passes and the upper bound finds nothing: no new offender. Not covered: a register kept
+across a hooked call and then returned to the caller's caller (the path ends at `ret`).
+
+### Stack addresses above an enclosing recorded call (HARNESS-3)
+
+The `Stack` class compared a stack address by its offset from the case's own argument block, which
+assumes one shift for the whole stack. Each Rust frame moves the locations below it by its own size
+difference, so an address in the frames above an enclosing recorded call moved by THAT call's shift.
+Seen as: `CReferences` (0xB9B9A8 `aRefs`) holds the address of a `CEntity*` slot of a Rust caller
+(PORT-WEAPON-2 split-combat: 0xB9C4FC plain 0x0036F06C rust 0x0036EF5C, 0x110 apart like the enclosing
+DoBulletImpact calls, while GenerateDamageEvent's own blocks were further apart: DIVERGED on the window
+byte, PASS-FP for DoBulletImpact through the page hash).
+
+- `normalise.rs`: `NormCtx::frames` = the argument blocks of the case's enclosing recorded calls,
+  index-aligned between the two runs; `Stack { frame, off }` classifies a stack address by the enclosing
+  call with the highest block at or below it (`frame` 1..), else by the case's own block (`frame` 0).
+- `split.rs`: `enclosing()` finds the recorded calls each case runs inside (entry order `seq`,
+  completion order = spool order); `with_frames()` pairs them by (function, ordinal); `rebase()` moves
+  rust-run stack writes by the shift of the frame they lie in; `page_diff()` compares the listed stack
+  words (below).
+- `sa-hook l2win.rs`: stack-valued words of the static windows are masked in the page fingerprint and
+  listed with the OS object words (`Case::foreign_words`); `page_diff()` counts their page as differing
+  unless the two words are equal through `Stack`. Before, such a word made the page hash differ
+  (PASS-FP) whatever it pointed to.
+- Tests: `normalise::stack_addresses_above_an_enclosing_call_compare_by_its_frame` (the 0x36F06C /
+  0x36EF5C numbers, a neighbouring slot, a missing or misplaced enclosing block, two levels) and
+  `split::stack_words_above_an_enclosing_call_compare_by_its_frame` (DIVERGED without the enclosing
+  case, PASS with it, PASS-FP for a listed stack word at another offset).
+- Limit: the enclosing call must itself be recorded (listed, and under its `SA_L2_MAX` case cap; use
+  `L2_FROM` of `port-l2.sh` to start sampling late).
+- Evidence (2026-11-11, lane 7, weapon-combat, list CWeapon::Fire + DoBulletImpact + GenerateDamageEvent,
+  `--max 3000`, sa-hook with the stack-word listing): master's sa-oracle reports GenerateDamageEvent
+  DIVERGED 3/11 at ordinal 3 frame 1758, `region Extra 0xb9b9a8 ... at 0xb9c4fc: plain 3cf03600 rust
+  2cef3600` (0x36F03C / 0x36EF2C, 0x110 apart = the DoBulletImpact pairs' shift, +0x110 in 134 pairs);
+  this branch's sa-oracle on the same spools: GenerateDamageEvent PASS 11/11 (own shift +0x234),
+  DoBulletImpact PASS 134/134, Fire PASS 135/135. Without the Rust Fire above it (only DoBulletImpact
+  listed), DoBulletImpact's own shift is 0 and no CReferences difference appears at all (master build,
+  weapon-combat / c-bug / driving: GenerateDamageEvent PASS 11 / 38 / 26).
+- `FUN_00606060` (0x606060, unregistered; the same family): its task / facial out-parameters point into
+  a frame above the Rust `CDecisionMakerTypes::MakeDecision-ped-ptr` (0x606E70), at the SAME address in
+  both runs (the frame holding them did not move), while 0x606060's own block moved +0x64. The rust
+  run's writes were moved by +0x64 (0x36FBA8 → 0x36FC0C): the plain address showed no rust write
+  (mismatch) and the moved one an undeclared write. `stack_pointees` now also lists a declared pointee
+  region (here `FUN_00606060@arg7:2:W` / `@arg8:2:W`, tools/e2e/l2-extras.txt) at the same caller-frame
+  address in both runs when the call's block moved, so its writes stay in place. Evidence (c-bug,
+  0x606060 re-registered in an experiment build only, list 0x606060 + 0x606E70, `L2_FROM=2450`,
+  `--max 3000`): master's sa-oracle FAIL 172/572 mismatches + 172 undeclared (first: ordinal 120 frame
+  2571, `0x36fba8: orig fc01 rust 0000`; earlier runs from frame 0: 239/572 on c-bug, 7/200 on grove);
+  this branch's sa-oracle on the same spools PASS 572/572, 0 undeclared, 884 same-address pointee uses.
+  Test: `split::out_parameter_at_the_same_address_is_not_moved`. The hook stays unregistered in this
+  branch (re-registering it is a porting decision; the grove run was not repeated with this rule).
+
 ## Stale traces (HARNESS-2)
 
 `winepath` right after `wineserver -k` sometimes printed nothing: `SA_DET_TRACE` was empty, sa-hook

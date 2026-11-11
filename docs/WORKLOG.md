@@ -840,3 +840,8 @@
   RwD3D9RasterLock level is u8 not s8, 4 wrong "readers" cells, gr's 0x8D2ED4 "30.f" is 10.0f in the image. The
   suspected init-order bug at 0x84CED0/0x84CF80/0x84D0F0 is intended (zero-initialised VolMax/VolMin).
   Hand-written sample: 2 MINOR in 58 (~3 %), 0 WRONG → ports must still re-read conditions and signedness.
+
+## 2026-11-11 HARNESS-3 integrated (main session)
+- Agent a456341d (lane 7): see ROADMAP HARNESS-3. Clean squash merge; sa-hook lib 50, sa-oracle lib 21,
+  sa-oracle-format 27, workspace clippy, i686 OK; all-ports IDENTICAL on grove, c-bug, weapon-combat.
+- Promoted to L2 the rerun rows with verdict PASS, compared > 0, 0 mismatches, 0 undeclared (CWeapon::Fire held back).

@@ -736,13 +736,17 @@ impl Snap {
     }
     /// Hashes of every 4 KiB page of the first `n` windows (split-run input fingerprint). Words whose
     /// value lies in the OS heap range (`mask`: below the determinism arena, outside the image and the
-    /// stack; the same decision in both runs, it depends on the value only) are replaced by a marker
-    /// first. Those that point into committed OS memory now (`fm`, OS object addresses) are listed in
-    /// `foreign_words` as (address, value) pairs, so the report can show which ones differed.
+    /// stack; the same decision in both runs, it depends on the value only) or in the thread's stack
+    /// (`stack`) are replaced by a marker first. Those that point into committed OS memory now (`fm`,
+    /// OS object addresses) and every stack address are listed in `foreign_words` as (address, value)
+    /// pairs: the report shows which OS words differed and compares the stack words through
+    /// normalise.rs `Stack` (a Rust caller's frame layout moves them; HARNESS-3: the `CEntity*` slots
+    /// that CReferences 0xB9B9A8 points to, PORT-WEAPON-2 DoBulletImpact PASS-FP).
     fn page_hashes(
         &self,
         n: usize,
         mask: &impl Fn(u32) -> bool,
+        stack: (u32, u32),
         fm: &ForeignMap,
         foreign_words: &mut Vec<u32>,
     ) -> Vec<(u32, u64)> {
@@ -754,13 +758,14 @@ impl Snap {
                 let mut hit = false;
                 for (w, b) in page.as_chunks::<4>().0.iter().enumerate() {
                     let v = u32::from_le_bytes(*b);
-                    if mask(v) {
+                    let on_stack = (stack.0..stack.1).contains(&v);
+                    if mask(v) || on_stack {
                         if !hit {
                             tmp[..page.len()].copy_from_slice(page);
                             hit = true;
                         }
                         tmp[4 * w..4 * w + 4].copy_from_slice(&FOREIGN_MARK.to_le_bytes());
-                        if fm.contains(v) {
+                        if on_stack || fm.contains(v) {
                             foreign_words.push(pa + 4 * w as u32);
                             foreign_words.push(v);
                         }
@@ -1540,7 +1545,7 @@ fn run_split(f: &mut Frame, i: usize, sig: &fmt::Sig, frame: u32, ordinal: u32, 
             && !(IMAGE.0..IMAGE.1).contains(&v)
             && !(stack.0..stack.1).contains(&v)
     };
-    let page_hashes = snap.page_hashes(nstatic, &mask, &fm, &mut foreign_words);
+    let page_hashes = snap.page_hashes(nstatic, &mask, stack, &fm, &mut foreign_words);
     let volatile: Vec<Write> = sa_oracle_format::normalise::volatile_ranges()
         .into_iter()
         .filter_map(|(addr, len, _)| mem_read(addr, len as usize).map(|bytes| Write { addr, bytes }))
