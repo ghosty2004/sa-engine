@@ -905,3 +905,11 @@
   local; visible when Rust frames change residue. Ledger (original bug). X87 agent is adding a stack-footprint helper
   so ports whose residue is read later leave the original's bytes.
 - verify-all main-bisfix: IDENTICAL on all 11 recordings, air-water included. 2 → L2.
+
+## 2026-11-11 PRESERVE-SPECS integrated (main session)
+- Agent a94dc0e7: register-comparing L1 specs for the 15 pending preserve hooks (new specs_veh.rs, specs_ai.rs, cam,
+  input); hosted.rs gains Widened images and fixed_map. 10^6 Unicorn + native cases each, 0 mismatches.
+- The test then caught one new offender from AI-GEN (0x4B1F80 dtor, preserve ecx) → pending list (spec queued).
+- Ledger (FSIN 53-bit model): RwMatrixRotate 0x7F1FD0 mismatches the CPU in 2,476 of 65,000 native cases (stays
+  implemented); CCamera ease weight sin(x)+1 near -1 in 0x50D350/0x50D430 (~2.7% of cases) — both need the 64-bit
+  fsin/fcos model (X87 work).
