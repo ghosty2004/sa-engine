@@ -1,0 +1,9 @@
+# PORT-CAM hooks verified in split mode, second batch (reference hand-overs: the entities' m_pReferences lists are heap state the plain L2 restore does not cover; world scans; the RwFrame; the constructor)
+CCamera::Restore
+CCamera::RestoreWithJumpCut
+CCamera::TakeControl
+CCamera::SetCameraDirectlyBehindForFollowPed_ForAPed_CamOnAString
+CCamera::SetCameraDirectlyInFrontForFollowPed_ForAPed_CamOnAString
+CCamera::UpdateSoundDistances
+CCamera::Constructor
+CCamera::CopyCameraMatrixToRWCam

@@ -778,3 +778,8 @@
   MAXANISOTROPY on stage 0; camera offset signs asymmetric. CAT-17 proposals: 0x7eede0 parallel frustum builder,
   0x7ef1f0 _rwCameraBuildParallelViewMatrix, 0x7fdcd0 _rwD3D9RWSetRasterStage, 0x7f2160 _rwMatrixInvertGeneral;
   RwStream rwOwned at +0x20 (fix docs/re/specs/STREAM/RwGtaStream.md).
+
+## 2026-11-11 PORT-CAM integrated (main session)
+- Agent abe46fff + 2 helpers (lane 1): crate sa-cam, specs_cam.rs, docs/arch/cam-port.md + verdicts, lists, extras.
+- Merge: registration conflicts resolved with a scratch script (cam after hud); a duplicated `pub mod specs_core_util`
+  from the merge removed. sa-hook lib 48, sa-cam tests, workspace clippy, i686 OK; all-ports IDENTICAL on 7 recordings.

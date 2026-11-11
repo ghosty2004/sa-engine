@@ -1,0 +1,12 @@
+# PORT-CAM hooks verified in split mode (world scan codes, rand, free, static initialisers)
+CCamera::CalculateGroundHeight
+CCamera::ConeCastCollisionResolve
+CHandShaker::Reset
+CHandShaker::SetDefaults
+CCamera::DeleteCutSceneCamDataMemory
+__init_gHandShaker
+__init_TheCamera
+__init_gIdleCam
+__init_preMirrorMat
+__init_gpCamColVars
+__init_g_b6fec0

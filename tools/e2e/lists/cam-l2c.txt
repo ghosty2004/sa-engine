@@ -1,0 +1,2 @@
+# PORT-CAM hooks verified in plain l2 mode, third batch
+CCamera::CalculateMirroredMatrix

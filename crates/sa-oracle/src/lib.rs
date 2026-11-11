@@ -28,6 +28,7 @@ pub mod scan;
 pub mod specs;
 pub mod specs_anim_a;
 pub mod specs_anim_b;
+pub mod specs_cam;
 pub mod specs_coll_data;
 pub mod specs_coll_prim;
 pub mod specs_coll_surface;
@@ -96,6 +97,7 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
                 .chain(sa_anim::hooks::ALL.iter())
                 .chain(sa_veh::hooks::ALL.iter())
                 .chain(sa_hud::hooks::ALL.iter())
+                .chain(sa_cam::hooks::ALL.iter())
                 .map(|r| (r.addr, r.preserve))
                 .collect()
         })

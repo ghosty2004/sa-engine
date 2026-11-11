@@ -2558,3 +2558,69 @@ CProjectileInfo::Update@0xB7CD98:0x320:RW
 CProjectileInfo::Update@0xA9B000:0x200:RW
 CProjectileInfo::Update@0xA9AE00:0xC0:RW
 CProjectileInfo::Update@0xC8A800:0x40:RW
+
+# PORT-CAM (docs/arch/cam-port.md). Evidence: pause-restart, lane 1, port-l2-camb-p.
+# CCamera::GetScreenRect: the caller's CRect (stack local; undeclared 0x36FD28..0x36FD37).
+CCamera::GetScreenRect@arg0:0x10:W
+# CCamera::ProcessMusicFade: the CAudioEngine callees (0x506D90 / 0x506E40 / 0x506E50) write their
+# fade state at 0xB5FCD0.. (undeclared 0xB5FCD0..0xB5FCD9).
+CCamera::ProcessMusicFade@0xB5FCD0:0x10:RW
+# CCamera::CalculateGroundHeight: its static block (0xB70028 lowest, top, rough, old position, guard;
+# without it the Rust run saw the old position the original had just updated and skipped the probe), and
+# the CWorld::ProcessVerticalLine scan state it changes (undeclared 0x9659FD..0x965A2B, 0xB742D8..0xB7442B).
+CCamera::CalculateGroundHeight@0xB70028:0x1C:RW
+CCamera::CalculateGroundHeight@0x9659F0:0x40:RW
+CCamera::CalculateGroundHeight@0xB742D8:0x154:RW
+# Target hand-overs: CEntity::CleanUpOldReference / RegisterReference (original callees) take and return
+# CReferences::aRefs nodes (3000 x 8 at 0xB9B9A8, pEmptyList 0xBA1768; port-l2-cam-g-l2 undeclared
+# 0xB9B9B0..0xB9B9B8 for RestoreWithJumpCut).
+CCamera::Restore@0xB9B9A8:0x5DC4:RW
+CCamera::RestoreWithJumpCut@0xB9B9A8:0x5DC4:RW
+CCamera::TakeControl@0xB9B9A8:0x5DC4:RW
+CCamera::SetCameraDirectlyBehindForFollowPed_ForAPed_CamOnAString@0xB9B9A8:0x5DC4:RW
+CCamera::SetCameraDirectlyInFrontForFollowPed_ForAPed_CamOnAString@0xB9B9A8:0x5DC4:RW
+# CCam::Constructor / CCam::Init reset gIdleCam (0xB6FDA0, 0x9C bytes) through CIdleCam::Reset
+# (port-l2-cam-g-l2 undeclared 0xB6FDB2..0xB6FE02).
+CCam::Constructor@0xB6FDA0:0x9C:RW
+CCam::Init@0xB6FDA0:0x9C:RW
+# CCurves::CalcCorrectedDist: the caller's interpolation out-parameter (stack; undeclared 0x36FAF8).
+CCurves::CalcCorrectedDist@arg3:4:W
+# CCamera::CopyCameraMatrixToRWCam: the RwFrame of m_pRwCamera (its matrix at +0x10).
+CCamera::CopyCameraMatrixToRWCam@[[ecx+0x954]+4]:0xA4:RW
+# CCam::Init / CCam::Constructor / CIdleCam::Reset: CIdleCam::Reset writes CPad 0's +0x120 (0xB73578;
+# port-l2-cam-b-l2 undeclared 0xB73578..0xB73579 for CCam::Init).
+CCam::Init@0xB73578:4:RW
+CCam::Constructor@0xB73578:4:RW
+CIdleCam::Reset@0xB73578:4:RW
+# CCamera::HandleCameraMotionForDucking(DuringAim)(ped, source, target, instant): source.z and target.z
+# through the caller's pointers (stack vectors; port-l2-cam-b-l2 undeclared 0x36FBB8..0x36FBBB).
+CCamera::HandleCameraMotionForDucking@arg1+8:4:W
+CCamera::HandleCameraMotionForDucking@arg2+8:4:W
+CCamera::HandleCameraMotionForDuckingDuringAim@arg1+8:4:W
+CCamera::HandleCameraMotionForDuckingDuringAim@arg2+8:4:W
+# Out-parameters (port-l2-cam-a-l2, anim-input): GetArrPosForVehicleType's int& (stack, undeclared
+# 0x36FB90 / 0x36FC18) and WrapAngle's float* (undeclared 0xB6F1DC, a CCam angle).
+CCamera::GetArrPosForVehicleType@arg1:4:W
+CCam::WrapAngle@arg0:4:RW
+# Split-mode write sets (port-l2-cam-g-split / -split2 "writes outside the declared write set"):
+# the static initialisers construct their objects and register atexit destructors (0xC9D428).
+__init_gHandShaker@0xB6ECA0:0x378:RW
+__init_gHandShaker@0xC9D428:4:RW
+__init_TheCamera@0xB6F028:0xD78:RW
+__init_TheCamera@0xC9D428:4:RW
+__init_gIdleCam@0xB6FDA0:0x9C:RW
+__init_gIdleCam@0xC9D428:4:RW
+__init_preMirrorMat@0xC9D428:4:RW
+__init_g_b6fec0@0xB6FEC0:0x9C:RW
+__init_g_b6fec0@0xC9D428:4:RW
+CCamera::Constructor@0xB6FDA0:0x9C:RW
+CCamera::Constructor@0xB73578:4:RW
+# CCamera::ConeCastCollisionResolve: its out vector and distance (caller stack), and the world-scan state
+# of CameraConeCastVsWorldCollision (0x96593C, 0xB74328).
+CCamera::ConeCastCollisionResolve@arg2:0xC:W
+CCamera::ConeCastCollisionResolve@arg5:4:RW
+CCamera::ConeCastCollisionResolve@0x965930:0x20:RW
+CCamera::ConeCastCollisionResolve@0xB742D8:0x154:RW
+# __init_TheCamera: the CCamera constructor's CCam::Init calls reset gIdleCam and CPad 0 +0x120.
+__init_TheCamera@0xB6FDA0:0x9C:RW
+__init_TheCamera@0xB73578:4:RW
