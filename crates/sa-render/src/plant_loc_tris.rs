@@ -11,7 +11,7 @@ use sa_math::x87::X87;
 use sa_world::collision::data::CdPtr;
 use sa_world::collision::surface::SiPtr;
 
-use crate::common::{g, jp, k, rd, wr, x};
+use crate::common::{ftol32, g, jp, k, rd, wr, x, xi};
 
 orig! {
     /// `CEntity::GetColModel()` (0x535300)
@@ -30,7 +30,13 @@ orig! {
     fn creates_objects(si: SiPtr, id: u32) -> u32 = thiscall 0x55e9f0 => sa_world::collision::surface::creates_objects;
     /// `CPlantLocTri::Add(const CVector&, const CVector&, const CVector&, uint8 surface, uint8 light,
     /// bool plants, bool objects)` (0x5dc290; dwords as pushed)
-    fn loc_tri_add(this: GPtr<u8>, v0: GPtr<u8>, v1: GPtr<u8>, v2: GPtr<u8>, surface: u32, light: u32, plants: u32, objects: u32) -> u32 = thiscall 0x5dc290 => unported;
+    fn loc_tri_add(this: GPtr<u8>, v0: GPtr<u8>, v1: GPtr<u8>, v2: GPtr<u8>, surface: u32, light: u32, plants: u32, objects: u32) -> u32 = thiscall 0x5dc290 => plant_loc_tri_add;
+    /// `CPlantLocTri::GetPlantDensity()` (0x5DC210): `this` in EAX, the area in ST0 (80 bits)
+    fn get_plant_density(this: GPtr<u8>) -> X87 = reg("args = eax") 0x5DC210 => crate::mvpb_r1::plant_loc_tri_get_plant_density;
+    /// `CPlantSurfPropMgr::GetSurfProperties(uint16 id)` (0x6F9DE0; the id pushed as a dword)
+    fn get_surf_properties(id: u32) -> GPtr<u8> = cdecl 0x6F9DE0 => unported;
+    /// `CPlantMgr::MoveLocTriToList(CPlantLocTri** from, CPlantLocTri** to, CPlantLocTri*)` (0x5DB590)
+    fn move_loc_tri_to_list(from: GPtr<u8>, to: GPtr<u8>, tri: GPtr<u8>) = cdecl 0x5DB590 => unported;
     /// `ProcObjectMan_c::ProcessTriangleAdded(CPlantLocTri*)` (0x5a3f20)
     fn process_triangle_added(this: GPtr<u8>, tri: GPtr<u8>) -> u8 = thiscall 0x5a3f20 => unported;
     /// `CPlantLocTri::Release()` (0x5db6d0)
@@ -41,6 +47,100 @@ orig! {
 const UNUSED_LOC_TRI_HEAD: usize = 0xc0_3984;
 const SURFACE_INFOS: usize = 0xb7_9538;
 const PROC_OBJ_MAN: usize = 0xbb_7cb0;
+
+/// `CPlantMgr::m_CloseLocTriListHead` (by surface slot, 0xC03988..) and `m_UnusedLocTriListHead[3]`
+/// (0xC03994, loc tris that only create objects).
+const CLOSE_LOC_TRI_HEADS: usize = 0xc0_3988;
+const OBJECTS_ONLY_HEAD: usize = 0xc0_3994;
+
+/// `CPlantLocTri::Add(const CVector& p1, const CVector& p2, const CVector& p3, uint8 surface, uint8
+/// light, bool createsPlants, bool createsObjects)` (0x5DC290, thiscall, `ret 0x1C`; spec
+/// `CPlantLocTri.deviations.md`). Stores the three points (+0, +0xC, +0x18), surface (+0x46), light
+/// (+0x47) and the flag byte +0x48 = `(objects & 1) << 1 | (old & 0xF8) | (plants & 1)`; the centre
+/// (+0x24) `((p2 + p1) + p3) * 0.33333334f` (x and y summed on the x87 stack, z through the stored
+/// f32 `p2.z + p1.z`), the radius (+0x30) `sqrt((dz² + dy²) + dx²) * 1.75f` of `centre - V1`. A loc
+/// tri that only creates objects joins the objects-only list (0xC03994) and returns `this`.
+/// Otherwise the surface properties give the densities `n_k = (u16)_ftol(area * density_k)` (+0x20,
+/// +0x48, +0x70; `area` = `GetPlantDensity` 0x5DC210 in ST0, all 80 bits); a zero total drops the
+/// plants bit (an objects tri then goes to the objects-only list, else NULL is returned); otherwise
+/// three seeds `rand() * (1/32767)` (+0x34..+0x3C, rand at 0x5DC458 / 0x5DC46E / 0x5DC484), the
+/// densities (+0x40..+0x44) and the move from the unused list to the surface slot's close list.
+/// The id passed to `GetSurfProperties` is `movzx ax, cl` pushed: EAX's upper half is that of
+/// `this + 0x24`.
+#[hook(addr = 0x5DC290, conv = thiscall, name = "CPlantLocTri::Add", expect = "83 EC 24 8B 44 24 28",
+       this = "CPlantLocTri",
+       unverified = "regconv-render-1", route = "L2", hazards = "x87-transcendental,heap-writes", recs = "grove-walk,driving",
+       note = "calls GetPlantDensity (this in EAX, 80-bit ST0) through orig! reg; three direct rand() calls (at_site)")]
+#[allow(clippy::too_many_arguments)]
+pub fn plant_loc_tri_add(
+    this: GPtr<u8>,
+    p1: GPtr<u8>,
+    p2: GPtr<u8>,
+    p3: GPtr<u8>,
+    surface: u32,
+    light: u32,
+    plants: u32,
+    objects: u32,
+) -> u32 {
+    let v = |p: GPtr<u8>| [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
+    let (a, b, c) = (v(p1), v(p2), v(p3));
+    for (i, w) in a.iter().chain(b.iter()).chain(c.iter()).enumerate() {
+        wr::<u32>(this, 4 * i as isize, *w);
+    }
+    wr::<u8>(this, 0x47, light as u8);
+    let fl = ((objects as u8 & 1) << 1) | (rd::<u8>(this, 0x48) & 0xF8) | (plants as u8 & 1);
+    wr::<u8>(this, 0x46, surface as u8);
+    wr::<u8>(this, 0x48, fl);
+    let f = |w: u32| f32::from_bits(w);
+    let sx = x(f(b[0])).fadd_m(f(a[0]));
+    let sy = x(f(b[1])).fadd_m(f(a[1]));
+    let sz = x(f(b[2])).fadd_m(f(a[2])).to_f32();
+    let cx = sx.fadd_m(f(c[0])).to_f32();
+    let cy = x(f(c[1])).fadd(sy).to_f32();
+    let cz = x(f(c[2])).fadd_m(sz).to_f32();
+    let third = k(0x3EAA_AAAB);
+    let centre = [x(cx).fmul_m(third).to_f32(), x(cy).fmul_m(third).to_f32(), x(cz).fmul_m(third).to_f32()];
+    for (i, w) in centre.iter().enumerate() {
+        wr::<f32>(this, 0x24 + 4 * i as isize, *w);
+    }
+    let dx = x(centre[0]).fsub_m(rd::<f32>(this, 0));
+    let dy = x(centre[1]).fsub_m(rd::<f32>(this, 4));
+    let dz = x(centre[2]).fsub_m(rd::<f32>(this, 8));
+    let r = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx)).fsqrt();
+    wr::<f32>(this, 0x30, r.fmul_m(k(0x3FE0_0000)).to_f32());
+    let fl = rd::<u8>(this, 0x48);
+    if fl & 2 != 0 && fl & 1 == 0 {
+        move_loc_tri_to_list(g::<u8>(UNUSED_LOC_TRI_HEAD), g::<u8>(OBJECTS_ONLY_HEAD), this);
+        return this.addr() as u32;
+    }
+    let id = ((this.addr() as u32).wrapping_add(0x24) & 0xFFFF_0000) | (surface & 0xFF);
+    let props = get_surf_properties(id);
+    let area = get_plant_density(this);
+    let n0 = ftol32(area.fmul_m(rd::<f32>(props, 0x20)));
+    let n1 = ftol32(area.fmul_m(rd::<f32>(props, 0x48)));
+    let n2 = ftol32(area.fmul_m(rd::<f32>(props, 0x70)));
+    let total = i32::from(n2 as u16) + i32::from(n1 as u16) + i32::from(n0 as u16);
+    if total <= 0 {
+        let fl = rd::<u8>(this, 0x48);
+        if fl & 2 == 0 {
+            return 0;
+        }
+        wr::<u8>(this, 0x48, fl & 0xFE);
+        move_loc_tri_to_list(g::<u8>(UNUSED_LOC_TRI_HEAD), g::<u8>(OBJECTS_ONLY_HEAD), this);
+        return this.addr() as u32;
+    }
+    let seed = |site: u32| xi(sa_core::orig::at_site(site, sa_core::crt::rand)).fmul_m(k(0x3800_0100)).to_f32();
+    wr::<f32>(this, 0x34, seed(0x5D_C45D));
+    wr::<f32>(this, 0x38, seed(0x5D_C473));
+    let s2 = seed(0x5D_C489);
+    wr::<u16>(this, 0x40, n0 as u16);
+    wr::<u16>(this, 0x42, n1 as u16);
+    wr::<u16>(this, 0x44, n2 as u16);
+    wr::<f32>(this, 0x3C, s2);
+    let slot = rd::<u16>(props, 0) as usize;
+    move_loc_tri_to_list(g::<u8>(UNUSED_LOC_TRI_HEAD), g::<u8>(CLOSE_LOC_TRI_HEADS + 4 * slot), this);
+    this.addr() as u32
+}
 
 /// `CPlantMgr::_ProcessEntryCollisionDataSections_AddLocTris(CPlantColEntEntry* entry, const CVector&
 /// centre, int32 skipMask, int32 start, int32 end)` (0x5DC8B0). Nothing without collision data. For
@@ -164,4 +264,4 @@ fn near_any(c: GPtr<u8>, v: &[[f32; 3]; 3]) -> bool {
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_ADD_LOC_TRIS];
+pub const HOOKS: &[HookReg] = &[HOOK_ADD_LOC_TRIS, HOOK_PLANT_LOC_TRI_ADD];

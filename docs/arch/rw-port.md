@@ -311,10 +311,13 @@ through named constants; no new `globals!` declarations. Verdicts: `docs/arch/rw
   0x7FB230, `RwRasterLock` 0x7FB2D0: sa-hook's callers test flags their callers because a later callee
   reaches `_alloca_probe` 0x822085, whose `push ecx` is a save (test false positive; **harness fix
   needed**, then the four `#[hook]` lines can be restored).
-- Not ported: the D3D9 raster render / clear / destroy / create / convert functions that call internal
-  helpers with register arguments (EAX/EDX/ECX/ESI: 0x4CAE40, 0x4CAE60, 0x4CAE80, 0x4CB4C0, 0x4CB4E0,
-  0x4CBB00, 0x4CCE60, 0x4CD250) and the ESI-entry functions 0x4CAEA0, 0x4CB560 (not hookable with the
-  current ABI); 0x4CC970 (jumps into the protection stub 0x4059B5); 0x7F3AA0 (tail `jmp eax`, argument
+- Not ported at the time: the D3D9 raster render / clear / destroy / create / convert functions that call
+  internal helpers with register arguments (EAX/EDX/ECX/ESI: 0x4CAE40, 0x4CAE60, 0x4CAE80, 0x4CB4C0,
+  0x4CB4E0, 0x4CBB00, 0x4CCE60, 0x4CD250) and the ESI-entry functions 0x4CAEA0, 0x4CB560. Since
+  HARNESS-5 (`conv = reg(...)`): 0x4CBB00 / 0x4CCE60 ported by STD-4, the rest by WRITER-REGCONV
+  (batch `regconv-rw-1`, with the dispatcher 0x4CAD90 and STD-4's register helpers 0x4CC5C0, 0x4CB7C0,
+  0x4CB9C0, 0x4CCD70, 0x4CB560 hooked) except `_rwD3D9RasterClearGeneric` 0x4CAEA0 (~520 instructions,
+  still called through `orig! reg("args = esi stack")`); 0x4CC970 (jumps into the protection stub 0x4059B5); 0x7F3AA0 (tail `jmp eax`, argument
   count undecidable); out of time: 0x7F40F0, 0x7FF270, 0x8001E0, 0x802AF0, 0x802FD0, 0x8035C0, 0x803FE0,
   0x80C600, 0x81E720, 0x81F360, 0x820A10.
 - Kept bugs: failed LockRect leaks the level surface (`_rwD3D9RasterLock`); the swap chain pointer is not
@@ -584,7 +587,7 @@ is covered (its page-walk loop). Unit test `push_saved_and_restored_is_not_a_rea
 | 0x7F5F70 | `D3D9System` | 23-way switch, 2 KB, 0x470-byte frame; not reached |
 | 0x7F8F20 | `_rwD3D9CameraBeginUpdate` | 2.4 KB; not reached |
 | 0x80E270 | `_rwD3D9ImmRenderPrimitiveNode` | not reached |
-| 0x7590E0 | `_rpMeshGetNextSerialNumber` | 16-bit return with the caller's upper EAX bits (`ax-al-return`); left for an `entry_eax` port |
+| 0x7590E0 | `_rpMeshGetNextSerialNumber` | 16-bit return with the caller's upper EAX bits; ported by WRITER-REGCONV (`ret = ax:entry`, batch `regconv-rw-1`) |
 | 0x75E9F0, 0x803FE0 | node getter, `RwImageSetGamma` | taken by another branch (worktree-agent-a4f0…, …a76f…) |
 
 Register-entry functions: none in these groups (no `entry_eax` / ESI ports needed).

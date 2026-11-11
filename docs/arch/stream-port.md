@@ -658,8 +658,8 @@ Conventions worth knowing for L2:
 | 0x84F2B0 | __init_g_bab358 | cdecl | `loading_screen::init_g_bab358` | spec | none | L1 (1,002,000, 0) | CRT initialiser (runs before sa-hook attaches; the store operand patched to scratch in L1) |
 | 0x84F2D0 | __init_CLoadingScreen__m_aSplashes | cdecl | `loading_screen::init_splashes` | spec | none | implemented-needs-L2 | CRT initialiser: runs before sa-hook attaches (needs a start-up record) |
 | 0x8565E0 | __dtor_CLoadingScreen__m_aSplashes | cdecl | `loading_screen::dtor_splashes` | spec | none | implemented-needs-L2 | `_atexit` callback |
-| 0x72E140 | (missed by ghidra: cat7-call) = GeometryListStreamRead1 | stream on stack, list in EBX | `rw_gta_stream::geometry_list_stream_read1` (no hook) | spec | none | ported-unhookable | register argument (EBX) |
-| 0x72E220 | FUN_0072e220 = GeometryListStreamRead2 | EBX = stream, EDI = list | `rw_gta_stream::geometry_list_stream_read2` (no hook) | spec | none | ported-unhookable | register arguments |
+| 0x72E140 | (missed by ghidra: cat7-call) = GeometryListStreamRead1 | stream on stack, list in EBX | `rw_gta_stream::geometry_list_stream_read1` (`conv = reg`, WRITER-REGCONV) | spec | none | unverified (`regconv-stream-1`) | register argument (EBX), hooked since HARNESS-5 |
+| 0x72E220 | FUN_0072e220 = GeometryListStreamRead2 | EBX = stream, EDI = list | `rw_gta_stream::geometry_list_stream_read2` (`conv = reg`, WRITER-REGCONV) | spec | none | unverified (`regconv-stream-1`) | register arguments, hooked since HARNESS-5 |
 | 0x72E570 | RpClumpGtaStreamRead1 | cdecl, AL | `rw_gta_stream::rp_clump_gta_stream_read1` | spec + bytes | none | implemented-needs-L2 | AL |
 | 0x72E620 | RpClumpGtaStreamRead2 | cdecl | `rw_gta_stream::rp_clump_gta_stream_read2` | spec + bytes | helpers 0x72E270/0x72E360 (UNK-game, register ABI) ported as private fns | implemented-needs-L2 | EAX |
 | 0x730E60 | RwTextureGtaStreamRead | cdecl | `rw_gta_stream::rw_texture_gta_stream_read` | spec + bytes | load-time average in x87 PC=24 (unsigned conversions) | implemented-needs-L2 | EAX; native texture read through RwEngineInstance+0xB0 |

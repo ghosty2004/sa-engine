@@ -23,7 +23,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpb-anim-1 | 2 | ANIM | 09ffb62 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpb-coll-1 | 1 | UNK-game | 09ffb62 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpb-core-1 | 7 | CORE | 09ffb62 | master | 0 | 0 | 0 | 7 | 0 | L3-only 7 |
-| mvpb-render-1 | 31 | RENDER | 09ffb62 | master | 0 | 0 | 0 | 31 | 0 | L2 26, L3-only 4, split 1 |
+| mvpb-render-1 | 30 | RENDER | 09ffb62 | master | 0 | 0 | 0 | 30 | 0 | L2 25, L3-only 4, split 1 |
 | mvpb-veh-1 | 6 | VEH | 09ffb62 | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
 | mvpb-veh-2 | 5 | VEH | 09ffb62 | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
 | mvpb-veh-3 | 2 | VEH | 09ffb62 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
@@ -100,53 +100,55 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpj-script-2 | 2 | SCRIPT | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | mvpj-stream-1 | 1 | STREAM | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | mvpj-world-1 | 3 | WORLD | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | split 3 |
-| mvpk-ai-1 | 3 | AI | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpk-ai-2 | 2 | AI | uncommitted | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpk-ai-3 | 6 | AI | uncommitted | worktree-agent-a77af859541ac4b2c | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| mvpk-ai-4 | 3 | UNK-game, VEH | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpk-anim-1 | 1 | ANIM | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-math-1 | 2 | MATH, UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpk-render-1 | 1 | RENDER | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-script-1 | 1 | SCRIPT | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-script-2 | 3 | SCRIPT | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpk-stream-1 | 1 | STREAM | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-veh-1 | 1 | VEH | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-world-1 | 1 | WORLD | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-world-2 | 2 | WORLD | uncommitted | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpk-world-3 | 1 | WORLD | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-ai-1 | 3 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpl-ai-2 | 1 | AI | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-ai-3 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-anim-1 | 1 | ANIM | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-anim-2 | 1 | ANIM | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | split 1 |
-| mvpl-audio-1 | 1 | AUDIO | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-audio-2 | 21 | AUDIO | uncommitted | worktree-agent-a77af859541ac4b2c | 21 | 0 | 0 | 0 | 0 | L2 5, split 16 |
-| mvpl-fx-1 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-ped-1 | 1 | PED | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-render-1 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-script-1 | 4 | SCRIPT | uncommitted | worktree-agent-a77af859541ac4b2c | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
-| mvpl-stream-1 | 3 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpl-world-1 | 3 | RENDER, UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpm-ai-1 | 2 | AI, PED | uncommitted | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpm-ai-2 | 1 | AI | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-ai-3 | 1 | AI | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-anim-1 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-anim-2 | 3 | ANIM | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpm-coll-1 | 1 | COLL | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-ped-1 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-1 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-2 | 1 | CALLED-ONLY | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-3 | 2 | RENDER | uncommitted | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpm-render-4 | 1 | RENDER | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-5 | 3 | RENDER | uncommitted | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpm-render-6 | 1 | RENDER | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-script-1 | 2 | SCRIPT | uncommitted | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpm-world-1 | 1 | UNK-game | uncommitted | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-ai-1 | 3 | AI | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpk-ai-2 | 2 | AI | 69c799f | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpk-ai-3 | 6 | AI | 69c799f | worktree-agent-a77af859541ac4b2c | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpk-ai-4 | 3 | UNK-game, VEH | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpk-anim-1 | 1 | ANIM | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-math-1 | 2 | MATH, UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpk-render-1 | 1 | RENDER | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-script-1 | 1 | SCRIPT | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-script-2 | 3 | SCRIPT | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpk-stream-1 | 1 | STREAM | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-veh-1 | 1 | VEH | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-world-1 | 1 | WORLD | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-world-2 | 2 | WORLD | 69c799f | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpk-world-3 | 1 | WORLD | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-ai-1 | 3 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpl-ai-2 | 1 | AI | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-ai-3 | 1 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-anim-1 | 1 | ANIM | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-anim-2 | 1 | ANIM | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvpl-audio-1 | 1 | AUDIO | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-audio-2 | 21 | AUDIO | 69c799f | worktree-agent-a77af859541ac4b2c | 21 | 0 | 0 | 0 | 0 | L2 5, split 16 |
+| mvpl-fx-1 | 1 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-ped-1 | 1 | PED | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-render-1 | 1 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-script-1 | 4 | SCRIPT | 69c799f | worktree-agent-a77af859541ac4b2c | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
+| mvpl-stream-1 | 3 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpl-world-1 | 3 | RENDER, UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpm-ai-1 | 2 | AI, PED | 69c799f | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpm-ai-2 | 1 | AI | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-ai-3 | 1 | AI | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-anim-2 | 3 | ANIM | 69c799f | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpm-coll-1 | 1 | COLL | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-ped-1 | 1 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-render-1 | 1 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-render-2 | 1 | CALLED-ONLY | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-render-5 | 2 | RENDER | 69c799f | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpm-render-6 | 1 | RENDER | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-script-1 | 2 | SCRIPT | 69c799f | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpm-world-1 | 1 | UNK-game | 69c799f | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | popw4-drive-1 | 9 | POP | 09ffb62 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
 | popw4-frame-1 | 2 | POP | 09ffb62 | master | 2 | 0 | 0 | 0 | 0 | L2 1, split 1 |
 | popw4-gang-1 | 11 | POP | 09ffb62 | master | 11 | 0 | 0 | 0 | 0 | L2 7, split 4 |
 | popw4-partial-1 | 4 | POP | 09ffb62 | master | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
 | popw4-pop-1 | 6 | POP | 09ffb62 | master | 6 | 0 | 0 | 0 | 0 | split 6 |
+| regconv-anim-1 | 1 | UNK-game | aab4ae3 | worktree-agent-a77af859541ac4b2c | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| regconv-ped-1 | 3 | PED, UNK-game | aab4ae3 | worktree-agent-a77af859541ac4b2c | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| regconv-render-1 | 7 | RENDER | aab4ae3 | worktree-agent-a77af859541ac4b2c | 6 | 0 | 0 | 1 | 0 | L2 7 |
+| regconv-rw-1 | 13 | RW, UNK-game | aab4ae3 | worktree-agent-a77af859541ac4b2c | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| regconv-stream-1 | 2 | STREAM | aab4ae3 | worktree-agent-a77af859541ac4b2c | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | renderbig-1 | 4 | RENDER | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | renderbig-2 | 2 | RENDER | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | renderbig-3 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -598,7 +600,7 @@ SA_UNVERIFIED=mvpb-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-core-1 $SA_
 
 ## mvpb-render-1
 
-31 hooks in sa-render; hazards: entry-protection-read (1), heap-writes (8), x87-transcendental (5); recordings calling them: driving (1), grove-walk (15), pause-restart (31).
+30 hooks in sa-render; hazards: entry-protection-read (1), heap-writes (8), x87-transcendental (4); recordings calling them: driving (1), grove-walk (15), pause-restart (30).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -622,7 +624,6 @@ SA_UNVERIFIED=mvpb-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpb-render-1 
 | 0x5DB6D0 | `CPlantLocTri::Release` | L3-batch | L2 | heap-writes |
 | 0x5DB7D0 | `CPlantColEntEntry::AddEntry` | L3-batch | L2 | heap-writes |
 | 0x5DB8A0 | `CPlantColEntEntry::ReleaseEntry` | L3-batch | L2 | heap-writes |
-| 0x5DC210 | `CPlantLocTri::GetPlantDensity` | L3-batch | L2 | x87-transcendental |
 | 0x5DCFA0 | `CPlantMgr::Update` | L3-batch | L3-only | none |
 | 0x6FABF0 | `CRegisteredCorona::Update` | L3-batch | L2 | none |
 | 0x6FADF0 | `CCoronas::Update` | L3-batch | L3-only | none |
@@ -2613,21 +2614,6 @@ SA_UNVERIFIED=mvpm-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-ai-3 $SA_ROOT
 |---|---|---|---|---|
 | 0x5FD330 | `CPedGroupPlacer::PlaceRandomGroup` | written | L2 | x87-transcendental,ax-al-return,heap-writes,stack-residue |
 
-## mvpm-anim-1
-
-1 hooks in sa-anim; hazards: none; recordings calling them: grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpm-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpm-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpm-anim-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x4D2E10 | `FrameUpdateCallBackOffscreen` | written | L2 | none |
-
 ## mvpm-anim-2
 
 3 hooks in sa-anim; hazards: heap-writes (2), uninit-locals (1); recordings calling them: grove-walk (3), pause-restart (3).
@@ -2705,40 +2691,9 @@ SA_UNVERIFIED=mvpm-render-2 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-render-2 
 |---|---|---|---|---|
 | 0x72CAE0 | `CWorldScan::ScanWorld` | written | L2 | none |
 
-## mvpm-render-3
-
-2 hooks in sa-render; hazards: ax-al-return (1), heap-writes (2); recordings calling them: grove-walk (2), pause-restart (2).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpm-render-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpm-render-3 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-render-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpm-render-3
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x5DC290 | `CPlantLocTri::Add` | written | L2 | heap-writes |
-| 0x5DC510 | `CPlantMgr::_ColEntityCache_Update` | written | L2 | ax-al-return,heap-writes |
-
-## mvpm-render-4
-
-1 hooks in sa-render; hazards: heap-writes (1), uninit-locals (1); recordings calling them: driving (1), grove-walk (1), pause-restart (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh mvpm-render-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=mvpm-render-4 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-render-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag mvpm-render-4
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x70A040 | `CShadows::CastShadowEntityXYZ` | written | L2 | uninit-locals,heap-writes |
-
 ## mvpm-render-5
 
-3 hooks in sa-render; hazards: ax-al-return (3), heap-writes (3); recordings calling them: driving (2), grove-walk (3), pause-restart (3).
+2 hooks in sa-render; hazards: ax-al-return (2), heap-writes (2); recordings calling them: driving (1), grove-walk (2), pause-restart (2).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -2751,7 +2706,6 @@ SA_UNVERIFIED=mvpm-render-5 LANE=$LANE tools/e2e/port-l2.sh batch:mvpm-render-5 
 |---|---|---|---|---|
 | 0x70FAE0 | `CStencilShadows::RenderForVehicle` | written | L2 | ax-al-return,heap-writes |
 | 0x710310 | `CStencilShadows::RenderForObject` | written | L2 | ax-al-return,heap-writes |
-| 0x711760 | `CStencilShadows::RegisterStencilShadows` | written | L2 | ax-al-return,heap-writes |
 
 ## mvpm-render-6
 
@@ -2900,6 +2854,102 @@ SA_UNVERIFIED=popw4-pop-1 LANE=$LANE tools/e2e/port-l2.sh batch:popw4-pop-1 $SA_
 | 0x6133F0 | `CPopulation::CreateWaitingCoppers` | written | split | heap-writes,x87-transcendental,stack-residue |
 | 0x613D60 | `CPopulation::PlaceCouple` | written | split | heap-writes,x87-transcendental |
 | 0x616470 | `CPopulation::PopulateInterior` | written | split | heap-writes,uninit-locals,stack-residue |
+
+## regconv-anim-1
+
+1 hooks in sa-anim; hazards: heap-writes (1); recordings calling them: grove-walk (1), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh regconv-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=regconv-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag regconv-anim-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D2E10 | `FrameUpdateCallBackOffscreen` | written | L2 | heap-writes |
+
+## regconv-ped-1
+
+3 hooks in sa-ped; hazards: heap-writes (2); recordings calling them: grove-walk (2), pause-restart (2), police-gang (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh regconv-ped-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=regconv-ped-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-ped-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag regconv-ped-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x561FF0 | `FUN_00561ff0` | written | L2 | none |
+| 0x5E3630 | `FUN_005e3630` | written | L2 | heap-writes |
+| 0x5E37C0 | `FUN_005e37c0` | written | L2 | heap-writes |
+
+## regconv-render-1
+
+7 hooks in sa-core, sa-render; hazards: heap-writes (6), stack-residue (2), x87-transcendental (2); recordings calling them: driving (5), grove-walk (7), new-game (2), pause-restart (7).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh regconv-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=regconv-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag regconv-render-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x5DC210 | `CPlantLocTri::GetPlantDensity` | L3-batch | L2 | x87-transcendental |
+| 0x5DC290 | `CPlantLocTri::Add` | written | L2 | x87-transcendental,heap-writes |
+| 0x5DC510 | `CPlantMgr::_ColEntityCache_Update` | written | L2 | heap-writes,stack-residue |
+| 0x5DD1E0 | `GeometrySetPrelitConstantColor` | written | L2 | heap-writes |
+| 0x5DD220 | `CPlantMgr::LoadModels` | written | L2 | heap-writes |
+| 0x70A040 | `CShadows::CastShadowEntityXYZ` | written | L2 | heap-writes |
+| 0x711760 | `CStencilShadows::RegisterStencilShadows` | written | L2 | heap-writes,stack-residue |
+
+## regconv-rw-1
+
+13 hooks in sa-rwcore; hazards: ax-al-return (1), heap-writes (8); recordings calling them: boot (13), grove-walk (4), menus-hud (6), pause-restart (7).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh regconv-rw-1 $SA_ROOT/target/e2e/corpus/boot.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=regconv-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-rw-1 $SA_ROOT/target/e2e/corpus/boot.sarec --runs "plain l2 rust" --tag regconv-rw-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4CAD90 | `FUN_004cad90` | written | L2 | none |
+| 0x4CAE40 | `_rwD3D9RasterRender` | written | L2 | none |
+| 0x4CAE60 | `_rwD3D9RasterRenderFast` | written | L2 | none |
+| 0x4CAE80 | `_rwD3D9RasterRenderScaled` | written | L2 | none |
+| 0x4CB4C0 | `_rwD3D9RasterClearRect` | written | L2 | heap-writes |
+| 0x4CB4E0 | `_rwD3D9RasterClear` | written | L2 | heap-writes |
+| 0x4CB560 | `_rxD3D9VideoMemoryRasterListRemove` | written | L2 | heap-writes |
+| 0x4CB7C0 | `FUN_004cb7c0` | written | L2 | heap-writes |
+| 0x4CB9C0 | `FUN_004cb9c0` | written | L2 | heap-writes |
+| 0x4CC5C0 | `FUN_004cc5c0` | written | L2 | heap-writes |
+| 0x4CCD70 | `FUN_004ccd70` | written | L2 | heap-writes |
+| 0x4CD250 | `_rwD3D9RasterConvertToNonPalettized` | written | L2 | heap-writes |
+| 0x7590E0 | `_rpMeshGetNextSerialNumber` | written | L2 | ax-al-return |
+
+## regconv-stream-1
+
+2 hooks in sa-stream; hazards: heap-writes (2); recordings calling them: boot (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh regconv-stream-1 $SA_ROOT/target/e2e/corpus/boot.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=regconv-stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:regconv-stream-1 $SA_ROOT/target/e2e/corpus/boot.sarec --runs "plain l2 rust" --tag regconv-stream-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x72E140 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
+| 0x72E220 | `FUN_0072e220` | written | L2 | heap-writes |
 
 ## renderbig-1
 

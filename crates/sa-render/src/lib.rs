@@ -20,6 +20,7 @@ pub use sa_core::hook;
 pub mod common;
 pub mod hooks;
 pub mod harness5;
+pub mod cast_shadow_entity;
 
 pub mod bullettraces;
 pub mod clouds;
@@ -43,6 +44,7 @@ pub mod carplates;
 pub mod glass;
 pub mod markers;
 pub mod stencilshadows;
+pub mod stencil_register;
 pub mod timecycle;
 pub mod waterlevel;
 
@@ -105,9 +107,6 @@ pub mod render_tail_leaves;
 pub mod short_leaf_natives;
 pub mod list_item_dtor;
 pub mod world_scan;
-pub mod plant_loc_tri_add;
 pub mod plant_col_entity_cache;
-pub mod shadow_cast_entity_xyz;
 pub mod stencil_shadow_volumes;
-pub mod stencil_shadow_register;
 pub mod roadsign_text_raster;

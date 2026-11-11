@@ -187,8 +187,18 @@ orig! {
     pub fn rw_texture_gta_stream_read_call(stream: GPtr<u8>) -> GPtr<u8> = cdecl 0x730E60 => rw_texture_gta_stream_read;
 }
 
-/// `GeometryListStreamRead1` (0x72E140; list in EBX, stream on the stack): reads the count and the
-/// first half (`n / 2`, truncating) of the geometries. Not hookable (register argument).
+orig! {
+    /// `GeometryListStreamRead1` (0x72E140): stream on the stack (caller pops), list in EBX
+    fn geometry_list_stream_read1_call(stream: GPtr<u8>, list: GPtr<PtrList>) -> GPtr<PtrList> = reg("args = stack ebx") 0x72E140 => geometry_list_stream_read1;
+    /// `GeometryListStreamRead2` (0x72E220): stream in EBX, list in EDI
+    fn geometry_list_stream_read2_call(stream: GPtr<u8>, list: GPtr<PtrList>) -> GPtr<PtrList> = reg("args = ebx edi") 0x72E220 => geometry_list_stream_read2;
+}
+
+/// `GeometryListStreamRead1` (0x72E140; list in EBX, stream on the stack, caller pops; returns the
+/// list or NULL in EAX): reads the count and the first half (`n / 2`, truncating) of the geometries.
+#[hook(addr = 0x72E140, conv = reg("args = stack ebx"), name = "(missed by ghidra: cat7-call)", expect = "83 EC 0C 55 8B 6C 24 14",
+       unverified = "regconv-stream-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention stack + EBX (HARNESS-5; was an unhooked plain function)")]
 pub fn geometry_list_stream_read1(stream: GPtr<u8>, list: GPtr<PtrList>) -> GPtr<PtrList> {
     NUMBER_GEOMETRYS.set(0);
     let mut lv = [0u32; 2];
@@ -229,8 +239,11 @@ pub fn geometry_list_stream_read1(stream: GPtr<u8>, list: GPtr<PtrList>) -> GPtr
     list
 }
 
-/// `GeometryListStreamRead2` (0x72E220; stream in EBX, list in EDI): the geometries from
-/// `numberGeometrys` (read once) to `numGeoms` (re-read). Not hookable (register arguments).
+/// `GeometryListStreamRead2` (0x72E220; stream in EBX, list in EDI; returns the list or NULL in EAX):
+/// the geometries from `numberGeometrys` (read once) to `numGeoms` (re-read).
+#[hook(addr = 0x72E220, conv = reg("args = ebx edi"), name = "FUN_0072e220", expect = "51 8B 47 04 56",
+       unverified = "regconv-stream-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention EBX/EDI (HARNESS-5; was an unhooked plain function)")]
 pub fn geometry_list_stream_read2(stream: GPtr<u8>, list: GPtr<PtrList>) -> GPtr<PtrList> {
     let mut ver = 0u32;
     let mut i = NUMBER_GEOMETRYS.get();
@@ -330,7 +343,7 @@ pub fn rp_clump_gta_stream_read1(stream: GPtr<u8>) -> u8 {
         return 0;
     }
     if rw_stream_find_chunk(stream, RW_ID_GEOMETRYLIST, GPtr::NULL, lvp.wrapping_index(1)) != 0
-        && !geometry_list_stream_read1(stream, GEOM_LIST.ptr()).is_null()
+        && !geometry_list_stream_read1_call(stream, GEOM_LIST.ptr()).is_null()
     {
         CLUMP_STREAM_POSITION.set(stream_pos(stream));
         return 1;
@@ -354,7 +367,7 @@ pub fn rp_clump_gta_stream_read2(stream: GPtr<u8>) -> GPtr<u8> {
         rp_clump_destroy(clump);
         GPtr::NULL
     };
-    if geometry_list_stream_read2(stream, GEOM_LIST.ptr()).is_null() {
+    if geometry_list_stream_read2_call(stream, GEOM_LIST.ptr()).is_null() {
         return fail(clump);
     }
     // RpClumpSetFrame as a raw store of frames[0] into clump->object.parent
@@ -497,6 +510,8 @@ pub fn rw_tex_dictionary_gta_stream_read2(stream: GPtr<u8>, dict: GPtr<u8>) -> G
 
 /// Every `#[hook]` of this module, in source order.
 pub const HOOKS: &[sa_core::abi::HookReg] = &[
+    HOOK_GEOMETRY_LIST_STREAM_READ1,
+    HOOK_GEOMETRY_LIST_STREAM_READ2,
     HOOK_RP_CLUMP_GTA_STREAM_READ1,
     HOOK_RP_CLUMP_GTA_STREAM_READ2,
     HOOK_RW_TEXTURE_GTA_STREAM_READ,

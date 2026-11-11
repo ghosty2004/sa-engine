@@ -4,9 +4,10 @@
 //! (0x4CB560) and the palette index release (0x4CB730), and the protected auto-mipmap format check
 //! (0x4CBF80). Ported from the 1.0 US bytes; they replace sa-game's `rw_standin.rs` stand-ins.
 //!
-//! Register arguments: the helpers are plain Rust functions called directly by the ports here; for
-//! phase B they are registered with `#[native]`, their register arguments modelled as cdecl
-//! arguments (every phase B caller is Rust).
+//! Register arguments: the helpers are hooked with `conv = reg(...)` (HARNESS-5, `sa_core::regconv`)
+//! and called directly by the ports here; `thunk_FUN_0040a288` (0x4CB730, an entry that is a
+//! `nop; jmp` into a protection stub) stays a phase B `#[native]` (its register argument modelled as
+//! a cdecl argument).
 //!
 //! Raster fields: +0 parent, +4 pixels, +8 palette, +0xC width, +0x10 height, +0x14 depth, +0x18
 //! stride, +0x20 type, +0x21 flags, +0x23 format byte, +0x28 / +0x2C original size. Extension
@@ -150,7 +151,9 @@ pub fn check_auto_mipmap_texture_format(f: u32) -> u32 {
 /// back buffer's RW format (an explicit one must equal it), the mode depth. Camera texture: 565 at
 /// 16 bits, else 888 when valid (else 565); an explicit one must pass the camera-texture check;
 /// auto-mipmap through 0x4CBFD0. Other types: 0.
-#[sa_core::native(addr = 0x4CC5C0, conv = cdecl, name = "FUN_004cc5c0")]
+#[hook(addr = 0x4CC5C0, conv = reg("args = eax edi"), name = "FUN_004cc5c0", expect = "53 8B D8 8A C3",
+       unverified = "regconv-rw-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention, EAX = flags, EDI = raster -> EAX (HARNESS-5; was a phase B #[native])")]
 pub fn check_raster_format(flags: u32, r: GPtr<u8>) -> u32 {
     let ty = flags & 7;
     wr::<u8>(r, 0x20, ty as u8);
@@ -273,7 +276,9 @@ pub fn check_raster_format(flags: u32, r: GPtr<u8>) -> u32 {
 /// `D3DResourceSystem::CreateTexture(w, h, levels, format)`; levels = 1 without MIPMAP, else 0. A
 /// failure frees the palette (index released) and returns 0; a palettised success joins the
 /// video-memory list.
-#[sa_core::native(addr = 0x4CB7C0, conv = cdecl, name = "FUN_004cb7c0")]
+#[hook(addr = 0x4CB7C0, conv = reg("args = stack edi"), name = "FUN_004cb7c0", expect = "8B 4C 24 04 33 C0",
+       unverified = "regconv-rw-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention, raster on the stack (caller pops), EDI = extension (HARNESS-5; was a phase B #[native])")]
 pub fn create_texture_raster(r: GPtr<u8>, e: GPtr<u8>) -> u32 {
     let fmt = (rd::<u8>(r, 0x23) as u32) << 8;
     if fmt & 0x6000 == 0 {
@@ -341,7 +346,9 @@ pub fn create_texture_raster(r: GPtr<u8>, e: GPtr<u8>) -> u32 {
 /// Out of video memory fails; another failure retries in the back buffer's format without
 /// RENDERTARGET (the extension keeps the first format) and on success takes that format's RW
 /// format byte and the mode depth.
-#[sa_core::native(addr = 0x4CB9C0, conv = cdecl, name = "FUN_004cb9c0")]
+#[hook(addr = 0x4CB9C0, conv = reg("args = stack esi"), name = "FUN_004cb9c0", expect = "8B 4C 24 04 33 C0",
+       unverified = "regconv-rw-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention, raster on the stack (caller pops), ESI = extension (HARNESS-5; was a phase B #[native])")]
 pub fn create_camera_texture_raster(r: GPtr<u8>, e: GPtr<u8>) -> u32 {
     let fmt = (rd::<u8>(r, 0x23) as u32) << 8;
     if fmt & 0x6000 != 0 {
@@ -382,7 +389,9 @@ pub fn create_camera_texture_raster(r: GPtr<u8>, e: GPtr<u8>) -> u32 {
 /// alpha 0. A raster of the window's client size uses the device's depth surface (0xC97C2C, no
 /// reference added); otherwise `EvictManagedResources` and `CreateDepthStencilSurface(w, h, format,
 /// the present parameters' multisampling, no discard)`. 0 on failure.
-#[sa_core::native(addr = 0x4CCD70, conv = cdecl, name = "FUN_004ccd70")]
+#[hook(addr = 0x4CCD70, conv = reg("args = edi esi"), name = "FUN_004ccd70", expect = "A1 FC BE C9 00",
+       unverified = "regconv-rw-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention, EDI = raster, ESI = extension (HARNESS-5; was a phase B #[native])")]
 pub fn create_zbuffer_raster(r: GPtr<u8>, e: GPtr<u8>) -> u32 {
     match u(Z_DEPTH) {
         16 => wr::<u32>(e, 0x18, if valid_zbuffer(0x49) != 0 { 0x49 } else { 0x50 }),
@@ -514,7 +523,9 @@ pub fn raster_create(_out: u32, r: GPtr<u8>, flags: u32) -> u32 {
 
 /// `_rxD3D9VideoMemoryRasterListRemove()` (0x4CB560; ESI = raster): unlinks the raster's node from
 /// the video-memory list and frees it (nothing when absent).
-#[sa_core::native(addr = 0x4CB560, conv = cdecl, name = "_rxD3D9VideoMemoryRasterListRemove")]
+#[hook(addr = 0x4CB560, conv = reg("args = esi"), name = "_rxD3D9VideoMemoryRasterListRemove", expect = "8B 15 FC E9 B4 00",
+       unverified = "regconv-rw-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "register convention, ESI = raster; mov edi, edi at 0x4CB56E is an alignment no-op (HARNESS-5; was a phase B #[native])")]
 pub fn vm_list_remove(r: GPtr<u8>) {
     let head = u(VM_LIST);
     let mut prev: u32 = 0;
@@ -645,6 +656,68 @@ orig! {
     fn dev_set_palette_entries(d: GPtr<u8>, index: u32, entries: GPtr<u8>) -> i32 = stdcall vslot 0x11C => unported;
     /// `IDirect3DSwapChain9::GetBackBuffer(index, type, out)` (+0x14)
     fn swap_chain_get_back_buffer(sc: GPtr<u8>, index: u32, ty: u32, out: GPtr<u8>) -> i32 = stdcall vslot 0x14 => unported;
+}
+
+orig! {
+    /// `FUN_004cc0c0` (0x4CC0C0, proposed `_rwD3D9CheckValidFormatForRasterType`): EAX = cube flag,
+    /// ECX = raster type, EDX = `D3DFORMAT`; non-zero when the device takes the format for the type
+    fn check_format_for_type(cube: u32, ty: u32, f: u32) -> u32 = reg("args = eax ecx edx") 0x4CC0C0 => unported;
+    /// `RwImageCreate(width, height, depth)` (0x8026E0)
+    fn image_create(w: i32, h: i32, depth: i32) -> GPtr<u8> = cdecl 0x8026E0 => crate::image::rw_image_create;
+    /// `RwImageAllocatePixels(image)` (0x8027A0)
+    fn image_allocate_pixels(img: GPtr<u8>) -> GPtr<u8> = cdecl 0x8027A0 => crate::image::rw_image_allocate_pixels;
+    /// `RwImageDestroy(image)` (0x802740)
+    fn image_destroy(img: GPtr<u8>) -> u32 = cdecl 0x802740 => crate::image::rw_image_destroy;
+    /// `_rwD3D9ImageGetRaster(image, raster, flags)` (0x7FF270)
+    fn image_get_raster(img: GPtr<u8>, r: GPtr<u8>, flags: u32) -> u32 = cdecl 0x7FF270 => crate::image2::d3d9_image_get_raster;
+    /// `_rwD3D9RasterSetImage(raster, image, flags)` (0x8001E0)
+    fn raster_set_image(r: GPtr<u8>, img: GPtr<u8>, flags: u32) -> u32 = cdecl 0x8001E0 => crate::image2::d3d9_raster_set_image;
+    /// `_rwD3D9RasterDestroy(out, raster, n)` (0x4CBB00)
+    fn raster_destroy_call(out: u32, r: GPtr<u8>, n: u32) -> u32 = cdecl 0x4CBB00 => raster_destroy;
+    /// `_rwD3D9RasterCreate(out, raster, flags)` (0x4CCE60)
+    fn raster_create_call(out: u32, r: GPtr<u8>, flags: u32) -> u32 = cdecl 0x4CCE60 => raster_create;
+}
+
+/// `_rwD3D9RasterConvertToNonPalettized(raster)` (0x4CD250): the raster's top-level pixels go into a
+/// new 32-bit image (`RwImageCreate(width, height, 32)`, NULL -> nothing; `RwImageAllocatePixels`,
+/// `_rwD3D9ImageGetRaster(image, raster->parent, 0)`), then the raster is destroyed and re-created
+/// as `(type & 7) | format | MIPMAP | AUTOMIPMAP` (0x9000; the create's result is ignored) and gets
+/// the image back (`_rwD3D9RasterSetImage`), and the image is destroyed. Format (checked with
+/// 0x4CC0C0 for the extension's cube flag and the type): with the extension's alpha byte, 8888
+/// (0x500) when the mode is deeper than 16 bits and A8R8G8B8 (0x15) is valid, else 4444 (0x300)
+/// when A4R4G4B4 (0x1A) is valid, else 1555 (0x100); without alpha, 888 (0x600) when deeper than
+/// 16 bits and X8R8G8B8 (0x16) is valid, else 565 (0x200).
+#[hook(addr = 0x4CD250, conv = cdecl, name = "_rwD3D9RasterConvertToNonPalettized", expect = "53 57 8B 7C 24 0C",
+       unverified = "regconv-rw-1", route = "L2", hazards = "heap-writes", recs = "boot",
+       note = "calls the register-convention format check 0x4CC0C0 (EAX/ECX/EDX)")]
+pub fn raster_convert_to_non_palettized(r: GPtr<u8>) {
+    let img = image_create(rd::<i32>(r, 0xC), rd::<i32>(r, 0x10), 0x20);
+    if img.is_null() {
+        return;
+    }
+    let e = ext_of(r);
+    image_allocate_pixels(img);
+    image_get_raster(img, p8(rd::<u32>(r, 0)), 0);
+    let cube = || u32::from(rd::<u8>(e, 9) & 0xF);
+    let ty = || u32::from(rd::<u8>(r, 0x20));
+    let deep = u(MODE_DEPTH) as i32 > 16;
+    let fmt = if rd::<u8>(e, 8) != 0 {
+        if deep && check_format_for_type(cube(), ty(), 0x15) != 0 {
+            0x500
+        } else if check_format_for_type(cube(), ty(), 0x1A) != 0 {
+            0x300
+        } else {
+            0x100
+        }
+    } else if deep {
+        if check_format_for_type(cube(), ty(), 0x16) != 0 { 0x600 } else { 0x200 }
+    } else {
+        0x200
+    };
+    raster_destroy_call(0, r, 0);
+    raster_create_call(0, r, (u32::from(rd::<u8>(r, 0x20)) & 7) | fmt | 0x9000);
+    raster_set_image(r, img, 0);
+    image_destroy(img);
 }
 
 /// `_rxD3D9VideoMemoryRasterListRestore()` (0x4CC970; the list head 0xB4E9FC is loaded behind a
@@ -789,6 +862,12 @@ pub fn vm_list_restore() -> u32 {
 
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_RASTER_CONVERT_TO_NON_PALETTIZED,
+    HOOK_CHECK_RASTER_FORMAT,
+    HOOK_CREATE_TEXTURE_RASTER,
+    HOOK_CREATE_CAMERA_TEXTURE_RASTER,
+    HOOK_CREATE_ZBUFFER_RASTER,
+    HOOK_VM_LIST_REMOVE,
     HOOK_CHECK_AUTO_MIPMAP_TEXTURE_FORMAT,
     HOOK_RASTER_CREATE,
     HOOK_RASTER_DESTROY,
@@ -797,11 +876,6 @@ pub const HOOKS: &[HookReg] = &[
 
 /// Every `#[native]` of this module.
 pub const NATIVES: &[NativeReg] = &[
-    NATIVE_CHECK_RASTER_FORMAT,
-    NATIVE_CREATE_TEXTURE_RASTER,
-    NATIVE_CREATE_CAMERA_TEXTURE_RASTER,
-    NATIVE_CREATE_ZBUFFER_RASTER,
-    NATIVE_VM_LIST_REMOVE,
     NATIVE_PALETTE_INDEX_FREE,
 ];
 

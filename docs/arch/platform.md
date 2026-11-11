@@ -479,9 +479,10 @@ The `rw_standin.rs` driver stand-ins are replaced by ports of the 1.0 US bytes (
   `_rwD3D9StandardFuncNotImplemented` 0x7F7530 is `#[native]` (3 bytes).
 * sa-rwcore `d3d9rast.rs` (`std4-d3d9-2`): `_rwD3D9RasterCreate` 0x4CCE60, `_rwD3D9RasterDestroy`
   0x4CBB00, `_rxD3D9VideoMemoryRasterListRestore` 0x4CC970, the protected auto-mipmap check
-  0x4CBF80; `#[native]` (register arguments, modelled as cdecl arguments; every phase B caller is
-  Rust): the format check 0x4CC5C0, texture 0x4CB7C0, camera texture 0x4CB9C0, Z buffer 0x4CCD70,
-  `_rxD3D9VideoMemoryRasterListRemove` 0x4CB560, the palette index release 0x4CB730.
+  0x4CBF80; `#[native]` (a register argument, modelled as a cdecl argument): the palette index
+  release 0x4CB730. The format check 0x4CC5C0, texture 0x4CB7C0, camera texture 0x4CB9C0, Z buffer
+  0x4CCD70 and `_rxD3D9VideoMemoryRasterListRemove` 0x4CB560 were `#[native]` too; since WRITER-REGCONV
+  they are `#[hook(conv = reg(...))]` (batch `regconv-rw-1`; phase B entry as for every hook).
 * sa-rwcore `d3d9cam.rs` (`std4-d3d9-2`): `_rwD3D9CameraBeginUpdate` 0x7F8F20,
   `_rwD3D9CameraClear` 0x7F7730, `_rwD3D9RasterShowRaster` 0x7F99B0 (the device reset paths share
   the existing post-reset sequence).
