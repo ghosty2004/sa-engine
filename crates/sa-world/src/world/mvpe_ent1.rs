@@ -179,7 +179,8 @@ fn create_enex(this: GPtr<u8>, eff: GPtr<u8>) {
         if rd::<u8>(eff, 0x38) > off && g::<u8>(0xB70153).read() < off {
             h = h.wrapping_sub(1);
         }
-        srand(h.wrapping_add(this.addr() as u32));
+        let seed = h.wrapping_add(this.addr() as u32);
+        sa_core::orig::at_site(0x53_39F5, || srand(seed));
     }
     let h1 = get_heading(this);
     let h2 = get_heading(this);
