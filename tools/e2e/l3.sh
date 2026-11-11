@@ -103,6 +103,7 @@ probe_main() {
     done
     wineserver -k 2> /dev/null || true
     wait "$pid" 2> /dev/null
+    e2e_saves_collect "$out"
     cp -f "$GTA_DIR/sa-hook.log" "$out.log" 2> /dev/null
     printf '%s\n' "$last" > "$out.det"
     [ -f "$DET/$name.trace" ] && mv -f "$DET/$name.trace" "$out"

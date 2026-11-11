@@ -17,6 +17,12 @@
 //! square triangle cross circle l3 r3 walk` (optionally `=value`, default 255); `mouse=DX,DY`, `lmb`,
 //! `rmb`; `key=NAME` with NAME in `enter extenter space esc tab lalt f1..f12` or `std:0xNN`
 //! (`CKeyboardState::standardKeys[NN]`).
+//!
+//! Harness pokes: `poke=0xADDR:0xVV` writes the byte VV to game address ADDR once, at the frame boundary of
+//! the line's first frame (before that frame's `CTimer::Update`, after its state hash). It reproduces a
+//! state change no pad input can reach in the corpus' start state, e.g. `poke=0xBA67A7:1`, the request
+//! byte the script command ACTIVATE_SAVE_MENU (03D8) sets at a save point (SAVE-1 `save-load`). The pokes
+//! are stored in the recording header (`pokes`), so every replay applies them at the same boundary.
 
 use crate::pad::{PadInput, ctrl, key, mouse};
 
@@ -26,6 +32,7 @@ enum Action {
     Key(usize, i16),
     Mouse(f32, f32),
     MouseButton(usize),
+    Poke(u32, u8),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -120,6 +127,19 @@ fn action(tok: &str) -> Result<Option<Action>, String> {
         "lmb" => Action::MouseButton(mouse::LMB),
         "rmb" => Action::MouseButton(mouse::RMB),
         "key" => Action::Key(key_offset(val.ok_or("key needs a name")?)?, 255),
+        "poke" => {
+            let v = val.ok_or("poke needs 0xADDR:0xVV")?;
+            let (a, b) = v.split_once(':').ok_or("poke needs 0xADDR:0xVV")?;
+            let hex = |t: &str, what: &str| -> Result<u32, String> {
+                let t = t.strip_prefix("0x").ok_or(format!("{what} must be 0x hex"))?;
+                u32::from_str_radix(t, 16).map_err(|_| format!("bad {what} {t:?}"))
+            };
+            let byte = hex(b, "poke value")?;
+            if byte > 0xFF {
+                return Err(format!("poke value {b:?} is not a byte"));
+            }
+            Action::Poke(hex(a, "poke address")?, byte as u8)
+        }
         b => match button(b) {
             Some(off) => Action::Ctrl(off, val.map(|v| num(v, b)).transpose()?.unwrap_or(255)),
             None => return Err(format!("unknown action {tok:?}")),
@@ -186,6 +206,19 @@ impl Program {
         })
     }
 
+    /// The harness pokes `(frame, address, byte)` in program order (each at its line's first frame).
+    pub fn pokes(&self) -> Vec<(u32, u32, u8)> {
+        let mut v = Vec::new();
+        for l in &self.lines {
+            for a in &l.actions {
+                if let Action::Poke(addr, b) = *a {
+                    v.push((l.from, addr, b));
+                }
+            }
+        }
+        v
+    }
+
     /// The input of tick `tick` (0-based count of ticks so far) running at frame boundary `frame`.
     pub fn input(&self, frame: u32, tick: u32) -> PadInput {
         let mut p = PadInput::default();
@@ -199,11 +232,38 @@ impl Program {
                     Action::Key(off, v) => p.set_key(off, v),
                     Action::Mouse(dx, dy) => p.set_mouse_moved(dx, dy),
                     Action::MouseButton(off) => p.set_mouse_button(off, true),
+                    Action::Poke(..) => {}
                 }
             }
         }
         p
     }
+}
+
+/// The recording header form of [`Program::pokes`]: `FRAME:0xADDR:0xVV` entries separated by `,`.
+pub fn encode_pokes(p: &[(u32, u32, u8)]) -> String {
+    p.iter()
+        .map(|(f, a, b)| format!("{f}:{a:#x}:{b:#x}"))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+/// Parses [`encode_pokes`]' form.
+pub fn decode_pokes(s: &str) -> Result<Vec<(u32, u32, u8)>, String> {
+    let mut v = Vec::new();
+    for e in s.split(',').filter(|e| !e.is_empty()) {
+        let mut it = e.split(':');
+        let (Some(f), Some(a), Some(b), None) = (it.next(), it.next(), it.next(), it.next()) else {
+            return Err(format!("bad poke {e:?}"));
+        };
+        let hex = |t: &str| u32::from_str_radix(t.trim_start_matches("0x"), 16).map_err(|_| format!("bad poke {e:?}"));
+        let b = hex(b)?;
+        if b > 0xFF {
+            return Err(format!("bad poke {e:?}"));
+        }
+        v.push((num(f, "frame")?, hex(a)?, b as u8));
+    }
+    Ok(v)
 }
 
 #[cfg(test)]
@@ -253,6 +313,13 @@ mod tests {
             assert!(Program::parse(bad).is_err(), "{bad}");
         }
         assert_eq!(key_offset("f12").unwrap(), 22);
+        let q = Program::parse("5 poke=0xBA67A7:0x1 cross\n7..9 poke=0x10:0xFF\n").unwrap();
+        assert_eq!(q.pokes(), vec![(5, 0xBA67A7, 1), (7, 0x10, 0xFF)]);
+        assert_eq!(q.input(7, 0), PadInput::default());
+        assert_eq!(decode_pokes(&encode_pokes(&q.pokes())).unwrap(), q.pokes());
+        for bad in ["1 poke=1:2", "1 poke=0x1", "1 poke=0x1:0x100"] {
+            assert!(Program::parse(bad).is_err(), "{bad}");
+        }
         assert_eq!(key_offset("std:0x41").unwrap(), key::STANDARD + 0x82);
     }
 }

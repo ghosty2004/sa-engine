@@ -1,0 +1,35 @@
+# SAVE-1 save-load corpus program (C_PcSave / CGenericGameStorage and every block's Save / Load; PLAN F5): the
+# grove-walk start, then SZCMAWO (suicide: the first mission fails, so no mission script runs when the game is
+# saved; a save made during the mission crashes the original on load, in CTheScripts::Process), the hospital
+# respawn and a short walk. The save menu is opened by a harness poke of the byte ACTIVATE_SAVE_MENU (03D8) sets at
+# a save point (0xBA67A7 = FrontEndMenuManager +0x5F): the cheat warning (OK), slot 1, "Are you sure?" Yes, "Save
+# Successful" OK. Then the pause menu (esc), whose screen byte (+0x15D, 0xBA68A5) is poked to 9 (Load Game: the
+# PC pause menu has no Load Game row; the main menu's Start Game page switches to screen 9): slot 1, "Proceed with
+# loading?" Yes; the game restarts from the save (CJ at County General) and walks a little.
+# Pad controls; frames as in grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game
+300..1199 cross pulse        # skip the intro cut-scene
+1300 key=std:0x53            # SZCMAWO (suicide)
+1302 key=std:0x5A
+1304 key=std:0x43
+1306 key=std:0x4D
+1308 key=std:0x41
+1310 key=std:0x57
+1312 key=std:0x4F
+2050..2199 ly=-128           # walk after the respawn
+2300 poke=0xBA67A7:0x1       # save menu request
+2400 key=enter               # cheat warning: OK
+2460 down                    # Cancel to slot 1
+2520 key=enter               # slot 1
+2580 down                    # No to Yes
+2640 key=enter               # save
+2760 key=enter               # "Save Successful": OK
+2960 key=esc                 # pause menu
+3020 poke=0xBA68A5:0x9       # screen 9: Load Game
+3080 key=enter               # slot 1
+3140 down                    # No to Yes
+3200 key=enter               # load
+3500..3699 ly=-128           # walk after the load
+end 3900
