@@ -1676,6 +1676,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sa-cam"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-macros",
+ "sa-math",
+ "sa-pop",
+ "sa-stream",
+ "sa-world",
+]
+
+[[package]]
 name = "sa-core"
 version = "0.1.0"
 dependencies = [
@@ -1693,6 +1705,7 @@ version = "0.1.0"
 dependencies = [
  "iced-x86",
  "sa-anim",
+ "sa-cam",
  "sa-core",
  "sa-hud",
  "sa-input",
@@ -1761,6 +1774,7 @@ version = "0.1.0"
 dependencies = [
  "iced-x86",
  "sa-anim",
+ "sa-cam",
  "sa-core",
  "sa-hook",
  "sa-hud",

@@ -1,0 +1,7 @@
+# PORT-CAM hooks rerun in plain l2 mode after declaring their extra regions (second batch)
+CCam::Constructor
+CCam::Init
+CCurves::CalcCorrectedDist
+CCamera::HandleCameraMotionForDucking
+CCamera::HandleCameraMotionForDuckingDuringAim
+CIdleCam::Reset
