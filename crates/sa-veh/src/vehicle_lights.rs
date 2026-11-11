@@ -136,7 +136,7 @@ fn cam_pos() -> GPtr<u8> {
 /// The original reuses its matrix argument slot for the facing value (`A4`).
 #[hook(addr = 0x6e1a60, conv = thiscall, name = "CVehicle::DoVehicleLights", this = "CVehicle",
        expect = "A0 18 CC C1 00",
-       unverified = "vehbig-1", route = "L2", hazards = "x87-transcendental,stack-residue",
+       route = "L2", hazards = "x87-transcendental,stack-residue",
        recs = "driving,car-ai,grove-walk",
        note = "fsin/fcos of the heading without a matrix via X87; the DoTailLightEffect/DoHeadLightReflection bool dwords carry register / stack residue above the byte in the original (zero-extended here)")]
 pub fn vehicle_do_vehicle_lights(this: GPtr<u8>, matrix: GPtr<u8>, flags: u32) {

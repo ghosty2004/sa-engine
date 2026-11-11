@@ -6260,3 +6260,64 @@ CTaskGoToVehicleAndLean::ControlSubTask@0xB9B9A8:0x5DC4:RW
 CTaskGoToVehicleAndLean::ControlSubTask@0xB5D4A0:0x1680:RW
 CTaskComplexWalkAlongsidePed::CreateSubTask@0xB9B9A8:0x5DC4:RW
 CTaskComplexWalkAlongsidePed::CreateFirstSubTask@0xB9B9A8:0x5DC4:RW
+# VERIFIER-5 (vehbig-1): the big vehicle drivers write, through their original callees, the same static state
+# as CWeapon::Fire above: CCollision::ms_colModelCache, the temp col models and ProcessColModels' scratch and
+# static matrices 0x965900..0x968F00, and the audio .bss (AEAudioHardware 0xB5FCE0; AESoundManager 0xB62CB0,
+# split driving v5-vb1-drv: 0xB62D28.. below CAutomobile::ProcessControl; AddAudioEvent).
+CAutomobile::ProcessControl@0x965900:0x3600:RW
+CAutomobile::ProcessControl@0xB5FCE0:0x360:RW
+CAutomobile::ProcessControl@0xB62CB0:0x35F0:RW
+CAutomobile::ProcessCarWheelPair@0x965900:0x3600:RW
+CAutomobile::ProcessCarWheelPair@0xB5FCE0:0x360:RW
+CAutomobile::ProcessCarWheelPair@0xB62CB0:0x35F0:RW
+CAutomobile::VehicleDamage@0x965900:0x3600:RW
+CAutomobile::VehicleDamage@0xB5FCE0:0x360:RW
+CAutomobile::VehicleDamage@0xB62CB0:0x35F0:RW
+CAutomobile::ProcessAI@0x965900:0x3600:RW
+CAutomobile::ProcessAI@0xB5FCE0:0x360:RW
+CAutomobile::ProcessAI@0xB62CB0:0x35F0:RW
+CAutomobile::PreRender@0x965900:0x3600:RW
+CAutomobile::PreRender@0xB5FCE0:0x360:RW
+CAutomobile::PreRender@0xB62CB0:0x35F0:RW
+CBike::ProcessControl@0x965900:0x3600:RW
+CBike::ProcessControl@0xB5FCE0:0x360:RW
+CBike::ProcessControl@0xB62CB0:0x35F0:RW
+CBike::PreRender@0x965900:0x3600:RW
+CBike::PreRender@0xB5FCE0:0x360:RW
+CBike::PreRender@0xB62CB0:0x35F0:RW
+CBmx::PreRender@0x965900:0x3600:RW
+CBmx::PreRender@0xB5FCE0:0x360:RW
+CBmx::PreRender@0xB62CB0:0x35F0:RW
+CBmx::ProcessAI@0x965900:0x3600:RW
+CBmx::ProcessAI@0xB5FCE0:0x360:RW
+CBmx::ProcessAI@0xB62CB0:0x35F0:RW
+CVehicle::AddSingleWheelParticles@0x965900:0x3600:RW
+CVehicle::AddSingleWheelParticles@0xB5FCE0:0x360:RW
+CVehicle::AddSingleWheelParticles@0xB62CB0:0x35F0:RW
+CVehicle::DoVehicleLights@0x965900:0x3600:RW
+CVehicle::DoVehicleLights@0xB5FCE0:0x360:RW
+CVehicle::DoVehicleLights@0xB62CB0:0x35F0:RW
+CTrain::ProcessControl@0x965900:0x3600:RW
+CTrain::ProcessControl@0xB5FCE0:0x360:RW
+CTrain::ProcessControl@0xB62CB0:0x35F0:RW
+# The vehicle's handling entry (m_pHandlingData +0x384, 0xE0 bytes): +0x90 is written below both
+# ProcessControls, ProcessAI and ProcessCarWheelPair through cHandlingDataMgr calls (ecx = 0xC2B9C8, 0x6B21A1 / 0x6A4EEA;
+# split driving v5-bike-c 0xC3500C x50, v5-vb1-drv 0xC33E8C x90).
+CAutomobile::ProcessControl@[ecx+0x384]:0xE0:RW
+CAutomobile::ProcessCarWheelPair@[ecx+0x384]:0xE0:RW
+CBike::ProcessControl@[ecx+0x384]:0xE0:RW
+CAutomobile::ProcessAI@[ecx+0x384]:0xE0:RW
+CBmx::ProcessAI@[ecx+0x384]:0xE0:RW
+# aAutomobileColPoints (0xC1BFF8, 4 x 0x2C): the wheel line col points ProcessControl's collision check
+# fills (split driving v5-vb1-drv: 0xC1BFF8..0xC1C0A2 x226).
+CAutomobile::ProcessControl@0xC1BFF8:0xB0:RW
+CAutomobile::ProcessCarWheelPair@0xC1BFF8:0xB0:RW
+# Pointer arguments into the Rust ProcessControl's frame (split pairs compare them by the pointee):
+# ProcessAI's extra handling flags (uint32&), ProcessCarWheelPair's contact speeds / points (CVector[4]).
+CAutomobile::ProcessAI@arg0:4:RW
+CBmx::ProcessAI@arg0:4:RW
+CAutomobile::ProcessCarWheelPair@arg3:0x30:RW
+CAutomobile::ProcessCarWheelPair@arg4:0x30:RW
+# CTrain::ProcessControl re-sectorises the moving train (CPhysical::RemoveAndAdd): CWorld::ms_aRepeatSectors
+# (split pause-restart v5-C-pr: 0xB99324..0xB99628, 0xB99E64).
+CTrain::ProcessControl@0xB992B8:0xC00:RW

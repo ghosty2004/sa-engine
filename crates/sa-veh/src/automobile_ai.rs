@@ -202,7 +202,7 @@ fn pos_ptr(this: GPtr<u8>) -> GPtr<u8> {
 /// trailer: no inputs and `BreakTowLink` without a tractor.
 #[hook(addr = 0x6b4800, conv = thiscall, name = "CAutomobile::ProcessAI", this = "CAutomobile",
        expect = "81 EC A4 00 00 00",
-       unverified = "vehbig-1", route = "L2", hazards = "uninit-locals",
+       route = "L2", hazards = "uninit-locals",
        recs = "driving,car-ai,grove-walk",
        note = "the parking probe's CColPoint is uninitialised in the original (zeroed here; ProcessLineOfSight writes it on a hit); the in-air control reuses argument slots for min/max operands")]
 pub fn automobile_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {

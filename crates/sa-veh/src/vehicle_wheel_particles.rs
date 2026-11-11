@@ -130,7 +130,7 @@ const SURFACE_INFOS: usize = 0xB7_9538;
 /// virtual `FindWheelWidth(wheelId & 1)`.
 #[hook(addr = 0x6de880, conv = thiscall, name = "CVehicle::AddSingleWheelParticles", this = "CVehicle",
        expect = "90 E9 F0 6F D2 FF",
-       unverified = "vehbig-1", route = "split", hazards = "uninit-locals",
+       route = "split", hazards = "uninit-locals",
        recs = "driving,car-ai",
        note = "entry is `nop; jmp 0x405876` (frame setup in a protection fragment); rand site 0x6DF299 plus GetRandomNumberInRange calls; the ReportCollision surface dwords keep the original's float residue above the byte; AddWheelDirtAndWater's in-water dword is zero-extended (stack residue above the byte in the original)")]
 #[allow(clippy::too_many_arguments)]

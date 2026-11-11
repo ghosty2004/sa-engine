@@ -149,7 +149,7 @@ fn etype(e: GPtr<u8>) -> u8 {
 /// coors, dir); the port uses locals.
 #[hook(addr = 0x6a7650, conv = thiscall, name = "CAutomobile::VehicleDamage", this = "CAutomobile",
        expect = "6A FF 68 D8 7F 84 00",
-       unverified = "vehbig-1", route = "split", hazards = "stack-residue,heap-writes",
+       route = "split", hazards = "stack-residue,heap-writes",
        recs = "driving,car-ai",
        note = "rand site 0x6A7D76; own argument slots rewritten (damage, component, coors, dir, damager); StartShake's frequency dword carries the damager slot's upper bytes in the original (zero-extended here); the collision event lives on the Rust stack (0x28 bytes, as the original frame)")]
 pub fn automobile_vehicle_damage(

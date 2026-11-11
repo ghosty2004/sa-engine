@@ -280,7 +280,7 @@ fn for_each_carriage(this: GPtr<u8>, mut f: impl FnMut(GPtr<u8>)) {
 /// scan.
 #[hook(addr = 0x6f86a0, conv = thiscall, name = "CTrain::ProcessControl", this = "CTrain",
        expect = "83 EC 7C 53 55 56",
-       unverified = "vehbig-1", route = "split", hazards = "x87-transcendental,heap-writes",
+       route = "split", hazards = "x87-transcendental,heap-writes",
        recs = "driving",
        note = "FPATAN headings via X87::fpatan; pow via orig::x87_binary; rand sites 0x6F8ECD and 0x6F8F36")]
 pub fn train_process_control(this: GPtr<u8>) {

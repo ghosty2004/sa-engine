@@ -162,7 +162,7 @@ fn add_flags(flags: GPtr<u32>) {
 /// The original reuses its argument slot (the flags pointer) as a float local once done with it.
 #[hook(addr = 0x6c1470, conv = thiscall, name = "CBmx::ProcessAI", this = "CBmx",
        expect = "83 EC 44 53 55 56 8B F1",
-       unverified = "vehbig-1", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "driving",
        note = "the original continues through the protection fragment 0x401797 (`mov eax, [esi+0x460]; jmp 0x6C1A04`); own argument slot rewritten")]
 pub fn bmx_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {

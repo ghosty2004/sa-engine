@@ -246,7 +246,7 @@ struct Frame {
 /// point as the force and the scaled right vector as the point.
 #[hook(addr = 0x6b9250, conv = thiscall, name = "CBike::ProcessControl", this = "CBike",
        expect = "6A FF 68 EB 82 84 00",
-       unverified = "vehbig-1", route = "split", hazards = "x87-transcendental,heap-writes,uninit-locals",
+       route = "split", hazards = "x87-transcendental,heap-writes,uninit-locals",
        recs = "driving",
        note = "pow/asin through orig::x87_binary/x87_unary; wheel status / bool dwords zero-extended (the original pushes register residue above the byte); the on-fire event lives on the Rust stack (0x30 bytes)")]
 pub fn bike_process_control(this: GPtr<u8>) {
@@ -559,7 +559,8 @@ fn skipped(this: GPtr<u8>) {
                 .to_f32(),
         );
     }
-    if locked {
+    // 0x6B9B88: `test cl, cl; je 0x6BBC18`: only a locked lean recovers here
+    if !locked {
         return;
     }
     let p = pow(

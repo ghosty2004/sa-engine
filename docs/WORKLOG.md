@@ -1018,3 +1018,9 @@
 - verify-all main-std6 (fresh DLL 4224b26): IDENTICAL on all 11.
 - Catalogue: every address with a #[hook]/#[native] registration is at least `implemented` (1,067 rows moved);
   L2 promoted from HUD-3/CAM-3/AUDIO-3 verdicts and the VERIFIER-2/4 mvpb promotions.
+
+## 2026-11-11 VERIFIER-5 integrated (main session)
+- All 13 VEH-BIG drivers promoted (split 0/0 on driving and pause-restart, all-ports IDENTICAL on 11). Fix:
+  CBike::ProcessControl's skipped-physics lean-recovery condition was inverted (0x6B9B88 `test cl,cl; je`).
+  New reviewed normaliser rule RULE_LEAN_MATRIX_PADS (CBike lean-matrix pad words are stack residue).
+- verify-all main-v5 + main-v5b (driving re-run after the disk guard skipped it): IDENTICAL on all 11.
