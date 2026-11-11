@@ -28,3 +28,11 @@ Vtable 0x85ACA8 (gr EventObjectCollision.h, size 0x30): CEvent (0xC), +0xC m_pie
   &this->m_impactPos (+0x24), moveState = `movsx [+0xE]` (0x4B6CF4). Push order 0x4B6CF8-0x4B6D11 (right to left).
 - gta-reversed: header inline `new CEventObjectCollision(m_pieceType, m_damageIntensity, m_object, m_impactNormal, m_impactPos,
   m_moveState)` - matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4ACDB0 CEventObjectCollision::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x4ACDB0).
+
+## 0x4ACEF0 CEventObjectCollision::TakesPriorityOver  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (1 stack arg)`, `ret 4`: returns true (AL=1; upper EAX bits unchanged) (0x4ACEF0).

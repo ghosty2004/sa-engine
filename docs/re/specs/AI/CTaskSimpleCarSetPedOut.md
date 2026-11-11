@@ -5,15 +5,8 @@ Vtable 0x86EEB8.
 ## 0x647930 CTaskSimpleCarSetPedOut::GetTaskType  (catalogue: specified/REA, port level 0)
 - `__thiscall int32 ()`: `mov eax,0x330; ret` -> 816 (TASK_SIMPLE_CAR_SET_PED_OUT). Slot 4. gr matches.
 
-## 0x64BF70 CTaskSimpleCarSetPedOut::`scalar deleting destructor'  (catalogue name CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut)  (catalogue: specified/REA, port level 2)
-- NAME CORRECTION: slot 0 of vtable 0x86EEB8. `__thiscall this (uint32 flags [esp+4])`, `ret 4`, returns this (EAX).
-- Calls the complete dtor 0x647950 (0x64BF73): SEH; `vtbl = 0x86EEB8`; if the vehicle [+8] != 0 `CEntity::CleanUpOldReference([+8], this+8)` 0x571A00; then ~CTaskSimple 0x61A3A0. Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
-  (test at 0x64BF78, call at 0x64BF80; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
-- gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
-
-## (sections below added by the lead for addresses the I3 writer left unwritten)
-Layout (gr, size 0x18): +8 m_pTargetVehicle, +0xC m_nTargetDoor, +0x10 m_bSwitchOffEngine, +0x11 m_bWarpingOutOfCar, +0x12
-m_bFallingOutOfCar, +0x13 m_bKnockedOffBike, +0x14 m_nDoorFlagsToClear u8, +0x15 m_nNumGettingInToClear u8.
+## 0x647940 CTaskSimpleCarSetPedOut::MakeAbortable  (catalogue: specified/REA, port level 0)
+- `__thiscall bool`: returns false (0) in AL only (`xor al, al` 0x647940; upper EAX bits undefined), `ret 0xc` (12 bytes of stack args, ignored). Vtable: slot 6 (+0x18) of vtable 0x86EEB8.
 
 ## 0x6479B0 CTaskSimpleCarSetPedOut::PositionPedOutOfCollision  (catalogue: specified/REA, port level 3)
 - `__cdecl void (CPed* ped, CVehicle* veh, int32 door)` (plain `ret`). `veh = veh ? veh : ped->m_pVehicle`; return if still null.
@@ -52,3 +45,13 @@ m_bFallingOutOfCar, +0x13 m_bKnockedOffBike, +0x14 m_nDoorFlagsToClear u8, +0x15
 - 7. `ped->ReplaceWeaponWhenExitingVehicle()` 0x5E6490; `ped->+0x474 |= 8` (bHasJustLeftCar); `ped->m_nPedState (+0x530) = 1`; if m_pTargetVehicle
   and `veh->+0x40 & 0x8000000`: `ped->+0x40 |= 0x8000000`. ped->m_pVehicle is not cleared here.
 - gta-reversed: not reversed (plugin::Call).
+
+## 0x64BF70 CTaskSimpleCarSetPedOut::`scalar deleting destructor'  (catalogue name CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut)  (catalogue: specified/REA, port level 2)
+- NAME CORRECTION: slot 0 of vtable 0x86EEB8. `__thiscall this (uint32 flags [esp+4])`, `ret 4`, returns this (EAX).
+- Calls the complete dtor 0x647950 (0x64BF73): SEH; `vtbl = 0x86EEB8`; if the vehicle [+8] != 0 `CEntity::CleanUpOldReference([+8], this+8)` 0x571A00; then ~CTaskSimple 0x61A3A0. Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
+  (test at 0x64BF78, call at 0x64BF80; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
+- gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
+
+## (sections below added by the lead for addresses the I3 writer left unwritten)
+Layout (gr, size 0x18): +8 m_pTargetVehicle, +0xC m_nTargetDoor, +0x10 m_bSwitchOffEngine, +0x11 m_bWarpingOutOfCar, +0x12
+m_bFallingOutOfCar, +0x13 m_bKnockedOffBike, +0x14 m_nDoorFlagsToClear u8, +0x15 m_nNumGettingInToClear u8.

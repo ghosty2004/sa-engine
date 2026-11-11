@@ -12,6 +12,9 @@ bit2 m_bHoldLastFrame)}, +0x10 m_PlayerIdlesAnimBlockId (i32, -1 = no hand objec
 ## 0x61AEA0 CTaskSimplePlayHandSignalAnim::GetTaskType  (catalogue: specified/REA, port level 0)
 - returns 0x1A9.
 
+## 0x61AF50 CTaskSimplePlayHandSignalAnim::MakeAbortable  (catalogue: specified/REA, port level 10)
+- Tail-jump thunk (0x61AF50): `jmp CTaskSimpleAnim::MakeAbortable 0x61A790` with all registers and stack args unchanged (same convention as the target). Vtable: slot 6 (+0x18) of vtable 0x86D5B8 (CTaskSimplePlayHandSignalAnim).
+
 ## 0x61B980 CTaskSimplePlayHandSignalAnim::Clone  (catalogue: specified/REA, port level 2)
 - `p = CTask::operator new(0x24)`; if p: ctor 0x61AE50 with `(+0x10, +0x14 raw, (u8)+0x18, (flags >> 2) & 1)`; return p or 0.
 

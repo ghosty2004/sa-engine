@@ -9,3 +9,10 @@
   `t = task->GetTaskType()` AGAIN (second virtual call, 0x61A377); return `t == 0x39E` (926) (0x61A37A). No null check of task.
 - gta-reversed: Task.cpp:26 `GetTaskType() == TASK_SIMPLE_GO_TO_POINT || GetTaskType() == TASK_SIMPLE_GO_TO_POINT_FINE`
   (two calls, same order): matches. 900 = TASK_SIMPLE_GO_TO_POINT, 926 = TASK_SIMPLE_GO_TO_POINT_FINE (gr eTaskType).
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x61A660 CTask::~CTask  (catalogue: specified/REA, port level 0)
+- Scalar deleting destructor of CTask (vtable 0x86D48C slot 0): `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`. `this->vtbl = 0x86D48C` (0x61A668); if flags & 1:
+  task-pool free inlined, pool = CPools::ms_pTaskPool [0xB744A8]: `idx = (this - m_pObjects) >> 7` (element 0x80, arithmetic `sar`, no rounding fix-up, 0x61A67B-0x61A682),
+  `m_byteMap[idx] |= 0x80`, `if (idx < m_nFirstFree) m_nFirstFree = idx` (signed, 0x61A68B-0x61A691). Returns this (EAX = ECX on entry).

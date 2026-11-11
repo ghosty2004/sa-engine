@@ -66,3 +66,18 @@ CEntity* entity}, stride 0xC), +0x60 m_nPriorities[29] (u8), +0x7E m_nDelays[29]
   (a) step 5 is executed when bit1 is SET (gr tests `!m_b2`); (b) step 9 branches are swapped (gr: m_b8 -> `time`);
   (c) gr lacks the "type == 0 -> take" shortcut; (d) gr sums dot products x+y+z, the original (z+y)+x / (y+z)+x. Port from the bytes.
 - Open questions: none.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x6028A0 CInterestingEvents::GetInterestingEvent  (catalogue: specified/REA, port level 0)
+- `__thiscall Event* ()`, `ret`. Layout: 8 events of 12 bytes at +0 {+0 type, +4 u32 time, +8 CEntity*}, +0x60 u8 priority[type], +0x7E u16 duration[type], +0x12C flags,
+  +0x154 int8 last chosen index. now = CTimer::m_snTimeInMilliseconds [0xB7CB84].
+- If flags bit 2 and last != -1 (0xFF) and events[last].entity != 0 and `now < events[last].time + duration[events[last].type]` (unsigned `jb`) -> return &events[last]
+  (0x6028A7-0x6028E1).
+- Else best = -1, bestPri = 0; for i = 0..7 (0x6028F6-0x60293B): if entity != 0 and `now < time + duration[type]` (unsigned): p = priority[type]; if `p > bestPri` (signed)
+  -> choose; else `(rand() & 0xFFFF) < 0x80` (`_rand` 0x821B1E, called only in this case) -> choose. choose: bestPri = p, best = i. Then +0x154 = (u8)best; return best == -1 ?
+  0 : &events[best].
+
+## 0x856880 CInterestingEvents::Destructor  (catalogue: specified/REA, port level 1)
+- atexit-style `void ()` for the global instance at 0xC0B058: for 8 slots `p = 0xC0B060 + 12*i` (events[i].entity): if `*p` `CEntity::CleanUpOldReference(*p, p)` 0x571A00
+  then `*p = 0` (0x856890-0x8568A6).

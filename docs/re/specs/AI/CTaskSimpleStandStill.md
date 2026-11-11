@@ -19,3 +19,11 @@ Vtable 0x86DD2C (gr TaskSimpleStandStill.h, size 0x20): +8 m_nTime (i32), +0xC m
 - Calls the complete dtor 0x62F360 (0x637483): `vtbl = 0x86DD2C; jmp 0x61A3A0` (~CTaskSimple). Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
   (test at 0x637488, call at 0x637490; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
 - gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x5F6880 CTaskSimpleStandStill::~CTaskSimpleStandStill  (catalogue: specified/REA, port level 4)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x5F67E0 FUN_005f67e0 (unnamed complete dtor: stores vtbl 0x86C7E8) (0x5F6883); if `flags & 1` (0x5F6888) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x5F6890); returns this (0x5F6898).
+
+## 0x6397A0 CTaskSimpleStandStill::~CTaskSimpleStandStill  (catalogue: specified/REA, port level 3)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x6355E0 CTaskSimpleWaitUntilAreaCodesMatch::Destructor (0x6397A3); if `flags & 1` (0x6397A8) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x6397B0); returns this (0x6397B8). Proposed name: `CTaskSimpleWaitUntilAreaCodesMatch::`scalar deleting destructor'` (the complete dtor it calls is CTaskSimpleWaitUntilAreaCodesMatch::Destructor).

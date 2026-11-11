@@ -17,3 +17,8 @@
 - 0x516 and other types: 0.
 - gta-reversed (cpp:137): the 0xCB case is commented out as "dead code" - it exists in the original (whether any caller passes 0xCB
   was not checked: open question); the `default: NOTSA_UNREACHABLE()` row: Verdict CONFIRMED - the original returns 0.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x65D2C0 CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity  (catalogue: specified/REA, port level 4)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x65CD10 CTaskComplexFleeAnyMeans::Destructor (0x65D2C3); if `flags & 1` (0x65D2C8) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x65D2D0); returns this (0x65D2D8). Proposed name: `CTaskComplexFleeAnyMeans::`scalar deleting destructor'` (the complete dtor it calls is CTaskComplexFleeAnyMeans::Destructor).

@@ -27,3 +27,21 @@ first group pointer (0x401881) - no behavioural effect.
 ## 0x5FB8C0 CPedGroups::Init  (catalogue: specified/REA, port level 5)
 - `__cdecl void ()`: for g = 0..7: if active: `ms_activeGroups[g] = 0`, remove every non-null member slot (0..7) via RemoveMember(slot),
   intelligence Flush, `+0x2D0 = 0`; then (for every g) `ScriptReferenceIndex[g] = 1`.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x5F7E30 CPedGroups::RegisterKillByPlayer  (catalogue: specified/REA, port level 0)
+- `__cdecl void ()`: if `ms_bIsPlayerOnAMission` [0xC098E8] (u8) -> `ms_iNoOfPlayerKills` [0xC098EC]++ (0x5F7E39).
+
+## 0x5F7E40 CPedGroups::IsGroupLeader  (catalogue: specified/REA, port level 0)
+- `__cdecl bool (CPed* ped [esp+4])`, `ret`: for group i = 0..7 (pointer 0xC09948 = ms_groups 0xC09920 + 0x28 = leader slot, stride 0x2D4, until 0xC0AFE8): if
+  `ms_activeGroups[i]` [0xC098E0 + i] and ped != 0 and leader == ped -> AL = 1 (0x5F7E73). Else AL = 0. (ped == 0 always gives 0.)
+
+## 0x5FB8A0 CPedGroups::RemoveAllFollowersFromGroup  (catalogue: specified/REA, port level 3)
+- `__cdecl void (int32 groupId [esp+4])`: if `ms_activeGroups[groupId]` [0xC098E0] -> tail-jump `CPedGroup::RemoveAllFollowers(&ms_groups[groupId])` 0x5FB7D0 (ECX =
+  0xC09920 + id*0x2D4, 0x5FB8AE-0x5FB8BA). No bounds check.
+
+## 0x5FB930 CPedGroups::CleanUpForShutDown  (catalogue: specified/REA, port level 5)
+- `__cdecl void ()`: for each of the 8 groups (membership pointer starts at 0xC09928 = ms_groups+8, stride 0x2D4): for i = 0..7, if `membership.m_members[i] (+4+4i) != 0`
+  -> `membership.RemoveMember(i)` 0x5F80D0 (0x5FB946-0x5FB95B); then `(membership+0x28 = group+0x30).Flush()` 0x5F7350 (CPedGroupIntelligence); then byte group+0x2D0 = 0
+  (membership+0x2C8, 0x5FB969). ms_activeGroups is not touched.

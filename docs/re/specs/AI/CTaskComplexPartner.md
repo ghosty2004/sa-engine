@@ -9,6 +9,9 @@ Helpers (see _unattributed-I1.md): 0x6822B0 GetPartnerState() (partner's task m_
 0x66B150 (sets +0x34 of a wander task: next scan time). "SS50" below = `p = new(0x20)`, return `p ? CTaskSimpleStandStill(p, 50,
 false, false, 8.0f) : 0` (shared tail 0x683C4E).
 
+## 0x681F10 CTaskComplexPartner::vfunc_4  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x100` (0x681F10); `ret` -> returns 256 (TASK_COMPLEX_PARTNER). Vtable: slot 4 (+0x10) of vtable 0x870664 (CTaskComplexPartner).
+
 ## 0x681F20 CTaskComplexPartner::CreateFirstSubTask  (catalogue: specified/REA, port level 5)
 - `__thiscall CTask* (this, CPed* ped)`, `ret 4`, SEH. If `m_leadSpeaker && m_taskId == 0x4B4 && this->+0x74` (chat subclass
   field): if `CAEPedSpeechAudioEntity::RequestPedConversation(ped, m_partner)` 0x4E50E0 (cdecl) -> `+0x76 = 1`; else if `!+0x75`
@@ -58,3 +61,6 @@ false, false, 8.0f) : 0` (shared tail 0x683C4E).
 - If `m_pSubTask->GetTaskType() == 0x387`: `++(i16)+0x70`; if > 150 (signed) and `MakeAbortable(ped, 1, nullptr)` return 0.
 - `ped->DropEntityThatThisPedIsHolding(true)` 0x5E0360; `this->StreamRequiredAnims()` (vtbl+0x2C); if `IsLooking(ped)` `AbortLookAt(ped, 500)`;
   return m_pSubTask.
+
+## 0x684F60 CTaskComplexPartner::`scalar deleting destructor'  (catalogue: specified/REA, port level 3)
+- Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskComplexPartner::~CTaskComplexPartner 0x683A40 (0x684F63); if `flags & 1` (0x684F68) calls CTask::operator delete 0x61A5B0 (this) (0x684F70, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x870664 (CTaskComplexPartner).

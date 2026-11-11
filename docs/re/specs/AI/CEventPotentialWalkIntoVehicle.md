@@ -23,3 +23,11 @@ registered reference), +0x18 m_moveState (i32). EVENT_POTENTIAL_WALK_INTO_VEHICL
   Else `return CEventPotentialWalkIntoVehicle::CEventPotentialWalkIntoVehicle(p, m_vehicle [+0x14], m_moveState [+0x18])` 0x4AE320
   (0x4B6FE4-0x4B6FEE). Editable-response fields of the clone are the ctor defaults.
 - gta-reversed: header inline `new CEventPotentialWalkIntoVehicle(m_vehicle, m_moveState)` - matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4AE3A0 CEventPotentialWalkIntoVehicle::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x4AE3A0).
+
+## 0x4AE5C0 CEventPotentialWalkIntoVehicle::TakesPriorityOver  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (1 stack arg)`, `ret 4`: returns true (AL=1; upper EAX bits unchanged) (0x4AE5C0).

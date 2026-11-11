@@ -18,3 +18,8 @@ Vtable 0x85B1B8 (gr EventAttractor.h, size 0x20): CEventEditableResponse (0x14),
   0x4B5630 (`idx = (this - objects) / 0x44` via magic 0x78787879 + `sar 5` + sign fix, `byteMap[idx] |= 0x80`,
   `if (idx < firstFree) firstFree = idx` signed, 0x4B6270-0x4B629E).
 - gta-reversed: EventAttractor.cpp dtor `if (m_entity) m_entity->CleanUpOldReference(&m_entity)` + pool delete - matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4AF3E0 CEventAttractor::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x4AF3E0).

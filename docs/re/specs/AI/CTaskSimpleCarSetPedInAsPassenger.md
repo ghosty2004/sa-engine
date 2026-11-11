@@ -4,12 +4,21 @@ Vtable 0x86EE04. Layout (gr TaskSimpleCarSetPedInAsPassenger.h, size 0x20): +0x8
 (registered reference), +0x14 m_nTargetDoor, +0x18 m_pUtility (CTaskUtilityLineUpPedWithCar*), +0x1C m_bWarpingInToCar (u8),
 +0x1D m_nDoorFlagsToClear (u8), +0x1E m_nNumGettingInToClear (u8).
 
+## 0x647060 CTaskSimpleCarSetPedInAsPassenger::GetTaskType  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x32B` (0x647060); `ret` -> returns 811 (TASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER). Vtable: slot 4 (+0x10) of vtable 0x86EE04.
+
+## 0x647070 CTaskSimpleCarSetPedInAsPassenger::MakeAbortable  (catalogue: specified/REA, port level 0)
+- `__thiscall bool`: returns false (0) in AL only (`xor al, al` 0x647070; upper EAX bits undefined), `ret 0xc` (12 bytes of stack args, ignored). Vtable: slot 6 (+0x18) of vtable 0x86EE04.
+
 ## 0x647080 CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger  (catalogue: specified/REA, port level 1)
 - `__thiscall void (this)`, plain `ret`, SEH (handler 0x8426C8). Complete-object destructor (name correct). Callers: 9 (script
   commands 0x47D210 / 0x489500 for stack objects incl. EH unwind, CTaskComplexLeaveCarAsPassengerWait::SetPedInZerothPassengerSeat 0x63B540, ...).
 - Behaviour: `vtbl = 0x86EE04` (0x64709D); `if (m_pTargetVehicle) m_pTargetVehicle->CleanUpOldReference(&m_pTargetVehicle)` 0x571A00
   (0x6470A3-0x6470B6); then CTaskSimple dtor 0x61A3A0 (`vtbl = 0x86D48C`). The pointer is not cleared.
 - gta-reversed: TaskSimpleCarSetPedInAsPassenger.cpp:28 dtor (`CEntity::SafeCleanUpRef`) matches.
+
+## 0x64B5B0 CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger  (catalogue: specified/REA, port level 2)
+- Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger 0x647080 (0x64B5B3); if `flags & 1` (0x64B5B8) calls CTask::operator delete 0x61A5B0 (this) (0x64B5C0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86EE04.
 
 ## 0x64B5D0 CTaskSimpleCarSetPedInAsPassenger::ProcessPed  (catalogue: specified/REA, port level 25)
 - `__thiscall bool (this, CPed* ped [esp+4])`, `ret 4`, always returns AL = 1. SEH (handler 0x843013; the `mov eax, fs:[0]` is moved to a

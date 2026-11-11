@@ -24,3 +24,16 @@ CPedGroup +0x8 = CPedGroupMembership (+0 m_group, +4 m_members[8]), so group+0xC
      (Slot, MatchID and UsedTask of the member pairs are left unchanged).
 - gta-reversed: PedGroupIntelligence.cpp:442 `plugin::CallMethod<0x5F7800>` (`.Reversed = false`): port from these bytes.
   Open questions: none.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x5F7660 CPedGroupIntelligence::GetTask  (catalogue: specified/REA, port level 0)
+- `__thiscall CTask* (this unused, CPed* ped [esp+4], const CPedTaskPair* pairs [esp+8])`, `ret 8`: for i = 0..7 (stride 0x14): if `pairs[i].ped (+0) == ped` return
+  `pairs[i].task (+4)` (0x5F7682); none -> 0.
+
+## 0x5F8580 CPedGroupIntelligence::SetDefaultTask  (catalogue: specified/REA, port level 1)
+- `__thiscall void (this, CPed* ped [esp+4], const CTask* task [esp+8])`, `ret 8`: `SetTask(ped, task, &this+0x1EC (m_PedTaskPairs default array), -1, 0)` 0x5F7540
+  (args pushed 0, -1, this+0x1EC, task, ped; 0x5F8584-0x5F8595). Note: ECX is passed through unchanged as this.
+
+## 0x5F8750 CPedGroupIntelligence::ReportAllTasksFinished  (catalogue: specified/REA, port level 1)
+- `__thiscall void ()`, `ret`: calls the pair-array overload 0x5F7730 three times with `this+0xC`, then `this+0x14C`, then `this+0xAC` (that order, 0x5F8753-0x5F8773).

@@ -3,6 +3,9 @@
 Vtable 0x859C80 (gr TaskComplexWanderCop.cpp:9). Layout (gr TaskComplexWanderCop.h, size 0x50): CTaskComplexWander (0x28),
 +0x28 m_pGoToPointAndStandStillTask (CTask*, owned), timers / counters after it (not touched here).
 
+## 0x460D50 CTaskComplexWanderCop::GetWanderType  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x1` (0x460D50); `ret` -> returns 1. Vtable: slot 11 (+0x2C) of vtable 0x859C80 (CTaskComplexWanderCop); slot 11 (+0x2C) of vtable 0x85A428.
+
 ## 0x460D60 CTaskComplexWanderCop::`scalar deleting destructor'  (catalogue name: ~CTaskComplexWanderCop; catalogue: specified/REA, port level 5)
 - NAME CORRECTION: slot 0 of vtable 0x859C80 -> `CTaskComplexWanderCop::`scalar deleting destructor'`.
 - `__thiscall this (uint32 flags [esp+4])`, `ret 4`, returns this. Calls 0x460D80 (the complete dtor, see below; 0x460D63), then

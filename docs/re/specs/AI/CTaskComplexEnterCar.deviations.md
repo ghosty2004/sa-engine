@@ -35,3 +35,37 @@ Row :193 (`TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE`: set cruise speed, the
 - Verdict: REFUTED (gr matches the bytes; byte-sized store via ftol). Class: harmless.
 Row :355 (`NOTSA_UNREACHABLE` at the end of the main switch):
 - Original: types outside the handled set return EDI = 0 (e.g. `ja 0x63F8B6` at 0x63EBD6, 0x63F8B8). Verdict: CONFIRMED. Class: keep-original.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x63ACC0 CTaskComplexEnterCar::CreateTaskUtilityLineUpPedWithCar  (gr_deviations = 2)
+Original bytes (`__thiscall void (this, CPed* ped [esp+4])`, `ret 4`, SEH): P = ped->m_matrix ? matrix+0x30 : ped+4 (0x63ACDF-0x63ACEA);
+`CCarEnterExit::GetPositionToOpenCarDoor(&tmp, m_Car (+0xC), m_TargetDoor (+0x14))` 0x64E740 (cdecl, hidden result pointer); `off = tmp - P` component-wise x, y, z,
+each `fld; fsub; fstp` f32 (0x63ACFF-0x63AD19); `p = operator new(0x1C)` 0x82119A (0x63AD1D); if p: `CTaskUtilityLineUpPedWithCar::Constructor(p, &off, 600 (0x258), 0,
+m_TargetDoor)` 0x64FBB0 (0x63AD47) else 0; `this+0x38 (m_LineUpUtility) = result` (0x63AD54).
+Row TaskComplexEnterCar.cpp:781 (`if (m_LineUpUtility && notsa::IsFixBugs())` placement-new reuse):
+- Original bytes: no test of the old pointer; 0x63AD54 overwrites +0x38 unconditionally - an existing line-up utility leaks (never destroyed or freed).
+- Verdict: CONFIRMED (only with FixBugs on; gr default path matches the original allocation). Class: keep-original (keep the leak semantics; Rust may drop the old box
+  only if it is unobservable - it is: the object has no side effects in its dtor besides freeing; record in the ledger if changed).
+Row TaskComplexEnterCar.cpp:790 (`assert(!m_LineUpUtility)`):
+- Original bytes: no check (0x63ACD8-0x63AD54).
+- Verdict: REFUTED (debug-only assert, no release behaviour). Class: harmless.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x63F970 CTaskComplexEnterCar::CreateNextSubTask_AfterSimpleCarAlign  (gr_deviations = 3)
+Original bytes: `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`, SEH (0x58-byte frame). Only the rows below are re-checked here; the rest of the body is gr-reversed.
+Rows TaskComplexEnterCar.cpp:373 / :374 (`GetRandomNumberInRange(2'000, 3'000)` / `(6'000, 8'000)` for the g_ikChainMan.LookAt time):
+- Original bytes: the helper is INLINED. For each occupant: passengers first, `ebp = 0x464 .. 0x480` step 4 (m_apPassengers[0..7], 0x64014B-0x64020B), then the driver
+  (+0x460, 0x640211-0x6402C7). If `ped->m_pIntelligence->IsFriendlyWith(occ)` 0x601BC0 or `CPedGroups::AreInSameGroup(ped, occ)` 0x5F7F40:
+  `t = 2000 - ftol((rand() & 0xFFFF) * 3.05175781e-05f [0x858B14] * -1000.0f [0x859948])` (0x6401AC-0x6401E8; `_rand` 0x821B1E, `_ftol` 0x821B40 truncation), else
+  `t = 6000 - ftol((rand() & 0xFFFF) * 3.05175781e-05f [0x858B14] * -2000.0f [0x86EAA8])` (0x640182-0x6401A5). That equals the original helper 0x407180 formula
+  (`min + trunc(r/32768 * (max-min))`, the negation is exact), i.e. ranges 2000..2999 / 6000..7999. LookAt 0x618970 (ECX = 0xC15448) args in order:
+  ("TaskEnterCar" 0x86EA98, occ, ped, t, 5, 0, 0, 0.5f, 350, 3, 0) (0x6401D4-0x6401F3).
+- Verdict: CONFIRMED (gr's helper uses `lerp(min, max-1, rand()/32767.0f)`, cat14 finding 1). Class: keep-original (2 rows).
+Row TaskComplexEnterCar.cpp:487 (`assert(m_DraggedPed)`):
+- Original bytes: no check; after the SkipState branch, 0x63FF9D-0x63FFA0 dereferences `[esi+0x40]` (m_DraggedPed) -> `+0x47C` unconditionally (null would fault).
+- Verdict: REFUTED (debug-only assert; release behaviour identical, both crash on null). Class: harmless.
+Additional difference found: cpp:475 `CEntity::ChangeEntityReference(m_DraggedPed, ComputeSlowJackedPed(...))`; the original (0x63FE54-0x63FE69) stores the new pointer into +0x40
+directly and only calls `RegisterReference` 0x571B70 when non-null - the OLD reference is never cleaned up (no call to 0x571A00 in this function). Verdict: CONFIRMED,
+keep-original (the stale registered slot is the original's behaviour).

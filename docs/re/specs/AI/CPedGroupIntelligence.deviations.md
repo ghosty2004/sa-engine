@@ -18,3 +18,10 @@ m_PrimaryTaskAllocator = nullptr; }`):
 Row PedGroupIntelligence.cpp:216 (`NOTE: The original doesn't use the return value`):
 - Original: the return value of `ProcessGroup` at 0x5FC7C1 is ignored, exactly as gr does.
 - Verdict: REFUTED (gr matches the bytes; the comment documents it). Class: harmless.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x5F7410 CPedGroupIntelligence::SetPrimaryTaskAllocator  (gr_deviations = 1)
+Original bytes (`__thiscall void (this, CTaskAllocator* ta [esp+4])`, `ret 4`): if `this+0x290` (m_PrimaryTaskAllocator) != 0: `old->vtbl[0](1)` (scalar deleting dtor,
+0x5F7421); `this+0x290 = ta` (0x5F7427 / 0x5F7435). m_EventResponseTaskAllocator is not touched.
+Row PedGroupIntelligence.cpp:228 (`if (GenericUB) { if (event == primary) event = nullptr; }`): Verdict CONFIRMED (fix-only code). Class: keep-original.

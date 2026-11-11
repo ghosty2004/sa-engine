@@ -154,3 +154,13 @@ Helpers used (not in this group; catalogue unknown, proposed names):
   return `CreateSubTask(0x330, ped)` (0x6421C5-0x642214). Else if `!m_bSensibleLeaveCar` and type == 0x329:
   `m_pSubTask->MakeAbortable(ped, 0, nullptr)` (result ignored). Return m_pSubTask.
 - gta-reversed: cpp:66 C++ (not hooked) matches the bytes (gr calls GetTaskType once - harmless).
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x62F250 CTaskComplexLeaveCar::~CTaskComplexLeaveCar  (catalogue: specified/REA, port level 4)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x62F270 FUN_0062f270 (unnamed complete dtor: stores vtbl 0x86DD00) (0x62F253); if `flags & 1` (0x62F258) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x62F260); returns this (0x62F268).
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x63D9E0 CTaskComplexLeaveCar::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* ()`, `ret`, SEH frame: `p = CTask::operator new(0x34)` 0x61A5A0 (cdecl, task pool, 0x63D9FB); if p == 0 return 0 (0x63DA11); else `CTaskComplexLeaveCar` 0x63B8C0 on p with args (this+0xC, this+0x10, this+0x14, (u8)this+0x18 (zero-extended) (byte, mov), (u8)this+0x19 (zero-extended) (byte, mov)) (0x63DA2D) and return its EAX (the ctor returns p).

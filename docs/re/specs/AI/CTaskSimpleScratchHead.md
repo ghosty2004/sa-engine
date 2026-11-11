@@ -16,3 +16,8 @@ Vtable 0x85A100 (set by Clone at 0x48DFAE). Derives from CTaskSimpleRunAnim (siz
 - `__thiscall this (uint32 flags [esp+4])`, `ret 4`. Calls 0x48E930 (a `jmp 0x61A6F0` thunk = CTaskSimpleAnim::~CTaskSimpleAnim;
   ScratchHead and RunAnim have no own dtor body), then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0; returns this.
 - gta-reversed: `= default` dtor; matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x48DFD0 CTaskSimpleScratchHead::IsInterruptable  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (1 stack arg)`, `ret 4`: returns false (AL=0; upper EAX bits unchanged) (0x48DFD0).

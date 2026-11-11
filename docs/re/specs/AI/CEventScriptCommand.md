@@ -12,3 +12,8 @@ Vtable 0x85B378. Layout (gr EventScriptCommand.h): CEvent (0xC), +0xC m_primaryT
   (magic 0x78787879, `sar edx,5`, add sign bit: truncation toward zero, 0x4B6456-0x4B646E); `byteMap[idx] |= 0x80` (0x4B6473);
   `if (idx < firstFree (+0xC)) firstFree = idx` (signed `jge` skip, 0x4B6476-0x4B647E). Identical to CEvent::operator delete 0x4B5630.
 - gta-reversed: dtor `delete m_task` + pool delete; matches.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x4B0A40 CEventScriptCommand::GetLifeTime  (catalogue: specified/REA, port level 0)
+- `__thiscall` no stack args, `ret`: returns 0 (EAX; null / 0) (0x4B0A40).

@@ -45,3 +45,8 @@ CreateSubTask(type, ped), 0x6551D0 ComputeRouteAndGetHitSideDistance (see _unatt
 - Ensure the object matrix (AllocateMatrix/UpdateMatrix as above). `d = snapPos - objPos`; if `(d.z*d.z + d.y*d.y) + d.x*d.x > 0.0625f
   [0x86F15C]` (strict) -> QUIT. `c1 = (mat.fwd.z*snapFwd.z + mat.fwd.y*snapFwd.y) + snapFwd.x*mat.fwd.x`; if `c1 < 0.9f [0x86F160]` -> QUIT.
   `c2 = DotProduct(&snapRight, &mat.right)` 0x40FDB0; if `c2 < 0.9f` -> QUIT. Else return m_pSubTask.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x655C10 CTaskComplexWalkRoundObject::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* ()`, `ret`, SEH frame: `p = CTask::operator new(0x54)` 0x61A5A0 (cdecl, task pool, 0x655C2B); if p == 0 return 0 (0x655C41); else `CTaskComplexWalkRoundObject::Constructor` 0x655020 on p with args (this+0xC, &this+0x10, this+0x1C) (0x655C51) and return its EAX (the ctor returns p).

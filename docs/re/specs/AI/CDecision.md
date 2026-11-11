@@ -35,3 +35,15 @@ Layout (gr Decision.h, size 0x3C): +0x00 m_Tasks[6] (i32 eTaskType), +0x18 m_Pro
   With forcedTaskType != -1 that is among the candidates, that candidate is chosen (step 2 of 0x6007A0).
 - gta-reversed: body commented out (`//RH_ScopedInstall(MakeDecision, 0x6040D0, { .Reversed = false })`, Decision.cpp:14/54):
   port from these bytes. Open questions: none.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x600600 CDecision::Add  (catalogue: specified/REA, port level 0)
+- `__thiscall void (this, int32 taskType [esp+4], const float* probs [esp+8] (4 floats), const int32* flags [esp+0xC] (2 ints))`, `ret 0xC`.
+- Layout: +0x00 int32 task[6], +0x18 u8 prob[6][4], +0x30 u8 friendFlag[6][2].
+- Behaviour: for slot i = 0..5 (0x600610-0x6006A2): the slot is free iff `task[i] == -1` and all four `prob[i][j] == 0` (unsigned byte, `ja`) and both
+  `friendFlag[i][0..1] == 0`; the FIRST free slot is filled (0x600641-0x600691): `task[i] = taskType`; `prob[i][j] = (u8)_ftol(probs[j])` for j = 0..3
+  (`_ftol` 0x821B40 truncation, low byte stored); `friendFlag[i][0] = flags[0] != 0`, `[i][1] = flags[1] != 0`. No free slot -> nothing. (`cmp esi,-1` at 0x60063C is dead.)
+
+## 0x600710 CDecision::HasResponse  (catalogue: specified/REA, port level 0)
+- `__thiscall bool ()`, `ret`: returns AL = 1 if any of the six dwords at this+0..+0x14 is != 200 (0xC8) (0x600714-0x600724), else AL = 0 (upper EAX bits = loop index).

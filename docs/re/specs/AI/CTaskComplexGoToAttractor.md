@@ -4,6 +4,12 @@ Vtable 0x86FF3C (gr TaskComplexGoToAttractor.h, size 0x2C): +0xC m_Attractor (CP
 +0x20 m_fAttrTime, +0x24 m_nQueueNumber, +0x28 m_MoveState. CPed: +0x14 m_matrix, +4 placement pos, +0x474 flags (bit 0x200000 bUseAttractorInstantly),
 +0x558 m_fHeadingCurrent, +0x55C m_fHeadingGoal (plugin-sdk names).
 
+## 0x66B690 CTaskComplexGoToAttractor::GetTaskType  (catalogue: specified/REA, port level 0)
+- `__thiscall int32 ()`: `mov eax, 0x393` (0x66B690); `ret` -> returns 915 (TASK_COMPLEX_GO_TO_ATTRACTOR). Vtable: slot 4 (+0x10) of vtable 0x86FF3C (CTaskComplexGoToAttractor).
+
+## 0x66B6B0 CTaskComplexGoToAttractor::MakeAbortable  (catalogue: specified/REA, port level 0)
+- `__thiscall bool (this, CPed* ped, int32 priority, const CEvent* event)`: forwards to `this->m_pSubTask` (+0x8, no null check, 0x66B6B0) virtual slot +0x18 (= MakeAbortable) via tail-jump 0x66B6B5 with the same stack args, so returns `m_pSubTask->MakeAbortable(ped, priority, event)`. Vtable: slot 6 (+0x18) of vtable 0x86FF3C (CTaskComplexGoToAttractor).
+
 ## 0x66B6C0 CTaskComplexGoToAttractor::CreateNextSubTask  (catalogue: specified/REA, port level 14)
 - `__thiscall CTask* (this, CPed* ped [esp+4])`, `ret 4`, returns 0 always (0x66B6FC). Slot 8.
 - Behaviour: pushes (m_Attractor, ped) then `GetPedAttractorManager()` 0x5EE190 (no args; returns the manager) and

@@ -134,3 +134,8 @@ data (AnimBlendFrameData*, quaternion pointer at +0x10), +0x46C bit 8 bInVehicle
 - Return 0.
 - gr: `.Reversed = false`. Open questions: name of the byte flag 0x969179 (drive-by enable, likely CPad/CHud setting) and of
   `veh+0x429 bit 3`.
+
+<!-- RE-SPEC-AI-2 helper A (groups J1/J6) additions -->
+
+## 0x643760 CTaskSimpleCarDrive::~CTaskSimpleCarDrive  (catalogue: specified/REA, port level 3)
+- Scalar deleting destructor, `__thiscall void* (this, uint8 flags [esp+4])`, `ret 4`: calls the complete dtor 0x63D730 CTaskSimpleCarSetTempAction::Destructor (0x643763); if `flags & 1` (0x643768) calls 0x61A5B0 CTask::operator delete(this) (cdecl, 0x643770); returns this (0x643778). Proposed name: `CTaskSimpleCarSetTempAction::`scalar deleting destructor'` (the complete dtor it calls is CTaskSimpleCarSetTempAction::Destructor).
