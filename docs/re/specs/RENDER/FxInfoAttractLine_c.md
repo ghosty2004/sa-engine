@@ -19,3 +19,23 @@ memory not cleared). Vtable 0x85A878.
 - gta-reversed: `m_nType = 0x2010; m_InterpInfo.Allocate(7)` - Allocate writes `m_nCount = 7` as int16 (two bytes, also clears +0xF)
   and `m_Keys = g_fxMan.Allocate<int16*>(7)` = GetMem(28, 4): same except the byte vs. word store (harmless: +0xF is not read
   by the original readers, which use `byte [+0xE]`). Open questions: none.
+
+## 0x4A5830 FxInfoAttractLine_c::Load  (catalogue: specified/REA, port level 0)
+- Convention: `__thiscall void (this, FILESTREAM file [esp+4], int32 version [esp+8])`, `ret 8`.
+- Behaviour: `this->m_InterpInfo (+8)` virtual Load (its vtable slot 1, +4) `(file)`; version unused.
+- gta-reversed: Fx/Blueprints/FxInfoAttractLine.cpp:9 - same. Open questions: none.
+
+## 0x4A5850 FxInfoAttractLine_c::GetValue  (catalogue: specified/REA, port level 2)
+- Convention: `__thiscall void (this, float currentTime [esp+4], float mult [esp+8], float totalTime [esp+0xC], float len [esp+0x10],
+  bool useConst [esp+0x14], MovementInfo_t* info [esp+0x18])`, `ret 0x18`.
+- Callees: FxInterpInfo32_c::GetVal 0x4A89C0 (thiscall (float* out, float t)); FindClosestPtOnLine 0x4A4880 (cdecl (out, lineA, lineB, point));
+  RwV3dLength 0x7EDAC0; RwV3dNormalize 0x7ED9B0 (cdecl (out, in), returns length in ST0 - popped).
+- Globals: 0.0f [0x858B50]=0.0f; 0.1f [0x858B1C]=0.1f.
+- Behaviour: `t = this->m_bTimeModeParticle (+6) ? mult : currentTime / len` (x87 `fld currentTime; fdiv len; fstp` to an f32 slot); `GetVal(this+8, v[7], t)`; lineA = v[0..2], lineB = v[3..5] (copied to locals);
+  `FindClosestPtOnLine(out, lineA, lineB, info->m_Pos (+0))`; `in = out - pos` (x: `out.x - pos.x`; y, z via fsubr = `out - pos`; f32);
+  `dist = RwV3dLength(&in)` (f32); if `dist > 0` (`test ah,0x41; jne`) `RwV3dNormalize(&in, &in)`. If `dist > 0.1f`:
+  `f = v[6] * totalTime` (st); `info->vel.x (+0xC) = in.x*f + vel.x`; `in.y' = f*in.y` (f32), `in.z' = in.z*f` (f32);
+  `vel.y = in.y' + vel.y`; `vel.z = in.z' + vel.z`.
+- gta-reversed: Fx/Blueprints/FxInfoAttractLine.cpp (GetValue) - same control flow, but gr computes `in * values[6] * totalTime`
+  ((in*v6)*tt) while the original computes `in * (v6*tt)` (product first): rounding can differ - port the original order. gr uses
+  Magnitude/Normalise instead of the RW functions. Open questions: none.

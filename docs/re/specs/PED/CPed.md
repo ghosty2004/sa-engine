@@ -689,3 +689,8 @@ wrong, EAX is the car argument): `ped+0x128 = car` (no RegisterReference). Retur
   6. Else if `bike`: for w = 0..1: skip if `bike->m_bWheelBloody[w]` (+0x74C + w) or `bike->m_aWheelRatios[w]` (+0x710 + 8w) >= 1.0f.
      O = w0: (0, max.y * 0.8f, 0); w1: (0, min.y * 0.8f, 0). Same W / distance tests; if Blood(): mark +0x74C+w, audio event 120 on bike+0x138.
      If `bike->m_fMass > 100.0f`: `ApplyMoveForce((0, 0, 10.0f))`; `0x65DA70(bike, (0, 0, 10.0f), W - bike.pos)`; player-vehicle shake as above.
+
+## 0x5E47A0 CPed::operator delete(void*,int32)  (catalogue: unknown/REA, port level 0)
+- `__cdecl void (void* p [esp+4], int32 /*unused*/)`, plain `ret`: inlined CPool<CPed>::Delete on [0xB74490]: `i = (p - objects) / 0x7C4` (magic
+  0x41EE7CA7, `sar 9`); `flags[i] |= 0x80`; `if (i < firstFree) firstFree = i`. Callers: CReplay::DealWithNewPedPacket 0x45CEA0, CPools::LoadPedPool 0x5D2D70.
+- gta-reversed: same. Open questions: none.

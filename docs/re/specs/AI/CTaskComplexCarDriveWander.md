@@ -28,3 +28,8 @@ m_DesiredCarModel i32, +0x18 m_CarDrivingStyle i32, +0x1C m_bAsDriver, +0x1D m_O
 ## 0x643240 CTaskComplexCarDriveWander::CreateSubTaskCannotGetInCar  (catalogue: specified/REA, port level 0)
 - `__thiscall CTask* (this, CPed* ped)`, `ret 4`: `return CTaskComplexCarDrive::CreateSubTask(this, 0x390, ped)` 0x642FA0
   (0x390 = 912 TASK_COMPLEX_WANDER).
+
+## 0x63CB50 CTaskComplexCarDriveWander::~CTaskComplexCarDriveWander  (catalogue: unknown/REA, port level 3)
+- Convention: `__thiscall void (this)`. `vtable = 0x86E96C` (CTaskComplexCarDriveWander, also stored by its ctor 0x63CB10), then tail-jump to
+  CTaskComplexCarDrive::~CTaskComplexCarDrive 0x63CA40.
+- gta-reversed: `= default` - matches. Open questions: none.

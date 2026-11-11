@@ -8,3 +8,6 @@
   `dword[this+8] = 0` (`m_BreakGroups`), in this order. Nothing else is written.
 - gta-reversed: provided (BreakObject_c.cpp:22), identical.
 - Open questions: none.
+
+## 0x59D180 BreakObject_c::~BreakObject_c  (catalogue: unknown/REA, port level 0)
+- Empty body (`ret`); element/global dtor of g_breakMan (0x856660). gta-reversed: `= default`. Open questions: none.

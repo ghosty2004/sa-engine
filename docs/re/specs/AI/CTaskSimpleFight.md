@@ -173,3 +173,52 @@ group (AssocGroupId i32, 0x21 = none), +0x10 m_nIdlePeriod u16, +0x12 m_nIdleCou
      `CTaskSimpleFight::SetPlayerMoveAnim`, UNCLEAR).
   6. +8 (m_bIsFinished) = 1; return 1.
 - gta-reversed: not hooked at this address.
+
+## 0x61D6F0 CTaskSimpleFight::sub_61D6F0  (catalogue: unknown/REA, port level 7)
+Catalogue name: CTaskSimpleFight::sub_61D6F0, proposed: `bool CTaskSimpleFight::FindTargetOnGround(CPed* ped)` (gr TaskSimpleFight.h:86 declares
+`void FindTargetOnGround(CPed*)` without an address; the bytes return a bool in AL; gated by CLocalisation::KickingWhenDown; finds a ped lying
+next to the fighter). Callers: 0x624710 (2 sites), 0x624A40.
+- Convention: `__thiscall bool (CTaskSimpleFight* this, CPed* ped [esp+4])`, `ret 4`, AL. No SEH. Locals (E = esp at entry): rangeFwd f32
+  [E-0x2C], rangeSide f32 [E-0x28], heading f32 [E-0x24], bestAngle f32 [E-0x20], bestHeading f32 [E-0x1C], diff CVector [E-0x18], bone pos
+  CVector [E-0xC] (zero-initialised at 0x61D732-0x61D742); the `ped` arg slot [E+4] is reused as `best` in the scan.
+- Callees: CLocalisation::KickingWhenDown 0x56D270; CPed::GetBonePosition(RwV3d& out, int bone, bool update) 0x5E4280 (bone 3, false);
+  CPed::IsAlive 0x5E0170; CTaskManager::GetSimplestActiveTask 0x6819D0; CPlaceable::GetMatrix 0x411990; VectorSub 0x40FE60 (cdecl out = a - b);
+  CVector::DotProduct 0x40FDB0 (cdecl (a*, b*), ST0 = a.z*b.z + a.y*b.y + a.x*b.x); CPed::IsPlayer 0x5DF8F0.
+- Globals: 0.2f [0x858CC4]=0.2f; 0.4f [0x858EE8]=0.4f; level table f32 [0xC177EC]=0 (.bss, = triple 2 .y of the 0xC177D0 table filled by
+  LoadMeleeData); CTaskSimpleFight::m_aComboData field at 0xC1710C + 0x88*(combo-4) (= CMeleeInfo +0x3C, radius[3] in the LoadMeleeData
+  layout); PI [0x858CB8]=3.1415927f; -PI [0x858CC0]=-3.1415927f; 2PI [0x858CBC]=6.2831855f; 0.0f [0x858B50]=0.0f; -1.0f [0x858C1C]=-1.0f;
+  PI/3 [0x8630F8]=1.0471976f; 0.0 (f64) [0x859EF8]=0.0; immediate PI (0x40490FDB, 0x61D8F7).
+- Fields: this+0x18 m_pTargetEntity, this+0x24 m_nComboSet (i8, `movsx`). Ped: +0x14 matrix (+0 right, +0x10 fwd), +4 placement pos, +0x36 type
+  bits (&7: 2 vehicle, 3 ped), +0x46C flags (bit 26 bIsDucking = 0x4000000), +0x47C intelligence (+0x130 ped-scanner list), +0x530 m_nPedState,
+  +0x540 m_fHealth, +0x558 m_fCurrentRotation, +0x55C m_fAimingRotation, +0x568 m_standingOnEntity. Vehicle +0x590 (eVehicleType, 0 = automobile).
+- Behaviour:
+  1. `if (!KickingWhenDown()) return false`.
+  2. x87 (0x61D706-0x61D754): `a = [0xC177EC] + m_aComboData[m_nComboSet-4].+0x3C`; `rangeSide = 0.2f + a` -> f32; `rangeFwd = a + 0.4f` -> f32.
+  3. Target set (`t = this->m_pTargetEntity != 0`):
+     - t not a ped (type != 3): return `t == ped->m_standingOnEntity` (0x61D8BB).
+     - t a ped: `t->GetBonePosition(bp, 3, false)`. If `t->IsAlive()`: `fld pedPos.z; fsub 0.2f; fcomp bp.z; test ah,0x41; je` -> if
+       `pedPos.z - 0.2 > bp.z` continue; else (spine at/above, or NaN): if `t->flags & bIsDucking` then `rangeFwd = rangeFwd - 0.4f` (f32), else
+       return false. (Dead targets skip this test.)
+     - `s = GetSimplestActiveTask(t->intel+4)`; if `s && s->GetTaskType() == 0xCF` (TASK_SIMPLE_FALL) and `anim = s->+0x14` != 0: `fld anim->+0x20
+       (m_fCurrentTime); fld anim->+0x14->+0x10 (hierarchy m_fTotalTime); fcompp; test ah,0x41; je return false` -> still falling (total > current)
+       -> false.
+     - `M = t->GetMatrix()`: `d = tPos - pedPos` (x87, unrounded): `f = d.z*M.fwd.z; f += d.y*M.fwd.y; f += d.x*M.fwd.x` (exact sequence
+       0x61D846-0x61D855); need `|f| < rangeFwd` (`test ah,5; jp -> false`).
+     - `M = t->GetMatrix()` again; `diff = VectorSub(tPos, pedPos)` (f32); `r = DotProduct(&diff, &M.right)`; need `|r| < rangeSide`; return true.
+  4. No target (0x61D8CB): if `!ped->IsPlayer()` return false. `best = 0`, `bestAngle = PI`, `bestHeading = 0`. For `i = 0..15`, `o =
+     intel->+0x130[i]`, skip if 0:
+     - `o->GetBonePosition(bp, 3, false)`; if `o->m_nPedState != 0x37` (55 PEDSTATE_DEAD): need `pedPos.z - 0.2f > bp.z` (`test ah,0x41; jne skip`).
+     - `dx = oPos.x - pedPos.x` -> f32, `dy` -> f32, `dz` kept in st0. `M = o->m_matrix` (no null check). `f = dz*M.fwd.z + dy*M.fwd.y +
+       dx*M.fwd.x` (that order), need `|f| < rangeFwd`; `r = dz*M.right.z + dy*M.right.y + dx*M.right.x`, need `|r| < rangeSide`.
+     - `heading = atan2(-dx, dy)` (`fld dx; fchs; fld dy; fpatan`) -> f32. `delta = heading - ped->m_fCurrentRotation` (fsubr, register);
+       if `delta < -PI` (`test ah,5; jp`) delta += 2PI; else if `delta > PI` (`test ah,0x41; jne`) delta -= 2PI. If `delta < 0` delta *= -1.0f.
+       Need `delta < PI/3` (else skip).
+     - Selection: if `best == 0` take. Else if `best->m_fHealth > 0.0f` or NaN (`test ah,0x41; jp`) -> take only if `delta < bestAngle`.
+       Else (best health <= 0): if `o->m_fHealth > 0.0` (f64 compare, `test ah,0x41; je`) take unconditionally; else take only if
+       `delta < bestAngle`. Take: `bestAngle = delta` (fstp f32), `best = o`, `bestHeading = heading`.
+     After the loop: if `best` { `ped->m_fAimingRotation = bestHeading`; return true }. Else return true if `s = ped->m_standingOnEntity` is a
+     vehicle (type 2) with `s->+0x590 == 0` (automobile); otherwise false.
+- Edge cases: `delta` is only wrapped once. An alive candidate replaces a dead best regardless of angle, but a dead candidate can replace an
+  alive best if its angle is smaller (asymmetric).
+- gta-reversed: declared only (no body, no hook; return type differs: void in gr). Spec from the bytes.
+- Open questions: none.

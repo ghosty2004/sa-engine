@@ -1497,3 +1497,50 @@ x87 compare idioms: `fcomp X; test ah,0x41; jne` skips when st0 <= X or unordere
   does not write it.
 - gta-reversed: `NOTSA_UNREACHABLE()` stub (Cam.cpp:990), `.Reversed = false`; row Cam.cpp:991 not a behavioural difference.
 - Open questions: none in this function (the spline helpers' internals belong to their own specs).
+
+## 0x509CA0 CCam::sub_509CA0 (proposed: CCam::GetBoatLookLRBehindCamHeight(float* out))  (catalogue: unknown/REA, port level 1)
+(RE-SPEC-FINAL.)
+- Convention: `__thiscall bool (CCam* this = ECX, float* out [esp+4])`, `ret 4`, AL result. Caller: CCam::LookRight 0x520E40 (call at 0x520F30,
+  only when the cam mode is 0x16; `*out` is pre-set to 0 by the caller). Callee: cHandlingDataMgr::GetBoatPointer 0x6F5300 (thiscall on
+  gHandlingDataMgr 0xC2B9C8, arg = handling index).
+- Behaviour: `e = this->m_pCamTargetEntity (+0x21C)`; if null return 0. `mi = CModelInfo::ms_modelInfoPtrs[(i16)e->m_nModelIndex]`;
+  `b = gHandlingDataMgr.GetBoatPointer((i16)mi->+0x4A /*m_nHandlingId*/)`; if null return 0. `*out = b->+0x20` (tBoatHandlingData
+  m_fLookLRBehindCamHeight, dword copy); return 1. No vehicle-type check: any target entity's model info is read at +0x4A.
+- gta-reversed: absent. Open questions: none.
+
+## 0x63A380 CCam::sub_63A380 (proposed: CTaskComplexEnterCarAsDriver::GetCameraStickModifier)  (catalogue: unknown/REA, port level 1)
+(RE-SPEC-FINAL. SA:MP-executed.) Despite the catalogue class, `this` is a task: the only caller CCam::Process_FollowPed_SA 0x522D40 calls it
+(0x523E9B) on `ped->m_pIntelligence->taskManager.GetActiveTask()` when that task's type is 0x2BD (701, TASK_COMPLEX_ENTER_CAR_AS_DRIVER),
+with the same argument pattern as CTaskSimpleClimb::GetCameraStickModifier 0x67A5D0 (called just above, 0x523E56).
+- Convention: `__thiscall void (CTask* this = ECX, CPed* ped [esp+4], float dist [esp+8], float* alpha [esp+0xC], float* beta [esp+0x10],
+  float* stickAlpha [esp+0x14], float* stickBeta [esp+0x18])`, `ret 0x18`. Arg slots ped and dist are reused as float temporaries.
+  (alpha = vertical, beta = horizontal camera angle, as passed by the caller: ESI, EBX, &local, &local; dist = the caller's [esp+0x20].)
+- Fields: this+0xC target vehicle (CVehicle*), this+0x29 u8 stick mode (1 brake, 2 accelerate, 3 aiming/none; persists between calls).
+  Vehicle: +0x594 vehicle type, +0x14 matrix (+0 right, +0x10 up, +0x30 pos), +0x10 placement heading, +4 placement pos.
+- Callees: CPad::GetPad 0x53FB70, CPad::AimWeaponLeftRight 0x541040 / AimWeaponUpDown 0x5410C0 (thiscall (CPed*), i16), CPad::GetAccelerate
+  0x5403F0, CPad::GetBrake 0x540080 (i16), virtual this->GetSubTask (slot +8), sub->GetTaskType (slot +0x10), CEntity::GetColModel 0x535300.
+- Constants: 20.0f [0x858BA4], PI/2 = 1.5707964f [0x858FE4], -PI/2 [0x859998], PI [0x858CB8], 2*PI [0x858CBC], 0.7f [0x86E690],
+  0.13962634f [0x86E694] (8 deg), -1.0f [0x858C1C], 0.0f [0x858B50]; tables indexed by mode: gain `G[m]` at 0x86E678 = {0.1, 0.2, 0.2, 0.1},
+  limit `Lm[m]` at 0x86E684 = {0.1, 0.2, 0.2, 0.7}; tweakable .data -0.17453294f [0x8D2ECC] (-10 deg).
+- Behaviour:
+  1. `v = this->+0xC`; return if `v == null` or `v->+0x594 == 3`.
+  2. `pad = GetPad(0)`; if `ped->m_nPedType (+0x598) == 1`: `pad = GetPad(1)`.
+  3. `if (!this->GetSubTask()) return`; then (calling GetSubTask()->GetTaskType() afresh for each test) continue only if the type is
+     0x322 (tested twice), 0x324, 0x334, 0x327 or 0x328 (802, 804, 820, 807, 808: open-door / bike pick-up / get-in / shuffle / slow drag-out
+     sub-tasks).
+  4. Mode: if `|(float)pad->AimWeaponLeftRight(ped)| > 20.0f` or `|(float)pad->AimWeaponUpDown(ped)| > 20.0f` (strict; i16 -> fild):
+     `this->+0x29 = 3`; else if `pad->GetAccelerate() != 0`: `= 2`; else if `pad->GetBrake() != 0`: `= 1`; else unchanged.
+     If `this->+0x29 == 3` return.
+  5. `h = v->matrix ? atan2(-up.x, up.y) : v->placement heading (+0x10)` (fchs + fpatan); `h0 = h - PI/2` (stored f32).
+  6. `d = pedPos - vehPos` (matrix pos or placement pos for both); `lat = (d.z*right.z + d.y*right.y) + d.x*right.x` (stored f32; `right`
+     read from `v->m_matrix` directly, which must exist).
+  7. `a = atan2(lat, dist) * 0.7f` (stored f32). `cm = v->GetColModel()`; if `-cm->bbox.min.y > dist` (strict): `a = (a > 0) ? -0.13962634f
+     : +0.13962634f` (NaN -> +).
+  8. `m = this->+0x29`; `t = (m == 1) ? ((h0 + PI) + a) : (h0 - a)`.
+  9. `b = *beta`; if `t > b + PI` (strict): `t -= 2*PI`; else if `t < b - PI` (strict): `t += 2*PI`. `t = t - b`.
+  10. Fold: if (`lat > 0` and `m == 1`) or (`lat <= 0` or NaN, and `m != 1`): `if (t <= -PI/2) t = -t` (NaN skips); otherwise
+      `if (t >= PI/2) t = -t` (NaN skips).
+  11. Clamp: `if (t > Lm[m]) t = Lm[m]` else `if (t < -Lm[m]) t = -Lm[m]` (strict; -Lm stored f32 first); `*stickBeta += t * G[m]`.
+  12. If `*alpha > [0x8D2ECC]` (strict): `*stickAlpha = *stickAlpha - G[m]*Lm[m]`.
+- gta-reversed: absent (no CTaskComplexEnterCarAsDriver::GetCameraStickModifier). Open questions: the meaning of `dist` (value from the
+  caller's local [esp+0x20] at 0x523E84); sub-task names for 804/807/808/820 follow gr enum order (unverified).

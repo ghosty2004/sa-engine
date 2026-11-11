@@ -1,0 +1,74 @@
+# CORPUS-1 air-water corpus program (heli, parachute, jetpack, water): the grove-walk start, a walk out
+# of the alley, HESOYAM, OHDUDE (Hunter) spawned on the street and entered (triangle), lift-off (cross =
+# throttle), a slow yaw (r2) and a backwards flight (ly > 0) towards the docks, AIYPWZQP (parachute)
+# and a bail-out at altitude (triangle): free fall, the parachute opened (circle), landing in Willowfield.
+# Then YECGAA (jetpack; cross = up, square = down, stick = move relative to the camera) flown south to
+# Ocean Docks, dipped into the water with the jetpack on, flown back onto the quay and landed; the
+# jetpack taken off (triangle on the ground), a walk off the quay edge into the water, swimming (cross
+# pulsed = faster strokes, the swimming help boxes), a dive (square) and underwater swimming.
+# Pad controls (the test setup runs the game in pad mode); cheats typed one key per two frames.
+# Generated from a compact source (one 'FRAME cheat WORD' line per cheat). Frames as in grove-walk.txt
+# (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300..1379 ly=-128           # walk out of the alley to the street
+1400 key=std:0x48            # HESOYAM
+1402 key=std:0x45
+1404 key=std:0x53
+1406 key=std:0x4F
+1408 key=std:0x59
+1410 key=std:0x41
+1412 key=std:0x4D
+1430 key=std:0x4F            # OHDUDE
+1432 key=std:0x48
+1434 key=std:0x44
+1436 key=std:0x55
+1438 key=std:0x44
+1440 key=std:0x45
+1470..1550 ly=-128
+1560 triangle
+1600 triangle
+1680..1950 cross
+1950..2700 cross ly=60
+2700 key=std:0x41            # AIYPWZQP
+2702 key=std:0x49
+2704 key=std:0x59
+2706 key=std:0x50
+2708 key=std:0x57
+2710 key=std:0x5A
+2712 key=std:0x51
+2714 key=std:0x50
+2740 triangle
+2780 triangle
+2820 triangle
+2900 circle
+3150 key=std:0x48            # HESOYAM
+3152 key=std:0x45
+3154 key=std:0x53
+3156 key=std:0x4F
+3158 key=std:0x59
+3160 key=std:0x41
+3162 key=std:0x4D
+3180 key=std:0x59            # YECGAA
+3182 key=std:0x45
+3184 key=std:0x43
+3186 key=std:0x47
+3188 key=std:0x41
+3190 key=std:0x41
+3220..3330 cross
+3330..3990 cross ly=128
+3990..4200 square            # descend into the water
+4200..4500 ly=-128 cross pulse
+4500..4650 square            # descend into the water
+4650..4720 ly=0              # in the water with the jetpack
+4720..5000 ly=-128 cross pulse  # back onto the dock
+5000..5120 square            # land
+5130 triangle                # take the jetpack off
+5160..5330 ly=128            # walk off the dock edge into the water
+5330..5500 ly=128 cross pulse  # swim
+5500..5600 ly=-128 cross pulse
+5600 square                  # dive
+5610..5700 ly=-128
+end 5800

@@ -5,3 +5,9 @@
 
 ## 0x638F00 CTaskComplexAttractorPartnerWait::~CTaskComplexAttractorPartnerWait  (catalogue: specified/REA, port level 3)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor CTaskComplexAttractorPartnerWait::~CTaskComplexAttractorPartnerWait 0x633290 (0x638F03); if `flags & 1` (0x638F08) calls CTask::operator delete 0x61A5B0 (this) (0x638F10, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86E284 (CTaskComplexAttractorPartnerWait).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x633250 CTaskComplexAttractorPartnerWait::CTaskComplexAttractorPartnerWait  (catalogue: specified/REA, port level 1)
+- `__thiscall T* (this, uint8 isLeader [esp+4], int32 a2 [esp+8])`, `ret 8`. Caller: CTaskComplexUsePairedAttractor::CreateSubTask 0x638D30.
+- Behaviour: CTaskComplex ctor 0x61A3B0; `+0xC = (u8)a1; vtbl = 0x86E284; +0x10 = a2`; return this.

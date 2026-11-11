@@ -63,3 +63,8 @@ size 0x3C): +0x24 m_Point CVector, +0x30 field_30 i32, +0x34 m_Radius f32, +0x38
   skip the call and also return EBP.
 - gr rows: cpp:51 assert (`m_CruiseSpeed < 255`) - REFUTED, harmless (no check in the bytes). cpp:65 `default: NOTSA_UNREACHABLE()` - CONFIRMED
   (original returns m_pSubTask for +0x30 > 3, 0x645513 -> 0x64558B); keep-original. gr's case mapping matches the table (1 = ACCURATE, 2 = STRAIGHT_LINE).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x63CE70 CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint  (catalogue: unknown/REA, port level 3)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86E9DC` (0x63CE70); tail-jump to base dtor CTaskComplexCarDrive::Destructor 0x63CA40 (0x63CE76). No other member cleanup.

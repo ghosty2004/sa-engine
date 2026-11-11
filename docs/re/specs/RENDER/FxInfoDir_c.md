@@ -19,3 +19,10 @@ memory not cleared). Vtable 0x85A914.
 - gta-reversed: `m_nType = 0x4040; m_InterpInfo.Allocate(3)` - Allocate writes `m_nCount = 3` as int16 (two bytes, also clears +0xF)
   and `m_Keys = g_fxMan.Allocate<float*>(3)` = GetMem(12, 4): same except the byte vs. word store (harmless: +0xF is not read
   by the original readers, which use `byte [+0xE]`). Open questions: none.
+
+## 0x4A64D0 FxInfoDir_c::GetValue  (catalogue: specified/REA, port level 1)
+- Convention: as FxInfoAttractLine_c::GetValue (`ret 0x18`), info = RenderInfo_t*.
+- Behaviour: `t = this->m_bTimeModeParticle (+6) ? mult : currentTime / len` (x87 `fld currentTime; fdiv len; fstp` to an f32 slot) (stored into the `mult` arg slot); `FxInterpInfoFloat_c::GetVal(this+8, v[3], t)` 0x4A8470; `info->m_Direction (+0x7C..+0x84)
+  = v[0..2]` (dword copies; +0x7C written first, then `info->m_bHasDir (+0x79) = 1`, then +0x80, +0x84); if `RwV3dLength(&info->m_Direction)`
+  0x7EDAC0 `< [0x858CDC]=0.001f` (`test ah,5; jp`; NaN -> no) `info->m_bUseVel (+0x7A) = 1`.
+- gta-reversed: FxInfoDir.cpp GetValue - same. Open questions: none.

@@ -13,3 +13,8 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 
 ## 0x5EE890 CPedTriggerScriptAttractor::CPedTriggerScriptAttractor  (catalogue: specified/REA, port level 4)
 - `__thiscall (this, C2dEffectPedAttractor* fx [esp+4], CEntity* entity [esp+8], int32 moveState [esp+0xC])`, `ret 0xC`: calls `CPedAttractor::Constructor` 0x5EDFB0 (0x5ee8d4) with (fx=fx [esp+4], entity=entity [esp+8], moveState=moveState [esp+0xC], maxNoOfPeds=1, spacing=1.0f [0x86C490], achieveQueueTime=30000.0f [0x86C494], achieveQueueShuffleTime=3000.0f [0x86C498], arriveRange=0.125f [0x86C49C], headingRange=0.100000001f [0x86C4A0], deltaPos=0.100000001f [0x86C4A4], deltaHeading=0.100000001f [0x86C4A8]) - float args are pushed as raw f32 dwords loaded from .rdata; then `this->vtbl = 0x86C5CC`; returns this.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5EE950 CPedTriggerScriptAttractor::~CPedTriggerScriptAttractor  (catalogue: unknown/REA, port level 3)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C5CC` (0x5EE950); tail-jump to base dtor CPedAttractor::Destructor 0x5EC410 (0x5EE956). No other member cleanup.

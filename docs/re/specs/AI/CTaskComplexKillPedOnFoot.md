@@ -48,3 +48,11 @@
   - anything else: NULL.
   "now" = CTimer::m_snTimeInMilliseconds 0xB7CB84.
 - gta-reversed: plugin::CallMethodAndReturn stub (TaskComplexKillPedOnFoot.cpp:60).
+
+## 0x5FE9C0 CTaskComplexKillPedOnFoot::sub_5FE9C0  (catalogue: unknown/REA, port level 0)
+Catalogue name: CTaskComplexKillPedOnFoot::sub_5FE9C0, proposed: `IsGangPedType(int32 pedType)` (static; evidence: returns true for 7..16 =
+PED_TYPE_GANG1..GANG10; callers 0x603AF0, CTaskComplexKillPedOnFoot::CreateNext/FirstSubTask, CTaskComplexWanderStandard::WillChat).
+- Convention: `__cdecl bool (int32 pedType [esp+4])`, plain `ret`, EAX = 1 / 0.
+- Behaviour: `if (pedType < 7 || pedType > 16) return 0; return 1` (signed compares `jl`/`jg`). The `return 1` path jumps out to a HOODLUM chunk
+  0x401DFA (`mov eax,1`) and back to the `ret` at 0x5FE9D3.
+- gta-reversed: absent as a hooked function. Open questions: none.

@@ -37,3 +37,7 @@ FxEmitter_c: +0x04 m_PrimBP (FxEmitterBP_c*; its FxInfoManager at +0x2C, m_nLodS
   code from the bytes: it multiplies the rate by `1000.0f` (original `* 0.001f`), and it sets
   `m_fEmissionIntensity -= m_fEmissionIntensity` (= 0; original keeps the fraction). Both are gr errors; port the bytes.
   Open questions: none.
+
+## 0x4A1920 FxEmitter_c::FxEmitter_c  (catalogue: specified/REA, port level 1)
+- Convention: `__thiscall FxEmitter_c* (this)`, plain `ret`, returns this. Body: `FxPrim_c::FxPrim_c(this)` 0x4A9F20; `vtable = 0x85A7A4`.
+- gta-reversed: FxEmitter.h default ctor - matches. Open questions: none.

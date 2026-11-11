@@ -237,3 +237,32 @@ Calls CTaskComplex ctor 0x61A3B0; vtable 0x870B98 (GetTaskType 0x691A40 returns 
   +0x144 w <- zero-extended byte +0x10 (`movzx dx, byte`, 0x5D259D); +0xC0 d <- +0x14; +0xC4 d <- +0x18;
   +0x14C..+0x154 b <- +0x1C..+0x24 (9 bytes); +0x156 w <- +0x26.
 - gta-reversed: same values (the redundant store is commented out; no observable difference).
+
+## 0x56EC80 CPlayerInfo::sub_56EC80 (proposed: CPlayerCrossHair::Process(int32 playerIndex, CPad* pad))  (catalogue: unknown/REA, port level 20)
+(RE-SPEC-FINAL. SA:MP-executed.) The free-aim "crosshair gun" of the player info (gr fields m_nCrosshairActivated / m_vecCrosshairTarget).
+- Convention: `__thiscall void (crosshair* this = ECX, int32 playerIndex [esp+4], CPad* pad [esp+8])`, `ret 8`. Only call: CPlayerInfo::Process
+  0x571776 with `this = &playerInfo + 0x158` (+0 activated, read as a BYTE; +4 x f32; +8 y f32, both in [-0.9, 0.9]).
+- Callees: CPad::GetSteeringLeftRight 0x53FB80, CPad::GetSteeringUpDown 0x53FBD0, CPad::GetCarGunFired 0x53FF90 (thiscall on pad, i16),
+  CCamera::CamShakeNoPos 0x50A970 (cdecl (CCamera*, float)), CCamera::FindCamFOV 0x50AD20 (thiscall, ST0), CWeapon::CWeapon(type, ammo)
+  0x73B430, CWeapon::FireInstantHit 0x73FB10.
+- Globals: CTimer::ms_fTimeStep 0xB7CB5C, CPad::bInvertLook4Pad 0xB73402, CDraw::ms_fAspectRatio 0xC3EFA4, TheCamera 0xB6F028 with its
+  camera CMatrix at TheCamera+0x974 (right 0xB6F99C, forward 0xB6F9AC, up 0xB6F9BC, pos 0xB6F9CC), TheCamera.m_matrix (0xB6F03C) /
+  placement pos 0xB6F02C, CWorld::Players 0xB7CD98 (stride 0x190). Constants 0.00033333333f [0x865030], 0.9f [0x858C20], -0.9f [0x858CAC],
+  0.008726646f [0x8631D4] (PI/360), 200.0f [0x858A48].
+- Behaviour:
+  1. If `this->byte[0] == 0` return.
+  2. `x += ((float)pad->GetSteeringLeftRight() * ts) * 0.00033333333f` (ts = ms_fTimeStep copied before the call; i16 -> fild).
+     `y`: if bInvertLook4Pad `y = ((float)ud * ts) * k + y` else `y = y - ((float)ud * ts) * k` (ud = GetSteeringUpDown, ts re-read).
+  3. Clamp each of x then y: `if (v > 0.9f) v = 0.9f` (bits 0x3F666666); `if (v < -0.9f) v = -0.9f` (strict).
+  4. If `pad->GetCarGunFired() == 0` return.
+  5. `CamShakeNoPos(&TheCamera, 0.2f)`.
+  6. `tv = tan(FindCamFOV() * PI/360) / ms_fAspectRatio * y` (fptan); `A = camUp * tv` (per component, stored f32).
+     `th = tan(FindCamFOV() * PI/360)` (second call); `Rx = (right.x * x) * th`, `Ry = (right.y * x) * th` (inner products stored f32),
+     `Rz = (x * right.z) * th` (x87). `D = (forward - R) - A` per component (`forward.c - R.c` stored f32 for y/z, x kept in x87; each D.c
+     stored f32).
+  7. `end = camPos + D * 200.0f` (x: `D.x*200 + pos.x`, y: `pos.y + D.y*200`, z: `pos.z + D.z*200`).
+  8. `w = CWeapon(31 /*0x1F*/, 5000)` (local; no destructor call). `start = TheCamera.m_matrix ? m_matrix->pos : TheCamera placement pos`.
+  9. `ped = CWorld::Players[playerIndex].m_pPed`; `saved = (ped->dword[+0x470] >> 25) & 1`; clear bit 25 (`&= 0xFDFFFFFF`);
+     `w.FireInstantHit(ped, &start, &start, null, &end, null, true, true)`; then (ped re-read) restore bit 25 of `+0x470` to `saved`.
+- gta-reversed: absent (CPlayerInfo has the fields, no function). Open questions: name of ped flag +0x470 bit 25 (the code temporarily
+  clears it so the shot is not blocked/attributed; semantics unverified).

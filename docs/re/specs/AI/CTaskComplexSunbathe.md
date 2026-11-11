@@ -95,3 +95,10 @@
   7. If loaded(+0x24): r = rand() & 0xFFFF; +0x14 = m_snTimeInMilliseconds; +0x18 = 20000 - _ftol((float)r * 3.0517578e-05f *
      [0x86E668]=-80000.0f); +0x1C = 1; +0xD = 1; return CS(0x1A2 SUNBATHE). Else (only reachable with s true): return CS(0xCA).
 - gta-reversed: not hooked at this address.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x62EB80 CTaskComplexSunbathe::sub_62EB80 (proposed: CTaskTimer::GetTimeLeft)  (catalogue: unknown/REA, port level 0)
+- Name correction: operates on a CTaskTimer {+0 m_nStartTime, +4 m_nInterval, +8 m_bStarted}. Caller: CTaskComplexSunbathe::CreateSubTask 0x638290 (3 sites, on its timer member).
+- `__thiscall int32 (this: CTaskTimer*)`, plain `ret`.
+- Behaviour: `if m_bStarted == 0` -> return 0 (0x62EB95). Else (through a .HOODLUM detour 0x40131C that loads `now = [0xB7CB84 CTimer::m_snTimeInMilliseconds]`; the address is computed as `[0x4EC103] ^ [0x156061C]`) return `m_nInterval - now + m_nStartTime` (u32 wrap-around arithmetic, 0x62EB8D-0x62EB92).

@@ -18,3 +18,8 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 
 ## 0x5FF2E0 CEventAcquaintancePedHateBadlyLit::CloneEditable  (catalogue: specified/REA, port level 4)
 - `__thiscall CEvent* ()`, `ret`, SEH frame: `p = CEvent::operator new(0x28)` 0x4B5620 (cdecl, event pool, 0x5FF2FB); if p == 0 return 0 (0x5FF311); else `CEventAcquaintancePedHateBadlyLit::Constructor` 0x5FF250 on p with args (this+0x14, this+0x18, &this+0x1C) (0x5FF321) and return its EAX (the ctor returns p).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5FF2C0 CEventAcquaintancePedHateBadlyLit::~CEventAcquaintancePedHateBadlyLit  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86CB10` (CEventAcquaintancePedHateBadlyLit) (0x5FF2C0); tail-jump to base dtor FUN_004af890 0x4AF890 (0x5FF2C6). No other member cleanup.

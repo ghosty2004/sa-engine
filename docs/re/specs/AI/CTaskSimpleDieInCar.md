@@ -18,3 +18,8 @@
 ## 0x635EF0 CTaskSimpleDieInCar::Clone  (catalogue: specified/REA, port level 2)
 - Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x28) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else reads a = this+0xC, g = this+8 first; p->CTaskSimple::CTaskSimple() 0x61A390; p+0xC = a; p+8 = g; p+0x20 (u8) &= 0xFC (rest uninitialised); p+0x10 = 0; p+0x14 = 0; p+0x1C = 0; p+0x24 = 0; p+0x18 = 4.0f; vtbl = 0x86DDE0 (CTaskSimpleDieInCar); return p.
 - gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x62FC70 CTaskSimpleDieInCar::~CTaskSimpleDieInCar  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86DDE0` (0x62FC70); tail-jump to base dtor CTaskSimpleDie::~CTaskSimpleDie 0x62FB40 (0x62FC76). No other member cleanup.

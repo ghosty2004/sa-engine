@@ -855,3 +855,8 @@
   l2-extras combined. sa-hook lib 50, sa-ai tests, clippy, i686 OK.
 - New tools/e2e/verify-all.sh: all-ports L3 of every corpus recording spread over several lanes; 11 recordings on 3
   lanes in 10 min (was ~50 min serial). Result: 10 IDENTICAL; air-water DIVERGED at 2742 (pre-existing).
+
+## 2026-11-11 RE-SPEC-RW-3, RE-SPEC-FINAL, CORPUS-1 (main session)
+- Spec files from RW-3 (811 rows) and FINAL (565 rows) committed after check_consts on all changed files. FINAL's
+  RENDER/CCustomCarEnvMapPipeline.md duplicates RW-3's 0x5D8590/0x5DA790 (unindexed cross-reference, kept).
+- CORPUS-1 programs and docs/e2e/corpus.md taken from its branch; recordings live in target/e2e/corpus (local).

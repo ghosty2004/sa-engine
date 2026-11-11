@@ -21,3 +21,8 @@
 - 4. `CPed::SetCurrentWeapon(ped, (i8)+0x181)` 0x5E61F0; ped->+0x2F = +0x182.
 - 5. `idx = +0x184`: if idx == -1 or the pool flag byte `pool->+4[idx]` is negative (slot free): ped->+0x78C = 0; else ped->+0x78C =
   `pool->+0 + 0x3C*idx` (pool = [0x96A7D8]).
+
+## 0x5D28B0 CPedSaveStructure::~CPedSaveStructure (unwind)  (catalogue: unknown/REA, port level 0)
+- `__thiscall void (this)`, plain `ret`; SEH unwind action of CPed::Load 0x5D4640 / CPed::Save 0x5D5730: `` `eh vector destructor iterator'(this+0x14,
+  0x1C, 13, 0x4411A0) `` (CRT 0x821E02) - destroys the 13 CWeapon entries (0x1C bytes) at +0x14 with CWeapon::~CWeapon 0x4411A0.
+- gta-reversed: compiler-generated. Open questions: none.

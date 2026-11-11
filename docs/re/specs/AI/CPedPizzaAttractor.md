@@ -13,3 +13,11 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 
 ## 0x5EE6E0 CPedPizzaAttractor::CPedPizzaAttractor  (catalogue: specified/REA, port level 4)
 - `__thiscall (this, C2dEffectPedAttractor* fx [esp+4], CEntity* entity [esp+8], int32 moveState [esp+0xC])`, `ret 0xC`: calls `CPedAttractor::Constructor` 0x5EDFB0 (0x5ee724) with (fx=fx [esp+4], entity=entity [esp+8], moveState=moveState [esp+0xC], maxNoOfPeds=5, spacing=1.0f [0x86C44C], achieveQueueTime=30000.0f [0x86C450], achieveQueueShuffleTime=3000.0f [0x86C454], arriveRange=0.200000002f [0x86C458], headingRange=0.100000001f [0x86C45C], deltaPos=0.100000001f [0x86C460], deltaHeading=0.100000001f [0x86C464]) - float args are pushed as raw f32 dwords loaded from .rdata; then `this->vtbl = 0x86C598`; returns this.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5EE750 CPedPizzaAttractor::GetHeadOfQueueWaitTime  (catalogue: specified/REA, port level 0)
+- `__thiscall float ()`, plain `ret`: `fld [0x86C468]=2000.0f` -> returns 2000.0f in ST0 (0x5EE750). Vtable slot of CPedPizzaAttractor (no direct callers).
+
+## 0x5EE7B0 CPedPizzaAttractor::~CPedPizzaAttractor  (catalogue: unknown/REA, port level 3)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C598` (0x5EE7B0); tail-jump to base dtor CPedAttractor::Destructor 0x5EC410 (0x5EE7B6). No other member cleanup.

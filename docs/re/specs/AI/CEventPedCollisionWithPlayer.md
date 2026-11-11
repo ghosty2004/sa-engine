@@ -23,3 +23,8 @@ Vtable 0x86C970. Layout = CEventPedCollisionWithPed (gr EventPedCollisionWithPed
   `m_victim` (+0x14) != 0 `CEntity::CleanUpOldReference(m_victim, &m_victim)` 0x571A00; `vtbl = 0x85AB38`).
   Then `if (flags & 1) CEvent::operator delete(this)` 0x4B5630 (0x5FEE28-0x5FEE35).
 - gta-reversed: `= default` + base dtor - matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5FED80 CEventPedCollisionWithPlayer::~CEventPedCollisionWithPlayer  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C970` (CEventPedCollisionWithPlayer) (0x5FED80); tail-jump to base dtor FUN_004aca70 0x4ACA70 (0x5FED86). No other member cleanup.

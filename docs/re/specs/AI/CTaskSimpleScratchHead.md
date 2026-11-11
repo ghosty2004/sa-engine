@@ -21,3 +21,14 @@ Vtable 0x85A100 (set by Clone at 0x48DFAE). Derives from CTaskSimpleRunAnim (siz
 
 ## 0x48DFD0 CTaskSimpleScratchHead::IsInterruptable  (catalogue: specified/REA, port level 0)
 - `__thiscall bool (1 stack arg)`, `ret 4`: returns false (AL=0; upper EAX bits unchanged) (0x48DFD0).
+
+## 0x48DF30 CTaskSimpleScratchHead::CTaskSimpleScratchHead  (catalogue: unknown/REA, port level 2)
+- Convention: `__thiscall CTaskSimpleScratchHead* (this)`, plain `ret`, returns this. 0x48DF30 is a `jmp` to the HOODLUM body 0x1562470.
+- Behaviour: `CTaskSimpleRunAnim::CTaskSimpleRunAnim(this, group 0 (ANIM_GROUP_DEFAULT), anim 0x87 (135 ANIM_ID_XPRESSSCRATCH), 4.0f (imm
+  0x40800000), taskType 0x1A5 (421), name "ScratchHead" [0x85A128], holdLastFrame 0)` 0x61A900 (thiscall, 6 args), then `vtable = 0x85A100`.
+- gta-reversed: TaskSimpleScratchHead.h:7 - same arguments. Open questions: none.
+
+## 0x48E930 CTaskSimpleScratchHead::~CTaskSimpleScratchHead  (catalogue: unknown/REA, port level 2)
+- Thunk: `jmp CTaskSimpleAnim::~CTaskSimpleAnim` 0x61A6F0 (this in ECX unchanged). Caller: the deleting destructor 0x48E910.
+  CTaskSimpleRunAnim has no own destructor work, so the class dtor is the CTaskSimpleAnim one.
+- gta-reversed: `= default` (TaskSimpleScratchHead.h:8) - matches. Open questions: none.

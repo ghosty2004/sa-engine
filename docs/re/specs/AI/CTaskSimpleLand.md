@@ -16,3 +16,9 @@ Vtable 0x8704FC (gr TaskSimpleLand.h, size 0x14): +8 m_pAnim (CAnimBlendAssociat
 - Calls the complete dtor 0x678EE0 (0x67D363): see above. Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
   (test at 0x67D368, call at 0x67D370; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
 - gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x67C3F0 CTaskSimpleLand::Clone  (catalogue: specified/REA, port level 2)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame.
+- Behaviour: `p = CTask::operator new(0x14)`; NULL -> 0. Else `id = this->+0xC (anim id)`; CTaskSimple ctor 0x61A390; `p+0x10 = (p+0x10 & 0xFC) | ((((id == -1) & 1) | 2) << 1)` - i.e. bit 0 cleared, bit 1 = (id == -1), bit 2 set, bits 3-7 left as the uninitialised heap byte (bit 2 of the old byte is overwritten by the OR); `p+0xC = id; p->vtbl = 0x8704FC; p+8 = 0`; return p.

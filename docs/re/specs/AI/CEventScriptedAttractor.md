@@ -13,3 +13,8 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 ## 0x5FEF90 CEventScriptedAttractor::CloneEditable  (catalogue: specified/REA, port level 3)
 - `__thiscall`, `ret`, SEH: `p = CEvent::operator new(0x20)` 0x4B5620; null -> 0; else `CEventAttractor::Constructor(p, this+0x14 attractor, this+0x18 entity, 0)`
   0x4AF350 (third arg = the zeroed EAX, 0x5FEFC7), `p->vtbl = 0x86C9F0` (0x5FEFD4); return p.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5FEF70 CEventScriptedAttractor::~CEventScriptedAttractor  (catalogue: unknown/REA, port level 2)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86C9F0` (CEventScriptedAttractor) (0x5FEF70); tail-jump to base dtor FUN_004af400 0x4AF400 (0x5FEF76). No other member cleanup.

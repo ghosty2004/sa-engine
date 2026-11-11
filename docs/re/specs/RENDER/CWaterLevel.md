@@ -452,3 +452,35 @@ Several functions here are entered or continued through .HOODLUM stubs that load
   missing in WaterLevel.h). gr's `GetWaterLayerTexInfo` pairs layer 0 with TextureShiftFirst* and layer 1 with TextureShiftSecond*,
   consistent with the 0.04 / 0.08 scroll speeds here.
 - Open questions: none affecting behaviour. Names of the 0x8D3824..0x8D3934 and 0xC21170/0xC21174/0xC228DC globals are not known.
+
+## 0x6E67A0 CWaterLevel::sub_6E67A0 (proposed: sphere-vs-camera near/far test, e.g. `IsSphereWithinCameraDepth`)  (catalogue: unknown/REA, port level 3)
+(RE-SPEC-FINAL.) No callers in the catalogue (dead code in 1.0 US); class attribution by address only (between CWaterLevel functions).
+- Convention: `__cdecl bool (const CVector* p [esp+4], float r [esp+8], bool farTest [esp+0xC])`, plain `ret`, AL result. SEH frame for
+  the local CMatrix.
+- Callees: CMatrix::CMatrix(RwMatrix*, bool) 0x59C050, CMatrix::operator*(CVector) 0x59C890 (cdecl (out, CMatrix*, CVector*)), ~CMatrix
+  0x59ACD0. Global: Scene.m_pRwCamera (0xC1703C).
+- Behaviour: `cam = Scene.m_pRwCamera`; `near = cam->nearPlane (+0x80)`, `far = cam->farPlane (+0x84)` (copied first);
+  `M = CMatrix(&cam->viewMatrix (+0x20), false)`; `v = M * (*p)`; destroy M. If `!(near - r < v.z)` return 0 (NaN -> 0). If `v.z < far` return 1.
+  Else return `farTest ? 0 : 1`. (r is not added on the far side.)
+- gta-reversed: absent. Open questions: purpose/name (no caller).
+
+## 0x6E6A10 CWaterLevel::RenderDetailedSeaBedSegment  (catalogue: unknown/REA, port level 0)
+(RE-SPEC-FINAL; name from gr WaterLevel.h:329 declaration list, signature matches the two call sites in CWaterLevel::RenderWater 0x6EF80F /
+0x6EF848.)
+- Convention: `__cdecl void (int32 bx [esp+4], int32 by [esp+8], float x0 [esp+0xC], float x1 [esp+0x10], float y0 [esp+0x14], float y1 [esp+0x18])`,
+  plain `ret`; the x1 and y1 arg slots are reused (nx, dy). Callees: `_ftol` 0x821B40 (x2). Globals: uiTempBufferVerticesStored 0xC4B950,
+  uiTempBufferIndicesStored 0xC4B954, aTempBufferIndices 0xC4B958 (u16), TempVertexBuffer 0xC4D958 (RwIm3DVertex 0x24: +0 x, +4 y, +8 z,
+  +0x18 colour, +0x1C u, +0x20 v). Constants 4.0f [0x858B90], 8.0f [0x859000], 500.0f [0x858B58], 3000.0f [0x859A94].
+- Behaviour:
+  1. `dx = x1 - x0` (stored f32); `nx = _ftol(dx * 4.0f)`, `if (nx < 1) nx = 1` (signed). `dy = y1 - y0` (stored); `ny = max(_ftol(dy * 4.0f), 1)`.
+  2. `vb = verticesStored`, `ic = indicesStored` (registers; no capacity check and no flush in this function). For `i = 0 .. nx-1`:
+     `fx0 = ((float)i * dx) / (float)nx + x0` (x87, not stored); `fx1 = ((float)(i+1) * dx) / (float)nx + x0` (stored f32);
+     `U0 = fx0 * 8.0f` (stored f32); `WX0 = ((float)bx + fx0) * 500.0f - 3000.0f` (x87); `U1 = fx1 * 8.0f`, `WX1 = ((float)bx + fx1) * 500.0f
+     - 3000.0f` (x87). For `j = 0 .. ny-1`: `fy0 = ((float)j * dy) / (float)ny + y0` (stored f32), `fy1` with j+1 (stored);
+     `V0 = fy0 * 8.0f`, `V1 = fy1 * 8.0f` (stored f32); `WY0 = ((float)by + fy0) * 500.0f - 3000.0f`, `WY1` with fy1.
+     Four vertices at `TempVertexBuffer + 0x24*vb`: v0 = (WX0, WY0, -70.0f, u U0, v V0), v1 = (WX0, WY1, -70.0f, U0, V1),
+     v2 = (WX1, WY0, -70.0f, U1, V0), v3 = (WX1, WY1, -70.0f, U1, V1); colour 0xFF505050 for all; normal fields not written.
+     Indices: `idx[ic..ic+5] = vb, vb+1, vb+2, vb+3, vb+1, vb+2`; `vb += 4`, `ic += 6`.
+  3. `indicesStored = ic`, `verticesStored = vb` (written once at the end, 0x6E6C84).
+- Edge cases: callers must leave room in the buffers (nx*ny*4 vertices); with `dx*4 < 1` one column is still emitted.
+- gta-reversed: declaration only. Open questions: none.

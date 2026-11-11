@@ -19,3 +19,14 @@ memory not cleared). Vtable 0x85A950.
 - gta-reversed: `m_nType = 0x8001; m_InterpInfo.Allocate(8)` - Allocate writes `m_nCount = 8` as int16 (two bytes, also clears +0xF)
   and `m_Keys = g_fxMan.Allocate<uint16*>(8)` = GetMem(32, 4): same except the byte vs. word store (harmless: +0xF is not read
   by the original readers, which use `byte [+0xE]`). Open questions: none.
+
+## 0x4A6950 FxInfoSmoke_c::Load  (catalogue: specified/REA, port level 0)
+- Convention: `__thiscall void (this, FILESTREAM file [esp+4], int32 version [esp+8])`, `ret 8`.
+- Behaviour: `this->m_InterpInfo (+8)` virtual Load (its vtable +4) `(file)`; version unused. Same code as FxInfoAttractLine_c::Load 0x4A5830.
+- gta-reversed: FxInfoSmoke_c Load - same. Open questions: none.
+
+## 0x4A6970 FxInfoSmoke_c::GetValue  (catalogue: specified/REA, port level 1)
+- Convention: as FxInfoAttractLine_c::GetValue (`ret 0x18`), info = RenderInfo_t*.
+- Behaviour: `t = this->m_bTimeModeParticle (+6) ? mult : currentTime / len` (x87 `fld currentTime; fdiv len; fstp` to an f32 slot); `FxInterpInfoU255_c::GetVal(this+8, v[8], t)` 0x4A8800; `info->m_SmokeType (+0x7B) = (u8)_ftol(v[0])`; dword copies
+  `+0x88..+0xA0 = v[1..7]` (m_SmokeColor r,g,b,a, m_SmokeBrightness, m_SmokeSize, m_SmokeLife).
+- gta-reversed: FxInfoSmoke.cpp - same. Open questions: none.

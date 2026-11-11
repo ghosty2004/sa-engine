@@ -111,3 +111,13 @@ int version (see docs/re/cat14-gr-deviations.md finding 1; gr's differs) - call 
 
 ## 0x6839C0 CTaskComplexBeInCouple::Clone  (catalogue: specified/REA, port level 3)
 - `__thiscall CTask* ()`, `ret`, SEH frame: `p = CTask::operator new(0x20)` 0x61A5A0 (cdecl, task pool, 0x6839DB); if p == 0 return 0 (0x6839F1); else `CTaskComplexBeInCouple::CTaskComplexBeInCouple` 0x6836F0 on p with args (this+0x10, (u8)this+0x14 (zero-extended) (byte, mov), (u8)this+0x15 (zero-extended) (byte, mov), (u8)this+0x16 (zero-extended) (byte, mov), this+0x18) (0x683A0F) and return its EAX (the ctor returns p).
+
+## 0x683840 CTaskComplexBeInCouple::sub_683840  (catalogue: unknown/REA, port level 0)
+Proposed: `int32 CTaskComplexBeInCouple::GetSideOfPartner(CPed* ped) const` (only caller ControlSubTask 0x684930; name as used in the
+ControlSubTask section of this file).
+- Convention: `__thiscall int32 (this, CPed* ped [esp+4])`, `ret 4`, EAX = 1 or 2. 12-byte local copy of the right vector.
+- Behaviour: `A = this->m_partner (+0x10)`; `r = A->m_matrix->right` (matrix +0/+4/+8, copied to locals; no null check on m_matrix, 0x683846);
+  `P = A->m_matrix ? matrix+0x30 : A+4` (pointer re-tested); x87: `a = r.y*P.y; a += r.z*P.z; a += r.x*P.x; a = -a` (fchs, kept in st);
+  `Q` = ped position likewise; `s = r.y*Q.y; s += r.z*Q.z; s += r.x*Q.x; s += a` (`fadd st(1)`); `fcomp [0x858B50]=0.0f; test ah,1`:
+  return 2 if `s < 0` or NaN (C0 set), else 1.
+- gta-reversed: absent. Open questions: none.

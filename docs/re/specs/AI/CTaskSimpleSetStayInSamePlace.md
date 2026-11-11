@@ -12,3 +12,8 @@
 ## 0x635BD0 CTaskSimpleSetStayInSamePlace::Clone  (catalogue: specified/REA, port level 2)
 - Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0xC) 0x61A5A0 (cdecl); if p == NULL -> return NULL (0 in EAX). Else p->CTaskSimple::CTaskSimple() 0x61A390; p+8 = this+8 (u8); vtbl = 0x86DD50 (CTaskSimpleSetStayInSamePlace); return p.
 - gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x62F5D0 CTaskSimpleSetStayInSamePlace::~CTaskSimpleSetStayInSamePlace  (catalogue: unknown/REA, port level 1)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86DD50` (0x62F5D0); tail-jump to base dtor CTaskSimple::~CTaskSimple 0x61A3A0 (0x62F5D6). No other member cleanup.

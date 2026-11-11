@@ -25,3 +25,10 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 ## 0x4B27B0 CEventVehicleHitAndRun::IsCriminalEvent  (catalogue: specified/REA, port level 1)
 - `__thiscall bool ()`, `ret`: `d = (this+0x10 vehicle)->m_pDriver (+0x460)` (vehicle pointer dereferenced without null check, 0x4B27B3); AL = 1 iff d != 0 and
   `d->IsPlayer()` 0x5DF8F0, else 0.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x4AEA50 CEventVehicleHitAndRun::~CEventVehicleHitAndRun  (catalogue: unknown/REA, port level 1)
+- Complete (non-deleting) dtor, `__thiscall void (this)`, plain `ret`. SEH frame via .HOODLUM stub (entry `push -1; jmp 0x40218C`). Callers: the scalar deleting dtor 0x4B5FE0 and CTaskSimpleKillPedWithCar::ProcessPed 0x6564A0 (stack instance).
+- Behaviour: `vtbl = 0x85AFA8` (CEventVehicleHitAndRun, 0x4AEA6D); `if this->+0x10 (m_Vehicle)` -> CleanUpOldReference(+0x10 entity, &this->+0x10) 0x571A00 (0x4AEA86); `if this->+0xC (m_Victim)` -> CleanUpOldReference(+0xC entity, &this->+0xC) (0x4AEA96); `vtbl = 0x85AB38` (CEvent base vtable, 0x4AEA9F). No base dtor call (CEvent's dtor is empty and inlined). Fields are not nulled.
+- gta-reversed: CEventVehicleHitAndRun (Events/EventVehicleHitAndRun) has `m_Victim` +0xC, `m_Vehicle` +0x10; order of cleanup in the bytes: vehicle first, then victim.

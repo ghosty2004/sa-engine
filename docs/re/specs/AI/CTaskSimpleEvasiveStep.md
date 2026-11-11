@@ -26,3 +26,12 @@ Vtable 0x86F1F4, type 0x1F5 (501), size 0x14. Layout: +8 m_pEntity (registered r
 ## 0x657A60 CTaskSimpleEvasiveStep::ProcessPed  (catalogue: specified/REA, port level 10)
 - `__thiscall bool (this, CPed* ped)`, `ret 4`: if m_bFinished or m_pEntity == 0 return 1. If m_pAnim == 0: if
   `(m_pEntity->+0x36 & 7) == 2` (entity type vehicle) `ped->Say(0x4A, 0, 1.0f, 0, 0, 0)` 0x5EFFE0; `StartAnim(ped)`. Return 0.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x653240 CTaskSimpleEvasiveStep::MakeAbortable  (catalogue: specified/REA, port level 1)
+- `__thiscall bool (this, CPed* ped, int32 priority [esp+8], const CEvent* event)`, `ret 0xC`.
+- Behaviour: `if priority != 1 && priority != 2` -> return 0. Else `if m_pAnim (+0x10)`: `m_pAnim->m_BlendDelta (+0x1C) = -4.0f` (0x653260); `m_pAnim->SetFinishCallback(0x4D1390 (empty default CB), NULL)` 0x4CEBE0; `m_pAnim = 0`. Return 1.
+
+## 0x655810 CTaskSimpleEvasiveStep::Clone  (catalogue: specified/REA, port level 3)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame. `p = CTask::operator new(0x14)`; if NULL return 0; else `CTaskSimpleEvasiveStep::CTaskSimpleEvasiveStep(p, this->+8 (m_pEntity))` 0x653160; return p.

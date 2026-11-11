@@ -164,3 +164,10 @@ Helpers used (not in this group; catalogue unknown, proposed names):
 
 ## 0x63D9E0 CTaskComplexLeaveCar::Clone  (catalogue: specified/REA, port level 3)
 - `__thiscall CTask* ()`, `ret`, SEH frame: `p = CTask::operator new(0x34)` 0x61A5A0 (cdecl, task pool, 0x63D9FB); if p == 0 return 0 (0x63DA11); else `CTaskComplexLeaveCar` 0x63B8C0 on p with args (this+0xC, this+0x10, this+0x14, (u8)this+0x18 (zero-extended) (byte, mov), (u8)this+0x19 (zero-extended) (byte, mov)) (0x63DA2D) and return its EAX (the ctor returns p).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x62F1A0 CTaskComplexLeaveCar::CTaskComplexLeaveCar (proposed: CTaskComplexLeaveCarAndDie::CTaskComplexLeaveCarAndDie)  (catalogue: specified/REA, port level 3)
+- Name correction: stores vtable 0x86DD00 (slot 4 returns TASK_COMPLEX_LEAVE_CAR_AND_DIE) after calling the CTaskComplexLeaveCar ctor, so this is the derived CTaskComplexLeaveCarAndDie ctor. Caller: CTaskComplexDieInCar::CreateSubTask 0x62FD50.
+- `__thiscall T* (this, CVehicle* veh [esp+4], int32 targetDoor [esp+8], int32 delayTime [esp+0xC])`, `ret 0xC`.
+- Behaviour: `CTaskComplexLeaveCar::CTaskComplexLeaveCar(this, veh, targetDoor, delayTime, 0, 1)` 0x63B8C0 (pushes 1, 0, a3, a2, a1; i.e. sensibleLeaveCar = false, forceGetOut = true per gr arg order) (0x62F1B8); `vtbl = 0x86DD00`; `+0x1A = 1 (u8)`; return this.

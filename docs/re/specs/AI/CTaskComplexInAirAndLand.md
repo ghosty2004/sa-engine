@@ -10,3 +10,9 @@ Vtable 0x8704AC.
 - Calls the complete dtor 0x678CC0 (0x67CC13): `vtbl = 0x8704AC; jmp 0x61A3D0` (~CTaskComplex). Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
   (test at 0x67CC18, call at 0x67CC20; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
 - gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x67C2E0 CTaskComplexInAirAndLand::Clone  (catalogue: specified/REA, port level 2)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame.
+- Behaviour: `p = CTask::operator new(0x10)`; if NULL return 0. Else `b1 = (this+0xD != 0)`, `b0 = (this+0xC != 0)` (normalised to 0/1 with `setne`); CTaskComplex ctor; `p+0xC = b0; p+0xD = b1; p->vtbl = 0x8704AC; p+0xE = 0`; return p.

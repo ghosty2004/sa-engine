@@ -41,3 +41,13 @@ Layout (FxPrimBP.h, confirmed by the bytes): +0x00 vtable, +0x04 m_Type (i8), +0
   bytes except: gr `ReadField<bool>`/`ReadField<uint8>` parse helpers (may differ in conversion of values > 255 / != 0/1;
   the original keeps the low byte) and gr's `CopyFromVectors` uses FixedVector conversion (must be `(i16)ftol(v*32767)`).
   Open questions: none.
+
+## 0x4A9D20 FxPrimBP_c::~FxPrimBP_c  (catalogue: specified/REA, port level 3)
+- Convention: `__thiscall void (this)`, plain `ret`. SEH frame (handler 0x83990B). Caller: FxEmitterBP_c::~FxEmitterBP_c 0x4A18F0 (tail call).
+- Behaviour: `vtable = 0x85A9C4`; for the texture slots in this order: +0xC, +0x10, +0x14, +0x14 again: `if (slot) { RwTextureDestroy(slot)
+  0x7F3820; slot = 0; }` (the second +0x14 test always sees 0; slot +0x18 is never destroyed). Then `FxInfoManager_c::~FxInfoManager_c(this+0x2C)`
+  0x4A4950; SEH -1; `0x4A8DE0(this+0x20)` (List_c member dtor).
+- gr-deviations row (FxPrimBP.cpp:21, "FIX_BUGS: They forgot destroy third texture (texture 3 destroyed twice)"): Original bytes 0x4A9D70-0x4A9D93
+  test/destroy +0x14 twice and never touch +0x18. Verdict: CONFIRMED (gr destroys all four, and calls RwTextureDestroy without a null check).
+  Class: keep-original (the 4th texture leaks in the original).
+- Open questions: none.

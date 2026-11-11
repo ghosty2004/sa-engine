@@ -21,3 +21,10 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 
 ## 0x6091C0 CEventDontJoinPlayerGroup::Clone  (catalogue: specified/REA, port level 3)
 - `__thiscall CEvent* ()`, `ret`, SEH frame: `p = CEvent::operator new(0x10)` 0x4B5620 (cdecl, event pool, 0x6091DB); if p == 0 return 0 (0x6091F1); else `CEventDontJoinPlayerGroup::Constructor` 0x6090E0 on p with args (this+0xC) (0x6091F9) and return its EAX (the ctor returns p).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x609140 CEventDontJoinPlayerGroup::CEventDontJoinPlayerGroup  (catalogue: unknown/REA, port level 1)
+- Name correction: this is the complete (non-deleting) DESTRUCTOR `CEventDontJoinPlayerGroup::~CEventDontJoinPlayerGroup`, not the ctor. Evidence: stores vtable 0x86D0E0 then cleans up the +0xC reference and calls the CEvent base dtor 0x4AC010; callers are the scalar deleting dtor 0x609230 and CPlayerPed::MakeThisPedJoinOurGroup 0x60C840 (stack instance).
+- `__thiscall void (this)`, plain `ret`; SEH frame via .HOODLUM stub (entry `push -1; jmp 0x4021BC`).
+- Behaviour: `vtbl = 0x86D0E0` (0x60915D); `if this->+0xC (m_Player)` -> CleanUpOldReference(+0xC entity, &this->+0xC) 0x571A00 (0x609176); base dtor 0x4AC010 (0x609185).

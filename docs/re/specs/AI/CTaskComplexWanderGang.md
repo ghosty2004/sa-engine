@@ -27,3 +27,8 @@ Vtable 0x8700D4 (gr TaskComplexWanderGang.h, size 0x38). CTaskComplexWander part
 - Calls the complete dtor 0x66F670 (0x66F653): `vtbl = 0x86FE84` (the CTaskComplexWander vtable; CTaskComplexWanderGang has no dtor of its own) `; jmp 0x61A3D0` (~CTaskComplex). Then `if (flags & 1) CTask::operator delete(this)` 0x61A5B0
   (test at 0x66F658, call at 0x66F660; cdecl, inlined task-pool delete, stride 0x80). Shape shared by every 11-insn task deleting dtor.
 - gta-reversed: compiler-generated (virtual ~X + pool operator delete) - matches.
+
+## 0x66F670 CTaskComplexWanderGang::~CTaskComplexWanderGang  (catalogue: unknown/REA, port level 2)
+- Convention: `__thiscall void (this)`. Body: `vtable = 0x86FE84` (the CTaskComplexWander base vtable - WanderGang has nothing of its own to
+  destroy), then tail-jump to CTaskComplex::~CTaskComplex 0x61A3D0. Byte-for-byte the same work as 0x669D20 (a second compiler copy).
+- gta-reversed: `= default` - matches. Open questions: none.

@@ -13,3 +13,8 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 ## 0x69DAC0 CTaskAllocator::~CTaskAllocator  (catalogue: specified/REA, port level 0)
 - Scalar deleting destructor: `this->vtbl = 0x870E30` (0x69DAC8); if flags & 1: allocator-pool free inlined ([0xB744BC], `>> 5`, byteMap |= 0x80, firstFree = min,
   0x69DAD1-0x69DAF1); returns this; `ret 4`.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x69BB40 CTaskAllocator::sub_69BB40 (proposed: CTaskAllocator::~CTaskAllocator (non-deleting))  (catalogue: unknown/REA, port level 0)
+- `__thiscall void (this)`: `vtbl = 0x870E30` (CTaskAllocator base vtable; done in the .HOODLUM detour 0x40A41C, entry `nop; jmp`); `ret` (0x69BB46). 8 references (base-dtor call sites of the derived allocators).

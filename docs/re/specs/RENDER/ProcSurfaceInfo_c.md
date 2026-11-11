@@ -17,3 +17,6 @@ Layout: see ProcSurfaceInfo_c.deviations.md.
      return 1. n.z == 0 gives inf/NaN (no check).
 - Edge cases: points on an edge (term == 0) are inside. Works only for one winding (all terms <= 0).
 - gta-reversed: ProcSurfaceInfo.cpp:246, not hooked; matches the bytes (including the term order). Open questions: none.
+
+## 0x5A2EA0 ProcSurfaceInfo_c::~ProcSurfaceInfo_c  (catalogue: specified/REA, port level 1)
+- `__thiscall void (this)`: `ecx += 0x3C; jmp 0x4A8DE0` (List_c::~List_c of the member at +0x3C; empty). gta-reversed: `= default`. Open questions: none.

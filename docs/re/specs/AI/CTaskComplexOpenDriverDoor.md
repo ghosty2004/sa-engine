@@ -9,3 +9,8 @@
 ## 0x643870 CTaskComplexOpenDriverDoor::Clone  (catalogue: specified/REA, port level 3)
 - Convention: virtual slot 1, `__thiscall CTask* (this = ECX)`, plain `ret`; SEH frame. p = CTask::operator new(0x50) 0x61A5A0 (cdecl); if p == NULL the constructor is skipped and EAX = 0 (see the trailing stores). Else p->CTaskComplexEnterCar::CTaskComplexEnterCar(this+0xC, 1, 1, 0, 0) 0x63A220; vtbl = 0x86EB0C (CTaskComplexOpenDriverDoor); p+0x1C = 0xA. Then outside the NULL check: p+0x24 = this+0x24 (same NULL-write bug as 0x6437F0); return p.
 - gta-reversed: not hooked at this address (catalogue source REA); described from the bytes.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x6403D0 CTaskComplexOpenDriverDoor::~CTaskComplexOpenDriverDoor  (catalogue: unknown/REA, port level 3)
+- Non-deleting dtor, `__thiscall void (this)`: `this->vtbl = 0x86EB0C` (0x6403D0); tail-jump to base dtor CTaskComplexEnterCar::Destructor 0x63DFA0 (0x6403D6). No other member cleanup.

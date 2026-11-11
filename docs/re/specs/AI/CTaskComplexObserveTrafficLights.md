@@ -29,3 +29,13 @@ Vtable 0x86DF98, type 0xE0 (224), size 0xC (no own members).
 
 ## 0x637F60 ...::`scalar deleting destructor'  (catalogue: specified/REA, port level 3)
 - call 0x6317C0; `if (flags & 1) CTask::operator delete`; return this; `ret 4`.
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x631790 CTaskComplexObserveTrafficLights::CTaskComplexObserveTrafficLights  (catalogue: specified/REA, port level 1)
+- `__thiscall T* (this)`, plain `ret`. No callers.
+- Behaviour: CTaskComplex ctor 0x61A3B0; `vtbl = 0x86DF98` (TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS); `+0xC = 0; +0x10 = 0; +0x14 = 0 (u8); +0x15 = 0 (u8)` (a CTaskTimer {start, interval, started, stopped}); return this.
+
+## 0x636410 CTaskComplexObserveTrafficLights::Clone  (catalogue: specified/REA, port level 2)
+- `__thiscall CTask* (this)`, plain `ret`; SEH frame. Slot 1 of vtable 0x86DF98.
+- Behaviour: `p = CTask::operator new(0x18)`; if NULL return 0 (0x63646E). Else CTaskComplex ctor on p; `p->vtbl = 0x86DF98; p+0xC = 0; p+0x10 = 0; p+0x14 = 0 (u8); p+0x15 = 0 (u8)`; return p (fresh timer; nothing copied).

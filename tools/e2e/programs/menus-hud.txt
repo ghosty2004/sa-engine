@@ -1,0 +1,94 @@
+# CORPUS-1 menus-hud corpus program (CMenuManager pages, map, radio, HUD help boxes): the grove-walk
+# start, then the pause menu (esc) navigated with the D-pad and enter: Map (scroll with the D-pad, zoom
+# keys, T = waypoint target, L = legend on/off, Z = overview), Stats (every category: player, money,
+# weapons, crimes, gangs, achievements, mission, misc), Brief, Options -> Controller Setup (redefine
+# controls, mouse settings pages, nothing changed), Options -> Display Setup (rows visited, nothing
+# changed). Audio Setup is NOT opened: in determinism mode the original divides by zero at 0x4F1464
+# there (docs/e2e/corpus.md). Back in the game: HESOYAM, JQNTDMH (Rancher) entered, driven slowly with
+# radio station changes (D-pad up/down) and camera modes (select); the Rancher is spawned next to a
+# police car, the collision gives a wanted star and the police arrest CJ in the car ("Busted"), then
+# the police-station restart with the wanted-level help boxes. Pad controls; cheats one key per two
+# frames. Generated from a compact source (one 'FRAME cheat WORD' line per cheat). Frames as in
+# grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300 key=esc                 # pause menu
+1400 down
+1460 down                    # Map
+1520 key=enter
+1580..1590 down              # scroll
+1620..1630 right
+1660..1720 r1                # zoom?
+1760..1820 l1
+1860 key=std:0x54            # T: target (waypoint)
+1920 key=std:0x4C            # L: legend
+1980 key=std:0x4C
+2040 key=std:0x5A            # Z: overview
+2100 key=std:0x5A
+2160 key=esc                 # back to the pause menu
+2220 down                    # Stats
+2280 key=enter
+2340 down
+2390 down
+2440 down
+2490 down
+2540 down
+2590 down
+2640 down
+2700 key=esc
+2760 down                    # Brief
+2820 key=enter
+2920 key=esc
+2980 down                    # Options
+3040 key=enter
+3100 key=enter               # Controller Setup
+3180 down
+3240 down
+3300 down
+3360 up
+3420 key=enter
+3520 key=esc
+3600 key=esc
+3660 down
+3700 down                    # Display Setup (Audio Setup is skipped: see corpus.md)
+3760 key=enter
+3820 down
+3870 down
+3920 down
+3970 down
+4020 down
+4070 down
+4120 key=esc
+4180 key=esc                 # back to the pause menu
+4240 key=esc                 # resume
+4300..4379 ly=-128           # walk out of the alley to the street
+4400 key=std:0x48            # HESOYAM
+4402 key=std:0x45
+4404 key=std:0x53
+4406 key=std:0x4F
+4408 key=std:0x59
+4410 key=std:0x41
+4412 key=std:0x4D
+4430 key=std:0x4A            # JQNTDMH: Rancher
+4432 key=std:0x51
+4434 key=std:0x4E
+4436 key=std:0x54
+4438 key=std:0x44
+4440 key=std:0x4D
+4442 key=std:0x48
+4460 triangle
+4500 triangle
+4600..5400 cross pulse       # drive slowly
+4700 up                      # radio station: next
+4800 up
+4900 down                    # previous
+5000 select                  # camera mode
+5100 select
+5200..5260 lx=-128
+5300 up
+5400..5450 square
+5460 key=esc                 # pause in the car
+5520 key=esc
+end 5700

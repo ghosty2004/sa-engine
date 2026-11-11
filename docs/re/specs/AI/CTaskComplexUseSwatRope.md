@@ -11,3 +11,9 @@
 
 ## 0x65A3C0 CTaskComplexUseSwatRope::~CTaskComplexUseSwatRope  (catalogue: specified/REA, port level 3)
 - Scalar deleting dtor, `__thiscall void* (this, u32 flags [esp+4])`, `ret 4`: calls dtor FUN_006594d0 0x6594D0 (0x65A3C3); if `flags & 1` (0x65A3C8) calls CTask::operator delete 0x61A5B0 (this) (0x65A3D0, cdecl, caller pops); returns this in EAX. Vtable: slot 0 (+0x0) of vtable 0x86F59C (CTaskComplexUseSwatRope).
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x6586A0 sub_6586a0 (proposed: CTaskSimpleAbseil::CTaskSimpleAbseil)  (catalogue: unknown/REA, port level 2)
+- Name proposal: CTaskSimpleAbseil ctor (gr Tasks/TaskTypes/TaskSimpleAbseil.h). Evidence: CTaskSimpleRunAnim(task type 0x1A7 = TASK_SIMPLE_ABSEIL, name "Abseil" 0x86F484) then vtable 0x86F45C; caller CTaskComplexUseSwatRope::CreateSubTask 0x659620.
+- `__thiscall T* (this)`, plain `ret`: `CTaskSimpleRunAnim::CTaskSimpleRunAnim(this, animGroup 0, animId 0x98, blendDelta 4.0f (0x40800000), taskType 0x1A7, "Abseil" [0x86F484], holdLastFrame 0)` 0x61A900 (Constructor2); `vtbl = 0x86F45C`; return this.

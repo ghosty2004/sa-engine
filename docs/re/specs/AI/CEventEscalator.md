@@ -23,3 +23,12 @@ Addresses are 1.0 US. Every claim cites the instruction address that proves it; 
 ## 0x602B90 CEventEscalator::Clone  (catalogue: specified/REA, port level 2)
 - `__thiscall CEvent* ()`, `ret`, SEH: `p = CEvent::operator new(0xC)` 0x4B5620; null -> 0; else `CEvent::CEvent(p)` 0x4ABFC0, `p->vtbl = 0x86CD00` (0x602BC8); return p.
   (Nothing is copied from `this`.)
+
+<!-- RE-SPEC-FINAL helper B additions -->
+
+## 0x5FF820 CEventEscalator::CEventEscalator  (catalogue: unknown/REA, port level 1)
+- `__thiscall CEventEscalator* (this)`, plain `ret`. No callers (inlined at the use sites; out-of-line copy).
+- Behaviour: `CEvent::CEvent(this)` 0x4ABFC0 (0x5FF823); `vtbl = 0x86CD00` (0x5FF828); return this.
+
+## 0x5FF860 CEventEscalator::~CEventEscalator  (catalogue: unknown/REA, port level 1)
+- Tail-jump thunk (0x5FF860): `jmp FUN_004ac010 0x4AC010` with all registers and stack args unchanged (same convention as the target).
