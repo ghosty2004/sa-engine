@@ -6,10 +6,10 @@ use sa_core::mem::GlobalDesc;
 
 use crate::{
     atomic, camera, clump, engine, frame, geometry, im3d, light, material, matrix, memory, mesh, plugin,
-    stream, texture, vector,
+    stream, texture, vector, videomode,
 };
 use crate::{d3d9misc, d3d9pipe, d3d9dev, d3d9state, d3d9vb, image, im2d, matfx, raster, skin};
-use crate::{core5, d3d9cam, d3d9inst, d3d9light, d3d9native, d3d9node, d3d9vsmat, image2};
+use crate::{core5, d3d9cam, d3d9inst, d3d9light, d3d9native, d3d9node, d3d9vsgen, d3d9vsmat, image2};
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -28,7 +28,15 @@ pub const MODULES: &[&[HookReg]] = &[
     im3d::HOOKS,
     engine::HOOKS,
     mesh::HOOKS,
+    crate::tristrip::HOOKS,
+    crate::atomic_world_sync::HOOKS,
     light::HOOKS,
+    videomode::HOOKS,
+    crate::rxpipeline::HOOKS,
+    crate::imagemod::HOOKS,
+    crate::worldplugin::HOOKS,
+    crate::anim::HOOKS,
+    crate::worldcreate::HOOKS,
     d3d9state::HOOKS,
     d3d9dev::HOOKS,
     d3d9vb::HOOKS,
@@ -47,6 +55,19 @@ pub const MODULES: &[&[HookReg]] = &[
     image2::HOOKS,
     core5::HOOKS,
     d3d9inst::HOOKS,
+    crate::rxcompile::HOOKS,
+    crate::anisot::HOOKS,
+    crate::d3d9sys::HOOKS,
+    crate::d3d9rast::HOOKS,
+    crate::clumpstream::HOOKS,
+    d3d9vsgen::HOOKS,
+    crate::bmp_read::HOOKS,
+    crate::hanim_stream::HOOKS,
+    crate::matfx_stream::HOOKS,
+    crate::skin_stream::HOOKS,
+    crate::rw_helpers::HOOKS,
+    crate::hanim_hierarchy::HOOKS,
+    crate::hanim_update::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -67,6 +88,12 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     engine::GLOBALS,
     mesh::GLOBALS,
     light::GLOBALS,
+    videomode::GLOBALS,
+    crate::rxpipeline::GLOBALS,
+    crate::imagemod::GLOBALS,
+    crate::worldplugin::GLOBALS,
+    crate::anim::GLOBALS,
+    crate::worldcreate::GLOBALS,
     d3d9state::GLOBALS,
     d3d9dev::GLOBALS,
     d3d9vb::GLOBALS,
@@ -85,6 +112,12 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     image2::GLOBALS,
     core5::GLOBALS,
     d3d9inst::GLOBALS,
+    crate::rxcompile::GLOBALS,
+    crate::d3d9sys::GLOBALS,
+    crate::d3d9rast::GLOBALS,
+    crate::clumpstream::GLOBALS,
+    d3d9vsgen::GLOBALS,
+    crate::bmp_read::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
@@ -117,6 +150,17 @@ const ALL_ARRAY: [HookReg; total(MODULES)] = concat(MODULES);
 
 /// All registrations of this crate (the concatenation of [`MODULES`]).
 pub const ALL: &[HookReg] = &ALL_ARRAY;
+
+/// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
+/// phase A); `sa_ports::NATIVES` lists each of these.
+pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
+    engine::NATIVES,
+    crate::worldplugin::NATIVES,
+    crate::raster::NATIVES,
+    crate::memory::NATIVES,
+    crate::d3d9sys::NATIVES,
+    crate::d3d9rast::NATIVES,
+];
 
 pub const COUNT: usize = ALL.len();
 

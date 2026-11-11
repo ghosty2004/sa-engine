@@ -173,15 +173,29 @@ fn timer_fn_at(addr: u32) -> TimerFn {
     }
     #[cfg(not(sa_phase_a))]
     {
-        let _ = addr;
-        unported_timer
+        match addr {
+            QPC_TIMER_FUNCTION => qpc_timer_function,
+            _ => ms_timer_function,
+        }
     }
 }
 
+/// Phases B/C: 0x5617A0 (`QueryPerformanceCounter` → the 64-bit count). The counter comes from
+/// the `query_performance_counter_cycles` declaration, which `sa-game` binds to sa-platform's
+/// Win32 time; an unbound declaration aborts here (a panic cannot unwind out of `extern "C"`).
 #[cfg(not(sa_phase_a))]
 #[allow(unsafe_code)]
-unsafe extern "C" fn unported_timer() -> u64 {
-    panic!("CTimer timer functions (0x5617A0/0x5617C0) need sa-platform's clock (phase B)")
+unsafe extern "C" fn qpc_timer_function() -> u64 {
+    let mut c: u64 = 0;
+    query_performance_counter_cycles(GPtr::from_raw(&raw mut c));
+    c
+}
+
+/// Phases B/C: 0x5617C0 (`RsTimer()` zero-extended: milliseconds).
+#[cfg(not(sa_phase_a))]
+#[allow(unsafe_code)]
+unsafe extern "C" fn ms_timer_function() -> u64 {
+    crate::platform::rs_timer() as u64
 }
 
 /// `CTimer::Shutdown` (0x5618C0).
@@ -275,6 +289,48 @@ pub fn update_variables(time_elapsed: f32) {
     TIME_MS.set(o.time_ms);
     OLD_TIME_STEP.set(o.old_time_step);
     TIME_STEP.set(o.time_step);
+}
+
+/// `CTimer::Update` (0x561B10, cdecl). Phase B entry only: in phase A sa-hook keeps its own hook here
+/// (the frame boundary of determinism mode), so this port is `#[native]`. Nothing without a timer
+/// function. `game_FPS = 1000 / (nonClipped - prevNonClipped)` (`fild` of the unsigned difference,
+/// `fdivr`), `m_sbEnableTimeDebug = 1`, the previous-time chain shifted (PPPP ← PPP ← PP ← P ← now) and
+/// `prevNonClipped = nonClipped`; then the timer function's 64-bit count minus the render start time
+/// as an unsigned 64-bit value rounded once to float (`fild` of the low 63 bits plus 2^63 when the top
+/// bit is set, `faddp` at PC=24), multiplied by `ms_fTimeScale` unless a pause is active; the render
+/// start time becomes the count; `m_snTimeInMillisecondsPauseMode = ftol(pauseMode + elapsed /
+/// divider)`; `UpdateVariables(paused ? 0 : elapsed)`; `m_FrameCounter += 1`.
+#[crate::native(addr = 0x561B10, conv = cdecl, name = "CTimer::Update")]
+pub fn update() {
+    if TIMER_FUNCTION.get().is_none() {
+        return;
+    }
+    let now_nc = TIME_MS_NON_CLIPPED.get();
+    let d = now_nc.wrapping_sub(PREV_TIME_MS_NON_CLIPPED.get());
+    let x = fild_u32(d);
+    ENABLE_TIME_DEBUG.set(GBool::TRUE);
+    let fps = x.fdivr_m(1000.0);
+    PPPP_TIME_MS.set(PPP_TIME_MS.get());
+    PPP_TIME_MS.set(PP_TIME_MS.get());
+    PP_TIME_MS.set(PREV_TIME_MS.get());
+    PREV_TIME_MS.set(TIME_MS.get());
+    PREV_TIME_MS_NON_CLIPPED.set(now_nc);
+    GAME_FPS.set(fps.to_f32());
+    let now = timer_function();
+    let elapsed_u = now.wrapping_sub(RENDER_START_TIME.get());
+    // fild qword (low 63 bits) + 2^63 when the top bit is set: one rounding to 24 bits (PC=24)
+    let mut elapsed = elapsed_u as f32;
+    let paused = USER_PAUSE.get().get() || CODE_PAUSE.get().get();
+    if !paused {
+        elapsed = X87::from_f32(TIME_SCALE.get()).fmul_m(elapsed).to_f32();
+    }
+    let div = fild_u32(TIMER_DIVIDER.get());
+    RENDER_START_TIME.set(now);
+    let step = div.fdivr_m(elapsed);
+    let pm = fild_u32(TIME_MS_PAUSE_MODE.get()).fadd(step);
+    TIME_MS_PAUSE_MODE.set(pm.ftol() as u32);
+    update_variables(if paused { 0.0 } else { elapsed });
+    FRAME_COUNTER.set(FRAME_COUNTER.get().wrapping_add(1));
 }
 
 /// `CTimer::Suspend` (0x5619D0).

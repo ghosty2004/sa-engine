@@ -1028,8 +1028,161 @@ pub fn handler_ctor(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     this
 }
 
+orig! {
+    /// `CEventGroup::GetHighestPriorityEvent` (0x4AB7C0)
+    fn he_group_get_highest_priority_event(g: GPtr<u8>) -> GPtr<u8> = thiscall 0x4AB7C0 => crate::group::event_group_get_highest_priority_event;
+    /// `CEventGroup::TickEvents` (0x4AB6D0)
+    fn he_group_tick_events(g: GPtr<u8>) = thiscall 0x4AB6D0 => crate::group::event_group_tick_events;
+    /// `CEventGroup::Remove(CEvent*)` (0x4AB5A0, `ret 4`)
+    fn he_group_remove(g: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4AB5A0 => unported;
+    /// `CEventGroup::RemoveInvalidEvents(bool)` (0x4AB760, `ret 4`)
+    fn he_group_remove_invalid_events(g: GPtr<u8>, b: u32) = thiscall 0x4AB760 => unported;
+    /// `CEventGroup::Reorganise` (0x4AB700)
+    fn he_group_reorganise(g: GPtr<u8>) = thiscall 0x4AB700 => unported;
+    /// `CTaskManager::StopTimers(const CEvent*)` (0x6819A0, `ret 4`)
+    fn he_tm_stop_timers(tm: GPtr<u8>, e: GPtr<u8>) = thiscall 0x6819A0 => unported;
+    /// `CEventHandler::ComputeEventResponseTask(CEvent*, CTask*)` (0x4C3870, `ret 8`)
+    fn he_compute_event_response_task(h: GPtr<u8>, e: GPtr<u8>, t: GPtr<u8>) = thiscall 0x4C3870 => unported;
+    /// `CEventHandler::SetEventResponseTask(const CEvent&)` (0x4BC600, `ret 4`)
+    fn he_set_event_response_task(h: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4BC600 => unported;
+    /// `CEvent::CanBeInterruptedBySameEvent` (vtable +0x3C)
+    fn v_event_can_be_interrupted_by_same_event(e: GPtr<u8>) -> u8 = thiscall vslot 0x3C => unported;
+    /// `CTask::MakeAbortable(CPed*, int32 priority, const CEvent*)` (vtable +0x18, `ret 0xC`)
+    fn v_task_make_abortable(t: GPtr<u8>, ped: GPtr<u8>, prio: u32, e: GPtr<u8>) -> u8 = thiscall vslot 0x18 => unported;
+    /// `CEntity::SetIsStatic(bool)` (vtable +0x10, `ret 4`)
+    fn v_entity_set_is_static(e: GPtr<u8>, b: u32) = thiscall vslot 0x10 => unported;
+}
+
+/// Deletes (`vtable[0](1)`) and clears the history pointer at `h + off`.
+fn he_delete_slot(h: GPtr<u8>, off: isize) {
+    let p = rd::<GPtr<u8>>(h, off);
+    if !p.is_null() {
+        v_delete(p, 1);
+    }
+    wr::<u32>(h, off, 0);
+}
+
+/// `CEventHandler::HandleEvents()` (0x4C3F10, thiscall). History h = this + 4: +0 aborted task, +4 non-temp
+/// event, +8 temp event, +0xC stored event. Inline `TickStoredEvent` (stored set and no temp event → it becomes
+/// the non-temp event, stored cleared). From the ped's intelligence (+0x47C): primary = first non-null of task
+/// manager slots 0, 1, 2 (+4, +8, +0xC); temp response = slot 1; persistent = slot 0, else slot 2; event group
+/// = intelligence + 0x68. The highest-priority event E is taken BEFORE `TickEvents` and used throughout (no
+/// second lookup). Aborted task set: kept only when it equals primary (primary null → 0). No temp response:
+/// no persistent → aborted = 0; temp event deleted. No persistent: non-temp event deleted.
+///
+/// No E: without primary, aborted = 0 and both events deleted (temp first, inline `ClearAllEvents`). With E:
+/// type 9 (damage) → ped `SetIsStatic(false)` (vtable +0x10). Current event C = temp, else non-temp; when C is
+/// set, not `CanBeInterruptedBySameEvent` (vtable +0x3C) and of E's type: group `Remove(E)`,
+/// `RemoveInvalidEvents(false)`, `Reorganise`, and without primary aborted = 0 + `ClearAllEvents`. Otherwise,
+/// when `TakesPriorityOverCurrentEvent(E)`: abortable = no active task, or its `MakeAbortable(ped, 1, E)`;
+/// abortable → `StopTimers(E)`. Primary: abortable → respond with the old aborted task; else E's tick count
+/// (+4) decremented, `MakeAbortable(ped, 0, E)` and aborted = primary (the bytes; gta-reversed says the active
+/// task). No primary: old aborted task set → respond with it; abortable → respond with null; else tick count
+/// decremented. "Respond" = `ComputeEventResponseTask(E, T)`, aborted = 0 (only on the paths with a primary
+/// or an old aborted task; it is already 0 on the other), `RecordCurrentEvent(ped, E)` when the response task
+/// (+0x24) is set, `SetEventResponseTask(E)`, group `Remove(E)`. Then `RemoveInvalidEvents(false)` and
+/// `Reorganise` (tail call).
+#[hook(addr = 0x4c3f10, conv = thiscall, name = "CEventHandler::HandleEvents", expect = "83 EC 1C 53 55 56 8B D9",
+       unverified = "mvpj-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "event and task objects are pool/heap memory")]
+pub fn handler_handle_events(this: GPtr<u8>) {
+    let h = this.byte_add(4);
+    let stored = rd::<GPtr<u8>>(h, 0xC);
+    if !stored.is_null() && rd::<GPtr<u8>>(h, 8).is_null() {
+        wr::<GPtr<u8>>(h, 4, stored);
+        wr::<u32>(h, 0xC, 0);
+    }
+    let ped = rd::<GPtr<u8>>(this, 0);
+    let intel = rd::<GPtr<u8>>(ped, 0x47C);
+    let aborted = rd::<GPtr<u8>>(h, 0);
+    let tm = intel.byte_add(4);
+    let s0 = rd::<GPtr<u8>>(intel, 4);
+    let s1 = rd::<GPtr<u8>>(intel, 8);
+    let s2 = rd::<GPtr<u8>>(intel, 0xC);
+    let primary = if !s0.is_null() { s0 } else if !s1.is_null() { s1 } else { s2 };
+    let temp_resp = s1;
+    let persistent = if !s0.is_null() { s0 } else { s2 };
+    let eg = intel.byte_add(0x68);
+    let ev = he_group_get_highest_priority_event(eg);
+    he_group_tick_events(eg);
+    if !aborted.is_null() {
+        let keep = if !primary.is_null() && aborted == primary { primary } else { GPtr::NULL };
+        wr::<GPtr<u8>>(h, 0, keep);
+    }
+    if temp_resp.is_null() {
+        if persistent.is_null() {
+            wr::<u32>(h, 0, 0);
+        }
+        he_delete_slot(h, 8);
+    }
+    if persistent.is_null() {
+        he_delete_slot(h, 4);
+    }
+    if ev.is_null() {
+        if primary.is_null() {
+            wr::<u32>(h, 0, 0);
+            he_delete_slot(h, 8);
+            he_delete_slot(h, 4);
+        }
+        return;
+    }
+    if v_event_type(ev) == 9 {
+        v_entity_set_is_static(rd::<GPtr<u8>>(this, 0), 0);
+    }
+    let cur = if !rd::<GPtr<u8>>(h, 8).is_null() { rd::<GPtr<u8>>(h, 8) } else { rd::<GPtr<u8>>(h, 4) };
+    if !cur.is_null() && v_event_can_be_interrupted_by_same_event(cur) == 0 {
+        let t = v_event_type(ev);
+        if v_event_type(cur) == t {
+            he_group_remove(eg, ev);
+            he_group_remove_invalid_events(eg, 0);
+            he_group_reorganise(eg);
+            if primary.is_null() {
+                wr::<u32>(h, 0, 0);
+                history_clear_all_events(h);
+            }
+            return;
+        }
+    }
+    if history_takes_priority_over_current_event(h, ev) != 0 {
+        let active = tm_get_active_task(tm);
+        let abortable = active.is_null() || v_task_make_abortable(active, rd::<GPtr<u8>>(this, 0), 1, ev) != 0;
+        if abortable {
+            he_tm_stop_timers(tm, ev);
+        }
+        let respond = |task: GPtr<u8>, clear: bool| {
+            he_compute_event_response_task(this, ev, task);
+            if clear {
+                wr::<u32>(h, 0, 0);
+            }
+            if rd::<u32>(this, 0x24) != 0 {
+                history_record_current_event(h, rd::<GPtr<u8>>(this, 0), ev);
+            }
+            he_set_event_response_task(this, ev);
+            he_group_remove(eg, ev);
+        };
+        if !primary.is_null() {
+            if abortable {
+                respond(aborted, true);
+            } else {
+                wr::<i32>(ev, 4, rd::<i32>(ev, 4).wrapping_sub(1));
+                v_task_make_abortable(active, rd::<GPtr<u8>>(this, 0), 0, ev);
+                wr::<GPtr<u8>>(h, 0, primary);
+            }
+        } else if !aborted.is_null() {
+            respond(aborted, true);
+        } else if abortable {
+            respond(GPtr::NULL, false);
+        } else {
+            wr::<i32>(ev, 4, rd::<i32>(ev, 4).wrapping_sub(1));
+        }
+    }
+    he_group_remove_invalid_events(eg, 0);
+    he_group_reorganise(eg);
+}
+
 /// Every registration of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_HANDLER_HANDLE_EVENTS,
     HOOK_EVENT_HANDLER_COMPUTE_DAMAGE_RESPONSE,
     HOOK_EVENT_HANDLER_COMPUTE_KNOCK_OFF_BIKE_RESPONSE,
     HOOK_HISTORY_GET_CURRENT_EVENT,

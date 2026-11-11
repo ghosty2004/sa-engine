@@ -16,7 +16,7 @@
 #   e2e_shot NAME               screenshot of the lane's display → target/e2e/lane-N/NAME.png
 #   e2e_key KEY... / e2e_keydown KEY / e2e_keyup KEY   xdotool keys on the lane's display only
 #   e2e_list_env VAR VALUE FILE print VAR=VALUE, or VAR=@<Windows path of FILE> with VALUE written to FILE
-#                               when it is too long for a Windows environment variable (SA_HOOK_MODE, SA_L2)
+#                               when it is too long for a Windows environment variable (SA_HOOK_MODE, SA_L2, SA_L2_EXTRA)
 #   e2e_unverified_env          (in a game run's subshell) rewrite SA_UNVERIFIED=@FILE to the file's
 #                               Windows path for sa-hook; host tools keep reading the Unix path
 #   e2e_cleanup                 stop the game (wineserver -k for the lane prefix only) and gamescope

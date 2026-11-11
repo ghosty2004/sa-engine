@@ -265,11 +265,13 @@ pub fn create_instance_void(this: MiPtr) -> GPtr<u8> {
 }
 
 /// `CAtomicModelInfo::AsAtomicModelInfoPtr` (0x4C5560): `this` (unhookable: 3 bytes).
+#[sa_core::native(addr = 0x4C5560, conv = thiscall, name = "CAtomicModelInfo::AsAtomicModelInfoPtr")]
 pub fn as_atomic_model_info_ptr(this: MiPtr) -> MiPtr {
     this
 }
 
 /// `CAtomicModelInfo::GetModelType` (0x4C5570): AL = 1 (unhookable).
+#[sa_core::native(addr = 0x4C5570, conv = thiscall, name = "CAtomicModelInfo::GetModelType")]
 pub fn get_model_type(_this: MiPtr) -> u8 {
     1
 }
@@ -398,6 +400,7 @@ pub fn damage_delete_rw_object(this: MiPtr) {
 }
 
 /// `CDamageAtomicModelInfo::AsDamageAtomicModelInfoPtr` (0x4C55C0): `this` (unhookable).
+#[sa_core::native(addr = 0x4C55C0, conv = thiscall, name = "CDamageAtomicModelInfo::AsDamageAtomicModelInfoPtr")]
 pub fn as_damage_atomic_model_info_ptr(this: MiPtr) -> MiPtr {
     this
 }
@@ -423,11 +426,13 @@ pub fn lod_init(this: MiPtr) {
 }
 
 /// `CLodAtomicModelInfo::GetModelType` (0x4C5600): AL = 8 (unhookable).
+#[sa_core::native(addr = 0x4C5600, conv = thiscall, name = "CLodAtomicModelInfo::GetModelType")]
 pub fn lod_get_model_type(_this: MiPtr) -> u8 {
     8
 }
 
 /// `CLodAtomicModelInfo::AsLodAtomicModelInfoPtr` (0x4C5610): `this` (unhookable).
+#[sa_core::native(addr = 0x4C5610, conv = thiscall, name = "CLodAtomicModelInfo::AsLodAtomicModelInfoPtr")]
 pub fn as_lod_atomic_model_info_ptr(this: MiPtr) -> MiPtr {
     this
 }

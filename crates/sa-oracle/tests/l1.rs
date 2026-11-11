@@ -420,6 +420,9 @@ fn fsin_fcos_model_matches_the_cpu() {
 const PRESERVE_SPECS_PENDING: &[u32] = &[
     // RW-5 RwD3D9SetRenderState (preserve edx), inherited unlisted by the MVP-F base; spec queued.
     0x7FC2D0,
+    // STD-3: CSprite2d::Draw(CRect, CRGBA) (preserve ecx); PORT-AUDIO-3 (merged by STD-4):
+    // CAEPedSpeechAudioEntity::Constructor (preserve edx); specs queued.
+    0x4E4F10, // (0x728350 is listed with WRITER-MVP-A below)
     // AI-GEN generated dtor CEventFireNearby::~CEventFireNearby (preserve ecx); spec queued.
     0x4B1F80,
     // PORT-VEH-2: GetVehicleAppearance, HeightAboveCeiling, SelectPlaneWeapon, GetPlaneNumGuns; specs queued.
@@ -442,6 +445,8 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x6F9EB0,
     // WRITER-MVP-D: CAttractorScanner::Clear (ecx), CConversationNode::ClearRecursively (edx); specs queued.
     0x5FFF90, 0x43A710,
+    // STD-6: CRunningScript::AddScriptToList (preserve ecx); spec queued.
+    0x464C00,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

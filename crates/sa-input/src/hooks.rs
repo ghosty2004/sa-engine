@@ -11,6 +11,9 @@ use crate::statics;
 /// Every module's registrations, in this order (PORT-ANIM-INPUT, INPUT).
 pub const MODULES: &[&[HookReg]] = &[pad::HOOKS, ccm::HOOKS, statics::HOOKS];
 
+/// Every `#[native]` registration of this crate.
+pub const NATIVES: &[sa_core::abi::NativeReg] = ccm::NATIVES;
+
 /// Every module's globals (initial values checked against the exe image by a test).
 pub const GLOBALS: &[&[GlobalDesc]] = &[pad::GLOBALS, ccm::GLOBALS, statics::GLOBALS];
 

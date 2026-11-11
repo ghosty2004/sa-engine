@@ -58,5 +58,33 @@ const fn concat<const N: usize>(parts: &[&[HookReg]]) -> [HookReg; N] {
 #[allow(clippy::large_const_arrays)]
 const ALL_ARRAY: [HookReg; COUNT] = concat(CRATES);
 
+/// Every port crate's `#[native]` registrations (phase B entries of ports that cannot be hooked in
+/// phase A, `sa_core::abi::NativeReg`), as lists of module lists. Append a crate's list when it
+/// gets one.
+pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
+    &[sa_core::hooks::NATIVES],
+    &[sa_core::general::math_natives::NATIVES],
+    &[sa_stream::hooks::NATIVES],
+    &[sa_input::hooks::NATIVES],
+    &[sa_anim::hooks::NATIVES],
+    sa_rwcore::hooks::NATIVE_MODULES,
+    sa_render::hooks::NATIVE_MODULES,
+    sa_hud::hooks::NATIVE_MODULES,
+    sa_audio::hooks::NATIVE_MODULES,
+    &[sa_ai::std6_natives::NATIVES],
+    &[sa_anim::std6_natives::NATIVES],
+    &[sa_audio::std6_natives::NATIVES],
+    &[sa_cam::std6_natives::NATIVES],
+    &[sa_core::std6_natives::NATIVES],
+    &[sa_input::std6_natives::NATIVES],
+    &[sa_stream::std6_natives::NATIVES],
+    &[sa_world::std6_natives::NATIVES],
+];
+
+/// Every `#[native]` registration of every crate.
+pub fn natives() -> impl Iterator<Item = &'static sa_core::abi::NativeReg> {
+    NATIVES.iter().flat_map(|c| c.iter()).flat_map(|m| m.iter())
+}
+
 /// All port registrations, concatenated in [`CRATES`] order.
 pub const ALL: &[HookReg] = &ALL_ARRAY;

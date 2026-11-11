@@ -2,7 +2,7 @@
 //! member constructors, cull-zone centre), the camera destructors, and mode processors ported by the
 //! PORT-CAM-2 agent itself. Ported from the 1.0 US bytes; `docs/re/specs/CAM/*.md` as reading aids.
 
-use sa_core::abi::HookReg;
+use sa_core::abi::{Fp, HookReg, stack_footprint};
 use sa_core::mem::{GPtr, GlobalDesc};
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
@@ -838,12 +838,30 @@ const SMOOTH_FIGHT: usize = 0x8CC39C;
 /// bytes. `_CIpow` goes through `orig::x87_binary` and `GetATanOfXY` through its ST0 as an f64 (both
 /// documented roundings, see the module docs of `camproc`).
 ///
-/// **Not hooked** (decision for the main session): split runs on the grove walk give 1000/1000 cases
-/// with 0 mismatches, but with this port on Rust the next `CCamera::CalculateDerivedValues` picks up
-/// a different stale stack word as `m_mMatInverse.flags` (0xB6FA80): the original leaves the return
-/// address 0x527DB4 of its `KeepTrackOfTheSpeed` call there (bit 0x20000, `rwMATRIXINTERNALIDENTITY`,
-/// set), the Rust frame leaves other data. Ready attribute:
-/// `#[hook(addr = 0x526FC0, conv = thiscall, name = "CCam::Process", expect = "DB 05 34 FE B6 00", this = "CCam")]`
+/// Stack footprint (`footprint`, ADR-001 §5b, PORT-CAM-3): the `CCamera::CalculateDerivedValues` that
+/// `CCamera::Process` calls next (0x52C983) builds `CMatrix::Inverted`'s result in a local whose RwMatrix
+/// `flags` word ([its entry ESP - 0x48]) is never written, and copies it to `m_mMatInverse.flags`
+/// (0xB6FA80), which `RwV3dTransformPoints` tests for `rwMATRIXINTERNALIDENTITY` (0x20000). That slot is
+/// this function's [S - 0xA8] (S = entry ESP): the return address 0x527DB4 of the `KeepTrackOfTheSpeed`
+/// call (PORT-CAM-2 measurement; slot measured with `SA_COV_PEEK` in PORT-CAM-3). So the hook leaves what
+/// the original leaves at its own frame level (from the disassembly): `sub esp, 0x7C; push esi; push edi`
+/// → [S-0x80] = ESI, [S-0x84] = EDI; `push ebx; push ebp` (0x527092, every path) → [S-0x88] = EBX,
+/// [S-0x8C] = EBP; and when `KeepTrackOfTheSpeed` runs (transition state 0, 0x527D93) its six arguments
+/// [S-0x90] .. [S-0xA4] (`this+0xB4`, `this+0xA0`, `this+0xA4`, `this+0x1B4`, `this+0x148`, `this+0x19C`)
+/// and the return address [S-0xA8] = 0x527DB4. Not reproduced (documented): the locals [S-0x7C, S) and
+/// the frames of the callees (the mode processor, `KeepTrackOfTheSpeed`'s own frame below S-0xA8, the
+/// look processors and `CVector::Normalise` / `GetVectorsReadyForRW` when they run after it: those
+/// overwrite [S-0xA8] in the original), and, while a transition runs (`KeepTrackOfTheSpeed` skipped),
+/// the residue the earlier callees leave at [S-0xA8, S-0x90]: the window holds the pre-call bytes there.
+/// The 0x1000-byte window covers the shim and the original callees it runs.
+#[hook(
+    addr = 0x526FC0,
+    conv = thiscall,
+    name = "CCam::Process",
+    expect = "DB 05 34 FE B6 00",
+    this = "CCam",
+    footprint = 0x1000
+)]
 pub fn cam_process(this: GPtr<u8>) {
     // 1. idle-camera bit and counter
     let flags = g::<u8>(0xC0B184);
@@ -1053,7 +1071,25 @@ pub fn cam_process(this: GPtr<u8>) {
     let h = f32_of(x(dy).fmul_m(dy).fadd(x(dx).fmul_m(dx)).fsqrt());
     let alpha = get_atan_of_xy_bits(h.to_bits(), dz.to_bits()) as f32;
     wr::<f32>(this, 0xA4, alpha);
+    stack_footprint(&[
+        (-0x7C, Fp::Val(svw)),
+        (-0x78, Fp::Val(orientation)),
+        (-0x80, Fp::Esi),
+        (-0x84, Fp::Edi),
+        (-0x88, Fp::Ebx),
+        (-0x8C, Fp::Ebp),
+    ]);
     if g::<u8>(TRANSITION_STATE).read() == 0 {
+        let a = |o: u32| Fp::Val(this.addr() as u32 + o);
+        stack_footprint(&[
+            (-0x90, a(0xB4)),
+            (-0x94, a(0xA0)),
+            (-0x98, a(0xA4)),
+            (-0x9C, a(0x1B4)),
+            (-0xA0, a(0x148)),
+            (-0xA4, a(0x19C)),
+            (-0xA8, Fp::Val(0x527DB4)),
+        ]);
         keep_track_of_the_speed(
             this,
             src,
@@ -1355,6 +1391,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_IDLE_CAM_RUN,
     HOOK_DRAW_BORDERS_FOR_WIDE_SCREEN,
     HOOK_IDLE_CAM_IS_TARGET_VALID,
+    HOOK_CAM_PROCESS,
 ];
 
 /// This module's globals (none).

@@ -11,7 +11,7 @@ use crate::{
     bullettraces, clouds, coronas, cullzones, fx, mirrors, occlusion, pointlights, posteffects, renderer,
     shadows, specialfx, sprite, sprite2d, weather,
 };
-use crate::{carplates, glass, markers, stencilshadows, timecycle, waterlevel};
+use crate::{carplates, draw, glass, markers, rwplugins, stencilshadows, timecycle, waterlevel};
 use crate::{mvpa_fx1, mvpa_fx2, mvpa_render1, mvpa_render2, mvpa_render3};
 
 /// Every module's registrations, in this order.
@@ -55,6 +55,41 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::quaternion::HOOKS,
     crate::render_lists::HOOKS,
     crate::mvpd_unk::HOOKS,
+    rwplugins::HOOKS,
+    draw::HOOKS,
+    crate::custompipes::HOOKS,
+    crate::fx_alloc::HOOKS,
+    crate::car_dirt::HOOKS,
+    crate::player_skin::HOOKS,
+    crate::clouds_render::HOOKS,
+    crate::water_render::HOOKS,
+    crate::coronas_render::HOOKS,
+    crate::mirrors_render::HOOKS,
+    crate::brightlights_render::HOOKS,
+    crate::weather_render::HOOKS,
+    crate::water_init::HOOKS,
+    crate::visibility_access::HOOKS,
+    crate::pipe_ids::HOOKS,
+    crate::collision_plugin_mi::HOOKS,
+    crate::car_env_stream::HOOKS,
+    crate::car_pipe_setup::HOOKS,
+    crate::clock_misc::HOOKS,
+    crate::effect_2d_stream::HOOKS,
+    crate::building_dn::HOOKS,
+    crate::birds_render::HOOKS,
+    crate::postfx_render::HOOKS,
+    crate::shadows_render::HOOKS,
+    crate::plant_loc_tris::HOOKS,
+    crate::weapon_effects_render::HOOKS,
+    crate::specialfx_render::HOOKS,
+    crate::grass_render::HOOKS,
+    crate::shadows_cast::HOOKS,
+    crate::occluder_process::HOOKS,
+    crate::fog_render::HOOKS,
+    crate::shadows_store::HOOKS,
+    crate::clouds_create::HOOKS,
+    crate::vector_compare::HOOKS,
+    crate::sprite_render::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -80,6 +115,8 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     carplates::GLOBALS,
     glass::GLOBALS,
     stencilshadows::GLOBALS,
+    rwplugins::GLOBALS,
+    crate::custompipes::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
@@ -112,6 +149,11 @@ const ALL_ARRAY: [HookReg; total(MODULES)] = concat(MODULES);
 
 /// All registrations of this crate (the concatenation of [`MODULES`]).
 pub const ALL: &[HookReg] = &ALL_ARRAY;
+
+/// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
+/// phase A); `sa_ports::NATIVES` lists each of these.
+pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] =
+    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 

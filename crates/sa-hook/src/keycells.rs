@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 26] = [
+pub const READERS: [Reader; 30] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -253,6 +253,40 @@ pub const READERS: [Reader; 26] = [
         disp_off: 2,
         key: 0x700CC1,
         value: 0xFFD0_8DE5,
+    },
+    // CFont::GetStringWidth entry 0x71A0E0 (`nop; jmp 0x4016B9`, PORT-HUD-3): `mov ecx, [0x71A0E2]` at
+    // 0x40641C (the rotate count of the protection chunk's `rol ebp, cl`).
+    Reader {
+        at: 0x40641C,
+        insn: [0x8B, 0x0D, 0xE2, 0xA0, 0x71, 0x00],
+        disp_off: 2,
+        key: 0x71A0E2,
+        value: 0xFFCE_75D3,
+    },
+    // Batch mvph-phys-1: CPhysical::ApplySoftCollision-2 entry 0x54A2C0 (`nop; jmp rel32`):
+    // `mov eax, [0x54A2C1]` at 0x406B2B (5 bytes; `insn` includes the next byte, 0x33).
+    Reader {
+        at: 0x406B2B,
+        insn: [0xA1, 0xC1, 0xA2, 0x54, 0x00, 0x33],
+        disp_off: 1,
+        key: 0x54A2C1,
+        value: 0xEBF4_89E9,
+    },
+    // Batch mvpi-ped-1: CPedClothesDesc::GetIsWearingBalaclava entry 0x5A7950, found by the test below.
+    Reader {
+        at: 0x407E2C,
+        insn: [0x1B, 0x05, 0x55, 0x79, 0x5A, 0x00],
+        disp_off: 2,
+        key: 0x5A7955,
+        value: 0xFFE5_BF2E,
+    },
+    // Batch mvpi-ped-1: CPed::RemoveGogglesModel entry 0x5DF170, found by the test below.
+    Reader {
+        at: 0x409AC8,
+        insn: [0x13, 0x1D, 0x74, 0xF1, 0x5D, 0x00],
+        disp_off: 2,
+        key: 0x5DF174,
+        value: 0xE223_A3E9,
     },
 ];
 

@@ -49,7 +49,7 @@ orig! {
 }
 
 /// `MenuNumber[i]` (`movzx` index).
-fn panel(i: u32) -> GPtr<u8> {
+pub(crate) fn panel(i: u32) -> GPtr<u8> {
     g::<GPtr<u8>>(MENU_NUMBER + (i as usize & 0xFF) * 4).read()
 }
 
@@ -389,7 +389,7 @@ const AUDIO_ENGINE: usize = 0xB6BC90;
 const FLAG_A: usize = 0xB7CB49;
 const FLAG_B: usize = 0xB7CB48;
 
-fn flags_set() -> bool {
+pub(crate) fn flags_set() -> bool {
     g::<u8>(FLAG_A).read() != 0 || g::<u8>(FLAG_B).read() != 0
 }
 
@@ -398,14 +398,14 @@ fn sound(event: u32) {
 }
 
 /// A pad button "just pressed": word `new` of `GetPad(0)` set and word `old` clear.
-fn just(newo: isize, oldo: isize) -> bool {
+pub(crate) fn just(newo: isize, oldo: isize) -> bool {
     let p = get_pad(0);
     rd::<u16>(p, newo) != 0 && rd::<u16>(p, oldo) == 0
 }
 
 /// The alternative input: with one of the two flags set, `GetPad(0)` is called twice and the absolute
 /// words `a` (set) and `b` (clear) are tested.
-fn alt(a: usize, b: usize) -> bool {
+pub(crate) fn alt(a: usize, b: usize) -> bool {
     if !flags_set() {
         return false;
     }

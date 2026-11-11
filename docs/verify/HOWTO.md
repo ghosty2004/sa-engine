@@ -154,6 +154,9 @@ Output `target/e2e/lane-N/port-l2-TAG/{summary.txt,results.tsv}`.
 
 Env: `L2_MAX` (= `--max`, default 1000), `L2_PER_FRAME` (default 4; raise for bursty hooks),
 `L2_FROM` (first sampled frame), `L2_EXTRA` (extra regions for every run), `RUN_TIMEOUT` (1500 s),
+`CRASH_WAIT` (seconds to let winedbg write the backtrace of a crashing run to `wine.log`; under the e2e runs it
+prints nothing, so set `SA_CRASH_LOG=1` instead: sa-hook logs the registers and 96 stack dwords from ESP and
+EBP of the first access violations to sa-hook.log (port-l2: `RUN.log`, e.g. `rust.log`); a return address in sa_hook.dll names a port),
 `PLAIN_CACHE=0`, `L2_SPOOL_DISCARD=1` (spool to a drained FIFO: bounded disk, no host report),
 `SA_COV*` passthrough.
 
@@ -201,6 +204,8 @@ lists over thousands of hooks go to sa-hook as `@FILE`. Report: `target/e2e/lane
 (hook, catalogue subsystem, source line, route, hazards, first divergent frame, hash subsystems, the
 next L2 command and the `queue.py set … failed` line). Output `target/verify/BATCH/bisect-REC.{txt,log}`
 and `l3-REC.txt`. Exit 0 identical, 1 culprits, 2 setup error. `RECORD=1` records culprits.
+The report is copied out of the lane's `l3/run.txt` by l3.sh itself while it holds the lane lock
+(`L3_REPORT_COPY=FILE`), so concurrent runs on the same lane cannot swap reports.
 
 ### `tools/e2e/verify-all.sh TAG LANES [REC...]`
 

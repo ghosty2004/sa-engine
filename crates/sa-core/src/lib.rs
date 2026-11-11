@@ -27,11 +27,15 @@ extern crate std;
 extern crate self as sa_core;
 
 pub mod abi;
+pub mod camerasize;
+pub mod cmatrix;
+pub mod cmdline;
 pub mod common;
 pub mod crt;
 pub mod directory;
 pub mod filemgr;
 pub mod game;
+pub mod gameinit;
 pub mod general;
 pub mod hooks;
 pub mod inifile;
@@ -46,16 +50,25 @@ pub mod mem;
 pub mod memory;
 pub mod mvpa_game;
 pub mod mvpa_game2;
+pub mod object_ctors;
+pub mod vector_ops;
+pub mod matrix_ops;
+pub mod matrix_rotate;
+pub mod matrix_more;
 pub mod orig;
 pub mod platform;
+pub mod psinit;
 pub mod pool;
+pub mod pool_ctors;
 pub mod pools;
 pub mod quadtree;
 pub mod references;
 pub mod timer;
 pub mod video;
 
-pub use sa_macros::hook;
+pub use sa_macros::{hook, native};
 
 /// True in phase A (inside the original process). See the crate docs.
 pub const PHASE_A: bool = cfg!(sa_phase_a);
+
+pub mod std6_natives;

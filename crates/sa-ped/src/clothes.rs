@@ -34,7 +34,21 @@ orig! {
     /// `CStreaming::AddImageToList(const char*, bool)` (0x407610)
     pub fn add_image_to_list(name: u32, cd: u32) -> i32 = cdecl 0x407610 => unported;
     /// `CClothes::LoadClothesFile` (0x5A7B30)
-    pub fn load_clothes_file() = cdecl 0x5A7B30 => unported;
+    pub fn load_clothes_file() = cdecl 0x5A7B30 => load_clothes_file_port;
+    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
+    pub fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => unported;
+    /// `CFileMgr::CloseFile(FILE*)` (0x5389D0)
+    pub fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => unported;
+    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
+    pub fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => unported;
+    /// CRT `strncmp` (0x8214D0)
+    pub fn crt_strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
+    /// CRT `strtok` (0x82244B)
+    pub fn crt_strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
+    /// CRT `_stricmp` (0x8229B6)
+    pub fn crt_stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
+    /// `GetClothesModelFromName(const char*)` (0x5A7A20)
+    pub fn clothes_model_from_name(name: GPtr<u8>) -> i32 = cdecl 0x5A7A20 => get_clothes_model_from_name;
     /// `CClothes::GetPlayerMotionGroupToLoad` (0x5A7FB0)
     pub fn get_player_motion_group_to_load_call() -> i32 = cdecl 0x5A7FB0 => get_player_motion_group_to_load;
     /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
@@ -246,6 +260,101 @@ pub fn init() {
     load_clothes_file();
 }
 
+/// `CClothes::ms_clothesRules` (0xBC1300, u32 tags and arguments, counted by `ms_numRuleTags`).
+const CLOTHES_RULES: usize = 0xBC1300;
+
+fn add_rule(v: u32) {
+    let n = NUM_RULE_TAGS.get();
+    g::<u32>(CLOTHES_RULES + 4 * n as usize).write(v);
+    NUM_RULE_TAGS.set(n + 1);
+}
+
+/// `"-"` compared with its NUL (`repe cmpsb`, 2 bytes): `0` for a dash, else the token's key.
+fn key_or_dash(t: GPtr<u8>) -> u32 {
+    if t.read() == b'-' && t.byte_add(1).read() == 0 { 0 } else { get_uppercase_key(t.addr() as u32) }
+}
+
+/// `CClothes::LoadClothesFile` (0x5A7B30): `ms_numRuleTags` = 0, then "DATA\\CLOTHES.DAT" (0x8671F8,
+/// mode 0x85A53C) line by line (`CFileLoader::LoadLine`, the file not checked): empty and `#` lines
+/// skipped; outside a block only a line starting "rule" (`strncmp` 4) opens one; inside, "end"
+/// (`strncmp` 3) closes it, else `strtok(line, " \\t,")` gives the tag, matched with `_stricmp` against
+/// cuts 0, setc 1, tex 2, hide 3, ignore 5, endignore 4, exclusive 7, endexclusive 6 (no match keeps
+/// the previous line's tag: the original's stack local is never reset). The tag is appended to
+/// `ms_clothesRules`, two more tokens are always taken, and per tag: cuts / tex: two keys
+/// (`CKeyGen::GetUppercaseKey`); setc: two more tokens, then key(1st), `GetClothesModelFromName(2nd)`,
+/// key or 0 for "-" of the 3rd and 4th; hide: key(1st), model(2nd); 4..7: key(1st).
+#[hook(addr = 0x5A7B30, conv = cdecl, name = "CClothes::LoadClothesFile", expect = "83 EC 14 55 56 57 33 ED",
+       unverified = "std6-ped-1", route = "L2", hazards = "uninit-locals", recs = "new-game",
+       note = "the tag local is uninitialised before the first matching line (CLOTHES.DAT always starts with a valid tag)")]
+pub fn load_clothes_file_port() {
+    let mut delim: [u8; 4] = [0x20, 0x09, 0x2C, 0];
+    let dl = GPtr::from_raw(delim.as_mut_ptr());
+    let mut in_rule = false;
+    // the stack slot the original never initialises; its first-line value is the caller's residue
+    let mut tag: u32 = 0;
+    NUM_RULE_TAGS.set(0);
+    let f = file_open(GPtr::from_addr(0x8671F8), GPtr::from_addr(0x85A53C));
+    let mut line = load_line(f);
+    while !line.is_null() {
+        let c = line.read();
+        if c == b'#' || c == 0 {
+        } else if !in_rule {
+            if crt_strncmp(GPtr::from_addr(0x8671F0), line, 4) == 0 {
+                in_rule = true;
+            }
+        } else if crt_strncmp(GPtr::from_addr(0x8671EC), line, 3) == 0 {
+            in_rule = false;
+        } else {
+            let t = crt_strtok(line, dl);
+            if !t.is_null() {
+                // 0x8671E4 "cuts", 0x8671DC "setc", 0x8671D8 "tex", 0x8671D0 "hide", 0x8671C8 "ignore",
+                // 0x8671BC "endignore", 0x8671B0 "exclusive", 0x8671A0 "endexclusive"
+                const NAMES: [(usize, u32); 8] = [
+                    (0x8671E4, 0),
+                    (0x8671DC, 1),
+                    (0x8671D8, 2),
+                    (0x8671D0, 3),
+                    (0x8671C8, 5),
+                    (0x8671BC, 4),
+                    (0x8671B0, 7),
+                    (0x8671A0, 6),
+                ];
+                for (a, v) in NAMES {
+                    if crt_stricmp(t, GPtr::from_addr(a)) == 0 {
+                        tag = v;
+                        break;
+                    }
+                }
+                add_rule(tag);
+                let a1 = crt_strtok(GPtr::NULL, dl);
+                let a2 = crt_strtok(GPtr::NULL, dl);
+                match tag {
+                    0 | 2 => {
+                        add_rule(get_uppercase_key(a1.addr() as u32));
+                        add_rule(get_uppercase_key(a2.addr() as u32));
+                    }
+                    1 => {
+                        let a3 = crt_strtok(GPtr::NULL, dl);
+                        let a4 = crt_strtok(GPtr::NULL, dl);
+                        add_rule(get_uppercase_key(a1.addr() as u32));
+                        add_rule(clothes_model_from_name(a2) as u32);
+                        add_rule(key_or_dash(a3));
+                        add_rule(key_or_dash(a4));
+                    }
+                    3 => {
+                        add_rule(get_uppercase_key(a1.addr() as u32));
+                        add_rule(clothes_model_from_name(a2) as u32);
+                    }
+                    4..=7 => add_rule(get_uppercase_key(a1.addr() as u32)),
+                    _ => {}
+                }
+            }
+        }
+        line = load_line(f);
+    }
+    file_close(f);
+}
+
 /// `CClothes::RequestMotionGroupAnims` (0x5A8120): requests the "fat" or "muscular" anim block (model
 /// index block + 0x63E7, flags 0x12) for the motion group to load and marks the other deletable (both
 /// deletable for the normal group).
@@ -358,7 +467,67 @@ pub fn rebuild_player_if_needed(p: GPtr<u8>) {
 
 // --- hook list (generated) ---
 
+orig! {
+    /// `NodeNamePlugin::GetFrameNodeName(RwFrame*)` (0x72FB30)
+    fn get_frame_node_name(f: GPtr<u8>) -> u32 = cdecl 0x72FB30 => unported;
+    /// CRT `_stricmp` (0x8229B6)
+    fn stricmp(a: u32, b: u32) -> i32 = cdecl 0x8229B6 => unported;
+}
+
+/// The "balaclava" model name (`.rdata` 0x86718C).
+const BALACLAVA_NAME: u32 = 0x86718C;
+
+/// `CPedClothesDesc::GetIsWearingBalaclava()` (0x5A7950, thiscall; the name push sits in the fragment
+/// 0x403887): model key 9 (+0x24) == `CKeyGen::GetUppercaseKey("balaclava")`. `sete al`: the upper
+/// three bytes of EAX are the key's.
+#[hook(addr = 0x5a7950, conv = thiscall, name = "CPedClothesDesc::GetIsWearingBalaclava", expect = "56 8B 71 24 E9 2E BF E5 FF",
+       unverified = "mvpi-ped-1", route = "L2", hazards = "entry-protection-read", recs = "grove-walk",
+       note = "0x407E2C reads entry bytes +5 (keycells)")]
+pub fn get_is_wearing_balaclava(this: GPtr<u8>) -> u32 {
+    let mine = rd::<u32>(this, 0x24);
+    let key = get_uppercase_key(BALACLAVA_NAME);
+    (key & 0xFFFF_FF00) | u32::from(mine == key)
+}
+
+/// `CClothes::GetDefaultPlayerMotionGroup()` (0x5A81B0, cdecl; the `ms_aAnimAssocGroups` load sits in
+/// the fragment 0x406B49): `GetPlayerMotionGroupToLoad()`, unless it is 0x36 or the group's anim block
+/// (`ms_aAnimAssocGroups` 0xB4EA34, 0x14-byte groups, block +0) is null or not loaded (block +0x10),
+/// else 0x36.
+#[hook(addr = 0x5a81b0, conv = cdecl, name = "CClothes::GetDefaultPlayerMotionGroup", expect = "E8 FB FD FF FF",
+       unverified = "mvpi-ped-1", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn get_default_player_motion_group() -> i32 {
+    let m = get_player_motion_group_to_load_call();
+    if m == 0x36 {
+        return 0x36;
+    }
+    let groups = g::<GPtr<u8>>(0xB4EA34).read();
+    let block = rd::<GPtr<u8>>(groups, (m as isize).wrapping_mul(0x14));
+    if block.is_null() || rd::<u8>(block, 0x10) == 0 {
+        return 0x36;
+    }
+    m
+}
+
+/// `FUN_005a47e0` (0x5A47E0, cdecl; unnamed in the catalogue): the `RpClumpForAllAtomics` callback of
+/// `CClothesBuilder` that finds an atomic by its frame's node name: `data` = { +0 name, +4 found atomic };
+/// when `_stricmp(name, GetFrameNodeName(atomic->frame +4))` is 0 the atomic is stored at +4 and null is
+/// returned (stop), else the atomic (continue).
+#[hook(addr = 0x5a47e0, conv = cdecl, name = "FUN_005a47e0", expect = "56 8B 74 24 08",
+       unverified = "mvpi-ped-1", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn get_atomic_with_name_cb(atomic: GPtr<u8>, data: GPtr<u8>) -> GPtr<u8> {
+    let name = get_frame_node_name(rd::<GPtr<u8>>(atomic, 4));
+    if stricmp(rd::<u32>(data, 0), name) == 0 {
+        wr::<GPtr<u8>>(data, 4, atomic);
+        return GPtr::NULL;
+    }
+    atomic
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_LOAD_CLOTHES_FILE_PORT,
+    HOOK_GET_IS_WEARING_BALACLAVA,
+    HOOK_GET_DEFAULT_PLAYER_MOTION_GROUP,
+    HOOK_GET_ATOMIC_WITH_NAME_CB,
     HOOK_DESC_INITIALISE,
     HOOK_DESC_CONSTRUCTOR,
     HOOK_SET_MODEL_HASH,

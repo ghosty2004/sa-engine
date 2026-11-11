@@ -37,3 +37,13 @@ pub mod place;
 pub mod radar_draw2;
 pub mod statics2;
 pub mod text_load;
+
+pub mod credits;
+pub mod credits_table;
+pub mod hud_draw3;
+pub mod menu3;
+pub mod menu_ctrl;
+pub mod menu_draw;
+pub mod menu_input;
+pub mod menu_map;
+pub mod radar_draw3;

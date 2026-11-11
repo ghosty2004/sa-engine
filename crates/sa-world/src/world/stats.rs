@@ -6,7 +6,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
-use sa_math::x87::X87;
+use sa_math::x87::{Cmp, X87};
 
 use super::common::{ftol32, g, x, xi};
 use super::cworld::{PLAYERS, PLAYER_INFO_SIZE, PLAYER_IN_FOCUS};
@@ -42,7 +42,7 @@ orig! {
     /// `CStats::DisplayScriptStatUpdateMessage(uint8, uint32, float)` (0x55B980)
     pub fn display_script_stat_update_message(state: u32, stat: u32, v: u32) = cdecl 0x55B980 => unported;
     /// `CStats::UpdateFatAndMuscleStats(uint32)` (0x55C470)
-    pub fn update_fat_and_muscle_stats(v: i32) = cdecl 0x55C470 => unported;
+    pub fn update_fat_and_muscle_stats(v: i32) = cdecl 0x55C470 => update_fat_and_muscle_stats_host;
 }
 
 fn int_stat(id: u32) -> i32 {
@@ -424,6 +424,7 @@ pub fn update_stats_add_to_health(add: u32) {
 /// int stats stored back as `(int16)_ftol`, even when unchanged (original); `CheckForStatsMessage`.
 // Not hooked: the protection code at 0x4017AD reads the entry dword 0x55C410 as data (`sbb eax, [0x55C410]`),
 // so patching the entry breaks it (L2 crash, world bisect h0). Ported, unhookable.
+#[sa_core::native(addr = 0x55C410, conv = cdecl, name = "CStats::SetNewRecordStat")]
 pub fn set_new_record_stat(id: u16, v: f32) {
     let idw = u32::from(id);
     let cur = if idw < 0x52 { x(float_stat(idw)) } else { xi(int_stat(idw)) };
@@ -436,7 +437,98 @@ pub fn set_new_record_stat(id: u16, v: f32) {
     check_for_stats_message();
 }
 
+/// The accumulators of `UpdateFatAndMuscleStats` (u32): fat-burn units (0xB794FC), muscle units
+/// (0xB7950C); the message toggle byte (0xB79534).
+const FAT_UNITS: usize = 0xB794FC;
+const MUSCLE_UNITS: usize = 0xB7950C;
+const FAT_MESSAGE_TOGGLE: usize = 0xB79534;
+/// The fat stat (float stat 0x15) and the muscle stat (float stat 0x17).
+const STAT_FAT: usize = 0xB793D4;
+const STAT_MUSCLE: usize = 0xB793DC;
+
+fn gf(addr: usize) -> f32 {
+    g::<f32>(addr).read()
+}
+
+/// `fild dword` of an accumulator, plus 2^32 when negative (the unsigned conversion).
+fn units(addr: usize) -> X87 {
+    let v = g::<i32>(addr).read();
+    let f = xi(v);
+    if v < 0 { f.fadd_m(4_294_967_296.0) } else { f }
+}
+
+/// `_ftol(CTimer::ms_fTimeStep * 0.02 * 1000.0)` (x87).
+fn step_ms() -> i32 {
+    ftol32(x(gf(0xB7CB5C)).fmul_m(f32::from_bits(0x3CA3_D70A)).fmul_m(1000.0))
+}
+
+/// `stat = max(stat - [rate], 0)` when `[rate]` > 0 (x87 `fsub`, `fcom 0.0`; a NaN difference gives 0),
+/// then `CheckForStatsMessage()`.
+fn decrease(stat: usize, rate: usize) {
+    if !matches!(x(gf(rate)).fcom(X87::zero()), Cmp::Greater) {
+        return;
+    }
+    let t = x(gf(stat)).fsub_m(gf(rate));
+    let v = if matches!(t.fcom(X87::zero()), Cmp::Greater) { t.to_f32() } else { 0.0 };
+    g::<f32>(stat).write(v);
+    check_for_stats_message();
+}
+
+/// Phase B/C path of [`update_fat_and_muscle_stats`].
+pub fn update_fat_and_muscle_stats_host(v: i32) {
+    update_fat_and_muscle_stats_port(v as u32)
+}
+
+/// `CStats::UpdateFatAndMuscleStats(uint32 fatBurned)` (0x55C470, cdecl). Fat: when 1000 * `[0xB78FB8]`
+/// is below the fat units (0xB794FC, unsigned; x87): the units become 0; with fat (0xB793D4) above 0
+/// it drops by `[0xB78F6C]` (when that is above 0; floored at 0, `CheckForStatsMessage`),
+/// `IncrementStat(0x17, [0xB78F34])` and the message toggle (0xB79534): 1 → 2 and
+/// `DisplayScriptStatUpdateMessage(1, 0x17, [0xB78F34])`, else → 1 and `(0, 0x15, [0xB78F6C])`; without
+/// fat the muscle (0xB793DC) drops by `[0xB78F70]` the same way, the toggle becomes 3 and
+/// `(0, 0x17, [0xB78F70])`. Otherwise the units grow by `_ftol(timeStep * 0.02 * 1000) * fatBurned / 10`
+/// (32-bit unsigned). Muscle: when 1000 * `[0xB78FC4]` is below the muscle units (0xB7950C):
+/// `IncrementStat(0x18, [0xB78F3C])`, `DisplayScriptStatUpdateMessage(1, 0x18, [0xB78F3C])`, units 0;
+/// else the units grow by `_ftol(timeStep * 0.02 * 1000)`.
+#[hook(addr = 0x55c470, conv = cdecl, name = "CStats::UpdateFatAndMuscleStats", expect = "51 A1 FC 94 B7 00",
+       unverified = "mvpi-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn update_fat_and_muscle_stats_port(fat_burned: u32) {
+    let thr = x(gf(0xB78FB8)).fmul_m(1000.0);
+    if matches!(thr.fcom(units(FAT_UNITS)), Cmp::Less) {
+        let fat = gf(STAT_FAT);
+        g::<u32>(FAT_UNITS).write(0);
+        if matches!(x(fat).fcom(X87::zero()), Cmp::Greater) {
+            decrease(STAT_FAT, 0xB78F6C);
+            increment_stat_call(0x17, g::<u32>(0xB78F34).read());
+            if g::<u8>(FAT_MESSAGE_TOGGLE).read() == 1 {
+                g::<u8>(FAT_MESSAGE_TOGGLE).write(2);
+                display_script_stat_update_message(1, 0x17, g::<u32>(0xB78F34).read());
+            } else {
+                g::<u8>(FAT_MESSAGE_TOGGLE).write(1);
+                display_script_stat_update_message(0, 0x15, g::<u32>(0xB78F6C).read());
+            }
+        } else {
+            decrease(STAT_MUSCLE, 0xB78F70);
+            g::<u8>(FAT_MESSAGE_TOGGLE).write(3);
+            display_script_stat_update_message(0, 0x17, g::<u32>(0xB78F70).read());
+        }
+    } else {
+        let n = (step_ms() as u32).wrapping_mul(fat_burned) / 10;
+        let u = g::<u32>(FAT_UNITS);
+        u.write(u.read().wrapping_add(n));
+    }
+    let thr = x(gf(0xB78FC4)).fmul_m(1000.0);
+    if matches!(thr.fcom(units(MUSCLE_UNITS)), Cmp::Less) {
+        increment_stat_call(0x18, g::<u32>(0xB78F3C).read());
+        display_script_stat_update_message(1, 0x18, g::<u32>(0xB78F3C).read());
+        g::<u32>(MUSCLE_UNITS).write(0);
+    } else {
+        let u = g::<u32>(MUSCLE_UNITS);
+        u.write(u.read().wrapping_add(step_ms() as u32));
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_UPDATE_FAT_AND_MUSCLE_STATS_PORT,
     HOOK_SET_STAT_VALUE,
     HOOK_MODIFY_STAT,
     HOOK_PROCESS_REACTION_STATS_ON_DECREMENT,

@@ -27,6 +27,13 @@
 //! naked wrapper that snapshots the W bytes (≤ 0x1000, covering the shim's whole stack depth) below the entry ESP, calls the shim, restores
 //! the snapshot and applies the writes the port recorded with `sa_core::abi::stack_footprint`.
 //!
+//! `peek = N` (PORT-HUD-3, ADR-001 §5b): the original reads stack slots it never wrote (an uninitialised
+//! local: whatever the caller's earlier callees left there) or uses the address of one of its locals as
+//! data. The entry is a naked wrapper that copies the N bytes (≤ `sa_core::abi::PEEK_MAX`) below the
+//! entry ESP and the entry ESP itself into a per-depth frame before calling the shim (nesting safe up to
+//! `sa_core::abi::PEEK_DEPTH`); the port reads them with `sa_core::abi::peek_entry_esp` /
+//! `peek_stack`, which answer only while this hook's own frame is on top (`None` for a direct Rust call).
+//!
 //! `fallback` (or `fallback = true`; ADR-002): a partial port. The macro also emits a cell that sa-hook
 //! fills at install with the original entry (the relocated-prologue trampoline, or a `.HOODLUM` stub's
 //! old target; `HookReg::set_original`) and `pub fn <fn>_original(args) -> R`, which calls that entry
@@ -131,6 +138,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut fallback = false;
     let mut footprint: Option<u32> = None;
     let mut hints = Hints::default();
+    let mut peek: Option<u32> = None;
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -151,7 +159,10 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             let v: LitInt = meta.value()?.parse()?;
             let w = v.base10_parse::<u32>()?;
             if w % 4 != 0 || w == 0 || w > 0x1000 {
-                return Err(syn::Error::new(v.span(), "footprint: a multiple of 4, at most 0x1000"));
+                return Err(syn::Error::new(
+                    v.span(),
+                    "footprint: a multiple of 4, at most 0x1000",
+                ));
             }
             footprint = Some(w);
         } else if meta.path.is_ident("unverified") {
@@ -164,6 +175,13 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             hints.recs = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("note") {
             hints.note = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("peek") {
+            let v: LitInt = meta.value()?.parse()?;
+            let w = v.base10_parse::<u32>()?;
+            if w % 4 != 0 || w == 0 || w > 0x200 {
+                return Err(syn::Error::new(v.span(), "peek: a multiple of 4, at most 0x200"));
+            }
+            peek = Some(w);
         } else if meta.path.is_ident("entry_eax") {
             entry_eax = true;
         } else if meta.path.is_ident("fallback") {
@@ -175,7 +193,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
         } else {
             return Err(
-                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, unverified, route, hazards, recs or note")
+                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, unverified, route, hazards, recs, note or peek")
             );
         }
         Ok(())
@@ -185,7 +203,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     if let Err(e) = hints.check() {
         return e.to_compile_error().into();
     }
-    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, &hints) {
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, &hints, peek) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -204,6 +222,7 @@ fn expand(
     fallback: bool,
     footprint: Option<u32>,
     hints: &Hints,
+    peek: Option<u32>,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -281,6 +300,8 @@ fn expand(
     let calls = format_ident!("__SA_HOOK_CALLS_{}", upper);
     let reg = format_ident!("HOOK_{}", upper);
     let abi = conv.abi();
+    let abi_unwind = LitStr::new(&format!("{}-unwind", conv.abi().value()), Span::call_site());
+    let native = format_ident!("__sa_hook_native_{}", fname);
     let variant = conv.variant();
     let mut doc = format!("Hook registration of `{}` ({addr:#x}).", name.value());
     if let Some(b) = &hints.batch {
@@ -362,9 +383,81 @@ fn expand(
     // copies for cdecl, pop, return as the original.
     // `entry_eax`: the wrapper first stores the caller's EAX in `sa_core::abi::ENTRY_EAX`.
     if footprint.is_some() && (!saved.is_empty() || entry_eax) {
-        return Err(syn::Error::new(span, "footprint cannot be combined with preserve or entry_eax"));
+        return Err(syn::Error::new(
+            span,
+            "footprint cannot be combined with preserve or entry_eax",
+        ));
     }
-    let (wrapper, entry) = if let Some(w) = footprint {
+    if peek.is_some() && (!saved.is_empty() || entry_eax || footprint.is_some()) {
+        return Err(syn::Error::new(span, "peek cannot be combined with preserve, entry_eax or footprint"));
+    }
+    let (wrapper, entry) = if let Some(np) = peek {
+        // `peek = N` (`sa_core::abi::PEEK`): frame = PEEK.frames[depth] (layout: depth 0, saved EDI /
+        // ESI / ECX 4..16, frames from 16, each [hook addr, entry ESP, N, N bytes]); EAX is free (no
+        // convention passes an argument in it, and entry_eax is excluded). The window is copied before
+        // anything is pushed; the arguments are copied as for `preserve`.
+        let wrap = format_ident!("__sa_hook_peek_{}", fname);
+        let mut l: Vec<String> = [
+            "mov eax, dword ptr [{pk}]",
+            "cmp eax, {dmax}",
+            "jb 2f",
+            "ud2",
+            "2:",
+            "mov dword ptr [{pk} + 4], edi",
+            "mov dword ptr [{pk} + 8], esi",
+            "mov dword ptr [{pk} + 12], ecx",
+            "imul edi, eax, {fsz}",
+            "lea edi, [{pk} + edi + 16]",
+            "mov dword ptr [edi], {addr}",
+            "mov dword ptr [edi + 4], esp",
+            "mov dword ptr [edi + 8], {np}",
+            "add edi, 12",
+            "lea esi, [esp - {np}]",
+            "mov ecx, {np4}",
+            "rep movsd",
+            "inc dword ptr [{pk}]",
+            "mov edi, dword ptr [{pk} + 4]",
+            "mov esi, dword ptr [{pk} + 8]",
+            "mov ecx, dword ptr [{pk} + 12]",
+            ".rept {n}",
+            "push dword ptr [esp + {d}]",
+            ".endr",
+            "call {inner}",
+        ]
+        .map(String::from)
+        .to_vec();
+        if matches!(conv, Conv::Cdecl) {
+            l.push("add esp, {b}".into());
+        }
+        l.push("dec dword ptr [{pk}]".into());
+        l.push(if matches!(conv, Conv::Cdecl) {
+            "ret".into()
+        } else {
+            "ret {b}".into()
+        });
+        let wrapper = quote! {
+            #[cfg(target_arch = "x86")]
+            #[doc(hidden)]
+            #[unsafe(naked)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+                ::core::arch::naked_asm!(
+                    #(#l),*,
+                    n = const #words as u32,
+                    d = const 4 * (#words as u32),
+                    b = const 4 * (#words as u32),
+                    np = const #np,
+                    np4 = const #np / 4,
+                    addr = const #addr,
+                    dmax = const ::sa_core::abi::PEEK_DEPTH as u32,
+                    fsz = const ::core::mem::size_of::<::sa_core::abi::PeekFrame>() as u32,
+                    inner = sym #shim,
+                    pk = sym ::sa_core::abi::PEEK,
+                )
+            }
+        };
+        (wrapper, quote!(#wrap as usize))
+    } else if let Some(w) = footprint {
         // `footprint = W` (ADR-001 §5b, `sa_core::abi::stack_footprint`): snapshot the W bytes below
         // the entry ESP, copy the stack arguments, call the shim, put the snapshot back, apply the
         // port's recorded writes relative to the entry ESP, return as the original. EAX/EDX/ECX and
@@ -373,12 +466,17 @@ fn expand(
         let mut l: Vec<String> = [
             "mov dword ptr [{fp}], 0",
             "mov dword ptr [{fp} + 4], 1",
+            // this state becomes the innermost (EAX is not an argument of a footprint hook)
+            "mov eax, dword ptr [{cur}]",
+            "mov dword ptr [{fp} + 28], eax",
+            "lea eax, [{fp}]",
+            "mov dword ptr [{cur}], eax",
             // snapshot [S - W, S) (ECX/EDX may carry register arguments: kept meanwhile)
             "mov dword ptr [{fp} + 16], ecx",
             "mov dword ptr [{fp} + 20], esi",
             "mov dword ptr [{fp} + 24], edi",
             "lea esi, [esp - {w}]",
-            "lea edi, [{fp} + 224]",
+            "lea edi, [{fp} + {snap}]",
             "mov ecx, {w4}",
             "rep movsd",
             "mov ecx, dword ptr [{fp} + 16]",
@@ -403,7 +501,7 @@ fn expand(
                 "mov dword ptr [{fp} + 20], esi",
                 "mov dword ptr [{fp} + 24], edi",
                 "mov dword ptr [{fp} + 4], 0",
-                "lea esi, [{fp} + 224]",
+                "lea esi, [{fp} + {snap}]",
                 "lea edi, [esp - {w}]",
                 "mov ecx, {w4}",
                 "rep movsd",
@@ -435,12 +533,18 @@ fn expand(
                 "jne 7f",
                 "add edx, esp",
                 "7:",
+                "cmp dword ptr [{fp} + eax*4 + 36], 6",
+                "jne 8f",
+                "mov edx, dword ptr fs:[0]",
+                "8:",
                 "mov eax, dword ptr [{fp} + eax*4 + 32]",
                 "mov dword ptr [esp + eax], edx",
                 "inc ecx",
                 "jmp 2b",
                 "9:",
                 "mov dword ptr [{fp}], 0",
+                "mov eax, dword ptr [{fp} + 28]",
+                "mov dword ptr [{cur}], eax",
                 "mov eax, dword ptr [{fp} + 8]",
                 "mov edx, dword ptr [{fp} + 12]",
                 "mov ecx, dword ptr [{fp} + 16]",
@@ -452,11 +556,16 @@ fn expand(
         } else {
             "ret {b}".into()
         });
+        let state = format_ident!("__SA_HOOK_FOOTPRINT_{}", fname.to_string().to_uppercase());
         let wrapper = quote! {
             #[cfg(target_arch = "x86")]
             #[doc(hidden)]
+            #[allow(non_upper_case_globals)]
+            static #state: ::sa_core::abi::FootprintCell = ::sa_core::abi::FootprintCell::new(#w);
+            #[cfg(target_arch = "x86")]
+            #[doc(hidden)]
             #[unsafe(naked)]
-            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, dead_code, clippy::not_unsafe_ptr_arg_deref)]
             unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
                 ::core::arch::naked_asm!(
                     #(#l),*,
@@ -466,7 +575,9 @@ fn expand(
                     w = const #w,
                     w4 = const #w / 4,
                     inner = sym #shim,
-                    fp = sym ::sa_core::abi::FOOTPRINT,
+                    fp = sym #state,
+                    cur = sym ::sa_core::abi::FOOTPRINT_CUR,
+                    snap = const ::sa_core::abi::FOOTPRINT_SNAPSHOT_OFF,
                 )
             }
         };
@@ -477,7 +588,7 @@ fn expand(
             #[cfg(target_arch = "x86")]
             #[doc(hidden)]
             #[unsafe(naked)]
-            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, dead_code, clippy::not_unsafe_ptr_arg_deref)]
             unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
                 ::core::arch::naked_asm!(
                     "mov dword ptr [{slot}], eax",
@@ -520,7 +631,7 @@ fn expand(
             #[cfg(target_arch = "x86")]
             #[doc(hidden)]
             #[unsafe(naked)]
-            #[allow(non_snake_case, unsafe_code, unused_variables, clippy::not_unsafe_ptr_arg_deref)]
+            #[allow(non_snake_case, unsafe_code, unused_variables, dead_code, clippy::not_unsafe_ptr_arg_deref)]
             unsafe extern #abi fn #wrap(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
                 ::core::arch::naked_asm!(
                     #(#lines),*,
@@ -587,7 +698,7 @@ fn expand(
 
         #[cfg(target_arch = "x86")]
         #[doc(hidden)]
-        #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref)]
+        #[allow(non_snake_case, unsafe_code, dead_code, clippy::not_unsafe_ptr_arg_deref)]
         extern #abi fn #shim(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
             #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
             let _fpu = ::sa_core::abi::FpuGuard::enter();
@@ -598,6 +709,19 @@ fn expand(
 
         #wrapper
 
+        // Phase B on 32-bit x86: the native entry `orig!`'s address registry calls
+        // (`sa_core::orig::registry`): the original convention with unwinding, so a panic in the port
+        // (an unported callee further down) reaches the Rust caller.
+        #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
+        #[doc(hidden)]
+        #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref)]
+        extern #abi_unwind fn #native(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+            #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
+            #[allow(unused_unsafe)]
+            let r = unsafe { #fname(#(#args),*) };
+            ::sa_core::abi::IntoAbi::into_abi(r)
+        }
+
         #[doc = #doc]
         pub const #reg: ::sa_core::abi::HookReg = ::sa_core::abi::HookReg {
             addr: #addr,
@@ -605,9 +729,13 @@ fn expand(
             conv: ::sa_core::abi::Conv::#variant,
             expect: &[#(#expect),*],
             entry: || {
-                #[cfg(target_arch = "x86")]
+                #[cfg(all(target_arch = "x86", sa_phase_a))]
                 {
                     #entry
+                }
+                #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
+                {
+                    #native as usize
                 }
                 #[cfg(not(target_arch = "x86"))]
                 {
@@ -624,6 +752,127 @@ fn expand(
             arg8: #arg8,
             arg16: #arg16,
             batch: #batch,
+        };
+    })
+}
+
+/// `#[native(addr = 0x…, conv = cdecl, name = "…")]`: registers a port that cannot be hooked in
+/// phase A (a lone `ret`, an entry a loop branches back into, a register argument, an entry another
+/// hook owns) as the phase B entry of its original address, without a phase A shim.
+///
+/// The function is left unchanged. Next to it the macro emits `pub const NATIVE_<NAME>:
+/// sa_core::abi::NativeReg` (address, catalogue name, the native entry): on 32-bit x86 outside
+/// phase A an `extern "<conv>-unwind"` function with the original convention that `orig!`'s
+/// address registry calls (`sa_core::orig::registry`), 0 elsewhere. The crate lists these
+/// constants in its `hooks::NATIVES`; `sa_ports::NATIVES` collects every crate's list.
+#[proc_macro_attribute]
+pub fn native(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut addr: Option<u32> = None;
+    let mut conv: Option<Conv> = None;
+    let mut name: Option<LitStr> = None;
+    let parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("addr") {
+            let v: LitInt = meta.value()?.parse()?;
+            addr = Some(v.base10_parse::<u32>()?);
+        } else if meta.path.is_ident("conv") {
+            let v: Ident = meta.value()?.parse()?;
+            conv = Some(Conv::parse(&v)?);
+        } else if meta.path.is_ident("name") {
+            name = Some(meta.value()?.parse()?);
+        } else {
+            return Err(meta.error("expected addr, conv or name"));
+        }
+        Ok(())
+    });
+    parse_macro_input!(attr with parser);
+    let f = parse_macro_input!(item as ItemFn);
+    match expand_native(f, addr, conv, name) {
+        Ok(t) => t.into(),
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+
+fn expand_native(
+    f: ItemFn,
+    addr: Option<u32>,
+    conv: Option<Conv>,
+    name: Option<LitStr>,
+) -> syn::Result<proc_macro2::TokenStream> {
+    let span = f.sig.ident.span();
+    let missing = |what: &str| syn::Error::new(span, format!("#[native] needs `{what} = ...`"));
+    let addr = addr.ok_or_else(|| missing("addr"))?;
+    let conv = conv.ok_or_else(|| missing("conv"))?;
+    let name = name.ok_or_else(|| missing("name"))?;
+    let sig = &f.sig;
+    if !sig.generics.params.is_empty() || sig.asyncness.is_some() || sig.variadic.is_some() {
+        return Err(syn::Error::new(
+            span,
+            "#[native] functions cannot be generic, async or variadic",
+        ));
+    }
+    let mut args = Vec::new();
+    let mut tys = Vec::new();
+    for a in &sig.inputs {
+        let FnArg::Typed(t) = a else {
+            return Err(syn::Error::new(
+                span,
+                "#[native] goes on free functions (pass `this` explicitly)",
+            ));
+        };
+        let Pat::Ident(p) = &*t.pat else {
+            return Err(syn::Error::new(
+                span,
+                "#[native] arguments must be plain identifiers",
+            ));
+        };
+        args.push(p.ident.clone());
+        tys.push((*t.ty).clone());
+    }
+    if matches!(conv, Conv::Thiscall) && args.is_empty() {
+        return Err(syn::Error::new(
+            span,
+            "a thiscall function takes `this` as its first argument",
+        ));
+    }
+    let ret = match &sig.output {
+        ReturnType::Default => quote!(()),
+        ReturnType::Type(_, t) => quote!(#t),
+    };
+    let fname = &sig.ident;
+    let upper = fname.to_string().to_uppercase();
+    let native = format_ident!("__sa_native_{}", fname);
+    let reg = format_ident!("NATIVE_{}", upper);
+    let abi_unwind = LitStr::new(&format!("{}-unwind", conv.abi().value()), Span::call_site());
+    let doc = format!(
+        "Phase B registration of `{}` ({addr:#x}, not hookable in phase A).",
+        name.value()
+    );
+    Ok(quote! {
+        #f
+
+        #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
+        #[doc(hidden)]
+        #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref)]
+        extern #abi_unwind fn #native(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+            #[allow(unused_unsafe)]
+            let r = unsafe { #fname(#(#args),*) };
+            ::sa_core::abi::IntoAbi::into_abi(r)
+        }
+
+        #[doc = #doc]
+        pub const #reg: ::sa_core::abi::NativeReg = ::sa_core::abi::NativeReg {
+            addr: #addr,
+            name: #name,
+            entry: || {
+                #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
+                {
+                    #native as usize
+                }
+                #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
+                {
+                    0
+                }
+            },
         };
     })
 }

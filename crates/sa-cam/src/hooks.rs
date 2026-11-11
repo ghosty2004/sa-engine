@@ -25,6 +25,20 @@ pub const MODULES: &[&[HookReg]] = &[
     camproc::HOOKS,
     camtrans::HOOKS,
     cammodes::HOOKS,
+    crate::followcar::HOOKS,
+    crate::dwcams::HOOKS,
+    crate::arrestcam::HOOKS,
+    crate::twoplayer::HOOKS,
+    crate::followped::HOOKS,
+    crate::aimweapon::HOOKS,
+    crate::avoidgeom::HOOKS,
+    crate::firstperson::HOOKS,
+    crate::rocket::HOOKS,
+    crate::pedonpc::HOOKS,
+    crate::pedmouse::HOOKS,
+    crate::camcontrol::HOOKS,
+    crate::obbe::HOOKS,
+    crate::camera_process::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -42,6 +56,18 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     camproc::GLOBALS,
     camtrans::GLOBALS,
     cammodes::GLOBALS,
+    crate::followcar::GLOBALS,
+    crate::dwcams::GLOBALS,
+    crate::arrestcam::GLOBALS,
+    crate::followped::GLOBALS,
+    crate::aimweapon::GLOBALS,
+    crate::avoidgeom::GLOBALS,
+    crate::firstperson::GLOBALS,
+    crate::rocket::GLOBALS,
+    crate::pedonpc::GLOBALS,
+    crate::pedmouse::GLOBALS,
+    crate::camcontrol::GLOBALS,
+    crate::obbe::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

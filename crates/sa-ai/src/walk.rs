@@ -1009,6 +1009,7 @@ pub fn turn_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 /// `CTaskComplexFollowPointRoute(+0x10, route +0x4C, 0, [0x86FC98], [0x86FC9C], 0, 0, 0)`; anything else null.
 /// Not hookable: the protection reads the patched entry bytes (`adc ebx, [0x64A5F2]` at 0x15630B8; sa-hook INF-20,
 /// keycells and patch_refs tests).
+#[sa_core::native(addr = 0x64A5F0, conv = thiscall, name = "CTaskComplexGoToCarDoorAndStandStill::CreateSubTask")]
 pub fn car_door_create_sub_task_port(this: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> {
     let alloc = |n: u32| task_new(n);
     match ty {

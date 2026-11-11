@@ -432,6 +432,7 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_hud2::all())
     .chain(crate::specs_hud2_text::all())
     .chain(crate::specs_hud2_menu::all())
+    .chain(crate::specs_hud3::all())
     .chain(crate::specs_cam::all())
     .chain(crate::specs_script::all())
     .chain(crate::specs_rw::all())

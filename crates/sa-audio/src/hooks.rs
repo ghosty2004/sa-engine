@@ -5,8 +5,8 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
 use crate::{
-    engine, entities, gen_bodies, gen_ctors, gen_dtors, gen_leaves, gen_virtuals, hardware, ped, port2_a,
-    port2_b, radio, sound, statics, utility, vehicle,
+    engine, entities, gen_bodies, gen_ctors, gen_dtors, gen_leaves, gen_virtuals, hardware, ped, ped_events,
+    port2_a, port2_b, port3_ent, port3_lead, port3_veh, radio, sound, statics, utility, vehicle,
 };
 
 /// Every module's registrations, in this order.
@@ -27,6 +27,13 @@ pub const MODULES: &[&[HookReg]] = &[
     gen_bodies::HOOKS,
     port2_a::HOOKS,
     port2_b::HOOKS,
+    port3_lead::HOOKS,
+    port3_veh::HOOKS,
+    port3_ent::HOOKS,
+    crate::port4_hw::HOOKS,
+    crate::port4_init::HOOKS,
+    crate::port4_service::HOOKS,
+    ped_events::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -42,6 +49,20 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     statics::GLOBALS,
     port2_a::GLOBALS,
     port2_b::GLOBALS,
+    port3_lead::GLOBALS,
+    port3_veh::GLOBALS,
+    port3_ent::GLOBALS,
+    crate::port4_hw::GLOBALS,
+    crate::port4_init::GLOBALS,
+    crate::port4_service::GLOBALS,
+];
+
+/// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
+/// phase A); `sa_ports::NATIVES` lists each of these.
+pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
+    crate::port4_hw::NATIVES,
+    crate::port4_init::NATIVES,
+    crate::port4_service::NATIVES,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

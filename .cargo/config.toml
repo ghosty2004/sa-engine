@@ -1,0 +1,5 @@
+# Phase B MVP runs sa-game as a 32-bit Linux process (docs/arch/platform.md §6): pkg-config looks up
+# the 32-bit system libraries (udev, ALSA) for that target only.
+[env]
+PKG_CONFIG_ALLOW_CROSS_i686_unknown_linux_gnu = "1"
+PKG_CONFIG_PATH_i686_unknown_linux_gnu = "/usr/lib32/pkgconfig"

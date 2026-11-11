@@ -80,8 +80,6 @@ orig! {
     pub fn display_script_stat_update_message(state: u32, id: u32, v: u32) = cdecl 0x55B980 => unported;
     /// `Interior_c::IsVisible` (0x5929F0)
     pub fn interior_is_visible(int: GPtr<u8>) -> u8 = thiscall 0x5929F0 => unported;
-    /// `FurnitureSubGroup_c::AddFurniture(...)` (0x5C00C0)
-    pub fn sub_group_add_furniture(sg: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u8 = thiscall 0x5C00C0 => unported;
     /// `RwEngineInstance->dOpenDevice.fpRenderStateSet` (RwEngineInstance 0xC97B24, +0x20)
     pub fn rw_render_state_set(state: i32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `BreakObject_c::Render(bool)` (0x59E480)
@@ -474,6 +472,7 @@ pub fn set_piece_get_target_coord2(this: GPtr<u8>, out: GPtr<f32>) -> GPtr<f32> 
 // ---- interiors ----
 
 /// `InteriorGroup_c::GetEntity` (0x594BD0, thiscall): +8 (4 bytes, not hookable).
+#[sa_core::native(addr = 0x594BD0, conv = thiscall, name = "InteriorGroup_c::GetEntity")]
 pub fn interior_group_get_entity(this: GPtr<u8>) -> GPtr<u8> {
     rd::<GPtr<u8>>(this, 8)
 }
@@ -1750,6 +1749,7 @@ pub fn break_object_ctor(this: GPtr<u8>) -> GPtr<u8> {
 }
 
 /// `BreakObject_c::~BreakObject_c` (0x59D180, thiscall): `ret` (1 byte, not hookable).
+#[sa_core::native(addr = 0x59D180, conv = thiscall, name = "(missed by ghidra: data-code-immediate)")]
 pub fn break_object_dtor(_this: GPtr<u8>) {}
 
 /// `memcmp(a, b, n) == 0` as `repe cmpsb` evaluates it (stops at the first difference).
@@ -1775,6 +1775,124 @@ pub fn furniture_get_group_id(_this: GPtr<u8>, name: GPtr<u8>) -> i32 {
         }
     }
     -1
+}
+
+/// `FurnitureManager_c::GetSubGroupId(const char*)` (0x5BFBF0, thiscall, `ret 4`): the sub-group index of
+/// the name within its group (51 names, each compared with its terminator, `repe cmpsb`), -1 when unknown
+/// (STD-6).
+#[hook(addr = 0x5BFBF0, conv = thiscall, name = "FurnitureManager_c::GetSubGroupId", expect = "8B 44 24 04 56 57 BF 0C AF 86 00", this = "FurnitureManager_c",
+       unverified = "std6-world-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+pub fn furniture_get_sub_group_id(_this: GPtr<u8>, name: GPtr<u8>) -> i32 {
+    const NAMES: [(&[u8], i32); 51] = [
+        (b"SHOP_UNIT1_L\0", 0),
+        (b"SHOP_UNIT1_R\0", 1),
+        (b"SHOP_UNIT1_M\0", 2),
+        (b"SHOP_UNIT2_L\0", 3),
+        (b"SHOP_UNIT2_R\0", 4),
+        (b"SHOP_UNIT2_M\0", 5),
+        (b"SHOP_UNIT3_L\0", 6),
+        (b"SHOP_UNIT3_R\0", 7),
+        (b"SHOP_UNIT3_M\0", 8),
+        (b"SHOP_UNIT4_L\0", 9),
+        (b"SHOP_UNIT4_R\0", 10),
+        (b"SHOP_UNIT4_M\0", 11),
+        (b"SHOP_CHECKOUTS\0", 12),
+        (b"SHOP_BASKETS\0", 13),
+        (b"SHOP_LIGHTS\0", 14),
+        (b"OFFICE_DESKS\0", 0),
+        (b"OFFICE_CHAIRS\0", 1),
+        (b"OFFICE_WATERCOOLERS\0", 2),
+        (b"OFFICE_FILINGCABS\0", 3),
+        (b"LOUNGE_SOFAS\0", 0),
+        (b"LOUNGE_CHAIRS\0", 1),
+        (b"LOUNGE_TVSTANDS\0", 2),
+        (b"LOUNGE_TVS\0", 3),
+        (b"LOUNGE_TABLES\0", 4),
+        (b"LOUNGE_LAMPS\0", 5),
+        (b"LOUNGE_HIFI_TABLES\0", 6),
+        (b"LOUNGE_VIDEOS\0", 7),
+        (b"LOUNGE_HIFIS\0", 8),
+        (b"LOUNGE_CONSOLES\0", 9),
+        (b"BEDROOM_BEDS\0", 0),
+        (b"BEDROOM_TABLES\0", 1),
+        (b"BEDROOM_DRAWERS\0", 2),
+        (b"BEDROOM_WARDROBES\0", 3),
+        (b"KITCHEN_UNIT_L\0", 0),
+        (b"KITCHEN_UNIT_M\0", 1),
+        (b"KITCHEN_UNIT_R\0", 2),
+        (b"KITCHEN_UNIT_SINKS\0", 3),
+        (b"KITCHEN_UNIT_FRIDGES\0", 4),
+        (b"KITCHEN_UNIT_OVENS\0", 5),
+        (b"KITCHEN_UNIT_WASHERS\0", 6),
+        (b"KITCHEN_UNIT_CORNERS\0", 7),
+        (b"KITCHEN_MICROWAVES\0", 8),
+        (b"KITCHEN_TOASTERS\0", 9),
+        (b"KITCHEN_TVS\0", 10),
+        (b"MISC_PLANTS\0", 0),
+        (b"MISC_LIGHTS\0", 1),
+        (b"MISC_RUGS\0", 2),
+        (b"MISC_PLATES\0", 3),
+        (b"MISC_FOOD\0", 4),
+        (b"MISC_MAGAZINES\0", 5),
+        (b"MISC_CLOTHES\0", 6),
+    ];
+    for (lit, id) in NAMES {
+        if bytes_eq(name, lit) {
+            return id;
+        }
+    }
+    -1
+}
+
+/// `FurnitureSubGroup_c::AddFurniture(uint16 model, int16 id, uint8 wealthMin, uint8 wealthMax, uint8
+/// maxAng)` (0x5C00C0, thiscall, `ret 0x14`, bool in AL): below 256 records (count u16 at 0xBAB378), the
+/// next `Furniture_c` (0x14 each from 0xBAE1F8): +8 model, +0xA id; the tile size from the model's
+/// collision box (`this+0x1A` set: `max - min`, else `max + 0.5`, x then y), each `_ftol`'d into a byte
+/// plus one unless the fraction is below 0.02 (`test ah,5; jnp`; the y size goes through an f32 store,
+/// the x size stays in ST); +0xE / +0xF wealth, +0x13 maxAng, +0x10..+0x12 the sub-group's bytes
+/// +0x18..+0x1A; then `List_c::AddItem(this+0xC, rec)` (STD-6).
+#[hook(addr = 0x5C00C0, conv = thiscall, name = "FurnitureSubGroup_c::AddFurniture", expect = "83 EC 18 57 8B F9", this = "FurnitureSubGroup_c",
+       unverified = "std6-world-1", route = "L2", hazards = "none", recs = "new-game")]
+pub fn sub_group_add_furniture(this: GPtr<u8>, model: u32, id: u32, wealth_min: u32, wealth_max: u32, max_ang: u32) -> u8 {
+    let count = g::<u16>(0xBAB378);
+    let n = count.read();
+    if n >= 0x100 {
+        return 0;
+    }
+    count.write(n + 1);
+    let rec = GPtr::<u8>::from_addr(0xBAE1F8 + usize::from(n) * 0x14);
+    let model = model as u16;
+    wr(rec, 8, model);
+    wr(rec, 0xA, id as u16);
+    let mi = g::<GPtr<u8>>(0xA9B0C8).wrapping_index(i32::from(model)).read();
+    let col: GPtr<u8> = rd(mi, 0x14);
+    let (min_x, min_y): (f32, f32) = (rd(col, 0), rd(col, 4));
+    let (max_x, max_y): (f32, f32) = (rd(col, 0xC), rd(col, 0x10));
+    let (sx, sy) = if rd::<u8>(this, 0x1A) != 0 {
+        (x(max_x).fsub_m(min_x), x(max_y).fsub_m(min_y))
+    } else {
+        let half = f32::from_bits(0x3F00_0000);
+        (x(max_x).fadd_m(half), x(max_y).fadd_m(half))
+    };
+    let k = f32::from_bits(0x3CA3_D70A);
+    let size = |v: X87| {
+        let t = ftol32(v);
+        let mut b = t as u8;
+        if v.fsub(xi(t)).fcom(x(k)).test_parity(0x05) {
+            b = b.wrapping_add(1);
+        }
+        b
+    };
+    wr(rec, 0xC, size(sx));
+    wr(rec, 0xD, size(x(sy.to_f32())));
+    wr(rec, 0xE, wealth_min as u8);
+    wr(rec, 0xF, wealth_max as u8);
+    wr(rec, 0x13, max_ang as u8);
+    wr(rec, 0x10, rd::<u8>(this, 0x18));
+    wr(rec, 0x11, rd::<u8>(this, 0x19));
+    wr(rec, 0x12, rd::<u8>(this, 0x1A));
+    list_add_item(this.wrapping_index(0xC), rec);
+    1
 }
 
 /// `CSetPieces::AddOne(uint8 type, CVector2D a, CVector2D b, CVector2D spawn1, CVector2D target1, CVector2D
@@ -1998,6 +2116,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FURNITURE_GROUP_INIT,
     HOOK_BREAK_OBJECT_CTOR,
     HOOK_FURNITURE_GET_GROUP_ID,
+    HOOK_FURNITURE_GET_SUB_GROUP_ID,
+    HOOK_SUB_GROUP_ADD_FURNITURE,
     HOOK_LA_RIOTS_ACTIVE_HERE,
     HOOK_POPULATE_FAVORITE_RADIO_STATION_LIST,
     HOOK_GET_RANDOM_WATER_CREATURE_ID,

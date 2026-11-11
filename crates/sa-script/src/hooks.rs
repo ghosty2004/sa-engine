@@ -5,9 +5,11 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
 use crate::{
-    cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100, cmd1200,
-    cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200, cmd2300,
-    cmd2400, cmd2500, cleanup, script_init, vm,
+    cleanup, cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100,
+    cmd1200, cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200,
+    cmd2300, cmd2400, cmd2500, script_brain_requests, script_brains, script_draw, script_init,
+    script_objects, script_process, script_registries, script_resources, script_tables, script_tasks,
+    script_things, vm,
 };
 
 /// Every module's registrations, in this order.
@@ -41,6 +43,17 @@ pub const MODULES: &[&[HookReg]] = &[
     cmd2500::HOOKS,
     cleanup::HOOKS,
     script_init::HOOKS,
+    script_draw::HOOKS,
+    script_brains::HOOKS,
+    script_objects::HOOKS,
+    script_brain_requests::HOOKS,
+    script_resources::HOOKS,
+    script_process::HOOKS,
+    script_tables::HOOKS,
+    script_registries::HOOKS,
+    script_tasks::HOOKS,
+    script_things::HOOKS,
+    crate::the_scripts_init::HOOKS,
 ];
 
 /// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).
@@ -288,7 +301,10 @@ mod tests {
             );
             let cases = jump_table_cases(*lo);
             for op in *ported {
-                assert!(cases.contains(op), "{name}: {op:04X} in PORTED has no jump-table case");
+                assert!(
+                    cases.contains(op),
+                    "{name}: {op:04X} in PORTED has no jump-table case"
+                );
             }
             if complete {
                 let missing: Vec<String> = cases
@@ -296,7 +312,10 @@ mod tests {
                     .filter(|op| !ported.contains(op))
                     .map(|op| std::format!("{op:04X}"))
                     .collect();
-                assert!(missing.is_empty(), "{name}: no fallback but not ported: {missing:?}");
+                assert!(
+                    missing.is_empty(),
+                    "{name}: no fallback but not ported: {missing:?}"
+                );
             }
             let src: String = std::fs::read_to_string(dir.join(std::format!("cmd{lo}.rs"))).unwrap();
             // Arms of the switch's `match command {` up to the last arm:
@@ -308,7 +327,10 @@ mod tests {
             // A complete switch has no fallback call left; its last arm (`_ =>`) is the original
             // default (-1, after the switch's common destructor tail where it has one).
             if complete {
-                assert!(!src.contains("fallback("), "{name}: complete but still calls fallback");
+                assert!(
+                    !src.contains("fallback("),
+                    "{name}: complete but still calls fallback"
+                );
             }
             let last = if complete { "_ =>" } else { "fallback(" };
             assert!(body.contains(last), "{name}: no `{last}` arm");

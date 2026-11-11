@@ -31,19 +31,22 @@ fn stop_sound_at(this: GPtr<u8>, off: isize) {
 // ---- CAEPedSpeechAudioEntity / CAEPedlessSpeechAudioEntity small members -------------------------
 
 /// `CAEPedlessSpeechAudioEntity::GetAllocatedVoice()` (0x4E6090): AX = -1 (upper EAX untouched).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX, needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn pedless_get_allocated_voice(_this: GPtr<u8>) -> u16 {
     0xFFFF
 }
 
 /// `CAEPedlessSpeechAudioEntity::GetPedType()` (0x4E60B0): AX = -1 (upper EAX untouched).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX, needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn pedless_get_ped_type(_this: GPtr<u8>) -> u16 {
     0xFFFF
 }
 
 /// `CAEPedSpeechAudioEntity::GetAllocatedVoice()` (0x4E4120): AX = the voice word +0x94.
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX (port-l2-a2-menus-hud mismatch), needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn speech_get_allocated_voice(this: GPtr<u8>) -> u16 {
     rd::<u16>(this, 0x94)
 }
@@ -85,7 +88,8 @@ pub fn speech_is_ped_female_for_audio(this: GPtr<u8>) -> u8 {
 }
 
 /// `CAEPedSpeechAudioEntity::GetPedType()` (0x4E4130): initialised ? the word +0x92 : -1 (AX).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX, needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn speech_get_ped_type(this: GPtr<u8>) -> u16 {
     if rd::<u8>(this, 0x90) == 0 {
         0xFFFF
@@ -168,6 +172,7 @@ pub fn vehicle_get_aircraft_near_position(this: GPtr<u8>, out: GPtr<u8>) -> GPtr
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_SPEECH_ENABLE_PED_SPEECH,
+    HOOK_SPEECH_RELEASE_PED_CONVERSATION,
     HOOK_SPEECH_ENABLE_PED_SPEECH_FOR_SCRIPT_SPEECH,
     HOOK_SPEECH_GET_PED_TALKING,
     HOOK_SPEECH_IS_PED_FEMALE_FOR_AUDIO,
@@ -337,7 +342,8 @@ const VEHICLE_TYPE_FOR_AUDIO_INDEX: usize = 0x4F4F48;
 
 /// `CAEVehicleAudioEntity::GetVehicleTypeForAudio()` (0x4F4F00): AX = 2 unless initialised (+0xA4) with
 /// an entity (+4); then the byte at 0x4F4F48 indexed by the signed audio type byte +0x9C (> 0x26 -> 2).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX (port-l2-a2-menus-hud mismatch), needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn vehicle_get_vehicle_type_for_audio(this: GPtr<u8>) -> u16 {
     if rd::<u8>(this, 0xA4) == 0 || rd::<u32>(this, 4) == 0 {
         return 2;
@@ -806,7 +812,9 @@ pub fn speech_can_ped_say_global_context(this: GPtr<u8>, ctx: u32) -> u8 {
 /// owner (+4) `StopCurrentSpeech`; slot 1 is cleared, then slot 2 (in the bytes' order, with both slot
 /// words = -1 in between) and the two conversation peds (0xB61410, 0xB6140C) = 0. The flag is cleared
 /// in both cases.
-/// Not hooked: L2 mismatch on air-water and police-gang (1 case each, port-l2-a2-*): a sound's physical pointer in AESoundManager stays set in the Rust run after StopCurrentSpeech; cause not found.
+/// PORT-AUDIO-2 left it unhooked (1 L2 mismatch on air-water / police-gang / grove); PORT-AUDIO-3 hooks it
+/// (see `docs/arch/audio-port.md`, PORT-AUDIO-3).
+#[hook(addr = 0x4E52A0, conv = cdecl, name = "CAEPedSpeechAudioEntity::ReleasePedConversation", expect = "A0 FD 13 B6 00 53 33 DB")]
 pub fn speech_release_ped_conversation() {
     if g::<u8>(0xB613FD).read() == 0 {
         return;
@@ -1192,9 +1200,10 @@ pub fn ped_handle_skate_event(this: GPtr<u8>, event: u32, vol_offset: f32, speed
 /// requested: (slot 2, sfx 3, `posn`, event volume, 2.0, 0.75, 0.6, 0, flags 4, 0, 0) with event 3 and
 /// +0x20 = 0x3D75C290 -> +0x7C; then (slot 0, sfx 0, volume + [0x858BA4], 2.0, 1.78, 0.6, 0, 4, 0, 0)
 /// with event 4 -> +0x80; the local is destroyed. The SEH frame is not reproduced.
-#[hook(addr = 0x4DD270, conv = thiscall, name = "CAEFireAudioEntity::PlayWaterSounds", expect = "6A FF 68 18 BF 83 00")]
+#[hook(addr = 0x4DD270, conv = thiscall, name = "CAEFireAudioEntity::PlayWaterSounds", expect = "6A FF 68 18 BF 83 00", peek = 0x80)]
 pub fn fire_play_water_sounds(this: GPtr<u8>, event: u32, posn: u32) {
-    let mut buf = [0u32; 0x74 / 4];
+    // the original's `CAESound` local (entry ESP - 0x80) is uninitialised: its stack residue (`peek`)
+    let mut buf = crate::port3_lead::stack_local::<0x1D>(0x4DD270, -0x80);
     let snd: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
     wr::<u32>(snd, 8, 0);
     let vol = event_volume(event);
@@ -1443,7 +1452,8 @@ fn cstr_eq(a: GPtr<u8>, b: GPtr<u8>) -> bool {
 
 /// `CAEPedSpeechAudioEntity::GetVoice(const char* name, int16 type)` (0x4E3CD0, static cdecl): AX = the
 /// index of `name` in the type's voice-name table (types 0..4, the bytes' jump table), else -1.
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX (port-l2-a2-menus-hud mismatch), needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn speech_get_voice(name: GPtr<u8>, ty: u32) -> u16 {
     let t = ty as u16 as i16 as i32 as u32;
     if t > 4 {
@@ -1942,7 +1952,8 @@ orig! {
 /// the context's next play time (contexts 0x154..0x166: the dword `this + 0xB4 + (ctx - 0x154) * 4`,
 /// other 0..0x167: `gGlobalSpeechContextNextPlayTime[ctx]`). Return u16: callers use AX only (the
 /// original's upper EAX is path-dependent).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX (port-l2-a2-menus-hud mismatch), needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn speech_can_we_play_global_speech_context(this: GPtr<u8>, ctx: u32) -> u16 {
     let c = ctx as u16 as i16;
     let me = this.addr() as u32;
@@ -2579,151 +2590,9 @@ pub fn vehicle_process_nitro(this: GPtr<u8>, params: GPtr<u8>) {
     wr::<u8>(this, 0x244, 1);
 }
 
-// ---- pass 3: collision (3) -----------------------------------------------------------------------
-
-orig! {
-    /// `SurfaceInfos_c::GetFrictionEffect(uint32 surface)` (0x55E650)
-    fn surface_get_friction_effect(infos: GPtr<u8>, surface: u32) -> u32 = thiscall 0x55E650 => unported;
-    /// `CEntity::GetIsTypePhysical()` (0x4DA030)
-    fn entity_get_is_type_physical(e: GPtr<u8>) -> u8 = thiscall 0x4DA030 => unported;
-    /// `CAECollisionAudioEntity::PlayOneShotCollisionSound(CEntity*, CEntity*, uint8, uint8, float, CVector&)` (0x4DB150)
-    fn collision_play_one_shot(this: GPtr<u8>, e1: u32, e2: u32, s1: u32, s2: u32, impulse: u32, posn: u32) = thiscall 0x4DB150 => unported;
-    /// `CAECollisionAudioEntity::PlayLoopingCollisionSound(CEntity*, CEntity*, uint8, uint8, float, CVector&, bool)` (0x4DB450)
-    fn collision_play_looping(this: GPtr<u8>, e1: u32, e2: u32, s1: u32, s2: u32, impulse: u32, posn: u32, flag: u32) = thiscall 0x4DB450 => unported;
-    /// `CAECollisionAudioEntity::UpdateLoopingCollisionSound(CAESound*, CEntity*, CEntity*, uint8, uint8, float, CVector&, bool)` (0x4DA540)
-    fn collision_update_looping(this: GPtr<u8>, sound: u32, e1: u32, e2: u32, s1: u32, s2: u32, a: u32, b: u32, flag: u32) = thiscall 0x4DA540 => unported;
-    /// `CAECollisionAudioEntity::GetCollisionSoundStatus(...)` (0x4DA830)
-    fn collision_get_collision_sound_status_call(this: GPtr<u8>, a: u32, b: u32, s1: u32, s2: u32, out: GPtr<u8>) -> u8 = thiscall 0x4DA830 => collision_get_collision_sound_status;
-}
-
-/// The collision surface override of `ReportCollision` for entity `e` (the other one `other`); `cur` is
-/// the surface being replaced, `other_surface` the other side's (read for the friction test).
-fn collision_surface_for(e: GPtr<u8>, other: u32, normal: u32, cur: u8, other_surface: u8) -> u8 {
-    if rd::<u8>(e, 0x36) & 7 == 2 {
-        let mut scraping = false;
-        if other != 0 && rd::<u8>(g(other as usize), 0x36) & 7 == 1 && normal != 0 {
-            let m: GPtr<u8> = g(rd::<u32>(e, 0x14) as usize);
-            let n: GPtr<u8> = g(normal as usize);
-            let d = rd::<f32>(m, 0x28) * rd::<f32>(n, 8)
-                + rd::<f32>(m, 0x24) * rd::<f32>(n, 4)
-                + rd::<f32>(m, 0x20) * rd::<f32>(n, 0);
-            scraping = d > g::<f32>(0x858CC8).read();
-        }
-        if scraping {
-            if rd::<u32>(e, 0x594) == 0xA {
-                return 0xBC;
-            }
-            if surface_get_friction_effect(g(0xB79538), other_surface as u32) != 1 {
-                return 0x43;
-            }
-        }
-        return if rd::<u32>(e, 0x594) == 0xA { 0xBC } else { 0x3F };
-    }
-    let model = rd::<u16>(e, 0x22);
-    match model {
-        0x158 => return 0x2D,
-        0x16B => return 0xBE,
-        0x156 | 0x16C | 0x157 => return 0xBF,
-        _ => {}
-    }
-    let m = model as i16 as i32;
-    if m == g::<u16>(0x8CD774).read() as i32 {
-        0xC1
-    } else if m == g::<u16>(0x8CD77C).read() as i32 {
-        0xC2
-    } else if m == g::<u16>(0x8CD6F4).read() as i32 {
-        0xAF
-    } else if m == g::<u16>(0x8CD780).read() as i32 {
-        0x2B
-    } else if entity_get_is_type_physical(e) != 0 && rd::<u8>(e, 0x40) & 0x80 != 0 {
-        0xC0
-    } else {
-        cur
-    }
-}
-
-/// `CAECollisionAudioEntity::ReportCollision(CEntity* e1, CEntity* e2, uint8 s1, uint8 s2, CVector&
-/// posn, CVector* normal, float impulse, float speed, bool oneShot, bool unknown)` (0x4DBA10, `ret
-/// 0x28`): nothing unless bank 0x27 is in slot 2, fewer than 300 collisions are active (+0x204) and
-/// `speed` is not <= 0. Each entity in turn (e1 then e2) may override its own surface: vehicles 0x3F
-/// (bikes, +0x594 == 10: 0xBC), or 0x43 when scraping a building (matrix up . normal > [0x858CC8]) and
-/// the other side's surface friction effect is not 1; models 0x158 / 0x16B / 0x156,0x16C,0x157 and the
-/// model words at 0x8CD774 / 0x8CD77C / 0x8CD6F4 / 0x8CD780 fixed surfaces; physicals with bit 0x80 of
-/// +0x40 0xC0. The surface arguments are passed on as their argument dwords with the low byte replaced.
-/// `oneShot` -> `PlayOneShotCollisionSound(e1, e2, s1, s2, impulse, posn)`. Otherwise
-/// `GetCollisionSoundStatus`: playing (2) -> the entry's end time = now + 100 and, with a sound,
-/// `UpdateLoopingCollisionSound(sound, entry e1/e2/s1/s2, impulse, speed, unknown)`; with `unknown`
-/// any other status -> `PlayLoopingCollisionSound(.., impulse, posn, unknown)`; without it status 1
-/// -> `PlayLoopingCollisionSound(.., 0)`, others -> `PlayOneShotCollisionSound`. The status index is
-/// written into the original's `oneShot` argument slot (a local here).
-/// Not hooked: L2 mismatch in every recording (port-l2-a2-*: 4..222 cases): the CAESound it builds on the stack carries the original's uninitialised bytes into AESoundManager, the port's are zero; kept as an original-only port until the stack-sound question is decided.
-#[allow(clippy::too_many_arguments)]
-pub fn collision_report_collision(
-    this: GPtr<u8>,
-    e1: u32,
-    e2: u32,
-    s1: u32,
-    s2: u32,
-    posn: u32,
-    normal: u32,
-    impulse: u32,
-    speed: u32,
-    one_shot: u32,
-    unknown: u32,
-) {
-    if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x27, 2) == 0 || rd::<u32>(this, 0x204) == 300 {
-        return;
-    }
-    let sp = f32::from_bits(speed);
-    let zero = g::<f32>(0x858B50).read();
-    if sp <= zero {
-        return;
-    }
-    let mut a = s1 as u8;
-    let mut b = s2 as u8;
-    a = collision_surface_for(g(e1 as usize), e2, normal, a, b);
-    b = collision_surface_for(g(e2 as usize), e1, normal, b, a);
-    let s1 = (s1 & !0xFF) | a as u32;
-    let s2 = (s2 & !0xFF) | b as u32;
-    if one_shot as u8 != 0 {
-        collision_play_one_shot(this, e1, e2, s1, s2, impulse, posn);
-        return;
-    }
-    let mut out = [one_shot];
-    let status = collision_get_collision_sound_status_call(
-        this,
-        e1,
-        e2,
-        s1,
-        s2,
-        GPtr::from_raw(out.as_mut_ptr()).cast(),
-    );
-    let flag = if unknown as u8 != 0 { unknown } else { 0 };
-    if status == 2 {
-        let e = this.byte_add(0x208 + out[0] as i32 as isize * 0x14);
-        wr::<u32>(e, 0xC, sa_core::timer::TIME_MS.get().wrapping_add(100));
-        let snd = rd::<u32>(e, 8);
-        if snd != 0 {
-            collision_update_looping(
-                this,
-                snd,
-                rd::<u32>(e, 0),
-                rd::<u32>(e, 4),
-                rd::<u8>(e, 0x11) as u32,
-                rd::<u8>(e, 0x12) as u32,
-                impulse,
-                speed,
-                flag,
-            );
-        }
-        return;
-    }
-    if unknown as u8 != 0 || status == 1 {
-        collision_play_looping(this, e1, e2, s1, s2, impulse, posn, flag);
-    } else {
-        collision_play_one_shot(this, e1, e2, s1, s2, impulse, posn);
-    }
-}
+// `CAECollisionAudioEntity::ReportCollision` (0x4DBA10): ported and hooked in `port3_ent.rs` (PORT-AUDIO-3).
+// The pass-2 port that stood here passed `speed` where `UpdateLoopingCollisionSound` takes the position
+// pointer (0x4DBCCE pushes `[esp+0x28]` = posn): the cause of its L2 mismatches, not stack residue.
 
 // ---- pass 3: ped footsteps -----------------------------------------------------------------------
 
@@ -3257,15 +3126,16 @@ pub fn weapon_update_parameters(this: GPtr<u8>, sound: u32, pos: u32) {
 
 /// `CAEDoorAudioEntity::PlayDoorSound(int16 sfx, eAudioEvents, CVector& posn, float volumeDelta, float
 /// speed)` (0x4DC6D0, `ret 0x14`): bank 0x33 must be in slot 0x1F (else loaded). A `CAESound` local
-/// (only +8 cleared in the original; zeroed here, see `PlayWaterSounds`) is initialised (slot 0x1F, sfx,
+/// (only +8 cleared in the original; the residue kept through `peek`) is initialised (slot 0x1F, sfx,
 /// position, event volume + delta, 2.0, speed, 1.0, 0, flags 4, 0, 0); the position is `posn` unless it
 /// is (-1000, -1000, -1000) (dword compare) or exactly (0, 0, 0), then (0, 1, 0) with `SetFlags(1, 1)`
 /// (front end; otherwise `SetFlags(1, 0)`); event +0xC = the event; requested; the local destroyed. The
 /// `SetFlags` value dword's upper half is the original's leftover EAX (only the word is read). SEH frame
 /// not reproduced.
-#[hook(addr = 0x4DC6D0, conv = thiscall, name = "CAEDoorAudioEntity::PlayDoorSound", expect = "6A FF 68 B8 BE 83 00")]
+#[hook(addr = 0x4DC6D0, conv = thiscall, name = "CAEDoorAudioEntity::PlayDoorSound", expect = "6A FF 68 B8 BE 83 00", peek = 0x80)]
 pub fn door_play_door_sound(this: GPtr<u8>, sfx: u32, event: u32, posn: u32, vol_delta: f32, speed: u32) {
-    let mut buf = [0u32; 0x74 / 4];
+    // the original's `CAESound` local (entry ESP - 0x80) is uninitialised: its stack residue (`peek`)
+    let mut buf = crate::port3_lead::stack_local::<0x1D>(0x4DC6D0, -0x80);
     let snd: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
     wr::<u32>(snd, 8, 0);
     if hw_is_sound_bank_loaded(g(0xB5F8B8), 0x33, 0x1F) == 0 {
@@ -3308,14 +3178,15 @@ pub fn door_play_door_sound(this: GPtr<u8>, sfx: u32, event: u32, posn: u32, vol
 
 /// `CAEFireAudioEntity::PlayFireSounds(eAudioEvents, CVector& posn)` (0x4DD0D0): the variation byte
 /// 0xB612EC = (signed +1) % 5 picks the speed dword at 0x8AE598; a `CAESound` local (only +8 cleared in
-/// the original; zeroed here) is initialised (slot 4, sfx 0, `posn`, event volume, 2.0, speed, 1.0, 0,
+/// the original; the residue kept through `peek`) is initialised (slot 4, sfx 0, `posn`, event volume, 2.0, speed, 1.0, 0,
 /// flags 4, 0, 0) and requested -> +0x7C. With bank 0x8A in slot 0x13: (slot 0x13, sfx 0x1A, volume -
 /// [0x85F100], 2.0, speed * [0x858CC8], 1.0, 0, 4, 0, 0), then local +0x10 = volume + [0x858B3C] and
 /// event +0xC = 1, requested (result unused); else the bank is loaded. The local is destroyed. SEH frame
 /// not reproduced.
-#[hook(addr = 0x4DD0D0, conv = thiscall, name = "CAEFireAudioEntity::PlayFireSounds", expect = "6A FF 68 F8 BE 83 00")]
+#[hook(addr = 0x4DD0D0, conv = thiscall, name = "CAEFireAudioEntity::PlayFireSounds", expect = "6A FF 68 F8 BE 83 00", peek = 0x80)]
 pub fn fire_play_fire_sounds(this: GPtr<u8>, event: u32, posn: u32) {
-    let mut buf = [0u32; 0x74 / 4];
+    // the original's `CAESound` local (entry ESP - 0x80) is uninitialised: its stack residue (`peek`)
+    let mut buf = crate::port3_lead::stack_local::<0x1D>(0x4DD0D0, -0x80);
     let snd: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
     wr::<u32>(snd, 8, 0);
     let v = ((g::<u8>(0xB612EC).read() as i8 as i32 + 1) % 5) as i8;
@@ -3610,7 +3481,7 @@ orig! {
 }
 
 /// `CAEPedSpeechAudioEntity::PlayLoadedSound()` (0x4E5CD0): nothing without an entity (+4). A `CAESound`
-/// local (only +8 cleared in the original; zeroed here) is initialised with bank slot `+0xA8 + 0x14`
+/// local (only +8 cleared in the original; the residue kept through `peek`) is initialised with bank slot `+0xA8 + 0x14`
 /// and sfx +0xA4: front end (+0x9B) at (0, 1, 0) with volume [0x8C80EC] and flags word +0x56 = 0x307;
 /// otherwise at the entity's position with volume +0xAC, flags 6 and +0x18 = [0x8C80F0] (radio player
 /// attached, 0xB6B98C) or [0x8C80F4]; force audible (+0x9C): local +0x14 = [0x8C80EC]. The requested
@@ -3618,9 +3489,10 @@ orig! {
 /// the context (+0xB0) is 0x151 / 0x152, the ped's facial task (`GetTaskSecondary(3)`, not null-checked)
 /// gets `SetRequest(7, 2800, -1, 0)`; otherwise the slot is cleared, +0x98 = 0 (CJ: `s_bAPlayerSpeaking`
 /// = 0), +0xA8 = -1. The local is destroyed; SEH frame not reproduced.
-#[hook(addr = 0x4E5CD0, conv = thiscall, name = "CAEPedSpeechAudioEntity::PlayLoadedSound", expect = "6A FF 68 38 C0 83 00")]
+#[hook(addr = 0x4E5CD0, conv = thiscall, name = "CAEPedSpeechAudioEntity::PlayLoadedSound", expect = "6A FF 68 38 C0 83 00", peek = 0x80)]
 pub fn speech_play_loaded_sound(this: GPtr<u8>) {
-    let mut buf = [0u32; 0x74 / 4];
+    // the original's `CAESound` local (entry ESP - 0x80) is uninitialised: its stack residue (`peek`)
+    let mut buf = crate::port3_lead::stack_local::<0x1D>(0x4E5CD0, -0x80);
     let snd: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
     wr::<u32>(snd, 8, 0);
     let ent = rd::<u32>(this, 4);

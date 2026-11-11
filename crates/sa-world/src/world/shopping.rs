@@ -28,11 +28,51 @@ sa_core::globals! {
     pub static CLOTHES_STORED @ 0xA97298: u8 = 0;
     /// `gStoredClothesState` (`CPedClothesDesc`, 0x78 bytes)
     pub static STORED_CLOTHES @ 0xA9A810: [u32; 30] = [0; 30];
+    /// `CShopping::ms_numBuyableItems` (0xA9A310)
+    pub static NUM_BUYABLE_ITEMS @ 0xA9A310: i32 = 0;
 }
+
+/// `CShopping::ms_statModifiers` (0xA974D0): 4 bytes per buyable item (stat, change, stat, change).
+const STAT_MODIFIERS: usize = 0xA974D0;
+/// `"section"` (0x85A514)
+const STR_SECTION: usize = 0x85A514;
+/// `" \t"` (0x85A510): the section-line token delimiters
+const STR_SECTION_DELIMS: usize = 0x85A510;
+/// `" \t,"` (0x85A51C): the stats-line token delimiters
+const STR_STATS_DELIMS: usize = 0x85A51C;
+/// `"prices"` (0x85A520)
+const STR_PRICES: usize = 0x85A520;
+/// `"data\shopping.dat"` (0x85A528)
+const STR_SHOPPING_DAT: usize = 0x85A528;
+/// `"r"` (0x85A53C)
+const STR_MODE_R: usize = 0x85A53C;
 
 orig! {
     /// CRT `_stricmp` (0x8229B6)
     pub fn stricmp(a: GPtr<u8>, b: GPtr<u8>) -> i32 = cdecl 0x8229B6 => unported;
+    /// CRT `strncmp` (0x8214D0)
+    fn strncmp(a: GPtr<u8>, b: GPtr<u8>, n: u32) -> i32 = cdecl 0x8214D0 => unported;
+    /// CRT `strtok` (0x82244B)
+    fn strtok(s: GPtr<u8>, delim: GPtr<u8>) -> GPtr<u8> = cdecl 0x82244B => unported;
+    /// CRT `atol` (0x82258E)
+    fn atol(s: GPtr<u8>) -> i32 = cdecl 0x82258E => unported;
+    /// `CFileLoader::LoadLine(FILESTREAM)` (0x536F80)
+    fn load_line(f: GPtr<u8>) -> GPtr<u8> = cdecl 0x536F80 => sa_stream::fileloader::load_line_file;
+    /// `CFileMgr::OpenFile(const char*, const char*)` (0x538900)
+    fn open_file(name: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => sa_core::filemgr::open_file;
+    /// `CFileMgr::CloseFile(FILESTREAM)` (0x5389D0)
+    fn close_file(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => sa_core::filemgr::close_file;
+    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30)
+    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => sa_core::keygen::get_uppercase_key;
+    /// `CWeaponInfo::FindWeaponType(const char*)` (0x743D10)
+    fn find_weapon_type(name: GPtr<u8>) -> u32 = cdecl 0x743D10 => unported;
+    /// `CModelInfo::GetModelInfo(const char*, int* index)` (0x4C5940)
+    fn get_model_info(name: GPtr<u8>, idx: GPtr<u32>) -> GPtr<u8> = cdecl 0x4C5940 => unported;
+}
+
+/// `line` starts with `"end"`.
+fn is_end(line: GPtr<u8>) -> bool {
+    line.read() == b'e' && line.byte_add(1).read() == b'n' && line.byte_add(2).read() == b'd'
 }
 
 fn key_index(key: u32) -> i32 {
@@ -180,7 +220,146 @@ pub fn set_player_has_bought(key: u32) {
     g::<u8>(HAS_BOUGHT).byte_add(key_index(key) as isize).write(1);
 }
 
+/// `CShopping::FindSection(FILESTREAM file, const char* name)` (stub 0x49AE70 → 0x15659E0, cdecl). Reads
+/// lines (`LoadLine`), skipping empty ones and `#` comments. A line starting with `"section"` (strncmp 7)
+/// raises the nesting depth and is split with `strtok(line, " \t")`, `strtok(NULL, " \t")`; at depth 1
+/// the second token compared `_stricmp` with `name` equal → AL = 1 (EAX = 1). Another line starting with
+/// "end" lowers the depth; below 0 → AL = 0. End of file → EAX = 0. The "end" exit leaves the
+/// `strncmp` result in EAX's upper bytes (reproduced).
+#[hook(addr = 0x49ae70, conv = cdecl, name = "CShopping::FindSection", expect = "E9 6B AB 0C 01",
+       unverified = "mvpj-world-1", route = "split", hazards = "ax-al-return", recs = "grove-walk",
+       note = "reads the shop data file (file position effects)")]
+pub fn find_section(file: GPtr<u8>, name: GPtr<u8>) -> u32 {
+    let mut depth: i32 = 0;
+    let mut line = load_line(file);
+    while !line.is_null() {
+        let c = line.read();
+        if c != b'#' && c != 0 {
+            let r = strncmp(line, g::<u8>(STR_SECTION), 7);
+            if r == 0 {
+                depth += 1;
+                strtok(line, g::<u8>(STR_SECTION_DELIMS));
+                let tok = strtok(GPtr::NULL, g::<u8>(STR_SECTION_DELIMS));
+                if depth == 1 && stricmp(name, tok) == 0 {
+                    return 1;
+                }
+            } else if is_end(line) {
+                depth -= 1;
+                if depth < 0 {
+                    return r as u32 & 0xFFFF_FF00;
+                }
+            }
+        }
+        line = load_line(file);
+    }
+    0
+}
+
+/// `CShopping::GetNextSection(FILESTREAM file)` (stub 0x49AF10 → 0x156B920, cdecl). Reads lines,
+/// skipping empty ones and `#` comments, until one starting with `"section"` (strncmp 7): returns its
+/// second token (`strtok(line, D)`, `strtok(NULL, " \t")`); a line starting with "end" or the end of
+/// the file → NULL. D is pushed by a no-CD VM call (0xCB73E0, descriptor 0x1560034, not evaluated); it
+/// is taken to be `" \t"` (0x85A510), the delimiter of the second call and of `FindSection`.
+#[hook(addr = 0x49af10, conv = cdecl, name = "CShopping::GetNextSection", expect = "E9 0B 0A 0D 01",
+       unverified = "mvpj-world-1", route = "split", hazards = "none", recs = "grove-walk",
+       note = "the first strtok delimiter comes from the no-CD VM 0xCB73E0 (assumed 0x85A510)")]
+pub fn get_next_section(file: GPtr<u8>) -> GPtr<u8> {
+    let mut line = load_line(file);
+    while !line.is_null() {
+        let c = line.read();
+        if c != b'#' && c != 0 {
+            if strncmp(line, g::<u8>(STR_SECTION), 7) == 0 {
+                strtok(line, g::<u8>(STR_SECTION_DELIMS));
+                return strtok(GPtr::NULL, g::<u8>(STR_SECTION_DELIMS));
+            }
+            if is_end(line) {
+                break;
+            }
+        }
+        line = load_line(file);
+    }
+    GPtr::NULL
+}
+
+/// `CShopping::LoadStats()` (0x49B6A0, cdecl). Opens `data\shopping.dat` ("r"), `FindSection(f,
+/// "prices")` (result ignored), `ms_numBuyableItems` = 0, then for every `GetNextSection` name: the
+/// section index = the first of the 11 price-section names equal (`_stricmp`), else -1. Each line of
+/// the section (empty and `#` skipped, "end" ends it): first token (`strtok`, `" \t,"`) → key:
+/// sections 4, 5, 6 `GetUppercaseKey`, 9 `CWeaponInfo::FindWeaponType`, 2 the previous line's key
+/// unchanged (the stack slot is not written for that section: a first line there reads an
+/// uninitialised local; zero here), else the model index of `GetModelInfo` (preset -1).
+/// `ms_keys[n]` = key, `ms_bHasBought[n]` = 0; then one token skipped (two more for 4..6, one more
+/// for 9); tokens a, b, c, d: `ms_statModifiers[n]` = { `GetChangingStatIndex(a)`, `atol(b)`,
+/// `GetChangingStatIndex(c)`, `atol(d)` } as bytes; n += 1. Closes the file.
+#[hook(addr = 0x49b6a0, conv = cdecl, name = "CShopping::LoadStats", expect = "83 EC 10 53 57",
+       unverified = "mvpj-world-1", route = "split", hazards = "uninit-locals", recs = "grove-walk",
+       note = "file I/O; one-time loader")]
+pub fn load_stats() {
+    let f = open_file(g::<u8>(STR_SHOPPING_DAT), g::<u8>(STR_MODE_R));
+    find_section(f, g::<u8>(STR_PRICES));
+    NUM_BUYABLE_ITEMS.set(0);
+    let d = || g::<u8>(STR_STATS_DELIMS);
+    let mut key: u32 = 0;
+    let mut name = get_next_section(f);
+    while !name.is_null() {
+        let mut sec: i32 = -1;
+        for i in 0..11 {
+            if stricmp(name, g::<GPtr<u8>>(SECTION_NAMES).wrapping_index(i).read()) == 0 {
+                sec = i;
+                break;
+            }
+        }
+        let mut line = load_line(f);
+        while !line.is_null() {
+            let c = line.read();
+            if c != b'#' && c != 0 {
+                if is_end(line) {
+                    break;
+                }
+                let tok = strtok(line, d());
+                match sec {
+                    4..=6 => key = get_uppercase_key(tok),
+                    9 => key = find_weapon_type(tok),
+                    2 => {}
+                    _ => {
+                        key = u32::MAX;
+                        get_model_info(tok, GPtr::from_raw(&raw mut key));
+                    }
+                }
+                let n = NUM_BUYABLE_ITEMS.get();
+                g::<u32>(KEYS).wrapping_index(n).write(key);
+                g::<u8>(HAS_BOUGHT).byte_add(n as isize).write(0);
+                strtok(GPtr::NULL, d());
+                if (4..=6).contains(&sec) {
+                    strtok(GPtr::NULL, d());
+                    strtok(GPtr::NULL, d());
+                } else if sec == 9 {
+                    strtok(GPtr::NULL, d());
+                }
+                let a = strtok(GPtr::NULL, d());
+                let b = strtok(GPtr::NULL, d());
+                let cc = strtok(GPtr::NULL, d());
+                let dd = strtok(GPtr::NULL, d());
+                let m = g::<u8>(STAT_MODIFIERS).byte_add(n as isize * 4);
+                m.write(get_changing_stat_index(a) as u8);
+                m.byte_add(2).write(get_changing_stat_index(cc) as u8);
+                let bv = atol(b);
+                let dv = atol(dd);
+                m.byte_add(1).write(bv as u8);
+                m.byte_add(3).write(dv as u8);
+                NUM_BUYABLE_ITEMS.set(n + 1);
+            }
+            line = load_line(f);
+        }
+        name = get_next_section(f);
+    }
+    close_file(f);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_FIND_SECTION,
+    HOOK_GET_NEXT_SECTION,
+    HOOK_LOAD_STATS,
     HOOK_GET_PRICE_SECTION_FROM_NAME,
     HOOK_GET_ITEM_INDEX,
     HOOK_GET_CHANGING_STAT_INDEX,

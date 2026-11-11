@@ -41,3 +41,7 @@ pub mod pedik;
 pub mod sequence;
 pub mod statics;
 pub mod vehgroup;
+pub mod anim_file_load;
+pub mod rp_anim_blend;
+
+pub mod std6_natives;

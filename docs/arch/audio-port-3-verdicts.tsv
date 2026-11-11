@@ -1,0 +1,199 @@
+address	name	file	state	evidence
+0x4D8810	CAEAudioHardware::GetNumAvailableChannels	port3_lead.rs	L2	l2 air-water:1/1 PASS; l2 driving:1/1 PASS; l2 inf4:1/1 PASS; l2 menus-hud:1/1 PASS; l2 car-ai:1/1 PASS; l2 driving:1/1 PASS; l2 inf4:1/1 PASS; l2 police-gang:1/1 PASS; l2 weapon-combat:1/1 PASS; l2 air-water:1/1 PASS; split air-water:1/1 PASS; l2 inf4:1/1 PASS; split inf4:1/1 PASS; l2 police-gang:1/1 PASS; split police-gang:1/1 PASS
+0x4EF630	CAESoundManager::GetVirtualChannelForPhysicalChannel	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4E6090	CAEPedlessSpeechAudioEntity::GetAllocatedVoice	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4E60B0	CAEPedlessSpeechAudioEntity::GetPedType	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4E4120	CAEPedSpeechAudioEntity::GetAllocatedVoice	port3_lead.rs	L2	l2 air-water:76/76 PASS; l2 driving:2/2 PASS; l2 inf4:8/8 PASS; l2 menus-hud:6/6 PASS; l2 car-ai:24/24 PASS; l2 driving:2/2 PASS; l2 inf4:8/8 PASS; l2 police-gang:20/20 PASS; l2 weapon-combat:36/36 PASS; l2 air-water:76/76 PASS; split air-water:76/76 PASS; l2 inf4:8/8 PASS; split inf4:8/8 PASS; l2 police-gang:20/20 PASS; split police-gang:20/20 PASS
+0x4E4130	CAEPedSpeechAudioEntity::GetPedType	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4E3CD0	CAEPedSpeechAudioEntity::GetVoice	port3_lead.rs	L2	l2 air-water:10/552 PASS; l2 driving:10/552 PASS; l2 inf4:10/552 PASS; l2 menus-hud:10/552 PASS; l2 car-ai:10/552 PASS; l2 driving:10/552 PASS; l2 inf4:10/552 PASS; l2 police-gang:10/552 PASS; l2 weapon-combat:10/552 PASS; l2 air-water:10/552 PASS; split air-water:10/10 PASS; l2 inf4:10/552 PASS; split inf4:10/10 PASS; l2 police-gang:10/552 PASS; split police-gang:10/10 PASS
+0x4E5F10	CAEPedSpeechAudioEntity::CanWePlayGlobalSpeechContext	port3_lead.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:139/139 PASS; l2 menus-hud:96/96 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:139/139 PASS; l2 police-gang:300/301 PASS; l2 weapon-combat:300/301 PASS; l2 air-water:300/301 PASS; split air-water:300/300 PASS; l2 inf4:139/139 PASS; split inf4:139/139 PASS; l2 police-gang:300/301 PASS; split police-gang:300/300 PASS
+0x4F4F00	CAEVehicleAudioEntity::GetVehicleTypeForAudio	port3_lead.rs	L2	l2 air-water:8/8 PASS; l2 driving:12/12 PASS; l2 inf4:5/5 PASS; l2 menus-hud:5/5 PASS; l2 car-ai:35/35 PASS; l2 driving:12/12 PASS; l2 inf4:5/5 PASS; l2 police-gang:21/21 PASS; l2 weapon-combat:9/9 PASS; l2 air-water:8/8 PASS; split air-water:8/8 PASS; l2 inf4:5/5 PASS; split inf4:5/5 PASS; l2 police-gang:21/21 PASS; split police-gang:21/21 PASS
+0x4D6E60	CAEAmbienceTrackManager::UpdateAmbienceTrackAndVolume	port3_lead.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:300/301 PASS; l2 menus-hud:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:300/301 PASS; l2 police-gang:300/301 PASS; l2 weapon-combat:300/301 PASS
+0x4EA010	CAERadioTrackManager::UpdateRadioVolumes	port3_lead.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 menus-hud:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS
+0x4D80B0	CAEAudioEnvironment::GetPositionRelativeToCamera-vec	port3_lead.rs	L2	l2 air-water:300/414 PASS; l2 driving:300/414 PASS; l2 inf4:300/414 PASS; l2 menus-hud:300/414 PASS; l2 car-ai:300/414 PASS; l2 driving:300/414 PASS; l2 inf4:300/414 PASS; l2 police-gang:300/414 PASS; l2 weapon-combat:300/414 PASS
+0x4EA930	CAERadioTrackManager::CheckForTrackConcatenation	port3_lead.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 menus-hud:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS
+0x5D3EE0	CAERadioTrackManager::Save	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x5D40E0	CAERadioTrackManager::Load	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4E4F10	CAEPedSpeechAudioEntity::Constructor	port3_lead.rs	L2	l2 air-water:300/301 PASS; l2 driving:82/82 PASS; l2 inf4:207/207 PASS; l2 menus-hud:111/111 PASS; l2 car-ai:217/227 PASS; l2 driving:82/82 PASS; l2 inf4:207/207 PASS; l2 police-gang:222/229 PASS; l2 weapon-combat:141/147 PASS
+0x4D9CC0	CAEAudioUtility::GetBankAndSoundFromScriptSlotAudioEvent	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4EF660	CAESound	port3_lead.rs	L2	l2 air-water:300/320 PASS; l2 driving:300/320 PASS; l2 inf4:300/320 PASS; l2 menus-hud:300/320 PASS; l2 car-ai:300/320 PASS; l2 driving:300/320 PASS; l2 inf4:300/320 PASS; l2 police-gang:300/320 PASS; l2 weapon-combat:300/320 PASS
+0x856330	__dtor_CAEPedSpeechAudioEntity__s_PedSpeechSlots	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x856360	__dtor_AESoundManager	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4D83A0	CAEAudioHardware::Destructor	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4DFB20	CAEBankLoader::Deconstructor	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4E0940	CAEMP3TrackLoader::Deconstructor	port3_lead.rs	implemented-needs-L2	no calls in the recordings run (a3lead2,a3lead3,a3ax)
+0x4DD0D0	CAEFireAudioEntity::PlayFireSounds	port2_a.rs/port2_b.rs (peek)	L2	l2 driving:78/78 PASS; l2 weapon-combat:1/1 PASS
+0x4DD270	CAEFireAudioEntity::PlayWaterSounds	port2_a.rs/port2_b.rs (peek)	implemented-needs-L2	no calls in the recordings run (a3lead3)
+0x4DC6D0	CAEDoorAudioEntity::PlayDoorSound	port2_a.rs/port2_b.rs (peek)	implemented-needs-L2	no calls in the recordings run (a3lead3)
+0x4E5CD0	CAEPedSpeechAudioEntity::PlayLoadedSound	port2_a.rs/port2_b.rs (peek)	L2	l2 car-ai:69/69 PASS; l2 driving:38/38 PASS; l2 inf4:39/39 PASS; l2 police-gang:58/58 PASS; l2 weapon-combat:35/35 PASS
+0x4E6F60	CAEPoliceScannerAudioEntity::PlayLoadedDialogue	port2_a.rs/port2_b.rs (peek)	implemented-needs-L2	no calls in the recordings run (a3lead3)
+0x4EC270	CAEScriptAudioEntity::PlayLoadedMissionAudio	port2_a.rs/port2_b.rs (peek)	implemented-needs-L2	no calls in the recordings run (a3lead3)
+0x4D8990	CAEAudioHardware::RescaleChannelVolumes	port3_lead.rs/port2_b.rs (split)	L2	split driving:300/300 PASS; split inf4:300/300 PASS
+0x4E52A0	CAEPedSpeechAudioEntity::ReleasePedConversation	port3_lead.rs/port2_b.rs (split)	L2	split air-water:7/7 PASS; split inf4:4/4 PASS; split police-gang:1/1 PASS; split inf4:4/4 PASS
+0x501E10	CAEVehicleAudioEntity::ProcessVehicle	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4FB6C0	CAEVehicleAudioEntity::UpdateParameters	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F7580	CAEVehicleAudioEntity::AddAudioEvent-1	port3_veh.rs	L2	l2 driving:10/13 PASS; l2 driving:10/13 PASS
+0x4F8940	CAEVehicleAudioEntity::ProcessVehicleFlatTyre	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F8B00	CAEVehicleAudioEntity::ProcessVehicleRoadNoise	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F8F10	CAEVehicleAudioEntity::ProcessVehicleSkidding	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F5BA0	CAEVehicleAudioEntity::PlayerAboutToExitVehicleAsDriver	port3_veh.rs	L2	l2 air-water:1/1 PASS; l2 car-ai:2/2 PASS; l2 driving:10/10 PASS; l2 air-water:1/1 PASS; l2 car-ai:2/2 PASS; l2 driving:10/10 PASS
+0x4F92C0	CAEVehicleAudioEntity::ProcessRainOnVehicle	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F9E90	CAEVehicleAudioEntity::UpdateBoatSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 air-water:300/301 PASS
+0x4FAD40	CAEVehicleAudioEntity::UpdateGenericVehicleSound	port3_veh.rs	L2	l2 police-gang:83/83 PASS; l2 police-gang:83/83 PASS
+0x5002C0	CAEVehicleAudioEntity::ProcessVehicleSirenAlarmHorn	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x501C50	CAEVehicleAudioEntity::ProcessAircraft	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F8360	CAEVehicleAudioEntity::PlaySkidSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4FA630	CAEVehicleAudioEntity::PlayTrainBrakeSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:213/221 PASS; l2 driving:86/86 PASS; l2 police-gang:233/233 PASS; l2 air-water:300/301 PASS; l2 car-ai:213/221 PASS; l2 driving:86/86 PASS; l2 police-gang:233/233 PASS
+0x4F84D0	CAEVehicleAudioEntity::PlayRoadNoiseSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F8650	CAEVehicleAudioEntity::PlayFlatTyreSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F87D0	CAEVehicleAudioEntity::PlayReverseSound	port3_veh.rs	L2	l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS
+0x4F7F20	CAEVehicleAudioEntity::StartVehicleEngineSound	port3_veh.rs	L2	l2 air-water:231/231 PASS; l2 car-ai:162/162 PASS; l2 driving:57/57 PASS; l2 police-gang:150/150 PASS; l2 air-water:231/231 PASS; l2 car-ai:162/162 PASS; l2 driving:57/57 PASS; l2 police-gang:150/150 PASS
+0x4F8070	CAEVehicleAudioEntity::GetFreqForPlayerEngineSound	port3_veh.rs	L2	l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS
+0x4F99D0	CAEVehicleAudioEntity::PlayHornOrSiren	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4FB260	CAEVehicleAudioEntity::ProcessMovingParts	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F7A50	CAEVehicleAudioEntity::RequestNewPlayerCarEngineSound	port3_veh.rs	L2	l2 car-ai:16/16 PASS; l2 driving:21/21 PASS; l2 car-ai:16/16 PASS; l2 driving:21/21 PASS
+0x4FCA10	CAEVehicleAudioEntity::ProcessDummyStateTransition	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F93C0	CAEVehicleAudioEntity::PlayAircraftSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 police-gang:300/301 PASS
+0x4F9710	CAEVehicleAudioEntity::PlayBicycleSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x500CE0	CAEVehicleAudioEntity::ProcessPlayerCombine	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x4FF7C0	CAEVehicleAudioEntity::ProcessDummySeaPlane	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x500DC0	CAEVehicleAudioEntity::ProcessDummyRCCar	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x501960	CAEVehicleAudioEntity::ProcessDummyJet	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x501270	CAEVehicleAudioEntity::ProcessDummyGolfCart	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x501AB0	CAEVehicleAudioEntity::ProcessSpecialVehicle	port3_veh.rs	L2	l2 driving:300/301 PASS; l2 driving:300/301 PASS
+0x4FA3F0	CAEVehicleAudioEntity::ProcessTrainTrackSound	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x500AB0	CAEVehicleAudioEntity::ProcessPlayerTrainBrakes	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x500710	CAEVehicleAudioEntity::ProcessDummyTrainEngine	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x4FFDC0	CAEVehicleAudioEntity::ProcessDummyBicycle	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS; l2 air-water:300/301 PASS; l2 car-ai:300/301 PASS; l2 driving:300/301 PASS; l2 police-gang:300/301 PASS
+0x500040	CAEVehicleAudioEntity::ProcessPlayerBicycle	port3_veh.rs	L2	l2 driving:44/44 PASS; l2 driving:44/44 PASS
+0x4FA7C0	CAEVehicleAudioEntity::ProcessDummyRCPlane	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x4FAA80	CAEVehicleAudioEntity::ProcessDummyRCHeli	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x5003A0	CAEVehicleAudioEntity::ProcessBoatEngine	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 air-water:300/301 PASS
+0x500F50	CAEVehicleAudioEntity::ProcessDummyHovercraft	port3_veh.rs	L2	l2 driving:128/128 PASS; l2 driving:128/128 PASS
+0x4FF900	CAEVehicleAudioEntity::ProcessGenericJet	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x501650	CAEVehicleAudioEntity::ProcessPlayerJet	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x4FDFD0	CAEVehicleAudioEntity::ProcessAIProp	port3_veh.rs	implemented-needs-L2	no calls in the recordings run (a3veh-5,a3veh-3)
+0x4FEE20	CAEVehicleAudioEntity::ProcessAIHeli	port3_veh.rs	L2	l2 police-gang:300/301 PASS
+0x4FE940	CAEVehicleAudioEntity::ProcessDummyHeli	port3_veh.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS
+0x4DA540	CAECollisionAudioEntity::UpdateLoopingCollisionSound	port3_ent.rs	L2	l2 air-water:300/303 PASS; l2 driving:300/301 PASS; l2 inf4:300/301 PASS; l2 police-gang:300/349 PASS; l2 weapon-combat:300/335 PASS
+0x4DB450	CAECollisionAudioEntity::PlayLoopingCollisionSound	port3_ent.rs	L2	l2 air-water:35/35 PASS; l2 driving:191/191 PASS; l2 inf4:48/48 PASS; l2 police-gang:124/124 PASS; l2 weapon-combat:54/54 PASS
+0x4DB150	CAECollisionAudioEntity::PlayOneShotCollisionSound	port3_ent.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/308 PASS; l2 inf4:300/302 PASS; l2 police-gang:300/301 PASS; l2 weapon-combat:300/301 PASS
+0x4DBA10	CAECollisionAudioEntity::ReportCollision	port3_ent.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:300/304 PASS; l2 police-gang:300/310 PASS; l2 weapon-combat:300/301 PASS
+0x4DA510	FUN_004da510	port3_ent.rs	L2	l2 driving:3/3 PASS; l2 weapon-combat:2/2 PASS
+0x4E2A90	CAEPedAudioEntity::PlayShirtFlap	port3_ent.rs	L2	l2 air-water:300/301 PASS; l2 driving:44/44 PASS
+0x4E2EE0	CAEPedAudioEntity::Service	port3_ent.rs	L2	l2 air-water:300/318 PASS; l2 driving:300/318 PASS; l2 inf4:300/318 PASS; l2 police-gang:300/318 PASS; l2 weapon-combat:300/318 PASS
+0x5052F0	CAEWeatherAudioEntity::Service	port3_ent.rs	L2	l2 air-water:300/301 PASS; l2 driving:300/301 PASS; l2 inf4:300/301 PASS; l2 police-gang:300/301 PASS; l2 weapon-combat:300/301 PASS
+0x4E3A00	CAEPedSpeechAudioEntity::SetUpConversation	port3_ent.rs	implemented-needs-L2	no calls in the recordings run (a3ent-5,a3ent-6)
+0x4E50E0	CAEPedSpeechAudioEntity::RequestPedConversation	port3_ent.rs	L2	l2 air-water:65/65 PASS; l2 driving:1/1 PASS; l2 inf4:4/4 PASS; l2 police-gang:11/11 PASS; l2 weapon-combat:18/18 PASS
+0x4E3FB0	CAEPedSpeechAudioEntity::StopCurrentSpeech	port3_ent.rs	L2	l2 air-water:300/301 PASS; l2 driving:73/73 PASS; l2 inf4:189/189 PASS; l2 police-gang:193/210 PASS; l2 weapon-combat:127/131 PASS
+0x4E68D0	CAEPedSpeechAudioEntity::Initialise	port3_ent.rs	L2	l2 air-water:300/301 PASS; l2 driving:81/81 PASS; l2 inf4:206/206 PASS; l2 police-gang:221/228 PASS; l2 weapon-combat:140/146 PASS
+0x5075B0	CAEGlobalWeaponAudioEntity::Constructor	port3_ent.rs	L2	l2 air-water:1/1 PASS; l2 driving:1/1 PASS; l2 inf4:1/1 PASS; l2 police-gang:1/1 PASS; l2 weapon-combat:1/1 PASS
+0x502F80	CAEWaterCannonAudioEntity::UpdateGenericWaterCannonSound	port3_ent.rs	L2	l2 air-water:300/359 PASS; l2 driving:300/359 PASS; l2 inf4:300/359 PASS; l2 police-gang:300/359 PASS; l2 weapon-combat:300/359 PASS
+0x4F2CB0	CAETwinLoopSoundEntity::PlayTwinLoopSound	port3_ent.rs	L2	l2 air-water:32/32 PASS; l2 driving:53/53 PASS; l2 inf4:9/9 PASS; l2 police-gang:103/103 PASS; l2 weapon-combat:43/43 PASS
+0x4E4270	CAEPedSpeechAudioEntity::IsCJDressedInForGangSpeech	port3_ent.rs	L2	l2 driving:4/4 PASS; l2 police-gang:2/2 PASS
+0x4DB7C0	CAECollisionAudioEntity::PlayBulletHitCollisionSound	port3_ent.rs	L2	l2 driving:45/45 PASS; l2 police-gang:222/222 PASS; l2 weapon-combat:76/76 PASS
+0x4DAE40	CAECollisionAudioEntity::ReportWaterSplash-for-physical	port3_ent.rs	L2	l2 air-water:50/50 PASS
+0x503B20	CAEWeaponAudioEntity::ReportStealthKill	port3_ent.rs	implemented-needs-L2	no calls in the recordings run (a3ent-5,a3ent-6)
+0x503910	CAEWeaponAudioEntity::ReportChainsawEvent	port3_ent.rs	implemented-needs-L2	no calls in the recordings run (a3ent-5,a3ent-6)
+0x506BA0	FUN_00506ba0	port3_ent.rs	implemented-needs-L2	no calls in the recordings run (a3ent-5,a3ent-6)
+0x4E28A0	CAEPedAudioEntity::TurnOnJetPack	port3_ent.rs	L2	l2 air-water:300/301 PASS
+0x4E2350	CAEPedAudioEntity::HandlePedJacked	port3_ent.rs (final HandlePedJacked)	L2	l2 driving:3/3 PASS
+0x4EA670	CAERadioTrackManager::QueueUpTracksForStation	port3_lead.rs	ported-unhookable	entry is a 5-byte jmp into the in-text detour 0x4020D0; sa-hook classifies a jmp entry as a .HOODLUM stub and the table test rejects a target outside .HOODLUM; reached through orig! (CheckForTrackConcatenation calls it)
+0x4EFB10	CAESoundManager::RequestNewSound	-	not-ported	unhookable: the slot loop branches back into the patched entry (0x4EFB28 jl 0x4EFB14 = entry+4)
+0x4D7E30	FUN_004d7e30	-	not-ported	3-byte body (ret 8): shorter than the 5-byte entry patch
+0x5B9330	FUN_005b9330	-	not-ported	3-byte body (mov eax,ecx; ret): shorter than the entry patch
+0x4EF070	FUN_004ef070	-	not-ported	1-byte body (ret)
+0x8562E0	__dtor_84c1a0	-	not-ported	1-byte body (ret)
+0x856310	__dtor_84c4f0	-	not-ported	1-byte body (ret)
+0x856320	__dtor_AEStreamTransformer	-	not-ported	1-byte body (ret)
+0x856350	__dtor_84cc30	-	not-ported	1-byte body (ret)
+0x856370	__dtor_84cd60	-	not-ported	1-byte body (ret)
+0x4E8370	CAERadioTrackManager::HasRadioRetuneJustStarted	-	not-ported	4-byte body: shorter than the entry patch
+0x4E83E0	CAERadioTrackManager::GetRadioStationListenTimes	-	not-ported	4-byte body: shorter than the entry patch
+0x4E8400	CAERadioTrackManager::PlayRadioAnnouncement	-	not-ported	3-byte body (ret 4): shorter than the entry patch
+0x446FE0	(missed by ghidra: data-code-immediate)	-	not-ported	placeholder catalogue name: sa-hook's table test needs the catalogue name as the hook name (10-byte setter: [this+8] = 0, EAX = this)
+0x4D8870	CAEAudioHardware::SetChannelVolume	-	not-ported	entry is a 5-byte jmp into the in-text detour 0x402182 (same table-test limit as QueueUpTracksForStation)
+0x4EC100	CAEScriptAudioEntity::AttachMissionAudioToPhysical	-	not-ported	protection code reads its entry bytes as data (PORT-AUDIO-2)
+0x4DCBE0	CAEExplosionAudioEntity::AddAudioEvent	-	protection	entry pushfd: protection entry (PORT-AUDIO-2 list)
+0x4F0000	CAESoundManager::Service	-	not-ported	deferred: 2,811 bytes / 856 instructions (per-channel bit packing into CAEAudioHardware::PlaySound flags, ftol play-time updates); its hardware calls query DirectSound play positions, which an L2 double run cannot repeat (split runs only); next pass
+0x4DD4A0	CAEFrontendAudioEntity::AddAudioEvent	-	not-ported	deferred: 6,160 bytes / 1,712 instructions, 102-case switch with an SEH-protected stack CAESound; candidate for an ADR-002 partial port (fallback) once the recordings' event ids are listed; next pass
+0x4ECCF0	CAEScriptAudioEntity::ProcessMissionAudioEvent	-	not-ported	deferred: 6,541 bytes / 2,382 instructions; no recording plays mission audio, so any port would stay implemented-needs-L2; ADR-002 partial port next pass
+0x4D9870	CAEAudioHardware::Service	-	not-ported	sa-hook determinism-mode hook (excluded, PORT-AUDIO-2)
+0x4D9E80	CAEAudioUtility::GetCurrentTimeInMS	-	not-ported	patched QPC site of the determinism mode (excluded)
+0x4D9E50	CAEAudioUtility::AudioLog10	-	ported-unhookable	returns the 64-bit FYL2X result in ST0; a hook returns ST0 through an f64 (53 bits); ported as crate::utility::audio_log10 and called directly by the Rust users
+0x4D8490	CAEAudioHardware::Query3DSoundEffects	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4D86B0	CAEAudioHardware::PlaySound	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4D8DA0	CAEAudioHardware::UpdateReverbEnvironment	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4D8FA0	CAEAudioHardware::GetBeatInfo	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4D9640	CAEAudioHardware::InitDirectSoundListener	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4D97A0	CAEAudioHardware::Terminate	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4D9930	CAEAudioHardware::Initialise	-	not-ported	DirectSound / EAX device layer (initialise, terminate, listener, reverb, beat info, play); phase-A scope keeps it original
+0x4DFB60	?	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4DFBD0	CAEBankLoader::LoadBankLookupFile	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4DFC70	CAEBankLoader::LoadSFXPakLookupFile	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4DFE30	CAEMP3BankLoader::Service	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E0590	CAEBankLoader::LoadBankSlotFile	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E08F0	CAEMP3BankLoader::Initialise	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E0970	CAEMP3TrackLoader::LoadStreamPackTable	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E09F0	CAEMP3TrackLoader::LoadTrackLookupTable	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E0A70	CAEMP3TrackLoader::GetTrackInfo	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E0BD0	CAEMP3TrackLoader::IsCurrentAudioStreamAvailable	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E0C50	CAEMP3TrackLoader::Initialise	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4E0D20	CAETrackLoader::GetDataStream	-	not-ported	bank / track file loading (CdStream, file I/O, request queue); phase-A scope keeps it original
+0x4F0B10	?	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x4F0B50	?	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x4F2FB0	CAEUserRadioTrackManager::Shutdown	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F3050	CAEUserRadioTrackManager::GetTrackPath	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F30F0	CAEUserRadioTrackManager::ResolveShortcut-	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F31F0	CAEUserRadioTrackManager::GetAudioFileType	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F32C0	CAEUserRadioTrackManager::IsShortcut	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F32F0	CAEUserRadioTrackManager::DeleteUserTracksInfo	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F35F0	CAEUserRadioTrackManager::LoadUserTrack	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F4620	?	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F4690	CAEUserRadioTrackManager::WriteUserTracksFile-	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F4A20	CAEUserRadioTrackManager::WriteUserTracksThread	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x4F4BA0	CAEUserRadioTrackManager::ScanUserTracks	-	not-ported	user-track scan / file / thread code (OS: shell links, file types, worker thread); phase-A scope keeps it original
+0x507750	CAudioEngine::Service	-	not-ported	audio start-up / shutdown / per-frame engine driver (protection pushfd entry for Service); runs once or drives the hardware; next pass (L3 only)
+0x507CB0	CAudioEngine::Shutdown	-	not-ported	audio start-up / shutdown / per-frame engine driver (protection pushfd entry for Service); runs once or drives the hardware; next pass (L3 only)
+0x59CB70	vt_866db0::Destructor	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x59CC70	vt_866db0::SynchPlayback	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x59CCC0	vt_866db0::Stop	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x59CCE0	vt_866db0::SetFrequencyScalingFactor	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x59CD10	vt_866db0::vfunc_9	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x59CD50	vt_866db0::Play	-	not-ported	sound output channel class (CAEStaticChannel family, vtable 0x85F3CC / 0x866DB0); phase-A scope keeps it original
+0x5B9690	CAESoundManager::Initialise	-	not-ported	audio start-up / shutdown / per-frame engine driver (protection pushfd entry for Service); runs once or drives the hardware; next pass (L3 only)
+0x5B97F0	CAEAudioUtility::StaticInitialise	-	not-ported	audio start-up / shutdown / per-frame engine driver (protection pushfd entry for Service); runs once or drives the hardware; next pass (L3 only)
+0x5B9AB0	CAEFrontendAudioEntity::Initialise	-	not-ported	audio start-up / shutdown / per-frame engine driver (protection pushfd entry for Service); runs once or drives the hardware; next pass (L3 only)
+0x5B9C60	CAudioEngine::Initialise	-	not-ported	audio start-up / shutdown / per-frame engine driver (protection pushfd entry for Service); runs once or drives the hardware; next pass (L3 only)
+0x747300	getDvdGamePath	-	not-ported	OS: DVD drive path query; phase-A scope keeps it original
+0x4F4EC0	CAEVehicleAudioEntity::StaticService	port3_veh.rs	ported-unhookable	body is a single ret (sa-hook TooShort(1))
+0x4F6420	CAEVehicleAudioEntity::AddAudioEvent-0	-	protection	protection code reads the entry bytes as data (adc ecx,[0x4F6423] / or eax,0x4F6423 at 0x401931/0x401932, code-data-reads.csv) inside the patched range
+0x4F4ED0	CAEVehicleAudioEntity::StaticGetPlayerVehicleAudioSettingsForRadio	-	protection	whole body is a protection chunk at 0x405B0E (pushf; mov eax,[0x15607EC]; not; xor [0x727253]; mov eax,[eax]; popf) decoding to [0xB6B99C]
+0x4FBB10	CAEVehicleAudioEntity::ProcessPlayerVehicleEngine	-	not-ported	0xDEE bytes, 7-state switch with shared tails; next pass (ADR-002 per state)
+0x4FD290	CAEVehicleAudioEntity::ProcessPlayerProp	-	not-ported	size/time; next pass
+0x4FD8F0	CAEVehicleAudioEntity::ProcessDummyProp	-	not-ported	size/time; next pass
+0x4FE420	CAEVehicleAudioEntity::ProcessPlayerHeli	-	not-ported	size/time; next pass
+0x4FF320	CAEVehicleAudioEntity::ProcessPlayerSeaPlane	-	not-ported	size/time; next pass
+0x5DE920	CAEPedAudioEntity::~CAEPedAudioEntity	port3_ent.rs	ported-unhookable	protection reads the entry bytes as data (0x402195 adc ebx,[0x5DE923]); sa-hook INF-20 / keycells tests fail when hooked; reached through orig!
+0x506B20	FUN_00506b20	port3_ent.rs	ported-unhookable	~CAEFrontendAudioEntity (vtable 0x862E54); protection reads the entry bytes (0x4021F5 adc eax,[0x506B22]); reached through orig!
+0x502BF0	(missed by ghidra: cat7-call)	port3_ent.rs	ported-unhookable	user-radio decoder FreeLibrary helper; placeholder catalogue name (sa-hook table test needs the catalogue name as the hook name)
+0x4E3330	FUN_004e3330	-	not-ported	entry shorter than the 5-byte patch (mov eax,ecx; ret)
+0x4E3340	FUN_004e3340	-	not-ported	entry shorter than the 5-byte patch (ret)
+0x4E1170	CAEPedAudioEntity::PlayWindRush	-	not-ported	entry shorter than the 5-byte patch (ret 8)
+0x4E6080	CAEPedlessSpeechAudioEntity::AddScriptSayEvent	-	not-ported	entry shorter than the 5-byte patch (ret 0x14)
+0x4E60C0	CAEPedlessSpeechAudioEntity::IsPedFemaleForAudio	-	not-ported	entry shorter than the 5-byte patch (xor al,al; ret)
+0x4E2BB0	CAEPedAudioEntity::AddAudioEvent	-	not-ported	push -1; jmp to a .text chunk computing the SEH handler from data dwords (protection-style entry, PORT-AUDIO-2 listed it as protection); large body, not ported
+0x503CE0	CAEWeaponAudioEntity::PlayGunSounds	-	not-ported	~570 instructions; the entry chunk computes the bank id 0x8F from protection data ([0x15607F4] + [0x15700DA] + CF); next pass
+0x4DF210	CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire	-	not-ported	FSIN/FCOS and CGeneral float random; next pass
+0x4E0EE0	CAEPedAudioEntity::UpdateJetPack	-	not-ported	FSIN; next pass
+0x505A00	CAEWeatherAudioEntity::UpdateParameters	-	not-ported	very large: CRT pow, line-of-sight with stack locals; next pass
+0x506800	CAEWeatherAudioEntity::AddAudioEvent	-	not-ported	very large: CRT pow, line-of-sight with stack locals; next pass
+0x4E1CC0	CAEPedAudioEntity::HandlePedHit	-	not-ported	three nested jump tables, ~400 instructions; next pass
+0x4E53B0	CAEPedSpeechAudioEntity::GetCurrentCJMood	-	not-ported	AX result with a path-dependent upper EAX; no call in the recordings
+0x4E60D0	CAEPedlessSpeechAudioEntity::AddSayEvent	-	not-ported	AX result with a path-dependent upper EAX; no call in the recordings
+0x4E6380	CAEPedlessSpeechAudioEntity::PlayLoadedSound	-	not-ported	AX result with a path-dependent upper EAX; no call in the recordings
+0x4DC550	FUN_004dc550	-	not-ported	CAEDataStream deleting destructor: data streams stay original (phase-A scope)
+0x4E7990	FUN_004e7990	-	not-ported	CAEMFDecoder internals: decoders stay original (phase-A scope)
+0x4E7A80	FUN_004e7a80	-	not-ported	CAEMFDecoder internals: decoders stay original (phase-A scope)
+0x4E7B80	FUN_004e7b80	-	not-ported	CAEMFDecoder internals: decoders stay original (phase-A scope)
+0x4E3870	CAEPedSpeechAudioEntity::ReservePlayerConversationSpeechSlot	port2_b.rs	ported-unhookable	loop branches back into the patched entry (0x4E3887 -> 0x4E3872), PORT-AUDIO-2

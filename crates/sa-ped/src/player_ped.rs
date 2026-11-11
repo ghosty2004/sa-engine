@@ -593,7 +593,106 @@ pub fn player_has_just_attacked_someone(this: GPtr<u8>) {
 
 // --- hook list (generated) ---
 
+orig! {
+    /// `CPed::CPed(ePedType)` (0x5E8030)
+    fn ped_ctor(p: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x5E8030 => unported;
+    /// `CPlayerPedData::AllocateData()` (0x571880)
+    fn player_ped_data_allocate_data(d: GPtr<u8>) = thiscall 0x571880 => unported;
+    /// `CPed::SetModelIndex(uint32)` (0x5E4880)
+    fn ped_set_model_index(p: GPtr<u8>, m: u32) = thiscall 0x5E4880 => unported;
+    /// `CPlayerPed::SetInitialState(bool)` (0x60CD20)
+    fn player_ped_set_initial_state(p: GPtr<u8>, b: u32) = thiscall 0x60CD20 => unported;
+    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
+    fn entity_clean_up_old_reference(e: GPtr<u8>, r: GPtr<u8>) = thiscall 0x571A00 => unported;
+    /// `CPed::SetPedState(ePedState)` (0x5E4500)
+    fn ped_set_ped_state(p: GPtr<u8>, st: u32) = thiscall 0x5E4500 => unported;
+    /// `CAnimManager::GetAnimationBlockIndex(const char*)` (0x4D3990)
+    fn get_animation_block_index(name: u32) -> i32 = cdecl 0x4D3990 => unported;
+    /// `CPedGroups::AddGroup()` (0x5FB800)
+    fn ped_groups_add_group() -> i32 = cdecl 0x5FB800 => unported;
+    /// `CPedGroupIntelligence::SetDefaultTaskAllocatorType(int32)` (0x5FBB70)
+    fn group_intel_set_default_task_allocator_type(gi: GPtr<u8>, t: u32) = thiscall 0x5FBB70 => unported;
+    /// `CPedGroupMembership::SetLeader(CPed*)` (0x5FB9C0)
+    fn group_membership_set_leader(m: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x5FB9C0 => unported;
+    /// `CPedGroup::Process()` (0x5FC7E0)
+    fn ped_group_process(g: GPtr<u8>) = thiscall 0x5FC7E0 => unported;
+    /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
+    fn stats_get_fat_and_muscle_modifier(m: u32) -> f64 = cdecl 0x559AF0 => unported;
+    /// `CAEPedSpeechAudioEntity::Initialise(CEntity*)` (0x4E68D0)
+    fn ped_speech_initialise(a: GPtr<u8>, e: GPtr<u8>) = thiscall 0x4E68D0 => unported;
+}
+
+/// `CPlayerPed` vtable (0x86D168).
+const PLAYER_PED_VTABLE: u32 = 0x86D168;
+/// `CWorld::Players[0].m_PlayerData` (0x190-byte `CPlayerInfo`)
+const PLAYER0_DATA: u32 = 0xB7CD9C;
+/// The "playidles" anim block name (`.rdata`) and the global its block index goes to (0xC0BC10)
+const PLAYIDLES_NAME: u32 = 0x86D1EC;
+const PLAYIDLES_BLOCK: usize = 0xC0BC10;
+/// `CPedGroups::ms_groups` (0x2D4 each)
+const PED_GROUPS: u32 = 0xC09920;
+
+/// `CPlayerPed::CPlayerPed(int32 playerId, bool groupCreated)` (0x60D5B0, thiscall, `ret 8`; catalogue
+/// name `CPlayerPed`, `FUN_0060d5b0`): `CPed(0)`, vtable 0x86D168, player data +0x480 =
+/// `&Players[playerId].m_PlayerData` (`AllocateData`), `SetModelIndex(0)`, `SetInitialState(groupCreated)`,
+/// +0x71C cleaned up (`CleanUpOldReference` when set) and cleared, `SetPedState(1)`, the "playidles" block
+/// index into 0xC0BC10. Without `groupCreated`: a new group (`CPedGroups::AddGroup`) into data +0x38,
+/// its intelligence's default task allocator 5, its byte +0x2D0 = 1, the ped its leader, `Process()`,
+/// and data flags +0x34 bits 8, 9, 10 cleared one by one (every access re-reads +0x480 and +0x38). The
+/// fat-and-muscle modifier 9 (ST0) into +0x544 and +0x540, +0x72D / +0x72E = 15, +0x79C / +0x7A0 = 0, the
+/// speech entity (+0x294) initialised, intelligence +0xC8 = 30.0 and +0xC4 = 2, flags +0x478 bit 21 =
+/// `groupCreated` bit 0. Returns `this`.
+#[hook(addr = 0x60d5b0, conv = thiscall, name = "CPlayerPed", expect = "6A FF 68 58 ED 83 00",
+       unverified = "mvpi-ped-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       note = "the CPlayerPed constructor (one-time: creates the player's group and data)")]
+pub fn player_ped_ctor(this: GPtr<u8>, player_id: i32, group_created: u32) -> GPtr<u8> {
+    ped_ctor(this, 0);
+    let data = PLAYER0_DATA.wrapping_add((player_id as u32).wrapping_mul(0x190));
+    wr::<u32>(this, 0, PLAYER_PED_VTABLE);
+    wr::<u32>(this, 0x480, data);
+    player_ped_data_allocate_data(GPtr::from_addr(data as usize));
+    ped_set_model_index(this, 0);
+    player_ped_set_initial_state(this, group_created);
+    let r = rd::<GPtr<u8>>(this, 0x71C);
+    if !r.is_null() {
+        entity_clean_up_old_reference(r, this.byte_add(0x71C));
+    }
+    wr::<u32>(this, 0x71C, 0);
+    ped_set_ped_state(this, 1);
+    g::<i32>(PLAYIDLES_BLOCK).write(get_animation_block_index(PLAYIDLES_NAME));
+    if group_created as u8 == 0 {
+        let d = rd::<GPtr<u8>>(this, 0x480);
+        wr::<i32>(d, 0x38, ped_groups_add_group());
+        let grp = |p: GPtr<u8>| -> u32 {
+            PED_GROUPS.wrapping_add(rd::<u32>(rd::<GPtr<u8>>(p, 0x480), 0x38).wrapping_mul(0x2D4))
+        };
+        group_intel_set_default_task_allocator_type(GPtr::from_addr(grp(this) as usize + 0x30), 5);
+        g::<u8>(grp(this) as usize + 0x2D0).write(1);
+        group_membership_set_leader(GPtr::from_addr(grp(this) as usize + 8), this);
+        ped_group_process(GPtr::from_addr(grp(this) as usize));
+        for bit in [0x100u32, 0x200, 0x400] {
+            let d = rd::<GPtr<u8>>(this, 0x480);
+            wr::<u32>(d, 0x34, rd::<u32>(d, 0x34) & !bit);
+        }
+    }
+    let m = stats_get_fat_and_muscle_modifier(9) as f32;
+    wr::<f32>(this, 0x544, m);
+    wr::<f32>(this, 0x540, m);
+    wr::<u8>(this, 0x72D, 0xF);
+    wr::<u8>(this, 0x72E, 0xF);
+    wr::<u32>(this, 0x79C, 0);
+    wr::<u32>(this, 0x7A0, 0);
+    ped_speech_initialise(this.byte_add(0x294), this);
+    let intel = rd::<GPtr<u8>>(this, 0x47C);
+    wr::<u32>(intel, 0xC8, 0x41F0_0000);
+    wr::<u32>(intel, 0xC4, 2);
+    let f = rd::<u32>(this, 0x478);
+    wr::<u32>(this, 0x478, f ^ (((group_created & 0xFF) << 21 ^ f) & 0x20_0000));
+    this
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PLAYER_PED_CTOR,
     HOOK_GET_WANTED_LEVEL,
     HOOK_SET_WANTED_LEVEL,
     HOOK_SET_WANTED_LEVEL_NO_DROP,

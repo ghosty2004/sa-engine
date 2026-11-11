@@ -35,10 +35,12 @@ fn event_pool() -> GPtr<u8> {
 
 /// `CEvent::ReportCriminalEvent(CPed*)` (0x420EA0): `ret 4`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x420EA0, conv = thiscall, name = "CEvent::ReportCriminalEvent")]
 pub fn event_report_criminal_event_420ea0(_this: GPtr<u8>, _ped: GPtr<u8>) {}
 
 /// `CEventSeenCop::AffectsPed(CPed*)` (0x4AFB40): tail jump to `CEventAcquaintancePed::AffectsPed`.
 /// Not hookable: a bare `jmp rel32` entry is taken for a `.HOODLUM` stub by sa-hook (its target is not in `.HOODLUM`).
+#[sa_core::native(addr = 0x4AFB40, conv = thiscall, name = "CEventSeenCop::AffectsPed")]
 pub fn event_seen_cop_affects_ped_4afb40(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     acquaintance_ped_affects_ped(this, ped)
 }
@@ -68,6 +70,7 @@ pub fn event_operator_delete_4b5630(p: GPtr<u8>) {
 /// stub: `vtbl = 0x85AB38` (CEvent), back to the `ret` at 0x4AC486).
 /// Not hookable: protection code reads the patched bytes (0x407EA1 reads 0x4AC482, INF-20), and a
 /// caller (0x4B5671) reads ECX afterwards.
+#[sa_core::native(addr = 0x4AC480, conv = thiscall, name = "CEventEditableResponse::~CEventEditableResponse")]
 pub fn event_editable_response_dtor_4ac480(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -414,6 +417,7 @@ fn acquaintance_clone(this: GPtr<u8>, vtbl: u32) -> GPtr<u8> {
 
 /// `CEventAcquaintancePedHate::CloneEditable` (0x420F50): vtable 0x858E68.
 /// Not hookable: protection code reads the patched bytes (`push 0x420F54` at 0x14674BE, INF-20).
+#[sa_core::native(addr = 0x420F50, conv = thiscall, name = "CEventAcquaintancePedHate::CloneEditable")]
 pub fn event_acquaintance_ped_hate_clone_editable_420f50(this: GPtr<u8>) -> GPtr<u8> {
     acquaintance_clone(this, 0x858E68)
 }

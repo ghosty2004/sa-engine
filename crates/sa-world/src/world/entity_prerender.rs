@@ -66,7 +66,7 @@ orig! {
     /// `CBaseModelInfo::GetModelType()` (vtable slot 0x10, AL)
     fn mi_get_model_type(mi: GPtr<u8>) -> u8 = thiscall vslot 0x10 => unported;
     /// `CEntity::ProcessLightsForEntity()` (0x6fc7a0)
-    fn process_lights_for_entity(e: GPtr<u8>) = thiscall 0x6fc7a0 => unported;
+    fn process_lights_for_entity(e: GPtr<u8>) = thiscall 0x6fc7a0 => super::entity_lights::process_lights_for_entity;
     /// `RpMatFXAtomicQueryEffects(RpAtomic*)` (0x811c30)
     fn rp_matfx_atomic_query_effects(a: GPtr<u8>) -> u32 = cdecl 0x811c30 => unported;
     /// `RpGeometryForAllMaterials(RpGeometry*, cb, data)` (0x74c790)

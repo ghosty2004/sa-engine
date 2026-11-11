@@ -150,6 +150,12 @@ orig! {
     fn timer_update() = cdecl 0x561B10 => unported;
     /// `CTimer::GetCurrentTimeInCycles()` (0x561A80)
     fn timer_get_current_time_in_cycles() -> u32 = cdecl 0x561A80 => crate::timer::get_current_time_in_cycles;
+    /// `CTimer::GetCurrentTimeInCycles()` as the `Game::Idle` busy-wait calls it (0x53E930; a
+    /// determinism-mode site: retargeted to a constant that ends the wait)
+    fn timer_cycles_idle_wait() -> u32 = cdecl callsite 0x53E930 => crate::timer::get_current_time_in_cycles;
+    /// `CTimer::GetCurrentTimeInCycles()` as `Game::Idle` calls it for `g_LastTickTime` (0x53E94F; a
+    /// determinism-mode site: retargeted to 0)
+    fn timer_cycles_idle_last_tick() -> u32 = cdecl callsite 0x53E94F => crate::timer::get_current_time_in_cycles;
     /// `CTimer::GetCyclesPerMillisecond()` (0x561A40)
     fn timer_get_cycles_per_millisecond() -> u32 = cdecl 0x561A40 => crate::timer::get_cycles_per_millisecond;
     /// `CSprite2d::SetRecipNearClip()` (0x727260)
@@ -495,7 +501,7 @@ pub fn frontend_idle() {
 /// `CSprite2d::DrawRect(CRect(0, maxHeight, maxWidth, 0), bottom, bottom, top, top)` (the two
 /// dimensions `fild` → f32); true.
 #[hook(addr = 0x53D690, conv = cdecl, name = "App::DoRWStuffStartOfFrame", expect = "83 EC 18 53 E8 87 1D 1C 00",
-       unverified = "mvpb-core-1", route = "L2", hazards = "x87-transcendental",
+       route = "split", hazards = "x87-transcendental",
        note = "called by the loading screens; bool in AL (callers test AL only)")]
 pub fn do_rw_stuff_start_of_frame(
     top_red: u32,
@@ -578,18 +584,18 @@ pub fn do_rw_stuff_start_of_frame_horizon(_a: u32, _b: u32, _c: u32, _d: u32, _e
 /// `RwCameraEndUpdate`, `RsCameraShowRaster`.
 #[hook(addr = 0x53E920, conv = cdecl, name = "Game::Idle", expect = "83 EC 08 E8 58 31 02 00",
        unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
-       recs = "grove-walk", note = "frame orchestrator (determinism mode: the limiter spins on the virtual clock)")]
+       recs = "grove-walk", note = "frame orchestrator (determinism mode retargets the limiter call sites 0x53E930/0x53E94F; the port calls through them)")]
 pub fn idle(param: GPtr<u8>) {
     let _ = timer_get_current_time_in_cycles();
     let _ = timer_get_cycles_per_millisecond();
     loop {
-        let c = timer_get_current_time_in_cycles();
+        let c = timer_cycles_idle_wait();
         let per = timer_get_cycles_per_millisecond();
         if (c / per).wrapping_sub(g::<u32>(LAST_TICK_TIME).read()) >= 14 {
             break;
         }
     }
-    let c = timer_get_current_time_in_cycles();
+    let c = timer_cycles_idle_last_tick();
     let per = timer_get_cycles_per_millisecond();
     g::<u32>(LAST_TICK_TIME).write(c / per);
     timer_update();
@@ -1057,7 +1063,7 @@ pub fn render_2d_stuff() {
 /// while `usedListHead.next` (+0x8) is not `&usedListTail` (+0xC), unlink that node and insert it after
 /// `freeListHead` (+0x18): `node.next.prev = node.prev`... exactly the original's six stores per node.
 #[hook(addr = 0x53E8D0, conv = thiscall, name = "FUN_0053e8d0", this = "CLinkList<void>", expect = "8B 41 08 56 8D 71 0C",
-       unverified = "mvpb-core-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "list nodes live in the list's own heap node array (l2-extras: the node array)")]
 pub fn link_list_clear(this: GPtr<u8>) {
     let used_tail = this.byte_add(0xC);
@@ -1084,7 +1090,7 @@ pub fn link_list_clear(this: GPtr<u8>) {
 /// 0x4082A0 (stub → .HOODLUM 0x1566860): `CPool<CPed>::GetAt(idx)` (slot 0x7C4): NULL when bit 7 of
 /// `map[idx]` is set (`cmp byte, 0; jns`), else `objects + idx * 0x7C4`.
 #[hook(addr = 0x4082A0, conv = thiscall, name = "thunk_FUN_01566860", this = "CPool<int32>", expect = "E9 BB E5 15 01",
-       unverified = "mvpb-core-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn ped_pool_get_at(this: PoolPtr<Slot<0x7C4>>, idx: i32) -> GPtr<Slot<0x7C4>> {
     pool::pool_at(this, idx)
 }
@@ -1098,14 +1104,14 @@ pub fn list_get_num_items(this: GPtr<u8>) -> u32 {
 /// 0x4048E0 `CPool<CVehicle>::GetAtRef(ref)` (slot 0xA18; the `imul` lives in the protection-relocated
 /// piece 0x40210A): `idx = ref >> 8` (arithmetic), NULL unless `map[idx] == (u8)ref`. No bounds check.
 #[hook(addr = 0x4048E0, conv = thiscall, name = "FUN_004048e0", this = "CPool<int32>", expect = "8B 54 24 04 53 56",
-       unverified = "mvpb-core-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn vehicle_pool_get_at_ref(this: PoolPtr<Slot<0xA18>>, handle: i32) -> GPtr<Slot<0xA18>> {
     pool::pool_at_ref(this, handle)
 }
 
 /// 0x465040 `CPool<CObject>::GetAtRef(ref)` (slot 0x19C), as 0x4048E0.
 #[hook(addr = 0x465040, conv = thiscall, name = "FUN_00465040", this = "CPool<int32>", expect = "8B 54 24 04 53 56",
-       unverified = "mvpb-core-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn object_pool_get_at_ref(this: PoolPtr<Slot<0x19C>>, handle: i32) -> GPtr<Slot<0x19C>> {
     pool::pool_at_ref(this, handle)
 }
@@ -1113,7 +1119,7 @@ pub fn object_pool_get_at_ref(this: PoolPtr<Slot<0x19C>>, handle: i32) -> GPtr<S
 /// 0x552B50 `CPool<CQuadTreeNode>::New()` (slot 0x28; the `lea eax,[eax+eax*4]; lea eax,[ecx+eax*8]`
 /// tail): the shared `CPool::New` algorithm.
 #[hook(addr = 0x552B50, conv = thiscall, name = "FUN_00552b50", this = "CPool<int32>", expect = "8B 51 08 56 32 C0",
-       unverified = "mvpb-core-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "heap-writes")]
 pub fn quad_tree_node_pool_new(this: PoolPtr<Slot<0x28>>) -> GPtr<Slot<0x28>> {
     pool::pool_new(this)
 }

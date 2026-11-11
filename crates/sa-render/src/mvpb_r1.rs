@@ -1059,6 +1059,8 @@ orig! {
     fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
     /// `RwV3dTransformPoint(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDD60)
     fn rw_v3d_transform_point(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDD60 => unported;
+    /// `RwV3dTransformVector(RwV3d* out, const RwV3d* in, const RwMatrix*)` (0x7EDDC0)
+    fn rw_v3d_transform_vector(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDC0 => unported;
 }
 
 /// `CPlantLocTri::GetPlantDensity()` (0x5DC210; `this` in EAX, float in ST0): half the length of
@@ -1102,6 +1104,24 @@ pub fn transform_points(out: GPtr<u8>, count: u32, m: GPtr<u8>, inp: GPtr<u8>) {
     let (mut o, mut i) = (out, inp);
     while n != 0 {
         rw_v3d_transform_point(o, i, g::<GPtr<u8>>(0xB72920).read());
+        o = o.byte_add(0xC);
+        i = i.byte_add(0xC);
+        n = n.wrapping_sub(1);
+    }
+}
+
+/// `TransformVectors(RwV3d* out, int count, const CMatrix& m, const RwV3d* in)` (0x54EEA0, cdecl): as
+/// `TransformPoints` with `RwV3dTransformVector`. The entry is a `jmp` into the protection chunk
+/// 0x408375 (it loads the scratch matrix pointer 0xB72920 through a rotated `.HOODLUM` dword), so the
+/// port is a phase B native (STD-6).
+#[sa_core::native(addr = 0x54EEA0, conv = cdecl, name = "TransformVectors")]
+pub fn transform_vectors(out: GPtr<u8>, count: u32, m: GPtr<u8>, inp: GPtr<u8>) {
+    matrix_copy_to_rw_matrix(m, g::<GPtr<u8>>(0xB72920).read());
+    rw_matrix_update(g::<GPtr<u8>>(0xB72920).read());
+    let mut n = count;
+    let (mut o, mut i) = (out, inp);
+    while n != 0 {
+        rw_v3d_transform_vector(o, i, g::<GPtr<u8>>(0xB72920).read());
         o = o.byte_add(0xC);
         i = i.byte_add(0xC);
         n = n.wrapping_sub(1);
@@ -1155,12 +1175,13 @@ orig! {
 /// float lightMult, float lightMultLimit, uint8 createLocal)` (0x4AA440, thiscall, `ret 0x20`): a
 /// `rand()` (site 0x4AA450) gives `p = ftol((rand & 0xFFFF) * 2^-15 * 100)`; nothing when the FX quality
 /// is 0 and `p < 50`, or 1 and `p < 25`. Brightness 1.0, or `(1 - limit) + lightMult` when `lightMult <
-/// limit`; then every enabled (+0xC) prim of the base system (`m_pBaseSystem` +8, count +0x1B signed,
-/// prims at +0x78) gets `AddParticle(pos, vel, timeSince, mult, zRot, brightness, createLocal)`. The
-/// original keeps its loop counter in the `lightMultLimit` argument slot.
+/// limit`; then for `i` below the base system's prim count (`m_pBaseSystem` +8, count +0x1B signed) every
+/// enabled (+0xC) prim of this system's own array (`this` +0x78, not the base system's) gets
+/// `AddParticle(pos, vel, timeSince, mult, zRot, brightness, createLocal)`. The original keeps its loop
+/// counter in the `lightMultLimit` argument slot (stack only).
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x4AA440, conv = thiscall, name = "FxSystem_c::AddParticle-v3d", expect = "83 EC 08 56 57 8B F9",
-       unverified = "mvpb-render-1", route = "L2", hazards = "heap-writes",
+       route = "split", hazards = "heap-writes",
        recs = "grove-walk", note = "rand() at site 0x4AA450; particles go to the FX pools (heap)")]
 pub fn fx_system_add_particle(this: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time: u32, mult: GPtr<u8>, zrot: u32, light_mult: f32, limit: f32, local: u32) {
     let r = sa_core::orig::at_site(0x4AA450, crt_rand) as u32 & 0xFFFF;
@@ -1179,7 +1200,8 @@ pub fn fx_system_add_particle(this: GPtr<u8>, pos: GPtr<u8>, vel: GPtr<u8>, time
     let base = || this.byte_add(8).cast::<GPtr<u8>>().read();
     let mut i = 0i32;
     while i < base().byte_add(0x1B).cast::<i8>().read() as i32 {
-        let prim = base().byte_add(0x78).cast::<GPtr<GPtr<u8>>>().read().wrapping_index(i).read();
+        // the prim array is the system's own (`this` +0x78, 0x4AA4F0..F7), the count the base system's
+        let prim = this.byte_add(0x78).cast::<GPtr<GPtr<u8>>>().read().wrapping_index(i).read();
         if prim.byte_add(0xC).read() != 0 {
             fx_prim_add_particle(prim, pos, vel, time, mult, zrot, bright.to_bits(), local);
         }
@@ -1452,3 +1474,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_REGISTER_CORONA_BY_TYPE,
     HOOK_REGISTER_CORONA_TYPE,
 ];
+
+/// Phase B natives of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_TRANSFORM_VECTORS];

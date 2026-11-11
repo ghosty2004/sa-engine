@@ -440,9 +440,9 @@ orig! {
     fn rw_render_state_set(state: u32, value: u32) -> u32 = cdecl table 0xC97B24 0x20 => unported;
 
     /// `CHud::DrawCrossHairs()` (0x58E020)
-    fn draw_cross_hairs_call() = cdecl 0x58E020 => unported;
+    fn draw_cross_hairs_call() = cdecl 0x58E020 => crate::hud_draw3::draw_cross_hairs;
     /// `CHud::DrawPlayerInfo()` (0x58EAF0)
-    fn draw_player_info_call() = cdecl 0x58EAF0 => unported;
+    fn draw_player_info_call() = cdecl 0x58EAF0 => crate::hud_draw3::draw_player_info;
     /// `CHud::DrawWanted()` (0x58D9A0)
     fn draw_wanted_call() = cdecl 0x58D9A0 => draw_wanted;
     /// `CHud::DrawVehicleName()` (0x58AEA0)
@@ -450,7 +450,7 @@ orig! {
     /// `CHud::DrawMissionTimers()` (0x58B180)
     fn draw_mission_timers_call() = cdecl 0x58B180 => draw_mission_timers;
     /// `CHud::DrawVitalStats()` (0x589650)
-    fn draw_vital_stats_call() = cdecl 0x589650 => unported;
+    fn draw_vital_stats_call() = cdecl 0x589650 => crate::hud_draw3::draw_vital_stats;
     /// `CHud::DrawRadar()` (0x58A330)
     fn draw_radar_call() = cdecl 0x58A330 => draw_radar;
     /// `CHud::DrawTripSkip()` (0x58A160)
@@ -490,7 +490,7 @@ orig! {
     /// `FindPlayerWanted(int32)` (0x56E230)
     fn find_player_wanted(id: i32) -> GPtr<u8> = cdecl 0x56E230 => sa_world::world::cworld::find_player_wanted;
     /// `CHud::GetYPosBasedOnHealth(uint8, float, int8)` (0x588B60, ST0)
-    fn get_y_pos_based_on_health_st0(player: u8, y: f32, offset: i8) -> f64 = cdecl 0x588B60 => get_y_pos_based_on_health_target_f64;
+    fn get_y_pos_based_on_health_st0(player: u8, y: f32, offset: i8) -> f64 = cdecl 0x588B60 => get_y_pos_based_on_health_st0_rust;
 
     /// `CStats::GetFatAndMuscleModifier(eStatModAbilities)` (0x559AF0, ST0)
     fn stats_get_fat_and_muscle_modifier_st0(stat: u32) -> f64 = cdecl 0x559AF0 => unported;
@@ -2921,43 +2921,43 @@ pub const HOOKS: &[HookReg] = &[HOOK_DRAW, HOOK_DRAW_AFTER_FADE, HOOK_DRAW_WEAPO
     HOOK_DRAW_HELP_TEXT,
 ];
 
-/// `min_f_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`min_f_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn min_f(a: f32, bb: f32) -> X87 {
     X87::from_f64_exact(min_f_st0(a, bb))
 }
 
-/// Phase B target of `get_y_pos_based_on_health_st0`: the port's ST0 result as f64.
+/// The Rust path of [`get_y_pos_based_on_health`] as an ST0 value.
 #[allow(dead_code)]
-fn get_y_pos_based_on_health_target_f64(player: u8, y: f32, offset: i8) -> f64 {
+fn get_y_pos_based_on_health_st0_rust(player: u8, y: f32, offset: i8) -> f64 {
     crate::hud::get_y_pos_based_on_health(player, y, offset).to_f64()
 }
 
-/// `get_y_pos_based_on_health_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`get_y_pos_based_on_health_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn get_y_pos_based_on_health(player: u8, y: f32, offset: i8) -> X87 {
     X87::from_f64_exact(get_y_pos_based_on_health_st0(player, y, offset))
 }
 
-/// `stats_get_fat_and_muscle_modifier_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`stats_get_fat_and_muscle_modifier_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn stats_get_fat_and_muscle_modifier(stat: u32) -> X87 {
     X87::from_f64_exact(stats_get_fat_and_muscle_modifier_st0(stat))
 }
 
-/// `font_get_string_width_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`font_get_string_width_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn font_get_string_width(text: GPtr<u8>, full: u32, script: u32) -> X87 {
     X87::from_f64_exact(font_get_string_width_st0(text, full, script))
 }
 
-/// `stats_get_stat_value_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`stats_get_stat_value_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn stats_get_stat_value(stat: u32) -> X87 {
     X87::from_f64_exact(stats_get_stat_value_st0(stat))
 }
 
-/// `max_f_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+/// [`max_f_st0`] as an x87 value (ST0, returned through the f64 ABI).
 #[allow(dead_code)]
 fn max_f(a: f32, bb: f32) -> X87 {
     X87::from_f64_exact(max_f_st0(a, bb))

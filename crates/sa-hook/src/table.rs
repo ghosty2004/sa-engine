@@ -455,6 +455,7 @@ const fn sig_of(r: &sa_core::abi::HookReg) -> Sig {
             AbiRet::Eax => Ret::Eax,
             AbiRet::EaxEdx => Ret::EaxEdx,
             AbiRet::St0 => Ret::St0,
+            AbiRet::Ax => Ret::Ax,
         },
         this_type: r.this_type,
         this_size: r.this_size,

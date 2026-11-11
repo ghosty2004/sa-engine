@@ -165,11 +165,13 @@ pub fn convert_anim_file_index(this: MiPtr) {
 }
 
 /// `CClumpModelInfo::GetBoundingBox` (0x4C5710): `m_pColModel` (+0x14) (unhookable: 4 bytes).
+#[sa_core::native(addr = 0x4C5710, conv = thiscall, name = "CClumpModelInfo::GetBoundingBox")]
 pub fn get_bounding_box(this: MiPtr) -> GPtr<u8> {
     f::<GPtr<u8>>(this, mi::COL_MODEL).read()
 }
 
 /// `CClumpModelInfo::GetModelType` (0x4C5720): AL = 5 (unhookable).
+#[sa_core::native(addr = 0x4C5720, conv = thiscall, name = "CClumpModelInfo::GetModelType")]
 pub fn get_model_type(_this: MiPtr) -> u8 {
     5
 }
@@ -181,6 +183,7 @@ pub fn get_rw_model_type(_this: MiPtr) -> u32 {
 }
 
 /// `CClumpModelInfo::GetAnimFileIndex` (0x4C5740): +0x20 (unhookable).
+#[sa_core::native(addr = 0x4C5740, conv = thiscall, name = "CClumpModelInfo::GetAnimFileIndex")]
 pub fn get_anim_file_index(this: MiPtr) -> i32 {
     f::<i32>(this, ANIM_FILE).read()
 }

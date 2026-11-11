@@ -5,6 +5,9 @@
 //! Each function names its original address. They are verified against the original bytes by
 //! `sa-oracle` (L1 runner, see `docs/re/l1-harness.md`).
 
+/// The deterministic libm (phase B stands in with it for the CRT's math intrinsics).
+pub use libm;
+
 pub mod col;
 pub mod compressed;
 pub mod consts;

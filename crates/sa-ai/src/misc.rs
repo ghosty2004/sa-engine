@@ -215,18 +215,21 @@ pub fn init_g_c1a4dc() -> i32 {
 
 /// `thunk_FUN_0061a6f0` (0x48DE60): `jmp CTaskSimpleAnim::~CTaskSimpleAnim`.
 /// Not hookable: a bare `jmp rel32` entry is taken for a `.HOODLUM` stub by sa-hook (its target is not in `.HOODLUM`).
+#[sa_core::native(addr = 0x48DE60, conv = thiscall, name = "thunk_FUN_0061a6f0")]
 pub fn thunk_61a6f0_48de60(this: GPtr<u8>) {
     task_simple_anim_dtor(this);
 }
 
 /// `thunk_FUN_0061a6f0` (0x48EA90): `jmp CTaskSimpleAnim::~CTaskSimpleAnim`.
 /// Not hookable: a bare `jmp rel32` entry is taken for a `.HOODLUM` stub by sa-hook (its target is not in `.HOODLUM`).
+#[sa_core::native(addr = 0x48EA90, conv = thiscall, name = "thunk_FUN_0061a6f0")]
 pub fn thunk_61a6f0_48ea90(this: GPtr<u8>) {
     task_simple_anim_dtor(this);
 }
 
 /// `CAcquaintance::~CAcquaintance` (0x608780): `ret`.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x608780, conv = thiscall, name = "CAcquaintance::~CAcquaintance")]
 pub fn acquaintance_dtor_608780(_this: GPtr<u8>) {}
 
 /// `(missed by ghidra: cat7-call)` (0x66B150): `this[+0x34] = a0` (`ret 4`).

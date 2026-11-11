@@ -14,7 +14,18 @@ extern crate std;
 pub use sa_core::hook;
 
 pub mod cleanup;
+pub mod script_draw;
 pub mod script_init;
+pub mod script_brains;
+pub mod script_brain_requests;
+pub mod script_objects;
+pub mod script_resources;
+pub mod script_tables;
+pub mod script_registries;
+pub mod script_process;
+pub mod script_tasks;
+pub mod script_things;
+pub mod the_scripts_init;
 pub mod cmd0;
 pub mod cmd100;
 pub mod cmd1000;

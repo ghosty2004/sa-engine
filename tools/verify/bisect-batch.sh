@@ -47,9 +47,11 @@ mkdir -p "$OUT"
 LOG="$OUT/bisect-$RECNAME.log"
 REPORT="$OUT/bisect-$RECNAME.txt"
 echo "bisect-batch: batch $BATCH ($N hooks) on top of the verified set, recording $RECNAME, lane $LANE_ARG"
-RUN="$ROOT/target/e2e/lane-$LANE_ARG/l3/run.txt"
+# l3.sh removes the lane's run.txt and copies the new one to RUN while it holds the lane lock, so
+# another agent's run on the same lane cannot race this report.
+RUN="$OUT/l3-$RECNAME.txt"
 rm -f "$RUN"
-LANE="$LANE_ARG" "$ROOT/tools/e2e/l3.sh" --rec "$REC" --rust "batch:$BATCH" --fixed verified --hookoff "$HOOKOFF" \
+L3_REPORT_COPY="$RUN" LANE="$LANE_ARG" "$ROOT/tools/e2e/l3.sh" --rec "$REC" --rust "batch:$BATCH" --fixed verified --hookoff "$HOOKOFF" \
     ${MARGIN:+--margin "$MARGIN"} > "$LOG" 2>&1
 RC=$?
 if ! grep -q '^L3 ' "$RUN" 2> /dev/null; then
@@ -57,7 +59,6 @@ if ! grep -q '^L3 ' "$RUN" 2> /dev/null; then
     tail -5 "$LOG" >&2
     exit 2
 fi
-cp -f "$RUN" "$OUT/l3-$RECNAME.txt"
 {
     echo "batch $BATCH ($N hooks), recording $REC, lane $LANE_ARG, $(date -Is)"
     grep -m1 '^FIXED' "$RUN"

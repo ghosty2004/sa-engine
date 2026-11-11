@@ -1273,7 +1273,8 @@ pub fn sound_manager_reset(this: GPtr<u8>) {
 /// `CAESoundManager::GetVirtualChannelForPhysicalChannel(int16 physical)` (0x4EF630): -1 when
 /// `physical - first channel (+2)` is negative (16-bit) or not below the channel count (+0); else the
 /// word entry of the table at +0x87F4. AX only (the upper half of EAX is path-dependent).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX, needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn sm_get_virtual_channel_for_physical_channel(this: GPtr<u8>, physical: u32) -> u16 {
     let idx = (physical as u16).wrapping_sub(rd::<u16>(this, 2)) as i16;
     if idx < 0 || i32::from(idx) >= i32::from(rd::<u16>(this, 0)) {
@@ -3870,9 +3871,10 @@ orig! {
 /// re-preps the slots, clears 0xB61D0C, sets 0xB61D08 = now + `[0x8C8148]` and the state 2. The stack sound
 /// is destroyed (`~CAESound`) on every path. Its bytes not written by `Initialise` are zero here and
 /// stack leftovers in the original (copied by `RequestNewSound`).
-#[hook(addr = 0x4E6F60, conv = thiscall, name = "CAEPoliceScannerAudioEntity::PlayLoadedDialogue", expect = "6A FF 68 78 C0 83 00")]
+#[hook(addr = 0x4E6F60, conv = thiscall, name = "CAEPoliceScannerAudioEntity::PlayLoadedDialogue", expect = "6A FF 68 78 C0 83 00", peek = 0x80)]
 pub fn ps_play_loaded_dialogue_port(this: GPtr<u8>) {
-    let mut buf = [0u32; 0x74 / 4];
+    // the original's `CAESound` local (entry ESP - 0x80) is uninitialised: its stack residue (`peek`)
+    let mut buf = crate::port3_lead::stack_local::<0x1D>(0x4E6F60, -0x80);
     let sound = GPtr::from_raw(buf.as_mut_ptr().cast::<u8>());
     wr::<u32>(sound, 8, 0);
     let slot_state = |i: usize| g::<u16>(PS_SLOTS + i * 2).read();
@@ -4469,9 +4471,10 @@ orig! {
 /// 6.0); max distance 2.0, speed 1.0; flags word +0x56 = 0xE, `SetFlags(1, relative)`, the three frontend
 /// flags; `RequestNewSound` stored at the record's +0xA0; then `~CAESound`. The sound's bytes not written
 /// by `Initialise` are zero here and stack leftovers in the original (copied by `RequestNewSound`).
-#[hook(addr = 0x4EC270, conv = thiscall, name = "CAEScriptAudioEntity::PlayLoadedMissionAudio", expect = "6A FF 68 B8 C0 83 00")]
+#[hook(addr = 0x4EC270, conv = thiscall, name = "CAEScriptAudioEntity::PlayLoadedMissionAudio", expect = "6A FF 68 B8 C0 83 00", peek = 0x80)]
 pub fn script_play_loaded_mission_audio(this: GPtr<u8>, slot: u32) {
-    let mut buf = [0u32; 0x74 / 4];
+    // the original's `CAESound` local (entry ESP - 0x80) is uninitialised: its stack residue (`peek`)
+    let mut buf = crate::port3_lead::stack_local::<0x1D>(0x4EC270, -0x80);
     let sound = GPtr::from_raw(buf.as_mut_ptr().cast::<u8>());
     wr::<u32>(sound, 8, 0);
     let sl = slot as u8;
@@ -4562,7 +4565,8 @@ pub fn script_play_loaded_mission_audio(this: GPtr<u8>, slot: u32) {
 
 /// `CAEAudioHardware::GetNumAvailableChannels()` (0x4D8810): the word +0x8C (AX only; the upper half of
 /// EAX is the caller's).
-/// Not hooked: AX-only result whose upper EAX is the caller's leftover on some paths; L2 compares EAX (port-l2-a2-menus-hud mismatch), needs an AX return kind in sa-core::abi.
+/// AX-only result (the upper EAX is the caller's leftover on some paths): hooked by PORT-AUDIO-3 through an
+/// `sa_core::abi::Ax` wrapper in `port3_lead.rs`.
 pub fn hw_get_num_available_channels(this: GPtr<u8>) -> u16 {
     rd::<u16>(this, 0x8C)
 }

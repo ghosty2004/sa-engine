@@ -451,3 +451,83 @@ The functions with no call in the grove walk need L2 runs on the other recording
 0x72D6D0, 0x509CA0, 0x63A380, the spline evaluators, `Process_Fixed`, `CIdleCam::Run` / `IsTargetValid`,
 `StartTransition`, `ProcessShake`, `ProcessPedsDeadBaby`, `Process_SpecialFixedForSyphon` and `Process_AttachedCam`.
 The lane 6 queue for driving, pause-restart and weapon-combat did not run in time.
+
+# PORT-CAM-3: third pass (2026-11-11)
+
+Third pass over CAM (agent + 2 helpers, lane 6). Verdicts: `docs/arch/cam-port-3-verdicts.tsv` (the main session sets
+`catalog/state.csv`). It hooks the stack-dependent functions PORT-CAM-2 left unhooked, ports `CamControl` and the main
+mode processors, and extends the footprint mechanism.
+
+## Stack footprints (ADR-001 §5b, extended)
+
+- **Nesting.** Each `footprint` hook now has its own `FootprintState` (emitted by the macro), and
+  `sa_core::abi::FOOTPRINT_CUR` names the innermost wrapper; the wrapper saves and restores the previous one. Needed
+  because `CCam::Process` runs original code that calls `RwV3dNormalize` (also a footprint hook). `FOOTPRINT_MAX` is 32;
+  a new value kind `Fp::Seh` stores `fs:[0]` (the MSVC EH prologue's push).
+- **`sa_core::abi::entry_residue(off)`** reads the word the caller left at entry ESP + `off` from the wrapper's
+  snapshot: the value an uninitialised local of the original reads when no code of the original writes that slot first.
+- **`CCam::Process` 0x526FC0, hooked.** Measured with `SA_COV_PEEK` (grove, `cam3-fp1..3`): the next
+  `CalculateDerivedValues` reads `m_mMatInverse.flags` from `Invert-2`'s own local, whose never-written words lie at
+  `CCam::Process`'s [S-0xA8] (flags: the `KeepTrackOfTheSpeed` return address 0x527DB4), [S-0x98] (an argument),
+  [S-0x88] (pushed EBX) and [S-0x78] (the `orientation` local). The hook records those slots plus its other pushes and
+  the `KeepTrackOfTheSpeed` arguments. With only the return address recorded, a peek (cam3-fp3) showed the `Invert-2`
+  local differing in its pos pad word only (0x40C49809 = `orientation` vs 0), which led to recording the locals; the peek
+  comparison was not rerun after that (a disk-check skip), but the split L2 and plain traces below are identical.
+  Not reproduced (documented in the doc comment): during a transition `KeepTrackOfTheSpeed` is skipped and the slot holds
+  whatever the mode processor's frame left there. In split mode with `DealWithMirror` also on Rust, this showed
+  as one input divergence at 0xB6FA80 (grove frame 1205); in plain runs every trace is identical.
+- **`CCamera::CalculateDerivedValues` 0x5150E0, hooked.** `tmp` starts from the caller's residue (`entry_residue`), so
+  the copied flags / pads match whatever caller frame the original sees; footprint of its EH frame and `tmp`.
+- **`CCamera::DealWithMirrorBeforeConstructRenderList` 0x50B510, ported and hooked**, same scheme.
+- **`CCamera::CameraColDetAndReact` 0x520190, hooked.** The uninitialised `dist` ([S-0x20]) comes from
+  `entry_residue(-0x20)`; footprint of its frame (arguments, locals, cone-cast arguments). Remaining edge (ledger
+  candidate): a Rust caller (the ported mode processors) has a different stack, so the `source == target` case then reads
+  a different residue. Never seen in the corpus.
+
+## New modules
+
+| file | contents |
+|---|---|
+| `camcontrol.rs` | `CCamera::CamControl` 0x527FA0 (all blocks of the spec; footprint; the vehicle-stairs door pointers L74/L78 from the residue) |
+| `obbe.rs` | the five Obbe cinema selectors (one body, spec table) |
+| `handshaker.rs` (ext.) | `CHandShaker::Process` 0x50D930 (bytes: z, y, x rand order, y clamp against the register value) |
+| `idlecam.rs` (ext.) | `CIdleCam::ProcessTargetSelection` 0x517870 (bytes inline other sequences than gta-reversed's `SetTargetPlayer`) |
+| `followped.rs`, `aimweapon.rs`, `avoidgeom.rs`, `firstperson.rs`, `rocket.rs`, `pedonpc.rs`, `pedmouse.rs` (helper A) | `Process_FollowPed_SA`, `Process_AimWeapon`, `Find3rdPersonQuickAimPitch`, `Find3rdPersonCamTargetVector`, `AvoidTheGeometry` (FPTAN, 64-bit model), `Process_1stPerson`, `Process_Rocket`, `Process_1rstPersonPedOnPC`, `Process_FollowPedWithMouse`: literal transcriptions with a frame array at the original offsets |
+| `followcar.rs`, `dwcams.rs`, `arrestcam.rs`, `twoplayer.rs` (helper B) | `Process_FollowCar_SA`, `LookBehind`, `LookRight`, `RotCamIfInFrontCar`, the DW cams (CamMan, PlaneSpotter, Plane1-3, Finalise, GetCoreData, IsTimeToExit, GetLookFromLampPostPos), the arrest / two-player helpers |
+
+Shared changes: `sa-core/src/abi.rs`, `sa-macros` (footprint nesting, `entry_residue`, `Fp::Seh`), ADR-001 §5b text;
+`sa-veh` / `sa-render`: three `orig!` ST0 results declared `f64` (the base did not build with the 16-byte `X87`).
+`tools/e2e/l2-extras.txt` sections `# PORT-CAM-3 (parent)`, `helper A`, `helper B`; lists `cam3-split.txt`,
+`cam3-l2.txt`, `cam3-a-*.txt`, `cam3-b-*.txt`.
+
+## Findings worth knowing
+
+- **`Process_FollowPed_SA` 0x522D40 is ported but not hooked.** Its split L2 passes on grove and weapon-combat, but the
+  first all-ports verify-all (`cam3-va`) diverged on car-ai (frame 4982) and menus-hud (frame 5164, camera). Bisected
+  to this hook alone. A split run from car-ai frame 4960 (`cam3-fp-ca`) shows the first mismatch at frame 4981 in the beta
+  (cam+0xBC, copied to 0x8CCE6C): orig 0xA6F72C00 (-1.7e-15), Rust 0xA6E00000. `atan2(-front.x, front.y) - pi/2`
+  cancels there, so FPATAN bits beyond sa-math's f64 model reach the f32. Hooking it needs a 64-bit FPATAN model (as the
+  X87 work did for FPTAN / FYL2X); the ready attribute is in its doc comment. Decision for the main session.
+- CamControl's CReferences / matrix-list / colModelCache writes come from callees (Restore, GetMatrix, the cone
+  cast) and are declared.
+- `DealWithMirror` in split mode fills the 2 GiB spool by frame ~1230 (its windows are large), so it is verified in plain L2.
+- Helper A: the CCam.md spec has the FollowPed_SA IK LookAt condition inverted; the bytes win. AimWeapon's mouse step uses
+  AccelVertical for alpha and AccelHorzntl for beta; `Find3rdPersonCamTargetVector` returns `(target.x bits & ~0xFF) | 1`
+  in EAX. `AvoidTheGeometry`'s split FAIL is only the known `CCollision::ProcessColModels` static residue at 0x967F50.
+- Helper B: FollowCar_SA needs split mode (gpColCache 0x9655C8/CC hold stack addresses); `gDWLastModeForCineyCam` holds
+  mode + 0x24; Finalise_DW_CineyCams uses the hand shaker's roll on the second pass and never reads its near-clip argument.
+- x87 approximations as before: FSIN/FCOS/FPATAN f64 model; ST0 results of `GetATanOfXY`, `GetHeading`, `Magnitude`,
+  `FindGroundZFor3DCoord`, `_CIasin`/`_CIpow` through f64.
+
+## Verification
+
+All on lane 6 with frozen binaries (`target/e2e-bin-p`), `SPLIT_PER_FRAME=20 SPLIT_STACKFILL=16384`:
+- split `cam3-split.txt` on grove, driving, weapon-combat, car-ai (`cam3-s3-*`): splito / splitr / rust traces
+  IDENTICAL; CCam::Process, CalculateDerivedValues, CamControl PASS, CameraColDetAndReact PASS-FP, 1000/1000 each, 0
+  undeclared; Obbe / HandShaker NOCASES.
+- plain l2 `cam3-l2.txt` on the same four (`cam3-l2-*`): DealWithMirror 1000/1001 PASS each; ProcessTargetSelection NOCALLS.
+- Tests: `cargo test --release -p sa-hook --lib` 51 pass; `cargo test -p sa-cam` 3 pass; clippy `-D warnings` host (sa-cam,
+  sa-core, sa-macros, all targets) and i686 (`--features in-process`); wasm32 build of sa-cam.
+- **All ports on Rust** (`tools/e2e/verify-all.sh cam3-va4 6`, after merging master, `Process_FollowPed_SA` unhooked):
+  **IDENTICAL on all 11 recordings.** The earlier `cam3-va` (pre-merge) had car-ai / menus-hud (bisected to FollowPed_SA,
+  see above) and air-water (randcalls from WORLD-2's `GetRandomWaterCreatureId` rand sites; fixed on master) diverging.

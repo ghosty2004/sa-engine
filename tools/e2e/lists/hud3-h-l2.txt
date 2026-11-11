@@ -1,0 +1,5 @@
+# PORT-HUD-3 harness decisions: AX return, keycells reader, preserve EDX, peek (plain L2)
+0x5733E0
+0x573410
+0x71A0E0
+0x571F20

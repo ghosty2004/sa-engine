@@ -679,6 +679,7 @@ pub fn g_fun_0043e3d0_43e3d0(this: u32) {
 
 /// `CTaskSimpleLeaveGroup::Destructor` (0x463560): dtor, thiscall, `ret`; 5 instruction(s) matched.
 /// Not hookable: protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x40381f).
+#[sa_core::native(addr = 0x463560, conv = thiscall, name = "CTaskSimpleLeaveGroup::Destructor")]
 pub fn g_task_simple_leave_group_destructor_463560(this: u32) {
     wr::<u32>(p(this), 0, 0x85_9CFC);
     let _v1 = c_61a3a0_t0(this);
@@ -705,6 +706,7 @@ pub fn g_fun_004636e0_4636e0(this: u32) {
 
 /// `CEntitySeekPosCalculator::~CEntitySeekPosCalculator` (0x46A5F0): dtor, thiscall, `ret 12`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x46A5F0, conv = thiscall, name = "CEntitySeekPosCalculator::~CEntitySeekPosCalculator")]
 pub fn g_centity_seek_pos_calculator_centity_seek_pos_calculator_46a5f0(
     _this: u32,
     _a0: u32,
@@ -758,6 +760,7 @@ pub fn g_task_simple_ctask_simple_46aef0(this: u32, a0: u32) -> u32 {
 
 /// `CTaskSimpleSetCharDecisionMaker::Destructor` (0x46AF10): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x46AF10, conv = thiscall, name = "CTaskSimpleSetCharDecisionMaker::Destructor")]
 pub fn g_task_simple_set_char_decision_maker_destructor_46af10(this: u32) {
     let _v1 = c_61a3a0_t0(this);
 }
@@ -779,12 +782,14 @@ pub fn g_task_simple_set_char_ignore_weapon_range_flag_ctask_simple_set_char_ign
 
 /// `CTaskSimpleSetCharIgnoreWeaponRangeFlag::Destructor` (0x4748F0): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x4748F0, conv = thiscall, name = "CTaskSimpleSetCharIgnoreWeaponRangeFlag::Destructor")]
 pub fn g_task_simple_set_char_ignore_weapon_range_flag_destructor_4748f0(this: u32) {
     let _v1 = c_61a3a0_t0(this);
 }
 
 /// `CTaskSimpleRunTimedAnim::Destructor` (0x48E090): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x48E090, conv = thiscall, name = "CTaskSimpleRunTimedAnim::Destructor")]
 pub fn g_task_simple_run_timed_anim_destructor_48e090(this: u32) {
     let _v1 = c_61a6f0_t0(this);
 }
@@ -825,6 +830,7 @@ pub fn g_task_simple_anim_ctask_simple_anim_48e8e0(this: u32, a0: u32) -> u32 {
 
 /// `CTaskSimpleCower::Destructor` (0x48E900): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x48E900, conv = thiscall, name = "CTaskSimpleCower::Destructor")]
 pub fn g_task_simple_cower_destructor_48e900(this: u32) {
     let _v1 = c_61a6f0_t0(this);
 }
@@ -843,6 +849,7 @@ pub fn g_task_simple_anim_ctask_simple_anim_48e940(this: u32, a0: u32) -> u32 {
 
 /// `CTaskSimpleUseAtm::Destructor` (0x48E960): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x48E960, conv = thiscall, name = "CTaskSimpleUseAtm::Destructor")]
 pub fn g_task_simple_use_atm_destructor_48e960(this: u32) {
     let _v1 = c_61a6f0_t0(this);
 }
@@ -861,6 +868,7 @@ pub fn g_task_simple_hands_up_ctask_simple_hands_up_48ea40(this: u32, a0: u32) -
 
 /// `CTaskSimpleHandsUp::Destructor` (0x48EA60): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x48EA60, conv = thiscall, name = "CTaskSimpleHandsUp::Destructor")]
 pub fn g_task_simple_hands_up_destructor_48ea60(this: u32) {
     let _v1 = c_61a6f0_t0(this);
 }
@@ -2238,6 +2246,7 @@ pub fn g_fun_005f6920_5f6920(this: u32) {
 
 /// `CTaskSimpleChat::Destructor` (0x5F7FD0): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x5F7FD0, conv = thiscall, name = "CTaskSimpleChat::Destructor")]
 pub fn g_task_simple_chat_destructor_5f7fd0(this: u32) {
     let _v1 = c_61a6f0_t0(this);
 }
@@ -2613,6 +2622,7 @@ pub fn g_vt_86d594_destructor_61bc80(this: u32, a0: u32) -> u32 {
 
 /// `CTaskSimpleRunNamedAnim::Destructor` (0x61BF10): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
+#[sa_core::native(addr = 0x61BF10, conv = thiscall, name = "CTaskSimpleRunNamedAnim::Destructor")]
 pub fn g_task_simple_run_named_anim_destructor_61bf10(this: u32) {
     let _v1 = c_61a6f0_t0(this);
 }
@@ -3372,6 +3382,7 @@ pub fn g_task_complex_wait_for_bus_destructor_632930(this: u32) {
 
 /// `CTaskSimpleWaitForBus::Destructor` (0x632A90): dtor, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x11a5c6a).
+#[sa_core::native(addr = 0x632A90, conv = thiscall, name = "CTaskSimpleWaitForBus::Destructor")]
 pub fn g_task_simple_wait_for_bus_destructor_632a90(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E1B8);
     let _v1 = c_61a3a0_t0(this);
@@ -4793,6 +4804,7 @@ pub fn g_task_simple_create_car_and_get_in_ctask_simple_create_car_and_get_in_64
 
 /// `CTaskUtilityLineUpPedWithCar::Destructor` (0x64FC00): dtor, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x64FC00, conv = thiscall, name = "CTaskUtilityLineUpPedWithCar::Destructor")]
 pub fn g_task_utility_line_up_ped_with_car_destructor_64fc00(_this: u32) {}
 
 /// `CTaskSimpleHitHead::~CTaskSimpleHitHead` (0x653090): dtor, thiscall, `ret`; 25 instruction(s) matched.
@@ -7506,6 +7518,7 @@ pub fn g_dtor_cped_group_default_task_allocators_ms_chat_allocator_856830() {
 
 /// `__dtor_CPedGroupDefaultTaskAllocators__ms_RandomAllocator` (0x856840): dtor, cdecl, `ret`; 4 instruction(s) matched.
 /// Not hookable: protection code reads the patched bytes (INF-20, `catalog/code-data-reads.csv` reader 0x67dd06).
+#[sa_core::native(addr = 0x856840, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_RandomAllocator")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_random_allocator_856840() {
     wr::<u32>(p(0xC0_9918), 0, 0x86_C754);
 }
@@ -7548,6 +7561,7 @@ pub fn g_dtor_ms_find_edge_col_model_856990() {
 
 /// `__dtor_CTaskComplexFollowLeaderInFormation__ms_offsets` (0x8569B0): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x8569B0, conv = cdecl, name = "__dtor_CTaskComplexFollowLeaderInFormation__ms_offsets")]
 pub fn g_dtor_ctask_complex_follow_leader_in_formation_ms_offsets_8569b0() {}
 
 /// `__dtor_CCover__m_ListOfProcessedBuildings` (0x8569C0): dtor, cdecl, `ret`; 2 instruction(s) matched.
@@ -7558,14 +7572,17 @@ pub fn g_dtor_ccover_m_list_of_processed_buildings_8569c0() {
 
 /// `__dtor_g_c1a43c` (0x8569D0): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x8569D0, conv = cdecl, name = "__dtor_g_c1a43c")]
 pub fn g_dtor_g_c1a43c_8569d0() {}
 
 /// `__dtor_g_c1a45c` (0x8569E0): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x8569E0, conv = cdecl, name = "__dtor_g_c1a45c")]
 pub fn g_dtor_g_c1a45c_8569e0() {}
 
 /// `__dtor_g_c1a4dc` (0x8569F0): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x8569F0, conv = cdecl, name = "__dtor_g_c1a4dc")]
 pub fn g_dtor_g_c1a4dc_8569f0() {}
 
 pub const HOOKS: &[HookReg] = &[

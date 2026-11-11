@@ -76,7 +76,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// is the entity position + `(nx * o, o * ny, +2)` and `CShadows::StoreCarLightShadow(this, this + 0x16,
 /// [0xC403F8], &pos, w * nx, w * ny, p4 * ny, -(nx * p4), 45, 45, 45, 7.0)`.
 #[hook(addr = 0x6E1600, conv = thiscall, name = "CVehicle::DoHeadLightReflectionTwin", this = "CVehicle", expect = "83 EC 1C 0F BF 41 22",
-       unverified = "mvpb-veh-2", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        note = "the original stores nx into its own matrix argument slot (entry esp+4); the port does not")]
 pub fn do_head_light_reflection_twin(this: GPtr<u8>, mat: GPtr<u8>) {
     let vs = rd::<GPtr<u8>>(crate::common::model_info(rd::<i16>(this, 0x22) as i32), 0x5C);

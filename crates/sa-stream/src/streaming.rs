@@ -600,7 +600,7 @@ orig! {
     /// `CStreaming::AddLodsToRequestList(const CVector&, flags)` (0x40C520)
     pub fn call_add_lods_to_request_list(pos: GPtr<f32>, flags: i32) = cdecl 0x40C520 => add_lods_to_request_list;
     /// `CStreaming::AddModelsToRequestList(const CVector&, flags)` (0x40D3F0, deferred)
-    pub fn call_add_models_to_request_list(pos: GPtr<f32>, flags: i32) = cdecl 0x40D3F0 => unported;
+    pub fn call_add_models_to_request_list(pos: GPtr<f32>, flags: i32) = cdecl 0x40D3F0 => add_models_to_request_list;
     /// `CStreaming::DeleteAllRwObjects()` (0x4090A0)
     pub fn call_delete_all_rw_objects() = cdecl 0x4090A0 => delete_all_rw_objects;
     /// `CStreaming::RequestBigBuildings(const CVector&)` (0x409430)
@@ -962,6 +962,7 @@ pub fn clear_flag_for_all(f: u32) {
 }
 
 /// `CStreaming::RemoveUnusedModelsInLoadedList()` (0x407AC0): `ret` (not hookable).
+#[sa_core::native(addr = 0x407AC0, conv = cdecl, name = "CStreaming::RemoveUnusedModelsInLoadedList")]
 pub fn remove_unused_models_in_loaded_list() {}
 
 /// `CStreaming::AreAnimsUsedByRequestedModels(int32 animSlot)` (0x407AD0, AL): entry `jmp 0x4019B9`
@@ -1093,6 +1094,7 @@ pub fn has_special_char_loaded(slot: i32) -> bool {
 }
 
 /// `CStreaming::LoadInitialVehicles()` (0x407F20): `ret` (not hookable).
+#[sa_core::native(addr = 0x407F20, conv = cdecl, name = "CStreaming::LoadInitialVehicles")]
 pub fn load_initial_vehicles() {}
 
 /// `CStreaming::WeAreTryingToPhaseVehicleOut(int32)` (0x407F80 → 0x1567B60, EAX 0/1): loaded and in a
@@ -2583,6 +2585,77 @@ pub fn process_entities_in_sector_list(list: GPtr<u8>, flags_arg: i32) {
 /// (x87) unless `radius² < it` (then radius²), stored f32; the position strictly inside
 /// `(minX, maxX) × (minY, maxY)` and `(y - ey)² + (x - ex)² < limit` → CreateRwObject (when the model
 /// has an RW object and the entity none) and RequestModel.
+/// `CStreaming::AddModelsToRequestList(const CVector&, int32 flags)` (0x40D3F0). x87. Radius r = 80 in the
+/// world, 40 in an interior (`CGame::currArea`, read through a disguised load); bounds `x - r`, `r + x`,
+/// `y - r`, `r + y` stored f32; R = `_ftol(r * 0.02)` (no floor); the position's sector (sx, sy); clamped
+/// sector bounds as `sector_min`/`sector_max` (each converted twice: the register then the stored f32);
+/// scan code advanced (0xFFFF → `ClearScanCodes`, 1). For each sector (y outer, x inner) with d² = (x -
+/// sx)² + (y - sy)²: d² ≤ (R - 1)² → `ProcessEntitiesInSectorList(list, flags)` on buildings, repeat-sector
+/// objects, dummies; else d² ≤ (R + 2)² → the radius variant `(list, pos.x, pos.y, bounds.., r, flags)` on
+/// the same three lists.
+///
+/// Stack: the original stores the min-x sector value (f32, then the sector index) in its own `pos`
+/// argument slot; not reproduced.
+#[hook(addr = 0x40d3f0, conv = cdecl, name = "CStreaming::AddModelsToRequestList", expect = "83 EC 44 E9 1B 4F FF FF",
+       unverified = "mvpj-stream-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       note = "overwrites its own pos argument slot")]
+pub fn add_models_to_request_list(pos: GPtr<f32>, flags_arg: i32) {
+    let r = if curr_area() != 0 { k(F_40) } else { k(F_80) };
+    let (px, py) = (pos.read(), pos.wrapping_index(1).read());
+    let min_x = x(px).fsub_m(r).to_f32();
+    let max_x = x(r).fadd_m(px).to_f32();
+    let min_y = x(py).fsub_m(r).to_f32();
+    let max_y = x(r).fadd_m(py).to_f32();
+    let rs = x(r).fmul_m(k(F_0_02)).ftol() as u32 as i32;
+    let sx = sector_of_f32(pos.read());
+    let sy = sector_of_f32(pos.wrapping_index(1).read());
+    let x0 = sector_min(min_x);
+    let y0 = sector_min(min_y);
+    let x1 = sector_max(max_x);
+    let y1 = sector_max(max_y);
+    let sc = g::<u16>(SCAN_CODE);
+    if sc.read() == 0xFFFF {
+        world_clear_scan_codes();
+        sc.write(1);
+    } else {
+        sc.write(sc.read() + 1);
+    }
+    let near = (rs - 1).wrapping_mul(rs - 1);
+    let far = (rs + 2).wrapping_mul(rs + 2);
+    let mut cy = y0;
+    while cy <= y1 {
+        let dy = cy - sy;
+        let mut cx = x0;
+        while cx <= x1 {
+            let dx = cx - sx;
+            let (b, d) = sector_lists(cx, cy);
+            let o = repeat_objects(cx, cy);
+            let dist = dx.wrapping_mul(dx).wrapping_add(dy.wrapping_mul(dy));
+            if dist <= near {
+                call_process_entities_in_sector_list(b, flags_arg);
+                call_process_entities_in_sector_list(o, flags_arg);
+                call_process_entities_in_sector_list(d, flags_arg);
+            } else if dist <= far {
+                for l in [b, o, d] {
+                    call_process_entities_in_sector_list_radius(
+                        l,
+                        pos.read(),
+                        pos.wrapping_index(1).read(),
+                        min_x,
+                        min_y,
+                        max_x,
+                        max_y,
+                        r,
+                        flags_arg,
+                    );
+                }
+            }
+            cx += 1;
+        }
+        cy += 1;
+    }
+}
+
 #[hook(addr = 0x40C270, conv = cdecl, name = "CStreaming::ProcessEntitiesInSectorList<CPtrListSingleLink<CEntity*>>-", expect = "51 D9 44 24 24")]
 #[allow(clippy::too_many_arguments)]
 pub fn process_entities_in_sector_list_radius(
@@ -4262,6 +4335,7 @@ pub fn load() -> bool {
 
 /// Every `#[hook]` of this module, in source order.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_ADD_MODELS_TO_REQUEST_LIST,
     HOOK_REQUEST_TXD_MODEL,
     HOOK_ADD_IMAGE_TO_LIST,
     HOOK_IS_VERY_BUSY,

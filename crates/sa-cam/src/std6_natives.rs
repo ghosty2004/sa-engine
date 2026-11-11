@@ -1,0 +1,8 @@
+//! Phase B registrations (`#[native]`) of existing ports whose entries cannot be hooked in phase A
+//! (STD-6: their docs say "not hookable"; collected by address).
+
+/// Every `#[native]` STD-6 added to existing ports of this crate.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[
+    crate::camctl::NATIVE_IS_SPHERE_VISIBLE_WITH_MATRIX,
+    crate::followped::NATIVE_PROCESS_FOLLOW_PED_SA,
+];

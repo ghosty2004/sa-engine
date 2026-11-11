@@ -115,6 +115,7 @@ pub fn task_manager_flush(this: GPtr<u8>) {
 
 /// `CTaskManager::GetActiveTask` (0x681720): the first non-null primary task, else null. Not hookable: the
 /// loop branches back to 0x681722, inside the 5-byte patch.
+#[sa_core::native(addr = 0x681720, conv = thiscall, name = "CTaskManager::GetActiveTask")]
 pub fn task_manager_get_active_task(this: GPtr<u8>) -> GPtr<u8> {
     for i in 0..5 {
         let t = slot(this, i * 4);
@@ -213,6 +214,7 @@ pub fn task_manager_stop_timers(this: GPtr<u8>, event: GPtr<u8>) {
 
 /// `CTaskManager::GetSimplestActiveTask` (0x6819D0): the last task of the first non-null primary chain, null
 /// when every primary slot is empty. Not hookable: the loop branches back to 0x6819D2, inside the patch.
+#[sa_core::native(addr = 0x6819D0, conv = thiscall, name = "CTaskManager::GetSimplestActiveTask")]
 pub fn task_manager_get_simplest_active_task(this: GPtr<u8>) -> GPtr<u8> {
     last_of(task_manager_get_active_task(this))
 }

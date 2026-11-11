@@ -37,6 +37,9 @@ pub enum Ret {
     /// float/double in ST0
     St0 = 3,
     EaxEdx = 4,
+    /// 16-bit result: only AX is defined (callers read AX; EAX[31:16] is whatever the original's last
+    /// computation left)
+    Ax = 5,
 }
 
 /// A pointer argument whose pointee is part of the read/write set.
@@ -780,6 +783,7 @@ impl Case {
             2 => Ret::Al,
             3 => Ret::St0,
             4 => Ret::EaxEdx,
+            5 => Ret::Ax,
             _ => Ret::Void,
         }
     }
@@ -1015,6 +1019,7 @@ pub fn compare(c: &Case) -> Vec<Diff> {
     match c.ret_kind() {
         Ret::Eax => regdiff(&mut d, 0, u32::MAX),
         Ret::Al => regdiff(&mut d, 0, 0xFF),
+        Ret::Ax => regdiff(&mut d, 0, 0xFFFF),
         Ret::EaxEdx => {
             regdiff(&mut d, 0, u32::MAX);
             regdiff(&mut d, 2, u32::MAX);
@@ -1435,6 +1440,14 @@ mod tests {
         m.rust.regs[0] = 0x0001;
         assert!(compare(&m).is_empty());
         m.rust.regs[0] = 0;
+        assert_eq!(compare(&m)[0].field, "eax");
+        // AX returns compare the low word only
+        let mut m = c.clone();
+        m.ret = Ret::Ax as u8;
+        m.orig.regs[0] = 0xFFF1_0003;
+        m.rust.regs[0] = 0x0000_0003;
+        assert!(compare(&m).is_empty());
+        m.rust.regs[0] = 0x0000_0103;
         assert_eq!(compare(&m)[0].field, "eax");
         let mut m = c.clone();
         m.rust.mxcsr = 0x9FA1; // a sticky flag only

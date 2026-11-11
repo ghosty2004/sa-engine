@@ -12,6 +12,7 @@ sa-math = { path = "../sa-math" }
 sa-macros = { path = "../sa-macros" }
 sa-stream = { path = "../sa-stream" }
 sa-world = { path = "../sa-world" }
+libm = "=0.2.16"
 
 [dev-dependencies]
 sa-pop = { path = "../sa-pop" }

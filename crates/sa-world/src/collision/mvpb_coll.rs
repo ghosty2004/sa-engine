@@ -26,7 +26,7 @@ pub fn col_lighting_get_current_lighting(l: u8, scale: f32) -> X87 {
 
 /// `thunk_FUN_01563610(uint8)` (0x411BF0 -> .HOODLUM 0x1563610, `ret 4`): stores the byte at +0x20.
 #[hook(addr = 0x411BF0, conv = thiscall, name = "thunk_FUN_01563610", expect = "E9 1B 1A 15 01",
-       unverified = "mvpb-coll-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn set_byte_20(this: GPtr<u8>, v: u8) {
     wr::<u8>(this, 0x20, v);
 }

@@ -641,6 +641,7 @@ pub fn fpr_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 /// kept). The entry continues through the island at 0x401D9D (`pushfd; stc; sbb`: the SEH handler push).
 /// Not hookable: its entry bytes are read as data by the protection (0x4022BB, `catalog/code-data-reads.csv`).
 #[allow(clippy::too_many_arguments)]
+#[sa_core::native(addr = 0x671510, conv = thiscall, name = "CTaskComplexFollowPointRoute::Constructor")]
 pub fn fpr_ctor(this: GPtr<u8>, ms: u32, route: GPtr<u8>, mode: u32, radius: u32, slow: u32, overshoot: u32, blending: u32, stand_still: u32) -> GPtr<u8> {
     task_complex_ctor(this);
     wr::<u32>(this, 0xC, mode);

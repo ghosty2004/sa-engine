@@ -790,7 +790,77 @@ pub fn p2p_update() {
 }
 
 /// Every registration of this module.
+/// `CConversations::m_aPedsTalking` (0x9691D8, 14 `CConversationForPed` of 0x1C bytes; +8 the ped)
+const PEDS_TALKING: usize = 0x9691D8;
+/// `CConversations::m_SettingUpConversationNumNodes` (0x9691C8)
+const SETUP_NUM_NODES: usize = 0x9691C8;
+/// `CConversations::m_aTempNodes` (0x969360, 0x2C each: +0 name char[8], +8 yes name, +0x10 no name, +0x20
+/// speech, +0x24 speech yes, +0x28 speech no)
+const TEMP_NODES: usize = 0x969360;
+
+orig! {
+    /// `CConversationForPed::IsPlayerInPositionForConversation(bool)` (0x43AC40, `ret 4`; EAX passed through)
+    fn conv_is_player_in_position_eax(c: GPtr<u8>, random: u32) -> u32 = thiscall 0x43AC40 => unported;
+    /// CRT `strncpy` (0x821F40)
+    fn crt_strncpy(d: GPtr<u8>, s: GPtr<u8>, n: u32) -> GPtr<u8> = cdecl 0x821F40 => unported;
+    /// `MakeUpperCase(char*)` (0x718710)
+    fn make_upper_case(s: GPtr<u8>) = cdecl 0x718710 => unported;
+}
+
+/// `CConversations::IsPlayerInPositionForConversation(CPed*, bool)` (stub 0x43B0B0 → 0x1563250, cdecl): the
+/// `CConversationForPed` of `m_aPedsTalking` whose ped (+8) is this one (first of 14), else a null `this`
+/// (original bug, kept), then its `IsPlayerInPositionForConversation(bool)`; that EAX is returned.
+#[hook(addr = 0x43b0b0, conv = cdecl, name = "CConversations::IsPlayerInPositionForConversation", expect = "E9 9B 81 12 01",
+       unverified = "mvpj-ai-4", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn conversations_is_player_in_position(ped: GPtr<u8>, random: u32) -> u32 {
+    let mut c = GPtr::<u8>::NULL;
+    for i in 0..14 {
+        let e = g::<u8>(PEDS_TALKING).byte_add(i * 0x1C);
+        if rd::<GPtr<u8>>(e, 8) == ped {
+            c = e;
+            break;
+        }
+    }
+    conv_is_player_in_position_eax(c, random)
+}
+
+/// `CConversations::SetUpConversationNode(const char* name, const char* yes, const char* no, int32 speech,
+/// int32 speechYes, int32 speechNo)` (stub 0x43A870 → 0x156A7C0, cdecl). Node n = `m_aTempNodes`
+/// [`m_SettingUpConversationNumNodes`]: name = `strncpy(.., 6)` + `MakeUpperCase`; the three speech ids at
+/// +0x20/+0x24/+0x28; yes: `strncpy(+8, yes, 6)` (not upper-cased), or without one an empty string
+/// upper-cased; no: `strncpy(+0x10, no, N)` + `MakeUpperCase`, or an empty string (no upper-casing); the
+/// count is incremented. N is produced by the no-CD VM (0xCB73E0, descriptor 0x155FFF8, not evaluated); it is
+/// taken to be 6 like the other two copies.
+#[hook(addr = 0x43a870, conv = cdecl, name = "CConversations::SetUpConversationNode", expect = "E9 4B FF 12 01",
+       unverified = "mvpj-ai-4", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "the third strncpy count comes from the no-CD VM 0xCB73E0 (assumed 6)")]
+pub fn conversations_set_up_conversation_node(name: GPtr<u8>, yes: GPtr<u8>, no: GPtr<u8>, speech: u32, speech_yes: u32, speech_no: u32) {
+    let node = || g::<u8>(TEMP_NODES).byte_add(g::<i32>(SETUP_NUM_NODES).read() as isize * 0x2C);
+    crt_strncpy(node(), name, 6);
+    make_upper_case(node());
+    let n = node();
+    wr::<u32>(n, 0x20, speech);
+    wr::<u32>(n, 0x24, speech_yes);
+    wr::<u32>(n, 0x28, speech_no);
+    if !yes.is_null() {
+        crt_strncpy(n.byte_add(8), yes, 6);
+    } else {
+        wr::<u8>(n, 8, 0);
+        make_upper_case(n.byte_add(8));
+    }
+    if !no.is_null() {
+        crt_strncpy(node().byte_add(0x10), no, 6);
+        make_upper_case(node().byte_add(0x10));
+    } else {
+        wr::<u8>(node(), 0x10, 0);
+    }
+    let c = g::<i32>(SETUP_NUM_NODES).read();
+    g::<i32>(SETUP_NUM_NODES).write(c + 1);
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_CONVERSATIONS_IS_PLAYER_IN_POSITION,
+    HOOK_CONVERSATIONS_SET_UP_CONVERSATION_NODE,
     HOOK_P2P_CLEAR,
     HOOK_CONV_IS_PLAYER_IN_POSITION_FOR_CONVERSATION,
     HOOK_CONV_FOR_PED_UPDATE,

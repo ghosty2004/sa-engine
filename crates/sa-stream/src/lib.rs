@@ -31,6 +31,7 @@ pub mod shared;
 pub mod cdstream;
 pub mod iplstore;
 pub mod loaded_car_group;
+pub mod name_damage;
 pub mod loading_screen;
 pub mod misc;
 pub mod rw_gta_stream;
@@ -43,3 +44,7 @@ pub mod streaming_info;
 pub mod fileloader;
 // --- owner B (C owns modelinfo::vehicle)
 pub mod modelinfo;
+pub mod img_size;
+pub mod object_instance;
+
+pub mod std6_natives;

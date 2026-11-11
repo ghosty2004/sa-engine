@@ -268,6 +268,39 @@ pub fn is_point_inside_line(ox: f32, oy: f32, dx: f32, dy: f32, px: f32, py: f32
     side(px, py, ox, oy, dx, dy).fcom(ld(r)).test_parity(5)
 }
 
+/// `CRGBA::CRGBA(uint8 r, uint8 g, uint8 b, uint8 a)` (0x7170C0, thiscall, `ret 0x10`): the four
+/// bytes (the low byte of each pushed dword) stored in order; returns `this`.
+#[hook(addr = 0x7170C0, conv = thiscall, name = "FUN_007170c0", expect = "8A 54 24 08 8B C1")]
+pub fn rgba_ctor(this: GPtr<u8>, r: u32, g: u32, b: u32, a: u32) -> GPtr<u8> {
+    for (i, v) in [r, g, b, a].into_iter().enumerate() {
+        this.byte_add(i as isize).write(v as u8);
+    }
+    this
+}
+
+/// `CRGBA::operator=(const CRGBA&)` (stub 0x463370 → `.HOODLUM` 0x156E2D0, thiscall, `ret 4`): the
+/// four bytes copied one by one in order; returns `this`.
+#[hook(addr = 0x463370, conv = thiscall, name = "thunk_FUN_0156e2d0", expect = "E9 5B AF 10 01")]
+pub fn rgba_assign(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
+    for i in 0..4 {
+        this.byte_add(i).write(src.byte_add(i).read());
+    }
+    this
+}
+
+/// `std::min<float>`-style instance (0x404330, cdecl, ST0): `fld a; fcomp b; test ah, 5; jp` → `b`
+/// when `a >= b` or unordered, else `a` (both returned through `fld dword`). The arguments are taken
+/// as their bits so a signalling NaN reaches the `fld` unchanged.
+#[hook(addr = 0x404330, conv = cdecl, name = "FUN_00404330", expect = "D9 44 24 04 D8 5C 24 08")]
+pub fn min_f(a: u32, b: u32) -> X87 {
+    let (xa, xb) = (X87::from_f32(f32::from_bits(a)), X87::from_f32(f32::from_bits(b)));
+    if xa.fcom(xb).test_parity(5) {
+        xb
+    } else {
+        xa
+    }
+}
+
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_DEBUG_INIT_TEXT_BUFFER,
@@ -281,6 +314,9 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_DOES_INFINITE_LINE_CROSS_FINITE_LINE,
     HOOK_DOES_INFINITE_LINE_TOUCH_SCREEN,
     HOOK_IS_POINT_INSIDE_LINE,
+    HOOK_RGBA_CTOR,
+    HOOK_RGBA_ASSIGN,
+    HOOK_MIN_F,
 ];
 
 // Host tests use Rust-owned memory; a phase A build cannot run them.

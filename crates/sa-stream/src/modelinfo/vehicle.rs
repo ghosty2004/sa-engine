@@ -148,9 +148,8 @@ sa_core::globals! {
     /// cleared by ShutdownEnvironmentMaps (gr: unnamed)
     pub static ENV_MAP_UNK_B4E6BC @ 0xB4E6BC: u8 = 0;
     /// Protection chunk 0x406413 of UseCommonVehicleTexDicationary: `rol [0x1560810], cl=[0x71A0E2]`
-    /// = 0x4C7510 (FindTextureCB).
+    /// = 0x4C7510 (FindTextureCB); the second operand is [`PROT_FINDTEX_B`].
     pub static PROT_FINDTEX_A @ 0x1560810: u32 = 0x8EA2_0009;
-    pub static PROT_FINDTEX_B @ 0x71A0E2: u32 = 0xFFCE_75D3;
     // foreign (owner: CWeather, not ported)
     /// `CWeather::NewWeatherType`
     pub static NEW_WEATHER_TYPE @ 0xC8131C: i16 = 0;
@@ -484,6 +483,7 @@ pub fn find_other_upgrade(list: GPtr<u8>, upgrade: i16) -> u32 {
 }
 
 /// `CVehicleModelInfo::GetModelType` (0x4C7650): `mov al, 6; ret` (too short to hook).
+#[sa_core::native(addr = 0x4C7650, conv = thiscall, name = "CVehicleModelInfo::GetModelType")]
 pub fn get_model_type(_mi: GPtr<u8>) -> u8 {
     6
 }
@@ -745,6 +745,7 @@ pub fn get_wheel_upgrade(set: i32, k: i32) -> i32 {
 }
 
 /// `CVehicleModelInfo::DeleteVehicleColourTextures` (0x4C8770): empty (`ret`, too short to hook).
+#[sa_core::native(addr = 0x4C8770, conv = cdecl, name = "CVehicleModelInfo::DeleteVehicleColourTextures")]
 pub fn delete_vehicle_colour_textures() {}
 
 /// `CVehicleModelInfo::GetCustomCarPlateText` (0x4C8970): `this + 0x28`, or null when empty.
@@ -886,13 +887,19 @@ pub fn find_texture_cb(name: GPtr<u8>) -> GPtr<u8> {
     rw_tex_dictionary_find_named_texture(cur, p)
 }
 
+/// The rotate count of the protection chunk 0x406413: the original dword at 0x71A0E2, i.e. code bytes of
+/// `CFont::GetStringWidth`'s entry (0x71A0E0). Since PORT-HUD-3 hooks that entry, the live bytes are the
+/// hook's `jmp` (sa-hook's keycells redirect the original's own read at 0x40641C to a copy), so the port
+/// uses the exe's value instead of reading the patched memory.
+const PROT_FINDTEX_B: u32 = 0xFFCE_75D3;
+
 /// `CVehicleModelInfo::UseCommonVehicleTexDicationary` (0x4C75A0): saves the find callback and
 /// installs FindTextureCB, whose address the original computes in the protection chunk 0x406413.
 #[hook(addr = 0x4C75A0, conv = cdecl, name = "CVehicleModelInfo::UseCommonVehicleTexDicationary", expect = "E8 4B BF 32 00")]
 pub fn use_common_vehicle_tex_dicationary() {
     let saved = rw_texture_get_find_call_back();
     let a = PROT_FINDTEX_A.get();
-    let cb = a.rotate_left(PROT_FINDTEX_B.get() & 31);
+    let cb = a.rotate_left(PROT_FINDTEX_B & 31);
     SAVED_TEXTURE_FIND_CALLBACK.set(saved);
     rw_texture_set_find_call_back(cb);
 }

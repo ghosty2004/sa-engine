@@ -6,7 +6,7 @@ use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 
-use crate::common::{g, jne, k, rd, wr, x};
+use crate::common::{ftol32, g, jne, k, rd, wr, x, xi};
 use sa_core::timer::TIME_MS;
 
 sa_core::globals! {
@@ -28,8 +28,13 @@ orig! {
     pub fn real_time_shadow_create(this: GPtr<u8>, blurred: u32, passes: i32, more_blur: u32) -> u8 = thiscall 0x706460 => unported;
     /// `CShadowCamera::Create(int32 rasterSizePower)` (0x705B60)
     pub fn shadow_camera_create(this: GPtr<u8>, size_power: i32) -> GPtr<u8> = thiscall 0x705B60 => unported;
-    /// `CShadowCamera::MakeGradientRaster()` (0x705D20)
-    pub fn shadow_camera_make_gradient_raster(this: GPtr<u8>) -> GPtr<u8> = thiscall 0x705D20 => unported;
+    /// `RwIm2DRenderLine(verts, numVerts, vert1, vert2)` (`RwEngineInstance` slot 0x28; the thunk
+    /// 0x734EC0 jumps there)
+    pub fn rw_im2d_render_line(verts: GPtr<u8>, n: i32, v1: i32, v2: i32) -> i32 = cdecl table 0xC97B24 0x28 => unported;
+    /// `RwCameraBeginUpdate(RwCamera*)` (0x7EE190)
+    pub fn rw_camera_begin_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE190 => unported;
+    /// `RwCameraEndUpdate(RwCamera*)` (0x7EE180)
+    pub fn rw_camera_end_update(cam: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EE180 => unported;
     /// `CRealTimeShadow::SetupForThisEntity(CPhysical*)` (0x706520)
     pub fn real_time_shadow_setup_for_this_entity(this: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x706520 => unported;
 }
@@ -44,6 +49,60 @@ const K_SPEED2: u32 = 0x3DB8_51EC;
 const PLAYER_IN_FOCUS: usize = 0xB7CD74;
 /// `CWorld::Players` (CPlayerInfo, 0x190 bytes; `m_pPed` at +0).
 const PLAYERS: usize = 0xB7CD98;
+
+/// `CShadowCamera::MakeGradientRaster()` (0x705D20, thiscall): with a camera (`this+0`) whose frame
+/// buffer raster (+0x60) has a height >= 1 (else 0), inside `RwCameraBeginUpdate` (skipped, raster
+/// returned, when it fails): render states 1/0, 6/0, 0xC/0, 0xB/1, 0xA/0xA, 7/1; one `RwIm2DRenderLine`
+/// per row y from (0, y) to (width - 1, y), z = the device's near screen z (`RwEngineInstance+0x18`),
+/// rhw = `1 / camera near plane`, grey colour `c * 0x01010101` (shift-or) with `c = _ftol(v)`, `v` from
+/// `(float)[0x8D5218]` stepping by `(float)([0x8D521C] - [0x8D5218]) / height` (f32 slots); then render
+/// states 6/1, 0xB/6, 0xA/5, 7/2 and `RwCameraEndUpdate`. Returns the raster. The vertices' u / v
+/// (uninitialised stack in the original) are 0 here; no texture is bound (STD-6).
+#[hook(addr = 0x705D20, conv = thiscall, name = "CShadowCamera::MakeGradientRaster", expect = "83 EC 54 8B 01", this = "CShadowCamera",
+       unverified = "std6-render-2", route = "L3-only", hazards = "none", recs = "new-game",
+       note = "draws into the shadow camera raster through RwIm2D")]
+pub fn shadow_camera_make_gradient_raster(this: GPtr<u8>) -> GPtr<u8> {
+    let cam: GPtr<u8> = rd(this, 0);
+    if cam.is_null() {
+        return GPtr::NULL;
+    }
+    let rhw = x(k(K_ONE)).fdiv_m(rd::<f32>(cam, 0x80)).to_f32();
+    let raster: GPtr<u8> = rd(cam, 0x60);
+    let width: i32 = rd(raster, 0xC);
+    let height: i32 = rd(raster, 0x10);
+    let engine: GPtr<u8> = g::<GPtr<u8>>(0xC97B24).read();
+    let z: f32 = rd(engine, 0x18);
+    if height < 1 {
+        return GPtr::NULL;
+    }
+    if rw_camera_begin_update(cam).is_null() {
+        return raster;
+    }
+    for (st, v) in [(1, 0), (6, 0), (0xC, 0), (0xB, 1), (0xA, 0xA), (7, 1)] {
+        rw_render_state_set(st, v);
+    }
+    let lo = g::<i32>(0x8D5218).read();
+    let hi = g::<i32>(0x8D521C).read();
+    let step = xi(hi.wrapping_sub(lo)).fdiv(xi(height)).to_f32();
+    let mut v = xi(lo).to_f32();
+    let x1 = xi(width - 1).to_f32();
+    for i in 0..height {
+        let c = ftol32(x(v)) as u32;
+        let colour = (((c << 8 | c) << 8 | c) << 8) | c;
+        let y = xi(i).to_f32();
+        // Two RwIm2DVertex (x, y, z, rhw, colour, u, v).
+        let mut verts = [0u32; 14];
+        verts[..5].copy_from_slice(&[0f32.to_bits(), y.to_bits(), z.to_bits(), rhw.to_bits(), colour]);
+        verts[7..12].copy_from_slice(&[x1.to_bits(), y.to_bits(), z.to_bits(), rhw.to_bits(), colour]);
+        rw_im2d_render_line(GPtr::<u32>::from_raw(verts.as_mut_ptr()).cast::<u8>(), 2, 0, 1);
+        v = x(v).fadd_m(step).to_f32();
+    }
+    for (st, v) in [(6, 1), (0xB, 6), (0xA, 5), (7, 2)] {
+        rw_render_state_set(st, v);
+    }
+    rw_camera_end_update(cam);
+    raster
+}
 
 /// `CStaticShadow::Free()` (0x707670): the poly bunch chain (+4, linked through +0x54) is prepended
 /// to `pEmptyBunchList`; +4 and the id +0 cleared.
@@ -247,6 +306,7 @@ pub fn get_real_time_shadow(this: GPtr<u8>, e: GPtr<u8>) -> GPtr<u8> {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_SHADOW_CAMERA_MAKE_GRADIENT_RASTER,
     HOOK_CALC_PED_SHADOW_VALUES,
     HOOK_GET_REAL_TIME_SHADOW,
     HOOK_STATIC_SHADOW_FREE,

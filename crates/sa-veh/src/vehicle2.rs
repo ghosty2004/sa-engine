@@ -399,9 +399,9 @@ orig! {
     /// `CVehicle::PreRenderDriverAndPassengers()` (0x6D3DB0)
     pub fn pre_render_driver_and_passengers_o(v: GPtr<u8>) = thiscall 0x6D3DB0 => pre_render_driver_and_passengers;
     /// `CEntity::ProcessLightsForEntity()` (0x6FC7A0)
-    pub fn entity_process_lights_for_entity(e: GPtr<u8>) = thiscall 0x6FC7A0 => unported;
+    pub fn entity_process_lights_for_entity(e: GPtr<u8>) = thiscall 0x6FC7A0 => sa_world::world::entity_lights::process_lights_for_entity;
     /// `CPhysical::GetLightingFromCol(bool)` (0x5447B0), float in ST0
-    pub fn physical_get_lighting_from_col(p: GPtr<u8>, interior: u32) -> f64 = thiscall 0x5447B0 => unported;
+    pub fn physical_get_lighting_from_col_st0(p: GPtr<u8>, interior: u32) -> f64 = thiscall 0x5447B0 => unported;
     /// `CVehicleModelInfo::SetEnvMapCoeff(float)` (0x4C9800)
     pub fn vmi_set_env_map_coeff(mi: GPtr<u8>, c: f32) = thiscall 0x4C9800 => unported;
     /// `CVisibilityPlugins::GetClumpAlpha(RpClump*)` (0x732B20)
@@ -512,7 +512,7 @@ pub fn pre_render(v: Veh) {
         entity_process_lights_for_entity(v);
     }
     wr::<u8>(v, 0x584, rd::<u8>(v, 0x584) & 0xF0);
-    let c = X87::from_f64_exact(physical_get_lighting_from_col(v, 0)).fmul_m(g::<f32>(0x858EE8).read());
+    let c = X87::from_f64_exact(physical_get_lighting_from_col_st0(v, 0)).fmul_m(g::<f32>(0x858EE8).read());
     vmi_set_env_map_coeff(mi_of(v), c.to_f32());
 }
 
@@ -2649,7 +2649,7 @@ orig! {
     /// `Fx_c::AddWheelSand(CVehicle*, CVector pos, uint8, float)` (0x4A0610)
     pub fn fx_add_wheel_sand(fx: GPtr<u8>, v: GPtr<u8>, px: u32, py: u32, pz: u32, a: u32, l: u32) = thiscall 0x4A0610 => unported;
     /// `CGeneral::GetRandomNumberInRange<float>(float, float)` (0x41BD90)
-    pub fn random_float_in_range(min: u32, max: u32) -> f64 = cdecl 0x41BD90 => unported;
+    pub fn random_float_in_range_st0(min: u32, max: u32) -> f64 = cdecl 0x41BD90 => unported;
 }
 
 /// `g_fx` (`Fx_c`).
@@ -2692,7 +2692,7 @@ pub fn add_wheel_dirt_and_water(v: Veh, cp: GPtr<u8>, below: u32, band: u32, in_
         if x(rain()).fcom(x(g::<f32>(0x858B50).read())).test_any(0x41) {
             return true;
         }
-        X87::from_f64_exact(random_float_in_range(rain().to_bits(), 0x3F81_47AE))
+        X87::from_f64_exact(random_float_in_range_st0(rain().to_bits(), 0x3F81_47AE))
             .fcom(x(g::<f32>(0x858B8C).read()))
             .test_any(0x41)
     };
@@ -2904,3 +2904,15 @@ pub const HOOKS: &[HookReg] = &[
 
 /// This module's globals (replace with a `sa_core::globals! { list GLOBALS; ... }` block when it gets some).
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];
+
+/// [`physical_get_lighting_from_col_st0`] as an x87 value (ST0, returned through the f64 ABI).
+#[allow(dead_code)]
+pub fn physical_get_lighting_from_col(p: GPtr<u8>, interior: u32) -> X87 {
+    X87::from_f64_exact(physical_get_lighting_from_col_st0(p, interior))
+}
+
+/// [`random_float_in_range_st0`] as an x87 value (ST0, returned through the f64 ABI).
+#[allow(dead_code)]
+pub fn random_float_in_range(min: u32, max: u32) -> X87 {
+    X87::from_f64_exact(random_float_in_range_st0(min, max))
+}

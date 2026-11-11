@@ -86,9 +86,31 @@ orig! {
     /// `CPickup::Update(CPlayerPed*, CVehicle*, int32 playerId)` (0x457410)
     pub fn pickup_update(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, id: i32) -> u8 = thiscall 0x457410 => crate::world::mvpd_w5::pickup_update;
     /// `CPickup::GiveUsAPickUpObject(CObject**, int32 slot)` (0x4567E0)
-    pub fn give_us_a_pick_up_object(this: GPtr<u8>, out: GPtr<GPtr<u8>>, slot: i32) = thiscall 0x4567E0 => unported;
+    pub fn give_us_a_pick_up_object(this: GPtr<u8>, out: GPtr<GPtr<u8>>, slot: i32) = thiscall 0x4567E0 => give_us_a_pick_up_object_port;
+    /// `CPools::MakeSureSlotInObjectPoolIsEmpty(int32)` (0x550080)
+    pub fn make_sure_slot_in_object_pool_is_empty(slot: i32) = cdecl 0x550080 => unported;
+    /// `CObject::operator new(uint32 size, int32 handle)` (0x5A1EF0)
+    pub fn object_new_at(size: u32, handle: i32) -> GPtr<u8> = cdecl 0x5A1EF0 => unported;
+    /// `CObject::CObject(int32 model, bool createRW)` (0x5A1D70): returns `this`
+    pub fn object_ctor(o: GPtr<u8>, model: u32, rw: u32) -> GPtr<u8> = thiscall 0x5A1D70 => unported;
+    /// `CObject::Create(int32 model, bool)` (0x5A1F60)
+    pub fn object_create(model: u32, b: u32) -> GPtr<u8> = cdecl 0x5A1F60 => unported;
+    /// `CPlaceable::SetOrientation(float x, float y, float z)` (0x439A80)
+    pub fn placeable_set_orientation(e: GPtr<u8>, ox: u32, oy: u32, oz: u32) = thiscall 0x439A80 => unported;
+    /// `CMatrix::UpdateRwMatrix(RwMatrix*)` (0x59AD70)
+    pub fn matrix_update_rw_matrix(m: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x59AD70 => unported;
+    /// `CSimpleTransform::UpdateRwMatrix(RwMatrix*)` (0x54EF40)
+    pub fn simple_transform_update_rw_matrix(t: GPtr<u8>, rw: GPtr<u8>) = thiscall 0x54EF40 => unported;
+    /// `CEntity::UpdateRwFrame()` (0x532B00)
+    pub fn entity_update_rw_frame(e: GPtr<u8>) = thiscall 0x532B00 => unported;
+    /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
+    pub fn entity_register_reference(e: GPtr<u8>, r: GPtr<GPtr<u8>>) = thiscall 0x571B70 => unported;
+    /// `CPickup::PickUpShouldBeInvisible()` (0x454D20, AL)
+    pub fn pick_up_should_be_invisible_call(this: GPtr<u8>) -> u8 = thiscall 0x454D20 => pick_up_should_be_invisible;
     /// `CWorld::Add(CEntity*)` (0x563220)
     pub fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
+    /// `CPickup::FindTextIndexForString(const char*)` (0x455500, AL used)
+    pub fn find_text_index_for_string_call(s: GPtr<u8>) -> i32 = cdecl 0x455500 => find_text_index_for_string;
     /// `CPad::GetPad(int32)` (0x53FB70)
     pub fn get_pad(n: i32) -> GPtr<u8> = cdecl 0x53FB70 => unported;
     /// `CPad::CollectPickupJustDown` (0x540A70)
@@ -597,7 +619,244 @@ pub fn update() {
     }
 }
 
+/// `CTimer::m_snTimeInMilliseconds` (0xB7CB84)
+const TIME_MS: usize = 0xB7CB84;
+
+/// The first pickup index in `range` whose type byte (+0x1C) satisfies `f`.
+fn find_slot(mut range: impl Iterator<Item = usize>, f: impl Fn(u8) -> bool) -> Option<usize> {
+    range.find(|&i| f(g::<u8>(0x9788DC + i * PICKUP_SIZE).read()))
+}
+
+/// `CPickups::GenerateNewOne(CVector pos, uint32 model, uint8 type, uint32 ammo, uint32 moneyPerDay, bool
+/// isEmpty, const char* message)` (0x456F20, cdecl). The slot: for type 0xB / 0xD or `isEmpty` the last
+/// free one (type 0, from 619 down), else (or when none) the first free one; then the first of type 8,
+/// then the first of type 4 or 5 (none → -1); a reused slot loses its object (`CWorld::Remove`, the
+/// re-read pointer deleted through vtable slot 0 with flag 1 when non-null, +4 = 0). Fields in the
+/// exe's order: ammo +8, money per day +0x16, flags +0x1D = (flags & 0xF8) | isEmpty << 1, type +0x1C,
+/// revenue +0 = 0, regeneration time +0xC = now (+20000 for type 4, +120000 for 5, +30000 for 8; types
+/// 9 / 10 become 9 with now + 1500; 0xB / 0xC become 0xB with now + 1500), model +0x18 (int16), flags
+/// bits 4-6 = `FindTextIndexForString(message)`, position +0x10 / +0x12 / +0x14 = `_ftol(c * 8.0)` (x87),
+/// flags bit 3 = `IsVisible()`, object +4 = 0; a visible pickup gets `GiveUsAPickUpObject(&object, -1)`
+/// and `CWorld::Add(object)` when one was made. The reference +0x1A goes up by one (restarts at 1 from
+/// 0xFFFE); returns `reference << 16 | index`.
+#[hook(addr = 0x456f20, conv = cdecl, name = "CPickups::GenerateNewOne", expect = "8A 4C 24 14 80 F9 0D",
+       unverified = "mvpi-world-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "creates the pickup's CObject (object pool) when visible")]
+#[allow(clippy::too_many_arguments)]
+pub fn generate_new_one(
+    px: f32,
+    py: f32,
+    pz: f32,
+    model: u32,
+    ty: u32,
+    ammo: u32,
+    money_per_day: u32,
+    is_empty: u32,
+    message: GPtr<u8>,
+) -> i32 {
+    let ty = ty as u8;
+    let empty = is_empty as u8;
+    let mut slot = None;
+    if ty == 0xD || ty == 0xB || empty != 0 {
+        slot = find_slot((0..NUM_PICKUPS).rev(), |t| t == 0);
+    }
+    if slot.is_none() {
+        slot = find_slot(0..NUM_PICKUPS, |t| t == 0);
+    }
+    if slot.is_none() {
+        let reuse = find_slot(0..NUM_PICKUPS, |t| t == 8).or_else(|| find_slot(0..NUM_PICKUPS, |t| t == 4 || t == 5));
+        let Some(i) = reuse else {
+            return -1;
+        };
+        let p = PICKUPS.ptr().cast::<u8>().byte_add((i * PICKUP_SIZE) as isize);
+        let obj = rd::<GPtr<u8>>(p, 4);
+        if !obj.is_null() {
+            world_remove(obj);
+            let obj = rd::<GPtr<u8>>(p, 4);
+            if !obj.is_null() {
+                entity_vdelete(obj, 1);
+            }
+            wr::<u32>(p, 4, 0);
+        }
+        slot = Some(i);
+    }
+    let i = slot.unwrap_or_default();
+    let p = PICKUPS.ptr().cast::<u8>().byte_add((i * PICKUP_SIZE) as isize);
+    wr::<u32>(p, 8, ammo);
+    wr::<u16>(p, 0x16, money_per_day as u16);
+    let fl = ((empty & 1) << 1) | (rd::<u8>(p, 0x1D) & 0xF8);
+    let now = g::<u32>(TIME_MS).read();
+    wr::<u8>(p, 0x1C, ty);
+    wr::<u32>(p, 0, 0);
+    wr::<u32>(p, 0xC, now);
+    wr::<u8>(p, 0x1D, fl);
+    match ty {
+        4 => wr::<u32>(p, 0xC, now.wrapping_add(20000)),
+        5 => wr::<u32>(p, 0xC, now.wrapping_add(120000)),
+        8 => wr::<u32>(p, 0xC, now.wrapping_add(30000)),
+        9 | 10 => {
+            wr::<u8>(p, 0x1C, 9);
+            wr::<u32>(p, 0xC, now.wrapping_add(1500));
+        }
+        0xB | 0xC => {
+            wr::<u8>(p, 0x1C, 0xB);
+            wr::<u32>(p, 0xC, now.wrapping_add(1500));
+        }
+        _ => {}
+    }
+    wr::<u16>(p, 0x18, model as u16);
+    let text = find_text_index_for_string_call(message) as u8;
+    let fl = rd::<u8>(p, 0x1D);
+    wr::<u8>(p, 0x1D, (fl & !0x70) | ((text << 4) & 0x70));
+    wr::<u16>(p, 0x10, ftol32(x(px).fmul_m(F8)) as u16);
+    wr::<u16>(p, 0x12, ftol32(x(py).fmul_m(F8)) as u16);
+    wr::<u16>(p, 0x14, ftol32(x(pz).fmul_m(F8)) as u16);
+    let vis = is_visible_call(p) as u8;
+    let fl = rd::<u8>(p, 0x1D);
+    let fl = (fl & !8) | ((vis << 3) & 8);
+    wr::<u8>(p, 0x1D, fl);
+    wr::<u32>(p, 4, 0);
+    if fl & 8 != 0 {
+        give_us_a_pick_up_object(p, p.byte_add(4).cast(), -1);
+        let obj = rd::<GPtr<u8>>(p, 4);
+        if !obj.is_null() {
+            world_add(obj);
+        }
+    }
+    let r = rd::<u16>(p, 0x1A);
+    let r = if r < 0xFFFE { r + 1 } else { 1 };
+    wr::<u16>(p, 0x1A, r);
+    ((u32::from(r) << 16) | i as u32) as i32
+}
+
+/// `CCutsceneMgr::ms_cutsceneLoadStatus` (int32)
+const CUTSCENE_LOAD_STATUS: usize = 0xB5F84C;
+/// `ModelIndices` entries 0x8CD750 (gets entity flag 0x100000), 0x8CD5CC and 0x8CD5F0 (carry the ammo
+/// byte into +0x13D)
+const MI_8CD750: usize = 0x8CD750;
+const MI_8CD5CC: usize = 0x8CD5CC;
+const MI_8CD5F0: usize = 0x8CD5F0;
+
+/// `CPickup::GiveUsAPickUpObject(CObject** obj, int32 slot)` (0x4567E0, thiscall, `ret 8`): `*obj = 0`;
+/// nothing more while the cutscene load status is 2. A weapon model (model type 4, vtable slot 0x10)
+/// calls `GetWeaponInfo(its weapon type +0x24, 1)` (result unused). With `slot` >= 0:
+/// `MakeSureSlotInObjectPoolIsEmpty(slot)`, then, unless `*obj` is set, `operator new(0x17C, slot << 8)`
+/// and `CObject(model, false)` (null when the allocation fails); else `CObject::Create(model, false)`.
+/// Null → done. The object: type +0x13C = 5; the pickup position (`GetPosn`, x87 loads) into the matrix
+/// (+0x30..+0x38) or the placement (+4..+0xC); model `[0x8CD750]` sets entity flag 0x100000;
+/// `SetOrientation(0, 0, -pi/2)`; with an RW object the RW matrix updated (`CMatrix::UpdateRwMatrix` or
+/// `CSimpleTransform::UpdateRwMatrix`) and `UpdateRwFrame()`; physical flags +0x40 bit 1 cleared and bit
+/// 23 set, entity flags +0x1C bit 0 cleared, object flags +0x140 bit 0 set and bit 1 = the pickup's flag
+/// bit 1, entity bit 21 set, object bit 25 = `PickUpShouldBeInvisible()`, entity bit 31 set,
+/// `RegisterReference(obj)`; +0x13D = the ammo's low byte for models `[0x8CD5CC]` / `[0x8CD5F0]`, else 0.
+/// Pickup type 7: object bit 3 and physical bit 29; type 0x12: object bit 2 and +0x13E = ammo / 5
+/// (signed). Every object access re-reads `*obj`.
+#[hook(addr = 0x4567e0, conv = thiscall, name = "CPickup::GiveUsAPickUpObject", expect = "83 EC 0C 56 8B 74 24 14",
+       unverified = "mvpi-world-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "creates a CObject (object pool, RW clump)")]
+pub fn give_us_a_pick_up_object_port(this: GPtr<u8>, obj: GPtr<GPtr<u8>>, slot: i32) {
+    obj.write(GPtr::NULL);
+    if g::<i32>(CUTSCENE_LOAD_STATUS).read() == 2 {
+        return;
+    }
+    let model = u32::from(rd::<u16>(this, 0x18));
+    let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + model as usize * 4).read();
+    if model_info_get_type(mi) == 4 {
+        let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + model as usize * 4).read();
+        get_weapon_info(rd::<i32>(mi, 0x24), 1);
+    }
+    let o = if slot >= 0 {
+        make_sure_slot_in_object_pool_is_empty(slot);
+        let cur = obj.read();
+        if !cur.is_null() {
+            cur
+        } else {
+            let mem = object_new_at(0x17C, slot << 8);
+            let o = if mem.is_null() { GPtr::NULL } else { object_ctor(mem, u32::from(rd::<u16>(this, 0x18)), 0) };
+            obj.write(o);
+            o
+        }
+    } else {
+        let o = object_create(u32::from(rd::<u16>(this, 0x18)), 0);
+        obj.write(o);
+        o
+    };
+    if o.is_null() {
+        return;
+    }
+    wr::<u8>(o, 0x13C, 5);
+    let mut tmp = [0f32; 3];
+    let p = get_posn_call(this, GPtr::from_raw(tmp.as_mut_ptr()));
+    let (pz, py, px) = (
+        x(p.wrapping_index(2).read()).to_f32(),
+        x(p.wrapping_index(1).read()).to_f32(),
+        x(p.read()).to_f32(),
+    );
+    let o = obj.read();
+    if !rd::<GPtr<u8>>(o, 0x14).is_null() {
+        wr::<f32>(rd::<GPtr<u8>>(o, 0x14), 0x30, px);
+        wr::<f32>(rd::<GPtr<u8>>(o, 0x14), 0x34, py);
+        wr::<f32>(rd::<GPtr<u8>>(o, 0x14), 0x38, pz);
+    } else {
+        wr::<f32>(o, 4, px);
+        wr::<f32>(o, 8, py);
+        wr::<f32>(o, 0xC, pz);
+    }
+    let o = obj.read();
+    if i32::from(rd::<i16>(o, 0x22)) == i32::from(g::<u16>(MI_8CD750).read()) {
+        wr::<u32>(o, 0x1C, rd::<u32>(o, 0x1C) | 0x10_0000);
+    }
+    placeable_set_orientation(obj.read(), 0, 0, 0xBFC9_0FDB);
+    let o = obj.read();
+    let rw = rd::<GPtr<u8>>(o, 0x18);
+    if !rw.is_null() {
+        let rwm = rd::<GPtr<u8>>(rw, 4).byte_add(0x10);
+        let m = rd::<GPtr<u8>>(o, 0x14);
+        if m.is_null() {
+            simple_transform_update_rw_matrix(o.byte_add(4), rwm);
+        } else {
+            matrix_update_rw_matrix(m, rwm);
+        }
+    }
+    entity_update_rw_frame(obj.read());
+    let upd = |off: isize, f: &dyn Fn(u32) -> u32| {
+        let o = obj.read();
+        wr::<u32>(o, off, f(rd::<u32>(o, off)));
+    };
+    upd(0x40, &|v| v & 0xFFFF_FFFD);
+    upd(0x40, &|v| v | 0x80_0000);
+    upd(0x1C, &|v| v & 0xFFFF_FFFE);
+    upd(0x140, &|v| v | 1);
+    let pf = u32::from(rd::<u8>(this, 0x1D));
+    upd(0x140, &|v| v ^ ((pf ^ v) & 2));
+    upd(0x1C, &|v| v | 0x20_0000);
+    let inv = u32::from(pick_up_should_be_invisible_call(this));
+    upd(0x140, &|v| v ^ (((inv << 25) ^ v) & 0x200_0000));
+    upd(0x1C, &|v| v | 0x8000_0000);
+    entity_register_reference(obj.read(), obj);
+    let m = rd::<u16>(this, 0x18);
+    if m == g::<u16>(MI_8CD5CC).read() || m == g::<u16>(MI_8CD5F0).read() {
+        wr::<u8>(obj.read(), 0x13D, rd::<u8>(this, 8));
+    } else {
+        wr::<u8>(obj.read(), 0x13D, 0);
+    }
+    match rd::<u8>(this, 0x1C) {
+        7 => {
+            upd(0x140, &|v| v | 8);
+            upd(0x40, &|v| v | 0x2000_0000);
+        }
+        0x12 => {
+            upd(0x140, &|v| v | 4);
+            let ammo = rd::<i32>(this, 8);
+            wr::<u16>(obj.read(), 0x13E, (ammo / 5) as u16);
+        }
+        _ => {}
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_GIVE_US_A_PICK_UP_OBJECT_PORT,
+    HOOK_GENERATE_NEW_ONE,
     HOOK_UPDATE,
     HOOK_IS_TYPE_3_4_5,
     HOOK_SET_POSN,

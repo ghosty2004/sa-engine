@@ -31,7 +31,7 @@ const HIST_X: usize = 0xB9B948;
 /// (Y + 1) * H * 0.5, 100)`, size 15x15, intensity 255, rz 0.01, rotation 0, alpha 255; the colour
 /// halves (logical shifts) after each entry. Finally ZWRITE 1, ZTEST 1.
 #[hook(addr = 0x56EF90, conv = thiscall, name = "FUN_0056ef90", this = "CPlayerInfo", expect = "83 EC 18 56 8B F1",
-       unverified = "mvpb-weapon-1", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        note = "spec says T[idx][j] for the pulse phase; the bytes read T[idx][0] for every entry (ECX reloaded from esp+0x24 = o). The original keeps b in its own argument slot (entry esp+4)")]
 pub fn crosshair_trail_render(this: GPtr<u8>, idx: i32) {
     if rd::<u8>(this, 0) == 0 {

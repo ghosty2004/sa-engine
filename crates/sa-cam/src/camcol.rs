@@ -5,7 +5,7 @@
 //! Values the original copies with integer moves (`mov eax, [mem]` / `push`) are carried as raw
 //! dwords, so a signalling NaN in a `.data` tunable or a `gCamColVars` row reaches the callee unchanged.
 
-use sa_core::abi::HookReg;
+use sa_core::abi::{Fp, HookReg, entry_residue, stack_footprint};
 use sa_core::mem::GPtr;
 use sa_core::platform::SCENE_CAMERA;
 use sa_core::pools::MODEL_INFO_PTRS;
@@ -402,13 +402,32 @@ fn ped_standing(this: GPtr<u8>, ped: GPtr<u8>) {
 ///    `prev = source` either way. Then at most 1.0; `source = target + D * gCurDistForCam` (z product
 ///    stored f32 first); bike and `gCurDistForCam < 0.5` -> near clip 0.05.
 ///
-/// Ported but **not hooked**: when `*source == *target` exactly, `ConeCastCollisionResolve` returns 0
-/// without writing `dist`, and step 5 reads the uninitialised stack local `[esp+0x10]` (the caller's
-/// stack history) into `gCurDistForCam` and `source`. The port uses 1.0 (the cone cast's own miss
-/// value) there. Hooking it needs a decision on that case (ledger) or a stack-faithful call. The
-/// registration, once decided (checked by the sa-hook tests: entry bytes, callers' ECX/EDX):
-/// `#[hook(addr = 0x520190, conv = stdcall, name = "CCamera::CameraColDetAndReact",
-/// expect = "83 EC 24 53 55 8B 6C 24 30")]`.
+/// Uninitialised `dist` (PORT-CAM-3): when `*source == *target` exactly, `ConeCastCollisionResolve`
+/// returns 0 without writing `dist`, and step 5 reads the local `[esp+0x10]` = [S-0x20] (S = entry
+/// ESP) into `gCurDistForCam` and `source`. No code of this function writes that slot before (its own
+/// callees run below S-0x34), so the original reads what its caller left there: the port takes that
+/// word from the footprint wrapper's entry snapshot (`sa_core::abi::entry_residue(-0x20)`), and 1.0
+/// (the cone cast's miss value) only outside the wrapper (direct Rust calls: a Rust caller's residue
+/// differs from the original caller's, see cam-port.md PORT-CAM-3).
+///
+/// Stack footprint (`footprint`, ADR-001 §5b), from the disassembly, final values: [S+4] low byte =
+/// the bike flag (`mov byte [esp+0x34]`, on the `source` argument slot); [S+8] = the radius R (stored
+/// over the `target` argument slot and updated in place); [S-4..S-0xC] = the new source z / y / x,
+/// [S-0x10] = (f32)(Dz * gCurDistForCam), [S-0x14] / [S-0x18] = Dy / Dx, [S-0x1C] = the angle,
+/// [S-0x20] = `dist`, byte [S-0x21] = 0; EBX / EBP / EDI pushed at [S-0x28] / [S-0x2C] / [S-0x30]; the
+/// cone cast's arguments [S-0x34] (&dist) .. [S-0x48] (source) and return address [S-0x4C] = 0x5204C9.
+/// The `RwCameraSetNearClipPlane` calls after it (close hit: 0x5204F3; bike: 0x520681) overwrite
+/// [S-0x34] .. [S-0x3C] with their arguments and return address; their own frames, the cone cast's
+/// frame and the ESI push / calls of the automobile path ([S-0x34] .. [S-0x3C], overwritten later) are
+/// not reproduced below that (the window keeps the pre-call bytes); when a near-clip call ran, the cone
+/// arguments [S-0x40] .. [S-0x4C] are left to the window too (the original has the callee's frame there).
+#[hook(
+    addr = 0x520190,
+    conv = stdcall,
+    name = "CCamera::CameraColDetAndReact",
+    expect = "83 EC 24 53 55 8B 6C 24 30",
+    footprint = 0x1000
+)]
 pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 {
     let mut cv = CAM_COL_VARS_PTR.get();
     let mut ccv = CUR_CAM_COL_VARS.get();
@@ -531,8 +550,8 @@ pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 {
         }
     }
 
-    // `dist` ([esp+0x10]) is not written by the cone cast when source == target (see above)
-    let mut dist = [0x3F80_0000u32];
+    // `dist` ([esp+0x10] = [S-0x20]) is not written by the cone cast when source == target (see above)
+    let mut dist = [entry_residue(-0x20).unwrap_or(0x3F80_0000)];
     let mut tmp = [0u32; 3];
     let dist_p = GPtr::from_raw(dist.as_mut_ptr()).cast::<u8>();
     LAST_RADIUS_USED_IN_COLLISION_PREVENTION
@@ -548,10 +567,13 @@ pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 {
         angle,
         dist_p,
     );
+    let mut near_clip: Option<(u32, u32, u32)> = None; // (near, camera, return address)
     let ret = if hit != 0 {
         let cvn = CAM_COL_VARS_PTR.get();
         if !jp(xb(dist[0]), x(rd::<f32>(cvn, 0xC)), 0x41) {
-            set_near_clip_raw(SCENE_CAMERA.get(), rd::<u32>(cvn, 0x10));
+            let (near, cam) = (rd::<u32>(cvn, 0x10), SCENE_CAMERA.get());
+            near_clip = Some((near, cam.addr() as u32, 0x5204F3));
+            set_near_clip_raw(cam, near);
         }
         1
     } else {
@@ -601,10 +623,47 @@ pub fn camera_col_det_and_react(source: GPtr<u8>, target: GPtr<u8>) -> u8 {
     wr::<u32>(source, 8, nz.to_bits());
     if bike && !jp(x(CUR_DIST_FOR_CAM.get()), x(CCDR_BIKE_CLOSE_DIST.get()), 0x05) {
         let v = bits(&CCDR_BIKE_NEAR);
-        set_near_clip_raw(SCENE_CAMERA.get(), v);
+        let cam = SCENE_CAMERA.get();
+        near_clip = Some((v, cam.addr() as u32, 0x520681));
+        set_near_clip_raw(cam, v);
+    }
+    let src_slot = (source.addr() as u32 & !0xFF) | u32::from(bike);
+    stack_footprint(&[
+        (4, Fp::Val(src_slot)),
+        (8, Fp::Val(r)),
+        (-4, Fp::Val(nz.to_bits())),
+        (-8, Fp::Val(ny.to_bits())),
+        (-0xC, Fp::Val(nx.to_bits())),
+        (-0x10, Fp::Val(pz.to_bits())),
+        (-0x14, Fp::Val(ddy.to_bits())),
+        (-0x18, Fp::Val(ddx.to_bits())),
+        (-0x1C, Fp::Val(angle)),
+        (-0x20, Fp::Val(dist[0])),
+        (-0x28, Fp::Ebx),
+        (-0x2C, Fp::Ebp),
+        (-0x30, Fp::Edi),
+    ]);
+    if let Some(w) = entry_residue(-0x24) {
+        stack_footprint(&[(-0x24, Fp::Val(w & 0x00FF_FFFF))]);
+    }
+    match near_clip {
+        Some((near, cam, ra)) => stack_footprint(&[
+            (-0x34, Fp::Val(near)),
+            (-0x38, Fp::Val(cam)),
+            (-0x3C, Fp::Val(ra)),
+        ]),
+        None => stack_footprint(&[
+            (-0x34, Fp::Addr(-0x20)),
+            (-0x38, Fp::Val(angle)),
+            (-0x3C, Fp::Val(r)),
+            (-0x40, Fp::Addr(-0xC)),
+            (-0x44, Fp::Val(target.addr() as u32)),
+            (-0x48, Fp::Val(source.addr() as u32)),
+            (-0x4C, Fp::Val(0x5204C9)),
+        ]),
     }
     ret
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_IMPROVE_NEAR_CLIP];
+pub const HOOKS: &[HookReg] = &[HOOK_IMPROVE_NEAR_CLIP, HOOK_CAMERA_COL_DET_AND_REACT];

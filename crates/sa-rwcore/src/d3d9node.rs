@@ -60,8 +60,8 @@ orig! {
     fn geometry_get_usage_flags(geo: GPtr<u8>) -> u32 = cdecl 0x7588D0 => crate::d3d9misc::geometry_get_usage_flags;
     /// `RwD3D9DeleteVertexShader(shader)` (0x7FAC90)
     fn delete_vertex_shader(vs: GPtr<u8>) -> u32 = cdecl 0x7FAC90 => crate::d3d9dev::delete_vertex_shader;
-    /// The vertex-shader creator `(desc, out)` (0x75F0B0, unnamed): returns the shader, fills two dwords
-    fn create_vertex_shader(desc: GPtr<u32>, out: GPtr<u32>) -> u32 = cdecl 0x75F0B0 => unported;
+    /// `_rpD3D9VertexShaderGenerate(desc, out)` (0x75F0B0): returns the shader, fills two dwords
+    fn create_vertex_shader(desc: GPtr<u32>, out: GPtr<u32>) -> u32 = cdecl 0x75F0B0 => crate::d3d9vsgen::vertex_shader_generate;
     /// CRT `memmove(dst, src, n)` (0x822A20)
     fn crt_memmove(dst: u32, src: u32, n: u32) -> u32 = cdecl 0x822A20 => unported;
     /// `RwRenderStateGet(state, out)` through `RwGlobals` +0x24 (the device's render-state getter)

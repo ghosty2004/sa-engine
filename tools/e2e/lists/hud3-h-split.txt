@@ -1,0 +1,5 @@
+# PORT-HUD-3 harness decisions in split mode: AX return (ProcessCurrentString), peek (ClipRadarPoly, DrawAreaOnRadar, CPlaceName::Process)
+0x71A220
+0x585040
+0x5853D0
+0x571F20

@@ -632,8 +632,82 @@ pub fn rp_d3d9_skin_pipeline_create() -> GPtr<u8> {
     p
 }
 
+orig! {
+    /// `RwFreeListCreateAndPreallocateSpace(size, perBlock, align, n, space, hint)` (0x801B70)
+    fn freelist_create_prealloc(size: u32, per_block: u32, align: u32, n: u32, space: GPtr<u8>, hint: u32) -> GPtr<u8> = cdecl 0x801B70 => crate::memory::rw_freelist_create_and_preallocate_space;
+    /// `RwFreeListDestroy(fl)` (0x801B80)
+    fn freelist_destroy(fl: GPtr<u8>) -> u32 = cdecl 0x801B80 => crate::memory::rw_freelist_destroy;
+    /// `_rpSkinPipelinesCreate(flags)` (0x7C8980)
+    fn skin_pipelines_create_call(flags: u32) -> u32 = cdecl 0x7C8980 => rp_skin_pipelines_create;
+    /// `_rpSkinPipelinesDestroy()` (0x7C86F0)
+    fn skin_pipelines_destroy_call() -> u32 = cdecl 0x7C86F0 => rp_skin_pipelines_destroy;
+}
+
+/// Skin engine-module instance count.
+const SKIN_OPEN_COUNT: usize = 0xC978C0;
+
+/// `cb_SKINPLUGIN_RwEngine_Open(instance, offset, size)` (0x7C68E0). On the first instance: the
+/// pipeline flags (1; 3 when the MatFX engine plugin 0x120 is attached; | 4 with plugin 0x12E),
+/// `_rpSkinPipelinesCreate(flags)` (result ignored), the matrix freelist (0x40-byte entries,
+/// `[0x8DECE0]` per block, `[0x8DECE4]` preallocated, space 0xC97078, hint 0x40116) -> 0xC978B8, a
+/// zeroed 0x400F-byte block (`rwmalloc`, not NULL-checked) -> 0xC978B0 and its 16-aligned address
+/// -> 0xC978AC. Counts the instance and returns it.
+#[hook(addr = 0x7C68E0, conv = cdecl, name = "cb_SKINPLUGIN_RwEngine_Open", expect = "A1 C0 78 C9 00 85 C0",
+       unverified = "std4-rxpipe-2", route = "L2", hazards = "heap-writes")]
+pub fn skin_engine_open(instance: u32, _offset: u32, _size: u32) -> u32 {
+    if g::<u32>(SKIN_OPEN_COUNT).read() == 0 {
+        let mut flags = 1u32;
+        if rw_engine_get_plugin_offset(0x120) != -1 {
+            flags = 3;
+        }
+        if rw_engine_get_plugin_offset(0x12E) != -1 {
+            flags |= 4;
+        }
+        skin_pipelines_create_call(flags);
+        let fl = freelist_create_prealloc(
+            0x40,
+            g::<u32>(FL_BLOCK_SIZE).read(),
+            4,
+            g::<u32>(FL_PREALLOC).read(),
+            p8(0xC97078),
+            0x40116,
+        );
+        g::<u32>(SKIN_FREELIST).write(fl.addr() as u32);
+        let buf = rw_malloc(0x400F, 0x40116);
+        g::<u32>(0xC978B0).write(buf.addr() as u32);
+        for k in 0..0x400F {
+            buf.byte_add(k).write(0u8);
+        }
+        let b = g::<u32>(0xC978B0).read();
+        g::<u32>(0xC978AC).write(b.wrapping_add(0xF) & !0xF);
+    }
+    g::<u32>(SKIN_OPEN_COUNT).write(g::<u32>(SKIN_OPEN_COUNT).read().wrapping_add(1));
+    instance
+}
+
+/// `cb_SKINPLUGIN_RwEngine_Close(instance, offset, size)` (0x7C69A0): on the last instance the
+/// pipelines, the matrix freelist (0xC978B8 = NULL) and the 0x400F-byte block (0xC978B0 = NULL) are
+/// released. Returns the instance.
+#[hook(addr = 0x7C69A0, conv = cdecl, name = "cb_SKINPLUGIN_RwEngine_Close", expect = "A1 C0 78 C9 00 48 A3",
+       unverified = "std4-rxpipe-2", route = "L2", hazards = "heap-writes")]
+pub fn skin_engine_close(instance: u32, _offset: u32, _size: u32) -> u32 {
+    let n = g::<u32>(SKIN_OPEN_COUNT).read().wrapping_sub(1);
+    g::<u32>(SKIN_OPEN_COUNT).write(n);
+    if n == 0 {
+        skin_pipelines_destroy_call();
+        freelist_destroy(p8(g::<u32>(SKIN_FREELIST).read()));
+        let b = g::<u32>(0xC978B0).read();
+        g::<u32>(SKIN_FREELIST).write(0);
+        rw_free(p8(b));
+        g::<u32>(0xC978B0).write(0);
+    }
+    instance
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_SKIN_ENGINE_OPEN,
+    HOOK_SKIN_ENGINE_CLOSE,
     HOOK_RP_SKIN_SET_FREE_LIST_CREATE_PARAMS,
     HOOK_RP_SKIN_PLUGIN_ATTACH,
     HOOK_RP_SKIN_ATOMIC_SET_HANIM_HIERARCHY,

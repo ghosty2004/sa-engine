@@ -1,0 +1,43 @@
+address	name	file	state	evidence
+0x526FC0	CCam::Process	camproc.rs	L2	split grove/driving/weapon-combat/car-ai (cam3-s3-*): 1000/1000 PASS each, 0 mismatches, 0 undeclared (after the # PORT-CAM-3 extras); rust trace IDENTICAL on all four; footprint hook (S-0xA8 = 0x527DB4 measured with SA_COV_PEEK, cam3-fp1..fp3)
+0x5150E0	CCamera::CalculateDerivedValues	camctl.rs	L2	split grove/driving/weapon-combat/car-ai (cam3-s3-*): 1000/1000 PASS each, 0 mismatches, 0 undeclared; footprint hook, Invert-2 local started from the caller's residue (entry_residue)
+0x520190	CCamera::CameraColDetAndReact	camcol.rs	L2	split grove/driving/weapon-combat/car-ai (cam3-s3-*): 1000/1000 PASS-FP each, 0 mismatches, 0 undeclared; footprint hook, uninitialised dist read from the caller's residue (entry_residue(-0x20))
+0x527FA0	CCamera::CamControl	camcontrol.rs	L2	split grove/driving/weapon-combat/car-ai (cam3-s3-*): 1000/1000 PASS each, 0 mismatches, 0 undeclared (CReferences / gMatrixList / colModelCache declared); footprint hook (L74/L78 residue on the vehicle stairs path)
+0x50B510	CCamera::DealWithMirrorBeforeConstructRenderList	camctl.rs	L2	plain l2 grove/driving/weapon-combat/car-ai (cam3-l2-*): 1000/1001 PASS each, 0 mismatches, 0 undeclared (split mode overflows the 2 GiB spool); footprint hook
+0x5267C0	CCamera::ProcessObbeCinemaCameraCar	obbe.rs	implemented	split NOCASES on grove/driving/weapon-combat/car-ai (no cinema camera in the corpus)
+0x526950	CCamera::ProcessObbeCinemaCameraTrain	obbe.rs	implemented	split NOCASES (as above)
+0x526AE0	CCamera::ProcessObbeCinemaCameraHeli	obbe.rs	implemented	split NOCASES (as above)
+0x526C80	CCamera::ProcessObbeCinemaCameraPlane	obbe.rs	implemented	split NOCASES (as above)
+0x526E20	CCamera::ProcessObbeCinemaCameraBoat	obbe.rs	implemented	split NOCASES (as above)
+0x50D930	CHandShaker::Process	handshaker.rs	implemented	split NOCASES on grove/driving/weapon-combat/car-ai
+0x517870	CIdleCam::ProcessTargetSelection	idlecam.rs	implemented	plain l2 NOCALLS on grove/driving/weapon-combat/car-ai (the idle camera never starts in the corpus)
+0x522D40	CCam::Process_FollowPed_SA	followped.rs	ported-not-hooked	helper A: split grove cam3a-gs2 1000 and weapon-combat cam3a-ws1 1000, 0 mismatches, 0 undeclared; but verify-all cam3-va: car-ai DIVERGED frame 4982 / menus-hud 5164 (camera) with it on Rust (bisected to this hook alone); split from car-ai frame 4960 (cam3-fp-ca): beta (cam+0xBC, 0x8CCE6C) orig 0xA6F72C00 rust 0xA6E00000 from atan2(-front.x, front.y) - pi/2 cancelling: needs a 64-bit FPATAN model; unhooked
+0x521500	CCam::Process_AimWeapon	aimweapon.rs	L2	helper A: split weapon-combat cam3a-ws3 356 cases, 0 mismatches, 0 undeclared
+0x50AD40	CCamera::Find3rdPersonQuickAimPitch	aimweapon.rs	L2	helper A: plain l2 weapon-combat cam3a-wl3 121 cases, 0 mismatches, 0 undeclared
+0x514970	CCamera::Find3rdPersonCamTargetVector	aimweapon.rs	L2	helper A: plain l2 weapon-combat cam3a-wl3 547 cases, 0 mismatches, 0 undeclared
+0x514030	CCamera::AvoidTheGeometry	avoidgeom.rs	implemented-needs-L2	helper A: split police-gang cam3a-ps2 256 cases FAIL only at CCollision::ProcessColModels' static sphere array 0x967F50 (known residue gap, needs the harness normaliser class, as AI-3's 0x6479B0); 0 undeclared; L3 IDENTICAL
+0x517EA0	CCam::Process_1stPerson	firstperson.rs	implemented-needs-L2	helper A: police-gang split NOCASES; L3 IDENTICAL
+0x511B50	CCam::Process_Rocket	rocket.rs	implemented-needs-L2	helper A: NOCASES
+0x50EB70	CCam::Process_1rstPersonPedOnPC	pedonpc.rs	implemented-needs-L2	helper A: NOCASES
+0x50F970	CCam::Process_FollowPedWithMouse	pedmouse.rs	implemented-needs-L2	helper A: NOCASES (needs a recording with m_bUseMouse3rdPerson)
+0x5105C0	CCam::Process_M16_1stPerson	-	not-ported	out of time (~1450 instructions)
+0x5245B0	CCam::Process_FollowCar_SA	followcar.rs	L2	helper B: split driving cam3b-ds1/ds2 and car-ai cam3b-s-car-ai, 1000 PASS each, 0 mismatches, 0 undeclared (plain L2 mismatches only at gpColCache 0x9655C8/CC stack addresses)
+0x5161A0	CCam::GetLookFromLampPostPos	dwcams.rs	L2	helper B: split car-ai cam3b-s2-car-ai 1/1, 0 mismatches, 0 undeclared
+0x520690	CCam::LookBehind	followcar.rs	implemented	helper B: no call on driving/car-ai/police-gang/grove
+0x520E40	CCam::LookRight	followcar.rs	implemented	helper B: no call
+0x50A4F0	CCam::RotCamIfInFrontCar	followcar.rs	implemented	helper B: plain l2 driving NOCALLS
+0x50DD70	CCam::Finalise_DW_CineyCams	dwcams.rs	implemented	helper B: NOCALLS
+0x517130	CCam::GetCoreDataForDWCineyCamMode	dwcams.rs	implemented	helper B: NOCALLS
+0x517400	CCam::IsTimeToExitThisDWCineyCamMode	dwcams.rs	implemented	helper B: NOCASES
+0x51D100	CCam::Process_DW_PlaneCam3	dwcams.rs	implemented	helper B: NOCASES
+0x51C760	CCam::Process_DW_PlaneCam1	dwcams.rs	implemented	helper B: NOCASES
+0x51CC30	CCam::Process_DW_PlaneCam2	dwcams.rs	implemented	helper B: NOCASES
+0x51C250	CCam::Process_DW_PlaneSpotterCam	dwcams.rs	implemented	helper B: NOCASES
+0x51B120	CCam::Process_DW_CamManCam	dwcams.rs	implemented	helper B: NOCASES
+0x512EF0	FUN_00512ef0 (ArrestCamOne cop head view)	arrestcam.rs	implemented	helper B: NOCASES
+0x515D80	FUN_00515d80 (arrest source from entity and target)	arrestcam.rs	implemented	helper B: NOCASES
+0x516010	FUN_00516010 (arrest side position near ground)	arrestcam.rs	implemented	helper B: NOCASES
+0x513220	FUN_00513220 (two-player both peds visible)	twoplayer.rs	implemented	helper B: NOCASES
+0x5132D0	FUN_005132d0 (two-player source / front / target)	twoplayer.rs	implemented	helper B: NOCASES
+0x51A740	CCam::Process_DW_HeliChaseCam	-	not-ported	out of time (nested sphere / LOS search loops)
+0x51B850	CCam::Process_DW_BirdyCam	-	not-ported	out of time (SEH static init, rand() inside the search loops)

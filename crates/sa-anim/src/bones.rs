@@ -109,6 +109,25 @@ orig! {
     pub fn call_init_limits(this: GPtr<u8>) = thiscall 0x617490 => init_limits;
 }
 
+/// `List_c::AddItem(ListItem_c*)` (0x4A8DF0, thiscall; the doubly linked list of FX, bones and IK
+/// chains): push front. `item->prev = NULL`, `item->next = head`, `head = item`; the old head's
+/// `prev` = item, or `tail = item` when the list was empty; `count += 1`.
+#[hook(addr = 0x4A8DF0, conv = thiscall, name = "FUN_004a8df0", expect = "8B 11 85 D2 8B 44 24 04",
+       unverified = "std4-core-1", route = "L2", hazards = "none", recs = "boot")]
+pub fn list_add_item(this: GPtr<u8>, item: GPtr<u8>) {
+    let head = this.cast::<u32>().read();
+    this.cast::<u32>().write(item.addr() as u32);
+    item.cast::<u32>().write(0);
+    item.byte_add(4).cast::<u32>().write(head);
+    if head != 0 {
+        GPtr::<u32>::from_addr(head as usize).write(item.addr() as u32);
+    } else {
+        this.byte_add(4).cast::<u32>().write(item.addr() as u32);
+    }
+    let c = this.byte_add(8).cast::<u32>();
+    c.write(c.read().wrapping_add(1));
+}
+
 /// `BoneNode_c::BoneNode_c` (0x616B30): `ListItem_c` ctor, `m_Children` (`TList_c`) ctor; returns
 /// this. The SEH frame around the member constructors is not built (stack only).
 #[hook(addr = 0x616B30, conv = thiscall, name = "BoneNode_c::Constructor", expect = "6A FF 68 A8 EF 83 00", this = "BoneNode_c")]
@@ -595,6 +614,7 @@ pub fn manager_get_num_bone_nodes_left(this: GPtr<u8>) -> i32 {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_LIST_ADD_ITEM,
     HOOK_CONSTRUCTOR,
     HOOK_DESTRUCTOR,
     HOOK_ADD_CHILD,

@@ -94,7 +94,7 @@ fn clump_data(clump: GPtr<u8>) -> GPtr<u8> {
 /// i * stride `+0x24`), +0x14 = node id (`pNodeInfo[i]`), +4..+0xC = bone position; then `ForAllFrames(0x4D6500)`
 /// and flag 8 on the first frame.
 #[hook(addr = 0x4D6510, conv = cdecl, name = "RpAnimBlendClumpInitSkinned", expect = "55 8B EC 83 E4 F8",
-       entry_eax, unverified = "mvpb-anim-1", route = "L2", hazards = "heap-writes", note = "clump pointer in EAX")]
+       entry_eax, route = "L2", hazards = "heap-writes", note = "clump pointer in EAX")]
 pub fn rp_anim_blend_clump_init_skinned() {
     let clump: GPtr<u8> = GPtr::from_addr(sa_core::abi::entry_eax() as usize);
     rp_anim_blend_allocate_data(clump);
@@ -129,7 +129,7 @@ pub fn rp_anim_blend_clump_init_skinned() {
 /// (`RwFrameForAllChildren(0x4D6670)` with a cursor starting at the frame array), `ForAllFrames(0x4D6640)`, flag 8 on
 /// the first frame.
 #[hook(addr = 0x4D66A0, conv = cdecl, name = "FUN_004d66a0", expect = "83 EC 08 56 57 8B F8",
-       entry_eax, unverified = "mvpb-anim-1", route = "L2", hazards = "heap-writes", note = "clump pointer in EAX")]
+       entry_eax, route = "L2", hazards = "heap-writes", note = "clump pointer in EAX")]
 pub fn rp_anim_blend_clump_init_unskinned() {
     let clump: GPtr<u8> = GPtr::from_addr(sa_core::abi::entry_eax() as usize);
     rp_anim_blend_allocate_data(clump);
@@ -149,7 +149,7 @@ pub fn rp_anim_blend_clump_init_unskinned() {
 /// skinned path): for ped nodes 1..18, `out[i]` = the frame entry of the bone `ConvertPedNode2BoneTag(i)`
 /// (`RpHAnimIDGetIndex` in the skin hierarchy; 0x18-byte entries).
 #[hook(addr = 0x4D6450, conv = cdecl, name = "FUN_004d6450", expect = "8B 0D 78 F8 B5 00",
-       entry_eax, unverified = "mvpb-anim-1", route = "L2", hazards = "none", note = "clump pointer in EAX")]
+       entry_eax, route = "L2", hazards = "none", note = "clump pointer in EAX")]
 pub fn clump_fill_frame_array_skinned(out: GPtr<u32>) {
     let clump: GPtr<u8> = GPtr::from_addr(sa_core::abi::entry_eax() as usize);
     let data = clump_data(clump);
@@ -167,7 +167,7 @@ pub fn clump_fill_frame_array_skinned(out: GPtr<u32>) {
 /// node (`assoc nodes + off`) has a sequence (+0x10) calls `CAnimBlendNode::FindKeyFrame(hierarchy time +0x20)`;
 /// frames flagged 8 are skipped while `[0xB4EA0C]+0xC` is set.
 #[hook(addr = 0x4D1570, conv = cdecl, name = "RpAnimBlendNodeUpdateKeyFrames", expect = "57 8B F8 8B 47 04",
-       entry_eax, unverified = "mvpb-anim-1", route = "L2", hazards = "heap-writes", note = "association list in EAX")]
+       entry_eax, route = "L2", hazards = "heap-writes", note = "association list in EAX")]
 pub fn rp_anim_blend_node_update_key_frames(frames: GPtr<u8>, n: i32) {
     let mut list: GPtr<u8> = GPtr::from_addr(sa_core::abi::entry_eax() as usize).byte_add(4);
     let mut a = rd::<GPtr<u8>>(list, 0);
@@ -191,7 +191,7 @@ pub fn rp_anim_blend_node_update_key_frames(frames: GPtr<u8>, n: i32) {
 /// `ForAllFramesF` (0x4D6310, cdecl callback `(AnimBlendFrameData*, void* key)`): stores the frame in 0xB5F87C when
 /// the upper-case key of its bone name (`ConvertBoneTag2BoneName(+0x14)`, skipped when null) equals the key.
 #[hook(addr = 0x4D6310, conv = cdecl, name = "ForAllFramesF", expect = "56 8B 74 24 08",
-       unverified = "mvpb-anim-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn for_all_frames_find_bone_name(fd: GPtr<u8>, key: u32) {
     let name = convert_bone_tag_2_bone_name_o(rd::<i32>(fd, 0x14));
     if name != 0 && get_uppercase_key(name) == key {
@@ -202,7 +202,7 @@ pub fn for_all_frames_find_bone_name(fd: GPtr<u8>, key: u32) {
 /// `ForAllFramesF` (0x4D6340, cdecl callback `(AnimBlendFrameData*, void* key)`): stores the frame in 0xB5F87C when
 /// the upper-case key of its RW frame's node name (`GetFrameNodeName(+0x10)`) equals the key.
 #[hook(addr = 0x4D6340, conv = cdecl, name = "ForAllFramesF", expect = "56 8B 74 24 08",
-       unverified = "mvpb-anim-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn for_all_frames_find_node_name(fd: GPtr<u8>, key: u32) {
     let name = get_frame_node_name(rd::<GPtr<u8>>(fd, 0x10));
     if get_uppercase_key(name) == key {
@@ -213,7 +213,7 @@ pub fn for_all_frames_find_node_name(fd: GPtr<u8>, key: u32) {
 /// `ConvertBoneTag2BoneName(int32 tag)` (0x4D56F0, cdecl): the bone name string for a ped bone tag (jump tables
 /// 0x4D5864 / 0x4D57EC for 0..0x36, then 0xC9, 0x12D, 0x12E); 0 for anything else.
 #[hook(addr = 0x4D56F0, conv = cdecl, name = "ConvertBoneTag2BoneName", expect = "8B 44 24 04 3D C9 00 00 00",
-       unverified = "mvpb-anim-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn convert_bone_tag_2_bone_name(tag: i32) -> u32 {
     match tag {
         0 => 0x85EE74,
@@ -279,7 +279,7 @@ pub fn cutscene_mgr_finish_cutscene() {
 /// objects of that model within 1.5 (2D) and hides each visible one (+0x1C bit 0x80): it is appended to the hidden
 /// list (0xBC2968, reference registered) and loses the flag.
 #[hook(addr = 0x5AFAD0, conv = cdecl, name = "CCutsceneMgr::HideRequestedObjects", expect = "A1 F8 3F BC 00",
-       unverified = "mvpb-anim-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn cutscene_mgr_hide_requested_objects() {
     let num = g::<i32>(0xBC3FF8);
     let n = num.read();
@@ -360,7 +360,7 @@ pub fn cutscene_mgr_create_cutscene_object(id: i32) -> GPtr<u8> {
 /// bits of +0x36 kept with status 2 (`| 0x10`), +0x13C = 4 (object type cutscene), +0x17C = +0x180 = 0, +0x1C flags:
 /// clear bit 0, set 0x10000400; `SetIsStatic(false)`; clear 0x08000000; +0x12C = 0.5. Returns this.
 #[hook(addr = 0x5B19D0, conv = thiscall, name = "CCutsceneObject::CCutsceneObject", expect = "6A FF 68 78 D4 83 00",
-       unverified = "mvpb-anim-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn cutscene_object_ctor(this: GPtr<u8>) -> GPtr<u8> {
     object_ctor(this);
     wr::<u32>(this, 0, 0x868A60);

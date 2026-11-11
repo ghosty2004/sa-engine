@@ -1008,3 +1008,13 @@
   main's DLL before). 108 promotions recorded as L2 in state.csv.
 - verify-all main-g5 + main-g5b (fresh DLL 32279fd): IDENTICAL on all 11 (3 recordings re-run after the disk guard
   skipped them).
+
+## 2026-11-11 STD-6 integrated (main session): native boot through Init1–3, plus everything it merged
+- STD-6's branch (base master 7fd59f2) carries STD-4/5/6 (native boot: main menu, New Game, Init1/2/3, main.scm
+  running, CCamera::Process; blocked at ServiceAmbientGunFire 0x4DF210), PORT-AUDIO-3 final, PORT-HUD-3 final
+  (incl. the GetStringWidth/UseCommonVehicleTexDicationary constant fix), PORT-CAM-3 (nested footprints),
+  WRITER-VEH-BIG, WRITER-RENDER-BIG/-2, WRITER-MVP-I/J, VERIFIER-4 (AddParticle / ComputeEventResponseTasks fixes,
+  SA_CRASH_LOG). Squash-merged as is (master was its ancestor). PRESERVE_SPECS_PENDING += 0x464C00.
+- verify-all main-std6 (fresh DLL 4224b26): IDENTICAL on all 11.
+- Catalogue: every address with a #[hook]/#[native] registration is at least `implemented` (1,067 rows moved);
+  L2 promoted from HUD-3/CAM-3/AUDIO-3 verdicts and the VERIFIER-2/4 mvpb promotions.

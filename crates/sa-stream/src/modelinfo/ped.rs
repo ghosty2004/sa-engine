@@ -55,12 +55,10 @@ sa_core::globals! {
         0x2B, 7, 0xBE38_51EC, 0, 0, 0x3E23_D70A, 0,
         0x35, 8, 0xBE38_51EC, 0, 0, 0x3E23_D70A,
     ];
-    // foreign (owner: CGame)
-    /// `CGame::m_pWorkingMatrix1`
-    pub static WORKING_MATRIX_1 @ 0xB72920: GPtr<RwMatrix> = GPtr::NULL;
-    /// `CGame::m_pWorkingMatrix2`
-    pub static WORKING_MATRIX_2 @ 0xB72924: GPtr<RwMatrix> = GPtr::NULL;
 }
+
+/// `CGame::m_pWorkingMatrix1` / `2` (owner: CGame, declared in `sa_core::game`).
+use sa_core::game::{WORKING_MATRIX_1, WORKING_MATRIX_2};
 
 orig! {
     /// `CClumpModelInfo::SetClump` (0x4C4F70)
@@ -131,7 +129,7 @@ fn clump_frame_matrix(clump: GPtr<u8>) -> GPtr<RwMatrix> {
 
 /// `vec = point; WM2 = WM1; WM2 = bone * WM2 (pre-concat); vec = WM2 * vec`.
 fn transform_via_working(hier: GPtr<u8>, id: i32, v: &mut RwV3d) {
-    let (wm1, wm2) = (WORKING_MATRIX_1.get(), WORKING_MATRIX_2.get());
+    let (wm1, wm2) = (WORKING_MATRIX_1.get().cast::<RwMatrix>(), WORKING_MATRIX_2.get().cast::<RwMatrix>());
     wm2.write(wm1.read());
     let m = bone_matrix(hier, id);
     rw_matrix_transform(wm2, m, 1);
@@ -140,14 +138,17 @@ fn transform_via_working(hier: GPtr<u8>, id: i32, v: &mut RwV3d) {
 }
 
 /// `CPedModelInfo::GetModelType` (0x4C57C0): AL = 7 (unhookable).
+#[sa_core::native(addr = 0x4C57C0, conv = thiscall, name = "CPedModelInfo::GetModelType")]
 pub fn get_model_type(_this: MiPtr) -> u8 {
     7
 }
 
 /// `CPedModelInfo::AddXtraAtomics` (0x4C6D40): `ret 4` (unhookable).
+#[sa_core::native(addr = 0x4C6D40, conv = thiscall, name = "CPedModelInfo::AddXtraAtomics")]
 pub fn add_xtra_atomics(_this: MiPtr, _clump: GPtr<u8>) {}
 
 /// `CPedModelInfo::SetFaceTexture` (0x4C6D50): `ret 4` (unhookable).
+#[sa_core::native(addr = 0x4C6D50, conv = thiscall, name = "CPedModelInfo::SetFaceTexture")]
 pub fn set_face_texture(_this: MiPtr, _tex: GPtr<u8>) {}
 
 /// `CPedModelInfo::IncrementVoice` (0x4C7300): with a valid range (`min, max >= 0`, signed 16-bit),
@@ -228,7 +229,7 @@ pub fn create_hit_col_model_skinned(this: MiPtr, clump: GPtr<u8>) {
     let mem = col_model_operator_new(0x30);
     let cm = if mem.is_null() { GPtr::NULL } else { col_model_constructor(mem) };
     col_model_allocate_data(cm, NUM_COL_NODES as i32, 0, 0, 0, 0, 0);
-    rw_matrix_invert(WORKING_MATRIX_1.get(), clump_frame_matrix(clump));
+    rw_matrix_invert(WORKING_MATRIX_1.get().cast(), clump_frame_matrix(clump));
     let mut sphere = cm.byte_add(0x2C).cast::<GPtr<u8>>().read().byte_add(8).cast::<GPtr<u8>>().read();
     for k in 0..NUM_COL_NODES {
         let (bone, piece, centre, radius) = node(k);
@@ -274,7 +275,7 @@ pub fn animate_ped_col_model_skinned(this: MiPtr, clump: GPtr<u8>) -> GPtr<u8> {
     }
     let col_data = hit_col(this).byte_add(0x2C).cast::<GPtr<u8>>().read();
     let hier = get_anim_hierarchy_from_skin_clump(clump);
-    rw_matrix_invert(WORKING_MATRIX_1.get(), clump_frame_matrix(clump));
+    rw_matrix_invert(WORKING_MATRIX_1.get().cast(), clump_frame_matrix(clump));
     let mut off = 0isize;
     for k in 0..NUM_COL_NODES {
         let (bone, _, centre, _) = node(k);

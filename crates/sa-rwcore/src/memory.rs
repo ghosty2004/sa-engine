@@ -626,6 +626,21 @@ pub fn rw_resources_arena_split_block(b: GPtr<u8>, size: u32) -> GPtr<u8> {
 }
 
 /// Every `#[hook]` of this module.
+/// `RwFreeListCreateAndPreallocateSpace(entrySize, entriesPerBlock, alignment, numBlocks,
+/// inPlaceSpace, hint)` (0x801B70): a `jmp _rwFreeListCreateInternal` (STD-3, written, unverified).
+// Not hooked: a 5-byte `jmp` into .text (sa-hook only takes jmp stubs into .HOODLUM).
+#[sa_core::native(addr = 0x801B70, conv = cdecl, name = "RwFreeListCreateAndPreallocateSpace")]
+pub fn rw_freelist_create_and_preallocate_space(
+    size: u32,
+    per_block: u32,
+    align: u32,
+    n: u32,
+    space: GPtr<u8>,
+    hint: u32,
+) -> GPtr<u8> {
+    freelist_create_internal_call(size, per_block, align, n, space, hint)
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_RW_FREELIST_SET_FLAGS,
     HOOK_RW_FREELIST_CREATE,
@@ -646,6 +661,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RW_RESOURCES_ARENA_FIND_FREE,
     HOOK_RW_RESOURCES_ARENA_SPLIT_BLOCK,
 ];
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_RW_FREELIST_CREATE_AND_PREALLOCATE_SPACE];
 
 /// Globals owned by this module.
 pub const GLOBALS: &[GlobalDesc] = &[];

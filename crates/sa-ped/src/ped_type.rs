@@ -167,9 +167,113 @@ pub fn ped_type_shutdown() {
     crt_free(a.byte_add(-4));
 }
 
+orig! {
+    /// CRT `operator new(size)` (0x821195)
+    fn ps_operator_new(size: u32) -> GPtr<u8> = cdecl 0x821195 => unported;
+    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
+    fn ps_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> u32 = cdecl 0x538900 => unported;
+    /// `CFileMgr::CloseFile(file)` (0x5389D0)
+    fn ps_close_file(file: u32) -> i32 = cdecl 0x5389D0 => unported;
+    /// `CFileLoader::LoadLine(FILE*)` (0x536F80)
+    fn ps_load_line(file: u32) -> GPtr<u8> = cdecl 0x536F80 => unported;
+    /// CRT `sscanf(line, "%s %f %f %d %d %d %d %f %f %d %d", ...)` (0x8220AD)
+    fn ps_sscanf(line: GPtr<u8>, fmt: GPtr<u8>, name: GPtr<u8>, a: GPtr<u32>, b: GPtr<u32>, c: GPtr<u32>, d: GPtr<u32>, e: GPtr<u32>, f: GPtr<u32>, gg: GPtr<u32>, h: GPtr<u32>, i: GPtr<u32>, j: GPtr<u32>) -> i32 = cdecl 0x8220AD => unported;
+    /// `CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker()` (0x5BF400)
+    fn ps_load_default_decision_maker() = cdecl 0x5BF400 => unported;
+}
+
+/// `CPedStats::Initialise` (0x5BF9D0): `ms_apPedStats = new CPedStat[43]` (0x8BC bytes), each entry
+/// defaulted (+0 id 0, +0x1C flee distance 20.0, +0x20 heading change rate 15.0, +0x24..+0x27 fear,
+/// temper, lawfulness, sexiness 50, +0x28 attack strength 1.0, +0x2C defend weakness 1.0, +0x30 shooting
+/// rate 0, +0x32 default decision maker 0; the name is left as allocated), then `LoadPedStats` and a
+/// tail jump to `CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker`.
+#[hook(addr = 0x5BF9D0, conv = cdecl, name = "CPedStats::Initialise", expect = "53 55 56 68 BC 08 00 00",
+       unverified = "std4-data-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+pub fn ped_stats_initialise() {
+    let t = ps_operator_new(0x8BC);
+    PED_STATS.set(t);
+    for i in 0..NUM_PED_STATS as isize {
+        let e = PED_STATS.get().byte_add(0x34 * i);
+        wr::<u32>(e, 0, 0);
+        wr::<u32>(e, 0x1C, 0x41A0_0000);
+        wr::<u32>(e, 0x20, 0x4170_0000);
+        for o in 0x24..0x28 {
+            wr::<u8>(e, o, 0x32);
+        }
+        wr::<u32>(e, 0x28, 0x3F80_0000);
+        wr::<u32>(e, 0x2C, 0x3F80_0000);
+        wr::<u16>(e, 0x30, 0);
+        wr::<u8>(e, 0x32, 0);
+    }
+    load_ped_stats();
+    ps_load_default_decision_maker();
+}
+
+/// `CPedStats::LoadPedStats` (0x5BB890): `data\pedstats.dat` line by line (`CFileLoader::LoadLine`),
+/// skipping lines starting with `#` or empty; each other line is `sscanf`'d with
+/// `"%s %f %f %d %d %d %d %f %f %d %d"` and fills the next entry: +0 the running index, +4 the name
+/// (strcpy), +0x1C/+0x20 floats, +0x24..+0x27 the low bytes of the four ints, +0x28/+0x2C floats, +0x30
+/// the low word and +0x32 the low byte of the last two ints. The values are stack locals in the
+/// original: fields `sscanf` does not fill keep the previous line's values (the port keeps them across
+/// lines too; before the first line they are zero here, uninitialised there). The floats are copied
+/// with `fld`/`fstp` (an SNaN would be quieted; the port copies bits).
+#[hook(addr = 0x5BB890, conv = cdecl, name = "CPedStats::LoadPedStats", expect = "83 EC 48 53 57",
+       unverified = "std4-data-1", route = "L2", hazards = "uninit-locals", recs = "boot")]
+pub fn load_ped_stats() {
+    let f = ps_open_file(g::<u8>(0x86A698), g::<u8>(0x85A53C));
+    let mut v = [0u32; 10];
+    let mut name = [0u8; 0x20];
+    let mut index = 0u32;
+    let mut off = 0isize;
+    loop {
+        let line = ps_load_line(f);
+        if line.is_null() {
+            break;
+        }
+        let c = line.read();
+        if c == b'#' || c == 0 {
+            continue;
+        }
+        let vb = v.as_mut_ptr();
+        let vp = |i: usize| GPtr::<u32>::from_raw(vb.wrapping_add(i));
+        ps_sscanf(
+            line,
+            g::<u8>(0x86A674),
+            GPtr::from_raw(name.as_mut_ptr()),
+            vp(0), vp(1), vp(2), vp(3), vp(4), vp(5), vp(6), vp(7), vp(8), vp(9),
+        );
+        let e = PED_STATS.get().byte_add(off);
+        wr::<u32>(e, 0, index);
+        let mut k = 0isize;
+        loop {
+            let b = name[k as usize];
+            wr::<u8>(e, 4 + k, b);
+            if b == 0 {
+                break;
+            }
+            k += 1;
+        }
+        wr::<u32>(e, 0x1C, v[0]);
+        index += 1;
+        wr::<u32>(e, 0x20, v[1]);
+        wr::<u8>(e, 0x24, v[2] as u8);
+        wr::<u8>(e, 0x25, v[3] as u8);
+        wr::<u8>(e, 0x26, v[4] as u8);
+        wr::<u8>(e, 0x27, v[5] as u8);
+        wr::<u32>(e, 0x28, v[6]);
+        wr::<u32>(e, 0x2C, v[7]);
+        wr::<u16>(e, 0x30, v[8] as u16);
+        wr::<u8>(e, 0x32, v[9] as u8);
+        off += 0x34;
+    }
+    ps_close_file(f);
+}
+
 // --- hook list (generated) ---
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PED_STATS_INITIALISE,
+    HOOK_LOAD_PED_STATS,
     HOOK_FIND_PED_TYPE,
     HOOK_GET_PED_FLAG,
     HOOK_GET_PED_STAT_TYPE,

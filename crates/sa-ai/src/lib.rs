@@ -56,6 +56,12 @@ pub mod mvpa_ai2;
 pub mod mvpc_ai1;
 pub mod mvpc_ai2;
 pub mod mvpc_ai3;
+pub mod node_route_tasks;
+pub mod anim_tasks;
+pub mod ped_geometry;
+pub mod player_on_foot;
+pub mod ik_tasks;
+pub mod hold_entity;
 pub mod pgi;
 pub mod seek;
 pub mod small;
@@ -73,3 +79,5 @@ pub mod attractor_scanner;
 pub mod walk;
 pub mod walkround;
 pub mod wander;
+
+pub mod std6_natives;

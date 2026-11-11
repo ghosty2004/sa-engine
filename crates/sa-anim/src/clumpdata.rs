@@ -78,9 +78,11 @@ pub fn for_all_frames(this: GPtr<u8>, cb: u32, data: u32) {
 }
 
 /// `CAnimBlendClumpData::LoadFramesIntoSPR()` (0x4CF1D0): `ret` (not hookable).
+#[sa_core::native(addr = 0x4CF1D0, conv = thiscall, name = "CAnimBlendClumpData::LoadFramesIntoSPR")]
 pub fn load_frames_into_spr(_this: GPtr<u8>) {}
 
 /// `CAnimBlendClumpData::ForAllFramesInSPR(cb, data, n)` (0x4CF1E0): `ret 0xC` (not hookable).
+#[sa_core::native(addr = 0x4CF1E0, conv = thiscall, name = "CAnimBlendClumpData::ForAllFramesInSPR")]
 pub fn for_all_frames_in_spr(_this: GPtr<u8>, _cb: u32, _data: u32, _n: u32) {}
 
 pub const HOOKS: &[HookReg] = &[HOOK_CONSTRUCTOR, HOOK_DESTRUCTOR, HOOK_SET_NUMBER_OF_BONES, HOOK_FOR_ALL_FRAMES];

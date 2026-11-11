@@ -536,6 +536,7 @@ fn attach() {
     crate::keycells::install();
     let (ok, wanted) = install_all(oracle, &ports);
     crate::cdsync::install();
+    crate::crashlog::init();
     log(&format!(
         "{ok}/{wanted} hooks installed (oracle group {}, ports {ports:?})",
         if oracle { "on" } else { "off" }

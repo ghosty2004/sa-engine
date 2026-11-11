@@ -405,6 +405,170 @@ pub fn play(_cmd_show: i32, path: GPtr<u8>) {
     call::set_focus_play(ps_window());
 }
 
+mod sel {
+    use crate::mem::GPtr;
+    crate::orig! {
+        /// `RwEngineGetNumSubSystems` (0x7F2C00)
+        pub fn rw_engine_get_num_sub_systems() -> i32 = cdecl 0x7F2C00 => unported;
+        /// `RwEngineGetSubSystemInfo(RwSubSystemInfo*, index)` (0x7F2C30)
+        pub fn rw_engine_get_sub_system_info(info: GPtr<u8>, index: i32) -> GPtr<u8> = cdecl 0x7F2C30 => unported;
+        /// `RwEngineSetSubSystem(index)` (0x7F2C90)
+        pub fn rw_engine_set_sub_system(index: u32) -> i32 = cdecl 0x7F2C90 => unported;
+        /// `RwEngineSetVideoMode(index)` (0x7F2D50)
+        pub fn rw_engine_set_video_mode(index: i32) -> i32 = cdecl 0x7F2D50 => unported;
+        /// `RwD3D9EngineSetRefreshRate(rate)` (0x7F8580)
+        pub fn rw_d3d9_engine_set_refresh_rate(rate: u32) -> i32 = cdecl 0x7F8580 => unported;
+        /// `RwD3D9EngineSetMultiSamplingLevels(levels)` (0x7F84F0)
+        pub fn rw_d3d9_engine_set_multi_sampling_levels(levels: u32) -> i32 = cdecl 0x7F84F0 => unported;
+        /// `GetBestRefreshRate(width, height, depth)` (0x7460A0)
+        pub fn get_best_refresh_rate(width: u32, height: u32, depth: u32) -> u32 = cdecl 0x7460A0 => super::get_best_refresh_rate;
+        /// `VideoMode::GetVideoModeList()` (0x745AF0)
+        pub fn get_video_mode_list() -> u32 = cdecl 0x745AF0 => super::get_video_mode_list;
+        /// USER32 `DialogBoxParamA` (IAT 0x8582CC)
+        pub fn dialog_box_param_a(instance: u32, template: u32, parent: u32, proc_: u32, param: u32) -> i32 = stdcall cell 0x8582CC => unported;
+        /// USER32 `MessageBoxA` (IAT 0x8582F4)
+        pub fn message_box_a(hwnd: u32, text: GPtr<u8>, caption: GPtr<u8>, ty: u32) -> i32 = stdcall cell 0x8582F4 => unported;
+    }
+}
+
+globals! {
+    list SELECT_GLOBALS;
+    /// `UseDefaultVM`
+    pub static USE_DEFAULT_VM @ 0xC920FC: u32 = 0;
+    /// `GnumSubSystems`
+    pub static NUM_SUB_SYSTEMS @ 0xC920F0: i32 = 0;
+    /// `MultipleSubSystems`
+    pub static MULTIPLE_SUB_SYSTEMS @ 0xC92118: u32 = 0;
+    /// `IsVMNotSelected`
+    pub static IS_VM_NOT_SELECTED @ 0x8D6218: u32 = 1;
+}
+
+/// `GsubSysInfo[16]` (0x50-byte `RwSubSystemInfo` each).
+const SUB_SYS_INFO: usize = 0xC8CFC0;
+/// The time-stamp counter `psSelectDevice` stores (high dword, low dword).
+const SELECT_TSC_HI: usize = 0xC92104;
+const SELECT_TSC_LO: usize = 0xC92108;
+/// `FrontEndMenuManager` fields: m_nCurrentScreenItem, m_nPrefsAntialiasing, m_nPrefsVideoMode,
+/// m_nDisplayVideoMode.
+const MENU_CURRENT_SCREEN_ITEM: usize = 0xBA679C;
+const MENU_PREFS_ANTIALIASING: usize = 0xBA6810;
+const MENU_PREFS_VIDEO_MODE: usize = 0xBA681C;
+const MENU_DISPLAY_VIDEO_MODE: usize = 0xBA6820;
+
+/// `rdtsc` as (high, low); 0 off x86.
+fn rdtsc() -> (u32, u32) {
+    #[cfg(target_arch = "x86")]
+    #[allow(unsafe_code)]
+    {
+        // SAFETY: reads the time-stamp counter.
+        let t = unsafe { core::arch::x86::_rdtsc() };
+        ((t >> 32) as u32, t as u32)
+    }
+    #[cfg(not(target_arch = "x86"))]
+    {
+        (0, 0)
+    }
+}
+
+/// `Ps::psSelectDevice` (0x746190), as the 1.0 US bytes differ from gta-reversed: unless
+/// `UseDefaultVM`, the subsystem count (0 → FALSE; at most 16), their infos, the current one, and
+/// the time-stamp counter stored at 0xC92104/0xC92108. More than one subsystem: the video-mode
+/// dialog (`DialogBoxParamA(instance, 0x68, window, 0x745E50, 0)` unless `UseDefaultVM`), set the
+/// subsystem. One: set the subsystem; unless `UseDefaultVM`, a listed `m_nDisplayVideoMode` (non-zero)
+/// becomes the preferred and current mode, else the default search: from `gCurrentVideoMode` up,
+/// the first mode when `IsVMNotSelected` is clear, otherwise the first exclusive 800x600x32 (none →
+/// `MessageBoxA` and FALSE). Then the mode's info, `m_nCurrentScreenItem = 0`, set the mode
+/// (failure → FALSE); an exclusive mode sets the best refresh rate (when there is one), the
+/// maximum size and `ps->fullScreen`; the antialiasing preference becomes the multisampling level.
+/// The mode-info local is uninitialised in the original where a query fails (port: zero).
+/// Written by STD-3, not yet verified.
+#[hook(addr = 0x746190, conv = cdecl, name = "Ps::psSelectDevice", expect = "A1 FC 20 C9 00 83 EC 1C")]
+pub fn ps_select_device() -> i32 {
+    let ps = crate::platform::RS_PS.get().cast::<u32>();
+    let (mut window, mut instance) = (0u32, 0u32);
+    if USE_DEFAULT_VM.get() == 0 {
+        window = ps.read();
+        instance = ps.wrapping_index(1).read();
+        let n = sel::rw_engine_get_num_sub_systems();
+        NUM_SUB_SYSTEMS.set(n);
+        if n == 0 {
+            return 0;
+        }
+        if n > 16 {
+            NUM_SUB_SYSTEMS.set(16);
+        }
+        let mut i = 0;
+        while i < NUM_SUB_SYSTEMS.get() {
+            sel::rw_engine_get_sub_system_info(GPtr::from_addr(SUB_SYS_INFO + 0x50 * i as usize), i);
+            i += 1;
+        }
+        CUR_SEL_SS.set(call::rw_engine_get_current_sub_system());
+        let (hi, lo) = rdtsc();
+        GPtr::<u32>::from_addr(SELECT_TSC_HI).write(hi);
+        GPtr::<u32>::from_addr(SELECT_TSC_LO).write(lo);
+    }
+    let mut vmi: RwVideoMode = [0; 6];
+    let vmi_p = GPtr::from_raw(&raw mut vmi);
+    if NUM_SUB_SYSTEMS.get() > 1 {
+        MULTIPLE_SUB_SYSTEMS.set(1);
+        if USE_DEFAULT_VM.get() == 0 && sel::dialog_box_param_a(instance, 0x68, window, 0x745E50, 0) == 0 {
+            return 0;
+        }
+        if sel::rw_engine_set_sub_system(CUR_SEL_SS.get()) == 0 {
+            return 0;
+        }
+    } else {
+        MULTIPLE_SUB_SYSTEMS.set(0);
+        if sel::rw_engine_set_sub_system(CUR_SEL_SS.get()) == 0 {
+            return 0;
+        }
+        if USE_DEFAULT_VM.get() == 0 {
+            let list = sel::get_video_mode_list();
+            let vm = GPtr::<i32>::from_addr(MENU_DISPLAY_VIDEO_MODE).read();
+            let listed = GPtr::<u32>::from_addr(list as usize).wrapping_index(vm).read() != 0;
+            if listed && vm != 0 {
+                GPtr::<i32>::from_addr(MENU_PREFS_VIDEO_MODE).write(vm);
+                CURRENT_VIDEO_MODE.set(vm);
+            } else {
+                // the default-mode search (0x746362)
+                loop {
+                    let n = call::rw_engine_get_num_video_modes();
+                    let cur = CURRENT_VIDEO_MODE.get();
+                    if cur >= n {
+                        sel::message_box_a(0, rdata(0x874AD0), rdata(0x86D388), 0);
+                        return 0;
+                    }
+                    call::rw_engine_get_video_mode_info(vmi_p, cur);
+                    if IS_VM_NOT_SELECTED.get() == 0
+                        || (vmi[0] == 800 && vmi[1] == 600 && vmi[2] == 32 && vmi[3] & 1 != 0)
+                    {
+                        break;
+                    }
+                    CURRENT_VIDEO_MODE.set(cur.wrapping_add(1));
+                }
+            }
+        }
+    }
+    call::rw_engine_get_video_mode_info(vmi_p, CURRENT_VIDEO_MODE.get());
+    GPtr::<u32>::from_addr(MENU_CURRENT_SCREEN_ITEM).write(0);
+    if sel::rw_engine_set_video_mode(CURRENT_VIDEO_MODE.get()) == 0 {
+        return 0;
+    }
+    if vmi[3] & 1 != 0 {
+        let rr = sel::get_best_refresh_rate(vmi[0] as u32, vmi[1] as u32, vmi[2] as u32);
+        if rr != 0xFFFF_FFFF {
+            sel::rw_d3d9_engine_set_refresh_rate(rr);
+        }
+        if vmi[3] & 1 != 0 {
+            crate::platform::RS_MAXIMUM_WIDTH.set(vmi[0]);
+            crate::platform::RS_MAXIMUM_HEIGHT.set(vmi[1]);
+            ps.wrapping_index(2).write(1);
+        }
+    }
+    sel::rw_d3d9_engine_set_multi_sampling_levels(GPtr::<u32>::from_addr(MENU_PREFS_ANTIALIASING).read());
+    1
+}
+
 /// This module's registrations (collected by [`crate::hooks`]).
 pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_FREE_VIDEO_MODE_LIST,
@@ -418,6 +582,7 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_RELEASE,
     HOOK_SHUTDOWN,
     HOOK_PLAY,
+    HOOK_PS_SELECT_DEVICE,
 ];
 
 // Host tests use Rust-owned memory; a phase A build cannot run them.

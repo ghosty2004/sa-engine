@@ -100,9 +100,8 @@ orig! {
 /// (`SetVertices(r, c, c, c, c)`), `RwRenderStateSet(TEXTURERASTER, texture ? texture->raster : NULL)`,
 /// one triangle fan of `maVertices` (0xC80468), then `RwRenderStateSet(TEXTURERASTER, NULL)`. The null
 /// texture path loads `RwEngineInstance` through the protection chunk 0x409B78 (decodes to 0xC97B24).
-#[hook(addr = 0x728350, conv = thiscall, name = "CSprite2d::Draw-CRectCRGBA", expect = "8B 44 24 08 56 50 50 50 50",
-       preserve = "ecx", unverified = "mvpa-render-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
-       note = "caller 0x59001B does `or cl, 0xFF` after the call (a byte write that ignores CL; the scan counts it as a read), so ECX is preserved only to satisfy the check")]
+///
+/// Not registered: 0x728350 is hooked by sa-render sprite2d.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 pub fn sprite2d_draw_rect(this: GPtr<u8>, r: GPtr<u8>, c: GPtr<u8>) {
     set_vertices_rect(r, c, c, c, c);
     let tex = rd::<GPtr<u8>>(this, 0);
@@ -118,8 +117,8 @@ pub fn sprite2d_draw_rect(this: GPtr<u8>, r: GPtr<u8>, c: GPtr<u8>) {
 /// n+3, n, n+2) at `aTempBufferIndices[nextBufferIndex]` (0xC4B958, written in the original's order
 /// +1, +0, +4, +2, +3, +5), `nextBufferVertex += 4`, `nextBufferIndex += 6`, then
 /// `RenderVertexBuffer()` when `n + 4 > 0x5FC` or `index + 6 > 0xFFA` (signed).
-#[hook(addr = 0x728200, conv = cdecl, name = "CSprite2d::AddToBuffer", expect = "8B 44 24 28 8B 4C 24 24",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+///
+/// Not registered: 0x728200 is hooked by sa-render sprite2d.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 #[allow(clippy::too_many_arguments)]
 pub fn sprite2d_add_to_buffer(
     r: GPtr<u8>,
@@ -159,9 +158,8 @@ pub fn sprite2d_add_to_buffer(
 /// +4 size, +8 capacity 0x10, +0xC/+0x10 counts 0, +0x14 = `operator new(0x40)`): one at 0xC87C6C with
 /// (0, -1); 16 at 0xC87E48.. with (0x65, 100 * (i + 1)); one at 0xC87FC8 with (0x65, 0). Stores in the
 /// original order around each allocation.
-#[hook(addr = 0x730830, conv = cdecl, name = "D3DResourceSystem::Init", expect = "53 55 56 B8 01 00 00 00",
-       route = "split", hazards = "none", recs = "grove-walk",
-       note = "one-time initialiser: allocates 18 0x40-byte arrays with operator new")]
+///
+/// Not registered: 0x730830 is hooked by sa-core game.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 pub fn d3d_resource_system_init() {
     g::<u32>(0xC87C60).write(1);
     g::<u8>(0x8D6084).write(1);
@@ -817,9 +815,6 @@ pub fn clock_set_game_clock(hours: u8, minutes: u8, day: u8) {
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
-    HOOK_SPRITE2D_DRAW_RECT,
-    HOOK_SPRITE2D_ADD_TO_BUFFER,
-    HOOK_D3D_RESOURCE_SYSTEM_INIT,
     HOOK_D3D_RESOURCE_SYSTEM_SET_USE_BUFFERING,
     HOOK_IS_ENVIRONMENT_MAPPING_SUPPORTED,
     HOOK_ENV_MAP_MATERIAL_POOL_CTOR,

@@ -67,7 +67,7 @@ orig! {
     /// `CAnimManager::AddAnimToAssocDefinition` (0x4D3C80)
     pub fn call_add_anim_to_assoc_definition(def: GPtr<u8>, name: GPtr<u8>) = cdecl 0x4D3C80 => add_anim_to_assoc_definition;
     /// `CAnimManager::LoadAnimFile(RwStream*, bool, const char (*)[32])` (0x4D47F0)
-    pub fn load_anim_file(s: GPtr<u8>, compressed: u32, names: GPtr<u8>) = cdecl 0x4D47F0 => unported;
+    pub fn load_anim_file(s: GPtr<u8>, compressed: u32, names: GPtr<u8>) = cdecl 0x4D47F0 => crate::anim_file_load::load_anim_file;
     /// `CAnimBlendHierarchy::Shutdown()` (0x4CF980)
     pub fn hier_shutdown(this: GPtr<u8>) = thiscall 0x4CF980 => crate::hierarchy::shutdown;
     /// `CAnimBlendHierarchy::RemoveUncompressedData()` (0x4CF760)
@@ -187,6 +187,8 @@ pub fn link_insert(this: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
 /// `CAnimManager::GetAnimationBlock(const char*)` (0x4D3940): the first block whose name
 /// `_stricmp`-matches, else null. Not hookable: the protection reads its entry bytes (0x156F054); the
 /// entry's chunk reads `ms_numAnimBlocks` through a rotated pointer (0xEA3000B4 rol 208 = 0xB4EA30).
+/// Phase B entry (STD-6).
+#[sa_core::native(addr = 0x4D3940, conv = cdecl, name = "CAnimManager::GetAnimationBlock-")]
 pub fn get_animation_block(name: GPtr<u8>) -> GPtr<u8> {
     let mut i = 0;
     while i < NUM_ANIM_BLOCKS.get() {

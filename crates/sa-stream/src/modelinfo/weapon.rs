@@ -41,6 +41,7 @@ orig! {
 }
 
 /// `CWeaponModelInfo::GetModelType` (0x4C5780): AL = 4 (unhookable).
+#[sa_core::native(addr = 0x4C5780, conv = thiscall, name = "CWeaponModelInfo::GetModelType")]
 pub fn get_model_type(_this: MiPtr) -> u8 {
     4
 }

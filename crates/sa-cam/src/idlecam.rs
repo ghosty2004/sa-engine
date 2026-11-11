@@ -31,6 +31,16 @@ orig! {
     pub fn set_target(this: GPtr<u8>, e: GPtr<u8>) = thiscall 0x50A280 => unported;
     /// `CIdleCam::Init()` (0x50E6D0)
     pub fn init_call(this: GPtr<u8>) = thiscall 0x50E6D0 => idle_cam_init;
+    /// `CIdleCam::IsTargetValid(CEntity*)` (0x517770, AL)
+    pub fn is_target_valid_call(this: GPtr<u8>, e: GPtr<u8>) -> u8 = thiscall 0x517770 => crate::camproc::idle_cam_is_target_valid;
+    /// `CIdleCam::SetTargetPlayer()` (0x50EB50)
+    pub fn set_target_player_call(this: GPtr<u8>) = thiscall 0x50EB50 => set_target_player;
+    /// `CInterestingEvents::InvalidateNonVisibleEvents()` (0x6029C0)
+    pub fn invalidate_non_visible_events(ie: GPtr<u8>) = thiscall 0x6029C0 => unported;
+    /// `CInterestingEvents::GetInterestingEvent()` (0x6028A0)
+    pub fn get_interesting_event(ie: GPtr<u8>) -> GPtr<u8> = thiscall 0x6028A0 => unported;
+    /// `CInterestingEvents::InvalidateEvent(const TInterestingEvent*)` (0x602960)
+    pub fn invalidate_event(ie: GPtr<u8>, ev: GPtr<u8>) = thiscall 0x602960 => unported;
     /// `CIdleCam::Reset(bool)` (0x50A160)
     pub fn reset_call(this: GPtr<u8>, reset_controls: u8) = thiscall 0x50A160 => reset;
 }
@@ -161,6 +171,80 @@ pub fn process_idle_cam_ticker(this: GPtr<u8>) {
     wr::<u32>(this, 0x94, 0);
 }
 
+/// `g_InterestingEvents` (0xC0B058).
+const INTERESTING_EVENTS: usize = 0xC0B058;
+
+/// `CIdleCam::ProcessTargetSelection()` (0x517870), from the bytes: gta-reversed calls `SetTargetPlayer()`
+/// where the bytes inline other sequences (`m_nForceAZoomOut` (+0x78) = 1 around `SetTarget(FindPlayerPed())`,
+/// and the null-target case stores the entry's `FindPlayerPed` result into `m_Target` first).
+/// `dt = (float)(uint32)now - m_TimeLastTargetSelected (+0x34)`, divided by +0x84 unless zoomed out (+0x58
+/// == 3) or the LOS counter (+0x54) is positive; the first test uses the register value, the later one the
+/// stored f32.
+#[hook(addr = 0x517870, conv = thiscall, name = "CIdleCam::ProcessTargetSelection", expect = "83 EC 08 53 56 57 6A FF", this = "CIdleCam")]
+pub fn process_target_selection(this: GPtr<u8>) {
+    let ped = find_player_ped(-1);
+    let now = TIME_MS.get();
+    let mut d = xi(now as i32);
+    if (now as i32) < 0 {
+        d = d.fadd_m(k(0x4F80_0000));
+    }
+    d = d.fsub_m(rd::<f32>(this, 0x34));
+    if rd::<i32>(this, 0x58) != 3 && rd::<i32>(this, 0x54) <= 0 {
+        d = d.fdiv_m(rd::<f32>(this, 0x84));
+    }
+    let d32 = d.to_f32();
+    let target = || rd::<GPtr<u8>>(this, 0);
+    let ie = GPtr::<u8>::from_addr(INTERESTING_EVENTS);
+    if !jne(d, x(rd::<f32>(this, 0x38)), 0x41) {
+        invalidate_non_visible_events(ie);
+        let ev = get_interesting_event(ie);
+        if ev.is_null() {
+            let t = target();
+            let valid = !t.is_null() && is_target_valid_call(this, t) != 0;
+            if !valid && target() != ped {
+                if rd::<i32>(this, 0x58) == 3 {
+                    set_target_player_call(this);
+                } else {
+                    wr::<u8>(this, 0x78, 1);
+                }
+            }
+        } else {
+            let e = rd::<GPtr<u8>>(ev, 8);
+            if target() == e {
+                if is_target_valid_call(this, e) == 0 {
+                    invalidate_event(ie, ev);
+                }
+            } else if is_target_valid_call(this, e) != 0 {
+                if rd::<i32>(this, 0x58) == 3 {
+                    set_target(this, e);
+                } else {
+                    wr::<u8>(this, 0x78, 1);
+                }
+            }
+        }
+    }
+    if target().is_null() {
+        wr::<u8>(this, 0x78, 1);
+        wr::<GPtr<u8>>(this, 0, ped);
+        set_target(this, find_player_ped(-1));
+        wr::<u8>(this, 0x78, 1);
+    }
+    if is_target_valid_call(this, target()) == 0 && !jne(x(d32), x(rd::<f32>(this, 0x38)), 0x41) {
+        if rd::<i32>(this, 0x58) == 3 {
+            set_target(this, find_player_ped(-1));
+        }
+        wr::<u8>(this, 0x78, 1);
+        if rd::<i32>(this, 0x54) > 0 {
+            set_target(this, find_player_ped(-1));
+            wr::<u8>(this, 0x78, 1);
+        }
+    }
+    if rd::<i32>(this, 0x54) > rd::<i32>(this, 0x50) {
+        set_target(this, find_player_ped(-1));
+        wr::<u8>(this, 0x78, 1);
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_IDLE_CAM_CONSTRUCTOR,
     HOOK_IDLE_CAM_INIT,
@@ -169,4 +253,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SET_TARGET_PLAYER,
     HOOK_GET_LOOK_AT_POSITION_ON_TARGET,
     HOOK_PROCESS_IDLE_CAM_TICKER,
+    HOOK_PROCESS_TARGET_SELECTION,
 ];

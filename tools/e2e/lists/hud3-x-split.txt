@@ -1,0 +1,6 @@
+# PORT-HUD-3: DIReleaseMouse (COM Unacquire/Release: cannot run twice) and the ProcessCurrentString / peek hooks, split
+0x746F70
+0x71A220
+0x585040
+0x5853D0
+0x571F20

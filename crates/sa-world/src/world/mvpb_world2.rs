@@ -217,7 +217,7 @@ pub fn world_remove_fallen_peds() {
 /// car node + 3, or without one the same x/y at z = 0); random (1) and parked (3) vehicles are removed from the
 /// world and the moving list and deleted; the rest are left alone. Teleported vehicles lose their move speed.
 #[hook(addr = 0x565E80, conv = cdecl, name = "CWorld::RemoveFallenCars", expect = "83 EC 2C 53 8B 1D 94 44 B7 00",
-       unverified = "mvpb-world-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn world_remove_fallen_cars() {
     for_pool_desc(0xB74494, 0xA18, |v| {
         if !fell(v) {
@@ -260,7 +260,7 @@ pub fn world_remove_fallen_cars() {
 /// otherwise AL = 0 as soon as one collision sphere (centre transformed by the entity matrix, allocated first when
 /// missing; radius + margin) touches the garage, else 1 (also without col data).
 #[hook(addr = 0x448D30, conv = thiscall, name = "CGarage::IsEntityEntirelyOutside", this = "CGarage",
-       expect = "83 EC 10 53 8B 5C 24 18", unverified = "mvpb-world-3", route = "L2", hazards = "heap-writes",
+       expect = "83 EC 10 53 8B 5C 24 18", route = "L2", hazards = "heap-writes",
        note = "the original reuses the operator* argument slots as the next call's arguments (stack-identical)")]
 pub fn garage_is_entity_entirely_outside(this: GPtr<u8>, e: GPtr<u8>, margin: f32) -> u8 {
     let px = rd::<f32>(entity_pos(e), 0);
@@ -298,7 +298,7 @@ pub fn garage_is_entity_entirely_outside(this: GPtr<u8>, e: GPtr<u8>, margin: f3
 /// the last slot down to slot 1: slot 0 is never visited, as in the original) inside the garage that is wrecked
 /// (status 5) or upside down (matrix up.z < 0.5) is removed from the world and deleted.
 #[hook(addr = 0x449C50, conv = thiscall, name = "CGarage::TidyUpGarage", this = "CGarage", expect = "83 EC 08 53 55 56",
-       unverified = "mvpb-world-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn garage_tidy_up_garage(this: GPtr<u8>) {
     let pool = g::<GPtr<u8>>(0xB74494).read();
     let mut i = rd::<i32>(pool, 8).wrapping_sub(1);
@@ -330,7 +330,7 @@ pub fn garage_tidy_up_garage(this: GPtr<u8>) {
 /// player while 0xB6EC20 is set; the byte is written three times as the original), the vehicle slot + 1 of a ped
 /// in a vehicle (else 0), +0x740 word, the animation state (+4), then advances the position by 0x34.
 #[hook(addr = 0x45C940, conv = cdecl, name = "CReplay::StorePedUpdate", expect = "A1 70 FB 97 00",
-       unverified = "mvpb-world-4", route = "L2", hazards = "none")]
+       route = "L2", hazards = "heap-writes")]
 pub fn replay_store_ped_update(ped: GPtr<u8>, idx: i32) {
     let b: GPtr<u8> = GPtr::from_addr(g::<u32>(0x97FB70).read().wrapping_add(g::<u32>(0x97FB74).read()) as usize);
     wr::<u8>(b, 1, idx as u8);

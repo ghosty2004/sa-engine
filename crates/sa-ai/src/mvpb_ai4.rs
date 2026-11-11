@@ -36,7 +36,7 @@ fn delete_slot(this: GPtr<u8>, off: isize) {
 /// is deleted (+4 = 0), the secondary event (+0x294) deleted and cleared, and the 8 main (+0x10) and 8 secondary
 /// (+0xB0) task slots (0x14 stride) deleted and cleared.
 #[hook(addr = 0x5F87A0, conv = thiscall, name = "CPedGroupIntelligence::ProcessIgnorePlayerGroup", this = "CPedGroupIntelligence",
-       expect = "56 6A FF 8B F1", unverified = "mvpb-ai-4", route = "L2", hazards = "heap-writes")]
+       expect = "56 6A FF 8B F1", route = "L2", hazards = "heap-writes")]
 pub fn pgi_process_ignore_player_group(this: GPtr<u8>) {
     if rd::<u8>(find_player_wanted(-1), 0x1E) & 4 == 0 {
         return;

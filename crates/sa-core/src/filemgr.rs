@@ -135,6 +135,7 @@ pub fn change_dir(path: GPtr<u8>) -> i32 {
 /// `CFileMgr::SetDir(path)` (0x5387D0, cdecl): `ms_dirName = root + path (+ "\\")`, `_chdir`.
 /// Not hookable: the inlined `strcpy` loop branches back to 0x5387D2, inside the entry bytes an
 /// inline hook would replace.
+#[crate::native(addr = 0x5387D0, conv = cdecl, name = "CFileMgr::SetDir")]
 pub fn set_dir(path: GPtr<u8>) -> i32 {
     strcpy(DIR_NAME.ptr().cast(), ROOT_DIR_NAME.ptr().cast());
     if path.read() != 0 {

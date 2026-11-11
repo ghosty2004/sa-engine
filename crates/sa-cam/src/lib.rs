@@ -30,9 +30,25 @@ pub mod handshaker;
 pub mod idlecam;
 pub mod statics;
 
+pub mod aimweapon;
+pub mod arrestcam;
+pub mod avoidgeom;
 pub mod camcol;
+pub mod camcontrol;
 pub mod cammodes;
 pub mod camproc;
 pub mod camtarget;
 pub mod camtrans;
+pub mod dwcams;
+pub mod firstperson;
+pub mod followcar;
+pub mod followped;
+pub mod obbe;
+pub mod pedmouse;
+pub mod pedonpc;
+pub mod rocket;
 pub mod splines;
+pub mod twoplayer;
+
+pub mod std6_natives;
+pub mod camera_process;

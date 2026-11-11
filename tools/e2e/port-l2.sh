@@ -31,6 +31,7 @@
 #            SPLIT_DUMP_SEQ=N,… dumps the watched windows at those cases (`sa-oracle l2 dump-diff`);
 #            SPLIT_STACKFILL=BYTES zeroes that much stack below the invoker before every sampled call
 #            (SA_L2_STACKFILL: original callees that read uninitialised stack see the same bytes in both runs)
+#            L2_STACKFILL=BYTES (+ L2_STACKFILL_VALUE=DWORD, default 0) does the same for the l2 run
 # and checks:
 #   (a) per hook: >= MAX cases or every call compared, 0 mismatches, 0 undeclared writes; a hook that
 #       got no call in the run is reported as NOCALLS (not a failure, but no evidence either)
@@ -206,7 +207,7 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
         for kv in "$@"; do
             case "$kv" in
                 # lists over every port exceed a Windows environment variable: passed as @FILE then
-                SA_HOOK_MODE=* | SA_L2=*)
+                SA_HOOK_MODE=* | SA_L2=* | SA_L2_EXTRA=*)
                     kv="$(e2e_list_env "${kv%%=*}" "${kv#*=}" "$DET/$name.${kv%%=*}.list")" || exit 1 ;;
             esac
             export "${kv?}"
@@ -228,6 +229,8 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
         # suspended until the timeout: stop at once and keep the fault line.
         if grep -q -E 'Unhandled (page fault|exception)' "$E2E_OUT/wine.log" 2> /dev/null; then
             e2e_say "run $name: crashed: $(grep -m1 -E 'Unhandled (page fault|exception)' "$E2E_OUT/wine.log"); $last"
+            # CRASH_WAIT=SECONDS: give winedbg time to write its register dump and backtrace to wine.log
+            [ -n "${CRASH_WAIT:-}" ] && sleep "$CRASH_WAIT"
             break
         fi
         if [ $(($(date +%s) - start)) -gt "$RUN_TIMEOUT" ]; then
@@ -302,6 +305,9 @@ SPLITCOMMON=(SA_L2_MAX="$MAX" SA_L2_PER_FRAME="${SPLIT_PER_FRAME:-1000}" SA_L2_S
 [ -n "${L2_SPOOL_MAX:-}" ] && SPLITCOMMON+=(SA_L2_SPOOL_MAX="$L2_SPOOL_MAX")
 [ -n "${SPLIT_DUMP_SEQ:-}" ] && SPLITCOMMON+=(SA_L2_DUMP_SEQ="$SPLIT_DUMP_SEQ")
 [ -n "${SPLIT_STACKFILL:-}" ] && SPLITCOMMON+=(SA_L2_STACKFILL="$SPLIT_STACKFILL")
+# L2_STACKFILL=BYTES [L2_STACKFILL_VALUE=DWORD]: the same fill for the l2 run (original, then Rust, each
+# called from the invoker); a non-zero pattern keeps a port that zeroes an uninitialised local failing
+[ -n "${L2_STACKFILL:-}" ] && L2COMMON+=(SA_L2_STACKFILL="$L2_STACKFILL" SA_L2_STACKFILL_VALUE="${L2_STACKFILL_VALUE:-0}")
 [ -n "${L2_FROM:-}" ] && SPLITCOMMON+=(SA_L2_FROM="$L2_FROM") && L2COMMON+=(SA_L2_FROM="$L2_FROM")
 
 for run in $RUNS; do

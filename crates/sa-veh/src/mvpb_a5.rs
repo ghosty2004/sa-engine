@@ -71,7 +71,7 @@ fn vec_at(p: GPtr<u8>) -> CVector {
 /// 0x5D, node +0x688 hidden, status 4; the object's speed = `(0.4 ms ± 0.1 right) + 0.5 up` (sign by
 /// `rand() & 1`, site 0x6AA09B) and `ApplyTurnForce(10 up, forward)`.
 #[hook(addr = 0x6A9D70, conv = thiscall, name = "CAutomobile::ProcessSwingingDoor", this = "CAutomobile", expect = "6A FF 64 A1 00 00 00 00",
-       unverified = "mvpb-veh-5", route = "L2", hazards = "heap-writes,x87-transcendental",
+       route = "L2", hazards = "heap-writes,x87-transcendental",
        note = "the door axis byte indexes the original's stack rotation vector; 3..5 hit the saved position (modelled), larger values write elsewhere in its frame (ignored)")]
 pub fn process_swinging_door(this: GPtr<u8>, node: i32, door: i32) {
     let dm = this.byte_add(0x5A0);
@@ -393,7 +393,7 @@ fn mag3(p: GPtr<u8>) -> sa_math::x87::X87 {
 /// 0.4, centre z = d + radius). The RHINO interpolates lines 4..7 / 8..11 between lines 0/1 and 2/3 at
 /// t = 0.2..0.8 with the original's mix of f32 and x87 intermediates.
 #[hook(addr = 0x6A65D0, conv = thiscall, name = "CAutomobile::SetupSuspensionLines", this = "CAutomobile", expect = "83 EC 5C 53 55 56 57",
-       unverified = "mvpb-veh-6", route = "L2", hazards = "heap-writes,x87-transcendental")]
+       route = "L2", hazards = "heap-writes,x87-transcendental")]
 pub fn setup_suspension_lines(this: GPtr<u8>) {
     let mi = crate::common::model_info(rd::<i16>(this, 0x22) as i32);
     let cm = get_col_model(this);

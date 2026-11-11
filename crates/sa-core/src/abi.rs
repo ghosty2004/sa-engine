@@ -14,6 +14,16 @@ pub enum Conv {
     Fastcall,
 }
 
+/// Phase B registration of a port that cannot be hooked in phase A (`#[native]`): the original
+/// address, the catalogue name and the native entry `orig!`'s address registry calls (32-bit x86
+/// outside phase A; 0 elsewhere). Each crate lists them in `hooks::NATIVES`.
+#[derive(Clone, Copy)]
+pub struct NativeReg {
+    pub addr: u32,
+    pub name: &'static str,
+    pub entry: fn() -> usize,
+}
+
 /// One ported function, as `#[hook]` registers it. `sa-hook` turns every record of
 /// [`crate::hooks::ALL`] into a hook-table entry (patched at attach, toggled Rust/original at frame
 /// boundaries).
@@ -26,7 +36,9 @@ pub struct HookReg {
     pub conv: Conv,
     /// Bytes that must be found at `addr` before patching (at least the 5 replaced by the entry jmp).
     pub expect: &'static [u8],
-    /// Address of the shim with the original convention (0 on targets other than 32-bit x86).
+    /// Address of the shim with the original convention (0 on targets other than 32-bit x86). Phase B
+    /// on 32-bit x86: the native `-unwind` entry `orig!`'s address registry calls
+    /// (`crate::orig::registry`).
     pub entry: fn() -> usize,
     /// Calls that came in through the shim (i.e. from original code while the hook is on Rust).
     pub calls: fn() -> u32,
@@ -79,17 +91,21 @@ pub enum Fp {
     Ebp,
     /// the address `entry ESP + offset` (e.g. a pushed pointer to one of the original's locals)
     Addr(i32),
+    /// the SEH chain head `fs:[0]` at entry (pushed by an MSVC EH prologue)
+    Seh,
 }
 
 /// Most writes one call records (see [`stack_footprint`]).
-pub const FOOTPRINT_MAX: usize = 16;
+pub const FOOTPRINT_MAX: usize = 32;
 /// Largest snapshot window below the entry ESP, bytes (see [`stack_footprint`]).
 pub const FOOTPRINT_WINDOW_MAX: usize = 0x1000;
 
 /// State shared with the naked `footprint` entry wrapper of `#[hook]` (field offsets are part of
-/// the wrapper's code: count 0, active 4, scratch 8 (EAX, EDX, ECX, ESI, EDI, spare), entries 32 as
-/// [offset, kind, value] triples (kinds 0 value, 1 esi, 2 edi, 3 ebx, 4 ebp, 5 entry ESP + value),
-/// snapshot 224).
+/// the wrapper's code: count 0, active 4, scratch 8 (EAX, EDX, ECX, ESI, EDI, the previous
+/// [`FOOTPRINT_CUR`]), entries 32 as [offset, kind, value] triples (kinds 0 value, 1 esi, 2 edi,
+/// 3 ebx, 4 ebp, 5 entry ESP + value, 6 fs:[0]), snapshot [`FOOTPRINT_SNAPSHOT_OFF`], then the window size).
+/// One per footprint hook (the macro emits it), so
+/// footprint hooks may nest (e.g. original code called by one footprint port calls another one).
 #[repr(C)]
 #[doc(hidden)]
 pub struct FootprintState {
@@ -98,6 +114,8 @@ pub struct FootprintState {
     pub scratch: [u32; 6],
     pub entries: [[u32; 3]; FOOTPRINT_MAX],
     pub snapshot: [u32; FOOTPRINT_WINDOW_MAX / 4],
+    /// the hook's `W` (bytes): `snapshot[i]` is the word at entry ESP - W + 4 * i
+    pub window: u32,
 }
 
 #[doc(hidden)]
@@ -106,18 +124,31 @@ pub struct FootprintCell(pub core::cell::UnsafeCell<FootprintState>);
 // and by the naked wrapper around those calls.
 unsafe impl Sync for FootprintCell {}
 
-const _: () = assert!(core::mem::offset_of!(FootprintState, entries) == 32);
-const _: () = assert!(core::mem::offset_of!(FootprintState, snapshot) == 224);
+impl FootprintCell {
+    #[allow(clippy::new_without_default)]
+    pub const fn new(window: u32) -> Self {
+        FootprintCell(core::cell::UnsafeCell::new(FootprintState {
+            count: 0,
+            active: 0,
+            scratch: [0; 6],
+            entries: [[0; 3]; FOOTPRINT_MAX],
+            snapshot: [0; FOOTPRINT_WINDOW_MAX / 4],
+            window,
+        }))
+    }
+}
 
-/// See [`stack_footprint`].
+const _: () = assert!(core::mem::offset_of!(FootprintState, scratch) == 8);
+const _: () = assert!(core::mem::offset_of!(FootprintState, entries) == 32);
+/// Offset of [`FootprintState::snapshot`] (used by the wrapper's code).
 #[doc(hidden)]
-pub static FOOTPRINT: FootprintCell = FootprintCell(core::cell::UnsafeCell::new(FootprintState {
-    count: 0,
-    active: 0,
-    scratch: [0; 6],
-    entries: [[0; 3]; FOOTPRINT_MAX],
-    snapshot: [0; FOOTPRINT_WINDOW_MAX / 4],
-}));
+pub const FOOTPRINT_SNAPSHOT_OFF: usize = core::mem::offset_of!(FootprintState, snapshot);
+const _: () = assert!(FOOTPRINT_SNAPSHOT_OFF == 32 + 12 * FOOTPRINT_MAX);
+
+/// The [`FootprintState`] of the innermost footprint wrapper running (0: none). Each wrapper saves
+/// the previous value in its scratch word 5 on entry and puts it back on exit.
+#[doc(hidden)]
+pub static FOOTPRINT_CUR: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 
 /// The stack residue the original leaves (ADR-001 §5b): original code that runs later may read
 /// uninitialised stack slots, and so depend on what an earlier callee left below its entry ESP.
@@ -128,19 +159,26 @@ pub static FOOTPRINT: FootprintCell = FootprintCell(core::cell::UnsafeCell::new(
 /// order: `(offset from the entry ESP, value)` (negative = below the return address; 4, 8, ... =
 /// the argument slots). The port lists every slot the original writes on the path it took (derived
 /// from the disassembly). Recorded only while that wrapper is active (a direct Rust call or a host
-/// test records nothing); not reentrant (a footprint hook must not call another one). Phases B/C:
-/// no wrapper, no effect.
+/// test records nothing); footprint hooks may nest (each has its own state) but must not recurse into
+/// themselves. Phases B/C: no wrapper, no effect.
 pub fn stack_footprint(writes: &[(i32, Fp)]) {
-    // SAFETY: main thread only (see FootprintCell); the wrapper is not running between its call
-    // and return of the shim, which is where this executes.
+    let cur = FOOTPRINT_CUR.load(core::sync::atomic::Ordering::Relaxed);
+    if cur == 0 {
+        return;
+    }
+    // SAFETY: main thread only (see FootprintCell); `cur` is the state of the innermost wrapper,
+    // which is not running between its call and return of the shim, where this executes.
     #[allow(unsafe_code)]
-    let st = unsafe { &mut *FOOTPRINT.0.get() };
+    let st = unsafe { &mut *(cur as usize as *mut FootprintState) };
     if st.active == 0 {
         return;
     }
     for &(off, v) in writes {
         let n = st.count as usize;
-        assert!(n < FOOTPRINT_MAX, "stack_footprint: more than {FOOTPRINT_MAX} writes");
+        assert!(
+            n < FOOTPRINT_MAX,
+            "stack_footprint: more than {FOOTPRINT_MAX} writes"
+        );
         let (kind, val) = match v {
             Fp::Val(x) => (0, x),
             Fp::Esi => (1, 0),
@@ -148,6 +186,7 @@ pub fn stack_footprint(writes: &[(i32, Fp)]) {
             Fp::Ebx => (3, 0),
             Fp::Ebp => (4, 0),
             Fp::Addr(o) => (5, o as u32),
+            Fp::Seh => (6, 0),
         };
         st.entries[n] = [off as u32, kind, val];
         st.count += 1;
@@ -157,17 +196,115 @@ pub fn stack_footprint(writes: &[(i32, Fp)]) {
 /// The byte the original would find at `entry ESP + off` (`-w <= off < 0`) in a `#[hook(..., footprint = w)]`
 /// port: the snapshot the wrapper took before the shim ran (an uninitialised local of the original reads
 /// the residue of earlier calls there). 0 when no footprint wrapper is active (direct Rust calls, host
-/// tests, phases B/C) or `off` is outside the window.
+/// tests, phases B/C) or `off` is outside the window. Reads the innermost footprint wrapper's
+/// snapshot (see [`entry_residue`]); `w` is the hook's declared window, which must match it.
 pub fn footprint_residue_u8(off: i32, w: u32) -> u8 {
-    // SAFETY: main thread only (see FootprintCell); read while the wrapper is inside the shim.
-    #[allow(unsafe_code)]
-    let st = unsafe { &*FOOTPRINT.0.get() };
-    let i = w as i64 + i64::from(off);
-    if st.active == 0 || off >= 0 || i < 0 || w as usize > FOOTPRINT_WINDOW_MAX {
+    let word = off.div_euclid(4) * 4;
+    let byte = off.rem_euclid(4) as u32;
+    if off >= 0 || off.unsigned_abs() > w {
         return 0;
     }
-    let i = i as usize;
-    (st.snapshot[i / 4] >> (8 * (i % 4))) as u8
+    entry_residue(word).map_or(0, |v| (v >> (8 * byte)) as u8)
+}
+
+/// Largest `peek = N` window (bytes below the entry ESP).
+pub const PEEK_MAX: usize = 0x200;
+/// Nesting depth of `peek` hooks (a deeper call executes `ud2`).
+pub const PEEK_DEPTH: usize = 8;
+
+/// One `peek` hook call: the hook's original address, its entry ESP (the return address slot), the
+/// window length and the window `[entry ESP - len, entry ESP)` as it was at the call.
+#[repr(C)]
+#[doc(hidden)]
+pub struct PeekFrame {
+    pub hook: u32,
+    pub esp: u32,
+    pub len: u32,
+    pub words: [u32; PEEK_MAX / 4],
+}
+
+/// State of the `peek` wrappers (field offsets are part of the wrapper's code: depth 0, saved EDI /
+/// ESI / ECX 4..16, frames 16).
+#[repr(C)]
+#[doc(hidden)]
+pub struct PeekState {
+    pub depth: u32,
+    pub save: [u32; 3],
+    pub frames: [PeekFrame; PEEK_DEPTH],
+}
+
+#[doc(hidden)]
+pub struct PeekCell(pub core::cell::UnsafeCell<PeekState>);
+// SAFETY: written only by the game's main thread (the hooked functions run there, ADR-001 §3 rule 3)
+// and by the naked wrapper around those calls.
+unsafe impl Sync for PeekCell {}
+
+const _: () = assert!(core::mem::offset_of!(PeekState, frames) == 16);
+const _: () = assert!(core::mem::offset_of!(PeekFrame, words) == 12);
+
+/// See [`peek_stack`].
+#[doc(hidden)]
+pub static PEEK: PeekCell = PeekCell(core::cell::UnsafeCell::new(PeekState {
+    depth: 0,
+    save: [0; 3],
+    frames: [const {
+        PeekFrame {
+            hook: 0,
+            esp: 0,
+            len: 0,
+            words: [0; PEEK_MAX / 4],
+        }
+    }; PEEK_DEPTH],
+}));
+
+fn peek_top(hook: u32) -> Option<&'static PeekFrame> {
+    // SAFETY: main thread only (see PeekCell); the frame read is the running hook's own, which no
+    // wrapper rewrites until this hook returns (nested calls use deeper frames).
+    #[allow(unsafe_code)]
+    let st = unsafe { &*PEEK.0.get() };
+    let d = st.depth as usize;
+    if d == 0 || d > PEEK_DEPTH {
+        return None;
+    }
+    let f = &st.frames[d - 1];
+    (f.hook == hook).then_some(f)
+}
+
+/// The entry ESP (the address of the return address) of the running `#[hook(addr = hook, peek = N)]`
+/// call, for an original whose locals' addresses are data (ADR-001 §5b). `None` when the port was not
+/// entered through its hook (a direct Rust call, phases B/C, host tests).
+pub fn peek_entry_esp(hook: u32) -> Option<u32> {
+    peek_top(hook).map(|f| f.esp)
+}
+
+/// The dword at `entry ESP + off` (`-N <= off <= -4`, a multiple of 4) as it was when the running
+/// `#[hook(addr = hook, peek = N)]` call was entered: an uninitialised local of the original holds
+/// exactly this (the residue of the caller's earlier callees) as long as the original never writes it
+/// before reading it. `None` off the hook (see [`peek_entry_esp`]) or outside the window.
+pub fn peek_stack(hook: u32, off: i32) -> Option<u32> {
+    let f = peek_top(hook)?;
+    let i = f.len as i32 + off;
+    (off < 0 && off % 4 == 0 && i >= 0).then(|| f.words[(i / 4) as usize])
+}
+
+/// The word the innermost `footprint` hook's caller left at entry ESP + `off` (`off` < 0, within the
+/// hook's window), read from the snapshot its wrapper took at entry: the stack residue an uninitialised
+/// local of the original reads when no code of the original writes that slot before the read (ADR-001
+/// §5b; first user `CCamera::CameraColDetAndReact`'s `dist`). `None` outside a footprint wrapper (a
+/// direct Rust call, host tests, phases B/C) or outside the window.
+pub fn entry_residue(off: i32) -> Option<u32> {
+    let cur = FOOTPRINT_CUR.load(core::sync::atomic::Ordering::Relaxed);
+    if cur == 0 {
+        return None;
+    }
+    // SAFETY: main thread only (see FootprintCell); read-only access to the innermost wrapper's
+    // state while its shim runs.
+    #[allow(unsafe_code)]
+    let st = unsafe { &*(cur as usize as *const FootprintState) };
+    if st.active == 0 || off >= 0 || off % 4 != 0 || off.unsigned_abs() > st.window {
+        return None;
+    }
+    Some(st.snapshot[((st.window as i64 + i64::from(off)) / 4) as usize])
 }
 
 /// See [`ENTRY_EAX`].
@@ -206,6 +343,23 @@ pub enum AbiRet {
     EaxEdx,
     /// float in ST0
     St0,
+    /// 16-bit result in AX: the original leaves EAX[31:16] as its last computation left them and
+    /// every caller reads AX only (the port returns [`Ax`]; the oracles compare the low word)
+    Ax,
+}
+
+/// A 16-bit result of which only AX is defined ([`AbiRet::Ax`]). The upper half of EAX is returned
+/// as 0; use it only where every caller of the original reads AX alone (`movsx r32, ax`, `cmp ax`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Ax(pub u16);
+
+impl IntoAbi for Ax {
+    type Abi = u32;
+    const RET: AbiRet = AbiRet::Ax;
+    #[inline(always)]
+    fn into_abi(self) -> u32 {
+        u32::from(self.0)
+    }
 }
 
 /// 32-bit stack words an argument of type `T` occupies.
@@ -452,4 +606,107 @@ pub fn call_original<R>(f: impl FnOnce() -> R) -> R {
         }
     }
     f()
+}
+
+/// The game's x87 control word and MXCSR as ported code that reads or writes them sees them (the RW
+/// processor functions `_rwProcessorInitialize` / `Release` / `ForceSinglePrecision`, the D3D9
+/// driver's FINALIZESTART and STOP; STD-4).
+///
+/// Phase A (the game process): the real registers; MXCSR inside a hook guard is the thread's game
+/// MXCSR ([`FpuGuard`]), so a port changes it exactly as the original does while the Rust code keeps
+/// running without FTZ/DAZ. Phases B/C: cells. The native process's own code (Rust's SSE
+/// arithmetic, the host libm, the GPU driver on the game thread) keeps the host's registers; the
+/// ports' x87 arithmetic is modelled by `sa_math::x87` at the game's precision whatever the cells
+/// hold. Initial cell values: the Windows process defaults (`_CW_DEFAULT` 0x027F, MXCSR 0x1F80).
+pub mod game_fpu {
+    #[cfg(not(sa_phase_a))]
+    use core::sync::atomic::{AtomicU32, Ordering};
+
+    #[cfg(not(sa_phase_a))]
+    static CW: AtomicU32 = AtomicU32::new(0x027F);
+    #[cfg(not(sa_phase_a))]
+    static MXCSR: AtomicU32 = AtomicU32::new(0x1F80);
+
+    /// `fnstcw`.
+    pub fn fnstcw() -> u16 {
+        #[cfg(sa_phase_a)]
+        {
+            let mut v: u16 = 0;
+            // SAFETY: stores the x87 control word into a local.
+            unsafe { core::arch::asm!("fnstcw [{0}]", in(reg) &mut v, options(nostack, preserves_flags)) };
+            v
+        }
+        #[cfg(not(sa_phase_a))]
+        {
+            CW.load(Ordering::Relaxed) as u16
+        }
+    }
+
+    /// `fldcw`.
+    pub fn fldcw(cw: u16) {
+        #[cfg(sa_phase_a)]
+        {
+            // SAFETY: loads the x87 control word the original loads.
+            unsafe { core::arch::asm!("fldcw [{0}]", in(reg) &cw, options(nostack, preserves_flags)) };
+        }
+        #[cfg(not(sa_phase_a))]
+        {
+            CW.store(cw as u32, Ordering::Relaxed);
+        }
+    }
+
+    /// `stmxcsr`.
+    pub fn stmxcsr() -> u32 {
+        #[cfg(sa_phase_a)]
+        {
+            match super::game_mxcsr::find() {
+                Some(slot) => super::game_mxcsr::get(slot),
+                None => super::stmxcsr(),
+            }
+        }
+        #[cfg(not(sa_phase_a))]
+        {
+            MXCSR.load(Ordering::Relaxed)
+        }
+    }
+
+    /// `cpuid(leaf)` with ECX 0 as `[eax, ebx, ecx, edx]`, after the original's EFLAGS.ID toggle test
+    /// (every CPU that runs an i686/x86_64 build has CPUID, so the test passes there). `None` off x86
+    /// (wasm32): no CPUID, as on a CPU whose ID flag does not toggle.
+    pub fn cpuid(leaf: u32) -> Option<[u32; 4]> {
+        #[cfg(target_arch = "x86")]
+        #[allow(unused_unsafe)]
+        {
+            // SAFETY: CPUID exists on every CPU an i686 (pentium4 baseline) build runs on.
+            let r = unsafe { core::arch::x86::__cpuid_count(leaf, 0) };
+            Some([r.eax, r.ebx, r.ecx, r.edx])
+        }
+        #[cfg(target_arch = "x86_64")]
+        #[allow(unused_unsafe)]
+        {
+            // SAFETY: CPUID exists on every x86_64 CPU.
+            let r = unsafe { core::arch::x86_64::__cpuid_count(leaf, 0) };
+            Some([r.eax, r.ebx, r.ecx, r.edx])
+        }
+        #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+        {
+            let _ = leaf;
+            None
+        }
+    }
+
+    /// `ldmxcsr`.
+    pub fn ldmxcsr(v: u32) {
+        #[cfg(sa_phase_a)]
+        {
+            match super::game_mxcsr::find() {
+                Some(slot) => super::game_mxcsr::set(slot, v),
+                None => super::ldmxcsr(v),
+            }
+        }
+        #[cfg(not(sa_phase_a))]
+        {
+            MXCSR.store(v, Ordering::Relaxed);
+        }
+    }
 }

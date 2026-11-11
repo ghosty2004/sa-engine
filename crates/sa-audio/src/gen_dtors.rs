@@ -174,6 +174,7 @@ pub fn g_caewater_cannon_audio_entity_caewater_cannon_audio_entity_728ab0(this: 
 
 /// `__dtor_84c1a0` (0x8562E0): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x8562E0, conv = cdecl, name = "__dtor_84c1a0")]
 pub fn g_dtor_84c1a0_8562e0() {
 }
 
@@ -190,21 +191,25 @@ pub fn g_dtor_aesmooth_fade_thread_856300() {
 
 /// `__dtor_84c4f0` (0x856310): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x856310, conv = cdecl, name = "__dtor_84c4f0")]
 pub fn g_dtor_84c4f0_856310() {
 }
 
 /// `__dtor_AEStreamTransformer` (0x856320): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x856320, conv = cdecl, name = "__dtor_AEStreamTransformer")]
 pub fn g_dtor_aestream_transformer_856320() {
 }
 
 /// `__dtor_84cc30` (0x856350): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x856350, conv = cdecl, name = "__dtor_84cc30")]
 pub fn g_dtor_84cc30_856350() {
 }
 
 /// `__dtor_84cd60` (0x856370): dtor, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x856370, conv = cdecl, name = "__dtor_84cd60")]
 pub fn g_dtor_84cd60_856370() {
 }
 

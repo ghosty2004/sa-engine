@@ -38,7 +38,7 @@ orig! {
     /// `CAESound::~CAESound` (0x4EF660)
     pub fn ae_sound_dtor(s: GPtr<u8>) = thiscall 0x4EF660 => unported;
     /// `CGarage::Update(int32 index)` (0x44AA50)
-    pub fn garage_update(gp: GPtr<u8>, i: i32) = thiscall 0x44AA50 => unported;
+    pub fn garage_update(gp: GPtr<u8>, i: i32) = thiscall 0x44AA50 => crate::world::garage_update::garage_update;
     /// `CGarage::TidyUpGarage` (0x449C50)
     pub fn tidy_up_garage(gp: GPtr<u8>) = thiscall 0x449C50 => unported;
     /// `CGarage::TidyUpGarageClose` (0x449D10)

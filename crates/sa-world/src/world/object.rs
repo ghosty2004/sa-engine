@@ -52,6 +52,26 @@ const CLUMP_ANIM_OFFSET: usize = 0xB5F878;
 const MI_FIRE_HYDRANT: usize = 0x8CD594;
 
 orig! {
+    /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
+    pub fn set_mission_doesnt_require_model(m: i32) = cdecl 0x409C90 => unported;
+    /// `CTheScripts::RemoveFromWaitingForScriptBrainArray(CEntity*, int16)` (0x46ABC0)
+    pub fn remove_from_waiting_for_script_brain_array(e: GPtr<u8>, i: u32) = cdecl 0x46ABC0 => unported;
+    /// `CColStore::RemoveRef(int32)` (0x4107D0)
+    pub fn col_store_remove_ref(i: i32) = cdecl 0x4107D0 => unported;
+    /// `CRadar::ClearBlipForEntity(eBlipType, int32 handle)` (0x587C60)
+    pub fn radar_clear_blip_for_entity(ty: i32, h: i32) = cdecl 0x587C60 => unported;
+    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
+    pub fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
+    /// `CTxdStore::RemoveRef(int32)` (0x731A30)
+    pub fn txd_store_remove_ref(i: i32) = cdecl 0x731A30 => unported;
+    /// `CObject::RemoveFromControlCodeList()` (0x59F450)
+    pub fn remove_from_control_code_list_call(o: GPtr<u8>) = thiscall 0x59F450 => remove_from_control_code_list;
+    /// `CPathFind::SetLinksBridgeLights(float xMin, float xMax, float yMin, float yMax, bool)` (0x44D960)
+    pub fn path_set_links_bridge_lights(pf: GPtr<u8>, x0: f32, x1: f32, y0: f32, y1: f32, b: u32) = thiscall 0x44D960 => unported;
+    /// `CFire::Extinguish()` (0x5393F0)
+    pub fn fire_extinguish(f: GPtr<u8>) = thiscall 0x5393F0 => unported;
+    /// `CPhysical::~CPhysical()` (0x542450): EAX of `CEntity::~CEntity`
+    pub fn physical_destructor(p: GPtr<u8>) -> u32 = thiscall 0x542450 => crate::physical::base::destructor;
     /// `CColStore::AddRef(int32)` (0x4107A0)
     pub fn col_store_add_ref(i: i32) = cdecl 0x4107A0 => unported;
     /// `CBaseModelInfo::SwaysInWind()` (0x4212C0)
@@ -1102,7 +1122,91 @@ pub fn hand_object_process_control(this: GPtr<u8>) {
 }
 
 /// Registrations of this module.
+/// `CObject` vtable (0x866F60).
+const OBJECT_VTABLE: u32 = 0x866F60;
+/// `CTheScripts::ScriptsForBrains` (0xA90CF0, 0x14-byte brains: streamed script index int16 +0)
+const SCRIPTS_FOR_BRAINS: usize = 0xA90CF0;
+/// `CObject::nNoTempObjects` (int16)
+const NO_TEMP_OBJECTS: usize = 0xBB4A70;
+/// `ModelIndices` entry 0x8CD6B8: the bridge whose removal relights the bridge path links
+const MI_BRIDGE_LIGHTS: usize = 0x8CD6B8;
+/// `ThePaths` (`CPathFind`)
+const THE_PATHS: usize = 0x96F050;
+/// 0x858CCC: the half extent of the bridge-lights rectangle
+const BRIDGE_HALF: usize = 0x858CCC;
+
+/// `CObject::~CObject()` (0x59F660, thiscall; catalogue name `CObject`, `FUN_0059f660`): vtable
+/// 0x866F60. A script-brain object (flags 0x300000, +0x140): `SetMissionDoesntRequireModel(0x6676 +
+/// ScriptsForBrains[+0x168].scriptIndex)`, flags &= !0x300000 (re-read after the call),
+/// `RemoveFromWaitingForScriptBrainArray(this, +0x168)`, +0x168 = -1. Flag byte +0x142 bit 0:
+/// `CColStore::RemoveRef(colModel->colSlot)` (model info +0x14, byte +0x28). `CRadar::ClearBlipForEntity(3,
+/// pool handle)`; ref model +0x14A ≠ -1 → its model info's `RemoveRef`; remap txd +0x16A ≠ -1 →
+/// `CTxdStore::RemoveRef`; a temporary object (+0x13C = 3) decrements `nNoTempObjects` when above 0;
+/// `RemoveFromControlCodeList`. The bridge model (`[0x8CD6B8]`) relights the path links in the rectangle
+/// of half extent `[0x858CCC]` around the position of the entity at +0x170 (matrix position or placement;
+/// x87 `fadd`/`fsub`, stored as f32): `ThePaths.SetLinksBridgeLights(x - h, x + h, y - h, y + h, false)`.
+/// A fire (+0x164) is extinguished. Then `CPhysical::~CPhysical()`, whose EAX is returned.
+#[hook(addr = 0x59f660, conv = thiscall, name = "CObject", expect = "6A FF 68 28 D2 83 00",
+       unverified = "mvpi-world-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "the CObject destructor: releases model/txd/col refs, frees the physical's lists")]
+pub fn object_destructor(this: GPtr<u8>) -> u32 {
+    wr::<u32>(this, 0, OBJECT_VTABLE);
+    if rd::<u32>(this, 0x140) & 0x30_0000 != 0 {
+        let b = i32::from(rd::<i16>(this, 0x168));
+        let slot = g::<i16>((SCRIPTS_FOR_BRAINS as u32).wrapping_add((b as u32).wrapping_mul(0x14)) as usize).read();
+        set_mission_doesnt_require_model(i32::from(slot) + 0x6676);
+        let f = rd::<u32>(this, 0x140) & 0xFFCF_FFFF;
+        let i = u32::from(rd::<u16>(this, 0x168));
+        wr::<u32>(this, 0x140, f);
+        remove_from_waiting_for_script_brain_array(this, i);
+        wr::<u16>(this, 0x168, 0xFFFF);
+    }
+    if rd::<u8>(this, 0x142) & 1 != 0 {
+        let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS).byte_add(isize::from(rd::<i16>(this, 0x22)) * 4).read();
+        let col = rd::<GPtr<u8>>(mi, 0x14);
+        col_store_remove_ref(i32::from(rd::<u8>(col, 0x28)));
+    }
+    let pool = g::<GPtr<u8>>(OBJECT_POOL).read();
+    let i = pool_index(pool, this, OBJECT_SLOT);
+    let flags = rd::<u32>(pool, 4);
+    let h = i32::from(GPtr::<u8>::from_addr(flags.wrapping_add(i as u32) as usize).read()).wrapping_add(i << 8);
+    radar_clear_blip_for_entity(3, h);
+    let r = rd::<i16>(this, 0x14A);
+    if r != -1 {
+        model_info_remove_ref(g::<GPtr<u8>>(MODEL_INFO_PTRS).byte_add(isize::from(r) * 4).read());
+    }
+    let t = rd::<i16>(this, 0x16A);
+    if t != -1 {
+        txd_store_remove_ref(i32::from(t));
+    }
+    if rd::<u8>(this, 0x13C) == 3 {
+        let n = g::<u16>(NO_TEMP_OBJECTS);
+        if n.read() > 0 {
+            n.write(n.read() - 1);
+        }
+    }
+    remove_from_control_code_list_call(this);
+    if i32::from(rd::<i16>(this, 0x22)) == i32::from(g::<u16>(MI_BRIDGE_LIGHTS).read()) {
+        let e = rd::<GPtr<u8>>(this, 0x170);
+        let m = rd::<GPtr<u8>>(e, 0x14);
+        let p: GPtr<f32> = if m.is_null() { e.byte_add(4).cast() } else { m.byte_add(0x30).cast() };
+        let (px, py) = (p.read(), p.wrapping_index(1).read());
+        let h = g::<f32>(BRIDGE_HALF).read();
+        let y1 = x(py).fadd_m(h).to_f32();
+        let y0 = x(py).fsub_m(h).to_f32();
+        let x1 = x(px).fadd_m(h).to_f32();
+        let x0 = x(px).fsub_m(h).to_f32();
+        path_set_links_bridge_lights(GPtr::from_addr(THE_PATHS), x0, x1, y0, y1, 0);
+    }
+    let fire = rd::<GPtr<u8>>(this, 0x164);
+    if !fire.is_null() {
+        fire_extinguish(fire);
+    }
+    physical_destructor(this)
+}
+
 pub const HOOKS: &[HookReg] = &[
+    HOOK_OBJECT_DESTRUCTOR,
     HOOK_OBJECT_NEW,
     HOOK_OBJECT_DELETE,
     HOOK_CAN_BE_DELETED,

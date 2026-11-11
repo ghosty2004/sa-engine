@@ -328,8 +328,427 @@ pub fn building_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     ret
 }
 
+orig! {
+    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxCorners(float z, CEntity&, CVector* corners)` (0x5F3650)
+    fn compute_entity_bounding_box_corners(z: u32, e: GPtr<u8>, corners: GPtr<u8>) = cdecl 0x5F3650 => unported;
+    /// `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes(float z, CEntity&, CVector* normals, float* ds)` (0x5F3660)
+    fn compute_entity_bounding_box_planes(z: u32, e: GPtr<u8>, normals: GPtr<u8>, ds: GPtr<u8>) = cdecl 0x5F3660 => unported;
+    /// `CPedGeometryAnalyser::ComputeEntityHitSide(const CPed&, CEntity&)` (0x5F3BC0)
+    fn compute_entity_hit_side_ped(ped: GPtr<u8>, e: GPtr<u8>) -> i32 = cdecl 0x5F3BC0 => unported;
+    /// `CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox(const CPed&, CEntity&, const CVector&, CPointRoute&,
+    /// int32)` (0x5F6110)
+    fn compute_route_round_entity_bounding_box(ped: GPtr<u8>, e: GPtr<u8>, target: GPtr<u8>, route: u32, dir: i32) -> u32 = cdecl 0x5F6110 => unported;
+}
+
+/// `CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar(CPed*)` (0x6544F0, thiscall, `ret 4`; float in ST0).
+/// x87. Vehicle V = +0x1C, target T = +0x10. Box corners and planes of V at the ped's z (cached versions); the
+/// side the ped hits (`ComputeEntityHitSide`, -1 none) gives the result distance f32(n.z*p.z + n.y*p.y + n.x*p.x
+/// + d) of the ped position p, else 0. With flag +0xD bit 0: the plane distances of T (plane 0 summed x, z, y;
+/// planes 1..3 y, x, z; each stored f32) up to the first not below 0; T inside all four → the side of T
+/// (`ComputeEntityHitSide(T, V)`), s = 0.05 - that plane's distance (register), T.x = f32(T.x + s*n.x), T.y,
+/// T.z plus the f32 products. Then `ComputeRouteRoundEntityBoundingBox(ped, V, T, route +0x20, the signed low
+/// nibble of +0xE)` and its low 4 bits go to bits 2..5 of +0xD. Returns the distance.
+#[hook(addr = 0x6544f0, conv = thiscall, name = "CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar",
+       expect = "81 EC 84 00 00 00 53", unverified = "mvpj-ai-5", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn car_compute_route_round_small_car(this: GPtr<u8>, ped: GPtr<u8>) -> X87 {
+    let veh = rd::<GPtr<u8>>(this, 0x1C);
+    let pz = rd::<u32>(ent_pos(ped), 8);
+    let mut corners = [0u32; 12];
+    compute_entity_bounding_box_corners(pz, veh, buf(&mut corners));
+    let pz = rd::<u32>(ent_pos(ped), 8);
+    let mut normals = [0u32; 12];
+    let mut ds = [0u32; 4];
+    compute_entity_bounding_box_planes(pz, rd::<GPtr<u8>>(this, 0x1C), buf(&mut normals), buf(&mut ds));
+    let side = compute_entity_hit_side_ped(ped, rd::<GPtr<u8>>(this, 0x1C));
+    let nf = |i: usize| f32::from_bits(normals[i]);
+    let dsf = |i: usize| f32::from_bits(ds[i]);
+    let mut dist = 0f32;
+    if side != -1 {
+        let p = ent_pos(ped);
+        let s = side as usize;
+        dist = x(nf(s * 3 + 2))
+            .fmul_m(rd::<f32>(p, 8))
+            .fadd(x(nf(s * 3 + 1)).fmul_m(rd::<f32>(p, 4)))
+            .fadd(x(nf(s * 3)).fmul_m(rd::<f32>(p, 0)))
+            .fadd_m(dsf(s))
+            .to_f32();
+    }
+    if rd::<u8>(this, 0xD) & 1 != 0 {
+        let t = this.byte_add(0x10);
+        let (tx, ty, tz) = (rd::<f32>(t, 0), rd::<f32>(t, 4), rd::<f32>(t, 8));
+        let mut dd = [0f32; 4];
+        let mut k = 0;
+        while k < 4 {
+            let n = |i: usize| nf(k * 3 + i);
+            let v = if k == 0 {
+                x(n(0)).fmul_m(tx).fadd(x(n(2)).fmul_m(tz)).fadd(x(ty).fmul_m(n(1)))
+            } else {
+                x(n(1)).fmul_m(ty).fadd(x(n(0)).fmul_m(tx)).fadd(x(n(2)).fmul_m(tz))
+            }
+            .fadd_m(dsf(k));
+            dd[k] = v.to_f32();
+            if !v.fcom(X87::zero()).c0() {
+                break;
+            }
+            k += 1;
+        }
+        if k == 4 {
+            let side2 = compute_entity_hit_side(t, rd::<GPtr<u8>>(this, 0x1C));
+            if side2 != -1 {
+                let s2 = side2 as usize;
+                let s = x(dd[s2]).fchs().fadd_m(0.05);
+                let sx = s.fmul_m(nf(s2 * 3));
+                let sy = s.fmul_m(nf(s2 * 3 + 1)).to_f32();
+                let sz = s.fmul_m(nf(s2 * 3 + 2)).to_f32();
+                wr::<f32>(t, 0, sx.fadd_m(rd::<f32>(t, 0)).to_f32());
+                wr::<f32>(t, 4, x(sy).fadd_m(rd::<f32>(t, 4)).to_f32());
+                wr::<f32>(t, 8, x(sz).fadd_m(rd::<f32>(t, 8)).to_f32());
+            }
+        }
+    }
+    let nib = i32::from((rd::<u8>(this, 0xE) << 4) as i8) >> 4;
+    let r = compute_route_round_entity_bounding_box(ped, rd::<GPtr<u8>>(this, 0x1C), this.byte_add(0x10), rd::<u32>(this, 0x20), nib);
+    let b = rd::<u8>(this, 0xD);
+    wr::<u8>(this, 0xD, b ^ (((r as u8) << 2 ^ b) & 0x3C));
+    x(dist)
+}
+
+orig! {
+    /// `CTaskComplexWalkRoundObject::CreateSubTask(int32 type, CPed*)` (`FUN_00655290`, `ret 8`)
+    fn object_create_sub_task(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x655290 => unported;
+    /// `CVector::DotProduct(const CVector*, const CVector*)` (0x40FDB0, ST0)
+    fn vector_dot_product(a: GPtr<u8>, b: GPtr<u8>) -> f64 = cdecl 0x40FDB0 => unported;
+    /// `CTaskSimpleScratchHead::CTaskSimpleScratchHead()` (thunk 0x48DF30)
+    fn scratch_head_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x48DF30 => unported;
+    /// `CTaskSimpleHitWall::CTaskSimpleHitWall()` (0x652F90)
+    fn hit_wall_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x652F90 => unported;
+}
+
+/// `CTaskComplexWalkRoundObject::ControlSubTask(CPed*)` (0x6575F0, thiscall, `ret 4`). x87. Abort (→ when the
+/// sub-task's `MakeAbortable(ped, 1, NULL)` succeeds, `CreateSubTask(0xCB, ped)`, else the sub-task) when: no
+/// object (+0x1C); or the sub-task is of type 0x389 with the timer set (+0x2C: a pending start +0x2D takes
+/// the current time into +0x24) and now ≥ +0x24 + +0x28 (unsigned); or the ped intelligence's +0x274 is above
+/// 30 ([0x86C938]). Else a sub-task of type 0xCB is kept; otherwise (matrix allocated from the simple transform
+/// when missing) the object is kept while |+0x30 - object position|² ≤ 0.0625, the matrix forward (+0x10)·
+/// +0x3C (z, y, x terms) is not below 0.9 and `DotProduct(+0x48, matrix right)` is not below 0.9; else abort.
+#[hook(addr = 0x6575f0, conv = thiscall, name = "CTaskComplexWalkRoundObject::ControlSubTask", expect = "53 8B 5C 24 08 56 8B F1",
+       unverified = "mvpj-ai-6", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn object_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    let abort = |ped: GPtr<u8>| {
+        if v_make_abortable(sub(), ped, 1, GPtr::NULL) != 0 {
+            object_create_sub_task(this, 0xCB, ped)
+        } else {
+            sub()
+        }
+    };
+    if rd::<u32>(this, 0x1C) == 0 {
+        return abort(ped);
+    }
+    if v_get_task_type(sub()) == 0x389 && rd::<u8>(this, 0x2C) != 0 {
+        if rd::<u8>(this, 0x2D) != 0 {
+            wr::<u32>(this, 0x24, g::<u32>(0xB7CB84).read());
+            wr::<u8>(this, 0x2D, 0);
+        }
+        let end = rd::<u32>(this, 0x28).wrapping_add(rd::<u32>(this, 0x24));
+        if g::<u32>(0xB7CB84).read() >= end {
+            return abort(ped);
+        }
+    }
+    if rd::<i32>(rd::<GPtr<u8>>(ped, 0x47C), 0x274) > g::<i32>(0x86C938).read() {
+        return abort(ped);
+    }
+    if v_get_task_type(sub()) == 0xCB {
+        return sub();
+    }
+    let obj = rd::<GPtr<u8>>(this, 0x1C);
+    if rd::<u32>(obj, 0x14) == 0 {
+        placeable_allocate_matrix(obj);
+        simple_transform_update_matrix(obj.byte_add(4), rd::<GPtr<u8>>(obj, 0x14));
+    }
+    let o = rd::<GPtr<u8>>(this, 0x1C);
+    let m = rd::<GPtr<u8>>(obj, 0x14);
+    let p = ent_pos(o);
+    let dx = x(rd::<f32>(this, 0x30)).fsub_m(rd::<f32>(p, 0));
+    let dy = x(rd::<f32>(this, 0x34)).fsub_m(rd::<f32>(p, 4));
+    let dz = x(rd::<f32>(this, 0x38)).fsub_m(rd::<f32>(p, 8));
+    let dsq = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
+    if !dsq.fcom(x(g::<f32>(0x86F15C).read())).test_any(0x41) {
+        return abort(ped);
+    }
+    let k = x(g::<f32>(0x86F160).read());
+    let fwd = x(rd::<f32>(m, 0x18))
+        .fmul_m(rd::<f32>(this, 0x44))
+        .fadd(x(rd::<f32>(m, 0x14)).fmul_m(rd::<f32>(this, 0x40)))
+        .fadd(x(rd::<f32>(this, 0x3C)).fmul_m(rd::<f32>(m, 0x10)));
+    if !fwd.fcom(k).test_parity(0x05) {
+        return abort(ped);
+    }
+    let r = X87::from_f64_exact(vector_dot_product(this.byte_add(0x48), m));
+    if r.fcom(k).test_parity(0x05) {
+        return sub();
+    }
+    abort(ped)
+}
+
+/// `CTaskComplexWalkRoundBuildingAttempt::CreateFirstSubTask(CPed*)` (0x654A00, thiscall, `ret 4`). With flag
+/// +0x49 bit 2: no entity (+0x38) → ped +0x478 bit 6 cleared, NULL; else (matrix allocated when missing) +0x14 =
+/// entity matrix × +0x3C (`CVector::FromMultiply`). Ped +0x478 bit 6 set; by the i8 at +0x48: 1..4 → a new
+/// `CTaskSimpleScratchHead`, 6/7 → a new `CTaskSimpleHitWall` (NULL when the pool is full, the flag stays set);
+/// others → the flag cleared again, NULL.
+#[hook(addr = 0x654a00, conv = thiscall, name = "CTaskComplexWalkRoundBuildingAttempt::CreateFirstSubTask",
+       expect = "64 A1 00 00 00 00 6A FF", unverified = "mvpj-ai-6", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn building_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u8>(this, 0x49) & 4 != 0 {
+        let e = rd::<GPtr<u8>>(this, 0x38);
+        if e.is_null() {
+            wr::<u32>(ped, 0x478, rd::<u32>(ped, 0x478) & 0xFFFF_FFBF);
+            return GPtr::NULL;
+        }
+        if rd::<u32>(e, 0x14) == 0 {
+            placeable_allocate_matrix(e);
+            simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
+        }
+        vector_from_multiply(this.byte_add(0x14), rd::<GPtr<u8>>(e, 0x14), this.byte_add(0x3C));
+    }
+    let f = rd::<u32>(ped, 0x478) | 0x40;
+    wr::<u32>(ped, 0x478, f);
+    match rd::<i8>(this, 0x48) {
+        1..=4 => {
+            let t = task_new(0x20);
+            if t.is_null() { GPtr::NULL } else { scratch_head_ctor(t) }
+        }
+        6 | 7 => {
+            let t = task_new(0x20);
+            if t.is_null() { GPtr::NULL } else { hit_wall_ctor(t) }
+        }
+        _ => {
+            wr::<u32>(ped, 0x478, f & 0xFFFF_FFBF);
+            GPtr::NULL
+        }
+    }
+}
+
+orig! {
+    /// `CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar(CPed*)` (0x656BB0, `ret 4`, ST0)
+    fn car_compute_route_round_big_car(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x656BB0 => unported;
+    /// `CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar(CPed*)` (0x6544F0, `ret 4`, ST0)
+    fn car_compute_route_round_small_car_st0(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x6544F0 => unported;
+    /// `CVector::NormaliseAndMag()` (0x59C970, ST0)
+    fn vector_normalise_and_mag(v: GPtr<u8>) -> f64 = thiscall 0x59C970 => unported;
+    /// `CTaskManager::FindTaskByType(int32 slot, int32 type)` (0x6817D0, `ret 8`)
+    fn tm_find_task_by_type(tm: GPtr<u8>, slot: i32, ty: i32) -> GPtr<u8> = thiscall 0x6817D0 => unported;
+    /// `CTaskSimpleStandStill::CTaskSimpleStandStill(int32, bool, bool, float)` (0x62F310, `ret 0x10`)
+    fn stand_still_ctor(t: GPtr<u8>, time: i32, looped: u32, b: u32, delta: u32) -> GPtr<u8> = thiscall 0x62F310 => unported;
+    /// `CTaskSimpleStandStill::ProcessPed(CPed*)` (0x62F370, `ret 4`)
+    fn stand_still_process_ped(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x62F370 => unported;
+    /// `CTaskSimpleStandStill` complete destructor (`FUN_0062F360`)
+    fn stand_still_dtor(t: GPtr<u8>) = thiscall 0x62F360 => unported;
+    /// `CGeneral::GetRadianAngleBetweenPoints(float, float, float, float)` (0x53CBE0, ST0)
+    fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -> f64 = cdecl 0x53CBE0 => unported;
+    /// `CGeneral::LimitRadianAngle(float)` (0x53CB50, ST0)
+    fn general_limit_radian_angle(a: f32) -> f64 = cdecl 0x53CB50 => unported;
+    /// `CTaskSimpleAchieveHeading::CTaskSimpleAchieveHeading(float heading, float changeRate, float tolerance)`
+    /// (0x667E20, `ret 0xC`)
+    fn achieve_heading_ctor(t: GPtr<u8>, heading: u32, rate: u32, tol: u32) -> GPtr<u8> = thiscall 0x667E20 => unported;
+}
+
+/// `CTaskComplexWalkRoundCar::CreateFirstSubTask(CPed*)` (0x658200, thiscall, `ret 4`). x87. Route (+0x20) count =
+/// 0; dist = f32 `ComputeRouteRoundBigCar` (vehicle +0x429 bit 2) or `ComputeRouteRoundSmallCar`; an empty route →
+/// NULL. Timer: +0x24 = now, +0x28 = 20000 (move state +0xC == 4) or 15000, scaled `_ftol(t * [0x858B90])` when the
+/// vehicle has a driver (+0x4C8) or passenger (+0x4C4) slot set; +0x2C = 1; +0x30 = vehicle position, +0x3C its
+/// matrix forward, +0x48 its matrix right. u = f32(route[0] - ped) (z, y, x registers), m = f32 `NormaliseAndMag`;
+/// dot = f32(u·ped forward) (z, y, x). Threshold 2 (move state 4), 4 (6) or 6. A player with a type-0x2BD task in
+/// slot 3 copies its +0x4C to +0x54. Not a big car, m, dist above the threshold and dot above [0x86F424] →
+/// `CreateRouteTask(ped)`. Else a stack `CTaskSimpleStandStill(0, false, false, 8.0)` `ProcessPed`s the ped and a
+/// new `CTaskSimpleAchieveHeading(f32 LimitRadianAngle(GetRadianAngleBetweenPoints(f32(route.x - ped.x),
+/// f32(route.y - ped.y), 0, 0)), 1.0, 0.1)` (NULL when the pool is full) is returned.
+///
+/// The original keeps the timer, the threshold and the heading in its own `ped` argument slot (popped by `ret 4`).
+#[hook(addr = 0x658200, conv = thiscall, name = "CTaskComplexWalkRoundCar::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "mvpj-ai-6", route = "L2", hazards = "stack-residue", recs = "grove-walk")]
+pub fn car_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    let route = rd::<GPtr<u8>>(this, 0x20);
+    wr::<u32>(route, 0, 0);
+    let big = rd::<u8>(rd::<GPtr<u8>>(this, 0x1C), 0x429) & 4 != 0;
+    let dist = X87::from_f64_exact(if big {
+        car_compute_route_round_big_car(this, ped)
+    } else {
+        car_compute_route_round_small_car_st0(this, ped)
+    })
+    .to_f32();
+    if rd::<u32>(rd::<GPtr<u8>>(this, 0x20), 0) == 0 {
+        return GPtr::NULL;
+    }
+    let t: i32 = if rd::<u8>(this, 0xC) == 4 { 0x4E20 } else { 0x3A98 };
+    let veh = rd::<GPtr<u8>>(this, 0x1C);
+    let dur = if rd::<u32>(veh, 0x4C8) != 0 || rd::<u32>(veh, 0x4C4) != 0 {
+        X87::from_i32(t).fmul_m(g::<f32>(0x858B90).read()).ftol() as u32 as i32
+    } else {
+        t
+    };
+    wr::<u32>(this, 0x24, g::<u32>(0xB7CB84).read());
+    wr::<i32>(this, 0x28, dur);
+    wr::<u8>(this, 0x2C, 1);
+    let vp = ent_pos(veh);
+    for i in 0..3isize {
+        wr::<u32>(this, 0x30 + i * 4, rd::<u32>(vp, i * 4));
+    }
+    let m = rd::<GPtr<u8>>(veh, 0x14);
+    for i in 0..3isize {
+        wr::<u32>(this, 0x3C + i * 4, rd::<u32>(m, 0x10 + i * 4));
+    }
+    for i in 0..3isize {
+        wr::<u32>(this, 0x48 + i * 4, rd::<u32>(m, i * 4));
+    }
+    let pp = ent_pos(ped);
+    let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
+    let dz = x(rd::<f32>(r, 8)).fsub_m(rd::<f32>(pp, 8));
+    let dy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4));
+    let dx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0));
+    let mut u = [dx.to_f32(), dy.to_f32(), dz.to_f32()];
+    let mag = X87::from_f64_exact(vector_normalise_and_mag(GPtr::from_raw(u.as_mut_ptr()).cast())).to_f32();
+    let pm = rd::<GPtr<u8>>(ped, 0x14);
+    let dot = x(u[2])
+        .fmul_m(rd::<f32>(pm, 0x18))
+        .fadd(x(u[1]).fmul_m(rd::<f32>(pm, 0x14)))
+        .fadd(x(u[0]).fmul_m(rd::<f32>(pm, 0x10)))
+        .to_f32();
+    let thr: f32 = match rd::<u8>(this, 0xC) {
+        4 => 2.0,
+        6 => 4.0,
+        _ => 6.0,
+    };
+    if ped_is_player(ped) != 0 {
+        let tm = rd::<GPtr<u8>>(ped, 0x47C).byte_add(4);
+        let tk = tm_find_task_by_type(tm, 3, 0x2BD);
+        if !tk.is_null() {
+            wr::<u32>(this, 0x54, rd::<u32>(tk, 0x4C));
+        }
+    }
+    let gt = |a: f32, b: f32| !x(a).fcom(x(b)).test_any(0x41);
+    if rd::<u8>(rd::<GPtr<u8>>(this, 0x1C), 0x429) & 4 == 0
+        && gt(mag, thr)
+        && gt(dist, thr)
+        && gt(dot, g::<f32>(0x86F424).read())
+    {
+        return car_create_route_task(this, ped);
+    }
+    let mut ss = [0u32; 8];
+    let sp = buf(&mut ss);
+    stand_still_ctor(sp, 0, 0, 0, 8f32.to_bits());
+    stand_still_process_ped(sp, ped);
+    let pp = ent_pos(ped);
+    let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
+    let hx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0)).to_f32();
+    let hy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32();
+    let a = X87::from_f64_exact(general_get_radian_angle_between_points(hx, hy, 0.0, 0.0)).to_f32();
+    let h = X87::from_f64_exact(general_limit_radian_angle(a)).to_f32();
+    let tk = task_new(0x18);
+    let res = if tk.is_null() {
+        GPtr::NULL
+    } else {
+        achieve_heading_ctor(tk, h.to_bits(), 0x3F80_0000, 0x3DCC_CCCD)
+    };
+    stand_still_dtor(sp);
+    res
+}
+
+orig! {
+    /// `CTaskComplexWalkRoundObject::ComputeRoute(CPed*)` (0x6551D0, `ret 4`, ST0; not in the catalogue's names)
+    fn object_compute_route(t: GPtr<u8>, ped: GPtr<u8>) -> f64 = thiscall 0x6551D0 => unported;
+}
+
+/// `CTaskComplexWalkRoundObject::CreateFirstSubTask(CPed*)` (0x657380, thiscall, `ret 4`). x87. No object (+0x1C)
+/// → NULL. Route (+0x20) count = 0; dist = f32 of `FUN_006551D0` (the route computation); an empty route → NULL.
+/// Timer +0x24 = now, +0x28 = 8000 (move state dword +0xC == 4) or 4000, +0x2C = 1; +0x30 = object position, +0x3C
+/// its matrix forward, +0x48 its matrix right (matrix allocated from the simple transform when missing, twice). u =
+/// f32(route[0] - ped) (z, y, x registers), m = f32 `NormaliseAndMag`, dot = u·ped forward (z, y, x; register).
+/// Threshold 2 / 4 / 6 (move state 4 / 6 / other). m, dist above it and dot above [0x86F420] → `CreateRouteTask`;
+/// else a new `CTaskSimpleAchieveHeading(f32 LimitRadianAngle(GetRadianAngleBetweenPoints(f32(route.x - ped.x),
+/// f32(route.y - ped.y), 0, 0)), 1.0, 0.2)` (NULL when the pool is full).
+///
+/// The original keeps m and the heading in its own `ped` argument slot (popped by `ret 4`).
+#[hook(addr = 0x657380, conv = thiscall, name = "CTaskComplexWalkRoundObject::CreateFirstSubTask", expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "mvpj-ai-6", route = "L2", hazards = "stack-residue", recs = "grove-walk")]
+pub fn object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0x1C) == 0 {
+        return GPtr::NULL;
+    }
+    wr::<u32>(rd::<GPtr<u8>>(this, 0x20), 0, 0);
+    let dist = X87::from_f64_exact(object_compute_route(this, ped)).to_f32();
+    if rd::<u32>(rd::<GPtr<u8>>(this, 0x20), 0) == 0 {
+        return GPtr::NULL;
+    }
+    let t: u32 = if rd::<u32>(this, 0xC) == 4 { 0x1F40 } else { 0xFA0 };
+    wr::<u32>(this, 0x24, g::<u32>(0xB7CB84).read());
+    wr::<u32>(this, 0x28, t);
+    wr::<u8>(this, 0x2C, 1);
+    let ensure = |o: GPtr<u8>| {
+        if rd::<u32>(o, 0x14) == 0 {
+            placeable_allocate_matrix(o);
+            simple_transform_update_matrix(o.byte_add(4), rd::<GPtr<u8>>(o, 0x14));
+        }
+    };
+    let o = rd::<GPtr<u8>>(this, 0x1C);
+    let op = ent_pos(o);
+    for i in 0..3isize {
+        wr::<u32>(this, 0x30 + i * 4, rd::<u32>(op, i * 4));
+    }
+    ensure(o);
+    let m = rd::<GPtr<u8>>(o, 0x14);
+    for i in 0..3isize {
+        wr::<u32>(this, 0x3C + i * 4, rd::<u32>(m, 0x10 + i * 4));
+    }
+    let o = rd::<GPtr<u8>>(this, 0x1C);
+    ensure(o);
+    let m = rd::<GPtr<u8>>(o, 0x14);
+    for i in 0..3isize {
+        wr::<u32>(this, 0x48 + i * 4, rd::<u32>(m, i * 4));
+    }
+    let pp = ent_pos(ped);
+    let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
+    let dz = x(rd::<f32>(r, 8)).fsub_m(rd::<f32>(pp, 8));
+    let dy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4));
+    let dx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0));
+    let mut u = [dx.to_f32(), dy.to_f32(), dz.to_f32()];
+    let mag = X87::from_f64_exact(vector_normalise_and_mag(GPtr::from_raw(u.as_mut_ptr()).cast())).to_f32();
+    let pm = rd::<GPtr<u8>>(ped, 0x14);
+    let dot = x(u[2])
+        .fmul_m(rd::<f32>(pm, 0x18))
+        .fadd(x(u[1]).fmul_m(rd::<f32>(pm, 0x14)))
+        .fadd(x(u[0]).fmul_m(rd::<f32>(pm, 0x10)));
+    let thr = x(match rd::<u32>(this, 0xC) {
+        4 => g::<f32>(0x858CA0).read(),
+        6 => g::<f32>(0x858B90).read(),
+        _ => g::<f32>(0x858B44).read(),
+    });
+    if !x(mag).fcom(thr).test_any(0x41)
+        && !x(dist).fcom(thr).test_any(0x41)
+        && !dot.fcom(x(g::<f32>(0x86F420).read())).test_any(0x41)
+    {
+        return object_create_route_task_orig(this, ped);
+    }
+    let pp = ent_pos(ped);
+    let r = rd::<GPtr<u8>>(this, 0x20).byte_add(4);
+    let hx = x(rd::<f32>(r, 0)).fsub_m(rd::<f32>(pp, 0)).to_f32();
+    let hy = x(rd::<f32>(r, 4)).fsub_m(rd::<f32>(pp, 4)).to_f32();
+    let a = X87::from_f64_exact(general_get_radian_angle_between_points(hx, hy, 0.0, 0.0)).to_f32();
+    let h = X87::from_f64_exact(general_limit_radian_angle(a)).to_f32();
+    let tk = task_new(0x18);
+    if tk.is_null() {
+        return GPtr::NULL;
+    }
+    achieve_heading_ctor(tk, h.to_bits(), 0x3F80_0000, 0x3E4C_CCCD)
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_OBJECT_CONTROL_SUB_TASK,
+    HOOK_BUILDING_CREATE_FIRST_SUB_TASK,
+    HOOK_CAR_CREATE_FIRST_SUB_TASK,
+    HOOK_OBJECT_CREATE_FIRST_SUB_TASK,
+    HOOK_CAR_COMPUTE_ROUTE_ROUND_SMALL_CAR,
     HOOK_CAR_CREATE_ROUTE_TASK,
     HOOK_OBJECT_CREATE_ROUTE_TASK,
     HOOK_CAR_CONTROL_SUB_TASK,

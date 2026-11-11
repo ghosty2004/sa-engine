@@ -7,6 +7,7 @@ use sa_core::mem::GlobalDesc;
 use crate::{
     font, font_print, hud, hud_draw, menu, menu2, menu_mgr, messages, place, radar, radar_draw, radar_draw2, statics, statics2,
     text, text_load, timer,
+    credits, hud_draw3, menu3, menu_ctrl, menu_draw, menu_input, menu_map, radar_draw3,
 };
 
 /// Every module's registrations, in this order.
@@ -28,6 +29,14 @@ pub const MODULES: &[&[HookReg]] = &[
     menu2::HOOKS,
     radar_draw2::HOOKS,
     place::HOOKS,
+    hud_draw3::HOOKS,
+    radar_draw3::HOOKS,
+    menu_map::HOOKS,
+    menu_draw::HOOKS,
+    menu_input::HOOKS,
+    menu3::HOOKS,
+    credits::HOOKS,
+    menu_ctrl::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -49,6 +58,14 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     menu2::GLOBALS,
     radar_draw2::GLOBALS,
     place::GLOBALS,
+    hud_draw3::GLOBALS,
+    radar_draw3::GLOBALS,
+    menu_map::GLOBALS,
+    menu_draw::GLOBALS,
+    menu_input::GLOBALS,
+    menu3::GLOBALS,
+    credits::GLOBALS,
+    menu_ctrl::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
@@ -81,6 +98,10 @@ const ALL_ARRAY: [HookReg; total(MODULES)] = concat(MODULES);
 
 /// All registrations of this crate (the concatenation of [`MODULES`]).
 pub const ALL: &[HookReg] = &ALL_ARRAY;
+
+/// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
+/// phase A); `sa_ports::NATIVES` lists each of these.
+pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[crate::font_print::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 

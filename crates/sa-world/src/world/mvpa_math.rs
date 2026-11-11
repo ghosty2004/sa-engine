@@ -148,9 +148,8 @@ pub fn vector_squared_magnitude(this: GPtr<u8>) -> X87 {
 
 /// `min(float a, float b)` (0x404330, cdecl, ST0): `a` when `a < b`, else `b` (equal and unordered
 /// give `b`).
-#[hook(addr = 0x404330, conv = cdecl, name = "FUN_00404330", expect = "D9 44 24 04 D8 5C 24 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
-       note = "std::min<float> (no catalogue name); pure, L1 spec not written")]
+///
+/// Not registered: 0x404330 is hooked by sa-core common.rs (verified) (duplicate port left unregistered when STD-5 merged both).
 pub fn min_f(a: f32, b: f32) -> X87 {
     if x(a).fcom(x(b)).test_parity(5) { x(b) } else { x(a) }
 }
@@ -489,7 +488,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_VECTOR_SUB_ASSIGN,
     HOOK_VECTOR_DIV_SCALAR,
     HOOK_VECTOR_SQUARED_MAGNITUDE,
-    HOOK_MIN_F,
     HOOK_MAX_F,
     HOOK_APPROX_EQUAL,
     HOOK_UNCOMPRESS_VECTOR,

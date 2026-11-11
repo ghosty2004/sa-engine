@@ -25,6 +25,7 @@ pub type Body = (u32, u64, &'static [(u32, u32)]);
 
 /// `CEvent::IsCriminalEvent` (0x420E90): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x420E90, conv = thiscall, name = "CEvent::IsCriminalEvent")]
 pub fn g_event_is_criminal_event_420e90(_this: u32) -> u8 {
     0 as u8
 }
@@ -38,24 +39,28 @@ pub fn g_event_get_local_sound_level_420eb0(_this: u32) -> X87 {
 
 /// `CEventEditableResponse::HasEditableResponse` (0x420EF0): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x420EF0, conv = thiscall, name = "CEventEditableResponse::HasEditableResponse")]
 pub fn g_event_editable_response_has_editable_response_420ef0(_this: u32) -> u8 {
     1 as u8
 }
 
 /// `CEventAcquaintancePed::GetLifeTime` (0x420F00): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x420F00, conv = thiscall, name = "CEventAcquaintancePed::GetLifeTime")]
 pub fn g_event_acquaintance_ped_get_life_time_420f00(_this: u32) -> u32 {
     0
 }
 
 /// `CEventAcquaintancePed::CanBeInterruptedBySameEvent` (0x420F20): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x420F20, conv = thiscall, name = "CEventAcquaintancePed::CanBeInterruptedBySameEvent")]
 pub fn g_event_acquaintance_ped_can_be_interrupted_by_same_event_420f20(_this: u32) -> u8 {
     1 as u8
 }
 
 /// `CTask::StopTimer` (0x421180): empty, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x421180, conv = thiscall, name = "CTask::StopTimer")]
 pub fn g_task_stop_timer_421180(_this: u32, _a0: u32) {}
 
 /// `CEventLeaderEntryExit::GetEventType` (0x43E200): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -66,12 +71,14 @@ pub fn g_event_leader_entry_exit_get_event_type_43e200(_this: u32) -> u32 {
 
 /// `CEventLeaderEntryExit::GetLifeTime` (0x43E210): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x43E210, conv = thiscall, name = "CEventLeaderEntryExit::GetLifeTime")]
 pub fn g_event_leader_entry_exit_get_life_time_43e210(_this: u32) -> u32 {
     0
 }
 
 /// `CEventLeaderEntryExit::CanBeInterruptedBySameEvent` (0x43E280): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x43E280, conv = thiscall, name = "CEventLeaderEntryExit::CanBeInterruptedBySameEvent")]
 pub fn g_event_leader_entry_exit_can_be_interrupted_by_same_event_43e280(_this: u32) -> u8 {
     1 as u8
 }
@@ -197,6 +204,7 @@ pub fn g_event_leader_entered_car_as_driver_get_event_type_48e280(_this: u32) ->
 
 /// `CEventLeaderEnteredCarAsDriver::GetLifeTime` (0x48E290): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x48E290, conv = thiscall, name = "CEventLeaderEnteredCarAsDriver::GetLifeTime")]
 pub fn g_event_leader_entered_car_as_driver_get_life_time_48e290(_this: u32) -> u32 {
     0
 }
@@ -209,6 +217,7 @@ pub fn g_event_leader_entered_car_as_driver_affects_ped_48e300(_this: u32, _a0: 
 
 /// `CEventLeaderEnteredCarAsDriver::CanBeInterruptedBySameEvent` (0x48E310): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x48E310, conv = thiscall, name = "CEventLeaderEnteredCarAsDriver::CanBeInterruptedBySameEvent")]
 pub fn g_event_leader_entered_car_as_driver_can_be_interrupted_by_same_event_48e310(_this: u32) -> u8 {
     1 as u8
 }
@@ -292,12 +301,14 @@ pub fn g_event_gun_shot_get_event_type_4ac6b0(_this: u32) -> u32 {
 
 /// `CEventGunShot::GetLifeTime` (0x4AC6C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AC6C0, conv = thiscall, name = "CEventGunShot::GetLifeTime")]
 pub fn g_event_gun_shot_get_life_time_4ac6c0(_this: u32) -> u32 {
     0
 }
 
 /// `CEventGunShot::GetSourceEntity` (0x4AC6D0): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AC6D0, conv = thiscall, name = "CEventGunShot::GetSourceEntity")]
 pub fn g_event_gun_shot_get_source_entity_4ac6d0(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     v1
@@ -305,6 +316,7 @@ pub fn g_event_gun_shot_get_source_entity_4ac6d0(this: u32) -> u32 {
 
 /// `CEventGunShot::CanBeInterruptedBySameEvent` (0x4AC700): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AC700, conv = thiscall, name = "CEventGunShot::CanBeInterruptedBySameEvent")]
 pub fn g_event_gun_shot_can_be_interrupted_by_same_event_4ac700(_this: u32) -> u8 {
     1 as u8
 }
@@ -317,6 +329,7 @@ pub fn g_event_gun_shot_get_event_priority_4ac710(_this: u32) -> u32 {
 
 /// `CEventGunShot::ReportCriminalEvent` (0x4AC830): empty, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AC830, conv = thiscall, name = "CEventGunShot::ReportCriminalEvent")]
 pub fn g_event_gun_shot_report_criminal_event_4ac830(_this: u32, _a0: u32) {}
 
 /// `CEventVehicleCollision::GetEventType` (0x4AC8F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -327,6 +340,7 @@ pub fn g_event_vehicle_collision_get_event_type_4ac8f0(_this: u32) -> u32 {
 
 /// `CEventVehicleCollision::GetLifeTime` (0x4AC900): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AC900, conv = thiscall, name = "CEventVehicleCollision::GetLifeTime")]
 pub fn g_event_vehicle_collision_get_life_time_4ac900(_this: u32) -> u32 {
     0
 }
@@ -345,6 +359,7 @@ pub fn g_event_vehicle_collision_takes_priority_over_4ac980(_this: u32, _a0: u32
 
 /// `CEventObjectCollision::GetLifeTime` (0x4ACDB0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ACDB0, conv = thiscall, name = "CEventObjectCollision::GetLifeTime")]
 pub fn g_event_object_collision_get_life_time_4acdb0(_this: u32) -> u32 {
     0
 }
@@ -363,12 +378,14 @@ pub fn g_event_dragged_out_car_get_event_type_4ad2e0(_this: u32) -> u32 {
 
 /// `CEventDraggedOutCar::GetLifeTime` (0x4AD2F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AD2F0, conv = thiscall, name = "CEventDraggedOutCar::GetLifeTime")]
 pub fn g_event_dragged_out_car_get_life_time_4ad2f0(_this: u32) -> u32 {
     0
 }
 
 /// `CEventDraggedOutCar::GetSourceEntity` (0x4AD300): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AD300, conv = thiscall, name = "CEventDraggedOutCar::GetSourceEntity")]
 pub fn g_event_dragged_out_car_get_source_entity_4ad300(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     v1
@@ -395,6 +412,7 @@ pub fn g_event_damage_get_event_type_4ad910(_this: u32) -> u32 {
 
 /// `CEventDamage::GetLifeTime` (0x4AD920): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AD920, conv = thiscall, name = "CEventDamage::GetLifeTime")]
 pub fn g_event_damage_get_life_time_4ad920(_this: u32) -> u32 {
     0
 }
@@ -408,6 +426,7 @@ pub fn g_event_damage_get_local_sound_level_4ad930(_this: u32) -> X87 {
 
 /// `CEventDamage::CanBeInterruptedBySameEvent` (0x4AD940): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AD940, conv = thiscall, name = "CEventDamage::CanBeInterruptedBySameEvent")]
 pub fn g_event_damage_can_be_interrupted_by_same_event_4ad940(_this: u32) -> u8 {
     1 as u8
 }
@@ -426,6 +445,7 @@ pub fn g_event_death_get_event_type_4ade20(_this: u32) -> u32 {
 
 /// `CEventDeath::GetLifeTime` (0x4ADE30): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ADE30, conv = thiscall, name = "CEventDeath::GetLifeTime")]
 pub fn g_event_death_get_life_time_4ade30(_this: u32) -> u32 {
     0
 }
@@ -450,12 +470,14 @@ pub fn g_event_dead_ped_get_event_type_4adf20(_this: u32) -> u32 {
 
 /// `CEventDeadPed::GetLifeTime` (0x4ADF30): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ADF30, conv = thiscall, name = "CEventDeadPed::GetLifeTime")]
 pub fn g_event_dead_ped_get_life_time_4adf30(_this: u32) -> u32 {
     0
 }
 
 /// `CEventDeadPed::GetSourceEntity` (0x4ADF40): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4ADF40, conv = thiscall, name = "CEventDeadPed::GetSourceEntity")]
 pub fn g_event_dead_ped_get_source_entity_4adf40(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     v1
@@ -476,6 +498,7 @@ pub fn g_event_dead_ped_get_event_priority_4adf60(_this: u32) -> u32 {
 
 /// `CEventGroupEvent::GetLifeTime` (0x4AE040): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AE040, conv = thiscall, name = "CEventGroupEvent::GetLifeTime")]
 pub fn g_event_group_event_get_life_time_4ae040(_this: u32) -> u32 {
     0
 }
@@ -501,6 +524,7 @@ pub fn g_event_group_event_affects_ped_4ae0d0(_this: u32, _a0: u32) -> u8 {
 
 /// `vt_85ae88::GetLifeTime` (0x4AE220): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AE220, conv = thiscall, name = "vt_85ae88::GetLifeTime")]
 pub fn g_vt_85ae88_get_life_time_4ae220(_this: u32) -> u32 {
     0
 }
@@ -514,6 +538,7 @@ pub fn g_vt_85ae88_get_local_sound_level_4ae250(_this: u32) -> X87 {
 
 /// `CEventPotentialWalkIntoVehicle::GetLifeTime` (0x4AE3A0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AE3A0, conv = thiscall, name = "CEventPotentialWalkIntoVehicle::GetLifeTime")]
 pub fn g_event_potential_walk_into_vehicle_get_life_time_4ae3a0(_this: u32) -> u32 {
     0
 }
@@ -532,6 +557,7 @@ pub fn g_event_potential_walk_into_object_get_event_type_4ae640(_this: u32) -> u
 
 /// `CEventPotentialWalkIntoObject::GetLifeTime` (0x4AE650): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AE650, conv = thiscall, name = "CEventPotentialWalkIntoObject::GetLifeTime")]
 pub fn g_event_potential_walk_into_object_get_life_time_4ae650(_this: u32) -> u32 {
     0
 }
@@ -556,6 +582,7 @@ pub fn g_event_vehicle_hit_and_run_get_event_type_4aea00(_this: u32) -> u32 {
 
 /// `CEventVehicleHitAndRun::GetLifeTime` (0x4AEA10): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AEA10, conv = thiscall, name = "CEventVehicleHitAndRun::GetLifeTime")]
 pub fn g_event_vehicle_hit_and_run_get_life_time_4aea10(_this: u32) -> u32 {
     0
 }
@@ -581,12 +608,14 @@ pub fn g_vt_85afe8_get_event_type_4aeb40(_this: u32) -> u32 {
 
 /// `vt_85afe8::GetLifeTime` (0x4AEB50): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AEB50, conv = thiscall, name = "vt_85afe8::GetLifeTime")]
 pub fn g_vt_85afe8_get_life_time_4aeb50(_this: u32) -> u32 {
     0
 }
 
 /// `vt_85afe8::GetSourceEntity` (0x4AEB60): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AEB60, conv = thiscall, name = "vt_85afe8::GetSourceEntity")]
 pub fn g_vt_85afe8_get_source_entity_4aeb60(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     v1
@@ -613,6 +642,7 @@ pub fn g_vt_85b030_get_event_type_4aec70(_this: u32) -> u32 {
 
 /// `vt_85b030::GetLifeTime` (0x4AEC80): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AEC80, conv = thiscall, name = "vt_85b030::GetLifeTime")]
 pub fn g_vt_85b030_get_life_time_4aec80(_this: u32) -> u32 {
     0
 }
@@ -625,18 +655,21 @@ pub fn g_vt_85b030_get_event_priority_4aec90(_this: u32) -> u32 {
 
 /// `vt_85b070::GetLifeTime` (0x4AED40): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AED40, conv = thiscall, name = "vt_85b070::GetLifeTime")]
 pub fn g_vt_85b070_get_life_time_4aed40(_this: u32) -> u32 {
     0
 }
 
 /// `vt_85b0b0::GetLifeTime` (0x4AEE70): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AEE70, conv = thiscall, name = "vt_85b0b0::GetLifeTime")]
 pub fn g_vt_85b0b0_get_life_time_4aee70(_this: u32) -> u32 {
     0
 }
 
 /// `vt_85b0f8::GetLifeTime` (0x4AF080): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AF080, conv = thiscall, name = "vt_85b0f8::GetLifeTime")]
 pub fn g_vt_85b0f8_get_life_time_4af080(_this: u32) -> u32 {
     0
 }
@@ -649,6 +682,7 @@ pub fn g_event_ped_to_chase_get_event_type_4af190(_this: u32) -> u32 {
 
 /// `CEventPedToChase::GetLifeTime` (0x4AF1A0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AF1A0, conv = thiscall, name = "CEventPedToChase::GetLifeTime")]
 pub fn g_event_ped_to_chase_get_life_time_4af1a0(_this: u32) -> u32 {
     0
 }
@@ -667,6 +701,7 @@ pub fn g_event_ped_to_flee_get_event_type_4af2a0(_this: u32) -> u32 {
 
 /// `CEventPedToFlee::GetLifeTime` (0x4AF2B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AF2B0, conv = thiscall, name = "CEventPedToFlee::GetLifeTime")]
 pub fn g_event_ped_to_flee_get_life_time_4af2b0(_this: u32) -> u32 {
     0
 }
@@ -679,6 +714,7 @@ pub fn g_event_ped_to_flee_get_event_priority_4af2c0(_this: u32) -> u32 {
 
 /// `CEventAttractor::GetLifeTime` (0x4AF3E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AF3E0, conv = thiscall, name = "CEventAttractor::GetLifeTime")]
 pub fn g_event_attractor_get_life_time_4af3e0(_this: u32) -> u32 {
     0
 }
@@ -691,6 +727,7 @@ pub fn g_event_vehicle_to_steal_get_event_type_4af6d0(_this: u32) -> u32 {
 
 /// `CEventVehicleToSteal::GetLifeTime` (0x4AF6E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AF6E0, conv = thiscall, name = "CEventVehicleToSteal::GetLifeTime")]
 pub fn g_event_vehicle_to_steal_get_life_time_4af6e0(_this: u32) -> u32 {
     0
 }
@@ -709,6 +746,7 @@ pub fn g_vt_85b298_get_event_type_4afbc0(_this: u32) -> u32 {
 
 /// `vt_85b298::GetLifeTime` (0x4AFBD0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AFBD0, conv = thiscall, name = "vt_85b298::GetLifeTime")]
 pub fn g_vt_85b298_get_life_time_4afbd0(_this: u32) -> u32 {
     0
 }
@@ -727,6 +765,7 @@ pub fn g_event_knock_off_bike_get_event_type_4afcb0(_this: u32) -> u32 {
 
 /// `CEventKnockOffBike::GetLifeTime` (0x4AFCC0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4AFCC0, conv = thiscall, name = "CEventKnockOffBike::GetLifeTime")]
 pub fn g_event_knock_off_bike_get_life_time_4afcc0(_this: u32) -> u32 {
     0
 }
@@ -746,6 +785,7 @@ pub fn g_event_knock_off_bike_get_event_priority_4afce0(_this: u32) -> u32 {
 
 /// `CEventKnockOffBike::IsCriminalEvent` (0x4B06F0): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B06F0, conv = thiscall, name = "CEventKnockOffBike::IsCriminalEvent")]
 pub fn g_event_knock_off_bike_is_criminal_event_4b06f0(_this: u32) -> u8 {
     1 as u8
 }
@@ -758,12 +798,14 @@ pub fn g_event_gun_aimed_at_get_event_type_4b0770(_this: u32) -> u32 {
 
 /// `CEventGunAimedAt::GetLifeTime` (0x4B0780): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B0780, conv = thiscall, name = "CEventGunAimedAt::GetLifeTime")]
 pub fn g_event_gun_aimed_at_get_life_time_4b0780(_this: u32) -> u32 {
     0
 }
 
 /// `CEventGunAimedAt::GetSourceEntity` (0x4B0790): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B0790, conv = thiscall, name = "CEventGunAimedAt::GetSourceEntity")]
 pub fn g_event_gun_aimed_at_get_source_entity_4b0790(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     v1
@@ -783,12 +825,14 @@ pub fn g_event_script_command_get_event_type_4b0a30(_this: u32) -> u32 {
 
 /// `CEventScriptCommand::GetLifeTime` (0x4B0A40): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B0A40, conv = thiscall, name = "CEventScriptCommand::GetLifeTime")]
 pub fn g_event_script_command_get_life_time_4b0a40(_this: u32) -> u32 {
     0
 }
 
 /// `CEventInAir::GetLifeTime` (0x4B0CE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B0CE0, conv = thiscall, name = "CEventInAir::GetLifeTime")]
 pub fn g_event_in_air_get_life_time_4b0ce0(_this: u32) -> u32 {
     0
 }
@@ -801,6 +845,7 @@ pub fn g_event_vehicle_died_get_event_type_4b0d70(_this: u32) -> u32 {
 
 /// `CEventVehicleDied::GetLifeTime` (0x4B0D80): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B0D80, conv = thiscall, name = "CEventVehicleDied::GetLifeTime")]
 pub fn g_event_vehicle_died_get_life_time_4b0d80(_this: u32) -> u32 {
     0
 }
@@ -837,6 +882,7 @@ pub fn g_event_vehicle_on_fire_get_event_type_4b1130(_this: u32) -> u32 {
 
 /// `CEventVehicleOnFire::GetLifeTime` (0x4B1140): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1140, conv = thiscall, name = "CEventVehicleOnFire::GetLifeTime")]
 pub fn g_event_vehicle_on_fire_get_life_time_4b1140(_this: u32) -> u32 {
     0
 }
@@ -862,6 +908,7 @@ pub fn g_event_hit_by_water_cannon_get_event_type_4b12e0(_this: u32) -> u32 {
 
 /// `CEventHitByWaterCannon::GetLifeTime` (0x4B12F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B12F0, conv = thiscall, name = "CEventHitByWaterCannon::GetLifeTime")]
 pub fn g_event_hit_by_water_cannon_get_life_time_4b12f0(_this: u32) -> u32 {
     0
 }
@@ -887,6 +934,7 @@ pub fn g_vt_85b4c8_get_event_type_4b1390(_this: u32) -> u32 {
 
 /// `vt_85b4c8::GetLifeTime` (0x4B13A0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B13A0, conv = thiscall, name = "vt_85b4c8::GetLifeTime")]
 pub fn g_vt_85b4c8_get_life_time_4b13a0(_this: u32) -> u32 {
     0
 }
@@ -905,12 +953,14 @@ pub fn g_event_stuck_in_air_get_event_type_4b14f0(_this: u32) -> u32 {
 
 /// `CEventStuckInAir::GetLifeTime` (0x4B1500): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1500, conv = thiscall, name = "CEventStuckInAir::GetLifeTime")]
 pub fn g_event_stuck_in_air_get_life_time_4b1500(_this: u32) -> u32 {
     0
 }
 
 /// `CEventStuckInAir::CanBeInterruptedBySameEvent` (0x4B1510): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1510, conv = thiscall, name = "CEventStuckInAir::CanBeInterruptedBySameEvent")]
 pub fn g_event_stuck_in_air_can_be_interrupted_by_same_event_4b1510(_this: u32) -> u8 {
     1 as u8
 }
@@ -923,6 +973,7 @@ pub fn g_event_cop_car_being_stolen_get_event_type_4b17c0(_this: u32) -> u32 {
 
 /// `CEventCopCarBeingStolen::GetLifeTime` (0x4B17D0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B17D0, conv = thiscall, name = "CEventCopCarBeingStolen::GetLifeTime")]
 pub fn g_event_cop_car_being_stolen_get_life_time_4b17d0(_this: u32) -> u32 {
     0
 }
@@ -935,6 +986,7 @@ pub fn g_event_cop_car_being_stolen_get_event_priority_4b17e0(_this: u32) -> u32
 
 /// `CEventVehicleDamage::GetLifeTime` (0x4B1960): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1960, conv = thiscall, name = "CEventVehicleDamage::GetLifeTime")]
 pub fn g_event_vehicle_damage_get_life_time_4b1960(_this: u32) -> u32 {
     0
 }
@@ -954,6 +1006,7 @@ pub fn g_event_special_get_event_type_4b1b10(_this: u32) -> u32 {
 
 /// `CEventSpecial::GetLifeTime` (0x4B1B20): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1B20, conv = thiscall, name = "CEventSpecial::GetLifeTime")]
 pub fn g_event_special_get_life_time_4b1b20(_this: u32) -> u32 {
     0
 }
@@ -978,6 +1031,7 @@ pub fn g_event_got_knocked_over_by_car_get_event_type_4b1bd0(_this: u32) -> u32 
 
 /// `CEventGotKnockedOverByCar::GetLifeTime` (0x4B1BE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1BE0, conv = thiscall, name = "CEventGotKnockedOverByCar::GetLifeTime")]
 pub fn g_event_got_knocked_over_by_car_get_life_time_4b1be0(_this: u32) -> u32 {
     0
 }
@@ -1003,6 +1057,7 @@ pub fn g_event_car_upside_down_get_event_type_4b1d20(_this: u32) -> u32 {
 
 /// `CEventCarUpsideDown::GetLifeTime` (0x4B1D30): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1D30, conv = thiscall, name = "CEventCarUpsideDown::GetLifeTime")]
 pub fn g_event_car_upside_down_get_life_time_4b1d30(_this: u32) -> u32 {
     0
 }
@@ -1021,6 +1076,7 @@ pub fn g_event_potential_walk_into_fire_get_event_type_4b1ed0(_this: u32) -> u32
 
 /// `CEventPotentialWalkIntoFire::GetLifeTime` (0x4B1EE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1EE0, conv = thiscall, name = "CEventPotentialWalkIntoFire::GetLifeTime")]
 pub fn g_event_potential_walk_into_fire_get_life_time_4b1ee0(_this: u32) -> u32 {
     0
 }
@@ -1039,6 +1095,7 @@ pub fn g_event_fire_nearby_get_event_type_4b1f50(_this: u32) -> u32 {
 
 /// `CEventFireNearby::GetLifeTime` (0x4B1F60): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B1F60, conv = thiscall, name = "CEventFireNearby::GetLifeTime")]
 pub fn g_event_fire_nearby_get_life_time_4b1f60(_this: u32) -> u32 {
     0
 }
@@ -1063,12 +1120,14 @@ pub fn g_event_gun_shot_whizzed_by_get_event_type_4b2030(_this: u32) -> u32 {
 
 /// `CEventGunShotWhizzedBy::GetLifeTime` (0x4B2040): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2040, conv = thiscall, name = "CEventGunShotWhizzedBy::GetLifeTime")]
 pub fn g_event_gun_shot_whizzed_by_get_life_time_4b2040(_this: u32) -> u32 {
     0
 }
 
 /// `CEventGunShotWhizzedBy::CanBeInterruptedBySameEvent` (0x4B2050): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2050, conv = thiscall, name = "CEventGunShotWhizzedBy::CanBeInterruptedBySameEvent")]
 pub fn g_event_gun_shot_whizzed_by_can_be_interrupted_by_same_event_4b2050(_this: u32) -> u8 {
     1 as u8
 }
@@ -1087,12 +1146,14 @@ pub fn g_event_seen_panicked_ped_get_event_type_4b20f0(_this: u32) -> u32 {
 
 /// `CEventSeenPanickedPed::GetLifeTime` (0x4B2100): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2100, conv = thiscall, name = "CEventSeenPanickedPed::GetLifeTime")]
 pub fn g_event_seen_panicked_ped_get_life_time_4b2100(_this: u32) -> u32 {
     0
 }
 
 /// `CEventSeenPanickedPed::GetSourceEntity` (0x4B2110): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2110, conv = thiscall, name = "CEventSeenPanickedPed::GetSourceEntity")]
 pub fn g_event_seen_panicked_ped_get_source_entity_4b2110(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     v1
@@ -1112,6 +1173,7 @@ pub fn g_event_area_codes_get_event_type_4b21f0(_this: u32) -> u32 {
 
 /// `CEventAreaCodes::GetLifeTime` (0x4B2200): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2200, conv = thiscall, name = "CEventAreaCodes::GetLifeTime")]
 pub fn g_event_area_codes_get_life_time_4b2200(_this: u32) -> u32 {
     0
 }
@@ -1124,6 +1186,7 @@ pub fn g_event_leader_entry_exit_takes_priority_over_4b2390(_this: u32, _a0: u32
 
 /// `CEventPlayerCommandToGroup::GetLifeTime` (0x4B2440): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2440, conv = thiscall, name = "CEventPlayerCommandToGroup::GetLifeTime")]
 pub fn g_event_player_command_to_group_get_life_time_4b2440(_this: u32) -> u32 {
     0
 }
@@ -1136,6 +1199,7 @@ pub fn g_event_player_command_to_group_affects_ped_4b2450(_this: u32, _a0: u32) 
 
 /// `CEventPlayerCommandToGroup::GetSourceEntity` (0x4B2460): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2460, conv = thiscall, name = "CEventPlayerCommandToGroup::GetSourceEntity")]
 pub fn g_event_player_command_to_group_get_source_entity_4b2460(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x18);
     v1
@@ -1155,6 +1219,7 @@ pub fn g_event_danger_get_event_type_4b2670(_this: u32) -> u32 {
 
 /// `CEventDanger::GetLifeTime` (0x4B2680): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B2680, conv = thiscall, name = "CEventDanger::GetLifeTime")]
 pub fn g_event_danger_get_life_time_4b2680(_this: u32) -> u32 {
     0
 }
@@ -1173,6 +1238,7 @@ pub fn g_event_leader_exited_car_as_driver_get_event_type_4b8320(_this: u32) -> 
 
 /// `CEventLeaderExitedCarAsDriver::GetLifeTime` (0x4B8330): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x4B8330, conv = thiscall, name = "CEventLeaderExitedCarAsDriver::GetLifeTime")]
 pub fn g_event_leader_exited_car_as_driver_get_life_time_4b8330(_this: u32) -> u32 {
     0
 }
@@ -1209,12 +1275,14 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_get_task_type_4
 
 /// `CEventSoundQuiet::GetLifeTime` (0x5DEA70): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5DEA70, conv = thiscall, name = "CEventSoundQuiet::GetLifeTime")]
 pub fn g_event_sound_quiet_get_life_time_5dea70(_this: u32) -> u32 {
     0
 }
 
 /// `CEventSoundQuiet::CanBeInterruptedBySameEvent` (0x5DEAA0): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5DEAA0, conv = thiscall, name = "CEventSoundQuiet::CanBeInterruptedBySameEvent")]
 pub fn g_event_sound_quiet_can_be_interrupted_by_same_event_5deaa0(_this: u32) -> u8 {
     1 as u8
 }
@@ -1227,6 +1295,7 @@ pub fn g_cped_shelter_attractor_is_at_head_of_queue_5e9680(_this: u32, _a0: u32)
 
 /// `CPedATMAttractor::GetType` (0x5EE4D0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5EE4D0, conv = thiscall, name = "CPedATMAttractor::GetType")]
 pub fn g_cped_atmattractor_get_type_5ee4d0(_this: u32) -> u32 {
     0
 }
@@ -1288,6 +1357,7 @@ pub fn g_cped_park_attractor_get_type_5eeb60(_this: u32) -> u32 {
 
 /// `vt_86c6d0::GetLifeTime` (0x5F6270): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5F6270, conv = thiscall, name = "vt_86c6d0::GetLifeTime")]
 pub fn g_vt_86c6d0_get_life_time_5f6270(_this: u32) -> u32 {
     0
 }
@@ -1300,6 +1370,7 @@ pub fn g_event_player_command_to_group_attack_get_event_priority_5f6400(_this: u
 
 /// `CPedGroupDefaultTaskAllocatorFollowAnyMeans::GetType` (0x5F6470): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5F6470, conv = thiscall, name = "CPedGroupDefaultTaskAllocatorFollowAnyMeans::GetType")]
 pub fn g_cped_group_default_task_allocator_follow_any_means_get_type_5f6470(_this: u32) -> u32 {
     0
 }
@@ -1354,6 +1425,7 @@ pub fn g_task_simple_wait_until_leader_area_codes_match_get_task_type_5f6870(_th
 
 /// `CTaskAllocator::Abort` (0x5F68E0): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5F68E0, conv = thiscall, name = "CTaskAllocator::Abort")]
 pub fn g_task_allocator_abort_5f68e0(_this: u32) {}
 
 /// `CTaskAllocatorKillThreatsBasicRandomGroup::GetType` (0x5F68F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -1364,6 +1436,7 @@ pub fn g_task_allocator_kill_threats_basic_random_group_get_type_5f68f0(_this: u
 
 /// `CPedGroupMembership::GetLeader` (0x5F69A0): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5F69A0, conv = thiscall, name = "CPedGroupMembership::GetLeader")]
 pub fn g_cped_group_membership_get_leader_5f69a0(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x20);
     v1
@@ -1389,6 +1462,7 @@ pub fn g_event_acquaintance_ped_hate_badly_lit_get_event_type_5ff2d0(_this: u32)
 
 /// `CEventAcquaintancePedHateBadlyLit::CanBeInterruptedBySameEvent` (0x5FF350): const-bool, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF350, conv = thiscall, name = "CEventAcquaintancePedHateBadlyLit::CanBeInterruptedBySameEvent")]
 pub fn g_event_acquaintance_ped_hate_badly_lit_can_be_interrupted_by_same_event_5ff350(_this: u32) -> u8 {
     1 as u8
 }
@@ -1401,6 +1475,7 @@ pub fn g_vt_86cba0_get_event_type_5ff470(_this: u32) -> u32 {
 
 /// `vt_86cba0::GetLifeTime` (0x5FF480): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF480, conv = thiscall, name = "vt_86cba0::GetLifeTime")]
 pub fn g_vt_86cba0_get_life_time_5ff480(_this: u32) -> u32 {
     0
 }
@@ -1413,6 +1488,7 @@ pub fn g_vt_86cbe8_get_event_type_5ff530(_this: u32) -> u32 {
 
 /// `vt_86cbe8::GetLifeTime` (0x5FF540): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF540, conv = thiscall, name = "vt_86cbe8::GetLifeTime")]
 pub fn g_vt_86cbe8_get_life_time_5ff540(_this: u32) -> u32 {
     0
 }
@@ -1425,6 +1501,7 @@ pub fn g_vt_86cc30_get_event_type_5ff5f0(_this: u32) -> u32 {
 
 /// `vt_86cc30::GetLifeTime` (0x5FF600): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF600, conv = thiscall, name = "vt_86cc30::GetLifeTime")]
 pub fn g_vt_86cc30_get_life_time_5ff600(_this: u32) -> u32 {
     0
 }
@@ -1437,6 +1514,7 @@ pub fn g_vt_86cc78_get_event_type_5ff6b0(_this: u32) -> u32 {
 
 /// `vt_86cc78::GetLifeTime` (0x5FF6C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF6C0, conv = thiscall, name = "vt_86cc78::GetLifeTime")]
 pub fn g_vt_86cc78_get_life_time_5ff6c0(_this: u32) -> u32 {
     0
 }
@@ -1449,6 +1527,7 @@ pub fn g_event_on_fire_get_event_type_5ff770(_this: u32) -> u32 {
 
 /// `CEventOnFire::GetLifeTime` (0x5FF780): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF780, conv = thiscall, name = "CEventOnFire::GetLifeTime")]
 pub fn g_event_on_fire_get_life_time_5ff780(_this: u32) -> u32 {
     0
 }
@@ -1468,6 +1547,7 @@ pub fn g_event_escalator_get_event_type_5ff840(_this: u32) -> u32 {
 
 /// `CEventEscalator::GetLifeTime` (0x5FF850): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x5FF850, conv = thiscall, name = "CEventEscalator::GetLifeTime")]
 pub fn g_event_escalator_get_life_time_5ff850(_this: u32) -> u32 {
     0
 }
@@ -1548,6 +1628,7 @@ pub fn g_event_new_gang_member_get_event_type_608fd0(_this: u32) -> u32 {
 
 /// `CEventNewGangMember::GetLifeTime` (0x608FE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x608FE0, conv = thiscall, name = "CEventNewGangMember::GetLifeTime")]
 pub fn g_event_new_gang_member_get_life_time_608fe0(_this: u32) -> u32 {
     0
 }
@@ -1566,6 +1647,7 @@ pub fn g_event_dont_join_player_group_get_event_type_6091a0(_this: u32) -> u32 {
 
 /// `CEventDontJoinPlayerGroup::GetLifeTime` (0x6091B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x6091B0, conv = thiscall, name = "CEventDontJoinPlayerGroup::GetLifeTime")]
 pub fn g_event_dont_join_player_group_get_life_time_6091b0(_this: u32) -> u32 {
     0
 }
@@ -2238,6 +2320,7 @@ pub fn g_task_simple_player_on_fire_make_abortable_6335a0(_this: u32, _a0: u32, 
 
 /// `CTaskSimpleIKChain::GetIKChain` (0x633C70): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x633C70, conv = thiscall, name = "CTaskSimpleIKChain::GetIKChain")]
 pub fn g_task_simple_ikchain_get_ikchain_633c70(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x10);
     v1
@@ -2251,6 +2334,7 @@ pub fn g_task_simple_iklook_at_get_task_type_633ee0(_this: u32) -> u32 {
 
 /// `CTaskSimpleIKLookAt::GetLookAtEntity` (0x634120): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x634120, conv = thiscall, name = "CTaskSimpleIKLookAt::GetLookAtEntity")]
 pub fn g_task_simple_iklook_at_get_look_at_entity_634120(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x28);
     v1
@@ -2399,6 +2483,7 @@ pub fn g_event_leader_quit_entering_car_as_driver_get_event_type_63a130(_this: u
 
 /// `CEventLeaderQuitEnteringCarAsDriver::GetLifeTime` (0x63A140): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x63A140, conv = thiscall, name = "CEventLeaderQuitEnteringCarAsDriver::GetLifeTime")]
 pub fn g_event_leader_quit_entering_car_as_driver_get_life_time_63a140(_this: u32) -> u32 {
     0
 }
@@ -2766,6 +2851,7 @@ pub fn g_task_complex_wander_medic_get_wander_type_658810(_this: u32) -> u32 {
 
 /// `CTaskComplexWanderMedic::ScanForStuff` (0x658820): empty, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x658820, conv = thiscall, name = "CTaskComplexWanderMedic::ScanForStuff")]
 pub fn g_task_complex_wander_medic_scan_for_stuff_658820(_this: u32, _a0: u32) {}
 
 /// `CTaskSimpleGiveCPR::GetTaskType` (0x658890): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -2838,6 +2924,7 @@ pub fn g_task_complex_wander_flee_get_wander_type_65b350(_this: u32) -> u32 {
 
 /// `CTaskComplexWanderFlee::ScanForStuff` (0x65B360): empty, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x65B360, conv = thiscall, name = "CTaskComplexWanderFlee::ScanForStuff")]
 pub fn g_task_complex_wander_flee_scan_for_stuff_65b360(_this: u32, _a0: u32) {}
 
 /// `CTaskComplexFleePoint::GetTaskType` (0x65B400): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -2872,6 +2959,7 @@ pub fn g_task_complex_flee_any_means_get_task_type_65cd00(_this: u32) -> u32 {
 
 /// `CEventLeanOnVehicle::GetLifeTime` (0x65DB60): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x65DB60, conv = thiscall, name = "CEventLeanOnVehicle::GetLifeTime")]
 pub fn g_event_lean_on_vehicle_get_life_time_65db60(_this: u32) -> u32 {
     0
 }
@@ -2890,6 +2978,7 @@ pub fn g_event_pass_object_get_event_type_65dd50(_this: u32) -> u32 {
 
 /// `CEventPassObject::GetLifeTime` (0x65DD60): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x65DD60, conv = thiscall, name = "CEventPassObject::GetLifeTime")]
 pub fn g_event_pass_object_get_life_time_65dd60(_this: u32) -> u32 {
     0
 }
@@ -3150,6 +3239,7 @@ pub fn g_vt_8701a8_get_event_type_674ee0(_this: u32) -> u32 {
 
 /// `vt_8701a8::GetLifeTime` (0x674EF0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x674EF0, conv = thiscall, name = "vt_8701a8::GetLifeTime")]
 pub fn g_vt_8701a8_get_life_time_674ef0(_this: u32) -> u32 {
     0
 }
@@ -3413,6 +3503,7 @@ pub fn g_vt_8706f8_create_next_sub_task_683440(_this: u32, _a0: u32) -> u32 {
 
 /// `CTaskSimplePlayerOnFoot::GetTaskType` (0x6857C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[sa_core::native(addr = 0x6857C0, conv = thiscall, name = "CTaskSimplePlayerOnFoot::GetTaskType")]
 pub fn g_task_simple_player_on_foot_get_task_type_6857c0(_this: u32) -> u32 {
     0
 }

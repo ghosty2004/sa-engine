@@ -18,6 +18,8 @@
 //!   `site ADDR` names a `call dword ptr [cell]` instruction of the original (an import call): the
 //!   cell is read from that instruction at call time, so call-site redirections made by sa-hook's
 //!   determinism mode (virtual clock) apply to the Rust port exactly as to the original code.
+//!   `callsite ADDR` names a `call rel32` instruction of the original the same way (its target is
+//!   read at call time; determinism mode retargets the `Game::Idle` frame-limiter calls).
 //!   `cell ADDR` calls the pointer stored at ADDR now (an IAT slot used by `jmp/mov reg, [cell]`
 //!   forms, or a global function pointer). `vslot OFF` calls slot OFF (bytes) of the vtable of the
 //!   first argument (C++ virtual call with `thiscall`, COM method with `stdcall`). `table CELL OFF`
@@ -40,6 +42,7 @@ pub const PHASE_A: bool = cfg!(sa_phase_a);
 /// The original entry recorded by sa-hook for a `#[hook(fallback)]` port (ADR-002): the trampoline
 /// (relocated prologue + `jmp` back) or a `.HOODLUM` stub's old target. Panics when the hook was not
 /// installed: a fallback runs only below the hook's own shim, which exists only once installed.
+#[cfg(sa_phase_a)]
 #[doc(hidden)]
 #[inline]
 pub fn fallback_entry(cell: &AtomicU32, name: &str) -> usize {
@@ -83,6 +86,17 @@ pub fn import_at_call_site(site: u32) -> usize {
     GPtr::<u32>::from_addr(cell as usize).read() as usize
 }
 
+/// The function a `call rel32` (`E8 rel32`) at `site` calls right now. sa-hook's determinism mode
+/// retargets some of these sites (the `Game::Idle` frame-limiter calls of `GetCurrentTimeInCycles`).
+#[cfg(sa_phase_a)]
+pub fn rel_call_target(site: u32) -> usize {
+    use crate::mem::GPtr;
+    let op = GPtr::<u8>::from_addr(site as usize).read();
+    assert!(op == 0xE8, "orig: {site:#x} is not a `call rel32`");
+    let rel = GPtr::<u32>::from_addr(site as usize + 1).read();
+    site.wrapping_add(5).wrapping_add(rel) as usize
+}
+
 /// The function pointer stored at `cell` right now (an IAT slot read by `call/jmp dword ptr [cell]`,
 /// or a global function pointer such as `RwEngineInstance`-style tables).
 #[cfg(sa_phase_a)]
@@ -96,6 +110,208 @@ pub fn fn_at_cell(cell: u32) -> usize {
 pub fn vtable_slot(obj: usize, off: u32) -> usize {
     let vt = crate::mem::GPtr::<u32>::from_addr(obj).read();
     crate::mem::GPtr::<u32>::from_addr(vt as usize + off as usize).read() as usize
+}
+
+/// Phases B/C: what a `call dword ptr [cell]` at `site` calls, as the registry's site resolver
+/// reports it (sa-game: the import trap address sa-game wrote into the IAT cell), 0 without one.
+#[cfg(not(sa_phase_a))]
+pub fn import_at_call_site(site: u32) -> usize {
+    registry::resolve_site(site)
+}
+
+/// Phases B/C: the function pointer stored at `cell` in the legacy address arena (sa-game maps the
+/// original's data sections there), 0 when nothing is mapped there (e.g. host tests).
+#[cfg(not(sa_phase_a))]
+pub fn fn_at_cell(cell: u32) -> usize {
+    if !registry::arena_contains(cell as usize, 4) {
+        return 0;
+    }
+    crate::mem::GPtr::<u32>::from_addr(cell as usize).read() as usize
+}
+
+/// Phases B/C: slot `off` of the vtable of the object at `obj` (objects made by ported code carry
+/// the original vtable addresses, whose slots are read from the arena; sa-game's native COM objects
+/// carry vtables of trap addresses); 0 for a null object or vtable, or with no registry installed.
+#[cfg(not(sa_phase_a))]
+pub fn vtable_slot(obj: usize, off: u32) -> usize {
+    if obj == 0 || !registry::is_installed() {
+        return 0;
+    }
+    let vt = crate::mem::GPtr::<u32>::from_addr(obj).read() as usize;
+    if vt == 0 {
+        return 0;
+    }
+    crate::mem::GPtr::<u32>::from_addr(vt + off as usize).read() as usize
+}
+
+/// Phases B/C: a `#[hook(fallback)]`'s original body does not exist. 0 makes `<fn>_original` fail
+/// loudly (the registry never maps 0, and must not map the hook's own address back to the port).
+#[cfg(not(sa_phase_a))]
+#[doc(hidden)]
+#[inline]
+pub fn fallback_entry(_cell: &AtomicU32, _name: &str) -> usize {
+    0
+}
+
+/// Phases B/C: the address-keyed registry of native implementations (decision 3 of
+/// docs/arch/platform.md §8).
+///
+/// Every `#[hook]` port has a native entry with the original calling convention (the macro's
+/// phase B shim, an `-unwind` ABI so that a panic inside reaches the caller's `catch_unwind`).
+/// sa-game installs the table of all of them (`sa_ports::ALL`) plus native replacements of
+/// excluded CRT functions, keyed by original address. An `orig!` declaration `=> unported` then
+/// resolves its callee address at call time (a literal address, a vtable slot read from the arena,
+/// a function pointer cell) and, when the registry has that address, calls the native entry with
+/// the declaration's signature, exactly as phase A calls the original address. Calls to addresses
+/// without an entry panic with the declaration's name and the address (the live MVP gap list).
+///
+/// Dispatch exists only on 32-bit x86, where the entries have the original's ABI.
+#[cfg(not(sa_phase_a))]
+pub mod registry {
+    use core::sync::atomic::{AtomicPtr, AtomicU32, AtomicUsize, Ordering};
+
+    /// One native implementation of an original function.
+    pub struct Entry {
+        /// Original address (for a `.HOODLUM` stub, the stub address).
+        pub addr: u32,
+        /// Native entry with the original calling convention (`-unwind` ABI).
+        pub entry: usize,
+        /// Catalogue name of the port (or of the replaced CRT function).
+        pub name: &'static str,
+        /// Calls dispatched through the registry.
+        pub calls: AtomicU32,
+    }
+
+    impl Entry {
+        pub const fn new(addr: u32, entry: usize, name: &'static str) -> Entry {
+            Entry {
+                addr,
+                entry,
+                name,
+                calls: AtomicU32::new(0),
+            }
+        }
+    }
+
+    static TABLE: AtomicPtr<Entry> = AtomicPtr::new(core::ptr::null_mut());
+    static LEN: AtomicUsize = AtomicUsize::new(0);
+    static ARENA_LO: AtomicUsize = AtomicUsize::new(0);
+    static ARENA_HI: AtomicUsize = AtomicUsize::new(0);
+    static MISSES: AtomicU32 = AtomicU32::new(0);
+
+    /// Installs the table (sorted by address, one entry per address), replacing an earlier one.
+    pub fn install(t: &'static [Entry]) {
+        assert!(
+            t.windows(2).all(|w| w[0].addr < w[1].addr),
+            "orig::registry: the table must be sorted by address without duplicates"
+        );
+        LEN.store(0, Ordering::SeqCst);
+        TABLE.store(t.as_ptr().cast_mut(), Ordering::SeqCst);
+        LEN.store(t.len(), Ordering::SeqCst);
+    }
+
+    /// True once a table is installed.
+    pub fn is_installed() -> bool {
+        LEN.load(Ordering::Acquire) != 0
+    }
+
+    /// The installed table.
+    pub fn table() -> &'static [Entry] {
+        let n = LEN.load(Ordering::Acquire);
+        if n == 0 {
+            return &[];
+        }
+        // SAFETY: `install` stores a `&'static [Entry]`'s pointer and length.
+        unsafe { core::slice::from_raw_parts(TABLE.load(Ordering::Acquire), n) }
+    }
+
+    /// The entry for `addr`, counting the call (or the miss).
+    pub fn lookup(addr: usize) -> Option<&'static Entry> {
+        let t = table();
+        match t.binary_search_by_key(&addr, |e| e.addr as usize) {
+            Ok(i) if addr != 0 => {
+                t[i].calls.fetch_add(1, Ordering::Relaxed);
+                Some(&t[i])
+            }
+            _ => {
+                MISSES.fetch_add(1, Ordering::Relaxed);
+                None
+            }
+        }
+    }
+
+    /// The name of the native implementation at `addr`, if any (not counted).
+    pub fn name_of(addr: usize) -> Option<&'static str> {
+        let t = table();
+        t.binary_search_by_key(&addr, |e| e.addr as usize)
+            .ok()
+            .map(|i| t[i].name)
+    }
+
+    /// Calls that found no entry.
+    pub fn misses() -> u32 {
+        MISSES.load(Ordering::Relaxed)
+    }
+
+    /// Records the legacy address arena `[lo, hi)` (sa-game maps the original's data sections
+    /// there) so that vtable and cell reads stay inside mapped memory.
+    pub fn set_arena(lo: usize, hi: usize) {
+        ARENA_LO.store(lo, Ordering::SeqCst);
+        ARENA_HI.store(hi, Ordering::SeqCst);
+    }
+
+    /// True if `[a, a + n)` lies in the arena.
+    pub fn arena_contains(a: usize, n: usize) -> bool {
+        let (lo, hi) = (ARENA_LO.load(Ordering::Relaxed), ARENA_HI.load(Ordering::Relaxed));
+        a >= lo && a < hi && a.saturating_add(n) <= hi
+    }
+
+    static SITE_RESOLVER: AtomicUsize = AtomicUsize::new(0);
+    static NAMES: AtomicPtr<(u32, &'static str)> = AtomicPtr::new(core::ptr::null_mut());
+    static NAMES_LEN: AtomicUsize = AtomicUsize::new(0);
+
+    /// Sets how an import call site (`call dword ptr [cell]`, `orig!`'s `site` form) is resolved to
+    /// the address to look up: sa-game reads the cell from the instruction bytes and returns the
+    /// value it put into that IAT cell (a per-import trap address).
+    pub fn set_site_resolver(f: fn(u32) -> usize) {
+        SITE_RESOLVER.store(f as usize, Ordering::SeqCst);
+    }
+
+    /// The address the `call dword ptr [cell]` at `site` reaches (0 without a resolver).
+    pub fn resolve_site(site: u32) -> usize {
+        match SITE_RESOLVER.load(Ordering::Acquire) {
+            0 => 0,
+            f => {
+                // SAFETY: stored from a `fn(u32) -> usize` by `set_site_resolver`.
+                let f = unsafe { core::mem::transmute::<usize, fn(u32) -> usize>(f) };
+                f(site)
+            }
+        }
+    }
+
+    /// Names for addresses that have no entry of their own (the import trap addresses: `DLL!name`),
+    /// sorted by address; used only in the failure message.
+    pub fn install_names(t: &'static [(u32, &'static str)]) {
+        assert!(t.windows(2).all(|w| w[0].0 < w[1].0), "orig::registry: names must be sorted");
+        NAMES_LEN.store(0, Ordering::SeqCst);
+        NAMES.store(t.as_ptr().cast_mut(), Ordering::SeqCst);
+        NAMES_LEN.store(t.len(), Ordering::SeqCst);
+    }
+
+    /// The name of an address (an entry or an import trap), else `""`.
+    pub fn describe(addr: usize) -> &'static str {
+        if let Some(n) = name_of(addr) {
+            return n;
+        }
+        let len = NAMES_LEN.load(Ordering::Acquire);
+        if len == 0 {
+            return "";
+        }
+        // SAFETY: `install_names` stores a `&'static` slice's pointer and length.
+        let t = unsafe { core::slice::from_raw_parts(NAMES.load(Ordering::Acquire), len) };
+        t.binary_search_by_key(&addr, |e| e.0 as usize)
+            .map_or("", |i| t[i].1)
+    }
 }
 
 /// Calls an original function that takes two operands on the x87 stack (`st1`, `st0`, loaded with
@@ -128,10 +344,15 @@ pub fn x87_binary(addr: usize, st1: f64, st0: f64) -> f64 {
     out
 }
 
-/// Phases B/C: no original code to call (the caller's `=> path` decides).
+/// Phases B/C: the CRT intrinsics the ports call this way are served by libm (STD-5, an MVP choice
+/// like `pow` in sa-game's `crt.rs`: the exe's SSE2 kernels can differ in the last bit): `_CIpow`
+/// (0x822130) = `st1 ^ st0`.
 #[cfg(not(sa_phase_a))]
-pub fn x87_binary(addr: usize, _st1: f64, _st0: f64) -> f64 {
-    panic!("orig::x87_binary({addr:#x}): unported")
+pub fn x87_binary(addr: usize, st1: f64, st0: f64) -> f64 {
+    match addr {
+        0x822130 => sa_math::libm::pow(st1, st0),
+        _ => panic!("orig::x87_binary({addr:#x}): unported"),
+    }
 }
 
 /// Calls an original function that takes one operand in ST0 and returns its result in ST0: the CRT's
@@ -149,10 +370,15 @@ pub fn x87_unary(addr: usize, st0: f64) -> f64 {
     crate::abi::call_original(|| unsafe { raw::call_unary(addr, st0) })
 }
 
-/// Phases B/C: no original code to call (the caller's `=> path` decides).
+/// Phases B/C: libm stands in for the CRT intrinsics (see [`x87_binary`]): `_CIasin` (0x821E70),
+/// `_CIacos` (0x822380).
 #[cfg(not(sa_phase_a))]
-pub fn x87_unary(addr: usize, _st0: f64) -> f64 {
-    panic!("orig::x87_unary({addr:#x}): unported")
+pub fn x87_unary(addr: usize, st0: f64) -> f64 {
+    match addr {
+        0x821E70 => sa_math::libm::asin(st0),
+        0x822380 => sa_math::libm::acos(st0),
+        _ => panic!("orig::x87_unary({addr:#x}): unported"),
+    }
 }
 
 /// The calling sequence behind [`x87_unary`], separate so that a host test (x86_64) can run it
@@ -327,6 +553,30 @@ macro_rules! orig {
     };
     (
         $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident callsite $site:literal => unported;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(unported $name, $conv, ($crate::orig::rel_call_target($site)), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident callsite $site:literal => $imp:path;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(ported $imp, $conv, ($crate::orig::rel_call_target($site)), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
         $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = $conv:ident $addr:literal => unported;
         $($rest:tt)*
     ) => {
@@ -425,7 +675,7 @@ pub mod host {
     use core::any::TypeId;
     use core::sync::atomic::{AtomicBool, Ordering};
 
-    const SLOTS: usize = 64;
+    const SLOTS: usize = 512;
 
     #[derive(Clone, Copy)]
     struct Slot {
@@ -515,14 +765,64 @@ macro_rules! __orig_body {
         )) {
             return f($($a),*);
         }
+        let __sa_callee: usize = $addr;
+        $crate::__orig_dispatch!($conv, __sa_callee, ($($a: $t),*) $(-> $r)?);
         $(let _ = $a;)*
-        panic!(concat!(
+        ::core::panic!(
+            "{} is not ported; phases B/C have no original code to call ({:#x}{}{})",
             stringify!($name),
-            " is not ported; phases B/C have no original code to call (",
-            stringify!($addr),
-            ")"
-        ))
+            __sa_callee,
+            if $crate::orig::registry::describe(__sa_callee).is_empty() { "" } else { " = " },
+            $crate::orig::registry::describe(__sa_callee)
+        )
     }};
+}
+
+/// Phase B on 32-bit x86: call the native implementation registered for the callee address
+/// ([`registry`]) with the declaration's signature and the original convention (`-unwind`).
+#[cfg(all(not(sa_phase_a), target_arch = "x86"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_dispatch {
+    ($conv:ident, $callee:ident, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
+        if let Some(e) = $crate::orig::registry::lookup($callee) {
+            $crate::__orig_dispatch_call!($conv, e.entry, ($($a: $t),*) $(-> $r)?);
+        }
+    };
+}
+
+#[cfg(all(not(sa_phase_a), target_arch = "x86"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_dispatch_call {
+    (cdecl, $e:expr, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        #[allow(unsafe_code)]
+        let f = unsafe { ::core::mem::transmute::<usize, extern "C-unwind" fn($($t),*) $(-> $r)?>($e) };
+        return f($($a),*);
+    }};
+    (stdcall, $e:expr, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        #[allow(unsafe_code)]
+        let f = unsafe { ::core::mem::transmute::<usize, extern "stdcall-unwind" fn($($t),*) $(-> $r)?>($e) };
+        return f($($a),*);
+    }};
+    (thiscall, $e:expr, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        #[allow(unsafe_code)]
+        let f = unsafe { ::core::mem::transmute::<usize, extern "thiscall-unwind" fn($($t),*) $(-> $r)?>($e) };
+        return f($($a),*);
+    }};
+    (fastcall, $e:expr, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        #[allow(unsafe_code)]
+        let f = unsafe { ::core::mem::transmute::<usize, extern "fastcall-unwind" fn($($t),*) $(-> $r)?>($e) };
+        return f($($a),*);
+    }};
+}
+
+/// Other phase B/C targets: no native entries with the original ABI.
+#[cfg(all(not(sa_phase_a), not(target_arch = "x86")))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_dispatch {
+    ($conv:ident, $callee:ident, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {};
 }
 
 // Host tests use Rust-owned memory; a phase A build cannot run them.
@@ -559,6 +859,39 @@ mod tests {
         assert_eq!(doubled(21), 42);
         let r = std::panic::catch_unwind(|| missing(1));
         assert!(r.is_err());
+    }
+
+    // Phase B on 32-bit x86: an unported declaration whose callee address has a registry entry calls
+    // it with the original convention; a panic inside unwinds to the caller; other addresses fail
+    // loudly with the address.
+    #[cfg(target_arch = "x86")]
+    #[test]
+    fn address_registry_dispatch() {
+        extern "thiscall-unwind" fn add_this(this: u32, x: i32) -> i32 {
+            this as i32 + x
+        }
+        extern "C-unwind" fn boom(_x: i32) -> i32 {
+            panic!("inner")
+        }
+        crate::orig! {
+            fn reg_this(this: u32, x: i32) -> i32 = thiscall 0x401040 => unported;
+            fn reg_boom(x: i32) -> i32 = cdecl 0x401050 => unported;
+            fn reg_none(x: i32) -> i32 = cdecl 0x401060 => unported;
+        }
+        let t: &'static [registry::Entry] = std::boxed::Box::leak(
+            std::vec![
+                registry::Entry::new(0x401040, add_this as *const () as usize, "add_this"),
+                registry::Entry::new(0x401050, boom as *const () as usize, "boom"),
+            ]
+            .into_boxed_slice(),
+        );
+        registry::install(t);
+        assert_eq!(reg_this(40, 2), 42);
+        assert!(std::panic::catch_unwind(|| reg_boom(1)).is_err());
+        let e = std::panic::catch_unwind(|| reg_none(1)).unwrap_err();
+        let m = e.downcast_ref::<std::string::String>().unwrap();
+        assert!(m.contains("reg_none is not ported") && m.contains("(0x401060)"), "{m}");
+        assert_eq!(registry::name_of(0x401040), Some("add_this"));
     }
 
     #[test]

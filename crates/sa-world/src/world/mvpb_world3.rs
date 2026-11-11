@@ -48,7 +48,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// z range +8..+0x1C; unordered compares count as inside), or when any collision sphere (centre through
 /// `GetMatrix`, radius `margin - r`) is not inside (`IsPointInsideGarage(c, r)`); else 1.
 #[hook(addr = 0x448BE0, conv = thiscall, name = "CGarage::IsEntityEntirelyInside3D", this = "CGarage",
-       expect = "83 EC 10 53 55", unverified = "mvpb-world-6", route = "L2", hazards = "heap-writes")]
+       expect = "83 EC 10 53 55", route = "L2", hazards = "heap-writes")]
 pub fn garage_is_entity_entirely_inside_3d(this: GPtr<u8>, e: GPtr<u8>, m: f32) -> u8 {
     for (lo, hi, k) in [(0x28isize, 0x2Cisize, 0isize), (0x30, 0x34, 4), (8, 0x1C, 8)] {
         let p = x(rd::<f32>(entity_pos(e), k));
@@ -90,7 +90,7 @@ fn abs_x87(v: f32) -> X87 {
 /// (`min <= p <= max`, x87), each move-speed component is at most 0.01 in magnitude and the squared speed at most
 /// 0.0001; then `IsEntityEntirelyInside3D(car, 0)`.
 #[hook(addr = 0x44A830, conv = thiscall, name = "CGarage::IsStaticPlayerCarEntirelyInside", this = "CGarage",
-       expect = "56 6A 00 6A FF 8B F1", unverified = "mvpb-world-6", route = "L2", hazards = "none")]
+       expect = "56 6A 00 6A FF 8B F1", route = "L2", hazards = "none")]
 pub fn garage_is_static_player_car_entirely_inside(this: GPtr<u8>) -> u8 {
     if find_player_vehicle(-1, 0).is_null() {
         return 0;
@@ -144,7 +144,7 @@ fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
 /// door's matrix (allocated/updated whenever missing, before every write as the original). Kept original detail:
 /// `s` is stored into the caller's `t` argument slot (not modelled).
 #[hook(addr = 0x4479F0, conv = cdecl, name = "CGarage::BuildRotatedDoorMatrix", expect = "83 EC 1C D9 44 24 24",
-       unverified = "mvpb-world-6", route = "L2", hazards = "x87-transcendental,heap-writes",
+       route = "L2", hazards = "x87-transcendental,heap-writes",
        note = "FSIN/FCOS results stored as f32; writes its own t argument slot")]
 pub fn garage_build_rotated_door_matrix(door: GPtr<u8>, t: f32) {
     let a = x(t).fmul_m(f32::from_bits(0xBFC9_0FDB));
@@ -178,7 +178,7 @@ fn entry_exit_box(this: GPtr<u8>, px: X87, py: X87, pz: f32) -> bool {
 /// position; otherwise the position is rotated about the box centre by a stack `CMatrix::SetRotateZ(+0x1C)`
 /// (`centre + M * (pos.xy - centre, pos.z)`, results stored as f32), tested, and the matrix destroyed. AL = result.
 #[hook(addr = 0x43E460, conv = thiscall, name = "CEntryExit::IsInArea", expect = "64 A1 00 00 00 00",
-       unverified = "mvpb-world-7", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn entry_exit_is_in_area(this: GPtr<u8>, pos: GPtr<u8>) -> u8 {
     if !x(rd::<f32>(this, 0x1C)).fcom(X87::zero()).test_parity(0x44) {
         return u8::from(entry_exit_box(this, x(rd::<f32>(pos, 0)), x(rd::<f32>(pos, 4)), rd::<f32>(pos, 8)));
