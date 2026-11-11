@@ -892,3 +892,16 @@
 - Merge: sa-ai hooks.rs/lib.rs conflicts combined; generator re-run on master (its output differed because AI-2/AI-3
   were merged meanwhile; --check clean afterwards). verify-all main-aigen: IDENTICAL on all 10 recordings (air-water
   excluded until its port fixes land).
+
+## 2026-11-11 Bisection fixes integrated (main session)
+- Harness (BISECT-CARAI 375b838): SA_HOOK_MODE / SA_L2 values over ~30,000 chars go through a file (@PATH; lib.sh
+  e2e_list_env; sa-hook list_value). Before this, l3.sh probes over the full port universe exceeded the 32,767-char
+  Windows env limit, sa-hook ignored the list and every probe ran all-original ("MATCH" without testing). port-l2.sh
+  `ports` mode (SA_HOOK_PORTS) was never affected, so the all-ports verifications stand; l3 bisections before this are void.
+- Ports (BISECT-AIRWATER): CTaskSimpleCarJumpOut::ProcessPed 0x64DD60 ran its factor update only with an anim (the
+  original also runs it without); CStreaming::StreamOneNewCar rand at_site moved to the return address 0x1563BF7;
+  l2-extras for JumpOut's callees. (Their duplicate l3 fix 6e58402 not taken.)
+- car-ai frame 2363 root cause (BISECT-CARAI) = WEAPON-FIX's: original FireInstantHit reads an uninitialised stack
+  local; visible when Rust frames change residue. Ledger (original bug). X87 agent is adding a stack-footprint helper
+  so ports whose residue is read later leave the original's bytes.
+- verify-all main-bisfix: IDENTICAL on all 11 recordings, air-water included. 2 → L2.

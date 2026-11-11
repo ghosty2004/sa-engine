@@ -3284,3 +3284,20 @@ CTaskSimpleFight::LoadMeleeData@0xB71848:0x200:RW
 CTaskSimpleFight::LoadMeleeData@0xC9AC4C:0x4:RW
 CTaskSimpleFight::LoadMeleeData@0xC170D0:0x6E8:RW
 CTaskSimpleFight::LoadMeleeData@0xC177D0:0x54:RW
+
+# CTaskSimpleCarJumpOut::ProcessPed (0x64DD60; AIRWATER bisection, 2026-11-11): static memory its original
+# callees write (StartAnim 0x64BF00 -> CAnimManager::BlendAnimation, ProcessOpenDoor -> door sounds,
+# the stack CTaskSimpleCarSetPedOut -> PositionPedOutOfCollision / TestLineOfSight, CPed references),
+# all inside the watched data windows (split air-water: identical on both sides, outputs PASS).
+# CCollision::TestLineOfSight's local static CMatrix 0x965960 (0x48; atexit dtor 0x855FF0).
+CTaskSimpleCarJumpOut::ProcessPed@0x965960:0x48:D
+# CAnimManager::ms_aAnimations 0xB4EA40 (2,500 x 0x18), ms_aAnimBlocks 0xB5D4A0 (180 x 0x20), ms_AnimCache 0xB5EB20.
+CTaskSimpleCarJumpOut::ProcessPed@0xB4EA40:0xEA60:D
+CTaskSimpleCarJumpOut::ProcessPed@0xB5D4A0:0x1680:D
+CTaskSimpleCarJumpOut::ProcessPed@0xB5EB20:0x34:D
+# AEAudioHardware 0xB5F8B8 (0x1014), AESoundManager 0xB62CB0 (0x8CBC).
+CTaskSimpleCarJumpOut::ProcessPed@0xB5F8B8:0x1014:D
+CTaskSimpleCarJumpOut::ProcessPed@0xB62CB0:0x8CBC:D
+# CWorld::Players 0xB7CD98 (2 x 0x190); CReferences::aRefs 0xB9B9A8 (3,000 x 8) + pEmptyList 0xBA1768.
+CTaskSimpleCarJumpOut::ProcessPed@0xB7CD98:0x320:D
+CTaskSimpleCarJumpOut::ProcessPed@0xB9B9A8:0x5DC4:D

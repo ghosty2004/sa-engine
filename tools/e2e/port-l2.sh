@@ -201,7 +201,14 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     fi
     (
         export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$wtrace" SA_HOOK_PORTS=orig
-        for kv in "$@"; do export "${kv?}"; done
+        for kv in "$@"; do
+            case "$kv" in
+                # lists over every port exceed a Windows environment variable: passed as @FILE then
+                SA_HOOK_MODE=* | SA_L2=*)
+                    kv="$(e2e_list_env "${kv%%=*}" "${kv#*=}" "$DET/$name.${kv%%=*}.list")" || exit 1 ;;
+            esac
+            export "${kv?}"
+        done
         # diagnostic coverage (SA_COV points file): one output per run
         [ -n "${SA_COV:-}" ] && export SA_COV_OUT="$(win "$OUT/$name.cov.csv")"
         e2e_game_start
@@ -447,8 +454,8 @@ for r in l2 l2all; do
     "$ORACLE" l2 report "$OUT/$r.spool" --undeclared > "$OUT/$r-report.txt" 2>&1
     check "host report of the $r spool: 0 mismatches" "$([ $? = 0 ] && echo 1)" "$(head -1 "$OUT/$r-report.txt")"
 done
-crash="$(grep -E -c 'Unhandled exception|page fault|PANIC|dispatch failed|FAILED' "$OUT"/*.log 2> /dev/null | awk -F: '{ s += $2 } END { print s + 0 }')"
-check "no crash / panic / dispatch or install failure in logs" "$([ "$crash" = 0 ] && echo 1)" "$crash lines"
+crash="$(grep -E -c 'Unhandled exception|page fault|PANIC|dispatch failed|FAILED|SA_HOOK_MODE ignored|l2: bad configuration' "$OUT"/*.log 2> /dev/null | awk -F: '{ s += $2 } END { print s + 0 }')"
+check "no crash / panic / dispatch or install failure / unread SA_HOOK_MODE or SA_L2 in logs" "$([ "$crash" = 0 ] && echo 1)" "$crash lines"
 note "results: $OUT/results.tsv"
 column -t -s $'\t' "$OUT/results.tsv" | tee -a "$SUMMARY"
 exit $((FAILS > 0))

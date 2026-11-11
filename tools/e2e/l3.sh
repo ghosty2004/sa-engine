@@ -65,7 +65,10 @@ probe_main() {
         export SA_DET=1 SA_DET_EXIT=1 SA_DET_TRACE="$(win "$DET/$name.trace")" SA_DET_REPLAY="$(win "$DET/l3.sarec")"
         # Engine-crate ports are installed in original mode (L3_HOOK_PORTS overrides SA_HOOK_PORTS; set
         # it empty to leave the ports uninstalled); MODES switches them.
-        export SA_DET_END="$end" SA_HOOK_MODE="$modes" SA_HOOK_PORTS="${L3_HOOK_PORTS-orig}"
+        export SA_DET_END="$end" SA_HOOK_PORTS="${L3_HOOK_PORTS-orig}"
+        # a mode list over every port exceeds a Windows environment variable: passed as @FILE then
+        hm="$(e2e_list_env SA_HOOK_MODE "$modes" "$DET/$name.modes")" || exit 1
+        export "${hm?}"
         if [ -n "${L3_COV_POINTS:-}" ]; then
             cp -f "$L3_COV_POINTS" "$DET/$name.points"
             export SA_COV="$(win "$DET/$name.points")" SA_COV_OUT="$(win "$DET/$name.cov.csv")" SA_COV_CAP="${L3_COV_CAP:-1}"
@@ -104,6 +107,13 @@ probe_main() {
     rm -f "$DET/$name".*
     e2e_say "probe $name finished in $(($(date +%s) - start)) s: $(grep -o 'frame=[0-9]* ticks=[0-9]*' "$out.det" | head -1)"
     [ -s "$out" ] || { echo "l3 probe $name: no trace written" >&2; return 1; }
+    # A start-mode list sa-hook could not read leaves every port on the original: the probe would
+    # compare the original with itself (BISECT-CARAI). Never accept such a trace.
+    if grep -q -E 'SA_HOOK_MODE ignored|l2: bad configuration' "$out.log" 2> /dev/null; then
+        echo "l3 probe $name: $(grep -m1 -o -E '(SA_HOOK_MODE ignored|l2: bad configuration).{0,120}' "$out.log")" >&2
+        rm -f "$out"
+        return 1
+    fi
 }
 
 # Since INF-15 (CdStreamSync fix) lanes run concurrently: the lane lock is enough. L3_GAME_LOCK=1 also

@@ -492,8 +492,8 @@ pub fn car_set_ped_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 }
 
 /// `CTaskSimpleCarJumpOut::ProcessPed(CPed*)` (0x64DD60). Finished (+8) or no vehicle (+0x10): true.
-/// With an anim (+0xC): when its time (+0x20) is below [0x86F0E8] on a bike (+0x590 == 9) or +0x594 == 2, or
-/// below [0x8631D0] on an automobile (+0x590 == 0) (strict; NaN skips), the factor +0x14 is multiplied by
+/// Without an anim (+0xC), or when its time (+0x20) is below [0x86F0E8] on a bike (+0x590 == 9) or +0x594 == 2,
+/// or below [0x8631D0] on an automobile (+0x590 == 0) (strict; NaN skips), the factor +0x14 is multiplied by
 /// `_CIpow([0x86F0E0] f64, timestep)` (stored) and `factor * timestep` is added to ped +0x4DC. Not in a
 /// vehicle: automobile vehicles set ped +0x528 bit 8 and +0x474 bit 0x100000; returns "no anim". No anim:
 /// `StartAnim`; false. Otherwise the jump threshold is [0x858CA8], [0x858F9C] for bikes / +0x594 == 2,
@@ -515,11 +515,14 @@ pub fn car_jump_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 1;
     }
     let a = rd::<GPtr<u8>>(this, 0xC);
-    if !a.is_null() {
-        let t = x(rd::<f32>(a, 0x20));
-        let bike = rd::<i32>(v, 0x590) == 9 || rd::<i32>(v, 0x594) == 2;
-        let apply = (t.fcom(x(g::<f32>(0x86F0E8).read())) == Cmp::Less && bike)
-            || (t.fcom(x(g::<f32>(0x8631D0).read())) == Cmp::Less && rd::<i32>(v, 0x590) == 0);
+    {
+        // no anim jumps straight into the factor update (0x64DD9C `je 0x64DDDA`)
+        let apply = a.is_null() || {
+            let t = x(rd::<f32>(a, 0x20));
+            let bike = rd::<i32>(v, 0x590) == 9 || rd::<i32>(v, 0x594) == 2;
+            (t.fcom(x(g::<f32>(0x86F0E8).read())) == Cmp::Less && bike)
+                || (t.fcom(x(g::<f32>(0x8631D0).read())) == Cmp::Less && rd::<i32>(v, 0x590) == 0)
+        };
         if apply {
             let ts = g::<f32>(0xB7CB5C).read();
             let p = sa_world::physical::shared::ci_pow(X87::from_f64_exact(g::<f64>(0x86F0E0).read()), x(ts));
