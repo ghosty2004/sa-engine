@@ -647,6 +647,15 @@ macro_rules! __orig_ret_check {
     };
 }
 
+/// The result type of an `orig!` declaration, `()` without one (a bare `($($r)?)` trips
+/// `unused_parens` when the macro is expanded inside sa-core).
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_ret_ty {
+    () => { () };
+    ($r:ty) => { $r };
+}
+
 /// Phase A: call the original address with the original convention.
 #[cfg(sa_phase_a)]
 #[doc(hidden)]
@@ -664,11 +673,11 @@ macro_rules! __orig_body {
         let mut fr = $crate::regconv::RegFrame::new(($addr) as u32);
         let mut _i = 0usize;
         $( fr.arg(&SPEC, _i, $a); _i += 1; )*
-        fr.want_st0 = <($($r)?) as $crate::regconv::FromRegFrame>::ST0 as u8;
+        fr.want_st0 = <$crate::__orig_ret_ty!($($r)?) as $crate::regconv::FromRegFrame>::ST0 as u8;
         // SAFETY: the declaration states the original's register convention.
         #[allow(unsafe_code)]
         $crate::abi::call_original(|| unsafe { $crate::regconv::call_regs(&mut fr) });
-        <($($r)?) as $crate::regconv::FromRegFrame>::from_frame(&fr)
+        <$crate::__orig_ret_ty!($($r)?) as $crate::regconv::FromRegFrame>::from_frame(&fr)
     }};
     ($kind:ident $what:path, cdecl, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         $($crate::__orig_ret_check!($r);)?

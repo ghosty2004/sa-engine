@@ -1191,6 +1191,13 @@ fn camera_pos() -> GPtr<f32> {
     if m.is_null() { cam.byte_add(4).cast() } else { m.byte_add(0x30).cast() }
 }
 
+orig! {
+    /// 0x5E3630 (`foot_splash_particles`), register convention EBX = ped, EDI = pos, EAX = count, one stack word
+    fn call_foot_splash_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, unused: u32) = reg("args = ebx edi eax stack") 0x5E3630 => foot_splash_particles;
+    /// 0x5E37C0 (`foot_dust_particles`), register convention ESI = ped, EBX = pos, EAX = count, one stack word
+    fn call_foot_dust_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, unused: u32) = reg("args = esi ebx eax stack") 0x5E37C0 => foot_dust_particles;
+}
+
 /// The shared head of 0x5E3630 / 0x5E37C0: on screen, and the camera's 2D squared distance to `pos` not above 100
 /// (`dy*dy + dx*dx`; `test ah, 0x41; je return`: NaN goes on).
 fn foot_fx_visible(ped: GPtr<u8>, pos: GPtr<f32>) -> bool {
@@ -1214,11 +1221,15 @@ fn rand_scaled(site: u32, k: f32) -> X87 {
     xi(r).fmul_m(f32c(0x3800_0100)).fmul_m(k)
 }
 
-/// 0x5E3630 (unnamed; "AddFootSplashParticles", only caller DoFootLanded): register arguments EBX = ped, EDI = pos,
-/// EAX = count, so it is not hookable through the table; ported as a plain Rust function (the caller is Rust).
-/// `count` times: `p = pos` with x/y jittered by `rand()/32767*0.2 - 0.1` (two rand() in that order), two `m_Splash`
+/// 0x5E3630 (unnamed; "AddFootSplashParticles", only caller DoFootLanded 0x5E562B): register arguments EBX = ped,
+/// EDI = pos, EAX = count (signed, `jle` skips 0 and below), one stack word the caller pushes (0.15f) and pops that
+/// the body never reads; ESI is saved, nothing is returned. When on screen and within 10 m of the camera (2D):
+/// `count` times `p = pos` with x/y jittered by `rand()/32767*0.2 - 0.1` (two rand() in that order), two `m_Splash`
 /// (`g_fx` +0x30, 0xA9AE30, re-read per call) particles, velocity (0,0,0) then `forward * 1.5f`.
-fn foot_splash_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32) {
+#[hook(addr = 0x5E3630, conv = reg("args = ebx edi eax stack"), name = "FUN_005e3630", expect = "83 EC 44 56 8B CB",
+       unverified = "regconv-ped-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "register convention EBX/EDI/EAX + an unread stack word; two rand() per particle pair")]
+pub fn foot_splash_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, _unused: u32) {
     if !foot_fx_visible(ped, pos) {
         return;
     }
@@ -1249,11 +1260,15 @@ fn foot_splash_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32) {
     }
 }
 
-/// 0x5E37C0 (unnamed; "AddFootDustParticles", only caller DoFootLanded): register arguments ESI = ped, EBX = pos,
-/// EAX = count; plain Rust function like 0x5E3630. Needs `ProducesFootDust(contact surface)`; `count` times: p jittered
+/// 0x5E37C0 (unnamed; "AddFootDustParticles", only caller DoFootLanded 0x5E563F): register arguments ESI = ped,
+/// EBX = pos, EAX = count, one unread stack word (the caller pushes 0 and pops it); EDI is saved, nothing is
+/// returned. Same visibility test as 0x5E3630, then `ProducesFootDust(contact surface)`; `count` times: p jittered
 /// as above, velocity x/y `rand()/32767*0.3 - 0.15`, z 0 (four rand() always), one `m_SmokeII3expand` (0xA9AE24)
 /// particle unless the byte 0xB72C70 is set.
-fn foot_dust_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32) {
+#[hook(addr = 0x5E37C0, conv = reg("args = esi ebx eax stack"), name = "FUN_005e37c0", expect = "83 EC 38 57 8B CE",
+       unverified = "regconv-ped-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "register convention ESI/EBX/EAX + an unread stack word; four rand() per particle")]
+pub fn foot_dust_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32, _unused: u32) {
     if !foot_fx_visible(ped, pos) {
         return;
     }
@@ -1287,7 +1302,7 @@ fn foot_dust_particles(ped: GPtr<u8>, pos: GPtr<f32>, count: i32) {
 /// bytes: foot point `P` from the foot bone (43 / 53) and `forward * 0.2f` (z: the product stored as f32 first, x/y
 /// unrounded); bloody footprints (+0x750 counter, unsigned); footprints on surfaces that leave them within 10 m of the
 /// camera (player 5000 ms, others 2000 ms); rain splash and foot dust (the register-argument helpers 0x5E3630 /
-/// 0x5E37C0, ported here as plain functions); wobble; water splash at `pos + 2 * ts * moveSpeed` / water level when
+/// 0x5E37C0, called through `orig! reg`); wobble; water splash at `pos + 2 * ts * moveSpeed` / water level when
 /// `pos.z - 0.4f > level` (submerged), or shallow-water splash `P + (0, 0, 0.3f) + top * k` (0.3f / k read from .data
 /// 0x8D21EC / 0x8D21E8). Not reproduced: `CWaterLevel::GetWaterLevel` writes the level into the original's own
 /// `leftFoot` argument slot (stack-only).
@@ -1368,9 +1383,9 @@ pub fn do_foot_landed(this: GPtr<u8>, left_foot: u8, make_wobble: u8) {
         && player_no_rain() == 0
         && g::<i32>(CURR_AREA).read() == 0
     {
-        foot_splash_particles(this, pp.cast(), 4);
+        call_foot_splash_particles(this, pp.cast(), 4, 0x3E19_999A);
     }
-    foot_dust_particles(this, pp.cast(), 4);
+    call_foot_dust_particles(this, pp.cast(), 4, 0);
 
     if make_wobble != 0 {
         wr::<u32>(this, 0x758, 0x40C9_0FDB);
@@ -3201,6 +3216,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_COP_ADD_CRIMINAL_TO_KILL,
     HOOK_CALCULATE_NEW_VELOCITY,
     HOOK_DO_FOOT_LANDED,
+    HOOK_FOOT_SPLASH_PARTICLES,
+    HOOK_FOOT_DUST_PARTICLES,
     HOOK_PLAY_FOOT_STEPS,
     HOOK_PLAYER_PROCESS_CONTROL,
     HOOK_RENDER,

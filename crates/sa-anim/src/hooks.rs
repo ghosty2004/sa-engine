@@ -39,7 +39,6 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpb_anim::HOOKS,
     crate::anim_file_load::HOOKS,
     crate::rp_anim_blend::HOOKS,
-    crate::offscreen_frame_update::HOOKS,
     crate::cutscene_update::HOOKS,
 ];
 

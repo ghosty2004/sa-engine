@@ -46,5 +46,4 @@ pub mod anim_file_load;
 pub mod rp_anim_blend;
 
 pub mod std6_natives;
-pub mod offscreen_frame_update;
 pub mod cutscene_update;

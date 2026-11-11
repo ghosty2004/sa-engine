@@ -871,6 +871,8 @@ pub fn bridge_init_port() {}
 pub const HOOKS: &[HookReg] = &[
 
     HOOK_PLANT_MGR_INITIALISE,
+    HOOK_PLANT_MGR_LOAD_MODELS,
+    HOOK_GEOMETRY_SET_PRELIT_CONSTANT_COLOR,
     HOOK_PLANT_SURF_PROP_MGR_LOAD_PLANTS_DAT,
     HOOK_GRASS_SET_PLANT_MODELS_TAB,
     HOOK_GRASS_SET_CLOSE_FAR_ALPHA_DIST,
@@ -902,8 +904,6 @@ pub const NATIVES: &[NativeReg] = &[
     NATIVE_RENDERER_INIT_PORT,
     NATIVE_CRANES_INIT_CRANES_PORT,
     NATIVE_BRIDGE_INIT_PORT,
-    NATIVE_PLANT_MGR_LOAD_MODELS,
-    NATIVE_GEOMETRY_SET_PRELIT_CONSTANT_COLOR,
     NATIVE_TXD_STORE_LOAD_CB,
     NATIVE_CAMERA_FADE,
     NATIVE_INFORM_FRIENDS_EVENT_QUEUE_INIT,
@@ -1001,11 +1001,11 @@ pub fn plant_mgr_initialise() -> u8 {
     g::<u32>(0xC039E8).write(0xC039A0);
     g::<u32>(0xC039EC).write(0xC039B0);
     let mut set1 = [0x86C004u32, 0x86BFF4, 0x86BFE4, 0x86BFD4];
-    if plant_mgr_load_models(p8(0xC039F0), GPtr::from_raw(set1.as_mut_ptr())) == 0 {
+    if plant_mgr_load_models_call(p8(0xC039F0), GPtr::from_raw(set1.as_mut_ptr())) == 0 {
         return 0;
     }
     let mut set2 = [0x86BFC4u32, 0x86BFB4, 0x86BFA4, 0x86BF94];
-    if plant_mgr_load_models(p8(0xC03A00), GPtr::from_raw(set2.as_mut_ptr())) == 0 {
+    if plant_mgr_load_models_call(p8(0xC03A00), GPtr::from_raw(set2.as_mut_ptr())) == 0 {
         return 0;
     }
     g::<u32>(0xC03A30).write(0xC039F0);
@@ -1220,13 +1220,22 @@ pub fn grass_set_close_far_alpha_dist(close: f32, far: f32) {
     g::<f32>(0x8D132C).write(far);
 }
 
-/// `CPlantMgr::LoadModels(names, out)` (0x5DD220; ECX = the output array, EAX = the four names):
+orig! {
+    /// `CPlantMgr::LoadModels` (0x5DD220): ECX = the output array, EAX = the four names, AL result
+    fn plant_mgr_load_models_call(out: GPtr<u8>, names: GPtr<u32>) -> u8 = reg("args = ecx eax") 0x5DD220 => plant_mgr_load_models;
+    /// `GeometrySetPrelitConstantColor` (0x5DD1E0): ESI = geometry, stack colour, AL result
+    fn geometry_set_prelit_constant_color_call(geo: GPtr<u8>, color: u32) -> u8 = reg("args = esi stack") 0x5DD1E0 => geometry_set_prelit_constant_color;
+}
+
+/// `CPlantMgr::LoadModels(names, out)` (0x5DD220; ECX = the output array, EAX = the four names, AL = 1):
 /// each "models\grass\<name>" clump streamed (`RwStreamOpen(FILENAME, READ)`, CLUMP chunk,
 /// `RpClumpStreamRead`; the stream closed even when it did not open), its first atomic: point
 /// filtering, prelit geometry (0x5DD100), geometry flags `(& ~0x30) | 0x40` under a lock, constant
 /// prelit white (0x5DD1E0), every material RGBA(0, 0, 0, 50) with the grass texture (0x5DD0B0); the
 /// atomic cloned, the clump destroyed, the clone bilinear with a new frame stored; 1.
-#[crate::native(addr = 0x5DD220, conv = cdecl, name = "CPlantMgr::LoadModels")]
+#[hook(addr = 0x5DD220, conv = reg("args = ecx eax"), name = "CPlantMgr::LoadModels", expect = "81 EC 94 00 00 00",
+       unverified = "regconv-render-1", route = "L2", hazards = "heap-writes", recs = "new-game",
+       note = "register convention ECX/EAX -> AL (HARNESS-5; was a phase B #[native]); the loop counter is EAX - ECX in the original")]
 pub fn plant_mgr_load_models(out: GPtr<u8>, names: GPtr<u32>) -> u8 {
     let mut color: u32 = 0x3200_0000;
     for k in 0..4 {
@@ -1247,7 +1256,7 @@ pub fn plant_mgr_load_models(out: GPtr<u8>, names: GPtr<u32>) -> u8 {
         let fl = geo.byte_add(8).cast::<u32>();
         fl.write((fl.read() & 0xFFFF_FFCF) | 0x40);
         rp_geometry_unlock(geo);
-        geometry_set_prelit_constant_color(geo, 0xFFFF_FFFF);
+        geometry_set_prelit_constant_color_call(geo, 0xFFFF_FFFF);
         rp_geometry_for_all_materials(p8(a.byte_add(0x18).cast::<u32>().read()), 0x5DD0B0, GPtr::from_raw(&mut color).addr() as u32);
         let clone = rp_atomic_clone(a);
         rp_clump_destroy(clump);
@@ -1258,9 +1267,12 @@ pub fn plant_mgr_load_models(out: GPtr<u8>, names: GPtr<u32>) -> u8 {
     1
 }
 
-/// `GeometrySetPrelitConstantColor(color)` (0x5DD1E0; ESI = geometry): a prelit geometry's colours
-/// (+0x30, one per vertex) set to `color` under a full lock (1); not prelit: 0.
-#[crate::native(addr = 0x5DD1E0, conv = cdecl, name = "GeometrySetPrelitConstantColor")]
+/// `GeometrySetPrelitConstantColor(color)` (0x5DD1E0; ESI = geometry, colour on the stack, caller
+/// pops): a prelit geometry's colours (+0x30, one per vertex, `rep stosd`) set to `color` under a
+/// full lock, AL = 1; not prelit: AL = 0 (`xor al, al`; EAX's upper bytes are left as they were).
+#[hook(addr = 0x5DD1E0, conv = reg("args = esi stack"), name = "GeometrySetPrelitConstantColor", expect = "F6 46 08 08 75 03",
+       unverified = "regconv-render-1", route = "L2", hazards = "heap-writes", recs = "new-game",
+       note = "register convention ESI + stack -> AL (HARNESS-5; was a phase B #[native])")]
 pub fn geometry_set_prelit_constant_color(geo: GPtr<u8>, color: u32) -> u8 {
     if geo.byte_add(8).read() & 8 == 0 {
         return 0;

@@ -37,8 +37,10 @@ pub const MODULES: &[&[HookReg]] = &[
     markers::HOOKS,
     carplates::HOOKS,
     harness5::HOOKS,
+    crate::cast_shadow_entity::HOOKS,
     glass::HOOKS,
     stencilshadows::HOOKS,
+    crate::stencil_register::HOOKS,
     mvpa_render1::HOOKS,
     mvpa_render2::HOOKS,
     mvpa_fx1::HOOKS,
@@ -98,11 +100,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::sprite_render::HOOKS,
     crate::list_item_dtor::HOOKS,
     crate::world_scan::HOOKS,
-    crate::plant_loc_tri_add::HOOKS,
     crate::plant_col_entity_cache::HOOKS,
-    crate::shadow_cast_entity_xyz::HOOKS,
     crate::stencil_shadow_volumes::HOOKS,
-    crate::stencil_shadow_register::HOOKS,
     crate::roadsign_text_raster::HOOKS,
 ];
 

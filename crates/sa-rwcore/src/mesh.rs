@@ -228,6 +228,20 @@ pub fn rp_mesh_header_for_all_meshes(h: GPtr<u8>, cb: u32, data: u32) -> GPtr<u8
     h
 }
 
+/// `_rpMeshGetNextSerialNumber()` (0x7590E0): returns the MESHMODULE's u16 serial counter (`G +
+/// [0xC9B8C0]` +0) and stores it + 1. The result is `mov ax, [..]`: EAX's upper half stays the
+/// caller's (`ret = ax:entry`); ECX/EDX hold the module offset / global base, ESI is saved.
+#[hook(addr = 0x7590E0, conv = reg("ret = ax:entry"), name = "_rpMeshGetNextSerialNumber",
+       expect = "8B 0D C0 B8 C9 00",
+       unverified = "regconv-rw-1", route = "L2", hazards = "ax-al-return", recs = "boot",
+       note = "16-bit result with the caller's upper EAX (HARNESS-5 ax:entry)")]
+pub fn rp_mesh_get_next_serial_number() -> u16 {
+    let m = module(MESH_MODULE);
+    let n = rd::<u16>(m, 0);
+    wr::<u16>(m, 0, n.wrapping_add(1));
+    n
+}
+
 /// `_rpMeshRead(stream, object, matList)` (0x758EC0): the 12-byte header (`flags, numMeshes,
 /// totalIndices`), one block of `(numMeshes + 1) * 16` bytes plus `totalIndices * 2` for a non-native
 /// geometry (type 8) or world (type 7) (hint 0x30502; NULL -> NULL), the module's next serial number,
@@ -305,6 +319,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RP_BUILD_MESH_ADD_TRIANGLE,
     HOOK_RP_MESH_HEADER_FOR_ALL_MESHES,
     HOOK_RP_MESH_READ,
+    HOOK_RP_MESH_GET_NEXT_SERIAL_NUMBER,
 ];
 
 /// Globals owned by this module.

@@ -1063,13 +1063,14 @@ orig! {
     fn rw_v3d_transform_vector(out: GPtr<u8>, inp: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7EDDC0 => unported;
 }
 
-/// `CPlantLocTri::GetPlantDensity()` (0x5DC210; `this` in EAX, float in ST0): half the length of
-/// `cross(V2 - V1, V3 - V1)` (differences rounded to f32, `|c| = sqrt(z*z + y*y + x*x)` via FSQRT).
-#[hook(addr = 0x5DC210, conv = cdecl, name = "CPlantLocTri::GetPlantDensity", expect = "83 EC 24 D9 40 0C",
-       entry_eax, unverified = "mvpb-render-1", route = "L2", hazards = "x87-transcendental",
-       note = "this in EAX (LTCG); phase B callers must pass it via sa_core::abi::set_entry_eax")]
-pub fn plant_loc_tri_get_plant_density() -> X87 {
-    let t = GPtr::<f32>::from_addr(sa_core::abi::entry_eax() as usize);
+/// `CPlantLocTri::GetPlantDensity()` (0x5DC210; `this` in EAX, the 80-bit result in ST0): half the
+/// length of `cross(V2 - V1, V3 - V1)` (differences rounded to f32, `|c| = sqrt(z*z + y*y + x*x)` via
+/// FSQRT), returned unrounded.
+#[hook(addr = 0x5DC210, conv = reg("args = eax"), name = "CPlantLocTri::GetPlantDensity", expect = "83 EC 24 D9 40 0C",
+       unverified = "regconv-render-1", route = "L2", hazards = "x87-transcendental", recs = "grove-walk,driving",
+       note = "this in EAX (LTCG), 80-bit ST0 result (HARNESS-5 reg conv; was entry_eax in mvpb-render-1)")]
+pub fn plant_loc_tri_get_plant_density(this: GPtr<u8>) -> X87 {
+    let t = this.cast::<f32>();
     let v = |i: i32| X87::from_f32(t.wrapping_index(i).read());
     let mut a = [
         v(3).fsub_m(t.read()).to_f32(),

@@ -74,6 +74,7 @@ pub mod rxcompile;
 pub mod anisot;
 pub mod d3d9sys;
 pub mod d3d9rast;
+pub mod d3d9rastrender;
 pub mod clumpstream;
 pub mod bmp_read;
 pub mod hanim_stream;

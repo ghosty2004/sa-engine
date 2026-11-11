@@ -12,9 +12,12 @@
 //!    EAX[31:16] for AX) must be covered by the spec (`keep = eax` for void, `ret = al:entry` /
 //!    `ax:entry`); ECX/EDX reads are the `callers` test's (`keep = ecx/edx` feed `preserve`).
 //!
-//! Paths follow fall-through, direct jumps and both sides of conditional jumps (up to [`STEPS`]
-//! instructions); a direct `call` is stepped over as an ABI call (EAX/ECX/EDX written, the others
-//! kept); `ret`, indirect branches and calls end a path. Byte granularity as `callers`: AL, AH and
+//! Paths follow fall-through, direct jumps, both sides of conditional jumps and the entries of a
+//! switch table `jmp [r*4 + table]` (up to [`STEPS`] instructions); a `call` (direct or indirect) is
+//! stepped over as an ABI call (EAX/ECX/EDX written, the others kept); `ret` and other indirect
+//! branches end a path. `mov r32, r32` of one register (an alignment no-op) is neither a read nor a
+//! write. With `ret = al:entry` / `ax:entry` the EAX bytes the result keeps from the entry are not
+//! inputs (e.g. `_rpMeshGetNextSerialNumber`'s `lea esi, [eax + 1]` after `mov ax, ...`). Byte granularity as `callers`: AL, AH and
 //! the upper half are tracked separately.
 
 use crate::callers::{CODE, call_sites, on_boundary, procedure_starts};
@@ -69,6 +72,14 @@ fn events(f: &mut InstructionInfoFactory, i: &Instruction) -> [(u8, u8); 7] {
         && i.op1_kind() == OpKind::Register
         && i.op0_register() == i.op1_register()
         && matches!(i.mnemonic(), iced_x86::Mnemonic::Xor | iced_x86::Mnemonic::Sub);
+    // `mov edi, edi` (MSVC's 2-byte alignment no-op, e.g. 0x4CB56E): neither a read nor a write
+    if matches!(i.code(), Code::Mov_r32_rm32 | Code::Mov_rm32_r32)
+        && i.op0_kind() == OpKind::Register
+        && i.op1_kind() == OpKind::Register
+        && i.op0_register() == i.op1_register()
+    {
+        return out;
+    }
     let info = f.info(i);
     for u in info.used_registers() {
         let Some((r, m)) = family(u.register()) else { continue };
@@ -138,8 +149,9 @@ fn walk(exe: &Exe, start: u32, carried: [u8; 7]) -> Walk {
                     work.push((i.near_branch32(), c, steps + 1));
                 }
             }
-            FlowControl::Call if i.op0_kind() == OpKind::NearBranch32 => {
-                // an ABI call: EAX/ECX/EDX written by the callee, the rest kept
+            FlowControl::Call | FlowControl::IndirectCall => {
+                // an ABI call (direct, or through an IAT cell / a vtable): EAX/ECX/EDX written by the
+                // callee, the rest kept
                 c[0] = 0;
                 c[1] = 0;
                 c[2] = 0;
@@ -148,10 +160,43 @@ fn walk(exe: &Exe, start: u32, carried: [u8; 7]) -> Walk {
             FlowControl::Return => {
                 w.rets.insert(if i.op_count() == 1 { i.immediate16() } else { 0 });
             }
+            FlowControl::IndirectBranch => {
+                for t in jump_table(exe, &i) {
+                    work.push((t, c, steps + 1));
+                }
+            }
             _ => {}
         }
     }
     w
+}
+
+/// The targets of a switch `jmp dword ptr [r*4 + table]`: the table's consecutive dwords while
+/// each is a code address within 0x1000 bytes of the jump (MSVC places the tables right after the
+/// function, so this may run into a following table of the same function: more paths, never fewer).
+fn jump_table(exe: &Exe, i: &Instruction) -> Vec<u32> {
+    let mut out = Vec::new();
+    if i.op0_kind() != OpKind::Memory
+        || i.memory_base() != Register::None
+        || i.memory_index() == Register::None
+        || i.memory_index_scale() != 4
+    {
+        return out;
+    }
+    let table = i.memory_displacement32();
+    if !CODE.iter().any(|&(lo, hi)| (lo..hi).contains(&table)) {
+        return out;
+    }
+    let near = |t: u32| t.abs_diff(i.ip32()) < 0x1000 && CODE.iter().any(|&(lo, hi)| (lo..hi).contains(&t));
+    for k in 0..256u32 {
+        let b = exe.bytes(table + 4 * k, 4);
+        let t = u32::from_le_bytes([b[0], b[1], b[2], b[3]]);
+        if !near(t) {
+            break;
+        }
+        out.push(t);
+    }
+    out
 }
 
 fn reg_hooks() -> Vec<&'static sa_core::abi::HookReg> {
@@ -171,7 +216,13 @@ fn body(exe: &Exe, r: &sa_core::abi::HookReg) -> u32 {
 /// Checks 1-3 of the module docs for one spec at `entry`.
 fn check_spec(exe: &Exe, name: &str, entry: u32, c: &sa_core::regconv::RegConv, stack_words: u8) -> Vec<String> {
     let mut bad = Vec::new();
-    let w = walk(exe, entry, [0xF; 7]);
+    let mut carried = [0xF; 7];
+    carried[0] = match c.ret {
+        sa_core::regconv::RetMode::AlEntry => 0x1,
+        sa_core::regconv::RetMode::AxEntry => 0x3,
+        _ => 0xF,
+    };
+    let w = walk(exe, entry, carried);
     let names = sa_core::regconv::REG_NAMES;
     for k in 0..c.nargs as usize {
         let Some(reg) = c.args[k].reg() else { continue };
@@ -294,3 +345,4 @@ fn walker_on_known_code() {
     let w = walk(&exe, 0x5DBE4B, [0xC, 0, 0, 0, 0, 0, 0]);
     assert_eq!(w.uses[0], Some(0x5DBE4B), "upper EAX bytes of an AX result");
 }
+

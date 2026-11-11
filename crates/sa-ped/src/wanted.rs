@@ -33,6 +33,28 @@ const CRIMES: isize = 0x34;
 const CRIME_SIZE: isize = 0x1C;
 const COPS: isize = 0x1F4;
 
+/// The `CCrimeBeingQd` array clear 0x561FF0 (unnamed, reached only by a jump from `CWanted::ClearQdCrimes`
+/// 0x561FE0 via the `.HOODLUM` chunk 0x404CD2, which sets EAX = `this + 0x34`, ECX = 16; so it returns to
+/// ClearQdCrimes' caller):
+/// register arguments EAX = first entry, ECX = count; `do { entry.type = 0; entry += 0x1C } while
+/// (--count)` (only the first dword of each 0x1C-byte entry; a count of 0 wraps to 2^32 entries). Plain
+/// `ret`, nothing returned (EAX ends one past the last entry, ECX 0).
+#[hook(addr = 0x561FF0, conv = reg("args = eax ecx"), name = "FUN_00561ff0", expect = "C7 00 00 00 00 00 83 C0 1C",
+       unverified = "regconv-ped-1", route = "L2", hazards = "none", recs = "police-gang",
+       note = "register convention EAX/ECX (HARNESS-5); its entry is also the loop head (`jne 0x561FF0`)")]
+pub fn clear_crimes_being_qd(first: GPtr<u8>, count: u32) {
+    let mut p = first;
+    let mut n = count;
+    loop {
+        p.cast::<u32>().write(0);
+        p = p.byte_add(CRIME_SIZE);
+        n = n.wrapping_sub(1);
+        if n == 0 {
+            break;
+        }
+    }
+}
+
 orig! {
     /// `CWanted::AddCrimeToQ` (0x562000)
     pub fn add_crime_to_q_call(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, coors: GPtr<f32>, reported: u8, dont_care: u8) -> u8 = thiscall 0x562000 => add_crime_to_q;
@@ -963,6 +985,7 @@ pub fn clear_qd_crimes(this: GPtr<u8>) {
 // --- hook list (generated) ---
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_CLEAR_CRIMES_BEING_QD,
     HOOK_FIND_IMMEDIATE_DETECTION_RANGE,
     HOOK_INITIALISE_STATIC_VARIABLES,
     HOOK_SET_MAXIMUM_WANTED_LEVEL,

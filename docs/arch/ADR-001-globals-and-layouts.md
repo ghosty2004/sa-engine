@@ -213,7 +213,9 @@ orig! {
 - **Checks**: `sa-core` unit tests call every variant's naked entry through `call_regs` on
   `i686-unknown-linux-gnu`; sa-hook's `regconv_check` compares each spec with the exe (declared
   registers read before written, no undeclared register input, `ret n` = the declared cleanup, and no
-  caller reads EAX bytes the hook leaves undefined); L1 specs set entry registers with
+  caller reads EAX bytes the hook leaves undefined; its walker follows switch tables and steps over
+  indirect calls, treats `mov edi, edi` as a no-op and, for `al:entry` / `ax:entry`, does not count
+  reads of the EAX bytes kept from the entry as inputs (WRITER-REGCONV)); L1 specs set entry registers with
   `Call::regconv` (Unicorn and native backends: context block bytes 128..152).
 - Not expressible (open): results in registers other than EAX/EDX/ST0, callee-saved registers the
   original changes on purpose (an output in ESI), more than one x87 result, `footprint`/`peek`/
