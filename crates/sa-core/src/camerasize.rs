@@ -153,7 +153,44 @@ mod tests {
         camera
     }
 
+    /// Two zeroed `RwRaster` stand-ins (8 dwords each) at addresses that fit in 32 bits.
+    #[cfg(target_pointer_width = "32")]
+    fn low_rasters() -> (&'static mut [i32; 8], &'static mut [i32; 8]) {
+        static mut RASTERS: [[i32; 8]; 2] = [[0; 8]; 2];
+        // SAFETY: used by this single test only.
+        #[allow(unsafe_code)]
+        unsafe {
+            let r = &mut *(&raw mut RASTERS);
+            *r = [[0; 8]; 2];
+            let (a, b) = r.split_at_mut(1);
+            (&mut a[0], &mut b[0])
+        }
+    }
+
+    /// Two zeroed `RwRaster` stand-ins (8 dwords each) at addresses that fit in 32 bits: one page
+    /// mapped with `MAP_32BIT` (Linux x86-64; never unmapped, the test process is short-lived).
+    #[cfg(all(target_pointer_width = "64", target_os = "linux", target_arch = "x86_64"))]
+    fn low_rasters() -> (&'static mut [i32; 8], &'static mut [i32; 8]) {
+        const PROT_READ_WRITE: i32 = 0x1 | 0x2;
+        const MAP_PRIVATE_ANONYMOUS_32BIT: i32 = 0x02 | 0x20 | 0x40;
+        #[allow(unsafe_code)]
+        unsafe extern "C" {
+            fn mmap(addr: *mut u8, len: usize, prot: i32, flags: i32, fd: i32, off: i64) -> *mut u8;
+        }
+        // SAFETY: a fresh private anonymous page (zero-filled), exclusively owned by this test.
+        #[allow(unsafe_code)]
+        unsafe {
+            let p = mmap(core::ptr::null_mut(), 0x1000, PROT_READ_WRITE, MAP_PRIVATE_ANONYMOUS_32BIT, -1, 0);
+            assert!(!p.is_null() && p as isize != -1, "mmap(MAP_32BIT) failed");
+            (&mut *p.cast::<[i32; 8]>(), &mut *p.add(0x40).cast::<[i32; 8]>())
+        }
+    }
+
     #[test]
+    #[cfg_attr(
+        not(any(target_pointer_width = "32", all(target_os = "linux", target_arch = "x86_64"))),
+        ignore = "needs memory below 4 GiB for the camera's 32-bit raster pointers"
+    )]
     fn sizes_rasters_and_view_window() {
         host::set::<fn() -> i32>("sa_core::camerasize::call::rw_engine_get_current_video_mode", cur_mode);
         host::set::<fn(GPtr<RwVideoMode>, i32) -> GPtr<RwVideoMode>>(
@@ -164,13 +201,14 @@ mod tests {
             "sa_core::camerasize::call::rw_camera_set_view_window",
             set_vw,
         );
-        let mut fb = [0i32; 8];
-        let mut zb = [0i32; 8];
+        // The camera holds 32-bit raster pointers (the 1.0 US layout), so the rasters must sit below
+        // 4 GiB: on a 64-bit host a stack address would be truncated (and the read would fault).
+        let (fb, zb) = low_rasters();
         fb[3] = 640;
         fb[4] = 480;
         let mut cam = [0u32; 0x40];
-        cam[0x60 / 4] = (&raw mut fb) as usize as u32;
-        cam[0x64 / 4] = (&raw mut zb) as usize as u32;
+        cam[0x60 / 4] = u32::try_from(core::ptr::from_mut(fb) as usize).unwrap();
+        cam[0x64 / 4] = u32::try_from(core::ptr::from_mut(zb) as usize).unwrap();
         let camp = GPtr::<u8>::from_raw((&raw mut cam).cast());
 
         // windowed, explicit rect 800x600

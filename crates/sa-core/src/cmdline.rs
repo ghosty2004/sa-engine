@@ -153,7 +153,8 @@ mod tests {
         let mut out = Vec::new();
         for n in 0..argc {
             let p = argv.wrapping_index(n).read();
-            if p.addr() == 0xCDCD_CDCD {
+            if p.addr() == usize::MAX / 0xFF * 0xCD {
+                // a malloc garbage slot (0xCDCDCDCD; pointer-sized 0xCD bytes on a 64-bit host)
                 out.push(String::from("<garbage>"));
                 continue;
             }
