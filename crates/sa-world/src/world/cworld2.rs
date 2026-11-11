@@ -152,7 +152,8 @@ fn heading(e: GPtr<u8>) -> X87 {
 /// not resolved), else the vehicle of the player (`id < 0` → `PlayerInFocus`) when in one, else the
 /// heading of `Players[id]`'s ped: `id` is not resolved there either (original bug: `Players[-1]` for
 /// id -1), and a null ped is dereferenced.
-/// Not registered: returns the raw FPATAN ST0, modelled at 53 bits (MATH-FPTAN); L2 compares the full ST0.
+/// Returns the raw FPATAN result: all 64 bits through `X87` (X87-2; WORLD-2 had withdrawn the hook).
+#[hook(addr = 0x56E450, conv = cdecl, name = "CWorld::FindPlayerHeading", expect = "8B 4C 24 04 8B D1 69 D2")]
 pub fn find_player_heading(id: i32) -> X87 {
     let remote = rd::<GPtr<u8>>(player(id), 0xB0);
     if !remote.is_null() {
@@ -688,4 +689,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FIND_OBJECTS_IN_RANGE_SECTOR_LIST,
     HOOK_FIND_OBJECTS_OF_TYPE_IN_RANGE_SECTOR_LIST,
     HOOK_SET_NEXT_SCAN_CODE,
+    HOOK_FIND_PLAYER_HEADING,
 ];

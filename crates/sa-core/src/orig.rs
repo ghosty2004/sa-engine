@@ -24,6 +24,10 @@
 //!   forms, or a global function pointer). `vslot OFF` calls slot OFF (bytes) of the vtable of the
 //!   first argument (C++ virtual call with `thiscall`, COM method with `stdcall`). `table CELL OFF`
 //!   calls slot OFF of the function table the global pointer at CELL points to (RwEngineInstance).
+//!   `reg("spec") ADDR` (HARNESS-5, [`crate::regconv`]) calls a register-convention function: the
+//!   arguments are placed per the spec and [`crate::regconv::call_regs`] loads EAX..EDI and the stack
+//!   words (`fn f(c: u8, p: GPtr<u32>) = reg("args = al stack") 0x6FD7C0 => path;`); an `X87`/`f32`
+//!   result is read from ST0 with all 80 bits.
 //! - Phases B/C: the call goes straight to the Rust path after `=>`. `unported` makes it a panic
 //!   naming the function (phase B starts only when F2 holds, i.e. nothing is unported).
 //!
@@ -438,6 +442,31 @@ pub mod raw {
 #[macro_export]
 macro_rules! orig {
     () => {};
+    // `reg("spec") ADDR` (HARNESS-5, [`crate::regconv`]): a register convention.
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = reg($spec:literal) $addr:literal => unported;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(unported $name, reg($spec), ($addr as usize), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
+    (
+        $(#[$m:meta])*
+        $vis:vis fn $name:ident($($a:ident : $t:ty),* $(,)?) $(-> $r:ty)? = reg($spec:literal) $addr:literal => $imp:path;
+        $($rest:tt)*
+    ) => {
+        $(#[$m])*
+        #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        $vis fn $name($($a: $t),*) $(-> $r)? {
+            $crate::__orig_body!(ported $imp, reg($spec), ($addr as usize), ($($a: $t),*) $(-> $r)?)
+        }
+        $crate::orig!($($rest)*);
+    };
     // `dyn`: the first argument is the address to call (a pointer computed at run time, e.g. a
     // `GetProcAddress` result); the remaining arguments are passed.
     (
@@ -623,6 +652,24 @@ macro_rules! __orig_ret_check {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __orig_body {
+    // register convention: the arguments go into a `RegFrame` per the spec, `call_regs` loads them
+    ($kind:ident $what:path, reg($spec:literal), ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        const SPEC: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
+        const {
+            assert!(SPEC.input_regs() & (1 << 6) == 0, "orig! reg conv: no argument in EBP");
+            let mut _i = 0usize;
+            $( $crate::regconv::check_arg(&SPEC, _i, ::core::mem::size_of::<$t>()); _i += 1; )*
+            $( $crate::regconv::check_ret(&SPEC, ::core::mem::size_of::<$r>()); )?
+        }
+        let mut fr = $crate::regconv::RegFrame::new(($addr) as u32);
+        let mut _i = 0usize;
+        $( fr.arg(&SPEC, _i, $a); _i += 1; )*
+        fr.want_st0 = <($($r)?) as $crate::regconv::FromRegFrame>::ST0 as u8;
+        // SAFETY: the declaration states the original's register convention.
+        #[allow(unsafe_code)]
+        $crate::abi::call_original(|| unsafe { $crate::regconv::call_regs(&mut fr) });
+        <($($r)?) as $crate::regconv::FromRegFrame>::from_frame(&fr)
+    }};
     ($kind:ident $what:path, cdecl, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
         $($crate::__orig_ret_check!($r);)?
         #[allow(unsafe_code)]
@@ -754,6 +801,14 @@ pub mod host {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __orig_body {
+    (ported $imp:path, reg($spec:literal), ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        const _: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
+        $imp($($a),*)
+    }};
+    (unported $name:path, reg($spec:literal), ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {{
+        const _: $crate::regconv::RegConv = $crate::regconv::RegConv::parse($spec);
+        $crate::__orig_body!(unported $name, cdecl, ($addr), ($($a: $t),*) $(-> $r)?)
+    }};
     (ported $imp:path, $conv:ident, ($addr:expr), ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
         $imp($($a),*)
     };

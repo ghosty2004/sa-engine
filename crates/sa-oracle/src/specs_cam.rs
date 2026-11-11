@@ -102,17 +102,21 @@ fn lin_window() -> Region {
 const LIN_REASON: &str = "FSIN in the callee (ProcessVector*Linear(float), eased path); the inputs keep \
      the ease byte clear, so the Unicorn verdict holds as well, but the static scan routes it to the CPU";
 
-/// Clears the ease byte (`+0xC7C` / `+0xCDC`, window words 8 and 32): the eased ratio runs FSIN,
+/// The eased variants: the ease byte set, so the callee runs FSIN (X87-2: sa-math's 64-bit FSIN model).
+const LIN_EASED_REASON: &str = "FSIN in the callee (ProcessVector*Linear(float), eased path: the ease \
+     weight sin(x) + 1 cancels near x = 3 pi / 2, exposing FSIN's 64-bit result)";
+
+/// Clears the ease byte (or sets it, for the eased variants) (`+0xC7C` / `+0xCDC`, window words 8 and 32): the eased ratio runs FSIN,
 /// and on the real CPU the port of the callee differs there (the ease weight `sin(x) + 1` near
 /// x = 3 pi / 2, where the cancellation exposes FSIN's last bits: 29091 / 28912 of 1.06M cases,
 /// e.g. weight bits 0x24240000 vs 0x24800000). That is a finding against 0x50D350 / 0x50D430
 /// (state `implemented`, no spec of their own), not against these preserve specs. Half the cases
 /// put the time just before the end time (the interpolation path), when that is a representable
 /// millisecond count.
-fn lin_fix(v: &mut [u32], l: &Layout, end_word: usize) {
+fn lin_fix(v: &mut [u32], l: &Layout, end_word: usize, eased: bool) {
     let w = |i: usize| l.word_slot[0][i].unwrap();
     for i in [8, 32] {
-        v[w(i)] &= !0xFF;
+        v[w(i)] = (v[w(i)] & !0xFF) | u32::from(eased);
     }
     let h = hash(v);
     let end = f32::from_bits(v[w(end_word)]);
@@ -128,6 +132,7 @@ fn lin_spec(
     addr: u32,
     callee: &'static [u32],
     end_word: usize,
+    eased: bool,
 ) -> Spec {
     let t = g_addr(&LIN_WORDS, 1);
     b(key, name, addr, Thiscall, Void)
@@ -135,8 +140,10 @@ fn lin_spec(
         .args(vec![k_this(LIN_BASE)])
         .callees(callee)
         .patch(operand(&[(addr + 1, 5), (addr + 6, 6)], t))
-        .fix(move |v, l| lin_fix(v, l, end_word))
-        .route(Route::L2 { reason: LIN_REASON })
+        .fix(move |v, l| lin_fix(v, l, end_word, eased))
+        .route(Route::L2 {
+            reason: if eased { LIN_EASED_REASON } else { LIN_REASON },
+        })
         // the callers keep EDX across the call (VER-2)
         .preserve(PRESERVE_EDX)
         .rust(move |c| {
@@ -224,6 +231,15 @@ fn cam_specs() -> Vec<Spec> {
             0x516440,
             &[0x50D350],
             1,
+            false,
+        ),
+        lin_spec(
+            "CameraProcessVectorTrackLinearEased",
+            "CCamera::ProcessVectorTrackLinear-wo-ratio",
+            0x516440,
+            &[0x50D350],
+            1,
+            true,
         ),
         lin_spec(
             "CameraProcessVectorMoveLinear",
@@ -231,6 +247,15 @@ fn cam_specs() -> Vec<Spec> {
             0x5164A0,
             &[0x50D430],
             25,
+            false,
+        ),
+        lin_spec(
+            "CameraProcessVectorMoveLinearEased",
+            "CCamera::ProcessVectorMoveLinear-wo-ratio",
+            0x5164A0,
+            &[0x50D430],
+            25,
+            true,
         ),
         b(
             "CameraInitCameraVehicleTweaks",

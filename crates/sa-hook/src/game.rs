@@ -80,10 +80,13 @@ pub(crate) fn ieee<T>(f: impl FnOnce() -> T) -> T {
 /// ST0 return value; with the `SA_L2_MUTANT` self-test active for `id` (and `when`), the f32 result's
 /// last bit is flipped (a deliberately wrong implementation the L2 oracle must catch).
 fn st0(id: Id, v: sa_math::x87::X87, when: bool) -> f64 {
-    if when && crate::l2::mutant(id) {
-        return f32::from_bits(v.to_f32().to_bits() ^ 1) as f64;
-    }
-    v.to_f64()
+    let v = if when && crate::l2::mutant(id) {
+        sa_math::x87::X87::from_f32(f32::from_bits(v.to_f32().to_bits() ^ 1))
+    } else {
+        v
+    };
+    // also records all 80 bits for the entries that return them (`get_atan_of_xy_entry`)
+    sa_core::abi::IntoAbi::into_abi(v)
 }
 
 /// `CGeneral::LimitRadianAngle` (cdecl `float(float)`). Returns the exact ST0 value: an f64 return is
@@ -113,12 +116,30 @@ pub extern "C" fn get_radian_angle_between_points_hook(x1: f32, y1: f32, x2: f32
     st0(Id::GetRadianAngleBetweenPoints, v, true)
 }
 
-/// `CGeneral::GetATanOfXY(float x, float y)` (cdecl, ST0). On the raw-FPATAN path ST0 has 53 bits
-/// here, 64 in the original (ledger: pending).
+/// `CGeneral::GetATanOfXY(float x, float y)` (cdecl, ST0). One path returns the raw FPATAN result: the
+/// installed entry is [`get_atan_of_xy_entry`], which returns all 64 significand bits (X87-2).
 pub extern "C" fn get_atan_of_xy_hook(x: f32, y: f32) -> f64 {
     table::count(Id::GetATanOfXY);
     let v = ieee(|| sa_math::general::get_atan_of_xy_x87(x, y));
     st0(Id::GetATanOfXY, v, true)
+}
+
+/// The installed entry of `CGeneral::GetATanOfXY`: [`get_atan_of_xy_hook`], then ST0 reloaded with the
+/// full 80-bit result it recorded (`sa_core::abi::ST0_EXT`).
+#[cfg(target_arch = "x86")]
+#[unsafe(naked)]
+pub extern "C" fn get_atan_of_xy_entry(x: f32, y: f32) -> f64 {
+    core::arch::naked_asm!(
+        "push dword ptr [esp + 8]",
+        "push dword ptr [esp + 8]",
+        "call {inner}",
+        "add esp, 8",
+        "fstp st(0)",
+        "fld tbyte ptr [{ext}]",
+        "ret",
+        inner = sym get_atan_of_xy_hook,
+        ext = sym sa_core::abi::ST0_EXT,
+    )
 }
 
 /// `CGeneral::SolveQuadratic(float a, float b, float c, float* x1, float* x2)` (cdecl, bool in AL).

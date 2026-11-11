@@ -19,6 +19,7 @@ pub use sa_core::hook;
 
 pub mod common;
 pub mod hooks;
+pub mod harness5;
 
 pub mod bullettraces;
 pub mod clouds;

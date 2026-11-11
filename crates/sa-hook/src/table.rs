@@ -83,6 +83,8 @@ pub struct HookSpec {
     pub batch: Option<&'static str>,
 }
 
+use sa_oracle_format::l2::NO_THIS;
+
 const fn sig(conv: Conv, args: u8, ret: Ret) -> Option<Sig> {
     Some(Sig {
         conv,
@@ -90,6 +92,7 @@ const fn sig(conv: Conv, args: u8, ret: Ret) -> Option<Sig> {
         ret,
         this_type: None,
         this_size: 0,
+        this_reg: NO_THIS,
         ptr_args: &[],
         arg8: 0,
         arg16: 0,
@@ -364,7 +367,13 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         kind: Kind::Inline,
         // fld dword [esp+4]; fcomp dword [0x858B50]
         expect: &[0xD9, 0x44, 0x24, 0x04, 0xD8, 0x1D, 0x50, 0x8B, 0x85, 0x00],
-        rust: || crate::game::get_atan_of_xy_hook as extern "C" fn(f32, f32) -> f64 as usize,
+        rust: || {
+            #[cfg(target_arch = "x86")]
+            let f = crate::game::get_atan_of_xy_entry as extern "C" fn(f32, f32) -> f64;
+            #[cfg(not(target_arch = "x86"))]
+            let f = crate::game::get_atan_of_xy_hook as extern "C" fn(f32, f32) -> f64;
+            f as usize
+        },
         calls: None,
         frame_boundary: false,
         start_rust: false,
@@ -396,6 +405,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
             ret: Ret::Al,
             this_type: None,
             this_size: 0,
+            this_reg: NO_THIS,
             // float* x1, float* x2
             ptr_args: &[PtrArg { arg: 3, size: 4 }, PtrArg { arg: 4, size: 4 }],
             arg8: 0,
@@ -423,6 +433,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
             this_type: Some("CVector"),
             // sizeof(CVector) = 0xC (catalog/layouts.csv)
             this_size: 0xC,
+            this_reg: 1,
             ptr_args: &[],
             arg8: 0,
             arg16: 0,
@@ -459,6 +470,15 @@ const fn sig_of(r: &sa_core::abi::HookReg) -> Sig {
         },
         this_type: r.this_type,
         this_size: r.this_size,
+        // `this` in ECX for thiscall, in argument 0's register for a register convention
+        this_reg: match (&r.regs, r.conv) {
+            (Some(c), _) => match c.this_reg() {
+                Some(i) => i as u8,
+                None => NO_THIS,
+            },
+            (None, C::Thiscall) => 1,
+            _ => NO_THIS,
+        },
         ptr_args: &[],
         arg8: r.arg8,
         arg16: r.arg16,
@@ -1036,5 +1056,16 @@ mod tests {
             .sig
             .unwrap();
         assert_eq!((s.arg8, s.arg16), (0b1000, 0));
+        // register conventions (HARNESS-5): stack words only, `this` in its register, ST0/void results
+        let s = HOOKS[find("CPlantMgr::_CalcDistanceSqrToEntity").unwrap()].sig.unwrap();
+        assert_eq!((s.conv, s.args, s.ret, s.this_reg), (Conv::Cdecl, 0, Ret::St0, 3));
+        let s = HOOKS[find("FUN_0070fa70").unwrap()].sig.unwrap();
+        assert_eq!((s.conv, s.args, s.ret, s.this_reg, s.arg16), (Conv::Cdecl, 1, Ret::Void, 1, 1));
+        let s = HOOKS[find("CCustomCarPlateMgr::GetCharacterPositionInCharSet").unwrap()].sig.unwrap();
+        assert_eq!((s.args, s.ret, s.this_reg), (2, Ret::Void, 0));
+        let s = HOOKS[find("CPedPool::GetAtRef").unwrap()].sig.unwrap();
+        assert_eq!(s.this_reg, 1, "thiscall: ECX");
+        let s = HOOKS[find("0x41bd90").unwrap()].sig.unwrap();
+        assert_eq!(s.this_reg, sa_oracle_format::l2::NO_THIS);
     }
 }

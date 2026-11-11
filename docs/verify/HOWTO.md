@@ -40,9 +40,34 @@ batch ids at compile time. Hazards (each one changes how the verifier runs it; s
 | `stack-residue` | original callers read the stack below their ESP after the call (residue) | `footprint = W` (ADR-001 §5b), split with `SPLIT_STACKFILL` |
 | `entry-protection-read` | the no-CD protection reads the entry bytes as data | keycells / `catalog/code-data-reads.csv`; sa-hook lib test `every_code_key_read...` |
 | `preserved-regs` | callers rely on ECX/EDX surviving | `preserve = "ecx,edx"`; L1 preserve specs, HARNESS-3 scans |
-| `ax-al-return` | 16/8-bit result with the caller's upper EAX bits | `entry_eax`, `RetKind::Ax` specs |
+| `ax-al-return` | 16/8-bit result with the caller's upper EAX bits | `conv = reg("...; ret = al:entry")` / `ax:entry` (or `entry_eax`), `RetKind::Ax` specs |
 | `uninit-locals` | the original reads locals it never wrote | split + `SPLIT_STACKFILL=4096..16384`, `SA_COV_PEEK` |
 | `heap-writes` | writes heap memory the catalogue cannot name | lines in `tools/e2e/l2-extras.txt`, `--window-all` |
+
+**Register conventions** (ADR-001 §4b, HARNESS-5). A function whose arguments arrive in registers other
+than thiscall's ECX / fastcall's ECX+EDX (EAX, EBX, ESI, EDI, a byte in AL, a word in DI), whose
+result is AL/AX with the caller's upper EAX, or whose ST0 result has 64 significant bits is no longer a
+reason to skip it:
+
+```rust
+#[hook(addr = 0x70FA70, conv = reg("args = ecx edx di stack; keep = ecx edx"), name = "FUN_0070fa70",
+       expect = "53 0F B7 1A 55", unverified = "harness5-1", route = "L1-pure", hazards = "preserved-regs")]
+pub fn toggle_edge(edges: GPtr<u8>, count: GPtr<u16>, a: u16, b: u16) { ... }
+```
+
+- Read the convention off the disassembly: the registers read before they are written are the
+  arguments (`args`, one location per Rust argument, in order; `stack` for the stack slots), `ret` vs
+  `ret n` decides `pop`, a `push r ... pop r` pair is a save, not an argument. sa-hook's
+  `regconv_check` test re-derives exactly this from the exe and fails on a mismatch, and fails when a
+  caller reads EAX bytes the hook leaves undefined (declare `keep = eax` for a void function, `ret =
+  al:entry` / `ax:entry` for an AL/AX result). ECX/EDX that callers keep across the call: `keep = ecx
+  edx` (the `callers` test reports them as for `preserve`).
+- Return `X87` for an ST0 result: the entry loads all 80 bits. A port calling such a function goes
+  through `orig! { fn f(..) -> X87 = reg("...") 0xADDR => path; }` (not the Rust function directly), so
+  the hook toggle governs the call and phase A gets the original's full ST0.
+- L1 specs build the call with `Call::regconv(addr, &sa_oracle::hook_regconv(addr).unwrap(), &args,
+  garbage)` (garbage fills the register bytes an AL/DI location does not cover); see
+  `crates/sa-oracle/src/specs_harness5.rs`.
 
 Writers do not run the game. Before hand-back:
 

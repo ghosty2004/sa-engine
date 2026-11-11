@@ -27,17 +27,13 @@
 //!   - invalid operations (inf - inf, 0 * inf, 0/0, inf/inf, sqrt of a negative) give the x87
 //!     "indefinite" (negative quiet NaN, `0xFFC00000` when stored as f32).
 //!
-//! Transcendentals (FPATAN) are *not* affected by PC on the real CPU and return a 64-bit significand.
-//! [`X87::fpatan`] computes them in f64 (53 bits, via `libm`, deterministic on every target). That is a
-//! documented approximation: the next PC=24 op rounds the value to 24 bits, and the f64/64-bit
-//! difference changes that rounding only when the exact value lies within 2^-29 ulp of a rounding
-//! boundary. A function that *returns* a raw FPATAN result leaves 64 bits in ST0, which this type cannot
-//! reproduce (see `GetATanOfXY` in `docs/re/l1-harness.md`).
-//!
-//! FYL2X and FPTAN ([`X87::fyl2x`], [`X87::fptan`]) do return 64-bit significands: such "wide" values
-//! are held exactly as an f64 pair, and arithmetic on them is exact integer arithmetic rounded once (see
-//! [`X87`]). Their models match the CPU's full 80-bit result in ~99.4% (FYL2X) / ~95.9% (FPTAN) of
-//! cases and are 1 ulp of 64 bits off otherwise; every stored f32 matched (measured, l1-harness.md).
+//! Transcendentals (FPATAN, FSIN, FCOS, FSINCOS, FYL2X, FPTAN) are *not* affected by PC on the real
+//! CPU and return a 64-bit significand. Such "wide" values are held exactly as an f64 pair, and
+//! arithmetic on them is exact integer arithmetic rounded once (see [`X87`]). The models reproduce the
+//! CPU's microcode structure where it was measurable (tables rounded to 67 bits, 67-bit truncated
+//! intermediates); measured against the CPU's full 80-bit results (`sa-oracle`, l1-harness.md):
+//! FPATAN 99.9995%, FSIN/FCOS ~99.5%, FYL2X ~99.4%, FPTAN ~95.9%, the rest 1 ulp of 64 bits off;
+//! every stored f32 matched.
 
 use crate::x87_wide::{self, Big, Dd};
 
@@ -156,28 +152,102 @@ fn two_sum_err(a: f64, b: f64, s: f64) -> f64 {
 /// The CPU's pi for argument reduction (FSIN/FCOS/FPTAN): 66 bits, `P = PI66 * 2^-64`.
 const PI66: u128 = 0x3_243F_6A88_85A3_08D3;
 
-/// Reduces a finite `0 <= x < 2^63` against [`PI66`] by quadrants: returns (k mod 4, x - k*P/2) with
-/// `k = round(x / (P/2))`, so `|r| <= P/4`. The remainder is exact before its final rounding to f64
-/// (results near zero, e.g. `cos` near pi/2, keep their full relative precision).
-fn reduce_pi66(x: f64) -> (u32, f64) {
-    if x < 0.78 {
-        return (0, x);
+/// FSIN/FCOS's table: `(sin(c), cos(c))` rounded to nearest at 67 bits for the centres
+/// `c = 2^b * (1 + (2j+1)/8)` of the quarters of the binades [0.25, 0.5) and [0.5, 1), as
+/// ((significand, exponent), (significand, exponent)). Fitted against the CPU (see [`X87::fcos`]).
+const SINCOS_TAB: [((u128, i32), (u128, i32)); 8] = [
+    ((0x4_70DF_5931_AE1D_9460, -68), (0x7_AF88_53DD_BBE9_EFD0, -67)),
+    ((0x5_646F_27E8_BD65_CBE4, -68), (0x7_882F_D26B_35B0_3D34, -67)),
+    ((0x6_529A_FA7D_51B1_2963, -68), (0x7_594F_C1CF_900F_E89E, -67)),
+    ((0x7_3A74_B8F5_2947_B682, -68), (0x7_2316_FE33_86A1_0D5A, -67)),
+    ((0x4_4434_312D_A70E_DD92, -67), (0x6_C474_1058_A931_88EF, -67)),
+    ((0x5_13AC_E073_CE1A_AC13, -67), (0x6_2EC4_1697_7240_1864, -67)),
+    ((0x5_CEDD_A037_A95D_F6EE, -67), (0x5_8061_49BD_58F7_D46D, -67)),
+    ((0x6_72DA_A6EF_3992_B586, -67), (0x4_BC04_4C99_0839_0C72, -67)),
+];
+
+/// `(sin r, cos r)` for an exact `0 < r <= P/4` as the CPU computes them before the final rounding
+/// (see [`X87::fcos`]): directly for `r < 0.25`, else from [`SINCOS_TAB`] at the centre `c` of r's
+/// quarter-binade, `sin(c + t) = S cos t + C sin t`, `cos(c + t) = C cos t - S sin t`. Evaluated in
+/// double-double (~100 bits), returned unrounded.
+fn sincos_table(r: Big) -> (Big, Big) {
+    let top = r.e + r.top();
+    if top < -2 {
+        let (s, c) = x87_wide::sincos_dd(r.to_dd());
+        return (Big::from_pair(s.h, s.l), Big::from_pair(c.h, c.l));
     }
-    let bits = x.to_bits();
-    let e = ((bits >> 52) & 0x7FF) as i32 - 1075; // x = m * 2^e
-    let m = (bits & FRAC) | (1 << 52);
-    // x / (P/2) = m * 2^(e+65) / PI66; 0.78 <= x < 2^63 gives 13 <= e+65 <= 75, so n < 2^128
-    let n = u128::from(m) << (e + 65) as u32;
-    let mut k = n / PI66;
-    let rem = n % PI66;
-    // PI66 is odd, so there is no tie; r = rem * 2^-65
-    let r = if 2 * rem > PI66 {
-        k += 1;
-        -((PI66 - rem) as f64)
+    // r in [0.25, 1): its quarter j and centre
+    let b = top; // -2 or -1
+    let j = ((r.m << r.m.leading_zeros()) >> 125) & 3; // the two bits after the leading one
+    let centre = Big::c(8 + 2 * j + 1, b - 3);
+    let t = Big::add_exact(r, centre.neg());
+    let ((sm, se), (cm, ce)) = SINCOS_TAB[(4 * (b + 2) + j as i32) as usize];
+    let (st, ct) = x87_wide::sincos_dd(t.to_dd());
+    let (s, c) = (Big::c(sm, se).to_dd(), Big::c(cm, ce).to_dd());
+    let sv = s.mul(ct).add(c.mul(st));
+    let cv = c.mul(ct).sub(s.mul(st));
+    (Big::from_pair(sv.h, sv.l), Big::from_pair(cv.h, cv.l))
+}
+
+/// pi/2, pi/4 and 3pi/4 as FPATAN returns them for infinite operands (measured; round to nearest).
+const PIO2_EXT: (u64, u16) = (0xC90F_DAA2_2168_C235, 0x3FFF);
+const PIO4_EXT: (u64, u16) = (0xC90F_DAA2_2168_C235, 0x3FFE);
+const PI3O4_EXT: (u64, u16) = (0x96CB_E3F9_990E_91A8, 0x4000);
+
+/// FPATAN's pi: rounded to nearest at 67 bits, as (significand, exponent).
+const PI67: (u128, i32) = (0x6_487E_D511_0B46_11A6, -65);
+
+/// FPATAN's table `atan(k/32)` for k = 2..=32, rounded to nearest at 67 bits (significand, exponent).
+/// Fitted against the CPU (see [`X87::fpatan`]); the values are the correctly rounded constants.
+const ATAN_TAB: [(u128, i32); 31] = [
+    (0x7_FD56_EDCB_3F7A_71B6, -71),
+    (0x5_FB86_0980_BC43_A305, -70),
+    (0x7_F56E_A6AB_0BDB_7196, -70),
+    (0x4_F5BB_BA31_989B_161A, -69),
+    (0x5_EE5E_D2F3_96C0_89A4, -69),
+    (0x6_E435_D4A4_9828_8118, -69),
+    (0x7_D6DD_7E4B_2037_58AB, -69),
+    (0x4_62FD_68C2_FC5E_0986, -68),
+    (0x4_D89D_CDC1_FAF2_F34E, -68),
+    (0x5_4C2B_6654_7352_76D5, -68),
+    (0x5_BD86_5079_37BC_239C, -68),
+    (0x6_2C93_4E52_86C9_5B6D, -68),
+    (0x6_993B_B0F3_08FF_2DB2, -68),
+    (0x7_036D_3253_B27B_E33E, -68),
+    (0x7_6B19_C158_6ED3_DA2B, -68),
+    (0x7_D037_42D5_0505_F2E3, -68),
+    (0x4_195F_A536_CC33_F152, -67),
+    (0x4_4957_66FE_F4AA_3DA8, -67),
+    (0x4_7802_EAF7_BFAC_FCDB, -67),
+    (0x4_A563_964C_238C_37B1, -67),
+    (0x4_D17C_0733_8DEE_D102, -67),
+    (0x4_FC4F_EE27_A5BD_0F68, -67),
+    (0x5_25E3_E8C9_A7B8_4921, -67),
+    (0x5_4E3D_5EE2_4187_AE45, -67),
+    (0x5_7562_61C5_A6C6_0401, -67),
+    (0x5_9B59_8E48_F821_B48B, -67),
+    (0x5_C029_F15E_118C_F39E, -67),
+    (0x5_E3DA_EF57_4C57_9407, -67),
+    (0x6_0674_2DC5_6293_3204, -67),
+    (0x6_27FD_7FD5_FC7D_EAA4, -67),
+    (0x6_487E_D511_0B46_11A6, -67),
+];
+
+/// `atan(t)` for an exact `|t| <= 0.05`: `t` plus the double-double correction (exact up to a sticky
+/// part far below the 67th bit), or `t` itself for `|t| < 2^-40`; truncated to 67 bits when `trunc`.
+fn atan_67(t: Big, trunc: bool) -> Big {
+    if t.m == 0 {
+        return t;
+    }
+    // below 2^-40 the CPU returns t itself (measured: the -t^3/3 correction decides ties of the
+    // 64-bit rounding for |t| >= 2^-40 and never below)
+    let a = if t.e + t.top() < -40 {
+        t
     } else {
-        rem as f64
+        let c = x87_wide::atan_minus_t_dd(t.to_dd());
+        Big::add_exact(t, Big::from_pair(c.h, c.l))
     };
-    ((k & 3) as u32, r * 2f64.powi(-65))
+    if trunc { a.truncate(67) } else { a }
 }
 
 /// True for a signalling NaN f32 (quiet bit clear).
@@ -574,12 +644,89 @@ impl X87 {
     }
 
     /// FPATAN with ST1 = `y` (self) and ST0 = `x`: atan2(y, x), *not* rounded to 24 bits (PC does not
-    /// apply). Computed in f64, see the module docs for the precision caveat.
+    /// apply): a 64-bit result.
+    ///
+    /// Model of the CPU's microcode (fitted with `sa-oracle`'s native backend on an Intel i7-14700F,
+    /// see `docs/re/l1-harness.md`; all steps are exact integer arithmetic except `atan(t) - t`,
+    /// evaluated in double-double to ~100 bits):
+    /// - `q = min(|y|, |x|) / max(|y|, |x|)` (exact), `k = round(32 q)`;
+    /// - `k < 2`: `t = q` truncated to 67 bits, `a = atan(t)`;
+    /// - `k >= 2`: `t = (q - k/32) / (1 + q k/32)` truncated to 67 bits,
+    ///   `a = A[k] + trunc67(atan(t))` with the table `A[k] = atan(k/32)` rounded to nearest at 67 bits;
+    /// - `|y| <= |x|`, `x > 0`: the result is `a` rounded to nearest at 64 bits; otherwise `a` is
+    ///   truncated to 67 bits and the result is `P/2 - a` (`|y| > |x|`, `x > 0`), `P/2 + a`
+    ///   (`|y| > |x|`, `x < 0`) or `P - a` (`|y| <= |x|`, `x < 0`) rounded to nearest at 64 bits, `P` =
+    ///   pi rounded to nearest at 67 bits; the sign is y's.
+    ///
+    /// Special operands as the SDM table: NaNs as the arithmetic ops, `y = ±0` → ±0 (`x > 0` or +0) or
+    /// ±pi (`x < 0` or -0), `x = ±0` → ±pi/2, `y = ±inf` → ±pi/2 (finite x), ±pi/4 (`x = +inf`), ±3pi/4
+    /// (`x = -inf`), finite y with `x = +inf` → ±0, `x = -inf` → ±pi.
     pub fn fpatan(self, x: X87) -> X87 {
         if let Some(n) = self.nan_of(Src::Reg(x)) {
             return n;
         }
-        X87::n(libm::atan2(self.0, x.0))
+        let (yv, xv) = (self.0, x.0);
+        let xneg = xv.is_sign_negative();
+        let sgn = |v: X87| if yv.is_sign_negative() { v.fchs() } else { v };
+        let zero = X87::n(0.0);
+        if yv == 0.0 {
+            return sgn(if xneg { X87::pi() } else { zero });
+        }
+        if yv.is_infinite() {
+            return sgn(if !xv.is_infinite() {
+                X87::ext_const(PIO2_EXT)
+            } else if xneg {
+                X87::ext_const(PI3O4_EXT)
+            } else {
+                X87::ext_const(PIO4_EXT)
+            });
+        }
+        if xv.is_infinite() {
+            return sgn(if xneg { X87::pi() } else { zero });
+        }
+        if xv == 0.0 {
+            return sgn(X87::ext_const(PIO2_EXT));
+        }
+        let (ay, ax) = (self.fabs().big(), x.fabs().big());
+        let swap = Big::cmp_abs(ay, ax) == Ordering::Greater;
+        let (n, d) = if swap { (ax, ay) } else { (ay, ax) };
+        let q = Big::div_floor(n, d, 72);
+        // k = round(32 q), q <= 1
+        let sh = -(q.e + 5);
+        let k = if sh <= 0 {
+            32
+        } else if sh > 127 {
+            0
+        } else {
+            (((q.m >> (sh - 1) as u32) + 1) >> 1) as u32
+        };
+        let a = if k < 2 {
+            atan_67(q.truncate(67), false)
+        } else {
+            // t = (q - c) / (1 + q c) = (32 n - k d) / (32 d + k n), c = k/32 (exact sums)
+            let n32 = Big { e: n.e + 5, ..n };
+            let d32 = Big { e: d.e + 5, ..d };
+            let kb = Big::c(u128::from(k), 0);
+            let num = Big::add_exact(n32, Big::mul(d, kb).neg());
+            let den = Big::add_exact(d32, Big::mul(n, kb));
+            let at = if num.m == 0 {
+                Big::zero(false)
+            } else {
+                let t = Big::div_floor(num, den, 72).truncate(67);
+                atan_67(t, true)
+            };
+            let (m, e) = ATAN_TAB[k as usize - 2];
+            Big::add_exact(Big::c(m, e), at)
+        };
+        let r = if !swap && !xneg {
+            a
+        } else {
+            let a = a.truncate(67);
+            let (pm, pe) = PI67;
+            let base = Big::c(pm, if swap { pe - 1 } else { pe });
+            Big::add_exact(base, if swap && xneg { a } else { a.neg() })
+        };
+        sgn(X87::from_big64(r))
     }
 
     /// A register value from an f64 that the x87 holds exactly (e.g. `fld qword` of an integral double).
@@ -740,20 +887,37 @@ impl X87 {
         Some(X87::from_big64(Big::from_pair(t.h, t.l)))
     }
 
+    /// FSINCOS: `(sin, cos)` = (ST1, ST0) after the instruction, each as [`X87::fsin`] /
+    /// [`X87::fcos`] (measured: the same values); a NaN or infinite operand gives the NaN result in
+    /// both. `None` when `|x| >= 2^63`: the CPU sets C2 and leaves the operand (nothing pushed).
+    pub fn fsincos(self) -> Option<(X87, X87)> {
+        let x = self.0;
+        if x.is_finite() && x.abs() >= 9_223_372_036_854_775_808.0 {
+            return None;
+        }
+        Some((self.fsin(), self.fcos()))
+    }
+
     /// FSIN (not affected by PC). See [`X87::fcos`] for the model.
     pub fn fsin(self) -> X87 {
         self.trig(false)
     }
 
-    /// FCOS (not affected by PC). Model of the CPU (checked against it by `sa-oracle`):
-    /// - NaN → the quieted NaN; ±inf → the indefinite;
+    /// FCOS (not affected by PC): a 64-bit result. Model of the CPU (fitted with `sa-oracle`'s native
+    /// backend, see `docs/re/l1-harness.md`):
+    /// - NaN → the quieted NaN; ±inf → the indefinite; ±0 → 1 (FSIN: ±0);
     /// - |x| >= 2^63 → the operand unchanged (the CPU sets C2 and does nothing);
     /// - otherwise the argument is reduced against the CPU's 66-bit approximation of pi,
     ///   `P = 0x3.243F6A8885A308D3`, by quadrants: `k = round(x / (P/2))`, `r = x - k*P/2` computed
-    ///   exactly, and the result is `sin`/`cos` of `r` rotated by `k` quadrants, evaluated in f64. So for large arguments the result follows
-    ///   the CPU's pi, not the true one (`sin(x*pi/P)`, not `sin(x)`).
+    ///   exactly (so for large arguments the result follows the CPU's pi, not the true one);
+    /// - `|r| < 0.25`: `sin r` / `cos r`; else from a table at the centre `c` of r's quarter-binade
+    ///   (`c = 2^b (1 + (2j+1)/8)`) holding `sin c` and `cos c` rounded to nearest at 67 bits:
+    ///   `S cos t + C sin t` / `C cos t - S sin t`, `t = |r| - c`; evaluated to ~100 bits, rotated by
+    ///   the quadrant and rounded to nearest at 64 bits.
     ///
-    /// Precision caveat as for [`X87::fpatan`]: 53 instead of 64 significand bits.
+    /// The table values are exact (their rounding errors are visible in the CPU's results); the CPU's
+    /// internal rounding of the polynomial terms is not modelled: about 0.5% of results differ from
+    /// the CPU by 1 ulp of the 64-bit significand (every stored f32 matched; ledger in l1-harness.md).
     pub fn fcos(self) -> X87 {
         self.trig(true)
     }
@@ -766,21 +930,44 @@ impl X87 {
         if x.is_infinite() {
             return X87::indefinite();
         }
-        let ax = x.abs();
-        if ax >= 9_223_372_036_854_775_808.0 {
-            return self;
+        if x == 0.0 {
+            return if cos { X87::one() } else { self };
         }
-        let (q, r) = reduce_pi66(ax);
+        let a = self.fabs();
+        let (_, e, m) = a.big().norm64();
+        if e >= 0 {
+            return self; // |x| >= 2^63
+        }
+        // r = |x| - k*P/2 (exact), q = k mod 4
+        let (q, r) = if a.0 < 0.78 {
+            (0, a.big())
+        } else {
+            // |x| / (P/2) = m * 2^(e+65) / PI66, 1 <= e + 65 <= 64
+            let n = u128::from(m) << (e + 65) as u32;
+            let mut k = n / PI66;
+            let rem = n % PI66;
+            // PI66 is odd: no tie
+            let r = if 2 * rem > PI66 {
+                k += 1;
+                Big::c(PI66 - rem, -65).neg()
+            } else {
+                Big::c(rem, -65)
+            };
+            ((k & 3) as u32, r)
+        };
+        let ar = Big { neg: false, ..r };
+        let (sr, cr) = sincos_table(ar);
+        let sr = if r.neg { sr.neg() } else { sr };
         // sin(r + q*pi/2) and cos(r + q*pi/2)
-        let (sr, cr) = (libm::sin(r), libm::cos(r));
         let v = match (cos, q) {
             (false, 0) | (true, 3) => sr,
             (false, 1) | (true, 0) => cr,
-            (false, 2) | (true, 1) => -sr,
-            _ => -cr,
+            (false, 2) | (true, 1) => sr.neg(),
+            _ => cr.neg(),
         };
         // sin is odd, cos is even
-        X87::n(if !cos && x.is_sign_negative() { -v } else { v })
+        let v = if !cos && x.is_sign_negative() { v.neg() } else { v };
+        X87::from_big64(v)
     }
 
     /// MSVC `_ftol2` (0x821B40), which the game calls for every float-to-int conversion: truncation of
@@ -864,6 +1051,34 @@ impl X87 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 80-bit results of FPATAN measured on the CPU (sa-oracle `x87_trig`).
+    #[test]
+    fn fpatan_cpu_values() {
+        let ext = |h: &str| {
+            let se = u16::from_str_radix(&h[..4], 16).unwrap();
+            let m = u64::from_str_radix(&h[4..], 16).unwrap();
+            let mut b = [0u8; 10];
+            b[..8].copy_from_slice(&m.to_le_bytes());
+            b[8..].copy_from_slice(&se.to_le_bytes());
+            b
+        };
+        let at = |y: u64, x: u64| {
+            X87::from_f64_exact(f64::from_bits(y)).fpatan(X87::from_f64_exact(f64::from_bits(x))).to_ext()
+        };
+        // |y| == |x|, table k = 32; quadrants
+        assert_eq!(at(0x3FF0_0000_0000_0000, 0x3FF0_0000_0000_0000), ext("3ffec90fdaa22168c235"));
+        assert_eq!(at(0x3FF0_0000_0000_0000, 0xBFF0_0000_0000_0000), ext("400096cbe3f9990e91a8"));
+        // |y| > |x|, x < 0: P/2 + trunc67(a)
+        assert_eq!(at(0x4004_0000_0000_0000, 0xBFF0_0000_0000_0000), ext("3ffff9c44978f06441a5"));
+        assert_eq!(at(0x3FF0_0000_0000_0000, 0x4004_0000_0000_0000), ext("3ffdc2d1bb5b3bedfdc0"));
+        // t < 2^-40: atan(t) = t, a 64-bit tie goes to even
+        assert_eq!(at(0x3AE8_DECB_8000_0000, 0x4338_44D4_C000_0000), ext("3f7a832c0b177b2599d2"));
+        // specials
+        assert_eq!(at(0x8000_0000_0000_0000, 0x8000_0000_0000_0000), ext("c000c90fdaa22168c235"));
+        assert_eq!(at(0x7FF0_0000_0000_0000, 0xFFF0_0000_0000_0000), ext("400096cbe3f9990e91a8"));
+        assert_eq!(at(0x3FF0_0000_0000_0000, 0x0000_0000_0000_0000), ext("3fffc90fdaa22168c235"));
+    }
 
     #[test]
     fn round24_basics() {

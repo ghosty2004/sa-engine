@@ -63,6 +63,7 @@ pub mod pool_ctors;
 pub mod pools;
 pub mod quadtree;
 pub mod references;
+pub mod regconv;
 pub mod timer;
 pub mod video;
 

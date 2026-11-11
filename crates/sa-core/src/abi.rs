@@ -67,6 +67,10 @@ pub struct HookReg {
     /// when it is selected (`SA_UNVERIFIED`, or named in `SA_HOOK_MODE` / `SA_L2` / `SA_HOOK_PORTS`), so
     /// unverified code never changes the default behaviour. Phases B/C use it like any other port.
     pub batch: Option<&'static str>,
+    /// `#[hook(conv = reg("..."))]` (HARNESS-5, [`crate::regconv`]): the register convention. `conv`
+    /// is then `Cdecl` (caller pops) or `Stdcall` (`pop`), `stack_words`/`arg8`/`arg16` count the
+    /// stack arguments only, `preserve` holds its `keep = ecx/edx`.
+    pub regs: Option<crate::regconv::RegConv>,
 }
 
 /// EAX as the caller left it at the entry of the last `#[hook(entry_eax)]` port (PORT-ANIM-INPUT).
@@ -441,11 +445,31 @@ impl<T> IntoAbi for crate::mem::GPtr<T> {
 impl IntoAbi for sa_math::x87::X87 {
     type Abi = f64;
     const RET: AbiRet = AbiRet::St0;
+    /// Also stores the full 80-bit value in [`ST0_EXT`]: `#[hook]` entries of functions returning
+    /// `X87` reload ST0 from it after the shim (a transcendental result keeps all 64 significand bits).
     #[inline(always)]
     fn into_abi(self) -> f64 {
+        #[cfg(target_arch = "x86")]
+        // SAFETY: see `St0Ext`: written by the shim and read by its entry wrapper right after.
+        #[allow(unsafe_code)]
+        unsafe {
+            *ST0_EXT.0.get() = self.to_ext();
+        }
         self.to_f64()
     }
 }
+
+/// The 80-bit ST0 of the last `X87` hook result (see [`IntoAbi`] for `X87`).
+#[doc(hidden)]
+#[repr(C, align(16))]
+pub struct St0Ext(pub core::cell::UnsafeCell<[u8; 10]>);
+// SAFETY: written by a hook shim and read by its naked entry wrapper immediately after the shim
+// returns, on the same thread; hooks returning `X87` run on the game's main thread.
+#[allow(unsafe_code)]
+unsafe impl Sync for St0Ext {}
+
+#[doc(hidden)]
+pub static ST0_EXT: St0Ext = St0Ext(core::cell::UnsafeCell::new([0; 10]));
 
 /// MXCSR for the duration of a hook shim (ADR-001 §5).
 ///

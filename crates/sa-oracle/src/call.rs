@@ -25,7 +25,8 @@ pub const STACK_FILL_LEN: u32 = 0x800;
 /// Code blob for x87 fidelity probes.
 pub const PROBE: u32 = 0x1010_0000;
 pub const PROBE_LEN: usize = 0x1_0000;
-pub const CTX_LEN: usize = 128;
+/// Context block bytes (128 until HARNESS-5 added the entry registers at 128..152).
+pub const CTX_LEN: usize = 160;
 
 /// The game's runtime FPU state, measured in-game by INF-3: x87 CW 0x007F (24-bit precision, round to
 /// nearest, all exceptions masked) and MXCSR 0x9FA0 (FTZ on, all exceptions masked, PE flag set).
@@ -74,6 +75,13 @@ pub struct Call {
     pub conv: Conv,
     pub ecx: u32,
     pub edx: u32,
+    /// Entry registers of register-convention functions (HARNESS-5, `sa_core::regconv`): EAX
+    /// (`None`: the call target, as before), EBX, ESI, EDI, EBP (0 by default).
+    pub eax: Option<u32>,
+    pub ebx: u32,
+    pub esi: u32,
+    pub edi: u32,
+    pub ebp: u32,
     /// dwords pushed, first element at the lowest address ([esp+4] at entry)
     pub stack: Vec<u32>,
     pub scratch: [u8; SCRATCH_LEN],
@@ -88,6 +96,11 @@ impl Call {
             conv,
             ecx: 0,
             edx: 0,
+            eax: None,
+            ebx: 0,
+            esi: 0,
+            edi: 0,
+            ebp: 0,
             stack: Vec::new(),
             scratch: [0; SCRATCH_LEN],
             fpu: Fpu::default(),
@@ -146,7 +159,45 @@ impl Call {
         }
         put(80, self.fpu.cw as u32);
         put(84, self.fpu.mxcsr);
+        put(128, self.eax.unwrap_or(0));
+        put(132, self.eax.is_some() as u32);
+        put(136, self.ebx);
+        put(140, self.esi);
+        put(144, self.edi);
+        put(148, self.ebp);
         b
+    }
+
+    /// The register picture of a `sa_core::regconv` spec: argument `k` goes to its register (the
+    /// low byte/word of an AL/AX-style location, over `fill` in the other bytes, which the original
+    /// must ignore) or onto the stack. `args` are the argument words in order (one word per stack
+    /// argument word).
+    pub fn regconv(addr: u32, conv: &sa_core::regconv::RegConv, args: &[u32], fill: u32) -> Call {
+        let pop = conv.pop;
+        let mut c = Call::new(addr, if pop { Conv::Stdcall } else { Conv::Cdecl }, &[]);
+        for (k, &v) in args.iter().enumerate() {
+            let l = conv.loc(k);
+            let Some(r) = l.reg() else {
+                c.stack.push(v);
+                continue;
+            };
+            let m: u32 = match l.width() {
+                1 => 0xFF,
+                2 => 0xFFFF,
+                _ => u32::MAX,
+            };
+            let v = (fill & !m) | (v & m);
+            match r {
+                0 => c.eax = Some(v),
+                1 => c.ecx = v,
+                2 => c.edx = v,
+                3 => c.ebx = v,
+                4 => c.esi = v,
+                5 => c.edi = v,
+                _ => c.ebp = v,
+            }
+        }
+        c
     }
 }
 

@@ -440,11 +440,16 @@ fn preserved_value(i: &Inputs, salt: u32) -> u32 {
 pub fn make_call(spec: &Spec, cfg: &Cfg, i: &Inputs) -> Call {
     let mut c = (spec.call)(i);
     c.fpu = cfg.fpu;
-    let (ecx_arg, edx_arg) = match c.conv {
+    let (mut ecx_arg, mut edx_arg) = match c.conv {
         Conv::Thiscall => (true, false),
         Conv::Fastcall => (true, true),
         _ => (false, false),
     };
+    // a register convention (HARNESS-5) may pass arguments in ECX/EDX
+    if let Some(rc) = crate::hook_regconv(spec.addr) {
+        ecx_arg |= rc.input_regs() & 2 != 0;
+        edx_arg |= rc.input_regs() & 4 != 0;
+    }
     if spec.preserve & sa_core::abi::PRESERVE_ECX != 0 && !ecx_arg {
         c.ecx = preserved_value(i, 0xEC);
     }

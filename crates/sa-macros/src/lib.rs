@@ -34,6 +34,12 @@
 //! `sa_core::abi::PEEK_DEPTH`); the port reads them with `sa_core::abi::peek_entry_esp` /
 //! `peek_stack`, which answer only while this hook's own frame is on top (`None` for a direct Rust call).
 //!
+//! `conv = reg("args = ebx esi; ret = al:entry; keep = ecx edx; pop")` (HARNESS-5, ADR-001 §4b,
+//! `sa_core::regconv`): a compiler-generated register convention. The entry is a naked wrapper that
+//! moves the registers and stack words into an `extern "C"` shim `(out, register words..., stack
+//! arguments...)` and returns EAX/EDX/ST0 (80 bits for an `X87` result) from the shim's `RegOut`.
+//! Cannot be combined with `preserve` / `entry_eax` / `footprint` / `peek` (use `keep`, `ret = ..:entry`).
+//!
 //! `fallback` (or `fallback = true`; ADR-002): a partial port. The macro also emits a cell that sa-hook
 //! fills at install with the original entry (the relocated-prologue trampoline, or a `.HOODLUM` stub's
 //! old target; `HookReg::set_original`) and `pub fn <fn>_original(args) -> R`, which calls that entry
@@ -137,6 +143,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut entry_eax = false;
     let mut fallback = false;
     let mut footprint: Option<u32> = None;
+    let mut reg: Option<(LitStr, RegSpec)> = None;
     let mut hints = Hints::default();
     let mut peek: Option<u32> = None;
     let parser = syn::meta::parser(|meta| {
@@ -144,8 +151,18 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             let v: LitInt = meta.value()?.parse()?;
             addr = Some(v.base10_parse::<u32>()?);
         } else if meta.path.is_ident("conv") {
-            let v: Ident = meta.value()?.parse()?;
-            conv = Some(Conv::parse(&v)?);
+            let input = meta.value()?;
+            let v: Ident = input.parse()?;
+            if v == "reg" {
+                let content;
+                syn::parenthesized!(content in input);
+                let lit: LitStr = content.parse()?;
+                let spec = RegSpec::parse(&lit)?;
+                conv = Some(if spec.pop { Conv::Stdcall } else { Conv::Cdecl });
+                reg = Some((lit, spec));
+            } else {
+                conv = Some(Conv::parse(&v)?);
+            }
         } else if meta.path.is_ident("name") {
             name = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("expect") {
@@ -203,7 +220,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     if let Err(e) = hints.check() {
         return e.to_compile_error().into();
     }
-    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, &hints, peek) {
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, &hints, peek, reg) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -223,6 +240,7 @@ fn expand(
     footprint: Option<u32>,
     hints: &Hints,
     peek: Option<u32>,
+    regconv: Option<(LitStr, RegSpec)>,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -271,7 +289,24 @@ fn expand(
         Conv::Fastcall => 2,
         _ => 0,
     };
-    let stack_tys: Vec<_> = tys.iter().skip(in_regs).collect();
+    let stack_tys: Vec<_> = match &regconv {
+        Some((lit, spec)) => {
+            if !spec.args.is_empty() && spec.args.len() != args.len() {
+                return Err(syn::Error::new(
+                    lit.span(),
+                    format!("reg conv: `args` lists {} locations for {} arguments", spec.args.len(), args.len()),
+                ));
+            }
+            if preserve.is_some() || entry_eax || footprint.is_some() || peek.is_some() {
+                return Err(syn::Error::new(
+                    lit.span(),
+                    "conv = reg(...) cannot be combined with preserve (use keep = ...), entry_eax (use ret = al:entry / ax:entry), footprint or peek",
+                ));
+            }
+            tys.iter().enumerate().filter(|(i, _)| spec.loc(*i) == 0).map(|(_, t)| t).collect()
+        }
+        None => tys.iter().skip(in_regs).collect(),
+    };
     let (this_type, this_size) = match &this {
         Some(t) => {
             let id: String = t
@@ -352,6 +387,20 @@ fn expand(
         .map(|r| if *r == "ecx" { 1u8 } else { 2u8 })
         .fold(0, |a, b| a | b);
     let words = quote!((0u8 #(+ ::sa_core::abi::stack_words::<#stack_tys>())*));
+    // An `X87` result goes back with all 80 bits (`sa_core::abi::ST0_EXT`): the shim returns it as
+    // f64 (ST0 = the value rounded to 53 bits) and the entry wrapper replaces ST0 with the full value.
+    let x87_ret = matches!(&sig.output, ReturnType::Type(_, t)
+        if quote!(#t).to_string().replace(' ', "").rsplit("::").next() == Some("X87"));
+    let ext_lines: Vec<String> = if x87_ret {
+        vec!["fstp st(0)".into(), "fld tbyte ptr [{ext}]".into()]
+    } else {
+        Vec::new()
+    };
+    let ext_op = if x87_ret {
+        quote!(ext = sym ::sa_core::abi::ST0_EXT,)
+    } else {
+        quote!()
+    };
     // the i686 stack word of each stack argument: the sum of the words before it. Pointer-sized
     // types are one word on i686 whatever the host's pointer size (the host build of the hook table
     // is what `sa-oracle` reads).
@@ -375,6 +424,9 @@ fn expand(
             quote!((0u8 #(+ #before)*))
         })
         .collect();
+    // a register convention registers its stack words as i686 counts on every target (the host
+    // table's checks compare them with the exe's `ret n`)
+    let reg_words = if regconv.is_some() { quote!((0u8 #(+ #i686_words)*)) } else { words.clone() };
     let arg8 = quote!((0u32 #(| ::sa_core::abi::narrow_bit::<#stack_tys>(#offsets, 1))*));
     let arg16 = quote!((0u32 #(| ::sa_core::abi::narrow_bit::<#stack_tys>(#offsets, 2))*));
     // The naked wrapper (entry when registers are preserved): push the saved registers, copy the
@@ -391,7 +443,23 @@ fn expand(
     if peek.is_some() && (!saved.is_empty() || entry_eax || footprint.is_some()) {
         return Err(syn::Error::new(span, "peek cannot be combined with preserve, entry_eax or footprint"));
     }
-    let (wrapper, entry) = if let Some(np) = peek {
+    let regparts = match &regconv {
+        Some((lit, spec)) => Some(reg_codegen(&RegIn {
+            fname,
+            args: &args,
+            tys: &tys,
+            ret: &ret,
+            lit,
+            spec,
+            calls: &calls,
+            shim: &shim,
+            spec_const: &format_ident!("__SA_HOOK_REGCONV_{}", upper),
+        })?),
+        None => None,
+    };
+    let (wrapper, entry) = if let Some(rp) = &regparts {
+        (rp.wrapper.clone(), rp.entry.clone())
+    } else if let Some(np) = peek {
         // `peek = N` (`sa_core::abi::PEEK`): frame = PEEK.frames[depth] (layout: depth 0, saved EDI /
         // ESI / ECX 4..16, frames from 16, each [hook addr, entry ESP, N, N bytes]); EAX is free (no
         // convention passes an argument in it, and entry_eax is excluded). The window is copied before
@@ -551,6 +619,7 @@ fn expand(
             ]
             .map(String::from),
         );
+        l.extend(ext_lines.iter().cloned());
         l.push(if matches!(conv, Conv::Cdecl) {
             "ret".into()
         } else {
@@ -578,11 +647,12 @@ fn expand(
                     fp = sym #state,
                     cur = sym ::sa_core::abi::FOOTPRINT_CUR,
                     snap = const ::sa_core::abi::FOOTPRINT_SNAPSHOT_OFF,
+                    #ext_op
                 )
             }
         };
         (wrapper, quote!(#wrap as usize))
-    } else if saved.is_empty() && entry_eax {
+    } else if saved.is_empty() && entry_eax && !x87_ret {
         let wrap = format_ident!("__sa_hook_entry_eax_{}", fname);
         let wrapper = quote! {
             #[cfg(target_arch = "x86")]
@@ -599,7 +669,7 @@ fn expand(
             }
         };
         (wrapper, quote!(#wrap as usize))
-    } else if saved.is_empty() {
+    } else if saved.is_empty() && !x87_ret {
         (quote!(), quote!(#shim as usize))
     } else {
         let wrap = format_ident!("__sa_hook_preserve_{}", fname);
@@ -615,6 +685,7 @@ fn expand(
         if matches!(conv, Conv::Cdecl) {
             lines.push("add esp, {b}".into());
         }
+        lines.extend(ext_lines.iter().cloned());
         lines.extend(saved.iter().rev().map(|r| format!("pop {r}")));
         lines.push(if matches!(conv, Conv::Cdecl) {
             "ret".into()
@@ -640,6 +711,7 @@ fn expand(
                     b = const 4 * (#words as u32),
                     inner = sym #shim,
                     #slot_op
+                    #ext_op
                 )
             }
         };
@@ -649,18 +721,34 @@ fn expand(
     // `<fn>_original(args)` calling it with the original convention under the game's MXCSR
     // (`__orig_body!`, i.e. `call_original`). Phases B/C: the `unported` panic (or a host stand-in
     // registered for `<module>::<fn>_original`).
+    let fallback_check = if regconv.is_some() {
+        // a register-convention fallback reads its result from the call frame (`FromRegFrame`)
+        quote!()
+    } else {
+        quote! {
+            // A fallback returns the original's raw result: only types whose ABI value is the
+            // type itself (integers, pointers, `()`) are allowed.
+            const _: fn(#ret) -> <#ret as ::sa_core::abi::IntoAbi>::Abi = |x| x;
+        }
+    };
     let (fallback_items, set_original) = if fallback {
         let cell = format_ident!("__SA_HOOK_ORIGINAL_{}", upper);
         let ofn = format_ident!("{}_original", fname);
-        let conv_id = Ident::new(
-            match conv {
-                Conv::Cdecl => "cdecl",
-                Conv::Stdcall => "stdcall",
-                Conv::Thiscall => "thiscall",
-                Conv::Fastcall => "fastcall",
-            },
-            Span::call_site(),
-        );
+        let conv_id = match &regconv {
+            Some((lit, _)) => quote!(reg(#lit)),
+            None => {
+                let i = Ident::new(
+                    match conv {
+                        Conv::Cdecl => "cdecl",
+                        Conv::Stdcall => "stdcall",
+                        Conv::Thiscall => "thiscall",
+                        Conv::Fastcall => "fastcall",
+                    },
+                    Span::call_site(),
+                );
+                quote!(#i)
+            }
+        };
         let odoc = format!(
             "Runs the original body of `{}` ({addr:#x}) for a path this port does not implement \
              (ADR-002 fallback). Phase A only; phases B/C panic.",
@@ -672,9 +760,7 @@ fn expand(
                 #[allow(dead_code)]
                 static #cell: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(0);
 
-                // A fallback returns the original's raw result: only types whose ABI value is the
-                // type itself (integers, pointers, `()`) are allowed.
-                const _: fn(#ret) -> <#ret as ::sa_core::abi::IntoAbi>::Abi = |x| x;
+                #fallback_check
 
                 #[doc = #odoc]
                 #[allow(clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments, clippy::unused_unit)]
@@ -688,6 +774,27 @@ fn expand(
     } else {
         (quote!(), quote!(None))
     };
+    let reg_spec_const = format_ident!("__SA_HOOK_REGCONV_{}", upper);
+    let (shim_def, ret_expr, preserve_expr, regs_expr) = match regparts {
+        Some(rp) => (rp.shim_def, rp.ret_expr, quote!(#reg_spec_const.preserve_mask()), quote!(Some(#reg_spec_const))),
+        None => (
+            quote! {
+                #[cfg(target_arch = "x86")]
+                #[doc(hidden)]
+                #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref)]
+                extern #abi fn #shim(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
+                    #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
+                    let _fpu = ::sa_core::abi::FpuGuard::enter();
+                    #[allow(unused_unsafe)]
+                    let r = unsafe { #fname(#(#args),*) };
+                    ::sa_core::abi::IntoAbi::into_abi(r)
+                }
+            },
+            quote!(<#ret as ::sa_core::abi::IntoAbi>::RET),
+            quote!(#mask),
+            quote!(None),
+        ),
+    };
     Ok(quote! {
         #f
 
@@ -696,16 +803,7 @@ fn expand(
         #[doc(hidden)]
         static #calls: ::core::sync::atomic::AtomicU32 = ::core::sync::atomic::AtomicU32::new(0);
 
-        #[cfg(target_arch = "x86")]
-        #[doc(hidden)]
-        #[allow(non_snake_case, unsafe_code, dead_code, clippy::not_unsafe_ptr_arg_deref)]
-        extern #abi fn #shim(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
-            #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
-            let _fpu = ::sa_core::abi::FpuGuard::enter();
-            #[allow(unused_unsafe)]
-            let r = unsafe { #fname(#(#args),*) };
-            ::sa_core::abi::IntoAbi::into_abi(r)
-        }
+        #shim_def
 
         #wrapper
 
@@ -743,15 +841,16 @@ fn expand(
                 }
             },
             calls: || #calls.load(::core::sync::atomic::Ordering::Relaxed),
-            stack_words: #words,
-            ret: <#ret as ::sa_core::abi::IntoAbi>::RET,
+            stack_words: #reg_words,
+            ret: #ret_expr,
             this_type: #this_type,
             this_size: #this_size,
-            preserve: #mask,
+            preserve: #preserve_expr,
             set_original: #set_original,
             arg8: #arg8,
             arg16: #arg16,
             batch: #batch,
+            regs: #regs_expr,
         };
     })
 }
@@ -942,4 +1041,290 @@ impl Hints {
         }
         Ok(())
     }
+}
+
+// ------------------------------------------------------------------ register conventions --------
+
+/// `conv = reg("...")` (HARNESS-5): the macro's own parse of the spec, mirrored by
+/// `sa_core::regconv::RegConv::parse` (a const assertion in the expansion compares the two).
+/// Location codes as `sa_core::regconv::Loc`, ret codes as `RetMode`, keep bits EAX 1, ECX 2, EDX 4.
+struct RegSpec {
+    args: Vec<u8>,
+    ret: u8,
+    keep: u8,
+    pop: bool,
+}
+
+const LOCS: [&str; 18] = [
+    "stack", "eax", "ecx", "edx", "ebx", "esi", "edi", "ebp", "ax", "cx", "dx", "bx", "al", "cl", "dl", "bl", "si", "di",
+];
+/// 32-bit register of each location code (index into LOCS)
+const LOC_REG32: [&str; 18] = [
+    "", "eax", "ecx", "edx", "ebx", "esi", "edi", "ebp", "eax", "ecx", "edx", "ebx", "eax", "ecx", "edx", "ebx", "esi", "edi",
+];
+
+impl RegSpec {
+    fn parse(l: &LitStr) -> syn::Result<RegSpec> {
+        let err = |m: String| syn::Error::new(l.span(), format!("reg conv: {m}"));
+        let mut r = RegSpec { args: Vec::new(), ret: 0, keep: 0, pop: false };
+        let mut seen_args = false;
+        let v = l.value();
+        let words = |x: &str| -> Vec<String> {
+            x.split(|c: char| c == ',' || c.is_whitespace()).filter(|w| !w.is_empty()).map(String::from).collect()
+        };
+        for clause in v.split(';').map(str::trim).filter(|c| !c.is_empty()) {
+            match clause.split_once('=') {
+                None if clause == "pop" => r.pop = true,
+                Some((n, val)) if n.trim() == "args" => {
+                    if seen_args {
+                        return Err(err("`args` given twice".into()));
+                    }
+                    seen_args = true;
+                    for w in words(val) {
+                        let code = LOCS.iter().position(|x| *x == w).ok_or_else(|| {
+                            err(format!("`{w}` is not stack or a register name ({})", LOCS.join(" ")))
+                        })? as u8;
+                        if code != 0
+                            && r.args.iter().any(|&c| c != 0 && LOC_REG32[c as usize] == LOC_REG32[code as usize])
+                        {
+                            return Err(err(format!("two arguments in {}", LOC_REG32[code as usize])));
+                        }
+                        r.args.push(code);
+                    }
+                    if r.args.len() > 12 {
+                        return Err(err("more than 12 arguments".into()));
+                    }
+                }
+                Some((n, val)) if n.trim() == "ret" => {
+                    r.ret = match val.trim() {
+                        "auto" => 0,
+                        "al" => 1,
+                        "ax" => 2,
+                        "al:entry" => 3,
+                        "ax:entry" => 4,
+                        x => return Err(err(format!("ret `{x}`: expected auto, al, ax, al:entry or ax:entry"))),
+                    }
+                }
+                Some((n, val)) if n.trim() == "keep" => {
+                    for w in words(val) {
+                        let bit = match w.as_str() {
+                            "eax" => 1,
+                            "ecx" => 2,
+                            "edx" => 4,
+                            _ => {
+                                return Err(err(format!(
+                                    "keep `{w}`: eax, ecx or edx (EBX/ESI/EDI/EBP are always kept)"
+                                )));
+                            }
+                        };
+                        if r.keep & bit != 0 {
+                            return Err(err(format!("keep `{w}` twice")));
+                        }
+                        r.keep |= bit;
+                    }
+                    if r.keep == 0 {
+                        return Err(err("keep without a register".into()));
+                    }
+                }
+                _ => return Err(err(format!("unknown clause `{clause}` (args = ..., ret = ..., keep = ..., pop)"))),
+            }
+        }
+        if r.keep & 1 != 0 && r.ret != 0 {
+            return Err(err("keep = eax conflicts with a register result".into()));
+        }
+        Ok(r)
+    }
+    /// Location code of argument i (stack past the list).
+    fn loc(&self, i: usize) -> u8 {
+        self.args.get(i).copied().unwrap_or(0)
+    }
+}
+
+struct RegIn<'a> {
+    fname: &'a Ident,
+    args: &'a [Ident],
+    tys: &'a [syn::Type],
+    ret: &'a proc_macro2::TokenStream,
+    lit: &'a LitStr,
+    spec: &'a RegSpec,
+    calls: &'a Ident,
+    shim: &'a Ident,
+    spec_const: &'a Ident,
+}
+
+struct RegParts {
+    shim_def: proc_macro2::TokenStream,
+    wrapper: proc_macro2::TokenStream,
+    entry: proc_macro2::TokenStream,
+    ret_expr: proc_macro2::TokenStream,
+}
+
+/// The phase A side of a register-convention hook (`sa_core::regconv`): an `extern "C"` shim
+/// `(out: *mut RegOut, register arguments as u32 words..., stack arguments with their types...)` and a
+/// naked entry that builds that call from the original's registers and stack:
+///
+/// ```text
+/// push ebp; mov ebp, esp                ; [ebp+8] = the original's first stack word
+/// push ecx / push edx                   ; keep = ecx / edx
+/// push esi; push edi                    ; used by the copy below
+/// sub esp, 20; and esp, -16             ; RegOut at ESP (16-aligned), EAX/EDX = the caller's
+/// mov [esp], eax; mov [esp+4], edx; mov byte [esp+18], 0
+/// sub esp, F                            ; F = 4 * (1 + registers + stack words), rounded up to 16
+/// mov [esp+4+4k], <register k>          ; register arguments in order (EBP's value from [ebp])
+/// lea eax, [esp+F]; mov [esp], eax      ; the RegOut pointer
+/// lea esi, [ebp+8]; lea edi, [esp+4+4*registers]; mov ecx, W; rep movsd   ; the stack arguments
+/// call shim
+/// add esp, F; mov eax, [esp]; mov edx, [esp+4]
+/// cmp byte [esp+18], 0; je 2f; fld tbyte [esp+8]; 2:
+/// lea esp, [ebp - 4*(kept + 2)]; pop edi; pop esi; pop edx / ecx; pop ebp
+/// ret / ret 4*W                         ; `pop`
+/// ```
+fn reg_codegen(r: &RegIn) -> syn::Result<RegParts> {
+    let RegIn { fname, args, tys, ret, lit, spec, calls, shim, spec_const } = *r;
+    let mut reg_idx = Vec::new(); // (arg index, loc code)
+    let mut stack_idx = Vec::new();
+    for i in 0..args.len() {
+        match spec.loc(i) {
+            0 => stack_idx.push(i),
+            c => reg_idx.push((i, c)),
+        }
+    }
+    let nreg = reg_idx.len() as u32;
+    let stack_tys: Vec<&syn::Type> = stack_idx.iter().map(|&i| &tys[i]).collect();
+    let words = quote!((0u32 #(+ ::sa_core::abi::stack_words::<#stack_tys>() as u32)*));
+    // shim parameters: registers as words, then the stack arguments with their types
+    let mut params = Vec::new();
+    for &(i, _) in &reg_idx {
+        let a = &args[i];
+        params.push(quote!(#a: u32));
+    }
+    for &i in &stack_idx {
+        let (a, t) = (&args[i], &tys[i]);
+        params.push(quote!(#a: #t));
+    }
+    let call_args: Vec<_> = (0..args.len())
+        .map(|i| {
+            let (a, t) = (&args[i], &tys[i]);
+            if spec.loc(i) == 0 {
+                quote!(#a)
+            } else {
+                quote!(<#t as ::sa_core::regconv::FromRegWord>::from_reg_word(#a))
+            }
+        })
+        .collect();
+    let checks: Vec<_> = (0..args.len())
+        .map(|i| {
+            let t = &tys[i];
+            quote!(::sa_core::regconv::check_arg(&#spec_const, #i, ::core::mem::size_of::<#t>());)
+        })
+        .collect();
+    let codes = &spec.args;
+    let (sret, skeep, spop) = (spec.ret, spec.keep, spec.pop);
+    let shim_def = quote! {
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals)]
+        const #spec_const: ::sa_core::regconv::RegConv = ::sa_core::regconv::RegConv::parse(#lit);
+        const _: () = {
+            assert!(
+                #spec_const.same(&[#(#codes),*], #sret, #skeep, #spop),
+                "#[hook] and sa_core::regconv parse this reg conv differently"
+            );
+            #(#checks)*
+            ::sa_core::regconv::check_ret(&#spec_const, ::core::mem::size_of::<#ret>());
+        };
+
+        #[cfg(target_arch = "x86")]
+        #[doc(hidden)]
+        #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref, clippy::too_many_arguments)]
+        extern "C" fn #shim(__sa_out: *mut ::sa_core::regconv::RegOut, #(#params),*) {
+            #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
+            let _fpu = ::sa_core::abi::FpuGuard::enter();
+            #[allow(unused_unsafe)]
+            let r = unsafe { #fname(#(#call_args),*) };
+            // SAFETY: the naked entry passes its RegOut slot.
+            ::sa_core::regconv::RegReturn::put(r, unsafe { &mut *__sa_out }, #spec_const.ret_low_bytes());
+        }
+    };
+    let mut kept: Vec<&str> = Vec::new();
+    if spec.keep & 2 != 0 {
+        kept.push("ecx");
+    }
+    if spec.keep & 4 != 0 {
+        kept.push("edx");
+    }
+    let mut l: Vec<String> = vec!["push ebp".into(), "mov ebp, esp".into()];
+    l.extend(kept.iter().map(|k| format!("push {k}")));
+    l.extend(
+        [
+            "push esi",
+            "push edi",
+            "sub esp, 20",
+            "and esp, -16",
+            "mov dword ptr [esp], eax",
+            "mov dword ptr [esp + 4], edx",
+            "mov byte ptr [esp + 18], 0",
+            "sub esp, {frame}",
+        ]
+        .map(String::from),
+    );
+    let mut ebp_slot = None;
+    for (k, &(_, code)) in reg_idx.iter().enumerate() {
+        let r32 = LOC_REG32[code as usize];
+        let off = 4 + 4 * k;
+        if r32 == "ebp" {
+            ebp_slot = Some(off);
+        } else {
+            l.push(format!("mov dword ptr [esp + {off}], {r32}"));
+        }
+    }
+    if let Some(off) = ebp_slot {
+        l.push("mov esi, dword ptr [ebp]".into());
+        l.push(format!("mov dword ptr [esp + {off}], esi"));
+    }
+    l.extend(["lea eax, [esp + {frame}]", "mov dword ptr [esp], eax", "lea esi, [ebp + 8]"].map(String::from));
+    l.push(format!("lea edi, [esp + {}]", 4 + 4 * nreg));
+    l.extend(
+        [
+            "mov ecx, {w}",
+            "rep movsd",
+            "call {inner}",
+            "add esp, {frame}",
+            "mov eax, dword ptr [esp]",
+            "mov edx, dword ptr [esp + 4]",
+            "cmp byte ptr [esp + 18], 0",
+            "je 2f",
+            "fld tbyte ptr [esp + 8]",
+            "2:",
+        ]
+        .map(String::from),
+    );
+    l.push(format!("lea esp, [ebp - {}]", 4 * (kept.len() + 2)));
+    l.push("pop edi".into());
+    l.push("pop esi".into());
+    l.extend(kept.iter().rev().map(|k| format!("pop {k}")));
+    l.push("pop ebp".into());
+    l.push(if spec.pop { "ret {b}".into() } else { "ret".into() });
+    let wrap = format_ident!("__sa_hook_reg_{}", fname);
+    let b_op = if spec.pop { quote!(b = const 4 * (#words),) } else { quote!() };
+    let wrapper = quote! {
+        #[cfg(target_arch = "x86")]
+        #[doc(hidden)]
+        #[unsafe(naked)]
+        #[allow(non_snake_case, unsafe_code)]
+        unsafe extern "C" fn #wrap() {
+            ::core::arch::naked_asm!(
+                #(#l),*,
+                frame = const (4 * (1 + #nreg + #words) + 15) & !15,
+                w = const #words,
+                #b_op
+                inner = sym #shim,
+            )
+        }
+    };
+    Ok(RegParts {
+        shim_def,
+        wrapper,
+        entry: quote!(#wrap as usize),
+        ret_expr: quote!(#spec_const.abi_ret(<#ret as ::sa_core::regconv::RegReturn>::RET)),
+    })
 }

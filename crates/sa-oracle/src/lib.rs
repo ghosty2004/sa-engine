@@ -42,6 +42,7 @@ pub mod specs_hud_radar;
 pub mod specs_hud2;
 pub mod specs_hud2_menu;
 pub mod specs_hud3;
+pub mod specs_harness5;
 pub mod specs_hud2_text;
 pub mod specs_input_ccm;
 pub mod specs_input_pad;
@@ -104,6 +105,12 @@ pub fn hook_preserve(addr: u32) -> Option<u8> {
         .get_or_init(|| sa_ports::ALL.iter().map(|r| (r.addr, r.preserve)).collect())
         .get(&addr)
         .copied()
+}
+
+/// The `#[hook(conv = reg("..."))]` register convention of the port hooked at `addr` (HARNESS-5;
+/// `None` for the standard conventions or when no port is hooked there).
+pub fn hook_regconv(addr: u32) -> Option<sa_core::regconv::RegConv> {
+    sa_ports::ALL.iter().find(|r| r.addr == addr).and_then(|r| r.regs)
 }
 
 static HOST_GLOBALS: std::sync::Mutex<()> = std::sync::Mutex::new(());

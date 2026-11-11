@@ -6,7 +6,7 @@
  * IMAGE   flat image (SizeOfImage bytes, sections laid out, IAT slots pointing at the trap page); everything
  *         after the header page is copied to 0x401000 (the exe's preferred base is 0x400000).
  * PROBES  code blob loaded at 0x10100000 (x87 fidelity probes), or "-".
- * CASES   N records of { u32 len, ctx (128 bytes, see thunk.S), scratch (len bytes at 0x10000000,
+ * CASES   N records of { u32 len, ctx (160 bytes, see thunk.S), scratch (len bytes at 0x10000000,
  *         len <= SCRATCH_MAX) }, or "-" for stdin.
  * OUT     the same records with the outputs filled in, or "-" for stdout.
  *
@@ -29,7 +29,7 @@
 #define SCRATCH_MAX 0x8000u
 #define PROBE 0x10100000u
 #define PROBE_LEN 0x10000u
-#define CTX_LEN 128u
+#define CTX_LEN 160u
 /* SizeOfImage of gta_sa.exe 1.0 US minus the header page */
 #define GTA_SPACE 0x1176000u
 

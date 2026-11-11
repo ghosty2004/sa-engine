@@ -343,15 +343,16 @@ impl Emu {
             st.extend_from_slice(&v.to_le_bytes());
         }
         self.uc.mem_write(esp as u64, &st).map_err(be)?;
-        // Same register picture as native/thunk.S at the call: eax = target, ecx/edx = inputs.
+        // Same register picture as native/thunk.S at the call: eax = target (or the spec's entry
+        // EAX), the other registers = inputs.
         for (r, v) in [
-            (R::EAX, call.addr),
+            (R::EAX, call.eax.unwrap_or(call.addr)),
             (R::ECX, call.ecx),
             (R::EDX, call.edx),
-            (R::EBX, 0),
-            (R::ESI, 0),
-            (R::EDI, 0),
-            (R::EBP, 0),
+            (R::EBX, call.ebx),
+            (R::ESI, call.esi),
+            (R::EDI, call.edi),
+            (R::EBP, call.ebp),
             (R::ESP, esp),
             (R::EFLAGS, 0x202),
         ] {

@@ -81,7 +81,7 @@ impl Big {
     }
 
     /// Index of the top set bit of `m` (m != 0).
-    fn top(&self) -> i32 {
+    pub fn top(&self) -> i32 {
         127 - self.m.leading_zeros() as i32
     }
 
@@ -251,6 +251,149 @@ impl Big {
         }
     }
 
+    /// A positive constant `m * 2^e`.
+    pub const fn c(m: u128, e: i32) -> Big {
+        Big {
+            neg: false,
+            e,
+            m,
+            sticky: false,
+        }
+    }
+
+    /// `-self`.
+    pub fn neg(self) -> Big {
+        Big {
+            neg: !self.neg,
+            ..self
+        }
+    }
+
+    /// The exact `a + b` for operands of at most 125 significant bits, at most one of them with a
+    /// sticky part. The result has its top bit at bit 124 or 125 of `m` (so it can be truncated or
+    /// rounded to any precision up to 120 bits), or is +0 (exact cancellation).
+    pub fn add_exact(a: Big, b: Big) -> Big {
+        if a.m == 0 {
+            return b;
+        }
+        if b.m == 0 {
+            return a;
+        }
+        debug_assert!(!(a.sticky && b.sticky));
+        let base = (a.e + a.top()).max(b.e + b.top()) - 124;
+        let place = |x: Big| -> (u128, bool) {
+            if x.e >= base {
+                (x.m << (x.e - base) as u32, x.sticky)
+            } else {
+                let s = (base - x.e) as u32;
+                if s >= 128 {
+                    (0, true)
+                } else {
+                    (x.m >> s, x.sticky || x.m & ((1u128 << s) - 1) != 0)
+                }
+            }
+        };
+        let (am, ast) = place(a);
+        let (bm, bst) = place(b);
+        if a.neg == b.neg {
+            return Big {
+                neg: a.neg,
+                e: base,
+                m: am + bm,
+                sticky: ast || bst,
+            };
+        }
+        // magnitudes: a - b; the operand with the sticky part is the larger one on equal integers
+        let a_larger = am > bm || (am == bm && ast);
+        let (xm, xs, ym, ys, neg) = if a_larger {
+            (am, ast, bm, bst, a.neg)
+        } else {
+            (bm, bst, am, ast, b.neg)
+        };
+        if xm == ym && !xs && !ys {
+            return Big::zero(false);
+        }
+        // x - (y + ε) = (x - y - 1) + (1 - ε)
+        let m = if ys { xm - ym - 1 } else { xm - ym };
+        Big {
+            neg,
+            e: base,
+            m,
+            sticky: xs || ys,
+        }
+    }
+
+    /// `a / b` (non-zero, exact operands) with at least `p + 1` exact quotient bits (`p <= 120`): the
+    /// truncated quotient and a sticky remainder.
+    pub fn div_floor(a: Big, b: Big, p: u32) -> Big {
+        debug_assert!(a.m != 0 && b.m != 0 && !a.sticky && !b.sticky && b.m >> 126 == 0);
+        let mut q = a.m / b.m;
+        let mut r = a.m % b.m;
+        let mut e = a.e - b.e;
+        let room = b.m.leading_zeros() - 1; // r < b.m: r << room cannot overflow
+        loop {
+            let bits = 128 - q.leading_zeros();
+            if bits > p {
+                break;
+            }
+            let s = room.min(p + 1 - bits);
+            let n = r << s;
+            q = (q << s) | (n / b.m);
+            r = n % b.m;
+            e -= s as i32;
+        }
+        Big {
+            neg: a.neg != b.neg,
+            e,
+            m: q,
+            sticky: r != 0,
+        }
+    }
+
+    /// Compares magnitudes of two exact non-zero values.
+    pub fn cmp_abs(a: Big, b: Big) -> core::cmp::Ordering {
+        let (ta, tb) = (a.e + a.top(), b.e + b.top());
+        if ta != tb {
+            return ta.cmp(&tb);
+        }
+        // same top position: align both to their top bit
+        let am = a.m << a.m.leading_zeros();
+        let bm = b.m << b.m.leading_zeros();
+        am.cmp(&bm).then(a.sticky.cmp(&b.sticky))
+    }
+
+    /// The value as a double-double (exact for values of at most 106 significant bits in the f64
+    /// range; `sticky` is ignored).
+    pub fn to_dd(self) -> Dd {
+        if self.m == 0 {
+            return Dd::new(0.0);
+        }
+        let h = Big {
+            sticky: false,
+            ..self
+        }
+        .round(53, None);
+        let rest = Big::add_exact(
+            Big {
+                sticky: false,
+                ..self
+            },
+            h.neg(),
+        );
+        // rest has few significant bits: the conversion of its (shifted) integer is exact
+        let (m, e) = if rest.m == 0 {
+            (0, 0)
+        } else {
+            let tz = rest.m.trailing_zeros();
+            (rest.m >> tz, rest.e + tz as i32)
+        };
+        let l = libm::scalbn(m as f64, e);
+        Dd {
+            h: h.to_f64(),
+            l: if rest.neg { -l } else { l },
+        }
+    }
+
     /// Square root with at least 63 result bits (enough to round to 24).
     pub fn sqrt(a: Big) -> Big {
         let (_, mut e, m) = a.norm64();
@@ -382,6 +525,54 @@ pub(crate) fn log2_dd(hi: f64, lo: f64) -> Dd {
     // ln(mm) = 2 atanh(z)
     let ln = sum.scale(1);
     Dd::new(f64::from(k)).add(ln.div(LN2))
+}
+
+/// `(sin r, cos r)` for `|r| <= 0.25` (a double-double), to about 104 bits, from the Taylor series.
+pub(crate) fn sincos_dd(r: Dd) -> (Dd, Dd) {
+    if r.h == 0.0 {
+        return (r, Dd::new(1.0));
+    }
+    let r2 = r.mul(r);
+    let mut s = r;
+    let mut c = Dd::new(1.0);
+    let mut ts = r;
+    let mut tc = Dd::new(1.0);
+    let mut n = 1.0;
+    loop {
+        tc = tc.mul(r2).div(Dd::new(-(n * (n + 1.0))));
+        c = c.add(tc);
+        ts = ts.mul(r2).div(Dd::new(-((n + 1.0) * (n + 2.0))));
+        s = s.add(ts);
+        n += 2.0;
+        if ts.h.abs() <= s.h.abs() * 1e-34 && tc.h.abs() <= 1e-34 {
+            break;
+        }
+    }
+    (s, c)
+}
+
+/// `atan(t) - t` for `|t| <= 0.05` (a double-double), to about 100 bits relative to the result.
+pub(crate) fn atan_minus_t_dd(t: Dd) -> Dd {
+    if t.h == 0.0 {
+        return t;
+    }
+    let t2 = t.mul(t);
+    // -t^3/3 + t^5/5 - ...
+    let mut term = t.mul(t2);
+    let mut sum = term.div(Dd::new(-3.0));
+    let mut n = 3.0;
+    let mut sign = 1.0;
+    loop {
+        term = term.mul(t2);
+        n += 2.0;
+        let s = term.div(Dd::new(sign * n));
+        sum = sum.add(s);
+        sign = -sign;
+        if s.h.abs() <= sum.h.abs() * 1e-34 {
+            break;
+        }
+    }
+    sum
 }
 
 /// `tan(r)` for `|r| <= 0.8` (a double-double), to about 104 bits, from the sine and cosine series.

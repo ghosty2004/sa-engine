@@ -51,6 +51,8 @@ const K_M23: u32 = 0xC1B8_0000;
 const K_M9: u32 = 0xC110_0000;
 
 orig! {
+    /// `CCustomCarPlateMgr::GetCharacterPositionInCharSet(char c (AL), uint32& col, uint32& row)` (0x6FD7C0)
+    fn char_position(c: u8, col: GPtr<u32>, row: GPtr<u32>) = reg("args = al stack stack") 0x6FD7C0 => get_character_position_in_char_set;
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
     pub fn file_mgr_set_dir(d: u32) = cdecl 0x5387D0 => unported;
     /// `CFileMgr::OpenFile(const char* name, const char* mode)` (0x538900)
@@ -216,8 +218,12 @@ pub fn generate_plate_text(buf: GPtr<u8>, len: i32) -> u8 {
 
 /// `CCustomCarPlateMgr::GetCharacterPositionInCharSet(char c (AL), uint32& col, uint32& row)`
 /// (0x6FD7C0): letters (either case) and digits are numbered A..Z = 0..25, 0..9 = 26..35, at column
-/// `n % 4`, row `n / 4`; everything else (0, 9). Not hookable: the character is passed in AL (a
-/// register convention `#[hook]` cannot express); `RenderLicenseplateTextToRaster` calls it directly.
+/// `n % 4`, row `n / 4`; everything else (0, 9). The character is passed in AL (HARNESS-5 register
+/// convention); `RenderLicenseplateTextToRaster` calls it through `orig!`.
+#[hook(addr = 0x6FD7C0, conv = reg("args = al stack stack"), name = "CCustomCarPlateMgr::GetCharacterPositionInCharSet",
+       expect = "0F B6 C0 83 C0 E0",
+       unverified = "harness5-1", route = "L1-pure", hazards = "none", recs = "driving",
+       note = "register convention AL + 2 stack words (HARNESS-5); EAX/ECX after return are not read by the caller")]
 pub fn get_character_position_in_char_set(c: u8, col: GPtr<u32>, row: GPtr<u32>) {
     let n = match c {
         b'A'..=b'Z' => Some(c - b'A'),
@@ -253,7 +259,7 @@ pub fn render_licenseplate_text_to_raster(text: GPtr<u8>, charset: GPtr<u8>, _pa
     }
     for i in 0..8i32 {
         let (mut col, mut row) = (1u32, 1u32);
-        get_character_position_in_char_set(
+        char_position(
             text.wrapping_index(i).read(),
             GPtr::from_raw(&mut col),
             GPtr::from_raw(&mut row),
@@ -477,6 +483,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GET_MAP_REGION_PLATE_DESIGN,
     HOOK_GENERATE_PLATE_TEXT,
     HOOK_RENDER_LICENSEPLATE_TEXT_TO_RASTER,
+    HOOK_GET_CHARACTER_POSITION_IN_CHAR_SET,
     HOOK_SETUP_MATERIAL_PLATEBACK_TEXTURE,
     HOOK_CREATE_PLATE_TEXTURE,
     HOOK_SETUP_MATERIAL_PLATE_TEXTURE,

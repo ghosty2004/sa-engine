@@ -3761,6 +3761,64 @@ CCamera::LoadPathSplines@0x8E31C0:0x120:RW
 CCamera::LoadPathSplines@0xC9AC4C:4:RW
 CCamera::LoadPathSplines@0xB71848:0x200:RW
 
+# PORT-CAM-3 helper B
+# CCam::Process_FollowCar_SA (plain l2 port-l2-cam3b-d1, driving): the vehicle camera tweak block
+# TheCamera+0xCF4..+0xD58 that InitCameraVehicleTweaks / ApplyVehicleCameraTweaks write (undeclared 0xB6FD1C..),
+# gpMadeInvisibleEntities[10] / gNumEntitiesSetInvisible of the collision passes (0x9655A1..), and
+# CReferences::aRefs of the entities they hide (0xB9C5E8..).
+CCam::Process_FollowCar_SA@0xB6FD1C:0x64:RW
+CCam::Process_FollowCar_SA@0x9655A0:0x28:RW
+CCam::Process_FollowCar_SA@0x9655DC:4:RW
+CCam::Process_FollowCar_SA@0xB9B9A8:0x5DC4:RW
+
+# PORT-CAM-3 helper A
+# CCam::Process_FollowPed_SA (split port-l2-cam3a-gs1, grove walk): gIdleCam (0xB6FDA0, 0x9C bytes) through
+# CIdleCam::Process (undeclared gIdleCam+0x90), CCollision::ms_colModelCache (0x96592C, CLinkList) and
+# CPlaceable's static matrix list gMatrixList (0xB74288) through the camera collision callees
+# (CameraColDetAndReact / ImproveNearClip; undeclared 0x96593C, 0xB74328).
+CCam::Process_FollowPed_SA@0xB6FDA0:0x9C:RW
+CCam::Process_FollowPed_SA@0x96592C:0x34:RW
+CCam::Process_FollowPed_SA@0xB74288:0x1F8:RW
+# CCamera::Find3rdPersonCamTargetVector: the caller's outSource / outTarget (stack arguments 4 and 5 after range and the
+# by-value muzzle).
+CCamera::Find3rdPersonCamTargetVector@arg4:0xC:W
+CCamera::Find3rdPersonCamTargetVector@arg5:0xC:W
+# CCam::LookBehind / CCam::LookRight: the same collision passes as Process_FollowCar_SA (ImproveNearClip /
+# CameraColDetAndReact hide entities): gpMadeInvisibleEntities, gNumEntitiesSetInvisible, CReferences::aRefs.
+CCam::LookBehind@0x9655A0:0x28:RW
+CCam::LookBehind@0x9655DC:4:RW
+CCam::LookBehind@0xB9B9A8:0x5DC4:RW
+CCam::LookRight@0x9655A0:0x28:RW
+CCam::LookRight@0x9655DC:4:RW
+CCam::LookRight@0xB9B9A8:0x5DC4:RW
+# CCamera::AvoidTheGeometry (split port-l2-cam3a-ps1, police-gang, ProcessPedsDeadBaby caller): the collision statics its
+# ProcessLineOfSight / TestSphereAgainstWorld callees write (0x9659B1.., ProcessColModels 0x967F41.. / 0x968941..),
+# gaTempSphereColPoints (0xB9B250..) and the WellBufferMe value / speed statics 0xB6EC38 / 0xB6EC3C.
+CCamera::AvoidTheGeometry@0x9659B0:0x40:D
+CCamera::AvoidTheGeometry@0x967F40:0x20:D
+CCamera::AvoidTheGeometry@0x968940:0x90:D
+CCamera::AvoidTheGeometry@0xB9B250:0x58:D
+CCamera::AvoidTheGeometry@0xB6EC38:8:RW
+# CCam::GetLookFromLampPostPos (split port-l2-cam3b-s-car-ai): the caller's out vector (arg3, stack) and
+# CCollision::ms_colModelCache with its links block, moved by the LOS tests (undeclared 0x965934.., 0x965990..).
+CCam::GetLookFromLampPostPos@arg3:0xC:W
+CCam::GetLookFromLampPostPos@0x96592C:0x74:RW
+CCam::GetLookFromLampPostPos@[0x96595C]:0x258:RW
+# PORT-CAM-3 (parent). Evidence: grove split cam3-s1 (lane 6): the undeclared writes, original and Rust alike.
+# CamControl: target reference hand-overs (CReferences::aRefs); CCam::Process / CameraColDetAndReact: the idle
+# ticker (gIdleCam+0x90), matrix allocation by CPlaceable::GetMatrix (gMatrixList), CCollision::ms_colModelCache.
+CCamera::CamControl@0xB9B9A8:0x5DC4:D
+CCamera::CamControl@0xB74288:0x1F8:D
+CCamera::CamControl@0x965900:0x3100:RW
+CCam::Process@0xB6FE30:4:RW
+CCam::Process@0xB74288:0x1F8:D
+CCam::Process@0x965900:0x3100:RW
+CCam::Process@0xB9B9A8:0x5DC4:D
+CCamera::CameraColDetAndReact@0xB74288:0x1F8:D
+CCamera::CameraColDetAndReact@0x965900:0x3100:RW
+# CCam::Process_AimWeapon (split port-l2-cam3a-ws1, weapon-combat): the quick-aim pitch it stores into the player's
+# CPlayerData +0x54, which is CWorld::Players[0] +0x58 (0xB7CDF0; m_pPlayerData points into the static array).
+CCam::Process_AimWeapon@0xB7CDF0:4:RW
 # PORT-AI-6 (docs/arch/ai-port.md, pass 6). The CGroupEventHandler responses set the members' response / default tasks
 # through CPedGroupIntelligence::SetTask (and inlined copies of it), i.e. they write the pair arrays of the CPedGroup
 # objects in CPedGroups::ms_groups (0xC09920, 8 x 0x2D4; grove split run ai6v2-grove: every undeclared byte of these

@@ -508,6 +508,7 @@ Shared changes: `sa-core/src/abi.rs`, `sa-macros` (footprint nesting, `entry_res
   (cam+0xBC, copied to 0x8CCE6C): orig 0xA6F72C00 (-1.7e-15), Rust 0xA6E00000. `atan2(-front.x, front.y) - pi/2`
   cancels there, so FPATAN bits beyond sa-math's f64 model reach the f32. Hooking it needs a 64-bit FPATAN model (as the
   X87 work did for FPTAN / FYL2X); the ready attribute is in its doc comment. Decision for the main session.
+  **X87-2 (2026-11-11): hooked** with the 64-bit FPATAN / FSIN / FCOS models (`docs/arch/x87-2-verdicts.tsv`).
 - CamControl's CReferences / matrix-list / colModelCache writes come from callees (Restore, GetMatrix, the cone
   cast) and are declared.
 - `DealWithMirror` in split mode fills the 2 GiB spool by frame ~1230 (its windows are large), so it is verified in plain L2.

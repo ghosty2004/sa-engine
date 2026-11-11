@@ -6,7 +6,9 @@
 #
 # ctx: +0 fn, +4 ecx, +8 edx, +12 nstack, +16 stack[16], +80 cw (u16), +84 mxcsr,
 #      +88 out eax, +92 out edx, +96 esp_delta, +100 fpsw (u16), +102 fptag (u16), +104 st0 (10 bytes),
-#      +116 st0 stored as f32, +120 mxcsr after, +124 has_st0; after the call +12 holds the returned ECX
+#      +116 st0 stored as f32, +120 mxcsr after, +124 has_st0; after the call +12 holds the returned ECX;
+#      entry registers (HARNESS-5): +128 eax, +132 flags (bit 0: use +128 for EAX, else EAX = fn),
+#      +136 ebx, +140 esi, +144 edi, +148 ebp
 .intel_syntax noprefix
 .text
 .globl _sa_call
@@ -41,9 +43,17 @@ _sa_call:
     dec ecx
     jmp 1b
 2:  mov eax, [esi + 0]
+    mov [call_target], eax
     mov ecx, [esi + 4]
     mov edx, [esi + 8]
-    call eax
+    mov ebx, [esi + 136]
+    mov edi, [esi + 144]
+    mov ebp, [esi + 148]
+    test dword ptr [esi + 132], 1
+    jz 5f
+    mov eax, [esi + 128]
+5:  mov esi, [esi + 140]
+    call [call_target]
     mov esi, [saved_ctx]
     mov [esi + 12], ecx
     mov [esi + 88], eax
@@ -79,6 +89,7 @@ _sa_call:
 .data
 saved_ctx:  .long 0
 saved_esp:  .long 0
+call_target: .long 0
 host_cw:    .short 0
             .short 0
 host_mxcsr: .long 0

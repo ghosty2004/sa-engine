@@ -1024,3 +1024,15 @@
   CBike::ProcessControl's skipped-physics lean-recovery condition was inverted (0x6B9B88 `test cl,cl; je`).
   New reviewed normaliser rule RULE_LEAN_MATRIX_PADS (CBike lean-matrix pad words are stack residue).
 - verify-all main-v5 + main-v5b (driving re-run after the disk guard skipped it): IDENTICAL on all 11.
+
+## 2026-11-12 HARNESS-5 and X87-2 integrated (main session)
+- HARNESS-5: `conv = reg("args = …; ret = …; keep = …; pop")` register conventions for #[hook] and orig!
+  (sa_core::regconv, naked phase-A shims, X87 results in ST0 with all 80 bits, sa-hook regconv_check against
+  the exe, L1 runner sets entry registers). 7 ports (unverified harness5-1), incl. AudioLog10 and
+  ShadowRenderTriangleCB. Merged by applying HARNESS-5's own diff onto master's sa-macros/abi.
+- X87-2: FPATAN/FSIN/FCOS/FSINCOS models fitted to the CPU (FPATAN 99.9995 % full-80-bit exact, FSIN/FCOS 99.5 %,
+  stored f32 100 %); X87-returning hooks return all 80 bits in ST0; Process_FollowPed_SA hooked (replaces
+  STD-6's native), GetHeading/FindPlayerHeading re-hooked, GetRoll unverified; RwMatrixRotate passes the CPU
+  → KNOWN_CPU_MISMATCHES is empty.
+- L1 tests 18/18 (a first run hung 55 min in ref.exe under Wine at 0 % CPU; re-run passed).
+- verify-all main-hx (fresh DLL 7cc2a0d): IDENTICAL on all 12 recordings (menus-map-controls is new, by PORT-MENU).

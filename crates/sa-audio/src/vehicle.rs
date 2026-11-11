@@ -13,7 +13,7 @@ use crate::common::{
     AE_SOUND_MANAGER, ae_random_int, audio_engine, audio_hardware, ftol32, g, rd, wr, x, xi,
 };
 use crate::entities::load_sound_bank;
-use crate::utility::audio_log10;
+use crate::utility::call_audio_log10;
 use sa_core::timer::TIME_MS;
 
 sa_core::globals! {
@@ -502,7 +502,7 @@ pub fn get_flying_metal_volume(_this: GPtr<u8>, phys: GPtr<u8>) -> X87 {
     if !v.fcom(x(g::<f32>(FLYING_METAL_MIN).read())).test_parity(0x05) {
         return x(g::<f32>(FLT_M100).read());
     }
-    audio_log10(stored).fmul_m(g::<f32>(FLT_10).read())
+    call_audio_log10(stored).fmul_m(g::<f32>(FLT_10).read())
 }
 
 /// `CAEVehicleAudioEntity::GetHornState(bool* out, cVehicleParams&)` (0x4F61E0): no horn for wrecked
@@ -634,7 +634,7 @@ fn dummy_vol_tail(this: GPtr<u8>, st0: X87, vol: f32) -> X87 {
 /// `AudioLog10(f32(GetPiecewiseLinear(fwd, 5, curve))) * [0x858BA4]`
 fn dummy_curve_db(fwd: u32, curve: usize) -> X87 {
     let pl = get_piecewise_linear(fwd, 5, g(curve));
-    audio_log10(pl).fmul_m(g::<f32>(FLT_8BA4).read())
+    call_audio_log10(pl).fmul_m(g::<f32>(FLT_8BA4).read())
 }
 
 /// `CAEVehicleAudioEntity::GetVolumeForDummyIdle(float ratio, float fwd)` (0x4F51F0): model 0x1C9 gives
@@ -656,7 +656,7 @@ pub fn get_volume_for_dummy_idle(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
     let st0 = if rd::<u8>(this, 0xA9) == 2 {
         dummy_curve_db(fwd.to_bits(), DUMMY_IDLE_VOL_CURVE)
     } else if x(fwd).fcom(x(g::<f32>(FLT_2CD0).read())).test_any(0x41) {
-        audio_log10(fwd).fmul_m(g::<f32>(FLT_10).read())
+        call_audio_log10(fwd).fmul_m(g::<f32>(FLT_10).read())
     } else {
         x(g::<f32>(FLT_0).read())
     };
@@ -687,7 +687,7 @@ pub fn get_volume_for_dummy_rev(this: GPtr<u8>, ratio: f32, fwd: f32) -> X87 {
         }
     } else {
         let a = x(g::<f32>(FLT_1).read()).fsub_m(fwd).to_f32();
-        audio_log10(a).fmul_m(g::<f32>(FLT_10).read())
+        call_audio_log10(a).fmul_m(g::<f32>(FLT_10).read())
     };
     dummy_vol_tail(this, st0, vol)
 }
@@ -907,7 +907,7 @@ pub fn process_boat_moving_over_water(this: GPtr<u8>, params: GPtr<u8>) {
         } else {
             BOAT_VOL_OTHER
         };
-        vol = audio_log10(ratio).fmul_m(gf(FLT_8BA4)).fadd_m(gf(off)).to_f32();
+        vol = call_audio_log10(ratio).fmul_m(gf(FLT_8BA4)).fadd_m(gf(off)).to_f32();
     }
     let mut freq = x(ratio)
         .fmul_m(gf(BOAT_FREQ_MULT))
@@ -965,7 +965,7 @@ pub fn process_reverse_gear(this: GPtr<u8>, params: GPtr<u8>) {
             .to_bits();
         let d = X87::from_f64_exact(f64::from_bits(g::<u64>(DBL_0).read()));
         if !t.fcom(d).test_any(0x41) {
-            vol = audio_log10(t_f32)
+            vol = call_audio_log10(t_f32)
                 .fmul_m(gf(FLT_8BA4))
                 .fadd_m(gf(REVERSE_VOL_OFFSET))
                 .to_f32()
