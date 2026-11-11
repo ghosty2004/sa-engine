@@ -11,6 +11,8 @@ name = "sa_hook"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+# The single port registry (table order).
+sa-ports = { path = "../sa-ports", features = ["in-process"] }
 sa-oracle-format = { path = "../sa-oracle-format" }
 sa-math = { path = "../sa-math" }
 # Engine ports (their `#[hook]` registrations become hook-table entries); phase A memory model.

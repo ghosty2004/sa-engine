@@ -91,27 +91,7 @@ static HOOK_PRESERVE: OnceLock<std::collections::HashMap<u32, u8>> = OnceLock::n
 /// sa-input, sa-anim and sa-ai registrations; `None` when no port is hooked there).
 pub fn hook_preserve(addr: u32) -> Option<u8> {
     HOOK_PRESERVE
-        .get_or_init(|| {
-            sa_core::hooks::ALL
-                .iter()
-                .chain(sa_stream::hooks::ALL.iter())
-                .chain(sa_world::hooks::ALL.iter())
-                .chain(sa_pop::hooks::ALL.iter())
-                .chain(sa_script::hooks::ALL.iter())
-                .chain(sa_weapon::hooks::ALL.iter())
-                .chain(sa_ped::hooks::ALL.iter())
-                .chain(sa_input::hooks::ALL.iter())
-                .chain(sa_anim::hooks::ALL.iter())
-                .chain(sa_veh::hooks::ALL.iter())
-                .chain(sa_hud::hooks::ALL.iter())
-                .chain(sa_cam::hooks::ALL.iter())
-                .chain(sa_ai::hooks::ALL.iter())
-                .chain(sa_audio::hooks::ALL.iter())
-                .chain(sa_rwcore::hooks::ALL.iter())
-                .chain(sa_render::hooks::ALL.iter())
-                .map(|r| (r.addr, r.preserve))
-                .collect()
-        })
+        .get_or_init(|| sa_ports::ALL.iter().map(|r| (r.addr, r.preserve)).collect())
         .get(&addr)
         .copied()
 }

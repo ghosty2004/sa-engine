@@ -231,6 +231,7 @@ The goal text states only the end condition. The next action is derived from the
   `re/snapshots/gta_sa_1.0US.snapshot`). Agents never open another target, never call `close_binary`, and never
   annotate in REA (a cancelled request re-imports the program and drops every session's annotations); names go
   to the catalogue. objdump and `catalog/raw/` remain fine alternatives.
+- Port crates are registered in ONE place: `crates/sa-ports` (Cargo.toml dependency + one `CRATES` line, appended at the end). sa-hook's table, its callers test, sa-oracle's hook_preserve and the L1 preserve test read `sa_ports::ALL`; do not chain crates anywhere else.
 - Shared crates (`sa-core`, `sa-math`, `sa-rw`, `sa-oracle`) must keep `cargo build --workspace` green after
   every edit.
 - Git: only the main session commits, after a green build and tests, with plain English messages and no

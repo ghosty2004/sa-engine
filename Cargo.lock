@@ -1751,6 +1751,7 @@ dependencies = [
  "sa-oracle-format",
  "sa-ped",
  "sa-pop",
+ "sa-ports",
  "sa-render",
  "sa-rwcore",
  "sa-script",
@@ -1825,6 +1826,7 @@ dependencies = [
  "sa-oracle-format",
  "sa-ped",
  "sa-pop",
+ "sa-ports",
  "sa-render",
  "sa-rwcore",
  "sa-script",
@@ -1867,6 +1869,28 @@ dependencies = [
  "sa-macros",
  "sa-math",
  "sa-stream",
+ "sa-world",
+]
+
+[[package]]
+name = "sa-ports"
+version = "0.1.0"
+dependencies = [
+ "sa-ai",
+ "sa-anim",
+ "sa-audio",
+ "sa-cam",
+ "sa-core",
+ "sa-hud",
+ "sa-input",
+ "sa-ped",
+ "sa-pop",
+ "sa-render",
+ "sa-rwcore",
+ "sa-script",
+ "sa-stream",
+ "sa-veh",
+ "sa-weapon",
  "sa-world",
 ]
 
