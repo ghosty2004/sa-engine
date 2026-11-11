@@ -1,0 +1,26 @@
+[package]
+name = "sa-anim"
+version = "0.1.0"
+description = "ANIM subsystem of gta_sa.exe 1.0 US (PORT-ANIM-INPUT): CAnimManager, CAnimBlend* (associations, hierarchies, sequences, nodes, groups, clump data), IFP loading, bones and IK chains (BoneNode_c, IKChain_c, CPedIK), vehicle anim groups, CCutsceneMgr, CAnimatedBuilding. Built on sa-core (ADR-001). no_std; host, i686-pc-windows-gnu and wasm32"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-math = { path = "../sa-math" }
+sa-macros = { path = "../sa-macros" }
+
+[dev-dependencies]
+# the cross-crate "declared once" / "hooked once" tests
+sa-stream = { path = "../sa-stream" }
+sa-world = { path = "../sa-world" }
+sa-input = { path = "../sa-input" }
+
+[features]
+# Phase A: run inside gta_sa.exe 1.0 US (sa-hook). Forwards to sa-core (whose `globals!`/`orig!`
+# expansions pick the memory model); build.rs sets `cfg(sa_phase_a)` for this crate's own tests.
+in-process = ["sa-core/in-process"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sa_phase_a)"] }

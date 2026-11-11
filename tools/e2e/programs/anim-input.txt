@@ -1,0 +1,33 @@
+# PORT-ANIM-INPUT corpus program (sa-input, sa-anim): the grove-walk start, then varied pad / keyboard /
+# mouse input so that the CPad queries, the ControlsManager keyboard and mouse mapping and many ped
+# animations (bike enter/exit, pedalling, jump, punches, crouch, look around) run: get on the BMX next to
+# CJ (when there; the intro leaves CJ on foot), ride and steer, get off, jump, target + punch, crouch, weapon cycling,
+# D-pad, keyboard walking keys, mouse look with buttons. Recorded by tools/e2e/record-program.sh; frames
+# as in grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1250..1259 triangle          # enter a vehicle (when one is next to CJ)
+1260..1349 lx=0              # enter animation
+1350..1699 cross pulse       # pedal (cross = accelerate on a bike)
+1500..1599 cross pulse lx=-128  # pedal and steer left
+1600..1699 cross pulse lx=128   # pedal and steer right
+1700..1799 square            # brake
+1800..1809 triangle          # get off the bike
+1810..1899 lx=0
+1900..1999 mouse=8,2         # look around
+2200..2299 square pulse      # jump
+2300..2399 r1 ly=-64         # target
+2320..2399 r1 circle pulse   # punch while targeting
+2400..2449 l3 pulse          # crouch / stand up
+2450..2499 r2 pulse          # next weapon
+2500..2549 l2 pulse          # previous weapon
+2550..2599 up pulse          # D-pad up / down (group control, conversation)
+2600..2649 down pulse
+2650..2849 key=std:0x57      # W (walk forward through the ControlsManager keyboard mapping)
+2700..2799 key=std:0x41      # A
+2850..2949 mouse=-6,1 lmb    # mouse look with the left button
+2950..3049 mouse=4,-1 rmb    # and the right button
+3050..3249 ly=-128 cross     # run
+end 3300

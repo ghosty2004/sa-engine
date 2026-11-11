@@ -43,6 +43,35 @@ pub struct HookReg {
     pub preserve: u8,
 }
 
+/// EAX as the caller left it at the entry of the last `#[hook(entry_eax)]` port (PORT-ANIM-INPUT).
+///
+/// Some originals return a 16-bit value with `xor ax, ax` / `mov ax, ...` on a path where the upper
+/// half of EAX is still the caller's EAX (e.g. `CPad::GetSteeringLeftRight` when the controls are
+/// disabled). L2 compares the whole EAX, so such a port reads this value first thing and returns
+/// `(entry_eax() & 0xFFFF_0000) | ax`. Phase A: the naked entry wrapper stores EAX here before
+/// jumping to the shim (single game thread, ADR-001 §3 rule 3). Elsewhere it is whatever
+/// [`set_entry_eax`] stored (L1 specs set the value their harness passes: the call target address).
+pub static ENTRY_EAX: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
+
+/// See [`ENTRY_EAX`].
+#[inline]
+pub fn entry_eax() -> u32 {
+    ENTRY_EAX.load(core::sync::atomic::Ordering::Relaxed)
+}
+
+/// See [`ENTRY_EAX`] (host-side specs and tests).
+#[inline]
+pub fn set_entry_eax(v: u32) {
+    ENTRY_EAX.store(v, core::sync::atomic::Ordering::Relaxed)
+}
+
+/// `(entry EAX & 0xFFFF0000) | ax`: a 16-bit result written with `mov ax, ...` / `xor ax, ax` while
+/// the upper half still holds the caller's EAX.
+#[inline]
+pub fn with_entry_hi(ax: u16) -> u32 {
+    (entry_eax() & 0xFFFF_0000) | u32::from(ax)
+}
+
 /// [`HookReg::preserve`]: ECX is returned unchanged.
 pub const PRESERVE_ECX: u8 = 1;
 /// [`HookReg::preserve`]: EDX is returned unchanged.

@@ -23,6 +23,8 @@ sa-script = { path = "../sa-script" }
 # WEAPON / PED ports for their specs.
 sa-weapon = { path = "../sa-weapon" }
 sa-ped = { path = "../sa-ped" }
+sa-input = { path = "../sa-input" }
+sa-anim = { path = "../sa-anim" }
 
 # Host-only (Linux): for Windows targets (the i686 workspace build) the crate compiles to nothing.
 [target.'cfg(not(windows))'.dependencies]

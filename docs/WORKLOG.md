@@ -717,3 +717,12 @@
   was a harness artefact: the loop reused one --tag for several recordings, so a stale weapon-combat Rust trace was
   compared; rerun alone and l3.sh both IDENTICAL. Rule: one --tag per recording.
 - States: 150 → L2, 31 → L1, 161 → implemented. F1 = 828 / 15,479 (5.35 %).
+
+## 2026-11-11 PORT-ANIM-INPUT integrated (main session)
+- Agent acb5cdca (lane 2): crates sa-anim, sa-input; sa-macros/sa-core `entry_eax`; docs/arch/anim-input-port.md;
+  anim-input program/recording; lists and l2-extras section.
+- Merge: registration conflicts resolved (order core, stream, world, pop, script, weapon, ped, input, anim); sa-stream
+  unregistrations dropped (keycells covers them). Master's INF-20 and callers tests (newer than the branch base)
+  failed on 2 hooks; fixed as in ROADMAP. sa-hook lib 45, sa-anim/sa-input/sa-core/sa-macros tests, workspace clippy
+  -D warnings, i686 build OK; all-ports IDENTICAL on six recordings (grove run: known post-exit fault 7BCF0729).
+- States: 132 → L2, 115 → L1, 155 → implemented. F1 = 960 / 15,479 (6.20 %).
