@@ -466,8 +466,29 @@ pub fn fun_005ec220(this: GPtr<u8>, out: GPtr<u8>, it: GPtr<u8>) -> GPtr<u8> {
 /// Not registered (PORT-AI-1): its split-run L2 pairs differ in the task out-parameter (grove 2/72, c-bug
 /// 146/146 pairs, all with the +0x64 stack shift of a Rust caller); unresolved, so the original keeps running.
 #[allow(clippy::too_many_arguments)]
-pub fn fun_00606060(this: GPtr<u8>, a0: i32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) {
-    decision_make_decision(this.byte_add(a0.wrapping_mul(0x3C) as isize), a1, a2, a3, a4, a5, a6, a7, a8);
+pub fn fun_00606060(
+    this: GPtr<u8>,
+    a0: i32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+    a5: u32,
+    a6: u32,
+    a7: u32,
+    a8: u32,
+) {
+    decision_make_decision(
+        this.byte_add(a0.wrapping_mul(0x3C) as isize),
+        a1,
+        a2,
+        a3,
+        a4,
+        a5,
+        a6,
+        a7,
+        a8,
+    );
 }
 
 /// The body of 0x46FEE0 / 0x665DC0: the seek-pos calculator at +0x40 computes into a local `CVector`
@@ -565,7 +586,6 @@ orig! {
     fn entity_delete(e: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
 }
 
-
 /// `CPools::ms_pPedAttractorPool` (slot 0xC4)
 const PED_ATTRACTOR_POOL: usize = 0xB744C4;
 /// `CPedGroups::ms_groups` (8 × 0x2D4)
@@ -593,7 +613,11 @@ pub fn get_ped_attractor_manager_5ee190() -> GPtr<u8> {
         return cur;
     }
     let p = crt_new(0xA0);
-    let r = if p.is_null() { GPtr::NULL } else { attractor_manager_ctor(p) };
+    let r = if p.is_null() {
+        GPtr::NULL
+    } else {
+        attractor_manager_ctor(p)
+    };
     PED_ATTRACTOR_MANAGER.set(r);
     r
 }
@@ -608,7 +632,11 @@ pub fn decision_maker_types_get_instance_4684f0() -> GPtr<u8> {
         return cur;
     }
     let p = crt_new(0xF1C0);
-    let r = if p.is_null() { GPtr::NULL } else { decision_maker_types_ctor(p) };
+    let r = if p.is_null() {
+        GPtr::NULL
+    } else {
+        decision_maker_types_ctor(p)
+    };
     DECISION_MAKER_TYPES.set(r);
     r
 }
@@ -696,7 +724,9 @@ pub fn fun_004ace80(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let f = rd::<GPtr<u8>>(ped, 0x14).byte_add(0x10);
     let mut v = [rd::<f32>(this, 0x18), rd::<f32>(this, 0x1C), 0.0f32];
     vector_normalise(GPtr::from_raw(&mut v as *mut [f32; 3]).cast());
-    let d = x(v[1]).fmul_m(rd::<f32>(f, 4)).fadd(x(v[2]).fmul_m(rd::<f32>(f, 8)));
+    let d = x(v[1])
+        .fmul_m(rd::<f32>(f, 4))
+        .fadd(x(v[2]).fmul_m(rd::<f32>(f, 8)));
     let d = d.fadd(x(v[0]).fmul_m(rd::<f32>(f, 0))).fchs();
     let c = d.fcom(x(f32::from_bits(0x3F70_902E)));
     u8::from(!c.test_any(0x41))
@@ -800,12 +830,24 @@ pub fn ped_attractor_manager_has_empty_slot_5ebb00(this: GPtr<u8>, effect: GPtr<
 /// (0x5EB690, `ret 0x10`, ECX unused): any attractor of the vector with that effect (+4) and entity
 /// (+8) that is registered with `ped`.
 #[hook(addr = 0x5EB690, conv = stdcall, name = "CPedAttractorManager::IsPedRegisteredWithEffect<CPedAttractor>", expect = "8B 44 24 10 53")]
-pub fn ped_attractor_manager_is_ped_registered_with_effect_5eb690(ped: u32, effect: u32, entity: u32, vec: GPtr<u8>) -> u8 {
+pub fn ped_attractor_manager_is_ped_registered_with_effect_5eb690(
+    ped: u32,
+    effect: u32,
+    entity: u32,
+    vec: GPtr<u8>,
+) -> u8 {
     let begin = rd::<GPtr<u8>>(vec, 4);
-    let n = if begin.is_null() { 0 } else { (rd::<u32>(vec, 8).wrapping_sub(begin.addr() as u32) as i32) >> 2 };
+    let n = if begin.is_null() {
+        0
+    } else {
+        (rd::<u32>(vec, 8).wrapping_sub(begin.addr() as u32) as i32) >> 2
+    };
     for i in 0..n.max(0) {
         let a = rd::<GPtr<u8>>(begin, 4 * i as isize);
-        if rd::<u32>(a, 4) == effect && rd::<u32>(a, 8) == entity && ped_attractor_is_registered_with_ped(a, ped) != 0 {
+        if rd::<u32>(a, 4) == effect
+            && rd::<u32>(a, 8) == entity
+            && ped_attractor_is_registered_with_ped(a, ped) != 0
+        {
             return 1;
         }
     }
@@ -888,7 +930,11 @@ orig! {
 pub fn active_task_byte_59_6822b0(this: GPtr<u8>) -> i32 {
     let intel = rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x38), 0x47C);
     let t = task_manager_find_active_task_by_type(intel.byte_add(4), rd::<i32>(this, 0x34));
-    if t.is_null() { 0 } else { i32::from(rd::<i8>(t, 0x59)) }
+    if t.is_null() {
+        0
+    } else {
+        i32::from(rd::<i8>(t, 0x59))
+    }
 }
 
 /// `CEventScanner::CEventScanner` (0x605300): clears the scanners' timers (+4.., +0x1C.., +0xAC..),
@@ -1031,13 +1077,27 @@ pub fn decision_simple_make_decision_6007a0(this: GPtr<u8>, ev: i32, task: GPtr<
 /// `task = 200`; returns `(int16) task`.
 #[hook(addr = 0x606F80, conv = thiscall, name = "CDecisionMakerTypes::MakeDecision-pedgroup-ptr", expect = "8B 54 24 08 8B 94 91 34 C0 00 00")]
 #[allow(clippy::too_many_arguments)]
-pub fn decision_maker_types_make_decision_group_606f80(this: GPtr<u8>, group: GPtr<u8>, ev: i32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> i32 {
+pub fn decision_maker_types_make_decision_group_606f80(
+    this: GPtr<u8>,
+    group: GPtr<u8>,
+    ev: i32,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+    a5: u32,
+    a6: u32,
+    a7: u32,
+) -> i32 {
     let idx = rd::<i32>(this, 0xC034 + 4 * ev as isize);
     let dm = rd::<i32>(group, 0x2C8);
     let mut task: u32 = 0xC8;
     let mut a7_slot: u32 = a7;
     let base = if dm == -1 {
-        let off: isize = if rd::<u8>(group, 0x2D0) == 1 { 0xE824 } else { 0xDE88 };
+        let off: isize = if rd::<u8>(group, 0x2D0) == 1 {
+            0xE824
+        } else {
+            0xDE88
+        };
         this.byte_add(off + idx.wrapping_mul(0x3C) as isize)
     } else {
         this.byte_add(4 + dm.wrapping_mul(0x29).wrapping_add(idx).wrapping_mul(0x3C) as isize)
@@ -1069,18 +1129,42 @@ pub fn decision_maker_types_make_decision_ped_606e70(
     facial: GPtr<u8>,
 ) {
     let intel = rd::<GPtr<u8>>(ped, 0x47C);
-    let dm = if a8 != 0 { rd::<i32>(intel, 0xB8) } else { rd::<i32>(intel, 0xB4) };
+    let dm = if a8 != 0 {
+        rd::<i32>(intel, 0xB8)
+    } else {
+        rd::<i32>(intel, 0xB4)
+    };
     let idx = rd::<i32>(this, 0xC034 + 4 * ev as isize);
     wr::<u16>(task, 0, 200);
     wr::<u16>(facial, 0, 0xFFFF);
     let (t, f) = (task.addr() as u32, facial.addr() as u32);
     match dm {
-        -2 => decision_make_decision(this.byte_add(0xD4EC + idx.wrapping_mul(0x3C) as isize), a2, a3, a4, a5, a6, a7, t, f),
+        -2 => decision_make_decision(
+            this.byte_add(0xD4EC + idx.wrapping_mul(0x3C) as isize),
+            a2,
+            a3,
+            a4,
+            a5,
+            a6,
+            a7,
+            t,
+            f,
+        ),
         -1 => {
             let off: isize = if rd::<u8>(ped, 0x484) == 2 { 0xCB50 } else { 0xC1B4 };
             fun_00606060_call(this.byte_add(off), idx, a2, a3, a4, a5, a6, a7, t, f)
         }
-        _ => decision_make_decision(this.byte_add(4 + dm.wrapping_mul(0x29).wrapping_add(idx).wrapping_mul(0x3C) as isize), a2, a3, a4, a5, a6, a7, t, f),
+        _ => decision_make_decision(
+            this.byte_add(4 + dm.wrapping_mul(0x29).wrapping_add(idx).wrapping_mul(0x3C) as isize),
+            a2,
+            a3,
+            a4,
+            a5,
+            a6,
+            a7,
+            t,
+            f,
+        ),
     }
 }
 
@@ -1094,7 +1178,12 @@ orig! {
 /// first free slot (`bool[0xC0B01C]`) of 15..20 (group) or 0..15 gets active, its type (0xC0AFE0),
 /// and the 0x29 decisions copied (`CDecision::From`); `++count (+0)`; returns the slot or -1.
 #[hook(addr = 0x607050, conv = thiscall, name = "CDecisionMakerTypes::AddDecisionMaker", expect = "51 8A 54 24 10")]
-pub fn decision_maker_types_add_decision_maker_607050(this: GPtr<u8>, src: GPtr<u8>, kind: u8, group: u8) -> i32 {
+pub fn decision_maker_types_add_decision_maker_607050(
+    this: GPtr<u8>,
+    src: GPtr<u8>,
+    kind: u8,
+    group: u8,
+) -> i32 {
     let (lo, hi) = if group != 0 { (0xF, 0x14) } else { (0, 0xF) };
     for k in lo..hi {
         let act = g::<u8>(0xC0B01C + k);
@@ -1186,7 +1275,10 @@ pub fn fun_0063ba00(this: GPtr<u8>, ped: GPtr<u8>) {
     let veh = rd::<GPtr<u8>>(this, 0xC);
     let f = compute_door_flag(veh, rd::<u32>(this, 0x10), 1);
     wr::<u8>(this, 0x20, f);
-    vehicle_set_getting_out_flags(rd::<GPtr<u8>>(this, 0xC), (this.addr() as u32 & 0xFFFF_FF00) | u32::from(f));
+    vehicle_set_getting_out_flags(
+        rd::<GPtr<u8>>(this, 0xC),
+        (this.addr() as u32 & 0xFFFF_FF00) | u32::from(f),
+    );
     wr::<u8>(this, 0x21, 1);
     let veh = rd::<GPtr<u8>>(this, 0xC);
     wr::<u8>(veh, 0x485, rd::<u8>(veh, 0x485).wrapping_add(1));
@@ -1215,7 +1307,17 @@ pub fn fun_0063ba00(this: GPtr<u8>, ped: GPtr<u8>) {
 /// `*facial = -1`.
 #[hook(addr = 0x6040D0, conv = thiscall, name = "CDecision::MakeDecision", expect = "83 EC 60 53 55")]
 #[allow(clippy::too_many_arguments)]
-pub fn decision_make_decision_6040d0(this: GPtr<u8>, kind: i32, b: u8, x1: i32, x2: i32, x3: i32, ev: i32, task: GPtr<u8>, facial: GPtr<u8>) {
+pub fn decision_make_decision_6040d0(
+    this: GPtr<u8>,
+    kind: i32,
+    b: u8,
+    x1: i32,
+    x2: i32,
+    x3: i32,
+    ev: i32,
+    task: GPtr<u8>,
+    facial: GPtr<u8>,
+) {
     let mut tasks = [0xC8i32; 6];
     let mut probs = [0u8; 6];
     let mut n = 0usize;
@@ -1225,7 +1327,8 @@ pub fn decision_make_decision_6040d0(this: GPtr<u8>, kind: i32, b: u8, x1: i32, 
             continue;
         }
         let t = rd::<i32>(this, 4 * i);
-        if t == -1 || t == x1 || t == x2 || t == x3 || rd::<u8>(this, 0x30 + isize::from(b != 0) + 2 * i) == 0 {
+        if t == -1 || t == x1 || t == x2 || t == x3 || rd::<u8>(this, 0x30 + isize::from(b != 0) + 2 * i) == 0
+        {
             continue;
         }
         tasks[n] = t;
@@ -1297,7 +1400,10 @@ pub fn interesting_events_ctor_6023a0(this: GPtr<u8>) -> GPtr<u8> {
     let words: [(&[isize], u16); 5] = [
         (&[0xB6, 0xB4], 0xFA0),
         (&[0xB2, 0xA8, 0x96], 0x1F40),
-        (&[0xB0, 0xAE, 0xAC, 0xA6, 0xA2, 0xA0, 0x9E, 0x9C, 0x9A, 0x94, 0x92], 0x1770),
+        (
+            &[0xB0, 0xAE, 0xAC, 0xA6, 0xA2, 0xA0, 0x9E, 0x9C, 0x9A, 0x94, 0x92],
+            0x1770,
+        ),
         (&[0xAA, 0xA4, 0x98, 0x84, 0x82, 0x80], 0x1388),
         (&[0x90, 0x8E, 0x8C, 0x8A, 0x88, 0x86], 0xBB8),
     ];
@@ -1321,7 +1427,11 @@ orig! {
 /// empty queue tail → true; tail == head → it has an active task 0xEB; otherwise its active task
 /// 0xEA has `+0x10 == queue size - 1` (EAX = 1/0).
 #[hook(addr = 0x5EBBA0, conv = thiscall, name = "CPedAttractorManager::HasQueueTailArrivedAtSlot", expect = "8B 44 24 04 85 C0")]
-pub fn ped_attractor_manager_has_queue_tail_arrived_at_slot_5ebba0(this: GPtr<u8>, effect: GPtr<u8>, entity: u32) -> u8 {
+pub fn ped_attractor_manager_has_queue_tail_arrived_at_slot_5ebba0(
+    this: GPtr<u8>,
+    effect: GPtr<u8>,
+    entity: u32,
+) -> u8 {
     if effect.is_null() || rd::<u8>(effect, 0xC) != 3 {
         return 0;
     }
@@ -1336,7 +1446,11 @@ pub fn ped_attractor_manager_has_queue_tail_arrived_at_slot_5ebba0(this: GPtr<u8
         return 1;
     }
     let begin = rd::<u32>(a, 0x20);
-    let n = if begin == 0 { 0 } else { (rd::<u32>(a, 0x24).wrapping_sub(begin) as i32) >> 2 };
+    let n = if begin == 0 {
+        0
+    } else {
+        (rd::<u32>(a, 0x24).wrapping_sub(begin) as i32) >> 2
+    };
     let tail = ped_attractor_get_tail_of_queue(a);
     if tail.is_null() {
         return 1;

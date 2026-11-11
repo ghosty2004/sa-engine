@@ -18,13 +18,21 @@ extern crate std;
 
 pub use sa_core::hook;
 
-pub mod common;
-pub mod dtors;
-pub mod events;
-pub mod hooks;
-pub mod misc;
 pub mod car_drive;
 pub mod car_enter;
 pub mod car_exit;
+pub mod common;
+pub mod dtors;
+pub mod events;
+pub mod fight;
+pub mod group;
+pub mod handler;
+pub mod hooks;
+pub mod intel;
+pub mod misc;
+pub mod pgi;
+pub mod small;
+pub mod taskmgr;
 pub mod tasks;
 pub mod trivial;
+pub mod usegun;

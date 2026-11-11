@@ -189,7 +189,9 @@ pub fn task_complex_observe_traffic_lights_ctask_complex_observe_traffic_lights_
 
 /// `CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading` (0x631980): `vtbl = 0x86DFC4`, then the base destructor `FUN_0061a3d0` (0x61A3D0, tail jump).
 #[hook(addr = 0x631980, conv = thiscall, name = "CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading", expect = "C7 01 C4 DF 86 00")]
-pub fn task_complex_observe_traffic_lights_and_achieve_heading_ctask_complex_observe_traffic_lights_and_achieve_heading_631980(this: GPtr<u8>) {
+pub fn task_complex_observe_traffic_lights_and_achieve_heading_ctask_complex_observe_traffic_lights_and_achieve_heading_631980(
+    this: GPtr<u8>,
+) {
     wr::<u32>(this, 0, 0x86dfc4);
     dtor_61a3d0(this);
 }
@@ -261,7 +263,10 @@ pub fn task_simple_leave_group_ctask_simple_leave_group_4635f0(this: GPtr<u8>, f
 /// `CTaskSimpleCarDriveTimed::~CTaskSimpleCarDriveTimed` (0x46F670): scalar deleting destructor: `FUN_0046f690` (0x46F690), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x46F670, conv = thiscall, name = "CTaskSimpleCarDriveTimed::~CTaskSimpleCarDriveTimed", expect = "56 8B F1 E8 18 00 00 00")]
-pub fn task_simple_car_drive_timed_ctask_simple_car_drive_timed_46f670(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_simple_car_drive_timed_ctask_simple_car_drive_timed_46f670(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_46f690(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -283,7 +288,10 @@ pub fn task_simple_ctask_simple_48e4c0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 /// `CTaskComplexWanderStandard::~CTaskComplexWanderStandard` (0x48E5E0): scalar deleting destructor: `FUN_0048e600` (0x48E600), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x48E5E0, conv = thiscall, name = "CTaskComplexWanderStandard::~CTaskComplexWanderStandard", expect = "56 8B F1 E8 18 00 00 00")]
-pub fn task_complex_wander_standard_ctask_complex_wander_standard_48e5e0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_wander_standard_ctask_complex_wander_standard_48e5e0(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_48e600(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -294,7 +302,10 @@ pub fn task_complex_wander_standard_ctask_complex_wander_standard_48e5e0(this: G
 /// `CTaskComplexWanderCriminal::~CTaskComplexWanderCriminal` (0x48E700): scalar deleting destructor: `CTaskComplexWanderCriminal::~CTaskComplexWanderCriminal` (0x48E720), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x48E700, conv = thiscall, name = "CTaskComplexWanderCriminal::~CTaskComplexWanderCriminal", expect = "56 8B F1 E8 18 00 00 00")]
-pub fn task_complex_wander_criminal_ctask_complex_wander_criminal_48e700(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_wander_criminal_ctask_complex_wander_criminal_48e700(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_48e720(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -360,7 +371,10 @@ pub fn task_simple_anim_ctask_simple_anim_61baa0(this: GPtr<u8>, flags: u32) -> 
 /// `CTaskSimplePlayHandSignalAnim::~CTaskSimplePlayHandSignalAnim` (0x61BD80): scalar deleting destructor: `FUN_0061aeb0` (0x61AEB0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x61BD80, conv = thiscall, name = "CTaskSimplePlayHandSignalAnim::~CTaskSimplePlayHandSignalAnim", expect = "56 8B F1 E8 28 F1 FF FF")]
-pub fn task_simple_play_hand_signal_anim_ctask_simple_play_hand_signal_anim_61bd80(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_simple_play_hand_signal_anim_ctask_simple_play_hand_signal_anim_61bd80(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_61aeb0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -437,7 +451,10 @@ pub fn task_complex_ctask_complex_637d90(this: GPtr<u8>, flags: u32) -> GPtr<u8>
 /// `CTaskComplexObserveTrafficLights::~CTaskComplexObserveTrafficLights` (0x637F60): scalar deleting destructor: `CTaskComplexObserveTrafficLights::~CTaskComplexObserveTrafficLights` (0x6317C0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x637F60, conv = thiscall, name = "CTaskComplexObserveTrafficLights::~CTaskComplexObserveTrafficLights", expect = "56 8B F1 E8 58 98 FF FF")]
-pub fn task_complex_observe_traffic_lights_ctask_complex_observe_traffic_lights_637f60(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_observe_traffic_lights_ctask_complex_observe_traffic_lights_637f60(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_6317c0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -448,7 +465,10 @@ pub fn task_complex_observe_traffic_lights_ctask_complex_observe_traffic_lights_
 /// `CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading` (0x637F80): scalar deleting destructor: `CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading` (0x631980), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x637F80, conv = thiscall, name = "CTaskComplexObserveTrafficLightsAndAchieveHeading::~CTaskComplexObserveTrafficLightsAndAchieveHeading", expect = "56 8B F1 E8 F8 99 FF FF")]
-pub fn task_complex_observe_traffic_lights_and_achieve_heading_ctask_complex_observe_traffic_lights_and_achieve_heading_637f80(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_observe_traffic_lights_and_achieve_heading_ctask_complex_observe_traffic_lights_and_achieve_heading_637f80(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_631980(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -558,7 +578,10 @@ pub fn task_simple_car_drive_ctask_simple_car_drive_6426e0(this: GPtr<u8>, flags
 /// `CTaskComplexCarDriveWander::~CTaskComplexCarDriveWander` (0x643220): scalar deleting destructor: `FUN_0063cb50` (0x63CB50), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x643220, conv = thiscall, name = "CTaskComplexCarDriveWander::~CTaskComplexCarDriveWander", expect = "56 8B F1 E8 28 99 FF FF")]
-pub fn task_complex_car_drive_wander_ctask_complex_car_drive_wander_643220(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_car_drive_wander_ctask_complex_car_drive_wander_643220(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_63cb50(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -580,7 +603,10 @@ pub fn task_complex_ctask_complex_6434f0(this: GPtr<u8>, flags: u32) -> GPtr<u8>
 /// `CTaskComplexEnterCarAsDriver::~CTaskComplexEnterCarAsDriver` (0x643C60): scalar deleting destructor: `FUN_00640330` (0x640330), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x643C60, conv = thiscall, name = "CTaskComplexEnterCarAsDriver::~CTaskComplexEnterCarAsDriver", expect = "56 8B F1 E8 C8 C6 FF FF")]
-pub fn task_complex_enter_car_as_driver_ctask_complex_enter_car_as_driver_643c60(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_enter_car_as_driver_ctask_complex_enter_car_as_driver_643c60(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_640330(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -602,7 +628,10 @@ pub fn task_simple_ctask_simple_64b000(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 /// `CTaskSimpleCarWaitToSlowDown::~CTaskSimpleCarWaitToSlowDown` (0x64B440): scalar deleting destructor: `CTaskSimpleCarWaitToSlowDown::Destructor` (0x646A00), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x64B440, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::~CTaskSimpleCarWaitToSlowDown", expect = "56 8B F1 E8 B8 B5 FF FF")]
-pub fn task_simple_car_wait_to_slow_down_ctask_simple_car_wait_to_slow_down_64b440(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_simple_car_wait_to_slow_down_ctask_simple_car_wait_to_slow_down_64b440(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_646a00(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -624,7 +653,10 @@ pub fn task_simple_ctask_simple_64bdc0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 /// `CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut` (0x64BF70): scalar deleting destructor: `FUN_00647950` (0x647950), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x64BF70, conv = thiscall, name = "CTaskSimpleCarSetPedOut::~CTaskSimpleCarSetPedOut", expect = "56 8B F1 E8 D8 B9 FF FF")]
-pub fn task_simple_car_set_ped_out_ctask_simple_car_set_ped_out_64bf70(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_simple_car_set_ped_out_ctask_simple_car_set_ped_out_64bf70(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_647950(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -635,7 +667,10 @@ pub fn task_simple_car_set_ped_out_ctask_simple_car_set_ped_out_64bf70(this: GPt
 /// `CTaskComplexGoToCarDoorAndStandStill::~CTaskComplexGoToCarDoorAndStandStill` (0x64D290): scalar deleting destructor: `CTaskComplexGoToCarDoorAndStandStill::Destructor` (0x64A580), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x64D290, conv = thiscall, name = "CTaskComplexGoToCarDoorAndStandStill::~CTaskComplexGoToCarDoorAndStandStill", expect = "56 8B F1 E8 E8 D2 FF FF")]
-pub fn task_complex_go_to_car_door_and_stand_still_ctask_complex_go_to_car_door_and_stand_still_64d290(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_go_to_car_door_and_stand_still_ctask_complex_go_to_car_door_and_stand_still_64d290(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_64a580(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -679,7 +714,10 @@ pub fn task_complex_ctask_complex_656e50(this: GPtr<u8>, flags: u32) -> GPtr<u8>
 /// `CTaskComplexWalkRoundObject::~CTaskComplexWalkRoundObject` (0x657200): scalar deleting destructor: `FUN_006550d0` (0x6550D0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x657200, conv = thiscall, name = "CTaskComplexWalkRoundObject::~CTaskComplexWalkRoundObject", expect = "56 8B F1 E8 C8 DE FF FF")]
-pub fn task_complex_walk_round_object_ctask_complex_walk_round_object_657200(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_walk_round_object_ctask_complex_walk_round_object_657200(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_6550d0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -723,7 +761,10 @@ pub fn task_complex_ctask_complex_65d260(this: GPtr<u8>, flags: u32) -> GPtr<u8>
 /// `CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity` (0x65D280): scalar deleting destructor: `CTaskComplexSmartFleeEntity::Destructor` (0x65C4D0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x65D280, conv = thiscall, name = "CTaskComplexSmartFleeEntity::~CTaskComplexSmartFleeEntity", expect = "56 8B F1 E8 48 F2 FF FF")]
-pub fn task_complex_smart_flee_entity_ctask_complex_smart_flee_entity_65d280(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_smart_flee_entity_ctask_complex_smart_flee_entity_65d280(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_65c4d0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -734,7 +775,10 @@ pub fn task_complex_smart_flee_entity_ctask_complex_smart_flee_entity_65d280(thi
 /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::~CTaskComplexSeekEntity` (0x661F10): scalar deleting destructor: `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Destructor` (0x661F30), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x661F10, conv = thiscall, name = "CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::~CTaskComplexSeekEntity", expect = "56 8B F1 E8 18 00 00 00")]
-pub fn task_complex_seek_entity_centity_seek_pos_calculator_xyoffset_ctask_complex_seek_entity_661f10(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_seek_entity_centity_seek_pos_calculator_xyoffset_ctask_complex_seek_entity_661f10(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_661f30(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -800,7 +844,10 @@ pub fn task_complex_ctask_complex_6644c0(this: GPtr<u8>, flags: u32) -> GPtr<u8>
 /// `CTaskGoToVehicleAndLean::~CTaskGoToVehicleAndLean` (0x6644E0): scalar deleting destructor: `CTaskGoToVehicleAndLean::Destructor` (0x660EE0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x6644E0, conv = thiscall, name = "CTaskGoToVehicleAndLean::~CTaskGoToVehicleAndLean", expect = "56 8B F1 E8 F8 C9 FF FF")]
-pub fn task_go_to_vehicle_and_lean_ctask_go_to_vehicle_and_lean_6644e0(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_go_to_vehicle_and_lean_ctask_go_to_vehicle_and_lean_6644e0(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_660ee0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -822,7 +869,10 @@ pub fn task_simple_go_to_point_ctask_simple_go_to_point_66d6f0(this: GPtr<u8>, f
 /// `CTaskSimpleAchieveHeading::~CTaskSimpleAchieveHeading` (0x66DB60): scalar deleting destructor: `CTaskSimpleAchieveHeading::~CTaskSimpleAchieveHeading` (0x667E70), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x66DB60, conv = thiscall, name = "CTaskSimpleAchieveHeading::~CTaskSimpleAchieveHeading", expect = "56 8B F1 E8 08 A3 FF FF")]
-pub fn task_simple_achieve_heading_ctask_simple_achieve_heading_66db60(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_simple_achieve_heading_ctask_simple_achieve_heading_66db60(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_667e70(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -833,7 +883,10 @@ pub fn task_simple_achieve_heading_ctask_simple_achieve_heading_66db60(this: GPt
 /// `CTaskComplexGoToPointAndStandStill::~CTaskComplexGoToPointAndStandStill` (0x66DB80): scalar deleting destructor: `FUN_00668240` (0x668240), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x66DB80, conv = thiscall, name = "CTaskComplexGoToPointAndStandStill::~CTaskComplexGoToPointAndStandStill", expect = "56 8B F1 E8 B8 A6 FF FF")]
-pub fn task_complex_go_to_point_and_stand_still_ctask_complex_go_to_point_and_stand_still_66db80(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_go_to_point_and_stand_still_ctask_complex_go_to_point_and_stand_still_66db80(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_668240(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -855,7 +908,10 @@ pub fn task_complex_wander_gang_ctask_complex_wander_gang_66f650(this: GPtr<u8>,
 /// `CTaskComplexAvoidOtherPedWhileWandering::~CTaskComplexAvoidOtherPedWhileWandering` (0x66F680): scalar deleting destructor: `CTaskComplexAvoidOtherPedWhileWandering::Destructor` (0x66A1D0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x66F680, conv = thiscall, name = "CTaskComplexAvoidOtherPedWhileWandering::~CTaskComplexAvoidOtherPedWhileWandering", expect = "56 8B F1 E8 48 AB FF FF")]
-pub fn task_complex_avoid_other_ped_while_wandering_ctask_complex_avoid_other_ped_while_wandering_66f680(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_avoid_other_ped_while_wandering_ctask_complex_avoid_other_ped_while_wandering_66f680(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_66a1d0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -866,7 +922,10 @@ pub fn task_complex_avoid_other_ped_while_wandering_ctask_complex_avoid_other_pe
 /// `CTaskComplexGoToAttractor::~CTaskComplexGoToAttractor` (0x670400): scalar deleting destructor: `CTaskComplexGoToAttractor::Destructor` (0x66B6A0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x670400, conv = thiscall, name = "CTaskComplexGoToAttractor::~CTaskComplexGoToAttractor", expect = "56 8B F1 E8 98 B2 FF FF")]
-pub fn task_complex_go_to_attractor_ctask_complex_go_to_attractor_670400(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_go_to_attractor_ctask_complex_go_to_attractor_670400(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_66b6a0(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -877,7 +936,10 @@ pub fn task_complex_go_to_attractor_ctask_complex_go_to_attractor_670400(this: G
 /// `CTaskComplexTurnToFaceEntityOrCoord::~CTaskComplexTurnToFaceEntityOrCoord` (0x670830): scalar deleting destructor: `CTaskComplexTurnToFaceEntityOrCoord::Destructor` (0x66B960), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x670830, conv = thiscall, name = "CTaskComplexTurnToFaceEntityOrCoord::~CTaskComplexTurnToFaceEntityOrCoord", expect = "56 8B F1 E8 28 B1 FF FF")]
-pub fn task_complex_turn_to_face_entity_or_coord_ctask_complex_turn_to_face_entity_or_coord_670830(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_turn_to_face_entity_or_coord_ctask_complex_turn_to_face_entity_or_coord_670830(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_66b960(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -888,7 +950,10 @@ pub fn task_complex_turn_to_face_entity_or_coord_ctask_complex_turn_to_face_enti
 /// `CTaskComplexFollowPointRoute::~CTaskComplexFollowPointRoute` (0x671610): scalar deleting destructor: `FUN_0066e050` (0x66E050), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x671610, conv = thiscall, name = "CTaskComplexFollowPointRoute::~CTaskComplexFollowPointRoute", expect = "56 8B F1 E8 38 CA FF FF")]
-pub fn task_complex_follow_point_route_ctask_complex_follow_point_route_671610(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_follow_point_route_ctask_complex_follow_point_route_671610(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_66e050(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -899,7 +964,10 @@ pub fn task_complex_follow_point_route_ctask_complex_follow_point_route_671610(t
 /// `CTaskComplexFollowNodeRoute::~CTaskComplexFollowNodeRoute` (0x671730): scalar deleting destructor: `CTaskComplexFollowNodeRoute::Destructor` (0x66EB70), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x671730, conv = thiscall, name = "CTaskComplexFollowNodeRoute::~CTaskComplexFollowNodeRoute", expect = "56 8B F1 E8 38 D4 FF FF")]
-pub fn task_complex_follow_node_route_ctask_complex_follow_node_route_671730(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_follow_node_route_ctask_complex_follow_node_route_671730(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_66eb70(this);
     if flags & 1 != 0 {
         task_delete(this);
@@ -910,7 +978,10 @@ pub fn task_complex_follow_node_route_ctask_complex_follow_node_route_671730(thi
 /// `CTaskComplexInAirAndLand::~CTaskComplexInAirAndLand` (0x67CC10): scalar deleting destructor: `FUN_00678cc0` (0x678CC0), then `CTask::operator delete` (0x61A5B0) when
 /// bit 0 of `flags` is set; returns `this`.
 #[hook(addr = 0x67CC10, conv = thiscall, name = "CTaskComplexInAirAndLand::~CTaskComplexInAirAndLand", expect = "56 8B F1 E8 A8 C0 FF FF")]
-pub fn task_complex_in_air_and_land_ctask_complex_in_air_and_land_67cc10(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
+pub fn task_complex_in_air_and_land_ctask_complex_in_air_and_land_67cc10(
+    this: GPtr<u8>,
+    flags: u32,
+) -> GPtr<u8> {
     dtor_678cc0(this);
     if flags & 1 != 0 {
         task_delete(this);

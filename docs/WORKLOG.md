@@ -849,3 +849,9 @@
 ## 2026-11-11 PORT-AI-3 integrated (main session)
 - Agent a8de4982 + 2 helpers (lane 4). Clean merge; sa-hook lib 50, sa-ai tests, clippy, i686 OK; all-ports
   IDENTICAL on the 7 older recordings (car-ai divergence predates the pass; bisect running).
+
+## 2026-11-11 PORT-AI-2 integrated; parallel verification (main session)
+- Agent aff5c540 + 2 helpers (lane 5). Merge conflicts in sa-ai hooks.rs/lib.rs (AI-3 modules vs AI-2 modules), ai-port.md,
+  l2-extras combined. sa-hook lib 50, sa-ai tests, clippy, i686 OK.
+- New tools/e2e/verify-all.sh: all-ports L3 of every corpus recording spread over several lanes; 11 recordings on 3
+  lanes in 10 min (was ~50 min serial). Result: 10 IDENTICAL; air-water DIVERGED at 2742 (pre-existing).

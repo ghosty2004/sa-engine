@@ -147,7 +147,11 @@ fn buf<const N: usize>(b: &mut [u32; N]) -> GPtr<u8> {
 /// Entity position: matrix +0x30, else the placement at +4.
 fn ent_pos(e: GPtr<u8>) -> GPtr<u8> {
     let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+    if m.is_null() {
+        e.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    }
 }
 
 /// `CTaskSimpleCarGetOut::FinishAnimCarGetOutCB(assoc, data)` (0x647480, cdecl): `data->+0xC = 0` (the anim),
@@ -288,7 +292,11 @@ pub fn car_jump_out_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     ped_placement_find_z_coor_for_ped(pp);
     g::<u32>(0xB7CD68).write(0);
     let v = rd::<GPtr<u8>>(this, 0x10);
-    let rate = if rd::<i32>(v, 0x590) == 9 || rd::<i32>(v, 0x594) == 2 { 0x3E8A_3D71u32 } else { 0x3D8F_5C29 };
+    let rate = if rd::<i32>(v, 0x590) == 9 || rd::<i32>(v, 0x594) == 2 {
+        0x3E8A_3D71u32
+    } else {
+        0x3D8F_5C29
+    };
     let a = rd::<GPtr<u8>>(this, 0xC);
     if a.is_null() {
         return 1;
@@ -303,7 +311,10 @@ pub fn car_jump_out_set_ped_position(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         return 1;
     }
     let mz = rd::<f32>(m, 0x38);
-    let r = x(rd::<f32>(a, 0x20)).fdiv_m(f32::from_bits(rate)).fmul(x(pz).fsub_m(mz)).fadd_m(mz);
+    let r = x(rd::<f32>(a, 0x20))
+        .fdiv_m(f32::from_bits(rate))
+        .fmul(x(pz).fsub_m(mz))
+        .fadd_m(mz);
     wr::<f32>(m, 0x38, f32_of(r));
     1
 }
@@ -319,7 +330,10 @@ pub fn car_jump_out_compute_anim_id(this: GPtr<u8>, group: GPtr<u8>, anim: GPtr<
     }
     let v = rd::<GPtr<u8>>(this, 0x10);
     let grp = u32::from(rd::<u8>(rd::<GPtr<u8>>(v, 0x384), 0xDE));
-    let r = vehicle_anim_group_get_group(GPtr::from_addr((grp * 0x94).wrapping_add(0xC1CDC0) as usize), rd::<u32>(anim, 0));
+    let r = vehicle_anim_group_get_group(
+        GPtr::from_addr((grp * 0x94).wrapping_add(0xC1CDC0) as usize),
+        rd::<u32>(anim, 0),
+    );
     wr::<u32>(group, 0, r);
 }
 
@@ -392,7 +406,10 @@ pub fn car_set_ped_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     }
     car_enter_exit_remove_car_sit_anim(ped);
     ped_restart_non_partial_anims(ped);
-    if rd::<u8>(this, 0x13) == 0 && rd::<u8>(this, 0x12) == 0 && rd::<i32>(rd::<GPtr<u8>>(this, 8), 0x594) != 5 {
+    if rd::<u8>(this, 0x13) == 0
+        && rd::<u8>(this, 0x12) == 0
+        && rd::<i32>(rd::<GPtr<u8>>(this, 8), 0x594) != 5
+    {
         wr::<u32>(ped, 0x44, 0);
         wr::<u32>(ped, 0x48, 0);
         wr::<u32>(ped, 0x4C, 0);
@@ -416,7 +433,9 @@ pub fn car_set_ped_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
             if rd::<i32>(v, 0x4F8) == 5 {
                 wr::<u32>(v, 0x4F8, 1);
             }
-            if rd::<i32>(ped, 0x598) == 6 && vehicle_is_law_enforcement_vehicle(rd::<GPtr<u8>>(ped, 0x58C)) != 0 {
+            if rd::<i32>(ped, 0x598) == 6
+                && vehicle_is_law_enforcement_vehicle(rd::<GPtr<u8>>(ped, 0x58C)) != 0
+            {
                 vehicle_change_law_enforcer_state(rd::<GPtr<u8>>(ped, 0x58C), 0);
             }
         } else {
@@ -443,11 +462,19 @@ pub fn car_set_ped_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let tm = |p: GPtr<u8>| rd::<GPtr<u8>>(p, 0x47C).byte_add(4);
     if ped_is_player(ped) != 0 {
         let t = task_new(0x1C);
-        let t = if t.is_null() { GPtr::NULL } else { player_on_foot_ctor(t) };
+        let t = if t.is_null() {
+            GPtr::NULL
+        } else {
+            player_on_foot_ctor(t)
+        };
         task_manager_set_task(tm(ped), t, 4, 0);
     } else if rd::<u8>(ped, 0x484) == 2 {
         let t = task_new(0x20);
-        let t = if t.is_null() { GPtr::NULL } else { stand_still_ctor(t, 0xF423F, 1, 0, 0x4100_0000) };
+        let t = if t.is_null() {
+            GPtr::NULL
+        } else {
+            stand_still_ctor(t, 0xF423F, 1, 0, 0x4100_0000)
+        };
         task_manager_set_task(tm(ped), t, 4, 0);
     } else {
         let m = tm(ped);
@@ -554,7 +581,9 @@ pub fn car_jump_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
         if rd::<i32>(v, 0x590) == 0 {
             let dm = || rd::<GPtr<u8>>(this, 0x10).byte_add(0x5A0);
             let door = rd::<u32>(this, 0x18);
-            if damage_manager_get_door_status(dm(), door) == 0 || damage_manager_get_door_status(dm(), rd::<u32>(this, 0x18)) == 2 {
+            if damage_manager_get_door_status(dm(), door) == 0
+                || damage_manager_get_door_status(dm(), rd::<u32>(this, 0x18)) == 2
+            {
                 let s = damage_manager_get_door_status(dm(), rd::<u32>(this, 0x18));
                 damage_manager_set_door_status(dm(), rd::<u32>(this, 0x18), s.wrapping_add(1));
             }
@@ -571,7 +600,14 @@ pub fn car_jump_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     car_jump_out_compute_anim_id_orig(this, p, p.byte_add(4));
     let time = rd::<u32>(rd::<GPtr<u8>>(this, 0xC), 0x20);
     let v = rd::<GPtr<u8>>(this, 0x10);
-    v_vehicle_process_open_door(v, ped, rd::<u32>(this, 0x18), rd::<u32>(p, 0), rd::<u32>(p, 4), time);
+    v_vehicle_process_open_door(
+        v,
+        ped,
+        rd::<u32>(this, 0x18),
+        rd::<u32>(p, 0),
+        rd::<u32>(p, 4),
+        time,
+    );
     0
 }
 
@@ -599,7 +635,9 @@ pub fn leave_car_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
         0xD4 => alloc(0x28, &|t| simple_die_ctor1(t, 0, f(0x24), f(0x28), f(0x2C))),
         0x2CC => alloc(0x14, &|t| leave_boat_ctor(t, f(0xC), 0)),
         0x2CF => alloc(0x70, &|t| car_drive_timed_ctor(t, f(0xC), f(0x14))),
-        0x326 => alloc(0x1C, &|t| close_door_from_outside_ctor(t, f(0xC), f(0x10), f(0x1C))),
+        0x326 => alloc(0x1C, &|t| {
+            close_door_from_outside_ctor(t, f(0xC), f(0x10), f(0x1C))
+        }),
         0x329 => {
             let mode = if rd::<u8>(this, 0x1A) != 0 {
                 2
@@ -614,7 +652,9 @@ pub fn leave_car_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr
         0x32D => alloc(0x20, &|t| car_get_out_ctor(t, f(0xC), f(0x10), f(0x1C))),
         0x32E => alloc(0x24, &|t| car_jump_out_ctor(t, f(0xC), f(0x10), f(0x1C))),
         0x32F => alloc(0x10, &|t| car_force_ped_out_ctor(t, f(0xC), f(0x10))),
-        0x330 => alloc(0x18, &|t| car_set_ped_out_ctor(t, f(0xC), f(0x10), u32::from(rd::<u8>(this, 0x18)))),
+        0x330 => alloc(0x18, &|t| {
+            car_set_ped_out_ctor(t, f(0xC), f(0x10), u32::from(rd::<u8>(this, 0x18)))
+        }),
         0x337 => alloc(0x1C, &|t| car_slow_be_dragged_out_ctor(t, f(0xC), f(0x10), 1)),
         _ => GPtr::NULL,
     }
@@ -661,7 +701,12 @@ pub fn leave_car_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, ev
             close_door_from_outside_make_abortable(cp, ped, 2, event);
             let mut so = [0u32; 6];
             let sp = buf(&mut so);
-            car_set_ped_out_ctor(sp, rd::<u32>(this, 0xC), rd::<u32>(this, 0x10), u32::from(rd::<u8>(this, 0x18)));
+            car_set_ped_out_ctor(
+                sp,
+                rd::<u32>(this, 0xC),
+                rd::<u32>(this, 0x10),
+                u32::from(rd::<u8>(this, 0x18)),
+            );
             car_set_ped_out_process_ped_orig(sp, ped);
             car_set_ped_out_dtor(sp);
             close_door_from_outside_dtor(cp);
@@ -685,7 +730,8 @@ pub fn leave_car_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, ev
         }
         return abort_and_clear();
     }
-    let killed = || !event.is_null() && v_event_get_type(event) == 9 && event_damage_has_killed_ped(event) != 0;
+    let killed =
+        || !event.is_null() && v_event_get_type(event) == 9 && event_damage_has_killed_ped(event) != 0;
     if v_get_task_type(sub()) == 0x329 && killed() {
         return abort_and_clear();
     }
@@ -711,7 +757,9 @@ pub fn leave_car_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, ev
             {
                 let v = rd::<GPtr<u8>>(this, 0xC);
                 let fast = rd::<i32>(v, 0x594) == 4
-                    && X87::from_f64_exact(vector_magnitude(v.byte_add(0x44))).fcom(x(g::<f32>(0x858CC4).read())) == Cmp::Greater;
+                    && X87::from_f64_exact(vector_magnitude(v.byte_add(0x44)))
+                        .fcom(x(g::<f32>(0x858CC4).read()))
+                        == Cmp::Greater;
                 if fast {
                     0x4100_0000
                 } else {
@@ -722,7 +770,19 @@ pub fn leave_car_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, ev
                     let mut cpb = [0u32; 0xB];
                     // the entity out-pointer is the original's priority argument slot (holding 1)
                     let mut ent = [1u32];
-                    let hit = world_process_vertical_line(pos, 0xC120_0000, buf(&mut cpb), buf(&mut ent), 1, 0, 0, 0, 1, 0, 0);
+                    let hit = world_process_vertical_line(
+                        pos,
+                        0xC120_0000,
+                        buf(&mut cpb),
+                        buf(&mut ent),
+                        1,
+                        0,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                    );
                     if hit != 0 {
                         return 0;
                     }
@@ -800,7 +860,11 @@ orig! {
 // Not registered (PORT-AI-3): split L2 FAIL on every recording (window writes at 0x967F50, CCollision::ProcessColModels
 // statics, differ), unresolved; was hooked with `addr = 0x6479B0, conv = cdecl, expect = "83 EC 0C 53 56"`.
 pub fn car_set_ped_out_position_ped_out_of_collision_port(ped: GPtr<u8>, veh: GPtr<u8>, door: u32) {
-    let veh = if veh.is_null() { rd::<GPtr<u8>>(ped, 0x58C) } else { veh };
+    let veh = if veh.is_null() {
+        rd::<GPtr<u8>>(ped, 0x58C)
+    } else {
+        veh
+    };
     if veh.is_null() {
         return;
     }
@@ -865,7 +929,11 @@ pub fn car_set_ped_out_position_ped_out_of_collision_port(ped: GPtr<u8>, veh: GP
         wr::<f32>(ped, 0x44, mx);
         wr::<f32>(ped, 0x48, my);
         wr::<f32>(ped, 0x4C, mz);
-        wr::<f32>(ped, 0x4C, f32_of(x(rd::<f32>(ped, 0x4C)).fsub_m(g::<f32>(0x858B1C).read())));
+        wr::<f32>(
+            ped,
+            0x4C,
+            f32_of(x(rd::<f32>(ped, 0x4C)).fsub_m(g::<f32>(0x858B1C).read())),
+        );
         wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) | 1);
         if rd::<u32>(ped, 0x568) == 0 {
             wr::<GPtr<u8>>(ped, 0x568, veh);
@@ -965,13 +1033,18 @@ pub fn leave_car_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             if !in_veh() {
                 return c(0x516);
             }
-            if vehicle_is_passenger(rd::<GPtr<u8>>(ped, 0x58C), ped) == 0 && vehicle_is_driver(rd::<GPtr<u8>>(ped, 0x58C), ped) == 0 {
+            if vehicle_is_passenger(rd::<GPtr<u8>>(ped, 0x58C), ped) == 0
+                && vehicle_is_driver(rd::<GPtr<u8>>(ped, 0x58C), ped) == 0
+            {
                 wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xFFFF_FEFF);
                 return c(0x516);
             }
             leave_car_compute_target_door(this, ped);
             // [0] = the pushed-ECX slot (its byte 3 is `in`), [1] = the ped argument slot (its byte 0 is `out`)
-            let mut l = [(this.addr() as u32) & 0x00FF_FFFF, (ped.addr() as u32) & 0xFFFF_FF00];
+            let mut l = [
+                (this.addr() as u32) & 0x00FF_FFFF,
+                (ped.addr() as u32) & 0xFFFF_FF00,
+            ];
             let p = buf(&mut l);
             car_door_in_use_646cf0(veh(), rd::<u32>(this, 0x10), p.byte_add(3), p.byte_add(4));
             if rd::<u8>(this, 0x19) != 0 {
@@ -990,7 +1063,8 @@ pub fn leave_car_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             }
             if car_enter_exit_is_room_for_ped_to_leave_car(veh(), rd::<u32>(this, 0x10), GPtr::NULL) == 0 {
                 let v = veh();
-                let bike_or_bit9 = || rd::<i32>(v, 0x590) == 9 || (rd::<u32>(rd::<GPtr<u8>>(v, 0x384), 0xCC) >> 9) & 1 != 0;
+                let bike_or_bit9 =
+                    || rd::<i32>(v, 0x590) == 9 || (rd::<u32>(rd::<GPtr<u8>>(v, 0x384), 0xCC) >> 9) & 1 != 0;
                 let busy = |seat: isize, bit: u8| rd::<u32>(v, seat) != 0 || rd::<u8>(v, 0x486) & bit != 0;
                 let alt: u32 = match rd::<i32>(this, 0x10) {
                     8 => {
@@ -1047,7 +1121,9 @@ pub fn leave_car_create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8>
             {
                 return c(0x326);
             }
-            if rd::<u32>(veh(), 0x590) == 0 && car_enter_exit_car_has_door_to_close(veh(), rd::<u32>(this, 0x10)) != 0 {
+            if rd::<u32>(veh(), 0x590) == 0
+                && car_enter_exit_car_has_door_to_close(veh(), rd::<u32>(this, 0x10)) != 0
+            {
                 door_status_bump(this);
             }
             c(0x330)

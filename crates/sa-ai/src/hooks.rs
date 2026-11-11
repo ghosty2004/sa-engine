@@ -15,6 +15,14 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::car_enter::HOOKS,
     crate::car_exit::HOOKS,
     crate::car_drive::HOOKS,
+    crate::taskmgr::HOOKS,
+    crate::usegun::HOOKS,
+    crate::fight::HOOKS,
+    crate::handler::HOOKS,
+    crate::intel::HOOKS,
+    crate::group::HOOKS,
+    crate::small::HOOKS,
+    crate::pgi::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -191,18 +199,18 @@ mod tests {
         );
         let addrs: BTreeSet<u32> = ALL.iter().map(|h| h.addr).collect();
         assert_eq!(addrs.len(), COUNT);
-        for h in sa_core::hooks::ALL.iter().chain(sa_stream::hooks::ALL.iter()).chain(sa_world::hooks::ALL.iter()).chain(sa_pop::hooks::ALL.iter())
+        for h in sa_core::hooks::ALL
+            .iter()
+            .chain(sa_stream::hooks::ALL.iter())
+            .chain(sa_world::hooks::ALL.iter())
+            .chain(sa_pop::hooks::ALL.iter())
             .chain(sa_script::hooks::ALL.iter())
             .chain(sa_weapon::hooks::ALL.iter())
             .chain(sa_ped::hooks::ALL.iter())
             .chain(sa_input::hooks::ALL.iter())
             .chain(sa_anim::hooks::ALL.iter())
         {
-            assert!(
-                !addrs.contains(&h.addr),
-                "{} hooked by another crate too",
-                h.name
-            );
+            assert!(!addrs.contains(&h.addr), "{} hooked by another crate too", h.name);
         }
         for h in ALL {
             #[cfg(not(target_arch = "x86"))]

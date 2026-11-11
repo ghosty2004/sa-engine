@@ -3275,3 +3275,12 @@ CSprite2d::SetMaskVertices@0xC80468:0xE0:W
 # FxSystemBP_c::SetBoundingSphere: the bounding sphere is allocated from the FX blueprint pool; its
 # position word (undeclared 0xA9AF34..0xA9AF36, port-l2-rl2b-g).
 FxSystemBP_c::SetBoundingSphere@0xA9AF2C:0xC:RW
+# PORT-AI-2 (docs/arch/ai-port.md, pass 2). CTaskSimpleFight::LoadMeleeData (0x5BEDC0) reads melee.dat through
+# CFileLoader::LoadLine into CFileLoader::ms_line (0xB71848, the CRT stream buffer counter 0xC9AC4C moves with it)
+# and fills the 13 x 0x88 melee combo table m_aComboData (0xC170D0) and the hit-offset CVectors from 0xC177D0
+# (defaults 0xC177D0..0xC17823). Seen as undeclared in the c-bug split run (ai2-cbug-c-bug): 0xB71849..0xB7189B,
+# 0xC170DC..0xC177B8, 0xC9AC4C.
+CTaskSimpleFight::LoadMeleeData@0xB71848:0x200:RW
+CTaskSimpleFight::LoadMeleeData@0xC9AC4C:0x4:RW
+CTaskSimpleFight::LoadMeleeData@0xC170D0:0x6E8:RW
+CTaskSimpleFight::LoadMeleeData@0xC177D0:0x54:RW
