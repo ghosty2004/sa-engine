@@ -50,6 +50,11 @@ pub struct HookReg {
     /// register), so split-run L2 compares only the argument's own bytes (HARNESS-2).
     pub arg8: u32,
     pub arg16: u32,
+    /// `#[hook(unverified = "BATCH")]` (docs/PLAN.md "Writer/verifier split"): the verification batch of
+    /// a port that has not passed L2/L3 yet, `None` once verified. Phase A installs such a port only
+    /// when it is selected (`SA_UNVERIFIED`, or named in `SA_HOOK_MODE` / `SA_L2` / `SA_HOOK_PORTS`), so
+    /// unverified code never changes the default behaviour. Phases B/C use it like any other port.
+    pub batch: Option<&'static str>,
 }
 
 /// EAX as the caller left it at the entry of the last `#[hook(entry_eax)]` port (PORT-ANIM-INPUT).

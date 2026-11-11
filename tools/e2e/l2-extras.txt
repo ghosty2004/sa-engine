@@ -3683,3 +3683,71 @@ CStencilShadows::Render@arg0:4:W
 # CTimeCycle::Update / CalcColoursForPoint: m_VectorToSun[16] (0xB7CA50, CVector x 16; undeclared 0xB7CA51.. in port-l2-r2e-l2).
 CTimeCycle::Update@0xB7CA50:0xC0:W
 CTimeCycle::CalcColoursForPoint@0xB7CA50:0xC0:W
+# PORT-AI-5 (docs/arch/ai-port.md, pass 5). The group hooks write the 8 CPedGroup objects of CPedGroups::ms_groups
+# (0xC09920, 8 x 0x2D4) and the used flags CPedGroups::ms_activeGroups (0xC098E0, 8 bytes) beyond the fields rwsets
+# names (grove split run ai5v1-s-rec: those undeclared bytes all lie inside these two arrays). CDecision::Set writes
+# its `this` (0x3C bytes, a CDecisionMaker on LoadDecisionMaker's stack); LoadDecisionMaker reads the file through
+# the CRT stream (counter 0xC9AC4C) into CFileLoader::ms_line (0xB71848), as LoadMeleeData does.
+CPedGroup::Constructor@0xC09920:0x16A0:RW
+CPedGroup::Constructor@0xC098E0:0x8:RW
+CPedGroup::Process@0xC09920:0x16A0:RW
+CPedGroup::Process@0xC098E0:0x8:RW
+CPedGroup::Flush@0xC09920:0x16A0:RW
+CPedGroup::Flush@0xC098E0:0x8:RW
+CPedGroups::Process@0xC09920:0x16A0:RW
+CPedGroups::Process@0xC098E0:0x8:RW
+CPedGroups::RemoveGroup@0xC09920:0x16A0:RW
+CPedGroups::RemoveGroup@0xC098E0:0x8:RW
+CPedGroupMembership::AddMember@0xC09920:0x16A0:RW
+CPedGroupMembership::AddMember@0xC098E0:0x8:RW
+CPedGroupMembership::AddFollower@0xC09920:0x16A0:RW
+CPedGroupMembership::AddFollower@0xC098E0:0x8:RW
+CPedGroupMembership::SetLeader@0xC09920:0x16A0:RW
+CPedGroupMembership::SetLeader@0xC098E0:0x8:RW
+CPedGroupIntelligence::Constructor@0xC09920:0x16A0:RW
+CPedGroupIntelligence::Constructor@0xC098E0:0x8:RW
+CPedGroupIntelligence::SetTask@0xC09920:0x16A0:RW
+CPedGroupIntelligence::SetTask@0xC098E0:0x8:RW
+CPedGroupIntelligence::ReportFinishedTask-Impl@0xC09920:0x16A0:RW
+CPedGroupIntelligence::ReportFinishedTask-Impl@0xC098E0:0x8:RW
+CPedGroupIntelligence::SetDefaultTaskAllocator@0xC09920:0x16A0:RW
+CPedGroupIntelligence::SetDefaultTaskAllocator@0xC098E0:0x8:RW
+CPedGroupIntelligence::SetDefaultTaskAllocatorType@0xC09920:0x16A0:RW
+CPedGroupIntelligence::SetDefaultTaskAllocatorType@0xC098E0:0x8:RW
+CPedGroupDefaultTaskAllocatorRandom::AllocateDefaultTasks@0xC09920:0x16A0:RW
+CPedGroupDefaultTaskAllocatorRandom::AllocateDefaultTasks@0xC098E0:0x8:RW
+CDecision::Set@ecx:0x3C:RW
+CDecisionMakerTypesFileLoader::LoadDecisionMaker-enum@0xB71848:0x200:RW
+CDecisionMakerTypesFileLoader::LoadDecisionMaker-enum@0xC9AC4C:0x4:RW
+# PORT-AI-5, grove split run ai5v3-s-rec: the inform-group queue (0xA9B018, 8 x 0x10) written by CInformGroupEvent::Process
+# through the queue's Process loop, and the CObjectScanner objects (this, 0x50 bytes) its constructor and scan write.
+CInformGroupEventQueue::Process@0xA9B018:0x80:RW
+CInformGroupEventQueue::Flush@0xA9B018:0x80:RW
+CObjectScanner::CObjectScanner@ecx:0x50:RW
+CObjectScanner::ScanForObjectsInRange@ecx:0x50:RW
+
+# PORT-CAM-2 (docs/arch/cam-port.md, second pass). Evidence: grove walk, lane 6, port-l2-cam2-g-l2.
+# FUN_0050a120: the CVector it rounds in place (the caller's; undeclared 0x36F...).
+FUN_0050a120@arg0:0xC:RW
+# FUN_0050e180: the DW heli-chase settings block it initialises (this, up to +0x9B; undeclared 0xB6FEDA..).
+FUN_0050e180@ecx:0x9C:RW
+# 0x50E470 / 0x5097B0 (both catalogued as "(missed by ghidra: data-code-immediate)"): the CCamera member
+# entries they construct (this, 0x10 / 4 bytes; undeclared 0xB6FD1C..).
+(missed by ghidra: data-code-immediate)@ecx:0x10:RW
+# CCurves::CalcCurvePoint: the caller's resultCoor / resultSpeed (stack locals; undeclared 0x36FB30..).
+CCurves::CalcCurvePoint@arg6:0xC:W
+CCurves::CalcCurvePoint@arg7:0xC:W
+# Split runs (port-l2-cam2-g-split): CCamera::UpdateTargetEntity hands the target over through
+# CEntity::CleanUpOldReference / RegisterReference (CReferences::aRefs, undeclared 0xB9B9B0.., 0xB9BBD8..).
+CCamera::UpdateTargetEntity@0xB9B9A8:0x5DC4:RW
+CCamera::StartTransition@0xB9B9A8:0x5DC4:RW
+# CCamera::DrawBordersForWideScreen draws through RwEngineInstance: the RW D3D9 driver statics
+# 0xC97B98..0xC9A5F0 (as DoFade) and _rwD3D9LastVertexDeclarationUsed.. (undeclared 0xC97B98..0xC9A5EC).
+CCamera::DrawBordersForWideScreen@0x8E2444:12:RW
+CCamera::DrawBordersForWideScreen@0xC97B98:0x2A58:RW
+# CCamera::LoadPathSplines: the CRT stream state of its file (_iob 0x8E2C30.., _cflush 0xC9AC4C) through
+# CFileLoader::LoadLine, and CFileLoader::ms_line 0xB71848 (undeclared 0xB71849..0xB718CA).
+CCamera::LoadPathSplines@0x8E2C30:0x280:RW
+CCamera::LoadPathSplines@0x8E31C0:0x120:RW
+CCamera::LoadPathSplines@0xC9AC4C:4:RW
+CCamera::LoadPathSplines@0xB71848:0x200:RW

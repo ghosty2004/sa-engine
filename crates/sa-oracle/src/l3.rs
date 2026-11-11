@@ -99,15 +99,22 @@ fn names(set: &[usize]) -> String {
 
 /// Every Rust port: the hooks with an L2 signature that are not oracle instruments (sa-hook's own
 /// ports and, once registered, the engine crates' ports; probes install the latter with
-/// `SA_HOOK_PORTS=orig` and switch them with `SA_HOOK_MODE`).
+/// `SA_HOOK_PORTS=orig` and switch them with `SA_HOOK_MODE`). Unverified ports belong to it only when
+/// `SA_UNVERIFIED` selects them (the probes' DLL reads the same variable), so default runs never
+/// touch unverified code.
 pub fn universe() -> Vec<usize> {
     use sa_hook::table::{Group, HOOKS};
+    if let Err(e) = sa_hook::table::select_unverified_from_env() {
+        eprintln!("warning: {e}");
+    }
     (0..HOOKS.len())
-        .filter(|&i| HOOKS[i].group != Group::Oracle && HOOKS[i].sig.is_some())
+        .filter(|&i| HOOKS[i].group != Group::Oracle && HOOKS[i].sig.is_some() && sa_hook::table::enabled(i))
         .collect()
 }
 
-/// Parses `ports` or a comma list of hook names/addresses into universe indices.
+/// Parses a comma list into universe indices: `ports`/`all` (the universe), `verified` (its verified
+/// hooks), `unverified` (its selected unverified hooks), `batch:ID` (one selected batch), or hook
+/// names/addresses.
 pub fn hook_set(list: &str) -> Result<Vec<usize>, String> {
     let u = universe();
     let mut out = BTreeSet::new();
@@ -116,7 +123,30 @@ pub fn hook_set(list: &str) -> Result<Vec<usize>, String> {
             out.extend(u.iter().copied());
             continue;
         }
+        if k == "verified" || k == "unverified" {
+            let want = k == "unverified";
+            out.extend(u.iter().copied().filter(|&i| sa_hook::table::batch(i).is_some() == want));
+            continue;
+        }
+        if let Some(b) = k.strip_prefix("batch:") {
+            let set: Vec<usize> = u.iter().copied().filter(|&i| sa_hook::table::batch(i) == Some(b)).collect();
+            if set.is_empty() {
+                return Err(format!(
+                    "batch {b:?}: no selected hook (unknown batch, or SA_UNVERIFIED does not select it)"
+                ));
+            }
+            out.extend(set);
+            continue;
+        }
         let i = sa_hook::table::find(k).ok_or_else(|| format!("unknown hook {k:?}"))?;
+        if let Some(b) = sa_hook::table::batch(i)
+            && !sa_hook::table::enabled(i)
+        {
+            return Err(format!(
+                "{} is unverified (batch {b}): select it with SA_UNVERIFIED={b} (or the hook name)",
+                sa_hook::table::HOOKS[i].name
+            ));
+        }
         if !u.contains(&i) {
             return Err(format!(
                 "{} is not a Rust port (an oracle hook or no L2 signature)",
@@ -164,6 +194,9 @@ pub struct Bisector<R: Runner> {
     pub log: Vec<ProbeLog>,
     /// Called after every probe (progress output).
     pub on_probe: Option<ProbeHook>,
+    /// Hooks on Rust in every probe besides the tested set (`--fixed`, e.g. the verified ports while
+    /// one unverified batch is bisected). The tested sets and the report never list them.
+    pub fixed: Vec<usize>,
 }
 
 /// A minimal culprit set and where it diverges on its own.
@@ -196,6 +229,7 @@ impl<R: Runner> Bisector<R> {
             memo: BTreeMap::new(),
             log: Vec::new(),
             on_probe: None,
+            fixed: Vec::new(),
         }
     }
 
@@ -210,9 +244,14 @@ impl<R: Runner> Bisector<R> {
         self.log.push(p);
     }
 
-    /// First divergence of `set` (on Rust) within frames ≤ `end`. The empty set is the reference.
+    /// First divergence of `set` (plus [`Self::fixed`], on Rust) within frames ≤ `end`. The empty set
+    /// without fixed hooks is the reference.
     pub fn test(&mut self, set: &[usize], end: u32) -> Result<Option<Div>, String> {
-        let mut key = set.to_vec();
+        let mut shown = set.to_vec();
+        shown.sort_unstable();
+        shown.dedup();
+        shown.retain(|i| !self.fixed.contains(i));
+        let mut key: Vec<usize> = shown.iter().chain(&self.fixed).copied().collect();
         key.sort_unstable();
         key.dedup();
         if key.is_empty() {
@@ -226,7 +265,7 @@ impl<R: Runner> Bisector<R> {
             };
             if let Some(r) = known {
                 self.note(ProbeLog {
-                    rust: key,
+                    rust: shown,
                     end,
                     div: r.clone(),
                     memo: true,
@@ -236,9 +275,9 @@ impl<R: Runner> Bisector<R> {
         }
         let t = self.runner.run(&key, end)?;
         let d = first_divergence(&self.reference, &t, end)?;
-        self.memo.insert(key.clone(), (end, d.clone()));
+        self.memo.insert(key, (end, d.clone()));
         self.note(ProbeLog {
-            rust: key,
+            rust: shown,
             end,
             div: d.clone(),
             memo: false,
@@ -275,6 +314,14 @@ impl<R: Runner> Bisector<R> {
         let full_end = self.reference_end();
         let mut rest: Vec<usize> = rust.to_vec();
         rest.sort_unstable();
+        rest.retain(|i| !self.fixed.contains(i));
+        if !self.fixed.is_empty()
+            && let Some(d) = self.test(&[], full_end)?
+        {
+            return Err(format!(
+                "the fixed set alone diverges at {d}: it must match the reference before a batch on top of it is bisected"
+            ));
+        }
         let full = self.test(&rest, full_end)?;
         let mut culprits = Vec::new();
         let mut cur = full.clone();
@@ -523,7 +570,7 @@ pub fn parse_opts(args: &[String]) -> Result<(BTreeMap<String, String>, BTreeSet
 
 pub const USAGE: &str = "usage: sa-oracle l3 --rec R.sarec --runner \"CMD ARGS\" [--rust ports|A,B] [--margin 100] \
     [--hookoff none|all|A,B] [--end N] [--work DIR] [--cache DIR] [--exe gta_sa.exe] [--dll sa_hook.dll] \
-    [--report FILE] [--no-iterate]\n       sa-oracle l3 --print-modes ports|A,B [--except A,B]";
+    [--report FILE] [--no-iterate] [--fixed SET]\n       sa-oracle l3 --print-modes ports|A,B [--except A,B]";
 
 /// `sa-oracle l3 ...`: returns Ok(true) when the set matches the reference and every hook-off run
 /// matches.
@@ -552,7 +599,7 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
             .and_then(|f| f.parse().ok())
             .ok_or("recording has no `frames` header; give --end")?,
     };
-    let rust = hook_set(o.get("rust").map(String::as_str).unwrap_or("ports"))?;
+    let mut rust = hook_set(o.get("rust").map(String::as_str).unwrap_or("ports"))?;
     let margin: u32 = o
         .get("margin")
         .map(|v| v.parse().map_err(|_| format!("--margin {v}")))
@@ -613,6 +660,18 @@ pub fn cli(args: &[String]) -> Result<bool, String> {
         return Err(format!("the reference run ended at frame {rlast} < {full_end}"));
     }
     let mut b = Bisector::new(runner, reference);
+    if let Some(f) = o.get("fixed") {
+        b.fixed = hook_set(f)?;
+        rust.retain(|i| !b.fixed.contains(i));
+        say(
+            format!(
+                "FIXED {} hooks on Rust in every probe (not bisected); tested set {}",
+                b.fixed.len(),
+                names(&rust)
+            ),
+            &mut out,
+        );
+    }
     b.on_probe = Some(Box::new(|p: &ProbeLog| println!("  {}", print_probe(p))));
     let r = b.l3(&rust, margin, !flags.contains("no-iterate"))?;
     let rep = print_report(&r, margin);

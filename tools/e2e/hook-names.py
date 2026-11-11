@@ -9,8 +9,12 @@ SA_HOOK_PORTS). With `ports` only the port hooks are printed, with `all` every h
 list of names, addresses, `@FILE` (one name/address per line, `#` comments) or `state:STATE[:DOC]` (the
 addresses of the docs/arch/*.md (or docs/arch/DOC.md) function-table rows with that state, e.g.
 `state:implemented-needs-L2:core-port` = PORT-CORE's L2 batch) or `doc:DOC` (every row of docs/arch/DOC.md
-that is a hook), resolved against the table; an unknown entry is
-an error.
+that is a hook), `batch:ID` (the unverified hooks of one batch), `unverified` / `verified`,
+resolved against the table; an unknown entry is an error.
+
+Unverified ports (`#[hook(unverified = "BATCH")]`, docs/verify/HOWTO.md) are left out of `ports` and
+`all` unless `SA_UNVERIFIED` (all | batch ids | hook names | @FILE, as sa-hook reads it) selects them,
+so default runs never include them; named explicitly (or by `batch:`/`unverified`) they are listed.
 """
 import pathlib
 import re
@@ -23,16 +27,22 @@ hooks = []  # (addr, group, name)
 table = (root / "crates/sa-hook/src/table.rs").read_text()
 for m in re.finditer(r'addr:\s*(0x[0-9A-Fa-f]+),\s*name:\s*"([^"]+)"', table):
     hooks.append((int(m.group(1), 16), "local", m.group(2)))
-for src in sorted(root.glob("crates/*/src/**/*.rs")):
-    if src.parts[-3] in ("sa-macros", "sa-hook"):
-        continue
-    text = src.read_text()
-    for m in re.finditer(r"^\s*#\[hook\((.*?)\)\]", text, re.S | re.M):
-        body = m.group(1)
-        a = re.search(r"addr\s*=\s*(0x[0-9A-Fa-f]+)", body)
-        n = re.search(r'name\s*=\s*"([^"]+)"', body)
-        if a and n:
-            hooks.append((int(a.group(1), 16), "port", n.group(1)))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "verify"))
+import hookattrs  # noqa: E402
+
+ports = hookattrs.hooks(root)
+batch_of = {h["addr"]: h.get("unverified") for h in ports}
+try:
+    selected = hookattrs.unverified_selection(ports)
+except (ValueError, OSError) as e:
+    sys.exit(f"hook-names: {e}")
+for h in ports:
+    hooks.append((h["addr"], "port", h["name"]))
+
+
+def default_on(h):
+    """Part of `ports`/`all`: verified, or an unverified hook SA_UNVERIFIED selects."""
+    return h[1] != "port" or not batch_of.get(h[0]) or h[0] in selected
 
 def keys_of(sel):
     """Comma list; `@FILE` = one name/address per line (`#` comments); `state:STATE` = the addresses of
@@ -66,12 +76,20 @@ def keys_of(sel):
 
 
 if sel == "all":
-    out = hooks
+    out = [h for h in hooks if default_on(h)]
 elif sel == "ports":
-    out = [h for h in hooks if h[1] == "port"]
+    out = [h for h in hooks if h[1] == "port" and default_on(h)]
 else:
     out = []
     for k in keys_of(sel):
+        if k.startswith("batch:") or k in ("unverified", "verified"):
+            b = k[len("batch:"):] if k.startswith("batch:") else None
+            hit = [h for h in hooks if h[1] == "port" and (
+                batch_of.get(h[0]) == b if b else bool(batch_of.get(h[0])) == (k == "unverified"))]
+            if not hit and b:
+                sys.exit(f"hook-names: no hook in batch {b!r}")
+            out.extend(h for h in hit if h not in out)
+            continue
         hit = [h for h in hooks if h[2] == k or (k.lower().startswith("0x") and h[0] == int(k, 16))]
         if not hit:
             sys.exit(f"hook-names: unknown hook {k!r}")

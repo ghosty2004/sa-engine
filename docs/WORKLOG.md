@@ -947,3 +947,21 @@
   256 MiB thread (the debug HOOKS table overflowed the default test stack).
 - Open: CPopCycle::FindNewPedType 0x60FBD0 one split mismatch per recording (stays implemented; POP-3 owns it);
   car-ai splito Wine fault at frame 2304 (harness).
+
+## 2026-11-11 Verification gap found and closed; AI-4, AI-5, CAM-2, HARNESS-4 integrated (main session)
+- verify-all never built the DLL: the X87, PED-2+WORLD-2 and RENDER-2+POP-2 runs (main-x87/main-pw/main-rp) tested
+  the 10:56 VEH-2 DLL. verify-all now builds sa-launcher+sa-hook first, aborts on a build failure, and records the
+  HEAD and the DLL's sha256 next to the summary.
+- The X87 widening broke the i686 build for 13 orig! ST0 returns declared X87 (VEH-2, POP-2, AI-4/5, RENDER-2):
+  declared f64 with `_st0` + X87 adapter functions (as X87 decided). Duplicate hook CPedIntelligence::operator new
+  (PED-2 and AI-5): sa-ped keeps it.
+- Fresh-DLL full run: air-water DIVERGED at 4585 (randcalls). Commit bisection (separate worktree): X87 IDENTICAL,
+  X87+PED-2 IDENTICAL, +WORLD-2 DIVERGED; hook bisection over WORLD-2's 481 hooks →
+  WaterCreatureManager_c::GetRandomWaterCreatureId 0x6E4040 (rand without at_site). Fixed there and in
+  InteriorGroup_c::GetRandomInterior 0x5948C0 and Interior_c::GetRandomTile 0x591B20 (no other unsited rand left).
+- verify-all main-full3 (VEH-2..POP-2 + AI-4 + AI-5 + CAM-2 + HARNESS-4, fresh DLL 3e8a73b): IDENTICAL on all 11.
+  States promoted for AI-4 (13 L2), AI-5 (65 L2), CAM-2 (25 L2); PRESERVE_SPECS_PENDING += 0x50E180, 0x600530,
+  0x669650.
+- HARNESS-4: writer/verifier split (#[hook(unverified = BATCH, route, hazards, recs)], SA_UNVERIFIED selection,
+  catalog/verify-queue.csv + docs/verify/QUEUE.md, tools/verify/{bisect-batch.sh,writer-gate.sh,queue.py},
+  PLAN §5.1). Unverified hooks never change default behaviour (demo: broken unverified hook, default run IDENTICAL).

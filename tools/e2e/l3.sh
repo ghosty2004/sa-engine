@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # INF-9: L3 runner with automatic divergence bisection (and the PLAN §5 hook-off check).
 #
-#   tools/e2e/l3.sh [--rec FILE] [--rust ports|A,B] [--hookoff none|all|A,B] [--margin N] [--mutant A,B]
+#   tools/e2e/l3.sh [--rec FILE] [--rust ports|A,B] [--fixed SET] [--hookoff none|all|A,B] [--margin N] [--mutant A,B]
 #   tools/e2e/l3.sh --selftest [--rec FILE]
 #   tools/e2e/l3.sh --l2 HOOK --from FRAME --end FRAME [--rec FILE] [--rust ports|A,B]
 #   tools/e2e/l3.sh --probe NAME END MODES OUT_TRACE        (one game run; used by sa-oracle l3)
@@ -12,6 +12,9 @@
 # and with the --rust set on Rust; on a divergence it bisects the set down to the minimal culprit
 # hooks without help and prints, per culprit, where it diverges alone and a suggested L2 run. With
 # --hookoff it then switches each hook of the matching set back to the original alone (must still match).
+# --fixed SET (e.g. `verified`): those hooks are on Rust in every probe and never bisected; the --rust
+# set (e.g. `batch:ID`) is tested on top of them (tools/verify/bisect-batch.sh). SETs also accept
+# `verified`, `unverified` and `batch:ID`; unverified hooks need SA_UNVERIFIED (docs/verify/HOWTO.md).
 #
 # --selftest: (1) the plain L3 run of the --rust set (default every port) with the hook-off check of
 # every hook (L3_SELFTEST_HOOKOFF=A,B: only those); (2) the same
@@ -69,6 +72,7 @@ probe_main() {
         # a mode list over every port exceeds a Windows environment variable: passed as @FILE then
         hm="$(e2e_list_env SA_HOOK_MODE "$modes" "$DET/$name.modes")" || exit 1
         export "${hm?}"
+        e2e_unverified_env
         if [ -n "${L3_COV_POINTS:-}" ]; then
             cp -f "$L3_COV_POINTS" "$DET/$name.points"
             export SA_COV="$(win "$DET/$name.points")" SA_COV_OUT="$(win "$DET/$name.cov.csv")" SA_COV_CAP="${L3_COV_CAP:-1}"
@@ -138,6 +142,7 @@ fi
 REC=""
 RUST="ports"
 HOOKOFF="none"
+FIXED=""
 # --selftest: the hook-off list (default: every hook of the matching set; with hundreds of engine
 # ports registered, pass a shorter list).
 SELFTEST_HOOKOFF="${L3_SELFTEST_HOOKOFF:-all}"
@@ -150,6 +155,7 @@ while [ $# -gt 0 ]; do
         --rec) REC="$2"; shift 2 ;;
         --rust) RUST="$2"; shift 2 ;;
         --hookoff) HOOKOFF="$2"; shift 2 ;;
+        --fixed) FIXED="$2"; shift 2 ;;
         --margin) MARGIN="$2"; shift 2 ;;
         --mutant) MUTANT="$2"; shift 2 ;;
         --selftest) MODE=selftest; shift ;;
@@ -212,10 +218,10 @@ culprits() { sed -n 's/^CULPRIT \({[^}]*}\).*/\1/p' "$OUT/$1.txt" | sort; }
 case "$MODE" in
     run)
         [ -n "$MUTANT" ] && export SA_L2_MUTANT="$MUTANT"
-        l3 run --rust "$RUST" --hookoff "$HOOKOFF"
+        l3 run --rust "$RUST" --hookoff "$HOOKOFF" ${FIXED:+--fixed "$FIXED"}
         rc=$?
         check "L3 $RUST${MUTANT:+ (mutant $MUTANT)}" "$([ "$rc" = 0 ] && echo 1)" "$(grep -m1 '^L3 ' "$OUT/run.txt")"
-        grep -E '^(CULPRIT|  alone|  suggest|rest|HOOKOFF|probes)' "$OUT/run.txt" | tee -a "$SUMMARY"
+        grep -E '^(FIXED|CULPRIT|  alone|  suggest|rest|HOOKOFF|probes)' "$OUT/run.txt" | tee -a "$SUMMARY"
         ;;
     selftest)
         unset SA_L2_MUTANT

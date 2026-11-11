@@ -1,4 +1,4 @@
-# PORT-AI-1 / PORT-AI-2: AI subsystem (crate `sa-ai`)
+# PORT-AI-1 / PORT-AI-2 / PORT-AI-5: AI subsystem (crate `sa-ai`)
 
 Pass 2 (PORT-AI-2: the c-bug tasks, the deferred event-handler / group-intelligence rows, more executed functions) is
 the section [PORT-AI-2 (second pass)](#port-ai-2-second-pass) below; pass 1 follows.
@@ -959,3 +959,246 @@ List: `tools/e2e/lists/ai3-split.txt` (the 55 v1 hooks; every one writes or call
 | 0x681720 | CTaskManager::GetActiveTask | sa_ai::taskmgr::task_manager_get_active_task | ported-unhookable (the loop branches back to 0x681722, inside the 5-byte patch) |  |  |
 | 0x6819D0 | CTaskManager::GetSimplestActiveTask | sa_ai::taskmgr::task_manager_get_simplest_active_task | ported-unhookable (the loop branches back to 0x6819D2, inside the 5-byte patch) |  |  |
 | 0x681820 | CTaskManager::HasTaskSecondary | sa_ai::taskmgr::task_manager_has_task_secondary | ported-unhookable (INF-20: protection code at 0xE1BC65 stores the immediate 0x681824) |  |  |
+
+## PORT-AI-5 (fifth pass: groups, decisions, intelligence, scanners, conversations, kill/gang tasks)
+
+Fifth pass (agent + 2 helpers, lane 7), on the families PORT-AI-5 owns (the parallel PORT-AI-4 owns locomotion /
+navigation tasks and every `CEvent*` class): SA:MP-priority rows of `catalog/samp-priority.csv` first, then rows
+executed in the single-player corpus (`catalog/raw/coverage-all.csv`), skipping every address already hooked or
+documented in `crates/sa-ai`. Ported from the 1.0 US bytes (objdump of the exe incl. `.HOODLUM` and the protection
+islands); gta-reversed and `docs/re/specs/AI` only as reading aids. **85 new hooks** + 4 ported, not registered (0x5FFF20 unhookable; 0x604500, 0x624710, 0x624A40 split FAIL).
+Per-function rows: `docs/arch/ai-port-5-verdicts.tsv`.
+
+| module | contents |
+|---|---|
+| `intelrest.rs` | `CPedIntelligence`: `operator new`, ctor, dtor, `Process`, `ProcessFirst`, `ClearTasks`, `FlushImmediately`, `ProcessAfterProcCol`, `ProcessAfterPreRender`, `FlushIntelligence`, `RecordEventForScript`, `LookAtInterestingEntities`, `ProcessStaticCounter`, `GetPedFOVRange`, `IsInSeeingRange`, `RestorePedDecisionMakerType`, `IsRespondingToEvent`, `AreFriends`, `IsPedGoingForCarDoor`, `CanSeeEntityWithLights`, `SetTaskDuckSecondary`, `ClearTaskDuckSecondary`; `CPlayerRelationshipRecorder::RecordRelationshipWithPlayer`; `CPedScriptedTaskRecord::Process` (24 hooks) |
+| `groups.rs` | `CPedGroup` ctor / `Process` / `Flush`, `CPedGroups::Process` / `RemoveGroup`, `CPedGroupMembership` `AddMember` / `AddFollower` / `SetLeader` / `Process` / `CountMembers`, `CPedGroupIntelligence` ctor / `SetTask` / `ReportFinishedTask` / `SetDefaultTaskAllocator(Type)` / `GetTaskSecondary(Slot)`, `CPedGroupDefaultTaskAllocatorRandom::AllocateDefaultTasks` (18 hooks) |
+| `decisions.rs` | `CDecision` ctor / `SetDefault` / `Set`, `CDecisionMaker` ctor, `CDecisionMakerTypesFileLoader::UnloadDecisionMaker` / `LoadDecisionMaker`(enum), `CMentalState::Process` (7 hooks) |
+| `smallai5.rs` | `CAcquaintance` `SetAsAcquaintance` / `ClearAsAcquaintance`, `CObjectScanner` ctor / `ScanForObjectsInRange`, `CDecisionMakerTypesFileLoader::ReStart`, `CPedScriptedTaskRecord::GetStatus`, `CTaskComplexSequence` `MakeAbortable` / `AddTask`, `CTaskComplexBeInGroup` ctor, `CInformGroupEventQueue` `Flush` / `Process` (11 hooks); `CPedScanner::GetClosestPedInRange` 0x5FFF20 ported-unhookable (4-byte body) |
+| `conversation.rs` (helper A) | `CPedToPlayerConversations::Update` (0x43B0F0) / `Clear`, `CConversationForPed::Update` (0x43C190, `.HOODLUM`) / `IsPlayerInPositionForConversation` (4 hooks; globals of the conversation statics) |
+| `stuck.rs` (helper A) | `CPedStuckChecker::TestPedStuck` (0x602C00) |
+| `collscan.rs` (helper A) | `CCollisionEventScanner::ScanForCollisionEvents` (0x604500; globals of its timers / tweakables): ported, **not registered** (split FAIL, see Verification) |
+| `fighthelp.rs` (helper B) | the four unnamed `CTaskSimpleFight::ProcessPed` helpers 0x623B10 (start anim), 0x6240B0 (strike), 0x624710 / 0x624A40 (choose attack, player / AI; these two not registered, see Verification) |
+| `killtasks.rs` (helper B) | `CTaskComplexKillCriminal::CreateFirstSubTask` (0x68DC60) |
+| `gangtasks.rs` (helper B) | `CTaskComplexGangLeader` `CreateFirstSubTask` / `CreateNextSubTask` / `GetRandomGangAmbientAnim` / `ShouldLoadGangAnims` / `DoGangAbuseSpeech`, `CTaskGangHasslePed` `CreateFirstSubTask` / `ControlSubTask`, `CTaskComplexSignalAtPed` (3), `CTaskComplexGangFollower` ctor / `CalculateOffsetPosition` / `CreateFirstSubTask`, `CTaskComplexPartner` ctor / `ControlSubTask`, `CTaskComplexPartnerChat` ctor, `CTaskComplexBeInCouple::CreateNextSubTask` (17 hooks) |
+
+### Findings (from the bytes)
+
+- **`CDecision::SetDefault` (0x600530) needs `preserve = "ecx"`**: `CDecision::CDecision` (0x6040C0) is `call SetDefault;
+  mov eax, ecx; ret` and returns ECX (sa-hook's `callers` test does not flag a tail `mov eax, ecx` after the call).
+- **`CPlayerRelationshipRecorder::RecordRelationshipWithPlayer` never records**: after clearing the ped's slot it calls
+  `IsKillPedTask`, `IsFollowPedTask`, `IsKillPedTask` and each time tests the out-flag the callee has just cleared (and
+  the record branch would test slot 0, not the ped's slot). Kept; the flags live in its frame and in the low byte of its
+  own argument slot (Rust locals here).
+- **`CMentalState::Process`**: the in-vehicle branch compares the zero-extended vehicle-health bytes with 600 and 300,
+  which no byte reaches, so no event is raised in a vehicle (kept). The on-foot thresholds are 50 / 10 (health events
+  0x86CBA0 / 0x86CBE8), anger thresholds 3 / 6 (0x86CC30 / 0x86CC78); the events are built on the stack.
+- **MSVC argument reuse**: `GetPlayerRelationshipRecorder` / `CDecisionMakerTypes::GetInstance` /
+  `CPedIntelligence::GetTaskUseGun` are called with an argument pushed for the *next* thiscall (`ret 4`), which consumes
+  it (`CPedIntelligence` dtor / `Process`, `UnloadDecisionMaker`, `ReStart`, `ClearTaskDuckSecondary`). The ports pass
+  the value to the second call.
+- **Dead code kept as reads**: `CPedGroupMembership::AddMember` scans 0xC0992C..0xC09948 for the ped and ignores the
+  result; `CPedGroupDefaultTaskAllocatorRandom::AllocateDefaultTasks` calls 0x65EE90 on a null follower task when the
+  allocation fails and overwrites the pair task without deleting the old one; `SetTaskDuckSecondary` reads +0x24 of a
+  null duck task in one path (as the original).
+- **`CPedIntelligence::LookAtInterestingEntities`** compacts the interesting entities into its own frame three dword
+  slots below the `FindObjectsInRange` array (the port keeps a copy of the whole 0x101C-byte frame with the same
+  offsets). RNG only through `GetRandomNumberInRange` (0x407180, return 0x407187), 0..100 == 50, then 0..n, then
+  3000..5000.
+- **Entries**: 0x607D30 (`nop; jmp 0x40168C`), 0x65E7F0 (`nop; nop; jmp 0x40142C`), 0x5FB280 (continues through the
+  island 0x4018FD), 0x6040C0 (a `call rel32`), 0x600DB0 (`add ecx, 0x38; jmp`), 0x4650A0 / 0x43AAE0 / 0x43C190
+  (`.HOODLUM` stubs): all install (sa-hook `every_hook_installs_on_the_exe`).
+- **Helper A** (conversation / stuck / collision scanner): `CPedStuckChecker::TestPedStuck` — the spec is wrong, 0x406DA0
+  returns the *squared* length (no `fsqrt`), so the first stuck test is `cnt * 0.01 > |D|^2`. `CConversationForPed::Update`
+  — the Yes path's `strcpy` destination is the result of the protection VM 0xCB73E0 (descriptor 0x155FF8C); taken as
+  gString 0xB71670 (the following `strlen` and suffix store use it, as the spec says), the VM call itself is not
+  reproduced (**unsure**, decision needed if it has side effects). `CPedToPlayerConversations::Update` — rand at
+  0x43B953, topic 7 never drawn (0..7 exclusive), the old vehicle reference not cleared before a new one is registered
+  (kept). `ScanForCollisionEvents` — `fpatan` through `X87::fpatan` (the known precision caveat), the `CEventDamage`
+  last argument passed with the original's upper bits.
+- **Helper B** (fight helpers / kill / gang tasks): 0x6240B0 passes the int16 arguments of 0x61D0B0 / 0x61D400
+  zero-extended (the original pushes ECX/EDX with stale upper halves left by `ProcessColModels`: not reproducible,
+  ledger candidate); 0x624710 / 0x624A40 return AX zero-extended (the original leaves stale upper EAX; every caller
+  reads AX). `CTaskComplexGangFollower::CreateFirstSubTask` writes +0x44..+0x54 through a null result after a failed
+  allocation (kept). RNG return addresses per row in the TSV.
+
+### Verification (lane 7, `SA_ROOT=/home/ghosty2004/sa-engine`)
+
+Frozen source exports (`git archive` into `target/ai5src*`, `CARGO_TARGET_DIR=target/ai5b`), host sa-oracle rebuilt
+with each. List `tools/e2e/lists/ai5-split.txt` (every hook of this pass; all run in INF-17 split mode,
+`L2_MAX=150 SPLIT_PER_FRAME=4 SPLIT_STACKFILL=16384`, spool quota 2-3 GiB). Extras: section `PORT-AI-5` of
+`tools/e2e/l2-extras.txt` (the `CPedGroups` arrays, `CDecision::Set`'s `this`, the decision-maker file read, the
+inform-group queue, the object scanner objects; the last block was added after the v3/v4 runs and is not yet
+exercised).
+
+| run | build | result |
+|---|---|---|
+| split, 41 hooks (own modules), grove | v1 = eedf498 | 38 PASS, 3 NOCASES, 0 mismatches; undeclared writes inside `CPedGroups::ms_groups` / callees (extras added in v2); rust (list L3) and splito/splitr == plain |
+| split, 88 hooks, c-bug | v2 = 08d2ec3 | **FAIL**: `ScanForCollisionEvents` 0x604500 1 mismatch at frame 233 (entity reference pool: `CReferences::pEmptyList` 0xBA1768 and `aRefs` differ after the call), `ProcessFirst` (its caller) with it; 70 pairs DIVERGED after it. 0x604500 unregistered (c89264d) |
+| split, 87 hooks, grove | v3 = c89264d | 70 PASS, 0 FAIL, 0 mismatches; spool quota at frame 2956 (cases before it valid); rust / splito / splitr == plain on all 5200 frames |
+| split, 87 hooks, c-bug | v4 = v3 code | 42 PASS, 38 PASS-FP, 0 FAIL, 0 mismatches; rust / splito / splitr == plain on all 3220 frames |
+| split, 87 hooks, weapon-combat | v4 | 76 PASS, 2 PASS-FP, **2 FAIL**: 0x624710 / 0x624A40 differ only in the upper half of EAX (orig 0x2106xxxx = the stale ped pointer under `mov ax, bp`, rust 0); both unregistered (7aa93f0) |
+| split, 87 hooks, police-gang | v4 | 37 PASS, 34 PASS-FP, 0 FAIL, 0 mismatches; traces == plain |
+| all engine ports on Rust (`verify-all.sh ai5v3 7`), **L3** | v3 (87 hooks incl. 0x624710 / 0x624A40) | IDENTICAL on 10 of 11 recordings (grove 5200, anim-input, car-ai, c-bug, driving, menus-hud, pause-restart, police-gang, weapon-combat, world-cheats); **air-water DIVERGED at frame 2742 (peds, player)**: the pre-existing BISECT-AIRWATER divergence, same frame as before this pass |
+
+- The final commit (7aa93f0) only removes the two fight-helper hooks from v3 (they return to the original body); the
+  all-ports run was not repeated on it.
+- `cargo test -p sa-ai` 13 pass; `cargo test --release -p sa-hook --lib` 50 pass (`every_hook_installs_on_the_exe`,
+  `matches_catalogue_and_exe`, `callers`, `patch_refs`, INF-20 `data_reads`); clippy `-D warnings` sa-ai host (all
+  targets), i686 (`--features in-process`), wasm32.
+- Undeclared writes (the `L2-split` rows) are writes by original callees (`CWorld::ms_aRepeatSectors`, `gMatrixList`,
+  anim / streaming / collision caches) or regions now covered by the new extras (inform-group queue, object scanner).
+
+Agent states over the 89 rows (85 hooks + 4 not registered; per row in `docs/arch/ai-port-5-verdicts.tsv`, the main
+session sets `catalog/state.csv`):
+
+| state | count |
+|---|---|
+| L2 | 66 |
+| L2-split (undeclared writes to review) | 11 |
+| implemented (split PASS-FP only) | 6 |
+| implemented-needs-L2 (no call in the four split recordings: `RemoveGroup`, `ReStart`) | 2 |
+| ported-unregistered (split FAIL: 0x604500, 0x624710, 0x624A40) | 3 |
+| ported-unhookable (0x5FFF20) | 1 |
+
+### Open items (PORT-AI-5)
+
+- 0x604500 `ScanForCollisionEvents`: find the reference register/release order difference (helper A's stack events
+  call `RegisterReference` on a Rust stack address; compare with the original's sequence at frame 233 of c-bug).
+- 0x624710 / 0x624A40: reproduce the stale upper EAX per path (the ped pointer loaded at 0x6249A4 on the loop path;
+  the other paths' last full EAX write), then re-register.
+- 0x43C190: the protection VM call 0xCB73E0 on the Yes path is not reproduced (destination taken as gString) — needs
+  a decision or a measurement of the VM's side effects.
+- Not ported (time box): `CTaskComplexGangLeader::ScanForStuff` 0x65E200 / `ControlSubTask` 0x662370,
+  `CTaskComplexGangFollower::CreateNextSubTask` 0x665E00 / `ControlSubTask` 0x662A10,
+  `CTaskComplexPartner::CreateNextSubTask` 0x683AD0, `CTaskComplexBeInCouple::ControlSubTask` 0x684930, the
+  `CGroupEventHandler::Compute*Response` family (0x5F9B20, 0x5F9BD0, 0x5F9D50, 0x5FA290, 0x5FA550, 0x5FA820, 0x5FB2D0,
+  0x5FBB90, 0x5FBCB0, 0x5FC200), `CInformGroupEvent::Process` 0x4B29E0 / `CInformGroupEventQueue::Add` 0x4B7CD0,
+  `CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker` 0x5BF400 / `LoadDecisionMaker`(ptr) 0x6076B0 (file I/O),
+  `CPedGroup::Teleport` 0x5F7AD0, `CPedGroupDefaultTaskAllocatorFollowLimited::AllocateDefaultTasks` 0x5F6C70,
+  `CPedAttractorManager::FindAssociatedAttractor` 0x5EB6F0, `CPedToPlayerConversations` callees outside the SA:MP list,
+  and the never-executed rows of these families.
+# PORT-AI-4: locomotion, navigation and event tasks (crate `sa-ai`)
+
+Fourth AI pass (agent + 2 helpers, lane 3), parallel to PORT-AI-5 (groups, decisions, attractors, scanners, fight AI,
+conversations, scripted tasks). Ownership: the locomotion / navigation task families (wander, go-to, follow route,
+seek, flee, walk-round, stand still, achieve heading, turn to face, evasive step, in air / land / fall / get up)
+and every `CEvent*` class. SA:MP-priority rows (`catalog/samp-priority.csv`) first, then corpus-executed rows
+(`catalog/raw/coverage-all.csv`), skipping everything already in `crates/` (hand ports and AI-GEN `gen_*.rs`).
+Same rules as PORT-AI-1..3 (ADR-001; the 1.0 US bytes win over gta-reversed and the specs; medium/low spec rows
+re-read from the bytes). Per-function verdicts: `docs/arch/ai-port-4-verdicts.tsv`.
+
+**172 new hooks** (sa-ai total after this pass: 2,330 = 1,584 generated + 746 hand ports), 3 ported but not
+hookable, 1 ported but unregistered (`CTaskSimpleInAir::ProcessPed`, see Verification). Every hook was on Rust
+together with every other engine port in the all-ports L3 runs below.
+
+| module | contents |
+|---|---|
+| `walk.rs` | `CTaskSimpleStandStill` (ctor, `ProcessPed`), `CTaskSimpleGoTo` (`HasCircledTarget`, `SetUpIK`, `QuitIK`), `CTaskSimpleGoToPoint` (ctor, `UpdatePoint`, `MakeAbortable`, `ProcessPed`), `CTaskSimpleAchieveHeading` (`MakeAbortable`, `SetUpIK`, `ProcessPed`), `CTaskComplexGoToPointAndStandStill` (ctor, `GoToPoint`, `CreateSubTask`, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`), `CTaskComplexTurnToFaceEntityOrCoord` (entity ctor, `ComputeTargetHeading`, `Clone`, `CreateFirstSubTask`, `ControlSubTask`), `CTaskComplexGoToCarDoorAndStandStill` (`CreateSubTask` unhookable, `CreateFirstSubTask`, `CreateNextSubTask`) (25 hooks) |
+| `fall.rs` | `CTaskComplexInAirAndLand` (ctor, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`), `CTaskSimpleInAir` (ctor; `ProcessPed` ported, unregistered), `CTaskSimpleLand` (`FinishAnimCB`, `Right/LeftFootLanded`), `CTaskSimpleGetUp` (`ProcessPed`, `MakeAbortable`, `StartAnim`, `FinishGetUpAnimCB`), `CTaskSimpleFall` (`ProcessPed`, `MakeAbortable`, `StartAnim`, `ProcessFall`), `CTaskComplexFallAndGetUp::CreateSubTask`, `CTaskComplexEvasiveStep::CreateSubTask`, `CTaskSimpleEvasiveStep::StartAnim` (19 hooks) |
+| `flee.rs` | `CTaskComplexSmartFleePoint` / `SmartFleeEntity` (`CreateSubTask`, `CreateFirstSubTask`, `ControlSubTask`) (6 hooks) |
+| `events2.rs` (helper A) | `CEvent*`: collision events, sound, gun shot / whizzed by / aimed at, damage (`AffectsPed`, `TakesPriorityOver`, `From`, `IsCriminalEvent`, `ReportCriminalEvent`, `ComputeBodyPartToRemove`, `WasHeadShot`, `ProcessDamage`, `CloneEditable`), dead ped, death, knock off bike (ctors, `AffectsPed`, `SetPedOutCar`, `ReportCriminalEvent`, `Clone`), vehicle on fire, cop car stolen, area codes, danger, acquaintance, potential walk into vehicle/ped, script command (`GetEventPriority`, `Clone`, `IsValid`), `CEventEditableResponse` (`Clone`, `Inform*`, `ComputeResponseTask*`, `TriggerLookAt`), `CEventPool::New`, `CEventGlobalGroup::AddEventsToPed/Group`, `CEventScanner::ScanForEvents` (58 hooks, 1 unhookable) |
+| `wander.rs` (helper B) | `CTaskComplexWander` (`UpdateDir`, `UpdatePathNodes`, `ValidNodes`, `ComputeTargetPos`, `ScanForBlockedNode(s)`, `CreateSubTask`, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`), `CTaskComplexWanderCop` (6), `CTaskComplexFollowPointRoute` (`GetSubTaskType`, `CreateTask`, `CalcGoToTaskType`, `MakeAbortable`, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`; ctor unhookable), `CTaskComplexFollowNodeRoute` (`MakeAbortable`, `GetSubTaskType`, `CreateSubTask`, `ComputeRoute`, `CalcGoToTaskType`, `CanGoStraightThere`, `SetTarget`, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`), `CTaskComplexAvoidOtherPedWhileWandering` (`QuitIK`, `NearbyPedsInSphere`, `ComputeAvoidSphere`, `ComputeRouteRoundSphere`, `ComputeDetourTarget`, `SetUpIK`, `CreateFirstSubTask`, `ControlSubTask`), `CTaskComplexWanderStandard` (`ScanForStuff`, `LookForSexyCars`, `LookForGangMembers`), `CTaskComplexWanderCop::LookForCriminals`, `CTaskComplexWander::GetWanderTaskByPedType` (48 hooks, 1 unhookable; the AvoidOtherPed / WanderStandard / LookForCriminals / GetWanderTaskByPedType rows by the main agent) |
+| `walkround.rs` (helper B) | `CTaskComplexWalkRoundCar` (`CreateRouteTask`, `ControlSubTask`), `CTaskComplexWalkRoundObject` (`CreateRouteTask`, `CreateNextSubTask`), `CTaskComplexWalkRoundBuildingAttempt` (`ComputeMoveDir`, `CreateNextSubTask`, `ControlSubTask`) (7 hooks) |
+| `seek.rs` (helper A) | `CTaskComplexSeekEntity<Standard>` and `<XYOffset>` (ctors, `CreateSubTask`, `CreateFirstSubTask`, `CreateNextSubTask`, `ControlSubTask`; one generic body per method for both instances) (9 hooks) |
+
+## Conventions and findings (from the bytes)
+
+- **Protection islands**: every island followed is straight code. `[A] ^ [B]` loads (0x403793 in
+  `CTaskSimpleStandStill::ProcessPed`: `[0x42B7D3] ^ [0x156074C]` = 0xB7CB84 `CTimer::m_snTimeInMilliseconds`) were
+  computed from the exe image; SEH-handler islands (`push -1; jmp`, `not`/`xor`/`rol`/`sbb` building the handler
+  address: 0x40823F, 0x401D31, 0x4040A5, 0x4039B2, 0x401D9D) have no Rust counterpart; register loads (0x40586C ECX =
+  `g_ikChainMan`, 0x404880 EAX = ped +0x530, 0x405FDF the vtable store, 0x401163 `mov eax, 0xC8`) are inlined.
+  Entries `push -1; jmp island` / `nop; jmp island` are hooked with the whole jump in `expect` (0x66B890,
+  0x65C530, 0x5E05B0, 0x4AD830, 0x4AFCF0, 0x4B10C0).
+- **Original behaviour kept**: `CTaskComplexGoToPointAndStandStill::GoToPoint` and its constructor compare the
+  radius +0x1C with itself (only a NaN differs) and the constructor compares the target with the uninitialised pool
+  slot; `CTaskSimpleInAir::ProcessPed` discards the jump-glide `BlendAnimation` result and installs the vault
+  anim's delete callback twice; the in-air ground test after the vault counter always ends the task (the +0xFC test
+  after it is unreachable); `CTaskComplexGoToPointAndStandStill::CreateSubTask` writes +0x20 of a null go-to-point
+  task when the pool is full and uses the matrix forward vector without a null check; `CTaskSimpleGetUp::
+  FinishGetUpAnimCB` does not null-check the anim; `CTaskComplexInAirAndLand::ControlSubTask` passes the climb
+  height byte inside a dword whose upper bytes are the task pointer's, `CreateFirstSubTask` the two `setne` bytes
+  inside leftover registers (the constructors read bytes only); `CTaskSimpleGetUp::StartAnim` passes the
+  `CEventDamage` bool as the full dword `(ped +0x46C >> 8) & 0xFFFFFF01`; `CTaskComplexSmartFleePoint::CreateSubTask`
+  adds null tasks to a sequence when the pool is full; `CTaskComplexSmartFleeEntity::CreateSubTask(0xCB)` draws
+  `rand` only after a successful allocation. Helper findings: see the verdict notes (`CEventDamage::CloneEditable`
+  writes through a null result, `CTaskComplexFollowPointRoute::CreateTask` writes +0x1C through a null task,
+  `CTaskComplexFollowNodeRoute::CreateSubTask(0xCB)` teleports the ped even when the allocation failed,
+  `CTaskComplexSeekEntityStandard::CreateSubTask` adds to a null sequence and writes +0x24 of a null task, the
+  Wander dead-end sequence path, unchecked node-array reads).
+- **RNG**: direct `rand` sites (`orig::at_site`): `CTaskComplexSmartFleeEntity::CreateSubTask` 0x65C637 and
+  `CTaskComplexWander::GetWanderTaskByPedType` 0x673E7A (standard wanderers; cops/medics/criminals/prostitutes draw
+  through `GetRandomNumberInRange(0, 8)`; every draw only after a successful allocation);
+  `CTaskComplexAvoidOtherPedWhileWandering::ControlSubTask` draws the stand-still time through `GetRandomNumberInRange`;
+  `CTaskComplexSmartFleePoint::ControlSubTask` and `CEventDamage::ComputeBodyPartToRemove` go through
+  `GetRandomNumberInRange` (0x407180) via `orig!`. `CTaskComplexWander::UpdateDir`'s "random" turn is
+  `(ped +0x20 + 3·frame) % 100`, no rand call.
+- **Preserved registers**: `CTaskComplexFollowNodeRoute::GetSubTaskType` (0x669650) `preserve = "edx"` (caller
+  0x671A25 tests EDX after the call; found by sa-hook's `callers` test). `CTaskComplexGoToCarDoorAndStandStill::
+  CreateFirstSubTask` relies on `IsVehicleInRange` (0x6458A0, `preserve = "ecx"` since PORT-AI-3) keeping ECX.
+- **Stack objects**: zeroed Rust buffers for the original's stack tasks/events/vectors (the stand still of
+  `CTaskSimpleGoToPoint::MakeAbortable` and the seek tasks' 0xDB branch, `CEventSoundQuiet` of the landing noise,
+  `CEventSeenPanickedPed`, `CPedDamageResponseCalculator` + `CEventDamage` of `CTaskSimpleGetUp::StartAnim` (one
+  0x44-byte buffer, the response at +0x38 as in the original frame), the vertical-line `CColPoint`, the seek boat
+  `CMatrix`). Values the original keeps in its own argument slots (GoToPoint position pointer and flag byte,
+  StandStill blend delta / dot, InAir climb pointer, GetUp damage) are locals.
+- **x87**: memory operands use the `_m` operations (signalling-NaN rules), register operands the plain ones; every
+  `fcomp`/`fnstsw`/`test ah` maps to `test_any`/`test_parity` (NaN branches kept); `fabs` clears the sign of the
+  f64 model value; `fsin`/`fcos` (AchieveHeading `SetUpIK`) use the sa-math model (53-bit caveat of
+  `sa_math::x87`); unsigned dword-to-float conversions (`fild` + `fadd 2^32`) are modelled.
+
+## Unhookable (ported, not registered)
+
+| address | name | reason |
+|---|---|---|
+| 0x4B0700 | `CEventGunAimedAt::CEventGunAimedAt` | protection reads the patched bytes (0x403A0D reads 0x4B0703) |
+| 0x671510 | `CTaskComplexFollowPointRoute::Constructor` | entry bytes read as data (0x4022BB, `catalog/code-data-reads.csv`) |
+| 0x64A5F0 | `CTaskComplexGoToCarDoorAndStandStill::CreateSubTask` | `adc ebx, [0x64A5F2]` at 0x15630B8 reads the patched entry (sa-hook INF-20 / keycells / patch_refs tests) |
+
+## Not ported (left)
+
+- Executed: `CTaskComplexAvoidOtherPedWhileWandering::ComputeSphere` 0x66A320 (420 instructions);
+  `CTaskComplexWanderStandard::LookForChatPartners` 0x66FDA0; `CTaskComplexFollowNodeRoute::ComputePathNodes` 0x66EFA0 (medium spec) and ctor 0x66EA30 (island entry not
+  checked); `CTaskComplexWalkRoundCar` ctor 0x6541B0, ComputeRouteRoundSmallCar 0x6544F0, CreateFirstSubTask
+  0x658200; `CTaskComplexWalkRoundBuildingAttempt` CreateFirstSubTask 0x654A00, CreateSubTask 0x654C80, ComputeCrapRoute
+  0x656F80, ComputeRoute 0x657BA0; `CTaskComplexWalkRoundObject` CreateFirstSubTask 0x657380, ControlSubTask 0x6575F0;
+  `CEvent::GetSoundLevel` 0x4B2850 (`fldlg2`/`fyl2x`: not in the X87 model, needs an L1-checked model first).
+- SA:MP rows never executed in the corpus: `CEventDamage::ComputeDeathAnim` 0x4B3A60, `CEventKnockOffBike::
+  CalcForcesAndAnims` 0x4B0020 / `SetPedSafePosition` 0x4B4AC0, `CTaskComplexGoToCarDoorAndStandStill::
+  ControlSubTask` 0x64A820 / `ComputeRouteToDoor` 0x645910, the `CTaskSimpleSwim` family (0x688A00..0x68B1C0, ~2,900
+  instructions).
+
+## Verification (lane 3, `SA_ROOT=/home/ghosty2004/sa-engine`)
+
+Frozen source exports per build (`git archive` into `target/p4srcN`, own `CARGO_TARGET_DIR`); lane 3 was shared
+with two other agents' runs through its lock. Lists: `tools/e2e/lists/ai4-all.txt` (every PORT-AI-4 hook).
+
+| run | build | result |
+|---|---|---|
+| sa-hook lib tests (keycells, INF-20 `every_hook_installs_on_the_exe`, `matches_catalogue_and_exe`, `callers`, `patch_refs`) | every build | 50/50 on the final build. Found: `callers` → `preserve = "edx"` on 0x669650; INF-20/keycells/patch_refs → 0x64A5F0 unhooked |
+| split `ai4-all` (173 hooks), grove, `L2_MAX=100 SPLIT_PER_FRAME=4`, 3 GiB spools | v5 (999123d) | 114 hooks called: 14 PASS, 68 PASS-FP, 24 DIVERGED (inputs differ: stack-address arguments from Rust callers, e.g. `ComputeTargetPos`'s out vector), 8 COUNT, **0 FAIL, 0 mismatches**; splito trace == plain; both spools hit the quota at frame ~2630 (cases before it valid). Undeclared writes (L2-split rows): audio-entity bytes 0xB5Fxxx/0xB62xxx written by `AddAudioEvent`/`Say`, event-pool and reference bytes |
+| L3 grove, port-l2 list mode (`plain rust`) | v1 (18 hooks), v5 (173) | **DIVERGED at frame 257 (`peds`)**, rand/randcalls identical. Bisection (lists of 9, then single hooks): StandStill/GoTo/GoToPoint half IDENTICAL; InAir/Land half DIVERGED; `CTaskComplexInAirAndLand::CreateNextSubTask` alone IDENTICAL, `ControlSubTask` alone IDENTICAL, **`CTaskSimpleInAir::ProcessPed` (0x680600) alone DIVERGED at 257** (CJ lands from a jump at frame 256). Its split cases all matched in the watched window (the ped object is heap state the window does not watch). Hook removed (v6). Cause found afterwards: the port set ped +0x46C bit 0 (standing) on every landing; in the bytes the `or dword [edi+0x46C], 1` at 0x680A3D belongs to the slow-fall counter path only (the ground branch jumps to 0x680A44, just after it). Fixed in the source, hook still unregistered; with the fix (build v7, hook re-registered in the export only) the single-hook L3 probe on grove is IDENTICAL over 5200 frames |
+| L3 grove, `sa-oracle l3` universe mode with 134 hooks | v3 | reported MATCH although port-l2 list mode diverges with a subset of the same hooks; not explained (probe .det files report frame=4776 / 4997 for 5200-frame runs) — harness question for the main session |
+| all engine ports on Rust (`tools/e2e/verify-all.sh ai4v6 3`), **L3** | v6 (30799b9: 172 hooks, InAir::ProcessPed unregistered) | IDENTICAL on grove (5200), anim-input (3300), car-ai (5000), c-bug (3220), driving (4338), menus-hud (5700); air-water DIVERGED at 2742 (`peds,player`) — pre-existing (ROADMAP BISECT-AIRWATER; the same frame on other branches' runs today), and the PORT-AI-4 hooks alone in list mode are IDENTICAL on air-water over 5800 frames. pause-restart, police-gang, weapon-combat, world-cheats were still queued on the shared lane at hand-back (results land in `$SA_ROOT/target/verify-all/ai4v6/summary.txt`) |
+| all engine ports on Rust + the fixed InAir::ProcessPed | v7 (export only) | grove IDENTICAL (5200); air-water DIVERGED at 2742 as v6; stopped there (time box) |
+
+- `cargo test -p sa-ai` 13 pass; clippy `-D warnings`: sa-ai host (all targets), i686 (`--features in-process`),
+  wasm32.
+- States (agent proposal, `docs/arch/ai-port-4-verdicts.tsv`; the main session sets `catalog/state.csv`): L2 13,
+  L2-split 1, implemented 90 (PASS-FP / DIVERGED / COUNT with 0 mismatches), implemented-needs-L2 68 (no call on
+  the grove run; covered by the all-ports L3 runs only), ported-unhookable 3, ported-unregistered 1, deferred 28.
+
+## Open items
+
+- `CTaskSimpleInAir::ProcessPed` (0x680600): fixed (standing bit, see the table), unregistered; register it again
+  after an all-ports L3 pass with it on Rust. Harness note: the split window cannot see writes to the ped object
+  (heap), which is how this survived the split pass with 0 mismatches.
+- `sa-oracle l3` universe mode vs port-l2 list mode disagree on grove (see the table).
+- Split evidence exists for grove only (lane contention); the other recordings have L3 only. A split pass over
+  c-bug / driving / car-ai / police-gang would move most PASS-FP rows' evidence forward (they stay `implemented`
+  under the PASS-FP rule anyway).
+- Not ported: see "Not ported (left)" above (executed: `ComputeSphere`, `LookForChatPartners`, FollowNodeRoute
+  `ComputePathNodes` / ctor, the walk-round creation/route rows, `GetSoundLevel`; SA:MP unexecuted: the Swim family,
+  `ComputeDeathAnim`, `CalcForcesAndAnims`, `SetPedSafePosition`, GoToCarDoor `ControlSubTask` /
+  `ComputeRouteToDoor`).

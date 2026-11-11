@@ -17,6 +17,8 @@
 #   e2e_key KEY... / e2e_keydown KEY / e2e_keyup KEY   xdotool keys on the lane's display only
 #   e2e_list_env VAR VALUE FILE print VAR=VALUE, or VAR=@<Windows path of FILE> with VALUE written to FILE
 #                               when it is too long for a Windows environment variable (SA_HOOK_MODE, SA_L2)
+#   e2e_unverified_env          (in a game run's subshell) rewrite SA_UNVERIFIED=@FILE to the file's
+#                               Windows path for sa-hook; host tools keep reading the Unix path
 #   e2e_cleanup                 stop the game (wineserver -k for the lane prefix only) and gamescope
 #
 # Isolation rules (CLAUDE.md, PLAN.md §8): nothing runs on the user's desktop (the game gets the
@@ -132,6 +134,15 @@ e2e_list_env() { # e2e_list_env VAR VALUE FILE
     local w
     w="$(e2e_winpath "$3")" || return 1
     printf '%s=@%s\n' "$1" "$w"
+}
+
+# SA_UNVERIFIED (docs/verify/HOWTO.md) selects unverified ports for sa-hook and for the host tools
+# (sa-oracle l3, hook-names.py). Its @FILE form names a Unix path; sa-hook under Wine needs the Windows
+# path. Call in the subshell that starts the game, after the lane is set up.
+e2e_unverified_env() {
+    case "${SA_UNVERIFIED:-}" in
+        @/*) export SA_UNVERIFIED="@$(e2e_winpath "${SA_UNVERIFIED#@}")" ;;
+    esac
 }
 
 # Replace a top-level file in the lane game dir; never writes through a symlink into wine/gta-sa.

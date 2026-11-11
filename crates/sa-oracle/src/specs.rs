@@ -447,9 +447,14 @@ pub fn all() -> Vec<Spec> {
 }
 
 pub fn by_key(key: &str) -> Option<Spec> {
-    all()
-        .into_iter()
-        .find(|s| s.key.eq_ignore_ascii_case(key) || s.name.eq_ignore_ascii_case(key))
+    // `0x` address (tools/verify/writer-gate.sh runs the L1 specs of new hooks by address)
+    let addr = key
+        .strip_prefix("0x")
+        .or_else(|| key.strip_prefix("0X"))
+        .and_then(|h| u32::from_str_radix(h, 16).ok());
+    all().into_iter().find(|s| {
+        s.key.eq_ignore_ascii_case(key) || s.name.eq_ignore_ascii_case(key) || Some(s.addr) == addr
+    })
 }
 
 /// The SolveQuadratic spec with another port in place of the real one (the INF-12 mutation smoke test

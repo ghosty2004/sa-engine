@@ -328,3 +328,126 @@ Verdict counts (130 hooks + 3 not hooked): **L1 5**, **L2 81**, **implemented-ne
 | 0x420C40 | CCamera::IsSphereVisible- | ported-unhookable | protection reads the entry bytes as data (push 0x420C46 at 0x14664CF); camctl::is_sphere_visible_with_matrix, reached through orig! by the Rust CCamera::IsSphereVisible (L2 PASS) |
 | 0x50AC20 | CCamera::Fade | ported-unhookable | protection reads the entry bytes as data (sbb edx, [0x50AC20] at 0x1566C27); camfx::fade |
 | 0x5150E0 | CCamera::CalculateDerivedValues | ported-not-hooked | L2 pause-restart (first build, hooked): 1000/1000 cases differ only in m_mMatInverse +0xC (RwMatrix flags): CMatrix::Invert-2 leaves its stack local's pad unwritten, so the value is the caller's stack garbage (orig 4); camctl::calculate_derived_values_port |
+
+---
+
+# PORT-CAM-2: second pass (2026-11-11)
+
+Second pass over CAM (agent + 2 helpers, lane 6). It ports 49 more functions: 46 `#[hook]` registrations and 3
+ported but not hooked (`CCam::Process`, `CCamera::CameraColDetAndReact`, `CIdleCam::SetTarget`). SA:MP-priority rows (`catalog/samp-priority.csv`) came first, then corpus-executed rows, then
+the CAM rows of `catalog/unk-classification-proposal.csv`. The verdicts are in `docs/arch/cam-port-2-verdicts.tsv`.
+The main session sets `catalog/state.csv`.
+
+## New modules
+
+| file | contents |
+|---|---|
+| `camproc.rs` | Small UNK helpers: `ConvertPedNode2BoneTag` 0x4D58A0, decimal rounding 0x50A0A0 / 0x50A120, the DW heli-chase settings init 0x50E180, the member constructors 0x50E470 / 0x5097B0, the cull-zone centre 0x72D6D0 and the boat look height 0x509CA0. Also `~CCamera`, its scalar deleting destructor, the four `__dtor_*`, `CCam::Process_Fixed`, the enter-car stick modifier 0x63A380, `CIdleCam::Process` / `Run` / `IsTargetValid` (and `SetTarget`, not hooked), `CCamera::DrawBordersForWideScreen` and **`CCam::Process`** (20 hooks; `CCam::Process` and `SetTarget` are ported but not hooked) |
+| `statics.rs` (extended) | The 14 header-constant initialisers `__init_g_b6eba0` .. `__init_g_c73c4c`. Each translation unit of the timing header computes its own copy of `0.005/16`, `1/50`, `100/3.6`, `1/50^2`, `10/50^2` and `0.2778/50`. The `* 10` variants read the copy computed just before, as a variable. |
+| `curves.rs` (extended) | `CCurves::CalcCurvePoint` 0x43C900: a literal `Fpu` transcription of all 435 instructions, keeping the stack slots it reuses |
+| `camcol.rs` (helper) | `CCamera::ImproveNearClip` 0x516B20; `CCamera::CameraColDetAndReact` 0x520190 (ported, **not hooked**, see below) |
+| `camtarget.rs` (helper) | `CCamera::UpdateTargetEntity` 0x50C360 |
+| `splines.rs` (helper) | CCamPathSplines: the vector / scalar evaluators 0x5B2090 / 0x5B2330, `CCamera::LoadPathSplines` 0x5B24D0, `CCam::Process_FlyBy` 0x5B25F0 |
+| `camtrans.rs` (helper) | `CCamera::StartTransition` 0x515200, `CCamera::ProcessShake(float)` 0x516560 |
+| `cammodes.rs` (helper) | `CCam::ProcessPedsDeadBaby` 0x519250, `CCam::Process_SpecialFixedForSyphon` 0x517500, `CCam::Process_AttachedCam` 0x512B10 |
+
+Shared files changed: `tools/e2e/l2-extras.txt` (section `# PORT-CAM-2`) and the lists `tools/e2e/lists/cam2-l2.txt` (plain
+L2) and `cam2-split.txt` (split mode). No shared crate was changed. sa-cam was already registered in `sa-ports`.
+
+## Findings worth knowing
+
+- **Unhookable because too short:** the instructions before the `ret` are under 5 bytes, so the 5-byte patch does not fit
+  (sa-hook `steal`).
+  - `CCamera::GetFading` 0x50ADE0 (`mov al,[ecx+0x51]; ret`)
+  - `CCamera::Get_Just_Switched_Status` 0x50AE10
+  - Bare `ret` bodies: 0x5097C0, 0x5097D0, 0x509800, 0x50E080, `CMBlur::MotionBlurRender` 0x71D700,
+    `CCamera::InitialiseCameraForDebugMode` 0x50AF90, `CCamera::ProcessObbeCinemaCameraPed` 0x50B880,
+    `CCurves::TestCurves` 0x43C600, `__dtor_gIdleCam` 0x8563D0
+
+  All of these are trivial; phase B can implement them directly.
+- **`CIdleCam::SetTarget` 0x50A280 is ported but not hooked:** protection reads its entry bytes
+  (`sbb ebx, [0x50A281]` at 0x4039BB; sa-hook `every_hook_installs_on_the_exe` and `patch_refs`). Its entry
+  `jmp 0x403961` goes to a protection fragment that loads `eax = [rol([0x156077C], [0x5E4224] & 31)]`. That rotates to
+  `[0xB7CB84]`, so the fragment loads `CTimer::m_snTimeInMilliseconds` for the sign test.
+- **`CCamera::CameraColDetAndReact` 0x520190 is ported but not hooked.** When `*source == *target` exactly,
+  `ConeCastCollisionResolve` returns 0 without writing `dist`. The function then copies its uninitialised local
+  `[esp+0x10]` into `gCurDistForCam` and `*source`. The port uses 1.0 there.
+
+  It is stdcall (ECX never read; caller 0x52102D does not load it). The ready attribute is in its doc comment.
+  Hooking it needs a decision: either a stack-faithful call, or a ledger entry for the equal-points case.
+- **Not ported, FPTAN:** `CCamera::AvoidTheGeometry` 0x514030 (`tan(fov/2)` at 0x5143D1). It waits for the X87
+  branch, like `Find3rdPersonQuickAimPitch` / `Find3rdPersonCamTargetVector`.
+- **`CCam::Process` 0x526FC0 is ported but not hooked.** On the grove walk, split mode gives 1000/1000 cases with
+  0 mismatches. With it on Rust, however, the following `CCamera::CalculateDerivedValues` picks up a different stale
+  stack word as `m_mMatInverse.flags` (0xB6FA80). This is the ROADMAP's CalculateDerivedValues issue.
+  - The original leaves the return address 0x527DB4 of its `KeepTrackOfTheSpeed` call in that slot. That value has
+    bit 0x20000 (`rwMATRIXINTERNALIDENTITY`) set, which `RwV3dTransformPoints` tests.
+  - The Rust frame leaves other data there (seen: 0x43420000).
+  - The split report shows this as an input divergence of the next `UpdateTargetEntity` / `ImproveNearClip` calls.
+
+  Hooking it needs a decision (a stack-faithful CalculateDerivedValues port, or a ledger entry); the ready attribute
+  is in its doc comment. The port follows the bytes:
+  - It inlines `CPlaceable::GetMatrix`, which can allocate a matrix, at every use of the target's matrix, and re-reads
+    the target pointer each time.
+  - The look-left/right `ok` flag is replaced by the vehicle appearance test (3 or 5) in the car modes.
+  - `gCameraDirection` is set to 3 before the active-cam test.
+  - The ped smoothing calls the vector helpers 0x40FE90 / 0x40FEC0 / 0x40FE30 / 0x4119D0 / 0x420800 in the original
+    order. `sPedVel.z = 0` and `sPedPos.z = P.z`.
+  - `_CIpow` goes through `orig::x87_binary`: the result is stored with `fstp qword`, which is exact for 24-bit results
+    under PC=24. This is the same path `CTaskSimpleUseGun` uses.
+  - The `gDWCamMode = -1` part of the body lives in the `.text` stub 0x401C8E.
+- **`CCurves::CalcCurvePoint`** follows the byte-level slot reuse:
+  - The speed variation is stored in the `endDir` argument slot. `CalcCorrectedDist` writes its interpolation over it.
+  - On the bend path, `min(d1, d2, 5)` overwrites the same slot.
+  - The speed's total distance is recomputed from the stack (`2m + bend2 + bend1`, or `L + 0 + 0` on the straight path).
+- **gta-reversed differences kept from the bytes** (`StartTransition`, from the helper's notes):
+  - Mode 4 entered from 0x12 always uses `atan(front) + 235°`, because the wrap tests run on `fld 0.0`.
+  - Mode 0x12 stores `atan(front)` unchanged.
+  - The fixed-mode copies and reference changes happen twice.
+- **Other byte details kept:**
+  - `Process_AttachedCam` sums the water colour blue first.
+  - `IsTargetValid` compares the distance with `+0x44` (`test ah,5; jp`) and `+0x4C` (`test ah,0x41; je`). Its LOS test
+    is `GetIsLineOfSightClear(src, P, 1, 0, 0, 1, 0, 0, 1)` with `pIgnoreEntity` set to the target.
+  - `FUN_0050e180` is `preserve = "ecx"`: caller 0x5173F0 reads ECX after the call.
+- **x87 approximations** (sa-math's f64 model, as in the first pass):
+  - FSIN/FCOS: `ImproveNearClip`, `ProcessShake`, `ProcessPedsDeadBaby`, `Process_AttachedCam`, `Process_FlyBy`.
+  - FPATAN: `StartTransition`, 0x63A380, `Process_SpecialFixedForSyphon`.
+  - `GetATanOfXY` results go through an f64 (double rounding), and `atof` results through an f64.
+
+## Verification
+
+All runs were on lane 6 (`SA_ROOT=/home/ghosty2004/sa-engine`) and used the lists `cam2-l2.txt` (plain L2,
+`L2_PER_FRAME=1000`) and `cam2-split.txt` (`SPLIT_PER_FRAME=20`, `SPLIT_STACKFILL=16384`).
+- **Grove walk, plain L2 + Rust** (`port-l2-cam2-g-l2`):
+  - (b) and (c) are IDENTICAL.
+  - Every hook that was called passes with 0 mismatches and 0 undeclared writes, after declaring the
+    `# PORT-CAM-2` regions.
+  - The functions called are `ConvertPedNode2BoneTag`, 0x50A0A0, 0x50A120, 0x50E180, 0x50E470, 0x5097B0,
+    `Process_FlyBy` and `CalcCurvePoint`.
+- **Grove walk, split + Rust** (`port-l2-cam2-g-split`):
+  - (b), (c) and (e) traces are IDENTICAL.
+  - Every split verdict is PASS or PASS-FP with 0 mismatches. This covers the 14 header initialisers,
+    `LoadPathSplines`, `DrawBordersForWideScreen`, `CIdleCam::Process` and `CCam::Process` (1000 cases).
+  - `UpdateTargetEntity` and `ImproveNearClip` are DIVERGED (973/1000 compared, 0 mismatches). The cause is the input
+    divergence at 0xB6FA80 that `CCam::Process` on Rust introduced, which is why `CCam::Process` was then left
+    unhooked. Rerunning these two in split mode without it is still to do; that rerun was queued but stopped at the
+    time limit.
+  - The undeclared regions are now declared: CReferences, the RW D3D9 driver statics, and the CRT stream / `ms_line`.
+- **All ports on Rust** (`tools/e2e/verify-all.sh cam2-va 6`, final build: 46 new CAM hooks, `CCam::Process` not
+  hooked): **IDENTICAL on all 11 recordings.** These are the grove walk, air-water, anim-input, car-ai, c-bug,
+  driving, menus-hud, pause-restart, police-gang, weapon-combat and world-cheats.
+- **Tests and lints:**
+  - `cargo test --release -p sa-hook --lib`: 51 pass.
+  - `cargo test -p sa-cam`: 3 pass.
+  - clippy `-D warnings` passes for sa-cam on host (all targets) and on i686 (`--features in-process`), and for
+    sa-hook on i686. sa-oracle on host was checked before the last two fixes.
+  - The wasm32 build of sa-cam passes.
+
+Verdict counts (`cam-port-2-verdicts.tsv`): L2 25, implemented 2, implemented-needs-L2 19, ported-not-hooked 2
+(`CCam::Process`, `CameraColDetAndReact`), ported-unhookable 1 (`CIdleCam::SetTarget`). There is also 1 not ported
+(FPTAN) and 11 unhookable because they are too short.
+
+The functions with no call in the grove walk need L2 runs on the other recordings. These are the destructors,
+0x72D6D0, 0x509CA0, 0x63A380, the spline evaluators, `Process_Fixed`, `CIdleCam::Run` / `IsTargetValid`,
+`StartTransition`, `ProcessShake`, `ProcessPedsDeadBaby`, `Process_SpecialFixedForSyphon` and `Process_AttachedCam`.
+The lane 6 queue for driving, pause-restart and weapon-combat did not run in time.

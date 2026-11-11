@@ -188,14 +188,14 @@ orig! {
     /// the destructor body `__dtor_g_977be8` jumps to (0x454200, thiscall)
     pub fn dtor_977be8_body(this: GPtr<u8>) = thiscall 0x454200 => unported;
     /// `CCollision::DistToLineSqr(const CVector* start, const CVector* end, const CVector* point)` (0x412850)
-    pub fn dist_to_line_sqr(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> X87 = cdecl 0x412850 => unported;
+    pub fn dist_to_line_sqr_st0(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> f64 = cdecl 0x412850 => unported;
     /// `CGenericGameStorage::SaveDataToWorkBuffer(void*, int32)` (0x5D1270)
     pub fn save_data_to_work_buffer(data: GPtr<u8>, size: i32) = cdecl 0x5D1270 => unported;
     /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
     pub fn load_data_from_work_buffer(data: GPtr<u8>, size: i32) = cdecl 0x5D1300 => unported;
 
     /// `CPathFind::CalcDistToAnyConnectingLinks(CPathNode*, CVector)` (0x44F190)
-    pub fn calc_dist_to_any_connecting_links_call(this: GPtr<u8>, node: GPtr<u8>, px: f32, py: f32, pz: f32) -> X87 = thiscall 0x44F190 => calc_dist_to_any_connecting_links;
+    pub fn calc_dist_to_any_connecting_links_call_st0(this: GPtr<u8>, node: GPtr<u8>, px: f32, py: f32, pz: f32) -> f64 = thiscall 0x44F190 => calc_dist_to_any_connecting_links_f64;
     /// `CPathFind::FindNodeClosestInRegion(...)` (0x44F2C0)
     pub fn find_node_closest_in_region_call(this: GPtr<u8>, out: GPtr<u32>, region: u32, px: f32, py: f32, pz: f32, node_type: u32, dist: GPtr<f32>, low_traffic: u32, unkn: u32, boats: u32, unused: u32) = thiscall 0x44F2C0 => find_node_closest_in_region;
     /// `CPathFind::FindNodeClosestToCoors(CVector, ...)` (0x44F460)
@@ -2382,7 +2382,7 @@ orig! {
     /// `CPathFind::FindRegionForCoors(float, float)` (0x44D830)
     pub fn find_region_for_coors_call(this: GPtr<u8>, px: f32, py: f32) -> i32 = thiscall 0x44D830 => find_region_for_coors;
     /// `CWorld::FindGroundZFor3DCoord(float x, float y, float z, bool* found, CEntity** outEntity)` (0x5696C0)
-    pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, ent: GPtr<GPtr<u8>>) -> X87 = cdecl 0x5696C0 => unported;
+    pub fn find_ground_z_for_3d_coord_st0(px: f32, py: f32, pz: f32, found: GPtr<u8>, ent: GPtr<GPtr<u8>>) -> f64 = cdecl 0x5696C0 => unported;
 }
 
 /// `CPathFind::GeneratePedCreationCoors_Interior(float x, float y, CVector* outCoords, CNodeAddress*,
@@ -3399,3 +3399,22 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FIND_NODE_COORS_FOR_SCRIPT_TWO_NODES,
     HOOK_LOAD_PATH_FIND_DATA_AREA,
 ];
+
+/// `dist_to_line_sqr_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+pub fn dist_to_line_sqr(a: GPtr<f32>, b: GPtr<f32>, p: GPtr<f32>) -> X87 {
+    X87::from_f64_exact(dist_to_line_sqr_st0(a, b, p))
+}
+
+/// `calc_dist_to_any_connecting_links_call_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+pub fn calc_dist_to_any_connecting_links_call(this: GPtr<u8>, node: GPtr<u8>, px: f32, py: f32, pz: f32) -> X87 {
+    X87::from_f64_exact(calc_dist_to_any_connecting_links_call_st0(this, node, px, py, pz))
+}
+
+/// `find_ground_z_for_3d_coord_st0` with its ST0 result as `X87` (orig! returns stay register-sized).
+pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, ent: GPtr<GPtr<u8>>) -> X87 {
+    X87::from_f64_exact(find_ground_z_for_3d_coord_st0(px, py, pz, found, ent))
+}
+/// Phase B target of `calc_dist_to_any_connecting_links_call_st0`: the port's ST0 result as f64.
+pub fn calc_dist_to_any_connecting_links_f64(this: GPtr<u8>, node: GPtr<u8>, px: f32, py: f32, pz: f32) -> f64 {
+    calc_dist_to_any_connecting_links(this, node, px, py, pz).to_f64()
+}

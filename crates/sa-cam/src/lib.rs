@@ -29,3 +29,10 @@ pub mod curves;
 pub mod handshaker;
 pub mod idlecam;
 pub mod statics;
+
+pub mod camcol;
+pub mod cammodes;
+pub mod camproc;
+pub mod camtarget;
+pub mod camtrans;
+pub mod splines;

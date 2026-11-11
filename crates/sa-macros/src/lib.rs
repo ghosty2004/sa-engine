@@ -35,6 +35,23 @@
 //! runs a host stand-in registered for `<module>::<fn>_original`). `R` must be its own ABI type
 //! (integers, pointers, `()`), checked at compile time.
 //!
+//! `unverified = "BATCH"` (docs/PLAN.md "Writer/verifier split", docs/verify/HOWTO.md): the port is
+//! written but not verified yet. It is compiled and registered like any other (`HookReg::batch` =
+//! `Some(BATCH)`, so the table, callers, patch_refs and keycells tests still check it), but phase A
+//! installs it only when selected (`SA_UNVERIFIED=all|BATCH|@FILE`, or named in `SA_HOOK_MODE`,
+//! `SA_L2` or an `SA_HOOK_PORTS` list). BATCH is `[a-z0-9][a-z0-9.-]*` (one writer commit, or at most
+//! ~60 hooks of one subsystem). An unverified hook must also carry the verifier's hints:
+//! - `route = "L1-pure" | "L2" | "split" | "L3-only"`: how it is to be verified;
+//! - `hazards = "none"` or a comma list of `x87-transcendental`, `stack-residue` (callers read the
+//!   stack below their ESP after the call), `entry-protection-read` (the no-CD protection reads the
+//!   entry bytes), `preserved-regs` (callers rely on ECX/EDX), `ax-al-return` (a 16/8-bit result with
+//!   the caller's upper EAX), `uninit-locals` (the original reads uninitialised stack), `heap-writes`
+//!   (writes heap memory that needs `tools/e2e/l2-extras.txt` regions);
+//! - optional `recs = "grove-walk,driving"` (corpus recordings expected to call it) and
+//!   `note = "..."` (anything else the verifier must know).
+//!
+//! `tools/verify/queue.py` reads these attributes into `catalog/verify-queue.csv`.
+//!
 //! Generated paths start with `::sa_core`, so the crate that uses `#[hook]` must have `sa_core` in
 //! scope (sa-core itself declares `extern crate self as sa_core`).
 
@@ -113,6 +130,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut entry_eax = false;
     let mut fallback = false;
     let mut footprint: Option<u32> = None;
+    let mut hints = Hints::default();
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -136,6 +154,16 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
                 return Err(syn::Error::new(v.span(), "footprint: a multiple of 4, at most 0x1000"));
             }
             footprint = Some(w);
+        } else if meta.path.is_ident("unverified") {
+            hints.batch = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("route") {
+            hints.route = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("hazards") {
+            hints.hazards = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("recs") {
+            hints.recs = Some(meta.value()?.parse()?);
+        } else if meta.path.is_ident("note") {
+            hints.note = Some(meta.value()?.parse()?);
         } else if meta.path.is_ident("entry_eax") {
             entry_eax = true;
         } else if meta.path.is_ident("fallback") {
@@ -147,14 +175,17 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
         } else {
             return Err(
-                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax, fallback or footprint")
+                meta.error("expected addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, unverified, route, hazards, recs or note")
             );
         }
         Ok(())
     });
     parse_macro_input!(attr with parser);
     let f = parse_macro_input!(item as ItemFn);
-    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint) {
+    if let Err(e) = hints.check() {
+        return e.to_compile_error().into();
+    }
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, &hints) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -172,6 +203,7 @@ fn expand(
     entry_eax: bool,
     fallback: bool,
     footprint: Option<u32>,
+    hints: &Hints,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -250,7 +282,20 @@ fn expand(
     let reg = format_ident!("HOOK_{}", upper);
     let abi = conv.abi();
     let variant = conv.variant();
-    let doc = format!("Hook registration of `{}` ({addr:#x}).", name.value());
+    let mut doc = format!("Hook registration of `{}` ({addr:#x}).", name.value());
+    if let Some(b) = &hints.batch {
+        doc += &format!(
+            " Unverified (batch `{}`, route {}, hazards {}): phase A installs it only when selected \
+             (`SA_UNVERIFIED`).",
+            b.value(),
+            hints.route.as_ref().map(LitStr::value).unwrap_or_default(),
+            hints.hazards.as_ref().map(LitStr::value).unwrap_or_default()
+        );
+    }
+    let batch = match &hints.batch {
+        Some(b) => quote!(Some(#b)),
+        None => quote!(None),
+    };
     // Registers to return unchanged, in push order.
     let mut saved: Vec<&'static str> = Vec::new();
     if let Some(p) = &preserve {
@@ -578,6 +623,74 @@ fn expand(
             set_original: #set_original,
             arg8: #arg8,
             arg16: #arg16,
+            batch: #batch,
         };
     })
+}
+
+/// The writer/verifier hints of `#[hook(unverified = ...)]` (docs/verify/HOWTO.md).
+#[derive(Default)]
+struct Hints {
+    batch: Option<LitStr>,
+    route: Option<LitStr>,
+    hazards: Option<LitStr>,
+    recs: Option<LitStr>,
+    note: Option<LitStr>,
+}
+
+/// `route` values.
+const ROUTES: &[&str] = &["L1-pure", "L2", "split", "L3-only"];
+/// `hazards` values (besides `none`).
+const HAZARDS: &[&str] = &[
+    "x87-transcendental",
+    "stack-residue",
+    "entry-protection-read",
+    "preserved-regs",
+    "ax-al-return",
+    "uninit-locals",
+    "heap-writes",
+];
+
+impl Hints {
+    fn check(&self) -> syn::Result<()> {
+        let err = |l: &LitStr, m: String| Err(syn::Error::new(l.span(), m));
+        if let Some(b) = &self.batch {
+            let v = b.value();
+            let ok = v.bytes().next().is_some_and(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+                && v.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-' || c == b'.')
+                && v != "all"
+                && !v.starts_with("0x");
+            if !ok {
+                return err(b, format!("unverified: batch id `{v}` must match [a-z0-9][a-z0-9.-]* (not `all`, not 0x...)"));
+            }
+            if self.route.is_none() {
+                return Err(syn::Error::new(b.span(), format!("an unverified hook needs `route = \"{}\"`", ROUTES.join("|"))));
+            }
+            if self.hazards.is_none() {
+                return Err(syn::Error::new(b.span(), "an unverified hook needs `hazards = \"none\"` or a list of hazards"));
+            }
+        }
+        if let Some(r) = &self.route
+            && !ROUTES.contains(&r.value().as_str())
+        {
+            return err(r, format!("route must be one of {}", ROUTES.join(", ")));
+        }
+        if let Some(h) = &self.hazards {
+            let v = h.value();
+            let items: Vec<&str> = v.split(',').map(str::trim).collect();
+            if v.trim() != "none" {
+                for x in &items {
+                    if !HAZARDS.contains(x) {
+                        return err(h, format!("hazard `{x}`: expected `none` or a list of {}", HAZARDS.join(", ")));
+                    }
+                }
+            }
+        }
+        if let Some(r) = &self.recs
+            && r.value().split(',').any(|x| x.trim().is_empty())
+        {
+            return err(r, "recs: a comma list of recording names".into());
+        }
+        Ok(())
+    }
 }

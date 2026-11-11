@@ -18,10 +18,18 @@ if [ ${#RECS[@]} -eq 0 ]; then
     RECS=("$ROOT/target/e2e/lane-2/inf4/rec.sarec")
     for r in "$ROOT"/target/e2e/corpus/*.sarec; do RECS+=("$r"); done
 fi
+# Always test the current tree: build the DLL and launcher first (a stale DLL silently tests old code).
+if [ -z "${VERIFY_NO_BUILD:-}" ]; then
+    (cd "$ROOT" && systemd-run --user --scope -q -p MemoryMax="${BUILD_MEM:-14G}" \
+        cargo build -q --release --target i686-pc-windows-gnu -p sa-launcher -p sa-hook) \
+        || { echo "verify-all: build failed, nothing verified" >&2; exit 2; }
+fi
 OUT="$ROOT/target/verify-all/$TAG"
 mkdir -p "$OUT"
 # One worker per lane; each takes the next recording from a shared index file (flock).
 echo 0 > "$OUT/next"
+git -C "$ROOT" rev-parse HEAD > "$OUT/head" 2>/dev/null
+sha256sum "${E2E_BIN:-$ROOT/target/i686-pc-windows-gnu/release}/sa_hook.dll" > "$OUT/dll.sha256" 2>/dev/null
 worker() {
     local lane=$1
     while :; do

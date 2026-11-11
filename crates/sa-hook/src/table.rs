@@ -78,6 +78,9 @@ pub struct HookSpec {
     pub set_original: Option<fn(u32)>,
     /// Calling signature for the L2 oracle (None: L2 not supported for this hook).
     pub sig: Option<Sig>,
+    /// Verification batch of an unverified port (`#[hook(unverified = "BATCH")]`), `None` when verified.
+    /// Installed only when selected ([`select_unverified_from_env`], [`select`]).
+    pub batch: Option<&'static str>,
 }
 
 const fn sig(conv: Conv, args: u8, ret: Ret) -> Option<Sig> {
@@ -108,6 +111,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: sig(Conv::Cdecl, 0, Ret::Void),
     },
     HookSpec {
@@ -123,6 +127,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
@@ -138,6 +143,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: sig(Conv::Cdecl, 0, Ret::Eax),
     },
     HookSpec {
@@ -153,6 +159,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -168,6 +175,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -183,6 +191,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -198,6 +207,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -213,6 +223,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     // The CRT heap (VC7.1 static CRT): every allocation path ends in one of these. In determinism
@@ -230,6 +241,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -244,6 +256,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -258,6 +271,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -272,6 +286,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -286,6 +301,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     HookSpec {
@@ -301,6 +317,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: true,
         group: Group::Oracle,
         set_original: None,
+        batch: None,
         sig: None,
     },
     // sa-math ports (L1-verified). Installed in original mode; `SA_HOOK_MODE` / `hook NAME rust|l2`
@@ -318,6 +335,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: false,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: sig(Conv::Cdecl, 1, Ret::St0),
     },
     HookSpec {
@@ -336,6 +354,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: false,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: sig(Conv::Cdecl, 4, Ret::St0),
     },
     HookSpec {
@@ -351,6 +370,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: false,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: sig(Conv::Cdecl, 2, Ret::St0),
     },
     HookSpec {
@@ -369,6 +389,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: false,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: Some(Sig {
             conv: Conv::Cdecl,
             args: 5,
@@ -394,6 +415,7 @@ const LOCAL: [HookSpec; LOCAL_N] = [
         start_rust: false,
         group: Group::Core,
         set_original: None,
+        batch: None,
         sig: Some(Sig {
             conv: Conv::Thiscall,
             args: 0,
@@ -459,6 +481,7 @@ const fn from_core(r: &sa_core::abi::HookReg) -> HookSpec {
         start_rust: false,
         group: Group::Port,
         set_original: r.set_original,
+        batch: r.batch,
         sig: Some(sig_of(r)),
     }
 }
@@ -639,6 +662,86 @@ pub fn find(key: &str) -> Option<usize> {
         .position(|h| Some(h.addr) == addr || h.name.eq_ignore_ascii_case(key))
 }
 
+// ------------------------------------------------------------------ unverified ports -------------
+//
+// docs/PLAN.md "Writer/verifier split": a port registered with `#[hook(unverified = "BATCH")]` is part
+// of the table (every table test checks it) but phase A installs it only when it is selected, so the
+// default behaviour (every all-ports run included) never depends on unverified code. Selection:
+// `SA_UNVERIFIED` (`all`, batch ids, hook names/addresses, or `@FILE` with one entry per line), and every
+// hook named explicitly in `SA_HOOK_MODE`, `SA_L2` or an `SA_HOOK_PORTS` list. Host tools (sa-oracle l3,
+// tools/e2e/hook-names.py) read the same `SA_UNVERIFIED`, so a probe's universe and the DLL agree.
+
+/// Selected unverified hooks (1 = selected). Verified hooks are always enabled.
+static SELECTED: [AtomicU8; N] = [Z8; N];
+
+/// The verification batch of hook `i` when it is unverified.
+pub fn batch(i: usize) -> Option<&'static str> {
+    HOOKS[i].batch
+}
+
+/// Hook `i` takes part in this run: verified, or an unverified hook that was selected.
+pub fn enabled(i: usize) -> bool {
+    HOOKS[i].batch.is_none() || SELECTED[i].load(Ordering::Acquire) != 0
+}
+
+/// Selects (enables) hook `i`; no effect on a verified hook.
+pub fn select(i: usize) {
+    SELECTED[i].store(1, Ordering::Release);
+}
+
+/// The batch ids of all unverified hooks, sorted, each once.
+pub fn batches() -> Vec<&'static str> {
+    let mut v: Vec<&'static str> = HOOKS.iter().filter_map(|h| h.batch).collect();
+    v.sort_unstable();
+    v.dedup();
+    v
+}
+
+/// Parses an `SA_UNVERIFIED` value (after `@FILE` expansion): entries separated by commas or new lines,
+/// `#` starts a comment; each entry is `all` (every unverified hook), a batch id, or a hook name or
+/// `0x` address. Returns the unverified hooks it selects; an unknown entry is an error.
+pub fn parse_unverified(v: &str) -> Result<Vec<usize>, String> {
+    let mut out = Vec::new();
+    for line in v.lines() {
+        let line = line.split('#').next().unwrap_or("");
+        for k in line.split(',').map(str::trim).filter(|k| !k.is_empty()) {
+            if k == "all" {
+                out.extend((0..N).filter(|&i| HOOKS[i].batch.is_some()));
+            } else if HOOKS.iter().any(|h| h.batch == Some(k)) {
+                out.extend((0..N).filter(|&i| HOOKS[i].batch == Some(k)));
+            } else {
+                match find(k) {
+                    Some(i) if HOOKS[i].batch.is_some() => out.push(i),
+                    Some(_) => {}
+                    None => return Err(format!("SA_UNVERIFIED: {k:?} is neither `all`, a batch id nor a hook")),
+                }
+            }
+        }
+    }
+    out.sort_unstable();
+    out.dedup();
+    Ok(out)
+}
+
+/// Applies `SA_UNVERIFIED` from the process environment (once; later calls return the first result).
+/// Returns the number of unverified hooks it selected.
+pub fn select_unverified_from_env() -> Result<usize, String> {
+    static DONE: std::sync::OnceLock<Result<usize, String>> = std::sync::OnceLock::new();
+    DONE.get_or_init(|| {
+        let Ok(v) = std::env::var("SA_UNVERIFIED") else {
+            return Ok(0);
+        };
+        let ids = crate::l2::list_value(&v)
+            .map_err(|e| format!("SA_UNVERIFIED: {e}"))
+            .and_then(|v| parse_unverified(&v))?;
+        for &i in &ids {
+            select(i);
+        }
+        Ok(ids.len())
+    })
+    .clone()
+}
+
 /// What `SA_HOOK_PORTS` asks for the `Group::Port` hooks at attach:
 /// unset or empty → not installed (the original runs untouched);
 /// `orig` → installed, all in original mode (toggle them with the control channel's `hook`);
@@ -712,6 +815,38 @@ mod tests {
         assert!(PortPlan::parse(Some("nope")).is_err());
         assert_eq!(PortPlan::AllRust.start_mode(a), Mode::Rust);
     }
+    #[test]
+    fn unverified_selection() {
+        let unverified: Vec<usize> = (0..N).filter(|&i| HOOKS[i].batch.is_some()).collect();
+        assert_eq!(parse_unverified("all"), Ok(unverified.clone()));
+        assert_eq!(parse_unverified(""), Ok(vec![]));
+        assert_eq!(parse_unverified("# only a comment\n"), Ok(vec![]));
+        // a verified hook selects nothing (it is always enabled)
+        assert_eq!(parse_unverified("CPedPool::New, 0x41bd90"), Ok(vec![]));
+        assert!(parse_unverified("no-such-batch").is_err());
+        for b in batches() {
+            let ids = parse_unverified(&format!("{b}\n# comment")).unwrap();
+            assert!(!ids.is_empty() && ids.iter().all(|&i| HOOKS[i].batch == Some(b)));
+            // by hook address too
+            let one = parse_unverified(&format!("{:#x}", HOOKS[ids[0]].addr)).unwrap();
+            assert_eq!(one, vec![ids[0]]);
+        }
+        // the sa-hook-local hooks are verified by construction
+        assert!((0..LOCAL_N).all(|i| HOOKS[i].batch.is_none() && enabled(i)));
+        // verified hooks are enabled without any selection
+        assert!((0..N).filter(|&i| HOOKS[i].batch.is_none()).all(enabled));
+    }
+
+    /// Batch ids follow the macro's rule and a batch stays small enough to bisect.
+    #[test]
+    fn batches_are_well_formed() {
+        for b in batches() {
+            assert!(b.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-' || c == b'.'));
+            let n = HOOKS.iter().filter(|h| h.batch == Some(b)).count();
+            assert!(n <= 80, "batch {b}: {n} hooks (a batch is at most ~60 hooks)");
+        }
+    }
+
     use crate::x86;
 
     #[test]
@@ -770,7 +905,7 @@ mod tests {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
         let csv = std::fs::read_to_string(root.join("catalog/functions.csv")).unwrap();
         let procs = std::fs::read_to_string(root.join("catalog/procedures.csv")).unwrap();
-        for h in HOOKS {
+        for h in &HOOKS {
             let key = format!("{:#x},", h.addr);
             let Some(row) = csv.lines().find(|l| l.starts_with(&key)) else {
                 // Not a gta-reversed hook: the CRT's rand/srand (catalogue class excluded:crt, found by

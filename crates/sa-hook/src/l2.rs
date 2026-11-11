@@ -173,11 +173,13 @@ impl Default for Config {
     }
 }
 
-fn hook_list(v: &str, what: &str) -> Result<Vec<usize>, String> {
+/// A comma list of hook names/addresses; `ports` = every hook with a signature that is enabled
+/// (unverified ports only when selected, `table::enabled`).
+pub fn hook_list(v: &str, what: &str) -> Result<Vec<usize>, String> {
     let mut out = Vec::new();
     for k in v.split(',').map(str::trim).filter(|k| !k.is_empty()) {
         if k == "ports" {
-            out.extend((0..HOOKS.len()).filter(|&i| HOOKS[i].sig.is_some()));
+            out.extend((0..HOOKS.len()).filter(|&i| HOOKS[i].sig.is_some() && crate::table::enabled(i)));
             continue;
         }
         let i = crate::table::find(k).ok_or_else(|| format!("{what}: unknown hook {k:?}"))?;

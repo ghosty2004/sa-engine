@@ -7,7 +7,9 @@
 # HOOKS: comma list of hook names or addresses (any hook of sa-hook's table, see tools/e2e/hook-names.py),
 # `@FILE` (one per line, e.g. tools/e2e/lists/core-pilots.txt), `state:STATE[:DOC]` (docs/arch/*.md or DOC.md table rows
 # in that state, e.g. state:implemented-needs-L2:core-port = PORT-CORE's 191), or `ports` = every engine-crate
-# port (`#[hook]` registrations, sa_core::hooks::ALL, ...).
+# port (`#[hook]` registrations, sa_core::hooks::ALL, ...), `batch:ID` / `unverified` (unverified ports,
+# docs/verify/HOWTO.md). Unverified ports are part of `ports` only when SA_UNVERIFIED selects them (sa-hook
+# and hook-names.py read it); named explicitly they are selected by the SA_HOOK_MODE / SA_L2 lists.
 # RECORDING: an input recording made from process start in determinism mode (default: the grove walk
 # $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec, recorded first from tools/e2e/programs/grove-walk.txt
 # when missing). Every run replays it from process start with SA_HOOK_PORTS=orig (all ports installed)
@@ -209,6 +211,7 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
             esac
             export "${kv?}"
         done
+        e2e_unverified_env
         # diagnostic coverage (SA_COV points file): one output per run
         [ -n "${SA_COV:-}" ] && export SA_COV_OUT="$(win "$OUT/$name.cov.csv")"
         e2e_game_start

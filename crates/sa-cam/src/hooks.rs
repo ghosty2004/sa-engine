@@ -4,7 +4,10 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
-use crate::{cam, camctl, camera, camfx, curves, handshaker, idlecam, statics};
+use crate::{
+    cam, camcol, camctl, camera, camfx, cammodes, camproc, camtarget, camtrans, curves, handshaker, idlecam,
+    splines, statics,
+};
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -16,6 +19,12 @@ pub const MODULES: &[&[HookReg]] = &[
     idlecam::HOOKS,
     curves::HOOKS,
     statics::HOOKS,
+    camcol::HOOKS,
+    camtarget::HOOKS,
+    splines::HOOKS,
+    camproc::HOOKS,
+    camtrans::HOOKS,
+    cammodes::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -27,6 +36,12 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     handshaker::GLOBALS,
     idlecam::GLOBALS,
     curves::GLOBALS,
+    camcol::GLOBALS,
+    camtarget::GLOBALS,
+    splines::GLOBALS,
+    camproc::GLOBALS,
+    camtrans::GLOBALS,
+    cammodes::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
