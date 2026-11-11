@@ -26,4 +26,6 @@ pub mod projectile;
 pub mod statics;
 pub mod water_cannon;
 pub mod weapon;
+pub mod weapon_fire;
+pub mod weapon_impact;
 pub mod weapon_info;

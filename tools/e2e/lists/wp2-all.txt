@@ -1,0 +1,13 @@
+CBulletInfo::Update
+CFireManager::Update
+CWeapon::Fire
+CWeapon::FireSniper
+CWeapon::FireM16_1stPerson
+CWeapon::FireInstantHitFromCar2
+CWeapon::DoBulletImpact
+CWeapon::GenerateDamageEvent
+CExplosion::AddExplosion
+CWeapon::FireInstantHitFromCar
+CFire::ProcessFire
+CProjectileInfo::RemoveProjectile
+CProjectileInfo::Update

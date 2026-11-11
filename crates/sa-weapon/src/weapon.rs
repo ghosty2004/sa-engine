@@ -97,7 +97,7 @@ orig! {
     /// `FxSystem_c::SetMatrix(RwMatrix*)` (0x4AA630, thiscall)
     pub fn fx_set_matrix(fx: GPtr<u8>, m: GPtr<u8>) = thiscall 0x4AA630 => unported;
     /// `CWeapon::FireInstantHitFromCar(CVehicle*, bool left, bool right)` (0x73EC40, thiscall)
-    pub fn fire_instant_hit_from_car(this: GPtr<u8>, veh: GPtr<u8>, left: u8, right: u8) -> u8 = thiscall 0x73EC40 => unported;
+    pub fn fire_instant_hit_from_car(this: GPtr<u8>, veh: GPtr<u8>, left: u8, right: u8) -> u8 = thiscall 0x73EC40 => crate::weapon_fire::fire_instant_hit_from_car;
     /// `CAEPedWeaponAudioEntity::AddAudioEvent(int32)` (0x4E69F0, thiscall)
     pub fn ped_weapon_audio_add_event(ae: GPtr<u8>, ev: i32) = thiscall 0x4E69F0 => unported;
     /// `CStats::GetPercentageProgress()` (0x5591E0, ST0)

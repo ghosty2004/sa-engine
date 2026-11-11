@@ -134,6 +134,80 @@ pub fn x87_binary(addr: usize, _st1: f64, _st0: f64) -> f64 {
     panic!("orig::x87_binary({addr:#x}): unported")
 }
 
+/// Calls an original function that takes one operand in ST0 and returns its result in ST0: the CRT's
+/// unary `_CI*` intrinsics such as `_CIacos` (0x821E70), `_CIasin`, `_CIsqrt`, which no `extern` ABI
+/// describes. The operand is loaded with `fld qword` (exact for any value a port holds as an f64, in
+/// particular every f32 and every 64-bit-mantissa value that fits a double) and the result is stored
+/// with `fstp qword`, so the caller gets ST0 rounded to a double (exact whenever the intrinsic's result
+/// carries at most 53 mantissa bits, which holds under the game's 24-bit precision control). Runs under
+/// the game's MXCSR like every `orig!` call ([`crate::abi::call_original`]); the x87 control word is
+/// the game's. The FPU stack is balanced on return (one push, one pop), checked by the host test.
+#[cfg(sa_phase_a)]
+pub fn x87_unary(addr: usize, st0: f64) -> f64 {
+    // SAFETY: `addr` is an original CRT intrinsic with the `_CI*` convention (operand in ST0, result
+    // in ST0, EAX/ECX/EDX clobbered).
+    crate::abi::call_original(|| unsafe { raw::call_unary(addr, st0) })
+}
+
+/// Phases B/C: no original code to call (the caller's `=> path` decides).
+#[cfg(not(sa_phase_a))]
+pub fn x87_unary(addr: usize, _st0: f64) -> f64 {
+    panic!("orig::x87_unary({addr:#x}): unported")
+}
+
+/// The calling sequence behind [`x87_unary`], separate so that a host test (x86_64) can run it
+/// against hand-written intrinsics.
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[doc(hidden)]
+pub mod raw {
+    /// `fld qword [&st0]; call f; fstp qword [&out]`.
+    ///
+    /// # Safety
+    /// `f` must be a function that takes its operand in ST0, returns its result in ST0 (leaving the
+    /// FPU stack depth unchanged), preserves the callee-saved registers and the stack pointer of the
+    /// platform's C ABI, and clobbers at most the C ABI's caller-saved registers.
+    pub unsafe fn call_unary(f: usize, st0: f64) -> f64 {
+        let mut out: f64 = 0.0;
+        let (a, o) = (&raw const st0, &raw mut out);
+        // SAFETY: per the contract above; the output pointer is kept on the stack across the call
+        // (pushed twice so that x86_64 keeps its 16-byte alignment at the call) and every
+        // caller-saved register is declared clobbered.
+        #[cfg(target_arch = "x86")]
+        unsafe {
+            core::arch::asm!(
+                "push ecx",
+                "push ecx",
+                "fld qword ptr [{a}]",
+                "call {f}",
+                "pop ecx",
+                "pop ecx",
+                "fstp qword ptr [ecx]",
+                a = in(reg) a,
+                f = in(reg) f,
+                inout("ecx") o => _,
+                clobber_abi("C"),
+            );
+        }
+        #[cfg(target_arch = "x86_64")]
+        unsafe {
+            core::arch::asm!(
+                "push rcx",
+                "push rcx",
+                "fld qword ptr [{a}]",
+                "call {f}",
+                "pop rcx",
+                "pop rcx",
+                "fstp qword ptr [rcx]",
+                a = in(reg) a,
+                f = in(reg) f,
+                inout("rcx") o => _,
+                clobber_abi("C"),
+            );
+        }
+        out
+    }
+}
+
 /// Declares typed calls into possibly-original functions (see the module docs).
 #[macro_export]
 macro_rules! orig {
@@ -475,6 +549,75 @@ mod tests {
         assert_eq!(stand_in(2), 6);
         host::clear("sa_core::orig::tests::stand_in");
         assert!(std::panic::catch_unwind(|| stand_in(1)).is_err());
+    }
+
+    // Hand-written `_CI*`-convention intrinsics for the x87_unary calling sequence: one negates ST0
+    // and uses stack scratch like the CRT's `_CIacos` (`sub esp, 0xC; fst qword [esp]`), one takes the
+    // square root, one replaces ST0 by a constant through a push/pop pair.
+    #[cfg(target_arch = "x86_64")]
+    core::arch::global_asm!(
+        ".globl sa_core_test_ci_neg",
+        "sa_core_test_ci_neg:",
+        "sub rsp, 0x18",
+        "fst qword ptr [rsp]",
+        "fchs",
+        "add rsp, 0x18",
+        "ret",
+        ".globl sa_core_test_ci_sqrt",
+        "sa_core_test_ci_sqrt:",
+        "fsqrt",
+        "ret",
+        ".globl sa_core_test_ci_one",
+        "sa_core_test_ci_one:",
+        "fld1",
+        "fstp st(1)",
+        "ret",
+    );
+
+    #[cfg(target_arch = "x86_64")]
+    unsafe extern "C" {
+        fn sa_core_test_ci_neg();
+        fn sa_core_test_ci_sqrt();
+        fn sa_core_test_ci_one();
+    }
+
+    /// The x87 status word's TOP field (stack depth marker).
+    #[cfg(target_arch = "x86_64")]
+    fn fpu_top() -> u16 {
+        let mut sw: u16 = 0;
+        // SAFETY: fnstsw only stores the status word.
+        unsafe { core::arch::asm!("fnstsw word ptr [{p}]", p = in(reg) &raw mut sw) };
+        (sw >> 11) & 7
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn x87_unary_calling_sequence() {
+        let top = fpu_top();
+        for &(v, neg, root) in &[
+            (2.0f64, -2.0f64, core::f64::consts::SQRT_2),
+            (0.25, -0.25, 0.5),
+            (f32::MAX as f64, -(f32::MAX as f64), (f32::MAX as f64).sqrt()),
+            (1.0e-300, -1.0e-300, 1.0e-150),
+        ] {
+            // SAFETY: the three intrinsics follow the documented convention.
+            unsafe {
+                assert_eq!(raw::call_unary(sa_core_test_ci_neg as *const () as usize, v), neg);
+                assert_eq!(raw::call_unary(sa_core_test_ci_sqrt as *const () as usize, v), root);
+                assert_eq!(raw::call_unary(sa_core_test_ci_one as *const () as usize, v), 1.0);
+            }
+            assert_eq!(fpu_top(), top, "the FPU stack is balanced after each call");
+        }
+        // NaN payloads and signed zero pass through the fld/fstp pair unchanged.
+        // SAFETY: as above.
+        let z = unsafe { raw::call_unary(sa_core_test_ci_neg as *const () as usize, 0.0) };
+        assert_eq!(z.to_bits(), (-0.0f64).to_bits());
+        let q = f64::from_bits(0x7FF8_0000_0000_1234);
+        // SAFETY: as above.
+        let r = unsafe { raw::call_unary(sa_core_test_ci_sqrt as *const () as usize, q) };
+        assert_eq!(r.to_bits(), 0x7FF8_0000_0000_1234);
+        assert!(std::panic::catch_unwind(|| x87_unary(0x821E70, 0.5)).is_err());
+        assert_eq!(fpu_top(), top);
     }
 
     #[test]
