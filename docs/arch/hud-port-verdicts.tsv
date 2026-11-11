@@ -1,0 +1,149 @@
+address	name	state	evidence
+0X719380	CFont::SetScale	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7193A0	CFont::SetScaleForCurrentLanguage	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719400	CFont::SetSlantRefPoint	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:1/1 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X719420	CFont::SetSlant	L2	L2 grove:928/928 PASS (0 mismatches, 0 undeclared); L2 pr:310/310 PASS (0 mismatches, 0 undeclared); L2 cheats:104/104 PASS (0 mismatches, 0 undeclared)
+0X719430	CFont::SetColor	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719490	CFont::SetFontStyle	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7194D0	CFont::SetWrapx	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7194E0	CFont::SetCentreSize	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7194F0	CFont::SetRightJustifyWrap	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719500	CFont::SetAlphaFade	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719510	CFont::SetDropColor	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719570	CFont::SetDropShadowPosition	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719590	CFont::SetEdge	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7195B0	CFont::SetProportional	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7195C0	CFont::SetBackground	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7195E0	CFont::SetBackgroundColor	L2	L2 grove:755/755 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719800	CFont::InitPerFrame	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X718770	CFont::GetLetterIdPropValue-	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X7192C0	CFont::FindSubFontCharacter	L1	L1 HudFindSubFontCharacter 1,002,000 cases, 0 mismatches; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X719750	CFont::GetCharacterSize	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X71A5E0	CFont::GetNumberLines	L2	L2 grove:647/647 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:664/664 PASS (0 mismatches, 0 undeclared)
+0X718E50	CFontChar::Set	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X588F50	CHud::SetVehicleName	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X588B50	CHud::HelpMessageDisplayed	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X589070	CHud::ResetWastedText	L2	L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X588BB0	CHud::SetZoneName	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X588B60	CHud::GetYPosBasedOnHealth	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X588F60	CHud::SetMessage	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X588FC0	CHud::SetBigMessage	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X588A50	CHud::GetRidOfAllHudMessages	L2	L2 grove:6/6 PASS (0 mismatches, 0 undeclared); L2 pr:7/7 PASS (0 mismatches, 0 undeclared); L2 cheats:6/6 PASS (0 mismatches, 0 undeclared)
+0X58FEA0	CHudColours::GetRGB	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X58FEE0	CHudColours::GetRGBA	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X56D180	CLocalisation::Initialise	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:1/1 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X56D1A0	CLocalisation::SetNormalGame	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D1C0	CLocalisation::SetFrenchGame	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D1E0	CLocalisation::SetGermanGame	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D200	CLocalisation::GermanGame	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D210	CLocalisation::FrenchGame	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D220	CLocalisation::Metric	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D250	CLocalisation::ScreamsFromKills	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D280	CLocalisation::ShootLimbs	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D290	CLocalisation::KnockDownPeds	L2	L2 cbug:4/4 PASS (0 mismatches, 0 undeclared); L2 weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X56D2A0	CLocalisation::KillFrenzy	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D2B0	CLocalisation::StealFromDeadPed	L2	L2 cbug:1/1 PASS (0 mismatches, 0 undeclared)
+0X56D2C0	CLocalisation::KillPeds	L2	L2 weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X56D2D0	CLocalisation::PedsOnFire	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X58FD20	CHudColours::SetRGBAValue	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X7170E0	CCredits::Start	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X717100	CCredits::Stop	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X571EE0	CUserDisplay::Init	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X5720A0	CUserDisplay::Process	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X582050	CMenuSystem::SetColumnWidth	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X5807E0	CMenuSystem::CheckForSelected	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X580750	CMenuSystem::SwitchOffMenu	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X581B30	CMenuSystem::ActivateOneItem	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X581990	CMenuSystem::ActivateItems	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X84F1C0	__init_CHud__Sprites	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X854DC0	__init_CFont__Sprite	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X854DF0	__init_CFont__ButtonSprite	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X84F0D0	__init_CRadar__RadarBlipSprites	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X84F0A0	__init_CRadar__ArrowBlipColour	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X84F1F0	__init_HudColour	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X84EE40	__init_FrontEndMenuManager	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X84ED80	__init_g_ba672c	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X582820	CRadar::GetNewUniqueBlipIndex	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X582870	CRadar::GetActualBlipArrayIndex	L1	L1 HudRadarGetActualBlipArrayIndex 1,002,000 cases, 0 mismatches; L2 grove:319/319 PASS (0 mismatches, 0 undeclared); L2 pr:110/110 PASS (0 mismatches, 0 undeclared); L2 cheats:137/137 PASS (0 mismatches, 0 undeclared)
+0X583AB0	CRadar::ChangeBlipColour	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X583D70	CRadar::SetBlipSprite	L2	L2 grove:46/46 PASS (0 mismatches, 0 undeclared); L2 pr:91/91 PASS (0 mismatches, 0 undeclared); L2 cheats:46/46 PASS (0 mismatches, 0 undeclared)
+0X583D20	CRadar::ChangeBlipDisplay	L2	L2 grove:33/33 PASS (0 mismatches, 0 undeclared); L2 pr:66/66 PASS (0 mismatches, 0 undeclared); L2 cheats:33/33 PASS (0 mismatches, 0 undeclared)
+0X583CC0	CRadar::ChangeBlipScale	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X583C70	CRadar::ChangeBlipBrightness	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X583EB0	CRadar::SetBlipFriendly	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X583DB0	CRadar::SetBlipAlwaysDisplayInZoom	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X583E00	CRadar::SetBlipFade	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X583E50	CRadar::SetCoordBlipAppearance	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X583F00	CRadar::SetBlipEntryExit	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X587C10	CRadar::ClearActualBlip-OG	L2	L2 cbug:2/2 PASS (0 mismatches, 0 undeclared); L2 anim:2/2 PASS (0 mismatches, 0 undeclared); L2 weapon:2/2 PASS (0 mismatches, 0 undeclared)
+0X587CE0	CRadar::ClearBlip	L2	L2 grove:2/2 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:2/2 PASS (0 mismatches, 0 undeclared)
+0X587C60	CRadar::ClearBlipForEntity-OG	L2	L2 grove:806/806 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:455/455 PASS (0 mismatches, 0 undeclared)
+0X583AF0	CRadar::HasThisBlipBeenRevealed	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X583420	CRadar::CalculateBlipAlpha	L1	L1 HudRadarCalculateBlipAlpha(+Map) 1,000,058 cases each, 0 mismatches (SNaN unverified); L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X5832F0	CRadar::LimitRadarPoint	L1	L1 HudRadarLimitRadarPoint(+Map) 1,003,364 cases each, 0 mismatches (SNaN unverified); L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X584D40	CRadar::IsPointInsideRadar	L1	L1 HudRadarIsPointInsideRadar 1,003,364 cases, 0 mismatches (SNaN unverified); no call in grove / pr / cheats / cbug / anim / weapon
+0X584B00	CRadar::ClipRadarTileCoords	L1	L1 HudRadarClipRadarTileCoords 1,002,000 cases, 0 mismatches; no call in grove / pr / cheats / cbug / anim / weapon
+0X583530	CRadar::TransformRealWorldPointToRadarSpace	L1	L1 HudRadarTransformRealWorldPointToRadarSpace 1,060,000 cases, 0 mismatches (SNaN unverified); L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X583480	CRadar::TransformRadarPointToScreenSpace	L1	L1 HudRadarTransformRadarPointToScreenSpace(+Map) 1,060,000 cases each, 0 mismatches (SNaN unverified); L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X584A80	CRadar::SetupRadarRect	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X584D90	CRadar::GetTextureCorners	L1	L1 HudRadarGetTextureCorners 1,002,000 cases, 0 mismatches; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X583820	CRadar::SetCoordBlip	L2	L2 grove:2/2 PASS (0 mismatches, 0 undeclared); L2 pr:3/3 PASS (0 mismatches, 0 undeclared); L2 cheats:2/2 PASS (0 mismatches, 0 undeclared)
+0X583920	CRadar::SetShortRangeCoordBlip	L2	L2 grove:44/44 PASS (0 mismatches, 0 undeclared); L2 pr:88/88 PASS (0 mismatches, 0 undeclared); L2 cheats:44/44 PASS (0 mismatches, 0 undeclared)
+0X5839A0	CRadar::SetEntityBlip	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X587FB0	CRadar::Initialise	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X584C50	CRadar::StreamRadarSections-xy	L2	split grove:1000/1000 PASS (0 mismatches, 0 undeclared); split pr:1000/1000 PASS (0 mismatches, 0 undeclared); split cheats:1000/1000 PASS (0 mismatches, 0 undeclared); split weapon:1000/1000 PASS (0 mismatches, 0 undeclared)
+0X5858D0	CRadar::StreamRadarSections-vec	L2	split grove:3/3 PASS (0 mismatches, 0 undeclared); split pr:6/6 PASS (0 mismatches, 0 undeclared); split cheats:4/4 PASS (0 mismatches, 0 undeclared); split weapon:4/4 PASS (0 mismatches, 0 undeclared)
+0X583B40	CRadar::DisplayThisBlip	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69DB50	CMessages::GetStringLength	L1	L1 HudMsgGetStringLength 1,002,000 cases, 0 mismatches; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69DB70	CMessages::StringCopy	L1	L1 HudMsgStringCopy + HudMsgStringCopyNull 1,002,000 cases each, 0 mismatches; L2 grove:83/83 PASS (0 mismatches, 0 undeclared); L2 pr:104/104 PASS (0 mismatches, 0 undeclared); L2 cheats:147/147 PASS (0 mismatches, 0 undeclared)
+0X69DBD0	CMessages::StringCompare	L1	L1 HudMsgStringCompare 1,002,000 cases, 0 mismatches; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69DC50	CMessages::CutString	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69DCD0	CMessages::ClearMessages	L2	L2 grove:6/6 PASS (0 mismatches, 0 undeclared); L2 pr:12/12 PASS (0 mismatches, 0 undeclared); L2 cheats:7/7 PASS (0 mismatches, 0 undeclared)
+0X69DD30	CMessages::ClearSmallMessagesOnly	L2	L2 cheats:1/1 PASS (0 mismatches, 0 undeclared); L2 cbug:1/1 PASS (0 mismatches, 0 undeclared); L2 weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X69DD50	CMessages::AddToPreviousBriefArray	L2	L2 grove:3/3 PASS (0 mismatches, 0 undeclared); L2 pr:5/5 PASS (0 mismatches, 0 undeclared); L2 cheats:6/6 PASS (0 mismatches, 0 undeclared)
+0X69DE70	CMessages::ClearPreviousBriefArray	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69DE90	CMessages::InsertNumberInString	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69E040	CMessages::InsertStringInString	L1	L1 HudMsgInsertStringInString 1,002,000 cases, 0 mismatches (Unicorn EFLAGS-across-rep-movsb workaround patch); L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69E160	CMessages::InsertPlayerControlKeysInString	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69E360	CMessages::AddMessageWithNumberQ	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69E4E0	CMessages::AddMessageJumpQWithNumber	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69E5F0	CMessages::AddBigMessageWithNumber	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69E6E0	CMessages::AddBigMessageWithNumberQ	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69E800	CMessages::AddMessageWithStringQ	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69E950	CMessages::AddMessageJumpQWithString	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69EDC0	CMessages::ClearAllMessagesDisplayedByGame	L2	L2 grove:6/6 PASS (0 mismatches, 0 undeclared); L2 pr:7/7 PASS (0 mismatches, 0 undeclared); L2 cheats:6/6 PASS (0 mismatches, 0 undeclared)
+0X69EE00	CMessages::Init	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X69EE60	CMessages::Process	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69EFC0	CMessages::Display	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69F0B0	CMessages::AddMessageQ	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69F1E0	CMessages::AddMessageJump	L2	L2 grove:3/3 PASS (0 mismatches, 0 undeclared); L2 pr:7/7 PASS (0 mismatches, 0 undeclared); L2 cheats:3/3 PASS (0 mismatches, 0 undeclared)
+0X69F2B0	CMessages::AddBigMessage	L2	L2 cheats:1/1 PASS (0 mismatches, 0 undeclared); L2 cbug:1/1 PASS (0 mismatches, 0 undeclared); L2 anim:1/1 PASS (0 mismatches, 0 undeclared); L2 weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X69F370	CMessages::AddBigMessageQ	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69F510	CKeyArray::Unload	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69F570	CKeyArray::BinarySearch	L1	L1 HudMsgBinarySearch 1,002,000 cases, 0 mismatches; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X69F640	CData::Unload	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69FBD0	CText::GetNameOfLoadedMissionText	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X69FF20	CText::Unload	L2	split grove:4/4 PASS (0 mismatches, 0 undeclared); split pr:4/4 PASS (0 mismatches, 0 undeclared); split cheats:4/4 PASS (0 mismatches, 0 undeclared); split weapon:4/4 PASS (0 mismatches, 0 undeclared)
+0X6A00F0	CText::Constructor	L2	split grove:1/1 PASS (0 mismatches, 0 undeclared); split pr:1/1 PASS (0 mismatches, 0 undeclared); split cheats:1/1 PASS (0 mismatches, 0 undeclared); split weapon:1/1 PASS (0 mismatches, 0 undeclared)
+0X6A0140	CText::Destructor	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CA90	COnscreenCounterEntry::ProcessForDisplayCounter	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CB00	COnscreenCounterEntry::SetColourID	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CB10	COnscreenTimerEntry::Process	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X44CBC0	COnscreenTimer::Init	L2	L2 grove:1/1 PASS (0 mismatches, 0 undeclared); L2 pr:2/2 PASS (0 mismatches, 0 undeclared); L2 cheats:1/1 PASS (0 mismatches, 0 undeclared)
+0X44CC20	COnscreenTimer::ProcessForDisplay	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X44CD30	COnscreenTimer::Process	L2	L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared)
+0X44CD50	COnscreenTimer::AddClock	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CDA0	COnscreenTimer::AddCounter	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CE60	COnscreenTimer::ClearClock	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CE80	COnscreenTimer::ClearCounter	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CEB0	COnscreenTimer::SetCounterFlashWhenFirstDisplayed	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X44CEE0	COnscreenTimer::SetClockBeepCountdownSecs	implemented-needs-L2	no call in grove / pr / cheats / cbug / anim / weapon
+0X56D230	CLocalisation::Blood	ported-unhookable	3-byte function (mov al,1; ret): TooShort(3); hud::localisation_blood
+0X56D240	CLocalisation::Porn	ported-unhookable	3-byte function (mov al,1; ret): TooShort(3); hud::localisation_porn
+0X56D260	CLocalisation::Prostitutes	ported-unhookable	3-byte function (mov al,1; ret): TooShort(3); hud::localisation_porn
+0X56D270	CLocalisation::KickingWhenDown	ported-unhookable	3-byte function (mov al,1; ret): TooShort(3); hud::localisation_kicking_when_down
+0X58FD50	CHudColours::GetIntColour	ported-unhookable	entry bytes read as data by protection code (sbb ecx,[0x58FD50] at 0x403CCE); hud::get_int_colour
+0X6A0000	CKeyArray::Search	ported-unhookable	entry bytes read as data at 0x522974, 0x5F7B7E, 0x62FDB5, 0x15648C5, 0x156DD95 (+58 code-key readers); text.rs
+0X6A0050	CText::Get	ported-unhookable	protection reads the dword at 0x6A004D (covers the entry) at 0xD723B1 / 0xD72411 (keycells); text.rs
+0X719600	CFont::SetJustify	ported-unhookable	not hooked: caller 0x58BAC5 reads ECX (stack-slot push) -> preserve needed, no L1 spec possible for a global writer; while hooked (first runs): L2 grove 657/657, pr and cheats PASS, 0 mismatches; font::set_justify
+0X719610	CFont::SetOrientation	ported-unhookable	not hooked: as SetJustify, and the original returns ECX=0; while hooked (first runs): L2 grove/pr/cheats 1000/1000 PASS, 0 mismatches; font::set_orientation

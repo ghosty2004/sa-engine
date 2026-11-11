@@ -423,6 +423,9 @@ pub fn all() -> Vec<Spec> {
     .chain(crate::specs_input_ccm::all())
     .chain(crate::specs_anim_a::all())
     .chain(crate::specs_anim_b::all())
+    .chain(crate::specs_hud::all())
+    .chain(crate::specs_hud_radar::all())
+    .chain(crate::specs_hud_msg::all())
     .collect()
 }
 

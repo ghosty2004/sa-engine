@@ -752,3 +752,9 @@
   IDENTICAL in the first batch. No state changes (partial switches stay implemented). Decisions in ROADMAP.
 - Known red: sa-oracle `--test l1` preserved_registers_match_the_hook_registrations (sa-script ECX preserves without
   specs) — next small task.
+
+## 2026-11-11 PORT-HUD integrated (main session)
+- Agent a6f6e6f4 + 2 helpers: crate sa-hud, 3 spec files, docs/arch/hud-port.md + verdicts, lists, extras section;
+  port-l2.sh stale wine.log fix (taken earlier for the SCRIPT-2 reruns).
+- Merge: registration conflicts resolved (hud after veh). sa-hook lib 45, sa-hud 3, workspace clippy, i686 OK;
+  all-ports IDENTICAL on all 7 recordings. States: 78 → L2, 14 → L1, 56 → implemented. F1 = 1128 (7.29 %).
