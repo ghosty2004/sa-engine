@@ -1,0 +1,15 @@
+COcclusion::IsPositionOccluded
+COcclusion::ProcessBeforeRendering
+COccluder::ProcessLineSegment
+CGlass::IsObjectGlass
+CGlass::Init
+CGlass::FindFreePane
+CGlass::AskForObjectToBeRenderedInGlass
+CGlass::CalcAlphaWithNormal
+CStencilShadows::GraphicsHighQuality
+CStencilShadows::RenderBuffer
+CStencilShadows::SunSetPositionFromEntity
+CStencilShadows::UpdateHierarchy
+CBulletTraces::Init
+CGlass::FindWindowSectorList<CPtrListSingleLink<CPhysical*>>
+COcclusion::AddOne

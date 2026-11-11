@@ -937,3 +937,13 @@
   exact L2 rows, minus whole-data-D extras); 3 WORLD-2 preserve hooks queued in PRESERVE_SPECS_PENDING.
 - Open (WORLD-2): ports calling CEntity::Constructor directly break split pairing (route through orig! per
   ADR-001); GetHeading/GetRoll/FindPlayerHeading withdrawn until a 64-bit FPATAN model exists.
+
+## 2026-11-11 RENDER-2 and POP-2 integrated (main session)
+- RENDER-2 (a792c7c8): 250 RENDER functions (244 hooks: CWaterLevel, CTimeCycle, 3D markers, car plates, CGlass,
+  stencil shadows, occlusion, regular Fx infos). POP-2 (af6f833d): 335 POP functions (321 hooks: 106 statics,
+  CPathFind, CPopulation, CPopCycle, CCarCtrl, gangs, darkel, car generators).
+- verify-all main-rp (both merged): IDENTICAL on all 11 recordings. States from the verdict TSVs (exact L2 only).
+- 3 POP-2 preserve hooks queued in PRESERVE_SPECS_PENDING. sa-hook's matches_catalogue_and_exe now runs on a
+  256 MiB thread (the debug HOOKS table overflowed the default test stack).
+- Open: CPopCycle::FindNewPedType 0x60FBD0 one split mismatch per recording (stays implemented; POP-3 owns it);
+  car-ai splito Wine fault at frame 2304 (harness).

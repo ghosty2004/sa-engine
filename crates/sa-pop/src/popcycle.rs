@@ -293,7 +293,7 @@ sa_core::orig! {
     /// `CTheZones::GetZoneInfo(const CVector&, CZone**)` (0x572400)
     pub fn get_zone_info(p: GPtr<f32>, out: GPtr<GPtr<u8>>) -> GPtr<u8> = cdecl 0x572400 => sa_world::world::zones::get_zone_info;
     /// `CPopCycle::UpdatePercentages()` (0x610770)
-    pub fn update_percentages_call() = cdecl 0x610770 => unported;
+    pub fn update_percentages_call() = cdecl 0x610770 => crate::population2::update_percentages;
     /// `CPopCycle::UpdateDealerStrengths()` (0x6104B0)
     pub fn update_dealer_strengths_call() = cdecl 0x6104B0 => update_dealer_strengths;
     /// `CPopCycle::UpdateAreaDodgyness()` (0x610560)

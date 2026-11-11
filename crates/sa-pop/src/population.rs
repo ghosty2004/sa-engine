@@ -80,9 +80,9 @@ orig! {
     /// `CPedGroupPlacer::PlaceGroup(ePedType, int32, const CVector&, ePedGroupDefaultTaskAllocatorType)` (0x5FD810)
     pub fn ped_group_placer_place_group(this: GPtr<u8>, ty: i32, n: i32, pos: GPtr<f32>, alloc: i32) -> u8 = thiscall 0x5FD810 => unported;
     /// `CPopulation::LoadPedGroups()` (0x5BCFE0)
-    pub fn load_ped_groups() = cdecl 0x5BCFE0 => unported;
+    pub fn load_ped_groups() = cdecl 0x5BCFE0 => crate::population2::load_ped_groups;
     /// `CPopulation::LoadCarGroups()` (0x5BD1A0)
-    pub fn load_car_groups() = cdecl 0x5BD1A0 => unported;
+    pub fn load_car_groups() = cdecl 0x5BD1A0 => crate::population2::load_car_groups;
 }
 
 /// `CPopulation::FindCarMultiplierMotorway()` (0x611B60): 1.7 with `m_bMoreCarsAndFewerPeds`, else 1.0.

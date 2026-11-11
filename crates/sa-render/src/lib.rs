@@ -35,3 +35,10 @@ pub mod specialfx;
 pub mod sprite;
 pub mod sprite2d;
 pub mod weather;
+
+pub mod carplates;
+pub mod glass;
+pub mod markers;
+pub mod stencilshadows;
+pub mod timecycle;
+pub mod waterlevel;

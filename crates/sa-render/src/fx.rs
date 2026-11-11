@@ -14,6 +14,7 @@ use sa_core::{hook, orig};
 use crate::common::{ftol32, g, jne, k, rd, wr, x, xi};
 
 pub mod info;
+pub mod regular;
 
 /// `g_fxMan` (FxManager_c, owned by the FX system; its storage stays original until the FX init ports).
 pub const FX_MAN: usize = 0xA9AE80;
@@ -1036,7 +1037,7 @@ const OWN_HOOKS: &[HookReg] = &[
     HOOK_FX_SYSTEM_GET_BOUNDING_SPHERE_WLD,
 ];
 
-const PARTS: &[&[HookReg]] = &[OWN_HOOKS, info::HOOKS];
+const PARTS: &[&[HookReg]] = &[OWN_HOOKS, info::HOOKS, regular::HOOKS];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
     let (mut n, mut i) = (0, 0);
@@ -1063,6 +1064,7 @@ const fn concat<const N: usize>(parts: &[&[HookReg]]) -> [HookReg; N] {
     out
 }
 
+#[allow(clippy::large_const_arrays)]
 const ALL_ARRAY: [HookReg; total(PARTS)] = concat(PARTS);
 
 /// This module's registrations (this file's, then the submodules').

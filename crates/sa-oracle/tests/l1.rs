@@ -425,6 +425,8 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     // PORT-WORLD-2: CBoundingBox::IsPointWithin, CGarages::FindSafeHouseIndexForGarageType,
     // CStats::FindMaxNumberOfGroupMembers; specs queued.
     0x49C300, 0x4489F0, 0x559A50,
+    // PORT-POP-2: CountNeighboursToBeSwitchedOff, FindIntersection2Lines, CheckDamagedWeaponType; specs queued.
+    0x4504F0, 0x4226F0, 0x43D9E0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

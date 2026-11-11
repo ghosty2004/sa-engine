@@ -428,3 +428,115 @@ initialisers), `render-cr.txt` / `render-cr-split.txt` (CRenderer).
 | 0x4A9130 | FxManager_c::GetFrustumInfo | ported-not-hooked | entry < 5 bytes |
 | 0x4A9C10 | FxMemoryPool_c::FxMemoryPool_c | ported-not-hooked | entry < 5 bytes |
 | 0x4AA900 | FxSystem_c::GetPlayStatus | ported-not-hooked | entry < 5 bytes |
+
+
+# PORT-RENDER-2: second pass (agent + 2 helpers, lane 1)
+
+Second pass over what pass 1 left ("Not done" above): the COcclusion workers, CRenderer::RequestObjectsInDirection,
+CBulletTraces, CGlass, CStencilShadows, the regular FX info bodies (agent), CWaterLevel (helper A), CTimeCycle +
+CColourSet, C3dMarker(s), CCustomCarPlateMgr (helper B). SA:MP-priority rows first (`catalog/samp-priority.csv`),
+then rows the corpus executes (`catalog/raw/coverage-all.hits.csv`). Per-function verdicts:
+`docs/arch/render-port-2-verdicts.tsv` (one row per hook plus the not-hooked / skipped rows).
+
+Ported: **250 functions**: 244 `#[hook]` registrations + 6 ported but not hooked / unhookable.
+Verdicts: **L2 60**, **implemented 56** (0 mismatches everywhere; undeclared writes or a truncated split spool), **implemented-needs-L2 128** (no case in the grove walk), **ported-not-hooked 4**, **ported-unhookable 2**; 17 rows skipped (1 FYL2X, 16 size / time). Per module (L2 / implemented / needs-L2): occlusion 3/0/1, renderer 0/1/0, bullettraces 0/1/2, glass 6/2/8, stencilshadows 4/6/3, fx/regular 8/24/73, waterlevel 13/4/18, timecycle 16/4/2, markers 5/10/15, carplates 5/4/6.
+
+## Files
+
+| file | contents |
+|---|---|
+| `occlusion.rs` (extended) | `COcclusion::AddOne`, `ProcessBeforeRendering`, `IsPositionOccluded`, `COccluder::ProcessLineSegment` (protection chunk 0x401759 `cl = flags[corner1]` inlined; entry `mov eax,[esp+4]; nop; jmp`) |
+| `renderer.rs` (extended) | `CRenderer::RequestObjectsInDirection` |
+| `bullettraces.rs` (extended) | `CBulletTraces::Init`, `AddTrace-Wrapper` (0x726AF0, three `rand` sites attributed 0x726C3C / 0x726C8F / 0x726CB9), `Render` |
+| `glass.rs` | CGlass: IsObjectGlass, Init, FindFreePane, AskForObjectToBeRenderedInGlass, CalcAlphaWithNormal, Update, Render + the three poly batches, WasGlassHitByBullet (`rand` at 0x71C138), WindowRespondsToSoftCollision, FindWindowSectorList, WindowRespondsToExplosion, the `aGlassPanes` static init / dtor |
+| `stencilshadows.rs` | CStencilShadows: GraphicsHighQuality, Init, Shutdown, UpdateHierarchy, the batch flush 0x710CC0, Render (volume batching), RenderStencilShadows, Process, the sun-direction setters 0x710B50 / 0x710AF0, CStencilShadowObject::Destroy, the static init / dtor |
+| `fx/regular.rs` | 105 regular `FxInfo*_c` / `FxInterpInfo*_c` bodies, generated from the bytes by exact instruction-shape matching (interp `Load` wrappers, SEH destructors, scalar deleting destructors, vtable-only destructors, flag `GetValue`s, `GetValue`s that copy an interp `GetVal` result); 33 irregular bodies are not ported |
+| `waterlevel.rs` (helper A) | CWaterLevel: 35 hooks (wave/level queries, block scan, level loader helpers, render rectangles/triangles, fog) + SetUpWaterFog unhookable; three partial ports with `fallback` (ADR-002) |
+| `timecycle.rs`, `markers.rs`, `carplates.rs` (helper B) | CTimeCycle + CColourSet (22 hooks, CalcColoursForPoint whole), C3dMarker(s) (30), CCustomCarPlateMgr (15) |
+
+Shared-file changes: `hooks.rs` / `lib.rs` (six new modules), `fx.rs` (`regular` part), sa-oracle `specs_render_water.rs`,
+`specs_render_c.rs`, `specs_render_2.rs` (registered, empty: no function of this pass is a pure leaf),
+`tools/e2e/l2-extras.txt` (`# PORT-RENDER-2` blocks), lists `tools/e2e/lists/render2-*.txt`.
+
+## Conventions and findings (agent part)
+
+- `ProcessBeforeRendering` keeps the original's 15-bit `m_nNextIndex` relinking (`shl/sar` sign extension, the
+  `xor`/`and 0x7FFF`/`xor` field update) and re-reads `NumActiveOccluders` after every `ProcessOneOccluder`; the
+  hidden-occluder removal moves the tail with `rep movsd` semantics and restarts the inner loop past the end.
+- `ProcessLineSegment` computes the near-plane crossing the same way for both corners (`t = |zb-1.1| /
+  (|za-1.1|+|zb-1.1|)`, `t*A + (1-t)*B`); the original stores `za` and the `h` out value into its own argument
+  slots (stack only; locals here). `AddOne` wraps angles into [0, 360] (exactly 360 stays), converts to radians
+  and stores `_ftol(rad * 40.743664)` bytes in the order z, y, x; the sizes are taken in the order length, width,
+  height.
+- `RequestObjectsInDirection(posn, angle)`: rotate 90 about x (replace), `angle * 57.29578 + 180` about z
+  (post-concat), translate, then `RequestObjectsInFrustum(m, 0x20)`: the streaming flags are the constant 0x20.
+  The original's matrix flags word is uninitialised stack ORed with 0x20003 and its pad words are uninitialised;
+  the port uses 0x20003 and zero pads (the same class as the PORT-RW RwMatrix pad decision).
+- `CBulletTraces::AddTrace-Wrapper`: a second random length replaces the first when the first is shorter than the
+  remaining length (the original's own logic). `AddTrace` itself (0x723750) executes FYL2X: skipped.
+- `CBulletTraces::Render`, `CStencilShadows::Render`: the stack vertices' normals / UVs are uninitialised in the
+  original, zero here (seen only by the D3D stream). `CStencilShadows::Render` uses the stored index count as the
+  index base (equal to the vertex count unless a flush happened between).
+- `CGlass::Init` sums the first two pane polygons p0+p1+p2 and the other three p2+p1+p0. `CGlass::IsObjectGlass`
+  clears only AL on the non-object path. `CGlass::Render` builds the fog colour with ORs of the 16-bit components.
+- `CStencilShadows::RenderStencilShadows` darkens with `CRGBA(0,0,0, strength * 0x32 >> 8)` (dword read of the
+  time-cycle shadow strength). The catalogue names of 0x710B50 (`RenderBuffer`) and 0x710CC0 (`sub_710CC0`) are kept
+  although the bytes set the sun direction and flush the batch.
+- `fx/regular.rs`: `GetValue`s copy `out[0]` through `fld`/`fstp` (a signalling NaN is quieted, `renderer::quiet`)
+  and the rest as dwords; SEH frames are not reproduced (torn down before return, fs:0 unchanged).
+
+Helper findings (bytes over gta-reversed) are in the module docs; the main ones: CWaterLevel::AddWaterLevelQuad
+reads uninitialised stack with 1 or 3 vertices on the minimum-y line (that case runs the original body through
+`fallback`), the flat-water OneLayer renderers fall back for layers other than 0/1, GetWaterLevel calls
+AddWaveToResult also without waves when `level - z <= 3`; CTimeCycle::CalcColoursForPoint truncates the
+below-horizon grey to a byte and computes the far clip above 200 m as `(z-200) * (1/300)`; PlaceMarker's bob is
+`sin(rad(angle)) * 0.3` (gta-reversed has `sin(rad * 0.3)`); GeneratePlateText can write up to `len + 3` bytes.
+
+## Not hookable / not ported
+
+- Not hooked: CStencilShadowObject::Constructor (3-byte entry), FxInfoSelfLit_c::Load (`ret 8`), CTimeCycle::Shutdown
+  and `__dtor_CTimeCycle__m_BelowHorizonGrey` (single `ret`). Unhookable: CWaterLevel::SetUpWaterFog (protection reads
+  its stub displacement), CCustomCarPlateMgr::GetCharacterPositionInCharSet (character in AL: no `#[hook]`
+  convention for it).
+- FYL2X: CBulletTraces::AddTrace (0x723750). No FPTAN function was met.
+- Not ported (size / time): COccluder::ProcessOneOccluder (5,008 bytes), CStencilShadows::RegisterStencilShadows,
+  RenderForVehicle, RenderForObject, CGlass::BreakGlassPhysically, WindowRespondsToCollision,
+  HasGlassBeenShatteredAtCoors, CWaterLevel::RenderWater, RenderWakeSegment, RenderBoatWakes, WaterLevelInitialise,
+  SplitWaterTriangleAlongX/YLine, the two high-detail layer workers 0x6E91D0 / 0x6E8780, 33 irregular FX info
+  bodies (the GetValue workers with arithmetic, FxInfoManager_c::Load / AddFxInfo, the interp `Load` / `GetVal`),
+  and the large shadow / post-effect / corona / cloud / weather workers listed in pass 1.
+
+## Verification (lane 1, `SA_ROOT=/home/ghosty2004/sa-engine`)
+
+Runs from a source snapshot of the worktree (`target/snap-src`, own target dir) so the helpers' files in progress
+could not break a run. Lists: `render2-l2.txt` / `render2-split.txt` (agent), `render2-fx-*.txt`,
+`render2-water-*.txt`, `render2-b-*.txt`.
+
+| run | tags | result |
+|---|---|---|
+| plain l2, agent hooks, 4/frame then 1000/frame | `r2l2-g`, `r2b-l2` | l2 == plain and rust == plain IDENTICAL; 0 mismatches; undeclared writes of ProcessBeforeRendering / ProcessLineSegment / UpdateHierarchy (identical on both sides) → extras; ProcessLineSegment first failed to install (`expect` missed the `nop` before its `jmp`), fixed |
+| plain l2, agent + FX (1000/frame) | `r2c-l2` | 0 mismatches (6,302 cases); AddOne undeclared → extras |
+| plain l2, all 106 plain-l2 hooks of the pass (1000/frame) | `r2d-l2`, then `r2e-l2` with the extras | l2 == plain, rust == plain IDENTICAL (5,200 frames, 17 subsystems); **0 mismatches in 34,151 cases** (CalcColoursForPoint, GetWaterLevel, the wave functions included); `r2e`: every hook PASS or NOCALLS except CTimeCycle::Update / CalcColoursForPoint (undeclared m_VectorToSun 0xB7CA50.., extras added after the run, not re-run) and AddWaterLevelTriangle / Quad (only nested calls: 0 cases) |
+| split, all 138 split hooks (`SPLIT_PER_FRAME=20`, `--max 300`, `SPLIT_STACKFILL=16384`) | `r2d-sp` | splito / splitr / rust traces IDENTICAL to plain; split-report 61 PASS, 3 FAIL, 1 DIVERGED, 3 COUNT, 70 NOCASES, **0 output mismatches except the 3 FAIL**: FxInfoFloat/Underwater/HeatHaze_c::Load returned the callee's leftover EAX (vtable vs stack) → the Load wrappers are void now; DIVERGED CStencilShadows::Render: its Rust caller passes a Rust stack CRGBA (input pointer) → extras declare the pointee; COUNT: the three marker draws hit the 2 GiB spool quota at frame 482 (cases before it compared, 0 mismatches) |
+| split rerun of those six | `r2f-sp` | all PASS, 0 mismatches; the three Loads 0 undeclared (L2) |
+| all engine ports on Rust, 11 recordings | `render2-final2` (lane 1) | **IDENTICAL on all 11** (grove 5200, air-water 5800, anim-input 3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200, weapon-combat 3500, world-cheats 3276 frames; 17 subsystems; build = the committed code) |
+
+The undeclared writes of the split PASS hooks (RW objects, heap material colours, stack info structs, the
+FX interp key buffers the Load wrappers fill, the marker / plate RW objects) are identical on both sides; they need
+narrow regions before those hooks can reach L2, as in pass 1.
+
+Other checks: `cargo test -p sa-render` 3/3; `cargo test --release -p sa-hook --lib` 51/51 (install, catalogue,
+callers, keycells, data_reads, patch_refs); clippy `-D warnings` sa-render host (all targets) and i686
+(`--features in-process`), sa-hook i686, sa-oracle host (all targets); `cargo build -p sa-render --target
+wasm32-unknown-unknown`. `cargo test --release -p sa-oracle --test l1`: 15/16; `l2_specs_pass_on_the_cpu` fails on
+`RwMatrixRotate` 0x7F1FD0 (FSIN/FCOS, 2,476 memory differences vs the CPU), a PORT-RW spec, not a RENDER hook.
+
+## Decisions needed
+
+- Narrow regions for the split PASS hooks with undeclared writes (56 `implemented`), as pass 1's open item.
+- `CCustomCarPlateMgr::GetCharacterPositionInCharSet` takes its argument in AL: a `#[hook]` register convention
+  would be needed to hook it.
+- `RequestObjectsInDirection`: RwMatrix flags / pad words from uninitialised stack → the PORT-RW normaliser decision.
+- CWaterLevel mid-CRenPar padding (+0xE/+0xF): the original lerps into uninitialised locals; the port writes 0.
+- 0x8D37D5 is `SPEED_FX` in posteffects.rs but `m_bWaterFogScript` in gta-reversed (RenderWaterFog reads it by address).
+
