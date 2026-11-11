@@ -24,6 +24,7 @@
 //! | `SA_HOOK_MODE` | start modes `NAME=orig\|rust\|l2,…` (independent of L2) |
 //! | `SA_L2_SPOOL_MAX` | spool quota in bytes (default 2 GiB; suffixes `k`, `M`, `G`): at the quota sa-hook stops spooling, writes a trailer and logs it; cases compared before stay valid (INF-18) |
 //! | `SA_L2_DUMP_SEQ` | split-run diagnostic: case sequence numbers whose static windows are dumped to `SA_L2_OUT.seqN.win` (compare two dumps with `sa-oracle l2 dump-diff`) |
+//! | `SA_L2_STACKFILL` | split-run mode: bytes below the invoker's stack pointer zeroed before every sampled call (default 0 = off, at most 64 KiB), so original code reading uninitialised stack sees the same bytes in both runs |
 //! | `SA_L2_SPLIT` | `orig` or `rust`: split-run mode (INF-17). Each sampled call runs ONE implementation (the original in the plain run, the Rust one in the rust run) and is recorded (inputs, outputs, OS probes, page hashes); `sa-oracle l2 split-report` compares two such runs call by call. Cases may nest |
 //!
 //! `SA_L2_EXTRA` entries may start with `post:` (address/length evaluated after the run with the exit
@@ -68,6 +69,9 @@ pub struct Config {
     /// Split-run diagnostic: case sequence numbers at which the static windows are dumped to
     /// `SA_L2_OUT.seqN.win` (`SA_L2_DUMP_SEQ`).
     pub dump_seq: Vec<u32>,
+    /// Split-run mode: bytes below the invoker's stack pointer zeroed before every sampled call
+    /// (`SA_L2_STACKFILL`, 0 = off, at most 64 KiB; WEAPON-FIX).
+    pub stack_fill: u32,
 }
 
 /// Split-run mode: the implementation every sampled call runs (once) and is recorded with.
@@ -160,6 +164,7 @@ impl Default for Config {
             spool_max: SPOOL_MAX_DEFAULT,
             split: None,
             dump_seq: Vec::new(),
+            stack_fill: 0,
         }
     }
 }
@@ -207,6 +212,7 @@ impl Config {
         c.per_frame = n("SA_L2_PER_FRAME", c.per_frame)?.max(1);
         c.from_frame = n("SA_L2_FROM", 0)?;
         c.stack = n("SA_L2_STACK", c.stack)?.min(0x10000);
+        c.stack_fill = n("SA_L2_STACKFILL", 0)?.min(0x10000) & !3;
         c.leave_rust = match get("SA_L2_LEAVE").as_deref() {
             None | Some("") | Some("orig") => false,
             Some("rust") => true,

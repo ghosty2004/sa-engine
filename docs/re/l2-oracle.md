@@ -364,6 +364,43 @@ byte, PASS-FP for DoBulletImpact through the page hash).
   Test: `split::out_parameter_at_the_same_address_is_not_moved`. The hook stays unregistered in this
   branch (re-registering it is a porting decision; the grove run was not repeated with this rule).
 
+### Uninitialised stack read by original callees (WEAPON-FIX)
+
+Original code that reads a local it never wrote sees whatever earlier calls left at that depth, and every
+Rust frame above it (or the split invoker) moves that depth. `CWeapon::FireInstantHit` does so on one path
+(gunshell direction `[esp+0x6C]` at 0x740DAC; docs/arch/weapon-ped-port.md, WEAPON-FIX): with a Rust
+`CWeapon::Fire` above it the split-rust run read (2257, -1261, 24.4) where the plain run read a denormal
+residue, the gunshell's ground-collision line test ran in other sectors, and the run diverged (c-bug frame
+2494). Neither run's value is "right"; the comparison is meaningless while the residue differs.
+
+- `SA_L2_STACKFILL=BYTES` (`port-l2.sh`: `SPLIT_STACKFILL`; split-run mode only, off by default, at most
+  64 KiB): `l2_invoke` zeroes BYTES below its stack pointer (downwards, so the guard page is touched in
+  order) right before every sampled call, in both runs. Uninitialised reads below the sampled call then see
+  zeros in both runs, unless the code between the fill and the read wrote there (then both runs wrote the
+  same values when their inputs matched). It does not touch unsampled calls. Evidence: c-bug, list Fire +
+  DoBulletImpact + GenerateDamageEvent, `L2_FROM=2400`: without the fill Fire FAIL at frame 2493 and the
+  splitr trace DIVERGED at 2494; with 16 KiB: 74/74, 74/74, 29/29 PASS, both traces IDENTICAL (`wf-fill`).
+- `SA_COV_PEEK=ADDR,…` (coverage.rs, with `SA_COV` listing the same points and `SA_COV_CAP` > 1): every trap
+  at those points logs the registers and the 0x30 dwords above ESP to sa-hook's log; the trap only writes
+  below ESP, so the bytes logged are those the original reads. `port-l2.sh` passes `SA_COV*` through and
+  gives each run its own `OUT/NAME.cov.csv`. Arming many points in a function changes the residue its
+  callees leave (the handler runs on the same stack): arm only the points needed.
+
+Open (WEAPON-FIX task 2): the 8 AI rows that are PASS-FP on weapon-combat only (HARNESS-3's 156 AI rows,
+reproduced with `L2_FROM=1600 SPLIT_PER_FRAME=20 --max 300`: 0x4B6FB0, 0x6040D0, 0x61A430, 0x63B970,
+0x6410E0, 0x6426E0, 0x64BF70, 0x668250; with only the 5 rows HARNESS-3 named listed, all 5 PASS) differ on
+page 0x967000 from frame 1646 (first pair seq 2720, `CTaskSimpleCarDrive::~CTaskSimpleCarDrive`). Window
+dumps seq 2719 / 2720 / 2727: the only differing bytes are 0x967F50..0x967F52, plain `c8 38 0c`, rust
+`00 f4 cb`: element 0 of `CCollision::ProcessColModels`' static sphere array 0x967F40 (stride 0x14; centre
++0x00, radius +0x0C, surface +0x10, piece +0x11, lighting +0x12). Between the two cases element 0 was
+rewritten (radius 0.4, centre (0.196, -48.26, -0.387) in the second matrix's space) by the copy loop
+0x418730..0x418795 (`[edi+0x10] = word [sphere+0x10]`, `[edi+0x12] = byte [sphere+0x12]`) from a colliding
+model's sphere whose surface bytes are themselves residue; the source col model is not identified yet (not
+the 0xC17824 sphere 0x61D5F0 builds: it sets surface 0, piece 0, lighting 0xFF). `SPLIT_STACKFILL=16384`
+does not remove it (the same 8 PASS-FP; the write happens outside any sampled call), so it is not the
+FireInstantHit pattern below a sampled call. No normaliser rule proposed until the writer of the source
+sphere is known; no pair whose inputs matched had a mismatch.
+
 ## Stale traces (HARNESS-2)
 
 `winepath` right after `wineserver -k` sometimes printed nothing: `SA_DET_TRACE` was empty, sa-hook

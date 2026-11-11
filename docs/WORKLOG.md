@@ -867,3 +867,13 @@
   world-cheats 2112 (objects, pools, world), c-bug 2494 (buildings), air-water 2742 (known). A baseline build of master
   in a separate worktree (base-x87chk) was IDENTICAL on world-cheats, weapon-combat and anim-input → the merge causes
   it. Staged files restored to master (only the merge's own files); not committed. Sent back to the agent.
+
+## 2026-11-11 WEAPON-FIX integrated (main session)
+- Agent aaebd0b6 (lane 1): CWeapon::Fire's c-bug split FAIL is caused by the original FireInstantHit 0x73FB10 reading an
+  uninitialised stack local (gunshell direction, read at 0x740DAC) whose residue depends on the caller frames; Fire port
+  faithful. New opt-in SA_L2_STACKFILL (SPLIT_STACKFILL in port-l2.sh) zeroes stack below each sampled split call;
+  SA_COV_PEEK for register/stack peeks. Fire back to L2. Ledger: FireInstantHit's uninitialised gunshell direction
+  (original bug; a future port must document its value). AI page 0x967000 PASS-FP: ProcessColModels static sphere
+  array 0x967F40 element 0 surface bytes from residue; writer of the source sphere unknown; no rule yet.
+- Merge conflicts (port-l2.sh, l2-oracle.md) combined; sa-hook lib 50, clippy, i686 OK; all-ports IDENTICAL on grove,
+  c-bug.
