@@ -1036,3 +1036,10 @@
   → KNOWN_CPU_MISMATCHES is empty.
 - L1 tests 18/18 (a first run hung 55 min in ref.exe under Wine at 0 % CPU; re-run passed).
 - verify-all main-hx (fresh DLL 7cc2a0d): IDENTICAL on all 12 recordings (menus-map-controls is new, by PORT-MENU).
+
+## 2026-11-12 INTEGRATE-2 fast-forwarded onto master (main session)
+- Agent INTEGRATE-2 applied each branch's own diff onto master 1c3e9e0: WRITER-MVP-I..M, WRITER-REGCONV (26
+  register-convention ports), VERIFIER-6 (28 render promotions, DrawTriPlants srand at_site, 0xC96438 normaliser
+  exclusion), GEN-ALL-2 (generator regenerated on the integrated tree: 852 unverified hooks, 25 L1-pure), SRAND-FIX.
+  Duplicates settled (see docs/verify/integration-2.md). verify-all int2: IDENTICAL on all 12; L1 18/18.
+- Catalogue: VERIFIER-6 promotions → L2; every registered address at least `implemented`.
