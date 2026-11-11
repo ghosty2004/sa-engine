@@ -118,7 +118,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );
@@ -154,7 +158,8 @@ mod tests {
         };
         for g in GLOBALS.iter().flat_map(|l| l.iter()) {
             let n = exe_size(g);
-            let img = exe_image_bytes(&exe, g.addr, n).unwrap_or_else(|| panic!("{} not in the image", g.name));
+            let img =
+                exe_image_bytes(&exe, g.addr, n).unwrap_or_else(|| panic!("{} not in the image", g.name));
             if n == g.size {
                 assert_eq!(&img[..], &g.init[..n], "{} @ {:#x}", g.name, g.addr);
             } else {
@@ -210,7 +215,11 @@ mod tests {
     #[test]
     fn list_is_complete_and_unique() {
         let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-        assert_eq!(count_hooks(&dir), COUNT, "a #[hook] is missing from a module's HOOKS");
+        assert_eq!(
+            count_hooks(&dir),
+            COUNT,
+            "a #[hook] is missing from a module's HOOKS"
+        );
         let addrs: BTreeSet<u32> = ALL.iter().map(|h| h.addr).collect();
         assert_eq!(addrs.len(), COUNT);
         for h in sa_core::hooks::ALL {

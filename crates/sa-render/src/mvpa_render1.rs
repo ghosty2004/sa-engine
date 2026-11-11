@@ -160,7 +160,7 @@ pub fn sprite2d_add_to_buffer(
 /// (0, -1); 16 at 0xC87E48.. with (0x65, 100 * (i + 1)); one at 0xC87FC8 with (0x65, 0). Stores in the
 /// original order around each allocation.
 #[hook(addr = 0x730830, conv = cdecl, name = "D3DResourceSystem::Init", expect = "53 55 56 B8 01 00 00 00",
-       unverified = "mvpa-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "one-time initialiser: allocates 18 0x40-byte arrays with operator new")]
 pub fn d3d_resource_system_init() {
     g::<u32>(0xC87C60).write(1);
@@ -197,7 +197,7 @@ pub fn d3d_resource_system_init() {
 
 /// `D3DResourceSystem::SetUseD3DResourceBuffering(bool)` (0x730AC0, cdecl): stores the byte at 0x8D6084.
 #[hook(addr = 0x730AC0, conv = cdecl, name = "D3DResourceSystem::SetUseD3DResourceBuffering", expect = "8A 44 24 04 A2 84 60 8D 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn d3d_resource_system_set_use_buffering(on: u8) {
     g::<u8>(0x8D6084).write(on);
 }
@@ -206,7 +206,7 @@ pub fn d3d_resource_system_set_use_buffering(on: u8) {
 /// `MaxTextureBlendStages (+0x94) > 1` (signed), `MaxSimultaneousTextures (+0x98) >= 2` (unsigned),
 /// TextureOpCaps (+0x90) bits 13 and 24 set; then bit 9 of +0x38 (0 or 1 in the whole EAX).
 #[hook(addr = 0x5D8980, conv = cdecl, name = "IsEnvironmentMappingSupported", expect = "E8 9B 23 22 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn is_environment_mapping_supported() -> u32 {
     let caps = rw_d3d9_get_caps();
     if rd::<i32>(caps, 0x94) <= 1 {
@@ -247,7 +247,7 @@ fn env_map_pool_ctor(this: GPtr<u8>, size: i32, elem: i32) -> GPtr<u8> {
 /// `CPool<CustomEnvMapPipeMaterialData>::CPool(int size, const char*)` (0x5D9060): 12-byte objects;
 /// see [`env_map_pool_ctor`].
 #[hook(addr = 0x5D9060, conv = thiscall, name = "FUN_005d9060", expect = "56 57 8B 7C 24 0C 8D 04 7F",
-       unverified = "mvpa-render-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "boot-time pool constructor (operator new twice)")]
 pub fn env_map_material_pool_ctor(this: GPtr<u8>, size: i32, _name: u32) -> GPtr<u8> {
     env_map_pool_ctor(this, size, 12)
@@ -256,7 +256,7 @@ pub fn env_map_material_pool_ctor(this: GPtr<u8>, size: i32, _name: u32) -> GPtr
 /// `CPool<CustomEnvMapPipeAtomicData>::CPool(int size, const char*)` (0x5D91B0): 12-byte objects;
 /// see [`env_map_pool_ctor`].
 #[hook(addr = 0x5D91B0, conv = thiscall, name = "FUN_005d91b0", expect = "56 57 8B 7C 24 0C 8D 04 7F",
-       unverified = "mvpa-render-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "boot-time pool constructor (operator new twice)")]
 pub fn env_map_atomic_pool_ctor(this: GPtr<u8>, size: i32, _name: u32) -> GPtr<u8> {
     env_map_pool_ctor(this, size, 12)
@@ -265,7 +265,7 @@ pub fn env_map_atomic_pool_ctor(this: GPtr<u8>, size: i32, _name: u32) -> GPtr<u
 /// `CPool<CustomSpecMapPipeMaterialData>::CPool(int size, const char*)` (0x5D9300): 8-byte objects;
 /// see [`env_map_pool_ctor`].
 #[hook(addr = 0x5D9300, conv = thiscall, name = "FUN_005d9300", expect = "56 57 8B 7C 24 0C 8D 04 FD 00 00 00 00",
-       unverified = "mvpa-render-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "boot-time pool constructor (operator new twice)")]
 pub fn spec_map_material_pool_ctor(this: GPtr<u8>, size: i32, _name: u32) -> GPtr<u8> {
     env_map_pool_ctor(this, size, 8)
@@ -278,7 +278,7 @@ pub fn spec_map_material_pool_ctor(this: GPtr<u8>, size: i32, _name: u32) -> GPt
 /// +9 byte 0, +0xC/+0x10 1.0f, +0x14/+0x18/+0x20/+0x24/+0x1C 0); finally
 /// `LoadPlantsDat("PLANTS.DAT") != 0` (AL; EAX upper bits from the callee, the only caller tests AL).
 #[hook(addr = 0x5DD6C0, conv = cdecl, name = "CPlantSurfPropMgr::Initialise", expect = "83 EC 08 53 55 56 57",
-       unverified = "mvpa-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "loads PLANTS.DAT (file effects)")]
 pub fn plant_surf_prop_mgr_initialise() -> u8 {
     g::<u32>(0xC39ED4).write(0);
@@ -331,7 +331,7 @@ pub fn plant_surf_prop_mgr_get_surf_properties(id: u32) -> GPtr<u8> {
 /// addressing byte +0x51 = 0x33; pop; `pCharsetLockedRaster (0xC3EF88) = RwRasterLock(tex->raster, 0,
 /// 2)`; returns AL = 1 (upper EAX from RwRasterLock; the only caller tests AL).
 #[hook(addr = 0x6FE120, conv = cdecl, name = "CCustomRoadsignMgr::Initialise", expect = "56 68 48 C6 85 00",
-       unverified = "mvpa-render-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads a texture and locks its raster (one-time initialiser)")]
 pub fn custom_roadsign_mgr_initialise() -> u8 {
     let slot = find_txd_slot(GPtr::from_addr(PARTICLE_TXD));
@@ -351,7 +351,7 @@ pub fn custom_roadsign_mgr_initialise() -> u8 {
 /// `CBirds::Init()` (0x711EC0): `aBirds[i].m_bCreated (+0x3F of each 0x44-byte CBird at 0xC6A8B0) = 0`
 /// for the 6 birds, `uiNumberOfBirds (0xC6A8A4) = 0`, `bHasBirdBeenShot (0xC6A8A0) = 0`.
 #[hook(addr = 0x711EC0, conv = cdecl, name = "CBirds::Init", expect = "B8 EF A8 C6 00 33 C9",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn birds_init() {
     let mut a = 0xC6A8EFusize;
     while a < 0xC6AA87 {
@@ -390,7 +390,7 @@ pub fn moving_things_init() {
 /// +0xE word 5, +0x10..+0x27 zero, +0x28 0.25f, +0x2C 1.0f, +0x30/+0x34 0; then `NumActiveCPts
 /// (0xC7C6D4) = 0`. Stores in the original order.
 #[hook(addr = 0x722880, conv = cdecl, name = "CCheckpoints::Init", expect = "B8 5A F1 C7 00 33 C9",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn checkpoints_init() {
     let mut a = 0xC7F15Ausize;
     while a < 0xC7F85A {
@@ -420,7 +420,7 @@ pub fn checkpoints_init() {
 /// `CRopes::Init()` (0x555DC0): `aRopes[i].m_bExists (+0x325 of each 0x328-byte CRope at 0xB768B8) = 0`
 /// for the 8 ropes, `PlayerControlsCrane (0xB76898) = 0`.
 #[hook(addr = 0x555DC0, conv = cdecl, name = "CRopes::Init", expect = "B8 DD 6B B7 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn ropes_init() {
     let mut a = 0xB76BDDusize;
     while a < 0xB7851D {
@@ -482,7 +482,7 @@ pub fn ropes_shutdown() {
 /// (0xC6AA7C)`, `gpMoonMask (0xC6AA74)` (with mask), `ms_vc.texture (0xC6BFC8)` (with mask); pop;
 /// `CloudRotation = 0`; `VolumetricCloudsInit()`; (tail call) `MovingFogInit()`.
 #[hook(addr = 0x7138D0, conv = cdecl, name = "CClouds::Init", expect = "E8 CB DD 01 00",
-       unverified = "mvpa-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "reads four textures (one-time initialiser)")]
 pub fn clouds_init() {
     push_current_txd();
@@ -515,7 +515,7 @@ fn skidmarks_clear_all() {
 /// RwTextureRead("particleskid", NULL)`, pop; clear the 32 skidmarks; the 16 strip index sextets at
 /// 0xC799C8 (u16: 2i, 2i+2, 2i+1, 2i+1, 2i+2, 2i+3).
 #[hook(addr = 0x7204E0, conv = cdecl, name = "CSkidmarks::Init", expect = "E8 BB 11 01 00",
-       unverified = "mvpa-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "reads a texture (one-time initialiser)")]
 pub fn skidmarks_init() {
     push_current_txd();
@@ -541,7 +541,7 @@ pub fn skidmarks_init() {
 
 /// `CSkidmarks::Clear()` (0x720590): bytes +0 and +1 of each of the 32 skidmarks cleared.
 #[hook(addr = 0x720590, conv = cdecl, name = "CSkidmarks::Clear", expect = "B8 FF 9B C7 00 32 C9",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn skidmarks_clear() {
     skidmarks_clear_all();
 }
@@ -573,7 +573,7 @@ pub fn special_fx_shutdown() {
 /// `CMovingThings::Shutdown()` (0x717C20): for the 32 escalators (0x150 bytes at 0xC6E9A8):
 /// `SwitchOff()` and `m_bExist (+0x78) = 0`.
 #[hook(addr = 0x717C20, conv = cdecl, name = "CMovingThings::Shutdown", expect = "56 BE 20 EA C6 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "SwitchOff removes the escalator step objects")]
 pub fn moving_things_shutdown() {
     let mut a = 0xC6EA20usize;
@@ -588,7 +588,7 @@ pub fn moving_things_shutdown() {
 /// this+0x2408) are added to the unused list (this+0x4C08); `m_numSurfaceInfos (+4) = 0`;
 /// `LoadDataFile()`; `+0 = 0`; returns AL = 1.
 #[hook(addr = 0x5A3EA0, conv = thiscall, name = "ProcObjectMan_c::Init", expect = "53 55 56 57 8B F9",
-       unverified = "mvpa-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "loads procobj.dat (file effects)")]
 pub fn proc_object_man_init(this: GPtr<u8>) -> u8 {
     let list = this.byte_add(0x4C08);
@@ -628,7 +628,7 @@ pub fn proc_object_man_exit(this: GPtr<u8>) {
 /// `(float)minRot/maxRot * (pi/180)`, +0x1C..+0x30 the six floats as dwords, +0x34 align, +0x38
 /// `(float)useGrid`; AL = 1 (upper EAX = zOffsetMax's, the caller ignores the result).
 #[hook(addr = 0x5A2EB0, conv = thiscall, name = "ProcSurfaceInfo_c::Init", expect = "8B 44 24 04 56 8B F1",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_arguments)]
 pub fn proc_surface_info_init(
     this: GPtr<u8>,
@@ -692,7 +692,7 @@ pub fn proc_surface_info_init(
 /// (+8) gets virtual slot +0x20, `CWorld::Remove`, is deleted (vtable slot 0, flag 1, when non-NULL)
 /// and +8 = NULL.
 #[hook(addr = 0x5A3270, conv = thiscall, name = "ProcSurfaceInfo_c::Exit", expect = "53 8D 59 3C 56",
-       unverified = "mvpa-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "deletes procedural objects")]
 pub fn proc_surface_info_exit(this: GPtr<u8>) {
     let list = this.byte_add(0x3C);
@@ -801,7 +801,7 @@ pub fn normalise_game_clock() {
 /// (0xB70158) = CTimer::m_snTimeInMilliseconds`, hours, minutes; `day != 0` → `CurrentDay (0xB7014E) =
 /// day` and `ms_nGameClockDays (0xB70154)++`; seconds = 0; (tail call) `NormaliseGameClock()`.
 #[hook(addr = 0x52D150, conv = cdecl, name = "CClock::SetGameClock", expect = "A1 84 CB B7 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clock_set_game_clock(hours: u8, minutes: u8, day: u8) {
     g::<u32>(0xB70158).write(g::<u32>(0xB7CB84).read());
     g::<u8>(0xB70153).write(hours);

@@ -109,7 +109,7 @@ pub fn fx_frustum_is_collision(this: GPtr<u8>, s: GPtr<u8>) -> u32 {
 /// gets `_ProcessEntryCollisionDataSections(entry, cam, 0xFAFAFAFA)`. AL = 1; the upper EAX bits are the
 /// last callee's.
 #[hook(addr = 0x5DCF30, conv = cdecl, name = "CPlantMgr::PreUpdateOnceForNewCameraPos", expect = "51 33 C0 66 A1 80 39 C0 00",
-       unverified = "mvpa-render-3", route = "L2", hazards = "ax-al-return,heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "ax-al-return,heap-writes", recs = "grove-walk",
        note = "callers (0x5B14B5, 0x5B14C2) return EAX to their own callers; upper bits differ from the original's")]
 pub fn plant_mgr_pre_update_once_for_new_camera_pos(cam: GPtr<u8>) -> u8 {
     let code = g::<u16>(0xC03980).read().wrapping_add(1);
@@ -177,7 +177,7 @@ pub fn fx_render_end() {
 /// `SetFrustum(radius * 1.1f)`, `SetCenter(this+0x3C)` on the camera (+8); AL = 1 (upper EAX from
 /// SetCenter). The only caller ignores the result.
 #[hook(addr = 0x706520, conv = thiscall, name = "CRealTimeShadow::SetupForThisEntity", expect = "8B 44 24 04 56 8B F1",
-       unverified = "mvpa-render-3", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the shadow object (heap)")]
 pub fn real_time_shadow_setup_for_this_entity(this: GPtr<u8>, e: GPtr<u8>) -> u8 {
     wr::<GPtr<u8>>(this, 0, e);

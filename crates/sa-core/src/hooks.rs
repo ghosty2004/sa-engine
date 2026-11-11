@@ -115,7 +115,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );

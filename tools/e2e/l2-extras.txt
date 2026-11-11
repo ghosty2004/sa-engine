@@ -5152,3 +5152,398 @@ CGangWars::CreateAttackWave@[0xB74494]:0x14:RW
 CGangWars::CreateAttackWave@[[0xB74494]+4]:[[0xB74494]+8]:RW
 # CGangWars::CheerVictory: CPed::Say writes the nearest group member (no static expression; the player's
 # group membership 0xC09928 + group * 0x2D4 lists it)
+# ---- mvpa batches (VERIFIER-1, 2026-11-11): write sets of the WRITER-MVP-A hooks, from the undeclared ranges of the
+# grove L2 and pause-restart split runs, sizes from the 1.0 US code. Part A:
+# ---- VERIFIER-1 part A: extras for the undeclared writes of target/verify/partA.txt -------------------------------
+# Evidence: target/verify/l2grove-partial.spool.txt (in-process L2) and splito-partial.txt (split), undeclared-summary.txt.
+# Stack writes were matched per case to the argument block; `this` writes go through ecx because none of these hooks
+# has a `this = "..."` attribute (only CEntity::CreateRwObject does), so the hook signature declares no `this` region.
+
+# CCheckpoints::Init (0x722880): CCheckpoints::m_aCheckPtArray (0xC7F158, 32 x CCheckpoint 0x38; undeclared
+# 0xC7F158..0xC7F850 on both sides, grove l2 and split).
+CCheckpoints::Init@0xC7F158:0x700:RW
+
+# CCollisionData::CCollisionData (0x40F030): its `this` (CCollisionData 0x30: counts +0..+7, ten pointers +8..+0x2C;
+# reads the flag byte +7), on the caller's stack (undeclared 0x36FA54..0x36FA84 = one object per case).
+CCollisionData@ecx:0x30:RW
+
+# CDecision::From(const CDecision& src) (0x6006B0): copies the 0x3C-byte decision into `this` (a CDecisionMaker's
+# decision on the caller's stack; undeclared 0x36F3E4..0x36F41A); src (stack arg0) is read in full.
+CDecision::From@ecx:0x3C:W
+CDecision::From@arg0:0x3C:R
+
+# CEntity::CreateRwObject (0x533D30; split route, see report): CStreaming::ms_rwObjectInstances (CLinkList 0x9654F0,
+# 0x34; undeclared 0x9654F8..0x965512) and its links buffer, CVehicleModelInfo::ms_compsUsed (0xB4E478, 2 bytes;
+# CVehicleModelInfo::CreateInstance 0x4C973B / 0x4C97A8), MODELINFO 0xA9B0C8..0xB4DBE0 (instance ref counts /
+# m_pRwObject of the model-info stores; undeclared 0xAAF07C..0xB49241), RWSTATIC 0xC92470..0xC979C8 (RW core module
+# free lists: RpClump/RpAtomic/RwFrame clones; undeclared 0xC92494.., 0xC97984..).
+CEntity::CreateRwObject@0x9654F0:0x34:RW
+CEntity::CreateRwObject@[0x965520]:0x2EE0:RW
+CEntity::CreateRwObject@0xB4E478:2:RW
+CEntity::CreateRwObject@0xA9B0C8:0xB2B18:D
+CEntity::CreateRwObject@0xC92470:0x5558:D
+
+# CGridRef::Init (0x71D4E0, split): reads gridref.dat through CFileLoader::LoadLine into CFileLoader::ms_line
+# (0xB71848, 0x200; undeclared 0xB71849..0xB718A2), the CRT _cflush counter 0xC9AC4C, and fills GridRefList
+# (0xC72FB0, char[10][10][32] = 0xC80; undeclared 0xC72FB1..0xC73C16).
+CGridRef::Init@0xB71848:0x200:RW
+CGridRef::Init@0xC9AC4C:4:RW
+CGridRef::Init@0xC72FB0:0xC80:RW
+
+# CMatrixLinkList::Init(count) (0x54F0D0, split): `this` = gMatrixList (0xB74288, CMatrixLinkList 0x1FC; undeclared
+# 0xB742D8..0xB74484: the sentinel links' prev/next and the +0x1F8 array pointer).
+CMatrixLinkList::Init@ecx:0x1FC:RW
+
+# CPedGeometryAnalyser::CanPedTargetPed (0x5F1C40) -> CanPedTargetPoint -> CWorld::GetIsLineOfSightClear ->
+# CCollision::TestLineOfSight: its local static CMatrix 0x965960 (0x48; atexit dtor 0x855FF0; undeclared
+# 0x965961..0x96599C) and CCollision::ms_colModelCache (CLinkList 0x96592C, 0x34; undeclared 0x965934, 0x96594C)
+# with its 50-link heap buffer [0x96595C] (CalculateTrianglePlanes moves links; as the coll lines above).
+CPedGeometryAnalyser::CanPedTargetPed@0x965960:0x48:RW
+CPedGeometryAnalyser::CanPedTargetPed@0x96592C:0x34:RW
+CPedGeometryAnalyser::CanPedTargetPed@[0x96595C]:0x258:RW
+
+# CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached(z, corners, out) (0x5F1600): the out CVector
+# (stack arg2; undeclared arg2+0..+0xC in all 21 split cases); the four corners (arg1, 4 x CVector) are read.
+CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached@arg2:0xC:W
+CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached@arg1:0x30:R
+
+# CPedGroupIntelligence::Flush (0x5F7350): `this` lies in CPedGroups::ms_groups (0xC09920, 8 x 0x2D4; undeclared
+# 0xC09EBC = group 1 intelligence +0x298, set to -1); same lines as the other PORT-AI-5 group hooks. It deletes the
+# tasks and events it holds: the task pool (CPools::ms_pTaskPool 0xB744A8) and event pool (0xB744AC) header + byte map.
+CPedGroupIntelligence::Flush@0xC09920:0x16A0:RW
+CPedGroupIntelligence::Flush@0xC098E0:0x8:RW
+CPedGroupIntelligence::Flush@[0xB744A8]:0x14:RW
+CPedGroupIntelligence::Flush@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+CPedGroupIntelligence::Flush@[0xB744AC]:0x14:RW
+CPedGroupIntelligence::Flush@[[0xB744AC]+4]:[[0xB744AC]+8]:RW
+
+# CPtrListSingleLink::DeleteItem(item) (0x533610): the list head `this` (a CWorld::ms_aSectors list, 0xB7D0B8..;
+# undeclared 0xB813D8.., 0xB8AAD8..0xB8B622, 4-byte heads), the predecessor node's next pointer inside the
+# ptr-node-single pool objects, and the node freed by operator delete 0x552390 (pool header + byte map).
+CPtrListSingleLink::DeleteItem@ecx:4:RW
+CPtrListSingleLink::DeleteItem@[0xB74484]:0x14:RW
+CPtrListSingleLink::DeleteItem@[[0xB74484]+4]:[[0xB74484]+8]:RW
+CPtrListSingleLink::DeleteItem@[[0xB74484]]:0x88B80:RW
+
+# CRealTimeShadow::Create (0x706460, split): the D3D9 video-memory raster list head/count (0xB4E9FC / 0xB4EA00;
+# _rxD3D9VideoMemoryRasterListAdd 0x4CB559 / 0x4CB530) when it creates its rasters, and RWSTATIC (camera module
+# free list 0xC9793C..; undeclared 0xC9794C) for RwCameraCreate.
+CRealTimeShadow::Create@0xB4E9FC:8:RW
+CRealTimeShadow::Create@0xC92470:0x5558:D
+
+# CShopping::Init (0x49C290, split): ms_bHasBought (0xA972A0, 560), ms_statModifiers (0xA974D0, 560 x 4) and ms_keys
+# (0xA97D90, 560 x 4) as one range (Init's rep stosd + LoadStats; undeclared 0xA974D4..0xA97D4F, 0xA97D94..0xA9860D),
+# CFileLoader::ms_line (undeclared 0xB71849..0xB718D5) and _cflush 0xC9AC4C (shopping.dat).
+CShopping::Init@0xA972A0:0x13B0:RW
+CShopping::Init@0xB71848:0x200:RW
+CShopping::Init@0xC9AC4C:4:RW
+
+# CSpecialPlateHandler::Add (0x6F2D90): `this` = CTheCarGenerators::m_SpecialPlateHandler (0xC279D8, 0xF4: 15 x 0x10
+# entries + count +0xF0; undeclared 0xC279D8..0xC27AC9 both sides); same extent as CTheCarGenerators::Init.
+CSpecialPlateHandler::Add@ecx:0xF4:RW
+
+# CSprite2d::Draw(CRect, CRGBA) (0x728350): draws through RwEngineInstance like DoFade: _rwD3D9LastVertexDeclaration..
+# (0x8E2444) and the RW D3D9 driver statics 0xC97B98..0xC9A5F0 (undeclared 0x8E2444..0x8E2450, 0xC97B98..0xC9A5ED).
+CSprite2d::Draw-CRectCRGBA@0x8E2444:12:RW
+CSprite2d::Draw-CRectCRGBA@0xC97B98:0x2A58:RW
+
+# CStats::LoadActionReactionStats (0x5599B0, split): CStats::StatReactionValue (0xB78F10, 59 floats; 0x559A1D fstp
+# [edx*4+0xB78F10]; undeclared 0xB78F16..0xB78FFC), CFileLoader::ms_line, _cflush.
+CStats::LoadActionReactionStats@0xB78F10:0xEC:RW
+CStats::LoadActionReactionStats@0xB71848:0x200:RW
+CStats::LoadActionReactionStats@0xC9AC4C:4:RW
+
+# CTaskSimpleCarDrive::CTaskSimpleCarDrive(veh, util, update) (0x63C340): RegisterReference of the vehicle
+# (CReferences::aRefs + pEmptyList; undeclared 0xB9BB08.., 0xB9BD48..0xB9BD78, 0xB9C0D0..), the vehicle's
+# m_pReferences (+0x24), and `this` (CTaskSimpleCarDrive 0x60, task pool object).
+CTaskSimpleCarDrive::Constructor@0xB9B9A8:0x5DC4:RW
+CTaskSimpleCarDrive::Constructor@arg0+0x24:4:RW
+CTaskSimpleCarDrive::Constructor@ecx:0x60:RW
+
+# CWorld::FindGroundZFor3DCoord(x, y, z, found, entity) (0x5696C0): *found (stack arg3, 1 byte; undeclared arg3+0 in
+# every case), *entity (arg4, nullable), CCollision::ProcessVerticalLine's static CColPoint 0x9659FC (0x2C; 0x417DCC
+# push 0x9659FC, 0x417D97 mov [0x965A20]; undeclared 0x9659FD..0x965A25), CCollision::ms_colModelCache.
+CWorld::FindGroundZFor3DCoord@arg3:1:W
+CWorld::FindGroundZFor3DCoord@arg4:4:W
+CWorld::FindGroundZFor3DCoord@0x9659FC:0x2C:RW
+CWorld::FindGroundZFor3DCoord@0x96592C:0x34:RW
+CWorld::FindGroundZFor3DCoord@[0x96595C]:0x258:RW
+# Optional, only for an in-process L2 attempt (see report): the building pool objects (13000 x 0x38, entity scan
+# codes +0x2C), as CStreaming::ProcessEntitiesInSectorList does.
+#CWorld::FindGroundZFor3DCoord@[[0xB74498]]:0xB1BC0:RW
+
+# D3DResourceSystem::Init (0x730830, split): the 17-entry resource table at 0xC87E48 (0x18 each: 16 in the loop
+# 0x730890..0x7308BB, esi 0xC87E5C..0xC87FDC, plus 0xC87FC8..0xC87FDC; undeclared 0xC87E48..0xC87FC8).
+D3DResourceSystem::Init@0xC87E48:0x198:RW
+
+# CVector operator+(a, b) / operator*(v, s) / operator/(v, s) / Multiply3x3(out, m, v) / Multiply3x3(out, v, m):
+# the returned CVector (stack arg0, 0xC; undeclared arg0+0..+0xC in every case, both sides identical in grove l2).
+FUN_0040fe30@arg0:0xC:W
+FUN_0040fec0@arg0:0xC:W
+FUN_004119d0@arg0:0xC:W
+Multiply3x3@arg0:0xC:W
+FUN_0059c810@arg0:0xC:W
+
+# FUN_004a5270 (FxInfoNoise_c ctor): +0x14 = g_fxMan.m_Pool.GetMem(4, 4): the FX memory pool (FxMemoryPool_c at
+# 0xA9AF2C: data, size, position; undeclared 0xA9AF34 both sides), as FxSystemBP_c::SetBoundingSphere.
+FUN_004a5270@0xA9AF2C:0xC:RW
+
+# FUN_004acff0 (CEventBuildingCollision dtor) / FUN_005ff0f0 (CEventAcquaintancePedLike dtor -> 0x4AF890): vtables
+# into `this` (0x30 / 0x18; undeclared 0x36FC00 for a stack event), CEntity::CleanUpOldReference 0x571A00 of the
+# reference at +0x14 (CReferences::aRefs + pEmptyList; undeclared 0xB9BA00.., 0xB9C030..0xB9C207) and the entity's
+# m_pReferences (+0x24).
+FUN_004acff0@ecx:0x30:RW
+FUN_004acff0@0xB9B9A8:0x5DC4:RW
+FUN_004acff0@[ecx+0x14]+0x24:4:RW
+FUN_005ff0f0@ecx:0x18:RW
+FUN_005ff0f0@0xB9B9A8:0x5DC4:RW
+FUN_005ff0f0@[ecx+0x14]+0x24:4:RW
+
+# FUN_004b0d00 (CEventInAir dtor): the CEvent vtable into `this` (CEventInAir 0xC; stack events, undeclared
+# 0x36FC34, 0x36FC74).
+FUN_004b0d00@ecx:0xC:W
+
+# FUN_005f64b0 / FUN_005f6510 (CPedGroupDefaultTaskAllocatorStandStill / Random ctors, split): the vtable into `this`
+# (ms_StandStillAllocator 0xC09910 / ms_RandomAllocator 0xC09918, 4 bytes each).
+FUN_005f64b0@ecx:4:W
+FUN_005f6510@ecx:4:W
+
+# FUN_0061a390 (CTaskSimple ctor): vtable and m_pParentTask into `this` (CTaskSimple 0x8; stack tasks, undeclared
+# 0x36FB18.., 0x36FB24..0x36FB2C).
+FUN_0061a390@ecx:8:W
+
+# FxInfoSize_c::Load(file, version) (0x4A6010, split): the interp member's Load allocates its keys from the FX
+# memory pool (0xA9AF2C; undeclared 0xA9AF34) and reads the FX project file through the CRT (_iob 0x8E2C30;
+# undeclared 0x8E2C90 = _iob[3]).
+FxInfoSize_c::Load@0xA9AF2C:0xC:RW
+FxInfoSize_c::Load@0x8E2C30:0x280:RW
+
+# FxManager_c::Init (0x4A98E0, split): `this` = g_fxMan (0xA9AE80, FxManager_c 0xBC; undeclared 0xA9AE98..0xA9AEA6
+# (+0x18 emitters ..), 0xA9AF0C..0xA9AF36 (matrices, m_Pool)).
+FxManager_c::Init@ecx:0xBC:RW
+
+# ProcSurfaceInfo_c::Init (0x5A2EB0): `this` (ProcSurfaceInfo_c 0x48, elements of the static array from 0xBB7CB8;
+# undeclared 0xBB7CB8..0xBB7CEC, 0xBB7D00.., one element per case, stride 0x48).
+ProcSurfaceInfo_c::Init@ecx:0x48:W
+
+# mvpa part B:
+# ---- VERIFY part B (2026-11-11): undeclared writes of l2grove-partial (in-process) / splito-partial (split,
+# original side) for the hooks of target/verify/partB.txt. Each region is the object the observed bytes fall in,
+# sized from the 1.0 US code; stack regions are the hook's out-pointer / `this` (no `this =` on these hooks).
+
+# CColLine (0x40EF50 -> 0x15611B0, thiscall ctor): copies start to this+0 and end to this+0x10 (12 bytes
+# each; this+0xC / +0x1C untouched); `this` is the caller's stack CColLine (undeclared 0x36EBA4.., 0x36EC40..).
+CColLine@ecx:0xC:W
+CColLine@ecx+0x10:0xC:W
+
+# CConversations::Clear (0x43A7B0 -> 0x156DFF0): m_Conversations 0x9691D8 (14 x 0x1C, loop to 0x969368)
+# and m_Nodes 0x969570 (50 x 0x18, 0x15 6E01B mov [eax-8], loop to 0x969A28).
+CConversations::Clear@0x9691D8:0x188:D
+CConversations::Clear@0x969570:0x4B0:D
+
+# CDummyObject::CreateObject (0x59EAC0) -> CObject::Create / CEntity::CreateRwObject: CStreaming::
+# ms_rwObjectInstances (CLinkList 0x9654F0, 0x34; undeclared 0x9654F8..) and its links block [0x965520]
+# (1000 x 12, heap); g_fx 0xA9AE00 (Fx_c, 0x70) + g_fxMan 0xA9AE80 (FxManager_c, 0xBC): entity effects
+# (undeclared 0xA9AE44, 0xA9AE8C..0xA9AE94).
+CDummyObject::CreateObject@0x9654F0:0x34:RW
+CDummyObject::CreateObject@[0x965520]:0x2EE0:RW
+CDummyObject::CreateObject@0xA9AE00:0x13C:D
+
+# CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos (0x6946A0): the out CVector (arg2, caller stack),
+# and via CPedGeometryAnalyser::ComputeClearTarget 0x5F5D80 -> CCollision::ProcessLineOfSight 0x417950 its
+# local static CMatrix 0x9659B0 (0x48) + guard 0x9659F8 (undeclared 0x9659B1..0x9659EB).
+CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos@arg2:0xC:W
+CEntitySeekPosCalculatorXYOffset::ComputeEntitySeekPos@0x9659B0:0x4C:D
+
+# CMaths::InitMathsTables (0x59AC90): the sine table 0xBB3E00 (256 floats; 0x59ACB6 fstp [eax*4+0xBB3DFC],
+# eax = 1..256).
+CMaths::InitMathsTables@0xBB3E00:0x400:D
+
+# CObject::Render (0x59F180) -> CEntity::Render / RW pipeline: RWSTATIC 0xC92470..0xC979C8 and RWD3D9
+# 0xC979C8..0xC9C080 (as the L2-EXTRAS block); D3D9 vertex-declaration cache + proj 0x8E2440 (0x58);
+# RwD3D9SetTransformWorld's last world D3DMATRIX 0x8E24D0 (0x40; 0x7FA545..0x7FA5AD); the
+# _rwD3D9VSGet* static matrices 0x8D7390..0x8D7490 (4 x 0x40; 0x764663.., 0x7647ED push 0x8D73D0, 0x764DEE
+# push 0x8D7410, 0x764AC6 push 0x8D7450); the D3DX CPU-dispatch table 0x8D7490 (0x47 dwords, FUN_00781A87
+# rep movsd from 0x8D75B0) and its state 0x8D88C0; CRT _NLG_Destination 0x8E2B80 (0x10, __NLG_Notify
+# 0x821963); RENDERENTITYLINK 0x8E48A0.
+CObject::Render@0xC92470:0x5558:D
+CObject::Render@0xC979C8:0x46B8:D
+CObject::Render@0x8E2440:0x58:D
+CObject::Render@0x8E24D0:0x40:D
+CObject::Render@0x8D7390:0x100:D
+CObject::Render@0x8D7490:0x11C:D
+CObject::Render@0x8D88C0:0x4:D
+CObject::Render@0x8E2B80:0x10:D
+CObject::Render@0x8E48A0:0x4:D
+
+# CPedGeometryAnalyser::CanPedTargetPoint (0x5F1B70) -> CWorld line of sight -> CCollision::TestLineOfSight
+# 0x417730 (body 0x1564C58): its local static CMatrix 0x965960 (0x48) + guard 0x9659A8 (undeclared
+# 0x965961..0x96599C); CCollision::ms_colModelCache (CLinkList 0x96592C, 0x34; undeclared 0x965934,
+# 0x96594C) and its links block [0x96595C] (50 x 12) moved by CalculateTrianglePlanes.
+CPedGeometryAnalyser::CanPedTargetPoint@0x965960:0x4C:D
+CPedGeometryAnalyser::CanPedTargetPoint@0x96592C:0x34:RW
+CPedGeometryAnalyser::CanPedTargetPoint@[0x96595C]:0x258:RW
+
+# CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached(z, corners, normals, distances) (0x5F1670):
+# normals (4 CVectors) and distances (4 floats), caller stack.
+CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached@arg2:0x30:W
+CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached@arg3:0x10:W
+
+# CPlantSurfPropMgr::Initialise (0x5DD6C0): PLANTS.DAT through CFileLoader::ms_line 0xB71848 (0x200) and
+# CFileMgr::ms_dirName 0xB71A60 (0x80; undeclared 0xB71A91..), CRT _cflush 0xC9AC4C; m_SurfPropPtrTab
+# 0xC38070 (178 x 4) + m_SurfPropTab 0xC38338 (57 x 0x7C) + m_countSurfPropsAllocated 0xC39ED4.
+CPlantSurfPropMgr::Initialise@0xB71848:0x200:D
+CPlantSurfPropMgr::Initialise@0xB71A60:0x80:RW
+CPlantSurfPropMgr::Initialise@0xC9AC4C:4:RW
+CPlantSurfPropMgr::Initialise@0xC38070:0x1E68:D
+
+# CPtrListSingleLink::Flush (0x552400): the list head (this; caller stack lists, undeclared 0x36FD04 /
+# 0x36FD08), and per node the ptr-node-single pool [0xB74484]: byte map (0x55244D or [edx+eax],0x80) and
+# first_free (+0xC, 0x552458). (The node+4 store at 0x552438 is not reached: the head is always unlinked.)
+CPtrListSingleLink::Flush@ecx:4:RW
+CPtrListSingleLink::Flush@[0xB74484]:0x14:RW
+CPtrListSingleLink::Flush@[[0xB74484]+4]:[[0xB74484]+8]:RW
+
+# CShadowCamera::Create (0x705B60): RwCameraCreate / RwFrameCreate / RwRasterCreate free lists in RWSTATIC
+# (undeclared 0xC9794C, camera module 0xC9793C) and the D3D9 video-memory raster list head 0xB4E9FC
+# (_rxD3D9VideoMemoryRasterListAdd 0x4CB559).
+CShadowCamera::Create@0xC92470:0x5558:D
+CShadowCamera::Create@0xB4E9FC:4:D
+
+# CSkidmarks::Init (0x7204E0): m_aIndices 0xC799C8 (96 x 2; loop 0x72052A..0x720557).
+CSkidmarks::Init@0xC799C8:0xC0:D
+
+# CSprite2d::AddToBuffer (0x728200): aTempBufferIndices 0xC4B958 (4096 x 2; [eax*2+0xC4B958..62]) and
+# aRadiosityVertexBuffer 0xC5F958 (4 RwD3D9Vertex per call via SetVertices 0x727A00 at [0xC8045C]*0x1C;
+# flush at > 0x5FC, so up to 0x600 x 0x1C).
+CSprite2d::AddToBuffer@0xC4B958:0x2000:D
+CSprite2d::AddToBuffer@0xC5F958:0xA800:D
+# (not seen yet: the full-buffer flush 0x7282AE jmp 0x7273D0 renders through RW; if it shows up:)
+# CSprite2d::AddToBuffer@0xC979C8:0x46B8:D
+
+# CStats::Init (0x55C0C0) -> LoadActionReactionStats / LoadStatUpdateConditions: ms_line 0xB71848, _cflush,
+# StatMessage 0xB78200 (128 x 0x10), StatReactionValue 0xB78F10 (59 floats).
+CStats::Init@0xB71848:0x200:D
+CStats::Init@0xC9AC4C:4:RW
+CStats::Init@0xB78200:0x800:D
+CStats::Init@0xB78F10:0xEC:D
+# CStats::LoadStatUpdateConditions (0x559860): STATDISP.DAT into StatMessage 0xB78200 (128 x 0x10).
+CStats::LoadStatUpdateConditions@0xB71848:0x200:D
+CStats::LoadStatUpdateConditions@0xC9AC4C:4:RW
+CStats::LoadStatUpdateConditions@0xB78200:0x800:D
+
+# CTaskSimpleCarDrive::ProcessBopping (0x642E70): the bopping anim blend writes the hierarchy in
+# CAnimManager::ms_aAnimations 0xB4EA40 (2,500 x 0x18; undeclared 0xB5024A..0xB50257) and the block
+# reference count in ms_aAnimBlocks 0xB5D4A0 (180 x 0x20; AddAnimBlockRef 0x4D3FB7; undeclared 0xB5D4B2).
+CTaskSimpleCarDrive::ProcessBopping@0xB4EA40:0xEA60:D
+CTaskSimpleCarDrive::ProcessBopping@0xB5D4A0:0x1680:D
+
+# CustomEnvMapPipeMaterialData::FromBuffer(src, dst) (0x5D8BE0): dst bytes 0..4, word +6, dword +8 (the
+# 0xC-byte CustomEnvMapPipeMaterialData; caller stack).
+CustomEnvMapPipeMaterialData::FromBuffer@arg1:0xC:W
+
+# FUN_00406d70 (CVector::operator-=, thiscall): this (3 floats, read and written).
+FUN_00406d70@ecx:0xC:RW
+# FUN_0040fe90 (CVector operator*(float, CVector), cdecl hidden result): arg0 (3 floats).
+FUN_0040fe90@arg0:0xC:W
+# FUN_00411590 (CompressedVector::Uncompress(out, in)): out (3 floats; often the static CColPoint 0x9659FC
+# fields 0x9659FC / 0x965A08 / 0x965A14, else caller stack).
+FUN_00411590@arg0:0xC:W
+# FUN_00411a00 (CVector::operator+=, thiscall): this.
+FUN_00411a00@ecx:0xC:RW
+# VectorSub (0x40FE60, cdecl out = a - b): out (3 floats).
+VectorSub@arg0:0xC:W
+
+# Event destructors (thiscall, no `this =` on the hooks): the vtable dword (V, then CEvent 0x85AB38;
+# undeclared this+0..+2 of stack events), and CEntity::CleanUpOldReference's CReferences::aRefs 0xB9B9A8
+# (3,000 x 8) + pEmptyList 0xBA1768.
+FUN_004aca70@ecx:4:W
+FUN_004aca70@0xB9B9A8:0x5DC4:RW
+FUN_004aca70@0xBA1768:0x4:RW
+FUN_004b2470@ecx:4:W
+FUN_004b2470@0xB9B9A8:0x5DC4:RW
+FUN_004b2470@0xBA1768:0x4:RW
+# FUN_005ff1b0 (~CEventAcquaintancePedDislike -> ~CEventAcquaintancePed 0x4AF890): heap `this` (vtable not
+# seen undeclared: heap is not watched; declared so it is compared), aRefs (undeclared 0xB9BA01..0xB9C037).
+FUN_005ff1b0@ecx:4:W
+FUN_005ff1b0@0xB9B9A8:0x5DC4:RW
+FUN_005ff1b0@0xBA1768:0x4:RW
+# FUN_004b0a50 (~CEventScriptCommand): the vtable (undeclared 0x36F658+2), and the owned task's
+# `delete` (virtual scalar-deleting dtor -> CTask::operator delete on CPools::ms_pTaskPool 0xB744A8).
+FUN_004b0a50@ecx:4:W
+FUN_004b0a50@[0xB744A8]:0x14:RW
+FUN_004b0a50@[[0xB744A8]+4]:[[0xB744A8]+8]:RW
+
+# CRT static initialisers' allocator ctors (mov [ecx], vtable; this = the static allocator object:
+# 0x851290 mov ecx,0xC0990C / 0xC09914 / 0xC0991C).
+FUN_005f6480@ecx:4:W
+FUN_005f64e0@ecx:4:W
+FUN_005f6540@ecx:4:W
+
+# FxFrustumInfo_c::IsCollision(FxSphere_c*) (0x4AA030): the sphere's m_nNumPlanesPassed (+0x10, dword,
+# 0x4AA0C3 mov [edx+0x10],esi); the whole FxSphere_c (0x14) so the stack pointee is matched by its bytes.
+FxFrustumInfo_c::IsCollision@arg0:0x14:RW
+
+# FxManager_c::DestroyFxSystem (0x4A9810; this = g_fxMan 0xA9AE80, FxManager_c 0xBC): unlinks the system
+# from m_FxSystems (+0xC; undeclared 0xA9AE8C..0xA9AE94).
+FxManager_c::DestroyFxSystem@0xA9AE80:0xBC:D
+
+# InteriorManager_c::Init (0x5C0500): ms_line, _cflush, g_currFurnitureId/g_currSubGroupId 0xBAB378,
+# g_furnitureMan 0xBAB380 (0x2078), g_subGroupStore 0xBAD3F8 (128 x 0x1C), the furniture store 0xBAE1F8
+# (0x100 x 0x14, __init_ 0x84F361).
+InteriorManager_c::Init@0xB71848:0x200:D
+InteriorManager_c::Init@0xC9AC4C:4:RW
+InteriorManager_c::Init@0xBAB378:0x4280:D
+
+# ProcObjectMan_c::Init (0x5A3EA0; this = g_procObjMan 0xBB7CB0, ProcObjectMan_c 0x4C14, no `this =` on the
+# hook): procobj.dat through ms_line, _cflush.
+ProcObjectMan_c::Init@ecx:0x4C14:RW
+ProcObjectMan_c::Init@0xB71848:0x200:D
+ProcObjectMan_c::Init@0xC9AC4C:4:RW
+
+# FUN_005f6450: static constructor, writes its vtable into the object at 0xC09908
+FUN_005f6450@ecx:4:W
+# mvpa-fx-1 (port-l2-l2-mvpa-fx-1, pause-restart): FX GetValue writes the caller's info struct (stack arg5), EmRate
+# a single float; FxInterpInfoFloat_c::GetVal the caller's value buffer (arg0, at most 16 floats).
+FxInfoForce_c::GetValue@arg5:0x70:W
+FxInfoFriction_c::GetValue@arg5:0x70:W
+FxInfoWind_c::GetValue@arg5:0x70:W
+FxInfoRotSpeed_c::GetValue@arg5:0x70:W
+FxInfoColour_c::GetValue@arg5:0x70:W
+FxInfoSize_c::GetValue@arg5:0x70:W
+FxInfoEmRate_c::GetValue@arg5:4:W
+FxInterpInfoFloat_c::GetVal@arg0:0x40:W
+# Fx_c::RenderEnd (0x4A1600): restores the render states through RwEngineInstance: _rwD3D9LastVertexDeclaration..
+# (0x8E2444) and the RW D3D9 driver statics from 0xC97B94 (undeclared 0x8E2444.., 0xC97B94..).
+Fx_c::RenderEnd@0x8E2444:12:RW
+Fx_c::RenderEnd@0xC97B94:0x2A5C:RW
+
+# WRITER-RW-5 batches (docs/arch/rw-port.md "WRITER-RW-5"), declared by VERIFIER-3 from the grove l2 run
+# port-l2-rw5v-gl2 (lane 2; every undeclared byte below was written by the original and the port alike).
+# _rpD3D9GetVertexShader: the two-dword `out` argument, the VS cache (0xC926F8, 0x100 x 0x14) and the
+# scratch / statics its shader-creating callee 0x75F0B0 writes on a miss (0x8E2B84.., 0xC93AF9..,
+# 0xC96032.., 0xC96420..0xC9643B incl. the stack-address cell 0xC96438).
+_rpD3D9GetVertexShader@arg1:8:RW
+_rpD3D9GetVertexShader@0x8E2B84:0xC:RW
+_rpD3D9GetVertexShader@0xC926F8:0x1700:RW
+_rpD3D9GetVertexShader@0xC96032:0x18:RW
+_rpD3D9GetVertexShader@0xC96420:0x1C:RW
+# _rxD3D9VertexShaderDefaultMeshRenderCallBack: the D3D9 render-state / sampler / stream caches
+# (the same tables as the PORT-RW-4 doc:rw-port lines 0xC980F8, 0xC98E88, 0xC991D0, 0xC99860).
+_rxD3D9VertexShaderDefaultMeshRenderCallBack@0xC980F8:0x840:RW
+_rxD3D9VertexShaderDefaultMeshRenderCallBack@0xC98E88:0x348:RW
+_rxD3D9VertexShaderDefaultMeshRenderCallBack@0xC991D0:0x690:RW
+_rxD3D9VertexShaderDefaultMeshRenderCallBack@0xC99860:0x420:RW
+# RwRasterCreate (split run port-l2-rw5v-gsplit): the driver's video-memory raster list head 0xB4E9FC, the
+# cell 0xC87C7C and the D3D9 cache words 0xC980C4.. its callees write.
+RwRasterCreate@0xB4E9FC:4:RW
+RwRasterCreate@0xC87C7C:4:RW
+RwRasterCreate@0xC980C4:8:RW
+# cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead (same run): the static byte 0x8E48B8 its stream-read callee writes.
+cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead@0x8E48B8:4:RW
+# _rpD3D9GetMinMaxValuesV2d / V3d: the min and max out-arguments (RwV2d / RwV3d on the caller's stack; split
+# run port-l2-rw5v-prmm: the only undeclared writes, original and Rust alike).
+_rpD3D9GetMinMaxValuesV2d@arg2:8:RW
+_rpD3D9GetMinMaxValuesV2d@arg3:8:RW
+_rpD3D9GetMinMaxValuesV3d@arg2:0xC:RW
+_rpD3D9GetMinMaxValuesV3d@arg3:0xC:RW

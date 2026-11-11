@@ -118,7 +118,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );
@@ -222,7 +226,12 @@ mod tests {
         );
         let addrs: BTreeSet<u32> = ALL.iter().map(|h| h.addr).collect();
         assert_eq!(addrs.len(), COUNT);
-        for h in sa_core::hooks::ALL.iter().chain(sa_stream::hooks::ALL.iter()).chain(sa_world::hooks::ALL.iter()).chain(sa_input::hooks::ALL.iter()) {
+        for h in sa_core::hooks::ALL
+            .iter()
+            .chain(sa_stream::hooks::ALL.iter())
+            .chain(sa_world::hooks::ALL.iter())
+            .chain(sa_input::hooks::ALL.iter())
+        {
             assert!(
                 !addrs.contains(&h.addr),
                 "{} hooked by another engine crate too",

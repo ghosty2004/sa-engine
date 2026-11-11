@@ -16,11 +16,11 @@ use crate::common::{Fpu, ftol32, k, rd, wr};
 
 orig! {
     /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
-    pub fn interp_32_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => crate::mvpc_fx1::interp_32_get_val;
+    pub fn interp_32_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A89C0 => unported;
     /// `FxInterpInfoFloat_c::GetVal(float* out, float t)` (0x4A8470)
     pub fn interp_float_get_val_call(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8470 => interp_float_get_val;
     /// `FxInterpInfoU255_c::GetVal(float* out, float t)` (0x4A8800)
-    pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => crate::mvpc_fx1::interp_u255_get_val;
+    pub fn interp_u255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) = thiscall 0x4A8800 => unported;
     /// `FxInterpInfoFloat_c::GetVal(int index, float t0, float t1)` (0x4A85C0): the second overload,
     /// result in ST0
     pub fn interp_float_get_val2(this: GPtr<u8>, index: i32, t0: u32, t1: u32) -> f64 = thiscall 0x4A85C0 => unported;
@@ -49,7 +49,7 @@ fn eval32(this: GPtr<u8>, t: u32) -> [f32; 16] {
 /// type word +4 = 0x2001, key count +0xE = 1, `+0x14 = g_fxMan pool GetMem(4, 4)`; returns this. The SEH
 /// frame of the original is not needed (nothing in between throws).
 #[hook(addr = 0x4A5270, conv = thiscall, name = "FUN_004a5270", expect = "6A FF 68 C3 8F 83 00",
-       unverified = "mvpa-fx-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "allocates from the FX memory pool")]
 pub fn fx_info_noise_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x85A848);
@@ -144,7 +144,7 @@ pub fn fx_info_colour_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32
 /// `FxInfoSize_c::Load(FILESTREAM file, int version)` (0x4A6010, thiscall, `ret 8`): `version < 0x69`
 /// (signed) → key count +0xE = 2; returns the interp member's `Load(file)` (vtable slot +4).
 #[hook(addr = 0x4A6010, conv = thiscall, name = "FxInfoSize_c::Load", expect = "83 7C 24 08 69",
-       unverified = "mvpa-fx-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "reads the FX project file")]
 pub fn fx_info_size_load(this: GPtr<u8>, file: u32, version: i32) -> u32 {
     if version < 0x69 {

@@ -588,3 +588,60 @@ is covered (its page-walk loop). Unit test `push_saved_and_restored_is_not_a_rea
 | 0x75E9F0, 0x803FE0 | node getter, `RwImageSetGamma` | taken by another branch (worktree-agent-a4f0…, …a76f…) |
 
 Register-entry functions: none in these groups (no `entry_eax` / ESI ports needed).
+
+## WRITER-RW-5 verification (VERIFIER-3, lane 2, `SA_ROOT=/home/ghosty2004/sa-engine`)
+
+Per-hook verdicts: `docs/verify/verdicts-rw5.tsv`. Lists: `target/lists/` of the verifier worktree (not committed).
+
+| step | runs | result |
+|---|---|---|
+| L3, per batch | `bisect-batch.sh` on grove: rw5-raster, rw5-node-1, rw5-native-1 | IDENTICAL |
+| L3, all 8 batches together | `l3.sh --rust unverified --fixed verified` (`SA_UNVERIFIED` = the 8 batches) on grove, menus-hud, pause-restart, driving, air-water | IDENTICAL on all 5 (the per-batch runs were replaced by this one after lane-2 contention made them ~8 min each; a culprit would still have been bisected to the hook) |
+| L2 (grove) | `rw5v-gl2` (every L2-route row), `rw5v-gfixl2` (with the new extras, `L2_PER_FRAME=16`) | see below |
+| split (grove, pause-restart, menus-hud) | `rw5v-gsplit`, `rw5v-gfixsplit`, `rw5v-prinst`, `rw5v-prall`, `rw5v-mhall` (all 88 non-L3-only hooks), `rw5v-prmm`/`prmm2` (`SPLIT_STACKFILL=16384`, `SPLIT_PER_FRAME=2`, max 100) | see below |
+| all ports | `SA_UNVERIFIED=<8 batches> verify-all.sh rw5v3 2` (11 recordings) | IDENTICAL on all 11 recordings (car-ai was skipped by the 20 GB disk guard in `rw5v3` and rerun as `rw5v3-carai` with the same DLL, sha256 ad2d7c87…) |
+
+Only 20 of the 94 hooks are called in the runs (grove, pause-restart and menus-hud call the same
+set): the rasters (Unlock / Create / Lock), the AtomicAllInOne node-definition getter, the VS cache and the
+default VS mesh-render callback, `_rwD3D9CameraEndUpdate`, the MatFX material dtor and atomic stream read,
+the instancing family the default (re)instance callbacks use (V3d / V2d / Color / Weights / IndicesRemap /
+FindFormatV2d / GetMinMaxValuesV2d) and the two callbacks, plus the L3-only `RwD3D9ChangeVideoMode` and
+`RwCameraClear` (INF-10 coverage). The other 74 (stream writers / sizes, string helpers, images / DDS, native-data streams,
+world iterators, module closes, CRT memory wrappers, ...) have no call in any run: L3-batch only, they stay
+`unverified`.
+
+Promoted (17; L2 or split with 0 mismatches and 0 undeclared writes, and every recording IDENTICAL):
+0x7FAEC0, 0x7FB230, 0x7FB2D0 (rw5-raster); 0x7582E0, 0x761030 (rw5-node-1); 0x7F98D0 (rw5-cam-1); 0x810C60,
+0x811A90 (rw5-core-1); 0x752320, 0x752AD0, 0x7544E0, 0x754AE0, 0x754C80, 0x7558F0, 0x755AA0, 0x7578C0,
+0x758270 (rw5-inst-1).
+
+Findings:
+
+- `_rpD3D9GetVertexShader` 0x75EED0 (not promoted): l2 200 cases, 3 mismatches, all cache misses (the
+  shader-creating callee 0x75F0B0 makes a new D3D vertex shader per run, so the return value and the cache
+  slot hold different OS object addresses); split FAIL by input divergence at 0xC96438, the stack-address
+  cell that callee writes (RW-4 already listed it for 0x761010): the port's frame is deeper, so the stored
+  stack address differs. Needs a normaliser for 0xC96438 (or a split comparison that classes it as a stack
+  address) before it can be promoted; its cache hits match.
+- An l2 (double-run) of `_rxD3D9DefaultInstanceCallback` / `_rxD3D9DefaultReinstanceCallback` crashes the game
+  (frame 256 of pause-restart, `_rpD3D9AddDynamicGeometry` 0x74E97E reading 0x80000000): both are split-only.
+  `0x758270` was marked `L2`; its route is now `split` (it calls 0x7578C0 directly).
+- `_rpD3D9GetMinMaxValuesV2d` under a Rust `FindFormatV2d`: the split inputs diverge (the Rust caller puts
+  min / max at other stack offsets, swapped); alone it passes. Not a port difference.
+- Hazards the writer asked about: 0x7F40F0 / 0x8001E0 (uninitialised palette / lookup tables) and 0x7FF270 are
+  never called in the corpus, so the zero-vs-garbage difference cannot be observed there (they stay
+  unverified; the difference stays documented in "Findings (bugs kept)"). The D3D lock / unlock pairs of the
+  promoted raster / instancing hooks survived the split runs; the double run is unsafe only for the instance
+  callbacks (above). The stream callbacks that ran (MatFX atomic stream read) wrote no caller-stack bytes; the
+  only stack out-parameters seen were `_rpD3D9GetVertexShader`'s `out` and the min / max of GetMinMaxValues
+  (declared). Argument-slot reuse was not observable (no undeclared caller-stack writes of the promoted hooks).
+- The `push_is_allocation` change of the sa-hook callers test (WRITER-RW-5, f5291e2) is sound: a revisited
+  (address, slot, aliases) state adds nothing; once ESP is written other than by push / pop / add / sub imm the
+  slot is only reachable through an alias, every ESP-relative access then counts as "not shown"; the restore
+  must be an exact dword `mov r, [slot]` into the pushed register, and any other read of the slot still fails.
+  `cargo test --release -p sa-hook --lib`: 54 passed (exe present).
+- Extras added (`tools/e2e/l2-extras.txt`, "WRITER-RW-5 batches" block): VS cache and its callee's statics,
+  the D3D9 render-state / sampler caches for the mesh-render callback, RwRasterCreate's driver cells, the
+  MatFX stream byte 0x8E48B8, the min / max out-arguments of GetMinMaxValues V2d / V3d.
+- `tools/e2e/verify-all.sh` built and hashed the DLL of `SA_ROOT` (the main checkout), so a worktree run
+  tested the main checkout's code; it now builds the script's own checkout.

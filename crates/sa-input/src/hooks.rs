@@ -9,18 +9,10 @@ use crate::pad;
 use crate::statics;
 
 /// Every module's registrations, in this order (PORT-ANIM-INPUT, INPUT).
-pub const MODULES: &[&[HookReg]] = &[
-    pad::HOOKS,
-    ccm::HOOKS,
-    statics::HOOKS,
-];
+pub const MODULES: &[&[HookReg]] = &[pad::HOOKS, ccm::HOOKS, statics::HOOKS];
 
 /// Every module's globals (initial values checked against the exe image by a test).
-pub const GLOBALS: &[&[GlobalDesc]] = &[
-    pad::GLOBALS,
-    ccm::GLOBALS,
-    statics::GLOBALS,
-];
+pub const GLOBALS: &[&[GlobalDesc]] = &[pad::GLOBALS, ccm::GLOBALS, statics::GLOBALS];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
     let (mut n, mut i) = (0, 0);
@@ -84,7 +76,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );
@@ -187,7 +183,11 @@ mod tests {
         );
         let addrs: BTreeSet<u32> = ALL.iter().map(|h| h.addr).collect();
         assert_eq!(addrs.len(), COUNT);
-        for h in sa_core::hooks::ALL.iter().chain(sa_stream::hooks::ALL.iter()).chain(sa_world::hooks::ALL.iter()) {
+        for h in sa_core::hooks::ALL
+            .iter()
+            .chain(sa_stream::hooks::ALL.iter())
+            .chain(sa_world::hooks::ALL.iter())
+        {
             assert!(
                 !addrs.contains(&h.addr),
                 "{} hooked by another engine crate too",

@@ -91,7 +91,7 @@ fn pos(e: GPtr<u8>) -> GPtr<u8> {
 /// argument goes to the saved type (+0xB8); else a non-zero argument replaces +0xB4 and 0 moves +0xB4 to +0xB8 and
 /// clears +0xB4. When +0xB4 is then 7: +0xC8 = 5.0f, +0xC4 = 15.
 #[hook(addr = 0x600B50, conv = thiscall, name = "CPedIntelligence::SetPedDecisionMakerType", expect = "8B 81 B4 00 00 00 85 C0",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn intel_set_ped_decision_maker_type(this: GPtr<u8>, ty: i32) {
     let cur = rd::<i32>(this, 0xB4);
     if cur == 0 {
@@ -111,7 +111,7 @@ pub fn intel_set_ped_decision_maker_type(this: GPtr<u8>, ty: i32) {
 /// `CPedGroupIntelligence::SetGroupDecisionMakerType(int32)` (0x5F7340, `ret 4`): +0x298 = the argument (the store
 /// sits in a protection chunk at 0x4037E0 that jumps back to the `ret 4`).
 #[hook(addr = 0x5F7340, conv = thiscall, name = "CPedGroupIntelligence::SetGroupDecisionMakerType", expect = "8B 44 24 04 90 E9 96 C4 E0 FF",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn pgi_set_group_decision_maker_type(this: GPtr<u8>, ty: i32) {
     wr::<i32>(this, 0x298, ty);
 }
@@ -121,7 +121,7 @@ pub fn pgi_set_group_decision_maker_type(this: GPtr<u8>, ty: i32) {
 /// dword `+4i` (task types), the four bytes `+0x18+4i` (probabilities) and the two bytes `+0x30+2i` (facial
 /// flags), in that order.
 #[hook(addr = 0x6006B0, conv = thiscall, name = "CDecision::From", expect = "53 55 56 57 8B 7C 24 14",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn decision_from(this: GPtr<u8>, src: GPtr<u8>) {
     for i in 0..6isize {
         wr::<u32>(this, 4 * i, rd::<u32>(src, 4 * i));
@@ -138,7 +138,7 @@ pub fn decision_from(this: GPtr<u8>, src: GPtr<u8>) {
 /// links (+0xA, +8) = -1 and +0x10/+0x14/+0xC = 0; then `m_bSettingUpConversation` (0x9691D0) = 0 and
 /// `m_SettingUpConversationNumNodes` (0x9691C4) = 0.
 #[hook(addr = 0x43A7B0, conv = cdecl, name = "CConversations::Clear", expect = "E9 3B 38 13 01",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn conversations_clear() {
     for i in 0..14usize {
         let c = g::<u8>(0x9691D8 + 0x1C * i);
@@ -176,7 +176,7 @@ pub fn cover_init() {
 /// `CTaskSequences::Init` (0x632D90): `ms_iActiveSequence` (0x8D2E98) = -1, then for each of the 64 sequences
 /// `ms_bIsOpened[i]` (0xC17898) = 0 and `ms_taskSequence[i]` (0xC178F0, 0x40 each) flushed.
 #[hook(addr = 0x632D90, conv = cdecl, name = "CTaskSequences::Init", expect = "56 57 C7 05 98 2E 8D 00 FF FF FF FF",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn task_sequences_init() {
     g::<i32>(0x8D2E98).write(-1);
     for i in 0..64usize {
@@ -223,7 +223,7 @@ pub fn membership_remove_member(this: GPtr<u8>, idx: i32) {
 /// +0x14C, interleaved in that order per index), deletes the old (+4) and new (+8) events (once when they are the
 /// same object) and the default task allocator's tasks (+0x290, +0x294), clearing each; +0x298 and +0x29C = -1.
 #[hook(addr = 0x5F7350, conv = thiscall, name = "CPedGroupIntelligence::Flush", expect = "53 56 57 8B F9",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn pgi_flush(this: GPtr<u8>) {
     for i in 0..8isize {
         task_pair_flush(this.byte_add(0xC + 0x14 * i));
@@ -264,11 +264,13 @@ pub fn pgi_flush(this: GPtr<u8>) {
 }
 
 /// `CPedTaskPair::Flush` (0x5E95B0; the test continues in the protection chunk 0x403956 and back at 0x5E95BE):
-/// deletes the task (+4) when set, then +4 = 0 and +8 (slot) = -1. The ped (+0) is kept.
+/// the chunk clears the ped (+0 = 0, a plain store, no reference release), then the task (+4) is deleted when
+/// set, +4 = 0 and +8 (slot) = -1.
 #[hook(addr = 0x5E95B0, conv = thiscall, name = "CPedTaskPair::Flush", expect = "56 8B F1 8B 4E 04",
        unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn ped_task_pair_flush(this: GPtr<u8>) {
     let t = rd::<GPtr<u8>>(this, 4);
+    wr::<u32>(this, 0, 0);
     if !t.is_null() {
         v_delete(t, 1);
     }
@@ -279,7 +281,7 @@ pub fn ped_task_pair_flush(this: GPtr<u8>) {
 /// `CInformFriendsEventQueue::Flush` (0x4AC2A0): each of the 8 entries (0xA9AFB8, 0xC each: +0 ped, +4 event, +8
 /// time) releases its ped reference and clears it, deletes its event and clears it, and gets time -1.
 #[hook(addr = 0x4AC2A0, conv = cdecl, name = "CInformFriendsEventQueue::Flush", expect = "56 BE B8 AF A9 00",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn inform_friends_event_queue_flush() {
     for i in 0..8usize {
         let e = g::<u8>(0xA9AFB8 + 0xC * i);
@@ -352,7 +354,7 @@ pub fn task_simple_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `CTask::operator delete(void*)` (0x61A5B0, cdecl): slot `(p - objects) >> 7` (arithmetic) of the task pool gets
 /// its free bit (0x80) set, and becomes the first-free index when below it (signed). No null test.
 #[hook(addr = 0x61A5B0, conv = cdecl, name = "CTask::operator delete", expect = "8B 0D A8 44 B7 00 8B 44 24 04",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn task_operator_delete(p: GPtr<u8>) {
     let pool = g::<GPtr<u8>>(TASK_POOL).read();
     let i = (p.addr() as i32).wrapping_sub(rd::<i32>(pool, 0)) >> 7;
@@ -366,7 +368,7 @@ pub fn task_operator_delete(p: GPtr<u8>) {
 /// `CEventScriptCommand::~CEventScriptCommand` (0x4B0A50): vtable 0x85B378, deletes the task (+0x10) when set,
 /// then the `CEvent` vtable 0x85AB38 (the SEH frame has no other effect).
 #[hook(addr = 0x4B0A50, conv = thiscall, name = "FUN_004b0a50", expect = "6A FF 68 18 A0 83 00",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_script_command_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B378);
     let t = rd::<GPtr<u8>>(this, 0x10);
@@ -388,7 +390,7 @@ pub fn event_acq_ped_respect_dtor(this: GPtr<u8>) {
 /// `CEventAcquaintancePedLike::~CEventAcquaintancePedLike` (0x5FF0F0): vtable 0x86CA80, then
 /// `CEventAcquaintancePed::~CEventAcquaintancePed` (0x4AF890, tail jump).
 #[hook(addr = 0x5FF0F0, conv = thiscall, name = "FUN_005ff0f0", expect = "C7 01 80 CA 86 00",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_acq_ped_like_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86CA80);
     event_acquaintance_ped_dtor(this);
@@ -421,7 +423,7 @@ pub fn event_in_air_dtor(this: GPtr<u8>) {
 
 /// `CEvent::~CEvent` (0x4AC010): only the `CEvent` vtable 0x85AB38.
 #[hook(addr = 0x4AC010, conv = thiscall, name = "FUN_004ac010", expect = "C7 01 38 AB 85 00 C3",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AB38);
 }
@@ -438,7 +440,7 @@ pub fn task_simple_stand_still_dtor(this: GPtr<u8>) {
 /// `CTaskSimpleGoTo::~CTaskSimpleGoTo` (0x667D50): vtable 0x86FD1C, then `CTaskSimple::~CTaskSimple` (0x61A3A0, tail
 /// jump).
 #[hook(addr = 0x667D50, conv = thiscall, name = "FUN_00667d50", expect = "C7 01 1C FD 86 00",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn task_simple_go_to_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86FD1C);
     task_simple_dtor(this);
@@ -464,7 +466,7 @@ pub fn task_simple_ik_look_at_dtor(this: GPtr<u8>) {
 
 /// `CPedGroupDefaultTaskAllocatorFollowAnyMeans::ctor` (0x5F6450): stores vtable 0x86C75C. Returns this.
 #[hook(addr = 0x5F6450, conv = thiscall, name = "FUN_005f6450", expect = "8B C1 C7 00 5C C7 86 00",
-       unverified = "mvpa-ai-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn allocator_follow_any_means_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x86C75C);
@@ -473,7 +475,7 @@ pub fn allocator_follow_any_means_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPedGroupDefaultTaskAllocatorFollowLimited::ctor` (0x5F6480): stores vtable 0x86C764. Returns this.
 #[hook(addr = 0x5F6480, conv = thiscall, name = "FUN_005f6480", expect = "8B C1 C7 00 64 C7 86 00",
-       unverified = "mvpa-ai-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn allocator_follow_limited_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x86C764);
@@ -482,7 +484,7 @@ pub fn allocator_follow_limited_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPedGroupDefaultTaskAllocatorStandStill::ctor` (0x5F64B0): stores vtable 0x86C76C. Returns this.
 #[hook(addr = 0x5F64B0, conv = thiscall, name = "FUN_005f64b0", expect = "8B C1 C7 00 6C C7 86 00",
-       unverified = "mvpa-ai-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn allocator_stand_still_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x86C76C);
@@ -491,7 +493,7 @@ pub fn allocator_stand_still_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPedGroupDefaultTaskAllocatorChat::ctor` (0x5F64E0): stores vtable 0x86C774. Returns this.
 #[hook(addr = 0x5F64E0, conv = thiscall, name = "FUN_005f64e0", expect = "8B C1 C7 00 74 C7 86 00",
-       unverified = "mvpa-ai-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn allocator_chat_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x86C774);
@@ -500,7 +502,7 @@ pub fn allocator_chat_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPedGroupDefaultTaskAllocatorRandom::ctor` (0x5F6510): stores vtable 0x86C77C. Returns this.
 #[hook(addr = 0x5F6510, conv = thiscall, name = "FUN_005f6510", expect = "8B C1 C7 00 7C C7 86 00",
-       unverified = "mvpa-ai-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn allocator_random_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x86C77C);
@@ -509,7 +511,7 @@ pub fn allocator_random_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPedGroupDefaultTaskAllocatorSitInLeaderCar::ctor` (0x5F6540): stores vtable 0x86C784. Returns this.
 #[hook(addr = 0x5F6540, conv = thiscall, name = "FUN_005f6540", expect = "8B C1 C7 00 84 C7 86 00",
-       unverified = "mvpa-ai-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn allocator_sit_in_leader_car_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x86C784);

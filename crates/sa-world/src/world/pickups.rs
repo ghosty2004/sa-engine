@@ -84,7 +84,7 @@ orig! {
     /// `CPickup::Remove` (0x4556C0, thiscall)
     pub fn remove_call(this: GPtr<u8>) = thiscall 0x4556C0 => remove;
     /// `CPickup::Update(CPlayerPed*, CVehicle*, int32 playerId)` (0x457410)
-    pub fn pickup_update(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, id: i32) -> u8 = thiscall 0x457410 => unported;
+    pub fn pickup_update(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr<u8>, id: i32) -> u8 = thiscall 0x457410 => crate::world::mvpd_w5::pickup_update;
     /// `CPickup::GiveUsAPickUpObject(CObject**, int32 slot)` (0x4567E0)
     pub fn give_us_a_pick_up_object(this: GPtr<u8>, out: GPtr<GPtr<u8>>, slot: i32) = thiscall 0x4567E0 => unported;
     /// `CWorld::Add(CEntity*)` (0x563220)

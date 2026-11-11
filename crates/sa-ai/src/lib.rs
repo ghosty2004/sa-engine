@@ -69,6 +69,7 @@ pub mod mvpb_ai;
 pub mod mvpb_ai2;
 pub mod mvpb_ai3;
 pub mod mvpb_ai4;
+pub mod attractor_scanner;
 pub mod walk;
 pub mod walkround;
 pub mod wander;

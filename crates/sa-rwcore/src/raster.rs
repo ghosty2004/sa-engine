@@ -122,7 +122,7 @@ pub fn rw_raster_get_offset(r: GPtr<u8>, x: GPtr<i16>, y: GPtr<i16>) {
 
 /// `RwRasterUnlock(raster)` (0x7FAEC0): `stdFunc[16](NULL, raster, 0)`, result ignored.
 #[hook(addr = 0x7FAEC0, conv = cdecl, name = "RwRasterUnlock", expect = "A1 24 7B C9 00",
-       unverified = "rw5-raster", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn rw_raster_unlock(r: GPtr<u8>) -> GPtr<u8> {
     std_raster_unlock(0, r, 0);
     r
@@ -291,7 +291,7 @@ pub fn rw_raster_sub_raster(r: GPtr<u8>, parent: GPtr<u8>, rect: GPtr<u8>) -> GP
 /// stores in the original order, `stdFunc[4](NULL, raster, flags)`; failure frees the raster and returns
 /// NULL; success runs the plugin constructors.
 #[hook(addr = 0x7FB230, conv = cdecl, name = "RwRasterCreate", expect = "A1 24 7B C9 00",
-       unverified = "rw5-raster", route = "split", hazards = "heap-writes", recs = "grove-walk")]
+       route = "split", hazards = "heap-writes", recs = "grove-walk")]
 pub fn rw_raster_create(width: i32, height: i32, depth: i32, flags: u32) -> GPtr<u8> {
     let r = rw_memory_alloc(raster_free_list(), 0x30407);
     if r.is_null() {
@@ -318,7 +318,7 @@ pub fn rw_raster_create(width: i32, height: i32, depth: i32, flags: u32) -> GPtr
 /// `RwRasterLock(raster, level, mode)` (0x7FB2D0): `stdFunc[15](&out, raster, ((level & 0xFF) << 8) +
 /// mode)` (out = the original's `raster` argument slot); returns out (the pixels) or NULL.
 #[hook(addr = 0x7FB2D0, conv = cdecl, name = "RwRasterLock", expect = "8B 44 24 08 8B 54 24 0C",
-       unverified = "rw5-raster", route = "split", hazards = "heap-writes", recs = "grove-walk")]
+       route = "split", hazards = "heap-writes", recs = "grove-walk")]
 pub fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> u32 {
     let flags = ((level & 0xFF) << 8).wrapping_add(mode);
     let mut out = a32(r);

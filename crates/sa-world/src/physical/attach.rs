@@ -72,9 +72,9 @@ orig! {
     /// `CWorld::ClearScanCodes()` (0x563470)
     pub fn world_clear_scan_codes() = cdecl 0x563470 => unported;
     /// `CPhysical::ProcessCollisionSectorList(int32 x, int32 y)` (0x54BA60)
-    pub fn process_collision_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x54BA60 => unported;
+    pub fn process_collision_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x54BA60 => crate::physical::mvpe_phys1::process_collision_sector_list;
     /// `CPhysical::ProcessCollisionSectorList_SimpleCar(CRepeatSector*)` (0x54CFF0)
-    pub fn process_collision_sector_list_simple_car(e: Ent, s: Ent) -> u8 = thiscall 0x54CFF0 => unported;
+    pub fn process_collision_sector_list_simple_car(e: Ent, s: Ent) -> u8 = thiscall 0x54CFF0 => crate::physical::mvpe_phys1::process_collision_sector_list_simple_car;
     /// `CPhysical::ApplySpeed()` (0x547B80)
     pub fn apply_speed(e: Ent) = thiscall 0x547B80 => apply_speed_port;
     /// `CPhysical::ApplyFriction(float, CColPoint&)` (0x5454C0)
@@ -86,7 +86,7 @@ orig! {
     /// `CPhysical::ApplyAirResistance()` (0x544C40)
     pub fn apply_air_resistance_call(e: Ent) = thiscall 0x544C40 => crate::physical::forces::apply_air_resistance;
     /// `CPhysical::PositionAttachedEntity()` (0x546FF0)
-    pub fn position_attached_entity(e: Ent) = thiscall 0x546FF0 => unported;
+    pub fn position_attached_entity(e: Ent) = thiscall 0x546FF0 => crate::physical::friction_attach::position_attached_entity;
     /// `CPhysical::CheckCollision()` (0x54D920)
     pub fn check_collision_call(e: Ent) -> u8 = thiscall 0x54D920 => check_collision;
     /// `CPhysical::AddCollisionRecord(CEntity*)` (0x543490)
@@ -806,7 +806,7 @@ orig! {
     /// `SetNextScanCode()` (0x4072E0)
     pub fn set_next_scan_code() = cdecl 0x4072E0 => unported;
     /// `CPhysical::ProcessShiftSectorList(int32 x, int32 y)` (0x546670)
-    pub fn process_shift_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x546670 => unported;
+    pub fn process_shift_sector_list(e: Ent, x: i32, y: i32) -> u8 = thiscall 0x546670 => crate::physical::mvpe_phys1::process_shift_sector_list;
     /// `CPhysical::RemoveAndAdd()` (0x542560)
     pub fn remove_and_add_call(e: Ent) = thiscall 0x542560 => crate::physical::base::remove_and_add;
 }

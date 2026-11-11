@@ -9,3 +9,4 @@ pub mod friction;
 pub mod shared;
 pub mod spring;
 pub mod mvpe_phys1;
+pub mod friction_attach;

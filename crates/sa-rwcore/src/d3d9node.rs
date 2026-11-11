@@ -89,7 +89,7 @@ fn frame_stamp() -> u32 {
 
 /// `RxNodeDefinitionGetD3D9AtomicAllInOne()` (0x7582E0): the static node definition at 0x8D6338.
 #[hook(addr = 0x7582E0, conv = cdecl, name = "RxNodeDefinitionGetD3D9AtomicAllInOne", expect = "B8 38 63 8D 00 C3",
-       unverified = "rw5-node-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn node_def_atomic_all_in_one() -> u32 {
     0x8D_6338
 }
@@ -272,7 +272,7 @@ pub fn vs_default_begin_callback(object: GPtr<u8>, ty: u32, desc: GPtr<u8>) {
 /// `DrawIndexedPrimitive(primType, baseIndex, 0, numVertices, startIndex, numPrimitives)` with an index
 /// buffer, else `DrawPrimitive(primType, baseIndex, numPrimitives)`. Returns the draw's HRESULT.
 #[hook(addr = 0x761030, conv = cdecl, name = "_rxD3D9VertexShaderDefaultMeshRenderCallBack", expect = "A1 4C 24 8E 00",
-       unverified = "rw5-node-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn vs_default_mesh_render_callback(header: GPtr<u8>, mesh: GPtr<u8>) -> i32 {
     if gu(LAST_PS) != 0 {
         let dev = device();

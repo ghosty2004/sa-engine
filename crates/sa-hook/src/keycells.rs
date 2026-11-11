@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 20] = [
+pub const READERS: [Reader; 26] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -60,7 +60,6 @@ pub const READERS: [Reader; 20] = [
         key: 0x410860,
         value: 0xFF16_6AE9,
     },
-    // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x40203A,
         insn: [0x8B, 0x0D, 0xD0, 0x7A, 0x40, 0x00],
@@ -198,13 +197,62 @@ pub const READERS: [Reader; 20] = [
         key: 0x7172D2,
         value: 0xCF01_AEE9,
     },
-    // CTaskSimpleCarSetPedInAsPassenger entry 0x646FE0 (WRITER-MVP-B), found by the test below.
     Reader {
         at: 0x156710A,
         insn: [0x1B, 0x35, 0xE2, 0x6F, 0x64, 0x00],
         disp_off: 2,
         key: 0x646FE2,
         value: 0xDBAC_13E9,
+    },
+    // MVP-F batch mvpf-coll-1: CCollision::SphereCastVsEntity entry 0x419F00 (`push -1; jmp rel32`):
+    // `xor ecx, [0x419F03]` at 0x40102D.
+    Reader {
+        at: 0x40102D,
+        insn: [0x33, 0x0D, 0x03, 0x9F, 0x41, 0x00],
+        disp_off: 2,
+        key: 0x419F03,
+        value: 0xFFFF_024E,
+    },
+    // MVP-F batch mvpf-phys-1: CPhysical::PositionAttachedEntity entry 0x546FF0 (`nop; jmp rel32`):
+    // `xor eax, [0x546FF1]` at 0x4015ED.
+    Reader {
+        at: 0x4015ED,
+        insn: [0x33, 0x05, 0xF1, 0x6F, 0x54, 0x00],
+        disp_off: 2,
+        key: 0x546FF1,
+        value: 0xEBF7_E2E9,
+    },
+    // CAutomobile::UpdateWheelMatrix entry 0x6AA290 (WRITER-MVP-D), found by the test below.
+    Reader {
+        at: 0x406020,
+        insn: [0x1B, 0x0D, 0x91, 0xA2, 0x6A, 0x00],
+        disp_off: 2,
+        key: 0x6AA291,
+        value: 0xD577_EEE9,
+    },
+    // CWaterLevel::SetUpWaterFog entry 0x6EA9F0 (WRITER-MVP-D), found by the test below.
+    Reader {
+        at: 0x4014C9,
+        insn: [0x2B, 0x0D, 0xF1, 0xA9, 0x6E, 0x00],
+        disp_off: 2,
+        key: 0x6EA9F1,
+        value: 0xFFD1_9104,
+    },
+    // 0x6FBA20 (CCoronas::RenderSunReflection's fade helper) entry (WRITER-MVP-D), found by the test below.
+    Reader {
+        at: 0x4038F3,
+        insn: [0x03, 0x2D, 0x21, 0xBA, 0x6F, 0x00],
+        disp_off: 2,
+        key: 0x6FBA21,
+        value: 0xFFD0_AA82,
+    },
+    // CPostEffects::ImmediateModeRenderStatesStore entry 0x700CC0 (WRITER-MVP-D), found by the test below.
+    Reader {
+        at: 0x409B7F,
+        insn: [0x33, 0x0D, 0xC1, 0x0C, 0x70, 0x00],
+        disp_off: 2,
+        key: 0x700CC1,
+        value: 0xFFD0_8DE5,
     },
 ];
 

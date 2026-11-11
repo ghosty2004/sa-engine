@@ -40,7 +40,7 @@ orig! {
 /// and z through `fld`/`fstp`) and heading `fpatan(-m.up.x, m.up.y)` (atan2, rounded by the f32 store).
 /// Otherwise the matrix is allocated when missing (`AllocateMatrix`) and assigned.
 #[hook(addr = 0x54F610, conv = thiscall, name = "CPlaceable::SetMatrix", expect = "83 EC 10 56 8B 74 24 18",
-       this = "CPlaceable", unverified = "mvpa-world-2", route = "L2", hazards = "x87-transcendental,heap-writes",
+       this = "CPlaceable", route = "L2", hazards = "x87-transcendental,heap-writes",
        recs = "grove-walk")]
 pub fn placeable_set_matrix(this: GPtr<u8>, m: GPtr<u8>) {
     if rd::<GPtr<u8>>(this, 0x14).is_null() {
@@ -106,7 +106,7 @@ pub fn find_ground_z_for_3d_coord(px: f32, py: f32, pz: f32, found: GPtr<u8>, en
 /// 0xA18` must be in `[0, size)` with the slot used; then true for trains (+0x590 == 8) or when +0xB0
 /// (the entity's collision/link pointer) is set. EAX is 0 or 1.
 #[hook(addr = 0x6E38F0, conv = cdecl, name = "CVehicle::IsVehiclePointerValid", expect = "56 90 E9 32 DE D1 FF",
-       unverified = "mvpa-world-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn is_vehicle_pointer_valid(v: GPtr<u8>) -> u32 {
     let pool = g::<GPtr<u8>>(VEHICLE_POOL).read();
     let idx = (v.addr() as u32).wrapping_sub(rd::<u32>(pool, 0)) as i32 / 0xA18;
@@ -124,7 +124,7 @@ pub fn is_vehicle_pointer_valid(v: GPtr<u8>) -> u32 {
 /// down) whose type (+0x590) is 6 (train) and which is not `FindPlayerVehicle(-1, false)`, clears bit 5
 /// of byte +0x5B8 (the mission-train flag).
 #[hook(addr = 0x6F6B60, conv = cdecl, name = "CTrain::ReleaseMissionTrains", expect = "53 8B 1D 94 44 B7 00",
-       unverified = "mvpa-world-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn release_mission_trains() {
     let pool = g::<GPtr<u8>>(VEHICLE_POOL).read();
     let mut i = rd::<i32>(pool, 8);
@@ -148,7 +148,7 @@ pub fn release_mission_trains() {
 /// count (+0xF0) is not 15, entry `count` (0x10 bytes) gets the id and the text (byte copy from +4), then
 /// count + 1.
 #[hook(addr = 0x6F2D90, conv = thiscall, name = "CSpecialPlateHandler::Add", expect = "8B 81 F0 00 00 00",
-       unverified = "mvpa-world-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn special_plate_handler_add(this: GPtr<u8>, id: i32, text: GPtr<u8>) {
     let n = rd::<i32>(this, 0xF0);
     if n == 15 {
@@ -175,7 +175,7 @@ pub fn special_plate_handler_add(this: GPtr<u8>, id: i32, text: GPtr<u8>) {
 /// slot down) with subtype (+0x594) 3 or 4 created randomly (+0x4A4 == 1) is removed from the world and
 /// deleted. The flag becomes `on` in every case.
 #[hook(addr = 0x6CCC50, conv = cdecl, name = "CPlane::SwitchAmbientPlanes", expect = "A0 BC 33 8D 00",
-       unverified = "mvpa-world-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "deletes vehicles (pool frees)")]
 pub fn switch_ambient_planes(on: u32) {
     if g::<u8>(0x8D33BC).read() != 0 && on as u8 == 0 {
@@ -256,7 +256,7 @@ pub fn find_nearest_entry_exit(pos: GPtr<u8>, range: f32, ignore_area: i32) -> i
 /// entry `0..size` (size re-read each round) gets bit 7 set and then everything but bit 7 cleared (free,
 /// id 0).
 #[hook(addr = 0x49C9A0, conv = thiscall, name = "Clear", expect = "E9 8B 5F 0C 01",
-       unverified = "mvpa-world-3", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "CPool<T>::Clear instance (catalogue name 'Clear')")]
 pub fn pool_clear(this: GPtr<u8>) {
     let mut i = 0i32;
@@ -273,7 +273,7 @@ pub fn pool_clear(this: GPtr<u8>) {
 /// `CPools::ms_pPointRoutePool` (0xB744B0, 0x64-byte objects; signed index) inline: byte-map bit 7 set,
 /// first-free index lowered.
 #[hook(addr = 0x41B7D0, conv = cdecl, name = "CPointRoute::operator delete", expect = "E9 FB 97 14 01",
-       unverified = "mvpa-world-3", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn point_route_delete(p: GPtr<u8>) {
     let pool = g::<GPtr<u8>>(0xB744B0).read();
     let idx = (p.addr() as u32).wrapping_sub(rd::<u32>(pool, 0)) as i32 / 0x64;

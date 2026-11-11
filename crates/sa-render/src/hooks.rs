@@ -4,15 +4,15 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GlobalDesc;
 
+use crate::mvpc_fx1;
+use crate::mvpc_fx2;
+use crate::mvpc_render1;
 use crate::{
     bullettraces, clouds, coronas, cullzones, fx, mirrors, occlusion, pointlights, posteffects, renderer,
     shadows, specialfx, sprite, sprite2d, weather,
 };
 use crate::{carplates, glass, markers, stencilshadows, timecycle, waterlevel};
 use crate::{mvpa_fx1, mvpa_fx2, mvpa_render1, mvpa_render2, mvpa_render3};
-use crate::mvpc_fx1;
-use crate::mvpc_fx2;
-use crate::mvpc_render1;
 
 /// Every module's registrations, in this order.
 pub const MODULES: &[&[HookReg]] = &[
@@ -46,6 +46,15 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpc_fx2::HOOKS,
     mvpc_render1::HOOKS,
     crate::mvpb_r1::HOOKS,
+    crate::mvpd_r1::HOOKS,
+    crate::mvpd_d3d::HOOKS,
+    crate::mvpd_r2::HOOKS,
+    crate::mvpd_r3::HOOKS,
+    crate::mvpd_r4::HOOKS,
+    crate::mvpd_r5::HOOKS,
+    crate::quaternion::HOOKS,
+    crate::render_lists::HOOKS,
+    crate::mvpd_unk::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
@@ -135,7 +144,11 @@ mod tests {
                     (0..n as u32)
                         .map(|k| {
                             let o = va + k - va0;
-                            if o < rsize { exe[(raw + o) as usize] } else { 0 }
+                            if o < rsize {
+                                exe[(raw + o) as usize]
+                            } else {
+                                0
+                            }
                         })
                         .collect(),
                 );

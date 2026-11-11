@@ -478,7 +478,7 @@ pub fn matfx_engine_close(instance: GPtr<u8>, _off: u32, _size: u32) -> GPtr<u8>
 /// the material's extension: `MaterialDataDestroyEffects(data)`, the data freed to the effects
 /// freelist (`RwGlobals` +0x148) and the extension cleared (offset re-read). Returns the material.
 #[hook(addr = 0x810C60, conv = cdecl, name = "cb_MATERIALEFFECTSPLUGIN_RpMaterial_Dtor", expect = "A1 74 AB C9 00",
-       unverified = "rw5-core-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn matfx_material_dtor(m: GPtr<u8>, _off: u32, _size: u32) -> GPtr<u8> {
     let d = rd::<u32>(m, gu(MATFX_MATERIAL_OFFSET) as i32 as isize);
     if d != 0 {
@@ -525,7 +525,7 @@ pub fn matfx_atomic_stream_write(s: GPtr<u8>, _len: u32, a: GPtr<u8>, _off: u32,
 /// `cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead(stream, length, atomic, offset, size)` (0x811A90): the
 /// flag; non-zero enables the MatFX atomic pipeline (`_rpMatFXAtomicSetPipeline`, 0x816260).
 #[hook(addr = 0x811A90, conv = cdecl, name = "cb_MATERIALEFFECTSPLUGIN_RpAtomic_StreamRead", expect = "57 8B 7C 24 08",
-       unverified = "rw5-core-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "stream read (file effects)")]
 pub fn matfx_atomic_stream_read(s: GPtr<u8>, len: u32, a: GPtr<u8>, _off: u32, _size: u32) -> GPtr<u8> {
     matfx_flag_read(s, len, a, MATFX_ATOMIC_OFFSET, matfx_atomic_set_pipeline)

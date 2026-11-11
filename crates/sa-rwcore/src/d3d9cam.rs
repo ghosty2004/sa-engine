@@ -40,7 +40,7 @@ orig! {
 /// the current camera and returns 1. A failed surface query leaves the original's surface local
 /// uninitialised (port: 0).
 #[hook(addr = 0x7F98D0, conv = cdecl, name = "_rwD3D9CameraEndUpdate", expect = "A1 C0 BC C9 00",
-       unverified = "rw5-cam-1", route = "L2", hazards = "uninit-locals", recs = "grove-walk")]
+       route = "L2", hazards = "uninit-locals", recs = "grove-walk")]
 pub fn camera_end_update(_out: u32, _camera: u32, _flags: u32) -> u32 {
     let cam = p8(g::<u32>(CURRENT_CAMERA).read());
     let fb = p8(rd::<u32>(cam, 0x60));

@@ -996,3 +996,15 @@
 - verify-all main-g4 (fresh DLL): IDENTICAL on all 11.
 - Rules from the user today: sub-agents start no agents at all (PLAN updated); new files are named after their
   content, never after writer/batch (the 27 mvp*-named files will be renamed once their batches are verified).
+
+## 2026-11-11 MVP-D, MVP-F, VERIFIER-1, VERIFIER-3 integrated (main session)
+- WRITER-MVP-D (125 unverified: shadows, weather, FX render, vehicle wheels/suspension, CWorld::Process, replay,
+  game logic) and WRITER-MVP-F (28 unverified: ProcessColModels partial, ped/vehicle entity collision,
+  CEntity::PreRender, LoadWeaponData, script init). 682 unverified hooks in the queue.
+- VERIFIER-1 (mvpa batches): fixed CPedTaskPair::Flush (protection chunk 0x403956 clears the ped slot), promoted 91
+  hooks; finding: in-process L2 double runs are invalid for heap-mutating hooks (allocators, CReferences free list,
+  colmodel cache, anim associations) → those need the split route. VERIFIER-3 (rw5 batches): promoted 17; 74 rw5
+  hooks are never called by the corpus; verify-all now builds the checkout it runs from (worktree runs used
+  main's DLL before). 108 promotions recorded as L2 in state.csv.
+- verify-all main-g5 + main-g5b (fresh DLL 32279fd): IDENTICAL on all 11 (3 recordings re-run after the disk guard
+  skipped them).

@@ -24,6 +24,11 @@ pub mod mvpb_world;
 pub mod mvpb_world2;
 pub mod mvpb_stats;
 pub mod mvpb_world3;
+pub mod mvpd_w1;
+pub mod mvpd_w2;
+pub mod mvpd_w3;
+pub mod mvpd_w4;
+pub mod mvpd_w5;
 pub mod object;
 pub mod statics2;
 // WRITER-MVP-A (unverified batches)
@@ -33,3 +38,4 @@ pub mod mvpa2;
 pub mod mvpc_world1;
 pub mod mvpc_world2;
 pub mod mvpe_ent1;
+pub mod entity_prerender;
