@@ -549,3 +549,15 @@ pub fn process_player_vehicle_engine(this: GPtr<u8>, p: GPtr<u8>) {
 }
 
 pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_PLAYER_VEHICLE_ENGINE];
+
+/// `CAEVehicleAudioEntity::GetFreqForIdle(float ratio)` (0x4F5C60, `ret 4`, ECX unused; the callers pass `this`),
+/// ST0: [`crate::vehicle::get_freq_for_idle`]. Registered `#[native]` (phases B/C only): its segment loop jumps
+/// back to 0x4F5C62, inside the 5 bytes a hook patches. Reached by `GetFreqForPlayerEngineSound` once the player
+/// sits in a car.
+#[sa_core::native(addr = 0x4F5C60, conv = thiscall, name = "CAEVehicleAudioEntity::GetFreqForIdle")]
+pub fn get_freq_for_idle_native(_this: GPtr<u8>, ratio: u32) -> X87 {
+    crate::vehicle::get_freq_for_idle(f32::from_bits(ratio))
+}
+
+/// This module's phase-B registrations.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_GET_FREQ_FOR_IDLE_NATIVE];
