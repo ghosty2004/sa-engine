@@ -378,7 +378,111 @@ fn dev_get_gamma_ramp(_this: u32, _swap: u32, ramp: GPtr<u16>) {
 fn dev_present(_this: u32, _src: u32, _dst: u32, _hwnd: u32, _dirty: u32) -> i32 {
     dump_memory();
     vehicle_list();
+    trace::present();
     present_frame()
+}
+
+/// Draw-call log (exploration only). `SA_GAME_D3D_LOG=FROM:TO`: the render-target changes, clears and draws of
+/// the presented frames FROM..=TO on stderr (`d3d:` lines: per-frame draw number, stencil / Z / blend / alpha-test
+/// states, stage-0 ops, bound textures, FVF or declaration, cull mode, the first vertex of UP draws).
+/// `SA_GAME_D3D_RTDUMP=DIR`: in those frames every render-target texture is written to `DIR/rt-N-ID.png` when the
+/// render target moves away from it, and `SA_GAME_D3D_BBDUMP=K,...` writes the back buffer before draw K of the
+/// frame (`stencil`: before every draw that turns the stencil test on or off) to `DIR/bb-before-draw-K.png`.
+mod trace {
+    use sa_platform::gpu::{D3d9Device, TextureId};
+    use std::sync::Mutex;
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    static FRAME: AtomicU32 = AtomicU32::new(0);
+    static DRAW: AtomicU32 = AtomicU32::new(0);
+    static STAGE: Mutex<[[u32; 8]; 2]> = Mutex::new([[0; 8]; 2]);
+    static TEX: Mutex<[u32; 2]> = Mutex::new([0; 2]);
+    /// The current FVF, or `0x8000_0000 | declaration object`.
+    pub static FVF: AtomicU32 = AtomicU32::new(0);
+
+    fn range() -> Option<(u32, u32)> {
+        static R: std::sync::OnceLock<Option<(u32, u32)>> = std::sync::OnceLock::new();
+        *R.get_or_init(|| {
+            let v = std::env::var("SA_GAME_D3D_LOG").ok()?;
+            let (a, b) = v.split_once(':')?;
+            Some((a.parse().ok()?, b.parse().ok()?))
+        })
+    }
+    pub fn on() -> bool {
+        range().is_some_and(|(a, b)| (a..=b).contains(&FRAME.load(Ordering::Relaxed)))
+    }
+    pub fn present() {
+        if on() {
+            eprintln!("d3d: --- present {}", FRAME.load(Ordering::Relaxed));
+        }
+        FRAME.fetch_add(1, Ordering::Relaxed);
+        DRAW.store(0, Ordering::Relaxed);
+    }
+    /// Writes a render target (`None` = the back buffer) to `SA_GAME_D3D_RTDUMP/name`.
+    fn dump(target: Option<TextureId>, name: &str) {
+        let Some(dir) = std::env::var_os("SA_GAME_D3D_RTDUMP") else { return };
+        let Some(Ok((w, h, rgba))) = super::with_device(|d| d.read_render_target(target)) else { return };
+        let path = std::path::Path::new(&dir).join(name);
+        eprintln!("d3d: dump {target:?} {w}x{h} -> {}", path.display());
+        if let Ok(f) = std::fs::File::create(path) {
+            let mut enc = png::Encoder::new(std::io::BufWriter::new(f), w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let _ = enc.write_header().and_then(|mut wr| wr.write_image_data(&rgba));
+        }
+    }
+    /// The render target changes to `c`: the render-target texture left is dumped.
+    pub fn target(c: Option<TextureId>) {
+        static PREV: Mutex<Option<TextureId>> = Mutex::new(None);
+        static N: AtomicU32 = AtomicU32::new(0);
+        let prev = std::mem::replace(&mut *PREV.lock().unwrap_or_else(|e| e.into_inner()), c);
+        if let Some(p) = prev.filter(|_| on()) {
+            dump(Some(p), &format!("rt-{:04}-{p}.png", N.fetch_add(1, Ordering::Relaxed)));
+        }
+    }
+    pub fn stage(stage: u32, ty: u32, v: u32) {
+        if stage < 2 && (1..=8).contains(&ty) {
+            STAGE.lock().unwrap_or_else(|e| e.into_inner())[stage as usize][ty as usize - 1] = v;
+        }
+    }
+    pub fn texture(stage: u32, obj: u32) {
+        if stage < 2 {
+            TEX.lock().unwrap_or_else(|e| e.into_inner())[stage as usize] = obj;
+        }
+    }
+    pub fn draw(what: &str, ty: u32, count: u32, first: &[u8]) {
+        if !on() {
+            return;
+        }
+        let rs = |s| super::with_device(|d| d.render_state(s)).unwrap_or(0);
+        let k = DRAW.fetch_add(1, Ordering::Relaxed);
+        static PREV_STENCIL: AtomicU32 = AtomicU32::new(0);
+        let stencil_changed = PREV_STENCIL.swap(rs(52), Ordering::Relaxed) != rs(52);
+        let list = std::env::var("SA_GAME_D3D_BBDUMP").unwrap_or_default();
+        if list.split(',').any(|v| v.parse() == Ok(k) || (v == "stencil" && stencil_changed)) {
+            dump(None, &format!("bb-before-draw-{k:05}.png"));
+        }
+        let st = *STAGE.lock().unwrap_or_else(|e| e.into_inner());
+        let tx = *TEX.lock().unwrap_or_else(|e| e.into_inner());
+        let v: Vec<String> = first
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .take(8)
+            .map(|c| {
+                let u = u32::from_le_bytes(*c);
+                let f = f32::from_bits(u);
+                if f.is_finite() && f.abs() > 1e-6 && f.abs() < 1e7 { format!("{f:.3}") } else { format!("{u:#x}") }
+            })
+            .collect();
+        eprintln!(
+            "d3d: #{k} {what} prim {ty} n {count} tex {:#x}/{:#x} | stencil {} {}/{}/{} func {} ref {} | blend {} {}/{} | \
+             op {} {}x{} a {} {}x{} | op1 {} a1 {} | atest {} {} | z {} {} func {} | fvf {:#x} cull {} | v [{}]",
+            tx[0], tx[1], rs(52), rs(53), rs(54), rs(55), rs(56), rs(57), rs(27), rs(19), rs(20),
+            st[0][0], st[0][1], st[0][2], st[0][3], st[0][4], st[0][5], st[1][0], st[1][3],
+            rs(15), rs(24), rs(7), rs(14), rs(23), FVF.load(Ordering::Relaxed), rs(22), v.join(" ")
+        );
+    }
 }
 
 /// `SA_GAME_DUMP=ADDR:LEN[,ADDR:LEN...]` (exploration only): every `Present` prints those game-memory
@@ -705,6 +809,9 @@ fn dev_create_texture(_this: u32, w: u32, h: u32, levels: u32, usage: u32, forma
     };
     match with_device(|d| d.create_texture(&desc)) {
         Some(Ok(id)) => {
+            if usage & 1 != 0 && std::env::var_os("SA_GAME_D3D_LOG").is_some() {
+                eprintln!("d3d: CreateTexture render target {id:?} {w}x{h} format {format:#x}");
+            }
             let n = if levels == 0 { 32 - (w.max(h).max(1)).leading_zeros() } else { levels };
             out.write(new_object(TEXTURE, Res::Texture { id, w, h, levels: n, format, usage, pool, locked: HashMap::new() }));
             D3D_OK
@@ -762,6 +869,10 @@ fn dev_set_render_target(_this: u32, index: u32, surface: u32) -> i32 {
     let mut rt = RENDER_TARGET.lock().unwrap_or_else(|e| e.into_inner());
     rt.0 = surface;
     let (c, d) = (surface_texture(rt.0), surface_texture(rt.1));
+    trace::target(c);
+    if trace::on() {
+        eprintln!("d3d: SetRenderTarget {surface:#x} -> {c:?} (ds {:?})", d);
+    }
     with_device(|dev| dev.set_render_target(c, d));
     D3D_OK
 }
@@ -794,6 +905,9 @@ fn dev_end_scene(_this: u32) -> i32 {
 /// `Clear(count, rects, flags, color, z, stencil)`: rectangles are not modelled (the whole
 /// viewport is cleared; RW clears whole cameras).
 fn dev_clear(_this: u32, _count: u32, _rects: u32, flags: u32, color: u32, z: f32, stencil: u32) -> i32 {
+    if trace::on() {
+        eprintln!("d3d: Clear flags {flags:#x} color {color:#010x} z {z}");
+    }
     with_device(|d| d.clear(flags, color, z, stencil));
     D3D_OK
 }
@@ -867,6 +981,7 @@ fn dev_get_render_state(_this: u32, state: u32, out: GPtr<u32>) -> i32 {
     D3D_OK
 }
 fn dev_set_texture(_this: u32, stage: u32, tex: u32) -> i32 {
+    trace::texture(stage, tex);
     let id = if tex == 0 {
         None
     } else {
@@ -880,6 +995,7 @@ fn dev_set_texture(_this: u32, stage: u32, tex: u32) -> i32 {
     D3D_OK
 }
 fn dev_set_texture_stage_state(_this: u32, stage: u32, ty: u32, value: u32) -> i32 {
+    trace::stage(stage, ty, value);
     with_device(|d| d.set_texture_stage_state(stage, ty, value));
     D3D_OK
 }
@@ -897,15 +1013,18 @@ fn dev_set_current_texture_palette(_this: u32, _a: u32) -> i32 {
 }
 fn dev_draw_primitive(_this: u32, ty: u32, start: u32, count: u32) -> i32 {
     let Some(p) = prim(ty) else { return D3DERR_INVALIDCALL };
+    trace::draw("DP", ty, count, &[]);
     hr(with_device(|d| d.draw_primitive(p, start, count)))
 }
 fn dev_draw_indexed_primitive(_this: u32, ty: u32, base: i32, min: u32, num: u32, start: u32, count: u32) -> i32 {
     let Some(p) = prim(ty) else { return D3DERR_INVALIDCALL };
+    trace::draw("DIP", ty, count, &[]);
     hr(with_device(|d| d.draw_indexed_primitive(p, base, min, num, start, count)))
 }
 fn dev_draw_primitive_up(_this: u32, ty: u32, count: u32, data: GPtr<u8>, stride: u32) -> i32 {
     let Some(p) = prim(ty) else { return D3DERR_INVALIDCALL };
     let v = bytes(data, (p.vertex_count(count) * stride) as usize);
+    trace::draw("DPUP", ty, count, &v[..(stride as usize).min(v.len())]);
     hr(with_device(|d| d.draw_primitive_up(p, count, &v, stride)))
 }
 #[allow(clippy::too_many_arguments)]
@@ -914,6 +1033,7 @@ fn dev_draw_indexed_primitive_up(_this: u32, ty: u32, min: u32, num: u32, count:
     let isz = if format == gpu::fmt::INDEX32 { 4 } else { 2 };
     let ib = bytes(idx, (p.vertex_count(count) * isz) as usize);
     let vb = bytes(data, ((min + num) * stride) as usize);
+    trace::draw("DIPUP", ty, count, &vb[(min * stride) as usize..((min + 1) * stride) as usize]);
     hr(with_device(|d| d.draw_indexed_primitive_up(p, min, num, count, &ib, format, &vb, stride)))
 }
 fn dev_create_vertex_declaration(_this: u32, elems: GPtr<u8>, out: GPtr<u32>) -> i32 {
@@ -967,6 +1087,7 @@ fn decl_get_declaration(obj: u32, elems: GPtr<u8>, num: GPtr<u32>) -> i32 {
     D3D_OK
 }
 fn dev_set_vertex_declaration(_this: u32, decl: u32) -> i32 {
+    trace::FVF.store(0x8000_0000 | decl, std::sync::atomic::Ordering::Relaxed);
     let id = if decl == 0 {
         None
     } else {
@@ -980,6 +1101,7 @@ fn dev_set_vertex_declaration(_this: u32, decl: u32) -> i32 {
     D3D_OK
 }
 fn dev_set_fvf(_this: u32, fvf: u32) -> i32 {
+    trace::FVF.store(fvf, std::sync::atomic::Ordering::Relaxed);
     with_device(|d| d.set_fvf(fvf));
     D3D_OK
 }
