@@ -1989,11 +1989,14 @@ def gen_main():
                 calls = {x[1] for x in flatten(fn.out) if x[0] == 'call'}
                 if all(v is not None and v[0] == 'v' and v[1] in calls for v in rv):
                     fn.ret = 'void'
-            if fn.tail and fn.ret == 'u32':
+            if fn.ret == 'u32':
                 # a tail call into a port that returns nothing (CPPTriPlantBuffer::Flush behind
                 # CGrassRenderer::FlushTriPlantBuffer): the original passes on whatever EAX that callee
                 # leaves, which the port leaves undefined; the forwarder returns nothing either (its
-                # callers are then checked like those of every void hook)
+                # callers are then checked like those of every void hook). The same for a plain call
+                # whose EAX is returned (`call; pop ecx; ret 4`: CAudioEngine::StopPoliceScanner behind
+                # CAEPoliceScannerAudioEntity::StopScanner, VERIFIER-10 split FAIL `eax: orig 0x1 rust
+                # 0x4e6dc0`)
                 tgt = {x[1]: x[2] for x in flatten(fn.out) if x[0] == 'call'}
                 rv = [x[1] for x in flatten(fn.out) if x[0] == 'ret']
                 if all(v is not None and v[0] == 'v' and tgt.get(v[1], ('?',))[0] == 'd'

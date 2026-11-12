@@ -57,10 +57,9 @@ orig! {
 
 /// `CClothesBuilder::LoadCdDirectory` (0x5A4190, RW): small, thiscall, `ret`; 8 instruction(s) matched.
 #[hook(addr = 0x5A4190, conv = thiscall, name = "CClothesBuilder::LoadCdDirectory", expect = "68 C8 CD BB 00", unverified = "gen2-rw-3", route = "L2", hazards = "none")]
-pub fn g_cclothes_builder_load_cd_directory_5a4190(_this: u32) -> u32 {
+pub fn g_cclothes_builder_load_cd_directory_5a4190(_this: u32) {
     c_5322f0_t2(0xBC_12C0, 0x226, 0xBB_CDC8);
-    let v2 = c_532350_t1(0xBC_12C0, 0x86_713C);
-    v2
+    let _v2 = c_532350_t1(0xBC_12C0, 0x86_713C);
 }
 
 /// `CClothesBuilder::nullptr` (0x5A4380, RW): small, cdecl, `ret`; 8 instruction(s) matched.
