@@ -37,20 +37,6 @@ pub fn furniture_group_exit(this: GPtr<u8>) {
     list_remove_all(this);
 }
 
-/// `CHandObject::Render()` (0x59EE80): puts the hand object's texture (+0x184) on the first
-/// material of its first atomic's geometry (`GetFirstAtomic(rwObject)->geometry->materials[0]`),
-/// then `CObject::Render` (tail jump).
-#[hook(addr = 0x59EE80, conv = thiscall, name = "CHandObject::Render", this = "CHandObject",
-       expect = "56 8B F1 8B 46 18",
-       unverified = "world5-2", route = "L2", hazards = "heap-writes",
-       note = "render pass only; writes the RW material's texture (refcounts)")]
-pub fn hand_object_render(this: GPtr<u8>) {
-    let atomic = get_first_atomic(rd::<GPtr<u8>>(this, 0x18));
-    let mats = rd::<GPtr<u8>>(rd::<GPtr<u8>>(atomic, 0x18), 0x20);
-    rp_material_set_texture(rd::<GPtr<u8>>(mats, 0), rd::<GPtr<u8>>(this, 0x184));
-    object_render(this);
-}
-
 /// `CPickups::DetonateMinesHitByGunShot(CVector* start, CVector* end)` (0x4590C0): every pickup of
 /// `aPickUps` (0x9788C0..0x97D640, 0x20 bytes each) of type 12 (mine) processes the shot.
 #[hook(addr = 0x4590C0, conv = cdecl, name = "CPickups::DetonateMinesHitByGunShot",
@@ -71,6 +57,5 @@ pub fn detonate_mines_hit_by_gun_shot(start: GPtr<u8>, end: GPtr<u8>) {
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FURNITURE_GROUP_EXIT,
-    HOOK_HAND_OBJECT_RENDER,
     HOOK_DETONATE_MINES_HIT_BY_GUN_SHOT,
 ];

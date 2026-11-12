@@ -232,13 +232,13 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | rw5-raster | 1 | RW | f789a8ea | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | samp-anim-1 | 1 | ANIM | 87822502 | worktree-agent-aa1e6f32d27702b8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | samp-ped-1 | 1 | PED | 87822502 | worktree-agent-aa1e6f32d27702b8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| samp-render-1 | 7 | CALLED-ONLY, UNK-game | 87822502 | worktree-agent-aa1e6f32d27702b8b | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| samp-render-1 | 6 | CALLED-ONLY, UNK-game | 87822502 | worktree-agent-aa1e6f32d27702b8b | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | samp-render-2 | 7 | RENDER, UNK-game | 87822502 | worktree-agent-aa1e6f32d27702b8b | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | samp-render-3 | 6 | RENDER | 87822502 | worktree-agent-aa1e6f32d27702b8b | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | samp-rw-1 | 8 | RW | 87822502 | worktree-agent-aa1e6f32d27702b8b | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | samp-rw-2 | 2 | RW | 87822502 | worktree-agent-aa1e6f32d27702b8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp-script-1 | 6 | SCRIPT | 87822502 | worktree-agent-aa1e6f32d27702b8b | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| samp-unk-1 | 24 | UNK-game | 87822502 | worktree-agent-aa1e6f32d27702b8b | 24 | 0 | 0 | 0 | 0 | L2 24 |
+| samp-unk-1 | 17 | UNK-game | 87822502 | worktree-agent-aa1e6f32d27702b8b | 17 | 0 | 0 | 0 | 0 | L2 17 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
 | std10-ai-1 | 1 | AI | f10aaf48 | worktree-agent-aa1e6f32d27702b8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -316,12 +316,12 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std9-rw-1 | 3 | RW | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | veh3-1 | 42 | VEH | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 42 | 0 | 0 | 0 | 0 | L2 40, split 2 |
 | veh3-2 | 2 | VEH | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| veh3-3 | 16 | VEH | 50bf37b7 | worktree-agent-aa1e6f32d27702b8b | 16 | 0 | 0 | 0 | 0 | L2 16 |
+| veh3-3 | 14 | VEH | 50bf37b7 | worktree-agent-aa1e6f32d27702b8b | 14 | 0 | 0 | 0 | 0 | L2 14 |
 | world3-1 | 11 | WORLD | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
 | world3-2 | 20 | WORLD | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 20 | 0 | 0 | 0 | 0 | L2 17, split 3 |
 | world3-3 | 3 | WORLD | c379e778 | worktree-agent-aa1e6f32d27702b8b | 3 | 0 | 0 | 0 | 0 | L2 2, split 1 |
 | world5-1 | 12 | WORLD | 21dfdc40 | worktree-agent-aa1e6f32d27702b8b | 12 | 0 | 0 | 0 | 0 | L2 9, split 3 |
-| world5-2 | 13 | WORLD | 1212c39d | worktree-agent-aa1e6f32d27702b8b | 13 | 0 | 0 | 0 | 0 | L2 10, split 3 |
+| world5-2 | 12 | WORLD | 1212c39d | worktree-agent-aa1e6f32d27702b8b | 12 | 0 | 0 | 0 | 0 | L2 9, split 3 |
 | writero-audio-1 | 1 | AUDIO | 0ba83279 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | writero-render-1 | 2 | RENDER | c97b6d17 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | writero-rw-1 | 8 | RW | abe5e427 | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
@@ -5393,7 +5393,7 @@ SA_UNVERIFIED=samp-ped-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-ped-1 $SA_RO
 
 ## samp-render-1
 
-7 hooks in sa-render; hazards: heap-writes (7), stack-residue (1); recordings calling them: weapon-combat (7).
+6 hooks in sa-render; hazards: heap-writes (6), stack-residue (1); recordings calling them: weapon-combat (6).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -5406,7 +5406,6 @@ SA_UNVERIFIED=samp-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-render-1 
 |---|---|---|---|---|
 | 0x4A56E0 | `FxInfoAttractPt_c::GetValue` | written | L2 | heap-writes |
 | 0x4A6140 | `FxInfoSpriteRect_c::GetValue` | written | L2 | heap-writes |
-| 0x4A62B0 | `FxInfoTrail_c::GetValue` | written | L2 | heap-writes |
 | 0x4A63B0 | `FxInfoFlat_c::GetValue` | written | L2 | heap-writes |
 | 0x4A6860 | `FxInfoColourBright_c::GetValue` | written | L2 | heap-writes |
 | 0x4A7100 | `FxInfoGroundCollide_c::GetValue` | written | L2 | heap-writes |
@@ -5513,7 +5512,7 @@ SA_UNVERIFIED=samp-script-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-script-1 
 
 ## samp-unk-1
 
-24 hooks in sa-ai, sa-core, sa-input, sa-weapon; hazards: entry-protection-read (1), heap-writes (16), preserved-regs (2); recordings calling them: anim-input (6), driving (6), pause-restart (1), weapon-combat (3).
+17 hooks in sa-ai, sa-core, sa-input, sa-weapon; hazards: entry-protection-read (1), heap-writes (9), preserved-regs (2); recordings calling them: anim-input (5), driving (2), pause-restart (1), weapon-combat (3).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -5526,12 +5525,8 @@ SA_UNVERIFIED=samp-unk-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-unk-1 $SA_RO
 |---|---|---|---|---|
 | 0x403D60 | `FUN_00403d60` | written | L2 | heap-writes |
 | 0x46AE00 | `FUN_0046ae00` | written | L2 | none |
-| 0x46F690 | `FUN_0046f690` | written | L2 | heap-writes |
 | 0x4AC720 | `FUN_004ac720` | written | L2 | heap-writes |
-| 0x4AD960 | `FUN_004ad960` | written | L2 | heap-writes |
 | 0x4ADE90 | `FUN_004ade90` | written | L2 | preserved-regs |
-| 0x4AFE70 | `FUN_004afe70` | written | L2 | heap-writes |
-| 0x4B1170 | `FUN_004b1170` | written | L2 | heap-writes |
 | 0x4B13C0 | `FUN_004b13c0` | written | L2 | preserved-regs |
 | 0x4B17F0 | `FUN_004b17f0` | written | L2 | heap-writes |
 | 0x4B1F10 | `FUN_004b1f10` | written | L2 | none |
@@ -5543,11 +5538,8 @@ SA_UNVERIFIED=samp-unk-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-unk-1 $SA_RO
 | 0x5A4030 | `CProjectile` | written | L2 | heap-writes,entry-protection-read |
 | 0x61D5F0 | `FUN_0061d5f0` | written | L2 | none |
 | 0x61DAE0 | `(missed by ghidra: data-fnptr-table-unreferenced)` | written | L2 | none |
-| 0x640330 | `FUN_00640330` | written | L2 | heap-writes |
 | 0x647710 | `FUN_00647710` | written | L2 | heap-writes |
 | 0x647790 | `FUN_00647790` | written | L2 | heap-writes |
-| 0x6478B0 | `CTaskSimpleCarSetPedOut` | written | L2 | heap-writes |
-| 0x647950 | `FUN_00647950` | written | L2 | heap-writes |
 
 ## save-core-1
 
@@ -7196,7 +7188,7 @@ SA_UNVERIFIED=veh3-2 LANE=$LANE tools/e2e/port-l2.sh batch:veh3-2 $SA_ROOT/targe
 
 ## veh3-3
 
-16 hooks in sa-veh; hazards: heap-writes (7), x87-transcendental (3); recordings calling them: driving (6).
+14 hooks in sa-veh; hazards: heap-writes (7), x87-transcendental (2); recordings calling them: driving (5).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -7207,7 +7199,6 @@ SA_UNVERIFIED=veh3-3 LANE=$LANE tools/e2e/port-l2.sh batch:veh3-3 $SA_ROOT/targe
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x64F240 | `CCarEnterExit::IsPlayerToQuitCarEnter` | written | L2 | x87-transcendental |
 | 0x6A32B0 | `CAutomobile::BurstTyre` | written | L2 | none |
 | 0x6A3440 | `CAutomobile::Fix` | written | L2 | heap-writes |
 | 0x6A3860 | `CAutomobile::SetBusDoorTimer` | written | L2 | none |
@@ -7217,7 +7208,6 @@ SA_UNVERIFIED=veh3-3 LANE=$LANE tools/e2e/port-l2.sh batch:veh3-3 $SA_ROOT/targe
 | 0x6A6DC0 | `CAutomobile::dmgDrawCarCollidingParticles` | written | L2 | x87-transcendental,heap-writes |
 | 0x6B5F50 | `CBike::SetRemoveAnimFlags` | written | L2 | heap-writes |
 | 0x6B6D40 | `CBike::DoSoftGroundResistance` | written | L2 | none |
-| 0x6B7080 | `CBike::PlayCarHorn` | written | L2 | none |
 | 0x6C8250 | `CMonsterTruck::ProcessControl` | written | L2 | heap-writes |
 | 0x6CED20 | `CTrailer::ProcessControl` | written | L2 | heap-writes |
 | 0x6D82F0 | `CVehicle::KillPedsGettingInVehicle` | written | L2 | heap-writes |
@@ -7328,7 +7318,7 @@ SA_UNVERIFIED=world5-1 LANE=$LANE tools/e2e/port-l2.sh batch:world5-1 $SA_ROOT/t
 
 ## world5-2
 
-13 hooks in sa-world; hazards: heap-writes (7), x87-transcendental (1); recordings calling them: world-cheats (9).
+12 hooks in sa-world; hazards: heap-writes (6), x87-transcendental (1); recordings calling them: world-cheats (9).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -7350,7 +7340,6 @@ SA_UNVERIFIED=world5-2 LANE=$LANE tools/e2e/port-l2.sh batch:world5-2 $SA_ROOT/t
 | 0x439DD0 | `CCheat::VillagePeopleCheat` | written | split | none |
 | 0x4590C0 | `CPickups::DetonateMinesHitByGunShot` | written | L2 | heap-writes |
 | 0x5910B0 | `FurnitureGroup_c::Exit` | written | L2 | heap-writes |
-| 0x59EE80 | `CHandObject::Render` | written | L2 | heap-writes |
 | 0x6E4670 | `WaterCreature_c::Update` | written | L2 | heap-writes,x87-transcendental |
 
 ## writero-audio-1
