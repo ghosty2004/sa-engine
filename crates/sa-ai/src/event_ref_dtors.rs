@@ -45,14 +45,6 @@ pub fn event_gun_shot_dtor_4ac720(this: GPtr<u8>) {
     ref_event_dtor(this, 0x85_ABE0, &[0x14]);
 }
 
-/// `FUN_004ade90` (0x4ADE90), proposed `CEventDeath::~CEventDeath` (thiscall): only stores `CEvent`'s vtable
-/// (`mov dword [ecx], 0x85AB38; ret`); called by `CEventDeath`'s deleting destructor.
-#[hook(addr = 0x4ADE90, conv = thiscall, name = "FUN_004ade90", expect = "C7 01 38 AB 85 00 C3",
-       unverified = "samp-unk-1", route = "L2", hazards = "preserved-regs", preserve = "ecx", recs = "anim-input")]
-pub fn event_death_dtor_4ade90(this: GPtr<u8>) {
-    wr::<u32>(this, 0, CEVENT_VTABLE);
-}
-
 /// `FUN_004b13c0` (0x4B13C0), proposed `CEventInWater::~CEventInWater` (thiscall): only stores `CEvent`'s
 /// vtable; called by the deleting destructor of vtable 0x85B4C8 and by `CPed::ProcessBuoyancy`'s stack event.
 #[hook(addr = 0x4B13C0, conv = thiscall, name = "FUN_004b13c0", expect = "C7 01 38 AB 85 00 C3",
@@ -115,7 +107,6 @@ pub fn event_danger_dtor_4b26a0(this: GPtr<u8>) {
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_EVENT_GUN_SHOT_DTOR_4AC720,
-    HOOK_EVENT_DEATH_DTOR_4ADE90,
     HOOK_EVENT_IN_WATER_DTOR_4B13C0,
     HOOK_EVENT_COP_CAR_BEING_STOLEN_DTOR_4B17F0,
     HOOK_EVENT_FIRE_NEARBY_CTOR_4B1F10,
