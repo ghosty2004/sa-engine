@@ -60,6 +60,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpd_r4::HOOKS,
     crate::mvpd_r5::HOOKS,
     crate::quaternion::HOOKS,
+    crate::fx_info_get_value_samp::HOOKS,
     crate::pole_shadow::HOOKS,
     crate::ropes_register::HOOKS,
     crate::rope_update::HOOKS,
