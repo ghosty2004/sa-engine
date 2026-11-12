@@ -28,6 +28,7 @@ mod screen;
 mod imports;
 mod native;
 mod rw_standin;
+mod samp;
 mod sha256;
 mod winmain;
 
@@ -51,6 +52,10 @@ struct Args {
     report: Option<PathBuf>,
     /// the user documents folder: `None` = a fresh temporary folder for this run (removed at exit)
     documents: Option<PathBuf>,
+    /// `--samp HOST[:PORT]`: host the SA:MP client (skeleton, `samp.rs`)
+    samp: Option<String>,
+    /// `--name NAME`: the SA:MP nickname
+    name: String,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -62,6 +67,8 @@ fn parse_args() -> Result<Args, String> {
         screenshot: None,
         report: None,
         documents: None,
+        samp: None,
+        name: "Player".into(),
     };
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
@@ -77,16 +84,22 @@ fn parse_args() -> Result<Args, String> {
             "--documents" => a.documents = Some(PathBuf::from(val()?)),
             "--persistent-documents" => a.documents = Some(documents_dir()),
             "--start-in-world" => native::set_start_in_world(),
+            "--samp" => a.samp = Some(val()?),
+            "--name" => a.name = val()?,
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME]] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
-                     --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given."
+                     --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
+                     --samp hosts the SA:MP client (skeleton: the native game adapter with a stand-in client, no network yet)."
                 );
                 std::process::exit(0);
             }
             _ => return Err(format!("unknown option {k}")),
         }
+    }
+    if let Some(s) = &a.samp {
+        samp::parse_target(s, &a.name)?;
     }
     if a.game.as_os_str().is_empty() {
         return Err("--game DIR is required (the GTA San Andreas install)".into());
@@ -159,6 +172,14 @@ fn run(args: &Args) -> Result<String, String> {
         calls: Default::default(),
     });
 
+    let samp_target = match &args.samp {
+        Some(s) => {
+            let t = samp::parse_target(s, &args.name)?;
+            samp::install(&t)?;
+            Some(t)
+        }
+        None => None,
+    };
     println!(
         "sa-game: game folder {} (read-only), user documents {}",
         args.game.display(),
@@ -329,6 +350,9 @@ fn run(args: &Args) -> Result<String, String> {
         for (m, n) in &undelivered {
             let _ = writeln!(md, "- message {m:#06x}: {n}");
         }
+    }
+    if let Some(t) = &samp_target {
+        samp::report(&mut md, t);
     }
     let crashed = rep
         .rows

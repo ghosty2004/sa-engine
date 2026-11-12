@@ -2015,6 +2015,8 @@ dependencies = [
  "sa-render",
  "sa-rw-wgpu",
  "sa-rwcore",
+ "sa-samp",
+ "sa-samp-api",
  "sa-script",
  "sa-stream",
  "sa-veh",
@@ -2231,6 +2233,14 @@ dependencies = [
  "sa-veh",
  "sa-weapon",
  "sa-world",
+]
+
+[[package]]
+name = "sa-samp"
+version = "0.1.0"
+dependencies = [
+ "sa-core",
+ "sa-samp-api",
 ]
 
 [[package]]
