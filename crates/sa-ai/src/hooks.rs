@@ -174,6 +174,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::fight_ground_target::HOOKS,
     crate::stare_at_ped_control::HOOKS,
     crate::jump_sub_tasks::HOOKS,
+    crate::fight_strike_damage::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

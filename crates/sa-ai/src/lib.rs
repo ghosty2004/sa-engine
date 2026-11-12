@@ -194,3 +194,4 @@ pub mod stare_at_ped_clone;
 pub mod fight_ground_target;
 pub mod stare_at_ped_control;
 pub mod jump_sub_tasks;
+pub mod fight_strike_damage;
