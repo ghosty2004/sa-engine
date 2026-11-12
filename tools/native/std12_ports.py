@@ -8,7 +8,7 @@ import csv
 import glob
 import re
 
-NATIVES = set()
+NATIVES = {0x563470}
 
 current = {}
 for f in sorted(glob.glob('crates/**/*.rs', recursive=True)):
