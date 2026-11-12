@@ -433,6 +433,35 @@ orig! {
     fn vslot_4_0(obj: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
 }
 
+/// `CTaskComplexLeaveAnyCar::Clone` (0x4211C0): clone, thiscall, `ret`; 38 instruction(s) matched.
+#[hook(addr = 0x4211C0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Clone", expect = "6A FF 68 9B 73 83 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_complex_leave_any_car_clone_4211c0(this: u32) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x10));
+        let v3 = u32::from(rd::<u8>(p(this), 0x11));
+        let v4 = rd::<u32>(p(this), 0xC);
+        let v5 = ((v2 & 0xFF) & 0xFF);
+        wr::<u32>(p(fb), 0x3F0, v1);
+        wr::<u32>(p(fb), 0x3F8, 0x83_739B);
+        wr::<u32>(p(fb), 0x3FC, 0);
+        wr::<u8>(p(fb), 0x3EC, v5 as u8);
+        c_61a3b0_t0(v1);
+        let v7 = u32::from(rd::<u8>(p(fb), 0x3EC));
+        let v8 = ((v3 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x11, v8 as u8);
+        wr::<u32>(p(v1), 0, 0x85_8EB0);
+        wr::<u32>(p(v1), 0xC, v4);
+        let v9 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x10, v9 as u8);
+        return v1;
+    }
+}
+
 /// `CEventLeaderEntryExit::Clone` (0x43E220): clone, thiscall, `ret`; 30 instruction(s) matched.
 #[hook(addr = 0x43E220, conv = thiscall, name = "CEventLeaderEntryExit::Clone", expect = "6A FF 68 DB 76 83 00")]
 pub fn g_event_leader_entry_exit_clone_43e220(this: u32) -> u32 {
@@ -736,6 +765,39 @@ pub fn g_task_simple_hands_up_clone_48e9c0(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0x20);
         c_61abe0_t8(v1, 0, 0x8E, 0x4080_0000, 0xC080_0000, v2, 0x19D, 0x85_A2C4, 0);
         wr::<u32>(p(v1), 0, 0x85_A29C);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleTogglePedThreatScanner::Clone` (0x492D50): clone, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x492D50, conv = thiscall, name = "CTaskSimpleTogglePedThreatScanner::Clone", expect = "6A FF 68 6B 8A 83 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_simple_toggle_ped_threat_scanner_clone_492d50(this: u32) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        let v3 = u32::from(rd::<u8>(p(this), 9));
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u32>(p(fb), 0x3F0, v1);
+        wr::<u32>(p(fb), 0x3F8, 0x83_8A6B);
+        wr::<u32>(p(fb), 0x3FC, 0);
+        wr::<u8>(p(fb), 0x3E8, v4 as u8);
+        let v5 = u32::from(rd::<u8>(p(this), 0xA));
+        let v6 = ((v3 & 0xFF) & 0xFF);
+        wr::<u8>(p(fb), 0x3EC, v6 as u8);
+        let v7 = c_61a390_t0(v1);
+        let v8 = u32::from(rd::<u8>(p(fb), 0x3EC));
+        let v9 = u32::from(rd::<u8>(p(fb), 0x3E8));
+        let v10 = (((v7 & 0xFFFF_FF00) | (v8 & 0xFF)) & 0xFF);
+        wr::<u8>(p(v1), 9, v10 as u8);
+        let v11 = ((v5 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0xA, v11 as u8);
+        wr::<u32>(p(v1), 0, 0x85_A334);
+        let v12 = ((v9 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v12 as u8);
         return v1;
     }
 }
@@ -5428,6 +5490,43 @@ pub fn g_task_complex_fall_to_death_clone_67c480(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleJump::Clone` (0x67C510): clone, thiscall, `ret`; 45 instruction(s) matched.
+#[hook(addr = 0x67C510, conv = thiscall, name = "CTaskSimpleJump::Clone", expect = "6A FF 68 8B 62 84 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_simple_jump_clone_67c510(this: u32) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    let v1 = c_61a5a0_c1(0x2C);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x25));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x25, v3 as u8);
+        return 0;
+    } else {
+        let v4 = u32::from(rd::<u8>(p(this), 0x24));
+        let v5 = (((v1 & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF);
+        wr::<u32>(p(fb), 0x3F0, v1);
+        wr::<u32>(p(fb), 0x3F8, 0x84_628B);
+        wr::<u32>(p(fb), 0x3FC, 0);
+        wr::<u8>(p(fb), 0x3EC, v5 as u8);
+        c_61a390_t0(v1);
+        let v7 = u32::from(rd::<u8>(p(fb), 0x3EC));
+        wr::<u32>(p(v1), 0, 0x87_054C);
+        wr::<u32>(p(v1), 0x1C, 0);
+        wr::<u8>(p(v1), 0x20, 0 as u8);
+        wr::<u8>(p(v1), 0x21, 0 as u8);
+        wr::<u8>(p(v1), 0x22, 0 as u8);
+        wr::<u8>(p(v1), 0x23, 0 as u8);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x24, v8 as u8);
+        wr::<u8>(p(v1), 0x25, 0 as u8);
+        wr::<u32>(p(v1), 0x28, 0);
+        let v9 = u32::from(rd::<u8>(p(this), 0x25));
+        let v10 = ((v9 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x25, v10 as u8);
+        return v1;
+    }
+}
+
 /// `CTaskComplexJump::Clone` (0x67C5A0): clone, thiscall, `ret`; 36 instruction(s) matched.
 #[hook(addr = 0x67C5A0, conv = thiscall, name = "CTaskComplexJump::Clone", expect = "6A FF 68 AB 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_jump_clone_67c5a0(this: u32) -> u32 {
@@ -6103,6 +6202,7 @@ pub fn g_event_vehicle_damage_collision_clone_editable_6a0670(this: u32) -> u32 
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_G_TASK_COMPLEX_LEAVE_ANY_CAR_CLONE_4211C0,
     HOOK_G_EVENT_LEADER_ENTRY_EXIT_CLONE_43E220,
     HOOK_G_TASK_SIMPLE_UNINTERRUPTABLE_CLONE_43E330,
     HOOK_G_TASK_COMPLEX_WANDER_COP_CLONE_460CE0,
@@ -6121,6 +6221,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_WANDER_CRIMINAL_CLONE_48E650,
     HOOK_G_TASK_SIMPLE_PAUSE_CLONE_48E780,
     HOOK_G_TASK_SIMPLE_HANDS_UP_CLONE_48E9C0,
+    HOOK_G_TASK_SIMPLE_TOGGLE_PED_THREAT_SCANNER_CLONE_492D50,
     HOOK_G_TASK_COMPLEX_DIVE_FROM_ATTACHED_ENTITY_AND_GET_UP_CLONE_492E70,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_RADIUS_ANGLE_OFFSET_CLONE_495FB0,
     HOOK_G_VT_85A428_CLONE_499440,
@@ -6379,6 +6480,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_870480_CLONE_67C270,
     HOOK_G_TASK_SIMPLE_LAND_CLONE_67C3F0,
     HOOK_G_TASK_COMPLEX_FALL_TO_DEATH_CLONE_67C480,
+    HOOK_G_TASK_SIMPLE_JUMP_CLONE_67C510,
     HOOK_G_TASK_COMPLEX_JUMP_CLONE_67C5A0,
     HOOK_G_TASK_SIMPLE_CLIMB_CLONE_67C610,
     HOOK_G_TASK_SIMPLE_JET_PACK_CLONE_67C690,
@@ -6417,6 +6519,7 @@ pub const HOOKS: &[HookReg] = &[
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from (`gen_check`).
 pub const BODIES: &[Body] = &[
+    (0x4211C0, 0xDBB2598967A7E3AA, &[(0x4211C0, 114)]),
     (0x43E220, 0xC2DE6B61B654D151, &[(0x43E220, 88)]),
     (0x43E330, 0xF30839A672DF233B, &[(0x43E330, 80)]),
     (0x460CE0, 0xD9B0CF7246F82A04, &[(0x460CE0, 102)]),
@@ -6435,6 +6538,7 @@ pub const BODIES: &[Body] = &[
     (0x48E650, 0xBBAAED4BEA37D0C7, &[(0x48E650, 149)]),
     (0x48E780, 0x779216E9AB02F633, &[(0x48E780, 124)]),
     (0x48E9C0, 0xBC3C326E706E74C4, &[(0x48E9C0, 115)]),
+    (0x492D50, 0x19F139471A0F9C0B, &[(0x492D50, 122)]),
     (0x492E70, 0xCAC0AC3BF75CEE69, &[(0x492E70, 110)]),
     (0x495FB0, 0x052BF9A84F61BF67, &[(0x495FB0, 162)]),
     (0x499440, 0x42D772B739AFC7B4, &[(0x499440, 121)]),
@@ -6693,6 +6797,7 @@ pub const BODIES: &[Body] = &[
     (0x67C270, 0x2AE3748E20349CDC, &[(0x67C270, 98)]),
     (0x67C3F0, 0xD79E95352D80A0E4, &[(0x67C3F0, 141)]),
     (0x67C480, 0x84458EE2082D639B, &[(0x67C480, 130)]),
+    (0x67C510, 0xE0A16991FD0114BB, &[(0x67C510, 133)]),
     (0x67C5A0, 0x7BA17AC466FE397F, &[(0x67C5A0, 108)]),
     (0x67C610, 0x88CF0FD2A990ADFD, &[(0x67C610, 122)]),
     (0x67C690, 0xAEEA7777E33804AA, &[(0x67C690, 108)]),

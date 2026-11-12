@@ -302,6 +302,29 @@ def entry_reads(a):
 _ecx = {}
 
 
+def only_pushes_ecx(a):
+    """True when the callee's only use of ECX before writing it is `push ecx` as its first instruction (MSVC's
+    4-byte local slot) and nothing else in its first block reads ECX (PORT-AI-8)."""
+    i = insn_at(a)
+    if i is None or i.mnemonic != 'push' or i.op_str != 'ecx':
+        return False
+    for j in md.disasm(rd(a + i.size, 200), a + i.size):
+        try:
+            rr, ww = j.regs_access()
+        except capstone.CsError:
+            return False
+        if any(PARENT.get(r) == 'ecx' for r in rr):
+            return False
+        if any(PARENT.get(r) == 'ecx' for r in ww):
+            return True
+        if j.mnemonic in ('ret', 'jmp') or j.mnemonic.startswith('j'):
+            return False
+        if j.mnemonic == 'call':
+            # the callee may take ECX; the CRT's `rand` does not (and clobbers it: ECX is dead after it)
+            return j.op_str.startswith('0x') and int(j.op_str, 16) == RAND
+    return False
+
+
 def ecx_first_read(a):
     """True when the first instruction touching ECX/CX/CL in a linear sweep of the callee's extent
     (stub target first) reads it: the callee takes ECX even if its first block does not read it."""
@@ -640,6 +663,10 @@ def store(st, fn, out, op, val, size=None):
         out.append(('store', size, ('frame',), off - FRAME_LO, val))
         st.stack[off - off % 4] = val if size == 4 and off % 4 == 0 else ('unk', 'partial')
         return
+    if a[0] == 'stack' and (size != 4 or a[1] % 4) and FRAME_LO <= a[1] < 0:
+        # a byte/word local: from now on the locals live in the frame (PORT-AI-8)
+        escape(st, fn, out)
+        return store(st, fn, out, op, val, size)
     if a[0] == 'stack':
         off = a[1]
         if size != 4 or off % 4:
@@ -829,7 +856,8 @@ def run(fn, st, pc, out):
         nxt = pc + i.size
         if i.prefix[0] or i.prefix[3]:
             raise Reject('lock/rep or address-size prefix')
-        if mn == 'nop':
+        if mn == 'nop' or (mn == 'lea' and i.op_str in ('esp, [esp]', 'esp, [esp + 0]')):
+            # (`lea esp, [esp]`: MSVC's alignment filler before a loop) (PORT-AI-8)
             pc = nxt
             continue
         if mn != 'push' and not (mn == 'mov' and ops[0].type == X.X86_OP_REG and ops[1].type == X.X86_OP_REG) \
@@ -907,7 +935,7 @@ def run(fn, st, pc, out):
             if mn in ('add', 'sub') and size < 4:
                 st.flags = ('res', v, size)
         elif mn == 'sbb' and ops[0].type == X.X86_OP_REG and ops[1].type == X.X86_OP_REG and \
-                ops[0].reg == ops[1].reg and ops[0].reg in REG32:
+                ops[0].reg == ops[1].reg and (ops[0].reg in REG32 or ops[0].reg in REG8):
             # `sbb r, r` = -CF: after `neg x` CF = (x != 0), after `cmp a, b` CF = (a <u b) (PORT-AI-8)
             f = st.flags
             if f is None:
@@ -1436,16 +1464,18 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
         if cleanup:
             nargs = cleanup // 4
             conv = 'cdecl'
-            if uses_ecx:
+            if uses_ecx and not only_pushes_ecx(target[1]):
                 raise Reject('caller-cleaned callee reads ECX')
+            uses_ecx = False
         elif target[0] == 'd' and outs and cdecl_arity(target[1]):
             # the cleanup is merged into a later `add esp`: the arity of the callee's other call sites
             nargs = cdecl_arity(target[1])
             cleanup = 4 * nargs
             proven = True
             conv = 'cdecl'
-            if uses_ecx:
+            if uses_ecx and not only_pushes_ecx(target[1]):
                 raise Reject('caller-cleaned callee reads ECX')
+            uses_ecx = False
         elif target[0] == 'd' and outs and target[1] in ZERO_ARITY:
             # a callee that takes nothing (no site cleans up after it, it reads no argument slot) called while
             # an enclosing call's arguments are pushed
@@ -1651,6 +1681,19 @@ def finish(fn, st, out, n):
         fn.retkinds.add('u8')
         out.append(('ret', low, 'u8'))
         return
+    # a C++ `bool` virtual (BOOL_METHODS): only AL is the result, whatever the upper EAX bytes hold (an x87
+    # status word, a callee's leftovers) (PORT-AI-8)
+    if method_of(getattr(fn, 'name', '') or '') in BOOL_METHODS and e[0] == 'bin' and e[1] == 'and' and \
+            e[3] == C(0xFFFFFF00) and has_unknown(e[2]):
+        fn.retkinds.add('u8')
+        out.append(('ret', C(0), 'u8'))
+        return
+    if method_of(getattr(fn, 'name', '') or '') in BOOL_METHODS and e[0] == 'bin' and e[1] == 'or' and \
+            e[2][0] == 'bin' and e[2][1] == 'and' and e[2][3] == C(0xFFFFFF00) and has_unknown(e[2]) and \
+            not has_unknown(e[3]):
+        fn.retkinds.add('u8')
+        out.append(('ret', e[3], 'u8'))
+        return
     if has_unknown(e):
         raise Reject('unknown EAX at ret')
     fn.retkinds.add('u32')
@@ -1842,6 +1885,13 @@ class Emit:
             return '%s%s.test_parity(%s)' % ('!' if op == 'fodd' else '', self.e(a), hexlit(b[1]))
         ea, eb = self.e(a), self.e(b)
         ty = {1: ('u8', 'i8'), 2: ('u16', 'i16'), 4: ('u32', 'i32')}[size]
+        # a constant beyond the narrow type's signed range gets a u32 suffix, so its cast truncates instead of
+        # tripping `overflowing_literals` (PORT-AI-8; no earlier body has such a constant)
+        lim = {1: 0x7F, 2: 0x7FFF, 4: 0x7FFFFFFF}[size]
+        if is_c(a) and a[1] > lim and size < 4:
+            ea = '%s_u32' % hexlit(a[1])
+        if is_c(b) and b[1] > lim and size < 4:
+            eb = '%s_u32' % hexlit(b[1])
         sym = {'eq': '==', 'ne': '!=', 'lt': '<', 'ge': '>=', 'gt': '>', 'le': '<=',
                'ult': '<', 'uge': '>=', 'ugt': '>', 'ule': '<='}[op]
         if op in ('eq', 'ne'):
@@ -1918,7 +1968,8 @@ class Emit:
                 if rk == 'void':
                     out.append('%sreturn;' % pad)
                 elif rk == 'u8':
-                    out.append('%sreturn %s as u8;' % (pad, paren(self.e(e))))
+                    ee = '%s_u32' % hexlit(e[1]) if e is not None and is_c(e) and e[1] > 0xFF else paren(self.e(e))
+                    out.append('%sreturn %s as u8;' % (pad, ee))
                 elif kind == 'x87v':
                     out.append('%sreturn %s;' % (pad, self.e(e)))
                 elif rk == 'x87':

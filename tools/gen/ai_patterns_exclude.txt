@@ -58,3 +58,6 @@
 0x5F2B80
 0x5F3730
 0x5F3B40
+0x4B4950  # hooked on worktree-agent-a6d319b53fd3185ec
+0x636280  # hooked on worktree-agent-a1954952637efd64a
+0x636390  # hooked on worktree-agent-a1954952637efd64a
