@@ -1377,3 +1377,129 @@ the walk), `off10/present-0{040,080,120,160}.png` (offscreen walk past the kerb)
    project-local copy on `LD_LIBRARY_PATH`.
 2. `CDoor::Process`'s obfuscated entry chunk: decode it by hand (as 14.6 item 1's VM values) or measure it in a Wine
    trace.
+
+## 18. STD-12: stubs out of the walk, CDoor's entry chunk, the real-time tail
+
+### 18.1 Main-session decisions on STD-11's questions (recorded by STD-12, 2026-11-12)
+
+1. **32-bit X11 client libraries stay project-local** on `LD_LIBRARY_PATH` (`target/std11-libs/`, copied per worktree);
+   a system install is the user's decision.
+2. **`CDoor::Process`'s obfuscated entry chunk: decoded by hand and confirmed under Wine** (18.3).
+
+### 18.2 Base and merges
+
+Base STD-11 (`worktree-agent-a9a0d6cdcec07ed1b`, c013fb7). Cherry-picked own commits: WRITER-P 1b4c361 (car env-map
+render callback 0x5D9900 and its helpers, train / big-vehicle visibility callbacks, boot statics, CColBox copy, float
+pow), WRITER-Q 3c7512b, 6f24819, 0d79933, c7b7840, 1ac88ae (route round entity box / sphere, PlacePedAtEffect,
+`CBike::ProcessRiderAnims`, `TidyUpGarageClose`, the chat ctor / `CarHasReasonToStop` natives, `CInterestingEvents::Add`,
+the attractor pool and registry). Their generated queue files were skipped and regenerated at the end. WRITER-P's
+five static-initialiser hooks replace sa-core's five `NATIVES_MISC` natives at the same addresses (one registration
+per address). Not rebased onto master (INTEGRATE-4 had not landed when STD-12 ended).
+
+### 18.3 `CDoor::Process` 0x6F4040: the entry chunk 0x407DD5
+
+Entry `push -1; jmp 0x407DD5`; the chunk is `push ecx; pushf; clc; mov ecx, [0x1560894]; sbb ecx, [0x66D4C0]; popf;
+xchg [esp], ecx; jmp 0x6F4047`. Decoded from the exe image: `0xD9C72A11 - 0xD9429FE9 - CF(0) = 0x848A28`, pushed with
+ECX and the flags preserved, i.e. the ordinary `push -1; push handler` SEH prologue; 0x848A28 is `mov eax, 0x8A18A4;
+jmp __CxxFrameHandler (0x8215A0)`. **Wine measurement** (lane 1, flock; original exe, sa-launcher + master's sa_hook.dll
+with no ports selected, headless gamescope, `scratchpad/std12/measure-door.sh`): `peek` of 0x1560894, 0x66D4C0, the
+chunk bytes 0x407DD5..+24, the handler 0x848A28..+10 and the entry 0x6F4040..+8 at start, at the main menu and in game
+(`gGameState` 9, 20.9 s in): all identical to the exe image in all three probes (`d9c72a11`, `d9429fe9`, chunk
+`51 9c f8 8b 0d 94 08 56 01 1b 0d c0 d4 66 00 9d 87 0c 24 e9 5a c2 2e 00`, handler `b8 a4 18 8a 00 e9 ...`): the
+decoded value is 0x848A28 at run time too. Evidence `target/std12-evidence/door-r1/door.txt`.
+
+The port (PORT-VEH-2's body, `sa-veh/door2.rs`) is now a hook (`std12-veh-1`, 7-byte expect through the `jmp`). The
+protection reader `sbb edi, [0x6F4043]` at 0x4072EE reads the entry's rel32 as a key: a keycell reader (value
+0xFFD13D8E) keeps it reading the original dword in phase A. The body was re-checked against the bytes (the axis-0/2
+rotation, the `sin` for other axes, the chassis `pow`, the clamp and limit parity tests).
+
+### 18.4 Ports
+
+`docs/arch/std12-ports.csv` (regenerate with `tools/native/std12_ports.py`): 20 hooks and one native. Batches:
+`std12-veh-1` (`CDoor::Process`, `CAutomobile::SetRandomDamage`), `std12-veh-2` (`CBike::FixHandsToBars`),
+`std12-render-1` (`RenderWeaponPedsForPC`, `FxSystem_c::AttachToBone`), `std12-render-2` (`CPostEffects::HeatHazeFX`,
+unreversed in gta-reversed), `std12-world-1` (`CPickups::DoPickUpEffects`, unreversed), `std12-world-2`
+(`CColSphere::IntersectPoint`, L1-pure, spec in sa-oracle math_specs), `std12-ai-1` (`RemoveMember(CPed*)`,
+`CMentalState::IncrementAnger` (.HOODLUM body 0x156FC20, its time read decoded to 0xB7CB84),
+`CTaskComplexWalkRoundObject::ComputeRoute`, `CTaskComplexSmartFleePoint::MakeAbortable` / `SetFleePosition` /
+`ComputeFleeDir`, `CEventHandlerHistory::StoreActiveEvent`, `GetIsLineOfSightClear`, `CTaskSimpleIKChain::BlendOut`),
+`std12-audio-1` (`GetVehicle(Non)DriveWheelSkidValue`: existing bodies, now hooked with `preserve = "edx"`),
+`std12-pop-1` (`CCarAI::UpdateCarAI`: the partial port, previously without a batch, now also covers law enforcers
+while the wanted level is 0, plus the gang-area police cruise speed 0x420553..0x42065A; marked unverified because its
+behaviour changed). Native: `CWorld::ClearScanCodes` 0x563470 (its entry is read as data at 0x4013A2). sa-game: the
+CRT `acos` 0x822394 replacement (the `_CIacos` libm model).
+
+Not ported (still exploration stubs or blockers): `CCarAI::UpdateCarAI` for missions > 1 and law enforcers with a
+wanted level (fallback, ~3,400 instructions), the five `FrameUpdateCallBack` variants (0x4D2E40, 0x4D1DB0, 0x4D1A50,
+0x4D30A0, 0x4D2450: none was reached in any STD-12 run), and the tail in 18.6.
+
+### 18.5 Runs (release, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+sa-game: `SA_GAME_KEYS=KEY:DOWN[:UP],...` scripted key presses for offscreen runs (letters, space, enter, shift, ctrl,
+arrows).
+
+STD-10/11's nine STD stubs are gone (`DoPickUpEffects`, `RenderWeaponPedsForPC`, 0x5D9900 via WRITER-P, `HeatHazeFX`,
+`CDoor::Process`, `SetRandomDamage`, `UpdateCarAI`'s cruise/law path, WRITER-Q's 0x5F1890 / 0x5EA390 / 0x5F3DD0 /
+0x5EFCA0 / 0x602590 / 0x449D10 / 0x6B7280). The real-time window runs reach new code every run (ambient peds, police
+bikes, flee / IK / event tasks, vehicle audio, car collisions); each blocker found was ported until the last runs.
+
+| run | stubs | in-game present intervals | blocked iterations |
+|---|---|---|---|
+| winA (before WRITER-Q's last four picks), 110 s, W + turns | 0x421A50, 0x6A6DC0, 0x6510D0 + Q's then-unlanded five | 931 intervals, mean 45.01 ms (22.2 fps), median 46.63, p95 61.68, p99 66.57, max 228.41 | 1,608 (1,497 `ClearScanCodes`, since ported; 105 drive-wheel skid, since hooked) |
+| winC (all picks), 100 s | 0x421A50, 0x6A6DC0, 0x6510D0 | 899 intervals, mean 48.00 ms (20.8 fps), median 45.02, p95 70.88, p99 153.13, max 248.15 | 1,193 (1,181 `CBikeDamage KnockOffRider` 0x6B5A10) |
+
+Exploration stubs still used for the evidence: `0x421A50` (the weave heading test of `WeaveForOtherCar`, ~400
+instructions with argument-slot reuse), `CAutomobile::dmgDrawCarCollidingParticles` 0x6A6DC0 (thiscall, 3),
+`CCarEnterExit::IsVehicleStealable` 0x6510D0 (needs `CPedGroup::IsAnyoneUsingCar` 0x5F7DB0 and
+`IsClearToDriveAway` 0x6509B0). Two of three video runs after WRITER-Q's attractor picks crashed (null +4 in
+`CPedAttractorManager::IsPedRegisteredWithEffect` after the unported `CPedAttractor` constructor 0x5EDFB0 blocked a
+registration half-way; logs `target/std12-evidence/crash*-attractor*.log`); one earlier crash in
+`CPointRoute::operator=` (null route, `crash-point-route-assign.log`).
+
+Evidence (not committed, `target/std12-evidence/`): `winA/frame-times.txt`, `winA/gs-{60,90,110}.png`, `winA/sa-game.log`;
+`winC/frame-times.txt`, `winC/sa-game.log`; `winV/cj-walk-window.mp4` (every 4th in-game frame of a window run, 67
+frames, until the attractor crash); `door-r1/` (18.3); `car1/` (offscreen F at the parked car: blocked by
+`GetNearestCarDoor` 0x6528F0); `glowA/` (18.7).
+
+### 18.6 Driving
+
+Offscreen `SA_GAME_KEYS=w:40:70,f:72:76,w:200:450` next to the parked car in front of CJ's house: F starts
+`CTaskComplexEnterCar`, which blocks in `CCarEnterExit::GetNearestCarDoor` 0x6528F0 (~150 instructions behind a
+protection chunk 0x4058AC). Not reached further; no driving video.
+
+### 18.7 The orange blobs on the ground
+
+Identified: the **sun halo corona's lens flare**. `CCoronas::DoSunAndMoon` registers corona id 2 (the halo) with flare
+type 1 and the time cycle's halo colour; `SA_GAME_DUMP=0xC3E094:0x3C` in game at 08:05 shows id 2 with colour
+(236, 121, 2), fade 255, flare 1. `CCoronas::Render` draws the `SunFlareDef` (0x8D4B68) sprites additively (SRC/DEST
+blend ONE) at `(sun - centre) * def.position + centre`, so they lie on the line from the sun through the screen
+centre (in STD-9's frame: sun (560, 20), blobs at (380, 330) and (240, 580)). The port follows the bytes (flare loop,
+`ProcessLineOfSight` with vehicles / peds / shoot-through only, as pushed at 0x6FB3E8). No fix made: whether the
+original draws the same flare at this spot is open (the e2e frames of the original do not show the sun; the halo is
+drawn only with a clear LOS from the camera, and the original's flare uses the same additive star sprite). Next step:
+an original frame with the sun in view at the same time of day (Wine, the corpus state at Grove Street, camera turned
+to the sun), then compare the flare sprites (count, colour, raster bound at the sprite-buffer flush).
+
+### 18.8 Next gaps, in order
+
+1. The attractor path WRITER-Q left (crashes the window runs): `CPedAttractor` ctor 0x5EDFB0, `RegisterPed` 0x5EEE30 →
+   `SetTaskForPed` 0x5EECA0 (+0x5EE270, 0x5EB310, 0x5EE300, 0x5ED4B0), `DeRegisterPed` 0x5EC5B0 (+0x5EAB80),
+   `CGarage::IsEntityTouching3D` 0x448EE0, `CEventKnockOffBike` dtor 0x4AFE70.
+2. `CBike::KnockOffRider`-path 0x6B5A10 (1,181 blocks in winC), 0x421A50, `dmgDrawCarCollidingParticles` 0x6A6DC0,
+   `IsVehicleStealable` 0x6510D0 (+0x5F7DB0, 0x6509B0), `CTaskComplexWander::SetDir` 0x669D30, the clone / dtor
+   vslots seen once (0x682DA0, 0x66CC60, 0x420F30, 0x4B18D0), `FxManager AddSparks` 0x49F040, 0x503CE0.
+3. Driving: `CCarEnterExit::GetNearestCarDoor` 0x6528F0, then the enter-car task chain.
+4. `CCarAI::UpdateCarAI` complete (missions > 1, law enforcers with a wanted level).
+5. The five `FrameUpdateCallBack` variants (not reached yet).
+6. 18.7 (original comparison frame).
+
+### 18.9 Checks
+
+`cargo test -p sa-hook --lib` 58 passed at every commit; clippy -D warnings on i686-unknown-linux-gnu for sa-veh,
+sa-render, sa-world, sa-ai, sa-pop, sa-audio, sa-core, sa-ports, sa-game; writer gate: see the hand-back.
+
+### 18.10 Decisions needed
+
+1. Whether the remaining exploration stubs (18.5) may stay for the evidence runs while the real-time tail keeps
+   growing, or STD-13 should first make the window run deterministic (fixed timestep) so one blocker list holds.
+2. 18.7: who produces the original comparison frame (needs a Wine lane and a scripted camera turn).
