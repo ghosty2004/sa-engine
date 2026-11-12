@@ -117,9 +117,7 @@ impl<V: View> NativeGame<V> {
             // A callback cannot reinstall hooks (it only sees `&mut dyn GameAdapter`), so put them back.
             self.hooks = Some(hooks);
         }
-        if phase == FramePhase::After2d {
-            self.overlay_frame();
-        }
+        self.overlay_frame(phase);
     }
 
     /// Runs the client's shutdown callback once and drops it.
