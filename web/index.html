@@ -21,7 +21,8 @@
   button, label.btn { background: #333; color: #eee; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
   .err { color: #f88; }
   #mouse { font-family: monospace; }
-  #mouse.on { color: #9c9; } #mouse.off { color: #fc6; }
+  #mouse.on, #audio.on { color: #9c9; } #mouse.off, #audio.off { color: #fc6; }
+  #audio { font-family: monospace; }
   #blocked { font-family: monospace; color: #fc6; }
 </style>
 </head>
@@ -37,6 +38,9 @@
 <div id="bar2">
   <span>Click the picture to capture the mouse; Esc releases it.</span>
   <span id="mouse" class="off">mouse captured: no</span>
+  <span id="audio" class="off">audio: off</span>
+  <button id="mute">mute</button>
+  <label>volume <input id="vol" type="range" min="0" max="100" step="1"></label>
   <span id="blocked"></span>
   <button id="fullwin" title="the picture fills the browser window (also ?full=1)">Full window</button>
   <button id="fullscreen" title="the picture fills the screen (Esc leaves)">Fullscreen</button>

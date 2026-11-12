@@ -15,8 +15,12 @@
 // pointer, then real mouse moves; the page does not pass that click to the game).
 // --screencast: records the page (status line included) with Page.startScreencast into OUT/cast/ (JPEG frames +
 // frames.jsonl with their times, events.jsonl with the status timeline); tools/web/make_video.py assembles an MP4.
+// --audio: Chromium may start audio without a gesture (--autoplay-policy=no-user-gesture-required); the page's audio
+// output is tapped (open the page with ?audiotap=1) every 2 s into OUT/audio.wav (44.1 kHz stereo 16-bit; derived from
+// the user's game files: never commit it) and each chunk's RMS / peak (dBFS) goes to OUT/audio-rms.tsv with the game
+// state and phase.
 import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const arg = (k, d) => {
@@ -44,7 +48,8 @@ const menuMouse = arg('menu-mouse') !== undefined ? Number(arg('menu-mouse')) : 
 let menuMoused = false;
 const chrome = arg('chrome', 'chromium');
 const port = Number(arg('port', '9333'));
-const extraFlags = (arg('flags', '') || '').split(' ').filter(Boolean);
+const audioOn = process.argv.includes('--audio');
+const extraFlags = [...(arg('flags', '') || '').split(' ').filter(Boolean), ...(audioOn ? ['--autoplay-policy=no-user-gesture-required'] : [])];
 mkdirSync(out, { recursive: true });
 const logFile = `${out}/log.txt`;
 writeFileSync(logFile, '');
@@ -163,6 +168,38 @@ async function dumpStacks(tag) {
     await send('Debugger.resume', {}, ws);
   }
 }
+// the audio tap: raw PCM appended to OUT/audio.raw, one RMS row per chunk in OUT/audio-rms.tsv
+let lastTap = 0;
+if (audioOn) {
+  writeFileSync(`${out}/audio.raw`, Buffer.alloc(0));
+  writeFileSync(`${out}/audio-rms.tsv`, 't\tstate\tphase\tctx\tseconds\trms_dbfs\tpeak_dbfs\tunderruns\n');
+}
+const db = (v) => (v > 0 ? (20 * Math.log10(v)).toFixed(1) : '-inf');
+async function tapAudio(t, phase) {
+  const r = await s('Runtime.evaluate', { expression: 'window.saGame?.audioTap ? window.saGame.audioTap() : null', awaitPromise: true, returnByValue: true });
+  const v = r.result?.result?.value;
+  if (!v) return;
+  const buf = Buffer.from(v.pcm, 'base64');
+  appendFileSync(`${out}/audio.raw`, buf);
+  let sum = 0, peak = 0;
+  const n = buf.length / 2;
+  for (let i = 0; i < n; i++) {
+    const x = buf.readInt16LE(i * 2) / 32768;
+    sum += x * x;
+    peak = Math.max(peak, Math.abs(x));
+  }
+  const rms = n ? Math.sqrt(sum / n) : 0;
+  appendFileSync(`${out}/audio-rms.tsv`, `${t.toFixed(1)}\t${v.state}\t${phase}\t${v.ctx}\t${(n / 2 / 44100).toFixed(2)}\t${db(rms)}\t${db(peak)}\t${v.underruns}\n`);
+}
+function writeWav() {
+  const raw = readFileSync(`${out}/audio.raw`);
+  const h = Buffer.alloc(44);
+  h.write('RIFF', 0); h.writeUInt32LE(36 + raw.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
+  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(44100, 24);
+  h.writeUInt32LE(44100 * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34); h.write('data', 36); h.writeUInt32LE(raw.length, 40);
+  writeFileSync(`${out}/audio.wav`, Buffer.concat([h, raw]));
+  note(`audio: ${out}/audio.wav (${(raw.length / 4 / 44100).toFixed(1)} s), per-chunk levels in ${out}/audio-rms.tsv`);
+}
 let lastChange = Date.now(), lastStatusText = '', lastProgressText = '', dumped = false, lastProgressNote = -10;
 
 const t0 = Date.now();
@@ -274,6 +311,10 @@ while ((Date.now() - t0) / 1000 < seconds) {
       await shot(`walk-after-t${Math.round(t)}`);
     }
   }
+  if (audioOn && t - lastTap >= 2) {
+    lastTap = t;
+    await tapAudio(t, walking !== false && !walked ? 'walk' : status.state === 9 ? 'in-game' : 'menu/loading');
+  }
   // frames read back by the worker itself (the compositor screenshot fails while the GPU process is busy)
   const snaps = JSON.parse((await evalJs('JSON.stringify(window.saGame?.snapshots?.splice(0) ?? [])')) ?? '[]');
   for (const sn of snaps) {
@@ -286,6 +327,10 @@ while ((Date.now() - t0) / 1000 < seconds) {
     lastShot = t;
     await shot(`t${String(Math.round(t)).padStart(4, '0')}-state${status.state}`);
   }
+}
+if (audioOn) {
+  await tapAudio((Date.now() - t0) / 1000, 'end');
+  writeWav();
 }
 note(`final status: ${JSON.stringify(await evalJs('window.saGame?.status'))} progress ${JSON.stringify(await evalJs('window.saGame?.progress'))}`);
 await shot('final');
