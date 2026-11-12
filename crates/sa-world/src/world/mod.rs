@@ -12,6 +12,7 @@ pub mod garages;
 pub mod garage_update;
 pub mod misc;
 pub mod pickups;
+pub mod pickup_effects;
 pub mod replay_playback;
 pub mod restart;
 pub mod shopping;
