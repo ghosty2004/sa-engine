@@ -54,19 +54,11 @@ pub fn g_fun_0044d2e0_44d2e0(
 ) {
 }
 
-/// `(missed by ghidra: data-code-immediate)` (0x4C73F0, STREAM): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_4c73f0(this: u32) -> u32 {
-    this
-}
-
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x44D2D0, 0x6A5F681C2468C4FD, &[(0x44D2D0, 3)]),
     (0x44D2E0, 0x6A7A981C247FDE45, &[(0x44D2E0, 3)]),
-    (0x4C73F0, 0x7B290C1B0B7F4D96, &[(0x4C73F0, 3)]),
 ];
 
 #[cfg(all(test, not(sa_phase_a)))]
