@@ -333,6 +333,13 @@ pub fn audio_threads() {
     crate::bind::coop::service_audio_threads();
 }
 
+/// Mixes into the page's audio ring up to its target fill (the worker calls it on a 4 ms timer between main-loop
+/// iterations, so the ring can stay short; natively the mixer thread runs every 5 ms).
+#[wasm_bindgen]
+pub fn audio_pump() {
+    crate::dsound::advance_real_time();
+}
+
 /// After `audio_threads` left through an unported callee: that audio thread stops. Returns false when the platform
 /// lock was left taken (the session cannot go on).
 #[wasm_bindgen]

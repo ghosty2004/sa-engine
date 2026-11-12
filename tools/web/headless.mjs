@@ -172,6 +172,7 @@ async function dumpStacks(tag) {
 let lastTap = 0;
 if (audioOn) {
   writeFileSync(`${out}/audio.raw`, Buffer.alloc(0));
+  writeFileSync(`${out}/audio-delay.tsv`, 't\tring_ms\ttarget_ms\tbase_ms\toutput_ms\ttotal_ms\tunderruns\n');
   writeFileSync(`${out}/audio-rms.tsv`, 't\tstate\tphase\tctx\tseconds\trms_dbfs\tpeak_dbfs\tunderruns\n');
 }
 const db = (v) => (v > 0 ? (20 * Math.log10(v)).toFixed(1) : '-inf');
@@ -189,6 +190,8 @@ async function tapAudio(t, phase) {
     peak = Math.max(peak, Math.abs(x));
   }
   const rms = n ? Math.sqrt(sum / n) : 0;
+  const d = JSON.parse((await evalJs('JSON.stringify(window.saGame?.audio ?? {})')) ?? '{}');
+  appendFileSync(`${out}/audio-delay.tsv`, `${t.toFixed(1)}\t${d.ringMs}\t${d.targetMs}\t${d.baseMs}\t${d.outputMs}\t${d.totalMs}\t${d.underruns}\n`);
   appendFileSync(`${out}/audio-rms.tsv`, `${t.toFixed(1)}\t${v.state}\t${phase}\t${v.ctx}\t${(n / 2 / 44100).toFixed(2)}\t${db(rms)}\t${db(peak)}\t${v.underruns}\n`);
 }
 function writeWav() {

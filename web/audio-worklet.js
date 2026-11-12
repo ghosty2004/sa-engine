@@ -2,8 +2,8 @@
 // produces (interleaved stereo 16-bit at 44.1 kHz; the AudioContext runs at 44.1 kHz, the browser resamples to the
 // device).
 //
-// Shared ring buffer (cross-origin isolated pages): header Int32Array [write, read, running, underruns] counted in
-// frames (wrapping 32-bit), then the samples. The worker writes and tops it up to its target fill each main-loop
+// Shared ring buffer (cross-origin isolated pages): header Int32Array [write, read, running, underruns, target, -, -,
+// -] counted in frames (wrapping 32-bit), then the samples. The worker writes and tops it up to its target fill each main-loop
 // iteration; this processor reads 128 frames per quantum and advances `read`, which is the play cursor the game's
 // DirectSound buffers follow.
 // Fallback (no SharedArrayBuffer): the page forwards the worker's chunks through the port into a local queue.
@@ -12,8 +12,8 @@ class SaGameAudio extends AudioWorkletProcessor {
     super();
     const sab = options.processorOptions?.sab;
     if (sab) {
-      this.hdr = new Int32Array(sab, 0, 4);
-      this.data = new Int16Array(sab, 16);
+      this.hdr = new Int32Array(sab, 0, 8);
+      this.data = new Int16Array(sab, 32);
       this.cap = this.data.length / 2;
     } else {
       this.queue = [];
