@@ -52,6 +52,8 @@ orig! {
     fn rw_raster_create(w: i32, h: i32, depth: i32, flags: u32) -> GPtr<u8> = cdecl 0x7FB230 => unported;
     /// `RwRasterLock(raster, level, mode)` (0x7FB2D0)
     fn rw_raster_lock(r: GPtr<u8>, level: u32, mode: u32) -> u32 = cdecl 0x7FB2D0 => unported;
+    /// `RwRasterDestroy(raster)` (0x7FB020)
+    fn rw_raster_destroy(r: GPtr<u8>) -> i32 = cdecl 0x7FB020 => unported;
     /// `RwRasterUnlock(raster)` (0x7FAEC0)
     fn rw_raster_unlock(r: GPtr<u8>) -> u32 = cdecl 0x7FAEC0 => unported;
     /// `CSprite::CalcScreenCoors(const RwV3d&, RwV3d* out, float* w, float* h, bool, bool)` (0x70CE30)
@@ -154,6 +156,11 @@ pub fn line_clear(a: Vec3, b: Vec3) -> bool {
         0,
         0,
     ) != 0
+}
+
+/// Frees an atlas raster (the font sizes changed).
+pub fn destroy_raster(r: u32) {
+    rw_raster_destroy(GPtr::from_addr(r as usize));
 }
 
 /// Creates the atlas raster and fills it (white, alpha = coverage). `None` when RW refuses the raster.
