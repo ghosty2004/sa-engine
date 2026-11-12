@@ -200,8 +200,14 @@ orig! {
     fn c_681810_t1(this: u32, a0: u32) -> u32 = thiscall 0x681810 => unported;
     /// `FUN_00691630` (0x691630), thiscall, 0 stack argument(s)
     fn c_691630_t0(this: u32) -> u32 = thiscall 0x691630 => unported;
+    /// `CTaskAllocatorAttack::AllocateTasks` (0x69C3F0), thiscall, 1 stack argument(s)
+    fn c_69c3f0_t1(this: u32, a0: u32) -> u32 = thiscall 0x69C3F0 => unported;
     /// `CVehicleAnimGroup::GetGroup` (0x6E3B00), thiscall, 1 stack argument(s)
     fn c_6e3b00_t1(this: u32, a0: u32) -> u32 = thiscall 0x6E3B00 => unported;
+    /// virtual slot +0x4 (`call [vtbl + 0x4]` on ECX), 1 stack argument(s)
+    fn vslot_4_1(obj: GPtr<u8>, a0: u32) -> u32 = thiscall vslot 0x4 => unported;
+    /// virtual slot +0xC (`call [vtbl + 0xC]` on ECX), 1 stack argument(s)
+    fn vslot_c_1(obj: GPtr<u8>, a0: u32) -> u32 = thiscall vslot 0xC => unported;
     /// virtual slot +0x10 (`call [vtbl + 0x10]` on ECX), 0 stack argument(s)
     fn vslot_10_0(obj: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     /// virtual slot +0x18 (`call [vtbl + 0x18]` on ECX), 3 stack argument(s)
@@ -3430,10 +3436,10 @@ pub fn g_say_jacked_6497a0(a0: u32, a1: u32, a2: u32) -> u32 {
     let v1 = c_4f4f00_t0(a1.wrapping_add(0x138));
     if ((v1 & 0xFFFF) as u16) != (0 as u16) {
         let v2 = c_5effe0_t6(a0, 0x77, a2, 0x3F80_0000, 0, 0, 0);
-        return ((v2 & 0xFFFF_FF00) | ((u32::from(((v2 & 0xFFFF) as u16) != (0xFFFF as u16))) & 0xFF));
+        return ((v2 & 0xFFFF_FF00) | ((u32::from(((v2 & 0xFFFF) as u16) != (0xFFFF_u32 as u16))) & 0xFF));
     } else {
         let v3 = c_5effe0_t6(a0, 0x76, a2, 0x3F80_0000, 0, 0, 0);
-        return ((v3 & 0xFFFF_FF00) | ((u32::from(((v3 & 0xFFFF) as u16) != (0xFFFF as u16))) & 0xFF));
+        return ((v3 & 0xFFFF_FF00) | ((u32::from(((v3 & 0xFFFF) as u16) != (0xFFFF_u32 as u16))) & 0xFF));
     }
 }
 
@@ -6967,6 +6973,356 @@ pub fn g_ccover_point_can_accommodate_another_ped_698e70(this: u32) -> u32 {
     }
 }
 
+/// `CTaskAllocatorKillThreatsBasic::ProcessGroup` (0x69C7E0): body, thiscall, `ret 4`; 37 instruction(s) matched.
+#[hook(addr = 0x69C7E0, conv = thiscall, name = "CTaskAllocatorKillThreatsBasic::ProcessGroup", expect = "56 8B F1 8A 46 10", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_kill_threats_basic_process_group_69c7e0(this: u32, a0: u32) -> u32 {
+    let v1 = u32::from(rd::<u8>(p(this), 0x10));
+    if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
+        let v2 = u32::from(rd::<u8>(p(this), 0x11));
+        if (v2 as u8) == (0 as u8) {
+            let v3 = rd::<u32>(p(this), 8);
+            let v4 = rd::<u32>(p(this), 0xC);
+            let v5 = g::<u32>(0xB7_CB84).read();
+            let v6 = 0_u32.wrapping_sub((u32::from((v5 as u32) < (v4.wrapping_add(v3) as u32))));
+            let v7 =
+                ((((((v4.wrapping_add(v3)) & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+            if (((((((v4.wrapping_add(v3)) & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF)
+                as u8)
+                == (0 as u8)
+            {
+                return this;
+            } else {
+                wr::<u32>(p(this), 8, v5);
+                wr::<u32>(p(this), 0xC, 0x1388);
+                wr::<u8>(p(this), 0x10, 1 as u8);
+                let _v8 = rd::<u32>(p(this), 0);
+                vslot_4_1(p(this), a0);
+                return this;
+            }
+        } else {
+            let v10 = g::<u32>(0xB7_CB84).read();
+            wr::<u32>(p(this), 8, v10);
+            wr::<u8>(p(this), 0x11, 0 as u8);
+            let v11 = rd::<u32>(p(this), 8);
+            let v12 = rd::<u32>(p(this), 0xC);
+            let v13 = g::<u32>(0xB7_CB84).read();
+            let v14 = 0_u32.wrapping_sub((u32::from((v13 as u32) < (v12.wrapping_add(v11) as u32))));
+            let v15 =
+                ((((((v12.wrapping_add(v11)) & 0xFFFF_FF00) | (v14 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+            if (((((((v12.wrapping_add(v11)) & 0xFFFF_FF00) | (v14 & 0xFF)) & 0xFFFF_FF00) | (v15 & 0xFF))
+                & 0xFF) as u8)
+                == (0 as u8)
+            {
+                return this;
+            } else {
+                wr::<u32>(p(this), 8, v13);
+                wr::<u32>(p(this), 0xC, 0x1388);
+                wr::<u8>(p(this), 0x10, 1 as u8);
+                let _v16 = rd::<u32>(p(this), 0);
+                vslot_4_1(p(this), a0);
+                return this;
+            }
+        }
+    } else {
+        let v18 = g::<u32>(0xB7_CB84).read();
+        wr::<u32>(p(this), 8, v18);
+        wr::<u32>(p(this), 0xC, 0);
+        wr::<u8>(p(this), 0x10, 1 as u8);
+        let v19 = u32::from(rd::<u8>(p(this), 0x10));
+        if (v19 as u8) == (0 as u8) {
+            return this;
+        } else {
+            let v20 = u32::from(rd::<u8>(p(this), 0x11));
+            if (v20 as u8) == (0 as u8) {
+                let v21 = rd::<u32>(p(this), 8);
+                let v22 = rd::<u32>(p(this), 0xC);
+                let v23 = g::<u32>(0xB7_CB84).read();
+                let v24 = 0_u32.wrapping_sub((u32::from((v23 as u32) < (v22.wrapping_add(v21) as u32))));
+                let v25 = ((((((v22.wrapping_add(v21)) & 0xFFFF_FF00) | (v24 & 0xFF)) & 0xFF)
+                    .wrapping_add(1))
+                    & 0xFF);
+                if (((((((v22.wrapping_add(v21)) & 0xFFFF_FF00) | (v24 & 0xFF)) & 0xFFFF_FF00)
+                    | (v25 & 0xFF))
+                    & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    return this;
+                } else {
+                    wr::<u32>(p(this), 8, v23);
+                    wr::<u32>(p(this), 0xC, 0x1388);
+                    wr::<u8>(p(this), 0x10, 1 as u8);
+                    let _v26 = rd::<u32>(p(this), 0);
+                    vslot_4_1(p(this), a0);
+                    return this;
+                }
+            } else {
+                let v28 = g::<u32>(0xB7_CB84).read();
+                wr::<u32>(p(this), 8, v28);
+                wr::<u8>(p(this), 0x11, 0 as u8);
+                let v29 = rd::<u32>(p(this), 8);
+                let v30 = rd::<u32>(p(this), 0xC);
+                let v31 = g::<u32>(0xB7_CB84).read();
+                let v32 = 0_u32.wrapping_sub((u32::from((v31 as u32) < (v30.wrapping_add(v29) as u32))));
+                let v33 = ((((((v30.wrapping_add(v29)) & 0xFFFF_FF00) | (v32 & 0xFF)) & 0xFF)
+                    .wrapping_add(1))
+                    & 0xFF);
+                if (((((((v30.wrapping_add(v29)) & 0xFFFF_FF00) | (v32 & 0xFF)) & 0xFFFF_FF00)
+                    | (v33 & 0xFF))
+                    & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    return this;
+                } else {
+                    wr::<u32>(p(this), 8, v31);
+                    wr::<u32>(p(this), 0xC, 0x1388);
+                    wr::<u8>(p(this), 0x10, 1 as u8);
+                    let _v34 = rd::<u32>(p(this), 0);
+                    vslot_4_1(p(this), a0);
+                    return this;
+                }
+            }
+        }
+    }
+}
+
+/// `CTaskAllocatorKillThreatsDriveby::ProcessGroup` (0x69CBC0): body, thiscall, `ret 4`; 37 instruction(s) matched.
+#[hook(addr = 0x69CBC0, conv = thiscall, name = "CTaskAllocatorKillThreatsDriveby::ProcessGroup", expect = "56 8B F1 8A 46 10", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_kill_threats_driveby_process_group_69cbc0(this: u32, a0: u32) -> u32 {
+    let v1 = u32::from(rd::<u8>(p(this), 0x10));
+    if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
+        let v2 = u32::from(rd::<u8>(p(this), 0x11));
+        if (v2 as u8) == (0 as u8) {
+            let v3 = rd::<u32>(p(this), 8);
+            let v4 = rd::<u32>(p(this), 0xC);
+            let v5 = g::<u32>(0xB7_CB84).read();
+            let v6 = 0_u32.wrapping_sub((u32::from((v5 as u32) < (v4.wrapping_add(v3) as u32))));
+            let v7 =
+                ((((((v4.wrapping_add(v3)) & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+            if (((((((v4.wrapping_add(v3)) & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF)
+                as u8)
+                == (0 as u8)
+            {
+                return this;
+            } else {
+                wr::<u32>(p(this), 8, v5);
+                wr::<u32>(p(this), 0xC, 0x1388);
+                wr::<u8>(p(this), 0x10, 1 as u8);
+                let _v8 = rd::<u32>(p(this), 0);
+                vslot_4_1(p(this), a0);
+                return this;
+            }
+        } else {
+            let v10 = g::<u32>(0xB7_CB84).read();
+            wr::<u32>(p(this), 8, v10);
+            wr::<u8>(p(this), 0x11, 0 as u8);
+            let v11 = rd::<u32>(p(this), 8);
+            let v12 = rd::<u32>(p(this), 0xC);
+            let v13 = g::<u32>(0xB7_CB84).read();
+            let v14 = 0_u32.wrapping_sub((u32::from((v13 as u32) < (v12.wrapping_add(v11) as u32))));
+            let v15 =
+                ((((((v12.wrapping_add(v11)) & 0xFFFF_FF00) | (v14 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+            if (((((((v12.wrapping_add(v11)) & 0xFFFF_FF00) | (v14 & 0xFF)) & 0xFFFF_FF00) | (v15 & 0xFF))
+                & 0xFF) as u8)
+                == (0 as u8)
+            {
+                return this;
+            } else {
+                wr::<u32>(p(this), 8, v13);
+                wr::<u32>(p(this), 0xC, 0x1388);
+                wr::<u8>(p(this), 0x10, 1 as u8);
+                let _v16 = rd::<u32>(p(this), 0);
+                vslot_4_1(p(this), a0);
+                return this;
+            }
+        }
+    } else {
+        let v18 = g::<u32>(0xB7_CB84).read();
+        wr::<u32>(p(this), 8, v18);
+        wr::<u32>(p(this), 0xC, 0);
+        wr::<u8>(p(this), 0x10, 1 as u8);
+        let v19 = u32::from(rd::<u8>(p(this), 0x10));
+        if (v19 as u8) == (0 as u8) {
+            return this;
+        } else {
+            let v20 = u32::from(rd::<u8>(p(this), 0x11));
+            if (v20 as u8) == (0 as u8) {
+                let v21 = rd::<u32>(p(this), 8);
+                let v22 = rd::<u32>(p(this), 0xC);
+                let v23 = g::<u32>(0xB7_CB84).read();
+                let v24 = 0_u32.wrapping_sub((u32::from((v23 as u32) < (v22.wrapping_add(v21) as u32))));
+                let v25 = ((((((v22.wrapping_add(v21)) & 0xFFFF_FF00) | (v24 & 0xFF)) & 0xFF)
+                    .wrapping_add(1))
+                    & 0xFF);
+                if (((((((v22.wrapping_add(v21)) & 0xFFFF_FF00) | (v24 & 0xFF)) & 0xFFFF_FF00)
+                    | (v25 & 0xFF))
+                    & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    return this;
+                } else {
+                    wr::<u32>(p(this), 8, v23);
+                    wr::<u32>(p(this), 0xC, 0x1388);
+                    wr::<u8>(p(this), 0x10, 1 as u8);
+                    let _v26 = rd::<u32>(p(this), 0);
+                    vslot_4_1(p(this), a0);
+                    return this;
+                }
+            } else {
+                let v28 = g::<u32>(0xB7_CB84).read();
+                wr::<u32>(p(this), 8, v28);
+                wr::<u8>(p(this), 0x11, 0 as u8);
+                let v29 = rd::<u32>(p(this), 8);
+                let v30 = rd::<u32>(p(this), 0xC);
+                let v31 = g::<u32>(0xB7_CB84).read();
+                let v32 = 0_u32.wrapping_sub((u32::from((v31 as u32) < (v30.wrapping_add(v29) as u32))));
+                let v33 = ((((((v30.wrapping_add(v29)) & 0xFFFF_FF00) | (v32 & 0xFF)) & 0xFF)
+                    .wrapping_add(1))
+                    & 0xFF);
+                if (((((((v30.wrapping_add(v29)) & 0xFFFF_FF00) | (v32 & 0xFF)) & 0xFFFF_FF00)
+                    | (v33 & 0xFF))
+                    & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    return this;
+                } else {
+                    wr::<u32>(p(this), 8, v31);
+                    wr::<u32>(p(this), 0xC, 0x1388);
+                    wr::<u8>(p(this), 0x10, 1 as u8);
+                    let _v34 = rd::<u32>(p(this), 0);
+                    vslot_4_1(p(this), a0);
+                    return this;
+                }
+            }
+        }
+    }
+}
+
+/// `CTaskAllocatorAttack::ProcessGroup` (0x69D0C0): body, thiscall, `ret 4`; 29 instruction(s) matched.
+#[hook(addr = 0x69D0C0, conv = thiscall, name = "CTaskAllocatorAttack::ProcessGroup", expect = "56 8B F1 8A 46 18", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_attack_process_group_69d0c0(this: u32, a0: u32) -> u32 {
+    let v1 = u32::from(rd::<u8>(p(this), 0x18));
+    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
+        c_69c3f0_t1(this, a0);
+        return this;
+    } else {
+        if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
+            return this;
+        } else {
+            let v3 = u32::from(rd::<u8>(p(this), 0x19));
+            if (((v3 & 0xFF) & 0xFF) as u8) == (0 as u8) {
+                let v4 = rd::<u32>(p(this), 0x14);
+                let v5 = rd::<u32>(p(this), 0x10);
+                let v6 = g::<u32>(0xB7_CB84).read();
+                let v7 = 0_u32.wrapping_sub((u32::from((v6 as u32) < (v4.wrapping_add(v5) as u32))));
+                let v8 = (((((v6 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+                if ((((((v6 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFFFF_FF00) | (v8 & 0xFF)) & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    return this;
+                } else {
+                    c_69c3f0_t1(this, a0);
+                    return this;
+                }
+            } else {
+                let v10 = g::<u32>(0xB7_CB84).read();
+                wr::<u32>(p(this), 0x10, v10);
+                wr::<u8>(p(this), 0x19, 0 as u8);
+                let v11 = rd::<u32>(p(this), 0x14);
+                let v12 = rd::<u32>(p(this), 0x10);
+                let v13 = g::<u32>(0xB7_CB84).read();
+                let v14 = 0_u32.wrapping_sub((u32::from((v13 as u32) < (v11.wrapping_add(v12) as u32))));
+                let v15 = (((((v13 & 0xFFFF_FF00) | (v14 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+                if ((((((v13 & 0xFFFF_FF00) | (v14 & 0xFF)) & 0xFFFF_FF00) | (v15 & 0xFF)) & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    return this;
+                } else {
+                    c_69c3f0_t1(this, a0);
+                    return this;
+                }
+            }
+        }
+    }
+}
+
+/// `CTaskAllocatorPlayerCommandAttack::ProcessGroup` (0x69D110): body, thiscall, `ret 4`; 38 instruction(s) matched.
+#[hook(addr = 0x69D110, conv = thiscall, name = "CTaskAllocatorPlayerCommandAttack::ProcessGroup", expect = "56 8B F1 8A 46 18", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_player_command_attack_process_group_69d110(this: u32, a0: u32) -> u32 {
+    let v1 = u32::from(rd::<u8>(p(this), 0x18));
+    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
+        c_69c3f0_t1(this, a0);
+        let _v3 = rd::<u32>(p(this), 0);
+        let v4 = vslot_c_1(p(this), a0);
+        let _v5 = ((0_u32.wrapping_sub((v4 & 0xFF))) & 0xFF);
+        let v6 = 0_u32.wrapping_sub((u32::from(((v4 & 0xFF) as u8) != (0 as u8))));
+        let v7 = ((v6 ^ 0xFFFF_FFFF) & this);
+        return v7;
+    } else {
+        if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
+            let _v8 = rd::<u32>(p(this), 0);
+            let v9 = vslot_c_1(p(this), a0);
+            let _v10 = ((0_u32.wrapping_sub((v9 & 0xFF))) & 0xFF);
+            let v11 = 0_u32.wrapping_sub((u32::from(((v9 & 0xFF) as u8) != (0 as u8))));
+            let v12 = ((v11 ^ 0xFFFF_FFFF) & this);
+            return v12;
+        } else {
+            let v13 = u32::from(rd::<u8>(p(this), 0x19));
+            if (((v13 & 0xFF) & 0xFF) as u8) == (0 as u8) {
+                let v14 = rd::<u32>(p(this), 0x14);
+                let v15 = rd::<u32>(p(this), 0x10);
+                let v16 = g::<u32>(0xB7_CB84).read();
+                let v17 = 0_u32.wrapping_sub((u32::from((v16 as u32) < (v14.wrapping_add(v15) as u32))));
+                let v18 = (((((v16 & 0xFFFF_FF00) | (v17 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+                if ((((((v16 & 0xFFFF_FF00) | (v17 & 0xFF)) & 0xFFFF_FF00) | (v18 & 0xFF)) & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    let _v19 = rd::<u32>(p(this), 0);
+                    let v20 = vslot_c_1(p(this), a0);
+                    let _v21 = ((0_u32.wrapping_sub((v20 & 0xFF))) & 0xFF);
+                    let v22 = 0_u32.wrapping_sub((u32::from(((v20 & 0xFF) as u8) != (0 as u8))));
+                    let v23 = ((v22 ^ 0xFFFF_FFFF) & this);
+                    return v23;
+                } else {
+                    c_69c3f0_t1(this, a0);
+                    let _v25 = rd::<u32>(p(this), 0);
+                    let v26 = vslot_c_1(p(this), a0);
+                    let _v27 = ((0_u32.wrapping_sub((v26 & 0xFF))) & 0xFF);
+                    let v28 = 0_u32.wrapping_sub((u32::from(((v26 & 0xFF) as u8) != (0 as u8))));
+                    let v29 = ((v28 ^ 0xFFFF_FFFF) & this);
+                    return v29;
+                }
+            } else {
+                let v30 = g::<u32>(0xB7_CB84).read();
+                wr::<u32>(p(this), 0x10, v30);
+                wr::<u8>(p(this), 0x19, 0 as u8);
+                let v31 = rd::<u32>(p(this), 0x14);
+                let v32 = rd::<u32>(p(this), 0x10);
+                let v33 = g::<u32>(0xB7_CB84).read();
+                let v34 = 0_u32.wrapping_sub((u32::from((v33 as u32) < (v31.wrapping_add(v32) as u32))));
+                let v35 = (((((v33 & 0xFFFF_FF00) | (v34 & 0xFF)) & 0xFF).wrapping_add(1)) & 0xFF);
+                if ((((((v33 & 0xFFFF_FF00) | (v34 & 0xFF)) & 0xFFFF_FF00) | (v35 & 0xFF)) & 0xFF) as u8)
+                    == (0 as u8)
+                {
+                    let _v36 = rd::<u32>(p(this), 0);
+                    let v37 = vslot_c_1(p(this), a0);
+                    let _v38 = ((0_u32.wrapping_sub((v37 & 0xFF))) & 0xFF);
+                    let v39 = 0_u32.wrapping_sub((u32::from(((v37 & 0xFF) as u8) != (0 as u8))));
+                    let v40 = ((v39 ^ 0xFFFF_FFFF) & this);
+                    return v40;
+                } else {
+                    c_69c3f0_t1(this, a0);
+                    let _v42 = rd::<u32>(p(this), 0);
+                    let v43 = vslot_c_1(p(this), a0);
+                    let _v44 = ((0_u32.wrapping_sub((v43 & 0xFF))) & 0xFF);
+                    let v45 = 0_u32.wrapping_sub((u32::from(((v43 & 0xFF) as u8) != (0 as u8))));
+                    let v46 = ((v45 ^ 0xFFFF_FFFF) & this);
+                    return v46;
+                }
+            }
+        }
+    }
+}
+
 /// `CTaskAllocator::operator delete` (0x69D990): body, cdecl, `ret`; 16 instruction(s) matched.
 #[hook(addr = 0x69D990, conv = cdecl, name = "CTaskAllocator::operator delete", expect = "8B 0D BC 44 B7 00", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
 pub fn g_task_allocator_operator_delete_69d990(a0: u32) -> u32 {
@@ -7074,6 +7430,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_CCOVER_FIND2_HIGHEST_POINTS_6988E0,
     HOOK_G_CCOVER_FIND_VECTOR_FROM_DIR_698D60,
     HOOK_G_CCOVER_POINT_CAN_ACCOMMODATE_ANOTHER_PED_698E70,
+    HOOK_G_TASK_ALLOCATOR_KILL_THREATS_BASIC_PROCESS_GROUP_69C7E0,
+    HOOK_G_TASK_ALLOCATOR_KILL_THREATS_DRIVEBY_PROCESS_GROUP_69CBC0,
+    HOOK_G_TASK_ALLOCATOR_ATTACK_PROCESS_GROUP_69D0C0,
+    HOOK_G_TASK_ALLOCATOR_PLAYER_COMMAND_ATTACK_PROCESS_GROUP_69D110,
     HOOK_G_TASK_ALLOCATOR_OPERATOR_DELETE_69D990,
 ];
 
@@ -7179,6 +7539,10 @@ pub const BODIES: &[Body] = &[
     (0x6988E0, 0x1940677C970A850A, &[(0x6988E0, 161)]),
     (0x698D60, 0x38FBDEBFEFBC0571, &[(0x698D60, 76)]),
     (0x698E70, 0xAA95BDDB5D49919C, &[(0x698E70, 50)]),
+    (0x69C7E0, 0x4ED3537C3FE00FA1, &[(0x69C7E0, 105)]),
+    (0x69CBC0, 0x4ED3537C3FE00FA1, &[(0x69CBC0, 105)]),
+    (0x69D0C0, 0x361C81531168F4FE, &[(0x69D0C0, 74)]),
+    (0x69D110, 0xCFB7FEDC1CA1BE42, &[(0x69D110, 90)]),
     (0x69D990, 0x51FB028F710E9ED2, &[(0x69D990, 41)]),
 ];
 

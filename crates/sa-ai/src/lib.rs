@@ -183,3 +183,5 @@ pub mod lean_on_vehicle_point;
 pub mod event_ref_dtors;
 pub mod car_task_ctors_dtors;
 pub mod fight_sphere_col_and_anim_cb;
+pub mod group_scan_loops;
+pub mod group_events_loops;
