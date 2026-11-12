@@ -1121,3 +1121,11 @@
   `unverified` from 554 PORT-AI-7 generated hooks; restored). Queue: 2,328 unverified hooks.
 - Tests: sa-hook 58, L1 18/18, all lib tests, samp-rs 638; builds (DLL, native ± samp, wasm ± samp); smoke 0 blocked.
   verify-all int9: IDENTICAL on all 13 recordings.
+
+## 2026-11-12 INTEGRATE-10: SAMP-FX on master (main session)
+- SAMP-FX's 16 commits (skin/animations/frontend sounds/special actions/give-weapon + HUD icon, game-clock toggle,
+  SA:MP files served to the browser, samp's main.scm by default with CHeli::SearchLightCone 0x6C58E0 — no more
+  "Fat +" box while connecting — and the adaptive web-audio latency) fast-forwarded onto master.
+- Tests: lib tests, samp-rs 638, builds (DLL, native ± samp, wasm + samp), smoke 0 blocked, native SA:MP join
+  0 blocked with no "Fat" box and the weapon icon shown. verify-all int10: IDENTICAL on all 13 recordings.
+- Open: HUD ammo after give-weapon reads 143-7 instead of 100; inflight.py does not see #[sa_core::native( registrations.
