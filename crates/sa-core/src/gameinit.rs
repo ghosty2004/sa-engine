@@ -854,9 +854,6 @@ pub fn the_zones_post_zone_creation_port() {}
 /// `TestModelIndices` (0x53ED30): a lone `ret` in 1.0 US.
 #[crate::native(addr = 0x53ED30, conv = cdecl, name = "TestModelIndices")]
 pub fn test_model_indices_port() {}
-/// `CStreaming::LoadInitialVehicles` (0x407F20): a lone `ret` in 1.0 US.
-#[crate::native(addr = 0x407F20, conv = cdecl, name = "CStreaming::LoadInitialVehicles")]
-pub fn streaming_load_initial_vehicles_port() {}
 /// `CRenderer::Init` (0x5531C0): a lone `ret` in 1.0 US.
 #[crate::native(addr = 0x5531C0, conv = cdecl, name = "CRenderer::Init")]
 pub fn renderer_init_port() {}
@@ -900,7 +897,6 @@ pub const NATIVES: &[NativeReg] = &[
     NATIVE_PATH_FIND_PREPARE_PATH_DATA_PORT,
     NATIVE_THE_ZONES_POST_ZONE_CREATION_PORT,
     NATIVE_TEST_MODEL_INDICES_PORT,
-    NATIVE_STREAMING_LOAD_INITIAL_VEHICLES_PORT,
     NATIVE_RENDERER_INIT_PORT,
     NATIVE_CRANES_INIT_CRANES_PORT,
     NATIVE_BRIDGE_INIT_PORT,
@@ -908,7 +904,6 @@ pub const NATIVES: &[NativeReg] = &[
     NATIVE_CAMERA_FADE,
     NATIVE_INFORM_FRIENDS_EVENT_QUEUE_INIT,
     NATIVE_INFORM_GROUP_EVENT_QUEUE_INIT,
-    NATIVE_PLANT_SURF_PROP_MGR_GET_SURF_PROPERTIES,
 ];
 
 /// Globals owned by this module.
@@ -920,7 +915,7 @@ orig! {
     pub fn plant_mgr_reload_config_call() -> u8 = cdecl 0x5DD780 => plant_mgr_reload_config;
     pub fn plant_surf_prop_mgr_initialise_call() -> u8 = cdecl 0x5DD6C0 => plant_surf_prop_mgr_initialise;
     pub fn plant_surf_prop_mgr_load_plants_dat_call(path: u32) -> u8 = cdecl 0x5DD3B0 => plant_surf_prop_mgr_load_plants_dat;
-    pub fn plant_surf_prop_mgr_get_surf_properties_call(id: u32) -> u32 = cdecl 0x6F9DE0 => plant_surf_prop_mgr_get_surf_properties;
+    pub fn plant_surf_prop_mgr_get_surf_properties_call(id: u32) -> u32 = cdecl 0x6F9DE0 => unported;
     pub fn grass_set_plant_models_tab_call(idx: u32, tab: u32) -> u8 = cdecl 0x5DACC0 => grass_set_plant_models_tab;
     pub fn grass_set_close_far_alpha_dist_call(a: f32, b: f32) = cdecl 0x5DABE0 => grass_set_close_far_alpha_dist;
     pub fn atomic_create_prelit_if_needed_call(a: GPtr<u8>) -> GPtr<u8> = cdecl 0x5DD100 => atomic_create_prelit_if_needed;
@@ -1190,14 +1185,6 @@ pub fn plant_surf_prop_mgr_load_plants_dat(path: u32) -> u8 {
     }
     close_file(f);
     1
-}
-
-/// `CPlantSurfPropMgr::GetSurfProperties(id)` (0x6F9DE0, entry through a protection fragment that
-/// loads the word argument): the surface's property record for ids below 0xB2, else NULL.
-#[crate::native(addr = 0x6F9DE0, conv = cdecl, name = "CPlantSurfPropMgr::GetSurfProperties")]
-pub fn plant_surf_prop_mgr_get_surf_properties(id: u32) -> u32 {
-    let id = id as u16;
-    if id < 0xB2 { g::<u32>(0xC38070 + 4 * id as usize).read() } else { 0 }
 }
 
 /// `CGrassRenderer::SetPlantModelsTab(index, table)` (0x5DACC0): table stored for index < 4 (1),
