@@ -84,6 +84,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::car_door_positions::HOOKS,
     crate::player_quit_car_enter::HOOKS,
     crate::bike_knock_off_rider::HOOKS,
+    crate::car_enter_stealable::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
