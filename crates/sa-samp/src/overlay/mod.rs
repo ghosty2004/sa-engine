@@ -96,6 +96,9 @@ impl<V: View> NativeGame<V> {
         let heights = heights_for_width(w as u32, ov.ui.options().font_size);
         if ov.atlas.as_ref().is_none_or(|a| a.heights() != heights) {
             ov.atlas = Some(FontAtlas::build(heights));
+            if ov.raster != 0 {
+                render::destroy_raster(ov.raster);
+            }
             ov.raster = 0;
             ov.upload_failed = false;
         }
