@@ -124,6 +124,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::plant_statics_init::HOOKS,
     crate::visibility_train_big_vehicle::HOOKS,
     crate::car_env_map_render::HOOKS,
+    // WRITER-NATIVE
+    crate::fx_add_sparks::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
