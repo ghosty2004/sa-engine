@@ -88,6 +88,11 @@ pub(crate) mod op {
     pub const SET_CHAR_AREA_VISIBLE: u16 = 0x0860;
     pub const SET_CHAR_DROPS_WEAPONS_WHEN_DEAD: u16 = 0x087E;
     pub const DISPLAY_ZONE_NAMES: u16 = 0x09BA;
+    pub const TASK_HANDS_UP: u16 = 0x05C4;
+    pub const TASK_ENTER_CAR_AS_PASSENGER: u16 = 0x05CA;
+    pub const TASK_ENTER_CAR_AS_DRIVER: u16 = 0x05CB;
+    pub const TASK_LEAVE_CAR: u16 = 0x05CD;
+    pub const TASK_USE_MOBILE_PHONE: u16 = 0x0729;
     pub const SET_PLAYER_MODEL: u16 = 0x09C7;
 }
 

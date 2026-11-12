@@ -348,8 +348,50 @@ impl<V: View> Peds for NativeGame<V> {
         .map(drop)
     }
 
-    fn start_task(&mut self, _ped: PedRef, _task: PedTask) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::start_task"))
+    fn start_task(&mut self, ped: PedRef, task: PedTask) -> GameResult<()> {
+        // The script tasks samp starts (samp-rs `client::ped`, `client::rpc_player`), through the ported handlers.
+        let h = self.ped_script_handle(ped)?.0;
+        let veh = |g: &Self, v: VehicleRef| {
+            sa_samp_api::vehicles::Vehicles::vehicle_script_handle(g, v).map(|s| s.0)
+        };
+        match task {
+            PedTask::HandsUp { time_ms } => self.run_op(op::TASK_HANDS_UP, &[I(h), I(time_ms)]),
+            PedTask::UseMobilePhone(on) => {
+                // CTaskComplexUseMobilePhone's functions (0x6348E0 ctor, 0x634930 MakeAbortable, 0x634A40 Stop,
+                // 0x634C10 CreateFirstSubTask) are unported: the task would block every frame it lives.
+                use sa_core::orig::registry;
+                let missing = [0x6348E0usize, 0x634930, 0x634A40, 0x634C10]
+                    .iter()
+                    .any(|&a| registry::name_of(a).is_none());
+                if registry::is_installed() && missing {
+                    return Err(GameError::Unsupported(
+                        "Peds::start_task (CTaskComplexUseMobilePhone is not ported)",
+                    ));
+                }
+                self.run_op(op::TASK_USE_MOBILE_PHONE, &[I(h), I(i32::from(on))])
+            }
+            PedTask::EnterCarAsDriver { vehicle, time_ms } => {
+                let v = veh(self, vehicle)?;
+                self.run_op(op::TASK_ENTER_CAR_AS_DRIVER, &[I(h), I(v), I(time_ms)])
+            }
+            PedTask::EnterCarAsPassenger {
+                vehicle,
+                time_ms,
+                seat,
+            } => {
+                let v = veh(self, vehicle)?;
+                self.run_op(
+                    op::TASK_ENTER_CAR_AS_PASSENGER,
+                    &[I(h), I(v), I(time_ms), I(seat)],
+                )
+            }
+            PedTask::LeaveCar { vehicle } => {
+                let v = veh(self, vehicle)?;
+                self.run_op(op::TASK_LEAVE_CAR, &[I(h), I(v)])
+            }
+            _ => Err(GameError::Unsupported("Peds::start_task (this task)")),
+        }
+        .map(drop)
     }
 
     fn flush_tasks(&mut self, _ped: PedRef) -> GameResult<()> {

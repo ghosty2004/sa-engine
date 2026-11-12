@@ -11,7 +11,7 @@
 //   obj|model|x|y|z  objmove|id|x|y|z|speed  pickup|model|type|x|y|z  label|text|x|y|z
 //   cp|x|y|z|size  rcp|type|x|y|z|nx|ny|nz|size  cpoff  gz|minx|miny|maxx|maxy  icon|id|x|y|z|type
 //   actor|skin|x|y|z|angle  explode|x|y|z|type|radius  time|h  weather|w  money|n  wanted|n
-//   anim|lib|name  clranim  campos|x|y|z|lx|ly|lz  camback  spec|1/0  drunk|level  attach|model|bone
+//   anim|lib|name  clranim  special|action  campos|x|y|z|lx|ly|lz  camback  spec|1/0  drunk|level  attach|model|bone
 //   menu  sound|id  gravity|g  control|0/1  rcon|command
 //   NPCs (open.mp NPC component; remote players for the client):
 //   npc|name|x|y|z|skin|weapon  npcmove|id|x|y|z  npcfollow|id  npcaim|id|shoot  npcstop|id  npcmelee|id
@@ -209,6 +209,7 @@ Run(seq, const line[])
     else if (!strcmp(cmd, "wanted")) SetPlayerWantedLevel(p, in(line, 1));
     else if (!strcmp(cmd, "anim")) { field(line, 1, a); field(line, 2, b); ApplyAnimation(p, a, b, 4.1, true, false, false, false, 0, SYNC_ALL); }
     else if (!strcmp(cmd, "clranim")) ClearAnimations(p, SYNC_ALL);
+    else if (!strcmp(cmd, "special")) SetPlayerSpecialAction(p, SPECIAL_ACTION:in(line, 1));
     else if (!strcmp(cmd, "campos")) { SetPlayerCameraPos(p, fl(line, 1), fl(line, 2), fl(line, 3)); SetPlayerCameraLookAt(p, fl(line, 4), fl(line, 5), fl(line, 6)); }
     else if (!strcmp(cmd, "camback")) SetCameraBehindPlayer(p);
     else if (!strcmp(cmd, "spec")) TogglePlayerSpectating(p, in(line, 1) != 0);
