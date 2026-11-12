@@ -101,21 +101,6 @@ pub fn fx_info_sprite_rect_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step
     }
 }
 
-/// `FxInfoTrail_c::GetValue` (0x4A62B0): `key = FxInterpInfoU255_c::GetVal(t)`; render info +0x30 = key[0]
-/// (`fld`/`fstp`), +0x2C = 1, then +0x2C = 2 when `key[1] > 0.1f` (0x858B1C).
-#[hook(addr = 0x4A62B0, conv = thiscall, name = "FxInfoTrail_c::GetValue", expect = "8A 41 06 83 EC 40",
-       unverified = "samp-render-1", route = "L2", hazards = "heap-writes", recs = "weapon-combat",
-       note = "writes the particle render info")]
-pub fn fx_info_trail_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, total: u32, _use_const: u32, out: GPtr<u8>) {
-    let t = key_time(this, curr, mult, total);
-    let b = eval(this, t, interp_u255_get_val);
-    wr::<f32>(out, 0x30, xf(b[0]).to_f32());
-    wr::<u32>(out, 0x2C, 1);
-    if !xf(b[1]).fcom(xf(k(0x3DCC_CCCD))).test_any(0x41) {
-        wr::<u32>(out, 0x2C, 2);
-    }
-}
-
 /// `FxInfoFlat_c::GetValue` (0x4A63B0): `key = FxInterpInfoFloat_c::GetVal(t)`; the render info's matrix at +0x38:
 /// right (+0x38..+0x40) = key[0..2], up (+0x48..+0x50) = key[3..5], at (+0x58..+0x60) = key[6..8] (dword copies),
 /// flag byte +0x78 = 1; then `RwMatrixUpdate(&out->matrix)`.
@@ -236,7 +221,6 @@ pub fn interp_255_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
 pub const HOOKS: &[HookReg] = &[
     HOOK_FX_INFO_ATTRACT_PT_GET_VALUE,
     HOOK_FX_INFO_SPRITE_RECT_GET_VALUE,
-    HOOK_FX_INFO_TRAIL_GET_VALUE,
     HOOK_FX_INFO_FLAT_GET_VALUE,
     HOOK_FX_INFO_COLOUR_BRIGHT_GET_VALUE,
     HOOK_FX_INFO_GROUND_COLLIDE_GET_VALUE,

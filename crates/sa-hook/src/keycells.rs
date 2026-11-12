@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 35] = [
+pub const READERS: [Reader; 38] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -332,22 +332,31 @@ pub const READERS: [Reader; 35] = [
         disp_off: 2,
         key: 0x5EDFB2,
         value: 0xE16D_00E9,
+    },
     // Batch world5-1: CPickups::GivePlayerGoodiesWithPickUpMI entry 0x4564F0 (`nop; jmp 0x401F0F`):
     // `xor eax, [0x4564F2]` at 0x4016E3 (the jmp's rel32).
+    Reader {
         at: 0x4016E3,
         insn: [0x33, 0x05, 0xF2, 0x64, 0x45, 0x00],
+        disp_off: 2,
         key: 0x4564F2,
         value: 0xFFFA_BA19,
+    },
     // Batch samp-unk-1: CProjectile::CProjectile entry 0x5A4030 (`push -1; jmp 0x4037B3`): the `.HOODLUM` code
     // reads the dword at 0x5A4032 (the jmp opcode and three rel32 bytes) as a key
+    Reader {
         at: 0x1561116,
         insn: [0x8B, 0x0D, 0x32, 0x40, 0x5A, 0x00],
+        disp_off: 2,
         key: 0x5A4032,
         value: 0xE5F7_7CE9,
+    },
     // Batch samp-ped-1: CPed::IsPointerValid entry 0x5E4220 (`push esi; push edi; nop; jmp 0x401E54`): the chunk
     // code at 0x403968 reads the jump's rel32 0x5E4224 as a key
+    Reader {
         at: 0x403968,
         insn: [0x8B, 0x0D, 0x24, 0x42, 0x5E, 0x00],
+        disp_off: 2,
         key: 0x5E4224,
         value: 0xFFE1_DC2C,
     },

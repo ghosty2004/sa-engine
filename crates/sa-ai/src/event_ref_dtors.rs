@@ -45,36 +45,12 @@ pub fn event_gun_shot_dtor_4ac720(this: GPtr<u8>) {
     ref_event_dtor(this, 0x85_ABE0, &[0x14]);
 }
 
-/// `FUN_004ad960` (0x4AD960), proposed `CEventDamage::~CEventDamage` (thiscall): vtable 0x85AD78
-/// (`CEventDamage`), releases the source entity at +0x14, then `CEvent`'s vtable. 43 callers (stack events).
-#[hook(addr = 0x4AD960, conv = thiscall, name = "FUN_004ad960", expect = "6A FF 68 E8 9A 83 00",
-       unverified = "samp-unk-1", route = "L2", hazards = "heap-writes", recs = "anim-input")]
-pub fn event_damage_dtor_4ad960(this: GPtr<u8>) {
-    ref_event_dtor(this, 0x85_AD78, &[0x14]);
-}
-
 /// `FUN_004ade90` (0x4ADE90), proposed `CEventDeath::~CEventDeath` (thiscall): only stores `CEvent`'s vtable
 /// (`mov dword [ecx], 0x85AB38; ret`); called by `CEventDeath`'s deleting destructor.
 #[hook(addr = 0x4ADE90, conv = thiscall, name = "FUN_004ade90", expect = "C7 01 38 AB 85 00 C3",
        unverified = "samp-unk-1", route = "L2", hazards = "preserved-regs", preserve = "ecx", recs = "anim-input")]
 pub fn event_death_dtor_4ade90(this: GPtr<u8>) {
     wr::<u32>(this, 0, CEVENT_VTABLE);
-}
-
-/// `FUN_004afe70` (0x4AFE70), proposed `CEventKnockOffBike::~CEventKnockOffBike` (thiscall): vtable 0x85B2E0,
-/// releases +0x38 then +0x30, then `CEvent`'s vtable.
-#[hook(addr = 0x4AFE70, conv = thiscall, name = "FUN_004afe70", expect = "6A FF 68 68 9F 83 00",
-       unverified = "samp-unk-1", route = "L2", hazards = "heap-writes")]
-pub fn event_knock_off_bike_dtor_4afe70(this: GPtr<u8>) {
-    ref_event_dtor(this, 0x85_B2E0, &[0x38, 0x30]);
-}
-
-/// `FUN_004b1170` (0x4B1170), proposed `CEventVehicleOnFire::~CEventVehicleOnFire` (thiscall): vtable
-/// 0x85B440, releases the vehicle at +0x14, then `CEvent`'s vtable.
-#[hook(addr = 0x4B1170, conv = thiscall, name = "FUN_004b1170", expect = "6A FF 68 98 A0 83 00",
-       unverified = "samp-unk-1", route = "L2", hazards = "heap-writes")]
-pub fn event_vehicle_on_fire_dtor_4b1170(this: GPtr<u8>) {
-    ref_event_dtor(this, 0x85_B440, &[0x14]);
 }
 
 /// `FUN_004b13c0` (0x4B13C0), proposed `CEventInWater::~CEventInWater` (thiscall): only stores `CEvent`'s
@@ -139,10 +115,7 @@ pub fn event_danger_dtor_4b26a0(this: GPtr<u8>) {
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_EVENT_GUN_SHOT_DTOR_4AC720,
-    HOOK_EVENT_DAMAGE_DTOR_4AD960,
     HOOK_EVENT_DEATH_DTOR_4ADE90,
-    HOOK_EVENT_KNOCK_OFF_BIKE_DTOR_4AFE70,
-    HOOK_EVENT_VEHICLE_ON_FIRE_DTOR_4B1170,
     HOOK_EVENT_IN_WATER_DTOR_4B13C0,
     HOOK_EVENT_COP_CAR_BEING_STOLEN_DTOR_4B17F0,
     HOOK_EVENT_FIRE_NEARBY_CTOR_4B1F10,
