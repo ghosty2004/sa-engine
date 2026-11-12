@@ -89,3 +89,4 @@ pub mod hanim_hierarchy;
 pub mod hanim_update;
 pub mod raster_copy;
 pub mod generated;
+pub mod rt_quat;
