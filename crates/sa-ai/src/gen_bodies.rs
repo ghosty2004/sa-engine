@@ -466,7 +466,6 @@ pub fn g_fun_005e9850_5e9850(this: u32) -> u32 {
 }
 
 /// `CPedAttractor::HasEmptySlot` (0x5EAF10): body, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x5EAF10, conv = thiscall, name = "CPedAttractor::HasEmptySlot", expect = "8B 41 20 85 C0", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cped_attractor_has_empty_slot_5eaf10(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x20);
     if v1 != 0 {
@@ -523,7 +522,6 @@ pub fn g_cped_attractor_operator_delete_5eafe0(a0: u32) -> u32 {
 }
 
 /// `CPedAttractor::GetHeadOfQueue` (0x5EB590): body, thiscall, `ret`; 13 instruction(s) matched.
-#[hook(addr = 0x5EB590, conv = thiscall, name = "CPedAttractor::GetHeadOfQueue", expect = "8B 51 20 85 D2", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cped_attractor_get_head_of_queue_5eb590(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x20);
     if v1 == 0 {
@@ -542,7 +540,6 @@ pub fn g_cped_attractor_get_head_of_queue_5eb590(this: u32) -> u32 {
 }
 
 /// `CPedAttractor::GetTailOfQueue` (0x5EB5B0): body, thiscall, `ret`; 23 instruction(s) matched.
-#[hook(addr = 0x5EB5B0, conv = thiscall, name = "CPedAttractor::GetTailOfQueue", expect = "8B 51 20 85 D2", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cped_attractor_get_tail_of_queue_5eb5b0(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x20);
     if v1 == 0 {
@@ -3041,7 +3038,6 @@ pub fn g_task_simple_tired_start_anim_630f70(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleStandUp::StartAnim` (0x631410): body, thiscall, `ret 4`; 26 instruction(s) matched.
-#[hook(addr = 0x631410, conv = thiscall, name = "CTaskSimpleStandUp::StartAnim", expect = "56 8B F1 8A 46 08", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_stand_up_start_anim_631410(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -3124,7 +3120,6 @@ pub fn g_thunk_fun_0061a6f0_637470(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleSitDown::StartAnim` (0x6379F0): body, thiscall, `ret 4`; 26 instruction(s) matched.
-#[hook(addr = 0x6379F0, conv = thiscall, name = "CTaskSimpleSitDown::StartAnim", expect = "56 8B F1 8A 46 08", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_sit_down_start_anim_6379f0(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -3679,7 +3674,6 @@ pub fn g_task_complex_walk_round_car_set_new_vehicle_654290(this: u32, a0: u32, 
 }
 
 /// `FUN_00655290` (0x655290): body, thiscall, `ret 8`; 42 instruction(s) matched.
-#[hook(addr = 0x655290, conv = thiscall, name = "FUN_00655290", expect = "64 A1 00 00 00 00", unverified = "ai8g-4", route = "L2", hazards = "none")]
 pub fn g_fun_00655290_655290(this: u32, a0: u32, a1: u32) -> u32 {
     if a0 == 0xCB {
         let v1 = c_61a5a0_c1(0x20);
@@ -7147,10 +7141,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_CPED_ATTRACTOR_MANAGER_COMPUTE_EFFECT_QUEUE_DIR_5E9730,
     HOOK_G_CPED_ATTRACTOR_MANAGER_COMPUTE_EFFECT_FORWARD_DIR_5E9780,
     HOOK_G_FUN_005E9850_5E9850,
-    HOOK_G_CPED_ATTRACTOR_HAS_EMPTY_SLOT_5EAF10,
     HOOK_G_CPED_ATTRACTOR_OPERATOR_DELETE_5EAFE0,
-    HOOK_G_CPED_ATTRACTOR_GET_HEAD_OF_QUEUE_5EB590,
-    HOOK_G_CPED_ATTRACTOR_GET_TAIL_OF_QUEUE_5EB5B0,
     HOOK_G_CPED_ATTRACTOR_MANAGER_GET_PED_USING_EFFECT_5EBE50,
     HOOK_G_FUN_005EDE50_5EDE50,
     HOOK_G_CPED_SHELTER_ATTRACTOR_COMPUTE_ATTRACT_POS_5EFC40,
@@ -7174,8 +7165,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_STEALTH_KILL_MANAGE_ANIM_6296D0,
     HOOK_G_FUN_0062F2D0_62F2D0,
     HOOK_G_TASK_SIMPLE_TIRED_START_ANIM_630F70,
-    HOOK_G_TASK_SIMPLE_STAND_UP_START_ANIM_631410,
-    HOOK_G_TASK_SIMPLE_SIT_DOWN_START_ANIM_6379F0,
     HOOK_G_TASK_COMPLEX_ENTER_CAR_GET_TARGET_POS_63A300,
     HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_SET_PED_IN_ZEROTH_PASSENGER_SEAT_63B540,
     HOOK_G_TASK_COMPLEX_DRIVE_TO_POINT_CREATE_SUB_TASK_CANNOT_GET_IN_CAR_63CE80,
@@ -7188,7 +7177,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_START_ANIM_64AE00,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_START_ANIM_64C010,
     HOOK_G_TASK_COMPLEX_WALK_ROUND_CAR_SET_NEW_VEHICLE_654290,
-    HOOK_G_FUN_00655290_655290,
     HOOK_G_TASK_SIMPLE_EVASIVE_DIVE_START_ANIM_655F20,
     HOOK_G_TASK_COMPLEX_WALK_ROUND_CAR_COMPUTE_ROUTE_657B80,
     HOOK_G_TASK_COMPLEX_WALK_ROUND_FIRE_COMPUTE_DETOUR_TARGET_6581B0,

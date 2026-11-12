@@ -2842,7 +2842,6 @@ pub fn g_task_simple_car_shuffle_get_task_type_646880(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::GetTaskType` (0x6469F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x6469F0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::GetTaskType", expect = "B8 29 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_wait_to_slow_down_get_task_type_6469f0(_this: u32) -> u32 {
     0x329
 }
@@ -4560,7 +4559,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_OUTSIDE_GET_TASK_TYPE_646560,
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_GET_TASK_TYPE_646700,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_GET_TASK_TYPE_646880,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_GET_TASK_TYPE_6469F0,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_GET_TASK_TYPE_646BE0,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_MAKE_ABORTABLE_646BF0,
     HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_GET_TASK_TYPE_646E30,

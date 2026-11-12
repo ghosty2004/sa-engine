@@ -1445,7 +1445,6 @@ pub fn g_event_pass_object_is_valid_4b1700(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventVehicleDamage::AffectsPed` (0x4B1A00): virtual-leaf, thiscall, `ret 4`; 42 instruction(s) matched.
-#[hook(addr = 0x4B1A00, conv = thiscall, name = "CEventVehicleDamage::AffectsPed", expect = "56 8B 74 24 08", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_vehicle_damage_affects_ped_4b1a00(this: u32, a0: u32) -> u8 {
     let v1 = c_5e0170_t0(a0);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -1545,7 +1544,6 @@ pub fn g_event_vehicle_damage_get_source_entity_4b1a70(this: u32) -> u32 {
 }
 
 /// `CEventVehicleDamage::IsCriminalEvent` (0x4B1A90): virtual-leaf, thiscall, `ret`; 30 instruction(s) matched.
-#[hook(addr = 0x4B1A90, conv = thiscall, name = "CEventVehicleDamage::IsCriminalEvent", expect = "56 8B F1 8B 4E 18", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_vehicle_damage_is_criminal_event_4b1a90(this: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0x18);
     if v1 == 0 {
@@ -3964,7 +3962,6 @@ pub fn g_task_complex_use_scripted_brain_make_abortable_635970(this: u32, a0: u3
 }
 
 /// `CTaskSimpleStandUp::ProcessPed` (0x637D60): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x637D60, conv = thiscall, name = "CTaskSimpleStandUp::ProcessPed", expect = "8A 41 09 84 C0", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_stand_up_process_ped_637d60(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 9));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -4091,7 +4088,6 @@ pub fn g_task_simple_die_in_car_process_ped_6398f0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CTaskSimpleSitDown::ProcessPed` (0x639960): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x639960, conv = thiscall, name = "CTaskSimpleSitDown::ProcessPed", expect = "8A 41 09 84 C0", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_sit_down_process_ped_639960(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 9));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -4902,7 +4898,6 @@ pub fn g_task_simple_car_shuffle_make_abortable_646900(this: u32, _a0: u32, a1: 
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::MakeAbortable` (0x646A60): make-abortable, thiscall, `ret 12`; 34 instruction(s) matched.
-#[hook(addr = 0x646A60, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::MakeAbortable", expect = "8B 44 24 08 83 F8 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_wait_to_slow_down_make_abortable_646a60(
     this: u32,
     _a0: u32,
@@ -4951,7 +4946,6 @@ pub fn g_task_simple_car_wait_to_slow_down_make_abortable_646a60(
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::SetPedPosition` (0x646AB0): virtual-leaf, thiscall, `ret 4`; 7 instruction(s) matched.
-#[hook(addr = 0x646AB0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::SetPedPosition", expect = "8B 41 08 85 C0", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_wait_to_slow_down_set_ped_position_646ab0(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     if v1 == 0 {
@@ -6104,7 +6098,6 @@ pub fn g_vt_86ff00_make_abortable_66ad40(this: u32, a0: u32, _a1: u32, _a2: u32)
 }
 
 /// `CTaskComplexGoToAttractor::MakeAbortable` (0x66B6B0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x66B6B0, conv = thiscall, name = "CTaskComplexGoToAttractor::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_go_to_attractor_make_abortable_66b6b0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -7070,9 +7063,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_8701A8_IS_VALID_4B1640,
     HOOK_G_EVENT_LEAN_ON_VEHICLE_IS_VALID_4B16C0,
     HOOK_G_EVENT_PASS_OBJECT_IS_VALID_4B1700,
-    HOOK_G_EVENT_VEHICLE_DAMAGE_AFFECTS_PED_4B1A00,
     HOOK_G_EVENT_VEHICLE_DAMAGE_GET_SOURCE_ENTITY_4B1A70,
-    HOOK_G_EVENT_VEHICLE_DAMAGE_IS_CRIMINAL_EVENT_4B1A90,
     HOOK_G_EVENT_GOT_KNOCKED_OVER_BY_CAR_AFFECTS_PED_4B1C70,
     HOOK_G_EVENT_GOT_KNOCKED_OVER_BY_CAR_GET_SOURCE_ENTITY_4B1CA0,
     HOOK_G_EVENT_CAR_UPSIDE_DOWN_AFFECTS_PED_4B1DB0,
@@ -7131,10 +7122,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_LEADER_AREA_CODES_MATCH_MAKE_ABORTABLE_6356A0,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_LEADER_AREA_CODES_MATCH_PROCESS_PED_6356C0,
     HOOK_G_TASK_COMPLEX_USE_SCRIPTED_BRAIN_MAKE_ABORTABLE_635970,
-    HOOK_G_TASK_SIMPLE_STAND_UP_PROCESS_PED_637D60,
     HOOK_G_TASK_SIMPLE_IKCHAIN_MAKE_ABORTABLE_639450,
     HOOK_G_TASK_COMPLEX_USE_SEQUENCE_MAKE_ABORTABLE_639730,
-    HOOK_G_TASK_SIMPLE_SIT_DOWN_PROCESS_PED_639960,
     HOOK_G_TASK_SIMPLE_TURN180_PROCESS_PED_639990,
     HOOK_G_TASK_COMPLEX_ENTER_CAR_MAKE_ABORTABLE_63A730,
     HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_MAKE_ABORTABLE_63AE60,
@@ -7151,8 +7140,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_SET_PED_POSITION_6462D0,
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_MAKE_ABORTABLE_646780,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_MAKE_ABORTABLE_646900,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_MAKE_ABORTABLE_646A60,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_SET_PED_POSITION_646AB0,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_SET_PED_POSITION_646CC0,
     HOOK_G_TASK_SIMPLE_CAR_GET_OUT_MAKE_ABORTABLE_6472D0,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_SET_PED_POSITION_6480E0,
@@ -7185,7 +7172,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_FOLLOW_NODE_ROUTE_STOP_TIMER_6694E0,
     HOOK_G_TASK_COMPLEX_AVOID_OTHER_PED_WHILE_WANDERING_MAKE_ABORTABLE_66A260,
     HOOK_G_VT_86FF00_MAKE_ABORTABLE_66AD40,
-    HOOK_G_TASK_COMPLEX_GO_TO_ATTRACTOR_MAKE_ABORTABLE_66B6B0,
     HOOK_G_VT_870114_MAKE_ABORTABLE_66BA90,
     HOOK_G_TASK_SIMPLE_SLIDE_TO_COORD_MAKE_ABORTABLE_66C4D0,
     HOOK_G_TASK_COMPLEX_INVESTIGATE_DISTURBANCE_MAKE_ABORTABLE_66C800,
