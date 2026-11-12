@@ -29,8 +29,10 @@ mod imports;
 mod native;
 mod rw_standin;
 mod samp;
+mod samp_assets;
 mod samp_input;
 mod samp_ui_demo;
+mod samp_ui_scene;
 mod sha256;
 mod winmain;
 
@@ -185,13 +187,13 @@ fn run(args: &Args) -> Result<String, String> {
     let samp_target = match &args.samp {
         Some(s) => {
             let t = samp::parse_target(s, &args.name)?;
-            samp::install(&t)?;
+            samp::install(&t, &args.game)?;
             Some(t)
         }
         None => None,
     };
     if args.samp_ui_demo {
-        samp_ui_demo::install()?;
+        samp_ui_demo::install(&args.game)?;
     }
     println!(
         "sa-game: game folder {} (read-only), user documents {}",

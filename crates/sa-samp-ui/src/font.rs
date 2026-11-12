@@ -13,6 +13,11 @@ use ab_glyph::{Font as _, FontRef, PxScale, ScaleFont as _, point};
 /// The committed font file.
 pub const FONT_TTF: &[u8] = include_bytes!("../../../assets/fonts/LiberationSans-Bold.ttf");
 
+/// Whether `ttf` is a TrueType / OpenType font the atlas can use.
+pub fn parses(ttf: &[u8]) -> bool {
+    FontRef::try_from_slice(ttf).is_ok()
+}
+
 /// The fonts the layouts use.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum FontId {
@@ -173,8 +178,15 @@ fn outlined(w: u32, h: u32, cov: &[u8], offsets: &[(i32, i32)], pad: u32) -> (u3
 impl FontAtlas {
     /// Rasterises the four fonts at `heights` (see [`heights_for_width`]).
     pub fn build(heights: [u32; 4]) -> Self {
-        let font =
-            FontRef::try_from_slice(FONT_TTF).expect("assets/fonts/LiberationSans-Bold.ttf is a valid font");
+        Self::build_from(FONT_TTF, heights)
+    }
+
+    /// Rasterises the four fonts from the TrueType file `ttf` (the user's Arial Bold when the host found
+    /// one; [`FONT_TTF`] when `ttf` does not parse).
+    pub fn build_from(ttf: &[u8], heights: [u32; 4]) -> Self {
+        let font = FontRef::try_from_slice(ttf)
+            .or_else(|_| FontRef::try_from_slice(FONT_TTF))
+            .expect("assets/fonts/LiberationSans-Bold.ttf is a valid font");
         const W: u32 = 512;
         let mut glyphs = HashMap::new();
         let mut bitmaps: Vec<Bitmap> = Vec::new();
