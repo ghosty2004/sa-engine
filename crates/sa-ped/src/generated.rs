@@ -26,8 +26,6 @@ pub mod generated_inits;
 pub mod generated_leaf_logic;
 #[path = "generated_leaves.rs"]
 pub mod generated_leaves;
-#[path = "generated_setters.rs"]
-pub mod generated_setters;
 #[path = "generated_thunks.rs"]
 pub mod generated_thunks;
 #[path = "ped_generated.rs"]
@@ -90,8 +88,6 @@ pub const HOOKS: &[HookReg] = &[
     generated_inits::HOOK_G_INIT_G_C0BC04_851750,
     generated_inits::HOOK_G_INIT_G_C3F038_8546F0,
     generated_leaf_logic::HOOK_G_FUN_005E47A0_5E47A0,
-    generated_setters::HOOK_G_FUN_005D24B0_5D24B0,
-    generated_setters::HOOK_G_FUN_005D2560_5D2560,
     generated_thunks::HOOK_G_THUNK_FUN_00401616_56F200,
 ];
 
@@ -102,7 +98,6 @@ pub const BODIES: &[&[Body]] = &[
     generated_inits::BODIES,
     generated_leaf_logic::BODIES,
     generated_leaves::BODIES,
-    generated_setters::BODIES,
     generated_thunks::BODIES,
     ped_generated::BODIES,
 ];
