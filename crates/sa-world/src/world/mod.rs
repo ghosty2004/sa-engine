@@ -89,3 +89,4 @@ pub mod cheat_clothes_themes;
 pub mod interior_place_furniture;
 pub mod garage_car_blocking;
 pub mod garage_slide_door_closed;
+pub mod garage_store_cars;

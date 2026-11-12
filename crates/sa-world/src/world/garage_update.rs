@@ -64,7 +64,7 @@ orig! {
     /// `CGarage::RemoveCarsBlockingDoorNotInside()` (0x449690)
     fn remove_cars_blocking_door_not_inside(gp: GPtr<u8>) = thiscall 0x449690 => unported;
     /// `CGarage::StoreAndRemoveCarsForThisHideOut(CStoredCar*, int32)` (0x449900)
-    fn store_and_remove_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449900 => unported;
+    fn store_and_remove_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449900 => super::garage_store_cars::store_and_remove_cars_for_this_hide_out;
     /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0)
     fn find_safe_house_index(ty: i32) -> i32 = cdecl 0x4489F0 => crate::world::misc2::find_safe_house_index_for_garage_type;
     /// `CGarages::CountCarsInHideoutGarage(eGarageType)` (0x44A210)
