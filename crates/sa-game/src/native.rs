@@ -55,7 +55,8 @@ pub fn install() -> Summary {
         .into_iter()
         .chain(crate::rw_standin::entries())
         .chain(crate::d3d9_shader::entries())
-        .chain(crate::com::thunks());
+        .chain(crate::com::thunks())
+        .chain(crate::vorbisfile::thunks());
     for (a, name, f) in others {
         if !seen.contains_key(&a) {
             v.push((a, f, name));
