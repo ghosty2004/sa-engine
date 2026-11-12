@@ -71,8 +71,18 @@ orig! {
     fn c_6321f0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6321F0 => unported;
     /// `CTaskComplexUseClosestFreeScriptedAttractor::Constructor` (0x6346F0), thiscall, 1 stack argument(s)
     fn c_6346f0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6346F0 => unported;
+    /// `FUN_0063a040` (0x63A040), thiscall, 1 stack argument(s)
+    fn c_63a040_t1(this: u32, a0: u32) -> u32 = thiscall 0x63A040 => unported;
     /// `CTaskComplexEnterCar::Constructor` (0x63A220), thiscall, 5 stack argument(s)
     fn c_63a220_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63A220 => unported;
+    /// `CTaskComplexLeaveCar` (0x63B8C0), thiscall, 5 stack argument(s)
+    fn c_63b8c0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63B8C0 => unported;
+    /// `CTaskSimpleCarDrive::Constructor` (0x63C340), thiscall, 3 stack argument(s)
+    fn c_63c340_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x63C340 => unported;
+    /// `CTaskComplexCarDrive::Constructor_1` (0x63C940), thiscall, 4 stack argument(s)
+    fn c_63c940_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x63C940 => unported;
+    /// `CTaskComplexCarDriveMission::Constructor` (0x63CC30), thiscall, 5 stack argument(s)
+    fn c_63cc30_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63CC30 => unported;
     /// `CTaskComplexSmartFleeEntity::Constructor` (0x65C430), thiscall, 6 stack argument(s)
     fn c_65c430_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x65C430 => unported;
     /// `CTaskComplexGoToPointAndStandStill::Constructor` (0x668120), thiscall, 6 stack argument(s)
@@ -671,6 +681,29 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_constructor_4b8
     c_6346f0_t1(this, 0);
     wr::<u32>(p(this), 0, 0x85_B930);
     wr::<u32>(p(this), 0xC, 7);
+    this
+}
+
+/// `CTaskComplexCarDriveMissionFleeScene::CTaskComplexCarDriveMissionFleeScene` (0x4B8920): ctor, thiscall, `ret 4`; 13 instruction(s) matched.
+#[hook(addr = 0x4B8920, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::CTaskComplexCarDriveMissionFleeScene", expect = "8B 44 24 04 56", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_mission_flee_scene_4b8920(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_63cc30_t5(this, a0, 0, 1, 2, 0x4220_0000);
+    wr::<u32>(p(this), 0, 0x85_B95C);
+    this
+}
+
+/// `CTaskComplexCarDriveMissionKillPed::CTaskComplexCarDriveMissionKillPed` (0x4B8A00): ctor, thiscall, `ret 8`; 15 instruction(s) matched.
+#[hook(addr = 0x4B8A00, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::CTaskComplexCarDriveMissionKillPed", expect = "8B 44 24 08 56", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission_kill_ped_4b8a00(
+    this: u32,
+    a0: u32,
+    a1: u32,
+) -> u32 {
+    c_63cc30_t5(this, a0, a1, 0x36, 3, 0x4220_0000);
+    wr::<u32>(p(this), 0, 0x85_B994);
     this
 }
 
@@ -1414,6 +1447,15 @@ pub fn g_task_simple_hit_by_gun_from_right_constructor_62f080(this: u32) -> u32 
     this
 }
 
+/// `CTaskComplexLeaveCar::CTaskComplexLeaveCar` (0x62F1A0): ctor, thiscall, `ret 12`; 17 instruction(s) matched.
+#[hook(addr = 0x62F1A0, conv = thiscall, name = "CTaskComplexLeaveCar::CTaskComplexLeaveCar", expect = "8B 44 24 0C 8B 54 24 04", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_car_ctask_complex_leave_car_62f1a0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_63b8c0_t5(this, a0, a1, a2, 0, 1);
+    wr::<u32>(p(this), 0, 0x86_DD00);
+    wr::<u8>(p(this), 0x1A, 1 as u8);
+    this
+}
+
 /// `CTaskSimpleSetStayInSamePlace::CTaskSimpleSetStayInSamePlace` (0x62F590): ctor, thiscall, `ret 4`; 9 instruction(s) matched.
 #[hook(addr = 0x62F590, conv = thiscall, name = "CTaskSimpleSetStayInSamePlace::CTaskSimpleSetStayInSamePlace", expect = "56 8B F1 E8 F8 AD FE FF")]
 pub fn g_task_simple_set_stay_in_same_place_ctask_simple_set_stay_in_same_place_62f590(
@@ -1434,6 +1476,15 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_constructor_62f610(this: u32, 
     let v2 = (((v1 & 0xFFFF_FF00) | ((a0 & 0xFF) & 0xFF)) & 0xFF);
     wr::<u8>(p(this), 8, v2 as u8);
     wr::<u32>(p(this), 0, 0x86_DD74);
+    this
+}
+
+/// `CTaskSimpleDuckToggle::Constructor` (0x62F690): ctor, thiscall, `ret 4`; 9 instruction(s) matched.
+#[hook(addr = 0x62F690, conv = thiscall, name = "CTaskSimpleDuckToggle::Constructor", expect = "56 8B F1 E8 F8 AC FE FF", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_duck_toggle_constructor_62f690(this: u32, a0: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 8, a0);
+    wr::<u32>(p(this), 0, 0x86_DD98);
     this
 }
 
@@ -1960,6 +2011,88 @@ pub fn g_event_leader_quit_entering_car_as_driver_constructor_63a110(this: u32) 
     this
 }
 
+/// `CTaskComplexEnterCarAsPassengerTimed::Constructor` (0x63B030): ctor, thiscall, `ret 16`; 38 instruction(s) matched.
+#[hook(addr = 0x63B030, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Constructor", expect = "6A FF 68 68 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_timed_constructor_63b030(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0xC, a0);
+    wr::<u32>(p(this), 0x10, a2);
+    wr::<u32>(p(this), 0x14, a1);
+    let v2 = (((a1 & 0xFFFF_FF00) | ((a3 & 0xFF) & 0xFF)) & 0xFF);
+    wr::<u8>(p(this), 0x18, v2 as u8);
+    wr::<u32>(p(this), 0, 0x86_E74C);
+    wr::<u32>(p(this), 0x1C, 6);
+    wr::<u32>(p(this), 0x20, 0);
+    wr::<u32>(p(this), 0x24, 0);
+    wr::<u8>(p(this), 0x28, 0 as u8);
+    wr::<u8>(p(this), 0x29, 0 as u8);
+    let v3 = rd::<u32>(p(this), 0xC);
+    if v3 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(v3, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerWait::Constructor` (0x63B320): ctor, thiscall, `ret 16`; 41 instruction(s) matched.
+#[hook(addr = 0x63B320, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Constructor", expect = "6A FF 68 C8 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_wait_constructor_63b320(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0x10, a1);
+    let v2 = (((a1 & 0xFFFF_FF00) | ((a2 & 0xFF) & 0xFF)) & 0xFF);
+    wr::<u8>(p(this), 0x18, v2 as u8);
+    wr::<u32>(p(this), 0, 0x86_E778);
+    wr::<u32>(p(this), 0xC, a0);
+    wr::<u32>(p(this), 0x14, 0);
+    wr::<u32>(p(this), 0x1C, a3);
+    wr::<u8>(p(this), 0x20, 0 as u8);
+    if a0 == 0 {
+        let v3 = rd::<u32>(p(this), 0x10);
+        if v3 == 0 {
+            return this;
+        } else {
+            c_571b70_t1(v3, this.wrapping_add(0x10));
+            return this;
+        }
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0xC));
+        let v6 = rd::<u32>(p(this), 0x10);
+        if v6 == 0 {
+            return this;
+        } else {
+            c_571b70_t1(v6, this.wrapping_add(0x10));
+            return this;
+        }
+    }
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::Constructor` (0x63B430): ctor, thiscall, `ret 4`; 25 instruction(s) matched.
+#[hook(addr = 0x63B430, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Constructor", expect = "6A FF 68 08 15 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_car_as_passenger_wait_constructor_63b430(this: u32, a0: u32) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0, 0x86_E7A4);
+    wr::<u32>(p(this), 0xC, a0);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
 /// `CTaskComplexEnterBoatAsDriver::Constructor` (0x63B5E0): ctor, thiscall, `ret 4`; 25 instruction(s) matched.
 #[hook(addr = 0x63B5E0, conv = thiscall, name = "CTaskComplexEnterBoatAsDriver::Constructor", expect = "6A FF 68 68 15 84 00")]
 pub fn g_task_complex_enter_boat_as_driver_constructor_63b5e0(this: u32, a0: u32) -> u32 {
@@ -1990,6 +2123,34 @@ pub fn g_task_complex_steal_car_constructor_63b7d0(this: u32, a0: u32) -> u32 {
         return this;
     } else {
         c_571b70_t1(v2, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
+/// `CTaskComplexLeaveCar` (0x63B8C0): ctor, thiscall, `ret 20`; 45 instruction(s) matched.
+#[hook(addr = 0x63B8C0, conv = thiscall, name = "CTaskComplexLeaveCar", expect = "6A FF 68 18 16 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_ctask_complex_leave_car_63b8c0(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0x10, a1);
+    wr::<u32>(p(this), 0x14, a2);
+    let v2 = (((a2 & 0xFFFF_FF00) | ((a3 & 0xFF) & 0xFF)) & 0xFF);
+    wr::<u8>(p(this), 0x18, v2 as u8);
+    wr::<u32>(p(this), 0, 0x86_E828);
+    wr::<u32>(p(this), 0xC, a0);
+    let v3 = (((((a2 & 0xFFFF_FF00) | ((a3 & 0xFF) & 0xFF)) & 0xFFFF_FF00) | ((a4 & 0xFF) & 0xFF)) & 0xFF);
+    wr::<u8>(p(this), 0x19, v3 as u8);
+    wr::<u8>(p(this), 0x1A, 0 as u8);
+    wr::<u32>(p(this), 0x1C, 0);
+    wr::<u8>(p(this), 0x20, 0 as u8);
+    wr::<u8>(p(this), 0x21, 0 as u8);
+    wr::<u32>(p(this), 0x24, 0xF);
+    wr::<u32>(p(this), 0x28, 0x4080_0000);
+    wr::<u32>(p(this), 0x2C, 0x3F80_0000);
+    wr::<u8>(p(this), 0x30, 0 as u8);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0xC));
         return this;
     }
 }
@@ -2029,6 +2190,73 @@ pub fn g_task_complex_scream_in_car_then_leave_constructor_63c240(this: u32, a0:
     }
 }
 
+/// `CTaskComplexCarDrive::Constructor_0` (0x63C9D0): ctor, thiscall, `ret 4`; 31 instruction(s) matched.
+#[hook(addr = 0x63C9D0, conv = thiscall, name = "CTaskComplexCarDrive::Constructor_0", expect = "6A FF 68 98 18 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_constructor_0_63c9d0(this: u32, a0: u32) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0, 0x86_E934);
+    wr::<u32>(p(this), 0xC, a0);
+    wr::<u32>(p(this), 0x10, 0);
+    wr::<u32>(p(this), 0x14, 0xFFFF_FFFF);
+    wr::<u32>(p(this), 0x18, 0);
+    wr::<u8>(p(this), 0x1C, 1 as u8);
+    wr::<u8>(p(this), 0x20, 0 as u8);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
+/// `CTaskComplexCarDriveMission::Constructor` (0x63CC30): ctor, thiscall, `ret 20`; 35 instruction(s) matched.
+#[hook(addr = 0x63CC30, conv = thiscall, name = "CTaskComplexCarDriveMission::Constructor", expect = "6A FF 68 D8 18 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_constructor_63cc30(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+) -> u32 {
+    c_63c940_t4(this, a0, a4, 0xFFFF_FFFF, a3);
+    wr::<u32>(p(this), 0, 0x86_E9A4);
+    wr::<u32>(p(this), 0x24, a1);
+    wr::<u32>(p(this), 0x28, a2);
+    if a1 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a1, this.wrapping_add(0x24));
+        return this;
+    }
+}
+
+/// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint` (0x63CE00): ctor, thiscall, `ret 28`; 29 instruction(s) matched.
+#[hook(addr = 0x63CE00, conv = thiscall, name = "CTaskComplexDriveToPoint::CTaskComplexDriveToPoint", expect = "8B 44 24 1C 8B 54 24 0C", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_drive_to_point_ctask_complex_drive_to_point_63ce00(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+    a5: u32,
+    a6: u32,
+) -> u32 {
+    c_63c940_t4(this, a0, a2, a4, a6);
+    wr::<u32>(p(this), 0, 0x86_E9DC);
+    let v2 = rd::<u32>(p(a1), 0);
+    wr::<u32>(p(this), 0x24, v2);
+    let v3 = rd::<u32>(p(a1), 4);
+    wr::<u32>(p(this), 0x28, v3);
+    let v4 = rd::<u32>(p(a1), 8);
+    wr::<u32>(p(this), 0x2C, v4);
+    wr::<u32>(p(this), 0x30, a3);
+    wr::<u32>(p(this), 0x34, a5);
+    wr::<u8>(p(this), 0x38, 0 as u8);
+    this
+}
+
 /// `CTaskComplexShuffleSeats::Constructor` (0x63D130): ctor, thiscall, `ret 4`; 28 instruction(s) matched.
 #[hook(addr = 0x63D130, conv = thiscall, name = "CTaskComplexShuffleSeats::Constructor", expect = "6A FF 68 78 19 84 00")]
 pub fn g_task_complex_shuffle_seats_constructor_63d130(this: u32, a0: u32) -> u32 {
@@ -2043,6 +2271,42 @@ pub fn g_task_complex_shuffle_seats_constructor_63d130(this: u32, a0: u32) -> u3
         c_571b70_t1(a0, this.wrapping_add(0xC));
         return this;
     }
+}
+
+/// `CTaskSimpleCarSetTempAction::Constructor` (0x63D6F0): ctor, thiscall, `ret 12`; 15 instruction(s) matched.
+#[hook(addr = 0x63D6F0, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Constructor", expect = "8B 44 24 04 56", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_temp_action_constructor_63d6f0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_63c340_t3(this, a0, 0, 0);
+    wr::<u32>(p(this), 0, 0x86_EA6C);
+    wr::<u32>(p(this), 0x60, a1);
+    wr::<u32>(p(this), 0x64, a2);
+    this
+}
+
+/// `CTaskComplexEnterCarAsDriver` (0x6402F0): ctor, thiscall, `ret 4`; 13 instruction(s) matched.
+#[hook(addr = 0x6402F0, conv = thiscall, name = "CTaskComplexEnterCarAsDriver", expect = "8B 44 24 04 56", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_ctask_complex_enter_car_as_driver_6402f0(this: u32, a0: u32) -> u32 {
+    c_63a220_t5(this, a0, 1, 0, 0, 0);
+    wr::<u32>(p(this), 0, 0x86_EAAC);
+    this
+}
+
+/// `CTaskComplexEnterCarAsPassenger` (0x640340): ctor, thiscall, `ret 12`; 17 instruction(s) matched.
+#[hook(addr = 0x640340, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger", expect = "8B 44 24 0C 56", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_ctask_complex_enter_car_as_passenger_640340(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_63a220_t5(this, a0, 0, 0, 0, a2);
+    wr::<u32>(p(this), 0, 0x86_EADC);
+    wr::<u32>(p(this), 0x1C, a1);
+    this
+}
+
+/// `FUN_00640390` (0x640390): ctor, thiscall, `ret 4`; 14 instruction(s) matched.
+#[hook(addr = 0x640390, conv = thiscall, name = "FUN_00640390", expect = "8B 44 24 04 56", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_fun_00640390_640390(this: u32, a0: u32) -> u32 {
+    c_63a220_t5(this, a0, 1, 1, 0, 0);
+    wr::<u32>(p(this), 0, 0x86_EB0C);
+    wr::<u32>(p(this), 0x1C, 0xA);
+    this
 }
 
 /// `FUN_006403e0` (0x6403E0): ctor, thiscall, `ret 8`; 15 instruction(s) matched.
@@ -2070,6 +2334,44 @@ pub fn g_task_complex_drag_ped_from_car_ctask_complex_drag_ped_from_car_640430(
     } else {
         c_571b70_t1(a0, this.wrapping_add(0x50));
         wr::<u32>(p(this), 0x20, a1);
+        return this;
+    }
+}
+
+/// `CTaskComplexDrivePointRoute::Constructor` (0x6433E0): ctor, thiscall, `ret 28`; 46 instruction(s) matched.
+#[hook(addr = 0x6433E0, conv = thiscall, name = "CTaskComplexDrivePointRoute::Constructor", expect = "6A FF 68 D8 21 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_drive_point_route_constructor_6433e0(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+    a5: u32,
+    a6: u32,
+) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0, 0x86_EBF8);
+    wr::<u32>(p(this), 0xC, a0);
+    let v2 = c_41b7c0_c1(0x64);
+    if v2 == 0 {
+        wr::<u32>(p(this), 0x18, a3);
+        wr::<u32>(p(this), 0x14, a2);
+        wr::<u32>(p(this), 0x10, 0);
+        wr::<u32>(p(this), 0x1C, a4);
+        wr::<u32>(p(this), 0x24, a6);
+        wr::<u32>(p(this), 0x20, a5);
+        wr::<u32>(p(this), 0x28, 0);
+        return this;
+    } else {
+        c_63a040_t1(v2, a1);
+        wr::<u32>(p(this), 0x18, a3);
+        wr::<u32>(p(this), 0x14, a2);
+        wr::<u32>(p(this), 0x10, v2);
+        wr::<u32>(p(this), 0x1C, a4);
+        wr::<u32>(p(this), 0x24, a6);
+        wr::<u32>(p(this), 0x20, a5);
+        wr::<u32>(p(this), 0x28, 0);
         return this;
     }
 }
@@ -2118,12 +2420,249 @@ pub fn g_task_complex_go_to_car_door_and_stand_still_constructor_645780(
     }
 }
 
+/// `CTaskSimpleCarAlign::Constructor` (0x645B40): ctor, thiscall, `ret 16`; 46 instruction(s) matched.
+#[hook(addr = 0x645B40, conv = thiscall, name = "CTaskSimpleCarAlign::Constructor", expect = "6A FF 68 B8 23 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_align_constructor_645b40(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0, 0x86_EC78);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u32>(p(this), 0x10, a0);
+    let v2 = rd::<u32>(p(a1), 0);
+    wr::<u32>(p(this), 0x14, v2);
+    let v3 = rd::<u32>(p(a1), 4);
+    wr::<u32>(p(this), 0x18, v3);
+    let v4 = rd::<u32>(p(a1), 8);
+    wr::<u32>(p(this), 0x1C, v4);
+    wr::<u32>(p(this), 0x20, a2);
+    wr::<u32>(p(this), 0x24, a3);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x10));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::Constructor` (0x646070): ctor, thiscall, `ret 12`; 34 instruction(s) matched.
+#[hook(addr = 0x646070, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Constructor", expect = "6A FF 68 38 24 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_open_locked_door_from_outside_constructor_646070(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0x14, a1);
+    wr::<u32>(p(this), 0, 0x86_ECC0);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u32>(p(this), 0x10, a0);
+    wr::<u32>(p(this), 0x18, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x10));
+        return this;
+    }
+}
+
 /// `CTaskSimplePickUpBike::Constructor` (0x6461B0): ctor, thiscall, `ret 12`; 34 instruction(s) matched.
 #[hook(addr = 0x6461B0, conv = thiscall, name = "CTaskSimplePickUpBike::Constructor", expect = "6A FF 68 78 24 84 00")]
 pub fn g_task_simple_pick_up_bike_constructor_6461b0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
     c_61a390_t0(this);
     wr::<u32>(p(this), 0x14, a1);
     wr::<u32>(p(this), 0, 0x86_ECE4);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u32>(p(this), 0x10, a0);
+    wr::<u32>(p(this), 0x18, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x10));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarCloseDoorFromInside::Constructor` (0x646300): ctor, thiscall, `ret 12`; 34 instruction(s) matched.
+#[hook(addr = 0x646300, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Constructor", expect = "6A FF 68 B8 24 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_close_door_from_inside_constructor_646300(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0x14, a1);
+    wr::<u32>(p(this), 0, 0x86_ED08);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u32>(p(this), 0x10, a0);
+    wr::<u32>(p(this), 0x18, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x10));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarGetIn::Constructor` (0x646690): ctor, thiscall, `ret 12`; 34 instruction(s) matched.
+#[hook(addr = 0x646690, conv = thiscall, name = "CTaskSimpleCarGetIn::Constructor", expect = "6A FF 68 38 25 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_get_in_constructor_646690(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0x1C, a1);
+    wr::<u32>(p(this), 0, 0x86_ED50);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u32>(p(this), 0x18, a0);
+    wr::<u32>(p(this), 0x20, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x18));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarShuffle::Constructor` (0x646810): ctor, thiscall, `ret 12`; 34 instruction(s) matched.
+#[hook(addr = 0x646810, conv = thiscall, name = "CTaskSimpleCarShuffle::Constructor", expect = "6A FF 68 78 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_shuffle_constructor_646810(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0x14, a1);
+    wr::<u32>(p(this), 0, 0x86_ED74);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u32>(p(this), 0x10, a0);
+    wr::<u32>(p(this), 0x18, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x10));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarWaitToSlowDown::Constructor` (0x646990): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
+#[hook(addr = 0x646990, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::Constructor", expect = "6A FF 68 B8 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_wait_to_slow_down_constructor_646990(this: u32, a0: u32, a1: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0, 0x86_ED98);
+    wr::<u32>(p(this), 8, a0);
+    wr::<u32>(p(this), 0x10, a1);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(8));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` (0x646B70): ctor, thiscall, `ret 12`; 29 instruction(s) matched.
+#[hook(addr = 0x646B70, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor", expect = "6A FF 68 F8 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_constructor_646b70(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0xC, a1);
+    wr::<u32>(p(this), 0, 0x86_EDBC);
+    wr::<u32>(p(this), 8, a0);
+    wr::<u32>(p(this), 0x10, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(8));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarGetOut::Constructor` (0x6471D0): ctor, thiscall, `ret 12`; 36 instruction(s) matched.
+#[hook(addr = 0x6471D0, conv = thiscall, name = "CTaskSimpleCarGetOut::Constructor", expect = "6A FF 68 28 27 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_get_out_constructor_6471d0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0x18, a1);
+    wr::<u32>(p(this), 0, 0x86_EE4C);
+    wr::<u8>(p(this), 8, 0 as u8);
+    wr::<u8>(p(this), 9, 0 as u8);
+    wr::<u32>(p(this), 0xC, 0);
+    wr::<u8>(p(this), 0x10, 0 as u8);
+    wr::<u32>(p(this), 0x14, a0);
+    wr::<u32>(p(this), 0x1C, a2);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0x14));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarSetPedSlowDraggedOut::Constructor` (0x6483B0): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
+#[hook(addr = 0x6483B0, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Constructor", expect = "6A FF 68 A8 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_ped_slow_dragged_out_constructor_6483b0(this: u32, a0: u32, a1: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0, 0x86_EF30);
+    wr::<u32>(p(this), 8, a0);
+    wr::<u32>(p(this), 0xC, a1);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(8));
+        return this;
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOut::Constructor` (0x648490): ctor, thiscall, `ret 12`; 30 instruction(s) matched.
+#[hook(addr = 0x648490, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Constructor", expect = "6A FF 68 E8 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_slow_be_dragged_out_constructor_648490(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0x10, a1);
+    wr::<u32>(p(this), 0, 0x86_EF54);
+    wr::<u32>(p(this), 0xC, a0);
+    let v2 = (((a1 & 0xFFFF_FF00) | ((a2 & 0xFF) & 0xFF)) & 0xFF);
+    wr::<u8>(p(this), 0x14, v2 as u8);
+    wr::<u32>(p(this), 0x18, 0);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648620` (0x648620): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
+#[hook(addr = 0x648620, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648620", expect = "6A FF 68 28 29 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_0x648620_648620(
+    this: u32,
+    a0: u32,
+    a1: u32,
+) -> u32 {
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0, 0x86_EF80);
+    wr::<u32>(p(this), 0xC, a0);
+    wr::<u32>(p(this), 0x10, a1);
+    if a0 == 0 {
+        return this;
+    } else {
+        c_571b70_t1(a0, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarFallOut::Constructor` (0x648D60): ctor, thiscall, `ret 12`; 34 instruction(s) matched.
+#[hook(addr = 0x648D60, conv = thiscall, name = "CTaskSimpleCarFallOut::Constructor", expect = "6A FF 68 18 2A 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_fall_out_constructor_648d60(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0x14, a1);
+    wr::<u32>(p(this), 0, 0x86_EFD0);
     wr::<u8>(p(this), 8, 0 as u8);
     wr::<u32>(p(this), 0xC, 0);
     wr::<u32>(p(this), 0x10, a0);
@@ -4251,6 +4790,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_LEADER_EXITED_CAR_AS_DRIVER_CONSTRUCTOR_4B8300,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_RUN_CONSTRUCTOR_4B8790,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_SPRINT_CONSTRUCTOR_4B8850,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_CTASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_4B8920,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_CTASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_4B8A00,
     HOOK_G_CPED_ATMATTRACTOR_CPED_ATMATTRACTOR_5EE470,
     HOOK_G_CPED_SEAT_ATTRACTOR_CPED_SEAT_ATTRACTOR_5EE540,
     HOOK_G_CPED_STOP_ATTRACTOR_CPED_STOP_ATTRACTOR_5EE610,
@@ -4294,8 +4835,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_REAR_CONSTRUCTOR_62EF20,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_LEFT_CONSTRUCTOR_62EFD0,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_RIGHT_CONSTRUCTOR_62F080,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_CTASK_COMPLEX_LEAVE_CAR_62F1A0,
     HOOK_G_TASK_SIMPLE_SET_STAY_IN_SAME_PLACE_CTASK_SIMPLE_SET_STAY_IN_SAME_PLACE_62F590,
     HOOK_G_TASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_CONSTRUCTOR_62F610,
+    HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_CONSTRUCTOR_62F690,
     HOOK_G_TASK_SIMPLE_DIE_CONSTRUCTOR_1_62FA00,
     HOOK_G_TASK_SIMPLE_DIE_CONSTRUCTOR_3_62FAF0,
     HOOK_G_TASK_SIMPLE_DIE_IN_CAR_CTASK_SIMPLE_DIE_IN_CAR_62FC20,
@@ -4335,15 +4878,39 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_FUN_00636860_636860,
     HOOK_G_TASK_SIMPLE_HIT_FROM_FRONT_CONSTRUCTOR_637250,
     HOOK_G_EVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_CONSTRUCTOR_63A110,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_CONSTRUCTOR_63B030,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_WAIT_CONSTRUCTOR_63B320,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_CONSTRUCTOR_63B430,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_CONSTRUCTOR_63B5E0,
     HOOK_G_TASK_COMPLEX_STEAL_CAR_CONSTRUCTOR_63B7D0,
+    HOOK_G_CTASK_COMPLEX_LEAVE_CAR_63B8C0,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CONSTRUCTOR_63BB60,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_CONSTRUCTOR_63C240,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_CONSTRUCTOR_0_63C9D0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_CONSTRUCTOR_63CC30,
+    HOOK_G_TASK_COMPLEX_DRIVE_TO_POINT_CTASK_COMPLEX_DRIVE_TO_POINT_63CE00,
     HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_CONSTRUCTOR_63D130,
+    HOOK_G_TASK_SIMPLE_CAR_SET_TEMP_ACTION_CONSTRUCTOR_63D6F0,
+    HOOK_G_CTASK_COMPLEX_ENTER_CAR_AS_DRIVER_6402F0,
+    HOOK_G_CTASK_COMPLEX_ENTER_CAR_AS_PASSENGER_640340,
+    HOOK_G_FUN_00640390_640390,
     HOOK_G_FUN_006403E0_6403E0,
     HOOK_G_TASK_COMPLEX_DRAG_PED_FROM_CAR_CTASK_COMPLEX_DRAG_PED_FROM_CAR_640430,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_CONSTRUCTOR_6433E0,
     HOOK_G_TASK_COMPLEX_GO_TO_CAR_DOOR_AND_STAND_STILL_CONSTRUCTOR_645780,
+    HOOK_G_TASK_SIMPLE_CAR_ALIGN_CONSTRUCTOR_645B40,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_CONSTRUCTOR_646070,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_CONSTRUCTOR_6461B0,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_INSIDE_CONSTRUCTOR_646300,
+    HOOK_G_TASK_SIMPLE_CAR_GET_IN_CONSTRUCTOR_646690,
+    HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_CONSTRUCTOR_646810,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_CONSTRUCTOR_646990,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_CONSTRUCTOR_646B70,
+    HOOK_G_TASK_SIMPLE_CAR_GET_OUT_CONSTRUCTOR_6471D0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_SLOW_DRAGGED_OUT_CONSTRUCTOR_6483B0,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_CONSTRUCTOR_648490,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_0X648620_648620,
+    HOOK_G_TASK_SIMPLE_CAR_FALL_OUT_CONSTRUCTOR_648D60,
     HOOK_G_TASK_SIMPLE_SET_PED_AS_AUTO_DRIVER_CONSTRUCTOR_648F40,
     HOOK_G_TASK_COMPLEX_GO_TO_BOAT_STEERING_WHEEL_CONSTRUCTOR_649090,
     HOOK_G_TASK_COMPLEX_GET_ON_BOAT_SEAT_CONSTRUCTOR_649210,
@@ -4480,6 +5047,8 @@ pub const BODIES: &[Body] = &[
     (0x4B8300, 0x14C0BADB7B786080, &[(0x4020C5, 11), (0x4B8300, 18)]),
     (0x4B8790, 0xD72C9B8DD2E89DF9, &[(0x4B8790, 27)]),
     (0x4B8850, 0xC02F46FA872E2041, &[(0x4B8850, 27)]),
+    (0x4B8920, 0x3257A4E5E7373261, &[(0x4B8920, 36)]),
+    (0x4B8A00, 0xFB22D77409FE0C3B, &[(0x4B8A00, 41)]),
     (0x5EE470, 0x1D98A02EB6EFA721, &[(0x5EE470, 85)]),
     (0x5EE540, 0x999477BED4FB72A2, &[(0x5EE540, 85)]),
     (0x5EE610, 0xEF45B642768C96B7, &[(0x5EE610, 85)]),
@@ -4523,8 +5092,10 @@ pub const BODIES: &[Body] = &[
     (0x62EF20, 0xEF49E8E6876E3475, &[(0x62EF20, 39)]),
     (0x62EFD0, 0xA839CED8AD632D84, &[(0x62EFD0, 39)]),
     (0x62F080, 0xFB09A1B1A436E6FA, &[(0x62F080, 39)]),
+    (0x62F1A0, 0x4A0A791E53000F3D, &[(0x62F1A0, 45)]),
     (0x62F590, 0xB81C8E7D38103FF0, &[(0x62F590, 27)]),
     (0x62F610, 0xEA0DB500AC63F194, &[(0x62F610, 27)]),
+    (0x62F690, 0xDD31B22E44166359, &[(0x62F690, 27)]),
     (0x62FA00, 0xE9CC41CDDF7DA3A5, &[(0x62FA00, 68)]),
     (0x62FAF0, 0xC30959EE52CC460D, &[(0x62FAF0, 72)]),
     (0x62FC20, 0x1E521D9863F4F91B, &[(0x62FC20, 64)]),
@@ -4564,15 +5135,39 @@ pub const BODIES: &[Body] = &[
     (0x636860, 0xDCEE2CF1B32F7807, &[(0x636860, 39)]),
     (0x637250, 0x862222ADF94236BC, &[(0x637250, 39)]),
     (0x63A110, 0xF23F6B40F69BFA5A, &[(0x408C81, 11), (0x63A110, 18)]),
+    (0x63B030, 0xECC541300436F032, &[(0x63B030, 128)]),
+    (0x63B320, 0xDF0B7234B51248E5, &[(0x63B320, 135)]),
+    (0x63B430, 0x0853F66E1BC4C8E5, &[(0x63B430, 87)]),
     (0x63B5E0, 0x4FABAA24056C3316, &[(0x63B5E0, 87)]),
     (0x63B7D0, 0x3B164AA52AB04D05, &[(0x63B7D0, 103)]),
+    (0x63B8C0, 0x5B57CF89A39027E4, &[(0x63B8C0, 153)]),
     (0x63BB60, 0x94D4655A3324A0CC, &[(0x63BB60, 94)]),
     (0x63C240, 0x673FC620611C1C40, &[(0x63C240, 107)]),
+    (0x63C9D0, 0x27268B8396542335, &[(0x63C9D0, 105)]),
+    (0x63CC30, 0x5F8517A36F81382C, &[(0x63CC30, 113)]),
+    (0x63CE00, 0x047B092B6653F926, &[(0x63CE00, 83)]),
     (0x63D130, 0xA70F93ABE7CD734B, &[(0x63D130, 91)]),
+    (0x63D6F0, 0x582175D0C5C7375B, &[(0x63D6F0, 43)]),
+    (0x6402F0, 0x02EBA9EA0FF5516F, &[(0x6402F0, 33)]),
+    (0x640340, 0xC9FE9FB5CDC84569, &[(0x640340, 45)]),
+    (0x640390, 0x5D99A7411D7EBB17, &[(0x640390, 40)]),
     (0x6403E0, 0x9DFCC2083229FA23, &[(0x6403E0, 40)]),
     (0x640430, 0xAB01BC31B08E79EF, &[(0x640430, 131)]),
+    (0x6433E0, 0xDB4EBEE12E67BD63, &[(0x6433E0, 154)]),
     (0x645780, 0xCA8BBDA611FC4D86, &[(0x645780, 170)]),
+    (0x645B40, 0x904398E4F323D545, &[(0x645B40, 134)]),
+    (0x646070, 0x96999E4E5167DFF8, &[(0x646070, 107)]),
     (0x6461B0, 0x59E1519371989EE2, &[(0x6461B0, 107)]),
+    (0x646300, 0xFFF3AAE387436B97, &[(0x646300, 107)]),
+    (0x646690, 0x234054DE6AF60B0C, &[(0x646690, 107)]),
+    (0x646810, 0x7090992939E1C23A, &[(0x646810, 107)]),
+    (0x646990, 0x8E1BBB36E4F705B6, &[(0x646990, 94)]),
+    (0x646B70, 0x16F34AC78CD76E7F, &[(0x646B70, 101)]),
+    (0x6471D0, 0x7C586B6E84C48986, &[(0x6471D0, 113)]),
+    (0x6483B0, 0x38F0349FB8822AC9, &[(0x6483B0, 94)]),
+    (0x648490, 0xB97256192F9CC66C, &[(0x648490, 108)]),
+    (0x648620, 0x0F039C7E73FE5628, &[(0x648620, 94)]),
+    (0x648D60, 0x44705D4BEB7B479C, &[(0x648D60, 107)]),
     (0x648F40, 0xD9D94D6A5CF3F83D, &[(0x648F40, 87)]),
     (0x649090, 0x5462CF18FB3DA8EE, &[(0x649090, 91)]),
     (0x649210, 0x59FDB9903D7A46DB, &[(0x649210, 87)]),

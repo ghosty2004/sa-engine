@@ -109,6 +109,10 @@ orig! {
     fn c_61a900_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x61A900 => unported;
     /// `CTaskSimpleRunTimedAnim::Constructor-2` (0x61ABE0), thiscall, 8 stack argument(s)
     fn c_61abe0_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x61ABE0 => unported;
+    /// `CTaskSimpleFight::CTaskSimpleFight` (0x61C470), thiscall, 3 stack argument(s)
+    fn c_61c470_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x61C470 => unported;
+    /// `CTaskSimpleFightingControl::Constructor` (0x61DC10), thiscall, 3 stack argument(s)
+    fn c_61dc10_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x61DC10 => unported;
     /// `CTaskSimpleThrowControl::Constructor` (0x61F8B0), thiscall, 2 stack argument(s)
     fn c_61f8b0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x61F8B0 => unported;
     /// `CTaskSimpleChoking::Constructor` (0x6202C0), thiscall, 2 stack argument(s)
@@ -155,24 +159,80 @@ orig! {
     fn c_6358b0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6358B0 => unported;
     /// `CTaskComplexEnterCar::Constructor` (0x63A220), thiscall, 5 stack argument(s)
     fn c_63a220_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63A220 => unported;
+    /// `CTaskComplexEnterCarAsDriverTimed::Constructor` (0x63AD70), thiscall, 2 stack argument(s)
+    fn c_63ad70_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x63AD70 => unported;
+    /// `CTaskComplexEnterCarAsPassengerTimed::Constructor` (0x63B030), thiscall, 4 stack argument(s)
+    fn c_63b030_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x63B030 => unported;
+    /// `CTaskComplexEnterCarAsPassengerWait::Constructor` (0x63B320), thiscall, 4 stack argument(s)
+    fn c_63b320_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x63B320 => unported;
+    /// `CTaskComplexLeaveCarAsPassengerWait::Constructor` (0x63B430), thiscall, 1 stack argument(s)
+    fn c_63b430_t1(this: u32, a0: u32) -> u32 = thiscall 0x63B430 => unported;
     /// `CTaskComplexEnterBoatAsDriver::Constructor` (0x63B5E0), thiscall, 1 stack argument(s)
     fn c_63b5e0_t1(this: u32, a0: u32) -> u32 = thiscall 0x63B5E0 => unported;
     /// `CTaskComplexStealCar::Constructor` (0x63B7D0), thiscall, 1 stack argument(s)
     fn c_63b7d0_t1(this: u32, a0: u32) -> u32 = thiscall 0x63B7D0 => unported;
+    /// `CTaskComplexLeaveCar` (0x63B8C0), thiscall, 5 stack argument(s)
+    fn c_63b8c0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63B8C0 => unported;
     /// `CTaskComplexLeaveBoat::Constructor` (0x63BB60), thiscall, 2 stack argument(s)
     fn c_63bb60_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x63BB60 => unported;
+    /// `CTaskComplexLeaveCarAndFlee::Constructor` (0x63BF90), thiscall, 5 stack argument(s)
+    fn c_63bf90_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63BF90 => unported;
     /// `CTaskComplexScreamInCarThenLeave::Constructor` (0x63C240), thiscall, 2 stack argument(s)
     fn c_63c240_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x63C240 => unported;
+    /// `CTaskSimpleCarDrive::Constructor` (0x63C340), thiscall, 3 stack argument(s)
+    fn c_63c340_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x63C340 => unported;
+    /// `CTaskComplexCarDriveMission::Constructor` (0x63CC30), thiscall, 5 stack argument(s)
+    fn c_63cc30_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63CC30 => unported;
+    /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint` (0x63CE00), thiscall, 7 stack argument(s)
+    fn c_63ce00_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x63CE00 => unported;
     /// `CTaskComplexShuffleSeats::Constructor` (0x63D130), thiscall, 1 stack argument(s)
     fn c_63d130_t1(this: u32, a0: u32) -> u32 = thiscall 0x63D130 => unported;
     /// `CTaskComplexDragPedFromCar::CTaskComplexDragPedFromCar` (0x640430), thiscall, 2 stack argument(s)
     fn c_640430_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x640430 => unported;
+    /// `CTaskComplexDrivePointRoute::Constructor` (0x6433E0), thiscall, 7 stack argument(s)
+    fn c_6433e0_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x6433E0 => unported;
     /// `CTaskComplexGoToCarDoorAndStandStill::Constructor` (0x645780), thiscall, 8 stack argument(s)
     fn c_645780_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x645780 => unported;
+    /// `CTaskSimpleCarAlign::Constructor` (0x645B40), thiscall, 4 stack argument(s)
+    fn c_645b40_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x645B40 => unported;
+    /// `CTaskSimpleCarOpenDoorFromOutside::Constructor` (0x645E50), thiscall, 4 stack argument(s)
+    fn c_645e50_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x645E50 => unported;
+    /// `CTaskSimpleCarOpenLockedDoorFromOutside::Constructor` (0x646070), thiscall, 3 stack argument(s)
+    fn c_646070_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646070 => unported;
     /// `CTaskSimplePickUpBike::Constructor` (0x6461B0), thiscall, 3 stack argument(s)
     fn c_6461b0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6461B0 => unported;
+    /// `CTaskSimpleCarCloseDoorFromInside::Constructor` (0x646300), thiscall, 3 stack argument(s)
+    fn c_646300_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646300 => unported;
+    /// `CTaskSimpleCarCloseDoorFromOutside::Constructor` (0x6464F0), thiscall, 3 stack argument(s)
+    fn c_6464f0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6464F0 => unported;
+    /// `CTaskSimpleCarGetIn::Constructor` (0x646690), thiscall, 3 stack argument(s)
+    fn c_646690_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646690 => unported;
+    /// `CTaskSimpleCarShuffle::Constructor` (0x646810), thiscall, 3 stack argument(s)
+    fn c_646810_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646810 => unported;
+    /// `CTaskSimpleCarWaitToSlowDown::Constructor` (0x646990), thiscall, 2 stack argument(s)
+    fn c_646990_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x646990 => unported;
+    /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` (0x646B70), thiscall, 3 stack argument(s)
+    fn c_646b70_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646B70 => unported;
+    /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Constructor` (0x646D70), thiscall, 4 stack argument(s)
+    fn c_646d70_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x646D70 => unported;
+    /// `CTaskSimpleCarGetOut::Constructor` (0x6471D0), thiscall, 3 stack argument(s)
+    fn c_6471d0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6471D0 => unported;
+    /// `FUN_00647710` (0x647710), thiscall, 2 stack argument(s)
+    fn c_647710_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x647710 => unported;
+    /// `CTaskSimpleCarSlowDragPedOut::Constructor` (0x647FE0), thiscall, 4 stack argument(s)
+    fn c_647fe0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x647FE0 => unported;
+    /// `CTaskSimpleCarSlowBeDraggedOut::Constructor` (0x648230), thiscall, 4 stack argument(s)
+    fn c_648230_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x648230 => unported;
+    /// `CTaskSimpleCarSetPedSlowDraggedOut::Constructor` (0x6483B0), thiscall, 2 stack argument(s)
+    fn c_6483b0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6483B0 => unported;
+    /// `CTaskComplexCarSlowBeDraggedOut::Constructor` (0x648490), thiscall, 3 stack argument(s)
+    fn c_648490_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x648490 => unported;
+    /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648620` (0x648620), thiscall, 2 stack argument(s)
+    fn c_648620_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x648620 => unported;
     /// `CTaskSimpleBikeJacked::Constructor` (0x648B90), thiscall, 5 stack argument(s)
     fn c_648b90_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x648B90 => unported;
+    /// `CTaskSimpleCarFallOut::Constructor` (0x648D60), thiscall, 3 stack argument(s)
+    fn c_648d60_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x648D60 => unported;
     /// `CTaskSimpleSetPedAsAutoDriver::Constructor` (0x648F40), thiscall, 1 stack argument(s)
     fn c_648f40_t1(this: u32, a0: u32) -> u32 = thiscall 0x648F40 => unported;
     /// `CTaskComplexGoToBoatSteeringWheel::Constructor` (0x649090), thiscall, 1 stack argument(s)
@@ -183,6 +243,8 @@ orig! {
     fn c_649450_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x649450 => unported;
     /// `CTaskSimpleWaitUntilPedIsInCar::Constructor` (0x649620), thiscall, 1 stack argument(s)
     fn c_649620_t1(this: u32, a0: u32) -> u32 = thiscall 0x649620 => unported;
+    /// `CTaskSimpleCarJumpOut::Constructor` (0x64BE40), thiscall, 3 stack argument(s)
+    fn c_64be40_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x64BE40 => unported;
     /// `CTaskSimpleEvasiveStep::CTaskSimpleEvasiveStep` (0x653160), thiscall, 1 stack argument(s)
     fn c_653160_t1(this: u32, a0: u32) -> u32 = thiscall 0x653160 => unported;
     /// `CTaskComplexEvasiveStep::CTaskComplexEvasiveStep` (0x6532D0), thiscall, 2 stack argument(s)
@@ -207,6 +269,10 @@ orig! {
     fn c_655720_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x655720 => unported;
     /// `CTaskComplexMedicTreatInjuredPed::Constructor` (0x658BA0), thiscall, 3 stack argument(s)
     fn c_658ba0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x658BA0 => unported;
+    /// `FUN_006591d0` (0x6591D0), thiscall, 1 stack argument(s)
+    fn c_6591d0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6591D0 => unported;
+    /// `CTaskComplexDriveFireTruck::Constructor` (0x659310), thiscall, 3 stack argument(s)
+    fn c_659310_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x659310 => unported;
     /// `CTaskComplexUseSwatRope::Constructor` (0x659470), thiscall, 2 stack argument(s)
     fn c_659470_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x659470 => unported;
     /// `CTaskComplexFleePoint::Constructor` (0x65B390), thiscall, 4 stack argument(s)
@@ -297,6 +363,12 @@ orig! {
     fn c_6917b0_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x6917B0 => unported;
     /// `CTaskSimplePickUpEntity::Constructor-1` (0x691870), thiscall, 8 stack argument(s)
     fn c_691870_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x691870 => unported;
+    /// `FUN_006919c0` (0x6919C0), thiscall, 2 stack argument(s)
+    fn c_6919c0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6919C0 => unported;
+    /// `CTaskSimpleDuck::Constructor` (0x691FC0), thiscall, 3 stack argument(s)
+    fn c_691fc0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x691FC0 => unported;
+    /// `FUN_00692680` (0x692680), thiscall, 1 stack argument(s)
+    fn c_692680_t1(this: u32, a0: u32) -> u32 = thiscall 0x692680 => unported;
     /// `CTaskComplexFollowLeaderInFormation::Constructor` (0x6949A0), thiscall, 4 stack argument(s)
     fn c_6949a0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x6949A0 => unported;
     /// `CTaskComplexFollowLeaderAnyMeans::Constructor` (0x694AA0), thiscall, 3 stack argument(s)
@@ -408,6 +480,26 @@ pub fn g_task_complex_climb_clone_46a650(_this: u32) -> u32 {
     } else {
         c_67a030_t1(v1, 1);
         wr::<u32>(p(v1), 0, 0x85_9DCC);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleCarDriveTimed::Clone` (0x46F570): clone, thiscall, `ret`; 50 instruction(s) matched.
+#[hook(addr = 0x46F570, conv = thiscall, name = "CTaskSimpleCarDriveTimed::Clone", expect = "6A FF 68 AB 80 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_drive_timed_clone_46f570(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x70);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 8);
+        let v3 = rd::<u32>(p(this), 0x60);
+        c_63c340_t3(v1, v2, 0, 0);
+        wr::<u32>(p(v1), 0x60, v3);
+        wr::<u32>(p(v1), 0, 0x85_9E50);
+        wr::<u32>(p(v1), 0x64, 0);
+        wr::<u32>(p(v1), 0x68, 0);
+        wr::<u8>(p(v1), 0x6C, 0 as u8);
+        wr::<u8>(p(v1), 0x6D, 0 as u8);
         return v1;
     }
 }
@@ -1077,6 +1169,35 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_clone_4b8870(_t
     }
 }
 
+/// `CTaskComplexCarDriveMissionFleeScene::Clone` (0x4B8950): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x4B8950, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::Clone", expect = "6A FF 68 5B A8 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_flee_scene_clone_4b8950(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x2C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0xC);
+        c_63cc30_t5(v1, v2, 0, 1, 2, 0x4220_0000);
+        wr::<u32>(p(v1), 0, 0x85_B95C);
+        return v1;
+    }
+}
+
+/// `CTaskComplexCarDriveMissionKillPed::Clone` (0x4B8A30): clone, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x4B8A30, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::Clone", expect = "6A FF 68 7B A8 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_kill_ped_clone_4b8a30(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x2C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x24);
+        let v3 = rd::<u32>(p(this), 0xC);
+        c_63cc30_t5(v1, v3, v2, 0x36, 3, 0x4220_0000);
+        wr::<u32>(p(v1), 0, 0x85_B994);
+        return v1;
+    }
+}
+
 /// `CEventSoundQuiet::CloneEditable` (0x5E0670): clone, thiscall, `ret`; 36 instruction(s) matched.
 #[hook(addr = 0x5E0670, conv = thiscall, name = "CEventSoundQuiet::CloneEditable", expect = "6A FF 68 EB D8 83 00")]
 pub fn g_event_sound_quiet_clone_editable_5e0670(this: u32) -> u32 {
@@ -1330,6 +1451,36 @@ pub fn g_event_vehicle_damage_weapon_clone_editable_61c330(this: u32) -> u32 {
         c_4b18d0_t3(v1, v4, v3, v2);
         wr::<u32>(p(v1), 0, 0x86_D640);
         return v1;
+    }
+}
+
+/// `CTaskSimpleFight::Clone` (0x622E40): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x622E40, conv = thiscall, name = "CTaskSimpleFight::Clone", expect = "6A FF 68 DB F9 83 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_fight_clone_622e40(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u16>(p(this), 0x10));
+        let v3 = rd::<u8>(p(this), 0x27) as i8 as i32 as u32;
+        let v4 = rd::<u32>(p(this), 0x18);
+        let v5 = c_61c470_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleFightingControl::Clone` (0x622EB0): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x622EB0, conv = thiscall, name = "CTaskSimpleFightingControl::Clone", expect = "6A FF 68 FB F9 83 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_fighting_control_clone_622eb0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x14);
+        let v3 = rd::<u32>(p(this), 0x10);
+        let v4 = rd::<u32>(p(this), 0xC);
+        let v5 = c_61dc10_t3(v1, v4, v3, v2);
+        return v5;
     }
 }
 
@@ -1672,6 +1823,38 @@ pub fn g_task_simple_hit_by_gun_from_right_clone_62f0b0(_this: u32) -> u32 {
     } else {
         c_61a900_t6(v1, 0, 0x1F, 0x4080_0000, 0x19A, 0x86_DCEC, 0);
         wr::<u32>(p(v1), 0, 0x86_DCC4);
+        return v1;
+    }
+}
+
+/// `CTaskComplexLeaveCarAndDie::Clone` (0x62F1D0): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x62F1D0, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::Clone", expect = "6A FF 68 FB 02 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_car_and_die_clone_62f1d0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x34);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = rd::<u32>(p(this), 0x14);
+        c_63b8c0_t5(v1, v3, v2, v4, 0, 1);
+        wr::<u32>(p(v1), 0, 0x86_DD00);
+        wr::<u8>(p(v1), 0x1A, 1 as u8);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleDuckToggle::Clone` (0x635C90): clone, thiscall, `ret`; 30 instruction(s) matched.
+#[hook(addr = 0x635C90, conv = thiscall, name = "CTaskSimpleDuckToggle::Clone", expect = "6A FF 68 BB 0A 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_duck_toggle_clone_635c90(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 8);
+        c_61a390_t0(v1);
+        wr::<u32>(p(v1), 0, 0x86_DD98);
+        wr::<u32>(p(v1), 8, v2);
         return v1;
     }
 }
@@ -2299,6 +2482,73 @@ pub fn g_event_leader_quit_entering_car_as_driver_clone_63a150(_this: u32) -> u3
     }
 }
 
+/// `CTaskComplexEnterCarAsDriverTimed::Clone` (0x63D780): clone, thiscall, `ret`; 30 instruction(s) matched.
+#[hook(addr = 0x63D780, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Clone", expect = "6A FF 68 1B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_driver_timed_clone_63d780(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x14);
+        wr::<u32>(p(0), 0x14, v2);
+        return 0;
+    } else {
+        let v3 = rd::<u32>(p(this), 0x10);
+        let v4 = rd::<u32>(p(this), 0xC);
+        let v5 = c_63ad70_t2(v1, v4, v3);
+        let v6 = rd::<u32>(p(this), 0x14);
+        wr::<u32>(p(v5), 0x14, v6);
+        return v5;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::Clone` (0x63D7E0): clone, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x63D7E0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Clone", expect = "6A FF 68 3B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_timed_clone_63d7e0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x2C);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x1C);
+        wr::<u32>(p(0), 0x1C, v2);
+        return 0;
+    } else {
+        let v3 = rd::<u32>(p(this), 0x10);
+        let v4 = u32::from(rd::<u8>(p(this), 0x18));
+        let v5 = rd::<u32>(p(this), 0x14);
+        let v6 = rd::<u32>(p(this), 0xC);
+        let v7 = c_63b030_t4(v1, v6, v5, v3, (v4 & 0xFF));
+        let v8 = rd::<u32>(p(this), 0x1C);
+        wr::<u32>(p(v7), 0x1C, v8);
+        return v7;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerWait::Clone` (0x63D850): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x63D850, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Clone", expect = "6A FF 68 5B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_wait_clone_63d850(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x1C);
+        let v3 = u32::from(rd::<u8>(p(this), 0x18));
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = rd::<u32>(p(this), 0xC);
+        let v6 = c_63b320_t4(v1, v5, v4, (v3 & 0xFF), v2);
+        return v6;
+    }
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::Clone` (0x63D8C0): clone, thiscall, `ret`; 30 instruction(s) matched.
+#[hook(addr = 0x63D8C0, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Clone", expect = "6A FF 68 7B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_as_passenger_wait_clone_63d8c0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0xC);
+        let v3 = c_63b430_t1(v1, v2);
+        return v3;
+    }
+}
+
 /// `CTaskComplexEnterBoatAsDriver::Clone` (0x63D920): clone, thiscall, `ret`; 30 instruction(s) matched.
 #[hook(addr = 0x63D920, conv = thiscall, name = "CTaskComplexEnterBoatAsDriver::Clone", expect = "6A FF 68 9B 1A 84 00")]
 pub fn g_task_complex_enter_boat_as_driver_clone_63d920(this: u32) -> u32 {
@@ -2325,6 +2575,23 @@ pub fn g_task_complex_steal_car_clone_63d980(this: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexLeaveCar::Clone` (0x63D9E0): clone, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x63D9E0, conv = thiscall, name = "CTaskComplexLeaveCar::Clone", expect = "6A FF 68 DB 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_clone_63d9e0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x34);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x19));
+        let v3 = u32::from(rd::<u8>(p(this), 0x18));
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = rd::<u32>(p(this), 0x10);
+        let v6 = rd::<u32>(p(this), 0xC);
+        let v7 = c_63b8c0_t5(v1, v6, v5, v4, (v3 & 0xFF), (v2 & 0xFF));
+        return v7;
+    }
+}
+
 /// `CTaskComplexLeaveBoat::Clone` (0x63DA60): clone, thiscall, `ret`; 32 instruction(s) matched.
 #[hook(addr = 0x63DA60, conv = thiscall, name = "CTaskComplexLeaveBoat::Clone", expect = "6A FF 68 FB 1A 84 00")]
 pub fn g_task_complex_leave_boat_clone_63da60(this: u32) -> u32 {
@@ -2336,6 +2603,21 @@ pub fn g_task_complex_leave_boat_clone_63da60(this: u32) -> u32 {
         let v3 = rd::<u32>(p(this), 0xC);
         let v4 = c_63bb60_t2(v1, v3, v2);
         return v4;
+    }
+}
+
+/// `CTaskComplexLeaveCarAndFlee::Clone` (0x63DB40): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x63DB40, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::Clone", expect = "6A FF 68 3B 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_and_flee_clone_63db40(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x20);
+        let v3 = rd::<u32>(p(this), 0x10);
+        let v4 = rd::<u32>(p(this), 0xC);
+        let v5 = c_63bf90_t5(v1, v4, this.wrapping_add(0x14), v3, v2, 0);
+        return v5;
     }
 }
 
@@ -2353,6 +2635,54 @@ pub fn g_task_complex_scream_in_car_then_leave_clone_63dbb0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexCarDriveMission::Clone` (0x63DD70): clone, thiscall, `ret`; 38 instruction(s) matched.
+#[hook(addr = 0x63DD70, conv = thiscall, name = "CTaskComplexCarDriveMission::Clone", expect = "6A FF 68 DB 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_clone_63dd70(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x2C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = rd::<u32>(p(this), 0x18);
+        let v4 = rd::<u32>(p(this), 0x28);
+        let v5 = rd::<u32>(p(this), 0x24);
+        let v6 = rd::<u32>(p(this), 0xC);
+        let v7 = c_63cc30_t5(v1, v6, v5, v4, v3, v2);
+        return v7;
+    }
+}
+
+/// `CTaskComplexDriveToPoint::Clone` (0x63DDE0): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x63DDE0, conv = thiscall, name = "CTaskComplexDriveToPoint::Clone", expect = "6A FF 68 FB 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_to_point_clone_63dde0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x3C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = rd::<u32>(p(this), 0x34);
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = rd::<u32>(p(this), 0x30);
+        let v6 = rd::<u32>(p(this), 0x10);
+        let v7 = rd::<u32>(p(this), 0xC);
+        let v8 = c_63ce00_t7(v1, v7, this.wrapping_add(0x24), v6, v5, v4, v3, v2);
+        return v8;
+    }
+}
+
+/// `CTaskComplexEnterAnyCarAsDriver::Clone` (0x63DE60): clone, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x63DE60, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::Clone", expect = "6A FF 68 1B 1C 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_any_car_as_driver_clone_63de60(_this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        return 0;
+    } else {
+        c_61a3b0_t0(v1);
+        wr::<u32>(p(v1), 0, 0x86_EA14);
+        return v1;
+    }
+}
+
 /// `CTaskComplexShuffleSeats::Clone` (0x63DEB0): clone, thiscall, `ret`; 30 instruction(s) matched.
 #[hook(addr = 0x63DEB0, conv = thiscall, name = "CTaskComplexShuffleSeats::Clone", expect = "6A FF 68 3B 1C 84 00")]
 pub fn g_task_complex_shuffle_seats_clone_63deb0(this: u32) -> u32 {
@@ -2363,6 +2693,42 @@ pub fn g_task_complex_shuffle_seats_clone_63deb0(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0xC);
         let v3 = c_63d130_t1(v1, v2);
         return v3;
+    }
+}
+
+/// `CTaskSimpleCarSetTempAction::Clone` (0x63DF10): clone, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x63DF10, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Clone", expect = "6A FF 68 5B 1C 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_temp_action_clone_63df10(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x68);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x64);
+        let v3 = rd::<u32>(p(this), 0x60);
+        let v4 = rd::<u32>(p(this), 8);
+        c_63c340_t3(v1, v4, 0, 0);
+        wr::<u32>(p(v1), 0x60, v3);
+        wr::<u32>(p(v1), 0x64, v2);
+        wr::<u32>(p(v1), 0, 0x86_EA6C);
+        return v1;
+    }
+}
+
+/// `CTaskComplexEnterCarAsDriver::Clone` (0x643780): clone, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x643780, conv = thiscall, name = "CTaskComplexEnterCarAsDriver::Clone", expect = "6A FF 68 4B 22 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_driver_clone_643780(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x50);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x24);
+        wr::<u32>(p(0), 0x24, v2);
+        return 0;
+    } else {
+        let v3 = rd::<u32>(p(this), 0xC);
+        c_63a220_t5(v1, v3, 1, 0, 0, 0);
+        wr::<u32>(p(v1), 0, 0x86_EAAC);
+        let v5 = rd::<u32>(p(this), 0x24);
+        wr::<u32>(p(v1), 0x24, v5);
+        return v1;
     }
 }
 
@@ -2419,6 +2785,42 @@ pub fn g_task_complex_drag_ped_from_car_clone_643950(this: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexDrivePointRoute::Clone` (0x6439C0): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x6439C0, conv = thiscall, name = "CTaskComplexDrivePointRoute::Clone", expect = "6A FF 68 EB 22 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_point_route_clone_6439c0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x2C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x24);
+        let v3 = rd::<u32>(p(this), 0x20);
+        let v4 = rd::<u32>(p(this), 0x1C);
+        let v5 = rd::<u32>(p(this), 0x18);
+        let v6 = rd::<u32>(p(this), 0x14);
+        let v7 = rd::<u32>(p(this), 0x10);
+        let v8 = rd::<u32>(p(this), 0xC);
+        let v9 = c_6433e0_t7(v1, v8, v7, v6, v5, v4, v3, v2);
+        return v9;
+    }
+}
+
+/// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Clone` (0x646EC0): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x646EC0, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Clone", expect = "6A FF 68 8B 26 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_clone_646ec0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 8);
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = rd::<u32>(p(v3), 0xC);
+        let v5 = rd::<u32>(p(v3), 8);
+        let v6 = rd::<u32>(p(v2), 8);
+        let v7 = c_646d70_t4(v1, v5, v4, v2.wrapping_add(0xC), v6);
+        return v7;
+    }
+}
+
 /// `CTaskComplexGoToCarDoorAndStandStill::Clone` (0x6498B0): clone, thiscall, `ret`; 45 instruction(s) matched.
 #[hook(addr = 0x6498B0, conv = thiscall, name = "CTaskComplexGoToCarDoorAndStandStill::Clone", expect = "6A FF 68 DB 2B 84 00")]
 pub fn g_task_complex_go_to_car_door_and_stand_still_clone_6498b0(this: u32) -> u32 {
@@ -2439,6 +2841,52 @@ pub fn g_task_complex_go_to_car_door_and_stand_still_clone_6498b0(this: u32) -> 
     }
 }
 
+/// `CTaskSimpleCarAlign::Clone` (0x649930): clone, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x649930, conv = thiscall, name = "CTaskSimpleCarAlign::Clone", expect = "6A FF 68 FB 2B 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_align_clone_649930(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x24);
+        let v3 = rd::<u32>(p(this), 0x20);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_645b40_t4(v1, v4, this.wrapping_add(0x14), v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarOpenDoorFromOutside::Clone` (0x6499A0): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x6499A0, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::Clone", expect = "6A FF 68 1B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_open_door_from_outside_clone_6499a0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x1C);
+        let v3 = u32::from(rd::<u8>(p(this), 0x18));
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = rd::<u32>(p(this), 0x10);
+        let v6 = c_645e50_t4(v1, v5, v4, v2, (v3 & 0xFF));
+        return v6;
+    }
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::Clone` (0x649A10): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649A10, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Clone", expect = "6A FF 68 3B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_open_locked_door_from_outside_clone_649a10(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_646070_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
 /// `CTaskSimplePickUpBike::Clone` (0x649A80): clone, thiscall, `ret`; 34 instruction(s) matched.
 #[hook(addr = 0x649A80, conv = thiscall, name = "CTaskSimplePickUpBike::Clone", expect = "6A FF 68 5B 2C 84 00")]
 pub fn g_task_simple_pick_up_bike_clone_649a80(this: u32) -> u32 {
@@ -2451,6 +2899,198 @@ pub fn g_task_simple_pick_up_bike_clone_649a80(this: u32) -> u32 {
         let v4 = rd::<u32>(p(this), 0x10);
         let v5 = c_6461b0_t3(v1, v4, v3, v2);
         return v5;
+    }
+}
+
+/// `CTaskSimpleCarCloseDoorFromInside::Clone` (0x649AF0): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649AF0, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Clone", expect = "6A FF 68 7B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_close_door_from_inside_clone_649af0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_646300_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarCloseDoorFromOutside::Clone` (0x649B60): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649B60, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Clone", expect = "6A FF 68 9B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_close_door_from_outside_clone_649b60(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_6464f0_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarGetIn::Clone` (0x649BD0): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649BD0, conv = thiscall, name = "CTaskSimpleCarGetIn::Clone", expect = "6A FF 68 BB 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_get_in_clone_649bd0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x20);
+        let v3 = rd::<u32>(p(this), 0x1C);
+        let v4 = rd::<u32>(p(this), 0x18);
+        let v5 = c_646690_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarShuffle::Clone` (0x649C40): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649C40, conv = thiscall, name = "CTaskSimpleCarShuffle::Clone", expect = "6A FF 68 DB 2C 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_shuffle_clone_649c40(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_646810_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarWaitToSlowDown::Clone` (0x649CB0): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x649CB0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::Clone", expect = "6A FF 68 FB 2C 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_wait_to_slow_down_clone_649cb0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = rd::<u32>(p(this), 8);
+        let v4 = c_646990_t2(v1, v3, v2);
+        return v4;
+    }
+}
+
+/// `CTaskSimpleCarWaitForDoorNotToBeInUse::Clone` (0x649D20): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649D20, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Clone", expect = "6A FF 68 1B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_clone_649d20(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = rd::<u32>(p(this), 8);
+        let v5 = c_646b70_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarGetOut::Clone` (0x649E70): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649E70, conv = thiscall, name = "CTaskSimpleCarGetOut::Clone", expect = "6A FF 68 7B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_get_out_clone_649e70(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x20);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x1C);
+        let v3 = rd::<u32>(p(this), 0x18);
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = c_6471d0_t3(v1, v4, v3, v2);
+        return v5;
+    }
+}
+
+/// `vt_86ee94::Clone` (0x649EE0): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x649EE0, conv = thiscall, name = "vt_86ee94::Clone", expect = "6A FF 68 9B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86ee94_clone_649ee0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0xC);
+        let v3 = rd::<u32>(p(this), 8);
+        let v4 = c_647710_t2(v1, v3, v2);
+        return v4;
+    }
+}
+
+/// `CTaskSimpleCarSlowDragPedOut::Clone` (0x649FD0): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x649FD0, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::Clone", expect = "6A FF 68 DB 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_slow_drag_ped_out_clone_649fd0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x20);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = u32::from(rd::<u8>(p(this), 0x1C));
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = rd::<u32>(p(this), 0x10);
+        let v6 = c_647fe0_t4(v1, v5, v4, v2, (v3 & 0xFF));
+        return v6;
+    }
+}
+
+/// `CTaskSimpleCarSlowBeDraggedOut::Clone` (0x64A040): clone, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x64A040, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::Clone", expect = "6A FF 68 FB 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_slow_be_dragged_out_clone_64a040(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x20);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x1C);
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_648230_t4(v1, v4, v3, v2, 0);
+        return v5;
+    }
+}
+
+/// `CTaskSimpleCarSetPedSlowDraggedOut::Clone` (0x64A0B0): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x64A0B0, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Clone", expect = "6A FF 68 1B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_ped_slow_dragged_out_clone_64a0b0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0xC);
+        let v3 = rd::<u32>(p(this), 8);
+        let v4 = c_6483b0_t2(v1, v3, v2);
+        return v4;
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOut::Clone` (0x64A120): clone, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x64A120, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Clone", expect = "6A FF 68 3B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_clone_64a120(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = u32::from(rd::<u8>(p(this), 0x14));
+        let v4 = rd::<u32>(p(this), 0xC);
+        let v5 = c_648490_t3(v1, v4, v2, (v3 & 0xFF));
+        return v5;
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone` (0x64A190): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x64A190, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone", expect = "6A FF 68 5B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_clone_64a190(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = c_648620_t2(v1, v3, v2);
+        return v4;
     }
 }
 
@@ -2468,6 +3108,21 @@ pub fn g_task_simple_bike_jacked_clone_64a200(this: u32) -> u32 {
         let v6 = rd::<u32>(p(this), 0x14);
         let v7 = c_648b90_t5(v1, v6, v5, v4, v2, (v3 & 0xFF));
         return v7;
+    }
+}
+
+/// `CTaskSimpleCarFallOut::Clone` (0x64A280): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x64A280, conv = thiscall, name = "CTaskSimpleCarFallOut::Clone", expect = "6A FF 68 9B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_fall_out_clone_64a280(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x18);
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_648d60_t3(v1, v4, v3, v2);
+        return v5;
     }
 }
 
@@ -2559,6 +3214,21 @@ pub fn g_task_simple_wait_until_ped_is_in_car_clone_64a520(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 8);
         let v3 = c_649620_t1(v1, v2);
         return v3;
+    }
+}
+
+/// `CTaskSimpleCarJumpOut::Clone` (0x64D220): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x64D220, conv = thiscall, name = "CTaskSimpleCarJumpOut::Clone", expect = "6A FF 68 BB 31 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_jump_out_clone_64d220(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x20);
+        let v3 = rd::<u32>(p(this), 0x18);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = c_64be40_t3(v1, v4, v3, v2);
+        return v5;
     }
 }
 
@@ -2855,6 +3525,34 @@ pub fn g_task_complex_medic_treat_injured_ped_clone_659af0(this: u32) -> u32 {
         let v3 = u32::from(rd::<u8>(p(this), 0x14));
         let v4 = rd::<u32>(p(this), 0xC);
         let v5 = c_658ba0_t3(v1, v4, v2, (v3 & 0xFF));
+        return v5;
+    }
+}
+
+/// `vt_86f544::Clone` (0x659B60): clone, thiscall, `ret`; 30 instruction(s) matched.
+#[hook(addr = 0x659B60, conv = thiscall, name = "vt_86f544::Clone", expect = "6A FF 68 9B 3D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86f544_clone_659b60(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0xC);
+        let v3 = c_6591d0_t1(v1, v2);
+        return v3;
+    }
+}
+
+/// `CTaskComplexDriveFireTruck::Clone` (0x659BC0): clone, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x659BC0, conv = thiscall, name = "CTaskComplexDriveFireTruck::Clone", expect = "6A FF 68 BB 3D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_fire_truck_clone_659bc0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x14);
+        let v3 = u32::from(rd::<u8>(p(this), 0x10));
+        let v4 = rd::<u32>(p(this), 0xC);
+        let v5 = c_659310_t3(v1, v4, v2, (v3 & 0xFF));
         return v5;
     }
 }
@@ -3982,6 +4680,48 @@ pub fn g_task_simple_pick_up_entity_clone_692a90(this: u32) -> u32 {
     }
 }
 
+/// `vt_870b98::Clone` (0x692C80): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x692C80, conv = thiscall, name = "vt_870b98::Clone", expect = "6A FF 68 3B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_870b98_clone_692c80(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x34);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x2C);
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = c_6919c0_t2(v1, v3, v2);
+        return v4;
+    }
+}
+
+/// `CTaskSimpleDuck::Clone` (0x692CF0): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x692CF0, conv = thiscall, name = "CTaskSimpleDuck::Clone", expect = "6A FF 68 5B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_duck_clone_692cf0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u16>(p(this), 0xE));
+        let v3 = u32::from(rd::<u16>(p(this), 0xC));
+        let v4 = u32::from(rd::<u8>(p(this), 0x24));
+        let v5 = c_691fc0_t3(v1, (v4 & 0xFF), (v3 & 0xFFFF), (v2 & 0xFFFF));
+        return v5;
+    }
+}
+
+/// `vt_870bec::Clone` (0x692D60): clone, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x692D60, conv = thiscall, name = "vt_870bec::Clone", expect = "6A FF 68 7B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_870bec_clone_692d60(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u16>(p(this), 0xC));
+        let v3 = c_692680_t1(v1, (v2 & 0xFFFF));
+        return v3;
+    }
+}
+
 /// `CTaskComplexFollowLeaderInFormation::Clone` (0x695740): clone, thiscall, `ret`; 36 instruction(s) matched.
 #[hook(addr = 0x695740, conv = thiscall, name = "CTaskComplexFollowLeaderInFormation::Clone", expect = "6A FF 68 5B 76 84 00")]
 pub fn g_task_complex_follow_leader_in_formation_clone_695740(this: u32) -> u32 {
@@ -4145,6 +4885,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_FINISH_BRAIN_CLONE_463660,
     HOOK_G_TASK_SIMPLE_SET_CHAR_DECISION_MAKER_CLONE_46A490,
     HOOK_G_TASK_COMPLEX_CLIMB_CLONE_46A650,
+    HOOK_G_TASK_SIMPLE_CAR_DRIVE_TIMED_CLONE_46F570,
     HOOK_G_TASK_SIMPLE_COWER_CLONE_48DEB0,
     HOOK_G_TASK_SIMPLE_USE_ATM_CLONE_48E010,
     HOOK_G_TASK_SIMPLE_LOOK_ABOUT_CLONE_48E0F0,
@@ -4186,6 +4927,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_85B8DC_CLONE_4B86C0,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_RUN_CLONE_4B87B0,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_SPRINT_CLONE_4B8870,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_CLONE_4B8950,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_CLONE_4B8A30,
     HOOK_G_EVENT_SOUND_QUIET_CLONE_EDITABLE_5E0670,
     HOOK_G_EVENT_PLAYER_COMMAND_TO_GROUP_ATTACK_CLONE_EDITABLE_5F6370,
     HOOK_G_TASK_SIMPLE_CHAT_CLONE_5F65E0,
@@ -4204,6 +4947,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_PLAYER_COMMAND_TO_GROUP_GATHER_CLONE_EDITABLE_609280,
     HOOK_G_TASK_COMPLEX_PLAY_HAND_SIGNAL_ANIM_CLONE_61BA00,
     HOOK_G_EVENT_VEHICLE_DAMAGE_WEAPON_CLONE_EDITABLE_61C330,
+    HOOK_G_TASK_SIMPLE_FIGHT_CLONE_622E40,
+    HOOK_G_TASK_SIMPLE_FIGHTING_CONTROL_CLONE_622EB0,
     HOOK_G_TASK_SIMPLE_THROW_CONTROL_CLONE_6230B0,
     HOOK_G_VT_86D7D8_CLONE_623120,
     HOOK_G_VT_86D7FC_CLONE_623190,
@@ -4227,6 +4972,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_REAR_CLONE_62EF50,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_LEFT_CLONE_62F000,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_RIGHT_CLONE_62F0B0,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_DIE_CLONE_62F1D0,
+    HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_CLONE_635C90,
     HOOK_G_TASK_SIMPLE_DIE_CLONE_635DA0,
     HOOK_G_TASK_SIMPLE_DROWN_CLONE_635E60,
     HOOK_G_TASK_SIMPLE_DIE_IN_CAR_CLONE_635EF0,
@@ -4264,23 +5011,54 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_USE_SCRIPTED_BRAIN_CLONE_6371F0,
     HOOK_G_TASK_SIMPLE_HIT_FROM_FRONT_CLONE_637290,
     HOOK_G_EVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_CLONE_63A150,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_CLONE_63D780,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_CLONE_63D7E0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_WAIT_CLONE_63D850,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_CLONE_63D8C0,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_CLONE_63D920,
     HOOK_G_TASK_COMPLEX_STEAL_CAR_CLONE_63D980,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_CLONE_63D9E0,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CLONE_63DA60,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_FLEE_CLONE_63DB40,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_CLONE_63DBB0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_CLONE_63DD70,
+    HOOK_G_TASK_COMPLEX_DRIVE_TO_POINT_CLONE_63DDE0,
+    HOOK_G_TASK_COMPLEX_ENTER_ANY_CAR_AS_DRIVER_CLONE_63DE60,
     HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_CLONE_63DEB0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_TEMP_ACTION_CLONE_63DF10,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_CLONE_643780,
     HOOK_G_TASK_COMPLEX_OPEN_DRIVER_DOOR_CLONE_643870,
     HOOK_G_TASK_COMPLEX_OPEN_PASSENGER_DOOR_CLONE_6438E0,
     HOOK_G_TASK_COMPLEX_DRAG_PED_FROM_CAR_CLONE_643950,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_CLONE_6439C0,
+    HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_CLONE_646EC0,
     HOOK_G_TASK_COMPLEX_GO_TO_CAR_DOOR_AND_STAND_STILL_CLONE_6498B0,
+    HOOK_G_TASK_SIMPLE_CAR_ALIGN_CLONE_649930,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_DOOR_FROM_OUTSIDE_CLONE_6499A0,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_CLONE_649A10,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_CLONE_649A80,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_INSIDE_CLONE_649AF0,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_OUTSIDE_CLONE_649B60,
+    HOOK_G_TASK_SIMPLE_CAR_GET_IN_CLONE_649BD0,
+    HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_CLONE_649C40,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_CLONE_649CB0,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_CLONE_649D20,
+    HOOK_G_TASK_SIMPLE_CAR_GET_OUT_CLONE_649E70,
+    HOOK_G_VT_86EE94_CLONE_649EE0,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_CLONE_649FD0,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_BE_DRAGGED_OUT_CLONE_64A040,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_SLOW_DRAGGED_OUT_CLONE_64A0B0,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_CLONE_64A120,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_CLONE_64A190,
     HOOK_G_TASK_SIMPLE_BIKE_JACKED_CLONE_64A200,
+    HOOK_G_TASK_SIMPLE_CAR_FALL_OUT_CLONE_64A280,
     HOOK_G_TASK_SIMPLE_SET_PED_AS_AUTO_DRIVER_CLONE_64A2F0,
     HOOK_G_TASK_COMPLEX_GO_TO_BOAT_STEERING_WHEEL_CLONE_64A350,
     HOOK_G_TASK_COMPLEX_GET_ON_BOAT_SEAT_CLONE_64A3B0,
     HOOK_G_TASK_SIMPLE_CREATE_CAR_AND_GET_IN_CLONE_64A410,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_PED_IS_OUT_CAR_CLONE_64A4B0,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_PED_IS_IN_CAR_CLONE_64A520,
+    HOOK_G_TASK_SIMPLE_CAR_JUMP_OUT_CLONE_64D220,
     HOOK_G_TASK_SIMPLE_HIT_FROM_BEHIND_CLONE_652F10,
     HOOK_G_TASK_SIMPLE_HIT_WALL_CLONE_652FC0,
     HOOK_G_TASK_SIMPLE_HIT_HEAD_CLONE_6557A0,
@@ -4301,6 +5079,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_GIVE_CPR_CLONE_659A10,
     HOOK_G_TASK_COMPLEX_TREAT_ACCIDENT_CLONE_659A90,
     HOOK_G_TASK_COMPLEX_MEDIC_TREAT_INJURED_PED_CLONE_659AF0,
+    HOOK_G_VT_86F544_CLONE_659B60,
+    HOOK_G_TASK_COMPLEX_DRIVE_FIRE_TRUCK_CLONE_659BC0,
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_CLONE_659C30,
     HOOK_G_TASK_COMPLEX_USE_WATER_CANNON_CLONE_659D10,
     HOOK_G_VT_86F5FC_CLONE_659D70,
@@ -4360,6 +5140,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_AFFECT_SECONDARY_BEHAVIOUR_CLONE_692910,
     HOOK_G_TASK_SIMPLE_HOLD_ENTITY_CLONE_6929B0,
     HOOK_G_TASK_SIMPLE_PICK_UP_ENTITY_CLONE_692A90,
+    HOOK_G_VT_870B98_CLONE_692C80,
+    HOOK_G_TASK_SIMPLE_DUCK_CLONE_692CF0,
+    HOOK_G_VT_870BEC_CLONE_692D60,
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_IN_FORMATION_CLONE_695740,
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_ANY_MEANS_CLONE_6957B0,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_AIMING_CLONE_695820,
@@ -4381,6 +5164,7 @@ pub const BODIES: &[Body] = &[
     (0x463660, 0xF08E198D0B76AB96, &[(0x463660, 80)]),
     (0x46A490, 0x5616E5ABAA9F301F, &[(0x46A490, 90)]),
     (0x46A650, 0xC9774298B2F910B6, &[(0x46A650, 82)]),
+    (0x46F570, 0x1E614DF8922A60F3, &[(0x46F570, 132)]),
     (0x48DEB0, 0x5B81E3142F7B0487, &[(0x48DEB0, 102)]),
     (0x48E010, 0xDB7EF3C0596D589B, &[(0x48E010, 102)]),
     (0x48E0F0, 0x7766A4048FC44165, &[(0x48E0F0, 112)]),
@@ -4422,6 +5206,8 @@ pub const BODIES: &[Body] = &[
     (0x4B86C0, 0x38FD545937B142D6, &[(0x4B86C0, 89)]),
     (0x4B87B0, 0x9DF2E1AE2D030568, &[(0x4B87B0, 88)]),
     (0x4B8870, 0x5C583A5DDF8727D8, &[(0x4B8870, 88)]),
+    (0x4B8950, 0x341EEB8DC8A1B722, &[(0x4B8950, 98)]),
+    (0x4B8A30, 0x155985C7D972F9CB, &[(0x4B8A30, 101)]),
     (0x5E0670, 0x745E01F957A51758, &[(0x5E0670, 108)]),
     (0x5F6370, 0xB7F4B487EFA2B9EB, &[(0x5F6370, 89)]),
     (0x5F65E0, 0xB4007DE5519A83B5, &[(0x5F65E0, 112)]),
@@ -4440,6 +5226,8 @@ pub const BODIES: &[Body] = &[
     (0x609280, 0x761B29300E665EF3, &[(0x609280, 90)]),
     (0x61BA00, 0x459F15CEF615B016, &[(0x61BA00, 114)]),
     (0x61C330, 0x397A1430FD39FF57, &[(0x61C330, 96)]),
+    (0x622E40, 0x24F62075002476DD, &[(0x622E40, 106)]),
+    (0x622EB0, 0xBB8A092B65CBF646, &[(0x622EB0, 104)]),
     (0x6230B0, 0x649D2C6B13736883, &[(0x6230B0, 100)]),
     (0x623120, 0x011383D44A010EF1, &[(0x623120, 111)]),
     (0x623190, 0x0C06028A54ECEFEE, &[(0x623190, 130)]),
@@ -4463,6 +5251,8 @@ pub const BODIES: &[Body] = &[
     (0x62EF50, 0x0E0AEDD8BFE0BC4F, &[(0x62EF50, 99)]),
     (0x62F000, 0xD780EF4C1E9C03A8, &[(0x62F000, 99)]),
     (0x62F0B0, 0x230F1648F86AF43E, &[(0x62F0B0, 99)]),
+    (0x62F1D0, 0xC4EA42AB337FC0DA, &[(0x62F1D0, 103)]),
+    (0x635C90, 0x28CB11E0FD04D5E3, &[(0x635C90, 90)]),
     (0x635DA0, 0x7B2168F4B3FD9051, &[(0x635DA0, 178)]),
     (0x635E60, 0x4C606DE392C0D127, &[(0x635E60, 142)]),
     (0x635EF0, 0x72225432AF4E2F19, &[(0x635EF0, 147)]),
@@ -4500,23 +5290,54 @@ pub const BODIES: &[Body] = &[
     (0x6371F0, 0x6B34BE837C2E3F64, &[(0x6371F0, 96)]),
     (0x637290, 0x7FE2E21638432446, &[(0x637290, 99)]),
     (0x63A150, 0xC1D5DC006457C4C9, &[(0x63A150, 80)]),
+    (0x63D780, 0x31B18D9C41E57CD8, &[(0x63D780, 92)]),
+    (0x63D7E0, 0xB96B735C962A5B4E, &[(0x63D7E0, 102)]),
+    (0x63D850, 0xF7E249DCC4830A37, &[(0x63D850, 110)]),
+    (0x63D8C0, 0x0AF2AF3DA70E0797, &[(0x63D8C0, 96)]),
     (0x63D920, 0xF4750D84F69D9F9A, &[(0x63D920, 96)]),
     (0x63D980, 0x2AE30DE292015EA0, &[(0x63D980, 96)]),
+    (0x63D9E0, 0x9545E54EFE60C975, &[(0x63D9E0, 116)]),
     (0x63DA60, 0x4246F9E85362F74A, &[(0x63DA60, 100)]),
+    (0x63DB40, 0xF29FC50685E88BB3, &[(0x63DB40, 110)]),
     (0x63DBB0, 0x9EE5605622EF096F, &[(0x63DBB0, 100)]),
+    (0x63DD70, 0x98169CD25C48C2A5, &[(0x63DD70, 112)]),
+    (0x63DDE0, 0x05741725F4D9566C, &[(0x63DDE0, 120)]),
+    (0x63DE60, 0x7D4D4A40E4911C4A, &[(0x63DE60, 80)]),
     (0x63DEB0, 0x8937CB0CE1B8A0C0, &[(0x63DEB0, 96)]),
+    (0x63DF10, 0xCF4F489D5A072E4F, &[(0x63DF10, 106)]),
+    (0x643780, 0x21F1051B33E909B5, &[(0x643780, 99)]),
     (0x643870, 0x1A86328B315F4CA8, &[(0x643870, 107)]),
     (0x6438E0, 0x0CE344B03A5FF06E, &[(0x6438E0, 107)]),
     (0x643950, 0x4F83D2D8B2926095, &[(0x643950, 100)]),
+    (0x6439C0, 0xB573D764915FC205, &[(0x6439C0, 120)]),
+    (0x646EC0, 0xB6B7F83C4B6627F8, &[(0x646EC0, 118)]),
     (0x6498B0, 0x044760E490B78F41, &[(0x6498B0, 126)]),
+    (0x649930, 0x2B2B12ABD4A670C0, &[(0x649930, 108)]),
+    (0x6499A0, 0xFF3312E982CAE8F4, &[(0x6499A0, 110)]),
+    (0x649A10, 0x4EB578A5E716B39A, &[(0x649A10, 104)]),
     (0x649A80, 0xBC766B661866F07A, &[(0x649A80, 104)]),
+    (0x649AF0, 0xDD5B4B9728821982, &[(0x649AF0, 104)]),
+    (0x649B60, 0xA9F033EEB99A3F44, &[(0x649B60, 104)]),
+    (0x649BD0, 0x3BADB322C42E52BC, &[(0x649BD0, 104)]),
+    (0x649C40, 0x40E100674C5DF7FF, &[(0x649C40, 104)]),
+    (0x649CB0, 0x3489A8EFC693CBE5, &[(0x649CB0, 100)]),
+    (0x649D20, 0xC0CA2BB60A3B2B82, &[(0x649D20, 104)]),
+    (0x649E70, 0x494564F9AF01C4C8, &[(0x649E70, 104)]),
+    (0x649EE0, 0xB949EA4F3C0A210F, &[(0x649EE0, 100)]),
+    (0x649FD0, 0x17F0450E4CD1E5F2, &[(0x649FD0, 110)]),
+    (0x64A040, 0xCA49C7D3FBEB60CA, &[(0x64A040, 106)]),
+    (0x64A0B0, 0x167C15C1250E9D31, &[(0x64A0B0, 100)]),
+    (0x64A120, 0xBC7B99C83517AF1F, &[(0x64A120, 106)]),
+    (0x64A190, 0x19EA983A792A90A2, &[(0x64A190, 100)]),
     (0x64A200, 0x9D0C0560FD2E31B9, &[(0x64A200, 114)]),
+    (0x64A280, 0xFB382F40833AB080, &[(0x64A280, 104)]),
     (0x64A2F0, 0xA440F78DF8E9F498, &[(0x64A2F0, 96)]),
     (0x64A350, 0xF8FAE44DB0B56F43, &[(0x64A350, 96)]),
     (0x64A3B0, 0x87D2293DA7947CEB, &[(0x64A3B0, 96)]),
     (0x64A410, 0x8742D0D602B2E6FE, &[(0x64A410, 151)]),
     (0x64A4B0, 0x1F8813640C6A20A1, &[(0x64A4B0, 100)]),
     (0x64A520, 0xCAABDBE04A841147, &[(0x64A520, 96)]),
+    (0x64D220, 0xDE3C3CD392D6BC1D, &[(0x64D220, 104)]),
     (0x652F10, 0x5496B85E754D6375, &[(0x652F10, 99)]),
     (0x652FC0, 0xD7F1ADBAA123F06C, &[(0x652FC0, 99)]),
     (0x6557A0, 0xE466952DC6591B1F, &[(0x6557A0, 111)]),
@@ -4537,6 +5358,8 @@ pub const BODIES: &[Body] = &[
     (0x659A10, 0x4373CEA53BE3507E, &[(0x659A10, 128)]),
     (0x659A90, 0xF303A1B22B29CDEF, &[(0x659A90, 90)]),
     (0x659AF0, 0x7EDE6786DB403F96, &[(0x659AF0, 106)]),
+    (0x659B60, 0xE804A1B1EACBFF24, &[(0x659B60, 96)]),
+    (0x659BC0, 0x17108F72045EBEEE, &[(0x659BC0, 106)]),
     (0x659C30, 0xF979A95C54C162D7, &[(0x659C30, 210)]),
     (0x659D10, 0x8493A2CA17BB3C0C, &[(0x659D10, 90)]),
     (0x659D70, 0x3CD17B2263EEF06F, &[(0x659D70, 106)]),
@@ -4596,6 +5419,9 @@ pub const BODIES: &[Body] = &[
     (0x692910, 0x71CAECF3E6F797D9, &[(0x692910, 149)]),
     (0x6929B0, 0xADEFEC14E8644AFF, &[(0x6929B0, 212)]),
     (0x692A90, 0xE4327A69D86DF96A, &[(0x692A90, 218)]),
+    (0x692C80, 0xC16349B52CB3C857, &[(0x692C80, 100)]),
+    (0x692CF0, 0x62C422C7449A702C, &[(0x692CF0, 112)]),
+    (0x692D60, 0xA8B6A519F82DF703, &[(0x692D60, 99)]),
     (0x695740, 0xA01F308873AC0DA5, &[(0x695740, 108)]),
     (0x6957B0, 0x323266AEBB225475, &[(0x6957B0, 104)]),
     (0x695820, 0xD71EE13523BE35DC, &[(0x695820, 104)]),

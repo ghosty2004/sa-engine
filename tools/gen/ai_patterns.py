@@ -37,6 +37,7 @@ cannot silently drift from the bytes it was matched against).
 import csv
 import os
 import re
+import subprocess
 import sys
 
 import capstone
@@ -100,11 +101,9 @@ def catname(a):
 AI_CLASS = re.compile(r'^(CTask|CEvent|CPedGroup|CDecisionMaker|CDecision|CPedAttractor|C\w*Attractor\b|'
                       r'CTaskAllocator|CInformFriendsEventQueue|CInformGroupEventQueue|CPedIntelligence|'
                       r'CAcquaintance|CEntitySeekPos)')
-# Classes other agents port (AI-2: c-bug tasks, event handler responses, group intelligence;
-# AI-3: the vehicle/chase task family). Never generated here.
-EXCLUDE = re.compile(r'^(CTaskSimpleUseGun|CTaskSimpleDuck|CTaskSimpleFight|CTaskManager|CEventHandler|'
-                     r'CPedGroupIntelligence|CTaskComplexCar|CTaskSimpleCar|CTaskComplexDrive|CTaskComplexChase|'
-                     r'CTaskComplexEnterCar|CTaskComplexLeaveCar|CTaskComplexEnterAnyCar|CTaskComplexLeaveAnyCar)')
+# Classes other agents port (none since PORT-AI-7: AI-2's c-bug tasks, event handler responses and group
+# intelligence and AI-3's vehicle/chase tasks are merged; what they ported is skipped as already ported).
+EXCLUDE = re.compile(r'(?!)')
 
 
 def cls_of(name):
@@ -137,10 +136,10 @@ def already_ported():
         if '/target' in dirpath:
             continue
         for f in sorted(files):
-            if not f.endswith('.rs') or f.startswith('gen_'):
+            if not f.endswith('.rs') or (f.startswith('gen_') and dirpath.endswith(os.path.join('sa-ai', 'src'))):
                 continue
             s = open(os.path.join(dirpath, f), encoding='utf-8').read()
-            for m in re.finditer(r'#\[hook\(addr = 0x([0-9A-Fa-f]+)', s):
+            for m in re.finditer(r'#\[(?:sa_core::)?(?:hook|native)\(\s*addr\s*=\s*0x([0-9A-Fa-f]+)', s):
                 done.add(int(m.group(1), 16))
             if os.sep + 'sa-ai' + os.sep in dirpath + os.sep:
                 for m in re.finditer(r'^/// `[^`]*` \(0x([0-9A-Fa-f]+)', s, re.M):
@@ -186,8 +185,17 @@ def linear(a, e):
     return out
 
 
+# CRT functions outside the catalogue extents (their `ret` read off the bytes by hand): `rand` and `free`
+# are cdecl.
+CRT_POPS = {0x821B1E: 0, 0x8214BD: 0}
+# CRT `rand`: called through `crate::common::rand` with the original return address (`orig::at_site`).
+RAND = 0x821B1E
+
+
 def pops(a, depth=0):
     """Stack bytes the function at `a` removes on return (from its own `ret N`), or None."""
+    if a in CRT_POPS:
+        return CRT_POPS[a]
     if a in _pops:
         return _pops[a]
     res = None
@@ -253,6 +261,10 @@ def entry_reads(a):
         if i.mnemonic == 'xor' and len(i.operands) == 2 and i.operands[0].type == X.X86_OP_REG and \
                 i.operands[0].reg == i.operands[1].reg:
             written.add(PARENT.get(i.operands[0].reg))
+            continue
+        # `mov edi, edi` (the 2-byte alignment no-op before a loop) reads nothing that matters
+        if i.mnemonic == 'mov' and len(i.operands) == 2 and i.operands[0].type == X.X86_OP_REG and \
+                i.operands[1].type == X.X86_OP_REG and i.operands[0].reg == i.operands[1].reg:
             continue
         if i.mnemonic == 'push' and i.operands[0].type == X.X86_OP_REG and \
                 PARENT.get(i.operands[0].reg) in ('ebx', 'esi', 'edi', 'ebp'):
@@ -899,6 +911,9 @@ def run(fn, st, pc, out):
             if o.type == X.X86_OP_MEM and o.mem.index and o.mem.scale == 4 and not o.mem.base and o.mem.segment == 0:
                 switch(fn, st, out, o, pc)
                 return
+            if o.type == X.X86_OP_MEM and o.mem.base and not o.mem.index and o.mem.segment == 0:
+                vtail(fn, st, out, o)
+                return
             raise Reject('indirect jump')
         elif mn in CC:
             cnd = cond_of(st, CC[mn])
@@ -995,7 +1010,13 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
             fn.uses_this = True
     n = fn.new()
     key = (target, conv, nargs)
-    fn.calls[key] = True
+    if target == ('d', RAND):
+        if nargs:
+            raise Reject('rand with arguments')
+        # the original return address names the draw (sa-hook's determinism hash keys on it)
+        vload = ('site', nxt)
+    else:
+        fn.calls[key] = True
     out.append(('call', n, target, conv, this, args, vload))
     if conv in ('thiscall', 'stdcall'):
         for _ in range(nargs):
@@ -1048,6 +1069,44 @@ def tail(fn, st, out, tgt):
     fn.calls[(('d', tgt), conv, nargs)] = True
     out.append(('call', n, ('d', tgt), conv, this, args, None))
     fn.rets.add(p)
+    fn.retkinds.add('u32')
+    fn.argmax = max(getattr(fn, 'argmax', -1), st.argmax)
+    out.append(('ret', ('v', n), 'u32'))
+    fn.tail = True
+
+
+# Stack arguments of the virtuals a body may tail-jump to (`jmp [vtbl + N]` on the object in ECX): the
+# callee is the same method of another object (a sub-task's `MakeAbortable`, ...), so it takes the
+# caller's own arguments, which it receives unchanged.
+VTAIL_ARGS = {'MakeAbortable': 3, 'ProcessPed': 1, 'ControlSubTask': 1, 'CreateFirstSubTask': 1,
+              'CreateNextSubTask': 1, 'SetPedPosition': 1}
+
+
+def vtail(fn, st, out, o):
+    nargs = VTAIL_ARGS.get(method_of(fn.name or ''))
+    if nargs is None:
+        raise Reject('virtual tail jump of an unknown method')
+    if st.esp != 0:
+        raise Reject('tail jump with an unbalanced stack')
+    check_restored(st)
+    if any(k > 0 for k in st.stack):
+        raise Reject('virtual tail jump after an argument write')
+    vt = regval(st, fn, o.mem.base)
+    obj = st.r['ecx']
+    if not (vt[0] == 'v' and any(x[0] == 'load' and x[1] == vt[1] and x[2] == 4 and x[4] == obj and x[5] == 0
+                                 for x in out)):
+        raise Reject('virtual tail jump not on the vtable of ECX')
+    if has_unknown(obj):
+        raise Reject('unknown ECX at a tail call')
+    if obj == ('this',):
+        fn.uses_this = True
+    args = [('arg', k) for k in range(nargs)]
+    st.argmax = max(st.argmax, nargs - 1)
+    n = fn.new()
+    target = ('vs', o.mem.disp)
+    fn.calls[(target, 'thiscall', nargs)] = True
+    out.append(('call', n, target, 'thiscall', obj, args, vt[1]))
+    fn.rets.add(4 * nargs)
     fn.retkinds.add('u32')
     fn.argmax = max(getattr(fn, 'argmax', -1), st.argmax)
     out.append(('ret', ('v', n), 'u32'))
@@ -1140,6 +1199,7 @@ def analyse(a, name=''):
     if not ranges:
         raise Reject('no extent')
     fn = Fn(a, body, ranges)
+    fn.name = name
     fn.seh_pcs = set()
     hd = list(md.disasm(rd(body, 24), body))[:3]
     if len(hd) == 3 and hd[0].mnemonic == 'push' and hd[0].operands[0].type == X.X86_OP_IMM and hd[0].operands[0].imm & M32 == M32 and hd[1].mnemonic == 'push' and \
@@ -1321,6 +1381,10 @@ class Emit:
                     out.append('%swr::<%s>(p(%s), %s, %s);' % (pad, t, self.e(base), off(disp), ve))
             elif s[0] == 'call':
                 _, n, target, conv, this, args, vload = s
+                if target == ('d', RAND):
+                    ce = 'sa_core::orig::at_site(%s, rand) as u32' % hexlit(vload[1])
+                    out.append('%slet v%d = %s;' % (pad, n, ce) if n in self.used else '%s%s;' % (pad, ce))
+                    continue
                 fname = callee_name(target, conv, len(args))
                 te = None if this is None else (self.e(this) if target[0] == 'd' else 'p(%s)' % self.e(this))
                 al = ([te] if te is not None else []) + [self.e(a) for a in args]
@@ -1555,6 +1619,56 @@ PRESERVE = {
 }
 
 
+# Writer/verifier split (docs/verify/HOWTO.md): a generated hook whose catalogue state is still
+# `unknown`/`specified` (`catalog/state.csv`) is registered `unverified`, with the batch id
+# `tools/gen/ai_patterns_unverified.txt` assigns it (`ADDR BATCH` lines). `--assign PREFIX` appends the
+# missing ones in address order, in batches of at most BATCH_MAX (`PREFIX-<n>`, n after the highest one
+# in use). A verifier promotes a hook by setting its state and deleting its line. Hooks generated before
+# the split (state `implemented` or above) carry no `unverified`.
+BATCH_MAX = 60
+UNVERIFIED_FILE = os.path.join(ROOT, 'tools', 'gen', 'ai_patterns_unverified.txt')
+
+
+def read_states():
+    out = {}
+    for r in csv.DictReader(open(os.path.join(ROOT, 'catalog', 'state.csv'))):
+        out[int(r['address'], 16)] = r['state']
+    return out
+
+
+def read_batches():
+    out = {}
+    if os.path.exists(UNVERIFIED_FILE):
+        for l in open(UNVERIFIED_FILE):
+            l = l.split('#', 1)[0].strip()
+            if l:
+                a, b = l.split()
+                out[int(a, 16)] = b
+    return out
+
+
+def route_hazards(fn, name):
+    """The verifier hints (docs/verify/HOWTO.md §1) from what the interpreter executed.
+
+    route: `split` for static initialisers and `atexit` destructors (one-time code), `L2` otherwise (also for bodies that only
+    return a constant: this generator writes no L1 specs, and their double run is trivially exact). hazards: `preserved-regs` (declared
+    `preserve`), `ax-al-return` (an AL result with the caller's upper EAX), `heap-writes` (a store
+    through a pointer, not to a fixed global), else `none`."""
+    flat = list(flatten(fn.out))
+    haz = []
+    if fn.addr in PRESERVE:
+        haz.append('preserved-regs')
+    if fn.ret == 'u8':
+        haz.append('ax-al-return')
+    if any(x[0] == 'store' and x[2] is not None for x in flat):
+        haz.append('heap-writes')
+    if (name or '').startswith(('__init_', '__dtor_')):
+        route = 'split'
+    else:
+        route = 'L2'
+    return route, ','.join(haz) or 'none'
+
+
 def fnv(data):
     h = 0xcbf29ce484222325
     for b in data:
@@ -1624,12 +1738,46 @@ def main():
             fid += '_b'
         seen.add(fid)
         gens.setdefault(FAMILY_FILE[fam], []).append((a, name, fid, fn, fam, strip_returns(body)))
+    states = read_states()
+    batches = read_batches()
+    want = []
+    for recs in gens.values():
+        for a, name, fid, fn, fam, body in recs:
+            if states.get(a, 'unknown') in ('unknown', 'specified') and hookable(a, fn) is True:
+                fn.unverified = batches.get(a)
+                if fn.unverified is None:
+                    want.append(a)
+            else:
+                fn.unverified = None
+    if want:
+        if '--assign' not in sys.argv:
+            sys.exit('%d generated hooks have no batch in %s: run with --assign PREFIX' % (
+                len(want), os.path.relpath(UNVERIFIED_FILE, ROOT)))
+        prefix = sys.argv[sys.argv.index('--assign') + 1]
+        used = [int(b.rsplit('-', 1)[1]) for b in batches.values() if b.rsplit('-', 1)[0] == prefix]
+        # hand-written batches of the same prefix in the crates count too (no id is reused)
+        for dirpath, _, fs in os.walk(os.path.join(ROOT, 'crates')):
+            for f in sorted(fs):
+                if f.endswith('.rs'):
+                    txt = open(os.path.join(dirpath, f), encoding='utf-8').read()
+                    used += [int(n) for n in re.findall(r'unverified = "%s-(\d+)"' % re.escape(prefix), txt)]
+        n = max(used, default=0)
+        with open(UNVERIFIED_FILE, 'a') as fh:
+            for k, a in enumerate(sorted(want)):
+                if k % BATCH_MAX == 0:
+                    n += 1
+                fh.write('0x%X %s-%d\n' % (a, prefix, n))
+        batches = read_batches()
+        for recs in gens.values():
+            for a, name, fid, fn, fam, body in recs:
+                if a in want:
+                    fn.unverified = batches[a]
     files = {}
     report = []
     for f in sorted(FAMILY_FILE.values()):
         if f in files:
             continue
-        files[f] = render(f, gens.get(f, []), report)
+        files[f] = rustfmt(render(f, gens.get(f, []), report))
     os.makedirs(REPORT_DIR, exist_ok=True)
     bad = []
     for f, text in sorted(files.items()):
@@ -1691,10 +1839,15 @@ def render(fname, recs, report):
         if h is True:
             exp, _ = expect_of(a)
             pres = ', preserve = "%s"' % PRESERVE[a] if a in PRESERVE else ''
+            if getattr(fn, 'unverified', None):
+                route, haz = route_hazards(fn, name)
+                pres += ', unverified = "%s", route = "%s", hazards = "%s"' % (fn.unverified, route, haz)
             s += '#[hook(addr = 0x%X, conv = %s, name = "%s", expect = "%s"%s)]\n' % (a, fn.conv, name, exp, pres)
             hooks.append(fid)
         else:
             s += '/// Not hookable: %s.\n' % h
+            # phase B still reaches it through the native registry (STD-6)
+            s += '#[sa_core::native(addr = 0x%X, conv = %s, name = "%s")]\n' % (a, fn.conv, name)
         s += 'pub fn %s(%s)%s {\n' % (fid, ', '.join(args), ret)
         s += '\n'.join(body) + ('\n' if body else '')
         s += '}\n'
@@ -1769,6 +1922,13 @@ def render(fname, recs, report):
         s += '    }\n'
     s += '}\n'
     return s
+
+
+def rustfmt(text):
+    """Format a generated file as the repository's rustfmt does (`rustfmt.toml`, the workspace edition)."""
+    r = subprocess.run(['rustfmt', '--edition', '2024', '--config-path', os.path.join(ROOT, 'rustfmt.toml'),
+                        '--emit', 'stdout'], input=text, capture_output=True, text=True, check=True)
+    return r.stdout
 
 
 def merge_spans(rng):
