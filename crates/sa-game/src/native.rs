@@ -37,8 +37,13 @@ pub fn install() -> Summary {
         v.push((n.addr, (n.entry)(), n.name));
     }
     let ports = v.len();
-    // exploration stubs (`SA_GAME_STUB`), only where nothing else is registered
-    for (a, f) in stubs() {
+    // exploration stubs (`SA_GAME_STUB`), only where nothing else is registered unless forced (`!ADDR`)
+    for (a, f, force) in stubs() {
+        if force && let Some(slot) = v.iter_mut().find(|r| r.0 == a) {
+            eprintln!("sa-game: SA_GAME_STUB: {a:#x} ({}) is replaced by a constant (forced; exploration only)", slot.2);
+            *slot = (a, f, "SA_GAME_STUB (forced exploration stub)");
+            continue;
+        }
         if let std::collections::btree_map::Entry::Vacant(e) = seen.entry(a) {
             eprintln!("sa-game: SA_GAME_STUB: {a:#x} returns a constant (exploration only)");
             e.insert("SA_GAME_STUB");
@@ -219,9 +224,10 @@ macro_rules! stub_fns {
 /// `SA_GAME_STUB="ADDR=RET[/N],..."` (development aid, never a port): registers up to 48
 /// addresses as functions that return RET without doing anything, so a boot run can look past a
 /// blocker another lane is porting. `N` (0..=8, default 0) is the number of stack dwords the
-/// callee pops (stdcall / thiscall arguments after `this`); 0 suits cdecl.
+/// callee pops (stdcall / thiscall arguments after `this`); 0 suits cdecl. `!ADDR` replaces a registered port too
+/// (calls through the address registry only; Rust callers that name the port directly still reach it).
 #[cfg(target_arch = "x86")]
-fn stubs() -> Vec<(u32, usize)> {
+fn stubs() -> Vec<(u32, usize, bool)> {
     let Ok(spec) = std::env::var("SA_GAME_STUB") else {
         return Vec::new();
     };
@@ -239,18 +245,22 @@ fn stubs() -> Vec<(u32, usize)> {
     let mut out = Vec::new();
     for (i, item) in spec.split(',').filter(|s| !s.trim().is_empty()).take(48).enumerate() {
         let (a, r) = item.split_once('=').unwrap_or((item, "0"));
+        let (a, force) = match a.trim().strip_prefix('!') {
+            Some(a) => (a, true),
+            None => (a, false),
+        };
         let (r, n) = r.split_once('/').unwrap_or((r, "0"));
         if let (Some(a), Some(r), Some(n)) = (num(a), num(r), num(n))
             && n <= 8
         {
             STUB_RET[i].store(r, std::sync::atomic::Ordering::Relaxed);
-            out.push((a, fns[i][n as usize]));
+            out.push((a, fns[i][n as usize], force));
         }
     }
     out
 }
 #[cfg(not(target_arch = "x86"))]
-fn stubs() -> Vec<(u32, usize)> {
+fn stubs() -> Vec<(u32, usize, bool)> {
     Vec::new()
 }
 
