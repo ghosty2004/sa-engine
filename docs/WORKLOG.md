@@ -1109,3 +1109,15 @@
 - Open (docs/verify/integration-6.md): generators treat catalogue state `implemented` as verified, so regenerating
   now would drop `unverified` from generated hooks — fix the generators' promotion rule before the next regeneration;
   CShopping::LoadStats, 0x606890, CObject::Render show L2 differences worth a writer's look.
+
+## 2026-11-12 INTEGRATE-9: one tree for everything (main session)
+- master moved to INTEGRATE-9's 7748bfe7: INTEGRATE-8's tree (web build, SA:MP native + browser, driving, climbing,
+  browser audio, SAMP-4/START/UI-2) with every master commit since b239e888 re-applied (INTEGRATE-6 promotions,
+  docs, samp-rs/ monorepo import). Every one of the 15 master commits is present by subject; origin/master
+  (37c7093f) is an ancestor, so the push is a fast-forward.
+- sa-game takes samp-client / samp-proto / samp-saa from samp-rs/ by path; no git+file sources left; every document
+  and script points at samp-rs/ (historical records annotated); auth_table.txt expected under re/samp/ (not committed).
+- Generator fix: ai_patterns.py keeps listed hooks unverified until L1/L2/L3 (INTEGRATE-8's regeneration had dropped
+  `unverified` from 554 PORT-AI-7 generated hooks; restored). Queue: 2,328 unverified hooks.
+- Tests: sa-hook 58, L1 18/18, all lib tests, samp-rs 638; builds (DLL, native ± samp, wasm ± samp); smoke 0 blocked.
+  verify-all int9: IDENTICAL on all 13 recordings.
