@@ -101,6 +101,13 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vehicle_soft_ground::HOOKS,
     // PORT-VEH-4
     crate::automobile_nitrous::HOOKS,
+    crate::boat_pre_render::HOOKS,
+    crate::heli_pre_render::HOOKS,
+    crate::boat_render::HOOKS,
+    crate::wake_locks_component_rotation::HOOKS,
+    crate::automobile_flying_component::HOOKS,
+    crate::quad_bike_controls::HOOKS,
+    crate::vehicle_plane_weapons::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

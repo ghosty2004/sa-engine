@@ -110,6 +110,8 @@ pub const MODULES: &[&[HookReg]] = &[
     // PORT-VEH-4
     world::break_object::HOOKS,
     world::interior_group_paths::HOOKS,
+    world::entry_exit_transition::HOOKS,
+    world::water_creature::HOOKS,
     physical::pair_collision::HOOKS,
     world::garage_tidy_up_close::HOOKS,
     crate::generated::HOOKS,
