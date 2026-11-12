@@ -23,7 +23,7 @@ use super::common::{ftol32, g, rd, wr, x, xi};
 
 orig! {
     /// `InteriorGroup_c::ArePathsLoaded()` (0x595380)
-    fn are_paths_loaded(this: GPtr<u8>) -> u8 = thiscall 0x595380 => super::interior_paths_loaded::are_paths_loaded;
+    fn are_paths_loaded(this: GPtr<u8>) -> u8 = thiscall 0x595380 => unported;
     /// `CPathFind::StartNewInterior(int32)` (0x44DE80) on `ThePaths` (0x96F050)
     fn start_new_interior(pf: GPtr<u8>, id: i32) = thiscall 0x44DE80 => unported;
     /// `CPathFind::AddNodeToNewInterior(float x, float y, float z, bool, int8 x6)` (0x450E90): the node
