@@ -221,6 +221,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GO_TO_POINT_SHOOTING_CTOR,
     HOOK_DECISION_MAKER_TYPES_ADD_EVENT_RESPONSE,
     HOOK_THE_SCRIPTS_ADD_SCRIPT_EFFECT_SYSTEM,
+    HOOK_THE_SCRIPTS_REMOVE_SCRIPT_SEARCH_LIGHT,
 ];
 
 orig! {
@@ -391,4 +392,50 @@ pub fn the_scripts_add_script_effect_system(fx: u32) -> i32 {
     used(i).write(1);
     GPtr::<u32>::from_addr(SCRIPT_FX + 8 * i as usize + 4).write(fx);
     get_new_unique_script_thing_index(i, 1)
+}
+
+orig! {
+    /// `CTheScripts::GetActualScriptThingIndex(int32 handle, uint8 type)` (0x4839A0)
+    fn get_actual_script_thing_index(handle: i32, ty: u32) -> i32 = cdecl 0x4839A0 => unported;
+    /// `CEntity::CleanUpOldReference(CEntity** slot)` (0x571A00, `ret 4`)
+    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
+}
+
+/// `CTheScripts::ScriptSearchLightArray` (0xA94D68, 8 x 0x7C)
+const SEARCH_LIGHTS: usize = 0xA94D68;
+/// `CTheScripts::NumberOfScriptSearchLights` (0xA90830, int16)
+const NUM_SEARCH_LIGHTS: usize = 0xA90830;
+
+/// `CTheScripts::RemoveScriptSearchLight(int32 handle)` (0x493160, cdecl).
+///
+/// Nothing when `GetActualScriptThingIndex(handle, 2)` is -1. Else the light's bytes +0..+3 become 0, 0, 1, 0, the
+/// dwords +0x08..+0x40 0, and each entity reference in the order +0x48, +0x44, +0x4C, +0x50, +0x54 is released
+/// (`CleanUpOldReference(&slot)` when non-null) and cleared; then `NumberOfScriptSearchLights--`.
+#[hook(addr = 0x493160, conv = cdecl, name = "CTheScripts::RemoveScriptSearchLight", expect = "8B 44 24 04 6A 02 50",
+       unverified = "script5-8", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn the_scripts_remove_script_search_light(handle: i32) {
+    let idx = get_actual_script_thing_index(handle, 2);
+    if idx == -1 {
+        return;
+    }
+    let l = GPtr::<u8>::from_addr(SEARCH_LIGHTS).byte_add(idx.wrapping_mul(0x7C) as isize);
+    l.write(0);
+    l.byte_add(1).write(0);
+    l.byte_add(2).write(1);
+    l.byte_add(3).write(0);
+    let mut off = 8;
+    while off <= 0x40 {
+        l.byte_add(off).cast::<u32>().write(0);
+        off += 4;
+    }
+    for off in [0x48, 0x44, 0x4C, 0x50, 0x54] {
+        let slot = l.byte_add(off);
+        let e = slot.cast::<GPtr<u8>>().read();
+        if !e.is_null() {
+            entity_clean_up_old_reference(e, slot);
+        }
+        slot.cast::<u32>().write(0);
+    }
+    let n = GPtr::<i16>::from_addr(NUM_SEARCH_LIGHTS);
+    n.write(n.read().wrapping_sub(1));
 }
