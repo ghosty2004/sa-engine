@@ -1043,3 +1043,14 @@
   exclusion), GEN-ALL-2 (generator regenerated on the integrated tree: 852 unverified hooks, 25 L1-pure), SRAND-FIX.
   Duplicates settled (see docs/verify/integration-2.md). verify-all int2: IDENTICAL on all 12; L1 18/18.
 - Catalogue: VERIFIER-6 promotions → L2; every registered address at least `implemented`.
+
+## 2026-11-12 INTEGRATE-3: the native path on master (main session)
+- Agent INTEGRATE-3 brought STD-7/8/9 (native boot through in-world frames: sa-game, sa-platform, 870 static-initialiser
+  natives, CRope::Update, the in-world render chain, `--start-in-world`), PORT-MENU (menu-1..3 verified), WRITER-CLUMP
+  (CreateSkinnedClump tree), WRITER-MVP-N and WRITER-INTRO (58 CEventHandler/cutscene hooks) onto master 4d484a0.
+  patterns.py fixed (rows marked implemented by the catalogue no longer hide the generator's own addresses): 841
+  generated hooks. Duplicates: 0x4D2E10 keeps STD-7's copy, 0x54EEA0 keeps MVP-K's hook (docs/verify/integration-3.md).
+- Tests: sa-hook 58, sa-script 8, sa-core 70, L1 18/18. verify-all int3/int3b: IDENTICAL on all 13 recordings.
+  Native smoke run (--start-in-world, offscreen) reaches Grove Street frames; the next native gaps (0x7331E0,
+  0x410090) are ported on STD-10's branch, where CJ is visible and walks (not yet on master).
+- Catalogue: every registered address at least `implemented`.

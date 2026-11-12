@@ -6,24 +6,24 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 
 | Subsystem | unknown | specified | implemented | L1 | L2 | L3 | excluded | total | ≥L2 % |
 |---|---|---|---|---|---|---|---|---|---|
-| AI | 42 | 1192 | 1851 | 0 | 962 | 0 | 0 | 4047 | 23.8 |
-| UNK-game | 723 | 461 | 960 | 1 | 738 | 0 | 0 | 2883 | 25.6 |
-| RW | 134 | 361 | 1054 | 1 | 255 | 0 | 0 | 1805 | 14.1 |
-| WORLD | 12 | 265 | 429 | 21 | 191 | 0 | 0 | 918 | 20.8 |
+| AI | 41 | 1139 | 1905 | 0 | 962 | 0 | 0 | 4047 | 23.8 |
+| UNK-game | 710 | 453 | 981 | 1 | 738 | 0 | 0 | 2883 | 25.6 |
+| RW | 130 | 315 | 1104 | 1 | 255 | 0 | 0 | 1805 | 14.1 |
+| WORLD | 12 | 263 | 431 | 21 | 191 | 0 | 0 | 918 | 20.8 |
 | AUDIO | 0 | 60 | 406 | 0 | 376 | 0 | 0 | 842 | 44.7 |
-| RENDER | 3 | 186 | 454 | 12 | 177 | 0 | 0 | 832 | 21.3 |
-| VEH | 2 | 232 | 306 | 0 | 173 | 1 | 0 | 714 | 24.4 |
+| RENDER | 3 | 177 | 463 | 12 | 177 | 0 | 0 | 832 | 21.3 |
+| VEH | 2 | 229 | 309 | 0 | 173 | 1 | 0 | 714 | 24.4 |
 | STREAM | 0 | 3 | 211 | 70 | 269 | 0 | 0 | 553 | 48.6 |
 | POP | 3 | 0 | 297 | 0 | 130 | 0 | 0 | 430 | 30.2 |
-| PED | 1 | 19 | 186 | 20 | 144 | 2 | 0 | 372 | 39.2 |
-| HUD | 0 | 5 | 134 | 24 | 179 | 0 | 0 | 342 | 52.3 |
-| CORE | 0 | 4 | 138 | 56 | 107 | 14 | 0 | 319 | 37.9 |
-| ANIM | 0 | 6 | 122 | 34 | 103 | 0 | 0 | 265 | 38.9 |
-| SCRIPT | 12 | 75 | 127 | 0 | 9 | 0 | 0 | 223 | 4.0 |
-| CAM | 0 | 19 | 97 | 5 | 97 | 0 | 0 | 218 | 44.5 |
+| PED | 1 | 18 | 187 | 20 | 144 | 2 | 0 | 372 | 39.2 |
+| HUD | 0 | 0 | 139 | 24 | 179 | 0 | 0 | 342 | 52.3 |
+| CORE | 0 | 3 | 139 | 56 | 107 | 14 | 0 | 319 | 37.9 |
+| ANIM | 0 | 2 | 126 | 34 | 103 | 0 | 0 | 265 | 38.9 |
+| SCRIPT | 12 | 69 | 133 | 0 | 9 | 0 | 0 | 223 | 4.0 |
+| CAM | 0 | 18 | 98 | 5 | 97 | 0 | 0 | 218 | 44.5 |
 | WEAPON | 1 | 17 | 68 | 11 | 61 | 0 | 0 | 158 | 38.6 |
 | INPUT | 0 | 0 | 43 | 81 | 31 | 0 | 0 | 155 | 20.0 |
-| COLL | 0 | 3 | 33 | 25 | 84 | 0 | 0 | 145 | 57.9 |
+| COLL | 0 | 1 | 35 | 25 | 84 | 0 | 0 | 145 | 57.9 |
 | MATH | 0 | 11 | 5 | 89 | 5 | 2 | 0 | 112 | 6.2 |
 | PHYS | 0 | 2 | 34 | 6 | 31 | 0 | 0 | 73 | 42.5 |
 | CALLED-ONLY | 3 | 16 | 14 | 0 | 4 | 0 | 0 | 37 | 10.8 |
@@ -36,11 +36,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | X-libpng-1.0.12+zlib-1.1.3 | 0 | 0 | 0 | 0 | 0 | 0 | 197 | 197 | - |
 | X-quicktime-qtml | 0 | 0 | 0 | 0 | 0 | 0 | 38 | 38 | - |
 | X-linker-thunk | 0 | 0 | 0 | 0 | 0 | 0 | 26 | 26 | - |
-| **total** | 937 | 2969 | 6972 | 456 | 4126 | 19 | 6683 | 22162 | 26.78 |
+| **total** | 919 | 2828 | 7131 | 456 | 4126 | 19 | 6683 | 22162 | 26.78 |
 
-`specified` by source: REA 1329, gta-reversed 1640
+`specified` by source: REA 1298, gta-reversed 1530
 
-## Functions above `specified` (11573)
+## Functions above `specified` (11732)
 
 | address | name | subsystem | state | evidence | updated |
 |---|---|---|---|---|---|
@@ -327,6 +327,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x411a80 | CMatrix::operator*= | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
 | 0x411ba0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x411bf0 |  | UNK-game | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
+| 0x411e20 | CCollision::Update | COLL | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x411e30 | CCollision::SortOutCollisionAfterLoad | COLL | implemented | PORT-COLL (2026-11-07): Rust port in crates/sa-world; L1 10^6 native-backend re-run pending (target/collv/l1-native.txt); no L2 call in the corpus or below the case budget (docs/arch/coll-port.md) | 2026-11-07 |
 | 0x411e70 | CCollision::TestSphereSphere | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
 | 0x411ec0 | CCollision::CalculateColPointInsideBox | COLL | L2 | PORT-COLL (2026-11-07): main-session port-l2.sh lane 1 (vc3 grove 4/frame, vcb burst 1000/frame, vcn nested-only hooks alone, vcpr pause-restart): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all 120 COLL hooks on Rust frame-identical on both recordings; all 897 ports on Rust frame-identical (grove); hook-off not run | 2026-11-07 |
@@ -383,6 +384,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x419f00 | CCollision::SphereCastVsEntity | COLL | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x41a5a0 | CCollision::SphereVsEntity | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x41a820 | CCollision::CheckCameraCollisionBuildings | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
+| 0x41a990 | CCollision::CheckCameraCollisionVehicles | COLL | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x41ab20 | CCollision::CheckCameraCollisionObjects | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x41ac40 | CCollision::BuildCacheOfCameraCollision | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
 | 0x41b000 | CCollision::CameraConeCastVsWorldCollision | COLL | implemented | written, unverified (batch mvpe-coll-1); verification queue | 2026-11-11 |
@@ -738,6 +740,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x440d10 | CEntryExitManager::Update | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4410e0 |  | HUD | L2 | L2 hud3-a-gr: 199/199 cases; 0 mismatches; 0 undeclared; L2 hud3-a-pa: 597/597 cases; 0 mismatches; 0 undeclared; L2 hud3-a2-mh: 1000/1001 cases; 0 mismatches; 0 undeclared | 2026-11-11 |
 | 0x441130 | CPhysical::SetVelocity | PHYS | L1 | PORT-PHYS: sa-oracle l1 >=1M cases, 0 mismatches (main-session spot check PhysSetVelocity 1M PASS) | 2026-11-10 |
+| 0x4411a0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x441210 | CGameLogic::InitAtStartOfGame | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x441240 | CGameLogic::ForceDeathRestart | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x441290 | CGameLogic::StopPlayerMovingFromDirection | WORLD | implemented | WORLD-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -857,6 +860,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x44d1b0 | CPathFind::RemoveNodeFromList | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44d1e0 | CPathFind::AddNodeToList | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x44d230 | CPathFind::These2NodesAreAdjacent | POP | L2 | split car-ai-final:32/32 (0 mismatches; 0 undeclared) COUNT (spool quota cut); split police-gang-c:28/46 (0 mismatches; 0 undeclared) DIVERGED later; all-ports L3 IDENTICAL on all 11 recordings (verif | 2026-11-11 |
+| 0x44d2b0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x44d2c0 |  | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x44d2f0 |  | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x44d310 | CPathFind::ThisNodeWillLeadIntoADeadEnd | POP | implemented | POP-2 ported; implemented (split inputs diverged before a comparison) | 2026-11-11 |
@@ -929,6 +933,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x452c80 | CPathFind::SwitchRoadsOffInArea | POP | L2 | split car-ai-final:3/3 (0 mismatches; 0 undeclared); split police-gang-c:5/5 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x452f00 | CPathFind::SwitchPedRoadsOffInArea | POP | L2 | split car-ai-final:2/2 (0 mismatches; 0 undeclared); split police-gang-c:4/4 (0 mismatches; 0 undeclared); all-ports L3 IDENTICAL on all 11 recordings (verify-all pop2c) | 2026-11-11 |
 | 0x452f40 | CPathFind::LoadPathFindData-Area | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x453fa0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4541e0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x454920 |  | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
 | 0x454960 | CPickup::SetPosn | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
@@ -982,6 +987,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x459b30 | CVehicleRecording::InterpolateInfoForCar | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x459d10 | CVehicleRecording::SkipForwardInRecording | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x459f00 | CVehicleRecording::RenderLineSegment | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x459f70 | CVehicleRecording::Render | VEH | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x459f80 | CVehicleRecording::RegisterRecordingFile | VEH | L2 | L2 veh2-d-l2: 426/426 PASS (0 mismatches, 0 undeclared) | 2026-11-11 |
 | 0x459ff0 | CVehicleRecording::FindIndexWithFileNameNumber | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x45a020 | CVehicleRecording::RequestRecordingFile | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
@@ -1001,6 +1007,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x45b060 | CAnimBlendAssocGroup::GetAnimBlock | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; ret / mov+ret shorter than the 5-byte entry patch; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x45b110 | CPlayerInfo::~CPlayerInfo | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x45b150 | CReplay::DisableReplays | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x45b160 | CReplay::EnableReplays | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x45b170 | CReplay::StorePedAnimation | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x45b730 | tReplayVehicleBlock::MakeVehicleUpdateData | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x45bf90 | tReplayBmxBlock::MakeBmxUpdateData | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
@@ -1008,6 +1015,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x45c070 | tReplayBikeBlock::MakeBikeUpdateData | WORLD | implemented | written, unverified (batch mvpb-world-1); verification queue | 2026-11-11 |
 | 0x45c0d0 | tReplayBikeBlock::ExtractBikeUpdateData | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x45c210 | CReplay::Display | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x45c440 | CReplay::ShouldStandardCameraBeProcessed | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x45c450 | CReplay::FindPoolIndexForPed | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x45c460 | CReplay::FindPoolIndexForVehicle | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x45c470 | CReplay::CanWeFindPoolIndexForPed | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -1049,6 +1057,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x461170 | CRoadBlocks::GenerateRoadBlockPedsForCar | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x4619c0 | CRoadBlocks::CreateRoadBlockBetween2Points | POP | implemented | pop-port-3 ported; not-ported | 2026-11-11 |
 | 0x4629e0 | CRoadBlocks::GenerateRoadBlocks | POP | implemented | pop-port-3 ported; partial-fallback | 2026-11-11 |
+| 0x463360 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x463370 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4633e0 | CEntity::GetIsStatic | WORLD | L2 | L2 grove:1000/1001 (0 mismatches; 0 undeclared) | 2026-11-11 |
 | 0x463540 | CTaskSimpleLeaveGroup::Constructor | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); split driving: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1063,6 +1072,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4636b0 | CTaskSimpleFinishBrain::GetTaskType | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4636c0 | CTaskSimpleFinishBrain::~CTaskSimpleFinishBrain | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4636e0 |  | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
+| 0x463750 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x463770 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4637e0 | CMissionCleanup::AddEntityToList | SCRIPT | implemented | script-port ported; implemented | 2026-11-11 |
 | 0x463830 | CUpsideDownCarCheck::IsCarUpsideDown-vehicle | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x4638d0 | CUpsideDownCarCheck::AddCarToCheck | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -1086,16 +1097,19 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4648e0 | CRunningScript::Init | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x464980 | CTheScripts::DrawScriptSpritesAndRectangles | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x464bb0 | CTheScripts::WipeLocalVariableMemoryForMissionScript | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x464bd0 | CRunningScript::RemoveScriptFromList | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x464c00 | CRunningScript::AddScriptToList | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x464c20 | CTheScripts::StartNewScript-last-idle | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x464d20 | CTheScripts::GetScriptIndexFromPointer | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x464d40 | CTheScripts::StartTestScript | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x464d50 | CTheScripts::IsPlayerOnAMission | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x464d70 | CRunningScript::IsPedDead | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x464da0 | CRunningScript::UpdatePC | SCRIPT | L2 | PORT-SCRIPT-1 (2026-11-11): L2; L2 grove PASS 1000/3184 / pr PASS 1000/1001 / cheats PASS 1000/1001; L3 PASS; hook-off PASS; main-session all-ports IDENTICAL grove/c-bug/pause-restart | 2026-11-11 |
 | 0x464dc0 | CRunningScript::SetCharCoordinates | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x464f50 | CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x464ff0 | CTheScripts::CheckStreamedScriptVersion | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x465040 |  | UNK-game | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
+| 0x465070 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4650a0 | CDecisionMaker | UNK-game | L2 | split ai5v3-s-rec: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-c-bug: PASS 4 cases (0 mismatches; 0 undeclared); split ai5v4-s-weapon-combat: PASS 4 cases (0 mismatches; 0 undeclared); sp | 2026-11-11 |
 | 0x4650f0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4652d0 | CMissionCleanup::CheckIfCollisionHasLoadedForMissionObjects | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -1165,6 +1179,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x470070 |  | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4700e0 |  | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x470100 | CBoundingBox::SetMinMax | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x470150 | CRunningScript::PlayAnimScriptCommand | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x470370 | CTheScripts::ReinitialiseSwitchStatementData | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x470390 | CTheScripts::AddToSwitchJumpTable | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4703c0 | CTheScripts::UseSwitchJumpTable | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -1193,6 +1208,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x474710 | CTheScripts::InitialiseSpecialAnimGroup | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x474730 | CTheScripts::InitialiseSpecialAnimGroupsAttachedToCharModels | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x474750 | CTheScripts::AddToListOfSpecialAnimGroupsAttachedToCharModels | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x474800 | CTheScripts::ScriptAttachAnimGroupToCharModel | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x474870 | CCamera::VectorTrackRunning | CAM | implemented | PORT-CAM (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / wc / anim; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4748a0 | CCamera::VectorMoveRunning | CAM | implemented | PORT-CAM (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / wc / anim; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4748d0 | CTaskSimpleSetCharIgnoreWeaponRangeFlag::~CTaskSimpleSetCharIgnoreWeaponRangeFlag | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
@@ -1202,6 +1218,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x478000 | CRunningScript::ProcessCommands2400To2499 | SCRIPT | implemented | script-port ported; implemented (partial) | 2026-11-11 |
 | 0x479d10 | CPed::IsWearingGoggles | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x479d60 | CTheCarGenerators::Get | POP | implemented | POP-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x479da0 | CRunningScript::ProcessCommands2600To2699 | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x47a760 | CRunningScript::ProcessCommands2500To2599 | SCRIPT | implemented | script-port ported; implemented (partial) | 2026-11-11 |
 | 0x47c0e0 |  | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x47c100 | CRunningScript::ProcessCommands300To399 | SCRIPT | implemented | script-port ported; implemented (complete, ADR-002 fallback removed) | 2026-11-11 |
@@ -1222,6 +1239,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x483ba0 | CTheScripts::RemoveScriptSphere | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x483bd0 | CRunningScript::ProcessCommands900To999 | SCRIPT | implemented | script-port ported; implemented (complete, ADR-002 fallback removed) | 2026-11-11 |
 | 0x4859d0 | CRunningScript::UpdateCompareFlag | SCRIPT | L2 | PORT-SCRIPT-1 (2026-11-11): L2; L2 grove PASS 1000/3084 / pr PASS 1000/1001 / cheats PASS 1000/1001; L3 PASS; hook-off PASS; main-session all-ports IDENTICAL grove/c-bug/pause-restart | 2026-11-11 |
+| 0x485a50 | CRunningScript::DoDeathArrestCheck | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x486670 | CTheScripts::CleanUpThisVehicle | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4866c0 | CTheScripts::CleanUpThisObject | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x486720 | CTheScripts::ReadObjectNamesFromScript | SCRIPT | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -1589,6 +1607,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4a8d70 | FxInterpInfo32_c::`scalar deleting destructor' | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4a8d90 | FxInterpInfo255_c::`scalar deleting destructor' | UNK-game | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4a8db0 | ListItem_c::ListItem_c | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4a8dc0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4a8dd0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4a8df0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4a8e30 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -1681,6 +1700,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4ab980 |  | UNK-game | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
 | 0x4ab9b0 |  | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4ab9c0 | CEventGlobalGroup::AddEventsToPed | AI | L2 | split ai4v5-grove: PASS 100 cases (0 mismatches; 0 undeclared) | 2026-11-11 |
+| 0x4aba50 | RwHelper::GetEventGlobalGroup | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4abac0 | CEventSource::ComputeEventSourceType | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 150 cases (0 mismatches, 0 undeclared); split grove: PASS 150 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 150 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4abba0 | CPhysical::ApplyMoveForce | PHYS | implemented | PORT-PHYS: ported; needs L2 (NOCALLS, collision scratch normaliser pending, or moving-list undeclared writes at 0xB9ACC8 in the main-session re-run) | 2026-11-10 |
 | 0x4abc30 | CEvent::TakesPriorityOver | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 33 cases (0 mismatches, 0 undeclared); split grove: PASS 3 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 33 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -2001,7 +2021,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b2700 | CEventDanger::GetSourceEntity | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b27b0 | CEventVehicleHitAndRun::IsCriminalEvent | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x4b2850 | CEvent::GetSoundLevel | AI | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
+| 0x4b2990 | CInformFriendsEventQueue::Init | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4b29e0 | CInformGroupEvent::Process | AI | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
+| 0x4b2ad0 | CInformGroupEventQueue::Init | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4b2ae0 | CInformGroupEventQueue::Process | AI | implemented | ai-port-5 ported; L2-split (undeclared writes to review) | 2026-11-11 |
 | 0x4b2b00 | CEventEditableResponse::InformRespectedFriends | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4b2cd0 | CEventGunShot::AffectsPed | AI | implemented | ai-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -2136,31 +2158,81 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4b8b90 | CEventHandlerHistory::IsRespondingToEvent | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
 | 0x4b8ca0 | CEventHandlerHistory::GetCurrentEvent | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 300 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 300 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4b8cc0 | CEventHandler::GetCurrentEventType | AI | implemented | written, unverified (batch mvpa-ai-2); verification queue | 2026-11-11 |
+| 0x4b8ce0 | CEventHandler::ComputePlayerCollisionWithPedResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b92b0 | CEventHandler::ComputeObjectCollisionResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9340 | CEventHandler::RegisterKill | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9400 | CEventHandler::ComputeDeathResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9470 | CEventHandler::ComputeDeadPedResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4b96d0 | CEventHandler::ComputeVehiclePotentialPassiveCollisionResponse | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4b97b0 | CEventHandler::ComputeReviveResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4b98e0 | CEventHandler::ComputeChatPartnerResponse | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-police-gang PASS 21 compared 0 mismatches 0 undeclared; ai6v2-c-bug PASS 10 compared 0 mismatches 0 undeclared; ai6v2-car-ai PASS 46 compared 0 mismatches 0 undeclared;  | 2026-11-11 |
 | 0x4b99f0 | CEventHandler::ComputeSexyPedResponse | AI | L2 | PORT-AI-1 (2026-11-11): L2; split grove: PASS 1 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 1 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4b9aa0 | CEventHandler::ComputeSexyVehicleResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9b50 | CEventHandler::ComputePedToFleeResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9be0 | CEventHandler::ComputeAttractorResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9c90 | CEventHandler::ComputePedThreatBadlyLitResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9d40 | CEventHandler::ComputePedSoundQuietResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9dd0 | CEventHandler::ComputePedFriendResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4b9f80 | CEventHandler::ComputeVehicleToStealResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4b9ff0 | CEventHandler::ComputeKnockOffBikeResponse | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-handler-driving: PASS 2 compared (0 mismatches, 2 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4ba7c0 | CEventHandler::ComputeScriptCommandResponse | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4ba8b0 | CEventHandler::ComputeVehicleDiedResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4ba990 | CEventHandler::ComputeLowHealthResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4baa30 | CEventHandler::ComputeReallyLowHealthResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4baad0 | CEventHandler::ComputeLowAngerAtPlayerResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bac10 | CEventHandler::ComputeHighAngerAtPlayerResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bad50 | CEventHandler::ComputeOnFireResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bae30 | CEventHandler::ComputeWaterCannonResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4baf80 | CEventHandler::ComputeInWaterResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bafe0 | CEventHandler::ComputeInteriorUseInfoResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4bb050 | CEventHandler::ComputeSignalAtPedResponse | AI | implemented | ai-port-6 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4bb0c0 | CEventHandler::ComputePassObjectResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4bb130 | CEventHandler::ComputeCreatePartnerTaskResponse | AI | L2 | PORT-AI-6 split (ai6v2): ai6v2-police-gang PASS 2 compared 0 mismatches 0 undeclared; ai6v2-driving PASS 5 compared 0 mismatches 0 undeclared; ai6v2x-grove PASS 1 compared 0 mismatches 0 undeclared; v | 2026-11-11 |
+| 0x4bb280 | CEventHandler::ComputePlayerWantedLevelResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bb2e0 | CEventHandler::ComputeVehicleOnFireResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bb740 | CEventHandler::ComputeCopCarBeingStolenResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bb800 | CEventHandler::ComputeSpecialResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bbb90 | CEventHandler::ComputeObjectCollisionPassiveResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bbc30 | CEventHandler::ComputeCarUpsideDownResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bbcd0 | CEventHandler::ComputePotentialWalkIntoFireResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bbe30 | CEventHandler::ComputeShotFiredWhizzedByResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bbf50 | CEventHandler::ComputeAreaCodesResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bbfb0 | CEventHandler::ComputeFireNearbyResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bc050 | CEventHandler::ComputeSeenCopResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bc150 | CEventHandler::ComputeOnEscalatorResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bc1d0 | CEventHandler::ComputeDontJoinGroupResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bc230 | CEventHandler::ComputeDangerResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4bc370 | CEventHandler::IsTemporaryEvent | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 300 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 300 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x4bc3e0 | CEventHandler::IsKillTaskAppropriate | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4bc470 |  | AI | L2 | PORT-AI-1 (2026-11-11): L2; split c-bug: PASS-FP 7 cases (0 mismatches, 0 undeclared); split grove: PASS 31 cases (0 mismatches, 0 undeclared); split weapon-combat: PASS-FP 7 cases (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4bc4b0 | CEventHandlerHistory::RecordCurrentEvent | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 117 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 138 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 131 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 161 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4bc550 | CEventHandlerHistory::ClearAllEvents | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 2 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 2 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 1 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 2 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4bc580 | CEventHandlerHistory::TakesPriorityOverCurrentEvent | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 150 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 150 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 300 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 300 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4bc600 | CEventHandler::SetEventResponseTask | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
+| 0x4bc710 | CEventHandler::ComputeShotFiredResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bcc30 | CEventHandler::ComputeDraggedOutCarResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bd6a0 | CEventHandler::ComputeVehicleCollisionResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4bdb80 | CEventHandler::ComputePedCollisionWithPedResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4be7d0 | CEventHandler::ComputePedCollisionWithPlayerResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4bf2b0 | CEventHandler::ComputeBuildingCollisionResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4bf9b0 | CEventHandler::ComputePersonalityResponseToDamage | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c0170 | CEventHandler::ComputeDamageResponse | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 42 compared (0 mismatches, 17 undeclared); split ai2-freq-weapon-combat: PASS 13 compared (0 mismatches, 5 undeclared); split ai2-handler-driving: PASS 28 compared (0 mismatches, 11 undeclared); split ai2-handler-weapon-combat: PASS 13 compared (0 mismatches, 5 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x4c0bd0 | CEventHandler::ComputeVehiclePotentialCollisionResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4c1590 | CEventHandler::ComputePedEnteredVehicleResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4c1910 | CEventHandler::ComputePedToChaseResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c19a0 | CEventHandler::ComputePedThreatResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x4c2610 | CEventHandler::ComputePotentialPedCollideResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4c2840 | CEventHandler::ComputeGunAimedAtResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c2fc0 | CEventHandler::ComputeVehicleDamageResponse | AI | implemented | PORT-AI-1 (2026-11-11): deferred (not reached in the time box (incl. the extra 50 min)); ; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x4c3430 | CEventHandler::ComputeGotKnockedOverByCarResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4c35f0 | CEventHandler::ComputeSeenPanickedPedResponse | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4c3790 | CEventHandler::Flush | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c3820 | CEventHandler::FlushImmediately | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 3 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 3 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 2 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 3 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4c3870 | CEventHandler::ComputeEventResponseTask-0 | AI | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c3e80 | CEventHandler::Constructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 105 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 107 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 81 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 135 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4c3ec0 | CEventHandler::Destructor | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-freq-c-bug: PASS-FP 73 compared (0 mismatches, 0 undeclared); split ai2-freq-weapon-combat: PASS 79 compared (0 mismatches, 0 undeclared); split ai2-handler-driving: PASS 69 compared (0 mismatches, 0 undeclared); split ai2-handler-weapon-combat: PASS 114 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x4c3f10 | CEventHandler::HandleEvents | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x4c4220 | CEventHandler::ComputeEventResponseTask-Ped | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c42f0 | CBaseModelInfo::SetHasBeenPreRendered | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c4340 | C2dEffect::RpGeometryGet2dFxCount | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c4360 | CAtomicModelInfo::SetAtomic | STREAM | L2 | STREAM-L2 (agent 2026-11-10, split (INF-17)): PASS, 0 mismatches, 0 undeclared (target/streaml2/h4/verdicts.tsv); main session: keycells merge, all ports IDENTICAL on 3 recordings | 2026-11-10 |
@@ -2314,6 +2386,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4c7300 | CPedModelInfo::IncrementVoice | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c7340 | CPedModelInfo::SetClump | STREAM | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): STREAM split grove PASS compared=56 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x4c73c0 | CVehicleModelInfo::GetNumDoors | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
+| 0x4c7400 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4c7410 |  | UNK-game | implemented | written, unverified (batch mvpc-ai-1); verification queue | 2026-11-11 |
 | 0x4c7470 | CVehicleModelInfo::ShutdownLightTexture | STREAM | implemented | PORT-STREAM: Rust port in sa-stream; needs L2 in game (docs/arch/stream-port.md) | 2026-11-05 |
 | 0x4c74b0 | CLinkedUpgradeList::AddUpgradeLink | STREAM | L1 | PORT-STREAM: sa-oracle l1 1M cases, 0 mismatches (docs/arch/stream-port.md) | 2026-11-05 |
@@ -2405,6 +2478,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4ca290 | _rwD3D9RasterUnlock | RW | L2 | split rw4-sb: PASS 32 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x4ca4e0 | _rwD3D9RasterLockPalette | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x4ca540 | _rwD3D9RasterUnlockPalette | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x4caae0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4cad90 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4cae40 | _rwD3D9RasterRender | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4cae60 | _rwD3D9RasterRenderFast | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -2537,13 +2611,17 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d1180 | CAnimBlendSequence::Print | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; ret / mov+ret shorter than the 5-byte entry patch; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d1190 | CAnimBlendSequence::RemoveQuaternionFlips | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:1000/1001, pr:1000/1001, cheats:1000/1001, anim-input:1000/1001 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d12a0 | CAnimBlendSequence::RemoveUncompressedData | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:200 compared, 0 mismatches, 0 undeclared (PASS-FP), anim-input:200 compared, 0 mismatches, 0 undeclared (PASS-FP); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4d1390 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4d13a0 | CAnimBlendAssociation::UpdateTimeStep | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d13d0 | CAnimBlendAssociation::UpdateTime | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:200 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 0 undeclared (PASS), cheats:200 compared, 0 mismatches, 0 undeclared (PASS), anim-input:200 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:1000 compared, 0 mismatches, 0 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d1490 | CAnimBlendAssociation::UpdateBlend | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:200 compared, 0 mismatches, 2 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 2 undeclared (PASS), cheats:200 compared, 0 mismatches, 2 undeclared (PASS), anim-input:200 compared, 0 mismatches, 2 undeclared (PASS-FP), grove:1000 compared, 0 mismatches, 37 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d1570 | RpAnimBlendNodeUpdateKeyFrames | UNK-game | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
 | 0x4d15e0 | RpAnimBlend::RpAnimBlendClumpGetFirstAssociation- | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x4d1610 | CQuaternion::Normalise | MATH | L1 | MATH-2: sa-oracle l1 1M cases + edges, 0 mismatches (Unicorn) | 2026-11-05 |
+| 0x4d1680 | RpAnimBlend::FrameUpdateCallBackSkinnedWithVelocityExtraction | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4d2b90 | RpAnimBlend::FrameUpdateCallBackSkinned | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4d2e10 | FrameUpdateCallBackOffscreen | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4d34f0 | RpAnimBlend::RpAnimBlendClumpUpdateAnimations | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4d37a0 | CAnimBlendAssocGroup::IsCreated | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hooked; follows pointer fields (64-bit host layout differs) or calls unported code: L2 in game; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d3940 | CAnimManager::GetAnimationBlock- | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): ported-unhookable; entry bytes read as data by the protection (adc edi, [0x4D3940] at 0x156F054); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d3990 | CAnimManager::GetAnimationBlockIndex-by-name | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:745/745, pr:450/450, cheats:422/422, anim-input:482/482 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -2583,6 +2661,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x4d59e0 | CPad::IsCrossPressed | INPUT | L1 | PORT-ANIM-INPUT (2026-11-11): L1; sa-oracle l1 PadIsCrossPressed: 10^6 cases, PASS, mismatches=0; main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5a20 | CCutsceneMgr::Initialise | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 split grove:1 compared, 0 mismatches, 0 undeclared (PASS-FP), pr:1 compared, 0 mismatches, 0 undeclared (PASS), cheats:1 compared, 0 mismatches, 0 undeclared (PASS), anim-input:1 compared, 0 mismatches, 0 undeclared (PASS-FP), grove:1 compared, 0 mismatches, 0 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5ab0 | CCutsceneMgr::LoadAnimationUncompressed | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:5/5, pr:10/10, cheats:5/5, anim-input:5/5 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x4d5af0 | CCutsceneMgr::RemoveEverythingBecauseCutsceneDoesntFitInMemory | ANIM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x4d5c10 | CCutsceneMgr::LoadEverythingBecauseCutsceneDeletedAllOfIt | ANIM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x4d5d00 | CCutsceneMgr::Update | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:200 compared, 0 mismatches, 5 undeclared (PASS-FP), pr:200 compared, 0 mismatches, 5 undeclared (PASS), cheats:200 compared, 0 mismatches, 5 undeclared (PASS), anim-input:200 compared, 0 mismatches, 5 undeclared (PASS-FP), grove:196 compared, 0 mismatches, 5 undeclared (COUNT); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5d10 | CCutsceneMgr::IsCutsceneSkipButtonBeingPressed | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:28/28, pr:154/154, cheats:28/28, anim-input:28/28 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x4d5db0 | CCutsceneMgr::AppendToNextCutscene | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -3401,6 +3481,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x50ad90 | CCamera::GetCutSceneFinishTime | CAM | L2 | PORT-CAM (2026-11-11): L2; L2 grove:30/30 PASS (0 mismatches, 0 undeclared); L2 pr:158/158 PASS (0 mismatches, 0 undeclared); L2 cheats:30/30 PASS (0 mismatches, 0 undeclared); L2 cbug:30/30 PASS (0 mismatches, 0 undeclared); L2 wc:30/30 PASS (0 mismatches, 0 undeclared); L2 anim:30/30 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x50ade0 | CCamera::GetFading | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x50adf0 | CCamera::GetFadingDirection | CAM | L2 | PORT-CAM (2026-11-11): L2; L2 grove:37/37 PASS (0 mismatches, 0 undeclared); L2 pr:76/76 PASS (0 mismatches, 0 undeclared); L2 cheats:112/112 PASS (0 mismatches, 0 undeclared); L2 cbug:112/112 PASS (0 mismatches, 0 undeclared); L2 wc:112/112 PASS (0 mismatches, 0 undeclared); L2 anim:57/57 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x50ae10 | CCamera::Get_Just_Switched_Status | CAM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x50ae20 | CCamera::GetScreenFadeStatus | CAM | L2 | PORT-CAM (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cbug:1000/1001 PASS (0 mismatches, 0 undeclared); L2 wc:1000/1001 PASS (0 mismatches, 0 undeclared); L2 anim:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x50ae50 | CCamera::GetGameCamPosition | CAM | L2 | PORT-CAM (2026-11-11): L2; L2 grove:623/623 PASS (0 mismatches, 0 undeclared); L2 pr:384/384 PASS (0 mismatches, 0 undeclared); L2 cheats:383/383 PASS (0 mismatches, 0 undeclared); L2 cbug:376/376 PASS (0 mismatches, 0 undeclared); L2 wc:411/411 PASS (0 mismatches, 0 undeclared); L2 anim:386/386 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x50ae60 | CCamera::GetLookingLRBFirstPerson | CAM | L2 | PORT-CAM (2026-11-11): L2; L2 grove:1000/1001 PASS (0 mismatches, 0 undeclared); L2 pr:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cheats:1000/1001 PASS (0 mismatches, 0 undeclared); L2 cbug:1000/1001 PASS (0 mismatches, 0 undeclared); L2 wc:1000/1001 PASS (0 mismatches, 0 undeclared); L2 anim:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -4046,6 +4127,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x552240 | CPtrNodeSingleLinkPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5522e0 | CPtrNodeDoubleLinkPool::New | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
 | 0x552380 | new | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x552390 | delete | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5523c0 | new | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5523d0 | delete | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x552400 | CPtrListSingleLink::Flush | UNK-game | implemented | written, unverified (batch mvpa-math-1); verification queue | 2026-11-11 |
@@ -4115,11 +4197,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x556000 | CRopes::FindRope | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x556030 | CRope::ReleasePickedUpObject | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x556070 | CRope::CreateHookObjectForRope | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5561b0 | CRope::UpdateWeightInRope | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x556760 | CRopes::FindPickupHeight | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x556780 | CRope::Remove | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
 | 0x556800 | CRope::Render | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x556ae0 | CRopes::Render | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x556b10 | CRopes::Shutdown | RENDER | implemented | written, unverified (batch mvpa-render-1); verification queue | 2026-11-11 |
+| 0x556b40 | CRopes::RegisterRope | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x557530 | CRope::Update | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x558d70 | CRopes::Update | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x558de0 | CStats::GetStatID | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
 | 0x558e30 | CStats::IsStatFloat | WORLD | L1 | PORT-WORLD p1: sa-oracle l1 1M cases, 0 mismatches (docs/arch/world-port.md) | 2026-11-10 |
@@ -4244,6 +4329,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x561ad0 | CTimer::GetIsSlowMotionActive | CORE | L3 | CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches | 2026-11-05 |
 | 0x561af0 | CTimer::StartUserPause | CORE | L3 | CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches | 2026-11-05 |
 | 0x561b00 | CTimer::EndUserPause | CORE | L3 | CORE-L2 port-l2.sh: L2 0 mismatches/0 undeclared on grove-walk + pause-restart (every call where marked), L3 frame-hash identical with all pilots on Rust, hook-off check PASS; main session re-ran grove-walk: 0 mismatches | 2026-11-05 |
+| 0x561b10 | CTimer::Update | CORE | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x561c70 | CWanted::InitialiseStaticVariables | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 pr:1/1 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x561c90 | CWanted::UpdateWantedLevel | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 combat:104/104 (0 mismatches, 0 undeclared); L2 grove:190/190 (0 mismatches, 0 undeclared); L2 cheats:120/120 (0 mismatches, 0 undeclared); L2 pr:115/115 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x561e70 | CWanted::SetMaximumWantedLevel | PED | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1002000 cases, 0 mismatches; L2 combat:2/2 (0 mismatches, 0 undeclared); L2 grove:2/2 (0 mismatches, 0 undeclared); L2 cheats:2/2 (0 mismatches, 0 undeclared); L2 pr:4/4 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -4499,9 +4585,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x57d520 | CMenuManager::ProcessMissionPackNewGame | HUD | L2 | split split-menus-hud: PASS 1 compared; 0 mismatches; 1 undeclared | 2026-11-11 |
 | 0x57d720 | CMenuManager::CheckMissionPackValidMenu | HUD | implemented | hud-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x57d860 | CMenuManager::DrawQuitGameScreen | HUD | implemented | hud-port-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x57d8d0 | CMenuManager::DrawControllerScreenExtraText | HUD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x57db20 | CMenuManager::CheckCodesForControls | HUD | implemented | hud-port-2 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x57dde0 | CMenuManager::SaveStatsToFile | HUD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x57e240 | CMenuManager::DisplayHelperText | HUD | implemented | hud-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x57e4d0 | CMenuManager::CheckRedefineControlInput | HUD | L2 | split split-menus-hud: PASS 199 compared; 0 mismatches; 0 undeclared | 2026-11-11 |
+| 0x57e6e0 | CMenuManager::DrawControllerBound | HUD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x57ef50 | CMenuManager::RedefineScreenUserInput | HUD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x57f300 | CMenuManager::DrawControllerSetupScreen | HUD | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x57fd70 | CMenuManager::UserInput | HUD | L2 | split hud3-m1-gr: PASS 199 compared; 0 mismatches; 0 undeclared; split hud3-m1-mh: COUNT 923 compared; 0 mismatches; 34 undeclared; split hud3-m1-mh2: COUNT 867 compared; 0 mismatches; 0 undeclared; s | 2026-11-11 |
 | 0x580750 | CMenuSystem::SwitchOffMenu | HUD | implemented | PORT-HUD (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / anim / weapon; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x5807c0 | CMenuSystem::CheckForAccept | HUD | L1 | hud-port-2 ported; L1 | 2026-11-11 |
@@ -4842,6 +4933,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5a2e90 | ProcSurfaceInfo_c::ProcSurfaceInfo_c | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5a2eb0 | ProcSurfaceInfo_c::Init | RENDER | L2 | verifier mvpa: split split-r3 pause-restart: PASS compared=8 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
 | 0x5a3070 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5a3110 | ProcObjectMan_c::Update | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a3120 | ProcObjectMan_c::GetEntityFromPool | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a3130 | ProcObjectMan_c::ReturnEntityToPool | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a3140 | ProcObjectMan_c::LoadDataFile | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
@@ -4853,11 +4945,30 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5a40f0 | CProjectile::`scalar deleting destructor' | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5a4150 | Common::WriteRaster | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x5a4190 | CClothesBuilder::LoadCdDirectory | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a41c0 | CClothesBuilder::RequestGeometry | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a4220 | CClothesBuilder::RequestTexture | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a42b0 | CClothesBuilder::nullptr | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a4380 | CClothesBuilder::nullptr | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a44a0 | CClothesBuilder::nullptr | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a44c0 | CClothesBuilder::PreprocessClothesDesc | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a47e0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5a4840 | CClothesBuilder::AddWeightToBoneVertex | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a48b0 | CClothesBuilder::StoreBoneArray | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a4940 | CClothesBuilder::BlendGeometry-3 | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a55a0 | CClothesBuilder::ConstructGeometryArray | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a56e0 | CClothesBuilder::BuildBoneIndexConversionTable | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a5730 | CClothesBuilder::CopyTexture | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5a57b0 | CClothesBuilder::PlaceTextureOnTopOfTexture | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a5820 | CClothesBuilder::BlendTextures-Dst-Src | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a59c0 | CClothesBuilder::BlendTextures-Dst-Src1-Src2 | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a5bc0 | CClothesBuilder::BlendTextures-Dst-Src1-Src2-Tat | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a5f70 | CClothesBuilder::GetTextureFromTxdAndLoadNextTxd | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a6040 | CClothesBuilder::ConstructTextures | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a6530 | CClothesBuilder::ConstructGeometryAndSkinArrays | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a69d0 | CClothesBuilder::CreateSkinnedClump | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a7280 | COctTreeBase::FillPalette | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a7490 | COctTree::~COctTree | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5a7570 | COctTreeBase | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a7710 | COctTreeBase::InsertTree | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5a78f0 | CPedClothesDesc::Initialise | PED | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1002000 cases, 0 mismatches; L2 combat:1/1 (0 mismatches, 0 undeclared); L2 grove:1/1 (0 mismatches, 0 undeclared); L2 cheats:1/1 (0 mismatches, 0 undeclared); L2 pr:2/2 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5a7910 | CPedClothesDesc::SetModel-modelHash | PED | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1002000 cases, 0 mismatches; L2 combat:2/2 (0 mismatches, 0 undeclared); L2 grove:2/2 (0 mismatches, 0 undeclared); L2 cheats:2/2 (0 mismatches, 0 undeclared); L2 pr:4/4 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -4886,6 +4997,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5afa50 | FindCutsceneAudioTrackId | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:1/1, pr:2/2, cheats:1/1, anim-input:1/1 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5afad0 | CCutsceneMgr::HideRequestedObjects | ANIM | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
 | 0x5afbc0 | CCutsceneMgr::LoadCutsceneData_postload | ANIM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5afd60 | CCutsceneMgr::DeleteCutsceneData_overlay | ANIM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5b0130 | CCutsceneMgr::CalculateBoundingSphereRadiusCB | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b01e0 | CCutsceneMgr::UpdateCutsceneObjectBoundingBox | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:145/145, pr:780/780, cheats:145/145, anim-input:145/145 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b02a0 | CCutsceneMgr::CreateCutsceneObject | ANIM | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
@@ -4899,6 +5011,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5b04d0 | CCutsceneMgr::FinishCutscene | ANIM | implemented | written, unverified (batch mvpb-anim-1); verification queue | 2026-11-11 |
 | 0x5b0550 | CCutsceneMgr::GetCutsceneTimeInMilleseconds | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): implemented-needs-L2; hook registered; calls into original/heap state (no pure L1 spec); in-game L2 pending; no call in the recordings (NOCALLS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b0570 | CCutsceneMgr::HasCutsceneFinished | ANIM | L2 | PORT-ANIM-INPUT (2026-11-11): L2; L2 grove:26/26, pr:150/150, cheats:26/26, anim-input:26/26 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
+| 0x5b05a0 | CCutsceneMgr::LoadCutsceneData_preload | ANIM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5b11c0 | CCutsceneMgr::LoadCutsceneData_loading | ANIM | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5b13f0 | CCutsceneMgr::LoadCutsceneData_overlay | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split pr:2 compared, 0 mismatches, 2 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
 | 0x5b1460 | CCutsceneMgr::StartCutscene | ANIM | implemented | PORT-ANIM-INPUT (2026-11-11): L2-split (undeclared writes to review); L2 split grove:1 compared, 0 mismatches, 1 undeclared (PASS-FP), pr:2 compared, 0 mismatches, 2 undeclared (PASS), cheats:1 compared, 0 mismatches, 1 undeclared (PASS), anim-input:1 compared, 0 mismatches, 1 undeclared (PASS-FP), grove:1 compared, 0 mismatches, 1 undeclared (PASS); main-session all-ports IDENTICAL on grove/anim-input/c-bug/weapon-combat/pause-restart/cheats | 2026-11-11 |
@@ -5098,6 +5211,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5d5860 | CRadar::Save | HUD | implemented | hud-port-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x5d5ac0 | CCarFXRenderer::Initialise | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d5b00 | CCarFXRenderer::RegisterPlugins | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5d5b10 | CCarFXRenderer::PreRenderUpdate | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5d5b20 | CCarFXRenderer::CustomCarPipeAtomicSetup | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d5b30 |  | UNK-game | L2 | verifier mvpa: split split-cold pause-restart: PASS compared=50 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
 | 0x5d5b40 | CCarFXRenderer::CustomCarPipeClumpSetup | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -5107,6 +5221,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5d5bc0 | CCarFXRenderer::InitialiseDirtTexture | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d5db0 | CVehicleModelInfo::SetDirtTextures | STREAM | L2 | STREAM-L2 (2026-11-07): main-session port-l2.sh lane 2 (sIG grove in-game 4/frame, sPR pause-restart, sAF all-frames 1000/frame; RemoveWindowAlphaCB targeted run rwa): every call or >=1000 cases, 0 mismatches, 0 undeclared writes, l2 traces identical; all ports on Rust frame-identical on the grove walk; hook-off not run | 2026-11-07 |
 | 0x5d5fa0 | CCustomBuildingDNPipeline::DestroyPipe | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5d6480 | CCustomBuildingDNPipeline::CustomPipeRenderCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5d6750 | CCustomBuildingDNPipeline::CreateCustomObjPipe | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d6830 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d6850 | CCustomBuildingDNPipeline::NVCPipelineProcess | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -5138,6 +5253,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5d7f40 | CCustomBuildingRenderer::IsCBPCPipelineAttached | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d7f80 | CCustomBuildingRenderer::UpdateDayNightBalanceParam | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5d8050 | CCustomBuildingRenderer::Update | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5d8870 | CCustomCarEnvMapPipeline::PreRenderUpdate | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5d8980 | IsEnvironmentMappingSupported | UNK-game | L2 | verifier mvpa: split split-r3 pause-restart: PASS compared=1 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
 | 0x5d8ad0 | CCustomCarEnvMapPipeline::GetFxEnvShininess | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5d8b50 | CCustomCarEnvMapPipeline::GetFxSpecTexture | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -5171,10 +5287,14 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5da450 | CCustomCarEnvMapPipeline::RegisterPlugin | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5da560 | CCustomCarEnvMapPipeline::CustomPipeMaterialSetup | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5da610 | CCustomCarEnvMapPipeline::CustomPipeAtomicSetup | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5da640 | RxD3D9InstanceDataRender | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5da6a0 | RxD3D9InstanceDataRenderLighting | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5daac0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5dab00 | CGrassRenderer::GenPointInTriangle | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x5dabb0 | CGrassRenderer::SetCurrentScanCode | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
+| 0x5dabc0 | CGrassRenderer::SetGlobalCameraPos | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5dabe0 | CGrassRenderer::SetCloseFarAlphaDist | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x5dac00 | CGrassRenderer::SetGlobalWindBending | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5dac10 | CPPTriPlantBuffer::SetGrassMaterialCB | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5dac80 | CPPTriPlantBuffer::SetPlantModelsTab | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5daca0 | CPPTriPlantBuffer::GetPlantModelsTab | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -5187,6 +5307,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5db1a0 | CPPTriPlantBuffer::IncreaseBufferIndex | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5db1d0 | CGrassRenderer::AddTriPlant | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x5db250 | CGrassRenderer::FlushTriPlantBuffer | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5db290 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x5db2b0 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5db310 | CPlantMgr::UpdateAmbientColor | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x5db3d0 | CPlantMgr::CalculateWindBending | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x5db590 | CPlantMgr::MoveLocTriToList | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -5293,6 +5415,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x5e00f0 | CPed::Undress | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5e0130 | CPed::Dress | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; split-combat: PASS-FP 1/1 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: PASS-FP 1/1 compared, 0 mismatches; split-pr: PASS-FP 2/2 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5e0170 | CPed::IsAlive | PED | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 combat:1000/1001 (0 mismatches, 0 undeclared); L2 grove:1000/1001 (0 mismatches, 0 undeclared); L2 cheats:1000/1001 (0 mismatches, 0 undeclared); L2 pr:1000/1001 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
+| 0x5e01a0 | CPed::UpdateStatEnteringVehicle | PED | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x5e01c0 | CPed::GetTransformedBonePosition | PED | L2 | split PASS weapon-combat 65; driving 14; car-ai 55; air-water 150; anim-input 10; c-bug 129 (police-gang PASS-FP 150); 0 mismatches; 0 undeclared; rust traces IDENTICAL | 2026-11-11 |
 | 0x5e0270 | CPed::ReleaseCoverPoint | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented; split-combat: PASS-FP 18/18 compared, 0 mismatches; split-cheats: PASS-FP 3/3 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x5e0290 | CPed::GetHoldingTask | PED | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -6034,6 +6157,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x619410 | Rs::RsTimer | CORE | L2 | CORE-L2b (2026-11-07): main-session port-l2.sh lane 1 runs vB,vPRB: every call compared or >=1000 cases, 0 mismatches, 0 undeclared writes; l2 trace identical to plain; all 191 CORE ports on Rust frame-identical on grove walk (5200) and pause-restart (3700); hook-off not yet run | 2026-11-07 |
 | 0x619420 | Rs::RsWindowSetText | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x619430 | Rs::RsPathGetSeparator | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
+| 0x619440 | RsCameraShowRaster | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x619450 | Rs::RsCameraBeginUpdate | CORE | L2 | L2-EXTRAS (2026-11-11, lane 6, extras completed): CORE split grove PASS-FP compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=1000; CORE split grove PASS compared=1000 mismatches=0 undeclared_cases=0 fingerprint_pairs=0; evidence target/l2extras/evidence | 2026-11-11 |
 | 0x619460 | Rs::RsAlwaysOnTop | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x619470 | Rs::RsRegisterImageLoader | CORE | L1 | PORT-CORE: sa-oracle l1 1M cases, 0 mismatches (docs/arch/core-port.md) | 2026-11-05 |
@@ -6116,6 +6240,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x61c520 | CTaskSimpleFight::GetTaskType | AI | implemented | PORT-AI-2 (2026-11-11): implemented (split PASS-FP/COUNT/DIVERGED only); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-weapon-combat: PASS-FP 1000 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x61c530 | CTaskSimpleFight::~CTaskSimpleFight | AI | implemented | PORT-AI-2 (2026-11-11): L2-split (undeclared writes to review); L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-weapon-combat: PASS 1 compared (0 mismatches, 1 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x61c5e0 | CTaskSimpleFight::ControlFight | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-weapon-combat: PASS 325 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
+| 0x61c7f0 |  | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x61db30 |  | WEAPON | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 combat:17/17 (0 mismatches, 0 undeclared); L2 grove:17/17 (0 mismatches, 0 undeclared); L2 cheats:17/17 (0 mismatches, 0 undeclared); L2 pr:34/34 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x61de60 | CTaskSimpleUseGun::Constructor | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-c-bug: PASS 11 compared (0 mismatches, 0 undeclared); split ai2-cbug-weapon-combat: PASS 8 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
 | 0x61df20 | CTaskSimpleUseGun::GetTaskType | AI | L2 | PORT-AI-2 (2026-11-11): L2; L3 all-ports IDENTICAL on 7 recordings (v7); split ai2-cbug-c-bug: PASS 1000 compared (0 mismatches, 0 undeclared); split ai2-cbug-weapon-combat: PASS 1000 compared (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on 10 recordings (air-water diverges, pre-existing) | 2026-11-11 |
@@ -7668,6 +7793,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x684fc0 | CTaskComplexPartnerChat::~CTaskComplexPartnerChat | AI | L2 | HARNESS-3 split reruns (2026-11-11, lane 7, stack-frame rule): grove:PASS 8/8p/8r m0 u0; c-bug:PASS 10/10p/10r m0 u0; weapon-combat:PASS 36/36p/36r m0 u0 | 2026-11-11 |
 | 0x684fe0 | CTaskComplexPartnerShove::~CTaskComplexPartnerShove | AI | implemented | AI-GEN (2026-11-11): implemented-needs-L2; ; main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x685000 | CTaskComplexWalkAlongsidePed::CreateSubTask | AI | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
+| 0x685170 | CTaskComplexWalkAlongsidePed::ControlSubTask | AI | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x685630 | CTaskComplexWalkAlongsidePed::CreateFirstSubTask | AI | L2 | verifier VERIFIER-2/4: promoted (L2/split evidence + all-ports IDENTICAL on 11; docs/verify/verdicts-mvpb.tsv) | 2026-11-11 |
 | 0x685680 | CTaskComplexWalkAlongsidePed::CreateNextSubTask | AI | L2 | AI-GEN (2026-11-11): L2; split grove: PASS ? cases (0 undeclared); split c-bug: PASS ? cases (0 undeclared); split pause-restart: PASS ? cases (0 undeclared); split world-cheats: PASS ? cases (0 undeclared); split weapon-combat: PASS ? cases (0 undeclared); main-session regenerated on master, verify-all IDENTICAL on 10 recordings | 2026-11-11 |
 | 0x685700 | CWeaponInfo::GetCrouchReloadAnimationID | WEAPON | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1,002,000 cases, 0 mismatches; L2 combat:76/76 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -8072,6 +8198,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6c45b0 | CHeli::AddHeliSearchLight | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6c4650 | CHeli::Pre_SearchLightCone | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6c46e0 | CHeli::Post_SearchLightCone | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
+| 0x6c4750 | CHeli::SpecialHeliPreRender | VEH | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6c4800 | CHeli::SwitchPoliceHelis | VEH | implemented | PORT-VEH (2026-11-11): implemented-needs-L2; no call in the recordings run; main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
 | 0x6c4810 | CHeli::`scalar deleting destructor' | VEH | implemented | VEH-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x6c79a0 | CHeli::UpdateHelis | VEH | implemented | VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match) | 2026-11-11 |
@@ -8365,6 +8492,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6f5570 | CTrain::PreRender | VEH | implemented | VEH-2 ported; L2-split (spool quota: case counts differ after the cut, compared cases match) | 2026-11-11 |
 | 0x6f55c0 | CTrain::Render | VEH | implemented | written, unverified (batch mvpb-veh-2); verification queue | 2026-11-11 |
 | 0x6f55d0 | CTrain::ReadAndInterpretTrackFile | VEH | implemented | written, unverified (batch mvpc-veh-1); verification queue | 2026-11-11 |
+| 0x6f5900 | CTrain::UpdateTrains | VEH | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6f59c0 | CTrain::GetDooorAngleOpenRatio | VEH | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6f5ba0 | CTrain::FindMaximumSpeedToStopAtStations | VEH | implemented | written, unverified (batch mvpb-veh-1); verification queue | 2026-11-11 |
 | 0x6f5cd0 | CTrain::FindNumCarriagesPulled | VEH | L2 | PORT-VEH (2026-11-11): L2; L2 drv:1000/1001 PASS (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL on driving/grove/anim-input/c-bug/weapon-combat/cheats | 2026-11-11 |
@@ -8441,9 +8569,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x6fe200 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6fe220 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6fe240 | CCustomRoadsignMgr::SetAtomicAlpha | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x6fe260 | RoadsignGetLineAndRow | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6feb70 | CCustomRoadsignMgr::RoadsignGenerateTextRaster | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6feca0 | CCustomRoadsignMgr::CreateRoadsignTexture | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
 | 0x6fed60 | CCustomRoadsignMgr::SetupRoadsignAtomic | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x6feda0 | CCustomRoadsignMgr::CreateRoadsignAtomicA | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x6ff2d0 | CCustomRoadsignMgr::CreateRoadsignAtomic | RENDER | L2 | verifier mvpa: split split-cold pause-restart: PASS compared=4 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
 | 0x6ff350 | CCustomRoadsignMgr::RenderRoadsignAtomic | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x6ff410 | CDraw::SetFOV | RENDER | implemented | written, unverified (batch mvpc-render-1); verification queue | 2026-11-11 |
@@ -8518,6 +8648,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x707ca0 | CShadows::StoreRealTimeShadow | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x707f40 | CShadows::UpdateStaticShadows | RENDER | implemented | PORT-RENDER-1 (2026-11-11): implemented; split grove:123/123 PASS-FP (0 mismatches, 123 undeclared); main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x707fa0 | CShadows::RenderExtraPlayerShadows | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x708290 | RenderBuffer::StartStoring | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x708300 | CShadows::RenderStaticShadows | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7086b0 | CShadows::CastShadowEntityXY | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x709cf0 | CShadows::ShadowRenderTriangleCB | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -8592,6 +8723,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x717100 | CCredits::Stop | HUD | implemented | PORT-HUD (2026-11-11): implemented-needs-L2; no call in grove / pr / cheats / cbug / anim / weapon; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x717110 | CEscalator::Constructor | WORLD | L2 | PORT-WORLD p1: L2 every call on grove/pause-restart/cheats, 0 mismatches, 0 undeclared (docs/arch/world-port.md); main-session re-run 2026-11-10 (lanes 3/6): 0 mismatches, l2/rust traces IDENTICAL | 2026-11-10 |
 | 0x717130 | CEscalator::Destructor | WORLD | implemented | PORT-WORLD p1: ported; needs L2 (NOCALLS or split-run undeclared writes to review), docs/arch/world-port.md | 2026-11-10 |
+| 0x717150 | CMovingThings::Render | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x717180 | CPlaneTrail::Render | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7172d0 | CPlaneTrail::RegisterPoint | RENDER | implemented | written, unverified (batch mvpb-render-1); verification queue | 2026-11-11 |
 | 0x7173a0 | CPlaneTrails::Render | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -8691,6 +8823,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x71fae0 | CEntity::IsEntityOccluded | WORLD | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7200b0 | COcclusion::IsPositionOccluded | RENDER | implemented | RENDER-2 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x7201c0 | COcclusion::ProcessBeforeRendering | RENDER | L2 | l2 port-l2-r2c-l2: 1000/1001 PASS (0 mismatches; 0 undeclared) [occlusion.rs] | 2026-11-11 |
+| 0x7204c0 | CRubbish::SetVisibility | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x7204e0 | CSkidmarks::Init | RENDER | L2 | verifier mvpa: split split-cold pause-restart: PASS compared=1 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
 | 0x720570 | CSkidmarks::Shutdown | RENDER | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x720590 | CSkidmarks::Clear | RENDER | L2 | verifier mvpa: split split-r3 pause-restart: PASS compared=1 mismatches=0 undeclared_cases=0; L3: all 206 mvpa hooks on Rust on top of the verified set; MATCH on all 11 recordings; verify-all promote-mvpa-v1: all-ports run of the new default set IDENTICAL on all 11 recordings (car-ai as promote-mvpa-v1-carai after a disk-check skip) | 2026-11-11 |
@@ -8940,7 +9073,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7323a0 | CVisibilityPlugins::GetUserValue | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7323b0 | CVisibilityPlugins::SetAlphaCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7323c0 | CVisibilityPlugins::RenderWheelAtomicCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x732480 | CVisibilityPlugins::RenderAtomicWithAlpha | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x732500 | CVisibilityPlugins::CalculateFadingAtomicAlpha | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x732610 | CVisibilityPlugins::RenderFadingAtomic | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x732660 | CVisibilityPlugins::RenderAtomicWithAlphaCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x732680 | CVisibilityPlugins::RenderFadingClump | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x732850 | CVisibilityPlugins::SetTextureCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x732870 | CVisibilityPlugins::RenderPlayerCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x7328a0 | CVisibilityPlugins::SetAtomicRenderCallback | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -8955,15 +9092,24 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x732b00 | CVisibilityPlugins::SetClumpAlpha | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x732b20 | CVisibilityPlugins::GetClumpAlpha | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x732b30 | CVisibilityPlugins::RenderAtomic | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x732b40 | CVisibilityPlugins::RenderEntity | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x732e10 | CVisibilityPlugins::ClumpConstructor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x732e30 | CVisibilityPlugins::PluginAttach | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x733160 | CVisibilityPlugins::SetupVehicleVariables | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x7335b0 | CVisibilityPlugins::RenderPedCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x733630 | CVisibilityPlugins::RenderFadingClumpCB | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x733750 | CVisibilityPlugins::SetClumpModelInfo | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x7337d0 | CVisibilityPlugins::RenderFadingUnderwaterEntities | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x733800 | CVisibilityPlugins::RenderReallyDrawLastObjects | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x733910 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x733a20 | CVisibilityPlugins::Initialise | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x733e90 | CVisibilityPlugins::RenderAlphaAtomics | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x733ec0 | CVisibilityPlugins::RenderBoatAlphaAtomics | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x733f10 | CVisibilityPlugins::RenderFadingEntities | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x733f40 |  | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x734530 | CVisibilityPlugins::InitAlphaAtomicList | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x734540 | CVisibilityPlugins::InitAlphaEntityList | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x734570 | CVisibilityPlugins::InsertEntityIntoSortedList | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x734610 | CreateDebugFont | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x734620 | DestroyDebugFont | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
 | 0x734640 | FlushObrsPrintfs | CORE | implemented | PORT-CORE: Rust port in sa-core; needs L2 in game (docs/arch/core-port.md) | 2026-11-05 |
@@ -9082,6 +9228,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x73fa20 | CWeapon::FireFromCar | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x741c00 | CWeapon::FireM16_1stPerson | WEAPON | implemented | PORT-WEAPON-2 (2026-11-11): implemented-needs-L2; split-combat: no call; split-c-bug: no call; split-driving: no call; split-grove: no call; split-cheats: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x742300 | CWeapon::Fire | WEAPON | L2 | WEAPON-FIX (2026-11-11): the c-bug split FAIL came from the ORIGINAL FireInstantHit 0x73FB10 reading an uninitialised shot-direction local ([esp+0x6C], path 0x73FDF2/0x73FE04 -> 0x740B71, read at 0x740DAC for AddGunshell); measured residue differs per run. With SA_L2_STACKFILL=16384: Fire c-bug 74/74, weapon-combat 135/135 PASS, 0 mismatches, 0 undeclared; Fire port re-read against 0x742300..0x742A0B: faithful. All-ports IDENTICAL on 7 recordings. | 2026-11-11 |
+| 0x742a90 | CWeaponEffects | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x742ab0 | CWeaponEffects::Init | WEAPON | L2 | PORT-WEAPON-PED (2026-11-11): L2; split-combat: PASS-FP 1/1 compared, 0 mismatches; split-grove: PASS 1/1 compared, 0 mismatches; split-cheats: PASS-FP 1/1 compared, 0 mismatches; split-pr: PASS-FP 2/2 compared, 0 mismatches; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x742b80 | CWeaponEffects::Shutdown | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x742bd0 | CWeaponEffects::IsLockedOn | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -9091,6 +9238,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x742ca0 | CWeaponEffects::ClearCrossHairImmediately | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x742cc0 | CWeaponEffects::ClearCrossHairsImmediately | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): implemented-needs-L2; no call in grove walk / pause-restart / world-cheats / weapon-combat; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x742cf0 | CWeaponEffects::Render | WEAPON | L2 | VERIFIER-6: split 0/0 + all-ports IDENTICAL (docs/verify/verdicts-render.tsv) | 2026-11-12 |
+| 0x743c30 | CWeaponInfo | UNK-game | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x743c50 | CWeaponInfo::Shutdown | WEAPON | implemented | PORT-WEAPON-PED (2026-11-11): ported-unhookable; ; main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x743c60 | CWeaponInfo::GetWeaponInfo-original | WEAPON | L2 | PORT-WEAPON-PED (2026-11-11): L2; L2 combat:1000/1001 (0 mismatches, 0 undeclared); L2 grove:1000/1001 (0 mismatches, 0 undeclared); L2 cheats:1000/1001 (0 mismatches, 0 undeclared); L2 pr:1000/1001 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
 | 0x743cd0 | CWeaponInfo::GetSkillStatIndex | WEAPON | L1 | PORT-WEAPON-PED (2026-11-11): L1; L1 1,002,000 cases, 0 mismatches; L2 combat:1000/1001 (0 mismatches, 0 undeclared); main-session all-ports IDENTICAL grove/weapon-combat/c-bug/pause-restart | 2026-11-11 |
@@ -9412,6 +9560,9 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x756260 | _rwD3D9LightDirectionalEnable | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x756390 | _rwD3D9LightLocalEnable | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x756600 | _rwD3D9LightsEnable | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
+| 0x7567a0 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x756830 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x756960 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x756d90 | _rwD3D9EnableClippingIfNeeded | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x756df0 | _rxD3D9DefaultRenderCallback | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x757380 | RxD3D9AllInOneSetInstanceCallBack | RW | L2 | split rw4-sb: PASS 2 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
@@ -9467,6 +9618,8 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x75b4e0 | RpBuildMeshGenerateExhaustiveIgnoreWindingTriStrip | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x75d4c0 | RpMeshSetTriStripMethod | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x75d500 | RpMeshGetTriStripMethod | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x75d530 | _rpTriListMeshGenerate | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x75d730 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x75d970 | _rpMeshOptimise | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x75e270 | RpWorldSetDefaultSectorPipeline | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x75e2a0 | RpAtomicSetDefaultPipeline | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -9484,6 +9637,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x75f0b0 |  | RW | L2 | VERIFIER-6: split 0/0 + all-ports IDENTICAL (docs/verify/verdicts-render.tsv) | 2026-11-12 |
 | 0x760cf0 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x760df0 | _rxD3D9VertexShaderDefaultBeginCallBack | RW | implemented | written, unverified (batch rw5-node-1); verification queue | 2026-11-11 |
+| 0x761000 | _rxD3D9VertexShaderDefaultEndCallBack | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x761010 | _rxD3D9VertexShaderDefaultGetMaterialShaderCallBack | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
 | 0x761030 | _rxD3D9VertexShaderDefaultMeshRenderCallBack | RW | L2 | verifier rw5: 0x761030 _rxD3D9VertexShaderDefaultMeshRenderCallBack rw5-node-1 L2 none promoted l2 port-l2-rw5v-gfixl2 (grove): 100 cases; 0 mismatches; 0 undeclared after declaring the D3D9 cac | 2026-11-11 |
 | 0x761720 | _rpD3D9VertexShaderUpdateLightsColors | RW | implemented | rw-port-4 ported; implemented-needs-L2 | 2026-11-11 |
@@ -9560,6 +9714,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x7c68e0 | cb_SKINPLUGIN_RwEngine_Open | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7c69a0 | cb_SKINPLUGIN_RwEngine_Close | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x7c69f0 | cb_SKINPLUGIN_RpGeometry_Ctor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x7c6a10 | cb_SKINPLUGIN_RpGeometry_Dtor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x7c6a70 | cb_SKINPLUGIN_RpGeometry_Copy | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x7c6a80 | cb_SKINPLUGIN_RpAtomic_Ctor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x7c6aa0 | cb_SKINPLUGIN_RpAtomic_Dtor | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
@@ -10042,6 +10197,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x805680 | RxPipelineNodeGetPipelineCluster | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x8056c0 | RxPipelineClusterSetCreationAttributes | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x8056f0 | RxClusterSetAttributes | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x805710 | RxPipelineExecute | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x8057b0 | RxPipelineCreate | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x805820 | _rxPipelineDestroy | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x805890 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
@@ -10122,9 +10278,11 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x809780 | _rwFrameSyncDirtyObjects | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x8097d0 | _rwFrameSyncHierarchyLTM | RW | L2 | PORT-RW-1 (2026-11-11): L2; split rw-hot-sg: PASS-FP 552 compared, 0 mismatches, 0 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
 | 0x809850 | _rwFrameSyncHierarchyLTMRecurse | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: no call; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
+| 0x8098b0 | RxHeapFree | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x8099f0 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x809bf0 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x809c70 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
+| 0x809ec0 | _rxHeapReset | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x809f30 | RxHeapDestroy | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x809f90 | RxHeapCreate | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x80a0a0 | _rwIm3DCreateTransformPipeline | RW | implemented | PORT-RW-1 (2026-11-11): implemented-needs-L2; split rw-b-sg: PASS 1 compared, 0 mismatches, 1 undeclared; main-session all-ports IDENTICAL on 7 recordings | 2026-11-11 |
@@ -10160,6 +10318,7 @@ Functions: 22162 (15479 non-excluded, 6683 excluded). States per docs/PLAN.md se
 | 0x80e990 | RxNodeDefinitionGetD3D9ImmInstance | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x80e9a0 | RxNodeDefinitionGetD3D9SubmitNoLight | RW | L2 | split rw4-sb: PASS 1 compared; 0 mismatches; 0 undeclared; all-ports L3 rw4-va/va2 IDENTICAL on 11 recordings | 2026-11-11 |
 | 0x80ea40 | RxRenderStateVectorSetDefaultRenderStateVector | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
+| 0x80f070 | _rxPacketDestroy | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-12 |
 | 0x80f0d0 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x80f460 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
 | 0x80f4b0 |  | RW | implemented | written (hook or native registration on master); see verification queue | 2026-11-11 |
