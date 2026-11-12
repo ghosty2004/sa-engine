@@ -31,7 +31,10 @@ orig! {
     /// `CAnimBlendNode::UpdateCompressed(CVector& t, CQuaternion& q, float weight)` (0x4D08D0), AL
     fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
     /// `FrameUpdateCallBackWithVelocityExtractionCompressedSkinned(c, fd)` (0x4D1DB0, `c` in EAX)
-    fn compressed_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1DB0 => unported;
+    fn compressed_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1DB0 => frame_update_compressed_with_velocity;
+    /// `CAnimBlendNode::GetCurrentTranslationCompressed` (0x4CFE60), `GetEndTranslationCompressed` (0x4D0000)
+    fn node_get_current_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFE60 => unported;
+    fn node_get_end_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4D0000 => unported;
     fn skinned_with_3d_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1A50 => frame_update_skinned_with_3d_velocity;
 }
 
@@ -342,8 +345,47 @@ pub fn frame_update_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
        unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
        note = "the intro cutscene's actors")]
 pub fn frame_update_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
+    velocity_3d(data, fd, false);
+}
+
+/// `FrameUpdateCallBackWithVelocityExtractionCompressedSkinned(c, fd)` (0x4D1DB0, `c` in EAX, `fd` on the stack,
+/// cdecl): the body of the 3D variant (0x4D1A50: x, y and z, no quaternion sign test) on compressed nodes
+/// (`GetCurrentTranslationCompressed` 0x4CFE60, `UpdateCompressed` 0x4D08D0, `GetEndTranslationCompressed`
+/// 0x4D0000); its partial sum takes every association with the partial flag (+0x2E bit 4, the 0x400 ones too).
+#[hook(addr = 0x4D1DB0, conv = reg("args = eax stack"), name = "RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedSkinned", expect = "83 EC 64 53 55 56 8B F0",
+       unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "compressed animations with velocity extraction (the intro's peds)")]
+pub fn frame_update_compressed_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
+    velocity_3d(data, fd, true);
+}
+
+/// The partial blend sum of 0x4D1DB0 / 0x4D2E40: associations with the partial flag (+0x2E bit 4); the first node
+/// pointer is not null-checked.
+fn partial_blend(data: GPtr<u8>) -> f32 {
+    let mut partial = 0f32;
+    if rd::<u32>(data, 0) != 0 {
+        let mut p = data.byte_add(4);
+        loop {
+            let n = rd::<GPtr<u8>>(p, 0);
+            if rd::<u32>(n, 0x10) != 0 {
+                let a = rd::<GPtr<u8>>(n, 0x14);
+                if (rd::<u8>(a, 0x2E) >> 4) & 1 != 0 {
+                    partial = add(rd::<f32>(a, 0x18), partial);
+                }
+            }
+            p = p.byte_add(4);
+            if rd::<u32>(p, 0) == 0 {
+                break;
+            }
+        }
+    }
+    partial
+}
+
+/// The shared body of 0x4D1A50 (uncompressed) and 0x4D1DB0 (compressed).
+fn velocity_3d(data: GPtr<u8>, fd: GPtr<u8>, compressed: bool) {
     let kf = rd::<GPtr<u8>>(fd, 0x10);
-    let partial = partial_blend_no_add(data);
+    let partial = if compressed { partial_blend(data) } else { partial_blend_no_add(data) };
     let mut curr = [0f32; 3];
     let mut delta = [0f32; 3];
     let mut lp = [0f32; 3];
@@ -360,7 +402,12 @@ pub fn frame_update_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
             && (rd::<u8>(seq, 4) >> 1) & 1 != 0
             && (rd::<u8>(rd::<GPtr<u8>>(node, 0x14), 0x2E) >> 6) & 1 != 0
         {
-            node_get_current_translation(node, tp, x(one()).fsub_m(partial).to_f32());
+            let w = x(one()).fsub_m(partial).to_f32();
+            if compressed {
+                node_get_current_translation_compressed(node, tp, w);
+            } else {
+                node_get_current_translation(node, tp, w);
+            }
             for i in 0..3 {
                 curr[i] = add(t[i], curr[i]);
             }
@@ -376,7 +423,8 @@ pub fn frame_update_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
         if rd::<u32>(node, 0x10) != 0 {
             let w = x(one()).fsub_m(partial).to_f32();
             let mut q = [0f32; 4];
-            let looped = node_update(node, tp, GPtr::from_raw(q.as_mut_ptr()).cast(), w);
+            let qp = GPtr::from_raw(q.as_mut_ptr()).cast();
+            let looped = if compressed { node_update_compressed(node, tp, qp, w) } else { node_update(node, tp, qp, w) };
             for i in 0..4 {
                 qsum[i] = add(q[i], qsum[i]);
             }
@@ -391,7 +439,11 @@ pub fn frame_update_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
                     }
                     any_looped |= looped != 0;
                     if looped != 0 {
-                        node_get_end_translation(node, tp, w);
+                        if compressed {
+                            node_get_end_translation_compressed(node, tp, w);
+                        } else {
+                            node_get_end_translation(node, tp, w);
+                        }
                         for i in 0..3 {
                             lp[i] = add(t[i], lp[i]);
                         }
@@ -455,23 +507,7 @@ pub fn frame_update_compressed_skinned(fd: GPtr<u8>, data: GPtr<u8>) {
     let mut tsum = [0f32; 3];
     let mut qsum = [0f32; 4];
     let mut blend_t = 0f32;
-    let mut partial = 0f32;
-    if rd::<u32>(data, 0) != 0 {
-        let mut p = data.byte_add(4);
-        loop {
-            let n = rd::<GPtr<u8>>(p, 0);
-            if rd::<u32>(n, 0x10) != 0 {
-                let a = rd::<GPtr<u8>>(n, 0x14);
-                if (rd::<u8>(a, 0x2E) >> 4) & 1 != 0 {
-                    partial = add(rd::<f32>(a, 0x18), partial);
-                }
-            }
-            p = p.byte_add(4);
-            if rd::<u32>(p, 0) == 0 {
-                break;
-            }
-        }
-    }
+    let partial = partial_blend(data);
     let mut p = data.byte_add(4);
     loop {
         let node = rd::<GPtr<u8>>(p, 0);
@@ -524,4 +560,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FRAME_UPDATE_SKINNED_WITH_VELOCITY,
     HOOK_FRAME_UPDATE_SKINNED_WITH_3D_VELOCITY,
     HOOK_FRAME_UPDATE_COMPRESSED_SKINNED,
+    HOOK_FRAME_UPDATE_COMPRESSED_WITH_VELOCITY,
 ];
