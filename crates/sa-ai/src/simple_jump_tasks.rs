@@ -27,7 +27,16 @@ orig! {
     /// `CTaskSimpleClimb::TestForClimb(CPed*, CVector& pos, float& angle, uint8& surface, bool)` (0x6803A0)
     fn climb_test_for_climb(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, b: u32) -> GPtr<u8> = cdecl 0x6803A0 => unported;
     /// `CTaskSimpleJump::CheckIfJumpBlocked(CPed*)` (0x67D590)
-    fn check_if_jump_blocked(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D590 => unported;
+    fn check_if_jump_blocked(t: GPtr<u8>, ped: GPtr<u8>) -> u8 = thiscall 0x67D590 => check_if_jump_blocked_port;
+    /// `CEventHandler::GetCurrentEventType()` (0x4B8CC0)
+    fn event_handler_current_type(h: GPtr<u8>) -> i32 = thiscall 0x4B8CC0 => unported;
+    /// `CWorld::TestSphereAgainstWorld(CVector, float, CEntity*, bool, bool, bool, bool, bool, bool)` (0x569E20)
+    #[allow(clippy::too_many_arguments)]
+    fn world_test_sphere(x: u32, y: u32, z: u32, r: f32, ignore: u32, b: u32, v: u32, p: u32, o: u32, d: u32, c: u32) -> GPtr<u8> = cdecl 0x569E20 => unported;
+    /// `CMatrix * CVector` (0x59C890, `(CVector* out, const CMatrix*, const CVector*)`)
+    fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
+    /// `CEntity::TestCollision(bool)` (vtable slot 0x34)
+    fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CTaskSimpleJump::Launch(CPed*)` (0x679B80)
     fn launch(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x679B80 => unported;
     /// `CEventSoundQuiet(CEntity*, float, uint32, CVector)` (0x5E05B0)
@@ -159,5 +168,75 @@ pub fn simple_jump_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
+/// The ped's position: `m_matrix` +0x30, else the placement position +4.
+fn pos_ptr(e: GPtr<u8>) -> GPtr<u8> {
+    let m = rd::<GPtr<u8>>(e, 0x14);
+    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+}
+
+/// Sets every collision sphere radius (+0xC of the 0x14-byte spheres at `colData +8`, count word +0).
+fn set_sphere_radii(col: GPtr<u8>, r: u32) {
+    for i in 0..i32::from(rd::<i16>(col, 0)) {
+        wr::<u32>(rd::<GPtr<u8>>(col, 8), (i * 0x14 + 0xC) as isize, r);
+    }
+}
+
+/// `bool CTaskSimpleJump::CheckIfJumpBlocked(CPed* ped)` (0x67D590, `ret 4`).
+///
+/// False for a stuck ped (+0x1C bit 4) or while the current event is 0x5D. +0x22 = a sphere (radius 0.25) at
+/// `pos + forward / 4` raised by collision sphere 2's centre z + 0.25 hits the world (buildings, vehicles,
+/// objects). The ped is moved to `matrix * (0, 0, 0.75)`, its collision spheres shrunk to 0.3, and +0x21 set when
+/// `TestCollision(false)` hits; then position and radii (0.35) are restored. Returns +0x21.
+#[hook(addr = 0x67D590, conv = thiscall, name = "CTaskSimpleJump::CheckIfJumpBlocked",
+       expect = "83 EC 24 53 55 56 57",
+       unverified = "native-27", route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
+       note = "moves the ped and its model's collision spheres temporarily")]
+pub fn check_if_jump_blocked_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    if (rd::<u32>(ped, 0x1C) >> 4) & 1 != 0 {
+        return 0;
+    }
+    if event_handler_current_type(rd::<GPtr<u8>>(ped, 0x47C).byte_add(0x34)) == 0x5D {
+        return 0;
+    }
+    let info = g::<GPtr<u8>>(0xA9_B0C8).wrapping_index(i32::from(rd::<i16>(ped, 0x22))).read();
+    let col = rd::<GPtr<u8>>(rd::<GPtr<u8>>(info, 0x14), 0x2C);
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let q = 0.25f32;
+    let fx = x(rd::<f32>(m, 0x10)).fmul_m(q);
+    let fy = x(rd::<f32>(m, 0x14)).fmul_m(q);
+    let fz = x(rd::<f32>(m, 0x18)).fmul_m(q).to_f32();
+    let p = pos_ptr(ped);
+    let px = fx.fadd_m(rd::<f32>(p, 0)).to_f32();
+    let py = fy.fadd_m(rd::<f32>(p, 4)).to_f32();
+    let pz = x(fz)
+        .fadd_m(rd::<f32>(p, 8))
+        .fadd_m(rd::<f32>(rd::<GPtr<u8>>(col, 8), 0x30))
+        .fadd_m(q)
+        .to_f32();
+    let hit = world_test_sphere(px.to_bits(), py.to_bits(), pz.to_bits(), q, 0, 1, 1, 0, 1, 0, 0);
+    wr::<u8>(this, 0x22, u8::from(!hit.is_null()));
+    let p = pos_ptr(ped);
+    let saved = [rd::<u32>(p, 0), rd::<u32>(p, 4), rd::<u32>(p, 8)];
+    let mut v = [0f32, 0.0, 0.75];
+    let mut out = [0u32; 3];
+    let outp: GPtr<u8> = GPtr::from_raw(out.as_mut_ptr()).cast();
+    matrix_mul_vec(outp, rd::<GPtr<u8>>(ped, 0x14), GPtr::from_raw(v.as_mut_ptr()).cast());
+    let set_pos = |v: [u32; 3]| {
+        let m = rd::<GPtr<u8>>(ped, 0x14);
+        let d = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+        for (k, w) in v.iter().enumerate() {
+            wr::<u32>(d, 4 * k as isize, *w);
+        }
+    };
+    set_pos(out);
+    set_sphere_radii(col, 0x3E99_999A);
+    if entity_test_collision(ped, 0) != 0 {
+        wr::<u8>(this, 0x21, 1);
+    }
+    set_pos(saved);
+    set_sphere_radii(col, 0x3EB3_3333);
+    rd::<u8>(this, 0x21)
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_START_LAUNCH_ANIM, HOOK_SIMPLE_JUMP_PROCESS_PED];
+pub const HOOKS: &[HookReg] = &[HOOK_START_LAUNCH_ANIM, HOOK_SIMPLE_JUMP_PROCESS_PED, HOOK_CHECK_IF_JUMP_BLOCKED_PORT];
