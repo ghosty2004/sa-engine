@@ -12,10 +12,8 @@ let worker = null;
 
 // the exploration defaults of the native play package (target/play/play.sh): unported mission-script opcodes are
 // skipped, and these functions return a constant (ADDRESS=RETURN/stack dwords popped; a leading ! replaces a port:
-// 0x5efca0 turns off ped attractors, whose task tree is still being ported). Web only: 0x6803a0
-// (CTaskSimpleClimb::TestForClimb, cdecl) returns null, "nothing to climb", so a jump goes on to its launch (the port
-// calls CTaskSimpleClimb::ScanToGrab 0x67FD30, not ported yet).
-const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4,0x6803a0=0/0';
+// 0x5efca0 turns off ped attractors, whose task tree is still being ported).
+const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4';
 
 if (params.get('inworld') === '0') $('inworld').checked = false;
 
