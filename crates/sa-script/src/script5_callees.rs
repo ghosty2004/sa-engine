@@ -1,6 +1,6 @@
 //! SCRIPT-5: callees of the opcodes MAIN and the Grove Street missions (INTRO1 .. SWEET7) run that were still on the
-//! original: `CRunningScript::GetPadState`, `CTaskSequences::GetAvailableSlot`,
-//! `CDecisionMakerTypesFileLoader::GetPedDMName`, `CTheScripts::RemoveScriptTextureDictionary`.
+//! original (pad state, task sequences, decision makers, script textures, routes, tasks, suppressed models, effect
+//! systems, search lights, impound garages, water creatures).
 //! Ported from the 1.0 US bytes (gta-reversed as a reading aid; the bytes win). Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
@@ -225,6 +225,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_THE_SCRIPTS_REMOVE_SCRIPT_SEARCH_LIGHT,
     HOOK_GARAGES_STORE_CAR_IN_NEAREST_IMPOUNDING_GARAGE,
     HOOK_WATER_CREATURE_MANAGER_TRY_TO_FREE_UP,
+    HOOK_CTOR_492F60,
 ];
 
 orig! {
@@ -514,6 +515,15 @@ pub fn water_creature_manager_try_to_free_up(this: GPtr<u8>, max: i32) -> i32 {
         node = next;
     }
     freed
+}
+
+/// The constructor at 0x492F60 (thiscall; unnamed in the catalogue, reached by 06A8): `*this = 0x859DC4` (vtable).
+/// EAX is not set by the original (left as the caller's value).
+#[hook(addr = 0x492f60, conv = thiscall, name = "FUN_00492f60", expect = "C7 01 C4 9D 85 00 C3",
+       unverified = "script5-13", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "the original leaves EAX untouched")]
+pub fn ctor_492f60(this: GPtr<u8>) {
+    this.cast::<u32>().write(0x859DC4);
 }
 
 orig! {
