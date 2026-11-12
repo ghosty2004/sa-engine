@@ -56,3 +56,4 @@ pub mod replay_vehicle_block;
 // SAVE-1 (docs/arch/save-port.md)
 pub mod save_blocks;
 pub mod stats_strings;
+pub mod garage_tidy_up_close;

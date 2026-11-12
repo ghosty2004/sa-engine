@@ -93,6 +93,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::entry_exit_add::HOOKS,
     world::pickup_generate::HOOKS,
     physical::pair_collision::HOOKS,
+    world::garage_tidy_up_close::HOOKS,
     crate::generated::HOOKS,
     // SAVE-1
     world::save_blocks::HOOKS,
