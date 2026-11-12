@@ -17,11 +17,6 @@ orig! {
     fn c_4ef660_t0(this: u32) -> u32 = thiscall 0x4EF660 => unported;
 }
 
-/// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator` (0x4AD420, PED): dtor, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cped_damage_response_calculator_cped_damage_response_calculator_4ad420(_this: u32) {}
-
 /// `FUN_005de9e0` (0x5DE9E0, PED): dtor, thiscall, `ret`; 3 instruction(s) matched.
 #[hook(addr = 0x5DE9E0, conv = thiscall, name = "FUN_005de9e0", expect = "C7 01 88 99 85 00", unverified = "gen2-ped-1", route = "L2", hazards = "heap-writes")]
 pub fn g_fun_005de9e0_5de9e0(this: u32) {
@@ -31,7 +26,4 @@ pub fn g_fun_005de9e0_5de9e0(this: u32) {
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
-pub const BODIES: &[Body] = &[
-    (0x4AD420, 0xAF647E4C8602FFD2, &[(0x4AD420, 1)]),
-    (0x5DE9E0, 0xBC36534BB3D0FB42, &[(0x5DE9E0, 14)]),
-];
+pub const BODIES: &[Body] = &[(0x5DE9E0, 0xBC36534BB3D0FB42, &[(0x5DE9E0, 14)])];

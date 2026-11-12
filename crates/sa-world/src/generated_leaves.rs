@@ -12,14 +12,6 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// `FUN_0047e050` (0x47E050, COLL): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_fun_0047e050_47e050(this: u32) -> u8 {
-    let v1 = u32::from(rd::<u8>(p(this), 0x23));
-    (v1 & 0xFF) as u8
-}
-
 /// `Interior_c::Shop_FurnishCeiling` (0x59A130, WORLD): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -33,7 +25,6 @@ pub fn g_break_manager_c_exit_59e660(_this: u32) {}
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
-    (0x47E050, 0x57B42AFCD841DAC2, &[(0x47E050, 4)]),
     (0x59A130, 0xAF647E4C8602FFD2, &[(0x59A130, 1)]),
     (0x59E660, 0xAF647E4C8602FFD2, &[(0x59E660, 1)]),
 ];

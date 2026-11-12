@@ -19,13 +19,6 @@ pub fn g_fun_0041bd00_41bd00(this: u32) -> u32 {
     this
 }
 
-/// `(missed by ghidra: data-code-immediate)` (0x4217B0, VEH): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_4217b0(this: u32) -> u32 {
-    this
-}
-
 /// `FUN_004c88f0` (0x4C88F0, VEH): getter, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x4C88F0, conv = cdecl, name = "FUN_004c88f0", expect = "8B 44 24 04 C3", route = "L1-pure", hazards = "none")]
 pub fn g_fun_004c88f0_4c88f0(a0: u32) -> u32 {
@@ -46,7 +39,6 @@ pub fn g_cbike_setup_damage_after_load_6b7070(_this: u32) {}
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x41BD00, 0x7B290C1B0B7F4D96, &[(0x41BD00, 3)]),
-    (0x4217B0, 0x7B290C1B0B7F4D96, &[(0x4217B0, 3)]),
     (0x4C88F0, 0x3A6DF6CC919E0BCB, &[(0x4C88F0, 5)]),
     (0x6B67A0, 0xAF647E4C8602FFD2, &[(0x6B67A0, 1)]),
     (0x6B7070, 0xAF647E4C8602FFD2, &[(0x6B7070, 1)]),
