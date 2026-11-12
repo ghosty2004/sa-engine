@@ -1,7 +1,7 @@
 //! samp mode (SAMP-4) on the native engine: the native backend's `sa_samp_api::config` traits. `install` stores
 //! the configuration and hands the disabled features to the ports (`sa_core::samp::set_disabled_features`); the
 //! ports test their bit at the call samp NOPs (sa_core::samp::feature lists the wired ones). Runtime toggles:
-//! typed cheats so far.
+//! typed cheats and the game clock so far.
 
 use sa_samp_api::config::*;
 use sa_samp_api::*;
@@ -17,6 +17,10 @@ impl<V: View> SampMode for NativeGame<V> {
         match toggle {
             RuntimeToggle::TypedCheats(on) => {
                 sa_core::samp::set_toggle(sa_core::samp::toggle::NO_CHEATS, !on);
+                Ok(())
+            }
+            RuntimeToggle::GameClock(on) => {
+                sa_core::samp::set_toggle(sa_core::samp::toggle::NO_GAME_CLOCK, !on);
                 Ok(())
             }
             _ => Err(GameError::Unsupported("SampMode::set_toggle")),

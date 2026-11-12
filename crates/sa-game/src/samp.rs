@@ -216,6 +216,10 @@ pub fn install(
     use sa_samp_api::config::{RuntimeToggle, SampMode as _};
     game.set_toggle(RuntimeToggle::TypedCheats(false))
         .map_err(|e| format!("samp: cheats toggle: {e}"))?;
+    // samp's first frame stops GTA's clock and blanks the HUD clock (samp.dll 0x100A14A0 with false); RPC 30
+    // TogglePlayerClock turns it back on.
+    game.set_toggle(RuntimeToggle::GameClock(false))
+        .map_err(|e| format!("samp: clock toggle: {e}"))?;
     crate::samp_assets::install(game_dir, game.overlay());
     // samp's start-up: no logos, intro movie or main menu (patch sites 0x747483 and samp's gGameState 7 init).
     sa_core::samp::set_toggle(sa_core::samp::toggle::SAMP_STARTUP, true);

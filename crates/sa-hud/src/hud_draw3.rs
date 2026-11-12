@@ -475,7 +475,14 @@ pub fn draw_player_info() {
         font_set_drop_color(rgba(0, 0, 0, 0xFF));
         let minutes = i32::from(b(CLOCK_MINUTES));
         let hours = i32::from(b(CLOCK_HOURS));
-        sprintf2(local(&mut buf), g(STR_CLOCK_FMT), hours, minutes);
+        // samp's clock-off patch zeroes the format: the clock prints as an empty string.
+        let mut no_fmt = [0u8; 12];
+        let fmt = if sa_core::samp::toggled(sa_core::samp::toggle::NO_GAME_CLOCK) {
+            local(&mut no_fmt)
+        } else {
+            g(STR_CLOCK_FMT)
+        };
+        sprintf2(local(&mut buf), fmt, hours, minutes);
         ascii_to_gxt_char(local(&mut buf), local(&mut gbuf));
         let mut c = [0u8; 4];
         let cp = hud_colours_get_rgb(g(HUD_COLOUR), local(&mut c), 4);
