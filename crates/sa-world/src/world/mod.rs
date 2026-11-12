@@ -78,3 +78,4 @@ pub mod water_creature;
 // SAVE-1 (docs/arch/save-port.md)
 pub mod save_blocks;
 pub mod stats_strings;
+pub mod entry_exit_ambient_peds;
