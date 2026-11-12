@@ -38,7 +38,7 @@ orig! {
 }
 
 /// `tReplayTrainBlock::MakeTrainUpdateData` (0x45CD10, stub to .HOODLUM 0x156A610, WORLD): dtor, thiscall, `ret 8`; 47 instruction(s) matched.
-#[hook(addr = 0x45CD10, conv = thiscall, name = "tReplayTrainBlock::MakeTrainUpdateData", expect = "E9 FB D8 10 01", unverified = "gen2-world-1", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
+#[hook(addr = 0x45CD10, conv = thiscall, name = "tReplayTrainBlock::MakeTrainUpdateData", expect = "E9 FB D8 10 01", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
 pub fn g_t_replay_train_block_make_train_update_data_45cd10(this: u32, a0: u32, a1: u32) -> u32 {
     wr::<u8>(p(this), 0, 0x12 as u8);
     c_45b730_t2(this, a0, a1);

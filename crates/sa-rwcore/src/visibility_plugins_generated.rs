@@ -57,7 +57,7 @@ pub fn g_cvisibility_plugins_render_wheel_atomic_cb_7323c0(a0: u32) -> u32 {
 }
 
 /// `CVisibilityPlugins::RenderAtomicWithAlphaCB` (0x732660, RW): small, cdecl, `ret`; 13 instruction(s) matched.
-#[hook(addr = 0x732660, conv = cdecl, name = "CVisibilityPlugins::RenderAtomicWithAlphaCB", expect = "56 8B 74 24 08", unverified = "gen2-rw-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x732660, conv = cdecl, name = "CVisibilityPlugins::RenderAtomicWithAlphaCB", expect = "56 8B 74 24 08", route = "L2", hazards = "none")]
 pub fn g_cvisibility_plugins_render_atomic_with_alpha_cb_732660(a0: u32, a1: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(a0), 2));
     if ((v1 & 4) as u8) == (0 as u8) {
@@ -99,7 +99,7 @@ pub fn g_cvisibility_plugins_render_atomic_732b30(a0: u32) -> u32 {
 }
 
 /// `CVisibilityPlugins::RenderFadingClumpCB` (0x733630, RW): small, cdecl, `ret`; 20 instruction(s) matched.
-#[hook(addr = 0x733630, conv = cdecl, name = "CVisibilityPlugins::RenderFadingClumpCB", expect = "8B 0D 94 60 8D 00", unverified = "gen2-rw-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x733630, conv = cdecl, name = "CVisibilityPlugins::RenderFadingClumpCB", expect = "8B 0D 94 60 8D 00", route = "L2", hazards = "none")]
 pub fn g_cvisibility_plugins_render_fading_clump_cb_733630(a0: u32) -> u32 {
     let v1 = g::<u32>(0x8D_6094).read();
     let v2 = rd::<u32>(p(a0), 0x3C);

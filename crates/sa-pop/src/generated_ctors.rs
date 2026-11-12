@@ -18,7 +18,7 @@ orig! {
 }
 
 /// `FUN_004ae1a0` (0x4AE1A0, POP): ctor, thiscall, `ret 4`; 30 instruction(s) matched.
-#[hook(addr = 0x4AE1A0, conv = thiscall, name = "FUN_004ae1a0", expect = "6A FF 68 88 9B 83 00", unverified = "gen2-pop-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x4AE1A0, conv = thiscall, name = "FUN_004ae1a0", expect = "6A FF 68 88 9B 83 00", route = "L2", hazards = "heap-writes")]
 pub fn g_fun_004ae1a0_4ae1a0(this: u32, a0: u32) -> u32 {
     wr::<u32>(p(this), 4, 0);
     wr::<u8>(p(this), 8, 0 as u8);

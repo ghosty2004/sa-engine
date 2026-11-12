@@ -19,7 +19,7 @@ pub fn g_fun_0059cba0_59cba0(this: u32) {
 }
 
 /// `FUN_005a2cb0` (0x5A2CB0, PHYS): setter, thiscall, `ret 12`; 19 instruction(s) matched.
-#[hook(addr = 0x5A2CB0, conv = thiscall, name = "FUN_005a2cb0", expect = "83 EC 0C 8B 44 24 10", unverified = "gen2-phys-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x5A2CB0, conv = thiscall, name = "FUN_005a2cb0", expect = "83 EC 0C 8B 44 24 10", route = "L2", hazards = "heap-writes")]
 pub fn g_fun_005a2cb0_5a2cb0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
     wr::<u32>(p(this), 0xA4, a0);
     wr::<u32>(p(this), 0xA8, a1);

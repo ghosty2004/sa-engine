@@ -13,7 +13,7 @@
 use super::*;
 
 /// `thunk_FUN_015674b0` (0x407D30, stub to .HOODLUM 0x15674B0, POP): getter, cdecl, `ret`; 3 instruction(s) matched.
-#[hook(addr = 0x407D30, conv = cdecl, name = "thunk_FUN_015674b0", expect = "E9 7B F7 15 01", unverified = "gen2-pop-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x407D30, conv = cdecl, name = "thunk_FUN_015674b0", expect = "E9 7B F7 15 01", route = "L2", hazards = "none")]
 pub fn g_thunk_fun_015674b0_407d30() -> u32 {
     let v1 = g::<u32>(0xBA_6718).read();
     let v2 = rd::<u32>(p(v1.wrapping_mul(4)), 0x8A_5AB4);
@@ -21,7 +21,7 @@ pub fn g_thunk_fun_015674b0_407d30() -> u32 {
 }
 
 /// `thunk_FUN_0156ce80` (0x407DC0, stub to .HOODLUM 0x156CE80, POP): getter, cdecl, `ret`; 3 instruction(s) matched.
-#[hook(addr = 0x407DC0, conv = cdecl, name = "thunk_FUN_0156ce80", expect = "E9 BB 50 16 01", unverified = "gen2-pop-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x407DC0, conv = cdecl, name = "thunk_FUN_0156ce80", expect = "E9 BB 50 16 01", route = "L2", hazards = "none")]
 pub fn g_thunk_fun_0156ce80_407dc0() -> u32 {
     let v1 = g::<u32>(0xBA_6718).read();
     let v2 = rd::<u32>(p(v1.wrapping_mul(4)), 0x8A_5AD4);

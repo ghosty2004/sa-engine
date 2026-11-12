@@ -97,11 +97,16 @@ batch from `docs/verify/QUEUE.md`.
   Such a forwarder that takes nothing and does not read ECX (it sets ECX for its callee) is `cdecl`, as
   are free functions: ECX is not an input. 16 forwarders; no direct caller reads EAX after them (checked
   on the exe at generation time by hand; vtable slots: the base class's port is void as well).
+  VERIFIER-10 extended the rule from tail calls to every return of a call result into a void port
+  (`call; pop ecx; ret 4`: split FAIL `eax: orig 0x1 rust 0x4e6dc0` for `CAudioEngine::StopPoliceScanner`
+  -> `CAEPoliceScannerAudioEntity::StopScanner`): 6 more functions are generated void.
 - **Promotion** `tools/gen/patterns_verified.txt`: generated hooks a verifier promoted (address per line,
   evidence in `docs/verify/verdicts-gen2.tsv`), and own hooks whose `catalog/state.csv` row is L1/L2/L3, are
   generated without `unverified` (route and hazards stay; batch numbering is unchanged). VERIFIER-7 promoted
   539 of the 852 (25 L1, 514 split); the other 313 had no split case on grove-walk, pause-restart or
   save-load (27 of them `atexit` destructors, never called before ExitProcess) and stay `L3-batch`.
+  VERIFIER-10 split the 282 non-atexit ones on the other 10 corpus recordings and promoted the 12 with
+  cases (docs/verify/verdicts-gen2b.tsv); the rest are never called on any recording.
 - **Own catalogue rows**: a `catalog/state.csv` row of an address this generator's own files register
   (the integration's `implemented` rows, L1/L2/L3 after promotion) does not hide it as a candidate.
 - **Unhook list** `tools/gen/patterns_unhook.txt`: `0x41BF70` (`CCarAI::FindSwitchDistanceFar`: a call at
