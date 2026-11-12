@@ -46,6 +46,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::cutscene_preload::HOOKS,
     crate::generated::HOOKS,
     crate::cutscene_memory::HOOKS,
+    crate::quaternion_get_matrix::HOOKS,
 ];
 
 /// Every `#[native]` registration of this crate (phase B entries of ports that cannot be hooked).
