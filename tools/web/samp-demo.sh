@@ -10,7 +10,8 @@
 # Ports: SAMP_PORT (UDP, default 7813), PROXY_PORT (WebSocket, default 7781), WEB_PORT (HTTP, default 8644).
 # The server runs tools/e2e/samp/sampcov.pwn: commands go to $OUT/server/scriptfiles/sampcov.txt (one
 # "SEQ CMD|ARGS" line each, e.g. `echo "1 msg|hello" >> .../sampcov.txt`), its "[cov]" lines are in $OUT/server.log.
-# Lock: $SA_ROOT/target/locks/samp-native.lock (shared with tools/e2e/samp/native-join.sh), held while the demo runs.
+# Lock: $SA_ROOT/target/locks/$SAMP_LOCK (default samp-native.lock, shared with tools/e2e/samp/native-join.sh), held
+# while the demo runs; another name with other ports runs beside a running demo.
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
@@ -38,7 +39,7 @@ if [ ! -x "$PROXY_BIN" ]; then
 fi
 
 mkdir -p "$SA_ROOT/target/locks"
-exec {LOCK_FD}> "$SA_ROOT/target/locks/samp-native.lock"
+exec {LOCK_FD}> "$SA_ROOT/target/locks/${SAMP_LOCK:-samp-native.lock}"
 flock -n "$LOCK_FD" || { echo "samp-demo: waiting for target/locks/samp-native.lock" >&2; flock "$LOCK_FD"; }
 if ss -lun | grep -q "127.0.0.1:$PORT "; then echo "samp-demo: UDP $PORT busy" >&2; exit 1; fi
 

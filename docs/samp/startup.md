@@ -29,8 +29,9 @@ the patch list: samp-rs `docs/re/subsystems/gta-patches.md` ("Startup / intro"),
 |---|---|---|---|
 | `gGameState` 0xC8D4C0 := 5 at attach; 0x747483 `89 35 C0 D4 C8 00` (`mov [gGameState],esi`) → 6×NOP | `Ps::psInitialize` 0x747420 | `sa_core::psinit::ps_initialize` writes 5 instead of 0 when `SAMP_STARTUP` is set | done |
 | end of samp's init-main (runs at `gGameState` 7): `FrontEndMenuManager` +0xE9 (0xBA6831) := 1, +0x5C (0xBA67A4) := 0, +0x33 (0xBA677B) := 0, `gGameState` := 8 | WinMain loop, state 7 (frontend idle) | `sa-game/src/winmain.rs` state 7 applies the same writes when `SAMP_STARTUP` is set | done |
-| 0x866CD8 "title_pc_US" → "title", 0x866CCC "loadsc%d" → "title" (`74 69 74 6C 65 00`) | `CLoadingScreen::LoadSplashes` string data | not yet: needs samp.saa's `loadscs.txd` served at run time from the user's SA:MP install (samp-rs `saafs` / `samp-saa`); without it the engine shows GTA's own splash | open |
-| 0x590099 `E8 C2 7A 19 00` → 5×NOP (`CSprite2d::DrawRect`) | `CLoadingScreen::RenderSplash` | not yet (goes with the splash names) | open |
+| `CreateFileA` hook: files whose lower-case basename is a samp.saa entry are served from memory | kernel32 (the game's every file open) | `sa_platform::vfs::set_redirect`, consulted by `Vfs::read` / `open_read` (where the engine's file opens reach the platform); `sa-game/src/samp_saa.rs` reads samp.saa from the game folder (or `SA_SAMP_DIR` natively) with samp-rs's `samp-saa` and serves `loadscs.txd` | done for `loadscs.txd`; samp's `main.scm` / `script.img` reach unported script paths (tried: blocked iterations), the IDE/DAT entries need samp's `SAMP` folder |
+| 0x866CD8 "title_pc_US" → "title", 0x866CCC "loadsc%d" → "title" (`74 69 74 6C 65 00`) | `CLoadingScreen::LoadSplashes` 0x5900B0 string data | `samp_saa::install` writes the same bytes into the mapped .rdata (`arena::patch_image`, over the original bytes only) | done |
+| 0x590099 `E8 C2 7A 19 00` → 5×NOP (`CSprite2d::DrawRect`) | `CLoadingScreen::RenderSplash` 0x58FF60 | `sa_stream::loading_screen::render_splash` skips that call when `SAMP_STARTUP` is set | done |
 | not-connected scene every frame until InitGame (samp.dll 0x100089B0): weather 1, HUD off, ped at (1133.05, -2038.40, 69.1), fixed camera (1093, -2036, 90) pointing at (384, -1557, 20) jump cut | script opcodes 015F / 0160 / 0373 | `samp_net.rs::connecting_scene` through the adapter (`set_fixed_position`, `point_at`, `set_weather`, `set_hud_visible`, `set_ped_position`) | done |
 | chat lines `Started` (netgame created), `Connecting to H:P...` (connect tick > 3000 ms, samp.dll 0x10008930), `Connected. Joining the game...` (0x22), `Connected to {B9C9BF}name` (InitGame), debug colour 0xA9C4E4 | samp chat | `samp_net.rs::debug_line` + samp-rs `lifecycle::NetGame` | done |
 | class selection: RPC 128 on entry, Left/Right/Shift polled from the keyboard state, sounds 1052/1053, HUD off while no menu | samp's class selection (samp-rs `classsel.rs`, `spawn.rs`) | `samp_net.rs::class_selection_tick` with samp-rs `classsel::ClassSelection`; keys from `NewKeyState` 0xB73190 (+0x22A left, +0x22C right, +0x260 shift) | done (keyboard); mouse panel open |
@@ -38,3 +39,13 @@ the patch list: samp-rs `docs/re/subsystems/gta-patches.md` ("Startup / intro"),
 
 Headless runs (offscreen sa-game, no keyboard) set `SA_SAMP_AUTO_SPAWN=1`: Shift is then held synthetically;
 samp's 2 s guard and the class-info wait still apply (`tools/e2e/samp/native-join.sh` sets it).
+
+## Comparison (2026-11-12, original 1280x720 under Wine, sa-game 800x600 offscreen)
+
+| phase | status |
+|---|---|
+| logos / intro / legal / menu skipped | same: `gGameState` FRONTEND_LOADING → FRONTEND_LOADED → FRONTEND_IDLE → LOADING_STARTED → IDLE in 4 iterations |
+| loading screen | same art (SA-MP logo, EAX / NVIDIA / RakNet); sa-game also shows GTA's loading bar on the last slides (not seen in the original's 200 ms samples: to check) |
+| connecting scene | same camera, weather and chat lines and the same 3 s connect tick; sa-game shows a "Fat" stat box at the top left (a stat message from GTA's main.scm; samp runs its own main.scm) |
+| class selection | same camera (the gamemode's), HUD off; keyboard flow measured by the server (2 s guard, Shift spawns); the mouse panel (`<< >> Spawn`) is not drawn yet, and the original showed none with keyboard input |
+| spawn | same position and camera behind the player; sa-game shows the HUD clock, which samp turns off (`reset_game_defaults`: HUD clock off) |
