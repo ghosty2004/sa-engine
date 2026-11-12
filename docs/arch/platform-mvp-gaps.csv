@@ -171,7 +171,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 1408,0x821490,,X-crt,excluded,native,loading,4,0x5b9030,CFileLoader::LoadLevel,static,2,1,1
 1422,0x822650,,X-crt,excluded,native,loading,7,0x4c47e0,CTimeInfo::FindOtherTimeModel,static,1,0,1
 1466,0x8213d0,,X-crt,excluded,native,loading,7,0x5b6170,CStreaming::LoadCdDirectory-char,static,1,0,1
-1597,0x403d60,,UNK-game,unknown,native,loading,6,0x6f55d0,CTrain::ReadAndInterpretTrackFile,static,1,0,1
 1699,0x836c58,,X-crt,excluded,native,loading,5,0x71d4e0,CGridRef::Init,static,1,0,1
 1782,0x821d1e,,X-crt,excluded,native,loading,11,0x417950,CCollision::ProcessLineOfSight,static,2,1,1
 1783,0x821ce6,,X-crt,excluded,excluded,loading,12,0x821d1e,,static,2,1,1
@@ -186,7 +185,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 1991,0x823820,,X-crt,excluded,native,loading,5,0x5858d0,CRadar::StreamRadarSections-vec,static,1,0,1
 2237,0x584c00,,UNK-game,unknown,gap,loading,3,0x584bf0,CRadar::RemoveRadarSections,static,1,0,1
 2590,0x660a37,,UNK-game,unknown,gap,in-world,17,0x660a30,CTaskComplexSignalAtPed::Constructor,static,1,0,1
-3138,0x732f30,CVisibilityPlugins::RenderWeaponPedsForPC,RW,specified,gap,in-world,5,0x727140,CMirrors::BeforeMainRender,static,1,0,1
 3276,0x807c10,,X-linker-thunk,excluded,excluded,boot,7,0x81805c,,ref,2,1,1
 3277,0x820dbd,,X-crt,excluded,excluded,boot,8,0x807c10,,ref,2,1,1
 3278,0x817508,,X-linker-thunk,excluded,excluded,boot,8,0x807c10,,ref,2,1,1
@@ -196,7 +194,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 4990,0x4d2e40,RpAnimBlend::FrameUpdateCallBackCompressedSkinned,RW,specified,gap,in-world,8,0x4d34f0,RpAnimBlend::RpAnimBlendClumpUpdateAnimations,ref,1,0,1
 4991,0x4d1db0,RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedSkinned,RW,specified,gap,in-world,9,0x4d2e40,RpAnimBlend::FrameUpdateCallBackCompressedSkinned,ref,1,0,1
 4999,0x4d1a50,RpAnimBlend::FrameUpdateCallBackSkinnedWith3dVelocityExtraction,RW,specified,gap,in-world,9,0x4d2b90,RpAnimBlend::FrameUpdateCallBackSkinned,ref,1,0,1
-5005,0x4d30a0,RpAnimBlend::FrameUpdateCallBackNonSkinned,RW,specified,gap,in-world,8,0x4d34f0,RpAnimBlend::RpAnimBlendClumpUpdateAnimations,ref,1,0,1
 5006,0x4d2450,RpAnimBlend::FrameUpdateCallBackNonSkinnedWith3dVelocityExtraction,RW,specified,gap,in-world,9,0x4d30a0,RpAnimBlend::FrameUpdateCallBackNonSkinned,ref,1,0,1
 5038,0x826a72,,X-crt,excluded,excluded,boot,0,,,crt-init,2,1,1
 5039,0x8289f5,,X-crt,excluded,excluded,boot,0,,,crt-init,2,1,1
@@ -251,7 +248,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 5131,0x849980,__init_g_9691a0,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5132,0x8499a0,__init_g_9691a4,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5133,0x8499c0,__init_g_9691a8,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
-5227,0x84a540,__init_CReplay__PlayerInfo,WORLD,specified,gap,boot,0,,,crt-init,2,1,1
 5233,0x84a5e0,__init_g_a43594,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5240,0x84a6c0,__init_g_a90840,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5246,0x84a750,__init_CTheScripts__IntroTextLines,SCRIPT,specified,gap,boot,0,,,crt-init,2,1,1
@@ -294,11 +290,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 5409,0x84baf0,__init_g_a9b0a4,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5410,0x84bb10,__init_g_a9b0a8,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5411,0x84bb30,__init_g_a9b0ac,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
-5466,0x733670,CVisibilityPlugins::RenderWeaponCB,RW,specified,gap,boot,4,0x4c9910,CWeaponModelInfo::SetClump,crt-init,1,0,1
-5486,0x7326d0,CVisibilityPlugins::GetDotProductWithCameraVector,RW,specified,gap,boot,7,0x734240,CVisibilityPlugins::RenderTrainHiDetailAlphaCB,crt-init,1,0,1
-5490,0x7331e0,CVisibilityPlugins::RenderVehicleReallyLowDetailCB,RW,specified,gap,boot,6,0x4c77e0,CVehicleModelInfo::SetAtomicRendererCB,crt-init,1,0,1
-5491,0x733f80,CVisibilityPlugins::RenderVehicleHiDetailAlphaCB,RW,specified,gap,boot,6,0x4c77e0,CVehicleModelInfo::SetAtomicRendererCB,crt-init,1,0,1
-5492,0x733240,CVisibilityPlugins::RenderVehicleHiDetailCB,RW,specified,gap,boot,6,0x4c77e0,CVehicleModelInfo::SetAtomicRendererCB,crt-init,1,0,1
 5534,0x84bdb0,__init_g_b4e6cc,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5540,0x84be70,__init_g_b4e760,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5547,0x84bf50,__init_g_b4ea1c,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
@@ -318,7 +309,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 5847,0x84e100,__init_84e100,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5852,0x84e190,__init_g_b7344c,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5860,0x84e280,__init_g_b74228,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
-5864,0x84e300,__init_gMatrixList,WORLD,specified,gap,boot,0,,,crt-init,2,1,1
 5869,0x84e380,__init_g_b744d4,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5875,0x84e440,__init_g_b745b0,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5881,0x84e500,__init_g_b76864,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
@@ -329,7 +319,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 5905,0x84e7f0,__init_g_b7cb24,RENDER,specified,gap,boot,0,,,crt-init,2,1,1
 5931,0x84eac0,__init_g_b9b7e0,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 5937,0x84eb80,__init_g_b9b988,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
-6002,0x84f320,__init_FurnitureManager_c__g_subGroupStore,WORLD,specified,gap,boot,0,,,crt-init,2,1,1
 6046,0x84f820,__init_g_bb3de8,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 6047,0x84f840,__init_g_bb3dec,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
 6048,0x84f860,__init_g_bb3df0,UNK-game,specified,gap,boot,0,,,crt-init,2,1,1
@@ -623,8 +612,6 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 6993,0x818080,,X-linker-thunk,excluded,excluded,unknown,3,0x502640,CAEVorbisDecoder::GetStreamPlayTimeMs,dynamic,1,0,1
 6995,0x818086,,X-linker-thunk,excluded,excluded,unknown,3,0x502670,CAEVorbisDecoder::SetCursor,dynamic,1,0,1
 6998,0x818062,,X-linker-thunk,excluded,excluded,unknown,4,0x5023f0,CAEVorbisDecoder::Destructor,dynamic,1,0,1
-7054,0x756710,,RW,unknown,gap,unknown,0,,,dynamic,1,0,1
-7055,0x756770,,RW,unknown,gap,unknown,0,,,dynamic,1,0,1
 7077,0x7652ae,,X-d3dx9,excluded,excluded,unknown,2,0x75f0b0,,dynamic,1,0,1
 7078,0x76b89b,,X-d3dx9,excluded,excluded,unknown,3,0x7652ae,,dynamic,1,0,1
 7079,0x76e390,,X-d3dx9,excluded,excluded,unknown,4,0x76b89b,,dynamic,1,0,1
@@ -710,13 +697,7 @@ order,address,name,subsystem,state,kind,phase,depth,first_caller,first_caller_na
 7164,0x7b9bc5,,X-d3dx9,excluded,excluded,unknown,6,0x7ac5e2,,dynamic,1,0,1
 7169,0x7672e1,,X-d3dx9,excluded,excluded,unknown,1,0x7646e0,_rwD3D9VSGetComposedTransformMatrix,dynamic,1,0,1
 7170,0x7676c7,,X-d3dx9,excluded,excluded,unknown,1,0x7646e0,_rwD3D9VSGetComposedTransformMatrix,dynamic,1,0,1
-7173,0x7c7b90,_rpD3D9SkinAllInOneNode,RW,specified,gap,unknown,0,,,dynamic,1,0,1
-7174,0x7c8d60,,RW,unknown,gap,unknown,1,0x7c7b90,_rpD3D9SkinAllInOneNode,dynamic,1,0,1
-7176,0x7c9680,,RW,unknown,gap,unknown,2,0x7c8d60,,dynamic,1,0,1
-7177,0x7c90d0,,RW,unknown,gap,unknown,2,0x7c8d60,,dynamic,1,0,1
 7179,0x7c8060,,RW,unknown,gap,unknown,1,0x7c7b90,_rpD3D9SkinAllInOneNode,dynamic,1,0,1
-7180,0x7cb190,,RW,unknown,gap,unknown,0,,,dynamic,1,0,1
-7229,0x80e270,_rwD3D9ImmRenderPrimitiveNode,RW,specified,gap,unknown,0,,,dynamic,1,0,1
 7233,0x82134f,,X-crt,excluded,excluded,unknown,0,,,dynamic,2,1,1
 7234,0x826b40,,X-crt,excluded,excluded,unknown,1,0x82134f,,dynamic,2,1,1
 7235,0x832ca8,,X-crt,excluded,excluded,unknown,2,0x826b40,,dynamic,2,1,1
