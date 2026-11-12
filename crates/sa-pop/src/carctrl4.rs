@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
-use sa_core::{hook, orig};
+use sa_core::{hook, native, orig};
 use sa_math::x87::X87;
 
 use crate::common::{ftol32, g, model_info, rand_at, rd, wr, x, xi};
@@ -1003,6 +1003,8 @@ orig! {
 /// rand 0x427C83) when the links are more than 16 m apart, the lane clamp, the curve duration, and a parking
 /// node (behaviour 2) switches to real physics with mission 0x2D. Returns 0.
 // Unhookable: protection code reads and calls its entry dwords as data (0x146C35E, 0x146C570, 0x146C585 `call [0x427744]`, ...; sa-hook every_hook_installs_on_the_exe).
+// Registered for phase B only (`#[native]`, INTRO-2: the Ballas car of the intro follows its path).
+#[native(addr = 0x427740, conv = cdecl, name = "CCarCtrl::PickNextNodeToFollowPath")]
 pub fn pick_next_node_to_follow_path(veh: GPtr<u8>) -> u8 {
     let seed = rd::<u16>(veh, 0x45E);
     if seed != 0 {
@@ -1689,7 +1691,7 @@ orig! {
     fn play_car_horn(v: GPtr<u8>) = thiscall vslot 0xD8 => unported;
 }
 
-/// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30; entry `nop; jmp` into its SEH prologue). PARTIAL (ADR-002; STD-14 adds the missions of [`shares_cruise_path`]):
+/// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30; entry `nop; jmp` into its SEH prologue). PARTIAL (ADR-002; STD-14 adds the missions of [`shares_cruise_path`], INTRO-2 missions 8 / 9 / 12 through [`goto_coors_arrived`]):
 /// ported are the early returns (a vehicle recording whose `bUseCarAI` (0x97D6C0) is off, vehicle type 3) and
 /// the whole body for mission 0 (none) or 1 (cruise) when the vehicle is not a law enforcer (+0x428 bit 0) or the
 /// player's wanted level is 0 (STD-12: for law enforcers the original then only reads the wanted level and adds
@@ -1706,7 +1708,7 @@ orig! {
 /// gta-reversed's stuck test runs for the listed missions or zero cruise speed; the bytes skip exactly those.
 #[hook(addr = 0x41DA30, conv = cdecl, name = "CCarAI::UpdateCarAI", expect = "90 E9 12 62 FE FF", fallback,
        unverified = "std12-pop-1", route = "L2", hazards = "heap-writes", recs = "grove-walk,driving",
-       note = "STD-12 extended the partial port to law enforcers while the wanted level is 0; STD-14 to the missions that share the cruise path")]
+       note = "STD-12 extended the partial port to law enforcers while the wanted level is 0; STD-14 to the missions that share the cruise path; INTRO-2 to missions 8 / 9 / 12")]
 pub fn update_car_ai(veh: GPtr<u8>) {
     let rec = rd::<i8>(veh, 0x424);
     if rec >= 0 && g::<u8>(0x97D6C0 + rec as usize).read() == 0 {
@@ -1717,8 +1719,11 @@ pub fn update_car_ai(veh: GPtr<u8>) {
     }
     let mission = rd::<u8>(veh, 0x3BA);
     let law = rd::<u8>(veh, 0x428) & 1 != 0;
-    if (mission > 1 && !shares_cruise_path(mission)) || (law && player_wanted_level() > 0) {
+    if (mission > 1 && !shares_cruise_path(mission) && !matches!(mission, 8 | 9 | 12)) || (law && player_wanted_level() > 0) {
         return update_car_ai_original(veh);
+    }
+    if matches!(mission, 8 | 9 | 12) && matches!(rd::<u8>(veh, 0x36) >> 3, 2 | 3 | 12) {
+        goto_coors_arrived(veh, mission);
     }
     if matches!(rd::<u8>(veh, 0x36) >> 3, 4 | 5) {
         wr::<u8>(veh, 0x3D0, 0);
@@ -1829,6 +1834,36 @@ pub fn update_car_ai(veh: GPtr<u8>) {
     wr(veh, 0x3D4, new.to_f32());
     if law {
         police_gang_area_cruise_speed(veh);
+    }
+}
+
+/// The mission-switch cases of `UpdateCarAI` for missions 8 (go to coordinates, 0x41E2BF), 9 (stop forever,
+/// 0x41E3B1) and 12 (0x41E338), status 2 / 3 / 12, with d = the 2D distance to the destination (+0x3EC) `sqrt(dy * dy
+/// + dx * dx)`. 8 / 12: d below the straight-line distance byte (+0x3DD, `fild`; strict, `test ah, 0x41; jne`
+/// skips) → mission 9 / 13. 9: d below 3.0 (`test ah, 5; jp` not taken) → temp action (+0x3BB) 0 and mission 0;
+/// otherwise d above `+0x3DD + 5.0` (strict) on frames with `(CTimer::m_FrameCounter & 7) == 0` → temp action 0 and
+/// mission `8 + (JoinCarWithRoadSystemGotoCoors(v, &destination, true, false) != 0)`. All three then continue with
+/// the cruise path (0x41FA92 → 0x40A4AD, the law-enforcer test), and the tail switch (0x41FE25) takes its default
+/// for them, so the rest is the path of missions 0 / 1 (INTRO-2).
+fn goto_coors_arrived(veh: GPtr<u8>, mission: u8) {
+    let p = entity_pos(veh).cast::<u8>();
+    let dy = x(rd::<f32>(veh, 0x3F0)).fsub_m(rd::<f32>(p, 4));
+    let dx = x(rd::<f32>(veh, 0x3EC)).fsub_m(rd::<f32>(p, 0));
+    let d = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();
+    let straight = xi(i32::from(rd::<u8>(veh, 0x3DD)));
+    if mission != 9 {
+        if !straight.fcom(d).test_any(0x41) {
+            wr::<u8>(veh, 0x3BA, if mission == 8 { 9 } else { 0xD });
+        }
+        return;
+    }
+    if !d.fcom(x(kf(0x858C74))).test_parity(0x05) {
+        wr::<u8>(veh, 0x3BB, 0);
+        wr::<u8>(veh, 0x3BA, 0);
+    } else if !d.fcom(straight.fadd_m(kf(0x858C80))).test_any(0x41) && g::<u8>(0xB7CB4C).read() & 7 == 0 {
+        wr::<u8>(veh, 0x3BB, 0);
+        let r = join_car_with_road_system_goto_coors(veh, veh.byte_add(0x3EC).cast(), 1, 0);
+        wr::<u8>(veh, 0x3BA, u8::from(r != 0) + 8);
     }
 }
 
@@ -2598,3 +2633,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PICK_NEXT_NODE_RANDOMLY,
     HOOK_PICK_NEXT_NODE_ACCORDING_STRATEGY,
 ];
+
+/// Every `#[native]` of this module.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_PICK_NEXT_NODE_TO_FOLLOW_PATH];

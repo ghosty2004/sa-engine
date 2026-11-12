@@ -51,3 +51,4 @@ pub mod generated;
 pub mod car_ai_reason_to_stop;
 pub mod weave_heading_test;
 pub mod weave_for_ped;
+pub mod join_road_goto_coors;
