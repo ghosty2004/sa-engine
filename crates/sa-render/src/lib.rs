@@ -137,3 +137,4 @@ pub mod rw_tex_dict_find_hash;
 pub mod fx_add_punch_impact;
 pub mod fx_info_get_value_samp;
 pub mod postfx_speed_fx;
+pub mod fx_debris_wheel_grass;
