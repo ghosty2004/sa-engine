@@ -79,6 +79,11 @@ function progress() {
 }
 
 self.saGameIo = {
+  // a Rust panic (the module aborts right after): straight to the page
+  panic(message) {
+    flushLogs();
+    post('panic', { message });
+  },
   read(id, offset, length) {
     progress();
     const f = files[id];
@@ -101,6 +106,17 @@ self.saGameIo = {
 
 // ---------------------------------------------------------------- the main loop ---
 let pending = () => false;
+// snapshot requests (evidence runs, the page's "save frame"): the canvas content right after the next present, read
+// before the task ends (a WebGPU canvas keeps its drawing buffer until then)
+let canvas = null;
+let snapshotWanted = false;
+let presentedNow = () => false;
+function takeSnapshot() {
+  snapshotWanted = false;
+  canvas.convertToBlob({ type: 'image/png' }).then((b) => b.arrayBuffer()).then((buf) => {
+    post('snapshot', { png: buf, state: sa.game_state(), iterations: sa.iterations() });
+  }).catch((e) => console.warn(`snapshot: ${e}`));
+}
 let stopped = false;
 let phase = 'starting';
 let lastStatus = 0;
@@ -108,6 +124,11 @@ let lastStatus = 0;
 function status(extra) {
   flushLogs();
   lastStatus = performance.now();
+  // after a trap the module's state is torn (a panic aborts mid-call): no more calls into it
+  if (extra.error) {
+    post('status', { phase, mib: Math.round(bytesRead / 1048576), ...extra });
+    return;
+  }
   post('status', {
     phase,
     iterations: sa.iterations(),
@@ -129,11 +150,14 @@ function tick() {
         status({ done: 'the main loop stopped (see the log)' });
         return;
       }
+      if (snapshotWanted && sa.presents() > 0 && presentedNow()) takeSnapshot();
     } while (performance.now() < end && !pending());
   } catch (e) {
     stopped = true;
-    status({ error: `${e}` });
-    console.error(`sa-game trapped: ${e}\n${e.stack || ''}`);
+    // the wasm stack (function names) of the trap, then the status (which flushes the log to the page)
+    const frames = (e.stack || '').split('\n').filter((l) => l.includes('wasm')).map((l) => l.trim().replace(/^at /, '').split(' (')[0]);
+    console.error(`sa-game trapped: ${e}\n  ${frames.join('\n  ')}`);
+    status({ error: `${e} in ${frames[0] ?? '?'}` });
     return;
   }
   if (performance.now() - lastStatus > 100) status({});
@@ -154,6 +178,7 @@ self.onmessage = async (ev) => {
           sa.add_game_file(f.path, id, f.size);
         }
         console.log(`${files.length} game files registered`);
+        canvas = m.canvas;
         const gpu = await sa.init_gpu(m.canvas, m.backend || '');
         console.log(`GPU: ${gpu}`);
         phase = 'booting';
@@ -162,6 +187,7 @@ self.onmessage = async (ev) => {
         phase = 'running';
         status({});
         pending = presentPending();
+        presentedNow = presentPending();
         setTimeout(tick, 0);
       } catch (e) {
         stopped = true;
@@ -181,6 +207,9 @@ self.onmessage = async (ev) => {
       break;
     case 'wheel':
       sa.wheel(m.lines);
+      break;
+    case 'snapshot':
+      snapshotWanted = true;
       break;
     case 'blur':
       sa.blur();

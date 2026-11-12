@@ -29,6 +29,8 @@ static DEVICE: Mutex<Option<WgpuDevice>> = Mutex::new(None);
 
 /// Runs `f` on the device (`None` before `CreateDevice`).
 pub fn with_device<R>(f: impl FnOnce(&mut WgpuDevice) -> R) -> Option<R> {
+    #[cfg(target_arch = "wasm32")]
+    crate::web::maybe_sample("IDirect3DDevice9 (seam)");
     let mut d = DEVICE.lock().unwrap_or_else(|e| e.into_inner());
     d.as_mut().map(f)
 }
