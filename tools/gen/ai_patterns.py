@@ -2248,9 +2248,12 @@ PRESERVE = {
 # `unknown`/`specified` (`catalog/state.csv`) is registered `unverified`, with the batch id
 # `tools/gen/ai_patterns_unverified.txt` assigns it (`ADDR BATCH` lines). `--assign PREFIX` appends the
 # missing ones in address order, in batches of at most BATCH_MAX (`PREFIX-<n>`, n after the highest one
-# in use). A verifier promotes a hook by setting its state and deleting its line. Hooks generated before
-# the split (state `implemented` or above) carry no `unverified`.
+# in use). A verifier promotes a hook by setting its state to L1/L2/L3 and deleting its line. A listed hook
+# stays `unverified` while its state is below L1, including `implemented` (written, not verified: an
+# integration records that state for every registered hook). Hooks generated before the split (AI-GEN, not
+# listed, state `implemented` or above) carry no `unverified`.
 BATCH_MAX = 60
+VERIFIED_STATES = ('L1', 'L2', 'L3')
 UNVERIFIED_FILE = os.path.join(ROOT, 'tools', 'gen', 'ai_patterns_unverified.txt')
 
 
@@ -2374,7 +2377,11 @@ def main():
     want = []
     for recs in gens.values():
         for a, name, fid, fn, fam, body in recs:
-            if states.get(a, 'unknown') in ('unknown', 'specified') and hookable(a, fn) is True:
+            st = states.get(a, 'unknown')
+            # `implemented` means written, not verified: a hook listed in UNVERIFIED_FILE stays unverified
+            # until a verifier raises its state to L1/L2/L3 (and deletes its line).
+            if (hookable(a, fn) is True and st not in VERIFIED_STATES
+                    and (a in batches or st in ('unknown', 'specified'))):
                 fn.unverified = batches.get(a)
                 if fn.unverified is None:
                     want.append(a)

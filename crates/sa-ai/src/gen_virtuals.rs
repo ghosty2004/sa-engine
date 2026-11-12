@@ -310,7 +310,7 @@ pub fn g_task_complex_seek_entity_radius_angle_offset_make_abortable_493810(
 }
 
 /// `CEventGunShot::GetLocalSoundLevel` (0x4AC6E0): virtual-leaf, thiscall, `ret`; 7 instruction(s) matched.
-#[hook(addr = 0x4AC6E0, conv = thiscall, name = "CEventGunShot::GetLocalSoundLevel", expect = "8A 41 30 84 C0")]
+#[hook(addr = 0x4AC6E0, conv = thiscall, name = "CEventGunShot::GetLocalSoundLevel", expect = "8A 41 30 84 C0", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_event_gun_shot_get_local_sound_level_4ac6e0(this: u32) -> X87 {
     let v1 = u32::from(rd::<u8>(p(this), 0x30));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -323,7 +323,7 @@ pub fn g_event_gun_shot_get_local_sound_level_4ac6e0(this: u32) -> X87 {
 }
 
 /// `CEventGunShot::TakesPriorityOver` (0x4AC780): virtual-leaf, thiscall, `ret 4`; 63 instruction(s) matched.
-#[hook(addr = 0x4AC780, conv = thiscall, name = "CEventGunShot::TakesPriorityOver", expect = "53 56 57 8B 7C 24 10")]
+#[hook(addr = 0x4AC780, conv = thiscall, name = "CEventGunShot::TakesPriorityOver", expect = "53 56 57 8B 7C 24 10", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_gun_shot_takes_priority_over_4ac780(this: u32, a0: u32) -> u8 {
     let _v1 = rd::<u32>(p(a0), 0);
     let v2 = vslot_4_0(p(a0));
@@ -461,7 +461,7 @@ pub fn g_event_gun_shot_takes_priority_over_4ac780(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventGunShot::IsCriminalEvent` (0x4AC810): virtual-leaf, thiscall, `ret`; 14 instruction(s) matched.
-#[hook(addr = 0x4AC810, conv = thiscall, name = "CEventGunShot::IsCriminalEvent", expect = "8B 49 14 85 C9")]
+#[hook(addr = 0x4AC810, conv = thiscall, name = "CEventGunShot::IsCriminalEvent", expect = "8B 49 14 85 C9", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_gun_shot_is_criminal_event_4ac810(this: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0x14);
     if v1 == 0 {
@@ -542,7 +542,7 @@ pub fn g_event_dragged_out_car_affects_ped_4ad3a0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventDraggedOutCar::AffectsPedGroup` (0x4AD3C0): virtual-leaf, thiscall, `ret 4`; 15 instruction(s) matched.
-#[hook(addr = 0x4AD3C0, conv = thiscall, name = "CEventDraggedOutCar::AffectsPedGroup", expect = "8B 4C 24 04 53")]
+#[hook(addr = 0x4AD3C0, conv = thiscall, name = "CEventDraggedOutCar::AffectsPedGroup", expect = "8B 4C 24 04 53", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_dragged_out_car_affects_ped_group_4ad3c0(_this: u32, a0: u32) -> u8 {
     let v1 = c_5f69a0_t0(a0.wrapping_add(8));
     let v2 = c_56e210_c1(0xFFFF_FFFF);
@@ -612,7 +612,7 @@ pub fn g_event_vehicle_hit_and_run_affects_ped_4aea20(_this: u32, a0: u32) -> u8
 }
 
 /// `vt_85afe8::AffectsPed` (0x4AEC00): virtual-leaf, thiscall, `ret 4`; 26 instruction(s) matched.
-#[hook(addr = 0x4AEC00, conv = thiscall, name = "vt_85afe8::AffectsPed", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x4AEC00, conv = thiscall, name = "vt_85afe8::AffectsPed", expect = "56 8B 74 24 08", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_85afe8_affects_ped_4aec00(this: u32, a0: u32) -> u8 {
     let v1 = c_5e0170_t0(a0);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -639,7 +639,7 @@ pub fn g_vt_85afe8_affects_ped_4aec00(this: u32, a0: u32) -> u8 {
 }
 
 /// `vt_85b030::AffectsPed` (0x4AECB0): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
-#[hook(addr = 0x4AECB0, conv = thiscall, name = "vt_85b030::AffectsPed", expect = "8B 4C 24 04 80 B9 84 04 00 00 02")]
+#[hook(addr = 0x4AECB0, conv = thiscall, name = "vt_85b030::AffectsPed", expect = "8B 4C 24 04 80 B9 84 04 00 00 02", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_85b030_affects_ped_4aecb0(_this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(a0), 0x484));
     if (v1 as u8) != (2 as u8) {
@@ -667,7 +667,7 @@ pub fn g_event_ped_to_flee_affects_ped_4af330(_this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventVehicleToSteal::AffectsPed` (0x4AF760): virtual-leaf, thiscall, `ret 4`; 63 instruction(s) matched.
-#[hook(addr = 0x4AF760, conv = thiscall, name = "CEventVehicleToSteal::AffectsPed", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x4AF760, conv = thiscall, name = "CEventVehicleToSteal::AffectsPed", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_vehicle_to_steal_affects_ped_4af760(this: u32, a0: u32) -> u8 {
     let v1 = c_5e0170_t0(a0);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -914,7 +914,7 @@ pub fn g_event_acquaintance_ped_takes_priority_over_4af8f0(this: u32, a0: u32) -
 }
 
 /// `CEventAcquaintancePedHateBadlyLit::AffectsPed` (0x4AFA90): virtual-leaf, thiscall, `ret 4`; 67 instruction(s) matched.
-#[hook(addr = 0x4AFA90, conv = thiscall, name = "CEventAcquaintancePedHateBadlyLit::AffectsPed", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x4AFA90, conv = thiscall, name = "CEventAcquaintancePedHateBadlyLit::AffectsPed", expect = "56 8B 74 24 08", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_acquaintance_ped_hate_badly_lit_affects_ped_4afa90(this: u32, a0: u32) -> u8 {
     let v1 = c_4afa30_t1(this, a0);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -1004,7 +1004,7 @@ pub fn g_event_gun_aimed_at_report_criminal_event_4b09e0(this: u32, a0: u32) -> 
 }
 
 /// `CEventScriptCommand::TakesPriorityOver` (0x4B0BA0): virtual-leaf, thiscall, `ret 4`; 38 instruction(s) matched.
-#[hook(addr = 0x4B0BA0, conv = thiscall, name = "CEventScriptCommand::TakesPriorityOver", expect = "56 8B F1 8A 46 14")]
+#[hook(addr = 0x4B0BA0, conv = thiscall, name = "CEventScriptCommand::TakesPriorityOver", expect = "56 8B F1 8A 46 14", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_script_command_takes_priority_over_4b0ba0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0x14));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -1193,7 +1193,7 @@ pub fn g_event_in_air_affects_ped_4b0c00(_this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventVehicleDied::AffectsPed` (0x4B0E00): virtual-leaf, thiscall, `ret 4`; 35 instruction(s) matched.
-#[hook(addr = 0x4B0E00, conv = thiscall, name = "CEventVehicleDied::AffectsPed", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x4B0E00, conv = thiscall, name = "CEventVehicleDied::AffectsPed", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_event_vehicle_died_affects_ped_4b0e00(this: u32, a0: u32) -> u8 {
     let v1 = c_5e0170_t0(a0);
     if ((v1 & 0xFF) as u8) != (0 as u8) {
@@ -1439,7 +1439,7 @@ pub fn g_event_stuck_in_air_takes_priority_over_4b15b0(this: u32, a0: u32) -> u8
 }
 
 /// `vt_8701a8::IsValid` (0x4B1640): virtual-leaf, thiscall, `ret 4`; 22 instruction(s) matched.
-#[hook(addr = 0x4B1640, conv = thiscall, name = "vt_8701a8::IsValid", expect = "56 8B F1 8B 4C 24 08")]
+#[hook(addr = 0x4B1640, conv = thiscall, name = "vt_8701a8::IsValid", expect = "56 8B F1 8B 4C 24 08", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_8701a8_is_valid_4b1640(this: u32, a0: u32) -> u8 {
     if a0 != 0 {
         let v1 = c_5e0170_t0(a0);
@@ -1462,7 +1462,7 @@ pub fn g_vt_8701a8_is_valid_4b1640(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventLeanOnVehicle::IsValid` (0x4B16C0): virtual-leaf, thiscall, `ret 4`; 22 instruction(s) matched.
-#[hook(addr = 0x4B16C0, conv = thiscall, name = "CEventLeanOnVehicle::IsValid", expect = "56 8B F1 8B 4C 24 08")]
+#[hook(addr = 0x4B16C0, conv = thiscall, name = "CEventLeanOnVehicle::IsValid", expect = "56 8B F1 8B 4C 24 08", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_lean_on_vehicle_is_valid_4b16c0(this: u32, a0: u32) -> u8 {
     if a0 != 0 {
         let v1 = c_5e0170_t0(a0);
@@ -1485,7 +1485,7 @@ pub fn g_event_lean_on_vehicle_is_valid_4b16c0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventPassObject::IsValid` (0x4B1700): virtual-leaf, thiscall, `ret 4`; 22 instruction(s) matched.
-#[hook(addr = 0x4B1700, conv = thiscall, name = "CEventPassObject::IsValid", expect = "56 8B F1 8B 4C 24 08")]
+#[hook(addr = 0x4B1700, conv = thiscall, name = "CEventPassObject::IsValid", expect = "56 8B F1 8B 4C 24 08", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_pass_object_is_valid_4b1700(this: u32, a0: u32) -> u8 {
     if a0 != 0 {
         let v1 = c_5e0170_t0(a0);
@@ -1560,7 +1560,7 @@ pub fn g_event_got_knocked_over_by_car_get_source_entity_4b1ca0(this: u32) -> u3
 }
 
 /// `CEventCarUpsideDown::AffectsPed` (0x4B1DB0): virtual-leaf, thiscall, `ret 4`; 33 instruction(s) matched.
-#[hook(addr = 0x4B1DB0, conv = thiscall, name = "CEventCarUpsideDown::AffectsPed", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x4B1DB0, conv = thiscall, name = "CEventCarUpsideDown::AffectsPed", expect = "56 8B 74 24 08", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_car_upside_down_affects_ped_4b1db0(_this: u32, a0: u32) -> u8 {
     let v1 = c_5df8f0_t0(a0);
     if ((v1 & 0xFF) as u8) != (0 as u8) {
@@ -1756,7 +1756,7 @@ pub fn g_event_vehicle_hit_and_run_is_criminal_event_4b27b0(this: u32) -> u8 {
 }
 
 /// `CEventVehicleHitAndRun::ReportCriminalEvent` (0x4B27D0): virtual-leaf, thiscall, `ret 4`; 44 instruction(s) matched.
-#[hook(addr = 0x4B27D0, conv = thiscall, name = "CEventVehicleHitAndRun::ReportCriminalEvent", expect = "56 8B F1 8B 06")]
+#[hook(addr = 0x4B27D0, conv = thiscall, name = "CEventVehicleHitAndRun::ReportCriminalEvent", expect = "56 8B F1 8B 06", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_event_vehicle_hit_and_run_report_criminal_event_4b27d0(this: u32, _a0: u32) -> u32 {
     let _v1 = rd::<u32>(p(this), 0);
     let v2 = vslot_1c_0(p(this));
@@ -1796,7 +1796,7 @@ pub fn g_event_vehicle_hit_and_run_report_criminal_event_4b27d0(this: u32, _a0: 
 }
 
 /// `CEventSeenPanickedPed::AffectsPed` (0x4B53C0): virtual-leaf, thiscall, `ret 4`; 62 instruction(s) matched.
-#[hook(addr = 0x4B53C0, conv = thiscall, name = "CEventSeenPanickedPed::AffectsPed", expect = "83 EC 0C 56 57")]
+#[hook(addr = 0x4B53C0, conv = thiscall, name = "CEventSeenPanickedPed::AffectsPed", expect = "83 EC 0C 56 57", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return,x87-transcendental,uninit-locals")]
 pub fn g_event_seen_panicked_ped_affects_ped_4b53c0(this: u32, a0: u32) -> u8 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -1894,7 +1894,7 @@ pub fn g_event_seen_panicked_ped_affects_ped_4b53c0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventDanger::AffectsPedGroup` (0x4B54E0): virtual-leaf, thiscall, `ret 4`; 56 instruction(s) matched.
-#[hook(addr = 0x4B54E0, conv = thiscall, name = "CEventDanger::AffectsPedGroup", expect = "56 8B F1 8B 06")]
+#[hook(addr = 0x4B54E0, conv = thiscall, name = "CEventDanger::AffectsPedGroup", expect = "56 8B F1 8B 06", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_event_danger_affects_ped_group_4b54e0(this: u32, a0: u32) -> u8 {
     let _v1 = rd::<u32>(p(this), 0);
     let v2 = vslot_28_0(p(this));
@@ -1991,7 +1991,7 @@ pub fn g_event_danger_affects_ped_group_4b54e0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CEventPotentialWalkIntoFire::AffectsPed` (0x4B6890): virtual-leaf, thiscall, `ret 4`; 65 instruction(s) matched.
-#[hook(addr = 0x4B6890, conv = thiscall, name = "CEventPotentialWalkIntoFire::AffectsPed", expect = "83 EC 2C 53 57")]
+#[hook(addr = 0x4B6890, conv = thiscall, name = "CEventPotentialWalkIntoFire::AffectsPed", expect = "83 EC 2C 53 57", unverified = "ai8g-1", route = "L2", hazards = "ax-al-return,uninit-locals")]
 pub fn g_event_potential_walk_into_fire_affects_ped_4b6890(this: u32, a0: u32) -> u8 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -2109,7 +2109,7 @@ pub fn g_task_simple_run_anim_process_ped_61bac0(this: u32, a0: u32) -> u8 {
 }
 
 /// `vt_86d594::ProcessPed` (0x61BCB0): virtual-leaf, thiscall, `ret 4`; 74 instruction(s) matched.
-#[hook(addr = 0x61BCB0, conv = thiscall, name = "vt_86d594::ProcessPed", expect = "56 8B F1 F6 46 0C 01")]
+#[hook(addr = 0x61BCB0, conv = thiscall, name = "vt_86d594::ProcessPed", expect = "56 8B F1 F6 46 0C 01", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_vt_86d594_process_ped_61bcb0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0xC));
     if ((v1 & 1) as u8) == (0 as u8) {
@@ -2251,7 +2251,7 @@ pub fn g_task_simple_play_hand_signal_anim_process_ped_61bda0(this: u32, a0: u32
 }
 
 /// `CTaskSimpleGunControl::MakeAbortable` (0x61F530): make-abortable, thiscall, `ret 12`; 61 instruction(s) matched.
-#[hook(addr = 0x61F530, conv = thiscall, name = "CTaskSimpleGunControl::MakeAbortable", expect = "56 57 8B 7C 24 10")]
+#[hook(addr = 0x61F530, conv = thiscall, name = "CTaskSimpleGunControl::MakeAbortable", expect = "56 57 8B 7C 24 10", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_gun_control_make_abortable_61f530(_this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     if a1 != 1 {
         let v1 = rd::<u32>(p(a0), 0x47C);
@@ -2667,7 +2667,7 @@ pub fn g_vt_86d7d8_make_abortable_61fcc0(this: u32, _a0: u32, a1: u32, _a2: u32)
 }
 
 /// `vt_86d7d8::ProcessPed` (0x61FE00): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x61FE00, conv = thiscall, name = "vt_86d7d8::ProcessPed", expect = "8A 41 08 84 C0")]
+#[hook(addr = 0x61FE00, conv = thiscall, name = "vt_86d7d8::ProcessPed", expect = "8A 41 08 84 C0", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_86d7d8_process_ped_61fe00(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -2722,7 +2722,7 @@ pub fn g_vt_86d7fc_make_abortable_61fee0(this: u32, _a0: u32, a1: u32, _a2: u32)
 }
 
 /// `vt_86d7fc::ProcessPed` (0x620290): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x620290, conv = thiscall, name = "vt_86d7fc::ProcessPed", expect = "8A 41 08 84 C0")]
+#[hook(addr = 0x620290, conv = thiscall, name = "vt_86d7fc::ProcessPed", expect = "8A 41 08 84 C0", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_86d7fc_process_ped_620290(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -2915,7 +2915,7 @@ pub fn g_task_simple_be_hit_make_abortable_620890(this: u32, _a0: u32, a1: u32, 
 }
 
 /// `CTaskSimpleBeHit::ProcessPed` (0x620A20): virtual-leaf, thiscall, `ret 4`; 82 instruction(s) matched.
-#[hook(addr = 0x620A20, conv = thiscall, name = "CTaskSimpleBeHit::ProcessPed", expect = "57 8B F9 8A 47 0C")]
+#[hook(addr = 0x620A20, conv = thiscall, name = "CTaskSimpleBeHit::ProcessPed", expect = "57 8B F9 8A 47 0C", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return,heap-writes,x87-transcendental")]
 pub fn g_task_simple_be_hit_process_ped_620a20(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0xC));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -3238,7 +3238,7 @@ pub fn g_task_simple_be_hit_process_ped_620a20(this: u32, a0: u32) -> u8 {
 }
 
 /// `vt_86d868::MakeAbortable` (0x620BF0): make-abortable, thiscall, `ret 12`; 29 instruction(s) matched.
-#[hook(addr = 0x620BF0, conv = thiscall, name = "vt_86d868::MakeAbortable", expect = "56 8B F1 8A 46 0D")]
+#[hook(addr = 0x620BF0, conv = thiscall, name = "vt_86d868::MakeAbortable", expect = "56 8B F1 8A 46 0D", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_vt_86d868_make_abortable_620bf0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0xD));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -3265,7 +3265,7 @@ pub fn g_vt_86d868_make_abortable_620bf0(this: u32, a0: u32, a1: u32, a2: u32) -
 }
 
 /// `CTaskComplexKillPedOnFootMelee::MakeAbortable` (0x6210F0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x6210F0, conv = thiscall, name = "CTaskComplexKillPedOnFootMelee::MakeAbortable", expect = "8B 49 08 8B 01")]
+#[hook(addr = 0x6210F0, conv = thiscall, name = "CTaskComplexKillPedOnFootMelee::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_kill_ped_on_foot_melee_make_abortable_6210f0(
     this: u32,
     a0: u32,
@@ -3346,7 +3346,7 @@ pub fn g_task_complex_destroy_car_make_abortable_621c80(this: u32, a0: u32, a1: 
 }
 
 /// `CTaskComplexDestroyCarMelee::MakeAbortable` (0x621E00): make-abortable, thiscall, `ret 12`; 122 instruction(s) matched.
-#[hook(addr = 0x621E00, conv = thiscall, name = "CTaskComplexDestroyCarMelee::MakeAbortable", expect = "8B 44 24 08 83 EC 18")]
+#[hook(addr = 0x621E00, conv = thiscall, name = "CTaskComplexDestroyCarMelee::MakeAbortable", expect = "8B 44 24 08 83 EC 18", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return,heap-writes,x87-transcendental,uninit-locals")]
 pub fn g_task_complex_destroy_car_melee_make_abortable_621e00(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -3772,7 +3772,7 @@ pub fn g_task_complex_destroy_car_armed_make_abortable_622070(this: u32, a0: u32
 }
 
 /// `CTaskComplexRoadRage::MakeAbortable` (0x622170): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x622170, conv = thiscall, name = "CTaskComplexRoadRage::MakeAbortable", expect = "8B 49 08 8B 01")]
+#[hook(addr = 0x622170, conv = thiscall, name = "CTaskComplexRoadRage::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_road_rage_make_abortable_622170(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -4275,7 +4275,7 @@ pub fn g_task_complex_be_in_group_make_abortable_632eb0(this: u32, a0: u32, a1: 
 }
 
 /// `CTaskSimpleTogglePedThreatScanner::ProcessPed` (0x6337A0): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x6337A0, conv = thiscall, name = "CTaskSimpleTogglePedThreatScanner::ProcessPed", expect = "8A 51 0A 8B 44 24 04")]
+#[hook(addr = 0x6337A0, conv = thiscall, name = "CTaskSimpleTogglePedThreatScanner::ProcessPed", expect = "8A 51 0A 8B 44 24 04", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_toggle_ped_threat_scanner_process_ped_6337a0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0xA));
     let v2 = rd::<u32>(p(a0), 0x47C);
@@ -4291,7 +4291,7 @@ pub fn g_task_simple_toggle_ped_threat_scanner_process_ped_6337a0(this: u32, a0:
 }
 
 /// `vt_86e3cc::ProcessPed` (0x634620): virtual-leaf, thiscall, `ret 4`; 31 instruction(s) matched.
-#[hook(addr = 0x634620, conv = thiscall, name = "vt_86e3cc::ProcessPed", expect = "8A 41 2C 84 C0")]
+#[hook(addr = 0x634620, conv = thiscall, name = "vt_86e3cc::ProcessPed", expect = "8A 41 2C 84 C0", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_86e3cc_process_ped_634620(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0x2C));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -4361,7 +4361,7 @@ pub fn g_task_simple_clear_look_at_process_ped_6346c0(_this: u32, a0: u32) -> u8
 }
 
 /// `CTaskComplex::MakeAbortable` (0x634F30): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x634F30, conv = thiscall, name = "CTaskComplex::MakeAbortable", expect = "8B 49 08 8B 01")]
+#[hook(addr = 0x634F30, conv = thiscall, name = "CTaskComplex::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_make_abortable_634f30(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -4390,7 +4390,7 @@ pub fn g_task_simple_wait_until_area_codes_match_make_abortable_6355d0(
 }
 
 /// `CTaskSimpleWaitUntilAreaCodesMatch::ProcessPed` (0x635640): virtual-leaf, thiscall, `ret 4`; 25 instruction(s) matched.
-#[hook(addr = 0x635640, conv = thiscall, name = "CTaskSimpleWaitUntilAreaCodesMatch::ProcessPed", expect = "8B 41 20 85 C0")]
+#[hook(addr = 0x635640, conv = thiscall, name = "CTaskSimpleWaitUntilAreaCodesMatch::ProcessPed", expect = "8B 41 20 85 C0", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_wait_until_area_codes_match_process_ped_635640(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0x20);
     if v1 != 0 {
@@ -4441,7 +4441,7 @@ pub fn g_task_simple_wait_until_leader_area_codes_match_make_abortable_6356a0(
 }
 
 /// `CTaskSimpleWaitUntilLeaderAreaCodesMatch::ProcessPed` (0x6356C0): virtual-leaf, thiscall, `ret 4`; 37 instruction(s) matched.
-#[hook(addr = 0x6356C0, conv = thiscall, name = "CTaskSimpleWaitUntilLeaderAreaCodesMatch::ProcessPed", expect = "53 56 57 8B 7C 24 10")]
+#[hook(addr = 0x6356C0, conv = thiscall, name = "CTaskSimpleWaitUntilLeaderAreaCodesMatch::ProcessPed", expect = "53 56 57 8B 7C 24 10", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_wait_until_leader_area_codes_match_process_ped_6356c0(this: u32, a0: u32) -> u8 {
     let v1 = c_635640_t1(this, a0);
     if ((((v1 & 0xFF) & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -4514,7 +4514,7 @@ pub fn g_task_complex_use_scripted_brain_make_abortable_635970(this: u32, a0: u3
 }
 
 /// `CTaskSimpleTired::ProcessPed` (0x637970): virtual-leaf, thiscall, `ret 4`; 41 instruction(s) matched.
-#[hook(addr = 0x637970, conv = thiscall, name = "CTaskSimpleTired::ProcessPed", expect = "56 8B F1 8B 46 18")]
+#[hook(addr = 0x637970, conv = thiscall, name = "CTaskSimpleTired::ProcessPed", expect = "56 8B F1 8B 46 18", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_tired_process_ped_637970(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0x18);
     if v1 != 0 {
@@ -4639,7 +4639,7 @@ pub fn g_task_simple_ikchain_make_abortable_639450(this: u32, _a0: u32, a1: u32,
 }
 
 /// `CTaskComplexUseSequence::MakeAbortable` (0x639730): make-abortable, thiscall, `ret 12`; 45 instruction(s) matched.
-#[hook(addr = 0x639730, conv = thiscall, name = "CTaskComplexUseSequence::MakeAbortable", expect = "8B 54 24 08 53")]
+#[hook(addr = 0x639730, conv = thiscall, name = "CTaskComplexUseSequence::MakeAbortable", expect = "8B 54 24 08 53", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_use_sequence_make_abortable_639730(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -4722,7 +4722,7 @@ pub fn g_task_simple_die_in_car_process_ped_6398f0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CTaskSimpleTurn180::ProcessPed` (0x639990): virtual-leaf, thiscall, `ret 4`; 30 instruction(s) matched.
-#[hook(addr = 0x639990, conv = thiscall, name = "CTaskSimpleTurn180::ProcessPed", expect = "56 8B F1 8A 46 08")]
+#[hook(addr = 0x639990, conv = thiscall, name = "CTaskSimpleTurn180::ProcessPed", expect = "56 8B F1 8A 46 08", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_turn180_process_ped_639990(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -4744,7 +4744,7 @@ pub fn g_task_simple_turn180_process_ped_639990(this: u32, a0: u32) -> u8 {
 }
 
 /// `CTaskComplexEnterCar::MakeAbortable` (0x63A730): make-abortable, thiscall, `ret 12`; 118 instruction(s) matched.
-#[hook(addr = 0x63A730, conv = thiscall, name = "CTaskComplexEnterCar::MakeAbortable", expect = "64 A1 00 00 00 00")]
+#[hook(addr = 0x63A730, conv = thiscall, name = "CTaskComplexEnterCar::MakeAbortable", expect = "64 A1 00 00 00 00", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,uninit-locals")]
 pub fn g_task_complex_enter_car_make_abortable_63a730(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -4863,7 +4863,7 @@ pub fn g_task_complex_enter_car_make_abortable_63a730(this: u32, a0: u32, a1: u3
 }
 
 /// `CTaskComplexEnterCarAsDriverTimed::MakeAbortable` (0x63AE60): make-abortable, thiscall, `ret 12`; 44 instruction(s) matched.
-#[hook(addr = 0x63AE60, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::MakeAbortable", expect = "8B 54 24 04 53")]
+#[hook(addr = 0x63AE60, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::MakeAbortable", expect = "8B 54 24 04 53", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_enter_car_as_driver_timed_make_abortable_63ae60(
     this: u32,
     a0: u32,
@@ -4964,7 +4964,7 @@ pub fn g_task_complex_enter_car_as_driver_timed_make_abortable_63ae60(
 }
 
 /// `CTaskComplexEnterCarAsDriverTimed::StopTimer` (0x63AFF0): virtual-leaf, thiscall, `ret 4`; 20 instruction(s) matched.
-#[hook(addr = 0x63AFF0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::StopTimer", expect = "8B 44 24 04 56")]
+#[hook(addr = 0x63AFF0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::StopTimer", expect = "8B 44 24 04 56", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_enter_car_as_driver_timed_stop_timer_63aff0(this: u32, a0: u32) -> u32 {
     let v1 = c_4bc370_c1(a0);
     if ((v1 & 0xFF) as u8) != (0 as u8) {
@@ -4986,7 +4986,7 @@ pub fn g_task_complex_enter_car_as_driver_timed_stop_timer_63aff0(this: u32, a0:
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::MakeAbortable` (0x63B120): make-abortable, thiscall, `ret 12`; 44 instruction(s) matched.
-#[hook(addr = 0x63B120, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::MakeAbortable", expect = "8B 54 24 04 53")]
+#[hook(addr = 0x63B120, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::MakeAbortable", expect = "8B 54 24 04 53", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_enter_car_as_passenger_timed_make_abortable_63b120(
     this: u32,
     a0: u32,
@@ -5087,7 +5087,7 @@ pub fn g_task_complex_enter_car_as_passenger_timed_make_abortable_63b120(
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::StopTimer` (0x63B2E0): virtual-leaf, thiscall, `ret 4`; 20 instruction(s) matched.
-#[hook(addr = 0x63B2E0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::StopTimer", expect = "8B 44 24 04 56")]
+#[hook(addr = 0x63B2E0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::StopTimer", expect = "8B 44 24 04 56", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_enter_car_as_passenger_timed_stop_timer_63b2e0(this: u32, a0: u32) -> u32 {
     let v1 = c_4bc370_c1(a0);
     if ((v1 & 0xFF) as u8) != (0 as u8) {
@@ -5109,7 +5109,7 @@ pub fn g_task_complex_enter_car_as_passenger_timed_stop_timer_63b2e0(this: u32, 
 }
 
 /// `CTaskSimpleCarSetTempAction::MakeAbortable` (0x63D740): make-abortable, thiscall, `ret 12`; 21 instruction(s) matched.
-#[hook(addr = 0x63D740, conv = thiscall, name = "CTaskSimpleCarSetTempAction::MakeAbortable", expect = "8B 44 24 0C 8B 54 24 04")]
+#[hook(addr = 0x63D740, conv = thiscall, name = "CTaskSimpleCarSetTempAction::MakeAbortable", expect = "8B 44 24 0C 8B 54 24 04", unverified = "ai7-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_set_temp_action_make_abortable_63d740(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = c_63c670_t3(this, a0, a1, a2);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -5129,7 +5129,7 @@ pub fn g_task_simple_car_set_temp_action_make_abortable_63d740(this: u32, a0: u3
 }
 
 /// `CTaskSimpleCarSetTempAction::ProcessPed` (0x645370): virtual-leaf, thiscall, `ret 4`; 61 instruction(s) matched.
-#[hook(addr = 0x645370, conv = thiscall, name = "CTaskSimpleCarSetTempAction::ProcessPed", expect = "55 8B 6C 24 08")]
+#[hook(addr = 0x645370, conv = thiscall, name = "CTaskSimpleCarSetTempAction::ProcessPed", expect = "55 8B 6C 24 08", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_set_temp_action_process_ped_645370(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     if v1 != 0 {
@@ -5345,7 +5345,7 @@ pub fn g_task_simple_car_set_temp_action_process_ped_645370(this: u32, a0: u32) 
 }
 
 /// `CTaskComplexGoToCarDoorAndStandStill::MakeAbortable` (0x645840): make-abortable, thiscall, `ret 12`; 41 instruction(s) matched.
-#[hook(addr = 0x645840, conv = thiscall, name = "CTaskComplexGoToCarDoorAndStandStill::MakeAbortable", expect = "56 8B F1 8A 46 48")]
+#[hook(addr = 0x645840, conv = thiscall, name = "CTaskComplexGoToCarDoorAndStandStill::MakeAbortable", expect = "56 8B F1 8A 46 48", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_go_to_car_door_and_stand_still_make_abortable_645840(
     this: u32,
     a0: u32,
@@ -5403,7 +5403,7 @@ pub fn g_task_complex_go_to_car_door_and_stand_still_make_abortable_645840(
 }
 
 /// `CTaskSimpleCarAlign::MakeAbortable` (0x645C50): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
-#[hook(addr = 0x645C50, conv = thiscall, name = "CTaskSimpleCarAlign::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x645C50, conv = thiscall, name = "CTaskSimpleCarAlign::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_align_make_abortable_645c50(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
     if a1 != 2 {
         return 0 as u8;
@@ -5419,7 +5419,7 @@ pub fn g_task_simple_car_align_make_abortable_645c50(this: u32, _a0: u32, a1: u3
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::MakeAbortable` (0x646160): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
-#[hook(addr = 0x646160, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x646160, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_open_locked_door_from_outside_make_abortable_646160(
     this: u32,
     _a0: u32,
@@ -5440,7 +5440,7 @@ pub fn g_task_simple_car_open_locked_door_from_outside_make_abortable_646160(
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::SetPedPosition` (0x646180): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
-#[hook(addr = 0x646180, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::SetPedPosition", expect = "8B 41 0C 8B 51 10")]
+#[hook(addr = 0x646180, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::SetPedPosition", expect = "8B 41 0C 8B 51 10", unverified = "ai7-2", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_open_locked_door_from_outside_set_ped_position_646180(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0xC);
     let v2 = rd::<u32>(p(this), 0x10);
@@ -5484,7 +5484,7 @@ pub fn g_task_simple_pick_up_bike_set_ped_position_6462d0(this: u32, a0: u32) ->
 }
 
 /// `CTaskSimpleCarGetIn::MakeAbortable` (0x646780): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
-#[hook(addr = 0x646780, conv = thiscall, name = "CTaskSimpleCarGetIn::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x646780, conv = thiscall, name = "CTaskSimpleCarGetIn::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_get_in_make_abortable_646780(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
     if a1 != 2 {
         return 0 as u8;
@@ -5500,7 +5500,7 @@ pub fn g_task_simple_car_get_in_make_abortable_646780(this: u32, _a0: u32, a1: u
 }
 
 /// `CTaskSimpleCarShuffle::MakeAbortable` (0x646900): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
-#[hook(addr = 0x646900, conv = thiscall, name = "CTaskSimpleCarShuffle::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x646900, conv = thiscall, name = "CTaskSimpleCarShuffle::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_shuffle_make_abortable_646900(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
     if a1 != 2 {
         return 0 as u8;
@@ -5516,7 +5516,7 @@ pub fn g_task_simple_car_shuffle_make_abortable_646900(this: u32, _a0: u32, a1: 
 }
 
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::ProcessPed` (0x646C90): virtual-leaf, thiscall, `ret 4`; 16 instruction(s) matched.
-#[hook(addr = 0x646C90, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::ProcessPed", expect = "8B 41 08 85 C0")]
+#[hook(addr = 0x646C90, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::ProcessPed", expect = "8B 41 08 85 C0", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_process_ped_646c90(this: u32, _a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     if v1 != 0 {
@@ -5536,7 +5536,7 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_process_ped_646c90(this:
 }
 
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::SetPedPosition` (0x646CC0): virtual-leaf, thiscall, `ret 4`; 12 instruction(s) matched.
-#[hook(addr = 0x646CC0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::SetPedPosition", expect = "8B 41 08 85 C0")]
+#[hook(addr = 0x646CC0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::SetPedPosition", expect = "8B 41 08 85 C0", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_set_ped_position_646cc0(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     if v1 == 0 {
@@ -5558,7 +5558,7 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_set_ped_position_646cc0(
 }
 
 /// `CTaskSimpleCarGetOut::MakeAbortable` (0x6472D0): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
-#[hook(addr = 0x6472D0, conv = thiscall, name = "CTaskSimpleCarGetOut::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x6472D0, conv = thiscall, name = "CTaskSimpleCarGetOut::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_car_get_out_make_abortable_6472d0(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
     if a1 != 2 {
         return 0 as u8;
@@ -5574,7 +5574,7 @@ pub fn g_task_simple_car_get_out_make_abortable_6472d0(this: u32, _a0: u32, a1: 
 }
 
 /// `CTaskSimpleCarSlowDragPedOut::SetPedPosition` (0x6480E0): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
-#[hook(addr = 0x6480E0, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::SetPedPosition", expect = "8B 41 0C 8B 51 10")]
+#[hook(addr = 0x6480E0, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::SetPedPosition", expect = "8B 41 0C 8B 51 10", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_slow_drag_ped_out_set_ped_position_6480e0(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0xC);
     let v2 = rd::<u32>(p(this), 0x10);
@@ -5600,7 +5600,7 @@ pub fn g_task_simple_bike_jacked_make_abortable_648ce0(this: u32, _a0: u32, a1: 
 }
 
 /// `CTaskSimpleBikeJacked::SetPedPosition` (0x648D00): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
-#[hook(addr = 0x648D00, conv = thiscall, name = "CTaskSimpleBikeJacked::SetPedPosition", expect = "8B 4C 24 04 8B 81 8C 05 00 00")]
+#[hook(addr = 0x648D00, conv = thiscall, name = "CTaskSimpleBikeJacked::SetPedPosition", expect = "8B 4C 24 04 8B 81 8C 05 00 00", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_bike_jacked_set_ped_position_648d00(_this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(a0), 0x58C);
     if v1 == 0 {
@@ -5669,7 +5669,7 @@ pub fn g_task_simple_wait_until_ped_is_in_car_process_ped_649700(this: u32, a0: 
 }
 
 /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::ProcessPed` (0x64B4A0): virtual-leaf, thiscall, `ret 4`; 86 instruction(s) matched.
-#[hook(addr = 0x64B4A0, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::ProcessPed", expect = "64 A1 00 00 00 00")]
+#[hook(addr = 0x64B4A0, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::ProcessPed", expect = "64 A1 00 00 00 00", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return,heap-writes,uninit-locals")]
 pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_process_ped_64b4a0(
     this: u32,
     a0: u32,
@@ -5890,7 +5890,7 @@ pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_process_ped
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::SetPedPosition` (0x64C0E0): virtual-leaf, thiscall, `ret 4`; 65 instruction(s) matched.
-#[hook(addr = 0x64C0E0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::SetPedPosition", expect = "83 EC 08 56 8B F1")]
+#[hook(addr = 0x64C0E0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::SetPedPosition", expect = "83 EC 08 56 8B F1", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return,heap-writes,uninit-locals")]
 pub fn g_task_simple_car_slow_be_dragged_out_set_ped_position_64c0e0(this: u32, a0: u32) -> u8 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -5977,7 +5977,7 @@ pub fn g_task_simple_car_slow_be_dragged_out_set_ped_position_64c0e0(this: u32, 
 }
 
 /// `CTaskComplexCarSlowBeDraggedOut::MakeAbortable` (0x64C600): make-abortable, thiscall, `ret 12`; 46 instruction(s) matched.
-#[hook(addr = 0x64C600, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::MakeAbortable", expect = "64 A1 00 00 00 00")]
+#[hook(addr = 0x64C600, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::MakeAbortable", expect = "64 A1 00 00 00 00", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return,uninit-locals")]
 pub fn g_task_complex_car_slow_be_dragged_out_make_abortable_64c600(
     this: u32,
     a0: u32,
@@ -6009,7 +6009,7 @@ pub fn g_task_complex_car_slow_be_dragged_out_make_abortable_64c600(
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::ProcessPed` (0x64D8E0): virtual-leaf, thiscall, `ret 4`; 16 instruction(s) matched.
-#[hook(addr = 0x64D8E0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::ProcessPed", expect = "8A 41 08 84 C0")]
+#[hook(addr = 0x64D8E0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::ProcessPed", expect = "8A 41 08 84 C0", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_open_locked_door_from_outside_process_ped_64d8e0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
@@ -6105,7 +6105,7 @@ pub fn g_task_simple_evasive_step_make_abortable_653240(this: u32, _a0: u32, a1:
 }
 
 /// `CTaskSimpleEvasiveDive::MakeAbortable` (0x653640): make-abortable, thiscall, `ret 12`; 35 instruction(s) matched.
-#[hook(addr = 0x653640, conv = thiscall, name = "CTaskSimpleEvasiveDive::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x653640, conv = thiscall, name = "CTaskSimpleEvasiveDive::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_evasive_dive_make_abortable_653640(this: u32, _a0: u32, a1: u32, a2: u32) -> u8 {
     if a1 != 2 {
         if a2 == 0 {
@@ -6151,7 +6151,7 @@ pub fn g_task_simple_evasive_dive_make_abortable_653640(this: u32, _a0: u32, a1:
 }
 
 /// `CTaskComplexEvasiveDiveAndGetUp::MakeAbortable` (0x6537A0): make-abortable, thiscall, `ret 12`; 30 instruction(s) matched.
-#[hook(addr = 0x6537A0, conv = thiscall, name = "CTaskComplexEvasiveDiveAndGetUp::MakeAbortable", expect = "8B 54 24 0C 8B 49 08")]
+#[hook(addr = 0x6537A0, conv = thiscall, name = "CTaskComplexEvasiveDiveAndGetUp::MakeAbortable", expect = "8B 54 24 0C 8B 49 08", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_evasive_dive_and_get_up_make_abortable_6537a0(
     this: u32,
     a0: u32,
@@ -6204,7 +6204,7 @@ pub fn g_task_complex_walk_round_building_attempt_make_abortable_6549d0(
 }
 
 /// `CTaskSimpleHitHead::ProcessPed` (0x657A10): virtual-leaf, thiscall, `ret 4`; 27 instruction(s) matched.
-#[hook(addr = 0x657A10, conv = thiscall, name = "CTaskSimpleHitHead::ProcessPed", expect = "56 8B F1 8A 46 08")]
+#[hook(addr = 0x657A10, conv = thiscall, name = "CTaskSimpleHitHead::ProcessPed", expect = "56 8B F1 8A 46 08", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_hit_head_process_ped_657a10(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -6226,7 +6226,7 @@ pub fn g_task_simple_hit_head_process_ped_657a10(this: u32, a0: u32) -> u8 {
 }
 
 /// `CTaskSimpleEvasiveDive::ProcessPed` (0x657AC0): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x657AC0, conv = thiscall, name = "CTaskSimpleEvasiveDive::ProcessPed", expect = "8A 41 0C 84 C0")]
+#[hook(addr = 0x657AC0, conv = thiscall, name = "CTaskSimpleEvasiveDive::ProcessPed", expect = "8A 41 0C 84 C0", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_evasive_dive_process_ped_657ac0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 0xC));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -6243,7 +6243,7 @@ pub fn g_task_simple_evasive_dive_process_ped_657ac0(this: u32, a0: u32) -> u8 {
 }
 
 /// `CTaskSimpleGiveCPR::MakeAbortable` (0x6589B0): make-abortable, thiscall, `ret 12`; 82 instruction(s) matched.
-#[hook(addr = 0x6589B0, conv = thiscall, name = "CTaskSimpleGiveCPR::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x6589B0, conv = thiscall, name = "CTaskSimpleGiveCPR::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_give_cpr_make_abortable_6589b0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     if ((((u32::from(a1 == 2)) & 0xFF) & 0xFF) as u8) != (0 as u8) {
         let v1 = rd::<u32>(p(this), 0x10);
@@ -6434,7 +6434,7 @@ pub fn g_task_simple_give_cpr_make_abortable_6589b0(this: u32, a0: u32, a1: u32,
 }
 
 /// `CTaskComplexUseSwatRope::MakeAbortable` (0x659530): make-abortable, thiscall, `ret 12`; 89 instruction(s) matched.
-#[hook(addr = 0x659530, conv = thiscall, name = "CTaskComplexUseSwatRope::MakeAbortable", expect = "83 EC 0C 53 55")]
+#[hook(addr = 0x659530, conv = thiscall, name = "CTaskComplexUseSwatRope::MakeAbortable", expect = "83 EC 0C 53 55", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_use_swat_rope_make_abortable_659530(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     if ((((u32::from(a1 == 2)) & 0xFF) & 0xFF) as u8) != (0 as u8) {
         let v1 = rd::<u32>(p(this), 8);
@@ -6618,7 +6618,7 @@ pub fn g_task_complex_use_swat_rope_make_abortable_659530(this: u32, a0: u32, a1
 }
 
 /// `CTaskSimpleGiveCPR::ProcessPed` (0x65A7C0): virtual-leaf, thiscall, `ret 4`; 36 instruction(s) matched.
-#[hook(addr = 0x65A7C0, conv = thiscall, name = "CTaskSimpleGiveCPR::ProcessPed", expect = "56 8B F1 8A 46 08")]
+#[hook(addr = 0x65A7C0, conv = thiscall, name = "CTaskSimpleGiveCPR::ProcessPed", expect = "56 8B F1 8A 46 08", unverified = "ai8g-4", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_give_cpr_process_ped_65a7c0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if ((((v1 & 0xFF) & 0xFF) & 1) as u8) == (0 as u8) {
@@ -6896,7 +6896,7 @@ pub fn g_task_complex_pass_object_make_abortable_664a50(_this: u32, a0: u32, _a1
 }
 
 /// `CTaskComplexGoToPointAndStandStillTimed::MakeAbortable` (0x668640): make-abortable, thiscall, `ret 12`; 42 instruction(s) matched.
-#[hook(addr = 0x668640, conv = thiscall, name = "CTaskComplexGoToPointAndStandStillTimed::MakeAbortable", expect = "8B 54 24 04 53")]
+#[hook(addr = 0x668640, conv = thiscall, name = "CTaskComplexGoToPointAndStandStillTimed::MakeAbortable", expect = "8B 54 24 04 53", unverified = "ai8g-5", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_go_to_point_and_stand_still_timed_make_abortable_668640(
     this: u32,
     a0: u32,
@@ -7142,7 +7142,7 @@ pub fn g_task_simple_slide_to_coord_make_abortable_66c4d0(this: u32, a0: u32, a1
 }
 
 /// `CTaskComplexInvestigateDisturbance::MakeAbortable` (0x66C800): make-abortable, thiscall, `ret 12`; 7 instruction(s) matched.
-#[hook(addr = 0x66C800, conv = thiscall, name = "CTaskComplexInvestigateDisturbance::MakeAbortable", expect = "8B 49 08 85 C9")]
+#[hook(addr = 0x66C800, conv = thiscall, name = "CTaskComplexInvestigateDisturbance::MakeAbortable", expect = "8B 49 08 85 C9", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_investigate_disturbance_make_abortable_66c800(
     this: u32,
     a0: u32,
@@ -7636,7 +7636,7 @@ pub fn g_task_complex_jump_make_abortable_67a070(this: u32, a0: u32, a1: u32, a2
 }
 
 /// `CTaskSimpleClimb::MakeAbortable` (0x67A280): make-abortable, thiscall, `ret 12`; 47 instruction(s) matched.
-#[hook(addr = 0x67A280, conv = thiscall, name = "CTaskSimpleClimb::MakeAbortable", expect = "83 EC 0C 56 8B F1")]
+#[hook(addr = 0x67A280, conv = thiscall, name = "CTaskSimpleClimb::MakeAbortable", expect = "83 EC 0C 56 8B F1", unverified = "ai8h-1", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_climb_make_abortable_67a280(this: u32, a0: u32, _a1: u32, a2: u32) -> u8 {
     if a2 == 0 {
         let v1 = rd::<u32>(p(this), 0x2C);
@@ -7718,7 +7718,7 @@ pub fn g_task_complex_walk_alongside_ped_make_abortable_683320(this: u32, a0: u3
 }
 
 /// `CTaskSimpleArrestPed::MakeAbortable` (0x68B740): make-abortable, thiscall, `ret 12`; 49 instruction(s) matched.
-#[hook(addr = 0x68B740, conv = thiscall, name = "CTaskSimpleArrestPed::MakeAbortable", expect = "83 7C 24 08 02")]
+#[hook(addr = 0x68B740, conv = thiscall, name = "CTaskSimpleArrestPed::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai8g-5", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_arrest_ped_make_abortable_68b740(this: u32, _a0: u32, a1: u32, a2: u32) -> u8 {
     if a1 != 2 {
         if a2 == 0 {
@@ -7775,7 +7775,7 @@ pub fn g_task_simple_arrest_ped_make_abortable_68b740(this: u32, _a0: u32, a1: u
 }
 
 /// `CTaskComplexArrestPed::MakeAbortable` (0x68BA60): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x68BA60, conv = thiscall, name = "CTaskComplexArrestPed::MakeAbortable", expect = "8B 49 08 8B 01")]
+#[hook(addr = 0x68BA60, conv = thiscall, name = "CTaskComplexArrestPed::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_arrest_ped_make_abortable_68ba60(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -7784,7 +7784,7 @@ pub fn g_task_complex_arrest_ped_make_abortable_68ba60(this: u32, a0: u32, a1: u
 }
 
 /// `CTaskComplexPolicePursuit::MakeAbortable` (0x68BAB0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x68BAB0, conv = thiscall, name = "CTaskComplexPolicePursuit::MakeAbortable", expect = "8B 49 08 8B 01")]
+#[hook(addr = 0x68BAB0, conv = thiscall, name = "CTaskComplexPolicePursuit::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_police_pursuit_make_abortable_68bab0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -7793,7 +7793,7 @@ pub fn g_task_complex_police_pursuit_make_abortable_68bab0(this: u32, a0: u32, a
 }
 
 /// `CTaskComplexCopInCar::MakeAbortable` (0x68C940): make-abortable, thiscall, `ret 12`; 62 instruction(s) matched.
-#[hook(addr = 0x68C940, conv = thiscall, name = "CTaskComplexCopInCar::MakeAbortable", expect = "57 8B F9 8B 4F 08")]
+#[hook(addr = 0x68C940, conv = thiscall, name = "CTaskComplexCopInCar::MakeAbortable", expect = "57 8B F9 8B 4F 08", unverified = "ai8g-5", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_complex_cop_in_car_make_abortable_68c940(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     if v1 == 0 {
@@ -7913,7 +7913,7 @@ pub fn g_task_simple_shake_fist_make_abortable_690c10(this: u32, _a0: u32, a1: u
 }
 
 /// `vt_870bec::MakeAbortable` (0x692700): make-abortable, thiscall, `ret 12`; 63 instruction(s) matched.
-#[hook(addr = 0x692700, conv = thiscall, name = "vt_870bec::MakeAbortable", expect = "53 8B 5C 24 0C")]
+#[hook(addr = 0x692700, conv = thiscall, name = "vt_870bec::MakeAbortable", expect = "53 8B 5C 24 0C", unverified = "ai7-4", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_vt_870bec_make_abortable_692700(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     if a1 != 2 {
         if a2 == 0 {
@@ -7954,7 +7954,7 @@ pub fn g_vt_870bec_make_abortable_692700(this: u32, a0: u32, a1: u32, a2: u32) -
 }
 
 /// `CTaskSimpleShakeFist::ProcessPed` (0x693BA0): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x693BA0, conv = thiscall, name = "CTaskSimpleShakeFist::ProcessPed", expect = "8A 41 08 84 C0")]
+#[hook(addr = 0x693BA0, conv = thiscall, name = "CTaskSimpleShakeFist::ProcessPed", expect = "8A 41 08 84 C0", unverified = "ai8g-6", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_shake_fist_process_ped_693ba0(this: u32, a0: u32) -> u8 {
     let v1 = u32::from(rd::<u8>(p(this), 8));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -8017,7 +8017,7 @@ pub fn g_task_simple_hold_entity_make_abortable_693bd0(this: u32, a0: u32, a1: u
 }
 
 /// `vt_870bec::ProcessPed` (0x694640): virtual-leaf, thiscall, `ret 4`; 25 instruction(s) matched.
-#[hook(addr = 0x694640, conv = thiscall, name = "vt_870bec::ProcessPed", expect = "56 8B F1 8B 46 10")]
+#[hook(addr = 0x694640, conv = thiscall, name = "vt_870bec::ProcessPed", expect = "56 8B F1 8B 46 10", unverified = "ai7-4", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_vt_870bec_process_ped_694640(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0x10);
     if v1 != 0 {
@@ -8034,7 +8034,7 @@ pub fn g_vt_870bec_process_ped_694640(this: u32, a0: u32) -> u8 {
 }
 
 /// `CTaskComplexFollowPedFootsteps::MakeAbortable` (0x694ED0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-#[hook(addr = 0x694ED0, conv = thiscall, name = "CTaskComplexFollowPedFootsteps::MakeAbortable", expect = "8B 49 08 8B 01")]
+#[hook(addr = 0x694ED0, conv = thiscall, name = "CTaskComplexFollowPedFootsteps::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_complex_follow_ped_footsteps_make_abortable_694ed0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 8);
     let _v2 = rd::<u32>(p(v1), 0);
