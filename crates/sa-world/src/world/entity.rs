@@ -155,7 +155,7 @@ orig! {
     /// `CMatrixLinkList::Init(int32)` (0x54F0D0)
     pub fn matrix_link_list_init(l: GPtr<u8>, n: i32) = thiscall 0x54F0D0 => unported;
     /// `CMatrixLinkList::AddToList1()` (0x54E9D0)
-    pub fn matrix_link_list_add_to_list1(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x54E9D0 => unported;
+    pub fn matrix_link_list_add_to_list1(l: GPtr<u8>) -> GPtr<u8> = thiscall 0x54E9D0 => crate::world::entity::matrix_link_list_add_to_list1_port;
     /// `operator*(const CMatrix&, const CVector&)` (0x59C890, cdecl, returns `out`)
     pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C890 => unported;
     /// `CPointLights::RemoveLightsAffectingObject()` (0x6FFFE0)
@@ -637,6 +637,29 @@ fn relink_matrix(m: GPtr<u8>, head: usize) {
     wr::<GPtr<u8>>(h.read(), 0x4C, m);
     wr::<u32>(m, 0x4C, head as u32);
     h.write(m);
+}
+
+/// `CMatrixLinkList::AddToList1()` (0x54E9D0, thiscall): the first free link (free head +0x150, its `next` at
+/// +0x1A0) unless it is the free tail (+0x1A4, then 0): unlinked (`next.prev = prev`, then `prev.next = next` with both
+/// re-read) and inserted after the list's head (+0, `next` at +0x50). Returns it. (`gMatrixList` runs out of free
+/// links during the intro; `CPlaceable::AllocateMatrix` then frees the last used one and calls this.)
+#[hook(addr = 0x54E9D0, conv = thiscall, name = "CMatrixLinkList::AddToList1", expect = "8B 81 A0 01 00 00 8D 91 A4 01 00 00",
+       this = "CMatrixLinkList",
+       unverified = "intro3-4", route = "L2", hazards = "none", recs = "intro")]
+pub fn matrix_link_list_add_to_list1_port(this: GPtr<u8>) -> GPtr<u8> {
+    let l = rd::<GPtr<u8>>(this, 0x1A0);
+    if l == this.byte_add(0x1A4) {
+        return GPtr::NULL;
+    }
+    let next = rd::<GPtr<u8>>(l, 0x50);
+    wr::<GPtr<u8>>(next, 0x4C, rd::<GPtr<u8>>(l, 0x4C));
+    let prev = rd::<GPtr<u8>>(l, 0x4C);
+    wr::<GPtr<u8>>(prev, 0x50, rd::<GPtr<u8>>(l, 0x50));
+    wr::<GPtr<u8>>(l, 0x50, rd::<GPtr<u8>>(this, 0x50));
+    wr::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0x50), 0x4C, l);
+    wr::<GPtr<u8>>(l, 0x4C, this);
+    wr::<GPtr<u8>>(this, 0x50, l);
+    l
 }
 
 /// `CPlaceable::RemoveMatrix` (0x54F3B0): placement = matrix position (y, z through x87) and heading;
@@ -1805,6 +1828,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PLACEABLE_DTOR,
     HOOK_INIT_MATRIX_ARRAY,
     HOOK_ALLOCATE_MATRIX,
+    HOOK_MATRIX_LINK_LIST_ADD_TO_LIST1_PORT,
     HOOK_TRANSFORM_FROM_OBJECT_SPACE_REF,
     HOOK_TRANSFORM_FROM_OBJECT_SPACE_PTR,
     HOOK_GET_BOUND_CENTRE_REF,
