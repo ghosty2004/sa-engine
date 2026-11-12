@@ -27,17 +27,17 @@ orig! {
 
 /// `CCurrentVehicle::Display` (0x571EA0, VEH): small, thiscall, `ret`; 17 instruction(s) matched.
 #[hook(addr = 0x571EA0, conv = thiscall, name = "CCurrentVehicle::Display", expect = "8B 01 85 C0 74 23", unverified = "gen2-veh-1", route = "L2", hazards = "none")]
-pub fn g_ccurrent_vehicle_display_571ea0(this: u32) -> u32 {
+pub fn g_ccurrent_vehicle_display_571ea0(this: u32) {
     let v1 = rd::<u32>(p(this), 0);
     if v1 == 0 {
-        let v2 = c_588f50_c1(0);
-        return v2;
+        let _v2 = c_588f50_c1(0);
+        return;
     } else {
         let v3 = rd::<u16>(p(v1), 0x22) as i16 as i32 as u32;
         let v4 = rd::<u32>(p(v3.wrapping_mul(4)), 0xA9_B0C8);
         let v5 = c_6a0050_t1(0xC1_B340, v4.wrapping_add(0x32));
-        let v6 = c_588f50_c1(v5);
-        return v6;
+        let _v6 = c_588f50_c1(v5);
+        return;
     }
 }
 

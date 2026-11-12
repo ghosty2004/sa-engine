@@ -94,7 +94,7 @@ pub fn g_cgarages_set_target_car_for_mission_garage_447c40(a0: u32, a1: u32) -> 
 
 /// `tReplayBmxBlock::ExtractBmxUpdateData` (0x45BFF0, WORLD): small, thiscall, `ret 8`; 34 instruction(s) matched.
 #[hook(addr = 0x45BFF0, conv = thiscall, name = "tReplayBmxBlock::ExtractBmxUpdateData", expect = "8B 44 24 08 56", unverified = "gen2-world-1", route = "L2", hazards = "heap-writes")]
-pub fn g_t_replay_bmx_block_extract_bmx_update_data_45bff0(this: u32, a0: u32, a1: u32) -> u32 {
+pub fn g_t_replay_bmx_block_extract_bmx_update_data_45bff0(this: u32, a0: u32, a1: u32) {
     c_45ba90_t2(this, a0, a1);
     let v2 = rd::<u8>(p(this), 0x35) as i8 as i32 as u32;
     let _v3 = rd::<u32>(p(a0), 0);
@@ -121,13 +121,12 @@ pub fn g_t_replay_bmx_block_extract_bmx_update_data_45bff0(this: u32, a0: u32, a
             .to_bits(),
     );
     wr::<u8>(p(a0), 0x5C8, 0 as u8);
-    let v10 = c_6b7150_t0(a0);
-    v10
+    let _v10 = c_6b7150_t0(a0);
 }
 
 /// `tReplayBikeBlock::ExtractBikeUpdateData` (0x45C0D0, WORLD): small, thiscall, `ret 8`; 34 instruction(s) matched.
 #[hook(addr = 0x45C0D0, conv = thiscall, name = "tReplayBikeBlock::ExtractBikeUpdateData", expect = "8B 44 24 08 56", unverified = "gen2-world-1", route = "L2", hazards = "heap-writes")]
-pub fn g_t_replay_bike_block_extract_bike_update_data_45c0d0(this: u32, a0: u32, a1: u32) -> u32 {
+pub fn g_t_replay_bike_block_extract_bike_update_data_45c0d0(this: u32, a0: u32, a1: u32) {
     c_45ba90_t2(this, a0, a1);
     let v2 = rd::<u8>(p(this), 0x35) as i8 as i32 as u32;
     let _v3 = rd::<u32>(p(a0), 0);
@@ -154,8 +153,7 @@ pub fn g_t_replay_bike_block_extract_bike_update_data_45c0d0(this: u32, a0: u32,
             .to_bits(),
     );
     wr::<u8>(p(a0), 0x5C8, 0 as u8);
-    let v10 = c_6b7150_t0(a0);
-    v10
+    let _v10 = c_6b7150_t0(a0);
 }
 
 /// `FUN_004c4c00` (0x4C4C00, COLL): small, thiscall, `ret 4`; 11 instruction(s) matched.
@@ -193,10 +191,9 @@ pub fn g_fun_00537570_537570(this: u32) -> u32 {
 
 /// `FUN_00563130` (0x563130, WORLD): small, thiscall, `ret`; 20 instruction(s) matched.
 #[hook(addr = 0x563130, conv = thiscall, name = "FUN_00563130", expect = "6A FF 68 A8 CC 83 00", unverified = "gen2-world-1", route = "L2", hazards = "none")]
-pub fn g_fun_00563130_563130(this: u32) -> u32 {
+pub fn g_fun_00563130_563130(this: u32) {
     c_552470_t0(this.wrapping_add(4));
-    let v2 = c_552400_t0(this);
-    v2
+    let _v2 = c_552400_t0(this);
 }
 
 /// `InteriorGroup_c::SetupPeds` (0x596890, WORLD): small, thiscall, `ret`; 29 instruction(s) matched.
