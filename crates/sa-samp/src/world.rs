@@ -33,6 +33,10 @@ impl<V: View> WorldState for NativeGame<V> {
         Err(GameError::Unsupported("WorldState::set_weather"))
     }
 
+    fn force_weather(&mut self, _weather: u8) -> GameResult<()> {
+        Err(GameError::Unsupported("WorldState::force_weather"))
+    }
+
     fn gravity(&self) -> f32 {
         self.view.read_f32(addr::GAME_GRAVITY)
     }
