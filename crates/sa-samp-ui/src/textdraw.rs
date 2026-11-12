@@ -67,6 +67,54 @@ pub fn hit_rect(s: &FontStyle, x: f32, y: f32) -> [f32; 4] {
     }
 }
 
+/// Font 4: a texture from a TXD (`txd:name`).
+pub const FONT_SPRITE: u8 = 4;
+
+/// Where a sprite textdraw's texture comes from (samp.dll 0x100B2D10).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SpriteSource {
+    /// TXD slot name (`CTxdStore::FindTxdSlot`).
+    pub slot: String,
+    /// File to load into a new slot when none has that name (`models/txd/NAME.txd`, or samp's own
+    /// `SAMP/samaps.txd` / `SAMP/vehicles128.txd`, with backslashes); `None` = the slot must exist (`hud`).
+    pub file: Option<String>,
+    /// Texture name.
+    pub texture: String,
+}
+
+/// Parses `txd:name` as samp does: at most 63 characters, no path separators; `hud` is the game's HUD
+/// dictionary, `samaps` / `vehicleprev` come from samp's folder, anything else from `models/txd` with the
+/// slot name cut at 10 characters.
+pub fn sprite_source(text: &str) -> Option<SpriteSource> {
+    if text.len() > 0x3F || text.contains(['\\', '/']) {
+        return None;
+    }
+    let (t, name) = text.split_once(':')?;
+    let (slot, file) = match t {
+        "hud" => ("hud".to_string(), None),
+        "samaps" => ("samaps".to_string(), Some("SAMP\\samaps.txd".to_string())),
+        "vehicleprev" => (
+            "vehicleprev".to_string(),
+            Some("SAMP\\vehicles128.txd".to_string()),
+        ),
+        _ => (
+            t.chars().take(10).collect(),
+            Some(format!("models\\txd\\{t}.txd")),
+        ),
+    };
+    Some(SpriteSource {
+        slot,
+        file,
+        texture: name.to_string(),
+    })
+}
+
+/// A sprite textdraw's rectangle: position and `TextSize` scaled from 640x448.
+pub fn sprite_rect(t: &TextDrawSpec, w: f32, h: f32) -> [f32; 4] {
+    let (sx, sy) = (w / 640.0, h / 448.0);
+    [t.x * sx, t.y * sy, (t.x + t.text_w) * sx, (t.y + t.text_h) * sy]
+}
+
 /// The textdraw pool and `SelectTextDraw` state.
 #[derive(Clone, Debug, Default)]
 pub struct TextDraws {
@@ -103,11 +151,36 @@ impl TextDraws {
         self.shown.is_empty()
     }
 
-    /// Draws every shown text textdraw in id order (fonts 4 / 5, sprites and model previews, are not drawn
-    /// yet) and records the hit rectangles. `cursor` hovers selectable ones while selecting.
+    /// Draws every shown textdraw in id order (text in the game fonts, font 4 as a TXD sprite; font 5, model
+    /// previews, is not drawn yet) and records the hit rectangles. `cursor` hovers selectable ones while
+    /// selecting.
     pub fn draw(&mut self, w: f32, h: f32, cursor: Option<(f32, f32)>, d: &mut DrawList) {
         self.hits.clear();
         for (&id, t) in &self.shown {
+            if t.font == FONT_SPRITE {
+                let r = sprite_rect(t, w, h);
+                let hit = r.map(f32::trunc);
+                let hovered = self.selecting.is_some()
+                    && t.selectable
+                    && cursor
+                        .is_some_and(|(cx, cy)| cx >= hit[0] && cx < hit[2] && cy >= hit[1] && cy < hit[3]);
+                if let Some(source) = sprite_source(&t.text) {
+                    let c = if hovered {
+                        self.selecting.unwrap_or(t.colour)
+                    } else {
+                        t.colour
+                    };
+                    d.cmds.push(Cmd::Sprite {
+                        source,
+                        rect: r,
+                        colour: c.to_argb_u32(),
+                    });
+                }
+                if t.selectable {
+                    self.hits.insert(id, hit);
+                }
+                continue;
+            }
             if t.font > 3 || t.text.is_empty() {
                 continue;
             }
@@ -194,6 +267,39 @@ mod tests {
         );
         let r = hit_rect(&s, x, y);
         assert_eq!((r[0], r[2]), (880.0, 640.0));
+    }
+
+    #[test]
+    fn sprite_sources_and_rects() {
+        assert_eq!(
+            sprite_source("LD_SPAC:white"),
+            Some(SpriteSource {
+                slot: "LD_SPAC".into(),
+                file: Some("models\\txd\\LD_SPAC.txd".into()),
+                texture: "white".into()
+            })
+        );
+        assert_eq!(sprite_source("hud:radar_burgershot").unwrap().file, None);
+        assert_eq!(
+            sprite_source("vehicleprev:411").unwrap().file.as_deref(),
+            Some("SAMP\\vehicles128.txd")
+        );
+        assert_eq!(sprite_source("loadscs_longname:x").unwrap().slot, "loadscs_lo");
+        assert_eq!(sprite_source("../x:y"), None);
+        assert_eq!(sprite_source("nocolon"), None);
+        let mut t = td(TdAlign::Left, (320.0, 224.0), (64.0, 32.0));
+        t.font = FONT_SPRITE;
+        t.text = "LD_SPAC:white".into();
+        assert_eq!(
+            sprite_rect(&t, 1280.0, 720.0),
+            [640.0, 360.0, 768.0, 360.0 + 32.0 * 720.0 / 448.0]
+        );
+        let mut p = TextDraws::default();
+        p.set(1, Some(&t));
+        let mut d = DrawList::default();
+        p.draw(1280.0, 720.0, None, &mut d);
+        assert!(matches!(&d.cmds[0], Cmd::Sprite { source, .. } if source.texture == "white"));
+        assert_eq!(p.hit(700.0, 370.0), Some(1));
     }
 
     #[test]
