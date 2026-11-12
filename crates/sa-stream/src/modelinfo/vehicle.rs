@@ -844,6 +844,15 @@ pub fn vehicle_structure_ctor(st: GPtr<u8>) -> GPtr<u8> {
     st
 }
 
+/// The element constructor of `CVehicleStructure`'s upgrade descriptor array (0x4C73F0, thiscall, catalogue
+/// unnamed: `mov eax, ecx; ret`): returns `this`. The original `CVehicleStructure` constructor (0x4C8D60) runs it 18
+/// times through the CRT's `eh vector constructor iterator`; [`vehicle_structure_ctor`] leaves it out (no effect).
+/// Not hookable in phase A (3 bytes); a phase B native for any other caller (batch `boot-stream-1`, unverified).
+#[sa_core::native(addr = 0x4C73F0, conv = thiscall, name = "FUN_004c73f0")]
+pub fn upgrade_desc_ctor(this: GPtr<u8>) -> GPtr<u8> {
+    this
+}
+
 /// `CVehicleModelInfo::GetWheelSize(bool front)` (0x6A06F0, `ret 4`, ST0).
 #[hook(addr = 0x6A06F0, conv = thiscall, name = "CVehicleModelInfo::GetWheelSize", expect = "8A 44 24 04 84 C0", this = "CVehicleModelInfo")]
 pub fn get_wheel_size(mi: GPtr<u8>, front: u8) -> f32 {

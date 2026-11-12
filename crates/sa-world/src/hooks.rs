@@ -73,6 +73,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::x87_leaves::HOOKS,
     world::replay_vehicle_block::HOOKS,
     collision::camera_collision_scan::HOOKS,
+    collision::col_box_assign::HOOKS,
     collision::sphere_cast::HOOKS,
     collision::col_point_assign::HOOKS,
     collision::col_sphere_edge::HOOKS,
