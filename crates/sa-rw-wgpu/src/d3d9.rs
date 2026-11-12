@@ -692,6 +692,15 @@ struct Target {
     depth_view: wgpu::TextureView,
     size: (u32, u32),
     color_id: Option<TextureId>,
+    /// The target's D3D format has no alpha channel (X8R8G8B8, R5G6B5, ...): alpha writes are masked
+    /// and clears store alpha 1, so the stored alpha is 1 as D3D9 samples and blends it.
+    opaque: bool,
+}
+
+/// A D3D colour format without an alpha channel: D3D9 reads its alpha as 1 (sampling and the
+/// DESTALPHA blend factors) and ignores alpha writes.
+fn format_is_opaque(format: u32) -> bool {
+    matches!(format, fmt::X8R8G8B8 | fmt::R8G8B8 | fmt::R5G6B5 | fmt::X1R5G5B5 | fmt::X4R4G4B4)
 }
 
 /// Where a draw's vertices/indices come from.
@@ -774,6 +783,11 @@ pub struct WgpuDevice {
     blit_pipeline_layout: wgpu::PipelineLayout,
     blit_sampler: wgpu::Sampler,
     blit_pipelines: HashMap<wgpu::TextureFormat, wgpu::RenderPipeline>,
+    /// The back buffer's D3D format has no alpha channel ([`WgpuDevice::set_back_buffer_format`]).
+    back_opaque: bool,
+    /// Writes alpha 1 into a rectangle of a colour target (the blit shader on the white texture, alpha
+    /// writes only): `StretchRect` into a target without alpha.
+    alpha_one_pipeline: Option<wgpu::RenderPipeline>,
 
     errors: Arc<Mutex<Vec<String>>>,
     pub stats: D3d9Stats,
@@ -968,7 +982,7 @@ impl WgpuDevice {
         let back_depth = depth_texture(&device, width, height).create_view(&Default::default());
         let mut depth_by_size = HashMap::new();
         depth_by_size.insert((width, height), back_depth.clone());
-        let target = Target { color_view: back_view.clone(), depth_view: back_depth, size: (width, height), color_id: None };
+        let target = Target { color_view: back_view.clone(), depth_view: back_depth, size: (width, height), color_id: None, opaque: false };
         WgpuDevice {
             white: white_tex.create_view(&Default::default()),
             device,
@@ -978,6 +992,8 @@ impl WgpuDevice {
             size: (width, height),
             back,
             back_view,
+            back_opaque: false,
+            alpha_one_pipeline: None,
             target,
             depth_by_size,
             next_id: 1,
@@ -1081,6 +1097,99 @@ impl WgpuDevice {
     }
 
     /// Submits the pending draws (also done implicitly whenever D3D9 ordering requires it).
+    /// The D3D format of the back buffer (`D3DPRESENT_PARAMETERS::BackBufferFormat`): without an
+    /// alpha channel (X8R8G8B8, R5G6B5, ...) the back buffer's stored alpha stays 1, as D3D9 reads
+    /// it (`StretchRect` into render-target textures, the DESTALPHA blend factors). Default: alpha kept.
+    pub fn set_back_buffer_format(&mut self, format: u32) {
+        self.flush();
+        self.back_opaque = format_is_opaque(format);
+        if self.back_opaque {
+            let v = self.back_view.clone();
+            self.clear_to_opaque_black(&v);
+        }
+        if self.target.color_id.is_none() {
+            self.target.opaque = self.back_opaque;
+        }
+    }
+
+    /// Initialises a colour target to (0, 0, 0, 1) (a new target of a format without alpha).
+    fn clear_to_opaque_black(&self, view: &wgpu::TextureView) {
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("d3d9 opaque init") });
+        enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("d3d9 opaque init"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view,
+                depth_slice: None,
+                resolve_target: None,
+                ops: wgpu::Operations { load: wgpu::LoadOp::Clear(wgpu::Color::BLACK), store: wgpu::StoreOp::Store },
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+            multiview_mask: None,
+        });
+        self.queue.submit([enc.finish()]);
+    }
+
+    /// Sets the alpha of `rect` (x, y, w, h) of a colour target to 1, keeping its colour.
+    fn set_alpha_one(&mut self, view: &wgpu::TextureView, rect: (u32, u32, u32, u32)) {
+        let pipeline = self
+            .alpha_one_pipeline
+            .get_or_insert_with(|| {
+                self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                    label: Some("d3d9 alpha one"),
+                    layout: Some(&self.blit_pipeline_layout),
+                    vertex: wgpu::VertexState {
+                        module: &self.blit_module,
+                        entry_point: Some("vs_blit"),
+                        compilation_options: Default::default(),
+                        buffers: &[],
+                    },
+                    primitive: wgpu::PrimitiveState::default(),
+                    depth_stencil: None,
+                    multisample: Default::default(),
+                    fragment: Some(wgpu::FragmentState {
+                        module: &self.blit_module,
+                        entry_point: Some("fs_blit"),
+                        compilation_options: Default::default(),
+                        targets: &[Some(wgpu::ColorTargetState { format: COLOR_FORMAT, blend: None, write_mask: wgpu::ColorWrites::ALPHA })],
+                    }),
+                    multiview_mask: None,
+                    cache: None,
+                })
+            })
+            .clone();
+        let group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("d3d9 alpha one"),
+            layout: &self.blit_layout,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&self.white) },
+                wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(&self.blit_sampler) },
+            ],
+        });
+        let mut enc = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: Some("d3d9 alpha one") });
+        {
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("d3d9 alpha one"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+                multiview_mask: None,
+            });
+            pass.set_pipeline(&pipeline);
+            pass.set_bind_group(0, &group, &[]);
+            pass.set_scissor_rect(rect.0, rect.1, rect.2, rect.3);
+            pass.draw(0..3, 0..1);
+        }
+        self.queue.submit([enc.finish()]);
+    }
+
     pub fn flush(&mut self) {
         let p = std::mem::take(&mut self.pending);
         if p.draws.is_empty() {
@@ -1778,7 +1887,7 @@ impl WgpuDevice {
             layout,
             topology,
             blend,
-            write_mask: (self.r(rs::COLORWRITEENABLE) & 0xF) as u8,
+            write_mask: (self.r(rs::COLORWRITEENABLE) & if self.target.opaque { 7 } else { 0xF }) as u8,
             depth_cmp: if zen { self.r(rs::ZFUNC) as u8 } else { 8 },
             depth_write: zen && self.r(rs::ZWRITEENABLE) != 0,
             bias,
@@ -2297,6 +2406,10 @@ impl D3d9Device for WgpuDevice {
         self.size = (w, h);
         self.back = color_texture(&self.device, w, h, "d3d9 back buffer");
         self.back_view = self.back.create_view(&Default::default());
+        if self.back_opaque {
+            let v = self.back_view.clone();
+            self.clear_to_opaque_black(&v);
+        }
         let depth = depth_texture(&self.device, w, h).create_view(&Default::default());
         self.depth_by_size.insert((w, h), depth);
         if self.target.color_id.is_none() {
@@ -2363,6 +2476,9 @@ impl D3d9Device for WgpuDevice {
             dimension: Some(if desc.cube { wgpu::TextureViewDimension::Cube } else { wgpu::TextureViewDimension::D2 }),
             ..Default::default()
         });
+        if desc.render_target && format_is_opaque(desc.format) {
+            self.clear_to_opaque_black(&view);
+        }
         let id = self.alloc_id();
         self.textures.insert(id, Tex { texture, view, desc: *desc, levels, store });
         Ok(id)
@@ -2664,9 +2780,9 @@ impl D3d9Device for WgpuDevice {
 
     fn set_render_target(&mut self, color: Option<TextureId>, depth: Option<TextureId>) {
         self.flush();
-        let (view, size, id) = match color.and_then(|id| self.textures.get(&id).filter(|t| t.desc.render_target).map(|t| (id, t))) {
-            Some((id, t)) => (t.view.clone(), (t.desc.width, t.desc.height), Some(id)),
-            None => (self.back_view.clone(), self.size, None),
+        let (view, size, id, opaque) = match color.and_then(|id| self.textures.get(&id).filter(|t| t.desc.render_target).map(|t| (id, t))) {
+            Some((id, t)) => (t.view.clone(), (t.desc.width, t.desc.height), Some(id), format_is_opaque(t.desc.format)),
+            None => (self.back_view.clone(), self.size, None, self.back_opaque),
         };
         let depth_view = match depth.and_then(|d| self.textures.get(&d)) {
             Some(t) if t.store == Store::Depth && (t.desc.width, t.desc.height) == size => t.view.clone(),
@@ -2676,7 +2792,7 @@ impl D3d9Device for WgpuDevice {
                 .or_insert_with(|| depth_texture(&self.device, size.0, size.1).create_view(&Default::default()))
                 .clone(),
         };
-        self.target = Target { color_view: view, depth_view, size, color_id: id };
+        self.target = Target { color_view: view, depth_view, size, color_id: id, opaque };
         // D3D9 resets the viewport and scissor rectangle to the new target
         self.viewport = Viewport { x: 0, y: 0, width: size.0, height: size.1, min_z: 0.0, max_z: 1.0 };
         self.scissor = (0, 0, size.0, size.1);
@@ -2701,6 +2817,9 @@ impl D3d9Device for WgpuDevice {
         let pipeline = self.clear_pipeline(c, d, s);
         let mut u = self.base_uniforms();
         u.tfactor = color(color_value);
+        if self.target.opaque {
+            u.tfactor[3] = 1.0;
+        }
         u.vpz[2] = z.clamp(0.0, 1.0);
         let uniform_offset = self.push_uniforms(&u);
         let textures = self.texture_group(0, self.samp_key(0), 0, self.samp_key(0));
@@ -2788,6 +2907,11 @@ impl D3d9Device for WgpuDevice {
         };
         let (st, ss) = target(src)?;
         let (dt, ds) = target(dst)?;
+        let opaque = |id: Option<TextureId>| match id {
+            None => self.back_opaque,
+            Some(id) => self.textures.get(&id).is_some_and(|t| format_is_opaque(t.desc.format)),
+        };
+        let (src_opaque, dst_opaque) = (opaque(src), opaque(dst));
         let sr = src_rect.unwrap_or((0, 0, ss.0, ss.1));
         let dr = dst_rect.unwrap_or((0, 0, ds.0, ds.1));
         let inside = |r: (u32, u32, u32, u32), s: (u32, u32)| {
@@ -2804,6 +2928,14 @@ impl D3d9Device for WgpuDevice {
                 wgpu::Extent3d { width: sr.2, height: sr.3, depth_or_array_layers: 1 },
             );
             self.queue.submit([enc.finish()]);
+            // D3D9 drops the alpha of a copy into a target without alpha (it samples as 1)
+            if dst_opaque && !src_opaque {
+                let view = match dst {
+                    None => self.back_view.clone(),
+                    Some(id) => self.textures[&id].view.clone(),
+                };
+                self.set_alpha_one(&view, dr);
+            }
             return Ok(());
         }
         let (w, _, rgba) = self.read_render_target(src)?;
@@ -2835,6 +2967,9 @@ impl D3d9Device for WgpuDevice {
                 } else {
                     let p = px((u as u32).clamp(x0, x1), (v as u32).clamp(y0, y1));
                     out.extend_from_slice(&p);
+                }
+                if let Some(a) = out.last_mut().filter(|_| dst_opaque) {
+                    *a = 255;
                 }
             }
         }
@@ -3307,6 +3442,31 @@ mod tests {
         let img = finish(&mut d);
         assert_px(&img, 8, 8, [0, 255, 0], 0);
         assert_px(&img, 24, 24, [0, 0, 0], 0);
+    }
+
+    /// A render-target texture without alpha (X8R8G8B8) keeps alpha 1: clears and draws do not write
+    /// alpha, and a StretchRect from a target with alpha does not carry it over.
+    #[test]
+    fn render_target_without_alpha() {
+        let Some(mut d) = dev(32, 32) else { return };
+        let desc = |format| TextureDesc { width: 16, height: 16, levels: 1, format, render_target: true, depth_stencil: false, dynamic: false, cube: false };
+        let x8 = d.create_texture(&desc(fmt::X8R8G8B8)).unwrap();
+        let a8 = d.create_texture(&desc(fmt::A8R8G8B8)).unwrap();
+        let alpha = |d: &mut WgpuDevice, id| d.read_render_target(Some(id)).unwrap().2[(8 * 16 + 8) * 4 + 3];
+        assert_eq!(alpha(&mut d, x8), 255, "a new X8 target");
+        d.set_render_target(Some(x8), None);
+        d.clear(clear::TARGET, 0x0000_FF00, 1.0, 0);
+        assert_eq!(alpha(&mut d, x8), 255, "cleared with alpha 0");
+        d.set_render_target(Some(x8), None);
+        d.set_fvf(RHW_CT);
+        d.draw_primitive_up(PrimitiveType::TriangleStrip, 2, &quad_ct(0.0, 0.0, 16.0, 16.0, 0x00FF_FFFF), 28).unwrap();
+        assert_eq!(alpha(&mut d, x8), 255, "drawn with alpha 0");
+        d.set_render_target(Some(a8), None);
+        d.clear(clear::TARGET, 0x0000_FF00, 1.0, 0);
+        assert_eq!(alpha(&mut d, a8), 0);
+        d.stretch_rect(Some(a8), None, Some(x8), None, false).unwrap();
+        let img = d.read_render_target(Some(x8)).unwrap();
+        assert_eq!(img.2[(8 * 16 + 8) * 4..(8 * 16 + 8) * 4 + 4], [0, 255, 0, 255], "copied from A8R8G8B8");
     }
 
     fn tokens(src: &str) -> Vec<u32> {
