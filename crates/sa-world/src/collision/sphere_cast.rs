@@ -158,7 +158,7 @@ fn copy_verts(dst: GPtr<u8>, src: GPtr<u8>, n: u32) {
 ///   the vertex array freed without nulling), then `+0x24` copied; otherwise both counts are zeroed and
 ///   both arrays freed and nulled.
 #[hook(addr = 0x40f120, conv = thiscall, name = "CCollisionData::Copy", expect = "E9 6B 3B 15 01",
-       unverified = "mvpf-coll-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "copies a CCollisionData into a heap block (CColModel::operator=, MakeMultipleAlloc)")]
 pub fn col_data_copy(this: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
     // spheres
@@ -592,7 +592,7 @@ impl TriCast {
 /// (`SphereCastVsBBox`, type 3, index +0xC). The first record of the call stores the entity at +4,
 /// later ones 0. Returns whether anything was recorded.
 #[hook(addr = 0x419f00, conv = cdecl, name = "CCollision::SphereCastVsEntity", expect = "6A FF E9 4E 02 FF FF",
-       unverified = "mvpf-coll-1", route = "L2", hazards = "entry-protection-read,heap-writes", recs = "grove-walk,driving",
+       route = "L2", hazards = "entry-protection-read,heap-writes", recs = "grove-walk,driving",
        note = "camera collision; the no-CD protection reads the entry (0x40102D); writes col cache entries")]
 pub fn sphere_cast_vs_entity(a: GPtr<u8>, b: GPtr<u8>, e: GPtr<u8>) -> u8 {
     let mut hit = 0u8;

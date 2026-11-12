@@ -472,7 +472,7 @@ fn release_com(p: u32) {
 /// (0x18 each: +0xC size, +0x10 count, +0x14 array) starting at slot 0xC87FE4, stopping after 16
 /// consecutive empty slots; the slot index advances by `(i + 1) % 16` (signed, as the original).
 #[hook(addr = 0x730740, conv = cdecl, name = "D3DResourceSystem::TidyUpD3DIndexBuffers", expect = "56 8B 74 24 08 57 33 FF",
-       unverified = "std4-core-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn tidy_up_d3d_index_buffers(count: u32) {
     let mut n = count;
     if n == 0 {
@@ -534,7 +534,7 @@ pub fn tidy_up_d3d_index_buffers(count: u32) {
 /// `[[0x1560904] + [0x685002]]`: both dwords are static (the `.HOODLUM` one is read only there), their
 /// sum is 0xC87FE0, so the port reads that global.
 #[hook(addr = 0x7305E0, conv = cdecl, name = "D3DResourceSystem::TidyUpD3DTextures", expect = "56 8B 74 24 08 57 33 FF",
-       unverified = "std4-core-1", route = "L2", hazards = "entry-protection-read", recs = "boot")]
+       route = "L2", hazards = "entry-protection-read", recs = "boot")]
 pub fn tidy_up_d3d_textures(count: u32) {
     let mut n = count;
     if n == 0 {
@@ -919,7 +919,7 @@ pub fn texture_buffer_setup(this: GPtr<u8>, format: u32, w: u32, levels: u32, ca
 /// incremented; with room (count < capacity, signed) the texture appended, 1; else 0. Written by
 /// STD-4, unverified.
 #[hook(addr = 0x72FFF0, conv = thiscall, name = "D3DTextureBuffer::Push", expect = "8B 41 14 8B 51 0C 56",
-       unverified = "std4-d3d9-3", route = "L2", hazards = "ax-al-return", recs = "boot")]
+       route = "L2", hazards = "ax-al-return", recs = "boot")]
 pub fn texture_buffer_push(this: GPtr<u8>, tex: GPtr<u8>) -> u8 {
     let n = tb_u32(this, 0x14).read();
     tb_u32(this, 0x10).write(tb_u32(this, 0x10).read().wrapping_add(1));

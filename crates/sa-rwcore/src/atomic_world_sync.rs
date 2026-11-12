@@ -44,7 +44,7 @@ fn addr(p: GPtr<u8>) -> u32 {
 /// unless `sup[axis] <= rightValue`), else right unless `sup[axis] <= rightValue` (then popped).
 /// Returns the atomic.
 #[hook(addr = 0x7507E0, conv = cdecl, name = "_rpWorldObjAtomicSync", expect = "A1 A8 25 C9 00 81 EC 1C 01 00",
-       unverified = "std5-rwworld-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn world_obj_atomic_sync(atomic: GPtr<u8>) -> GPtr<u8> {
     let ext = atomic.byte_add(g::<u32>(ATOMIC_WORLD_OFFSET).read() as isize);
     if call_saved_sync(rd::<u32>(ext, 4), atomic).is_null() {

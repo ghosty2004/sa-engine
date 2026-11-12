@@ -73,7 +73,7 @@ fn within(c: f32, r: f32, p: f32) -> bool {
 /// The original keeps the 3D flag in its own `command` argument slot (popped by `ret 4`) and passes the result as a
 /// byte over an uninitialised stack dword.
 #[hook(addr = 0x486d80, conv = thiscall, name = "CRunningScript::LocateCharCommand", expect = "83 EC 2C 53 55",
-       this = "CRunningScript", unverified = "mvpk-script-2", route = "L2", hazards = "stack-residue,uninit-locals",
+       this = "CRunningScript", route = "L2", hazards = "stack-residue,uninit-locals",
        recs = "grove-walk", note = "UpdateCompareFlag gets the result byte over an uninitialised dword (upper bytes)")]
 pub fn running_script_locate_char_command(this: Scr, command: i32) {
     let is3d = (0xFE..=0x103).contains(&command);

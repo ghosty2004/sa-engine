@@ -82,7 +82,7 @@ const THE_CAMERA: usize = 0xB6F028;
 /// `0x2B70680 ror 3` = 0x56E0D0); its second argument is the protection routine's leftover EAX, passed here
 /// as `false` (only a set remote vehicle could tell the difference).
 #[hook(addr = 0x4415C0, conv = cdecl, name = "CGameLogic::SkipCanBeActivated", expect = "E9 9B 32 12 01",
-       unverified = "mvpd-world-2", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        note = "BMX FindPlayerVehicle(-1, leftover EAX of the protection call) modelled with false")]
 pub fn game_logic_skip_can_be_activated() -> u8 {
     if g::<u32>(0xB72914).read() != 0 || g::<u8>(0xB6F079).read() != 0 {
@@ -127,7 +127,7 @@ pub fn game_logic_skip_can_be_activated() -> u8 {
 /// state 5 (pad bit cleared) when 0x96A894 is set, else a 1.5 s fade in and state 3. 3: after the timer, state 0
 /// and the pad bit cleared.
 #[hook(addr = 0x442480, conv = cdecl, name = "CGameLogic::UpdateSkip", expect = "A1 A0 A8 96 00",
-       unverified = "mvpd-world-2", route = "L2", hazards = "heap-writes,x87-transcendental",
+       route = "L2", hazards = "heap-writes,x87-transcendental",
        note = "the fsqrt distance feeds PassTime's minutes")]
 pub fn game_logic_update_skip() {
     let state = g::<u32>(SKIP_STATE);
@@ -374,7 +374,7 @@ pub fn object_process_control_logic(this: GPtr<u8>) {
 /// `h * door * 0x8599A0`. Flag 0x40 is copied into the entity's +0x1C bit 0, then the RW matrix and frame are
 /// updated (inlined `UpdateRwMatrix`, tail `UpdateRwFrame`).
 #[hook(addr = 0x44A4D0, conv = thiscall, name = "CObject::ProcessGarageDoorBehaviour", this = "CObject", expect = "83 EC 10 56 8B F1",
-       unverified = "mvpd-world-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn object_process_garage_door_behaviour(this: GPtr<u8>) {
     if (rd::<u8>(this, 0x147) as i8) < 0 {
         wr::<u8>(this, 0x147, garages_find_garage_for_object(this) as u8);

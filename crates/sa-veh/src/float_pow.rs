@@ -14,7 +14,7 @@ use sa_math::x87::X87;
 /// `sa_math::libm::pow`, the ledger line for `pow`); its ST0 comes back as a double, exact for every result the
 /// game's 24-bit precision control produces.
 #[hook(addr = 0x470000, conv = cdecl, name = "FUN_00470000", expect = "D9 44 24 04 D9 44 24 08 E8 23 21 3B 00",
-       unverified = "boot-veh-1", route = "L2", hazards = "x87-transcendental", recs = "boot",
+       route = "L2", hazards = "x87-transcendental", recs = "boot",
        note = "returns ST0; the CRT _CIpow result is taken through orig::x87_binary (double precision of the stored ST0)")]
 pub fn float_pow(base: f32, exponent: f32) -> X87 {
     X87::from_f64_exact(sa_core::orig::x87_binary(0x822130, f64::from(base), f64::from(exponent)))

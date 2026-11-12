@@ -439,7 +439,7 @@ pub fn create_zbuffer_raster(r: GPtr<u8>, e: GPtr<u8>) -> u32 {
 /// the size against the window's client area (unless don't-allocate), takes the back buffer's depth
 /// and format, becomes don't-allocate with its original size set and joins the list.
 #[hook(addr = 0x4CCE60, conv = cdecl, name = "_rwD3D9RasterCreate", expect = "A1 E0 E9 B4 00 83 EC 10",
-       unverified = "std4-d3d9-2", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn raster_create(_out: u32, r: GPtr<u8>, flags: u32) -> u32 {
     let e = ext_of(r);
     wr::<u32>(r, 4, 0);
@@ -580,7 +580,7 @@ pub fn palette_index_free(idx: u32) {
 /// Z leaves the list and releases a surface other than the device's depth surface; camera leaves
 /// the list; don't-allocate rasters do nothing. Type 3 and above 5 return 0, the rest 1.
 #[hook(addr = 0x4CBB00, conv = cdecl, name = "_rwD3D9RasterDestroy", expect = "A1 E0 E9 B4 00 53 56",
-       unverified = "std4-d3d9-2", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn raster_destroy(_out: u32, r: GPtr<u8>, _n: u32) -> u32 {
     let e = ext_of(r);
     for stage in 0..8 {
@@ -734,7 +734,7 @@ pub fn raster_convert_to_non_palettized(r: GPtr<u8>) {
 /// data. Returns 1 unless an HRESULT seen after a raster was negative (the last one is carried
 /// over to later rasters).
 #[hook(addr = 0x4CC970, conv = cdecl, name = "_rxD3D9VideoMemoryRasterListRestore", expect = "83 EC 60 E9 3D 90 F3 FF",
-       unverified = "std4-d3d9-2", route = "L2", hazards = "heap-writes", recs = "boot",
+       route = "L2", hazards = "heap-writes", recs = "boot",
        note = "entry jumps into a protection stub (0x4059B5) that loads the list head")]
 pub fn vm_list_restore() -> u32 {
     let mut ok: u32 = 1;

@@ -14,7 +14,7 @@ use crate::world::common::{rd, wr};
 /// copied. Every field is written right after it is read, in this order (an overlapping source behaves the same).
 /// Returns `this` (EAX = the original ECX).
 #[hook(addr = 0x40EEC0, conv = thiscall, name = "thunk_FUN_0156d230", expect = "E9 6B E3 15 01", this = "CColBox",
-       unverified = "boot-coll-1", route = "L2", hazards = "none", recs = "new-game",
+       route = "L2", hazards = "none", recs = "new-game",
        note = "only caller CCollisionData::Copy (0x40F120) while loading collision; the source and target are heap col data")]
 pub fn col_box_assign(this: GPtr<u8>, other: GPtr<u8>) -> GPtr<u8> {
     for off in [0x0isize, 0x4, 0x8, 0xC, 0x10, 0x14] {

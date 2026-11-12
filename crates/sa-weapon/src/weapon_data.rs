@@ -138,7 +138,7 @@ fn snap(lo: f32, hi: f32) -> f32 {
 /// after the prologue), persistent across lines like the original's: fields `sscanf` does not match
 /// keep the previous line's values.
 #[hook(addr = 0x5BE670, conv = cdecl, name = "CWeaponInfo::LoadWeaponData", expect = "55 8B EC 83 E4 F8 81 EC 10 01 00 00",
-       unverified = "mvpf-weapon-1", route = "split", hazards = "uninit-locals",
+       route = "split", hazards = "uninit-locals",
        recs = "grove-walk", note = "file read (DATA/WEAPON.DAT) on the boot path: a second run reads the file again; one-time init")]
 pub fn load_weapon_data() {
     let mut frame = [0u32; 0x120 / 4];

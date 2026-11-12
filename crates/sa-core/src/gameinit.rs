@@ -804,7 +804,7 @@ pub fn env_mat_stream_read_cb(s: GPtr<u8>, len: u32, obj: GPtr<u8>, offset: i32,
 /// every material's texture `RwTextureRead(name, mask or NULL for an empty mask)` (NULL kept).
 /// Returns the stream.
 #[hook(addr = 0x59CEC0, conv = cdecl, name = "BreakablePlugin::BreakableStreamRead", expect = "8B 44 24 0C 8B 0D 38 42 BB 00",
-       unverified = "std4-load-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn breakable_stream_read(s: GPtr<u8>, _len: i32, obj: GPtr<u8>, _offset: i32, _size: i32) -> GPtr<u8> {
     let ext = obj.byte_add(g::<i32>(0xBB4238).read() as isize).cast::<u32>();
     rw_stream_read(s, ext.cast(), 4);
@@ -966,7 +966,7 @@ orig! {
 /// 0xC039F0 / 0xC03A00, failure: 0), the model-set table (0xC03A30..) and the grass renderer's
 /// four model tables and close / far alpha distances (3, 60); 1.
 #[hook(addr = 0x5DD910, conv = cdecl, name = "CPlantMgr::Initialise", expect = "83 EC 10 E8 68 FE FF FF",
-       unverified = "std4-load-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn plant_mgr_initialise() -> u8 {
     if plant_mgr_reload_config_call() == 0 {
         return 0;
@@ -1111,7 +1111,7 @@ pub fn plant_surf_prop_mgr_initialise() -> u8 {
 /// model, uv, colour bytes R, G, B, intensity, intensity variation, alpha and the seven floats;
 /// fewer than 18 fields: 0. The file is closed only on success (1).
 #[hook(addr = 0x5DD3B0, conv = cdecl, name = "CPlantSurfPropMgr::LoadPlantsDat", expect = "81 EC 90 00 00 00 53",
-       unverified = "std4-load-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn plant_surf_prop_mgr_load_plants_dat(path: u32) -> u8 {
     set_dir(0x86A784);
     let f = open_file(path, 0x85A53C);
@@ -1190,7 +1190,7 @@ pub fn plant_surf_prop_mgr_load_plants_dat(path: u32) -> u8 {
 /// `CGrassRenderer::SetPlantModelsTab(index, table)` (0x5DACC0): table stored for index < 4 (1),
 /// else 0.
 #[hook(addr = 0x5DACC0, conv = cdecl, name = "CGrassRenderer::SetPlantModelsTab", expect = "8B 44 24 04 83 F8 04",
-       unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn grass_set_plant_models_tab(idx: u32, tab: u32) -> u8 {
     if idx >= 4 {
         return 0;
@@ -1201,7 +1201,7 @@ pub fn grass_set_plant_models_tab(idx: u32, tab: u32) -> u8 {
 
 /// `CGrassRenderer::SetCloseFarAlphaDist(close, far)` (0x5DABE0): 0xC02DBC / 0x8D132C.
 #[hook(addr = 0x5DABE0, conv = cdecl, name = "CGrassRenderer::SetCloseFarAlphaDist", expect = "8B 44 24 04 8B 4C 24 08",
-       unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn grass_set_close_far_alpha_dist(close: f32, far: f32) {
     g::<f32>(0xC02DBC).write(close);
     g::<f32>(0x8D132C).write(far);
@@ -1258,7 +1258,7 @@ pub fn plant_mgr_load_models(out: GPtr<u8>, names: GPtr<u32>) -> u8 {
 /// pops): a prelit geometry's colours (+0x30, one per vertex, `rep stosd`) set to `color` under a
 /// full lock, AL = 1; not prelit: AL = 0 (`xor al, al`; EAX's upper bytes are left as they were).
 #[hook(addr = 0x5DD1E0, conv = reg("args = esi stack"), name = "GeometrySetPrelitConstantColor", expect = "F6 46 08 08 75 03",
-       unverified = "regconv-render-1", route = "L2", hazards = "heap-writes", recs = "new-game",
+       route = "L2", hazards = "heap-writes", recs = "new-game",
        note = "register convention ESI + stack -> AL (HARNESS-5; was a phase B #[native])")]
 pub fn geometry_set_prelit_constant_color(geo: GPtr<u8>, color: u32) -> u8 {
     if geo.byte_add(8).read() & 8 == 0 {
@@ -1279,7 +1279,7 @@ pub fn geometry_set_prelit_constant_color(geo: GPtr<u8>, color: u32) -> u8 {
 /// The plant material callback (0x5DD0B0, `RpGeometryForAllMaterials`): the material colour
 /// (+4) = `*data`, texture = the grass texture 0xC09174; returns the material.
 #[hook(addr = 0x5DD0B0, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "8B 15 74 91 C0 00",
-       unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn plant_material_cb(m: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
     let tex = g::<u32>(0xC09174).read();
     m.byte_add(4).cast::<u32>().write(data.read());
@@ -1292,7 +1292,7 @@ pub fn plant_material_cb(m: GPtr<u8>, data: GPtr<u32>) -> GPtr<u8> {
 /// triangles and triangle materials, unlocked, flag 2 added, set on the atomic (`RpAtomicSetGeometry`
 /// flag 1). Returns the atomic.
 #[hook(addr = 0x5DD100, conv = cdecl, name = "AtomicCreatePrelitIfNeeded", expect = "8B 44 24 04 83 EC 0C",
-       unverified = "std4-load-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn atomic_create_prelit_if_needed(a: GPtr<u8>) -> GPtr<u8> {
     let old = p8(a.byte_add(0x18).cast::<u32>().read());
     if old.byte_add(8).read() & 8 != 0 {
@@ -1327,7 +1327,7 @@ pub fn atomic_create_prelit_if_needed(a: GPtr<u8>) -> GPtr<u8> {
 /// `RwHelper::GetFirstAtomic(clump)` (0x734820): the first atomic `RpClumpForAllAtomics` visits
 /// (0x734810), NULL for none.
 #[hook(addr = 0x734820, conv = cdecl, name = "RwHelper::GetFirstAtomic", expect = "51 8B 4C 24 08",
-       unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn rw_helper_get_first_atomic(c: GPtr<u8>) -> GPtr<u8> {
     let mut first: u32 = 0;
     rp_clump_for_all_atomics(c, 0x734810, GPtr::from_raw(&mut first).cast());
@@ -1337,7 +1337,7 @@ pub fn rw_helper_get_first_atomic(c: GPtr<u8>) -> GPtr<u8> {
 /// `RwHelper::SetFilterModeOnAtomicsTextures(atomic, mode)` (0x734D80): every material texture of
 /// the atomic's geometry gets the filter mode (0x734D60); 1.
 #[hook(addr = 0x734D80, conv = cdecl, name = "RwHelper::SetFilterModeOnAtomicsTextures", expect = "8B 44 24 08 8B 4C 24 04",
-       unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn rw_helper_set_filter_mode_on_atomics_textures(a: GPtr<u8>, mode: u32) -> u8 {
     rp_geometry_for_all_materials(p8(a.byte_add(0x18).cast::<u32>().read()), 0x734D60, mode);
     1
@@ -1391,7 +1391,7 @@ pub fn quad_tree_node_pool_new(pool: GPtr<u8>) -> GPtr<u8> {
 /// `CQuadTreeNode::CQuadTreeNode(rect, depth)` (0x552830, thiscall): the rectangle copied, item
 /// list +0x10 and the four children +0x14..+0x20 cleared, depth +0x24; returns `this`.
 #[hook(addr = 0x552830, conv = thiscall, name = "CQuadTreeNode", expect = "8B C1 8B 4C 24 04 56",
-       unverified = "std4-load-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn quad_tree_node_ctor(this: GPtr<u8>, rect: GPtr<u8>, depth: u32) -> GPtr<u8> {
     for k in 0..4 {
         this.byte_add(4 * k).cast::<u32>().write(rect.byte_add(4 * k).cast::<u32>().read());
@@ -1408,7 +1408,7 @@ pub fn quad_tree_node_ctor(this: GPtr<u8>, rect: GPtr<u8>, depth: u32) -> GPtr<u
 /// (`count * 0x3C`, `operator new[]`), flag bytes (`count`), owns 1, size, first free -1, every
 /// flag 0x80 (free, id 0); returns `this`.
 #[hook(addr = 0x43F720, conv = thiscall, name = "thunk_FUN_01561900", expect = "E9 DB 21 12 01",
-       unverified = "std4-load-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn entry_exit_pool_ctor(this: GPtr<u8>, count: i32, _name: u32) -> GPtr<u8> {
     let objs = operator_new_array((count as u32).wrapping_mul(0x3C));
     this.cast::<u32>().write(objs.addr() as u32);

@@ -1133,7 +1133,7 @@ fn fric_forces(f: &mut Fpu, ua: [f32; 3], imp1: f32) -> ([f32; 3], [f32; 3]) {
 ///   scaled by G_8CD7C4 when `|s_this| < G_8CD7CC*G_8CD7C8`, and `lim = limit` (no timeStep); each
 ///   side without physical flag 4 gets `ApplyFrictionForce` at its own `r`.
 #[hook(addr = 0x545980, conv = thiscall, name = "CPhysical::ApplyFriction-other", expect = "83 EC 7C 53 55 56 8B F1",
-       this = "CPhysical", unverified = "mvpf-phys-1", route = "L2", hazards = "stack-residue,x87-transcendental",
+       this = "CPhysical", route = "L2", hazards = "stack-residue,x87-transcendental",
        recs = "grove-walk,driving",
        note = "writes timeStep*limit (or limit*G_8CD7C4) into its own limit argument slot; fsqrt results feed the impulses")]
 pub fn apply_friction_other(this: Ent, other: Ent, limit: f32, cp: Ent) -> u8 {

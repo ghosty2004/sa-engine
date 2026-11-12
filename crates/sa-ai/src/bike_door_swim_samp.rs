@@ -237,7 +237,7 @@ pub fn swim_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, priority: i32, event: 
 /// (0xA9AE80) creates the system named at 0x870954 at a zero offset (a stack vector; Rust local) on the matrix; a
 /// created system (+0x5C) copies its parent matrix and plays.
 #[hook(addr = 0x68A9F0, conv = thiscall, name = "CTaskSimpleSwim::CreateFxSystem", expect = "83 EC 0C 8B 44 24 14",
-       unverified = "ai7-12", route = "L2", hazards = "heap-writes", recs = "air-water")]
+       route = "L2", hazards = "heap-writes", recs = "air-water")]
 pub fn swim_create_fx_system(this: GPtr<u8>, _ped: GPtr<u8>, matrix: u32) {
     let mut v = [0u32; 3];
     let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
@@ -353,7 +353,7 @@ pub fn ik_look_at_update_look_at_info(this: GPtr<u8>, _name: u32, _ped: u32, tar
 /// (+0x484 == 2) with a 0x384 task swims to that task's target (+0xC, copied to a stack vector first; Rust local);
 /// everyone else runs anim 0xE (`CTaskSimpleRunAnim(0, 0xE, 8.0, false)`). Null when the pool is full.
 #[hook(addr = 0x635200, conv = thiscall, name = "CTaskComplexInWater::CreateFirstSubTask", expect = "64 A1 00 00 00 00",
-       unverified = "ai7-12", route = "L2", hazards = "heap-writes", recs = "air-water")]
+       route = "L2", hazards = "heap-writes", recs = "air-water")]
 pub fn in_water_create_first_sub_task(_this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if ped_is_player(ped) != 0 || population_is_sunbather(i32::from(rd::<u16>(ped, 0x22) as i16)) != 0 {
         let t = task_new(0x64);

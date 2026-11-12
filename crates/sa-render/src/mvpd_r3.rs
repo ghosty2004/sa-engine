@@ -61,7 +61,7 @@ fn fild_u32(v: u32) -> X87 {
 /// `CCheckpoints::Render()` (0x726060): `CCheckpoint::Render` for each of the 32 checkpoints (0x38 bytes at
 /// 0xC7F158) whose `m_bIsUsed` (+2) is set, then render state 20 (cull mode) = 2.
 #[hook(addr = 0x726060, conv = cdecl, name = "CCheckpoints::Render", expect = "56 BE 58 F1 C7 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn checkpoints_render() {
     for i in 0..32isize {
         let c = g::<u8>(0xC7F158).byte_add(i * 0x38);
@@ -147,7 +147,7 @@ pub fn rope_render(this: GPtr<u8>) {
 /// `CPostEffects::ImmediateModeRenderStatesStore()` (0x700CC0; the entry is a SecuROM fragment jump):
 /// `RwRenderStateGet` of states 10, 11, 14, 20, 6, 8, 7, 12, 2, 9 into 0xC40280..0xC402A4 in turn.
 #[hook(addr = 0x700CC0, conv = cdecl, name = "CPostEffects::ImmediateModeRenderStatesStore", expect = "E9 E5 8D D0 FF 68 80 02 C4 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "entry-protection-read",
+       route = "L2", hazards = "entry-protection-read",
        recs = "grove-walk", note = "entry is a SecuROM fragment jump (reads RwEngineInstance)")]
 pub fn immediate_mode_render_states_store() {
     let states = [0xA, 0xB, 0xE, 0x14, 6, 8, 7, 0xC, 2, 9];
@@ -161,7 +161,7 @@ pub fn immediate_mode_render_states_store() {
 /// fog colour (15) `(((r | 0xFFFFFF00) << 8 | g) << 8) | b` from the time-cycle fog words
 /// 0xB7C4CA/CC/CE, (10,5), (11,6), (1,0); after any, (8,1) and (12,0).
 #[hook(addr = 0x7240E0, conv = cdecl, name = "CMotionBlurStreaks::Render", expect = "53 56 32 DB BE 08 CA C7 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn motion_blur_streaks_render() {
     let mut set = false;
     for i in 0..4isize {
@@ -194,7 +194,7 @@ pub fn motion_blur_streaks_render() {
 /// `(1 - [0x8D12C0]) * 0.6 + 0.4`; states (6,1), (8,0), (30,0); every system blueprint of the list (+0,
 /// linked through +4) `Render(camera, brightness, heatHaze)`; then (8,1), (6,1).
 #[hook(addr = 0x4A92A0, conv = thiscall, name = "FxManager_c::Render", this = "FxManager_c", expect = "51 D9 05 24 86 85 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn fx_manager_render(this: GPtr<u8>, cam: u32, haze: u32) {
     let bright = X87::one().fsub_m(g::<f32>(0x8D12C0).read()).fmul_m(k(0x3F19_999A)).fadd_m(k(0x3ECC_CCCD)).to_f32().to_bits();
     wr::<u8>(this, 0xB8, 0);
@@ -214,7 +214,7 @@ pub fn fx_manager_render(this: GPtr<u8>, cam: u32, haze: u32) {
 /// `g_fxMan` 0xA9AE80 into ECX, then a tail jump): `g_fxMan.Render(camera, heatHaze)`. The caller's ECX
 /// is ignored; the callee pops both arguments.
 #[hook(addr = 0x49E650, conv = stdcall, name = "Fx_c::Render", expect = "E9 C9 66 F6 FF E9 46 AC 00 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "entry-protection-read",
+       route = "L2", hazards = "entry-protection-read",
        recs = "grove-walk", note = "entry is a SecuROM fragment jump")]
 pub fn fx_render(cam: u32, haze: u32) {
     fx_manager_render_o(g(0xA9AE80), cam, haze);
@@ -224,7 +224,7 @@ pub fn fx_render(cam: u32, haze: u32) {
 /// `1 - [0xC81304]`, `1 - [0xC81300]`, `1 - Rain` and the brightest time-cycle fog word / 256; above
 /// 0.0001 each of the 3 trails (0x100 bytes at 0xC713A8) is rendered with it.
 #[hook(addr = 0x7173A0, conv = cdecl, name = "CPlaneTrails::Render", expect = "83 EC 08 D9 05 24 86 85 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn plane_trails_render() {
     let a = X87::one().fsub_m(g::<f32>(0xC81304).read());
     let b = X87::one().fsub_m(g::<f32>(0xC81300).read()).to_f32();
@@ -257,7 +257,7 @@ pub fn plane_trails_render() {
 /// `RwIm3DTransform(…, n, NULL, 0x18)` and the line list 0x8D5B98 (`2n - 2` indices). The point
 /// counter lives in the original's argument slot.
 #[hook(addr = 0x717180, conv = thiscall, name = "CPlaneTrail::Render", this = "CPlaneTrail", expect = "83 EC 08 D9 44 24 0C",
-       unverified = "mvpd-render-3", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "grove-walk", note = "keeps its loop counter in its own argument slot")]
 pub fn plane_trail_render(this: GPtr<u8>, intensity: u32) {
     let alpha = x(f32::from_bits(intensity)).fmul_m(k(0x42DC_0000)).ftol() as u32 as i32;
@@ -307,7 +307,7 @@ pub fn plane_trail_render(this: GPtr<u8>, intensity: u32) {
 /// at alpha 255, otherwise alpha `ftol((250000 - d²) * 4.0257e-6 * 254)` (low byte); then the atomic's
 /// render callback.
 #[hook(addr = 0x6FF350, conv = cdecl, name = "CCustomRoadsignMgr::RenderRoadsignAtomic", expect = "8B 4C 24 08 D9 01",
-       unverified = "mvpd-render-3", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "grove-walk", note = "writes d2 into its own argument slot")]
 pub fn render_roadsign_atomic(atomic: GPtr<u8>, cam: GPtr<u8>) -> GPtr<u8> {
     let p = rd::<GPtr<u8>>(atomic, 4).byte_add(0x40);
@@ -399,7 +399,7 @@ pub fn render_buffered_one_xlu_sprite_2d(px: f32, py: f32, w: f32, h: f32, colou
 /// the index block.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x70E4A0, conv = cdecl, name = "CSprite::RenderBufferedOneXLUSprite", expect = "83 EC 40 D9 44 24 44",
-       unverified = "mvpd-render-3", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "grove-walk", note = "writes the scaled blue into its own r argument slot (byte +2)")]
 pub fn render_buffered_one_xlu_sprite(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, alpha: u32) {
     g::<u32>(0xC6A15C).write(0);
@@ -475,7 +475,7 @@ orig! {
 /// mode (+0xB84: 0..3 → +0xB88/+0xB8C/+0xB90/+0xB94, else NULL); `r = rand()`, `DrawTriPlants(+4, count,
 /// models, NULL)`, count = 0, `srand(r)`.
 #[hook(addr = 0x5DB0C0, conv = thiscall, name = "CPPTriPlantBuffer::Flush", expect = "56 8B F1 83 3E 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        recs = "grove-walk", note = "rand site 0x5DB103; reseeds the CRT generator with the value it drew")]
 pub fn tri_plant_buffer_flush(this: GPtr<u8>) {
     if rd::<i32>(this, 0) <= 0 {
@@ -527,7 +527,7 @@ pub fn grass_add_tri_plant(plant: GPtr<u8>, mode: u32) {
 /// `RwIm2DRenderIndexedPrimitive(TRILIST, …, 4, 0x8D5174, 6)`; then (9,2), (6,1), (8,1), (1,0), (10,5) and,
 /// through a tail jump that rewrites the original's own argument slots, (11,6).
 #[hook(addr = 0x703650, conv = cdecl, name = "CPostEffects::ColourFilter", expect = "A1 24 7B C9 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "grove-walk", note = "its last RwRenderStateSet is a tail jump with (0xB, 6) written over its own argument slots")]
 pub fn colour_filter(pass1: u32, pass2: u32) {
     rs(9, 1);
@@ -560,7 +560,7 @@ pub fn colour_filter(pass1: u32, pass2: u32) {
 /// (0xC228E8 = 1) when below level + 12 and inside the rect (inclusive); the rect (i16 ×4 at
 /// 0xC21188/0xC21214/0xC212A0/0xC2132C) and level (0xC213B8) are stored, count + 1.
 #[hook(addr = 0x6EA9F0, conv = cdecl, name = "CWaterLevel::SetUpWaterFog", expect = "E9 04 91 D1 FF 83 EC 20",
-       unverified = "mvpd-render-3", route = "L2", hazards = "entry-protection-read",
+       route = "L2", hazards = "entry-protection-read",
        recs = "grove-walk", note = "entry is a SecuROM fragment jump (reads the water-fog flag)")]
 pub fn set_up_water_fog(x0: i32, y0: i32, x1: i32, y1: i32) {
     if g::<u8>(0x8D37D4).read() == 0 || g::<i32>(0xC228E4).read() >= 0x46 {
@@ -631,7 +631,7 @@ orig! {
 /// v+2, v+2, v+1, v+3. Leftovers are drawn (`LittleTest()`, `RwIm3DTransform(…, NULL, 1)`, TRILIST).
 /// Finally (12,0), count 0, (8,1), (10,5), (11,6).
 #[hook(addr = 0x724890, conv = cdecl, name = "CShinyTexts::Render", expect = "83 EC 08 A1 F8 C6 C7 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn shiny_texts_render() {
     let count = g::<i32>(0xC7C6F8);
     if count.read() == 0 {
@@ -712,7 +712,7 @@ pub fn shiny_texts_render() {
 /// sphere centre `pos + at * r` goes to +0x34 and r to +0x40; four of the camera's frustum planes
 /// (normal + distance at +0xBC/+0xD0/+0xE4/+0xF8) are copied to +0x48.. (0x10 apart).
 #[hook(addr = 0x4A9140, conv = thiscall, name = "FxManager_c::CalcFrustumInfo", this = "FxManager_c", expect = "83 EC 0C 8B 44 24 10",
-       unverified = "mvpd-render-3", route = "L2", hazards = "x87-transcendental,stack-residue",
+       route = "L2", hazards = "x87-transcendental,stack-residue",
        recs = "grove-walk", note = "FSQRT/FPATAN/FSIN; the angle is stored into its own argument slot")]
 pub fn calc_frustum_info(this: GPtr<u8>, cam: GPtr<u8>) {
     let m = rd::<GPtr<u8>>(cam, 4).byte_add(0x10);
@@ -750,7 +750,7 @@ pub fn calc_frustum_info(this: GPtr<u8>, cam: GPtr<u8>) {
 /// last); `LittleTest()`, `RwIm3DTransform(…, 2n + 2, NULL, 1)`, TRILIST with 6n indices from 0xC799C8.
 /// Finally (12,0), (8,1), (6,1).
 #[hook(addr = 0x720640, conv = cdecl, name = "CSkidmarks::Render", expect = "83 EC 20 A1 24 7B C9 00",
-       unverified = "mvpd-render-3", route = "L2", hazards = "none", recs = "driving")]
+       route = "L2", hazards = "none", recs = "driving")]
 pub fn skidmarks_render() {
     rs(8, 0);
     rs(0xC, 1);
@@ -854,7 +854,7 @@ orig! {
 /// name key (`[[this+8]+8]`) the fire audio entity (+0x7C) gets event 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
 /// 0x88, 0x89, 0x89, 0x89, 0x8A, 0x8B, 0x8C at `pos`.
 #[hook(addr = 0x4AAC90, conv = thiscall, name = "FxSystem_c::DoFxAudio", expect = "83 EC 28 53 55",
-       unverified = "mvpd-render-3", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        recs = "grove-walk", note = "audio entity events (heap)")]
 pub fn fx_system_do_fx_audio(this: GPtr<u8>, px: u32, py: u32, pz: u32) {
     let names: [u32; 13] = [

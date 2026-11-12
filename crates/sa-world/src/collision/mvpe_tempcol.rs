@@ -36,7 +36,7 @@ fn local(b: &mut [u32; 3]) -> GPtr<u8> {
 /// bounding box dwords 0x968FD0..0x968FE4 (±0.25) and radius 0x968FF4 = 0.25 stored directly. The vectors
 /// are passed as pointers to stack temporaries in the original; here to locals with the same values.
 #[hook(addr = 0x5BA8C0, conv = cdecl, name = "CTempColModels::Initialise", expect = "83 EC 18 53 56",
-       unverified = "mvpe-tempcol-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "one-time boot initialiser (allocates the temp models' collision data)")]
 pub fn temp_col_models_initialise() {
     let mut v1 = [0x0, 0x0, 0x0u32];

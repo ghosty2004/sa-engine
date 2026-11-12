@@ -154,7 +154,7 @@ fn consider_list(mut node: GPtr<u8>, cam: GPtr<u8>) -> Result<(), ()> {
 /// out of free objects returns 0, else 1. The original keeps the vehicle-pool offset and the sector
 /// temporaries in its own `doNotCreateNew` argument slot.
 #[hook(addr = 0x711760, conv = cdecl, name = "CStencilShadows::RegisterStencilShadows", expect = "8A 44 24 08 83 EC 1C",
-       unverified = "regconv-render-1", route = "L2", hazards = "heap-writes,stack-residue", recs = "grove-walk,driving",
+       route = "L2", hazards = "heap-writes,stack-residue", recs = "grove-walk,driving",
        note = "calls the shadow distances 0x711160 / 0x7111F0 (EBX/ESI -> 80-bit ST0) through orig! reg; writes scan codes and the shadow object lists; uses its own argument slot as scratch")]
 pub fn register_stencil_shadows(cam: GPtr<u8>, do_not_create_new: u8) -> u8 {
     let mut o = GPtr::<u8>::from_addr(ACTIVE_OBJECTS.get() as usize);

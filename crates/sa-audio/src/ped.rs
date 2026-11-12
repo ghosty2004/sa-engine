@@ -451,7 +451,7 @@ orig! {
 /// twin-loop sound entity member (+0xA8) destructor, then the `CAEAudioEntity` part: vtable 0x859988 and the
 /// `CAESound` member (+8) destructor. The SEH frame of the original is not needed (nothing in between throws).
 #[hook(addr = 0x5de920, conv = thiscall, name = "CAEPedAudioEntity::~CAEPedAudioEntity", expect = "6A FF E9 A3 9B E2 FF",
-       unverified = "mvpl-audio-1", route = "L2", hazards = "heap-writes,entry-protection-read", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes,entry-protection-read", recs = "grove-walk",
        note = "the entry jumps through the fragment 0x4084CA (push of the SEH handler; the protection reads it at 0x402195, keycells); writes the ped's audio entity (ped object)")]
 pub fn ped_audio_entity_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86C2A8);

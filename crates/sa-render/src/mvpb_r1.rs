@@ -71,7 +71,7 @@ orig! {
 /// product rounded on the x87 and stored as a double, `pow` from the CRT), and
 /// `SetGammaRamp(0, D3DSGR_CALIBRATE, 0xC8DAC8)`.
 #[hook(addr = 0x747200, conv = thiscall, name = "CGamma::SetGamma", this = "CGamma", expect = "55 8B EC 83 E4 F8",
-       unverified = "mvpb-render-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "D3D device calls (gamma ramp); frontend/menu settings only")]
 pub fn set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
     let gm = X87::from_f32(gamma).fmul_m(f(0x3F33_3333)).to_f32();
@@ -118,7 +118,7 @@ pub fn set_gamma(this: GPtr<u8>, gamma: f32, force: u32) {
 /// menu's widescreen flag (0xBA6793) is set, else 5/4 (0x8595F0) when `TheCamera.m_bWideScreenOn`
 /// (0xB6F065), else 4/3 (0x85F09C); the value stays in ST0 (`fst`).
 #[hook(addr = 0x6FF420, conv = cdecl, name = "CDraw::CalculateAspectRatio", expect = "A0 93 67 BA 00",
-       unverified = "mvpb-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn calculate_aspect_ratio() -> X87 {
     let bits = if g::<u8>(0xBA6793).read() != 0 {
         0x3FE3_8E39
@@ -173,7 +173,7 @@ pub fn set_plant_friendly_flag_in_atomic_mi(mi: GPtr<u8>) -> bool {
 /// a texture), the 4-vertex triangle fan (`0x734E90(5, maVertices 0xC80468, 4)`), raster state NULL.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x728520, conv = thiscall, name = "CSprite2d::Draw-ffffffffCRGBA", this = "CSprite2d", expect = "8B 44 24 24 8B 54 24 18",
-       unverified = "mvpb-render-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn sprite2d_draw_quad(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, c: GPtr<u8>) {
     sprite2d_set_vertices(a0, a1, a2, a3, a4, a5, a6, a7, c, c, c, c);
     let tex = this.cast::<GPtr<u32>>().read();
@@ -195,7 +195,7 @@ pub fn sprite2d_draw_quad(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4
 /// IncrementStat(0x86, 1.0)` and the month by the days table (0x8CCF23, 12 → 1). Always:
 /// `ms_nGameClockSeconds = (now - LastClockTick) * 60 / msPerMinute` (unsigned, 16-bit store).
 #[hook(addr = 0x52CF10, conv = cdecl, name = "CClock::Update", expect = "56 8B 35 58 01 B7 00",
-       unverified = "mvpb-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clock_update() {
     let last = g::<u32>(0xB70158);
     let now = g::<u32>(0xB7CB84).read();
@@ -251,7 +251,7 @@ pub fn clock_update() {
 /// (< 4 pieces), 5/10 s (< 9) or 10/20 s; state 2 past the disappear time (unsigned) → 0. Every
 /// skidmark's `m_bActive` is cleared.
 #[hook(addr = 0x7205C0, conv = cdecl, name = "CSkidmarks::Update", expect = "8B 15 84 CB B7 00 B8 FE",
-       unverified = "mvpb-render-1", route = "L2", hazards = "none", recs = "driving")]
+       route = "L2", hazards = "none", recs = "driving")]
 pub fn skidmarks_update() {
     let now = g::<u32>(0xB7CB84).read();
     let mut s = 0xC79BFEu32;
@@ -507,7 +507,7 @@ pub fn moving_things_update() {
 /// more than 2000 ms old (unsigned), every entry moves one slot back (15..1 from 14..0). `point[0] = pt`;
 /// `time[0] = now` after a shift or when it was 0.
 #[hook(addr = 0x7172D0, conv = thiscall, name = "CPlaneTrail::RegisterPoint", this = "CPlaneTrail", expect = "51 90 E9 AE 01 CF FF",
-       unverified = "mvpb-render-1", route = "L2", hazards = "entry-protection-read",
+       route = "L2", hazards = "entry-protection-read",
        recs = "grove-walk", note = "the protection reads the entry bytes at +2 (code-data-reads 0x1562826)")]
 pub fn plane_trail_register_point(this: GPtr<u8>, x: u32, y: u32, z: u32) {
     let times = this.byte_add(0xC0).cast::<u32>();
@@ -548,7 +548,7 @@ fn trail_point(cos_first: bool, k1: u32, k2: u32, z: u32) -> [u32; 3] {
 /// pull 1.5, fade speed 15) when bit 9 of `now` (+0, +0x15E, +0xC8) is set, else only its coordinates
 /// are updated (`UpdateCoronaCoors(id, pos, 2000, 0)`).
 #[hook(addr = 0x7174F0, conv = cdecl, name = "CPlaneTrails::Update", expect = "83 EC 1C 53 56 8B 35 84",
-       unverified = "mvpb-render-1", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk", note = "FSIN/FCOS of the clock")]
 #[allow(clippy::type_complexity)]
 pub fn plane_trails_update() {
@@ -582,7 +582,7 @@ pub fn plane_trails_update() {
 /// `TheCamera.m_pMat` 0xB6F03C): nothing when `range^2 <` the 2D squared camera distance (x87,
 /// ordered); else the corona with this id (if any) gets `m_vPosn = pos` and `m_fNormalAngle`.
 #[hook(addr = 0x6FC4D0, conv = cdecl, name = "CCoronas::UpdateCoronaCoors", expect = "E9 ED 73 D0 FF 85 C0",
-       unverified = "mvpb-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn update_corona_coors(id: u32, pos: GPtr<u8>, range: u32, normal_angle: u32) {
     let range = f(range);
     let m = g::<GPtr<u8>>(0xB6F03C).read();
@@ -617,7 +617,7 @@ pub fn update_corona_coors(id: u32, pos: GPtr<u8>, range: u32, normal_angle: u32
 /// the first of the 8 ropes (0x328 bytes from 0xB76BB8) with `m_nType` (+0x25) set and `m_nId` (+0) ==
 /// id, else -1.
 #[hook(addr = 0x556000, conv = cdecl, name = "CRopes::FindRope", expect = "8B 54 24 04 33 C0",
-       unverified = "mvpb-render-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn ropes_find_rope(id: u32) -> i32 {
     let mut i = 0;
     let mut r = 0xB76BB8u32;
@@ -642,7 +642,7 @@ pub fn ropes_find_rope(id: u32) -> i32 {
 /// `min(1.0, dist * 0.01)` (1.0 kept when `1.0 < v`). `CWeather::InTunnelness` (0xC81334) moves towards
 /// the target by `timeStep * 0.01` (f32), snapping when `|target - cur| < step`.
 #[hook(addr = 0x72B630, conv = cdecl, name = "CWeather::UpdateInTunnelness", expect = "83 EC 20 A1 BC 7A C8 00",
-       unverified = "mvpb-render-1", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk", note = "FSIN/FCOS only without a camera matrix")]
 pub fn update_in_tunnelness() {
     let mut target = 0.0f32;

@@ -243,7 +243,7 @@ fn lt0(v: X87) -> bool {
 /// flags 0x80000 front / 0x800000 rear). Monster truck / hydraulics: `RotateY(atan2(-(wheelPos[i] -
 /// wheelPos[opposite]) * side, 2|pos.y|))`. The position is added back, `UpdateRW`, `~CMatrix`.
 #[hook(addr = 0x6AA290, conv = thiscall, name = "CAutomobile::UpdateWheelMatrix", this = "CAutomobile", expect = "90 E9 EE 77 D5 FF",
-       unverified = "mvpd-veh-4", route = "L2", hazards = "x87-transcendental,entry-protection-read",
+       route = "L2", hazards = "x87-transcendental,entry-protection-read",
        recs = "driving",
        note = "fsin of the wheel rotation (burst tyre), fpatan (monster truck/hydraulics), _CIasin via orig::x87_unary(0x821E70); the stack CMatrix lives on the Rust stack")]
 pub fn automobile_update_wheel_matrix(this: GPtr<u8>, node: i32, flags: u32) {

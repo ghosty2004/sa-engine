@@ -70,7 +70,7 @@ pub fn fx_manager_init(this: GPtr<u8>) -> u8 {
 /// copied, the index decremented, and the result is `this->frustum (+0x34).IsCollision(&sphere) != 0`.
 /// Callers test AL.
 #[hook(addr = 0x4A9500, conv = thiscall, name = "FxManager_c::ShouldCreate", expect = "83 EC 18 8A 44 24 28",
-       unverified = "mvpa-fx-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn fx_manager_should_create(this: GPtr<u8>, bp: GPtr<u8>, local: GPtr<u8>, parent: GPtr<u8>, ignore: u32) -> u8 {
     if ignore as u8 != 0 {
         return 1;

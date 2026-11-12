@@ -376,7 +376,7 @@ orig! {
 /// dt * (1/255)`; only w2/w3: `-= ((b32 / 255) * (w3 - w2) + w2) * b31 * dt / 255`; both: b32 < 128 →
 /// the first with `b32 * (1/128)`, else the second with `(b32 - 128) * (1/128)`. Returns 0.
 #[hook(addr = 0x4A21D0, conv = thiscall, name = "FxEmitterBP_c::UpdateParticle", expect = "83 EC 2C 56 8B 74 24 38",
-       unverified = "mvpc-fx-2", route = "L2", hazards = "stack-residue,heap-writes,ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue,heap-writes,ax-al-return", recs = "grove-walk",
        note = "writes dt / the water level / byte values into its own argument slots (no footprint recorded)")]
 pub fn emitter_bp_update_particle(this: GPtr<u8>, time: u32, p: GPtr<u8>) -> u8 {
     let sys = rd::<GPtr<u8>>(p, 0x28);

@@ -47,7 +47,7 @@ fn pool_new_bytes(this: GPtr<u8>, elem: i32) -> GPtr<u8> {
 
 /// `CPool<IplDef>::New()` (stub 0x4059B0 → 0x15654E0, thiscall): 0x34-byte slots; see [`pool_new_bytes`].
 #[hook(addr = 0x4059b0, conv = thiscall, name = "thunk_FUN_015654e0", expect = "E9 2B FB 15 01",
-       unverified = "mvpl-stream-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the pool's flag array (heap)")]
 pub fn ipl_pool_new(this: GPtr<u8>) -> GPtr<u8> {
     pool_new_bytes(this, 0x34)
@@ -55,7 +55,7 @@ pub fn ipl_pool_new(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPool<ColDef>::New()` (stub 0x411030 → 0x156FBB0, thiscall): 0x2C-byte slots; see [`pool_new_bytes`].
 #[hook(addr = 0x411030, conv = thiscall, name = "thunk_FUN_0156fbb0", expect = "E9 7B EB 15 01",
-       unverified = "mvpl-stream-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the pool's flag array (heap)")]
 pub fn col_pool_new(this: GPtr<u8>) -> GPtr<u8> {
     pool_new_bytes(this, 0x2C)

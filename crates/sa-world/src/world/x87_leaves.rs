@@ -13,7 +13,7 @@ const CURR_AREA: usize = 0xB72914;
 
 /// `FUN_0041bcf0(float)` (0x41BCF0, cdecl): `fld` of the argument, FCOS, result in ST0.
 #[hook(addr = 0x41bcf0, conv = cdecl, name = "FUN_0041bcf0", expect = "D9 44 24 04 D9 FF C3",
-       unverified = "mvpl-world-1", route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
        note = "returns the raw FCOS in ST0: the model carries 53 of the CPU's 64 significand bits")]
 pub fn x87_cos(a: u32) -> X87 {
     X87::from_f32(f32::from_bits(a)).fcos()

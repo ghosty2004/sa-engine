@@ -161,7 +161,7 @@ fn apply_wheel_forces(this: GPtr<u8>, wf: GPtr<u8>, wrt: GPtr<u8>, point: GPtr<u
 /// times `1 - |gas| * 0.2` for SPINNING with player/remote status. The forces follow when fwd or right
 /// is not 0 (anti-dive +0xC4 > 0 while braking (factor 1) or driving (0.5) separates the turn vector).
 #[hook(addr = 0x6D6C00, conv = thiscall, name = "CVehicle::ProcessWheel", this = "CVehicle", expect = "83 EC 48 D9 05 50 8B 85 00",
-       unverified = "mvpd-veh-1", route = "L2", hazards = "stack-residue,x87-transcendental",
+       route = "L2", hazards = "stack-residue,x87-transcendental",
        recs = "driving",
        note = "the original keeps temporaries in its own argument slots (contactSpeedFwd in wheelFwd, contactSpeedRight/min in contactSpeed, adhesion*ts then the mass in adhesion, speed in wheelId, rand in state, slip/turnSpeed in wheelStatus); fsqrt of the slip and the speeds")]
 #[allow(clippy::too_many_arguments)]
@@ -374,7 +374,7 @@ fn brake_clamp(brk: X87, adh: f32, csf: f32, fwd: &mut f32, state: GPtr<i32>) {
 /// matRight), cp - (cp . matRight) * matRight)` with `rc = turnForce . matRight`; then always
 /// `ApplyTurnForce(rc * matRight, (cp . matFwd) * matFwd)`.
 #[hook(addr = 0x6D73B0, conv = thiscall, name = "CVehicle::ProcessBikeWheel", this = "CVehicle", expect = "83 EC 40 D9 05 50 8B 85 00",
-       unverified = "mvpd-veh-1", route = "L2", hazards = "stack-residue,x87-transcendental",
+       route = "L2", hazards = "stack-residue,x87-transcendental",
        recs = "driving",
        note = "the original keeps temporaries in its own argument slots (contactSpeedFwd in wheelFwd, right/min in wheelRight/contactSpeed, adhesion^2 in brake, the mass then cp.matRight in adhesion, destab*tl then cp.matFwd in destabTraction, rand in state, the burst mod in special, speed/slip/rc in wheelStatus)")]
 #[allow(clippy::too_many_arguments)]

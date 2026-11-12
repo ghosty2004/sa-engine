@@ -1,0 +1,698 @@
+# VERIFIER-11 (INTEGRATE-6): SA:MP-priority hooks (catalog/samp-priority.csv) with an L2 / split / L1 result.
+# L3: union of the 157 SA:MP-priority batches on top of the verified set: L3 MATCH on all 13 recordings (b09007a).
+# L2 runs: port-l2.sh --runs "plain l2" (L2_MAX=200, L2_PER_FRAME=2, fix* runs 8..16, L2_SPOOL_MAX=1G);
+# split runs: --runs "plain split" (SPLIT_PER_FRAME=20, SPLIT_STACKFILL=4096); run tags i6-* (recording in brackets).
+# verdict: promote (PASS: 0 mismatches, 0 undeclared writes, cases >= min(calls,100) or every call compared; a fix*
+# run with the added l2-extras lines supersedes the runs without them), mismatch (an L2/split difference, see
+# docs/verify/integration-6.md), open (no cases, too few cases, undeclared writes left, run crashed or diverged).
+address	name	batch	route	hazards	verdict	evidence
+0x4059B0	thunk_FUN_015654e0	mvpl-stream-1	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x406360	thunk_FUN_015700d0	std5-stream-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x406450	thunk_FUN_01567540	std5-stream-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 1712 calls 0 mismatches 0 undeclared
+0x406CE0	FUN_00406ce0	std4-audio-3	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 17 cases of 17 calls 0 mismatches 0 undeclared
+0x406D70	FUN_00406d70	mvpa-math-1	L2	preserved-regs	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 885 calls 0 mismatches 0 undeclared
+0x406DA0	FUN_00406da0	mvpa-math-1	L2	preserved-regs	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 1821 calls 0 mismatches 0 undeclared
+0x40A560	CStreaming::StreamZoneModels	mvpk-stream-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x40D3F0	CStreaming::AddModelsToRequestList	mvpj-stream-1	L2	stack-residue	mismatch	i6-l2pr0 (pause-restart) L2 MISMATCH 200 cases of 201 calls 5 mismatches 5 undeclared
+0x40EEC0	thunk_FUN_0156d230	boot-coll-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 2 cases of 2 calls 0 mismatches 0 undeclared
+0x40EF50	CColLine	mvpa-math-1	L2	preserved-regs	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 9195 calls 0 mismatches 0 undeclared
+0x40F030	CCollisionData	mvpa-math-1	L2	preserved-regs	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 773 calls 0 mismatches 0 undeclared
+0x40F120	CCollisionData::Copy	mvpf-coll-1	L2	heap-writes	promote	i6-fix4 (pause-restart) L2 PASS 33 cases of 33 calls 0 mismatches 0 undeclared
+0x40F700	CColModel	mvpa-math-1	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 52 cases 0 mismatches 0 undeclared
+0x40FAF0	CBoundingBox	std5-ctor-1	L2	none	open	i6-l2pr0 (pause-restart) L2 UNDECL 200 cases of 23119 calls 0 mismatches 32 undeclared
+0x40FB60	CColModel	std5-ctor-1	L2	none	open	i6-l2pr0 (pause-restart) L2 UNDECL 200 cases of 10980 calls 0 mismatches 100 undeclared
+0x40FE30	FUN_0040fe30	mvpa-math-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 2785 calls 0 mismatches 0 undeclared
+0x40FE60	VectorSub	mvpa-math-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 39472 calls 0 mismatches 0 undeclared
+0x40FE90	FUN_0040fe90	mvpa-math-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 2283 calls 0 mismatches 0 undeclared
+0x40FEC0	FUN_0040fec0	mvpa-math-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 1494 calls 0 mismatches 0 undeclared
+0x411030	thunk_FUN_0156fbb0	mvpl-stream-1	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x411590	FUN_00411590	mvpa-math-1	L2	stack-residue	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 417 calls 0 mismatches 0 undeclared
+0x4119D0	FUN_004119d0	mvpa-math-1	L2	stack-residue	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 1352 calls 0 mismatches 0 undeclared
+0x411A00	FUN_00411a00	mvpa-math-1	L2	preserved-regs	promote	i6-l2pr0 (pause-restart) L2 PASS 128 cases of 136 calls 0 mismatches 0 undeclared
+0x4140F0	CCollision::ProcessLineTriangle	mvpc-coll-1	L2	stack-residue	mismatch	i6-l2pr0 (pause-restart) L2 MISMATCH 200 cases of 40305 calls 122 mismatches 15 undeclared
+0x415320	CCollision::CheckCameraCollisionPeds	mvpe-coll-1	L2	stack-residue,heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 27 cases 0 mismatches 0 undeclared
+0x417730	CCollision::TestLineOfSight	mvpc-coll-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x417950	CCollision::ProcessLineOfSight	mvpc-coll-1	L2	stack-residue	mismatch	i6-fixl2 (pause-restart) L2 MISMATCH 200 cases 1 mismatches 0 undeclared; i6-l2pr0 (pause-restart) L2 UNDECL 200 cases of 4057 calls 0 mismatches 200 undeclared
+0x417BF0	CCollision::ProcessVerticalLine	mvpc-coll-1	L2	stack-residue,uninit-locals	mismatch	i6-l2pr0 (pause-restart) L2 MISMATCH 200 cases of 2002 calls 1 mismatches 4 undeclared
+0x4181B0	CCollision::SphereCastVsCaches	mvpe-coll-1	L2	uninit-locals,heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4185C0	CCollision::ProcessColModels	mvpf-coll-1	L2	heap-writes	mismatch	i6-l2hpr0 (pause-restart) L2 MISMATCH 52 cases 50 mismatches 50 undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 200 cases 196 mismatches 196 undeclared
+0x419F00	CCollision::SphereCastVsEntity	mvpf-coll-1	L2	entry-protection-read,heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 54 cases 0 mismatches 0 undeclared
+0x41A820	CCollision::CheckCameraCollisionBuildings	mvpe-coll-1	L2	stack-residue	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x41AB20	CCollision::CheckCameraCollisionObjects	mvpe-coll-1	L2	stack-residue	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x41AC40	CCollision::BuildCacheOfCameraCollision	mvpe-coll-1	L2	x87-transcendental	mismatch	i6-l2pr0 (pause-restart) L2 MISMATCH 200 cases of 201 calls 1 mismatches 0 undeclared
+0x41B000	CCollision::CameraConeCastVsWorldCollision	mvpe-coll-1	L2	uninit-locals	mismatch	i6-l2pr0 (pause-restart) L2 MISMATCH 200 cases of 201 calls 200 mismatches 2 undeclared
+0x41B7C0	CPointRoute::operator new	mvpa-world-3	L2	heap-writes	mismatch	i6-l2hpr5 (pause-restart) L2 MISMATCH 2 cases 2 mismatches 0 undeclared
+0x41BCF0	FUN_0041bcf0	mvpl-world-1	L2	x87-transcendental	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 281 calls 0 mismatches 0 undeclared
+0x420800	FUN_00420800	mvpa-math-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 554 calls 0 mismatches 0 undeclared
+0x43E3F0	(missed by ghidra: data-code-immediate)	std5-ctor-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x43F4B0	CEntryExitManager::FindNearestEntryExit	mvpa-world-2	L2	x87-transcendental,stack-residue	open	i6-fix4 (pause-restart) L2 FEW 64 cases of 95 calls 0 mismatches 0 undeclared; i6-l2pr5 (pause-restart) L2 FEW 10 cases of 101 calls 0 mismatches 0 undeclared
+0x43F720	thunk_FUN_01561900	std4-load-1	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x43F7D0	thunk_FUN_015651d0	std5-pool-1	L2	heap-writes	open	i6-fix4 (pause-restart) L2 FEW 67 cases of 435 calls 0 mismatches 0 undeclared; i6-fixl2b (pause-restart) L2 FEW 21 cases of 435 calls 0 mismatches 0 undeclared; i6-l2hpr0 (pause-restart) L2 MISMATCH 2 cases 2 mismatches 0 undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 7 cases 7 mismatches 0 undeclared
+0x43F880	CEntryExitManager::Init	mvpc-world-2	split	heap-writes	promote	i6-sp0 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x43FA00	CEntryExitManager::AddOne	std5-world-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x440D10	CEntryExitManager::Update	mvpd-world-3	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 26 cases 0 mismatches 0 undeclared
+0x4415C0	CGameLogic::SkipCanBeActivated	mvpd-world-2	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x4418E0	CGameLogic::CalcDistanceToForbiddenTrainCrossing	mvpd-world-2	L2	x87-transcendental	open	i6-l2pr5 (pause-restart) L2 UNDECL 200 cases of 201 calls 0 mismatches 200 undeclared
+0x441E00	(missed by ghidra: data-code-immediate)	std5-ctor-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 16 cases 0 mismatches 0 undeclared
+0x441E10	CGameLogic::IsPlayerAllowedToGoInThisDirection	mvpi-world-1	L2	ax-al-return,x87-transcendental	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x442020	CGameLogic::IsPlayerUse2PlayerControls	mvpk-world-1	L2	ax-al-return	open	i6-l2gw0 (grove-walk) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x442480	CGameLogic::UpdateSkip	mvpd-world-2	L2	heap-writes,x87-transcendental	promote	i6-l2hpr0b (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x442AD0	CGameLogic::Update	mvpd-world-4	L2	heap-writes,x87-transcendental	promote	i6-fix2 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x4471E0	CGarages::AddOne	std5-world-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x447790	CGarages::PrintMessages	mvpd-world-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x44A4D0	CObject::ProcessGarageDoorBehaviour	mvpd-world-2	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 3 cases 0 mismatches 0 undeclared
+0x4541E0	thunk_FUN_01568bf0	std5-ctor-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x455000	CPickups::RenderPickUpText	mvpd-world-5	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x4567E0	CPickup::GiveUsAPickUpObject	mvpi-world-1	L2	heap-writes	mismatch	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 MISMATCH 2 cases 2 mismatches 2 undeclared
+0x456F20	CPickups::GenerateNewOne	mvpi-world-1	L2	heap-writes	mismatch	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 MISMATCH 8 cases 1 mismatches 8 undeclared
+0x457410	CPickup::Update	mvpd-world-5	L2	stack-residue,heap-writes,x87-transcendental	promote	i6-l2hpr4c (pause-restart) L2 PASS 48 cases 0 mismatches 0 undeclared
+0x45C210	CReplay::Display	mvpd-world-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x45EBB0	CReplay::RecordVehicleDeleted	mvpb-world-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 31 cases 0 mismatches 0 undeclared
+0x45EC20	CReplay::RecordPedDeleted	mvpb-world-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 16 cases 0 mismatches 0 undeclared
+0x464BB0	CTheScripts::WipeLocalVariableMemoryForMissionScript	mvpj-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 3 cases 0 mismatches 0 undeclared
+0x464C20	CTheScripts::StartNewScript-last-idle	mvph-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 39 cases 0 mismatches 0 undeclared
+0x4650F0	thunk_FUN_01567930	std4-data-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4652D0	CMissionCleanup::CheckIfCollisionHasLoadedForMissionObjects	mvpj-script-2	L2	heap-writes	mismatch	i6-l2hpr0 (pause-restart) L2 PASS 27 cases 0 mismatches 0 undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 200 cases 1 mismatches 1 undeclared
+0x465AA0	CRunningScript::ShutdownThisScript	mvpi-script-1	L2	heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 97 cases 0 mismatches 0 undeclared
+0x465C20	CRunningScript::GivePedScriptedTask-OG	mvpi-script-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x46A7C0	CTheScripts::ClearAllSuppressedCarModels	mvpf-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x46A840	CTheScripts::ClearAllVehicleModelsBlockedByScript	mvpf-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x46A8C0	CScriptsForBrains::Init	mvph-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x46A930	CScriptsForBrains::AddNewScriptBrain	mvpj-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x46A9C0	CScriptsForBrains::AddNewStreamedScriptBrainForCodeUse	mvph-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x46AB60	CTheScripts::AddToWaitingForScriptBrainArray	mvpm-script-1	L2	none	open	i6-l2pr5 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x46ABC0	CTheScripts::RemoveFromWaitingForScriptBrainArray	mvph-script-1	L2	none	promote	i6-fixsp2 (pause-restart) split PASS 5 cases 0 mismatches 0 undeclared
+0x46AE30	(missed by ghidra: data-code-immediate)	std5-ctor-1	L2	none	promote	i6-l2pr0 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x46B270	CScriptsForBrains::StartNewStreamedScriptBrain	mvpi-script-1	L2	none	mismatch	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 MISMATCH 69 cases of 69 calls 2 mismatches 69 undeclared
+0x46B3D0	CScriptsForBrains::IsObjectWithinBrainActivationRange	mvpi-script-2	L2	ax-al-return,x87-transcendental	promote	i6-l2pr5 (pause-restart) L2 PASS 66 cases of 66 calls 0 mismatches 0 undeclared
+0x46CD80	CScriptsForBrains::StartOrRequestNewStreamedScriptBrain	mvpi-script-1	L2	none	mismatch	i6-l2pr5 (pause-restart) L2 MISMATCH 76 cases of 76 calls 3 mismatches 69 undeclared
+0x46CF00	CTheScripts::ProcessWaitingForScriptBrainArray	mvpj-script-1	L2	uninit-locals	mismatch	i6-l2pr1 (pause-restart) L2 MISMATCH 200 cases 23 mismatches 23 undeclared
+0x46FF20	CScriptsForBrains::CheckIfNewEntityNeedsScript	mvpi-script-1	L2	stack-residue,uninit-locals	promote	i6-l2pr1 (pause-restart) L2 PASS 27 cases 0 mismatches 0 undeclared
+0x470000	FUN_00470000	boot-veh-1	L2	x87-transcendental	promote	i6-l2pr1 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x470390	CTheScripts::AddToSwitchJumpTable	mvpj-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4703C0	CTheScripts::UseSwitchJumpTable	mvpj-script-1	L2	stack-residue	open	i6-l2pr1 (pause-restart) L2 UNDECL 200 cases 0 mismatches 200 undeclared
+0x470510	CScriptResourceManager::RemoveFromResourceManager	mvpi-script-1	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x470750	CStreamedScripts::ReadStreamedScriptData	mvpj-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x470840	CStreamedScripts::LoadStreamedScript	mvpl-script-1	split	ax-al-return,heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x470890	CStreamedScripts::StartNewStreamedScript	mvph-script-1	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x470960	CTheScripts::InitialiseAllConnectLodObjects	mvpi-script-2	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x470980	CTheScripts::AddToListOfConnectedLodObjects	mvpj-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 7 cases 0 mismatches 0 undeclared
+0x470A20	CTheScripts::ScriptConnectLodsFunction	mvpi-script-1	L2	none	mismatch	i6-l2pr1 (pause-restart) L2 MISMATCH 2 cases 2 mismatches 2 undeclared
+0x474730	CTheScripts::InitialiseSpecialAnimGroupsAttachedToCharModels	mvpi-script-2	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x481200	CTheScripts::AddToInvisibilitySwapArray	mvpj-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x483720	CTheScripts::GetNewUniqueScriptThingIndex	mvpi-script-1	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4839A0	CTheScripts::GetActualScriptThingIndex	mvpl-script-1	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x486780	CTheScripts::UpdateObjectIndices	mvpf-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4867C0	CTheScripts::ReadMultiScriptFileOffsetsFromScript	mvpf-script-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x486D80	CRunningScript::LocateCharCommand	mvpk-script-2	L2	stack-residue,uninit-locals	promote	i6-fix4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x4939F0	CTheScripts::ProcessAllSearchLights	mvpk-script-2	L2	x87-transcendental,heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 27 cases 0 mismatches 0 undeclared
+0x49AE70	CShopping::FindSection	mvpj-world-1	split	ax-al-return	open	i6-sp0 (pause-restart) split split-COUNT 0 cases 0 mismatches 0 undeclared
+0x49AF10	CShopping::GetNextSection	mvpj-world-1	split	none	open	i6-sp0 (pause-restart) split split-COUNT 0 cases 0 mismatches 0 undeclared
+0x49B6A0	CShopping::LoadStats	mvpj-world-1	split	uninit-locals	mismatch	i6-sp0 (pause-restart) split split-FAIL 1 cases 1 mismatches 1 undeclared
+0x49C490	CStuntJumpManager::Update	mvpd-world-3	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 26 cases 0 mismatches 0 undeclared
+0x49C8F0	thunk_FUN_0156fa80	std5-pool-1	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x49DAB0	CTrafficLights::DisplayActualLight	popw4-frame-1	L2	heap-writes	mismatch	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 200 cases 2 mismatches 200 undeclared
+0x49E650	Fx_c::Render	mvpd-render-3	L2	entry-protection-read	promote	i6-fixl2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x49E660	Fx_c::InitStaticSystems	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x4A11E0	Fx_c::CreateEntityFx	mvpc-fx-1	L2	heap-writes	promote	i6-fix2 (pause-restart) L2 PASS 47 cases of 47 calls 0 mismatches 0 undeclared
+0x4A1410	Fx_c::RenderAddTri_	mvpc-fx-2	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A1600	Fx_c::RenderEnd	mvpa-render-3	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A1660	Fx_c::RotateVecIntoVec	mvpc-fx-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A1780	Fx_c::RotateVecAboutVec	mvpc-fx-1	L2	stack-residue,heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A1900	FUN_004a1900	std5-fx-1	L2	heap-writes	open	i6-fix2 (pause-restart) L2 FEW 8 cases of 161 calls 0 mismatches 0 undeclared; i6-l2hpr0 (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared; i6-l2hpr0b (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared
+0x4A21D0	FxEmitterBP_c::UpdateParticle	mvpc-fx-2	L2	stack-residue,heap-writes,ax-al-return	promote	i6-l2hpr0b (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x4A2580	FxEmitter_c::CreateParticle	mvpc-fx-2	L2	x87-transcendental,stack-residue,heap-writes	mismatch	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 2 cases 2 mismatches 2 undeclared
+0x4A3EA0	FxEmitter_c::AddParticle_Reversed-matrix	mvpc-fx-2	L2	heap-writes	mismatch	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 2 cases 2 mismatches 2 undeclared
+0x4A41E0	FxEmitter_c::CreateParticles	mvpc-fx-2	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A4460	FxEmitter_c::Update_Reversed	mvpa-render-2	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A4960	FxInfoManager_c::ProcessEmissionInfo	mvpc-fx-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared
+0x4A4A80	FxInfoManager_c::ProcessRenderInfo	mvpc-fx-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A4B60	FxInfoEmRate_c::GetValue	mvpa-fx-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A5300	FxInfoNoise_c::GetValue	mvpc-fx-1	L2	heap-writes,stack-residue	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A54E0	FxInfoForce_c::GetValue	mvpa-fx-1	L2	heap-writes	promote	i6-l2hpr0b (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x4A55E0	FxInfoFriction_c::GetValue	mvpa-fx-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A5AA0	FxInfoWind_c::GetValue	mvpa-fx-1	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A5BB0	FxInfoJitter_c::GetValue	mvpc-fx-1	L2	heap-writes,stack-residue	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A5D40	FxInfoRotSpeed_c::GetValue	mvpa-fx-1	L2	heap-writes	promote	i6-l2hpr0b (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x4A5F30	FxInfoColour_c::GetValue	mvpa-fx-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A6030	FxInfoSize_c::GetValue	mvpa-fx-1	L2	heap-writes	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A7B00	FxInfoManager_c::AddFxInfo	mvpc-fx-1	L2	heap-writes	open	i6-fix2 (pause-restart) L2 FEW 8 cases of 1470 calls 0 mismatches 0 undeclared; i6-l2hpr0 (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared; i6-l2hpr0b (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared
+0x4A8470	FxInterpInfoFloat_c::GetVal	mvpa-fx-1	L2	heap-writes	promote	i6-l2hpr0b (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4A85C0	FxInterpInfoFloat_c::GetVal	mvpl-fx-1	L2	none	open	i6-l2pr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A8800	FxInterpInfoU255_c::GetVal	mvpc-fx-1	L2	heap-writes,stack-residue	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A89C0	FxInterpInfo32_c::GetVal	mvpc-fx-1	L2	heap-writes,stack-residue	open	i6-l2hpr0 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr0b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4A8DD0	FUN_004a8dd0	std5-ctor-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 4 cases 0 mismatches 0 undeclared
+0x4A8DF0	FUN_004a8df0	std4-core-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 49 cases 0 mismatches 0 undeclared
+0x4A9140	FxManager_c::CalcFrustumInfo	mvpd-render-3	L2	x87-transcendental,stack-residue	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4A92A0	FxManager_c::Render	mvpd-render-3	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4A94E0	FxEmitterPrt_c::FxEmitterPrt_c	std5-ctor-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x4A9500	FxManager_c::ShouldCreate	mvpa-fx-2	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 9 cases 0 mismatches 0 undeclared
+0x4A96B0	FxManager_c::CreateFxSystem-3	mvpc-fx-1	L2	heap-writes	open	i6-fix2 (pause-restart) L2 FEW 17 cases of 35 calls 0 mismatches 0 undeclared; i6-l2hpr0 (pause-restart) L2 UNDECL 3 cases 0 mismatches 3 undeclared; i6-l2hpr0b (pause-restart) L2 UNDECL 6 cases 0 mismatches 6 undeclared
+0x4A9810	FxManager_c::DestroyFxSystem	mvpa-render-2	L2	heap-writes,preserved-regs	promote	i6-spd (pause-restart) split PASS 11 cases 0 mismatches 0 undeclared
+0x4A9F20	FxPrim_c::FxPrim_c	std5-fx-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 9 cases 0 mismatches 0 undeclared
+0x4A9F40	FxPrim_c::~FxPrim_c	std5-fx-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 7 cases 0 mismatches 0 undeclared
+0x4AA030	FxFrustumInfo_c::IsCollision	mvpa-render-3	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 25 cases 0 mismatches 0 undeclared
+0x4AA750	FxSystem_c::Init	mvpc-fx-1	L2	heap-writes,ax-al-return	promote	i6-l2hpr0 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x4AAC90	FxSystem_c::DoFxAudio	mvpd-render-3	L2	heap-writes	promote	i6-l2hpr0 (pause-restart) L2 PASS 50 cases 0 mismatches 0 undeclared
+0x4AAF70	FxSystem_c::Update	mvpd-render-3	L2	stack-residue,heap-writes,ax-al-return	mismatch	i6-l2hpr0 (pause-restart) L2 PASS 52 cases 0 mismatches 0 undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 200 cases 2 mismatches 0 undeclared
+0x4AB240	thunk_FUN_008232d8	mvpc-fx-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4AB250	thunk_FUN_005389b0	mvpc-fx-1	split	ax-al-return	open	i6-sp0 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x4AB260	_fclose	mvpc-fx-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4AC0D0	(missed by ghidra: data-code-immediate)	mvpc-render-1	split	none	promote	i6-fixsp (pause-restart) split PASS 8 cases 0 mismatches 0 undeclared
+0x4ACA70	FUN_004aca70	mvpa-ai-2	L2	heap-writes	mismatch	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 MISMATCH 30 cases 13 mismatches 0 undeclared
+0x4ACFF0	FUN_004acff0	mvpa-ai-2	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4B0D00	FUN_004b0d00	mvpa-ai-1	L2	heap-writes,preserved-regs	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4B1420	vt_85b4c8::TakesPriorityOver	ai7-10	L2	ax-al-return	open	i6-l2pr5 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x4B2470	FUN_004b2470	mvpa-ai-2	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4B6610	vt_85b4c8::Destructor	ai7-10	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x4B7810	vt_85b4c8::Clone	ai7-10	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4BA7C0	CEventHandler::ComputeScriptCommandResponse	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4BC600	CEventHandler::SetEventResponseTask	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4C3870	CEventHandler::ComputeEventResponseTask-0	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4C3F10	CEventHandler::HandleEvents	mvpj-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4C4A60	CBaseModelInfo	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x4C5540	FUN_004c5540	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x4C55A0	FUN_004c55a0	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x4C55E0	FUN_004c55e0	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4C5640	FUN_004c5640	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x4C5690	FUN_004c5690	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4C56F0	FUN_004c56f0	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x4C5760	FUN_004c5760	std5-ctor-1	L2	none	promote	i6-fixl2 (pause-restart) L2 PASS 8 cases 0 mismatches 0 undeclared
+0x4C5CB0	FUN_004c5cb0	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5D10	FUN_004c5d10	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5D70	FUN_004c5d70	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5DD0	FUN_004c5dd0	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5E30	FUN_004c5e30	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5E90	FUN_004c5e90	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5EF0	FUN_004c5ef0	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C5F50	FUN_004c5f50	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C67D0	FUN_004c67d0	mvpc-ai-1	split	none	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4C7410	FUN_004c7410	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4C75E0	FUN_004c75e0	mvpc-ai-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x4C94C0	FUN_004c94c0	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4C9990	_rxD3D9DefaultDestroyInstanceCallback	boot-rw-1	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x4CB560	_rxD3D9VideoMemoryRasterListRemove	regconv-rw-1	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x4CB7C0	FUN_004cb7c0	regconv-rw-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-COUNT 0 cases 0 mismatches 0 undeclared
+0x4CB9C0	FUN_004cb9c0	regconv-rw-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-COUNT 0 cases 0 mismatches 0 undeclared
+0x4CBB00	_rwD3D9RasterDestroy	std4-d3d9-2	L2	heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 171 cases 0 mismatches 0 undeclared
+0x4CC5C0	FUN_004cc5c0	regconv-rw-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-COUNT 0 cases 0 mismatches 0 undeclared
+0x4CC970	_rxD3D9VideoMemoryRasterListRestore	std4-d3d9-2	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x4CCD70	FUN_004ccd70	regconv-rw-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-COUNT 0 cases 0 mismatches 0 undeclared
+0x4CCE60	_rwD3D9RasterCreate	std4-d3d9-2	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4CECF0	CAnimBlendAssociation	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4CEFA0	CAnimBlendAssociation	mvpc-ai-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4D7950	CAEAudioChannel::SetPosition	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D79A0	CAEAudioChannel::GetCurrentPlaybackPosition	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D7A50	CAEAudioChannel::SetFrequency	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D7AA0	CAEAudioChannel::SetReverbAndDepth	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D7B50	CAEAudioChannel::SetNotInRoom	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 22 cases 0 mismatches 0 undeclared
+0x4D7BD0	CAEAudioChannel::UpdateStatus	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D7C60	CAEAudioChannel::SetVolume	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D7D00	CAEAudioChannel::SetFrequencyScalingFactor	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4D86B0	CAEAudioHardware::PlaySound	std4-audio-3	L2	none	mismatch	i6-l2pr1 (pause-restart) L2 MISMATCH 135 cases 135 mismatches 0 undeclared
+0x4D8DA0	CAEAudioHardware::UpdateReverbEnvironment	std4-audio-3	L2	uninit-locals	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4DC1C0	CAEDataStream::FillBuffer	mvpl-audio-2	split	heap-writes	promote	i6-sp0 (pause-restart) split PASS 86 cases 0 mismatches 0 undeclared
+0x4DC230	CAEDataStream::GetCurrentPosition	mvpl-audio-2	split	none	promote	i6-sp0 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x4DC250	CAEDataStream::Seek-OG	mvpl-audio-2	split	none	promote	i6-sp0 (pause-restart) split PASS 52 cases 0 mismatches 0 undeclared
+0x4DC490	CAEDataStream::Destructor	mvpl-audio-2	split	heap-writes	promote	i6-sp1 (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x4DD4A0	CAEFrontendAudioEntity::AddAudioEvent	std4-audio-3	L2	uninit-locals,heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4DFE30	CAEMP3BankLoader::Service	std4-audio-3	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4E0D20	CAETrackLoader::GetDataStream	mvpl-audio-2	split	heap-writes	promote	i6-sp0 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x4E2BB0	CAEPedAudioEntity::AddAudioEvent	mvpi-audio-1	L2	uninit-locals	mismatch	i6-l2pr1 (pause-restart) L2 MISMATCH 30 cases 30 mismatches 30 undeclared
+0x4EEAA0	CAESmoothFadeThread::RequestFade	std4-audio-1	L2	none	mismatch	i6-l2pr1 (pause-restart) L2 MISMATCH 36 cases 21 mismatches 11 undeclared
+0x4EEC80	CAESmoothFadeThread::SetBufferVolume	std4-audio-1	L2	none	promote	i6-l2pr1 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F0000	CAESoundManager::Service	std4-audio-3	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4F0B10	FUN_004f0b10	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x4F0BD0	CAEStaticChannel::Play	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 31 cases 0 mismatches 0 undeclared
+0x4F0C40	CAEStaticChannel::SetAudioBuffer	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4F0F40	CAEStaticChannel::IsSoundPlaying	std4-audio-1	L2	ax-al-return	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F0F70	CAEStaticChannel::GetPlayTime	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F0FA0	CAEStaticChannel::GetLength	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 47 cases 0 mismatches 0 undeclared
+0x4F0FB0	CAEStaticChannel::Stop	std4-audio-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 16 cases 8 mismatches 3 undeclared
+0x4F1040	CAEStaticChannel::SynchPlayback	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F10D0	CAEStaticChannel::Service	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4F1230	CAEStreamThread::PlayTrack	std4-audio-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 4 cases of 4 calls 0 mismatches 0 undeclared
+0x4F1530	CAEStreamThread::GetTrackPlayTime	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F1580	CAEStreamThread::StopTrack	std4-audio-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 4 cases of 4 calls 0 mismatches 0 undeclared
+0x4F1750	CAEStreamTransformer::Initialise	std4-audio-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x4F17D0	CAEStreamTransformer::TransformBuffer	mvpl-audio-2	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x4F1800	CAEStreamingChannel::Constructor	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4F1880	CAEStreamingChannel::GetLength	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F18A0	CAEStreamingChannel::UpdatePlayTime	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F19E0	CAEStreamingChannel::GetPlayTime	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F1A60	CAEStreamingChannel::GetPlayingTrackID	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F1AE0	CAEStreamingChannel::AddFX	std4-audio-1	L2	none	open	i6-l2pr5 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x4F1C20	CAEStreamingChannel::RemoveFX	std4-audio-1	L2	none	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x4F1C70	CAEStreamingChannel::InitialiseSilence	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4F1D40	CAEStreamingChannel::Play	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4F1DE0	CAEStreamingChannel::SetNextStream	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 8 cases 0 mismatches 0 undeclared
+0x4F1E20	CAEStreamingChannel::FillBuffer	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 5 cases 0 mismatches 0 undeclared
+0x4F1F30	CAEStreamingChannel::SetBassEQ	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4F1FF0	CAEStreamingChannel::SetReady	std4-audio-1	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot2 (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x4F2060	CAEStreamingChannel::SetFrequencyScalingFactor	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x4F21C0	CAEStreamingChannel::Stop-virtual	std4-audio-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x4F22F0	CAEStreamingChannel::Initialise	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x4F23D0	CAEStreamingChannel::PrepareStream	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x4F2550	CAEStreamingChannel::Service	std4-audio-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x4F2830	CAEStreamingDecoder::Destructor	mvpl-audio-2	split	heap-writes	promote	i6-sp1 (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x5023F0	CAEVorbisDecoder::Destructor	mvpl-audio-2	split	heap-writes	promote	i6-sp1 (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x502470	CAEVorbisDecoder::FillBuffer	mvpl-audio-2	split	heap-writes	promote	i6-sp0 (pause-restart) split PASS 5 cases 0 mismatches 0 undeclared
+0x5024D0	CAEVorbisDecoder::Initialise	mvpl-audio-2	split	ax-al-return,heap-writes	promote	i6-sp0 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x502560	CAEVorbisDecoder::GetSampleRate	mvpl-audio-2	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 19 cases 0 mismatches 0 undeclared
+0x502580	CAEVorbisDecoder::ReadCallback	mvpl-audio-2	split	heap-writes	promote	i6-sp0 (pause-restart) split PASS 86 cases 0 mismatches 0 undeclared
+0x5025B0	CAEVorbisDecoder::SeekCallback	mvpl-audio-2	split	none	promote	i6-sp0 (pause-restart) split PASS 52 cases 0 mismatches 0 undeclared
+0x5025D0	CAEVorbisDecoder::CloseCallback	mvpl-audio-2	split	none	promote	i6-sp1 (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x5025F0	CAEVorbisDecoder::TellCallback	mvpl-audio-2	split	none	promote	i6-sp0 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x502610	CAEVorbisDecoder::GetStreamLengthMs	mvpl-audio-2	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 54 cases 0 mismatches 0 undeclared
+0x502640	CAEVorbisDecoder::GetStreamPlayTimeMs	mvpl-audio-2	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x502670	CAEVorbisDecoder::SetCursor	mvpl-audio-2	split	none	promote	i6-sp0 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x5026B0	CAEVorbisDecoder::Constructor	mvpl-audio-2	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x502700	CAEVorbisDecoder::~CAEVorbisDecoder	mvpl-audio-2	split	heap-writes	promote	i6-sp1 (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x52CDE0	CClock::NormaliseGameClock	mvpa-render-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x52CEE0	CClock::GetIsTimeInRange	mvpa-render-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x52CF10	CClock::Update	mvpb-render-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x533610	CPtrListSingleLink::DeleteItem	mvpa-math-1	L2	heap-writes	promote	i6-spd (pause-restart) split PASS 100 cases 0 mismatches 0 undeclared
+0x533790	CEntity::CreateEffects	mvpe-ent-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x533BF0	CEntity::DestroyEffects	mvpc-world-2	L2	none	promote	i6-fixsp2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x533D30	CEntity::CreateRwObject	mvpa-world-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x534310	CEntity::Render	mvpb-world-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5347D0	CEntity::Add-rect	mvpd-world-1	L2	stack-residue	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 8 cases 8 mismatches 8 undeclared
+0x534AE0	CEntity::Remove	mvpd-world-1	L2	heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x534E90	CEntity::ModifyMatrixForTreeInWind	mvpk-world-2	L2	x87-transcendental,heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x535E90	CEntity::Destructor	mvpb-world-1	L2	heap-writes,entry-protection-read	promote	i6-fixsp2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x535FA0	CEntity::PreRender	mvpf-ent-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x537290	CloneAtomicToClumpCB	mvpd-unk-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x538090	CFileLoader::LoadObjectInstance-inst	std5-stream-1	L2	heap-writes,x87-transcendental	mismatch	i6-l2hpr0 (pause-restart) L2 MISMATCH 4 cases 4 mismatches 0 undeclared; i6-l2hpr0b (pause-restart) L2 MISMATCH 18 cases 18 mismatches 0 undeclared
+0x541D80	CPad	std5-ctor-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x544D50	CPhysical::ApplyCollisionAlt	mvpf-phys-1	L2	stack-residue	open	i6-l2pr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x545980	CPhysical::ApplyFriction-other	mvpf-phys-1	L2	stack-residue,x87-transcendental	promote	i6-l2pr2 (pause-restart) L2 PASS 27 cases 0 mismatches 0 undeclared
+0x546670	CPhysical::ProcessShiftSectorList	mvpe-phys-1	L2	none	mismatch	i6-l2pr5 (pause-restart) L2 MISMATCH 18 cases of 18 calls 18 mismatches 18 undeclared
+0x548680	CPhysical::ApplyCollision-2	mvph-phys-1	L2	none	open	i6-l2pr2 (pause-restart) L2 UNDECL 38 cases 0 mismatches 19 undeclared
+0x54A2C0	CPhysical::ApplySoftCollision-2	mvph-phys-1	L2	entry-protection-read	open	i6-l2gw0 (grove-walk) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x54BA60	CPhysical::ProcessCollisionSectorList	mvpe-phys-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 102 cases 97 mismatches 96 undeclared
+0x54DFB0	CPhysical::ProcessCollision	mvpe-phys-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 104 cases 29 mismatches 41 undeclared
+0x54EEA0	TransformVectors	mvpk-math-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x54EEF0	TransformPoints	mvpb-render-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x54EF40	CSimpleTransform::UpdateRwMatrix	mvpa-math-1	L2	x87-transcendental,preserved-regs	promote	i6-l2pr2 (pause-restart) L2 PASS 4 cases 0 mismatches 0 undeclared
+0x54F0C0	CMatrixLink	mvpa-math-1	L2	preserved-regs	promote	i6-l2pr2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x54F1B0	CSimpleTransform::UpdateMatrix	mvpd-unk-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x54F440	FUN_0054f440	mvpa-math-1	split	preserved-regs	promote	i6-sp0 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x54F4C0	CPlaceable::AllocateStaticMatrix	std5-world-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x552380	new	std5-pool-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5523C0	new	std5-pool-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5523D0	delete	std5-pool-1	L2	heap-writes	promote	i6-spd (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x552400	CPtrListSingleLink::Flush	mvpa-math-1	L2	heap-writes	promote	i6-spd (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x552470	CPtrListDoubleLink::Flush	mvpa-math-1	L2	heap-writes	promote	i6-spd (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x552830	CQuadTreeNode	std4-load-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x552C80	new	std4-load-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 2 cases 2 mismatches 0 undeclared
+0x556000	CRopes::FindRope	mvpb-render-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 104 cases 0 mismatches 0 undeclared
+0x556070	CRope::CreateHookObjectForRope	mvpb-render-1	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x556800	CRope::Render	mvpd-render-3	L2	x87-transcendental	open	i6-l2pr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x556AE0	CRopes::Render	mvpd-render-3	L2	none	open	i6-l2pr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x559760	CStats::CheckForStatsMessage	mvpb-world-5	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 200 cases of 344 calls 0 mismatches 0 undeclared
+0x55BC50	CStats::UpdateRespectStat	mvpb-world-5	L2	heap-writes	open	i6-l2hpr1 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr1b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x55BF20	CStats::UpdateSexAppealStat	mvpb-world-5	L2	x87-transcendental,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x55C0C0	CStats::Init	mvpa-world-1	split	none	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x55C180	CStats::IncrementStat	mvpb-world-5	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5632B0	CWorld::ProcessVerticalLineSectorList<CPtrListDoubleLink<CPhysical*>>	mvpc-world-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 11 cases 7 mismatches 7 undeclared
+0x564500	CWorld::ProcessVerticalLineSector	mvpc-world-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 35 cases 30 mismatches 27 undeclared
+0x5647F0	CWorld::ProcessAttachedEntities	mvpb-world-2	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x564970	CWorld::GetIsLineOfSightSectorListClear<CPtrListDoubleLink<CPhysical*>>	mvpc-world-1	L2	none	open	i6-spd (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x564A20	CWorld::FindObjectsInRange	mvpb-world-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 6 cases 6 mismatches 6 undeclared
+0x564C70	CWorld::FindObjectsOfTypeInRange	mvpb-world-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 2 cases 2 mismatches 2 undeclared
+0x564ED0	CWorld::FindLodOfTypeInRange	mvpc-world-1	L2	stack-residue	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 2 cases 2 mismatches 2 undeclared
+0x565CB0	CWorld::RemoveFallenPeds	mvpb-world-2	L2	heap-writes	promote	i6-spd (pause-restart) split PASS 145 cases 0 mismatches 0 undeclared
+0x566140	CWorld::TestSphereAgainstSectorList<CPtrListDoubleLink<CPhysical*>>	mvpc-world-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 1 cases 0 mismatches 0 undeclared
+0x566EE0	CWorld::ProcessLineOfSightSectorList<CPtrListDoubleLink<CPhysical*>>	mvpf-coll-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5674E0	CWorld::ProcessVerticalLine	mvpc-world-1	L2	stack-residue	mismatch	i6-l2pr0 (pause-restart) L2 MISMATCH 200 cases of 279 calls 98 mismatches 88 undeclared
+0x568AD0	CWorld::GetIsLineOfSightSectorClear	mvpc-world-1	L2	none	open	i6-spd (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x568B80	CWorld::FindObjectsKindaColliding	mvpc-world-1	L2	none	mismatch	i6-l2pr2 (pause-restart) L2 MISMATCH 40 cases 7 mismatches 29 undeclared
+0x5696C0	CWorld::FindGroundZFor3DCoord	mvpa-world-2	L2	stack-residue	mismatch	i6-l2pr5 (pause-restart) L2 MISMATCH 73 cases of 97 calls 73 mismatches 0 undeclared
+0x569E20	CWorld::TestSphereAgainstWorld	mvpc-world-1	L2	none	promote	i6-l2pr2 (pause-restart) L2 PASS 2 cases 0 mismatches 0 undeclared
+0x56A0D0	CWorld::ClearExcitingStuffFromArea	mvpd-world-3	L2	heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x56A490	CWorld::GetIsLineOfSightClear	mvpc-world-1	L2	stack-residue	promote	i6-fixsp2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x56B5E0	CWorld::ProcessLineOfSightSector	mvpc-world-1	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 206 calls 191 mismatches 98 undeclared
+0x56BA00	CWorld::ProcessLineOfSight	mvpc-world-1	L2	stack-residue	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 217 calls 134 mismatches 115 undeclared
+0x5728A0	CTheZones::CreateZone	std5-zones-1	L2	none	open	i6-l2pr3 (pause-restart) L2 UNDECL 2 cases of 384 calls 0 mismatches 2 undeclared
+0x591260	FurnitureManager_c::FurnitureManager_c	std5-ctor-1	L2	none	promote	i6-l2pr3 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x5984C0	InteriorManager_c::InteriorManager_c	std5-ctor-1	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 1 cases of 1 calls 1 mismatches 1 undeclared
+0x598F50	InteriorManager_c::Update	mvpd-world-3	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x59AC90	CMaths::InitMathsTables	mvpa-math-1	L2	x87-transcendental	promote	i6-l2pr3 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x59ACD0	CMatrix	mvpa-math-1	L2	none	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 13506 calls 0 mismatches 0 undeclared
+0x59BCF0	CMatrix	mvpd-unk-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x59C050	CMatrix	mvpd-unk-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x59C600	CQuaternion::Set	mvpd-math-1	L2	x87-transcendental	promote	i6-l2pr5 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x59C790	Multiply3x3	mvpa-math-1	L2	none	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 7452 calls 0 mismatches 0 undeclared
+0x59C810	FUN_0059c810	mvpa-math-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x59CEC0	BreakablePlugin::BreakableStreamRead	std4-load-1	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x59EAC0	CDummyObject::CreateObject	mvpa-world-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x59F0C0	tColLighting::GetCurrentLighting	mvpb-coll-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 200 cases of 597 calls 0 mismatches 0 undeclared
+0x59F180	CObject::Render	mvpa-world-1	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 471 calls 2 mismatches 0 undeclared
+0x59F660	CObject	mvpi-world-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x59FD50	CObject::PreRender	mvpc-world-2	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 752 calls 1 mismatches 200 undeclared
+0x5A2130	CObject::ProcessControl	mvpe-ent-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5A29A0	CObject::ProcessControlLogic	mvpd-world-2	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5A2E90	ProcSurfaceInfo_c::ProcSurfaceInfo_c	std5-ctor-1	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x5A3070	FUN_005a3070	std5-ctor-1	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x5A3140	ProcObjectMan_c::LoadDataFile	mvpc-render-1	split	heap-writes,uninit-locals	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x5A3E20	ProcObjectMan_c::ProcObjectMan_c	std5-ctor-1	L2	none	promote	i6-l2pr3 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x5A47E0	FUN_005a47e0	mvpi-ped-1	L2	none	open	i6-l2pr3 (pause-restart) L2 UNDECL 6 cases of 105 calls 0 mismatches 3 undeclared
+0x5A7950	CPedClothesDesc::GetIsWearingBalaclava	mvpi-ped-1	L2	entry-protection-read	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x5B5360	CObjectData::Initialise	std5-objdata-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5BA8C0	CTempColModels::Initialise	mvpe-tempcol-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5BB890	CPedStats::LoadPedStats	std4-data-1	L2	uninit-locals	promote	i6-fix2 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x5BB9F0	FUN_005bb9f0	std4-data-1	L2	uninit-locals	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x5BD830	cHandlingDataMgr::LoadHandlingData	std4-data-1	L2	uninit-locals	promote	i6-fix2 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x5BE670	CWeaponInfo::LoadWeaponData	mvpf-weapon-1	split	uninit-locals	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x5BF400	CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker	std4-data-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x5BF9D0	CPedStats::Initialise	std4-data-1	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5C0280	FurnitureManager_c::LoadFurniture	mvpc-world-2	split	heap-writes,uninit-locals	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x5C05F0	FxSystemBP_c::Load	mvpc-fx-1	split	heap-writes,uninit-locals,ax-al-return	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x5C0A30	FxEmitterBP_c::LoadTextures	mvpc-fx-1	split	heap-writes,ax-al-return	open	i6-sp0 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x5C0B70	FxInfoManager_c::Load	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x5C16F0	FxInterpInfoFloat_c::Load	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x5C18F0	FxInterpInfoU255_c::Load	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x5C1B10	FxInterpInfo32_c::Load	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x5C1D30	FxInterpInfo255_c::Load	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 17 cases 0 mismatches 0 undeclared
+0x5C1F50	FxManager_c::LoadFxSystemBP	mvpc-fx-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x5C2010	FxPrimBP_c::Load	mvpc-fx-1	split	heap-writes,ax-al-return	open	i6-sp0 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x5C2420	FxManager_c::LoadFxProject	mvpc-fx-1	split	heap-writes,ax-al-return	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5C25F0	FxEmitterBP_c::Load	mvpc-fx-1	split	heap-writes,ax-al-return	open	i6-sp0 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x5D5AC0	CCarFXRenderer::Initialise	std4-rxpipe-3	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 1 cases of 1 calls 1 mismatches 1 undeclared
+0x5D5BC0	CCarFXRenderer::InitialiseDirtTexture	std5-rw-1	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5D6750	CCustomBuildingDNPipeline::CreateCustomObjPipe	std4-rxpipe-3	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5D7100	CCustomBuildingDNPipeline::CreatePipe	std4-rxpipe-3	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x5D7AA0	CCustomBuildingPipeline::CreateCustomObjPipe	std4-rxpipe-3	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5D7D90	CCustomBuildingPipeline::CreatePipe	std4-rxpipe-3	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x5D7EC0	CCustomBuildingRenderer::Initialise	std4-rxpipe-3	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 1 cases of 1 calls 1 mismatches 1 undeclared
+0x5D84C0	FUN_005d84c0	boot-render-2	L2	none	open	i6-l2pr3 (pause-restart) L2 UNDECL 200 cases of 851 calls 0 mismatches 200 undeclared
+0x5D8590	FUN_005d8590	boot-render-2	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x5D8BE0	CustomEnvMapPipeMaterialData::FromBuffer	mvpa-render-3	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5D9180	FUN_005d9180	mvpd-unk-2	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5D9660	CCustomCarEnvMapPipeline::pluginEnvMatStreamReadCB	std4-load-1	L2	none	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 66 cases of 3001 calls 66 mismatches 66 undeclared
+0x5D9900	CCustomCarEnvMapPipeline::CustomPipeRenderCB	boot-render-2	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x5D9F80	CCustomCarEnvMapPipeline::CreateCustomObjPipe	std4-rxpipe-3	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5DA020	CCustomCarEnvMapPipeline::CreatePipe	std4-rxpipe-3	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5DA790	FUN_005da790	boot-render-2	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 200 cases of 2001 calls 0 mismatches 0 undeclared
+0x5DABE0	CGrassRenderer::SetCloseFarAlphaDist	std4-load-1	L2	none	promote	i6-l2pr3 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x5DACC0	CGrassRenderer::SetPlantModelsTab	std4-load-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 4 cases of 4 calls 0 mismatches 0 undeclared
+0x5DB0C0	CPPTriPlantBuffer::Flush	mvpd-render-3	L2	none	promote	i6-fixsp2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x5DB650	CPlantMgr::SetPlantFriendlyFlagInAtomicMI	mvpb-render-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5DBAE0	CPlantMgr::Render	mvpd-render-4	L2	uninit-locals	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 201 calls 159 mismatches 200 undeclared
+0x5DD0B0	(missed by ghidra: data-code-immediate)	std4-load-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 8 cases of 8 calls 0 mismatches 0 undeclared
+0x5DD100	AtomicCreatePrelitIfNeeded	std4-load-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 8 cases 0 mismatches 0 undeclared
+0x5DD1E0	GeometrySetPrelitConstantColor	regconv-render-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 8 cases 0 mismatches 0 undeclared
+0x5DD220	CPlantMgr::LoadModels	regconv-render-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x5DD3B0	CPlantSurfPropMgr::LoadPlantsDat	std4-load-1	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5DD780	CPlantMgr::ReloadConfig	mvpc-render-1	split	ax-al-return	promote	i6-fixsp (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5DD910	CPlantMgr::Initialise	std4-load-1	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x5DE920	CAEPedAudioEntity::~CAEPedAudioEntity	mvpl-audio-1	L2	heap-writes,entry-protection-read	promote	i6-spd (pause-restart) split PASS 15 cases 0 mismatches 0 undeclared
+0x5DF170	CPed::RemoveGogglesModel	mvpi-ped-1	L2	entry-protection-read,heap-writes	promote	i6-spd (pause-restart) split PASS 16 cases 0 mismatches 0 undeclared
+0x5E2530	CPed::ProcessEntityCollision	mvpf-ped-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5E37C0	FUN_005e37c0	regconv-ped-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5F1450	CPedGeometryAnalyser::ComputeEntityHitSide-2	mvpa-ai-2	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 FEW 10 cases of 26 calls 0 mismatches 0 undeclared
+0x5F1600	CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached	mvpa-ai-1	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 134 cases of 134 calls 0 mismatches 0 undeclared
+0x5F1670	CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached	mvpa-ai-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 200 cases of 350 calls 0 mismatches 0 undeclared
+0x5F1750	CPedGeometryAnalyser::ComputeEntityBoundingBoxSegmentPlanesUncached	mvpa-ai-1	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 UNDECL 10 cases of 21 calls 0 mismatches 10 undeclared
+0x5F1CB0	CPedGeometryAnalyser::IsInAir	mvpi-ai-1	L2	stack-residue,uninit-locals	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 204 calls 2 mismatches 2 undeclared
+0x5F3660	CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanes	mvpa-ai-2	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 UNDECL 3 cases of 3 calls 0 mismatches 3 undeclared
+0x5F3AC0	CPedGeometryAnalyser::ComputeEntityHitSide-3	mvpa-ai-1	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 FEW 5 cases of 11 calls 0 mismatches 0 undeclared
+0x5F3C20	CPedGeometryAnalyser::ComputeEntityBoundingSphere	mvpc-ai-3	L2	x87-transcendental,stack-residue	open	i6-l2pr5 (pause-restart) L2 UNDECL 190 cases of 228 calls 0 mismatches 190 undeclared
+0x5F5A30	CPedGeometryAnalyser::GetIsLineOfSightClear-ped	mvpj-ai-2	L2	x87-transcendental,ax-al-return	open	i6-spd (pause-restart) split UNDECL 21 cases 0 mismatches 12 undeclared
+0x5FE0E0	CPedIK::PitchForSlope	mvpk-anim-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x5FF8E0	vt_86cbe8::GetEventPriority	ai7-1	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x5FFF90	CAttractorScanner::Clear	mvpd-ai-1	L2	heap-writes,preserved-regs	promote	i6-spd (pause-restart) split PASS 60 cases 0 mismatches 0 undeclared
+0x5FFFD0	FUN_005fffd0	mvpl-ai-1	L2	stack-residue,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6034B0	FUN_006034b0	mvpc-ai-2	L2	heap-writes,stack-residue	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x603BF0	FUN_00603bf0	mvpc-ai-3	L2	heap-writes,stack-residue	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x606890	FUN_00606890	mvpl-ai-1	L2	stack-residue	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 200 cases of 446 calls 5 mismatches 0 undeclared
+0x6076B0	CDecisionMakerTypesFileLoader::LoadDecisionMaker-ptr	std4-data-1	L2	uninit-locals	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x607A90	FUN_00607a90	mvpc-ai-2	L2	uninit-locals,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x607D80	FUN_00607d80	mvpc-ai-1	L2	heap-writes,stack-residue	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x608B30	CPedType::LoadPedData	mvpf-ped-2	split	uninit-locals,heap-writes	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x608E40	CPedType::Initialise	mvpf-ped-2	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x608F00	FUN_00608f00	ai7-10	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x608F20	FUN_00608f20	ai7-10	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x60D5B0	CPlayerPed	mvpi-ped-1	split	heap-writes	promote	i6-fixsp (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x614720	CPopulation::AddToPopulation	popw4-frame-1	split	heap-writes,uninit-locals,stack-residue,x87-transcendental	promote	i6-fixsp2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x617850	FUN_00617850	std5-ctor-1	L2	none	open	i6-fix2 (pause-restart) L2 FEW 8 cases of 32 calls 0 mismatches 0 undeclared; i6-l2pr3 (pause-restart) L2 FEW 2 cases of 32 calls 0 mismatches 0 undeclared
+0x618970	IKChainManager_c::LookAt	mvpi-anim-1	L2	stack-residue,heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61A390	FUN_0061a390	mvpa-ai-1	L2	heap-writes,preserved-regs	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61A500	CTaskPool::New	mvpa-ai-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61A5A0	CTask::operator new	mvpa-ai-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61A790	CTaskSimpleAnim::MakeAbortable	mvpa-ai-2	L2	heap-writes,ax-al-return	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61A950	CTaskSimpleRunAnim::StartAnim	mvpa-ai-2	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61C150	FUN_0061c150	ai7-10	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x61F810	CTaskSimpleThrowProjectile::ControlThrow	ai7-10	L2	ax-al-return,heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x61F890	CTaskSimpleThrowProjectile::FinishAnimThrowProjectileCB	ai7-10	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6259E0	CTaskSimpleThrowProjectile::StartAnim	ai7-12	L2	heap-writes	open	i6-l2hwc0 (weapon-combat) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x62AF50	CTaskSimpleThrowProjectile::ProcessPed	ai7-12	L2	ax-al-return,heap-writes	open	i6-l2hwc0 (weapon-combat) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x62F360	FUN_0062f360	mvpa-ai-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x630100	CTaskComplexDie::SayDeathSample	ai7-10	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6302D0	CTaskComplexDie::CreateFirstSubTask	ai7-12	L2	heap-writes,uninit-locals	promote	i6-fixwc (weapon-combat) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x630590	CTaskSimpleDead::CTaskSimpleDead	ai7-10	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr2b (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x633A90	CTaskSimpleIKChain::Destructor	mvpc-ai-3	L2	heap-writes,entry-protection-read	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x633C40	CTaskSimpleIKChain::BlendOut	ai7-10	L2	heap-writes	open	i6-l2hpr5 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x633C80	CTaskSimpleIKChain::ProcessPed	mvpj-ai-6	L2	ax-al-return,stack-residue	mismatch	i6-l2pr3 (pause-restart) L2 MISMATCH 104 cases of 104 calls 44 mismatches 0 undeclared
+0x633EF0	CTaskSimpleIKLookAt::Destructor-	mvpa-ai-1	L2	heap-writes	open	i6-l2hpr2 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x633FC0	CTaskSimpleIKLookAt::CreateIKChain	mvpj-ai-4	L2	ax-al-return,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x634050	CTaskSimpleIKLookAt::UpdateLookAtInfo	ai7-12	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x635200	CTaskComplexInWater::CreateFirstSubTask	ai7-12	L2	heap-writes	promote	i6-fixaw (air-water) L2 PASS 2 cases of 2 calls 0 mismatches 0 undeclared
+0x637520	CTaskSimpleDie::StartAnim	ai7-12	L2	heap-writes	open	i6-l2hwc0 (weapon-combat) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x6397E0	CTaskSimpleDie::ProcessPed	ai7-12	L2	ax-al-return,heap-writes	mismatch	i6-fixwc (weapon-combat) L2 MISMATCH 30 cases of 30 calls 1 mismatches 1 undeclared; i6-l2hwc0 (weapon-combat) L2 MISMATCH 30 cases of 30 calls 1 mismatches 1 undeclared
+0x63A040	FUN_0063a040	mvpa-ai-2	L2	heap-writes	open	i6-l2hpr5 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x63A220	CTaskComplexEnterCar::Constructor	ai7-11	L2	heap-writes	promote	i6-fixcar (car-ai) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x63A690	CTaskComplexEnterCar::GetCameraAvoidVehicle	ai7-12	L2	none	promote	i6-l2car0 (car-ai) L2 PASS 179 cases of 179 calls 0 mismatches 0 undeclared
+0x63AD70	CTaskComplexEnterCarAsDriverTimed::Constructor	ai7-11	L2	heap-writes	open	i6-fixcar (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared; i6-l2hcar0 (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x63ADF0	CTaskComplexEnterCarAsDriverTimed::GetTaskType	ai7-1	L2	none	open	i6-l2pr5 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x63AE00	CTaskComplexEnterCarAsDriverTimed::Destructor	ai7-1	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x63B8C0	CTaskComplexLeaveCar	ai7-1	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x63BC50	CTaskComplexLeaveBoat::CreateSubTask	ai7-11	L2	heap-writes	open	i6-l2hcar0 (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x63C340	CTaskSimpleCarDrive::Constructor	mvpa-ai-2	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x63C460	CTaskSimpleCarDrive::Destructor	mvpa-ai-2	L2	heap-writes	promote	i6-spd (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x63D780	CTaskComplexEnterCarAsDriverTimed::Clone	ai7-2	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x63DFA0	CTaskComplexEnterCar::Destructor	ai7-11	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x642E70	CTaskSimpleCarDrive::ProcessBopping	mvpa-ai-2	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x644470	CTaskSimpleCarDrive::ProcessPed	mvpk-ai-3	L2	ax-al-return,uninit-locals,heap-writes,x87-transcendental	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x645B40	CTaskSimpleCarAlign::Constructor	ai7-2	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x645BD0	CTaskSimpleCarAlign::GetTaskType	ai7-2	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x645BE0	CTaskSimpleCarAlign::Destructor	ai7-2	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x645E50	CTaskSimpleCarOpenDoorFromOutside::Constructor	ai7-11	L2	heap-writes	promote	i6-fixcar (car-ai) L2 PASS 4 cases of 4 calls 0 mismatches 0 undeclared
+0x645ED0	CTaskSimpleCarOpenDoorFromOutside::GetTaskType	ai7-2	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x645EE0	CTaskSimpleCarOpenDoorFromOutside::Destructor	ai7-11	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x646300	CTaskSimpleCarCloseDoorFromInside::Constructor	ai7-2	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x646370	CTaskSimpleCarCloseDoorFromInside::GetTaskType	ai7-2	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x646380	CTaskSimpleCarCloseDoorFromInside::Destructor	ai7-2	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x6464F0	CTaskSimpleCarCloseDoorFromOutside::Constructor	ai7-11	L2	heap-writes	promote	i6-fixcar (car-ai) L2 PASS 3 cases of 3 calls 0 mismatches 0 undeclared
+0x646560	CTaskSimpleCarCloseDoorFromOutside::GetTaskType	ai7-2	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x646570	CTaskSimpleCarCloseDoorFromOutside::Destructor	ai7-2	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x646690	CTaskSimpleCarGetIn::Constructor	ai7-2	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x646700	CTaskSimpleCarGetIn::GetTaskType	ai7-3	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x646710	CTaskSimpleCarGetIn::Destructor	ai7-3	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x646990	CTaskSimpleCarWaitToSlowDown::Constructor	ai7-3	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6469F0	CTaskSimpleCarWaitToSlowDown::GetTaskType	ai7-3	L2	none	open	i6-l2pr3 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x646A00	CTaskSimpleCarWaitToSlowDown::Destructor	ai7-3	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x647150	CTaskSimpleCarSetPedInAsDriver::GetTaskType	ai7-3	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x6471D0	CTaskSimpleCarGetOut::Constructor	ai7-3	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x647250	CTaskSimpleCarGetOut::GetTaskType	ai7-3	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x647260	CTaskSimpleCarGetOut::Destructor	ai7-3	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x647490	CTaskSimpleCarJumpOut::Destructor	ai7-3	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x647500	CTaskSimpleCarJumpOut::GetTaskType	ai7-3	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x647770	vt_86ee94::GetTaskType	ai7-3	L2	none	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x64AE90	CTaskSimplePickUpBike::StartAnim	ai7-12	L2	heap-writes	open	i6-l2hcar0 (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x64B930	CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver	ai7-4	L2	none	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x64BE40	CTaskSimpleCarJumpOut::Constructor	ai7-12	L2	heap-writes,x87-transcendental	open	i6-fixcar (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared; i6-l2hcar0 (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x64BF50	vt_86ee94::Destructor	ai7-4	L2	none	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x64D910	CTaskSimplePickUpBike::ProcessPed	ai7-12	L2	ax-al-return,heap-writes	open	i6-l2hcar0 (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x64E4B0	FUN_0064e4b0	ai7-11	L2	none	promote	i6-l2car0 (car-ai) L2 PASS 179 cases of 179 calls 0 mismatches 0 undeclared
+0x66BC80	CTaskComplexGotoDoorAndOpen::MakeAbortable	ai7-11	L2	ax-al-return	open	i6-l2car0 (car-ai) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x66C0D0	CTaskComplexGotoDoorAndOpen::CreateNextSubTask	ai7-12	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x66C1F0	CTaskComplexGotoDoorAndOpen::ControlSubTask	ai7-12	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6859A0	CTaskSimplePlayerOnFoot::ProcessPlayerWeapon	mvpk-ai-3	L2	x87-transcendental,uninit-locals,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6872C0	CTaskSimplePlayerOnFoot::PlayIdleAnimations	mvpj-ai-3	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x687530	CTaskSimplePlayerOnFoot::PlayerControlFighter	mvpk-ai-1	L2	x87-transcendental,stack-residue	open	i6-l2gw0 (grove-walk) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x687C20	CTaskSimplePlayerOnFoot::PlayerControlZeldaWeapon	mvpk-ai-1	L2	x87-transcendental,stack-residue	open	i6-l2gw0 (grove-walk) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x687F30	CTaskSimplePlayerOnFoot::PlayerControlDucked	mvpk-ai-1	L2	x87-transcendental,stack-residue	open	i6-l2gw0 (grove-walk) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x6883D0	CTaskSimplePlayerOnFoot::PlayerControlZelda	mvpj-ai-3	L2	x87-transcendental,stack-residue	promote	i6-fix2 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x688810	CTaskSimplePlayerOnFoot::ProcessPed	mvpj-ai-3	L2	ax-al-return,stack-residue	promote	i6-fix2 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x688A00	CTaskSimpleSwim::~CTaskSimpleSwim	ai7-12	L2	heap-writes	open	i6-spd (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x68A9F0	CTaskSimpleSwim::CreateFxSystem	ai7-12	L2	heap-writes	promote	i6-fixaw (air-water) L2 PASS 3 cases of 3 calls 0 mismatches 0 undeclared
+0x68B100	CTaskSimpleSwim::MakeAbortable	ai7-12	L2	ax-al-return,heap-writes	open	i6-l2haw0 (air-water) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x693C40	CTaskSimpleHoldEntity::ProcessPed	mvpm-ai-2	L2	x87-transcendental,heap-writes,stack-residue	mismatch	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 MISMATCH 79 cases 2 mismatches 0 undeclared
+0x6940A0	CTaskSimpleHoldEntity::SetPedPosition	mvpj-ai-4	L2	ax-al-return,heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x694850	FUN_00694850	std5-ctor-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x698710	CCover::Init	mvpa-ai-1	L2	none	promote	i6-fix2 (pause-restart) L2 PASS 2 cases of 2 calls 0 mismatches 0 undeclared
+0x6A2B10	CAutomobile::Render	mvpb-veh-3	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6A8C00	CAutomobile::ProcessBuoyancy	mvpd-veh-5	L2	x87-transcendental	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 283 calls 0 mismatches 0 undeclared
+0x6AA290	CAutomobile::UpdateWheelMatrix	mvpd-veh-4	L2	x87-transcendental,entry-protection-read	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 795 calls 0 mismatches 0 undeclared
+0x6ACE70	CAutomobile::ProcessEntityCollision	mvpf-veh-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6AF420	CAutomobile::PlaceOnRoadProperly	mvpf-veh-1	L2	none	open	i6-l2drv0 (driving) L2 NORUN  cases  mismatches  undeclared
+0x6B0A90	CAutomobile::Constructor	mvpd-veh-7	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6B5FB0	CBike::ProcessBuoyancy	mvpd-veh-3	L2	x87-transcendental	promote	i6-l2pr6c (pause-restart) L2 PASS 114 cases of 114 calls 0 mismatches 0 undeclared
+0x6B6950	CBike::DoBurstAndSoftGroundRatios	mvpb-veh-4	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6B89B0	CBike::SetupSuspensionLines	mvpd-veh-2	L2	heap-writes,x87-transcendental	mismatch	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr4c (pause-restart) L2 MISMATCH 1 cases 1 mismatches 0 undeclared
+0x6B8EC0	CBike::VehicleDamage	mvpb-veh-4	L2	heap-writes	promote	i6-l2hpr4c (pause-restart) L2 PASS 29 cases 0 mismatches 0 undeclared
+0x6BC930	CBike::ProcessAI	mvpd-veh-6	L2	stack-residue	promote	i6-l2pr6c (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6BDEA0	CBike::ProcessEntityCollision	mvpf-veh-1	L2	heap-writes	mismatch	i6-l2hpr5 (pause-restart) L2 MISMATCH 106 cases 106 mismatches 106 undeclared
+0x6BEEB0	CBike::PlaceOnRoadProperly	mvpf-veh-1	L2	x87-transcendental	mismatch	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 MISMATCH 2 cases of 2 calls 2 mismatches 2 undeclared
+0x6BF430	CBike::Constructor	mvpd-veh-2	L2	stack-residue,x87-transcendental,heap-writes	mismatch	i6-l2hpr5 (pause-restart) L2 MISMATCH 1 cases 1 mismatches 1 undeclared
+0x6BFB50	CBmx::ProcessDrivingAnims	mvpf-veh-1	L2	stack-residue	open	i6-l2drv0 (driving) L2 NORUN  cases  mismatches  undeclared
+0x6D6C00	CVehicle::ProcessWheel	mvpd-veh-1	L2	stack-residue,x87-transcendental	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 885 calls 0 mismatches 0 undeclared
+0x6D73B0	CVehicle::ProcessBikeWheel	mvpd-veh-1	L2	stack-residue,x87-transcendental	promote	i6-l2pr6c (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6DE240	CVehicle::AddExhaustParticles	mvpd-veh-2	L2	none	promote	i6-l2pr3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6DF4A0	CVehicle::ProcessDrivingAnims	mvpf-veh-1	L2	stack-residue	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6E1780	CVehicle::DoTailLightEffect	mvpb-veh-2	L2	x87-transcendental	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6E4F10	WaterCreatureManager_c::Update	mvpd-world-3	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6E5280	lerp	mvpd-unk-1	L2	none	open	i6-l2pr4 (pause-restart) L2 UNDECL 200 cases of 60407 calls 0 mismatches 200 undeclared
+0x6EA9F0	CWaterLevel::SetUpWaterFog	mvpd-render-3	L2	entry-protection-read	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 559 calls 0 mismatches 0 undeclared
+0x6F55C0	CTrain::Render	mvpb-veh-2	L2	none	mismatch	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 MISMATCH 200 cases of 259 calls 87 mismatches 200 undeclared
+0x6F55D0	CTrain::ReadAndInterpretTrackFile	mvpc-veh-1	split	heap-writes,uninit-locals	promote	i6-fixsp2 (pause-restart) split PASS 4 cases 0 mismatches 0 undeclared
+0x6F7550	CTrain::CreateMissionTrain	mvpb-veh-5	L2	heap-writes	open	i6-l2hpr5 (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6F9DE0	CPlantSurfPropMgr::GetSurfProperties	mvpa-render-1	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 1947 calls 0 mismatches 0 undeclared
+0x6F9EB0	FUN_006f9eb0	mvpc-render-1	L2	preserved-regs	open	i6-fix3 (pause-restart) L2 FEW 8 cases of 64 calls 0 mismatches 0 undeclared; i6-l2pr4 (pause-restart) L2 FEW 2 cases of 64 calls 0 mismatches 0 undeclared
+0x6FA6D0	(missed by ghidra: data-code-immediate)	mvpc-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x6FA6F0	CScripted2dEffects::Init	mvpj-script-1	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 2 cases of 2 calls 0 mismatches 0 undeclared
+0x6FA770	(missed by ghidra: data-code-immediate)	std5-ctor-1	L2	none	open	i6-fix3 (pause-restart) L2 FEW 8 cases of 256 calls 0 mismatches 0 undeclared; i6-l2pr4 (pause-restart) L2 UNDECL 2 cases of 256 calls 0 mismatches 2 undeclared
+0x6FA790	(missed by ghidra: data-code-immediate)	mvpc-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 20 cases 0 mismatches 0 undeclared
+0x6FABF0	CRegisteredCorona::Update	mvpb-render-1	L2	none	mismatch	i6-l2pr4 (pause-restart) L2 MISMATCH 200 cases of 521 calls 20 mismatches 20 undeclared
+0x6FC180	CCoronas::RegisterCorona-type	mvpb-render-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6FC4D0	CCoronas::UpdateCoronaCoors	mvpb-render-1	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6FC580	CCoronas::RegisterCorona-texture	mvpb-render-1	L2	none	open	i6-l2pr4 (pause-restart) L2 NOCALLS 0 cases of 15809 calls 0 mismatches 0 undeclared
+0x6FC7A0	CEntity::ProcessLightsForEntity	mvph-world-1	L2	x87-transcendental	mismatch	i6-l2pr4 (pause-restart) L2 MISMATCH 200 cases of 2218 calls 2 mismatches 112 undeclared
+0x6FE220	(missed by ghidra: data-code-immediate)	mvpl-render-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6FEB70	CCustomRoadsignMgr::RoadsignGenerateTextRaster	mvpm-render-6	L2	ax-al-return,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6FECA0	CCustomRoadsignMgr::CreateRoadsignTexture	mvpc-render-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6FF350	CCustomRoadsignMgr::RenderRoadsignAtomic	mvpd-render-3	L2	stack-residue	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6FF410	CDraw::SetFOV	mvpc-render-1	L2	entry-protection-read	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6FF420	CDraw::CalculateAspectRatio	mvpb-render-1	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x6FFA10	CPlayerSkin::GetSkinTexture	std5-ped-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x6FFBB0	CPointLights::GenerateLightsAffectingObject	mvpc-render-1	L2	x87-transcendental,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x700CC0	CPostEffects::ImmediateModeRenderStatesStore	mvpd-render-3	L2	entry-protection-read	promote	i6-l2pr4 (pause-restart) L2 PASS 31 cases of 31 calls 0 mismatches 0 undeclared
+0x703650	CPostEffects::ColourFilter	mvpd-render-3	L2	stack-residue	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x705590	CShadowCamera::SetCenter	mvpd-render-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x706CD0	CShadows::Init	mvpc-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x707390	CShadows::StoreShadowToBeRendered-Texture	mvpd-render-1	L2	entry-protection-read	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 UNDECL 200 cases of 201 calls 0 mismatches 200 undeclared
+0x707850	CShadows::AffectColourWithLighting	mvpb-render-1	L2	none	open	i6-l2pr4 (pause-restart) L2 UNDECL 200 cases of 4755 calls 0 mismatches 100 undeclared
+0x707B40	CShadows::StoreShadowForPedObject	mvpc-render-1	L2	x87-transcendental,uninit-locals	open	i6-l2pr6 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2pr6c (pause-restart) L2 UNDECL 200 cases of 519 calls 0 mismatches 50 undeclared
+0x707FA0	CShadows::RenderExtraPlayerShadows	mvpd-render-1	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x708300	CShadows::RenderStaticShadows	mvpd-render-1	L2	uninit-locals	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x7086B0	CShadows::CastShadowEntityXY	renderbig2-3	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x70A470	CShadows::CastPlayerShadowSectorList<CPtrListSingleLink<CPhysical*>>	mvpd-render-1	L2	stack-residue,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x70B730	CShadows::GeneratePolysForStaticShadow	mvpd-render-1	L2	stack-residue	mismatch	i6-l2pr4 (pause-restart) L2 MISMATCH 129 cases of 130 calls 6 mismatches 6 undeclared
+0x70BA00	CShadows::StoreStaticShadow	mvpd-render-1	L2	x87-transcendental,stack-residue,entry-protection-read,ax-al-return	open	i6-l2pr4 (pause-restart) L2 NOCALLS 0 cases of 12475 calls 0 mismatches 0 undeclared
+0x70C950	CShadows::UpdatePermanentShadows	mvpd-render-1	L2	x87-transcendental	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x70D490	CSprite::RenderOneXLUSprite_Rotate_Aspect	mvpd-render-5	L2	x87-transcendental	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x70E4A0	CSprite::RenderBufferedOneXLUSprite	mvpd-render-3	L2	stack-residue	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 424 calls 0 mismatches 0 undeclared
+0x70EAB0	CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension	mvpd-render-5	L2	x87-transcendental,stack-residue	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x70FAE0	CStencilShadows::RenderForVehicle	mvpm-render-5	L2	ax-al-return,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x710310	CStencilShadows::RenderForObject	mvpm-render-5	L2	ax-al-return,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x710BA0	FUN_00710ba0	mvpd-render-4	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 762 calls 0 mismatches 0 undeclared
+0x711280	FUN_00711280	mvpd-render-4	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x711760	CStencilShadows::RegisterStencilShadows	regconv-render-1	L2	heap-writes,stack-residue	promote	i6-fixsp4 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x711EF0	CBirds::CreateNumberOfBirds	mvpd-render-2	L2	x87-transcendental,stack-residue	mismatch	i6-l2pr4 (pause-restart) L2 MISMATCH 5 cases of 5 calls 5 mismatches 5 undeclared
+0x712330	CBirds::Update	mvpd-render-2	L2	x87-transcendental	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x717180	CPlaneTrail::Render	mvpd-render-3	L2	stack-residue	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x7172D0	CPlaneTrail::RegisterPoint	mvpb-render-1	L2	entry-protection-read	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 300 calls 0 mismatches 0 undeclared
+0x7173A0	CPlaneTrails::Render	mvpd-render-3	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x7174F0	CPlaneTrails::Update	mvpb-render-1	L2	x87-transcendental	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x717D00	CMovingThings::Init	mvpa-render-1	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 2 cases of 2 calls 0 mismatches 0 undeclared
+0x71A8B0	CFallingGlassPane::CFallingGlassPane	std5-ctor-1	L2	none	open	i6-fix3 (pause-restart) L2 FEW 8 cases of 45 calls 0 mismatches 0 undeclared; i6-l2pr4 (pause-restart) L2 FEW 2 cases of 45 calls 0 mismatches 0 undeclared
+0x7205C0	CSkidmarks::Update	mvpb-render-1	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x720640	CSkidmarks::Render	mvpd-render-3	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x7240E0	CMotionBlurStreaks::Render	mvpd-render-3	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x724770	CBrightLights::RegisterOne	mvpc-render-1	L2	x87-transcendental	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x724890	CShinyTexts::Render	mvpd-render-3	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x724B60	CShinyTexts::RegisterOne	mvpc-render-1	L2	x87-transcendental	open	i6-l2pr4 (pause-restart) L2 NOCALLS 0 cases of 2648 calls 0 mismatches 0 undeclared
+0x726060	CCheckpoints::Render	mvpd-render-3	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x7268F0	CSpecialFX::Init	mvpc-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 2 cases 0 mismatches 0 undeclared
+0x726DF0	CMirrors::BeforeConstructRenderList	mvpd-render-2	split	uninit-locals	promote	i6-sp1 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x728520	CSprite2d::Draw-ffffffffCRGBA	mvpb-render-1	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x7285B0	CSprite2d::Draw2DPolygon	renderbig2-4	L2	none	open	i6-l2gw0 (grove-walk) L2 NOCALLS 0 cases 0 mismatches 0 undeclared
+0x728640	CSprite2d::DrawBarChart	std4-render-1	L2	none	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 332 calls 0 mismatches 0 undeclared
+0x72A9A0	CWeather::AddRain	mvpd-render-2	L2	x87-transcendental,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x72B630	CWeather::UpdateInTunnelness	mvpb-render-1	L2	x87-transcendental	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x72B850	CWeather::Update	mvpd-render-4	L2	x87-transcendental	promote	i6-fix3 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x72C950	CWindModifiers::FindWindModifier	mvpc-render-1	L2	x87-transcendental,ax-al-return	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 2379 calls 0 mismatches 0 undeclared
+0x72CAE0	CWorldScan::ScanWorld	mvpm-render-2	L2	none	mismatch	i6-l2pr4 (pause-restart) L2 MISMATCH 200 cases of 243 calls 94 mismatches 200 undeclared
+0x72FE80	D3DTextureBuffer::Setup	mvpd-d3d-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x72FFF0	D3DTextureBuffer::Push	std4-d3d9-3	L2	ax-al-return	promote	i6-fix3 (pause-restart) L2 PASS 6 cases of 6 calls 0 mismatches 0 undeclared
+0x730020	D3DTextureBuffer::Resize	std4-d3d9-3	L2	heap-writes	open	i6-l2hpr5 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) L2 split:NOCASES  cases  mismatches  undeclared
+0x730270	D3DIndexDataBuffer::Pop	mvpd-d3d-1	L2	stack-residue,heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x7305E0	D3DResourceSystem::TidyUpD3DTextures	std4-core-1	L2	entry-protection-read	promote	i6-fixsp4 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x7306A0	D3DResourceSystem::CreateIndexBuffer	mvpd-d3d-1	split	heap-writes	promote	i6-sp1 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x730740	D3DResourceSystem::TidyUpD3DIndexBuffers	std4-core-1	L2	none	promote	i6-spboot2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x730B70	D3DResourceSystem::DestroyTexture	mvpd-d3d-1	split	heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 171 cases 0 mismatches 0 undeclared
+0x730D30	D3DResourceSystem::DestroyIndexBuffer	mvpd-d3d-1	split	heap-writes	promote	i6-sp1 (pause-restart) split PASS 21 cases 0 mismatches 0 undeclared
+0x732820	CVisibilityPlugins::RenderVehicleReallyLowDetailCB_BigVehicle	boot-render-1	L2	none	promote	i6-spboot2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x7328C0	CVisibilityPlugins::SetRenderWareCamera	std4-render-1	L2	none	promote	i6-l2pr4 (pause-restart) L2 PASS 200 cases of 201 calls 0 mismatches 0 undeclared
+0x733330	CVisibilityPlugins::RenderTrainHiDetailCB	boot-render-1	L2	none	promote	i6-fixsp4 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x733910	FUN_00733910	mvpd-unk-2	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x733F40	FUN_00733f40	mvpd-unk-2	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x734240	CVisibilityPlugins::RenderTrainHiDetailAlphaCB	boot-render-1	L2	none	promote	i6-fixsp4 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x734810	RwHelper::GetFirstAtomicCallback	std4-load-2	L2	none	open	i6-l2pr5 (pause-restart) L2 UNDECL 200 cases of 1234 calls 0 mismatches 200 undeclared
+0x734820	RwHelper::GetFirstAtomic	std4-load-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 200 cases of 1233 calls 0 mismatches 0 undeclared
+0x734970	(missed by ghidra: data-code-immediate)	mvpc-render-1	L2	none	open	i6-fix4 (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared; i6-l2pr5 (pause-restart) L2 AMBIGUOUS  cases  mismatches  undeclared
+0x734D60	RwHelper::forceLinearFilteringMatTexturesCB	std4-load-2	L2	none	open	i6-fix4 (pause-restart) L2 NOCALLS 0 cases 0 mismatches 0 undeclared; i6-l2pr5 (pause-restart) L2 FEW 2 cases of 14 calls 0 mismatches 0 undeclared
+0x734D80	RwHelper::SetFilterModeOnAtomicsTextures	std4-load-1	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 16 cases of 16 calls 0 mismatches 0 undeclared
+0x734ED0	(missed by ghidra: data-code-immediate)	mvpc-render-1	L2	x87-transcendental	open	i6-fix4 (pause-restart) L2 UNDECL 2 cases 0 mismatches 2 undeclared; i6-l2pr5 (pause-restart) L2 AMBIGUOUS  cases  mismatches  undeclared
+0x734FC0	RpClumpGetBoundingSphere	mvpc-render-1	L2	stack-residue	promote	i6-l2pr5 (pause-restart) L2 PASS 2 cases of 2 calls 0 mismatches 0 undeclared
+0x747200	CGamma::SetGamma	mvpb-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 9 cases 0 mismatches 0 undeclared
+0x748F20	RpAnisotGetMaxSupportedMaxAnisotropy	std4-render-1	L2	ax-al-return	promote	i6-l2pr5 (pause-restart) L2 PASS 194 cases of 3150 calls 0 mismatches 0 undeclared
+0x748F30	RpAnisotTextureSetMaxAnisotropy	std4-render-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 194 cases of 3150 calls 0 mismatches 0 undeclared
+0x748F50	RpAnisotTextureGetMaxAnisotropy	std4-render-1	L2	ax-al-return	promote	i6-l2pr5 (pause-restart) L2 PASS 194 cases of 3150 calls 0 mismatches 0 undeclared
+0x74B060	_rpClumpAtomicStreamRead	std4-load-2	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot2 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x74B420	RpClumpStreamRead	std4-load-2	L2	heap-writes	promote	i6-fixsp4 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x7507E0	_rpWorldObjAtomicSync	std5-rwworld-1	L2	heap-writes	promote	i6-spboot2 (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x7591B0	RpBuildMeshGenerateDefaultTriStrip	std5-tristrip-1	L2	heap-writes	promote	i6-sptri (pause-restart) split PASS 23 cases 0 mismatches 0 undeclared
+0x7591D0	FUN_007591d0	std5-tristrip-1	L2	heap-writes	promote	i6-sptri (pause-restart) split PASS 23 cases 0 mismatches 0 undeclared
+0x759640	(missed by ghidra: data-code-immediate)	std5-tristrip-1	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 96 cases 0 mismatches 0 undeclared
+0x759790	FUN_00759790	std5-tristrip-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-sptri (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared; i6-sptri2 (pause-restart) split UNDECL 35 cases 0 mismatches 35 undeclared
+0x75A090	FUN_0075a090	std5-tristrip-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-sptri (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared; i6-sptri2 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x75A1B0	FUN_0075a1b0	std5-tristrip-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-sptri (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared; i6-sptri2 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x75A250	FUN_0075a250	std5-tristrip-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-sptri (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared; i6-sptri2 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x75A370	FUN_0075a370	std5-tristrip-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-sptri (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared; i6-sptri2 (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x75A660	FUN_0075a660	std5-tristrip-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-sptri (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared; i6-sptri2 (pause-restart) split UNDECL 35 cases 0 mismatches 35 undeclared
+0x75E9F0	RxNodeDefinitionGetD3D9WorldSectorAllInOne	std4-rxpipe-1	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 3 cases of 3 calls 0 mismatches 0 undeclared
+0x75EED0	_rpD3D9GetVertexShader	rw5-node-1	L2	heap-writes	open	i6-l2hpr3 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3b (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-l2hpr3c (pause-restart) L2 NORUN  cases  mismatches  undeclared
+0x760CF0	FUN_00760cf0	std4-d3d9-2	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x7C68E0	cb_SKINPLUGIN_RwEngine_Open	std4-rxpipe-2	L2	heap-writes	promote	i6-fixsp4 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x7C6AE0	(missed by ghidra: data-code-immediate)	std4-load-2	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 200 cases 0 mismatches 0 undeclared
+0x7F6B00	FUN_007f6b00	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x7F6B40	FUN_007f6b40	std4-d3d9-1	L2	heap-writes	promote	i6-fixsp4 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x7F6BF0	FUN_007f6bf0	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x7F6CB0	WindowedModeHooks::RenderWare::D3D9SetPresentParameters	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x7F72E0	_rwD3D9SetStandardFunctions	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x7F7540	FUN_007f7540	std4-d3d9-1	L2	heap-writes	promote	i6-spboot2 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x7F7730	WindowedModeHooks::RenderWare::_rwD3D9CameraClear	std4-d3d9-2	L2	none	promote	i6-spd (pause-restart) split PASS 200 cases 0 mismatches 0 undeclared
+0x7F7F70	D3D9DeviceReleaseVideoMemory	std4-d3d9-1	L2	heap-writes	promote	i6-fixsp2 (pause-restart) split PASS 3 cases 0 mismatches 0 undeclared
+0x7F8F20	WindowedModeHooks::RenderWare::_rwD3D9CameraBeginUpdate	std4-d3d9-2	L2	none	mismatch	i6-l2pr5 (pause-restart) L2 MISMATCH 200 cases of 1102 calls 200 mismatches 2 undeclared
+0x804130	RwOsGetFileInterface	std4-audio-3	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 12 cases of 12 calls 0 mismatches 0 undeclared
+0x805890	FUN_00805890	std4-rxpipe-1	L2	none	open	i6-fix4 (pause-restart) L2 FEW 16 cases of 30 calls 0 mismatches 0 undeclared; i6-l2pr5 (pause-restart) L2 FEW 2 cases of 30 calls 0 mismatches 0 undeclared
+0x8058F0	FUN_008058f0	std4-rxpipe-1	L2	none	open	i6-fix4 (pause-restart) L2 FEW 16 cases of 38 calls 0 mismatches 0 undeclared; i6-l2pr5 (pause-restart) L2 FEW 2 cases of 38 calls 0 mismatches 0 undeclared
+0x805950	FUN_00805950	std4-rxpipe-1	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 10 cases of 10 calls 0 mismatches 0 undeclared
+0x805F40	RxLockedPipeUnlock	std4-rxpipe-1	L2	heap-writes	promote	i6-fixsp4 (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x8064D0	FUN_008064d0	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot2 (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x8067B0	FUN_008067b0	std4-rxpipe-1	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split UNDECL 10 cases 0 mismatches 10 undeclared
+0x806990	RxPipelineLock	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x806B30	RxPipelineFindNodeByName	std4-rxpipe-1	L2	none	promote	i6-fix4 (pause-restart) L2 PASS 5 cases of 5 calls 0 mismatches 0 undeclared
+0x806BE0	RxLockedPipeAddFragment	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x806DE0	FUN_00806de0	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x80DBE0	_rwIntelMMXsupported	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x80DC40	_rwIntelSSEsupported	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x80DCA0	_rwIntelSSE2supported	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x80DD00	_rwAMD3DNowSupported	std4-d3d9-1	L2	none	promote	i6-l2pr5 (pause-restart) L2 PASS 1 cases of 1 calls 0 mismatches 0 undeclared
+0x80F0D0	FUN_0080f0d0	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x80F460	FUN_0080f460	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x80F690	FUN_0080f690	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x80F970	FUN_0080f970	std4-rxpipe-1	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x80FBA0	FUN_0080fba0	std4-rxpipe-1	L2	heap-writes	open	i6-l2hpr4 (pause-restart) L2 NORUN  cases  mismatches  undeclared; i6-spboot (pause-restart) split split-DIVERGED 0 cases 0 mismatches 0 undeclared
+0x80FC30	FUN_0080fc30	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x8103D0	FUN_008103d0	std4-rxpipe-1	L2	heap-writes	promote	i6-spboot (pause-restart) split PASS 10 cases 0 mismatches 0 undeclared
+0x810BF0	cb_MATERIALEFFECTSPLUGIN_RwEngine_Open	std4-rxpipe-2	L2	heap-writes	promote	i6-fixsp3 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x84A720	__init_CTheScripts__MissionCleanUp	boot-script-1	split	none	promote	i6-sp1 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x84E2E0	__init_gDummyMatrix	boot-core-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x8508C0	__init_g_c03970	boot-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x850910	__init_CPlantMgr__m_AmbientColor	boot-render-1	split	none	promote	i6-fixsp2 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x855FD0	__init_AllValidWinJoys	boot-input-1	split	none	promote	i6-sp1 (pause-restart) split PASS 1 cases 0 mismatches 0 undeclared
+0x6FD7C0	CCustomCarPlateMgr::GetCharacterPositionInCharSet	harness5-1	L1-pure	none	promote	sa-oracle l1 0x6FD7C0 --backend native --cases 1000000: PASS, 0 mismatches, unicorn vs CPU 0 differ
+0x70FA70	FUN_0070fa70	harness5-1	L1-pure	preserved-regs	promote	sa-oracle l1 0x70FA70 --backend native --cases 1000000: PASS, 0 mismatches, unicorn vs CPU 0 differ

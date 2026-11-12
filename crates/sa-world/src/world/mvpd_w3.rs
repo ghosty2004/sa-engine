@@ -216,7 +216,7 @@ fn within_2d(pos: GPtr<u8>, p: GPtr<u8>, r: f32) -> bool {
 /// cleared, optionally all projectiles and shadows, and unnecessary pickups removed. Both pool counts are read
 /// once.
 #[hook(addr = 0x56A0D0, conv = cdecl, name = "CWorld::ClearExcitingStuffFromArea", expect = "83 EC 1C E9 77 6F E9 FF",
-       unverified = "mvpd-world-3", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "the vehicle pool pointer is read through an obfuscated SecuROM fragment (0x40104F)")]
 pub fn world_clear_exciting_stuff_from_area(point: GPtr<u8>, r: f32, projectiles: u8) {
     let vehs = g::<GPtr<u8>>(0xB74494).read();
@@ -349,7 +349,7 @@ fn cam_position() -> GPtr<u8> {
 /// transition of the first enabled entry-exit containing it (unless blocked); with none found, state 3 becomes
 /// 4 and any other state 0.
 #[hook(addr = 0x440D10, conv = cdecl, name = "CEntryExitManager::Update", expect = "64 A1 00 00 00 00",
-       unverified = "mvpd-world-3", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "the original's SEH frame only guards the local lists' destructors")]
 pub fn entry_exit_manager_update() {
     let blocked = g::<u8>(0xB5F852).read() != 0
@@ -502,7 +502,7 @@ fn frame_ms() -> i32 {
 /// +0x40, counts it (stat 0x91), pays `+0x3C` (10000 for the last one) into the player's money (+0xB8) with
 /// frontend sound 0x2B and messages; then state 0 and no active jump.
 #[hook(addr = 0x49C490, conv = cdecl, name = "CStuntJumpManager::Update", expect = "A1 88 A8 A9 00",
-       unverified = "mvpd-world-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn stunt_jump_manager_update() {
     if g::<GPtr<u8>>(0xA9A888).read().is_null() || g::<u8>(0xA43088).read() == 1 {
         return;

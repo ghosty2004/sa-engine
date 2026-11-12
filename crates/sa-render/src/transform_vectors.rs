@@ -27,7 +27,7 @@ fn work_matrix() -> GPtr<u8> {
 /// count is decremented to zero, so a negative count runs 2^32 times: original) is `RwV3dTransformVector(out + i, in +
 /// i, work)` (the work pointer re-read per vector).
 #[hook(addr = 0x54eea0, conv = cdecl, name = "TransformVectors", expect = "E9 D0 94 EB FF 8B 4C 24 0C",
-       unverified = "mvpk-math-1", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        note = "the entry fragment 0x408375 loads the work matrix pointer through rol([0x15608C8], [0x642511]); the port reads 0xB72920 (assumed no-CD VM value)")]
 pub fn transform_vectors(out: GPtr<u8>, count: i32, m: GPtr<u8>, inp: GPtr<u8>) {
     matrix_copy_to_rw_matrix(m, work_matrix());

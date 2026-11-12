@@ -243,7 +243,7 @@ fn destroy_clump_tail(c: GPtr<u8>) {
 /// list deinitialised and the clump's plugin data read (failure: `RpClumpDestroy`). Every failure
 /// path cleans up as the original and sets the read error (plugin 2).
 #[hook(addr = 0x74B420, conv = cdecl, name = "RpClumpStreamRead", expect = "83 EC 44 8D 44 24 04",
-       unverified = "std4-load-2", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn clump_stream_read(s: GPtr<u8>) -> GPtr<u8> {
     let mut len: u32 = 0;
     let mut ver: u32 = 0;
@@ -450,7 +450,7 @@ orig! {
 /// type)`, the type falling back to 1 when its plugin (MatFX 0x120 for 2, 0x12E for 3) is missing.
 /// Returns 1.
 #[hook(addr = 0x7C6AE0, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "56 57 68 20 01 00 00",
-       unverified = "std4-load-2", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 #[allow(clippy::if_same_then_else)]
 pub fn skin_atomic_always_cb(a: GPtr<u8>, _offset: i32, _size: i32) -> u32 {
     let mut t = 1u32;

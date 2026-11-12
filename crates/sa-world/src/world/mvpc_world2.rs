@@ -113,7 +113,7 @@ orig! {
 /// message is formatted into a local buffer and dropped. Closes the file; EAX = `CloseFile`'s result.
 /// The locals live in one frame-shaped buffer so the original's overlapping string slots overlap alike.
 #[hook(addr = 0x5C0280, conv = thiscall, name = "FurnitureManager_c::LoadFurniture", this = "FurnitureManager_c",
-       expect = "81 EC 9C 01 00 00", unverified = "mvpc-world-2", route = "split", hazards = "heap-writes,uninit-locals",
+       expect = "81 EC 9C 01 00 00", route = "split", hazards = "heap-writes,uninit-locals",
        recs = "grove-walk", note = "file read (data/furnitur.dat); fields sscanf does not match keep the previous line's values")]
 pub fn furniture_load_furniture(this: GPtr<u8>) -> u32 {
     let mut frame = [0u32; 0x1A0 / 4];
@@ -166,7 +166,7 @@ pub fn furniture_load_furniture(this: GPtr<u8>) -> u32 {
 /// `FindNearestEntryExit((x, y), 1.5, -1)`; found → its flags (+0x30 of the pool slot; a free slot gives
 /// a null object, read as such) with bit 0x2000 get 0x8000 set, else `DeleteOne`.
 #[hook(addr = 0x533BF0, conv = thiscall, name = "CEntity::DestroyEffects", this = "CEntity", expect = "83 EC 20 53 8B D9 0F BF",
-       unverified = "mvpc-world-2", route = "L2", hazards = "none", recs = "grove-walk,driving")]
+       route = "L2", hazards = "none", recs = "grove-walk,driving")]
 pub fn destroy_effects(this: GPtr<u8>) {
     let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + 4 * rd::<i16>(this, 0x22) as isize as usize).read();
     let n = rd::<u8>(mi, 0xD) as i32;
@@ -292,7 +292,7 @@ pub fn object_pre_render(this: GPtr<u8>) {
 /// 0x96A7C4 and byte 0x96A730 cleared; the entry-exit pool (CRT `new(0x14)`, `CPool(0x190, name
 /// 0x8595F4)`, null on failure) into 0x96A7D8 and its byte +0x11 set.
 #[hook(addr = 0x43F880, conv = cdecl, name = "CEntryExitManager::Init", expect = "E9 6B AE 12 01",
-       unverified = "mvpc-world-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "allocates the quad tree and the entry-exit pool (one-time init)")]
 pub fn entry_exit_manager_init() {
     let mut rect = [0xC53B_8000u32, 0x453B_8000, 0x453B_8000, 0xC53B_8000];

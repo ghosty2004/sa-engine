@@ -36,7 +36,7 @@ const PED_TYPES: usize = 0xC0BBE8;
 /// null when `new` failed). Then every entry's five dwords are zeroed (through the re-read global, so a
 /// failed `new` writes from address 0, as the original) and `LoadPedData()` runs.
 #[hook(addr = 0x608e40, conv = cdecl, name = "CPedType::Initialise", expect = "6A FF 68 1B EB 83 00",
-       unverified = "mvpf-ped-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "one-time boot initialiser (allocates ms_apPedTypes, then loads ped.dat)")]
 pub fn ped_type_initialise() {
     let p = operator_new(0x284);
@@ -72,7 +72,7 @@ const KEYWORDS: [(usize, usize, isize); 4] = [(0x86D06C, 5, 0x10), (0x86D064, 8,
 /// other word selects the current type (`FindPedType`). The current type starts at 32 (one past the
 /// array, as the original). The file is closed at the end.
 #[hook(addr = 0x608b30, conv = cdecl, name = "CPedType::LoadPedData", expect = "83 EC 24 53 55 56",
-       unverified = "mvpf-ped-2", route = "split", hazards = "uninit-locals,heap-writes", recs = "grove-walk",
+       route = "split", hazards = "uninit-locals,heap-writes", recs = "grove-walk",
        note = "file I/O; a blank-but-whitespace line compares the previous (first: uninitialised) sscanf buffer")]
 pub fn load_ped_data() {
     let delim = GPtr::<u8>::from_addr(0x86A8C8);

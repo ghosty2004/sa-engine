@@ -579,7 +579,7 @@ pub fn complex_car_drive_dtor(this: GPtr<u8>) {
 /// no null test) gets finish callback 0x4D1390 with null data and the vehicle (when set) `ClearGettingOutFlags(1)`;
 /// then `CTaskSimple::~CTaskSimple`.
 #[hook(addr = 0x63C460, conv = thiscall, name = "CTaskSimpleCarDrive::Destructor", expect = "6A FF 68 38 18 84 00",
-       unverified = "mvpa-ai-2", route = "L2", hazards = "heap-writes", recs = "driving")]
+       route = "L2", hazards = "heap-writes", recs = "driving")]
 pub fn simple_car_drive_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86E904);
     let v = rd::<GPtr<u8>>(this, 8);

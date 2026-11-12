@@ -124,7 +124,7 @@ fn occupant_in_water(this: GPtr<u8>, ped: GPtr<u8>, is_driver: bool) {
 /// (piece 3, damage = the time step) for non-players; no driver clears +0x428 bit 4. Not in water
 /// clears +0x40 bit 8 and +0x42B bit 6.
 #[hook(addr = 0x6B5FB0, conv = thiscall, name = "CBike::ProcessBuoyancy", this = "CBike", expect = "6A FF 64 A1 00 00 00 00",
-       unverified = "mvpd-veh-3", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "driving",
        note = "pow through orig::x87_binary(0x822130); event objects on the Rust stack (sizes assumed <= 0x80)")]
 pub fn bike_process_buoyancy(this: GPtr<u8>) {

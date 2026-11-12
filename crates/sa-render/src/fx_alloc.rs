@@ -46,7 +46,7 @@ pub fn memory_pool_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `FxPrim_c::FxPrim_c()` (0x4A9F20): vtable 0x85A9E0, +4 = +8 = 0, byte +0xC = 1.
 #[hook(addr = 0x4A9F20, conv = thiscall, name = "FxPrim_c::FxPrim_c", expect = "8B C1 33 C9 C7 00 E0 A9 85 00",
-       unverified = "std5-fx-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn prim_ctor(this: GPtr<u8>) -> GPtr<u8> {
     this.cast::<u32>().write(0x85A9E0);
     this.byte_add(4).cast::<u32>().write(0);
@@ -57,7 +57,7 @@ pub fn prim_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `FxPrim_c::~FxPrim_c()` (0x4A9F40): vtable 0x85A9E0, +4 = +8 = 0; EAX = 0.
 #[hook(addr = 0x4A9F40, conv = thiscall, name = "FxPrim_c::~FxPrim_c", expect = "33 C0 C7 01 E0 A9 85 00 89 41",
-       unverified = "std5-fx-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn prim_dtor(this: GPtr<u8>) -> u32 {
     this.cast::<u32>().write(0x85A9E0);
     this.byte_add(4).cast::<u32>().write(0);

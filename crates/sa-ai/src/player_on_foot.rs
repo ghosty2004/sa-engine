@@ -175,7 +175,7 @@ fn current_weapon_info(ped: GPtr<u8>) -> GPtr<u8> {
 /// `PlayerControlZelda(ped, false)`; `ProcessPlayerWeapon`; +0xC = the frame counter; AL = 0 (EAX's upper
 /// bytes are the frame counter's, reproduced).
 #[hook(addr = 0x688810, conv = thiscall, name = "CTaskSimplePlayerOnFoot::ProcessPed", expect = "56 8B 74 24 08 57 8B F9",
-       unverified = "mvpj-ai-3", route = "L2", hazards = "ax-al-return,stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "ax-al-return,stack-residue", recs = "grove-walk",
        note = "writes a flag byte into its own ped argument slot (popped by ret 4)")]
 pub fn on_foot_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
     if player_get_pad(ped).is_null() {
@@ -309,7 +309,7 @@ pub fn on_foot_make_abortable(_this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPt
 /// Stack: the original keeps r in its own `ped` argument slot and the new task in its `noJumpDuck` slot (popped
 /// by `ret 8`); not reproduced.
 #[hook(addr = 0x6883d0, conv = thiscall, name = "CTaskSimplePlayerOnFoot::PlayerControlZelda", expect = "6A FF E9 2E F8 D7 FF",
-       unverified = "mvpj-ai-3", route = "L2", hazards = "x87-transcendental,stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental,stack-residue", recs = "grove-walk",
        note = "FSIN/FCOS of the move direction; argument slots overwritten (see doc)")]
 pub fn on_foot_player_control_zelda(this: GPtr<u8>, ped: GPtr<u8>, no_jump_duck: u8) {
     let cam = g::<f32>(CAMERA_ORIENTATION).read();

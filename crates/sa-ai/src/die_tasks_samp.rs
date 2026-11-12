@@ -138,7 +138,7 @@ pub fn die_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// is one of the door / seat / get-in / set-out types (0x2C0, 0x322..0x324, 0xCB, 0x331, 0x334, 0x330, 0x2CB,
 /// 0x2CF, 0x327, 0x325, 0x328, 0x321, 0x32C, 0x32B); else null.
 #[hook(addr = 0x63A690, conv = thiscall, name = "CTaskComplexEnterCar::GetCameraAvoidVehicle", expect = "56 8B F1 8B 46 0C",
-       unverified = "ai7-12", route = "L2", hazards = "none", recs = "car-ai")]
+       route = "L2", hazards = "none", recs = "car-ai")]
 pub fn enter_car_get_camera_avoid_vehicle(this: GPtr<u8>) -> u32 {
     if rd::<u32>(this, 0xC) == 0 || v_sub_task(this).is_null() {
         return 0;
@@ -158,7 +158,7 @@ pub fn enter_car_get_camera_avoid_vehicle(this: GPtr<u8>) -> u32 {
 /// 1 -right, 2 -forward, 3 right (any other value passes the original's uninitialised stack vector; zeros here), else
 /// `CTaskSimpleDie(+0x10, +0x14, +0x18, +0x1C)`. Null when the pool is full.
 #[hook(addr = 0x6302D0, conv = thiscall, name = "CTaskComplexDie::CreateFirstSubTask", expect = "64 A1 00 00 00 00",
-       unverified = "ai7-12", route = "L2", hazards = "heap-writes,uninit-locals", recs = "weapon-combat")]
+       route = "L2", hazards = "heap-writes,uninit-locals", recs = "weapon-combat")]
 pub fn die_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     o_say_death_sample(this, ped);
     let weapon = rd::<u32>(this, 0xC);

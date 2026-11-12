@@ -26,7 +26,7 @@ const DTOR_AMBIENT_COLOR: u32 = 0x85_6710;
 /// store after the `atexit` argument push, no observable difference), then `atexit(0x856700)`; EAX = the
 /// `_atexit` result.
 #[hook(addr = 0x8508C0, conv = cdecl, name = "__init_g_c03970", expect = "33 C0 A3 70 39 C0 00",
-       unverified = "boot-render-1", route = "split", hazards = "none", recs = "boot",
+       route = "split", hazards = "none", recs = "boot",
        note = "C++ static initialiser: runs once from _initterm before WinMain; registers an atexit destructor")]
 pub fn init_plant_models_tab() -> i32 {
     for i in 0..4 {
@@ -38,7 +38,7 @@ pub fn init_plant_models_tab() -> i32 {
 /// `__init_CPlantMgr__m_AmbientColor` (0x850910, cdecl): `m_AmbientColor.CRGBA(255, 255, 255, 255)` (0x7170C0),
 /// then `atexit(0x856710)`; EAX = the `_atexit` result.
 #[hook(addr = 0x850910, conv = cdecl, name = "__init_CPlantMgr__m_AmbientColor", expect = "68 FF 00 00 00",
-       unverified = "boot-render-1", route = "split", hazards = "none", recs = "boot",
+       route = "split", hazards = "none", recs = "boot",
        note = "C++ static initialiser: runs once from _initterm before WinMain; registers an atexit destructor")]
 pub fn init_plant_ambient_color() -> i32 {
     rgba_ctor(GPtr::from_addr(AMBIENT_COLOR), 0xFF, 0xFF, 0xFF, 0xFF);

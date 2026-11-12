@@ -67,7 +67,7 @@ fn coord16(v: f32) -> i16 {
 /// (i16), then `total += sqrt(dx*dx + dy*dy)` with `d = node - next` (`next = (i + 1) % n`, coordinates
 /// `i16 * 0.125`, x87); `*totalLength = total` (0.0 without nodes).
 #[hook(addr = 0x6F55D0, conv = cdecl, name = "CTrain::ReadAndInterpretTrackFile", expect = "64 A1 00 00 00 00 6A FF",
-       unverified = "mvpc-veh-1", route = "split", hazards = "heap-writes,uninit-locals", recs = "grove-walk",
+       route = "split", hazards = "heap-writes,uninit-locals", recs = "grove-walk",
        note = "file read (tracks*.dat); the station flag local is uninitialised when sscanf matches fewer than 4 fields")]
 pub fn read_and_interpret_track_file(filename: GPtr<u8>, nodes: GPtr<u8>, count: GPtr<u8>, length: GPtr<u8>, skip: i32) {
     if rd::<u32>(nodes, 0) == 0 {

@@ -726,7 +726,7 @@ pub fn camera_begin_update(_out: u32, camera: GPtr<u8>, _flags: u32) -> u32 {
 /// other rasters IMAGE / Z as requested and stencil with Z or STENCIL when the depth format has a
 /// stencil. Returns 1.
 #[hook(addr = 0x7F7730, conv = cdecl, name = "WindowedModeHooks::RenderWare::_rwD3D9CameraClear", expect = "83 EC 68 8B 44 24 74",
-       unverified = "std4-d3d9-2", route = "L2", hazards = "none", recs = "boot,menus-hud",
+       route = "L2", hazards = "none", recs = "boot,menus-hud",
        note = "device reset / window paths need OS effects (L3)")]
 pub fn camera_clear(camera: GPtr<u8>, color: GPtr<u8>, flags: u32) -> u32 {
     let mut c: u32 = 0;

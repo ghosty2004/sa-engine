@@ -115,7 +115,7 @@ pub fn idx_buffer_pop(this: GPtr<u8>, n: u32) -> GPtr<u8> {
 /// sizes `Pop` from 0xC87FC8. A reused buffer returns 0; otherwise the device (`[0xC97C28]`)
 /// `CreateIndexBuffer(capacity * 2, WRITEONLY, INDEX16, MANAGED, out, NULL)` and its HRESULT.
 #[hook(addr = 0x7306A0, conv = cdecl, name = "D3DResourceSystem::CreateIndexBuffer", expect = "8B 4C 24 04 83 EC 14",
-       unverified = "mvpd-d3d-1", route = "split", hazards = "heap-writes",
+       route = "split", hazards = "heap-writes",
        note = "creates D3D index buffers (COM state cannot run twice)")]
 pub fn create_index_buffer(n: u32, _format: u32, out: GPtr<u8>) -> u32 {
     let bucket = (n as i32).wrapping_sub(1) / 100;
@@ -162,7 +162,7 @@ fn fild_u32(v: u32) -> X87 {
 /// `Release`. Everything else up to 256×256 goes to buffer 0 (counter + 1; when full, `Resize(capacity
 /// * 2)` and stored only if room was made), larger textures are released.
 #[hook(addr = 0x730B70, conv = cdecl, name = "D3DResourceSystem::DestroyTexture", expect = "A0 84 60 8D 00",
-       unverified = "mvpd-d3d-1", route = "split", hazards = "heap-writes",
+       route = "split", hazards = "heap-writes",
        note = "COM texture calls and release")]
 pub fn destroy_texture(t: GPtr<u8>) {
     if g::<u8>(USE_BUFFERING).read() == 0 {
@@ -232,7 +232,7 @@ pub fn destroy_texture(t: GPtr<u8>) {
 /// that bucket, else the large-size buffer 0xC87FC8 — counter (+0xC) + 1 and the buffer stored, after
 /// a `Resize(capacity * 2)` when full (dropped if still full).
 #[hook(addr = 0x730D30, conv = cdecl, name = "D3DResourceSystem::DestroyIndexBuffer", expect = "A0 84 60 8D 00",
-       unverified = "mvpd-d3d-1", route = "split", hazards = "heap-writes",
+       route = "split", hazards = "heap-writes",
        note = "COM index buffer calls and release")]
 pub fn destroy_index_buffer(ib: GPtr<u8>) {
     if g::<u8>(USE_BUFFERING).read() == 0 {

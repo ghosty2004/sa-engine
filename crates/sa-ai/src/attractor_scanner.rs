@@ -16,7 +16,7 @@ orig! {
 /// (+0x18) and attractor (+0x40) slots are cleared and the minimum distance (+0x68) set to `15 * 15`
 /// (computed on the x87), then to 25.0 for every type but 4 and 7.
 #[hook(addr = 0x5FFF90, conv = thiscall, name = "CAttractorScanner::Clear", this = "CAttractorScanner", expect = "56 33 F6 33 D2 8D 41 68", preserve = "ecx",
-       unverified = "mvpd-ai-1", route = "L2", hazards = "heap-writes,preserved-regs",
+       route = "L2", hazards = "heap-writes,preserved-regs",
        note = "writes the ped's attractor scanner (ped object); the caller at 0x6034A7 reads ECX after the call")]
 pub fn attractor_scanner_clear(this: GPtr<u8>) {
     for i in 0..10isize {

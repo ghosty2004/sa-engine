@@ -177,7 +177,7 @@ fn req_append_default(req: u32, cd: u32, node: u32) -> u32 {
 
 /// `RxNodeDefinitionGetD3D9WorldSectorAllInOne()` (0x75E9F0): the static node definition 0x8D63B8.
 #[hook(addr = 0x75E9F0, conv = cdecl, name = "RxNodeDefinitionGetD3D9WorldSectorAllInOne", expect = "B8 B8 63 8D 00 C3",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn node_def_world_sector_all_in_one() -> u32 {
     0x8D_63B8
 }
@@ -253,7 +253,7 @@ fn distinct_clusters(pipe: u32) -> u32 {
 
 /// Distinct cluster count (0x805950, catalogue `FUN_00805950`); see [`distinct_clusters`].
 #[hook(addr = 0x805950, conv = cdecl, name = "FUN_00805950", expect = "83 EC 08 8B 44 24 0C 53",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn pipeline_count_clusters(pipe: u32) -> u32 {
     distinct_clusters(pipe)
 }
@@ -263,7 +263,7 @@ pub fn pipeline_count_clusters(pipe: u32) -> u32 {
 /// nodes = the new block, superBlockSize = size, and every non-NULL pointer into the block (the
 /// embedded packet, the input requirements, each node's +8 .. +0x1C) moves by the delta. TRUE.
 #[hook(addr = 0x8064D0, conv = cdecl, name = "FUN_008064d0", expect = "83 EC 08 A1 24 7B C9 00 53",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn pipeline_resize(pipe: u32, size: u32) -> i32 {
     let old = r(pipe + 0x20);
     let nb = a32(rw_realloc(p8(old), size, 0x0104_0409));
@@ -592,7 +592,7 @@ pub fn pipeline_node_destroy(node: u32, pipe: u32) -> u32 {
 /// earlier error FALSE. Else outputs = slot buffer `numNodes` (all -1), topSortData = slot
 /// `numNodes` (cleared), init data cleared, nodeDef = def, `numNodes += 1`. TRUE.
 #[hook(addr = 0x806DE0, conv = cdecl, name = "FUN_00806de0", expect = "8B 44 24 0C 83 EC 08 B9 0A 00 00 00",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn pipeline_node_init(pipe: u32, node: u32, def: u32) -> i32 {
     let num_out = r(def + 0x2C);
     for k in 0..10 {
@@ -645,7 +645,7 @@ pub fn pipeline_node_init(pipe: u32, node: u32, def: u32) -> i32 {
 /// (0x8065E0). Then locked = 1 and each node is torn down: pipelineNodeTerm(node), `InputPipesCnt
 /// -= 1` (nodeTerm(def) at 0), slotClusterRefs = NULL. Returns the pipeline.
 #[hook(addr = 0x806990, conv = cdecl, name = "RxPipelineLock", expect = "83 EC 08 55 56 8B 74 24 14",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn rx_pipeline_lock(pipe: u32) -> u32 {
     if r(pipe) != 0 {
         return pipe;
@@ -713,7 +713,7 @@ pub fn rx_pipeline_lock(pipe: u32) -> u32 {
 /// `RxLockedPipeAddPath` checks; a failed check destroys the new node and stops). All added:
 /// `*firstIndex = start` (when given), pipe. Else the added nodes are destroyed in reverse, NULL.
 #[hook(addr = 0x806BE0, conv = cdecl, name = "RxLockedPipeAddFragment", expect = "83 EC 18 53 55 8B 6C 24 24",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "varargs: the port reads def0 and def1 only (every 1.0 US call passes one definition)")]
 pub fn rx_locked_pipe_add_fragment(pipe: u32, first_index: u32, def0: u32, def1: u32) -> u32 {
     if pipe == 0 {
@@ -786,7 +786,7 @@ pub fn rx_locked_pipe_add_fragment(pipe: u32, first_index: u32, def0: u32, def1:
 /// (from the first when NULL) whose definition's name compares equal (`G->vecStrcmp`); `*index =
 /// numNodes - left` when found. Not found / NULL pipe / NULL name / no nodes: `*index = -1`, NULL.
 #[hook(addr = 0x806B30, conv = cdecl, name = "RxPipelineFindNodeByName", expect = "53 8B 5C 24 08 55 56",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn rx_pipeline_find_node_by_name(pipe: u32, name: u32, start: u32, index: u32) -> u32 {
     let not_found = || {
         if index != 0 {
@@ -861,7 +861,7 @@ fn unlock_undo(pipe: u32, from: u32) -> u32 {
 /// initialised nodes (quirk kept: a failed nodeInit leaves its `InputPipesCnt` incremented),
 /// re-lays the pipeline out and returns NULL. Success: unlocked, pipe.
 #[hook(addr = 0x805F40, conv = cdecl, name = "RxLockedPipeUnlock", expect = "83 EC 14 53 8B 5C 24 1C",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn rx_locked_pipe_unlock(pipe: u32) -> u32 {
     if pipe == 0 {
         error1(0x8000_0016);
@@ -1060,7 +1060,7 @@ pub fn rx_locked_pipe_unlock(pipe: u32) -> u32 {
 /// node's own input requirements are added. Then the forward pass, the groups, the slots and the
 /// build (first non-zero result returned).
 #[hook(addr = 0x80F0D0, conv = cdecl, name = "FUN_0080f0d0", expect = "83 EC 24 8B 4C 24 28 53",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn unlock_resolve(pipe: u32) -> u32 {
     let mut count = r(pipe + 4);
     let mut groups: u32 = 0;
@@ -1186,7 +1186,7 @@ pub fn unlock_resolve(pipe: u32) -> u32 {
 /// Requirement set creation (0x80F460, catalogue `FUN_0080f460`): the set (0x14) and its entries
 /// (`capacity * 0x24`) from the scratch top; NULL when either fails. count 0, mask 0, node.
 #[hook(addr = 0x80F460, conv = cdecl, name = "FUN_0080f460", expect = "56 57 6A 14 E8 27 64 FF FF",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn req_create(node: u32, capacity: u32) -> u32 {
     let s = scratch_top_call(0x14);
     if s == 0 {
@@ -1304,7 +1304,7 @@ fn io_find_inline(io: u32, cd: u32) -> i32 {
 /// own entry for `e.cd` when there is one; otherwise the own entry is found or appended and bit
 /// `k` set.
 #[hook(addr = 0x80F690, conv = cdecl, name = "FUN_0080f690", expect = "83 EC 28 8B 44 24 2C 53",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn unlock_forward(pipe: u32) -> u32 {
     let mut count = r(pipe + 4);
     let mut node = r(pipe + 8);
@@ -1534,7 +1534,7 @@ fn first_occurrence(head: u32, gr: u32) -> bool {
 /// inputToClusterSlot and the private data; the entry node's REQUIRED / OPTIONAL clusters as
 /// `{cd, requirement, slot}` at +0x1C (+0x18 count), sorted by cluster pointer (0x8103D0).
 #[hook(addr = 0x80FC30, conv = cdecl, name = "FUN_0080fc30", expect = "83 EC 18 53 8B 5C 24 20",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn unlock_build(pipe: u32, list: u32) -> u32 {
     let req0 = r(r(r(pipe + 8) + 0x1C) + 8);
     let mut nreq = 0u32;
@@ -1666,7 +1666,7 @@ fn swap_elems(a: u32, b: u32, stride: u32) {
 /// the parent's upper bound for its push test). More than 1: the minimum of elements 0..min(4,
 /// count-1) (ties keep the higher index) is swapped to the front, then an insertion sort.
 #[hook(addr = 0x8103D0, conv = cdecl, name = "FUN_008103d0", expect = "81 EC 94 01 00 00 53",
-       unverified = "std4-rxpipe-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn radix_sort(base: u32, count: u32, stride: u32, key: u32, key_min: u32, key_max: u32) {
     if base == 0 || key.wrapping_add(4) > stride || key_min >= key_max {
         return;

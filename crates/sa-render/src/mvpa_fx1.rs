@@ -64,7 +64,7 @@ pub fn fx_info_noise_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `FxInfoForce_c::GetValue` (0x4A54E0): `out.velocity (+0xC, +0x10, +0x14) += key[i] * timeStep` (x87
 /// per component, f32 stores).
 #[hook(addr = 0x4A54E0, conv = thiscall, name = "FxInfoForce_c::GetValue", expect = "8A 41 06 83 EC 40",
-       unverified = "mvpa-fx-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the particle movement info (caller stack or heap)")]
 pub fn fx_info_force_get_value(this: GPtr<u8>, curr: u32, mult: u32, step: u32, total: u32, _use_const: u32, out: GPtr<u8>) {
     let t = key_time(this, curr, mult, total);
@@ -115,7 +115,7 @@ pub fn fx_info_wind_get_value(this: GPtr<u8>, curr: u32, mult: u32, step: u32, t
 /// `FxInfoRotSpeed_c::GetValue` (0x4A5D40): `FxInterpInfoFloat_c::GetVal`; `out +0x18 = key[0]` (fld/fstp)
 /// and +0x1C, +0x20, +0x24 = key[1..3] (dword copies).
 #[hook(addr = 0x4A5D40, conv = thiscall, name = "FxInfoRotSpeed_c::GetValue", expect = "8A 41 06 83 EC 40",
-       unverified = "mvpa-fx-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the particle movement info")]
 pub fn fx_info_rot_speed_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, total: u32, _use_const: u32, out: GPtr<u8>) {
     let t = key_time(this, curr, mult, total);
@@ -223,7 +223,7 @@ pub fn fx_info_em_rate_get_value(this: GPtr<u8>, curr: u32, _mult: u32, step: u3
 /// compare, `jnp`) gives `f = (float)((t - Tp) / (Tj - Tp))` and `out[i] = (v[j] - v[j-1]) * f +
 /// v[j-1]`; none: `out[i] = keys[i][n-1]`. Indexing wraps like the original for degenerate counts.
 #[hook(addr = 0x4A8470, conv = thiscall, name = "FxInterpInfoFloat_c::GetVal", expect = "51 53 56 8B F1 8A 5E 05",
-       unverified = "mvpa-fx-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the caller's key buffer (stack of the caller)")]
 pub fn interp_float_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32) {
     let out = out.cast::<u32>();

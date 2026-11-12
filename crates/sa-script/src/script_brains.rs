@@ -46,7 +46,7 @@ fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
 /// pushes it at the head of the active list (next = old head, prev = 0, old head's prev = it) and
 /// sets +0xC4 (active) to 1. Returns the script.
 #[hook(addr = 0x464c20, conv = cdecl, name = "CTheScripts::StartNewScript-last-idle", expect = "E9 7B 56 10 01",
-       unverified = "mvph-script-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "moves a CRunningScript (ScriptsArray 0xA8B430) from the idle to the active list")]
 pub fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> {
     let s = ga::<GPtr<u8>>(IDLE_SCRIPTS).read();
@@ -77,7 +77,7 @@ pub fn start_new_script(ip: GPtr<u8>) -> GPtr<u8> {
 /// holding `entity` and `modelIndex` gets `CleanUpOldReference(&entry.entity)` (entity non-null),
 /// entity 0 and index -1.
 #[hook(addr = 0x46abc0, conv = cdecl, name = "CTheScripts::RemoveFromWaitingForScriptBrainArray",
-       expect = "E9 0B F1 0F 01", unverified = "mvph-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       expect = "E9 0B F1 0F 01", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn remove_from_waiting_for_script_brain_array(entity: GPtr<u8>, model_index: u32) {
     let id = model_index as u16;
     for i in 0..0x96usize {
@@ -97,7 +97,7 @@ pub fn remove_from_waiting_for_script_brain_array(entity: GPtr<u8>, model_index:
 /// (+0), +0xC and +0xE zero (u16), +0x10 zero, attach type and type 0xFF (+2, +3), active 1 (+4) and
 /// the radius dword of 0x859D9C (+8, reread per entry), in the bytes' store order.
 #[hook(addr = 0x46a8c0, conv = thiscall, name = "CScriptsForBrains::Init", expect = "E9 AB 12 10 01",
-       unverified = "mvph-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn scripts_for_brains_init(this: GPtr<u8>) {
     for i in 0..0x46isize {
         let e = this.byte_add(0x14 * i);
@@ -119,7 +119,7 @@ pub fn scripts_for_brains_init(this: GPtr<u8>) {
 /// attach type +2, type 0xFF (+3), active 1 (+4) and the radius dword of 0x859D9C (+8). No free
 /// entry: nothing.
 #[hook(addr = 0x46a9c0, conv = thiscall, name = "CScriptsForBrains::AddNewStreamedScriptBrainForCodeUse",
-       expect = "E9 DB 7E 0F 01", unverified = "mvph-script-1", route = "L2",
+       expect = "E9 DB 7E 0F 01", route = "L2",
        hazards = "none", recs = "grove-walk")]
 pub fn add_new_streamed_script_brain_for_code_use(this: GPtr<u8>, index: u32, name: GPtr<u8>, attach: u32) {
     let Some(i) = (0..0x46isize).find(|&i| at::<u16>(this, 0x14 * i).read() == 0xFFFF) else {

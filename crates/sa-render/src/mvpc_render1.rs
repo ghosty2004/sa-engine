@@ -27,7 +27,7 @@ fn g<T: Copy>(a: usize) -> GPtr<T> {
 /// SecuROM fragment (0x401025, the target address de-obfuscated from `[0x15605DC] ^ [0x419F03]`);
 /// the protection reads the entry's `jmp` bytes (0x6FF415) as data.
 #[hook(addr = 0x6FF410, conv = cdecl, name = "CDraw::SetFOV", expect = "8B 44 24 04 E9 0C 1C D0 FF",
-       unverified = "mvpc-render-1", route = "L2", hazards = "entry-protection-read", recs = "grove-walk",
+       route = "L2", hazards = "entry-protection-read", recs = "grove-walk",
        note = "protection code reads 0x6FF415 (inside the patched entry) as a key")]
 pub fn draw_set_fov(fov: u32) {
     g::<u32>(0x8D5038).write(fov);
@@ -37,7 +37,7 @@ pub fn draw_set_fov(fov: u32) {
 /// `CInformFriendsEventQueue::ms_informFriendsEvents` element constructor: +0 = +4 = 0, +8 = -1;
 /// returns this.
 #[hook(addr = 0x4AC0D0, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "8B C1 C7 00 00 00 00 00",
-       unverified = "mvpc-render-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn inform_friends_event_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0);
@@ -49,7 +49,7 @@ pub fn inform_friends_event_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `(missed by ghidra: data-code-immediate)` (0x6FA6D0, thiscall): the `CScripted2dEffects::ms_userLists`
 /// element constructor: dwords +0..+0xC and +0x10..+0x1C = -1, byte +0x20 = 0; returns this.
 #[hook(addr = 0x6FA6D0, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "8B C1 33 D2 83 C9 FF",
-       unverified = "mvpc-render-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn scripted_2d_user_list_ctor(this: GPtr<u8>) -> GPtr<u8> {
     for i in 0..4isize {
@@ -64,7 +64,7 @@ pub fn scripted_2d_user_list_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `CScripted2dEffects::ms_effectPairs` element constructor: `eh vector constructor iterator(this + 4,
 /// 0x24, 4, 0x6FA770, 0x6F9E30)`, then `FUN_006f9eb0(this)`; returns this.
 #[hook(addr = 0x6FA790, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "56 68 30 9E 6F 00",
-       unverified = "mvpc-render-1", route = "split", hazards = "none",
+       route = "split", hazards = "none",
        note = "run only by its CRT static initialiser (before any recorded frame)")]
 pub fn scripted_2d_effect_pairs_ctor(this: GPtr<u8>) -> GPtr<u8> {
     eh_vector_ctor(this.byte_add(4), 0x24, 4, 0x6FA770, 0x6F9E30);
@@ -99,7 +99,7 @@ pub fn effect_pairs_reset(this: GPtr<u8>) -> u32 {
 /// `CPlantColEntEntry` (0x14 bytes at 0xC08E48): +0, +4, word +8 cleared, linked through +0xC / +0x10;
 /// 0xC0399C = 0, free head 0xC03998 = 0xC08E48. Returns 1.
 #[hook(addr = 0x5DD780, conv = cdecl, name = "CPlantMgr::ReloadConfig", expect = "83 EC 30 E8 38 FF FF FF",
-       unverified = "mvpc-render-1", route = "split", hazards = "ax-al-return", recs = "grove-walk",
+       route = "split", hazards = "ax-al-return", recs = "grove-walk",
        note = "loads PLANTS.DAT through CPlantSurfPropMgr::Initialise (file effects)")]
 pub fn plant_mgr_reload_config() -> u8 {
     let r = plant_surf_prop_initialise();
@@ -179,7 +179,7 @@ const PARTICLE_TXD: usize = 0x85C648;
 /// +0x54 (from 0xC40E44, 0x68 apart) = bunch + 0x68 (the next), the last (0xC4A01C) = 0; byte +0x32 of
 /// the 48 permanent shadows (0x38 apart from 0xC4AC62) = 0.
 #[hook(addr = 0x706CD0, conv = cdecl, name = "CShadows::Init", expect = "53 E8 CA A9 02 00",
-       unverified = "mvpc-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "reads 12 textures (one-time initialiser)")]
 pub fn shadows_init() {
     txd_push_current();
@@ -226,7 +226,7 @@ pub fn shadows_init() {
 /// current: the texture 0xC7C718 is read (0x872A04) when null. The rasters 0xC7C71C and 0xC7C720 are
 /// destroyed when set (and cleared); 0xC7C724 = 0xC7C618 = 0.
 #[hook(addr = 0x7268F0, conv = cdecl, name = "CSpecialFX::Init", expect = "53 B8 60 C7 C7 00",
-       unverified = "mvpc-render-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "reads a texture and destroys rasters (one-time initialiser)")]
 pub fn special_fx_init() {
     for (start, end, step) in [(0xC7C760usize, 0xC7CA20usize, 0x2Cusize), (0xC80258, 0xC802E4, 0x1C), (0xC802E8, 0xC803D8, 0x30)] {
@@ -304,7 +304,7 @@ fn cam_dist(x: u32, y: u32, z: u32) -> X87 {
 /// slot's +0x30 (0x38-byte records at 0xC7CB58) before the test; `d <= 60.0` (ordered) registers: the
 /// 12 floats → +0..+0x2C, colour → +0x34, a/b/c → +0x35..+0x37, count + 1.
 #[hook(addr = 0x724770, conv = cdecl, name = "CBrightLights::RegisterOne", expect = "53 8A 5C 24 38",
-       unverified = "mvpc-render-1", route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
        note = "fsqrt of the camera distance")]
 #[allow(clippy::too_many_arguments)]
 pub fn bright_lights_register_one(
@@ -391,7 +391,7 @@ fn kf(bits: u32) -> f32 {
 /// modifier sets `wx = dx * (1/d) * S`, `wy = (1/d) * dy * S` (f32). Any match: `R = ((rand() & 0x1F) -
 /// 16) * 0.0005 + 1`, `*outX += wx * R`, `*outY += R * wy`, 1; else 0.
 #[hook(addr = 0x72C950, conv = cdecl, name = "CWindModifiers::FindWindModifier", expect = "83 EC 18 A1 50 14 C8 00",
-       unverified = "mvpc-render-1", route = "L2", hazards = "x87-transcendental,ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental,ax-al-return", recs = "grove-walk",
        note = "one rand() call when a modifier matches; fsqrt")]
 pub fn find_wind_modifier(x: u32, y: u32, z: u32, out_x: GPtr<f32>, out_y: GPtr<f32>) -> u8 {
     let (x, y, z) = (kf(x), kf(y), kf(z));
@@ -512,7 +512,7 @@ orig! {
 /// `ProcSurfaceInfo_c::Init(surface, model, the 12 values)` on entry `this + 8 + 0x48 * count`, count
 /// (+4) + 1. `CloseFile`.
 #[hook(addr = 0x5A3140, conv = thiscall, name = "ProcObjectMan_c::LoadDataFile", expect = "81 EC B0 00 00 00",
-       unverified = "mvpc-render-1", route = "split", hazards = "heap-writes,uninit-locals", recs = "grove-walk",
+       route = "split", hazards = "heap-writes,uninit-locals", recs = "grove-walk",
        note = "loads procobj.dat (file effects)")]
 pub fn proc_object_man_load_data_file(this: GPtr<u8>) {
     let f = cfm_open_file(g(0x867014), g(0x85A53C));
@@ -623,7 +623,7 @@ pub fn clump_sphere_radius_cb(atomic: GPtr<u8>, s: GPtr<f32>) -> GPtr<u8> {
 /// around it (from 0); the centre is then brought back with the inverse of the frame's LTM (or modelling
 /// matrix) via `RwV3dTransformPoints`. Returns the clump.
 #[hook(addr = 0x734FC0, conv = cdecl, name = "RpClumpGetBoundingSphere", expect = "8A 44 24 0C 83 EC 5C",
-       unverified = "mvpc-render-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "keeps the atomic count (f32) in its own third argument slot (no footprint recorded)")]
 pub fn rp_clump_get_bounding_sphere(clump: GPtr<u8>, sphere: GPtr<u8>, use_ltm: u32) -> GPtr<u8> {
     g::<u8>(SPHERE_USE_LTM).write(use_ltm as u8);

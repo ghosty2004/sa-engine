@@ -233,7 +233,7 @@ fn residue32(off: i32) -> i32 {
 ///   0x6157B9: criminal wander or the TV-carrying task) or the brain script check, the leader and the clump alpha.
 #[hook(addr = 0x614720, conv = cdecl, name = "CPopulation::AddToPopulation", expect = "6A FF 68 8E EF 83 00 64",
        footprint = 0x1000,
-       unverified = "popw4-frame-1", route = "split", hazards = "heap-writes,uninit-locals,stack-residue,x87-transcendental",
+       route = "split", hazards = "heap-writes,uninit-locals,stack-residue,x87-transcendental",
        recs = "grove-walk,driving,car-ai,police-gang,world-cheats",
        note = "every frame from CPopulation::Update; creates peds, tasks, objects and beach toys (split: no double run); pedType/model locals can be residue when FindNewPedType writes nothing (SPLIT_STACKFILL); fsqrt distances")]
 pub fn add_to_population(r1: f32, r2: f32, r3: f32, r4: f32) -> u8 {

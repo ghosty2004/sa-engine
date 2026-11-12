@@ -85,7 +85,7 @@ const DTOR_DUMMY_MATRIX: u32 = 0x85_6480;
 /// `.bss` values), then `atexit(__dtor_gDummyMatrix)`. The original returns the `_atexit` result in EAX
 /// (ignored by `_initterm`).
 #[hook(addr = 0x84E2E0, conv = cdecl, name = "__init_gDummyMatrix", expect = "68 00 00 80 3F",
-       unverified = "boot-core-1", route = "split", hazards = "none", recs = "boot",
+       route = "split", hazards = "none", recs = "boot",
        note = "C++ static initialiser: runs once from _initterm before WinMain; registers an atexit destructor")]
 pub fn init_dummy_matrix() -> i32 {
     set_scale_call(GPtr::from_addr(DUMMY_MATRIX), 1.0);

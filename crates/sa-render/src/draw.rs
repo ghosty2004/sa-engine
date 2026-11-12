@@ -51,7 +51,7 @@ fn sq(base: f32, k: usize) -> X87 {
 /// 0xC8802C = (m1·20)², 0xC88028 = (m1·50)², 0xC88044 = 2(m2·45)², 0xC88040 = 2(m2·70)²,
 /// 0xC8803C = 0xC88038 = 2(m2·150)², 0xC88034 = 2(m1·60)², 0xC88030 = 2(m1·70)².
 #[hook(addr = 0x7328C0, conv = cdecl, name = "CVisibilityPlugins::SetRenderWareCamera", expect = "D9 05 18 F1 B6 00",
-       unverified = "std4-render-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn set_render_ware_camera(camera: GPtr<u8>) {
     let m1 = rdf(0xB6F118);
     GPtr::<u32>::from_addr(0xC8804C).write(camera.addr() as u32);

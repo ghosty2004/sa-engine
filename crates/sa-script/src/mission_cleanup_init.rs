@@ -16,7 +16,7 @@ const ENTRIES: usize = 0x4B;
 /// (0xA90AA8) is not written. No `atexit`. The original leaves EAX = 0xA90AAC, ECX = EDX = 0 (ignored by
 /// `_initterm`).
 #[hook(addr = 0x84A720, conv = cdecl, name = "__init_CTheScripts__MissionCleanUp", expect = "B8 54 08 A9 00",
-       unverified = "boot-script-1", route = "split", hazards = "none", recs = "boot",
+       route = "split", hazards = "none", recs = "boot",
        note = "C++ static initialiser: runs once from _initterm before WinMain")]
 pub fn init_mission_cleanup() {
     for i in 0..ENTRIES {

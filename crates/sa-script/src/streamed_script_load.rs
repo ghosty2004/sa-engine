@@ -19,7 +19,7 @@ orig! {
 /// operator new(e+0x1C size)`, `RwStreamRead(stream, e+0, e+0x1C)`, AL = 1. AL only: the upper EAX bytes are those
 /// of the last callee's result.
 #[hook(addr = 0x470840, conv = thiscall, name = "CStreamedScripts::LoadStreamedScript", expect = "E9 7B 56 0F 01",
-       unverified = "mvpl-script-1", route = "split", hazards = "ax-al-return,heap-writes", recs = "grove-walk",
+       route = "split", hazards = "ax-al-return,heap-writes", recs = "grove-walk",
        note = "reads the script file through RwStreamRead (file position) and allocates the script buffer: one run per state")]
 pub fn load_streamed_script(this: GPtr<u8>, stream: GPtr<u8>, index: i32) -> u8 {
     if check_streamed_script_version(stream, GPtr::from_addr(0x859E84)) == 0 {
