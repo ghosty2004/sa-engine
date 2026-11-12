@@ -79,7 +79,7 @@ pub fn get_actual_script_thing_index(r: i32, ty: u32) -> i32 {
 /// `CTheScripts::HasCarModelBeenSuppressed(int32 model)` (0x46A810, cdecl): `model` in the 40 dwords of
 /// `SuppressedVehicleModels` (0xA44940) → AL = 1, else 0. AL only: the upper EAX bytes are the caller's.
 #[hook(addr = 0x46a810, conv = cdecl, name = "CTheScripts::HasCarModelBeenSuppressed", expect = "8B 4C 24 04 32 C0",
-       unverified = "mvpl-script-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "ax-al-return", recs = "grove-walk",
        note = "AL result; the original leaves the caller's upper EAX bytes")]
 pub fn has_car_model_been_suppressed(model: i32) -> u8 {
     u8::from((0..40u32).any(|i| GPtr::<i32>::from_addr((0xA44940 + 4 * i) as usize).read() == model))
@@ -88,7 +88,7 @@ pub fn has_car_model_been_suppressed(model: i32) -> u8 {
 /// `CTheScripts::HasVehicleModelBeenBlockedByScript(int32 model)` (0x46A890, cdecl): `model` in the 20 dwords of
 /// `VehicleModelsBlockedByScript` (0xA448F0) → AL = 1, else 0. AL only: the upper EAX bytes are the caller's.
 #[hook(addr = 0x46a890, conv = cdecl, name = "CTheScripts::HasVehicleModelBeenBlockedByScript",
-       expect = "8B 4C 24 04 32 C0", unverified = "mvpl-script-1", route = "L2", hazards = "ax-al-return",
+       expect = "8B 4C 24 04 32 C0", route = "L2", hazards = "ax-al-return",
        recs = "grove-walk", note = "AL result; the original leaves the caller's upper EAX bytes")]
 pub fn has_vehicle_model_been_blocked_by_script(model: i32) -> u8 {
     u8::from((0..20u32).any(|i| GPtr::<i32>::from_addr((0xA448F0 + 4 * i) as usize).read() == model))

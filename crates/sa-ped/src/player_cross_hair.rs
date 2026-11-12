@@ -71,7 +71,7 @@ fn tan(v: X87) -> X87 {
 /// `CWeapon(31, 5000)` fires `FireInstantHit(ped, &O, &O, NULL, &T, NULL, true, true)` from the camera's placement
 /// position `O`, with ped flag +0x470 bit 25 cleared during the call and restored afterwards (ped read again).
 #[hook(addr = 0x56ec80, conv = thiscall, name = "FUN_0056ec80", expect = "83 EC 5C 56 8B F1",
-       unverified = "mvpm-ped-1", route = "L2", hazards = "x87-transcendental,stack-residue", recs = "driving",
+       route = "L2", hazards = "x87-transcendental,stack-residue", recs = "driving",
        note = "two FPTANs (sa_math::x87 model); the CWeapon lives on the Rust stack (0x1C bytes, no destructor in the original)")]
 pub fn player_cross_hair_process(this: GPtr<u8>, player: i32, pad: GPtr<u8>) {
     if rd::<u8>(this, 0) == 0 {

@@ -46,7 +46,7 @@ const CONVERSATIONS_END: usize = 0x969360;
 /// The `FindPlayerPed` call is return-address obfuscated in the original (`push -1; call $+5; ... ret`): the target
 /// is `~[0x1560580] ^ [0x6840B7]` = 0x56E210 and the return lands at 0x156CB2F (decoded from the image).
 #[hook(addr = 0x43aba0, conv = thiscall, name = "CPed::PedIsReadyForConversation", expect = "E9 3B 1F 13 01",
-       unverified = "mvpm-ai-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "ax-al-return", recs = "grove-walk",
        note = "AL result, upper EAX bytes from the last callee or the state; FindPlayerPed reached through a decoded return-address-obfuscated call (0x56E210)")]
 pub fn ped_is_ready_for_conversation(this: GPtr<u8>, check_wanted: u32) -> u8 {
     if rd::<u32>(this, 0x46C) & 0x100 != 0 {

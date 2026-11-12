@@ -188,7 +188,7 @@ pub const AUDIO_LOG10_FLOOR: f32 = f32::from_bits(0xC0A0_0000);
 /// [`call_audio_log10`].
 #[hook(addr = 0x4D9E50, conv = reg("args = stack"), name = "CAEAudioUtility::AudioLog10",
        expect = "D9 44 24 04 D8 1D 14 8C 85 00",
-       unverified = "harness5-1", route = "L2", hazards = "x87-transcendental", recs = "driving",
+       route = "L2", hazards = "x87-transcendental", recs = "driving",
        note = "80-bit ST0 result (HARNESS-5 reg conv); FYL2X model 1 ulp (64-bit) off in ~0.6% of inputs, ledger")]
 pub fn audio_log10(v: f32) -> X87 {
     let xv = X87::from_f32(v);
