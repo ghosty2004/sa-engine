@@ -122,6 +122,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::respected_friend_range::HOOKS,
     crate::attractor_arrival::HOOKS,
     crate::use_attractor_tasks::HOOKS,
+    crate::wander_set_dir::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
