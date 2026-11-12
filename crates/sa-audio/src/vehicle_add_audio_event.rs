@@ -2,7 +2,7 @@
 //! vehicle audio entity's one-shot event dispatcher. Ported from the 1.0 US bytes (the SEH handler push
 //! sits in the SecuROM fragment 0x40727C, the `mov ecx, AESoundManager` before the shared
 //! `RequestNewSound` in 0x40A125); gta-reversed is a reading aid only (its volumes, flags and the
-//! wave-hit volume differ from the exe). Unverified (docs/verify/HOWTO.md).
+//! wave-hit volume differ from the exe). Verified by L2 (VERIFIER-10, docs/verify/verdicts-gen2b.tsv).
 //!
 //! The entry bytes (`push -1; jmp rel32`) are read as data by the no-CD protection (`adc ecx,
 //! [0x4F6423]` at 0x401931): sa-hook keycells reader, hazard `entry-protection-read`.
@@ -179,7 +179,7 @@ fn stack_sound() -> [u32; 0x74 / 4] {
 /// The words of the stack sound `Initialise` does not write keep the original's stack residue
 /// (`peek`); `RequestNewSound` copies them.
 #[hook(addr = 0x4F6420, conv = thiscall, name = "CAEVehicleAudioEntity::AddAudioEvent-0", expect = "6A FF E9 55 0E F1 FF",
-       peek = 0x80, unverified = "writero-audio-1", route = "L2", hazards = "uninit-locals,entry-protection-read",
+       peek = 0x80, route = "L2", hazards = "uninit-locals,entry-protection-read",
        recs = "driving")]
 pub fn vehicle_add_audio_event(this: GPtr<u8>, event: u32, p1: u32) {
     let mut buf = stack_sound();

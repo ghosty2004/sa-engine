@@ -13,7 +13,7 @@
 use super::*;
 
 /// `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType` (0x464F50, SCRIPT): leaf, thiscall, `ret 8`; 26 instruction(s) matched.
-#[hook(addr = 0x464F50, conv = thiscall, name = "CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType", expect = "8B 44 24 08 8B 08", unverified = "gen2-script-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x464F50, conv = thiscall, name = "CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType", expect = "8B 44 24 08 8B 08", route = "L2", hazards = "heap-writes")]
 pub fn g_crunning_script_get_correct_ped_model_index_for_emergency_service_type_464f50(
     _this: u32,
     a0: u32,

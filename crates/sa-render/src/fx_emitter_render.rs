@@ -1,7 +1,7 @@
 //! `FxEmitterBP_c::Render` (0x4A2C40, batch `writero-render-1`): the particle emitter's per-frame
 //! renderer (gta-reversed has it unreversed). Ported from the 1.0 US bytes; the x87 stack values the
 //! original keeps across instructions are modelled with `sa_math::x87::X87` (full width), every `fstp dword` is a
-//! `to_f32`. Unverified (docs/verify/HOWTO.md).
+//! `to_f32`. Verified by L2 (VERIFIER-10, docs/verify/verdicts-gen2b.tsv).
 //!
 //! Per particle the original keeps its locals in one 0x1F8-byte frame; the ones that live across
 //! iterations are kept here too: the render-info block (`FxInfoManager_c::ProcessRenderInfo` rewrites
@@ -150,7 +150,7 @@ fn set_basis(m: GPtr<u8>, b: [f32; 3], a: [f32; 3], c: [f32; 3]) {
 ///   (`RenderEnd` + `RenderBegin`). Two triangles go to `RenderAddTri_`.
 /// - `RenderEnd()`.
 #[hook(addr = 0x4A2C40, conv = thiscall, name = "FxEmitterBP_c::Render", expect = "81 EC E8 01 00 00",
-       unverified = "writero-render-1", route = "L2", hazards = "uninit-locals,heap-writes",
+       route = "L2", hazards = "uninit-locals,heap-writes",
        recs = "grove-walk,driving",
        note = "direct rand() at 0x4A2E64; writes particle +0x38 (rotation); x87-heavy (full-width intermediates)")]
 pub fn fx_emitter_bp_render(this: GPtr<u8>, camera: u32, txd: u32, brightness: u32, heat: u32) {
@@ -213,7 +213,7 @@ pub fn fx_emitter_bp_render(this: GPtr<u8>, camera: u32, txd: u32, brightness: u
 /// smoke and trails, its direction-info velocity used as is, colour bytes r/g/b = 0 (alpha from the
 /// render info); then `RenderEnd()`. `txdHash` and `brightness` are not read.
 #[hook(addr = 0x4A1940, conv = thiscall, name = "FxEmitterBP_c::RenderHeatHaze", expect = "81 EC 2C 01 00 00",
-       unverified = "writero-render-1", route = "L2", hazards = "uninit-locals,heap-writes",
+       route = "L2", hazards = "uninit-locals,heap-writes",
        recs = "grove-walk",
        note = "writes particle +0x38 (rotation); x87-heavy (full-width intermediates)")]
 pub fn fx_emitter_bp_render_heat_haze(this: GPtr<u8>, camera: u32, _txd: u32, brightness: u32) {

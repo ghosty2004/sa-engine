@@ -24,7 +24,7 @@ orig! {
 }
 
 /// `RwHelper::RemoveRefsCB` (0x7226D0, RW): small, cdecl, `ret`; 10 instruction(s) matched.
-#[hook(addr = 0x7226D0, conv = cdecl, name = "RwHelper::RemoveRefsCB", expect = "56 8B 74 24 08", unverified = "gen2-rw-5", route = "L2", hazards = "none", recs = "pause-restart")]
+#[hook(addr = 0x7226D0, conv = cdecl, name = "RwHelper::RemoveRefsCB", expect = "56 8B 74 24 08", route = "L2", hazards = "none", recs = "pause-restart")]
 pub fn g_rw_helper_remove_refs_cb_7226d0(a0: u32) -> u32 {
     let v1 = c_732260_c1(a0);
     c_4c4bb0_t0(v1);

@@ -13,7 +13,7 @@
 use super::*;
 
 /// `IsLampPost` (0x509A30, CAM): leaf, cdecl, `ret`; 51 instruction(s) matched.
-#[hook(addr = 0x509A30, conv = cdecl, name = "IsLampPost", expect = "90 90 E9 B7 BE EF FF", unverified = "gen2-cam-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x509A30, conv = cdecl, name = "IsLampPost", expect = "90 90 E9 B7 BE EF FF", route = "L2", hazards = "none")]
 pub fn g_is_lamp_post_509a30(a0: u32) -> u32 {
     let v1 = u32::from(g::<u16>(0x8C_D518).read());
     if a0 == v1 {

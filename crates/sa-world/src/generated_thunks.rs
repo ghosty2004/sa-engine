@@ -22,7 +22,7 @@ orig! {
 }
 
 /// `CAudioEngine::StopPoliceScanner` (0x507400, WORLD): thunk, thiscall, `ret 4`; 5 instruction(s) matched.
-#[hook(addr = 0x507400, conv = thiscall, name = "CAudioEngine::StopPoliceScanner", expect = "8B 44 24 04 50", unverified = "gen2-world-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x507400, conv = thiscall, name = "CAudioEngine::StopPoliceScanner", expect = "8B 44 24 04 50", route = "L2", hazards = "none")]
 pub fn g_caudio_engine_stop_police_scanner_507400(_this: u32, a0: u32) {
     let _v1 = c_4e6dc0_c1(a0);
 }

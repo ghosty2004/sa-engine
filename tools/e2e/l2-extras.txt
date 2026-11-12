@@ -6854,3 +6854,34 @@ CStats::BuildStatLine@0xC1AED8:0x480:RW
 0x59B920@ecx:0x48:RW
 0x59AFA0@ecx:0x48:RW
 0x59AFE0@ecx:0x48:RW
+# GEN2 generated hooks, VERIFIER-10 (split v10*-* on the corpus recordings): static memory the original callees write.
+# CEmergencyPed (0x5DE340, the CPed constructor it calls): the ped model info's reference count
+# (CModelInfo::ms_pedModelInfoStore 0xB478F8), the anim block reference counts (CAnimManager::ms_aAnimBlocks
+# 0xB5D4A0) and the RwFrame module statics (0xC97974..0xC979C8: the frame free list the clump copy uses)
+0x5DE340@0xB478F8:0x49DC:D
+0x5DE340@0xB5D4A0:0x1680:D
+0x5DE340@0xC97974:0x54:D
+# CVisibilityPlugins::RenderAtomicWithAlphaCB / RenderFadingClumpCB: RenderWare / D3D9 driver state the original
+# render callees write (the D3D9 transform / last-buffer cache 0x8E2418.., RW module statics 0xC926C8..,
+# RwEngineInstance and the D3D9 render-state caches 0xC97B98..; split v10a-air-water)
+0x732660@0x8E2400:0x200:D
+0x732660@0xC926C8:0x20:D
+0x732660@0xC97B98:0x2fa6:D
+0x733630@0x8E2400:0x200:D
+0x733630@0xC926C8:0x20:D
+0x733630@0xC97B98:0x2fa6:D
+# writero-rw-1 (RtQuat, VERIFIER-10 l2 v10-wr-rw-*): the output quaternion / vectors / matrix / slerp cache
+# behind the pointer arguments (often the caller's stack locals or a static matrix)
+0x7EB5C0@arg0:0x10:RW
+0x7EB6A0@arg0:0x10:RW
+0x7EB700@arg0:0x10:RW
+0x7EB760@arg0:0x10:RW
+0x7EB7C0@arg0:0x10:RW
+0x7EBBB0@arg0:arg2+arg2+arg2+arg2+arg2+arg2+arg2+arg2+arg2+arg2+arg2+arg2:RW
+0x7F1930@arg0:0x40:RW
+0x7EC220@arg2:0x28:RW
+# CAEVehicleAudioEntity::AddAudioEvent (writero-audio-1, VERIFIER-10 l2 v10-wr-audio-drv): the original callees
+# (CAESoundManager::RequestNewSound, CAEAudioHardware bank queries) write AEAudioHardware (0xB5F8B8, 0x1014) and
+# AESoundManager (0xB62CB0, 0x8CBC) state (the sound slots); static windows, compared there
+0x4F6420@0xB5F8B8:0x1014:D
+0x4F6420@0xB62CB0:0x8CBC:D

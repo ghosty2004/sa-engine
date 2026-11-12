@@ -3,7 +3,7 @@
 //! `RwMatrixOrthoNormalize`'s body 0x7F1930 (its entry 0x7F1920 is a `jmp` into it, registered as a
 //! native in `matrix.rs`). Ported from the 1.0 US bytes (gta-reversed does not reverse RtQuat). Every
 //! x87 value the original keeps on the FPU stack is a full-width [`X87`]; `fstp dword` is `to_f32`.
-//! Unverified (docs/verify/HOWTO.md).
+//! Verified by L2 (VERIFIER-10, docs/verify/verdicts-gen2b.tsv).
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
@@ -51,7 +51,7 @@ fn f(p: GPtr<u8>, o: isize) -> f32 {
 /// up.x) * s`. Otherwise the largest diagonal term picks `_rtQuatFromMatrixX` (right.x > up.y and >
 /// at.z), `Y` (up.y > at.z) or `Z` (ties and NaNs as the original's `and eax, 0x4100` tests). Returns 1.
 #[hook(addr = 0x7EB5C0, conv = cdecl, name = "RtQuatConvertFromMatrix", expect = "53 56 57 8B 7C 24 10",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn rt_quat_convert_from_matrix(q: GPtr<u8>, m: GPtr<u8>) -> u32 {
     if q.is_null() || m.is_null() {
         return 0;
@@ -100,7 +100,7 @@ fn from_matrix(q: GPtr<u8>, m: GPtr<u8>, a: isize, b: isize, d: isize, big: isiz
 /// (at.z + up.y)) + 1))`; x = `0.5 r`, w = `(up.z - at.y) s`, y = `(up.x + right.y) s`, z = `(at.x +
 /// right.z) s` (`s = 0.5 / r`). See [`from_matrix`].
 #[hook(addr = 0x7EB6A0, conv = cdecl, name = "_rtQuatFromMatrixX", expect = "56 8B 74 24 0C",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "stores an f32 into its own m argument slot (entry+8); the caller pops it unread")]
 pub fn rt_quat_from_matrix_x(q: GPtr<u8>, m: GPtr<u8>) {
     from_matrix(q, m, 0x28, 0x14, 0, 0, [(0xC, 0x18, 0x24, true), (4, 0x10, 4, false), (8, 0x20, 8, false)]);
@@ -110,7 +110,7 @@ pub fn rt_quat_from_matrix_x(q: GPtr<u8>, m: GPtr<u8>) {
 /// + right.x)) + 1))`; y = `0.5 r`, w = `(at.x - right.z) s`, z = `(at.y + up.z) s`, x = `(up.x +
 /// right.y) s`.
 #[hook(addr = 0x7EB700, conv = cdecl, name = "_rtQuatFromMatrixY", expect = "56 8B 74 24 0C",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "stores an f32 into its own m argument slot (entry+8); the caller pops it unread")]
 pub fn rt_quat_from_matrix_y(q: GPtr<u8>, m: GPtr<u8>) {
     from_matrix(q, m, 0x28, 0, 0x14, 4, [(0xC, 0x20, 8, true), (8, 0x24, 0x18, false), (0, 0x10, 4, false)]);
@@ -120,7 +120,7 @@ pub fn rt_quat_from_matrix_y(q: GPtr<u8>, m: GPtr<u8>) {
 /// + right.x)) + 1))`; z = `0.5 r`, w = `(right.y - up.x) s`, x = `(at.x + right.z) s`, y = `(at.y +
 /// up.z) s`.
 #[hook(addr = 0x7EB760, conv = cdecl, name = "_rtQuatFromMatrixZ", expect = "56 8B 74 24 0C",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "stores an f32 into its own m argument slot (entry+8); the caller pops it unread")]
 pub fn rt_quat_from_matrix_z(q: GPtr<u8>, m: GPtr<u8>) {
     from_matrix(q, m, 0x14, 0, 0x28, 8, [(0xC, 4, 0x10, true), (0, 0x20, 8, false), (4, 0x24, 0x18, false)]);
@@ -137,7 +137,7 @@ pub fn rt_quat_from_matrix_z(q: GPtr<u8>, m: GPtr<u8>) {
 ///
 /// Returns q.
 #[hook(addr = 0x7EB7C0, conv = cdecl, name = "RtQuatRotate", expect = "83 EC 20 56 8B 74 24 28",
-       unverified = "writero-rw-1", route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
        note = "fsin/fcos of the full-width half angle; stores sin as f32 into its own angle argument slot (entry+0xC)")]
 pub fn rt_quat_rotate(q: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> u32 {
     if q.is_null() || axis.is_null() {
@@ -203,7 +203,7 @@ pub fn rt_quat_rotate(q: GPtr<u8>, axis: GPtr<u8>, angle: f32, op: u32) -> u32 {
 /// then out += `v * k`, where v is re-read from `in` after each store (in-place calls see the new
 /// values, as in the original). Returns out.
 #[hook(addr = 0x7EBBB0, conv = cdecl, name = "RtQuatTransformVectors", expect = "83 EC 24 53 56",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "stores k as f32 into its own q argument slot (entry+0x10); callers pop it unread")]
 pub fn rt_quat_transform_vectors(out: GPtr<u8>, inp: GPtr<u8>, n: i32, q: GPtr<u8>) -> GPtr<u8> {
     let (qx, qy, qz, qw) = (f(q, 0), f(q, 4), f(q, 8), f(q, 0xC));
@@ -239,7 +239,7 @@ pub fn rt_quat_transform_vectors(out: GPtr<u8>, inp: GPtr<u8>, n: i32, q: GPtr<u
 /// the native at 0x7F1920 ([`crate::matrix::matrix_ortho_normalize`]), hooked at the body so phase A
 /// reaches the port (the 0x7F1920 entry is a `jmp` into game text and cannot be patched).
 #[hook(addr = 0x7F1930, conv = cdecl, name = "FUN_007f1930", expect = "83 EC 3C 8B 44 24 44",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn matrix_ortho_normalize_body(dst: GPtr<u8>, src: GPtr<u8>) -> GPtr<u8> {
     crate::matrix::matrix_ortho_normalize(dst, src)
 }
@@ -289,7 +289,7 @@ enum Z {
 /// it both quaternions are scaled by `1 / sin(omega)` (a 6-term polynomial). Returns the flag. The
 /// original keeps d, z and df in its own argument slots (entry+0xC, +4, +8).
 #[hook(addr = 0x7EC220, conv = cdecl, name = "RtQuatSetupSlerpCache", expect = "8B 44 24 04 56",
-       unverified = "writero-rw-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "stores f32 scratch into its own argument slots (entry+4, +8, +0xC); callers pop them unread")]
 pub fn rt_quat_setup_slerp_cache(from: GPtr<u8>, to: GPtr<u8>, cache: GPtr<u8>) -> u32 {
     for o in [0, 4, 8, 0xC] {

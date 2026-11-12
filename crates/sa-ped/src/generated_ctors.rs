@@ -22,7 +22,7 @@ orig! {
 }
 
 /// `CEmergencyPed` (0x5DE340, PED): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
-#[hook(addr = 0x5DE340, conv = thiscall, name = "CEmergencyPed", expect = "6A FF 68 C8 D7 83 00", unverified = "gen2-ped-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x5DE340, conv = thiscall, name = "CEmergencyPed", expect = "6A FF 68 C8 D7 83 00", route = "L2", hazards = "heap-writes")]
 pub fn g_cemergency_ped_5de340(this: u32, a0: u32, a1: u32) -> u32 {
     c_5e8030_t1(this, a0);
     wr::<u32>(p(this), 0, 0x86_C200);
