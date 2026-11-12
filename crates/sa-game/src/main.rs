@@ -230,10 +230,11 @@ fn run(args: &Args) -> Result<String, String> {
             let mut i = InputState::default();
             if let Some((start, count)) = walk {
                 if n >= start && n < start + count {
-                    i.held.insert(Key::W);
+                    // key_down first: it queues the key-down message only for a key not yet held
                     if n == start {
                         i.key_down(Key::W);
                     }
+                    i.held.insert(Key::W);
                 } else if n == start + count {
                     i.events.push(InputEvent::KeyUp { key: Key::W });
                 }
