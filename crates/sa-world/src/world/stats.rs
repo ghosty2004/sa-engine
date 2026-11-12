@@ -490,7 +490,7 @@ pub fn update_fat_and_muscle_stats_host(v: i32) {
 /// `IncrementStat(0x18, [0xB78F3C])`, `DisplayScriptStatUpdateMessage(1, 0x18, [0xB78F3C])`, units 0;
 /// else the units grow by `_ftol(timeStep * 0.02 * 1000)`.
 #[hook(addr = 0x55c470, conv = cdecl, name = "CStats::UpdateFatAndMuscleStats", expect = "51 A1 FC 94 B7 00",
-       unverified = "mvpi-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn update_fat_and_muscle_stats_port(fat_burned: u32) {
     let thr = x(gf(0xB78FB8)).fmul_m(1000.0);
     if matches!(thr.fcom(units(FAT_UNITS)), Cmp::Less) {

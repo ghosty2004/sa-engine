@@ -246,7 +246,7 @@ fn darkel_text_x() -> f32 {
 /// above 4000 ms or on odd frames; only with `TimeLimit >= 0`) and the kills left `"%d"` (negative shown as 0),
 /// printed right-aligned at `w - w * 0.0015625 * 32`.
 #[hook(addr = 0x43CEC0, conv = cdecl, name = "CDarkel::DrawMessages", expect = "A0 88 30 A4 00",
-       unverified = "popw4-partial-1", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        note = "completed partial port: statuses 1, 2, 4 are new (frenzy HUD); the 0xA43088 / status exits were verified")]
 pub fn darkel_draw_messages() {
     if g::<u8>(0xA43088).read() == 1 {

@@ -259,7 +259,7 @@ pub fn destroy_index_buffer(ib: GPtr<u8>) {
 /// `CVector::operator*=(float)` (0x40FEF0, thiscall, `ret 4`): each component `= s * c` (f32 stores).
 /// Returns `this` in EAX.
 #[hook(addr = 0x40FEF0, conv = thiscall, name = "FUN_0040fef0", this = "CVector", expect = "D9 44 24 04 8B C1",
-       unverified = "mvpd-d3d-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn vector_mul_assign(this: GPtr<u8>, s: f32) -> GPtr<u8> {
     for c in 0..3isize {
         wr::<f32>(this, c * 4, x(s).fmul_m(rd::<f32>(this, c * 4)).to_f32());

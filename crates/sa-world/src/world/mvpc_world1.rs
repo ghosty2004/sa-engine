@@ -725,7 +725,7 @@ pub fn find_objects_kinda_colliding(c: GPtr<u8>, radius: f32, two_d: u8, count: 
 /// `colModel radius + radius` (the model info's col model +0x24) and `*outCount < maxCount` (int16), the
 /// entity is stored at `outEntities[count]` (when given) and the count incremented.
 #[hook(addr = 0x565000, conv = cdecl, name = "CWorld::FindObjectsKindaCollidingSectorList<CPtrListDoubleLink<CPhysical*>>",
-       expect = "8B 44 24 04 83 EC 0C 55", unverified = "mvpc-world-1", route = "L2", hazards = "none",
+       expect = "8B 44 24 04 83 EC 0C 55", route = "L2", hazards = "none",
        recs = "grove-walk,driving")]
 pub fn find_objects_kinda_colliding_sector_list(list: GPtr<u8>, c: GPtr<u8>, radius: f32, two_d: u8, count: GPtr<u8>,
     max: i16, out: GPtr<u8>) {

@@ -21,7 +21,7 @@ pub fn x87_cos(a: u32) -> X87 {
 
 /// `FUN_00406d10(float)` (0x406D10, cdecl): `fld` of the argument, FABS, result in ST0.
 #[hook(addr = 0x406d10, conv = cdecl, name = "FUN_00406d10", expect = "D9 44 24 04 D9 E1 C3",
-       unverified = "mvpl-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn x87_abs(a: u32) -> X87 {
     X87::from_f32(f32::from_bits(a)).fabs()
 }

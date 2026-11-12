@@ -52,7 +52,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// a go-to simplest task and that fire: 4² above `d2` and `|dz|` below 2 → a stack `CEventPotentialWalkIntoFire(fire pos,
 /// fire +0x1C, ms)` likewise. The original keeps `ms` in its own ped argument slot.
 #[hook(addr = 0x603e70, conv = thiscall, name = "FUN_00603e70", expect = "64 A1 00 00 00 00",
-       unverified = "mvpk-ai-4", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "the events live on the Rust stack; the ped argument slot holds the move state")]
 pub fn nearby_fire_scanner_scan(this: GPtr<u8>, ped: GPtr<u8>) {
     let now = || g::<u32>(TIMER_TIME_MS).read();

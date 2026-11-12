@@ -54,7 +54,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// zeroed first) blocked with `dist` above 0.5 → a stack `CEventPotentialWalkIntoVehicle(vehicle, GetMoveStateFromGoToTask())`
 /// into the ped's event group. The original keeps `r` and `dist` in its own ped argument slot (popped by `ret 0xC`).
 #[hook(addr = 0x603720, conv = thiscall, name = "CVehiclePotentialCollisionScanner::ScanForVehiclePotentialCollisionEvents",
-       expect = "64 A1 00 00 00 00", unverified = "mvpk-ai-4", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       expect = "64 A1 00 00 00 00", route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "the event lives on the Rust stack; the ped argument slot holds floats (see doc)")]
 pub fn vehicle_scanner_scan_for_potential_collision_events(this: GPtr<u8>, ped: GPtr<u8>, _list: GPtr<u8>, _n: i32) {
     let now = || g::<u32>(TIMER_TIME_MS).read();

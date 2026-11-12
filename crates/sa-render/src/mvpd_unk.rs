@@ -82,7 +82,7 @@ pub fn lerp(out: GPtr<u8>, ax: f32, ay: f32, az: f32, _a3: u32, bx: f32, by: f32
 /// `GetFirstTexture(RwTexDictionary*)` (0x734940, cdecl): `RwTexDictionaryForAllTextures(dict, 0x734930,
 /// &tex)` with tex = NULL; returns tex.
 #[hook(addr = 0x734940, conv = cdecl, name = "GetFirstTexture", expect = "51 8B 4C 24 08",
-       unverified = "mvpd-unk-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn get_first_texture(dict: GPtr<u8>) -> u32 {
     let mut tex = 0u32;
     rw_tex_dictionary_for_all_textures(dict, 0x734930, GPtr::from_raw(&mut tex as *mut u32).cast());

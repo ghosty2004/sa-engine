@@ -60,7 +60,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// above `a` → a stack `CEventPotentialWalkIntoPed(closest, target, move state)` into the ped's event group. The
 /// original keeps the loop index, the best distance and `b` in its own argument slots.
 #[hook(addr = 0x606580, conv = thiscall, name = "FUN_00606580", expect = "64 A1 00 00 00 00",
-       unverified = "mvpk-ai-4", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "the event and the sphere live on the Rust stack; argument slots reused as locals")]
 pub fn walk_into_ped_scanner_scan(_this: GPtr<u8>, ped: GPtr<u8>, enabled: u32) {
     if enabled == 0 || rd::<u8>(ped, 0x1C) & 1 == 0 {

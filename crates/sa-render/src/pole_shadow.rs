@@ -55,7 +55,7 @@ fn matrix_of(e: GPtr<u8>) -> GPtr<u8> {
 /// 0, 0, 9.0, 1.0, 40.0, false, 0)`.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x70c750, conv = cdecl, name = "CShadows::StoreShadowForPole", expect = "83 EC 14 E8 58 32 00 00",
-       unverified = "mvpk-render-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "the chunk at 0x70C760 is a no-CD fragment (the shadow strength compare)")]
 pub fn shadows_store_shadow_for_pole(ent: GPtr<u8>, off_x: f32, off_y: f32, off_z: f32, height: f32, width: f32, local_id: u32) {
     if stencil_graphics_high_quality() != 0 {

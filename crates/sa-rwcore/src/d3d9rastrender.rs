@@ -37,7 +37,7 @@ orig! {
 /// (`0x4CA5A0`, then 1) and copies a camera source; a Z-buffer source gives 0, type 3 and types
 /// above 5 give 1. Destinations of type 1, 3 or above 5: 0.
 #[hook(addr = 0x4CAD90, conv = reg("args = eax edx ecx stack"), name = "FUN_004cad90", expect = "85 C0 53 8B D9",
-       unverified = "regconv-rw-1", route = "L2", hazards = "none", recs = "boot,menus-hud",
+       route = "L2", hazards = "none", recs = "boot,menus-hud",
        note = "register convention EAX/EDX/ECX + stack (HARNESS-5); the context is read through a .HOODLUM disguised load at 0x4CAD98")]
 pub fn raster_render_generic(src: GPtr<u8>, rect: GPtr<u8>, scaled: u32, blend: u32) -> u32 {
     if src.is_null() {
@@ -76,7 +76,7 @@ pub fn raster_render(raster: GPtr<u8>, rect: GPtr<u8>, _flags: u32) -> u32 {
 
 /// `_rwD3D9RasterRenderFast(raster, rect, flags)` (0x4CAE60, `stdFunc[0x13]`): scaled 0, blend 0.
 #[hook(addr = 0x4CAE60, conv = cdecl, name = "_rwD3D9RasterRenderFast", expect = "8B 54 24 08 8B 44 24 04 6A 00",
-       unverified = "regconv-rw-1", route = "L2", hazards = "none", recs = "boot,menus-hud",
+       route = "L2", hazards = "none", recs = "boot,menus-hud",
        note = "calls the register-convention dispatcher 0x4CAD90")]
 pub fn raster_render_fast(raster: GPtr<u8>, rect: GPtr<u8>, _flags: u32) -> u32 {
     render_generic_call(raster, rect, 0, 0)

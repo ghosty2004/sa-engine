@@ -522,7 +522,7 @@ pub fn conversations_start_setting_up_conversation(ped: GPtr<u8>) {
 /// 0x1C each) whose ped (+8) is the argument gets enabled byte +0x18 = the flag. Original bug kept: with no match
 /// the byte is written to address 0x18.
 #[hook(addr = 0x43AA40, conv = cdecl, name = "CConversations::EnableConversation", expect = "8B 54 24 04 33 C9",
-       unverified = "mvpc-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn conversations_enable_conversation(ped: GPtr<u8>, enable: u8) {
     for i in 0..14usize {
         let c = g::<u8>(0x9691D8 + 0x1C * i);
@@ -746,7 +746,7 @@ pub fn store_ped_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// elements of 0x28 at +4 (ctor 0x46AE30, dtor 0x46A380), then the bytes +4, +0x1C, +0x2C, +0x44, +0x54, +0x6C,
 /// +0x7C, +0x94, +0xA4, +0xBC, +0xCC, +0xE4, +0xF4, +0x10C, +0x11C and +0x134 = 0. Returns `this`.
 #[hook(addr = 0x66D440, conv = thiscall, name = "FUN_0066d440", expect = "53 56 57 68 80 A3 46 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn init_c18db8_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0);
     eh_vector_ctor(this.byte_add(4), 0x28, 8, 0x46AE30, 0x46A380);
@@ -797,7 +797,7 @@ pub fn acq_scanner_scan(this: GPtr<u8>, ped: GPtr<u8>, ents: GPtr<u8>, n: i32) {
 /// (history at intel +0x38) is type 0x24 is refused when intel +0xC4 is 0, when the event has no response of type
 /// 0x6A4, or when no respected friend is in inform range.
 #[hook(addr = 0x603A30, conv = thiscall, name = "FUN_00603a30", expect = "56 8B 74 24 08 57 8B F9",
-       unverified = "mvpc-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn acq_scanner_can_scan(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let alive = ped_is_alive(ped);
     if alive == 0 {
@@ -835,7 +835,7 @@ pub fn acq_scanner_can_scan(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
 /// mission-ped (+0x484 == 2, +0xCB50) or random-ped (+0xC1B4) default for -1, else `this + 4 + 0x3C*(0x29*dm +
 /// index)`; it responds when one of its six task types is not 200. Stops at the first event that responds.
 #[hook(addr = 0x6042B0, conv = thiscall, name = "FUN_006042b0", expect = "8B 44 24 04 55 56 8B F1",
-       unverified = "mvpc-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn decision_maker_types_has_response(this: GPtr<u8>, ped: GPtr<u8>, events: GPtr<u8>, count: i32) -> u8 {
     let dm = rd::<i32>(rd::<GPtr<u8>>(ped, 0x47C), 0xB4);
     let mut found = 0u8;
