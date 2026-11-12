@@ -207,8 +207,11 @@ orig! {
     pub fn o_render_water_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32) = cdecl 0x6EC5D0 => crate::waterlevel::render_water_rectangle;
     /// `CWaterLevel::RenderHighDetailWaterRectangle` (0x6EB810)
     pub fn o_render_high_detail_water_rectangle(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32) = cdecl 0x6EB810 => crate::waterlevel::render_high_detail_water_rectangle;
+    /// `CWaterLevel::CalculateWavesOnlyForCoordinate(x, y, big, small, float* wave, float* colourMult, float*
+    /// glare, CVector* n)` (0x6E6EF0)
+    pub fn o_calculate_waves_only_for_coordinate(x0: i32, y0: i32, big: f32, small: f32, out: GPtr<f32>, color_mult: GPtr<f32>, glare: GPtr<f32>, n: GPtr<f32>) = cdecl 0x6E6EF0 => crate::waterlevel::calculate_waves_only_for_coordinate;
     /// `FUN_006e91d0`: one layer of a high-detail water rectangle (0x6E91D0)
-    pub fn o_render_high_detail_rectangle_layer(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32, layer: i32, cells: i32, verts: i32, nx: i32, ny: i32) = cdecl 0x6E91D0 => unported;
+    pub fn o_render_high_detail_rectangle_layer(x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32, layer: i32, cells: i32, verts: i32, nx: i32, ny: i32) = cdecl 0x6E91D0 => crate::waterlevel::render_high_detail_rectangle_layer;
     /// `CWaterLevel::SplitWaterRectangleAlongXLine(int32 split, x1, x2, y1, y2, p1..p4)` (0x6E73A0)
     pub fn o_split_water_rectangle_along_x_line(s: i32, x1: i32, x2: i32, y1: i32, y2: i32, a0: u32, a1: u32, a2: u32, a3: u32, b0: u32, b1: u32, b2: u32, b3: u32, c0: u32, c1: u32, c2: u32, c3: u32, d0: u32, d1: u32, d2: u32, d3: u32) = cdecl 0x6E73A0 => crate::waterlevel::split_water_rectangle_along_x_line;
     /// `CWaterLevel::SetUpWaterFog(int32, int32, int32, int32)` (0x6EA9F0)
@@ -2085,6 +2088,201 @@ pub fn render_high_detail_water_triangle(
     );
 }
 
+/// The wave colour bytes of the high-detail grid, one per vertex of layer 0, reused by layer 1 (r, g, b at
+/// 0xC20968, 0xC20168, 0xC1F968) and their counter (0xC1F960).
+const HD_COLOUR_R: usize = 0xC20968;
+const HD_COLOUR_G: usize = 0xC20168;
+const HD_COLOUR_B: usize = 0xC1F968;
+const HD_COLOUR_COUNT: usize = 0xC1F960;
+/// The wave normal `CalculateWavesOnlyForCoordinate` writes for the grid (0xC278D4) and the flag that suppresses
+/// the grid's vertex and index counters (0xC278E0).
+const HD_WAVE_NORMAL: usize = 0xC278D4;
+const HD_NO_COUNT: usize = 0xC278E0;
+/// The high-detail fade distance (int, .data 48)
+const HD_FADE_DIST: usize = 0x8D37D0;
+/// 0.08 (0x859018), 0.04 (0x858CEC), 0.75 (0x858F34), 4.0 (0x858B90)
+const HD_SCALE0: u32 = 0x3DA3_D70A;
+const HD_SCALE1: u32 = 0x3D23_D70A;
+const HD_FADE_START: u32 = 0x3F40_0000;
+const HD_FADE_MUL: u32 = 0x4080_0000;
+
+/// `FUN_006e91d0` (0x6E91D0, cdecl): one layer of a high-detail water rectangle, `(nx + 1) x (ny + 1)` vertices
+/// (the extra arguments `cells` / `verts` are not read).
+///
+/// Colour counter 0, `RenderBuffer::RenderIfDoesntFit()`. `a = f32(1 / nx)`, `b = f32(1 / ny)`; the steps
+/// `(x2 - x1) / nx`, `(y2 - y1) / ny`, `(x1 - x2) / nx`, `(y1 - y2) / ny` (`idiv`); the f32 gradients of z, the big
+/// and the small wave factors from p1 along x (p2 - p1, times a) and y (p3 - p1, times b) and from p4 (p3 - p4
+/// times a, p2 - p4 times b). Layer 0 / 1: the texture origin `frac(x1 * s + shiftU)`, `frac(y1 * s + shiftV)`
+/// (s 0.08 with the second shifts / 0.04 with the first). For each row j and column i: below the diagonal (`i * a
+/// + f32(j * b) < 1`, else `test ah, 5; jp`) the values interpolate from p1 at `(x1 + i * stepX, y1 + j *
+/// stepY)`, otherwise from p4 with the counts `nx - i`, `ny - j` at `(x2 + (nx - i) * -stepX', y2 + (ny - j) *
+/// -stepY')`; the camera's 2D distance (`camera - f32 position`, both f32) over the fade distance (`fidiv`) gives
+/// the wave factor F (0 beyond 1, 1 up to 0.75, else `(1 - d) * 4`). Layer 0: `CalculateWavesOnlyForCoordinate(x,
+/// y, f32(B * F), f32(S * F), &z, &colourMult, &glare, 0xC278D4)`, the vertex position, uv `(i * stepX * 0.08 +
+/// u0, j * stepY * 0.08 + v0)`, colour `WaterLayerAlpha[0]` with `ftol(WaterColor.rgb * colourMult)` (each byte
+/// kept for layer 1); layer 1: uv with 0.04 and the kept bytes under `WaterLayerAlpha[1]`; other layers write
+/// nothing. Unless the flag at 0xC278E0: two triangles `(n - nx - 2, n - nx - 1, n - 1)`, `(n, n - nx - 1, n -
+/// 1)` once i and j are both non-zero, and the vertex count + 1.
+#[hook(addr = 0x6E91D0, conv = cdecl, name = "FUN_006e91d0", expect = "81 EC C4 00 00 00 53 55 56 57",
+       unverified = "intro3-9", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "the intro's first scene sees the Los Santos canal in high detail")]
+#[allow(clippy::too_many_arguments)]
+pub fn render_high_detail_rectangle_layer(
+    x1: i32, x2: i32, y1: i32, y2: i32,
+    p1z: u32, p1b: u32, p1s: u32, _p1f: u32,
+    p2z: u32, p2b: u32, p2s: u32, _p2f: u32,
+    p3z: u32, p3b: u32, p3s: u32, _p3f: u32,
+    p4z: u32, p4b: u32, p4s: u32, _p4f: u32,
+    layer: i32, _cells: i32, _verts: i32, nx: i32, ny: i32,
+) {
+    g::<u32>(HD_COLOUR_COUNT).write(0);
+    render_buffer_render_if_doesnt_fit();
+    let f = f32::from_bits;
+    let a = f32_of(xi(nx).fdivr_m(k(ONE)));
+    let b = f32_of(xi(ny).fdivr_m(k(ONE)));
+    let step_x = x2.wrapping_sub(x1).wrapping_div(nx);
+    let step_y = y2.wrapping_sub(y1).wrapping_div(ny);
+    let grad = |hi: u32, lo: u32, m: f32| f32_of(x(f(hi)).fsub_m(f(lo)).fmul_m(m));
+    let (dz12, dz13) = (grad(p2z, p1z, a), grad(p3z, p1z, b));
+    let (db12, db13) = (grad(p2b, p1b, a), grad(p3b, p1b, b));
+    let (ds12, ds13) = (grad(p2s, p1s, a), grad(p3s, p1s, b));
+    let back_x = x1.wrapping_sub(x2).wrapping_div(nx);
+    let (dz34, dz24) = (grad(p3z, p4z, a), grad(p2z, p4z, b));
+    let back_y = y1.wrapping_sub(y2).wrapping_div(ny);
+    let (db34, db24) = (grad(p3b, p4b, a), grad(p2b, p4b, b));
+    let (ds34, ds24) = (grad(p3s, p4s, a), grad(p2s, p4s, b));
+    let frac = |v: f32| f32_of(floor_x(x(v)).fsubr_m(v));
+    let (u0, v0) = match layer {
+        0 => (
+            frac(f32_of(xi(x1).fmul_m(k(HD_SCALE0)).fadd_m(TEXTURE_SHIFT_SECOND_U.get()))),
+            frac(f32_of(xi(y1).fmul_m(k(HD_SCALE0)).fadd_m(TEXTURE_SHIFT_SECOND_V.get()))),
+        ),
+        1 => (
+            frac(f32_of(xi(x1).fmul_m(k(HD_SCALE1)).fadd_m(TEXTURE_SHIFT_FIRST_U.get()))),
+            frac(f32_of(xi(y1).fmul_m(k(HD_SCALE1)).fadd_m(TEXTURE_SHIFT_FIRST_V.get()))),
+        ),
+        _ => (0.0, 0.0),
+    };
+    let cm = g::<GPtr<u8>>(crate::common::THE_CAMERA + 0x14).read();
+    let cam = if cm.is_null() { GPtr::<u8>::from_addr(crate::common::THE_CAMERA + 4) } else { cm.byte_add(0x30) };
+    let (cam_x, cam_y) = (rd::<f32>(cam, 0), rd::<f32>(cam, 4));
+    let mut vtx = g::<i32>(TEMP_VERTICES_STORED).read();
+    let mut idx = g::<i32>(TEMP_INDICES_STORED).read();
+    let mut c = g::<i32>(HD_COLOUR_COUNT).read();
+    let mut row_down = y2.wrapping_add(back_y.wrapping_mul(ny));
+    let mut rows_left = ny;
+    let mut jq = 0i32;
+    let mut j = 0i32;
+    while j <= ny {
+        if nx >= 0 {
+            let fj = f32_of(xi(j));
+            let jb = f32_of(xi(j).fmul_m(b));
+            let mut col_down = back_x.wrapping_mul(nx).wrapping_add(x2);
+            let mut cols_left = nx;
+            let mut ix = 0i32;
+            let mut i = 0i32;
+            while i <= nx {
+                let fi = f32_of(xi(i));
+                let (xp, yp, z, big, small);
+                if !xi(i).fmul_m(a).fadd_m(jb).fcom(x(k(ONE))).test_parity(0x05) {
+                    xp = x1.wrapping_add(ix);
+                    yp = y1.wrapping_add(jq);
+                    z = f32_of(x(fj).fmul_m(dz13).fadd(x(fi).fmul_m(dz12)).fadd_m(f(p1z)));
+                    big = x(fj).fmul_m(db13).fadd(x(fi).fmul_m(db12)).fadd_m(f(p1b));
+                    small = x(fi).fmul_m(ds12).fadd(x(fj).fmul_m(ds13)).fadd_m(f(p1s));
+                } else {
+                    let fni = f32_of(xi(cols_left));
+                    let fnj = f32_of(xi(rows_left));
+                    xp = col_down;
+                    yp = row_down;
+                    z = f32_of(xi(rows_left).fmul_m(dz24).fadd(x(fni).fmul_m(dz34)).fadd_m(f(p4z)));
+                    big = x(fnj).fmul_m(db24).fadd(x(fni).fmul_m(db34)).fadd_m(f(p4b));
+                    small = x(fnj).fmul_m(ds24).fadd(x(fni).fmul_m(ds34)).fadd_m(f(p4s));
+                }
+                let small = f32_of(small);
+                let (fx, fy) = (f32_of(xi(xp)), f32_of(xi(yp)));
+                let dxc = f32_of(x(cam_x).fsub(xi(xp)));
+                let dyc = f32_of(x(cam_y).fsub(xi(yp)));
+                let d = x(dyc).fmul_m(dyc).fadd(x(dxc).fmul_m(dxc)).fsqrt().fdiv(xi(g::<i32>(HD_FADE_DIST).read()));
+                let d32 = f32_of(d);
+                let fade = if !d.fcom(x(k(ONE))).test_any(0x41) {
+                    x(0.0)
+                } else if x(d32).fcom(x(k(HD_FADE_START))).test_any(0x41) {
+                    x(k(ONE))
+                } else {
+                    x(k(ONE)).fsub_m(d32).fmul_m(k(HD_FADE_MUL))
+                };
+                let vp = g::<u8>(TEMP_VERTICES).byte_add((vtx as isize).wrapping_mul(0x24));
+                match layer {
+                    0 => {
+                        let mut zz = z;
+                        let mut colour_mult = 0f32;
+                        let mut glare = 0f32;
+                        o_calculate_waves_only_for_coordinate(
+                            xp,
+                            yp,
+                            f32_of(fade.fmul(big)),
+                            f32_of(x(small).fmul(fade)),
+                            GPtr::from_raw(&raw mut zz),
+                            GPtr::from_raw(&raw mut colour_mult),
+                            GPtr::from_raw(&raw mut glare),
+                            GPtr::from_addr(HD_WAVE_NORMAL),
+                        );
+                        wr::<f32>(vp, 0x1C, f32_of(xi(ix).fmul_m(k(HD_SCALE0)).fadd_m(u0)));
+                        wr::<f32>(vp, 0x20, f32_of(xi(jq).fmul_m(k(HD_SCALE0)).fadd_m(v0)));
+                        wr::<f32>(vp, 0, fx);
+                        wr::<f32>(vp, 4, fy);
+                        wr::<f32>(vp, 8, zz);
+                        let ch = |a: usize| ftol32(xi(i32::from(g::<u8>(a).read())).fmul_m(colour_mult)) as u8;
+                        let (r, gg, bb) = (ch(0xC2116C), ch(0xC2116D), ch(0xC2116E));
+                        let alpha = WATER_LAYER_ALPHA.get()[0];
+                        wr::<u32>(vp, 0x18, (((alpha << 8 | u32::from(r)) << 8 | u32::from(gg)) << 8) | u32::from(bb));
+                        g::<u8>(HD_COLOUR_G + c as usize).write(gg);
+                        g::<u8>(HD_COLOUR_R + c as usize).write(r);
+                        g::<u8>(HD_COLOUR_B + c as usize).write(bb);
+                        c = c.wrapping_add(1);
+                        g::<i32>(HD_COLOUR_COUNT).write(c);
+                    }
+                    1 => {
+                        wr::<f32>(vp, 0x1C, f32_of(xi(ix).fmul_m(k(HD_SCALE1)).fadd_m(u0)));
+                        let r = u32::from(g::<u8>(HD_COLOUR_R + c as usize).read());
+                        let gg = u32::from(g::<u8>(HD_COLOUR_G + c as usize).read());
+                        let bb = u32::from(g::<u8>(HD_COLOUR_B + c as usize).read());
+                        let alpha = WATER_LAYER_ALPHA.get()[1];
+                        wr::<f32>(vp, 0x20, f32_of(xi(jq).fmul_m(k(HD_SCALE1)).fadd_m(v0)));
+                        wr::<u32>(vp, 0x18, (((alpha << 8 | r) << 8 | gg) << 8) | bb);
+                        c = c.wrapping_add(1);
+                        g::<i32>(HD_COLOUR_COUNT).write(c);
+                    }
+                    _ => {}
+                }
+                if g::<u8>(HD_NO_COUNT).read() == 0 {
+                    if j != 0 && i != 0 {
+                        let e = vtx.wrapping_sub(nx);
+                        let ix16 = g::<u16>(TEMP_INDICES).wrapping_index(idx);
+                        let tri = [e.wrapping_sub(2), e.wrapping_sub(1), vtx.wrapping_sub(1), vtx, e.wrapping_sub(1), vtx.wrapping_sub(1)];
+                        for (n, v) in tri.into_iter().enumerate() {
+                            ix16.wrapping_index(n as i32).write(v as u16);
+                        }
+                        idx = idx.wrapping_add(6);
+                        g::<i32>(TEMP_INDICES_STORED).write(idx);
+                    }
+                    vtx = vtx.wrapping_add(1);
+                    g::<i32>(TEMP_VERTICES_STORED).write(vtx);
+                }
+                cols_left = cols_left.wrapping_sub(1);
+                col_down = col_down.wrapping_sub(back_x);
+                ix = ix.wrapping_add(step_x);
+                i += 1;
+            }
+        }
+        j += 1;
+        rows_left = rows_left.wrapping_sub(1);
+        row_down = row_down.wrapping_sub(back_y);
+        jq = jq.wrapping_add(step_y);
+    }
+}
+
 /// The CRenPar lerp 0x6E5280 into a buffer holding `init` (the lerp leaves bytes +0xE / +0xF alone).
 fn lerp_into(init: [u32; 4], a: [u32; 4], b: [u32; 4], t: u32) -> [u32; 4] {
     let mut out = init;
@@ -2220,6 +2418,7 @@ pub fn split_water_rectangle_along_y_line(
 
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_RENDER_HIGH_DETAIL_RECTANGLE_LAYER,
     HOOK_CALCULATE_WAVES_ONLY_FOR_COORDINATE2,
     HOOK_CALCULATE_WAVES_ONLY_FOR_COORDINATE,
     HOOK_ADD_WAVE_TO_RESULT,

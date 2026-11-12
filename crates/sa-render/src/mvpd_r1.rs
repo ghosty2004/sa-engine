@@ -646,12 +646,18 @@ orig! {
 /// (`m_nScanCode` +0x2C against `CWorld::ms_nCurrentScanCode` 0xB7CD78, then set), `bUsesCollision`
 /// (+0x1C bit 0) set, +0x1E bit 0 clear, area (+0x2F) the current one (0xB72914) or 13.
 fn sector_entity_ok(e: GPtr<u8>) -> bool {
+    sector_entity_ok_flags(e, true)
+}
+
+/// [`sector_entity_ok`]; `test_1e` = the player walk's extra `+0x1E bit 0` exclusion (0x70A4B7), which
+/// `CastShadowSectorList` (0x70A630) does not have.
+fn sector_entity_ok_flags(e: GPtr<u8>, test_1e: bool) -> bool {
     let sc = g::<u16>(0xB7CD78).read();
     if rd::<u16>(e, 0x2C) == sc {
         return false;
     }
     wr::<u16>(e, 0x2C, sc);
-    if rd::<u8>(e, 0x1C) & 1 == 0 || rd::<u8>(e, 0x1E) & 1 != 0 {
+    if rd::<u8>(e, 0x1C) & 1 == 0 || (test_1e && rd::<u8>(e, 0x1E) & 1 != 0) {
         return false;
     }
     let area = rd::<u8>(e, 0x2F);
@@ -705,6 +711,36 @@ pub fn cast_player_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32,
         let e = rd::<GPtr<u8>>(node, 0);
         node = rd::<GPtr<u8>>(node, 4);
         if !sector_entity_ok(e) {
+            continue;
+        }
+        if rd::<u32>(e, 0x14) == 0 {
+            placeable_allocate_matrix(e);
+            simple_transform_update_matrix(e.byte_add(4), rd::<GPtr<u8>>(e, 0x14));
+        }
+        if jne_(x(rd::<f32>(rd::<GPtr<u8>>(e, 0x14), 0x28)), x(k(0x3F78_51EC))) {
+            continue;
+        }
+        if !sector_bounds_ok(e, &a) {
+            continue;
+        }
+        cast_shadow_entity_xy(e, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19);
+    }
+}
+
+/// `CShadows::CastShadowSectorList(CPtrListSingleLink&, float minX, minY, maxX, maxY, CVector* pos, 13 more
+/// dwords)` (0x70A630, cdecl): the body of [`cast_player_shadow_sector_list`] without the `+0x1E bit 0` exclusion
+/// (the two walks differ only there; INTRO-2: the intro's cars cast shadows over the other entities).
+#[allow(clippy::too_many_arguments)]
+#[hook(addr = 0x70A630, conv = cdecl, name = "CShadows::CastShadowSectorList<CPtrListSingleLink<CPhysical*>>", expect = "8B 44 24 04 8B 00",
+       unverified = "intro3-7", route = "L2", hazards = "stack-residue,heap-writes",
+       recs = "intro", note = "next-node pointer kept in its own argument slot; entity scan codes; may allocate entity matrices")]
+pub fn cast_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) {
+    let a = [0, 0, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19];
+    let mut node = rd::<GPtr<u8>>(list, 0);
+    while !node.is_null() {
+        let e = rd::<GPtr<u8>>(node, 0);
+        node = rd::<GPtr<u8>>(node, 4);
+        if !sector_entity_ok_flags(e, false) {
             continue;
         }
         if rd::<u32>(e, 0x14) == 0 {
@@ -1389,6 +1425,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_STORE_STATIC_SHADOW,
     HOOK_UPDATE_PERMANENT_SHADOWS,
     HOOK_CAST_PLAYER_SHADOW_SECTOR_LIST,
+    HOOK_CAST_SHADOW_SECTOR_LIST,
     HOOK_CAST_REAL_TIME_SHADOW_SECTOR_LIST,
     HOOK_SET_CENTER,
     HOOK_INVERT_RASTER,
