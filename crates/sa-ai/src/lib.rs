@@ -215,3 +215,8 @@ pub mod climb_camera;
 pub mod follow_node_route_blend;
 pub mod fight_hit_object;
 pub mod use_effect_abort;
+pub mod drive_to_point_target_blocked;
+pub mod event_damage_affects_group;
+pub mod decision_maker_index;
+pub mod evasive_dive_next_sub_task;
+pub mod conversation_setup_done;
