@@ -4,6 +4,7 @@
 
 pub mod render;
 
+use sa_samp_api::hooks::FramePhase;
 use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::peds::Peds as _;
 use sa_samp_api::{GameAdapter as _, PedRef, Vec3};
@@ -76,18 +77,21 @@ impl<V: View> NativeGame<V> {
         &mut self.overlay
     }
 
-    /// Draws the UI (called at `After2d` by [`NativeGame::dispatch_frame`]): queued big messages go to
-    /// `CMessages`, then the frame's draw list is rendered. Nothing while the pause menu is up (samp draws
-    /// no UI then).
-    pub(crate) fn overlay_frame(&mut self) {
+    /// Draws the UI (called by [`NativeGame::dispatch_frame`]) where samp draws it: at `After2d` the queued
+    /// big messages go to `CMessages` and the textdraws are printed (their text joins the HUD's in `CFont`'s
+    /// buffer, flushed by `Game::Idle`); at `Present` (the end of the frame, over the game text and the fade)
+    /// everything else. Nothing while the pause menu is up (samp draws no UI then).
+    pub(crate) fn overlay_frame(&mut self, phase: FramePhase) {
         use sa_samp_api::hud::Hud as _;
-        if self.menu_active() {
+        if self.menu_active() || !matches!(phase, FramePhase::After2d | FramePhase::Present) {
             return;
         }
         let mut ov = std::mem::take(&mut self.overlay);
         let (w, h) = render::screen_size();
-        for t in ov.ui.take_game_texts() {
-            ov.big.show(&t.text, t.time_ms, t.style);
+        if phase == FramePhase::After2d {
+            for t in ov.ui.take_game_texts() {
+                ov.big.show(&t.text, t.time_ms, t.style);
+            }
         }
         let heights = heights_for_width(w as u32, ov.ui.options().font_size);
         if ov.atlas.as_ref().is_none_or(|a| a.heights() != heights) {
@@ -102,10 +106,15 @@ impl<V: View> NativeGame<V> {
                 None => ov.upload_failed = true,
             }
         }
-        let now = self.game_time_ms();
-        let list = ov.ui.build(atlas, &EngineWorld { game: self }, w, h, now);
-        render::draw(&list, atlas, ov.raster, &mut ov.sprites);
-        ov.frames += 1;
+        if phase == FramePhase::After2d {
+            let list = ov.ui.build_textdraws(w, h);
+            render::draw(&list, atlas, ov.raster, &mut ov.sprites, false);
+        } else {
+            let now = self.game_time_ms();
+            let list = ov.ui.build(atlas, &EngineWorld { game: self }, w, h, now);
+            render::draw(&list, atlas, ov.raster, &mut ov.sprites, true);
+            ov.frames += 1;
+        }
         self.overlay = ov;
     }
 

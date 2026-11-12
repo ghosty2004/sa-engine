@@ -1,13 +1,13 @@
 //! UI anchored in the world: nametags with health / armour bars (samp.dll 0x1006d0a0) and 3D text labels.
 //! World positions are projected by the engine ([`WorldView`]; natively `CSprite::CalcScreenCoors`).
 
-use sa_samp_api::ui::{Nametag, NametagAnchor, TextLabel3d};
+use sa_samp_api::ui::{ChatBubble, Nametag, NametagAnchor, TextLabel3d};
 use sa_samp_api::{PedRef, Vec3};
 
 use crate::colour::strip_codes;
 use crate::draw::{DrawList, OUTLINE_4};
 use crate::font::{FontId, Measure};
-use crate::text::wrap_pixels;
+use crate::text::{split_line, wrap_pixels};
 
 /// Anchor raise above the head: `0.0475·d + 0.2` metres (d = camera distance).
 pub const RAISE_PER_METRE: f32 = 0.0475;
@@ -150,6 +150,99 @@ pub fn draw_nametags(
                 0xFFE3_E1E3,
                 &OUTLINE_4,
             );
+        }
+    }
+}
+
+/// Bubble text wrap (characters) and backtrack, and the longest text samp accepts.
+pub const BUBBLE_WRAP: (usize, usize) = (36, 12);
+/// Longest bubble text.
+pub const BUBBLE_MAX_LEN: usize = 144;
+
+/// Splits a bubble text like samp: repeated 36-character splits with a 12-character backtrack.
+pub fn bubble_lines(text: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut rest = text.to_string();
+    loop {
+        let (first, more) = split_line(&rest, BUBBLE_WRAP.0, BUBBLE_WRAP.1);
+        out.push(first);
+        match more {
+            Some(m) => rest = m,
+            None => return out,
+        }
+    }
+}
+
+/// Anchor raise of a bubble with `lines` lines at camera distance `d` (above the nametag).
+pub fn bubble_raise(lines: usize, d: f32) -> f32 {
+    let extra = lines.saturating_sub(1) as f32;
+    0.2 + 0.02 * extra + (0.065 + 0.0125 * extra) * d
+}
+
+/// A shown bubble: the spec, its lines and when it started (game time).
+#[derive(Clone, Debug, PartialEq)]
+pub struct Bubble {
+    /// What samp-rs sent.
+    pub spec: ChatBubble,
+    /// Wrapped lines.
+    pub lines: Vec<String>,
+    /// Start time.
+    pub start_ms: u32,
+}
+
+impl Bubble {
+    /// Whether the lifetime is over at `now_ms`.
+    pub fn expired(&self, now_ms: u32) -> bool {
+        now_ms.wrapping_sub(self.start_ms) > self.spec.expire_ms
+    }
+}
+
+/// Draws the bubbles in range: centred lines, outlined, the top line at the raised anchor.
+pub fn draw_bubbles<'a>(
+    bubbles: impl Iterator<Item = &'a Bubble>,
+    w: &dyn WorldView,
+    m: &dyn Measure,
+    d: &mut DrawList,
+) {
+    let cam = w.camera_pos();
+    for b in bubbles {
+        let root = match b.spec.anchor {
+            NametagAnchor::Ped(p) => match w.ped_position(p) {
+                Some(p) => p,
+                None => continue,
+            },
+            NametagAnchor::World(p) => p,
+        };
+        let head = Vec3::new(root.x, root.y, root.z + HEAD_ABOVE_ROOT);
+        let dd = dist(head, cam);
+        if dd >= b.spec.distance {
+            continue;
+        }
+        let anchor = Vec3::new(head.x, head.y, head.z + bubble_raise(b.lines.len(), dd));
+        let Some((sx, sy)) = w.project(anchor) else {
+            continue;
+        };
+        let lh = m.line_height(FontId::Small);
+        let base = b.spec.colour.to_argb_u32() | 0xFF00_0000;
+        let mut carry = String::new();
+        for (i, line) in b.lines.iter().enumerate() {
+            let text = format!("{carry}{line}");
+            let lw = m.width(FontId::Small, &strip_codes(&text));
+            d.coloured(
+                m,
+                (sx - lw / 2.0).round(),
+                sy.trunc() + i as f32 * lh,
+                FontId::Small,
+                &text,
+                base,
+                &OUTLINE_4,
+            );
+            let c = crate::colour::last_colour(&text, 0);
+            carry = if c != 0 {
+                format!("{{{:06X}}}", c & 0xFF_FFFF)
+            } else {
+                String::new()
+            };
         }
     }
 }
@@ -332,6 +425,52 @@ mod tests {
             }),
             0
         );
+    }
+
+    #[test]
+    fn bubbles_wrap_raise_and_expire() {
+        let text = "This is a chat bubble that is long enough to wrap onto more lines";
+        let lines = bubble_lines(text);
+        assert_eq!(
+            lines,
+            vec![
+                "This is a chat bubble that is long",
+                "enough to wrap onto more lines"
+            ]
+        );
+        assert!((bubble_raise(1, 10.0) - 0.85).abs() < 1e-6);
+        assert!((bubble_raise(2, 10.0) - (0.22 + 0.775)).abs() < 1e-6);
+        let b = Bubble {
+            spec: ChatBubble {
+                anchor: NametagAnchor::Ped(PedRef(1)),
+                text: text.into(),
+                colour: Rgba::from_rgba_u32(0xFFFF_0000),
+                distance: 20.0,
+                expire_ms: 5000,
+            },
+            lines,
+            start_ms: 1000,
+        };
+        assert!(!b.expired(6000) && b.expired(6001));
+        let mut d = DrawList::default();
+        draw_bubbles([&b].into_iter(), &Flat, &M, &mut d);
+        assert_eq!(
+            d.texts(),
+            vec![
+                "This is a chat bubble that is long",
+                "enough to wrap onto more lines"
+            ]
+        );
+        let far = Bubble {
+            spec: ChatBubble {
+                distance: 5.0,
+                ..b.spec.clone()
+            },
+            ..b.clone()
+        };
+        let mut d = DrawList::default();
+        draw_bubbles([&far].into_iter(), &Flat, &M, &mut d);
+        assert!(d.cmds.is_empty());
     }
 
     #[test]

@@ -584,7 +584,9 @@ mod tests {
         assert!(d.cmds.is_empty());
         c.draw_scrollbar(&M, true, &mut d);
         assert_eq!(d.cmds.len(), 4);
-        let Cmd::Rect { rect, .. } = d.cmds[0] else { panic!() };
+        let Cmd::Rect { rect, .. } = d.cmds[0] else {
+            panic!()
+        };
         assert_eq!(rect, [10.0, 40.0, 30.0, 40.0 + 17.0 * 15.0 - 60.0]);
         // The thumb sits at the bottom when not scrolled, higher when scrolled up.
         let thumb = |c: &ChatWindow| {

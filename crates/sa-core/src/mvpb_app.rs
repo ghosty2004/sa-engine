@@ -685,6 +685,7 @@ pub fn idle(param: GPtr<u8>) {
     }
     debug_display_text_buffer();
     flush_obrs_printfs();
+    crate::samp::frame(crate::samp::FramePhase::Present);
     rw_camera_end_update(camera());
     rs_camera_show_raster(camera());
 }

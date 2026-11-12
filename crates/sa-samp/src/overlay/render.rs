@@ -307,11 +307,14 @@ fn game_font(style: &FontStyle, x: f32, y: f32, text: &str) {
     let mut buf = gxt_bytes(text);
     font_print_string(x, y, GPtr::from_raw(buf.as_mut_ptr()));
     font_set_edge(0);
-    font_draw_fonts();
 }
 
 /// Draws `list`. `raster` is the uploaded atlas (0 = none: UI text then goes through `CFont` font 1).
-pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprites) {
+///
+/// `flush_fonts`: draw `CFont`'s buffer after each game-font text (the `Present` pass, after `Game::Idle`'s
+/// own `DrawFonts`); without it (the `After2d` pass) the textdraws' text stays in the buffer with the HUD's,
+/// as on samp.
+pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprites, flush_fonts: bool) {
     let z = GPtr::<f32>::from_addr(NEAR_SCREEN_Z).read();
     let rhw = GPtr::<f32>::from_addr(RECIP_NEAR_CLIP).read();
     let mut glyphs = Batch {
@@ -374,6 +377,7 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
                         align: TextAlign::Left,
                     };
                     game_font(&style, *x, *y, text);
+                    font_draw_fonts();
                     continue;
                 }
                 let mut pen = x.round();
@@ -397,6 +401,9 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
                 glyphs.flush();
                 solid.flush();
                 game_font(style, *x, *y, text);
+                if flush_fonts {
+                    font_draw_fonts();
+                }
             }
             Cmd::Sprite { source, rect, colour } => {
                 glyphs.flush();

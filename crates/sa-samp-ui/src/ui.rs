@@ -7,8 +7,8 @@ use std::collections::BTreeMap;
 use sa_samp_api::Rgba;
 use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::ui::{
-    ChatMessage, CursorMode, DialogSpec, Nametag, SampUi, ScoreRow, TextDrawSpec, TextLabel3d, UiEvent,
-    UiOptions,
+    ChatBubble, ChatMessage, CursorMode, DialogSpec, Nametag, SampUi, ScoreRow, TextDrawSpec, TextLabel3d,
+    UiEvent, UiOptions,
 };
 
 use crate::chat::{ChatInput, ChatWindow, PAGE_SIZE};
@@ -18,7 +18,7 @@ use crate::edit::EditKey;
 use crate::font::{FontId, Measure};
 use crate::panels::{KillList, KillRow, Scoreboard, draw_cursor};
 use crate::textdraw::TextDraws;
-use crate::world::NametagRules;
+use crate::world::{BUBBLE_MAX_LEN, Bubble, NametagRules, bubble_lines, draw_bubbles};
 use crate::world::{WorldView, draw_labels, draw_nametags};
 
 /// Windows virtual-key codes the UI reacts to.
@@ -78,6 +78,7 @@ pub struct Ui {
     dialog: Option<Dialog>,
     nametags: Vec<Nametag>,
     labels: BTreeMap<u16, TextLabel3d>,
+    bubbles: BTreeMap<u16, Bubble>,
     /// Textdraws.
     pub textdraws: TextDraws,
     /// Kill list.
@@ -266,8 +267,17 @@ impl Ui {
         }
     }
 
-    /// Builds the frame's draw list, in samp's order: world (nametags, labels), textdraws, kill list, chat,
-    /// chat input, scoreboard, dialog, cursor.
+    /// The textdraws, drawn where samp draws them: after `Render2dStuff` (`FramePhase::After2d`), their text
+    /// printed into `CFont`'s buffer with the HUD's own text.
+    pub fn build_textdraws(&mut self, w: f32, h: f32) -> DrawList {
+        let mut d = DrawList::default();
+        let cursor = self.cursor_visible().then_some(self.cursor);
+        self.textdraws.draw(w, h, cursor, &mut d);
+        d
+    }
+
+    /// The rest of the frame, in samp's `Present` order (over everything, the game text and the fade
+    /// included): nametags, labels, bubbles, kill list, chat, chat input, scoreboard, dialog, cursor.
     pub fn build(
         &mut self,
         m: &dyn Measure,
@@ -282,6 +292,7 @@ impl Ui {
         }
         self.screen = (w, h);
         let mut d = DrawList::default();
+        let cursor = self.cursor_visible().then_some(self.cursor);
         let rules = NametagRules {
             show: self.options.nametags,
             distance: self.options.nametag_distance,
@@ -289,8 +300,8 @@ impl Ui {
         };
         draw_nametags(&self.nametags, rules, world, m, &mut d);
         draw_labels(self.labels.values(), world, m, &mut d);
-        let cursor = self.cursor_visible().then_some(self.cursor);
-        self.textdraws.draw(w, h, cursor, &mut d);
+        self.bubbles.retain(|_, b| !b.expired(time_ms));
+        draw_bubbles(self.bubbles.values(), world, m, &mut d);
         self.kills.draw(m, w, h, &mut d);
         self.chat.draw(m, w as u32, &mut d);
         let bottom = self.chat.bottom(m.line_height(FontId::Main));
@@ -327,6 +338,26 @@ impl SampUi for Ui {
 
     fn set_nametags(&mut self, tags: &[Nametag]) {
         self.nametags = tags.to_vec();
+    }
+
+    fn set_chat_bubble(&mut self, player_id: u16, bubble: Option<&ChatBubble>) {
+        match bubble {
+            Some(b) if b.text.chars().count() <= BUBBLE_MAX_LEN => {
+                let lines = bubble_lines(&crate::text::replace_control_chars(&b.text));
+                self.bubbles.insert(
+                    player_id,
+                    Bubble {
+                        spec: b.clone(),
+                        lines,
+                        start_ms: self.time_ms,
+                    },
+                );
+            }
+            Some(_) => {}
+            None => {
+                self.bubbles.remove(&player_id);
+            }
+        }
     }
 
     fn set_label(&mut self, id: u16, label: Option<&TextLabel3d>) {
@@ -660,6 +691,8 @@ mod tests {
         );
         ui.select_textdraws(Some(Rgba::from_rgba_u32(0xFF00_00FF)));
         let _ = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
+        let td = ui.build_textdraws(1280.0, 720.0);
+        assert_eq!(td.cmds.len(), 1);
         ui.handle_event(WindowEvent::MouseMove { x: 700, y: 365 });
         ui.handle_event(WindowEvent::MouseButton {
             button: 0,
