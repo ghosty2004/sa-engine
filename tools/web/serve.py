@@ -4,6 +4,11 @@
 Serves web/ (index.html, the worker, web/pkg from tools/web/build.sh) and, with --game DIR, the user's own GTA San
 Andreas folder under /game/ (byte ranges, for the worker's synchronous reads) plus /game-index.json (path and size of
 every file). The game files never leave this machine: the server refuses any non-loopback bind address.
+
+With --samp-dir DIR (the files of a SA:MP client install: samp.saa, sampgui.png, mouse.png, ...), those files are
+overlaid on the game folder: listed in /game-index.json and served under /game/ like the game's own files (a file
+of the game folder wins; DLLs are left out), so the page's file layer finds them where the native build looks for
+them (the game folder).
 """
 
 import argparse
@@ -18,13 +23,26 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 WEB = os.path.join(ROOT, "web")
 
 
-def game_index(game):
+def game_index(game, skip_dll=False):
     out = []
     for d, _, files in os.walk(game):
         for f in files:
+            if skip_dll and f.lower().endswith(".dll"):
+                continue
             p = os.path.join(d, f)
             rel = os.path.relpath(p, game).replace(os.sep, "/")
             out.append({"path": rel, "size": os.path.getsize(p)})
+    out.sort(key=lambda e: e["path"])
+    return out
+
+
+def merged_index(game, samp):
+    """The game folder's index plus the SA:MP files it does not have (case-insensitive paths)."""
+    idx = game_index(game) if game else []
+    have = {e["path"].lower() for e in idx}
+    extra = [e for e in game_index(samp, skip_dll=True) if e["path"].lower() not in have]
+    Handler.samp_files = {e["path"] for e in extra}
+    out = idx + extra
     out.sort(key=lambda e: e["path"])
     return out
 
@@ -33,6 +51,8 @@ class Handler(SimpleHTTPRequestHandler):
     game = None
     index = b"[]"
     samp_auth = None
+    samp_dir = None
+    samp_files = set()
 
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=WEB, **kw)
@@ -90,7 +110,8 @@ class Handler(SimpleHTTPRequestHandler):
         if rel.startswith("..") or rel.startswith("/"):
             self.send_error(403)
             return
-        path = os.path.join(Handler.game, *rel.split("/"))
+        base = Handler.samp_dir if rel in Handler.samp_files else Handler.game
+        path = os.path.join(base, *rel.split("/"))
         if not os.path.isfile(path):
             self.send_error(404)
             return
@@ -130,6 +151,7 @@ def main():
     ap.add_argument("--port", type=int, default=8642)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--game", help="your GTA San Andreas folder (served to this machine only)")
+    ap.add_argument("--samp-dir", help="a SA:MP client folder (samp.saa, sampgui.png, mouse.png) overlaid on the game folder")
     ap.add_argument("--samp-auth", help="the SA:MP auth table (third-party data, served to this machine only as /samp-auth.txt)")
     a = ap.parse_args()
     if a.bind not in ("127.0.0.1", "::1", "localhost"):
@@ -139,6 +161,13 @@ def main():
             sys.exit(f"serve.py: {a.game} has no gta_sa.exe")
         Handler.game = os.path.abspath(a.game)
         Handler.index = json.dumps(game_index(Handler.game)).encode()
+    if a.samp_dir:
+        if not a.game:
+            sys.exit("serve.py: --samp-dir needs --game")
+        if not os.path.isfile(os.path.join(a.samp_dir, "samp.saa")):
+            sys.exit(f"serve.py: {a.samp_dir} has no samp.saa")
+        Handler.samp_dir = os.path.abspath(a.samp_dir)
+        Handler.index = json.dumps(merged_index(Handler.game, Handler.samp_dir)).encode()
     if a.samp_auth:
         if not os.path.isfile(a.samp_auth):
             sys.exit(f"serve.py: {a.samp_auth} does not exist")

@@ -12,9 +12,8 @@ use std::path::{Path, PathBuf};
 use sa_samp_ui::skin::{TEXTURE_H, TEXTURE_W};
 
 /// Decodes a PNG into RGBA8 (`None` for anything else than 8-bit RGB / RGBA / grey).
-fn decode_png(path: &Path) -> Option<(u32, u32, Vec<u8>)> {
-    let f = std::fs::File::open(path).ok()?;
-    let mut dec = png::Decoder::new(std::io::BufReader::new(f));
+fn decode_png(data: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
+    let mut dec = png::Decoder::new(std::io::Cursor::new(data));
     dec.set_transformations(png::Transformations::EXPAND);
     let mut r = dec.read_info().ok()?;
     let mut buf = vec![0u8; r.output_buffer_size()?];
@@ -42,8 +41,17 @@ fn samp_dirs(game: &Path) -> Vec<PathBuf> {
     v
 }
 
-fn find(game: &Path, name: &str) -> Option<PathBuf> {
-    samp_dirs(game).into_iter().map(|d| d.join(name)).find(|p| p.is_file())
+/// A SA:MP file's bytes: through the game's own file layer first (the game folder; in the browser, the files the
+/// page serves), then the folders of [`samp_dirs`].
+fn find(game: &Path, name: &'static str) -> Option<Vec<u8>> {
+    if let Ok(d) = crate::bind::with(name, |p| p.vfs.read(name)) {
+        return Some(d);
+    }
+    samp_dirs(game)
+        .into_iter()
+        .map(|d| d.join(name))
+        .find(|p| p.is_file())
+        .and_then(|p| std::fs::read(p).ok())
 }
 
 /// The combined skin texture ([`sa_samp_ui::skin`]): `sampgui.png` at the top, `mouse.png` at (0, 512).
@@ -55,7 +63,7 @@ pub fn skin(game: &Path) -> Option<Vec<u8>> {
     }
     let mut img = vec![0u8; (TEXTURE_W * TEXTURE_H * 4) as usize];
     img[..gui.len()].copy_from_slice(&gui);
-    if let Some((mw, mh, m)) = find(game, "mouse.png").and_then(|p| decode_png(&p)) {
+    if let Some((mw, mh, m)) = find(game, "mouse.png").and_then(|d| decode_png(&d)) {
         for y in 0..mh.min(32) {
             for x in 0..mw.min(32) {
                 let s = ((y * mw + x) * 4) as usize;
