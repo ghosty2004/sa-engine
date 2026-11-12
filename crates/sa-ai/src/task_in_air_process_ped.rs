@@ -305,5 +305,20 @@ fn climb_test(this: GPtr<u8>, ped: GPtr<u8>) {
     }
 }
 
+/// `CTaskSimpleInAir::DeleteAnimCB(CAnimBlendAssociation* anim, void* task)` (0x678E60, cdecl): with both set and the
+/// task's anim (+0x1C) being `anim`, the task's anim cleared.
+#[hook(addr = 0x678E60, conv = cdecl, name = "CTaskSimpleInAir::DeleteAnimCB", expect = "8B 44 24 08 85 C0 74 14",
+       unverified = "std11-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn task_simple_in_air_delete_anim_cb(anim: GPtr<u8>, task: GPtr<u8>) {
+    if !task.is_null() && !anim.is_null() && rd::<GPtr<u8>>(task, 0x1C) == anim {
+        wr::<u32>(task, 0x1C, 0);
+    }
+}
+
+/// 0x678E80 (thiscall, `ret 4`): the in-air task's empty roll / pitch step `CPed::PreRenderAfterTest` calls (a lone
+/// `ret 4`, too short for a hook: registered for phase B only).
+#[sa_core::native(addr = 0x678E80, conv = thiscall, name = "FUN_00678e80")]
+pub fn task_simple_in_air_678e80(_this: GPtr<u8>, _ped: GPtr<u8>) {}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_TASK_SIMPLE_IN_AIR_PROCESS_PED];
+pub const HOOKS: &[HookReg] = &[HOOK_TASK_SIMPLE_IN_AIR_PROCESS_PED, HOOK_TASK_SIMPLE_IN_AIR_DELETE_ANIM_CB];

@@ -73,6 +73,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     sa_audio::hooks::NATIVE_MODULES,
     &[sa_ai::std6_natives::NATIVES],
     &[sa_ai::std7_natives::NATIVES],
+    &[sa_ai::std11_natives::NATIVES],
     &[sa_anim::std6_natives::NATIVES],
     &[sa_audio::std6_natives::NATIVES],
     &[sa_cam::std6_natives::NATIVES],
