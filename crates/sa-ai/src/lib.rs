@@ -179,3 +179,4 @@ pub mod leave_car_ctor;
 pub mod group_closest_ped;
 pub mod road_rage_control;
 pub mod car_wait_slow_down;
+pub mod lean_on_vehicle_point;
