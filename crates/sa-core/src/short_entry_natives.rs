@@ -39,14 +39,6 @@ pub fn col_point_get_surface_type_b(cp: crate::mem::GPtr<u8>) -> u8 {
     cp.byte_add(0x23).read()
 }
 
-/// `CPedDamageResponseCalculator::~CPedDamageResponseCalculator()` (0x4AD420, thiscall): `ret` (empty).
-#[crate::native(addr = 0x4AD420, conv = thiscall, name = "CPedDamageResponseCalculator::~CPedDamageResponseCalculator")]
-pub fn ped_damage_response_calculator_dtor(_this: crate::mem::GPtr<u8>) {}
-
-/// `CPed::UpdateStatLeavingVehicle()` (0x5E01B0, thiscall): `ret` (empty).
-#[crate::native(addr = 0x5E01B0, conv = thiscall, name = "CPed::UpdateStatLeavingVehicle")]
-pub fn ped_update_stat_leaving_vehicle(_this: crate::mem::GPtr<u8>) {}
-
 /// `CCranes::IsThisCarPickedUp(float, float, CVehicle*)` (0x6F3FD0, cdecl): `xor al, al; ret` (false in AL).
 #[crate::native(addr = 0x6F3FD0, conv = cdecl, name = "CCranes::IsThisCarPickedUp")]
 pub fn cranes_is_this_car_picked_up(_x: u32, _y: u32, _veh: u32) -> u8 {
@@ -67,8 +59,6 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     NATIVE_BRIDGE_THIS_IS_A_BRIDGE_OBJECT_MOVING_UP,
     NATIVE_IDENTITY_THIS_4217B0,
     NATIVE_COL_POINT_GET_SURFACE_TYPE_B,
-    NATIVE_PED_DAMAGE_RESPONSE_CALCULATOR_DTOR,
-    NATIVE_PED_UPDATE_STAT_LEAVING_VEHICLE,
     NATIVE_CRANES_IS_THIS_CAR_PICKED_UP,
     NATIVE_BRIDGE_SHOULD_LIGHTS_BE_FLASHING,
 ];
