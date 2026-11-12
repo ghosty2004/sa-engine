@@ -1203,8 +1203,8 @@ the missing piece for the frame-pacing check.
 `std10-skin-2` (6), `std10-rw-1` (1), `std10-render-1` (4), `std10-render-2` (1), `std10-world-1` (1), `std10-ai-1` (1).
 All written, none verified. Writer gate: hooks PASS (79 new hooks since 622f85e incl. WRITER-INTRO's, all unverified,
 batches ≤ 60), queue regenerated; `cargo test -p sa-hook --lib` 58 passed; clippy -D warnings clean for sa-rwcore,
-sa-render, sa-world, sa-ai, sa-core, sa-game on i686-unknown-linux-gnu. Not run: the i686-pc-windows-gnu clippy of
-sa-hook, L1 / Wine steps (no Wine lane).
+sa-render, sa-world, sa-ai, sa-core, sa-game on i686-unknown-linux-gnu and for sa-hook on i686-pc-windows-gnu. Not run:
+L1 / Wine steps (no Wine lane).
 
 Not ported in the skin path: the x87 (non-SSE) branch of the node (`_rpSkinPrepareMatrices` 0x7CA850 and the blenders
 0x7C9DA0 / 0x7CA410 / 0x7CA330 / 0x7CA240: taken only when `_rwIntelSSEsupported` is 0) and the vertex-shader render
