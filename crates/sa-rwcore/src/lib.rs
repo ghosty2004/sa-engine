@@ -51,6 +51,8 @@ pub mod videomode;
 pub mod rxpipeline;
 pub mod rx_execute;
 pub mod d3d9_mesh_instance;
+pub mod d3d9_skin_node;
+pub mod d3d9_skin_blend;
 pub mod imagemod;
 pub mod worldplugin;
 pub mod anim;
