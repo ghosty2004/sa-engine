@@ -84,3 +84,4 @@ pub mod automobile_random_damage;
 pub mod bike_fix_hands;
 pub mod generated;
 pub mod float_pow;
+pub mod bike_rider_anims;
