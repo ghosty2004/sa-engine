@@ -19,6 +19,63 @@ orig! {
     fn vehicle_set_vehicle_created_by(v: GPtr<u8>, by: i32) = thiscall 0x6D5D70 => unported;
     /// `CEntity::RegisterReference(CEntity** slot)` (0x571B70, `ret 4`)
     fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
+    /// `CVehicle::RemoveDriver(bool)` (0x6D1950, `ret 4`)
+    fn vehicle_remove_driver(v: GPtr<u8>, b: u32) = thiscall 0x6D1950 => unported;
+    /// `CVehicle::RemovePassenger(CPed*)` (0x6D1610, `ret 4`)
+    fn vehicle_remove_passenger(v: GPtr<u8>, p: GPtr<u8>) = thiscall 0x6D1610 => unported;
+    /// `CVehicle::IsLawEnforcementVehicle()` (0x6D2370)
+    fn vehicle_is_law_enforcement_vehicle(v: GPtr<u8>) -> u8 = thiscall 0x6D2370 => unported;
+    /// `CVehicle::ChangeLawEnforcerState(bool)` (0x6D2330, `ret 4`)
+    fn vehicle_change_law_enforcer_state(v: GPtr<u8>, b: u32) = thiscall 0x6D2330 => unported;
+    /// `CWorld::RemoveReferencesToDeletedObject(CEntity*)` (0x565510)
+    fn world_remove_references_to_deleted_object(e: GPtr<u8>) = cdecl 0x565510 => unported;
+    /// Virtual slot 0 (the scalar deleting destructor, `ret 4`)
+    fn vcall_delete(f: u32, this: GPtr<u8>, flags: u32) = thiscall dyn => unported;
+}
+
+/// `CPopulation::ms_nTotalMissionPeds` (0xC0EC24, int32)
+const TOTAL_MISSION_PEDS: usize = 0xC0EC24;
+
+/// `CTheScripts::RemoveThisPed(CPed*)` (0x486240, cdecl).
+///
+/// Nothing for a null ped. `mission = created-by byte (+0x484) == 2`. In a vehicle (+0x46C bit 8, +0x58C non-null):
+/// as its driver (+0x460) `RemoveDriver(false)`, then (the vehicle re-read from the ped each time) its +0x36 byte
+/// becomes `(b & 7) | 0x20` (status 4: abandoned), +0x4F8 5 → 1, and for a cop (ped type +0x598 == 6) in a law
+/// enforcement vehicle `ChangeLawEnforcerState(false)`; as a passenger `RemovePassenger(ped)`. Then
+/// `CWorld::RemoveReferencesToDeletedObject(ped)`, the deleting destructor (vtable slot 0, flag 1) and, for a mission
+/// ped, `CPopulation::ms_nTotalMissionPeds--`.
+#[hook(addr = 0x486240, conv = cdecl, name = "CTheScripts::RemoveThisPed", expect = "56 8B 74 24 08",
+       unverified = "script5-1", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn remove_this_ped(ped: GPtr<u8>) {
+    if ped.is_null() {
+        return;
+    }
+    let mission = ped.byte_add(0x484).read() == 2;
+    let veh_of = || ped.byte_add(0x58C).cast::<GPtr<u8>>().read();
+    let v = veh_of();
+    if ped.byte_add(0x46C).cast::<u32>().read() & 0x100 != 0 && !v.is_null() {
+        if v.byte_add(0x460).cast::<u32>().read() == ped.addr() as u32 {
+            vehicle_remove_driver(v, 0);
+            let b = veh_of().byte_add(0x36);
+            b.write((b.read() & 7) | 0x20);
+            let st = veh_of().byte_add(0x4F8).cast::<u32>();
+            if st.read() == 5 {
+                st.write(1);
+            }
+            if ped.byte_add(0x598).cast::<u32>().read() == 6 && vehicle_is_law_enforcement_vehicle(veh_of()) != 0 {
+                vehicle_change_law_enforcer_state(veh_of(), 0);
+            }
+        } else {
+            vehicle_remove_passenger(v, ped);
+        }
+    }
+    world_remove_references_to_deleted_object(ped);
+    let f = ped.cast::<GPtr<u32>>().read().read();
+    vcall_delete(f, ped, 1);
+    if mission {
+        let n = GPtr::<i32>::from_addr(TOTAL_MISSION_PEDS);
+        n.write(n.read().wrapping_sub(1));
+    }
 }
 
 /// `CTheScripts::EntitiesWaitingForScriptBrain` (0xA476B0, 150 x 8: +0 entity, +4 i16 brain index)
@@ -84,4 +141,5 @@ pub fn add_to_waiting_for_script_brain_array(entity: GPtr<u8>, brain: i16) {
     GPtr::<i16>::from_addr((slot + 4) as usize).write(brain);
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_CLEAN_UP_THIS_VEHICLE, HOOK_ADD_TO_WAITING_FOR_SCRIPT_BRAIN_ARRAY];
+pub const HOOKS: &[HookReg] =
+    &[HOOK_CLEAN_UP_THIS_VEHICLE, HOOK_ADD_TO_WAITING_FOR_SCRIPT_BRAIN_ARRAY, HOOK_REMOVE_THIS_PED];
