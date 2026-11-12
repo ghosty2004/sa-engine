@@ -147,7 +147,7 @@ impl NetHooks {
             {
                 let p = s.matrix.pos;
                 self.note(format!(
-                    "state: phase={:?} spawned={} pos=({:.2},{:.2},{:.2}) health={:.0} armour={:.0} weapon={} money={} clock={:?} weather={:?} area={} syncs={}",
+                    "state: phase={:?} spawned={} pos=({:.2},{:.2},{:.2}) health={:.0} armour={:.0} weapon={} money={} clock={:?} weather={:?} area={} syncs={} pad=({},{}) ped_flags={:#x}",
                     self.net.phase(),
                     self.spawned,
                     p.x,
@@ -160,7 +160,10 @@ impl NetHooks {
                     game.clock(),
                     game.weather(),
                     game.area_raw(),
-                    self.syncs_sent
+                    self.syncs_sent,
+                    game.pad().0.left_x,
+                    game.pad().0.left_y,
+                    s.flags[0],
                 ));
             }
         }
