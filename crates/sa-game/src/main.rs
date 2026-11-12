@@ -35,6 +35,7 @@ mod imports;
 mod native;
 mod rw_standin;
 mod samp;
+mod samp_input;
 mod samp_ui_demo;
 mod screen;
 mod sha256;
@@ -378,7 +379,7 @@ fn merge_input(base: &InputState, extra: &InputState) -> InputState {
 impl Session {
     /// One main-loop iteration with `input` (its events are queued as window messages, its state is the
     /// DirectInput state). Returns false when the loop has stopped.
-    pub fn iterate(&mut self, input: InputState) -> bool {
+    pub fn iterate(&mut self, mut input: InputState) -> bool {
         if self.stopped || winmain::aborted() {
             self.stopped = true;
             return false;
@@ -386,6 +387,9 @@ impl Session {
         let n = self.n;
         self.n += 1;
         det::begin_iteration();
+        // the SA:MP UI takes the input it consumes (demo text entry, the mouse while it is locked)
+        samp_ui_demo::take_input(&mut input);
+        samp_input::filter(&mut input);
         bind::with("input", |p| {
             let t = p.time.time_get_time();
             for e in &input.events {

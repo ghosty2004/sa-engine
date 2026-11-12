@@ -9,10 +9,10 @@
 
 use std::cell::RefCell;
 
+use sa_platform::input::{InputEvent, InputState, Key, MouseButton};
 use sa_samp::{EngineView, NativeGame};
 use sa_samp_api::camera::Camera as _;
 use sa_samp_api::hooks::FramePhase;
-use sa_samp_api::input::WindowEvent;
 use sa_samp_api::peds::Peds as _;
 use sa_samp_api::ui::{
     ChatKind, ChatMessage, DialogSpec, DialogStyle, Nametag, NametagAnchor, SampUi, ScoreRow, TdAlign,
@@ -47,6 +47,7 @@ const ECHO_FRAME: u32 = 30;
 thread_local! {
     static GAME: RefCell<Option<NativeGame<EngineView>>> = const { RefCell::new(None) };
     static DEMO: RefCell<Demo> = RefCell::new(Demo::default());
+    static INPUT: RefCell<Vec<InputEvent>> = const { RefCell::new(Vec::new()) };
 }
 
 /// The client does nothing in the demo: the frame handler below plays samp-rs's part.
@@ -63,18 +64,29 @@ fn chat(ui: &mut dyn SampUi, kind: ChatKind, name: &str, name_rgba: u32, text: &
     });
 }
 
-fn key(game: &mut NativeGame<EngineView>, vk: u16) {
-    game.window_event(WindowEvent::KeyDown { vk, repeat: false });
-    game.window_event(WindowEvent::KeyUp { vk });
+/// Platform input events for the next main-loop iteration: they take the real path (`samp_input::filter`
+/// → `NativeGame::window_event` → the UI), as the window's events do.
+fn queue(e: InputEvent) {
+    INPUT.with(|q| q.borrow_mut().push(e));
 }
 
-fn type_text(game: &mut NativeGame<EngineView>, s: &str) {
+fn key(k: Key) {
+    queue(InputEvent::KeyDown {
+        key: k,
+        repeat: false,
+    });
+    queue(InputEvent::KeyUp { key: k });
+}
+
+fn type_text(s: &str) {
     for c in s.chars() {
-        game.window_event(WindowEvent::Char {
-            ch: c as u32,
-            unicode: true,
-        });
+        queue(InputEvent::Char(c));
     }
+}
+
+/// Moves the demo's queued input into this iteration's platform input (main loop, before `samp_input`).
+pub fn take_input(input: &mut InputState) {
+    INPUT.with(|q| input.events.append(&mut q.borrow_mut()));
 }
 
 /// The world-anchored parts: nametags above CJ and the peds within 40 m, a label 6 m in front of the camera.
@@ -263,6 +275,24 @@ fn setup(ui: &mut dyn SampUi) {
     ui.game_text("~y~Welcome~n~~w~to Grove Street", 6000, 3);
 }
 
+/// The UI's input path (`samp_input`): a window event to the adapter.
+fn ui_event(e: sa_samp_api::input::WindowEvent) -> sa_samp_api::input::EventResult {
+    GAME.with(|g| match g.borrow_mut().as_mut() {
+        Some(game) => game.window_event(e),
+        None => sa_samp_api::input::EventResult::PassToGame,
+    })
+}
+
+/// Whether the UI has the keyboard.
+fn ui_wants_keyboard() -> bool {
+    GAME.with(|g| {
+        g.borrow_mut()
+            .as_mut()
+            .and_then(|g| g.ui().map(|u| u.wants_keyboard()))
+            .unwrap_or(false)
+    })
+}
+
 fn on_frame(phase: u8) {
     let Some(&phase) = PHASES.get(usize::from(phase)) else {
         return;
@@ -293,11 +323,12 @@ fn script(game: &mut NativeGame<EngineView>) {
     match n {
         // Open the chat input with T and type (the T's own character is swallowed).
         3 => {
-            key(game, 0x54);
-            type_text(game, "thello from the native client");
+            key(Key::T);
+            // The window delivers the T key and then its character, which the UI swallows.
+            type_text("thello from the native client");
         }
         // Enter sends: the client gets a ChatSubmit event and echoes it like the server would.
-        8 => key(game, 0x0D),
+        8 => key(Key::Enter),
         // A list dialog; Down twice selects the third row.
         10 => {
             if let Some(ui) = game.ui() {
@@ -310,13 +341,13 @@ fn script(game: &mut NativeGame<EngineView>) {
                     button2: "Close".into(),
                 }));
             }
-            game.window_event(WindowEvent::MouseMove { x: 300, y: 380 });
-            key(game, 0x28);
-            key(game, 0x28);
+            queue(InputEvent::MouseMove { x: 300, y: 380 });
+            key(Key::Down);
+            key(Key::Down);
         }
         // Enter answers the list; a password dialog follows.
-        15 => {
-            key(game, 0x0D);
+        15 => key(Key::Enter),
+        16 => {
             if let Some(ui) = game.ui() {
                 ui.show_dialog(Some(&DialogSpec {
                     id: 2,
@@ -328,9 +359,9 @@ fn script(game: &mut NativeGame<EngineView>) {
                     button2: "Quit".into(),
                 }));
             }
-            type_text(game, "grove4life");
+            type_text("grove4life");
         }
-        20 => key(game, 0x0D),
+        20 => key(Key::Enter),
         // The scoreboard (samp-rs opens it on TAB with the score RPC's rows); the cursor hovers a row.
         24 => {
             let rows: Vec<ScoreRow> = [
@@ -353,14 +384,14 @@ fn script(game: &mut NativeGame<EngineView>) {
             if let Some(ui) = game.ui() {
                 ui.set_scoreboard(Some(("sa-engine native test server", &rows)));
             }
-            game.window_event(WindowEvent::MouseMove { x: 420, y: 232 });
+            queue(InputEvent::MouseMove { x: 420, y: 232 });
         }
-        // Clicking a row answers with its player id; the scoreboard closes.
+        // Clicking a row answers with its player id; then the scoreboard closes.
         28 => {
-            game.window_event(WindowEvent::MouseButton {
-                button: 0,
-                down: true,
-            });
+            queue(InputEvent::MouseDown(MouseButton::Left));
+            queue(InputEvent::MouseUp(MouseButton::Left));
+        }
+        29 => {
             if let Some(ui) = game.ui() {
                 ui.set_scoreboard(None);
             }
@@ -424,6 +455,10 @@ pub fn install() -> Result<(), String> {
     .map_err(|e| format!("samp-ui-demo: install: {e}"))?;
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
+    crate::samp_input::set_target(crate::samp_input::Target {
+        event: ui_event,
+        wants_keyboard: ui_wants_keyboard,
+    });
     println!("sa-game: samp-ui demo: the engine-drawn SA:MP UI with sample content (no server)");
     Ok(())
 }
