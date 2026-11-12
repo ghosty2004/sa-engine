@@ -14,8 +14,9 @@ let worker = null;
 // skipped, and these functions return a constant (ADDRESS=RETURN/stack dwords popped; a leading ! replaces a port:
 // 0x5efca0 turns off ped attractors, whose task tree is still being ported). Web only: 0x517bf0
 // (CIdleCam::ProcessFOVZoom, thiscall, one float) does nothing, so the idle camera that starts when the player stands
-// still for a while does not block every iteration (the loop stops after three identical blocked iterations).
-const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4,0x517bf0=0/1';
+// still for a while does not block every iteration; 0x6803a0 (CTaskSimpleClimb::TestForClimb, cdecl) returns null,
+// "nothing to climb", so a jump goes on to its launch (until TestForClimb is ported).
+const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4,0x517bf0=0/1,0x6803a0=0/0';
 
 if (params.get('inworld') === '0') $('inworld').checked = false;
 
@@ -68,6 +69,7 @@ async function start(files) {
       statusEl.textContent = m.error ? `error: ${m.error}` : m.done ? m.done :
         `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read`;
       statusEl.className = m.error ? 'err' : '';
+      $('blocked').textContent = m.blocked ? `blocked iterations: ${m.blocked}, last: ${m.lastBlocked} (not ported yet)` : '';
     }
   };
   worker.onerror = (e) => log(`worker error: ${e.message}`, 'error');
@@ -149,6 +151,16 @@ canvas.addEventListener('mousedown', (e) => {
     return;
   }
   worker.postMessage({ type: 'button', button: e.button, down: true });
+});
+// the capture indicator (pointer lock comes and goes with clicks, Esc and focus changes)
+document.addEventListener('pointerlockchange', () => {
+  const on = document.pointerLockElement === canvas;
+  $('mouse').textContent = `mouse captured: ${on ? 'yes' : 'no'}`;
+  $('mouse').className = on ? 'on' : 'off';
+  window.saGame.mouseCaptured = on;
+});
+document.addEventListener('pointerlockerror', () => {
+  $('mouse').textContent = 'mouse captured: no (the browser refused the pointer lock; click the picture again)';
 });
 document.addEventListener('mousemove', (e) => {
   if (worker && document.pointerLockElement === canvas) {

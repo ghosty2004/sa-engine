@@ -1888,7 +1888,8 @@ the message and throws a JS exception (`wasm_bindgen::throw_str`). The engine dr
 `sa.frame()` without running Rust destructors. The worker puts back the shadow stack pointer (the module exports
 `__stack_pointer`, `tools/web/build.sh`) to its value before the call, then calls `sa.recover()`, which ends the
 iteration through the same bookkeeping as natively (`Session::finish`: report row, `CGame::Initialise` and
-three-identical-failures stop rules). Why the state stays sane: the original code's state is left exactly as the native
+three-identical-failures stop rules; in the browser the latter is off: the last frame stays on the canvas and the
+page shows the blocked function, so one unported path does not end the session). Why the state stays sane: the original code's state is left exactly as the native
 unwind leaves it (it has no destructors); Rust state that an unwind would release is what differs. The session is no
 longer in a `RefCell` (a borrow would stay taken). Guards held across game code would stay taken: `recover` checks the
 platform lock and stops the session if it is held. The no-threads `Mutex` of wasm32 panics on a second lock, so any
@@ -1898,9 +1899,19 @@ module. `?SA_WEB_NO_RECOVER=1` turns the handler off. Seen in the recording run:
 
 **Exploration defaults.** The page sets `SA_GAME_SCRIPT_SKIP=1` and `SA_GAME_STUB` to the play package's list plus
 `0x517bf0=0/1` (`CIdleCam::ProcessFOVZoom`; without it the idle camera, which starts after the player stands still for
-about two minutes, blocks three iterations in a row and the loop stops). `&stub=...` replaces the list and `&stub=none`
+about two minutes, blocks every frame) and `0x6803a0=0/0` (`CTaskSimpleClimb::TestForClimb`, cdecl: null, nothing to
+climb, so a jump reaches its launch; WRITER-NATIVE's det jump run with this stub: 0 blocked frames of 1516). `&stub=...` replaces the list and `&stub=none`
 drops it. Any `SA_*` query variable still wins. The click that locks the pointer is not passed to the game (it used
 to punch: CTaskSimpleFight).
+
+**Input in the frames that read it.** The page runs the main loop without the frame limiter's sleep, so most
+iterations only peek messages; the game reads DirectInput / `CPad` in the few that run a frame (the ones that
+present). Clearing the mouse motion, the wheel and the pressed keys after every iteration lost most of them (user
+report: mouse-look barely turned the camera, sprint unreliable). They now stay pending until an iteration presents
+(`web::frame`); window-message events still go to the queue once. A key released before any frame saw it held is
+released after the next frame (quick taps; Enter on SwiftShader, where a menu frame takes longer than a 150 ms tap).
+Verified headless on the GPU (rec2, rec3): pointer-lock mouse-look turns the camera, Space + W sprints. The page shows
+"Click the picture to capture the mouse; Esc releases it." and whether the mouse is captured.
 
 **The FX out-of-bounds trap** (`FindFxSystemBP` from `CObjectData::Initialise`, `CreateEntityFx`; the user's AMD
 WebGPU run and a headless GL run). The cause is not an uninitialised read: the wasm32 C heap's `realloc` always
@@ -1929,4 +1940,12 @@ it (run2, the recording run).
   `Present` (2,365 blocked iterations, the picture frozen, the loop still running, because the iterations in between
   that do not render keep the three-in-a-row rule from firing). That is a missing port, not a web issue: natively the
   same. Other blocked callees seen: 0x5F3B70, 0x65C680 (vslot `CreateNextSubTask`), 0x5F32D0.
+  WRITER-NATIVE's ports picked onto this branch (`worktree-agent-a6d319b53fd3185ec`: dfa84753, 99c9089c, 1af4e486,
+  662a6799, 67e218c1, 83637f99, cfb801e0, a6a2e813, 8bbc8b6e, 818e3702) remove the car-collision (0x4AC840 /
+  0x4AE270), garage hideout restore (0x448550) and jump (0x680C60, CheckIfJumpBlocked, Launch) blocks. On the final
+  build: a SwiftShader WebGL2 run (run3) with real Enter menus, in the world at 110 s, 71 s of W/A/D, 0 blocked, no
+  trap; a GPU garage run (rec4: sprint, mouse-look, three jumps) 1 blocked iteration in 137k (0x66F530), no freeze.
+  Next web-visible blockers: `CGarage::SlideDoorOpen` 0x44A660 (sprinting at CJ's garage door: every frame blocks,
+  the picture freezes), `CAutomobile::CanPedEnterCar` 0x6D1E80, 0x66F530, 0x6513A0 (line-up with car), the real
+  `TestForClimb` 0x6803A0 (stubbed by the page), `CIdleCam::ProcessFOVZoom` 0x517BF0 (stubbed by the page).
 
