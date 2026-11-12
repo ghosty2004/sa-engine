@@ -40,5 +40,5 @@ png = "0.18"
 libc = "0.2"
 # samp-rs (branch sa-engine/adapter), pinned to a commit. samp-client takes sa-samp-api from this repository;
 # the workspace `[patch]` points that back at `crates/sa-samp-api`, so both sides share one crate.
-samp-client = { git = "file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter", rev = "4908e11d7e8530b091aebe4c308cc231413d4e38", optional = true }
-samp-proto = { git = "file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter", rev = "4908e11d7e8530b091aebe4c308cc231413d4e38", optional = true }
+samp-client = { git = "file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter", rev = "45fe1437ede9b9ec59cf05ca134ddc67b6c1f542", optional = true }
+samp-proto = { git = "file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter", rev = "45fe1437ede9b9ec59cf05ca134ddc67b6c1f542", optional = true }
