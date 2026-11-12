@@ -88,6 +88,7 @@ pub mod float_pow;
 pub mod bike_rider_anims;
 pub mod vehicle_collision_particles;
 pub mod car_door_positions;
+pub mod vehicle_process_open_door;
 pub mod bike_knock_off_rider;
 pub mod car_enter_stealable;
 
