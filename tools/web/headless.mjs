@@ -49,10 +49,17 @@ const note = (s) => {
   appendFileSync(logFile, s + '\n');
 };
 
+// --gpu swiftshader (default: CPU WebGL2 / WebGPU), vulkan (WebGL2 through ANGLE on the machine's GPU; no WebGPU
+// adapter), native (WebGL2 through ANGLE/Vulkan and WebGPU on the machine's GPU through Dawn/Vulkan). All offscreen.
+function gpuFlags(g) {
+  if (g === 'swiftshader') return ['--use-angle=swiftshader', '--use-webgpu-adapter=swiftshader'];
+  if (g === 'native') return ['--use-gl=angle', '--use-angle=vulkan'];
+  return ['--use-angle=vulkan', '--enable-features=Vulkan,VulkanFromANGLE'];
+}
 const flags = [
   '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${process.cwd()}/target/web1-chrome-${port}`,
   '--no-first-run', '--no-default-browser-check', '--enable-unsafe-webgpu', '--enable-features=Vulkan',
-  '--ignore-gpu-blocklist', ...(arg('gpu', 'swiftshader') === 'swiftshader' ? ['--use-angle=swiftshader', '--use-webgpu-adapter=swiftshader'] : ['--use-angle=vulkan', '--enable-features=Vulkan,VulkanFromANGLE']), '--window-size=820,700', ...extraFlags, 'about:blank',
+  '--ignore-gpu-blocklist', ...gpuFlags(arg('gpu', 'swiftshader')), '--window-size=820,700', ...extraFlags, 'about:blank',
 ];
 const proc = spawn(chrome, flags, { stdio: ['ignore', 'ignore', 'pipe'] });
 proc.stderr.on('data', (d) => appendFileSync(`${out}/chrome-stderr.txt`, d));
