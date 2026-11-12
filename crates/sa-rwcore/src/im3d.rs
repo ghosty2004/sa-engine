@@ -8,7 +8,7 @@
 //! +0x40 stride), +0x44 stash (flags, +0x48 ltm, +0x64 pipeline, +0x68 primType, +0x6C indices,
 //! +0x70 numIndices).
 //!
-//! Not ported: `_rwD3D9ImmRenderPrimitiveNode` (0x80E270, the D3D9 draw node; see the hand-back notes).
+//! The D3D9 draw node `_rwD3D9ImmRenderPrimitiveNode` (0x80E270) is in `d3d9_im3d_render.rs`.
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
