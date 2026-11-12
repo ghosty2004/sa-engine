@@ -24,7 +24,7 @@ orig! {
     /// `CShadows::CastRealTimeShadowSectorList(list, ...)` (0x70a7e0, 19 dwords)
     fn cast_real_time_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a7e0 => crate::mvpd_r1::cast_real_time_shadow_sector_list;
     /// `CShadows::CastShadowSectorList(list, ...)` (0x70a630, 19 dwords)
-    fn cast_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a630 => unported;
+    fn cast_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a630 => crate::mvpd_r1::cast_shadow_sector_list;
     /// `CShadows::CastPlayerShadowSectorList(list, ...)` (0x70a470, 19 dwords)
     fn cast_player_shadow_sector_list(list: GPtr<u8>, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32, a9: u32, a10: u32, a11: u32, a12: u32, a13: u32, a14: u32, a15: u32, a16: u32, a17: u32, a18: u32, a19: u32) = cdecl 0x70a470 => crate::mvpd_r1::cast_player_shadow_sector_list;
     /// `CWaterLevel::GetWaterLevelNoWaves(x, y, z, float* level, float* big, float* small)` (0x6e8580)
