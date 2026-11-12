@@ -196,3 +196,4 @@ pub mod stare_at_ped_control;
 pub mod jump_sub_tasks;
 pub mod fight_strike_damage;
 pub mod event_vehicle_collision_ctor;
+pub mod closest_surface_flee_next;
