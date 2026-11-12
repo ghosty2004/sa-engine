@@ -131,3 +131,6 @@ pub mod route_round_entity_bbox;
 pub mod route_round_sphere;
 pub mod attractor_place_ped;
 pub mod chat_task_ctor;
+pub mod interesting_events_add;
+pub mod attractor_ptr_vectors;
+pub mod attractor_register_ped;
