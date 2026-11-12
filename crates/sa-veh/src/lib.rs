@@ -133,3 +133,4 @@ pub mod vehicle_fire_rates_upgrades;
 pub mod vehicle_teleport_destroy;
 pub mod vehicle_misc_queries;
 pub mod stored_car_restore;
+pub mod vehicle_can_ped_enter;
