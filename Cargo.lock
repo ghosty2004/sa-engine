@@ -2497,7 +2497,6 @@ dependencies = [
 [[package]]
 name = "samp-client"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
 dependencies = [
  "sa-net",
  "sa-samp-api",
@@ -2511,7 +2510,6 @@ dependencies = [
 [[package]]
 name = "samp-proto"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
 dependencies = [
  "web-time",
 ]
@@ -2519,12 +2517,10 @@ dependencies = [
 [[package]]
 name = "samp-saa"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
 
 [[package]]
 name = "samp-ui"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
 dependencies = [
  "samp-proto",
 ]

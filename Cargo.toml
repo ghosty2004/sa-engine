@@ -9,7 +9,3 @@ edition = "2024"
 license = "UNLICENSED"
 publish = false
 
-# samp-rs (sa-game feature `samp`) takes sa-samp-api from this repository by URL: use the workspace copy.
-[patch."file:///home/ghosty2004/sa-engine"]
-sa-samp-api = { path = "crates/sa-samp-api" }
-sa-net = { path = "crates/sa-net" }
