@@ -192,3 +192,5 @@ pub mod fight_choose_attack_natives;
 pub mod fight_sphere_col_and_anim_cb;
 pub mod stare_at_ped_clone;
 pub mod fight_ground_target;
+pub mod stare_at_ped_control;
+pub mod jump_sub_tasks;
