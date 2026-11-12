@@ -214,6 +214,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TASK_USE_MOBILE_PHONE_STOP,
     HOOK_SUPPRESS_VEHICLE_MODEL,
     HOOK_DONT_SUPPRESS_VEHICLE_MODEL,
+    HOOK_AUTOPILOT_SET_CAR_MISSION_BYTE,
+    HOOK_OBJECT_DAMAGE_FLAG_QUERY,
+    HOOK_VEHICLE_POOL_GET_AT,
+    HOOK_TASK_62F5D0_DTOR,
+    HOOK_GO_TO_POINT_SHOOTING_CTOR,
 ];
 
 orig! {
@@ -271,4 +276,71 @@ pub fn dont_suppress_vehicle_model(model: i32) {
             s.write(-1);
         }
     }
+}
+
+orig! {
+    /// `CTask::~CTask()` (0x61A3A0)
+    fn task_dtor(t: GPtr<u8>) = thiscall 0x61A3A0 => unported;
+    /// `CTaskComplexGoToPointAiming::CTaskComplexGoToPointAiming(int32 moveState, CEntity* target, CVector*
+    /// offset, CVector point, float radius, float moveStateRadius)` (0x668790, `ret 0x20`)
+    fn go_to_point_aiming_ctor(t: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> = thiscall 0x668790 => unported;
+}
+
+/// The mission byte setter at stub 0x463490 (→ 0x1565620, thiscall on a `CAutoPilot`, `ret 4`; unnamed in the
+/// catalogue, reached by 00AF SET_CAR_MISSION): byte +0x2A takes the argument's low byte unless it is 0x39 or 0x3A.
+/// AL: the new byte, or the kept one.
+#[hook(addr = 0x463490, conv = thiscall, name = "thunk_FUN_01565620", expect = "E9 8B 21 10 01",
+       this = "CAutoPilot", unverified = "script5-6", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "AL only; the original's upper EAX is stale")]
+pub fn autopilot_set_car_mission_byte(this: GPtr<u8>, mission: u32) -> u8 {
+    let b = this.byte_add(0x2A);
+    let old = b.read();
+    if old == 0x39 || old == 0x3A {
+        return old;
+    }
+    b.write(mission as u8);
+    mission as u8
+}
+
+/// The object flag query at stub 0x46A2F0 (→ 0x1569D20, thiscall on a `CObject`; unnamed in the catalogue, reached
+/// by 0366): AL = 1 when the flags dword +0x1C has bit 9 set or bit 7 clear, else 0.
+#[hook(addr = 0x46a2f0, conv = thiscall, name = "thunk_FUN_01569d20", expect = "E9 2B FA 0F 01",
+       this = "CObject", unverified = "script5-6", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "AL only; the original's upper EAX holds the flags' upper bytes")]
+pub fn object_damage_flag_query(this: GPtr<u8>) -> u8 {
+    let f = this.byte_add(0x1C).cast::<u32>().read();
+    u8::from(f & 0x200 != 0 || (f as u8 as i8) >= 0)
+}
+
+/// `CPool<CVehicle>::GetAt(int32 index)` at stub 0x41CC10 (→ 0x15638F0, thiscall on the pool, `ret 4`): NULL when the
+/// slot's flags byte (+4) is negative (free), else `objects + 0xA18 * index`.
+#[hook(addr = 0x41cc10, conv = thiscall, name = "thunk_FUN_015638f0", expect = "E9 DB 6C 14 01",
+       unverified = "script5-6", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn vehicle_pool_get_at(this: GPtr<u8>, index: i32) -> GPtr<u8> {
+    let flags = this.byte_add(4).cast::<GPtr<u8>>().read();
+    if (flags.byte_add(index as isize).read() as i8) < 0 {
+        return GPtr::NULL;
+    }
+    this.cast::<GPtr<u8>>().read().byte_add(index.wrapping_mul(0xA18) as isize)
+}
+
+/// The task destructor at 0x62F5D0 (thiscall; unnamed in the catalogue, vtable 0x86DD50, reached by 0638): the vtable,
+/// then a tail jump to `CTask::~CTask()` (0x61A3A0).
+#[hook(addr = 0x62f5d0, conv = thiscall, name = "FUN_0062f5d0", expect = "C7 01 50 DD 86 00",
+       this = "CTask", unverified = "script5-6", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn task_62f5d0_dtor(this: GPtr<u8>) {
+    this.cast::<u32>().write(0x86DD50);
+    task_dtor(this);
+}
+
+/// `CTaskComplexGoToPointShooting::CTaskComplexGoToPointShooting(...)` (0x668C70, thiscall, `ret 0x20`): the eight
+/// argument dwords passed unchanged (the point re-pushed by value) to `CTaskComplexGoToPointAiming`'s constructor,
+/// then the vtable 0x86FE2C; returns `this`.
+#[hook(addr = 0x668c70, conv = thiscall, name = "CTaskComplexGoToPointShooting::Constructor", expect = "8B 44 24 20 56 50",
+       unverified = "script5-6", route = "L2", hazards = "none", recs = "grove-walk")]
+#[allow(clippy::too_many_arguments)]
+pub fn go_to_point_shooting_ctor(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> GPtr<u8> {
+    go_to_point_aiming_ctor(this, a1, a2, a3, a4, a5, a6, a7, a8);
+    this.cast::<u32>().write(0x86FE2C);
+    this
 }
