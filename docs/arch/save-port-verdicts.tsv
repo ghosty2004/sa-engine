@@ -1,8 +1,8 @@
 address	name	file	state	evidence
 0X44A170	CGarages::CloseHideOutGaragesBeforeSave	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g4 (save-load, 3900 frames): PASS, 3 compared, 0 mismatches, 0 undeclared; splitr == plain
-0X559230	CStats::BuildStatLine	crates/sa-world/src/world/stats_strings.rs	NOCASES	no call in the corpus
-0X55A210	CStats::FindCriminalRatingString	crates/sa-world/src/world/stats_strings.rs	NOCASES	no call in the corpus
-0X55A780	CStats::ConstructStatLine	crates/sa-world/src/world/stats_strings.rs	NOCASES	no call in the corpus
+0X559230	CStats::BuildStatLine	crates/sa-world/src/world/stats_strings.rs	L2	split s8-gstb (save-load, 3900 frames): PASS, 110 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X55A210	CStats::FindCriminalRatingString	crates/sa-world/src/world/stats_strings.rs	L2	split s8-gsta (save-load, 3900 frames): COUNT, 117 compared, 0 mismatches, 0 undeclared; splitr == plain; COUNT as ConstructStatLine (119 / 117 calls sampled); every compared case matches
+0X55A780	CStats::ConstructStatLine	crates/sa-world/src/world/stats_strings.rs	L2	split s8-gsta (save-load, 3900 frames): COUNT, 706 compared, 0 mismatches, 0 undeclared; splitr == plain; COUNT: splito / splitr sample a slightly different number of stats-page calls (714 / 706; the trace is IDENTICAL); every compared case matches
 0X5D08C0	CGenericGameStorage::ReportError	crates/sa-core/src/save.rs	NOCASES	no call in the corpus; error paths only (a corrupt or truncated save); no observable effect
 0X5D0D20	CGenericGameStorage::OpenFileForReading	crates/sa-core/src/save.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS-FP, 4 compared, 0 mismatches, 0 undeclared; splitr == plain
 0X5D0DD0	CGenericGameStorage::OpenFileForWriting	crates/sa-core/src/save.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain

@@ -105,7 +105,25 @@ alone (`s2-*`, `s3-*`, `s5-*`), and the residue readers with `SPLIT_STACKFILL=40
 stack below the invoker is zeroed before every sampled call in both runs, so original and port read the same
 residue; there the save files of splito and splitr are compared too).
 
-RESULTS_PLACEHOLDER
+Results (every split run: splito and splitr traces IDENTICAL to the all-original trace on every frame):
+
+- **59 hooks L2** (promoted): PASS, PASS-FP or COUNT with every compared case matching and 0 undeclared writes;
+  the cited run per hook is in `save-port-verdicts.tsv`. `SaveDataToWorkBuffer` / `LoadDataFromWorkBuffer`
+  end in COUNT because the 400 MB spool quota stops the run (822 / 939 cases compared, no mismatch);
+  `ConstructStatLine` / `FindCriminalRatingString` (menus-hud) in COUNT because splito / splitr sample a few
+  stats-page calls more or less (714 / 706; 706 compared, no mismatch). With `SPLIT_STACKFILL=4096` the save file
+  written with `CPed::Save` + `CSimpleVariablesSaveStructure::Construct` (`s4-gsf2`) or `CGangWars::Save`
+  (`s6-ggw`) on Rust is byte-identical to splito's; so are those of the leaf group (`s5-gleaf`),
+  `LoadDataFromWorkBuffer` and `GenericLoad` (`s5-*`).
+- The first split (`save1`) found `CTheScripts::Load`'s result: the bytes return the loaded script count in EAX
+  (AL 0x1C), not 1; fixed. The undeclared writes the first runs listed are now `tools/e2e/l2-extras.txt`
+  lines (section SAVE-1): CRT stdio state, file name buffers, the pad states `UpdatePads` writes after a save,
+  the arrays the block loads fill whole, the world state the after-load step changes, and the save structures
+  the `Construct` functions fill (`D` regions).
+- **Ledger** (not promoted): `GenericSave`, `C_PcSave::SaveSlot` (below).
+- **No corpus case**: `CVehicle::Save`, `CAutomobile::Save` / `Load`, `CVehicleSaveStructure::Construct` /
+  `Extract` (no vehicle of the save-load recording has +0x4A4 == 2), `C_PcSave::DeleteSlot`, `ReportError`,
+  `CloseFile` (error paths only).
 
 ### Ledger SAVE-1 (stack residue)
 
