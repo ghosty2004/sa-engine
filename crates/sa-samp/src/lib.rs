@@ -38,6 +38,7 @@ mod config;
 mod hud;
 mod input;
 mod objects;
+pub mod overlay;
 mod peds;
 mod render;
 pub mod script;
@@ -66,6 +67,7 @@ pub struct NativeGame<V: View> {
     files: Option<Box<dyn files::FileProvider>>,
     installed: bool,
     threads: script::Threads,
+    overlay: overlay::Overlay,
 }
 
 /// The adapter over this process's engine (native sa-game).
@@ -88,6 +90,7 @@ impl<V: View> NativeGame<V> {
             files: None,
             installed: false,
             threads: script::Threads::new(exec),
+            overlay: overlay::Overlay::default(),
         }
     }
 
@@ -113,6 +116,9 @@ impl<V: View> NativeGame<V> {
             hooks.frame(phase, self);
             // A callback cannot reinstall hooks (it only sees `&mut dyn GameAdapter`), so put them back.
             self.hooks = Some(hooks);
+        }
+        if phase == FramePhase::After2d {
+            self.overlay_frame();
         }
     }
 
@@ -159,6 +165,10 @@ impl<V: View> GameAdapter for NativeGame<V> {
 
     fn request_quit(&mut self) {
         self.view.write_u32(addr::RS_QUIT, 1);
+    }
+
+    fn ui(&mut self) -> Option<&mut dyn sa_samp_api::ui::SampUi> {
+        Some(&mut self.overlay.ui)
     }
 }
 

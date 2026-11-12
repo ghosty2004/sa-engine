@@ -232,9 +232,9 @@ mod tests {
         );
         // Only the first: the second is stale, the third out of range.
         let names: Vec<&str> = d.texts();
-        assert_eq!(names.iter().filter(|t| **t == "CJ (3)").count(), 5);
+        assert_eq!(names.iter().filter(|t| **t == "CJ (3)").count(), 1);
         // Raised anchor: head 0.7 + 0.0475·d + 0.2 at d ≈ 10.02 → z ≈ 1.376 → y ≈ 346.
-        let Some(Cmd::Text { y, colour, .. }) = d.cmds.get(4) else {
+        let Some(Cmd::Text { y, colour, .. }) = d.cmds.first() else {
             panic!()
         };
         assert_eq!((*y, *colour), (346.0 + 17.0 - 14.0, 0xFFFF_8000));

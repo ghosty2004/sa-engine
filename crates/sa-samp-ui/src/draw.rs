@@ -3,7 +3,7 @@
 
 use sa_samp_api::hud::FontStyle;
 
-use crate::colour::{colour_runs, strip_codes};
+use crate::colour::colour_runs;
 use crate::font::{FontId, Measure};
 
 /// Black, every outline's colour.
@@ -51,6 +51,8 @@ pub enum Cmd {
         colour: u32,
         /// Text.
         text: String,
+        /// With samp's black one-pixel outline (the renderer's outlined glyphs).
+        outline: bool,
     },
     /// Text in a game font through `CFont` (textdraws): the complete font state, then `PrintString`.
     GameFont {
@@ -98,12 +100,14 @@ impl DrawList {
                 font,
                 colour,
                 text: text.into(),
+                outline: false,
             });
         }
     }
 
-    /// Text with `{RRGGBB}` codes, drawn run by run, each run first in black at the outline offsets (samp's
-    /// outlined font: the stripped text in black, then in colour). Returns the stripped width.
+    /// Text with `{RRGGBB}` codes, drawn run by run; with a non-empty `outline` every run is outlined in
+    /// black (samp's outlined font draws the stripped text in black at the outline offsets, then in colour;
+    /// the renderer bakes the one-pixel outline into its glyphs). Returns the stripped width.
     #[allow(clippy::too_many_arguments)]
     pub fn coloured(
         &mut self,
@@ -115,23 +119,18 @@ impl DrawList {
         base: u32,
         outline: &[(i32, i32)],
     ) -> f32 {
-        let stripped = strip_codes(text);
-        if !outline.is_empty() {
-            for &(dx, dy) in outline {
-                // The outline alpha follows the base colour's alpha (fading labels fade their outline too).
-                let a = base & 0xFF00_0000;
-                self.text(
-                    x + dx as f32,
-                    y + dy as f32,
-                    font,
-                    a | (OUTLINE & 0xFF_FFFF),
-                    &stripped,
-                );
-            }
-        }
         let mut pen = x;
         for run in colour_runs(text, base) {
-            self.text(pen, y, font, run.colour, &run.text);
+            if !run.text.is_empty() {
+                self.cmds.push(Cmd::Text {
+                    x: pen,
+                    y,
+                    font,
+                    colour: run.colour,
+                    text: run.text.clone(),
+                    outline: !outline.is_empty(),
+                });
+            }
             pen += m.width(font, &run.text);
         }
         pen - x
@@ -160,7 +159,7 @@ mod tests {
     use crate::font::MonoMeasure;
 
     #[test]
-    fn coloured_text_draws_outline_then_runs() {
+    fn coloured_text_draws_outlined_runs() {
         let m = MonoMeasure {
             char_w: 7.0,
             line_h: 16.0,
@@ -176,26 +175,23 @@ mod tests {
             &OUTLINE_4,
         );
         assert_eq!(w, 28.0);
-        assert_eq!(d.cmds.len(), 6);
+        let run = |x: f32, colour: u32, text: &str, outline: bool| Cmd::Text {
+            x,
+            y: 20.0,
+            font: FontId::Main,
+            colour,
+            text: text.into(),
+            outline,
+        };
         assert_eq!(
-            d.cmds[0],
-            Cmd::Text {
-                x: 10.0,
-                y: 19.0,
-                font: FontId::Main,
-                colour: 0xFF00_0000,
-                text: "abcd".into()
-            }
+            d.cmds,
+            vec![
+                run(10.0, 0xFFFF_FFFF, "ab", true),
+                run(24.0, 0xFFFF_0000, "cd", true)
+            ]
         );
-        assert_eq!(
-            d.cmds[5],
-            Cmd::Text {
-                x: 24.0,
-                y: 20.0,
-                font: FontId::Main,
-                colour: 0xFFFF_0000,
-                text: "cd".into()
-            }
-        );
+        let mut d = DrawList::default();
+        d.coloured(&m, 0.0, 20.0, FontId::Main, "x", 0xFF12_3456, &[]);
+        assert_eq!(d.cmds, vec![run(0.0, 0xFF12_3456, "x", false)]);
     }
 }
