@@ -75,3 +75,5 @@ pub mod game_logic_resurrection;
 pub mod break_object;
 pub mod interior_paths_loaded;
 pub mod water_creature;
+pub mod cheat_player_toggles;
+pub mod furniture_hand_object_mines;
