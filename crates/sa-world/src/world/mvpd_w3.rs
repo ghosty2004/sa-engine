@@ -73,7 +73,7 @@ fn transform(m: GPtr<u8>, mut v: [f32; 3]) -> [f32; 3] {
 /// boxes not larger than 60 in x or y or not larger than 0x858CA4 in z are occluded, else (min.x, min.y,
 /// max.z) and (max.x, min.y, max.z) must be hidden too.
 #[hook(addr = 0x71FAE0, conv = thiscall, name = "CEntity::IsEntityOccluded", this = "CEntity", expect = "81 EC AC 00 00 00",
-       unverified = "mvpd-world-3", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn entity_is_entity_occluded(this: GPtr<u8>) -> u8 {
     let mut c = [0f32; 3];
     entity_get_bound_centre(this, GPtr::from_raw(&mut c).cast());
@@ -769,7 +769,7 @@ pub fn interior_manager_update(this: GPtr<u8>) -> u8 {
 /// (exchange sort, whole 0x50-byte swaps, ordered `<`) and entries are taken while the running count stays
 /// within `max` and their distance is not above `dist^2` (f32); the rest are flagged (+0x4C).
 #[hook(addr = 0x598A60, conv = thiscall, name = "InteriorManager_c::PruneVisibleEffects", this = "InteriorManager_c", expect = "55 8B EC 83 E4 F8",
-       unverified = "mvpd-world-3", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn interior_manager_prune_visible_effects(_this: GPtr<u8>, fx: GPtr<u8>, n: i32, max: i32, dist: f32) {
     let max_sq = x(dist).fmul_m(dist).to_f32();
     let e = |k: i32| fx.byte_add(IEI * k as isize);

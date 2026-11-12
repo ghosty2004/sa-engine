@@ -114,7 +114,7 @@ pub fn use_switch_jump_table(offset: GPtr<i32>) {
 /// `FUN_004700E0(int32 index)` (cdecl): `CStreaming::SetMissionDoesntRequireModel(index + 0x6676)` (the
 /// streamed script's resource id; tail call, the argument slot rewritten).
 #[hook(addr = 0x4700e0, conv = cdecl, name = "FUN_004700e0", expect = "8B 44 24 04 05 76 66 00 00",
-       unverified = "mvpj-script-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "tail call with the argument slot rewritten to index + 0x6676")]
 pub fn streamed_script_doesnt_require(index: i32) {
     streaming_set_mission_doesnt_require_model(index.wrapping_add(0x6676));

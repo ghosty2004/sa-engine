@@ -56,7 +56,7 @@ fn bound_sphere(entity: GPtr<u8>) -> ([f32; 3], f32) {
 /// returns `d * d` in ST0. Preserves EBX/ESI/EDI.
 #[hook(addr = 0x5DBE40, conv = reg("args = ebx esi"), name = "CPlantMgr::_CalcDistanceSqrToEntity",
        expect = "83 EC 10 57 8B CB",
-       unverified = "harness5-1", route = "L2", hazards = "none", recs = "grove-walk,driving",
+       route = "L2", hazards = "none", recs = "grove-walk,driving",
        note = "register convention EBX/ESI -> ST0 (HARNESS-5); callers CPlantMgr::_ColEntityCache_Update")]
 pub fn calc_distance_sqr_to_entity(entity: GPtr<u8>, posn: GPtr<u8>) -> X87 {
     let (c, r) = bound_sphere(entity);
@@ -82,7 +82,7 @@ fn signed_sq_dist_to_bound_sphere(entity: GPtr<u8>, point: GPtr<u8>) -> X87 {
 /// point, ST0 result): see [`signed_sq_dist_to_bound_sphere`].
 #[hook(addr = 0x711160, conv = reg("args = ebx esi"), name = "FUN_00711160",
        expect = "83 EC 14 57 8B CB",
-       unverified = "harness5-1", route = "L2", hazards = "none", recs = "grove-walk,driving",
+       route = "L2", hazards = "none", recs = "grove-walk,driving",
        note = "register convention EBX/ESI -> ST0 (HARNESS-5); caller RegisterStencilShadows (objects)")]
 pub fn signed_sq_dist_object(entity: GPtr<u8>, point: GPtr<u8>) -> X87 {
     signed_sq_dist_to_bound_sphere(entity, point)
@@ -91,7 +91,7 @@ pub fn signed_sq_dist_object(entity: GPtr<u8>, point: GPtr<u8>) -> X87 {
 /// `CStencilShadows` helper 0x7111F0 (`GetSignedSqDistToBoundSphere_Vehicle`), the same body.
 #[hook(addr = 0x7111F0, conv = reg("args = ebx esi"), name = "FUN_007111f0",
        expect = "83 EC 14 57 8B CB",
-       unverified = "harness5-1", route = "L2", hazards = "none", recs = "driving",
+       route = "L2", hazards = "none", recs = "driving",
        note = "register convention EBX/ESI -> ST0 (HARNESS-5); caller RegisterStencilShadows (vehicles)")]
 pub fn signed_sq_dist_vehicle(entity: GPtr<u8>, point: GPtr<u8>) -> X87 {
     signed_sq_dist_to_bound_sphere(entity, point)

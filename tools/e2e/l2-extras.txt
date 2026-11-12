@@ -6475,3 +6475,6 @@ CWaterLevel::RenderWater@0xC21188:0x468:D
 # RwHelper::RemoveRefsCB: the model info its callee 0x4C4BB0 drops a reference of (the static model info
 # stores; split v7-pr-gen2-rw-5-pr: 0xAB105C, 0xAB2E7C)
 0x7226D0@0xAB105C:0x1e21:D
+# VERIFIER-8: out-parameter on the caller's stack (split v8-leafcoll2: 0 undeclared with it)
+# CCollision::IsStoredPolyStillValidVerticalLine(const CVector&, float, CColPoint& colPoint, CStoredCollPoly*)
+CCollision::IsStoredPolyStillValidVerticalLine@arg2:0x2C:RW

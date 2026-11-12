@@ -497,7 +497,7 @@ pub fn object_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
 /// `CTaskSimpleScratchHead`, 6/7 → a new `CTaskSimpleHitWall` (NULL when the pool is full, the flag stays set);
 /// others → the flag cleared again, NULL.
 #[hook(addr = 0x654a00, conv = thiscall, name = "CTaskComplexWalkRoundBuildingAttempt::CreateFirstSubTask",
-       expect = "64 A1 00 00 00 00 6A FF", unverified = "mvpj-ai-6", route = "L2", hazards = "none", recs = "grove-walk")]
+       expect = "64 A1 00 00 00 00 6A FF", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn building_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     if rd::<u8>(this, 0x49) & 4 != 0 {
         let e = rd::<GPtr<u8>>(this, 0x38);

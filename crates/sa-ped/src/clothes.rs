@@ -494,7 +494,7 @@ pub fn get_is_wearing_balaclava(this: GPtr<u8>) -> u32 {
 /// (`ms_aAnimAssocGroups` 0xB4EA34, 0x14-byte groups, block +0) is null or not loaded (block +0x10),
 /// else 0x36.
 #[hook(addr = 0x5a81b0, conv = cdecl, name = "CClothes::GetDefaultPlayerMotionGroup", expect = "E8 FB FD FF FF",
-       unverified = "mvpi-ped-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn get_default_player_motion_group() -> i32 {
     let m = get_player_motion_group_to_load_call();
     if m == 0x36 {

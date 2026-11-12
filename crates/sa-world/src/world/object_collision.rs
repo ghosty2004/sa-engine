@@ -77,7 +77,7 @@ fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
 /// Then, unless `ignored`: `ignoreStuck` or this +0x1C bit 4 → `stuck`.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x59fee0, conv = thiscall, name = "CObject::SpecialEntityPreCollisionStuff", expect = "64 A1 00 00 00 00",
-       this = "CObject", unverified = "mvpk-world-2", route = "L2", hazards = "none", recs = "grove-walk",
+       this = "CObject", route = "L2", hazards = "none", recs = "grove-walk",
        note = "the CMatrix temporary lives on the Rust stack")]
 pub fn object_special_entity_pre_collision_stuff(
     this: GPtr<u8>,
@@ -269,7 +269,7 @@ fn step_count(v: X87) -> u8 {
 /// - Else `s = f32(0.5 * min(dx, dy, dz))` of the col box (dy and dz as f32 when chosen); `|move speed|² * ts * ts` below
 ///   `s²` → 1, else `ceilf(f32(sqrt / s))`.
 #[hook(addr = 0x5a02e0, conv = thiscall, name = "CObject::SpecialEntityCalcCollisionSteps", expect = "83 EC 28 53 56",
-       this = "CObject", unverified = "mvpk-world-3", route = "L2", hazards = "x87-transcendental,ax-al-return", recs = "grove-walk",
+       this = "CObject", route = "L2", hazards = "x87-transcendental,ax-al-return", recs = "grove-walk",
        note = "AL = _ftol(ceil(..)); EAX upper bytes are the _ftol result's")]
 pub fn object_special_entity_calc_collision_steps(this: GPtr<u8>, _a: GPtr<u8>, _b: GPtr<u8>) -> u8 {
     let ts = || g::<f32>(TIMER_TIME_STEP).read();

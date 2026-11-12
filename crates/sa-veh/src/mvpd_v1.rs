@@ -594,7 +594,7 @@ fn lt(a: X87, b: X87) -> bool {
 /// `ApplyTurnForce(up * (roll * turnMass * dir), right * bboxMax.x)` and `ApplyMoveForce((Z x fwd) *
 /// (roll * mass * dir))`.
 #[hook(addr = 0x6AFB10, conv = thiscall, name = "CAutomobile::ProcessSuspension", this = "CAutomobile", expect = "81 EC 40 01 00 00",
-       unverified = "mvpd-veh-1", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        recs = "driving")]
 pub fn automobile_process_suspension(this: GPtr<u8>) {
     let mut spring = [0f32; 4];

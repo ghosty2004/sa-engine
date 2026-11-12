@@ -324,7 +324,7 @@ fn vertex(f: &mut Fpu, verts: GPtr<u8>, tri: GPtr<u8>, k: isize, q128: f32) -> [
 /// `ClosestSquaredDistanceBetweenFiniteLines(a.centre, X, Y, dir, len2) < r2` for the edges (A, B),
 /// (C, B), (A, C) in that order: the first that holds → true; none → false (NaN never holds).
 #[hook(addr = 0x415cf0, conv = cdecl, name = "CCollision::SphereCastVersusVsPoly", expect = "83 EC 78 90 90",
-       unverified = "mvpf-coll-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "AL result; the early false returns leave AH = the fnstsw status")]
 pub fn sphere_cast_versus_vs_poly(a: GPtr<u8>, b: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, verts: GPtr<u8>) -> u8 {
     let q4096 = kf(K_1_4096);

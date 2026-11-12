@@ -302,7 +302,7 @@ orig! {
 /// the end re-read every iteration). The array base comes from the protection routine 0xCB73E0's return value,
 /// which is `CSetPieces::aSetPieces` (0xA95818, 0x20-byte entries).
 #[hook(addr = 0x49AA00, conv = cdecl, name = "CSetPieces::Update", expect = "E9 4B F2 0C 01",
-       unverified = "mvpd-world-2", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        note = "array base taken as 0xA95818 (the protection routine's return value)")]
 pub fn set_pieces_update() {
     let f = (g::<u32>(0xB7CB4C).read() & 7) as i32;
@@ -433,7 +433,7 @@ pub fn object_process_garage_door_behaviour(this: GPtr<u8>) {
 /// 0xFC..0x101, and for 0x150 (gang recruits, with a player ped) the smaller of
 /// `FindMaxNumberOfGroupMembers()` and the player data's byte +0x43.
 #[hook(addr = 0x55B980, conv = cdecl, name = "CStats::DisplayScriptStatUpdateMessage", expect = "51 56 6A 00 E8 E7 41 FE FF",
-       unverified = "mvpd-world-2", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn stats_display_script_stat_update_message(state: u32, stat: u32, change: f32) {
     let flag = g::<u8>(0xB794D4);
     if rd::<u8>(pad_get_pad(0), 0x117) != 0
@@ -559,7 +559,7 @@ orig! {
 /// Each case's x87 order and clamps (some through `FUN_00420800` max / `FUN_00404330` min) as in the original;
 /// ability values above 15 return 1.
 #[hook(addr = 0x559AF0, conv = cdecl, name = "CStats::GetFatAndMuscleModifier", expect = "8B 44 24 04 D9 05 24 86 85 00",
-       unverified = "mvpd-world-2", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn stats_get_fat_and_muscle_modifier(ability: u32) -> X87 {
     let f = |a: usize| g::<f32>(a).read();
     let one = f(0x858624);

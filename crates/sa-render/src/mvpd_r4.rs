@@ -473,7 +473,7 @@ fn neg_abs(v: X87) -> X87 {
 /// flips at 0.2 / -0.2, z += speed). Type 8 out of range → type 7, flag set, speed 0.02; then z +=
 /// speed unless the player is not below z + 0.75 (a debug `printf` instead).
 #[hook(addr = 0x7229C0, conv = cdecl, name = "CCheckpoints::Update", expect = "83 EC 0C 53 55",
-       unverified = "mvpd-render-4", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn checkpoints_update() {
     let mut p = [0f32; 3];
     find_player_coors(GPtr::from_raw(p.as_mut_ptr()).cast(), -1);

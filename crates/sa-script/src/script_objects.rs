@@ -37,7 +37,7 @@ fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
 /// removal time +0x150 = now + 20 000 000 ms, object flag 0x80 (+0x140) cleared, +0x14A = -1, and
 /// `CObject::nNoTempObjects` (0xBB4A70) incremented (stores in the bytes' order).
 #[hook(addr = 0x4866c0, conv = cdecl, name = "CTheScripts::CleanUpThisObject", expect = "E9 CB 51 0E 01",
-       unverified = "mvpi-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clean_up_this_object(obj: GPtr<u8>) {
     if obj.is_null() {
         return;
