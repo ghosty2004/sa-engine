@@ -23,6 +23,10 @@ orig! {
     /// `FrameUpdateCallBackNonSkinnedWithVelocityExtraction(data, fd)` (0x4D2100, `data` in EAX) and the 3D variant
     /// (0x4D2450)
     fn non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2100 => unported;
+    /// `CAnimBlendNode::UpdateCompressed(CVector&, CQuaternion&, float)` (0x4D08D0), AL
+    fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
+    /// `FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned(data, fd)` (0x4D27F0, `data` in EAX)
+    fn compressed_non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D27F0 => unported;
     fn non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2450 => frame_update_non_skinned_with_3d_velocity;
     /// `CAnimBlendNode::GetCurrentTranslation(CVector&, float)` (0x4CFC50), `GetEndTranslation` (0x4CFD90)
     fn node_get_current_translation(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFC50 => unported;
@@ -56,6 +60,25 @@ pub fn frame_update_non_skinned(fd: GPtr<u8>, data: GPtr<u8>) {
         }
         return;
     }
+    non_skinned_body(fd, data, false);
+}
+
+/// `FrameUpdateCallBackCompressedNonSkinned(AnimBlendFrameData* fd, void* data)` (0x4D32D0, cdecl): with frame flag
+/// bit 3 and the clump's ped position, the compressed velocity-extraction variant (0x4D27F0, `data` in EAX; flag bit
+/// 4 not tested); otherwise the body of [`frame_update_non_skinned`] with `UpdateCompressed` (0x4D08D0).
+#[hook(addr = 0x4D32D0, conv = cdecl, name = "RpAnimBlend::FrameUpdateCallBackCompressedNonSkinned", expect = "83 EC 3C 53 8B 5C 24 44 8A 03",
+       unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "writes the frame's matrix (the intro's objects)")]
+pub fn frame_update_compressed_non_skinned(fd: GPtr<u8>, data: GPtr<u8>) {
+    if rd::<u8>(fd, 0) & 8 != 0 && rd::<u32>(g::<GPtr<u8>>(ANIM_BLEND_CLUMP).read(), 0xC) != 0 {
+        compressed_non_skinned_with_velocity(data, fd);
+        return;
+    }
+    non_skinned_body(fd, data, true);
+}
+
+/// The shared body of 0x4D30A0 and 0x4D32D0 (`Update` / `UpdateCompressed`).
+fn non_skinned_body(fd: GPtr<u8>, data: GPtr<u8>, compressed: bool) {
     let m = rd::<GPtr<u8>>(fd, 0x10).byte_add(0x10);
     let mut tsum = [0f32; 3];
     let mut qsum = [0f32; 4];
@@ -83,7 +106,12 @@ pub fn frame_update_non_skinned(fd: GPtr<u8>, data: GPtr<u8>) {
                 let mut t = [0f32; 3];
                 let mut q = [0f32; 4];
                 let w = x(one()).fsub_m(partial).to_f32();
-                node_update(node, GPtr::from_raw(t.as_mut_ptr()).cast(), GPtr::from_raw(q.as_mut_ptr()).cast(), w);
+                let (tp, qp) = (GPtr::from_raw(t.as_mut_ptr()).cast(), GPtr::from_raw(q.as_mut_ptr()).cast());
+                if compressed {
+                    node_update_compressed(node, tp, qp, w);
+                } else {
+                    node_update(node, tp, qp, w);
+                }
                 let node = rd::<GPtr<u8>>(p, 0);
                 let seq = rd::<GPtr<u8>>(node, 0x10);
                 if (rd::<u8>(seq, 4) >> 1) & 1 != 0 {
@@ -267,4 +295,5 @@ pub fn frame_update_non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
 pub const HOOKS: &[HookReg] = &[
     HOOK_FRAME_UPDATE_NON_SKINNED,
     HOOK_FRAME_UPDATE_NON_SKINNED_WITH_3D_VELOCITY,
+    HOOK_FRAME_UPDATE_COMPRESSED_NON_SKINNED,
 ];

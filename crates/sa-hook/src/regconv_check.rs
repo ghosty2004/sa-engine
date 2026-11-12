@@ -80,6 +80,15 @@ fn events(f: &mut InstructionInfoFactory, i: &Instruction) -> [(u8, u8); 7] {
     {
         return out;
     }
+    // `lea r, [r + 0]` (MSVC's 6-byte alignment no-op, e.g. 0x4D1EEA): neither a read nor a write
+    if i.mnemonic() == iced_x86::Mnemonic::Lea
+        && i.op0_kind() == OpKind::Register
+        && i.memory_base() == i.op0_register()
+        && i.memory_index() == iced_x86::Register::None
+        && i.memory_displacement32() == 0
+    {
+        return out;
+    }
     let info = f.info(i);
     for u in info.used_registers() {
         let Some((r, m)) = family(u.register()) else { continue };
