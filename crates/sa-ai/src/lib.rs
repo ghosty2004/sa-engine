@@ -190,3 +190,5 @@ pub mod pass_object_tasks;
 pub mod interesting_events_scan;
 pub mod fight_choose_attack_natives;
 pub mod fight_sphere_col_and_anim_cb;
+pub mod stare_at_ped_clone;
+pub mod fight_ground_target;
