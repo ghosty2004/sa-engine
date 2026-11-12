@@ -534,6 +534,8 @@ fn expand(
         let mut l: Vec<String> = [
             "mov dword ptr [{fp}], 0",
             "mov dword ptr [{fp} + 4], 1",
+            // the entry ESP (`sa_core::abi::footprint_entry_esp`, SAVE-1: locals of `and esp, -8` frames)
+            "mov dword ptr [{fp} + {espo}], esp",
             // this state becomes the innermost (EAX is not an argument of a footprint hook)
             "mov eax, dword ptr [{cur}]",
             "mov dword ptr [{fp} + 28], eax",
@@ -647,6 +649,7 @@ fn expand(
                     fp = sym #state,
                     cur = sym ::sa_core::abi::FOOTPRINT_CUR,
                     snap = const ::sa_core::abi::FOOTPRINT_SNAPSHOT_OFF,
+                    espo = const ::sa_core::abi::FOOTPRINT_ENTRY_ESP_OFF,
                     #ext_op
                 )
             }

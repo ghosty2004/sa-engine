@@ -2777,10 +2777,22 @@ fn save_buffer() -> [u32; 0x1B] {
 /// size dword (4 bytes) and the structure (0x68 bytes) written to the work buffer; the structure's
 /// matrix destroyed. AL = 1.
 ///
-/// Not registered (decision needed): the original's structure is an uninitialised stack buffer, so any
-/// byte `Construct` leaves unwritten reaches the save file as stack garbage; the port's buffer is zeroed.
+/// The original's structure is an uninitialised stack buffer (entry ESP -0x74): the bytes neither `Save`
+/// (+0x40 / +0x44 = 0) nor `Construct` writes (+0x48, +0x4D, +0x51..+0x53) reach the save file as stack
+/// residue. SAVE-1 registers the port with a footprint window and takes them from its snapshot (ADR-001
+/// §5b): the original's residue whenever the caller is original code (docs/arch/save-port.md).
+#[hook(addr = 0x5D4760, conv = thiscall, name = "CVehicle::Save", expect = "6A FF 68 F8 D6 83 00", this = "CVehicle",
+       unverified = "save-veh-1", route = "L2", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000,
+       note = "no vehicle of the corpus is saved (+0x4A4 == 2 only)")]
 pub fn save(v: Veh) -> u8 {
     let mut b = save_buffer();
+    for k in 4..0x6Cusize {
+        let byte = sa_core::abi::footprint_residue_u8(k as i32 - 0x78, 0x1000);
+        let w = &mut b[k / 4];
+        *w = (*w & !(0xFF << (8 * (k % 4)))) | (u32::from(byte) << (8 * (k % 4)));
+    }
+    b[(4 + 0x40) / 4] = 0;
+    b[(4 + 0x44) / 4] = 0;
     let p = GPtr::from_raw(&raw mut b).cast::<u8>();
     save_structure_construct(p.byte_add(4), v);
     save_data_to_work_buffer(p, 4);
@@ -2900,6 +2912,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SCALAR_DELETING_DESTRUCTOR,
     HOOK_DO_HEAD_LIGHT_REFLECTION,
     HOOK_LOAD,
+    HOOK_SAVE,
 ];
 
 /// This module's globals (replace with a `sa_core::globals! { list GLOBALS; ... }` block when it gets some).

@@ -26,6 +26,7 @@ pub const MODULES: &[&[HookReg]] = &[
     checks::HOOKS,
     statics::HOOKS,
     vehicle2::HOOKS,
+    crate::vehicle_save::HOOKS,
     statics2::HOOKS,
     misc::HOOKS,
     automobile2::HOOKS,
