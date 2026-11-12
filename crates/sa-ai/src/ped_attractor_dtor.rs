@@ -39,29 +39,86 @@ pub fn destructor(this: GPtr<u8>) {
     }
 }
 
-/// The complete destructors: `mov dword [ecx], VTABLE; jmp CPedAttractor::~CPedAttractor`.
-macro_rules! derived_dtor {
-    ($fn:ident, $addr:literal, $name:literal, $vt:literal, $expect:literal) => {
-        #[doc = concat!("`", $name, "` (", stringify!($addr), ", thiscall): vtable ", stringify!($vt),
-                        ", then `CPedAttractor::~CPedAttractor` (tail jump).")]
-        #[hook(addr = $addr, conv = thiscall, name = $name, expect = $expect, unverified = "std13-ai-1", route = "L2",
-               hazards = "heap-writes", recs = "grove-walk")]
-        pub fn $fn(this: GPtr<u8>) {
-            wr::<u32>(this, 0, $vt);
-            destructor_o(this);
-        }
-    };
+/// `FUN_005ee530` (0x5EE530, thiscall): the complete destructor of the attractor class with vtable 0x86C550 (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EE530, conv = thiscall, name = "FUN_005ee530", expect = "C7 01 50 C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn atm_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C550);
+    destructor_o(this);
 }
 
-derived_dtor!(atm_dtor, 0x5EE530, "FUN_005ee530", 0x86C550, "C7 01 50 C5 86 00");
-derived_dtor!(seat_dtor, 0x5EE600, "FUN_005ee600", 0x86C568, "C7 01 68 C5 86 00");
-derived_dtor!(stop_dtor, 0x5EE6D0, "FUN_005ee6d0", 0x86C580, "C7 01 80 C5 86 00");
-derived_dtor!(pizza_dtor, 0x5EE7B0, "FUN_005ee7b0", 0x86C598, "C7 01 98 C5 86 00");
-derived_dtor!(shelter_dtor, 0x5EE950, "FUN_005ee950", 0x86C5CC, "C7 01 CC C5 86 00");
-derived_dtor!(look_at_dtor, 0x5EEA20, "FUN_005eea20", 0x86C5E4, "C7 01 E4 C5 86 00");
-derived_dtor!(scripted_dtor, 0x5EEAF0, "FUN_005eeaf0", 0x86C5FC, "C7 01 FC C5 86 00");
-derived_dtor!(park_dtor, 0x5EEBC0, "FUN_005eebc0", 0x86C614, "C7 01 14 C6 86 00");
-derived_dtor!(step_dtor, 0x5EEC90, "FUN_005eec90", 0x86C62C, "C7 01 2C C6 86 00");
+/// `FUN_005ee600` (0x5EE600, thiscall): the complete destructor of the attractor class with vtable 0x86C568 (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EE600, conv = thiscall, name = "FUN_005ee600", expect = "C7 01 68 C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn seat_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C568);
+    destructor_o(this);
+}
+
+/// `FUN_005ee6d0` (0x5EE6D0, thiscall): the complete destructor of the attractor class with vtable 0x86C580 (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EE6D0, conv = thiscall, name = "FUN_005ee6d0", expect = "C7 01 80 C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn stop_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C580);
+    destructor_o(this);
+}
+
+/// `FUN_005ee7b0` (0x5EE7B0, thiscall): the complete destructor of the attractor class with vtable 0x86C598 (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EE7B0, conv = thiscall, name = "FUN_005ee7b0", expect = "C7 01 98 C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn pizza_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C598);
+    destructor_o(this);
+}
+
+/// `FUN_005ee950` (0x5EE950, thiscall): the complete destructor of the attractor class with vtable 0x86C5CC (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EE950, conv = thiscall, name = "FUN_005ee950", expect = "C7 01 CC C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn shelter_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C5CC);
+    destructor_o(this);
+}
+
+/// `FUN_005eea20` (0x5EEA20, thiscall): the complete destructor of the attractor class with vtable 0x86C5E4 (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EEA20, conv = thiscall, name = "FUN_005eea20", expect = "C7 01 E4 C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn look_at_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C5E4);
+    destructor_o(this);
+}
+
+/// `FUN_005eeaf0` (0x5EEAF0, thiscall): the complete destructor of the attractor class with vtable 0x86C5FC (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EEAF0, conv = thiscall, name = "FUN_005eeaf0", expect = "C7 01 FC C5 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn scripted_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C5FC);
+    destructor_o(this);
+}
+
+/// `FUN_005eebc0` (0x5EEBC0, thiscall): the complete destructor of the attractor class with vtable 0x86C614 (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EEBC0, conv = thiscall, name = "FUN_005eebc0", expect = "C7 01 14 C6 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn park_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C614);
+    destructor_o(this);
+}
+
+/// `FUN_005eec90` (0x5EEC90, thiscall): the complete destructor of the attractor class with vtable 0x86C62C (vtable, then
+/// `CPedAttractor::~CPedAttractor` as a tail jump).
+#[hook(addr = 0x5EEC90, conv = thiscall, name = "FUN_005eec90", expect = "C7 01 2C C6 86 00", unverified = "std13-ai-1", route = "L2",
+       hazards = "heap-writes", recs = "grove-walk")]
+pub fn step_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C62C);
+    destructor_o(this);
+}
 
 /// `CPedAttractor::HasEmptySlot()` (0x5EAF10, thiscall): AL = queue + attracted < maximum (+0x3C, signed).
 #[hook(addr = 0x5EAF10, conv = thiscall, name = "CPedAttractor::HasEmptySlot", expect = "8B 41 20 85 C0 75 04",
