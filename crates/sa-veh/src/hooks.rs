@@ -79,6 +79,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::bike_rider_anims::HOOKS,
     // WRITER-NATIVE
     crate::vehicle_collision_particles::HOOKS,
+    // STD-14 (unverified batches)
+    crate::car_door_positions::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
