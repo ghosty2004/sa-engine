@@ -21,7 +21,7 @@ function log(text, level = 'log') {
 
 const STATES = ['INITIAL', 'LOGO', 'PLAYING_LOGO', 'TITLE', 'PLAYING_INTRO', 'FRONTEND_LOADING', 'FRONTEND_LOADED',
   'FRONTEND_IDLE', 'LOADING_STARTED', 'IDLE', 'EXIT'];
-window.saGame = { status: {}, logs: [], logBase: 0 };
+window.saGame = { status: {}, logs: [], logBase: 0, snapshots: [], snapshot: () => worker?.postMessage({ type: 'snapshot' }) };
 
 function start(files) {
   if (worker) return;
@@ -38,6 +38,18 @@ function start(files) {
         window.saGame.logs.splice(0, extra);
         window.saGame.logBase += extra;
       }
+    } else if (m.type === 'panic') {
+      log(m.message, 'error');
+      window.saGame.logs.push(m.message);
+      window.saGame.panic = m.message;
+      statusEl.textContent = m.message.split('\n')[0];
+      statusEl.className = 'err';
+    } else if (m.type === 'snapshot') {
+      const bytes = new Uint8Array(m.png);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      const b64 = btoa(bin);
+      window.saGame.snapshots.push({ state: m.state, iterations: m.iterations, png: b64 });
     } else if (m.type === 'progress') {
       window.saGame.progress = m;
       statusEl.textContent = `loading... ${m.mib} MiB read`;

@@ -86,7 +86,7 @@ const shot = async (name) => {
   const full = process.argv.includes('--full-page');
   const clip = full ? { x: 0, y: 0, width: 820, height: 700, scale: 1 } : { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
   // a canvas the compositor cannot show (headless with a real GPU) can stall the capture: give up after 5 s
-  const r = await Promise.race([s('Page.captureScreenshot', { format: 'png', clip }), sleep(5000).then(() => ({}))]);
+  const r = await Promise.race([s('Page.captureScreenshot', { format: 'png', clip }), sleep(Number(arg("shot-timeout", "5")) * 1000).then(() => ({}))]);
   if (r.result?.data) {
     writeFileSync(`${out}/${name}.png`, Buffer.from(r.result.data, 'base64'));
     note(`screenshot ${out}/${name}.png`);
@@ -134,6 +134,12 @@ while ((Date.now() - t0) / 1000 < seconds) {
   logsSeen = Math.max(logsSeen, (await evalJs('window.saGame?.logBase ?? 0')) ?? 0) + ls.length;
   for (const l of ls) appendFileSync(`${out}/game-log.txt`, l + '\n');
   const status = JSON.parse(st);
+  const panicMsg = await evalJs('window.saGame?.panic ?? null');
+  if (panicMsg) {
+    note(`t=${t.toFixed(1)} s: PANIC ${panicMsg}`);
+    await shot(`panic-t${Math.round(t)}`);
+    break;
+  }
   if (st !== lastStatusText) { lastStatusText = st; lastChange = Date.now(); }
   if (hangSecs > 0 && !dumped && (Date.now() - lastChange) / 1000 > hangSecs) {
     dumped = true;
@@ -170,7 +176,15 @@ while ((Date.now() - t0) / 1000 < seconds) {
     note(`t=${t.toFixed(1)} s: W up`);
     await shot(`walk-after-t${Math.round(t)}`);
   }
+  // frames read back by the worker itself (the compositor screenshot fails while the GPU process is busy)
+  const snaps = JSON.parse((await evalJs('JSON.stringify(window.saGame?.snapshots?.splice(0) ?? [])')) ?? '[]');
+  for (const sn of snaps) {
+    const name = `frame-t${String(Math.round(t)).padStart(4, '0')}-state${sn.state}-it${sn.iterations}.png`;
+    writeFileSync(`${out}/${name}`, Buffer.from(sn.png, 'base64'));
+    note(`frame ${out}/${name}`);
+  }
   if (t - lastShot >= every) {
+    await evalJs('window.saGame?.snapshot?.()');
     lastShot = t;
     await shot(`t${String(Math.round(t)).padStart(4, '0')}-state${status.state}`);
   }

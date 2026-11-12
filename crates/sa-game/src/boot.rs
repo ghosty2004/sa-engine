@@ -66,6 +66,9 @@ pub fn install_panic_hook() {
             .map(|l| format!(" ({}:{})", l.file(), l.line()))
             .unwrap_or_default();
         LAST_PANIC.with(|p| *p.borrow_mut() = format!("{msg}{at}"));
+        // wasm32 cannot unwind: the panic aborts the module, so its message is all the page gets
+        #[cfg(target_arch = "wasm32")]
+        crate::web::report_panic(&format!("sa-game panicked: {msg}{at}"));
         // `SA_GAME_BACKTRACE=1` (exploration): the Rust call chain of every panic, e.g. of a blocked step
         if crate::env::var_os("SA_GAME_BACKTRACE").is_some() {
             eprintln!("panic: {msg}{at}\n{}", std::backtrace::Backtrace::force_capture());

@@ -26,11 +26,37 @@ thread_local! {
     static INPUT: RefCell<InputState> = RefCell::new(InputState::default());
 }
 
-/// Panic messages to the console (a panic then aborts: wasm32 has no unwinding).
+#[wasm_bindgen]
+extern "C" {
+    /// `saGameIo.panic(message)`: the worker posts it to the page at once (the module aborts right after).
+    #[wasm_bindgen(js_namespace = saGameIo, js_name = panic)]
+    fn io_panic(message: &str);
+}
+
+/// A panic's message and location, with the JS stack (wasm function names), to the console and the page.
+pub fn report_panic(msg: &str) {
+    let stack: String = js_sys::Reflect::get(&js_sys::Error::new("panic"), &"stack".into())
+        .ok()
+        .and_then(|v| v.as_string())
+        .unwrap_or_default();
+    let frames: Vec<&str> = stack
+        .lines()
+        .filter(|l| l.contains("wasm-function"))
+        .map(|l| l.trim().trim_start_matches("at ").split(" (").next().unwrap_or(""))
+        .filter(|l| !l.contains("panic") && !l.contains("report_panic") && !l.contains("Error>::new"))
+        .take(30)
+        .collect();
+    let text = format!("{msg}\n  {}", frames.join("\n  "));
+    web_sys::console::error_1(&text.clone().into());
+    io_panic(&text);
+}
+
+/// Panic messages to the console and the page (a panic then aborts: wasm32 has no unwinding). The boot replaces
+/// this hook with its own, which also reports.
 #[wasm_bindgen(start)]
 pub fn start() {
     std::panic::set_hook(Box::new(|info| {
-        web_sys::console::error_1(&format!("sa-game panicked: {info}").into());
+        report_panic(&format!("sa-game panicked: {info}"));
     }));
 }
 
@@ -170,6 +196,24 @@ pub fn boot() -> Result<(), JsValue> {
 #[wasm_bindgen]
 pub fn frame() -> bool {
     crate::d3d9::PRESENTED_THIS_TASK.store(0, std::sync::atomic::Ordering::Relaxed);
+    if SAMPLING.load(std::sync::atomic::Ordering::Relaxed) {
+        thread_local! {
+            static LAST_STATS: std::cell::Cell<f64> = const { std::cell::Cell::new(0.0) };
+        }
+        let now = js_sys::Date::now();
+        if now - LAST_STATS.with(|l| l.get()) > 2000.0 {
+            LAST_STATS.with(|l| l.set(now));
+            if let Some(s) = crate::d3d9::with_device(|d| (d.stats.draws, d.stats.flushes, d.stats.pipelines)) {
+                log_line(format!(
+                    "gpu: {} draws, {} flushes, {} pipelines, {} presents",
+                    s.0,
+                    s.1,
+                    s.2,
+                    crate::d3d9::PRESENTS.load(std::sync::atomic::Ordering::Relaxed)
+                ));
+            }
+        }
+    }
     let input = INPUT.with(|i| {
         let mut i = i.borrow_mut();
         let out = i.clone();
@@ -201,7 +245,7 @@ pub fn maybe_sample(what: &str) {
         static LAST: std::cell::Cell<f64> = const { std::cell::Cell::new(0.0) };
     }
     let now = js_sys::Date::now();
-    if now - LAST.with(|l| l.get()) < 3000.0 {
+    if now - LAST.with(|l| l.get()) < 1000.0 {
         return;
     }
     LAST.with(|l| l.set(now));
