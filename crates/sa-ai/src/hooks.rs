@@ -133,6 +133,10 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::intel_group_misc::HOOKS,
     crate::car_shuffle_fall_out::HOOKS,
     crate::samp_reached_small::HOOKS,
+    crate::enter_exit_car_samp::HOOKS,
+    crate::die_tasks_samp::HOOKS,
+    crate::bike_door_swim_samp::HOOKS,
+    crate::throw_projectile_anim::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
