@@ -142,6 +142,11 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::fx_debris_wheel_grass::HOOKS,
     crate::skidmark_register::HOOKS,
     crate::fx_info_colour_value::HOOKS,
+    // WRITER-SAMP-2
+    crate::water_line_test::HOOKS,
+    crate::fx_add_bullet_impact::HOOKS,
+    crate::bullet_trace_add::HOOKS,
+    crate::checkpoint_render::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

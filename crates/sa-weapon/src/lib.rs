@@ -31,6 +31,9 @@ pub mod weapon_fire;
 pub mod weapon_data;
 pub mod weapon_impact;
 pub mod weapon_info;
+pub mod fire_instant_hit;
+pub mod fire_projectile;
+pub mod projectile_add;
 
 // WRITER-MVP-B (helper A)
 pub mod mvpb_a;

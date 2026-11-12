@@ -149,3 +149,7 @@ pub mod postfx_speed_fx;
 pub mod fx_debris_wheel_grass;
 pub mod skidmark_register;
 pub mod fx_info_colour_value;
+pub mod water_line_test;
+pub mod fx_add_bullet_impact;
+pub mod bullet_trace_add;
+pub mod checkpoint_render;

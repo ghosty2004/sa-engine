@@ -22,6 +22,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::weapon_data::HOOKS,
     crate::generated::HOOKS,
     crate::projectile_ctor::HOOKS,
+    crate::fire_instant_hit::HOOKS,
+    crate::fire_projectile::HOOKS,
+    crate::projectile_add::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
