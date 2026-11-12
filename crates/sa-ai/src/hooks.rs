@@ -98,6 +98,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::task_in_air_process_ped::HOOKS,
     crate::event_attractor_affects_ped::HOOKS,
     crate::stuck_in_air_subtask::HOOKS,
+    crate::group_membership_remove::HOOKS,
     crate::attractor_ped_use_effect::HOOKS,
     crate::general_node_heading::HOOKS,
 ];
