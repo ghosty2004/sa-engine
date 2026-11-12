@@ -39,6 +39,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::weather_update_parameters::HOOKS,
     crate::generated::HOOKS,
     crate::vehicle_add_audio_event::HOOKS,
+    // WRITER-NATIVE
+    crate::weapon_gun_sounds::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
