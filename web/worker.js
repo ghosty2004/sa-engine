@@ -236,6 +236,9 @@ self.onmessage = async (ev) => {
     case 'mouse':
       sa.mouse_move(m.dx, m.dy);
       break;
+    case 'mousepos':
+      sa.mouse_pos(m.x, m.y);
+      break;
     case 'button':
       sa.mouse_button(m.button, m.down);
       break;

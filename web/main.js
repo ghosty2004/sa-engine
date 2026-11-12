@@ -66,6 +66,9 @@ async function start(files) {
       statusEl.textContent = m.error ? `error: ${m.error}` : m.done ? m.done :
         `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read`;
       statusEl.className = m.error ? 'err' : '';
+      $('ministatus').textContent = m.error ? `error: ${m.error}` : m.blocked ? `${m.blocked} blocked` : '';
+      inMenu = m.state !== 9;
+      canvas.classList.toggle('menu', inMenu && document.pointerLockElement !== canvas);
       $('blocked').textContent = m.blocked ? `blocked iterations: ${m.blocked}, last: ${m.lastBlocked} (not ported yet)` : '';
     }
   };
@@ -138,12 +141,49 @@ window.addEventListener('keydown', onKey(true));
 window.addEventListener('keyup', onKey(false));
 window.addEventListener('blur', () => worker?.postMessage({ type: 'blur' }));
 
-// mouse: a click locks the pointer (DirectInput exclusive mode: relative motion). That click is not a game button
+// full window (?full=1) and fullscreen: CSS scales the canvas (the game keeps its video mode, letterboxed at 4:3)
+let inMenu = true;
+function setFull(on) {
+  document.body.classList.toggle('full', on);
+  $('unfull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Exit full window';
+  canvas.focus();
+}
+$('fullwin').onclick = () => setFull(true);
+$('unfull').onclick = () => (document.fullscreenElement ? document.exitFullscreen() : setFull(false));
+$('fullscreen').onclick = () => $('stage').requestFullscreen?.().then(() => setFull(false)).catch((e) => log(`fullscreen: ${e}`, 'error'));
+document.addEventListener('fullscreenchange', () => {
+  $('unfull').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Exit full window';
+  canvas.focus();
+});
+if (params.get('full') === '1') setFull(true);
+
+// the pointer position in the game's client pixels (the canvas is scaled by CSS)
+function gamePos(e) {
+  const r = canvas.getBoundingClientRect();
+  return [Math.round((e.clientX - r.left) * canvas.width / r.width), Math.round((e.clientY - r.top) * canvas.height / r.height)];
+}
+
+// menus (gGameState other than IDLE): no pointer lock; the absolute position goes to the game as WM_MOUSEMOVE (the
+// menu draws its own cursor there, the OS cursor is hidden over the picture) and clicks are menu clicks.
+canvas.addEventListener('mousemove', (e) => {
+  if (worker && inMenu && document.pointerLockElement !== canvas) {
+    const [x, y] = gamePos(e);
+    worker.postMessage({ type: 'mousepos', x, y });
+  }
+});
+
+// mouse: in the world a click locks the pointer (DirectInput exclusive mode: relative motion). That click is not a game button
 // press (natively sa-game captures the pointer itself, no click reaches the game for it): otherwise capturing the mouse
 // in the world would also punch. Buttons reach the game only while the pointer is locked.
 canvas.addEventListener('mousedown', (e) => {
   if (!worker) return;
   if (document.pointerLockElement !== canvas) {
+    if (inMenu) {
+      const [x, y] = gamePos(e);
+      worker.postMessage({ type: 'mousepos', x, y });
+      worker.postMessage({ type: 'button', button: e.button, down: true });
+      return;
+    }
     canvas.requestPointerLock?.();
     return;
   }
