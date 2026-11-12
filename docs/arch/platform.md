@@ -1684,3 +1684,109 @@ runs, play-package binary vs the fix), `offscreen-before-after-{0100,0130,0160}.
 camera / resample / blur / gradient passes, RGB above, alpha below), `colour-filter-draws-before-fix.png`.
 
 Not done: a Wine reference frame of the original at the same spot; the black near palm (not investigated).
+
+## 21. STD-14: the enter-car chain up to the door, lane integration, the window heap
+
+### 21.1 Main-session decisions on STD-13's questions (recorded by STD-14, 2026-11-12)
+
+1. **One heap layout everywhere:** window runs serve the game heap from the deterministic mode's fixed-address
+   region too (`det::fixed_heap`, decided at argument parsing, before the first game allocation); `--system-heap`
+   turns it off. The region falls back to a kernel-chosen address when 0x18000000 is taken (no `setarch -R` in the
+   play package). Freed blocks are reused only within their size class; long sessions were not measured.
+2. **The flare:** the state-level match of 19.6 is enough for now; no lane run on it.
+
+### 21.2 Base and merges
+
+Base STD-13 (`worktree-agent-adab932ed2ad46a44`, 9e704a6). Cherry-picked, in order: PORT-AI-8 (f9328ce, 462c48d,
+5e4797c, 60ec250, e030fca, later d879c4d), WRITER-NATIVE (404c763; 68ffe50..34e3306 without 6c6d495, a duplicate
+of 404c763; f19bf238, 092fa866; 0ab02d5..654c82d without 1a13d09), WRITER-ATTR (3461aa8; dcbe3d2, 53c1f7e,
+5ee67d7, 2c9d51a; the rest already came through WRITER-NATIVE), RENDER-SHADOW (7e080de, 86d6e5f, 3984228, its
+platform.md section 20), PORT-VEH-3/4 (1e2f939, be17e4f, 08c723d, 49cc1ac, df2eefb). Conflicts in the generated
+queue files (`catalog/verify-queue.csv`, `docs/verify/QUEUE.md`) were resolved to ours and not regenerated.
+
+Duplicates removed on the way (each address registered once, `cargo test -p sa-hook --lib` 58 passed):
+* PORT-AI-8's generated copies (`gen_*.rs`, `samp_reached_small.rs`, `intel_group_misc.rs`) of 47 functions other
+  lanes port by hand; WRITER-NATIVE's f19bf238 then regenerated the AI-GEN modules without them.
+* STD-13's `CBike::PlayCarHorn`, STD-14's `IsPlayerToQuitCarEnter` and crane native in favour of PORT-VEH-3/4's.
+* The keycell `READERS` of both sides merged (41 readers).
+
+**AI-GEN bug found:** the generated bodies of 0x5F2B80, 0x5F3730 and 0x5F3B40 call
+`ComputeEntityBoundingBoxCornersUncached` 0x5F1FA0 as a one-argument thiscall; the original pushes three cdecl
+arguments. The enter-car walk crashed on the null entity (SIGSEGV at 0x36). The three addresses are excluded in
+`tools/gen/ai_patterns_exclude.txt`; other callees whose entry is `nop; jmp` may be misdeclared the same way.
+
+### 21.3 Ports (`docs/arch/std14-ports.csv`, `tools/native/std14_ports.py`)
+
+* `std14-veh-1`: `CCarEnterExit::GetPositionToOpenCarDoor` 0x64E740, `IsRoomForPedToLeaveCar` 0x6504C0 (both
+  unreversed in gta-reversed), `GetNearestCarDoor` 0x6528F0 (entry chunk 0x4058AC; the bytes differ from
+  gta-reversed in the bike branch, door 0x12 and the towed-vehicle path test).
+* `std14-ai-1`: `CTaskComplexEnterCar` `CreateFirstSubTask` 0x643A60, `ControlSubTask` 0x63A890, `CreateSubTask`
+  0x63E040, `CreateNextSubTask` 0x63E990 (0x2C0 and the fall-and-get-up order follow the bytes),
+  `CreateNextSubTask_AfterSimpleCarAlign` 0x63F970 (chat reactions with `rand()` at their call sites), the
+  `CTaskComplexEnterCarAsDriver` destructor 0x640330; `ComputeTargetDoorOppositeToFlag` 0x63AB70 is called directly
+  (not in the catalogue).
+* `std14-ai-2`: `CEventLeaderEnteredCarAsDriver` destructor 0x48E220, `CTaskComplexGoToCarDoorAndStandStill::
+  ControlSubTask` 0x64A820, `CTaskSimpleSlideToCoord::ProcessPed` 0x66C4E0.
+* Phase-B natives of existing ports: `CTaskSimpleCarSetPedOut::PositionPedOutOfCollision` 0x6479B0 (PORT-AI-3's
+  body, unhooked for its split L2 difference) and `CAERadioTrackManager::QueueUpTracksForStation` 0x4EA670
+  (unhookable entry).
+* Extended partial ports: `CCarAI::UpdateCarAI` 0x41DA30 now takes the ported body for the missions both of its
+  mission switches leave to the default (45..=51, 56..=58, 62, 63, > 68: parking, heli landing...); the parking car
+  at Grove Street (mission 45) blocked every frame. `SteerAICarWithPhysics_OnlyMission` 0x436A90 dispatches the
+  parking missions 0x2D / 0x31 and 0x2E / 0x32 to the ported `SteerAICarParkPerpendicular` / `Parallel`.
+* sa-game: `SA_GAME_VEHLIST=N` (vehicles near the player, with mission and law flag) and
+  `SA_GAME_TELEPORT=ITER:X:Y:Z[:HEADING]` (the player through its `Teleport` virtual) for exploration runs.
+
+### 21.4 Runs (release, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, no stubs)
+
+Enter-car scenario: deterministic, `SA_GAME_TELEPORT=60:2456.5:-1761.7:13.6` (next to the parked Savanna, model
+567, at (2452.88, -1761.75)), `SA_GAME_KEYS=f:100:103`.
+
+| run | first blocker | where the player got |
+|---|---|---|
+| car1 | `GetNearestCarDoor` 0x6528F0 | standing |
+| car4 | `CreateFirstSubTask` 0x643A60, the 0x640330 destructor | standing |
+| car5..car9 | the leader event 0x4B0EF0, `UpdateCarAI` (mission 45), the steering of mission 45 | standing |
+| car9 | SIGSEGV in the AI-GEN body of 0x5F3730 (21.2) | standing |
+| car12 | `GoToCarDoorAndStandStill::ControlSubTask` 0x64A820 | standing |
+| car13..car14 | `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0, `CVehicle::ProcessOpenDoor` 0x6D56C0 | at the door (2454.72, -1761.54) |
+
+Window runs (headless gamescope 800x600, `--auto-input`, W held from iteration 150): 60 s, 1,887 frames, 0
+blocked, no crash (system heap, before 21.1); with the fixed heap a `CTaskSimpleSlideToCoord::ProcessPed` block
+appeared (since ported).
+
+Evidence (not committed, `target/std14-evidence/`): `enter-door/png/` and `enter-door/cj-to-car-door.mp4`
+(deterministic run, CJ teleported beside the car turns and walks to its door; the camera faces the wall),
+`car*/sa-game.log` (blocker lists), `win3/`, `win4/`, `win5/` (window runs).
+
+### 21.5 Play package
+
+Refreshed at 08:54 (RENDER-SHADOW), 09:04 (WRITER-NATIVE car damage, two stubs left) and 09:33 (no stubs,
+`SA_GAME_STUB` gone from `play.sh`). The README says not to press F next to a car: three identical blocked frames
+stop a window run.
+
+### 21.6 Next gaps, in order
+
+1. `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 (unreversed, ~600 instructions, SEH, a per-anim switch of 0xFA
+   entries) and `GetLocalPositionToOpenCarDoor` 0x64FC10; `CVehicle::ProcessOpenDoor` 0x6D56C0 (gr-reversed, x87,
+   two nested anim / anim-group switches; the time argument's slot holds the ratio).
+2. Then the get-in / close-door / set-ped-in tasks run (their bodies are ported) and the driving path follows:
+   PORT-VEH-4's `ProcessControlInputs` are now in; camera in car, vehicle audio (`ProcessPlayerVehicleEngine`
+   0x4FBB10 blocked in car14).
+3. `CCarEnterExit::GetNearestCarPassengerDoor` 0x650BB0 (passengers), `CEventVehicleCollision` ctor 0x4AC840,
+   `CPed::KillPedWithCar` 0x5F0360, `ComputeClosestSurfacePoint` 0x5F3B70, `ChoosePolicePedOccupation` 0x610F40.
+4. `UpdateCarAI` for law enforcers with a wanted level and the remaining missions.
+5. AI-GEN: check the other `nop; jmp` callees for the 0x5F1FA0 argument bug.
+
+### 21.7 Checks
+
+clippy -D warnings, i686-unknown-linux-gnu: sa-ai, sa-veh, sa-core, sa-game, sa-pop, sa-audio, sa-ports; host:
+sa-ai, sa-veh, sa-core, sa-pop, sa-audio, sa-hook. `cargo test -p sa-hook --lib`: 58 passed. Every commit builds
+(the release sa-game build after each).
+
+### 21.8 Decisions needed
+
+1. Whether to keep the fixed-address heap in the play package before a long-session memory test (it never returns
+   memory across size classes).
+2. Whether PORT-AI-3's split-L2-failing `PositionPedOutOfCollision` / `SetPedOut::ProcessPed` bodies may stay
+   registered for phases B/C until their difference is resolved.
