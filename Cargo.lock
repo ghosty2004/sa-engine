@@ -2481,7 +2481,7 @@ dependencies = [
 [[package]]
 name = "samp-client"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=45fe1437ede9b9ec59cf05ca134ddc67b6c1f542#45fe1437ede9b9ec59cf05ca134ddc67b6c1f542"
 dependencies = [
  "sa-net",
  "sa-samp-api",
@@ -2495,7 +2495,7 @@ dependencies = [
 [[package]]
 name = "samp-proto"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=45fe1437ede9b9ec59cf05ca134ddc67b6c1f542#45fe1437ede9b9ec59cf05ca134ddc67b6c1f542"
 dependencies = [
  "web-time",
 ]
@@ -2503,12 +2503,12 @@ dependencies = [
 [[package]]
 name = "samp-saa"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=45fe1437ede9b9ec59cf05ca134ddc67b6c1f542#45fe1437ede9b9ec59cf05ca134ddc67b6c1f542"
 
 [[package]]
 name = "samp-ui"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=45fe1437ede9b9ec59cf05ca134ddc67b6c1f542#45fe1437ede9b9ec59cf05ca134ddc67b6c1f542"
 dependencies = [
  "samp-proto",
 ]
