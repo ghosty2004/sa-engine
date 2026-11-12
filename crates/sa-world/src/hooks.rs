@@ -25,6 +25,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::garages::HOOKS,
     world::garage_update::HOOKS,
     world::garage_slide_door::HOOKS,
+    world::object_damage::HOOKS,
     world::misc::HOOKS,
     world::pickups::HOOKS,
     world::pickup_effects::HOOKS,
