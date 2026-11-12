@@ -217,13 +217,27 @@ macro_rules! stub_fns {
                 }
                 f as *const () as usize
             },
+            {
+                extern "stdcall" fn f(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32, _g: u32, _h: u32, _i: u32) -> u32 {
+                    STUB_RET[$i].load(std::sync::atomic::Ordering::Relaxed)
+                }
+                f as *const () as usize
+            },
+            {
+                extern "stdcall" fn f(
+                    _a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32, _g: u32, _h: u32, _i: u32, _j: u32,
+                ) -> u32 {
+                    STUB_RET[$i].load(std::sync::atomic::Ordering::Relaxed)
+                }
+                f as *const () as usize
+            },
         ]),*]
     };
 }
 
 /// `SA_GAME_STUB="ADDR=RET[/N],..."` (development aid, never a port): registers up to 48
 /// addresses as functions that return RET without doing anything, so a boot run can look past a
-/// blocker another lane is porting. `N` (0..=8, default 0) is the number of stack dwords the
+/// blocker another lane is porting. `N` (0..=10, default 0) is the number of stack dwords the
 /// callee pops (stdcall / thiscall arguments after `this`); 0 suits cdecl. `!ADDR` replaces a registered port too
 /// (calls through the address registry only; Rust callers that name the port directly still reach it).
 #[cfg(target_arch = "x86")]
@@ -231,7 +245,7 @@ fn stubs() -> Vec<(u32, usize, bool)> {
     let Ok(spec) = std::env::var("SA_GAME_STUB") else {
         return Vec::new();
     };
-    let fns: [[usize; 9]; 48] = stub_fns!(
+    let fns: [[usize; 11]; 48] = stub_fns!(
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
         31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47
     );
@@ -251,7 +265,7 @@ fn stubs() -> Vec<(u32, usize, bool)> {
         };
         let (r, n) = r.split_once('/').unwrap_or((r, "0"));
         if let (Some(a), Some(r), Some(n)) = (num(a), num(r), num(n))
-            && n <= 8
+            && n <= 10
         {
             STUB_RET[i].store(r, std::sync::atomic::Ordering::Relaxed);
             out.push((a, fns[i][n as usize], force));
