@@ -1,0 +1,328 @@
+//! The web front end (wasm32, WEB-1): the same boot and main loop as the native `--window` mode, driven by the
+//! page's worker (`web/worker.js`): the game folder is the user's own install ([`crate::webfs`]), the device draws
+//! into an `OffscreenCanvas` through wgpu (WebGPU, else WebGL2), and the page's keyboard / mouse events become the
+//! platform input (window messages and DirectInput state), exactly as the winit window's do natively.
+//!
+//! The legacy address arena lives in the low linear memory at the original addresses (the module is linked above
+//! [`crate::arena::WASM_LOW_END`]), and `orig!`'s registry dispatches through type-erased entries
+//! ([`sa_core::wabi`]). There are no threads: the streaming thread is cooperative (`bind::coop`), the frame limiter
+//! does not sleep (the page calls [`frame`] once per animation frame).
+
+use std::cell::RefCell;
+
+use sa_platform::fs::MemFs;
+use sa_platform::input::{InputState, Key, MouseButton};
+use wasm_bindgen::prelude::*;
+
+use crate::app::{Session, merge_input, synthetic_input};
+
+/// A console line (the crate's `println!` / `eprintln!`).
+pub fn log_line(s: String) {
+    web_sys::console::log_1(&s.into());
+}
+
+thread_local! {
+    static SESSION: RefCell<Option<Session>> = const { RefCell::new(None) };
+    static INPUT: RefCell<InputState> = RefCell::new(InputState::default());
+}
+
+/// Panic messages to the console (a panic then aborts: wasm32 has no unwinding).
+#[wasm_bindgen(start)]
+pub fn start() {
+    std::panic::set_hook(Box::new(|info| {
+        web_sys::console::error_1(&format!("sa-game panicked: {info}").into());
+    }));
+}
+
+/// A development variable (`SA_GAME_STUB`, `SA_GAME_WALK`, `SA_GAME_SCRIPT_SKIP`, ...), from the page's URL query.
+#[wasm_bindgen]
+pub fn set_env(name: &str, value: &str) {
+    crate::env::set(name, value);
+}
+
+/// `--start-in-world`: main.scm's intro mission is skipped.
+#[wasm_bindgen]
+pub fn set_start_in_world() {
+    crate::native::set_start_in_world();
+}
+
+/// Registers file `id` of the game folder (`path` relative to it, `size` bytes); reads go to `saGameIo.read`.
+#[wasm_bindgen]
+pub fn add_game_file(path: &str, id: u32, size: f64) {
+    crate::webfs::add(path, id, size as u64);
+}
+
+/// Creates the GPU device on `canvas` (WebGPU, else WebGL2) and installs it as the window the game's
+/// `IDirect3D9::CreateDevice` uses. Returns the backend's name.
+#[wasm_bindgen]
+pub async fn init_gpu(canvas: web_sys::OffscreenCanvas) -> Result<String, JsValue> {
+    let (w, h) = (canvas.width().max(1), canvas.height().max(1));
+    let mut desc = wgpu::InstanceDescriptor::new_without_display_handle();
+    desc.backends = wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL;
+    let instance = wgpu::util::new_instance_with_webgpu_detection(desc).await;
+    let surface = instance
+        .create_surface(wgpu::SurfaceTarget::OffscreenCanvas(canvas))
+        .map_err(|e| JsValue::from_str(&format!("create_surface: {e}")))?;
+    let adapter = instance
+        .request_adapter(&wgpu::RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            force_fallback_adapter: false,
+            compatible_surface: Some(&surface),
+        })
+        .await
+        .map_err(|e| JsValue::from_str(&format!("no GPU adapter: {e}")))?;
+    let info = adapter.get_info();
+    let limits = if info.backend == wgpu::Backend::Gl {
+        wgpu::Limits::downlevel_webgl2_defaults().using_resolution(adapter.limits())
+    } else {
+        wgpu::Limits::default().using_resolution(adapter.limits())
+    };
+    let (device, queue) = adapter
+        .request_device(&wgpu::DeviceDescriptor {
+            label: Some("sa-game web"),
+            required_features: adapter.features() & sa_rw_wgpu::d3d9::WgpuDevice::optional_features(),
+            required_limits: limits,
+            experimental_features: Default::default(),
+            memory_hints: wgpu::MemoryHints::Performance,
+            trace: Default::default(),
+        })
+        .await
+        .map_err(|e| JsValue::from_str(&format!("request_device: {e}")))?;
+    device.on_uncaptured_error(std::sync::Arc::new(|e| {
+        web_sys::console::error_1(&format!("wgpu: {e}").into());
+    }));
+    let caps = surface.get_capabilities(&adapter);
+    let format = caps
+        .formats
+        .iter()
+        .copied()
+        .find(|f| !f.is_srgb())
+        .or(caps.formats.first().copied())
+        .ok_or_else(|| JsValue::from_str("the canvas has no surface format"))?;
+    let config = wgpu::SurfaceConfiguration {
+        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        format,
+        width: w,
+        height: h,
+        present_mode: wgpu::PresentMode::AutoNoVsync,
+        desired_maximum_frame_latency: 2,
+        alpha_mode: caps.alpha_modes[0],
+        view_formats: vec![],
+    };
+    surface.configure(&device, &config);
+    crate::d3d9::set_window(crate::d3d9::WindowTarget {
+        surface,
+        config,
+        device,
+        queue,
+    });
+    Ok(format!("{:?} ({}, {:?})", info.backend, info.name, format))
+}
+
+/// The platform setup and the boot (WinMain up to its main loop), from the registered game folder.
+#[wasm_bindgen]
+pub fn boot() -> Result<(), JsValue> {
+    use sa_platform::fs::GameFs;
+    let game = crate::webfs::WebFs;
+    let exe = game
+        .read("gta_sa.exe")
+        .map_err(|e| JsValue::from_str(&format!("gta_sa.exe: {e} (choose your GTA San Andreas folder)")))?;
+    crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
+    let s = crate::app::boot_with(
+        Box::new(game),
+        Box::new(MemFs::default()),
+        exe,
+        &format!("your game folder ({} files)", crate::webfs::count()),
+        "browser memory (not kept)",
+    )
+    .map_err(|e| JsValue::from_str(&e))?;
+    SESSION.with(|c| *c.borrow_mut() = Some(s));
+    Ok(())
+}
+
+/// One main-loop iteration with the input gathered since the last one; false once the loop has stopped. With
+/// `SA_WEB_AUTO_INPUT=1` the offscreen mode's synthetic input is added (unattended evidence runs).
+#[wasm_bindgen]
+pub fn frame() -> bool {
+    let input = INPUT.with(|i| {
+        let mut i = i.borrow_mut();
+        let out = i.clone();
+        i.end_frame();
+        out
+    });
+    SESSION.with(|c| {
+        let mut c = c.borrow_mut();
+        let Some(s) = c.as_mut() else { return false };
+        let input = if crate::env::var_os("SA_WEB_AUTO_INPUT").is_some() {
+            merge_input(&input, &synthetic_input(s.n))
+        } else {
+            input
+        };
+        s.iterate(input)
+    })
+}
+
+/// Main-loop iterations run so far.
+#[wasm_bindgen]
+pub fn iterations() -> u32 {
+    SESSION.with(|c| c.borrow().as_ref().map_or(0, |s| s.n))
+}
+
+/// The main loop's `gGameState` (9 = in game).
+#[wasm_bindgen]
+pub fn game_state() -> u32 {
+    crate::winmain::game_state()
+}
+
+/// In-game frames presented so far.
+#[wasm_bindgen]
+pub fn in_game_presents() -> u32 {
+    crate::d3d9::frame_times().len() as u32
+}
+
+/// Frames presented so far (every `Present`).
+#[wasm_bindgen]
+pub fn presents() -> u32 {
+    crate::d3d9::PRESENTS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// A DOM `KeyboardEvent.code` going down (`repeat`: auto-repeat) or up.
+#[wasm_bindgen]
+pub fn key(code: &str, down: bool, repeat: bool) {
+    let Some(k) = key_of(code) else { return };
+    INPUT.with(|i| {
+        let mut i = i.borrow_mut();
+        match (down, repeat) {
+            (true, false) => i.key_down(k),
+            (true, true) => i.key_repeat(k),
+            (false, _) => i.key_up(k),
+        }
+    });
+}
+
+/// Text the layout produced (`WM_CHAR`).
+#[wasm_bindgen]
+pub fn text(s: &str) {
+    INPUT.with(|i| {
+        let mut i = i.borrow_mut();
+        for c in s.chars() {
+            i.events.push(sa_platform::input::InputEvent::Char(c));
+        }
+    });
+}
+
+/// Relative pointer motion (pointer-lock `movementX/Y`).
+#[wasm_bindgen]
+pub fn mouse_move(dx: f64, dy: f64) {
+    INPUT.with(|i| {
+        let mut i = i.borrow_mut();
+        i.mouse_delta.0 += dx;
+        i.mouse_delta.1 += dy;
+    });
+}
+
+/// A DOM mouse button (0 left, 1 middle, 2 right, 3 back, 4 forward) going down or up.
+#[wasm_bindgen]
+pub fn mouse_button(button: u32, down: bool) {
+    let b = match button {
+        0 => MouseButton::Left,
+        1 => MouseButton::Middle,
+        2 => MouseButton::Right,
+        3 => MouseButton::X1,
+        4 => MouseButton::X2,
+        _ => return,
+    };
+    INPUT.with(|i| {
+        let mut i = i.borrow_mut();
+        if down { i.mouse_down(b) } else { i.mouse_up(b) }
+    });
+}
+
+/// Wheel lines (positive = away from the user).
+#[wasm_bindgen]
+pub fn wheel(lines: f32) {
+    INPUT.with(|i| {
+        let mut i = i.borrow_mut();
+        i.wheel += lines;
+        i.events.push(sa_platform::input::InputEvent::Wheel(lines));
+    });
+}
+
+/// Focus lost: every held key and button is released.
+#[wasm_bindgen]
+pub fn blur() {
+    INPUT.with(|i| i.borrow_mut().release_all());
+}
+
+/// The platform key of a DOM `KeyboardEvent.code` (layout-independent physical keys, as winit's `KeyCode`).
+fn key_of(code: &str) -> Option<Key> {
+    if let Some(l) = code.strip_prefix("Key")
+        && l.len() == 1
+        && l.as_bytes()[0].is_ascii_uppercase()
+    {
+        const KEYS: [Key; 26] = [
+            Key::A, Key::B, Key::C, Key::D, Key::E, Key::F, Key::G, Key::H, Key::I, Key::J, Key::K, Key::L, Key::M,
+            Key::N, Key::O, Key::P, Key::Q, Key::R, Key::S, Key::T, Key::U, Key::V, Key::W, Key::X, Key::Y, Key::Z,
+        ];
+        return Some(KEYS[usize::from(l.as_bytes()[0] - b'A')]);
+    }
+    if let Some(d) = code.strip_prefix("Digit").and_then(|d| d.parse::<u8>().ok()) {
+        return Some(Key::Digit(d));
+    }
+    if let Some(d) = code.strip_prefix("Numpad").and_then(|d| d.parse::<u8>().ok()) {
+        return Some(Key::Numpad(d));
+    }
+    if let Some(n) = code.strip_prefix('F').and_then(|d| d.parse::<u8>().ok()) {
+        return Some(Key::Fn(n));
+    }
+    Some(match code {
+        "NumpadDivide" => Key::NumpadDivide,
+        "NumpadMultiply" => Key::NumpadMultiply,
+        "NumpadSubtract" => Key::NumpadSubtract,
+        "NumpadAdd" => Key::NumpadAdd,
+        "NumpadDecimal" => Key::NumpadDecimal,
+        "NumpadEnter" => Key::NumpadEnter,
+        "NumLock" => Key::NumLock,
+        "Space" => Key::Space,
+        "ShiftLeft" => Key::ShiftLeft,
+        "ShiftRight" => Key::ShiftRight,
+        "ControlLeft" => Key::ControlLeft,
+        "ControlRight" => Key::ControlRight,
+        "AltLeft" => Key::AltLeft,
+        "AltRight" => Key::AltRight,
+        "MetaLeft" => Key::MetaLeft,
+        "MetaRight" => Key::MetaRight,
+        "ContextMenu" => Key::ContextMenu,
+        "CapsLock" => Key::CapsLock,
+        "ArrowUp" => Key::Up,
+        "ArrowDown" => Key::Down,
+        "ArrowLeft" => Key::Left,
+        "ArrowRight" => Key::Right,
+        "Insert" => Key::Insert,
+        "Delete" => Key::Delete,
+        "Home" => Key::Home,
+        "End" => Key::End,
+        "PageUp" => Key::PageUp,
+        "PageDown" => Key::PageDown,
+        "PrintScreen" => Key::PrintScreen,
+        "ScrollLock" => Key::ScrollLock,
+        "Pause" => Key::Pause,
+        "BracketLeft" => Key::BracketLeft,
+        "BracketRight" => Key::BracketRight,
+        "Backslash" => Key::Backslash,
+        "Semicolon" => Key::Semicolon,
+        "Quote" => Key::Quote,
+        "Backquote" => Key::Backquote,
+        "Comma" => Key::Comma,
+        "Period" => Key::Period,
+        "Slash" => Key::Slash,
+        "Minus" => Key::Minus,
+        "Equal" => Key::Equal,
+        "IntlBackslash" => Key::IntlBackslash,
+        "Escape" => Key::Escape,
+        "Tab" => Key::Tab,
+        "Enter" => Key::Enter,
+        "Backspace" => Key::Backspace,
+        _ => return None,
+    })
+}

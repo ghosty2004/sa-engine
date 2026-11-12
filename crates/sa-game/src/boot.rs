@@ -67,7 +67,7 @@ pub fn install_panic_hook() {
             .unwrap_or_default();
         LAST_PANIC.with(|p| *p.borrow_mut() = format!("{msg}{at}"));
         // `SA_GAME_BACKTRACE=1` (exploration): the Rust call chain of every panic, e.g. of a blocked step
-        if std::env::var_os("SA_GAME_BACKTRACE").is_some() {
+        if crate::env::var_os("SA_GAME_BACKTRACE").is_some() {
             eprintln!("panic: {msg}{at}\n{}", std::backtrace::Backtrace::force_capture());
         }
     }));
@@ -115,7 +115,7 @@ pub fn run_step(s: &Step) -> Outcome {
     // is off for good: forking a process with wgpu threads is unsafe (the crash reporter still names
     // the step of a fault).
     if s.probe
-        && std::env::var_os("SA_GAME_NO_PROBE").is_none()
+        && crate::env::var_os("SA_GAME_NO_PROBE").is_none()
         && !NO_PROBE.load(std::sync::atomic::Ordering::SeqCst)
         && crate::d3d9::with_device(|_| ()).is_none()
         && let Some(report) = arena::probe(|| {

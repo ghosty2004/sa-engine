@@ -15,7 +15,22 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread::ThreadId;
 
-use sa_platform::clock::{Clock, StdClock};
+use sa_platform::clock::Clock;
+
+/// Real time since the clock was made (`web_time`: `performance.now()` on wasm32).
+pub struct StdClock(web_time::Instant);
+
+impl Default for StdClock {
+    fn default() -> Self {
+        StdClock(web_time::Instant::now())
+    }
+}
+
+impl StdClock {
+    fn now_seconds(&self) -> f64 {
+        self.0.elapsed().as_secs_f64()
+    }
+}
 
 /// The step in microseconds (0: real time).
 static STEP_US: AtomicU64 = AtomicU64::new(0);
@@ -66,6 +81,8 @@ pub fn begin_iteration() {
         NOW_US.fetch_add(s, Ordering::SeqCst);
         // the DirectSound buffers' play cursors advance with the virtual clock, in the main loop
         crate::dsound::advance(s as f64 / 1_000_000.0);
+    } else if cfg!(target_arch = "wasm32") {
+        crate::dsound::advance_real_time();
     }
 }
 
@@ -101,7 +118,7 @@ pub fn end_iteration() {
 }
 
 fn drain() {
-    let start = std::time::Instant::now();
+    let start = web_time::Instant::now();
     loop {
         let empty = sa_stream::cdstream::QUEUE_HEAD.get() == sa_stream::cdstream::QUEUE_TAIL.get();
         if empty && !STREAM_BUSY.load(Ordering::SeqCst) {
@@ -141,7 +158,7 @@ impl Clock for GameClock {
             } else {
                 NOW_US.load(Ordering::SeqCst)
             };
-            if std::env::var("SA_GAME_DET_BT")
+            if crate::env::var("SA_GAME_DET_BT")
                 .ok()
                 .and_then(|v| v.parse::<u64>().ok())
                 == Some(ITER.load(Ordering::SeqCst))

@@ -881,8 +881,24 @@ macro_rules! __orig_dispatch_call {
     }};
 }
 
+/// Phases B/C on wasm32: every entry is type-erased ([`crate::wabi`]): the arguments go as the
+/// original's stack words, the result comes back as EAX:EDX or ST0.
+#[cfg(all(not(sa_phase_a), target_arch = "wasm32"))]
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __orig_dispatch {
+    ($conv:ident, $callee:ident, ($($a:ident : $t:ty),*) $(-> $r:ty)?) => {
+        if let Some(e) = $crate::orig::registry::lookup($callee) {
+            #[allow(unused_mut)]
+            let mut __sa_args = $crate::wabi::Args::new();
+            $(__sa_args.push::<$t>($a);)*
+            return $crate::wabi::call(e.entry, $callee, &__sa_args);
+        }
+    };
+}
+
 /// Other phase B/C targets: no native entries with the original ABI.
-#[cfg(all(not(sa_phase_a), not(target_arch = "x86")))]
+#[cfg(all(not(sa_phase_a), not(target_arch = "x86"), not(target_arch = "wasm32")))]
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __orig_dispatch {

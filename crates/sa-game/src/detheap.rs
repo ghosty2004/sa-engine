@@ -11,6 +11,7 @@ use std::sync::Mutex;
 use sa_core::mem::GPtr;
 
 /// Where the region is mapped (below the no-ASLR PIE image at 0x56555000) and its size.
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
 const BASE: usize = 0x1800_0000;
 const SIZE: usize = 0x3800_0000;
 /// Block header: the class size (the pointer handed out is 16-aligned after it).
@@ -43,32 +44,38 @@ fn class(n: usize) -> usize {
 fn with<R>(f: impl FnOnce(&mut Heap) -> R) -> R {
     let mut h = HEAP.lock().unwrap_or_else(|e| e.into_inner());
     let h = h.get_or_insert_with(|| {
-        // SAFETY: an anonymous private mapping; MAP_FIXED_NOREPLACE never replaces an existing mapping.
-        let mut p = unsafe {
-            libc::mmap(
-                BASE as *mut libc::c_void,
-                SIZE,
-                libc::PROT_READ | libc::PROT_WRITE,
-                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE | libc::MAP_FIXED_NOREPLACE,
-                -1,
-                0,
-            )
-        };
-        if p == libc::MAP_FAILED {
-            eprintln!("sa-game: --fixed-step heap: {BASE:#x} is taken; the kernel picks the address (runs may differ)");
-            // SAFETY: as above, without a fixed address.
-            p = unsafe {
+        #[cfg(target_arch = "wasm32")]
+        let p = Box::leak(vec![0u8; SIZE].into_boxed_slice()).as_mut_ptr();
+        #[cfg(not(target_arch = "wasm32"))]
+        let p = {
+            // SAFETY: an anonymous private mapping; MAP_FIXED_NOREPLACE never replaces an existing mapping.
+            let mut p = unsafe {
                 libc::mmap(
-                    std::ptr::null_mut(),
+                    BASE as *mut libc::c_void,
                     SIZE,
                     libc::PROT_READ | libc::PROT_WRITE,
-                    libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE,
+                    libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE | libc::MAP_FIXED_NOREPLACE,
                     -1,
                     0,
                 )
             };
-            assert!(p != libc::MAP_FAILED, "sa-game: --fixed-step heap: mmap failed");
-        }
+            if p == libc::MAP_FAILED {
+                eprintln!("sa-game: --fixed-step heap: {BASE:#x} is taken; the kernel picks the address (runs may differ)");
+                // SAFETY: as above, without a fixed address.
+                p = unsafe {
+                    libc::mmap(
+                        std::ptr::null_mut(),
+                        SIZE,
+                        libc::PROT_READ | libc::PROT_WRITE,
+                        libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE,
+                        -1,
+                        0,
+                    )
+                };
+                assert!(p != libc::MAP_FAILED, "sa-game: --fixed-step heap: mmap failed");
+            }
+            p
+        };
         let base = p as usize;
         Heap { top: base, end: base + SIZE, free: Default::default() }
     });

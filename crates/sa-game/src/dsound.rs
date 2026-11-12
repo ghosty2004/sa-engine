@@ -30,7 +30,8 @@
 
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use web_time::Instant;
 
 use sa_core::mem::GPtr;
 use sa_platform::audio::{AudioFormat, AudioOut, NullAudio};
@@ -247,21 +248,7 @@ static DS8_OBJECT: Mutex<u32> = Mutex::new(0);
 
 /// Maps the vtable page and starts the mixer.
 pub fn map() -> Result<(), String> {
-    // SAFETY: an anonymous private mapping at a fixed low address that MAP_FIXED_NOREPLACE refuses
-    // to place over anything already mapped; never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            PAGE as *mut libc::c_void,
-            0x1000,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != PAGE {
-        return Err(format!("cannot map the DirectSound vtable page at {PAGE:#x}"));
-    }
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the DirectSound vtable page at {PAGE:#x}")))?;
     for (c, cl) in CLASSES.iter().enumerate() {
         for i in 0..cl.methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));
@@ -289,7 +276,7 @@ pub fn names() -> Vec<(u32, &'static str)> {
 /// The sink the mixer plays into.
 fn open_sink() -> Box<dyn AudioOut> {
     #[cfg(feature = "audio")]
-    if std::env::var("SA_GAME_AUDIO").as_deref() == Ok("cpal") {
+    if crate::env::var("SA_GAME_AUDIO").as_deref() == Ok("cpal") {
         match sa_platform::native::CpalAudio::new() {
             Ok(a) => return Box::new(a),
             Err(e) => eprintln!("sa-game: no audio device ({e}); playing into NullAudio"),
@@ -341,12 +328,26 @@ pub fn advance(secs: f64) {
     m.sink.push(&m.pcm);
 }
 
+/// wasm32: advances the buffers by the real time since the last call (once per main-loop iteration).
+pub fn advance_real_time() {
+    static LAST: Mutex<Option<Instant>> = Mutex::new(None);
+    let now = Instant::now();
+    let mut l = LAST.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(prev) = l.replace(now) {
+        advance(now.duration_since(prev).as_secs_f64().min(0.25));
+    }
+}
+
 fn start_mixer() {
     let mut started = MIXER_STARTED.lock().unwrap_or_else(|e| e.into_inner());
     if *started {
         return;
     }
     *started = true;
+    // wasm32: no threads; the main loop advances the buffers in real time ([`advance_real_time`])
+    if cfg!(target_arch = "wasm32") {
+        return;
+    }
     std::thread::Builder::new()
         .name("sa-game dsound mixer".into())
         .spawn(|| {
@@ -850,7 +851,13 @@ macro_rules! entries {
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
                     $f($($a),*)
                 }
-                v.push(($addr, $name, w as *const () as usize));
+                v.push(($addr, $name, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }

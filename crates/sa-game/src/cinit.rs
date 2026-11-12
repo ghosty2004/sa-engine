@@ -46,8 +46,12 @@ pub fn run() -> String {
                 // SAFETY: a registered entry of a `__init_*` port: an `extern "C-unwind" fn()` with
                 // the original's cdecl convention and no arguments (every slot of the table is
                 // called that way by `_initterm`).
+                #[cfg(not(target_arch = "wasm32"))]
                 let call: extern "C-unwind" fn() =
                     unsafe { std::mem::transmute::<usize, extern "C-unwind" fn()>(entry) };
+                // wasm32: the type-erased entry, no arguments
+                #[cfg(target_arch = "wasm32")]
+                let call = || sa_core::wabi::call::<()>(entry, f as usize, &sa_core::wabi::Args::new());
                 match catch_unwind(AssertUnwindSafe(|| call())) {
                     Ok(()) => ran += 1,
                     Err(p) => {

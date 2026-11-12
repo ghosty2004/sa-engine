@@ -82,21 +82,7 @@ fn trap(class: u32, slot: usize) -> u32 {
 
 /// Maps the page and writes the objects' vtable pointers and the vtables.
 pub fn map() -> Result<(), String> {
-    // SAFETY: an anonymous private mapping at a fixed low address that MAP_FIXED_NOREPLACE refuses
-    // to place over anything already mapped; never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            PAGE as *mut libc::c_void,
-            0x1000,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != PAGE {
-        return Err(format!("cannot map the DirectInput object page at {PAGE:#x}"));
-    }
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the DirectInput object page at {PAGE:#x}")))?;
     let w = |a: usize, v: u32| GPtr::<u32>::from_addr(a).write(v);
     w(DI8, VT_DI8 as u32);
     for obj in [DI_MOUSE, DI_PAD1, DI_PAD2] {
@@ -138,7 +124,13 @@ macro_rules! methods {
                     $f($($a),*)
                 }
                 let name = if $class == 0 { DI8_METHODS.get($slot) } else { DEVICE_METHODS.get($slot) }.copied().unwrap_or("?");
-                v.push((trap($class, $slot), name, w as *const () as usize));
+                v.push((trap($class, $slot), name, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }
