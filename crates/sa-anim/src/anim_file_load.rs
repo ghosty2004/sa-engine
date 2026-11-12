@@ -1,6 +1,7 @@
 //! `CAnimManager::LoadAnimFile` (STD-6, batch `std6-anim-1`). Ported from the 1.0 US bytes (0x4D47F0):
-//! the ANP2 / ANP3 loader in full; the ANPK branch (0x4D4863..0x4D516D, not used by the 1.0 US data)
-//! runs the original body (`fallback`, ADR-002).
+//! the ANP2 / ANP3 loader in full; the ANPK branch (0x4D4863..0x4D516D; the 1.0 US data loads ANPK files
+//! during the new-game boot) runs the original body (`fallback`, ADR-002) after the header bytes the port
+//! read are put back into the stream (`stream_unread`).
 //!
 //! `CAnimBlendHierarchy` (0x18, `ms_aAnimations` 0xB4EA40): +0 hash, +4 sequences, +8 count (i16),
 //! +0xA "uncompressed / to be processed" byte, +0xB keep-compressed, +0xC block index, +0x10 total time.
@@ -41,6 +42,22 @@ orig! {
     fn operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `eh vector constructor iterator(ptr, size, count, ctor, dtor)` (0x821D30)
     fn eh_vector_ctor(p: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) = stdcall 0x821D30 => unported;
+    /// The RW OS file interface's `fseek(fp, offset, whence)` (`RwGlobals` +0xE4, as `RwStreamSkip` calls it)
+    fn rw_fseek(fp: u32, offset: i32, whence: i32) -> i32 = cdecl table 0xC97B24 0xE4 => unported;
+}
+
+/// Puts back the `n` header bytes the port read, so the original body (the ANPK fallback) reads them itself:
+/// memory streams (type 3) move their position (+0xC) back, file streams (types 1 and 2, `FILE*` at +0xC) seek
+/// back. A custom stream (type 4) cannot be rewound: the fallback then reads past the header (no SA file uses
+/// one for animations).
+fn stream_unread(s: GPtr<u8>, n: u32) {
+    match rd::<u32>(s, 0) {
+        3 => wr::<u32>(s, 0xC, rd::<u32>(s, 0xC).wrapping_sub(n)),
+        1 | 2 => {
+            rw_fseek(rd::<u32>(s, 0xC), -(n as i32), 1);
+        }
+        _ => {}
+    }
 }
 
 /// `CAnimManager::ms_numAnimBlocks`, `ms_numAnimations`, `ms_aAnimBlocks`, `ms_aAnimations`.
@@ -87,9 +104,12 @@ fn read_i32(s: GPtr<u8>) -> i32 {
        note = "ANPK files run the original body (ADR-002 fallback)")]
 pub fn load_anim_file(s: GPtr<u8>, load_compressed: u32, uncompressed: GPtr<u8>) {
     let mut hdr = [0u8; 8];
-    stream_read(s, GPtr::from_raw(hdr.as_mut_ptr()), 8);
+    let got = stream_read(s, GPtr::from_raw(hdr.as_mut_ptr()), 8);
     let id = GPtr::from_raw(hdr.as_mut_ptr());
     if crt_strncmp(id, GPtr::from_addr(0x85C70C), 4) != 0 && crt_strncmp(id, GPtr::from_addr(0x85C704), 4) != 0 {
+        // ANPK (the 1.0 US data has such files: the grove-walk boot loads one): the original body reads the
+        // header itself, so it is put back first.
+        stream_unread(s, got);
         load_anim_file_original(s, load_compressed, uncompressed);
         return;
     }
