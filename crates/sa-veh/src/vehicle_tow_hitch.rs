@@ -105,7 +105,12 @@ pub fn trailer_break_tow_link(this: GPtr<u8>) -> u8 {
 /// `CMonsterTruck::CMonsterTruck(int32, eVehicleCreatedBy)` (0x6C8D60): the automobile constructor
 /// (no suspension setup), vtable 0x8717D8, the four +0x988 ratios 1.0, SetupSuspensionLines,
 /// +0x868 bit 7, vehicle sub-type +0x594 = 1.
-/// Not hooked: the no-CD protection reads the entry bytes (0x409B96 and 0x1562E04 read 0x6C8D62); needs a keycells redirect.
+/// The entry is `push -1; jmp 0x401443` (a protection fragment that decodes and pushes the SEH handler);
+/// 0x409B96 and 0x1562E04 read the jmp bytes at 0x6C8D62 (keycells readers).
+#[hook(addr = 0x6C8D60, conv = thiscall, name = "CMonsterTruck::Constructor", this = "CMonsterTruck",
+       expect = "6A FF E9 DC 86 D3 FF",
+       unverified = "veh4-1", route = "L2", hazards = "entry-protection-read,heap-writes",
+       note = "constructs into pool memory; the SEH frame and the entry's protection detour are not reproduced")]
 pub fn monster_truck_constructor(this: GPtr<u8>, mi: u32, created_by: u32) -> GPtr<u8> {
     automobile_ctor(this, mi, created_by, 0);
     wr::<u32>(this, 0, 0x0087_17D8);
@@ -147,4 +152,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_TRAILER_GET_TOW_BAR_POS,
     HOOK_TRAILER_BREAK_TOW_LINK,
     HOOK_TRAILER_CONSTRUCTOR,
+    HOOK_MONSTER_TRUCK_CONSTRUCTOR,
 ];
