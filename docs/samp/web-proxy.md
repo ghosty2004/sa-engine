@@ -111,8 +111,8 @@ green.
 
 ### 5.2 Real join through the proxy (`tools/e2e/samp/proxy-handshake.sh`)
 
-samp-rs's `native_handshake` test (from the SAMP-3 step-4 patch, `docs/samp/patches/samp-rs-adapter-step4.patch`,
-applied to a scratch copy of `~/samp-rs-adapter` under `target/`; samp-rs itself untouched), built for
+samp-rs's `native_handshake` test (`samp-rs/crates/samp-client/tests/native_handshake.rs`; at the time of this
+run it came from the SAMP-3 step-4 patch on a scratch copy of samp-rs), built for
 `i686-unknown-linux-gnu`, joins our open.mp 1.6.7 copy (`re/samp/server`, 127.0.0.1:7812) via
 `UDP → shim 127.0.0.2:7812 → ws://127.0.0.1:7781 → sa-udp-proxy → UDP`, under `target/locks/samp-native.lock`:
 
@@ -136,10 +136,8 @@ The server sees the proxy's UDP socket (51665) as the client. Join time 1.13 s v
 first second is samp's open-connection retry interval either way). Run:
 
 ```
-# a samp-rs tree with tests/native_handshake.rs; until step 4 is committed on sa-engine/adapter, a scratch copy:
-mkdir -p target/samp-rs-copy && rsync -a --exclude /target --exclude /re --exclude /.git ~/samp-rs-adapter/ target/samp-rs-copy/
-patch -p1 -d target/samp-rs-copy < docs/samp/patches/samp-rs-adapter-step4.patch
-tools/e2e/samp/proxy-handshake.sh "$PWD/target/samp-rs-copy"   # [AUTH_TABLE]; env SAMP_PORT (7812), WS_PORT (7781), SA_ROOT
+# runs the test from samp-rs/ in this repository; auth table default: $SA_ROOT/re/samp/auth_table.txt
+tools/e2e/samp/proxy-handshake.sh   # [SAMP_RS_DIR [AUTH_TABLE]]; env SAMP_PORT (7812), WS_PORT (7781), SA_ROOT
 ```
 
 The shim listens on the **server's port number** on 127.0.0.2 because SA:MP's datagram cipher key is derived

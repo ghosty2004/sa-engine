@@ -3,11 +3,11 @@
 # samp-tracer with the BASS call log) in the trace lane, with the same filterscript
 # (tools/trace/uifs.pwn) on our own server copy at the trace lane's port 7790 and
 # tools/trace/icyserve.py on 18801. Run it under the trace-lane lock:
-#   /home/ghosty2004/samp-rs/tools/trace/with-lock.sh tools/e2e/m9-orig.sh
+#   tools/trace/with-lock.sh tools/e2e/m9-orig.sh
 # Output: target/m9-orig/ (trace.jsonl, server.log, icy.log, run.out).
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-MAIN="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+MAIN="${SAMP_RS_ROOT:-$ROOT}"
 T="$ROOT/tools/trace"
 OUT="$ROOT/target/m9-orig"
 mkdir -p "$OUT"

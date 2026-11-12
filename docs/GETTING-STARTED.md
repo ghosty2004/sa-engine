@@ -110,6 +110,8 @@ re/snapshots/…                   Ghidra snapshot
 re/gta-reversed/                 gta-reversed, pinned at 20d8d2a (reading aid)
 re/samp/client/                  your SA:MP 0.3.7-R4 client files (samp.dll, samp.saa, sampgui.png, …)
 re/samp/server/                  an open.mp 1.6.7 server copy for local tests
+re/samp/auth_table.txt           SA:MP's 256-entry auth-key table (tools/e2e/samp/*, tools/web/samp-demo.sh; AUTH_TABLE overrides)
+re/samp/gta-patches-r4-annotated.csv  samp.dll's patch list (docs/samp/samp_usage.py; also read from samp-rs/docs/re/data/)
 wine/prefix/                     the Wine prefix (DXVK installed)
 wine/gta-sa/                     the game copy: gta_sa.exe 1.0 US + data (incl. the install's vorbisFile.dll)
 wine/lane-N/{prefix,gta-sa}      per-lane copies, created on demand by tools/e2e/lib.sh (prefix copy + symlinked data)

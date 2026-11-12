@@ -2,8 +2,9 @@
 """SAMP-1 (static): inventory of the gta_sa.exe 1.0 US functionality the SA:MP client depends on.
 
 Inputs (read-only):
-  ~/samp-rs/crates/samp-client/src/**/*.rs          addresses, field offsets and SCM opcodes samp-rs uses
-  ~/samp-rs/docs/re/data/gta-patches-r4-annotated.csv  every memory patch samp.dll 0.3.7-R4 applies
+  samp-rs/crates/samp-client/src/**/*.rs            addresses, field offsets and SCM opcodes samp-rs uses
+  samp-rs/docs/re/data/gta-patches-r4-annotated.csv  every memory patch samp.dll 0.3.7-R4 applies (gitignored;
+                                                     falls back to re/samp/gta-patches-r4-annotated.csv)
   catalog/procedures.csv, extents.csv, callgraph.csv, data-tables.csv, script-commands.csv
   gta-reversed / plugin-sdk headers (global names via tools/catalog/callgraph.py, field offsets via
   plugin-sdk VALIDATE_OFFSET)
@@ -28,9 +29,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SAMP = Path(os.path.expanduser('~/samp-rs'))
+SAMP = ROOT / 'samp-rs'
 SRC = SAMP / 'crates' / 'samp-client' / 'src'
+# Third-party data (gitignored): samp-rs's copy, else the one under re/samp/.
 PATCH_CSV = SAMP / 'docs' / 're' / 'data' / 'gta-patches-r4-annotated.csv'
+if not PATCH_CSV.exists():
+    PATCH_CSV = ROOT / 're' / 'samp' / 'gta-patches-r4-annotated.csv'
 CAT = ROOT / 'catalog'
 OUT_CSV = CAT / 'samp-usage.csv'
 OUT_DIR = ROOT / 'docs' / 'samp'

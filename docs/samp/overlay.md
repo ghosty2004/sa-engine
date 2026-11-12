@@ -6,7 +6,7 @@ cursor are drawn by native sa-game through ported engine code, driven by window 
 Evidence: `sa-game --samp-ui-demo` (offscreen PNGs, §6).
 
 Inputs: `docs/samp/game-adapter.md` §4.10 (overlay surface), `docs/samp/native-plan.md` §3 (dispatch points),
-samp-rs's `samp-ui` crate (`~/samp-rs-adapter/crates/samp-ui`, read only: its specification of samp.dll's UI
+samp-rs's `samp-ui` crate (`samp-rs/crates/samp-ui`: its specification of samp.dll's UI
 layout, colours, colour codes and wrapping) and `samp-client/src/ui/render/*.rs` (how samp-rs draws today).
 
 ## 1. Why the engine draws the UI

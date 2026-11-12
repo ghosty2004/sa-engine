@@ -1,6 +1,6 @@
 //! "samp mode": samp.dll's memory patches as engine configuration (ROADMAP SAMP-4, PLAN F13).
 //!
-//! Every samp.dll patch row (`~/samp-rs/docs/re/data/gta-patches-r4-annotated.csv`, classified in
+//! Every samp.dll patch row (`samp-rs/docs/re/data/gta-patches-r4-annotated.csv`, classified in
 //! `catalog/samp-usage.csv`) maps to one of:
 //! * a [`Limits`] value (pool sizes, store sizes, relocated tables);
 //! * a [`Feature`] in [`SampModeConfig::disabled`] (the 60 `patch-disable` entries, 55 labels);

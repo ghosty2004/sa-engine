@@ -8,6 +8,9 @@ Inputs: `docs/samp/game-adapter.md` (API, 12-step migration, open questions), `d
 `catalog/samp-priority.csv` (what SA:MP executes), `docs/arch/platform.md` (native sa-game), samp-rs on branch
 `sa-engine/adapter` (worktree `~/samp-rs-adapter`, read only for this agent, see §8).
 
+Note: samp-rs moved into this repository as `samp-rs/` on 2026-11-12; the `~/samp-rs` / `~/samp-rs-adapter` paths and the git-URL pin below are historical.
+sa-game now takes samp-rs's crates by path from `samp-rs/crates/`.
+
 ## 1. Where we are (measured 2026-11-12)
 
 | piece | state | evidence |

@@ -6,7 +6,7 @@
 #   tools/web/samp-demo.sh                  then open the URL it prints
 #
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/server (open.mp), $SA_ROOT/wine/gta-sa (your own game
-# folder), the auth table AUTH_TABLE (default ~/samp-rs/data/auth_table.txt, third-party data, read only).
+# folder), the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, gitignored third-party data, read only).
 # Ports: SAMP_PORT (UDP, default 7813), PROXY_PORT (WebSocket, default 7781), WEB_PORT (HTTP, default 8644).
 # The server runs tools/e2e/samp/sampcov.pwn: commands go to $OUT/server/scriptfiles/sampcov.txt (one
 # "SEQ CMD|ARGS" line each, e.g. `echo "1 msg|hello" >> .../sampcov.txt`), its "[cov]" lines are in $OUT/server.log.
@@ -21,7 +21,7 @@ if [ ! -d "$SA_ROOT/re" ]; then
     SA_ROOT="$(cd "$(git -C "$ROOT" rev-parse --git-common-dir)/.." && pwd)"
 fi
 OUT="$(mkdir -p "${OUT:-$ROOT/target/web-samp}" && cd "${OUT:-$ROOT/target/web-samp}" && pwd)"
-AUTH="${AUTH_TABLE:-$HOME/samp-rs/data/auth_table.txt}"
+AUTH="${AUTH_TABLE:-$SA_ROOT/re/samp/auth_table.txt}"
 PORT="${SAMP_PORT:-7813}"
 PROXY_PORT="${PROXY_PORT:-7781}"
 WEB_PORT="${WEB_PORT:-8644}"

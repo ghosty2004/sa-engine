@@ -9,7 +9,7 @@
 #   LANE=3 SA_ROOT=~/sa-engine tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME
 #
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/client (samp.saa, SAMP/, ... - samp.dll is NOT used),
-# $SA_ROOT/re/samp/server (open.mp), the auth table AUTH_TABLE (default ~/samp-rs/data/auth_table.txt, third-party
+# $SA_ROOT/re/samp/server (open.mp), the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, gitignored third-party
 # data, read only). The lane's game dir gets lane-private copies/symlinks that are removed afterwards.
 # Output: target/e2e/lane-N/samp-ab/NAME/ (server.log, samp-rs.log, shots, sequence.txt).
 # sequence.txt = the server's [cov] event lines + the client's RPC/state lines, with timestamps removed.
@@ -23,7 +23,7 @@ source "$HERE/../lib.sh"
 SAMP_PORT="${SAMP_PORT:-7813}"
 CLIENT_SRC="$SA_ROOT/re/samp/client"
 SERVER_SRC="$SA_ROOT/re/samp/server"
-AUTH="${AUTH_TABLE:-$HOME/samp-rs/data/auth_table.txt}"
+AUTH="${AUTH_TABLE:-$SA_ROOT/re/samp/auth_table.txt}"
 OUT="$E2E_OUT/samp-ab/$NAME"
 SRV="$E2E_OUT/samp-ab/server"
 SLOG="$OUT/server.log"
