@@ -22,8 +22,20 @@ Unmerged branches (each = its own commits; integrate with picks, regenerate gene
 | ab013435f0f3841aa (SAMP-FX) | f10a8428+ | sa-samp: skin change, one-off sounds, animations (in progress at hand-off) |
 | aa4c0e8384f020c37 (INTEGRATE-6) | b766ecc3 | PORT-AI-7 + VERIFIER-10 on master + SA:MP verification (did not finish) |
 
+Added after 11:45:
+
+| branch (worktree-agent-…) | head | content |
+|---|---|---|
+| ab013435f0f3841aa (SAMP-FX) | e6e0528e | on WEB-3 421ba072: SA:MP files served to the browser (serve.py --samp-dir), skin change / class skins, animations, 17 frontend sounds, hands up, give-weapon + HUD icon, HUD clock toggle, samp's main.scm default (no "Fat +" box; includes HELI-CONE c47670e6 and WRITER-SAMP's search lights). Serves 127.0.0.1:8644 with open.mp 7813 + proxy 7781. The newest SA:MP tree. |
+| a6df07424cbb59315 (HELI-CONE) | c47670e6 | CHeli::SearchLightCone 0x6C58E0 (in SAMP-FX's tree) |
+| acc62cadcdbd3be53 (AUDIO-STREAM) | 22e226f8 | CAEDataStream + lewton vorbisfile replacement, GetStreamID, 16-tap sinc mixer, native WAV tap; streams decode but the game holds the stream buffer at -10000 (open); web streams off by default (hang) |
+| a43f6b653f2e96d67 (SCRIPT-5) | 17a4881f | 31 callees of the first missions' opcodes (LOCATE helpers, CleanUpThisPed, AddPassenger …); per-mission remaining list in its hand-back (05EB StartPlaybackRecordedCar, 070A, 0637, 0723, 07F5 …) |
+| newgame-1 (NEWGAME) | 5752d60e | New Game from the pause menu (CMenuSystem::Initialise native, CTaskComplexWaitForPed); its CAEDataStream port duplicates AUDIO-STREAM's — keep AUDIO-STREAM's |
+| a2c16c35b48eab431 (INTRO-1) | 52d081eb+ | intro mission 1:1 (in progress at hand-off) |
+| ac8a20a070c956b08 (INTEGRATE-8) | 907043d6+ | WEB-3 tree onto master (in progress; only fast-forward if its verify-all is 13/13) |
+
 Next steps, in order:
-1. INTEGRATE-8: bring WEB-3's tree (and the branches above not in it) onto master; verify-all 13/13; record promotions.
+1. INTEGRATE-8 (or its successor): bring SAMP-FX's tree (newest SA:MP), STD-15, SCRIPT-5, AUDIO-STREAM, NEWGAME, INTRO-1 and WEB-3's tree (and the branches above not in it) onto master; verify-all 13/13; record promotions.
 2. SA:MP: adapter steps 5b–12 in samp-rs (sa-engine/adapter), sa-samp write side (skin, anims, sounds, money,
    trains, proofs, bones for attached objects), unapplied RPCs (e.g. 60), audio streams (CAEDataStream 0x4DC620 +
    a Rust Vorbis decoder), the ~200 SA:MP-executed functions still unported (docs/samp/native-unported.csv),
@@ -32,3 +44,8 @@ Next steps, in order:
 4. Verification: the ~7,500 implemented-but-unverified hooks, SA:MP priority first; new recordings (driving,
    interiors, climbing, SA:MP sessions) so the gen2 hooks without callers get evidence.
 5. Web: real viewport resolution, OPFS settings/saves, audio latency, streams.
+
+Known issues to fix first: duplicate #[hook] registrations in the WEB-3-based trees (e.g. RenderWeaponCB 0x733670,
+CTaskComplexPassObject::ControlSubTask) make `cargo test -p sa-hook --lib` fail there; stream volume -10000;
+web stream hang; ProcessMissionAudioEvent 0x4ECCF0 (all non-frontend PlayerPlaySound), phone task, class-selection
+<< >> Spawn panel, CEventDamage::AffectsPedGroup 0x4B38D0, burning-car path.
