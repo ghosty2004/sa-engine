@@ -68,6 +68,12 @@ pub fn with<R>(key: &'static str, f: impl FnOnce(&mut Platform) -> R) -> R {
     f(p)
 }
 
+/// wasm32: whether the platform lock is free (after an iteration left through a JS exception, see `web::recover`).
+#[cfg(target_arch = "wasm32")]
+pub fn lock_is_free() -> bool {
+    !matches!(PLATFORM.try_lock(), Err(std::sync::TryLockError::WouldBlock))
+}
+
 /// Reads a NUL-terminated string from game memory (at most 4 KiB).
 pub fn cstr(p: GPtr<u8>) -> String {
     let mut v = Vec::new();

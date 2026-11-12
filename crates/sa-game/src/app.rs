@@ -139,6 +139,8 @@ pub struct Session {
     pub(crate) repeats: u32,
     /// the loop stopped (aborted, `CGame::Initialise` failed, or the same failure three times)
     pub(crate) stopped: bool,
+    /// `gGameState` at the start of the current iteration
+    pub(crate) iter_state: u32,
 }
 
 /// The platform setup and the boot (WinMain up to its main loop).
@@ -259,6 +261,7 @@ pub fn boot_with(game: Box<dyn GameFs>, docs_fs: Box<dyn GameFs>, exe: Vec<u8>, 
         last: None,
         repeats: 0,
         stopped: false,
+        iter_state: 0,
     })
 }
 
@@ -374,10 +377,28 @@ impl Session {
         }
         teleport_player(n);
         let state = winmain::game_state();
+        self.iter_state = state;
         let frame = winmain::frame_step();
         let o = run_step(&frame);
+        self.finish(n, state, &frame, o)
+    }
+
+    /// wasm32: the iteration that an unported callee left through a JS exception (no unwinding there; see
+    /// `web::recover`) ends as natively after a caught panic: a blocked step, with the same stop rules.
+    #[cfg(target_arch = "wasm32")]
+    pub fn finish_blocked(&mut self, msg: &str) -> bool {
+        let o = match crate::boot::parse_unported(msg) {
+            Some((callee, addr)) => Outcome::Blocked { callee, addr },
+            None => Outcome::Panicked(msg.to_owned()),
+        };
+        let frame = winmain::frame_step();
+        self.finish(self.n.wrapping_sub(1), self.iter_state, &frame, o)
+    }
+
+    /// The bookkeeping after an iteration's step: the report row and when the loop stops.
+    fn finish(&mut self, n: u32, state: u32, frame: &Step, o: Outcome) -> bool {
         det::end_iteration();
-        self.rep.add(&format!("frame {n}"), &frame, &o);
+        self.rep.add(&format!("frame {n}"), frame, &o);
         // decision 2 of STD-5 (platform.md section 12.1): a failure inside `CGame::Initialise`
         // leaves the game half-initialised; the next iteration would retry it from that state, so
         // the run reports the blocked function and stops (exit code 4)

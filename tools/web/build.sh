@@ -4,7 +4,7 @@
 # The module is linked with its data, heap and stack above 0x1600000 (`--global-base`, `--no-stack-first`), so the
 # low linear memory is free for the legacy address arena: the original's .rdata/.data/.bss (0x858000..0xCB1000), the
 # read-only code bytes the no-CD protection reads (0x401000..0x858000, .HOODLUM 0x1556000..0x1577000) and sa-game's
-# COM object pages (0x30000..) live at their original addresses (docs/arch/platform.md section 20).
+# COM object pages (0x30000..) live at their original addresses (docs/arch/platform.md section 21).
 #
 #   tools/web/build.sh            release build (PROFILE=dev for a debug build)
 #
@@ -20,7 +20,7 @@ dir=$profile
 low_end=$((0x1600000))   # crates/sa-game/src/arena.rs WASM_LOW_END
 stack=$((16 * 1024 * 1024))
 
-RUSTFLAGS="-C link-arg=--no-stack-first -C link-arg=--global-base=$low_end -C link-arg=-zstack-size=$stack ${RUSTFLAGS:-}" \
+RUSTFLAGS="-C link-arg=--no-stack-first -C link-arg=--global-base=$low_end -C link-arg=-zstack-size=$stack -C link-arg=--export=__stack_pointer ${RUSTFLAGS:-}" \
 CARGO_PROFILE_RELEASE_DEBUG=${CARGO_PROFILE_RELEASE_DEBUG:-0} \
     cargo build -j"${JOBS:-8}" --profile "$profile" -p sa-game --lib --target wasm32-unknown-unknown --no-default-features
 

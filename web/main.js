@@ -1,12 +1,18 @@
 // The page (WEB-1): picks the game folder, starts the worker that runs the game, forwards keyboard and mouse input.
 // URL query: ?inworld=0 (play the intro), ?backend=gl|webgpu, ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
+// &stub=ADDR=RET/N,... replaces the default exploration stubs (the play package's, DEFAULT_STUBS); &stub=none drops them.
 const $ = (id) => document.getElementById(id);
 const canvas = $('screen');
 const logEl = $('log');
 const statusEl = $('status');
 const params = new URLSearchParams(location.search);
 let worker = null;
+
+// the exploration defaults of the native play package (target/play/play.sh): unported mission-script opcodes are
+// skipped, and these functions return a constant (ADDRESS=RETURN/stack dwords popped; a leading ! replaces a port:
+// 0x5efca0 turns off ped attractors, whose task tree is still being ported)
+const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4';
 
 if (params.get('inworld') === '0') $('inworld').checked = false;
 
@@ -57,12 +63,15 @@ function start(files) {
       window.saGame.status = m;
       const st = STATES[m.state] ?? m.state;
       statusEl.textContent = m.error ? `error: ${m.error}` : m.done ? m.done :
-        `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations, ${m.presents} in-game frames, ${m.mib} MiB read`;
+        `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read`;
       statusEl.className = m.error ? 'err' : '';
     }
   };
   worker.onerror = (e) => log(`worker error: ${e.message}`, 'error');
   const env = {};
+  env.SA_GAME_SCRIPT_SKIP = '1';
+  const stub = params.get('stub');
+  if (stub !== 'none') env.SA_GAME_STUB = stub ?? DEFAULT_STUBS;
   for (const [k, v] of params) if (k.startsWith('SA_')) env[k] = v;
   if (params.get('auto') === '1') env.SA_WEB_AUTO_INPUT = '1';
   const off = canvas.transferControlToOffscreen();
@@ -112,12 +121,23 @@ window.addEventListener('keydown', onKey(true));
 window.addEventListener('keyup', onKey(false));
 window.addEventListener('blur', () => worker?.postMessage({ type: 'blur' }));
 
-// mouse: click locks the pointer (DirectInput exclusive mode: relative motion)
-canvas.addEventListener('click', () => { if (worker && document.pointerLockElement !== canvas) canvas.requestPointerLock?.(); });
-document.addEventListener('mousemove', (e) => {
-  if (worker && document.pointerLockElement === canvas) worker.postMessage({ type: 'mouse', dx: e.movementX, dy: e.movementY });
+// mouse: a click locks the pointer (DirectInput exclusive mode: relative motion). That click is not a game button
+// press (natively sa-game captures the pointer itself, no click reaches the game for it): otherwise capturing the mouse
+// in the world would also punch. Buttons reach the game only while the pointer is locked.
+canvas.addEventListener('mousedown', (e) => {
+  if (!worker) return;
+  if (document.pointerLockElement !== canvas) {
+    canvas.requestPointerLock?.();
+    return;
+  }
+  worker.postMessage({ type: 'button', button: e.button, down: true });
 });
-canvas.addEventListener('mousedown', (e) => worker?.postMessage({ type: 'button', button: e.button, down: true }));
+document.addEventListener('mousemove', (e) => {
+  if (worker && document.pointerLockElement === canvas) {
+    worker.postMessage({ type: 'mouse', dx: e.movementX, dy: e.movementY });
+    window.saGame.mouseX = (window.saGame.mouseX ?? 0) + e.movementX;
+  }
+});
 window.addEventListener('mouseup', (e) => worker?.postMessage({ type: 'button', button: e.button, down: false }));
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 canvas.addEventListener('wheel', (e) => {

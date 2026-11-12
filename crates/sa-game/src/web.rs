@@ -22,7 +22,11 @@ pub fn log_line(s: String) {
 }
 
 thread_local! {
-    static SESSION: RefCell<Option<Session>> = const { RefCell::new(None) };
+    /// The running session (leaked `Box`). Not a `RefCell`: an iteration left through a JS exception (an unported
+    /// callee, [`unported`]) never returns, so a borrow held across it would stay taken.
+    static SESSION: std::cell::Cell<*mut Session> = const { std::cell::Cell::new(std::ptr::null_mut()) };
+    /// The message of the unported callee that left the current iteration (see [`recover`]).
+    static BLOCKED: RefCell<Option<String>> = const { RefCell::new(None) };
     static INPUT: RefCell<InputState> = RefCell::new(InputState::default());
 }
 
@@ -187,7 +191,11 @@ pub fn boot() -> Result<(), JsValue> {
         "browser memory (not kept)",
     )
     .map_err(|e| JsValue::from_str(&e))?;
-    SESSION.with(|c| *c.borrow_mut() = Some(s));
+    SESSION.with(|c| c.set(Box::into_raw(Box::new(s))));
+    // from now on an unported callee leaves the main-loop iteration instead of aborting the module
+    if crate::env::var_os("SA_WEB_NO_RECOVER").is_none() {
+        sa_core::orig::set_unported_handler(unported);
+    }
     Ok(())
 }
 
@@ -220,9 +228,7 @@ pub fn frame() -> bool {
         i.end_frame();
         out
     });
-    SESSION.with(|c| {
-        let mut c = c.borrow_mut();
-        let Some(s) = c.as_mut() else { return false };
+    with_session(|s| {
         let input = if crate::env::var_os("SA_WEB_AUTO_INPUT").is_some() {
             merge_input(&input, &synthetic_input(s.n))
         } else {
@@ -230,6 +236,49 @@ pub fn frame() -> bool {
         };
         s.iterate(input)
     })
+    .unwrap_or(false)
+}
+
+/// `f` with the session, if the boot made one.
+#[allow(unsafe_code)]
+fn with_session<R>(f: impl FnOnce(&mut Session) -> R) -> Option<R> {
+    let p = SESSION.with(|c| c.get());
+    // SAFETY: `p` is the leaked box `boot` stored (or null); the module is single-threaded and the page never calls
+    // into it re-entrantly, so this is the only reference. An iteration left by a JS exception drops nothing, so the
+    // box stays valid.
+    (!p.is_null()).then(|| f(unsafe { &mut *p }))
+}
+
+/// The prefix of the JS exception [`unported`] throws (the worker recognises it).
+pub const BLOCKED_TAG: &str = "sa-game blocked: ";
+
+/// `sa_core::orig::unported`'s handler on wasm32: natively the panic of an unported callee unwinds to the main loop,
+/// which reports a blocked iteration and goes on. wasm32 has no unwinding (a panic aborts the module), so this throws
+/// a JS exception instead: the engine drops the wasm frames up to the worker's `frame()` call without running Rust
+/// destructors, the worker resets the shadow stack pointer and calls [`recover`], which ends the iteration as natively.
+/// Game memory is left exactly as the native unwind leaves it (the original code has no destructors to run); what
+/// differs is Rust state that an unwind would release: guards held across the call (see `recover`).
+fn unported(msg: std::fmt::Arguments<'_>) -> ! {
+    let msg = msg.to_string();
+    BLOCKED.with(|b| *b.borrow_mut() = Some(msg.clone()));
+    wasm_bindgen::throw_str(&format!("{BLOCKED_TAG}{msg}"))
+}
+
+/// After the worker caught [`unported`]'s exception (and reset the shadow stack pointer): ends the iteration as a
+/// blocked step, as natively. False when there is no pending blocked callee, when the platform lock was left taken
+/// (a guard held across the call: the state is not sane, so the session stops) or when the loop stops by its own
+/// rules (`CGame::Initialise` incomplete, the same failure three times).
+#[wasm_bindgen]
+pub fn recover() -> bool {
+    let Some(msg) = BLOCKED.with(|b| b.borrow_mut().take()) else {
+        return false;
+    };
+    if !crate::bind::lock_is_free() {
+        web_sys::console::error_1(&format!("{BLOCKED_TAG}{msg}: the platform lock is still taken; not resuming").into());
+        return false;
+    }
+    log_line(format!("{BLOCKED_TAG}{msg}"));
+    with_session(|s| s.finish_blocked(&msg)).unwrap_or(false)
 }
 
 static SAMPLING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -270,7 +319,7 @@ pub fn maybe_sample(what: &str) {
 /// Main-loop iterations run so far.
 #[wasm_bindgen]
 pub fn iterations() -> u32 {
-    SESSION.with(|c| c.borrow().as_ref().map_or(0, |s| s.n))
+    with_session(|s| s.n).unwrap_or(0)
 }
 
 /// The main loop's `gGameState` (9 = in game).

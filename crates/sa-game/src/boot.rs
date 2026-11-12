@@ -77,7 +77,7 @@ pub fn install_panic_hook() {
 }
 
 /// Parses `orig!`'s phase B panic: `NAME is not ported; phases B/C have no original code to call (ADDR)`.
-fn parse_unported(msg: &str) -> Option<(String, String)> {
+pub(crate) fn parse_unported(msg: &str) -> Option<(String, String)> {
     let (name, rest) = msg.split_once(" is not ported; ")?;
     let addr = rest
         .split_once('(')

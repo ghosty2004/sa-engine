@@ -7,8 +7,13 @@
 //   node tools/web/headless.mjs --url 'http://localhost:8642/?autostart=1' --out target/web1-evidence/run1 \
 //        [--seconds 240] [--every 10] [--walk-after 8 --walk-for 12] [--enter-every 0] [--chrome chromium]
 //
-// --walk-after S: S seconds after gGameState first reaches IDLE (in game), W goes down for --walk-for seconds.
+// --walk-after S: S seconds after gGameState first reaches IDLE (in game), W goes down for --walk-for seconds; or
+// --walk 'w:20,wa:6,w:10,wd:6,w:20': held key sets (letters of W/A/S/D) and seconds, in order (real key events).
 // --enter-every S: presses Enter every S seconds until the game is in IDLE (menus) with real key events.
+// --walk letters l / r: mouse-look left / right while that segment lasts (a real click on the canvas first locks the
+// pointer, then real mouse moves; the page does not pass that click to the game).
+// --screencast: records the page (status line included) with Page.startScreencast into OUT/cast/ (JPEG frames +
+// frames.jsonl with their times, events.jsonl with the status timeline); tools/web/make_video.py assembles an MP4.
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -23,6 +28,15 @@ const seconds = Number(arg('seconds', '240'));
 const every = Number(arg('every', '10'));
 const walkAfter = arg('walk-after') !== undefined ? Number(arg('walk-after')) : null;
 const walkFor = Number(arg('walk-for', '10'));
+const walkPlan = (arg('walk', '') || `w:${walkFor}`).split(',').map((x) => {
+  const [k, d] = x.split(':');
+  return { keys: [...k.toLowerCase()], secs: Number(d) };
+});
+const walkTotal = walkPlan.reduce((a, p) => a + p.secs, 0);
+const lookPx = Number(arg('look-px', '40'));
+const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83], d: ['KeyD', 'd', 68] };
+let held = new Set();
+let locked = false, mx = 0, my = 0;
 const enterEvery = Number(arg('enter-every', '0'));
 const chrome = arg('chrome', 'chromium');
 const port = Number(arg('port', '9333'));
@@ -78,7 +92,25 @@ handlers.push((m) => {
   if (m.method === 'Runtime.exceptionThrown') note(`page exception: ${JSON.stringify(m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text)}`);
 });
 await s('Emulation.setDeviceMetricsOverride', { width: 820, height: 700, deviceScaleFactor: 1, mobile: false });
+const cast = process.argv.includes('--screencast');
+const castDir = `${out}/cast`;
+let castN = 0;
+if (cast) {
+  mkdirSync(castDir, { recursive: true });
+  writeFileSync(`${castDir}/frames.jsonl`, '');
+  writeFileSync(`${castDir}/events.jsonl`, '');
+  handlers.push((m) => {
+    if (m.method !== 'Page.screencastFrame' || m.sessionId !== sessionId) return;
+    const file = `f${String(castN++).padStart(6, '0')}.jpg`;
+    writeFileSync(`${castDir}/${file}`, Buffer.from(m.params.data, 'base64'));
+    appendFileSync(`${castDir}/frames.jsonl`, JSON.stringify({ file, ts: m.params.metadata.timestamp ?? Date.now() / 1000 }) + '\n');
+    send('Page.screencastFrameAck', { sessionId: m.params.sessionId }, sessionId);
+  });
+  await s('Page.startScreencast', { format: 'jpeg', quality: 85, maxWidth: 820, maxHeight: 700, everyNthFrame: 1 });
+}
+const castEvent = (e) => { if (cast) appendFileSync(`${castDir}/events.jsonl`, JSON.stringify({ ts: Date.now() / 1000, ...e }) + '\n'); };
 await s('Page.navigate', { url });
+castEvent({ event: 'navigate' });
 
 const evalJs = async (expr) => (await s('Runtime.evaluate', { expression: expr, returnByValue: true })).result?.result?.value;
 const shot = async (name) => {
@@ -140,7 +172,7 @@ while ((Date.now() - t0) / 1000 < seconds) {
     await shot(`panic-t${Math.round(t)}`);
     break;
   }
-  if (st !== lastStatusText) { lastStatusText = st; lastChange = Date.now(); }
+  if (st !== lastStatusText) { lastStatusText = st; lastChange = Date.now(); castEvent({ status }); }
   if (hangSecs > 0 && !dumped && (Date.now() - lastChange) / 1000 > hangSecs) {
     dumped = true;
     await dumpStacks(`t=${t.toFixed(1)} s: no status change for ${hangSecs} s`);
@@ -159,6 +191,7 @@ while ((Date.now() - t0) / 1000 < seconds) {
   if (status.state === 9 && inGameAt === null) inGameAt = t;
   if (enterEvery > 0 && status.state !== 9 && t - lastEnter >= enterEvery && status.phase === 'running') {
     lastEnter = t;
+    castEvent({ event: 'enter' });
     await key('keyDown', 'Enter', 'Enter', 13);
     await sleep(150);
     await key('keyUp', 'Enter', 'Enter', 13);
@@ -166,15 +199,55 @@ while ((Date.now() - t0) / 1000 < seconds) {
   }
   if (walkAfter !== null && inGameAt !== null && !walking && !walked && t - inGameAt >= walkAfter) {
     await shot(`walk-before-t${Math.round(t)}`);
-    await key('keyDown', 'KeyW', 'w', 87);
     walking = t;
-    note(`t=${t.toFixed(1)} s: W down (real key event)`);
+    note(`t=${t.toFixed(1)} s: walk starts (${arg('walk', '') || `w:${walkFor}`}, real key events)`);
   }
-  if (walking !== false && !walked && t - walking >= walkFor) {
-    await key('keyUp', 'KeyW', 'w', 87);
-    walked = true;
-    note(`t=${t.toFixed(1)} s: W up`);
-    await shot(`walk-after-t${Math.round(t)}`);
+  if (walking !== false && !walked) {
+    // the key set of the plan segment at this time; keys leave and join with real key events
+    let at = t - walking, want = [];
+    for (const p of walkPlan) {
+      if (at < p.secs) { want = p.keys; break; }
+      at -= p.secs;
+    }
+    const look = want.includes('l') ? -1 : want.includes('r') ? 1 : 0;
+    want = want.filter((k) => KEYS[k]);
+    if (look && !locked) {
+      // a real click on the canvas: the page asks for pointer lock (and does not pass this click to the game)
+      const r = JSON.parse(await evalJs('JSON.stringify(document.getElementById("screen").getBoundingClientRect())'));
+      mx = r.x + r.width / 2; my = r.y + r.height / 2;
+      await s('Input.dispatchMouseEvent', { type: 'mousePressed', x: mx, y: my, button: 'left', clickCount: 1 });
+      await s('Input.dispatchMouseEvent', { type: 'mouseReleased', x: mx, y: my, button: 'left', clickCount: 1 });
+      await sleep(100);
+      locked = await evalJs('document.pointerLockElement === document.getElementById("screen")');
+      note(`t=${t.toFixed(1)} s: click on the canvas: pointer lock ${locked ? 'on' : 'refused'}`);
+      locked = true; // try the moves either way (once)
+    }
+    if (look) {
+      // pointer-lock movement is the difference between successive positions: plans should alternate l and r so
+      // the position stays inside the viewport (leaving it jumps back to the centre, one jerk)
+      for (let i = 0; i < 5; i++) {
+        mx += look * lookPx / 5;
+        if (mx < 20 || mx > 800) { mx = 410; }
+        await s('Input.dispatchMouseEvent', { type: 'mouseMoved', x: mx, y: my });
+        await sleep(20);
+      }
+      note(`t=${t.toFixed(1)} s: look ${look > 0 ? 'right' : 'left'} (page saw movementX sum ${await evalJs('window.saGame?.mouseX ?? 0')})`);
+    }
+    for (const k of [...held]) if (!want.includes(k)) {
+      await key('keyUp', ...KEYS[k]);
+      held.delete(k);
+      note(`t=${t.toFixed(1)} s: ${k.toUpperCase()} up`);
+    }
+    for (const k of want) if (!held.has(k)) {
+      await key('keyDown', ...KEYS[k]);
+      held.add(k);
+      note(`t=${t.toFixed(1)} s: ${k.toUpperCase()} down`);
+    }
+    if (t - walking >= walkTotal) {
+      walked = true;
+      note(`t=${t.toFixed(1)} s: walk done (${walkTotal} s)`);
+      await shot(`walk-after-t${Math.round(t)}`);
+    }
   }
   // frames read back by the worker itself (the compositor screenshot fails while the GPU process is busy)
   const snaps = JSON.parse((await evalJs('JSON.stringify(window.saGame?.snapshots?.splice(0) ?? [])')) ?? '[]');
