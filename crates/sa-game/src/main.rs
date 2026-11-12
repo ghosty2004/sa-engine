@@ -355,6 +355,7 @@ impl Session {
             p.input = input;
         });
         println!("frame {n}:");
+        teleport_player(n);
         let state = winmain::game_state();
         let frame = winmain::frame_step();
         let o = run_step(&frame);
@@ -623,6 +624,33 @@ fn mouse_spec() -> Vec<(f64, f64, u32, u32)> {
             ))
         })
         .collect()
+}
+
+sa_core::orig! {
+    fn entity_teleport(e: sa_core::mem::GPtr<u8>, x: u32, y: u32, z: u32, reset_rotation: u32) = thiscall vslot 0x38 => unported;
+}
+
+/// `SA_GAME_TELEPORT=ITER:X:Y:Z[:HEADING]` (exploration only): at main-loop iteration ITER the player ped is moved
+/// to (X, Y, Z) through its `Teleport` virtual, and its current and aimed rotations set to HEADING (radians).
+fn teleport_player(n: u32) {
+    let Ok(v) = std::env::var("SA_GAME_TELEPORT") else { return };
+    let f: Vec<f32> = v.split(':').filter_map(|x| x.trim().parse().ok()).collect();
+    if f.len() < 4 || f[0] as u32 != n {
+        return;
+    }
+    let ped = sa_core::mem::GPtr::<u32>::from_addr(0xB7CD98).read();
+    if ped < 0x1000 {
+        println!("teleport: no player ped");
+        return;
+    }
+    let ped = sa_core::mem::GPtr::<u8>::from_addr(ped as usize);
+    entity_teleport(ped, f[1].to_bits(), f[2].to_bits(), f[3].to_bits(), 0);
+    if let Some(h) = f.get(4) {
+        for off in [0x558, 0x55C] {
+            sa_core::mem::GPtr::<f32>::from_addr(ped.addr() + off).write(*h);
+        }
+    }
+    println!("teleport: player to ({}, {}, {})", f[1], f[2], f[3]);
 }
 
 /// `SA_GAME_WALK=START:COUNT` (see [`synthetic_input`]).
