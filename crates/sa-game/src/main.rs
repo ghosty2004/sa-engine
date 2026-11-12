@@ -258,10 +258,13 @@ fn run(args: &Args) -> Result<String, String> {
             let mut i = InputState::default();
             if let Some((start, count)) = walk {
                 if n >= start && n < start + count {
-                    i.held.insert(Key::W);
-                    if n == start {
+                    // `key_down` queues the message only for a key not yet held, so it comes first; repeated every
+                    // 8 iterations like a keyboard's auto-repeat, so an iteration that unwinds (a blocked port)
+                    // while the message is handled does not lose the key
+                    if (n - start) % 8 == 0 {
                         i.key_down(Key::W);
                     }
+                    i.held.insert(Key::W);
                 } else if n == start + count {
                     i.events.push(InputEvent::KeyUp { key: Key::W });
                 }
