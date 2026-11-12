@@ -36,8 +36,8 @@ const OBJECT_SIZE: i32 = 0x19C;
 orig! {
     /// `CStreaming::SetMissionDoesntRequireModel(int32)` (0x409C90)
     fn streaming_set_mission_doesnt_require_model(id: i32) = cdecl 0x409C90 => unported;
-    /// `CDecisionMakerTypes::AddDecisionMaker(CDecisionMaker*, eDecisionTypes, bool)` (0x607050, `ret 8`)
-    fn decision_maker_types_add(t: GPtr<u8>, dm: GPtr<u8>, ty: u32) -> u32 = thiscall 0x607050 => unported;
+    /// `CDecisionMakerTypes::AddDecisionMaker(CDecisionMaker*, eDecisionTypes, bool)` (0x607050, `ret 0xC`)
+    fn decision_maker_types_add(t: GPtr<u8>, dm: GPtr<u8>, ty: u32, mission: u32) -> u32 = thiscall 0x607050 => unported;
 }
 
 fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
@@ -120,19 +120,20 @@ pub fn streamed_script_doesnt_require(index: i32) {
     streaming_set_mission_doesnt_require_model(index.wrapping_add(0x6676));
 }
 
-/// `FUN_006070F0(int32 index, bool group)` (thiscall on `CDecisionMakerTypes`): index -1 → the default ped
-/// decision maker (+0xCB50) when `group` is 0, else the default group one (+0xE824); otherwise entry `index`
-/// (+4 + index*0x99C); tail call `AddDecisionMaker(that, group)` (EAX passed through).
+/// `FUN_006070F0(int32 index, int32 group, bool mission)` (thiscall on `CDecisionMakerTypes`, `ret 0xC` through
+/// the tail call): index -1 → the default ped decision maker (+0xCB50) when `group` is 0, else the default
+/// group one (+0xE824); otherwise entry `index` (+4 + index*0x99C); tail call `AddDecisionMaker(that, group,
+/// mission)` (EAX passed through).
 #[hook(addr = 0x6070f0, conv = thiscall, name = "FUN_006070f0", expect = "8B 44 24 04 83 F8 FF",
        unverified = "mvpj-script-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "tail call with the first argument slot rewritten")]
-pub fn decision_maker_types_add_by_index(this: GPtr<u8>, index: i32, group: u32) -> u32 {
+pub fn decision_maker_types_add_by_index(this: GPtr<u8>, index: i32, group: u32, mission: u32) -> u32 {
     let dm = if index == -1 {
         if group == 0 { this.byte_add(0xCB50) } else { this.byte_add(0xE824) }
     } else {
         this.byte_add(index as isize * 0x99C + 4)
     };
-    decision_maker_types_add(this, dm, group)
+    decision_maker_types_add(this, dm, group, mission)
 }
 
 /// `CTheScripts::AddToInvisibilitySwapArray(CEntity*, bool remove)` (stub 0x481200 → 0x156DF60). Nothing when
