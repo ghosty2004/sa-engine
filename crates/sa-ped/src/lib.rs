@@ -43,3 +43,4 @@ pub mod ped_entity_collision;
 pub mod ped_type_init;
 pub mod player_cross_hair;
 pub mod generated;
+pub mod ped_pointer_valid;
