@@ -26,7 +26,10 @@ orig! {
     /// `CAnimBlendNode::UpdateCompressed(CVector&, CQuaternion&, float)` (0x4D08D0), AL
     fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
     /// `FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned(data, fd)` (0x4D27F0, `data` in EAX)
-    fn compressed_non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D27F0 => unported;
+    fn compressed_non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D27F0 => frame_update_compressed_non_skinned_with_velocity;
+    /// `GetCurrentTranslationCompressed` (0x4CFE60), `GetEndTranslationCompressed` (0x4D0000)
+    fn node_get_current_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFE60 => unported;
+    fn node_get_end_translation_compressed(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4D0000 => unported;
     fn non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2450 => frame_update_non_skinned_with_3d_velocity;
     /// `CAnimBlendNode::GetCurrentTranslation(CVector&, float)` (0x4CFC50), `GetEndTranslation` (0x4CFD90)
     fn node_get_current_translation(n: GPtr<u8>, t: GPtr<u8>, w: f32) = thiscall 0x4CFC50 => unported;
@@ -175,6 +178,21 @@ fn add(a: f32, b: f32) -> f32 {
        unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
        note = "the intro cutscene's objects; writes the frame's matrix")]
 pub fn frame_update_non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
+    non_skinned_velocity_3d(data, fd, false);
+}
+
+/// `FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned(data, fd)` (0x4D27F0, `data` in EAX, `fd` on the
+/// stack, cdecl): the body of 0x4D2450 on compressed nodes (`GetCurrentTranslationCompressed` 0x4CFE60,
+/// `UpdateCompressed` 0x4D08D0, `GetEndTranslationCompressed` 0x4D0000).
+#[hook(addr = 0x4D27F0, conv = reg("args = eax stack"), name = "RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned", expect = "83 EC 74 53 56 8B F0",
+       unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "the intro's objects; writes the frame's matrix")]
+pub fn frame_update_compressed_non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
+    non_skinned_velocity_3d(data, fd, true);
+}
+
+/// The shared body of 0x4D2450 and 0x4D27F0.
+fn non_skinned_velocity_3d(data: GPtr<u8>, fd: GPtr<u8>, compressed: bool) {
     let m = rd::<GPtr<u8>>(fd, 0x10).byte_add(0x10);
     let mut partial = 0f32;
     if rd::<u32>(data, 0) != 0 {
@@ -209,7 +227,12 @@ pub fn frame_update_non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
             && (rd::<u8>(seq, 4) >> 1) & 1 != 0
             && (rd::<u8>(rd::<GPtr<u8>>(node, 0x14), 0x2E) >> 6) & 1 != 0
         {
-            node_get_current_translation(node, tp, x(one()).fsub_m(partial).to_f32());
+            let w = x(one()).fsub_m(partial).to_f32();
+            if compressed {
+                node_get_current_translation_compressed(node, tp, w);
+            } else {
+                node_get_current_translation(node, tp, w);
+            }
             for i in 0..3 {
                 curr[i] = add(t[i], curr[i]);
             }
@@ -225,7 +248,8 @@ pub fn frame_update_non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
         if rd::<u32>(node, 0x10) != 0 {
             let w = x(one()).fsub_m(partial).to_f32();
             let mut q = [0f32; 4];
-            let looped = node_update(node, tp, GPtr::from_raw(q.as_mut_ptr()).cast(), w);
+            let qp = GPtr::from_raw(q.as_mut_ptr()).cast();
+            let looped = if compressed { node_update_compressed(node, tp, qp, w) } else { node_update(node, tp, qp, w) };
             for i in 0..4 {
                 qsum[i] = add(q[i], qsum[i]);
             }
@@ -240,7 +264,11 @@ pub fn frame_update_non_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
                     }
                     any_looped |= looped != 0;
                     if looped != 0 {
-                        node_get_end_translation(node, tp, w);
+                        if compressed {
+                            node_get_end_translation_compressed(node, tp, w);
+                        } else {
+                            node_get_end_translation(node, tp, w);
+                        }
                         for i in 0..3 {
                             lp[i] = add(t[i], lp[i]);
                         }
@@ -296,4 +324,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FRAME_UPDATE_NON_SKINNED,
     HOOK_FRAME_UPDATE_NON_SKINNED_WITH_3D_VELOCITY,
     HOOK_FRAME_UPDATE_COMPRESSED_NON_SKINNED,
+    HOOK_FRAME_UPDATE_COMPRESSED_NON_SKINNED_WITH_VELOCITY,
 ];
