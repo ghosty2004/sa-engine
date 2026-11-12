@@ -2,6 +2,7 @@
 // URL query: ?inworld=0 (play the intro), ?backend=gl|webgpu, ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
 // ?samp=HOST:PORT[&proxy=ws://127.0.0.1:7781][&name=NAME]: join a SA:MP / open.mp server through sa-udp-proxy (build with FEATURES=samp).
+// ?audiotap=1 keeps a copy of the audio output for evidence runs (window.saGame.audioTap(), tools/web/headless.mjs --audio).
 // &stub=ADDR=RET/N,... replaces the default exploration stubs (the play package's, DEFAULT_STUBS); &stub=none drops them.
 const $ = (id) => document.getElementById(id);
 const canvas = $('screen');
@@ -30,12 +31,101 @@ const STATES = ['INITIAL', 'LOGO', 'PLAYING_LOGO', 'TITLE', 'PLAYING_INTRO', 'FR
   'FRONTEND_IDLE', 'LOADING_STARTED', 'IDLE', 'EXIT'];
 window.saGame = { status: {}, logs: [], logBase: 0, snapshots: [], snapshot: () => worker?.postMessage({ type: 'snapshot' }) };
 
+// ---------------------------------------------------------------- audio (WEB-AUDIO) ---
+// The game's DirectSound mix plays through an AudioWorklet (web/audio-worklet.js). With cross-origin isolation (the
+// dev server sends COOP/COEP) the worker writes a SharedArrayBuffer ring the worklet reads, and the game's play
+// cursors follow the AudioContext's consumption; otherwise the worker posts chunks here and they go to the worklet's
+// port. Browsers start an AudioContext only after a user gesture: the first click (the pointer-lock click) or key
+// resumes it.
+const RING_FRAMES = 32768; // power of two (the indices wrap at 2^32)
+const audio = { ctx: null, gain: null, node: null, sab: null, mode: 'off', tapWaiters: [] };
+let volume = Number(localStorage.getItem('saGameVolume') ?? '80');
+let muted = localStorage.getItem('saGameMuted') === '1';
+
+function applyVolume() {
+  if (audio.gain) audio.gain.gain.value = muted ? 0 : (volume / 100) ** 2;
+  $('mute').textContent = muted ? 'unmute' : 'mute';
+  $('vol').value = String(volume);
+}
+
+function audioStatus() {
+  const st = audio.ctx ? audio.ctx.state : 'off';
+  const running = st === 'running';
+  if (audio.sab) Atomics.store(new Int32Array(audio.sab, 0, 4), 2, running ? 1 : 0);
+  else worker?.postMessage({ type: 'audioState', running });
+  const shown = st === 'running' ? 'running' : st === 'off' ? 'off' : 'suspended (click the picture)';
+  $('audio').textContent = `audio: ${shown}${audio.ctx ? ` (${audio.mode})` : ''}`;
+  $('audio').className = running ? 'on' : 'off';
+  window.saGame.audio = { state: st, mode: audio.mode };
+}
+
+// called at start: the context starts suspended unless the browser allows autoplay
+async function initAudio() {
+  try {
+    audio.ctx = new AudioContext({ sampleRate: 44100, latencyHint: 'interactive' });
+  } catch (e) {
+    log(`audio: no AudioContext (${e})`, 'error');
+    return null;
+  }
+  audio.ctx.onstatechange = audioStatus;
+  try {
+    await audio.ctx.audioWorklet.addModule('audio-worklet.js');
+  } catch (e) {
+    log(`audio: the worklet did not load (${e})`, 'error');
+    audio.ctx = null;
+    return null;
+  }
+  let opts = {};
+  if (self.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined') {
+    audio.sab = new SharedArrayBuffer(16 + RING_FRAMES * 4);
+    opts = { sab: audio.sab };
+    audio.mode = 'shared ring';
+  } else {
+    audio.mode = 'postMessage';
+  }
+  audio.node = new AudioWorkletNode(audio.ctx, 'sa-game-audio', { numberOfInputs: 0, outputChannelCount: [2], processorOptions: opts });
+  audio.gain = audio.ctx.createGain();
+  audio.node.connect(audio.gain).connect(audio.ctx.destination);
+  applyVolume();
+  audioStatus();
+  return audio.sab ? { sab: audio.sab } : { port: true };
+}
+
+function resumeAudio() {
+  if (audio.ctx && audio.ctx.state !== 'running') audio.ctx.resume().then(audioStatus, () => {});
+}
+window.addEventListener('pointerdown', resumeAudio, true);
+window.addEventListener('keydown', resumeAudio, true);
+$('mute').onclick = () => {
+  muted = !muted;
+  localStorage.setItem('saGameMuted', muted ? '1' : '0');
+  applyVolume();
+};
+$('vol').oninput = () => {
+  volume = Number($('vol').value);
+  localStorage.setItem('saGameVolume', String(volume));
+  applyVolume();
+};
+applyVolume();
+
 async function start(files) {
   if (worker) return;
   worker = new Worker('worker.js', { type: 'module' });
+  // evidence runs (?audiotap=1): the PCM produced since the last call, as base64 little-endian 16-bit stereo
+  window.saGame.audioTap = () => new Promise((res) => {
+    audio.tapWaiters.push(res);
+    worker.postMessage({ type: 'audioTap' });
+  });
   worker.onmessage = (ev) => {
     const m = ev.data;
-    if (m.type === 'logs') {
+    if (m.type === 'pcm') {
+      audio.node?.port.postMessage(m.pcm, [m.pcm.buffer]);
+    } else if (m.type === 'audioTap') {
+      const bytes = new Uint8Array(m.pcm.buffer);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+      audio.tapWaiters.shift()?.({ pcm: btoa(bin), underruns: m.underruns, state: m.state, ctx: audio.ctx?.state ?? 'off' });
+    } else if (m.type === 'logs') {
       for (const l of m.lines) {
         log(l.text, l.level);
         window.saGame.logs.push(l.text);
@@ -94,8 +184,9 @@ async function start(files) {
       log(`SA:MP auth table: ${e}`, 'error');
     }
   }
+  const audioOut = await initAudio();
   const off = canvas.transferControlToOffscreen();
-  worker.postMessage({ type: 'start', canvas: off, files, env, startInWorld: $('inworld').checked, backend: params.get('backend') ?? '' }, [off]);
+  worker.postMessage({ type: 'start', canvas: off, files, env, audio: audioOut, audioTap: params.get('audiotap') === '1', startInWorld: $('inworld').checked, backend: params.get('backend') ?? '' }, [off]);
   canvas.focus();
 }
 

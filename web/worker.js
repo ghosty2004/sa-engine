@@ -104,6 +104,58 @@ self.saGameIo = {
   },
 };
 
+// ---------------------------------------------------------------- audio (WEB-AUDIO) ---
+// sa-game's DirectSound mixer (crates/sa-game/src/dsound.rs) calls these once per main-loop iteration. With the
+// shared ring buffer (web/audio-worklet.js) and a running AudioContext, the mix tops the ring up to TARGET frames, so
+// the DirectSound play cursors advance by exactly what the AudioContext consumed; otherwise they advance in real time
+// and the mix goes to the page in chunks (fallback) or nowhere (no output yet).
+const AUDIO_TARGET = 4096; // frames kept queued (~93 ms at 44.1 kHz): covers one long main-loop iteration
+let ring = null; // { hdr: Int32Array [write, read, running, underruns], data: Int16Array, cap }
+let audioPort = false; // fallback: chunks posted to the page
+let audioRunning = false; // fallback: the page's AudioContext state
+let audioTap = null; // ?audiotap=1: copies of every chunk pushed while the output runs, drained by the page
+let tapFrames = 0;
+let realPlayed = 0;
+const ringRunning = () => ring && Atomics.load(ring.hdr, 2) === 1;
+self.saGameAudio = {
+  want(realFrames) {
+    if (ringRunning()) return Math.max(0, AUDIO_TARGET - self.saGameAudio.queued());
+    return Math.round(realFrames);
+  },
+  push(pcm) {
+    const frames = pcm.length / 2;
+    if (ringRunning()) {
+      const { hdr, data, cap } = ring;
+      let w = Atomics.load(hdr, 0);
+      const free = cap - ((w - Atomics.load(hdr, 1)) | 0);
+      const n = Math.min(frames, free);
+      for (let i = 0; i < n; i++) {
+        const p = ((w + i) >>> 0) % cap;
+        data[p * 2] = pcm[i * 2];
+        data[p * 2 + 1] = pcm[i * 2 + 1];
+      }
+      Atomics.store(hdr, 0, (w + n) | 0);
+    } else if (audioPort && audioRunning) {
+      const c = pcm.slice();
+      post('pcm', { pcm: c });
+    } else {
+      realPlayed += frames;
+      return;
+    }
+    // pcm is a view of the module's memory, valid during this call only: the tap copies it
+    if (audioTap && tapFrames < 44100 * 600) {
+      audioTap.push(pcm.slice());
+      tapFrames += frames;
+    }
+  },
+  played() {
+    return ring ? Atomics.load(ring.hdr, 1) >>> 0 : realPlayed;
+  },
+  queued() {
+    return ring ? Math.max(0, (Atomics.load(ring.hdr, 0) - Atomics.load(ring.hdr, 1)) | 0) : 0;
+  },
+};
+
 // ---------------------------------------------------------------- the main loop ---
 let pending = () => false;
 // snapshot requests (evidence runs, the page's "save frame"): the canvas content right after the next present, read
@@ -153,6 +205,19 @@ function stackPointer() {
   return wasm && wasm.__stack_pointer instanceof WebAssembly.Global ? wasm.__stack_pointer : null;
 }
 
+// the game's audio threads (smooth fades, the stream decoder) run cooperatively after each iteration; an unported
+// callee in one ends that thread only (natively its panic ends the thread and the game goes on)
+function audioThreads(sp, sp0) {
+  try {
+    sa.audio_threads();
+  } catch (e) {
+    const msg = String(e && e.message !== undefined ? e.message : e);
+    if (!msg.startsWith(BLOCKED_TAG)) throw e;
+    if (sp) sp.value = sp0;
+    if (!sa.audio_thread_blocked()) throw new Error(`audio thread left the platform lock taken: ${msg}`);
+  }
+}
+
 function tick() {
   if (stopped) return;
   const end = performance.now() + 12;
@@ -178,6 +243,7 @@ function tick() {
         }
         ok = true;
       }
+      if (ok) audioThreads(sp, sp0);
       if (!ok) {
         stopped = true;
         status({ done: 'the main loop stopped (see the log)' });
@@ -206,6 +272,13 @@ self.onmessage = async (ev) => {
         if (!stackPointer()) console.warn('the module does not export __stack_pointer: blocked iterations leak their stack');
         for (const [k, v] of Object.entries(m.env || {})) sa.set_env(k, String(v));
         if (m.startInWorld) sa.set_start_in_world();
+        if (m.audio?.sab) {
+          const data = new Int16Array(m.audio.sab, 16);
+          ring = { hdr: new Int32Array(m.audio.sab, 0, 4), data, cap: data.length / 2 };
+        } else if (m.audio) {
+          audioPort = true;
+        }
+        if (m.audioTap) audioTap = [];
         for (const f of m.files) {
           const id = files.length;
           files.push(f.file ? { size: f.size, file: f.file } : { size: f.size, url: f.url });
@@ -251,6 +324,24 @@ self.onmessage = async (ev) => {
     case 'blur':
       sa.blur();
       break;
+    case 'audioState':
+      audioRunning = !!m.running;
+      break;
+    case 'audioTap': {
+      // the PCM pushed since the last request (evidence runs, ?audiotap=1)
+      const chunks = audioTap ?? [];
+      const n = chunks.reduce((a, c) => a + c.length, 0);
+      const pcm = new Int16Array(n);
+      let o = 0;
+      for (const c of chunks) {
+        pcm.set(c, o);
+        o += c.length;
+      }
+      if (audioTap) audioTap = [];
+      const underruns = ring ? Atomics.load(ring.hdr, 3) : 0;
+      self.postMessage({ type: 'audioTap', pcm, underruns, state: sa.game_state() }, [pcm.buffer]);
+      break;
+    }
   }
 };
 
