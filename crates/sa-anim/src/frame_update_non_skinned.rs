@@ -25,7 +25,7 @@ orig! {
     fn rw_matrix_update(m: GPtr<u8>) -> GPtr<u8> = cdecl 0x7F18A0 => unported;
     /// `FrameUpdateCallBackNonSkinnedWithVelocityExtraction(data, fd)` (0x4D2100, `data` in EAX) and the 3D variant
     /// (0x4D2450)
-    fn non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2100 => unported;
+    fn non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D2100 => frame_update_non_skinned_with_velocity;
     /// `CAnimBlendNode::UpdateCompressed(CVector&, CQuaternion&, float)` (0x4D08D0), AL
     fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
     /// `FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned(data, fd)` (0x4D27F0, `data` in EAX)
@@ -194,6 +194,138 @@ pub fn frame_update_compressed_non_skinned_with_velocity(data: GPtr<u8>, fd: GPt
     non_skinned_velocity_3d(data, fd, true);
 }
 
+/// `FrameUpdateCallBackNonSkinnedWithVelocityExtraction(data, fd)` (0x4D2100, `data` in EAX, `fd` on the stack,
+/// cdecl): the planar velocity extraction on the frame's matrix `m` = `fd->frame + 0x10`. Partial sum as in
+/// [`frame_update_non_skinned`] (the first node pointer null-checked). Pass 1 (pointers not advanced): nodes with a
+/// sequence with a translation (+4 bit 1) whose association flags word (+0x2E) has bit 6 and not bit 13:
+/// `GetCurrentTranslation(t, f32(1 - partial))`, `curr.y += t.y`, and with flag bit 7 `curr.x += t.x`. Pass 2
+/// (pointers advanced by 0x18): `looped = Update(t, q, w)`, `Q += q` (no sign test); with a translation and without
+/// flag bit 13: `T += t`; with flag bit 6 also `delta.y += t.y`, with bit 7 `delta.x += t.x`, `anyLooped |= looped`,
+/// and a looped node's `GetEndTranslation(t, w)` into `loop.y` (and `loop.x` with bit 7). Unless frame flag bit 1:
+/// `m` flags |= 0x20003, `m` := identity with a zero position, `Q.Normalise()`, `Q.Get(m)`. Unless bit 2: the ped
+/// position's x/y (`gpAnimBlendClump` +0xC) = `delta - curr` (+ `loop` when any looped; z untouched), `m.pos = (T.x -
+/// delta.x, T.y - delta.y, T.z)` (no bone position, unlike the 3D variant). Always `RwMatrixUpdate(m)`.
+#[hook(addr = 0x4D2100, conv = reg("args = eax stack"), name = "RpAnimBlend::FrameUpdateCallBackNonSkinnedWithVelocityExtraction", expect = "83 EC 68 53 55 56 8B F0",
+       unverified = "intro3-3", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "the intro's objects with planar velocity extraction; writes the frame's matrix and the ped position")]
+pub fn frame_update_non_skinned_with_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
+    let m = rd::<GPtr<u8>>(fd, 0x10).byte_add(0x10);
+    let mut partial = 0f32;
+    if rd::<u32>(data, 0) != 0 && rd::<u32>(data, 4) != 0 {
+        let mut p = data.byte_add(4);
+        loop {
+            let n = rd::<GPtr<u8>>(p, 0);
+            if rd::<u32>(n, 0x10) != 0 {
+                let a = rd::<GPtr<u8>>(n, 0x14);
+                if (rd::<u8>(a, 0x2E) >> 4) & 1 != 0 {
+                    partial = add(rd::<f32>(a, 0x18), partial);
+                }
+            }
+            p = p.byte_add(4);
+            if rd::<u32>(p, 0) == 0 {
+                break;
+            }
+        }
+    }
+    let (mut curr, mut delta, mut lp) = ([0f32; 2], [0f32; 2], [0f32; 2]);
+    let mut tsum = [0f32; 3];
+    let mut qsum = [0f32; 4];
+    let mut any_looped = 0u8;
+    let mut t = [0f32; 3];
+    let tp = GPtr::from_raw(t.as_mut_ptr()).cast::<u8>();
+    let list = data.byte_add(4);
+    let mut p = list;
+    while rd::<u32>(p, 0) != 0 {
+        let node = rd::<GPtr<u8>>(p, 0);
+        let seq = rd::<GPtr<u8>>(node, 0x10);
+        if !seq.is_null() && (rd::<u8>(seq, 4) >> 1) & 1 != 0 {
+            let fl = rd::<u16>(rd::<GPtr<u8>>(node, 0x14), 0x2E);
+            if (fl >> 13) & 1 == 0 && (fl >> 6) & 1 != 0 {
+                let w = x(one()).fsub_m(partial).to_f32();
+                node_get_current_translation(node, tp, w);
+                curr[1] = add(curr[1], t[1]);
+                let node = rd::<GPtr<u8>>(p, 0);
+                if (rd::<u8>(rd::<GPtr<u8>>(node, 0x14), 0x2E) >> 7) & 1 != 0 {
+                    curr[0] = add(curr[0], t[0]);
+                }
+            }
+        }
+        p = p.byte_add(4);
+    }
+    let mut p = list;
+    if rd::<u32>(p, 0) != 0 {
+        loop {
+            let node = rd::<GPtr<u8>>(p, 0);
+            if rd::<u32>(node, 0x10) != 0 {
+                let w = x(one()).fsub_m(partial).to_f32();
+                let mut q = [0f32; 4];
+                let qp = GPtr::from_raw(q.as_mut_ptr()).cast();
+                let looped = node_update(node, tp, qp, w);
+                for i in 0..4 {
+                    qsum[i] = add(q[i], qsum[i]);
+                }
+                let node = rd::<GPtr<u8>>(p, 0);
+                if (rd::<u8>(rd::<GPtr<u8>>(node, 0x10), 4) >> 1) & 1 != 0 {
+                    let fl = rd::<u16>(rd::<GPtr<u8>>(node, 0x14), 0x2E);
+                    if (fl >> 13) & 1 == 0 {
+                        tsum[0] = add(tsum[0], t[0]);
+                        tsum[1] = add(tsum[1], t[1]);
+                        tsum[2] = add(t[2], tsum[2]);
+                        if (fl >> 6) & 1 != 0 {
+                            delta[1] = add(delta[1], t[1]);
+                            if (fl >> 7) & 1 != 0 {
+                                delta[0] = add(delta[0], t[0]);
+                            }
+                            any_looped |= looped;
+                            if looped != 0 {
+                                node_get_end_translation(node, tp, w);
+                                lp[1] = add(lp[1], t[1]);
+                                let node = rd::<GPtr<u8>>(p, 0);
+                                if (rd::<u8>(rd::<GPtr<u8>>(node, 0x14), 0x2E) >> 7) & 1 != 0 {
+                                    lp[0] = add(lp[0], t[0]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            let node = rd::<GPtr<u8>>(p, 0);
+            wr::<u32>(p, 0, node.addr() as u32 + 0x18);
+            p = p.byte_add(4);
+            if rd::<u32>(p, 0) == 0 {
+                break;
+            }
+        }
+    }
+    if rd::<u8>(fd, 0) & 2 == 0 {
+        wr::<u32>(m, 0xC, rd::<u32>(m, 0xC) | 0x20003);
+        wr::<u32>(m, 0x28, 0x3F80_0000);
+        wr::<u32>(m, 0x14, 0x3F80_0000);
+        wr::<u32>(m, 0, 0x3F80_0000);
+        for o in [0x10isize, 8, 4, 0x24, 0x20, 0x18, 0x38, 0x34, 0x30] {
+            wr::<u32>(m, o, 0);
+        }
+        let qp = GPtr::from_raw(qsum.as_mut_ptr()).cast::<u8>();
+        quat_normalise(qp);
+        quat_get(qp, m);
+    }
+    if rd::<u8>(fd, 0) & 4 == 0 {
+        let clump = g::<GPtr<u8>>(ANIM_BLEND_CLUMP).read();
+        wr::<f32>(rd::<GPtr<u8>>(clump, 0xC), 0, x(delta[0]).fsub_m(curr[0]).to_f32());
+        wr::<f32>(rd::<GPtr<u8>>(clump, 0xC), 4, x(delta[1]).fsub_m(curr[1]).to_f32());
+        if any_looped != 0 {
+            let ped = rd::<GPtr<u8>>(clump, 0xC);
+            wr::<f32>(ped, 0, add(lp[0], rd::<f32>(ped, 0)));
+            let ped = rd::<GPtr<u8>>(clump, 0xC);
+            wr::<f32>(ped, 4, add(lp[1], rd::<f32>(ped, 4)));
+        }
+        wr::<f32>(m, 0x30, x(tsum[0]).fsub_m(delta[0]).to_f32());
+        wr::<f32>(m, 0x34, x(tsum[1]).fsub_m(delta[1]).to_f32());
+        wr::<f32>(m, 0x38, tsum[2]);
+    }
+    rw_matrix_update(m);
+}
+
 /// The shared body of 0x4D2450 and 0x4D27F0.
 fn non_skinned_velocity_3d(data: GPtr<u8>, fd: GPtr<u8>, compressed: bool) {
     let m = rd::<GPtr<u8>>(fd, 0x10).byte_add(0x10);
@@ -325,6 +457,7 @@ fn non_skinned_velocity_3d(data: GPtr<u8>, fd: GPtr<u8>, compressed: bool) {
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_FRAME_UPDATE_NON_SKINNED,
+    HOOK_FRAME_UPDATE_NON_SKINNED_WITH_VELOCITY,
     HOOK_FRAME_UPDATE_NON_SKINNED_WITH_3D_VELOCITY,
     HOOK_FRAME_UPDATE_COMPRESSED_NON_SKINNED,
     HOOK_FRAME_UPDATE_COMPRESSED_NON_SKINNED_WITH_VELOCITY,
