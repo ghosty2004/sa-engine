@@ -148,8 +148,17 @@ pub fn process_impact(
 /// `+9` bit 0: 0.05, else [0x8D3950]). `angle += angVel`; state 0 unless dirn bit 7; at the open limit
 /// angle = open, angVel *= -0.8, state 1; at the closed limit angle = closed and either (dirn bit 4, not
 /// bit 7, |angVel| > 0.1) angVel 0, state 4 and true, or angVel *= (bit 5 ? -0.9 : -0.4), state 2.
-/// Returns false otherwise. Only AL is defined. Ported but unhookable: the protection code at 0x4072EE
-/// (`sbb edi, [0x6F4043]`) reads the entry bytes as a key.
+/// Returns false otherwise. Only AL is defined (`ax-al-return`).
+///
+/// Entry: `push -1; jmp 0x407DD5`. The .HOODLUM chunk 0x407DD5 is `push ecx; pushf; clc; mov ecx, [0x1560894];
+/// sbb ecx, [0x66D4C0]; popf; xchg [esp], ecx; jmp 0x6F4047`: it pushes `0xD9C72A11 - 0xD9429FE9 - 0 = 0x848A28`
+/// (the SEH handler `mov eax, 0x8A18A4; jmp __CxxFrameHandler`) with ECX and the flags preserved, i.e. the usual
+/// `push -1; push handler` SEH prologue (decoded by hand, the operands measured unchanged at run time under Wine:
+/// platform.md §18). The protection code at 0x4072EE (`sbb edi, [0x6F4043]`) reads the entry bytes as a key: a
+/// keycell reader in sa-hook keeps it reading the original dword.
+#[hook(addr = 0x6F4040, conv = thiscall, name = "CDoor::Process", expect = "6A FF E9 8E 3D D1 FF", this = "CDoor",
+       unverified = "std12-veh-1", route = "L2", hazards = "x87-transcendental,ax-al-return,entry-protection-read",
+       recs = "driving,grove-walk")]
 pub fn process(
     door: GPtr<u8>,
     veh: GPtr<u8>,
@@ -471,7 +480,7 @@ pub fn process_panel(
     matrix_dtor(fmp);
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_IMPACT, HOOK_PROCESS_PANEL];
+pub const HOOKS: &[HookReg] = &[HOOK_PROCESS_IMPACT, HOOK_PROCESS, HOOK_PROCESS_PANEL];
 
 /// This module's globals (replace with a `sa_core::globals! { list GLOBALS; ... }` block when it gets some).
 pub const GLOBALS: &[sa_core::mem::GlobalDesc] = &[];
