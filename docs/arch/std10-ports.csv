@@ -1,0 +1,22 @@
+address,name,kind,batch,file
+0x410090,CColSphere::IntersectSphere,hook,std10-world-1,crates/sa-world/src/collision/col_sphere_sphere.rs
+0x4B1600,CEventStuckInAir::GetEventPriority,hook,std10-ai-1,crates/sa-ai/src/event_stuck_in_air_priority.rs
+0x7326D0,CVisibilityPlugins::GetDotProductWithCameraVector,hook,std10-render-1,crates/sa-render/src/visibility_vehicle.rs
+0x7331E0,CVisibilityPlugins::RenderVehicleReallyLowDetailCB,hook,std10-render-1,crates/sa-render/src/visibility_vehicle.rs
+0x733240,CVisibilityPlugins::RenderVehicleHiDetailCB,hook,std10-render-1,crates/sa-render/src/visibility_vehicle.rs
+0x733670,CVisibilityPlugins::RenderWeaponCB,hook,std10-render-2,crates/sa-render/src/visibility_weapon.rs
+0x733F80,CVisibilityPlugins::RenderVehicleHiDetailAlphaCB,hook,std10-render-1,crates/sa-render/src/visibility_vehicle.rs
+0x756710,FUN_00756710,hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x756770,FUN_00756770,hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x7C7B90,_rpD3D9SkinAllInOneNode,hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x7C85B0,(missed by ghidra: cat7-call),hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x7C8D60,(missed by ghidra: cat7-call),hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x7C90D0,FUN_007c90d0,hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x7C9680,FUN_007c9680,hook,std10-skin-1,crates/sa-rwcore/src/d3d9_skin_node.rs
+0x7CAA30,(missed by ghidra: cat7-call),hook,std10-skin-2,crates/sa-rwcore/src/d3d9_skin_blend.rs
+0x7CAAD0,FUN_007caad0,hook,std10-skin-2,crates/sa-rwcore/src/d3d9_skin_blend.rs
+0x7CAB80,FUN_007cab80,hook,std10-skin-2,crates/sa-rwcore/src/d3d9_skin_blend.rs
+0x7CAC60,(missed by ghidra: cat7-call),hook,std10-skin-2,crates/sa-rwcore/src/d3d9_skin_blend.rs
+0x7CAF50,(missed by ghidra: cat7-call),hook,std10-skin-2,crates/sa-rwcore/src/d3d9_skin_blend.rs
+0x7CB390,(missed by ghidra: cat7-call),hook,std10-skin-2,crates/sa-rwcore/src/d3d9_skin_blend.rs
+0x80E270,_rwD3D9ImmRenderPrimitiveNode,hook,std10-rw-1,crates/sa-rwcore/src/d3d9_im3d_render.rs
