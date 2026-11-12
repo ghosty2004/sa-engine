@@ -131,6 +131,4 @@ pub mod fx_emitter_render;
 pub mod plant_statics_init;
 pub mod visibility_train_big_vehicle;
 pub mod car_env_map_render;
-pub mod visibility_vehicle;
-pub mod visibility_weapon;
 pub mod fx_add_sparks;
