@@ -1054,3 +1054,12 @@
   Native smoke run (--start-in-world, offscreen) reaches Grove Street frames; the next native gaps (0x7331E0,
   0x410090) are ported on STD-10's branch, where CJ is visible and walks (not yet on master).
 - Catalogue: every registered address at least `implemented`.
+
+## 2026-11-12 INTEGRATE-4: VERIFIER-7 generated-hook promotions and WRITER-O (main session)
+- VERIFIER-7 verified the 852 gen2 hooks: L3 MATCH on all 13 recordings with all on Rust; 25 L1 (1M cases each)
+  and 514 split promotions; generator bug fixed (tail-call forwarders into void hand ports were generated as
+  returning EAX — found by split on CGrassRenderer::FlushTriPlantBuffer). INTEGRATE-4 merged its patterns.py with
+  INTEGRATE-3's fix, regenerated (841 hooks, 532 promoted, 309 unverified), and took WRITER-O's ports
+  (CAEVehicleAudioEntity::AddAudioEvent, FxEmitterBP_c::Render/RenderHeatHaze, RtQuat functions).
+- Tests: sa-hook 58, sa-script 8, sa-core 70, L1 18/18. verify-all int4: IDENTICAL on all 13 recordings.
+- Catalogue: 532 generated addresses promoted (25 L1, 507 L2).
