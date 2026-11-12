@@ -221,6 +221,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std12-veh-2 | 1 | VEH | 88ebf33 | worktree-agent-a0c5043f7469fc732 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std12-world-1 | 1 | WORLD | 09bb6f9 | worktree-agent-a0c5043f7469fc732 | 1 | 0 | 0 | 0 | 0 | split 1 |
 | std12-world-2 | 1 | MATH | 6589bdd | worktree-agent-a0c5043f7469fc732 | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std13-ai-1 | 52 | AI, UNK-game | baa0544 | worktree-agent-a1954952637efd64a | 52 | 0 | 0 | 0 | 0 | L2 52 |
+| std13-veh-1 | 1 | VEH | cf6f194 | worktree-agent-a1954952637efd64a | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std4-audio-1 | 55 | AUDIO | 309d8fe | master | 55 | 0 | 0 | 0 | 0 | L2 47, L3-only 8 |
 | std4-audio-2 | 18 | AUDIO | 309d8fe | master | 18 | 0 | 0 | 0 | 0 | L2 1, L3-only 17 |
 | std4-audio-3 | 7 | AUDIO, RW, UNK-game | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -5126,6 +5128,87 @@ SA_UNVERIFIED=std12-world-2 LANE=$LANE tools/e2e/port-l2.sh batch:std12-world-2 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x410040 | `CColSphere::IntersectPoint` | written | L1-pure | none |
+
+## std13-ai-1
+
+52 hooks in sa-ai; hazards: ax-al-return (10), heap-writes (35), stack-residue (8), uninit-locals (4); recordings calling them: grove-walk (52).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh std13-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=std13-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:std13-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std13-ai-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x420F30 | `FUN_00420f30` | written | L2 | heap-writes |
+| 0x4AE670 | `FUN_004ae670` | written | L2 | heap-writes |
+| 0x4B18D0 | `CEventVehicleDamage::Constructor` | written | L2 | heap-writes |
+| 0x5E9600 | `CPedAttractor::ComputeDeltaPos` | written | L2 | none |
+| 0x5E9640 | `CPedAttractor::ComputeDeltaHeading` | written | L2 | none |
+| 0x5EA110 | `CPedAttractor::ComputeAttractPos-v` | written | L2 | none |
+| 0x5EA1C0 | `CPedAttractor::ComputeAttractHeading-v` | written | L2 | stack-residue |
+| 0x5EAB80 | `FUN_005eab80` | written | L2 | heap-writes |
+| 0x5EAE40 | `FUN_005eae40` | written | L2 | heap-writes |
+| 0x5EAE70 | `FUN_005eae70` | written | L2 | heap-writes |
+| 0x5EAF10 | `CPedAttractor::HasEmptySlot` | written | L2 | ax-al-return |
+| 0x5EB2E0 | `FUN_005eb2e0` | written | L2 | heap-writes |
+| 0x5EB310 | `FUN_005eb310` | written | L2 | heap-writes |
+| 0x5EB550 | `CPedAttractor::GetQueueSlot` | written | L2 | none |
+| 0x5EB590 | `CPedAttractor::GetHeadOfQueue` | written | L2 | none |
+| 0x5EB5B0 | `CPedAttractor::GetTailOfQueue` | written | L2 | none |
+| 0x5EC410 | `CPedAttractor::Destructor` | written | L2 | heap-writes,stack-residue |
+| 0x5EC5B0 | `CPedAttractor::DeRegisterPed` | written | L2 | heap-writes,ax-al-return |
+| 0x5EC660 | `CPedAttractorManager::BroadcastDeparture<CPedAttractor>` | written | L2 | heap-writes,ax-al-return |
+| 0x5EC980 | `CPedAttractorManager::BroadcastDeparture-` | written | L2 | ax-al-return |
+| 0x5ED1B0 | `FUN_005ed1b0` | written | L2 | heap-writes |
+| 0x5ED4B0 | `FUN_005ed4b0` | written | L2 | heap-writes,stack-residue |
+| 0x5EDD90 | `FUN_005edd90` | written | L2 | heap-writes,stack-residue |
+| 0x5EDFB0 | `CPedAttractor::Constructor` | written | L2 | heap-writes,stack-residue |
+| 0x5EE270 | `FUN_005ee270` | written | L2 | heap-writes,stack-residue |
+| 0x5EE300 | `FUN_005ee300` | written | L2 | heap-writes |
+| 0x5EE530 | `FUN_005ee530` | written | L2 | heap-writes |
+| 0x5EE600 | `FUN_005ee600` | written | L2 | heap-writes |
+| 0x5EE6D0 | `FUN_005ee6d0` | written | L2 | heap-writes |
+| 0x5EE7B0 | `FUN_005ee7b0` | written | L2 | heap-writes |
+| 0x5EE950 | `FUN_005ee950` | written | L2 | heap-writes |
+| 0x5EEA20 | `FUN_005eea20` | written | L2 | heap-writes |
+| 0x5EEAF0 | `FUN_005eeaf0` | written | L2 | heap-writes |
+| 0x5EEBC0 | `FUN_005eebc0` | written | L2 | heap-writes |
+| 0x5EEC90 | `FUN_005eec90` | written | L2 | heap-writes |
+| 0x5EECA0 | `CPedAttractor::SetTaskForPed` | written | L2 | heap-writes,uninit-locals |
+| 0x5EEE30 | `CPedAttractor::RegisterPed` | written | L2 | heap-writes,uninit-locals,ax-al-return |
+| 0x5EEF80 | `CPedAttractor::BroadcastArrival` | written | L2 | heap-writes,uninit-locals,stack-residue,ax-al-return |
+| 0x5EF160 | `CPedAttractor::BroadcastDeparture` | written | L2 | heap-writes,uninit-locals,stack-residue,ax-al-return |
+| 0x5EF920 | `CPedAttractorManager::BroadcastArrival<CPedAttractor>` | written | L2 | ax-al-return |
+| 0x5EFE20 | `CPedAttractorManager::BroadcastArrival-` | written | L2 | ax-al-return |
+| 0x5F6190 | `FUN_005f6190` | written | L2 | heap-writes |
+| 0x5F6200 | `FUN_005f6200` | written | L2 | heap-writes |
+| 0x600CF0 | `CPedIntelligence::FindRespectedFriendInInformRange` | written | L2 | ax-al-return |
+| 0x631460 | `CTaskComplexSitDownThenIdleThenStandUp::Constructor` | written | L2 | heap-writes |
+| 0x632730 | `CTaskComplexUseAttractor::CreateNextSubTask` | written | L2 | none |
+| 0x6327C0 | `CTaskComplexUseAttractor::ControlSubTask` | written | L2 | none |
+| 0x6385D0 | `CTaskComplexUseAttractor::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x655290 | `FUN_00655290` | written | L2 | none |
+| 0x669D30 | `FUN_00669d30` | written | L2 | none |
+| 0x66B6B0 | `CTaskComplexGoToAttractor::MakeAbortable` | written | L2 | none |
+| 0x670420 | `CTaskComplexGoToAttractor::CreateFirstSubTask` | written | L2 | heap-writes |
+
+## std13-veh-1
+
+1 hooks in sa-veh; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh std13-veh-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=std13-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:std13-veh-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std13-veh-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6B7080 | `CBike::PlayCarHorn` | written | L2 | none |
 
 ## std4-audio-1
 
