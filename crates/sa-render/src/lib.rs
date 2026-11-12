@@ -125,3 +125,4 @@ pub mod roadsign_atomic;
 pub mod generated;
 pub mod visibility_vehicle;
 pub mod visibility_weapon;
+pub mod fx_emitter_render;
