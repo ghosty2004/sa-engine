@@ -1,0 +1,191 @@
+# SAMP-UI: the SA:MP overlay drawn by the engine
+
+Status: first working slice (2026-11-12). Chat window and input line, all six dialog styles, nametags with
+health / armour bars, 3D text labels, textdraws (fonts 0–3), game text, the kill list, the scoreboard and the
+cursor are drawn by native sa-game through ported engine code, driven by window events from the platform layer.
+Evidence: `sa-game --samp-ui-demo` (offscreen PNGs, §6).
+
+Inputs: `docs/samp/game-adapter.md` §4.10 (overlay surface), `docs/samp/native-plan.md` §3 (dispatch points),
+samp-rs's `samp-ui` crate (`~/samp-rs-adapter/crates/samp-ui`, read only: its specification of samp.dll's UI
+layout, colours, colour codes and wrapping) and `samp-client/src/ui/render/*.rs` (how samp-rs draws today).
+
+## 1. Why the engine draws the UI
+
+samp-rs draws its UI with Direct3D 9 + D3DX through a device proxy that replaces `_RwD3DDevice` (0xC97C28).
+Native sa-game (Linux, later wasm32) has no D3D9 device and must not grow a second GPU path. So the UI is
+split in two:
+
+| part | where | what |
+|---|---|---|
+| state, layout, input | `crates/sa-samp-ui` (new, renderer-independent, no engine dependency) | chat (100 entries, page of 10), input line + history, dialogs, nametags, labels, textdraws, kill list, scoreboard, cursor; produces a **draw list** (rectangles, UI-font text runs, game-font text, triangles) |
+| engine renderer | `crates/sa-samp/src/overlay/` (new module of the native backend) | draws the list at `FramePhase::After2d` through `orig!` calls to the ports; owns the glyph atlas raster |
+| API | `crates/sa-samp-api/src/ui.rs` (new, additive) | `SampUi` trait + spec types + `UiEvent`; `GameAdapter::ui()` (default `None`) |
+| host | `crates/sa-game/src/samp_input.rs`, `samp_ui_demo.rs` (new) | platform input → window events → UI; the demo |
+
+samp-rs keeps its D3D renderer on the original exe (`GameAdapter::ui()` is `None` there). On the native
+backend it feeds the RPC state into `game.ui()` instead of its own `samp-ui` model and drains the events.
+
+## 2. Rendering (engine paths only)
+
+Called from `NativeGame::dispatch_frame(After2d)` (sa-core's dispatch point after `Render2dStuff`, inside the
+camera's `BeginUpdate`/`EndUpdate`), after the client's own `After2d` callback; nothing while the pause menu is
+active (samp draws no UI then).
+
+| draw-list item | engine path (all `orig!` → the Rust port through the address registry) |
+|---|---|
+| filled rectangle (dialog background, bars, boxes, list selection) | `CSprite2d::DrawRect(CRect, CRGBA)` 0x727B60 |
+| UI-font text | RW Im2D: `RwIm2DRenderPrimitive` 0x734E90, `rwPRIMTYPETRILIST`, one quad per glyph, texture = one `RwRaster` (`RwRasterCreate` 0x7FB230 `rwRASTERTYPETEXTURE \| FORMAT8888`, `RwRasterLock` 0x7FB2D0 / `Unlock` 0x7FAEC0) holding the glyph atlas; render states through `RwRenderStateSet` (`RwEngineInstance` +0x20): raster, nearest filter, z test / write off, vertex alpha, src alpha / inv src alpha; z / rhw = `CSprite2d::NearScreenZ` 0xC4B8D8 / `RecipNearClipPlane` 0xC4B8D0 like every game 2D vertex |
+| cursor | the same Im2D path, untextured triangles |
+| textdraws (game fonts 0–3) | `CFont::SetScale` … `SetFontStyle` in samp's order (14 setters), `PrintString` 0x71A700, `DrawFonts` 0x71A210 (immediately, to keep draw order) |
+| game text (`GameTextForPlayer`) | `CMessages::AddBigMessage` 0x69F2B0 (style 0..6) with a buffer that outlives the message, exactly what samp does; `CHud` draws it |
+| world → screen (nametags, labels) | `CSprite::CalcScreenCoors` 0x70CE30 (both visibility checks); camera position from `TheCamera.m_mCameraMatrix` |
+| ped positions | the adapter's `ped_snapshot` (pool-validated handles) |
+
+Text runs are batched until a non-text item needs the screen, so a frame is a handful of Im2D calls. If the
+raster cannot be created, UI text falls back to `CFont` font 1 (approximate size).
+
+### 2.1 The UI font
+
+SA:MP's chat, dialogs, nametags and labels use D3DX "Arial" bold. The engine uses **Liberation Sans Bold**
+(metric-compatible with Arial; SIL Open Font License 1.1), committed as `assets/fonts/LiberationSans-Bold.ttf`
+with its licence `assets/fonts/LiberationSans-LICENSE.txt`, rasterised at start-up with `ab_glyph` (pure Rust,
+builds for i686 and wasm32) into a 512-wide alpha atlas: printable ASCII + Latin-1, four sizes (samp's table:
+main 14/16/18/20 px by video width, small = main − 2, GUI 20 and 18). Every glyph is also stored with samp's
+1-pixel black outline baked in (black at the four offsets under the glyph: `A = f + o(1 − f)`, brightness
+`f / A`), so outlined text is one quad per glyph instead of five; the vertex colour tints the core and leaves the
+outline black. Textdraws keep the game's own fonts, as in SA:MP.
+
+## 3. Look and behaviour (matches samp-rs's samp-ui spec)
+
+* **Colour codes** `{RRGGBB}`: parsed and stripped as samp.dll 0x100b5fd0 / 0x100b6100 (in-place removal),
+  glyph colouring with samp's cursor walk (a code before a blank applies one glyph late; base alpha only until
+  the first code). Wrapped lines and labels carry the colour over line breaks.
+* **Chat**: 100 entries, page of 10 at (45, 10), line pitch `h + 1`, `name:` prefix in the player colour then the
+  text in white (gap 5), player chat split at 72 characters with a 12-character backtrack into a nameless second
+  entry, texts cut at 144, control characters → spaces, names over 24 characters dropped; outlined (four
+  directions); F7 cycles off / plain / outlined; Page Up / Down scroll.
+* **Input line**: T or F6 opens (the T's own character is swallowed), Enter sends (`UiEvent::ChatSubmit`, the text
+  or `/command`; samp-rs decides RPC 101 vs 50 and runs local commands), Esc closes, Up / Down walk a 10-entry
+  history, Left / Right / Home / End / Backspace / Delete edit, 128 characters; box `min(800, 0.6·W)` wide at
+  `(40, chatBottom)`, `14 + 1.5·h0` high; blinking caret.
+* **Dialogs**: geometry of samp.dll 0x1006f500 (caption `mainH + 4`, list height 200..400, list width 400..800,
+  minimum width 230, two buttons 100×30 at `w/2 − 110` and `w/2 + 10`, edit `14 + 1.5·h0`), background
+  0xDC050505, caption 0xFFD2D2D2, body 0xFFA9C4E4 (small font, outlined), selection 0xFFB92228; tab lists with
+  up to 4 columns and samp's column widths, style 5 header row; password masked with `*`. Keyboard: Up / Down /
+  Page Up / Page Down / Home / End, Enter = button 1, Esc = button 0; mouse: buttons, row select, double click =
+  button 1, wheel scrolls. Response = `UiEvent::DialogResponse { id, button, list_item, text }` (list: the
+  selected row's first cell without codes; input: the text; ≤ 128 characters).
+* **Nametags**: anchor = head (root + 0.7 m) raised `0.0475·d + 0.2`, drawn within 70 m; `Name (id)` in the
+  player colour (small font, outlined) above samp's bars (health 0xFFB92228 on 0xFF4B0B14, armour 0xFFC8C8C8
+  on 0xFF282828, 38.46 px per 100, health 8 px lower when armour shows; geometry of samp.dll 0x1006d0a0).
+* **3D labels**: centred lines at the projected point, small font outlined, codes and `\n`, wrapped at 400 px,
+  draw distance per label, optional attachment to a ped.
+* **Textdraws**: samp's `font_params` (scale `W·lw/640`, `H·lh/448·0.5`, wrap, centre size, box, shadow or
+  outline, proportional, alignment), samp's hit rectangles for `SelectTextDraw` (hover colour, click →
+  `TextDrawClicked(id)`, Esc → `0xFFFF`).
+* **Kill list**: 5 rows at `(0.75·W, 0.3·H)` pulled left to fit, names right / left of a 35 px icon box.
+* **Scoreboard**: centred panel (60 % × 50 %), id / name / score / ping in the player colours, hover highlight,
+  click → `ScoreboardClicked(id)`.
+* **Cursor**: shown while a dialog, the scoreboard, textdraw selection or a cursor mode is active.
+
+## 4. Input path
+
+`sa-game` → `samp_input::filter(&mut InputState)` once per main-loop iteration (and in `--window` mode's
+`screen::frame`): every platform `InputEvent` becomes a `sa_samp_api::input::WindowEvent` (Windows virtual-key
+codes via `sa_platform::win32::key_info`, characters as Unicode, wheel × 120) and goes to
+`NativeGame::window_event`: the UI first (`SampUi::handle_event`), then the client's `GameHooks::window_event`.
+Consumed events never reach the game's message queue; while the chat line or a dialog is open the held keys,
+mouse buttons and mouse motion are cleared too (samp's input lock: typing does not move CJ).
+
+## 5. API changes for the samp-rs pin bump (all additive; `API_VERSION` stays 1)
+
+* New module `sa_samp_api::ui`: trait `SampUi` (`chat_add`, `chat_clear`, `show_dialog`, `set_nametags`,
+  `set_label`, `set_textdraw`, `game_text`, `kill_entry`, `set_scoreboard`, `set_cursor_mode`,
+  `select_textdraws`, `wants_keyboard`, `handle_event`, `poll_events`), types `ChatKind`, `ChatMessage`,
+  `DialogStyle` (+ `from_byte`), `DialogSpec`, `NametagAnchor`, `Nametag`, `TextLabel3d`, `TdAlign`,
+  `TextDrawSpec`, `ScoreRow`, `CursorMode`, `UiEvent`.
+* `Rgba::from_rgba_u32` (wire `0xRRGGBBAA`), `Rgba::from_argb_u32`, `Rgba::to_argb_u32`.
+* `GameAdapter::ui(&mut self) -> Option<&mut dyn ui::SampUi>` with a default `None`: the original backend
+  compiles unchanged and keeps drawing with D3D9.
+
+How samp-rs uses it (step 11 of game-adapter.md §8, native backend only): in `GameHooks::frame` (any phase
+before `After2d`), `if let Some(ui) = game.ui()` → forward chat RPCs 93/101 as `chat_add`, RPC 61 as
+`show_dialog`, the per-frame nametag set from its remote players (`NametagAnchor::Ped` with the remote ped's
+handle), RPC 36/58 as `set_label`, RPC 134/135 as `set_textdraw`, RPC 73 as `game_text`, RPC 55 as
+`kill_entry`, the score list as `set_scoreboard`, RPC 83 as `select_textdraws`; then `poll_events()` →
+RPC 101 / 50 / 62 / 83 / 23. samp-rs's local commands (`/q`, `/pagesize`, `/timestamp`, ...) stay in samp-rs.
+
+## 6. Demo and evidence
+
+```
+SA_GAME_PRESENT_GAME=1 SA_GAME_SCRIPT_SKIP=1 SA_GAME_STUB=<STD-9 list>,0x680600=0/1,0x7331e0=0/0 \
+  target/i686-unknown-linux-gnu/release/sa-game --game wine/gta-sa --start-in-world --frames 160 \
+  --samp-ui-demo --present-dir DIR
+```
+
+(`0x680600` `CTaskSimpleInAir::ProcessPed` and `0x7331E0` are stubbed in addition to STD-9's list: both are
+reached by the in-world frames on this base and are not registered yet.) The demo installs the native adapter
+with an empty client and plays samp-rs's part from the frame handler: sample chat (codes, player chat, a wrapped
+line), nametags above CJ (and peds within 40 m), a label in front of the camera, two textdraws, game text, three
+kill-list rows; then, through **platform input events** (`samp_input`): T + typing + Enter, a tab list with
+headers navigated with Down Down Enter, a password dialog typed and confirmed, the scoreboard clicked. Log:
+
+```
+samp-ui-demo: event ChatSubmit("hello from the native client")
+samp-ui-demo: event DialogResponse { id: 1, button: 1, list_item: 2, text: "MP5" }
+samp-ui-demo: event DialogResponse { id: 2, button: 1, list_item: -1, text: "grove4life" }
+samp-ui-demo: event ScoreboardClicked(2)
+samp-ui-demo: 36 playing frames, 36 overlay frames, atlas uploaded: true, 4 events
+```
+
+Evidence (not committed; Rockstar-derived pixels): `target/samp-ui-evidence/` — `01-chat-nametag-label-textdraws-killlist.png`,
+`02-chat-input-typing.png`, `03-tablist-dialog-cursor.png`, `04-password-dialog.png`, `05-scoreboard.png`,
+`06-chat-after-events.png`, `00-contact-sheet.png`, `run.log`. Where the sky is still drawn wrong (STD-9 §15.4)
+the frame is not cleared, so text that moved (chat after new lines) leaves earlier frames' pixels there; the demo
+holds its echo lines back until the dialogs are done to keep those frames clean. This is not an overlay effect.
+
+## 7. Tests
+
+`cargo test -p sa-samp-ui` (34): colour-code parse / strip / runs (samp's cursor walk), pixel wrapping with
+colour carry, player-chat split, chat capacity / truncation / wrap / layout / scrolling / F7, input history and
+submit, edit caret / capacity / password, dialog geometry (message box, input, list, tab list with headers),
+list keyboard and mouse navigation, double click, responses, nametag bar geometry (samp's measured values),
+nametag projection / raise / culling, label centring and distance, textdraw params and hit rectangles, kill
+list and scoreboard, the full `Ui` state machine (T swallowing, dialogs taking the keyboard, textdraw selection
+and Esc, game-text filtering, layer order), the atlas (every glyph present, Arial-like widths, outlined variant).
+`sa-samp`: conversions of the renderer (1); `sa-game`: platform → window event mapping and the input filter (2).
+Clippy `-D warnings`: sa-samp-ui, sa-samp-api, sa-samp on host, i686-unknown-linux-gnu and wasm32-unknown-unknown;
+sa-game on i686-unknown-linux-gnu and host.
+
+## 8. Open items
+
+1. **Textdraw sprites and model previews** (fonts 4 and 5): `CTxdStore` + `CSprite2d::Draw` for sprites,
+   `render_model_preview` for previews. Not drawn yet.
+2. **Kill-list weapon icons**: samp draws them with its own GTAWEAPON3 font from samp's files; the engine shows a
+   short label in the icon box. Needs the font from samp.saa through `FileProvider`, or a bitmap set.
+3. **Nametag AFK icon** (SAMPAUX3 glyphs): shown as "AFK" text. Nametag line-of-sight test and samp's
+   per-server `nametag_draw_distance` / `ShowNameTags` / `ShowPlayerMarkers` options: not wired (a `SampUi`
+   setter at the next bump).
+4. **8-offset 2-pixel chat outline** above 1280 px: the 1-pixel outline is used at every width.
+5. **Label line of sight** (`test_los`) is ignored until `WorldState::line_clear` is served natively.
+6. **Chat timestamps, `/fontsize`, `/pagesize`, chat log**: samp-rs owns the commands; the UI needs setters
+   (page size, timestamps, font size → atlas heights) at the next bump.
+7. **Menus** (`ShowMenu`, GTA's `CMenuSystem`) stay on `hud::Menus`, not this UI.
+8. **Present phase**: the UI draws at `After2d` (inside the game's frame) rather than at `Present`; equivalent for
+   2D, and the screen fade / widescreen bars are drawn before it as in samp.
+9. **wasm32**: the UI crate and the backend build; `sa-game` itself does not target wasm32 yet.
+
+## 9. Proposed ROADMAP / WORKLOG rows (for the main session)
+
+| ID | Task | Status | Acceptance | Notes |
+|---|---|---|---|---|
+| SAMP-UI | Engine-drawn SA:MP UI (chat, input, dialogs, nametags, labels, textdraws, game text, kill list, scoreboard, cursor) for the native backend | in-progress | samp-rs on the native backend shows its UI through `GameAdapter::ui`, look and behaviour as samp 0.3.7 | 2026-11-12: `crates/sa-samp-ui` (state + layout + input → draw list, 34 tests), `sa-samp::overlay` (draws through `CSprite2d::DrawRect`, RW Im2D glyph quads over one RW raster, `CFont`, `CMessages::AddBigMessage`, `CSprite::CalcScreenCoors`), API `sa_samp_api::ui` (additive), Liberation Sans Bold (OFL) atlas, `sa-game --samp-ui-demo` with platform-input-driven chat / dialogs / scoreboard (evidence `target/samp-ui-evidence/`). Open: textdraw sprites / previews, weapon icons, AFK icon, 2-px outline, UI setters for samp-rs commands (docs/samp/overlay.md §8) |
+
+WORKLOG entry (proposal): "SAMP-UI: engine-drawn SA:MP overlay. New crate sa-samp-ui (renderer-independent UI
+state, layout and input handling following samp-rs's samp-ui spec), sa-samp overlay module (draws through
+ported CSprite2d / RW Im2D / CFont / CMessages, world → screen with CSprite::CalcScreenCoors), additive API
+module sa_samp_api::ui + GameAdapter::ui, Liberation Sans Bold (OFL 1.1) glyph atlas with baked outline,
+sa-game platform input → UI (samp_input) and --samp-ui-demo. Verified: 34 + 1 + 2 host tests; clippy -D warnings
+host / i686 / wasm32 (UI, API, backend), host / i686 (sa-game); demo run on the user's install (release i686,
+--start-in-world, STD-9 stubs + 0x680600, 0x7331E0): 4 UI events from platform input, PNGs in
+target/samp-ui-evidence/."
