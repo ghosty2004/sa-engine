@@ -31,6 +31,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::ped_type_init::HOOKS,
     crate::player_cross_hair::HOOKS,
     crate::generated::HOOKS,
+    // WRITER-NATIVE
+    crate::ped_pointer_valid::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
