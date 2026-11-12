@@ -8,6 +8,7 @@ use sa_samp_api::Rgba;
 use sa_samp_api::input::{EventResult, WindowEvent};
 use sa_samp_api::ui::{
     ChatMessage, CursorMode, DialogSpec, Nametag, SampUi, ScoreRow, TextDrawSpec, TextLabel3d, UiEvent,
+    UiOptions,
 };
 
 use crate::chat::{ChatInput, ChatWindow, PAGE_SIZE};
@@ -17,6 +18,7 @@ use crate::edit::EditKey;
 use crate::font::{FontId, Measure};
 use crate::panels::{KillList, KillRow, Scoreboard, draw_cursor};
 use crate::textdraw::TextDraws;
+use crate::world::NametagRules;
 use crate::world::{WorldView, draw_labels, draw_nametags};
 
 /// Windows virtual-key codes the UI reacts to.
@@ -90,6 +92,7 @@ pub struct Ui {
     /// Screen size of the last frame (for mouse hit tests between frames).
     screen: (f32, f32),
     measure_cache: Option<Box<dyn MeasureSnapshot>>,
+    options: UiOptions,
 }
 
 /// Metrics kept between frames for mouse hit tests (dialog and scoreboard geometry).
@@ -171,6 +174,11 @@ impl Ui {
             || self.cursor_mode != CursorMode::Off
     }
 
+    /// The display options (the renderer sizes the fonts with `font_size`).
+    pub fn options(&self) -> &UiOptions {
+        &self.options
+    }
+
     /// Big messages queued for the engine since the last call.
     pub fn take_game_texts(&mut self) -> Vec<GameText> {
         std::mem::take(&mut self.game_texts)
@@ -223,8 +231,8 @@ impl Ui {
             vk::ESCAPE => self.input.close(),
             vk::UP => self.input.history_older(),
             vk::DOWN => self.input.history_newer(),
-            vk::PRIOR => self.chat.scroll_by(PAGE_SIZE as isize),
-            vk::NEXT => self.chat.scroll_by(-(PAGE_SIZE as isize)),
+            vk::PRIOR => self.chat.scroll_by(self.chat.page_size() as isize),
+            vk::NEXT => self.chat.scroll_by(-(self.chat.page_size() as isize)),
             vk::LEFT => self.input.edit_mut().key(EditKey::Left),
             vk::RIGHT => self.input.edit_mut().key(EditKey::Right),
             vk::HOME => self.input.edit_mut().key(EditKey::Home),
@@ -274,13 +282,19 @@ impl Ui {
         }
         self.screen = (w, h);
         let mut d = DrawList::default();
-        draw_nametags(&self.nametags, world, m, &mut d);
+        let rules = NametagRules {
+            show: self.options.nametags,
+            distance: self.options.nametag_distance,
+            los: self.options.nametag_los,
+        };
+        draw_nametags(&self.nametags, rules, world, m, &mut d);
         draw_labels(self.labels.values(), world, m, &mut d);
         let cursor = self.cursor_visible().then_some(self.cursor);
         self.textdraws.draw(w, h, cursor, &mut d);
         self.kills.draw(m, w, h, &mut d);
         self.chat.draw(m, w as u32, &mut d);
         let bottom = self.chat.bottom(m.line_height(FontId::Main));
+        self.chat.draw_scrollbar(m, self.input.is_open(), &mut d);
         self.input.draw(m, w as u32, bottom, time_ms, &mut d);
         if let Some(sb) = &self.scoreboard {
             sb.draw(m, w, h, cursor, &mut d);
@@ -366,6 +380,12 @@ impl SampUi for Ui {
         });
     }
 
+    fn set_options(&mut self, options: &UiOptions) {
+        self.options = *options;
+        self.chat.set_page_size(usize::from(options.chat_page_size));
+        self.chat.set_timestamps(options.timestamps);
+    }
+
     fn set_cursor_mode(&mut self, mode: CursorMode) {
         self.cursor_mode = mode;
     }
@@ -426,11 +446,11 @@ impl SampUi for Ui {
                         Consumed
                     }
                     vk::PRIOR => {
-                        self.chat.scroll_by(PAGE_SIZE as isize);
+                        self.chat.scroll_by(self.chat.page_size() as isize);
                         Consumed
                     }
                     vk::NEXT => {
-                        self.chat.scroll_by(-(PAGE_SIZE as isize));
+                        self.chat.scroll_by(-(self.chat.page_size() as isize));
                         Consumed
                     }
                     vk::ESCAPE if self.textdraws.selecting.is_some() => {
@@ -671,6 +691,7 @@ mod tests {
             name_colour: Rgba::default(),
             text: "chat".into(),
             colour: Rgba::from_argb_u32(0xFFFF_FFFF),
+            time: [12, 0, 0],
         });
         ui.set_cursor_mode(CursorMode::Free);
         let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);

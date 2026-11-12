@@ -34,6 +34,9 @@ orig! {
     fn txd_set_current(slot: i32) = cdecl 0x7319C0 => unported;
     /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
     fn txd_pop_current() = cdecl 0x7316B0 => unported;
+    /// `CWorld::GetIsLineOfSightClear(a, b, buildings, vehicles, peds, objects, dummies, seeThrough, cameraIgnore)`
+    /// (0x56A490)
+    fn line_of_sight_clear(a: GPtr<f32>, b: GPtr<f32>, buildings: u32, vehicles: u32, peds: u32, objects: u32, dummies: u32, see_through: u32, camera_ignore: u32) -> u8 = cdecl 0x56A490 => unported;
     /// `CFileMgr::OpenFile(path, mode)` (0x538900)
     fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => unported;
     /// `CFileMgr::CloseFile(file)` (0x5389D0)
@@ -134,6 +137,23 @@ pub fn project(p: Vec3) -> Option<(f32, f32)> {
         1,
     );
     (ok != 0).then_some((out[0], out[1]))
+}
+
+/// samp's nametag / label test (opcode 06BD: buildings and objects, no see-through or camera-ignore check).
+pub fn line_clear(a: Vec3, b: Vec3) -> bool {
+    let mut pa = [a.x, a.y, a.z];
+    let mut pb = [b.x, b.y, b.z];
+    line_of_sight_clear(
+        GPtr::from_raw(pa.as_mut_ptr()),
+        GPtr::from_raw(pb.as_mut_ptr()),
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+    ) != 0
 }
 
 /// Creates the atlas raster and fills it (white, alpha = coverage). `None` when RW refuses the raster.
@@ -347,7 +367,7 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
                         centre_size: 4000.0,
                         drop_colour: sa_samp_api::Rgba::default(),
                         shadow: 0,
-                        edge: i8::from(*outline),
+                        edge: *outline as i8,
                         proportional: true,
                         background: false,
                         background_colour: sa_samp_api::Rgba::default(),

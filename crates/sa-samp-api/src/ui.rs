@@ -67,6 +67,38 @@ pub struct ChatMessage {
     pub text: String,
     /// Text colour.
     pub colour: Rgba,
+    /// Local time the line arrived (hour, minute, second), for the chat timestamps (F9 / `/timestamp`).
+    pub time: [u8; 3],
+}
+
+/// Display options samp-rs sets from `sa-mp.cfg`, its local commands and the server's `InitGame` flags.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct UiOptions {
+    /// Chat lines shown (`/pagesize`, 10..=20).
+    pub chat_page_size: u8,
+    /// Timestamps before chat lines (`/timestamp`).
+    pub timestamps: bool,
+    /// `/fontsize` (−3..=5): every UI font grows by 2 px per step.
+    pub font_size: i8,
+    /// Nametags shown at all (`ShowNameTags`).
+    pub nametags: bool,
+    /// Nametag draw distance in metres (`SetNameTagDrawDistance`, default 70).
+    pub nametag_distance: f32,
+    /// Nametags hidden behind buildings and objects (`DisableNameTagLOS` turns it off).
+    pub nametag_los: bool,
+}
+
+impl Default for UiOptions {
+    fn default() -> Self {
+        Self {
+            chat_page_size: 10,
+            timestamps: false,
+            font_size: 0,
+            nametags: true,
+            nametag_distance: 70.0,
+            nametag_los: true,
+        }
+    }
 }
 
 /// Dialog styles (`ShowPlayerDialog`'s style byte).
@@ -293,6 +325,8 @@ pub trait SampUi {
     fn set_cursor_mode(&mut self, mode: CursorMode);
     /// `SelectTextDraw` (`Some(hover colour)`) / `CancelSelectTextDraw` (`None`).
     fn select_textdraws(&mut self, hover: Option<Rgba>);
+    /// Display options (page size, timestamps, font size, nametag rules).
+    fn set_options(&mut self, options: &UiOptions);
     /// Whether the chat input or a dialog has the keyboard (samp's input lock).
     fn wants_keyboard(&self) -> bool;
     /// A window event, before the game sees it. Native backends call this themselves before
