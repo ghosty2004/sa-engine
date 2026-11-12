@@ -1725,6 +1725,8 @@ arguments. The enter-car walk crashed on the null entity (SIGSEGV at 0x36). The 
   `CreateNextSubTask_AfterSimpleCarAlign` 0x63F970 (chat reactions with `rand()` at their call sites), the
   `CTaskComplexEnterCarAsDriver` destructor 0x640330; `ComputeTargetDoorOppositeToFlag` 0x63AB70 is called directly
   (not in the catalogue).
+* `std14-veh-2`: `CVehicle::ProcessOpenDoor` 0x6D56C0 (the door enum's default passes the time's bits; the default
+  animation groups of the last cases read the pushed `this` and argument slots as floats, as the bytes do).
 * `std14-ai-2`: `CEventLeaderEnteredCarAsDriver` destructor 0x48E220, `CTaskComplexGoToCarDoorAndStandStill::
   ControlSubTask` 0x64A820, `CTaskSimpleSlideToCoord::ProcessPed` 0x66C4E0.
 * Phase-B natives of existing ports: `CTaskSimpleCarSetPedOut::PositionPedOutOfCollision` 0x6479B0 (PORT-AI-3's
@@ -1750,6 +1752,7 @@ Enter-car scenario: deterministic, `SA_GAME_TELEPORT=60:2456.5:-1761.7:13.6` (ne
 | car9 | SIGSEGV in the AI-GEN body of 0x5F3730 (21.2) | standing |
 | car12 | `GoToCarDoorAndStandStill::ControlSubTask` 0x64A820 | standing |
 | car13..car14 | `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0, `CVehicle::ProcessOpenDoor` 0x6D56C0 | at the door (2454.72, -1761.54) |
+| car15 (ProcessOpenDoor ported) | `LineUpPedWithCar::ProcessPed` 0x6513A0 (from frame 118), then `ProcessPlayerVehicleEngine` 0x4FBB10, the excluded 0x5F3730 | at the door |
 
 Window runs (headless gamescope 800x600, `--auto-input`, W held from iteration 150): 60 s, 1,887 frames, 0
 blocked, no crash (system heap, before 21.1); with the fixed heap a `CTaskSimpleSlideToCoord::ProcessPed` block
@@ -1767,16 +1770,18 @@ stop a window run.
 
 ### 21.6 Next gaps, in order
 
-1. `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 (unreversed, ~600 instructions, SEH, a per-anim switch of 0xFA
-   entries) and `GetLocalPositionToOpenCarDoor` 0x64FC10; `CVehicle::ProcessOpenDoor` 0x6D56C0 (gr-reversed, x87,
-   two nested anim / anim-group switches; the time argument's slot holds the ratio).
+1. `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 (unreversed, ~650 instructions over 0x6513A0..0x651F00 with
+   the entry chunk 0x406B07, SEH, a per-anim switch of 0xFA entries, the ped's slide offset and heading blend) and
+   `GetLocalPositionToOpenCarDoor` 0x64FC10. Read up to 0x651CF3 in STD-14, not ported.
 2. Then the get-in / close-door / set-ped-in tasks run (their bodies are ported) and the driving path follows:
    PORT-VEH-4's `ProcessControlInputs` are now in; camera in car, vehicle audio (`ProcessPlayerVehicleEngine`
    0x4FBB10 blocked in car14).
 3. `CCarEnterExit::GetNearestCarPassengerDoor` 0x650BB0 (passengers), `CEventVehicleCollision` ctor 0x4AC840,
    `CPed::KillPedWithCar` 0x5F0360, `ComputeClosestSurfacePoint` 0x5F3B70, `ChoosePolicePedOccupation` 0x610F40.
 4. `UpdateCarAI` for law enforcers with a wanted level and the remaining missions.
-5. AI-GEN: check the other `nop; jmp` callees for the 0x5F1FA0 argument bug.
+5. AI-GEN: check the other `nop; jmp` callees for the 0x5F1FA0 argument bug; port 0x5F3730 / 0x5F2B80 / 0x5F3B40 by
+   hand (0x5F3730 blocks once excluded).
+6. `CAEVehicleAudioEntity::ProcessPlayerVehicleEngine` 0x4FBB10 (blocked every frame after 178 in car15).
 
 ### 21.7 Checks
 
