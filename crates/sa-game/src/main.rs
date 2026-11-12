@@ -9,8 +9,12 @@
 //! step that is not in Rust, or that reaches an unported callee, is reported instead of crashing.
 //!
 //! ```text
-//! sa-game --game wine/gta-sa [--frames N] [--report out.md] [--window [--exit-after S] | --screenshot out.png]
+//! sa-game --game wine/gta-sa [--frames N] [--report out.md] [--window [--exit-after S] [--auto-input]] [--screenshot out.png]
 //! ```
+//!
+//! `--window` runs the same boot and main loop in a native window ([`game_window`]): every `Present` draws the
+//! device's back buffer into the window surface, and the window's keyboard / mouse input reaches the game through the
+//! platform layer (window messages and DirectInput). Without `--window` the loop runs offscreen with synthetic input.
 #![deny(unsafe_code)]
 
 mod arena;
@@ -24,6 +28,7 @@ mod d3d9;
 mod dsound;
 mod d3d9_shader;
 mod dx;
+mod game_window;
 mod screen;
 mod imports;
 mod native;
@@ -42,11 +47,16 @@ use sa_platform::win32::{MessageQueue, Win32Time};
 
 use boot::{Outcome, Step, run_step};
 
-struct Args {
+pub struct Args {
     game: PathBuf,
-    frames: u32,
+    /// main-loop iterations (`None`: 3 offscreen, unlimited in a window)
+    frames: Option<u32>,
     window: bool,
     exit_after: Option<f32>,
+    /// `--auto-input`: the offscreen mode's synthetic input in the window too (evidence runs)
+    auto_input: bool,
+    /// `--frame-times FILE`: the intervals between in-game presents (ms, one per line)
+    frame_times: Option<PathBuf>,
     screenshot: Option<PathBuf>,
     report: Option<PathBuf>,
     /// the user documents folder: `None` = a fresh temporary folder for this run (removed at exit)
@@ -56,9 +66,11 @@ struct Args {
 fn parse_args() -> Result<Args, String> {
     let mut a = Args {
         game: PathBuf::new(),
-        frames: 3,
+        frames: None,
         window: false,
         exit_after: None,
+        auto_input: false,
+        frame_times: None,
         screenshot: None,
         report: None,
         documents: None,
@@ -68,9 +80,11 @@ fn parse_args() -> Result<Args, String> {
         let mut val = || it.next().ok_or(format!("{k} needs a value"));
         match k.as_str() {
             "--game" => a.game = PathBuf::from(val()?),
-            "--frames" => a.frames = val()?.parse().map_err(|e| format!("--frames: {e}"))?,
+            "--frames" => a.frames = Some(val()?.parse().map_err(|e| format!("--frames: {e}"))?),
             "--window" => a.window = true,
             "--exit-after" => a.exit_after = Some(val()?.parse().map_err(|e| format!("--exit-after: {e}"))?),
+            "--auto-input" => a.auto_input = true,
+            "--frame-times" => a.frame_times = Some(PathBuf::from(val()?)),
             "--screenshot" => a.screenshot = Some(PathBuf::from(val()?)),
             "--report" => a.report = Some(PathBuf::from(val()?)),
             "--present-dir" => d3d9::set_present_dir(PathBuf::from(val()?)),
@@ -79,9 +93,11 @@ fn parse_args() -> Result<Args, String> {
             "--start-in-world" => native::set_start_in_world(),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--frame-times FILE] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
-                     --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given."
+                     --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
+                     --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
+                     the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK)."
                 );
                 std::process::exit(0);
             }
@@ -118,7 +134,19 @@ impl Report {
     }
 }
 
-fn run(args: &Args) -> Result<String, String> {
+/// A booted game: the report so far and the main loop's state.
+pub struct Session {
+    rep: Report,
+    /// main-loop iterations run
+    n: u32,
+    last: Option<Outcome>,
+    repeats: u32,
+    /// the loop stopped (aborted, `CGame::Initialise` failed, or the same failure three times)
+    stopped: bool,
+}
+
+/// The platform setup and the boot (WinMain up to its main loop).
+pub fn boot(args: &Args) -> Result<Session, String> {
     let game = NativeFs::new(&args.game).map_err(|e| format!("--game {}: {e}", args.game.display()))?;
     if !sa_platform::fs::GameFs::exists(&game, "models/gta3.img") {
         return Err(format!(
@@ -212,150 +240,206 @@ fn run(args: &Args) -> Result<String, String> {
         let o = run_step(&s);
         rep.add("check", &s, &o);
     }
-    let frame = [winmain::frame_step()];
-    let (mut last, mut repeats): (Option<Outcome>, u32) = (None, 0);
-    for n in 0..args.frames {
-        if winmain::aborted() {
-            break;
+    Ok(Session {
+        rep,
+        n: 0,
+        last: None,
+        repeats: 0,
+        stopped: false,
+    })
+}
+
+/// The offscreen mode's synthetic input for main-loop iteration `n`.
+///
+/// Enter and the left mouse button are pressed and released every 8 iterations (skips the logo and title movie
+/// states, presses the menu's default entry; Enter reaches CPad through the window procedure, the mouse through
+/// DirectInput). `SA_GAME_WALK=START:COUNT` (evidence runs): from iteration START the W key (GO_FORWARD) is pressed
+/// and held for COUNT iterations, then released; the synthetic Enter stops 8 iterations before START (Enter enters
+/// vehicles in the world).
+fn synthetic_input(n: u32) -> InputState {
+    let walk = walk_spec();
+    let mut i = InputState::default();
+    if let Some((start, count)) = walk {
+        if n >= start && n < start + count {
+            // key_down first: it queues the key-down message only for a key not yet held
+            if n == start {
+                i.key_down(Key::W);
+            }
+            i.held.insert(Key::W);
+        } else if n == start + count {
+            i.events.push(InputEvent::KeyUp { key: Key::W });
         }
-        // synthetic input: Enter and the left mouse button pressed and released every 8 iterations
-        // (skips the logo and title movie states, presses the menu's default entry; Enter reaches
-        // CPad through the window procedure, the mouse through DirectInput)
-        // `SA_GAME_WALK=START:COUNT` (evidence runs): from iteration START the W key (GO_FORWARD) is
-        // pressed and held for COUNT iterations, then released; the synthetic Enter stops 8
-        // iterations before START (Enter enters vehicles in the world)
-        let walk = walk_spec();
+    }
+    // in game (gGameState IDLE) the menu input stops: the left button is the fire / punch key and Enter
+    // enters vehicles
+    let enter = walk.is_none_or(|(start, _)| n + 8 < start) && winmain::game_state() != winmain::STATE_IDLE;
+    match if enter { n % 8 } else { 0 } {
+        4 => {
+            i.key_down(Key::Enter);
+            i.mouse_held.insert(MouseButton::Left);
+        }
+        // the button (DirectInput state only, no window message) stays down while the key
+        // messages take their iterations
+        // the key-down message takes iteration 4; 5 and 6 run game frames with Enter held
+        // (the window procedure feeds CPad), the key-up message is queued at 7
+        5 | 6 => {
+            i.mouse_held.insert(MouseButton::Left);
+        }
+        7 => {
+            i.events.push(InputEvent::KeyUp { key: Key::Enter });
+        }
+        _ => {}
+    }
+    // the synthetic mouse movement stops in game too: it turns the player camera (pitching it at the ground)
+    if winmain::game_state() != winmain::STATE_IDLE {
+        i.mouse_delta = (4.0, -2.0);
+    }
+    i
+}
+
+/// `extra` added to `base`: events appended, held keys and buttons united, motion summed.
+fn merge_input(base: &InputState, extra: &InputState) -> InputState {
+    let mut i = base.clone();
+    i.events.extend(extra.events.iter().cloned());
+    i.pressed.extend(extra.pressed.iter().copied());
+    i.held.extend(extra.held.iter().copied());
+    i.mouse_held.extend(extra.mouse_held.iter().copied());
+    i.mouse_delta.0 += extra.mouse_delta.0;
+    i.mouse_delta.1 += extra.mouse_delta.1;
+    i.wheel += extra.wheel;
+    i
+}
+
+impl Session {
+    /// One main-loop iteration with `input` (its events are queued as window messages, its state is the
+    /// DirectInput state). Returns false when the loop has stopped.
+    pub fn iterate(&mut self, input: InputState) -> bool {
+        if self.stopped || winmain::aborted() {
+            self.stopped = true;
+            return false;
+        }
+        let n = self.n;
+        self.n += 1;
         bind::with("input", |p| {
             let t = p.time.time_get_time();
-            let mut i = InputState::default();
-            if let Some((start, count)) = walk {
-                if n >= start && n < start + count {
-                    // key_down first: it queues the key-down message only for a key not yet held
-                    if n == start {
-                        i.key_down(Key::W);
-                    }
-                    i.held.insert(Key::W);
-                } else if n == start + count {
-                    i.events.push(InputEvent::KeyUp { key: Key::W });
-                }
-            }
-            // in game (gGameState IDLE) the menu input stops: the left button is the fire / punch key and Enter
-            // enters vehicles
-            let enter = walk.is_none_or(|(start, _)| n + 8 < start) && winmain::game_state() != winmain::STATE_IDLE;
-            match if enter { n % 8 } else { 0 } {
-                4 => {
-                    i.key_down(Key::Enter);
-                    i.mouse_held.insert(MouseButton::Left);
-                }
-                // the button (DirectInput state only, no window message) stays down while the key
-                // messages take their iterations
-                // the key-down message takes iteration 4; 5 and 6 run game frames with Enter held
-                // (the window procedure feeds CPad), the key-up message is queued at 7
-                5 | 6 => {
-                    i.mouse_held.insert(MouseButton::Left);
-                }
-                7 => {
-                    i.events.push(InputEvent::KeyUp { key: Key::Enter });
-                }
-                _ => {}
-            }
-            // the synthetic mouse movement stops in game too: it turns the player camera (pitching it at the ground)
-            if winmain::game_state() != winmain::STATE_IDLE {
-                i.mouse_delta = (4.0, -2.0);
-            }
-            for e in &i.events {
+            for e in &input.events {
                 p.queue.push_event(e, t);
             }
-            p.input = i;
+            p.input = input;
         });
         println!("frame {n}:");
         let state = winmain::game_state();
-        let o = run_step(&frame[0]);
-        rep.add(&format!("frame {n}"), &frame[0], &o);
+        let frame = winmain::frame_step();
+        let o = run_step(&frame);
+        self.rep.add(&format!("frame {n}"), &frame, &o);
         // decision 2 of STD-5 (platform.md section 12.1): a failure inside `CGame::Initialise`
         // leaves the game half-initialised; the next iteration would retry it from that state, so
         // the run reports the blocked function and stops (exit code 4)
         if state == winmain::STATE_LOADING_STARTED && !matches!(o, Outcome::Ok(_)) {
             println!("main loop: CGame::Initialise did not complete; stopping (no retry)");
             INIT_FAILED.store(true, std::sync::atomic::Ordering::SeqCst);
-            break;
+            self.stopped = true;
+            return false;
         }
         // a loop that cannot get further makes no progress: stop after three identical failures
         let failed = !matches!(o, Outcome::Ok(_));
-        repeats = if failed && last.as_ref() == Some(&o) { repeats + 1 } else { 0 };
-        last = Some(o);
-        if failed && repeats >= 2 {
+        self.repeats = if failed && self.last.as_ref() == Some(&o) { self.repeats + 1 } else { 0 };
+        self.last = Some(o);
+        if failed && self.repeats >= 2 {
             println!("main loop: the same failure three times in a row; stopping");
-            break;
+            self.stopped = true;
+            return false;
         }
+        true
     }
 
-    let mut md = String::new();
-    let _ = writeln!(
-        md,
-        "# sa-game native run\n\n| phase | step | address | result |\n|---|---|---|---|"
-    );
-    for (ph, name, addr, r) in &rep.rows {
-        let _ = writeln!(md, "| {ph} | {name} | {addr:#x} | {} |", r.replace('|', "\\|"));
-    }
-    let skipped = cinit::skipped();
-    let _ = writeln!(
-        md,
-        "\n## C++ static initialisers without a port (skipped, {})\n",
-        skipped.len()
-    );
-    for (a, name) in &skipped {
-        let _ = writeln!(md, "- {a:#x} {name}");
-    }
-    let (calls, undelivered) = bind::with("report", |p| (p.calls.clone(), p.undelivered.clone()));
-    let _ = writeln!(md, "\n## Platform calls served natively\n");
-    for (k, v) in calls.iter().filter(|(k, _)| **k != "report" && **k != "input") {
-        let _ = writeln!(md, "- `{k}`: {v}");
-    }
-    let disp = native::dispatched();
-    let _ = writeln!(
-        md,
-        "\n## Native implementations reached through the orig! address registry ({} functions, {} calls)\n",
-        disp.len(),
-        disp.iter().map(|d| d.2 as u64).sum::<u64>()
-    );
-    for (name, addr, n) in &disp {
-        let _ = writeln!(md, "- `{name}` ({addr:#x}): {n}");
-    }
-    if !undelivered.is_empty() {
+    /// The run's report (markdown).
+    fn report(&self) -> String {
+        let rep = &self.rep;
+        let mut md = String::new();
         let _ = writeln!(
             md,
-            "\n## Window messages without a WndProc (Win::__MainWndProc 0x747EB0 is original-only)\n"
+            "# sa-game native run\n\n| phase | step | address | result |\n|---|---|---|---|"
         );
-        for (m, n) in &undelivered {
-            let _ = writeln!(md, "- message {m:#06x}: {n}");
+        for (ph, name, addr, r) in &rep.rows {
+            let _ = writeln!(md, "| {ph} | {name} | {addr:#x} | {} |", r.replace('|', "\\|"));
         }
+        let skipped = cinit::skipped();
+        let _ = writeln!(
+            md,
+            "\n## C++ static initialisers without a port (skipped, {})\n",
+            skipped.len()
+        );
+        for (a, name) in &skipped {
+            let _ = writeln!(md, "- {a:#x} {name}");
+        }
+        let (calls, undelivered) = bind::with("report", |p| (p.calls.clone(), p.undelivered.clone()));
+        let _ = writeln!(md, "\n## Platform calls served natively\n");
+        for (k, v) in calls.iter().filter(|(k, _)| **k != "report" && **k != "input") {
+            let _ = writeln!(md, "- `{k}`: {v}");
+        }
+        let disp = native::dispatched();
+        let _ = writeln!(
+            md,
+            "\n## Native implementations reached through the orig! address registry ({} functions, {} calls)\n",
+            disp.len(),
+            disp.iter().map(|d| d.2 as u64).sum::<u64>()
+        );
+        for (name, addr, n) in &disp {
+            let _ = writeln!(md, "- `{name}` ({addr:#x}): {n}");
+        }
+        if !undelivered.is_empty() {
+            let _ = writeln!(
+                md,
+                "\n## Window messages without a WndProc (Win::__MainWndProc 0x747EB0 is original-only)\n"
+            );
+            for (m, n) in &undelivered {
+                let _ = writeln!(md, "- message {m:#06x}: {n}");
+            }
+        }
+        let count = |p: &str| rep.rows.iter().filter(|r| r.3.starts_with(p)).count();
+        let (ok, blocked, orig, crashed) =
+            (count("rust: ok"), count("rust: blocked"), count("ORIGINAL-ONLY"), count("rust: CRASHED"));
+        let _ = writeln!(
+            md,
+            "\nSummary: {ok} steps ran in Rust, {blocked} blocked on an unported callee, {orig} original-only, {crashed} crashed (skipped).\nFull MVP gap list: docs/arch/platform-mvp-gaps.csv."
+        );
+        if let Some(ft) = frame_time_summary() {
+            let _ = writeln!(md, "\nFrame pacing (in-game presents): {ft}");
+        }
+        println!(
+            "summary: {ok} ok, {blocked} blocked, {orig} original-only, {crashed} crashed; calls served natively: {}",
+            calls.values().sum::<u64>()
+        );
+        md
     }
-    let crashed = rep
-        .rows
-        .iter()
-        .filter(|r| r.3.starts_with("rust: CRASHED"))
-        .count();
-    let ok = rep.rows.iter().filter(|r| r.3.starts_with("rust: ok")).count();
-    let blocked = rep
-        .rows
-        .iter()
-        .filter(|r| r.3.starts_with("rust: blocked"))
-        .count();
-    let orig = rep
-        .rows
-        .iter()
-        .filter(|r| r.3.starts_with("ORIGINAL-ONLY"))
-        .count();
-    let _ = writeln!(
-        md,
-        "\nSummary: {ok} steps ran in Rust, {blocked} blocked on an unported callee, {orig} original-only, {crashed} crashed (skipped).\nFull MVP gap list: docs/arch/platform-mvp-gaps.csv."
-    );
-    println!(
-        "summary: {ok} ok, {blocked} blocked, {orig} original-only, {crashed} crashed; calls served natively: {}",
-        calls.values().sum::<u64>()
-    );
-    Ok(md)
+}
+
+/// The intervals between the in-game presents (ms).
+fn frame_intervals() -> Vec<f64> {
+    let t = d3d9::frame_times();
+    t.windows(2).map(|w| (w[1] - w[0]).as_secs_f64() * 1000.0).collect()
+}
+
+/// Count, mean, percentiles and the rate of the in-game present intervals.
+fn frame_time_summary() -> Option<String> {
+    let mut v = frame_intervals();
+    if v.is_empty() {
+        return None;
+    }
+    let mean = v.iter().sum::<f64>() / v.len() as f64;
+    v.sort_by(f64::total_cmp);
+    let pct = |p: f64| v[((v.len() - 1) as f64 * p).round() as usize];
+    Some(format!(
+        "{} intervals, mean {mean:.2} ms ({:.1} fps), min {:.2}, median {:.2}, p95 {:.2}, p99 {:.2}, max {:.2} ms",
+        v.len(),
+        1000.0 / mean,
+        v[0],
+        pct(0.5),
+        pct(0.95),
+        pct(0.99),
+        v[v.len() - 1]
+    ))
 }
 
 /// Set when `CGame::Initialise` did not complete: the process exits with code 4.
@@ -372,6 +456,17 @@ fn remove_temp_docs() {
     }
 }
 
+/// The offscreen run: the boot, then `--frames` iterations (3 by default) with the synthetic input.
+fn run_offscreen(args: &Args) -> Result<Session, String> {
+    let mut s = boot(args)?;
+    for n in 0..args.frames.unwrap_or(3) {
+        if !s.iterate(synthetic_input(n)) {
+            break;
+        }
+    }
+    Ok(s)
+}
+
 fn main() {
     let args = match parse_args() {
         Ok(a) => a,
@@ -380,19 +475,27 @@ fn main() {
             std::process::exit(2);
         }
     };
-    match run(&args) {
-        Ok(md) => {
+    let session = if args.window { game_window::run(&args) } else { run_offscreen(&args) };
+    match session {
+        Ok(s) => {
+            let md = s.report();
             if let Some(p) = &args.report
                 && let Err(e) = std::fs::write(p, md)
             {
                 eprintln!("sa-game: {}: {e}", p.display());
             }
-            let r = if let Some(p) = &args.screenshot {
-                screen::screenshot(p).map(|()| println!("sa-game: wrote {}", p.display()))
-            } else if args.window {
-                screen::run_window(args.exit_after)
-            } else {
-                Ok(())
+            if let Some(ft) = frame_time_summary() {
+                println!("sa-game: frame pacing (in-game presents): {ft}");
+            }
+            if let Some(p) = &args.frame_times {
+                let text: String = frame_intervals().iter().map(|v| format!("{v:.3}\n")).collect();
+                if let Err(e) = std::fs::write(p, text) {
+                    eprintln!("sa-game: {}: {e}", p.display());
+                }
+            }
+            let r = match &args.screenshot {
+                Some(p) if !args.window => screen::screenshot(p).map(|()| println!("sa-game: wrote {}", p.display())),
+                _ => Ok(()),
             };
             remove_temp_docs();
             if let Err(e) = r {
@@ -411,7 +514,7 @@ fn main() {
     }
 }
 
-/// `SA_GAME_WALK=START:COUNT` (see the main loop).
+/// `SA_GAME_WALK=START:COUNT` (see [`synthetic_input`]).
 fn walk_spec() -> Option<(u32, u32)> {
     let v = std::env::var("SA_GAME_WALK").ok()?;
     let (a, b) = v.split_once(':')?;

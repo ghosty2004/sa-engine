@@ -83,6 +83,10 @@ fn parse_unported(msg: &str) -> Option<(String, String)> {
     Some((name.to_owned(), addr))
 }
 
+/// Set by `--window`: no step is probed in a forked child (the window's GPU device and display connection exist
+/// before the boot).
+pub static NO_PROBE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// Runs a step in this process without the forked probe (main-loop steps known not to fault).
 pub fn run_step_direct(s: &Step) -> Outcome {
     let Some(f) = s.run else {
@@ -112,6 +116,7 @@ pub fn run_step(s: &Step) -> Outcome {
     // the step of a fault).
     if s.probe
         && std::env::var_os("SA_GAME_NO_PROBE").is_none()
+        && !NO_PROBE.load(std::sync::atomic::Ordering::SeqCst)
         && crate::d3d9::with_device(|_| ()).is_none()
         && let Some(report) = arena::probe(|| {
             f();
