@@ -1940,9 +1940,12 @@ it (run2, the recording run).
   `Present` (2,365 blocked iterations, the picture frozen, the loop still running, because the iterations in between
   that do not render keep the three-in-a-row rule from firing). That is a missing port, not a web issue: natively the
   same. Other blocked callees seen: 0x5F3B70, 0x65C680 (vslot `CreateNextSubTask`), 0x5F32D0.
-  With WRITER-NATIVE's 0x4AC840 / 0x4AE270 picked (branch `worktree-agent-a6d319b53fd3185ec`: dfa84753, 99c9089c,
-  1af4e486, 662a6799, 67e218c1, 83637f99, cfb801e0, cherry-picked onto this branch) the car collision no longer
-  blocks. Next web-visible blockers: `hideout_restore_cars` 0x448550 (near CJ's garage, from the first in-world
-  frames; once it blocked every frame when CJ ran into the garage door), the jump's `CTaskSimpleClimb::TestForClimb`
-  0x6803A0, `CIdleCam::ProcessFOVZoom` 0x517BF0 (stubbed by the page), 0x6513A0 (line-up with car, enter-car path).
+  WRITER-NATIVE's ports picked onto this branch (`worktree-agent-a6d319b53fd3185ec`: dfa84753, 99c9089c, 1af4e486,
+  662a6799, 67e218c1, 83637f99, cfb801e0, a6a2e813, 8bbc8b6e, 818e3702) remove the car-collision (0x4AC840 /
+  0x4AE270), garage hideout restore (0x448550) and jump (0x680C60, CheckIfJumpBlocked, Launch) blocks. On the final
+  build: a SwiftShader WebGL2 run (run3) with real Enter menus, in the world at 110 s, 71 s of W/A/D, 0 blocked, no
+  trap; a GPU garage run (rec4: sprint, mouse-look, three jumps) 1 blocked iteration in 137k (0x66F530), no freeze.
+  Next web-visible blockers: `CGarage::SlideDoorOpen` 0x44A660 (sprinting at CJ's garage door: every frame blocks,
+  the picture freezes), `CAutomobile::CanPedEnterCar` 0x6D1E80, 0x66F530, 0x6513A0 (line-up with car), the real
+  `TestForClimb` 0x6803A0 (stubbed by the page), `CIdleCam::ProcessFOVZoom` 0x517BF0 (stubbed by the page).
 
