@@ -62,6 +62,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::script_thing_index::HOOKS,
     crate::streamed_script_load::HOOKS,
     crate::script_entity_cleanup::HOOKS,
+    crate::script5_callees::HOOKS,
     crate::play_anim_command::HOOKS,
     misc::HOOKS,
     crate::generated::HOOKS,
