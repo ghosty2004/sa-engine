@@ -161,6 +161,7 @@ pub mod enter_car_sub_tasks;
 pub mod leader_entered_car_event_dtor;
 pub mod go_to_car_door_control;
 pub mod line_up_ped_with_car;
+pub mod short_body_natives;
 pub mod event_car_upside_down_dtor;
 pub mod event_base_dtor_police_occupation;
 pub mod ped_geometry_avoid_entity;
