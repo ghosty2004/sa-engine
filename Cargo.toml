@@ -1,6 +1,8 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
+# samp-rs/ is its own Cargo workspace (the SA:MP client; Windows DLL target)
+exclude = ["samp-rs"]
 
 [workspace.package]
 edition = "2024"

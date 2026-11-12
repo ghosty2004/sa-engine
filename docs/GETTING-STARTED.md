@@ -60,8 +60,8 @@ A port is **verified** at L2 or L3 (F1 progress in `catalog/progress.md`). Every
 - **The oracle** (`crates/sa-oracle*`, `tools/e2e`): recordings, replays, state hashes, L1/L2/L3 runners.
 - **SA:MP**: `crates/sa-samp-api` (the interface samp-rs uses to talk to "the game"), `crates/sa-samp` (that
   interface implemented on the engine), `crates/sa-samp-ui` (SA:MP's chat, dialogs, nametags, scoreboard drawn
-  by the engine), `crates/sa-udp-proxy` + `crates/sa-net` (browser networking). The samp-rs side lives in
-  `~/samp-rs` on branch `sa-engine/adapter` (see [samp/game-adapter.md](samp/game-adapter.md)).
+  by the engine), `crates/sa-udp-proxy` + `crates/sa-net` (browser networking). The SA:MP client itself (samp-rs) lives in
+  `samp-rs/` in this repository, as its own Cargo workspace (see [samp/game-adapter.md](samp/game-adapter.md)).
 
 ---
 
@@ -241,6 +241,7 @@ crates/
   sa-oracle, sa-oracle-format   the oracle (L1 specs, recordings, satool)
   sa-samp-api, sa-samp, sa-samp-ui, sa-net, sa-udp-proxy   SA:MP (§1)
   sa-viewer      model/texture viewer
+samp-rs/         the SA:MP client (own Cargo workspace: samp-proto, samp-client, the samp.dll replacement, …)
 catalog/         the function catalogue (generated + state.csv, verify-queue.csv)
 docs/            PLAN, ROADMAP, WORKLOG, CONTINUE, arch/ (design + per-lane notes), verify/, samp/, re/, e2e/
 tools/
@@ -365,8 +366,8 @@ These are binding (from the project owner, see [CLAUDE.md](../CLAUDE.md) and ROA
   the divergence ledger.
 - **Single player stays untouched by SA:MP**: SA:MP behaviour is enabled only in samp mode, through hooks at the
   same places samp.dll patches (see `docs/samp/startup.md`).
-- **samp-rs**: write only on its branch `sa-engine/adapter` (worktree `~/samp-rs-adapter`); samp-rs must keep
-  working with the original `gta_sa.exe`; every adapter step is a pure refactor checked by its tests and an A/B join.
+- **samp-rs** (`samp-rs/`): its original-exe backend must keep working with the original `gta_sa.exe`; every
+  adapter step is a pure refactor checked by its tests (`cd samp-rs && cargo test --workspace`) and an A/B join.
 - **Commits**: plain English, no attribution trailers. Pushing is done by the owner.
 - **Code, comments and docs in English.**
 - Visual checks only on isolated headless displays (gamescope lanes, offscreen), never on someone's desktop.

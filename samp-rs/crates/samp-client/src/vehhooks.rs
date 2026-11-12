@@ -1,0 +1,967 @@
+//! Vehicle hooks inside GTA (Windows only): the `ProcessControl` redirect of all ten vehicle classes (remote
+//! drivers run with their own pad and camera swapped in), siren/horn, `UsesSiren`, `BreakTowLink`,
+//! `ProcessEntityCollision`, the train derail clamp, the enter/leave task constructors and the passenger radar.
+//! The hooks never touch the client session: they read [`SHARED`] (written by `vehicles.rs` on the main thread
+//! between frames) and queue [`HookEvent`]s that the client tick sends in the same frame. [`install`] applies all.
+//! Spec: docs/re/subsystems/remote-control-vehicles.md, "2.3 The vehicle `ProcessControl` hook", "2.4 Other
+//! per-vehicle hooks" and "5. Enter / exit"; deviations from samp are listed in docs/phase3/m5-notes.md.
+
+use std::collections::HashMap;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicU32, Ordering};
+
+use sa_samp_api::PedRef;
+use sa_samp_api::peds::Peds as _;
+
+use crate::adapter::original::process;
+use crate::patch::{Memory, PatchError, Patcher, ProcessMemory};
+use crate::remote::{PAD_OLD_STATE, PAD_SIZE, SlotShadow};
+use crate::swap::addr as sw;
+use crate::vehicle::{self, Kind, NEAR_RANGE, is_rail};
+
+/// GTA addresses and offsets (names via gta-reversed / plugin-sdk).
+pub mod g {
+    pub const CWORLD_PLAYERS: u32 = 0xB7CD98;
+    /// `CGame::currArea`.
+    pub const CURR_AREA: u32 = 0xB72914;
+    /// `CAEVehicleAudioEntity::Service` (thiscall).
+    pub const AUDIO_SERVICE: u32 = 0x502280;
+    /// `CColStore::HasCollisionLoaded(const CVector&, int32 area)` (cdecl).
+    pub const HAS_COLLISION_LOADED: u32 = 0x410CE0;
+    /// `CAEVehicleAudioEntity::ProcessVehicleSirenAlarmHorn` (thiscall).
+    pub const PROCESS_SIREN_ALARM_HORN: u32 = 0x5002C0;
+    /// `CVehicle::UsesSiren` (thiscall).
+    pub const USES_SIREN: u32 = 0x6D8470;
+    /// `CAutomobile::BreakTowLink` (shared by the five classes).
+    pub const BREAK_TOW_LINK: u32 = 0x6A4400;
+    /// `FindPlayerSpeed` (cdecl, returns `CVector&`).
+    pub const FIND_PLAYER_SPEED: u32 = 0x56E090;
+    // CEntity / CPhysical / CVehicle / CPed fields.
+    pub const ENTITY_TYPE_STATUS: u32 = 0x36;
+    pub const ENTITY_MODEL: u32 = 0x22;
+    pub const PLACEABLE_MATRIX: u32 = 0x14;
+    /// `CMatrix::pos` and its z component.
+    pub const MATRIX_POS: u32 = 0x30;
+    pub const MATRIX_POS_Z: u32 = 0x38;
+    /// `CPhysical::m_vecMoveSpeed.z`.
+    pub const MOVE_SPEED_Z: u32 = 0x4C;
+    /// `CAEAudioEntity::m_pEntity`.
+    pub const AUDIO_ENTITY: u32 = 0x4;
+    pub const VEH_AUDIO: u32 = 0x138;
+    pub const VEH_FLAGS: u32 = 0x428;
+    pub const VEH_ENGINE_ON: u8 = 0x10;
+    pub const VEH_DRIVER: u32 = 0x460;
+    pub const VEH_HEALTH: u32 = 0x4C0;
+    pub const VEH_TRACTOR: u32 = 0x4C4;
+    pub const BIKE_LEAN: u32 = 0x648;
+    pub const BIKE_DESIRED_LEAN: u32 = 0x64C;
+    pub const TRAIN_SPEED: u32 = 0x5A4;
+    pub const PED_FLAGS: u32 = 0x46C;
+    pub const PED_IN_VEHICLE: u32 = 1 << 8;
+    pub const PED_VEHICLE: u32 = 0x58C;
+    pub const PED_TYPE: u32 = 0x598;
+    /// `CPed::m_nPedType` value of a civilian male (used for the audio "AI car" service).
+    pub const PEDTYPE_CIVMALE: u32 = 4;
+    /// Entity type 2 (vehicle) + status 3 (STATUS_PHYSICS).
+    pub const TYPE_STATUS_VEHICLE_PHYSICS: u8 = 0x1A;
+    /// Status bit of STATUS_ABANDONED (4 << 3).
+    pub const STATUS_ABANDONED_BIT: u8 = 0x20;
+    /// Pad words zeroed for an engine-off car: Square (brake) and Cross (accelerate).
+    pub const PAD_SQUARE: usize = 0x0E;
+    pub const PAD_CROSS: usize = 0x10;
+}
+
+/// `ProcessControl` vtable slots (+0x28) of the ten vehicle classes: (row in
+/// docs/re/data/gta-patches-r4-annotated.csv, slot, original function, vtable).
+pub const PROCESS_CONTROL: [(u32, u32, u32, u32); 10] = [
+    (26, 0x871148, 0x6B1880, vehicle::vtbl::AUTOMOBILE),
+    (27, 0x8721C8, 0x6F1770, vehicle::vtbl::BOAT),
+    (28, 0x871388, 0x6B9250, vehicle::vtbl::BIKE),
+    (29, 0x871970, 0x6C9260, vehicle::vtbl::PLANE),
+    (30, 0x8716A8, 0x6C7050, vehicle::vtbl::HELI),
+    (31, 0x871550, 0x6BFA30, vehicle::vtbl::BMX),
+    (32, 0x871800, 0x6C8250, vehicle::vtbl::MONSTER_TRUCK),
+    (33, 0x871B10, 0x6CDCC0, vehicle::vtbl::QUAD_BIKE),
+    (34, 0x872398, 0x6F86A0, vehicle::vtbl::TRAIN),
+    (35, 0x871C50, 0x6CED20, vehicle::vtbl::TRAILER),
+];
+
+/// `BreakTowLink` vtable slots (+0xF8) of the five classes that have one, all holding [`g::BREAK_TOW_LINK`]:
+/// (patch row, slot).
+pub const BREAK_TOW_LINK_SLOTS: [(u32, u32); 5] =
+    [(70, 0x871218), (71, 0x871778), (72, 0x8718D0), (73, 0x871A40), (74, 0x871BE0)];
+
+/// `CAutomobile::ProcessEntityCollision`.
+pub const PEC_AUTOMOBILE: u32 = 0x6ACE70;
+/// `CBike::ProcessEntityCollision`.
+pub const PEC_BIKE: u32 = 0x6BDEA0;
+/// `CMonsterTruck::ProcessEntityCollision`.
+pub const PEC_MONSTER_TRUCK: u32 = 0x6C8AE0;
+/// `CPhysical::ProcessEntityCollision`.
+pub const PEC_PHYSICAL: u32 = 0x546D00;
+
+/// `ProcessEntityCollision` vtable slots (+0x58): (patch row, slot, original function).
+pub const ENTITY_COLLISION_SLOTS: [(u32, u32, u32); 8] = [
+    (84, 0x871178, PEC_AUTOMOBILE),
+    (85, 0x8716D8, PEC_AUTOMOBILE),
+    (86, 0x8719A0, PEC_AUTOMOBILE),
+    (87, 0x871B40, PEC_AUTOMOBILE),
+    (88, 0x8713B8, PEC_BIKE),
+    (89, 0x871580, PEC_BIKE),
+    (90, 0x871830, PEC_MONSTER_TRUCK),
+    (91, 0x8721F8, PEC_PHYSICAL),
+];
+
+/// Call sites of `ProcessVehicleSirenAlarmHorn`: (patch row, call address).
+pub const SIREN_HORN_CALLS: [(u32, u32); 5] =
+    [(36, 0x501B1D), (37, 0x501B42), (38, 0x501FC2), (39, 0x502067), (40, 0x5021AE)];
+/// Call sites of `CVehicle::UsesSiren`: (patch row, call address).
+pub const USES_SIREN_CALLS: [(u32, u32); 3] = [(92, 0x6E0954), (93, 0x6B2BCB), (94, 0x4F77DA)];
+/// `call FindPlayerSpeed` in `CRadar::DrawMap`.
+pub const RADAR_SPEED_CALL: u32 = 0x586C0A;
+
+/// `CTaskComplexEnterCarAsDriver` constructor (hooked with `jmp [slot]`).
+pub const ENTER_CTOR: u32 = 0x6402F0;
+/// Pointer slot of the enter hook's `jmp [slot]`.
+pub const ENTER_CTOR_SLOT: u32 = 0x6919BB;
+/// Where the enter constructor continues after the overwritten bytes.
+pub const ENTER_CTOR_RESUME: u32 = 0x6402F7;
+/// The enter constructor's bytes the hook overwrites.
+pub const ENTER_CTOR_ORIGINAL: [u8; 7] = [0x8B, 0x44, 0x24, 0x04, 0x56, 0x6A, 0x00];
+/// `CTaskComplexLeaveCar` constructor (hooked with `jmp [slot]`).
+pub const LEAVE_CTOR: u32 = 0x63B8C0;
+/// Pointer slot of the leave hook's `jmp [slot]`.
+pub const LEAVE_CTOR_SLOT: u32 = 0x63B8BA;
+/// Where the leave constructor continues after the overwritten bytes.
+pub const LEAVE_CTOR_RESUME: u32 = 0x63B8C7;
+/// The constant the original pushes second (`push 0x841618`, the SEH scope table).
+pub const LEAVE_CTOR_SEH_SCOPE: u32 = 0x841618;
+/// The leave constructor's bytes the hook overwrites.
+pub const LEAVE_CTOR_ORIGINAL: [u8; 7] = [0x6A, 0xFF, 0x68, 0x18, 0x16, 0x84, 0x00];
+/// Return addresses of the player-input callers of the enter constructor (`CPlayerInfo::Process` area); other
+/// callers (scripts, AI) are not filtered.
+pub const ENTER_CALLERS: [u32; 2] = [0x570A20, 0x570A99];
+/// Return addresses of the player-input callers of the leave constructor.
+pub const LEAVE_CALLERS: [u32; 2] = [0x5704A1, 0x5703FC];
+/// `CTask::operator delete` (cdecl, named via gta-reversed `Task.cpp`).
+pub const TASK_OPERATOR_DELETE: u32 = 0x61A5B0;
+/// Where a refused enter continues (no SetTask).
+pub const ENTER_REFUSED_CONTINUE: u32 = 0x570A9E;
+/// Train derail block in `CTrain::ProcessControl` (byte-patched in `vehpatches::INIT`, then call-hooked here).
+pub const TRAIN_DERAIL_SITE: u32 = 0x6F8CF8;
+
+/// What a hook asks the client to do in the next tick.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HookEvent {
+    /// Driver enter accepted: send RPC 26 (passenger 0). `parachute`: arm weapon 0 first.
+    Enter { vehicle_id: u16, parachute: bool },
+    /// Player-input exit: `driver` = the local ped was the driver; `rc` = no RPC 154; `train` = warp beside it.
+    Exit { vehicle_id: u16, driver: bool, rc: bool, train: bool },
+    /// samp's script opcode 0x09C6 with a network event type 1–4 (`scmops.rs`): RPC 96 for the vehicle with
+    /// script handle `handle`.
+    Scm { handle: i32, arg1: i32, arg2: i32, kind: i32 },
+}
+
+/// One streamed vehicle as the hooks see it.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct VehInfo {
+    pub id: u16,
+    pub model: u32,
+    pub locked: bool,
+    pub siren: bool,
+    /// The samp object has an attached trailer object (RPC 148 / 210).
+    pub has_trailer: bool,
+}
+
+/// State shared between the client tick (writer) and the hooks (readers, event queue).
+#[derive(Default)]
+pub struct Shared {
+    /// Streamed-in vehicles by `CVehicle*`.
+    pub by_ptr: HashMap<u32, VehInfo>,
+    /// Remote NPC peds (player-pool entry isNPC).
+    pub npc_peds: Vec<u32>,
+    /// Vehicle-vehicle collisions disabled by the server (RPC 167).
+    pub disable_collisions: bool,
+    /// samp is detaching a trailer itself (BreakTowLink lets it through).
+    pub detaching: bool,
+    /// The local ped is cuffed (special action 24): the driver-enter gate refuses.
+    pub local_cuffed: bool,
+    /// The local ped is carrying (special action 25): the driver-enter gate refuses.
+    pub local_carrying: bool,
+    /// Events queued by the hooks for the next client tick.
+    pub events: Vec<HookEvent>,
+}
+
+/// The hooks' view of the client state (created on first use).
+pub static SHARED: Mutex<Option<Shared>> = Mutex::new(None);
+
+/// Runs `f` on the shared state, blocking for the lock.
+pub fn with_shared<R>(f: impl FnOnce(&mut Shared) -> R) -> R {
+    let mut g = SHARED.lock().unwrap_or_else(|e| e.into_inner());
+    f(g.get_or_insert_with(Shared::default))
+}
+
+/// For hooks that may run while the client holds the lock: never blocks.
+pub fn try_with_shared<R>(f: impl FnOnce(&mut Shared) -> R) -> Option<R> {
+    let mut g = match SHARED.try_lock() {
+        Ok(g) => g,
+        Err(std::sync::TryLockError::Poisoned(p)) => p.into_inner(),
+        Err(std::sync::TryLockError::WouldBlock) => return None,
+    };
+    Some(f(g.get_or_insert_with(Shared::default)))
+}
+
+/// (remote, local, none-run, none-skipped) ProcessControl calls (diagnostics).
+static PC_REMOTE: AtomicU32 = AtomicU32::new(0);
+static PC_LOCAL: AtomicU32 = AtomicU32::new(0);
+static PC_NONE_RUN: AtomicU32 = AtomicU32::new(0);
+static PC_NONE_SKIP: AtomicU32 = AtomicU32::new(0);
+
+/// ProcessControl call counts: remote driver, local or nested, no driver simulated, no driver skipped.
+pub fn call_counts() -> [u32; 4] {
+    [&PC_REMOTE, &PC_LOCAL, &PC_NONE_RUN, &PC_NONE_SKIP].map(|a| a.load(Ordering::Relaxed))
+}
+
+// ---- raw access ---------------------------------------------------------------------------------------
+
+unsafe fn rd<T: Copy>(a: u32) -> T {
+    // SAFETY: caller passes a readable address of a T.
+    unsafe { std::ptr::read_unaligned(a as usize as *const T) }
+}
+
+unsafe fn wr<T: Copy>(a: u32, v: T) {
+    // SAFETY: caller passes a writable address of a T.
+    unsafe { std::ptr::write_unaligned(a as usize as *mut T, v) }
+}
+
+unsafe fn copy_in(a: u32, src: &[u8]) {
+    // SAFETY: caller passes a writable range.
+    unsafe { std::ptr::copy_nonoverlapping(src.as_ptr(), a as usize as *mut u8, src.len()) }
+}
+
+unsafe fn copy_out(a: u32, dst: &mut [u8]) {
+    // SAFETY: caller passes a readable range.
+    unsafe { std::ptr::copy_nonoverlapping(a as usize as *const u8, dst.as_mut_ptr(), dst.len()) }
+}
+
+fn local_ped() -> u32 {
+    // SAFETY: CWorld::Players[0].m_pPed.
+    unsafe { rd(g::CWORLD_PLAYERS) }
+}
+
+fn pos_of(ent: u32) -> Option<[f32; 3]> {
+    // SAFETY: live entity; the matrix pointer may be null.
+    unsafe {
+        let m: u32 = rd(ent + g::PLACEABLE_MATRIX);
+        if m == 0 {
+            return None;
+        }
+        Some([rd(m + g::MATRIX_POS), rd(m + g::MATRIX_POS + 4), rd(m + g::MATRIX_POS_Z)])
+    }
+}
+
+fn seated(ped: u32) -> bool {
+    // SAFETY: live ped.
+    ped != 0 && unsafe { rd::<u32>(ped + g::PED_FLAGS) } & g::PED_IN_VEHICLE != 0
+}
+
+fn model_of(ent: u32) -> u32 {
+    // SAFETY: live entity.
+    u32::from(unsafe { rd::<u16>(ent + g::ENTITY_MODEL) })
+}
+
+fn has_collision_loaded(pos: [f32; 3]) -> bool {
+    // SAFETY: GTA's cdecl function with a valid vector. The area is the current one (samp passes an
+    // uninitialised stack value there).
+    unsafe {
+        let f: extern "C" fn(*const f32, i32) -> u8 = std::mem::transmute(g::HAS_COLLISION_LOADED as usize);
+        f(pos.as_ptr(), rd::<i32>(g::CURR_AREA)) != 0
+    }
+}
+
+/// Within 200 units (2-D) of the local ped and collision loaded at the car.
+fn near_with_collision(veh: u32) -> bool {
+    let (Some(p), Some(l)) = (pos_of(veh), pos_of(local_ped())) else { return false };
+    vehicle::dist2d(p, l) <= NEAR_RANGE && has_collision_loaded(p)
+}
+
+fn audio_service(veh: u32) {
+    // SAFETY: GTA's own thiscall on the vehicle's audio entity.
+    unsafe {
+        let f: extern "thiscall" fn(u32) = std::mem::transmute(g::AUDIO_SERVICE as usize);
+        f(veh + g::VEH_AUDIO);
+    }
+}
+
+fn original_for(vt: u32) -> Option<u32> {
+    PROCESS_CONTROL.iter().find(|e| e.3 == vt).map(|e| e.2)
+}
+
+// ---- ProcessControl ---------------------------------------------------------------------------------------
+
+/// Zeroes Cross and Square (new and old state) of the pad at `pad` (engine off).
+unsafe fn zero_throttle(pad: u32) {
+    for w in [g::PAD_CROSS, g::PAD_SQUARE] {
+        // SAFETY: Pads[0] words.
+        unsafe {
+            wr::<i16>(pad + 2 * w as u32, 0);
+            wr::<i16>(pad + (PAD_OLD_STATE + 2 * w) as u32, 0);
+        }
+    }
+}
+
+/// Engine-off handling for remote and local drivers: helis get status ABANDONED; returns true when the engine
+/// is off, so the caller zeroes the pad's throttle. Engine on clears the heli's ABANDONED bit.
+unsafe fn engine_off_rules(veh: u32, kind: Kind) -> bool {
+    // SAFETY: live vehicle.
+    unsafe {
+        let engine_on = rd::<u8>(veh + g::VEH_FLAGS) & g::VEH_ENGINE_ON != 0;
+        let st: u8 = rd(veh + g::ENTITY_TYPE_STATUS);
+        if kind == Kind::Heli {
+            wr(
+                veh + g::ENTITY_TYPE_STATUS,
+                if engine_on { st & !g::STATUS_ABANDONED_BIT } else { st | g::STATUS_ABANDONED_BIT },
+            );
+        }
+        !engine_on
+    }
+}
+
+/// The globals a remote driver's `ProcessControl` swaps out, restored afterwards.
+struct SwapSaved {
+    pad: [u8; PAD_SIZE],
+    looking: (u8, u8),
+    cam_mode: u8,
+    weapon_mode: u16,
+    vectors: [u8; 0x30],
+    focus: u8,
+}
+
+/// One `ProcessControl` call: the vehicle, its class kind and model, and GTA's own function for the class.
+#[derive(Clone, Copy)]
+struct PcCall {
+    veh: u32,
+    kind: Kind,
+    model: u32,
+    original: extern "thiscall" fn(u32),
+}
+
+/// Replacement for `ProcessControl` of every vehicle class (thiscall, vtable slot +0x28). Three branches as in
+/// samp: A. a remote player drives (swap in that player's pad, camera and focus, run GTA's function, protect z,
+/// swap out); B. the local player drives or a swap is active; C. no player driver (simulate only when near,
+/// towed or on rails). Mirrors samp.dll 0x100A3140.
+pub extern "thiscall" fn vehicle_process_control(veh: u32) {
+    // SAFETY: GTA calls us with a live vehicle; the vtable is its first field.
+    let vt: u32 = unsafe { rd(veh) };
+    let Some(orig_addr) = original_for(vt) else { return };
+    // SAFETY: `orig_addr` is GTA's `ProcessControl` of this vehicle class (thiscall, no arguments).
+    let original: extern "thiscall" fn(u32) = unsafe { std::mem::transmute(orig_addr as usize) };
+    let pc = PcCall { veh, kind: vehicle::kind_from_vtable(vt), model: model_of(veh), original };
+    // SAFETY: a GTA global and a field of the live vehicle.
+    let (focus, driver): (u8, u32) = unsafe { (rd(sw::PLAYER_IN_FOCUS), rd(veh + g::VEH_DRIVER)) };
+    let local = local_ped();
+    // SAFETY: the driver is a live ped while it is set.
+    let player_driver = driver != 0 && unsafe { rd::<u32>(driver + g::PED_TYPE) } == 0;
+
+    // A. remote player driver.
+    if player_driver
+        && driver != local
+        && focus == 0
+        && let Some((slot, shadow)) = remote_driver_shadow(driver)
+    {
+        PC_REMOTE.fetch_add(1, Ordering::Relaxed);
+        // SAFETY: called from GTA's vehicle processing with a live vehicle and its live driver.
+        unsafe { process_remote_driver(pc, driver, slot, &shadow, focus) };
+        return;
+    }
+    // B. local driver, a nested call while a switch is active, or a player driver without a slot.
+    if (driver != 0 && driver == local) || focus != 0 || player_driver {
+        PC_LOCAL.fetch_add(1, Ordering::Relaxed);
+        // SAFETY: as above.
+        unsafe { process_local_driver(pc) };
+        return;
+    }
+    // C. no driver or a non-player driver.
+    // SAFETY: as above.
+    unsafe { process_without_player_driver(pc) };
+}
+
+/// The swap slot and shadow state of a remote player's ped (`None` when the ped has no slot or the table is busy).
+fn remote_driver_shadow(driver: u32) -> Option<(u8, SlotShadow)> {
+    crate::swap::TABLE.try_lock().ok().and_then(|g| {
+        let t = g.as_ref()?;
+        let slot = t.slot_of(driver)?;
+        Some((slot as u8, t.shadows[slot]))
+    })
+}
+
+/// Branch A: the remote player's pad, camera and focus swapped in around GTA's function, the vehicle audio
+/// serviced as an AI car, z protected, bike lean smoothed, then everything swapped out again.
+unsafe fn process_remote_driver(pc: PcCall, driver: u32, slot: u8, shadow: &SlotShadow, focus: u8) {
+    let veh = pc.veh;
+    // SAFETY: the caller passes a live vehicle; the rest are GTA globals.
+    unsafe {
+        let saved = swap_in(shadow, focus);
+        // Engine off: no throttle.
+        if engine_off_rules(veh, pc.kind) {
+            zero_throttle(sw::PAD0);
+        }
+        // Bike lean values, restored and smoothed after GTA's function.
+        let bike = matches!(pc.kind, Kind::Bike | Kind::Bmx);
+        let lean: (f32, f32) = if bike { (rd(veh + g::BIKE_LEAN), rd(veh + g::BIKE_DESIRED_LEAN)) } else { (0.0, 0.0) };
+        wr(sw::PLAYER_IN_FOCUS, 0u8);
+        service_audio_as_ai_car(veh, driver);
+        // Focus := slot, then GTA's function with the z protection.
+        wr(sw::PLAYER_IN_FOCUS, slot);
+        run_with_z_protection(pc);
+        if bike {
+            wr(veh + g::BIKE_LEAN, lean.0);
+            wr(veh + g::BIKE_DESIRED_LEAN, lean.1);
+            wr(veh + g::BIKE_LEAN, lean.0 + (lean.1 - lean.0) * 0.5);
+        }
+        swap_out(&saved);
+    }
+}
+
+/// Swaps in the remote player's pad, look-left/right, camera mode, weapon mode and aim vectors; returns what
+/// was there.
+unsafe fn swap_in(shadow: &SlotShadow, focus: u8) -> SwapSaved {
+    // SAFETY: GTA globals (Pads[0], TheCamera, the local player's weapon mode).
+    unsafe {
+        let mut saved = SwapSaved {
+            pad: [0; PAD_SIZE],
+            looking: (rd(sw::CAM0_LOOKING_LEFT), rd(sw::CAM0_LOOKING_RIGHT)),
+            cam_mode: rd(sw::CAM0_MODE),
+            weapon_mode: rd(sw::PLAYER_WEAPON_MODE),
+            vectors: [0; 0x30],
+            focus,
+        };
+        copy_out(sw::PAD0, &mut saved.pad);
+        copy_out(sw::CAM0_VECTORS, &mut saved.vectors);
+        copy_in(sw::PAD0, &shadow.pad);
+        let (l, r) = shadow.looking_left_right();
+        wr(sw::CAM0_LOOKING_LEFT, l);
+        wr(sw::CAM0_LOOKING_RIGHT, r);
+        wr(sw::CAM0_MODE, shadow.cam_mode);
+        wr(sw::PLAYER_WEAPON_MODE, shadow.weapon_mode());
+        let aim: Vec<u8> = shadow.aim.iter().flat_map(|f| f.to_le_bytes()).collect();
+        copy_in(sw::CAM0_VECTORS, &aim);
+        saved
+    }
+}
+
+/// Swap out: every value restored to what it was.
+unsafe fn swap_out(saved: &SwapSaved) {
+    // SAFETY: GTA globals, as in `swap_in`.
+    unsafe {
+        wr(sw::PLAYER_IN_FOCUS, saved.focus);
+        copy_in(sw::PAD0, &saved.pad);
+        wr(sw::CAM0_LOOKING_LEFT, saved.looking.0);
+        wr(sw::CAM0_LOOKING_RIGHT, saved.looking.1);
+        wr(sw::CAM0_MODE, saved.cam_mode);
+        wr(sw::PLAYER_WEAPON_MODE, saved.weapon_mode);
+        copy_in(sw::CAM0_VECTORS, &saved.vectors);
+    }
+}
+
+/// Vehicle audio serviced as an AI car (civilian driver, physics status), then both restored.
+unsafe fn service_audio_as_ai_car(veh: u32, driver: u32) {
+    // SAFETY: the caller passes a live vehicle and its live driver.
+    unsafe {
+        let st: u8 = rd(veh + g::ENTITY_TYPE_STATUS);
+        wr(driver + g::PED_TYPE, g::PEDTYPE_CIVMALE);
+        wr(veh + g::ENTITY_TYPE_STATUS, g::TYPE_STATUS_VEHICLE_PHYSICS);
+        audio_service(veh);
+        wr(veh + g::ENTITY_TYPE_STATUS, st);
+        wr(driver + g::PED_TYPE, 0u32);
+    }
+}
+
+/// GTA's function for a remote-driven vehicle with the matrix z and move-speed z saved around it; they are
+/// restored when the car is far away / without collision, and always for boats and aircraft.
+unsafe fn run_with_z_protection(pc: PcCall) {
+    let veh = pc.veh;
+    // SAFETY: the caller passes a live vehicle; its matrix pointer may be null.
+    unsafe {
+        let m: u32 = rd(veh + g::PLACEABLE_MATRIX);
+        let z: f32 = if m != 0 { rd(m + g::MATRIX_POS_Z) } else { 0.0 };
+        let vz: f32 = rd(veh + g::MOVE_SPEED_Z);
+        (pc.original)(veh);
+        let restore = if !is_rail(pc.model) && !near_with_collision(veh) {
+            true
+        } else {
+            matches!(pc.kind, Kind::Boat | Kind::Plane | Kind::Heli)
+        };
+        if restore {
+            let m2: u32 = rd(veh + g::PLACEABLE_MATRIX);
+            if m2 != 0 && m2 == m {
+                wr(m2 + g::MATRIX_POS_Z, z);
+            }
+            wr(veh + g::MOVE_SPEED_Z, vz);
+        }
+    }
+}
+
+/// Branch B: GTA's function with the audio serviced first; with the engine off, the pad's throttle is zeroed
+/// for the call and restored after it.
+unsafe fn process_local_driver(pc: PcCall) {
+    let veh = pc.veh;
+    // SAFETY: the caller passes a live vehicle; Pads[0] is a GTA global.
+    unsafe {
+        if engine_off_rules(veh, pc.kind) {
+            let mut pad = [0u8; PAD_SIZE];
+            copy_out(sw::PAD0, &mut pad);
+            zero_throttle(sw::PAD0);
+            audio_service(veh);
+            (pc.original)(veh);
+            copy_in(sw::PAD0, &pad);
+        } else {
+            audio_service(veh);
+            (pc.original)(veh);
+        }
+    }
+}
+
+/// Branch C: simulate only when towed by a seated driver, on rails, or near with collision loaded.
+unsafe fn process_without_player_driver(pc: PcCall) {
+    let veh = pc.veh;
+    // SAFETY: the caller passes a live vehicle; the tractor is a live vehicle while it is set.
+    let tractor: u32 = unsafe { rd(veh + g::VEH_TRACTOR) };
+    let towed = tractor != 0 && seated(unsafe { rd::<u32>(tractor + g::VEH_DRIVER) });
+    if towed || is_rail(pc.model) || near_with_collision(veh) {
+        PC_NONE_RUN.fetch_add(1, Ordering::Relaxed);
+        audio_service(veh);
+        (pc.original)(veh);
+    } else {
+        PC_NONE_SKIP.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+// ---- enter / leave task constructors ----------------------------------------------------------------------
+
+/// Entry of `CTaskComplexEnterCarAsDriver::CTaskComplexEnterCarAsDriver(CVehicle*)` (thiscall, ret 4).
+#[unsafe(naked)]
+unsafe extern "C" fn enter_ctor_stub() {
+    core::arch::naked_asm!(
+        "push ecx",
+        "push dword ptr [esp+8]",
+        "push ecx",
+        "push dword ptr [esp+12]",
+        "call {filter}",
+        "add esp, 12",
+        "pop ecx",
+        "test eax, eax",
+        "jz 2f",
+        "mov eax, [esp+4]",
+        "push esi",
+        "push 0",
+        "push {resume}",
+        "ret",
+        "2:",
+        "add esp, 8",
+        "push {refused}",
+        "ret",
+        filter = sym enter_filter,
+        resume = const ENTER_CTOR_RESUME,
+        refused = const ENTER_REFUSED_CONTINUE,
+    )
+}
+
+/// Entry of `CTaskComplexLeaveCar::CTaskComplexLeaveCar(CVehicle*, …)` (thiscall, 5 arguments).
+#[unsafe(naked)]
+unsafe extern "C" fn leave_ctor_stub() {
+    core::arch::naked_asm!(
+        "push ecx",
+        "push dword ptr [esp+8]",
+        "push ecx",
+        "push dword ptr [esp+12]",
+        "call {filter}",
+        "add esp, 12",
+        "pop ecx",
+        "push eax",
+        "push {seh}",
+        "push {resume}",
+        "ret",
+        filter = sym leave_filter,
+        seh = const LEAVE_CTOR_SEH_SCOPE,
+        resume = const LEAVE_CTOR_RESUME,
+    )
+}
+
+/// The driver-enter gate. Returns 1 to let the constructor run, 0 after deleting the task.
+/// Mirrors samp.dll 0x100A3700.
+extern "C" fn enter_filter(ret: u32, task: u32, veh: u32) -> u32 {
+    if !ENTER_CALLERS.contains(&ret) {
+        return 1;
+    }
+    let accept = gate_driver_enter(veh);
+    match accept {
+        Some(ev) => {
+            with_shared(|s| s.events.push(ev));
+            1
+        }
+        None => {
+            // samp calls slot 0 of whatever stale vtable the unconstructed task memory holds (a samp quirk). We
+            // only return the raw memory to the task pool (`CTask::operator delete`); the observable effect is
+            // the same: no task, no RPC.
+            // SAFETY: the memory came from `CTask::operator new` in the caller; nothing was constructed in it.
+            unsafe {
+                let f: extern "C" fn(u32) = std::mem::transmute(TASK_OPERATOR_DELETE as usize);
+                f(task);
+            }
+            0
+        }
+    }
+}
+
+/// Refusal rules in samp's order: no samp id, locked, model 570, the local ped cuffed or carrying, current
+/// driver not a player or a remote NPC.
+fn gate_driver_enter(veh: u32) -> Option<HookEvent> {
+    let (info, cuffed, carrying) = {
+        let g = SHARED.try_lock().ok()?;
+        let s = g.as_ref()?;
+        (s.by_ptr.get(&veh).copied()?, s.local_cuffed, s.local_carrying)
+    };
+    if vehicle::driver_enter_refused(info.locked, info.model, cuffed, carrying) {
+        if cuffed || carrying {
+            crate::log!(
+                "vehicles: driver enter of vehicle {} refused: local ped cuffed {cuffed} carrying {carrying}",
+                info.id
+            );
+        }
+        return None;
+    }
+    // SAFETY: live vehicle / ped fields.
+    let driver: u32 = unsafe { rd(veh + g::VEH_DRIVER) };
+    if driver != 0 {
+        if unsafe { rd::<u32>(driver + g::PED_TYPE) } != 0 {
+            return None;
+        }
+        if with_shared(|s| s.npc_peds.contains(&driver)) {
+            return None;
+        }
+    }
+    let local = local_ped();
+    let parachute = local != 0 && crate::vehicles::current_weapon(local) == u32::from(vehicle::WEAPON_PARACHUTE);
+    Some(HookEvent::Enter { vehicle_id: info.id, parachute })
+}
+
+/// The leave-task constructor filter: returns the value pushed as the SEH try-level (−1, or 1 for trains).
+/// Mirrors samp.dll 0x100A38C0.
+extern "C" fn leave_filter(ret: u32, _task: u32, veh: u32) -> i32 {
+    if !LEAVE_CALLERS.contains(&ret) {
+        return -1;
+    }
+    let local = local_ped();
+    // SAFETY: local ped field.
+    if local == 0 || unsafe { rd::<u32>(local + g::PED_VEHICLE) } != veh {
+        return -1;
+    }
+    let Some(info) = SHARED.try_lock().ok().and_then(|g| g.as_ref().and_then(|s| s.by_ptr.get(&veh).copied())) else {
+        return -1;
+    };
+    let train = is_rail(info.model);
+    // SAFETY: live vehicle.
+    let driver = unsafe { rd::<u32>(veh + g::VEH_DRIVER) } == local && !matches!(info.model, 569 | 570);
+    if train {
+        warp_beside_train(local, veh);
+    }
+    with_shared(|s| {
+        s.events.push(HookEvent::Exit { vehicle_id: info.id, driver, rc: vehicle::is_rc(info.model), train })
+    });
+    if train { 1 } else { -1 }
+}
+
+/// Inside the leave constructor, like samp: WARP_CHAR_FROM_CAR_TO_COORD to the train's position + (2.5, 2.5, 0),
+/// before GTA's SetTask of the leave task; no camera call and no RPC 154.
+fn warp_beside_train(local: u32, veh: u32) {
+    let Ok(h) = process().ped_script_handle(PedRef(local)).map(|h| h.0) else { return };
+    let Some(p) = pos_of(veh) else { return };
+    use crate::script::{Arg, Runner, op};
+    Runner::new().run(
+        op::WARP_CHAR_FROM_CAR_TO_COORD,
+        &[
+            Arg::Int(h),
+            Arg::Float(p[0] + vehicle::TRAIN_EXIT_OFFSET),
+            Arg::Float(p[1] + vehicle::TRAIN_EXIT_OFFSET),
+            Arg::Float(p[2]),
+        ],
+    );
+}
+
+// ---- other hooks ----------------------------------------------------------------------------------------
+
+/// `ProcessVehicleSirenAlarmHorn` call sites: entity status PLAYER while a driver is seated, else ABANDONED, for
+/// the duration of the call.
+extern "thiscall" fn siren_alarm_horn(audio: u32, params: u32) {
+    // SAFETY: GTA's audio entity (its `m_pEntity`) and its own function.
+    unsafe {
+        let f: extern "thiscall" fn(u32, u32) = std::mem::transmute(g::PROCESS_SIREN_ALARM_HORN as usize);
+        let veh: u32 = rd(audio + g::AUDIO_ENTITY);
+        if veh == 0 {
+            f(audio, params);
+            return;
+        }
+        let st: u8 = rd(veh + g::ENTITY_TYPE_STATUS);
+        let status = if seated(rd(veh + g::VEH_DRIVER)) { 0 } else { 4 };
+        wr(veh + g::ENTITY_TYPE_STATUS, (st & 0x07) | (status << 3));
+        f(audio, params);
+        wr(veh + g::ENTITY_TYPE_STATUS, st);
+    }
+}
+
+/// `UsesSiren` call sites: GTA's answer, else the stream-in siren flag. (samp's one-shot "force true" global has
+/// no known writer; not reproduced.)
+extern "thiscall" fn uses_siren(veh: u32) -> bool {
+    // SAFETY: GTA's own thiscall.
+    let orig = unsafe {
+        let f: extern "thiscall" fn(u32) -> bool = std::mem::transmute(g::USES_SIREN as usize);
+        f(veh)
+    };
+    orig || SHARED
+        .try_lock()
+        .ok()
+        .and_then(|g| g.as_ref().and_then(|s| s.by_ptr.get(&veh).map(|i| i.siren)))
+        .unwrap_or(false)
+}
+
+/// `BreakTowLink`: only the cab's driver (or the server) can break a tow.
+extern "thiscall" fn break_tow_link(veh: u32) -> bool {
+    // SAFETY: live vehicle fields; GTA's own function.
+    unsafe {
+        let original: extern "thiscall" fn(u32) -> bool = std::mem::transmute(g::BREAK_TOW_LINK as usize);
+        let tractor: u32 = rd(veh + g::VEH_TRACTOR);
+        let suppress = SHARED.try_lock().ok().and_then(|g| {
+            let s = g.as_ref()?;
+            if s.detaching || rd::<f32>(veh + g::VEH_HEALTH) <= 0.0 || tractor == 0 {
+                return Some(false);
+            }
+            let cab = s.by_ptr.get(&tractor)?;
+            let local_drives = rd::<u32>(tractor + g::VEH_DRIVER) == local_ped() && local_ped() != 0;
+            Some(!local_drives && cab.has_trailer)
+        });
+        if suppress == Some(true) { false } else { original(veh) }
+    }
+}
+
+/// `ProcessEntityCollision` filter: with collisions disabled (RPC 167), two driven vehicles do not collide.
+fn entity_collision_blocked(veh: u32, other: u32) -> bool {
+    let Some(on) = SHARED.try_lock().ok().and_then(|g| g.as_ref().map(|s| s.disable_collisions)) else { return false };
+    if !on || other == 0 {
+        return false;
+    }
+    // SAFETY: live entities.
+    unsafe {
+        let is_vehicle = rd::<u8>(other + g::ENTITY_TYPE_STATUS) & 7 == 2;
+        let m = model_of(other);
+        is_vehicle
+            && (vehicle::MODEL_MIN..=vehicle::MODEL_MAX).contains(&m)
+            && rd::<u32>(veh + g::VEH_DRIVER) != 0
+            && rd::<u32>(other + g::VEH_DRIVER) != 0
+    }
+}
+
+macro_rules! entity_collision_hook {
+    ($name:ident, $orig:expr) => {
+        extern "thiscall" fn $name(veh: u32, other: u32, colpoints: u32) -> i32 {
+            if entity_collision_blocked(veh, other) {
+                return 0;
+            }
+            // SAFETY: GTA's own thiscall with the same signature.
+            unsafe {
+                let f: extern "thiscall" fn(u32, u32, u32) -> i32 = std::mem::transmute($orig as usize);
+                f(veh, other, colpoints)
+            }
+        }
+    };
+}
+entity_collision_hook!(pec_automobile, PEC_AUTOMOBILE);
+entity_collision_hook!(pec_bike, PEC_BIKE);
+entity_collision_hook!(pec_monster_truck, PEC_MONSTER_TRUCK);
+entity_collision_hook!(pec_physical, PEC_PHYSICAL);
+
+fn pec_for(original: u32) -> u32 {
+    let f: extern "thiscall" fn(u32, u32, u32) -> i32 = match original {
+        PEC_AUTOMOBILE => pec_automobile,
+        PEC_BIKE => pec_bike,
+        PEC_MONSTER_TRUCK => pec_monster_truck,
+        _ => pec_physical,
+    };
+    f as usize as u32
+}
+
+/// Train derail block: clamp `m_fTrainSpeed` to ±1.0 (sign kept); the patched code then jumps past the derail
+/// check.
+extern "C" fn clamp_train_speed(train: u32) {
+    if train == 0 {
+        return;
+    }
+    // SAFETY: live CTrain (esi of CTrain::ProcessControl).
+    unsafe {
+        let s: f32 = rd(train + g::TRAIN_SPEED);
+        if s.abs() > 1.0 {
+            wr(train + g::TRAIN_SPEED, 1.0f32.copysign(s));
+        }
+    }
+}
+
+#[unsafe(naked)]
+unsafe extern "C" fn train_derail_stub() {
+    core::arch::naked_asm!("push esi", "call {f}", "add esp, 4", "ret", f = sym clamp_train_speed)
+}
+
+static ZERO_SPEED: [f32; 3] = [0.0; 3];
+
+/// `call CVehicleModelInfo::SetDirtTextures` in `CVehicle::Render`.
+const RENDER_DIRT_CALL: u32 = 0x6D0E7E;
+/// `CVehicleModelInfo::SetDirtTextures`.
+const SET_DIRT_TEXTURES: u32 = 0x5D5DB0;
+
+/// The vehicle `CVehicle::Render` is drawing (esi at the `SetDirtTextures` call).
+static RENDER_VEHICLE: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// The vehicle `CVehicle::Render` is drawing now (plate substitution, `plates.rs`).
+pub fn render_vehicle() -> u32 {
+    RENDER_VEHICLE.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// Replaces `SetDirtTextures(modelInfo, dirt)` in `CVehicle::Render`. It only records the vehicle (esi) and
+/// returns: the dirt textures are never switched per vehicle (the caller pops the arguments).
+/// Mirrors samp.dll 0x100A4570 (build B).
+#[unsafe(naked)]
+unsafe extern "C" fn render_dirt_stub() {
+    core::arch::naked_asm!("mov dword ptr [{v}], esi", "ret", v = sym RENDER_VEHICLE)
+}
+
+/// `FindPlayerSpeed` in `CRadar::DrawMap`: a zero vector while the local ped is a passenger (or drives a train
+/// carriage), so the radar does not zoom out.
+extern "C" fn radar_find_player_speed(id: i32) -> *const f32 {
+    let local = local_ped();
+    if local != 0 && seated(local) {
+        // SAFETY: local ped and its vehicle.
+        let veh: u32 = unsafe { rd(local + g::PED_VEHICLE) };
+        if veh != 0 {
+            let driver: u32 = unsafe { rd(veh + g::VEH_DRIVER) };
+            if driver != local || matches!(model_of(veh), 569 | 570) {
+                return ZERO_SPEED.as_ptr();
+            }
+        }
+    }
+    // SAFETY: GTA's own cdecl function.
+    unsafe {
+        let f: extern "C" fn(i32) -> *const f32 = std::mem::transmute(g::FIND_PLAYER_SPEED as usize);
+        f(id)
+    }
+}
+
+// ---- install --------------------------------------------------------------------------------------------
+
+fn expect_ptr(slot: u32, want: u32) -> Result<(), PatchError> {
+    let found = ProcessMemory.read_u32(slot)?;
+    if found == want {
+        Ok(())
+    } else {
+        Err(PatchError::Mismatch {
+            addr: slot,
+            expected: want.to_le_bytes().to_vec(),
+            found: found.to_le_bytes().to_vec(),
+        })
+    }
+}
+
+/// `jmp dword [slot]` + NOP at `site`, the handler address stored in `slot` (samp's hook-jmp-indirect form).
+fn hook_jmp_indirect(
+    patcher: &mut Patcher,
+    mem: &mut ProcessMemory,
+    label: &'static str,
+    site: u32,
+    slot: u32,
+    handler: u32,
+    original: &[u8; 7],
+) -> Result<(), PatchError> {
+    patcher.write(mem, label, slot, &handler.to_le_bytes(), Some(&[0x90; 4]))?;
+    let s = slot.to_le_bytes();
+    patcher.write(mem, label, site, &[0xFF, 0x25, s[0], s[1], s[2], s[3], 0x90], Some(original))
+}
+
+/// Installs every vehicle hook. Returns (patch row, result) per hook for the log.
+pub fn install(patcher: &mut Patcher, mem: &mut ProcessMemory) -> Vec<(u32, Result<(), PatchError>)> {
+    let mut out = Vec::new();
+    let pc = vehicle_process_control as extern "thiscall" fn(u32) as usize as u32;
+    for (row, slot, orig, _) in PROCESS_CONTROL {
+        let r = expect_ptr(slot, orig)
+            .and_then(|()| patcher.swap_pointer(mem, "vehicle ProcessControl", slot, pc).map(|_| ()));
+        out.push((row, r));
+    }
+    let btl = break_tow_link as extern "thiscall" fn(u32) -> bool as usize as u32;
+    for (row, slot) in BREAK_TOW_LINK_SLOTS {
+        let r = expect_ptr(slot, g::BREAK_TOW_LINK)
+            .and_then(|()| patcher.swap_pointer(mem, "BreakTowLink", slot, btl).map(|_| ()));
+        out.push((row, r));
+    }
+    for (row, slot, orig) in ENTITY_COLLISION_SLOTS {
+        let r = expect_ptr(slot, orig)
+            .and_then(|()| patcher.swap_pointer(mem, "ProcessEntityCollision", slot, pec_for(orig)).map(|_| ()));
+        out.push((row, r));
+    }
+    let sah = siren_alarm_horn as extern "thiscall" fn(u32, u32) as usize as u32;
+    for (row, site) in SIREN_HORN_CALLS {
+        out.push((
+            row,
+            patcher
+                .retarget_branch(mem, "ProcessVehicleSirenAlarmHorn call", site, sah, Some(g::PROCESS_SIREN_ALARM_HORN))
+                .map(|_| ()),
+        ));
+    }
+    let us = uses_siren as extern "thiscall" fn(u32) -> bool as usize as u32;
+    for (row, site) in USES_SIREN_CALLS {
+        out.push((row, patcher.retarget_branch(mem, "UsesSiren call", site, us, Some(g::USES_SIREN)).map(|_| ())));
+    }
+    let rs = radar_find_player_speed as extern "C" fn(i32) -> *const f32 as usize as u32;
+    out.push((
+        64,
+        patcher
+            .retarget_branch(mem, "CRadar::DrawMap FindPlayerSpeed", RADAR_SPEED_CALL, rs, Some(g::FIND_PLAYER_SPEED))
+            .map(|_| ()),
+    ));
+    let rd_stub = render_dirt_stub as unsafe extern "C" fn() as usize as u32;
+    out.push((
+        62,
+        patcher
+            .retarget_branch(
+                mem,
+                "CVehicle::Render SetDirtTextures",
+                RENDER_DIRT_CALL,
+                rd_stub,
+                Some(SET_DIRT_TEXTURES),
+            )
+            .map(|_| ()),
+    ));
+    let enter = enter_ctor_stub as unsafe extern "C" fn() as usize as u32;
+    out.push((
+        48,
+        hook_jmp_indirect(
+            patcher,
+            mem,
+            "enter-as-driver ctor",
+            ENTER_CTOR,
+            ENTER_CTOR_SLOT,
+            enter,
+            &ENTER_CTOR_ORIGINAL,
+        ),
+    ));
+    let leave = leave_ctor_stub as unsafe extern "C" fn() as usize as u32;
+    out.push((
+        49,
+        hook_jmp_indirect(patcher, mem, "leave-car ctor", LEAVE_CTOR, LEAVE_CTOR_SLOT, leave, &LEAVE_CTOR_ORIGINAL),
+    ));
+    // Over the derail-block patch of `vehpatches::INIT` (NOP5 + `mov eax,0x6F8F89; jmp eax`): the NOP5 becomes a
+    // call to the clamp.
+    let td = train_derail_stub as unsafe extern "C" fn() as usize as u32;
+    out.push((
+        47,
+        patcher.hook_call(mem, "CTrain::ProcessControl derail clamp", TRAIN_DERAIL_SITE, td, Some(&[0x90; 5])),
+    ));
+    with_shared(|_| ());
+    out
+}

@@ -49,3 +49,9 @@ Known issues to fix first: the generators (ai_patterns.py, patterns.py, inflight
 CTaskComplexPassObject::ControlSubTask) make `cargo test -p sa-hook --lib` fail there; stream volume -10000;
 web stream hang; ProcessMissionAudioEvent 0x4ECCF0 (all non-frontend PlayerPlaySound), phone task, class-selection
 << >> Spawn panel, CEventDamage::AffectsPedGroup 0x4B38D0, burning-car path.
+
+samp-rs is now part of this repository (`samp-rs/`, 2026-11-12, user decision: all SA:MP work happens here). Its
+Cargo.toml still takes sa-samp-api / sa-net as `git = "file:///home/ghosty2004/sa-engine"` pinned revs (b4cf80c /
+b9ab5c2), because master's crates/sa-samp-api is still API v1 and samp-rs needs v3 (SAMP-4, on the integration
+branch). After the next integration brings v3 to master, switch both to `path = "../../../crates/…"`, and point
+sa-game's samp-client/samp-proto dependency at `path = "../../samp-rs/crates/…"` instead of ~/samp-rs.
