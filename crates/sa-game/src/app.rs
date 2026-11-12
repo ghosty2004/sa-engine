@@ -211,7 +211,9 @@ pub fn boot_with(game: Box<dyn GameFs>, docs_fs: Box<dyn GameFs>, exe: Vec<u8>, 
         reg.imports,
         arena::imports().len(),
         reg.duplicates.len(),
-        if cfg!(target_arch = "x86") {
+        if cfg!(target_arch = "wasm32") {
+            "; wasm32: type-erased entries (sa_core::wabi)"
+        } else if cfg!(target_arch = "x86") {
             ""
         } else {
             "; NOT dispatched on this target (build for i686-unknown-linux-gnu)"

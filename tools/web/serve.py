@@ -37,7 +37,7 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*a, directory=WEB, **kw)
 
     def end_headers(self):
-        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Cache-Control", "no-store")
         # cross-origin isolation (needed only for a future threaded build; harmless now)
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
         self.send_header("Cross-Origin-Embedder-Policy", "require-corp")

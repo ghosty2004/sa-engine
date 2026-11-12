@@ -45,7 +45,7 @@ SA:MP needs UDP, which a page cannot open. The plan: a separate WebSocket-to-UDP
 on localhost; the worker opens `ws://localhost:PORT/udp?host=SERVER&port=7777` and the samp-rs client's socket
 trait gets a web implementation that sends each datagram as one binary WebSocket message (and receives the same
 way). Nothing in the game loop blocks on the network: datagrams queue on the JS side and the client drains the
-queue once per main-loop iteration. See `docs/arch/platform.md` section 20.
+queue once per main-loop iteration. See `docs/arch/platform.md` section 21.
 
 ## Files
 
