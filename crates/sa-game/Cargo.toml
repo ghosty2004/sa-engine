@@ -10,6 +10,8 @@ publish.workspace = true
 default = ["gamepad"]
 gamepad = ["sa-platform/gamepad"]
 audio = ["sa-platform/audio"]
+# `--samp` joins SA:MP / open.mp servers with samp-rs's network core (docs/samp/native-plan.md).
+samp = ["dep:samp-client", "dep:samp-proto"]
 
 [dependencies]
 sa-core = { path = "../sa-core" }
@@ -36,3 +38,7 @@ sa-samp-api = { path = "../sa-samp-api" }
 wgpu = "29"
 png = "0.18"
 libc = "0.2"
+# samp-rs (branch sa-engine/adapter), pinned to a commit. samp-client takes sa-samp-api from this repository;
+# the workspace `[patch]` points that back at `crates/sa-samp-api`, so both sides share one crate.
+samp-client = { git = "file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter", rev = "e706d170a936a0ea104257c8ab8844016a5a306b", optional = true }
+samp-proto = { git = "file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter", rev = "e706d170a936a0ea104257c8ab8844016a5a306b", optional = true }

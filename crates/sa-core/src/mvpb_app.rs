@@ -719,7 +719,10 @@ pub fn game_process() {
     let start = now_ms();
     streaming_update();
     let mut t = now_ms().wrapping_sub(start);
-    cutscene_mgr_update();
+    // samp mode: the call sites samp NOPs (sa_core::samp::feature).
+    if !crate::samp::disabled(crate::samp::feature::CUTSCENES) {
+        cutscene_mgr_update();
+    }
     if g::<u8>(CUTSCENE_PROCESSING).read() == 0 && g::<u8>(TIMER_CODE_PAUSE).read() == 0 {
         menu_process(g(MENU));
     }
@@ -732,7 +735,9 @@ pub fn game_process() {
         sprite2d_set_recip_near_clip();
         sprite2d_init_per_frame();
         font_init_per_frame();
-        cheat_do_cheats();
+        if !crate::samp::toggled(crate::samp::toggle::NO_CHEATS) {
+            cheat_do_cheats();
+        }
         clock_update();
         weather_update();
         scripts_process();
@@ -755,7 +760,7 @@ pub fn game_process() {
             population_update(0);
         }
         weapon_update_weapons();
-        if g::<u8>(CUTSCENE_RUNNING).read() == 0 {
+        if g::<u8>(CUTSCENE_RUNNING).read() == 0 && !crate::samp::disabled(crate::samp::feature::CAR_GENERATORS) {
             car_generators_process();
         }
         if g::<u8>(REPLAY_MODE).read() != 1 {
@@ -765,7 +770,9 @@ pub fn game_process() {
         moving_things_update();
         water_cannons_update();
         user_display_process();
-        replay_update();
+        if !crate::samp::disabled(crate::samp::feature::REPLAY) {
+            replay_update();
+        }
         world_process();
         load_monitor_end_frame(g(LOAD_MONITOR));
         if g::<u8>(TIMER_SKIP_PROCESS).read() == 0 {
@@ -799,10 +806,14 @@ pub fn game_process() {
         conversations_update();
         ped_to_player_conversations_update();
         bridge_update();
-        coronas_do_sun_and_moon();
+        if !crate::samp::disabled(crate::samp::feature::SUN_MOON_CORONAS) {
+            coronas_do_sun_and_moon();
+        }
         coronas_update();
         shadows_update_permanent_shadows();
-        plant_mgr_update(camera_position_ptr());
+        if !crate::samp::disabled(crate::samp::feature::PLANT_MANAGER) {
+            plant_mgr_update(camera_position_ptr());
+        }
         custom_building_renderer_update();
         let i = g::<i32>(TC_CURRENT_STORED).read();
         let xv = X87::from_f32(g::<f32>(TC_TABLE_X).wrapping_index(i).read());
@@ -815,7 +826,7 @@ pub fn game_process() {
         stencil_shadows_set_light(GPtr::from_raw(light.as_mut_ptr()).cast());
         stencil_shadows_process(camera_position_ptr());
         if g::<u8>(REPLAY_MODE).read() != 1 {
-            if t < 4 {
+            if t < 4 && !crate::samp::disabled(crate::samp::feature::RANDOM_TRAFFIC) {
                 car_ctrl_generate_random_cars();
             }
             road_blocks_generate_road_blocks();

@@ -54,8 +54,14 @@ impl<V: View> WorldState for NativeGame<V> {
     }
 
     fn set_gravity(&mut self, g: f32) -> GameResult<()> {
-        self.view.write(addr::GAME_GRAVITY, &g.to_le_bytes());
-        Ok(())
+        // `GAME_GRAVITY` is a constant in `.rdata`, which the native arena maps read-only (samp unprotects the
+        // page first). The default value needs no write; other values wait for an engine-side gravity setting.
+        if self.view.read_f32(addr::GAME_GRAVITY).to_bits() == g.to_bits() {
+            return Ok(());
+        }
+        Err(GameError::Unsupported(
+            "WorldState::set_gravity: GAME_GRAVITY is read-only natively",
+        ))
     }
 
     fn area(&self) -> AreaCode {
@@ -89,7 +95,7 @@ impl<V: View> WorldState for NativeGame<V> {
         // The whole map, as samp does at start-up.
         self.run_op(
             op::SWITCH_ROADS_OFF,
-            &[F(-4000.0), F(-4000.0), F(-500.0), F(4000.0), F(4000.0), F(500.0)],
+            &[F(-4000.0), F(-4000.0), F(-500.0), F(4000.0), F(4000.0), F(1500.0)],
         )
         .map(drop)
     }

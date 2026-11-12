@@ -427,7 +427,9 @@ fn in_air_landed(this: GPtr<u8>, ped: GPtr<u8>, hit_z: f32) -> Option<u8> {
 /// Ported, not registered: the first build set ped +0x46C bit 0 (standing) on every landing, which the bytes do
 /// only after the slow-fall counter (0x680A3D, the `or` sits just before the 0x680A44 target); the grove walk
 /// diverged at frame 257 (`peds`) with it. Fixed after the verification runs; needs an L3 rerun before the hook
-/// is registered again.
+/// is registered again. SAMP-4: registered for phase B only (`#[native]`; phase A keeps the original until that
+/// rerun): native sa-game reaches it whenever the player falls (a spawn sets the ped 0.5 m above the point).
+#[sa_core::native(addr = 0x680600, conv = thiscall, name = "CTaskSimpleInAir::ProcessPed")]
 pub fn in_air_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let m = rd::<GPtr<u8>>(ped, 0x14);
     let mut pos = [rd::<u32>(m, 0x30), f32_of(x(rd::<f32>(m, 0x34))).to_bits(), f32_of(x(rd::<f32>(m, 0x38))).to_bits()];

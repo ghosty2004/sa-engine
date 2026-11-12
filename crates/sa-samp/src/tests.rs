@@ -453,8 +453,10 @@ fn world_hud_camera_and_streaming_writes() {
     assert_eq!(g.weather(), (8, 8, 8));
     g.force_weather(10).unwrap();
     assert_eq!(g.weather(), (10, 8, 8));
-    g.set_gravity(0.005).unwrap();
-    assert_eq!(g.gravity(), 0.005);
+    put(&mut g, addr::GAME_GRAVITY, 0.008f32);
+    assert_eq!(g.set_gravity(0.008), Ok(()));
+    assert!(g.set_gravity(0.005).is_err());
+    assert_eq!(g.gravity(), 0.008);
     g.set_area(AreaCode(3)).unwrap();
     assert_eq!(issued(&g, 0), enc(0x04BB, &[I(3)]));
     g.set_hud_visible(false).unwrap();
@@ -530,4 +532,22 @@ fn created_entities_come_back_as_handles() {
         g.create_object(ModelId(1337), Vec3::default()),
         Err(GameError::NotLoaded)
     );
+}
+
+#[test]
+fn feature_bits_match_the_api() {
+    use sa_core::samp::feature as f;
+    use sa_samp_api::config::Feature;
+    for (bit, feat) in [
+        (f::AMBIENT_PEDS, Feature::AmbientPeds),
+        (f::RANDOM_TRAFFIC, Feature::RandomTraffic),
+        (f::CAR_GENERATORS, Feature::CarGenerators),
+        (f::AMBIENT_PLANES, Feature::AmbientPlanes),
+        (f::CUTSCENES, Feature::Cutscenes),
+        (f::REPLAY, Feature::Replay),
+        (f::PLANT_MANAGER, Feature::PlantManager),
+        (f::SUN_MOON_CORONAS, Feature::SunMoonCoronas),
+    ] {
+        assert_eq!(bit, feat as u8, "{feat:?}");
+    }
 }

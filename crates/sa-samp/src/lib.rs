@@ -124,6 +124,10 @@ impl<V: View> NativeGame<V> {
         if let Some(mut hooks) = self.hooks.take() {
             hooks.shutdown(self);
         }
+        if self.installed {
+            sa_core::samp::set_disabled_features(0);
+            sa_core::samp::set_toggle(sa_core::samp::toggle::NO_CHEATS, false);
+        }
     }
 }
 
@@ -175,9 +179,9 @@ impl<V: View> SampHost for NativeGame<V> {
         if self.installed {
             return Err(GameError::Unsupported("SampHost::install called twice"));
         }
-        // The engine does not read samp mode yet (SAMP-4): the configuration is stored and reported by
-        // `SampMode::config`, the ports keep their single-player behaviour.
+        // samp mode (SAMP-4): the ports read the disabled features from sa-core (see `config.rs`).
         self.config = config.clone();
+        sa_core::samp::set_disabled_features(config.disabled.0);
         self.hooks = Some(hooks);
         self.files = files;
         self.installed = true;

@@ -29,6 +29,8 @@ mod imports;
 mod native;
 mod rw_standin;
 mod samp;
+#[cfg(feature = "samp")]
+mod samp_net;
 mod sha256;
 mod winmain;
 
@@ -56,6 +58,8 @@ struct Args {
     samp: Option<String>,
     /// `--name NAME`: the SA:MP nickname
     name: String,
+    /// `--samp-auth FILE`: the auth table (default: `SAMP_AUTH_TABLE`)
+    samp_auth: Option<PathBuf>,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -69,6 +73,7 @@ fn parse_args() -> Result<Args, String> {
         documents: None,
         samp: None,
         name: "Player".into(),
+        samp_auth: None,
     };
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
@@ -86,12 +91,14 @@ fn parse_args() -> Result<Args, String> {
             "--start-in-world" => native::set_start_in_world(),
             "--samp" => a.samp = Some(val()?),
             "--name" => a.name = val()?,
+            "--samp-auth" => a.samp_auth = Some(PathBuf::from(val()?)),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME]] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE]] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
-                     --samp hosts the SA:MP client (skeleton: the native game adapter with a stand-in client, no network yet)."
+                     --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
+                     without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE."
                 );
                 std::process::exit(0);
             }
@@ -175,7 +182,7 @@ fn run(args: &Args) -> Result<String, String> {
     let samp_target = match &args.samp {
         Some(s) => {
             let t = samp::parse_target(s, &args.name)?;
-            samp::install(&t)?;
+            samp::install(&t, args.samp_auth.as_deref())?;
             Some(t)
         }
         None => None,

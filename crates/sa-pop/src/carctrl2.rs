@@ -457,7 +457,9 @@ pub fn generate_random_cars() {
         }
     }
     do_train_generation_and_removal();
-    do_plane_generation_and_removal();
+    if !sa_core::samp::disabled(sa_core::samp::feature::AMBIENT_PLANES) {
+        do_plane_generation_and_removal();
+    }
     if (g::<u32>(0xB7CB78).read() ^ g::<u32>(0xB7CB84).read()) & 0xFFFF_F000 != 0 {
         generate_emergency_services_car_o();
     }
