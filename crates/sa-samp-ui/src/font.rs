@@ -191,9 +191,15 @@ impl FontAtlas {
         let mut glyphs = HashMap::new();
         let mut bitmaps: Vec<Bitmap> = Vec::new();
         for (fi, &h) in heights.iter().enumerate() {
-            let scale = PxScale::from(h as f32);
+            // GDI under Wine (what samp's D3DX font uses): a cell height `h` gives a whole em size
+            // `trunc(h · unitsPerEm / (ascent − descent))` (14 px → 12 ppem for Arial / Liberation Sans:
+            // measured, the reference chat line widths match only this), and an integer baseline.
+            let units = font.units_per_em().unwrap_or(2048.0);
+            let cell = font.height_unscaled();
+            let ppem = (h as f32 * units / cell).floor().max(1.0);
+            let scale = PxScale::from(ppem * cell / units);
             let scaled = font.as_scaled(scale);
-            let ascent = scaled.ascent();
+            let ascent = scaled.ascent().round();
             for ch in charset() {
                 let id = font.glyph_id(ch);
                 let advance = scaled.h_advance(id).round();

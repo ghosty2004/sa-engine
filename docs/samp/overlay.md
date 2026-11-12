@@ -64,6 +64,27 @@ main 14/16/18/20 px by video width, small = main − 2, GUI 20 and 18). Every gl
 `f / A`), so outlined text is one quad per glyph instead of five; the vertex colour tints the core and leaves the
 outline black. Textdraws keep the game's own fonts, as in SA:MP.
 
+When the user has Microsoft's Arial Bold, sa-game uses it instead (`SA_SAMP_UI_FONT`, `~/.fonts`,
+`~/.local/share/fonts`, the usual `/usr/share/fonts/...` places, `$WINEPREFIX` and the game folder's Wine prefix,
+`C:\Windows\Fonts`; `crates/sa-game/src/samp_assets.rs`); it is read at run time and never committed. Note: the
+original client under Wine draws "Arial" with whatever Wine substitutes (on this machine no Arial is installed,
+so Wine falls back to Liberation Sans through fontconfig), so the reference screenshots of §6.1 use the same
+face as the engine's fallback.
+
+### 2.2 samp's GUI skin and cursor
+
+samp draws its dialogs, scoreboard, chat input and chat scrollbar with a statically linked DXUT whose skin is
+`sampgui.png` (512 × 512) and its hardware cursor from `mouse.png` (32 × 32); both are loose files of the user's
+SA:MP install. sa-game reads them at run time (`samp_assets.rs`: the game folder, then `SA_SAMP_DIR`) into one
+512 × 1024 RGBA image (`sampgui.png` on top, `mouse.png` at (0, 512)), `Overlay::set_skin` uploads it as one RW
+raster, and the UI emits `Cmd::Skin { src, dst, colour }` (a skin rectangle scaled into a screen rectangle,
+tinted, bilinear, as `CDXUTDialog::DrawSprite`). `crates/sa-samp-ui/src/skin.rs` holds samp's element
+rectangles and colours (samp-rs `ui-rendering.md` §4.1) and the DXUT control renders: caption bar + GUI-font-1
+title, buttons (face, label, fill, label; under the mouse moved by (−1, −2), red), list box (box, selection bar
+`0xFFB92228`, rows from the border 6 + margin 5, colour codes interpreted), scrollbar (track, arrows, thumb),
+edit box (nine-slice frame, white text, grey 2-px caret that does not blink). Without the files the same
+controls are flat rectangles of the same colours (`DrawList::skin` false).
+
 ## 3. Look and behaviour (matches samp-rs's samp-ui spec)
 
 * **Colour codes** `{RRGGBB}`: parsed and stripped as samp.dll 0x100b5fd0 / 0x100b6100 (in-place removal),
@@ -72,18 +93,20 @@ outline black. Textdraws keep the game's own fonts, as in SA:MP.
 * **Chat**: 100 entries, page of 10 at (45, 10), line pitch `h + 1`, `name:` prefix in the player colour then the
   text in white (gap 5), player chat split at 72 characters with a 12-character backtrack into a nameless second
   entry, texts cut at 144, control characters → spaces, names over 24 characters dropped; outlined (four
-  directions, the 2-pixel eight-offset outline above 1280 px); F7 cycles off / plain / outlined; Page Up / Down
+  directions, the 2-pixel eight-offset outline above 1280 px); F7 cycles outlined → plain → off (samp's 2 → 1 → 0); Page Up / Down
   scroll; `UiOptions`: page size 10..=20 (`/pagesize`), timestamps `[hh:mm:ss]` with the text at
   `width("[19:58:34]") + 50` (`/timestamp`), font size −3..=5 (`/fontsize`, every UI font ±2 px per step); the
   scrollbar (10, 40, 20 × `(h + 1)·page − 60`) shows while scrolled up or while the input line is open.
 * **Input line**: T or F6 opens (the T's own character is swallowed), Enter sends (`UiEvent::ChatSubmit`, the text
   or `/command`; samp-rs decides RPC 101 vs 50 and runs local commands), Esc closes, Up / Down walk a 10-entry
   history, Left / Right / Home / End / Backspace / Delete edit, 128 characters; box `min(800, 0.6·W)` wide at
-  `(40, chatBottom)`, `14 + 1.5·h0` high; blinking caret.
+  `(40, chatBottom)`, `14 + 1.5·h0` high; samp's DXUT edit box (§2.2), grey caret that does not blink.
 * **Dialogs**: geometry of samp.dll 0x1006f500 (caption `mainH + 4`, list height 200..400, list width 400..800,
   minimum width 230, two buttons 100×30 at `w/2 − 110` and `w/2 + 10`, edit `14 + 1.5·h0`), background
-  0xDC050505, caption 0xFFD2D2D2, body 0xFFA9C4E4 (small font, outlined), selection 0xFFB92228; tab lists with
-  up to 4 columns and samp's column widths, style 5 header row; password masked with `*`. Keyboard: Up / Down /
+  0xDC050505, caption bar from the skin with the title in GUI font 1 (0xFFD2D2D2), body 0xFFA9C4E4 (small font,
+  outlined, one multi-line text: a colour code carries over `\n`), selection 0xFFB92228, list rows with colour
+  codes; tab lists with up to 4 columns and samp's column widths, style 5 header row (small font, outlined);
+  password masked with `*`; not drawn while the chat input is open. Keyboard: Up / Down /
   Page Up / Page Down / Home / End, Enter = button 1, Esc = button 0; mouse: buttons, row select, double click =
   button 1, wheel scrolls. Response = `UiEvent::DialogResponse { id, button, list_item, text }` (list: the
   selected row's first cell without codes; input: the text; ≤ 128 characters).
@@ -101,10 +124,16 @@ outline black. Textdraws keep the game's own fonts, as in SA:MP.
   colour; text in samp's `font_params` (scale `W·lw/640`, `H·lh/448·0.5`, wrap, centre size, box, shadow or
   outline, proportional, alignment), samp's hit rectangles for `SelectTextDraw` (hover colour, click →
   `TextDrawClicked(id)`, Esc → `0xFFFF`).
-* **Kill list**: 5 rows at `(0.75·W, 0.3·H)` pulled left to fit, names right / left of a 35 px icon box.
-* **Scoreboard**: centred panel (60 % × 50 %), id / name / score / ping in the player colours, hover highlight,
-  click → `ScoreboardClicked(id)`.
-* **Cursor**: shown while a dialog, the scoreboard, textdraw selection or a cursor mode is active.
+* **Kill list**: 5 slots at `(trunc(0.75·W), trunc(0.3·H))` pulled left to fit, newest at the bottom, empty slots
+  keep their space, step `iconH + 5` (iconH = aux + 12), killer right-aligned to `x + nickW`, icon box at
+  `x + nickW + 3`, victim at `+ iconW` (31 px measured).
+* **Scoreboard** (samp.dll 0x1006eab0 / 0x1006f0b0): 640 × 480 (800 × 600 above 800 px) centred, background
+  0x960A0A0A, DXUT list box at (0, 60) with columns 0.085 / 0.4375 / 0.265625 of the width, rows in the player
+  colours (row 0 selected, the row under the cursor selected), server name and `Players: N` (0xFFBEBEBE) and the
+  headers (0xFF95B0D0) in the small font, outlined; click → `ScoreboardClicked(id)`. While it is open only the
+  nametags and the scoreboard are drawn (no chat, labels, kill list, dialog, textdraws).
+* **Cursor**: `mouse.png` (hotspot 0, 0) from the skin, else a drawn arrow; shown while a dialog, the scoreboard,
+  textdraw selection or a cursor mode is active.
 
 ## 4. Input path
 
