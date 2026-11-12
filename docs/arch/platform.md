@@ -1877,7 +1877,7 @@ main-loop iteration, so nothing blocks the game loop.
 
 ### 22.7 WEB-2: STD-14 tree, blocked iterations without unwinding, the FX trap's cause
 
-Base: STD-14 (`worktree-agent-a98204e188a13ff2e`, 3f2b6d7f) with WEB-1's commits rebased on it (STD-14's
+Base: STD-14 (`worktree-agent-a98204e188a13ff2e`, a449ffb3 at the last rebase) with WEB-1's commits rebased on it (STD-14's
 `SA_GAME_TELEPORT`, `SA_GAME_LMB` and `--system-heap` moved into `app.rs`, where WEB-1 put the executable's code).
 
 **Blocked iterations on wasm32.** Natively an unported callee panics, the panic unwinds to `run_step`'s
@@ -1921,6 +1921,12 @@ it (run2, the recording run).
   click locks the pointer, CDP mouse moves arrive as `movementX`); 4 blocked iterations, the last three
   (0x517BF0, after 2 min standing still) stopped the loop, hence the stub above.
   `browser-playthrough.mp4` is that run's screencast (`--screencast`, assembled by `tools/web/make_video.py`).
-* WebGPU: not rerun headless (SwiftShader WebGPU stalls, 22.4); the FX fix above is the cause found for the user's
-  trap, still to be confirmed on the user's machine.
+* **WebGPU on an AMD RDNA3 GPU** (`--gpu native`: Chromium `--use-gl=angle --use-angle=vulkan` gives Dawn a Vulkan
+  adapter, vendor amd, architecture rdna-3, the user's GPU family; headless, offscreen; gpu1): through the menus with
+  real Enter key events, **in the world 23 s after the page opened**, 60 s of real W/A/D: no FX trap (the user's
+  trap was on this path). After about 35 s CJ ran into a car: `CEventVehicleCollision::CEventVehicleCollision`
+  (0x4AC840, from `sa-ai` collscan) is unported, so every rendering iteration from then on blocked before its
+  `Present` (2,365 blocked iterations, the picture frozen, the loop still running, because the iterations in between
+  that do not render keep the three-in-a-row rule from firing). That is a missing port, not a web issue: natively the
+  same. Other blocked callees seen: 0x5F3B70, 0x65C680 (vslot `CreateNextSubTask`), 0x5F32D0.
 

@@ -28,7 +28,7 @@ Status (2026-11-12, WEB-2): headless Chromium on WebGL2 boots to the world and C
 keys and mouse. An unported callee ends only its main-loop iteration (a "blocked" step, as natively; the status line
 counts them); three identical ones in a row stop the loop, as natively. The page applies the play package's exploration
 stubs by default: `&stub=ADDR=RET/N,...` replaces them, `&stub=none` drops them. `?backend=gl` forces WebGL2, the path
-verified headless. Details: `docs/arch/platform.md` section 21.
+verified headless. Details: `docs/arch/platform.md` section 22.
 
 Needs a browser with WebGPU (Chromium 113+, Firefox 141+ on supported systems) or WebGL2 and module workers.
 
@@ -51,7 +51,7 @@ SA:MP needs UDP, which a page cannot open. The plan: a separate WebSocket-to-UDP
 on localhost; the worker opens `ws://localhost:PORT/udp?host=SERVER&port=7777` and the samp-rs client's socket
 trait gets a web implementation that sends each datagram as one binary WebSocket message (and receives the same
 way). Nothing in the game loop blocks on the network: datagrams queue on the JS side and the client drains the
-queue once per main-loop iteration. See `docs/arch/platform.md` section 21.
+queue once per main-loop iteration. See `docs/arch/platform.md` section 22.
 
 ## Files
 
