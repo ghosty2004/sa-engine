@@ -233,8 +233,6 @@ orig! {
     fn c_646690_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646690 => unported;
     /// `CTaskSimpleCarShuffle::Constructor` (0x646810), thiscall, 3 stack argument(s)
     fn c_646810_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646810 => unported;
-    /// `CTaskSimpleCarWaitToSlowDown::Constructor` (0x646990), thiscall, 2 stack argument(s)
-    fn c_646990_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x646990 => unported;
     /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` (0x646B70), thiscall, 3 stack argument(s)
     fn c_646b70_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646B70 => unported;
     /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Constructor` (0x646D70), thiscall, 4 stack argument(s)
@@ -335,8 +333,6 @@ orig! {
     fn c_661dc0_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x661DC0 => unported;
     /// `CTaskSimpleGoTo::Constructor` (0x6679C0), thiscall, 3 stack argument(s)
     fn c_6679c0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6679C0 => unported;
-    /// `CTaskSimpleGoToPoint::Constructor` (0x667CD0), thiscall, 5 stack argument(s)
-    fn c_667cd0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x667CD0 => unported;
     /// `CTaskComplexGoToPointAndStandStill::Constructor` (0x668120), thiscall, 6 stack argument(s)
     fn c_668120_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x668120 => unported;
     /// `CTaskComplexGoToPointAndStandStillAndAchieveHeading::Constructor` (0x668CD0), thiscall, 6 stack argument(s)
@@ -383,8 +379,6 @@ orig! {
     fn c_67a110_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x67A110 => unported;
     /// `CTaskSimpleJetPack::Constructor` (0x67B4E0), thiscall, 4 stack argument(s)
     fn c_67b4e0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x67B4E0 => unported;
-    /// `CTaskComplexChat::Constructor` (0x682CB0), thiscall, 4 stack argument(s)
-    fn c_682cb0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x682CB0 => unported;
     /// `CTaskComplexWalkAlongsidePed::Constructor` (0x683240), thiscall, 2 stack argument(s)
     fn c_683240_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x683240 => unported;
     /// `FUN_00683340` (0x683340), thiscall, 4 stack argument(s)
@@ -2558,40 +2552,6 @@ pub fn g_task_simple_tired_clone_636180(this: u32) -> u32 {
     }
 }
 
-/// `CTaskSimpleSitDown::Clone` (0x636200): clone, thiscall, `ret`; 40 instruction(s) matched.
-pub fn g_task_simple_sit_down_clone_636200(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0x10);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = u32::from(rd::<u8>(p(this), 8));
-        c_61a390_t0(v1);
-        let v4 = ((v2 & 0xFF) & 0xFF);
-        wr::<u8>(p(v1), 8, v4 as u8);
-        wr::<u32>(p(v1), 0, 0x86_DEF4);
-        wr::<u8>(p(v1), 9, 0 as u8);
-        wr::<u32>(p(v1), 0xC, 0);
-        return v1;
-    }
-}
-
-/// `CTaskSimpleStandUp::Clone` (0x636310): clone, thiscall, `ret`; 40 instruction(s) matched.
-pub fn g_task_simple_stand_up_clone_636310(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0x10);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = u32::from(rd::<u8>(p(this), 8));
-        c_61a390_t0(v1);
-        let v4 = ((v2 & 0xFF) & 0xFF);
-        wr::<u8>(p(v1), 8, v4 as u8);
-        wr::<u32>(p(v1), 0, 0x86_DF3C);
-        wr::<u8>(p(v1), 9, 0 as u8);
-        wr::<u32>(p(v1), 0xC, 0);
-        return v1;
-    }
-}
-
 /// `CTaskComplexObserveTrafficLights::Clone` (0x636410): clone, thiscall, `ret`; 38 instruction(s) matched.
 #[hook(addr = 0x636410, conv = thiscall, name = "CTaskComplexObserveTrafficLights::Clone", expect = "6A FF 68 7B 0C 84 00")]
 pub fn g_task_complex_observe_traffic_lights_clone_636410(_this: u32) -> u32 {
@@ -2834,28 +2794,6 @@ pub fn g_vt_86e1dc_clone_636b40(_this: u32) -> u32 {
         wr::<u32>(p(v1), 0xC, 0);
         wr::<u8>(p(v1), 0x10, 0 as u8);
         wr::<u8>(p(v1), 0x11, 0 as u8);
-        return v1;
-    }
-}
-
-/// `CTaskComplexBeInGroup::Clone` (0x636BE0): clone, thiscall, `ret`; 49 instruction(s) matched.
-pub fn g_task_complex_be_in_group_clone_636be0(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0x28);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = u32::from(rd::<u8>(p(this), 0x10));
-        let v3 = rd::<u32>(p(this), 0xC);
-        c_61a3b0_t0(v1);
-        let v5 = ((v2 & 0xFF) & 0xFF);
-        wr::<u8>(p(v1), 0x10, v5 as u8);
-        wr::<u32>(p(v1), 0xC, v3);
-        wr::<u32>(p(v1), 0x14, 0);
-        wr::<u32>(p(v1), 0x18, 0);
-        wr::<u32>(p(v1), 0x20, 0);
-        wr::<u32>(p(v1), 0, 0x86_E22C);
-        wr::<u32>(p(v1), 0x1C, 0xC8);
-        wr::<u32>(p(v1), 0x24, 0xFFFF_FFFF);
         return v1;
     }
 }
@@ -3629,19 +3567,6 @@ pub fn g_task_simple_car_shuffle_clone_649c40(this: u32) -> u32 {
         let v4 = rd::<u32>(p(this), 0x10);
         let v5 = c_646810_t3(v1, v4, v3, v2);
         return v5;
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::Clone` (0x649CB0): clone, thiscall, `ret`; 32 instruction(s) matched.
-pub fn g_task_simple_car_wait_to_slow_down_clone_649cb0(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0x14);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = rd::<u32>(p(this), 0x10);
-        let v3 = rd::<u32>(p(this), 8);
-        let v4 = c_646990_t2(v1, v3, v2);
-        return v4;
     }
 }
 
@@ -4580,25 +4505,6 @@ pub fn g_task_gang_hassle_vehicle_clone_65fc00(this: u32) -> u32 {
     }
 }
 
-/// `CTaskSimpleDoHandSignal::Clone` (0x6608C0): clone, thiscall, `ret`; 32 instruction(s) matched.
-pub fn g_task_simple_do_hand_signal_clone_6608c0(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0xC);
-    if v1 == 0 {
-        let v2 = u32::from(rd::<u8>(p(this), 8));
-        let v3 = ((v2 & 0xFF) & 0xFF);
-        wr::<u8>(p(0), 8, v3 as u8);
-        return 0;
-    } else {
-        c_61a390_t0(v1);
-        wr::<u32>(p(v1), 0, 0x86_FA68);
-        wr::<u8>(p(v1), 8, 0 as u8);
-        let v5 = u32::from(rd::<u8>(p(this), 8));
-        let v6 = ((v5 & 0xFF) & 0xFF);
-        wr::<u8>(p(v1), 8, v6 as u8);
-        return v1;
-    }
-}
-
 /// `CTaskLeanOnVehicle::Clone` (0x6610A0): clone, thiscall, `ret`; 35 instruction(s) matched.
 #[hook(addr = 0x6610A0, conv = thiscall, name = "CTaskLeanOnVehicle::Clone", expect = "6A FF 68 DB 47 84 00")]
 pub fn g_task_lean_on_vehicle_clone_6610a0(this: u32) -> u32 {
@@ -4827,24 +4733,6 @@ pub fn g_task_complex_goto_door_and_open_clone_66bca0(this: u32) -> u32 {
             let v6 = c_66bb20_t1(v4, v5);
             return v6;
         }
-    }
-}
-
-/// `CTaskSimpleGoToPoint::Clone` (0x66CC60): clone, thiscall, `ret`; 43 instruction(s) matched.
-pub fn g_task_simple_go_to_point_clone_66cc60(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0x30);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = u32::from(rd::<u8>(p(this), 0x20));
-        let v3 = ((v2 & 0xFF) & 0xFF);
-        let v4 = (((((v3 & 0xFF) & 0xFF) & 0xFF) >> 3) & 0xFF);
-        let v5 = ((v2 & 0xFF) & 0xFFFF_FF01);
-        let v6 = ((((v3 & 0xFF) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFFFF_FF01);
-        let v7 = rd::<u32>(p(this), 0x18);
-        let v8 = rd::<u32>(p(this), 8);
-        let v9 = c_667cd0_t5(v1, v8, this.wrapping_add(0xC), v7, v5, v6);
-        return v9;
     }
 }
 
@@ -5612,27 +5500,6 @@ pub fn g_task_complex_stuck_in_air_clone_67c700(_this: u32) -> u32 {
         c_61a3b0_t0(v1);
         wr::<u32>(p(v1), 0, 0x87_0608);
         return v1;
-    }
-}
-
-/// `CTaskComplexChat::Clone` (0x682DA0): clone, thiscall, `ret`; 36 instruction(s) matched.
-pub fn g_task_complex_chat_clone_682da0(this: u32) -> u32 {
-    let v1 = c_61a5a0_c1(0x20);
-    if v1 == 0 {
-        let v2 = u32::from(rd::<u8>(p(this), 0x1A));
-        let v3 = ((v2 & 0xFF) & 0xFF);
-        wr::<u8>(p(0), 0x1A, v3 as u8);
-        return 0;
-    } else {
-        let v4 = rd::<u32>(p(this), 0x14);
-        let v5 = u32::from(rd::<u16>(p(this), 0x18));
-        let v6 = rd::<u32>(p(this), 0x10);
-        let v7 = u32::from(rd::<u8>(p(this), 0xC));
-        let v8 = c_682cb0_t4(v1, (v7 & 0xFF), v6, v4, (v5 & 0xFFFF));
-        let v9 = u32::from(rd::<u8>(p(this), 0x1A));
-        let v10 = ((v9 & 0xFF) & 0xFF);
-        wr::<u8>(p(v8), 0x1A, v10 as u8);
-        return v8;
     }
 }
 
@@ -6668,8 +6535,6 @@ pub const BODIES: &[Body] = &[
     (0x636060, 0xB07C711B40C250B7, &[(0x636060, 152)]),
     (0x636100, 0xD7A1D6FCDC1D3CEA, &[(0x636100, 118)]),
     (0x636180, 0x452B0155C9147AEA, &[(0x636180, 127)]),
-    (0x636200, 0x9150B77715D63052, &[(0x636200, 124)]),
-    (0x636310, 0x3C3562BC8C7BDC9E, &[(0x636310, 124)]),
     (0x636410, 0x72710CBD1A49D0B2, &[(0x636410, 113)]),
     (0x636490, 0xD20BCA79120537AB, &[(0x636490, 106)]),
     (0x636500, 0x63A3FAA2BEB597AF, &[(0x636500, 106)]),
@@ -6686,7 +6551,6 @@ pub const BODIES: &[Body] = &[
     (0x636A60, 0x514403552F4FB558, &[(0x636A60, 107)]),
     (0x636AD0, 0xAC7AC1BC33504080, &[(0x636AD0, 107)]),
     (0x636B40, 0x7064D164E4775BE2, &[(0x636B40, 113)]),
-    (0x636BE0, 0xEC1C7A374F24A0D9, &[(0x636BE0, 143)]),
     (0x636C70, 0x0A16F2E82909A0F9, &[(0x636C70, 127)]),
     (0x636DD0, 0xA7627607EE548220, &[(0x636DD0, 90)]),
     (0x636E30, 0x89CCD6A7D1FE6872, &[(0x636E30, 80)]),
@@ -6734,7 +6598,6 @@ pub const BODIES: &[Body] = &[
     (0x649B60, 0xA9F033EEB99A3F44, &[(0x649B60, 104)]),
     (0x649BD0, 0x3BADB322C42E52BC, &[(0x649BD0, 104)]),
     (0x649C40, 0x40E100674C5DF7FF, &[(0x649C40, 104)]),
-    (0x649CB0, 0x3489A8EFC693CBE5, &[(0x649CB0, 100)]),
     (0x649D20, 0xC0CA2BB60A3B2B82, &[(0x649D20, 104)]),
     (0x649D90, 0x1F3825F74A9A6663, &[(0x649D90, 108)]),
     (0x649E00, 0x4024E67FEF5A10E9, &[(0x649E00, 104)]),
@@ -6790,7 +6653,6 @@ pub const BODIES: &[Body] = &[
     (0x65D030, 0x18B38B8923BB65DA, &[(0x65D030, 130)]),
     (0x65DD70, 0xC224B94D25EA798D, &[(0x65DD70, 102)]),
     (0x65FC00, 0x80D8EEA677170047, &[(0x65FC00, 114)]),
-    (0x6608C0, 0x255D533F322B13E0, &[(0x6608C0, 100)]),
     (0x6610A0, 0x42A8E49D0C5DE7AF, &[(0x6610A0, 106)]),
     (0x661FA0, 0xEEFBA5097CD56785, &[(0x661FA0, 151)]),
     (0x662040, 0x3B08EA978014668B, &[(0x662040, 137)]),
@@ -6800,7 +6662,6 @@ pub const BODIES: &[Body] = &[
     (0x6622F0, 0x7D41BFAB9CFEBE33, &[(0x6622F0, 96)]),
     (0x664AF0, 0xF05CB5ADF0A4712D, &[(0x664AF0, 174)]),
     (0x66BCA0, 0x2200B85F608AFF7B, &[(0x66BCA0, 157)]),
-    (0x66CC60, 0x56D1E482F8E99238, &[(0x66CC60, 130)]),
     (0x66CCF0, 0x5AF5E0BFD2AD5AE0, &[(0x66CCF0, 136)]),
     (0x66CEA0, 0x5F387F43B1604A22, &[(0x66CEA0, 133)]),
     (0x66CFD0, 0x5BBA181F424A0C3E, &[(0x66CFD0, 116)]),
@@ -6836,7 +6697,6 @@ pub const BODIES: &[Body] = &[
     (0x67C610, 0x88CF0FD2A990ADFD, &[(0x67C610, 122)]),
     (0x67C690, 0xAEEA7777E33804AA, &[(0x67C690, 108)]),
     (0x67C700, 0x7A2A32E459A5C590, &[(0x67C700, 80)]),
-    (0x682DA0, 0x8AE01AF24243452F, &[(0x682DA0, 105)]),
     (0x6838E0, 0xC442EA4E00A9D3BA, &[(0x6838E0, 100)]),
     (0x683950, 0xBDD44730F850EECA, &[(0x683950, 110)]),
     (0x6839C0, 0x8FB3A850FD43FDFF, &[(0x6839C0, 118)]),

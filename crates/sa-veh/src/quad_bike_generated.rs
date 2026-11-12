@@ -13,14 +13,10 @@
 use super::*;
 
 orig! {
-    /// `CAutomobile::ResetSuspension` (0x6A2AE0), thiscall, 0 stack argument(s)
-    fn c_6a2ae0_t0(this: u32) -> u32 = thiscall 0x6A2AE0 => unported;
     /// `CAutomobile::Destructor` (0x6A61E0), thiscall, 0 stack argument(s)
     fn c_6a61e0_t0(this: u32) -> u32 = thiscall 0x6A61E0 => unported;
     /// `CAutomobile::SetupSuspensionLines` (0x6A65D0), thiscall, 0 stack argument(s)
     fn c_6a65d0_t0(this: u32) -> u32 = thiscall 0x6A65D0 => unported;
-    /// `CAutomobile::ProcessSuspension` (0x6AFB10), thiscall, 0 stack argument(s)
-    fn c_6afb10_t0(this: u32) -> u32 = thiscall 0x6AFB10 => unported;
     /// `CAutomobile::SetBumperDamage` (0x6B1350), thiscall, 2 stack argument(s)
     fn c_6b1350_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6B1350 => unported;
     /// `CAutomobile::SetDoorDamage` (0x6B1600), thiscall, 2 stack argument(s)
@@ -46,20 +42,6 @@ pub fn g_cquad_bike_cquad_bike_6cdc30(this: u32) {
 pub fn g_cquad_bike_setup_suspension_lines_6cdca0(this: u32) {
     wr::<u32>(p(this), 0x9A8, 0x3F80_0000);
     let _v1 = c_6a65d0_t0(this);
-}
-
-/// `CQuadBike::ResetSuspension` (0x6CDCB0, VEH): thunk, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
-#[allow(dead_code)]
-pub fn g_cquad_bike_reset_suspension_6cdcb0(this: u32) {
-    let _v1 = c_6a2ae0_t0(this);
-}
-
-/// `CQuadBike::ProcessSuspension` (0x6CE270, VEH): thunk, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
-#[allow(dead_code)]
-pub fn g_cquad_bike_process_suspension_6ce270(this: u32) {
-    let _v1 = c_6afb10_t0(this);
 }
 
 /// `CQuadBike::SetupDamageAfterLoad` (0x6CE340, VEH): small, thiscall, `ret`; 17 instruction(s) matched.
@@ -103,8 +85,6 @@ pub fn g_cquad_bike_scalar_deleting_destructor_6ce440(this: u32, a0: u32) -> u32
 pub const BODIES: &[Body] = &[
     (0x6CDC30, 0x49FEB6B8B4AE09B3, &[(0x6CDC30, 85)]),
     (0x6CDCA0, 0x07A314ACEFABBD54, &[(0x6CDCA0, 15)]),
-    (0x6CDCB0, 0x8C8A7EE06870DC59, &[(0x6CDCB0, 5)]),
-    (0x6CE270, 0x50F8BE4706F6FE54, &[(0x6CE270, 5)]),
     (0x6CE340, 0xFEDAB9700839D416, &[(0x6CE340, 45)]),
     (0x6CE440, 0xE4A21EE635C9EBDF, &[(0x6CE440, 30)]),
 ];

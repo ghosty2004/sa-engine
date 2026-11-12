@@ -32,15 +32,15 @@ pub fn g_fun_004c88f0_4c88f0(a0: u32) -> u32 {
     a0
 }
 
-/// `CBmx::BlowUpCar` (0x6C0560, VEH): empty, thiscall, `ret 8`; 1 instruction(s) matched.
+/// `CBike::DebugCode` (0x6B67A0, VEH): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
-pub fn g_cbmx_blow_up_car_6c0560(_this: u32, _a0: u32, _a1: u32) {}
+pub fn g_cbike_debug_code_6b67a0(_this: u32) {}
 
-/// `CBoat::ProcessOpenDoor` (0x6F0190, VEH): empty, thiscall, `ret 20`; 1 instruction(s) matched.
+/// `CBike::SetupDamageAfterLoad` (0x6B7070, VEH): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
-pub fn g_cboat_process_open_door_6f0190(_this: u32, _a0: u32, _a1: u32, _a2: u32, _a3: u32, _a4: u32) {}
+pub fn g_cbike_setup_damage_after_load_6b7070(_this: u32) {}
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
@@ -48,8 +48,8 @@ pub const BODIES: &[Body] = &[
     (0x41BD00, 0x7B290C1B0B7F4D96, &[(0x41BD00, 3)]),
     (0x4217B0, 0x7B290C1B0B7F4D96, &[(0x4217B0, 3)]),
     (0x4C88F0, 0x3A6DF6CC919E0BCB, &[(0x4C88F0, 5)]),
-    (0x6C0560, 0x69D7781C23F54695, &[(0x6C0560, 3)]),
-    (0x6F0190, 0x69E5101C2400D339, &[(0x6F0190, 3)]),
+    (0x6B67A0, 0xAF647E4C8602FFD2, &[(0x6B67A0, 1)]),
+    (0x6B7070, 0xAF647E4C8602FFD2, &[(0x6B7070, 1)]),
 ];
 
 #[cfg(all(test, not(sa_phase_a)))]
@@ -59,7 +59,7 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_cbmx_blow_up_car_6c0560(0, 0, 0);
-        g_cboat_process_open_door_6f0190(0, 0, 0, 0, 0, 0);
+        g_cbike_debug_code_6b67a0(0);
+        g_cbike_setup_damage_after_load_6b7070(0);
     }
 }

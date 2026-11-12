@@ -166,8 +166,6 @@ orig! {
     fn c_61a6f0_t0(this: u32) -> u32 = thiscall 0x61A6F0 => unported;
     /// `CTaskSimpleUseGun::AbortIK` (0x61DFA0), thiscall, 1 stack argument(s)
     fn c_61dfa0_t1(this: u32, a0: u32) -> u32 = thiscall 0x61DFA0 => unported;
-    /// `CTaskSimpleStandStill::Constructor` (0x62F310), thiscall, 4 stack argument(s)
-    fn c_62f310_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x62F310 => unported;
     /// `CTaskSimpleCarSetPedInAsPassenger` (0x646FE0), thiscall, 3 stack argument(s)
     fn c_646fe0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646FE0 => unported;
     /// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger` (0x647080), thiscall, 0 stack argument(s)
@@ -186,8 +184,6 @@ orig! {
     fn c_64e740_c3(a0: u32, a1: u32, a2: u32) -> u32 = cdecl 0x64E740 => unported;
     /// `CTaskComplexWalkRoundCar::ComputeRouteRoundSmallCar` (0x6544F0), thiscall, 1 stack argument(s)
     fn c_6544f0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6544F0 => unported;
-    /// `CTaskComplexWalkRoundObject::CreateRouteTask` (0x655140), thiscall, 1 stack argument(s)
-    fn c_655140_t1(this: u32, a0: u32) -> u32 = thiscall 0x655140 => unported;
     /// `CTaskComplexWalkRoundCar::ComputeRouteRoundBigCar` (0x656BB0), thiscall, 1 stack argument(s)
     fn c_656bb0_t1(this: u32, a0: u32) -> u32 = thiscall 0x656BB0 => unported;
     /// `CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset` (0x658D20), thiscall, 2 stack argument(s)
@@ -465,40 +461,6 @@ pub fn g_fun_005e9850_5e9850(this: u32) -> u32 {
     }
 }
 
-/// `CPedAttractor::HasEmptySlot` (0x5EAF10): body, thiscall, `ret`; 32 instruction(s) matched.
-pub fn g_cped_attractor_has_empty_slot_5eaf10(this: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0x20);
-    if v1 != 0 {
-        let v2 = rd::<u32>(p(this), 0x24);
-        let v3 = ((((v2.wrapping_sub(v1)) as i32) >> 2) as u32);
-        let v4 = rd::<u32>(p(this), 0x10);
-        if v4 != 0 {
-            let v5 = rd::<u32>(p(this), 0x14);
-            let v6 = rd::<u32>(p(this), 0x3C);
-            let v7 = ((((v5.wrapping_sub(v4)) as i32) >> 2) as u32);
-            let v8 = (((u32::from((v7.wrapping_add(v3) as i32) < (v6 as i32))) & 0xFF) & 0xFF);
-            return (((v7.wrapping_add(v3)) & 0xFFFF_FF00) | (v8 & 0xFF));
-        } else {
-            let v9 = rd::<u32>(p(this), 0x3C);
-            let v10 = (((u32::from((v3 as i32) < (v9 as i32))) & 0xFF) & 0xFF);
-            return ((v3 & 0xFFFF_FF00) | (v10 & 0xFF));
-        }
-    } else {
-        let v11 = rd::<u32>(p(this), 0x10);
-        if v11 != 0 {
-            let v12 = rd::<u32>(p(this), 0x14);
-            let v13 = rd::<u32>(p(this), 0x3C);
-            let v14 = ((((v12.wrapping_sub(v11)) as i32) >> 2) as u32);
-            let v15 = (((u32::from((v14 as i32) < (v13 as i32))) & 0xFF) & 0xFF);
-            return ((v14 & 0xFFFF_FF00) | (v15 & 0xFF));
-        } else {
-            let v16 = rd::<u32>(p(this), 0x3C);
-            let v17 = (((u32::from((0 as i32) < (v16 as i32))) & 0xFF) & 0xFF);
-            return (v17 & 0xFF);
-        }
-    }
-}
-
 /// `CPedAttractor::operator delete` (0x5EAFE0): body, cdecl, `ret`; 18 instruction(s) matched.
 #[hook(addr = 0x5EAFE0, conv = cdecl, name = "CPedAttractor::operator delete", expect = "8B 4C 24 04 56", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_cped_attractor_operator_delete_5eafe0(a0: u32) -> u32 {
@@ -518,50 +480,6 @@ pub fn g_cped_attractor_operator_delete_5eafe0(a0: u32) -> u32 {
     } else {
         wr::<u32>(p(v1), 0xC, v7);
         return v5.wrapping_add(v7);
-    }
-}
-
-/// `CPedAttractor::GetHeadOfQueue` (0x5EB590): body, thiscall, `ret`; 13 instruction(s) matched.
-pub fn g_cped_attractor_get_head_of_queue_5eb590(this: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0x20);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = rd::<u32>(p(this), 0x24);
-        let v3 = ((((v2.wrapping_sub(v1)) as i32) >> 2) as u32);
-        if v3 != 0 {
-            let v4 = rd::<u32>(p(this), 0x20);
-            let v5 = rd::<u32>(p(v4), 0);
-            return v5;
-        } else {
-            return 0;
-        }
-    }
-}
-
-/// `CPedAttractor::GetTailOfQueue` (0x5EB5B0): body, thiscall, `ret`; 23 instruction(s) matched.
-pub fn g_cped_attractor_get_tail_of_queue_5eb5b0(this: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0x20);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = rd::<u32>(p(this), 0x24);
-        let v3 = ((((v2.wrapping_sub(v1)) as i32) >> 2) as u32);
-        if v3 != 0 {
-            let v4 = rd::<u32>(p(this), 0x20);
-            if v4 != 0 {
-                let v5 = rd::<u32>(p(this), 0x24);
-                let v6 = rd::<u32>(p(this), 0x20);
-                let v7 = ((((v5.wrapping_sub(v4)) as i32) >> 2) as u32);
-                let v8 = rd::<u32>(p(v6.wrapping_add((v7.wrapping_mul(4)))), -4);
-                return v8;
-            } else {
-                let v9 = rd::<u32>(p(v4), -4);
-                return v9;
-            }
-        } else {
-            return 0;
-        }
     }
 }
 
@@ -3037,24 +2955,6 @@ pub fn g_task_simple_tired_start_anim_630f70(this: u32, a0: u32) -> u32 {
     }
 }
 
-/// `CTaskSimpleStandUp::StartAnim` (0x631410): body, thiscall, `ret 4`; 26 instruction(s) matched.
-pub fn g_task_simple_stand_up_start_anim_631410(this: u32, a0: u32) -> u32 {
-    let v1 = u32::from(rd::<u8>(p(this), 8));
-    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
-        let v2 = rd::<u32>(p(a0), 0x18);
-        let v3 = c_4d4610_c4(v2, 0, 0x95, 0x4080_0000);
-        wr::<u32>(p(this), 0xC, v3);
-        let v4 = c_4cebe0_t2(v3, 0x63_1400, this);
-        return v4;
-    } else {
-        let v5 = rd::<u32>(p(a0), 0x18);
-        let v6 = c_4d4610_c4(v5, 0x35, 0x135, 0x4080_0000);
-        wr::<u32>(p(this), 0xC, v6);
-        let v7 = c_4cebe0_t2(v6, 0x63_1400, this);
-        return v7;
-    }
-}
-
 /// `thunk_FUN_0061a6f0` (0x637320): body, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
 #[sa_core::native(addr = 0x637320, conv = thiscall, name = "thunk_FUN_0061a6f0")]
@@ -3117,24 +3017,6 @@ pub fn g_thunk_fun_0061a6f0_637440(this: u32) -> u32 {
 pub fn g_thunk_fun_0061a6f0_637470(this: u32) -> u32 {
     let v1 = c_61a6f0_t0(this);
     v1
-}
-
-/// `CTaskSimpleSitDown::StartAnim` (0x6379F0): body, thiscall, `ret 4`; 26 instruction(s) matched.
-pub fn g_task_simple_sit_down_start_anim_6379f0(this: u32, a0: u32) -> u32 {
-    let v1 = u32::from(rd::<u8>(p(this), 8));
-    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
-        let v2 = rd::<u32>(p(a0), 0x18);
-        let v3 = c_4d4610_c4(v2, 0, 0x94, 0x4080_0000);
-        wr::<u32>(p(this), 0xC, v3);
-        let v4 = c_4cebe0_t2(v3, 0x63_1150, this);
-        return v4;
-    } else {
-        let v5 = rd::<u32>(p(a0), 0x18);
-        let v6 = c_4d4610_c4(v5, 0x35, 0x134, 0x4080_0000);
-        wr::<u32>(p(this), 0xC, v6);
-        let v7 = c_4cebe0_t2(v6, 0x63_1150, this);
-        return v7;
-    }
 }
 
 /// `CTaskComplexEnterCar::GetTargetPos` (0x63A300): body, thiscall, `ret 4`; 41 instruction(s) matched.
@@ -3670,30 +3552,6 @@ pub fn g_task_complex_walk_round_car_set_new_vehicle_654290(this: u32, a0: u32, 
         wr::<u32>(p(v22), 0, 0);
         return ((((((v14 & 0xFFFF_FF00) | (v15 & 0xFF)) & 0xFFFF_FF00) | (v17 & 0xFF)) & 0xFFFF_FF00)
             | (v19 & 0xFF));
-    }
-}
-
-/// `FUN_00655290` (0x655290): body, thiscall, `ret 8`; 42 instruction(s) matched.
-pub fn g_fun_00655290_655290(this: u32, a0: u32, a1: u32) -> u32 {
-    if a0 == 0xCB {
-        let v1 = c_61a5a0_c1(0x20);
-        if v1 == 0 {
-            return 0;
-        } else {
-            let v2 = c_62f310_t4(v1, 0x1F4, 0, 0, 0x4100_0000);
-            return v2;
-        }
-    } else {
-        if a0 == 0x389 {
-            let v3 = c_655140_t1(this, a1);
-            return v3;
-        } else {
-            if a0 != 0x516 {
-                return 0;
-            } else {
-                return 0;
-            }
-        }
     }
 }
 
@@ -7233,10 +7091,7 @@ pub const BODIES: &[Body] = &[
     (0x5E9730, 0x8A47DAF2EC31D9C8, &[(0x5E9730, 74)]),
     (0x5E9780, 0x3644A2BCF15F8CDD, &[(0x5E9780, 74)]),
     (0x5E9850, 0x88F980B5B4913FF6, &[(0x5E9850, 32)]),
-    (0x5EAF10, 0x7C27D99BCF3C6640, &[(0x5EAF10, 69)]),
     (0x5EAFE0, 0x2B89965CDD75A6BA, &[(0x5EAFE0, 49)]),
-    (0x5EB590, 0x2B939F6E034557D9, &[(0x5EB590, 28)]),
-    (0x5EB5B0, 0xBDB19D9810833B76, &[(0x5EB5B0, 54)]),
     (0x5EBE50, 0x5CC71EBE01F3C4BA, &[(0x5EBE50, 212), (0x5EBF24, 40)]),
     (0x5EDE50, 0xBE68EB5B867F13BA, &[(0x5EDE50, 109)]),
     (0x5EFC40, 0x4F6CF7344948878B, &[(0x5EFC40, 86)]),
@@ -7260,7 +7115,6 @@ pub const BODIES: &[Body] = &[
     (0x6296D0, 0x2B1ECDE07A22CDDB, &[(0x6296D0, 518)]),
     (0x62F2D0, 0xC84434BE82DBEFBD, &[(0x62F2D0, 49)]),
     (0x630F70, 0x6989AA8B3B5CA765, &[(0x630F70, 125)]),
-    (0x631410, 0xF9FD7C8709464A81, &[(0x631410, 75)]),
     (0x637320, 0x9E0950D75D4911D9, &[(0x637320, 5)]),
     (0x637350, 0xB6584F47D203BC09, &[(0x637350, 5)]),
     (0x637380, 0x743753F6799A0F79, &[(0x637380, 5)]),
@@ -7269,7 +7123,6 @@ pub const BODIES: &[Body] = &[
     (0x637410, 0xBE0CFA5D64AD74A2, &[(0x637410, 5)]),
     (0x637440, 0x813FF6B5D6873712, &[(0x637440, 5)]),
     (0x637470, 0x8D6EFD7C7B382042, &[(0x637470, 5)]),
-    (0x6379F0, 0xB848E1E39B07F121, &[(0x6379F0, 75)]),
     (0x63A300, 0xB5560037A22D419B, &[(0x63A300, 118)]),
     (0x63B540, 0xBB3E09A64B1604D2, &[(0x63B540, 159)]),
     (0x63CE80, 0x7E09607A1CD73C81, &[(0x63CE80, 113)]),
@@ -7282,7 +7135,6 @@ pub const BODIES: &[Body] = &[
     (0x64AE00, 0xFBBDFB3F47CD1E48, &[(0x64AE00, 105)]),
     (0x64C010, 0xBF3FDA15180EAD74, &[(0x64C010, 77)]),
     (0x654290, 0xA19220C161505BEE, &[(0x654290, 74)]),
-    (0x655290, 0x1E6F029E588A32B9, &[(0x655290, 161)]),
     (0x655DD0, 0xE9B249730C0E28DD, &[(0x655DD0, 5)]),
     (0x655E00, 0xEF97CECD551F6F22, &[(0x655E00, 5)]),
     (0x655F20, 0xA2F8AA036A01FB74, &[(0x655F20, 183)]),
