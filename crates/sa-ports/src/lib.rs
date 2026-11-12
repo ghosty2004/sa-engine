@@ -91,6 +91,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_pop::pathfind::NATIVES],
     &[sa_pop::car_ai_reason_to_stop::NATIVES],
     &[sa_ai::seek::NATIVES],
+    &[sa_ai::police_pursuit::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.
