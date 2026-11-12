@@ -4,7 +4,7 @@
 # The module is linked with its data, heap and stack above 0x1600000 (`--global-base`, `--no-stack-first`), so the
 # low linear memory is free for the legacy address arena: the original's .rdata/.data/.bss (0x858000..0xCB1000), the
 # read-only code bytes the no-CD protection reads (0x401000..0x858000, .HOODLUM 0x1556000..0x1577000) and sa-game's
-# COM object pages (0x30000..) live at their original addresses (docs/arch/platform.md section 21).
+# COM object pages (0x30000..) live at their original addresses (docs/arch/platform.md section 22).
 #
 #   tools/web/build.sh            release build (PROFILE=dev for a debug build)
 #
