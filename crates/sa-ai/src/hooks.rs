@@ -180,6 +180,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::simple_jump_tasks::HOOKS,
     crate::climb_test::HOOKS,
     crate::wander_target_heading::HOOKS,
+    crate::can_ped_jump_obstacle::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
