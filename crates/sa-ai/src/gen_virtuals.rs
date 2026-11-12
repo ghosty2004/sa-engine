@@ -134,8 +134,6 @@ orig! {
     fn c_62f370_t1(this: u32, a0: u32) -> u32 = thiscall 0x62F370 => unported;
     /// `CTaskSimpleTired::StartAnim` (0x630F70), thiscall, 1 stack argument(s)
     fn c_630f70_t1(this: u32, a0: u32) -> u32 = thiscall 0x630F70 => unported;
-    /// `CTaskSimpleStandUp::StartAnim` (0x631410), thiscall, 1 stack argument(s)
-    fn c_631410_t1(this: u32, a0: u32) -> u32 = thiscall 0x631410 => unported;
     /// `CTaskComplexSequence::Flush` (0x632C10), thiscall, 0 stack argument(s)
     fn c_632c10_t0(this: u32) -> u32 = thiscall 0x632C10 => unported;
     /// `CTaskSimpleWaitUntilAreaCodesMatch::ProcessPed` (0x635640), thiscall, 1 stack argument(s)
@@ -4613,23 +4611,6 @@ pub fn g_task_simple_tired_process_ped_637970(this: u32, a0: u32) -> u8 {
     }
 }
 
-/// `CTaskSimpleStandUp::ProcessPed` (0x637D60): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x637D60, conv = thiscall, name = "CTaskSimpleStandUp::ProcessPed", expect = "8A 41 09 84 C0", unverified = "ai8g-3", route = "L2", hazards = "ax-al-return")]
-pub fn g_task_simple_stand_up_process_ped_637d60(this: u32, a0: u32) -> u8 {
-    let v1 = u32::from(rd::<u8>(p(this), 9));
-    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
-        let v2 = rd::<u32>(p(this), 0xC);
-        if v2 != 0 {
-            return (v2 & 0xFFFF_FF00) as u8;
-        } else {
-            let v3 = c_631410_t1(this, a0);
-            return (v3 & 0xFFFF_FF00) as u8;
-        }
-    } else {
-        return 1 as u8;
-    }
-}
-
 /// `CTaskSimpleIKChain::MakeAbortable` (0x639450): make-abortable, thiscall, `ret 12`; 16 instruction(s) matched.
 #[hook(addr = 0x639450, conv = thiscall, name = "CTaskSimpleIKChain::MakeAbortable", expect = "83 7C 24 08 02")]
 pub fn g_task_simple_ikchain_make_abortable_639450(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
@@ -5531,67 +5512,6 @@ pub fn g_task_simple_car_shuffle_make_abortable_646900(this: u32, _a0: u32, a1: 
             wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
             return ((v1 & 0xFFFF_FF00) | 1) as u8;
         }
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::MakeAbortable` (0x646A60): make-abortable, thiscall, `ret 12`; 34 instruction(s) matched.
-#[hook(addr = 0x646A60, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::MakeAbortable", expect = "8B 44 24 08 83 F8 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
-pub fn g_task_simple_car_wait_to_slow_down_make_abortable_646a60(
-    this: u32,
-    _a0: u32,
-    a1: u32,
-    a2: u32,
-) -> u8 {
-    if a1 != 2 {
-        if a1 != 1 {
-            wr::<u32>(p(this), 0x10, 2);
-            return (a1 & 0xFFFF_FF00) as u8;
-        } else {
-            if a2 == 0 {
-                wr::<u32>(p(this), 0x10, 2);
-                return (a1 & 0xFFFF_FF00) as u8;
-            } else {
-                let _v1 = rd::<u32>(p(a2), 0);
-                let v2 = vslot_4_0(p(a2));
-                if v2 != 9 {
-                    wr::<u32>(p(this), 0x10, 2);
-                    return (v2 & 0xFFFF_FF00) as u8;
-                } else {
-                    let v3 = u32::from(rd::<u8>(p(a2), 0x40));
-                    if ((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFF) as u8) == (0 as u8) {
-                        wr::<u32>(p(this), 0x10, 2);
-                        return (((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) as u8;
-                    } else {
-                        let v4 = u32::from(rd::<u8>(p(a2), 0xC));
-                        if ((((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF) as u8)
-                            == (0 as u8)
-                        {
-                            wr::<u32>(p(this), 0x10, 2);
-                            return (((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF))
-                                & 0xFFFF_FF00) as u8;
-                        } else {
-                            return ((((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF))
-                                & 0xFFFF_FF00)
-                                | 1) as u8;
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        return ((a1 & 0xFFFF_FF00) | 1) as u8;
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::SetPedPosition` (0x646AB0): virtual-leaf, thiscall, `ret 4`; 7 instruction(s) matched.
-#[hook(addr = 0x646AB0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::SetPedPosition", expect = "8B 41 08 85 C0", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
-pub fn g_task_simple_car_wait_to_slow_down_set_ped_position_646ab0(this: u32, a0: u32) -> u8 {
-    let v1 = rd::<u32>(p(this), 8);
-    if v1 == 0 {
-        return ((v1 & 0xFFFF_FF00) | 1) as u8;
-    } else {
-        let v2 = c_5df910_t0(a0);
-        return ((v2 & 0xFFFF_FF00) | 1) as u8;
     }
 }
 
@@ -8226,7 +8146,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_LEADER_AREA_CODES_MATCH_PROCESS_PED_6356C0,
     HOOK_G_TASK_COMPLEX_USE_SCRIPTED_BRAIN_MAKE_ABORTABLE_635970,
     HOOK_G_TASK_SIMPLE_TIRED_PROCESS_PED_637970,
-    HOOK_G_TASK_SIMPLE_STAND_UP_PROCESS_PED_637D60,
     HOOK_G_TASK_SIMPLE_IKCHAIN_MAKE_ABORTABLE_639450,
     HOOK_G_TASK_COMPLEX_USE_SEQUENCE_MAKE_ABORTABLE_639730,
     HOOK_G_TASK_SIMPLE_TURN180_PROCESS_PED_639990,
@@ -8245,8 +8164,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_SET_PED_POSITION_6462D0,
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_MAKE_ABORTABLE_646780,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_MAKE_ABORTABLE_646900,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_MAKE_ABORTABLE_646A60,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_SET_PED_POSITION_646AB0,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_PROCESS_PED_646C90,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_SET_PED_POSITION_646CC0,
     HOOK_G_TASK_SIMPLE_CAR_GET_OUT_MAKE_ABORTABLE_6472D0,
@@ -8416,7 +8333,6 @@ pub const BODIES: &[Body] = &[
     (0x6356C0, 0xAC0A8F2FCD00AF42, &[(0x6356C0, 84)]),
     (0x635970, 0x11EB87D1927B756B, &[(0x635970, 78)]),
     (0x637970, 0x02F7A2CB89CC5956, &[(0x637970, 96)]),
-    (0x637D60, 0xDFDEA278BB0D2D41, &[(0x637D60, 34)]),
     (0x639450, 0x95697F491D9D173E, &[(0x639450, 57)]),
     (0x639730, 0x9F997771CFEAAC21, &[(0x639730, 112)]),
     (0x6398F0, 0x96544CCED671C8B7, &[(0x6398F0, 5)]),
@@ -8436,8 +8352,6 @@ pub const BODIES: &[Body] = &[
     (0x6462D0, 0x369784DA9F02738A, &[(0x6462D0, 26)]),
     (0x646780, 0x5B28A8B5F7895C3E, &[(0x646780, 31)]),
     (0x646900, 0x5B28A8B5F7895C3E, &[(0x646900, 31)]),
-    (0x646A60, 0x4889CE8936B161BB, &[(0x646A60, 79)]),
-    (0x646AB0, 0x5635008B77A9448F, &[(0x646AB0, 21)]),
     (0x646C90, 0x3E9A83949BD8C92A, &[(0x646C90, 38)]),
     (0x646CC0, 0x2685FA4D8CF98377, &[(0x646CC0, 40)]),
     (0x6472D0, 0x5B28A8B5F7895C3E, &[(0x6472D0, 31)]),
