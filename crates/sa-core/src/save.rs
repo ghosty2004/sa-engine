@@ -305,7 +305,7 @@ pub fn report_error(_block: i32, _error: i32) {}
 /// failure: error 4, false. Else size, `ms_WorkBufferSize = ms_WorkBufferPos = 0xC800`, `ms_FilePos = 0`, the
 /// work buffer allocated (0xC801) if missing; true.
 #[hook(addr = 0x5D0D20, conv = cdecl, name = "CGenericGameStorage::OpenFileForReading", expect = "8B 44 24 04 85 C0 74 34",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn open_file_for_reading(name: GPtr<u8>, slot: i32) -> u8 {
     if !name.is_null() {
         crate::filemgr::strcpy(g(LOAD_FILE_NAME), name);
@@ -333,7 +333,7 @@ pub fn open_file_for_reading(name: GPtr<u8>, slot: i32) -> u8 {
 /// 4, false. Else `ms_FilePos = ms_WorkBufferPos = 0` and the work buffer allocated if missing
 /// (`ms_WorkBufferSize` is not reset); true.
 #[hook(addr = 0x5D0DD0, conv = cdecl, name = "CGenericGameStorage::OpenFileForWriting", expect = "68 DC 0A 86 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn open_file_for_writing() -> u8 {
     let h = call::open_file(g(SAVE_FILE_NAME), g(MODE_WB));
     g::<GPtr<u8>>(FILE_HANDLE).write(h);
@@ -378,7 +378,7 @@ fn question_marks_to_spaces(s: GPtr<u8>) {
 /// DefaultPCSaveFileName, slot + 1)`; a name of 0x101+ characters is cut at 0x101; ".b" appended; copied to
 /// `ms_SaveFileName`, whose '?' become ' ' up to the first NUL or '\n'.
 #[hook(addr = 0x5D0E90, conv = cdecl, name = "CGenericGameStorage::MakeValidSaveName", expect = "81 EC 04 01 00 00",
-       unverified = "save-core-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn make_valid_save_name(slot: i32) {
     let mut buf = [0u8; 0x104];
     let b = GPtr::<u8>::from_raw(buf.as_mut_ptr());
@@ -395,7 +395,7 @@ pub fn make_valid_save_name(slot: i32) {
 
 /// `CGenericGameStorage::GetNameOfSavedGame(int32 slot)` (0x5D0F40): `ms_SlotFileName + 0x104 * slot`.
 #[hook(addr = 0x5D0F40, conv = cdecl, name = "CGenericGameStorage::GetNameOfSavedGame", expect = "8B 44 24 04 69 C0 04 01 00 00",
-       unverified = "save-core-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn get_name_of_saved_game(slot: i32) -> u32 {
     (SLOT_FILE_NAME as u32).wrapping_add((slot as u32).wrapping_mul(0x104))
 }
@@ -403,7 +403,7 @@ pub fn get_name_of_saved_game(slot: i32) -> u32 {
 /// `CGenericGameStorage::GetCurrentVersionNumber()` (0x5D0F50): `CKeyGen::GetKey(sprintf("%s%s", "Apr 28
 /// 2005", "10:28:55"))`.
 #[hook(addr = 0x5D0F50, conv = cdecl, name = "CGenericGameStorage::GetCurrentVersionNumber", expect = "83 EC 28 68 FC BA 86 00",
-       unverified = "save-core-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn get_current_version_number() -> u32 {
     let mut buf = [0u8; 0x28];
     let b = GPtr::<u8>::from_raw(buf.as_mut_ptr());
@@ -430,7 +430,7 @@ fn save_work_buffer_fail() -> u8 {
 /// and the checksum dword is appended. `CFileMgr::Write`; an I/O error or a short write fails (see
 /// [`save_work_buffer_fail`]); else `ms_FilePos += pos`, `pos = 0`, true.
 #[hook(addr = 0x5D0F80, conv = cdecl, name = "CGenericGameStorage::SaveWorkBuffer", expect = "A0 FC 6E C1 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn save_work_buffer(include_checksum: u32) -> u8 {
     if failed() {
         return 0;
@@ -476,7 +476,7 @@ pub fn save_work_buffer(include_checksum: u32) -> u8 {
 /// error. `CFileMgr::Read`; an I/O error or a short read: error 5, `CloseFile()` (error 6 when it fails),
 /// `ms_bFailed = 1`, false. Else `ms_FilePos += size`, `ms_WorkBufferSize = size`, `pos = 0`, true.
 #[hook(addr = 0x5D10B0, conv = cdecl, name = "CGenericGameStorage::LoadWorkBuffer", expect = "A0 FC 6E C1 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn load_work_buffer() -> u8 {
     if failed() {
         return 0;
@@ -508,7 +508,7 @@ pub fn load_work_buffer() -> u8 {
 /// dword (the last 4 bytes of the last chunk) is compared with the sum minus those 4 bytes; buffer freed,
 /// file closed (result ignored).
 #[hook(addr = 0x5D1170, conv = cdecl, name = "CGenericGameStorage::CheckDataNotCorrupt", expect = "51 8B 44 24 08",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn check_data_not_corrupt(slot: i32, name: GPtr<u8>) -> u8 {
     g::<u8>(FAILED).write(0);
     if call::open_file_for_reading(name, slot) == 0 {
@@ -547,7 +547,7 @@ pub fn check_data_not_corrupt(slot: i32, name: GPtr<u8>) -> u8 {
 /// <= 0. A block that does not fit (`pos + size > 0xC800`) is split: `SaveDataToWorkBuffer(data, 0xC800 -
 /// pos)`, `SaveWorkBuffer(false)`, the rest copied. Copy, `pos += size`, true.
 #[hook(addr = 0x5D1270, conv = cdecl, name = "CGenericGameStorage::SaveDataToWorkBuffer-org", expect = "A0 FC 6E C1 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn save_data_to_work_buffer(data: GPtr<u8>, size: i32) -> u8 {
     if failed() {
         return 0;
@@ -579,7 +579,7 @@ pub fn save_data_to_work_buffer(data: GPtr<u8>, size: i32) -> u8 {
 /// literal, not the buffered size): `LoadDataFromWorkBuffer(data, 0xC800 - pos)`, `LoadWorkBuffer()`, the
 /// rest copied. Copy, `pos += size`, true.
 #[hook(addr = 0x5D1300, conv = cdecl, name = "CGenericGameStorage::LoadDataFromWorkBuffer-org", expect = "A0 FC 6E C1 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn load_data_from_work_buffer(data: GPtr<u8>, size: i32) -> u8 {
     if failed() {
         return 0;
@@ -622,7 +622,7 @@ fn copy(dst: GPtr<u8>, src: GPtr<u8>, n: u32) {
 /// `CGenericGameStorage::CheckSlotDataValid(int32 slot)` (0x5D1380): `C_PcSave::GenerateGameFilename` into a
 /// local; `CheckDataNotCorrupt(slot, name)`: `CStreaming::DeleteAllRwObjects()`, true; else error 7, false.
 #[hook(addr = 0x5D1380, conv = cdecl, name = "CGenericGameStorage::CheckSlotDataValid", expect = "81 EC 04 01 00 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn check_slot_data_valid(slot: i32) -> u8 {
     let mut name = [0u8; 0x104];
     let n = GPtr::<u8>::from_raw(name.as_mut_ptr());
@@ -677,8 +677,8 @@ fn generic_save_fail() -> u8 {
 /// The structure's bytes `Construct` leaves unwritten are the original's stack residue at entry ESP -0x138..0
 /// (the footprint snapshot; see the module doc).
 #[hook(addr = 0x5D13E0, conv = cdecl, name = "CGenericGameStorage::GenericSave", expect = "81 EC 38 01 00 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes,uninit-locals", recs = "save-load",
-       footprint = 0x1000, note = "writes the save file; block 0 carries stack residue")]
+       route = "split", hazards = "heap-writes,uninit-locals", recs = "save-load",
+       footprint = 0x1000, note = "writes the save file; block 0 carries stack residue (L2, ledger SAVE-1: the save bytes differ only in uninitialised-stack residue, state after load identical)")]
 pub fn generic_save() -> u8 {
     g::<u8>(FAILED).write(0);
     if call::open_file_for_writing() == 0 {
@@ -852,7 +852,7 @@ fn load_block_tag(tag: &mut [u8; 8]) -> Option<bool> {
 /// `ms_bLoading = 0`, buffer freed, `CFileMgr::CloseFile`: non-zero -> false; else
 /// `DoGameSpecificStuffAfterSucessLoad()`, true.
 #[hook(addr = 0x5D17B0, conv = cdecl, name = "CGenericGameStorage::GenericLoad", expect = "8B 44 24 04 81 EC 7C 02 00 00",
-       unverified = "save-core-1", route = "split", hazards = "heap-writes", recs = "save-load",
+       route = "split", hazards = "heap-writes", recs = "save-load",
        note = "reads the save file; restarts the world from it")]
 pub fn generic_load(out_variables_loaded: GPtr<u8>) -> u8 {
     out_variables_loaded.write(0);
@@ -1012,7 +1012,7 @@ fn rd<T: crate::mem::GameData>(p: GPtr<u8>, off: isize) -> T {
 /// through the call site 0x5D1E54). The other bytes are not written.
 #[hook(addr = 0x5D1B80, conv = thiscall, name = "CSimpleVariablesSaveStructure::Construct", expect = "A0 00 8A B7 00",
        this = "CSimpleVariablesSaveStructure",
-       unverified = "save-core-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn simple_vars_construct(this: GPtr<u8>) {
     let key: usize = if g::<u8>(0xB78A00).read() != 0 {
         0xB78A00
@@ -1095,7 +1095,7 @@ pub fn simple_vars_construct(this: GPtr<u8>) {
 /// flag 0x96918B / 0x96918A toggled when the entry is null).
 #[hook(addr = 0x5D1EA0, conv = thiscall, name = "CSimpleVariablesSaveStructure::Extract", expect = "56 8B F1 8B 06",
        this = "CSimpleVariablesSaveStructure",
-       unverified = "save-core-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn simple_vars_extract(this: GPtr<u8>, version: GPtr<u32>) {
     version.write(rd::<u32>(this, 0));
     g::<u8>(0xB72910).write(rd::<u8>(this, 0x68));
@@ -1169,7 +1169,7 @@ pub fn simple_vars_extract(this: GPtr<u8>, version: GPtr<u32>) {
 
 /// `GetSavedGameDateAndTime(int32 slot)` (0x618D00): `ms_SlotSaveDate + 0x46 * slot`.
 #[hook(addr = 0x618D00, conv = cdecl, name = "CGenericGameStorage::GetSavedGameDateAndTime", expect = "8B 44 24 04 6B C0 46",
-       unverified = "save-core-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn get_saved_game_date_and_time(slot: i32) -> u32 {
     (SLOT_SAVE_DATE as u32).wrapping_add((slot as u32).wrapping_mul(0x46))
 }
@@ -1202,7 +1202,7 @@ fn camera_position() -> GPtr<u8> {
 /// `CGangWars::ClearSpecificZonesToTriggerGangWar()`, then `bTrainingMission = 0` and
 /// `CTheZones::FillZonesWithGangColours(bGangWarsActive)` (read before the store).
 #[hook(addr = 0x618E90, conv = cdecl, name = "CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad", expect = "6A 00 B9 40 B3 C1 00",
-       unverified = "save-core-1", route = "L3-only", hazards = "heap-writes", recs = "save-load",
+       route = "L3-only", hazards = "heap-writes", recs = "save-load",
        note = "calls the scripts, streaming and the scene load: one call per load, verified by the trace")]
 pub fn do_game_specific_stuff_after_success_load() {
     call::text_load(g(THE_TEXT), 0);
@@ -1231,7 +1231,7 @@ pub fn do_game_specific_stuff_after_success_load() {
 /// `CGameLogic::PassTime(360)`, the focused player's +0x144 word = 0, `ResetSprintEnergy` and
 /// `SetWantedLevel(0)` on `FindPlayerPed(-1)` (fetched for each), `CGame::TidyUpMemory(true, false)`.
 #[hook(addr = 0x618F50, conv = cdecl, name = "CGenericGameStorage::DoGameSpecificStuffBeforeSave", expect = "51 E8 BA DB F3 FF",
-       unverified = "save-core-1", route = "L3-only", hazards = "heap-writes", recs = "save-load",
+       route = "L3-only", hazards = "heap-writes", recs = "save-load",
        note = "one call per save, verified by the trace and the save bytes")]
 pub fn do_game_specific_stuff_before_save() {
     call::ropes_shutdown();
@@ -1254,8 +1254,8 @@ pub fn do_game_specific_stuff_before_save() {
 /// `C_PcSave::SaveSlot(int32 slot)` (0x619060, thiscall, `ret 4`): `MakeValidSaveName((int8)slot)`, error =
 /// 0, `InitUserDirectories()`, `DoGameSpecificStuffBeforeSave()`, `GenericSave()`; EAX = 0 on success, else 2.
 #[hook(addr = 0x619060, conv = thiscall, name = "C_PcSave::SaveSlot", expect = "0F BE 44 24 04 50",
-       unverified = "save-core-1", route = "L3-only", hazards = "heap-writes", recs = "save-load",
-       note = "one call per save; the save bytes and the trace check it")]
+       route = "L3-only", hazards = "heap-writes", recs = "save-load",
+       note = "one call per save; the save bytes and the trace check it (L2, ledger SAVE-1: the save bytes differ only in uninitialised-stack residue, state after load identical)")]
 pub fn save_slot(_this: GPtr<u8>, slot: i32) -> u32 {
     call::make_valid_save_name(i32::from(slot as i8));
     set_error(0);
@@ -1267,7 +1267,7 @@ pub fn save_slot(_this: GPtr<u8>, slot: i32) -> u32 {
 /// `C_PcSave::GenerateGameFilename(int32 slot, char* out)` (0x6190A0, thiscall, `ret 8`): `sprintf(out,
 /// "%s%i%s", DefaultPCSaveFileName, slot + 1, ".b")`.
 #[hook(addr = 0x6190A0, conv = thiscall, name = "C_PcSave::GenerateGameFilename", expect = "8B 44 24 04 8B 4C 24 08",
-       unverified = "save-core-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn generate_game_filename(_this: GPtr<u8>, slot: i32, out: GPtr<u8>) {
     call::sprintf_sis(out, g(FMT_S_I_S), g(DEFAULT_PC_SAVE_FILE_NAME), slot.wrapping_add(1), g(STR_DOT_B));
 }
@@ -1297,7 +1297,7 @@ pub fn delete_slot(_this: GPtr<u8>, slot: i32) -> u8 {
 /// `TextCopy(GxtChar* dst, const GxtChar* src)` (0x69F910): copies up to and including the NUL (an empty
 /// source writes the NUL only).
 #[hook(addr = 0x69F910, conv = cdecl, name = "TextCopy", expect = "8B 4C 24 08 8A 01",
-       unverified = "save-core-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn text_copy(dst: GPtr<u8>, src: GPtr<u8>) {
     let mut i = 0isize;
     loop {

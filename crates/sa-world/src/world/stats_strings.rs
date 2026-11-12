@@ -118,7 +118,7 @@ pub fn criminal_rating_key(r: i32) -> usize {
 /// `(int)(stat 0xB790C4 * f[0x863FD0] * f[0x859044])` exceeds 10), and above them the money of the focused
 /// player (+0xBC) above 10,000,000 with a rating of at least 1,000,000.
 #[hook(addr = 0x55A210, conv = cdecl, name = "CStats::FindCriminalRatingString", expect = "E8 6B EE FF FF",
-       unverified = "save-stats-1", route = "L2", hazards = "none", recs = "menus-hud,menus-map-controls")]
+       route = "L2", hazards = "none", recs = "menus-hud,menus-map-controls")]
 pub fn find_criminal_rating_string() -> GPtr<u8> {
     let key = criminal_rating_key(find_criminal_rating_number());
     text_get(g(THE_TEXT), g(key))
@@ -299,7 +299,7 @@ fn widen(p: GPtr<u8>) -> f64 {
 /// `AsciiToGxtChar(gString2, gGxtString2)`. The sprintf tail runs through the protection chunk 0x401711 (an
 /// obfuscated `push gString2`).
 #[hook(addr = 0x559230, conv = cdecl, name = "CStats::BuildStatLine", expect = "55 8B EC 83 E4 F8 83 EC 08",
-       unverified = "save-stats-1", route = "L2", hazards = "none", recs = "menus-hud,menus-map-controls")]
+       route = "L2", hazards = "none", recs = "menus-hud,menus-map-controls")]
 pub fn build_stat_line_port(key: GPtr<u8>, p1: GPtr<u8>, metrics: i32, p2: GPtr<u8>, ty: i32) {
     if key.is_null() {
         return;
@@ -384,7 +384,7 @@ const TABLES: [usize; 8] = [0x8CD8A0, 0x8CD938, 0x8CD9B0, 0x8CD9D8, 0x8CDA70, 0x
 /// (original bug: "0kgs"), the bar-chart id is stored before the line test, the weapon-skill and radio
 /// lines call their game functions even when the next line is not requested.
 #[hook(addr = 0x55A780, conv = cdecl, name = "CStats::ConstructStatLine", expect = "E9 9A 79 EA FF 83 EC 18",
-       unverified = "save-stats-1", route = "L2", hazards = "x87-transcendental", recs = "menus-hud,menus-map-controls",
+       route = "L2", hazards = "x87-transcendental", recs = "menus-hud,menus-map-controls",
        note = "x87: fmul / fsub with the 24-bit precision model; the category argument slot is reused as a temp (not modelled)")]
 pub fn construct_stat_line(line: i32, category: u32) -> i32 {
     let table = TABLES[usize::from(category as u8).min(7)];

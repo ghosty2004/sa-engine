@@ -89,7 +89,7 @@ fn script_space(size: i32, io: fn(GPtr<u8>, i32) -> u8) {
 /// `CTheScripts::Save()` (0x5D4C40): see the module doc. The locals (dwords at entry ESP -0x1C .. -4) start
 /// as the footprint snapshot's residue. AL = 1.
 #[hook(addr = 0x5D4C40, conv = cdecl, name = "CTheScripts::Save", expect = "83 EC 1C A1 63 99 A4 00",
-       unverified = "save-script-1", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn the_scripts_save() -> u8 {
     // locals: [0] type (-0x1C), [1] swap index (-0x18), [2] IP offset (-0x14), [3] count (-0x10),
     // [4] size (-0xC), [5] invisibility index (-8), [6] script index (-4)
@@ -218,7 +218,7 @@ fn pool_entity(pool: usize, idx: &mut u32, stride: u32) -> u32 {
 /// `StartNewScript(nullptr, index)`, its 0xE0 bytes read over it (the list links kept) and its IPs rebased.
 /// EAX = the saved script count (the last value the bytes load into EAX; split run save1: AL 0x1C, not 1).
 #[hook(addr = 0x5D4FD0, conv = cdecl, name = "CTheScripts::Load", expect = "83 EC 24 53 55 56 57",
-       unverified = "save-script-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn the_scripts_load() -> u32 {
     let mut size = 0i32;
     let mut ty = 0u32;
