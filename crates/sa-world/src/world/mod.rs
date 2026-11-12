@@ -11,6 +11,7 @@ pub mod hand_object;
 pub mod gamelogic;
 pub mod garages;
 pub mod garage_update;
+pub mod garage_slide_door;
 pub mod misc;
 pub mod pickups;
 pub mod pickup_effects;
