@@ -100,6 +100,8 @@ if wait_log '\[cov\] connect id=[0-9]+ name=NativeCJ' 120; then say "connected";
 if wait_log '\[cov\] spawn id=' 120; then
     say "spawned"
     sleep 4
+    cmd "msg|Welcome, native sa-game: chat from open.mp"
+    cmd "gametext|3|6000|~g~native ~w~sa-game"
     cmd "hp|60"
     cmd "armour|40"
     cmd "money|5000"

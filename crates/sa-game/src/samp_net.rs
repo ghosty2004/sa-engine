@@ -19,13 +19,14 @@ use samp_client::footsync::{self, FootSender, KeyContext, LocalSample, Rotation}
 use samp_client::netclient::{Event, NetClient, NetPacket, resolve};
 use samp_proto::auth::AuthTable;
 use samp_proto::raknet::Reliability;
-use samp_proto::rpcs::{Incoming, player, vehicle};
+use samp_proto::rpcs::{Incoming, player, remote, ui, vehicle};
 use samp_proto::sync::player::StatsSync;
 
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
+use sa_samp_api::ui::{ChatKind, ChatMessage, DialogSpec, DialogStyle, UiEvent};
 use sa_samp_api::vehicles::VehicleSpawn;
-use sa_samp_api::{AreaCode, GameAdapter, ModelId, Vec3, VehicleRef, WeaponType};
+use sa_samp_api::{AreaCode, GameAdapter, ModelId, Rgba, Vec3, VehicleRef, WeaponType};
 
 use crate::samp::Target;
 
@@ -51,6 +52,8 @@ pub struct NetHooks {
     vehicles: HashMap<u16, VehicleRef>,
     last_car_sync: Option<Instant>,
     car_rotation: Option<samp_proto::types::Quat>,
+    /// Remote players' names (RPC 137), for player chat lines.
+    names: HashMap<u16, String>,
 }
 
 /// The auth table (third-party data, never committed): `--samp-auth FILE` or `SAMP_AUTH_TABLE`.
@@ -125,6 +128,7 @@ impl NetHooks {
             vehicles: HashMap::new(),
             last_car_sync: None,
             car_rotation: None,
+            names: HashMap::new(),
         })
     }
 
@@ -143,6 +147,7 @@ impl NetHooks {
         for e in self.net.tick(now) {
             self.on_event(e, game);
         }
+        self.ui_events(game);
         if self.spawned {
             self.sync(game, now);
         }
@@ -223,6 +228,10 @@ impl NetHooks {
             Event::Rejected(r) => self.note(format!("connection rejected: {r}")),
             Event::Rpc(Incoming::Player(p)) => self.on_player_rpc(p, game),
             Event::Rpc(Incoming::Vehicle(v)) => self.on_vehicle_rpc(v, game),
+            Event::Rpc(Incoming::Ui(u)) => self.on_ui_rpc(u, game),
+            Event::Rpc(Incoming::Remote(remote::Incoming::PlayerJoin(j))) => {
+                self.names.insert(j.player_id, text(&j.name));
+            }
             Event::Rpc(other) => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
             Event::Sync(_) => {}
         }
@@ -330,6 +339,108 @@ impl NetHooks {
             }
             P::SetPlayerCameraBehindPlayer(_) => report(self, "behind_player", game.behind_player()),
             other => self.note(format!("player rpc {} (not applied natively yet)", other.id())),
+        }
+    }
+
+    /// The chat, dialog and game-text RPCs through the engine-drawn UI (`GameAdapter::ui`, docs/samp/overlay.md §5).
+    fn on_ui_rpc(&mut self, rpc: ui::Incoming, game: &mut dyn GameAdapter) {
+        use ui::Incoming as U;
+        let note = match &rpc {
+            U::SendClientMessage(m) => format!("chat: {}", text(&m.message)),
+            U::PlayerChatMessage(m) => format!("chat {}: {}", m.player_id, text(&m.message)),
+            U::ShowDialog(d) => format!("dialog {} \"{}\"", d.dialog_id, text(&d.title)),
+            U::SendGameText(t) => format!("game text \"{}\"", text(&t.text)),
+            other => format!("ui rpc {} (not shown natively yet)", other.id()),
+        };
+        self.note(note);
+        let Some(ui) = game.ui() else { return };
+        let msg = |kind, name: String, name_colour, text: String, colour| ChatMessage {
+            kind,
+            name,
+            name_colour,
+            text,
+            colour,
+            time: clock_now(),
+        };
+        match rpc {
+            U::SendClientMessage(m) => ui.chat_add(&msg(
+                ChatKind::Info,
+                String::new(),
+                Rgba::from_rgba_u32(m.colour),
+                text(&m.message),
+                Rgba::from_rgba_u32(m.colour),
+            )),
+            U::PlayerChatMessage(m) => {
+                let name = self
+                    .names
+                    .get(&m.player_id)
+                    .cloned()
+                    .unwrap_or_else(|| format!("Player{}", m.player_id));
+                let white = Rgba::from_rgba_u32(0xFFFF_FFFF);
+                ui.chat_add(&msg(ChatKind::Player, name, white, text(&m.message), white));
+            }
+            U::ShowDialog(d) => {
+                if d.dialog_id < 0 {
+                    ui.show_dialog(None);
+                } else {
+                    ui.show_dialog(Some(&DialogSpec {
+                        id: d.dialog_id,
+                        style: DialogStyle::from_byte(d.style),
+                        title: text(&d.title),
+                        body: text(&d.body),
+                        button1: text(&d.button1),
+                        button2: text(&d.button2),
+                    }));
+                }
+            }
+            U::SendGameText(t) => ui.game_text(&text(&t.text), t.time_ms, t.style as u8),
+            _ => {}
+        }
+    }
+
+    /// What the player did in the UI: chat lines and commands (RPC 101 / 50) and dialog answers (RPC 62).
+    fn ui_events(&mut self, game: &mut dyn GameAdapter) {
+        let Some(ui) = game.ui() else { return };
+        for e in ui.poll_events() {
+            match e {
+                UiEvent::ChatSubmit(line) => {
+                    let bytes = line
+                        .chars()
+                        .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
+                        .collect::<Vec<_>>();
+                    if line.starts_with('/') {
+                        self.net.send_rpc(
+                            &ui::PlayerRequestCommandMessage { command: bytes },
+                            Reliability::Reliable,
+                        );
+                    } else {
+                        self.net.send_rpc(
+                            &ui::PlayerRequestChatMessage { message: bytes },
+                            Reliability::Reliable,
+                        );
+                    }
+                    self.note(format!("sent chat line \"{line}\""));
+                }
+                UiEvent::DialogResponse {
+                    id,
+                    button,
+                    list_item,
+                    text,
+                } => {
+                    let r = ui::OnPlayerDialogResponse {
+                        dialog_id: id as u16,
+                        response: button,
+                        list_item,
+                        text: text
+                            .chars()
+                            .map(|c| u8::try_from(u32::from(c)).unwrap_or(b'?'))
+                            .collect(),
+                    };
+                    self.net.send_rpc(&r, Reliability::ReliableOrdered);
+                    self.note(format!("dialog {id} answered with button {button}"));
+                }
+                _ => {}
+            }
         }
     }
 
@@ -586,6 +697,19 @@ impl NetHooks {
             });
         }
     }
+}
+
+/// SA:MP text (code page 1252 bytes) as a `String`, byte for byte (Latin-1 view, the UI's font covers it).
+fn text(b: &[u8]) -> String {
+    b.iter().map(|&c| char::from(c)).collect()
+}
+
+/// The local wall-clock time (UTC hour, minute, second) for chat timestamps.
+fn clock_now() -> [u8; 3] {
+    let s = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    [((s / 3600) % 24) as u8, ((s / 60) % 60) as u8, (s % 60) as u8]
 }
 
 fn other_id(i: &Incoming) -> String {
