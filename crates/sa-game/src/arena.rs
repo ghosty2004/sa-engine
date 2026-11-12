@@ -369,7 +369,7 @@ extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, ctx: *mut l
     #[cfg(target_arch = "x86")]
     let eip = unsafe { (*(ctx as *const libc::ucontext_t)).uc_mcontext.gregs[libc::REG_EIP as usize] } as usize;
     #[cfg(not(target_arch = "x86"))]
-    let eip = ctx as usize & 0;
+    let eip = { let _ = ctx; 0usize };
     let mut buf2 = [0u8; 18];
     write_err(hex(eip, &mut buf2));
     // the reporter's own address: `eip - on_fault` + its link address locates the faulting code in a PIE build

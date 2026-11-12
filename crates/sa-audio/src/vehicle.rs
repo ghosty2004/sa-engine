@@ -410,7 +410,9 @@ pub fn get_vehicle_non_drive_wheel_skid_value(
 /// cTransmission&, float velocity)` (0x4F5F30): 0.0 unless enabled; state 1: `(gas - 0.4) * 1.667 *
 /// 0.75 * mult` above 0.4 (else 0 * mult); state 2 / 3 as the non-drive wheel value without the audio
 /// type factor; other states 0.0.
-/// Not hooked: the caller at 0x4F9094 keeps EDX across the call (sa-hook callers test).
+/// The caller at 0x4F9094 keeps EDX across the call: hooked with `preserve = "edx"` (STD-12, as the non-drive value).
+#[hook(addr = 0x4F5F30, conv = thiscall, name = "CAEVehicleAudioEntity::GetVehicleDriveWheelSkidValue", expect = "A0 80 BD 8C 00 D9 05 50 8B 85 00",
+       preserve = "edx", unverified = "std12-audio-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk,driving")]
 pub fn get_vehicle_drive_wheel_skid_value(
     _this: GPtr<u8>,
     _veh: GPtr<u8>,
@@ -1171,6 +1173,7 @@ pub fn turn_off_radio_for_vehicle(this: GPtr<u8>) {
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_GET_VEHICLE_NON_DRIVE_WHEEL_SKID_VALUE,
+    HOOK_GET_VEHICLE_DRIVE_WHEEL_SKID_VALUE,
     HOOK_CONSTRUCTOR,
     HOOK_STATIC_INITIALISE,
     HOOK_UPDATE_VEHICLE_ENGINE_SOUND,

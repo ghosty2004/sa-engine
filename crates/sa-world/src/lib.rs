@@ -24,4 +24,5 @@ pub mod physical;
 
 pub mod std6_natives;
 pub mod std7_natives;
+pub mod std12_natives;
 pub mod generated;
