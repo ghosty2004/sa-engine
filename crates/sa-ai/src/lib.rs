@@ -201,3 +201,4 @@ pub mod simple_jump_tasks;
 pub mod climb_test;
 pub mod wander_target_heading;
 pub mod can_ped_jump_obstacle;
+pub mod climb_scan;
