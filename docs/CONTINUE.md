@@ -45,7 +45,7 @@ Next steps, in order:
    interiors, climbing, SA:MP sessions) so the gen2 hooks without callers get evidence.
 5. Web: real viewport resolution, OPFS settings/saves, audio latency, streams.
 
-Known issues to fix first: duplicate #[hook] registrations in the WEB-3-based trees (e.g. RenderWeaponCB 0x733670,
+Known issues to fix first: the generators (ai_patterns.py, patterns.py, inflight.py) treat catalogue state `implemented` as verified — fix before any regeneration (see integration-6.md); duplicate #[hook] registrations in the WEB-3-based trees (e.g. RenderWeaponCB 0x733670,
 CTaskComplexPassObject::ControlSubTask) make `cargo test -p sa-hook --lib` fail there; stream volume -10000;
 web stream hang; ProcessMissionAudioEvent 0x4ECCF0 (all non-frontend PlayerPlaySound), phone task, class-selection
 << >> Spawn panel, CEventDamage::AffectsPedGroup 0x4B38D0, burning-car path.
