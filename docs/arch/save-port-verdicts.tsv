@@ -1,0 +1,70 @@
+address	name	file	state	evidence
+0X44A170	CGarages::CloseHideOutGaragesBeforeSave	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g4 (save-load, 3900 frames): PASS, 3 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X559230	CStats::BuildStatLine	crates/sa-world/src/world/stats_strings.rs	NOCASES	no call in the corpus
+0X55A210	CStats::FindCriminalRatingString	crates/sa-world/src/world/stats_strings.rs	NOCASES	no call in the corpus
+0X55A780	CStats::ConstructStatLine	crates/sa-world/src/world/stats_strings.rs	NOCASES	no call in the corpus
+0X5D08C0	CGenericGameStorage::ReportError	crates/sa-core/src/save.rs	NOCASES	no call in the corpus; error paths only (a corrupt or truncated save); no observable effect
+0X5D0D20	CGenericGameStorage::OpenFileForReading	crates/sa-core/src/save.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS-FP, 4 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D0DD0	CGenericGameStorage::OpenFileForWriting	crates/sa-core/src/save.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D0E30	CGenericGameStorage::CloseFile	crates/sa-core/src/save.rs	NOCASES	no call in the corpus; reached only on the read-error path of LoadWorkBuffer (GenericSave / GenericLoad / CheckDataNotCorrupt free and close inline)
+0X5D0E90	CGenericGameStorage::MakeValidSaveName	crates/sa-core/src/save.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D0F40	CGenericGameStorage::GetNameOfSavedGame	crates/sa-core/src/save.rs	L2	split sg1-g1 (save-load, 3900 frames): PASS-FP, 60 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D0F50	CGenericGameStorage::GetCurrentVersionNumber	crates/sa-core/src/save.rs	L2	split sg1-g4 (save-load, 3900 frames): PASS, 3 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D0F80	CGenericGameStorage::SaveWorkBuffer	crates/sa-core/src/save.rs	L2	split s3-g5 (save-load, 3900 frames): PASS, 4 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D10B0	CGenericGameStorage::LoadWorkBuffer	crates/sa-core/src/save.rs	L2	split s3-g5 (save-load, 3900 frames): PASS, 19 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D1170	CGenericGameStorage::CheckDataNotCorrupt	crates/sa-core/src/save.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 3 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D1270	CGenericGameStorage::SaveDataToWorkBuffer-org	crates/sa-core/src/save.rs	L2	split s2-0x5d1270 (save-load, 3900 frames): COUNT, 822 compared, 0 mismatches, 0 undeclared; splitr == plain; the spool quota (400 MB) ended the run after 822 compared cases (COUNT); no mismatch
+0X5D1300	CGenericGameStorage::LoadDataFromWorkBuffer-org	crates/sa-core/src/save.rs	L2	split s5-0x5d1300 (save-load, 3900 frames): COUNT, 939 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito; the spool quota ended the run after 939 compared cases (COUNT); no mismatch
+0X5D1380	CGenericGameStorage::CheckSlotDataValid	crates/sa-core/src/save.rs	L2	split sg1-g1 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D13E0	CGenericGameStorage::GenericSave	crates/sa-core/src/save.rs	ledger	split s4-gsf3 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): FAIL, 1 compared, 1 mismatches, 0 undeclared; splitr == plain; save file splitr != splito; every differing byte is stack residue of the original block functions running below a Rust frame (s4-gsf3: 486 bytes, all inside tools/accept/save-diff.py --mask; the only mismatching output is ms_CheckSum); trace IDENTICAL; ledger SAVE-1 (save-port.md); kept unverified
+0X5D17B0	CGenericGameStorage::GenericLoad	crates/sa-core/src/save.rs	L2	split s5-0x5d17b0 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D1B80	CSimpleVariablesSaveStructure::Construct	crates/sa-core/src/save.rs	L2	split s4-gsf2 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 2 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D1EA0	CSimpleVariablesSaveStructure::Extract	crates/sa-core/src/save.rs	L2	split s5-gleaf (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D2330	CVehicleSaveStructure::Construct	crates/sa-veh/src/vehicle_save.rs	NOCASES	no call in the corpus; no vehicle of the corpus is saved
+0X5D23B0	CVehicleSaveStructure::Extract	crates/sa-veh/src/vehicle_save.rs	NOCASES	no call in the corpus; no vehicle of the corpus is loaded
+0X5D24B0	FUN_005d24b0	crates/sa-ped/src/save_blocks.rs	L2	split s5-gleaf (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D2560	FUN_005d2560	crates/sa-ped/src/save_blocks.rs	L2	split s5-gleaf (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D2620	CGangWarsSaveStructure::Construct	crates/sa-pop/src/misc2.rs	L2	split s2-0x5d2620 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D2740	CGangWarsSaveStructure::Extract	crates/sa-pop/src/misc2.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D2980	CAutomobile::Load	crates/sa-veh/src/vehicle_save.rs	NOCASES	no call in the corpus; no vehicle of the corpus is loaded
+0X5D3160	CGarages::Save	crates/sa-world/src/world/save_blocks.rs	L2	split s4-gsf1 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr != splito
+0X5D3270	CGarages::Load	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D33C0	CGameLogic::Save	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3440	CGameLogic::Load	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3540	CPickups::Save	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D35A0	CPickups::Load	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3620	CRestart::Save	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3770	CRestart::Load	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3AC0	CPlayerInfo::Save	crates/sa-ped/src/save_blocks.rs	L2	split s2-0x5d3ac0 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3B00	CPlayerInfo::Load	crates/sa-ped/src/save_blocks.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3B40	CStats::Save	crates/sa-world/src/world/save_blocks.rs	L2	split s2-0x5d3b40 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3BF0	CStats::Load	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3C70	CSetPieces::Save	crates/sa-world/src/world/save_blocks.rs	L2	split s2-0x5d3c70 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D3CA0	CSetPieces::Load	crates/sa-world/src/world/save_blocks.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3CD0	CPedType::Save	crates/sa-ped/src/save_blocks.rs	L2	split s2-0x5d3cd0 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D3D10	CPedType::Load	crates/sa-ped/src/save_blocks.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D3DE0	CShopping::Save	crates/sa-world/src/world/save_blocks.rs	L2	split s2-0x5d3de0 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D3E40	CShopping::Load	crates/sa-world/src/world/save_blocks.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D43D0	CPedSaveStructure::Construct	crates/sa-ped/src/save_blocks.rs	L2	split s5-gleaf (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D44B0	CPedSaveStructure::Extract	crates/sa-ped/src/save_blocks.rs	L2	split sg1-g4 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D4640	CPed::Load	crates/sa-ped/src/save_blocks.rs	L2	split sg1-g3 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D46E0	CPlayerPed::Load	crates/sa-ped/src/save_blocks.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D4760	CVehicle::Save	crates/sa-veh/src/vehicle2.rs	NOCASES	no call in the corpus; no vehicle of the corpus is saved (+0x4A4 == 2 only)
+0X5D47E0	CAutomobile::Save	crates/sa-veh/src/vehicle_save.rs	NOCASES	no call in the corpus; no vehicle of the corpus is saved
+0X5D4940	CPools::SaveObjectPool	crates/sa-core/src/pools.rs	L2	split s4-gsf1 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr != splito
+0X5D4C40	CTheScripts::Save	crates/sa-script/src/save.rs	L2	split s4-gsf1 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr != splito
+0X5D4FD0	CTheScripts::Load	crates/sa-script/src/save.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; first build returned AL = 1 (split save1: the bytes return the loaded script count, 0x1C); fixed
+0X5D5530	CGangWars::Save	crates/sa-pop/src/misc2.rs	L2	split s6-ggw (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D5570	CStuntJumpManager::Save	crates/sa-world/src/world/save_blocks.rs	L2	split s2-0x5d5570 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D55C0	CEntryExitManager::Load	crates/sa-world/src/world/save_blocks.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D5730	CPed::Save	crates/sa-ped/src/save_blocks.rs	L2	split s4-gsf2 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X5D57E0	CPlayerPed::Save	crates/sa-ped/src/save_blocks.rs	L2	split s4-gsf1 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr != splito
+0X5D5920	CStuntJumpManager::Load	crates/sa-world/src/world/save_blocks.rs	L2	split save1 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X5D5970	CEntryExitManager::Save	crates/sa-world/src/world/save_blocks.rs	L2	split s2-0x5d5970 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X618D00	CGenericGameStorage::GetSavedGameDateAndTime	crates/sa-core/src/save.rs	L2	split sg1-g1 (save-load, 3900 frames): PASS-FP, 60 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X618E90	CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad	crates/sa-core/src/save.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS-FP, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X618F50	CGenericGameStorage::DoGameSpecificStuffBeforeSave	crates/sa-core/src/save.rs	L2	split sg1-g2 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain
+0X619060	C_PcSave::SaveSlot	crates/sa-core/src/save.rs	ledger	split s4-gsf4 (SPLIT_STACKFILL=4096) (save-load, 3900 frames): FAIL, 1 compared, 1 mismatches, 0 undeclared; splitr == plain; save file splitr != splito; as GenericSave (s4-gsf4: 108 residue bytes, all inside the mask; only ms_CheckSum differs); trace IDENTICAL; ledger SAVE-1; kept unverified
+0X6190A0	C_PcSave::GenerateGameFilename	crates/sa-core/src/save.rs	L2	split s2-0x6190a0 (save-load, 3900 frames): PASS, 1 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito
+0X6190D0	C_PcSave::DeleteSlot	crates/sa-core/src/save.rs	NOCASES	no call in the corpus; no corpus recording deletes a save
+0X69F910	TextCopy	crates/sa-core/src/save.rs	L2	split s5-gleaf (save-load, 3900 frames): PASS, 2 compared, 0 mismatches, 0 undeclared; splitr == plain; save file splitr == splito

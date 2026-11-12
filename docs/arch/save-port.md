@@ -62,4 +62,59 @@ other byte differs. Loading never reads them back (the `Extract` functions skip 
 
 ## Verification
 
-(see below; filled in by the runs)
+Lanes 6 and 7 (`SA_ROOT=/home/ghosty2004/sa-engine`), DLL and host tools built from this branch; outputs under
+the worktree's `target/e2e/lane-{6,7}/port-l2-*` (spools deleted after each report).
+
+### Harness additions
+
+- **Harness pokes** (`crates/sa-oracle-format/src/program.rs`, `crates/sa-hook/src/detwin.rs`): a program line
+  `FRAME poke=0xADDR:0xVV` writes one byte at that frame boundary (after its hash, before its `CTimer::Update`);
+  the pokes go into the recording header (`pokes`) and every replay applies them. They stand in for the two
+  inputs no pad input reaches from the corpus start: the save point request (0xBA67A7, the byte
+  ACTIVATE_SAVE_MENU sets) and the Load Game screen of the PC pause menu (screen byte 0xBA68A5 = 9).
+- **Save files** (`tools/e2e/lib.sh`): every game start and every cleanup removes `GTASAsf1..8.b` from the lane
+  prefix's user files (the boot reads them: no run may see another run's saves); `port-l2.sh`, `l3.sh` and
+  `record-program.sh` move a run's save files next to its trace (`RUN.GTASAsfN.b`); the plain cache keeps them.
+  `port-l2.sh` check (f): a Rust run's save files are byte-identical to plain's (rust, l2) or, for the split
+  runs, to splito's (both call the sampled hooks through the L2 invoker). `verify-all.sh` turns a failed (f)
+  into a failed recording and notes a passed one.
+- **`tools/accept/save-diff.py A.b B.b [--mask]`**: block-by-block comparison of two saves; `--mask` allows only
+  the stack-residue bytes (previous section) and their copies in the padding, and checks both checksums.
+- **`tools/accept/f5-saves.sh LANE`** (PLAN F5): the save-load recording with every save and load port on Rust
+  (`all`), only the save side (`save`: the original loads the Rust save) and only the load side (`load`: Rust
+  loads the original's save); each must replay IDENTICAL to the all-original run, and its save file is
+  compared raw and with the mask.
+
+### Recording save-load (docs/e2e/corpus.md)
+
+`tools/e2e/programs/save-load.txt`, 3,900 frames: grove-walk start, SZCMAWO (the first mission fails, so no
+mission script is saved: a save made during the mission crashes the original itself on load, in
+`CTheScripts::Process`, 0x469FF7 calling address 9), hospital respawn, the save menu through the poke, the
+cheat warning, slot 1, "Save Successful", then Load Game of slot 1 from the pause menu; CJ restarts at County
+General and walks. Recorded on lane 7, replay == record IDENTICAL over 3,900 frames, record and replay save
+files identical (sha256 40be2e70...). Canonical copy: the main checkout's `target/e2e/corpus/save-load.sarec`
+(the save file it writes is never committed).
+
+### Split runs (per-hook verdicts: save-port-verdicts.tsv)
+
+A split run of all 66 hooks at once (`save1`) shows why one run is not enough: a port's caller on Rust moves
+the stack, so the original callees below it read other residue, the work buffer and `ms_CheckSum` differ, and
+every later call's inputs diverge. The hooks were therefore split into call-depth groups whose members never
+call each other (`sg1-g1..g4`, `s3-g5`), then the hooks whose inputs a residue difference still reached were run
+alone (`s2-*`, `s3-*`, `s5-*`), and the residue readers with `SPLIT_STACKFILL=4096` (`s4-gsf*`, `s6-ggw`: the
+stack below the invoker is zeroed before every sampled call in both runs, so original and port read the same
+residue; there the save files of splito and splitr are compared too).
+
+RESULTS_PLACEHOLDER
+
+### Ledger SAVE-1 (stack residue)
+
+- `GenericSave` and `C_PcSave::SaveSlot` on Rust: the original block functions (`CPed::Save`, `CPools::Save`
+  ...) they call run on a Rust frame and read other stack residue into their uninitialised structures, so the
+  written bytes differ in exactly the residue positions: split `s4-gsf3` (GenericSave, stackfill) 486 bytes,
+  `s4-gsf4` (SaveSlot) 108 bytes, every one inside the save-diff mask, checksums valid; the only mismatching
+  output is `ms_CheckSum`. The trace after the load is IDENTICAL (the `Extract` functions skip those bytes). Kept
+  `unverified` with this evidence; promoting them is a decision for the main session (the residue cannot be
+  modelled: it comes from the frames of the original callees' own callees).
+- With every save port on Rust the save file differs from the original's in residue positions only
+  (`save1` rust run: 570 bytes, all inside the mask) and the game state after loading it is IDENTICAL.

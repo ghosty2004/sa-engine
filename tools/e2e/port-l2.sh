@@ -284,13 +284,13 @@ same_as_plain() { # same_as_plain RUN → 1 when identical over every frame; dif
     "$SATOOL" diff "$OUT/plain.trace" "$OUT/$1.trace" > "$OUT/plain-vs-$1.txt" 2>&1 && full_len "$1" && echo 1
 }
 # SAVE-1: the save files a run wrote must be byte-identical to plain's (same set of slots, same bytes).
-saves_same() { # saves_same RUN → 1 when RUN wrote exactly plain's save files
-    local f n bad=0 any=0
-    for f in "$OUT"/plain.GTASAsf[1-8].b "$OUT/$1".GTASAsf[1-8].b; do
+saves_same() { # saves_same RUN [REF] → 1 when RUN wrote exactly REF's (default plain) save files
+    local f n bad=0 any=0 ref="${2:-plain}"
+    for f in "$OUT/$ref".GTASAsf[1-8].b "$OUT/$1".GTASAsf[1-8].b; do
         [ -f "$f" ] || continue
         any=1
         n="${f##*.GTASAsf}"
-        cmp -s "$OUT/plain.GTASAsf$n" "$OUT/$1.GTASAsf$n" || bad=1
+        cmp -s "$OUT/$ref.GTASAsf$n" "$OUT/$1.GTASAsf$n" || bad=1
     done
     [ "$any" = 1 ] && [ "$bad" = 0 ] && echo 1
 }
@@ -440,10 +440,16 @@ fi
 # SAVE-1 (PLAN F5): a recording that saves writes the same bytes with the ports on Rust
 if ls "$OUT"/plain.GTASAsf[1-8].b > /dev/null 2>&1; then
     note "plain save files: $(saves_info plain)"
-    for r in rust splitr l2; do
+    for r in rust l2; do
         [ -f "$OUT/$r.trace" ] || continue
         check "(f) $r save files byte-identical to plain's" "$(saves_same "$r")" "$(saves_info "$r")"
     done
+    # the split runs call the sampled hooks through the L2 invoker (other stack residue than plain): splitr
+    # is compared with splito, the original called the same way
+    if [ -f "$OUT/splitr.trace" ] && [ -f "$OUT/splito.trace" ]; then
+        check "(f) splitr save files byte-identical to splito's" "$(saves_same splitr splito)" \
+            "$(saves_info splito)/ $(saves_info splitr)"
+    fi
 fi
 S="$(l2_summary l2)"
 SA="$(l2_summary l2all)"

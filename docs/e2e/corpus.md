@@ -37,6 +37,7 @@ run (`--replay`), and its screenshots must show the intended scenario before it 
 | menus-hud (CORPUS-1) | 5,700 | pause menu pages, map, stats, controller and display setup, radio, busted in a car |
 | police-gang (CORPUS-1) | 5,200 | gang fight, 5-star wanted level, chase on foot, killed by the police, two hospital restarts |
 | menus-map-controls (PORT-MENU) | 4,000 | map pan / zoom / waypoint / legend options menu, stats.html saved, redefine-controls screen with one key redefined |
+| save-load (SAVE-1) | 3,900 | suicide and hospital respawn, save to slot 1 through a harness poke of the save point request, Load Game of slot 1 from the pause menu (screen poke), walk after the load |
 
 ### air-water
 
@@ -135,3 +136,16 @@ car-ai). Examples of new reach: radio track manager (station choice, StartRadio)
 callbacks, CWanted::SetWantedLevel / CheatWantedLevel / RemovePursuitCop, CPlayerInfo::ArrestPlayer,
 CRestart::FindClosestPoliceRestartPoint, CStats::FindCriminalRatingNumber, CPad::IsDPadUpPressed,
 CCamera::InitCameraVehicleTweaks, door-state queries of CAutomobile.
+
+### save-load
+
+Made for SAVE-1 (docs/arch/save-port.md, PLAN F5). The corpus start has no save point in reach (the first
+mission runs, and a game saved during it crashes the original on load), so the program kills CJ with SZCMAWO
+first: the mission fails and CJ respawns at County General. The save menu is opened by a **harness poke**
+(`2300 poke=0xBA67A7:0x1`, the request byte ACTIVATE_SAVE_MENU sets; stored in the recording header and applied
+by every replay): the cheat warning (OK), slot 1, "Are you sure?" Yes, "Save Successful" OK. The PC pause menu
+has no Load Game row: after esc the menu's screen byte is poked to 9 (`3020 poke=0xBA68A5:0x9`, the screen the
+main menu's Start Game page switches to), then slot 1, "Proceed with loading?" Yes; the game restarts from the
+save and CJ walks a little. The save file is written to and read from the lane prefix's user files; the e2e
+scripts delete saves before every game start and collect each run's save next to its trace (never committed).
+Replay == record IDENTICAL over 3,900 frames; the record and replay saves are byte-identical.
