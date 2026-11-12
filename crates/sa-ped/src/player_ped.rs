@@ -422,8 +422,11 @@ pub fn can_ik_reach_this_target(this: GPtr<u8>, tx: f32, ty: f32, tz: f32, w: GP
     if d.fcom(dz).test_parity(5) { 1 } else { 0 }
 }
 
-/// `CPlayerPed::ResetSprintEnergy` (0x60A530, entry `push esi; nop; jmp 0x406B3E`)
-// Not registered (INF-20): the no-CD protection reads this entry as data (`sbb ebx, [0x60A533]` at 0x4037BC).
+/// `CPlayerPed::ResetSprintEnergy` (0x60A530, entry `push esi; nop; jmp 0x406B3E`). The no-CD protection reads
+/// this entry as data (`sbb ebx, [0x60A533]` at 0x4037BC): redirected through sa-hook's key cells (INF-20).
+#[hook(addr = 0x60A530, conv = thiscall, name = "CPlayerPed::ResetSprintEnergy", expect = "56 90 E9 07 C6 DF FF",
+       this = "CPlayerPed", unverified = "intro2-1", route = "split", hazards = "none", recs = "intro",
+       note = "reached by the intro's LOAD_CUTSCENE (CCutsceneMgr::LoadCutsceneData_preload)")]
 pub fn reset_sprint_energy(this: GPtr<u8>) {
     let d = pdata(this);
     wr::<f32>(d, 0x18, X87::from_f64_exact(get_fat_and_muscle_modifier(7)).to_f32());
@@ -713,6 +716,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PICK_WEAPON_ALLOWED_FOR_2_PLAYER,
     HOOK_FIND_TARGET_PRIORITY,
     HOOK_CAN_IK_REACH_THIS_TARGET,
+    HOOK_RESET_SPRINT_ENERGY,
     HOOK_HANDLE_SPRINT_ENERGY,
     HOOK_RESET_PLAYER_BREATH,
     HOOK_REMOVE_PLAYER_PED,

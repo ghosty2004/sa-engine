@@ -714,7 +714,10 @@ pub(crate) fn create_thread(_sec: u32, _stack: u32, entry: u32, param: u32, _fla
     let f: Box<dyn FnOnce() + Send> = Box::new(move || {
         if std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).is_err() {
             let n = crate::imports::release_critical_sections_of_current_thread();
-            eprintln!("sa-game: game thread (entry {entry:#x}) stopped on a panic; {n} critical section(s) released");
+            eprintln!(
+                "sa-game: game thread (entry {entry:#x}) stopped on a panic ({}); {n} critical section(s) released",
+                crate::boot::last_panic()
+            );
         }
     });
     let (h, tid) = kernel().create_thread(f);

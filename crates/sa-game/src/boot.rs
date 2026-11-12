@@ -51,6 +51,11 @@ thread_local! {
     static LAST_PANIC: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
+/// The message of this thread's last panic (game threads report it when they stop on one).
+pub(crate) fn last_panic() -> String {
+    LAST_PANIC.with(|p| p.borrow().clone())
+}
+
 /// Silences the default panic output (the runner reports panics itself).
 pub fn install_panic_hook() {
     std::panic::set_hook(Box::new(|info| {
