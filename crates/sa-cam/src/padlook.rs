@@ -38,7 +38,6 @@ fn gf(a: usize) -> f32 {
 }
 
 /// `FUN_00540E80`: the look left/right value (float compares, as the original).
-#[sa_core::native(addr = 0x540E80, conv = thiscall, name = "CPad::FUN_00540E80")]
 pub fn pad_look_x(pad: GPtr<u8>) -> i16 {
     let s = X87::from_f32(f32::from(g::<i16>(RIGHT_STICK_X).read()));
     let neg = s.to_f32() <= 0.0;
@@ -58,7 +57,6 @@ pub fn pad_look_x(pad: GPtr<u8>) -> i16 {
 }
 
 /// `FUN_00540F80`: the look up/down value (integer compares, as the original).
-#[sa_core::native(addr = 0x540F80, conv = thiscall, name = "CPad::FUN_00540F80")]
 pub fn pad_look_y(pad: GPtr<u8>) -> i16 {
     let mut di = g::<i16>(RIGHT_STICK_Y).read();
     if g::<u8>(INVERT_LOOK).read() != 0 {
