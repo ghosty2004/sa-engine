@@ -115,7 +115,8 @@ impl Thread {
 
 /// Script-thread state of the adapter.
 pub(crate) struct Threads {
-    threads: Vec<Thread>,
+    /// Thread slots; a destroyed thread leaves `None`, reused by the next `create`.
+    threads: Vec<Option<Thread>>,
     /// The thread `run_command` uses (locals copied in and out).
     one_shot: Option<ScriptThreadRef>,
     last: Opcode,
@@ -135,16 +136,35 @@ impl Threads {
     }
 
     fn get(&self, t: ScriptThreadRef) -> GameResult<&Thread> {
-        self.threads.get(t.0 as usize).ok_or(GameError::InvalidHandle)
+        self.threads
+            .get(t.0 as usize)
+            .and_then(Option::as_ref)
+            .ok_or(GameError::InvalidHandle)
     }
 
     fn get_mut(&mut self, t: ScriptThreadRef) -> GameResult<&mut Thread> {
-        self.threads.get_mut(t.0 as usize).ok_or(GameError::InvalidHandle)
+        self.threads
+            .get_mut(t.0 as usize)
+            .and_then(Option::as_mut)
+            .ok_or(GameError::InvalidHandle)
     }
 
     fn create(&mut self) -> ScriptThreadRef {
-        self.threads.push(Thread::new());
+        if let Some(i) = self.threads.iter().position(Option::is_none) {
+            self.threads[i] = Some(Thread::new());
+            return ScriptThreadRef(i as u32);
+        }
+        self.threads.push(Some(Thread::new()));
         ScriptThreadRef(self.threads.len() as u32 - 1)
+    }
+
+    fn destroy(&mut self, t: ScriptThreadRef) {
+        if Some(t) == self.one_shot {
+            return;
+        }
+        if let Some(slot) = self.threads.get_mut(t.0 as usize) {
+            *slot = None;
+        }
     }
 
     fn run(&mut self, t: ScriptThreadRef, op: Opcode, args: &[ScriptArg<'_>]) -> GameResult<bool> {
@@ -193,6 +213,10 @@ impl<V: View> ScriptCommands for NativeGame<V> {
 
     fn create_script_thread(&mut self) -> GameResult<ScriptThreadRef> {
         Ok(self.threads.create())
+    }
+
+    fn destroy_script_thread(&mut self, thread: ScriptThreadRef) {
+        self.threads.destroy(thread);
     }
 
     fn run_on_thread(
