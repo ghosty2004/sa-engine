@@ -15,6 +15,14 @@ orig! {
     fn get_look_at_position_on_target(this: GPtr<u8>, target: GPtr<u8>, out: GPtr<u8>) = thiscall 0x50EAE0 => crate::idlecam::get_look_at_position_on_target;
     /// `CGeneral::GetATanOfXY(float x, float y)` (0x53CC70, ST0)
     fn general_get_atan_of_xy(x: f32, y: f32) -> f64 = cdecl 0x53CC70 => unported;
+    /// `CVector::Normalise()` (0x59C910)
+    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
+    /// `CHandShaker::Process(float)` (0x50D930) on `gHandShaker[0]` (0xB6ECA0)
+    fn hand_shaker_process(h: GPtr<u8>, f: f32) = thiscall 0x50D930 => unported;
+    /// `Multiply3x3(CVector* out, const CVector*, const CMatrix*)` (0x59C810, cdecl)
+    fn multiply3x3_vm(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C810 => unported;
+    /// `CrossProduct(CVector* out, const CVector*, const CVector*)` (0x59C730, cdecl)
+    fn cross_product(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = cdecl 0x59C730 => unported;
     /// `CWorld::GetIsLineOfSightClear(const CVector&, const CVector&, bool x7)` (0x56A490)
     #[allow(clippy::too_many_arguments)]
     fn world_get_is_line_of_sight_clear(a: GPtr<u8>, b: GPtr<u8>, bu: u32, ve: u32, pe: u32, ob: u32, du: u32, st: u32, ig: u32) -> u8 = cdecl 0x56A490 => unported;
@@ -241,5 +249,77 @@ pub fn idle_cam_process_fov_zoom(this: GPtr<u8>, slerp_time: f32) {
     wr::<u32>(rd::<GPtr<u8>>(this, 0x98), 0xB4, rd::<u32>(this, 0x70));
 }
 
+/// Copies three dwords.
+fn copy3(dst: GPtr<u8>, src: GPtr<u8>) {
+    for o in [0, 4, 8] {
+        wr::<u32>(dst, o, rd::<u32>(src, o));
+    }
+}
+
+/// `front.x = front.y = 0.0001` when both are exactly 0 (`fcomp 0; test ah, 0x44; jp`).
+fn nudge_vertical_front(front: GPtr<u8>) {
+    if !x(rd::<f32>(front, 0)).fcom(x(0.0)).test_parity(0x44) && !x(rd::<f32>(front, 4)).fcom(x(0.0)).test_parity(0x44) {
+        wr::<u32>(front, 0, 0x38D1_B717);
+        wr::<u32>(front, 4, 0x38D1_B717);
+    }
+}
+
+/// `right = normalise(front x up)` (through a temporary), `up = right x front`.
+fn reorthogonalise(front: GPtr<u8>, up: GPtr<u8>, right: GPtr<u8>, tmp: GPtr<u8>) {
+    copy3(right, cross_product(tmp, front, up));
+    vector_normalise(right);
+    copy3(up, cross_product(tmp, right, front));
+}
+
+/// `void CIdleCam::FinaliseIdleCamera(float angleX, float angleY, float shake)` (0x50E760, `ret 0xC`).
+///
+/// The camera (+0x98) front +0x190 = `(-(cos y cos x), -(sin y cos x), sin x)` normalised; the last idle position
+/// +0x18 = front + source (+0x19C). `gHandShaker[0].Process(shake * +0x88)`; the front goes through its result
+/// matrix (`Multiply3x3`), up +0x1B4 = `(sin a, 0, cos a)` with `a = shaker angle z * +0x88 * shake`; right =
+/// normalise(front x up), up = right x front; a front with x and y exactly 0 gets 0.0001 each; right / up again.
+/// Then up is reset to (0, 0, 1), the front normalised, and the nudge and the right / up pass repeated. The
+/// original keeps `a` in its angleY argument slot.
+#[hook(addr = 0x50E760, conv = thiscall, name = "CIdleCam::FinaliseIdleCamera", this = "CIdleCam",
+       expect = "83 EC 24 D9 44 24 28",
+       unverified = "native-18", route = "L2", hazards = "x87-transcendental,stack-residue", recs = "grove-walk",
+       note = "fsin / fcos; reached once the idle camera runs")]
+pub fn idle_cam_finalise(this: GPtr<u8>, ax: f32, ay: f32, shake: f32) {
+    let cam = rd::<GPtr<u8>>(this, 0x98);
+    let front = cam.byte_add(0x190);
+    let up = cam.byte_add(0x1B4);
+    let cx = x(ax).fcos();
+    wr::<f32>(front, 0, x(ay).fcos().fmul(cx).fchs().to_f32());
+    wr::<f32>(front, 4, x(ay).fsin().fmul(cx).fchs().to_f32());
+    wr::<f32>(front, 8, x(ax).fsin().to_f32());
+    vector_normalise(front);
+    let cam = rd::<GPtr<u8>>(this, 0x98);
+    let f = |o: isize| rd::<f32>(cam, o);
+    wr::<f32>(this, 0x18, x(f(0x190)).fadd_m(f(0x19C)).to_f32());
+    wr::<f32>(this, 0x1C, x(f(0x1A0)).fadd_m(f(0x194)).to_f32());
+    wr::<f32>(this, 0x20, x(f(0x1A4)).fadd_m(f(0x198)).to_f32());
+    hand_shaker_process(GPtr::from_addr(0xB6_ECA0), x(shake).fmul_m(rd::<f32>(this, 0x88)).to_f32());
+    let a = x(g::<f32>(0xB6_ECA8).read()).fmul_m(rd::<f32>(this, 0x88)).fmul_m(shake).to_f32();
+    let mut buf = [0u32; 9];
+    let right: GPtr<u8> = GPtr::from_raw(buf.as_mut_ptr()).cast();
+    let tmp = right.byte_add(12);
+    let out = right.byte_add(24);
+    let r = multiply3x3_vm(out, front, GPtr::from_addr(0xB6_ECDC));
+    copy3(front, r);
+    wr::<f32>(up, 0, x(a).fsin().to_f32());
+    wr::<u32>(up, 4, 0);
+    wr::<f32>(up, 8, x(a).fcos().to_f32());
+    copy3(right, cross_product(tmp, front, up));
+    vector_normalise(right);
+    copy3(up, cross_product(tmp, right, front));
+    nudge_vertical_front(front);
+    reorthogonalise(front, up, right, tmp);
+    wr::<u32>(up, 0, 0);
+    wr::<u32>(up, 4, 0);
+    wr::<u32>(up, 8, 0x3F80_0000);
+    vector_normalise(front);
+    nudge_vertical_front(front);
+    reorthogonalise(front, up, right, tmp);
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_IDLE_CAM_PROCESS_SLERP, HOOK_IDLE_CAM_PROCESS_FOV_ZOOM];
+pub const HOOKS: &[HookReg] = &[HOOK_IDLE_CAM_PROCESS_SLERP, HOOK_IDLE_CAM_PROCESS_FOV_ZOOM, HOOK_IDLE_CAM_FINALISE];
