@@ -34,6 +34,7 @@ mod game_window;
 mod imports;
 mod native;
 mod rw_standin;
+mod samp;
 mod screen;
 mod sha256;
 mod winmain;
@@ -62,6 +63,10 @@ pub struct Args {
     report: Option<PathBuf>,
     /// the user documents folder: `None` = a fresh temporary folder for this run (removed at exit)
     documents: Option<PathBuf>,
+    /// `--samp HOST[:PORT]`: host the SA:MP client (skeleton, `samp.rs`)
+    samp: Option<String>,
+    /// `--name NAME`: the SA:MP nickname
+    name: String,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -75,6 +80,8 @@ fn parse_args() -> Result<Args, String> {
         screenshot: None,
         report: None,
         documents: None,
+        samp: None,
+        name: "Player".into(),
     };
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
@@ -92,21 +99,27 @@ fn parse_args() -> Result<Args, String> {
             "--documents" => a.documents = Some(PathBuf::from(val()?)),
             "--persistent-documents" => a.documents = Some(documents_dir()),
             "--start-in-world" => native::set_start_in_world(),
+            "--samp" => a.samp = Some(val()?),
+            "--name" => a.name = val()?,
             "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME]] [--fixed-step MS] [--frame-times FILE] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
                      the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK).\n\
                      --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
-                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE)."
+                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE).\n\
+                     --samp hosts the SA:MP client (skeleton: the native game adapter with a stand-in client, no network yet)."
                 );
                 std::process::exit(0);
             }
             _ => return Err(format!("unknown option {k}")),
         }
+    }
+    if let Some(s) = &a.samp {
+        samp::parse_target(s, &a.name)?;
     }
     if a.game.as_os_str().is_empty() {
         return Err("--game DIR is required (the GTA San Andreas install)".into());
@@ -147,6 +160,8 @@ pub struct Session {
     repeats: u32,
     /// the loop stopped (aborted, `CGame::Initialise` failed, or the same failure three times)
     stopped: bool,
+    /// `--samp`: the SA:MP target the adapter was installed for
+    samp_target: Option<samp::Target>,
 }
 
 /// The platform setup and the boot (WinMain up to its main loop).
@@ -191,6 +206,14 @@ pub fn boot(args: &Args) -> Result<Session, String> {
         calls: Default::default(),
     });
 
+    let samp_target = match &args.samp {
+        Some(s) => {
+            let t = samp::parse_target(s, &args.name)?;
+            samp::install(&t)?;
+            Some(t)
+        }
+        None => None,
+    };
     println!(
         "sa-game: game folder {} (read-only), user documents {}",
         args.game.display(),
@@ -250,6 +273,7 @@ pub fn boot(args: &Args) -> Result<Session, String> {
         last: None,
         repeats: 0,
         stopped: false,
+        samp_target,
     })
 }
 
@@ -425,6 +449,9 @@ impl Session {
             for (m, n) in &undelivered {
                 let _ = writeln!(md, "- message {m:#06x}: {n}");
             }
+        }
+        if let Some(t) = &self.samp_target {
+            samp::report(&mut md, t);
         }
         let count = |p: &str| rep.rows.iter().filter(|r| r.3.starts_with(p)).count();
         let (ok, blocked, orig, crashed) =
