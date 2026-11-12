@@ -56,10 +56,12 @@ pub mod imports;
 pub mod native;
 pub mod rw_standin;
 pub mod samp;
+pub mod samp_assets;
 #[cfg(feature = "samp")]
 pub mod samp_net;
 pub mod samp_input;
 pub mod samp_ui_demo;
+pub mod samp_ui_scene;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod screen;
 pub mod sha256;

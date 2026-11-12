@@ -16,7 +16,7 @@ use crate::dialog::Dialog;
 use crate::draw::DrawList;
 use crate::edit::EditKey;
 use crate::font::{FontId, Measure};
-use crate::panels::{KillList, KillRow, Scoreboard, draw_cursor};
+use crate::panels::{KillList, KillRow, Scoreboard};
 use crate::textdraw::TextDraws;
 use crate::world::{BUBBLE_MAX_LEN, Bubble, NametagRules, bubble_lines, draw_bubbles};
 use crate::world::{WorldView, draw_labels, draw_nametags};
@@ -94,6 +94,7 @@ pub struct Ui {
     screen: (f32, f32),
     measure_cache: Option<Box<dyn MeasureSnapshot>>,
     options: UiOptions,
+    skin: bool,
 }
 
 /// Metrics kept between frames for mouse hit tests (dialog and scoreboard geometry).
@@ -189,6 +190,12 @@ impl Ui {
         &self.options
     }
 
+    /// Whether the renderer holds samp's skin texture (`sampgui.png` + `mouse.png`, [`crate::skin`]): GUI
+    /// controls and the cursor are then drawn from it.
+    pub fn set_skin(&mut self, loaded: bool) {
+        self.skin = loaded;
+    }
+
     /// Big messages queued for the engine since the last call.
     pub fn take_game_texts(&mut self) -> Vec<GameText> {
         std::mem::take(&mut self.game_texts)
@@ -280,6 +287,10 @@ impl Ui {
     /// printed into `CFont`'s buffer with the HUD's own text.
     pub fn build_textdraws(&mut self, w: f32, h: f32) -> DrawList {
         let mut d = DrawList::default();
+        // samp skips the textdraws while the scoreboard is open (samp.dll 0x100c5030).
+        if self.scoreboard.is_some() {
+            return d;
+        }
         let cursor = self.cursor_visible().then_some(self.cursor);
         self.textdraws.draw(w, h, cursor, &mut d);
         d
@@ -300,30 +311,39 @@ impl Ui {
             self.measure_cache = Some(snapshot(m));
         }
         self.screen = (w, h);
-        let mut d = DrawList::default();
+        let mut d = DrawList {
+            skin: self.skin,
+            ..DrawList::default()
+        };
         let cursor = self.cursor_visible().then_some(self.cursor);
         let rules = NametagRules {
             show: self.options.nametags,
             distance: self.options.nametag_distance,
             los: self.options.nametag_los,
         };
+        // samp's Present order (samp.dll 0x10075790): nametags; with the scoreboard open only the
+        // scoreboard; otherwise bubbles, labels, chat, input, kill list, dialog.
         draw_nametags(&self.nametags, rules, world, m, &mut d);
-        draw_labels(self.labels.values(), world, m, &mut d);
         self.bubbles.retain(|_, b| !b.expired(time_ms));
-        draw_bubbles(self.bubbles.values(), world, m, &mut d);
-        self.kills.draw(m, w, h, &mut d);
-        self.chat.draw(m, w as u32, &mut d);
-        let bottom = self.chat.bottom(m.line_height(FontId::Main));
-        self.chat.draw_scrollbar(m, self.input.is_open(), &mut d);
-        self.input.draw(m, w as u32, bottom, time_ms, &mut d);
         if let Some(sb) = &self.scoreboard {
             sb.draw(m, w, h, cursor, &mut d);
-        }
-        if let Some(dl) = &self.dialog {
-            dl.draw(m, w, h, cursor, time_ms, &mut d);
+        } else {
+            draw_bubbles(self.bubbles.values(), world, m, &mut d);
+            draw_labels(self.labels.values(), world, m, &mut d);
+            self.chat.draw(m, w as u32, &mut d);
+            let bottom = self.chat.bottom(m.line_height(FontId::Main));
+            self.kills.draw(m, w, h, &mut d);
+            if let Some(dl) = &self.dialog
+                && !self.input.is_open()
+            {
+                dl.draw(m, w, h, cursor, time_ms, &mut d);
+            }
+            // The chat / input GUI dialog renders after samp's dialog: the scrollbar, then the edit box.
+            self.chat.draw_scrollbar(m, self.input.is_open(), &mut d);
+            self.input.draw(m, w as u32, bottom, time_ms, &mut d);
         }
         if let Some((x, y)) = cursor {
-            draw_cursor(x, y, &mut d);
+            d.cursor(x, y);
         }
         d
     }
@@ -739,7 +759,10 @@ mod tests {
         let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
         assert!(d.texts().contains(&"chat"));
         assert!(matches!(d.cmds.last(), Some(crate::draw::Cmd::Triangle { .. })));
-        // F7 hides the chat.
+        // F7 twice hides the chat (outlined → plain → off).
+        key(&mut ui, vk::F7);
+        let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
+        assert!(d.texts().contains(&"chat"));
         key(&mut ui, vk::F7);
         let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
         assert!(!d.texts().contains(&"chat"));

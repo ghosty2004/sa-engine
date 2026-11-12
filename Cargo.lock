@@ -2150,6 +2150,7 @@ dependencies = [
  "sa-rwcore",
  "sa-samp",
  "sa-samp-api",
+ "sa-samp-ui",
  "sa-script",
  "sa-stream",
  "sa-veh",

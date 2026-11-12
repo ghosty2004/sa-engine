@@ -168,6 +168,8 @@ pub struct SampOptions {
     /// wasm32: the sa-udp-proxy WebSocket URL
     pub proxy: Option<String>,
     pub ui_demo: bool,
+    /// the game folder, where SA:MP's own UI files are looked up (`samp_assets`; empty in the browser)
+    pub game: PathBuf,
 }
 
 impl Args {
@@ -178,6 +180,7 @@ impl Args {
             auth: self.samp_auth.clone(),
             proxy: self.samp_proxy.clone(),
             ui_demo: self.samp_ui_demo,
+            game: self.game.clone(),
         }
     }
 }
@@ -188,13 +191,13 @@ fn install_samp(o: &SampOptions) -> Result<Option<crate::samp::Target>, String> 
         Some(s) => {
             let mut t = crate::samp::parse_target(s, &o.name)?;
             t.proxy = o.proxy.clone();
-            crate::samp::install(&t, o.auth.as_deref())?;
+            crate::samp::install(&t, o.auth.as_deref(), &o.game)?;
             Some(t)
         }
         None => None,
     };
     if o.ui_demo {
-        crate::samp_ui_demo::install()?;
+        crate::samp_ui_demo::install(&o.game)?;
     }
     Ok(target)
 }

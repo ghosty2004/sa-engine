@@ -174,6 +174,7 @@ fn samp_options() -> crate::app::SampOptions {
         auth: None,
         proxy: crate::env::var_os("SA_SAMP_PROXY"),
         ui_demo: crate::env::var_os("SA_SAMP_UI_DEMO").is_some(),
+        game: std::path::PathBuf::new(),
     }
 }
 
