@@ -1091,3 +1091,11 @@
   blocked. verify-all int7: IDENTICAL on all 13 recordings (int7b recheck of the final DLL: grove + driving IDENTICAL).
 - Not in yet: WRITER-SAMP-2, SAMP-4/WEB-*/SAMP-START (samp-rs dependency path), STD-15, INTEGRATE-6.
 - Catalogue: VERIFIER-9 promotions recorded; every registered address at least `implemented`.
+
+## 2026-11-12 late morning: hand-off state (main session)
+- See docs/CONTINUE.md for every unmerged branch, its head and what it holds, and the next steps.
+- Reached on branches today (not yet on master): native driving (STD-15), climbing (WRITER-CLIMB), sa-game in the
+  browser (WEB-1/2/3: boot → world → walk/sprint/jump/climb/drive, WebGL2 + WebGPU, input, full window, audio),
+  SA:MP in the browser through sa-udp-proxy (join, class selection, spawn, chat, interiors), SA:MP startup 1:1
+  (SAMP-START, samp.dll patch points), SA:MP UI compared with the original client (SAMP-UI-2).
+- samp-rs: branch sa-engine/adapter fast-forwarded to fb89010 (SAMP-4's 13 verified commits) with the user's approval.
