@@ -124,6 +124,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::use_attractor_tasks::HOOKS,
     crate::wander_set_dir::HOOKS,
     crate::walk_round_object_sub_task::HOOKS,
+    crate::event_vehicle_damage_ctor::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
