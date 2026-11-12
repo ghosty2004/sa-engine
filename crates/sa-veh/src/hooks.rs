@@ -58,6 +58,7 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpd_v5::HOOKS,
     mvpd_v6::HOOKS,
     mvpd_v7::HOOKS,
+    crate::heli_cone::HOOKS,
     // WRITER-VEH-BIG (unverified batches)
     crate::automobile_control::HOOKS,
     crate::automobile_wheels::HOOKS,
