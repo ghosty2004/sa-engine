@@ -129,9 +129,9 @@ fn ui_event(e: sa_samp_api::input::WindowEvent) -> sa_samp_api::input::EventResu
     })
 }
 
-/// Whether the UI has the keyboard.
-fn ui_wants_keyboard() -> bool {
-    GAME.with(|g| g.borrow_mut().as_mut().and_then(|g| g.ui().map(|u| u.wants_keyboard())).unwrap_or(false))
+/// samp's input lock (keyboard, mouse) from the UI.
+fn ui_lock() -> (bool, bool) {
+    GAME.with(|g| g.borrow().as_ref().map(|g| g.ui_input_lock()).unwrap_or_default())
 }
 
 
@@ -159,7 +159,7 @@ pub fn install(target: &Target) -> Result<(), String> {
     .map_err(|e| format!("samp: install: {e}"))?;
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
-    crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, wants_keyboard: ui_wants_keyboard });
+    crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, lock: ui_lock });
     println!(
         "sa-game: samp mode (skeleton): server {}:{} as {}; adapter {:?}; stand-in client (no network yet)",
         target.host,

@@ -135,6 +135,13 @@ impl<V: View> NativeGame<V> {
         }
     }
 
+    /// samp's input lock while the UI is up: (keyboard, mouse).
+    pub fn ui_input_lock(&self) -> (bool, bool) {
+        use sa_samp_api::ui::SampUi as _;
+        let keyboard = self.overlay.ui.wants_keyboard();
+        (keyboard, keyboard || self.overlay.ui.locks_mouse())
+    }
+
     /// Live peds within `radius` of `centre` (pool order), for nametag demos and tests.
     pub fn peds_near(&self, centre: Vec3, radius: f32) -> Vec<PedRef> {
         let v = &self.view;
