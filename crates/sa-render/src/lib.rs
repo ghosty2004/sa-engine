@@ -125,6 +125,7 @@ pub mod roadsign_atomic;
 pub mod generated;
 pub mod visibility_vehicle;
 pub mod visibility_weapon;
+pub mod heat_haze_fx;
 pub mod fx_emitter_render;
 pub mod plant_statics_init;
 pub mod visibility_train_big_vehicle;
