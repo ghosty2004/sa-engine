@@ -68,10 +68,10 @@ fn transform(m: GPtr<u8>, mut v: [f32; 3]) -> [f32; 3] {
 /// 0xAC-byte `ActiveOccluders` at 0xC78610) and the bound centre on screen, the screen radius is `sphere radius
 /// * max(w, h) * 0x858C20`. An occluder nearer than the centre's depth minus the radius (`int16` +0x78) hides
 /// the entity when the centre's screen circle is within its area and the centre is behind it; otherwise, when
-/// the centre point is within its area, the bounding box corners min, (min.x, max.y, max.z) and (max.x, min.y,
-/// min.z) must all be hidden (later corners are skipped once one fails); then boxes not larger than 60 in x or y
-/// or not larger than 0x858CA4 in z are occluded, else (min.x, min.y, max.z) and (max.x, min.y, max.z) must be
-/// hidden too.
+/// the centre point is within its area, the bounding box corners min, max, (min.x, max.y, max.z) and (max.x,
+/// min.y, min.z) must all be hidden (all four are transformed; later tests are skipped once one fails); then
+/// boxes not larger than 60 in x or y or not larger than 0x858CA4 in z are occluded, else (min.x, min.y,
+/// max.z) and (max.x, min.y, max.z) must be hidden too.
 #[hook(addr = 0x71FAE0, conv = thiscall, name = "CEntity::IsEntityOccluded", this = "CEntity", expect = "81 EC AC 00 00 00",
        unverified = "mvpd-world-3", route = "L2", hazards = "none")]
 pub fn entity_is_entity_occluded(this: GPtr<u8>) -> u8 {
@@ -112,17 +112,16 @@ pub fn entity_is_entity_occluded(this: GPtr<u8>) -> u8 {
             continue;
         }
         let cv = |o: isize| rd::<f32>(col_model(this), o);
-        let mut ok = {
-            let col = col_model(this);
-            let mut p = transform(ensure_matrix(this), [rd::<f32>(col, 0), rd::<f32>(col, 4), rd::<f32>(col, 8)]);
-            corner_hidden(occ, &mut p)
-        };
-        let mut p = transform(ensure_matrix(this), [cv(0), cv(0x10), cv(0x14)]);
-        if ok {
-            ok = corner_hidden(occ, &mut p);
+        // min, max, (min.x, max.y, max.z), (max.x, min.y, min.z): every corner is transformed, the test
+        // stops at the first one that is not hidden
+        let mut ok = true;
+        for (a, b, c) in [(0, 4, 8), (0xC, 0x10, 0x14), (0, 0x10, 0x14), (0xC, 4, 8)] {
+            let mut p = transform(ensure_matrix(this), [cv(a), cv(b), cv(c)]);
+            if ok {
+                ok = corner_hidden(occ, &mut p);
+            }
         }
-        let mut p = transform(ensure_matrix(this), [cv(0xC), cv(4), cv(8)]);
-        if !ok || !corner_hidden(occ, &mut p) {
+        if !ok {
             continue;
         }
         let col = col_model(this);
