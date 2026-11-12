@@ -105,6 +105,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::smart_flee_point_position::HOOKS,
     crate::event_history_store::HOOKS,
     crate::geometry_line_of_sight::HOOKS,
+    crate::ik_chain_blend_out::HOOKS,
     crate::attractor_ped_use_effect::HOOKS,
     crate::general_node_heading::HOOKS,
     crate::route_round_entity_bbox::HOOKS,

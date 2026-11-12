@@ -1,8 +1,13 @@
-//! `CTaskComplexSmartFleePoint::SetFleePosition` (0x65C3C0, batch `std12-ai-1`): reached when an ambient ped flees
-//! from a point near CJ. Unreversed in gta-reversed; ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
+//! `CTaskComplexSmartFleePoint::SetFleePosition` (0x65C3C0) and `ComputeFleeDir` (0x65BE40) (batch `std12-ai-1`):
+//! reached when an ambient ped flees from a point near CJ. Unreversed in gta-reversed; ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
-use sa_core::hook;
+use sa_core::{hook, orig};
+
+orig! {
+    /// `CGeneral::GetNodeHeadingFromVector(float x, float y)` (0x53CDC0), floats as bits
+    fn node_heading_from_vector(x: u32, y: u32) -> u32 = cdecl 0x53CDC0 => unported;
+}
 
 use crate::common::*;
 
@@ -29,5 +34,17 @@ pub fn smart_flee_point_set_flee_position(this: GPtr<u8>, pos: GPtr<u8>, dist: f
     wr::<u8>(this, 0x24, scream as u8);
 }
 
+/// `CTaskComplexSmartFleePoint::ComputeFleeDir(CPed* ped)` (0x65BE40, thiscall, `ret 4`):
+/// `GetNodeHeadingFromVector(f32(ped.x - flee.x), f32(ped.y - flee.y))` (flee point +0x18), its EAX returned.
+#[hook(addr = 0x65BE40, conv = thiscall, name = "CTaskComplexSmartFleePoint::ComputeFleeDir", expect = "8B 54 24 04 8B 42 14",
+       unverified = "std12-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn smart_flee_point_compute_flee_dir(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let p = if m.is_null() { ped.byte_add(4) } else { m.byte_add(0x30) };
+    let dy = x(rd::<f32>(p, 4)).fsub_m(rd::<f32>(this, 0x1C)).to_f32();
+    let dx = x(rd::<f32>(p, 0)).fsub_m(rd::<f32>(this, 0x18)).to_f32();
+    node_heading_from_vector(dx.to_bits(), dy.to_bits())
+}
+
 /// This module's hooks.
-pub const HOOKS: &[HookReg] = &[HOOK_SMART_FLEE_POINT_SET_FLEE_POSITION];
+pub const HOOKS: &[HookReg] = &[HOOK_SMART_FLEE_POINT_SET_FLEE_POSITION, HOOK_SMART_FLEE_POINT_COMPUTE_FLEE_DIR];
