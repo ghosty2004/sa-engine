@@ -47,6 +47,18 @@ pub fn ped_damage_response_calculator_dtor(_this: crate::mem::GPtr<u8>) {}
 #[crate::native(addr = 0x5E01B0, conv = thiscall, name = "CPed::UpdateStatLeavingVehicle")]
 pub fn ped_update_stat_leaving_vehicle(_this: crate::mem::GPtr<u8>) {}
 
+/// `CCranes::IsThisCarPickedUp(float, float, CVehicle*)` (0x6F3FD0, cdecl): `xor al, al; ret` (false in AL).
+#[crate::native(addr = 0x6F3FD0, conv = cdecl, name = "CCranes::IsThisCarPickedUp")]
+pub fn cranes_is_this_car_picked_up(_x: u32, _y: u32, _veh: u32) -> u8 {
+    0
+}
+
+/// `CBridge::ShouldLightsBeFlashing()` (0x41BC90, cdecl): `xor al, al; ret` (false in AL).
+#[crate::native(addr = 0x41BC90, conv = cdecl, name = "CBridge::ShouldLightsBeFlashing")]
+pub fn bridge_should_lights_be_flashing() -> u8 {
+    0
+}
+
 /// This module's natives.
 pub const NATIVES: &[crate::abi::NativeReg] = &[
     NATIVE_CRANES_IS_THIS_CAR_BEING_TARGETTED_BY_ANY_CRANE,
@@ -57,4 +69,6 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     NATIVE_COL_POINT_GET_SURFACE_TYPE_B,
     NATIVE_PED_DAMAGE_RESPONSE_CALCULATOR_DTOR,
     NATIVE_PED_UPDATE_STAT_LEAVING_VEHICLE,
+    NATIVE_CRANES_IS_THIS_CAR_PICKED_UP,
+    NATIVE_BRIDGE_SHOULD_LIGHTS_BE_FLASHING,
 ];
