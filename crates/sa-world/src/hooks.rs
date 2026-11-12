@@ -139,6 +139,13 @@ pub const MODULES: &[&[HookReg]] = &[
     world::garage_car_blocking::HOOKS,
     world::garage_slide_door_closed::HOOKS,
     world::garage_store_cars::HOOKS,
+    world::interior_furnish_lookup::HOOKS,
+    world::furniture_lists::HOOKS,
+    world::world_small_actions::HOOKS,
+    world::interior_room_items::HOOKS,
+    world::stats_records::HOOKS,
+    world::garage_checks::HOOKS,
+    world::entity_sector_check::HOOKS,
     crate::generated::HOOKS,
     // SAVE-1
     world::save_blocks::HOOKS,
