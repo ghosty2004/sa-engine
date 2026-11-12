@@ -5,33 +5,39 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| clump-1 | 18 | RW | 3a6b0e0 | worktree-agent-a5944be11b642b989 | 18 | 0 | 0 | 0 | 0 | L2 14, split 4 |
-| gen2-anim-1 | 25 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 25 | 0 | 0 | 0 | 0 | L1-pure 1, L2 6, split 18 |
-| gen2-cam-1 | 1 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| gen2-coll-1 | 33 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 33 | 0 | 0 | 0 | 0 | L2 8, split 25 |
-| gen2-core-1 | 56 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 56 | 0 | 0 | 0 | 0 | L2 8, split 48 |
-| gen2-input-1 | 15 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 15 | 0 | 0 | 0 | 0 | split 15 |
-| gen2-ped-1 | 25 | PED, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 25 | 0 | 0 | 0 | 0 | L2 6, split 19 |
-| gen2-phys-1 | 7 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 7 | 0 | 0 | 0 | 0 | L2 1, split 6 |
-| gen2-pop-1 | 3 | POP, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| gen2-render-1 | 48 | RENDER, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 48 | 0 | 0 | 0 | 0 | L2 7, split 41 |
-| gen2-render-2 | 48 | RENDER, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 48 | 0 | 0 | 0 | 0 | split 48 |
-| gen2-render-3 | 48 | RENDER, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 48 | 0 | 0 | 0 | 0 | split 48 |
-| gen2-render-4 | 48 | RENDER, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 48 | 0 | 0 | 0 | 0 | L2 41, split 7 |
-| gen2-rw-1 | 57 | RW, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 57 | 0 | 0 | 0 | 0 | L1-pure 3, L2 9, split 45 |
-| gen2-rw-2 | 57 | RW, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 57 | 0 | 0 | 0 | 0 | L1-pure 4, L2 27, split 26 |
-| gen2-rw-3 | 57 | RW, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 57 | 0 | 0 | 0 | 0 | L1-pure 1, L2 56 |
-| gen2-rw-4 | 57 | RW, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 57 | 0 | 0 | 0 | 0 | L1-pure 5, L2 52 |
-| gen2-rw-5 | 53 | RW | 51c0470 | worktree-agent-a5944be11b642b989 | 53 | 0 | 0 | 0 | 0 | L1-pure 5, L2 48 |
-| gen2-script-1 | 54 | SCRIPT, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 54 | 0 | 0 | 0 | 0 | L1-pure 4, L2 12, split 38 |
-| gen2-stream-1 | 53 | STREAM, UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 53 | 0 | 0 | 0 | 0 | L2 5, split 48 |
-| gen2-veh-1 | 19 | UNK-game, VEH | 51c0470 | worktree-agent-a5944be11b642b989 | 19 | 0 | 0 | 0 | 0 | L1-pure 1, L2 17, split 1 |
-| gen2-weapon-1 | 53 | UNK-game | 51c0470 | worktree-agent-a5944be11b642b989 | 53 | 0 | 0 | 0 | 0 | L2 1, split 52 |
-| gen2-world-1 | 28 | UNK-game, WORLD | 51c0470 | worktree-agent-a5944be11b642b989 | 28 | 0 | 0 | 0 | 0 | L1-pure 1, L2 20, split 7 |
-| harness5-1 | 7 | AUDIO, RENDER | 108e489 | worktree-agent-a5944be11b642b989 | 7 | 0 | 0 | 0 | 0 | L1-pure 2, L2 5 |
-| menu-1 | 1 | HUD | 36dccf2 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| menu-2 | 1 | HUD | 36dccf2 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | split 1 |
-| menu-3 | 4 | HUD | 36dccf2 | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
+| clump-1 | 18 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 18 | 0 | 0 | 0 | 0 | L2 14, split 4 |
+| gen2-anim-1 | 25 | UNK-game | ed288e8 | master | 25 | 0 | 0 | 0 | 0 | L1-pure 1, L2 6, split 18 |
+| gen2-cam-1 | 1 | UNK-game | ed288e8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| gen2-coll-1 | 33 | UNK-game | ed288e8 | master | 33 | 0 | 0 | 0 | 0 | L2 8, split 25 |
+| gen2-core-1 | 56 | UNK-game | ed288e8 | master | 56 | 0 | 0 | 0 | 0 | L2 8, split 48 |
+| gen2-input-1 | 15 | UNK-game | ed288e8 | master | 15 | 0 | 0 | 0 | 0 | split 15 |
+| gen2-ped-1 | 23 | UNK-game | ed288e8 | master | 23 | 0 | 0 | 0 | 0 | L2 4, split 19 |
+| gen2-phys-1 | 7 | UNK-game | ed288e8 | master | 7 | 0 | 0 | 0 | 0 | L2 1, split 6 |
+| gen2-pop-1 | 3 | POP, UNK-game | ed288e8 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| gen2-render-1 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | L2 7, split 41 |
+| gen2-render-2 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | split 48 |
+| gen2-render-3 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | split 48 |
+| gen2-render-4 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | L2 41, split 7 |
+| gen2-rw-1 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 3, L2 9, split 45 |
+| gen2-rw-2 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 4, L2 27, split 26 |
+| gen2-rw-3 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 1, L2 56 |
+| gen2-rw-4 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 5, L2 52 |
+| gen2-rw-5 | 53 | RW | ed288e8 | master | 53 | 0 | 0 | 0 | 0 | L1-pure 5, L2 48 |
+| gen2-script-1 | 54 | SCRIPT, UNK-game | ed288e8 | master | 54 | 0 | 0 | 0 | 0 | L1-pure 4, L2 12, split 38 |
+| gen2-stream-1 | 53 | STREAM, UNK-game | ed288e8 | master | 53 | 0 | 0 | 0 | 0 | L2 5, split 48 |
+| gen2-veh-1 | 17 | UNK-game, VEH | ed288e8 | master | 17 | 0 | 0 | 0 | 0 | L1-pure 1, L2 15, split 1 |
+| gen2-weapon-1 | 53 | UNK-game | ed288e8 | master | 53 | 0 | 0 | 0 | 0 | L2 1, split 52 |
+| gen2-world-1 | 28 | UNK-game, WORLD | ed288e8 | master | 28 | 0 | 0 | 0 | 0 | L1-pure 1, L2 20, split 7 |
+| harness5-1 | 7 | AUDIO, RENDER | 909b776 | master | 7 | 0 | 0 | 0 | 0 | L1-pure 2, L2 5 |
+| intro-ai-1 | 4 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| intro-ai-2 | 35 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 35 | 0 | 0 | 0 | 0 | L2 35 |
+| intro-ai-3 | 7 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| intro-ai-4 | 8 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| intro-ai-5 | 2 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| intro-anim-1 | 2 | ANIM | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| menu-1 | 1 | HUD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| menu-2 | 1 | HUD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | split 1 |
+| menu-3 | 4 | HUD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
 | mvpa-ai-1 | 21 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 2 | 19 | 0 | L2 21 |
 | mvpa-ai-2 | 23 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 0 | 23 | 0 | L2 23 |
 | mvpa-core-1 | 5 | CORE | 09ffb62 | master | 0 | 0 | 0 | 5 | 0 | L3-only 5 |
@@ -45,19 +51,19 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpa-world-1 | 9 | WORLD | 09ffb62 | master | 0 | 0 | 0 | 9 | 0 | L2 8, split 1 |
 | mvpa-world-2 | 2 | WORLD | 09ffb62 | master | 0 | 0 | 1 | 1 | 0 | L2 2 |
 | mvpa-world-3 | 1 | UNK-game | 09ffb62 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpb-ai-1 | 3 | UNK-game | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| mvpb-anim-1 | 2 | ANIM | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpb-coll-1 | 1 | UNK-game | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpb-core-1 | 7 | CORE | a140bda | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 7 | 0 | L3-only 7 |
-| mvpb-render-1 | 30 | RENDER | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 30 | 0 | L2 25, L3-only 4, split 1 |
-| mvpb-veh-1 | 6 | VEH | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 6 | 0 | L2 6 |
-| mvpb-veh-2 | 5 | VEH | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 5 | 0 | L2 5 |
-| mvpb-veh-3 | 2 | VEH | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpb-veh-4 | 2 | VEH | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpb-veh-5 | 1 | VEH | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| mvpb-world-1 | 9 | WORLD | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 9 | 0 | L2 9 |
-| mvpb-world-2 | 2 | WORLD | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 2 | 0 | L2 2 |
-| mvpb-world-5 | 4 | WORLD | 3692436 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| mvpb-ai-1 | 3 | UNK-game | 09ffb62 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| mvpb-anim-1 | 2 | ANIM | 09ffb62 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| mvpb-coll-1 | 1 | UNK-game | 09ffb62 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| mvpb-core-1 | 7 | CORE | 09ffb62 | master | 0 | 0 | 0 | 7 | 0 | L3-only 7 |
+| mvpb-render-1 | 30 | RENDER | 09ffb62 | master | 0 | 0 | 0 | 30 | 0 | L2 25, L3-only 4, split 1 |
+| mvpb-veh-1 | 6 | VEH | 09ffb62 | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
+| mvpb-veh-2 | 5 | VEH | 09ffb62 | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
+| mvpb-veh-3 | 2 | VEH | 09ffb62 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| mvpb-veh-4 | 2 | VEH | 09ffb62 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| mvpb-veh-5 | 1 | VEH | 09ffb62 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| mvpb-world-1 | 9 | WORLD | 09ffb62 | master | 0 | 0 | 0 | 9 | 0 | L2 9 |
+| mvpb-world-2 | 2 | WORLD | 09ffb62 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| mvpb-world-5 | 4 | WORLD | 09ffb62 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | mvpc-ai-1 | 28 | AI, UNK-game | 09ffb62 | master | 28 | 0 | 0 | 0 | 0 | L2 17, split 11 |
 | mvpc-ai-2 | 5 | UNK-game | 09ffb62 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | mvpc-ai-3 | 10 | AI, UNK-game | 09ffb62 | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
@@ -68,202 +74,202 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpc-veh-1 | 1 | VEH | 09ffb62 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
 | mvpc-world-1 | 13 | WORLD | 09ffb62 | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
 | mvpc-world-2 | 4 | WORLD | 09ffb62 | master | 4 | 0 | 0 | 0 | 0 | L2 2, split 2 |
-| mvpd-ai-1 | 2 | CALLED-ONLY, UNK-game | be8a838 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpd-coll-1 | 2 | COLL | be8a838 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpd-d3d-1 | 6 | CALLED-ONLY, UNK-game | be8a838 | worktree-agent-a08f755b0b5a9348d | 6 | 0 | 0 | 0 | 0 | L2 3, split 3 |
-| mvpd-math-1 | 2 | MATH | be8a838 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpd-render-1 | 23 | RENDER | be8a838 | worktree-agent-a08f755b0b5a9348d | 23 | 0 | 0 | 0 | 0 | L2 23 |
-| mvpd-render-2 | 5 | RENDER | be8a838 | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 3, L3-only 1, split 1 |
-| mvpd-render-3 | 22 | RENDER | be8a838 | worktree-agent-a08f755b0b5a9348d | 22 | 0 | 0 | 0 | 0 | L2 22 |
-| mvpd-render-4 | 5 | RENDER | be8a838 | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| mvpd-render-5 | 4 | RENDER | be8a838 | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| mvpd-unk-1 | 6 | UNK-game | be8a838 | worktree-agent-a08f755b0b5a9348d | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| mvpd-unk-2 | 3 | UNK-game | be8a838 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpd-veh-1 | 3 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpd-veh-2 | 4 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| mvpd-veh-3 | 1 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpd-veh-4 | 2 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpd-veh-5 | 1 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpd-veh-6 | 2 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpd-veh-7 | 3 | VEH | be8a838 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpd-world-1 | 8 | WORLD | be8a838 | worktree-agent-a08f755b0b5a9348d | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
-| mvpd-world-2 | 8 | WORLD | be8a838 | worktree-agent-a08f755b0b5a9348d | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| mvpd-world-3 | 9 | WORLD | be8a838 | worktree-agent-a08f755b0b5a9348d | 9 | 0 | 0 | 0 | 0 | L2 9 |
-| mvpd-world-4 | 1 | WORLD | be8a838 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpd-world-5 | 3 | WORLD | be8a838 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpd-ai-1 | 2 | CALLED-ONLY, UNK-game | 7fd59f2 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpd-coll-1 | 2 | COLL | 7fd59f2 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpd-d3d-1 | 6 | CALLED-ONLY, UNK-game | 7fd59f2 | master | 6 | 0 | 0 | 0 | 0 | L2 3, split 3 |
+| mvpd-math-1 | 2 | MATH | 7fd59f2 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpd-render-1 | 23 | RENDER | 7fd59f2 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
+| mvpd-render-2 | 5 | RENDER | 7fd59f2 | master | 5 | 0 | 0 | 0 | 0 | L2 3, L3-only 1, split 1 |
+| mvpd-render-3 | 22 | RENDER | 7fd59f2 | master | 22 | 0 | 0 | 0 | 0 | L2 22 |
+| mvpd-render-4 | 5 | RENDER | 7fd59f2 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| mvpd-render-5 | 4 | RENDER | 7fd59f2 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpd-unk-1 | 6 | UNK-game | 7fd59f2 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpd-unk-2 | 3 | UNK-game | 7fd59f2 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpd-veh-1 | 3 | VEH | 7fd59f2 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpd-veh-2 | 4 | VEH | 7fd59f2 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpd-veh-3 | 1 | VEH | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpd-veh-4 | 2 | VEH | 7fd59f2 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpd-veh-5 | 1 | VEH | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpd-veh-6 | 2 | VEH | 7fd59f2 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpd-veh-7 | 3 | VEH | 7fd59f2 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpd-world-1 | 8 | WORLD | 7fd59f2 | master | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
+| mvpd-world-2 | 8 | WORLD | 7fd59f2 | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| mvpd-world-3 | 9 | WORLD | 7fd59f2 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| mvpd-world-4 | 1 | WORLD | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpd-world-5 | 3 | WORLD | 7fd59f2 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | mvpe-coll-1 | 10 | COLL | 09ffb62 | master | 10 | 0 | 0 | 0 | 0 | L2 9, split 1 |
 | mvpe-ent-1 | 2 | WORLD | 09ffb62 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | mvpe-phys-1 | 4 | PHYS | 09ffb62 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | mvpe-tempcol-1 | 1 | COLL | 09ffb62 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
 | mvpe-veh-1 | 3 | VEH | 09ffb62 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpf-coll-1 | 5 | COLL, WORLD | 9f39342 | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| mvpf-ent-1 | 1 | WORLD | 9f39342 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpf-ped-1 | 1 | PED | 9f39342 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpf-ped-2 | 2 | PED | 9f39342 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | split 2 |
-| mvpf-phys-1 | 3 | PHYS | 9f39342 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpf-script-1 | 9 | SCRIPT | 9f39342 | worktree-agent-a08f755b0b5a9348d | 9 | 0 | 0 | 0 | 0 | L2 9 |
-| mvpf-veh-1 | 6 | VEH | 9f39342 | worktree-agent-a08f755b0b5a9348d | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| mvpf-weapon-1 | 1 | WEAPON | 9f39342 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | split 1 |
-| mvph-phys-1 | 2 | PHYS | 5c77a83 | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvph-script-1 | 7 | SCRIPT | de56208 | worktree-agent-a08f755b0b5a9348d | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| mvph-world-1 | 1 | WORLD | 9b8b982 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpi-ai-1 | 4 | AI | d325d5d | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| mvpi-anim-1 | 1 | ANIM | 38ad7fe | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpi-audio-1 | 1 | AUDIO | fc3e071 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpi-ped-1 | 5 | PED, UNK-game | 965912c | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 4, split 1 |
-| mvpi-script-1 | 10 | SCRIPT | 6709a99 | worktree-agent-a08f755b0b5a9348d | 10 | 0 | 0 | 0 | 0 | L2 9, L3-only 1 |
-| mvpi-script-2 | 10 | SCRIPT | a858341 | worktree-agent-a08f755b0b5a9348d | 10 | 0 | 0 | 0 | 0 | L2 10 |
-| mvpi-world-1 | 6 | UNK-game, WORLD | e26c262 | worktree-agent-a08f755b0b5a9348d | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| mvpj-ai-1 | 1 | AI | 5c38fd0 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpj-ai-2 | 4 | AI | b2128eb | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| mvpj-ai-3 | 4 | AI | 2a3a42d | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| mvpj-ai-4 | 5 | AI | e694e1a | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| mvpj-ai-5 | 1 | AI | 86ea3f5 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpj-ai-6 | 6 | AI | 23c7868 | worktree-agent-a08f755b0b5a9348d | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| mvpj-script-1 | 12 | SCRIPT | 629ba2b | worktree-agent-a08f755b0b5a9348d | 12 | 0 | 0 | 0 | 0 | L2 12 |
-| mvpj-script-2 | 2 | SCRIPT | 0948d8e | worktree-agent-a08f755b0b5a9348d | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpj-stream-1 | 1 | STREAM | 9d3ceff | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpj-world-1 | 3 | WORLD | ec01315 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | split 3 |
-| mvpk-ai-1 | 3 | AI | da9a306 | worktree-agent-a44183684f317220c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpk-ai-2 | 2 | AI | 071c55e | worktree-agent-a44183684f317220c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpk-ai-3 | 6 | AI | 29f35d3 | worktree-agent-a44183684f317220c | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| mvpk-ai-4 | 3 | UNK-game, VEH | 88376fb | worktree-agent-a44183684f317220c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpk-anim-1 | 1 | ANIM | 38e54b6 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-math-1 | 2 | MATH, UNK-game | d83e95f | worktree-agent-a44183684f317220c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpk-render-1 | 1 | RENDER | 64bb9f6 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-script-1 | 1 | SCRIPT | 8b4d323 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-script-2 | 3 | SCRIPT | 4ad93a6 | worktree-agent-a44183684f317220c | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpk-stream-1 | 1 | STREAM | df1c687 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-veh-1 | 1 | VEH | 08bc7c5 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-world-1 | 1 | WORLD | 0452ee9 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpk-world-2 | 2 | WORLD | e4a9908 | worktree-agent-a44183684f317220c | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpk-world-3 | 1 | WORLD | e4a9908 | worktree-agent-a44183684f317220c | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-ai-1 | 3 | UNK-game | 599af1e | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpl-ai-2 | 1 | AI | 599af1e | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-ai-3 | 1 | UNK-game | e4c30e5 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-anim-1 | 1 | ANIM | 599af1e | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-anim-2 | 1 | ANIM | babf676 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | split 1 |
-| mvpl-audio-1 | 1 | AUDIO | 599af1e | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-audio-2 | 21 | AUDIO | e4c30e5 | worktree-agent-a5944be11b642b989 | 21 | 0 | 0 | 0 | 0 | L2 5, split 16 |
-| mvpl-fx-1 | 1 | UNK-game | 599af1e | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-ped-1 | 1 | PED | 599af1e | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-render-1 | 1 | UNK-game | 599af1e | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpl-script-1 | 4 | SCRIPT | 599af1e | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
-| mvpl-stream-1 | 3 | UNK-game | e4c30e5 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpl-world-1 | 3 | RENDER, UNK-game | 599af1e | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpm-ai-1 | 2 | AI, PED | d08621e | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpm-ai-2 | 1 | AI | c3a9cc5 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-ai-3 | 1 | AI | 5dab700 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-anim-2 | 3 | ANIM | b613776 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| mvpm-coll-1 | 1 | COLL | 4149999 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-ped-1 | 1 | UNK-game | d142ea9 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-1 | 1 | UNK-game | 7348c43 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-2 | 1 | CALLED-ONLY | 9f39436 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-render-5 | 2 | RENDER | 8bbe6fe | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpm-render-6 | 1 | RENDER | a7491a9 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpm-script-1 | 2 | SCRIPT | 3d7a6ab | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| mvpm-world-1 | 1 | UNK-game | 4149999 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpn-ai-1 | 1 | AI | faabcc8 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpn-anim-1 | 1 | ANIM | 26e7607 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| mvpn-anim-2 | 1 | ANIM | 2df7132 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | split 1 |
-| mvpn-render-1 | 2 | RENDER | ddea7c6 | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L1-pure 1, L2 1 |
-| mvpn-script-1 | 1 | SCRIPT | 0a39017 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpn-script-2 | 1 | SCRIPT | 27c5d94 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpf-coll-1 | 5 | COLL, WORLD | 7fd59f2 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| mvpf-ent-1 | 1 | WORLD | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpf-ped-1 | 1 | PED | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpf-ped-2 | 2 | PED | 7fd59f2 | master | 2 | 0 | 0 | 0 | 0 | split 2 |
+| mvpf-phys-1 | 3 | PHYS | 7fd59f2 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpf-script-1 | 9 | SCRIPT | 7fd59f2 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| mvpf-veh-1 | 6 | VEH | 7fd59f2 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpf-weapon-1 | 1 | WEAPON | 7fd59f2 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvph-phys-1 | 2 | PHYS | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvph-script-1 | 7 | SCRIPT | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| mvph-world-1 | 1 | WORLD | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpi-ai-1 | 4 | AI | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpi-anim-1 | 1 | ANIM | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpi-audio-1 | 1 | AUDIO | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpi-ped-1 | 5 | PED, UNK-game | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 4, split 1 |
+| mvpi-script-1 | 10 | SCRIPT | 309d8fe | master | 10 | 0 | 0 | 0 | 0 | L2 9, L3-only 1 |
+| mvpi-script-2 | 10 | SCRIPT | 309d8fe | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
+| mvpi-world-1 | 6 | UNK-game, WORLD | 309d8fe | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpj-ai-1 | 1 | AI | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpj-ai-2 | 4 | AI | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpj-ai-3 | 4 | AI | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| mvpj-ai-4 | 5 | AI | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| mvpj-ai-5 | 1 | AI | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpj-ai-6 | 6 | AI | 309d8fe | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpj-script-1 | 12 | SCRIPT | 309d8fe | master | 12 | 0 | 0 | 0 | 0 | L2 12 |
+| mvpj-script-2 | 2 | SCRIPT | 309d8fe | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpj-stream-1 | 1 | STREAM | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpj-world-1 | 3 | WORLD | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | split 3 |
+| mvpk-ai-1 | 3 | AI | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpk-ai-2 | 2 | AI | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpk-ai-3 | 6 | AI | 69c799f | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| mvpk-ai-4 | 3 | UNK-game, VEH | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpk-anim-1 | 1 | ANIM | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-math-1 | 2 | MATH, UNK-game | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpk-render-1 | 1 | RENDER | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-script-1 | 1 | SCRIPT | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-script-2 | 3 | SCRIPT | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpk-stream-1 | 1 | STREAM | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-veh-1 | 1 | VEH | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-world-1 | 1 | WORLD | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpk-world-2 | 2 | WORLD | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpk-world-3 | 1 | WORLD | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-ai-1 | 3 | UNK-game | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpl-ai-2 | 1 | AI | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-ai-3 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-anim-1 | 1 | ANIM | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-anim-2 | 1 | ANIM | 69c799f | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvpl-audio-1 | 1 | AUDIO | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-audio-2 | 21 | AUDIO | 69c799f | master | 21 | 0 | 0 | 0 | 0 | L2 5, split 16 |
+| mvpl-fx-1 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-ped-1 | 1 | PED | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-render-1 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpl-script-1 | 4 | SCRIPT | 69c799f | master | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
+| mvpl-stream-1 | 3 | UNK-game | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpl-world-1 | 3 | RENDER, UNK-game | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpm-ai-1 | 2 | AI, PED | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpm-ai-2 | 1 | AI | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-ai-3 | 1 | AI | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-anim-2 | 3 | ANIM | 69c799f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| mvpm-coll-1 | 1 | COLL | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-ped-1 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-render-1 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-render-2 | 1 | CALLED-ONLY | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-render-5 | 2 | RENDER | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpm-render-6 | 1 | RENDER | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpm-script-1 | 2 | SCRIPT | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| mvpm-world-1 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpn-ai-1 | 1 | AI | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpn-anim-1 | 1 | ANIM | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| mvpn-anim-2 | 1 | ANIM | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvpn-render-1 | 2 | RENDER | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L1-pure 1, L2 1 |
+| mvpn-script-1 | 1 | SCRIPT | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpn-script-2 | 1 | SCRIPT | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | popw4-drive-1 | 9 | POP | 09ffb62 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
 | popw4-frame-1 | 2 | POP | 09ffb62 | master | 2 | 0 | 0 | 0 | 0 | L2 1, split 1 |
 | popw4-gang-1 | 11 | POP | 09ffb62 | master | 11 | 0 | 0 | 0 | 0 | L2 7, split 4 |
 | popw4-partial-1 | 4 | POP | 09ffb62 | master | 4 | 0 | 0 | 0 | 0 | L2 3, split 1 |
 | popw4-pop-1 | 6 | POP | 09ffb62 | master | 6 | 0 | 0 | 0 | 0 | split 6 |
-| regconv-ped-1 | 3 | PED, UNK-game | c64929a | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| regconv-render-1 | 7 | RENDER | c64929a | worktree-agent-a5944be11b642b989 | 6 | 0 | 0 | 1 | 0 | L2 7 |
-| regconv-rw-1 | 13 | RW, UNK-game | c64929a | worktree-agent-a5944be11b642b989 | 13 | 0 | 0 | 0 | 0 | L2 13 |
-| regconv-stream-1 | 2 | STREAM | c64929a | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| renderbig2-3 | 1 | RENDER | 3f0a249 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| renderbig2-4 | 1 | RENDER | b68811d | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| renderbig2-5 | 1 | RENDER | c7275d7 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| rw5-cam-1 | 1 | RW | d2f48e4 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
-| rw5-core-1 | 31 | RW | 4f614f3 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 31 | 0 | L2 21, split 10 |
-| rw5-core-2 | 17 | RW | 3103523 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 17 | 0 | L2 9, L3-only 5, split 3 |
-| rw5-image-1 | 9 | RW | 4f614f3 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 9 | 0 | L2 5, split 4 |
-| rw5-inst-1 | 8 | RW | 3103523 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 8 | 0 | L2 8 |
-| rw5-native-1 | 6 | RW | d2f48e4 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 6 | 0 | L2 2, split 4 |
-| rw5-node-1 | 4 | RW | d2f48e4 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 4 | 0 | L2 4 |
-| rw5-raster | 1 | RW | f5291e2 | worktree-agent-a08f755b0b5a9348d | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std4-audio-1 | 55 | AUDIO | e622f2d | worktree-agent-a08f755b0b5a9348d | 55 | 0 | 0 | 0 | 0 | L2 47, L3-only 8 |
-| std4-audio-2 | 18 | AUDIO | e622f2d | worktree-agent-a08f755b0b5a9348d | 18 | 0 | 0 | 0 | 0 | L2 1, L3-only 17 |
-| std4-audio-3 | 7 | AUDIO, RW, UNK-game | e622f2d | worktree-agent-a08f755b0b5a9348d | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| std4-core-1 | 5 | CALLED-ONLY, SAVE, UNK-game | 593b7db | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std4-d3d9-1 | 17 | RW | 25a38e8 | worktree-agent-a08f755b0b5a9348d | 17 | 0 | 0 | 0 | 0 | L2 15, L3-only 2 |
-| std4-d3d9-2 | 8 | RW, UNK-game | 25a38e8 | worktree-agent-a08f755b0b5a9348d | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
-| std4-d3d9-3 | 3 | UNK-game | 25a38e8 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std4-d3d9-4 | 1 | RW | uncommitted | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| std4-data-1 | 7 | AI, PED, UNK-game, VEH | 41e2a39 | worktree-agent-a08f755b0b5a9348d | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| std4-data-2 | 4 | MATH | 08267e0 | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L1-pure 4 |
-| std4-load-1 | 13 | CALLED-ONLY, RENDER, RW, UNK-game | 6c7b651 | worktree-agent-a08f755b0b5a9348d | 13 | 0 | 0 | 0 | 0 | L2 13 |
-| std4-load-2 | 5 | RW | 6c7b651 | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std4-render-1 | 5 | RENDER, RW | 593b7db | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std4-rxpipe-1 | 23 | RW | bd52f35 | worktree-agent-a08f755b0b5a9348d | 23 | 0 | 0 | 0 | 0 | L2 23 |
-| std4-rxpipe-2 | 3 | RW | bd52f35 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std4-rxpipe-3 | 8 | RW | bd52f35 | worktree-agent-a08f755b0b5a9348d | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| std4-win-1 | 1 | CORE | 41e2a39 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| std5-ctor-1 | 26 | RENDER, UNK-game, WORLD | 476bd68 | worktree-agent-a08f755b0b5a9348d | 26 | 0 | 0 | 0 | 0 | L2 26 |
-| std5-fx-1 | 4 | RENDER, UNK-game | 553c325 | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std5-math-1 | 6 | MATH | 121b3f6 | worktree-agent-a08f755b0b5a9348d | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| std5-math-2 | 8 | MATH | 4c13a38 | worktree-agent-a08f755b0b5a9348d | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| std5-math-3 | 7 | MATH | 4c13a38 | worktree-agent-a08f755b0b5a9348d | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| std5-objdata-1 | 1 | WORLD | e053672 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std5-ped-1 | 1 | PED | 6272093 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std5-pool-1 | 5 | UNK-game, WORLD | 476bd68 | worktree-agent-a08f755b0b5a9348d | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std5-rw-1 | 1 | RW | e053672 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std5-rwworld-1 | 1 | RW | 553c325 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std5-script-1 | 1 | SCRIPT | 476bd68 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| std5-stream-1 | 3 | STREAM, UNK-game | e053672 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std5-tristrip-1 | 9 | RW | 476bd68 | worktree-agent-a08f755b0b5a9348d | 9 | 0 | 0 | 0 | 0 | L2 9 |
-| std5-world-1 | 4 | MATH, WORLD | 121b3f6 | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std5-zones-1 | 1 | WORLD | 121b3f6 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std6-anim-1 | 43 | ANIM, CALLED-ONLY, RW, UNK-game | 12aa014 | worktree-agent-a08f755b0b5a9348d | 43 | 0 | 0 | 0 | 0 | L1-pure 16, L2 27 |
-| std6-cam-1 | 1 | CAM | cd5cb0f | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std6-core-1 | 1 | UNK-game | dc3ece4 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
-| std6-input-1 | 1 | UNK-game | 961cd69 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
-| std6-math-1 | 4 | MATH | 541d64f | worktree-agent-a08f755b0b5a9348d | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std6-math-2 | 11 | MATH | d8f422a | worktree-agent-a08f755b0b5a9348d | 11 | 0 | 0 | 0 | 0 | L1-pure 7, L2 4 |
-| std6-ped-1 | 1 | PED | 68bd5e3 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std6-render-1 | 56 | RENDER, RW, UNK-game | 68bd5e3 | worktree-agent-a08f755b0b5a9348d | 56 | 0 | 0 | 0 | 0 | L1-pure 29, L2 27 |
-| std6-render-2 | 1 | RENDER | f336c53 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| std6-rw-1 | 48 | RW, UNK-game | ebd00ac | worktree-agent-a08f755b0b5a9348d | 48 | 0 | 0 | 0 | 0 | L1-pure 15, L2 33 |
-| std6-script-1 | 7 | SCRIPT | ccc6a21 | worktree-agent-a08f755b0b5a9348d | 7 | 0 | 0 | 0 | 0 | L1-pure 3, L2 4 |
-| std6-stream-1 | 1 | RW | 316b9ba | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
-| std6-veh-1 | 1 | VEH | 09bf203 | worktree-agent-a08f755b0b5a9348d | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std6-world-1 | 3 | MATH, WORLD | 7775ad1 | worktree-agent-a08f755b0b5a9348d | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
-| std7-ai-1 | 4 | AI, RW | 03b4a46 | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std7-anim-1 | 5 | MATH, RW, UNK-game | 8d5c7bb | worktree-agent-a5944be11b642b989 | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std7-audio-1 | 1 | AUDIO | 03b4a46 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std7-core-1 | 1 | UNK-game | 3e520b4 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std7-math-1 | 4 | MATH | 03b4a46 | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std7-script-1 | 4 | SCRIPT | 03b4a46 | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std7-world-1 | 1 | WORLD | a7e0727 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std8-ai-1 | 2 | AI | 7af8402 | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std8-core-1 | 1 | WORLD | 9bfcecb | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std8-math-1 | 3 | MATH | 9bfcecb | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
-| std8-ped-1 | 1 | UNK-game | 8b18d4d | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std8-pop-1 | 2 | POP | 31bc5bd | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std8-render-1 | 6 | RENDER, UNK-game | 9bfcecb | worktree-agent-a5944be11b642b989 | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| std8-rw-1 | 3 | RW | 9f88fe6 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std8-world-1 | 3 | MATH, UNK-game | 7af8402 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
-| std9-audio-1 | 1 | AUDIO | 717e055 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std9-coll-1 | 1 | MATH | 28d8469 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
-| std9-math-1 | 3 | MATH | ca88780 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
-| std9-render-1 | 1 | RW | 366a998 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std9-render-2 | 2 | RENDER | 014b73e | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std9-render-3 | 1 | RW | 28d8469 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std9-render-4 | 3 | RW, UNK-game | 31bf691 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std9-render-5 | 2 | RW | 8a83297 | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std9-render-6 | 5 | RW | 2a764fc | worktree-agent-a5944be11b642b989 | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std9-render-7 | 4 | RW | 9a4974f | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std9-render-8 | 2 | RW | 5feb43c | worktree-agent-a5944be11b642b989 | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std9-rw-1 | 4 | RW | 9cda97e | worktree-agent-a5944be11b642b989 | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std9-rw-2 | 3 | RW | c6004a7 | worktree-agent-a5944be11b642b989 | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| x87-2-roll | 1 | WORLD | 1495610 | worktree-agent-a5944be11b642b989 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| regconv-ped-1 | 3 | PED, UNK-game | 8d70493 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| regconv-render-1 | 7 | RENDER | 8d70493 | master | 6 | 0 | 0 | 1 | 0 | L2 7 |
+| regconv-rw-1 | 13 | RW, UNK-game | 8d70493 | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| regconv-stream-1 | 2 | STREAM | 8d70493 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| renderbig2-3 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| renderbig2-4 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| renderbig2-5 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| rw5-cam-1 | 1 | RW | f789a8e | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
+| rw5-core-1 | 31 | RW | f789a8e | master | 0 | 0 | 0 | 31 | 0 | L2 21, split 10 |
+| rw5-core-2 | 17 | RW | f789a8e | master | 0 | 0 | 0 | 17 | 0 | L2 9, L3-only 5, split 3 |
+| rw5-image-1 | 9 | RW | f789a8e | master | 0 | 0 | 0 | 9 | 0 | L2 5, split 4 |
+| rw5-inst-1 | 8 | RW | f789a8e | master | 0 | 0 | 0 | 8 | 0 | L2 8 |
+| rw5-native-1 | 6 | RW | f789a8e | master | 0 | 0 | 0 | 6 | 0 | L2 2, split 4 |
+| rw5-node-1 | 4 | RW | f789a8e | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| rw5-raster | 1 | RW | f789a8e | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| std4-audio-1 | 55 | AUDIO | 309d8fe | master | 55 | 0 | 0 | 0 | 0 | L2 47, L3-only 8 |
+| std4-audio-2 | 18 | AUDIO | 309d8fe | master | 18 | 0 | 0 | 0 | 0 | L2 1, L3-only 17 |
+| std4-audio-3 | 7 | AUDIO, RW, UNK-game | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| std4-core-1 | 5 | CALLED-ONLY, SAVE, UNK-game | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std4-d3d9-1 | 17 | RW | 309d8fe | master | 17 | 0 | 0 | 0 | 0 | L2 15, L3-only 2 |
+| std4-d3d9-2 | 8 | RW, UNK-game | 309d8fe | master | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
+| std4-d3d9-3 | 3 | UNK-game | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std4-d3d9-4 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| std4-data-1 | 7 | AI, PED, UNK-game, VEH | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| std4-data-2 | 4 | MATH | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L1-pure 4 |
+| std4-load-1 | 13 | CALLED-ONLY, RENDER, RW, UNK-game | 309d8fe | master | 13 | 0 | 0 | 0 | 0 | L2 13 |
+| std4-load-2 | 5 | RW | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std4-render-1 | 5 | RENDER, RW | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std4-rxpipe-1 | 23 | RW | 309d8fe | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
+| std4-rxpipe-2 | 3 | RW | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std4-rxpipe-3 | 8 | RW | 309d8fe | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| std4-win-1 | 1 | CORE | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| std5-ctor-1 | 26 | RENDER, UNK-game, WORLD | 309d8fe | master | 26 | 0 | 0 | 0 | 0 | L2 26 |
+| std5-fx-1 | 4 | RENDER, UNK-game | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std5-math-1 | 6 | MATH | 309d8fe | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| std5-math-2 | 8 | MATH | 309d8fe | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| std5-math-3 | 7 | MATH | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| std5-objdata-1 | 1 | WORLD | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std5-ped-1 | 1 | PED | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std5-pool-1 | 5 | UNK-game, WORLD | 309d8fe | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std5-rw-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std5-rwworld-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std5-script-1 | 1 | SCRIPT | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| std5-stream-1 | 3 | STREAM, UNK-game | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std5-tristrip-1 | 9 | RW | 309d8fe | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| std5-world-1 | 4 | MATH, WORLD | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std5-zones-1 | 1 | WORLD | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std6-anim-1 | 43 | ANIM, CALLED-ONLY, RW, UNK-game | 309d8fe | master | 43 | 0 | 0 | 0 | 0 | L1-pure 16, L2 27 |
+| std6-cam-1 | 1 | CAM | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std6-core-1 | 1 | UNK-game | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std6-input-1 | 1 | UNK-game | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std6-math-1 | 4 | MATH | 309d8fe | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std6-math-2 | 11 | MATH | 309d8fe | master | 11 | 0 | 0 | 0 | 0 | L1-pure 7, L2 4 |
+| std6-ped-1 | 1 | PED | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std6-render-1 | 56 | RENDER, RW, UNK-game | 309d8fe | master | 56 | 0 | 0 | 0 | 0 | L1-pure 29, L2 27 |
+| std6-render-2 | 1 | RENDER | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| std6-rw-1 | 48 | RW, UNK-game | 309d8fe | master | 48 | 0 | 0 | 0 | 0 | L1-pure 15, L2 33 |
+| std6-script-1 | 7 | SCRIPT | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L1-pure 3, L2 4 |
+| std6-stream-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std6-veh-1 | 1 | VEH | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std6-world-1 | 3 | MATH, WORLD | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
+| std7-ai-1 | 4 | AI, RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std7-anim-1 | 5 | MATH, RW, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std7-audio-1 | 1 | AUDIO | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std7-core-1 | 1 | UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std7-math-1 | 4 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std7-script-1 | 4 | SCRIPT | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std7-world-1 | 1 | WORLD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std8-ai-1 | 2 | AI | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std8-core-1 | 1 | WORLD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std8-math-1 | 3 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
+| std8-ped-1 | 1 | UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std8-pop-1 | 2 | POP | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std8-render-1 | 6 | RENDER, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| std8-rw-1 | 3 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std8-world-1 | 3 | MATH, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
+| std9-audio-1 | 1 | AUDIO | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std9-coll-1 | 1 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std9-math-1 | 3 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
+| std9-render-1 | 1 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std9-render-2 | 2 | RENDER | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std9-render-3 | 1 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std9-render-4 | 3 | RW, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std9-render-5 | 2 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std9-render-6 | 5 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std9-render-7 | 4 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std9-render-8 | 2 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std9-rw-1 | 4 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std9-rw-2 | 3 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| x87-2-roll | 1 | WORLD | 909b776 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 
 ## clump-1
 
@@ -499,7 +505,7 @@ SA_UNVERIFIED=gen2-input-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-input-1 $S
 
 ## gen2-ped-1
 
-25 hooks in sa-ped; hazards: heap-writes (5); recordings calling them: grove-walk (19), pause-restart (19).
+23 hooks in sa-ped; hazards: heap-writes (3); recordings calling them: grove-walk (19), pause-restart (19).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -511,8 +517,6 @@ SA_UNVERIFIED=gen2-ped-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-ped-1 $SA_RO
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x56F200 | `thunk_FUN_00401616` | written | L2 | none |
-| 0x5D24B0 | `FUN_005d24b0` | written | L2 | heap-writes |
-| 0x5D2560 | `FUN_005d2560` | written | L2 | heap-writes |
 | 0x5DE340 | `CEmergencyPed` | written | L2 | heap-writes |
 | 0x5DE9E0 | `FUN_005de9e0` | written | L2 | heap-writes |
 | 0x5E47A0 | `FUN_005e47a0` | written | L2 | heap-writes |
@@ -1310,7 +1314,7 @@ SA_UNVERIFIED=gen2-stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-stream-1 
 
 ## gen2-veh-1
 
-19 hooks in sa-veh; hazards: heap-writes (7); recordings calling them: no coverage data.
+17 hooks in sa-veh; hazards: heap-writes (7); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1325,8 +1329,6 @@ SA_UNVERIFIED=gen2-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-veh-1 $SA_RO
 | 0x4AB2D0 | `FxPrtMult_c::SetUp` | written | L2 | heap-writes |
 | 0x4C88F0 | `FUN_004c88f0` | written | L1-pure | none |
 | 0x571EA0 | `CCurrentVehicle::Display` | written | L2 | none |
-| 0x5D2980 | `CAutomobile::Load` | written | L2 | none |
-| 0x5D47E0 | `CAutomobile::Save` | written | L2 | none |
 | 0x6A44D0 | `CAutomobile::PopBootUsingPhysics` | written | L2 | heap-writes |
 | 0x6C7F90 | `CMonsterTruck::`scalar deleting destructor'` | written | L2 | none |
 | 0x6CDC30 | `CQuadBike::~CQuadBike` | written | L2 | heap-writes |
@@ -1470,6 +1472,148 @@ SA_UNVERIFIED=harness5-1 LANE=$LANE tools/e2e/port-l2.sh batch:harness5-1 $SA_RO
 | 0x70FA70 | `FUN_0070fa70` | written | L1-pure | preserved-regs |
 | 0x711160 | `FUN_00711160` | written | L2 | none |
 | 0x7111F0 | `FUN_007111f0` | written | L2 | none |
+
+## intro-ai-1
+
+4 hooks in sa-ai; hazards: none; recordings calling them: grove-walk (4), pause-restart (4).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:intro-ai-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag intro-ai-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4BDB80 | `CEventHandler::ComputePedCollisionWithPedResponse` | written | L2 | none |
+| 0x4C19A0 | `CEventHandler::ComputePedThreatResponse` | written | L2 | none |
+| 0x4C2610 | `CEventHandler::ComputePotentialPedCollideResponse` | written | L2 | none |
+| 0x5F1FA0 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached` | written | L2 | none |
+
+## intro-ai-2
+
+35 hooks in sa-ai; hazards: x87-transcendental (1); recordings calling them: grove-walk (35).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro-ai-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:intro-ai-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag intro-ai-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4B92B0 | `CEventHandler::ComputeObjectCollisionResponse` | written | L2 | none |
+| 0x4B9340 | `CEventHandler::RegisterKill` | written | L2 | none |
+| 0x4B9400 | `CEventHandler::ComputeDeathResponse` | written | L2 | none |
+| 0x4B97B0 | `CEventHandler::ComputeReviveResponse` | written | L2 | none |
+| 0x4B9AA0 | `CEventHandler::ComputeSexyVehicleResponse` | written | L2 | none |
+| 0x4B9B50 | `CEventHandler::ComputePedToFleeResponse` | written | L2 | none |
+| 0x4B9BE0 | `CEventHandler::ComputeAttractorResponse` | written | L2 | none |
+| 0x4B9C90 | `CEventHandler::ComputePedThreatBadlyLitResponse` | written | L2 | none |
+| 0x4B9D40 | `CEventHandler::ComputePedSoundQuietResponse` | written | L2 | none |
+| 0x4B9DD0 | `CEventHandler::ComputePedFriendResponse` | written | L2 | none |
+| 0x4B9F80 | `CEventHandler::ComputeVehicleToStealResponse` | written | L2 | none |
+| 0x4BA8B0 | `CEventHandler::ComputeVehicleDiedResponse` | written | L2 | none |
+| 0x4BA990 | `CEventHandler::ComputeLowHealthResponse` | written | L2 | none |
+| 0x4BAA30 | `CEventHandler::ComputeReallyLowHealthResponse` | written | L2 | none |
+| 0x4BAAD0 | `CEventHandler::ComputeLowAngerAtPlayerResponse` | written | L2 | none |
+| 0x4BAC10 | `CEventHandler::ComputeHighAngerAtPlayerResponse` | written | L2 | none |
+| 0x4BAD50 | `CEventHandler::ComputeOnFireResponse` | written | L2 | none |
+| 0x4BAE30 | `CEventHandler::ComputeWaterCannonResponse` | written | L2 | x87-transcendental |
+| 0x4BAF80 | `CEventHandler::ComputeInWaterResponse` | written | L2 | none |
+| 0x4BAFE0 | `CEventHandler::ComputeInteriorUseInfoResponse` | written | L2 | none |
+| 0x4BB0C0 | `CEventHandler::ComputePassObjectResponse` | written | L2 | none |
+| 0x4BB280 | `CEventHandler::ComputePlayerWantedLevelResponse` | written | L2 | none |
+| 0x4BB740 | `CEventHandler::ComputeCopCarBeingStolenResponse` | written | L2 | none |
+| 0x4BBB90 | `CEventHandler::ComputeObjectCollisionPassiveResponse` | written | L2 | none |
+| 0x4BBC30 | `CEventHandler::ComputeCarUpsideDownResponse` | written | L2 | none |
+| 0x4BBCD0 | `CEventHandler::ComputePotentialWalkIntoFireResponse` | written | L2 | none |
+| 0x4BBE30 | `CEventHandler::ComputeShotFiredWhizzedByResponse` | written | L2 | none |
+| 0x4BBF50 | `CEventHandler::ComputeAreaCodesResponse` | written | L2 | none |
+| 0x4BBFB0 | `CEventHandler::ComputeFireNearbyResponse` | written | L2 | none |
+| 0x4BC050 | `CEventHandler::ComputeSeenCopResponse` | written | L2 | none |
+| 0x4BC150 | `CEventHandler::ComputeOnEscalatorResponse` | written | L2 | none |
+| 0x4BC1D0 | `CEventHandler::ComputeDontJoinGroupResponse` | written | L2 | none |
+| 0x4BC230 | `CEventHandler::ComputeDangerResponse` | written | L2 | none |
+| 0x4BC3E0 | `CEventHandler::IsKillTaskAppropriate` | written | L2 | none |
+| 0x4C1910 | `CEventHandler::ComputePedToChaseResponse` | written | L2 | none |
+
+## intro-ai-3
+
+7 hooks in sa-ai; hazards: none; recordings calling them: grove-walk (7).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro-ai-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro-ai-3 LANE=$LANE tools/e2e/port-l2.sh batch:intro-ai-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag intro-ai-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4B9470 | `CEventHandler::ComputeDeadPedResponse` | written | L2 | none |
+| 0x4BB2E0 | `CEventHandler::ComputeVehicleOnFireResponse` | written | L2 | none |
+| 0x4BB800 | `CEventHandler::ComputeSpecialResponse` | written | L2 | none |
+| 0x4C3430 | `CEventHandler::ComputeGotKnockedOverByCarResponse` | written | L2 | none |
+| 0x4C35F0 | `CEventHandler::ComputeSeenPanickedPedResponse` | written | L2 | none |
+| 0x4C3790 | `CEventHandler::Flush` | written | L2 | none |
+| 0x4C4220 | `CEventHandler::ComputeEventResponseTask-Ped` | written | L2 | none |
+
+## intro-ai-4
+
+8 hooks in sa-ai; hazards: x87-transcendental (1); recordings calling them: grove-walk (8).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro-ai-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro-ai-4 LANE=$LANE tools/e2e/port-l2.sh batch:intro-ai-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag intro-ai-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4B8CE0 | `CEventHandler::ComputePlayerCollisionWithPedResponse` | written | L2 | none |
+| 0x4BC710 | `CEventHandler::ComputeShotFiredResponse` | written | L2 | none |
+| 0x4BD6A0 | `CEventHandler::ComputeVehicleCollisionResponse` | written | L2 | x87-transcendental |
+| 0x4BE7D0 | `CEventHandler::ComputePedCollisionWithPlayerResponse` | written | L2 | none |
+| 0x4BF9B0 | `CEventHandler::ComputePersonalityResponseToDamage` | written | L2 | none |
+| 0x4C1590 | `CEventHandler::ComputePedEnteredVehicleResponse` | written | L2 | none |
+| 0x4C2840 | `CEventHandler::ComputeGunAimedAtResponse` | written | L2 | none |
+| 0x4C2FC0 | `CEventHandler::ComputeVehicleDamageResponse` | written | L2 | none |
+
+## intro-ai-5
+
+2 hooks in sa-ai; hazards: none; recordings calling them: grove-walk (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro-ai-5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro-ai-5 LANE=$LANE tools/e2e/port-l2.sh batch:intro-ai-5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag intro-ai-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4BCC30 | `CEventHandler::ComputeDraggedOutCarResponse` | written | L2 | none |
+| 0x4C0BD0 | `CEventHandler::ComputeVehiclePotentialCollisionResponse` | written | L2 | none |
+
+## intro-anim-1
+
+2 hooks in sa-anim; hazards: heap-writes (2); recordings calling them: grove-walk (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:intro-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag intro-anim-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D5AF0 | `CCutsceneMgr::RemoveEverythingBecauseCutsceneDoesntFitInMemory` | written | L2 | heap-writes |
+| 0x4D5C10 | `CCutsceneMgr::LoadEverythingBecauseCutsceneDeletedAllOfIt` | written | L2 | heap-writes |
 
 ## menu-1
 
