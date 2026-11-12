@@ -486,6 +486,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x5FFF90, 0x43A710,
     // STD-6: CRunningScript::AddScriptToList (preserve ecx); spec queued.
     0x464C00,
+    // STD-12 (std12-audio-1): CAEVehicleAudioEntity::GetVehicleDriveWheelSkidValue /
+    // GetVehicleNonDriveWheelSkidValue (preserve edx); specs queued.
+    0x4F5F30, 0x4F6000,
     // PORT-AI-8 (generated batch ai8g-2): CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges
     // (preserve ecx, caller 0x62DD41 → 0x628A70); spec queued.
     0x6289F0,
