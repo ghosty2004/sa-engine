@@ -131,9 +131,11 @@ finish() {
     # client's log without timestamps, addresses, frame ticks and network counters.
     {
         grep -oE '\[cov\] .*' "$SLOG" | grep -vE '^\[cov\] (where|sync|keys|upd|aim) '
+        echo '---- probes'
+        cat "$OUT/probes.txt" 2> /dev/null
         echo '---- client'
         sed -E 's/^\[[^]]*\] \[[^]]*\] //' "$OUT/samp-rs.log" 2> /dev/null |
-            grep -vE '^(tick [0-9]+|client: net phase|net: connect to|net: auth challenge|net: open-connection)' |
+            grep -vE '^(tick [0-9]+|control: client|client: net phase|net: connect to|net: auth challenge|net: open-connection)' |
             sed -E 's/0x[0-9a-f]{5,}/0xADDR/g; s/after [0-9.]+s/after Ns/; s/(physical RAM) [0-9]+ MB/\1 N MB/' || true
     } > "$OUT/sequence.txt"
     say "sequence: $(wc -l < "$OUT/sequence.txt") lines in $OUT/sequence.txt"
@@ -167,6 +169,25 @@ hold() { e2e_keydown "$1"; sleep "$2"; e2e_keyup "$1"; }
 alive() { e2e_game_alive || { say "GAME EXITED"; exit 1; }; }
 shot() { e2e_shot "samp-ab/$NAME/$1" > /dev/null; }
 mark() { say "== $*"; alive; }
+# Game state the steps change, read through samp-rs's control channel (`peek`): weather (forced/new/old),
+# clock, CClock::Update's first byte, the HUD clock format, gravity, current area, money.
+PEEKS="0xC81318:12 0xB70152:2 0x52CF10:1 0x859A6C:12 0x863984:4 0xB72914:4 0xB7CE50:4"
+probe() {
+    local p
+    for p in $PEEKS; do
+        echo "probe $1 $(python3 -I - "$SAMP_RS_CTL_PORT" "peek ${p%%:*} ${p##*:}" << 'PY'
+import socket, sys
+try:
+    s = socket.create_connection(("127.0.0.1", int(sys.argv[1])), timeout=3)
+    s.settimeout(5)
+    s.sendall((sys.argv[2] + "\n").encode())
+    print(s.makefile().readline().strip())
+except OSError as e:
+    print("error", e)
+PY
+)" >> "$OUT/probes.txt"
+    done
+}
 
 wait_log "\[cov\] connect id=[0-9]+ name=AbPlayer" 180 || { shot fail-connect; say "FAIL: no connect"; exit 1; }
 mark "connected"
@@ -184,6 +205,7 @@ done
 mark "spawned"
 sleep 4
 shot spawn
+probe spawned
 hold w 2; sleep 1
 mark "server commands"
 cmd "msg|ab message"
@@ -196,8 +218,11 @@ cmd "time|22"
 cmd "weather|8"
 sleep 2
 shot night
+probe night
 cmd "time|12"
 cmd "weather|10"
+sleep 1
+probe day
 cmd "veh|560|2500|-1660|13.4|0"
 V="$(cmd_id)"
 sleep 2
@@ -212,8 +237,10 @@ fi
 cmd "interior|17"
 cmd "pos|-25.9|-185.9|1003.6|0"; sleep 3
 shot interior
+probe interior
 cmd "interior|0"
 cmd "pos|2495|-1680|13.5|0"; sleep 2
+probe outside
 mark "death"
 cmd "kill"
 wait_log "\[cov\] death id=" 10 || say "no death"
@@ -221,6 +248,7 @@ sleep 8
 for _ in 1 2 3; do [ "$(grep -c "\[cov\] spawn id=" "$SLOG")" -ge 2 ] && break; e2e_key shift; sleep 3; done
 [ "$(grep -c "\[cov\] spawn id=" "$SLOG")" -ge 2 ] && mark "respawned" || say "no respawn seen"
 shot respawn
+probe respawned
 mark "quit (/q)"
 e2e_key t; sleep 0.5; DISPLAY="$E2E_DISPLAY" xdotool type --delay 60 "/q"; e2e_key Return
 wait_log "\[cov\] disconnect id=" 15 || say "no disconnect"
