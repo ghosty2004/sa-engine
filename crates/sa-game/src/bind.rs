@@ -696,7 +696,16 @@ pub(crate) fn create_thread(_sec: u32, _stack: u32, entry: u32, param: u32, _fla
             sa_audio::port4_hw::smooth_fade_proc(param);
         }),
         0x4F_15C0 => Box::new(move || {
-            sa_audio::port4_hw::stream_thread_main_loop(param);
+            // a panic (an unported callee) ends this thread only, as on Windows a fault would end the process:
+            // say which one, so the silence has a reason
+            if let Err(e) = std::panic::catch_unwind(|| sa_audio::port4_hw::stream_thread_main_loop(param)) {
+                let msg = e
+                    .downcast_ref::<String>()
+                    .map(String::as_str)
+                    .or_else(|| e.downcast_ref::<&str>().copied())
+                    .unwrap_or("(no message)");
+                eprintln!("sa-game: the audio stream thread ended: {msg}");
+            }
         }),
         _ => return GPtr::from_addr(0),
     };

@@ -603,6 +603,13 @@ pub fn data_stream_release(this: GPtr<u8>) -> u32 {
     0
 }
 
+/// `CAEVorbisDecoder::GetStreamID()` (0x502460, thiscall): the data source's (+0x20) track id (+0x1C).
+#[hook(addr = 0x502460, conv = thiscall, name = "CAEVorbisDecoder::GetStreamID", expect = "8B 41 20 8B 40 1C",
+       unverified = "stream-1", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn vorbis_get_stream_id(this: GPtr<u8>) -> i32 {
+    rd::<i32>(rd::<GPtr<u8>>(this, 0x20), 0x1C)
+}
+
 /// `CAEStreamingDecoder::CAEStreamingDecoder(CAEDataStream* stream)` (0x4F2810, thiscall, `ret 4`): vtable 0x85F418,
 /// the stream (+4); a stream → `CAEDataStream::Initialise` (result ignored); returns `this`.
 #[hook(addr = 0x4f2810, conv = thiscall, name = "CAEStreamingDecoder::Constructor", expect = "56 8B F1 8B 4C 24 08",
@@ -648,4 +655,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DATA_STREAM_ADD_REF,
     HOOK_DATA_STREAM_RELEASE,
     HOOK_STREAMING_DECODER_CONSTRUCTOR,
+    HOOK_VORBIS_GET_STREAM_ID,
 ];
