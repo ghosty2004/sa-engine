@@ -45,10 +45,22 @@ worker() {
         local line
         line=$(grep -E '^(PASS|FAIL) \(c\)' "$OUT/$name.log" | tail -1)
         [ -n "$line" ] || line="FAIL (c) no comparison line (see $OUT/$name.log)"
-        # SAVE-1: a recording that writes save files must write plain's bytes (port-l2 check (f))
-        local fl
+        # SAVE-1: a recording that writes save files must write plain's bytes (port-l2 check (f)), except in
+        # the stack-residue positions of the 1.0 save structures (ledger SAVE-1, tools/accept/save-diff.py
+        # --mask): those differ whenever a save port's caller runs on Rust
+        local fl d f
         fl=$(grep -E '^FAIL \(f\)' "$OUT/$name.log" | head -1)
-        [ -n "$fl" ] && line="FAIL save files differ: ${fl#FAIL }"
+        if [ -n "$fl" ]; then
+            d="$SRC/target/e2e/lane-$lane/port-l2-$TAG-$name"
+            line="FAIL save files differ: ${fl#FAIL }"
+            for f in "$d"/rust.GTASAsf[1-8].b; do
+                [ -f "$f" ] || continue
+                python3 -I "$SRC/tools/accept/save-diff.py" "$d/plain.${f##*/rust.}" "$f" --mask > "$f.diff.txt" 2>&1
+                if [ $? = 3 ]; then
+                    line="$(grep -E '^(PASS|FAIL) \(c\)' "$OUT/$name.log" | tail -1); save files identical except stack residue ($(grep -o '[0-9]* differing bytes are residue' "$f.diff.txt"), ledger SAVE-1)"
+                fi
+            done
+        fi
         grep -q -E '^PASS \(f\)' "$OUT/$name.log" && line="$line; save files byte-identical"
         echo "$name: $line" >> "$OUT/summary.txt"
     done
