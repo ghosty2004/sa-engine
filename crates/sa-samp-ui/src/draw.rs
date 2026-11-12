@@ -65,6 +65,15 @@ pub enum Cmd {
         /// Text (GTA codes such as `~r~` are the game font's).
         text: String,
     },
+    /// A TXD texture (sprite textdraws) through `CSprite2d::Draw`.
+    Sprite {
+        /// Texture source.
+        source: crate::textdraw::SpriteSource,
+        /// `[left, top, right, bottom]`.
+        rect: [f32; 4],
+        /// Tint `0xAARRGGBB`.
+        colour: u32,
+    },
 }
 
 /// The commands of one frame.

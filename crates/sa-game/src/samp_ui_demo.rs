@@ -272,6 +272,34 @@ fn setup(ui: &mut dyn SampUi) {
             selectable: false,
         }),
     );
+    // Sprite textdraws (font 4): a TXD loaded from models/txd like samp does, and a tinted box.
+    let sprite = |text: &str, x: f32, y: f32, w: f32, h: f32, rgba: u32| TextDrawSpec {
+        text: text.into(),
+        x,
+        y,
+        letter_w: 0.0,
+        letter_h: 0.0,
+        text_w: w,
+        text_h: h,
+        colour: Rgba::from_rgba_u32(rgba),
+        use_box: false,
+        box_colour: Rgba::default(),
+        shadow: 0,
+        outline: 0,
+        background_colour: Rgba::default(),
+        font: 4,
+        proportional: false,
+        align: TdAlign::Left,
+        selectable: false,
+    };
+    ui.set_textdraw(
+        12,
+        Some(&sprite("LD_SPAC:white", 496.0, 116.0, 124.0, 3.0, 0xFFFF_FFC0)),
+    );
+    ui.set_textdraw(
+        13,
+        Some(&sprite("loadsc2:loadsc2", 8.0, 236.0, 84.0, 56.0, 0xFFFF_FFFF)),
+    );
     ui.game_text("~y~Welcome~n~~w~to Grove Street", 6000, 3);
 }
 
@@ -467,24 +495,30 @@ pub fn install() -> Result<(), String> {
 pub fn report(md: &mut String) {
     use std::fmt::Write as _;
     sa_core::samp::clear_frame_handler();
-    let (frames, uploaded) = GAME.with(|g| {
+    let (frames, uploaded, sprites) = GAME.with(|g| {
         g.borrow_mut()
             .as_mut()
-            .map(|g| (g.overlay().frames, g.overlay().atlas_uploaded()))
+            .map(|g| {
+                (
+                    g.overlay().frames,
+                    g.overlay().atlas_uploaded(),
+                    g.overlay().sprites_loaded(),
+                )
+            })
             .unwrap_or_default()
     });
     DEMO.with(|d| {
         let d = d.borrow();
         let _ = writeln!(
             md,
-            "\n## SA:MP UI demo\n\nOverlay frames drawn: {frames}; glyph atlas uploaded: {uploaded}; UI events: {}\n",
+            "\n## SA:MP UI demo\n\nOverlay frames drawn: {frames}; glyph atlas uploaded: {uploaded}; sprite textures: {sprites}; UI events: {}\n",
             d.events.len()
         );
         for e in &d.events {
             let _ = writeln!(md, "- {e}");
         }
         println!(
-            "samp-ui-demo: {} playing frames, {frames} overlay frames, atlas uploaded: {uploaded}, {} events",
+            "samp-ui-demo: {} playing frames, {frames} overlay frames, atlas uploaded: {uploaded}, sprites: {sprites}, {} events",
             d.frames,
             d.events.len()
         );

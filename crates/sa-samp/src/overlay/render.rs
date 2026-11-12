@@ -12,9 +12,33 @@ use sa_core::orig;
 use sa_samp_api::Vec3;
 use sa_samp_api::hud::{FontStyle, TextAlign};
 use sa_samp_ui::font::FontAtlas;
+use sa_samp_ui::textdraw::SpriteSource;
 use sa_samp_ui::{Cmd, DrawList};
 
 orig! {
+    /// `CSprite2d::Draw(const CRect&, const CRGBA&)` (0x728350, thiscall)
+    fn sprite2d_draw(this: GPtr<u8>, r: GPtr<u8>, c: GPtr<u8>) = thiscall 0x728350 => unported;
+    /// `CSprite2d::SetTexture(const char*)` (0x727270, thiscall)
+    fn sprite2d_set_texture(this: GPtr<u8>, name: GPtr<u8>) = thiscall 0x727270 => unported;
+    /// `CTxdStore::FindTxdSlot(const char*)` (0x731850)
+    fn txd_find_slot(name: GPtr<u8>) -> i32 = cdecl 0x731850 => unported;
+    /// `CTxdStore::AddTxdSlot(const char*)` (0x731C80)
+    fn txd_add_slot(name: GPtr<u8>) -> i32 = cdecl 0x731C80 => unported;
+    /// `CTxdStore::LoadTxd(int, const char* filename)` (0x7320B0)
+    fn txd_load(slot: i32, file: GPtr<u8>) -> u8 = cdecl 0x7320B0 => unported;
+    /// `CTxdStore::AddRef(int)` (0x731A00)
+    fn txd_add_ref(slot: i32) = cdecl 0x731A00 => unported;
+    /// `CTxdStore::PushCurrentTxd()` (0x7316A0)
+    fn txd_push_current() = cdecl 0x7316A0 => unported;
+    /// `CTxdStore::SetCurrentTxd(int)` (0x7319C0)
+    fn txd_set_current(slot: i32) = cdecl 0x7319C0 => unported;
+    /// `CTxdStore::PopCurrentTxd()` (0x7316B0)
+    fn txd_pop_current() = cdecl 0x7316B0 => unported;
+    /// `CFileMgr::OpenFile(path, mode)` (0x538900)
+    fn file_open(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> = cdecl 0x538900 => unported;
+    /// `CFileMgr::CloseFile(file)` (0x5389D0)
+    fn file_close(f: GPtr<u8>) -> i32 = cdecl 0x5389D0 => unported;
+
     /// `RwRenderStateSet(state, value)` through `RwEngineInstance` +0x20
     fn rw_render_state_set(state: u32, value: u32) -> i32 = cdecl table 0xC97B24 0x20 => unported;
     /// `RwIm2DRenderPrimitive(type, vertices, n)` (0x734E90)
@@ -267,7 +291,7 @@ fn game_font(style: &FontStyle, x: f32, y: f32, text: &str) {
 }
 
 /// Draws `list`. `raster` is the uploaded atlas (0 = none: UI text then goes through `CFont` font 1).
-pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32) {
+pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprites) {
     let z = GPtr::<f32>::from_addr(NEAR_SCREEN_Z).read();
     let rhw = GPtr::<f32>::from_addr(RECIP_NEAR_CLIP).read();
     let mut glyphs = Batch {
@@ -354,10 +378,97 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32) {
                 solid.flush();
                 game_font(style, *x, *y, text);
             }
+            Cmd::Sprite { source, rect, colour } => {
+                glyphs.flush();
+                solid.flush();
+                let tex = sprites.get(source);
+                if tex != 0 {
+                    // samp: bilinear filter, then `CSprite2d::Draw(CRect{l, b, r, t}, colour)`.
+                    rw_render_state_set(rs::TEXTUREFILTER, 2);
+                    let mut sprite = tex;
+                    let mut r = [rect[0], rect[3], rect[2], rect[1]];
+                    let mut c = crgba(*colour);
+                    sprite2d_draw(
+                        GPtr::from_raw(&mut sprite).cast(),
+                        GPtr::from_raw(r.as_mut_ptr().cast::<u8>()),
+                        GPtr::from_raw(&mut c).cast(),
+                    );
+                }
+            }
         }
     }
     glyphs.flush();
     solid.flush();
+}
+
+/// Sprite textdraw textures (`RwTexture*` by `txd:name`; 0 = not available), loaded on first use.
+#[derive(Default)]
+pub struct Sprites {
+    loaded: std::collections::HashMap<(String, String), u32>,
+}
+
+impl Sprites {
+    /// The texture of `source`, loading its TXD like samp (find the slot by name, else add one and load the
+    /// file when it exists), then `CSprite2d::SetTexture` with the slot current.
+    pub fn get(&mut self, source: &SpriteSource) -> u32 {
+        let key = (source.slot.clone(), source.texture.clone());
+        if let Some(&t) = self.loaded.get(&key) {
+            return t;
+        }
+        let t = load_sprite(source);
+        self.loaded.insert(key, t);
+        t
+    }
+
+    /// Textures loaded (non-zero).
+    pub fn count(&self) -> usize {
+        self.loaded.values().filter(|&&t| t != 0).count()
+    }
+}
+
+/// A NUL-terminated copy.
+fn cstr(s: &str) -> Vec<u8> {
+    let mut v = s.as_bytes().to_vec();
+    v.push(0);
+    v
+}
+
+/// Whether the game's file layer can open `path` (`CFileMgr::OpenFile` / `CloseFile`): `LoadTxd` retries
+/// forever on a missing file, as the original does.
+fn file_exists(path: &str) -> bool {
+    let mut p = cstr(path);
+    let mut mode = cstr("rb");
+    let f = file_open(GPtr::from_raw(p.as_mut_ptr()), GPtr::from_raw(mode.as_mut_ptr()));
+    if f.is_null() {
+        return false;
+    }
+    file_close(f);
+    true
+}
+
+fn load_sprite(source: &SpriteSource) -> u32 {
+    let mut slot_name = cstr(&source.slot);
+    let mut slot = txd_find_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
+    if slot == -1 {
+        let Some(file) = &source.file else { return 0 };
+        if !file_exists(file) {
+            return 0;
+        }
+        slot = txd_add_slot(GPtr::from_raw(slot_name.as_mut_ptr()));
+        let mut f = cstr(file);
+        txd_load(slot, GPtr::from_raw(f.as_mut_ptr()));
+        txd_add_ref(slot);
+    }
+    let mut sprite: u32 = 0;
+    let mut name = cstr(&source.texture);
+    txd_push_current();
+    txd_set_current(slot);
+    sprite2d_set_texture(
+        GPtr::from_raw(&mut sprite).cast(),
+        GPtr::from_raw(name.as_mut_ptr()),
+    );
+    txd_pop_current();
+    sprite
 }
 
 /// Big-message buffers: `AddBigMessage` keeps the pointer (samp copies into a static buffer per call).
