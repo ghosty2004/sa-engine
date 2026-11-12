@@ -113,18 +113,6 @@ pub fn g_event_acquaintance_ped_hate_constructor2_420e70(this: u32, a0: u32) -> 
     this
 }
 
-/// `CTaskComplexLeaveAnyCar::Constructor` (0x421150, stub to .HOODLUM 0x15667C0): ctor, thiscall, `ret 12`; 13 instruction(s) matched.
-pub fn g_task_complex_leave_any_car_constructor_421150(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
-    c_61a3b0_t0(this);
-    wr::<u32>(p(this), 0xC, a0);
-    wr::<u32>(p(this), 0, 0x85_8EB0);
-    let v2 = (((a1 & 0xFF) & 0xFF) & 0xFF);
-    wr::<u8>(p(this), 0x10, v2 as u8);
-    let v3 = (((a2 & 0xFF) & 0xFF) & 0xFF);
-    wr::<u8>(p(this), 0x11, v3 as u8);
-    this
-}
-
 /// `CEventLeaderEntryExit::Constructor` (0x43E1C0, stub to .HOODLUM 0x1566D50): ctor, thiscall, `ret 4`; 9 instruction(s) matched.
 #[hook(addr = 0x43E1C0, conv = thiscall, name = "CEventLeaderEntryExit::Constructor", expect = "E9 8B 8B 12 01")]
 pub fn g_event_leader_entry_exit_constructor_43e1c0(this: u32, a0: u32) -> u32 {
@@ -2137,24 +2125,6 @@ pub fn g_task_simple_stand_up_constructor_6312e0(this: u32, a0: u32) -> u32 {
     this
 }
 
-/// `CTaskComplexSitDownThenIdleThenStandUp::Constructor` (0x631460): ctor, thiscall, `ret 12`; 14 instruction(s) matched.
-pub fn g_task_complex_sit_down_then_idle_then_stand_up_constructor_631460(
-    this: u32,
-    a0: u32,
-    a1: u32,
-    a2: u32,
-) -> u32 {
-    c_61a3b0_t0(this);
-    wr::<u32>(p(this), 0xC, a0);
-    wr::<u32>(p(this), 0, 0x86_DF60);
-    let v2 = (((a1 & 0xFF) & 0xFF) & 0xFF);
-    wr::<u8>(p(this), 0x10, v2 as u8);
-    let v3 = (((a2 & 0xFF) & 0xFF) & 0xFF);
-    wr::<u8>(p(this), 0x11, v3 as u8);
-    wr::<u8>(p(this), 0x12, 0 as u8);
-    this
-}
-
 /// `CTaskComplexObserveTrafficLights::CTaskComplexObserveTrafficLights` (0x631790): ctor, thiscall, `ret`; 12 instruction(s) matched.
 #[hook(addr = 0x631790, conv = thiscall, name = "CTaskComplexObserveTrafficLights::CTaskComplexObserveTrafficLights", expect = "56 8B F1 E8 18 8C FE FF")]
 pub fn g_task_complex_observe_traffic_lights_ctask_complex_observe_traffic_lights_631790(this: u32) -> u32 {
@@ -2722,33 +2692,6 @@ pub fn g_task_complex_steal_car_constructor_63b7d0(this: u32, a0: u32) -> u32 {
     }
 }
 
-/// `CTaskComplexLeaveCar` (0x63B8C0): ctor, thiscall, `ret 20`; 45 instruction(s) matched.
-pub fn g_ctask_complex_leave_car_63b8c0(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 {
-    c_61a3b0_t0(this);
-    wr::<u32>(p(this), 0x10, a1);
-    wr::<u32>(p(this), 0x14, a2);
-    let v2 = (((a2 & 0xFFFF_FF00) | ((a3 & 0xFF) & 0xFF)) & 0xFF);
-    wr::<u8>(p(this), 0x18, v2 as u8);
-    wr::<u32>(p(this), 0, 0x86_E828);
-    wr::<u32>(p(this), 0xC, a0);
-    let v3 = (((((a2 & 0xFFFF_FF00) | ((a3 & 0xFF) & 0xFF)) & 0xFFFF_FF00) | ((a4 & 0xFF) & 0xFF)) & 0xFF);
-    wr::<u8>(p(this), 0x19, v3 as u8);
-    wr::<u8>(p(this), 0x1A, 0 as u8);
-    wr::<u32>(p(this), 0x1C, 0);
-    wr::<u8>(p(this), 0x20, 0 as u8);
-    wr::<u8>(p(this), 0x21, 0 as u8);
-    wr::<u32>(p(this), 0x24, 0xF);
-    wr::<u32>(p(this), 0x28, 0x4080_0000);
-    wr::<u32>(p(this), 0x2C, 0x3F80_0000);
-    wr::<u8>(p(this), 0x30, 0 as u8);
-    if a0 == 0 {
-        return this;
-    } else {
-        c_571b70_t1(a0, this.wrapping_add(0xC));
-        return this;
-    }
-}
-
 /// `CTaskComplexLeaveBoat::Constructor` (0x63BB60): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
 #[hook(addr = 0x63BB60, conv = thiscall, name = "CTaskComplexLeaveBoat::Constructor", expect = "6A FF 68 78 16 84 00")]
 pub fn g_task_complex_leave_boat_constructor_63bb60(this: u32, a0: u32, a1: u32) -> u32 {
@@ -3134,20 +3077,6 @@ pub fn g_task_simple_car_shuffle_constructor_646810(this: u32, a0: u32, a1: u32,
         return this;
     } else {
         c_571b70_t1(a0, this.wrapping_add(0x10));
-        return this;
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::Constructor` (0x646990): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
-pub fn g_task_simple_car_wait_to_slow_down_constructor_646990(this: u32, a0: u32, a1: u32) -> u32 {
-    c_61a390_t0(this);
-    wr::<u32>(p(this), 0, 0x86_ED98);
-    wr::<u32>(p(this), 8, a0);
-    wr::<u32>(p(this), 0x10, a1);
-    if a0 == 0 {
-        return this;
-    } else {
-        c_571b70_t1(a0, this.wrapping_add(8));
         return this;
     }
 }
@@ -6067,7 +5996,6 @@ pub const HOOKS: &[HookReg] = &[
 /// executed instruction, switch tables): the bodies this file was generated from (`gen_check`).
 pub const BODIES: &[Body] = &[
     (0x420E70, 0x35C7DC1D2FA2E71D, &[(0x420E70, 5), (0x1561070, 25)]),
-    (0x421150, 0x29B66D57F346D93D, &[(0x421150, 5), (0x15667C0, 41)]),
     (0x43E1C0, 0x0BCF214AEAFAF841, &[(0x43E1C0, 5), (0x1566D50, 25)]),
     (0x43E2E0, 0x100E0A9835CCCD7B, &[(0x43E2E0, 5), (0x156CBA0, 18)]),
     (0x460C80, 0xBF768699952FA244, &[(0x460C80, 78)]),
@@ -6178,7 +6106,6 @@ pub const BODIES: &[Body] = &[
     (0x631030, 0xEEAC0738B104600E, &[(0x631030, 35)]),
     (0x631160, 0xE206AB95FB232138, &[(0x631160, 51)]),
     (0x6312E0, 0x7CD717F7BD2E11B6, &[(0x6312E0, 35)]),
-    (0x631460, 0x15BDAED94C4CDD6D, &[(0x631460, 45)]),
     (0x631790, 0x51CBBCDE12357CAA, &[(0x631790, 32)]),
     (0x631AE0, 0x7D97BB70A0FA9A05, &[(0x631AE0, 34)]),
     (0x631CC0, 0x54E7FC0F8DA4FEBB, &[(0x631CC0, 26)]),
@@ -6215,7 +6142,6 @@ pub const BODIES: &[Body] = &[
     (0x63B430, 0x0853F66E1BC4C8E5, &[(0x63B430, 87)]),
     (0x63B5E0, 0x4FABAA24056C3316, &[(0x63B5E0, 87)]),
     (0x63B7D0, 0x3B164AA52AB04D05, &[(0x63B7D0, 103)]),
-    (0x63B8C0, 0x5B57CF89A39027E4, &[(0x63B8C0, 153)]),
     (0x63BB60, 0x94D4655A3324A0CC, &[(0x63BB60, 94)]),
     (0x63C240, 0x673FC620611C1C40, &[(0x63C240, 107)]),
     (0x63C9D0, 0x27268B8396542335, &[(0x63C9D0, 105)]),
@@ -6236,7 +6162,6 @@ pub const BODIES: &[Body] = &[
     (0x646300, 0xFFF3AAE387436B97, &[(0x646300, 107)]),
     (0x646690, 0x234054DE6AF60B0C, &[(0x646690, 107)]),
     (0x646810, 0x7090992939E1C23A, &[(0x646810, 107)]),
-    (0x646990, 0x8E1BBB36E4F705B6, &[(0x646990, 94)]),
     (0x646B70, 0x16F34AC78CD76E7F, &[(0x646B70, 101)]),
     (0x6471D0, 0x7C586B6E84C48986, &[(0x6471D0, 113)]),
     (0x647FE0, 0x8973D33229DB5DBB, &[(0x647FE0, 116)]),

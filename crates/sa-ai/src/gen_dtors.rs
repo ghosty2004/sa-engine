@@ -165,10 +165,6 @@ orig! {
     fn c_5e4500_t1(this: u32, a0: u32) -> u32 = thiscall 0x5E4500 => unported;
     /// `CPedAttractor::Destructor` (0x5EC410), thiscall, 0 stack argument(s)
     fn c_5ec410_t0(this: u32) -> u32 = thiscall 0x5EC410 => unported;
-    /// `CPedAttractorManager::DeRegisterPed-` (0x5EC850), thiscall, 2 stack argument(s)
-    fn c_5ec850_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x5EC850 => unported;
-    /// `CPedAttractorManager::GetPedAttractorManager` (0x5EE190), thiscall, 0 stack argument(s)
-    fn c_5ee190_t0(this: u32) -> u32 = thiscall 0x5EE190 => unported;
     /// `FUN_005ee530` (0x5EE530), thiscall, 0 stack argument(s)
     fn c_5ee530_t0(this: u32) -> u32 = thiscall 0x5EE530 => unported;
     /// `FUN_005ee600` (0x5EE600), thiscall, 0 stack argument(s)
@@ -2041,186 +2037,6 @@ pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission
     let _v1 = c_63ccc0_t0(this);
 }
 
-/// `CPedAttractor::Destructor` (0x5EC410): dtor, thiscall, `ret`; 52 instruction(s) matched.
-pub fn g_cped_attractor_destructor_5ec410(this: u32) -> u32 {
-    wr::<u32>(p(this), 0, 0x86_C538);
-    let v1 = rd::<u32>(p(this), 8);
-    if v1 == 0 {
-        let v2 = rd::<u32>(p(this), 0x30);
-        if v2 == 0 {
-            wr::<u32>(p(this), 0x30, 0);
-            wr::<u32>(p(this), 0x34, 0);
-            wr::<u32>(p(this), 0x38, 0);
-            let v3 = rd::<u32>(p(this), 0x20);
-            if v3 == 0 {
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v4 = rd::<u32>(p(this), 0x10);
-                if v4 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v4;
-                } else {
-                    let v5 = c_8214bd_c1(v4);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v5;
-                }
-            } else {
-                c_8214bd_c1(v3);
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v7 = rd::<u32>(p(this), 0x10);
-                if v7 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v7;
-                } else {
-                    let v8 = c_8214bd_c1(v7);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v8;
-                }
-            }
-        } else {
-            c_8214bd_c1(v2);
-            wr::<u32>(p(this), 0x30, 0);
-            wr::<u32>(p(this), 0x34, 0);
-            wr::<u32>(p(this), 0x38, 0);
-            let v10 = rd::<u32>(p(this), 0x20);
-            if v10 == 0 {
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v11 = rd::<u32>(p(this), 0x10);
-                if v11 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v11;
-                } else {
-                    let v12 = c_8214bd_c1(v11);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v12;
-                }
-            } else {
-                c_8214bd_c1(v10);
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v14 = rd::<u32>(p(this), 0x10);
-                if v14 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v14;
-                } else {
-                    let v15 = c_8214bd_c1(v14);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v15;
-                }
-            }
-        }
-    } else {
-        c_571a00_t1(v1, this.wrapping_add(8));
-        let v17 = rd::<u32>(p(this), 0x30);
-        if v17 == 0 {
-            wr::<u32>(p(this), 0x30, 0);
-            wr::<u32>(p(this), 0x34, 0);
-            wr::<u32>(p(this), 0x38, 0);
-            let v18 = rd::<u32>(p(this), 0x20);
-            if v18 == 0 {
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v19 = rd::<u32>(p(this), 0x10);
-                if v19 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v19;
-                } else {
-                    let v20 = c_8214bd_c1(v19);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v20;
-                }
-            } else {
-                c_8214bd_c1(v18);
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v22 = rd::<u32>(p(this), 0x10);
-                if v22 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v22;
-                } else {
-                    let v23 = c_8214bd_c1(v22);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v23;
-                }
-            }
-        } else {
-            c_8214bd_c1(v17);
-            wr::<u32>(p(this), 0x30, 0);
-            wr::<u32>(p(this), 0x34, 0);
-            wr::<u32>(p(this), 0x38, 0);
-            let v25 = rd::<u32>(p(this), 0x20);
-            if v25 == 0 {
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v26 = rd::<u32>(p(this), 0x10);
-                if v26 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v26;
-                } else {
-                    let v27 = c_8214bd_c1(v26);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v27;
-                }
-            } else {
-                c_8214bd_c1(v25);
-                wr::<u32>(p(this), 0x20, 0);
-                wr::<u32>(p(this), 0x24, 0);
-                wr::<u32>(p(this), 0x28, 0);
-                let v29 = rd::<u32>(p(this), 0x10);
-                if v29 == 0 {
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v29;
-                } else {
-                    let v30 = c_8214bd_c1(v29);
-                    wr::<u32>(p(this), 0x10, 0);
-                    wr::<u32>(p(this), 0x14, 0);
-                    wr::<u32>(p(this), 0x18, 0);
-                    return v30;
-                }
-            }
-        }
-    }
-}
-
 /// `CPedAttractor::~CPedAttractor` (0x5EC4B0): dtor, thiscall, `ret 4`; 30 instruction(s) matched.
 #[hook(addr = 0x5EC4B0, conv = thiscall, name = "CPedAttractor::~CPedAttractor", expect = "56 57 8B F9 E8 57 FF FF FF")]
 pub fn g_cped_attractor_cped_attractor_5ec4b0(this: u32, a0: u32) -> u32 {
@@ -3738,48 +3554,6 @@ pub fn g_task_complex_hit_response_destructor_631da0(this: u32) {
 pub fn g_task_complex_hit_by_gun_response_destructor_631e30(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E06C);
     let _v1 = c_61a3d0_t0(this);
-}
-
-/// `CTaskComplexUseEffect::Destructor` (0x632270): dtor, thiscall, `ret`; 36 instruction(s) matched.
-pub fn g_task_complex_use_effect_destructor_632270(this: u32) {
-    wr::<u32>(p(this), 0, 0x86_E0D8);
-    let v1 = rd::<u32>(p(this), 0x18);
-    if v1 == 0 {
-        let v2 = rd::<u32>(p(this), 0x10);
-        if v2 == 0 {
-            let _v3 = c_61a3d0_t0(this);
-            return;
-        } else {
-            c_571a00_t1(v2, this.wrapping_add(0x10));
-            let _v5 = c_61a3d0_t0(this);
-            return;
-        }
-    } else {
-        let v6 = rd::<u32>(p(this), 0x14);
-        if v6 == 0 {
-            let v7 = rd::<u32>(p(this), 0x10);
-            if v7 == 0 {
-                let _v8 = c_61a3d0_t0(this);
-                return;
-            } else {
-                c_571a00_t1(v7, this.wrapping_add(0x10));
-                let _v10 = c_61a3d0_t0(this);
-                return;
-            }
-        } else {
-            let v11 = c_5ee190_t0(v1);
-            c_5ec850_t2(v11, v1, v6);
-            let v13 = rd::<u32>(p(this), 0x10);
-            if v13 == 0 {
-                let _v14 = c_61a3d0_t0(this);
-                return;
-            } else {
-                c_571a00_t1(v13, this.wrapping_add(0x10));
-                let _v16 = c_61a3d0_t0(this);
-                return;
-            }
-        }
-    }
 }
 
 /// `CTaskComplexWaitAtAttractor::Destructor` (0x632630): dtor, thiscall, `ret`; 2 instruction(s) matched.
@@ -5321,20 +5095,6 @@ pub fn g_task_simple_car_shuffle_destructor_646890(this: u32) {
             let _v10 = c_61a3a0_t0(this);
             return;
         }
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::Destructor` (0x646A00): dtor, thiscall, `ret`; 25 instruction(s) matched.
-pub fn g_task_simple_car_wait_to_slow_down_destructor_646a00(this: u32) {
-    wr::<u32>(p(this), 0, 0x86_ED98);
-    let v1 = rd::<u32>(p(this), 8);
-    if v1 == 0 {
-        let _v2 = c_61a3a0_t0(this);
-        return;
-    } else {
-        c_571a00_t1(v1, this.wrapping_add(8));
-        let _v4 = c_61a3a0_t0(this);
-        return;
     }
 }
 
@@ -9933,7 +9693,6 @@ pub const BODIES: &[Body] = &[
     (0x4B89F0, 0x05159C6FD77812D1, &[(0x4B89F0, 11)]),
     (0x4B8AB0, 0x72CD8CD31B65D5C6, &[(0x4B8AB0, 30)]),
     (0x4B8AD0, 0x976F5F71BA7AC2D8, &[(0x4B8AD0, 11)]),
-    (0x5EC410, 0xD2A7877A86C82AFD, &[(0x5EC410, 154)]),
     (0x5EC4B0, 0xE04E5D0B8E938E2D, &[(0x5EC4B0, 76)]),
     (0x5EE4E0, 0xDF612AFAA664A198, &[(0x5EE4E0, 76)]),
     (0x5EE5B0, 0xDF612AFAA664A198, &[(0x5EE5B0, 76)]),
@@ -10035,7 +9794,6 @@ pub const BODIES: &[Body] = &[
     (0x631D00, 0xD1ECFA021BD52F68, &[(0x631D00, 93)]),
     (0x631DA0, 0x7DE8AD60DA348C7A, &[(0x631DA0, 11)]),
     (0x631E30, 0xE84C8F0B617A349F, &[(0x631E30, 11)]),
-    (0x632270, 0xEFD770EA01489F3F, &[(0x632270, 118)]),
     (0x632630, 0xF87B1A62872616F6, &[(0x632630, 11)]),
     (0x632720, 0x0B4A99FD9E9ED011, &[(0x632720, 11)]),
     (0x632830, 0x1F0A3BC133A23394, &[(0x632830, 11)]),
@@ -10151,7 +9909,6 @@ pub const BODIES: &[Body] = &[
     (0x646570, 0xE456CD1F500BB07A, &[(0x646570, 109)]),
     (0x646710, 0xB79A4DDCF06856C1, &[(0x646710, 109)]),
     (0x646890, 0xD929013D07199E75, &[(0x646890, 109)]),
-    (0x646A00, 0x1BC89D79BF144DCC, &[(0x646A00, 90)]),
     (0x646C00, 0x408558906C7320BB, &[(0x646C00, 90)]),
     (0x646E50, 0x1C8A339AA2810E49, &[(0x646E50, 100)]),
     (0x647260, 0x1AF8E8927F8328C8, &[(0x647260, 109)]),

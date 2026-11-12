@@ -24,8 +24,6 @@ fn p(a: u32) -> GPtr<u8> {
 pub type Body = (u32, u64, &'static [(u32, u32)]);
 
 orig! {
-    /// `CStreaming::RequestModel` (0x4087E0), cdecl, 2 stack argument(s)
-    fn c_4087e0_c2(a0: u32, a1: u32) -> u32 = cdecl 0x4087E0 => unported;
     /// `CColSphere::Set` (0x40FD10), thiscall, 5 stack argument(s)
     fn c_40fd10_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x40FD10 => unported;
     /// `VectorSub` (0x40FE60), cdecl, 3 stack argument(s)
@@ -54,10 +52,6 @@ orig! {
     fn c_4b8920_t1(this: u32, a0: u32) -> u32 = thiscall 0x4B8920 => unported;
     /// `CEventHandler::RegisterKill` (0x4B9340), cdecl, 4 stack argument(s)
     fn c_4b9340_c4(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = cdecl 0x4B9340 => unported;
-    /// `CAnimManager::GetAnimationBlockIndex-by-name` (0x4D3990), cdecl, 1 stack argument(s)
-    fn c_4d3990_c1(a0: u32) -> u32 = cdecl 0x4D3990 => unported;
-    /// `CAnimManager::AddAnimBlockRef` (0x4D3FB0), cdecl, 1 stack argument(s)
-    fn c_4d3fb0_c1(a0: u32) -> u32 = cdecl 0x4D3FB0 => unported;
     /// `CAEPedWeaponAudioEntity::AddAudioEvent` (0x4E69F0), thiscall, 1 stack argument(s)
     fn c_4e69f0_t1(this: u32, a0: u32) -> u32 = thiscall 0x4E69F0 => unported;
     /// `CFireManager::FindNearestFire` (0x538F40), thiscall, 3 stack argument(s)
@@ -102,12 +96,6 @@ orig! {
     fn c_5e6580_t0(this: u32) -> u32 = thiscall 0x5E6580 => unported;
     /// `CPed::DettachPedFromEntity` (0x5E7EC0), thiscall, 0 stack argument(s)
     fn c_5e7ec0_t0(this: u32) -> u32 = thiscall 0x5E7EC0 => unported;
-    /// `CPedAttractorManager::GetRelevantAttractor-` (0x5EBF50), thiscall, 3 stack argument(s)
-    fn c_5ebf50_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x5EBF50 => unported;
-    /// `CPedAttractor::GetTaskForPed` (0x5EC500), thiscall, 1 stack argument(s)
-    fn c_5ec500_t1(this: u32, a0: u32) -> u32 = thiscall 0x5EC500 => unported;
-    /// `CPedAttractorManager::DeRegisterPed-` (0x5EC850), thiscall, 2 stack argument(s)
-    fn c_5ec850_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x5EC850 => unported;
     /// `CPedAttractorManager::BroadcastDeparture-` (0x5EC980), thiscall, 2 stack argument(s)
     fn c_5ec980_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x5EC980 => unported;
     /// `CPedAttractorManager::GetPedAttractorManager` (0x5EE190), thiscall, 0 stack argument(s)
@@ -136,8 +124,6 @@ orig! {
     fn c_602590_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x602590 => unported;
     /// `CPlayerPed::GetPlayerInfoForThisPlayerPed` (0x609FF0), thiscall, 0 stack argument(s)
     fn c_609ff0_t0(this: u32) -> u32 = thiscall 0x609FF0 => unported;
-    /// `CPedPlacement::FindZCoorForPed` (0x616920), cdecl, 1 stack argument(s)
-    fn c_616920_c1(a0: u32) -> u32 = cdecl 0x616920 => unported;
     /// `IKChainManager_c::IsLooking` (0x6181A0), thiscall, 1 stack argument(s)
     fn c_6181a0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6181A0 => unported;
     /// `IKChainManager_c::AbortLookAt` (0x618280), thiscall, 2 stack argument(s)
@@ -174,8 +160,6 @@ orig! {
     fn c_620e30_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x620E30 => unported;
     /// `CTaskComplexKillPedOnFootMelee::CalculateSearchPositionAndRanges` (0x621100), thiscall, 1 stack argument(s)
     fn c_621100_t1(this: u32, a0: u32) -> u32 = thiscall 0x621100 => unported;
-    /// `CTaskComplexDestroyCar::Constructor` (0x621C00), thiscall, 4 stack argument(s)
-    fn c_621c00_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x621C00 => unported;
     /// `CTaskComplexDestroyCarMelee::Constructor` (0x621D10), thiscall, 1 stack argument(s)
     fn c_621d10_t1(this: u32, a0: u32) -> u32 = thiscall 0x621D10 => unported;
     /// `CTaskComplexDestroyCarArmed::Constructor` (0x621F50), thiscall, 4 stack argument(s)
@@ -234,10 +218,6 @@ orig! {
     fn c_630040_t9(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> u32 = thiscall 0x630040 => unported;
     /// `CTaskSimpleTired::Constructor` (0x630F20), thiscall, 1 stack argument(s)
     fn c_630f20_t1(this: u32, a0: u32) -> u32 = thiscall 0x630F20 => unported;
-    /// `CTaskSimpleSitDown::Constructor` (0x631030), thiscall, 1 stack argument(s)
-    fn c_631030_t1(this: u32, a0: u32) -> u32 = thiscall 0x631030 => unported;
-    /// `CTaskSimpleSitIdle::Constructor` (0x631160), thiscall, 2 stack argument(s)
-    fn c_631160_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x631160 => unported;
     /// `CTaskComplexObserveTrafficLightsAndAchieveHeading::CreateSubTask` (0x631990), thiscall, 1 stack argument(s)
     fn c_631990_t1(this: u32, a0: u32) -> u32 = thiscall 0x631990 => unported;
     /// `CTaskComplexCrossRoadLookAndAchieveHeading::CreateSubTask` (0x631B60), thiscall, 2 stack argument(s)
@@ -428,8 +408,6 @@ orig! {
     fn c_66ad10_t1(this: u32, a0: u32) -> u32 = thiscall 0x66AD10 => unported;
     /// `CTaskComplexTurnToFaceEntityOrCoord::Constructor-Coords` (0x66B890), thiscall, 3 stack argument(s)
     fn c_66b890_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x66B890 => unported;
-    /// `CTaskSimpleSlideToCoord::Constructor-NoAnim` (0x66C3E0), thiscall, 3 stack argument(s)
-    fn c_66c3e0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x66C3E0 => unported;
     /// `FUN_0066ca40` (0x66CA40), thiscall, 8 stack argument(s)
     fn c_66ca40_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x66CA40 => unported;
     /// `CTaskComplexFollowNodeRoute::Constructor` (0x66EA30), thiscall, 8 stack argument(s)
@@ -476,8 +454,6 @@ orig! {
     fn c_68c9e0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x68C9E0 => unported;
     /// `CTaskComplexArrestPed::CreateSubTask` (0x68CF80), thiscall, 2 stack argument(s)
     fn c_68cf80_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x68CF80 => unported;
-    /// `CTaskSimpleShakeFist::Constructor` (0x690B80), thiscall, 0 stack argument(s)
-    fn c_690b80_t0(this: u32) -> u32 = thiscall 0x690B80 => unported;
     /// `CTaskComplexFollowLeaderInFormation::Constructor` (0x6949A0), thiscall, 4 stack argument(s)
     fn c_6949a0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x6949A0 => unported;
     /// `FUN_00695600` (0x695600), thiscall, 3 stack argument(s)
@@ -524,8 +500,6 @@ orig! {
     fn c_53cbe0_c4_st0(a0: u32, a1: u32, a2: u32, a3: u32) -> f64 = cdecl 0x53CBE0 => unported;
     /// `CTaskComplexTreatAccident::ComputeHeading` (0x658AF0), thiscall, 1 stack argument(s), ST0 result
     fn c_658af0_t1_st0(this: u32, a0: u32) -> f64 = thiscall 0x658AF0 => unported;
-    /// virtual slot +0x0 (`call [vtbl + 0x0]` on ECX), 0 stack argument(s)
-    fn vslot_0_0(obj: GPtr<u8>) -> u32 = thiscall vslot 0x0 => unported;
     /// virtual slot +0x4 (`call [vtbl + 0x4]` on ECX), 0 stack argument(s)
     fn vslot_4_0(obj: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
     /// virtual slot +0x8 (`call [vtbl + 0x8]` on ECX), 0 stack argument(s)
@@ -920,138 +894,6 @@ pub fn g_task_complex_destroy_car_armed_control_sub_task_628fa0(this: u32, a0: u
         }
     } else {
         return v1;
-    }
-}
-
-/// `CTaskComplexRoadRage::CreateSubTask` (0x629080): subtask, thiscall, `ret 8`; 214 instruction(s) matched.
-pub fn g_task_complex_road_rage_create_sub_task_629080(this: u32, a0: u32, a1: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0xC);
-    if v1 == 0 {
-        return 0;
-    } else {
-        if (a0 as i32) > (0x398 as i32) {
-            if a0.wrapping_sub(0x3E8) == 0 {
-                let v2 = c_61a5a0_c1(0x38);
-                if v2 == 0 {
-                    return 0;
-                } else {
-                    let v3 = rd::<u32>(p(this), 0xC);
-                    let v4 = c_620e30_t6(v2, v3, 0xFFFF_FFFF, 0, 0, 0, 1);
-                    return v4;
-                }
-            } else {
-                let _v5 = (a0.wrapping_sub(0x3E8)).wrapping_sub(3);
-                if (a0.wrapping_sub(0x3E8)).wrapping_sub(3) == 0 {
-                    let v6 = rd::<u32>(p(v1), 0x58C);
-                    if v6 == 0 {
-                        let v7 = c_61a5a0_c1(0x38);
-                        if v7 == 0 {
-                            return 0;
-                        } else {
-                            let v8 = rd::<u32>(p(this), 0xC);
-                            let v9 = c_620e30_t6(v7, v8, 0xFFFF_FFFF, 0, 0, 0, 1);
-                            return v9;
-                        }
-                    } else {
-                        let v10 = c_61a5a0_c1(0x20);
-                        if v10 == 0 {
-                            return 0;
-                        } else {
-                            let v11 = rd::<u32>(p(this), 0xC);
-                            let v12 = rd::<u32>(p(v11), 0x58C);
-                            let v13 = c_621c00_t4(v10, v12, 0, 0, 0);
-                            return v13;
-                        }
-                    }
-                } else {
-                    return 0;
-                }
-            }
-        } else {
-            if a0 == 0x398 {
-                let v14 = c_61a5a0_c1(0x28);
-                if v14 == 0 {
-                    return 0;
-                } else {
-                    let v15 = g::<u32>(0x86_FC80).read();
-                    let v16 = g::<u32>(0x86_FC7C).read();
-                    let v17 = rd::<u32>(p(this), 0xC);
-                    let v18 = c_66b890_t3(v14, v17, v16, v15);
-                    return v18;
-                }
-            } else {
-                if (a0 as i32) > (0x2C0 as i32) {
-                    if a0 != 0x38B {
-                        return 0;
-                    } else {
-                        let v19 = rd::<u32>(p(v1), 0x58C);
-                        if v19 == 0 {
-                            let v20 = c_61a5a0_c1(0x38);
-                            if v20 == 0 {
-                                return 0;
-                            } else {
-                                let v21 = rd::<u32>(p(this), 0xC);
-                                let v22 = c_620e30_t6(v20, v21, 0xFFFF_FFFF, 0, 0, 0, 1);
-                                return v22;
-                            }
-                        } else {
-                            let v23 = rd::<u16>(p(v19), 0x22) as i16 as i32 as u32;
-                            let v24 = rd::<u32>(p(v23.wrapping_mul(4)), 0xA9_B0C8);
-                            let v25 = rd::<u32>(p(v24), 0x14);
-                            let v26 = rd::<u32>(p(v25), 0x24);
-                            let v27 = c_61a5a0_c1(0x4C);
-                            if v27 == 0 {
-                                return 0;
-                            } else {
-                                let v28 = g::<u32>(0x85_9E34).read();
-                                let v29 = x(f32::from_bits(v26));
-                                let v30 = g::<u32>(0x85_9E30).read();
-                                let v31 = v29.fadd_m(g::<f32>(0x85_8624).read());
-                                let v32 = rd::<u32>(p(this), 0xC);
-                                let v33 = rd::<u32>(p(v32), 0x58C);
-                                let v34 = f32_of(v31).to_bits();
-                                let v35 = c_46ac10_t8(v27, v33, 0x4E20, 0x3E8, v34, v30, v28, 1, 1);
-                                return v35;
-                            }
-                        }
-                    }
-                } else {
-                    if a0 == 0x2C0 {
-                        let v36 = c_61a5a0_c1(0x34);
-                        if v36 == 0 {
-                            return 0;
-                        } else {
-                            let v37 = rd::<u32>(p(a1), 0x58C);
-                            let v38 = c_63b8c0_t5(v36, v37, 0, 0, 1, 0);
-                            return v38;
-                        }
-                    } else {
-                        if a0 == 0x12E {
-                            let v39 = c_61a5a0_c1(0x10);
-                            if v39 == 0 {
-                                return 0;
-                            } else {
-                                let v40 = c_690b80_t0(v39);
-                                return v40;
-                            }
-                        } else {
-                            if a0 != 0x2BD {
-                                return 0;
-                            } else {
-                                let v41 = c_61a5a0_c1(0x50);
-                                if v41 == 0 {
-                                    return 0;
-                                } else {
-                                    let v42 = rd::<u32>(p(a1), 0x58C);
-                                    let v43 = c_6402f0_t1(v41, v42);
-                                    return v43;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -2154,215 +1996,6 @@ pub fn g_task_complex_road_rage_create_next_sub_task_62e270(this: u32, a0: u32) 
     }
 }
 
-/// `CTaskComplexRoadRage::ControlSubTask` (0x62E3F0): subtask, thiscall, `ret 4`; 125 instruction(s) matched.
-pub fn g_task_complex_road_rage_control_sub_task_62e3f0(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0xC);
-    let v2 = rd::<u32>(p(this), 8);
-    if v1 != 0 {
-        let _v3 = rd::<u32>(p(v2), 0);
-        let v4 = vslot_10_0(p(v2));
-        if v4.wrapping_sub(0x3E8) == 0 {
-            let v5 = rd::<u32>(p(a0), 0x58C);
-            if v5 == 0 {
-                return v2;
-            } else {
-                let v6 = rd::<u32>(p(a0), 0x14);
-                if v6 != 0 {
-                    let v7 = rd::<u32>(p(this), 0xC);
-                    let v8 = rd::<u32>(p(v7), 0x14);
-                    if v8 == 0 {
-                        let v9 = x(rd::<f32>(p(v7), 4));
-                        let v10 = v9.fsub_m(rd::<f32>(p(v6), 0x30));
-                        let v11 = x(rd::<f32>(p(v7), 8));
-                        let v12 = v11.fsub_m(rd::<f32>(p(v6), 0x34));
-                        let v13 = x(rd::<f32>(p(v7), 0xC));
-                        let v14 = v13.fsub_m(rd::<f32>(p(v6), 0x38));
-                        let v15 = v14.fmul(v14);
-                        let v16 = v12.fmul(v12);
-                        let v17 = v15.fadd(v16);
-                        let v18 = v10.fmul(v10);
-                        let v19 = v17.fadd(v18);
-                        let v20 = v19.fcom(x(g::<f32>(0x85_A700).read()));
-                        if v20.test_any(0x41) {
-                            return v2;
-                        } else {
-                            let v21 = c_629080_t2(this, 0x2BD, a0);
-                            return v21;
-                        }
-                    } else {
-                        let v22 = x(rd::<f32>(p(v8), 0x30));
-                        let v23 = v22.fsub_m(rd::<f32>(p(v6), 0x30));
-                        let v24 = x(rd::<f32>(p(v8), 0x34));
-                        let v25 = v24.fsub_m(rd::<f32>(p(v6), 0x34));
-                        let v26 = x(rd::<f32>(p(v8), 0x38));
-                        let v27 = v26.fsub_m(rd::<f32>(p(v6), 0x38));
-                        let v28 = v27.fmul(v27);
-                        let v29 = v25.fmul(v25);
-                        let v30 = v28.fadd(v29);
-                        let v31 = v23.fmul(v23);
-                        let v32 = v30.fadd(v31);
-                        let v33 = v32.fcom(x(g::<f32>(0x85_A700).read()));
-                        if v33.test_any(0x41) {
-                            return v2;
-                        } else {
-                            let v34 = c_629080_t2(this, 0x2BD, a0);
-                            return v34;
-                        }
-                    }
-                } else {
-                    let v35 = rd::<u32>(p(this), 0xC);
-                    let v36 = rd::<u32>(p(v35), 0x14);
-                    if v36 == 0 {
-                        let v37 = x(rd::<f32>(p(v35), 4));
-                        let v38 = v37.fsub_m(rd::<f32>(p(a0), 4));
-                        let v39 = x(rd::<f32>(p(v35), 8));
-                        let v40 = v39.fsub_m(rd::<f32>(p(a0), 8));
-                        let v41 = x(rd::<f32>(p(v35), 0xC));
-                        let v42 = v41.fsub_m(rd::<f32>(p(a0), 0xC));
-                        let v43 = v42.fmul(v42);
-                        let v44 = v40.fmul(v40);
-                        let v45 = v43.fadd(v44);
-                        let v46 = v38.fmul(v38);
-                        let v47 = v45.fadd(v46);
-                        let v48 = v47.fcom(x(g::<f32>(0x85_A700).read()));
-                        if v48.test_any(0x41) {
-                            return v2;
-                        } else {
-                            let v49 = c_629080_t2(this, 0x2BD, a0);
-                            return v49;
-                        }
-                    } else {
-                        let v50 = x(rd::<f32>(p(v36), 0x30));
-                        let v51 = v50.fsub_m(rd::<f32>(p(a0), 4));
-                        let v52 = x(rd::<f32>(p(v36), 0x34));
-                        let v53 = v52.fsub_m(rd::<f32>(p(a0), 8));
-                        let v54 = x(rd::<f32>(p(v36), 0x38));
-                        let v55 = v54.fsub_m(rd::<f32>(p(a0), 0xC));
-                        let v56 = v55.fmul(v55);
-                        let v57 = v53.fmul(v53);
-                        let v58 = v56.fadd(v57);
-                        let v59 = v51.fmul(v51);
-                        let v60 = v58.fadd(v59);
-                        let v61 = v60.fcom(x(g::<f32>(0x85_A700).read()));
-                        if v61.test_any(0x41) {
-                            return v2;
-                        } else {
-                            let v62 = c_629080_t2(this, 0x2BD, a0);
-                            return v62;
-                        }
-                    }
-                }
-            }
-        } else {
-            let _v63 = (v4.wrapping_sub(0x3E8)).wrapping_sub(3);
-            if (v4.wrapping_sub(0x3E8)).wrapping_sub(3) != 0 {
-                return v2;
-            } else {
-                let v64 = rd::<u32>(p(this), 0xC);
-                let v65 = rd::<u32>(p(v64), 0x46C);
-                if ((((v65 >> 8) & 0xFF) & 1) as u8) != (0 as u8) {
-                    let v66 = rd::<u32>(p(a0), 0x58C);
-                    if v66 == 0 {
-                        return v2;
-                    } else {
-                        let v67 = rd::<u32>(p(a0), 0x14);
-                        if v67 != 0 {
-                            let v68 = rd::<u32>(p(v64), 0x14);
-                            if v68 == 0 {
-                                let v69 = x(rd::<f32>(p(v64), 4));
-                                let v70 = v69.fsub_m(rd::<f32>(p(v67), 0x30));
-                                let v71 = x(rd::<f32>(p(v64), 8));
-                                let v72 = v71.fsub_m(rd::<f32>(p(v67), 0x34));
-                                let v73 = x(rd::<f32>(p(v64), 0xC));
-                                let v74 = v73.fsub_m(rd::<f32>(p(v67), 0x38));
-                                let v75 = v70.fmul(v70);
-                                let v76 = v74.fmul(v74);
-                                let v77 = v75.fadd(v76);
-                                let v78 = v72.fmul(v72);
-                                let v79 = v77.fadd(v78);
-                                let v80 = v79.fcom(x(g::<f32>(0x85_A700).read()));
-                                if v80.test_any(0x41) {
-                                    return v2;
-                                } else {
-                                    let v81 = c_629080_t2(this, 0x2BD, a0);
-                                    return v81;
-                                }
-                            } else {
-                                let v82 = x(rd::<f32>(p(v68), 0x30));
-                                let v83 = v82.fsub_m(rd::<f32>(p(v67), 0x30));
-                                let v84 = x(rd::<f32>(p(v68), 0x34));
-                                let v85 = v84.fsub_m(rd::<f32>(p(v67), 0x34));
-                                let v86 = x(rd::<f32>(p(v68), 0x38));
-                                let v87 = v86.fsub_m(rd::<f32>(p(v67), 0x38));
-                                let v88 = v83.fmul(v83);
-                                let v89 = v87.fmul(v87);
-                                let v90 = v88.fadd(v89);
-                                let v91 = v85.fmul(v85);
-                                let v92 = v90.fadd(v91);
-                                let v93 = v92.fcom(x(g::<f32>(0x85_A700).read()));
-                                if v93.test_any(0x41) {
-                                    return v2;
-                                } else {
-                                    let v94 = c_629080_t2(this, 0x2BD, a0);
-                                    return v94;
-                                }
-                            }
-                        } else {
-                            let v95 = rd::<u32>(p(v64), 0x14);
-                            if v95 == 0 {
-                                let v96 = x(rd::<f32>(p(v64), 4));
-                                let v97 = v96.fsub_m(rd::<f32>(p(a0), 4));
-                                let v98 = x(rd::<f32>(p(v64), 8));
-                                let v99 = v98.fsub_m(rd::<f32>(p(a0), 8));
-                                let v100 = x(rd::<f32>(p(v64), 0xC));
-                                let v101 = v100.fsub_m(rd::<f32>(p(a0), 0xC));
-                                let v102 = v97.fmul(v97);
-                                let v103 = v101.fmul(v101);
-                                let v104 = v102.fadd(v103);
-                                let v105 = v99.fmul(v99);
-                                let v106 = v104.fadd(v105);
-                                let v107 = v106.fcom(x(g::<f32>(0x85_A700).read()));
-                                if v107.test_any(0x41) {
-                                    return v2;
-                                } else {
-                                    let v108 = c_629080_t2(this, 0x2BD, a0);
-                                    return v108;
-                                }
-                            } else {
-                                let v109 = x(rd::<f32>(p(v95), 0x30));
-                                let v110 = v109.fsub_m(rd::<f32>(p(a0), 4));
-                                let v111 = x(rd::<f32>(p(v95), 0x34));
-                                let v112 = v111.fsub_m(rd::<f32>(p(a0), 8));
-                                let v113 = x(rd::<f32>(p(v95), 0x38));
-                                let v114 = v113.fsub_m(rd::<f32>(p(a0), 0xC));
-                                let v115 = v110.fmul(v110);
-                                let v116 = v114.fmul(v114);
-                                let v117 = v115.fadd(v116);
-                                let v118 = v112.fmul(v112);
-                                let v119 = v117.fadd(v118);
-                                let v120 = v119.fcom(x(g::<f32>(0x85_A700).read()));
-                                if v120.test_any(0x41) {
-                                    return v2;
-                                } else {
-                                    let v121 = c_629080_t2(this, 0x2BD, a0);
-                                    return v121;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    let v122 = c_629080_t2(this, 0x3E8, a0);
-                    return v122;
-                }
-            }
-        }
-    } else {
-        let _v123 = rd::<u32>(p(v2), 0);
-        vslot_18_3(p(v2), a0, 0, 0);
-        return v2;
-    }
-}
-
 /// `CTaskComplexBeStill::CreateNextSubTask` (0x62F8D0): subtask, thiscall, `ret 4`; 23 instruction(s) matched.
 #[hook(addr = 0x62F8D0, conv = thiscall, name = "CTaskComplexBeStill::CreateNextSubTask", expect = "56 8B F1 8B 4E 08")]
 pub fn g_task_complex_be_still_create_next_sub_task_62f8d0(this: u32, a0: u32) -> u32 {
@@ -2522,59 +2155,6 @@ pub fn g_task_complex_die_create_next_sub_task_6301e0(this: u32, a0: u32) -> u32
     }
 }
 
-/// `CTaskComplexSitDownThenIdleThenStandUp::CreateSubTask` (0x631550): subtask, thiscall, `ret 4`; 100 instruction(s) matched.
-pub fn g_task_complex_sit_down_then_idle_then_stand_up_create_sub_task_631550(this: u32, a0: u32) -> u32 {
-    if (a0 as i32) > (0xDE as i32) {
-        if a0 != 0x516 {
-            return 0;
-        } else {
-            return 0;
-        }
-    } else {
-        if a0 == 0xDE {
-            let v1 = c_61a5a0_c1(0x10);
-            if v1 == 0 {
-                return 0;
-            } else {
-                let v2 = u32::from(rd::<u8>(p(this), 0x10));
-                c_61a390_t0(v1);
-                wr::<u32>(p(v1), 0, 0x86_DF3C);
-                let v4 = ((v2 & 0xFF) & 0xFF);
-                wr::<u8>(p(v1), 8, v4 as u8);
-                wr::<u8>(p(v1), 9, 0 as u8);
-                wr::<u32>(p(v1), 0xC, 0);
-                return v1;
-            }
-        } else {
-            if a0.wrapping_sub(0xDC) == 0 {
-                let v5 = c_61a5a0_c1(0x10);
-                if v5 == 0 {
-                    return 0;
-                } else {
-                    let v6 = u32::from(rd::<u8>(p(this), 0x10));
-                    let v7 = c_631030_t1(v5, (v6 & 0xFF));
-                    return v7;
-                }
-            } else {
-                let _v8 = (a0.wrapping_sub(0xDC)).wrapping_sub(1);
-                if (a0.wrapping_sub(0xDC)).wrapping_sub(1) != 0 {
-                    return 0;
-                } else {
-                    let v9 = c_61a5a0_c1(0x20);
-                    if v9 == 0 {
-                        return 0;
-                    } else {
-                        let v10 = rd::<u32>(p(this), 0xC);
-                        let v11 = u32::from(rd::<u8>(p(this), 0x10));
-                        let v12 = c_631160_t2(v9, v10, (v11 & 0xFF));
-                        return v12;
-                    }
-                }
-            }
-        }
-    }
-}
-
 /// `CTaskComplexSitDownThenIdleThenStandUp::CreateFirstSubTask` (0x6316A0): subtask, thiscall, `ret 4`; 42 instruction(s) matched.
 #[hook(addr = 0x6316A0, conv = thiscall, name = "CTaskComplexSitDownThenIdleThenStandUp::CreateFirstSubTask", expect = "6A FF 68 1B 05 84 00")]
 pub fn g_task_complex_sit_down_then_idle_then_stand_up_create_first_sub_task_6316a0(
@@ -2596,34 +2176,6 @@ pub fn g_task_complex_sit_down_then_idle_then_stand_up_create_first_sub_task_631
         wr::<u8>(p(v1), 0x19, 0 as u8);
         wr::<u32>(p(v1), 0x1C, 0x4100_0000);
         return v1;
-    }
-}
-
-/// `CTaskComplexSitDownThenIdleThenStandUp::ControlSubTask` (0x631730): subtask, thiscall, `ret 4`; 31 instruction(s) matched.
-pub fn g_task_complex_sit_down_then_idle_then_stand_up_control_sub_task_631730(this: u32, _a0: u32) -> u32 {
-    let v1 = u32::from(rd::<u8>(p(this), 0x12));
-    if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
-        let v2 = rd::<u32>(p(this), 8);
-        return v2;
-    } else {
-        let v3 = u32::from(rd::<u8>(p(this), 0x10));
-        if (((v3 & 0xFF) & 0xFF) as u8) == (0 as u8) {
-            let v4 = rd::<u32>(p(this), 8);
-            return v4;
-        } else {
-            let v5 = c_4d3990_c1(0x86_DF8C);
-            let v6 = u32::from(rd::<u8>(p((v5 << 5)), 0xB5_D4B0));
-            if (((v6 & 0xFF) & 0xFF) as u8) == (1 as u8) {
-                c_4d3fb0_c1(v5);
-                wr::<u8>(p(this), 0x12, 1 as u8);
-                let v8 = rd::<u32>(p(this), 8);
-                return v8;
-            } else {
-                c_4087e0_c2(v5.wrapping_add(0x63E7), 8);
-                let v10 = rd::<u32>(p(this), 8);
-                return v10;
-            }
-        }
     }
 }
 
@@ -2817,89 +2369,6 @@ pub fn g_task_complex_hit_by_gun_response_create_first_sub_task_631e50(this: u32
     }
 }
 
-/// `CTaskComplexUseEffect::CreateNextSubTask` (0x632420): subtask, thiscall, `ret 4`; 27 instruction(s) matched.
-pub fn g_task_complex_use_effect_create_next_sub_task_632420(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0x14);
-    if v1 == 0 {
-        return 0;
-    } else {
-        let v2 = rd::<u32>(p(this), 0x10);
-        let v3 = rd::<u32>(p(this), 0xC);
-        let v4 = c_5ee190_t0(v3);
-        let v5 = c_5ebf50_t3(v4, a0, v3, v2);
-        if v5 != v1 {
-            return 0;
-        } else {
-            let v6 = c_5ec500_t1(v1, a0);
-            return v6;
-        }
-    }
-}
-
-/// `CTaskComplexUseEffect::ControlSubTask` (0x632570): subtask, thiscall, `ret 4`; 52 instruction(s) matched.
-pub fn g_task_complex_use_effect_control_sub_task_632570(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(a0), 0x598);
-    if v1 != 6 {
-        let v2 = rd::<u32>(p(this), 0x14);
-        if v2 == 0 {
-            let _v3 = rd::<u32>(p(this), 0);
-            let v4 = vslot_24_1(p(this), a0);
-            return v4;
-        } else {
-            let v5 = c_5ec500_t1(v2, a0);
-            return v5;
-        }
-    } else {
-        let v6 = c_56e230_c1(0xFFFF_FFFF);
-        let v7 = rd::<u32>(p(v6), 0x2C);
-        if v7 == 0 {
-            let v8 = rd::<u32>(p(this), 0x14);
-            if v8 == 0 {
-                let _v9 = rd::<u32>(p(this), 0);
-                let v10 = vslot_24_1(p(this), a0);
-                return v10;
-            } else {
-                let v11 = c_5ec500_t1(v8, a0);
-                return v11;
-            }
-        } else {
-            let v12 = c_56e230_c1(0xFFFF_FFFF);
-            let v13 = c_562fb0_t1(v12, a0);
-            if ((v13 & 0xFF) as u8) == (0 as u8) {
-                let v14 = rd::<u32>(p(this), 0x14);
-                if v14 == 0 {
-                    let _v15 = rd::<u32>(p(this), 0);
-                    let v16 = vslot_24_1(p(this), a0);
-                    return v16;
-                } else {
-                    let v17 = c_5ec500_t1(v14, a0);
-                    return v17;
-                }
-            } else {
-                let v18 = rd::<u32>(p(this), 8);
-                let _v19 = rd::<u32>(p(v18), 0);
-                let v20 = vslot_18_3(p(v18), a0, 1, 0);
-                if ((v20 & 0xFF) as u8) == (0 as u8) {
-                    let v21 = rd::<u32>(p(this), 0x14);
-                    if v21 == 0 {
-                        let _v22 = rd::<u32>(p(this), 0);
-                        let v23 = vslot_24_1(p(this), a0);
-                        return v23;
-                    } else {
-                        let v24 = c_5ec500_t1(v21, a0);
-                        return v24;
-                    }
-                } else {
-                    let v25 = rd::<u32>(p(this), 0x14);
-                    let v26 = c_5ee190_t0(v25);
-                    c_5ec850_t2(v26, a0, v25);
-                    return 0;
-                }
-            }
-        }
-    }
-}
-
 /// `CTaskComplexWaitAtAttractor::CreateFirstSubTask` (0x632650): subtask, thiscall, `ret 4`; 42 instruction(s) matched.
 #[hook(addr = 0x632650, conv = thiscall, name = "CTaskComplexWaitAtAttractor::CreateFirstSubTask", expect = "6A FF 68 9B 06 84 00")]
 pub fn g_task_complex_wait_at_attractor_create_first_sub_task_632650(_this: u32, _a0: u32) -> u32 {
@@ -2918,42 +2387,6 @@ pub fn g_task_complex_wait_at_attractor_create_first_sub_task_632650(_this: u32,
         wr::<u8>(p(v1), 0x19, 0 as u8);
         wr::<u32>(p(v1), 0x1C, 0x4100_0000);
         return v1;
-    }
-}
-
-/// `CTaskComplexUseAttractor::ControlSubTask` (0x6327C0): subtask, thiscall, `ret 4`; 25 instruction(s) matched.
-pub fn g_task_complex_use_attractor_control_sub_task_6327c0(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0xC);
-    if v1 == 0 {
-        let v2 = rd::<u32>(p(this), 8);
-        return v2;
-    } else {
-        let v3 = rd::<u32>(p(v1), 8);
-        if v3 == 0 {
-            let v4 = rd::<u32>(p(this), 8);
-            return v4;
-        } else {
-            let v5 = u32::from(rd::<u8>(p(v3), 0x36));
-            let v6 = (((((this & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFF) & 7) & 0xFF);
-            if ((((((this & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF) as u8)
-                != (4 as u8)
-            {
-                let v7 = rd::<u32>(p(this), 8);
-                return v7;
-            } else {
-                let v8 = rd::<u32>(p(v3), 0x140);
-                if ((((v8 >> 8) & 0xFF) & 4) as u8) == (0 as u8) {
-                    let v9 = rd::<u32>(p(this), 8);
-                    return v9;
-                } else {
-                    let v10 = rd::<u32>(p(this), 8);
-                    let _v11 = rd::<u32>(p(v10), 0);
-                    vslot_18_3(p(v10), a0, 0, 0);
-                    let v13 = rd::<u32>(p(this), 8);
-                    return v13;
-                }
-            }
-        }
     }
 }
 
@@ -8292,227 +7725,6 @@ pub fn g_task_complex_go_to_point_and_stand_still_and_achieve_heading_create_fir
     v3
 }
 
-/// `CTaskComplexGoToAttractor::CreateFirstSubTask` (0x670420): subtask, thiscall, `ret 4`; 126 instruction(s) matched.
-pub fn g_task_complex_go_to_attractor_create_first_sub_task_670420(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(this), 0xC);
-    let _v2 = rd::<u32>(p(v1), 0);
-    let v3 = rd::<u32>(p(this), 0x28);
-    let v4 = vslot_0_0(p(v1));
-    if v4 != 4 {
-        let v5 = rd::<u32>(p(a0), 0x474);
-        if (v5 & 0x20_0000) == 0 {
-            let v6 = c_61a5a0_c1(0x40);
-            if v6 == 0 {
-                let v7 = c_61a5a0_c1(0x28);
-                if v7 == 0 {
-                    c_632d10_t1(0, 0);
-                    let v9 = c_61a5a0_c1(0x80);
-                    if v9 == 0 {
-                        c_632d10_t1(0, 0);
-                        return 0;
-                    } else {
-                        let v11 = rd::<u32>(p(this), 0x1C);
-                        let v12 = c_66c3e0_t3(v9, this.wrapping_add(0x10), v11, 0x3F00_0000);
-                        c_632d10_t1(0, v12);
-                        return 0;
-                    }
-                } else {
-                    let v14 = g::<u32>(0x86_FC88).read();
-                    let v15 = g::<u32>(0x86_FC84).read();
-                    let v16 = c_668120_t6(v7, v3, this.wrapping_add(0x10), v15, v14, 0, 0);
-                    c_632d10_t1(0, v16);
-                    let v18 = c_61a5a0_c1(0x80);
-                    if v18 == 0 {
-                        c_632d10_t1(0, 0);
-                        return 0;
-                    } else {
-                        let v20 = rd::<u32>(p(this), 0x1C);
-                        let v21 = c_66c3e0_t3(v18, this.wrapping_add(0x10), v20, 0x3F00_0000);
-                        c_632d10_t1(0, v21);
-                        return 0;
-                    }
-                }
-            } else {
-                let v23 = c_632bd0_t0(v6);
-                let v24 = c_61a5a0_c1(0x28);
-                if v24 == 0 {
-                    c_632d10_t1(v23, 0);
-                    let v26 = c_61a5a0_c1(0x80);
-                    if v26 == 0 {
-                        c_632d10_t1(v23, 0);
-                        return v23;
-                    } else {
-                        let v28 = rd::<u32>(p(this), 0x1C);
-                        let v29 = c_66c3e0_t3(v26, this.wrapping_add(0x10), v28, 0x3F00_0000);
-                        c_632d10_t1(v23, v29);
-                        return v23;
-                    }
-                } else {
-                    let v31 = g::<u32>(0x86_FC88).read();
-                    let v32 = g::<u32>(0x86_FC84).read();
-                    let v33 = c_668120_t6(v24, v3, this.wrapping_add(0x10), v32, v31, 0, 0);
-                    c_632d10_t1(v23, v33);
-                    let v35 = c_61a5a0_c1(0x80);
-                    if v35 == 0 {
-                        c_632d10_t1(v23, 0);
-                        return v23;
-                    } else {
-                        let v37 = rd::<u32>(p(this), 0x1C);
-                        let v38 = c_66c3e0_t3(v35, this.wrapping_add(0x10), v37, 0x3F00_0000);
-                        c_632d10_t1(v23, v38);
-                        return v23;
-                    }
-                }
-            }
-        } else {
-            c_616920_c1(this.wrapping_add(0x10));
-            let v41 = x(rd::<f32>(p(this), 0x18));
-            let v42 = rd::<u32>(p(a0), 0x14);
-            let v43 = x(rd::<f32>(p(this), 0x14));
-            let v44 = x(rd::<f32>(p(this), 0x10));
-            if v42 == 0 {
-                wr::<f32>(p(a0), 4, f32_of(v44));
-                wr::<f32>(p(a0), 8, f32_of(v43));
-                wr::<f32>(p(a0), 0xC, f32_of(v41));
-                let v45 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x55C, v45);
-                let v46 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x558, v46);
-                let v47 = c_61a5a0_c1(0x20);
-                if v47 == 0 {
-                    return 0;
-                } else {
-                    let v48 = c_62f310_t4(v47, 0, 0, 0, 0x4100_0000);
-                    return v48;
-                }
-            } else {
-                wr::<f32>(p(v42), 0x30, f32_of(v44));
-                let v49 = rd::<u32>(p(a0), 0x14);
-                wr::<f32>(p(v49), 0x34, f32_of(v43));
-                let v50 = rd::<u32>(p(a0), 0x14);
-                wr::<f32>(p(v50), 0x38, f32_of(v41));
-                let v51 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x55C, v51);
-                let v52 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x558, v52);
-                let v53 = c_61a5a0_c1(0x20);
-                if v53 == 0 {
-                    return 0;
-                } else {
-                    let v54 = c_62f310_t4(v53, 0, 0, 0, 0x4100_0000);
-                    return v54;
-                }
-            }
-        }
-    } else {
-        let v55 = rd::<u32>(p(a0), 0x474);
-        if (v55 & 0x20_0000) == 0 {
-            let v56 = c_61a5a0_c1(0x40);
-            if v56 == 0 {
-                let v57 = c_61a5a0_c1(0x28);
-                if v57 == 0 {
-                    c_632d10_t1(0, 0);
-                    let v59 = c_61a5a0_c1(0x80);
-                    if v59 == 0 {
-                        c_632d10_t1(0, 0);
-                        return 0;
-                    } else {
-                        let v61 = rd::<u32>(p(this), 0x1C);
-                        let v62 = c_66c3e0_t3(v59, this.wrapping_add(0x10), v61, 0x3F00_0000);
-                        c_632d10_t1(0, v62);
-                        return 0;
-                    }
-                } else {
-                    let v64 = g::<u32>(0x86_FC88).read();
-                    let v65 = g::<u32>(0x86_FC84).read();
-                    let v66 = c_668120_t6(v57, 6, this.wrapping_add(0x10), v65, v64, 0, 0);
-                    c_632d10_t1(0, v66);
-                    let v68 = c_61a5a0_c1(0x80);
-                    if v68 == 0 {
-                        c_632d10_t1(0, 0);
-                        return 0;
-                    } else {
-                        let v70 = rd::<u32>(p(this), 0x1C);
-                        let v71 = c_66c3e0_t3(v68, this.wrapping_add(0x10), v70, 0x3F00_0000);
-                        c_632d10_t1(0, v71);
-                        return 0;
-                    }
-                }
-            } else {
-                let v73 = c_632bd0_t0(v56);
-                let v74 = c_61a5a0_c1(0x28);
-                if v74 == 0 {
-                    c_632d10_t1(v73, 0);
-                    let v76 = c_61a5a0_c1(0x80);
-                    if v76 == 0 {
-                        c_632d10_t1(v73, 0);
-                        return v73;
-                    } else {
-                        let v78 = rd::<u32>(p(this), 0x1C);
-                        let v79 = c_66c3e0_t3(v76, this.wrapping_add(0x10), v78, 0x3F00_0000);
-                        c_632d10_t1(v73, v79);
-                        return v73;
-                    }
-                } else {
-                    let v81 = g::<u32>(0x86_FC88).read();
-                    let v82 = g::<u32>(0x86_FC84).read();
-                    let v83 = c_668120_t6(v74, 6, this.wrapping_add(0x10), v82, v81, 0, 0);
-                    c_632d10_t1(v73, v83);
-                    let v85 = c_61a5a0_c1(0x80);
-                    if v85 == 0 {
-                        c_632d10_t1(v73, 0);
-                        return v73;
-                    } else {
-                        let v87 = rd::<u32>(p(this), 0x1C);
-                        let v88 = c_66c3e0_t3(v85, this.wrapping_add(0x10), v87, 0x3F00_0000);
-                        c_632d10_t1(v73, v88);
-                        return v73;
-                    }
-                }
-            }
-        } else {
-            c_616920_c1(this.wrapping_add(0x10));
-            let v91 = x(rd::<f32>(p(this), 0x18));
-            let v92 = rd::<u32>(p(a0), 0x14);
-            let v93 = x(rd::<f32>(p(this), 0x14));
-            let v94 = x(rd::<f32>(p(this), 0x10));
-            if v92 == 0 {
-                wr::<f32>(p(a0), 4, f32_of(v94));
-                wr::<f32>(p(a0), 8, f32_of(v93));
-                wr::<f32>(p(a0), 0xC, f32_of(v91));
-                let v95 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x55C, v95);
-                let v96 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x558, v96);
-                let v97 = c_61a5a0_c1(0x20);
-                if v97 == 0 {
-                    return 0;
-                } else {
-                    let v98 = c_62f310_t4(v97, 0, 0, 0, 0x4100_0000);
-                    return v98;
-                }
-            } else {
-                wr::<f32>(p(v92), 0x30, f32_of(v94));
-                let v99 = rd::<u32>(p(a0), 0x14);
-                wr::<f32>(p(v99), 0x34, f32_of(v93));
-                let v100 = rd::<u32>(p(a0), 0x14);
-                wr::<f32>(p(v100), 0x38, f32_of(v91));
-                let v101 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x55C, v101);
-                let v102 = rd::<u32>(p(this), 0x1C);
-                wr::<u32>(p(a0), 0x558, v102);
-                let v103 = c_61a5a0_c1(0x20);
-                if v103 == 0 {
-                    return 0;
-                } else {
-                    let v104 = c_62f310_t4(v103, 0, 0, 0, 0x4100_0000);
-                    return v104;
-                }
-            }
-        }
-    }
-}
-
 /// `CTaskComplexGoToPointAnyMeans::CreateSubTask` (0x6705D0): subtask, thiscall, `ret 8`; 186 instruction(s) matched.
 #[hook(addr = 0x6705D0, conv = thiscall, name = "CTaskComplexGoToPointAnyMeans::CreateSubTask", expect = "90 E9 2C 0B D9 FF", unverified = "ai8g-5", route = "L2", hazards = "none")]
 pub fn g_task_complex_go_to_point_any_means_create_sub_task_6705d0(this: u32, a0: u32, a1: u32) -> u32 {
@@ -11642,7 +10854,6 @@ pub const BODIES: &[Body] = &[
     (0x628A70, 0x01A2B1FC1E0641C9, &[(0x408350, 11), (0x628A70, 487)]),
     (0x628DA0, 0x4AABC12E7F5A9795, &[(0x628DA0, 510)]),
     (0x628FA0, 0xFD3849344613F5AF, &[(0x628FA0, 186)]),
-    (0x629080, 0x56075AC3A31926A1, &[(0x629080, 787)]),
     (0x6293C0, 0x6112F311D91CB4E3, &[(0x6293C0, 178)]),
     (0x629480, 0xCAACDFA20E3EC0BE, &[(0x629480, 194)]),
     (0x629570, 0x4B2BD5102685560E, &[(0x629570, 177)]),
@@ -11656,14 +10867,11 @@ pub const BODIES: &[Body] = &[
     (0x62DDB0, 0xF42E8101F80EE445, &[(0x62DDB0, 366)]),
     (0x62E0A0, 0xC05A14CFE3BC9373, &[(0x62E0A0, 200)]),
     (0x62E270, 0x60B7DCD0009B8C8C, &[(0x62E270, 383)]),
-    (0x62E3F0, 0x01E2210525D92E85, &[(0x62E3F0, 323)]),
     (0x62F8D0, 0xE97F98C5417F620F, &[(0x62F8D0, 52)]),
     (0x62F910, 0x55F9FCFDD33176A9, &[(0x62F910, 215)]),
     (0x62FD50, 0x6FC1BA7D36070EF2, &[(0x409BDE, 11), (0x62FD50, 362)]),
     (0x6301E0, 0x79CE6A997D06D4EF, &[(0x6301E0, 234)]),
-    (0x631550, 0x2AC39D17D073BDDF, &[(0x631550, 329)]),
     (0x6316A0, 0x60CB3EC48CAA7629, &[(0x6316A0, 137)]),
-    (0x631730, 0xC670A1A16CB4F248, &[(0x631730, 89)]),
     (0x631990, 0xCB875D92A160D96C, &[(0x401A79, 11), (0x631990, 218)]),
     (0x631A70, 0xC07D35B6DF5436B5, &[(0x631A70, 69)]),
     (0x631AC0, 0x6E97795C68368C4B, &[(0x631AC0, 13)]),
@@ -11671,10 +10879,7 @@ pub const BODIES: &[Body] = &[
     (0x631C40, 0xFF74FF48F406C462, &[(0x631C40, 79)]),
     (0x631C90, 0x48933927851B960C, &[(0x631C90, 18)]),
     (0x631E50, 0x55BA9B0933397DBA, &[(0x631E50, 266), (0x631F5C, 16)]),
-    (0x632420, 0x3C034E51B342517F, &[(0x632420, 60)]),
-    (0x632570, 0x0B7CC92B385E209C, &[(0x632570, 127)]),
     (0x632650, 0x2EBD99FD17AF6B4F, &[(0x632650, 137)]),
-    (0x6327C0, 0xDA586CDB095CDB22, &[(0x6327C0, 63)]),
     (0x632840, 0x1A9DB86A41E75557, &[(0x632840, 29)]),
     (0x632860, 0x0478119688CACDD4, &[(0x632860, 137)]),
     (0x632940, 0x73418C080324EAD4, &[(0x632940, 253)]),
@@ -11792,7 +10997,6 @@ pub const BODIES: &[Body] = &[
     (0x66DD70, 0x5BA07C8D63B70967, &[(0x66DD70, 50)]),
     (0x66DFD0, 0x3BBB0984B95498C6, &[(0x66DFD0, 91)]),
     (0x66E030, 0x4C4F7E3234B2DC87, &[(0x66E030, 17)]),
-    (0x670420, 0x944E675065B1D0B6, &[(0x670420, 396)]),
     (0x6705D0, 0x81EEAAF9AC7603EB, &[(0x401102, 11), (0x6705D0, 600)]),
     (0x672530, 0x02773558AAE8B5AF, &[(0x672530, 204)]),
     (0x6728A0, 0x4EE173E8A0A086FA, &[(0x6728A0, 278)]),

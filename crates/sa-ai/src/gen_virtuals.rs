@@ -120,14 +120,10 @@ orig! {
     fn c_62f360_t0(this: u32) -> u32 = thiscall 0x62F360 => unported;
     /// `CTaskSimpleStandStill::ProcessPed` (0x62F370), thiscall, 1 stack argument(s)
     fn c_62f370_t1(this: u32, a0: u32) -> u32 = thiscall 0x62F370 => unported;
-    /// `CTaskSimpleStandUp::StartAnim` (0x631410), thiscall, 1 stack argument(s)
-    fn c_631410_t1(this: u32, a0: u32) -> u32 = thiscall 0x631410 => unported;
     /// `CTaskComplexSequence::Flush` (0x632C10), thiscall, 0 stack argument(s)
     fn c_632c10_t0(this: u32) -> u32 = thiscall 0x632C10 => unported;
     /// `CTaskSimpleWaitUntilAreaCodesMatch::ProcessPed` (0x635640), thiscall, 1 stack argument(s)
     fn c_635640_t1(this: u32, a0: u32) -> u32 = thiscall 0x635640 => unported;
-    /// `CTaskSimpleSitDown::StartAnim` (0x6379F0), thiscall, 1 stack argument(s)
-    fn c_6379f0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6379F0 => unported;
     /// `CTaskSimpleDie::ProcessPed` (0x6397E0), thiscall, 1 stack argument(s)
     fn c_6397e0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6397E0 => unported;
     /// `CTaskSimpleCarDrive::MakeAbortable` (0x63C670), thiscall, 3 stack argument(s)
@@ -188,8 +184,6 @@ orig! {
     fn c_6930f0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6930F0 => unported;
     /// `CTaskSimpleDuck::ProcessPed` (0x694390), thiscall, 1 stack argument(s)
     fn c_694390_t1(this: u32, a0: u32) -> u32 = thiscall 0x694390 => unported;
-    /// `CVehicle::IsPassenger-Ped` (0x6D1BD0), thiscall, 1 stack argument(s)
-    fn c_6d1bd0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6D1BD0 => unported;
     /// `CVehicle::IsDriver-Ped` (0x6D1C40), thiscall, 1 stack argument(s)
     fn c_6d1c40_t1(this: u32, a0: u32) -> u32 = thiscall 0x6D1C40 => unported;
     /// `FUN_00406da0` (0x406DA0), thiscall, 0 stack argument(s), ST0 result
@@ -1444,82 +1438,6 @@ pub fn g_event_pass_object_is_valid_4b1700(this: u32, a0: u32) -> u8 {
     }
 }
 
-/// `CEventVehicleDamage::AffectsPed` (0x4B1A00): virtual-leaf, thiscall, `ret 4`; 42 instruction(s) matched.
-pub fn g_event_vehicle_damage_affects_ped_4b1a00(this: u32, a0: u32) -> u8 {
-    let v1 = c_5e0170_t0(a0);
-    if ((v1 & 0xFF) as u8) == (0 as u8) {
-        return (v1 & 0xFFFF_FF00) as u8;
-    } else {
-        let v2 = rd::<u32>(p(this), 0x18);
-        if v2 == 0 {
-            return (v2 & 0xFFFF_FF00) as u8;
-        } else {
-            let v3 = rd::<u32>(p(a0), 0x46C);
-            if ((((v3 >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
-                let v4 = rd::<u32>(p(this), 0x14);
-                if v4 == 0 {
-                    return 0 as u8;
-                } else {
-                    let v5 = rd::<u32>(p(a0), 0x58C);
-                    if v5 != v4 {
-                        return 0 as u8;
-                    } else {
-                        return 1 as u8;
-                    }
-                }
-            } else {
-                let v6 = rd::<u32>(p(a0), 0x58C);
-                if v6 == 0 {
-                    let v7 = rd::<u32>(p(this), 0x14);
-                    if v7 == 0 {
-                        return 0 as u8;
-                    } else {
-                        let v8 = rd::<u32>(p(a0), 0x58C);
-                        if v8 != v7 {
-                            return 0 as u8;
-                        } else {
-                            return 1 as u8;
-                        }
-                    }
-                } else {
-                    let v9 = c_6d1bd0_t1(v6, a0);
-                    if ((v9 & 0xFF) as u8) == (0 as u8) {
-                        let v10 = rd::<u32>(p(this), 0x14);
-                        if v10 == 0 {
-                            return 0 as u8;
-                        } else {
-                            let v11 = rd::<u32>(p(a0), 0x58C);
-                            if v11 != v10 {
-                                return 0 as u8;
-                            } else {
-                                return 1 as u8;
-                            }
-                        }
-                    } else {
-                        let v12 = rd::<u32>(p(a0), 0x58C);
-                        let v13 = rd::<u32>(p(v12), 0x460);
-                        if v13 == 0 {
-                            let v14 = rd::<u32>(p(this), 0x14);
-                            if v14 == 0 {
-                                return 0 as u8;
-                            } else {
-                                let v15 = rd::<u32>(p(a0), 0x58C);
-                                if v15 != v14 {
-                                    return 0 as u8;
-                                } else {
-                                    return 1 as u8;
-                                }
-                            }
-                        } else {
-                            return (v12 & 0xFFFF_FF00) as u8;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 /// `CEventVehicleDamage::GetSourceEntity` (0x4B1A70): virtual-leaf, thiscall, `ret`; 12 instruction(s) matched.
 #[hook(addr = 0x4B1A70, conv = thiscall, name = "CEventVehicleDamage::GetSourceEntity", expect = "8B 41 18 85 C0")]
 pub fn g_event_vehicle_damage_get_source_entity_4b1a70(this: u32) -> u32 {
@@ -1538,55 +1456,6 @@ pub fn g_event_vehicle_damage_get_source_entity_4b1a70(this: u32) -> u32 {
                 return v1;
             } else {
                 return v4;
-            }
-        }
-    }
-}
-
-/// `CEventVehicleDamage::IsCriminalEvent` (0x4B1A90): virtual-leaf, thiscall, `ret`; 30 instruction(s) matched.
-pub fn g_event_vehicle_damage_is_criminal_event_4b1a90(this: u32) -> u8 {
-    let v1 = rd::<u32>(p(this), 0x18);
-    if v1 == 0 {
-        return 0 as u8;
-    } else {
-        let v2 = u32::from(rd::<u8>(p(v1), 0x36));
-        let v3 = ((((v2 & 0xFF) & 0xFF) & 7) & 0xFF);
-        if (((v3 & 0xFF) & 0xFF) as u8) != (3 as u8) {
-            let v4 = rd::<u32>(p(this), 0x18);
-            let v5 = u32::from(rd::<u8>(p(v4), 0x36));
-            let v6 = ((((v5 & 0xFF) & 0xFF) & 7) & 0xFF);
-            if (((v6 & 0xFF) & 0xFF) as u8) != (2 as u8) {
-                return 0 as u8;
-            } else {
-                let v7 = c_56e210_c1(0xFFFF_FFFF);
-                let v8 = rd::<u32>(p(this), 0x18);
-                let v9 = rd::<u32>(p(v8), 0x460);
-                if v9 != v7 {
-                    return (v7 & 0xFFFF_FF00) as u8;
-                } else {
-                    return ((v7 & 0xFFFF_FF00) | 1) as u8;
-                }
-            }
-        } else {
-            let v10 = c_5df8f0_t0(v1);
-            if ((v10 & 0xFF) as u8) != (0 as u8) {
-                return ((v10 & 0xFFFF_FF00) | 1) as u8;
-            } else {
-                let v11 = rd::<u32>(p(this), 0x18);
-                let v12 = u32::from(rd::<u8>(p(v11), 0x36));
-                let v13 = ((((v12 & 0xFF) & 0xFF) & 7) & 0xFF);
-                if (((v13 & 0xFF) & 0xFF) as u8) != (2 as u8) {
-                    return (v10 & 0xFFFF_FF00) as u8;
-                } else {
-                    let v14 = c_56e210_c1(0xFFFF_FFFF);
-                    let v15 = rd::<u32>(p(this), 0x18);
-                    let v16 = rd::<u32>(p(v15), 0x460);
-                    if v16 != v14 {
-                        return (v14 & 0xFFFF_FF00) as u8;
-                    } else {
-                        return ((v14 & 0xFFFF_FF00) | 1) as u8;
-                    }
-                }
             }
         }
     }
@@ -3961,22 +3830,6 @@ pub fn g_task_complex_use_scripted_brain_make_abortable_635970(this: u32, a0: u3
     }
 }
 
-/// `CTaskSimpleStandUp::ProcessPed` (0x637D60): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-pub fn g_task_simple_stand_up_process_ped_637d60(this: u32, a0: u32) -> u8 {
-    let v1 = u32::from(rd::<u8>(p(this), 9));
-    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
-        let v2 = rd::<u32>(p(this), 0xC);
-        if v2 != 0 {
-            return (v2 & 0xFFFF_FF00) as u8;
-        } else {
-            let v3 = c_631410_t1(this, a0);
-            return (v3 & 0xFFFF_FF00) as u8;
-        }
-    } else {
-        return 1 as u8;
-    }
-}
-
 /// `CTaskSimpleIKChain::MakeAbortable` (0x639450): make-abortable, thiscall, `ret 12`; 16 instruction(s) matched.
 #[hook(addr = 0x639450, conv = thiscall, name = "CTaskSimpleIKChain::MakeAbortable", expect = "83 7C 24 08 02")]
 pub fn g_task_simple_ikchain_make_abortable_639450(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
@@ -4085,22 +3938,6 @@ pub fn g_task_complex_use_sequence_make_abortable_639730(this: u32, a0: u32, a1:
 pub fn g_task_simple_die_in_car_process_ped_6398f0(this: u32, a0: u32) -> u8 {
     let v1 = c_6397e0_t1(this, a0);
     v1 as u8
-}
-
-/// `CTaskSimpleSitDown::ProcessPed` (0x639960): virtual-leaf, thiscall, `ret 4`; 13 instruction(s) matched.
-pub fn g_task_simple_sit_down_process_ped_639960(this: u32, a0: u32) -> u8 {
-    let v1 = u32::from(rd::<u8>(p(this), 9));
-    if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
-        let v2 = rd::<u32>(p(this), 0xC);
-        if v2 != 0 {
-            return (v2 & 0xFFFF_FF00) as u8;
-        } else {
-            let v3 = c_6379f0_t1(this, a0);
-            return (v3 & 0xFFFF_FF00) as u8;
-        }
-    } else {
-        return 1 as u8;
-    }
 }
 
 /// `CTaskSimpleTurn180::ProcessPed` (0x639990): virtual-leaf, thiscall, `ret 4`; 30 instruction(s) matched.
@@ -4894,65 +4731,6 @@ pub fn g_task_simple_car_shuffle_make_abortable_646900(this: u32, _a0: u32, a1: 
             wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
             return ((v1 & 0xFFFF_FF00) | 1) as u8;
         }
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::MakeAbortable` (0x646A60): make-abortable, thiscall, `ret 12`; 34 instruction(s) matched.
-pub fn g_task_simple_car_wait_to_slow_down_make_abortable_646a60(
-    this: u32,
-    _a0: u32,
-    a1: u32,
-    a2: u32,
-) -> u8 {
-    if a1 != 2 {
-        if a1 != 1 {
-            wr::<u32>(p(this), 0x10, 2);
-            return (a1 & 0xFFFF_FF00) as u8;
-        } else {
-            if a2 == 0 {
-                wr::<u32>(p(this), 0x10, 2);
-                return (a1 & 0xFFFF_FF00) as u8;
-            } else {
-                let _v1 = rd::<u32>(p(a2), 0);
-                let v2 = vslot_4_0(p(a2));
-                if v2 != 9 {
-                    wr::<u32>(p(this), 0x10, 2);
-                    return (v2 & 0xFFFF_FF00) as u8;
-                } else {
-                    let v3 = u32::from(rd::<u8>(p(a2), 0x40));
-                    if ((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFF) as u8) == (0 as u8) {
-                        wr::<u32>(p(this), 0x10, 2);
-                        return (((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) as u8;
-                    } else {
-                        let v4 = u32::from(rd::<u8>(p(a2), 0xC));
-                        if ((((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF) as u8)
-                            == (0 as u8)
-                        {
-                            wr::<u32>(p(this), 0x10, 2);
-                            return (((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF))
-                                & 0xFFFF_FF00) as u8;
-                        } else {
-                            return ((((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF))
-                                & 0xFFFF_FF00)
-                                | 1) as u8;
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        return ((a1 & 0xFFFF_FF00) | 1) as u8;
-    }
-}
-
-/// `CTaskSimpleCarWaitToSlowDown::SetPedPosition` (0x646AB0): virtual-leaf, thiscall, `ret 4`; 7 instruction(s) matched.
-pub fn g_task_simple_car_wait_to_slow_down_set_ped_position_646ab0(this: u32, a0: u32) -> u8 {
-    let v1 = rd::<u32>(p(this), 8);
-    if v1 == 0 {
-        return ((v1 & 0xFFFF_FF00) | 1) as u8;
-    } else {
-        let v2 = c_5df910_t0(a0);
-        return ((v2 & 0xFFFF_FF00) | 1) as u8;
     }
 }
 
@@ -6097,14 +5875,6 @@ pub fn g_vt_86ff00_make_abortable_66ad40(this: u32, a0: u32, _a1: u32, _a2: u32)
     }
 }
 
-/// `CTaskComplexGoToAttractor::MakeAbortable` (0x66B6B0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
-pub fn g_task_complex_go_to_attractor_make_abortable_66b6b0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
-    let v1 = rd::<u32>(p(this), 8);
-    let _v2 = rd::<u32>(p(v1), 0);
-    let v3 = vslot_18_3(p(v1), a0, a1, a2);
-    v3 as u8
-}
-
 /// `vt_870114::MakeAbortable` (0x66BA90): make-abortable, thiscall, `ret 12`; 45 instruction(s) matched.
 #[hook(addr = 0x66BA90, conv = thiscall, name = "vt_870114::MakeAbortable", expect = "53 56 57 8B 7C 24 14")]
 pub fn g_vt_870114_make_abortable_66ba90(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
@@ -7240,9 +7010,7 @@ pub const BODIES: &[Body] = &[
     (0x4B1640, 0x1F9D40E4B061E412, &[(0x4B1640, 54)]),
     (0x4B16C0, 0xF4003B1D3C32C492, &[(0x4B16C0, 54)]),
     (0x4B1700, 0xAE0346B670CC5852, &[(0x4B1700, 54)]),
-    (0x4B1A00, 0xE28714B245BA6EB0, &[(0x4B1A00, 112)]),
     (0x4B1A70, 0x1D8DFFA7ADC7BDD5, &[(0x4B1A70, 31)]),
-    (0x4B1A90, 0x4F78CA54F221699C, &[(0x4B1A90, 73)]),
     (0x4B1C70, 0xE598C621B6684144, &[(0x4B1C70, 45)]),
     (0x4B1CA0, 0x7EFB1FF74F2AE93B, &[(0x4B1CA0, 17)]),
     (0x4B1DB0, 0xE5B0C274B783D06F, &[(0x4B1DB0, 111)]),
@@ -7302,11 +7070,9 @@ pub const BODIES: &[Body] = &[
     (0x6356A0, 0x64CBA5AA6771B208, &[(0x6356A0, 25)]),
     (0x6356C0, 0xAC0A8F2FCD00AF42, &[(0x6356C0, 84)]),
     (0x635970, 0x11EB87D1927B756B, &[(0x635970, 78)]),
-    (0x637D60, 0xDFDEA278BB0D2D41, &[(0x637D60, 34)]),
     (0x639450, 0x95697F491D9D173E, &[(0x639450, 57)]),
     (0x639730, 0x9F997771CFEAAC21, &[(0x639730, 112)]),
     (0x6398F0, 0x96544CCED671C8B7, &[(0x6398F0, 5)]),
-    (0x639960, 0x429E7FF36E21BBB3, &[(0x639960, 34)]),
     (0x639990, 0xE23F5DF5479C2809, &[(0x639990, 92)]),
     (0x63A730, 0x5172E20C207AD47A, &[(0x63A730, 342)]),
     (0x63AE60, 0x8EF5E73C466DE730, &[(0x63AE60, 100)]),
@@ -7323,8 +7089,6 @@ pub const BODIES: &[Body] = &[
     (0x6462D0, 0x369784DA9F02738A, &[(0x6462D0, 26)]),
     (0x646780, 0x5B28A8B5F7895C3E, &[(0x646780, 31)]),
     (0x646900, 0x5B28A8B5F7895C3E, &[(0x646900, 31)]),
-    (0x646A60, 0x4889CE8936B161BB, &[(0x646A60, 79)]),
-    (0x646AB0, 0x5635008B77A9448F, &[(0x646AB0, 21)]),
     (0x646CC0, 0x2685FA4D8CF98377, &[(0x646CC0, 40)]),
     (0x6472D0, 0x5B28A8B5F7895C3E, &[(0x6472D0, 31)]),
     (0x6480E0, 0x207AC80868478AF0, &[(0x6480E0, 26)]),
@@ -7357,7 +7121,6 @@ pub const BODIES: &[Body] = &[
     (0x6694E0, 0x15A8D90213DF4602, &[(0x6694E0, 53)]),
     (0x66A260, 0xC0DAAD698979D5D3, &[(0x66A260, 89)]),
     (0x66AD40, 0xD5E06111B7D7231B, &[(0x66AD40, 48)]),
-    (0x66B6B0, 0x73938DDE8D0EE714, &[(0x66B6B0, 8)]),
     (0x66BA90, 0xDB077A2780DEB0F7, &[(0x66BA90, 104)]),
     (0x66C4D0, 0xD246CE14E52346EF, &[(0x66C4D0, 16)]),
     (0x66C800, 0xDCC3108C785C03BE, &[(0x66C800, 17)]),
