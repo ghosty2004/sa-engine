@@ -202,7 +202,8 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std10-skin-1 | 7 | RW | 1422113 | worktree-agent-a9a0d6cdcec07ed1b | 7 | 0 | 0 | 0 | 0 | L2 7 |
 | std10-skin-2 | 6 | RW | 1422113 | worktree-agent-a9a0d6cdcec07ed1b | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | std10-world-1 | 1 | MATH | 8c3ee76 | worktree-agent-a9a0d6cdcec07ed1b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std11-ai-1 | 5 | AI, UNK-game | 7ae9fdf | worktree-agent-a9a0d6cdcec07ed1b | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std11-ai-1 | 19 | AI, MATH, UNK-game | 7ae9fdf | worktree-agent-a9a0d6cdcec07ed1b | 19 | 0 | 0 | 0 | 0 | L2 19 |
+| std11-anim-1 | 1 | MATH | a5a5cbb | worktree-agent-a9a0d6cdcec07ed1b | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std4-audio-1 | 55 | AUDIO | 309d8fe | master | 55 | 0 | 0 | 0 | 0 | L2 47, L3-only 8 |
 | std4-audio-2 | 18 | AUDIO | 309d8fe | master | 18 | 0 | 0 | 0 | 0 | L2 1, L3-only 17 |
 | std4-audio-3 | 7 | AUDIO, RW, UNK-game | 309d8fe | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -4785,7 +4786,7 @@ SA_UNVERIFIED=std10-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:std10-world-1 
 
 ## std11-ai-1
 
-5 hooks in sa-ai; hazards: ax-al-return (2), heap-writes (3), stack-residue (1), uninit-locals (1); recordings calling them: grove-walk (5), pause-restart (1).
+19 hooks in sa-ai; hazards: ax-al-return (5), heap-writes (11), stack-residue (3), uninit-locals (1); recordings calling them: grove-walk (19), pause-restart (2).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -4796,11 +4797,40 @@ SA_UNVERIFIED=std11-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:std11-ai-1 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4AF350 | `CEventAttractor::CEventAttractor` | written | L2 | heap-writes |
+| 0x4ACDD0 | `FUN_004acdd0` | written | L2 | heap-writes |
+| 0x4AF350 | `CEventAttractor::Constructor` | written | L2 | heap-writes |
+| 0x4AF400 | `FUN_004af400` | written | L2 | heap-writes |
+| 0x4AF460 | `CEventAttractor::IsEffectActive` | written | L2 | ax-al-return |
+| 0x4AF4B0 | `CEventAttractor::AffectsPed` | written | L2 | ax-al-return |
 | 0x4B1520 | `FUN_004b1520` | written | L2 | heap-writes |
+| 0x53CDC0 | `CGeneral::GetNodeHeadingFromVector` | written | L2 | none |
 | 0x5EA220 | `CPedAttractorManager::IsApproachable` | written | L2 | ax-al-return |
+| 0x601BB0 | `CPedIntelligence::ProcessEventHandler` | written | L2 | none |
+| 0x632270 | `CTaskComplexUseEffect::Destructor` | written | L2 | heap-writes |
+| 0x632420 | `CTaskComplexUseEffect::CreateNextSubTask` | written | L2 | none |
+| 0x632460 | `CTaskComplexUseEffect::CreateFirstSubTask` | written | L2 | heap-writes |
+| 0x632570 | `CTaskComplexUseEffect::ControlSubTask` | written | L2 | heap-writes |
 | 0x6726F0 | `FUN_006726f0` | written | L2 | heap-writes |
+| 0x6787F0 | `CTaskComplexFallAndGetUp::MakeAbortable` | written | L2 | ax-al-return |
+| 0x678E60 | `CTaskSimpleInAir::DeleteAnimCB` | written | L2 | heap-writes |
+| 0x67BA80 | `CTaskComplexStuckInAir::CreateSubTask` | written | L2 | heap-writes,stack-residue |
+| 0x67BE50 | `CTaskComplexStuckInAir::ControlSubTask` | written | L2 | heap-writes,stack-residue |
 | 0x680600 | `CTaskSimpleInAir::ProcessPed` | written | L2 | ax-al-return,stack-residue,uninit-locals |
+
+## std11-anim-1
+
+1 hooks in sa-anim; hazards: none; recordings calling them: driving (1), grove-walk (1), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh std11-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=std11-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:std11-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std11-anim-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x59C080 | `CQuaternion::Get-` | written | L2 | none |
 
 ## std4-audio-1
 
