@@ -119,6 +119,7 @@ pub mod stuck_in_air_subtask;
 pub mod group_membership_remove;
 pub mod mental_state_anger;
 pub mod walk_round_object_route;
+pub mod smart_flee_point_abortable;
 pub mod attractor_ped_use_effect;
 pub mod general_node_heading;
 pub mod route_round_entity_bbox;
