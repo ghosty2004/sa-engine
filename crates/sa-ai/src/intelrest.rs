@@ -204,8 +204,6 @@ orig! {
     fn task_record_data_flush(r: GPtr<u8>) = thiscall 0x608350 => unported;
     /// `CPedGroupIntelligence::GetTaskScriptCommand(CPed*)` (0x5F8690, `ret 4`)
     fn pgi_get_task_script_command(i: GPtr<u8>, p: GPtr<u8>) -> u32 = thiscall 0x5F8690 => unported;
-    /// `CTaskManager::HasTaskSecondary(const CTask*)` (0x681820, `ret 4`)
-    fn tm_has_task_secondary(tm: GPtr<u8>, t: u32) -> u8 = thiscall 0x681820 => unported;
 }
 
 fn ped(this: GPtr<u8>) -> GPtr<u8> {
@@ -1074,7 +1072,7 @@ pub fn scripted_task_record_process_port() {
             wr::<u32>(r, 0x10, 2);
             continue;
         }
-        if tm_has_task_secondary(intel.byte_add(4), task) != 0 {
+        if crate::taskmgr::task_manager_has_task_secondary(intel.byte_add(4), GPtr::from_addr(task as usize)) != 0 {
             wr::<u32>(r, 0x10, 6);
         } else {
             task_record_data_flush(r);

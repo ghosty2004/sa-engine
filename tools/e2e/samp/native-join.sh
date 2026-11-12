@@ -125,6 +125,11 @@ if wait_log '\[cov\] spawn id=' 120; then
     V="$(grep -oE "\[cov\] $SEQ veh -?[0-9]+" "$SLOG" | tail -1 | awk '{print $4}')"
     [ -n "$V" ] && [ "${PUTIN:-0}" = 1 ] && cmd "putin|$V|0"
     sleep 6
+    # EXTRA_CMDS: more sampcov commands, ';'-separated ("sleep|N" waits N s), e.g. "skin|105;sleep|3;anim|PED|IDLE_CHAT".
+    IFS=';' read -ra EXTRA <<< "${EXTRA_CMDS:-}"
+    for c in "${EXTRA[@]}"; do
+        case "$c" in sleep\|*) sleep "${c#sleep|}" ;; ?*) cmd "$c" ;; esac
+    done
 else
     say "FAIL: no spawn"
 fi
