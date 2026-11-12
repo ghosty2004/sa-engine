@@ -10,7 +10,7 @@ use sa_core::mem::GPtr;
 /// `malloc` (0x824257) / `operator new` (0x82119A) / `operator new[]` (0x821195). MSVC's
 /// `malloc(0)` returns a unique pointer; so does glibc's.
 pub extern "C-unwind" fn malloc(size: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::alloc(size as usize);
     }
     // SAFETY: plain C allocation; the game owns the block until `free`.
@@ -19,7 +19,7 @@ pub extern "C-unwind" fn malloc(size: u32) -> GPtr<u8> {
 
 /// `free` (0x82413F) / `operator delete` (0x8214BD).
 pub extern "C-unwind" fn free(p: GPtr<u8>) {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::free(p);
     }
     // SAFETY: `p` came from `malloc`/`calloc`/`realloc` above (or is null).
@@ -28,7 +28,7 @@ pub extern "C-unwind" fn free(p: GPtr<u8>) {
 
 /// `calloc` (0x824416).
 pub extern "C-unwind" fn calloc(n: u32, size: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::calloc(n as usize * size as usize);
     }
     // SAFETY: plain C allocation.
@@ -37,7 +37,7 @@ pub extern "C-unwind" fn calloc(n: u32, size: u32) -> GPtr<u8> {
 
 /// `realloc` (0x824269).
 pub extern "C-unwind" fn realloc(p: GPtr<u8>, size: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::realloc(p, size as usize);
     }
     // SAFETY: `p` came from this allocator (or is null).
