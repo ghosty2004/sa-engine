@@ -211,9 +211,36 @@ pub fn task_complex_stuck_in_air_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>)
     res
 }
 
+/// `CTaskComplexFallAndGetUp::MakeAbortable(CPed* ped, eAbortPriority prio, const CEvent* event)` (0x6787F0, thiscall,
+/// `ret 0xC`): an immediate abort (2) is the sub-task's (+8) `MakeAbortable(ped, 2, event)` (tail jump). Otherwise a
+/// dying ped (state 0x3F) or ped byte +0x474 bit 0x40 → 0; an urgent abort (1) is the sub-task's answer; a leisure
+/// abort: 0 when the sub-task is of type 0xCF, else +0x14 = 0, the sub-task asked (`MakeAbortable(ped, prio, event)`,
+/// answer ignored) and 0.
+#[hook(addr = 0x6787F0, conv = thiscall, name = "CTaskComplexFallAndGetUp::MakeAbortable", expect = "53 8B 5C 24 0C 83 FB 02",
+       unverified = "std11-ai-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
+pub fn task_complex_fall_and_get_up_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: i32, event: u32) -> u8 {
+    let sub = || rd::<GPtr<u8>>(this, 8);
+    if prio == 2 {
+        return task_make_abortable(sub(), ped, 2, event);
+    }
+    if rd::<u32>(ped, 0x530) == 0x3F || rd::<u8>(ped, 0x474) & 0x40 != 0 {
+        return 0;
+    }
+    if prio == 1 {
+        return task_make_abortable(sub(), ped, 1, event);
+    }
+    if task_get_type(sub()) == 0xCF {
+        return 0;
+    }
+    wr::<u32>(this, 0x14, 0);
+    task_make_abortable(sub(), ped, prio, event);
+    0
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_EVENT_OBJECT_COLLISION_DTOR,
     HOOK_TASK_COMPLEX_STUCK_IN_AIR_CREATE_SUB_TASK,
     HOOK_TASK_COMPLEX_STUCK_IN_AIR_CONTROL_SUB_TASK,
+    HOOK_TASK_COMPLEX_FALL_AND_GET_UP_MAKE_ABORTABLE,
 ];

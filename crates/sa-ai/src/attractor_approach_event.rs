@@ -74,7 +74,7 @@ pub fn is_approachable(fx: GPtr<u8>, mat: GPtr<u8>, _slot: i32, ped: GPtr<u8>) -
 /// thiscall, `ret 0xC`): the `CEventEditableResponse` base inline (+4 = 0, byte +8 = 0, byte +0xC = 1, word +0xE =
 /// 200, word +0x10 = 0xFFFF), +0x14 = fx, vtable 0x85B1B8, +0x18 = entity, byte +0x1C = avoid_looking; a set entity
 /// registers the reference at +0x18. Returns `this`.
-#[hook(addr = 0x4AF350, conv = thiscall, name = "CEventAttractor::CEventAttractor", expect = "6A FF 68 48 9E 83 00",
+#[hook(addr = 0x4AF350, conv = thiscall, name = "CEventAttractor::Constructor", expect = "6A FF 68 48 9E 83 00",
        unverified = "std11-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_attractor_ctor(this: GPtr<u8>, fx: GPtr<u8>, entity: GPtr<u8>, avoid: u32) -> GPtr<u8> {
     wr::<u32>(this, 4, 0);
