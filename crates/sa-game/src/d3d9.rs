@@ -33,11 +33,70 @@ pub fn with_device<R>(f: impl FnOnce(&mut WgpuDevice) -> R) -> Option<R> {
     d.as_mut().map(f)
 }
 
-/// Creates the seam device (a headless `WgpuDevice` of `w` x `h`) whose swap chain reports the
-/// back-buffer format `color` and the depth-stencil format `depth`; false when no adapter exists.
+/// The native window's swap chain (`--window`): `CreateDevice` creates the seam device on the window's GPU device
+/// and every `Present` draws the back buffer into the window surface and presents it.
+pub struct WindowTarget {
+    pub surface: wgpu::Surface<'static>,
+    pub config: wgpu::SurfaceConfiguration,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+}
+
+static WINDOW: Mutex<Option<WindowTarget>> = Mutex::new(None);
+
+/// Installs the window's swap chain (before the boot creates the device).
+pub fn set_window(t: WindowTarget) {
+    *WINDOW.lock().unwrap_or_else(|e| e.into_inner()) = Some(t);
+}
+
+/// The window's client area changed: the surface is reconfigured (the back buffer keeps its size and is stretched).
+pub fn resize_window(w: u32, h: u32) {
+    if let Some(t) = WINDOW.lock().unwrap_or_else(|e| e.into_inner()).as_mut() {
+        t.config.width = w.max(1);
+        t.config.height = h.max(1);
+        t.surface.configure(&t.device, &t.config);
+    }
+}
+
+/// Draws the presented back buffer into the window surface and presents it.
+fn present_to_window(d: &mut WgpuDevice) {
+    let mut w = WINDOW.lock().unwrap_or_else(|e| e.into_inner());
+    let Some(t) = w.as_mut() else { return };
+    let st = match t.surface.get_current_texture() {
+        wgpu::CurrentSurfaceTexture::Success(f) | wgpu::CurrentSurfaceTexture::Suboptimal(f) => f,
+        _ => {
+            // outdated / lost: reconfigured, this frame is not shown
+            t.surface.configure(&t.device, &t.config);
+            return;
+        }
+    };
+    let view = st.texture.create_view(&Default::default());
+    d.blit_to(&view, t.config.format);
+    st.present();
+}
+
+/// Wall-clock times of the in-game `Present` calls (`Game::Idle` frames), for the frame-pacing report.
+static FRAME_TIMES: Mutex<Vec<std::time::Instant>> = Mutex::new(Vec::new());
+
+/// The in-game present times so far.
+pub fn frame_times() -> Vec<std::time::Instant> {
+    FRAME_TIMES.lock().unwrap_or_else(|e| e.into_inner()).clone()
+}
+
+/// Creates the seam device (a `WgpuDevice` of `w` x `h`: on the window's GPU device with `--window`, otherwise
+/// headless) whose swap chain reports the back-buffer format `color` and the depth-stencil format `depth`; false
+/// when no adapter exists.
 pub fn create_device(w: u32, h: u32, color: u32, depth: u32) -> bool {
     *SWAP_FORMATS.lock().unwrap_or_else(|e| e.into_inner()) = (color, depth);
-    let dev = WgpuDevice::new_headless(w, h);
+    let window = WINDOW
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .as_ref()
+        .map(|t| (t.device.clone(), t.queue.clone()));
+    let dev = match window {
+        Some((device, queue)) => Some(WgpuDevice::new(device, queue, w, h)),
+        None => WgpuDevice::new_headless(w, h),
+    };
     let ok = dev.is_some();
     *DEVICE.lock().unwrap_or_else(|e| e.into_inner()) = dev;
     *SWAP_SURFACES.lock().unwrap_or_else(|e| e.into_inner()) = None;
@@ -63,13 +122,19 @@ pub static IN_GAME_FRAME: std::sync::atomic::AtomicBool = std::sync::atomic::Ato
 
 /// `Present` on the seam device, and the frame to `--present-dir`.
 fn present_frame() -> i32 {
+    let in_game = IN_GAME_FRAME.load(std::sync::atomic::Ordering::SeqCst);
+    let read_back = PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner()).is_some();
     let r = with_device(|d| {
         let r = d.present();
-        (r, d.read_render_target(None).ok())
+        present_to_window(d);
+        (r, if read_back { d.read_render_target(None).ok() } else { None })
     });
+    if in_game {
+        FRAME_TIMES.lock().unwrap_or_else(|e| e.into_inner()).push(std::time::Instant::now());
+    }
     // `SA_GAME_PRESENT_GAME=1`: only the frames presented inside `Game::Idle` (the in-game frames) are counted and
     // written; the loading screens are not.
-    if std::env::var_os("SA_GAME_PRESENT_GAME").is_some() && !IN_GAME_FRAME.load(std::sync::atomic::Ordering::SeqCst) {
+    if std::env::var_os("SA_GAME_PRESENT_GAME").is_some() && !in_game {
         with("Present", |_| ());
         return match r {
             Some((Ok(()), _)) => D3D_OK,
