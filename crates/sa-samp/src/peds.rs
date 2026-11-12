@@ -5,7 +5,10 @@
 use sa_samp_api::peds::*;
 use sa_samp_api::*;
 
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
+
 use crate::addr::{self, off};
+use crate::script::op;
 use crate::{NativeGame, View};
 
 impl<V: View> NativeGame<V> {
@@ -176,8 +179,10 @@ impl<V: View> Peds for NativeGame<V> {
         self.view.read_i32(addr::PLAYER_MONEY)
     }
 
-    fn set_ped_position(&mut self, _ped: PedRef, _pos: Vec3) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_position"))
+    fn set_ped_position(&mut self, ped: PedRef, pos: Vec3) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::SET_CHAR_COORDINATES, &[I(h), F(pos.x), F(pos.y), F(pos.z)])
+            .map(drop)
     }
 
     fn set_ped_matrix(&mut self, _ped: PedRef, _m: &Matrix) -> GameResult<()> {
@@ -188,28 +193,48 @@ impl<V: View> Peds for NativeGame<V> {
         Err(GameError::Unsupported("Peds::set_ped_move_speed"))
     }
 
-    fn set_ped_heading(&mut self, _ped: PedRef, _heading: f32, _raw: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_heading"))
+    fn set_ped_heading(&mut self, ped: PedRef, heading: f32, raw: bool) -> GameResult<()> {
+        if raw {
+            // The raw current/goal heading fields in radians (samp's remote-player writes).
+            let p = self.ped_addr(ped)?;
+            self.view.write(p + off::PED_HEADING, &heading.to_le_bytes());
+            self.view.write(p + off::PED_HEADING_GOAL, &heading.to_le_bytes());
+            return Ok(());
+        }
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::SET_CHAR_HEADING, &[I(h), F(heading)]).map(drop)
     }
 
-    fn set_ped_health(&mut self, _ped: PedRef, _health: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_health"))
+    fn set_ped_health(&mut self, ped: PedRef, health: f32) -> GameResult<()> {
+        let p = self.ped_addr(ped)?;
+        self.view.write(p + off::PED_HEALTH, &health.to_le_bytes());
+        Ok(())
     }
 
-    fn set_ped_armour(&mut self, _ped: PedRef, _armour: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_armour"))
+    fn set_ped_armour(&mut self, ped: PedRef, armour: f32) -> GameResult<()> {
+        let p = self.ped_addr(ped)?;
+        self.view.write(p + off::PED_ARMOUR, &armour.to_le_bytes());
+        Ok(())
     }
 
-    fn give_weapon(&mut self, _ped: PedRef, _weapon: WeaponType, _ammo: u32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::give_weapon"))
+    fn give_weapon(&mut self, ped: PedRef, weapon: WeaponType, ammo: u32) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(
+            op::GIVE_WEAPON_TO_CHAR,
+            &[I(h), I(i32::from(weapon.0)), I(ammo as i32)],
+        )
+        .map(drop)
     }
 
-    fn set_current_weapon(&mut self, _ped: PedRef, _weapon: WeaponType) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_current_weapon"))
+    fn set_current_weapon(&mut self, ped: PedRef, weapon: WeaponType) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::SET_CURRENT_CHAR_WEAPON, &[I(h), I(i32::from(weapon.0))])
+            .map(drop)
     }
 
-    fn clear_weapons(&mut self, _ped: PedRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::clear_weapons"))
+    fn clear_weapons(&mut self, ped: PedRef) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::REMOVE_ALL_CHAR_WEAPONS, &[I(h)]).map(drop)
     }
 
     fn set_weapon_slot(&mut self, _ped: PedRef, _slot: u8, _value: WeaponSlot) -> GameResult<()> {
@@ -224,36 +249,49 @@ impl<V: View> Peds for NativeGame<V> {
         Err(GameError::Unsupported("Peds::set_proofs"))
     }
 
-    fn set_suffers_critical_hits(&mut self, _ped: PedRef, _on: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_suffers_critical_hits"))
+    fn set_suffers_critical_hits(&mut self, ped: PedRef, on: bool) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::SET_CHAR_SUFFERS_CRITICAL_HITS, &[I(h), I(i32::from(on))])
+            .map(drop)
     }
 
-    fn set_drops_weapons_when_dead(&mut self, _ped: PedRef, _on: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_drops_weapons_when_dead"))
+    fn set_drops_weapons_when_dead(&mut self, ped: PedRef, on: bool) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::SET_CHAR_DROPS_WEAPONS_WHEN_DEAD, &[I(h), I(i32::from(on))])
+            .map(drop)
     }
 
-    fn freeze_ped(&mut self, _ped: PedRef, _frozen: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::freeze_ped"))
+    fn freeze_ped(&mut self, ped: PedRef, frozen: bool) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::FREEZE_CHAR_POSITION, &[I(h), I(i32::from(frozen))])
+            .map(drop)
     }
 
-    fn set_ped_area(&mut self, _ped: PedRef, _area: AreaCode) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_area"))
+    fn set_ped_area(&mut self, ped: PedRef, area: AreaCode) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::SET_CHAR_AREA_VISIBLE, &[I(h), I(i32::from(area.0))])
+            .map(drop)
     }
 
     fn set_decision_maker(&mut self, _ped: PedRef, _maker: i32) -> GameResult<()> {
         Err(GameError::Unsupported("Peds::set_decision_maker"))
     }
 
-    fn set_player_money(&mut self, _money: i32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_player_money"))
+    fn set_player_money(&mut self, money: i32) -> GameResult<()> {
+        // `CPlayerInfo::m_nMoney` and the HUD's `m_nDisplayMoney` (+4), as samp's money reset leaves them.
+        self.view.write(addr::PLAYER_MONEY, &money.to_le_bytes());
+        self.view.write(addr::PLAYER_MONEY + 4, &money.to_le_bytes());
+        Ok(())
     }
 
-    fn set_player_control(&mut self, _enabled: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_player_control"))
+    fn set_player_control(&mut self, enabled: bool) -> GameResult<()> {
+        self.run_op(op::SET_PLAYER_CONTROL, &[I(0), I(i32::from(enabled))])
+            .map(drop)
     }
 
-    fn set_drunkenness(&mut self, _level: i32) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_drunkenness"))
+    fn set_drunkenness(&mut self, level: i32) -> GameResult<()> {
+        self.run_op(op::SET_PLAYER_DRUNKENNESS, &[I(0), I(level)])
+            .map(drop)
     }
 
     fn set_ped_flags(&mut self, _ped: PedRef, _mask: [u32; 2], _value: [u32; 2]) -> GameResult<()> {
@@ -268,17 +306,23 @@ impl<V: View> Peds for NativeGame<V> {
         Err(GameError::Unsupported("Peds::explode_head"))
     }
 
-    fn warp_into_vehicle(
-        &mut self,
-        _ped: PedRef,
-        _vehicle: VehicleRef,
-        _seat: Option<i32>,
-    ) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::warp_into_vehicle"))
+    fn warp_into_vehicle(&mut self, ped: PedRef, vehicle: VehicleRef, seat: Option<i32>) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        let v = sa_samp_api::vehicles::Vehicles::vehicle_script_handle(self, vehicle)?.0;
+        match seat {
+            None => self.run_op(op::WARP_CHAR_INTO_CAR, &[I(h), I(v)]),
+            Some(s) => self.run_op(op::WARP_CHAR_INTO_CAR_AS_PASSENGER, &[I(h), I(v), I(s)]),
+        }
+        .map(drop)
     }
 
-    fn warp_out_of_vehicle(&mut self, _ped: PedRef, _pos: Vec3) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::warp_out_of_vehicle"))
+    fn warp_out_of_vehicle(&mut self, ped: PedRef, pos: Vec3) -> GameResult<()> {
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(
+            op::WARP_CHAR_FROM_CAR_TO_COORD,
+            &[I(h), F(pos.x), F(pos.y), F(pos.z)],
+        )
+        .map(drop)
     }
 
     fn start_task(&mut self, _ped: PedRef, _task: PedTask) -> GameResult<()> {

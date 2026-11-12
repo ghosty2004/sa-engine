@@ -66,6 +66,8 @@ pub struct NativeGame<V: View> {
     files: Option<Box<dyn files::FileProvider>>,
     installed: bool,
     threads: script::Threads,
+    /// The text `CMessages::AddBigMessage` points into (GTA keeps the pointer).
+    big_message: Box<[u8; 0x200]>,
 }
 
 /// The adapter over this process's engine (native sa-game).
@@ -88,6 +90,7 @@ impl<V: View> NativeGame<V> {
             files: None,
             installed: false,
             threads: script::Threads::new(exec),
+            big_message: Box::new([0; 0x200]),
         }
     }
 

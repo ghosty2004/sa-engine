@@ -2,10 +2,12 @@
 //! Methods that return `Unsupported` (or a neutral value, for reads that cannot fail) are not served by the
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Local as L};
 use sa_samp_api::world::*;
 use sa_samp_api::*;
 
 use crate::addr;
+use crate::script::op;
 use crate::{NativeGame, View};
 
 impl<V: View> WorldState for NativeGame<V> {
@@ -16,8 +18,12 @@ impl<V: View> WorldState for NativeGame<V> {
         )
     }
 
-    fn set_clock(&mut self, _hour: u8, _minute: u8) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_clock"))
+    fn set_clock(&mut self, hour: u8, minute: u8) -> GameResult<()> {
+        // samp's way: the clock bytes, then SET_TIME_OF_DAY (CClock::SetGameClock).
+        self.view.write(addr::CLOCK_HOURS, &[hour]);
+        self.view.write(addr::CLOCK_MINUTES, &[minute]);
+        self.run_op(op::SET_TIME_OF_DAY, &[I(i32::from(hour)), I(i32::from(minute))])
+            .map(drop)
     }
 
     fn weather(&self) -> (i16, i16, i16) {
@@ -29,20 +35,27 @@ impl<V: View> WorldState for NativeGame<V> {
         )
     }
 
-    fn set_weather(&mut self, _weather: u8) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_weather"))
+    fn set_weather(&mut self, weather: u8) -> GameResult<()> {
+        let v = u32::from(weather).to_le_bytes();
+        for a in [addr::WEATHER_FORCED, addr::WEATHER_NEW, addr::WEATHER_OLD] {
+            self.view.write(a, &v);
+        }
+        Ok(())
     }
 
-    fn force_weather(&mut self, _weather: u8) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::force_weather"))
+    fn force_weather(&mut self, weather: u8) -> GameResult<()> {
+        self.view
+            .write(addr::WEATHER_FORCED, &u32::from(weather).to_le_bytes());
+        Ok(())
     }
 
     fn gravity(&self) -> f32 {
         self.view.read_f32(addr::GAME_GRAVITY)
     }
 
-    fn set_gravity(&mut self, _g: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_gravity"))
+    fn set_gravity(&mut self, g: f32) -> GameResult<()> {
+        self.view.write(addr::GAME_GRAVITY, &g.to_le_bytes());
+        Ok(())
     }
 
     fn area(&self) -> AreaCode {
@@ -53,32 +66,45 @@ impl<V: View> WorldState for NativeGame<V> {
         self.view.read_i32(addr::CURR_AREA)
     }
 
-    fn set_area(&mut self, _area: AreaCode) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_area"))
+    fn set_area(&mut self, area: AreaCode) -> GameResult<()> {
+        self.run_op(op::SET_AREA_VISIBLE, &[I(i32::from(area.0))])
+            .map(drop)
     }
 
     fn set_stunt_bonus(&mut self, _on: bool) -> GameResult<()> {
         Err(GameError::Unsupported("WorldState::set_stunt_bonus"))
     }
 
-    fn set_max_wanted_level(&mut self, _level: u8) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_max_wanted_level"))
+    fn set_max_wanted_level(&mut self, level: u8) -> GameResult<()> {
+        self.run_op(op::SET_MAX_WANTED_LEVEL, &[I(i32::from(level))])
+            .map(drop)
     }
 
-    fn set_densities(&mut self, _peds: f32, _cars: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_densities"))
+    fn set_densities(&mut self, peds: f32, cars: f32) -> GameResult<()> {
+        self.run_op(op::SET_PED_DENSITY_MULTIPLIER, &[F(peds)])?;
+        self.run_op(op::SET_CAR_DENSITY_MULTIPLIER, &[F(cars)]).map(drop)
     }
 
     fn switch_roads_off(&mut self) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::switch_roads_off"))
+        // The whole map, as samp does at start-up.
+        self.run_op(
+            op::SWITCH_ROADS_OFF,
+            &[F(-4000.0), F(-4000.0), F(-500.0), F(4000.0), F(4000.0), F(500.0)],
+        )
+        .map(drop)
     }
 
-    fn set_random_trains(&mut self, _on: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_random_trains"))
+    fn set_random_trains(&mut self, on: bool) -> GameResult<()> {
+        self.run_op(op::SWITCH_RANDOM_TRAINS, &[I(i32::from(on))])
+            .map(drop)
     }
 
-    fn set_restart_point(&mut self, _pos: Vec3, _heading_deg: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldState::set_restart_point"))
+    fn set_restart_point(&mut self, pos: Vec3, heading_deg: f32) -> GameResult<()> {
+        self.run_op(
+            op::ADD_HOSPITAL_RESTART,
+            &[F(pos.x), F(pos.y), F(pos.z), F(heading_deg), I(0)],
+        )
+        .map(drop)
     }
 
     fn ground_z(&self, _pos: Vec3) -> f32 {
@@ -117,12 +143,16 @@ impl<V: View> WorldState for NativeGame<V> {
 }
 
 impl<V: View> WorldEntities for NativeGame<V> {
-    fn create_pickup(&mut self, _model: ModelId, _kind: i32, _pos: Vec3) -> GameResult<PickupRef> {
-        Err(GameError::Unsupported("WorldEntities::create_pickup"))
+    fn create_pickup(&mut self, model: ModelId, kind: i32, pos: Vec3) -> GameResult<PickupRef> {
+        let h = self.run_op_out(
+            op::CREATE_PICKUP,
+            &[I(model.0), I(kind), F(pos.x), F(pos.y), F(pos.z), L(0)],
+        )?;
+        Ok(PickupRef(h))
     }
 
-    fn remove_pickup(&mut self, _p: PickupRef) -> GameResult<()> {
-        Err(GameError::Unsupported("WorldEntities::remove_pickup"))
+    fn remove_pickup(&mut self, p: PickupRef) -> GameResult<()> {
+        self.run_op(op::REMOVE_PICKUP, &[I(p.0 as i32)]).map(drop)
     }
 
     fn pickup_collected(&self, _p: PickupRef) -> GameResult<bool> {
