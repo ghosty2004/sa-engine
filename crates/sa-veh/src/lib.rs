@@ -81,3 +81,4 @@ pub mod train_control;
 pub mod bike_control;
 pub mod bike_render;
 pub mod generated;
+pub mod float_pow;

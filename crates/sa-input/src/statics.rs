@@ -46,4 +46,24 @@ pub fn init_controls_manager() -> GPtr<u8> {
     ccm_constructor(GPtr::from_addr(CONTROLS_MANAGER))
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_INIT_PADS, HOOK_DTOR_PADS, HOOK_INIT_CONTROLS_MANAGER];
+/// `AllValidWinJoys` (`CJoySticks`, 0xC92144): two 0x10-byte joystick records.
+const ALL_VALID_WIN_JOYS: usize = 0xC9_2144;
+
+/// `__init_AllValidWinJoys` (0x855FD0, batch `boot-input-1`): the inlined `CJoySticks` constructor. For both
+/// records (`mov eax, 0xC92148` .. `cmp eax, 0xC92168; jl`, step 0x10) the dword +0 (device id) and the bytes +4,
+/// +5, +6 (the "present", "plugged in" and "two sticks" flags) are zeroed, in that order. No `atexit`. The original
+/// leaves EAX = 0xC92168, which `_initterm` ignores.
+#[hook(addr = 0x855FD0, conv = cdecl, name = "__init_AllValidWinJoys", expect = "B8 48 21 C9 00",
+       unverified = "boot-input-1", route = "split", hazards = "none", recs = "boot",
+       note = "C++ static initialiser: runs once from _initterm before WinMain")]
+pub fn init_all_valid_win_joys() {
+    for i in 0..2 {
+        let r = GPtr::<u8>::from_addr(ALL_VALID_WIN_JOYS + 0x10 * i);
+        r.cast::<u32>().write(0);
+        r.byte_add(4).write(0);
+        r.byte_add(5).write(0);
+        r.byte_add(6).write(0);
+    }
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_INIT_PADS, HOOK_DTOR_PADS, HOOK_INIT_CONTROLS_MANAGER, HOOK_INIT_ALL_VALID_WIN_JOYS];

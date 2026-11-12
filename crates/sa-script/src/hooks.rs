@@ -65,6 +65,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::play_anim_command::HOOKS,
     misc::HOOKS,
     crate::generated::HOOKS,
+    crate::mission_cleanup_init::HOOKS,
 ];
 
 /// The partial switches (ADR-002) and their Rust cases: (first opcode of the switch, `PORTED`).
