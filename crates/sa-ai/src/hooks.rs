@@ -99,6 +99,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::event_attractor_affects_ped::HOOKS,
     crate::stuck_in_air_subtask::HOOKS,
     crate::group_membership_remove::HOOKS,
+    crate::mental_state_anger::HOOKS,
+    crate::walk_round_object_route::HOOKS,
     crate::attractor_ped_use_effect::HOOKS,
     crate::general_node_heading::HOOKS,
     crate::route_round_entity_bbox::HOOKS,
