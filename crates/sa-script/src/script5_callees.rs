@@ -23,6 +23,61 @@ orig! {
     fn txd_remove(slot: i32) = cdecl 0x731E90 => unported;
     /// `CTaskComplexEnterCar::~CTaskComplexEnterCar()` (0x63DFA0)
     fn enter_car_dtor(t: GPtr<u8>) = thiscall 0x63DFA0 => unported;
+    /// `CTask::CTask()` (0x61A390)
+    fn task_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x61A390 => unported;
+    /// `CEntity::RegisterReference(CEntity** slot)` (0x571B70, `ret 4`)
+    fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
+}
+
+/// `CTaskSimpleTriggerLookAt` vtable (0x86E3CC)
+const VT_TRIGGER_LOOK_AT: u32 = 0x86E3CC;
+
+/// `CTaskSimpleTriggerLookAt::CTaskSimpleTriggerLookAt(CEntity* e, int32 time, int32 bone, CVector offset, bool
+/// useTorso, float speed, int32 blendTime, int8 priority)` (0x634440, thiscall, `ret 0x28`; unnamed in the
+/// catalogue, the type from its vtable 0x86E3CC).
+///
+/// `CTask::CTask()`, then +0xC time, +0x10 bone, +0x14..+0x1C the offset, byte +0x20 useTorso, +0x24 speed, the
+/// vtable, +8 the entity, +0x28 blendTime, byte +0x2D priority; a non-null entity gets `RegisterReference(&this->+8)`
+/// and byte +0x2C = 1, else +0x2C = 0. Returns `this`. The original's SEH frame (state 0 after the base constructor)
+/// has nothing to unwind; its handler push sits behind a `jmp` into the 0x40384F thunk area, whose rel32 the
+/// protection reads at 0x401D0A (sa-hook keycells).
+#[hook(addr = 0x634440, conv = thiscall, name = "FUN_00634440", expect = "6A FF E9 08 F4 DC FF",
+       this = "CTaskSimpleTriggerLookAt", unverified = "script5-4", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "SEH frame not reproduced (no unwind action)")]
+#[allow(clippy::too_many_arguments)]
+pub fn task_simple_trigger_look_at_ctor(
+    this: GPtr<u8>,
+    e: GPtr<u8>,
+    time: u32,
+    bone: u32,
+    x: u32,
+    y: u32,
+    z: u32,
+    use_torso: u32,
+    speed: u32,
+    blend: u32,
+    prio: u32,
+) -> GPtr<u8> {
+    task_ctor(this);
+    let w = |off: isize, v: u32| this.byte_add(off).cast::<u32>().write(v);
+    w(0xC, time);
+    w(0x10, bone);
+    w(0x14, x);
+    w(0x18, y);
+    w(0x1C, z);
+    this.byte_add(0x20).write(use_torso as u8);
+    w(0x24, speed);
+    w(0x0, VT_TRIGGER_LOOK_AT);
+    w(0x8, e.addr() as u32);
+    w(0x28, blend);
+    this.byte_add(0x2D).write(prio as u8);
+    if e.is_null() {
+        this.byte_add(0x2C).write(0);
+    } else {
+        entity_register_reference(e, this.byte_add(8));
+        this.byte_add(0x2C).write(1);
+    }
+    this
 }
 
 /// `CPointRoute::AddRoutePoint(const CVector&)` (stub 0x48E180 → 0x1569990, thiscall, `ret 4`).
@@ -155,6 +210,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_THE_SCRIPTS_REMOVE_SCRIPT_TEXTURE_DICTIONARY,
     HOOK_POINT_ROUTE_ADD_ROUTE_POINT,
     HOOK_TASK_ENTER_CAR_AS_PASSENGER_DTOR,
+    HOOK_TASK_SIMPLE_TRIGGER_LOOK_AT_CTOR,
     HOOK_TASK_USE_MOBILE_PHONE_STOP,
     HOOK_SUPPRESS_VEHICLE_MODEL,
     HOOK_DONT_SUPPRESS_VEHICLE_MODEL,
