@@ -377,6 +377,14 @@ pub fn node_route_pool_new(p: PoolPtr<NodeRouteSlot>) -> GPtr<NodeRouteSlot> {
     pool::pool_new(p)
 }
 
+/// `CPedAttractorPool::New` (0x5EA9F0, slot 0xC4; the wrap-around reset of `m_nFirstFree` sits in the protection
+/// fragment 0x408C97).
+#[hook(addr = 0x5EA9F0, conv = thiscall, name = "CPedAttractorPool::New", expect = "8B 51 08 56 32 C0", this = "CPool<int32>",
+       unverified = "writerq-ai-3", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn ped_attractor_pool_new(p: PoolPtr<PedAttractorSlot>) -> GPtr<PedAttractorSlot> {
+    pool::pool_new(p)
+}
+
 /// `CEntryInfoNodePool::GetAt` (0x536D10): the catalogue name is gta-reversed's, but the bytes are a
 /// `CPool::New` with slot 0x14 (the target of `CEntryInfoNode::operator new`).
 #[hook(addr = 0x536D10, conv = thiscall, name = "CEntryInfoNodePool::GetAt", expect = "8B 51 08 56 32 C0", this = "CPool<int32>")]
@@ -1078,6 +1086,7 @@ pub const HOOKS: &[crate::abi::HookReg] = &[
     HOOK_POINT_ROUTE_POOL_NEW,
     HOOK_PATROL_ROUTE_POOL_NEW,
     HOOK_NODE_ROUTE_POOL_NEW,
+    HOOK_PED_ATTRACTOR_POOL_NEW,
     HOOK_ENTRY_INFO_NODE_POOL_NEW,
     HOOK_PTR_NODE_SINGLE_POOL_NEW,
     HOOK_PTR_NODE_DOUBLE_POOL_NEW,

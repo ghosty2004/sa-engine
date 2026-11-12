@@ -111,6 +111,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::route_round_entity_bbox::HOOKS,
     crate::route_round_sphere::HOOKS,
     crate::attractor_place_ped::HOOKS,
+    crate::interesting_events_add::HOOKS,
+    crate::attractor_ptr_vectors::HOOKS,
+    crate::attractor_register_ped::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
