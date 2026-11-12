@@ -79,8 +79,6 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     crate::gameinit::NATIVES[8],
     crate::gameinit::NATIVES[9],
     crate::gameinit::NATIVES[10],
-    crate::gameinit::NATIVES[11],
-    crate::gameinit::NATIVES[12],
     crate::object_ctors::NATIVES[0],
     crate::object_ctors::NATIVES[1],
     crate::object_ctors::NATIVES[2],
