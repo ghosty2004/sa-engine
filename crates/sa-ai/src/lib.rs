@@ -206,3 +206,4 @@ pub mod climb_anim;
 pub mod climb_process;
 pub mod event_ref_dtors;
 pub mod climb_camera;
+pub mod follow_node_route_blend;
