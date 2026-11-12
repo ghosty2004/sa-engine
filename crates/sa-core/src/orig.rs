@@ -38,6 +38,33 @@ use core::sync::atomic::{AtomicU32, Ordering};
 
 static SITE: AtomicU32 = AtomicU32::new(0);
 
+/// What phases B/C do when an `unported` declaration is called and nothing is registered for its address: a
+/// [`set_unported_handler`] handler, else a panic with `msg`. Natively the panic unwinds to the main loop, which
+/// reports a blocked iteration; wasm32 cannot unwind, so the web build installs a handler that leaves the iteration
+/// another way (a JS exception) and reports the same blocked iteration.
+#[cold]
+#[track_caller]
+pub fn unported(msg: core::fmt::Arguments<'_>) -> ! {
+    let h = UNPORTED_HANDLER.load(Ordering::Relaxed);
+    if h != 0 {
+        // SAFETY: only `set_unported_handler` stores a non-zero value, an `UnportedHandler`.
+        let f: UnportedHandler = unsafe { core::mem::transmute::<usize, UnportedHandler>(h as usize) };
+        f(msg);
+    }
+    panic!("{msg}")
+}
+
+/// A handler for [`unported`] (it must not return).
+pub type UnportedHandler = fn(core::fmt::Arguments<'_>) -> !;
+
+static UNPORTED_HANDLER: AtomicU32 = AtomicU32::new(0);
+
+/// Installs `f` as [`unported`]'s handler (32-bit targets only: the handler is kept as a 32-bit word).
+#[cfg(target_pointer_width = "32")]
+pub fn set_unported_handler(f: UnportedHandler) {
+    UNPORTED_HANDLER.store(f as usize as u32, Ordering::Relaxed);
+}
+
 /// True in phase A (in-process with the original exe): only there does a fallback hook's
 /// `<fn>_original` reach original code (ADR-002). Ports use it to panic with their own context
 /// (e.g. the opcode of an unported script command) before calling a fallback in phases B/C.
@@ -832,13 +859,13 @@ macro_rules! __orig_body {
         let __sa_callee: usize = $addr;
         $crate::__orig_dispatch!($conv, __sa_callee, ($($a: $t),*) $(-> $r)?);
         $(let _ = $a;)*
-        ::core::panic!(
+        $crate::orig::unported(::core::format_args!(
             "{} is not ported; phases B/C have no original code to call ({:#x}{}{})",
             stringify!($name),
             __sa_callee,
             if $crate::orig::registry::describe(__sa_callee).is_empty() { "" } else { " = " },
             $crate::orig::registry::describe(__sa_callee)
-        )
+        ))
     }};
 }
 

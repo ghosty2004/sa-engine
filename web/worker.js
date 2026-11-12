@@ -132,6 +132,7 @@ function status(extra) {
   post('status', {
     phase,
     iterations: sa.iterations(),
+    blocked,
     state: sa.game_state(),
     presents: sa.in_game_presents(),
     allPresents: sa.presents(),
@@ -140,12 +141,39 @@ function status(extra) {
   });
 }
 
+// an unported callee leaves its main-loop iteration through a JS exception (wasm32 cannot unwind; sa-game's
+// web::unported): the shadow stack pointer is put back to its value before the call and sa.recover() ends the
+// iteration as natively (a blocked step), then the loop goes on
+const BLOCKED_TAG = 'sa-game blocked: ';
+let wasm = null;
+let blocked = 0;
+function stackPointer() {
+  return wasm && wasm.__stack_pointer instanceof WebAssembly.Global ? wasm.__stack_pointer : null;
+}
+
 function tick() {
   if (stopped) return;
   const end = performance.now() + 12;
+  const sp = stackPointer();
+  const sp0 = sp ? sp.value : 0;
   try {
     do {
-      if (!sa.frame()) {
+      let ok;
+      try {
+        ok = sa.frame();
+      } catch (e) {
+        const msg = String(e && e.message !== undefined ? e.message : e);
+        if (!msg.startsWith(BLOCKED_TAG)) throw e;
+        if (sp) sp.value = sp0;
+        blocked++;
+        if (!sa.recover()) {
+          stopped = true;
+          status({ done: `stopped after a blocked iteration: ${msg.slice(BLOCKED_TAG.length)}` });
+          return;
+        }
+        ok = true;
+      }
+      if (!ok) {
         stopped = true;
         status({ done: 'the main loop stopped (see the log)' });
         return;
@@ -169,7 +197,8 @@ self.onmessage = async (ev) => {
   switch (m.type) {
     case 'start':
       try {
-        await init();
+        wasm = await init();
+        if (!stackPointer()) console.warn('the module does not export __stack_pointer: blocked iterations leak their stack');
         for (const [k, v] of Object.entries(m.env || {})) sa.set_env(k, String(v));
         if (m.startInWorld) sa.set_start_in_world();
         for (const f of m.files) {

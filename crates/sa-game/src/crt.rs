@@ -33,9 +33,9 @@ mod sys {
         }
     }
 
-    /// Zeroed, like the fresh pages a native heap mostly hands out: dlmalloc on wasm32 reuses freed blocks at once,
-    /// and a port that reads a field the original leaves uninitialised (an FX blueprint list link, seen as an
-    /// out-of-bounds trap in `FindFxSystemBP` / `CreateEntityFx`) must not see stale pointers.
+    /// Zeroed, like the fresh pages a native heap mostly hands out: dlmalloc on wasm32 reuses freed blocks at once.
+    /// (The `FindFxSystemBP` / `CreateEntityFx` out-of-bounds trap this was first meant for was the moving shrink in
+    /// [`realloc`], not an uninitialised field.)
     pub unsafe fn malloc(n: usize) -> *mut u8 {
         // SAFETY: a non-zero layout.
         unsafe { finish(alloc_zeroed(layout(n)), n) }
@@ -66,6 +66,15 @@ mod sys {
         // SAFETY: as free; the copy stays inside both blocks.
         unsafe {
             let old = p.sub(HDR).cast::<usize>().read();
+            // A shrink stays in place, as MSVC's realloc (and glibc's, natively) does. The game relies on it:
+            // `FxMemoryPool_c::Optimise` (0x4A9CD0) shrinks the 1 MiB effects pool to its used size after
+            // `LoadFxProject` and keeps the blueprints allocated inside it, whose list links (`g_fxMan` +0, each
+            // blueprint +4) point into the block. A moved pool left them in a freed block that later allocations
+            // reuse: the out-of-bounds trap in `FindFxSystemBP` from `CObjectData::Initialise`. The header keeps
+            // the block's real size (its layout for `dealloc`).
+            if n <= old {
+                return p;
+            }
             let q = malloc(n);
             if !q.is_null() {
                 std::ptr::copy_nonoverlapping(p, q, old.min(n));
@@ -678,10 +687,10 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
 #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
 pub(crate) fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor: u32) {
     let Some(e) = sa_core::orig::registry::lookup(dtor as usize) else {
-        panic!(
+        sa_core::orig::unported(format_args!(
             "eh_vector_dtor_element is not ported; phases B/C have no original code to call ({dtor:#x} {})",
             sa_core::orig::registry::describe(dtor as usize)
-        );
+        ));
     };
     let f = |p: u32| {
         call_this(e, p);
@@ -705,10 +714,10 @@ pub(crate) fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor: u32) {
 #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
 pub(crate) fn eh_vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32, _dtor: u32) {
     let Some(e) = sa_core::orig::registry::lookup(ctor as usize) else {
-        panic!(
+        sa_core::orig::unported(format_args!(
             "eh_vector_ctor_element is not ported; phases B/C have no original code to call ({ctor:#x} {})",
             sa_core::orig::registry::describe(ctor as usize)
-        );
+        ));
     };
     let f = |p: u32| call_this(e, p);
     let mut p = ptr;

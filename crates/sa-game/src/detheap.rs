@@ -126,7 +126,9 @@ pub fn realloc(p: GPtr<u8>, n: usize) -> GPtr<u8> {
         return alloc(n);
     }
     let c = class_of(p);
-    if class(n) == c {
+    // a shrink stays in place, as MSVC's realloc does: `FxMemoryPool_c::Optimise` shrinks the effects pool after
+    // `LoadFxProject` and keeps using the blueprints (and their list links) already allocated inside it
+    if class(n) <= c {
         return p;
     }
     let q = alloc(n);
