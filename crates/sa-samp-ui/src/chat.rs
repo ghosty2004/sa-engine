@@ -244,8 +244,9 @@ impl ChatWindow {
         }
     }
 
-    /// The scrollbar at the left (samp's DXUT scrollbar: shown while scrolled up or while the input is
-    /// open): track, the two arrow buttons and the thumb sized by page / entries.
+
+    /// The scrollbar at the left (samp's DXUT scrollbar in the full-screen chat GUI dialog: shown while
+    /// scrolled up or while the input is open), range 1..100 over samp's 100 chat slots, page = page size.
     pub fn draw_scrollbar(&self, m: &dyn Measure, input_open: bool, d: &mut DrawList) {
         if self.mode == Mode::Off || (self.scroll == 0 && !input_open) {
             return;
@@ -253,22 +254,13 @@ impl ChatWindow {
         let h = m.line_height(FontId::Main);
         let (x, y, w) = SCROLLBAR;
         let len = (h + 1.0) * self.page_size as f32 - 60.0;
-        if len < 3.0 * w {
+        if len < 2.0 * w {
             return;
         }
-        let (x1, y1) = (x + w, y + len);
-        d.rect(x, y, x1, y1, 0xC820_2020);
-        for (t, b) in [(y, y + w), (y1 - w, y1)] {
-            d.rect(x + 1.0, t + 1.0, x1 - 1.0, b - 1.0, 0xC860_6060);
-        }
-        let (tt, tb) = (y + w, y1 - w);
-        let total = self.entries.len().max(self.page_size) as f32;
-        let th = ((tb - tt) * self.page_size as f32 / total).max(8.0);
-        let first =
-            (self.entries.len() - self.scroll.min(self.entries.len())).saturating_sub(self.page_size) as f32;
-        let span = (total - self.page_size as f32).max(1.0);
-        let top = tt + (tb - tt - th) * (first / span).min(1.0);
-        d.rect(x + 2.0, top, x1 - 2.0, top + th, 0xC8B0_B0B0);
+        let r = [x, y, x + w, y + len];
+        let slots = CAPACITY - 1;
+        let pos = slots.saturating_sub(self.page_size + self.scroll);
+        d.scrollbar(r, DrawList::scroll_thumb(r, slots, self.page_size, pos));
     }
 }
 
@@ -375,37 +367,15 @@ impl ChatInput {
         ]
     }
 
-    /// Draws the open line: dark box, light frame, text and a blinking caret.
-    pub fn draw(&self, m: &dyn Measure, video_w: u32, chat_bottom: f32, time_ms: u32, d: &mut DrawList) {
+    /// Draws the open line: samp's DXUT edit box (skin frame, white text, grey caret).
+    pub fn draw(&self, m: &dyn Measure, video_w: u32, chat_bottom: f32, _time_ms: u32, d: &mut DrawList) {
         if !self.open {
             return;
         }
         let r = Self::box_rect(video_w, chat_bottom, m.line_height(FontId::Gui0));
-        d.rect(r[0], r[1], r[2], r[3], 0xC000_0000);
-        d.frame(r[0], r[1], r[2], r[3], 0xFFC8_C8C8);
-        let pad = 9.0;
-        let ty = ((r[1] + r[3] - m.line_height(FontId::Gui0)) / 2.0).round();
-        // Scroll the text left so the caret stays inside the box.
-        let inner = r[2] - r[0] - 2.0 * pad;
-        let before = self.edit.display_before_caret(false);
-        let shift = (m.width(FontId::Gui0, &before) - inner + 2.0).max(0.0);
-        let text = self.edit.display(false);
-        // Characters scrolled out on the left are dropped whole.
-        let mut skip = 0;
-        let mut acc = 0.0;
-        for c in text.chars() {
-            if acc >= shift {
-                break;
-            }
-            acc += m.width(FontId::Gui0, &c.to_string());
-            skip += 1;
-        }
-        let shown: String = text.chars().skip(skip).collect();
-        d.text(r[0] + pad, ty, FontId::Gui0, 0xFFFF_FFFF, &shown);
-        if (time_ms / 500).is_multiple_of(2) {
-            let cx = r[0] + pad + m.width(FontId::Gui0, &before) - acc;
-            d.rect(cx, ty, cx + 2.0, ty + m.line_height(FontId::Gui0), 0xFFFF_FFFF);
-        }
+        let area = d.edit_frame(r);
+        let (shown, before_w) = crate::dialog::edit_view(m, &self.edit, false, area[2] - area[0]);
+        d.edit_text(m, area, &shown, before_w);
     }
 }
 
@@ -584,10 +554,13 @@ mod tests {
         assert!(d.cmds.is_empty());
         c.draw_scrollbar(&M, true, &mut d);
         assert_eq!(d.cmds.len(), 4);
-        let Cmd::Rect { rect, .. } = d.cmds[0] else {
-            panic!()
+        // Track between the arrows, the up arrow, the down arrow, the thumb (flat without the skin).
+        let rect = |i: usize| match d.cmds[i] {
+            Cmd::Rect { rect, .. } => rect,
+            _ => panic!(),
         };
-        assert_eq!(rect, [10.0, 40.0, 30.0, 40.0 + 17.0 * 15.0 - 60.0]);
+        assert_eq!(rect(1), [10.0, 40.0, 30.0, 60.0]);
+        assert_eq!(rect(2)[3], 40.0 + 17.0 * 15.0 - 60.0);
         // The thumb sits at the bottom when not scrolled, higher when scrolled up.
         let thumb = |c: &ChatWindow| {
             let mut d = DrawList::default();

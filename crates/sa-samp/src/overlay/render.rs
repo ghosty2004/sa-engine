@@ -165,7 +165,15 @@ pub fn destroy_raster(r: u32) {
 
 /// Creates the atlas raster and fills it (white, alpha = coverage). `None` when RW refuses the raster.
 pub fn upload_atlas(atlas: &FontAtlas) -> Option<u32> {
-    let r = rw_raster_create(atlas.width as i32, atlas.height as i32, 32, RASTER_TEXTURE_8888);
+    upload_rgba(atlas.width, atlas.height, &atlas.rgba())
+}
+
+/// Creates a `w × h` texture raster from RGBA8 pixels. `None` when RW refuses the raster.
+pub fn upload_rgba(w: u32, h: u32, rgba: &[u8]) -> Option<u32> {
+    if rgba.len() < (w * h * 4) as usize {
+        return None;
+    }
+    let r = rw_raster_create(w as i32, h as i32, 32, RASTER_TEXTURE_8888);
     if r.is_null() {
         return None;
     }
@@ -175,16 +183,21 @@ pub fn upload_atlas(atlas: &FontAtlas) -> Option<u32> {
     }
     let stride = GPtr::<i32>::from_addr(r.addr() + 0x18)
         .read()
-        .max(atlas.width as i32 * 4) as usize;
-    for y in 0..atlas.height as usize {
+        .max(w as i32 * 4) as usize;
+    for y in 0..h as usize {
         let row = GPtr::<u8>::from_addr(px as usize + y * stride);
-        for x in 0..atlas.width as usize {
-            let i = y * atlas.width as usize + x;
-            let (a, l) = (u32::from(atlas.alpha[i]), u32::from(atlas.lum[i]));
+        for x in 0..w as usize {
+            let i = 4 * (y * w as usize + x);
+            let (r8, g8, b8, a8) = (
+                u32::from(rgba[i]),
+                u32::from(rgba[i + 1]),
+                u32::from(rgba[i + 2]),
+                u32::from(rgba[i + 3]),
+            );
             // D3DFMT_A8R8G8B8 in memory: B, G, R, A.
             row.byte_add(4 * x as isize)
                 .cast::<u32>()
-                .write(a << 24 | l << 16 | l << 8 | l);
+                .write(a8 << 24 | r8 << 16 | g8 << 8 | b8);
         }
     }
     rw_raster_unlock(r);
@@ -207,6 +220,8 @@ struct Vertex {
 /// Batches triangles of one texture (or none) until a draw of another kind needs the screen.
 struct Batch {
     raster: u32,
+    /// `rwFILTERNEAREST` (1) or `rwFILTERLINEAR` (2).
+    filter: u32,
     verts: Vec<Vertex>,
     z: f32,
     rhw: f32,
@@ -251,7 +266,7 @@ impl Batch {
             return;
         }
         rw_render_state_set(rs::TEXTURERASTER, self.raster);
-        rw_render_state_set(rs::TEXTUREFILTER, 1);
+        rw_render_state_set(rs::TEXTUREFILTER, self.filter);
         rw_render_state_set(rs::ZTESTENABLE, 0);
         rw_render_state_set(rs::ZWRITEENABLE, 0);
         rw_render_state_set(rs::VERTEXALPHAENABLE, 1);
@@ -316,32 +331,55 @@ fn game_font(style: &FontStyle, x: f32, y: f32, text: &str) {
     font_set_edge(0);
 }
 
-/// Draws `list`. `raster` is the uploaded atlas (0 = none: UI text then goes through `CFont` font 1).
+/// Draws `list`. `raster` is the uploaded atlas (0 = none: UI text then goes through `CFont` font 1);
+/// `skin` the skin texture raster ([`sa_samp_ui::skin`]; 0 = none, the UI then draws flat controls).
 ///
 /// `flush_fonts`: draw `CFont`'s buffer after each game-font text (the `Present` pass, after `Game::Idle`'s
 /// own `DrawFonts`); without it (the `After2d` pass) the textdraws' text stays in the buffer with the HUD's,
 /// as on samp.
-pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprites, flush_fonts: bool) {
+pub fn draw(
+    list: &DrawList,
+    atlas: &FontAtlas,
+    raster: u32,
+    skin: u32,
+    sprites: &mut Sprites,
+    flush_fonts: bool,
+) {
     let z = GPtr::<f32>::from_addr(NEAR_SCREEN_Z).read();
     let rhw = GPtr::<f32>::from_addr(RECIP_NEAR_CLIP).read();
     let mut glyphs = Batch {
         raster,
+        filter: 1,
         verts: Vec::new(),
         z,
         rhw,
     };
     let mut solid = Batch {
         raster: 0,
+        filter: 1,
         verts: Vec::new(),
         z,
         rhw,
     };
+    // D3DX sprites of samp's GUI sample the skin bilinearly.
+    let mut skins = Batch {
+        raster: skin,
+        filter: 2,
+        verts: Vec::new(),
+        z,
+        rhw,
+    };
+    let (sw, sh) = (
+        sa_samp_ui::skin::TEXTURE_W as f32,
+        sa_samp_ui::skin::TEXTURE_H as f32,
+    );
     let (aw, ah) = (atlas.width as f32, atlas.height as f32);
     for cmd in &list.cmds {
         match cmd {
             Cmd::Rect { rect, colour } => {
                 glyphs.flush();
                 solid.flush();
+                skins.flush();
                 // `CRect` {left, bottom, right, top} as the HUD passes it (y down: bottom = the larger y).
                 let mut r = [rect[0], rect[3], rect[2], rect[1]];
                 let mut c = crgba(*colour);
@@ -352,6 +390,7 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
             }
             Cmd::Triangle { pts, colour } => {
                 glyphs.flush();
+                skins.flush();
                 solid.push_tri(*pts, *colour);
             }
             Cmd::Text {
@@ -363,6 +402,7 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
                 outline,
             } => {
                 solid.flush();
+                skins.flush();
                 if raster == 0 {
                     glyphs.flush();
                     let h = atlas.heights()[font.index()] as f32;
@@ -404,9 +444,22 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
                     pen += g.advance;
                 }
             }
+            Cmd::Skin { src, dst, colour } => {
+                glyphs.flush();
+                solid.flush();
+                if skin == 0 {
+                    continue;
+                }
+                skins.push_quad(
+                    [dst[0] - 0.5, dst[1] - 0.5, dst[2] - 0.5, dst[3] - 0.5],
+                    [src[0] / sw, src[1] / sh, src[2] / sw, src[3] / sh],
+                    *colour,
+                );
+            }
             Cmd::GameFont { style, x, y, text } => {
                 glyphs.flush();
                 solid.flush();
+                skins.flush();
                 game_font(style, *x, *y, text);
                 if flush_fonts {
                     font_draw_fonts();
@@ -415,6 +468,7 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
             Cmd::Sprite { source, rect, colour } => {
                 glyphs.flush();
                 solid.flush();
+                skins.flush();
                 let tex = sprites.get(source);
                 if tex != 0 {
                     // samp: bilinear filter, then `CSprite2d::Draw(CRect{l, b, r, t}, colour)`.
@@ -433,6 +487,7 @@ pub fn draw(list: &DrawList, atlas: &FontAtlas, raster: u32, sprites: &mut Sprit
     }
     glyphs.flush();
     solid.flush();
+    skins.flush();
 }
 
 /// Sprite textdraw textures (`RwTexture*` by `txd:name`; 0 = not available), loaded on first use.

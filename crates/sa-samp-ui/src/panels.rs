@@ -132,77 +132,94 @@ pub struct Scoreboard {
     pub rows: Vec<ScoreRow>,
 }
 
-/// Scoreboard background.
-pub const SB_BACKGROUND: u32 = 0xC000_0000;
+/// Scoreboard background (its GUI dialog, samp.dll 0x1006ea30).
+pub const SB_BACKGROUND: u32 = 0x960A_0A0A;
+/// Server name and player count colour.
+pub const SB_TEXT: u32 = 0xFFBE_BEBE;
+/// Column header colour.
+pub const SB_HEADER: u32 = 0xFF95_B0D0;
+/// The player count text samp measures to place the count.
+pub const PLAYERS_SAMPLE: &str = "Players: 10000";
+/// Height of the area above the list box.
+pub const SB_TOP: f32 = 60.0;
 
 impl Scoreboard {
-    /// Panel rectangle: centred, 60 % of the width (at most 640), 50 % of the height.
+    /// Panel rectangle (samp.dll 0x1006eab0): 640 × 480, or 800 × 600 above 800 px, centred on the video
+    /// mode.
     pub fn rect(w: f32, h: f32) -> [f32; 4] {
-        let pw = (0.6 * w).min(640.0).round();
-        let ph = (0.5 * h).round();
-        let (x, y) = (((w - pw) / 2.0).round(), ((h - ph) / 2.0).round());
+        let (pw, ph) = if w > 800.0 { (800.0, 600.0) } else { (640.0, 480.0) };
+        let (x, y) = ((w / 2.0).trunc() - pw / 2.0, (h / 2.0).trunc() - ph / 2.0);
         [x, y, x + pw, y + ph]
     }
 
-    fn row_top(r: &[f32; 4], lh: f32, i: usize) -> f32 {
-        r[1] + 10.0 + 2.0 * (lh + 4.0) + i as f32 * (lh + 2.0)
+    /// The list box.
+    fn list_rect(r: &[f32; 4]) -> [f32; 4] {
+        [r[0], r[1] + SB_TOP, r[2], r[3]]
     }
 
-    /// Draws the panel; `cursor` highlights the row under it.
+    /// Column widths: id, name, score (ping takes the rest).
+    pub fn columns(r: &[f32; 4]) -> [f32; 3] {
+        let sw = r[2] - r[0];
+        [(0.085 * sw).round(), (0.4375 * sw).round(), (0.265625 * sw).round()]
+    }
+
+    /// The row under `(x, y)`.
+    fn row_at(&self, m: &dyn Measure, r: &[f32; 4], x: f32, y: f32) -> Option<usize> {
+        let sel = crate::skin::list_selection_rect(Self::list_rect(r));
+        if x < sel[0] || x >= sel[2] || y < sel[1] || y >= sel[3] {
+            return None;
+        }
+        let i = ((y - sel[1]) / m.line_height(FontId::Gui1)) as usize;
+        (i < self.rows.len()).then_some(i)
+    }
+
+    /// Draws the panel (samp.dll 0x1006f0b0): the GUI dialog with its list box (rows in the player colours,
+    /// the row under the cursor selected), then the server name, the player count and the column headers in
+    /// the small font with the outline.
     pub fn draw(&self, m: &dyn Measure, w: f32, h: f32, cursor: Option<(f32, f32)>, d: &mut DrawList) {
         let r = Self::rect(w, h);
-        let lh = m.line_height(FontId::Small);
-        d.rect(r[0], r[1], r[2], r[3], SB_BACKGROUND);
-        d.frame(r[0], r[1], r[2], r[3], 0xFF80_8080);
+        d.dialog_background(r, SB_BACKGROUND);
+        let cols = Self::columns(&r);
+        let rows: Vec<(u32, Vec<String>)> = self
+            .rows
+            .iter()
+            .map(|row| {
+                (
+                    row.colour.to_argb_u32() | 0xFF00_0000,
+                    vec![
+                        row.id.to_string(),
+                        row.name.clone(),
+                        row.score.to_string(),
+                        row.ping.to_string(),
+                    ],
+                )
+            })
+            .collect();
+        let selected = cursor.and_then(|(x, y)| self.row_at(m, &r, x, y));
+        d.list_box(m, Self::list_rect(&r), &rows, 4, &cols, selected, 0);
+        d.coloured(m, r[0] + 5.0, r[1] + 5.0, FontId::Small, &self.server, SB_TEXT, &OUTLINE_4);
+        let count = format!("Players: {}", self.rows.len());
         d.coloured(
             m,
-            r[0] + 10.0,
-            r[1] + 8.0,
+            r[2] - m.width(FontId::Small, PLAYERS_SAMPLE),
+            r[1] + 5.0,
             FontId::Small,
-            &self.server,
-            0xFFFF_FFFF,
-            &[],
-        );
-        let count = format!("Players: {}", self.rows.len());
-        d.text(
-            r[2] - 10.0 - m.width(FontId::Small, &count),
-            r[1] + 8.0,
-            FontId::Small,
-            0xFFFF_FFFF,
             &count,
+            SB_TEXT,
+            &OUTLINE_4,
         );
-        let cols = [r[0] + 10.0, r[0] + 60.0, r[2] - 150.0, r[2] - 70.0];
-        let hy = r[1] + 10.0 + lh + 4.0;
-        for (x, t) in cols.iter().zip(["id", "name", "score", "ping"]) {
-            d.text(*x, hy, FontId::Small, 0xFFA9_C4E4, t);
-        }
-        for (i, row) in self.rows.iter().enumerate() {
-            let y = Self::row_top(&r, lh, i);
-            if y + lh > r[3] - 5.0 {
-                break;
-            }
-            if cursor.is_some_and(|(cx, cy)| cx >= r[0] && cx < r[2] && cy >= y && cy < y + lh + 2.0) {
-                d.rect(r[0] + 4.0, y - 1.0, r[2] - 4.0, y + lh + 1.0, 0x8040_4040);
-            }
-            let c = row.colour.to_argb_u32() | 0xFF00_0000;
-            d.text(cols[0], y, FontId::Small, c, &row.id.to_string());
-            d.text(cols[1], y, FontId::Small, c, &row.name);
-            d.text(cols[2], y, FontId::Small, c, &row.score.to_string());
-            d.text(cols[3], y, FontId::Small, c, &row.ping.to_string());
+        let top = r[1] + SB_TOP - m.line_height(FontId::Small) - 3.0;
+        let mut x = r[0] + 10.0;
+        for (i, t) in ["id", "name", "score", "ping"].iter().enumerate() {
+            d.coloured(m, x, top, FontId::Small, t, SB_HEADER, &OUTLINE_4);
+            x += cols.get(i).copied().unwrap_or(0.0);
         }
     }
 
     /// The player id of the row under `(x, y)`.
     pub fn hit(&self, m: &dyn Measure, w: f32, h: f32, x: f32, y: f32) -> Option<u16> {
         let r = Self::rect(w, h);
-        if x < r[0] || x >= r[2] {
-            return None;
-        }
-        let lh = m.line_height(FontId::Small);
-        self.rows.iter().enumerate().find_map(|(i, row)| {
-            let t = Self::row_top(&r, lh, i);
-            (y >= t && y < t + lh + 2.0).then_some(row.id)
-        })
+        self.row_at(m, &r, x, y).map(|i| self.rows[i].id)
     }
 }
 
@@ -270,8 +287,11 @@ mod tests {
                 .collect(),
         };
         let r = Scoreboard::rect(1280.0, 720.0);
-        assert_eq!(r, [320.0, 180.0, 960.0, 540.0]);
-        let y1 = Scoreboard::row_top(&r, 14.0, 1) + 3.0;
+        assert_eq!(r, [240.0, 60.0, 1040.0, 660.0]);
+        assert_eq!(Scoreboard::rect(800.0, 600.0), [80.0, 60.0, 720.0, 540.0]);
+        assert_eq!(Scoreboard::columns(&r), [68.0, 350.0, 213.0]);
+        // Rows start at the list box's border (top + 60 + 6), one line each.
+        let y1 = r[1] + SB_TOP + 6.0 + 14.0 + 3.0;
         assert_eq!(sb.hit(&M, 1280.0, 720.0, 400.0, y1), Some(11));
         assert_eq!(sb.hit(&M, 1280.0, 720.0, 100.0, y1), None);
         let mut d = DrawList::default();

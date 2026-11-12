@@ -149,7 +149,7 @@ fn on_frame(phase: u8) {
 }
 
 /// Builds the adapter, installs the stand-in client and registers the dispatch handler.
-pub fn install(target: &Target) -> Result<(), String> {
+pub fn install(target: &Target, game_dir: &std::path::Path) -> Result<(), String> {
     let mut game = sa_samp::engine();
     game.install(
         &sa_samp_api::config::SampModeConfig::default(),
@@ -157,6 +157,7 @@ pub fn install(target: &Target) -> Result<(), String> {
         None,
     )
     .map_err(|e| format!("samp: install: {e}"))?;
+    crate::samp_assets::install(game_dir, game.overlay());
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
     crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, lock: ui_lock });
