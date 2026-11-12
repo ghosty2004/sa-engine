@@ -23,7 +23,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | ai8-4 | 22 | AI, UNK-game | 4ebaa97b | worktree-agent-aa1e6f32d27702b8b | 22 | 0 | 0 | 0 | 0 | L2 22 |
 | ai8-5 | 23 | AI | 8985b5a5 | worktree-agent-aa1e6f32d27702b8b | 23 | 0 | 0 | 0 | 0 | L2 23 |
 | ai8-6 | 7 | AI | 8985b5a5 | worktree-agent-aa1e6f32d27702b8b | 7 | 0 | 0 | 0 | 0 | L2 5, split 2 |
-| ai8g-1 | 54 | AI, SCRIPT | 4ebaa97b | worktree-agent-aa1e6f32d27702b8b | 54 | 0 | 0 | 0 | 0 | L2 54 |
+| ai8g-1 | 51 | AI, SCRIPT | 4ebaa97b | worktree-agent-aa1e6f32d27702b8b | 51 | 0 | 0 | 0 | 0 | L2 51 |
 | ai8g-2 | 50 | AI, SCRIPT, UNK-game | 4ebaa97b | worktree-agent-aa1e6f32d27702b8b | 50 | 0 | 0 | 0 | 0 | L2 50 |
 | ai8g-3 | 55 | AI | 4ebaa97b | worktree-agent-aa1e6f32d27702b8b | 55 | 0 | 0 | 0 | 0 | L2 55 |
 | ai8g-4 | 58 | AI | 4ebaa97b | worktree-agent-aa1e6f32d27702b8b | 58 | 0 | 0 | 0 | 0 | L2 58 |
@@ -260,9 +260,9 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std12-world-1 | 1 | WORLD | 82f41602 | worktree-agent-aa1e6f32d27702b8b | 1 | 0 | 0 | 0 | 0 | split 1 |
 | std12-world-2 | 1 | MATH | 10fdb4cb | worktree-agent-aa1e6f32d27702b8b | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
 | std13-ai-1 | 52 | AI, UNK-game | f228d74a | worktree-agent-aa1e6f32d27702b8b | 52 | 0 | 0 | 0 | 0 | L2 52 |
-| std13-veh-1 | 1 | VEH | 1248d3a9 | worktree-agent-aa1e6f32d27702b8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std14-ai-1 | 6 | AI, UNK-game | 9e54b559 | worktree-agent-aa1e6f32d27702b8b | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| std14-veh-1 | 4 | VEH | 14f382eb | worktree-agent-aa1e6f32d27702b8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std14-ai-2 | 2 | AI, UNK-game | 3d3e49dc | worktree-agent-aa1e6f32d27702b8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std14-veh-1 | 3 | VEH | 14f382eb | worktree-agent-aa1e6f32d27702b8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
 | std4-audio-1 | 55 | AUDIO | 309d8fec | master | 55 | 0 | 0 | 0 | 0 | L2 47, L3-only 8 |
 | std4-audio-2 | 18 | AUDIO | 309d8fec | master | 18 | 0 | 0 | 0 | 0 | L2 1, L3-only 17 |
 | std4-audio-3 | 7 | AUDIO, RW, UNK-game | 309d8fec | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
@@ -316,10 +316,15 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std9-rw-1 | 3 | RW | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | veh3-1 | 42 | VEH | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 42 | 0 | 0 | 0 | 0 | L2 40, split 2 |
 | veh3-2 | 2 | VEH | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| veh3-3 | 14 | VEH | 50bf37b7 | worktree-agent-aa1e6f32d27702b8b | 14 | 0 | 0 | 0 | 0 | L2 14 |
+| veh3-3 | 16 | VEH | 50bf37b7 | worktree-agent-aa1e6f32d27702b8b | 16 | 0 | 0 | 0 | 0 | L2 16 |
+| veh4-1 | 2 | VEH | 7f7af765 | worktree-agent-aa1e6f32d27702b8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| veh4-2 | 8 | VEH | 6c771f75 | worktree-agent-aa1e6f32d27702b8b | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
+| veh4-3 | 12 | VEH | bc843646 | worktree-agent-aa1e6f32d27702b8b | 12 | 0 | 0 | 0 | 0 | L2 11, split 1 |
+| veh4-4 | 9 | VEH | bc843646 | worktree-agent-aa1e6f32d27702b8b | 9 | 0 | 0 | 0 | 0 | L2 8, L3-only 1 |
 | world3-1 | 11 | WORLD | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
 | world3-2 | 20 | WORLD | 35a056ba | worktree-agent-aa1e6f32d27702b8b | 20 | 0 | 0 | 0 | 0 | L2 17, split 3 |
 | world3-3 | 3 | WORLD | c379e778 | worktree-agent-aa1e6f32d27702b8b | 3 | 0 | 0 | 0 | 0 | L2 2, split 1 |
+| world4-2 | 2 | WORLD | 6c771f75 | worktree-agent-aa1e6f32d27702b8b | 2 | 0 | 0 | 0 | 0 | L2 1, L3-only 1 |
 | world5-1 | 12 | WORLD | 21dfdc40 | worktree-agent-aa1e6f32d27702b8b | 12 | 0 | 0 | 0 | 0 | L2 9, split 3 |
 | world5-2 | 12 | WORLD | 1212c39d | worktree-agent-aa1e6f32d27702b8b | 12 | 0 | 0 | 0 | 0 | L2 9, split 3 |
 | writero-audio-1 | 1 | AUDIO | 0ba83279 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -975,7 +980,7 @@ SA_UNVERIFIED=ai8-6 LANE=$LANE tools/e2e/port-l2.sh batch:ai8-6 $SA_ROOT/target/
 
 ## ai8g-1
 
-54 hooks in sa-ai; hazards: ax-al-return (14), heap-writes (27), uninit-locals (15), x87-transcendental (2); recordings calling them: no coverage data.
+51 hooks in sa-ai; hazards: ax-al-return (14), heap-writes (26), uninit-locals (12), x87-transcendental (2); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1028,9 +1033,6 @@ SA_UNVERIFIED=ai8g-1 LANE=$LANE tools/e2e/port-l2.sh batch:ai8g-1 $SA_ROOT/targe
 | 0x5F1500 | `CPedGeometryAnalyser::ComputeEntityDirs` | written | L2 | heap-writes,x87-transcendental |
 | 0x5F1B00 | `CPedGeometryAnalyser::CanPedJumpObstacle-LoS` | written | L2 | uninit-locals |
 | 0x5F1E70 | `CPedGeometryAnalyser::ComputePedHitSide-pos` | written | L2 | uninit-locals |
-| 0x5F2B80 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncachedAll` | written | L2 | uninit-locals |
-| 0x5F3730 | `CPedGeometryAnalyser::ComputeMoveDirToAvoidEntity-OG` | written | L2 | heap-writes,uninit-locals |
-| 0x5F3B40 | `CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncachedAll` | written | L2 | uninit-locals |
 | 0x5F7CC0 | `CPedGroup::PlayerGaveCommand_Attack` | written | L2 | heap-writes,uninit-locals |
 | 0x5FEEA0 | `CEventPlayerCollisionWithPed::Clone` | written | L2 | heap-writes |
 | 0x604490 | `CDecisionMakerTypes::FlushDecisionMakerEventResponse` | written | L2 | none |
@@ -5956,21 +5958,6 @@ SA_UNVERIFIED=std13-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:std13-ai-1 $SA_RO
 | 0x66B6B0 | `CTaskComplexGoToAttractor::MakeAbortable` | written | L2 | none |
 | 0x670420 | `CTaskComplexGoToAttractor::CreateFirstSubTask` | written | L2 | heap-writes |
 
-## std13-veh-1
-
-1 hooks in sa-veh; hazards: none; recordings calling them: grove-walk (1).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh std13-veh-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=std13-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:std13-veh-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag std13-veh-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x6B7080 | `CBike::PlayCarHorn` | written | L2 | none |
-
 ## std14-ai-1
 
 6 hooks in sa-ai; hazards: heap-writes (6); recordings calling them: enter-car (6).
@@ -5991,9 +5978,25 @@ SA_UNVERIFIED=std14-ai-1 LANE=$LANE tools/e2e/port-l2.sh batch:std14-ai-1 $SA_RO
 | 0x640330 | `FUN_00640330` | written | L2 | heap-writes |
 | 0x643A60 | `CTaskComplexEnterCar::CreateFirstSubTask` | written | L2 | heap-writes |
 
+## std14-ai-2
+
+2 hooks in sa-ai; hazards: heap-writes (1), uninit-locals (1); recordings calling them: enter-car (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh std14-ai-2 $SA_ROOT/target/e2e/corpus/enter-car.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=std14-ai-2 LANE=$LANE tools/e2e/port-l2.sh batch:std14-ai-2 $SA_ROOT/target/e2e/corpus/enter-car.sarec --runs "plain l2 rust" --tag std14-ai-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x48E220 | `FUN_0048e220` | written | L2 | heap-writes |
+| 0x64A820 | `CTaskComplexGoToCarDoorAndStandStill::ControlSubTask` | written | L2 | uninit-locals |
+
 ## std14-veh-1
 
-4 hooks in sa-veh; hazards: ax-al-return (3), stack-residue (2); recordings calling them: enter-car (4).
+3 hooks in sa-veh; hazards: ax-al-return (2), stack-residue (2); recordings calling them: enter-car (3).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -6005,7 +6008,6 @@ SA_UNVERIFIED=std14-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:std14-veh-1 $SA_
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x64E740 | `CCarEnterExit::GetPositionToOpenCarDoor` | written | L2 | stack-residue |
-| 0x64F240 | `CCarEnterExit::IsPlayerToQuitCarEnter` | written | L2 | ax-al-return |
 | 0x6504C0 | `CCarEnterExit::IsRoomForPedToLeaveCar` | written | L2 | stack-residue,ax-al-return |
 | 0x6528F0 | `CCarEnterExit::GetNearestCarDoor` | written | L2 | ax-al-return |
 
@@ -7188,7 +7190,7 @@ SA_UNVERIFIED=veh3-2 LANE=$LANE tools/e2e/port-l2.sh batch:veh3-2 $SA_ROOT/targe
 
 ## veh3-3
 
-14 hooks in sa-veh; hazards: heap-writes (7), x87-transcendental (2); recordings calling them: driving (5).
+16 hooks in sa-veh; hazards: heap-writes (7), x87-transcendental (3); recordings calling them: driving (6).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -7199,6 +7201,7 @@ SA_UNVERIFIED=veh3-3 LANE=$LANE tools/e2e/port-l2.sh batch:veh3-3 $SA_ROOT/targe
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
+| 0x64F240 | `CCarEnterExit::IsPlayerToQuitCarEnter` | written | L2 | x87-transcendental |
 | 0x6A32B0 | `CAutomobile::BurstTyre` | written | L2 | none |
 | 0x6A3440 | `CAutomobile::Fix` | written | L2 | heap-writes |
 | 0x6A3860 | `CAutomobile::SetBusDoorTimer` | written | L2 | none |
@@ -7208,11 +7211,99 @@ SA_UNVERIFIED=veh3-3 LANE=$LANE tools/e2e/port-l2.sh batch:veh3-3 $SA_ROOT/targe
 | 0x6A6DC0 | `CAutomobile::dmgDrawCarCollidingParticles` | written | L2 | x87-transcendental,heap-writes |
 | 0x6B5F50 | `CBike::SetRemoveAnimFlags` | written | L2 | heap-writes |
 | 0x6B6D40 | `CBike::DoSoftGroundResistance` | written | L2 | none |
+| 0x6B7080 | `CBike::PlayCarHorn` | written | L2 | none |
 | 0x6C8250 | `CMonsterTruck::ProcessControl` | written | L2 | heap-writes |
 | 0x6CED20 | `CTrailer::ProcessControl` | written | L2 | heap-writes |
 | 0x6D82F0 | `CVehicle::KillPedsGettingInVehicle` | written | L2 | heap-writes |
 | 0x6F2D10 | `CSpecialPlateHandler::Init` | written | L2 | none |
 | 0x6F2DD0 | `CSpecialPlateHandler::Remove` | written | L2 | none |
+
+## veh4-1
+
+2 hooks in sa-veh; hazards: entry-protection-read (1), heap-writes (2); recordings calling them: driving (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh veh4-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=veh4-1 LANE=$LANE tools/e2e/port-l2.sh batch:veh4-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag veh4-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A3EA0 | `CAutomobile::NitrousControl` | written | L2 | heap-writes |
+| 0x6C8D60 | `CMonsterTruck::Constructor` | written | L2 | entry-protection-read,heap-writes |
+
+## veh4-2
+
+8 hooks in sa-veh; hazards: heap-writes (5), x87-transcendental (1); recordings calling them: driving (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh veh4-2 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=veh4-2 LANE=$LANE tools/e2e/port-l2.sh batch:veh4-2 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag veh4-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A8580 | `CAutomobile::SpawnFlyingComponent` | written | L2 | heap-writes |
+| 0x6C5420 | `CHeli::PreRender` | written | L2 | heap-writes |
+| 0x6CE020 | `CQuadBike::ProcessControlInputs` | written | L2 | x87-transcendental |
+| 0x6D1E20 | `CVehicle::CanPedOpenLocks` | written | L2 | none |
+| 0x6DBA30 | `CVehicle::SetComponentRotation` | written | L2 | heap-writes |
+| 0x6E3440 | `CVehicle::GetPlaneWeaponFiringStatus` | written | L2 | heap-writes |
+| 0x6F0210 | `CBoat::Render` | written | L3-only | none |
+| 0x6F1180 | `CBoat::PreRender` | written | L2 | heap-writes |
+
+## veh4-3
+
+12 hooks in sa-veh; hazards: heap-writes (7), uninit-locals (3), x87-transcendental (5); recordings calling them: driving (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh veh4-3 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=veh4-3 LANE=$LANE tools/e2e/port-l2.sh batch:veh4-3 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag veh4-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6AD690 | `CAutomobile::ProcessControlInputs` | written | L2 | x87-transcendental |
+| 0x6B0690 | `CAutomobile::DoHeliDustEffect` | written | split | uninit-locals,heap-writes |
+| 0x6B3780 | `CAutomobile::BlowUpCar` | written | L2 | heap-writes |
+| 0x6BE310 | `CBike::ProcessControlInputs` | written | L2 | x87-transcendental |
+| 0x6C4830 | `CHeli::ProcessControlInputs` | written | L2 | x87-transcendental |
+| 0x6C7D10 | `CMonsterTruck::~CMonsterTruck` | written | L2 | heap-writes |
+| 0x6CADD0 | `CPlane::ProcessControlInputs` | written | L2 | x87-transcendental,uninit-locals |
+| 0x6CC4B0 | `CPlane::VehicleDamage` | written | L2 | heap-writes |
+| 0x6CED10 | `CTrailer::~CTrailer` | written | L2 | heap-writes |
+| 0x6E2E50 | `CVehicle::DoBladeCollision` | written | L2 | heap-writes |
+| 0x6F6CC0 | `CTrain::FindPositionOnTrackFromCoors` | written | L2 | x87-transcendental |
+| 0x741FD0 | `CVehicle::DoDriveByShootings` | written | L2 | uninit-locals,heap-writes |
+
+## veh4-4
+
+9 hooks in sa-veh; hazards: heap-writes (3); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh veh4-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=veh4-4 LANE=$LANE tools/e2e/port-l2.sh batch:veh4-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag veh4-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6A2150 | `CAutomobile::GetMovingCollisionOffset` | written | L2 | none |
+| 0x6BCFC0 | `CBike::Teleport` | written | L2 | heap-writes |
+| 0x6D1280 | `CVehicle::CanVehicleBeDamaged` | written | L2 | none |
+| 0x6D2250 | `CVehicle::DestroyVehicleAndDriverAndPassengers` | written | L3-only | heap-writes |
+| 0x6D3650 | `CVehicle::GetUpgrade` | written | L2 | none |
+| 0x6D40E0 | `CVehicle::GetPlaneGunsRateOfFire` | written | L2 | none |
+| 0x6D4590 | `CVehicle::GetPlaneOrdnanceRateOfFire` | written | L2 | none |
+| 0x6D7BC0 | `CVehicle::FindTyreNearestPoint` | written | L2 | none |
+| 0x6F20E0 | `CBoat::Teleport` | written | L2 | heap-writes |
 
 ## world3-1
 
@@ -7289,6 +7380,22 @@ SA_UNVERIFIED=world3-3 LANE=$LANE tools/e2e/port-l2.sh batch:world3-3 $SA_ROOT/t
 | 0x442060 | `CGameLogic::RestorePlayerStuffDuringResurrection` | written | split | heap-writes |
 | 0x593BF0 | `Interior_c::Init` | written | L2 | heap-writes |
 | 0x5A1580 | `CObject::ObjectFireDamage` | written | L2 | heap-writes |
+
+## world4-2
+
+2 hooks in sa-world; hazards: heap-writes (2); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh world4-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=world4-2 LANE=$LANE tools/e2e/port-l2.sh batch:world4-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag world4-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x43FFD0 | `CEntryExit::TransitionStarted` | written | L2 | heap-writes |
+| 0x4404A0 | `CEntryExit::TransitionFinished` | written | L3-only | heap-writes |
 
 ## world5-1
 
