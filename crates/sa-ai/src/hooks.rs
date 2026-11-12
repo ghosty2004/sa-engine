@@ -127,6 +127,12 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::event_vehicle_damage_ctor::HOOKS,
     // WRITER-NATIVE
     crate::task_clones_native::HOOKS,
+    crate::group_task_pairs::HOOKS,
+    crate::duck_sequence_groups::HOOKS,
+    crate::police_pursuit::HOOKS,
+    crate::intel_group_misc::HOOKS,
+    crate::car_shuffle_fall_out::HOOKS,
+    crate::samp_reached_small::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
