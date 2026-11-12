@@ -81,6 +81,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vehicle_collision_particles::HOOKS,
     // STD-14 (unverified batches)
     crate::car_door_positions::HOOKS,
+    crate::vehicle_process_open_door::HOOKS,
     crate::bike_knock_off_rider::HOOKS,
     crate::car_enter_stealable::HOOKS,
     // PORT-VEH-3 (unverified batches)
