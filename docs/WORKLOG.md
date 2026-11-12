@@ -1079,3 +1079,15 @@
 - SAMP-PROXY (3933363, b9ab5c2): crates sa-udp-proxy (WebSocket↔UDP relay with allowlist/limits/shim mode) and
   sa-net (DatagramTransport: UDP native, WebSocket wasm32); samp-rs join through the proxy in 1.13 s.
 - verify-all samp3b (fresh DLL, sa-oracle rebuilt after a stale-binary first attempt): IDENTICAL on all 13 recordings.
+
+## 2026-11-12 INTEGRATE-7: the native game, writers and SA:MP UI on master (main session)
+- Agent INTEGRATE-7 brought onto master (picks only, 132 commits): the native path STD-10..14 (CJ visible, walking,
+  window loop, deterministic mode, attractors, traffic, shadow fix, enter-car up to the door), WRITER-NATIVE,
+  WRITER-ATTR, RENDER-SHADOW, PORT-AI-7/8 (generator regenerated; 0x5F2B80/0x5F3730/0x5F3B40 excluded for a
+  call-arity bug), VERIFIER-9 (163 promotions minus 0x5F1FA0, kept unverified; LoadAnimFile header fix),
+  PORT-VEH-3/4, WRITER-WORLD, WRITER-SAMP, SAMP-UI. Fixes: ped_attractor_base orig! X87 → f64 (phase A build),
+  PRESERVE_SPECS_PENDING for 0x4F5F30/0x4F6000.
+- Tests: sa-hook 58, sa-script 9, sa-core 72, sa-rw-wgpu 58, L1 18/18 after the fix. Native smoke run 316 ok, 0
+  blocked. verify-all int7: IDENTICAL on all 13 recordings (int7b recheck of the final DLL: grove + driving IDENTICAL).
+- Not in yet: WRITER-SAMP-2, SAMP-4/WEB-*/SAMP-START (samp-rs dependency path), STD-15, INTEGRATE-6.
+- Catalogue: VERIFIER-9 promotions recorded; every registered address at least `implemented`.
