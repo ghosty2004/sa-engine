@@ -217,6 +217,8 @@ pub fn install(
     game.set_toggle(RuntimeToggle::TypedCheats(false))
         .map_err(|e| format!("samp: cheats toggle: {e}"))?;
     crate::samp_assets::install(game_dir, game.overlay());
+    // samp's start-up: no logos, intro movie or main menu (patch sites 0x747483 and samp's gGameState 7 init).
+    sa_core::samp::set_toggle(sa_core::samp::toggle::SAMP_STARTUP, true);
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
     crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, lock: ui_lock });

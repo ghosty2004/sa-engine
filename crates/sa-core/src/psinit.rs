@@ -202,7 +202,12 @@ pub fn ps_initialize() -> i32 {
     call::file_mgr_initialise();
     call::set_save_directory(call::init_user_directories());
     call::initialise_language();
-    crate::video::GAME_STATE.set(0);
+    // 0x747483 `mov [gGameState],esi`: samp NOPs it and writes 5 (FRONTEND_LOADING) itself at attach.
+    if crate::samp::toggled(crate::samp::toggle::SAMP_STARTUP) {
+        crate::video::GAME_STATE.set(5);
+    } else {
+        crate::video::GAME_STATE.set(0);
+    }
 
     // Feature flags (edx of leaf 1, then of 0x80000001 or 0): stored into a local nothing reads.
     let _ = cpuid(1);

@@ -487,6 +487,15 @@ fn process_game_logic() -> String {
             do_pc_title_fade_out();
         }
         7 => {
+            // samp's init-main runs at gGameState 7 and ends with the menu flags and gGameState := 8
+            // (sa_core::samp::toggle::SAMP_STARTUP, docs/samp/startup.md).
+            if sa_core::samp::toggled(sa_core::samp::toggle::SAMP_STARTUP) {
+                wr::<u8>(MENU_MAIN_SWITCH, 1);
+                wr::<u8>(MENU_ACTIVE, 0);
+                wr::<u8>(MENU_ACTIVATE_NEXT_FRAME, 0);
+                wr::<u32>(GAME_STATE, 8);
+                return format!("gGameState {} → {} (samp start-up: no main menu)", state_name(7), state_name(8));
+            }
             let mut wp = [0u32; 11];
             wp[0] = 0x2C;
             get_window_placement(ps().read(), GPtr::from_raw(wp.as_mut_ptr()).cast());
