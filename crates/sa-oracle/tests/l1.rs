@@ -489,6 +489,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     // PORT-AI-8 (generated batch ai8g-2): CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges
     // (preserve ecx, caller 0x62DD41 → 0x628A70); spec queued.
     0x6289F0,
+    // WRITER-SAMP batch samp-unk-1: the vtable-only event destructors 0x4ADE90 / 0x4B13C0 (preserve ecx: their
+    // callers read ECX after the call); specs queued.
+    0x4ADE90, 0x4B13C0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

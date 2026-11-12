@@ -180,3 +180,6 @@ pub mod group_closest_ped;
 pub mod road_rage_control;
 pub mod car_wait_slow_down;
 pub mod lean_on_vehicle_point;
+pub mod event_ref_dtors;
+pub mod car_task_ctors_dtors;
+pub mod fight_sphere_col_and_anim_cb;

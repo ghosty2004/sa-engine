@@ -46,6 +46,8 @@ pub mod anim_file_load;
 pub mod rp_anim_blend;
 pub mod clump_update;
 pub mod frame_update;
+pub mod frame_update_non_skinned;
+pub mod ped_ik_point_gun;
 
 pub mod std6_natives;
 pub mod cutscene_update;

@@ -1021,7 +1021,7 @@ pub fn fx_rotate_vec_about_vec(out: GPtr<u8>, inp: GPtr<u8>, axis: GPtr<u8>, ang
 /// `movzx`). Layout: +4 looped, +5 key count, +6 value count, +8 key times (u16, 1/256 s), +0xC
 /// per-value key arrays. The original reuses its own argument slot `t` (+8) and the pushed-ECX slot
 /// (-4) as scratch (the wrapped time, the integer keys, the fraction).
-fn interp_short_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32, signed: bool, kbits: u32) {
+pub(crate) fn interp_short_get_val(this: GPtr<u8>, out: GPtr<u8>, t: u32, signed: bool, kbits: u32) {
     let out = out.cast::<f32>();
     let key = |p: GPtr<u8>, j: i32| -> X87 {
         let w = p.cast::<u16>().wrapping_index(j).read();
