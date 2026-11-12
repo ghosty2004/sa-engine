@@ -1,6 +1,9 @@
-//! `RpAnimBlend::FrameUpdateCallBackNonSkinned` (batch `samp-rw-2`; catalogue subsystem RW), ported from the 1.0 US
+//! `RpAnimBlend::FrameUpdateCallBackNonSkinned` (batch `samp-rw-2`; catalogue subsystem RW) and its compressed and
+//! velocity-extraction variants (batch `intro2-1`: 0x4D32D0, 0x4D2450, 0x4D27F0), ported from the 1.0 US
 //! bytes with the original's x87 evaluation order (f32 at every `fstp dword`). The layouts are those of
 //! `frame_update` (STD-7). Unverified (docs/verify/HOWTO.md).
+
+#![allow(clippy::needless_range_loop)]
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
