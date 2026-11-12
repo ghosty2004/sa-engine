@@ -303,7 +303,42 @@ fn dev_get_gamma_ramp(_this: u32, _swap: u32, ramp: GPtr<u16>) {
     }
 }
 fn dev_present(_this: u32, _src: u32, _dst: u32, _hwnd: u32, _dirty: u32) -> i32 {
+    dump_memory();
     present_frame()
+}
+
+/// `SA_GAME_DUMP=ADDR:LEN[,ADDR:LEN...]` (exploration only): every `Present` prints those game-memory
+/// ranges as dwords, with their f32 reading.
+fn dump_memory() {
+    let Some(spec) = std::env::var_os("SA_GAME_DUMP") else { return };
+    for part in spec.to_string_lossy().split(',') {
+        let mut it = part.split(':');
+        let parse = |v: Option<&str>| v.and_then(|v| u32::from_str_radix(v.trim_start_matches("0x"), 16).ok());
+        // `BASE>OFF>OFF...`: each `>` reads the dword at the address so far and adds the offset
+        let Some(path) = it.next() else { continue };
+        let mut hops = path.split('>');
+        let Some(mut a) = parse(hops.next()) else { continue };
+        let mut ok = true;
+        for h in hops {
+            let Some(off) = parse(Some(h)) else { ok = false; break };
+            if a < 0x1000 {
+                ok = false;
+                break;
+            }
+            a = GPtr::<u32>::from_addr(a as usize).read().wrapping_add(off);
+        }
+        let Some(n) = parse(it.next()) else { continue };
+        if !ok || a < 0x1000 {
+            eprintln!("sa-game: dump {path}: null");
+            continue;
+        }
+        let mut line = format!("sa-game: dump {path} = {a:#x}:");
+        for k in 0..n.div_ceil(4) {
+            let v = GPtr::<u32>::from_addr((a + 4 * k) as usize).read();
+            line += &format!(" {v:08x}({})", f32::from_bits(v));
+        }
+        eprintln!("{line}");
+    }
 }
 /// `EvictManagedResources`: nothing to evict (the seam keeps every resource); `D3D_OK`.
 fn dev_evict_managed_resources(_this: u32) -> i32 {
@@ -962,7 +997,9 @@ fn tex_unlock_rect(obj: u32, level: u32) -> i32 {
     let r = with_res(obj, |r| match r {
         Res::Texture { id, w, h, format, locked, .. } => {
             let (_, _, pitch, _) = level_size(*format, *w, *h, level);
-            locked.remove(&level).map(|data| (*id, pitch, data))
+            // the level's CPU copy stays: a later read lock (RwRasterLock for reading, the clothes
+            // builder's texture blending) sees the uploaded pixels, as a managed D3D9 texture's
+            locked.get(&level).map(|data| (*id, pitch, data.clone()))
         }
         _ => None,
     })
