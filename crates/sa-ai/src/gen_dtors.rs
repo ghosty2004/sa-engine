@@ -65,6 +65,8 @@ orig! {
     fn c_493890_t0(this: u32) -> u32 = thiscall 0x493890 => unported;
     /// `FUN_004994e0` (0x4994E0), thiscall, 0 stack argument(s)
     fn c_4994e0_t0(this: u32) -> u32 = thiscall 0x4994E0 => unported;
+    /// `FxSystem_c::Kill` (0x4AA3F0), thiscall, 0 stack argument(s)
+    fn c_4aa3f0_t0(this: u32) -> u32 = thiscall 0x4AA3F0 => unported;
     /// `CEventGroup::Flush` (0x4AB370), thiscall, 1 stack argument(s)
     fn c_4ab370_t1(this: u32, a0: u32) -> u32 = thiscall 0x4AB370 => unported;
     /// `FUN_004ab9b0` (0x4AB9B0), thiscall, 0 stack argument(s)
@@ -141,6 +143,8 @@ orig! {
     fn c_4b89f0_t0(this: u32) -> u32 = thiscall 0x4B89F0 => unported;
     /// `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` (0x4B8AD0), thiscall, 0 stack argument(s)
     fn c_4b8ad0_t0(this: u32) -> u32 = thiscall 0x4B8AD0 => unported;
+    /// `CBaseModelInfo::RemoveRef` (0x4C4BB0), thiscall, 0 stack argument(s)
+    fn c_4c4bb0_t0(this: u32) -> u32 = thiscall 0x4C4BB0 => unported;
     /// `CAnimBlendAssociation::SetDeleteCallback` (0x4CEBC0), thiscall, 2 stack argument(s)
     fn c_4cebc0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x4CEBC0 => unported;
     /// `CAnimBlendAssociation::SetFinishCallback` (0x4CEBE0), thiscall, 2 stack argument(s)
@@ -681,6 +685,16 @@ orig! {
     fn c_69d990_c1(a0: u32) -> u32 = cdecl 0x69D990 => unported;
     /// `FUN_0069db40` (0x69DB40), thiscall, 0 stack argument(s)
     fn c_69db40_t0(this: u32) -> u32 = thiscall 0x69DB40 => unported;
+    /// `CVisibilityPlugins::GetClumpModelInfo` (0x732AC0), cdecl, 1 stack argument(s)
+    fn c_732ac0_c1(a0: u32) -> u32 = cdecl 0x732AC0 => unported;
+    /// `RwHelper::GetFirstAtomic` (0x734820), cdecl, 1 stack argument(s)
+    fn c_734820_c1(a0: u32) -> u32 = cdecl 0x734820 => unported;
+    /// `RpClumpForAllAtomics` (0x749B70), cdecl, 3 stack argument(s)
+    fn c_749b70_c3(a0: u32, a1: u32, a2: u32) -> u32 = cdecl 0x749B70 => unported;
+    /// `RpClumpDestroy` (0x74A310), cdecl, 1 stack argument(s)
+    fn c_74a310_c1(a0: u32) -> u32 = cdecl 0x74A310 => unported;
+    /// `RpSkinGeometryGetSkin` (0x7C7550), cdecl, 1 stack argument(s)
+    fn c_7c7550_c1(a0: u32) -> u32 = cdecl 0x7C7550 => unported;
     /// `_free` (0x8214BD), cdecl, 1 stack argument(s)
     fn c_8214bd_c1(a0: u32) -> u32 = cdecl 0x8214BD => unported;
     /// virtual slot +0x0 (`call [vtbl + 0x0]` on ECX), 1 stack argument(s)
@@ -7709,6 +7723,255 @@ pub fn g_task_simple_climb_ctask_simple_climb_67dbc0(this: u32, a0: u32) -> u32 
     }
 }
 
+/// `CTaskSimpleJetPack::Destructor` (0x67E600): dtor, thiscall, `ret`; 71 instruction(s) matched.
+#[hook(addr = 0x67E600, conv = thiscall, name = "CTaskSimpleJetPack::Destructor", expect = "6A FF 68 58 64 84 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_jet_pack_destructor_67e600(this: u32) {
+    wr::<u32>(p(this), 0, 0x87_05C4);
+    let v1 = rd::<u32>(p(this), 0x40);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x64);
+        if v2 == 0 {
+            let v3 = rd::<u32>(p(this), 0x68);
+            if v3 == 0 {
+                let v4 = rd::<u32>(p(this), 0x60);
+                if v4 == 0 {
+                    let _v5 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_571a00_t1(v4, this.wrapping_add(0x60));
+                    let _v7 = c_61a3a0_t0(this);
+                    return;
+                }
+            } else {
+                c_4aa3f0_t0(v3);
+                wr::<u32>(p(this), 0x68, 0);
+                let v9 = rd::<u32>(p(this), 0x60);
+                if v9 == 0 {
+                    let _v10 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_571a00_t1(v9, this.wrapping_add(0x60));
+                    let _v12 = c_61a3a0_t0(this);
+                    return;
+                }
+            }
+        } else {
+            c_4aa3f0_t0(v2);
+            wr::<u32>(p(this), 0x64, 0);
+            let v14 = rd::<u32>(p(this), 0x68);
+            if v14 == 0 {
+                let v15 = rd::<u32>(p(this), 0x60);
+                if v15 == 0 {
+                    let _v16 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_571a00_t1(v15, this.wrapping_add(0x60));
+                    let _v18 = c_61a3a0_t0(this);
+                    return;
+                }
+            } else {
+                c_4aa3f0_t0(v14);
+                wr::<u32>(p(this), 0x68, 0);
+                let v20 = rd::<u32>(p(this), 0x60);
+                if v20 == 0 {
+                    let _v21 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_571a00_t1(v20, this.wrapping_add(0x60));
+                    let _v23 = c_61a3a0_t0(this);
+                    return;
+                }
+            }
+        }
+    } else {
+        let v24 = c_732ac0_c1(v1);
+        c_4c4bb0_t0(v24);
+        let v26 = rd::<u32>(p(this), 0x40);
+        let v27 = c_734820_c1(v26);
+        if v27 == 0 {
+            let v28 = rd::<u32>(p(this), 0x40);
+            c_74a310_c1(v28);
+            wr::<u32>(p(this), 0x40, 0);
+            let v30 = rd::<u32>(p(this), 0x64);
+            if v30 == 0 {
+                let v31 = rd::<u32>(p(this), 0x68);
+                if v31 == 0 {
+                    let v32 = rd::<u32>(p(this), 0x60);
+                    if v32 == 0 {
+                        let _v33 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        c_571a00_t1(v32, this.wrapping_add(0x60));
+                        let _v35 = c_61a3a0_t0(this);
+                        return;
+                    }
+                } else {
+                    c_4aa3f0_t0(v31);
+                    wr::<u32>(p(this), 0x68, 0);
+                    let v37 = rd::<u32>(p(this), 0x60);
+                    if v37 == 0 {
+                        let _v38 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        c_571a00_t1(v37, this.wrapping_add(0x60));
+                        let _v40 = c_61a3a0_t0(this);
+                        return;
+                    }
+                }
+            } else {
+                c_4aa3f0_t0(v30);
+                wr::<u32>(p(this), 0x64, 0);
+                let v42 = rd::<u32>(p(this), 0x68);
+                if v42 == 0 {
+                    let v43 = rd::<u32>(p(this), 0x60);
+                    if v43 == 0 {
+                        let _v44 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        c_571a00_t1(v43, this.wrapping_add(0x60));
+                        let _v46 = c_61a3a0_t0(this);
+                        return;
+                    }
+                } else {
+                    c_4aa3f0_t0(v42);
+                    wr::<u32>(p(this), 0x68, 0);
+                    let v48 = rd::<u32>(p(this), 0x60);
+                    if v48 == 0 {
+                        let _v49 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        c_571a00_t1(v48, this.wrapping_add(0x60));
+                        let _v51 = c_61a3a0_t0(this);
+                        return;
+                    }
+                }
+            }
+        } else {
+            let v52 = rd::<u32>(p(v27), 0x18);
+            let v53 = c_7c7550_c1(v52);
+            if ((((v53 & 0xFFFF_FF00) | ((u32::from(v53 != 0)) & 0xFF)) & 0xFF) as u8) == (0 as u8) {
+                let v54 = rd::<u32>(p(this), 0x40);
+                c_74a310_c1(v54);
+                wr::<u32>(p(this), 0x40, 0);
+                let v56 = rd::<u32>(p(this), 0x64);
+                if v56 == 0 {
+                    let v57 = rd::<u32>(p(this), 0x68);
+                    if v57 == 0 {
+                        let v58 = rd::<u32>(p(this), 0x60);
+                        if v58 == 0 {
+                            let _v59 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v58, this.wrapping_add(0x60));
+                            let _v61 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    } else {
+                        c_4aa3f0_t0(v57);
+                        wr::<u32>(p(this), 0x68, 0);
+                        let v63 = rd::<u32>(p(this), 0x60);
+                        if v63 == 0 {
+                            let _v64 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v63, this.wrapping_add(0x60));
+                            let _v66 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    }
+                } else {
+                    c_4aa3f0_t0(v56);
+                    wr::<u32>(p(this), 0x64, 0);
+                    let v68 = rd::<u32>(p(this), 0x68);
+                    if v68 == 0 {
+                        let v69 = rd::<u32>(p(this), 0x60);
+                        if v69 == 0 {
+                            let _v70 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v69, this.wrapping_add(0x60));
+                            let _v72 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    } else {
+                        c_4aa3f0_t0(v68);
+                        wr::<u32>(p(this), 0x68, 0);
+                        let v74 = rd::<u32>(p(this), 0x60);
+                        if v74 == 0 {
+                            let _v75 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v74, this.wrapping_add(0x60));
+                            let _v77 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    }
+                }
+            } else {
+                let v78 = rd::<u32>(p(this), 0x40);
+                c_749b70_c3(v78, 0x73_4B90, 0);
+                let v80 = rd::<u32>(p(this), 0x40);
+                c_74a310_c1(v80);
+                wr::<u32>(p(this), 0x40, 0);
+                let v82 = rd::<u32>(p(this), 0x64);
+                if v82 == 0 {
+                    let v83 = rd::<u32>(p(this), 0x68);
+                    if v83 == 0 {
+                        let v84 = rd::<u32>(p(this), 0x60);
+                        if v84 == 0 {
+                            let _v85 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v84, this.wrapping_add(0x60));
+                            let _v87 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    } else {
+                        c_4aa3f0_t0(v83);
+                        wr::<u32>(p(this), 0x68, 0);
+                        let v89 = rd::<u32>(p(this), 0x60);
+                        if v89 == 0 {
+                            let _v90 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v89, this.wrapping_add(0x60));
+                            let _v92 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    }
+                } else {
+                    c_4aa3f0_t0(v82);
+                    wr::<u32>(p(this), 0x64, 0);
+                    let v94 = rd::<u32>(p(this), 0x68);
+                    if v94 == 0 {
+                        let v95 = rd::<u32>(p(this), 0x60);
+                        if v95 == 0 {
+                            let _v96 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v95, this.wrapping_add(0x60));
+                            let _v98 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    } else {
+                        c_4aa3f0_t0(v94);
+                        wr::<u32>(p(this), 0x68, 0);
+                        let v100 = rd::<u32>(p(this), 0x60);
+                        if v100 == 0 {
+                            let _v101 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            c_571a00_t1(v100, this.wrapping_add(0x60));
+                            let _v103 = c_61a3a0_t0(this);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// `CTaskComplexStuckInAir::~CTaskComplexStuckInAir` (0x67FA60): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
 #[hook(addr = 0x67FA60, conv = thiscall, name = "CTaskComplexStuckInAir::~CTaskComplexStuckInAir", expect = "56 8B F1 E8 08 C0 FF FF")]
 pub fn g_task_complex_stuck_in_air_ctask_complex_stuck_in_air_67fa60(this: u32, a0: u32) -> u32 {
@@ -9539,6 +9802,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_JUMP_CTASK_SIMPLE_JUMP_67D570,
     HOOK_G_TASK_COMPLEX_JUMP_CTASK_COMPLEX_JUMP_67D960,
     HOOK_G_TASK_SIMPLE_CLIMB_CTASK_SIMPLE_CLIMB_67DBC0,
+    HOOK_G_TASK_SIMPLE_JET_PACK_DESTRUCTOR_67E600,
     HOOK_G_TASK_COMPLEX_STUCK_IN_AIR_CTASK_COMPLEX_STUCK_IN_AIR_67FA60,
     HOOK_G_TASK_SIMPLE_JET_PACK_CTASK_SIMPLE_JET_PACK_6801D0,
     HOOK_G_TASK_COMPLEX_CHAT_DESTRUCTOR_682D40,
@@ -10077,6 +10341,7 @@ pub const BODIES: &[Body] = &[
     (0x67D570, 0x936D43DE7446CC47, &[(0x67D570, 30)]),
     (0x67D960, 0xA9CC22FA317DD8A2, &[(0x67D960, 30)]),
     (0x67DBC0, 0x7F479703FBD685C3, &[(0x67DBC0, 30)]),
+    (0x67E600, 0x99D4B79CC16DD114, &[(0x67E600, 213)]),
     (0x67FA60, 0x54D9B22106290E67, &[(0x67FA60, 30)]),
     (0x6801D0, 0xD132CFD4341C033B, &[(0x6801D0, 30)]),
     (0x682D40, 0x877DEAB5707F567D, &[(0x682D40, 90)]),
