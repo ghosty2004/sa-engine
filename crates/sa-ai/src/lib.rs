@@ -135,3 +135,5 @@ pub mod attractor_registry;
 pub mod interesting_events_add;
 pub mod attractor_ptr_vectors;
 pub mod attractor_register_ped;
+pub mod attractor_task_pair_vector;
+pub mod ped_attractor_base;
