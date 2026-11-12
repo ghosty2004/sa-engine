@@ -45,6 +45,7 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpa_render2::HOOKS,
     mvpa_fx1::HOOKS,
     crate::fx_info_trail_value::HOOKS,
+    crate::rw_tex_dict_find_hash::HOOKS,
     mvpa_render3::HOOKS,
     mvpa_fx2::HOOKS,
     mvpc_fx1::HOOKS,
