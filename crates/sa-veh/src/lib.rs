@@ -28,6 +28,7 @@ pub mod door;
 pub mod enterexit;
 pub mod handling;
 pub mod heli;
+pub mod heli_cone;
 pub mod statics;
 pub mod train;
 pub mod vehicle;
