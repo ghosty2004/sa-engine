@@ -31,3 +31,4 @@ pub mod statics;
 
 pub mod std6_natives;
 pub mod generated;
+pub mod pad_mouse_steer;
