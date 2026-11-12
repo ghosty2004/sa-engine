@@ -524,11 +524,20 @@ impl Runner for CommandRunner {
         let out = self.work.join(format!("{name}.trace"));
         let _ = std::fs::remove_file(&out);
         let (prog, args) = self.cmd.split_first().ok_or("empty runner command")?;
+        // One argument is capped at 128 KiB on Linux (MAX_ARG_STRLEN): a long mode list (the verified
+        // set plus large unverified selections) goes to the runner as @FILE.
+        let marg = if m.len() > 64 * 1024 {
+            let f = self.work.join(format!("{name}.modes.txt"));
+            std::fs::write(&f, &m).map_err(|e| format!("{}: {e}", f.display()))?;
+            format!("@{}", f.display())
+        } else {
+            m.clone()
+        };
         let st = std::process::Command::new(prog)
             .args(args)
             .arg(&name)
             .arg(end.to_string())
-            .arg(&m)
+            .arg(&marg)
             .arg(&out)
             .status()
             .map_err(|e| format!("runner {prog}: {e}"))?;

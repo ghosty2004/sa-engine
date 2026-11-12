@@ -31,6 +31,16 @@ pub struct Args {
     pub report: Option<PathBuf>,
     /// the user documents folder: `None` = a fresh temporary folder for this run (removed at exit)
     pub documents: Option<PathBuf>,
+    /// `--samp HOST[:PORT]`: join a SA:MP / open.mp server (`samp.rs`; the network client needs feature `samp`)
+    pub samp: Option<String>,
+    /// `--name NAME`: the SA:MP nickname
+    pub name: String,
+    /// `--samp-auth FILE`: the auth table (default: `SAMP_AUTH_TABLE`)
+    pub samp_auth: Option<PathBuf>,
+    /// wasm32: the sa-udp-proxy WebSocket URL the client reaches the server through
+    pub samp_proxy: Option<String>,
+    /// `--samp-ui-demo`: the engine-drawn SA:MP UI with sample content (`samp_ui_demo.rs`)
+    pub samp_ui_demo: bool,
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -45,6 +55,11 @@ fn parse_args() -> Result<Args, String> {
         screenshot: None,
         report: None,
         documents: None,
+        samp: None,
+        name: "Player".into(),
+        samp_auth: None,
+        samp_proxy: None,
+        samp_ui_demo: false,
     };
     let mut system_heap = false;
     let mut it = std::env::args().skip(1);
@@ -64,10 +79,14 @@ fn parse_args() -> Result<Args, String> {
             "--documents" => a.documents = Some(PathBuf::from(val()?)),
             "--persistent-documents" => a.documents = Some(documents_dir()),
             "--start-in-world" => native::set_start_in_world(),
+            "--samp" => a.samp = Some(val()?),
+            "--name" => a.name = val()?,
+            "--samp-auth" => a.samp_auth = Some(PathBuf::from(val()?)),
+            "--samp-ui-demo" => a.samp_ui_demo = true,
             "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
@@ -75,11 +94,20 @@ fn parse_args() -> Result<Args, String> {
                      --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
                      reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE, SA_GAME_LMB).\n\
                      Window runs serve the game heap from the deterministic mode's fixed-address region (one heap\n\
-                     layout everywhere); --system-heap uses the C library's allocator instead."
+                     layout everywhere); --system-heap uses the C library's allocator instead.\n\
+                     --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
+                     without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE.\n\
+                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content."
                 );
                 std::process::exit(0);
             }
             _ => return Err(format!("unknown option {k}")),
+        }
+    }
+    if let Some(s) = &a.samp {
+        crate::samp::parse_target(s, &a.name)?;
+        if a.samp_ui_demo {
+            return Err("--samp-ui-demo and --samp are exclusive".into());
         }
     }
     if a.game.as_os_str().is_empty() {
@@ -130,6 +158,47 @@ impl Report {
     }
 }
 
+/// The SA:MP options of a run (`--samp ...` natively, the page's `?samp=...` in the browser).
+#[derive(Clone, Debug, Default)]
+pub struct SampOptions {
+    /// `HOST[:PORT]` of the server to join
+    pub server: Option<String>,
+    pub name: String,
+    pub auth: Option<PathBuf>,
+    /// wasm32: the sa-udp-proxy WebSocket URL
+    pub proxy: Option<String>,
+    pub ui_demo: bool,
+}
+
+impl Args {
+    pub fn samp_options(&self) -> SampOptions {
+        SampOptions {
+            server: self.samp.clone(),
+            name: self.name.clone(),
+            auth: self.samp_auth.clone(),
+            proxy: self.samp_proxy.clone(),
+            ui_demo: self.samp_ui_demo,
+        }
+    }
+}
+
+/// Installs the SA:MP host (before the boot, as samp.dll is loaded before WinMain runs) and returns its target.
+fn install_samp(o: &SampOptions) -> Result<Option<crate::samp::Target>, String> {
+    let target = match &o.server {
+        Some(s) => {
+            let mut t = crate::samp::parse_target(s, &o.name)?;
+            t.proxy = o.proxy.clone();
+            crate::samp::install(&t, o.auth.as_deref())?;
+            Some(t)
+        }
+        None => None,
+    };
+    if o.ui_demo {
+        crate::samp_ui_demo::install()?;
+    }
+    Ok(target)
+}
+
 /// A booted game: the report so far and the main loop's state.
 pub struct Session {
     pub(crate) rep: Report,
@@ -141,6 +210,9 @@ pub struct Session {
     pub(crate) stopped: bool,
     /// `gGameState` at the start of the current iteration
     pub(crate) iter_state: u32,
+    /// the SA:MP server joined (`--samp`)
+    pub(crate) samp: Option<crate::samp::Target>,
+    pub(crate) samp_ui_demo: bool,
 }
 
 /// The platform setup and the boot (WinMain up to its main loop).
@@ -174,12 +246,20 @@ pub fn boot(args: &Args) -> Result<Session, String> {
         exe,
         &args.game.display().to_string(),
         &docs.display().to_string(),
+        &args.samp_options(),
     )
 }
 
 /// The platform setup and the boot on any target: `game` is the install (read-only), `docs` the user documents
 /// folder, `exe` the bytes of the install's gta_sa.exe (its data sections fill the arena).
-pub fn boot_with(game: Box<dyn GameFs>, docs_fs: Box<dyn GameFs>, exe: Vec<u8>, game_label: &str, docs_label: &str) -> Result<Session, String> {
+pub fn boot_with(
+    game: Box<dyn GameFs>,
+    docs_fs: Box<dyn GameFs>,
+    exe: Vec<u8>,
+    game_label: &str,
+    docs_label: &str,
+    samp: &SampOptions,
+) -> Result<Session, String> {
     if !game.exists("models/gta3.img") {
         return Err(format!("{game_label} does not look like a GTA San Andreas folder (no models/gta3.img)"));
     }
@@ -203,6 +283,7 @@ pub fn boot_with(game: Box<dyn GameFs>, docs_fs: Box<dyn GameFs>, exe: Vec<u8>, 
         undelivered: Default::default(),
         calls: Default::default(),
     });
+    let samp_target = install_samp(samp)?;
 
     println!("sa-game: game folder {game_label} (read-only), user documents {docs_label}");
     println!("sa-game: arena: {arena_info}");
@@ -262,6 +343,8 @@ pub fn boot_with(game: Box<dyn GameFs>, docs_fs: Box<dyn GameFs>, exe: Vec<u8>, 
         repeats: 0,
         stopped: false,
         iter_state: 0,
+        samp: samp_target,
+        samp_ui_demo: samp.ui_demo,
     })
 }
 
@@ -277,8 +360,10 @@ pub(crate) fn synthetic_input(n: u32) -> InputState {
     let mut i = InputState::default();
     if let Some((start, count)) = walk {
         if n >= start && n < start + count {
-            // key_down first: it queues the key-down message only for a key not yet held
-            if n == start {
+            // key_down first: it queues the key-down message only for a key not yet held; repeated every 8
+            // iterations like a keyboard's auto-repeat, so an iteration that unwinds (a blocked port) while the
+            // message is handled does not lose the key
+            if (n - start) % 8 == 0 {
                 i.key_down(Key::W);
             }
             i.held.insert(Key::W);
@@ -357,11 +442,13 @@ pub(crate) fn merge_input(base: &InputState, extra: &InputState) -> InputState {
 impl Session {
     /// One main-loop iteration with `input` (its events are queued as window messages, its state is the
     /// DirectInput state). Returns false when the loop has stopped.
-    pub fn iterate(&mut self, input: InputState) -> bool {
+    pub fn iterate(&mut self, mut input: InputState) -> bool {
         if self.stopped || winmain::aborted() {
             self.stopped = true;
             return false;
         }
+        crate::samp_ui_demo::take_input(&mut input);
+        crate::samp_input::filter(&mut input);
         let n = self.n;
         self.n += 1;
         det::begin_iteration();
@@ -464,6 +551,12 @@ impl Session {
             for (m, n) in &undelivered {
                 let _ = writeln!(md, "- message {m:#06x}: {n}");
             }
+        }
+        if let Some(t) = &self.samp {
+            crate::samp::report(&mut md, t);
+        }
+        if self.samp_ui_demo {
+            crate::samp_ui_demo::report(&mut md);
         }
         let count = |p: &str| rep.rows.iter().filter(|r| r.3.starts_with(p)).count();
         let (ok, blocked, orig, crashed) =

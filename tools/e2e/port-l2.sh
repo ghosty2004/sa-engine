@@ -243,6 +243,8 @@ run_game() { # run_game NAME VAR=VALUE... : one determinism-mode run from proces
     done
     wineserver -k 2> /dev/null || true
     wait "$pid" 2> /dev/null
+    # the save files this run wrote (OUT/NAME.GTASAsfN.b; compared with plain's below)
+    e2e_saves_collect "$OUT/$name"
     cp -f "$GTA_DIR/sa-hook.log" "$OUT/$name.log" 2> /dev/null
     # Wine's own output (an unhandled-exception line ends up in the crash check below). A fault after
     # `oracle: exiting` happens inside ExitProcess, after the trace, spool and summary were flushed: it
@@ -280,6 +282,23 @@ full_len() { "$SATOOL" show "$OUT/$1.trace" | awk -v e="$END_FRAME" 'NR > 1 { n+
 same_as_plain() { # same_as_plain RUN → 1 when identical over every frame; diff in OUT/plain-vs-RUN.txt
     [ -f "$OUT/plain.trace" ] && [ -f "$OUT/$1.trace" ] || return
     "$SATOOL" diff "$OUT/plain.trace" "$OUT/$1.trace" > "$OUT/plain-vs-$1.txt" 2>&1 && full_len "$1" && echo 1
+}
+# SAVE-1: the save files a run wrote must be byte-identical to plain's (same set of slots, same bytes).
+saves_same() { # saves_same RUN [REF] → 1 when RUN wrote exactly REF's (default plain) save files
+    local f n bad=0 any=0 ref="${2:-plain}"
+    for f in "$OUT/$ref".GTASAsf[1-8].b "$OUT/$1".GTASAsf[1-8].b; do
+        [ -f "$f" ] || continue
+        any=1
+        n="${f##*.GTASAsf}"
+        cmp -s "$OUT/$ref.GTASAsf$n" "$OUT/$1.GTASAsf$n" || bad=1
+    done
+    [ "$any" = 1 ] && [ "$bad" = 0 ] && echo 1
+}
+saves_info() { # sha256 prefixes of a run's save files
+    local f
+    for f in "$OUT/$1".GTASAsf[1-8].b; do
+        [ -f "$f" ] && printf '%s %s; ' "${f##*/}" "$(sha256sum < "$f" | cut -c1-16)"
+    done
 }
 l2_summary() { sed -n 's/.*l2: summary: //p' "$OUT/$1.log" 2> /dev/null | tail -1; }
 l2_field() { printf '%s\n' "$1" | tr ';' '\n' | grep -F " $2 calls=" -m1 | tr ' ' '\n' | sed -n "s/^$3=//p" | head -1; }
@@ -321,6 +340,10 @@ for run in $RUNS; do
             if [ "${PLAIN_CACHE:-1}" = 1 ] && [ -s "$pdir/plain-$pkey.trace" ] && [ -s "$pdir/plain-$pkey.log" ]; then
                 cp -f "$pdir/plain-$pkey.trace" "$OUT/plain.trace"
                 cp -f "$pdir/plain-$pkey.log" "$OUT/plain.log"
+                rm -f "$OUT"/plain.GTASAsf[1-8].b
+                for f in "$pdir/plain-$pkey".GTASAsf[1-8].b; do
+                    [ -f "$f" ] && cp -f "$f" "$OUT/plain.GTASAsf${f##*.GTASAsf}"
+                done
                 note "plain: reused cached all-original trace $pdir/plain-$pkey.trace"
             else
                 run_game plain "$REPLAY" SA_HOOK_MODE="$(modes)"
@@ -328,6 +351,9 @@ for run in $RUNS; do
                     mkdir -p "$pdir"
                     cp -f "$OUT/plain.trace" "$pdir/plain-$pkey.trace"
                     cp -f "$OUT/plain.log" "$pdir/plain-$pkey.log"
+                    for f in "$OUT"/plain.GTASAsf[1-8].b; do
+                        [ -f "$f" ] && cp -f "$f" "$pdir/plain-$pkey.${f##*/plain.}"
+                    done
                 fi
             fi
             check "plain (all original) reached the end frame" "$(reached plain)" "$(trace_info "$OUT/plain.trace")"
@@ -410,6 +436,20 @@ if [ -f "$OUT/rust.trace" ]; then
         "$(tail -1 "$OUT/plain-vs-rust.txt" 2> /dev/null)"
     sed 's/^/    /' "$OUT/plain-vs-rust.txt" >> "$SUMMARY"
     note "    randcalls (Rust vs original): $(grep -E '^\s*randcalls' "$OUT/plain-vs-rust.txt" | sed 's/^ *//')"
+fi
+# SAVE-1 (PLAN F5): a recording that saves writes the same bytes with the ports on Rust
+if ls "$OUT"/plain.GTASAsf[1-8].b > /dev/null 2>&1; then
+    note "plain save files: $(saves_info plain)"
+    for r in rust l2; do
+        [ -f "$OUT/$r.trace" ] || continue
+        check "(f) $r save files byte-identical to plain's" "$(saves_same "$r")" "$(saves_info "$r")"
+    done
+    # the split runs call the sampled hooks through the L2 invoker (other stack residue than plain): splitr
+    # is compared with splito, the original called the same way
+    if [ -f "$OUT/splitr.trace" ] && [ -f "$OUT/splito.trace" ]; then
+        check "(f) splitr save files byte-identical to splito's" "$(saves_same splitr splito)" \
+            "$(saves_info splito)/ $(saves_info splitr)"
+    fi
 fi
 S="$(l2_summary l2)"
 SA="$(l2_summary l2all)"

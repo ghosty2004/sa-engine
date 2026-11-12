@@ -418,7 +418,7 @@ fn is_rc(this: GPtr<u8>) -> bool {
 /// killed. Finally an engine status > 225 with health > 250 loses 2 health, and
 /// `ProcessDelayedExplosion`.
 #[hook(addr = 0x6A7090, conv = thiscall, name = "CAutomobile::ProcessCarOnFireAndExplode", this = "CAutomobile", expect = "6A FF 68 B8 7F 84 00",
-       unverified = "mvpd-veh-2", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "driving",
        note = "the original stores the ftol step into its own explodeImmediately slot (the plane path reads the flag before that store)")]
 pub fn automobile_process_car_on_fire_and_explode(this: GPtr<u8>, explode: u32) {

@@ -165,6 +165,18 @@ impl wgpu::rwh::HasDisplayHandle for WebDisplay {
     }
 }
 
+/// The page's SA:MP options (`?samp=HOST:PORT&proxy=ws://...&name=NAME`, passed as `SA_SAMP`, `SA_SAMP_PROXY`,
+/// `SA_SAMP_NAME`; the auth table's text as `SA_SAMP_AUTH`).
+fn samp_options() -> crate::app::SampOptions {
+    crate::app::SampOptions {
+        server: crate::env::var_os("SA_SAMP").filter(|s| !s.is_empty()),
+        name: crate::env::var_os("SA_SAMP_NAME").unwrap_or_else(|| "WebCJ".into()),
+        auth: None,
+        proxy: crate::env::var_os("SA_SAMP_PROXY"),
+        ui_demo: crate::env::var_os("SA_SAMP_UI_DEMO").is_some(),
+    }
+}
+
 /// The platform setup and the boot (WinMain up to its main loop), from the registered game folder.
 #[wasm_bindgen]
 pub fn boot() -> Result<(), JsValue> {
@@ -189,6 +201,7 @@ pub fn boot() -> Result<(), JsValue> {
         exe,
         &format!("your game folder ({} files)", crate::webfs::count()),
         "browser memory (not kept)",
+        &samp_options(),
     )
     .map_err(|e| JsValue::from_str(&e))?;
     SESSION.with(|c| c.set(Box::into_raw(Box::new(s))));

@@ -330,7 +330,7 @@ fn tri_frame(f: &mut Fpu, e1: [X87; 3], v0: [f32; 3], v2: [f32; 3], c: [f32; 3],
 /// clamped to its ends through the vertex distance, else `sqrt(perp_dist^2 + dist^2)`). The final
 /// compare is `distance < radius` (`test ah, 5; jp`; NaN false).
 #[hook(addr = 0x4165B0, conv = cdecl, name = "CCollision::TestSphereTriangle", expect = "90 E9 D1 AE FE FF",
-       unverified = "mvpe-coll-1", route = "L2", hazards = "x87-transcendental", recs = "grove-walk,driving",
+       route = "L2", hazards = "x87-transcendental", recs = "grove-walk,driving",
        note = "FSQRT results compared bit-exactly against the radius")]
 pub fn test_sphere_triangle(sphere: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 {
     let q4096 = kf(K_1_4096);
@@ -514,7 +514,7 @@ fn edge_tail(f: &mut Fpu, dist: f32) {
 /// the sphere, surface B from the triangle, piece B 0, depth `radius - distance`; `minDistSq =
 /// distance^2` → true.
 #[hook(addr = 0x416BA0, conv = cdecl, name = "CCollision::ProcessSphereTriangle", expect = "81 EC 38 01 00 00",
-       unverified = "mvpe-coll-1", route = "L2", hazards = "x87-transcendental,uninit-locals",
+       route = "L2", hazards = "x87-transcendental,uninit-locals",
        recs = "grove-walk,driving",
        note = "edge count 0 (NaN inputs) reads the never-written closest-point locals")]
 pub fn process_sphere_triangle(sphere: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>, cp: GPtr<u8>,
@@ -992,7 +992,7 @@ fn line_box_face(f: &mut Fpu, s: [f32; 3], e: [f32; 3], bmin: [f32; 3], bmax: [f
 /// unwritten locals; zero here). Stack: `t` and an interpolated coordinate are stored into the `line`
 /// (S+4) and `box` (S+8) argument slots (not reproduced).
 #[hook(addr = 0x413100, conv = cdecl, name = "CCollision::ProcessLineBox", expect = "8B 4C 24 04 D9 05 24 86 85 00",
-       unverified = "mvpe-coll-1", route = "L2", hazards = "stack-residue,uninit-locals",
+       route = "L2", hazards = "stack-residue,uninit-locals",
        recs = "grove-walk,driving",
        note = "stores t / a coordinate into its line/box argument slots; no-hit with *minDist > 1 writes unwritten locals")]
 pub fn process_line_box(line: GPtr<u8>, bx: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>) -> u8 {

@@ -350,7 +350,7 @@ pub fn attractor_scanner_scan_list(this: GPtr<u8>, list: GPtr<u8>, ped: GPtr<u8>
 /// effect is set; then each slot 1..9 (distance +0x68+4k, effect +0x40+4k, entity +0x18+4k) wins when best is
 /// greater than its distance and its effect is set. All values compared are f32 loads, compared exactly.
 #[hook(addr = 0x600180, conv = thiscall, name = "FUN_00600180", expect = "8B 54 24 04 56 8B 74 24 0C",
-       unverified = "mvpc-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn attractor_scanner_pick(this: GPtr<u8>, out_fx: GPtr<u8>, out_e: GPtr<u8>) {
     wr::<u32>(out_fx, 0, 0);
     wr::<u32>(out_e, 0, 0);

@@ -1,0 +1,17 @@
+[package]
+name = "sa-samp-ui"
+version = "0.1.0"
+description = "The engine-drawn SA:MP 0.3.7 user interface (chat, input line, dialogs, nametags, 3D labels, textdraws, kill list, scoreboard, cursor): state, layout and input handling as a draw list; renderer-independent and host-testable (docs/samp/overlay.md)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-samp-api = { path = "../sa-samp-api" }
+# Rasterises the committed Liberation Sans Bold (SIL OFL 1.1, assets/fonts/) into the glyph atlas: pure Rust,
+# builds for i686 and wasm32.
+ab_glyph = "0.2"
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"

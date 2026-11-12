@@ -1054,3 +1054,28 @@
   Native smoke run (--start-in-world, offscreen) reaches Grove Street frames; the next native gaps (0x7331E0,
   0x410090) are ported on STD-10's branch, where CJ is visible and walks (not yet on master).
 - Catalogue: every registered address at least `implemented`.
+
+## 2026-11-12 INTEGRATE-4: VERIFIER-7 generated-hook promotions and WRITER-O (main session)
+- VERIFIER-7 verified the 852 gen2 hooks: L3 MATCH on all 13 recordings with all on Rust; 25 L1 (1M cases each)
+  and 514 split promotions; generator bug fixed (tail-call forwarders into void hand ports were generated as
+  returning EAX — found by split on CGrassRenderer::FlushTriPlantBuffer). INTEGRATE-4 merged its patterns.py with
+  INTEGRATE-3's fix, regenerated (841 hooks, 532 promoted, 309 unverified), and took WRITER-O's ports
+  (CAEVehicleAudioEntity::AddAudioEvent, FxEmitterBP_c::Render/RenderHeatHaze, RtQuat functions).
+- Tests: sa-hook 58, sa-script 8, sa-core 70, L1 18/18. verify-all int4: IDENTICAL on all 13 recordings.
+- Catalogue: 532 generated addresses promoted (25 L1, 507 L2).
+
+## 2026-11-12 INTEGRATE-5: VERIFIER-8, WRITER-P and Save/Load (main session)
+- VERIFIER-8 (527 writer hooks, L3 MATCH on 13 recordings after 4 fixes: FUN_006070F0 3 stack args, ProcessVerticalLineSectorList
+  argument order, IsEntityOccluded max corner, CreateIndexBuffer format argument) → 67 L2. WRITER-P: 15 boot hooks + 1 native.
+  PORT-SAVE (SAVE-1): 73 Save/Load ports, 61 L2, F5 cross-load identical; ledger SAVE-1 in ROADMAP.
+- Integration by agent INTEGRATE-5 (own diffs, generator regenerated). Tests: sa-hook 58, sa-script 9, sa-core 71, L1 18/18.
+  verify-all int5: IDENTICAL on all 13 recordings (save-load: save bytes identical except 750 residue bytes, ledger SAVE-1).
+- Catalogue: 128 addresses → L2; F1 30.88 %.
+
+## 2026-11-12 SA:MP native groundwork and the browser proxy on master (main session)
+- SAMP-3 (18671e6, 76c533d): crate sa-samp (NativeGame on the sa-samp-api traits, read side), frame dispatch points in
+  sa-core samp.rs (Game::Idle / CGame::Process, inert without a handler), `sa-game --samp` host skeleton,
+  docs/samp/native-plan.md, samp-rs networking verified on i686 Linux (join to our open.mp copy in ~1.06 s).
+- SAMP-PROXY (3933363, b9ab5c2): crates sa-udp-proxy (WebSocket↔UDP relay with allowlist/limits/shim mode) and
+  sa-net (DatagramTransport: UDP native, WebSocket wasm32); samp-rs join through the proxy in 1.13 s.
+- verify-all samp3b (fresh DLL, sa-oracle rebuilt after a stale-binary first attempt): IDENTICAL on all 13 recordings.

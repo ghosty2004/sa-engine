@@ -120,6 +120,8 @@ pub struct FootprintState {
     pub snapshot: [u32; FOOTPRINT_WINDOW_MAX / 4],
     /// the hook's `W` (bytes): `snapshot[i]` is the word at entry ESP - W + 4 * i
     pub window: u32,
+    /// the entry ESP of the running call (the address of the return address)
+    pub entry_esp: u32,
 }
 
 #[doc(hidden)]
@@ -138,6 +140,7 @@ impl FootprintCell {
             entries: [[0; 3]; FOOTPRINT_MAX],
             snapshot: [0; FOOTPRINT_WINDOW_MAX / 4],
             window,
+            entry_esp: 0,
         }))
     }
 }
@@ -148,6 +151,23 @@ const _: () = assert!(core::mem::offset_of!(FootprintState, entries) == 32);
 #[doc(hidden)]
 pub const FOOTPRINT_SNAPSHOT_OFF: usize = core::mem::offset_of!(FootprintState, snapshot);
 const _: () = assert!(FOOTPRINT_SNAPSHOT_OFF == 32 + 12 * FOOTPRINT_MAX);
+/// Offset of [`FootprintState::entry_esp`] (used by the wrapper's code).
+#[doc(hidden)]
+pub const FOOTPRINT_ENTRY_ESP_OFF: usize = core::mem::offset_of!(FootprintState, entry_esp);
+
+/// The entry ESP (the address of the return address) of the innermost running `#[hook(..., footprint =
+/// W)]` call, for an original whose locals sit at an address-dependent place (`and esp, -8` frames; SAVE-1
+/// `CPlayerPed::Save`). `None` outside a footprint wrapper (direct Rust calls, host tests, phases B/C).
+pub fn footprint_entry_esp() -> Option<u32> {
+    let cur = FOOTPRINT_CUR.load(core::sync::atomic::Ordering::Relaxed);
+    if cur == 0 {
+        return None;
+    }
+    // SAFETY: as in `entry_residue`.
+    #[allow(unsafe_code)]
+    let st = unsafe { &*(cur as usize as *const FootprintState) };
+    (st.active != 0).then_some(st.entry_esp)
+}
 
 /// The [`FootprintState`] of the innermost footprint wrapper running (0: none). Each wrapper saves
 /// the previous value in its scratch word 5 on entry and puts it back on exit.

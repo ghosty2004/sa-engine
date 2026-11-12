@@ -83,7 +83,7 @@ fn forward_dot(d: GPtr<u8>, m: GPtr<u8>) -> X87 {
 /// `CEventChatPartner(false, ped)` into the other's, `SetNextMinScanTime` for both (ped first), the two destructors
 /// (second event first) and AL = 1. The original keeps the ped position pointer in its own argument slot.
 #[hook(addr = 0x66fda0, conv = thiscall, name = "CTaskComplexWanderStandard::LookForChatPartners", expect = "6A FF 68 90 55 84 00",
-       unverified = "mvpl-ai-2", route = "L2", hazards = "ax-al-return,stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "ax-al-return,stack-residue", recs = "grove-walk",
        note = "AL result (upper EAX bytes from the last callee); the events live on the Rust stack; the ped argument slot holds its position pointer")]
 pub fn wander_look_for_chat_partners(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let si: GPtr<u8> = GPtr::from_addr(SURFACE_INFOS);

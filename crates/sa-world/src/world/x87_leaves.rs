@@ -21,7 +21,7 @@ pub fn x87_cos(a: u32) -> X87 {
 
 /// `FUN_00406d10(float)` (0x406D10, cdecl): `fld` of the argument, FABS, result in ST0.
 #[hook(addr = 0x406d10, conv = cdecl, name = "FUN_00406d10", expect = "D9 44 24 04 D9 E1 C3",
-       unverified = "mvpl-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn x87_abs(a: u32) -> X87 {
     X87::from_f32(f32::from_bits(a)).fabs()
 }
@@ -30,7 +30,7 @@ pub fn x87_abs(a: u32) -> X87 {
 /// AL = 1 when the area code byte (+0x2F) equals `CGame::currArea` (dword compare of the zero-extended byte) or is
 /// 13, else 0. AL only: the upper EAX bytes are the caller's.
 #[hook(addr = 0x407000, conv = thiscall, name = "thunk_FUN_01562960", expect = "E9 5B B9 15 01",
-       unverified = "mvpl-world-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "ax-al-return", recs = "grove-walk",
        note = "AL result; the original leaves the caller's upper EAX bytes")]
 pub fn entity_is_in_current_area(this: GPtr<u8>) -> u8 {
     let area = rd::<u8>(this, 0x2F);

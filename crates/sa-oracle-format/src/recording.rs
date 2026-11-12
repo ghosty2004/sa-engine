@@ -35,6 +35,7 @@ pub const VERSION: u32 = 1;
 /// | `data.PATH` | `fnv64:size` of a game data file (relative path) |
 /// | `settings` | `fnv64:size` of gta_sa.set |
 /// | `program` | `fnv64` of the input program that generated the input (scripted recordings) |
+/// | `pokes` | harness pokes of the program (`program::encode_pokes`), applied at frame boundaries on replay |
 /// | `frames` | last frame boundary seen while recording |
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Header {

@@ -1366,7 +1366,10 @@ fn main_block(this: GPtr<u8>, b: GPtr<u8>, ped: GPtr<u8>, f: &mut Fpu) {
             !f.jp(0x41)
         };
     if idle {
-        idle_cam_process(g::<u8>(G_IDLE_CAM));
+        // samp mode NOPs only this call.
+        if !sa_core::samp::disabled(sa_core::samp::feature::IDLE_CAMERA) {
+            idle_cam_process(g::<u8>(G_IDLE_CAM));
+        }
     } else {
         g::<u32>(IDLE_COUNTER).write(0);
     }

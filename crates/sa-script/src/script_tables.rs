@@ -38,7 +38,7 @@ fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
 /// `CStreamedScripts::GetStreamedScriptWithThisStartAddress(uint8* ip)` (0x470910, thiscall, `ret 4`):
 /// the first of the 0x52 streamed scripts (0x20 bytes, data pointer +0) whose data is `ip`, else 0x52.
 #[hook(addr = 0x470910, conv = thiscall, name = "CStreamedScripts::GetStreamedScriptWithThisStartAddress",
-       expect = "8B 54 24 04 56", unverified = "mvpi-script-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       expect = "8B 54 24 04 56", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn get_streamed_script_with_this_start_address(this: GPtr<u8>, ip: u32) -> u32 {
     let mut i = 0u32;
     while i < 0x52 {
@@ -58,7 +58,7 @@ pub fn get_streamed_script_with_this_start_address_host(this: GPtr<u8>, ip: u32)
 /// `CTheScripts::GetUniqueScriptThingIndex(int32 index, uint8 type)` (stub 0x4810C0 → 0x1561250,
 /// cdecl): type 8 → `counter[index] << 16 | index` (int16 counters at 0xC098D0), else -1.
 #[hook(addr = 0x4810c0, conv = cdecl, name = "CTheScripts::GetUniqueScriptThingIndex", expect = "E9 8B 01 0E 01",
-       unverified = "mvpi-script-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn get_unique_script_thing_index(index: i32, ty: u32) -> i32 {
     if ty as u8 != 8 {
         return -1;
@@ -82,7 +82,7 @@ pub fn streamed_scripts_reinitialise(this: GPtr<u8>) {
 /// +8) with this id and type, else 0. EAX's upper bytes are the original's: that entry's address, else
 /// `this + 0x384`.
 #[hook(addr = 0x470620, conv = thiscall, name = "CScriptResourceManager::HasResourceBeenRequested",
-       expect = "E9 7B EC 0F 01", unverified = "mvpi-script-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       expect = "E9 7B EC 0F 01", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn has_resource_been_requested(this: GPtr<u8>, id: i32, ty: u32) -> u32 {
     for i in 0..0x4Bisize {
         let e = this.byte_add(i * 0xC);
@@ -155,7 +155,7 @@ pub fn undo_entity_invisibility_settings() {
 /// `CTheScripts::DrawScriptSpheres()` (stub 0x4810E0 → 0x15647C0, cdecl): every active one of the 16
 /// script spheres places marker set `(id, 1, pos, radius, 255, 0, 0, 228, 0x800, 0.1, 0)`.
 #[hook(addr = 0x4810e0, conv = cdecl, name = "CTheScripts::DrawScriptSpheres", expect = "E9 DB 36 0E 01",
-       unverified = "mvpi-script-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn draw_script_spheres() {
     for i in 0..16usize {
         let e = SCRIPT_SPHERES + i * 0x18;

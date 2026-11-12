@@ -39,7 +39,7 @@ pub fn remove_streamed_script_from_memory(this: GPtr<u8>, index: i32) {
 /// +0xC4..=+0xC8 = 0, +0xC9 = 0xFF, the 0x22 dwords +0x3C..+0xC4 = 0, u16 +0xD0 = 0, +0xD2 = 0,
 /// +0xD4 = 0, +0xD8 = 0, +0xDC = 0, +0xD3 = 1 (in that order).
 #[hook(addr = 0x4648e0, conv = thiscall, name = "CRunningScript::Init", expect = "E9 CB DD 0F 01",
-       this = "CRunningScript", unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CRunningScript", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn running_script_init(this: GPtr<u8>) {
     at::<u32>(this, 8).write(ga::<u32>(0x859D44).read());
     at::<u16>(this, 0xC).write(ga::<u16>(0x859D48).read());
@@ -90,7 +90,7 @@ pub fn clear_all_vehicle_models_blocked_by_script() {
 /// `CScriptResourceManager::Initialise()` (stub 0x470480 → 0x1565710): 0x4B entries of 0xC bytes, each
 /// id +0 = -1, u16 type +8 = 0, script +4 = 0.
 #[hook(addr = 0x470480, conv = thiscall, name = "CScriptResourceManager::Initialise", expect = "E9 8B 52 0F 01",
-       this = "CScriptResourceManager", unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CScriptResourceManager", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn script_resource_manager_initialise(this: GPtr<u8>) {
     for k in 0..0x4Bisize {
         let e = this.byte_add(0xC * k);
@@ -104,7 +104,7 @@ pub fn script_resource_manager_initialise(this: GPtr<u8>) {
 /// = 0, byte +4 = 0, u16 +6 = 0xFFFF, byte +8 = 0, +0x1C = 0; then +0xA40 = 0 and the u16 count
 /// +0xA44 = 0. The body leaves ECX untouched.
 #[hook(addr = 0x470660, conv = thiscall, name = "CStreamedScripts::Initialise", expect = "E9 CB 1D 0F 01",
-       this = "CStreamedScripts", unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CStreamedScripts", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn streamed_scripts_initialise(this: GPtr<u8>) {
     for k in 0..0x52isize {
         let e = this.byte_add(0x20 * k);
@@ -123,7 +123,7 @@ pub fn streamed_scripts_initialise(this: GPtr<u8>) {
 /// increments the u16 count (+0xA44) and returns `count - 1` (the new index, from the zero-extended
 /// count).
 #[hook(addr = 0x4706c0, conv = thiscall, name = "CStreamedScripts::RegisterScript", expect = "E9 DB B0 0F 01",
-       this = "CStreamedScripts", unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CStreamedScripts", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn streamed_scripts_register_script(this: GPtr<u8>, name: GPtr<u8>) -> i32 {
     let cnt = at::<u16>(this, 0xA44);
     let mut d = this.byte_add((cnt.read() as isize) << 5).byte_add(8);

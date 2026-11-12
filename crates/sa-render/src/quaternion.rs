@@ -31,7 +31,7 @@ pub fn quaternion_set(this: GPtr<u8>, axis: GPtr<u8>, angle: f32) {
 /// t.x`, y/z/w = `b t.c + a f.c`.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x59C300, conv = thiscall, name = "CQuaternion::Slerp", this = "CQuaternion", expect = "D9 44 24 0C D8 1D 50 8B 85 00",
-       unverified = "mvpd-math-1", route = "L2", hazards = "x87-transcendental,stack-residue",
+       route = "L2", hazards = "x87-transcendental,stack-residue",
        note = "FSIN; writes pi - halfTheta into its own argument slot")]
 pub fn quaternion_slerp(this: GPtr<u8>, from: GPtr<u8>, to: GPtr<u8>, half_theta: f32, sin_inv: f32, t: f32) {
     if !jp(x(half_theta), X87::zero(), 0x44) {
@@ -76,7 +76,7 @@ fn quaternion_from_matrix_branch(this: GPtr<u8>, m: GPtr<u8>, t: X87, big: isize
 /// `at.z - (up.y + right.x)` → `z`, `w = (right.y - up.x)`, `x = (at.x + right.z)`, `y = (at.y + up.z)`; in each
 /// branch `s = sqrt(t + 1)`, `inv = 0.5 / s` (register), every component stored as f32 in that order.
 #[hook(addr = 0x59c3e0, conv = thiscall, name = "CQuaternion::Set", this = "CQuaternion", expect = "8B 54 24 04 D9 42 14",
-       unverified = "mvpk-math-1", route = "L2", hazards = "x87-transcendental", note = "FSQRT; the RwMatrix overload")]
+       route = "L2", hazards = "x87-transcendental", note = "FSQRT; the RwMatrix overload")]
 pub fn quaternion_set_from_matrix(this: GPtr<u8>, m: GPtr<u8>) {
     let f = |o: isize| rd::<f32>(m, o);
     let t = x(f(0x14)).fadd_m(f(0)).fadd_m(f(0x28));

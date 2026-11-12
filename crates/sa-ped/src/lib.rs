@@ -45,3 +45,5 @@ pub mod player_cross_hair;
 pub mod generated;
 pub mod ped_pointer_valid;
 pub mod player_sprint_results;
+// SAVE-1 (docs/arch/save-port.md)
+pub mod save_blocks;

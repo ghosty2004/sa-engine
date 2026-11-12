@@ -55,6 +55,11 @@ pub mod game_window;
 pub mod imports;
 pub mod native;
 pub mod rw_standin;
+pub mod samp;
+#[cfg(feature = "samp")]
+pub mod samp_net;
+pub mod samp_input;
+pub mod samp_ui_demo;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod screen;
 pub mod sha256;

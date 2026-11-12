@@ -13,7 +13,7 @@ orig! {
 
 /// `ListItem_c::~ListItem_c()` (0x49EA70, thiscall): `jmp 0x4A8DC0` (ECX passes through unchanged).
 #[hook(addr = 0x49ea70, conv = thiscall, name = "ListItem_c::~ListItem_c", expect = "E9 4B A3 00 00 90",
-       unverified = "mvpm-render-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn list_item_dtor(this: GPtr<u8>) {
     list_item_base_dtor(this);
 }

@@ -5708,140 +5708,19 @@ _rpD3D9GetMinMaxValuesV3d@arg3:0xC:RW
 # PORT-HUD-3 (docs/arch/hud-port.md, third pass). Evidence: lane 7, port-l2-hud3-* runs: the undeclared writes
 # (original and Rust alike) listed per line.
 # ProcessCurrentString (split, menus-hud): RenderWare / D3D9 render-state caches written by the font render.
-CFont::ProcessCurrentString@0xC97BD8:4:RW
-CFont::ProcessCurrentString@0xC98100:0x20:RW
-CFont::ProcessCurrentString@0xC99860:0x20:RW
 # Split runs on menus-hud (port-l2-hud3-{x,m1,m2,d}-mh): callee writes (RenderWare / D3D9 render-state caches, font render
 # buffer and state, sprite / Im2D vertex buffers, audio front-end events, legend list, aScreens, text buffers).
 # CHud::DrawPlayerInfo: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aTempBufferIndices, gString, s_RenderFontBuffer
-CHud::DrawPlayerInfo@0xB71670:0x4:RW
-CHud::DrawPlayerInfo@0xC4B964:0x354:RW
-CHud::DrawPlayerInfo@0xC5F958:0x1F80:RW
-CHud::DrawPlayerInfo@0xC716B4:0x1F4:RW
-CHud::DrawPlayerInfo@0xC71AA0:0x2C:RW
-CHud::DrawPlayerInfo@0xC97B94:0x48:RW
-CHud::DrawPlayerInfo@0xC980E4:0xC:RW
-CHud::DrawPlayerInfo@0xC98B40:0x8:RW
-CHud::DrawPlayerInfo@0xC98EAC:0x44:RW
-CHud::DrawPlayerInfo@0xC9920C:0xA4:RW
-CHud::DrawPlayerInfo@0xC9A5EC:0x4:RW
 # CMenuManager::AdditionalOptionInput: AESoundManager, CRadar::ms_RadarTrace, FrontEndMenuManager
-CMenuManager::AdditionalOptionInput@0xB62DD8:0xAC:RW
-CMenuManager::AdditionalOptionInput@0xBA6774:0x4C:RW
-CMenuManager::AdditionalOptionInput@0xBA8E20:0x28:RW
 # CMenuManager::DisplaySlider: D3D9RestoreDeviceCallback, RwEngineInstance
-CMenuManager::DisplaySlider@0xC97B98:0x10:RW
-CMenuManager::DisplaySlider@0xC980E4:0x38:RW
-CMenuManager::DisplaySlider@0xC98EC4:0x34:RW
-CMenuManager::DisplaySlider@0xC99248:0x4:RW
-CMenuManager::DisplaySlider@0xC992A8:0x4:RW
-CMenuManager::DisplaySlider@0xC99864:0x10:RW
-CMenuManager::DisplaySlider@0xC9A4E8:0x24:RW
 # CMenuManager::DrawBackground: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
-CMenuManager::DrawBackground@0x8CE110:0xBC:RW
-CMenuManager::DrawBackground@0x8CE498:0xBC:RW
-CMenuManager::DrawBackground@0x8CFE34:0xB8:RW
-CMenuManager::DrawBackground@0x8D0460:0xBC:RW
-CMenuManager::DrawBackground@0xBA8318:0x8:RW
-CMenuManager::DrawBackground@0xC4B964:0x4EC:RW
-CMenuManager::DrawBackground@0xC5F958:0x2E60:RW
-CMenuManager::DrawBackground@0xC716B4:0x1F8:RW
-CMenuManager::DrawBackground@0xC71AA0:0x2C:RW
-CMenuManager::DrawBackground@0xC97B98:0x10:RW
-CMenuManager::DrawBackground@0xC980E4:0x38:RW
-CMenuManager::DrawBackground@0xC98B40:0x14:RW
-CMenuManager::DrawBackground@0xC98EAC:0x74:RW
-CMenuManager::DrawBackground@0xC9920C:0xF4:RW
-CMenuManager::DrawBackground@0xC99864:0x10:RW
-CMenuManager::DrawBackground@0xC9A4EC:0x20:RW
-CMenuManager::DrawBackground@0xC9A5EC:0x4:RW
 # CMenuManager::DrawStandardMenus: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, _rwD3D9LastIndexBufferUsed, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
-CMenuManager::DrawStandardMenus@0x8CE110:0xBC:RW
-CMenuManager::DrawStandardMenus@0x8CE498:0xBC:RW
-CMenuManager::DrawStandardMenus@0x8CFE34:0xB8:RW
-CMenuManager::DrawStandardMenus@0x8D0460:0xBC:RW
-CMenuManager::DrawStandardMenus@0x8E2450:0x4:RW
-CMenuManager::DrawStandardMenus@0xC4B964:0x4EC:RW
-CMenuManager::DrawStandardMenus@0xC5F958:0x2E60:RW
-CMenuManager::DrawStandardMenus@0xC716B4:0x1F8:RW
-CMenuManager::DrawStandardMenus@0xC71AA0:0x2C:RW
-CMenuManager::DrawStandardMenus@0xC97B98:0x10:RW
-CMenuManager::DrawStandardMenus@0xC980E4:0xC:RW
-CMenuManager::DrawStandardMenus@0xC98B40:0x8:RW
-CMenuManager::DrawStandardMenus@0xC98EC4:0x34:RW
-CMenuManager::DrawStandardMenus@0xC99248:0x4:RW
-CMenuManager::DrawStandardMenus@0xC992A8:0x4:RW
-CMenuManager::DrawStandardMenus@0xC9A4E8:0x24:RW
 # CMenuManager::PrintBriefs: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, gGxtString, s_RenderFontBuffer
-CMenuManager::PrintBriefs@0xC1B100:0x28:RW
-CMenuManager::PrintBriefs@0xC5F958:0x4440:RW
-CMenuManager::PrintBriefs@0xC716B4:0x1C0:RW
-CMenuManager::PrintBriefs@0xC71AA0:0x2C:RW
-CMenuManager::PrintBriefs@0xC97B98:0x10:RW
-CMenuManager::PrintBriefs@0xC980E4:0xC:RW
-CMenuManager::PrintBriefs@0xC98EC4:0x34:RW
-CMenuManager::PrintBriefs@0xC99248:0x4:RW
-CMenuManager::PrintBriefs@0xC992A8:0x4:RW
-CMenuManager::PrintBriefs@0xC9A4E8:0x24:RW
 # CMenuManager::PrintMap: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, s_RenderFontBuffer
-CMenuManager::PrintMap@0xBA8318:0x8:RW
-CMenuManager::PrintMap@0xC5F958:0x27D0:RW
-CMenuManager::PrintMap@0xC716B4:0x1E8:RW
-CMenuManager::PrintMap@0xC71AA0:0x2C:RW
-CMenuManager::PrintMap@0xC97B98:0x10:RW
-CMenuManager::PrintMap@0xC980E4:0x38:RW
-CMenuManager::PrintMap@0xC98EC4:0x34:RW
-CMenuManager::PrintMap@0xC99248:0x4:RW
-CMenuManager::PrintMap@0xC992A8:0x4:RW
-CMenuManager::PrintMap@0xC99864:0x10:RW
-CMenuManager::PrintMap@0xC9A4E8:0x24:RW
 # CMenuManager::PrintStats: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, TheText, aRadiosityVertexBuffer, aTempBufferIndices, gGxtString, gGxtString2, gString, gString2, s_RenderFontBuffer
-CMenuManager::PrintStats@0xB71510:0xC:RW
-CMenuManager::PrintStats@0xB71670:0x8:RW
-CMenuManager::PrintStats@0xC1AED8:0x1C:RW
-CMenuManager::PrintStats@0xC1B100:0x28:RW
-CMenuManager::PrintStats@0xC1BDD0:0x8:RW
-CMenuManager::PrintStats@0xC4BE50:0x378:RW
-CMenuManager::PrintStats@0xC5F958:0x4EC0:RW
-CMenuManager::PrintStats@0xC716B4:0x1F8:RW
-CMenuManager::PrintStats@0xC71AA0:0x2C:RW
-CMenuManager::PrintStats@0xC97B98:0x10:RW
-CMenuManager::PrintStats@0xC980E4:0xC:RW
-CMenuManager::PrintStats@0xC98B40:0x8:RW
-CMenuManager::PrintStats@0xC98EAC:0x4C:RW
-CMenuManager::PrintStats@0xC99218:0x34:RW
-CMenuManager::PrintStats@0xC992A8:0x4:RW
-CMenuManager::PrintStats@0xC9A4E8:0x24:RW
 # CMenuManager::UserInput: AEAudioHardware, AERadioTrackManager, AESmoothFadeThread, AESoundManager, AudioEngine, CAEPedSpeechAudioEntity::gGlobalSpeechContextNextPlayTime, CAEPoliceScannerAudioEntity::s_ScannerSlotFirst, CAEPo
-CMenuManager::UserInput@0x8CB7A4:0x40:RW
-CMenuManager::UserInput@0x8E2CA0:0x4:RW
-CMenuManager::UserInput@0xB5F9CC:0x4:RW
-CMenuManager::UserInput@0xB5FACC:0x4:RW
-CMenuManager::UserInput@0xB5FCE8:0x8:RW
-CMenuManager::UserInput@0xB5FF40:0x8:RW
-CMenuManager::UserInput@0xB608D8:0x20:RW
-CMenuManager::UserInput@0xB610E0:0x4:RW
-CMenuManager::UserInput@0xB61670:0x5A0:RW
-CMenuManager::UserInput@0xB61D24:0x24:RW
-CMenuManager::UserInput@0xB62D10:0x174:RW
-CMenuManager::UserInput@0xB6B960:0x8:RW
-CMenuManager::UserInput@0xB6BFBC:0x4:RW
-CMenuManager::UserInput@0xB6F078:0x4:RW
-CMenuManager::UserInput@0xB6FC24:0x4C:RW
-CMenuManager::UserInput@0xB71670:0x1C:RW
-CMenuManager::UserInput@0xB71A60:0x34:RW
-CMenuManager::UserInput@0xBA6774:0x4C:RW
-CMenuManager::UserInput@0xBA6804:0x8:RW
-CMenuManager::UserInput@0xBA68A4:0x4:RW
-CMenuManager::UserInput@0xBA8234:0x1C:RW
-CMenuManager::UserInput@0xBA8E20:0x28:RW
 # CRadar::DrawLegend: D3D9RestoreDeviceCallback, RwEngineInstance, s_RenderFontBuffer
-CRadar::DrawLegend@0xC716F0:0x64:RW
-CRadar::DrawLegend@0xC97B98:0x10:RW
-CRadar::DrawLegend@0xC980E4:0x4:RW
-CRadar::DrawLegend@0xC9A4EC:0x20:RW
 # DIReleaseMouse: PsGlobal
-DIReleaseMouse@[0xC17054]+0x1C:4:RW
 # CReplay::StorePedUpdate (mvpb-world-4): the 0x34-byte ped block at the replay write position
 # (buffer [0x97FB74] + offset [0x97FB70], both .data; the offset advances by 0x34)
 CReplay::StorePedUpdate@[0x97FB74]+[0x97FB70]:0x34:RW
@@ -6535,3 +6414,270 @@ CWeaponEffects::Render@0xC8A838:0x70:D
 # CWaterLevel::RenderWater (split v6-water-aw): its sea-bed / detailed segment callees fill CWaterLevel::ms_WaterFog
 # (0xC21188, up to CWaterLevel::NumWaterZonePolys 0xC215F0)
 CWaterLevel::RenderWater@0xC21188:0x468:D
+
+# GEN2 generated hooks (VERIFIER-7, split v7-gen2-*-grove, keyed by address). Stores through an argument or
+# `this` (tools/gen/patterns.py `heap-writes`: the generated body's own stores, offsets from the code):
+0x4CFA90@arg0:0x10:RW
+0x4CFB10@arg0:0xc:RW
+0x4AE1A0@ecx:0x18:RW
+0x4AB270@ecx:0x1c:RW
+0x4AB290@ecx:0x1c:RW
+0x722220@arg1:0x4:RW
+0x734930@arg1:0x4:RW
+# Static memory the original callees of generated thunks/small bodies write (the same callee runs in both
+# runs; compared through the static-window page hashes, D): ranges from the split reports' undeclared lines.
+# tReplayTrainBlock::MakeTrainUpdateData: the CReplay buffer block the base update (0x45B730) fills
+0x45CD10@0x9CF0E4:0x10d95:D
+# CScriptsForBrains ctor and its static initialiser: CTheScripts::ScriptsForBrains (0xA90CF0)
+0x46B260@0xA90CF0:0x570:D
+0x84A740@0xA90CF0:0x570:D
+# FUN_004ae1a0: its callee 0x571B70 (the list it links `this + 0x14` into)
+0x4AE1A0@0xB9BD80:0xfb7:D
+0x5DAAC0@0xC98AFA:0x19:D
+# CPlantMgr::MoveLocTriToList: the plant LocTri array the list links run through
+0x5DB590@0xC03984:0x16bf:D
+0x5E46D0@0xC88234:0x11:D
+# render callbacks: RenderWare / D3D9 driver state written by the original render callees
+0x705620@0x8D7390:0x7c:D
+0x705620@0x8E2444:0x74a:D
+0x705620@0xC926F8:0x50:D
+0x705620@0xC93B3D:0x113e:D
+0x705620@0xC9603C:0x45b1:D
+0x722150@0x8E2444:0xe:D
+0x722150@0xC97B98:0x2fa6:D
+0x7323C0@0x8D12E4:0xd:D
+0x7323C0@0x8E2450:0xbb:D
+0x7323C0@0xC926C8:0xe:D
+0x7323C0@0xC98AFA:0x7af:D
+0x7323C0@0xC9A4E8:0x22:D
+0x732B30@0x8D12E4:0x38:D
+0x732B30@0x8E2444:0xc7:D
+0x732B30@0xC926C8:0xe:D
+0x732B30@0xC97BD8:0x16e5:D
+0x732B30@0xC9A4E8:0x22:D
+# CVisibilityPlugins::InitAlphaAtomicList / InitAlphaEntityList: the alpha lists (0xC88070, 0xC88120) their
+# callee 0x733F40 initialises
+0x734530@0xC88080:0x29:D
+0x734540@0xC88130:0x81:D
+0x748F70@0x8E22AC:0x138:D
+0x748F70@0xC9A6D0:0x2:D
+0x6E7680@0xC97B98:0xe:D
+0x6E7680@0xC98EC0:0x385:D
+0x6E7680@0xC9A5EC:0x552:D
+# List_c-style intrusive list ops (head +0 / tail +4 / count +8; item next +0 / prev +4): the head and the
+# neighbours they relink
+0x4A8E30@ecx:0xc:RW
+0x4A8E30@[arg0+4]:4:RW
+0x4A8E30@[arg0]+4:4:RW
+0x4A8E70@ecx:0xc:RW
+0x4A8E70@[[ecx]+4]:4:RW
+0x4A8EB0@ecx:0xc:RW
+# RwHelper::RemoveRefsCB: the model info its callee 0x4C4BB0 drops a reference of (the static model info
+# stores; split v7-pr-gen2-rw-5-pr: 0xAB105C, 0xAB2E7C)
+0x7226D0@0xAB105C:0x1e21:D
+# VERIFIER-8: out-parameter on the caller's stack (split v8-leafcoll2: 0 undeclared with it)
+# CCollision::IsStoredPolyStillValidVerticalLine(const CVector&, float, CColPoint& colPoint, CStoredCollPoly*)
+CCollision::IsStoredPolyStillValidVerticalLine@arg2:0x2C:RW
+# SAVE-1 (docs/arch/save-port.md): writes of the save / load ports and their original callees outside the
+# catalogue's write sets, from the split run port-l2-save1 (save-load), coalesced (gaps < 0x400): the CRT stdio
+# state (0x8E2C90.., 0xC9AC4C) of the file functions, the file name buffers, the pad states CPad::UpdatePads
+# writes after a save, the arrays the block loads fill whole, the scene / streaming / script state the
+# before-save and after-load steps change, and the save structures the Construct functions fill (ecx).
+CGameLogic::Load@0x96A8AD:0x1:RW
+CGangWarsSaveStructure::Construct@ecx:0x58:D
+CGarages::Load@0x96C31E:0x26D1:RW
+CGenericGameStorage::CheckDataNotCorrupt@0xC15F61:0xAA:RW
+CGenericGameStorage::CheckDataNotCorrupt@0xC9AC4C:0x1:RW
+CGenericGameStorage::CheckSlotDataValid@0x8E48A0:0x3:RW
+CGenericGameStorage::CheckSlotDataValid@0x9654F8:0x24:RW
+CGenericGameStorage::CheckSlotDataValid@0xAAEB1C:0xE01:RW
+CGenericGameStorage::CheckSlotDataValid@0xAB045C:0xAE1:RW
+CGenericGameStorage::CheckSlotDataValid@0xAB1B9C:0x41:RW
+CGenericGameStorage::CheckSlotDataValid@0xAB273C:0x1:RW
+CGenericGameStorage::CheckSlotDataValid@0xABC97C:0xF21:RW
+CGenericGameStorage::CheckSlotDataValid@0xABE77C:0x3C1:RW
+CGenericGameStorage::CheckSlotDataValid@0xACA23C:0x361:RW
+CGenericGameStorage::CheckSlotDataValid@0xACBB3C:0x1:RW
+CGenericGameStorage::CheckSlotDataValid@0xB0B17C:0x1:RW
+CGenericGameStorage::CheckSlotDataValid@0xB1CEA0:0x25:RW
+CGenericGameStorage::CheckSlotDataValid@0xB1E6B4:0x1:RW
+CGenericGameStorage::CheckSlotDataValid@0xB71804:0x2:RW
+CGenericGameStorage::CheckSlotDataValid@0xC87C74:0x1E5:RW
+CGenericGameStorage::CheckSlotDataValid@0xC9AC4C:0x1:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8E48B8:0x2CD:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8EAC88:0x59D:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8EC204:0x11:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8F3E64:0x11:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8F62CC:0x61:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8F6984:0xAC5:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8F852C:0x12A9:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8FB114:0xFC5:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8FD194:0x11:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x8FF2C8:0x1565:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x928290:0x359:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x93A990:0x1B5:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x93B3F4:0xDE5:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x93C830:0x89:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x948146:0x2:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x949648:0x205:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x949DDC:0x11:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x94A688:0xC2D:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x94C3E8:0x63D:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x952F90:0x11:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x955B38:0x119:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0x965460:0xA4:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xA49A00:0x1:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xA4A4BC:0x271:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xA4EBF0:0x1:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xA8ECF5:0x548:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xA8F69C:0x541:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xA90035:0x7E8:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAAEB1C:0xE01:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAB04FC:0x8F8:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAB273C:0x18:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAB4FA0:0x34F4:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAB9A00:0x14:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xABCAFC:0x38:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xABCF3C:0x1D78:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xABF6A0:0x294:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAC0720:0xA14:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAC1560:0x7F4:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAC2700:0xD4:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xAC9660:0x554:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xACA2C0:0x94:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xACAD40:0x234:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xACB3A0:0x334:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xACBD20:0x154:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB0B17C:0x18:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB1CA24:0x4B8:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB6F079:0x2:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB6FC68:0x7:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB71804:0x292:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB84454:0x792:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB992E4:0xD0:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB99D64:0xE8:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xB9BAE4:0x74A:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xC1B341:0x29:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xC87C7C:0x39:RW
+CGenericGameStorage::DoGameSpecificStuffAfterSucessLoad@0xC9AC4C:0x1:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0x965510:0xC:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0x978D4C:0x182:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0x97A744:0x1A:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB1E6B4:0x1:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB74238:0x1F2:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB76BCC:0x98A:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB79038:0x9:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB99398:0x7A:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB99D10:0x122:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xB9BA20:0xEF:RW
+CGenericGameStorage::DoGameSpecificStuffBeforeSave@0xBA1769:0x1:RW
+CGenericGameStorage::GenericSave@0xB7315C:0x1:RW
+CGenericGameStorage::GenericSave@0xB7356E:0x135:RW
+CGenericGameStorage::GenericSave@0xC16031:0x42:RW
+CGenericGameStorage::GenericSave@0xC9AC4C:0x1:RW
+CGenericGameStorage::LoadWorkBuffer@0x8E2C90:0xD:RW
+CGenericGameStorage::LoadWorkBuffer@0xC9AC4C:0x1:RW
+CGenericGameStorage::MakeValidSaveName@0xC16DB9:0x42:RW
+CGenericGameStorage::OpenFileForReading@0x8E2C9C:0x1:RW
+CGenericGameStorage::OpenFileForReading@0xC15F61:0xAA:RW
+CGenericGameStorage::OpenFileForReading@0xC9AC4C:0x1:RW
+CGenericGameStorage::OpenFileForWriting@0x8E2C9C:0x1:RW
+CGenericGameStorage::OpenFileForWriting@0xC9AC4C:0x1:RW
+CGenericGameStorage::SaveWorkBuffer@0x8E2C90:0xD:RW
+CGenericGameStorage::SaveWorkBuffer@0xC9AC4C:0x1:RW
+CPickups::Load@0x9788DA:0x4544:RW
+CRestart::Load@0xA4329A:0x14A:RW
+CShopping::Load@0xA9734D:0x100:RW
+CStats::Load@0xB78252:0x2F1:RW
+CStats::Load@0xB79038:0x44C:RW
+CTheScripts::Load@0x8E2C91:0x5:RW
+CTheScripts::Load@0xA44818:0x1D0:RW
+CTheScripts::Load@0xA4996C:0x5399:RW
+CTheScripts::Load@0xA8EB54:0x1CD0:RW
+CTheScripts::Load@0xA90CF1:0x4D2:RW
+CTheScripts::Load@0xC9AC4C:0x1:RW
+CTheScripts::Save@0x8E2C90:0xD:RW
+CTheScripts::Save@0xC9AC4C:0x1:RW
+C_PcSave::SaveSlot@0x965510:0xC:RW
+C_PcSave::SaveSlot@0x978D4C:0x182:RW
+C_PcSave::SaveSlot@0x97A744:0x1A:RW
+C_PcSave::SaveSlot@0xB1E6B4:0x1:RW
+C_PcSave::SaveSlot@0xB7315C:0x1:RW
+C_PcSave::SaveSlot@0xB7356E:0x135:RW
+C_PcSave::SaveSlot@0xB74238:0x1F2:RW
+C_PcSave::SaveSlot@0xB76BCC:0x98A:RW
+C_PcSave::SaveSlot@0xB79038:0x9:RW
+C_PcSave::SaveSlot@0xB99398:0x7A:RW
+C_PcSave::SaveSlot@0xB99D10:0x122:RW
+C_PcSave::SaveSlot@0xB9BA20:0xEF:RW
+C_PcSave::SaveSlot@0xBA1769:0x1:RW
+C_PcSave::SaveSlot@0xC16031:0x42:RW
+C_PcSave::SaveSlot@0xC16DB9:0x42:RW
+C_PcSave::SaveSlot@0xC9AC4C:0x1:RW
+C_PcSave::GenerateGameFilename@arg1:0x104:D
+FUN_005d2560@0xB7CE50:0x7E:RW
+FUN_005d24b0@ecx:0x28:D
+TextCopy@arg0:0x80:D
+CGenericGameStorage::LoadDataFromWorkBuffer-org@arg0:arg1:D
+CGenericGameStorage::LoadDataFromWorkBuffer-org@0x8E2C90:0xD:RW
+CGenericGameStorage::SaveDataToWorkBuffer-org@0x8E2C90:0xD:RW
+CGenericGameStorage::SaveDataToWorkBuffer-org@0xC9AC4C:0x1:RW
+CSimpleVariablesSaveStructure::Extract@arg0:4:D
+CSimpleVariablesSaveStructure::Extract@0xB6F9CC:0xC:RW
+# SAVE-1: GenericLoad (split s3-0x5d17b0): the world state its block loads and DoGameSpecificStuffAfterSucessLoad
+# (text, collision, scene load, streaming, scripts, clothes, population) write, coalesced (gaps < 0x1000).
+CGenericGameStorage::GenericLoad@0x8E48B8:0x2CD:RW
+CGenericGameStorage::GenericLoad@0x8E612A:0x1:RW
+CGenericGameStorage::GenericLoad@0x8EAC88:0x158D:RW
+CGenericGameStorage::GenericLoad@0x8F3E64:0x11:RW
+CGenericGameStorage::GenericLoad@0x8F62CC:0x117D:RW
+CGenericGameStorage::GenericLoad@0x8F852C:0x12A9:RW
+CGenericGameStorage::GenericLoad@0x8FB114:0xFC5:RW
+CGenericGameStorage::GenericLoad@0x8FD194:0x11:RW
+CGenericGameStorage::GenericLoad@0x8FF2C8:0x1565:RW
+CGenericGameStorage::GenericLoad@0x928290:0x359:RW
+CGenericGameStorage::GenericLoad@0x93A990:0x1F29:RW
+CGenericGameStorage::GenericLoad@0x946CAA:0x1:RW
+CGenericGameStorage::GenericLoad@0x947D76:0x353F:RW
+CGenericGameStorage::GenericLoad@0x94C3E8:0x63D:RW
+CGenericGameStorage::GenericLoad@0x952F90:0x11:RW
+CGenericGameStorage::GenericLoad@0x955B38:0x119:RW
+CGenericGameStorage::GenericLoad@0x965460:0xA4:RW
+CGenericGameStorage::GenericLoad@0x96A8AD:0x1:RW
+CGenericGameStorage::GenericLoad@0x96C31E:0x26D1:RW
+CGenericGameStorage::GenericLoad@0x9725B8:0x1:RW
+CGenericGameStorage::GenericLoad@0x9788FA:0x4524:RW
+CGenericGameStorage::GenericLoad@0xA4329A:0x14A:RW
+CGenericGameStorage::GenericLoad@0xA44818:0x1D0:RW
+CGenericGameStorage::GenericLoad@0xA4996C:0x5399:RW
+CGenericGameStorage::GenericLoad@0xA8EB54:0x266F:RW
+CGenericGameStorage::GenericLoad@0xA9734D:0x100:RW
+CGenericGameStorage::GenericLoad@0xAAEB1C:0x22D8:RW
+CGenericGameStorage::GenericLoad@0xAB273C:0x18:RW
+CGenericGameStorage::GenericLoad@0xAB4FA0:0x34F4:RW
+CGenericGameStorage::GenericLoad@0xAB9A00:0x14:RW
+CGenericGameStorage::GenericLoad@0xABCAFC:0x5CD8:RW
+CGenericGameStorage::GenericLoad@0xAC9660:0x2814:RW
+CGenericGameStorage::GenericLoad@0xB0B17C:0x18:RW
+CGenericGameStorage::GenericLoad@0xB1CA24:0x4B8:RW
+CGenericGameStorage::GenericLoad@0xB47904:0x1:RW
+CGenericGameStorage::GenericLoad@0xB5D4B2:0x1:RW
+CGenericGameStorage::GenericLoad@0xB6F079:0xBF6:RW
+CGenericGameStorage::GenericLoad@0xB71804:0x292:RW
+CGenericGameStorage::GenericLoad@0xB78252:0x113E:RW
+CGenericGameStorage::GenericLoad@0xB7CDC0:0x10E:RW
+CGenericGameStorage::GenericLoad@0xB84454:0x792:RW
+CGenericGameStorage::GenericLoad@0xB992CC:0x2F62:RW
+CGenericGameStorage::GenericLoad@0xBA3787:0xB:RW
+CGenericGameStorage::GenericLoad@0xBA8704:0x709:RW
+CGenericGameStorage::GenericLoad@0xC099E8:0x1E8:RW
+CGenericGameStorage::GenericLoad@0xC1B341:0x29:RW
+CGenericGameStorage::GenericLoad@0xC279D9:0x1EF5:RW
+CGenericGameStorage::GenericLoad@0xC87C7C:0x39:RW
+CGenericGameStorage::GenericLoad@0xC9AC4C:0x1:RW
+CPedSaveStructure::Construct@ecx:0x18C:D
+# SAVE-1: the stats strings write gString2 (0xB71510) and gGxtString2 (0xC1AED8) (split s7-gsta, menus-hud).
+CStats::ConstructStatLine@0xB71510:0x200:RW
+CStats::ConstructStatLine@0xC1AED8:0x480:RW
+CStats::BuildStatLine@0xB71510:0x200:RW
+CStats::BuildStatLine@0xC1AED8:0x480:RW
