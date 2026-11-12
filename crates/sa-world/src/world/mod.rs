@@ -115,3 +115,5 @@ pub mod interior_closest_info;
 pub mod pickup_collectables;
 pub mod interior_bounding_box;
 pub mod office_edge_desks;
+pub mod world_peds_fire;
+pub mod world_clear_cars;
