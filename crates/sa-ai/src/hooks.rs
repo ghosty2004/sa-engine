@@ -54,6 +54,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpa_ai1::HOOKS,
     crate::mvpa_ai2::HOOKS,
     crate::event_stuck_in_air_priority::HOOKS,
+    crate::wander_prostitute_stuck_in_air_dtors::HOOKS,
     crate::mvpc_ai1::HOOKS,
     crate::mvpc_ai2::HOOKS,
     crate::mvpc_ai3::HOOKS,
@@ -93,6 +94,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::ped_player_collision::HOOKS,
     crate::dragged_out_car::HOOKS,
     crate::vehicle_potential_collision::HOOKS,
+    crate::attractor_approach_event::HOOKS,
+    crate::task_in_air_process_ped::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
