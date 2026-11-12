@@ -93,3 +93,4 @@ pub mod vehicle_collision_particles;
 pub mod car_door_positions;
 pub mod player_quit_car_enter;
 pub mod bike_knock_off_rider;
+pub mod car_enter_stealable;
