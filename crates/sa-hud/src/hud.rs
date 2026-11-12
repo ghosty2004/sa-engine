@@ -459,7 +459,9 @@ pub fn user_display_init() {
 /// `CUserDisplay::Process()` (0x5720A0): place name, on-screen timer, current vehicle.
 #[hook(addr = 0x5720A0, conv = cdecl, name = "CUserDisplay::Process", expect = "B9 F4 18 BA 00")]
 pub fn user_display_process() {
-    place_name_process(PLACE_NAME.ptr().cast());
+    if !sa_core::samp::disabled(sa_core::samp::feature::ZONE_NAMES) {
+        place_name_process(PLACE_NAME.ptr().cast());
+    }
     onscreen_timer_process(g(ONSCN_TIMER));
     current_vehicle_process(CURRENT_VEHICLE.ptr().cast());
 }

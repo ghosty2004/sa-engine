@@ -89,6 +89,12 @@ pub mod feature {
     pub const PLANT_MANAGER: u8 = 10;
     /// `CCoronas::DoSunAndMoon` call 0x53C136 in `CGame::Process`.
     pub const SUN_MOON_CORONAS: u8 = 11;
+    /// `CIdleCam::Process` call 0x524582 in `CCam::Process_FollowPed_SA`.
+    pub const IDLE_CAMERA: u8 = 15;
+    /// `CHud::SetHelpMessage` 0x588BE0 returns at once.
+    pub const HELP_MESSAGES: u8 = 16;
+    /// `CPlaceName::Process` call 0x5720A5 in `CUserDisplay::Process`.
+    pub const ZONE_NAMES: u8 = 19;
 }
 
 /// Runtime toggle bits (`sa_samp_api::config::RuntimeToggle`).
