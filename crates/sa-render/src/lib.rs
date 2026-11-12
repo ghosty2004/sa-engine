@@ -134,3 +134,4 @@ pub mod car_env_map_render;
 pub mod fx_add_sparks;
 pub mod fx_info_trail_value;
 pub mod rw_tex_dict_find_hash;
+pub mod fx_add_punch_impact;

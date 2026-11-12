@@ -132,3 +132,4 @@ pub mod vehicle_stub_natives;
 pub mod vehicle_fire_rates_upgrades;
 pub mod vehicle_teleport_destroy;
 pub mod vehicle_misc_queries;
+pub mod stored_car_restore;
