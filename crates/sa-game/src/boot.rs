@@ -147,7 +147,7 @@ pub fn run_step(s: &Step) -> Outcome {
 /// `FxRwMatrixCreate` of a frame is matched by a `FxRwMatrixDestroy` before the frame ends) is empty between
 /// frames. An unwind between the two leaks entries until the stack runs past its array and hands out garbage
 /// matrices (SAMP-4: seen as a fault in `FxEmitter_c::CreateParticles` after FX info types that are not ported).
-fn unwound_frame_recovery() {
+pub(crate) fn unwound_frame_recovery() {
     let fx_man = sa_core::mem::GPtr::<i32>::from_addr(sa_render::fx::FX_MAN + 0x88);
     if fx_man.read() != 0 {
         fx_man.write(0);

@@ -88,7 +88,11 @@ fn auth_table(path: Option<&Path>) -> Result<AuthTable, String> {
 /// data (main-session decision 2026-11-12). In the browser: a new one per page load (no configuration folder).
 #[cfg(target_arch = "wasm32")]
 pub fn serial_seed() -> String {
-    samp_client::netclient::pseudo_random_hex40()
+    // samp-rs's `pseudo_random_hex40` reads std's clock, which wasm32-unknown-unknown does not have
+    (0..40)
+        .map(|_| char::from_digit((js_sys::Math::random() * 16.0) as u32 & 15, 16).unwrap_or('0'))
+        .collect::<String>()
+        .to_ascii_uppercase()
 }
 
 /// The client serial's seed: made once per install from randomness and kept in sa-game's configuration

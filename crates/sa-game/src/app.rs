@@ -363,7 +363,7 @@ pub(crate) fn synthetic_input(n: u32) -> InputState {
             // key_down first: it queues the key-down message only for a key not yet held; repeated every 8
             // iterations like a keyboard's auto-repeat, so an iteration that unwinds (a blocked port) while the
             // message is handled does not lose the key
-            if (n - start) % 8 == 0 {
+            if (n - start).is_multiple_of(8) {
                 i.key_down(Key::W);
             }
             i.held.insert(Key::W);
@@ -474,6 +474,8 @@ impl Session {
     /// `web::recover`) ends as natively after a caught panic: a blocked step, with the same stop rules.
     #[cfg(target_arch = "wasm32")]
     pub fn finish_blocked(&mut self, msg: &str) -> bool {
+        // the per-frame invariants a natively unwound step restores (boot.rs: the FX matrix stack)
+        crate::boot::unwound_frame_recovery();
         let o = match crate::boot::parse_unported(msg) {
             Some((callee, addr)) => Outcome::Blocked { callee, addr },
             None => Outcome::Panicked(msg.to_owned()),
