@@ -112,8 +112,11 @@ outline black. Textdraws keep the game's own fonts, as in SA:MP.
 `screen::frame`): every platform `InputEvent` becomes a `sa_samp_api::input::WindowEvent` (Windows virtual-key
 codes via `sa_platform::win32::key_info`, characters as Unicode, wheel × 120) and goes to
 `NativeGame::window_event`: the UI first (`SampUi::handle_event`), then the client's `GameHooks::window_event`.
-Consumed events never reach the game's message queue; while the chat line or a dialog is open the held keys,
-mouse buttons and mouse motion are cleared too (samp's input lock: typing does not move CJ).
+Consumed events never reach the game's message queue (key releases always pass, so no key sticks). samp's input
+lock comes from `NativeGame::ui_input_lock()`: while the chat line or a dialog is open the held keys are cleared
+(typing does not move CJ); while a dialog, the scoreboard, textdraw selection or `CursorMode::Locked` has the
+cursor, mouse motion, buttons and wheel are cleared too (the camera does not turn). Open: showing / releasing the
+OS pointer (`Input::set_cursor_visible`) so `MouseMove` events arrive while the pointer is captured.
 
 ## 5. API changes for the samp-rs pin bump (all additive; `API_VERSION` stays 1)
 
