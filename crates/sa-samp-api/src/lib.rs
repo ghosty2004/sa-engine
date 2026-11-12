@@ -54,6 +54,7 @@ pub mod render;
 pub mod script;
 pub mod streaming;
 pub mod types;
+pub mod ui;
 pub mod vehicles;
 pub mod world;
 
@@ -129,6 +130,12 @@ pub trait GameAdapter:
 
     /// Requests the game to quit at the next frame boundary (`RsGlobal.quit` 0xC17050).
     fn request_quit(&mut self);
+
+    /// The engine-drawn SA:MP UI ([`ui::SampUi`]), where the backend offers one (native engine). `None`
+    /// on the original backend: samp-rs draws its own UI through D3D9 there.
+    fn ui(&mut self) -> Option<&mut dyn ui::SampUi> {
+        None
+    }
 }
 
 /// The host side of start-up: samp-rs hands its callbacks and configuration to the backend once.
@@ -155,6 +162,7 @@ const _: Option<&dyn GameAdapter> = None;
 const _: Option<&dyn SampHost> = None;
 const _: Option<&dyn hooks::GameHooks> = None;
 const _: Option<&dyn files::FileProvider> = None;
+const _: Option<&dyn ui::SampUi> = None;
 
 #[cfg(test)]
 mod tests {

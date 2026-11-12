@@ -38,6 +38,7 @@ mod config;
 mod hud;
 mod input;
 mod objects;
+pub mod overlay;
 mod peds;
 mod render;
 pub mod script;
@@ -68,6 +69,7 @@ pub struct NativeGame<V: View> {
     threads: script::Threads,
     /// The text `CMessages::AddBigMessage` points into (GTA keeps the pointer).
     big_message: Box<[u8; 0x200]>,
+    overlay: overlay::Overlay,
 }
 
 /// The adapter over this process's engine (native sa-game).
@@ -91,6 +93,7 @@ impl<V: View> NativeGame<V> {
             installed: false,
             threads: script::Threads::new(exec),
             big_message: Box::new([0; 0x200]),
+            overlay: overlay::Overlay::default(),
         }
     }
 
@@ -122,6 +125,7 @@ impl<V: View> NativeGame<V> {
                 std::panic::resume_unwind(e);
             }
         }
+        self.overlay_frame(phase);
     }
 
     /// Runs the client's shutdown callback once and drops it.
@@ -171,6 +175,10 @@ impl<V: View> GameAdapter for NativeGame<V> {
 
     fn request_quit(&mut self) {
         self.view.write_u32(addr::RS_QUIT, 1);
+    }
+
+    fn ui(&mut self) -> Option<&mut dyn sa_samp_api::ui::SampUi> {
+        Some(&mut self.overlay.ui)
     }
 }
 
