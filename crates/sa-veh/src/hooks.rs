@@ -74,7 +74,6 @@ pub const MODULES: &[&[HookReg]] = &[
     // STD-12 (unverified batches)
     crate::automobile_random_damage::HOOKS,
     crate::bike_fix_hands::HOOKS,
-    crate::bike_car_horn::HOOKS,
     crate::vehicle_damage_react::HOOKS,
     crate::float_pow::HOOKS,
     crate::bike_rider_anims::HOOKS,
@@ -82,7 +81,6 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vehicle_collision_particles::HOOKS,
     // STD-14 (unverified batches)
     crate::car_door_positions::HOOKS,
-    crate::player_quit_car_enter::HOOKS,
     crate::bike_knock_off_rider::HOOKS,
     crate::car_enter_stealable::HOOKS,
     // PORT-VEH-3 (unverified batches)
@@ -97,7 +95,6 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::special_vehicle_control::HOOKS,
     crate::car_enter_quit::HOOKS,
     crate::vehicle_kill_entering_peds::HOOKS,
-    crate::vehicle_collision_particles::HOOKS,
     crate::vehicle_soft_ground::HOOKS,
     // PORT-VEH-4
     crate::automobile_nitrous::HOOKS,

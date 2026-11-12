@@ -82,14 +82,12 @@ pub mod bike_control;
 pub mod bike_render;
 pub mod automobile_random_damage;
 pub mod bike_fix_hands;
-pub mod bike_car_horn;
 pub mod vehicle_damage_react;
 pub mod generated;
 pub mod float_pow;
 pub mod bike_rider_anims;
 pub mod vehicle_collision_particles;
 pub mod car_door_positions;
-pub mod player_quit_car_enter;
 pub mod bike_knock_off_rider;
 pub mod car_enter_stealable;
 
@@ -105,7 +103,6 @@ pub mod automobile_tyre_fix;
 pub mod special_vehicle_control;
 pub mod car_enter_quit;
 pub mod vehicle_kill_entering_peds;
-pub mod vehicle_collision_particles;
 pub mod vehicle_soft_ground;
 
 // PORT-VEH-4 (unverified batches veh4-*)
