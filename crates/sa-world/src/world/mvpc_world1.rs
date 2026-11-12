@@ -216,13 +216,12 @@ pub fn process_vertical_line_sector(s: GPtr<u8>, r: GPtr<u8>, line: GPtr<u8>, cp
 /// float& minDist, CEntity*& outEntity, bool doSeeThroughCheck, CStoredCollPoly* poly)` (0x5632B0,
 /// AL). A local minimum starts at `*minDist`; every entity not yet scanned, using collision and not
 /// `pIgnoreEntity` gets the scan code, a matrix if it has none, and
-/// `CCollision::ProcessVerticalLine(line, matrix, colModel, colPoint, localMin, poly, false, see)`
-/// (the original passes the poly pointer as the sixth and the see-through flag as the eighth
-/// argument); a hit stores the entity and adds `ms_iProcessLineNumCrossings` to the total. True (and
+/// `CCollision::ProcessVerticalLine(line, matrix, colModel, colPoint, localMin, see, false, poly)`;
+/// a hit stores the entity and adds `ms_iProcessLineNumCrossings` to the total. True (and
 /// `*minDist` updated) when the local minimum ends below `*minDist`.
 #[hook(addr = 0x5632B0, conv = cdecl, name = "CWorld::ProcessVerticalLineSectorList<CPtrListDoubleLink<CPhysical*>>",
        expect = "51 8B 54 24 08 8B 4C 24", unverified = "mvpc-world-1", route = "L2", hazards = "none",
-       recs = "grove-walk,driving", note = "argument order of the CCollision::ProcessVerticalLine call kept: (..., poly, 0, see)")]
+       recs = "grove-walk,driving")]
 pub fn process_vertical_line_sector_list(list: GPtr<u8>, line: GPtr<u8>, cp: GPtr<u8>, min: GPtr<u8>, out: GPtr<u8>,
     see: u8, poly: GPtr<u8>) -> u8 {
     let mut lmb = [rd::<u32>(min, 0)];
@@ -238,9 +237,7 @@ pub fn process_vertical_line_sector_list(list: GPtr<u8>, line: GPtr<u8>, cp: GPt
         wr::<u16>(e, 0x2C, sc);
         let m = ensure_matrix(e);
         let model = get_col_model(e);
-        if coll_process_vertical_line(line, m, model, cp, lm, poly.addr() as u32, 0, GPtr::<u8>::from_addr(see as usize))
-            != 0
-        {
+        if coll_process_vertical_line(line, m, model, cp, lm, u32::from(see), 0, poly) != 0 {
             wr::<GPtr<u8>>(out, 0, e);
             add_crossings();
         }
