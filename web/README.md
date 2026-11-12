@@ -64,6 +64,12 @@ URL options: `?samp=HOST:PORT` (the server, as the proxy reaches it), `&proxy=ws
 new per page load. By hand: `sa-udp-proxy 127.0.0.1:7813 --bind 127.0.0.1:7781`, then
 `tools/web/serve.sh --port 8644 --game DIR --samp-auth FILE`.
 
+Status (2026-11-12, WEB-SAMP): headless Chromium on WebGL2 (`--gpu native`) joins the private open.mp copy through
+the proxy as WebCJ, picks class 0 and spawns in Grove Street 18 s after the page opened; the server's chat lines and
+game text show through the engine-drawn SA:MP UI, and while a real W key is held the server's `[cov] where` position
+follows CJ (on-foot sync, y -1686.6 to -1642.3 until he reaches a wall). Blocked iterations on the unported FX getter
+`info_vget_value` (0x4A56E0) occur while walking (22 in 40 s, a few white frames); the run continues.
+
 ## Files
 
 * `index.html`, `main.js`: the page (folder picker, input forwarding, status line, log panel)
