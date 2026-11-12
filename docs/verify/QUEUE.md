@@ -73,6 +73,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | intro-ai-3 | 3 | AI | 5e0f61bf | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | intro-ai-4 | 4 | AI | 5e0f61bf | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | intro-anim-1 | 2 | ANIM | 5e0f61bf | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
+| intro2-1 | 10 | AI, ANIM, PED, RW, UNK-game | 0eb10920 | worktree-agent-ab80f5d4fe8147e79 | 9 | 0 | 0 | 1 | 0 | L2 9, split 1 |
 | menu-1 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | menu-2 | 1 | HUD | da9de7f1 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
 | menu-3 | 4 | HUD | da9de7f1 | master | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
@@ -248,6 +249,19 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | samp2-render-1 | 1 | RENDER | 572a1369 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
+| script5-1 | 6 | SCRIPT | 139aacef | worktree-agent-ab80f5d4fe8147e79 | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| script5-10 | 1 | SCRIPT | 962a2dc5 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-11 | 1 | WORLD | 61f4949f | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-12 | 1 | WORLD | aaac68aa | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-13 | 1 | UNK-game | 6951e29c | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-2 | 5 | AI, SCRIPT, VEH | 656b389e | worktree-agent-ab80f5d4fe8147e79 | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| script5-3 | 5 | SCRIPT, UNK-game | 6668985e | worktree-agent-ab80f5d4fe8147e79 | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| script5-4 | 1 | UNK-game | 00073bab | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-5 | 1 | SCRIPT | c3bd1166 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-6 | 5 | AI, SCRIPT, UNK-game | 7108b2e9 | worktree-agent-ab80f5d4fe8147e79 | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| script5-7 | 2 | AI, SCRIPT | 73a70b39 | worktree-agent-ab80f5d4fe8147e79 | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| script5-8 | 1 | SCRIPT | 9a77f79e | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| script5-9 | 1 | VEH | e110b347 | worktree-agent-ab80f5d4fe8147e79 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std10-ai-1 | 1 | AI | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std10-render-1 | 4 | RW | aa9224ad | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
 | std10-render-2 | 1 | RW | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
@@ -309,7 +323,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std5-tristrip-1 | 6 | RW | 309d8fec | master | 0 | 0 | 0 | 6 | 0 | L2 6 |
 | std5-world-1 | 3 | MATH, WORLD | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | std5-zones-1 | 1 | WORLD | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| std6-anim-1 | 38 | ANIM, CALLED-ONLY, RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 38 | 0 | L1-pure 16, L2 22 |
+| std6-anim-1 | 37 | CALLED-ONLY, RW, UNK-game | 309d8fec | master | 0 | 0 | 0 | 37 | 0 | L1-pure 16, L2 21 |
 | std6-cam-1 | 1 | CAM | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std6-math-1 | 1 | MATH | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std6-math-2 | 3 | MATH | 309d8fec | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
@@ -328,6 +342,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std9-render-4 | 2 | RW, UNK-game | da9de7f1 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | std9-render-7 | 1 | RW | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | std9-rw-1 | 3 | RW | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| stream-1 | 9 | AUDIO | eca373d3 | worktree-agent-ab80f5d4fe8147e79 | 9 | 0 | 0 | 0 | 0 | L2 4, split 5 |
 | veh3-1 | 42 | VEH | 35a056ba | master | 42 | 0 | 0 | 0 | 0 | L2 40, split 2 |
 | veh3-2 | 2 | VEH | 35a056ba | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | veh3-3 | 16 | VEH | 43038126 | master | 16 | 0 | 0 | 0 | 0 | L2 16 |
@@ -2406,6 +2421,30 @@ SA_UNVERIFIED=intro-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:intro-anim-1 $S
 |---|---|---|---|---|
 | 0x4D5AF0 | `CCutsceneMgr::RemoveEverythingBecauseCutsceneDoesntFitInMemory` | L3-batch | L2 | heap-writes |
 | 0x4D5C10 | `CCutsceneMgr::LoadEverythingBecauseCutsceneDeletedAllOfIt` | L3-batch | L2 | heap-writes |
+
+## intro2-1
+
+10 hooks in sa-ai, sa-anim, sa-ped; hazards: heap-writes (9); recordings calling them: intro (10), new-game (1), pause-restart (6).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh intro2-1 $SA_ROOT/target/e2e/corpus/intro.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=intro2-1 LANE=$LANE tools/e2e/port-l2.sh batch:intro2-1 $SA_ROOT/target/e2e/corpus/intro.sarec --runs "plain l2 rust" --tag intro2-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4D1A50 | `RpAnimBlend::FrameUpdateCallBackSkinnedWith3dVelocityExtraction` | written | L2 | heap-writes |
+| 0x4D1DB0 | `RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedSkinned` | written | L2 | heap-writes |
+| 0x4D2450 | `RpAnimBlend::FrameUpdateCallBackNonSkinnedWith3dVelocityExtraction` | written | L2 | heap-writes |
+| 0x4D27F0 | `RpAnimBlend::FrameUpdateCallBackWithVelocityExtractionCompressedNonSkinned` | written | L2 | heap-writes |
+| 0x4D2E40 | `RpAnimBlend::FrameUpdateCallBackCompressedSkinned` | written | L2 | heap-writes |
+| 0x4D32D0 | `RpAnimBlend::FrameUpdateCallBackCompressedNonSkinned` | written | L2 | heap-writes |
+| 0x4D47F0 | `CAnimManager::LoadAnimFile` | L3-batch | L2 | heap-writes |
+| 0x60A530 | `CPlayerPed::ResetSprintEnergy` | written | split | none |
+| 0x6322F0 | `CTaskComplexUseEffect::MakeAbortable` | written | L2 | heap-writes |
+| 0x63CE70 | `FUN_0063ce70` | written | L2 | heap-writes |
 
 ## menu-1
 
@@ -5490,6 +5529,219 @@ SA_UNVERIFIED=save-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:save-veh-1 $SA_RO
 | 0x5D4760 | `CVehicle::Save` | written | L2 | uninit-locals |
 | 0x5D47E0 | `CAutomobile::Save` | written | split | none |
 
+## script5-1
+
+6 hooks in sa-script; hazards: stack-residue (2), uninit-locals (4); recordings calling them: grove-walk (6).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-1 LANE=$LANE tools/e2e/port-l2.sh batch:script5-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4861F0 | `CTheScripts::IsVehicleStopped` | written | L2 | none |
+| 0x486240 | `CTheScripts::RemoveThisPed` | written | L2 | none |
+| 0x4870F0 | `CRunningScript::LocateCharCharCommand` | written | L2 | uninit-locals |
+| 0x487420 | `CRunningScript::LocateCharCarCommand` | written | L2 | uninit-locals |
+| 0x487A20 | `CRunningScript::LocateCarCommand` | written | L2 | uninit-locals,stack-residue |
+| 0x487D10 | `CRunningScript::LocateObjectCommand` | written | L2 | uninit-locals,stack-residue |
+
+## script5-10
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-10 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-10 LANE=$LANE tools/e2e/port-l2.sh batch:script5-10 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-10
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x486110 | `CTheScripts::IsPedStopped` | written | L2 | none |
+
+## script5-11
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-11 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-11 LANE=$LANE tools/e2e/port-l2.sh batch:script5-11 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-11
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x44A3C0 | `CGarages::StoreCarInNearestImpoundingGarage` | written | L2 | none |
+
+## script5-12
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-12 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-12 LANE=$LANE tools/e2e/port-l2.sh batch:script5-12 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-12
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6E40E0 | `WaterCreatureManager_c::TryToFreeUpWaterCreatures` | written | L2 | none |
+
+## script5-13
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-13 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-13 LANE=$LANE tools/e2e/port-l2.sh batch:script5-13 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-13
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x492F60 | `FUN_00492f60` | written | L2 | none |
+
+## script5-2
+
+5 hooks in sa-script, sa-veh; hazards: none; recordings calling them: grove-walk (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-2 LANE=$LANE tools/e2e/port-l2.sh batch:script5-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x465A40 | `CTheScripts::RemoveScriptTextureDictionary` | written | L2 | none |
+| 0x485B10 | `CRunningScript::GetPadState` | written | L2 | none |
+| 0x600860 | `CDecisionMakerTypesFileLoader::GetPedDMName` | written | L2 | none |
+| 0x632E00 | `CTaskSequences::GetAvailableSlot` | written | L2 | none |
+| 0x6A4520 | `CAutomobile::CloseAllDoors` | written | L2 | none |
+
+## script5-3
+
+5 hooks in sa-script; hazards: none; recordings calling them: grove-walk (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-3 LANE=$LANE tools/e2e/port-l2.sh batch:script5-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-3
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x46A7E0 | `thunk_FUN_015624a0` | written | L2 | none |
+| 0x46B1A0 | `FUN_0046b1a0` | written | L2 | none |
+| 0x48E180 | `thunk_FUN_01569990` | written | L2 | none |
+| 0x634A40 | `FUN_00634a40` | written | L2 | none |
+| 0x640380 | `FUN_00640380` | written | L2 | none |
+
+## script5-4
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-4 LANE=$LANE tools/e2e/port-l2.sh batch:script5-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-4
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x634440 | `FUN_00634440` | written | L2 | none |
+
+## script5-5
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-5 LANE=$LANE tools/e2e/port-l2.sh batch:script5-5 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-5
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x486300 | `CTheScripts::CleanUpThisPed` | written | L2 | none |
+
+## script5-6
+
+5 hooks in sa-script; hazards: none; recordings calling them: grove-walk (5).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-6 LANE=$LANE tools/e2e/port-l2.sh batch:script5-6 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-6
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x41CC10 | `thunk_FUN_015638f0` | written | L2 | none |
+| 0x463490 | `thunk_FUN_01565620` | written | L2 | none |
+| 0x46A2F0 | `thunk_FUN_01569d20` | written | L2 | none |
+| 0x62F5D0 | `FUN_0062f5d0` | written | L2 | none |
+| 0x668C70 | `CTaskComplexGoToPointShooting::Constructor` | written | L2 | none |
+
+## script5-7
+
+2 hooks in sa-script; hazards: none; recordings calling them: grove-walk (2).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-7 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-7 LANE=$LANE tools/e2e/port-l2.sh batch:script5-7 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-7
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x492F90 | `CTheScripts::AddScriptEffectSystem` | written | L2 | none |
+| 0x6044C0 | `CDecisionMakerTypes::AddEventResponse` | written | L2 | none |
+
+## script5-8
+
+1 hooks in sa-script; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-8 LANE=$LANE tools/e2e/port-l2.sh batch:script5-8 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-8
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x493160 | `CTheScripts::RemoveScriptSearchLight` | written | L2 | none |
+
+## script5-9
+
+1 hooks in sa-veh; hazards: none; recordings calling them: grove-walk (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh script5-9 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=script5-9 LANE=$LANE tools/e2e/port-l2.sh batch:script5-9 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag script5-9
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6D13A0 | `CVehicle::AddPassenger-Auto-Seat` | written | L2 | none |
+
 ## std10-ai-1
 
 1 hooks in sa-ai; hazards: none; recordings calling them: grove-walk (1).
@@ -6616,7 +6868,7 @@ SA_UNVERIFIED=std5-zones-1 LANE=$LANE tools/e2e/port-l2.sh batch:std5-zones-1 $S
 
 ## std6-anim-1
 
-38 hooks in sa-anim; hazards: heap-writes (6); recordings calling them: new-game (7), pause-restart (20).
+37 hooks in sa-anim; hazards: heap-writes (5); recordings calling them: new-game (6), pause-restart (19).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -6627,7 +6879,6 @@ SA_UNVERIFIED=std6-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:std6-anim-1 $SA_
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4D47F0 | `CAnimManager::LoadAnimFile` | L3-batch | L2 | heap-writes |
 | 0x4D5F00 | `RpAnimBlend::RpAnimBlendFrameSetName` | L3-batch | L2 | none |
 | 0x4D5F20 | `CAnimBlendClumpData` | L3-batch | L2 | heap-writes |
 | 0x4D5FA0 | `RpAnimBlend::RtAnimBlendKeyFrameApply` | L3-batch | L2 | none |
@@ -7009,6 +7260,29 @@ SA_UNVERIFIED=std9-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:std9-rw-1 $SA_ROOT
 | 0x8098B0 | `RxHeapFree` | L3-batch | L2 | heap-writes |
 | 0x809EC0 | `_rxHeapReset` | L3-batch | L2 | heap-writes |
 | 0x80F070 | `_rxPacketDestroy` | L3-batch | L2 | heap-writes |
+
+## stream-1
+
+9 hooks in sa-audio; hazards: heap-writes (8); recordings calling them: grove-walk (9), pause-restart (3).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh stream-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:stream-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag stream-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4DC320 | `CAEDataStream::Read` | written | split | heap-writes |
+| 0x4DC340 | `CAEDataStream::Seek-istream` | written | split | heap-writes |
+| 0x4DC3A0 | `CAEDataStream::Stat` | written | split | heap-writes |
+| 0x4DC410 | `CAEDataStream::QueryInterface` | written | L2 | heap-writes |
+| 0x4DC460 | `CAEDataStream::AddRef` | written | L2 | heap-writes |
+| 0x4DC5B0 | `CAEDataStream::Release` | written | split | heap-writes |
+| 0x4DC620 | `CAEDataStream::Constructor` | written | L2 | heap-writes |
+| 0x4F2810 | `CAEStreamingDecoder::Constructor` | written | split | heap-writes |
+| 0x502460 | `CAEVorbisDecoder::GetStreamID` | written | L2 | none |
 
 ## veh3-1
 
