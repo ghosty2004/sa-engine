@@ -1,4 +1,8 @@
 //! STD-7: phase B registrations (`#[native]`) of this crate's ports that are not hooked in phase A.
 
 /// Every `#[native]` STD-7 added to this crate.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[crate::collscan::NATIVE_SCAN_FOR_COLLISION_EVENTS];
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[
+    crate::collscan::NATIVE_SCAN_FOR_COLLISION_EVENTS,
+    // SAMP-4 (phase B only until its L3 rerun, see the port's docs).
+    crate::fall::NATIVE_IN_AIR_PROCESS_PED,
+];

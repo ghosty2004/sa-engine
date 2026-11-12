@@ -13,7 +13,7 @@
 // operation of this module.
 #![allow(unsafe_code)]
 
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::sync::atomic::{AtomicU32, AtomicU64, AtomicUsize, Ordering};
 
 /// A frame point, in frame order (same order as `sa_samp_api::hooks::FramePhase`).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -62,6 +62,68 @@ pub fn frame(phase: FramePhase) {
     }
 }
 
+// ---- samp mode (SAMP-4, docs/samp/game-adapter.md §6) -------------------------------------------------------
+
+/// The `sa_samp_api::config::Feature`s samp disables, as bits (`1 << feature`). 0 = single-player.
+static DISABLED: AtomicU64 = AtomicU64::new(0);
+/// Runtime toggles (bits of [`toggle`]).
+static TOGGLES: AtomicU32 = AtomicU32::new(0);
+
+/// Bit numbers of the features the ports test, in `sa_samp_api::config::Feature` declaration order (sa-core does
+/// not depend on `sa-samp-api`; sa-samp's tests check that the numbers match). Each names the original call or
+/// entry samp NOPs; the port skips exactly that call when the bit is set.
+pub mod feature {
+    /// `CPopulation::AddPed` 0x612710 returns NULL.
+    pub const AMBIENT_PEDS: u8 = 0;
+    /// `CCarCtrl::GenerateRandomCars` call 0x53C1C1 in `CGame::Process`.
+    pub const RANDOM_TRAFFIC: u8 = 2;
+    /// `CTheCarGenerators::Process` call 0x53C06A in `CGame::Process`.
+    pub const CAR_GENERATORS: u8 = 3;
+    /// `CPlane::DoPlaneGenerationAndRemoval` call 0x434272 in `CCarCtrl::GenerateRandomCars`.
+    pub const AMBIENT_PLANES: u8 = 4;
+    /// `CCutsceneMgr::Update` call 0x53BF28 in `CGame::Process`.
+    pub const CUTSCENES: u8 = 8;
+    /// `CReplay::Update` call 0x53C090 in `CGame::Process`.
+    pub const REPLAY: u8 = 9;
+    /// `CPlantMgr::Update` call 0x53C159 in `CGame::Process`.
+    pub const PLANT_MANAGER: u8 = 10;
+    /// `CCoronas::DoSunAndMoon` call 0x53C136 in `CGame::Process`.
+    pub const SUN_MOON_CORONAS: u8 = 11;
+}
+
+/// Runtime toggle bits (`sa_samp_api::config::RuntimeToggle`).
+pub mod toggle {
+    /// Typed cheats off: `CCheat::DoCheats` is not called from `CGame::Process` (samp blocks the typed
+    /// characters at 0x438576; natively the whole cheat poll is skipped).
+    pub const NO_CHEATS: u32 = 1 << 0;
+}
+
+/// Sets the disabled features (`FeatureSet` bits) at install; 0 restores single-player behaviour.
+pub fn set_disabled_features(mask: u64) {
+    DISABLED.store(mask, Ordering::Relaxed);
+}
+
+/// Whether samp mode disables `feature` (one of [`feature`]).
+#[inline]
+pub fn disabled(feature: u8) -> bool {
+    DISABLED.load(Ordering::Relaxed) & (1u64 << feature) != 0
+}
+
+/// Sets or clears runtime toggle bits ([`toggle`]).
+pub fn set_toggle(bit: u32, on: bool) {
+    if on {
+        TOGGLES.fetch_or(bit, Ordering::Relaxed);
+    } else {
+        TOGGLES.fetch_and(!bit, Ordering::Relaxed);
+    }
+}
+
+/// Whether a runtime toggle bit is set.
+#[inline]
+pub fn toggled(bit: u32) -> bool {
+    TOGGLES.load(Ordering::Relaxed) & bit != 0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -71,6 +133,19 @@ mod tests {
 
     fn record(p: u8) {
         SEEN.fetch_add(1 << (4 * u32::from(p)), Ordering::SeqCst);
+    }
+
+    #[test]
+    fn samp_mode_flags_default_to_single_player() {
+        assert!(!disabled(feature::RANDOM_TRAFFIC));
+        set_disabled_features(1 << feature::RANDOM_TRAFFIC);
+        assert!(disabled(feature::RANDOM_TRAFFIC) && !disabled(feature::AMBIENT_PEDS));
+        set_disabled_features(0);
+        assert!(!toggled(toggle::NO_CHEATS));
+        set_toggle(toggle::NO_CHEATS, true);
+        assert!(toggled(toggle::NO_CHEATS));
+        set_toggle(toggle::NO_CHEATS, false);
+        assert!(!toggled(toggle::NO_CHEATS));
     }
 
     #[test]

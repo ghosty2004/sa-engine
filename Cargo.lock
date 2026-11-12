@@ -2022,6 +2022,8 @@ dependencies = [
  "sa-veh",
  "sa-weapon",
  "sa-world",
+ "samp-client",
+ "samp-proto",
  "wgpu",
 ]
 
@@ -2321,6 +2323,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "samp-client"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+dependencies = [
+ "sa-samp-api",
+ "samp-proto",
+ "samp-saa",
+ "samp-ui",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "samp-proto"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+
+[[package]]
+name = "samp-saa"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+
+[[package]]
+name = "samp-ui"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+dependencies = [
+ "samp-proto",
 ]
 
 [[package]]

@@ -95,6 +95,10 @@ fn give_weapon(ped: GPtr<u8>, w: u32) {
        unverified = "popw4-partial-1", route = "split", hazards = "heap-writes",
        note = "partial port widened: the cheat paths (0x969140 / 0x96913E / 0x96915C / 0x96915D) are new; the non-cheat paths were verified in pass 3")]
 pub fn add_ped(ty: u32, model: u32, pos: GPtr<f32>, make_wander: u8) -> GPtr<u8> {
+    // samp mode: no ambient peds (samp makes this entry return NULL).
+    if sa_core::samp::disabled(sa_core::samp::feature::AMBIENT_PEDS) {
+        return GPtr::from_addr(0);
+    }
     let cheat = |a: usize| g::<u8>(a).read() != 0;
     if !(4..=31).contains(&ty) || ty == 21 {
         return add_ped_original(ty, model, pos, make_wander);
