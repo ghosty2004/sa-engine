@@ -77,6 +77,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::automobile_random_damage::HOOKS,
     crate::bike_fix_hands::HOOKS,
     crate::bike_car_horn::HOOKS,
+    crate::vehicle_damage_react::HOOKS,
     crate::bike_rider_anims::HOOKS,
     // WRITER-NATIVE
     crate::vehicle_collision_particles::HOOKS,
