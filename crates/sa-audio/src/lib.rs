@@ -58,3 +58,4 @@ pub mod audio_data_stream;
 pub mod std6_natives;
 pub mod generated;
 pub mod weather_update_parameters;
+pub mod vehicle_add_audio_event;
