@@ -1849,8 +1849,25 @@ words from the buffer as the x86 entries read the stack. X87 results lose their 
   the legal splash on the canvas; `CGame::Initialise` then stalls on the GPU process (SwiftShader WebGPU at ~1000 % CPU).
 * WebGL2 (ANGLE/SwiftShader): through `CGame::Initialise` into the world: **CJ in Grove Street with the HUD**
   (`target/web1-evidence/gl2/t0107-state9.png`, not committed), about 105 s after start.
+* WebGL2, real keys: with `?auto=1` for the menus, the run is in the world 87 s after start; a real W key event
+  (`Input.dispatchKeyEvent` → the page's keydown listener → the worker → window message + DirectInput state) held for
+  30 s: **CJ runs from the cul-de-sac towards his garage** (`keep/03-…`, `keep/04-…` under `target/web1-evidence/`, not
+  committed; frames read back in the worker with `OffscreenCanvas.convertToBlob`). Five seconds after W was released
+  ambient-ped AI reached an unported vslot (`v_control_sub_task` 0x631730, from `GeneratePedsAtAttractors`): natively a
+  "blocked" iteration, on wasm32 a panic aborts the module (no unwinding).
 * The user's desktop (Brave, AMD RX 7800 XT, WebGPU): through the menu into `CGame::Initialise`, then an
-  out-of-bounds trap in `FxManager_c::FindFxSystemBP` (fixed candidate: the zeroed C heap, 21.3).
+  out-of-bounds trap in `FxManager_c::FindFxSystemBP`; one headless GL run trapped the same way in `CreateEntityFx`.
+  Fixed candidate: the zeroed C heap (21.3), not yet confirmed on the user's machine.
+
+### 21.6 Next steps
+
+1. Unported callees abort the web session (no unwinding): build with `-Cpanic=unwind` + wasm exception handling
+   (nightly `-Zbuild-std`) so a blocked iteration is reported and the loop goes on, as natively; or port the callees
+   (0x631730 first).
+2. WebGPU on the user's GPU: confirm the zeroed-heap fix; then WebGPU stays the default and WebGL2 the fallback.
+3. Loading runs as one long task (the loading screens are not shown): yield inside `CGame::Initialise` needs the loop
+   turned inside out (asyncify, or a worker with `Atomics.wait` and a second thread presenting).
+4. OPFS cache of the picked folder (no re-pick per visit), audio through an AudioWorklet, threads (atomics, build-std).
 
 ### 22.5 Network seam for SA:MP (not built)
 
