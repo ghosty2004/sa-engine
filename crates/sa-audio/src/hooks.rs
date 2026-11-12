@@ -69,6 +69,7 @@ pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     crate::port4_hw::NATIVES,
     crate::port4_init::NATIVES,
     crate::port4_service::NATIVES,
+    crate::bicycle_tyre_volume::NATIVES,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
