@@ -53,3 +53,4 @@ pub mod cutscene_delete;
 pub mod cutscene_preload;
 pub mod generated;
 pub mod cutscene_memory;
+pub mod quaternion_get_matrix;
