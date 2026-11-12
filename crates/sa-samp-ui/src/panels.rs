@@ -11,8 +11,6 @@ use crate::font::{FontId, Measure};
 pub const KILL_ROWS: usize = 5;
 /// The widest name samp reserves room for.
 pub const NICK_SAMPLE: &str = "LONGESTNICKNICK_NICKNICK";
-/// Icon box width.
-pub const ICON_W: f32 = 35.0;
 /// Reason codes for connect / disconnect.
 pub const REASON_CONNECT: u8 = 200;
 /// Disconnect.
@@ -68,23 +66,39 @@ impl KillList {
         self.rows.iter()
     }
 
-    /// Origin `(round(0.75·W), round(0.3·H))`, pulled left so two names and the icon fit.
-    pub fn origin(w: f32, h: f32, nick_w: f32) -> (f32, f32) {
-        let mut x = (0.75 * w).round();
-        if x + nick_w * 2.0 + ICON_W > w {
-            x = w - (nick_w * 2.0 + ICON_W);
-        }
-        (x, (0.3 * h).round())
+
+    /// Icon height: samp measures a GTAWEAPON3 glyph of its backdrop font (aux height + 12 px; the small
+    /// font's height stands in for aux).
+    pub fn icon_h(m: &dyn Measure) -> f32 {
+        m.line_height(FontId::Small) + 12.0
     }
 
-    /// Draws the rows: killer right-aligned before the icon box, victim after it.
+    /// Icon width (the glyph's measured width; 31 px at 24 px in the reference screenshots).
+    pub fn icon_w(m: &dyn Measure) -> f32 {
+        (1.3 * Self::icon_h(m)).round()
+    }
+
+    /// Origin `(trunc(0.75·W), trunc(0.3·H))`, pulled left so two names and the icon fit.
+    pub fn origin(w: f32, h: f32, nick_w: f32, icon_w: f32) -> (f32, f32) {
+        let mut x = (0.75 * w).trunc();
+        if x + nick_w * 2.0 + icon_w > w {
+            x = w - (nick_w * 2.0 + icon_w);
+        }
+        (x, (0.3 * h).trunc())
+    }
+
+    /// Draws the five slots (samp.dll 0x1006a2e0), newest at the bottom, empty slots keeping their space:
+    /// the killer right-aligned to end at `x + nickW`, the icon box at `x + nickW + 3`, the victim after the
+    /// icon. Without killer the victim takes the killer's place. The weapon glyphs (samp's GTAWEAPON3 font)
+    /// are stood in for by short labels.
     pub fn draw(&self, m: &dyn Measure, w: f32, h: f32, d: &mut DrawList) {
-        let nick_w = m.width(FontId::Small, NICK_SAMPLE);
-        let (x, y0) = Self::origin(w, h, nick_w);
-        let lh = m.line_height(FontId::Small);
-        let row_h = lh + 9.0;
+        let nick_w = m.width(FontId::Small, NICK_SAMPLE).trunc();
+        let (icon_w, icon_h) = (Self::icon_w(m), Self::icon_h(m));
+        let (x, y0) = Self::origin(w, h, nick_w, icon_w);
+        let step = icon_h + 5.0;
+        let empty = KILL_ROWS - self.rows.len().min(KILL_ROWS);
         for (i, r) in self.rows.iter().enumerate() {
-            let y = y0 + i as f32 * row_h;
+            let y = y0 + (empty + i) as f32 * step;
             let icon_l = x + nick_w + 3.0;
             let left = if r.killer.is_empty() {
                 (&r.victim, r.victim_colour)
@@ -93,7 +107,10 @@ impl KillList {
             };
             let lw = m.width(FontId::Small, left.0);
             d.coloured(m, x + nick_w - lw, y, FontId::Small, left.0, left.1, &OUTLINE_4);
-            d.rect(icon_l, y - 3.0, icon_l + ICON_W, y + lh + 3.0, 0xFF00_0000);
+            // The backdrop glyph `G`: a black square of about the font's x-height.
+            let side = icon_h - 4.0;
+            let (bl, bt) = (icon_l + 3.0, y - 3.0);
+            d.rect(bl, bt, bl + side, bt + side, 0xFF00_0000);
             let label = reason_label(r.reason);
             let colour = match r.reason {
                 REASON_CONNECT => 0xFF11_11AA,
@@ -102,8 +119,8 @@ impl KillList {
             };
             let tw = m.width(FontId::Small, &label);
             d.text(
-                (icon_l + (ICON_W - tw) / 2.0).round(),
-                y,
+                (bl + (side - tw) / 2.0).round(),
+                (bt + (side - m.line_height(FontId::Small)) / 2.0).round(),
                 FontId::Small,
                 colour,
                 &label,
@@ -111,7 +128,7 @@ impl KillList {
             if !r.killer.is_empty() {
                 d.coloured(
                     m,
-                    icon_l + ICON_W + 3.0,
+                    icon_l + icon_w,
                     y,
                     FontId::Small,
                     &r.victim,
@@ -195,7 +212,8 @@ impl Scoreboard {
                 )
             })
             .collect();
-        let selected = cursor.and_then(|(x, y)| self.row_at(m, &r, x, y));
+        // DXUT keeps the list selection (row 0 when the scoreboard opens); the row under the cursor here.
+        let selected = cursor.and_then(|(x, y)| self.row_at(m, &r, x, y)).or(Some(0));
         d.list_box(m, Self::list_rect(&r), &rows, 4, &cols, selected, 0);
         d.coloured(m, r[0] + 5.0, r[1] + 5.0, FontId::Small, &self.server, SB_TEXT, &OUTLINE_4);
         let count = format!("Players: {}", self.rows.len());
@@ -266,8 +284,8 @@ mod tests {
         }
         let r: Vec<&str> = k.rows().map(|r| r.killer.as_str()).collect();
         assert_eq!(r, ["k2", "k3", "k4", "k5", "k6"]);
-        assert_eq!(KillList::origin(1280.0, 720.0, 168.0), (1280.0 - 371.0, 216.0));
-        assert_eq!(KillList::origin(1920.0, 1080.0, 100.0), (1440.0, 324.0));
+        assert_eq!(KillList::origin(1280.0, 720.0, 168.0, 31.0), (1280.0 - 367.0, 216.0));
+        assert_eq!(KillList::origin(1920.0, 1080.0, 100.0, 31.0), (1440.0, 324.0));
         assert_eq!(reason_label(REASON_CONNECT), "+");
         assert_eq!(reason_label(24), "#24");
     }

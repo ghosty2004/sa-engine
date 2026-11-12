@@ -287,6 +287,10 @@ impl Ui {
     /// printed into `CFont`'s buffer with the HUD's own text.
     pub fn build_textdraws(&mut self, w: f32, h: f32) -> DrawList {
         let mut d = DrawList::default();
+        // samp skips the textdraws while the scoreboard is open (samp.dll 0x100c5030).
+        if self.scoreboard.is_some() {
+            return d;
+        }
         let cursor = self.cursor_visible().then_some(self.cursor);
         self.textdraws.draw(w, h, cursor, &mut d);
         d
@@ -755,7 +759,10 @@ mod tests {
         let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
         assert!(d.texts().contains(&"chat"));
         assert!(matches!(d.cmds.last(), Some(crate::draw::Cmd::Triangle { .. })));
-        // F7 hides the chat.
+        // F7 twice hides the chat (outlined → plain → off).
+        key(&mut ui, vk::F7);
+        let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
+        assert!(d.texts().contains(&"chat"));
         key(&mut ui, vk::F7);
         let d = ui.build(&M, &NoWorld, 1280.0, 720.0, 0);
         assert!(!d.texts().contains(&"chat"));

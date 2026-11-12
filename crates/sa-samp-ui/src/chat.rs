@@ -171,12 +171,13 @@ impl ChatWindow {
         self.mode
     }
 
-    /// F7: next display mode.
+    /// F7: next display mode, samp's 2 → 1 → 0 → 2 (outlined, plain, off; samp.dll 0x100612c0; the
+    /// reference shows the plain chat after one F7).
     pub fn cycle_mode(&mut self) {
         self.mode = match self.mode {
-            Mode::Outlined => Mode::Off,
-            Mode::Off => Mode::Plain,
-            Mode::Plain => Mode::Outlined,
+            Mode::Outlined => Mode::Plain,
+            Mode::Plain => Mode::Off,
+            Mode::Off => Mode::Outlined,
         };
     }
 
@@ -475,6 +476,11 @@ mod tests {
             ]
         );
         assert_eq!(c.bottom(16.0), 10.0 + 11.0 * 17.0);
+        // F7: outlined → plain (no outline) → off.
+        c.cycle_mode();
+        let mut d = DrawList::default();
+        c.draw(&M, 1024, &mut d);
+        assert!(d.cmds.iter().all(|c| matches!(c, Cmd::Text { outline: 0, .. })));
         c.cycle_mode();
         let mut d = DrawList::default();
         c.draw(&M, 1024, &mut d);
