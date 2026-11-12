@@ -9,7 +9,8 @@
 # folder), the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, gitignored third-party data, read only).
 # Ports: SAMP_PORT (UDP, default 7813), PROXY_PORT (WebSocket, default 7781), WEB_PORT (HTTP, default 8644).
 # SAMP_DIR: a SA:MP client folder (samp.saa, sampgui.png, mouse.png) the page reads over the game folder (serve.py
-# --samp-dir), for samp's loading screen and UI skin.
+# --samp-dir), for samp's loading screen and UI skin. Default: $SA_ROOT/re/samp/client when it exists (gitignored
+# third-party files, read only); SAMP_DIR= (empty) serves the game folder alone.
 # The server runs tools/e2e/samp/sampcov.pwn: commands go to $OUT/server/scriptfiles/sampcov.txt (one
 # "SEQ CMD|ARGS" line each, e.g. `echo "1 msg|hello" >> .../sampcov.txt`), its "[cov]" lines are in $OUT/server.log.
 # Lock: $SA_ROOT/target/locks/$SAMP_LOCK (default samp-native.lock, shared with tools/e2e/samp/native-join.sh), held
@@ -28,6 +29,7 @@ PORT="${SAMP_PORT:-7813}"
 PROXY_PORT="${PROXY_PORT:-7781}"
 WEB_PORT="${WEB_PORT:-8644}"
 GAME="${GAME_DIR:-$SA_ROOT/wine/gta-sa}"
+if [ -z "${SAMP_DIR+x}" ] && [ -d "$SA_ROOT/re/samp/client" ]; then SAMP_DIR="$SA_ROOT/re/samp/client"; fi
 PROXY_BIN="${SA_UDP_PROXY:-$ROOT/target/release/sa-udp-proxy}"
 SERVER_SRC="$SA_ROOT/re/samp/server"
 SRV="$OUT/server"
