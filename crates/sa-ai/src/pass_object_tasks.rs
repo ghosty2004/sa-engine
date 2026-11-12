@@ -26,6 +26,17 @@ orig! {
     fn ik_is_arm_pointing(m: GPtr<u8>, arm: i32, ped: GPtr<u8>) -> u8 = thiscall 0x6182B0 => unported;
     /// `IKChainManager_c::AbortPointArm(int32 arm, CPed*, int32 blendTime)` (0x6182F0)
     fn ik_abort_point_arm(m: GPtr<u8>, arm: i32, ped: GPtr<u8>, blend: i32) = thiscall 0x6182F0 => unported;
+    /// `CTaskManager::FindActiveTaskByType(int32)` (0x681740)
+    fn tm_find_active_task_by_type(tm: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x681740 => unported;
+    /// `CTaskSimpleHoldEntity::DropEntity(CPed*, bool)` (0x6930F0)
+    fn hold_entity_drop_entity(t: GPtr<u8>, ped: GPtr<u8>, b: u32) = thiscall 0x6930F0 => unported;
+    /// `CTaskSimpleHoldEntity(CEntity*, CVector*, uint8 boneFrame, uint8 flags, int32 anim, int32 group, bool)` (0x6913A0)
+    #[allow(clippy::too_many_arguments)]
+    fn hold_entity_ctor(t: GPtr<u8>, e: GPtr<u8>, pos: GPtr<u8>, bone: u32, flags: u32, anim: i32, group: i32, b: u32) -> GPtr<u8> = thiscall 0x6913A0 => unported;
+    /// `CTaskManager::SetTaskSecondary(CTask*, int32 slot)` (0x681B60)
+    fn tm_set_task_secondary(tm: GPtr<u8>, t: GPtr<u8>, slot: i32) = thiscall 0x681B60 => unported;
+    /// `CTaskComplexPassObject::AbortIK(CPed*)` (0x661290)
+    fn pass_object_abort_ik(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x661290 => unported;
 }
 
 /// `CEventPassObject::~CEventPassObject()` body (0x65DCF0, SEH frame, no `delete`): vtable 0x86F8B8,
@@ -106,5 +117,54 @@ pub fn pass_object_create_first_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<
     turn_to_face_entity_ctor(t, rd::<GPtr<u8>>(this, 0xC), g::<u32>(0x86_FC7C).read(), g::<u32>(0x86_FC80).read())
 }
 
+/// `CTaskComplexPassObject::ControlSubTask(CPed* ped)` (0x661570, `ret 4`, SEH frame).
+///
+/// Without a partner (+0xC): abort the ped's arm pointing (arm 0, 500 ms), null. Before the timer (+0x28 set; +0x29
+/// restarts it at now; `now >= start +0x20 + duration +0x24` unsigned) has run out: the sub-task. Then, for the
+/// receiving side (+0x10 clear) with an object (+0x2C): the partner's hold-entity task (0x133) drops its entity
+/// and the ped gets `CTaskSimpleHoldEntity(entity, (0, 0, 0), 6, 0x10, 0xBF, 0, true)` as secondary task 4 (null
+/// when the pool is full). `AbortIK(ped)`; null.
+#[hook(addr = 0x661570, conv = thiscall, name = "CTaskComplexPassObject::ControlSubTask",
+       expect = "64 A1 00 00 00 00 6A FF",
+       unverified = "native-19", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn pass_object_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
+    if rd::<u32>(this, 0xC) == 0 {
+        let ik = GPtr::<u8>::from_addr(0xC1_5448);
+        if ik_is_arm_pointing(ik, 0, ped) != 0 {
+            ik_abort_point_arm(ik, 0, ped, 0x1F4);
+        }
+        return GPtr::NULL;
+    }
+    if rd::<u8>(this, 0x28) == 0 {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    if rd::<u8>(this, 0x29) != 0 {
+        wr::<u32>(this, 0x20, g::<u32>(0xB7_CB84).read());
+        wr::<u8>(this, 0x29, 0);
+    }
+    let now = g::<u32>(0xB7_CB84).read();
+    if now < rd::<u32>(this, 0x24).wrapping_add(rd::<u32>(this, 0x20)) {
+        return rd::<GPtr<u8>>(this, 8);
+    }
+    if rd::<u8>(this, 0x10) == 0 && rd::<u32>(this, 0x2C) != 0 {
+        let partner = rd::<GPtr<u8>>(this, 0xC);
+        let hold = tm_find_active_task_by_type(rd::<GPtr<u8>>(partner, 0x47C).byte_add(4), 0x133);
+        if !hold.is_null() {
+            let entity = rd::<GPtr<u8>>(hold, 8);
+            hold_entity_drop_entity(hold, rd::<GPtr<u8>>(this, 0xC), 0);
+            let mut zero = [0u32; 3];
+            let t = task_new_c(0x3C);
+            let t = if t.is_null() {
+                t
+            } else {
+                hold_entity_ctor(t, entity, GPtr::from_raw(zero.as_mut_ptr()).cast(), 6, 0x10, 0xBF, 0, 1)
+            };
+            tm_set_task_secondary(rd::<GPtr<u8>>(ped, 0x47C).byte_add(4), t, 4);
+        }
+    }
+    pass_object_abort_ik(this, ped);
+    GPtr::NULL
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_EVENT_PASS_OBJECT_DTOR, HOOK_PASS_OBJECT_CREATE_FIRST_SUB_TASK];
+pub const HOOKS: &[HookReg] = &[HOOK_EVENT_PASS_OBJECT_DTOR, HOOK_PASS_OBJECT_CREATE_FIRST_SUB_TASK, HOOK_PASS_OBJECT_CONTROL_SUB_TASK];
