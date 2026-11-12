@@ -88,15 +88,23 @@ pub fn frame_times() -> Vec<std::time::Instant> {
 /// when no adapter exists.
 pub fn create_device(w: u32, h: u32, color: u32, depth: u32) -> bool {
     *SWAP_FORMATS.lock().unwrap_or_else(|e| e.into_inner()) = (color, depth);
+    if std::env::var_os("SA_GAME_D3D_LOG").is_some() {
+        eprintln!("d3d: CreateDevice {w}x{h} back buffer format {color:#x} depth {depth:#x}");
+    }
     let window = WINDOW
         .lock()
         .unwrap_or_else(|e| e.into_inner())
         .as_ref()
         .map(|t| (t.device.clone(), t.queue.clone()));
-    let dev = match window {
+    let mut dev = match window {
         Some((device, queue)) => Some(WgpuDevice::new(device, queue, w, h)),
         None => WgpuDevice::new_headless(w, h),
     };
+    // X8R8G8B8 / R5G6B5 back buffers have no alpha channel (D3D9 reads their alpha as 1); a windowed
+    // D3DFMT_UNKNOWN back buffer has the desktop format (X8R8G8B8)
+    if let Some(d) = dev.as_mut() {
+        d.set_back_buffer_format(if color == 0 { gpu::fmt::X8R8G8B8 } else { color });
+    }
     let ok = dev.is_some();
     *DEVICE.lock().unwrap_or_else(|e| e.into_inner()) = dev;
     *SWAP_SURFACES.lock().unwrap_or_else(|e| e.into_inner()) = None;
@@ -474,7 +482,14 @@ fn dev_reset(_this: u32, pp: GPtr<u32>) -> i32 {
         v => v,
     };
     // the same size keeps the back buffer (its contents are undefined after a D3D9 Reset)
-    let r = with_device(|d| if (w, h) == d.back_buffer_size() { Ok(()) } else { d.reset(w, h) });
+    let format = pp.wrapping_index(2).read();
+    let r = with_device(|d| {
+        let r = if (w, h) == d.back_buffer_size() { Ok(()) } else { d.reset(w, h) };
+        if format != 0 {
+            d.set_back_buffer_format(format);
+        }
+        r
+    });
     let swap = *SWAP_SURFACES.lock().unwrap_or_else(|e| e.into_inner());
     if let Some((c, z)) = swap {
         for o in [c, z] {
