@@ -55,6 +55,7 @@ pub mod vector_ops;
 pub mod matrix_ops;
 pub mod matrix_rotate;
 pub mod rect_inside;
+pub mod samp;
 pub mod matrix_members;
 pub mod std7_natives;
 pub mod static_init_kinds;

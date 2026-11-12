@@ -581,7 +581,8 @@ pub fn do_rw_stuff_start_of_frame_horizon(_a: u32, _b: u32, _c: u32, _d: u32, _e
 /// `DrawFrontEnd` if the menu is active, `RwRenderStateSet(rwRENDERSTATETEXTURERASTER, NULL)`,
 /// `DoFade`, `CHud::DrawAfterFade`, `CMessages::Display(false)`, `CFont::DrawFonts`, the credits test
 /// twice (`RenderCredits` each time it holds), `DebugDisplayTextBuffer`, `FlushObrsPrintfs`,
-/// `RwCameraEndUpdate`, `RsCameraShowRaster`.
+/// `RwCameraEndUpdate`, `RsCameraShowRaster`. SA:MP dispatch points (`crate::samp`, no-ops without a
+/// registered handler) sit where samp retargets the calls: before `CGame::Process` and around `Render2dStuff`.
 #[hook(addr = 0x53E920, conv = cdecl, name = "Game::Idle", expect = "83 EC 08 E8 58 31 02 00",
        unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
        recs = "grove-walk", note = "frame orchestrator (determinism mode retargets the limiter call sites 0x53E930/0x53E94F; the port calls through them)")]
@@ -602,6 +603,7 @@ pub fn idle(param: GPtr<u8>) {
     sprite2d_init_per_frame();
     font_init_per_frame();
     g::<u32>(POINT_LIGHTS_NUM).write(0);
+    crate::samp::frame(crate::samp::FramePhase::BeforeGameProcess);
     game_process_o();
     audio_engine_service(g(AUDIO_ENGINE));
     set_lights_with_time_of_day_colour(g::<GPtr<u8>>(0xC17038).read());
@@ -652,7 +654,9 @@ pub fn idle(param: GPtr<u8>) {
             camera_set_motion_blur_alpha(g(THE_CAMERA), 0x96);
         }
         camera_render_motion_blur(g(THE_CAMERA));
+        crate::samp::frame(crate::samp::FramePhase::Before2d);
         render_2d_stuff_o();
+        crate::samp::frame(crate::samp::FramePhase::After2d);
     } else {
         let _ = draw_calculate_aspect_ratio();
         let view = view_window();
@@ -781,7 +785,9 @@ pub fn game_process() {
             interesting_events_scan_for_nearby_entities(g(INTERESTING_EVENTS));
         }
         if replay_should_standard_camera_be_processed() != 0 {
+            crate::samp::frame(crate::samp::FramePhase::CameraProcess);
             camera_process(g(THE_CAMERA));
+            crate::samp::frame(crate::samp::FramePhase::AfterGameProcess);
         } else {
             camera_process_fade(g(THE_CAMERA));
         }
