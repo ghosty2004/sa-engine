@@ -31,6 +31,11 @@ blocks do not stop the loop. Click the picture to capture the mouse, Esc release
 package's exploration stubs by default: `&stub=ADDR=RET/N,...` replaces them, `&stub=none` drops them. `?backend=gl` forces WebGL2, the path
 verified headless. Details: `docs/arch/platform.md` section 22.
 
+`?full=1` (or the "Full window" button) lets the picture fill the browser window, "Fullscreen" fills the screen
+(Esc leaves); the game keeps its video mode and the canvas is scaled, letterboxed at 4:3. In the menus (gGameState
+other than IDLE) the pointer is not captured: its position reaches the game as `WM_MOUSEMOVE` (the menu draws its own
+cursor and highlights the item under it) and clicks are menu clicks; in the world a click captures the mouse.
+
 Needs a browser with WebGPU (Chromium 113+, Firefox 141+ on supported systems) or WebGL2 and module workers.
 
 ## How it maps the native build
@@ -70,6 +75,12 @@ the proxy as WebCJ, picks class 0 and spawns in Grove Street 18 s after the page
 game text show through the engine-drawn SA:MP UI, and while a real W key is held the server's `[cov] where` position
 follows CJ (on-foot sync, y -1686.6 to -1642.3 until he reaches a wall). Blocked iterations on the unported FX getter
 `info_vget_value` (0x4A56E0) occur while walking (22 in 40 s, a few white frames); the run continues.
+
+Status (2026-11-12, WEB-3): with SAMP-START's start-up sequence the page goes straight from the loading screen to
+samp's connecting scene and class selection (no logos, intro or main menu); Shift spawns (`--walk 'h:1'` headless).
+With the FxInfo getters, the event destructors and the WORLD interior batches picked, CJ spawns, walks into his house
+(the interior, z 1014, reported by the server) with 0 blocked iterations, and a server chat line shows once (the
+second `all: ...` line is `sampcov.pwn`'s own `SendClientMessageToAll`).
 
 ## Files
 
