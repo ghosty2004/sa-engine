@@ -226,7 +226,11 @@ macro_rules! cdecl_entries {
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
                     $f($($a),*)
                 }
-                v.push(($addr, $name, w as *const () as usize));
+                #[cfg(target_arch = "wasm32")]
+                let e = sa_core::wabi_wrap!(w; $($a)*);
+                #[cfg(not(target_arch = "wasm32"))]
+                let e = w as *const () as usize;
+                v.push(($addr, $name, e));
             })*
             v
         }

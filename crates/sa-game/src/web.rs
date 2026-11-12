@@ -54,11 +54,17 @@ pub fn add_game_file(path: &str, id: u32, size: f64) {
 
 /// Creates the GPU device on `canvas` (WebGPU, else WebGL2) and installs it as the window the game's
 /// `IDirect3D9::CreateDevice` uses. Returns the backend's name.
+///
+/// `backend`: `"webgpu"`, `"gl"` (WebGL2) or `""` (WebGPU when the browser has it, else WebGL2).
 #[wasm_bindgen]
-pub async fn init_gpu(canvas: web_sys::OffscreenCanvas) -> Result<String, JsValue> {
+pub async fn init_gpu(canvas: web_sys::OffscreenCanvas, backend: String) -> Result<String, JsValue> {
     let (w, h) = (canvas.width().max(1), canvas.height().max(1));
-    let mut desc = wgpu::InstanceDescriptor::new_without_display_handle();
-    desc.backends = wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL;
+    let mut desc = wgpu::InstanceDescriptor::new_with_display_handle(Box::new(WebDisplay));
+    desc.backends = match backend.as_str() {
+        "webgpu" => wgpu::Backends::BROWSER_WEBGPU,
+        "gl" => wgpu::Backends::GL,
+        _ => wgpu::Backends::BROWSER_WEBGPU | wgpu::Backends::GL,
+    };
     let instance = wgpu::util::new_instance_with_webgpu_detection(desc).await;
     let surface = instance
         .create_surface(wgpu::SurfaceTarget::OffscreenCanvas(canvas))
@@ -119,6 +125,16 @@ pub async fn init_gpu(canvas: web_sys::OffscreenCanvas) -> Result<String, JsValu
     Ok(format!("{:?} ({}, {:?})", info.backend, info.name, format))
 }
 
+/// The web "display" (WebGL2 surfaces need one; there is nothing behind it).
+#[derive(Debug)]
+struct WebDisplay;
+
+impl wgpu::rwh::HasDisplayHandle for WebDisplay {
+    fn display_handle(&self) -> Result<wgpu::rwh::DisplayHandle<'_>, wgpu::rwh::HandleError> {
+        Ok(wgpu::rwh::DisplayHandle::web())
+    }
+}
+
 /// The platform setup and the boot (WinMain up to its main loop), from the registered game folder.
 #[wasm_bindgen]
 pub fn boot() -> Result<(), JsValue> {
@@ -128,6 +144,19 @@ pub fn boot() -> Result<(), JsValue> {
         .read("gta_sa.exe")
         .map_err(|e| JsValue::from_str(&format!("gta_sa.exe: {e} (choose your GTA San Andreas folder)")))?;
     crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
+    crate::app::QUIET_FRAMES.store(true, std::sync::atomic::Ordering::SeqCst);
+    if crate::env::var_os("SA_WEB_SAMPLE").is_some() {
+        fn sample(callee: usize, n: u32) {
+            log_line(format!(
+                "sample: dispatch {n}: {callee:#x} {} (game time {} ms, gGameState {})",
+                sa_core::orig::registry::describe(callee),
+                sa_core::mem::GPtr::<u32>::from_addr(0xB7CB84).read(),
+                crate::winmain::game_state()
+            ));
+        }
+        let f: fn(usize, u32) = sample;
+        sa_core::wabi::SAMPLER.store(f as usize, std::sync::atomic::Ordering::Relaxed);
+    }
     let s = crate::app::boot_with(
         Box::new(game),
         Box::new(MemFs::default()),

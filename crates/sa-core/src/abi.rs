@@ -712,7 +712,19 @@ pub mod game_fpu {
             let r = unsafe { core::arch::x86_64::__cpuid_count(leaf, 0) };
             Some([r.eax, r.ebx, r.ecx, r.edx])
         }
-        #[cfg(not(any(target_arch = "x86", target_arch = "x86_64")))]
+        // wasm32 (the web build): a fixed virtual CPU, so the paths taken are those of the native phase B runs on
+        // an SSE2 machine (RW's SSE skinning blenders, not the unported x87 ones): "GenuineIntel", family 6, with
+        // FPU / TSC / CMOV / MMX / FXSR / SSE / SSE2 (and SSE3 / SSSE3) in leaf 1; every other leaf zero.
+        #[cfg(target_arch = "wasm32")]
+        {
+            let w = |s: &[u8; 4]| u32::from_le_bytes(*s);
+            Some(match leaf {
+                0 => [1, w(b"Genu"), w(b"ntel"), w(b"ineI")],
+                1 => [0x0003_06A9, 0x0010_0800, 0x0000_0201, 0x078B_FBFF],
+                _ => [0; 4],
+            })
+        }
+        #[cfg(not(any(target_arch = "x86", target_arch = "x86_64", target_arch = "wasm32")))]
         {
             let _ = leaf;
             None

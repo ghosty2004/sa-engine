@@ -273,6 +273,12 @@ pub fn thunks() -> Vec<(u32, &'static str, usize)> {
     vec![(
         0x0081_7523,
         "DirectInput8Create (dinput8 thunk)",
-        direct_input8_create as *const () as usize,
+        {
+            #[cfg(target_arch = "wasm32")]
+            let e = sa_core::wabi_wrap!(direct_input8_create; inst version iid out outer);
+            #[cfg(not(target_arch = "wasm32"))]
+            let e = direct_input8_create as *const () as usize;
+            e
+        },
     )]
 }

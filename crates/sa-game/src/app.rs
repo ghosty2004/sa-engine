@@ -90,6 +90,15 @@ fn parse_args() -> Result<Args, String> {
     Ok(a)
 }
 
+/// Whether a main-loop step's detail (`gGameState A → B ...`) reports a state change.
+fn state_changed(d: &str) -> bool {
+    let Some((a, b)) = d.split_once('→') else { return false };
+    a.split_whitespace().last() != b.split_whitespace().next()
+}
+
+/// Set by the web front end: successful main-loop iterations without a `gGameState` change are not logged.
+pub static QUIET_FRAMES: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 pub(crate) struct Report {
     rows: Vec<(String, String, u32, String)>,
 }
@@ -105,6 +114,13 @@ impl Report {
             Outcome::Panicked(m) => ("rust: panicked", m.clone()),
             Outcome::Crashed(m) => ("rust: CRASHED", format!("{m} (step skipped)")),
         };
+        // the web page logs only what changes: failed iterations and gGameState transitions
+        let quiet = QUIET_FRAMES.load(std::sync::atomic::Ordering::Relaxed)
+            && phase.starts_with("frame")
+            && matches!(o, Outcome::Ok(d) if !state_changed(d));
+        if quiet {
+            return;
+        }
         println!(
             "  [{phase}] {:<62} {status:<15} {detail}",
             format!("{} ({:#x})", s.name, s.addr)
@@ -351,7 +367,9 @@ impl Session {
             }
             p.input = input;
         });
-        println!("frame {n}:");
+        if !QUIET_FRAMES.load(std::sync::atomic::Ordering::Relaxed) {
+            println!("frame {n}:");
+        }
         teleport_player(n);
         let state = winmain::game_state();
         let frame = winmain::frame_step();

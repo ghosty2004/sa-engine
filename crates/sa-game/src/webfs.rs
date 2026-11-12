@@ -80,9 +80,16 @@ fn read_into(id: u32, offset: u64, buf: &mut [u8]) -> io::Result<()> {
 /// The game folder as the page registered it.
 pub struct WebFs;
 
+/// Bytes a small read fetches ahead: the game reads its text data files a line (or a byte) at a time, and every
+/// fetch crosses into JavaScript.
+const READ_AHEAD: usize = 64 * 1024;
+
 struct WebFile {
     id: u32,
     len: u64,
+    /// the last window fetched: `[at, at + window.len())`
+    at: u64,
+    window: Vec<u8>,
 }
 
 impl RandomRead for WebFile {
@@ -90,7 +97,19 @@ impl RandomRead for WebFile {
         if offset + buf.len() as u64 > self.len {
             return Err(io::Error::new(io::ErrorKind::UnexpectedEof, "read past the end"));
         }
-        read_into(self.id, offset, buf)
+        if buf.len() >= READ_AHEAD {
+            return read_into(self.id, offset, buf);
+        }
+        let end = offset + buf.len() as u64;
+        if offset < self.at || end > self.at + self.window.len() as u64 {
+            let n = (READ_AHEAD as u64).min(self.len - offset) as usize;
+            self.window.resize(n, 0);
+            read_into(self.id, offset, &mut self.window)?;
+            self.at = offset;
+        }
+        let from = (offset - self.at) as usize;
+        buf.copy_from_slice(&self.window[from..from + buf.len()]);
+        Ok(())
     }
 
     fn len(&self) -> u64 {
@@ -112,7 +131,7 @@ impl GameFs for WebFs {
 
     fn open(&self, path: &str) -> io::Result<Box<dyn RandomRead>> {
         let (id, len) = lookup(path).ok_or_else(|| not_found(path))?;
-        Ok(Box::new(WebFile { id, len }))
+        Ok(Box::new(WebFile { id, len, at: 0, window: Vec::new() }))
     }
 
     fn exists(&self, path: &str) -> bool {
