@@ -67,7 +67,7 @@ fn special_model(m: u16) -> bool {
 ///   `unableToMove`.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x6d6640, conv = thiscall, name = "CVehicle::SpecialEntityPreCollisionStuff", expect = "6A FF 64 A1 00 00 00 00",
-       this = "CVehicle", unverified = "mvpk-veh-1", route = "L2", hazards = "none", recs = "driving",
+       this = "CVehicle", route = "L2", hazards = "none", recs = "driving",
        note = "the CMatrix temporary lives on the Rust stack; the exit chunk 0x4017C2 is a no-CD fragment (SEH restore)")]
 pub fn vehicle_special_entity_pre_collision_stuff(
     this: GPtr<u8>,

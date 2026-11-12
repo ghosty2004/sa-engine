@@ -96,7 +96,7 @@ fn intersect(nx: X87, ny: f32, nz: f32, d: f32, s: [f32; 3], e: [f32; 3], pxs: f
 /// original details: the start dot products and `t` are kept in the caller-owned line / plane argument slots
 /// (not modelled); a `dir` above 5 tests against two never-written locals (modelled as 0).
 #[hook(addr = 0x413AC0, conv = cdecl, name = "CCollision::TestLineTriangle", expect = "83 EC 28 8B 54 24 38",
-       unverified = "mvpd-coll-1", route = "L2", hazards = "stack-residue,uninit-locals",
+       route = "L2", hazards = "stack-residue,uninit-locals",
        note = "overwrites its line/plane argument slots; dir > 5 reads two uninitialised locals")]
 pub fn test_line_triangle(line: GPtr<u8>, verts: GPtr<u8>, tri: GPtr<u8>, plane: GPtr<u8>) -> u8 {
     let k1 = g::<f32>(0x858BFC).read();
@@ -143,7 +143,7 @@ fn fabs_cmp(v: f32) -> X87 {
 /// Success stores the point in the colpoint (+0); any failure after the validity check clears the poly's valid
 /// flag. Kept original detail: `d` and `t` are kept in the caller-owned poly argument slot (not modelled).
 #[hook(addr = 0x414D70, conv = cdecl, name = "CCollision::IsStoredPolyStillValidVerticalLine", expect = "83 EC 64 53 56",
-       unverified = "mvpd-coll-1", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        note = "overwrites its poly argument slot with the plane distance and t")]
 pub fn is_stored_poly_still_valid_vertical_line(pos: GPtr<u8>, z: f32, cp: GPtr<u8>, poly: GPtr<u8>) -> u8 {
     if rd::<u8>(poly, 0x24) == 0 {

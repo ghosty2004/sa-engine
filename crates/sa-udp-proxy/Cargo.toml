@@ -1,0 +1,24 @@
+[package]
+name = "sa-udp-proxy"
+version = "0.1.0"
+description = "WebSocket <-> UDP relay so the browser (wasm32) build of sa-game + samp-rs can join unmodified SA:MP / open.mp servers (docs/samp/web-proxy.md)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "sa-udp-proxy"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1.54", features = ["rt-multi-thread", "net", "time", "macros", "sync", "signal"] }
+tokio-tungstenite = { version = "0.29", default-features = false, features = ["handshake", "connect"] }
+futures-util = { version = "0.3", default-features = false, features = ["sink", "std"] }
+serde_json = "1"
+
+[dev-dependencies]
+sa-net = { path = "../sa-net", features = ["native-ws"] }
+
+[lints.rust]
+missing_docs = "warn"
+unsafe_code = "forbid"

@@ -581,7 +581,8 @@ pub fn do_rw_stuff_start_of_frame_horizon(_a: u32, _b: u32, _c: u32, _d: u32, _e
 /// `DrawFrontEnd` if the menu is active, `RwRenderStateSet(rwRENDERSTATETEXTURERASTER, NULL)`,
 /// `DoFade`, `CHud::DrawAfterFade`, `CMessages::Display(false)`, `CFont::DrawFonts`, the credits test
 /// twice (`RenderCredits` each time it holds), `DebugDisplayTextBuffer`, `FlushObrsPrintfs`,
-/// `RwCameraEndUpdate`, `RsCameraShowRaster`.
+/// `RwCameraEndUpdate`, `RsCameraShowRaster`. SA:MP dispatch points (`crate::samp`, no-ops without a
+/// registered handler) sit where samp retargets the calls: before `CGame::Process` and around `Render2dStuff`.
 #[hook(addr = 0x53E920, conv = cdecl, name = "Game::Idle", expect = "83 EC 08 E8 58 31 02 00",
        unverified = "mvpb-core-1", route = "L3-only", hazards = "x87-transcendental",
        recs = "grove-walk", note = "frame orchestrator (determinism mode retargets the limiter call sites 0x53E930/0x53E94F; the port calls through them)")]
@@ -602,6 +603,7 @@ pub fn idle(param: GPtr<u8>) {
     sprite2d_init_per_frame();
     font_init_per_frame();
     g::<u32>(POINT_LIGHTS_NUM).write(0);
+    crate::samp::frame(crate::samp::FramePhase::BeforeGameProcess);
     game_process_o();
     audio_engine_service(g(AUDIO_ENGINE));
     set_lights_with_time_of_day_colour(g::<GPtr<u8>>(0xC17038).read());
@@ -652,7 +654,9 @@ pub fn idle(param: GPtr<u8>) {
             camera_set_motion_blur_alpha(g(THE_CAMERA), 0x96);
         }
         camera_render_motion_blur(g(THE_CAMERA));
+        crate::samp::frame(crate::samp::FramePhase::Before2d);
         render_2d_stuff_o();
+        crate::samp::frame(crate::samp::FramePhase::After2d);
     } else {
         let _ = draw_calculate_aspect_ratio();
         let view = view_window();
@@ -681,6 +685,7 @@ pub fn idle(param: GPtr<u8>) {
     }
     debug_display_text_buffer();
     flush_obrs_printfs();
+    crate::samp::frame(crate::samp::FramePhase::Present);
     rw_camera_end_update(camera());
     rs_camera_show_raster(camera());
 }
@@ -715,7 +720,10 @@ pub fn game_process() {
     let start = now_ms();
     streaming_update();
     let mut t = now_ms().wrapping_sub(start);
-    cutscene_mgr_update();
+    // samp mode: the call sites samp NOPs (sa_core::samp::feature).
+    if !crate::samp::disabled(crate::samp::feature::CUTSCENES) {
+        cutscene_mgr_update();
+    }
     if g::<u8>(CUTSCENE_PROCESSING).read() == 0 && g::<u8>(TIMER_CODE_PAUSE).read() == 0 {
         menu_process(g(MENU));
     }
@@ -728,7 +736,9 @@ pub fn game_process() {
         sprite2d_set_recip_near_clip();
         sprite2d_init_per_frame();
         font_init_per_frame();
-        cheat_do_cheats();
+        if !crate::samp::toggled(crate::samp::toggle::NO_CHEATS) {
+            cheat_do_cheats();
+        }
         clock_update();
         weather_update();
         scripts_process();
@@ -751,7 +761,7 @@ pub fn game_process() {
             population_update(0);
         }
         weapon_update_weapons();
-        if g::<u8>(CUTSCENE_RUNNING).read() == 0 {
+        if g::<u8>(CUTSCENE_RUNNING).read() == 0 && !crate::samp::disabled(crate::samp::feature::CAR_GENERATORS) {
             car_generators_process();
         }
         if g::<u8>(REPLAY_MODE).read() != 1 {
@@ -761,7 +771,9 @@ pub fn game_process() {
         moving_things_update();
         water_cannons_update();
         user_display_process();
-        replay_update();
+        if !crate::samp::disabled(crate::samp::feature::REPLAY) {
+            replay_update();
+        }
         world_process();
         load_monitor_end_frame(g(LOAD_MONITOR));
         if g::<u8>(TIMER_SKIP_PROCESS).read() == 0 {
@@ -781,7 +793,9 @@ pub fn game_process() {
             interesting_events_scan_for_nearby_entities(g(INTERESTING_EVENTS));
         }
         if replay_should_standard_camera_be_processed() != 0 {
+            crate::samp::frame(crate::samp::FramePhase::CameraProcess);
             camera_process(g(THE_CAMERA));
+            crate::samp::frame(crate::samp::FramePhase::AfterGameProcess);
         } else {
             camera_process_fade(g(THE_CAMERA));
         }
@@ -793,10 +807,14 @@ pub fn game_process() {
         conversations_update();
         ped_to_player_conversations_update();
         bridge_update();
-        coronas_do_sun_and_moon();
+        if !crate::samp::disabled(crate::samp::feature::SUN_MOON_CORONAS) {
+            coronas_do_sun_and_moon();
+        }
         coronas_update();
         shadows_update_permanent_shadows();
-        plant_mgr_update(camera_position_ptr());
+        if !crate::samp::disabled(crate::samp::feature::PLANT_MANAGER) {
+            plant_mgr_update(camera_position_ptr());
+        }
         custom_building_renderer_update();
         let i = g::<i32>(TC_CURRENT_STORED).read();
         let xv = X87::from_f32(g::<f32>(TC_TABLE_X).wrapping_index(i).read());
@@ -809,7 +827,7 @@ pub fn game_process() {
         stencil_shadows_set_light(GPtr::from_raw(light.as_mut_ptr()).cast());
         stencil_shadows_process(camera_position_ptr());
         if g::<u8>(REPLAY_MODE).read() != 1 {
-            if t < 4 {
+            if t < 4 && !crate::samp::disabled(crate::samp::feature::RANDOM_TRAFFIC) {
                 car_ctrl_generate_random_cars();
             }
             road_blocks_generate_road_blocks();

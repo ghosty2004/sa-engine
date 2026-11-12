@@ -64,6 +64,8 @@ pub mod cmd900;
 pub mod cmdlib;
 pub mod hooks;
 pub mod misc;
+// SAVE-1 (docs/arch/save-port.md)
+pub mod save;
 pub mod vm;
 pub mod play_anim_command;
 pub mod generated;

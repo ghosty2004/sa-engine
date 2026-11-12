@@ -88,6 +88,20 @@ e2e_isolate_userfiles() {
     if [ -L "$docs" ]; then rm "$docs" && mkdir -p "$docs"; fi
 }
 
+# Save files (SAVE-1). GTASAsf1.b .. GTASAsf8.b in the prefix's user files: the boot reads them
+# (C_PcSave::PopulateSlotInfo), so no run may see another run's saves. Every game start and every cleanup
+# removes them; scripts collect a run's saves right after it (e2e_saves_collect) to compare the bytes.
+e2e_userfiles() { printf '%s\n' "$WINEPREFIX/drive_c/users/$USER/Documents/GTA San Andreas User Files"; }
+e2e_saves_clear() { rm -f "$(e2e_userfiles)"/GTASAsf[1-8].b; }
+e2e_saves_collect() { # e2e_saves_collect DEST_PREFIX: moves each save to DEST_PREFIX.GTASAsfN.b
+    local f
+    rm -f "$1".GTASAsf[1-8].b
+    for f in "$(e2e_userfiles)"/GTASAsf[1-8].b; do
+        [ -f "$f" ] && mv -f "$f" "$1.$(basename "$f")"
+    done
+    return 0
+}
+
 e2e_lane_setup() {
     local base_prefix="$SA_ROOT/wine/prefix" base_gta="$SA_ROOT/wine/gta-sa" e
     [ -d "$base_prefix" ] && [ -f "$base_gta/gta_sa.exe" ] || { echo "e2e: no wine/prefix or wine/gta-sa (INF-1)" >&2; return 1; }
@@ -207,6 +221,7 @@ e2e_keyup() { DISPLAY="$E2E_DISPLAY" xdotool keyup "$1"; }
 e2e_game_start() {
     [ -n "${E2E_DISPLAY:-}" ] || { echo "e2e: start the headless display first" >&2; return 1; }
     rm -f "$GTA_DIR/sa-hook.log" "$GTA_DIR/sa-launcher.log"
+    e2e_saves_clear
     (
         cd "$GTA_DIR" || exit 1
         exec env -u WAYLAND_DISPLAY DISPLAY="$E2E_DISPLAY" wine "$GTA_DIR/sa-launcher.exe" \
@@ -279,4 +294,5 @@ e2e_cleanup() {
         E2E_GAME_PID=
     fi
     e2e_headless_stop
+    if [ -d "$WINEPREFIX" ]; then e2e_saves_clear; fi
 }

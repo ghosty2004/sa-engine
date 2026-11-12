@@ -371,7 +371,9 @@ pub fn get_vehicle_appearance(v: Veh) -> u32 {
 /// `CVehicle::CanPedOpenLocks(const CPed*)` (0x6D1E20, the lock status read sits in a .HOODLUM fragment
 /// at 0x401A4D): door lock (+0x4F8) 2, 4, 5, 7 -> false; a player ped with lock 3 -> false; else true.
 ///
-/// Not hooked: protection code reads its entry bytes (0x401B4F, 0x405BD6 read 0x6D1E24).
+/// Not hooked: protection code reads its entry bytes (0x401B4F, 0x405BD6 read 0x6D1E24). Registered for phase B
+/// (`#[native]`, SAMP-4: a ped entering a vehicle reaches it).
+#[sa_core::native(addr = 0x6D1E20, conv = thiscall, name = "CVehicle::CanPedOpenLocks")]
 pub fn can_ped_open_locks(v: Veh, ped: GPtr<u8>) -> u8 {
     let lock = rd::<u32>(v, 0x4F8);
     if matches!(lock, 2 | 4 | 5 | 7) {
@@ -2777,10 +2779,22 @@ fn save_buffer() -> [u32; 0x1B] {
 /// size dword (4 bytes) and the structure (0x68 bytes) written to the work buffer; the structure's
 /// matrix destroyed. AL = 1.
 ///
-/// Not registered (decision needed): the original's structure is an uninitialised stack buffer, so any
-/// byte `Construct` leaves unwritten reaches the save file as stack garbage; the port's buffer is zeroed.
+/// The original's structure is an uninitialised stack buffer (entry ESP -0x74): the bytes neither `Save`
+/// (+0x40 / +0x44 = 0) nor `Construct` writes (+0x48, +0x4D, +0x51..+0x53) reach the save file as stack
+/// residue. SAVE-1 registers the port with a footprint window and takes them from its snapshot (ADR-001
+/// §5b): the original's residue whenever the caller is original code (docs/arch/save-port.md).
+#[hook(addr = 0x5D4760, conv = thiscall, name = "CVehicle::Save", expect = "6A FF 68 F8 D6 83 00", this = "CVehicle",
+       unverified = "save-veh-1", route = "L2", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000,
+       note = "no vehicle of the corpus is saved (+0x4A4 == 2 only)")]
 pub fn save(v: Veh) -> u8 {
     let mut b = save_buffer();
+    for k in 4..0x6Cusize {
+        let byte = sa_core::abi::footprint_residue_u8(k as i32 - 0x78, 0x1000);
+        let w = &mut b[k / 4];
+        *w = (*w & !(0xFF << (8 * (k % 4)))) | (u32::from(byte) << (8 * (k % 4)));
+    }
+    b[(4 + 0x40) / 4] = 0;
+    b[(4 + 0x44) / 4] = 0;
     let p = GPtr::from_raw(&raw mut b).cast::<u8>();
     save_structure_construct(p.byte_add(4), v);
     save_data_to_work_buffer(p, 4);
@@ -2900,6 +2914,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_SCALAR_DELETING_DESTRUCTOR,
     HOOK_DO_HEAD_LIGHT_REFLECTION,
     HOOK_LOAD,
+    HOOK_SAVE,
 ];
 
 /// This module's globals (replace with a `sa_core::globals! { list GLOBALS; ... }` block when it gets some).
@@ -2916,3 +2931,6 @@ pub fn physical_get_lighting_from_col(p: GPtr<u8>, interior: u32) -> X87 {
 pub fn random_float_in_range(min: u32, max: u32) -> X87 {
     X87::from_f64_exact(random_float_in_range_st0(min, max))
 }
+
+/// This module's phase B registrations (`#[native]`).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_CAN_PED_OPEN_LOCKS];

@@ -45,13 +45,24 @@ Needs a browser with WebGPU (Chromium 113+, Firefox 141+ on supported systems) o
 | CPUID | a fixed virtual SSE2 CPU (the paths of the native runs) |
 | audio (cpal) | silent (the DirectSound buffers advance in real time) |
 
-## Network seam for SA:MP (later)
+## SA:MP (WEB-SAMP)
 
-SA:MP needs UDP, which a page cannot open. The plan: a separate WebSocket-to-UDP proxy (another lane writes it)
-on localhost; the worker opens `ws://localhost:PORT/udp?host=SERVER&port=7777` and the samp-rs client's socket
-trait gets a web implementation that sends each datagram as one binary WebSocket message (and receives the same
-way). Nothing in the game loop blocks on the network: datagrams queue on the JS side and the client drains the
-queue once per main-loop iteration. See `docs/arch/platform.md` section 22.
+The browser build joins SA:MP 0.3.7 / open.mp servers with samp-rs's network core (`crates/sa-game/src/samp_net.rs`,
+feature `samp`). A page cannot open UDP, so the client's datagrams go over a WebSocket to `sa-udp-proxy`
+(`crates/sa-udp-proxy`, docs/samp/web-proxy.md), which relays them unchanged to the server; natively the same client
+uses plain UDP. RakNet runs inside the main-loop iteration (no update thread, no blocking waits).
+
+```sh
+FEATURES=samp tools/web/build.sh        # the wasm32 build with the SA:MP client
+tools/web/samp-demo.sh                  # private open.mp copy (udp 127.0.0.1:7813) + sa-udp-proxy (ws://127.0.0.1:7781)
+                                        # + this page on http://127.0.0.1:8644/, all loopback only; prints the URL
+```
+
+URL options: `?samp=HOST:PORT` (the server, as the proxy reaches it), `&proxy=ws://127.0.0.1:7781` (default),
+`&name=WebCJ` (default). The auth table (third-party data, never committed) is served to this machine only by
+`serve.sh --samp-auth FILE` as `/samp-auth.txt` and passed to the game as `SA_SAMP_AUTH`. The client serial's seed is
+new per page load. By hand: `sa-udp-proxy 127.0.0.1:7813 --bind 127.0.0.1:7781`, then
+`tools/web/serve.sh --port 8644 --game DIR --samp-auth FILE`.
 
 ## Files
 

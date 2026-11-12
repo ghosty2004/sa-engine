@@ -566,6 +566,9 @@ three drawing functions and SaveStatsToFile). Outputs: the worktree's `target/e2
 
 ## Save / Load screens (not ported, out of scope)
 
+SAVE-1 (docs/arch/save-port.md) has since ported everything listed here, plus `CStats::ConstructStatLine`,
+`BuildStatLine` and `FindCriminalRatingString`; the list below is the PORT-MENU hand-over.
+
 The menu side is Rust already (`ProcessFileActions`, `DrawStandardMenus`' slot rows, `C_PcSave::PopulateSlotInfo`
 / `SetSaveDirectory`). What the Save / Load screens still reach on the original, i.e. what a native save /
 load needs (from the callees of `GenericSave` 0x5D13E0, `GenericLoad` 0x5D17B0 and `C_PcSave::SaveSlot`

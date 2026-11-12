@@ -49,6 +49,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::replay_camera::HOOKS,
     crate::vector2d_normalise::HOOKS,
     crate::generated::HOOKS,
+    crate::save::HOOKS,
 ];
 
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).
@@ -56,6 +57,10 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     crate::memory::NATIVE_INIT,
     crate::matrix_members::NATIVE_SCALE,
     crate::memory::NATIVE_NULLSUB_72F3C0,
+    crate::save::NATIVE_INIT_RADIO_STATION_POSITION_LIST,
+    crate::save::NATIVE_RESTORE_FOR_START_LOAD,
+    crate::save::NATIVE_UPDATE_PADS_THUNK,
+    crate::save::NATIVE_DO_SCRIPT_SETUP_AFTER_POOLS_HAVE_LOADED,
     crate::filemgr::NATIVE_SET_DIR,
     crate::platform::NATIVE_WIN32_INIT_APPLICATION,
     crate::platform::NATIVE_CREATE_DEBUG_FONT,

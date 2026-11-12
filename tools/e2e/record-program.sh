@@ -79,10 +79,11 @@ run_game() { # run_game NAME VAR=VALUE...
             e2e_ctl stack > "$OUT/$name.stack"
             break
         fi
-        sleep 1
+        sleep "${REC_POLL:-1}"   # REC_POLL=0.2: denser screenshots while tuning a program
     done
     wineserver -k 2> /dev/null || true
     wait "$pid" 2> /dev/null
+    e2e_saves_collect "$OUT/$name"
     cp -f "$GTA_DIR/sa-hook.log" "$OUT/$name.log" 2> /dev/null
     mv -f "$DET/$name.trace" "$OUT/$name.trace" 2> /dev/null
     printf '%s\n' "$last" > "$OUT/$name.det"

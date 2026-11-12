@@ -271,6 +271,8 @@ while ((Date.now() - t0) / 1000 < seconds) {
 }
 note(`final status: ${JSON.stringify(await evalJs('window.saGame?.status'))} progress ${JSON.stringify(await evalJs('window.saGame?.progress'))}`);
 await shot('final');
+// the page's log panel (the game's console lines, the last 4000)
+writeFileSync(`${out}/page-log.txt`, ((await evalJs('(window.saGame?.logs ?? []).join("\\n")')) ?? '') + '\n');
 ws.close();
 kill();
 process.exit(0);

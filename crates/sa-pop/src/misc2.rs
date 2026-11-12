@@ -1163,9 +1163,9 @@ orig! {
     /// `CGenericGameStorage::LoadDataFromWorkBuffer(void*, int32)` (0x5D1300)
     fn load_data_from_work_buffer(p: GPtr<u8>, n: i32) -> u8 = cdecl 0x5D1300 => unported;
     /// `CGangWarsSaveStructure::Construct()` (0x5D2620)
-    fn gang_wars_save_construct(s: GPtr<u8>) = thiscall 0x5D2620 => unported;
+    fn gang_wars_save_construct(s: GPtr<u8>) = thiscall 0x5D2620 => gang_wars_save_structure_construct;
     /// `CGangWarsSaveStructure::Extract()` (0x5D2740)
-    fn gang_wars_save_extract(s: GPtr<u8>) = thiscall 0x5D2740 => unported;
+    fn gang_wars_save_extract(s: GPtr<u8>) = thiscall 0x5D2740 => gang_wars_save_structure_extract;
 }
 
 /// `CGangs::Save()` (0x5D3A60): the 10 `CGangInfo` (0x10 each).
@@ -1186,10 +1186,97 @@ pub fn gangs_load() -> u8 {
     1
 }
 
-/// `CGangWars::Save()` (0x5D5530): size 0x58, then the constructed `CGangWarsSaveStructure`.
-#[hook(addr = 0x5D5530, conv = cdecl, name = "CGangWars::Save", expect = "83 EC 5C 8D 4C 24 04")]
+/// The dword fields of `CGangWarsSaveStructure` after the two zone indices (structure offset, global), in
+/// the bytes' order.
+const GANG_WARS_SAVE_DWORDS: [(isize, usize); 15] = [
+    (0x14, 0x96ABBC),
+    (0x18, 0x96ABC0),
+    (0x1C, 0x96ABC4),
+    (0x20, 0x96AB84),
+    (0x24, 0x96AB50),
+    (0x28, 0x96AB58),
+    (0x2C, 0x96AB54),
+    (0x30, 0x96AB4C),
+    (0x34, 0x96AB48),
+    (0x38, 0x96ABC8),
+    (0x3C, 0x96ABCC),
+    (0x40, 0x96ABD0),
+    (0x44, 0x96AB44),
+    (0x48, 0x96AB98),
+    (0x50, 0x96AB9C),
+];
+
+/// `CGangWarsSaveStructure::Construct()` (0x5D2620, thiscall; docs/re/specs/SAVE/CGangWarsSaveStructure.md):
+/// +0 `bGangWarsActive`, +4 `State`, +8 `TimeStarted`, +0xC / +0x10 the indices of the zone info / navigation
+/// zone to fight over (-1 when null or not found; linear searches over the counts, read once), the dwords of
+/// [`GANG_WARS_SAVE_DWORDS`], +0x4C `bPlayerIsCloseby`, +0x54 `Difficulty`. +1..+3 and +0x4D..+0x4F are not
+/// written.
+#[hook(addr = 0x5D2620, conv = thiscall, name = "CGangWarsSaveStructure::Construct", expect = "A0 90 AB 96 00 88 01",
+       route = "L2", hazards = "none", recs = "save-load")]
+pub fn gang_wars_save_structure_construct(this: GPtr<u8>) {
+    let gw = |a: usize| GPtr::<u32>::from_addr(a).read();
+    this.write(GPtr::<u8>::from_addr(0x96AB90).read());
+    this.byte_add(4).cast::<u32>().write(gw(0x96AB64));
+    this.byte_add(8).cast::<u32>().write(gw(0x96AB60));
+    for (field, ptr, count, base, stride) in [(0xCisize, 0x96AB8Cusize, 0xBA1DE8usize, 0xBA1DF0u32, 0x11u32), (0x10, 0x96AB88, 0xBA3794, 0xBA3798, 0x20)] {
+        this.byte_add(field).cast::<i32>().write(-1);
+        let p = gw(ptr);
+        if p == 0 {
+            continue;
+        }
+        let n = i32::from(GPtr::<u16>::from_addr(count).read());
+        let mut i = 0i32;
+        while i < n {
+            if p == base.wrapping_add((i as u32).wrapping_mul(stride)) {
+                this.byte_add(field).cast::<i32>().write(i);
+                break;
+            }
+            i += 1;
+        }
+    }
+    for (o, a) in GANG_WARS_SAVE_DWORDS {
+        if o == 0x50 {
+            this.byte_add(0x4C).write(GPtr::<u8>::from_addr(0x96AB92).read());
+        }
+        this.byte_add(o).cast::<u32>().write(gw(a));
+    }
+    this.byte_add(0x54).cast::<u32>().write(gw(0x96AB80));
+}
+
+/// `CGangWarsSaveStructure::Extract()` (0x5D2740, thiscall): the inverse of `Construct` in the same order; the
+/// zone pointers from the indices (`0xBA1DF0 + 0x11 * i` / `0xBA3798 + (i << 5)`, null for -1, no range
+/// checks).
+#[hook(addr = 0x5D2740, conv = thiscall, name = "CGangWarsSaveStructure::Extract", expect = "8A 01 A2 90 AB 96 00",
+       route = "L2", hazards = "none", recs = "save-load")]
+pub fn gang_wars_save_structure_extract(this: GPtr<u8>) {
+    let set = |a: usize, v: u32| GPtr::<u32>::from_addr(a).write(v);
+    GPtr::<u8>::from_addr(0x96AB90).write(this.read());
+    set(0x96AB64, this.byte_add(4).cast::<u32>().read());
+    set(0x96AB60, this.byte_add(8).cast::<u32>().read());
+    let zi = this.byte_add(0xC).cast::<i32>().read();
+    set(0x96AB8C, if zi == -1 { 0 } else { (zi as u32).wrapping_mul(0x11).wrapping_add(0xBA1DF0) });
+    let nz = this.byte_add(0x10).cast::<i32>().read();
+    set(0x96AB88, if nz == -1 { 0 } else { (nz as u32).wrapping_shl(5).wrapping_add(0xBA3798) });
+    for (o, a) in GANG_WARS_SAVE_DWORDS {
+        if o == 0x50 {
+            GPtr::<u8>::from_addr(0x96AB92).write(this.byte_add(0x4C).read());
+        }
+        set(a, this.byte_add(o).cast::<u32>().read());
+    }
+    set(0x96AB80, this.byte_add(0x54).cast::<u32>().read());
+}
+
+/// `CGangWars::Save()` (0x5D5530): size 0x58, then the constructed `CGangWarsSaveStructure`. The structure
+/// is an uninitialised local (entry ESP -0x58) whose bytes `Construct` skips (+1..+3, +0x4D..+0x4F) reach the
+/// save file: SAVE-1 takes them from the footprint snapshot (ADR-001 §5b; docs/arch/save-port.md).
+#[hook(addr = 0x5D5530, conv = cdecl, name = "CGangWars::Save", expect = "83 EC 5C 8D 4C 24 04",
+       route = "L2", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn gang_wars_save() -> u8 {
     let mut buf = [0u32; 0x17];
+    for (k, w) in buf.iter_mut().enumerate().skip(1) {
+        let off = 4 * k as i32 - 0x5C;
+        *w = u32::from_le_bytes([0, 1, 2, 3].map(|b| sa_core::abi::footprint_residue_u8(off + b, 0x1000)));
+    }
     buf[0] = 0x58;
     let p = GPtr::<u8>::from_raw(buf.as_mut_ptr().cast());
     gang_wars_save_construct(p.byte_add(4));
@@ -1537,6 +1624,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_GANGS_SAVE,
     HOOK_GANGS_LOAD,
     HOOK_GANG_WARS_SAVE,
+    HOOK_GANG_WARS_SAVE_STRUCTURE_CONSTRUCT,
+    HOOK_GANG_WARS_SAVE_STRUCTURE_EXTRACT,
     HOOK_GANG_WARS_LOAD,
     HOOK_TAG_MANAGER_SAVE,
     HOOK_TAG_MANAGER_LOAD,

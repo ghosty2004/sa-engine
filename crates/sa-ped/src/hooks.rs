@@ -34,6 +34,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // WRITER-NATIVE
     crate::ped_pointer_valid::HOOKS,
     crate::player_sprint_results::HOOKS,
+    crate::save_blocks::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

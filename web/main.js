@@ -1,6 +1,7 @@
 // The page (WEB-1): picks the game folder, starts the worker that runs the game, forwards keyboard and mouse input.
 // URL query: ?inworld=0 (play the intro), ?backend=gl|webgpu, ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
+// ?samp=HOST:PORT[&proxy=ws://127.0.0.1:7781][&name=NAME]: join a SA:MP / open.mp server through sa-udp-proxy (build with FEATURES=samp).
 // &stub=ADDR=RET/N,... replaces the default exploration stubs (the play package's, DEFAULT_STUBS); &stub=none drops them.
 const $ = (id) => document.getElementById(id);
 const canvas = $('screen');
@@ -31,7 +32,7 @@ const STATES = ['INITIAL', 'LOGO', 'PLAYING_LOGO', 'TITLE', 'PLAYING_INTRO', 'FR
   'FRONTEND_IDLE', 'LOADING_STARTED', 'IDLE', 'EXIT'];
 window.saGame = { status: {}, logs: [], logBase: 0, snapshots: [], snapshot: () => worker?.postMessage({ type: 'snapshot' }) };
 
-function start(files) {
+async function start(files) {
   if (worker) return;
   worker = new Worker('worker.js', { type: 'module' });
   worker.onmessage = (ev) => {
@@ -76,6 +77,21 @@ function start(files) {
   if (stub !== 'none') env.SA_GAME_STUB = stub ?? DEFAULT_STUBS;
   for (const [k, v] of params) if (k.startsWith('SA_')) env[k] = v;
   if (params.get('auto') === '1') env.SA_WEB_AUTO_INPUT = '1';
+  // SA:MP: ?samp=HOST:PORT&proxy=ws://127.0.0.1:7781&name=NAME joins that server through sa-udp-proxy
+  // (docs/samp/web-proxy.md); the auth table (third-party data) comes from the local server (serve.sh --samp-auth FILE)
+  const samp = params.get('samp');
+  if (samp) {
+    env.SA_SAMP = samp;
+    env.SA_SAMP_PROXY = params.get('proxy') ?? 'ws://127.0.0.1:7781';
+    env.SA_SAMP_NAME = params.get('name') ?? 'WebCJ';
+    try {
+      const r = await fetch(params.get('auth') ?? 'samp-auth.txt');
+      if (r.ok) env.SA_SAMP_AUTH = await r.text();
+      else log(`SA:MP auth table: HTTP ${r.status} (start the server with --samp-auth FILE)`, 'error');
+    } catch (e) {
+      log(`SA:MP auth table: ${e}`, 'error');
+    }
+  }
   const off = canvas.transferControlToOffscreen();
   worker.postMessage({ type: 'start', canvas: off, files, env, startInWorld: $('inworld').checked, backend: params.get('backend') ?? '' }, [off]);
   canvas.focus();

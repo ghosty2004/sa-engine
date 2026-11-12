@@ -7,6 +7,7 @@
 # COM object pages (0x30000..) live at their original addresses (docs/arch/platform.md section 22).
 #
 #   tools/web/build.sh            release build (PROFILE=dev for a debug build)
+#   FEATURES=samp tools/web/build.sh   with the SA:MP client (joins through sa-udp-proxy, docs/samp/web-proxy.md)
 #
 # Needs: rustup target wasm32-unknown-unknown, wasm-bindgen-cli 0.2.130 (on PATH or in target/tools/bin:
 # `cargo binstall --root target/tools wasm-bindgen-cli@0.2.130`).
@@ -22,7 +23,7 @@ stack=$((16 * 1024 * 1024))
 
 RUSTFLAGS="-C link-arg=--no-stack-first -C link-arg=--global-base=$low_end -C link-arg=-zstack-size=$stack -C link-arg=--export=__stack_pointer ${RUSTFLAGS:-}" \
 CARGO_PROFILE_RELEASE_DEBUG=${CARGO_PROFILE_RELEASE_DEBUG:-0} \
-    cargo build -j"${JOBS:-8}" --profile "$profile" -p sa-game --lib --target wasm32-unknown-unknown --no-default-features
+    cargo build -j"${JOBS:-8}" --profile "$profile" -p sa-game --lib --target wasm32-unknown-unknown --no-default-features ${FEATURES:+--features "$FEATURES"}
 
 bindgen=wasm-bindgen
 [ -x target/tools/bin/wasm-bindgen ] && bindgen=target/tools/bin/wasm-bindgen

@@ -32,6 +32,7 @@ def game_index(game):
 class Handler(SimpleHTTPRequestHandler):
     game = None
     index = b"[]"
+    samp_auth = None
 
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=WEB, **kw)
@@ -60,6 +61,18 @@ class Handler(SimpleHTTPRequestHandler):
             body = Handler.index
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if url.path == "/samp-auth.txt":
+            if Handler.samp_auth is None:
+                self.send_error(404, "no --samp-auth file")
+                return
+            with open(Handler.samp_auth, "rb") as f:
+                body = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -117,6 +130,7 @@ def main():
     ap.add_argument("--port", type=int, default=8642)
     ap.add_argument("--bind", default="127.0.0.1")
     ap.add_argument("--game", help="your GTA San Andreas folder (served to this machine only)")
+    ap.add_argument("--samp-auth", help="the SA:MP auth table (third-party data, served to this machine only as /samp-auth.txt)")
     a = ap.parse_args()
     if a.bind not in ("127.0.0.1", "::1", "localhost"):
         sys.exit("serve.py: binds to the loopback address only (the game files must not leave this machine)")
@@ -125,6 +139,10 @@ def main():
             sys.exit(f"serve.py: {a.game} has no gta_sa.exe")
         Handler.game = os.path.abspath(a.game)
         Handler.index = json.dumps(game_index(Handler.game)).encode()
+    if a.samp_auth:
+        if not os.path.isfile(a.samp_auth):
+            sys.exit(f"serve.py: {a.samp_auth} does not exist")
+        Handler.samp_auth = os.path.abspath(a.samp_auth)
     if not os.path.isfile(os.path.join(WEB, "pkg", "sa_game.js")):
         print("serve.py: web/pkg is missing: run tools/web/build.sh first", file=sys.stderr)
     srv = ThreadingHTTPServer((a.bind, a.port), Handler)

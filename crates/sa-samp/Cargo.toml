@@ -1,0 +1,15 @@
+[package]
+name = "sa-samp"
+version = "0.1.0"
+description = "The native sa-engine backend of the SA:MP game adapter (docs/samp/game-adapter.md, docs/samp/native-plan.md): implements the sa-samp-api traits on the ported engine's state, so samp-rs can run inside native sa-game"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+sa-core = { path = "../sa-core" }
+sa-samp-api = { path = "../sa-samp-api" }
+sa-samp-ui = { path = "../sa-samp-ui" }
+
+[lints.rust]
+missing_docs = "warn"

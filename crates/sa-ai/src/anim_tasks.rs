@@ -47,7 +47,7 @@ fn copy_str(dst: GPtr<u8>, src: GPtr<u8>) {
 /// `GetAnimationBlock(+0x28)` is non-null, else 0. Returns `this`. The flags byte's other bits are
 /// whatever the task pool slot held.
 #[hook(addr = 0x61a990, conv = thiscall, name = "CTaskSimpleRunNamedAnim::Constructor-Anim", expect = "6A FF 68 28 F1 83 00",
-       unverified = "mvpi-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_arguments)]
 pub fn run_named_anim_ctor(
     this: GPtr<u8>,

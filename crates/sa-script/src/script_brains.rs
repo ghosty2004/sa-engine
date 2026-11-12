@@ -147,7 +147,7 @@ pub fn add_new_streamed_script_brain_for_code_use(this: GPtr<u8>, index: u32, na
 /// the no-CD fragment 0x401F5F, `ret 4`, AX): the first of the 0x52 streamed scripts whose int16 +6
 /// equals `index` (entries 0x20 bytes); else 0xFFFF. EAX's upper half is 0 on both paths.
 #[hook(addr = 0x470810, conv = thiscall, name = "CStreamedScripts::GetProperIndexFromIndexUsedByScript",
-       expect = "E9 4A 17 F9 FF 33 C0 56", this = "CStreamedScripts", unverified = "mvph-script-1", route = "L2",
+       expect = "E9 4A 17 F9 FF 33 C0 56", this = "CStreamedScripts", route = "L2",
        hazards = "none", recs = "grove-walk", note = "entry jmp goes to a no-CD fragment (not .HOODLUM); expect covers 8 bytes")]
 pub fn get_proper_index_from_index_used_by_script(this: GPtr<u8>, index: u32) -> u32 {
     let want = index as u16;
@@ -192,7 +192,7 @@ orig! {
 /// entry (type 0) is remembered, the last one wins. Then the remembered entry, if any, gets id, the
 /// low 16 bits of `type` and owner.
 #[hook(addr = 0x4704b0, conv = thiscall, name = "CScriptResourceManager::AddToResourceManager", expect = "E9 2B A8 0F 01",
-       this = "CScriptResourceManager", unverified = "mvph-script-1", route = "L2", hazards = "none",
+       this = "CScriptResourceManager", route = "L2", hazards = "none",
        recs = "grove-walk")]
 pub fn add_to_resource_manager(this: GPtr<u8>, id: i32, ty: u32, owner: GPtr<u8>) {
     let mut free: i32 = -1;

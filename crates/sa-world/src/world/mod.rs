@@ -74,3 +74,6 @@ pub mod break_object;
 pub mod interior_group_paths;
 pub mod entry_exit_transition;
 pub mod water_creature;
+// SAVE-1 (docs/arch/save-port.md)
+pub mod save_blocks;
+pub mod stats_strings;

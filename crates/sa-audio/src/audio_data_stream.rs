@@ -145,7 +145,7 @@ pub fn data_stream_seek(this: GPtr<u8>, offset: u32, whence: u32) -> u32 {
 /// open, result 1. Then a zero length becomes `GetFileSize(handle, NULL)` (also after a failed open, with the invalid
 /// handle). AL only: the upper EAX bytes are the caller's (open) or the last call's.
 #[hook(addr = 0x4dc2b0, conv = thiscall, name = "CAEDataStream::Initialise", expect = "56 8B F1 8A 46 0C",
-       unverified = "mvpl-audio-2", route = "split", hazards = "ax-al-return", recs = "grove-walk",
+       route = "split", hazards = "ax-al-return", recs = "grove-walk",
        note = "opens the track file (CreateFileA): one run per OS state")]
 pub fn data_stream_initialise(this: GPtr<u8>) -> u8 {
     if rd::<u8>(this, 0xC) != 0 {

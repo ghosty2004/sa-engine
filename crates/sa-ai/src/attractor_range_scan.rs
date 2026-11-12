@@ -86,7 +86,7 @@ fn floor_ftol(v: X87) -> i32 {
 /// event's destructor (the scripted one re-sets its vtable first). The original keeps `x1` and the chosen effect
 /// in its own ped argument slot.
 #[hook(addr = 0x6060a0, conv = thiscall, name = "FUN_006060a0", expect = "64 A1 00 00 00 00",
-       unverified = "mvpl-ai-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "the events live on the Rust stack; the ped argument slot holds the sector bound and the chosen effect")]
 pub fn attractor_scanner_scan_in_range(this: GPtr<u8>, ped: GPtr<u8>) {
     if rd::<u8>(this, 0) == 0 {
