@@ -379,7 +379,21 @@ impl NetHooks {
                     "give_weapon",
                     game.give_weapon(me, WeaponType(w.weapon as u8), w.ammo),
                 );
+                // samp arms the given weapon (not forced).
+                report(
+                    self,
+                    "set_current_weapon",
+                    game.set_current_weapon(me, WeaponType(w.weapon as u8)),
+                );
                 self.note(format!("GivePlayerWeapon {} x{}", w.weapon, w.ammo));
+            }
+            P::SetPlayerArmedWeapon(w) => {
+                report(
+                    self,
+                    "set_current_weapon",
+                    game.set_current_weapon(me, WeaponType(w.weapon as u8)),
+                );
+                self.note(format!("SetPlayerArmedWeapon {}", w.weapon));
             }
             P::ResetPlayerWeapons(_) => report(self, "clear_weapons", game.clear_weapons(me)),
             P::GivePlayerMoney(m) => {

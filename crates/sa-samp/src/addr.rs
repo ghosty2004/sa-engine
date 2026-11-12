@@ -92,6 +92,12 @@ pub const STREAMING_INFO: u32 = 0x8E4CC0;
 pub const STREAMING_INFO_SIZE: u32 = 0x14;
 /// Entries of `ms_aInfoForModel` (models, txds, collisions, ipls, ... up to the scripts).
 pub const STREAMING_MODELS: u32 = 26_316;
+/// `aWeaponInfo` (`CWeaponInfo`, 0x70 bytes; `m_nModelId1` at +0xC): types 0..47 at standard skill.
+pub const WEAPON_INFO: u32 = 0xC8AAB8;
+/// `sizeof(CWeaponInfo)`.
+pub const WEAPON_INFO_SIZE: u32 = 0x70;
+/// Weapon types with a standard-skill entry at their own index.
+pub const WEAPON_INFO_STD_COUNT: u8 = 47;
 /// `CAnimManager::ms_aAnimBlocks[180]` (`CAnimBlock`: `char szName[16]`, `bool bLoaded` +0x10, ... 0x20 bytes).
 pub const ANIM_BLOCKS: u32 = 0xB5D4A0;
 /// `sizeof(CAnimBlock)`.
