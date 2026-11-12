@@ -132,3 +132,4 @@ pub mod plant_statics_init;
 pub mod visibility_train_big_vehicle;
 pub mod car_env_map_render;
 pub mod fx_add_sparks;
+pub mod fx_info_trail;
