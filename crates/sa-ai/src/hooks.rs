@@ -96,6 +96,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vehicle_potential_collision::HOOKS,
     crate::attractor_approach_event::HOOKS,
     crate::task_in_air_process_ped::HOOKS,
+    crate::event_attractor_affects_ped::HOOKS,
+    crate::stuck_in_air_subtask::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
