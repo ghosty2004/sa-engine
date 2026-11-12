@@ -61,6 +61,8 @@ orig! {
     fn c_61a390_t0(this: u32) -> u32 = thiscall 0x61A390 => unported;
     /// `CTaskComplex` (0x61A3B0), thiscall, 0 stack argument(s)
     fn c_61a3b0_t0(this: u32) -> u32 = thiscall 0x61A3B0 => unported;
+    /// `CTask::operator new` (0x61A5A0), cdecl, 1 stack argument(s)
+    fn c_61a5a0_c1(a0: u32) -> u32 = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleAnim` (0x61A6C0), thiscall, 1 stack argument(s)
     fn c_61a6c0_t1(this: u32, a0: u32) -> u32 = thiscall 0x61A6C0 => unported;
     /// `CTaskSimpleRunAnim::Constructor2` (0x61A900), thiscall, 6 stack argument(s)
@@ -87,10 +89,14 @@ orig! {
     fn c_63c940_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x63C940 => unported;
     /// `CTaskComplexCarDriveMission::Constructor` (0x63CC30), thiscall, 5 stack argument(s)
     fn c_63cc30_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63CC30 => unported;
+    /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Constructor` (0x646B70), thiscall, 3 stack argument(s)
+    fn c_646b70_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646B70 => unported;
     /// `CTaskComplexEvasiveDiveAndGetUp::Constructor` (0x6536B0), thiscall, 4 stack argument(s)
     fn c_6536b0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x6536B0 => unported;
     /// `CTaskComplexSmartFleeEntity::Constructor` (0x65C430), thiscall, 6 stack argument(s)
     fn c_65c430_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x65C430 => unported;
+    /// `CTaskSimpleGoToPoint::Constructor` (0x667CD0), thiscall, 5 stack argument(s)
+    fn c_667cd0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x667CD0 => unported;
     /// `CTaskComplexGoToPointAndStandStill::Constructor` (0x668120), thiscall, 6 stack argument(s)
     fn c_668120_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x668120 => unported;
     /// `CTaskComplexWander::Constructor` (0x66F450), thiscall, 4 stack argument(s)
@@ -279,6 +285,95 @@ pub fn g_task_complex_dive_from_attached_entity_and_get_up_constructor_492e20(th
     c_6536b0_t4(this, 0, a0, fb.wrapping_add(0x3F4), 1);
     wr::<u32>(p(this), 0, 0x85_A358);
     this
+}
+
+/// `CTaskComplexSeekEntityRadiusAngleOffset::Constructor` (0x493730, stub to .HOODLUM 0x156F640): ctor, thiscall, `ret 32`; 63 instruction(s) matched.
+#[hook(addr = 0x493730, conv = thiscall, name = "CTaskComplexSeekEntityRadiusAngleOffset::Constructor", expect = "E9 0B BF 0D 01", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_complex_seek_entity_radius_angle_offset_constructor_493730(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+    a4: u32,
+    a5: u32,
+    a6: u32,
+    a7: u32,
+) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0xC, a0);
+    wr::<u32>(p(this), 0x10, a1);
+    wr::<u32>(p(this), 0x14, a2);
+    wr::<u32>(p(this), 0x18, a3);
+    wr::<u32>(p(this), 0, 0x85_A388);
+    wr::<u32>(p(this), 0x1C, a4);
+    wr::<u32>(p(this), 0x20, 0);
+    wr::<u32>(p(this), 0x24, a5);
+    wr::<u32>(p(this), 0x28, 0);
+    wr::<u32>(p(this), 0x2C, 0);
+    wr::<u8>(p(this), 0x30, 0 as u8);
+    wr::<u8>(p(this), 0x31, 0 as u8);
+    wr::<u32>(p(this), 0x34, 0);
+    wr::<u32>(p(this), 0x38, 0);
+    wr::<u8>(p(this), 0x3C, 0 as u8);
+    wr::<u8>(p(this), 0x3D, 0 as u8);
+    wr::<u32>(p(this), 0x40, 0x85_A384);
+    wr::<u32>(p(this), 0x44, 0);
+    wr::<u32>(p(this), 0x48, 0);
+    let v2 = u32::from(rd::<u8>(p(this), 0x50));
+    let v3 = (((((a4 & 0xFFFF_FF00) | ((a7 & 0xFF) & 0xFF)) & 0xFF) & 1) & 0xFF);
+    let v4 = ((((((((a4 & 0xFFFF_FF00) | ((a7 & 0xFF) & 0xFF)) & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFF)
+        & 0xFF)
+        << 1)
+        & 0xFF);
+    let v5 = (((((a5 & 0xFFFF_FF00) | (v2 & 0xFF)) & 0xFF) & 0xF0) & 0xFF);
+    let v6 = (((((((((a4 & 0xFFFF_FF00) | ((a7 & 0xFF) & 0xFF)) & 0xFFFF_FF00) | (v3 & 0xFF))
+        & 0xFFFF_FF00)
+        | (v4 & 0xFF))
+        & 0xFF)
+        | (((((a5 & 0xFFFF_FF00) | (v2 & 0xFF)) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFF))
+        & 0xFF);
+    let v7 = (((((((((a5 & 0xFFFF_FF00) | (v2 & 0xFF)) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF00)
+        | ((a6 & 0xFF) & 0xFF))
+        & 0xFF)
+        & 1)
+        & 0xFF);
+    let v8 = (((((((((((a4 & 0xFFFF_FF00) | ((a7 & 0xFF) & 0xFF)) & 0xFFFF_FF00) | (v3 & 0xFF))
+        & 0xFFFF_FF00)
+        | (v4 & 0xFF))
+        & 0xFFFF_FF00)
+        | (v6 & 0xFF))
+        & 0xFF)
+        | (((((((((a5 & 0xFFFF_FF00) | (v2 & 0xFF)) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF00)
+            | ((a6 & 0xFF) & 0xFF))
+            & 0xFFFF_FF00)
+            | (v7 & 0xFF))
+            & 0xFF))
+        & 0xFF);
+    let v9 = (((((((((((a4 & 0xFFFF_FF00) | ((a7 & 0xFF) & 0xFF)) & 0xFFFF_FF00) | (v3 & 0xFF))
+        & 0xFFFF_FF00)
+        | (v4 & 0xFF))
+        & 0xFFFF_FF00)
+        | (v6 & 0xFF))
+        & 0xFFFF_FF00)
+        | (v8 & 0xFF))
+        & 0xFF);
+    wr::<u8>(p(this), 0x50, v9 as u8);
+    let v10 = rd::<u32>(p(this), 0xC);
+    wr::<u32>(p(fb), 0x3F0, this);
+    wr::<u32>(p(fb), 0x3F8, 0x83_8AB3);
+    wr::<u32>(p(fb), 0x3FC, 0);
+    wr::<u8>(p(fb), 0x3FC, 1 as u8);
+    wr::<u32>(p(this), 0x4C, 6);
+    if v10 == 0 {
+        return this;
+    } else {
+        wr::<u32>(p(fb), 0x3E4, this.wrapping_add(0xC));
+        c_571b70_t1(v10, this.wrapping_add(0xC));
+        return this;
+    }
 }
 
 /// `CEvent::Constructor` (0x4ABFC0): ctor, thiscall, `ret`; 6 instruction(s) matched.
@@ -3102,6 +3197,69 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_constructor_646b70(
     }
 }
 
+/// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Constructor` (0x646D70): ctor, thiscall, `ret 16`; 56 instruction(s) matched.
+#[hook(addr = 0x646D70, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Constructor", expect = "6A FF 68 4E 26 84 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_constructor_646d70(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+    a3: u32,
+) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    c_61a390_t0(this);
+    wr::<u32>(p(this), 0, 0x86_EDE0);
+    let v2 = c_61a5a0_c1(0x30);
+    wr::<u32>(p(fb), 0x3EC, this);
+    wr::<u32>(p(fb), 0x3F0, v2);
+    wr::<u32>(p(fb), 0x3F8, 0x84_264E);
+    wr::<u32>(p(fb), 0x3FC, 0);
+    wr::<u8>(p(fb), 0x3FC, 1 as u8);
+    if v2 == 0 {
+        wr::<u32>(p(fb), 0x3E4, 0x14);
+        wr::<u8>(p(fb), 0x3FC, 0 as u8);
+        wr::<u32>(p(this), 8, 0);
+        let v3 = c_61a5a0_c1(0x14);
+        wr::<u8>(p(fb), 0x3FC, 2 as u8);
+        if v3 == 0 {
+            wr::<u32>(p(this), 0xC, 0);
+            return this;
+        } else {
+            wr::<u32>(p(fb), 0x3E4, 0);
+            wr::<u32>(p(fb), 0x3E0, a1);
+            wr::<u32>(p(fb), 0x3DC, a0);
+            let v4 = c_646b70_t3(v3, a0, a1, 0);
+            wr::<u32>(p(this), 0xC, v4);
+            return this;
+        }
+    } else {
+        let v5 = g::<u32>(0x86_FC78).read();
+        wr::<u32>(p(fb), 0x3E4, 0);
+        wr::<u32>(p(fb), 0x3E0, 0);
+        wr::<u32>(p(fb), 0x3DC, v5);
+        wr::<u32>(p(fb), 0x3D8, a2);
+        wr::<u32>(p(fb), 0x3D4, a3);
+        let v6 = c_667cd0_t5(v2, a3, a2, v5, 0, 0);
+        wr::<u32>(p(fb), 0x3E4, 0x14);
+        wr::<u8>(p(fb), 0x3FC, 0 as u8);
+        wr::<u32>(p(this), 8, v6);
+        let v7 = c_61a5a0_c1(0x14);
+        wr::<u8>(p(fb), 0x3FC, 2 as u8);
+        if v7 == 0 {
+            wr::<u32>(p(this), 0xC, 0);
+            return this;
+        } else {
+            wr::<u32>(p(fb), 0x3E4, 0);
+            wr::<u32>(p(fb), 0x3E0, a1);
+            wr::<u32>(p(fb), 0x3DC, a0);
+            let v8 = c_646b70_t3(v7, a0, a1, 0);
+            wr::<u32>(p(this), 0xC, v8);
+            return this;
+        }
+    }
+}
+
 /// `CTaskSimpleCarGetOut::Constructor` (0x6471D0): ctor, thiscall, `ret 12`; 36 instruction(s) matched.
 #[hook(addr = 0x6471D0, conv = thiscall, name = "CTaskSimpleCarGetOut::Constructor", expect = "6A FF 68 28 27 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_get_out_constructor_6471d0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
@@ -5519,6 +5677,38 @@ pub fn g_task_complex_follow_ped_footsteps_constructor_694e20(this: u32, a0: u32
     }
 }
 
+/// `FUN_00695600` (0x695600): ctor, thiscall, `ret 12`; 40 instruction(s) matched.
+#[hook(addr = 0x695600, conv = thiscall, name = "FUN_00695600", expect = "6A FF 68 23 76 84 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_fun_00695600_695600(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    c_61a3b0_t0(this);
+    wr::<u32>(p(this), 0xC, a0);
+    wr::<u32>(p(this), 0x10, a1);
+    wr::<u32>(p(this), 0, 0x87_0CF0);
+    wr::<u32>(p(this), 0x14, a2);
+    wr::<u32>(p(this), 0x18, 0);
+    wr::<u32>(p(this), 0x1C, 0);
+    wr::<u8>(p(this), 0x20, 0 as u8);
+    wr::<u8>(p(this), 0x21, 0 as u8);
+    wr::<u32>(p(this), 0x24, 0x86_F8F8);
+    wr::<u32>(p(this), 0x28, 0);
+    wr::<u32>(p(this), 0x2C, 0);
+    wr::<u32>(p(this), 0x30, 0);
+    let v2 = rd::<u32>(p(this), 0xC);
+    wr::<u32>(p(fb), 0x3F0, this);
+    wr::<u32>(p(fb), 0x3F8, 0x84_7623);
+    wr::<u32>(p(fb), 0x3FC, 0);
+    wr::<u8>(p(fb), 0x3FC, 1 as u8);
+    if v2 == 0 {
+        return this;
+    } else {
+        wr::<u32>(p(fb), 0x3E8, this.wrapping_add(0xC));
+        c_571b70_t1(v2, this.wrapping_add(0xC));
+        return this;
+    }
+}
+
 /// `CTaskComplexInvestigateDeadPed::Constructor` (0x696DF0): ctor, thiscall, `ret 4`; 39 instruction(s) matched.
 #[hook(addr = 0x696DF0, conv = thiscall, name = "CTaskComplexInvestigateDeadPed::Constructor", expect = "6A FF 68 D8 78 84 00")]
 pub fn g_task_complex_investigate_dead_ped_constructor_696df0(this: u32, a0: u32) -> u32 {
@@ -5729,6 +5919,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_HANDS_UP_CONSTRUCTOR_48E970,
     HOOK_G_TASK_SIMPLE_TOGGLE_PED_THREAT_SCANNER_CTASK_SIMPLE_TOGGLE_PED_THREAT_SCANNER_492D10,
     HOOK_G_TASK_COMPLEX_DIVE_FROM_ATTACHED_ENTITY_AND_GET_UP_CONSTRUCTOR_492E20,
+    HOOK_G_TASK_COMPLEX_SEEK_ENTITY_RADIUS_ANGLE_OFFSET_CONSTRUCTOR_493730,
     HOOK_G_EVENT_CONSTRUCTOR_4ABFC0,
     HOOK_G_CINFORM_GROUP_EVENT_CONSTRUCTOR_4AC350,
     HOOK_G_EVENT_GUN_SHOT_CONSTRUCTOR_4AC610,
@@ -5881,6 +6072,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_CONSTRUCTOR_646690,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_CONSTRUCTOR_646810,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_CONSTRUCTOR_646B70,
+    HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_CONSTRUCTOR_646D70,
     HOOK_G_TASK_SIMPLE_CAR_GET_OUT_CONSTRUCTOR_6471D0,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_CONSTRUCTOR_647FE0,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_BE_DRAGGED_OUT_CONSTRUCTOR_648230,
@@ -5980,6 +6172,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_ANY_MEANS_CONSTRUCTOR_694AA0,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_AIMING_CONSTRUCTOR_694B90,
     HOOK_G_TASK_COMPLEX_FOLLOW_PED_FOOTSTEPS_CONSTRUCTOR_694E20,
+    HOOK_G_FUN_00695600_695600,
     HOOK_G_TASK_COMPLEX_INVESTIGATE_DEAD_PED_CONSTRUCTOR_696DF0,
     HOOK_G_TASK_COMPLEX_REACT_TO_GUN_AIMED_AT_CONSTRUCTOR_6971B0,
     HOOK_G_TASK_COMPLEX_WAIT_FOR_BACKUP_CONSTRUCTOR_697290,
@@ -6011,6 +6204,7 @@ pub const BODIES: &[Body] = &[
     (0x48E970, 0x0C364B6B5AC70D47, &[(0x48E970, 5), (0x1566240, 54)]),
     (0x492D10, 0x68C85CD7AA2F37C6, &[(0x492D10, 5), (0x15622B0, 41)]),
     (0x492E20, 0x1EE1320EF81FF52A, &[(0x492E20, 5), (0x1565A80, 66)]),
+    (0x493730, 0x3577EB9831FC1F68, &[(0x493730, 5), (0x156F640, 206)]),
     (0x4ABFC0, 0x742A290B6CA34EBC, &[(0x4ABFC0, 17)]),
     (0x4AC350, 0x74BF10660C1FC7F5, &[(0x4AC350, 23)]),
     (0x4AC610, 0xB285D499708976DA, &[(0x4AC610, 159)]),
@@ -6163,6 +6357,7 @@ pub const BODIES: &[Body] = &[
     (0x646690, 0x234054DE6AF60B0C, &[(0x646690, 107)]),
     (0x646810, 0x7090992939E1C23A, &[(0x646810, 107)]),
     (0x646B70, 0x16F34AC78CD76E7F, &[(0x646B70, 101)]),
+    (0x646D70, 0x3C1DED94A741A023, &[(0x646D70, 182)]),
     (0x6471D0, 0x7C586B6E84C48986, &[(0x6471D0, 113)]),
     (0x647FE0, 0x8973D33229DB5DBB, &[(0x647FE0, 116)]),
     (0x648230, 0x336CB063167F3203, &[(0x648230, 119)]),
@@ -6262,6 +6457,7 @@ pub const BODIES: &[Body] = &[
     (0x694AA0, 0x63F45A33605411AA, &[(0x694AA0, 121)]),
     (0x694B90, 0xEB91F6AB13809C01, &[(0x694B90, 101)]),
     (0x694E20, 0x97E2794717E788CE, &[(0x694E20, 157)]),
+    (0x695600, 0xACCA2E4F8EF440D3, &[(0x695600, 135)]),
     (0x696DF0, 0x052E5449A3DBA428, &[(0x696DF0, 124)]),
     (0x6971B0, 0xA3ECEEFFFF03E041, &[(0x6971B0, 100)]),
     (0x697290, 0xE33BCEBFC7982CDB, &[(0x697290, 133)]),

@@ -53,3 +53,6 @@
 0x669D30  # FUN_00669d30 (STD-13 lane )
 0x678E60  # CTaskSimpleInAir::DeleteAnimCB (hooked on worktree-agent-a0c5043f7469fc732)
 0x664770  # FUN_00664770 (catalogue state 'implemented' from PORT-AI-1 without a hook here: left to the main session)
+0x4B4950  # hooked on worktree-agent-a6d319b53fd3185ec
+0x636280  # hooked on worktree-agent-a1954952637efd64a
+0x636390  # hooked on worktree-agent-a1954952637efd64a
