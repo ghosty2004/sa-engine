@@ -40,22 +40,22 @@ pub fn g_ctrain_get_dooor_angle_open_ratio_6f59c0(this: u32, a0: u32) -> u32 {
 
 /// `CTrain::SetNewTrainPosition` (0x6F7140, VEH): small, cdecl, `ret`; 20 instruction(s) matched.
 #[hook(addr = 0x6F7140, conv = cdecl, name = "CTrain::SetNewTrainPosition", expect = "8B 4C 24 04 8B 41 14", unverified = "gen2-veh-1", route = "L2", hazards = "heap-writes")]
-pub fn g_ctrain_set_new_train_position_6f7140(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 {
+pub fn g_ctrain_set_new_train_position_6f7140(a0: u32, a1: u32, a2: u32, a3: u32) {
     let v1 = rd::<u32>(p(a0), 0x14);
     if v1 == 0 {
         wr::<u32>(p(a0), 4, a1);
         wr::<u32>(p(a0), 8, a2);
         wr::<u32>(p(a0), 0xC, a3);
-        let v2 = c_6f6cc0_t0(a0);
-        return v2;
+        let _v2 = c_6f6cc0_t0(a0);
+        return;
     } else {
         wr::<u32>(p(v1), 0x30, a1);
         let v3 = rd::<u32>(p(a0), 0x14);
         wr::<u32>(p(v3), 0x34, a2);
         let v4 = rd::<u32>(p(a0), 0x14);
         wr::<u32>(p(v4), 0x38, a3);
-        let v5 = c_6f6cc0_t0(a0);
-        return v5;
+        let _v5 = c_6f6cc0_t0(a0);
+        return;
     }
 }
 
