@@ -94,3 +94,11 @@ pub mod car_door_positions;
 pub mod player_quit_car_enter;
 pub mod bike_knock_off_rider;
 pub mod car_enter_stealable;
+
+// PORT-VEH-3 (unverified batches veh3-*)
+pub mod vehicle_suspension_nodes;
+pub mod vehicle_part_damage;
+pub mod train_stations;
+pub mod vehicle_flight_targets;
+pub mod vehicle_tow_hitch;
+pub mod vehicle_upgrade_remove;
