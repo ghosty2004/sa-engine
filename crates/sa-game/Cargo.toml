@@ -39,6 +39,7 @@ sa-platform = { path = "../sa-platform", default-features = false }
 sa-rw-wgpu = { path = "../sa-rw-wgpu" }
 sa-samp = { path = "../sa-samp" }
 sa-samp-api = { path = "../sa-samp-api" }
+sa-samp-ui = { path = "../sa-samp-ui" }
 wgpu = "29"
 png = "0.18"
 web-time = "1.1"

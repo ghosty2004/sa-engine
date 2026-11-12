@@ -362,94 +362,22 @@ impl Dialog {
         double.then(|| self.response(1))
     }
 
-    /// Draws the dialog; `cursor` highlights the button under it.
+    /// Draws the dialog as samp does (samp.dll 0x1006f890): the DXUT dialog (background, caption, buttons,
+    /// the list or edit box last as the focused control), then the body (styles 0, 1, 3) or the style-5
+    /// headers in the small font with the outline. `cursor` highlights the button under it.
     pub fn draw(
         &self,
         m: &dyn Measure,
         w: f32,
         h: f32,
         cursor: Option<(f32, f32)>,
-        time_ms: u32,
+        _time_ms: u32,
         d: &mut DrawList,
     ) {
         let l = self.layout(m, w, h);
-        let [x0, y0, x1, y1] = l.rect;
-        d.rect(x0, y0, x1, y1, BACKGROUND);
+        d.dialog_background(l.rect, BACKGROUND);
         if l.caption_h > 0.0 {
-            d.rect(x0, y0, x1, y0 + l.caption_h, 0xFF00_0000);
-            let ty = (y0 + (l.caption_h - m.line_height(FontId::Main)) / 2.0).round();
-            d.text(
-                x0 + 5.0,
-                ty,
-                FontId::Main,
-                CAPTION_COLOUR,
-                &strip_codes(&self.spec.title),
-            );
-        }
-        if let Some((bx, by)) = l.body {
-            let sh = m.line_height(FontId::Small);
-            for (i, line) in self.spec.body.split('\n').enumerate() {
-                d.coloured(
-                    m,
-                    bx,
-                    by + i as f32 * sh,
-                    FontId::Small,
-                    line,
-                    BODY_COLOUR,
-                    &OUTLINE_4,
-                );
-            }
-        }
-        if let Some((hx, hy)) = l.header {
-            let mut x = hx;
-            for (k, cell) in self.header.iter().take(self.columns).enumerate() {
-                d.coloured(m, x, hy, FontId::Small, cell, BODY_COLOUR, &[]);
-                x += l.columns.get(k).copied().unwrap_or(0.0);
-            }
-        }
-        if let Some(lr) = l.list {
-            d.rect(lr[0], lr[1], lr[2], lr[3], 0x8000_0000);
-            d.frame(lr[0], lr[1], lr[2], lr[3], 0xC880_8080);
-            let page = Self::page_rows(&l);
-            let tx = lr[0] + LIST_BORDER + 5.0;
-            let sel_r = lr[2] - LIST_SCROLLBAR_W - LIST_BORDER;
-            for (k, row) in self.rows.iter().enumerate().skip(self.top).take(page) {
-                let ry = lr[1] + LIST_BORDER + (k - self.top) as f32 * l.row_h;
-                if k == self.selected {
-                    d.rect(lr[0] + LIST_BORDER, ry, sel_r, ry + l.row_h, SELECTION_COLOUR);
-                }
-                let mut cx = tx;
-                for (ci, cell) in row.iter().take(self.columns).enumerate() {
-                    d.coloured(m, cx, ry, FontId::Gui1, cell, ROW_COLOUR, &[]);
-                    cx += l.columns.get(ci).copied().unwrap_or(0.0);
-                }
-            }
-            // Scrollbar: track, thumb.
-            let (sx0, sx1) = (lr[2] - LIST_SCROLLBAR_W - 2.0, lr[2] - 2.0);
-            let (ty0, ty1) = (lr[1] + 2.0, lr[3] - 2.0);
-            d.rect(sx0, ty0, sx1, ty1, 0xC820_2020);
-            let n = self.rows.len().max(1) as f32;
-            let frac = (page as f32 / n).min(1.0);
-            let th = ((ty1 - ty0) * frac).max(8.0);
-            let tt = ty0
-                + (ty1 - ty0 - th)
-                    * if self.rows.len() > page {
-                        self.top as f32 / (n - page as f32)
-                    } else {
-                        0.0
-                    };
-            d.rect(sx0 + 2.0, tt, sx1 - 2.0, tt + th, 0xC8A0_A0A0);
-        }
-        if let Some(er) = l.edit {
-            d.rect(er[0], er[1], er[2], er[3], 0xC000_0000);
-            d.frame(er[0], er[1], er[2], er[3], 0xFFC8_C8C8);
-            let pw = self.spec.style == DialogStyle::Password;
-            let ty = ((er[1] + er[3] - m.line_height(FontId::Gui0)) / 2.0).round();
-            d.text(er[0] + 9.0, ty, FontId::Gui0, 0xFFFF_FFFF, &self.edit.display(pw));
-            if (time_ms / 500).is_multiple_of(2) {
-                let cx = er[0] + 9.0 + m.width(FontId::Gui0, &self.edit.display_before_caret(pw));
-                d.rect(cx, ty, cx + 2.0, ty + m.line_height(FontId::Gui0), 0xFFFF_FFFF);
-            }
+            d.caption(m, l.rect, l.caption_h, &self.spec.title);
         }
         let buttons = [
             (Some(l.button1), &self.spec.button1),
@@ -457,22 +385,57 @@ impl Dialog {
         ];
         for (b, label) in buttons {
             let Some(b) = b else { continue };
-            let hover = cursor.is_some_and(|(cx, cy)| contains(&b, cx, cy));
-            d.rect(
-                b[0],
-                b[1],
-                b[2],
-                b[3],
-                if hover { 0xC860_6060 } else { 0xC830_3030 },
-            );
-            d.frame(b[0], b[1], b[2], b[3], 0xC8A0_A0A0);
-            let t = strip_codes(label);
-            let tw = m.width(FontId::Gui0, &t);
-            let tx = ((b[0] + b[2] - tw) / 2.0).round();
-            let ty = ((b[1] + b[3] - m.line_height(FontId::Gui0)) / 2.0).round();
-            d.text(tx, ty, FontId::Gui0, 0xFFFF_FFFF, &t);
+            let over = cursor.is_some_and(|(cx, cy)| contains(&b, cx, cy));
+            d.button(m, b, label, over);
+        }
+        if let Some(lr) = l.list {
+            let rows: Vec<(u32, Vec<String>)> = self.rows.iter().map(|r| (ROW_COLOUR, r.clone())).collect();
+            let cols = if self.spec.style == DialogStyle::List {
+                1
+            } else {
+                self.columns
+            };
+            d.list_box(m, lr, &rows, cols, &l.columns, Some(self.selected), self.top);
+        }
+        if let Some(er) = l.edit {
+            let area = d.edit_frame(er);
+            let pw = self.spec.style == DialogStyle::Password;
+            let (shown, before_w) = edit_view(m, &self.edit, pw, area[2] - area[0]);
+            d.edit_text(m, area, &shown, before_w);
+        }
+        if let Some((bx, by)) = l.body {
+            d.coloured_lines(m, bx, by, FontId::Small, &self.spec.body, BODY_COLOUR, &OUTLINE_4);
+        }
+        if let Some((hx, hy)) = l.header {
+            let mut x = hx;
+            for (k, cell) in self.header.iter().take(self.columns).enumerate() {
+                d.coloured(m, x, hy, FontId::Small, cell, BODY_COLOUR, &OUTLINE_4);
+                x += l.columns.get(k).copied().unwrap_or(0.0);
+            }
         }
     }
+}
+
+/// The part of an edit box's text that is shown in `width` pixels with the caret kept in view (characters
+/// scrolled out on the left are dropped whole), and the caret's x offset from the text area's left edge.
+pub fn edit_view(m: &dyn Measure, edit: &LineEdit, password: bool, width: f32) -> (String, f32) {
+    let font = FontId::Gui0;
+    let before = edit.display_before_caret(password);
+    let shift = (m.width(font, &before) - width + 2.0).max(0.0);
+    let text = edit.display(password);
+    let mut skip = 0;
+    let mut acc = 0.0;
+    for c in text.chars() {
+        if acc >= shift {
+            break;
+        }
+        acc += m.width(font, &c.to_string());
+        skip += 1;
+    }
+    (
+        text.chars().skip(skip).collect(),
+        m.width(font, &before) - acc,
+    )
 }
 
 #[cfg(test)]

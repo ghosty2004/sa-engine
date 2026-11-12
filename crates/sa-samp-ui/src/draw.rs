@@ -66,6 +66,15 @@ pub enum Cmd {
         /// Text (GTA codes such as `~r~` are the game font's).
         text: String,
     },
+    /// A rectangle of samp's skin texture (`sampgui.png`, `mouse.png`; [`crate::skin`]) scaled into `dst`.
+    Skin {
+        /// Source rectangle in skin texture pixels `[left, top, right, bottom]`.
+        src: [f32; 4],
+        /// Screen rectangle.
+        dst: [f32; 4],
+        /// Tint `0xAARRGGBB`.
+        colour: u32,
+    },
     /// A TXD texture (sprite textdraws) through `CSprite2d::Draw`.
     Sprite {
         /// Texture source.
@@ -92,6 +101,8 @@ pub fn outline_kind(offsets: &[(i32, i32)]) -> u8 {
 pub struct DrawList {
     /// Commands in draw order.
     pub cmds: Vec<Cmd>,
+    /// Whether samp's skin texture is available ([`Cmd::Skin`]); otherwise GUI controls are flat rectangles.
+    pub skin: bool,
 }
 
 impl DrawList {
@@ -154,6 +165,43 @@ impl DrawList {
             pen += m.width(font, &run.text);
         }
         pen - x
+    }
+
+    /// Multi-line text drawn as one D3DX `DrawText` call: `\n` starts a line `line_height` lower, and a
+    /// colour set by `{RRGGBB}` carries over the line break.
+    #[allow(clippy::too_many_arguments)]
+    pub fn coloured_lines(
+        &mut self,
+        m: &dyn Measure,
+        x: f32,
+        y: f32,
+        font: FontId,
+        text: &str,
+        base: u32,
+        outline: &[(i32, i32)],
+    ) {
+        let lh = m.line_height(font);
+        let (mut pen, mut line) = (x, 0.0f32);
+        for run in colour_runs(text, base) {
+            for (i, part) in run.text.split('\n').enumerate() {
+                if i > 0 {
+                    pen = x;
+                    line += 1.0;
+                }
+                let part = part.trim_end_matches('\r');
+                if !part.is_empty() {
+                    self.cmds.push(Cmd::Text {
+                        x: pen,
+                        y: y + line * lh,
+                        font,
+                        colour: run.colour,
+                        text: part.into(),
+                        outline: outline_kind(outline),
+                    });
+                }
+                pen += m.width(font, part);
+            }
+        }
     }
 
     /// Appends another list.

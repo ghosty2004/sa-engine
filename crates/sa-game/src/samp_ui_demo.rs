@@ -342,6 +342,10 @@ fn script(game: &mut NativeGame<EngineView>) {
         d.frames += 1;
         d.frames
     });
+    if std::env::var("SA_SAMP_UI_SCENE").is_ok_and(|s| s == "ref") {
+        reference_scene(game, n);
+        return;
+    }
     if n == 1
         && let Some(ui) = game.ui()
     {
@@ -501,8 +505,38 @@ fn script(game: &mut NativeGame<EngineView>) {
     }
 }
 
+/// `SA_SAMP_UI_SCENE=ref`: the content of the reference gamemode (`crate::samp_ui_scene`) instead of the demo.
+fn reference_scene(game: &mut NativeGame<EngineView>, n: u32) {
+    if n == 1 {
+        let cam = game.camera();
+        let (p, f) = (cam.matrix.pos, cam.matrix.forward);
+        let z = game
+            .local_player()
+            .and_then(|cj| game.ped_snapshot(cj).ok())
+            .map_or(p.z, |s| s.matrix.pos.z + 1.0);
+        let label = Vec3::new(p.x + f.x * 7.0 + 1.5, p.y + f.y * 7.0, z);
+        if let Some(ui) = game.ui() {
+            crate::samp_ui_scene::setup(ui, label);
+        }
+    }
+    let (w, h) = sa_samp::overlay::render::screen_size();
+    let mut input = Vec::new();
+    if let Some(ui) = game.ui() {
+        crate::samp_ui_scene::step(n, w, h, ui, &mut input);
+    }
+    for e in input {
+        queue(e);
+    }
+    let events = game.ui().map(|u| u.poll_events()).unwrap_or_default();
+    for e in events {
+        let line = format!("{e:?}");
+        println!("samp-ui-demo: event {line}");
+        DEMO.with(|d| d.borrow_mut().events.push(line));
+    }
+}
+
 /// Builds the adapter and registers the demo's frame handler.
-pub fn install() -> Result<(), String> {
+pub fn install(game_dir: &std::path::Path) -> Result<(), String> {
     let mut game = sa_samp::engine();
     game.install(
         &sa_samp_api::config::SampModeConfig::default(),
@@ -510,6 +544,7 @@ pub fn install() -> Result<(), String> {
         None,
     )
     .map_err(|e| format!("samp-ui-demo: install: {e}"))?;
+    crate::samp_assets::install(game_dir, game.overlay());
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
     crate::samp_input::set_target(crate::samp_input::Target {

@@ -203,7 +203,11 @@ fn samp_mode_config() -> sa_samp_api::config::SampModeConfig {
 }
 
 /// Builds the adapter, installs the client and registers the dispatch handler.
-pub fn install(target: &Target, auth: Option<&std::path::Path>) -> Result<(), String> {
+pub fn install(
+    target: &Target,
+    auth: Option<&std::path::Path>,
+    game_dir: &std::path::Path,
+) -> Result<(), String> {
     let mut game = sa_samp::engine();
     let (hooks, what) = client(target, auth)?;
     game.install(&samp_mode_config(), hooks, None)
@@ -212,6 +216,7 @@ pub fn install(target: &Target, auth: Option<&std::path::Path>) -> Result<(), St
     use sa_samp_api::config::{RuntimeToggle, SampMode as _};
     game.set_toggle(RuntimeToggle::TypedCheats(false))
         .map_err(|e| format!("samp: cheats toggle: {e}"))?;
+    crate::samp_assets::install(game_dir, game.overlay());
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
     crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, lock: ui_lock });
