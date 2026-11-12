@@ -119,6 +119,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // SAVE-1
     world::save_blocks::HOOKS,
     world::stats_strings::HOOKS,
+    world::entry_exit_ambient_peds::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
