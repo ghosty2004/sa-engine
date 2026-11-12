@@ -56,3 +56,8 @@
 0x4B4950  # hooked on worktree-agent-a6d319b53fd3185ec
 0x636280  # hooked on worktree-agent-a1954952637efd64a
 0x636390  # hooked on worktree-agent-a1954952637efd64a
+# STD-14 (2026-11-12): generated bodies call ComputeEntityBoundingBoxCornersUncached 0x5F1FA0 as a one-argument
+# thiscall (the original pushes three cdecl arguments); the null entity crashed the enter-car walk
+0x5F2B80
+0x5F3730
+0x5F3B40
