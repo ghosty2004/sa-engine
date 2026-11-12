@@ -124,14 +124,14 @@ pub fn speed_fx(speed: f32) {
         let k = sa_math::x87::X87::from_i32(s[0x34 / 4] as i32).fmul_m(gf(0x859CE0));
         s[0x30 / 4] = x(gf(0xC4016C)).fmul(k).to_f32().to_bits();
         s[0x2C / 4] = x(gf(0xC40170)).fmul(k).to_f32().to_bits();
-        let r1 = sa_core::orig::at_site(0x70_31A0, sa_core::crt::rand);
+        let r1 = sa_core::orig::at_site(0x70_31A5, sa_core::crt::rand);
         s[0x34 / 4] = r1 as u32;
         s[0x10 / 4] = X87::from_i32(r1)
             .fmul_m(gf(0x858C7C))
             .fmul_m(f(&s, 0x30))
             .to_f32()
             .to_bits();
-        let r2 = sa_core::orig::at_site(0x70_31BB, sa_core::crt::rand);
+        let r2 = sa_core::orig::at_site(0x70_31C0, sa_core::crt::rand);
         s[0x34 / 4] = r2 as u32;
         s[0x14 / 4] = s[0x10 / 4];
         s[0xC / 4] = X87::from_i32(r2)
