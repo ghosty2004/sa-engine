@@ -23,6 +23,7 @@ pub struct Overlay {
     raster: u32,
     upload_failed: bool,
     big: render::BigMessages,
+    sprites: render::Sprites,
     /// Frames drawn (for logs).
     pub frames: u64,
 }
@@ -58,6 +59,11 @@ impl Overlay {
     /// Whether the glyph atlas is on the GPU (otherwise UI text falls back to the game font).
     pub fn atlas_uploaded(&self) -> bool {
         self.raster != 0
+    }
+
+    /// Sprite textdraw textures loaded so far.
+    pub fn sprites_loaded(&self) -> usize {
+        self.sprites.count()
     }
 }
 
@@ -95,7 +101,7 @@ impl<V: View> NativeGame<V> {
         }
         let now = self.game_time_ms();
         let list = ov.ui.build(atlas, &EngineWorld { game: self }, w, h, now);
-        render::draw(&list, atlas, ov.raster);
+        render::draw(&list, atlas, ov.raster, &mut ov.sprites);
         ov.frames += 1;
         self.overlay = ov;
     }
