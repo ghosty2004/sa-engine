@@ -219,6 +219,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_VEHICLE_POOL_GET_AT,
     HOOK_TASK_62F5D0_DTOR,
     HOOK_GO_TO_POINT_SHOOTING_CTOR,
+    HOOK_DECISION_MAKER_TYPES_ADD_EVENT_RESPONSE,
+    HOOK_THE_SCRIPTS_ADD_SCRIPT_EFFECT_SYSTEM,
 ];
 
 orig! {
@@ -343,4 +345,50 @@ pub fn go_to_point_shooting_ctor(this: GPtr<u8>, a1: u32, a2: u32, a3: u32, a4: 
     go_to_point_aiming_ctor(this, a1, a2, a3, a4, a5, a6, a7, a8);
     this.cast::<u32>().write(0x86FE2C);
     this
+}
+
+orig! {
+    /// `CDecision::Add(int32 taskId, float* chances, int32* flags)` (0x600600, `ret 0xC`)
+    fn decision_add(d: GPtr<u8>, task: u32, chances: u32, flags: u32) = thiscall 0x600600 => unported;
+    /// `CTheScripts::GetNewUniqueScriptThingIndex(int32 index, int32 type)` (0x483720)
+    fn get_new_unique_script_thing_index(index: u32, ty: u32) -> i32 = cdecl 0x483720 => unported;
+}
+
+/// `CDecisionMakerTypes::AddEventResponse(int32 dm, int32 eventType, int32 taskId, float* chances, int32* flags)`
+/// (0x6044C0, thiscall, `ret 0x14`): `CDecision::Add(taskId, chances, flags)` on the decision at `this + 4 + 0x3C *
+/// (dword [this + 0xC034 + 4 * eventType] + 0x29 * dm)`.
+#[hook(addr = 0x6044c0, conv = thiscall, name = "CDecisionMakerTypes::AddEventResponse", expect = "8B 44 24 14 8B 54 24 10",
+       unverified = "script5-7", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn decision_maker_types_add_event_response(this: GPtr<u8>, dm: i32, event: i32, task: u32, chances: u32, flags: u32) {
+    let k = this.byte_add(0xC034 + 4 * event as isize).cast::<i32>().read();
+    let idx = k.wrapping_add(dm.wrapping_mul(0x29)).wrapping_mul(0x3C);
+    decision_add(this.byte_add(idx as isize + 4), task, chances, flags);
+}
+
+/// `CTheScripts::ScriptEffectSystemArray` (0xA44110, 32 x 8: byte used, +4 `FxSystem_c*`)
+const SCRIPT_FX: usize = 0xA44110;
+
+/// `CTheScripts::AddScriptEffectSystem(FxSystem_c*)` (stub 0x492F90 → 0x156B9B0, cdecl).
+///
+/// The slot: 0 when its used byte is clear, else the first later slot with a clear byte, scanning while the index is
+/// below 32 (the byte of slot 32, past the array, is read too; a full array yields 32 and writes past it, as the
+/// original). The slot is marked used, takes the effect system, and `GetNewUniqueScriptThingIndex(slot, 1)` is
+/// returned.
+#[hook(addr = 0x492f90, conv = cdecl, name = "CTheScripts::AddScriptEffectSystem", expect = "E9 1B 8A 0D 01",
+       unverified = "script5-7", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn the_scripts_add_script_effect_system(fx: u32) -> i32 {
+    let used = |i: u32| GPtr::<u8>::from_addr(SCRIPT_FX + 8 * i as usize);
+    let mut i = 0u32;
+    if used(0).read() != 0 {
+        while i < 0x20 {
+            let c = used(i + 1).read();
+            i += 1;
+            if c == 0 {
+                break;
+            }
+        }
+    }
+    used(i).write(1);
+    GPtr::<u32>::from_addr(SCRIPT_FX + 8 * i as usize + 4).write(fx);
+    get_new_unique_script_thing_index(i, 1)
 }
