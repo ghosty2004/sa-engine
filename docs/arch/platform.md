@@ -1592,7 +1592,7 @@ Exploration stubs of these runs: `0x421a50=0/0,0x6a6dc0=0/3,0x6510d0=0/0,!0x5efc
 0x503ce0=0/10,0x4b1a00=0/1` (0x6A6DC0 is ported since the WRITER-NATIVE pick). The walk is crash-free but not
 stub-free.
 
-Evidence (not committed, `target/std13-evidence/`): `drep4-{a,b}/` (reproducibility), `walk2..walk10/` (blocker
+Evidence (not committed, `target/std13-evidence/`): `drep4-{a,b}/` (reproducibility), `walk10/`, `walk11/` (blocker
 lists), `winT/frame-times.txt`, `winV2/cj-walk-window.mp4` (CJ turns and walks across Grove Street; 157 captured
 frames), `winV/cj-walk-window.mp4` (an earlier run into the garage wall), `flare-orig-l2/` (19.6).
 
