@@ -11,6 +11,7 @@ pub mod mvpb_coll;
 pub mod sphere_cast;
 pub mod col_point_assign;
 pub mod col_sphere_edge;
+pub mod col_sphere_sphere;
 pub mod col_models;
 pub mod mvpd_coll;
 pub mod prim;

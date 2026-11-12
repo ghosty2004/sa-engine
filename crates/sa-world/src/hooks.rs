@@ -75,6 +75,7 @@ pub const MODULES: &[&[HookReg]] = &[
     collision::sphere_cast::HOOKS,
     collision::col_point_assign::HOOKS,
     collision::col_sphere_edge::HOOKS,
+    collision::col_sphere_sphere::HOOKS,
     collision::col_models::HOOKS,
     physical::friction_attach::HOOKS,
     world::mvpd_w1::HOOKS,
