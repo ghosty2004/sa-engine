@@ -351,7 +351,7 @@ fn hex(mut v: usize, out: &mut [u8; 18]) -> &[u8] {
     &out[..2 + n]
 }
 
-extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, _ctx: *mut libc::c_void) {
+extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, ctx: *mut libc::c_void) {
     // SAFETY: the kernel passes a valid siginfo for SA_SIGINFO handlers.
     let addr = unsafe { (*info).si_addr() } as usize;
     let mut buf = [0u8; 18];
@@ -364,7 +364,19 @@ extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, _ctx: *mut 
     write_err(hex(addr, &mut buf));
     write_err(b" [");
     write_err(section_of(addr).as_bytes());
-    write_err(b"] during step `");
+    write_err(b"] at eip ");
+    // SAFETY: SA_SIGINFO handlers get the interrupted context as a ucontext_t.
+    #[cfg(target_arch = "x86")]
+    let eip = unsafe { (*(ctx as *const libc::ucontext_t)).uc_mcontext.gregs[libc::REG_EIP as usize] } as usize;
+    #[cfg(not(target_arch = "x86"))]
+    let eip = ctx as usize & 0;
+    let mut buf2 = [0u8; 18];
+    write_err(hex(eip, &mut buf2));
+    // the reporter's own address: `eip - on_fault` + its link address locates the faulting code in a PIE build
+    write_err(b" (on_fault at ");
+    let mut buf3 = [0u8; 18];
+    write_err(hex(on_fault as *const () as usize, &mut buf3));
+    write_err(b") during step `");
     let (p, n) = (STEP_PTR.load(Ordering::SeqCst), STEP_LEN.load(Ordering::SeqCst));
     if !p.is_null() {
         // SAFETY: set_step stores a &'static str.
