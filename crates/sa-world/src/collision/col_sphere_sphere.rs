@@ -1,5 +1,6 @@
-//! `CColSphere::IntersectSphere` (0x410090, batch `std10-world-1`): ported from the 1.0 US bytes (gta-reversed's
-//! version as a reading aid). Unverified (docs/verify/HOWTO.md).
+//! `CColSphere::IntersectSphere` (0x410090, batch `std10-world-1`) and `CColSphere::IntersectPoint` (0x410040, batch
+//! `std12-world-2`): ported from the 1.0 US bytes (gta-reversed's versions as reading aids). Unverified
+//! (docs/verify/HOWTO.md).
 
 use sa_core::abi::HookReg;
 use sa_core::hook;
@@ -25,5 +26,18 @@ pub fn col_sphere_intersect_sphere(this: GPtr<u8>, other: GPtr<u8>) -> u8 {
     u8::from(!r.fmul(r).fcom(sum).test_any(0x41))
 }
 
+/// `CColSphere::IntersectPoint(const CVector& p)` (0x410040, thiscall `ret 4`, full EAX 1 / 0): with `d = centre - p`
+/// and the radius on the x87 stack, true when `r * r > (dz*dz + dx*dx) + dy*dy` (C0 and C3 clear).
+#[hook(addr = 0x410040, conv = thiscall, name = "CColSphere::IntersectPoint", expect = "8B 44 24 04 D9 01 D8 20",
+       unverified = "std12-world-2", route = "L1-pure", hazards = "none", recs = "grove-walk")]
+pub fn col_sphere_intersect_point(this: GPtr<u8>, p: GPtr<u8>) -> u32 {
+    let dx = X87::from_f32(f(this, 0)).fsub_m(f(p, 0));
+    let dy = X87::from_f32(f(this, 4)).fsub_m(f(p, 4));
+    let dz = X87::from_f32(f(this, 8)).fsub_m(f(p, 8));
+    let r = X87::from_f32(f(this, 0xC));
+    let sum = dz.fmul(dz).fadd(dx.fmul(dx)).fadd(dy.fmul(dy));
+    u32::from(!r.fmul(r).fcom(sum).test_any(0x41))
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_COL_SPHERE_INTERSECT_SPHERE];
+pub const HOOKS: &[HookReg] = &[HOOK_COL_SPHERE_INTERSECT_SPHERE, HOOK_COL_SPHERE_INTERSECT_POINT];
