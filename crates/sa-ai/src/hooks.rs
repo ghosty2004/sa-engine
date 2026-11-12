@@ -151,7 +151,6 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::group_list_loops::HOOKS,
     crate::event_affects_ped_native::HOOKS,
     crate::event_damage_dtor::HOOKS,
-    crate::knock_off_bike_damage_anims::HOOKS,
     crate::car_set_ped_out_native::HOOKS,
     crate::road_rage_events_native::HOOKS,
     crate::road_rage_sub_tasks::HOOKS,
