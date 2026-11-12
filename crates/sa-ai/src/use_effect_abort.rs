@@ -1,4 +1,4 @@
-//! `CTaskComplexUseEffect::MakeAbortable` (batch `intro2-1`, reached by the intro's ambient peds after the arrival
+//! `CTaskComplexUseEffect::MakeAbortable` and the destructor 0x63CE70 (batch `intro2-1`, reached by the intro's ambient peds after the arrival
 //! cutscene). Ported from the 1.0 US bytes (gta-reversed `TaskComplexUseEffect.cpp` as a reading aid; the bytes win:
 //! the 0x393 test is on the sub-task's type). Unverified (docs/verify/HOWTO.md).
 
@@ -22,6 +22,26 @@ orig! {
     fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> = thiscall 0x40FE00 => unported;
     /// `CVector::Magnitude()` (0x406DA0, ST0)
     fn vector_magnitude(v: GPtr<u8>) -> f64 = thiscall 0x406DA0 => unported;
+}
+
+/// `CTaskComplexCarDrive::~CTaskComplexCarDrive` (0x63CA40, the base destructor)
+fn task_car_drive_dtor(this: GPtr<u8>) {
+    car_drive_dtor(this);
+}
+
+orig! {
+    fn car_drive_dtor(t: GPtr<u8>) = thiscall 0x63CA40 => unported;
+}
+
+/// `FUN_0063ce70` (0x63CE70, thiscall): the complete destructor of the `CTaskComplexCarDrive` subclass with the
+/// vtable 0x86E9DC (`CTaskComplexDriveToPoint`'s base, reached from its destructor 0x643280): the vtable stored,
+/// then the tail jump into `CTaskComplexCarDrive`'s destructor (0x63CA40).
+#[hook(addr = 0x63CE70, conv = thiscall, name = "FUN_0063ce70", expect = "C7 01 DC E9 86 00 E9",
+       unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "reached when the intro's police car drive task ends")]
+pub fn car_drive_subclass_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x0086_E9DC);
+    task_car_drive_dtor(this);
 }
 
 /// 2.25f (0x86E104)
@@ -81,4 +101,4 @@ pub fn use_effect_make_abortable(this: GPtr<u8>, ped: GPtr<u8>, prio: u32, event
 }
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_USE_EFFECT_MAKE_ABORTABLE];
+pub const HOOKS: &[HookReg] = &[HOOK_USE_EFFECT_MAKE_ABORTABLE, HOOK_CAR_DRIVE_SUBCLASS_DTOR];
