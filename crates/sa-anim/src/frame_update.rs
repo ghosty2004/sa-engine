@@ -28,6 +28,10 @@ orig! {
     fn quat_normalise(q: GPtr<u8>) = thiscall 0x4D1610 => quaternion_normalise;
     /// `FrameUpdateCallBackSkinnedWithVelocityExtraction(c, fd)` (0x4D1680, `c` in EAX) and the 3D variant (0x4D1A50)
     fn skinned_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1680 => frame_update_skinned_with_velocity;
+    /// `CAnimBlendNode::UpdateCompressed(CVector& t, CQuaternion& q, float weight)` (0x4D08D0), AL
+    fn node_update_compressed(n: GPtr<u8>, t: GPtr<u8>, q: GPtr<u8>, w: f32) -> u8 = thiscall 0x4D08D0 => unported;
+    /// `FrameUpdateCallBackWithVelocityExtractionCompressedSkinned(c, fd)` (0x4D1DB0, `c` in EAX)
+    fn compressed_with_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1DB0 => unported;
     fn skinned_with_3d_velocity(c: GPtr<u8>, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1A50 => frame_update_skinned_with_3d_velocity;
 }
 
@@ -432,10 +436,92 @@ pub fn frame_update_skinned_with_3d_velocity(data: GPtr<u8>, fd: GPtr<u8>) {
     }
 }
 
+/// `FrameUpdateCallBackCompressedSkinned(AnimBlendFrameData* fd, void* data)` (0x4D2E40, cdecl): as
+/// [`frame_update_skinned`] with compressed nodes. With velocity (`wants_velocity`, flag bit 4 not tested): the
+/// compressed velocity-extraction variant (0x4D1DB0). Else the partial blend sum (the update data's word set:
+/// associations with the partial flag, +0x2E bit 4; the first node pointer not null-checked); each node with a
+/// sequence: `UpdateCompressed(t, q, f32(1 - partial))` (0x4D08D0), with a translation `T += t` and `blendT +=`
+/// the association's blend; `Q += q` or `Q -= q` by the sign of the dot product; each node pointer advances by one
+/// node. Unless flag bit 1 the normalised quaternion; unless bit 2 key frame `t = T·blendT + (1 - blendT)·bonePos`.
+#[hook(addr = 0x4D2E40, conv = cdecl, name = "RpAnimBlend::FrameUpdateCallBackCompressedSkinned", expect = "83 EC 3C 55 8B 6C 24 44 F6 45 00 08",
+       unverified = "intro2-1", route = "L2", hazards = "heap-writes", recs = "intro",
+       note = "compressed animations (the intro's peds)")]
+pub fn frame_update_compressed_skinned(fd: GPtr<u8>, data: GPtr<u8>) {
+    if wants_velocity(fd) {
+        compressed_with_velocity(data, fd);
+        return;
+    }
+    let kf = rd::<GPtr<u8>>(fd, 0x10);
+    let mut tsum = [0f32; 3];
+    let mut qsum = [0f32; 4];
+    let mut blend_t = 0f32;
+    let mut partial = 0f32;
+    if rd::<u32>(data, 0) != 0 {
+        let mut p = data.byte_add(4);
+        loop {
+            let n = rd::<GPtr<u8>>(p, 0);
+            if rd::<u32>(n, 0x10) != 0 {
+                let a = rd::<GPtr<u8>>(n, 0x14);
+                if (rd::<u8>(a, 0x2E) >> 4) & 1 != 0 {
+                    partial = add(rd::<f32>(a, 0x18), partial);
+                }
+            }
+            p = p.byte_add(4);
+            if rd::<u32>(p, 0) == 0 {
+                break;
+            }
+        }
+    }
+    let mut p = data.byte_add(4);
+    loop {
+        let node = rd::<GPtr<u8>>(p, 0);
+        if rd::<u32>(node, 0x10) != 0 {
+            let mut t = [0f32; 3];
+            let mut q = [0f32; 4];
+            let w = x(one()).fsub_m(partial).to_f32();
+            node_update_compressed(node, GPtr::from_raw(t.as_mut_ptr()).cast(), GPtr::from_raw(q.as_mut_ptr()).cast(), w);
+            let node = rd::<GPtr<u8>>(p, 0);
+            let seq = rd::<GPtr<u8>>(node, 0x10);
+            if (rd::<u8>(seq, 4) >> 1) & 1 != 0 {
+                for i in 0..3 {
+                    tsum[i] = add(t[i], tsum[i]);
+                }
+                blend_t = add(rd::<f32>(rd::<GPtr<u8>>(node, 0x14), 0x18), blend_t);
+            }
+            let dot = x(q[3]).fmul_m(qsum[3]).fadd(x(q[2]).fmul_m(qsum[2])).fadd(x(q[1]).fmul_m(qsum[1])).fadd(x(q[0]).fmul_m(qsum[0]));
+            if dot.fcom(zero()).test_parity(5) {
+                for i in 0..4 {
+                    qsum[i] = add(q[i], qsum[i]);
+                }
+            } else {
+                for i in 0..4 {
+                    qsum[i] = x(qsum[i]).fsub_m(q[i]).to_f32();
+                }
+            }
+        }
+        let node = rd::<GPtr<u8>>(p, 0);
+        wr::<u32>(p, 0, node.addr() as u32 + 0x18);
+        p = p.byte_add(4);
+        if rd::<u32>(p, 0) == 0 {
+            break;
+        }
+    }
+    if rd::<u8>(fd, 0) & 2 == 0 {
+        quat_normalise(GPtr::from_raw(qsum.as_mut_ptr()).cast());
+        for (i, v) in qsum.iter().enumerate() {
+            wr::<f32>(kf, i as isize * 4, *v);
+        }
+    }
+    if rd::<u8>(fd, 0) & 4 == 0 {
+        apply_translation(fd, kf, tsum, blend_t);
+    }
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_QUATERNION_NORMALISE,
     HOOK_FRAME_UPDATE_SKINNED,
     HOOK_FRAME_UPDATE_OFFSCREEN,
     HOOK_FRAME_UPDATE_SKINNED_WITH_VELOCITY,
     HOOK_FRAME_UPDATE_SKINNED_WITH_3D_VELOCITY,
+    HOOK_FRAME_UPDATE_COMPRESSED_SKINNED,
 ];
