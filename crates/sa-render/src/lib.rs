@@ -139,3 +139,4 @@ pub mod fx_info_get_value_samp;
 pub mod postfx_speed_fx;
 pub mod fx_debris_wheel_grass;
 pub mod skidmark_register;
+pub mod fx_info_colour_value;
