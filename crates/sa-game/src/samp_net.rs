@@ -86,6 +86,9 @@ const CONNECT_PED_POS: Vec3 = Vec3::new(1133.05, -2038.40, 69.1);
 const CONNECT_CAMERA: Vec3 = Vec3::new(1093.0, -2036.0, 90.0);
 const CONNECT_LOOK_AT: Vec3 = Vec3::new(384.0, -1557.0, 20.0);
 const CONNECT_WEATHER: u8 = 1;
+/// samp's server-settings default time of day (12:00), applied every frame while samp holds the time (samp-rs
+/// `World::time_of_day` in `world_frame`); before InitGame it is the connecting scene's clock.
+const CONNECT_HOUR: u8 = 12;
 
 /// The auth table (third-party data, never committed): `--samp-auth FILE` or `SAMP_AUTH_TABLE`; in the browser
 /// its text, which the page fetches from the local web server (`SA_SAMP_AUTH`).
@@ -716,6 +719,7 @@ impl NetHooks {
     /// ped parked under the camera, the camera fixed above Verona Beach looking at downtown Los Santos.
     fn connecting_scene(&mut self, game: &mut dyn GameAdapter) {
         report(self, "set_weather", game.set_weather(CONNECT_WEATHER));
+        report(self, "set_clock", game.set_clock(CONNECT_HOUR, 0));
         report(self, "set_hud_visible", game.set_hud_visible(false));
         if let Some(me) = game.local_player() {
             report(self, "set_ped_position", game.set_ped_position(me, CONNECT_PED_POS));
