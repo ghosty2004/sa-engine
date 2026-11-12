@@ -179,6 +179,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::closest_surface_flee_next::HOOKS,
     crate::simple_jump_tasks::HOOKS,
     crate::climb_test::HOOKS,
+    crate::event_ref_dtors::HOOKS,
     crate::wander_target_heading::HOOKS,
     crate::can_ped_jump_obstacle::HOOKS,
     crate::climb_scan::HOOKS,

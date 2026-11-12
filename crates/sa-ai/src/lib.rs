@@ -204,3 +204,4 @@ pub mod can_ped_jump_obstacle;
 pub mod climb_scan;
 pub mod climb_anim;
 pub mod climb_process;
+pub mod event_ref_dtors;

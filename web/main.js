@@ -12,8 +12,11 @@ let worker = null;
 
 // the exploration defaults of the native play package (target/play/play.sh): unported mission-script opcodes are
 // skipped, and these functions return a constant (ADDRESS=RETURN/stack dwords popped; a leading ! replaces a port:
-// 0x5efca0 turns off ped attractors, whose task tree is still being ported).
-const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4';
+// 0x5efca0 turns off ped attractors, whose task tree is still being ported). Web only: 0x43e8b0
+// (CEntryExit::GenerateAmbientPeds, thiscall, one pointer) does nothing, so walking through a door does not block
+// the iteration halfway through the entry-exit transition (CEntryExitManager's visible-entity count is left
+// unbalanced then and the next ResetAreaCodeForVisibleObjects writes out of bounds).
+const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4,0x43e8b0=0/1';
 
 if (params.get('inworld') === '0') $('inworld').checked = false;
 
