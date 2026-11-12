@@ -127,6 +127,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::use_attractor_tasks::HOOKS,
     crate::wander_set_dir::HOOKS,
     crate::walk_round_object_sub_task::HOOKS,
+    crate::event_vehicle_damage::HOOKS,
     crate::event_vehicle_damage_ctor::HOOKS,
     // WRITER-NATIVE
     crate::task_clones_native::HOOKS,
