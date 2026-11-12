@@ -38,3 +38,18 @@
 # found in those worktrees' crates/sa-ai/src (hooks and doc lines), 2026-11-11
 0x4B0AF0
 0x608390
+# PORT-AI-8 (2026-11-12): hooked on other agents' branches (hooked_all.py) or in STD-13's lane
+0x4AF350  # CEventAttractor::Constructor (hooked on worktree-agent-a0c5043f7469fc732)
+0x5E9600  # CPedAttractor::ComputeDeltaPos (hooked on worktree-agent-adab932ed2ad46a44)
+0x5E9640  # CPedAttractor::ComputeDeltaHeading (hooked on worktree-agent-adab932ed2ad46a44)
+0x5EBCB0  # CPedAttractorManager::IsPedRegisteredWithEffect-Ped (hooked on worktree-agent-a0c5043f7469fc732)
+0x5EBD70  # CPedAttractorManager::IsPedRegisteredWithEffect-Effect (hooked on worktree-agent-a0c5043f7469fc732)
+0x5EBF50  # CPedAttractorManager::GetRelevantAttractor- (hooked on worktree-agent-a0c5043f7469fc732)
+0x5EDD90  # FUN_005edd90 (hooked on worktree-agent-adab932ed2ad46a44)
+0x5EE200  # FUN_005ee200 (hooked on worktree-agent-a0c5043f7469fc732)
+0x5EE300  # FUN_005ee300 (hooked on worktree-agent-adab932ed2ad46a44)
+0x5F2F00  # CPedGeometryAnalyser::GetIsLineOfSightClear-v3d (hooked on worktree-agent-a0c5043f7469fc732)
+0x601BB0  # CPedIntelligence::ProcessEventHandler (hooked on worktree-agent-a0c5043f7469fc732)
+0x669D30  # FUN_00669d30 (STD-13 lane )
+0x678E60  # CTaskSimpleInAir::DeleteAnimCB (hooked on worktree-agent-a0c5043f7469fc732)
+0x664770  # FUN_00664770 (catalogue state 'implemented' from PORT-AI-1 without a hook here: left to the main session)

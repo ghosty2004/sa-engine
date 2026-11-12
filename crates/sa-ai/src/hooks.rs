@@ -31,6 +31,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::gen_clones::HOOKS,
     crate::gen_dtors::HOOKS,
     crate::gen_subtasks::HOOKS,
+    crate::gen_bodies::HOOKS,
     crate::intelrest::HOOKS,
     crate::groups::HOOKS,
     crate::decisions::HOOKS,
@@ -141,6 +142,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::door_route_fight_strafe::HOOKS,
     crate::dead_task_process::HOOKS,
     crate::knock_off_bike_damage_anims::HOOKS,
+    crate::group_list_loops::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
