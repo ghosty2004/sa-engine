@@ -371,7 +371,9 @@ pub fn get_vehicle_appearance(v: Veh) -> u32 {
 /// `CVehicle::CanPedOpenLocks(const CPed*)` (0x6D1E20, the lock status read sits in a .HOODLUM fragment
 /// at 0x401A4D): door lock (+0x4F8) 2, 4, 5, 7 -> false; a player ped with lock 3 -> false; else true.
 ///
-/// Not hooked: protection code reads its entry bytes (0x401B4F, 0x405BD6 read 0x6D1E24).
+/// Not hooked: protection code reads its entry bytes (0x401B4F, 0x405BD6 read 0x6D1E24). Registered for phase B
+/// (`#[native]`, SAMP-4: a ped entering a vehicle reaches it).
+#[sa_core::native(addr = 0x6D1E20, conv = thiscall, name = "CVehicle::CanPedOpenLocks")]
 pub fn can_ped_open_locks(v: Veh, ped: GPtr<u8>) -> u8 {
     let lock = rd::<u32>(v, 0x4F8);
     if matches!(lock, 2 | 4 | 5 | 7) {
@@ -2929,3 +2931,6 @@ pub fn physical_get_lighting_from_col(p: GPtr<u8>, interior: u32) -> X87 {
 pub fn random_float_in_range(min: u32, max: u32) -> X87 {
     X87::from_f64_exact(random_float_in_range_st0(min, max))
 }
+
+/// This module's phase B registrations (`#[native]`).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_CAN_PED_OPEN_LOCKS];

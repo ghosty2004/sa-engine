@@ -554,3 +554,26 @@ fn feature_bits_match_the_api() {
         assert_eq!(bit, feat as u8, "{feat:?}");
     }
 }
+
+struct Panicky(std::sync::Arc<std::sync::atomic::AtomicU32>);
+
+impl GameHooks for Panicky {
+    fn frame(&mut self, _phase: FramePhase, _game: &mut dyn GameAdapter) {
+        let n = self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        assert!(n != 0, "an unported engine function reached from the first callback");
+    }
+}
+
+#[test]
+fn hooks_survive_an_unwinding_callback() {
+    let mut g = game();
+    let n = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
+    let cfg = sa_samp_api::config::SampModeConfig::default();
+    g.install(&cfg, Box::new(Panicky(n.clone())), None).unwrap();
+    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        g.dispatch_frame(FramePhase::Before2d)
+    }));
+    assert!(r.is_err());
+    g.dispatch_frame(FramePhase::Before2d);
+    assert_eq!(n.load(std::sync::atomic::Ordering::SeqCst), 2);
+}

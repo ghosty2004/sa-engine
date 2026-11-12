@@ -9,6 +9,7 @@
 //! callback; RakNet's update thread is samp-rs's own.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
@@ -18,12 +19,13 @@ use samp_client::footsync::{self, FootSender, KeyContext, LocalSample, Rotation}
 use samp_client::netclient::{Event, NetClient, NetPacket, resolve};
 use samp_proto::auth::AuthTable;
 use samp_proto::raknet::Reliability;
-use samp_proto::rpcs::{Incoming, player};
+use samp_proto::rpcs::{Incoming, player, vehicle};
 use samp_proto::sync::player::StatsSync;
 
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
-use sa_samp_api::{AreaCode, GameAdapter, ModelId, Vec3, WeaponType};
+use sa_samp_api::vehicles::VehicleSpawn;
+use sa_samp_api::{AreaCode, GameAdapter, ModelId, Vec3, VehicleRef, WeaponType};
 
 use crate::samp::Target;
 
@@ -45,6 +47,10 @@ pub struct NetHooks {
     syncs_sent: u32,
     last_report: Option<Instant>,
     world_set_up: bool,
+    /// Server vehicle id → the engine's vehicle (streamed in by RPC 164).
+    vehicles: HashMap<u16, VehicleRef>,
+    last_car_sync: Option<Instant>,
+    car_rotation: Option<samp_proto::types::Quat>,
 }
 
 /// The auth table (third-party data, never committed): `--samp-auth FILE` or `SAMP_AUTH_TABLE`.
@@ -116,6 +122,9 @@ impl NetHooks {
             syncs_sent: 0,
             last_report: None,
             world_set_up: false,
+            vehicles: HashMap::new(),
+            last_car_sync: None,
+            car_rotation: None,
         })
     }
 
@@ -213,6 +222,7 @@ impl NetHooks {
             }
             Event::Rejected(r) => self.note(format!("connection rejected: {r}")),
             Event::Rpc(Incoming::Player(p)) => self.on_player_rpc(p, game),
+            Event::Rpc(Incoming::Vehicle(v)) => self.on_vehicle_rpc(v, game),
             Event::Rpc(other) => self.note(format!("rpc {} (not applied natively yet)", other_id(&other))),
             Event::Sync(_) => {}
         }
@@ -323,6 +333,119 @@ impl NetHooks {
         }
     }
 
+    fn on_vehicle_rpc(&mut self, rpc: vehicle::Incoming, game: &mut dyn GameAdapter) {
+        use vehicle::Incoming as V;
+        match rpc {
+            V::StreamInVehicle(v) => {
+                let model = ModelId(v.model as i32);
+                report(self, "request_model", game.request_model(model));
+                report(self, "load_all_now", game.load_all_now());
+                let colour = |c: u8| if c == 0xFF { 0 } else { c };
+                let spawn = VehicleSpawn {
+                    model,
+                    pos: Vec3::new(v.position.x, v.position.y, v.position.z),
+                    heading_deg: v.angle,
+                    colours: [colour(v.colour1), colour(v.colour2)],
+                    paintjob: 3,
+                    area: AreaCode(v.interior),
+                };
+                match game.create_vehicle(&spawn) {
+                    Ok(r) => {
+                        report(self, "set_vehicle_health", game.set_vehicle_health(r, v.health));
+                        self.vehicles.insert(v.vehicle_id, r);
+                        self.note(format!(
+                            "vehicle {} (model {}) streamed in at ({:.1},{:.1},{:.1}) as {:#x}",
+                            v.vehicle_id, v.model, v.position.x, v.position.y, v.position.z, r.0
+                        ));
+                    }
+                    Err(e) => self.note(format!("vehicle {} (model {}): {e}", v.vehicle_id, v.model)),
+                }
+            }
+            V::StreamOutVehicle(v) => {
+                if let Some(r) = self.vehicles.remove(&v.vehicle_id) {
+                    report(self, "destroy_vehicle", game.destroy_vehicle(r));
+                    self.note(format!("vehicle {} streamed out", v.vehicle_id));
+                }
+            }
+            V::PutPlayerInVehicle(p) => {
+                let (Some(me), Some(&v)) = (game.local_player(), self.vehicles.get(&p.vehicle_id)) else {
+                    self.note(format!("PutPlayerInVehicle {}: unknown vehicle", p.vehicle_id));
+                    return;
+                };
+                let seat = (p.seat != 0).then(|| i32::from(p.seat) - 1);
+                report(self, "warp_into_vehicle", game.warp_into_vehicle(me, v, seat));
+                self.note(format!("PutPlayerInVehicle {} seat {}", p.vehicle_id, p.seat));
+            }
+            V::RemovePlayerFromVehicle(_) => {
+                if let Some(me) = game.local_player()
+                    && let Ok(s) = game.ped_snapshot(me)
+                {
+                    let p = s.matrix.pos;
+                    report(
+                        self,
+                        "warp_out_of_vehicle",
+                        game.warp_out_of_vehicle(me, Vec3::new(p.x + 2.0, p.y, p.z)),
+                    );
+                    self.note("RemovePlayerFromVehicle".into());
+                }
+            }
+            other => self.note(format!("vehicle rpc {} (not applied natively yet)", other.id())),
+        }
+    }
+
+    /// Driver sync (200) while the local player drives a vehicle the server streamed in.
+    fn car_sync(
+        &mut self,
+        game: &mut dyn GameAdapter,
+        v: VehicleRef,
+        s: &sa_samp_api::peds::PedSnapshot,
+        now: Instant,
+    ) {
+        let Some((&id, _)) = self.vehicles.iter().find(|(_, r)| **r == v) else {
+            return;
+        };
+        let Ok(vs) = game.vehicle_snapshot(v) else { return };
+        if vs.driver != game.local_player() {
+            return;
+        }
+        let due = self
+            .last_car_sync
+            .is_none_or(|t| now.duration_since(t) >= Duration::from_millis(u64::from(self.on_foot_rate)));
+        if !due {
+            return;
+        }
+        self.last_car_sync = Some(now);
+        let (pad, _) = game.pad();
+        let a = |v: Vec3| [v.x, v.y, v.z];
+        let m = vs.matrix;
+        let sample = samp_client::vehicle::DriverSample {
+            vehicle_id: id,
+            left_right: pad.left_x,
+            up_down: pad.left_y,
+            keys: 0,
+            additional_key: 0,
+            rotation: Rotation {
+                right: a(m.right),
+                forward: a(m.forward),
+                up: a(m.up),
+            },
+            position: a(m.pos),
+            velocity: a(vs.move_speed),
+            vehicle_health: vs.health,
+            health: s.health,
+            armour: s.armour,
+            weapon: s.weapon.0,
+            siren: vs.siren,
+            landing_gear: vs.gear_down,
+            trailer_id: 0,
+            extra: 0,
+        };
+        let p = samp_client::vehicle::build_driver_sync(&sample, self.car_rotation);
+        self.car_rotation = Some(p.rotation);
+        self.net.send_sync(&p);
+        self.syncs_sent += 1;
+    }
+
     /// samp's local spawn routine, reduced to what the native adapter serves: control, HUD, the spawn
     /// point and heading, health, the spawn weapons, the camera, then RPC 52 PlayerSpawn.
     fn spawn_local(&mut self, game: &mut dyn GameAdapter) {
@@ -382,7 +505,8 @@ impl NetHooks {
     fn sync(&mut self, game: &mut dyn GameAdapter, now: Instant) {
         let Some(me) = game.local_player() else { return };
         let Ok(s) = game.ped_snapshot(me) else { return };
-        if s.vehicle.is_some() {
+        if let Some(v) = s.vehicle {
+            self.car_sync(game, v, &s, now);
             return;
         }
         let (pad, _) = game.pad();
