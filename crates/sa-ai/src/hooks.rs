@@ -111,6 +111,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::route_round_entity_bbox::HOOKS,
     crate::route_round_sphere::HOOKS,
     crate::attractor_place_ped::HOOKS,
+    crate::attractor_registry::HOOKS,
     crate::interesting_events_add::HOOKS,
     crate::attractor_ptr_vectors::HOOKS,
     crate::attractor_register_ped::HOOKS,
