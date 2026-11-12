@@ -23,9 +23,6 @@ fn put(d: u32, v: f64) {
 fn w32(a: u32, v: u32) {
     GPtr::<u32>::from_addr(a as usize).write(v)
 }
-fn w8(a: u32, v: u8) {
-    GPtr::<u8>::from_addr(a as usize).write(v)
-}
 
 /// The registered native entry at `addr` (phase B, 32-bit x86), else a "not ported" panic as `orig!` gives.
 #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
@@ -51,38 +48,6 @@ fn call_thiscall0(ctor: u32, this: u32) {
     }
     #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
     let _ = (ctor, this);
-}
-
-/// `this->fn(a)` (thiscall, one stack argument).
-#[allow(unsafe_code)]
-fn call_thiscall1(func: u32, this: u32, a: u32) {
-    #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
-    {
-        // SAFETY: a registered thiscall entry taking one stack dword.
-        let f = unsafe {
-            core::mem::transmute::<usize, extern "thiscall-unwind" fn(u32, u32) -> u32>(entry_at(func))
-        };
-        f(this, a);
-    }
-    #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
-    let _ = (func, this, a);
-}
-
-/// `this->fn(a, b, c, d)` (thiscall, four stack arguments).
-#[allow(unsafe_code)]
-fn call_thiscall4(func: u32, this: u32, a: u32, b: u32, c: u32, d: u32) {
-    #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
-    {
-        // SAFETY: a registered thiscall entry taking four stack dwords.
-        let f = unsafe {
-            core::mem::transmute::<usize, extern "thiscall-unwind" fn(u32, u32, u32, u32, u32) -> u32>(
-                entry_at(func),
-            )
-        };
-        f(this, a, b, c, d);
-    }
-    #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
-    let _ = (func, this, a, b, c, d);
 }
 
 /// CRT `atexit(fn)` (0x821D1E, cdecl).
@@ -183,75 +148,6 @@ macro_rules! static_inits {
 }
 pub(crate) use static_inits;
 
-/// `__init_CTheScripts__MissionCleanUp` (0x84A720): 75 entries of 8 bytes from 0xA90850: the type byte (+0) then
-/// the handle dword (+4) zeroed.
-pub extern "C-unwind" fn init_mission_clean_up() {
-    for i in 0..0x4B {
-        w8(0xA90850 + i * 8, 0);
-        w32(0xA90854 + i * 8, 0);
-    }
-}
-
-/// `__init_gDummyMatrix` (0x84E2E0): `gDummyMatrix.SetScale(1.0)` (0x59AED0 on 0xB74240), `atexit(0x856480)`.
-pub extern "C-unwind" fn init_dummy_matrix() {
-    call_thiscall1(0x59AED0, 0xB74240, 0x3F80_0000);
-    atexit(0x856480);
-}
-
-/// `__init_g_c03970` (0x8508C0): the four dwords 0xC03970..0xC0397C zeroed, `atexit(0x856700)`.
-pub extern "C-unwind" fn init_c03970() {
-    for a in [0xC03970, 0xC03974, 0xC03978] {
-        w32(a, 0);
-    }
-    w32(0xC0397C, 0);
-    atexit(0x856700);
-}
-
-/// `__init_CPlantMgr__m_AmbientColor` (0x850910): `CRGBA(255, 255, 255, 255)` (0x7170C0) on 0xC03A44,
-/// `atexit(0x856710)`.
-pub extern "C-unwind" fn init_plant_ambient_color() {
-    call_thiscall4(0x7170C0, 0xC03A44, 0xFF, 0xFF, 0xFF, 0xFF);
-    atexit(0x856710);
-}
-
-/// `__init_AllValidWinJoys` (0x855FD0): the two 16-byte entries from 0xC92144: the dword (+0) and the bytes +4..+6
-/// zeroed.
-pub extern "C-unwind" fn init_all_valid_win_joys() {
-    let mut a = 0xC92148;
-    while a < 0xC92168 {
-        w32(a - 4, 0);
-        w8(a, 0);
-        w8(a + 1, 0);
-        w8(a + 2, 0);
-        a += 0x10;
-    }
-}
-
-/// The hand-written initialisers of other shapes.
-pub const NATIVES_MISC: &[NativeReg] = &[
-    NativeReg {
-        addr: 0x84A720,
-        name: "__init_CTheScripts__MissionCleanUp",
-        entry: || init_mission_clean_up as *const () as usize,
-    },
-    NativeReg {
-        addr: 0x84E2E0,
-        name: "__init_gDummyMatrix",
-        entry: || init_dummy_matrix as *const () as usize,
-    },
-    NativeReg {
-        addr: 0x8508C0,
-        name: "__init_g_c03970",
-        entry: || init_c03970 as *const () as usize,
-    },
-    NativeReg {
-        addr: 0x850910,
-        name: "__init_CPlantMgr__m_AmbientColor",
-        entry: || init_plant_ambient_color as *const () as usize,
-    },
-    NativeReg {
-        addr: 0x855FD0,
-        name: "__init_AllValidWinJoys",
-        entry: || init_all_valid_win_joys as *const () as usize,
-    },
-];
+/// The hand-written initialisers of other shapes. Empty: the five STD-4 natives (0x84A720, 0x84E2E0, 0x8508C0, 0x850910,
+/// 0x855FD0) were dropped when WRITER-P's hooks for the same addresses landed (one registration per address).
+pub const NATIVES_MISC: &[NativeReg] = &[];

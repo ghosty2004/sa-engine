@@ -116,5 +116,6 @@ pub mod attractor_approach_event;
 pub mod task_in_air_process_ped;
 pub mod event_attractor_affects_ped;
 pub mod stuck_in_air_subtask;
+pub mod group_membership_remove;
 pub mod attractor_ped_use_effect;
 pub mod general_node_heading;
