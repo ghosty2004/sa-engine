@@ -123,3 +123,4 @@ pub mod roadsign_text_raster;
 pub mod roadsign_line_row;
 pub mod roadsign_atomic;
 pub mod generated;
+pub mod fx_emitter_render;
