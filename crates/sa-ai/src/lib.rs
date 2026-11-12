@@ -55,6 +55,7 @@ pub mod misc;
 pub mod partner6;
 pub mod mvpa_ai1;
 pub mod mvpa_ai2;
+pub mod event_stuck_in_air_priority;
 pub mod mvpc_ai1;
 pub mod mvpc_ai2;
 pub mod mvpc_ai3;

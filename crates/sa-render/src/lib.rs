@@ -124,3 +124,4 @@ pub mod roadsign_line_row;
 pub mod roadsign_atomic;
 pub mod generated;
 pub mod visibility_vehicle;
+pub mod visibility_weapon;
