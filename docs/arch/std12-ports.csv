@@ -1,0 +1,22 @@
+address,name,kind,batch,file
+0x410040,CColSphere::IntersectPoint,hook,std12-world-2,crates/sa-world/src/collision/col_sphere_sphere.rs
+0x41DA30,CCarAI::UpdateCarAI,hook,std12-pop-1,crates/sa-pop/src/carctrl4.rs
+0x421050,CMentalState::IncrementAnger,hook,std12-ai-1,crates/sa-ai/src/mental_state_anger.rs
+0x455720,CPickups::DoPickUpEffects,hook,std12-world-1,crates/sa-world/src/world/pickup_effects.rs
+0x4AA400,FxSystem_c::AttachToBone,hook,std12-render-1,crates/sa-render/src/fx_attach_to_bone.rs
+0x4B8BF0,CEventHandlerHistory::StoreActiveEvent,hook,std12-ai-1,crates/sa-ai/src/event_history_store.rs
+0x4F5F30,CAEVehicleAudioEntity::GetVehicleDriveWheelSkidValue,hook,std12-audio-1,crates/sa-audio/src/vehicle.rs
+0x4F6000,CAEVehicleAudioEntity::GetVehicleNonDriveWheelSkidValue,hook,std12-audio-1,crates/sa-audio/src/vehicle.rs
+0x563470,CWorld::ClearScanCodes,native,,crates/sa-world/src/world/clear_scan_codes.rs
+0x5F2F00,CPedGeometryAnalyser::GetIsLineOfSightClear-v3d,hook,std12-ai-1,crates/sa-ai/src/geometry_line_of_sight.rs
+0x5FB210,CPedGroupMembership::RemoveMember-ByPed,hook,std12-ai-1,crates/sa-ai/src/group_membership_remove.rs
+0x633C40,CTaskSimpleIKChain::BlendOut,hook,std12-ai-1,crates/sa-ai/src/ik_chain_blend_out.rs
+0x6551D0,(missed by ghidra: cat7-call),hook,std12-ai-1,crates/sa-ai/src/walk_round_object_route.rs
+0x65BDC0,CTaskComplexSmartFleePoint::MakeAbortable,hook,std12-ai-1,crates/sa-ai/src/smart_flee_point_abortable.rs
+0x65BE40,CTaskComplexSmartFleePoint::ComputeFleeDir,hook,std12-ai-1,crates/sa-ai/src/smart_flee_point_position.rs
+0x65C3C0,CTaskComplexSmartFleePoint::SetFleePosition,hook,std12-ai-1,crates/sa-ai/src/smart_flee_point_position.rs
+0x6A2530,CAutomobile::SetRandomDamage,hook,std12-veh-1,crates/sa-veh/src/automobile_random_damage.rs
+0x6B7F90,CBike::FixHandsToBars,hook,std12-veh-2,crates/sa-veh/src/bike_fix_hands.rs
+0x6F4040,CDoor::Process,hook,std12-veh-1,crates/sa-veh/src/door2.rs
+0x701780,CPostEffects::HeatHazeFX,hook,std12-render-2,crates/sa-render/src/heat_haze_fx.rs
+0x732F30,CVisibilityPlugins::RenderWeaponPedsForPC,hook,std12-render-1,crates/sa-render/src/visibility_weapon.rs
