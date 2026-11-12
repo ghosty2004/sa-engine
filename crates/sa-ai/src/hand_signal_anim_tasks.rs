@@ -51,6 +51,14 @@ orig! {
     fn anim_get_anim_association(group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
     /// `CAnimManager::AddAnimation(RpClump*, CAnimBlendHierarchy*, int flags)` (0x4D4330)
     fn anim_add_animation(clump: u32, hier: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D4330 => unported;
+    /// `CBaseModelInfo::RemoveRef()` (0x4C4BB0)
+    fn model_info_remove_ref(mi: GPtr<u8>) = thiscall 0x4C4BB0 => unported;
+    /// `CAnimManager::RemoveAnimBlockRef(int32)` (0x4D3FD0)
+    fn anim_remove_block_ref(i: i32) = cdecl 0x4D3FD0 => unported;
+    /// `CStreaming::RemoveModel(int32)` (0x4089A0)
+    fn streaming_remove_model(id: i32) = cdecl 0x4089A0 => unported;
+    /// `CTaskComplex::~CTaskComplex()` (0x61A3D0)
+    fn task_complex_dtor(t: GPtr<u8>) = thiscall 0x61A3D0 => unported;
 }
 
 /// `g_ikChainMan`
@@ -162,6 +170,41 @@ pub fn hand_signal_control_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<u8> 
     sub
 }
 
+/// `CTaskComplexPlayHandSignalAnim::~CTaskComplexPlayHandSignalAnim()` (0x61BDF0, thiscall, SEH frame): vtable
+/// 0x86D5DC; each hand model referenced (flags bits 0 / 1) is released (fat hands: 0x18C / 0x18D, else 0x18A /
+/// 0x18B). With the "ghands" block referenced (bit 2) the reference is removed; otherwise, when either hand model
+/// has no references left (model info +8) and the block index is known with no references (`ms_aAnimBlocks[i]`
+/// +0x12), its IFP (`index + 0x63E7`) is removed from the streaming. Then `CTaskComplex::~CTaskComplex`.
+#[hook(addr = 0x61BDF0, conv = thiscall, name = "CTaskComplexPlayHandSignalAnim::Destructor",
+       expect = "6A FF 68 D8 F2 83 00", unverified = "attr-7", route = "L2", hazards = "heap-writes",
+       recs = "grove-walk")]
+pub fn hand_signal_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86D5DC);
+    let mi = |slot: usize| g::<GPtr<u8>>(slot).read();
+    let f = rd::<u8>(this, 0x14);
+    if f & 1 != 0 {
+        model_info_remove_ref(mi(if f & 8 != 0 { 0xA9B6F8 } else { 0xA9B6F0 }));
+    }
+    let f = rd::<u8>(this, 0x14);
+    if f & 2 != 0 {
+        model_info_remove_ref(mi(if f & 8 != 0 { 0xA9B6FC } else { 0xA9B6F4 }));
+    }
+    let f = rd::<u8>(this, 0x14);
+    if f & 4 != 0 {
+        anim_remove_block_ref(g::<i32>(ANIM_BLOCK).read());
+    } else {
+        let (l, r) = if f & 8 != 0 { (0xA9B6F8, 0xA9B6FC) } else { (0xA9B6F0, 0xA9B6F4) };
+        let both_used = rd::<u16>(mi(l), 8) != 0 && rd::<u16>(mi(r), 8) != 0;
+        if !both_used {
+            let idx = g::<i32>(ANIM_BLOCK).read();
+            if idx != -1 && g::<u16>(0xB5D4B2usize.wrapping_add((idx as usize).wrapping_shl(5))).read() == 0 {
+                streaming_remove_model(idx.wrapping_add(0x63E7));
+            }
+        }
+    }
+    task_complex_dtor(this);
+}
+
 /// One hand object of the signal: `CHandObject(model, ped, left)` (0x18C bytes) into `slot`; when created, added to
 /// the world with the `group` animation of the task's anim id (+0x10) and counted as a temporary object. Returns
 /// whether it was created.
@@ -222,4 +265,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_HAND_SIGNAL_CREATE_SUB_TASK,
     HOOK_HAND_SIGNAL_CONTROL_SUB_TASK,
     HOOK_PLAY_HAND_SIGNAL_START_ANIM,
+    HOOK_HAND_SIGNAL_DTOR,
 ];
