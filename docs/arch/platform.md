@@ -1130,3 +1130,119 @@ for sa-hook on i686-pc-windows-gnu. L1 / Wine steps not run (no Wine lane).
 
 1. Whether `--start-in-world` should also set what the intro's end leaves (its global flags), or stay a pure skip.
 2. Whether the 0x6F9DE0 / 0x407F20 hook-vs-native duplicates of the STD-8 base are settled by dropping the natives.
+
+## 16. STD-10: CJ on screen, the sky, walking
+
+### 16.1 Main-session decisions on STD-9's questions (recorded by STD-10, 2026-11-12)
+
+1. **`--start-in-world` stays a pure skip of `START_MISSION 2`** (no faked intro flags). If a missing intro flag blocks
+   walking, that one flag is set with a ledger line. None was needed: CJ walks without any intro flag (16.5).
+2. **Hook-vs-native duplicates**: the native is dropped where a hook covers the native path. 0x6F9DE0
+   `CPlantSurfPropMgr::GetSurfProperties`: the mvpa-render-1 hook (`sa-render/mvpa_render1.rs`) has the same body as
+   `sa-core/gameinit.rs`'s native; the native is dropped and gameinit's `orig!` call goes through the registry.
+   0x407F20 `CStreaming::LoadInitialVehicles` (a lone `ret`, not hookable) was registered natively twice (sa-stream and
+   sa-core); sa-core's copy is dropped. One registration per address.
+
+### 16.2 Merges
+
+Base: STD-9 (`worktree-agent-a5944be11b642b989`, 622f85e; the branch was reset to it). Cherry-picked own commits:
+WRITER-INTRO 4627242, a8d686f, fa12c38, 7647d85, dd7849a (intro-ai-1..5, intro-anim-1; base STD-8, list conflicts
+unioned) and WRITER-O 19c4c83, 2f6593e, 86975df (`CAEVehicleAudioEntity::AddAudioEvent` 0x4F6420, `FxEmitterBP_c::Render`
+0x4A2C40 + `RenderHeatHaze` 0x4A1940, the RtQuat helpers; its MVP-N cherry-picks skipped). The generated queue files
+were regenerated after each step. `cargo test -p sa-hook --lib`: 58 passed.
+
+### 16.3 sa-game changes
+
+* **Texture levels keep their CPU copy after `UnlockRect`** (`d3d9.rs`). The copy was removed at unlock, so a later read
+  lock (`RwRasterLock` for reading) saw zeros: `CClothesBuilder`'s texture blending read black sources and CJ's clothes
+  textures were black. The module doc already described the kept copy.
+* **`SA_GAME_WALK` sends the W key-down.** W was marked held before `key_down`, which queues the message only for a key
+  not yet held: only the key-up reached the game (STD-9's walking runs never pressed W).
+* `SA_GAME_DUMP=ADDR:LEN[,...]` (exploration): every `Present` prints game memory as dwords with their f32 reading;
+  `BASE>OFF>OFF` follows pointers (each `>` reads the dword so far and adds the offset).
+* The SIGSEGV / SIGBUS report gives the faulting EIP and the reporter's own address (`eip - on_fault` + `nm`'s link
+  address of `on_fault` locates the code in the PIE build).
+
+### 16.4 Boot progress (release build, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+| step | status |
+|---|---|
+| boot to in-world frames | ok (as STD-9) |
+| CJ's skin pipeline: `_rpD3D9SkinAllInOneNode` + instancing / declaration / reinstancing / software render, bone matrices, SSE blenders (std10-skin-1/2) | ported, pass: **CJ drawn, posed and textured** |
+| sky: `_rwD3D9ImmRenderPrimitiveNode` (std10-rw-1) | ported, pass: **the sky gradient, sun and clouds draw** (the yellow / red / black blocks were the Im3D node stubbed: no sky polygons, only the sun corona / cloud sprites over the clear colour) |
+| vehicle render callbacks 0x7331E0 / 0x733240 / 0x733F80 + `GetDotProductWithCameraVector` (std10-render-1), `RenderWeaponCB` (std10-render-2) | ported, pass |
+| `AddAudioEvent` 0x4F6420, `FxEmitterBP_c::Render` 0x4A2C40 (WRITER-O) | taken, pass: stubs dropped |
+| walking: `CColSphere::IntersectSphere` (std10-world-1), `CEventStuckInAir::GetEventPriority` (std10-ai-1) | ported, pass |
+
+Exploration stubs still used (`SA_GAME_STUB=0x41da30=0/0,0x5f1890=0/0,0x5ea390=0/0,0x6a2530=0/1,0x455720=0/0,0x732f30=0/0,0x5d9900=0/0,0x701780=0/0,0x6f4040=0/4`):
+`CCarAI::UpdateCarAI` 0x41DA30 (its partial port falls back to the original for law enforcers and missions > 1: a null
+call in phase B), `CPedGeometryAnalyser::ComputeRouteRoundSphere` 0x5F1890, `CPedAttractorPedPlacer::PlacePedAtEffect`
+0x5EA390, `CAutomobile::SetRandomDamage` 0x6A2530 (thiscall, 1 argument), `CPickups::DoPickUpEffects` 0x455720,
+`RenderWeaponPedsForPC` 0x732F30, the car env-map render callback 0x5D9900, `CPostEffects::HeatHazeFX` 0x701780,
+`CDoor::Process` 0x6F4040 (thiscall, **4** arguments: STD-10's first stub popped none and corrupted the caller's stack in
+`CAutomobile::PreRender`, the intermittent SIGSEGV at 0x6FAF2Exx).
+
+Evidence (not committed, `target/std10-evidence/keep/`): `01-cj-visible-grove-street.png` (CJ textured, before the sky
+fix), `02-cj-sky-im3d.png` (CJ and the sky), `walk/present-00{30..50}.png` and `walk-long/present-00{40..76}.png` (CJ
+walking from the street to the curb in front of his house, `SA_GAME_WALK=40:200`).
+
+### 16.5 Walking
+
+`SA_GAME_WALK=40:200` (W from iteration 40): CJ runs from the Grove Street cul-de-sac to the pavement in front of his
+house (about 75 presented frames). The next blockers: `CTaskSimpleInAir::ProcessPed` 0x680600 (stepping off the
+kerb; ~350 instructions, reversed in gta-reversed), `CPedAttractorManager::IsApproachable` 0x5EA220 and the
+`CEventAttractor` constructor 0x4AF350 (ambient peds), then the stubbed functions above.
+
+No gamescope window run: `sa-game --window` still shows STD-2's status screen (`screen.rs`); the game loop runs only in
+the offscreen `--frames` mode. A windowed game loop (the seam's frames presented to the winit surface, real input) is
+the missing piece for the frame-pacing check.
+
+### 16.6 Ports and verification queue
+
+`docs/arch/std10-ports.csv` (regenerate with `tools/native/std10_ports.py`): 21 hooks in batches `std10-skin-1` (7),
+`std10-skin-2` (6), `std10-rw-1` (1), `std10-render-1` (4), `std10-render-2` (1), `std10-world-1` (1), `std10-ai-1` (1).
+All written, none verified. Writer gate: hooks PASS (79 new hooks since 622f85e incl. WRITER-INTRO's, all unverified,
+batches ≤ 60), queue regenerated; `cargo test -p sa-hook --lib` 58 passed; clippy -D warnings clean for sa-rwcore,
+sa-render, sa-world, sa-ai, sa-core, sa-game on i686-unknown-linux-gnu. Not run: the i686-pc-windows-gnu clippy of
+sa-hook, L1 / Wine steps (no Wine lane).
+
+Not ported in the skin path: the x87 (non-SSE) branch of the node (`_rpSkinPrepareMatrices` 0x7CA850 and the blenders
+0x7C9DA0 / 0x7CA410 / 0x7CA330 / 0x7CA240: taken only when `_rwIntelSSEsupported` is 0) and the vertex-shader render
+step 0x7C8060 / instancing (taken only with vertex-shader caps, which sa-game does not report).
+
+### 16.7 Divergences and ledger proposals
+
+1. **`CTimeCycle::Initialise`'s directional multiplier is an uninitialised local** (0x5BBAC0: the 1.0 US `timecyc.dat`
+   has 51 values per line; the 52nd `%f` (directional mult) is never scanned, so `m_nDirectionalMult` is the
+   byte of whatever the stack slot [esp+0xCC] held, times 100). The port's local is 0: `m_fIllumination` is 0, the
+   directional light of peds and vehicles is black, CJ is lit by the ambient light only. Proposed ledger text:
+   "**timecyc directional multiplier (phases B/C)**: the original reads an uninitialised stack float for
+   `m_nDirectionalMult` (timecyc.dat has no such column); the port uses 0 (no directional light on peds / vehicles).
+   Closing: measure the original's `m_nDirectionalMult` (0xB79FD8, 184 bytes) in a Wine run and use that value."
+   With the bytes forced to 100 (exploration) CJ gets the expected directional shading.
+2. The Im3D node's primitive count for a primitive type outside 2..6 is the original's uninitialised local (0 in the
+   port; `uninit-locals` on the hook).
+3. `_rpD3D9SkinGeometryReinstance`'s element buffer holds 65 elements (the original's 18; `GetDeclaration` writes at
+   most 15 here).
+
+### 16.8 Next gaps, in order
+
+1. `CTaskSimpleInAir::ProcessPed` 0x680600 (walking off the kerb), `CPedGeometryAnalyser::ComputeRouteRoundSphere`
+   0x5F1890, `CPedAttractorManager::IsApproachable` 0x5EA220, `CEventAttractor` ctor 0x4AF350,
+   `PlacePedAtEffect` 0x5EA390.
+2. `CCarAI::UpdateCarAI` 0x41DA30 complete (law enforcers, missions > 1), `CAutomobile::SetRandomDamage` 0x6A2530,
+   `CDoor::Process` 0x6F4040 (entry through the protection chunk 0x407DD5).
+3. The remaining render stubs: `RenderWeaponPedsForPC` 0x732F30, `CCustomCarEnvMapPipeline::CustomPipeRenderCB`
+   0x5D9900, `CPostEffects::HeatHazeFX` 0x701780, `CPickups::DoPickUpEffects` 0x455720; the five FrameUpdateCallBack
+   variants (0x4D2E40, 0x4D1DB0, 0x4D1A50, 0x4D30A0, 0x4D2450).
+4. A windowed game loop in sa-game, then the gamescope frame-pacing run.
+5. The measured directional multiplier (16.7 item 1).
+6. Visual leftovers: a near palm tree drawn black (top left of the in-world frames), a grey Im3D triangle at the
+   bottom right (likely a marker or shadow polygon; not investigated).
+
+### 16.9 Decisions needed
+
+1. The directional multiplier (16.7 item 1): measure it in a Wine run (needs a Wine lane), or accept another value
+   (e.g. 100, `(uint8)1.0f * 100`, which the SA mobile data implies) with the ledger line.
+2. Whether STD-11 builds the windowed game loop in sa-game (needed for the gamescope frame-pacing evidence) or that
+   goes to a platform lane.
