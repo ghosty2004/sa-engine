@@ -6,8 +6,9 @@
 //! does the same at the same places: the strings are rewritten in the mapped image, and `sa_platform::vfs`'s
 //! redirect (where file opens reach the platform, the native counterpart of `CreateFileA`) serves samp.saa's
 //! `loadscs.txd`. samp.saa is read at run time from the user's SA:MP install (the game folder, or `SA_SAMP_DIR`
-//! natively) and never shipped. Only `loadscs.txd` is served so far; samp.saa's other entries (main.scm,
-//! gta.dat, the IDE files ...) need samp's `SAMP` folder in the engine's file layer first.
+//! natively) and never shipped. Only `loadscs.txd` is served by default (main.scm and script.img with
+//! `SA_SAMP_SCM=1`); the other entries (gta.dat, the IDE files ...) need samp's `SAMP` folder in the engine's
+//! file layer first.
 
 use std::sync::{Arc, OnceLock};
 
@@ -19,6 +20,10 @@ static SERVED: OnceLock<Vec<Served>> = OnceLock::new();
 
 /// The entries served from samp.saa (subset of samp's, see the module comment).
 const ENTRIES: [&str; 1] = ["loadscs.txd"];
+
+/// samp's own scripts, served only with `SA_SAMP_SCM=1` (exploration): samp's main.scm starts threads that
+/// reach unported code (the script search lights, docs/samp/startup.md), so GTA's main.scm stays the default.
+const SCRIPT_ENTRIES: [&str; 2] = ["main.scm", "script.img"];
 
 /// samp.dll's string patches: (address, original bytes, samp's bytes).
 const STRING_PATCHES: [(usize, &[u8], &[u8]); 2] = [
@@ -56,8 +61,10 @@ pub fn install() -> String {
         Ok(a) => a,
         Err(e) => return format!("samp.saa: {e:?}: GTA's own loading screen"),
     };
+    let scripts = crate::env::var_os("SA_SAMP_SCM").is_some();
     let served: Vec<_> = ENTRIES
         .iter()
+        .chain(SCRIPT_ENTRIES.iter().filter(|_| scripts))
         .filter_map(|n| archive.read(n).map(|d| (n.as_bytes(), Arc::new(d))))
         .collect();
     if served.is_empty() {
@@ -74,5 +81,6 @@ pub fn install() -> String {
         }
     }
     sa_platform::vfs::set_redirect(Some(redirect));
-    "samp.saa: loadscs.txd served, splash names \"title\" (samp's loading screen)".into()
+    let what = if scripts { "loadscs.txd, main.scm, script.img" } else { "loadscs.txd" };
+    format!("samp.saa: {what} served, splash names \"title\" (samp's loading screen)")
 }
