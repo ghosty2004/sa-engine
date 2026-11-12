@@ -132,6 +132,9 @@ pub fn set_present_dir(dir: std::path::PathBuf) {
 /// Set by the main loop while `rsIDLE` (`Game::Idle`, the in-game frame) runs.
 pub static IN_GAME_FRAME: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// Presents since the page's current task began (the web front end resets it per main-loop iteration).
+pub static PRESENTED_THIS_TASK: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
 /// Every `Present` so far (the web page ends its task after one, so the browser shows the frame).
 pub static PRESENTS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
@@ -142,7 +145,12 @@ fn present_frame() -> i32 {
     let read_back = PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner()).is_some();
     let r = with_device(|d| {
         let r = d.present();
-        present_to_window(d);
+        // wasm32: the canvas shows only the last frame of a task (the worker yields between main-loop iterations), so
+        // inside one long iteration (the loading screens of `CGame::Initialise`) only the first present per
+        // iteration reaches the canvas; the rest would only queue swap-chain work
+        if PRESENTED_THIS_TASK.fetch_add(1, std::sync::atomic::Ordering::Relaxed) == 0 || !cfg!(target_arch = "wasm32") {
+            present_to_window(d);
+        }
         (r, if read_back { d.read_render_target(None).ok() } else { None })
     });
     if in_game {

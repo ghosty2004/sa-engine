@@ -60,6 +60,8 @@ pub fn install(p: Platform) {
 
 /// Runs `f` on the platform state. Stand-ins never call back into game code while holding it.
 pub fn with<R>(key: &'static str, f: impl FnOnce(&mut Platform) -> R) -> R {
+    #[cfg(target_arch = "wasm32")]
+    crate::web::maybe_sample(key);
     let mut b = PLATFORM.lock().unwrap_or_else(|e| e.into_inner());
     let p = b.as_mut().expect("sa-game: platform not installed");
     *p.calls.entry(key).or_default() += 1;

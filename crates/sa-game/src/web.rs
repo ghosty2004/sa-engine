@@ -146,13 +146,9 @@ pub fn boot() -> Result<(), JsValue> {
     crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
     crate::app::QUIET_FRAMES.store(true, std::sync::atomic::Ordering::SeqCst);
     if crate::env::var_os("SA_WEB_SAMPLE").is_some() {
-        fn sample(callee: usize, n: u32) {
-            log_line(format!(
-                "sample: dispatch {n}: {callee:#x} {} (game time {} ms, gGameState {})",
-                sa_core::orig::registry::describe(callee),
-                sa_core::mem::GPtr::<u32>::from_addr(0xB7CB84).read(),
-                crate::winmain::game_state()
-            ));
+        SAMPLING.store(true, std::sync::atomic::Ordering::Relaxed);
+        fn sample(callee: usize, _n: u32) {
+            maybe_sample(sa_core::orig::registry::describe(callee));
         }
         let f: fn(usize, u32) = sample;
         sa_core::wabi::SAMPLER.store(f as usize, std::sync::atomic::Ordering::Relaxed);
@@ -173,6 +169,7 @@ pub fn boot() -> Result<(), JsValue> {
 /// `SA_WEB_AUTO_INPUT=1` the offscreen mode's synthetic input is added (unattended evidence runs).
 #[wasm_bindgen]
 pub fn frame() -> bool {
+    crate::d3d9::PRESENTED_THIS_TASK.store(0, std::sync::atomic::Ordering::Relaxed);
     let input = INPUT.with(|i| {
         let mut i = i.borrow_mut();
         let out = i.clone();
@@ -189,6 +186,41 @@ pub fn frame() -> bool {
         };
         s.iterate(input)
     })
+}
+
+static SAMPLING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// `SA_WEB_SAMPLE=1`: at most every 3 s of real time, the JS stack (wasm function names) of the current call, so a
+/// main-loop iteration that does not return shows where it spends its time.
+pub fn maybe_sample(what: &str) {
+    use std::sync::atomic::Ordering;
+    if !SAMPLING.load(Ordering::Relaxed) {
+        return;
+    }
+    thread_local! {
+        static LAST: std::cell::Cell<f64> = const { std::cell::Cell::new(0.0) };
+    }
+    let now = js_sys::Date::now();
+    if now - LAST.with(|l| l.get()) < 3000.0 {
+        return;
+    }
+    LAST.with(|l| l.set(now));
+    let stack: String = js_sys::Reflect::get(&js_sys::Error::new("sample"), &"stack".into())
+        .ok()
+        .and_then(|v| v.as_string())
+        .unwrap_or_default();
+    let frames: Vec<&str> = stack
+        .lines()
+        .filter(|l| l.contains("wasm-function"))
+        .map(|l| l.trim().trim_start_matches("at ").split(" (").next().unwrap_or(""))
+        .take(40)
+        .collect();
+    log_line(format!(
+        "sample at {what}: game time {} ms, gGameState {}\n  {}",
+        sa_core::mem::GPtr::<u32>::from_addr(0xB7CB84).read(),
+        crate::winmain::game_state(),
+        frames.join("\n  ")
+    ));
 }
 
 /// Main-loop iterations run so far.

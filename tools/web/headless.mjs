@@ -38,7 +38,7 @@ const note = (s) => {
 const flags = [
   '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${process.cwd()}/target/web1-chrome-${port}`,
   '--no-first-run', '--no-default-browser-check', '--enable-unsafe-webgpu', '--enable-features=Vulkan',
-  '--ignore-gpu-blocklist', '--use-angle=swiftshader', '--use-webgpu-adapter=swiftshader', '--window-size=820,700', ...extraFlags, 'about:blank',
+  '--ignore-gpu-blocklist', ...(arg('gpu', 'swiftshader') === 'swiftshader' ? ['--use-angle=swiftshader', '--use-webgpu-adapter=swiftshader'] : ['--use-angle=vulkan', '--enable-features=Vulkan,VulkanFromANGLE']), '--window-size=820,700', ...extraFlags, 'about:blank',
 ];
 const proc = spawn(chrome, flags, { stdio: ['ignore', 'ignore', 'pipe'] });
 proc.stderr.on('data', (d) => appendFileSync(`${out}/chrome-stderr.txt`, d));
@@ -85,7 +85,8 @@ const shot = async (name) => {
   const rect = JSON.parse((await evalJs('JSON.stringify(document.getElementById("screen").getBoundingClientRect())')) ?? '{"x":0,"y":0,"width":800,"height":600}');
   const full = process.argv.includes('--full-page');
   const clip = full ? { x: 0, y: 0, width: 820, height: 700, scale: 1 } : { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
-  const r = await s('Page.captureScreenshot', { format: 'png', clip });
+  // a canvas the compositor cannot show (headless with a real GPU) can stall the capture: give up after 5 s
+  const r = await Promise.race([s('Page.captureScreenshot', { format: 'png', clip }), sleep(5000).then(() => ({}))]);
   if (r.result?.data) {
     writeFileSync(`${out}/${name}.png`, Buffer.from(r.result.data, 'base64'));
     note(`screenshot ${out}/${name}.png`);
@@ -112,7 +113,7 @@ async function dumpStacks(tag) {
     const paused = new Promise((res) => handlers.push((m) => { if (m.method === 'Debugger.paused' && m.sessionId === ws) res(m.params); }));
     await send('Debugger.enable', {}, ws);
     await send('Debugger.pause', {}, ws);
-    const p = await Promise.race([paused, sleep(10000).then(() => null)]);
+    const p = await Promise.race([paused, sleep(120000).then(() => null)]);
     if (!p) { note(`${tag}: worker did not pause`); continue; }
     note(`${tag}: worker stack:\n` + p.callFrames.map((f) => `  ${f.functionName}`).join('\n'));
     await send('Debugger.resume', {}, ws);
