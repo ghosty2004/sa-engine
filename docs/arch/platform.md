@@ -1246,3 +1246,134 @@ step 0x7C8060 / instancing (taken only with vertex-shader caps, which sa-game do
    (e.g. 100, `(uint8)1.0f * 100`, which the SA mobile data implies) with the ledger line.
 2. Whether STD-11 builds the windowed game loop in sa-game (needed for the gamescope frame-pacing evidence) or that
    goes to a platform lane.
+
+## 17. STD-11: the windowed game loop, walking past the kerb
+
+### 17.1 Main-session decisions on STD-10's questions (recorded by STD-11, 2026-11-12)
+
+1. **Directional light: measured in the original.** Measured value: **0** (17.4); the port's 0 already reproduces it,
+   no code change.
+2. **STD-11 builds the windowed game loop** (17.3).
+
+### 17.2 Base
+
+Rebased (main session's request, mid-task) onto master ca917d6 (INTEGRATE-3: STD-7/8/9, PORT-MENU, CLUMP, MVP-N,
+WRITER-INTRO, GEN-ALL-2). STD-10's own commits were cherry-picked onto it (STD-10's WRITER-INTRO picks are already on
+master and were left out); WRITER-O's three commits (`writero-audio-1`, `writero-render-1`, `writero-rw-1`) came along
+with STD-10's branch. At each conflict the generated queue files were taken from master; they were regenerated at the
+end. WRITER-P had no commits of its own yet. The pre-rebase branch is kept locally as `std11-pre-rebase`.
+
+### 17.3 sa-game: the windowed game loop (`--window`)
+
+* `sa-game --window` runs the real boot and main loop in a winit window (`game_window.rs`). The window and its wgpu
+  device / surface exist before the boot (as `WinMain` creates its window before RW starts); `IDirect3D9::CreateDevice`
+  makes the seam device on that GPU device (`d3d9::set_window`), and every `IDirect3DDevice9::Present` draws the back
+  buffer into the surface and presents it (`AutoNoVsync`: the game's frame limiter paces, not the vertical blank).
+* Every event-loop redraw runs one main-loop iteration (one window message or one `gGameState` step), as the offscreen
+  mode does. Input: the window's keyboard and mouse events are queued as window messages (the window procedure feeds
+  `CPad`); its held keys / buttons and relative motion are the DirectInput state. `--auto-input` adds the offscreen
+  mode's synthetic input (Enter through the menus, `SA_GAME_WALK`) for unattended evidence runs.
+* Frame pacing is the original's frame limiter (`winmain.rs` state 9, 0x748D81: `Idle` only after `1000 / frameLimit`
+  ms since the last `CTimer::Update`; the iterations in between sleep the rest of the interval).
+* The forked probe of the boot steps is off in window mode (`boot::NO_PROBE`): the display connection and the GPU device
+  exist before the boot.
+* `--frame-times FILE` writes the intervals between in-game presents (ms); the report and stdout give count, mean,
+  median, p95, p99, max. `--present-dir` works in window mode too; `Present` now reads the back buffer back only when
+  `--present-dir` is given (it read it back on every frame before).
+* `--exit-after S` counts from the end of the boot; `--frames N` limits the iterations in a window too.
+* STD-2's status-screen window is gone (`screen.rs` keeps only `--screenshot`).
+* **32-bit X11 client libraries**: winit's X11 backend loads libXcursor, libXrandr, libXi, libXinerama, libXrender,
+  libxkbcommon and libxkbcommon-x11; the system has no 32-bit copies of them (only lib32-libx11 / libxcb). For the
+  evidence runs the Arch multilib packages (lib32-libxcursor 1.2.3, lib32-libxrandr 1.5.5, lib32-libxi 1.8.3,
+  lib32-libxkbcommon(-x11) 1.13.2, lib32-libxinerama 1.1.6, lib32-libxrender 0.9.12; checksums verified against the
+  pacman sync database) were extracted under `target/std11-libs/` and put on `LD_LIBRARY_PATH`; nothing was installed
+  (decision 17.9 item 1).
+
+Verification: gamescope headless only (800x600, its own `setsid` process group), `gamescopectl screenshot` for the
+window's content, `xdotool keydown w` / `keyup w` on the gamescope display for real key input (342 WM_KEYDOWN and 337
+WM_CHAR messages dispatched in the first run: the key path works).
+
+| run | what | in-game present intervals |
+|---|---|---|
+| win4: window, no PNG capture, W held 20 s | frame pacing | 202 intervals, mean 41.12 ms (24.3 fps), min 25.01, median 39.58, p95 49.50, p99 81.60, max 155.76 ms (limiter: 25 fps = 40 ms) |
+| win3: window + `--present-dir` (PNG read-back and encode per frame) | the walking video | 303 intervals, mean 92.29 ms (10.8 fps) |
+| offscreen + `--present-dir` | as STD-10 | 112..185 ms mean (the PNG encode dominates) |
+
+In win4 most later iterations block on `CBike::ProcessRiderAnims` 0x6B7280 (a bike appears in the real-time run; its
+710 blocked iterations present nothing), so its intervals cover the first ~8 s of in-game time.
+
+### 17.4 The directional multiplier, measured
+
+Original under Wine: lane 3 (flock), `sa-launcher` + the lane's `sa_hook.dll` with no ports selected (`SA_HOOK_PORTS`,
+`SA_HOOK_MODE`, `SA_L2`, `SA_UNVERIFIED` unset: only the Core observer hooks, none on the path of `CTimeCycle::Initialise`'s
+caller up to the call), headless gamescope, New Game, `peek 0xB79FD8 184` through the control channel in `gGameState` 9
+(script kept in the agent's scratch directory, not committed). Two runs: **all 184 bytes 0** (r3, r4). Arrays the same
+loop fills are populated (`m_nWaterFogAlpha` 0xB7A090, `m_nHighLightMinIntensity` 0xB7A148 non-zero), so the table had
+been read. The slot `[esp+0xCC]` of 0x5BBAC0 is caller esp − 0x1C at the call 0x53BD6B in 0x53BCF0: the frame of the
+sibling call just before it (0x44E4E0 on 0x96F050) decides the residue. The port's local is 0: it matches; no change.
+Proposed ledger line: "**timecyc directional multiplier**: the original reads an uninitialised stack float for
+`m_nDirectionalMult`; measured 0 under Wine (two runs); the port uses 0. The residue comes from the frame of the call
+0x44E4E0 before `CTimeCycle::Initialise`; measured under Wine only." The directional light of peds and vehicles is
+therefore black in the original too; STD-10's forced 100 was exploration only.
+
+### 17.5 Boot progress (release build, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+| step | status |
+|---|---|
+| boot to in-world frames, CJ, sky | ok (as STD-10, now on master ca917d6) |
+| walking off the kerb: `CTaskSimpleInAir::ProcessPed` (with its part behind the protection chunk 0x404880), `DeleteAnimCB`, the empty 0x678E80, `CTaskComplexStuckInAir::CreateSubTask` / `ControlSubTask`, `CTaskComplexFallAndGetUp::MakeAbortable`, the `CEventStuckInAir` / `CEventObjectCollision` / wander-prostitute destructors | ported, pass |
+| ambient peds at attractors: `IsApproachable`, `CEventAttractor` ctor / dtor / `AffectsPed` / `IsEffectActive`, `CPedIntelligence::ProcessEventHandler`, `CTaskComplexUseEffect` first / next / control sub-task and destructor | ported, pass |
+| `CQuaternion::Get(RwMatrix*)`, `CGeneral::GetNodeHeadingFromVector` | ported |
+| **CJ walks from the street over the kerb and the lawn to his garage door**, offscreen and in the window with a real (xdotool) W key | with the exploration stubs below |
+
+Exploration stubs used for the evidence (`SA_GAME_STUB=0x41da30=0/0,0x5f1890=0/0,0x5ea390=0/0,0x6a2530=0/1,0x455720=0/0,0x732f30=0/0,0x5d9900=0/0,0x701780=0/0,0x6f4040=0/4,0x5efca0=0/4,0x602590=0/2,0x5f3dd0=0/0`):
+STD-10's nine plus `CPedAttractorManager::RegisterPedWithAttractor` 0x5EFCA0 (thiscall, 4 arguments: no attractor, so
+`CTaskComplexUseEffect` falls back to `CTaskSimpleNone`), `CInterestingEvents::Add` 0x602590 (thiscall, 2) and
+`CPedGeometryAnalyser::ComputeRouteRoundEntityBoundingBox` (6-argument overload) 0x5F3DD0 (cdecl, ~1,900
+instructions, not ported). Without 0x5F3DD0's stub 440 of 1,888 window iterations block on it.
+
+Evidence (not committed, `target/std11-evidence/`): `win3/cj-walk-window.mp4` (25 fps video of the 201 in-game frames
+of the window run: CJ walking to his garage), `win3/gs-{09,16,22,29}.png` (gamescope screenshots of the window during
+the walk), `off10/present-0{040,080,120,160}.png` (offscreen walk past the kerb), `win4/frame-times.txt` (pacing),
+`light-r3/`, `light-r4/` (the measurement runs; `in-game.png` is the original's frame).
+
+### 17.6 Ports and verification queue
+
+`docs/arch/std11-ports.csv` (regenerate with `tools/native/std11_ports.py`): 20 hooks in batches `std11-ai-1` (19) and
+`std11-anim-1` (1), and one `#[native]` (0x678E80, a lone `ret 4`; `sa_ai::std11_natives`). All written, none verified.
+0x4ACDD0 (entry `push -1; jmp` into the protection chunk 0x406A96) is hooked with the 7-byte expect.
+
+### 17.7 Divergences and ledger proposals
+
+1. 17.4 (directional multiplier, measured 0).
+2. `CTaskSimpleInAir::ProcessPed` and `CTaskComplexStuckInAir::CreateSubTask` / `ControlSubTask` store into their own
+   argument slots (dead afterwards; `stack-residue`); `ProcessPed` reads the uninitialised colpoint z when the ped is
+   already standing (the outcome does not depend on it; the port's colpoint is zeroed: `uninit-locals`).
+3. AL-returning ports leave EAX's upper bytes (status word / callee residue) unreproduced (`ax-al-return`).
+
+### 17.8 Next gaps, in order
+
+1. `ComputeRouteRoundEntityBoundingBox` 0x5F3DD0 (~1,900 instructions) and `ComputeRouteRoundSphere` 0x5F1890; then
+   `PlacePedAtEffect` 0x5EA390.
+2. The attractor registry: `RegisterPedWithAttractor` 0x5EFCA0 (decoded: a 10-way dispatch on the effect type into
+   `RegisterPed` 0x5EF980 with the manager's per-type arrays at +0x10 for type 0, +0 for type 1, +0x10·type otherwise;
+   not ported because `RegisterPed` and the attractor classes follow), `DeRegisterPed` 0x5EC850, 0x5EBF50,
+   `CPedAttractor::GetTaskForPed` 0x5EC500; `CInterestingEvents::Add` 0x602590 (protection chunk 0x401F31).
+3. `CBike::ProcessRiderAnims` 0x6B7280 (~3.3 KB, unreversed in gta-reversed): blocks every real-time window run once a
+   bike spawns.
+4. `CDoor::Process` 0x6F4040: its entry chunk 0x407DD5 is obfuscated (`push ecx; pushf; clc; mov ecx, [0x1560894];
+   sbb ...`); `CCarAI::UpdateCarAI` complete, `SetRandomDamage` 0x6A2530.
+5. The render stubs (`RenderWeaponPedsForPC`, the car env-map callback, `HeatHazeFX`, `DoPickUpEffects`) and the five
+   `FrameUpdateCallBack` variants: not started.
+6. The last offscreen run (off11, 300 iterations, W from 40: 308 ok, 8 blocked): `CTaskComplexChat` ctor 0x682CB0 (5),
+   0x41C050 (`car_has_reason_to_stop`, 2), `CGarages` 0x449D10 (`tidy_up_garage_close`, 1, near CJ's garage).
+7. Visual leftovers (the grey triangle bottom right of the first in-world frames, the black near palm): not
+   investigated; no original frame of the same spot yet (the original reaches it only after the intro).
+
+### 17.9 Decisions needed
+
+1. Install the 32-bit X11 client packages (lib32-libxcursor, lib32-libxrandr, lib32-libxi, lib32-libxkbcommon,
+   lib32-libxkbcommon-x11, lib32-libxinerama, lib32-libxrender) system-wide for `sa-game --window`, or keep a
+   project-local copy on `LD_LIBRARY_PATH`.
+2. `CDoor::Process`'s obfuscated entry chunk: decode it by hand (as 14.6 item 1's VM values) or measure it in a Wine
+   trace.
