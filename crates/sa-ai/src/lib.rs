@@ -145,3 +145,4 @@ pub mod use_attractor_tasks;
 pub mod wander_set_dir;
 pub mod walk_round_object_sub_task;
 pub mod event_vehicle_damage_ctor;
+pub mod task_clones_native;
