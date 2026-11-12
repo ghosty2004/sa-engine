@@ -5708,140 +5708,19 @@ _rpD3D9GetMinMaxValuesV3d@arg3:0xC:RW
 # PORT-HUD-3 (docs/arch/hud-port.md, third pass). Evidence: lane 7, port-l2-hud3-* runs: the undeclared writes
 # (original and Rust alike) listed per line.
 # ProcessCurrentString (split, menus-hud): RenderWare / D3D9 render-state caches written by the font render.
-CFont::ProcessCurrentString@0xC97BD8:4:RW
-CFont::ProcessCurrentString@0xC98100:0x20:RW
-CFont::ProcessCurrentString@0xC99860:0x20:RW
 # Split runs on menus-hud (port-l2-hud3-{x,m1,m2,d}-mh): callee writes (RenderWare / D3D9 render-state caches, font render
 # buffer and state, sprite / Im2D vertex buffers, audio front-end events, legend list, aScreens, text buffers).
 # CHud::DrawPlayerInfo: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aTempBufferIndices, gString, s_RenderFontBuffer
-CHud::DrawPlayerInfo@0xB71670:0x4:RW
-CHud::DrawPlayerInfo@0xC4B964:0x354:RW
-CHud::DrawPlayerInfo@0xC5F958:0x1F80:RW
-CHud::DrawPlayerInfo@0xC716B4:0x1F4:RW
-CHud::DrawPlayerInfo@0xC71AA0:0x2C:RW
-CHud::DrawPlayerInfo@0xC97B94:0x48:RW
-CHud::DrawPlayerInfo@0xC980E4:0xC:RW
-CHud::DrawPlayerInfo@0xC98B40:0x8:RW
-CHud::DrawPlayerInfo@0xC98EAC:0x44:RW
-CHud::DrawPlayerInfo@0xC9920C:0xA4:RW
-CHud::DrawPlayerInfo@0xC9A5EC:0x4:RW
 # CMenuManager::AdditionalOptionInput: AESoundManager, CRadar::ms_RadarTrace, FrontEndMenuManager
-CMenuManager::AdditionalOptionInput@0xB62DD8:0xAC:RW
-CMenuManager::AdditionalOptionInput@0xBA6774:0x4C:RW
-CMenuManager::AdditionalOptionInput@0xBA8E20:0x28:RW
 # CMenuManager::DisplaySlider: D3D9RestoreDeviceCallback, RwEngineInstance
-CMenuManager::DisplaySlider@0xC97B98:0x10:RW
-CMenuManager::DisplaySlider@0xC980E4:0x38:RW
-CMenuManager::DisplaySlider@0xC98EC4:0x34:RW
-CMenuManager::DisplaySlider@0xC99248:0x4:RW
-CMenuManager::DisplaySlider@0xC992A8:0x4:RW
-CMenuManager::DisplaySlider@0xC99864:0x10:RW
-CMenuManager::DisplaySlider@0xC9A4E8:0x24:RW
 # CMenuManager::DrawBackground: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
-CMenuManager::DrawBackground@0x8CE110:0xBC:RW
-CMenuManager::DrawBackground@0x8CE498:0xBC:RW
-CMenuManager::DrawBackground@0x8CFE34:0xB8:RW
-CMenuManager::DrawBackground@0x8D0460:0xBC:RW
-CMenuManager::DrawBackground@0xBA8318:0x8:RW
-CMenuManager::DrawBackground@0xC4B964:0x4EC:RW
-CMenuManager::DrawBackground@0xC5F958:0x2E60:RW
-CMenuManager::DrawBackground@0xC716B4:0x1F8:RW
-CMenuManager::DrawBackground@0xC71AA0:0x2C:RW
-CMenuManager::DrawBackground@0xC97B98:0x10:RW
-CMenuManager::DrawBackground@0xC980E4:0x38:RW
-CMenuManager::DrawBackground@0xC98B40:0x14:RW
-CMenuManager::DrawBackground@0xC98EAC:0x74:RW
-CMenuManager::DrawBackground@0xC9920C:0xF4:RW
-CMenuManager::DrawBackground@0xC99864:0x10:RW
-CMenuManager::DrawBackground@0xC9A4EC:0x20:RW
-CMenuManager::DrawBackground@0xC9A5EC:0x4:RW
 # CMenuManager::DrawStandardMenus: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, _rwD3D9LastIndexBufferUsed, aRadiosityVertexBuffer, aScreens, aTempBufferIndices, s_RenderFontBuffer
-CMenuManager::DrawStandardMenus@0x8CE110:0xBC:RW
-CMenuManager::DrawStandardMenus@0x8CE498:0xBC:RW
-CMenuManager::DrawStandardMenus@0x8CFE34:0xB8:RW
-CMenuManager::DrawStandardMenus@0x8D0460:0xBC:RW
-CMenuManager::DrawStandardMenus@0x8E2450:0x4:RW
-CMenuManager::DrawStandardMenus@0xC4B964:0x4EC:RW
-CMenuManager::DrawStandardMenus@0xC5F958:0x2E60:RW
-CMenuManager::DrawStandardMenus@0xC716B4:0x1F8:RW
-CMenuManager::DrawStandardMenus@0xC71AA0:0x2C:RW
-CMenuManager::DrawStandardMenus@0xC97B98:0x10:RW
-CMenuManager::DrawStandardMenus@0xC980E4:0xC:RW
-CMenuManager::DrawStandardMenus@0xC98B40:0x8:RW
-CMenuManager::DrawStandardMenus@0xC98EC4:0x34:RW
-CMenuManager::DrawStandardMenus@0xC99248:0x4:RW
-CMenuManager::DrawStandardMenus@0xC992A8:0x4:RW
-CMenuManager::DrawStandardMenus@0xC9A4E8:0x24:RW
 # CMenuManager::PrintBriefs: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, gGxtString, s_RenderFontBuffer
-CMenuManager::PrintBriefs@0xC1B100:0x28:RW
-CMenuManager::PrintBriefs@0xC5F958:0x4440:RW
-CMenuManager::PrintBriefs@0xC716B4:0x1C0:RW
-CMenuManager::PrintBriefs@0xC71AA0:0x2C:RW
-CMenuManager::PrintBriefs@0xC97B98:0x10:RW
-CMenuManager::PrintBriefs@0xC980E4:0xC:RW
-CMenuManager::PrintBriefs@0xC98EC4:0x34:RW
-CMenuManager::PrintBriefs@0xC99248:0x4:RW
-CMenuManager::PrintBriefs@0xC992A8:0x4:RW
-CMenuManager::PrintBriefs@0xC9A4E8:0x24:RW
 # CMenuManager::PrintMap: CFont::RenderState, CRadar::MapLegendList, D3D9RestoreDeviceCallback, RwEngineInstance, aRadiosityVertexBuffer, s_RenderFontBuffer
-CMenuManager::PrintMap@0xBA8318:0x8:RW
-CMenuManager::PrintMap@0xC5F958:0x27D0:RW
-CMenuManager::PrintMap@0xC716B4:0x1E8:RW
-CMenuManager::PrintMap@0xC71AA0:0x2C:RW
-CMenuManager::PrintMap@0xC97B98:0x10:RW
-CMenuManager::PrintMap@0xC980E4:0x38:RW
-CMenuManager::PrintMap@0xC98EC4:0x34:RW
-CMenuManager::PrintMap@0xC99248:0x4:RW
-CMenuManager::PrintMap@0xC992A8:0x4:RW
-CMenuManager::PrintMap@0xC99864:0x10:RW
-CMenuManager::PrintMap@0xC9A4E8:0x24:RW
 # CMenuManager::PrintStats: CFont::RenderState, D3D9RestoreDeviceCallback, RwEngineInstance, TheText, aRadiosityVertexBuffer, aTempBufferIndices, gGxtString, gGxtString2, gString, gString2, s_RenderFontBuffer
-CMenuManager::PrintStats@0xB71510:0xC:RW
-CMenuManager::PrintStats@0xB71670:0x8:RW
-CMenuManager::PrintStats@0xC1AED8:0x1C:RW
-CMenuManager::PrintStats@0xC1B100:0x28:RW
-CMenuManager::PrintStats@0xC1BDD0:0x8:RW
-CMenuManager::PrintStats@0xC4BE50:0x378:RW
-CMenuManager::PrintStats@0xC5F958:0x4EC0:RW
-CMenuManager::PrintStats@0xC716B4:0x1F8:RW
-CMenuManager::PrintStats@0xC71AA0:0x2C:RW
-CMenuManager::PrintStats@0xC97B98:0x10:RW
-CMenuManager::PrintStats@0xC980E4:0xC:RW
-CMenuManager::PrintStats@0xC98B40:0x8:RW
-CMenuManager::PrintStats@0xC98EAC:0x4C:RW
-CMenuManager::PrintStats@0xC99218:0x34:RW
-CMenuManager::PrintStats@0xC992A8:0x4:RW
-CMenuManager::PrintStats@0xC9A4E8:0x24:RW
 # CMenuManager::UserInput: AEAudioHardware, AERadioTrackManager, AESmoothFadeThread, AESoundManager, AudioEngine, CAEPedSpeechAudioEntity::gGlobalSpeechContextNextPlayTime, CAEPoliceScannerAudioEntity::s_ScannerSlotFirst, CAEPo
-CMenuManager::UserInput@0x8CB7A4:0x40:RW
-CMenuManager::UserInput@0x8E2CA0:0x4:RW
-CMenuManager::UserInput@0xB5F9CC:0x4:RW
-CMenuManager::UserInput@0xB5FACC:0x4:RW
-CMenuManager::UserInput@0xB5FCE8:0x8:RW
-CMenuManager::UserInput@0xB5FF40:0x8:RW
-CMenuManager::UserInput@0xB608D8:0x20:RW
-CMenuManager::UserInput@0xB610E0:0x4:RW
-CMenuManager::UserInput@0xB61670:0x5A0:RW
-CMenuManager::UserInput@0xB61D24:0x24:RW
-CMenuManager::UserInput@0xB62D10:0x174:RW
-CMenuManager::UserInput@0xB6B960:0x8:RW
-CMenuManager::UserInput@0xB6BFBC:0x4:RW
-CMenuManager::UserInput@0xB6F078:0x4:RW
-CMenuManager::UserInput@0xB6FC24:0x4C:RW
-CMenuManager::UserInput@0xB71670:0x1C:RW
-CMenuManager::UserInput@0xB71A60:0x34:RW
-CMenuManager::UserInput@0xBA6774:0x4C:RW
-CMenuManager::UserInput@0xBA6804:0x8:RW
-CMenuManager::UserInput@0xBA68A4:0x4:RW
-CMenuManager::UserInput@0xBA8234:0x1C:RW
-CMenuManager::UserInput@0xBA8E20:0x28:RW
 # CRadar::DrawLegend: D3D9RestoreDeviceCallback, RwEngineInstance, s_RenderFontBuffer
-CRadar::DrawLegend@0xC716F0:0x64:RW
-CRadar::DrawLegend@0xC97B98:0x10:RW
-CRadar::DrawLegend@0xC980E4:0x4:RW
-CRadar::DrawLegend@0xC9A4EC:0x20:RW
 # DIReleaseMouse: PsGlobal
-DIReleaseMouse@[0xC17054]+0x1C:4:RW
 # CReplay::StorePedUpdate (mvpb-world-4): the 0x34-byte ped block at the replay write position
 # (buffer [0x97FB74] + offset [0x97FB70], both .data; the offset advances by 0x34)
 CReplay::StorePedUpdate@[0x97FB74]+[0x97FB70]:0x34:RW
@@ -6535,3 +6414,64 @@ CWeaponEffects::Render@0xC8A838:0x70:D
 # CWaterLevel::RenderWater (split v6-water-aw): its sea-bed / detailed segment callees fill CWaterLevel::ms_WaterFog
 # (0xC21188, up to CWaterLevel::NumWaterZonePolys 0xC215F0)
 CWaterLevel::RenderWater@0xC21188:0x468:D
+
+# GEN2 generated hooks (VERIFIER-7, split v7-gen2-*-grove, keyed by address). Stores through an argument or
+# `this` (tools/gen/patterns.py `heap-writes`: the generated body's own stores, offsets from the code):
+0x4CFA90@arg0:0x10:RW
+0x4CFB10@arg0:0xc:RW
+0x4AE1A0@ecx:0x18:RW
+0x4AB270@ecx:0x1c:RW
+0x4AB290@ecx:0x1c:RW
+0x722220@arg1:0x4:RW
+0x734930@arg1:0x4:RW
+# Static memory the original callees of generated thunks/small bodies write (the same callee runs in both
+# runs; compared through the static-window page hashes, D): ranges from the split reports' undeclared lines.
+# tReplayTrainBlock::MakeTrainUpdateData: the CReplay buffer block the base update (0x45B730) fills
+0x45CD10@0x9CF0E4:0x10d95:D
+# CScriptsForBrains ctor and its static initialiser: CTheScripts::ScriptsForBrains (0xA90CF0)
+0x46B260@0xA90CF0:0x570:D
+0x84A740@0xA90CF0:0x570:D
+# FUN_004ae1a0: its callee 0x571B70 (the list it links `this + 0x14` into)
+0x4AE1A0@0xB9BD80:0xfb7:D
+0x5DAAC0@0xC98AFA:0x19:D
+# CPlantMgr::MoveLocTriToList: the plant LocTri array the list links run through
+0x5DB590@0xC03984:0x16bf:D
+0x5E46D0@0xC88234:0x11:D
+# render callbacks: RenderWare / D3D9 driver state written by the original render callees
+0x705620@0x8D7390:0x7c:D
+0x705620@0x8E2444:0x74a:D
+0x705620@0xC926F8:0x50:D
+0x705620@0xC93B3D:0x113e:D
+0x705620@0xC9603C:0x45b1:D
+0x722150@0x8E2444:0xe:D
+0x722150@0xC97B98:0x2fa6:D
+0x7323C0@0x8D12E4:0xd:D
+0x7323C0@0x8E2450:0xbb:D
+0x7323C0@0xC926C8:0xe:D
+0x7323C0@0xC98AFA:0x7af:D
+0x7323C0@0xC9A4E8:0x22:D
+0x732B30@0x8D12E4:0x38:D
+0x732B30@0x8E2444:0xc7:D
+0x732B30@0xC926C8:0xe:D
+0x732B30@0xC97BD8:0x16e5:D
+0x732B30@0xC9A4E8:0x22:D
+# CVisibilityPlugins::InitAlphaAtomicList / InitAlphaEntityList: the alpha lists (0xC88070, 0xC88120) their
+# callee 0x733F40 initialises
+0x734530@0xC88080:0x29:D
+0x734540@0xC88130:0x81:D
+0x748F70@0x8E22AC:0x138:D
+0x748F70@0xC9A6D0:0x2:D
+0x6E7680@0xC97B98:0xe:D
+0x6E7680@0xC98EC0:0x385:D
+0x6E7680@0xC9A5EC:0x552:D
+# List_c-style intrusive list ops (head +0 / tail +4 / count +8; item next +0 / prev +4): the head and the
+# neighbours they relink
+0x4A8E30@ecx:0xc:RW
+0x4A8E30@[arg0+4]:4:RW
+0x4A8E30@[arg0]+4:4:RW
+0x4A8E70@ecx:0xc:RW
+0x4A8E70@[[ecx]+4]:4:RW
+0x4A8EB0@ecx:0xc:RW
+# RwHelper::RemoveRefsCB: the model info its callee 0x4C4BB0 drops a reference of (the static model info
+# stores; split v7-pr-gen2-rw-5-pr: 0xAB105C, 0xAB2E7C)
+0x7226D0@0xAB105C:0x1e21:D
