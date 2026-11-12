@@ -16,6 +16,10 @@ orig! {
     fn c_588f50_c1(a0: u32) -> u32 = cdecl 0x588F50 => unported;
     /// `CText::Get` (0x6A0050), thiscall, 1 stack argument(s)
     fn c_6a0050_t1(this: u32, a0: u32) -> u32 = thiscall 0x6A0050 => unported;
+    /// `CDamageManager::SetDoorStatus-` (0x6C21C0), thiscall, 2 stack argument(s)
+    fn c_6c21c0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6C21C0 => unported;
+    /// `CDamageManager::GetDoorStatus` (0x6C2230), thiscall, 1 stack argument(s)
+    fn c_6c2230_t1(this: u32, a0: u32) -> u32 = thiscall 0x6C2230 => unported;
     /// `cTransmission` (0x6D0450), thiscall, 0 stack argument(s)
     fn c_6d0450_t0(this: u32) -> u32 = thiscall 0x6D0450 => unported;
 }
@@ -36,6 +40,27 @@ pub fn g_ccurrent_vehicle_display_571ea0(this: u32) -> u32 {
     }
 }
 
+/// `CAutomobile::PopBootUsingPhysics` (0x6A44D0, VEH): small, thiscall, `ret`; 27 instruction(s) matched.
+#[hook(addr = 0x6A44D0, conv = thiscall, name = "CAutomobile::PopBootUsingPhysics", expect = "56 57 8B F9 8D B7 A0 05 00 00", unverified = "gen2-veh-1", route = "L2", hazards = "heap-writes")]
+pub fn g_cautomobile_pop_boot_using_physics_6a44d0(this: u32) -> u32 {
+    let v1 = c_6c2230_t1(this.wrapping_add(0x5A0), 1);
+    if v1 == 0 {
+        c_6c21c0_t2(this.wrapping_add(0x5A0), 1, 1);
+        let v3 = c_6c21c0_t2(this.wrapping_add(0x5A0), 1, 3);
+        wr::<u32>(p(this), 0x5E4, 0xC000_0000_u32);
+        return v3;
+    } else {
+        if v1.wrapping_sub(2) == 0 {
+            let v4 = c_6c21c0_t2(this.wrapping_add(0x5A0), 1, 3);
+            wr::<u32>(p(this), 0x5E4, 0xC000_0000_u32);
+            return v4;
+        } else {
+            wr::<u32>(p(this), 0x5E4, 0xC000_0000_u32);
+            return v1.wrapping_sub(2);
+        }
+    }
+}
+
 /// `FUN_006f4fa0` (0x6F4FA0, VEH): small, thiscall, `ret`; 7 instruction(s) matched.
 #[hook(addr = 0x6F4FA0, conv = thiscall, name = "FUN_006f4fa0", expect = "56 8B F1 8D 4E 2C", unverified = "gen2-veh-1", route = "L2", hazards = "none")]
 pub fn g_fun_006f4fa0_6f4fa0(this: u32) -> u32 {
@@ -47,5 +72,6 @@ pub fn g_fun_006f4fa0_6f4fa0(this: u32) -> u32 {
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x571EA0, 0xC6D82E7E32A0E9FB, &[(0x571EA0, 50)]),
+    (0x6A44D0, 0xA8E0C9B7A18F8521, &[(0x6A44D0, 77)]),
     (0x6F4FA0, 0x35BE984DE038F27D, &[(0x6F4FA0, 15)]),
 ];

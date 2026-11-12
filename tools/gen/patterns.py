@@ -1747,6 +1747,22 @@ def ported(skip_mark):
     return done
 
 
+def generated_addrs(mark):
+    """Addresses registered in the files carrying `mark` in their head (this generator's own output)."""
+    out = set()
+    for dirpath, dirs, files in os.walk(os.path.join(ROOT, 'crates')):
+        dirs[:] = sorted(d for d in dirs if d != 'target')
+        for f in sorted(files):
+            if not f.endswith('.rs'):
+                continue
+            s = open(os.path.join(dirpath, f), encoding='utf-8').read()
+            if mark not in s[:400]:
+                continue
+            for m in re.finditer(r'^[ \t]*#\[(?:[\w:]+::)?(?:hook|native)\(\s*addr\s*=\s*0x([0-9A-Fa-f_]+)', s, re.M):
+                out.add(int(m.group(1).replace('_', ''), 16))
+    return out
+
+
 def read_list(path):
     out = set()
     if os.path.exists(path):
@@ -1907,9 +1923,14 @@ def gen_main():
     done = ported(GEN_MARK)
     inflight = read_list(os.path.join(ROOT, 'tools', 'gen', 'exclude_inflight.txt'))
     state = load_state()
+    own = generated_addrs(GEN_MARK)
     skipped_state = set()
     for a, (stt, ev) in state.items():
-        # verified or ported elsewhere (also ported-unhookable rows) or excluded, not by this generator
+        # verified or ported elsewhere (also ported-unhookable rows) or excluded, not by this generator; a
+        # row the catalogue records as `implemented` for this generator's own hook (an integration's
+        # "written on master" evidence carries no GEN2 tag) is still this generator's
+        if a in own and stt == 'implemented':
+            continue
         if stt in ('implemented', 'L1', 'L2', 'L3', 'excluded') and 'GEN-ALL' not in ev and 'GEN2' not in ev:
             skipped_state.add(a)
     cand = gen_candidates(done | inflight | skipped_state)

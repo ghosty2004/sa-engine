@@ -16,8 +16,6 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
-#[path = "automobile_generated.rs"]
-pub mod automobile_generated;
 #[path = "bike_generated.rs"]
 pub mod bike_generated;
 #[path = "generated_dtors.rs"]
@@ -74,9 +72,6 @@ pub type Body = (u32, u64, &'static [(u32, u32)]);
 
 /// Every generated registration of this crate.
 pub const HOOKS: &[HookReg] = &[
-    automobile_generated::HOOK_G_CAUTOMOBILE_LOAD_5D2980,
-    automobile_generated::HOOK_G_CAUTOMOBILE_SAVE_5D47E0,
-    automobile_generated::HOOK_G_CAUTOMOBILE_POP_BOOT_USING_PHYSICS_6A44D0,
     generated_dtors::HOOK_G_CMONSTER_TRUCK_SCALAR_DELETING_DESTRUCTOR_6C7F90,
     generated_dtors::HOOK_G_CTRAILER_SCALAR_DELETING_DESTRUCTOR_6CF180,
     generated_dtors::HOOK_G_DTOR_S_TEST_BLADE_COL_856A50,
@@ -85,6 +80,7 @@ pub const HOOKS: &[HookReg] = &[
     generated_setters::HOOK_G_FX_PRT_MULT_C_SET_UP_4AB2D0,
     generated_setters::HOOK_G_CTRAIN_NODE_GET_POSN_6F5440,
     generated_small::HOOK_G_CCURRENT_VEHICLE_DISPLAY_571EA0,
+    generated_small::HOOK_G_CAUTOMOBILE_POP_BOOT_USING_PHYSICS_6A44D0,
     generated_small::HOOK_G_FUN_006F4FA0_6F4FA0,
     generated_thunks::HOOK_G_MISSED_BY_GHIDRA_DATA_CODE_IMMEDIATE_856A10,
     quad_bike_generated::HOOK_G_CQUAD_BIKE_CQUAD_BIKE_6CDC30,
@@ -97,7 +93,6 @@ pub const HOOKS: &[HookReg] = &[
 
 /// Every generated body of this crate.
 pub const BODIES: &[&[Body]] = &[
-    automobile_generated::BODIES,
     bike_generated::BODIES,
     generated_dtors::BODIES,
     generated_leaf_logic::BODIES,
