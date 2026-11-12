@@ -5,7 +5,8 @@
 use sa_samp_api::peds::*;
 use sa_samp_api::*;
 
-use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Text as T};
+use sa_samp_api::streaming::Streaming;
 
 use crate::addr::{self, off};
 use crate::script::op;
@@ -107,8 +108,30 @@ impl<V: View> Peds for NativeGame<V> {
         Err(GameError::Unsupported("Peds::destroy_ped"))
     }
 
-    fn set_ped_model(&mut self, _ped: PedRef, _model: ModelId) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::set_ped_model"))
+    fn set_ped_model(&mut self, ped: PedRef, model: ModelId) -> GameResult<()> {
+        // samp's `CPlayerPed::SetModelIndex`: a ped model only, loaded first (RequestModel +
+        // LoadAllRequestedModels), then the model change. A player-slot ped goes through 09C7
+        // SET_PLAYER_MODEL (`DeleteRwObject` + `SetModelIndex`, keeping the ped's +0x4D4).
+        let p = self.ped_addr(ped)?;
+        if !self.is_ped_model(model) {
+            return Err(GameError::Other(format!("{} is not a ped model", model.0)));
+        }
+        let slot = (0..addr::PLAYER_SLOTS)
+            .find(|&i| {
+                self.view
+                    .read_u32(addr::PLAYERS + u32::from(i) * addr::PLAYER_INFO_SIZE)
+                    == p
+            })
+            .ok_or(GameError::Unsupported("Peds::set_ped_model (non-player ped)"))?;
+        if !self.model_loaded(model) {
+            self.request_model(model)?;
+            self.load_all_now()?;
+            if !self.model_loaded(model) {
+                return Err(GameError::NotLoaded);
+            }
+        }
+        self.run_op(op::SET_PLAYER_MODEL, &[I(i32::from(slot)), I(model.0)])
+            .map(drop)
     }
 
     fn ped_snapshot(&self, ped: PedRef) -> GameResult<PedSnapshot> {
@@ -337,12 +360,48 @@ impl<V: View> Peds for NativeGame<V> {
         Err(GameError::Unsupported("Peds::delete_task"))
     }
 
-    fn play_anim(&mut self, _ped: PedRef, _anim: &AnimRequest<'_>) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::play_anim"))
+    fn play_anim(&mut self, ped: PedRef, anim: &AnimRequest<'_>) -> GameResult<()> {
+        // samp's `CPlayerPed::ApplyAnimation`: the IFP block loaded first (04ED REQUEST_ANIMATION +
+        // LoadAllRequestedModels, 04EE HAS_ANIMATION_LOADED), then 0812 TASK_PLAY_ANIM_NON_INTERRUPTABLE.
+        let h = self.ped_script_handle(ped)?.0;
+        if anim.name.is_empty() || anim.name.len() > 23 {
+            return Err(GameError::Other(format!("bad animation name {:?}", anim.name)));
+        }
+        if self.anim_block_addr(anim.block).is_none() {
+            return Err(GameError::Other(format!(
+                "unknown animation block {:?}",
+                anim.block
+            )));
+        }
+        let block = anim.block.as_bytes();
+        if !self.anim_block_loaded(anim.block) {
+            self.run_op(op::REQUEST_ANIMATION, &[T(block)])?;
+            self.load_all_now()?;
+            if !self.run_op(op::HAS_ANIMATION_LOADED, &[T(block)])? {
+                return Err(GameError::NotLoaded);
+            }
+        }
+        self.run_op(
+            op::TASK_PLAY_ANIM_NON_INTERRUPTABLE,
+            &[
+                I(h),
+                T(anim.name.as_bytes()),
+                T(block),
+                F(anim.delta),
+                I(i32::from(anim.looped)),
+                I(i32::from(anim.lock_x)),
+                I(i32::from(anim.lock_y)),
+                I(i32::from(anim.freeze)),
+                I(anim.time_ms),
+            ],
+        )
+        .map(drop)
     }
 
-    fn stop_anims(&mut self, _ped: PedRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Peds::stop_anims"))
+    fn stop_anims(&mut self, ped: PedRef) -> GameResult<()> {
+        // samp's ClearAnimations: 0687 CLEAR_CHAR_TASKS (`CPedIntelligence::ClearTasks(true, true)`).
+        let h = self.ped_script_handle(ped)?.0;
+        self.run_op(op::CLEAR_CHAR_TASKS, &[I(h)]).map(drop)
     }
 
     fn look_at(&mut self, _ped: PedRef, _target: Vec3, _time_ms: i32) -> GameResult<()> {

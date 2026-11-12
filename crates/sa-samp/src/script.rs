@@ -42,6 +42,7 @@ pub(crate) mod op {
     pub const CREATE_CAR: u16 = 0x00A5;
     pub const DELETE_CAR: u16 = 0x00A6;
     pub const CLEAR_PRINTS: u16 = 0x00BE;
+    pub const ADD_ONE_OFF_SOUND: u16 = 0x018C;
     pub const SET_CHAR_COORDINATES: u16 = 0x00A1;
     pub const CREATE_OBJECT: u16 = 0x0107;
     pub const DELETE_OBJECT: u16 = 0x0108;
@@ -70,6 +71,8 @@ pub(crate) mod op {
     pub const SET_CAMERA_BEHIND_PLAYER: u16 = 0x0373;
     pub const LOAD_ALL_MODELS_NOW: u16 = 0x038B;
     pub const SET_PED_DENSITY_MULTIPLIER: u16 = 0x03DE;
+    pub const CLEAR_CHAR_TASKS: u16 = 0x0687;
+    pub const TASK_PLAY_ANIM_NON_INTERRUPTABLE: u16 = 0x0812;
     pub const WARP_CHAR_INTO_CAR_AS_PASSENGER: u16 = 0x0430;
     pub const SET_CHAR_SUFFERS_CRITICAL_HITS: u16 = 0x0446;
     pub const SET_OBJECT_ROTATION: u16 = 0x0453;
@@ -77,12 +80,15 @@ pub(crate) mod op {
     pub const SET_AREA_VISIBLE: u16 = 0x04BB;
     pub const FREEZE_CHAR_POSITION: u16 = 0x04D7;
     pub const REQUEST_COLLISION: u16 = 0x04E4;
+    pub const REQUEST_ANIMATION: u16 = 0x04ED;
+    pub const HAS_ANIMATION_LOADED: u16 = 0x04EE;
     pub const SET_PLAYER_DRUNKENNESS: u16 = 0x052C;
     pub const SWITCH_RANDOM_TRAINS: u16 = 0x06D7;
     pub const SET_VEHICLE_AREA_VISIBLE: u16 = 0x0840;
     pub const SET_CHAR_AREA_VISIBLE: u16 = 0x0860;
     pub const SET_CHAR_DROPS_WEAPONS_WHEN_DEAD: u16 = 0x087E;
     pub const DISPLAY_ZONE_NAMES: u16 = 0x09BA;
+    pub const SET_PLAYER_MODEL: u16 = 0x09C7;
 }
 
 /// Parameter type bytes of the SCM format.

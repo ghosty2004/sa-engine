@@ -92,6 +92,12 @@ pub const STREAMING_INFO: u32 = 0x8E4CC0;
 pub const STREAMING_INFO_SIZE: u32 = 0x14;
 /// Entries of `ms_aInfoForModel` (models, txds, collisions, ipls, ... up to the scripts).
 pub const STREAMING_MODELS: u32 = 26_316;
+/// `CAnimManager::ms_aAnimBlocks[180]` (`CAnimBlock`: `char szName[16]`, `bool bLoaded` +0x10, ... 0x20 bytes).
+pub const ANIM_BLOCKS: u32 = 0xB5D4A0;
+/// `sizeof(CAnimBlock)`.
+pub const ANIM_BLOCK_SIZE: u32 = 0x20;
+/// `CAnimManager::ms_numAnimBlocks`.
+pub const ANIM_BLOCK_COUNT: u32 = 0xB4EA34;
 
 /// `TheCamera` fields.
 pub mod camera {
