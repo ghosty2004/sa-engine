@@ -70,8 +70,9 @@ orig! {
     /// `CTask`'s deleting destructor (vtable slot 0, `ret 4`)
     fn task_delete_v(t: GPtr<u8>, flags: u32) = thiscall vslot 0x0 => unported;
     fn set_task_for_ped_o(a: GPtr<u8>, ped: GPtr<u8>, task: GPtr<u8>) = thiscall 0x5EECA0 => set_task_for_ped;
-    fn compute_delta_pos_o(a: GPtr<u8>) -> X87 = thiscall 0x5E9600 => compute_delta_pos;
-    fn compute_delta_heading_o(a: GPtr<u8>) -> X87 = thiscall 0x5E9640 => compute_delta_heading;
+    // ST0 results: declared f64 (phase A returns at most a register pair); the ports' X87 values convert exactly
+    fn compute_delta_pos_o(a: GPtr<u8>) -> f64 = thiscall 0x5E9600 => compute_delta_pos_st0;
+    fn compute_delta_heading_o(a: GPtr<u8>) -> f64 = thiscall 0x5E9640 => compute_delta_heading_st0;
 }
 
 /// `CPedAttractor::ms_tasks` (`std::vector<CTask*>`: first 0xC09860, last 0xC09864, end 0xC09868)
@@ -317,6 +318,18 @@ pub fn compute_delta_heading(this: GPtr<u8>) -> X87 {
     random_delta(this, 0x58, 0x5E9658)
 }
 
+/// [`compute_delta_pos`] as the `orig!` declaration's f64 (ST0) result.
+#[allow(dead_code)] // reached through orig! outside phase A
+fn compute_delta_pos_st0(this: GPtr<u8>) -> f64 {
+    compute_delta_pos(this).to_f64()
+}
+
+/// [`compute_delta_heading`] as the `orig!` declaration's f64 (ST0) result.
+#[allow(dead_code)] // reached through orig! outside phase A
+fn compute_delta_heading_st0(this: GPtr<u8>) -> f64 {
+    compute_delta_heading(this).to_f64()
+}
+
 /// `CPedAttractor::ComputeAttractPos(int slot, CVector& out)` (0x5EA110, thiscall, `ret 8`; vtable slot 0xC). Nothing
 /// without an effect. s = (float)slot: out = position - spacing * s * queue direction, with the x87 rounding of the
 /// original (x: `s*qx*spacing` unrounded; y, z: `s*q` rounded to float first); slot != 0 adds `ComputeDeltaPos()` to
@@ -342,9 +355,9 @@ pub fn compute_attract_pos(this: GPtr<u8>, slot: i32, out: GPtr<u8>) {
     let oz = x(rd::<f32>(this, 0x64)).fsub_m(z).to_f32();
     wr::<f32>(out, 8, oz);
     if slot != 0 {
-        let v = compute_delta_pos_o(this).fadd_m(rd::<f32>(out, 0)).to_f32();
+        let v = X87::from_f64_exact(compute_delta_pos_o(this)).fadd_m(rd::<f32>(out, 0)).to_f32();
         wr::<f32>(out, 0, v);
-        let v = compute_delta_pos_o(this).fadd_m(rd::<f32>(out, 4)).to_f32();
+        let v = X87::from_f64_exact(compute_delta_pos_o(this)).fadd_m(rd::<f32>(out, 4)).to_f32();
         wr::<f32>(out, 4, v);
     }
 }
@@ -363,7 +376,7 @@ pub fn compute_attract_heading(this: GPtr<u8>, queue: i32, out: GPtr<u8>) {
     let h = radian_angle_between_points(rd::<u32>(this, dir), rd::<u32>(this, dir + 4), 0, 0);
     wr::<f32>(out, 0, X87::from_f64_exact(h).to_f32());
     if queue != 0 {
-        let v = compute_delta_heading_o(this).fadd_m(rd::<f32>(out, 0)).to_f32();
+        let v = X87::from_f64_exact(compute_delta_heading_o(this)).fadd_m(rd::<f32>(out, 0)).to_f32();
         wr::<f32>(out, 0, v);
     }
 }
