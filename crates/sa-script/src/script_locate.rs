@@ -380,6 +380,49 @@ pub fn the_scripts_is_vehicle_stopped(v: GPtr<u8>) -> u8 {
     u8::from(vehicle_stopped(v))
 }
 
+orig! {
+    /// `CPed::IsPlayer()` (0x5DF8F0), AL
+    fn ped_is_player(p: GPtr<u8>) -> u8 = thiscall 0x5DF8F0 => unported;
+    /// `RpAnimBlendClumpGetAssociation(RpClump*, uint32 animId)` (0x4D68B0)
+    fn clump_get_association(clump: GPtr<u8>, id: u32) -> GPtr<u8> = cdecl 0x4D68B0 => unported;
+}
+
+/// `CTheScripts::IsPedStopped(CPed*)` (0x486110, cdecl). The flags load (`mov eax, [esi+0x46C]`) sits behind a `jmp`
+/// to 0x409A95 and back.
+///
+/// In a vehicle (+0x46C bit 8, +0x58C non-null): stopped when `ms_fTimeStep * 0.01f` (x87) is not below the vehicle's
+/// speed (+0xD4; NaN → false). Otherwise: a player with any of the animations 6, 7, 0x74, 0x76 on its clump (+0x18)
+/// is moving; then false for a move state (+0x534) >= 4, flags (re-read) with bit 9 or 10, or without bit 0; else
+/// stopped when both +0x4D8 and +0x4DC equal 0.0 (`test ah, 0x44; jp`).
+#[hook(addr = 0x486110, conv = cdecl, name = "CTheScripts::IsPedStopped", expect = "56 8B 74 24 08 90 E9",
+       unverified = "script5-10", route = "L2", hazards = "none", recs = "grove-walk",
+       note = "AL only; the original's upper EAX holds the flags, a status word or a callee's result")]
+pub fn the_scripts_is_ped_stopped(ped: GPtr<u8>) -> u8 {
+    let flags = rd::<u32>(ped, 0x46C);
+    let v = rd::<GPtr<u8>>(ped, 0x58C);
+    if flags & 0x100 != 0 && !v.is_null() {
+        let speed = rd::<f32>(v, 0xD4);
+        let k = x(GPtr::<f32>::from_addr(TIME_STEP).read()).fmul_m(f32::from_bits(K_0_01));
+        return u8::from(!k.fcom(x(speed)).c0());
+    }
+    if ped_is_player(ped) != 0 {
+        for id in [6, 7, 0x74, 0x76] {
+            if !clump_get_association(rd::<GPtr<u8>>(ped, 0x18), id).is_null() {
+                return 0;
+            }
+        }
+    }
+    if rd::<i32>(ped, 0x534) >= 4 {
+        return 0;
+    }
+    let flags = rd::<u32>(ped, 0x46C);
+    if flags & 0x600 != 0 || flags & 1 == 0 {
+        return 0;
+    }
+    let zero = |off: isize| !x(rd::<f32>(ped, off)).fcom(x(0.0)).test_parity(0x44);
+    u8::from(zero(0x4D8) && zero(0x4DC))
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_RUNNING_SCRIPT_LOCATE_CHAR_COMMAND,
     HOOK_RUNNING_SCRIPT_LOCATE_CHAR_OBJECT_COMMAND,
@@ -388,4 +431,5 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_RUNNING_SCRIPT_LOCATE_CAR_COMMAND,
     HOOK_RUNNING_SCRIPT_LOCATE_OBJECT_COMMAND,
     HOOK_THE_SCRIPTS_IS_VEHICLE_STOPPED,
+    HOOK_THE_SCRIPTS_IS_PED_STOPPED,
 ];
