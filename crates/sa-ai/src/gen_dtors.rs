@@ -67,6 +67,8 @@ orig! {
     fn c_4994e0_t0(this: u32) -> u32 = thiscall 0x4994E0 => unported;
     /// `CEventGroup::Flush` (0x4AB370), thiscall, 1 stack argument(s)
     fn c_4ab370_t1(this: u32, a0: u32) -> u32 = thiscall 0x4AB370 => unported;
+    /// `FUN_004ab9b0` (0x4AB9B0), thiscall, 0 stack argument(s)
+    fn c_4ab9b0_t0(this: u32) -> u32 = thiscall 0x4AB9B0 => unported;
     /// `FUN_004ac010` (0x4AC010), thiscall, 0 stack argument(s)
     fn c_4ac010_t0(this: u32) -> u32 = thiscall 0x4AC010 => unported;
     /// `FUN_004ac720` (0x4AC720), thiscall, 0 stack argument(s)
@@ -135,6 +137,10 @@ orig! {
     fn c_4b8840_t0(this: u32) -> u32 = thiscall 0x4B8840 => unported;
     /// `CTaskComplexUseClosestFreeScriptedAttractorSprint::Destructor` (0x4B8900), thiscall, 0 stack argument(s)
     fn c_4b8900_t0(this: u32) -> u32 = thiscall 0x4B8900 => unported;
+    /// `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` (0x4B89F0), thiscall, 0 stack argument(s)
+    fn c_4b89f0_t0(this: u32) -> u32 = thiscall 0x4B89F0 => unported;
+    /// `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` (0x4B8AD0), thiscall, 0 stack argument(s)
+    fn c_4b8ad0_t0(this: u32) -> u32 = thiscall 0x4B8AD0 => unported;
     /// `CAnimBlendAssociation::SetDeleteCallback` (0x4CEBC0), thiscall, 2 stack argument(s)
     fn c_4cebc0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x4CEBC0 => unported;
     /// `CAnimBlendAssociation::SetFinishCallback` (0x4CEBE0), thiscall, 2 stack argument(s)
@@ -263,10 +269,14 @@ orig! {
     fn c_622830_t0(this: u32) -> u32 = thiscall 0x622830 => unported;
     /// `CTaskComplexSeekCoverUntilTargetDead::Destructor` (0x622C20), thiscall, 0 stack argument(s)
     fn c_622c20_t0(this: u32) -> u32 = thiscall 0x622C20 => unported;
+    /// `FUN_0062f270` (0x62F270), thiscall, 0 stack argument(s)
+    fn c_62f270_t0(this: u32) -> u32 = thiscall 0x62F270 => unported;
     /// `FUN_0062f5d0` (0x62F5D0), thiscall, 0 stack argument(s)
     fn c_62f5d0_t0(this: u32) -> u32 = thiscall 0x62F5D0 => unported;
     /// `CTaskSimpleSetKindaStayInSamePlace::Destructor` (0x62F650), thiscall, 0 stack argument(s)
     fn c_62f650_t0(this: u32) -> u32 = thiscall 0x62F650 => unported;
+    /// `CTaskSimpleDuckToggle::Destructor` (0x62F6D0), thiscall, 0 stack argument(s)
+    fn c_62f6d0_t0(this: u32) -> u32 = thiscall 0x62F6D0 => unported;
     /// `CTaskSimpleDie::~CTaskSimpleDie` (0x62FB40), thiscall, 0 stack argument(s)
     fn c_62fb40_t0(this: u32) -> u32 = thiscall 0x62FB40 => unported;
     /// `FUN_0062fc70` (0x62FC70), thiscall, 0 stack argument(s)
@@ -369,6 +379,8 @@ orig! {
     fn c_63a1d0_t0(this: u32) -> u32 = thiscall 0x63A1D0 => unported;
     /// `CTaskComplexEnterCarAsDriverTimed::Destructor` (0x63AE00), thiscall, 0 stack argument(s)
     fn c_63ae00_t0(this: u32) -> u32 = thiscall 0x63AE00 => unported;
+    /// `CTaskComplexEnterCarAsPassengerTimed::Destructor` (0x63B0C0), thiscall, 0 stack argument(s)
+    fn c_63b0c0_t0(this: u32) -> u32 = thiscall 0x63B0C0 => unported;
     /// `CTaskComplexEnterCarAsPassengerWait::Destructor` (0x63B3C0), thiscall, 0 stack argument(s)
     fn c_63b3c0_t0(this: u32) -> u32 = thiscall 0x63B3C0 => unported;
     /// `CTaskComplexLeaveCarAsPassengerWait::Destructor` (0x63B4A0), thiscall, 0 stack argument(s)
@@ -377,6 +389,8 @@ orig! {
     fn c_63b650_t0(this: u32) -> u32 = thiscall 0x63B650 => unported;
     /// `CTaskComplexStealCar::Destructor` (0x63B850), thiscall, 0 stack argument(s)
     fn c_63b850_t0(this: u32) -> u32 = thiscall 0x63B850 => unported;
+    /// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x63B970), thiscall, 0 stack argument(s)
+    fn c_63b970_t0(this: u32) -> u32 = thiscall 0x63B970 => unported;
     /// `FUN_0063bbd0` (0x63BBD0), thiscall, 0 stack argument(s)
     fn c_63bbd0_t0(this: u32) -> u32 = thiscall 0x63BBD0 => unported;
     /// `CTaskComplexLeaveCarAndWander::Destructor` (0x63BE50), thiscall, 0 stack argument(s)
@@ -385,10 +399,22 @@ orig! {
     fn c_63c030_t0(this: u32) -> u32 = thiscall 0x63C030 => unported;
     /// `CTaskComplexScreamInCarThenLeave::Destructor` (0x63C2C0), thiscall, 0 stack argument(s)
     fn c_63c2c0_t0(this: u32) -> u32 = thiscall 0x63C2C0 => unported;
+    /// `CTaskSimpleCarDrive::Destructor` (0x63C460), thiscall, 0 stack argument(s)
+    fn c_63c460_t0(this: u32) -> u32 = thiscall 0x63C460 => unported;
+    /// `CTaskComplexCarDrive::Destructor` (0x63CA40), thiscall, 0 stack argument(s)
+    fn c_63ca40_t0(this: u32) -> u32 = thiscall 0x63CA40 => unported;
+    /// `CTaskComplexCarDriveMission::Destructor` (0x63CCC0), thiscall, 0 stack argument(s)
+    fn c_63ccc0_t0(this: u32) -> u32 = thiscall 0x63CCC0 => unported;
+    /// `FUN_0063ce70` (0x63CE70), thiscall, 0 stack argument(s)
+    fn c_63ce70_t0(this: u32) -> u32 = thiscall 0x63CE70 => unported;
     /// `CTaskComplexShuffleSeats::Destructor` (0x63D1A0), thiscall, 0 stack argument(s)
     fn c_63d1a0_t0(this: u32) -> u32 = thiscall 0x63D1A0 => unported;
+    /// `CTaskSimpleCarSetTempAction::Destructor` (0x63D730), thiscall, 0 stack argument(s)
+    fn c_63d730_t0(this: u32) -> u32 = thiscall 0x63D730 => unported;
     /// `CTaskComplexEnterCar::Destructor` (0x63DFA0), thiscall, 0 stack argument(s)
     fn c_63dfa0_t0(this: u32) -> u32 = thiscall 0x63DFA0 => unported;
+    /// `FUN_00640380` (0x640380), thiscall, 0 stack argument(s)
+    fn c_640380_t0(this: u32) -> u32 = thiscall 0x640380 => unported;
     /// `FUN_006403d0` (0x6403D0), thiscall, 0 stack argument(s)
     fn c_6403d0_t0(this: u32) -> u32 = thiscall 0x6403D0 => unported;
     /// `CTaskComplexOpenPassengerDoor::~CTaskComplexOpenPassengerDoor` (0x640420), thiscall, 0 stack argument(s)
@@ -415,14 +441,26 @@ orig! {
     fn c_646c00_t0(this: u32) -> u32 = thiscall 0x646C00 => unported;
     /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Destructor` (0x646E50), thiscall, 0 stack argument(s)
     fn c_646e50_t0(this: u32) -> u32 = thiscall 0x646E50 => unported;
+    /// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger` (0x647080), thiscall, 0 stack argument(s)
+    fn c_647080_t0(this: u32) -> u32 = thiscall 0x647080 => unported;
+    /// `FUN_00647170` (0x647170), thiscall, 0 stack argument(s)
+    fn c_647170_t0(this: u32) -> u32 = thiscall 0x647170 => unported;
     /// `CTaskSimpleCarJumpOut::Destructor` (0x647490), thiscall, 0 stack argument(s)
     fn c_647490_t0(this: u32) -> u32 = thiscall 0x647490 => unported;
+    /// `FUN_00647790` (0x647790), thiscall, 0 stack argument(s)
+    fn c_647790_t0(this: u32) -> u32 = thiscall 0x647790 => unported;
+    /// `CTaskSimpleCarSlowDragPedOut::Destructor` (0x648070), thiscall, 0 stack argument(s)
+    fn c_648070_t0(this: u32) -> u32 = thiscall 0x648070 => unported;
     /// `CTaskSimpleCarSlowBeDraggedOut::Destructor` (0x6482C0), thiscall, 0 stack argument(s)
     fn c_6482c0_t0(this: u32) -> u32 = thiscall 0x6482C0 => unported;
     /// `CTaskSimpleCarSetPedSlowDraggedOut::Destructor` (0x648430), thiscall, 0 stack argument(s)
     fn c_648430_t0(this: u32) -> u32 = thiscall 0x648430 => unported;
+    /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690` (0x648690), thiscall, 0 stack argument(s)
+    fn c_648690_t0(this: u32) -> u32 = thiscall 0x648690 => unported;
     /// `CTaskSimpleBikeJacked::Destructor` (0x648C40), thiscall, 0 stack argument(s)
     fn c_648c40_t0(this: u32) -> u32 = thiscall 0x648C40 => unported;
+    /// `CTaskSimpleCarFallOut::Destructor` (0x648DE0), thiscall, 0 stack argument(s)
+    fn c_648de0_t0(this: u32) -> u32 = thiscall 0x648DE0 => unported;
     /// `CTaskSimpleSetPedAsAutoDriver::Destructor` (0x648FC0), thiscall, 0 stack argument(s)
     fn c_648fc0_t0(this: u32) -> u32 = thiscall 0x648FC0 => unported;
     /// `CTaskComplexGoToBoatSteeringWheel::Destructor` (0x649100), thiscall, 0 stack argument(s)
@@ -433,8 +471,12 @@ orig! {
     fn c_6494f0_t0(this: u32) -> u32 = thiscall 0x6494F0 => unported;
     /// `CTaskSimpleWaitUntilPedIsInCar::Destructor` (0x6496A0), thiscall, 0 stack argument(s)
     fn c_6496a0_t0(this: u32) -> u32 = thiscall 0x6496A0 => unported;
+    /// `CTaskComplexCarSlowBeDraggedOut::Destructor` (0x64C580), thiscall, 0 stack argument(s)
+    fn c_64c580_t0(this: u32) -> u32 = thiscall 0x64C580 => unported;
     /// `CTaskSimpleCreateCarAndGetIn::Destructor` (0x64CEA0), thiscall, 0 stack argument(s)
     fn c_64cea0_t0(this: u32) -> u32 = thiscall 0x64CEA0 => unported;
+    /// `CTaskUtilityLineUpPedWithCar::Destructor` (0x64FC00), thiscall, 0 stack argument(s)
+    fn c_64fc00_t0(this: u32) -> u32 = thiscall 0x64FC00 => unported;
     /// `CTaskSimpleHitHead::~CTaskSimpleHitHead` (0x653090), thiscall, 0 stack argument(s)
     fn c_653090_t0(this: u32) -> u32 = thiscall 0x653090 => unported;
     /// `CTaskSimpleEvasiveDive::~CTaskSimpleEvasiveDive` (0x6535D0), thiscall, 0 stack argument(s)
@@ -465,6 +507,10 @@ orig! {
     fn c_658ae0_t0(this: u32) -> u32 = thiscall 0x658AE0 => unported;
     /// `CTaskComplexMedicTreatInjuredPed::~CTaskComplexMedicTreatInjuredPed` (0x658C30), thiscall, 0 stack argument(s)
     fn c_658c30_t0(this: u32) -> u32 = thiscall 0x658C30 => unported;
+    /// `FUN_00659240` (0x659240), thiscall, 0 stack argument(s)
+    fn c_659240_t0(this: u32) -> u32 = thiscall 0x659240 => unported;
+    /// `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` (0x6593A0), thiscall, 0 stack argument(s)
+    fn c_6593a0_t0(this: u32) -> u32 = thiscall 0x6593A0 => unported;
     /// `FUN_006594d0` (0x6594D0), thiscall, 0 stack argument(s)
     fn c_6594d0_t0(this: u32) -> u32 = thiscall 0x6594D0 => unported;
     /// `FUN_006597b0` (0x6597B0), thiscall, 0 stack argument(s)
@@ -595,6 +641,8 @@ orig! {
     fn c_6912c0_t0(this: u32) -> u32 = thiscall 0x6912C0 => unported;
     /// `FUN_00691a50` (0x691A50), thiscall, 0 stack argument(s)
     fn c_691a50_t0(this: u32) -> u32 = thiscall 0x691A50 => unported;
+    /// `FUN_006926f0` (0x6926F0), thiscall, 0 stack argument(s)
+    fn c_6926f0_t0(this: u32) -> u32 = thiscall 0x6926F0 => unported;
     /// `thunk_FUN_00691630` (0x6935B0), thiscall, 0 stack argument(s)
     fn c_6935b0_t0(this: u32) -> u32 = thiscall 0x6935B0 => unported;
     /// `thunk_FUN_00691630` (0x6935E0), thiscall, 0 stack argument(s)
@@ -623,6 +671,8 @@ orig! {
     fn c_69c780_t0(this: u32) -> u32 = thiscall 0x69C780 => unported;
     /// `CTaskAllocator::operator delete` (0x69D990), cdecl, 1 stack argument(s)
     fn c_69d990_c1(a0: u32) -> u32 = cdecl 0x69D990 => unported;
+    /// `_free` (0x8214BD), cdecl, 1 stack argument(s)
+    fn c_8214bd_c1(a0: u32) -> u32 = cdecl 0x8214BD => unported;
     /// virtual slot +0x0 (`call [vtbl + 0x0]` on ECX), 1 stack argument(s)
     fn vslot_0_1(obj: GPtr<u8>, a0: u32) -> u32 = thiscall vslot 0x0 => unported;
 }
@@ -637,6 +687,13 @@ pub fn g_task_complex_ctask_complex_421250(this: u32, a0: u32) -> u32 {
         c_61a5b0_c1(this);
         return this;
     }
+}
+
+/// `CTaskComplexLeaveAnyCar::Destructor` (0x421270): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x421270, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Destructor", expect = "C7 01 B0 8E 85 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_any_car_destructor_421270(this: u32) {
+    wr::<u32>(p(this), 0, 0x85_8EB0);
+    let _v1 = c_61a3d0_t0(this);
 }
 
 /// `CEventLeaderEntryExit::~CEventLeaderEntryExit` (0x43E290): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
@@ -959,6 +1016,31 @@ pub fn g_vt_85a428_destructor_4994c0(this: u32, a0: u32) -> u32 {
 pub fn g_fun_004ab9b0_4ab9b0(this: u32) {
     wr::<u32>(p(this), 0, 0x85_AAB0);
     let _v1 = c_4ab370_t1(this, 0);
+}
+
+/// `CEventGroup::~CEventGroup` (0x4ABA20): dtor, thiscall, `ret 4`; 13 instruction(s) matched.
+#[hook(addr = 0x4ABA20, conv = thiscall, name = "CEventGroup::~CEventGroup", expect = "56 8B F1 6A 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+pub fn g_event_group_cevent_group_4aba20(this: u32, a0: u32) -> u32 {
+    wr::<u32>(p(this), 0, 0x85_AAB0);
+    c_4ab370_t1(this, 0);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_8214bd_c1(this);
+        return this;
+    }
+}
+
+/// `CEventGlobalGroup::~CEventGlobalGroup` (0x4ABAA0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x4ABAA0, conv = thiscall, name = "CEventGlobalGroup::~CEventGlobalGroup", expect = "56 8B F1 E8 08 FF FF FF", unverified = "ai7-5", route = "L2", hazards = "none")]
+pub fn g_event_global_group_cevent_global_group_4abaa0(this: u32, a0: u32) -> u32 {
+    c_4ab9b0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_8214bd_c1(this);
+        return this;
+    }
 }
 
 /// `CEventDraggedOutCar::~CEventDraggedOutCar` (0x4AD330): dtor, thiscall, `ret`; 29 instruction(s) matched.
@@ -1899,6 +1981,233 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_destructor_4b89
     let _v1 = c_634720_t0(this);
 }
 
+/// `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` (0x4B89D0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x4B89D0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene", expect = "56 8B F1 E8 18 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_mission_flee_scene_4b89d0(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_4b89f0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` (0x4B89F0): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x4B89F0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene", expect = "C7 01 5C B9 85 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_mission_flee_scene_4b89f0(
+    this: u32,
+) {
+    wr::<u32>(p(this), 0, 0x85_B95C);
+    let _v1 = c_63ccc0_t0(this);
+}
+
+/// `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` (0x4B8AB0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x4B8AB0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed", expect = "56 8B F1 E8 18 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission_kill_ped_4b8ab0(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_4b8ad0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` (0x4B8AD0): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x4B8AD0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed", expect = "C7 01 94 B9 85 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission_kill_ped_4b8ad0(this: u32) {
+    wr::<u32>(p(this), 0, 0x85_B994);
+    let _v1 = c_63ccc0_t0(this);
+}
+
+/// `CPedAttractor::Destructor` (0x5EC410): dtor, thiscall, `ret`; 52 instruction(s) matched.
+#[hook(addr = 0x5EC410, conv = thiscall, name = "CPedAttractor::Destructor", expect = "6A FF 68 B1 DA 83 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+pub fn g_cped_attractor_destructor_5ec410(this: u32) -> u32 {
+    wr::<u32>(p(this), 0, 0x86_C538);
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x30);
+        if v2 == 0 {
+            wr::<u32>(p(this), 0x30, 0);
+            wr::<u32>(p(this), 0x34, 0);
+            wr::<u32>(p(this), 0x38, 0);
+            let v3 = rd::<u32>(p(this), 0x20);
+            if v3 == 0 {
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v4 = rd::<u32>(p(this), 0x10);
+                if v4 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v4;
+                } else {
+                    let v5 = c_8214bd_c1(v4);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v5;
+                }
+            } else {
+                c_8214bd_c1(v3);
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v7 = rd::<u32>(p(this), 0x10);
+                if v7 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v7;
+                } else {
+                    let v8 = c_8214bd_c1(v7);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v8;
+                }
+            }
+        } else {
+            c_8214bd_c1(v2);
+            wr::<u32>(p(this), 0x30, 0);
+            wr::<u32>(p(this), 0x34, 0);
+            wr::<u32>(p(this), 0x38, 0);
+            let v10 = rd::<u32>(p(this), 0x20);
+            if v10 == 0 {
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v11 = rd::<u32>(p(this), 0x10);
+                if v11 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v11;
+                } else {
+                    let v12 = c_8214bd_c1(v11);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v12;
+                }
+            } else {
+                c_8214bd_c1(v10);
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v14 = rd::<u32>(p(this), 0x10);
+                if v14 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v14;
+                } else {
+                    let v15 = c_8214bd_c1(v14);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v15;
+                }
+            }
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(8));
+        let v17 = rd::<u32>(p(this), 0x30);
+        if v17 == 0 {
+            wr::<u32>(p(this), 0x30, 0);
+            wr::<u32>(p(this), 0x34, 0);
+            wr::<u32>(p(this), 0x38, 0);
+            let v18 = rd::<u32>(p(this), 0x20);
+            if v18 == 0 {
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v19 = rd::<u32>(p(this), 0x10);
+                if v19 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v19;
+                } else {
+                    let v20 = c_8214bd_c1(v19);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v20;
+                }
+            } else {
+                c_8214bd_c1(v18);
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v22 = rd::<u32>(p(this), 0x10);
+                if v22 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v22;
+                } else {
+                    let v23 = c_8214bd_c1(v22);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v23;
+                }
+            }
+        } else {
+            c_8214bd_c1(v17);
+            wr::<u32>(p(this), 0x30, 0);
+            wr::<u32>(p(this), 0x34, 0);
+            wr::<u32>(p(this), 0x38, 0);
+            let v25 = rd::<u32>(p(this), 0x20);
+            if v25 == 0 {
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v26 = rd::<u32>(p(this), 0x10);
+                if v26 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v26;
+                } else {
+                    let v27 = c_8214bd_c1(v26);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v27;
+                }
+            } else {
+                c_8214bd_c1(v25);
+                wr::<u32>(p(this), 0x20, 0);
+                wr::<u32>(p(this), 0x24, 0);
+                wr::<u32>(p(this), 0x28, 0);
+                let v29 = rd::<u32>(p(this), 0x10);
+                if v29 == 0 {
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v29;
+                } else {
+                    let v30 = c_8214bd_c1(v29);
+                    wr::<u32>(p(this), 0x10, 0);
+                    wr::<u32>(p(this), 0x14, 0);
+                    wr::<u32>(p(this), 0x18, 0);
+                    return v30;
+                }
+            }
+        }
+    }
+}
+
 /// `CPedAttractor::~CPedAttractor` (0x5EC4B0): dtor, thiscall, `ret 4`; 30 instruction(s) matched.
 #[hook(addr = 0x5EC4B0, conv = thiscall, name = "CPedAttractor::~CPedAttractor", expect = "56 57 8B F9 E8 57 FF FF FF")]
 pub fn g_cped_attractor_cped_attractor_5ec4b0(this: u32, a0: u32) -> u32 {
@@ -2639,6 +2948,21 @@ pub fn g_event_vehicle_damage_weapon_cevent_vehicle_damage_weapon_61c390(this: u
     }
 }
 
+/// `CTaskSimpleFightingControl::Destructor` (0x61DCA0): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x61DCA0, conv = thiscall, name = "CTaskSimpleFightingControl::Destructor", expect = "6A FF 68 B8 F3 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_fighting_control_destructor_61dca0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_D700);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let _v2 = c_61a3a0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let _v4 = c_61a3a0_t0(this);
+        return;
+    }
+}
+
 /// `CTaskSimpleGunControl::Destructor` (0x61F4D0): dtor, thiscall, `ret`; 25 instruction(s) matched.
 #[hook(addr = 0x61F4D0, conv = thiscall, name = "CTaskSimpleGunControl::Destructor", expect = "6A FF 68 38 F4 83 00")]
 pub fn g_task_simple_gun_control_destructor_61f4d0(this: u32) {
@@ -3213,10 +3537,36 @@ pub fn g_task_complex_ctask_complex_629900(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x62F250): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x62F250, conv = thiscall, name = "CTaskComplexLeaveCar::~CTaskComplexLeaveCar", expect = "56 8B F1 E8 18 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_ctask_complex_leave_car_62f250(this: u32, a0: u32) -> u32 {
+    c_62f270_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `FUN_0062f270` (0x62F270): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x62F270, conv = thiscall, name = "FUN_0062f270", expect = "C7 01 00 DD 86 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_fun_0062f270_62f270(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_DD00);
+    let _v1 = c_63b970_t0(this);
+}
+
 /// `CTaskSimpleSetKindaStayInSamePlace::Destructor` (0x62F650): dtor, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x62F650, conv = thiscall, name = "CTaskSimpleSetKindaStayInSamePlace::Destructor", expect = "C7 01 74 DD 86 00")]
 pub fn g_task_simple_set_kinda_stay_in_same_place_destructor_62f650(this: u32) {
     wr::<u32>(p(this), 0, 0x86_DD74);
+    let _v1 = c_61a3a0_t0(this);
+}
+
+/// `CTaskSimpleDuckToggle::Destructor` (0x62F6D0): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x62F6D0, conv = thiscall, name = "CTaskSimpleDuckToggle::Destructor", expect = "C7 01 98 DD 86 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_duck_toggle_destructor_62f6d0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_DD98);
     let _v1 = c_61a3a0_t0(this);
 }
 
@@ -3669,6 +4019,18 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_ctask_simple_set_kinda_stay_in
     a0: u32,
 ) -> u32 {
     c_62f650_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskSimpleDuckToggle::~CTaskSimpleDuckToggle` (0x6374E0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x6374E0, conv = thiscall, name = "CTaskSimpleDuckToggle::~CTaskSimpleDuckToggle", expect = "56 8B F1 E8 E8 81 FF FF", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_duck_toggle_ctask_simple_duck_toggle_6374e0(this: u32, a0: u32) -> u32 {
+    c_62f6d0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -4172,6 +4534,80 @@ pub fn g_fun_0063a1d0_63a1d0(this: u32) {
     let _v1 = c_4ac010_t0(this);
 }
 
+/// `CTaskComplexEnterCarAsDriverTimed::Destructor` (0x63AE00): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x63AE00, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Destructor", expect = "6A FF 68 28 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_driver_timed_destructor_63ae00(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E720);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let _v4 = c_61a3d0_t0(this);
+        return;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::Destructor` (0x63B0C0): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x63B0C0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Destructor", expect = "6A FF 68 88 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_timed_destructor_63b0c0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E74C);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let _v4 = c_61a3d0_t0(this);
+        return;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerWait::Destructor` (0x63B3C0): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x63B3C0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Destructor", expect = "6A FF 68 E8 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_wait_destructor_63b3c0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E778);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x10);
+        if v2 == 0 {
+            let _v3 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_571a00_t1(v2, this.wrapping_add(0x10));
+            let _v5 = c_61a3d0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let v7 = rd::<u32>(p(this), 0x10);
+        if v7 == 0 {
+            let _v8 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_571a00_t1(v7, this.wrapping_add(0x10));
+            let _v10 = c_61a3d0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::Destructor` (0x63B4A0): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x63B4A0, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Destructor", expect = "6A FF 68 28 15 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_car_as_passenger_wait_destructor_63b4a0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E7A4);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let _v4 = c_61a3d0_t0(this);
+        return;
+    }
+}
+
 /// `CTaskComplexEnterBoatAsDriver::Destructor` (0x63B650): dtor, thiscall, `ret`; 25 instruction(s) matched.
 #[hook(addr = 0x63B650, conv = thiscall, name = "CTaskComplexEnterBoatAsDriver::Destructor", expect = "6A FF 68 88 15 84 00")]
 pub fn g_task_complex_enter_boat_as_driver_destructor_63b650(this: u32) {
@@ -4231,6 +4667,21 @@ pub fn g_fun_0063bbd0_63bbd0(this: u32) {
     }
 }
 
+/// `CTaskComplexLeaveCarAndFlee::Destructor` (0x63C030): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x63C030, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::Destructor", expect = "6A FF 68 78 17 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_car_and_flee_destructor_63c030(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E8AC);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let _v4 = c_61a3d0_t0(this);
+        return;
+    }
+}
+
 /// `CTaskComplexScreamInCarThenLeave::Destructor` (0x63C2C0): dtor, thiscall, `ret`; 25 instruction(s) matched.
 #[hook(addr = 0x63C2C0, conv = thiscall, name = "CTaskComplexScreamInCarThenLeave::Destructor", expect = "6A FF 68 F8 17 84 00")]
 pub fn g_task_complex_scream_in_car_then_leave_destructor_63c2c0(this: u32) {
@@ -4244,6 +4695,59 @@ pub fn g_task_complex_scream_in_car_then_leave_destructor_63c2c0(this: u32) {
         let _v4 = c_61a3d0_t0(this);
         return;
     }
+}
+
+/// `CTaskComplexCarDriveMission::Destructor` (0x63CCC0): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x63CCC0, conv = thiscall, name = "CTaskComplexCarDriveMission::Destructor", expect = "6A FF 68 F8 18 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_mission_destructor_63ccc0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E9A4);
+    let v1 = rd::<u32>(p(this), 0x24);
+    if v1 == 0 {
+        let _v2 = c_63ca40_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x24));
+        let _v4 = c_63ca40_t0(this);
+        return;
+    }
+}
+
+/// `CTaskComplexShuffleSeats::Destructor` (0x63D1A0): dtor, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x63D1A0, conv = thiscall, name = "CTaskComplexShuffleSeats::Destructor", expect = "6A FF 68 98 19 84 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_shuffle_seats_destructor_63d1a0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EA40);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x24);
+        if v2 == 0 {
+            let _v3 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_64fc00_t0(v2);
+            c_8214bd_c1(v2);
+            let _v6 = c_61a3d0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let v8 = rd::<u32>(p(this), 0x24);
+        if v8 == 0 {
+            let _v9 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_64fc00_t0(v8);
+            c_8214bd_c1(v8);
+            let _v12 = c_61a3d0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarSetTempAction::Destructor` (0x63D730): dtor, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63D730, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Destructor", expect = "C7 01 6C EA 86 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_temp_action_destructor_63d730(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EA6C);
+    let _v1 = c_63c460_t0(this);
 }
 
 /// `CTaskComplexDragPedFromCar::~CTaskComplexDragPedFromCar` (0x6404D0): dtor, thiscall, `ret`; 25 instruction(s) matched.
@@ -4265,6 +4769,21 @@ pub fn g_task_complex_drag_ped_from_car_ctask_complex_drag_ped_from_car_6404d0(t
 #[hook(addr = 0x640590, conv = thiscall, name = "CTaskComplex::~CTaskComplex", expect = "56 8B F1 E8 68 A8 FF FF")]
 pub fn g_task_complex_ctask_complex_640590(this: u32, a0: u32) -> u32 {
     c_63ae00_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::~CTaskComplexEnterCarAsPassengerTimed` (0x640640): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x640640, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::~CTaskComplexEnterCarAsPassengerTimed", expect = "56 8B F1 E8 78 AA FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_timed_ctask_complex_enter_car_as_passenger_timed_640640(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_63b0c0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -4369,10 +4888,100 @@ pub fn g_task_complex_ctask_complex_6424f0(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexCarDrive::~CTaskComplexCarDrive` (0x642F80): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x642F80, conv = thiscall, name = "CTaskComplexCarDrive::~CTaskComplexCarDrive", expect = "56 8B F1 E8 B8 9A FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_ctask_complex_car_drive_642f80(this: u32, a0: u32) -> u32 {
+    c_63ca40_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission` (0x643260): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x643260, conv = thiscall, name = "CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission", expect = "56 8B F1 E8 58 9A FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_ctask_complex_car_drive_mission_643260(this: u32, a0: u32) -> u32 {
+    c_63ccc0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint` (0x643280): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x643280, conv = thiscall, name = "CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint", expect = "56 8B F1 E8 E8 9B FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_to_point_ctask_complex_drive_to_point_643280(this: u32, a0: u32) -> u32 {
+    c_63ce70_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexDrivePointRoute::Destructor` (0x643490): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x643490, conv = thiscall, name = "CTaskComplexDrivePointRoute::Destructor", expect = "6A FF 68 F8 21 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_drive_point_route_destructor_643490(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EBF8);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        c_41b7d0_c1(v1);
+        let _v4 = c_61a3d0_t0(this);
+        return;
+    }
+}
+
 /// `CTaskComplex::~CTaskComplex` (0x6436E0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
 #[hook(addr = 0x6436E0, conv = thiscall, name = "CTaskComplex::~CTaskComplex", expect = "56 8B F1 E8 B8 9A FF FF")]
 pub fn g_task_complex_ctask_complex_6436e0(this: u32, a0: u32) -> u32 {
     c_63d1a0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarDrive::~CTaskSimpleCarDrive` (0x643760): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x643760, conv = thiscall, name = "CTaskSimpleCarDrive::~CTaskSimpleCarDrive", expect = "56 8B F1 E8 C8 9F FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_drive_ctask_simple_car_drive_643760(this: u32, a0: u32) -> u32 {
+    c_63d730_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexEnterCar::~CTaskComplexEnterCar` (0x643A40): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x643A40, conv = thiscall, name = "CTaskComplexEnterCar::~CTaskComplexEnterCar", expect = "56 8B F1 E8 58 A5 FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_ctask_complex_enter_car_643a40(this: u32, a0: u32) -> u32 {
+    c_63dfa0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger` (0x643C80): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x643C80, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger", expect = "56 8B F1 E8 F8 C6 FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_ctask_complex_enter_car_as_passenger_643c80(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_640380_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -4432,6 +5041,64 @@ pub fn g_task_complex_ctask_complex_645350(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleCarAlign::Destructor` (0x645BE0): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x645BE0, conv = thiscall, name = "CTaskSimpleCarAlign::Destructor", expect = "6A FF 68 D8 23 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_align_destructor_645be0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EC78);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::Destructor` (0x6460F0): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x6460F0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Destructor", expect = "6A FF 68 58 24 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_open_locked_door_from_outside_destructor_6460f0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_ECC0);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
 /// `CTaskSimplePickUpBike::Destructor` (0x646230): dtor, thiscall, `ret`; 31 instruction(s) matched.
 #[hook(addr = 0x646230, conv = thiscall, name = "CTaskSimplePickUpBike::Destructor", expect = "6A FF 68 98 24 84 00")]
 pub fn g_task_simple_pick_up_bike_destructor_646230(this: u32) {
@@ -4458,6 +5125,462 @@ pub fn g_task_simple_pick_up_bike_destructor_646230(this: u32) {
             let _v10 = c_61a3a0_t0(this);
             return;
         }
+    }
+}
+
+/// `CTaskSimpleCarCloseDoorFromInside::Destructor` (0x646380): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x646380, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Destructor", expect = "6A FF 68 D8 24 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_close_door_from_inside_destructor_646380(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_ED08);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarCloseDoorFromOutside::Destructor` (0x646570): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x646570, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Destructor", expect = "6A FF 68 18 25 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_close_door_from_outside_destructor_646570(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_ED2C);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarGetIn::Destructor` (0x646710): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x646710, conv = thiscall, name = "CTaskSimpleCarGetIn::Destructor", expect = "6A FF 68 58 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_get_in_destructor_646710(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_ED50);
+    let v1 = rd::<u32>(p(this), 0x18);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x18));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarShuffle::Destructor` (0x646890): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x646890, conv = thiscall, name = "CTaskSimpleCarShuffle::Destructor", expect = "6A FF 68 98 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_shuffle_destructor_646890(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_ED74);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarWaitToSlowDown::Destructor` (0x646A00): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x646A00, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::Destructor", expect = "6A FF 68 D8 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_wait_to_slow_down_destructor_646a00(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_ED98);
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        let _v2 = c_61a3a0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(8));
+        let _v4 = c_61a3a0_t0(this);
+        return;
+    }
+}
+
+/// `CTaskSimpleCarWaitForDoorNotToBeInUse::Destructor` (0x646C00): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x646C00, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Destructor", expect = "6A FF 68 18 26 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_destructor_646c00(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EDBC);
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        let _v2 = c_61a3a0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(8));
+        let _v4 = c_61a3a0_t0(this);
+        return;
+    }
+}
+
+/// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Destructor` (0x646E50): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x646E50, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Destructor", expect = "6A FF 68 68 26 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_destructor_646e50(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EDE0);
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            let _v4 = rd::<u32>(p(v2), 0);
+            vslot_0_1(p(v2), 1);
+            let _v6 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        let _v7 = rd::<u32>(p(v1), 0);
+        vslot_0_1(p(v1), 1);
+        let v9 = rd::<u32>(p(this), 0xC);
+        if v9 == 0 {
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        } else {
+            let _v11 = rd::<u32>(p(v9), 0);
+            vslot_0_1(p(v9), 1);
+            let _v13 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarGetOut::Destructor` (0x647260): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x647260, conv = thiscall, name = "CTaskSimpleCarGetOut::Destructor", expect = "6A FF 68 48 27 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_get_out_destructor_647260(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EE4C);
+    let v1 = rd::<u32>(p(this), 0x14);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x14));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarJumpOut::Destructor` (0x647490): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x647490, conv = thiscall, name = "CTaskSimpleCarJumpOut::Destructor", expect = "6A FF 68 68 27 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_jump_out_destructor_647490(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EE70);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarSlowDragPedOut::Destructor` (0x648070): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x648070, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::Destructor", expect = "6A FF 68 48 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_slow_drag_ped_out_destructor_648070(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EEE8);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarSlowBeDraggedOut::Destructor` (0x6482C0): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x6482C0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::Destructor", expect = "6A FF 68 88 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_slow_be_dragged_out_destructor_6482c0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EF0C);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0xC);
+        if v2 == 0 {
+            let _v3 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v2, 0x4D_1390, 0);
+            let _v5 = c_61a3a0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let v7 = rd::<u32>(p(this), 0xC);
+        if v7 == 0 {
+            let _v8 = c_61a3a0_t0(this);
+            return;
+        } else {
+            c_4cebe0_t2(v7, 0x4D_1390, 0);
+            let _v10 = c_61a3a0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskSimpleCarSetPedSlowDraggedOut::Destructor` (0x648430): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x648430, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Destructor", expect = "6A FF 68 C8 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_ped_slow_dragged_out_destructor_648430(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EF30);
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        let _v2 = c_61a3a0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(8));
+        let _v4 = c_61a3a0_t0(this);
+        return;
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690` (0x648690): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x648690, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690", expect = "6A FF 68 48 29 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_0x648690_648690(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EF80);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let _v4 = c_61a3d0_t0(this);
+        return;
+    }
+}
+
+/// `CTaskSimpleBikeJacked::Destructor` (0x648C40): dtor, thiscall, `ret`; 47 instruction(s) matched.
+#[hook(addr = 0x648C40, conv = thiscall, name = "CTaskSimpleBikeJacked::Destructor", expect = "6A FF 68 F8 29 84 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_bike_jacked_destructor_648c40(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EFAC);
+    let v1 = rd::<u32>(p(this), 0x14);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x20);
+        if v2 == 0 {
+            let v3 = rd::<u32>(p(this), 0x28);
+            if v3 == 0 {
+                let v4 = rd::<u32>(p(this), 0xC);
+                if v4 == 0 {
+                    let _v5 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v4, 0x4D_1390, 0);
+                    let _v7 = c_61a3a0_t0(this);
+                    return;
+                }
+            } else {
+                c_64fc00_t0(v3);
+                c_8214bd_c1(v3);
+                let v10 = rd::<u32>(p(this), 0xC);
+                if v10 == 0 {
+                    let _v11 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v10, 0x4D_1390, 0);
+                    let _v13 = c_61a3a0_t0(this);
+                    return;
+                }
+            }
+        } else {
+            c_571a00_t1(v2, this.wrapping_add(0x20));
+            let v15 = rd::<u32>(p(this), 0x28);
+            if v15 == 0 {
+                let v16 = rd::<u32>(p(this), 0xC);
+                if v16 == 0 {
+                    let _v17 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v16, 0x4D_1390, 0);
+                    let _v19 = c_61a3a0_t0(this);
+                    return;
+                }
+            } else {
+                c_64fc00_t0(v15);
+                c_8214bd_c1(v15);
+                let v22 = rd::<u32>(p(this), 0xC);
+                if v22 == 0 {
+                    let _v23 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v22, 0x4D_1390, 0);
+                    let _v25 = c_61a3a0_t0(this);
+                    return;
+                }
+            }
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x14));
+        let v27 = rd::<u32>(p(this), 0x20);
+        if v27 == 0 {
+            let v28 = rd::<u32>(p(this), 0x28);
+            if v28 == 0 {
+                let v29 = rd::<u32>(p(this), 0xC);
+                if v29 == 0 {
+                    let _v30 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v29, 0x4D_1390, 0);
+                    let _v32 = c_61a3a0_t0(this);
+                    return;
+                }
+            } else {
+                c_64fc00_t0(v28);
+                c_8214bd_c1(v28);
+                let v35 = rd::<u32>(p(this), 0xC);
+                if v35 == 0 {
+                    let _v36 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v35, 0x4D_1390, 0);
+                    let _v38 = c_61a3a0_t0(this);
+                    return;
+                }
+            }
+        } else {
+            c_571a00_t1(v27, this.wrapping_add(0x20));
+            let v40 = rd::<u32>(p(this), 0x28);
+            if v40 == 0 {
+                let v41 = rd::<u32>(p(this), 0xC);
+                if v41 == 0 {
+                    let _v42 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v41, 0x4D_1390, 0);
+                    let _v44 = c_61a3a0_t0(this);
+                    return;
+                }
+            } else {
+                c_64fc00_t0(v40);
+                c_8214bd_c1(v40);
+                let v47 = rd::<u32>(p(this), 0xC);
+                if v47 == 0 {
+                    let _v48 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    c_4cebe0_t2(v47, 0x4D_1390, 0);
+                    let _v50 = c_61a3a0_t0(this);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/// `CTaskSimpleCarFallOut::Destructor` (0x648DE0): dtor, thiscall, `ret`; 25 instruction(s) matched.
+#[hook(addr = 0x648DE0, conv = thiscall, name = "CTaskSimpleCarFallOut::Destructor", expect = "6A FF 68 38 2A 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_fall_out_destructor_648de0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EFD0);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let _v2 = c_61a3a0_t0(this);
+        return;
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0x10));
+        let _v4 = c_61a3a0_t0(this);
+        return;
     }
 }
 
@@ -4673,10 +5796,67 @@ pub fn g_task_simple_ctask_simple_64b480(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger` (0x64B5B0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64B5B0, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger", expect = "56 8B F1 E8 C8 BA FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_ped_in_as_passenger_ctask_simple_car_set_ped_in_as_passenger_64b5b0(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_647080_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver` (0x64B930): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64B930, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver", expect = "56 8B F1 E8 38 B8 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_ped_in_as_driver_ctask_simple_car_set_ped_in_as_driver_64b930(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_647170_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
 /// `CTaskSimple::~CTaskSimple` (0x64BEE0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
 #[hook(addr = 0x64BEE0, conv = thiscall, name = "CTaskSimple::~CTaskSimple", expect = "56 8B F1 E8 A8 B5 FF FF")]
 pub fn g_task_simple_ctask_simple_64bee0(this: u32, a0: u32) -> u32 {
     c_647490_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `vt_86ee94::Destructor` (0x64BF50): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64BF50, conv = thiscall, name = "vt_86ee94::Destructor", expect = "56 8B F1 E8 38 B8 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86ee94_destructor_64bf50(this: u32, a0: u32) -> u32 {
+    c_647790_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut` (0x64BF90): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64BF90, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut", expect = "56 8B F1 E8 D8 C0 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_slow_drag_ped_out_ctask_simple_car_slow_drag_ped_out_64bf90(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_648070_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -4709,10 +5889,68 @@ pub fn g_task_simple_ctask_simple_64c200(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexCarSlowBeDraggedOut::Destructor` (0x64C580): dtor, thiscall, `ret`; 35 instruction(s) matched.
+#[hook(addr = 0x64C580, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Destructor", expect = "6A FF 68 B8 30 84 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_slow_be_dragged_out_destructor_64c580(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_EF54);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x18);
+        if v2 == 0 {
+            let _v3 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_64fc00_t0(v2);
+            c_8214bd_c1(v2);
+            let _v6 = c_61a3d0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let v8 = rd::<u32>(p(this), 0x18);
+        if v8 == 0 {
+            let _v9 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_64fc00_t0(v8);
+            c_8214bd_c1(v8);
+            let _v12 = c_61a3d0_t0(this);
+            return;
+        }
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp` (0x64C930): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64C930, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp", expect = "56 8B F1 E8 58 BD FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_ctask_complex_car_slow_be_dragged_out_and_stand_up_64c930(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_648690_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
 /// `CTaskSimple::~CTaskSimple` (0x64C950): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
 #[hook(addr = 0x64C950, conv = thiscall, name = "CTaskSimple::~CTaskSimple", expect = "56 8B F1 E8 E8 C2 FF FF")]
 pub fn g_task_simple_ctask_simple_64c950(this: u32, a0: u32) -> u32 {
     c_648c40_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskSimpleCarFallOut::~CTaskSimpleCarFallOut` (0x64CC40): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64CC40, conv = thiscall, name = "CTaskSimpleCarFallOut::~CTaskSimpleCarFallOut", expect = "56 8B F1 E8 98 C1 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_fall_out_ctask_simple_car_fall_out_64cc40(this: u32, a0: u32) -> u32 {
+    c_648de0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -4779,6 +6017,21 @@ pub fn g_task_simple_wait_until_ped_is_out_car_ctask_simple_wait_until_ped_is_ou
 #[hook(addr = 0x64D200, conv = thiscall, name = "CTaskSimple::~CTaskSimple", expect = "56 8B F1 E8 98 C4 FF FF")]
 pub fn g_task_simple_ctask_simple_64d200(this: u32, a0: u32) -> u32 {
     c_6496a0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut` (0x64E2A0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x64E2A0, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut", expect = "56 8B F1 E8 D8 E2 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_ctask_complex_car_slow_be_dragged_out_64e2a0(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_64c580_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -5306,6 +6559,35 @@ pub fn g_task_complex_medic_treat_injured_ped_ctask_complex_medic_treat_injured_
     }
 }
 
+/// `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` (0x6593A0): dtor, thiscall, `ret`; 31 instruction(s) matched.
+#[hook(addr = 0x6593A0, conv = thiscall, name = "CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck", expect = "6A FF 68 68 3C 84 00", unverified = "ai7-4", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_drive_fire_truck_ctask_complex_drive_fire_truck_6593a0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_F570);
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x14);
+        if v2 == 0 {
+            let _v3 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_571a00_t1(v2, this.wrapping_add(0x14));
+            let _v5 = c_61a3d0_t0(this);
+            return;
+        }
+    } else {
+        c_571a00_t1(v1, this.wrapping_add(0xC));
+        let v7 = rd::<u32>(p(this), 0x14);
+        if v7 == 0 {
+            let _v8 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_571a00_t1(v7, this.wrapping_add(0x14));
+            let _v10 = c_61a3d0_t0(this);
+            return;
+        }
+    }
+}
+
 /// `FUN_006594d0` (0x6594D0): dtor, thiscall, `ret`; 27 instruction(s) matched.
 #[hook(addr = 0x6594D0, conv = thiscall, name = "FUN_006594d0", expect = "6A FF 68 A8 3C 84 00")]
 pub fn g_fun_006594d0_6594d0(this: u32) {
@@ -5377,6 +6659,30 @@ pub fn g_task_complex_medic_treat_injured_ped_ctask_complex_medic_treat_injured_
     a0: u32,
 ) -> u32 {
     c_658c30_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `vt_86f544::Destructor` (0x65A0F0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x65A0F0, conv = thiscall, name = "vt_86f544::Destructor", expect = "56 8B F1 E8 48 F1 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86f544_destructor_65a0f0(this: u32, a0: u32) -> u32 {
+    c_659240_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
+/// `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` (0x65A220): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x65A220, conv = thiscall, name = "CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck", expect = "56 8B F1 E8 78 F1 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_fire_truck_ctask_complex_drive_fire_truck_65a220(this: u32, a0: u32) -> u32 {
+    c_6593a0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
         return this;
     } else {
@@ -7111,6 +8417,18 @@ pub fn g_vt_870b98_destructor_6935f0(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `vt_870bec::Destructor` (0x693B80): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
+#[hook(addr = 0x693B80, conv = thiscall, name = "vt_870bec::Destructor", expect = "56 8B F1 E8 68 EB FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_870bec_destructor_693b80(this: u32, a0: u32) -> u32 {
+    c_6926f0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        c_61a5b0_c1(this);
+        return this;
+    }
+}
+
 /// `CTaskComplexFollowLeaderInFormation::Destructor` (0x694A40): dtor, thiscall, `ret`; 25 instruction(s) matched.
 #[hook(addr = 0x694A40, conv = thiscall, name = "CTaskComplexFollowLeaderInFormation::Destructor", expect = "6A FF 68 38 75 84 00")]
 pub fn g_task_complex_follow_leader_in_formation_destructor_694a40(this: u32) {
@@ -7492,6 +8810,24 @@ pub fn g_fun_0069db40_69db40(this: u32) {
     let _v1 = c_69c2d0_t0(this);
 }
 
+/// `__dtor_g_c09870` (0x8567C0): dtor, cdecl, `ret`; 10 instruction(s) matched.
+#[hook(addr = 0x8567C0, conv = cdecl, name = "__dtor_g_c09870", expect = "A1 70 98 C0 00", unverified = "ai7-5", route = "split", hazards = "none")]
+pub fn g_dtor_g_c09870_8567c0() -> u32 {
+    let v1 = g::<u32>(0xC0_9870).read();
+    if v1 == 0 {
+        g::<u32>(0xC0_9870).write(0);
+        g::<u32>(0xC0_9874).write(0);
+        g::<u32>(0xC0_9878).write(0);
+        return v1;
+    } else {
+        let v2 = c_8214bd_c1(v1);
+        g::<u32>(0xC0_9870).write(0);
+        g::<u32>(0xC0_9874).write(0);
+        g::<u32>(0xC0_9878).write(0);
+        return v2;
+    }
+}
+
 /// `__dtor_CPedGroupDefaultTaskAllocators__ms_FollowAnyMeansAllocator` (0x856800): dtor, cdecl, `ret`; 4 instruction(s) matched.
 #[hook(addr = 0x856800, conv = cdecl, name = "__dtor_CPedGroupDefaultTaskAllocators__ms_FollowAnyMeansAllocator", expect = "B9 08 99 C0 00")]
 pub fn g_dtor_cped_group_default_task_allocators_ms_follow_any_means_allocator_856800() {
@@ -7587,6 +8923,7 @@ pub fn g_dtor_g_c1a4dc_8569f0() {}
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_421250,
+    HOOK_G_TASK_COMPLEX_LEAVE_ANY_CAR_DESTRUCTOR_421270,
     HOOK_G_EVENT_LEADER_ENTRY_EXIT_CEVENT_LEADER_ENTRY_EXIT_43E290,
     HOOK_G_FUN_0043E2B0_43E2B0,
     HOOK_G_TASK_SIMPLE_UNINTERRUPTABLE_CTASK_SIMPLE_UNINTERRUPTABLE_43E3B0,
@@ -7610,6 +8947,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_RADIUS_ANGLE_OFFSET_DESTRUCTOR_493890,
     HOOK_G_VT_85A428_DESTRUCTOR_4994C0,
     HOOK_G_FUN_004AB9B0_4AB9B0,
+    HOOK_G_EVENT_GROUP_CEVENT_GROUP_4ABA20,
+    HOOK_G_EVENT_GLOBAL_GROUP_CEVENT_GLOBAL_GROUP_4ABAA0,
     HOOK_G_EVENT_DRAGGED_OUT_CAR_CEVENT_DRAGGED_OUT_CAR_4AD330,
     HOOK_G_EVENT_DEAD_PED_CEVENT_DEAD_PED_4ADF70,
     HOOK_G_EVENT_PED_TO_CHASE_CEVENT_PED_TO_CHASE_4AF1C0,
@@ -7650,6 +8989,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_RUN_DESTRUCTOR_4B8840,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_SPRINT_CTASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_SPRINT_4B88E0,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_SPRINT_DESTRUCTOR_4B8900,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_CTASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_4B89D0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_CTASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_4B89F0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_CTASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_4B8AB0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_CTASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_4B8AD0,
+    HOOK_G_CPED_ATTRACTOR_DESTRUCTOR_5EC410,
     HOOK_G_CPED_ATTRACTOR_CPED_ATTRACTOR_5EC4B0,
     HOOK_G_CPED_ATMATTRACTOR_CPED_ATMATTRACTOR_5EE4E0,
     HOOK_G_CPED_SEAT_ATTRACTOR_CPED_SEAT_ATTRACTOR_5EE5B0,
@@ -7691,6 +9035,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_ANIM_CTASK_SIMPLE_ANIM_61BBC0,
     HOOK_G_VT_86D594_DESTRUCTOR_61BC80,
     HOOK_G_EVENT_VEHICLE_DAMAGE_WEAPON_CEVENT_VEHICLE_DAMAGE_WEAPON_61C390,
+    HOOK_G_TASK_SIMPLE_FIGHTING_CONTROL_DESTRUCTOR_61DCA0,
     HOOK_G_TASK_SIMPLE_GUN_CONTROL_DESTRUCTOR_61F4D0,
     HOOK_G_TASK_SIMPLE_THROW_PROJECTILE_DESTRUCTOR_61F700,
     HOOK_G_TASK_SIMPLE_THROW_CONTROL_DESTRUCTOR_61F950,
@@ -7729,7 +9074,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_6296B0,
     HOOK_G_TASK_COMPLEX_KILL_PED_FROM_BOAT_CTASK_COMPLEX_KILL_PED_FROM_BOAT_6298E0,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_629900,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_CTASK_COMPLEX_LEAVE_CAR_62F250,
+    HOOK_G_FUN_0062F270_62F270,
     HOOK_G_TASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_DESTRUCTOR_62F650,
+    HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_DESTRUCTOR_62F6D0,
     HOOK_G_TASK_SIMPLE_DIE_CTASK_SIMPLE_DIE_62FB40,
     HOOK_G_FUN_0062FCF0_62FCF0,
     HOOK_G_FUN_0062FF10_62FF10,
@@ -7776,6 +9124,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_ANIM_CTASK_SIMPLE_ANIM_637450,
     HOOK_G_TASK_SIMPLE_SET_STAY_IN_SAME_PLACE_CTASK_SIMPLE_SET_STAY_IN_SAME_PLACE_6374A0,
     HOOK_G_TASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_CTASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_6374C0,
+    HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_CTASK_SIMPLE_DUCK_TOGGLE_6374E0,
     HOOK_G_TASK_SIMPLE_DIE_CTASK_SIMPLE_DIE_637500,
     HOOK_G_TASK_SIMPLE_DIE_IN_CAR_CTASK_SIMPLE_DIE_IN_CAR_6375B0,
     HOOK_G_TASK_COMPLEX_DIE_IN_CAR_CTASK_COMPLEX_DIE_IN_CAR_6375D0,
@@ -7815,12 +9164,21 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_USE_SEQUENCE_CTASK_COMPLEX_USE_SEQUENCE_639F90,
     HOOK_G_EVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_CEVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_63A1B0,
     HOOK_G_FUN_0063A1D0_63A1D0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_DESTRUCTOR_63AE00,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_DESTRUCTOR_63B0C0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_WAIT_DESTRUCTOR_63B3C0,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_DESTRUCTOR_63B4A0,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_DESTRUCTOR_63B650,
     HOOK_G_TASK_COMPLEX_STEAL_CAR_DESTRUCTOR_63B850,
     HOOK_G_FUN_0063BBD0_63BBD0,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_FLEE_DESTRUCTOR_63C030,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_DESTRUCTOR_63C2C0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_DESTRUCTOR_63CCC0,
+    HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_DESTRUCTOR_63D1A0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_TEMP_ACTION_DESTRUCTOR_63D730,
     HOOK_G_TASK_COMPLEX_DRAG_PED_FROM_CAR_CTASK_COMPLEX_DRAG_PED_FROM_CAR_6404D0,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_640590,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_CTASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_640640,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_640710,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_640BC0,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_640E40,
@@ -7829,12 +9187,36 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_6422A0,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_642370,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_6424F0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_CTASK_COMPLEX_CAR_DRIVE_642F80,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_CTASK_COMPLEX_CAR_DRIVE_MISSION_643260,
+    HOOK_G_TASK_COMPLEX_DRIVE_TO_POINT_CTASK_COMPLEX_DRIVE_TO_POINT_643280,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_DESTRUCTOR_643490,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_6436E0,
+    HOOK_G_TASK_SIMPLE_CAR_DRIVE_CTASK_SIMPLE_CAR_DRIVE_643760,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_CTASK_COMPLEX_ENTER_CAR_643A40,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_CTASK_COMPLEX_ENTER_CAR_AS_PASSENGER_643C80,
     HOOK_G_TASK_COMPLEX_OPEN_DRIVER_DOOR_CTASK_COMPLEX_OPEN_DRIVER_DOOR_643CA0,
     HOOK_G_TASK_COMPLEX_OPEN_PASSENGER_DOOR_CTASK_COMPLEX_OPEN_PASSENGER_DOOR_643CC0,
     HOOK_G_TASK_COMPLEX_DRAG_PED_FROM_CAR_SCALAR_DELETING_DESTRUCTOR_643CE0,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_645350,
+    HOOK_G_TASK_SIMPLE_CAR_ALIGN_DESTRUCTOR_645BE0,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_DESTRUCTOR_6460F0,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_DESTRUCTOR_646230,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_INSIDE_DESTRUCTOR_646380,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_OUTSIDE_DESTRUCTOR_646570,
+    HOOK_G_TASK_SIMPLE_CAR_GET_IN_DESTRUCTOR_646710,
+    HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_DESTRUCTOR_646890,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_DESTRUCTOR_646A00,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_DESTRUCTOR_646C00,
+    HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_DESTRUCTOR_646E50,
+    HOOK_G_TASK_SIMPLE_CAR_GET_OUT_DESTRUCTOR_647260,
+    HOOK_G_TASK_SIMPLE_CAR_JUMP_OUT_DESTRUCTOR_647490,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_DESTRUCTOR_648070,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_BE_DRAGGED_OUT_DESTRUCTOR_6482C0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_SLOW_DRAGGED_OUT_DESTRUCTOR_648430,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_0X648690_648690,
+    HOOK_G_TASK_SIMPLE_BIKE_JACKED_DESTRUCTOR_648C40,
+    HOOK_G_TASK_SIMPLE_CAR_FALL_OUT_DESTRUCTOR_648DE0,
     HOOK_G_TASK_SIMPLE_SET_PED_AS_AUTO_DRIVER_DESTRUCTOR_648FC0,
     HOOK_G_TASK_COMPLEX_GO_TO_BOAT_STEERING_WHEEL_DESTRUCTOR_649100,
     HOOK_G_TASK_COMPLEX_GET_ON_BOAT_SEAT_DESTRUCTOR_649280,
@@ -7850,15 +9232,23 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64B3C0,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64B460,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64B480,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER_CTASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER_64B5B0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER_CTASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER_64B930,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64BEE0,
+    HOOK_G_VT_86EE94_DESTRUCTOR_64BF50,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_CTASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_64BF90,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64C060,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64C200,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_DESTRUCTOR_64C580,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_CTASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_64C930,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64C950,
+    HOOK_G_TASK_SIMPLE_CAR_FALL_OUT_CTASK_SIMPLE_CAR_FALL_OUT_64CC40,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64CD60,
     HOOK_G_TASK_COMPLEX_GO_TO_BOAT_STEERING_WHEEL_CTASK_COMPLEX_GO_TO_BOAT_STEERING_WHEEL_64CD80,
     HOOK_G_TASK_COMPLEX_GET_ON_BOAT_SEAT_CTASK_COMPLEX_GET_ON_BOAT_SEAT_64CE80,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_PED_IS_OUT_CAR_CTASK_SIMPLE_WAIT_UNTIL_PED_IS_OUT_CAR_64D1E0,
     HOOK_G_TASK_SIMPLE_CTASK_SIMPLE_64D200,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_CTASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_64E2A0,
     HOOK_G_TASK_SIMPLE_CREATE_CAR_AND_GET_IN_CTASK_SIMPLE_CREATE_CAR_AND_GET_IN_64E480,
     HOOK_G_TASK_SIMPLE_HIT_HEAD_CTASK_SIMPLE_HIT_HEAD_653090,
     HOOK_G_TASK_SIMPLE_EVASIVE_DIVE_CTASK_SIMPLE_EVASIVE_DIVE_6535D0,
@@ -7886,12 +9276,15 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_FUN_006588A0_6588A0,
     HOOK_G_TASK_COMPLEX_TREAT_ACCIDENT_CTASK_COMPLEX_TREAT_ACCIDENT_658AE0,
     HOOK_G_TASK_COMPLEX_MEDIC_TREAT_INJURED_PED_CTASK_COMPLEX_MEDIC_TREAT_INJURED_PED_658C30,
+    HOOK_G_TASK_COMPLEX_DRIVE_FIRE_TRUCK_CTASK_COMPLEX_DRIVE_FIRE_TRUCK_6593A0,
     HOOK_G_FUN_006594D0_6594D0,
     HOOK_G_FUN_006597B0_6597B0,
     HOOK_G_VT_86F45C_DESTRUCTOR_659DE0,
     HOOK_G_TASK_SIMPLE_GIVE_CPR_CTASK_SIMPLE_GIVE_CPR_659E10,
     HOOK_G_TASK_COMPLEX_TREAT_ACCIDENT_CTASK_COMPLEX_TREAT_ACCIDENT_659E70,
     HOOK_G_TASK_COMPLEX_MEDIC_TREAT_INJURED_PED_CTASK_COMPLEX_MEDIC_TREAT_INJURED_PED_659FC0,
+    HOOK_G_VT_86F544_DESTRUCTOR_65A0F0,
+    HOOK_G_TASK_COMPLEX_DRIVE_FIRE_TRUCK_CTASK_COMPLEX_DRIVE_FIRE_TRUCK_65A220,
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_CTASK_COMPLEX_USE_SWAT_ROPE_65A3C0,
     HOOK_G_TASK_COMPLEX_USE_WATER_CANNON_CTASK_COMPLEX_USE_WATER_CANNON_65A620,
     HOOK_G_VT_86F5FC_DESTRUCTOR_65A700,
@@ -8007,6 +9400,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_PICK_UP_ENTITY_CTASK_SIMPLE_PICK_UP_ENTITY_693590,
     HOOK_G_TASK_SIMPLE_PUT_DOWN_ENTITY_CTASK_SIMPLE_PUT_DOWN_ENTITY_6935C0,
     HOOK_G_VT_870B98_DESTRUCTOR_6935F0,
+    HOOK_G_VT_870BEC_DESTRUCTOR_693B80,
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_IN_FORMATION_DESTRUCTOR_694A40,
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_ANY_MEANS_DESTRUCTOR_694B30,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_AIMING_DESTRUCTOR_694C10,
@@ -8031,6 +9425,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_ALLOCATOR_KILL_THREATS_DRIVEBY_DESTRUCTOR_69CB60,
     HOOK_G_TASK_ALLOCATOR_CTASK_ALLOCATOR_69DAC0,
     HOOK_G_FUN_0069DB40_69DB40,
+    HOOK_G_DTOR_G_C09870_8567C0,
     HOOK_G_DTOR_CPED_GROUP_DEFAULT_TASK_ALLOCATORS_MS_FOLLOW_ANY_MEANS_ALLOCATOR_856800,
     HOOK_G_DTOR_CPED_GROUP_DEFAULT_TASK_ALLOCATORS_MS_FOLLOW_LIMITED_ALLOCATOR_856810,
     HOOK_G_DTOR_CPED_GROUP_DEFAULT_TASK_ALLOCATORS_MS_STAND_STILL_ALLOCATOR_856820,
@@ -8048,6 +9443,7 @@ pub const HOOKS: &[HookReg] = &[
 /// executed instruction, switch tables): the bodies this file was generated from (`gen_check`).
 pub const BODIES: &[Body] = &[
     (0x421250, 0x33C4C5F63063C2E4, &[(0x421250, 30)]),
+    (0x421270, 0xF20D05E132233074, &[(0x421270, 11)]),
     (0x43E290, 0x9909D969DD0EC51C, &[(0x43E290, 30)]),
     (0x43E2B0, 0xBA1E1E7B43F93EE5, &[(0x43E2B0, 11)]),
     (0x43E3B0, 0xB9931DC09F99D1BC, &[(0x43E3B0, 30)]),
@@ -8079,6 +9475,8 @@ pub const BODIES: &[Body] = &[
     (0x493890, 0xA50B8D55D234F249, &[(0x493890, 5), (0x1566130, 97)]),
     (0x4994C0, 0xC5729A880072329E, &[(0x4994C0, 30)]),
     (0x4AB9B0, 0xBDC4E32CA2D98803, &[(0x4AB9B0, 14)]),
+    (0x4ABA20, 0x4956322F91DB517D, &[(0x4ABA20, 38)]),
+    (0x4ABAA0, 0x384A7463B070D537, &[(0x4ABAA0, 30)]),
     (0x4AD330, 0xC3921F68AEE07A18, &[(0x4AD330, 97)]),
     (0x4ADF70, 0xCCD7F549B89F6115, &[(0x4ADF70, 81)]),
     (0x4AF1C0, 0x02A6FBB1DA9C11C4, &[(0x4AF1C0, 81)]),
@@ -8119,6 +9517,11 @@ pub const BODIES: &[Body] = &[
     (0x4B8840, 0x52C4FBEF22C09B4A, &[(0x4B8840, 11)]),
     (0x4B88E0, 0xF7F91D8A3B1DDB4C, &[(0x4B88E0, 30)]),
     (0x4B8900, 0x77FB06EF061B6DD6, &[(0x4B8900, 11)]),
+    (0x4B89D0, 0x2D36D835E02EC9F3, &[(0x4B89D0, 30)]),
+    (0x4B89F0, 0x05159C6FD77812D1, &[(0x4B89F0, 11)]),
+    (0x4B8AB0, 0x72CD8CD31B65D5C6, &[(0x4B8AB0, 30)]),
+    (0x4B8AD0, 0x976F5F71BA7AC2D8, &[(0x4B8AD0, 11)]),
+    (0x5EC410, 0xD2A7877A86C82AFD, &[(0x5EC410, 154)]),
     (0x5EC4B0, 0xE04E5D0B8E938E2D, &[(0x5EC4B0, 76)]),
     (0x5EE4E0, 0xDF612AFAA664A198, &[(0x5EE4E0, 76)]),
     (0x5EE5B0, 0xDF612AFAA664A198, &[(0x5EE5B0, 76)]),
@@ -8162,6 +9565,7 @@ pub const BODIES: &[Body] = &[
     (0x61BC80, 0x297DAF4951489D9D, &[(0x61BC80, 30)]),
     (0x61BF10, 0x8891DD594F401984, &[(0x61BF10, 5)]),
     (0x61C390, 0x1C4F595753B7F1BB, &[(0x61C390, 30)]),
+    (0x61DCA0, 0x84381A370E70DED1, &[(0x61DCA0, 90)]),
     (0x61F4D0, 0x5C3B35A79D761D47, &[(0x61F4D0, 90)]),
     (0x61F700, 0xA6B4EA1764523E2B, &[(0x61F700, 116)]),
     (0x61F950, 0x1501F970F7C555B7, &[(0x61F950, 90)]),
@@ -8200,7 +9604,10 @@ pub const BODIES: &[Body] = &[
     (0x6296B0, 0x53122B6B30D88531, &[(0x6296B0, 30)]),
     (0x6298E0, 0x25212579A99637F3, &[(0x6298E0, 30)]),
     (0x629900, 0x3B24027DBC8052FF, &[(0x629900, 30)]),
+    (0x62F250, 0x172FB1801591C828, &[(0x62F250, 30)]),
+    (0x62F270, 0x1AB0C30F35196AF4, &[(0x62F270, 11)]),
     (0x62F650, 0x2E9E2D290E4B6F9E, &[(0x62F650, 11)]),
+    (0x62F6D0, 0x9D553C8442FFDDF9, &[(0x62F6D0, 11)]),
     (0x62FB40, 0x9C2F07126948A261, &[(0x62FB40, 93)]),
     (0x62FCF0, 0xC442FE339ECB8E20, &[(0x62FCF0, 11)]),
     (0x62FF10, 0x469B4DCBEDE2FCF3, &[(0x62FF10, 11)]),
@@ -8248,6 +9655,7 @@ pub const BODIES: &[Body] = &[
     (0x637450, 0xB08DD8D87FF8225E, &[(0x637450, 30)]),
     (0x6374A0, 0x1CBB4A976835A7CE, &[(0x6374A0, 30)]),
     (0x6374C0, 0x27DB60BFED6DCECE, &[(0x6374C0, 30)]),
+    (0x6374E0, 0x0D1E912F57EE1B4E, &[(0x6374E0, 30)]),
     (0x637500, 0xCE214DCA363BB05B, &[(0x637500, 30)]),
     (0x6375B0, 0x467DDCD9BF321D44, &[(0x6375B0, 30)]),
     (0x6375D0, 0x56752B9F581483EF, &[(0x6375D0, 30)]),
@@ -8287,12 +9695,21 @@ pub const BODIES: &[Body] = &[
     (0x639F90, 0x139B2728D28E9C9A, &[(0x639F90, 30)]),
     (0x63A1B0, 0x2AD491E0083AC8B8, &[(0x63A1B0, 30)]),
     (0x63A1D0, 0xFE93F9B2648682FD, &[(0x63A1D0, 11)]),
+    (0x63AE00, 0x163F486CB0D0F750, &[(0x63AE00, 90)]),
+    (0x63B0C0, 0x25B7F8E649A7E9C7, &[(0x63B0C0, 90)]),
+    (0x63B3C0, 0xABBECC24B010DDF3, &[(0x63B3C0, 106)]),
+    (0x63B4A0, 0x05DCE49DEC1D4222, &[(0x63B4A0, 90)]),
     (0x63B650, 0x0E73B9A6007D3F1D, &[(0x63B650, 90)]),
     (0x63B850, 0xDF7FA5D406007DC1, &[(0x63B850, 106)]),
     (0x63BBD0, 0x21349E63C67E9E3D, &[(0x63BBD0, 90)]),
+    (0x63C030, 0xE0246A3A6F3BB38C, &[(0x63C030, 90)]),
     (0x63C2C0, 0x9C8983C1110F1AF3, &[(0x63C2C0, 90)]),
+    (0x63CCC0, 0x2EC771F31A7E527E, &[(0x63CCC0, 90)]),
+    (0x63D1A0, 0x082FC0E8E461E44D, &[(0x63D1A0, 115)]),
+    (0x63D730, 0x008E168F3B289148, &[(0x63D730, 11)]),
     (0x6404D0, 0xC16B996BEBEC3DFE, &[(0x6404D0, 90)]),
     (0x640590, 0x152F168F9E48581C, &[(0x640590, 30)]),
+    (0x640640, 0x0A45867D34A1BA85, &[(0x640640, 30)]),
     (0x640710, 0x0B58534FB34CBF3E, &[(0x640710, 30)]),
     (0x640BC0, 0xBB7CA18B037C9919, &[(0x640BC0, 30)]),
     (0x640E40, 0xA64AC500C48107CF, &[(0x640E40, 30)]),
@@ -8301,12 +9718,36 @@ pub const BODIES: &[Body] = &[
     (0x6422A0, 0x920BB4271F20FCDB, &[(0x6422A0, 30)]),
     (0x642370, 0x5C391DEAEEC60C62, &[(0x642370, 30)]),
     (0x6424F0, 0x644604F62DB8543B, &[(0x6424F0, 30)]),
+    (0x642F80, 0x4116DAFEFFF68D68, &[(0x642F80, 30)]),
+    (0x643260, 0x2F5D35D5E265BFF1, &[(0x643260, 30)]),
+    (0x643280, 0xF7B73F143C0979C6, &[(0x643280, 30)]),
+    (0x643490, 0xDF2F710D54E66A5F, &[(0x643490, 90)]),
     (0x6436E0, 0x3025CF51426370F0, &[(0x6436E0, 30)]),
+    (0x643760, 0xC5DB8376CD8CCE9B, &[(0x643760, 30)]),
+    (0x643A40, 0x491EC8918A4CDB24, &[(0x643A40, 30)]),
+    (0x643C80, 0x417CA206CA5B12D7, &[(0x643C80, 30)]),
     (0x643CA0, 0x274D738E22F5FF3D, &[(0x643CA0, 30)]),
     (0x643CC0, 0x2310E637743A86AD, &[(0x643CC0, 30)]),
     (0x643CE0, 0x87BB679272F80DBD, &[(0x643CE0, 30)]),
     (0x645350, 0x264590E3E7B2D7BD, &[(0x645350, 30)]),
+    (0x645BE0, 0xF8826C18E06257AF, &[(0x645BE0, 109)]),
+    (0x6460F0, 0xBC3C4807E4151177, &[(0x6460F0, 109)]),
     (0x646230, 0x9D104EEC7B78EBBC, &[(0x646230, 109)]),
+    (0x646380, 0x860737620D1EB617, &[(0x646380, 109)]),
+    (0x646570, 0xE456CD1F500BB07A, &[(0x646570, 109)]),
+    (0x646710, 0xB79A4DDCF06856C1, &[(0x646710, 109)]),
+    (0x646890, 0xD929013D07199E75, &[(0x646890, 109)]),
+    (0x646A00, 0x1BC89D79BF144DCC, &[(0x646A00, 90)]),
+    (0x646C00, 0x408558906C7320BB, &[(0x646C00, 90)]),
+    (0x646E50, 0x1C8A339AA2810E49, &[(0x646E50, 100)]),
+    (0x647260, 0x1AF8E8927F8328C8, &[(0x647260, 109)]),
+    (0x647490, 0x6A0AF2292C2750A2, &[(0x647490, 109)]),
+    (0x648070, 0x841925CDEC9E8D4B, &[(0x648070, 109)]),
+    (0x6482C0, 0x9948D61631411E0F, &[(0x6482C0, 109)]),
+    (0x648430, 0x8B5F8DEA9B61BB67, &[(0x648430, 90)]),
+    (0x648690, 0x4FB284CAFAD71129, &[(0x648690, 90)]),
+    (0x648C40, 0x1C1759BD9E2BCBE0, &[(0x648C40, 150)]),
+    (0x648DE0, 0x0453A2326DEFF4AD, &[(0x648DE0, 90)]),
     (0x648FC0, 0x44326552C0ADB35E, &[(0x648FC0, 90)]),
     (0x649100, 0xCEE199ACE10449E8, &[(0x649100, 90)]),
     (0x649280, 0xA09BF26503D0A6AA, &[(0x649280, 90)]),
@@ -8322,15 +9763,23 @@ pub const BODIES: &[Body] = &[
     (0x64B3C0, 0xE2F7A96473025676, &[(0x64B3C0, 30)]),
     (0x64B460, 0x53AE38BF4D07A4CF, &[(0x64B460, 30)]),
     (0x64B480, 0x31CA1CCABF9FE569, &[(0x64B480, 30)]),
+    (0x64B5B0, 0x61A3DDE1596A0B1E, &[(0x64B5B0, 30)]),
+    (0x64B930, 0x4E44DE0AA1B2FBFF, &[(0x64B930, 30)]),
     (0x64BEE0, 0x8E751C29A43A2966, &[(0x64BEE0, 30)]),
+    (0x64BF50, 0xE82C5BF23E7DAAF1, &[(0x64BF50, 30)]),
+    (0x64BF90, 0x503A1E2176B412F9, &[(0x64BF90, 30)]),
     (0x64C060, 0x1A271A8E5D7D33C8, &[(0x64C060, 30)]),
     (0x64C200, 0x553D3EFA9DE00652, &[(0x64C200, 30)]),
+    (0x64C580, 0x677AD74B07C02065, &[(0x64C580, 115)]),
+    (0x64C930, 0xFE11630374FADE00, &[(0x64C930, 30)]),
     (0x64C950, 0xE89213EB6FE146C1, &[(0x64C950, 30)]),
+    (0x64CC40, 0x6599E2E91A87EC39, &[(0x64CC40, 30)]),
     (0x64CD60, 0x95A8A69995D1D565, &[(0x64CD60, 30)]),
     (0x64CD80, 0xEC1125EC7DEC3612, &[(0x64CD80, 30)]),
     (0x64CE80, 0x826FC67DF5BE4CE1, &[(0x64CE80, 30)]),
     (0x64D1E0, 0xE27D400DDEC61695, &[(0x64D1E0, 30)]),
     (0x64D200, 0x87E3FF23B31CC730, &[(0x64D200, 30)]),
+    (0x64E2A0, 0xA065BBC83133A523, &[(0x64E2A0, 30)]),
     (0x64E480, 0xD4F7371ED855E304, &[(0x64E480, 30)]),
     (0x64FC00, 0xAF647E4C8602FFD2, &[(0x64FC00, 1)]),
     (0x653090, 0xC09E7CA03F440380, &[(0x653090, 93)]),
@@ -8359,12 +9808,15 @@ pub const BODIES: &[Body] = &[
     (0x6588A0, 0x295ED449282BC3DB, &[(0x6588A0, 93)]),
     (0x658AE0, 0x584A1922964C59EE, &[(0x658AE0, 11)]),
     (0x658C30, 0xD4C87D79D8C8555C, &[(0x658C30, 129)]),
+    (0x6593A0, 0x0B9379EC495592D7, &[(0x6593A0, 106)]),
     (0x6594D0, 0xA4AAA33E568D2742, &[(0x6594D0, 96)]),
     (0x6597B0, 0x043CABBAD2B38577, &[(0x6597B0, 11)]),
     (0x659DE0, 0xDE0C85CF70F1F39A, &[(0x659DE0, 30)]),
     (0x659E10, 0xE3DDFF97A08FF856, &[(0x659E10, 30)]),
     (0x659E70, 0xE27B2BC0B1DBD1FC, &[(0x659E70, 30)]),
     (0x659FC0, 0x7928C7AF65C4F532, &[(0x659FC0, 30)]),
+    (0x65A0F0, 0x3BCFC38AC0CBC074, &[(0x65A0F0, 30)]),
+    (0x65A220, 0x633B1DA41B95D4F7, &[(0x65A220, 30)]),
     (0x65A3C0, 0x12F5F6F859BD1351, &[(0x65A3C0, 30)]),
     (0x65A620, 0x10D62A9E4872F656, &[(0x65A620, 30)]),
     (0x65A700, 0x92535AC34A955227, &[(0x65A700, 30)]),
@@ -8480,6 +9932,7 @@ pub const BODIES: &[Body] = &[
     (0x693590, 0xAFB51589812AE6D5, &[(0x693590, 30)]),
     (0x6935C0, 0x2FA7F6C7070BEAC6, &[(0x6935C0, 30)]),
     (0x6935F0, 0xF3C8A5A3E34FF690, &[(0x6935F0, 30)]),
+    (0x693B80, 0x9DFFF60075881FB8, &[(0x693B80, 30)]),
     (0x694A40, 0x94204211E287FC4E, &[(0x694A40, 90)]),
     (0x694B30, 0xCC2A880DB3FA0DBC, &[(0x694B30, 90)]),
     (0x694C10, 0x49ED935B494FBDDE, &[(0x694C10, 90)]),
@@ -8504,6 +9957,7 @@ pub const BODIES: &[Body] = &[
     (0x69CB60, 0x7AD800C491646797, &[(0x69CB60, 81)]),
     (0x69DAC0, 0xD4DA55E0DF1E1847, &[(0x69DAC0, 56)]),
     (0x69DB40, 0x9367C6D8E3F52AD9, &[(0x69DB40, 11)]),
+    (0x8567C0, 0x5D75CBEC56332547, &[(0x8567C0, 49)]),
     (0x856800, 0xCB5A9F4D9500D38A, &[(0x5F6460, 7), (0x856800, 10)]),
     (0x856810, 0x2C12FBF0CCA88B46, &[(0x5F6490, 7), (0x856810, 10)]),
     (0x856820, 0x87C034F4B7FCAB52, &[(0x5F64C0, 7), (0x856820, 10)]),

@@ -30,12 +30,16 @@ orig! {
     fn c_4cebc0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x4CEBC0 => unported;
     /// `CAnimBlendAssociation::SetFinishCallback` (0x4CEBE0), thiscall, 2 stack argument(s)
     fn c_4cebe0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x4CEBE0 => unported;
+    /// `CAnimManager::BlendAnimation-id` (0x4D4610), cdecl, 4 stack argument(s)
+    fn c_4d4610_c4(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = cdecl 0x4D4610 => unported;
     /// `RpAnimBlend::RpAnimBlendClumpGetAssociation-AnimId` (0x4D68B0), cdecl, 2 stack argument(s)
     fn c_4d68b0_c2(a0: u32, a1: u32) -> u32 = cdecl 0x4D68B0 => unported;
     /// `CPed::SetMoveState` (0x5DEC00), thiscall, 1 stack argument(s)
     fn c_5dec00_t1(this: u32, a0: u32) -> u32 = thiscall 0x5DEC00 => unported;
     /// `CPed::IsPlayer` (0x5DF8F0), thiscall, 0 stack argument(s)
     fn c_5df8f0_t0(this: u32) -> u32 = thiscall 0x5DF8F0 => unported;
+    /// `CPed::SetPedPositionInCar` (0x5DF910), thiscall, 0 stack argument(s)
+    fn c_5df910_t0(this: u32) -> u32 = thiscall 0x5DF910 => unported;
     /// `CPed::IsAlive` (0x5E0170), thiscall, 0 stack argument(s)
     fn c_5e0170_t0(this: u32) -> u32 = thiscall 0x5E0170 => unported;
     /// `CPed::SetPedState` (0x5E4500), thiscall, 1 stack argument(s)
@@ -70,6 +74,8 @@ orig! {
     fn c_61af60_t1(this: u32, a0: u32) -> u32 = thiscall 0x61AF60 => unported;
     /// `CTaskSimpleDie::ProcessPed` (0x6397E0), thiscall, 1 stack argument(s)
     fn c_6397e0_t1(this: u32, a0: u32) -> u32 = thiscall 0x6397E0 => unported;
+    /// `CTaskSimpleCarDrive::MakeAbortable` (0x63C670), thiscall, 3 stack argument(s)
+    fn c_63c670_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x63C670 => unported;
     /// `CTaskUtilityLineUpPedWithCar::ProcessPed` (0x6513A0), thiscall, 3 stack argument(s)
     fn c_6513a0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6513A0 => unported;
     /// `CTaskSimpleGoTo::QuitIK` (0x667CA0), thiscall, 1 stack argument(s)
@@ -82,8 +88,12 @@ orig! {
     fn c_681810_t1(this: u32, a0: u32) -> u32 = thiscall 0x681810 => unported;
     /// `CTaskManager::GetSimplestActiveTask` (0x6819D0), thiscall, 0 stack argument(s)
     fn c_6819d0_t0(this: u32) -> u32 = thiscall 0x6819D0 => unported;
+    /// `CTaskSimpleDuck::MakeAbortable` (0x692100), thiscall, 3 stack argument(s)
+    fn c_692100_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x692100 => unported;
     /// `CTaskSimpleHoldEntity::DropEntity` (0x6930F0), thiscall, 2 stack argument(s)
     fn c_6930f0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6930F0 => unported;
+    /// `CTaskSimpleDuck::ProcessPed` (0x694390), thiscall, 1 stack argument(s)
+    fn c_694390_t1(this: u32, a0: u32) -> u32 = thiscall 0x694390 => unported;
     /// virtual slot +0x4 (`call [vtbl + 0x4]` on ECX), 0 stack argument(s)
     fn vslot_4_0(obj: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
     /// virtual slot +0x8 (`call [vtbl + 0x8]` on ECX), 0 stack argument(s)
@@ -1384,6 +1394,20 @@ pub fn g_task_simple_be_hit_make_abortable_620890(this: u32, _a0: u32, a1: u32, 
     }
 }
 
+/// `CTaskComplexKillPedOnFootMelee::MakeAbortable` (0x6210F0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x6210F0, conv = thiscall, name = "CTaskComplexKillPedOnFootMelee::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_kill_ped_on_foot_melee_make_abortable_6210f0(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
+}
+
 /// `CTaskComplexKillPedOnFootArmed::MakeAbortable` (0x6212B0): make-abortable, thiscall, `ret 12`; 36 instruction(s) matched.
 #[hook(addr = 0x6212B0, conv = thiscall, name = "CTaskComplexKillPedOnFootArmed::MakeAbortable", expect = "53 8B 5C 24 0C")]
 pub fn g_task_complex_kill_ped_on_foot_armed_make_abortable_6212b0(
@@ -1469,6 +1493,15 @@ pub fn g_task_complex_destroy_car_armed_make_abortable_622070(this: u32, a0: u32
             return (a1 & 0xFFFF_FF00) as u8;
         }
     }
+}
+
+/// `CTaskComplexRoadRage::MakeAbortable` (0x622170): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x622170, conv = thiscall, name = "CTaskComplexRoadRage::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_road_rage_make_abortable_622170(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
 }
 
 /// `CTaskSimpleStealthKill::MakeAbortable` (0x6226F0): make-abortable, thiscall, `ret 12`; 54 instruction(s) matched.
@@ -1977,6 +2010,15 @@ pub fn g_task_simple_clear_look_at_process_ped_6346c0(_this: u32, a0: u32) -> u8
     }
 }
 
+/// `CTaskComplex::MakeAbortable` (0x634F30): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x634F30, conv = thiscall, name = "CTaskComplex::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_make_abortable_634f30(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
+}
+
 /// `CTaskSimpleSetCharDecisionMaker::ProcessPed` (0x635430): virtual-leaf, thiscall, `ret 4`; 7 instruction(s) matched.
 #[hook(addr = 0x635430, conv = thiscall, name = "CTaskSimpleSetCharDecisionMaker::ProcessPed", expect = "8B 41 08 8B 4C 24 04")]
 pub fn g_task_simple_set_char_decision_maker_process_ped_635430(this: u32, a0: u32) -> u8 {
@@ -2089,6 +2131,117 @@ pub fn g_task_simple_die_in_car_process_ped_6398f0(this: u32, a0: u32) -> u8 {
     v1 as u8
 }
 
+/// `CTaskComplexEnterCarAsDriverTimed::StopTimer` (0x63AFF0): virtual-leaf, thiscall, `ret 4`; 20 instruction(s) matched.
+#[hook(addr = 0x63AFF0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::StopTimer", expect = "8B 44 24 04 56", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_driver_timed_stop_timer_63aff0(this: u32, a0: u32) -> u32 {
+    let v1 = c_4bc370_c1(a0);
+    if ((v1 & 0xFF) as u8) != (0 as u8) {
+        return v1;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x20));
+        if ((((v1 & 0xFFFF_FF00) | (v2 & 0xFF)) & 0xFF) as u8) == (0 as u8) {
+            return ((v1 & 0xFFFF_FF00) | (v2 & 0xFF));
+        } else {
+            let v3 = rd::<u32>(p(this), 0x18);
+            let v4 = rd::<u32>(p(this), 0x1C);
+            wr::<u8>(p(this), 0x21, 1 as u8);
+            let v5 = g::<u32>(0xB7_CB84).read();
+            let v6 = v4.wrapping_sub((v5.wrapping_sub(v3)));
+            wr::<u32>(p(this), 0x1C, v6);
+            return v5.wrapping_sub(v3);
+        }
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::StopTimer` (0x63B2E0): virtual-leaf, thiscall, `ret 4`; 20 instruction(s) matched.
+#[hook(addr = 0x63B2E0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::StopTimer", expect = "8B 44 24 04 56", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_timed_stop_timer_63b2e0(this: u32, a0: u32) -> u32 {
+    let v1 = c_4bc370_c1(a0);
+    if ((v1 & 0xFF) as u8) != (0 as u8) {
+        return v1;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x28));
+        if ((((v1 & 0xFFFF_FF00) | (v2 & 0xFF)) & 0xFF) as u8) == (0 as u8) {
+            return ((v1 & 0xFFFF_FF00) | (v2 & 0xFF));
+        } else {
+            let v3 = rd::<u32>(p(this), 0x20);
+            let v4 = rd::<u32>(p(this), 0x24);
+            wr::<u8>(p(this), 0x29, 1 as u8);
+            let v5 = g::<u32>(0xB7_CB84).read();
+            let v6 = v4.wrapping_sub((v5.wrapping_sub(v3)));
+            wr::<u32>(p(this), 0x24, v6);
+            return v5.wrapping_sub(v3);
+        }
+    }
+}
+
+/// `CTaskSimpleCarSetTempAction::MakeAbortable` (0x63D740): make-abortable, thiscall, `ret 12`; 21 instruction(s) matched.
+#[hook(addr = 0x63D740, conv = thiscall, name = "CTaskSimpleCarSetTempAction::MakeAbortable", expect = "8B 44 24 0C 8B 54 24 04", unverified = "ai7-2", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_set_temp_action_make_abortable_63d740(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = c_63c670_t3(this, a0, a1, a2);
+    if ((v1 & 0xFF) as u8) == (0 as u8) {
+        return v1 as u8;
+    } else {
+        let v2 = rd::<u32>(p(this), 8);
+        if v2 == 0 {
+            return v1 as u8;
+        } else {
+            wr::<u8>(p(v2), 0x3BB, 0 as u8);
+            let v3 = rd::<u32>(p(this), 8);
+            let v4 = g::<u32>(0xB7_CB84).read();
+            wr::<u32>(p(v3), 0x3BC, v4);
+            return v1 as u8;
+        }
+    }
+}
+
+/// `CTaskSimpleCarAlign::MakeAbortable` (0x645C50): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
+#[hook(addr = 0x645C50, conv = thiscall, name = "CTaskSimpleCarAlign::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-2", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_align_make_abortable_645c50(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
+    if a1 != 2 {
+        return 0 as u8;
+    } else {
+        let v1 = rd::<u32>(p(this), 0xC);
+        if v1 == 0 {
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        } else {
+            wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        }
+    }
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::MakeAbortable` (0x646160): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
+#[hook(addr = 0x646160, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-2", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_open_locked_door_from_outside_make_abortable_646160(
+    this: u32,
+    _a0: u32,
+    a1: u32,
+    _a2: u32,
+) -> u8 {
+    if a1 != 2 {
+        return 0 as u8;
+    } else {
+        let v1 = rd::<u32>(p(this), 0xC);
+        if v1 == 0 {
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        } else {
+            wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        }
+    }
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::SetPedPosition` (0x646180): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
+#[hook(addr = 0x646180, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::SetPedPosition", expect = "8B 41 0C 8B 51 10", unverified = "ai7-2", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_open_locked_door_from_outside_set_ped_position_646180(this: u32, a0: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 0xC);
+    let v2 = rd::<u32>(p(this), 0x10);
+    let v3 = rd::<u32>(p(this), 0x18);
+    let v4 = c_6513a0_t3(v3, a0, v2, v1);
+    ((v4 & 0xFFFF_FF00) | 1) as u8
+}
+
 /// `CTaskSimplePickUpBike::MakeAbortable` (0x6462A0): make-abortable, thiscall, `ret 12`; 12 instruction(s) matched.
 #[hook(addr = 0x6462A0, conv = thiscall, name = "CTaskSimplePickUpBike::MakeAbortable", expect = "83 7C 24 08 02")]
 pub fn g_task_simple_pick_up_bike_make_abortable_6462a0(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
@@ -2116,6 +2269,125 @@ pub fn g_task_simple_pick_up_bike_make_abortable_6462a0(this: u32, _a0: u32, a1:
 /// `CTaskSimplePickUpBike::SetPedPosition` (0x6462D0): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
 #[hook(addr = 0x6462D0, conv = thiscall, name = "CTaskSimplePickUpBike::SetPedPosition", expect = "8B 41 0C 8B 51 10")]
 pub fn g_task_simple_pick_up_bike_set_ped_position_6462d0(this: u32, a0: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 0xC);
+    let v2 = rd::<u32>(p(this), 0x10);
+    let v3 = rd::<u32>(p(this), 0x18);
+    let v4 = c_6513a0_t3(v3, a0, v2, v1);
+    ((v4 & 0xFFFF_FF00) | 1) as u8
+}
+
+/// `CTaskSimpleCarGetIn::MakeAbortable` (0x646780): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
+#[hook(addr = 0x646780, conv = thiscall, name = "CTaskSimpleCarGetIn::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_get_in_make_abortable_646780(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
+    if a1 != 2 {
+        return 0 as u8;
+    } else {
+        let v1 = rd::<u32>(p(this), 0xC);
+        if v1 == 0 {
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        } else {
+            wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        }
+    }
+}
+
+/// `CTaskSimpleCarShuffle::MakeAbortable` (0x646900): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
+#[hook(addr = 0x646900, conv = thiscall, name = "CTaskSimpleCarShuffle::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_shuffle_make_abortable_646900(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
+    if a1 != 2 {
+        return 0 as u8;
+    } else {
+        let v1 = rd::<u32>(p(this), 0xC);
+        if v1 == 0 {
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        } else {
+            wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        }
+    }
+}
+
+/// `CTaskSimpleCarWaitToSlowDown::MakeAbortable` (0x646A60): make-abortable, thiscall, `ret 12`; 34 instruction(s) matched.
+#[hook(addr = 0x646A60, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::MakeAbortable", expect = "8B 44 24 08 83 F8 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_wait_to_slow_down_make_abortable_646a60(
+    this: u32,
+    _a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u8 {
+    if a1 != 2 {
+        if a1 != 1 {
+            wr::<u32>(p(this), 0x10, 2);
+            return (a1 & 0xFFFF_FF00) as u8;
+        } else {
+            if a2 == 0 {
+                wr::<u32>(p(this), 0x10, 2);
+                return (a1 & 0xFFFF_FF00) as u8;
+            } else {
+                let _v1 = rd::<u32>(p(a2), 0);
+                let v2 = vslot_4_0(p(a2));
+                if v2 != 9 {
+                    wr::<u32>(p(this), 0x10, 2);
+                    return (v2 & 0xFFFF_FF00) as u8;
+                } else {
+                    let v3 = u32::from(rd::<u8>(p(a2), 0x40));
+                    if ((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFF) as u8) == (0 as u8) {
+                        wr::<u32>(p(this), 0x10, 2);
+                        return (((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) as u8;
+                    } else {
+                        let v4 = u32::from(rd::<u8>(p(a2), 0xC));
+                        if ((((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF) as u8)
+                            == (0 as u8)
+                        {
+                            wr::<u32>(p(this), 0x10, 2);
+                            return (((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF))
+                                & 0xFFFF_FF00) as u8;
+                        } else {
+                            return ((((((v2 & 0xFFFF_FF00) | (v3 & 0xFF)) & 0xFFFF_FF00) | (v4 & 0xFF))
+                                & 0xFFFF_FF00)
+                                | 1) as u8;
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        return ((a1 & 0xFFFF_FF00) | 1) as u8;
+    }
+}
+
+/// `CTaskSimpleCarWaitToSlowDown::SetPedPosition` (0x646AB0): virtual-leaf, thiscall, `ret 4`; 7 instruction(s) matched.
+#[hook(addr = 0x646AB0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::SetPedPosition", expect = "8B 41 08 85 C0", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_wait_to_slow_down_set_ped_position_646ab0(this: u32, a0: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        return ((v1 & 0xFFFF_FF00) | 1) as u8;
+    } else {
+        let v2 = c_5df910_t0(a0);
+        return ((v2 & 0xFFFF_FF00) | 1) as u8;
+    }
+}
+
+/// `CTaskSimpleCarGetOut::MakeAbortable` (0x6472D0): make-abortable, thiscall, `ret 12`; 10 instruction(s) matched.
+#[hook(addr = 0x6472D0, conv = thiscall, name = "CTaskSimpleCarGetOut::MakeAbortable", expect = "83 7C 24 08 02", unverified = "ai7-3", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_task_simple_car_get_out_make_abortable_6472d0(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
+    if a1 != 2 {
+        return 0 as u8;
+    } else {
+        let v1 = rd::<u32>(p(this), 0xC);
+        if v1 == 0 {
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        } else {
+            wr::<u32>(p(v1), 0x1C, 0xC47A_0000);
+            return ((v1 & 0xFFFF_FF00) | 1) as u8;
+        }
+    }
+}
+
+/// `CTaskSimpleCarSlowDragPedOut::SetPedPosition` (0x6480E0): virtual-leaf, thiscall, `ret 4`; 10 instruction(s) matched.
+#[hook(addr = 0x6480E0, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::SetPedPosition", expect = "8B 41 0C 8B 51 10", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_slow_drag_ped_out_set_ped_position_6480e0(this: u32, a0: u32) -> u8 {
     let v1 = rd::<u32>(p(this), 0xC);
     let v2 = rd::<u32>(p(this), 0x10);
     let v3 = rd::<u32>(p(this), 0x18);
@@ -2613,6 +2885,15 @@ pub fn g_vt_86ff00_make_abortable_66ad40(this: u32, a0: u32, _a1: u32, _a2: u32)
     }
 }
 
+/// `CTaskComplexGoToAttractor::MakeAbortable` (0x66B6B0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x66B6B0, conv = thiscall, name = "CTaskComplexGoToAttractor::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_go_to_attractor_make_abortable_66b6b0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
+}
+
 /// `vt_870114::MakeAbortable` (0x66BA90): make-abortable, thiscall, `ret 12`; 45 instruction(s) matched.
 #[hook(addr = 0x66BA90, conv = thiscall, name = "vt_870114::MakeAbortable", expect = "53 56 57 8B 7C 24 14")]
 pub fn g_vt_870114_make_abortable_66ba90(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
@@ -2700,6 +2981,24 @@ pub fn g_task_simple_slide_to_coord_make_abortable_66c4d0(this: u32, a0: u32, a1
     } else {
         let v2 = c_61a790_t3(this, a0, a1, a2);
         return v2 as u8;
+    }
+}
+
+/// `CTaskComplexInvestigateDisturbance::MakeAbortable` (0x66C800): make-abortable, thiscall, `ret 12`; 7 instruction(s) matched.
+#[hook(addr = 0x66C800, conv = thiscall, name = "CTaskComplexInvestigateDisturbance::MakeAbortable", expect = "8B 49 08 85 C9", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_investigate_disturbance_make_abortable_66c800(
+    this: u32,
+    a0: u32,
+    a1: u32,
+    a2: u32,
+) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    if v1 == 0 {
+        return 1 as u8;
+    } else {
+        let _v2 = rd::<u32>(p(v1), 0);
+        let v3 = vslot_18_3(p(v1), a0, a1, a2);
+        return v3 as u8;
     }
 }
 
@@ -3188,6 +3487,24 @@ pub fn g_task_complex_walk_alongside_ped_make_abortable_683320(this: u32, a0: u3
     ((v3 & 0xFFFF_FF00) | ((u32::from(((v3 & 0xFF) as u8) != (0 as u8))) & 0xFF)) as u8
 }
 
+/// `CTaskComplexArrestPed::MakeAbortable` (0x68BA60): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x68BA60, conv = thiscall, name = "CTaskComplexArrestPed::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_arrest_ped_make_abortable_68ba60(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
+}
+
+/// `CTaskComplexPolicePursuit::MakeAbortable` (0x68BAB0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x68BAB0, conv = thiscall, name = "CTaskComplexPolicePursuit::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_police_pursuit_make_abortable_68bab0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
+}
+
 /// `CTaskSimpleShakeFist::MakeAbortable` (0x690C10): make-abortable, thiscall, `ret 12`; 26 instruction(s) matched.
 #[hook(addr = 0x690C10, conv = thiscall, name = "CTaskSimpleShakeFist::MakeAbortable", expect = "8B 44 24 08 83 F8 01")]
 pub fn g_task_simple_shake_fist_make_abortable_690c10(this: u32, _a0: u32, a1: u32, _a2: u32) -> u8 {
@@ -3223,6 +3540,47 @@ pub fn g_task_simple_shake_fist_make_abortable_690c10(this: u32, _a0: u32, a1: u
                 return (a1 & 0xFFFF_FF00) as u8;
             }
         }
+    }
+}
+
+/// `vt_870bec::MakeAbortable` (0x692700): make-abortable, thiscall, `ret 12`; 63 instruction(s) matched.
+#[hook(addr = 0x692700, conv = thiscall, name = "vt_870bec::MakeAbortable", expect = "53 8B 5C 24 0C", unverified = "ai7-4", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_vt_870bec_make_abortable_692700(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    if a1 != 2 {
+        if a2 == 0 {
+            let v1 = c_692100_t3(this, a0, a1, a2);
+            return v1 as u8;
+        } else {
+            let _v2 = rd::<u32>(p(a2), 0);
+            let v3 = vslot_4_0(p(a2));
+            if v3 != 0x31 {
+                let v4 = c_692100_t3(this, a0, a1, a2);
+                return v4 as u8;
+            } else {
+                let v5 = rd::<u32>(p(this), 0x10);
+                if v5 == 0 {
+                    return (v3 & 0xFFFF_FF00) as u8;
+                } else {
+                    c_4cebe0_t2(v5, 0x4D_1390, 0);
+                    let v7 = rd::<u32>(p(this), 0x14);
+                    wr::<u32>(p(this), 0x10, 0);
+                    if v7 == 0 {
+                        let v8 = rd::<u32>(p(a0), 0x46C);
+                        wr::<u32>(p(a0), 0x46C, (v8 & 0xFBFF_FFFF));
+                        return ((a0 & 0xFFFF_FF00) | 1) as u8;
+                    } else {
+                        c_4cebe0_t2(v7, 0x4D_1390, 0);
+                        wr::<u32>(p(this), 0x14, 0);
+                        let v10 = rd::<u32>(p(a0), 0x46C);
+                        wr::<u32>(p(a0), 0x46C, (v10 & 0xFBFF_FFFF));
+                        return ((a0 & 0xFFFF_FF00) | 1) as u8;
+                    }
+                }
+            }
+        }
+    } else {
+        let v11 = c_692100_t3(this, a0, a1, a2);
+        return v11 as u8;
     }
 }
 
@@ -3272,6 +3630,32 @@ pub fn g_task_simple_hold_entity_make_abortable_693bd0(this: u32, a0: u32, a1: u
     }
 }
 
+/// `vt_870bec::ProcessPed` (0x694640): virtual-leaf, thiscall, `ret 4`; 25 instruction(s) matched.
+#[hook(addr = 0x694640, conv = thiscall, name = "vt_870bec::ProcessPed", expect = "56 8B F1 8B 46 10", unverified = "ai7-4", route = "L2", hazards = "ax-al-return,heap-writes")]
+pub fn g_vt_870bec_process_ped_694640(this: u32, a0: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 != 0 {
+        let v2 = c_694390_t1(this, a0);
+        return v2 as u8;
+    } else {
+        let v3 = rd::<u32>(p(a0), 0x18);
+        let v4 = c_4d4610_c4(v3, 0, 0x8D, 0x4080_0000);
+        wr::<u32>(p(this), 0x10, v4);
+        c_4cebc0_t2(v4, 0x69_2550, this);
+        let v6 = c_694390_t1(this, a0);
+        return v6 as u8;
+    }
+}
+
+/// `CTaskComplexFollowPedFootsteps::MakeAbortable` (0x694ED0): make-abortable, thiscall, `ret 12`; 3 instruction(s) matched.
+#[hook(addr = 0x694ED0, conv = thiscall, name = "CTaskComplexFollowPedFootsteps::MakeAbortable", expect = "8B 49 08 8B 01", unverified = "ai7-5", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_complex_follow_ped_footsteps_make_abortable_694ed0(this: u32, a0: u32, a1: u32, a2: u32) -> u8 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_18_3(p(v1), a0, a1, a2);
+    v3 as u8
+}
+
 pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_UNINTERRUPTABLE_MAKE_ABORTABLE_43E390,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_STANDARD_MAKE_ABORTABLE_46ACF0,
@@ -3319,9 +3703,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_86D7FC_MAKE_ABORTABLE_61FEE0,
     HOOK_G_TASK_SIMPLE_CHOKING_MAKE_ABORTABLE_6203F0,
     HOOK_G_TASK_SIMPLE_BE_HIT_MAKE_ABORTABLE_620890,
+    HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_MELEE_MAKE_ABORTABLE_6210F0,
     HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_ARMED_MAKE_ABORTABLE_6212B0,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_MAKE_ABORTABLE_621C80,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_ARMED_MAKE_ABORTABLE_622070,
+    HOOK_G_TASK_COMPLEX_ROAD_RAGE_MAKE_ABORTABLE_622170,
     HOOK_G_TASK_SIMPLE_STEALTH_KILL_MAKE_ABORTABLE_6226F0,
     HOOK_G_TASK_SIMPLE_SET_CHAR_IGNORE_WEAPON_RANGE_FLAG_PROCESS_PED_622B50,
     HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_MAKE_ABORTABLE_625E40,
@@ -3339,13 +3725,26 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_SUNBATHE_MAKE_ABORTABLE_6320F0,
     HOOK_G_TASK_COMPLEX_BE_IN_GROUP_MAKE_ABORTABLE_632EB0,
     HOOK_G_TASK_SIMPLE_CLEAR_LOOK_AT_PROCESS_PED_6346C0,
+    HOOK_G_TASK_COMPLEX_MAKE_ABORTABLE_634F30,
     HOOK_G_TASK_SIMPLE_SET_CHAR_DECISION_MAKER_PROCESS_PED_635430,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_AREA_CODES_MATCH_MAKE_ABORTABLE_6355D0,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_LEADER_AREA_CODES_MATCH_MAKE_ABORTABLE_6356A0,
     HOOK_G_TASK_COMPLEX_USE_SCRIPTED_BRAIN_MAKE_ABORTABLE_635970,
     HOOK_G_TASK_SIMPLE_IKCHAIN_MAKE_ABORTABLE_639450,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_STOP_TIMER_63AFF0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_STOP_TIMER_63B2E0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_TEMP_ACTION_MAKE_ABORTABLE_63D740,
+    HOOK_G_TASK_SIMPLE_CAR_ALIGN_MAKE_ABORTABLE_645C50,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_MAKE_ABORTABLE_646160,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_SET_PED_POSITION_646180,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_MAKE_ABORTABLE_6462A0,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_SET_PED_POSITION_6462D0,
+    HOOK_G_TASK_SIMPLE_CAR_GET_IN_MAKE_ABORTABLE_646780,
+    HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_MAKE_ABORTABLE_646900,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_MAKE_ABORTABLE_646A60,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_SET_PED_POSITION_646AB0,
+    HOOK_G_TASK_SIMPLE_CAR_GET_OUT_MAKE_ABORTABLE_6472D0,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_SET_PED_POSITION_6480E0,
     HOOK_G_TASK_SIMPLE_BIKE_JACKED_MAKE_ABORTABLE_648CE0,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_PED_IS_IN_CAR_PROCESS_PED_649700,
     HOOK_G_TASK_SIMPLE_HIT_HEAD_MAKE_ABORTABLE_6530F0,
@@ -3364,8 +3763,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_FOLLOW_NODE_ROUTE_STOP_TIMER_6694E0,
     HOOK_G_TASK_COMPLEX_AVOID_OTHER_PED_WHILE_WANDERING_MAKE_ABORTABLE_66A260,
     HOOK_G_VT_86FF00_MAKE_ABORTABLE_66AD40,
+    HOOK_G_TASK_COMPLEX_GO_TO_ATTRACTOR_MAKE_ABORTABLE_66B6B0,
     HOOK_G_VT_870114_MAKE_ABORTABLE_66BA90,
     HOOK_G_TASK_SIMPLE_SLIDE_TO_COORD_MAKE_ABORTABLE_66C4D0,
+    HOOK_G_TASK_COMPLEX_INVESTIGATE_DISTURBANCE_MAKE_ABORTABLE_66C800,
     HOOK_G_VT_87004C_MAKE_ABORTABLE_66CB30,
     HOOK_G_TASK_INTERIOR_USE_INFO_MAKE_ABORTABLE_675B30,
     HOOK_G_VT_870314_MAKE_ABORTABLE_675D60,
@@ -3377,8 +3778,13 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_JUMP_MAKE_ABORTABLE_679B60,
     HOOK_G_TASK_COMPLEX_JUMP_MAKE_ABORTABLE_67A070,
     HOOK_G_TASK_COMPLEX_WALK_ALONGSIDE_PED_MAKE_ABORTABLE_683320,
+    HOOK_G_TASK_COMPLEX_ARREST_PED_MAKE_ABORTABLE_68BA60,
+    HOOK_G_TASK_COMPLEX_POLICE_PURSUIT_MAKE_ABORTABLE_68BAB0,
     HOOK_G_TASK_SIMPLE_SHAKE_FIST_MAKE_ABORTABLE_690C10,
+    HOOK_G_VT_870BEC_MAKE_ABORTABLE_692700,
     HOOK_G_TASK_SIMPLE_HOLD_ENTITY_MAKE_ABORTABLE_693BD0,
+    HOOK_G_VT_870BEC_PROCESS_PED_694640,
+    HOOK_G_TASK_COMPLEX_FOLLOW_PED_FOOTSTEPS_MAKE_ABORTABLE_694ED0,
 ];
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
@@ -3431,9 +3837,11 @@ pub const BODIES: &[Body] = &[
     (0x61FEE0, 0x82479CBC807CA3D4, &[(0x61FEE0, 76)]),
     (0x6203F0, 0x40E144E8C655BD17, &[(0x6203F0, 136)]),
     (0x620890, 0x30E38D8D038CD9DE, &[(0x620890, 104)]),
+    (0x6210F0, 0x73938DDE8D0EE714, &[(0x6210F0, 8)]),
     (0x6212B0, 0xB3109E56AEF1B55E, &[(0x6212B0, 76)]),
     (0x621C80, 0x81DFAE2348A5B715, &[(0x621C80, 43)]),
     (0x622070, 0x81DFAE2348A5B715, &[(0x622070, 43)]),
+    (0x622170, 0x73938DDE8D0EE714, &[(0x622170, 8)]),
     (0x6226F0, 0x59DA8D3A67B8E43F, &[(0x6226F0, 154)]),
     (0x622B50, 0xBE7ED4DF6859A1A5, &[(0x622B50, 38)]),
     (0x625E40, 0xEA807665F7ACE51C, &[(0x625E40, 48)]),
@@ -3451,14 +3859,27 @@ pub const BODIES: &[Body] = &[
     (0x6320F0, 0xC1E4D1C6058E61AA, &[(0x6320F0, 76)]),
     (0x632EB0, 0x7EACCFDAAD81B224, &[(0x632EB0, 134)]),
     (0x6346C0, 0x04BAA5BE9E6B550B, &[(0x6346C0, 42)]),
+    (0x634F30, 0x73938DDE8D0EE714, &[(0x634F30, 8)]),
     (0x635430, 0x6131C9FBC1837C64, &[(0x635430, 24)]),
     (0x6355D0, 0x2FA1BACC250E8200, &[(0x6355D0, 15)]),
     (0x6356A0, 0x64CBA5AA6771B208, &[(0x6356A0, 25)]),
     (0x635970, 0x11EB87D1927B756B, &[(0x635970, 78)]),
     (0x639450, 0x95697F491D9D173E, &[(0x639450, 57)]),
     (0x6398F0, 0x96544CCED671C8B7, &[(0x6398F0, 5)]),
+    (0x63AFF0, 0x4217661707DA43EC, &[(0x63AFF0, 53)]),
+    (0x63B2E0, 0x6CB9B7DFC7D0C219, &[(0x63B2E0, 53)]),
+    (0x63D740, 0xA35782FB5B62189B, &[(0x63D740, 62)]),
+    (0x645C50, 0x5B28A8B5F7895C3E, &[(0x645C50, 31)]),
+    (0x646160, 0x5B28A8B5F7895C3E, &[(0x646160, 31)]),
+    (0x646180, 0x2CE2D7BA48A079B0, &[(0x646180, 26)]),
     (0x6462A0, 0x27B006D150A4CB8B, &[(0x6462A0, 41)]),
     (0x6462D0, 0x369784DA9F02738A, &[(0x6462D0, 26)]),
+    (0x646780, 0x5B28A8B5F7895C3E, &[(0x646780, 31)]),
+    (0x646900, 0x5B28A8B5F7895C3E, &[(0x646900, 31)]),
+    (0x646A60, 0x4889CE8936B161BB, &[(0x646A60, 79)]),
+    (0x646AB0, 0x5635008B77A9448F, &[(0x646AB0, 21)]),
+    (0x6472D0, 0x5B28A8B5F7895C3E, &[(0x6472D0, 31)]),
+    (0x6480E0, 0x207AC80868478AF0, &[(0x6480E0, 26)]),
     (0x648CE0, 0x5B28A8B5F7895C3E, &[(0x648CE0, 31)]),
     (0x649700, 0x30531AAB1EC167D7, &[(0x649700, 147)]),
     (0x6530F0, 0x3AEFEF39E27744BE, &[(0x6530F0, 83)]),
@@ -3477,8 +3898,10 @@ pub const BODIES: &[Body] = &[
     (0x6694E0, 0x15A8D90213DF4602, &[(0x6694E0, 53)]),
     (0x66A260, 0xC0DAAD698979D5D3, &[(0x66A260, 89)]),
     (0x66AD40, 0xD5E06111B7D7231B, &[(0x66AD40, 48)]),
+    (0x66B6B0, 0x73938DDE8D0EE714, &[(0x66B6B0, 8)]),
     (0x66BA90, 0xDB077A2780DEB0F7, &[(0x66BA90, 104)]),
     (0x66C4D0, 0xD246CE14E52346EF, &[(0x66C4D0, 16)]),
+    (0x66C800, 0xDCC3108C785C03BE, &[(0x66C800, 17)]),
     (0x66CB30, 0xB7B32F3CCF73FF2F, &[(0x66CB30, 82)]),
     (0x675B30, 0x93A50F2DD2564445, &[(0x675B30, 48)]),
     (0x675D60, 0x490AD216AECFEECB, &[(0x675D60, 99)]),
@@ -3490,8 +3913,13 @@ pub const BODIES: &[Body] = &[
     (0x679B60, 0xED55A7DA46E8D693, &[(0x679B60, 32)]),
     (0x67A070, 0x0BBEC07632C1F36B, &[(0x67A070, 131)]),
     (0x683320, 0x713880985C97D815, &[(0x683320, 31)]),
+    (0x68BA60, 0x73938DDE8D0EE714, &[(0x68BA60, 8)]),
+    (0x68BAB0, 0x73938DDE8D0EE714, &[(0x68BAB0, 8)]),
     (0x690C10, 0x01AB99FFBA941A10, &[(0x690C10, 79)]),
+    (0x692700, 0x5CFFB06A1BE72641, &[(0x692700, 167)]),
     (0x693BD0, 0x611E0E8799569835, &[(0x693BD0, 97)]),
+    (0x694640, 0x1CD13B5BCACE8B88, &[(0x694640, 68)]),
+    (0x694ED0, 0x73938DDE8D0EE714, &[(0x694ED0, 8)]),
 ];
 
 #[cfg(all(test, not(sa_phase_a)))]
