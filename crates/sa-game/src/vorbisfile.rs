@@ -210,6 +210,7 @@ fn apply_skip(f: &mut File) {
 }
 
 /// `ov_open_callbacks(void* ds, OggVorbis_File* vf, char* initial, long ibytes, ov_callbacks cb)`.
+#[allow(clippy::too_many_arguments)] // the C signature: four callbacks passed by value
 pub fn ov_open_callbacks(ds: u32, vf: u32, _initial: u32, _ibytes: u32, read: u32, seek: u32, close: u32, tell: u32) -> i32 {
     if let Some(old) = take(vf) {
         drop(old);
@@ -397,6 +398,7 @@ pub fn thunks() -> Vec<(u32, &'static str, usize)> {
     macro_rules! entry {
         ($addr:literal, $name:literal, $f:path; fn($($a:ident : $t:ty),*) -> $r:ty) => {{
             // cdecl on x86 (the thunks' convention)
+            #[allow(clippy::too_many_arguments)]
             extern "C-unwind" fn w($($a: $t),*) -> $r {
                 $f($($a),*)
             }

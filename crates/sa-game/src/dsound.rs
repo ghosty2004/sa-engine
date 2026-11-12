@@ -15,7 +15,7 @@
 //! * A buffer's play cursor advances in real time while it plays, at its frequency
 //!   (`SetFrequency`, else the format's rate); the mixer thread (every [`MIX_MS`] ms) advances
 //!   every playing buffer and mixes the frames it passed into the sink at 44.1 kHz stereo 16 bit
-//!   (linear interpolation, gain `10^(volume/2000)`, pan as DirectSound attenuates the far side:
+//!   (windowed-sinc resampling, 16 taps, mixed in f32 and clipped at 16 bits as DirectSound's output is; gain `10^(volume/2000)`, pan as DirectSound attenuates the far side:
 //!   `10^(-|pan|/2000)`, mono buffers centred). A non-looping buffer
 //!   stops at its end (`GetStatus` then reports not playing); a looping one wraps.
 //! * The write cursor is the play cursor plus [`WRITE_LEAD_MS`] ms of data (DirectSound's
@@ -310,6 +310,9 @@ fn trace_levels(s: &State) {
         return;
     }
     *l = Some(now);
+    // AEAudioHardware (0xB5F8B8): music master / effects master / music fader / effects fader scaling factors
+    let f = |o: usize| GPtr::<f32>::from_addr(0xB5_F8B8 + o).read();
+    eprintln!("dsound: hw factors music {} sfx {} music fader {} sfx fader {}", f(0x410), f(0x414), f(0x418), f(0x41C));
     for (h, b) in &s.buffers {
         if !b.playing || b.block == 0 {
             continue;
@@ -327,7 +330,7 @@ fn trace_levels(s: &State) {
 struct Mixer {
     sink: Box<dyn AudioOut>,
     carry: f64,
-    mix: Vec<i32>,
+    mix: Vec<f32>,
     pcm: Vec<i16>,
 }
 
@@ -357,7 +360,7 @@ fn mix_frames(m: &mut Mixer, frames: usize) {
         return;
     }
     m.mix.clear();
-    m.mix.resize(frames * 2, 0);
+    m.mix.resize(frames * 2, 0.0);
     let mix = &mut m.mix;
     with_state(|s| {
         for b in s.buffers.values_mut() {
@@ -369,8 +372,42 @@ fn mix_frames(m: &mut Mixer, frames: usize) {
     });
     m.pcm.clear();
     let pcm = &mut m.pcm;
-    pcm.extend(m.mix.iter().map(|v| (*v).clamp(-32768, 32767) as i16));
+    // DirectSound's 16-bit output: the float mix rounded, clipped at full scale
+    pcm.extend(m.mix.iter().map(|v| v.round().clamp(-32768.0, 32767.0) as i16));
+    #[cfg(not(target_arch = "wasm32"))]
+    wav_tap(&m.pcm);
     m.sink.push(&m.pcm);
+}
+
+/// `SA_GAME_AUDIO_WAV=PATH` (native, evidence runs): every mixed chunk is also appended to a 44.1 kHz stereo 16-bit
+/// WAV file (the header's sizes are rewritten after each chunk, so the file is valid while the game runs). The file is
+/// derived from the user's game audio: never commit it.
+#[cfg(not(target_arch = "wasm32"))]
+fn wav_tap(pcm: &[i16]) {
+    use std::io::{Seek, SeekFrom, Write};
+    static TAP: Mutex<Option<Option<(std::fs::File, u32)>>> = Mutex::new(None);
+    let mut g = TAP.lock().unwrap_or_else(|e| e.into_inner());
+    let t = g.get_or_insert_with(|| {
+        let path = crate::env::var_os("SA_GAME_AUDIO_WAV")?;
+        let mut f = std::fs::File::create(path).ok()?;
+        let mut h = Vec::with_capacity(44);
+        h.extend_from_slice(b"RIFF\0\0\0\0WAVEfmt ");
+        for v in [16u32, 0x0002_0001, 44100, 44100 * 4, 0x0010_0004] {
+            h.extend_from_slice(&v.to_le_bytes());
+        }
+        h.extend_from_slice(b"data\0\0\0\0");
+        f.write_all(&h).ok()?;
+        Some((f, 0))
+    });
+    let Some((f, n)) = t.as_mut() else { return };
+    let bytes: Vec<u8> = pcm.iter().flat_map(|v| v.to_le_bytes()).collect();
+    if f.write_all(&bytes).is_err() {
+        return;
+    }
+    *n = n.wrapping_add(bytes.len() as u32);
+    let _ = f.seek(SeekFrom::Start(4)).and_then(|_| f.write_all(&(36 + *n).to_le_bytes()));
+    let _ = f.seek(SeekFrom::Start(40)).and_then(|_| f.write_all(&n.to_le_bytes()));
+    let _ = f.seek(SeekFrom::End(0));
 }
 
 /// wasm32: advances the buffers once per main-loop iteration. While the page's audio output runs, by the frames it
@@ -492,7 +529,7 @@ fn sample(b: &Buffer, f: u32, ch: u32) -> i32 {
 }
 
 /// Advances a playing buffer by `frames` output frames and adds its samples to `mix`.
-fn mix_buffer(b: &mut Buffer, mix: &mut [i32], frames: usize, out_rate: u32) {
+fn mix_buffer(b: &mut Buffer, mix: &mut [f32], frames: usize, out_rate: u32) {
     if !b.playing || b.flags & DSBCAPS_PRIMARYBUFFER != 0 || b.block == 0 {
         return;
     }
@@ -502,7 +539,9 @@ fn mix_buffer(b: &mut Buffer, mix: &mut [i32], frames: usize, out_rate: u32) {
     }
     let rate = if b.freq != 0 { b.freq } else { b.rate };
     let step = rate as f64 / out_rate as f64;
-    let gain = if b.volume <= -10000 {
+    let gain = if forced_full_volume(b.size) {
+        1.0
+    } else if b.volume <= -10000 {
         0.0
     } else {
         10f64.powf(b.volume as f64 / 2000.0)
@@ -510,7 +549,10 @@ fn mix_buffer(b: &mut Buffer, mix: &mut [i32], frames: usize, out_rate: u32) {
     // DSBPAN: the far side is attenuated by |pan| hundredths of a dB (-10000 = left only)
     let pan = b.pan.clamp(-10000, 10000);
     let side = |att: i32| if att >= 10000 { 0.0 } else { 10f64.powf(-att as f64 / 2000.0) };
-    let ch_gain = [gain * side(pan.max(0)), gain * side((-pan).max(0))];
+    let ch_gain = [(gain * side(pan.max(0))) as f32, (gain * side((-pan).max(0))) as f32];
+    let kernel = sinc_kernel(step);
+    let len_i = len as i64;
+    let mono = b.channels <= 1;
     for i in 0..frames {
         if b.pos >= len {
             if b.looping {
@@ -522,21 +564,85 @@ fn mix_buffer(b: &mut Buffer, mix: &mut [i32], frames: usize, out_rate: u32) {
             }
         }
         if gain > 0.0 {
-            let f0 = b.pos as u32;
-            let t = b.pos - f0 as f64;
-            let f1 = if (f0 + 1) as f64 >= len {
-                if b.looping { 0 } else { f0 }
-            } else {
-                f0 + 1
-            };
-            for ch in 0..2u32 {
-                let a = sample(b, f0, ch) as f64;
-                let c = sample(b, f1, ch) as f64;
-                mix[i * 2 + ch as usize] += ((a + (c - a) * t) * ch_gain[ch as usize]) as i32;
+            let f0 = b.pos as i64;
+            let phase = ((b.pos - f0 as f64) * SINC_PHASES as f64) as usize;
+            let taps = &kernel[phase.min(SINC_PHASES - 1) * SINC_TAPS..][..SINC_TAPS];
+            let mut acc = [0f32; 2];
+            for (k, &w) in taps.iter().enumerate() {
+                let mut f = f0 + k as i64 - (SINC_TAPS as i64 / 2 - 1);
+                if f < 0 || f >= len_i {
+                    if !b.looping {
+                        continue;
+                    }
+                    f = f.rem_euclid(len_i);
+                }
+                let l = sample(b, f as u32, 0) as f32;
+                acc[0] += l * w;
+                acc[1] += if mono { l } else { sample(b, f as u32, 1) as f32 } * w;
             }
+            mix[i * 2] += acc[0] * ch_gain[0];
+            mix[i * 2 + 1] += acc[1] * ch_gain[1];
         }
         b.pos += step;
     }
+}
+
+/// `SA_GAME_DSOUND_FULL_VOLUME=BYTES` (exploration only, never a port): buffers of exactly BYTES bytes play at 0 dB
+/// whatever volume the game set, e.g. 786432 for the streaming channel's buffer, to listen to a stream the game holds
+/// at silence.
+fn forced_full_volume(size: u32) -> bool {
+    static SIZE: std::sync::OnceLock<Option<u32>> = std::sync::OnceLock::new();
+    SIZE.get_or_init(|| crate::env::var("SA_GAME_DSOUND_FULL_VOLUME").ok().and_then(|v| v.parse().ok())) == &Some(size)
+}
+
+/// Taps of the resampling kernel (frames around the play position).
+const SINC_TAPS: usize = 16;
+/// Fractional positions the kernel is tabulated at.
+const SINC_PHASES: usize = 256;
+
+/// The windowed-sinc kernel for a resampling step (source frames per output frame): `SINC_PHASES` rows of
+/// `SINC_TAPS` weights (Blackman-Harris window, cutoff at 0.92 of the lower Nyquist frequency, each row normalised
+/// to unity gain at DC). Tabulated per step class (cached: the game uses a handful of rates).
+fn sinc_kernel(step: f64) -> std::sync::Arc<Vec<f32>> {
+    static CACHE: Mutex<Vec<(u32, std::sync::Arc<Vec<f32>>)>> = Mutex::new(Vec::new());
+    // the cutoff only depends on the step when downsampling; quantised to 1/64
+    let key = if step <= 1.0 { 0 } else { (step * 64.0).round() as u32 };
+    let mut c = CACHE.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((_, k)) = c.iter().find(|(k, _)| *k == key) {
+        return k.clone();
+    }
+    let cutoff = 0.92 / if key == 0 { 1.0 } else { f64::from(key) / 64.0 };
+    let half = (SINC_TAPS / 2) as f64;
+    let mut t = vec![0f32; SINC_PHASES * SINC_TAPS];
+    for p in 0..SINC_PHASES {
+        let frac = p as f64 / SINC_PHASES as f64;
+        let mut row = [0f64; SINC_TAPS];
+        for (k, w) in row.iter_mut().enumerate() {
+            // tap k is source frame f0 + k - (TAPS/2 - 1); its distance from the play position
+            let x = (k as f64 - (half - 1.0)) - frac;
+            let sinc = if x.abs() < 1e-9 {
+                1.0
+            } else {
+                let a = std::f64::consts::PI * x * cutoff;
+                a.sin() / a
+            };
+            let u = (x + half) / (2.0 * half);
+            let win = if (0.0..=1.0).contains(&u) {
+                let tau = 2.0 * std::f64::consts::PI * u;
+                0.35875 - 0.48829 * tau.cos() + 0.14128 * (2.0 * tau).cos() - 0.01168 * (3.0 * tau).cos()
+            } else {
+                0.0
+            };
+            *w = sinc * win;
+        }
+        let sum: f64 = row.iter().sum();
+        for (k, w) in row.iter().enumerate() {
+            t[p * SINC_TAPS + k] = (w / sum) as f32;
+        }
+    }
+    let k = std::sync::Arc::new(t);
+    c.push((key, k.clone()));
+    k
 }
 
 // ------------------------------------------------------------------ entry points -----------------
@@ -875,7 +981,13 @@ fn buf_set_volume(this: u32, v: i32) -> i32 {
         }
         return DSERR_INVALIDPARAM;
     }
-    with_buf(this, |b| b.volume = v).map_or(DSERR_INVALIDCALL, |_| DS_OK)
+    with_buf(this, |b| {
+        if trace_on() && b.size >= 0x40000 && b.volume != v {
+            eprintln!("dsound: SetVolume {this:#x} ({} bytes) {} -> {v}", b.size, b.volume);
+        }
+        b.volume = v
+    })
+    .map_or(DSERR_INVALIDCALL, |_| DS_OK)
 }
 fn buf_set_pan(this: u32, v: i32) -> i32 {
     with_buf(this, |b| b.pan = v).map_or(DSERR_INVALIDCALL, |_| DS_OK)
