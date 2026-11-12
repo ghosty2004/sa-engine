@@ -10,7 +10,8 @@
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/server (open.mp), $SA_ROOT/wine/gta-sa (the game data
 # sa-game reads), the auth table AUTH_TABLE (default ~/samp-rs/data/auth_table.txt, third-party data, read only).
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game). FRAMES (default 1400).
-# Port SAMP_PORT (default 7812), lock target/locks/samp-native.lock (shared with native-handshake.sh).
+# Port SAMP_PORT (default 7812), lock target/locks/$SAMP_LOCK (default samp-native.lock, shared with
+# native-handshake.sh; give another name together with another port to run beside a running stack).
 # Output: server.log, sa-game.log, report.md, present/*.png (every 20th in-game frame).
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,7 +37,7 @@ free_kb="$(df -Pk /home | awk 'NR == 2 { print $4 }')"
 [ "$free_kb" -ge $((20 * 1024 * 1024)) ] || { echo "native-join: less than 20 GB free on /home" >&2; exit 1; }
 
 mkdir -p "$SA_ROOT/target/locks"
-exec {LOCK_FD}> "$SA_ROOT/target/locks/samp-native.lock"
+exec {LOCK_FD}> "$SA_ROOT/target/locks/${SAMP_LOCK:-samp-native.lock}"
 flock "$LOCK_FD"
 if ss -lun | grep -q ":$PORT "; then echo "native-join: UDP $PORT busy" >&2; exit 1; fi
 
@@ -84,7 +85,7 @@ say "server pid $SRV_PID on 127.0.0.1:$PORT"
 # STD-9's exploration stubs (render callbacks, skin node, effects), plus two for the native join's vehicle:
 # CVisibilityPlugins::RenderVehicleReallyLowDetailCB 0x7331E0 and the collision sparks 0x6A6DC0 (visual only).
 STUBS='0x6a6dc0=0/12,0x7331e0=0/0,0x7c7b90=1/0,0x80e270=1/0,0x455720=0/0,0x4f6420=0/2,0x732f30=0/0,0x5d9900=0/0,0x4a2c40=0/4,0x701780=0/0,0x733f80=0/0,0x733240=0/0'
-SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 SA_GAME_PRESENT_EVERY=20 \
+SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 SA_GAME_PRESENT_EVERY="${SA_GAME_PRESENT_EVERY:-20}" \
     "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world \
     --samp "127.0.0.1:$PORT" --name NativeCJ --samp-auth "$AUTH" \
     --present-dir "$OUT/present" --report "$OUT/report.md" > "$OUT/sa-game.log" 2>&1 &
