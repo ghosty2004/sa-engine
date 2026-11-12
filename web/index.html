@@ -6,7 +6,16 @@
 <style>
   body { margin: 0; background: #111; color: #ddd; font: 14px system-ui, sans-serif; }
   #bar, #bar2 { padding: 8px 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  #screen { display: block; margin: 0 auto; background: #000; width: 800px; height: 600px; image-rendering: auto; }
+  #stage { display: flex; justify-content: center; align-items: center; background: #000; }
+  #screen { display: block; background: #000; width: 800px; height: 600px; image-rendering: auto; }
+  #screen.menu { cursor: none; }
+  /* full window / fullscreen: the canvas fills the viewport at the game's 4:3 aspect (letterboxed, smooth scaling) */
+  body.full #bar, body.full #bar2, body.full #log { display: none; }
+  body.full #stage, #stage:fullscreen { position: fixed; inset: 0; z-index: 1; }
+  body.full #screen, #stage:fullscreen #screen { width: min(100vw, calc(100vh * 4 / 3)); height: min(100vh, calc(100vw * 3 / 4)); }
+  #corner { display: none; position: fixed; top: 6px; right: 6px; z-index: 2; opacity: 0.35; font: 12px monospace; gap: 6px; align-items: center; }
+  #corner:hover { opacity: 0.9; }
+  body.full #corner, #stage:fullscreen #corner { display: flex; }
   #status { font-family: monospace; color: #9c9; }
   #log { font: 12px monospace; white-space: pre-wrap; max-height: 30vh; overflow: auto; margin: 8px 12px; color: #aaa; }
   button, label.btn { background: #333; color: #eee; border: 1px solid #555; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
@@ -29,8 +38,13 @@
   <span>Click the picture to capture the mouse; Esc releases it.</span>
   <span id="mouse" class="off">mouse captured: no</span>
   <span id="blocked"></span>
+  <button id="fullwin" title="the picture fills the browser window (also ?full=1)">Full window</button>
+  <button id="fullscreen" title="the picture fills the screen (Esc leaves)">Fullscreen</button>
 </div>
-<canvas id="screen" width="800" height="600" tabindex="0"></canvas>
+<div id="stage">
+  <canvas id="screen" width="800" height="600" tabindex="0"></canvas>
+  <div id="corner"><span id="ministatus"></span><button id="unfull">Exit full window</button></div>
+</div>
 <div id="log"></div>
 <script type="module" src="main.js"></script>
 </body>

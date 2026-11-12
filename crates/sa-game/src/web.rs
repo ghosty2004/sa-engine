@@ -440,6 +440,13 @@ pub fn mouse_move(dx: f64, dy: f64) {
     });
 }
 
+/// Absolute pointer position in the game's client pixels (the page scales the canvas position to the video mode):
+/// `WM_MOUSEMOVE`, which the menus read for their cursor (no pointer lock in the menus).
+#[wasm_bindgen]
+pub fn mouse_pos(x: i32, y: i32) {
+    INPUT.with(|i| i.borrow_mut().events.push(sa_platform::input::InputEvent::MouseMove { x, y }));
+}
+
 /// A DOM mouse button (0 left, 1 middle, 2 right, 3 back, 4 forward) going down or up.
 #[wasm_bindgen]
 pub fn mouse_button(button: u32, down: bool) {
