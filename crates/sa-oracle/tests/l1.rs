@@ -486,6 +486,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x5FFF90, 0x43A710,
     // STD-6: CRunningScript::AddScriptToList (preserve ecx); spec queued.
     0x464C00,
+    // PORT-AI-8 (generated batch ai8g-2): CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges
+    // (preserve ecx, caller 0x62DD41 → 0x628A70); spec queued.
+    0x6289F0,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
