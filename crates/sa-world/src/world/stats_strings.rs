@@ -146,7 +146,13 @@ orig! {
     /// `CStats::ConvertToSecs(int32)` (0x559560)
     fn convert_to_secs(v: i32) -> i32 = cdecl 0x559560 => super::stats::convert_to_secs;
     /// `CStats::BuildStatLine(const char* key, void* p1, int32 metrics, void* p2, int32 type)` (0x559230)
-    fn build_stat_line(key: GPtr<u8>, p1: GPtr<u8>, metrics: i32, p2: GPtr<u8>, ty: i32) = cdecl 0x559230 => unported;
+    fn build_stat_line(key: GPtr<u8>, p1: GPtr<u8>, metrics: i32, p2: GPtr<u8>, ty: i32) = cdecl 0x559230 => build_stat_line_port;
+    /// CRT `sprintf(buf, fmt, int, int)` (0x821BB5)
+    fn sprintf_ii(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, b: i32) -> i32 = cdecl 0x821BB5 => unported;
+    /// CRT `sprintf(buf, fmt, double, char*, double)` (0x821BB5)
+    fn sprintf_dsd(buf: GPtr<u8>, fmt: GPtr<u8>, a: f64, s: GPtr<u8>, b: f64) -> i32 = cdecl 0x821BB5 => unported;
+    /// CRT `sprintf(buf, fmt, int, char*)` (0x821BB5)
+    fn sprintf_is(buf: GPtr<u8>, fmt: GPtr<u8>, a: i32, s: GPtr<u8>) -> i32 = cdecl 0x821BB5 => unported;
     /// `CStats::PopulateFavoriteRadioStationList()` (0x558EC0)
     fn populate_favorite_radio_station_list() -> u8 = cdecl 0x558EC0 => unported;
     /// `CStats::FindMostFavoriteRadioStation()` (0x558FA0)
@@ -277,6 +283,93 @@ fn time_line(a: i32, b: i32) -> i32 {
 /// `(t / 60, t % 60)` as `cdq; idiv 60`.
 fn div60(t: i32) -> (i32, i32) {
     (t.wrapping_div(60), t.wrapping_rem(60))
+}
+
+/// `fld dword; fstp qword`: the f32 at `p` widened (a signalling NaN comes out quiet).
+fn widen(p: GPtr<u8>) -> f64 {
+    x(p.cast::<f32>().read()).to_f64()
+}
+
+/// `CStats::BuildStatLine(const char* key, void* p1, int32 metrics, void* p2, int32 type)` (0x559230, `and esp,
+/// -8` frame; docs/re/specs/WORLD/CStats.md): nothing for a null key; `gString2 = ""`; type 1: `"%d:0%d"` /
+/// `"%d:%d"` of `*p1`, `*p2` (by `*p2 < 10`); else with `p2`: metrics 0 `" %d %s %d"`, 1 `"%.2f %s %.2f"`, 3 `"$%.2f
+/// %s $%.2f"` around `A("FEST_OO")`; else with `p1` and metrics 0..9 the single-value formats (5: "%dlbs", or
+/// "%dkgs" with a double in metric units, original bug; 6 with `A("ST_MILE")`, 8 feet `* 3.3333333`, 9 with
+/// `A("ST_SECS")`); then `GxtCharStrcpy(gGxtString, TheText.Get(key))`, the token strip,
+/// `AsciiToGxtChar(gString2, gGxtString2)`. The sprintf tail runs through the protection chunk 0x401711 (an
+/// obfuscated `push gString2`).
+#[hook(addr = 0x559230, conv = cdecl, name = "CStats::BuildStatLine", expect = "55 8B EC 83 E4 F8 83 EC 08",
+       unverified = "save-stats-1", route = "L2", hazards = "none", recs = "menus-hud,menus-map-controls")]
+pub fn build_stat_line_port(key: GPtr<u8>, p1: GPtr<u8>, metrics: i32, p2: GPtr<u8>, ty: i32) {
+    if key.is_null() {
+        return;
+    }
+    g::<u8>(G_STRING2).write(0);
+    let buf = s(G_STRING2);
+    let fest = || gxt_char_to_ascii(text_get(g(THE_TEXT), s(0x863F50)), 0);
+    if ty == 1 {
+        let (a, b) = (p1.cast::<i32>().read(), p2.cast::<i32>().read());
+        sprintf_ii(buf, s(if b < 10 { 0x863EBC } else { 0x863EB4 }), a, b);
+    } else if !p2.is_null() {
+        match metrics {
+            0 => {
+                let (a, b) = (p1.cast::<i32>().read(), p2.cast::<i32>().read());
+                sprintf_isi(buf, s(0x863F24), a, fest(), b);
+            }
+            1 | 3 => {
+                let b = widen(p2);
+                let a = fest();
+                sprintf_dsd(buf, s(if metrics == 1 { 0x863F30 } else { 0x863F40 }), widen(p1), a, b);
+            }
+            _ => {}
+        }
+    } else if !p1.is_null() && (0..=9).contains(&metrics) {
+        match metrics {
+            0 => {
+                sprintf_i(buf, s(0x859508), p1.cast::<i32>().read());
+            }
+            1 => {
+                sprintf_d(buf, s(0x863F1C), widen(p1));
+            }
+            2 => {
+                sprintf_d(buf, s(0x863F14), widen(p1));
+            }
+            3 => {
+                sprintf_d(buf, s(0x863EF4), widen(p1));
+            }
+            4 => {
+                sprintf_i(buf, s(0x863F10), p1.cast::<i32>().read());
+            }
+            5 => {
+                let w = p1.cast::<i32>().read();
+                if metric() != 0 {
+                    sprintf_d(buf, s(0x863F04), xi(w).fmul_m(g::<f32>(F_KGS).read()).to_f64());
+                } else {
+                    sprintf_i(buf, s(0x863EFC), w);
+                }
+            }
+            6 => {
+                let v = p1.cast::<f32>().read();
+                let a = gxt_char_to_ascii(text_get(g(THE_TEXT), s(0x863EDC)), 0);
+                sprintf_ds(buf, s(0x863ED4), x(v).to_f64(), a);
+            }
+            7 => {
+                sprintf_d(buf, s(0x863EEC), widen(p1));
+            }
+            8 => {
+                sprintf_d(buf, s(0x863EE4), x(p1.cast::<f32>().read()).fmul_m(g::<f32>(F_FEET).read()).to_f64());
+            }
+            _ => {
+                let v = p1.cast::<i32>().read();
+                let a = gxt_char_to_ascii(text_get(g(THE_TEXT), s(0x863ECC)), 0);
+                sprintf_is(buf, s(0x863EC4), v, a);
+            }
+        }
+    }
+    let t = text_get(g(THE_TEXT), key);
+    gxt_char_strcpy(s(G_GXT_STRING), t);
+    strip_tokens(s(G_GXT_STRING));
+    ascii_to_gxt_char(s(G_STRING2), s(G_GXT_STRING2));
 }
 
 /// The stat tables of the 8 categories (6-byte entries `{i16 id, u8 type, u8 alwaysShow, u8 special, pad}`,
@@ -507,9 +600,7 @@ fn special_high(edi: i32, line: i32, n: &mut i32) -> Option<i32> {
             }
             *n += 1;
             let keys = [0x8642A0usize, 0x864298, 0x864290, 0x864288, 0x864280, 0x864278, 0x864270, 0x864268];
-            let Some(&key) = keys.get((gang - 7) as u32 as usize) else {
-                return None;
-            };
+            let &key = keys.get((gang - 7) as u32 as usize)?;
             line!();
             Some(txt(s(key)))
         }
@@ -697,7 +788,7 @@ fn pilot_rank_key(q: i32, r: i32) -> Option<usize> {
     Some(0x8641D0)
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_FIND_CRIMINAL_RATING_STRING, HOOK_CONSTRUCT_STAT_LINE];
+pub const HOOKS: &[HookReg] = &[HOOK_FIND_CRIMINAL_RATING_STRING, HOOK_BUILD_STAT_LINE_PORT, HOOK_CONSTRUCT_STAT_LINE];
 
 #[cfg(test)]
 mod tests {
