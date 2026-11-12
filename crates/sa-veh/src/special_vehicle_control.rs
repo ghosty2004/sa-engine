@@ -100,5 +100,48 @@ pub fn trailer_process_control(this: GPtr<u8>) {
     wr::<u32>(this, 0x9E4, s);
 }
 
+/// `CBike::PlayCarHorn()` (0x6B7080): not for a bike with an active alarm (+0x45C neither 0 nor
+/// 0xFFFF) unless its state (+0x36 bits 3..7) is 5, nor while the horn counter (+0x514) runs; a
+/// delay byte (+0x519) counts down; else a new delay `(rand & 0x7F) - 0x6A`, and by its low 3 bits:
+/// 0/1 the horn (counter 45), 2/3 the horn with the driver's horn speech (id 22) when the bike's
+/// +0x3DB bit 0 is set, 4..7 only the speech.
+#[hook(addr = 0x6B7080, conv = thiscall, name = "CBike::PlayCarHorn", this = "CBike",
+       expect = "56 8B F1 66 8B 86 5C 04 00 00",
+       unverified = "veh3-3", route = "L2", hazards = "none",
+       recs = "driving", note = "rand site 0x6B70C5")]
+pub fn bike_play_car_horn(this: GPtr<u8>) {
+    let a = rd::<u16>(this, 0x45C);
+    if a != 0 && a != 0xFFFF && rd::<u8>(this, 0x36) & 0xF8 != 0x28 {
+        return;
+    }
+    if rd::<u32>(this, 0x514) != 0 {
+        return;
+    }
+    let d = rd::<u8>(this, 0x519);
+    if d > 0 {
+        wr::<u8>(this, 0x519, d - 1);
+        return;
+    }
+    let r = sa_core::orig::at_site(0x6B_70C5, sa_core::crt::rand);
+    let nd = ((r as u8) & 0x7F).wrapping_sub(0x6A);
+    wr::<u8>(this, 0x519, nd);
+    let v = nd & 7;
+    let driver = rd::<GPtr<u8>>(this, 0x460);
+    if v < 2 {
+        wr::<u32>(this, 0x514, 0x2D);
+        return;
+    }
+    if v < 4 {
+        if !driver.is_null() && rd::<u8>(this, 0x3DB) & 1 != 0 {
+            ped_say(driver, 0x16, 0, 0x3F80_0000, 0, 0, 0);
+        }
+        wr::<u32>(this, 0x514, 0x2D);
+        return;
+    }
+    if !driver.is_null() {
+        ped_say(driver, 0x16, 0, 0x3F80_0000, 0, 0, 0);
+    }
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_MONSTER_TRUCK_PROCESS_CONTROL, HOOK_TRAILER_PROCESS_CONTROL];
+pub const HOOKS: &[HookReg] = &[HOOK_MONSTER_TRUCK_PROCESS_CONTROL, HOOK_TRAILER_PROCESS_CONTROL, HOOK_BIKE_PLAY_CAR_HORN];
