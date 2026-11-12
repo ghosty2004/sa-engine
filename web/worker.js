@@ -109,8 +109,23 @@ self.saGameIo = {
 // shared ring buffer (web/audio-worklet.js) and a running AudioContext, the mix tops the ring up to TARGET frames, so
 // the DirectSound play cursors advance by exactly what the AudioContext consumed; otherwise they advance in real time
 // and the mix goes to the page in chunks (fallback) or nowhere (no output yet).
-const AUDIO_TARGET = 4096; // frames kept queued (~93 ms at 44.1 kHz): covers one long main-loop iteration
-let ring = null; // { hdr: Int32Array [write, read, running, underruns], data: Int16Array, cap }
+// Frames kept queued: just over the longest recent gap between two mixes (a main-loop iteration; between iterations
+// a 4 ms timer also mixes), at least AUDIO_MIN (~23 ms), at most AUDIO_MAX; the peak decays with a 2 s time constant.
+const AUDIO_MIN = 1024;
+const AUDIO_MAX = 4096;
+let audioTarget = AUDIO_MIN;
+let lastMix = 0;
+let gapPeak = 0;
+function updateTarget() {
+  const now = performance.now();
+  if (lastMix) {
+    const dt = now - lastMix;
+    gapPeak = Math.max(dt * 44.1, gapPeak * Math.exp(-dt / 2000));
+    audioTarget = Math.min(AUDIO_MAX, Math.max(AUDIO_MIN, Math.ceil(gapPeak * 1.25 + 256)));
+  }
+  lastMix = now;
+}
+let ring = null; // { hdr: Int32Array [write, read, running, underruns, target, 0, 0, 0], data: Int16Array, cap }
 let audioPort = false; // fallback: chunks posted to the page
 let audioRunning = false; // fallback: the page's AudioContext state
 let audioTap = null; // ?audiotap=1: copies of every chunk pushed while the output runs, drained by the page
@@ -119,7 +134,11 @@ let realPlayed = 0;
 const ringRunning = () => ring && Atomics.load(ring.hdr, 2) === 1;
 self.saGameAudio = {
   want(realFrames) {
-    if (ringRunning()) return Math.max(0, AUDIO_TARGET - self.saGameAudio.queued());
+    if (ringRunning()) {
+      updateTarget();
+      Atomics.store(ring.hdr, 4, audioTarget);
+      return Math.max(0, audioTarget - self.saGameAudio.queued());
+    }
     return Math.round(realFrames);
   },
   push(pcm) {
@@ -273,8 +292,8 @@ self.onmessage = async (ev) => {
         for (const [k, v] of Object.entries(m.env || {})) sa.set_env(k, String(v));
         if (m.startInWorld) sa.set_start_in_world();
         if (m.audio?.sab) {
-          const data = new Int16Array(m.audio.sab, 16);
-          ring = { hdr: new Int32Array(m.audio.sab, 0, 4), data, cap: data.length / 2 };
+          const data = new Int16Array(m.audio.sab, 32);
+          ring = { hdr: new Int32Array(m.audio.sab, 0, 8), data, cap: data.length / 2 };
         } else if (m.audio) {
           audioPort = true;
         }
@@ -293,6 +312,10 @@ self.onmessage = async (ev) => {
         sa.boot();
         phase = 'running';
         status({});
+        // between iterations the mix keeps the ring near its target (the module is idle then)
+        setInterval(() => {
+          if (!stopped && ringRunning()) sa.audio_pump();
+        }, 4);
         pending = presentPending();
         presentedNow = presentPending();
         setTimeout(tick, 0);

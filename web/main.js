@@ -51,13 +51,27 @@ function applyVolume() {
 function audioStatus() {
   const st = audio.ctx ? audio.ctx.state : 'off';
   const running = st === 'running';
-  if (audio.sab) Atomics.store(new Int32Array(audio.sab, 0, 4), 2, running ? 1 : 0);
+  if (audio.sab) Atomics.store(new Int32Array(audio.sab, 0, 8), 2, running ? 1 : 0);
   else worker?.postMessage({ type: 'audioState', running });
   const shown = st === 'running' ? 'running' : st === 'off' ? 'off' : 'suspended (click the picture)';
-  $('audio').textContent = `audio: ${shown}${audio.ctx ? ` (${audio.mode})` : ''}`;
+  const d = audioDelay();
+  $('audio').textContent = `audio: ${shown}${audio.ctx ? ` (${audio.mode}${running && d ? `, delay ${d.totalMs} ms` : ''})` : ''}`;
   $('audio').className = running ? 'on' : 'off';
-  window.saGame.audio = { state: st, mode: audio.mode };
+  window.saGame.audio = { state: st, mode: audio.mode, ...d };
 }
+
+// end-to-end delay of a sound the game starts now: the frames queued in the ring (mixed, not yet played) plus the
+// context's own latency (baseLatency: the worklet quantum / graph; outputLatency: the device)
+function audioDelay() {
+  if (!audio.ctx || !audio.sab) return null;
+  const h = new Int32Array(audio.sab, 0, 8);
+  const ringMs = (((Atomics.load(h, 0) - Atomics.load(h, 1)) | 0) / 44.1);
+  const baseMs = (audio.ctx.baseLatency ?? 0) * 1000;
+  const outMs = (audio.ctx.outputLatency ?? 0) * 1000;
+  return { ringMs: Math.round(ringMs), targetMs: Math.round(Atomics.load(h, 4) / 44.1), baseMs: Math.round(baseMs),
+    outputMs: Math.round(outMs), totalMs: Math.round(ringMs + baseMs + outMs), underruns: Atomics.load(h, 3) };
+}
+setInterval(() => { if (audio.ctx) audioStatus(); }, 1000);
 
 // called at start: the context starts suspended unless the browser allows autoplay
 async function initAudio() {
@@ -77,7 +91,7 @@ async function initAudio() {
   }
   let opts = {};
   if (self.crossOriginIsolated && typeof SharedArrayBuffer !== 'undefined') {
-    audio.sab = new SharedArrayBuffer(16 + RING_FRAMES * 4);
+    audio.sab = new SharedArrayBuffer(32 + RING_FRAMES * 4);
     opts = { sab: audio.sab };
     audio.mode = 'shared ring';
   } else {
