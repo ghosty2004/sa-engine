@@ -106,6 +106,7 @@ fn parse_args() -> Result<Args, String> {
                      reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE).\n\
                      Window runs serve the game heap from the deterministic mode's fixed-address region (one heap\n\
                      layout everywhere); --system-heap uses the C library's allocator instead."
+                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE, SA_GAME_LMB)."
                 );
                 std::process::exit(0);
             }
@@ -324,6 +325,12 @@ fn synthetic_input(n: u32) -> InputState {
         if n >= from && n < to {
             i.mouse_delta.0 += dx;
             i.mouse_delta.1 += dy;
+        }
+    }
+    // SA_GAME_LMB: the left mouse button (fire / punch) held over iteration ranges
+    for (from, to) in lmb_spec() {
+        if n >= from && n < to {
+            i.mouse_held.insert(MouseButton::Left);
         }
     }
     i
@@ -628,6 +635,20 @@ fn mouse_spec() -> Vec<(f64, f64, u32, u32)> {
                 f[2].parse().ok()?,
                 f[3].parse().ok()?,
             ))
+        })
+        .collect()
+}
+
+/// `SA_GAME_LMB=FROM:TO,...` (evidence runs): the left mouse button (DirectInput state) is held from main-loop
+/// iteration FROM up to (not including) TO.
+fn lmb_spec() -> Vec<(u32, u32)> {
+    let Ok(v) = std::env::var("SA_GAME_LMB") else {
+        return Vec::new();
+    };
+    v.split(',')
+        .filter_map(|e| {
+            let (a, b) = e.trim().split_once(':')?;
+            Some((a.parse().ok()?, b.parse().ok()?))
         })
         .collect()
 }
