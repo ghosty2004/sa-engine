@@ -300,6 +300,47 @@ fn open_sink() -> Box<dyn AudioOut> {
 
 static MIXER_STARTED: Mutex<bool> = Mutex::new(false);
 
+/// The mixer's sink, the fraction of a frame carried over and its scratch buffers.
+struct Mixer {
+    sink: Box<dyn AudioOut>,
+    carry: f64,
+    mix: Vec<i32>,
+    pcm: Vec<i16>,
+}
+
+static MIXER: Mutex<Option<Mixer>> = Mutex::new(None);
+
+/// Advances every playing buffer by `secs` seconds and mixes the frames passed into the sink (the mixer thread every
+/// [`MIX_MS`] ms; the main loop once per iteration in the deterministic mode, `--fixed-step`).
+pub fn advance(secs: f64) {
+    let out = AudioFormat::GAME;
+    let mut g = MIXER.lock().unwrap_or_else(|e| e.into_inner());
+    let m = g.get_or_insert_with(|| Mixer {
+        sink: open_sink(),
+        carry: 0.0,
+        mix: Vec::new(),
+        pcm: Vec::new(),
+    });
+    let frames_f = secs * out.sample_rate as f64 + m.carry;
+    let frames = frames_f as usize;
+    m.carry = frames_f - frames as f64;
+    if frames == 0 {
+        return;
+    }
+    m.mix.clear();
+    m.mix.resize(frames * 2, 0);
+    let mix = &mut m.mix;
+    with_state(|s| {
+        for b in s.buffers.values_mut() {
+            mix_buffer(b, mix, frames, out.sample_rate);
+        }
+    });
+    m.pcm.clear();
+    let pcm = &mut m.pcm;
+    pcm.extend(m.mix.iter().map(|v| (*v).clamp(-32768, 32767) as i16));
+    m.sink.push(&m.pcm);
+}
+
 fn start_mixer() {
     let mut started = MIXER_STARTED.lock().unwrap_or_else(|e| e.into_inner());
     if *started {
@@ -309,32 +350,16 @@ fn start_mixer() {
     std::thread::Builder::new()
         .name("sa-game dsound mixer".into())
         .spawn(|| {
-            let mut sink = open_sink();
-            let out = AudioFormat::GAME;
             let mut last = Instant::now();
-            let mut carry = 0.0f64;
-            let mut mix: Vec<i32> = Vec::new();
-            let mut pcm: Vec<i16> = Vec::new();
             loop {
                 std::thread::sleep(Duration::from_millis(MIX_MS));
                 let now = Instant::now();
-                let frames_f = now.duration_since(last).as_secs_f64() * out.sample_rate as f64 + carry;
+                let secs = now.duration_since(last).as_secs_f64();
                 last = now;
-                let frames = frames_f as usize;
-                carry = frames_f - frames as f64;
-                if frames == 0 {
-                    continue;
+                // the deterministic mode advances the buffers from the main loop ([`advance`])
+                if !crate::det::on() {
+                    advance(secs);
                 }
-                mix.clear();
-                mix.resize(frames * 2, 0);
-                with_state(|s| {
-                    for b in s.buffers.values_mut() {
-                        mix_buffer(b, &mut mix, frames, out.sample_rate);
-                    }
-                });
-                pcm.clear();
-                pcm.extend(mix.iter().map(|v| (*v).clamp(-32768, 32767) as i16));
-                sink.push(&pcm);
             }
         })
         .expect("sa-game: cannot start the DirectSound mixer thread");

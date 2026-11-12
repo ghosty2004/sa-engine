@@ -22,13 +22,27 @@ pub const fn lcg_step(state: u32) -> (u32, i32) {
 
 /// Phases B/C `rand()`.
 pub fn rand_owned() -> i32 {
+    RANDS.fetch_add(1, Ordering::Relaxed);
     let (s, v) = lcg_step(HOLDRAND.load(Ordering::Relaxed));
     HOLDRAND.store(s, Ordering::Relaxed);
     v
 }
 
+/// `srand` calls so far and the last seed (sa-game's deterministic-mode trace).
+pub static SEEDS: AtomicU32 = AtomicU32::new(0);
+/// `rand` calls so far (the same trace).
+pub static RANDS: AtomicU32 = AtomicU32::new(0);
+pub static LAST_SEED: AtomicU32 = AtomicU32::new(0);
+
+/// The owned `_holdrand` (sa-game's deterministic-mode trace).
+pub fn holdrand() -> u32 {
+    HOLDRAND.load(Ordering::Relaxed)
+}
+
 /// Phases B/C `srand(seed)`.
 pub fn srand_owned(seed: u32) {
+    LAST_SEED.store(seed, Ordering::Relaxed);
+    SEEDS.fetch_add(1, Ordering::Relaxed);
     HOLDRAND.store(seed, Ordering::Relaxed);
 }
 

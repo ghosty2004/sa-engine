@@ -208,6 +208,7 @@ fn set_error_mode(_mode: u32) -> u32 {
 }
 fn sleep(ms: u32) {
     with("Sleep", |_| ());
+    crate::det::slept(ms);
     std::thread::sleep(std::time::Duration::from_millis(ms.min(1000) as u64));
 }
 /// `GetVersionExA(OSVERSIONINFOA*)`: Windows 10 (NT 10.0, build 19045), what the phase A Wine
