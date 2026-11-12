@@ -100,7 +100,7 @@ python3 -m venv .venv && .venv/bin/pip install capstone pefile
 ## 3. Your game files
 
 You need your own **GTA San Andreas PC 1.0 US** install. The exe must match
-SHA-256 `a559aa77…cbd26` (full value in [CLAUDE.md](../CLAUDE.md)); other versions are not supported.
+SHA-256 `a559aa772fd136379155efa71f00c47aad34bbfeae6196b0fe1047d0645cbd26`; other versions are not supported.
 
 Layout (all of `re/` and `wine/` is gitignored; nothing in them is ever committed):
 
