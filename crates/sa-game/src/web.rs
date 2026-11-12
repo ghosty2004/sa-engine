@@ -325,6 +325,24 @@ pub fn recover() -> bool {
     with_session(|s| s.finish_blocked(&msg)).unwrap_or(false)
 }
 
+/// One pass of each due audio thread (`CAESmoothFadeThread`, `CAEStreamThread`; cooperative on wasm32, `bind::coop`).
+/// The worker calls it after every main-loop iteration, outside [`frame`], so an unported callee in a pass ends only
+/// that thread ([`audio_thread_blocked`]), as a panic on the native thread does, not the iteration.
+#[wasm_bindgen]
+pub fn audio_threads() {
+    crate::bind::coop::service_audio_threads();
+}
+
+/// After `audio_threads` left through an unported callee: that audio thread stops. Returns false when the platform
+/// lock was left taken (the session cannot go on).
+#[wasm_bindgen]
+pub fn audio_thread_blocked() -> bool {
+    let msg = BLOCKED.with(|b| b.borrow_mut().take()).unwrap_or_default();
+    let entry = crate::bind::coop::audio_thread_blocked();
+    log_line(format!("audio thread {entry:#x?} ended: {msg}"));
+    crate::bind::lock_is_free()
+}
+
 static SAMPLING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// `SA_WEB_SAMPLE=1`: at most every 3 s of real time, the JS stack (wasm function names) of the current call, so a
