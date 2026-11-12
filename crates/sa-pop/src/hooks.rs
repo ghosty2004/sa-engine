@@ -40,6 +40,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::generated::HOOKS,
     // WRITER-NATIVE
     crate::weave_heading_test::HOOKS,
+    crate::weave_for_ped::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

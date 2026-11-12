@@ -40,6 +40,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::obbe::HOOKS,
     crate::camera_process::HOOKS,
     crate::generated::HOOKS,
+    // WRITER-NATIVE
+    crate::idle_cam_slerp::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

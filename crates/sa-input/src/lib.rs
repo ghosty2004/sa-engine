@@ -27,8 +27,8 @@ pub mod ccm;
 pub mod common;
 pub mod hooks;
 pub mod pad;
-pub mod pad_look_axes;
 pub mod statics;
 
 pub mod std6_natives;
 pub mod generated;
+pub mod pad_mouse_steer;

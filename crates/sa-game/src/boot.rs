@@ -66,15 +66,18 @@ pub fn install_panic_hook() {
             .map(|l| format!(" ({}:{})", l.file(), l.line()))
             .unwrap_or_default();
         LAST_PANIC.with(|p| *p.borrow_mut() = format!("{msg}{at}"));
+        // wasm32 cannot unwind: the panic aborts the module, so its message is all the page gets
+        #[cfg(target_arch = "wasm32")]
+        crate::web::report_panic(&format!("sa-game panicked: {msg}{at}"));
         // `SA_GAME_BACKTRACE=1` (exploration): the Rust call chain of every panic, e.g. of a blocked step
-        if std::env::var_os("SA_GAME_BACKTRACE").is_some() {
+        if crate::env::var_os("SA_GAME_BACKTRACE").is_some() {
             eprintln!("panic: {msg}{at}\n{}", std::backtrace::Backtrace::force_capture());
         }
     }));
 }
 
 /// Parses `orig!`'s phase B panic: `NAME is not ported; phases B/C have no original code to call (ADDR)`.
-fn parse_unported(msg: &str) -> Option<(String, String)> {
+pub(crate) fn parse_unported(msg: &str) -> Option<(String, String)> {
     let (name, rest) = msg.split_once(" is not ported; ")?;
     let addr = rest
         .split_once('(')
@@ -96,6 +99,7 @@ pub fn run_step_direct(s: &Step) -> Outcome {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(detail) => Outcome::Ok(detail),
         Err(_) => {
+            unwound_frame_recovery();
             let msg = LAST_PANIC.with(|p| p.borrow().clone());
             match parse_unported(&msg) {
                 Some((callee, addr)) => Outcome::Blocked { callee, addr },
@@ -115,7 +119,7 @@ pub fn run_step(s: &Step) -> Outcome {
     // is off for good: forking a process with wgpu threads is unsafe (the crash reporter still names
     // the step of a fault).
     if s.probe
-        && std::env::var_os("SA_GAME_NO_PROBE").is_none()
+        && crate::env::var_os("SA_GAME_NO_PROBE").is_none()
         && !NO_PROBE.load(std::sync::atomic::Ordering::SeqCst)
         && crate::d3d9::with_device(|_| ()).is_none()
         && let Some(report) = arena::probe(|| {
@@ -128,12 +132,25 @@ pub fn run_step(s: &Step) -> Outcome {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(detail) => Outcome::Ok(detail),
         Err(_) => {
+            unwound_frame_recovery();
             let msg = LAST_PANIC.with(|p| p.borrow().clone());
             match parse_unported(&msg) {
                 Some((callee, addr)) => Outcome::Blocked { callee, addr },
                 None => Outcome::Panicked(msg),
             }
         }
+    }
+}
+
+/// After a step unwound (a blocked or panicking port), restores the per-frame invariants the original keeps by
+/// running every frame to its end: `FxManager_c`'s RwMatrix stack (index +0x88 of g_fxMan 0xA9AE80; every
+/// `FxRwMatrixCreate` of a frame is matched by a `FxRwMatrixDestroy` before the frame ends) is empty between
+/// frames. An unwind between the two leaks entries until the stack runs past its array and hands out garbage
+/// matrices (SAMP-4: seen as a fault in `FxEmitter_c::CreateParticles` after FX info types that are not ported).
+pub(crate) fn unwound_frame_recovery() {
+    let fx_man = sa_core::mem::GPtr::<i32>::from_addr(sa_render::fx::FX_MAN + 0x88);
+    if fx_man.read() != 0 {
+        fx_man.write(0);
     }
 }
 

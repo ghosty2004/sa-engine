@@ -82,6 +82,16 @@ pub const CURR_AREA: u32 = 0xB72914;
 
 /// `FrontEndMenuManager.m_bMenuActive` (`FrontEndMenuManager` 0xBA6748 + 0x5C).
 pub const MENU_ACTIVE: u32 = 0xBA67A4;
+/// `FrontEndMenuManager.m_bHudOn`.
+pub const MENU_HUD_ON: u32 = 0xBA6769;
+/// `CHud::bScriptDontDisplayRadar`.
+pub const HUD_DONT_DISPLAY_RADAR: u32 = 0xBAA3FB;
+/// `CStreaming::ms_aInfoForModel` (`CStreamingInfo`, 0x14 bytes each; `m_nLoadState` at +0x10).
+pub const STREAMING_INFO: u32 = 0x8E4CC0;
+/// `sizeof(CStreamingInfo)`.
+pub const STREAMING_INFO_SIZE: u32 = 0x14;
+/// Entries of `ms_aInfoForModel` (models, txds, collisions, ipls, ... up to the scripts).
+pub const STREAMING_MODELS: u32 = 26_316;
 
 /// `TheCamera` fields.
 pub mod camera {

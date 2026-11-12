@@ -2,10 +2,12 @@
 //! Methods that return `Unsupported` (or a neutral value, for reads that cannot fail) are not served by the
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Local as L};
 use sa_samp_api::vehicles::*;
 use sa_samp_api::*;
 
 use crate::addr::{self, off};
+use crate::script::op;
 use crate::{NativeGame, View};
 
 impl<V: View> NativeGame<V> {
@@ -95,12 +97,30 @@ impl<V: View> Vehicles for NativeGame<V> {
         self.vehicle_ref(self.view.read_u32(ped + off::PED_VEHICLE))
     }
 
-    fn create_vehicle(&mut self, _spawn: &VehicleSpawn) -> GameResult<VehicleRef> {
-        Err(GameError::Unsupported("Vehicles::create_vehicle"))
+    fn create_vehicle(&mut self, spawn: &VehicleSpawn) -> GameResult<VehicleRef> {
+        let p = spawn.pos;
+        let h = self.run_op_out(op::CREATE_CAR, &[I(spawn.model.0), F(p.x), F(p.y), F(p.z), L(0)])? as i32;
+        let v = self
+            .vehicle_from_script_handle(ScriptHandle(h))
+            .ok_or(GameError::NotLoaded)?;
+        self.run_op(op::SET_CAR_HEADING, &[I(h), F(spawn.heading_deg)])?;
+        self.run_op(
+            op::CHANGE_CAR_COLOUR,
+            &[
+                I(h),
+                I(i32::from(spawn.colours[0])),
+                I(i32::from(spawn.colours[1])),
+            ],
+        )?;
+        if spawn.area.0 != 0 {
+            self.run_op(op::SET_VEHICLE_AREA_VISIBLE, &[I(h), I(i32::from(spawn.area.0))])?;
+        }
+        Ok(v)
     }
 
-    fn destroy_vehicle(&mut self, _v: VehicleRef) -> GameResult<()> {
-        Err(GameError::Unsupported("Vehicles::destroy_vehicle"))
+    fn destroy_vehicle(&mut self, v: VehicleRef) -> GameResult<()> {
+        let h = self.vehicle_script_handle(v)?.0;
+        self.run_op(op::DELETE_CAR, &[I(h)]).map(drop)
     }
 
     fn set_vehicle_matrix(&mut self, _v: VehicleRef, _m: &Matrix) -> GameResult<()> {
@@ -111,8 +131,10 @@ impl<V: View> Vehicles for NativeGame<V> {
         Err(GameError::Unsupported("Vehicles::set_vehicle_speed"))
     }
 
-    fn set_vehicle_heading(&mut self, _v: VehicleRef, _heading_deg: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("Vehicles::set_vehicle_heading"))
+    fn set_vehicle_heading(&mut self, v: VehicleRef, heading_deg: f32) -> GameResult<()> {
+        let h = self.vehicle_script_handle(v)?.0;
+        self.run_op(op::SET_CAR_HEADING, &[I(h), F(heading_deg)])
+            .map(drop)
     }
 
     fn set_train_position(&mut self, _v: VehicleRef, _pos: Vec3) -> GameResult<()> {
@@ -123,8 +145,10 @@ impl<V: View> Vehicles for NativeGame<V> {
         Err(GameError::Unsupported("Vehicles::set_train_speed"))
     }
 
-    fn set_vehicle_health(&mut self, _v: VehicleRef, _health: f32) -> GameResult<()> {
-        Err(GameError::Unsupported("Vehicles::set_vehicle_health"))
+    fn set_vehicle_health(&mut self, v: VehicleRef, health: f32) -> GameResult<()> {
+        let a = self.vehicle_addr(v)?;
+        self.view.write(a + off::VEH_HEALTH, &health.to_le_bytes());
+        Ok(())
     }
 
     fn set_vehicle_damage(&mut self, _v: VehicleRef, _d: VehicleDamage) -> GameResult<()> {
@@ -135,8 +159,13 @@ impl<V: View> Vehicles for NativeGame<V> {
         Err(GameError::Unsupported("Vehicles::fix_vehicle"))
     }
 
-    fn set_vehicle_colours(&mut self, _v: VehicleRef, _colours: [u8; 2]) -> GameResult<()> {
-        Err(GameError::Unsupported("Vehicles::set_vehicle_colours"))
+    fn set_vehicle_colours(&mut self, v: VehicleRef, colours: [u8; 2]) -> GameResult<()> {
+        let h = self.vehicle_script_handle(v)?.0;
+        self.run_op(
+            op::CHANGE_CAR_COLOUR,
+            &[I(h), I(i32::from(colours[0])), I(i32::from(colours[1]))],
+        )
+        .map(drop)
     }
 
     fn set_paintjob(&mut self, _v: VehicleRef, _paintjob: u8) -> GameResult<()> {
@@ -167,8 +196,10 @@ impl<V: View> Vehicles for NativeGame<V> {
         Err(GameError::Unsupported("Vehicles::set_petrol_tank_weakpoint"))
     }
 
-    fn set_vehicle_area(&mut self, _v: VehicleRef, _area: AreaCode) -> GameResult<()> {
-        Err(GameError::Unsupported("Vehicles::set_vehicle_area"))
+    fn set_vehicle_area(&mut self, v: VehicleRef, area: AreaCode) -> GameResult<()> {
+        let h = self.vehicle_script_handle(v)?.0;
+        self.run_op(op::SET_VEHICLE_AREA_VISIBLE, &[I(h), I(i32::from(area.0))])
+            .map(drop)
     }
 
     fn set_door(&mut self, _v: VehicleRef, _door: u8, _open_ratio: f32) -> GameResult<()> {

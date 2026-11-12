@@ -1,60 +1,88 @@
 # Generator exclusions: addresses registered (#[hook]/#[native]) on master, a worktree-agent-* branch
 # or an agent worktree, but not in this checkout. Regenerate: python3 -I tools/gen/inflight.py
-0x426970  # worktree-agent-a6d319b53fd3185ec
-0x439230  # worktree agent-a33f0e44a9994a468
-0x439720  # worktree agent-a33f0e44a9994a468
-0x439F60  # worktree agent-a33f0e44a9994a468
+0x438FF0  # worktree-agent-a33f0e44a9994a468
+0x4393F0  # worktree-agent-a33f0e44a9994a468
+0x439E50  # worktree-agent-a33f0e44a9994a468
+0x4413C0  # master
+0x449050  # worktree-agent-a33f0e44a9994a468
 0x449220  # worktree-agent-a33f0e44a9994a468
+0x449690  # worktree-agent-a33f0e44a9994a468
+0x44A9C0  # worktree-agent-a33f0e44a9994a468
+0x4552D0  # worktree-agent-a33f0e44a9994a468
+0x455390  # worktree-agent-a33f0e44a9994a468
 0x499690  # worktree-agent-a33f0e44a9994a468
-0x49F3D0  # worktree agent-aa6be1d1b3cc0f218
-0x49FF20  # worktree agent-aa6be1d1b3cc0f218
-0x5179E0  # worktree-agent-a6d319b53fd3185ec
+0x49F3D0  # worktree-agent-aa6be1d1b3cc0f218
+0x4DC320  # worktree agent-acc62cadcdbd3be53
+0x4DC340  # worktree agent-acc62cadcdbd3be53
+0x4DC3A0  # worktree agent-acc62cadcdbd3be53
+0x4DC410  # worktree agent-acc62cadcdbd3be53
+0x4DC460  # worktree agent-acc62cadcdbd3be53
+0x4DC5B0  # worktree agent-acc62cadcdbd3be53
+0x4DC620  # worktree agent-acc62cadcdbd3be53
+0x4F2810  # worktree agent-acc62cadcdbd3be53
+0x533050  # worktree-agent-a33f0e44a9994a468
+0x55A0B0  # worktree-agent-a33f0e44a9994a468
+0x55A160  # worktree-agent-a33f0e44a9994a468
+0x5633D0  # worktree-agent-a33f0e44a9994a468
+0x563840  # worktree-agent-a33f0e44a9994a468
+0x563A10  # worktree-agent-a33f0e44a9994a468
 0x565200  # worktree-agent-a33f0e44a9994a468
+0x565610  # worktree-agent-a33f0e44a9994a468
+0x565800  # worktree-agent-a33f0e44a9994a468
+0x5659F0  # worktree-agent-a33f0e44a9994a468
+0x5660B0  # worktree-agent-a33f0e44a9994a468
+0x5664A0  # worktree-agent-a33f0e44a9994a468
+0x566610  # worktree-agent-a33f0e44a9994a468
+0x566DA0  # worktree-agent-a33f0e44a9994a468
 0x567750  # worktree-agent-a33f0e44a9994a468
 0x569660  # worktree-agent-a33f0e44a9994a468
-0x5924A0  # worktree agent-a33f0e44a9994a468
-0x592AA0  # worktree agent-a33f0e44a9994a468
+0x569750  # worktree-agent-a33f0e44a9994a468
+0x5697F0  # worktree-agent-a33f0e44a9994a468
+0x56B910  # worktree-agent-a33f0e44a9994a468
+0x56B9C0  # worktree-agent-a33f0e44a9994a468
+0x590FD0  # worktree-agent-a33f0e44a9994a468
+0x591590  # worktree-agent-a33f0e44a9994a468
+0x5915D0  # worktree-agent-a33f0e44a9994a468
+0x5917C0  # worktree-agent-a33f0e44a9994a468
+0x591C50  # worktree-agent-a33f0e44a9994a468
+0x592230  # worktree-agent-a33f0e44a9994a468
 0x593120  # worktree-agent-a33f0e44a9994a468
-0x593910  # worktree agent-a33f0e44a9994a468
+0x593340  # worktree-agent-a33f0e44a9994a468
+0x593DB0  # worktree-agent-a33f0e44a9994a468
+0x593F10  # worktree-agent-a33f0e44a9994a468
 0x594970  # worktree-agent-a33f0e44a9994a468
-0x594C10  # worktree agent-a33f0e44a9994a468
-0x595590  # worktree agent-a33f0e44a9994a468
+0x594A50  # worktree-agent-a33f0e44a9994a468
+0x5970B0  # worktree-agent-a33f0e44a9994a468
+0x597430  # worktree-agent-a33f0e44a9994a468
+0x5974E0  # worktree-agent-a33f0e44a9994a468
+0x598090  # worktree-agent-a33f0e44a9994a468
 0x5980F0  # worktree-agent-a33f0e44a9994a468
-0x598690  # worktree agent-a33f0e44a9994a468
-0x598D80  # worktree agent-a33f0e44a9994a468
+0x5983D0  # worktree-agent-a33f0e44a9994a468
+0x598620  # worktree-agent-a33f0e44a9994a468
 0x599210  # worktree-agent-a33f0e44a9994a468
-0x599BB0  # worktree agent-a33f0e44a9994a468
-0x599DC0  # worktree agent-a33f0e44a9994a468
-0x599EF0  # worktree agent-a33f0e44a9994a468
-0x59A1B0  # worktree agent-a33f0e44a9994a468
-0x59A590  # worktree agent-a33f0e44a9994a468
-0x5A0D90  # worktree-agent-a33f0e44a9994a468
-0x5E8A30  # worktree-agent-a6d319b53fd3185ec
-0x5F2B80  # worktree-agent-a6d319b53fd3185ec
-0x5F3730  # worktree-agent-a6d319b53fd3185ec
-0x5F3B40  # worktree-agent-a6d319b53fd3185ec
+0x5995B0  # worktree-agent-a33f0e44a9994a468
+0x599770  # worktree-agent-a33f0e44a9994a468
+0x599960  # worktree-agent-a33f0e44a9994a468
+0x599A30  # worktree-agent-a33f0e44a9994a468
+0x599AF0  # worktree-agent-a33f0e44a9994a468
+0x59E1F0  # master
+0x5C04A0  # worktree-agent-a33f0e44a9994a468
 0x604500  # worktree agent-a2f522e2079bcc8af
-0x605A30  # worktree-agent-a6d319b53fd3185ec
-0x60A820  # worktree agent-a6d319b53fd3185ec
-0x61D6F0  # worktree agent-aa6be1d1b3cc0f218
 0x624710  # worktree agent-a38d9283f45e4edb6
 0x624A40  # worktree agent-a38d9283f45e4edb6
 0x645600  # worktree-agent-acb5cdcad9d0bd3d6
-0x65DC70  # worktree-agent-a6d319b53fd3185ec
-0x65DCF0  # worktree-agent-a6d319b53fd3185ec
-0x6613A0  # worktree-agent-a6d319b53fd3185ec
-0x6C3030  # worktree agent-aa6be1d1b3cc0f218
-0x6C34E0  # worktree agent-aa6be1d1b3cc0f218
-0x6E61B0  # worktree agent-aa6be1d1b3cc0f218
-0x6E91D0  # worktree agent-aa6be1d1b3cc0f218
-0x6EA260  # worktree agent-aa6be1d1b3cc0f218
-0x6ECF00  # worktree agent-aa6be1d1b3cc0f218
-0x7039C0  # worktree agent-aa6be1d1b3cc0f218
-0x706F60  # worktree agent-aa6be1d1b3cc0f218
-0x71CF50  # worktree agent-aa6be1d1b3cc0f218
-0x720930  # worktree agent-aa6be1d1b3cc0f218
-0x723750  # worktree agent-aa6be1d1b3cc0f218
-0x725C00  # worktree agent-aa6be1d1b3cc0f218
-0x737C80  # worktree agent-aa6be1d1b3cc0f218
-0x73FB10  # worktree agent-aa6be1d1b3cc0f218
-0x741360  # worktree agent-aa6be1d1b3cc0f218
+0x6C3030  # worktree-agent-aa6be1d1b3cc0f218
+0x6C34E0  # worktree-agent-aa6be1d1b3cc0f218
+0x6E3E60  # worktree-agent-a33f0e44a9994a468
+0x6E61B0  # worktree-agent-aa6be1d1b3cc0f218
+0x6E91D0  # worktree-agent-aa6be1d1b3cc0f218
+0x6EA260  # worktree-agent-aa6be1d1b3cc0f218
+0x6ECF00  # worktree-agent-aa6be1d1b3cc0f218
+0x7039C0  # worktree-agent-aa6be1d1b3cc0f218
+0x706F60  # worktree-agent-aa6be1d1b3cc0f218
+0x71CF50  # worktree-agent-aa6be1d1b3cc0f218
+0x723750  # worktree-agent-aa6be1d1b3cc0f218
+0x725C00  # worktree-agent-aa6be1d1b3cc0f218
+0x737C80  # worktree-agent-aa6be1d1b3cc0f218
+0x73FB10  # worktree-agent-aa6be1d1b3cc0f218
+0x741360  # worktree-agent-aa6be1d1b3cc0f218

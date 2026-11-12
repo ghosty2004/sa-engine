@@ -26,6 +26,9 @@ pub struct Target {
     pub host: String,
     pub port: u16,
     pub name: String,
+    /// wasm32: the sa-udp-proxy WebSocket URL (`ws://127.0.0.1:7781`) the datagrams go through; natively unused
+    /// (plain UDP)
+    pub proxy: Option<String>,
 }
 
 /// Parses `HOST[:PORT]` (default port 7777, samp's).
@@ -41,6 +44,7 @@ pub fn parse_target(s: &str, name: &str) -> Result<Target, String> {
         host: host.into(),
         port,
         name: name.into(),
+        proxy: None,
     })
 }
 
@@ -62,6 +66,8 @@ struct Stats {
 }
 
 thread_local! {
+    /// What the network client did (feature `samp`), for the report.
+    static JOURNAL: std::rc::Rc<RefCell<Vec<String>>> = std::rc::Rc::default();
     static GAME: RefCell<Option<NativeGame<EngineView>>> = const { RefCell::new(None) };
     static STATS: RefCell<Stats> = RefCell::new(Stats::default());
 }
@@ -148,20 +154,79 @@ fn on_frame(phase: u8) {
     });
 }
 
-/// Builds the adapter, installs the stand-in client and registers the dispatch handler.
-pub fn install(target: &Target) -> Result<(), String> {
-    let mut game = sa_samp::engine();
-    game.install(
-        &sa_samp_api::config::SampModeConfig::default(),
+/// Phase counting and once-a-second sampling around the real client (feature `samp`).
+struct Counting<H: GameHooks>(H);
+
+impl<H: GameHooks> GameHooks for Counting<H> {
+    fn frame(&mut self, phase: FramePhase, game: &mut dyn GameAdapter) {
+        StandIn.frame(phase, game);
+        self.0.frame(phase, game);
+    }
+
+    fn shutdown(&mut self, game: &mut dyn GameAdapter) {
+        self.0.shutdown(game);
+    }
+}
+
+/// The client `--samp` installs: the network client with the `samp` feature, else the stand-in.
+#[cfg(feature = "samp")]
+fn client(
+    target: &Target,
+    auth: Option<&std::path::Path>,
+) -> Result<(Box<dyn GameHooks>, &'static str), String> {
+    let journal = JOURNAL.with(|j| j.clone());
+    let net = crate::samp_net::NetHooks::connect(target, auth, journal)?;
+    Ok((Box::new(Counting(net)), "samp-rs network core (native client)"))
+}
+
+#[cfg(not(feature = "samp"))]
+fn client(
+    _target: &Target,
+    _auth: Option<&std::path::Path>,
+) -> Result<(Box<dyn GameHooks>, &'static str), String> {
+    let _ = Counting(StandIn);
+    Ok((
         Box::new(StandIn),
-        None,
-    )
-    .map_err(|e| format!("samp: install: {e}"))?;
+        "stand-in client (no network: build with --features samp)",
+    ))
+}
+
+/// samp mode as samp.dll sets it up: every static feature samp disables (the ports wired so far test theirs,
+/// `sa_core::samp::feature`). Limits, behaviour switches and the start-up path are not read by the engine yet
+/// (`--start-in-world` stays the way into the world).
+fn samp_mode_config() -> sa_samp_api::config::SampModeConfig {
+    use sa_samp_api::config::{Feature, FeatureSet, SampModeConfig};
+    SampModeConfig {
+        disabled: Feature::ALL.iter().fold(FeatureSet::NONE, |s, f| s.with(*f)),
+        ..SampModeConfig::default()
+    }
+}
+
+/// Builds the adapter, installs the client and registers the dispatch handler.
+pub fn install(
+    target: &Target,
+    auth: Option<&std::path::Path>,
+    game_dir: &std::path::Path,
+) -> Result<(), String> {
+    let mut game = sa_samp::engine();
+    let (hooks, what) = client(target, auth)?;
+    game.install(&samp_mode_config(), hooks, None)
+        .map_err(|e| format!("samp: install: {e}"))?;
+    // samp blocks typed cheats.
+    use sa_samp_api::config::{RuntimeToggle, SampMode as _};
+    game.set_toggle(RuntimeToggle::TypedCheats(false))
+        .map_err(|e| format!("samp: cheats toggle: {e}"))?;
+    crate::samp_assets::install(game_dir, game.overlay());
+    // samp's start-up: no logos, intro movie or main menu (patch sites 0x747483 and samp's gGameState 7 init).
+    sa_core::samp::set_toggle(sa_core::samp::toggle::SAMP_STARTUP, true);
+    // samp's loading screen: samp.saa's loadscs.txd and the "title" splash names (docs/samp/startup.md).
+    #[cfg(feature = "samp")]
+    println!("sa-game: samp mode: {}", crate::samp_saa::install());
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
     crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, lock: ui_lock });
     println!(
-        "sa-game: samp mode (skeleton): server {}:{} as {}; adapter {:?}; stand-in client (no network yet)",
+        "sa-game: samp mode: server {}:{} as {}; adapter {:?}; {what}",
         target.host,
         target.port,
         target.name,
@@ -189,6 +254,13 @@ pub fn report(md: &mut String, target: &Target) {
         for (p, n) in PHASES.iter().zip(s.counts) {
             let _ = writeln!(md, "| {p:?} | {n} |");
         }
+        let journal = JOURNAL.with(|j| j.borrow().clone());
+        if !journal.is_empty() {
+            let _ = writeln!(md, "\nClient journal:\n");
+            for l in &journal {
+                let _ = writeln!(md, "- {l}");
+            }
+        }
         let _ = writeln!(md, "\nAdapter samples (one per second of game time):\n");
         for l in &s.log {
             let _ = writeln!(md, "- {l}");
@@ -215,7 +287,8 @@ mod tests {
             Ok(Target {
                 host: "127.0.0.1".into(),
                 port: 7810,
-                name: "Rust".into()
+                name: "Rust".into(),
+                proxy: None
             })
         );
         assert_eq!(parse_target("example.org", "N").unwrap().port, 7777);

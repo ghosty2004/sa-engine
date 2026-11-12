@@ -44,12 +44,14 @@ pub mod firstperson;
 pub mod followcar;
 pub mod followped;
 pub mod obbe;
+pub mod padlook;
 pub mod pedmouse;
 pub mod pedonpc;
 pub mod rocket;
 pub mod splines;
 pub mod twoplayer;
 
-pub mod std6_natives;
 pub mod camera_process;
 pub mod generated;
+pub mod idle_cam_slerp;
+pub mod std6_natives;

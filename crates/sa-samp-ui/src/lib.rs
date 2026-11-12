@@ -21,6 +21,7 @@ pub mod draw;
 pub mod edit;
 pub mod font;
 pub mod panels;
+pub mod skin;
 pub mod text;
 pub mod textdraw;
 pub mod ui;

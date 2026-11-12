@@ -91,6 +91,7 @@ pub mod float_pow;
 pub mod bike_rider_anims;
 pub mod vehicle_collision_particles;
 pub mod car_door_positions;
+pub mod vehicle_process_open_door;
 pub mod bike_knock_off_rider;
 pub mod car_enter_stealable;
 
@@ -131,3 +132,5 @@ pub mod vehicle_stub_natives;
 pub mod vehicle_fire_rates_upgrades;
 pub mod vehicle_teleport_destroy;
 pub mod vehicle_misc_queries;
+pub mod stored_car_restore;
+pub mod vehicle_can_ped_enter;

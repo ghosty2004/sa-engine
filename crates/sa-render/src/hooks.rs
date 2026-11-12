@@ -67,7 +67,6 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::shadows_indicator_oil_birds::HOOKS,
     crate::fx_trigger_gunshot::HOOKS,
     crate::checkpoints_place_marker::HOOKS,
-    crate::fx_add_debris::HOOKS,
     crate::pole_shadow::HOOKS,
     crate::ropes_register::HOOKS,
     crate::rope_update::HOOKS,
@@ -136,6 +135,11 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::car_env_map_render::HOOKS,
     // WRITER-NATIVE
     crate::fx_add_sparks::HOOKS,
+    crate::fx_add_punch_impact::HOOKS,
+    crate::postfx_speed_fx::HOOKS,
+    crate::fx_debris_wheel_grass::HOOKS,
+    crate::skidmark_register::HOOKS,
+    crate::fx_info_colour_value::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

@@ -19,12 +19,6 @@ pub fn camera_get_just_switched_status(cam: crate::mem::GPtr<u8>) -> u8 {
     cam.byte_add(0x2A).read()
 }
 
-/// `CBridge::ThisIsABridgeObjectMovingUp(int32 modelIndex)` (0x41BCB0, cdecl): `xor al, al; ret` (false in AL).
-#[crate::native(addr = 0x41BCB0, conv = cdecl, name = "CBridge::ThisIsABridgeObjectMovingUp")]
-pub fn bridge_this_is_a_bridge_object_moving_up(_model: i32) -> u8 {
-    0
-}
-
 /// 0x4217B0 (catalogue: missed by Ghidra, data-code-immediate), proposed `identity cast getter` (thiscall,
 /// `mov eax, ecx; ret`: returns `this`; only reference `CBike::ProcessEntityCollision`).
 #[crate::native(addr = 0x4217B0, conv = thiscall, name = "(missed by ghidra: data-code-immediate)")]
@@ -56,7 +50,6 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     NATIVE_CRANES_IS_THIS_CAR_BEING_TARGETTED_BY_ANY_CRANE,
     NATIVE_CRANES_IS_THIS_CAR_BEING_CARRIED_BY_ANY_CRANE,
     NATIVE_CAMERA_GET_JUST_SWITCHED_STATUS,
-    NATIVE_BRIDGE_THIS_IS_A_BRIDGE_OBJECT_MOVING_UP,
     NATIVE_IDENTITY_THIS_4217B0,
     NATIVE_COL_POINT_GET_SURFACE_TYPE_B,
     NATIVE_CRANES_IS_THIS_CAR_PICKED_UP,

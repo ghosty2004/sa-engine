@@ -68,6 +68,8 @@ pub mod matrix_orthonormal;
 pub mod matrix_euler;
 pub mod replay_camera;
 pub mod vector2d_normalise;
+#[cfg(not(sa_phase_a))]
+pub mod wabi;
 pub mod orig;
 pub mod platform;
 pub mod psinit;

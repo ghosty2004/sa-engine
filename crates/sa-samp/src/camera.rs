@@ -3,9 +3,11 @@
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
 use sa_samp_api::camera::*;
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
 use sa_samp_api::*;
 
 use crate::addr;
+use crate::script::op;
 use crate::{NativeGame, View};
 
 impl<V: View> Camera for NativeGame<V> {
@@ -33,12 +35,24 @@ impl<V: View> Camera for NativeGame<V> {
         false
     }
 
-    fn set_fixed_position(&mut self, _pos: Vec3, _rot: Vec3) -> GameResult<()> {
-        Err(GameError::Unsupported("Camera::set_fixed_position"))
+    fn set_fixed_position(&mut self, pos: Vec3, rot: Vec3) -> GameResult<()> {
+        self.run_op(
+            op::SET_FIXED_CAMERA_POSITION,
+            &[F(pos.x), F(pos.y), F(pos.z), F(rot.x), F(rot.y), F(rot.z)],
+        )
+        .map(drop)
     }
 
-    fn point_at(&mut self, _target: Vec3, _cut: CameraCut) -> GameResult<()> {
-        Err(GameError::Unsupported("Camera::point_at"))
+    fn point_at(&mut self, target: Vec3, cut: CameraCut) -> GameResult<()> {
+        let mode = match cut {
+            CameraCut::Cut => 2,
+            CameraCut::Smooth => 1,
+        };
+        self.run_op(
+            op::POINT_CAMERA_AT_POINT,
+            &[F(target.x), F(target.y), F(target.z), I(mode)],
+        )
+        .map(drop)
     }
 
     fn point_at_ped(&mut self, _ped: PedRef, _mode: i32, _cut: CameraCut) -> GameResult<()> {
@@ -50,11 +64,11 @@ impl<V: View> Camera for NativeGame<V> {
     }
 
     fn behind_player(&mut self) -> GameResult<()> {
-        Err(GameError::Unsupported("Camera::behind_player"))
+        self.run_op(op::SET_CAMERA_BEHIND_PLAYER, &[]).map(drop)
     }
 
     fn restore(&mut self) -> GameResult<()> {
-        Err(GameError::Unsupported("Camera::restore"))
+        self.run_op(op::RESTORE_CAMERA_JUMPCUT, &[]).map(drop)
     }
 
     fn interpolate(
@@ -68,8 +82,8 @@ impl<V: View> Camera for NativeGame<V> {
         Err(GameError::Unsupported("Camera::interpolate"))
     }
 
-    fn set_widescreen(&mut self, _on: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Camera::set_widescreen"))
+    fn set_widescreen(&mut self, on: bool) -> GameResult<()> {
+        self.run_op(op::SWITCH_WIDESCREEN, &[I(i32::from(on))]).map(drop)
     }
 
     fn shake(&mut self, _strength: f32) -> GameResult<()> {

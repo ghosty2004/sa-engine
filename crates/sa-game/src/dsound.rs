@@ -15,7 +15,8 @@
 //! * A buffer's play cursor advances in real time while it plays, at its frequency
 //!   (`SetFrequency`, else the format's rate); the mixer thread (every [`MIX_MS`] ms) advances
 //!   every playing buffer and mixes the frames it passed into the sink at 44.1 kHz stereo 16 bit
-//!   (linear interpolation, gain `10^(volume/2000)`, mono buffers centred). A non-looping buffer
+//!   (linear interpolation, gain `10^(volume/2000)`, pan as DirectSound attenuates the far side:
+//!   `10^(-|pan|/2000)`, mono buffers centred). A non-looping buffer
 //!   stops at its end (`GetStatus` then reports not playing); a looping one wraps.
 //! * The write cursor is the play cursor plus [`WRITE_LEAD_MS`] ms of data (DirectSound's
 //!   "safe to write" distance; not measured).
@@ -30,10 +31,11 @@
 
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use web_time::Instant;
 
 use sa_core::mem::GPtr;
-use sa_platform::audio::{AudioFormat, AudioOut, NullAudio};
+use sa_platform::audio::{AudioFormat, AudioOut};
 
 use crate::bind::with;
 
@@ -247,21 +249,7 @@ static DS8_OBJECT: Mutex<u32> = Mutex::new(0);
 
 /// Maps the vtable page and starts the mixer.
 pub fn map() -> Result<(), String> {
-    // SAFETY: an anonymous private mapping at a fixed low address that MAP_FIXED_NOREPLACE refuses
-    // to place over anything already mapped; never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            PAGE as *mut libc::c_void,
-            0x1000,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != PAGE {
-        return Err(format!("cannot map the DirectSound vtable page at {PAGE:#x}"));
-    }
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the DirectSound vtable page at {PAGE:#x}: {e}"))?;
     for (c, cl) in CLASSES.iter().enumerate() {
         for i in 0..cl.methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));
@@ -288,17 +276,52 @@ pub fn names() -> Vec<(u32, &'static str)> {
 
 /// The sink the mixer plays into.
 fn open_sink() -> Box<dyn AudioOut> {
-    #[cfg(feature = "audio")]
-    if std::env::var("SA_GAME_AUDIO").as_deref() == Ok("cpal") {
-        match sa_platform::native::CpalAudio::new() {
-            Ok(a) => return Box::new(a),
-            Err(e) => eprintln!("sa-game: no audio device ({e}); playing into NullAudio"),
-        }
+    #[cfg(target_arch = "wasm32")]
+    {
+        Box::new(web_out::WebAudio)
     }
-    Box::new(NullAudio::default())
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        #[cfg(feature = "audio")]
+        if crate::env::var("SA_GAME_AUDIO").as_deref() == Ok("cpal") {
+            match sa_platform::native::CpalAudio::new() {
+                Ok(a) => return Box::new(a),
+                Err(e) => eprintln!("sa-game: no audio device ({e}); playing into NullAudio"),
+            }
+        }
+        Box::new(sa_platform::audio::NullAudio::default())
+    }
 }
 
 static MIXER_STARTED: Mutex<bool> = Mutex::new(false);
+
+/// `SA_GAME_DSOUND_TRACE=1`: `Play` calls are logged.
+fn trace_on() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| crate::env::var_os("SA_GAME_DSOUND_TRACE").is_some())
+}
+
+/// Trace: every 3 s, each playing buffer's handle, format, volume and the peak of its contents.
+fn trace_levels(s: &State) {
+    static LAST: Mutex<Option<Instant>> = Mutex::new(None);
+    let now = Instant::now();
+    let mut l = LAST.lock().unwrap_or_else(|e| e.into_inner());
+    if l.is_some_and(|t| now.duration_since(t).as_secs_f64() < 3.0) {
+        return;
+    }
+    *l = Some(now);
+    for (h, b) in &s.buffers {
+        if !b.playing || b.block == 0 {
+            continue;
+        }
+        let frames = b.size / b.block;
+        let peak = (0..frames).map(|f| sample(b, f, 0).abs()).max().unwrap_or(0);
+        eprintln!(
+            "dsound: playing #{h} {} bytes {} Hz freq {} {} ch vol {} pan {} pos {:.0} peak {peak} 3d {:?} mode {} dist {}..{}",
+            b.size, b.rate, b.freq, b.channels, b.volume, b.pan, b.pos, b.pos3d, b.mode3d, b.min_dist, b.max_dist
+        );
+    }
+}
 
 /// The mixer's sink, the fraction of a frame carried over and its scratch buffers.
 struct Mixer {
@@ -324,6 +347,12 @@ pub fn advance(secs: f64) {
     let frames_f = secs * out.sample_rate as f64 + m.carry;
     let frames = frames_f as usize;
     m.carry = frames_f - frames as f64;
+    mix_frames(m, frames);
+}
+
+/// Advances every playing buffer by `frames` output frames and pushes the mix into the sink.
+fn mix_frames(m: &mut Mixer, frames: usize) {
+    let out = AudioFormat::GAME;
     if frames == 0 {
         return;
     }
@@ -334,11 +363,84 @@ pub fn advance(secs: f64) {
         for b in s.buffers.values_mut() {
             mix_buffer(b, mix, frames, out.sample_rate);
         }
+        if trace_on() {
+            trace_levels(s);
+        }
     });
     m.pcm.clear();
     let pcm = &mut m.pcm;
     pcm.extend(m.mix.iter().map(|v| (*v).clamp(-32768, 32767) as i16));
     m.sink.push(&m.pcm);
+}
+
+/// wasm32: advances the buffers once per main-loop iteration. While the page's audio output runs, by the frames it
+/// consumed (the play cursors follow the `AudioContext`'s clock: the ring buffer is topped up to its target fill);
+/// otherwise by the real time since the last call.
+pub fn advance_real_time() {
+    static LAST: Mutex<Option<Instant>> = Mutex::new(None);
+    let now = Instant::now();
+    let prev = LAST.lock().unwrap_or_else(|e| e.into_inner()).replace(now);
+    let Some(prev) = prev else { return };
+    let real = now.duration_since(prev).as_secs_f64().min(0.25) * AudioFormat::GAME.sample_rate as f64;
+    #[cfg(target_arch = "wasm32")]
+    let frames = web_out::frames_wanted(real);
+    #[cfg(not(target_arch = "wasm32"))]
+    let frames = real as usize;
+    let mut g = MIXER.lock().unwrap_or_else(|e| e.into_inner());
+    let m = g.get_or_insert_with(|| Mixer {
+        sink: open_sink(),
+        carry: 0.0,
+        mix: Vec::new(),
+        pcm: Vec::new(),
+    });
+    mix_frames(m, frames);
+}
+
+/// The page's audio output (wasm32): `saGameAudio` on the worker's global scope (`web/worker.js`) owns the ring
+/// buffer the `AudioWorklet` plays from.
+#[cfg(target_arch = "wasm32")]
+mod web_out {
+    use sa_platform::audio::{AudioFormat, AudioOut};
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    extern "C" {
+        /// `saGameAudio.want(realFrames)`: how many frames to mix now (`realFrames` = the real time since the
+        /// last call, used while no output consumes).
+        #[wasm_bindgen(js_namespace = saGameAudio, js_name = want)]
+        fn want(real_frames: f64) -> f64;
+        /// `saGameAudio.push(pcm)`: interleaved stereo 16-bit frames for the ring buffer.
+        #[wasm_bindgen(js_namespace = saGameAudio, js_name = push)]
+        fn push(pcm: &[i16]);
+        /// `saGameAudio.played()`: frames the output has consumed.
+        #[wasm_bindgen(js_namespace = saGameAudio, js_name = played)]
+        fn played() -> f64;
+        /// `saGameAudio.queued()`: frames in the ring buffer not yet consumed.
+        #[wasm_bindgen(js_namespace = saGameAudio, js_name = queued)]
+        fn queued() -> f64;
+    }
+
+    pub fn frames_wanted(real: f64) -> usize {
+        want(real).max(0.0) as usize
+    }
+
+    pub struct WebAudio;
+
+    impl AudioOut for WebAudio {
+        fn format(&self) -> AudioFormat {
+            AudioFormat::GAME
+        }
+        fn push(&mut self, interleaved: &[i16]) -> usize {
+            push(interleaved);
+            interleaved.len() / 2
+        }
+        fn queued_frames(&self) -> usize {
+            queued().max(0.0) as usize
+        }
+        fn frames_played(&self) -> u64 {
+            played().max(0.0) as u64
+        }
+    }
 }
 
 fn start_mixer() {
@@ -347,6 +449,10 @@ fn start_mixer() {
         return;
     }
     *started = true;
+    // wasm32: no threads; the main loop advances the buffers in real time ([`advance_real_time`])
+    if cfg!(target_arch = "wasm32") {
+        return;
+    }
     std::thread::Builder::new()
         .name("sa-game dsound mixer".into())
         .spawn(|| {
@@ -401,6 +507,10 @@ fn mix_buffer(b: &mut Buffer, mix: &mut [i32], frames: usize, out_rate: u32) {
     } else {
         10f64.powf(b.volume as f64 / 2000.0)
     };
+    // DSBPAN: the far side is attenuated by |pan| hundredths of a dB (-10000 = left only)
+    let pan = b.pan.clamp(-10000, 10000);
+    let side = |att: i32| if att >= 10000 { 0.0 } else { 10f64.powf(-att as f64 / 2000.0) };
+    let ch_gain = [gain * side(pan.max(0)), gain * side((-pan).max(0))];
     for i in 0..frames {
         if b.pos >= len {
             if b.looping {
@@ -422,7 +532,7 @@ fn mix_buffer(b: &mut Buffer, mix: &mut [i32], frames: usize, out_rate: u32) {
             for ch in 0..2u32 {
                 let a = sample(b, f0, ch) as f64;
                 let c = sample(b, f1, ch) as f64;
-                mix[i * 2 + ch as usize] += ((a + (c - a) * t) * gain) as i32;
+                mix[i * 2 + ch as usize] += ((a + (c - a) * t) * ch_gain[ch as usize]) as i32;
             }
         }
         b.pos += step;
@@ -726,7 +836,14 @@ fn buf_lock(
 }
 /// `Play(reserved1, priority, flags)`: `DSBPLAY_LOOPING` 1.
 fn buf_play(this: u32, _r: u32, _prio: u32, flags: u32) -> i32 {
+    let trace = trace_on();
     with_buf(this, |b| {
+        if trace {
+            eprintln!(
+                "dsound: Play {this:#x} {} bytes {} Hz {} bit {} ch flags {:#x} vol {} freq {} loop {}",
+                b.size, b.rate, b.bits, b.channels, b.flags, b.volume, b.freq, flags & 1
+            );
+        }
         b.playing = true;
         b.looping = flags & 1 != 0;
     })
@@ -753,6 +870,9 @@ fn buf_set_format(this: u32, wfx: GPtr<u8>) -> i32 {
 }
 fn buf_set_volume(this: u32, v: i32) -> i32 {
     if !(-10000..=0).contains(&v) {
+        if trace_on() {
+            eprintln!("dsound: SetVolume {this:#x} {v} rejected");
+        }
         return DSERR_INVALIDPARAM;
     }
     with_buf(this, |b| b.volume = v).map_or(DSERR_INVALIDCALL, |_| DS_OK)
@@ -762,6 +882,9 @@ fn buf_set_pan(this: u32, v: i32) -> i32 {
 }
 /// `SetFrequency(hz)`: 0 = the format's rate; 100..200000 Hz.
 fn buf_set_frequency(this: u32, f: u32) -> i32 {
+    if trace_on() {
+        eprintln!("dsound: SetFrequency {this:#x} {f}");
+    }
     if f != 0 && !(100..=200_000).contains(&f) {
         return DSERR_INVALIDPARAM;
     }
@@ -850,7 +973,13 @@ macro_rules! entries {
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
                     $f($($a),*)
                 }
-                v.push(($addr, $name, w as *const () as usize));
+                v.push(($addr, $name, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }

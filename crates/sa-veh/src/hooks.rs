@@ -72,17 +72,19 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::bike_control::HOOKS,
     crate::bike_render::HOOKS,
     crate::generated::HOOKS,
-    crate::float_pow::HOOKS,
     // STD-12 (unverified batches)
     crate::automobile_random_damage::HOOKS,
     crate::bike_fix_hands::HOOKS,
-    crate::car_enter_quit::HOOKS,
     crate::vehicle_damage_react::HOOKS,
+    crate::float_pow::HOOKS,
+    // STD-12 (unverified batches)
+    crate::car_enter_quit::HOOKS,
     crate::bike_rider_anims::HOOKS,
     // WRITER-NATIVE
     crate::vehicle_collision_particles::HOOKS,
     // STD-14 (unverified batches)
     crate::car_door_positions::HOOKS,
+    crate::vehicle_process_open_door::HOOKS,
     crate::bike_knock_off_rider::HOOKS,
     crate::car_enter_stealable::HOOKS,
     // PORT-VEH-3 (unverified batches)
@@ -120,6 +122,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vehicle_fire_rates_upgrades::HOOKS,
     crate::vehicle_teleport_destroy::HOOKS,
     crate::vehicle_misc_queries::HOOKS,
+    crate::stored_car_restore::HOOKS,
+    crate::vehicle_can_ped_enter::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

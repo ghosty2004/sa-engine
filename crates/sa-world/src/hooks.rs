@@ -24,6 +24,8 @@ pub const MODULES: &[&[HookReg]] = &[
     world::gamelogic::HOOKS,
     world::garages::HOOKS,
     world::garage_update::HOOKS,
+    world::garage_slide_door::HOOKS,
+    world::object_damage::HOOKS,
     world::misc::HOOKS,
     world::pickups::HOOKS,
     world::pickup_effects::HOOKS,
@@ -109,7 +111,6 @@ pub const MODULES: &[&[HookReg]] = &[
     world::game_logic_resurrection::HOOKS,
     // WRITER-WORLD (world5-*)
     world::break_object::HOOKS,
-    world::interior_paths_loaded::HOOKS,
     world::water_creature::HOOKS,
     world::cheat_player_toggles::HOOKS,
     world::furniture_hand_object_mines::HOOKS,
@@ -117,10 +118,23 @@ pub const MODULES: &[&[HookReg]] = &[
     world::entry_exit_transition::HOOKS,
     physical::pair_collision::HOOKS,
     world::garage_tidy_up_close::HOOKS,
+    world::interior_group_paths::HOOKS,
+    // WRITER-WORLD-2 (world6-*)
+    world::interior_group_setup::HOOKS,
+    world::interior_shop_furnishing::HOOKS,
+    world::interior_effects_visible::HOOKS,
+    world::interior_reset_tiles::HOOKS,
+    world::interior_exit_points::HOOKS,
+    world::cheat_clothes_themes::HOOKS,
+    world::interior_place_furniture::HOOKS,
+    world::garage_car_blocking::HOOKS,
+    world::garage_slide_door_closed::HOOKS,
+    world::garage_store_cars::HOOKS,
     crate::generated::HOOKS,
     // SAVE-1
     world::save_blocks::HOOKS,
     world::stats_strings::HOOKS,
+    world::entry_exit_ambient_peds::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

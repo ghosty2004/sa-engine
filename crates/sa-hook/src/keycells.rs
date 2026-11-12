@@ -333,7 +333,7 @@ pub const READERS: [Reader; 43] = [
         key: 0x5EDFB2,
         value: 0xE16D_00E9,
     },
-    // Batch world5-1: CPickups::GivePlayerGoodiesWithPickUpMI entry 0x4564F0 (`nop; jmp 0x401F0F`):
+    // Batch world4-1: CPickups::GivePlayerGoodiesWithPickUpMI entry 0x4564F0 (`nop; jmp 0x401F0F`):
     // `xor eax, [0x4564F2]` at 0x4016E3 (the jmp's rel32).
     Reader {
         at: 0x4016E3,

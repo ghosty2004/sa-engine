@@ -714,7 +714,7 @@ pub fn g_task_complex_ctask_complex_421250(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexLeaveAnyCar::Destructor` (0x421270): dtor, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x421270, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Destructor", expect = "C7 01 B0 8E 85 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x421270, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Destructor", expect = "C7 01 B0 8E 85 00")]
 pub fn g_task_complex_leave_any_car_destructor_421270(this: u32) {
     wr::<u32>(p(this), 0, 0x85_8EB0);
     let _v1 = c_61a3d0_t0(this);
@@ -1043,7 +1043,7 @@ pub fn g_fun_004ab9b0_4ab9b0(this: u32) {
 }
 
 /// `CEventGroup::~CEventGroup` (0x4ABA20): dtor, thiscall, `ret 4`; 13 instruction(s) matched.
-#[hook(addr = 0x4ABA20, conv = thiscall, name = "CEventGroup::~CEventGroup", expect = "56 8B F1 6A 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x4ABA20, conv = thiscall, name = "CEventGroup::~CEventGroup", expect = "56 8B F1 6A 00")]
 pub fn g_event_group_cevent_group_4aba20(this: u32, a0: u32) -> u32 {
     wr::<u32>(p(this), 0, 0x85_AAB0);
     c_4ab370_t1(this, 0);
@@ -1056,7 +1056,7 @@ pub fn g_event_group_cevent_group_4aba20(this: u32, a0: u32) -> u32 {
 }
 
 /// `CEventGlobalGroup::~CEventGlobalGroup` (0x4ABAA0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x4ABAA0, conv = thiscall, name = "CEventGlobalGroup::~CEventGlobalGroup", expect = "56 8B F1 E8 08 FF FF FF", unverified = "ai7-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x4ABAA0, conv = thiscall, name = "CEventGlobalGroup::~CEventGlobalGroup", expect = "56 8B F1 E8 08 FF FF FF")]
 pub fn g_event_global_group_cevent_global_group_4abaa0(this: u32, a0: u32) -> u32 {
     c_4ab9b0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -2006,7 +2006,7 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_destructor_4b89
 }
 
 /// `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` (0x4B89D0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x4B89D0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene", expect = "56 8B F1 E8 18 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x4B89D0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene", expect = "56 8B F1 E8 18 00 00 00")]
 pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_mission_flee_scene_4b89d0(
     this: u32,
     a0: u32,
@@ -2021,7 +2021,7 @@ pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_missi
 }
 
 /// `CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene` (0x4B89F0): dtor, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x4B89F0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene", expect = "C7 01 5C B9 85 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x4B89F0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::~CTaskComplexCarDriveMissionFleeScene", expect = "C7 01 5C B9 85 00")]
 pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_mission_flee_scene_4b89f0(
     this: u32,
 ) {
@@ -2030,7 +2030,7 @@ pub fn g_task_complex_car_drive_mission_flee_scene_ctask_complex_car_drive_missi
 }
 
 /// `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` (0x4B8AB0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x4B8AB0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed", expect = "56 8B F1 E8 18 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x4B8AB0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed", expect = "56 8B F1 E8 18 00 00 00")]
 pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission_kill_ped_4b8ab0(
     this: u32,
     a0: u32,
@@ -2045,7 +2045,7 @@ pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission
 }
 
 /// `CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed` (0x4B8AD0): dtor, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x4B8AD0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed", expect = "C7 01 94 B9 85 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x4B8AD0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::~CTaskComplexCarDriveMissionKillPed", expect = "C7 01 94 B9 85 00")]
 pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission_kill_ped_4b8ad0(this: u32) {
     wr::<u32>(p(this), 0, 0x85_B994);
     let _v1 = c_63ccc0_t0(this);
@@ -2713,7 +2713,7 @@ pub fn g_vt_86d4a8_destructor_61a5e0(this: u32, a0: u32) {
 }
 
 /// `CTaskComplex::~CTaskComplex` (0x61A620): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
-#[hook(addr = 0x61A620, conv = thiscall, name = "CTaskComplex::~CTaskComplex", expect = "56 8B F1 E8 A8 FD FF FF", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x61A620, conv = thiscall, name = "CTaskComplex::~CTaskComplex", expect = "56 8B F1 E8 A8 FD FF FF")]
 pub fn g_task_complex_ctask_complex_61a620(this: u32, a0: u32) -> u32 {
     c_61a3d0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -2817,7 +2817,7 @@ pub fn g_event_vehicle_damage_weapon_cevent_vehicle_damage_weapon_61c390(this: u
 }
 
 /// `CTaskSimpleFightingControl::Destructor` (0x61DCA0): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x61DCA0, conv = thiscall, name = "CTaskSimpleFightingControl::Destructor", expect = "6A FF 68 B8 F3 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x61DCA0, conv = thiscall, name = "CTaskSimpleFightingControl::Destructor", expect = "6A FF 68 B8 F3 83 00")]
 pub fn g_task_simple_fighting_control_destructor_61dca0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_D700);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -3406,7 +3406,7 @@ pub fn g_task_complex_ctask_complex_629900(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexLeaveCar::~CTaskComplexLeaveCar` (0x62F250): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x62F250, conv = thiscall, name = "CTaskComplexLeaveCar::~CTaskComplexLeaveCar", expect = "56 8B F1 E8 18 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x62F250, conv = thiscall, name = "CTaskComplexLeaveCar::~CTaskComplexLeaveCar", expect = "56 8B F1 E8 18 00 00 00")]
 pub fn g_task_complex_leave_car_ctask_complex_leave_car_62f250(this: u32, a0: u32) -> u32 {
     c_62f270_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -3418,7 +3418,7 @@ pub fn g_task_complex_leave_car_ctask_complex_leave_car_62f250(this: u32, a0: u3
 }
 
 /// `FUN_0062f270` (0x62F270): dtor, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x62F270, conv = thiscall, name = "FUN_0062f270", expect = "C7 01 00 DD 86 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x62F270, conv = thiscall, name = "FUN_0062f270", expect = "C7 01 00 DD 86 00")]
 pub fn g_fun_0062f270_62f270(this: u32) {
     wr::<u32>(p(this), 0, 0x86_DD00);
     let _v1 = c_63b970_t0(this);
@@ -3432,7 +3432,7 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_destructor_62f650(this: u32) {
 }
 
 /// `CTaskSimpleDuckToggle::Destructor` (0x62F6D0): dtor, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x62F6D0, conv = thiscall, name = "CTaskSimpleDuckToggle::Destructor", expect = "C7 01 98 DD 86 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x62F6D0, conv = thiscall, name = "CTaskSimpleDuckToggle::Destructor", expect = "C7 01 98 DD 86 00")]
 pub fn g_task_simple_duck_toggle_destructor_62f6d0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_DD98);
     let _v1 = c_61a3a0_t0(this);
@@ -3896,7 +3896,7 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_ctask_simple_set_kinda_stay_in
 }
 
 /// `CTaskSimpleDuckToggle::~CTaskSimpleDuckToggle` (0x6374E0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x6374E0, conv = thiscall, name = "CTaskSimpleDuckToggle::~CTaskSimpleDuckToggle", expect = "56 8B F1 E8 E8 81 FF FF", unverified = "ai7-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x6374E0, conv = thiscall, name = "CTaskSimpleDuckToggle::~CTaskSimpleDuckToggle", expect = "56 8B F1 E8 E8 81 FF FF")]
 pub fn g_task_simple_duck_toggle_ctask_simple_duck_toggle_6374e0(this: u32, a0: u32) -> u32 {
     c_62f6d0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -4403,7 +4403,7 @@ pub fn g_fun_0063a1d0_63a1d0(this: u32) {
 }
 
 /// `CTaskComplexEnterCarAsDriverTimed::Destructor` (0x63AE00): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x63AE00, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Destructor", expect = "6A FF 68 28 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63AE00, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Destructor", expect = "6A FF 68 28 14 84 00")]
 pub fn g_task_complex_enter_car_as_driver_timed_destructor_63ae00(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E720);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -4418,7 +4418,7 @@ pub fn g_task_complex_enter_car_as_driver_timed_destructor_63ae00(this: u32) {
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::Destructor` (0x63B0C0): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x63B0C0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Destructor", expect = "6A FF 68 88 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63B0C0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Destructor", expect = "6A FF 68 88 14 84 00")]
 pub fn g_task_complex_enter_car_as_passenger_timed_destructor_63b0c0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E74C);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -4433,7 +4433,7 @@ pub fn g_task_complex_enter_car_as_passenger_timed_destructor_63b0c0(this: u32) 
 }
 
 /// `CTaskComplexEnterCarAsPassengerWait::Destructor` (0x63B3C0): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x63B3C0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Destructor", expect = "6A FF 68 E8 14 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63B3C0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Destructor", expect = "6A FF 68 E8 14 84 00")]
 pub fn g_task_complex_enter_car_as_passenger_wait_destructor_63b3c0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E778);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -4462,7 +4462,7 @@ pub fn g_task_complex_enter_car_as_passenger_wait_destructor_63b3c0(this: u32) {
 }
 
 /// `CTaskComplexLeaveCarAsPassengerWait::Destructor` (0x63B4A0): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x63B4A0, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Destructor", expect = "6A FF 68 28 15 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63B4A0, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Destructor", expect = "6A FF 68 28 15 84 00")]
 pub fn g_task_complex_leave_car_as_passenger_wait_destructor_63b4a0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E7A4);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -4536,7 +4536,7 @@ pub fn g_fun_0063bbd0_63bbd0(this: u32) {
 }
 
 /// `CTaskComplexLeaveCarAndFlee::Destructor` (0x63C030): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x63C030, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::Destructor", expect = "6A FF 68 78 17 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63C030, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::Destructor", expect = "6A FF 68 78 17 84 00")]
 pub fn g_task_complex_leave_car_and_flee_destructor_63c030(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E8AC);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -4566,7 +4566,7 @@ pub fn g_task_complex_scream_in_car_then_leave_destructor_63c2c0(this: u32) {
 }
 
 /// `CTaskComplexCarDriveMission::Destructor` (0x63CCC0): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x63CCC0, conv = thiscall, name = "CTaskComplexCarDriveMission::Destructor", expect = "6A FF 68 F8 18 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63CCC0, conv = thiscall, name = "CTaskComplexCarDriveMission::Destructor", expect = "6A FF 68 F8 18 84 00")]
 pub fn g_task_complex_car_drive_mission_destructor_63ccc0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E9A4);
     let v1 = rd::<u32>(p(this), 0x24);
@@ -4581,7 +4581,7 @@ pub fn g_task_complex_car_drive_mission_destructor_63ccc0(this: u32) {
 }
 
 /// `CTaskComplexShuffleSeats::Destructor` (0x63D1A0): dtor, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x63D1A0, conv = thiscall, name = "CTaskComplexShuffleSeats::Destructor", expect = "6A FF 68 98 19 84 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63D1A0, conv = thiscall, name = "CTaskComplexShuffleSeats::Destructor", expect = "6A FF 68 98 19 84 00")]
 pub fn g_task_complex_shuffle_seats_destructor_63d1a0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EA40);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -4612,7 +4612,7 @@ pub fn g_task_complex_shuffle_seats_destructor_63d1a0(this: u32) {
 }
 
 /// `CTaskSimpleCarSetTempAction::Destructor` (0x63D730): dtor, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63D730, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Destructor", expect = "C7 01 6C EA 86 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63D730, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Destructor", expect = "C7 01 6C EA 86 00")]
 pub fn g_task_simple_car_set_temp_action_destructor_63d730(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EA6C);
     let _v1 = c_63c460_t0(this);
@@ -4646,7 +4646,7 @@ pub fn g_task_complex_ctask_complex_640590(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::~CTaskComplexEnterCarAsPassengerTimed` (0x640640): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x640640, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::~CTaskComplexEnterCarAsPassengerTimed", expect = "56 8B F1 E8 78 AA FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x640640, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::~CTaskComplexEnterCarAsPassengerTimed", expect = "56 8B F1 E8 78 AA FF FF")]
 pub fn g_task_complex_enter_car_as_passenger_timed_ctask_complex_enter_car_as_passenger_timed_640640(
     this: u32,
     a0: u32,
@@ -4757,7 +4757,7 @@ pub fn g_task_complex_ctask_complex_6424f0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexCarDrive::~CTaskComplexCarDrive` (0x642F80): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x642F80, conv = thiscall, name = "CTaskComplexCarDrive::~CTaskComplexCarDrive", expect = "56 8B F1 E8 B8 9A FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x642F80, conv = thiscall, name = "CTaskComplexCarDrive::~CTaskComplexCarDrive", expect = "56 8B F1 E8 B8 9A FF FF")]
 pub fn g_task_complex_car_drive_ctask_complex_car_drive_642f80(this: u32, a0: u32) -> u32 {
     c_63ca40_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -4769,7 +4769,7 @@ pub fn g_task_complex_car_drive_ctask_complex_car_drive_642f80(this: u32, a0: u3
 }
 
 /// `CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission` (0x643260): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x643260, conv = thiscall, name = "CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission", expect = "56 8B F1 E8 58 9A FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x643260, conv = thiscall, name = "CTaskComplexCarDriveMission::~CTaskComplexCarDriveMission", expect = "56 8B F1 E8 58 9A FF FF")]
 pub fn g_task_complex_car_drive_mission_ctask_complex_car_drive_mission_643260(this: u32, a0: u32) -> u32 {
     c_63ccc0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -4781,7 +4781,7 @@ pub fn g_task_complex_car_drive_mission_ctask_complex_car_drive_mission_643260(t
 }
 
 /// `CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint` (0x643280): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x643280, conv = thiscall, name = "CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint", expect = "56 8B F1 E8 E8 9B FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x643280, conv = thiscall, name = "CTaskComplexDriveToPoint::~CTaskComplexDriveToPoint", expect = "56 8B F1 E8 E8 9B FF FF")]
 pub fn g_task_complex_drive_to_point_ctask_complex_drive_to_point_643280(this: u32, a0: u32) -> u32 {
     c_63ce70_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -4793,7 +4793,7 @@ pub fn g_task_complex_drive_to_point_ctask_complex_drive_to_point_643280(this: u
 }
 
 /// `CTaskComplexDrivePointRoute::Destructor` (0x643490): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x643490, conv = thiscall, name = "CTaskComplexDrivePointRoute::Destructor", expect = "6A FF 68 F8 21 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x643490, conv = thiscall, name = "CTaskComplexDrivePointRoute::Destructor", expect = "6A FF 68 F8 21 84 00")]
 pub fn g_task_complex_drive_point_route_destructor_643490(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EBF8);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -4820,7 +4820,7 @@ pub fn g_task_complex_ctask_complex_6436e0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarDrive::~CTaskSimpleCarDrive` (0x643760): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x643760, conv = thiscall, name = "CTaskSimpleCarDrive::~CTaskSimpleCarDrive", expect = "56 8B F1 E8 C8 9F FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x643760, conv = thiscall, name = "CTaskSimpleCarDrive::~CTaskSimpleCarDrive", expect = "56 8B F1 E8 C8 9F FF FF")]
 pub fn g_task_simple_car_drive_ctask_simple_car_drive_643760(this: u32, a0: u32) -> u32 {
     c_63d730_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -4832,7 +4832,7 @@ pub fn g_task_simple_car_drive_ctask_simple_car_drive_643760(this: u32, a0: u32)
 }
 
 /// `CTaskComplexEnterCar::~CTaskComplexEnterCar` (0x643A40): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x643A40, conv = thiscall, name = "CTaskComplexEnterCar::~CTaskComplexEnterCar", expect = "56 8B F1 E8 58 A5 FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x643A40, conv = thiscall, name = "CTaskComplexEnterCar::~CTaskComplexEnterCar", expect = "56 8B F1 E8 58 A5 FF FF")]
 pub fn g_task_complex_enter_car_ctask_complex_enter_car_643a40(this: u32, a0: u32) -> u32 {
     c_63dfa0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -4844,7 +4844,7 @@ pub fn g_task_complex_enter_car_ctask_complex_enter_car_643a40(this: u32, a0: u3
 }
 
 /// `CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger` (0x643C80): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x643C80, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger", expect = "56 8B F1 E8 F8 C6 FF FF", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x643C80, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::~CTaskComplexEnterCarAsPassenger", expect = "56 8B F1 E8 F8 C6 FF FF")]
 pub fn g_task_complex_enter_car_as_passenger_ctask_complex_enter_car_as_passenger_643c80(
     this: u32,
     a0: u32,
@@ -4910,7 +4910,7 @@ pub fn g_task_complex_ctask_complex_645350(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarAlign::Destructor` (0x645BE0): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x645BE0, conv = thiscall, name = "CTaskSimpleCarAlign::Destructor", expect = "6A FF 68 D8 23 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x645BE0, conv = thiscall, name = "CTaskSimpleCarAlign::Destructor", expect = "6A FF 68 D8 23 84 00")]
 pub fn g_task_simple_car_align_destructor_645be0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EC78);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -4939,7 +4939,7 @@ pub fn g_task_simple_car_align_destructor_645be0(this: u32) {
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::Destructor` (0x6460F0): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x6460F0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Destructor", expect = "6A FF 68 58 24 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6460F0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Destructor", expect = "6A FF 68 58 24 84 00")]
 pub fn g_task_simple_car_open_locked_door_from_outside_destructor_6460f0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_ECC0);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -4997,7 +4997,7 @@ pub fn g_task_simple_pick_up_bike_destructor_646230(this: u32) {
 }
 
 /// `CTaskSimpleCarCloseDoorFromInside::Destructor` (0x646380): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x646380, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Destructor", expect = "6A FF 68 D8 24 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x646380, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Destructor", expect = "6A FF 68 D8 24 84 00")]
 pub fn g_task_simple_car_close_door_from_inside_destructor_646380(this: u32) {
     wr::<u32>(p(this), 0, 0x86_ED08);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5026,7 +5026,7 @@ pub fn g_task_simple_car_close_door_from_inside_destructor_646380(this: u32) {
 }
 
 /// `CTaskSimpleCarCloseDoorFromOutside::Destructor` (0x646570): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x646570, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Destructor", expect = "6A FF 68 18 25 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x646570, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Destructor", expect = "6A FF 68 18 25 84 00")]
 pub fn g_task_simple_car_close_door_from_outside_destructor_646570(this: u32) {
     wr::<u32>(p(this), 0, 0x86_ED2C);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5055,7 +5055,7 @@ pub fn g_task_simple_car_close_door_from_outside_destructor_646570(this: u32) {
 }
 
 /// `CTaskSimpleCarGetIn::Destructor` (0x646710): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x646710, conv = thiscall, name = "CTaskSimpleCarGetIn::Destructor", expect = "6A FF 68 58 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x646710, conv = thiscall, name = "CTaskSimpleCarGetIn::Destructor", expect = "6A FF 68 58 25 84 00")]
 pub fn g_task_simple_car_get_in_destructor_646710(this: u32) {
     wr::<u32>(p(this), 0, 0x86_ED50);
     let v1 = rd::<u32>(p(this), 0x18);
@@ -5084,7 +5084,7 @@ pub fn g_task_simple_car_get_in_destructor_646710(this: u32) {
 }
 
 /// `CTaskSimpleCarShuffle::Destructor` (0x646890): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x646890, conv = thiscall, name = "CTaskSimpleCarShuffle::Destructor", expect = "6A FF 68 98 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x646890, conv = thiscall, name = "CTaskSimpleCarShuffle::Destructor", expect = "6A FF 68 98 25 84 00")]
 pub fn g_task_simple_car_shuffle_destructor_646890(this: u32) {
     wr::<u32>(p(this), 0, 0x86_ED74);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5113,7 +5113,7 @@ pub fn g_task_simple_car_shuffle_destructor_646890(this: u32) {
 }
 
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Destructor` (0x646C00): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x646C00, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Destructor", expect = "6A FF 68 18 26 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x646C00, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Destructor", expect = "6A FF 68 18 26 84 00")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_destructor_646c00(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EDBC);
     let v1 = rd::<u32>(p(this), 8);
@@ -5128,7 +5128,7 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_destructor_646c00(this: 
 }
 
 /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Destructor` (0x646E50): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x646E50, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Destructor", expect = "6A FF 68 68 26 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x646E50, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Destructor", expect = "6A FF 68 68 26 84 00")]
 pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_destructor_646e50(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EDE0);
     let v1 = rd::<u32>(p(this), 8);
@@ -5160,7 +5160,7 @@ pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_destructor_
 }
 
 /// `CTaskSimpleCarGetOut::Destructor` (0x647260): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x647260, conv = thiscall, name = "CTaskSimpleCarGetOut::Destructor", expect = "6A FF 68 48 27 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x647260, conv = thiscall, name = "CTaskSimpleCarGetOut::Destructor", expect = "6A FF 68 48 27 84 00")]
 pub fn g_task_simple_car_get_out_destructor_647260(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EE4C);
     let v1 = rd::<u32>(p(this), 0x14);
@@ -5189,7 +5189,7 @@ pub fn g_task_simple_car_get_out_destructor_647260(this: u32) {
 }
 
 /// `CTaskSimpleCarJumpOut::Destructor` (0x647490): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x647490, conv = thiscall, name = "CTaskSimpleCarJumpOut::Destructor", expect = "6A FF 68 68 27 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x647490, conv = thiscall, name = "CTaskSimpleCarJumpOut::Destructor", expect = "6A FF 68 68 27 84 00")]
 pub fn g_task_simple_car_jump_out_destructor_647490(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EE70);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5218,7 +5218,7 @@ pub fn g_task_simple_car_jump_out_destructor_647490(this: u32) {
 }
 
 /// `CTaskSimpleCarSlowDragPedOut::Destructor` (0x648070): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x648070, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::Destructor", expect = "6A FF 68 48 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x648070, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::Destructor", expect = "6A FF 68 48 28 84 00")]
 pub fn g_task_simple_car_slow_drag_ped_out_destructor_648070(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EEE8);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5247,7 +5247,7 @@ pub fn g_task_simple_car_slow_drag_ped_out_destructor_648070(this: u32) {
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::Destructor` (0x6482C0): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x6482C0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::Destructor", expect = "6A FF 68 88 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6482C0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::Destructor", expect = "6A FF 68 88 28 84 00")]
 pub fn g_task_simple_car_slow_be_dragged_out_destructor_6482c0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EF0C);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5276,7 +5276,7 @@ pub fn g_task_simple_car_slow_be_dragged_out_destructor_6482c0(this: u32) {
 }
 
 /// `CTaskSimpleCarSetPedSlowDraggedOut::Destructor` (0x648430): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x648430, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Destructor", expect = "6A FF 68 C8 28 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x648430, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Destructor", expect = "6A FF 68 C8 28 84 00")]
 pub fn g_task_simple_car_set_ped_slow_dragged_out_destructor_648430(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EF30);
     let v1 = rd::<u32>(p(this), 8);
@@ -5291,7 +5291,7 @@ pub fn g_task_simple_car_set_ped_slow_dragged_out_destructor_648430(this: u32) {
 }
 
 /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690` (0x648690): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x648690, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690", expect = "6A FF 68 48 29 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x648690, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::0x648690", expect = "6A FF 68 48 29 84 00")]
 pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_0x648690_648690(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EF80);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -5306,7 +5306,7 @@ pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_0x648690_648690(this:
 }
 
 /// `CTaskSimpleBikeJacked::Destructor` (0x648C40): dtor, thiscall, `ret`; 47 instruction(s) matched.
-#[hook(addr = 0x648C40, conv = thiscall, name = "CTaskSimpleBikeJacked::Destructor", expect = "6A FF 68 F8 29 84 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x648C40, conv = thiscall, name = "CTaskSimpleBikeJacked::Destructor", expect = "6A FF 68 F8 29 84 00")]
 pub fn g_task_simple_bike_jacked_destructor_648c40(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EFAC);
     let v1 = rd::<u32>(p(this), 0x14);
@@ -5423,7 +5423,7 @@ pub fn g_task_simple_bike_jacked_destructor_648c40(this: u32) {
 }
 
 /// `CTaskSimpleCarFallOut::Destructor` (0x648DE0): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x648DE0, conv = thiscall, name = "CTaskSimpleCarFallOut::Destructor", expect = "6A FF 68 38 2A 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x648DE0, conv = thiscall, name = "CTaskSimpleCarFallOut::Destructor", expect = "6A FF 68 38 2A 84 00")]
 pub fn g_task_simple_car_fall_out_destructor_648de0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EFD0);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -5650,7 +5650,7 @@ pub fn g_task_simple_ctask_simple_64b480(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger` (0x64B5B0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64B5B0, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger", expect = "56 8B F1 E8 C8 BA FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64B5B0, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::~CTaskSimpleCarSetPedInAsPassenger", expect = "56 8B F1 E8 C8 BA FF FF")]
 pub fn g_task_simple_car_set_ped_in_as_passenger_ctask_simple_car_set_ped_in_as_passenger_64b5b0(
     this: u32,
     a0: u32,
@@ -5665,7 +5665,7 @@ pub fn g_task_simple_car_set_ped_in_as_passenger_ctask_simple_car_set_ped_in_as_
 }
 
 /// `CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver` (0x64B930): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64B930, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver", expect = "56 8B F1 E8 38 B8 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64B930, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::~CTaskSimpleCarSetPedInAsDriver", expect = "56 8B F1 E8 38 B8 FF FF")]
 pub fn g_task_simple_car_set_ped_in_as_driver_ctask_simple_car_set_ped_in_as_driver_64b930(
     this: u32,
     a0: u32,
@@ -5692,7 +5692,7 @@ pub fn g_task_simple_ctask_simple_64bee0(this: u32, a0: u32) -> u32 {
 }
 
 /// `vt_86ee94::Destructor` (0x64BF50): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64BF50, conv = thiscall, name = "vt_86ee94::Destructor", expect = "56 8B F1 E8 38 B8 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64BF50, conv = thiscall, name = "vt_86ee94::Destructor", expect = "56 8B F1 E8 38 B8 FF FF")]
 pub fn g_vt_86ee94_destructor_64bf50(this: u32, a0: u32) -> u32 {
     c_647790_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -5704,7 +5704,7 @@ pub fn g_vt_86ee94_destructor_64bf50(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut` (0x64BF90): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64BF90, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut", expect = "56 8B F1 E8 D8 C0 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64BF90, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::~CTaskSimpleCarSlowDragPedOut", expect = "56 8B F1 E8 D8 C0 FF FF")]
 pub fn g_task_simple_car_slow_drag_ped_out_ctask_simple_car_slow_drag_ped_out_64bf90(
     this: u32,
     a0: u32,
@@ -5743,7 +5743,7 @@ pub fn g_task_simple_ctask_simple_64c200(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexCarSlowBeDraggedOut::Destructor` (0x64C580): dtor, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x64C580, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Destructor", expect = "6A FF 68 B8 30 84 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x64C580, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Destructor", expect = "6A FF 68 B8 30 84 00")]
 pub fn g_task_complex_car_slow_be_dragged_out_destructor_64c580(this: u32) {
     wr::<u32>(p(this), 0, 0x86_EF54);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -5774,7 +5774,7 @@ pub fn g_task_complex_car_slow_be_dragged_out_destructor_64c580(this: u32) {
 }
 
 /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp` (0x64C930): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64C930, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp", expect = "56 8B F1 E8 58 BD FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64C930, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::~CTaskComplexCarSlowBeDraggedOutAndStandUp", expect = "56 8B F1 E8 58 BD FF FF")]
 pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_ctask_complex_car_slow_be_dragged_out_and_stand_up_64c930(
     this: u32,
     a0: u32,
@@ -5801,7 +5801,7 @@ pub fn g_task_simple_ctask_simple_64c950(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarFallOut::~CTaskSimpleCarFallOut` (0x64CC40): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64CC40, conv = thiscall, name = "CTaskSimpleCarFallOut::~CTaskSimpleCarFallOut", expect = "56 8B F1 E8 98 C1 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64CC40, conv = thiscall, name = "CTaskSimpleCarFallOut::~CTaskSimpleCarFallOut", expect = "56 8B F1 E8 98 C1 FF FF")]
 pub fn g_task_simple_car_fall_out_ctask_simple_car_fall_out_64cc40(this: u32, a0: u32) -> u32 {
     c_648de0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -5879,7 +5879,7 @@ pub fn g_task_simple_ctask_simple_64d200(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut` (0x64E2A0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x64E2A0, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut", expect = "56 8B F1 E8 D8 E2 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64E2A0, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::~CTaskComplexCarSlowBeDraggedOut", expect = "56 8B F1 E8 D8 E2 FF FF")]
 pub fn g_task_complex_car_slow_be_dragged_out_ctask_complex_car_slow_be_dragged_out_64e2a0(
     this: u32,
     a0: u32,
@@ -6413,7 +6413,7 @@ pub fn g_task_complex_medic_treat_injured_ped_ctask_complex_medic_treat_injured_
 }
 
 /// `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` (0x6593A0): dtor, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x6593A0, conv = thiscall, name = "CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck", expect = "6A FF 68 68 3C 84 00", unverified = "ai7-4", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6593A0, conv = thiscall, name = "CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck", expect = "6A FF 68 68 3C 84 00")]
 pub fn g_task_complex_drive_fire_truck_ctask_complex_drive_fire_truck_6593a0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_F570);
     let v1 = rd::<u32>(p(this), 0xC);
@@ -6521,7 +6521,7 @@ pub fn g_task_complex_medic_treat_injured_ped_ctask_complex_medic_treat_injured_
 }
 
 /// `vt_86f544::Destructor` (0x65A0F0): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x65A0F0, conv = thiscall, name = "vt_86f544::Destructor", expect = "56 8B F1 E8 48 F1 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x65A0F0, conv = thiscall, name = "vt_86f544::Destructor", expect = "56 8B F1 E8 48 F1 FF FF")]
 pub fn g_vt_86f544_destructor_65a0f0(this: u32, a0: u32) -> u32 {
     c_659240_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -6533,7 +6533,7 @@ pub fn g_vt_86f544_destructor_65a0f0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck` (0x65A220): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x65A220, conv = thiscall, name = "CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck", expect = "56 8B F1 E8 78 F1 FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x65A220, conv = thiscall, name = "CTaskComplexDriveFireTruck::~CTaskComplexDriveFireTruck", expect = "56 8B F1 E8 78 F1 FF FF")]
 pub fn g_task_complex_drive_fire_truck_ctask_complex_drive_fire_truck_65a220(this: u32, a0: u32) -> u32 {
     c_6593a0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -6788,7 +6788,7 @@ pub fn g_task_complex_pass_object_destructor_661230(this: u32) {
 }
 
 /// `CTaskComplexProstituteSolicit::~CTaskComplexProstituteSolicit` (0x661AF0): dtor, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x661AF0, conv = thiscall, name = "CTaskComplexProstituteSolicit::~CTaskComplexProstituteSolicit", expect = "6A FF 68 28 49 84 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x661AF0, conv = thiscall, name = "CTaskComplexProstituteSolicit::~CTaskComplexProstituteSolicit", expect = "6A FF 68 28 49 84 00")]
 pub fn g_task_complex_prostitute_solicit_ctask_complex_prostitute_solicit_661af0(this: u32) {
     wr::<u32>(p(this), 0, 0x86_FB88);
     let v1 = c_56e210_c1(0xFFFF_FFFF);
@@ -7724,7 +7724,7 @@ pub fn g_task_simple_climb_ctask_simple_climb_67dbc0(this: u32, a0: u32) -> u32 
 }
 
 /// `CTaskSimpleJetPack::Destructor` (0x67E600): dtor, thiscall, `ret`; 71 instruction(s) matched.
-#[hook(addr = 0x67E600, conv = thiscall, name = "CTaskSimpleJetPack::Destructor", expect = "6A FF 68 58 64 84 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x67E600, conv = thiscall, name = "CTaskSimpleJetPack::Destructor", expect = "6A FF 68 58 64 84 00")]
 pub fn g_task_simple_jet_pack_destructor_67e600(this: u32) {
     wr::<u32>(p(this), 0, 0x87_05C4);
     let v1 = rd::<u32>(p(this), 0x40);
@@ -8108,7 +8108,7 @@ pub fn g_task_simple_swim_ctask_simple_swim_68b0e0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleArrestPed::~CTaskSimpleArrestPed` (0x68B690): dtor, thiscall, `ret`; 50 instruction(s) matched.
-#[hook(addr = 0x68B690, conv = thiscall, name = "CTaskSimpleArrestPed::~CTaskSimpleArrestPed", expect = "6A FF 68 08 6D 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x68B690, conv = thiscall, name = "CTaskSimpleArrestPed::~CTaskSimpleArrestPed", expect = "6A FF 68 08 6D 84 00")]
 pub fn g_task_simple_arrest_ped_ctask_simple_arrest_ped_68b690(this: u32) {
     wr::<u32>(p(this), 0, 0x87_0984);
     let v1 = rd::<u32>(p(this), 0x10);
@@ -8716,7 +8716,7 @@ pub fn g_vt_870b98_destructor_6935f0(this: u32, a0: u32) -> u32 {
 }
 
 /// `vt_870bec::Destructor` (0x693B80): dtor, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x693B80, conv = thiscall, name = "vt_870bec::Destructor", expect = "56 8B F1 E8 68 EB FF FF", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x693B80, conv = thiscall, name = "vt_870bec::Destructor", expect = "56 8B F1 E8 68 EB FF FF")]
 pub fn g_vt_870bec_destructor_693b80(this: u32, a0: u32) -> u32 {
     c_6926f0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -9078,7 +9078,7 @@ pub fn g_task_allocator_kill_threats_driveby_destructor_69cb60(this: u32) -> u32
 }
 
 /// `CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot` (0x69D9C0): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
-#[hook(addr = 0x69D9C0, conv = thiscall, name = "CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot", expect = "56 8B F1 E8 28 E2 FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x69D9C0, conv = thiscall, name = "CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot", expect = "56 8B F1 E8 28 E2 FF FF")]
 pub fn g_task_allocator_kill_on_foot_ctask_allocator_kill_on_foot_69d9c0(this: u32, a0: u32) -> u32 {
     c_69bbf0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -9103,7 +9103,7 @@ pub fn g_task_allocator_kill_on_foot_ctask_allocator_kill_on_foot_69d9c0(this: u
 }
 
 /// `CTaskAllocatorAttack::~CTaskAllocatorAttack` (0x69DA00): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
-#[hook(addr = 0x69DA00, conv = thiscall, name = "CTaskAllocatorAttack::~CTaskAllocatorAttack", expect = "56 8B F1 E8 C8 E8 FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x69DA00, conv = thiscall, name = "CTaskAllocatorAttack::~CTaskAllocatorAttack", expect = "56 8B F1 E8 C8 E8 FF FF")]
 pub fn g_task_allocator_attack_ctask_allocator_attack_69da00(this: u32, a0: u32) -> u32 {
     c_69c2d0_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -9128,7 +9128,7 @@ pub fn g_task_allocator_attack_ctask_allocator_attack_69da00(this: u32, a0: u32)
 }
 
 /// `CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic` (0x69DA40): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
-#[hook(addr = 0x69DA40, conv = thiscall, name = "CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic", expect = "56 8B F1 E8 38 ED FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x69DA40, conv = thiscall, name = "CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic", expect = "56 8B F1 E8 38 ED FF FF")]
 pub fn g_task_allocator_kill_threats_basic_ctask_allocator_kill_threats_basic_69da40(
     this: u32,
     a0: u32,
@@ -9156,7 +9156,7 @@ pub fn g_task_allocator_kill_threats_basic_ctask_allocator_kill_threats_basic_69
 }
 
 /// `CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor'` (0x69DA80): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
-#[hook(addr = 0x69DA80, conv = thiscall, name = "CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor'", expect = "56 8B F1 E8 D8 F0 FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x69DA80, conv = thiscall, name = "CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor'", expect = "56 8B F1 E8 D8 F0 FF FF")]
 pub fn g_task_allocator_kill_threats_driveby_scalar_deleting_destructor_69da80(this: u32, a0: u32) -> u32 {
     c_69cb60_t0(this);
     if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
@@ -9205,7 +9205,7 @@ pub fn g_task_allocator_ctask_allocator_69dac0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack` (0x69DB00): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
-#[hook(addr = 0x69DB00, conv = thiscall, name = "CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack", expect = "56 8B F1 E8 38 00 00 00", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x69DB00, conv = thiscall, name = "CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack", expect = "56 8B F1 E8 38 00 00 00")]
 pub fn g_task_allocator_player_command_attack_ctask_allocator_player_command_attack_69db00(
     this: u32,
     a0: u32,
@@ -9240,7 +9240,7 @@ pub fn g_fun_0069db40_69db40(this: u32) {
 }
 
 /// `__dtor_g_c09870` (0x8567C0): dtor, cdecl, `ret`; 10 instruction(s) matched.
-#[hook(addr = 0x8567C0, conv = cdecl, name = "__dtor_g_c09870", expect = "A1 70 98 C0 00", unverified = "ai7-5", route = "split", hazards = "none")]
+#[hook(addr = 0x8567C0, conv = cdecl, name = "__dtor_g_c09870", expect = "A1 70 98 C0 00")]
 pub fn g_dtor_g_c09870_8567c0() -> u32 {
     let v1 = g::<u32>(0xC0_9870).read();
     if v1 == 0 {

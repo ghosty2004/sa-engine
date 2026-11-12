@@ -11,6 +11,8 @@ pub mod hand_object;
 pub mod gamelogic;
 pub mod garages;
 pub mod garage_update;
+pub mod garage_slide_door;
+pub mod object_damage;
 pub mod misc;
 pub mod pickups;
 pub mod pickup_effects;
@@ -55,9 +57,6 @@ pub mod tree_wind;
 pub mod object_collision;
 pub mod x87_leaves;
 pub mod replay_vehicle_block;
-// SAVE-1 (docs/arch/save-port.md)
-pub mod save_blocks;
-pub mod stats_strings;
 pub mod garage_tidy_up_close;
 pub mod entry_exit_stack;
 pub mod game_logic_time;
@@ -72,10 +71,25 @@ pub mod interior_shop_units;
 pub mod interior_init;
 pub mod object_fire_damage;
 pub mod game_logic_resurrection;
+// PORT-VEH-4
 pub mod break_object;
-pub mod interior_paths_loaded;
+pub mod interior_group_paths;
+pub mod entry_exit_transition;
 pub mod water_creature;
+// SAVE-1 (docs/arch/save-port.md)
+pub mod save_blocks;
+pub mod stats_strings;
 pub mod cheat_player_toggles;
 pub mod furniture_hand_object_mines;
 // PORT-VEH-4
-pub mod entry_exit_transition;
+pub mod entry_exit_ambient_peds;
+pub mod interior_group_setup;
+pub mod interior_shop_furnishing;
+pub mod interior_effects_visible;
+pub mod interior_reset_tiles;
+pub mod interior_exit_points;
+pub mod cheat_clothes_themes;
+pub mod interior_place_furniture;
+pub mod garage_car_blocking;
+pub mod garage_slide_door_closed;
+pub mod garage_store_cars;

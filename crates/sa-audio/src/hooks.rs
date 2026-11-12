@@ -39,6 +39,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::weather_update_parameters::HOOKS,
     crate::generated::HOOKS,
     crate::vehicle_add_audio_event::HOOKS,
+    crate::player_vehicle_engine::HOOKS,
     // WRITER-NATIVE
     crate::weapon_gun_sounds::HOOKS,
 ];
@@ -72,6 +73,7 @@ pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     crate::port4_init::NATIVES,
     crate::port4_service::NATIVES,
     crate::bicycle_tyre_volume::NATIVES,
+    crate::player_vehicle_engine::NATIVES,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {

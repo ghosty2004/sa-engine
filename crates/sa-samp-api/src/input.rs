@@ -26,8 +26,10 @@ pub struct PadState {
     pub face: [i16; 4],
     /// Left / right shock (stick press, `Pads + 0x24` 0xB7347C for L).
     pub shock: [i16; 2],
-    /// Home button / ped walk.
-    pub home: i16,
+    /// `m_bChatIndicated` (+0x28).
+    pub chat_indicated: i16,
+    /// `m_bPedWalk` (+0x2A): the walk key, sent by samp's on-foot sync.
+    pub ped_walk: i16,
 }
 
 /// Mouse state (`CPad::NewMouseControllerState` 0xB73418, temp state 0xB73404).

@@ -28,6 +28,8 @@ pub mod generated_leaf_logic;
 pub mod generated_leaves;
 #[path = "generated_thunks.rs"]
 pub mod generated_thunks;
+#[path = "ped_generated.rs"]
+pub mod ped_generated;
 
 /// A 32-bit game address as a pointer.
 #[allow(dead_code)]
@@ -97,6 +99,7 @@ pub const BODIES: &[&[Body]] = &[
     generated_leaf_logic::BODIES,
     generated_leaves::BODIES,
     generated_thunks::BODIES,
+    ped_generated::BODIES,
 ];
 
 #[cfg(all(test, not(sa_phase_a)))]

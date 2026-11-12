@@ -2116,6 +2116,19 @@ impl WgpuDevice {
             }
         }
 
+        // A positive base vertex becomes a vertex-buffer offset (`base * stride` per stream): the same vertices, and
+        // WebGL2 has no base-vertex draws (wgpu's GL backend panics on them).
+        let mut kind = kind;
+        if let DrawKind::Indexed { first, count, base } = kind
+            && base > 0
+            && vertex_buffers.len() == layout.len()
+            && layout.iter().all(|s| s.stride % 4 == 0)
+        {
+            for (vb, s) in vertex_buffers.iter_mut().zip(layout.iter()) {
+                vb.1 += base as u64 * s.stride as u64;
+            }
+            kind = DrawKind::Indexed { first, count, base: 0 };
+        }
         let mut key = self.pipe_key(layout, topology);
         if self.vs.is_some() || self.ps.is_some() {
             key.prog = ProgKey { vs: self.vs.unwrap_or(0), ps: self.ps.unwrap_or(0), cube: self.ps.map(|id| self.ps_cube_mask(id)).unwrap_or(0) };
