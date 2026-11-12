@@ -16,18 +16,28 @@ How a function is accepted (instruction by instruction, nothing is pattern-guess
    and loads through AL/CL/DL/BL, `test`/`cmp` + `jcc`/`setcc`, `push`/`pop`, direct calls, virtual
    calls `call [vtbl + N]` on the object in ECX, direct tail jumps, forward branches, bounded
    `jmp [reg*4 + table]` switch dispatch (the table is read from the exe), `ret`/`ret N`, and
-   `fld dword ptr [m]; ret` (ST0 result). Any other instruction, an unknown register or flag value
-   reaching a use, a loop, a stack address escaping, an unbalanced stack, a callee-saved register
-   not restored, or `fs:[0]` not restored rejects the function.
+   `fld dword ptr [m]; ret` (ST0 result). PORT-AI-8 added: the x87 subset MSVC emits for float code
+   (`fld`/`fild`/`fst(p)` m32, `fld qword`, register and m32 `fadd`/`fsub(r)`/`fmul`/`fdiv(r)` with their
+   pop forms, `fxch`, `fchs`/`fabs`/`fsqrt`/`fsin`/`fcos`/`fpatan`, `fld1`/`fldz`, `fcom(p)`/`fcompp` +
+   `fnstsw ax; test ah, M; jcc`, `call _ftol`, calls whose result is read from ST0, an ST0 result at `ret`),
+   reads of AH/CH/DH/BH, 8/16-bit shifts by a constant, `sbb r, r` after `neg`/`cmp`, and stack objects
+   (once a local's address escapes the locals live in a Rust `frame` array). Any other instruction, an
+   unknown register or flag value reaching a use, a loop, the address of an argument slot, an
+   unbalanced stack, a callee-saved register not restored, or `fs:[0]` not restored rejects the
+   function.
 2. Calls: the callee's stack cleanup is read from its own `ret N` instructions (all of them must
    agree; a callee ending in a tail jump inherits its target's); a callee that cleans up nothing
-   gets its argument count from the caller's `add esp, N` / `pop reg` right after the call, and
-   no argument may be outstanding otherwise. The callee's first block must not read EAX/EDX/EBX/
+   gets its argument count from the caller's `add esp, N` / `pop reg` after the call (straight-line
+   instructions that leave ESP alone may sit between), else from its other call sites (`cdecl_arity`:
+   a consistent cleanup there, confirmed by a majority of sites or by the callee's own argument reads).
+   Outstanding pushes below the arguments belong to an enclosing call (nested evaluation) and are allowed
+   when the arity is proven that way. The callee's first block must not read EAX/EDX/EBX/
    ESI/EDI/EBP before writing them (no register-passed arguments). ECX is passed (thiscall) when
    the callee's first block reads it.
 3. Only functions of the AI families (procedures.csv subsystem AI, or a CTask*/CEvent*/CPedGroup*/
-   CDecisionMaker*/attractor class name) whose name or shape is one of the families in FAMILIES are
-   emitted; the classes other agents own (EXCLUDE) and every address already ported are skipped.
+   CDecisionMaker*/attractor class name) are emitted, filed by the families in FAMILIES (any other
+   accepted body goes to `gen_bodies`); the classes other agents own (EXCLUDE), the addresses in
+   `ai_patterns_exclude.txt` and every address already ported are skipped.
 
 The generated Rust contains only semantics: offsets, constants, vtable addresses and the
 original addresses of callees, never code bytes. Each generated file carries a host test that
@@ -190,6 +200,7 @@ def linear(a, e):
 CRT_POPS = {0x821B1E: 0, 0x8214BD: 0}
 # CRT `rand`: called through `crate::common::rand` with the original return address (`orig::at_site`).
 RAND = 0x821B1E
+FTOL = 0x821B40
 
 
 def pops(a, depth=0):
@@ -231,6 +242,7 @@ def pops(a, depth=0):
 REG32 = {X.X86_REG_EAX: 'eax', X.X86_REG_ECX: 'ecx', X.X86_REG_EDX: 'edx', X.X86_REG_EBX: 'ebx',
          X.X86_REG_ESP: 'esp', X.X86_REG_EBP: 'ebp', X.X86_REG_ESI: 'esi', X.X86_REG_EDI: 'edi'}
 REG8 = {X.X86_REG_AL: 'eax', X.X86_REG_CL: 'ecx', X.X86_REG_DL: 'edx', X.X86_REG_BL: 'ebx'}
+REG8H = {X.X86_REG_AH: 'eax', X.X86_REG_CH: 'ecx', X.X86_REG_DH: 'edx', X.X86_REG_BH: 'ebx'}
 REG16 = {X.X86_REG_AX: 'eax', X.X86_REG_CX: 'ecx', X.X86_REG_DX: 'edx', X.X86_REG_BX: 'ebx',
          X.X86_REG_SI: 'esi', X.X86_REG_DI: 'edi', X.X86_REG_BP: 'ebp'}
 PARENT = {}
@@ -387,6 +399,18 @@ def bop(op, a, b):
         return C(0)
     if op == 'or' and a[0] == 'bin' and a[1] == 'and' and is_c(a[3]) and is_c(b) and b[1] == 0 and False:
         return a
+    # `(A & M1 | B) & M2` with M1 & M2 == 0 is `B & M2`: a byte/word register write over an unknown input
+    # register (`mov al, [m]` while EAX is the caller's) read back through the same narrow register. Only
+    # applied when A is unknown, so bodies the interpreter accepted before keep their exact text (PORT-AI-8).
+    if op == 'and' and is_c(b) and a[0] == 'bin' and a[1] == 'or':
+        x_, y_ = a[2], a[3]
+        if x_[0] == 'bin' and x_[1] == 'and' and is_c(x_[3]) and x_[3][1] & b[1] == 0 and has_unknown(x_[2]):
+            return bop('and', y_, b)
+        # `(A & M1 | Y) & M2` with Y confined to bits outside M2 is `A & (M1 & M2)` (`xor al, al` after a
+        # byte write over the caller's EAX)
+        if x_[0] == 'bin' and x_[1] == 'and' and is_c(x_[3]) and has_unknown(x_[2]) and \
+                y_[0] == 'bin' and y_[1] == 'and' and is_c(y_[3]) and y_[3][1] & b[1] == 0:
+            return bop('and', x_[2], C(x_[3][1] & b[1]))
     return ('bin', op, a, b)
 
 
@@ -410,6 +434,10 @@ class St:
         s.prologue = True
         s.argmax = -1
         s.conds = []
+        s.fp = []        # x87 register stack: value numbers, ST0 last (PORT-AI-8)
+        s.fpend = None   # (out list, index) of the last call (its ST0 result may be read next)
+        s.fcmp = None    # value number of the last x87 compare (`fnstsw ax`)
+        s.esc = False    # a local's address escaped: locals live in the Rust `frame` array from then on
 
     def copy(s):
         n = St()
@@ -424,6 +452,10 @@ class St:
         n.prologue = s.prologue
         n.argmax = s.argmax
         n.conds = list(s.conds)
+        n.fp = list(s.fp)
+        n.fpend = s.fpend
+        n.fcmp = s.fcmp
+        n.esc = s.esc
         return n
 
 
@@ -469,6 +501,12 @@ def regval(st, fn, reg):
         if v == ('this',):
             fn.uses_this = True
         return bop('and', v, C(0xFFFF))
+    if reg in REG8H:
+        # AH / CH / DH / BH read (writes stay rejected) (PORT-AI-8)
+        v = st.r[REG8H[reg]]
+        if v == ('this',):
+            fn.uses_this = True
+        return bop('and', bop('shr', v, C(8)), C(0xFF))
     raise Reject('register %d' % reg)
 
 
@@ -490,6 +528,34 @@ def setreg(st, reg, val):
 
 def opsize(op):
     return op.size
+
+
+# ---------------------------------------------------------------- stack objects (PORT-AI-8)
+# Once the address of a local escapes (`lea r, [esp + N]`, `mov r, esp`), every local slot lives in a Rust
+# array `frame` (FRAME_DWORDS dwords; entry ESP + FRAME_LO is its first byte): the known slot values are
+# flushed to it, and from then on every local read is a load from it, every local write (also pushes) a store
+# to it, so callees that write through the escaped pointer are seen. `fb` is its 32-bit address.
+FRAME_LO = -0x400
+FRAME_DWORDS = -FRAME_LO // 4
+
+
+def frame_addr(off):
+    if off >= 0:
+        raise Reject('address of an argument slot')
+    if off < FRAME_LO:
+        raise Reject('frame too large')
+    return bop('add', ('frame',), C(off - FRAME_LO))
+
+
+def escape(st, fn, out):
+    if st.esc:
+        return
+    st.esc = True
+    fn.frame = True
+    for off in sorted(st.stack):
+        v = st.stack[off]
+        if FRAME_LO <= off < 0 and not has_unknown(v) and v[0] not in ('ret', 'fs0', 'espval'):
+            out.append(('store', 4, ('frame',), off - FRAME_LO, v))
 
 
 def memaddr(st, fn, op):
@@ -545,6 +611,10 @@ def stack_slot(st, fn, off, size):
 def load(st, fn, out, op, size=None, signed=False):
     size = size or op.size
     a = memaddr(st, fn, op)
+    if a[0] == 'stack' and st.esc and a[1] < 0 and not (size == 4 and st.stack.get(a[1]) == ('fs0',)):
+        # (the saved SEH link stays symbolic: no callee writes the caller's EH record)
+        frame_addr(a[1])
+        a = ('mem', ('frame',), a[1] - FRAME_LO)
     if a[0] == 'stack':
         v = stack_slot(st, fn, a[1], size)
         if signed and size < 4:
@@ -562,6 +632,14 @@ def load(st, fn, out, op, size=None, signed=False):
 def store(st, fn, out, op, val, size=None):
     size = size or op.size
     a = memaddr(st, fn, op)
+    if a[0] == 'stack' and st.esc and a[1] < 0:
+        off = a[1]
+        frame_addr(off)
+        if has_unknown(val):
+            raise Reject('unknown value stored')
+        out.append(('store', size, ('frame',), off - FRAME_LO, val))
+        st.stack[off - off % 4] = val if size == 4 and off % 4 == 0 else ('unk', 'partial')
+        return
     if a[0] == 'stack':
         off = a[1]
         if size != 4 or off % 4:
@@ -609,16 +687,23 @@ def write_op(st, fn, out, op, val):
         raise Reject('write operand')
 
 
-def push(st, val, kind):
+def push(st, val, kind, out=None):
     st.esp -= 4
     st.stack[st.esp] = val
     st.pushes.append((st.esp, kind))
+    if st.esc and out is not None and not has_unknown(val) and st.esp >= FRAME_LO and val[0] not in ('fs0', 'espval'):
+        out.append(('store', 4, ('frame',), st.esp - FRAME_LO, val))
 
 
-def pop(st):
+def pop(st, fn=None, out=None):
     if st.esp >= 0:
         raise Reject('pop above the frame')
     v = st.stack.get(st.esp, ('unk', 'pop'))
+    if st.esc and out is not None and st.esp >= FRAME_LO and not has_unknown(v) and v != ('fs0',):
+        # a callee may have written the slot through an escaped pointer
+        n = fn.new()
+        out.append(('load', n, 4, False, ('frame',), st.esp - FRAME_LO))
+        v = ('v', n)
     st.pushes = [p for p in st.pushes if p[0] != st.esp]
     del st.stack[st.esp]
     st.esp += 4
@@ -643,20 +728,28 @@ def outstanding(st):
     return [p for p in st.pushes if p[1] == 'arg']
 
 
-def after_call(st):
+def after_call(st, consumed=None):
+    """Clobbers ECX/EDX/flags and the slots below ESP; the call's arguments (`consumed`, their push offsets;
+    every outstanding argument when None) stop being outstanding. Arguments pushed earlier for an enclosing
+    call (MSVC evaluates a nested call while the outer call's later arguments are already pushed) stay."""
     st.r['ecx'] = ('unk', 'ecx')
     st.r['edx'] = ('unk', 'edx')
     st.flags = None
     for k in list(st.stack):
         if k < st.esp:
             del st.stack[k]
-    st.pushes = [p for p in st.pushes if p[1] != 'arg']
+    if consumed is None:
+        st.pushes = [p for p in st.pushes if p[1] != 'arg']
+    else:
+        st.pushes = [p for p in st.pushes if p[1] != 'arg' or p[0] not in consumed]
 
 
 CC = {'je': 'eq', 'jne': 'ne', 'jl': 'lt', 'jge': 'ge', 'jg': 'gt', 'jle': 'le', 'jb': 'ult', 'jae': 'uge',
-      'ja': 'ugt', 'jbe': 'ule', 'js': 'neg', 'jns': 'nneg'}
+      'ja': 'ugt', 'jbe': 'ule', 'js': 'neg', 'jns': 'nneg', 'jp': 'par', 'jnp': 'npar'}
 NEG = {'eq': 'ne', 'ne': 'eq', 'lt': 'ge', 'ge': 'lt', 'gt': 'le', 'le': 'gt', 'ult': 'uge', 'uge': 'ult',
-       'ugt': 'ule', 'ule': 'ugt', 'neg': 'nneg', 'nneg': 'neg'}
+       'ugt': 'ule', 'ule': 'ugt', 'neg': 'nneg', 'nneg': 'neg',
+       # x87 compares (`fnstsw ax; test ah, M; jcc`): `jne` = any masked bit, `jp` = even parity
+       'fany': 'fnone', 'fnone': 'fany', 'fpar': 'fodd', 'fodd': 'fpar'}
 
 
 def cond_of(st, cc):
@@ -664,6 +757,14 @@ def cond_of(st, cc):
     if f is None:
         raise Reject('unknown flags')
     kind = f[0]
+    if kind == 'ftest':
+        _, n, mask = f
+        op = {'ne': 'fany', 'eq': 'fnone', 'par': 'fpar', 'npar': 'fodd'}.get(cc)
+        if op is None:
+            raise Reject('cc %s after an x87 status test' % cc)
+        return (op, ('v', n), C(mask), 0)
+    if cc in ('par', 'npar'):
+        raise Reject('parity after integer flags')
     if kind == 'cmp':
         _, a, b, size = f
         if cc in ('neg', 'nneg'):
@@ -704,8 +805,8 @@ def table_bound(st, reg_expr):
     return None
 
 
-MAXPATHS = 48
-MAXINSN = 400
+MAXPATHS = 96
+MAXINSN = 800
 
 
 def run(fn, st, pc, out):
@@ -744,6 +845,12 @@ def run(fn, st, pc, out):
                     st.fs0 = ('espval', st.esp)
                     pc = nxt
                     continue
+                if ops[0].type == X.X86_OP_REG and ops[0].size == 4:
+                    v = frame_addr(st.esp)
+                    escape(st, fn, out)
+                    setreg(st, ops[0].reg, v)
+                    pc = nxt
+                    continue
                 raise Reject('esp copied')
             v = operand(st, fn, out, ops[1])
             write_op(st, fn, out, ops[0], v)
@@ -758,6 +865,11 @@ def run(fn, st, pc, out):
             if mn == 'movzx' and src.type == X.X86_OP_MEM and src.size < 4:
                 pass
             setreg(st, ops[0].reg, v if ops[0].size == 4 else bop('and', v, C((1 << (8 * ops[0].size)) - 1)))
+        elif mn == 'lea' and memaddr(st, fn, ops[1])[0] == 'stack':
+            a = memaddr(st, fn, ops[1])
+            v = frame_addr(a[1])
+            escape(st, fn, out)
+            setreg(st, ops[0].reg, v)
         elif mn == 'lea':
             a = memaddr(st, fn, ops[1])
             if a[0] != 'mem':
@@ -794,6 +906,23 @@ def run(fn, st, pc, out):
             st.flags = ('res', v, size) if mn in ('xor', 'and', 'or') or size == 4 else None
             if mn in ('add', 'sub') and size < 4:
                 st.flags = ('res', v, size)
+        elif mn == 'sbb' and ops[0].type == X.X86_OP_REG and ops[1].type == X.X86_OP_REG and \
+                ops[0].reg == ops[1].reg and ops[0].reg in REG32:
+            # `sbb r, r` = -CF: after `neg x` CF = (x != 0), after `cmp a, b` CF = (a <u b) (PORT-AI-8)
+            f = st.flags
+            if f is None:
+                raise Reject('sbb without flags')
+            if f[0] == 'negcf':
+                cnd = ('ne', f[1], C(0), f[2])
+            elif f[0] == 'cmp':
+                cnd = ('ult', f[1], f[2], f[3])
+            else:
+                raise Reject('sbb after %s' % f[0])
+            for x_ in cnd[1:3]:
+                if has_unknown(x_):
+                    raise Reject('unknown value in a condition')
+            setreg(st, ops[0].reg, mat(fn, out, bop('sub', C(0), ('cond', cnd))))
+            st.flags = None
         elif mn in ('inc', 'dec', 'neg', 'not'):
             size = ops[0].size
             a = operand(st, fn, out, ops[0])
@@ -811,7 +940,21 @@ def run(fn, st, pc, out):
             if mn in ('inc', 'dec'):
                 st.flags = ('res', v, size)
             elif mn == 'neg':
-                st.flags = None
+                st.flags = ('negcf', a, size)
+        elif mn in ('shl', 'shr', 'sar', 'sal') and ops[0].size in (1, 2) and \
+                (len(ops) == 1 or ops[1].type == X.X86_OP_IMM):
+            # 8/16-bit shifts by a constant (PORT-AI-8): the narrow value, shifted, written back narrow
+            size = ops[0].size
+            k = 1 if len(ops) == 1 else ops[1].imm & 31
+            a = operand(st, fn, out, ops[0])
+            mask = (1 << (8 * size)) - 1
+            if mn == 'sar':
+                v = bop('sar', ('sx', size, bop('and', a, C(mask))), C(k))
+            else:
+                v = bop('shl' if mn == 'sal' else mn, bop('and', a, C(mask)), C(k))
+            v = bop('and', v, C(mask))
+            write_op(st, fn, out, ops[0], v)
+            st.flags = ('res', v, size) if k else st.flags
         elif mn in ('shl', 'shr', 'sar', 'sal'):
             if ops[0].size != 4:
                 raise Reject('narrow shift')
@@ -844,7 +987,8 @@ def run(fn, st, pc, out):
             st.flags = None
         elif mn == 'cdq':
             st.r['edx'] = mat(fn, out, bop('sar', st.r['eax'], C(31)))
-        elif mn in ('test', 'cmp'):
+        elif mn in ('test', 'cmp') and not (ops[0].type == X.X86_OP_REG and ops[0].reg == X.X86_REG_AH and
+                                             st.r['eax'][0] == 'unk' and isinstance(st.r['eax'][1], tuple)):
             size = ops[0].size
             a = operand(st, fn, out, ops[0])
             b = operand(st, fn, out, ops[1])
@@ -875,20 +1019,41 @@ def run(fn, st, pc, out):
                     kind = 'local'
             elif o.type == X.X86_OP_REG and REG32.get(o.reg) in ('esi', 'edi', 'ebx', 'ebp') and v == ('in', REG32[o.reg]):
                 kind = 'save'
-            push(st, v, kind)
+            push(st, v, kind, out)
         elif mn == 'pop':
-            v = pop(st)
+            v = pop(st, fn, out)
             o = ops[0]
             if o.type != X.X86_OP_REG:
                 raise Reject('pop to memory')
             setreg(st, o.reg, v)
         elif mn == 'call':
             o = ops[0]
+            if o.type == X.X86_OP_IMM and o.imm & M32 == FTOL:
+                # `_ftol`: ST0 (popped) -> EDX:EAX; only EAX is modelled (PORT-AI-8)
+                if not st.fp:
+                    raise Reject('_ftol without ST0')
+                n = fn.new()
+                out.append(('ftol', n, st.fp.pop()))
+                st.r['eax'] = ('v', n)
+                st.r['ecx'] = ('unk', 'ecx')
+                st.r['edx'] = ('unk', 'edx')
+                st.flags = None
+                st.fpend = None
+                fn.x87 = True
+                pc = nxt
+                continue
+            if st.fp:
+                raise Reject('x87 stack not empty at a call')
+            st.fpend = None
             if o.type == X.X86_OP_IMM:
                 tgt = o.imm & M32
                 if fn.inside(tgt):
                     raise Reject('call into the body')
                 do_call(fn, st, out, ('d', tgt), nxt)
+                if out and out[-1][0] == 'call' and out[-1][2] == ('d', tgt):
+                    st.fpend = (out, len(out) - 1)
+                pc = nxt
+                continue
             elif o.type == X.X86_OP_MEM and o.mem.base and not o.mem.index and o.mem.segment == 0:
                 vt = regval(st, fn, o.mem.base)
                 obj = st.r['ecx']
@@ -933,18 +1098,290 @@ def run(fn, st, pc, out):
             n = ops[0].imm if ops else 0
             finish(fn, st, out, n)
             return
-        elif mn == 'fld':
-            if not ops or ops[0].type != X.X86_OP_MEM or ops[0].size != 4:
-                raise Reject('fld form')
+        elif mn == 'fld' and not st.fp and ops and ops[0].type == X.X86_OP_MEM and ops[0].size == 4 and \
+                insn_at(nxt).mnemonic == 'ret':
             st.st0 = load(st, fn, out, ops[0], 4)
             pc = nxt
-            j = insn_at(pc)
-            if j.mnemonic != 'ret':
-                raise Reject('fld not followed by ret')
             continue
+        elif mn == 'test' and ops[0].type == X.X86_OP_REG and ops[0].reg == X.X86_REG_AH and \
+                ops[1].type == X.X86_OP_IMM and st.r['eax'][0] == 'unk' and isinstance(st.r['eax'][1], tuple) and \
+                st.r['eax'][1][0] == 'fsw':
+            st.flags = ('ftest', st.r['eax'][1][1], ops[1].imm & 0xFF)
+        elif mn.startswith('f') or mn == 'wait':
+            fpu(fn, st, out, i)
         else:
             raise Reject('insn %s' % mn)
         pc = nxt
+
+
+# ---------------------------------------------------------------- x87 (PORT-AI-8)
+# The register stack (`St.fp`, ST0 last) holds value numbers bound by `let vN` statements, in instruction
+# order, so every memory read happens where the original reads it:
+#   ('fld', n, kind, src)          kind 'f32' / 'f64' / 'i32' (src = ('mem', base, disp)), 'f32' / 'i32b' with
+#                                  src = ('bits', u32 expression) for stack slots
+#   ('fop', n, op, a, b)           vN = va.op(vb) (register operand), op in fadd / fsub / fmul / fdiv
+#   ('fopm', n, op, a, src)        vN = va.op_m(f32 operand), op in fadd / fsub / fsubr / fmul / fdiv / fdivr
+#   ('fun', n, op, a)              fchs / fabs / fsqrt / fsin / fcos, or the constants one / zero (a = None)
+#   ('fpatan', n, y, x)            vN = vy.fpatan(vx)
+#   ('fcmp', n, a, b), ('fcmpm', n, a, src)   vN: Cmp = va.fcom(..), src ('f64', mem) for `fcom qword`
+#   ('fst', a, mem)                f32 store; ('fbits', n, a): vN = the f32 bits (a stack slot value)
+#   ('ftol', n, a)                 vN = ftol32(va) as u32 (`call _ftol`)
+# `fnstsw ax; test ah, M; jcc` becomes a condition on the compare (`test_any` / `test_parity`). A call whose
+# result is read from ST0 (an x87 instruction needs ST0 with an empty stack right after the call) becomes a call
+# on target ('df', addr), declared `-> f64` and loaded with `X87::from_f64_exact`.
+FUN_OPS = {0xE0: 'fchs', 0xE1: 'fabs', 0xFA: 'fsqrt', 0xFE: 'fsin', 0xFF: 'fcos', 0xE8: 'one', 0xEE: 'zero'}
+X87_TRANSCENDENTAL = {'fsqrt', 'fsin', 'fcos'}
+X87_ARITH = {0: 'fadd', 1: 'fmul', 4: 'fsub', 5: 'fsubr', 6: 'fdiv', 7: 'fdivr'}
+
+
+def fp_get(fn, st, out, i):
+    """ST(i)'s value number; ST0 of an empty stack is the ST0 result of the call just before."""
+    if i < len(st.fp):
+        return st.fp[-1 - i]
+    if i == 0 and not st.fp and st.fpend is not None:
+        lst, idx = st.fpend
+        if lst is not out or any(x[0] not in ('load', 'let') for x in out[idx + 1:]):
+            raise Reject('ST0 result across statements')
+        c = lst[idx]
+        n = fn.new()
+        lst[idx] = ('call', n, ('df', c[2][1])) + tuple(c[3:])
+        fn.calls.pop((c[2], c[3], len(c[5])), None)
+        fn.calls[(('df', c[2][1]), c[3], len(c[5]))] = True
+        if st.r['eax'] == ('v', c[1]):
+            st.r['eax'] = ('unk', 'eax')
+        st.fpend = None
+        st.fp.append(n)
+        # the callee's ST0 may carry a 64-bit significand (an FPATAN result) that the f64 round trip of
+        # `orig!` rounds: flag it for the verifier
+        fn.transcendental = True
+        return n
+    raise Reject('x87 stack underflow')
+
+
+def fp_set(st, i, n):
+    st.fp[-1 - i] = n
+
+
+def fpu(fn, st, out, i):
+    b = bytes(i.bytes)
+    op0 = b[0]
+    if op0 == 0x9B:
+        return
+    if op0 < 0xD8 or op0 > 0xDF or len(b) < 2:
+        raise Reject('x87 %s' % i.mnemonic)
+    reg = b[1] >= 0xC0
+    sub = (b[1] >> 3) & 7
+    k = b[1] & 7
+    fn.x87 = True
+
+    def new(head, *rest):
+        n = fn.new()
+        out.append((head, n) + rest)
+        return n
+
+    def bin_reg(op, a, bb):
+        # the value `a op bb`; fsubr / fdivr mean bb - a and bb / a
+        if op == 'fsubr':
+            return new('fop', 'fsub', bb, a)
+        if op == 'fdivr':
+            return new('fop', 'fdiv', bb, a)
+        return new('fop', op, a, bb)
+
+    def src_of(o):
+        a = memaddr(st, fn, o)
+        if a[0] == 'stack' and st.esc and a[1] < 0:
+            frame_addr(a[1])
+            return ('mem', ('frame',), a[1] - FRAME_LO)
+        if a[0] == 'stack':
+            v = stack_slot(st, fn, a[1], 4)
+            if has_unknown(v):
+                raise Reject('unknown x87 stack operand')
+            return ('bits', v)
+        if a[0] != 'mem':
+            raise Reject('x87 memory operand')
+        if a[1] is not None and has_unknown(a[1]):
+            raise Reject('x87 operand through an unknown pointer')
+        return a
+
+    def compare(n, pop):
+        st.fcmp = n
+        if pop:
+            st.fp.pop()
+
+    if reg:
+        if op0 == 0xD9:
+            if sub == 0:      # fld st(i)
+                st.fp.append(fp_get(fn, st, out, k))
+            elif sub == 1:    # fxch st(i)
+                x0, xk = fp_get(fn, st, out, 0), fp_get(fn, st, out, k)
+                fp_set(st, 0, xk)
+                fp_set(st, k, x0)
+            elif b[1] in FUN_OPS:
+                o = FUN_OPS[b[1]]
+                if o in ('one', 'zero'):
+                    st.fp.append(new('fun', o, None))
+                else:
+                    fp_set(st, 0, new('fun', o, fp_get(fn, st, out, 0)))
+                    if o in X87_TRANSCENDENTAL:
+                        fn.transcendental = True
+            elif b[1] == 0xF3:  # fpatan: ST1 = atan2(ST1, ST0), pop
+                x0, y = fp_get(fn, st, out, 0), fp_get(fn, st, out, 1)
+                st.fp.pop()
+                fp_set(st, 0, new('fpatan', y, x0))
+                fn.transcendental = True
+            else:
+                raise Reject('x87 %s' % i.mnemonic)
+            return
+        if op0 == 0xDE and b[1] == 0xD9:  # fcompp
+            a, bb = fp_get(fn, st, out, 0), fp_get(fn, st, out, 1)
+            compare(new('fcmp', a, bb), True)
+            st.fp.pop()
+            return
+        if op0 in (0xD8, 0xDC, 0xDE):
+            if sub in (2, 3):
+                if op0 != 0xD8:
+                    raise Reject('x87 %s' % i.mnemonic)
+                compare(new('fcmp', fp_get(fn, st, out, 0), fp_get(fn, st, out, k)), sub == 3)
+                return
+            op = X87_ARITH[sub]
+            if op0 == 0xD8:   # ST0 = ST0 op ST(i)
+                fp_set(st, 0, bin_reg(op, fp_get(fn, st, out, 0), fp_get(fn, st, out, k)))
+                return
+            # DC / DE: ST(i) = ST(i) op ST0; the sub/div names are reversed in these encodings
+            # (DC E8+i FSUB: ST(i) - ST0, DC E0+i FSUBR: ST0 - ST(i))
+            rop = {'fadd': 'fadd', 'fmul': 'fmul', 'fsub': 'fsubr', 'fsubr': 'fsub', 'fdiv': 'fdivr',
+                   'fdivr': 'fdiv'}[op]
+            fp_set(st, k, bin_reg(rop, fp_get(fn, st, out, k), fp_get(fn, st, out, 0)))
+            if op0 == 0xDE:
+                st.fp.pop()
+            return
+        if op0 == 0xDD and sub in (2, 3):  # fst / fstp st(i)
+            fp_set(st, k, fp_get(fn, st, out, 0))
+            if sub == 3:
+                st.fp.pop()
+            return
+        if op0 == 0xDF and b[1] == 0xE0:  # fnstsw ax
+            if getattr(st, 'fcmp', None) is None:
+                raise Reject('fnstsw without a compare')
+            st.r['eax'] = ('unk', ('fsw', st.fcmp))
+            return
+        raise Reject('x87 %s' % i.mnemonic)
+    o = i.operands[0] if i.operands else None
+    if o is None or o.type != X.X86_OP_MEM:
+        raise Reject('x87 %s' % i.mnemonic)
+    if op0 == 0xD8:      # ST0 op m32 / fcom m32
+        m = src_of(o)
+        if sub in (2, 3):
+            compare(new('fcmpm', fp_get(fn, st, out, 0), m), sub == 3)
+            return
+        fp_set(st, 0, new('fopm', X87_ARITH[sub], fp_get(fn, st, out, 0), m))
+        return
+    if op0 == 0xD9 and sub == 0:   # fld m32
+        st.fp.append(new('fld', 'f32', src_of(o)))
+        return
+    if op0 == 0xD9 and sub in (2, 3):  # fst / fstp m32
+        v = fp_get(fn, st, out, 0)
+        a = memaddr(st, fn, o)
+        if a[0] == 'stack':
+            if a[1] % 4 or a[1] == 0:
+                raise Reject('x87 store to the return slot or unaligned')
+            st.stack[a[1]] = ('v', new('fbits', v))
+            if st.esc and a[1] < 0:
+                frame_addr(a[1])
+                out.append(('fst', v, ('mem', ('frame',), a[1] - FRAME_LO)))
+        elif a[0] == 'mem':
+            if a[1] is not None and has_unknown(a[1]):
+                raise Reject('x87 store through an unknown pointer')
+            out.append(('fst', v, a))
+        else:
+            raise Reject('x87 store')
+        if sub == 3:
+            st.fp.pop()
+        return
+    if op0 == 0xDD and sub == 0:   # fld m64
+        m = src_of(o)
+        if m[0] != 'mem':
+            raise Reject('fld qword from the stack')
+        st.fp.append(new('fld', 'f64', m))
+        return
+    if op0 == 0xDB and sub == 0:   # fild m32
+        m = src_of(o)
+        st.fp.append(new('fld', 'i32' if m[0] == 'mem' else 'i32b', m))
+        return
+    if op0 == 0xDC and sub in (2, 3):   # fcom qword
+        m = src_of(o)
+        if m[0] != 'mem':
+            raise Reject('fcom qword on the stack')
+        compare(new('fcmpm', fp_get(fn, st, out, 0), ('f64', m)), sub == 3)
+        return
+    raise Reject('x87 %s' % i.mnemonic)
+
+ARITY = None
+
+
+def cdecl_arity(a):
+    """The argument count of a caller-cleaned callee from its call sites in every catalogued body: the
+    `add esp, N` right after `call a`. Known only when every immediate cleanup has the same N and they outnumber
+    the sites without one (a callee taking nothing whose sites sometimes carry a merged cleanup of an earlier
+    call shows the reverse). PORT-AI-8."""
+    global ARITY
+    if ARITY is None:
+        seen = {}
+        for rs in RANGES.values():
+            for s_, e_ in rs:
+                prev = None
+                for (_, _, mn, op) in md.disasm_lite(rd(s_, e_ - s_), s_):
+                    if prev is not None:
+                        k = int(op[5:], 16) if mn == 'add' and op.startswith('esp, ') else None
+                        seen.setdefault(prev, []).append(k)
+                        prev = None
+                    if mn == 'call' and op.startswith('0x'):
+                        prev = int(op, 16)
+        ARITY = {}
+        for t, ks in seen.items():
+            imm = [k for k in ks if k is not None]
+            if not imm or len(set(imm)) != 1 or imm[0] % 4:
+                continue
+            n = imm[0] // 4
+            # a majority of immediate cleanups, or the callee's own reads reaching exactly its last argument
+            if (len(imm) >= 2 and len(imm) > len(ks) - len(imm)) or arg_reads(t) == n:
+                ARITY[t] = n
+        for t, ks in seen.items():
+            if len(ks) >= 2 and all(k is None for k in ks) and t in RANGES and pops(t) == 0 and \
+                    arg_reads(t) == 0 and not entry_reads(t) & {'eax', 'edx', 'ebx', 'esi', 'edi', 'ebp'}:
+                ZERO_ARITY.add(t)
+    return ARITY.get(a, 0)
+
+
+ZERO_ARITY = set()
+
+
+def arg_reads(a):
+    """How many stack arguments the body at `a` reads before its first `ret`, in address order (ESP tracked
+    through push / pop / add / sub; 0 when unsure)."""
+    depth = 0
+    top = 0
+    for s_, e_ in sorted(RANGES.get(a, [])):
+        for i in md.disasm(rd(s_, e_ - s_), s_):
+            mn = i.mnemonic
+            for o in i.operands:
+                if o.type == X.X86_OP_MEM and o.mem.base == X.X86_REG_ESP and not o.mem.index:
+                    slot = o.mem.disp - depth
+                    if slot >= 4 and slot % 4 == 0:
+                        top = max(top, slot // 4)
+            if mn == 'push':
+                depth += 4
+            elif mn == 'pop':
+                depth -= 4
+            elif mn in ('sub', 'add') and i.op_str.startswith('esp, ') and i.operands[1].type == X.X86_OP_IMM:
+                depth += i.operands[1].imm if mn == 'sub' else -i.operands[1].imm
+            elif mn in ('ret', 'jmp') or (mn != 'push' and 'esp' in i.op_str.split(',')[0] and mn not in ('sub', 'add')
+                                          and not i.op_str.startswith('dword ptr [esp') and not i.op_str.startswith('byte ptr [esp')):
+                return top if mn in ('ret', 'jmp') else 0
+            if depth < 0:
+                return 0
+        return top
+    return top
 
 
 def do_call(fn, st, out, target, nxt, obj=None, vload=None):
@@ -961,7 +1398,7 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
         uses_ecx = True
     cleanup = None
     q = nxt
-    for _ in range(4):
+    for _ in range(6):
         nxt_i = insn_at(q)
         if nxt_i is None:
             break
@@ -971,12 +1408,21 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
         if nxt_i.mnemonic == 'pop' and nxt_i.op_str == 'ecx':
             cleanup = 4
             break
-        # only register moves that do not touch ESP may sit between a call and its cleanup
-        if not (nxt_i.mnemonic == 'mov' and len(nxt_i.operands) == 2 and
-                all(o.type == X.X86_OP_REG for o in nxt_i.operands) and 'esp' not in nxt_i.op_str):
+        # only straight-line instructions that leave ESP and the stack alone may sit between a call and its
+        # cleanup (register moves and arithmetic, loads and stores through other registers, x87 ops)
+        writes_esp = bool(nxt_i.operands) and nxt_i.operands[0].type == X.X86_OP_REG and \
+            nxt_i.operands[0].reg == X.X86_REG_ESP
+        if writes_esp or 'ebp' in nxt_i.op_str or nxt_i.mnemonic in (
+                'call', 'jmp', 'ret', 'push', 'pop', 'leave', 'pushfd', 'popfd') or nxt_i.mnemonic.startswith('j') or \
+                nxt_i.prefix[0] or nxt_i.prefix[3]:
             break
         q += nxt_i.size
     outs = outstanding(st)
+    proven = False
+    cdecl_arity(0)
+    if cleanup and cleanup > 4 * len(outs):
+        # more than every outstanding push: the frame's own cleanup (an epilogue), not this call's
+        cleanup = None
     if target[0] == 'vs':
         nargs = len(outs)
         conv = 'thiscall'
@@ -992,14 +1438,36 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
             conv = 'cdecl'
             if uses_ecx:
                 raise Reject('caller-cleaned callee reads ECX')
+        elif target[0] == 'd' and outs and cdecl_arity(target[1]):
+            # the cleanup is merged into a later `add esp`: the arity of the callee's other call sites
+            nargs = cdecl_arity(target[1])
+            cleanup = 4 * nargs
+            proven = True
+            conv = 'cdecl'
+            if uses_ecx:
+                raise Reject('caller-cleaned callee reads ECX')
+        elif target[0] == 'd' and outs and target[1] in ZERO_ARITY:
+            # a callee that takes nothing (no site cleans up after it, it reads no argument slot) called while
+            # an enclosing call's arguments are pushed
+            nargs = 0
+            proven = True
+            conv = 'thiscall' if uses_ecx or not has_unknown(st.r['ecx']) else 'cdecl'
         else:
             nargs = 0
             conv = 'thiscall' if uses_ecx or not has_unknown(st.r['ecx']) else 'cdecl'
-    if len(outs) != nargs:
+    if len(outs) < nargs:
         raise Reject('outstanding pushes %d != %d arguments' % (len(outs), nargs))
-    # the arguments must be exactly the outstanding pushes, at the top of the stack
-    if nargs and sorted(o[0] for o in outs) != [st.esp + 4 * k for k in range(nargs)]:
+    # nesting is accepted only when the callee's argument count is proven (its own `ret N`, or the caller's
+    # cleanup right after the call); a caller-cleaned callee without an immediate cleanup may have its cleanup
+    # merged with a later call's
+    if len(outs) > nargs and not (target[0] == 'd' and (p > 0 or cleanup or proven)):
+        raise Reject('outstanding pushes %d != %d arguments' % (len(outs), nargs))
+    # the arguments must be the outstanding pushes at the top of the stack; outstanding pushes below them
+    # belong to an enclosing call and must all lie above them (nested argument evaluation)
+    top = sorted(o[0] for o in outs)
+    if nargs and top[:nargs] != [st.esp + 4 * k for k in range(nargs)]:
         raise Reject('arguments interleaved')
+    consumed = set(top[:nargs])
     args = call_args(st, fn, nargs)
     this = None
     if conv == 'thiscall':
@@ -1026,10 +1494,12 @@ def do_call(fn, st, out, target, nxt, obj=None, vload=None):
         for k in range(nargs):
             st.stack[st.esp + 4 * k] = ('unk', 'argslot')
     st.r['eax'] = ('v', n)
-    after_call(st)
+    after_call(st, consumed)
 
 
 def tail(fn, st, out, tgt):
+    if st.fp:
+        raise Reject('x87 stack at a tail jump')
     if st.esp != 0:
         raise Reject('tail jump with an unbalanced stack')
     check_restored(st)
@@ -1083,6 +1553,8 @@ VTAIL_ARGS = {'MakeAbortable': 3, 'ProcessPed': 1, 'ControlSubTask': 1, 'CreateF
 
 
 def vtail(fn, st, out, o):
+    if st.fp:
+        raise Reject('x87 stack at a tail jump')
     nargs = VTAIL_ARGS.get(method_of(fn.name or ''))
     if nargs is None:
         raise Reject('virtual tail jump of an unknown method')
@@ -1114,6 +1586,8 @@ def vtail(fn, st, out, o):
 
 
 def switch(fn, st, out, o, pc):
+    if st.fp:
+        raise Reject('x87 stack at a switch')
     idx = regval(st, fn, o.mem.index)
     k = table_bound(st, idx)
     if k is None or k > 40:
@@ -1153,6 +1627,12 @@ def finish(fn, st, out, n):
     check_restored(st)
     fn.rets.add(n)
     fn.argmax = max(getattr(fn, 'argmax', -1), st.argmax)
+    if st.fp:
+        if len(st.fp) != 1 or st.st0 is not None:
+            raise Reject('x87 stack at ret')
+        fn.retkinds.add('x87')
+        out.append(('ret', ('v', st.fp[0]), 'x87v'))
+        return
     if st.st0 is not None:
         fn.retkinds.add('x87')
         out.append(('ret', st.st0, 'x87'))
@@ -1205,6 +1685,11 @@ def analyse(a, name=''):
     if len(hd) == 3 and hd[0].mnemonic == 'push' and hd[0].operands[0].type == X.X86_OP_IMM and hd[0].operands[0].imm & M32 == M32 and hd[1].mnemonic == 'push' and \
             hd[1].operands[0].type == X.X86_OP_IMM and hd[2].op_str == 'eax, dword ptr fs:[0]':
         fn.seh_pcs = {hd[0].address, hd[1].address}
+    # the other MSVC order: `mov eax, fs:[0]; push -1; push handler` (PORT-AI-8)
+    if len(hd) == 3 and hd[0].op_str == 'eax, dword ptr fs:[0]' and hd[1].mnemonic == 'push' and \
+            hd[1].operands[0].type == X.X86_OP_IMM and hd[1].operands[0].imm & M32 == M32 and \
+            hd[2].mnemonic == 'push' and hd[2].operands[0].type == X.X86_OP_IMM:
+        fn.seh_pcs = {hd[1].address, hd[2].address}
     st = St()
     out = []
     run(fn, st, body, out)
@@ -1291,6 +1776,23 @@ class Emit:
                 self.collect(s[3])
             elif s[0] == 'ret':
                 self.collect_e(s[1])
+            elif s[0] in X87_STMTS:
+                for x in s[1:]:
+                    if isinstance(x, int) and not isinstance(x, bool):
+                        self.used.add(x)
+                    elif isinstance(x, tuple):
+                        self.collect_e(x)
+
+    def src(self, m, kind='f32'):
+        """An x87 memory operand: ('mem', base, disp), ('bits', u32 expr) or ('f64', ('mem', ...))."""
+        if m[0] == 'bits':
+            return 'f32::from_bits(%s)' % self.e(m[1])
+        if m[0] == 'f64':
+            kind, m = 'f64', m[1]
+        t = {'f32': 'f32', 'f64': 'f64', 'i32': 'i32'}[kind]
+        if m[1] is None:
+            return 'g::<%s>(%s).read()' % (t, hexlit(m[2]))
+        return 'rd::<%s>(p(%s), %s)' % (t, self.e(m[1]), off(m[2]))
 
     def e(self, x):
         k = x[0]
@@ -1298,6 +1800,8 @@ class Emit:
             return hexlit(x[1])
         if k == 'this':
             return 'this'
+        if k == 'frame':
+            return 'fb'
         if k == 'arg':
             return 'a%d' % x[1]
         if k == 'v':
@@ -1332,6 +1836,10 @@ class Emit:
 
     def cond(self, c):
         op, a, b, size = c
+        if op in ('fany', 'fnone'):
+            return '%s%s.test_any(%s)' % ('!' if op == 'fnone' else '', self.e(a), hexlit(b[1]))
+        if op in ('fpar', 'fodd'):
+            return '%s%s.test_parity(%s)' % ('!' if op == 'fodd' else '', self.e(a), hexlit(b[1]))
         ea, eb = self.e(a), self.e(b)
         ty = {1: ('u8', 'i8'), 2: ('u16', 'i16'), 4: ('u32', 'i32')}[size]
         sym = {'eq': '==', 'ne': '!=', 'lt': '<', 'ge': '>=', 'gt': '>', 'le': '<=',
@@ -1379,6 +1887,8 @@ class Emit:
                     out.append('%sg::<%s>(%s).write(%s);' % (pad, t, hexlit(disp), ve))
                 else:
                     out.append('%swr::<%s>(p(%s), %s, %s);' % (pad, t, self.e(base), off(disp), ve))
+            elif s[0] in X87_STMTS:
+                out.append(pad + self.x87_stmt(s))
             elif s[0] == 'call':
                 _, n, target, conv, this, args, vload = s
                 if target == ('d', RAND):
@@ -1386,9 +1896,11 @@ class Emit:
                     out.append('%slet v%d = %s;' % (pad, n, ce) if n in self.used else '%s%s;' % (pad, ce))
                     continue
                 fname = callee_name(target, conv, len(args))
-                te = None if this is None else (self.e(this) if target[0] == 'd' else 'p(%s)' % self.e(this))
+                te = None if this is None else (self.e(this) if target[0] in ('d', 'df') else 'p(%s)' % self.e(this))
                 al = ([te] if te is not None else []) + [self.e(a) for a in args]
                 ce = '%s(%s)' % (fname, ', '.join(al))
+                if target[0] == 'df':
+                    ce = 'X87::from_f64_exact(%s)' % ce
                 if n in self.used:
                     out.append('%slet v%d = %s;' % (pad, n, ce))
                 else:
@@ -1407,11 +1919,64 @@ class Emit:
                     out.append('%sreturn;' % pad)
                 elif rk == 'u8':
                     out.append('%sreturn %s as u8;' % (pad, paren(self.e(e))))
+                elif kind == 'x87v':
+                    out.append('%sreturn %s;' % (pad, self.e(e)))
                 elif rk == 'x87':
                     out.append('%sreturn x(f32::from_bits(%s));' % (pad, self.e(e)))
                 else:
                     out.append('%sreturn %s;' % (pad, self.e(e)))
         return out
+
+    def x87_stmt(self, s):
+        k = s[0]
+        if k == 'fld':
+            _, n, kind, m = s
+            if kind == 'f32':
+                return 'let v%d = x(%s);' % (n, self.src(m))
+            if kind == 'f64':
+                return 'let v%d = X87::from_f64_exact(%s);' % (n, self.src(m, 'f64'))
+            if kind == 'i32':
+                return 'let v%d = xi(%s);' % (n, self.src(m, 'i32'))
+            return 'let v%d = xi(%s as i32);' % (n, self.e(m[1]))
+        if k == 'fop':
+            _, n, op, a, b = s
+            return 'let v%d = v%d.%s(v%d);' % (n, a, op, b)
+        if k == 'fopm':
+            _, n, op, a, m = s
+            return 'let v%d = v%d.%s_m(%s);' % (n, a, op, self.src(m))
+        if k == 'fun':
+            _, n, op, a = s
+            if op == 'one':
+                return 'let v%d = X87::one();' % n
+            if op == 'zero':
+                return 'let v%d = X87::zero();' % n
+            return 'let v%d = v%d.%s();' % (n, a, op)
+        if k == 'fpatan':
+            _, n, y, x_ = s
+            return 'let v%d = v%d.fpatan(v%d);' % (n, y, x_)
+        if k == 'fcmp':
+            _, n, a, b = s
+            return 'let v%d = v%d.fcom(v%d);' % (n, a, b)
+        if k == 'fcmpm':
+            _, n, a, m = s
+            if m[0] == 'f64':
+                return 'let v%d = v%d.fcom(X87::from_f64_exact(%s));' % (n, a, self.src(m))
+            return 'let v%d = v%d.fcom(x(%s));' % (n, a, self.src(m))
+        if k == 'fst':
+            _, a, m = s
+            if m[1] is None:
+                return 'g::<f32>(%s).write(f32_of(v%d));' % (hexlit(m[2]), a)
+            return 'wr::<f32>(p(%s), %s, f32_of(v%d));' % (self.e(m[1]), off(m[2]), a)
+        if k == 'fbits':
+            _, n, a = s
+            return 'let v%d = f32_of(v%d).to_bits();' % (n, a)
+        if k == 'ftol':
+            _, n, a = s
+            return 'let v%d = ftol32(v%d) as u32;' % (n, a)
+        raise Reject('emit x87 %s' % k)
+
+
+X87_STMTS = ('fld', 'fop', 'fopm', 'fun', 'fpatan', 'fcmp', 'fcmpm', 'fst', 'fbits', 'ftol')
 
 
 def paren(s):
@@ -1452,6 +2017,8 @@ def off(d):
 def callee_name(target, conv, n):
     if target[0] == 'd':
         return 'c_%x_%s%d' % (target[1], conv[0], n)
+    if target[0] == 'df':
+        return 'c_%x_%s%d_st0' % (target[1], conv[0], n)
     return 'vslot_%x_%d' % (target[1], n)
 
 
@@ -1532,7 +2099,9 @@ def family(name, fn):
         return 'dtor'
     if ncalls == 0 and nifs == 0 and len(flat) <= 6:
         return 'leaf'
-    return None
+    # any other AI body the interpreter executed completely (PORT-AI-8): helpers, thunks, geometry and
+    # attractor computations, event and task methods outside the named families
+    return 'body'
 
 
 def nm_static(name):
@@ -1553,6 +2122,7 @@ FAMILY_FILE = {
     'getter': 'gen_leaves', 'getter-f32': 'gen_leaves', 'setter': 'gen_leaves', 'leaf': 'gen_leaves',
     'virtual-leaf': 'gen_virtuals', 'ctor': 'gen_ctors', 'clone': 'gen_clones', 'dtor': 'gen_dtors',
     'make-abortable': 'gen_virtuals', 'subtask': 'gen_subtasks', 'static-init': 'gen_virtuals',
+    'body': 'gen_bodies',
 }
 FILE_DOC = {
     'gen_leaves': 'constant `GetTaskType`/`GetEventType`/`GetEventPriority`/`GetLifeTime`, constant-bool\n'
@@ -1564,6 +2134,8 @@ FILE_DOC = {
     'gen_dtors': 'complete and scalar deleting destructors',
     'gen_subtasks': '`CreateSubTask`/`CreateFirstSubTask`/`CreateNextSubTask`/`ControlSubTask` bodies that only\n'
                     '//! select a task id or a constructor',
+    'gen_bodies': 'other AI bodies outside the named families (helpers, thunks, geometry, attractor and\n'
+                  '//! event/task methods)',
 }
 
 
@@ -1616,6 +2188,8 @@ def hookable(a, fn):
 # original body leaves the register unchanged and the port must too.
 PRESERVE = {
     0x4B1F80: 'ecx',
+    # its caller 0x62DD41 passes the same ECX on to 0x628A70 (sa-hook's callers test, PORT-AI-8)
+    0x6289F0: 'ecx',
 }
 
 
@@ -1660,8 +2234,14 @@ def route_hazards(fn, name):
         haz.append('preserved-regs')
     if fn.ret == 'u8':
         haz.append('ax-al-return')
-    if any(x[0] == 'store' and x[2] is not None for x in flat):
+    if any((x[0] == 'store' and x[2] not in (None, ('frame',))) or (x[0] == 'fst' and x[2][1] not in (None, ('frame',)))
+           for x in flat):
         haz.append('heap-writes')
+    if getattr(fn, 'transcendental', False):
+        haz.append('x87-transcendental')
+    if getattr(fn, 'frame', False):
+        # the Rust frame starts zeroed where the original's stack holds garbage
+        haz.append('uninit-locals')
     if (name or '').startswith(('__init_', '__dtor_')):
         route = 'split'
     else:
@@ -1849,6 +2429,10 @@ def render(fname, recs, report):
             # phase B still reaches it through the native registry (STD-6)
             s += '#[sa_core::native(addr = 0x%X, conv = %s, name = "%s")]\n' % (a, fn.conv, name)
         s += 'pub fn %s(%s)%s {\n' % (fid, ', '.join(args), ret)
+        if getattr(fn, 'frame', False):
+            # the original's locals (stack objects whose address escapes), entry ESP - 0x%X first
+            s += '    let mut frame = [0u32; 0x%X];\n' % FRAME_DWORDS
+            s += '    let fb = frame.as_mut_ptr() as usize as u32;\n'
         s += '\n'.join(body) + ('\n' if body else '')
         s += '}\n'
         parts.append(s)
@@ -1880,12 +2464,13 @@ def render(fname, recs, report):
         s += 'orig! {\n'
         for (target, conv, n) in sorted(callees, key=lambda k: (k[0][0], k[0][1], k[1], k[2])):
             nm = callee_name(target, conv, n)
-            ps = ([('this: u32' if target[0] == 'd' else 'obj: GPtr<u8>')] if conv == 'thiscall' else []) + \
+            ps = ([('this: u32' if target[0] in ('d', 'df') else 'obj: GPtr<u8>')] if conv == 'thiscall' else []) + \
                 ['a%d: u32' % k for k in range(n)]
-            if target[0] == 'd':
+            if target[0] in ('d', 'df'):
                 cn = catname(target[1]) or 'FUN_%08x' % target[1]
-                s += '    /// `%s` (0x%X), %s, %d stack argument(s)\n' % (cn, target[1], conv, n)
-                s += '    fn %s(%s) -> u32 = %s 0x%X => unported;\n' % (nm, ', '.join(ps), conv, target[1])
+                st0 = target[0] == 'df'
+                s += '    /// `%s` (0x%X), %s, %d stack argument(s)%s\n' % (cn, target[1], conv, n, ', ST0 result' if st0 else '')
+                s += '    fn %s(%s) -> %s = %s 0x%X => unported;\n' % (nm, ', '.join(ps), 'f64' if st0 else 'u32', conv, target[1])
             else:
                 s += '    /// virtual slot +0x%X (`call [vtbl + 0x%X]` on ECX), %d stack argument(s)\n' % (target[1], target[1], n)
                 s += '    fn %s(%s) -> u32 = thiscall vslot 0x%X => unported;\n' % (nm, ', '.join(ps), target[1])

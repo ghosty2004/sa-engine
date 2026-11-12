@@ -159,8 +159,16 @@ orig! {
     fn c_571a00_t1(this: u32, a0: u32) -> u32 = thiscall 0x571A00 => unported;
     /// `CEntity::RegisterReference-` (0x571B70), thiscall, 1 stack argument(s)
     fn c_571b70_t1(this: u32, a0: u32) -> u32 = thiscall 0x571B70 => unported;
+    /// `CPed::IsPlayer` (0x5DF8F0), thiscall, 0 stack argument(s)
+    fn c_5df8f0_t0(this: u32) -> u32 = thiscall 0x5DF8F0 => unported;
+    /// `CPed::SetPedState` (0x5E4500), thiscall, 1 stack argument(s)
+    fn c_5e4500_t1(this: u32, a0: u32) -> u32 = thiscall 0x5E4500 => unported;
     /// `CPedAttractor::Destructor` (0x5EC410), thiscall, 0 stack argument(s)
     fn c_5ec410_t0(this: u32) -> u32 = thiscall 0x5EC410 => unported;
+    /// `CPedAttractorManager::DeRegisterPed-` (0x5EC850), thiscall, 2 stack argument(s)
+    fn c_5ec850_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x5EC850 => unported;
+    /// `CPedAttractorManager::GetPedAttractorManager` (0x5EE190), thiscall, 0 stack argument(s)
+    fn c_5ee190_t0(this: u32) -> u32 = thiscall 0x5EE190 => unported;
     /// `FUN_005ee530` (0x5EE530), thiscall, 0 stack argument(s)
     fn c_5ee530_t0(this: u32) -> u32 = thiscall 0x5EE530 => unported;
     /// `FUN_005ee600` (0x5EE600), thiscall, 0 stack argument(s)
@@ -665,12 +673,18 @@ orig! {
     fn c_697330_t0(this: u32) -> u32 = thiscall 0x697330 => unported;
     /// `CTaskComplexExtinguishFires::Destructor` (0x6975F0), thiscall, 0 stack argument(s)
     fn c_6975f0_t0(this: u32) -> u32 = thiscall 0x6975F0 => unported;
+    /// `CTaskAllocatorKillOnFoot::Destructor` (0x69BBF0), thiscall, 0 stack argument(s)
+    fn c_69bbf0_t0(this: u32) -> u32 = thiscall 0x69BBF0 => unported;
     /// `CTaskAllocatorAttack::Destructor` (0x69C2D0), thiscall, 0 stack argument(s)
     fn c_69c2d0_t0(this: u32) -> u32 = thiscall 0x69C2D0 => unported;
     /// `CTaskAllocatorKillThreatsBasic::Destructor` (0x69C780), thiscall, 0 stack argument(s)
     fn c_69c780_t0(this: u32) -> u32 = thiscall 0x69C780 => unported;
+    /// `CTaskAllocatorKillThreatsDriveby::Destructor` (0x69CB60), thiscall, 0 stack argument(s)
+    fn c_69cb60_t0(this: u32) -> u32 = thiscall 0x69CB60 => unported;
     /// `CTaskAllocator::operator delete` (0x69D990), cdecl, 1 stack argument(s)
     fn c_69d990_c1(a0: u32) -> u32 = cdecl 0x69D990 => unported;
+    /// `FUN_0069db40` (0x69DB40), thiscall, 0 stack argument(s)
+    fn c_69db40_t0(this: u32) -> u32 = thiscall 0x69DB40 => unported;
     /// `_free` (0x8214BD), cdecl, 1 stack argument(s)
     fn c_8214bd_c1(a0: u32) -> u32 = cdecl 0x8214BD => unported;
     /// virtual slot +0x0 (`call [vtbl + 0x0]` on ECX), 1 stack argument(s)
@@ -2869,6 +2883,31 @@ pub fn g_vt_86d4a8_destructor_61a5e0(this: u32, a0: u32) {
     }
 }
 
+/// `CTaskComplex::~CTaskComplex` (0x61A620): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x61A620, conv = thiscall, name = "CTaskComplex::~CTaskComplex", expect = "56 8B F1 E8 A8 FD FF FF", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_ctask_complex_61a620(this: u32, a0: u32) -> u32 {
+    c_61a3d0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        let v2 = g::<u32>(0xB7_44A8).read();
+        let v3 = rd::<u32>(p(v2), 0);
+        let v4 = rd::<u32>(p(v2), 4);
+        let v5 = ((((this.wrapping_sub(v3)) as i32) >> 7) as u32);
+        let v6 = u32::from(rd::<u8>(p(v4.wrapping_add(v5)), 0));
+        let v7 = ((((v6 & 0xFF) & 0xFF) | 0x80) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v4.wrapping_add(v5)), 0, v8 as u8);
+        let v9 = rd::<u32>(p(v2), 0xC);
+        if (v5 as i32) >= (v9 as i32) {
+            return this;
+        } else {
+            wr::<u32>(p(v2), 0xC, v5);
+            return this;
+        }
+    }
+}
+
 /// `CTask::~CTask` (0x61A660): dtor, thiscall, `ret 4`; 21 instruction(s) matched.
 #[hook(addr = 0x61A660, conv = thiscall, name = "CTask::~CTask", expect = "8B C1 F6 44 24 04 01")]
 pub fn g_task_ctask_61a660(this: u32, a0: u32) -> u32 {
@@ -3700,6 +3739,49 @@ pub fn g_task_complex_hit_response_destructor_631da0(this: u32) {
 pub fn g_task_complex_hit_by_gun_response_destructor_631e30(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E06C);
     let _v1 = c_61a3d0_t0(this);
+}
+
+/// `CTaskComplexUseEffect::Destructor` (0x632270): dtor, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x632270, conv = thiscall, name = "CTaskComplexUseEffect::Destructor", expect = "6A FF 68 58 06 84 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_use_effect_destructor_632270(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_E0D8);
+    let v1 = rd::<u32>(p(this), 0x18);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x10);
+        if v2 == 0 {
+            let _v3 = c_61a3d0_t0(this);
+            return;
+        } else {
+            c_571a00_t1(v2, this.wrapping_add(0x10));
+            let _v5 = c_61a3d0_t0(this);
+            return;
+        }
+    } else {
+        let v6 = rd::<u32>(p(this), 0x14);
+        if v6 == 0 {
+            let v7 = rd::<u32>(p(this), 0x10);
+            if v7 == 0 {
+                let _v8 = c_61a3d0_t0(this);
+                return;
+            } else {
+                c_571a00_t1(v7, this.wrapping_add(0x10));
+                let _v10 = c_61a3d0_t0(this);
+                return;
+            }
+        } else {
+            let v11 = c_5ee190_t0(v1);
+            c_5ec850_t2(v11, v1, v6);
+            let v13 = rd::<u32>(p(this), 0x10);
+            if v13 == 0 {
+                let _v14 = c_61a3d0_t0(this);
+                return;
+            } else {
+                c_571a00_t1(v13, this.wrapping_add(0x10));
+                let _v16 = c_61a3d0_t0(this);
+                return;
+            }
+        }
+    }
 }
 
 /// `CTaskComplexWaitAtAttractor::Destructor` (0x632630): dtor, thiscall, `ret`; 2 instruction(s) matched.
@@ -6934,6 +7016,45 @@ pub fn g_task_complex_pass_object_destructor_661230(this: u32) {
     }
 }
 
+/// `CTaskComplexProstituteSolicit::~CTaskComplexProstituteSolicit` (0x661AF0): dtor, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x661AF0, conv = thiscall, name = "CTaskComplexProstituteSolicit::~CTaskComplexProstituteSolicit", expect = "6A FF 68 28 49 84 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_prostitute_solicit_ctask_complex_prostitute_solicit_661af0(this: u32) {
+    wr::<u32>(p(this), 0, 0x86_FB88);
+    let v1 = c_56e210_c1(0xFFFF_FFFF);
+    if v1 == 0 {
+        let _v2 = c_61a3d0_t0(this);
+        return;
+    } else {
+        let v3 = rd::<u32>(p(v1), 0x480);
+        let v4 = rd::<u32>(p(v3), 0xA4);
+        if v4 == 0 {
+            let v5 = u32::from(rd::<u16>(p(this), 0x2C));
+            if (((((v5 & 0xFFFF) >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
+                let _v6 = c_61a3d0_t0(this);
+                return;
+            } else {
+                let v7 = ((v5 & 0xFFFF) & 0xFEFF);
+                wr::<u16>(p(this), 0x2C, (v7 & 0xFFFF) as u16);
+                let _v8 = c_61a3d0_t0(this);
+                return;
+            }
+        } else {
+            c_571a00_t1(v4, v3.wrapping_add(0xA4));
+            wr::<u32>(p(v3), 0xA4, 0);
+            let v10 = u32::from(rd::<u16>(p(this), 0x2C));
+            if (((((v10 & 0xFFFF) >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
+                let _v11 = c_61a3d0_t0(this);
+                return;
+            } else {
+                let v12 = ((v10 & 0xFFFF) & 0xFEFF);
+                wr::<u16>(p(this), 0x2C, (v12 & 0xFFFF) as u16);
+                let _v13 = c_61a3d0_t0(this);
+                return;
+            }
+        }
+    }
+}
+
 /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Destructor` (0x661F30): dtor, thiscall, `ret`; 26 instruction(s) matched.
 #[hook(addr = 0x661F30, conv = thiscall, name = "CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Destructor", expect = "6A FF 68 73 49 84 00")]
 pub fn g_task_complex_seek_entity_centity_seek_pos_calculator_xyoffset_destructor_661f30(this: u32) {
@@ -7966,6 +8087,163 @@ pub fn g_task_simple_swim_ctask_simple_swim_68b0e0(this: u32, a0: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleArrestPed::~CTaskSimpleArrestPed` (0x68B690): dtor, thiscall, `ret`; 50 instruction(s) matched.
+#[hook(addr = 0x68B690, conv = thiscall, name = "CTaskSimpleArrestPed::~CTaskSimpleArrestPed", expect = "6A FF 68 08 6D 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_arrest_ped_ctask_simple_arrest_ped_68b690(this: u32) {
+    wr::<u32>(p(this), 0, 0x87_0984);
+    let v1 = rd::<u32>(p(this), 0x10);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 8);
+        if v2 == 0 {
+            let v3 = rd::<u32>(p(this), 0x10);
+            if v3 == 0 {
+                let _v4 = c_61a3a0_t0(this);
+                return;
+            } else {
+                let v5 = rd::<u32>(p(this), 8);
+                if v5 == 0 {
+                    let _v6 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    let v7 = c_5df8f0_t0(v5);
+                    if ((v7 & 0xFF) as u8) != (0 as u8) {
+                        let _v8 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        let v9 = rd::<u32>(p(this), 8);
+                        let v10 = rd::<u32>(p(v9), 0x46C);
+                        if ((((v10 >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
+                            let _v11 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            let v12 = rd::<u32>(p(v9), 0x530);
+                            if v12 != 0x3F {
+                                let _v13 = c_61a3a0_t0(this);
+                                return;
+                            } else {
+                                c_5e4500_t1(v9, 0x32);
+                                let _v15 = c_61a3a0_t0(this);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            c_571a00_t1(v2, this.wrapping_add(8));
+            let v17 = rd::<u32>(p(this), 0x10);
+            if v17 == 0 {
+                let _v18 = c_61a3a0_t0(this);
+                return;
+            } else {
+                let v19 = rd::<u32>(p(this), 8);
+                if v19 == 0 {
+                    let _v20 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    let v21 = c_5df8f0_t0(v19);
+                    if ((v21 & 0xFF) as u8) != (0 as u8) {
+                        let _v22 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        let v23 = rd::<u32>(p(this), 8);
+                        let v24 = rd::<u32>(p(v23), 0x46C);
+                        if ((((v24 >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
+                            let _v25 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            let v26 = rd::<u32>(p(v23), 0x530);
+                            if v26 != 0x3F {
+                                let _v27 = c_61a3a0_t0(this);
+                                return;
+                            } else {
+                                c_5e4500_t1(v23, 0x32);
+                                let _v29 = c_61a3a0_t0(this);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        c_4cebe0_t2(v1, 0x4D_1390, 0);
+        let v31 = rd::<u32>(p(this), 8);
+        if v31 == 0 {
+            let v32 = rd::<u32>(p(this), 0x10);
+            if v32 == 0 {
+                let _v33 = c_61a3a0_t0(this);
+                return;
+            } else {
+                let v34 = rd::<u32>(p(this), 8);
+                if v34 == 0 {
+                    let _v35 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    let v36 = c_5df8f0_t0(v34);
+                    if ((v36 & 0xFF) as u8) != (0 as u8) {
+                        let _v37 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        let v38 = rd::<u32>(p(this), 8);
+                        let v39 = rd::<u32>(p(v38), 0x46C);
+                        if ((((v39 >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
+                            let _v40 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            let v41 = rd::<u32>(p(v38), 0x530);
+                            if v41 != 0x3F {
+                                let _v42 = c_61a3a0_t0(this);
+                                return;
+                            } else {
+                                c_5e4500_t1(v38, 0x32);
+                                let _v44 = c_61a3a0_t0(this);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            c_571a00_t1(v31, this.wrapping_add(8));
+            let v46 = rd::<u32>(p(this), 0x10);
+            if v46 == 0 {
+                let _v47 = c_61a3a0_t0(this);
+                return;
+            } else {
+                let v48 = rd::<u32>(p(this), 8);
+                if v48 == 0 {
+                    let _v49 = c_61a3a0_t0(this);
+                    return;
+                } else {
+                    let v50 = c_5df8f0_t0(v48);
+                    if ((v50 & 0xFF) as u8) != (0 as u8) {
+                        let _v51 = c_61a3a0_t0(this);
+                        return;
+                    } else {
+                        let v52 = rd::<u32>(p(this), 8);
+                        let v53 = rd::<u32>(p(v52), 0x46C);
+                        if ((((v53 >> 8) & 0xFF) & 1) as u8) == (0 as u8) {
+                            let _v54 = c_61a3a0_t0(this);
+                            return;
+                        } else {
+                            let v55 = rd::<u32>(p(v52), 0x530);
+                            if v55 != 0x3F {
+                                let _v56 = c_61a3a0_t0(this);
+                                return;
+                            } else {
+                                c_5e4500_t1(v52, 0x32);
+                                let _v58 = c_61a3a0_t0(this);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// `CTaskComplexArrestPed::Destructor` (0x68BA00): dtor, thiscall, `ret`; 25 instruction(s) matched.
 #[hook(addr = 0x68BA00, conv = thiscall, name = "CTaskComplexArrestPed::Destructor", expect = "6A FF 68 48 6D 84 00")]
 pub fn g_task_complex_arrest_ped_destructor_68ba00(this: u32) {
@@ -8779,6 +9057,109 @@ pub fn g_task_allocator_kill_threats_driveby_destructor_69cb60(this: u32) -> u32
     }
 }
 
+/// `CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot` (0x69D9C0): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x69D9C0, conv = thiscall, name = "CTaskAllocatorKillOnFoot::~CTaskAllocatorKillOnFoot", expect = "56 8B F1 E8 28 E2 FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_kill_on_foot_ctask_allocator_kill_on_foot_69d9c0(this: u32, a0: u32) -> u32 {
+    c_69bbf0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        let v2 = g::<u32>(0xB7_44BC).read();
+        let v3 = rd::<u32>(p(v2), 0);
+        let v4 = rd::<u32>(p(v2), 4);
+        let v5 = ((((this.wrapping_sub(v3)) as i32) >> 5) as u32);
+        let v6 = u32::from(rd::<u8>(p(v4.wrapping_add(v5)), 0));
+        let v7 = ((((v6 & 0xFF) & 0xFF) | 0x80) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v4.wrapping_add(v5)), 0, v8 as u8);
+        let v9 = rd::<u32>(p(v2), 0xC);
+        if (v5 as i32) >= (v9 as i32) {
+            return this;
+        } else {
+            wr::<u32>(p(v2), 0xC, v5);
+            return this;
+        }
+    }
+}
+
+/// `CTaskAllocatorAttack::~CTaskAllocatorAttack` (0x69DA00): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x69DA00, conv = thiscall, name = "CTaskAllocatorAttack::~CTaskAllocatorAttack", expect = "56 8B F1 E8 C8 E8 FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_attack_ctask_allocator_attack_69da00(this: u32, a0: u32) -> u32 {
+    c_69c2d0_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        let v2 = g::<u32>(0xB7_44BC).read();
+        let v3 = rd::<u32>(p(v2), 0);
+        let v4 = rd::<u32>(p(v2), 4);
+        let v5 = ((((this.wrapping_sub(v3)) as i32) >> 5) as u32);
+        let v6 = u32::from(rd::<u8>(p(v4.wrapping_add(v5)), 0));
+        let v7 = ((((v6 & 0xFF) & 0xFF) | 0x80) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v4.wrapping_add(v5)), 0, v8 as u8);
+        let v9 = rd::<u32>(p(v2), 0xC);
+        if (v5 as i32) >= (v9 as i32) {
+            return this;
+        } else {
+            wr::<u32>(p(v2), 0xC, v5);
+            return this;
+        }
+    }
+}
+
+/// `CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic` (0x69DA40): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x69DA40, conv = thiscall, name = "CTaskAllocatorKillThreatsBasic::~CTaskAllocatorKillThreatsBasic", expect = "56 8B F1 E8 38 ED FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_kill_threats_basic_ctask_allocator_kill_threats_basic_69da40(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_69c780_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        let v2 = g::<u32>(0xB7_44BC).read();
+        let v3 = rd::<u32>(p(v2), 0);
+        let v4 = rd::<u32>(p(v2), 4);
+        let v5 = ((((this.wrapping_sub(v3)) as i32) >> 5) as u32);
+        let v6 = u32::from(rd::<u8>(p(v4.wrapping_add(v5)), 0));
+        let v7 = ((((v6 & 0xFF) & 0xFF) | 0x80) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v4.wrapping_add(v5)), 0, v8 as u8);
+        let v9 = rd::<u32>(p(v2), 0xC);
+        if (v5 as i32) >= (v9 as i32) {
+            return this;
+        } else {
+            wr::<u32>(p(v2), 0xC, v5);
+            return this;
+        }
+    }
+}
+
+/// `CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor'` (0x69DA80): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x69DA80, conv = thiscall, name = "CTaskAllocatorKillThreatsDriveby::`scalar deleting destructor'", expect = "56 8B F1 E8 D8 F0 FF FF", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_kill_threats_driveby_scalar_deleting_destructor_69da80(this: u32, a0: u32) -> u32 {
+    c_69cb60_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        let v2 = g::<u32>(0xB7_44BC).read();
+        let v3 = rd::<u32>(p(v2), 0);
+        let v4 = rd::<u32>(p(v2), 4);
+        let v5 = ((((this.wrapping_sub(v3)) as i32) >> 5) as u32);
+        let v6 = u32::from(rd::<u8>(p(v4.wrapping_add(v5)), 0));
+        let v7 = ((((v6 & 0xFF) & 0xFF) | 0x80) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v4.wrapping_add(v5)), 0, v8 as u8);
+        let v9 = rd::<u32>(p(v2), 0xC);
+        if (v5 as i32) >= (v9 as i32) {
+            return this;
+        } else {
+            wr::<u32>(p(v2), 0xC, v5);
+            return this;
+        }
+    }
+}
+
 /// `CTaskAllocator::~CTaskAllocator` (0x69DAC0): dtor, thiscall, `ret 4`; 21 instruction(s) matched.
 #[hook(addr = 0x69DAC0, conv = thiscall, name = "CTaskAllocator::~CTaskAllocator", expect = "8B C1 F6 44 24 04 01")]
 pub fn g_task_allocator_ctask_allocator_69dac0(this: u32, a0: u32) -> u32 {
@@ -8798,6 +9179,34 @@ pub fn g_task_allocator_ctask_allocator_69dac0(this: u32, a0: u32) -> u32 {
             return this;
         } else {
             wr::<u32>(p(v1), 0xC, v4);
+            return this;
+        }
+    }
+}
+
+/// `CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack` (0x69DB00): dtor, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x69DB00, conv = thiscall, name = "CTaskAllocatorPlayerCommandAttack::~CTaskAllocatorPlayerCommandAttack", expect = "56 8B F1 E8 38 00 00 00", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+pub fn g_task_allocator_player_command_attack_ctask_allocator_player_command_attack_69db00(
+    this: u32,
+    a0: u32,
+) -> u32 {
+    c_69db40_t0(this);
+    if (((a0 & 0xFF) & 1) as u8) == (0 as u8) {
+        return this;
+    } else {
+        let v2 = g::<u32>(0xB7_44BC).read();
+        let v3 = rd::<u32>(p(v2), 0);
+        let v4 = rd::<u32>(p(v2), 4);
+        let v5 = ((((this.wrapping_sub(v3)) as i32) >> 5) as u32);
+        let v6 = u32::from(rd::<u8>(p(v4.wrapping_add(v5)), 0));
+        let v7 = ((((v6 & 0xFF) & 0xFF) | 0x80) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(v4.wrapping_add(v5)), 0, v8 as u8);
+        let v9 = rd::<u32>(p(v2), 0xC);
+        if (v5 as i32) >= (v9 as i32) {
+            return this;
+        } else {
+            wr::<u32>(p(v2), 0xC, v5);
             return this;
         }
     }
@@ -9030,6 +9439,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_PLAYER_COMMAND_TO_GROUP_GATHER_CEVENT_PLAYER_COMMAND_TO_GROUP_GATHER_6092E0,
     HOOK_G_FUN_00609300_609300,
     HOOK_G_VT_86D4A8_DESTRUCTOR_61A5E0,
+    HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_61A620,
     HOOK_G_TASK_CTASK_61A660,
     HOOK_G_TASK_SIMPLE_ANIM_CTASK_SIMPLE_ANIM_61BA80,
     HOOK_G_TASK_SIMPLE_ANIM_CTASK_SIMPLE_ANIM_61BBC0,
@@ -9092,6 +9502,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_TURN180_DESTRUCTOR_631D00,
     HOOK_G_TASK_COMPLEX_HIT_RESPONSE_DESTRUCTOR_631DA0,
     HOOK_G_TASK_COMPLEX_HIT_BY_GUN_RESPONSE_DESTRUCTOR_631E30,
+    HOOK_G_TASK_COMPLEX_USE_EFFECT_DESTRUCTOR_632270,
     HOOK_G_TASK_COMPLEX_WAIT_AT_ATTRACTOR_DESTRUCTOR_632630,
     HOOK_G_TASK_COMPLEX_USE_ATTRACTOR_DESTRUCTOR_632720,
     HOOK_G_TASK_COMPLEX_WAIT_FOR_DRY_WEATHER_DESTRUCTOR_632830,
@@ -9304,6 +9715,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_DO_HAND_SIGNAL_DESTRUCTOR_6608B0,
     HOOK_G_TASK_LEAN_ON_VEHICLE_DESTRUCTOR_661030,
     HOOK_G_TASK_COMPLEX_PASS_OBJECT_DESTRUCTOR_661230,
+    HOOK_G_TASK_COMPLEX_PROSTITUTE_SOLICIT_CTASK_COMPLEX_PROSTITUTE_SOLICIT_661AF0,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_CENTITY_SEEK_POS_CALCULATOR_XYOFFSET_DESTRUCTOR_661F30,
     HOOK_G_TASK_SIMPLE_GO_TO_POINT_FINE_CTASK_SIMPLE_GO_TO_POINT_FINE_6634E0,
     HOOK_G_TASK_COMPLEX_CTASK_COMPLEX_663620,
@@ -9385,6 +9797,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_PARTNER_SHOVE_CTASK_COMPLEX_PARTNER_SHOVE_684FE0,
     HOOK_G_TASK_SIMPLE_PLAYER_ON_FOOT_DESTRUCTOR_6857D0,
     HOOK_G_TASK_SIMPLE_SWIM_CTASK_SIMPLE_SWIM_68B0E0,
+    HOOK_G_TASK_SIMPLE_ARREST_PED_CTASK_SIMPLE_ARREST_PED_68B690,
     HOOK_G_TASK_COMPLEX_ARREST_PED_DESTRUCTOR_68BA00,
     HOOK_G_TASK_COMPLEX_KILL_CRIMINAL_DESTRUCTOR_68BF30,
     HOOK_G_TASK_COMPLEX_COP_IN_CAR_DESTRUCTOR_68C8C0,
@@ -9423,7 +9836,12 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_ALLOCATOR_ATTACK_DESTRUCTOR_69C2D0,
     HOOK_G_TASK_ALLOCATOR_KILL_THREATS_BASIC_DESTRUCTOR_69C780,
     HOOK_G_TASK_ALLOCATOR_KILL_THREATS_DRIVEBY_DESTRUCTOR_69CB60,
+    HOOK_G_TASK_ALLOCATOR_KILL_ON_FOOT_CTASK_ALLOCATOR_KILL_ON_FOOT_69D9C0,
+    HOOK_G_TASK_ALLOCATOR_ATTACK_CTASK_ALLOCATOR_ATTACK_69DA00,
+    HOOK_G_TASK_ALLOCATOR_KILL_THREATS_BASIC_CTASK_ALLOCATOR_KILL_THREATS_BASIC_69DA40,
+    HOOK_G_TASK_ALLOCATOR_KILL_THREATS_DRIVEBY_SCALAR_DELETING_DESTRUCTOR_69DA80,
     HOOK_G_TASK_ALLOCATOR_CTASK_ALLOCATOR_69DAC0,
+    HOOK_G_TASK_ALLOCATOR_PLAYER_COMMAND_ATTACK_CTASK_ALLOCATOR_PLAYER_COMMAND_ATTACK_69DB00,
     HOOK_G_FUN_0069DB40_69DB40,
     HOOK_G_DTOR_G_C09870_8567C0,
     HOOK_G_DTOR_CPED_GROUP_DEFAULT_TASK_ALLOCATORS_MS_FOLLOW_ANY_MEANS_ALLOCATOR_856800,
@@ -9559,6 +9977,7 @@ pub const BODIES: &[Body] = &[
     (0x6092E0, 0xFE605FB349F94B84, &[(0x6092E0, 30)]),
     (0x609300, 0x0786A6FBACDE3FEE, &[(0x609300, 11)]),
     (0x61A5E0, 0xAC44B373BF5B5240, &[(0x61A5E0, 55)]),
+    (0x61A620, 0x3C3AFDBAE82840C0, &[(0x61A620, 59)]),
     (0x61A660, 0xB74A6C72198C33DA, &[(0x61A660, 56)]),
     (0x61BA80, 0xD95FB1310E449365, &[(0x61BA80, 30)]),
     (0x61BBC0, 0xA4089E9193516387, &[(0x61BBC0, 30)]),
@@ -9622,6 +10041,7 @@ pub const BODIES: &[Body] = &[
     (0x631D00, 0xD1ECFA021BD52F68, &[(0x631D00, 93)]),
     (0x631DA0, 0x7DE8AD60DA348C7A, &[(0x631DA0, 11)]),
     (0x631E30, 0xE84C8F0B617A349F, &[(0x631E30, 11)]),
+    (0x632270, 0xEFD770EA01489F3F, &[(0x632270, 118)]),
     (0x632630, 0xF87B1A62872616F6, &[(0x632630, 11)]),
     (0x632720, 0x0B4A99FD9E9ED011, &[(0x632720, 11)]),
     (0x632830, 0x1F0A3BC133A23394, &[(0x632830, 11)]),
@@ -9836,6 +10256,7 @@ pub const BODIES: &[Body] = &[
     (0x6608B0, 0x121D603C648BD519, &[(0x6608B0, 11)]),
     (0x661030, 0x012045D412687C56, &[(0x661030, 109)]),
     (0x661230, 0x8012D311C76BB0D8, &[(0x661230, 90)]),
+    (0x661AF0, 0x5AA21661913BF9B6, &[(0x661AF0, 144)]),
     (0x661F30, 0xC34D52452AFDF2A4, &[(0x661F30, 97)]),
     (0x6634E0, 0x9EA8B92500AF65EC, &[(0x6634E0, 30)]),
     (0x663620, 0x7DFC791860AB850F, &[(0x663620, 30)]),
@@ -9917,6 +10338,7 @@ pub const BODIES: &[Body] = &[
     (0x684FE0, 0xA645F63A8104F688, &[(0x684FE0, 30)]),
     (0x6857D0, 0x3CC784AA9F304A45, &[(0x6857D0, 11)]),
     (0x68B0E0, 0xC433F7243621CEC0, &[(0x68B0E0, 30)]),
+    (0x68B690, 0x4F34CB9CF361261E, &[(0x68B690, 162)]),
     (0x68BA00, 0x73586B216F7D5D8A, &[(0x68BA00, 90)]),
     (0x68BF30, 0xE5F8272ECC89B905, &[(0x68BF30, 283)]),
     (0x68C8C0, 0x1A4C6D974E1B5199, &[(0x68C8C0, 122)]),
@@ -9955,7 +10377,12 @@ pub const BODIES: &[Body] = &[
     (0x69C2D0, 0x9DAB9F3E093B33F7, &[(0x69C2D0, 97)]),
     (0x69C780, 0x278A4B26679C6EB4, &[(0x69C780, 81)]),
     (0x69CB60, 0x7AD800C491646797, &[(0x69CB60, 81)]),
+    (0x69D9C0, 0xF1EB1B8336720E05, &[(0x69D9C0, 59)]),
+    (0x69DA00, 0x77FE9ACC57550A33, &[(0x69DA00, 59)]),
+    (0x69DA40, 0x79858B4124A1279A, &[(0x69DA40, 59)]),
+    (0x69DA80, 0xEA5D9DC95C35BC5B, &[(0x69DA80, 59)]),
     (0x69DAC0, 0xD4DA55E0DF1E1847, &[(0x69DAC0, 56)]),
+    (0x69DB00, 0xDAC48B6D46091F19, &[(0x69DB00, 59)]),
     (0x69DB40, 0x9367C6D8E3F52AD9, &[(0x69DB40, 11)]),
     (0x8567C0, 0x5D75CBEC56332547, &[(0x8567C0, 49)]),
     (0x856800, 0xCB5A9F4D9500D38A, &[(0x5F6460, 7), (0x856800, 10)]),
