@@ -612,6 +612,14 @@ pub(crate) fn create_thread(_sec: u32, _stack: u32, entry: u32, param: u32, _fla
         }),
         _ => return GPtr::from_addr(0),
     };
+    // a game thread that stops on a panic (an unported function) releases the critical sections it holds, so the
+    // main thread does not block on them (the audio stream thread loading a radio track, STD-15)
+    let f: Box<dyn FnOnce() + Send> = Box::new(move || {
+        if std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).is_err() {
+            let n = crate::imports::release_critical_sections_of_current_thread();
+            eprintln!("sa-game: game thread (entry {entry:#x}) stopped on a panic; {n} critical section(s) released");
+        }
+    });
     let (h, tid) = kernel().create_thread(f);
     #[cfg(target_arch = "wasm32")]
     if entry == sa_stream::cdstream::THREAD_ENTRY {

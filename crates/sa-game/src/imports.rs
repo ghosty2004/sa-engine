@@ -334,6 +334,24 @@ type CsMap = std::collections::HashMap<u32, (u64, u32)>;
 static CRITICAL: std::sync::Mutex<Option<CsMap>> = std::sync::Mutex::new(None);
 static CRITICAL_CV: std::sync::Condvar = std::sync::Condvar::new();
 
+/// Releases every critical section the calling thread owns (a game thread that ends by a panic, e.g. on an
+/// unported function, would otherwise leave them locked and block the main thread on its next `Enter`).
+/// Returns how many were released.
+pub(crate) fn release_critical_sections_of_current_thread() -> usize {
+    let me = thread_key();
+    let mut m = CRITICAL.lock().unwrap_or_else(|e| e.into_inner());
+    let mut n = 0;
+    for e in m.get_or_insert_with(Default::default).values_mut() {
+        if e.1 > 0 && e.0 == me {
+            *e = (0, 0);
+            n += 1;
+        }
+    }
+    if n > 0 {
+        CRITICAL_CV.notify_all();
+    }
+    n
+}
 fn thread_key() -> u64 {
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();
