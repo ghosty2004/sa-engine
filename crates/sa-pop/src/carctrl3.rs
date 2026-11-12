@@ -1304,6 +1304,10 @@ pub fn steer_ai_car_with_physics(veh: GPtr<u8>) {
 orig! {
     /// `CCarCtrl::SteerAICarWithPhysicsFollowPath(CVehicle*, float*, float*, float*, bool*)` (0x434900)
     fn steer_follow_path(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x434900 => steer_ai_car_with_physics_follow_path;
+    /// `CCarCtrl::SteerAICarParkPerpendicular(CVehicle*, float*, float*, float*, bool*)` (0x433EA0)
+    fn steer_park_perpendicular(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x433EA0 => unported;
+    /// `CCarCtrl::SteerAICarParkParallel(CVehicle*, float*, float*, float*, bool*)` (0x433BA0)
+    fn steer_park_parallel(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x433BA0 => unported;
     /// `CCarCtrl::SteerAICarWithPhysicsFollowPath_Racing(CVehicle*, float*, float*, float*, bool*)` (0x435830)
     fn steer_follow_path_racing(v: GPtr<u8>, steer: GPtr<f32>, gas: GPtr<f32>, brake: GPtr<f32>, hb: GPtr<u8>) = cdecl 0x435830 => unported;
     /// `CCarCtrl::SteerAICarWithPhysicsFollowPreRecordedPath(CVehicle*, float*, float*, float*, bool*)` (0x432DD0)
@@ -1404,6 +1408,9 @@ pub fn steer_ai_car_with_physics_only_mission(
             hb.write(0);
         }
         0x15 => steer_ai_boat_attacking_player(veh, steer, gas, brake, hb),
+        // STD-14: the parking missions (0x437939 / 0x43796D)
+        0x2D | 0x31 => steer_park_perpendicular(veh, steer, gas, brake, hb),
+        0x2E | 0x32 => steer_park_parallel(veh, steer, gas, brake, hb),
         0x3E => get_ai_plane_to_do_dog_fight_call(veh),
         0x3F => get_ai_plane_to_do_dog_fight_against_player_call(veh),
         _ => steer_ai_car_with_physics_only_mission_original(veh, steer, gas, brake, hb),

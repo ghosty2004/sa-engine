@@ -1689,7 +1689,7 @@ orig! {
     fn play_car_horn(v: GPtr<u8>) = thiscall vslot 0xD8 => unported;
 }
 
-/// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30; entry `nop; jmp` into its SEH prologue). PARTIAL (ADR-002):
+/// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30; entry `nop; jmp` into its SEH prologue). PARTIAL (ADR-002; STD-14 adds the missions of [`shares_cruise_path`]):
 /// ported are the early returns (a vehicle recording whose `bUseCarAI` (0x97D6C0) is off, vehicle type 3) and
 /// the whole body for mission 0 (none) or 1 (cruise) when the vehicle is not a law enforcer (+0x428 bit 0) or the
 /// player's wanted level is 0 (STD-12: for law enforcers the original then only reads the wanted level and adds
@@ -1706,7 +1706,7 @@ orig! {
 /// gta-reversed's stuck test runs for the listed missions or zero cruise speed; the bytes skip exactly those.
 #[hook(addr = 0x41DA30, conv = cdecl, name = "CCarAI::UpdateCarAI", expect = "90 E9 12 62 FE FF", fallback,
        unverified = "std12-pop-1", route = "L2", hazards = "heap-writes", recs = "grove-walk,driving",
-       note = "STD-12 extended the partial port to law enforcers while the wanted level is 0")]
+       note = "STD-12 extended the partial port to law enforcers while the wanted level is 0; STD-14 to the missions that share the cruise path")]
 pub fn update_car_ai(veh: GPtr<u8>) {
     let rec = rd::<i8>(veh, 0x424);
     if rec >= 0 && g::<u8>(0x97D6C0 + rec as usize).read() == 0 {
@@ -1717,7 +1717,7 @@ pub fn update_car_ai(veh: GPtr<u8>) {
     }
     let mission = rd::<u8>(veh, 0x3BA);
     let law = rd::<u8>(veh, 0x428) & 1 != 0;
-    if mission > 1 || (law && player_wanted_level() > 0) {
+    if (mission > 1 && !shares_cruise_path(mission)) || (law && player_wanted_level() > 0) {
         return update_car_ai_original(veh);
     }
     if matches!(rd::<u8>(veh, 0x36) >> 3, 4 | 5) {
@@ -1833,6 +1833,13 @@ pub fn update_car_ai(veh: GPtr<u8>) {
 }
 
 /// `FindPlayerPed(-1)->GetWantedLevel()` (0x41BE60 → 0x156D300: the player data's wanted +0x2C).
+/// Missions the original runs exactly as missions 0 / 1 (STD-14): both mission switches (status 2 / 3 at 0x41DB51,
+/// table 0x420708; the tail at 0x41FE25, missions 2..=44 only) take their default, and the entry's 0x3B rewrite does
+/// not apply: 45..=51 (parking, heli landing), 56..=58, 62, 63 and everything above 68 (the signed byte included).
+fn shares_cruise_path(mission: u8) -> bool {
+    matches!(mission, 45..=51 | 56..=58 | 62 | 63 | 69..=255)
+}
+
 fn player_wanted_level() -> i32 {
     let pd = rd::<GPtr<u8>>(crate::common::find_player_ped(-1), 0x480);
     rd::<i32>(rd::<GPtr<u8>>(pd, 0), 0x2C)
