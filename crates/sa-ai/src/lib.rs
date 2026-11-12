@@ -158,6 +158,7 @@ pub mod attractor_arrival;
 pub mod partner_deal_dtor;
 pub mod sit_down_idle_stand_up;
 pub mod enter_car_sub_tasks;
+pub mod leader_entered_car_event_dtor;
 pub mod use_attractor_tasks;
 pub mod wander_set_dir;
 pub mod walk_round_object_sub_task;
