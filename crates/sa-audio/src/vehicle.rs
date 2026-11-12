@@ -361,7 +361,10 @@ pub fn get_siren_state(this: GPtr<u8>, siren: GPtr<u8>, fast: GPtr<u8>, params: 
 /// float velocity)` (0x4F6000): 0.0 unless enabled; spinning (3): `min(|v| * 5, 1) * spin mult` above
 /// |v| = 0.04 (else 0 * mult); sliding (2): `min(|v|, 1) * 0.75 * slide mult`, * 0.2 more for vehicle
 /// audio type 2 (+0x80); other states 0.0.
-/// Not hooked: the caller at 0x4F9062 / 0x4F907D keeps EDX across the call (sa-hook callers test).
+/// The caller at 0x4F9062 / 0x4F907D keeps EDX across the call: hooked with `preserve = "edx"` (STD-12; the
+/// function was reached in every real-time Grove Street run with traffic and blocked phase B while unregistered).
+#[hook(addr = 0x4F6000, conv = thiscall, name = "CAEVehicleAudioEntity::GetVehicleNonDriveWheelSkidValue", expect = "A0 81 BD 8C 00 D9 05 50 8B 85 00",
+       preserve = "edx", unverified = "std12-audio-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk,driving")]
 pub fn get_vehicle_non_drive_wheel_skid_value(
     this: GPtr<u8>,
     _veh: GPtr<u8>,
@@ -1167,6 +1170,7 @@ pub fn turn_off_radio_for_vehicle(this: GPtr<u8>) {
 }
 
 pub const HOOKS: &[HookReg] = &[
+    HOOK_GET_VEHICLE_NON_DRIVE_WHEEL_SKID_VALUE,
     HOOK_CONSTRUCTOR,
     HOOK_STATIC_INITIALISE,
     HOOK_UPDATE_VEHICLE_ENGINE_SOUND,
