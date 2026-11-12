@@ -92,6 +92,7 @@ pub fn run_step_direct(s: &Step) -> Outcome {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(detail) => Outcome::Ok(detail),
         Err(_) => {
+            unwound_frame_recovery();
             let msg = LAST_PANIC.with(|p| p.borrow().clone());
             match parse_unported(&msg) {
                 Some((callee, addr)) => Outcome::Blocked { callee, addr },
@@ -123,12 +124,25 @@ pub fn run_step(s: &Step) -> Outcome {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(detail) => Outcome::Ok(detail),
         Err(_) => {
+            unwound_frame_recovery();
             let msg = LAST_PANIC.with(|p| p.borrow().clone());
             match parse_unported(&msg) {
                 Some((callee, addr)) => Outcome::Blocked { callee, addr },
                 None => Outcome::Panicked(msg),
             }
         }
+    }
+}
+
+/// After a step unwound (a blocked or panicking port), restores the per-frame invariants the original keeps by
+/// running every frame to its end: `FxManager_c`'s RwMatrix stack (index +0x88 of g_fxMan 0xA9AE80; every
+/// `FxRwMatrixCreate` of a frame is matched by a `FxRwMatrixDestroy` before the frame ends) is empty between
+/// frames. An unwind between the two leaks entries until the stack runs past its array and hands out garbage
+/// matrices (SAMP-4: seen as a fault in `FxEmitter_c::CreateParticles` after FX info types that are not ported).
+fn unwound_frame_recovery() {
+    let fx_man = sa_core::mem::GPtr::<i32>::from_addr(sa_render::fx::FX_MAN + 0x88);
+    if fx_man.read() != 0 {
+        fx_man.write(0);
     }
 }
 
