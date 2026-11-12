@@ -117,6 +117,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::roadsign_atomic::HOOKS,
     crate::generated::HOOKS,
     crate::fx_emitter_render::HOOKS,
+    crate::plant_statics_init::HOOKS,
+    crate::visibility_train_big_vehicle::HOOKS,
+    crate::car_env_map_render::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
