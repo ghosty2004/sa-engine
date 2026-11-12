@@ -272,7 +272,7 @@ fn reads_world_input_hud_and_camera() {
     put(&mut g, addr::PAD0 + 2 * 21, 255i16);
     put(&mut g, addr::PAD0 + 0x30 + 2 * 16, 255i16);
     let (new, old) = g.pad();
-    assert_eq!((new.left_x, new.face[1], new.home), (-128, 255, 255));
+    assert_eq!((new.left_x, new.face[1], new.ped_walk), (-128, 255, 255));
     assert_eq!(old.face[2], 255);
     put(&mut g, addr::NEW_MOUSE, 1u8);
     put(&mut g, addr::NEW_MOUSE + 0xC, 3.5f32);
@@ -354,6 +354,13 @@ fn script_threads_keep_their_locals() {
     locals.0[0] = 6;
     assert_eq!(g.run_command(Opcode(0x0470), &[], &mut locals), Ok(true));
     assert_eq!(locals.int(1), 7);
+    // A destroyed thread is gone and its slot is reused; the one-shot thread survives a destroy.
+    g.destroy_script_thread(t);
+    assert_eq!(g.thread_local(t, 0), Err(GameError::InvalidHandle));
+    let u = g.create_script_thread().unwrap();
+    assert_eq!((u, g.thread_local(u, 0)), (t, Ok(0)));
+    g.destroy_script_thread(sa_samp_api::script::ScriptThreadRef(1));
+    assert_eq!(g.run_command(Opcode(0x0470), &[], &mut locals), Ok(true));
 }
 
 type Seen = std::sync::Arc<std::sync::Mutex<Vec<(FramePhase, Option<PedRef>)>>>;

@@ -70,7 +70,6 @@ impl<V: View> Input for NativeGame<V> {
 
 /// One `CControllerState` (24 i16 fields, 0x30 bytes): sticks, shoulders, d-pad, start/select, face buttons,
 /// shocks, then `m_bChatIndicated` (+0x28), `m_bPedWalk` (+0x2A), `m_bVehicleMouseLook`, `m_bRadioTrackSkip`.
-/// The API's `home` ("home button / ped walk") is taken as `m_bPedWalk`, the field samp's on-foot sync uses.
 fn read_pad<V: View>(v: &V, a: u32) -> PadState {
     let s = |i: u32| v.read_i16(a + 2 * i);
     PadState {
@@ -83,6 +82,7 @@ fn read_pad<V: View>(v: &V, a: u32) -> PadState {
         start_select: [s(12), s(13)],
         face: [s(14), s(15), s(16), s(17)],
         shock: [s(18), s(19)],
-        home: s(21),
+        chat_indicated: s(20),
+        ped_walk: s(21),
     }
 }

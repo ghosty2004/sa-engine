@@ -67,6 +67,12 @@ pub trait ScriptCommands {
     /// 1:1 mapping for the original backend. `run_command` behaves like a thread whose locals are copied in
     /// and out.
     fn create_script_thread(&mut self) -> GameResult<ScriptThreadRef>;
+    /// Frees a thread made by [`ScriptCommands::create_script_thread`] (samp-rs drops short-lived `Runner`s:
+    /// train warp, `/save`, first-frame flags). A stale or unknown handle is ignored. The default keeps the
+    /// thread (backends without per-thread storage).
+    fn destroy_script_thread(&mut self, thread: ScriptThreadRef) {
+        let _ = thread;
+    }
     /// Runs one command on `thread`; returns the condition result.
     fn run_on_thread(
         &mut self,
