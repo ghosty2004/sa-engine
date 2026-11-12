@@ -65,8 +65,17 @@ pub fn car_set_ped_out_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     crate::car_exit::car_set_ped_out_process_ped(this, ped)
 }
 
+/// `CTaskSimpleCarSetPedOut::PositionPedOutOfCollision(CPed*, CVehicle*, int door)` (0x6479B0, cdecl): PORT-AI-3's
+/// body (`car_exit.rs`), not hooked there for the same reason. Registered for phases B/C only (STD-14: reached by
+/// parking cars' drivers and the enter-car task on the native walk).
+#[sa_core::native(addr = 0x6479B0, conv = cdecl, name = "CTaskSimpleCarSetPedOut::PositionPedOutOfCollision")]
+pub fn car_set_ped_out_position_ped_out_of_collision(ped: GPtr<u8>, veh: GPtr<u8>, door: u32) {
+    crate::car_exit::car_set_ped_out_position_ped_out_of_collision_port(ped, veh, door)
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[HOOK_CAR_SET_PED_OUT_CTOR, HOOK_CAR_SET_PED_OUT_DTOR];
 
 /// This module's phase-B registrations.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_CAR_SET_PED_OUT_PROCESS_PED];
+pub const NATIVES: &[sa_core::abi::NativeReg] =
+    &[NATIVE_CAR_SET_PED_OUT_PROCESS_PED, NATIVE_CAR_SET_PED_OUT_POSITION_PED_OUT_OF_COLLISION];
