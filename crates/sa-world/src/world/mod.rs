@@ -86,3 +86,4 @@ pub mod interior_reset_tiles;
 pub mod interior_exit_points;
 pub mod cheat_clothes_themes;
 pub mod interior_place_furniture;
+pub mod garage_car_blocking;

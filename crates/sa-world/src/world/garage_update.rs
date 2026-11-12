@@ -44,7 +44,7 @@ orig! {
     /// `FUN_00449220(CVehicle*)` (0x449220): pushes cars near the door out of the garage
     fn throw_cars_near_door_out(gp: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x449220 => unported;
     /// `thunk_FUN_0156d610()` (0x4494F0): another car blocks the garage
-    fn is_any_car_blocking(gp: GPtr<u8>) -> u8 = thiscall 0x4494F0 => unported;
+    fn is_any_car_blocking(gp: GPtr<u8>) -> u8 = thiscall 0x4494F0 => super::garage_car_blocking::garage_is_any_car_blocking_door;
     /// `thunk_FUN_01561400(CVehicle*)` (0x4495F0): the count of cars inside except the given one
     fn count_cars_inside(gp: GPtr<u8>, veh: GPtr<u8>) -> i32 = thiscall 0x4495F0 => unported;
     /// `thunk_FUN_01566680(CPed*)` (0x449100): another ped touches the garage
