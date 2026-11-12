@@ -1099,3 +1099,13 @@
   SA:MP in the browser through sa-udp-proxy (join, class selection, spawn, chat, interiors), SA:MP startup 1:1
   (SAMP-START, samp.dll patch points), SA:MP UI compared with the original client (SAMP-UI-2).
 - samp-rs: branch sa-engine/adapter fast-forwarded to fb89010 (SAMP-4's 13 verified commits) with the user's approval.
+
+## 2026-11-12 INTEGRATE-6 / VERIFIER-10 / VERIFIER-11 on master (main session)
+- INTEGRATE-6's commits (rebased by it onto 14f4b7a3, verified there: verify-all i6-final/i6-final2 IDENTICAL on all 13)
+  applied unchanged onto master: VERIFIER-10 (void-forwarder generator fix, 23 promotions), the audio-thread Start fix
+  (ResumeThread through the original call sites — the stream thread ran free in determinism mode), L3-batch status
+  for 157 SA:MP-priority batches (union L3 MATCH 13/13), 370 SA:MP-priority promotions (232 L2, 136 split, 2 L1).
+- Catalogue: 393 addresses promoted; F1 34.34 %.
+- Open (docs/verify/integration-6.md): generators treat catalogue state `implemented` as verified, so regenerating
+  now would drop `unverified` from generated hooks — fix the generators' promotion rule before the next regeneration;
+  CShopping::LoadStats, 0x606890, CObject::Render show L2 differences worth a writer's look.
