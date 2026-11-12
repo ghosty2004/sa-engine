@@ -122,6 +122,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::go_to_attractor_first_sub_task::HOOKS,
     crate::respected_friend_range::HOOKS,
     crate::attractor_arrival::HOOKS,
+    crate::partner_deal_dtor::HOOKS,
     crate::sit_down_idle_stand_up::HOOKS,
     crate::enter_car_sub_tasks::HOOKS,
     crate::chat_task_subtasks::HOOKS,
