@@ -47,6 +47,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::statics2::HOOKS,
     world::entity::HOOKS,
     world::object::HOOKS,
+    world::hand_object::HOOKS,
     world::cworld2::HOOKS,
     world::misc2::HOOKS,
     // WRITER-MVP-A (unverified batches)
