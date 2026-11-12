@@ -34,7 +34,7 @@ orig! {
     /// CRT `operator new` (0x82119A)
     fn crt_operator_new(size: u32) -> GPtr<u8> = cdecl 0x82119A => unported;
     /// `CAEStreamingDecoder::CAEStreamingDecoder(CAEDataStream*)` (0x4F2810, `ret 4`)
-    fn streaming_decoder_ctor(d: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> = thiscall 0x4F2810 => unported;
+    fn streaming_decoder_ctor(d: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> = thiscall 0x4F2810 => streaming_decoder_constructor;
     /// `CAEVorbisDecoder::GetStreamLengthMs()` (vtable +8)
     fn v_get_stream_length_ms(d: GPtr<u8>) -> i32 = thiscall vslot 0x8 => unported;
     /// `CAEStreamTransformer::TransformBuffer(void*, uint32, uint32)` (0x4F17D0, `ret 0xC`)
@@ -59,7 +59,13 @@ orig! {
     fn lstrcat_a(d: GPtr<u8>, s: GPtr<u8>) -> GPtr<u8> = stdcall cell 0x8580D8 => unported;
     /// `CAEDataStream::CAEDataStream(int32 track, char* name, uint32 start, uint32 length, bool encrypted)` (0x4DC620,
     /// `ret 0x14`)
-    fn data_stream_ctor(s: GPtr<u8>, track: i32, name: GPtr<u8>, start: u32, length: u32, encrypted: u32) -> GPtr<u8> = thiscall 0x4DC620 => unported;
+    fn data_stream_ctor(s: GPtr<u8>, track: i32, name: GPtr<u8>, start: u32, length: u32, encrypted: u32) -> GPtr<u8> = thiscall 0x4DC620 => data_stream_constructor;
+    /// KERNEL32 `InterlockedIncrement` (IAT 0x8580CC)
+    fn interlocked_increment(p: GPtr<u32>) -> u32 = stdcall cell 0x8580CC => unported;
+    /// KERNEL32 `InterlockedDecrement` (IAT 0x8580D0)
+    fn interlocked_decrement(p: GPtr<u32>) -> u32 = stdcall cell 0x8580D0 => unported;
+    /// `IUnknown::AddRef` through the object's vtable (slot +4)
+    fn v_add_ref(this: GPtr<u8>) -> u32 = stdcall vslot 0x4 => unported;
     /// `CFileMgr::SetDir(const char*)` (0x5387D0)
     fn file_mgr_set_dir(dir: GPtr<u8>) -> i32 = cdecl 0x5387D0 => unported;
     /// `CAEDataStream::Initialise()` (0x4DC2B0), AL
@@ -477,6 +483,140 @@ pub fn track_loader_get_data_stream(this: GPtr<u8>, track: u32) -> GPtr<u8> {
     GPtr::NULL
 }
 
+/// `CAEDataStream::CAEDataStream(int32 track, char* name, uint32 start, uint32 length, bool encrypted)` (0x4DC620,
+/// thiscall, `ret 0x14`): name +8, open +0xC cleared, current position +0x10 cleared, start +0x14, length +0x18,
+/// vtable 0x85F0BC, track +0x1C, encrypted +0x20 (the byte), reference count +0x24 = 1; returns `this`. The file
+/// handle (+4) is left as it was.
+#[hook(addr = 0x4dc620, conv = thiscall, name = "CAEDataStream::Constructor", expect = "8B 54 24 0C 8B C1",
+       unverified = "stream-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       note = "constructs a heap stream")]
+pub fn data_stream_constructor(this: GPtr<u8>, track: i32, name: GPtr<u8>, start: u32, length: u32, encrypted: u32) -> GPtr<u8> {
+    wr::<GPtr<u8>>(this, 8, name);
+    wr::<u8>(this, 0xC, 0);
+    wr::<u32>(this, 0x10, 0);
+    wr::<u32>(this, 0x14, start);
+    wr::<u32>(this, 0x18, length);
+    wr::<u32>(this, 0, 0x85F0BC);
+    wr::<i32>(this, 0x1C, track);
+    wr::<u8>(this, 0x20, encrypted as u8);
+    wr::<u32>(this, 0x24, 1);
+    this
+}
+
+/// `CAEDataStream::Read(void* pv, ULONG cb, ULONG* read)` (0x4DC320, IStream, stdcall `ret 0x10`): `*read =
+/// FillBuffer(pv, cb)` (no NULL check, as the original); `S_OK`.
+#[hook(addr = 0x4dc320, conv = stdcall, name = "CAEDataStream::Read", expect = "8B 44 24 0C 8B 4C 24 08",
+       unverified = "stream-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       note = "reads the track file through FillBuffer")]
+pub fn data_stream_read(this: GPtr<u8>, pv: GPtr<u8>, cb: u32, read: GPtr<u32>) -> u32 {
+    let n = data_stream_fill_buffer_call(this, pv, cb);
+    read.write(n);
+    0
+}
+
+/// `CAEDataStream::Seek(LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER* pos)` (0x4DC340, IStream, stdcall `ret
+/// 0x14`). Origin 0: `start + move.lo`, method 0; origin 2: `(length + start) - move.lo`, method 0; otherwise
+/// `move.lo` with method `origin` (the high dword is ignored). `cur = SetFilePointer(handle, that, NULL, method)`; a
+/// `pos` gets `(cur - start, 0)`; `S_OK`.
+#[hook(addr = 0x4dc340, conv = stdcall, name = "CAEDataStream::Seek-istream", expect = "8B 4C 24 10 56",
+       unverified = "stream-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       note = "moves the OS file position")]
+pub fn data_stream_seek_istream(this: GPtr<u8>, move_lo: u32, _move_hi: u32, origin: u32, pos: GPtr<u32>) -> u32 {
+    let (to, method) = match origin {
+        0 => (rd::<u32>(this, 0x14).wrapping_add(move_lo), 0),
+        2 => (rd::<u32>(this, 0x18).wrapping_add(rd::<u32>(this, 0x14)).wrapping_sub(move_lo), 0),
+        _ => (move_lo, origin),
+    };
+    let cur = set_file_pointer(rd::<u32>(this, 4), to, 0, method);
+    wr::<u32>(this, 0x10, cur);
+    let rel = cur.wrapping_sub(rd::<u32>(this, 0x14));
+    if !pos.is_null() {
+        pos.write(0);
+        pos.wrapping_index(1).write(0);
+        pos.write(rel);
+    }
+    0
+}
+
+/// `CAEDataStream::Stat(STATSTG* stat, DWORD flags)` (0x4DC3A0, IStream, stdcall `ret 0xC`). No `stat` or `flags !=
+/// STATFLAG_NONAME` → `E_INVALIDARG`. `size = GetFileSize(handle, NULL)`; `INVALID_FILE_SIZE` → `GetLastError()` is
+/// read twice: a value ≤ 0 → the second read itself, else `HRESULT_FROM_WIN32` of a third read. Else the 0x48 bytes
+/// zeroed, type `STGTY_STREAM` (+4), `cbSize.lo` (+8) = the file size; `S_OK`.
+#[hook(addr = 0x4dc3a0, conv = stdcall, name = "CAEDataStream::Stat", expect = "56 8B 74 24 0C 85 F6",
+       unverified = "stream-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       note = "queries the OS file size")]
+pub fn data_stream_stat(this: GPtr<u8>, stat: GPtr<u32>, flags: u32) -> u32 {
+    if stat.is_null() || flags != 1 {
+        return 0x8007_0057;
+    }
+    let size = get_file_size(rd::<u32>(this, 4), 0);
+    if size == u32::MAX {
+        if (get_last_error() as i32) <= 0 {
+            return get_last_error();
+        }
+        return (get_last_error() & 0xFFFF) | 0x8007_0000;
+    }
+    for i in 0..0x12 {
+        stat.wrapping_index(i).write(0);
+    }
+    stat.wrapping_index(1).write(2);
+    stat.wrapping_index(2).write(size);
+    0
+}
+
+/// `CAEDataStream::QueryInterface(REFIID riid, void** out)` (0x4DC410, stdcall `ret 0xC`): `riid` equal (16 bytes) to
+/// the IID at 0x887BBC or the one at 0x887A4C → `*out = this`, `AddRef` through the vtable, `S_OK`; else
+/// `E_NOINTERFACE` (`*out` untouched).
+#[hook(addr = 0x4dc410, conv = stdcall, name = "CAEDataStream::QueryInterface", expect = "8B 44 24 08 56 57",
+       unverified = "stream-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn data_stream_query_interface(this: GPtr<u8>, riid: GPtr<u32>, out: GPtr<u32>) -> u32 {
+    let eq = |iid: usize| (0..4).all(|i| riid.wrapping_index(i).read() == g::<u32>(iid + 4 * i as usize).read());
+    if !eq(0x887BBC) && !eq(0x887A4C) {
+        return 0x8000_4002;
+    }
+    out.write(this.addr() as u32);
+    v_add_ref(this);
+    0
+}
+
+/// `CAEDataStream::AddRef()` (0x4DC460, stdcall): the tail jump into `InterlockedIncrement(&refs)` (+0x24).
+#[hook(addr = 0x4dc460, conv = stdcall, name = "CAEDataStream::AddRef", expect = "8B 44 24 04 83 C0 24",
+       unverified = "stream-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn data_stream_add_ref(this: GPtr<u8>) -> u32 {
+    interlocked_increment(this.byte_add(0x24).cast())
+}
+
+/// `CAEDataStream::Release()` (0x4DC5B0, stdcall `ret 4`): `InterlockedDecrement(&refs)` non-zero → 0xBAD; else (a
+/// non-NULL `this`) the destructor inlined (vtable 0x85F0BC, an open handle closed, the name freed) and `free(this)`;
+/// 0.
+#[hook(addr = 0x4dc5b0, conv = stdcall, name = "CAEDataStream::Release", expect = "56 8B 74 24 08 8D 46 24",
+       unverified = "stream-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       note = "closes the OS file handle and frees the stream")]
+pub fn data_stream_release(this: GPtr<u8>) -> u32 {
+    if interlocked_decrement(this.byte_add(0x24).cast()) != 0 {
+        return 0xBAD;
+    }
+    if !this.is_null() {
+        data_stream_destructor_call(this);
+        crt_free(this);
+    }
+    0
+}
+
+/// `CAEStreamingDecoder::CAEStreamingDecoder(CAEDataStream* stream)` (0x4F2810, thiscall, `ret 4`): vtable 0x85F418,
+/// the stream (+4); a stream → `CAEDataStream::Initialise` (result ignored); returns `this`.
+#[hook(addr = 0x4f2810, conv = thiscall, name = "CAEStreamingDecoder::Constructor", expect = "56 8B F1 8B 4C 24 08",
+       unverified = "stream-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       note = "opens the track file (CreateFileA)")]
+pub fn streaming_decoder_constructor(this: GPtr<u8>, stream: GPtr<u8>) -> GPtr<u8> {
+    wr::<u32>(this, 0, 0x85F418);
+    wr::<GPtr<u8>>(this, 4, stream);
+    if !stream.is_null() {
+        data_stream_initialise_call(stream);
+    }
+    this
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
     HOOK_DATA_STREAM_FILL_BUFFER,
@@ -500,4 +640,12 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_VORBIS_INITIALISE,
     HOOK_VORBIS_CONSTRUCTOR,
     HOOK_TRACK_LOADER_GET_DATA_STREAM,
+    HOOK_DATA_STREAM_CONSTRUCTOR,
+    HOOK_DATA_STREAM_READ,
+    HOOK_DATA_STREAM_SEEK_ISTREAM,
+    HOOK_DATA_STREAM_STAT,
+    HOOK_DATA_STREAM_QUERY_INTERFACE,
+    HOOK_DATA_STREAM_ADD_REF,
+    HOOK_DATA_STREAM_RELEASE,
+    HOOK_STREAMING_DECODER_CONSTRUCTOR,
 ];

@@ -133,6 +133,24 @@ natives! {
     "KERNEL32.dll!DeleteCriticalSection" => delete_critical_section: fn(cs: GPtr<u32>);
     "KERNEL32.dll!EnterCriticalSection" => enter_critical_section: fn(cs: GPtr<u32>);
     "KERNEL32.dll!LeaveCriticalSection" => leave_critical_section: fn(cs: GPtr<u32>);
+    "KERNEL32.dll!InterlockedIncrement" => interlocked_increment: fn(p: GPtr<u32>) -> u32;
+    "KERNEL32.dll!InterlockedDecrement" => interlocked_decrement: fn(p: GPtr<u32>) -> u32;
+}
+
+/// `InterlockedIncrement(LONG*)`: the incremented value (atomic on the arena dword).
+fn interlocked_increment(p: GPtr<u32>) -> u32 {
+    interlocked_add(p, 1)
+}
+/// `InterlockedDecrement(LONG*)`: the decremented value.
+fn interlocked_decrement(p: GPtr<u32>) -> u32 {
+    interlocked_add(p, u32::MAX)
+}
+fn interlocked_add(p: GPtr<u32>, d: u32) -> u32 {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    let _g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    let v = p.read().wrapping_add(d);
+    p.write(v);
+    v
 }
 
 /// The command line `GetCommandLineA` returns: the program name only (no arguments), so

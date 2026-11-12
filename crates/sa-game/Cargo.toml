@@ -43,6 +43,8 @@ sa-samp-ui = { path = "../sa-samp-ui" }
 wgpu = "29"
 png = "0.18"
 web-time = "1.1"
+# pure-Rust Vorbis decoder behind the VORBISFILE.DLL replacement (vorbisfile.rs); MIT OR Apache-2.0
+lewton = "0.10"
 # samp-rs (the SA:MP client, `samp-rs/` in this repository, its own Cargo workspace). samp-client takes
 # sa-samp-api and sa-net from `crates/` by path, so both sides share one crate.
 samp-client = { path = "../../samp-rs/crates/samp-client", optional = true }

@@ -67,6 +67,7 @@ pub mod samp_ui_scene;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod screen;
 pub mod sha256;
+pub mod vorbisfile;
 pub mod winmain;
 
 pub mod app;

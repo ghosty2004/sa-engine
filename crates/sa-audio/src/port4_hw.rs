@@ -225,8 +225,9 @@ orig! {
     fn st_service(this: u32) = thiscall 0x4F1290 => stream_thread_service;
     fn track_loader_ctor(this: u32) -> u32 = thiscall 0x4E0930 => unported;
     fn track_loader_initialise(this: u32) -> u8 = thiscall 0x4E0C50 => unported;
-    fn track_loader_get_data_stream(this: u32, track: u32, a: u32) -> u32 = thiscall 0x4E0D20 => unported;
-    fn vorbis_decoder_ctor(this: u32, stream: u32) -> u32 = thiscall 0x5026B0 => unported;
+    fn track_loader_get_data_stream(this: u32, track: u32) -> u32 = thiscall 0x4E0D20 => unported;
+    /// `CAEVorbisDecoder::CAEVorbisDecoder(CAEDataStream*, bool checkLength)` (`ret 8`)
+    fn vorbis_decoder_ctor(this: u32, stream: u32, check: u32) -> u32 = thiscall 0x5026B0 => unported;
     fn user_radio_load_user_track(this: u32, track: u32) -> u32 = thiscall 0x4F35F0 => unported;
 }
 
@@ -1776,8 +1777,9 @@ fn stream_thread_load_decoder(this: u32, user: bool, track: u32) -> u32 {
     } else {
         let m = operator_new(0x28);
         if m != 0 {
-            let s = track_loader_get_data_stream(r32(this + 0xC), track, 0);
-            vorbis_decoder_ctor(m, s)
+            // the original pushes the constructor's `checkLength` (0) before `GetDataStream`'s argument
+            let s = track_loader_get_data_stream(r32(this + 0xC), track);
+            vorbis_decoder_ctor(m, s, 0)
         } else {
             0
         }
