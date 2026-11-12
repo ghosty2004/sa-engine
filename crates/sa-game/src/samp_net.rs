@@ -31,7 +31,7 @@ use samp_proto::sync::player::StatsSync;
 
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
-use sa_samp_api::peds::AnimRequest;
+use sa_samp_api::peds::{AnimRequest, PedTask};
 use sa_samp_api::ui::{ChatKind, ChatMessage, DialogSpec, DialogStyle, UiEvent};
 use sa_samp_api::vehicles::VehicleSpawn;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, Rgba, Vec3, VehicleRef, WeaponType};
@@ -63,6 +63,8 @@ pub struct NetHooks {
     names: HashMap<u16, String>,
     /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
     netgame: NetGame,
+    /// The local player uses the mobile phone (special action 11 until 0 / 13).
+    phone: bool,
     /// samp's class selection (arrows, Shift; RPC 128 / 129).
     class_sel: ClassSelection,
     /// `HOST:PORT` for the `Connecting to` line.
@@ -187,6 +189,7 @@ impl NetHooks {
             car_rotation: None,
             names: HashMap::new(),
             netgame: NetGame::new(0),
+            phone: false,
             class_sel: ClassSelection::new(now),
             server_text: (target.host.clone(), target.port),
             auto_spawn: crate::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
@@ -424,6 +427,27 @@ impl NetHooks {
                 self.note("SetPlayerCameraLookAt".into());
             }
             P::SetPlayerCameraBehindPlayer(_) => report(self, "behind_player", game.behind_player()),
+            P::SetPlayerSpecialAction(a) => {
+                // samp.dll 0x100030F0 (samp-rs `on_special_action`) for the phone and hands up: 0 / 13 stop the
+                // phone, 11 starts it and 10 raises the hands (TASK_HANDS_UP for ever), both on foot only.
+                self.note(format!("SetPlayerSpecialAction {}", a.action));
+                let in_vehicle = game.ped_snapshot(me).is_ok_and(|s| s.vehicle.is_some());
+                if matches!(a.action, 0 | 13) && self.phone {
+                    self.phone = false;
+                    report(self, "start_task", game.start_task(me, PedTask::UseMobilePhone(false)));
+                }
+                match a.action {
+                    11 if !in_vehicle => {
+                        let r = game.start_task(me, PedTask::UseMobilePhone(true));
+                        self.phone = r.is_ok();
+                        report(self, "start_task", r);
+                    }
+                    10 if !in_vehicle && game.ped_in_world(me) => {
+                        report(self, "start_task", game.start_task(me, PedTask::HandsUp { time_ms: -2 }));
+                    }
+                    _ => {}
+                }
+            }
             P::TogglePlayerClock(c) => {
                 use sa_samp_api::config::RuntimeToggle;
                 report(self, "set_toggle", game.set_toggle(RuntimeToggle::GameClock(c.enable != 0)));
