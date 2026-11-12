@@ -547,6 +547,9 @@ fn feature_bits_match_the_api() {
         (f::REPLAY, Feature::Replay),
         (f::PLANT_MANAGER, Feature::PlantManager),
         (f::SUN_MOON_CORONAS, Feature::SunMoonCoronas),
+        (f::IDLE_CAMERA, Feature::IdleCamera),
+        (f::HELP_MESSAGES, Feature::HelpMessages),
+        (f::ZONE_NAMES, Feature::ZoneNames),
     ] {
         assert_eq!(bit, feat as u8, "{feat:?}");
     }
