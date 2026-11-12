@@ -89,7 +89,7 @@ const GARAGE_STATICS: [(usize, i32); 11] = [
 /// then per garage (`i < NumGarages`, unsigned, re-read) a `CSaveGarage` built in the 0x50-byte local and
 /// written whole (its unwritten bytes: residue, see the module doc). AL = 1.
 #[hook(addr = 0x5D3160, conv = cdecl, name = "CGarages::Save", expect = "83 EC 50 56 57",
-       unverified = "save-world-1", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn garages_save() -> u8 {
     close_hide_out_garages_before_save_call();
     for (a, n) in GARAGE_STATICS {
@@ -119,7 +119,7 @@ pub fn garages_save() -> u8 {
 /// back, per garage the `CSaveGarage` read and copied out; then the dwords 0x96C01C / 0x96C020 and the byte
 /// 0x96BFE4 cleared. AL = 1.
 #[hook(addr = 0x5D3270, conv = cdecl, name = "CGarages::Load", expect = "83 EC 50 53 56 57",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn garages_load() -> u8 {
     close_hide_out_garages_before_save_call();
     for (a, n) in GARAGE_STATICS {
@@ -150,7 +150,7 @@ pub fn garages_load() -> u8 {
 /// `StoreAndRemoveCarsForThisHideOut(&aCarsInSafeHouse[FindSafeHouseIndexForGarageType(type)], 4)`,
 /// `RemoveCarsBlockingDoorNotInside()`, +0x38 = 0.
 #[hook(addr = 0x44A170, conv = cdecl, name = "CGarages::CloseHideOutGaragesBeforeSave", expect = "53 56 57 BF 94 C0 96 00",
-       unverified = "save-world-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn close_hide_out_garages_before_save() {
     for k in 0..50usize {
         let garage = g::<u8>(GARAGES + k * 0xD8);
@@ -177,7 +177,7 @@ const NUM_AFTER_DEATH_START_POINTS: usize = 0x96A890;
 /// 0x96A8AC; per start point (`i < count`, signed, re-read) its position (0xC, 0x96A8E0) and heading (4,
 /// 0x96A850). AL = 1.
 #[hook(addr = 0x5D33C0, conv = cdecl, name = "CGameLogic::Save", expect = "56 6A 04 68 90 A8 96 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn game_logic_save() -> u8 {
     game_logic_blocks(save);
     1
@@ -185,7 +185,7 @@ pub fn game_logic_save() -> u8 {
 
 /// `CGameLogic::Load()` (0x5D3440): the same layout read back. AL = 1.
 #[hook(addr = 0x5D3440, conv = cdecl, name = "CGameLogic::Load", expect = "56 6A 04 68 90 A8 96 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn game_logic_load() -> u8 {
     game_logic_blocks(load);
     1
@@ -214,7 +214,7 @@ const NUM_PICKUPS: usize = 620;
 /// `CPickups::Save()` (0x5D3540): the 620 pickups (0x20 each), `CollectedPickUpIndex` (2, 0x978624), the
 /// byte 0x8A5F48, the 20 collected-pickup dwords (0x978628). AL = 1.
 #[hook(addr = 0x5D3540, conv = cdecl, name = "CPickups::Save", expect = "56 57 BE C0 88 97 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn pickups_save() -> u8 {
     for k in 0..NUM_PICKUPS {
         save(PICKUPS + k * 0x20, 0x20);
@@ -230,7 +230,7 @@ pub fn pickups_save() -> u8 {
 /// `CPickups::Load()` (0x5D35A0): each pickup read, then one with a type (+0x1C) and an object (+4) loses
 /// the object (+4 = 0) and bit 3 of its flags (+0x1D); the word 0x978678 = 0; the rest as `Save`. AL = 1.
 #[hook(addr = 0x5D35A0, conv = cdecl, name = "CPickups::Load", expect = "56 57 BE C4 88 97 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn pickups_load() -> u8 {
     for k in 0..NUM_PICKUPS {
         let p = g::<u8>(PICKUPS + k * 0x20);
@@ -257,7 +257,7 @@ pub fn pickups_load() -> u8 {
 /// alike; then `bOverrideRestart` (1), the override position (0xC), the two fade-in bytes, the extra
 /// hospital position, radius and heading, the extra police station position, radius and heading. AL = 1.
 #[hook(addr = 0x5D3620, conv = cdecl, name = "CRestart::Save", expect = "56 57 6A 02 68 6C 32 A4 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn restart_save() -> u8 {
     restart_blocks(save);
     1
@@ -265,7 +265,7 @@ pub fn restart_save() -> u8 {
 
 /// `CRestart::Load()` (0x5D3770): `CRestart::Initialise()`, then the layout of `Save` read back. AL = 1.
 #[hook(addr = 0x5D3770, conv = cdecl, name = "CRestart::Load", expect = "56 57 E8 B9 CE E8 FF",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn restart_load() -> u8 {
     restart_initialise();
     restart_blocks(load);
@@ -311,7 +311,7 @@ const STATS_ARRAYS: [(usize, i32); 6] =
 /// `PopulateFavoriteRadioStationList()` between it and 0xB78E58 (0x38), 0xB78CC8 (0x190), then one byte of
 /// each of the 128 records at 0xB78202 (stride 0x10). AL = 1.
 #[hook(addr = 0x5D3B40, conv = cdecl, name = "CStats::Save", expect = "56 57 68 B0 00 00 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn stats_save() -> u8 {
     let v = stats_get_stat_value(0xB0);
     stats_increment_stat(0xB1, v);
@@ -330,7 +330,7 @@ pub fn stats_save() -> u8 {
 
 /// `CStats::Load()` (0x5D3BF0): the arrays and the 128 record bytes of `Save` read back. AL = 1.
 #[hook(addr = 0x5D3BF0, conv = cdecl, name = "CStats::Load", expect = "56 57 68 48 01 00 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn stats_load() -> u8 {
     for (a, n) in STATS_ARRAYS {
         load(a, n);
@@ -345,7 +345,7 @@ pub fn stats_load() -> u8 {
 
 /// `CSetPieces::Save()` (0x5D3C70): `NumSetPieces` (4, 0xA957FC) and the whole array (0x1A40, 0xA95818).
 #[hook(addr = 0x5D3C70, conv = cdecl, name = "CSetPieces::Save", expect = "6A 04 68 FC 57 A9 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn set_pieces_save() -> u8 {
     save(0xA957FC, 4);
     save(0xA95818, 0x1A40);
@@ -354,7 +354,7 @@ pub fn set_pieces_save() -> u8 {
 
 /// `CSetPieces::Load()` (0x5D3CA0): the same read back.
 #[hook(addr = 0x5D3CA0, conv = cdecl, name = "CSetPieces::Load", expect = "6A 04 68 FC 57 A9 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn set_pieces_load() -> u8 {
     load(0xA957FC, 4);
     load(0xA95818, 0x1A40);
@@ -366,7 +366,7 @@ pub fn set_pieces_load() -> u8 {
 /// `CShopping::Save()` (0x5D3DE0): the bought-items count (4, 0xA9A7D0) and its entries (8 each, 0xA98650;
 /// `i < count`, unsigned, re-read), the price modifier count (4, 0xA9A310) and that many bytes of 0xA972A0.
 #[hook(addr = 0x5D3DE0, conv = cdecl, name = "CShopping::Save", expect = "56 6A 04 68 D0 A7 A9 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn shopping_save() -> u8 {
     shopping_blocks(save);
     1
@@ -374,7 +374,7 @@ pub fn shopping_save() -> u8 {
 
 /// `CShopping::Load()` (0x5D3E40): the same read back.
 #[hook(addr = 0x5D3E40, conv = cdecl, name = "CShopping::Load", expect = "56 6A 04 68 D0 A7 A9 00",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn shopping_load() -> u8 {
     shopping_blocks(load);
     1
@@ -401,7 +401,7 @@ const NUM_JUMPS: usize = 0xA9A89C;
 /// `CStuntJumpManager::Save()` (0x5D5570): `m_iNumJumps` (4), then every used pool slot (flag byte not
 /// negative; 256 slots) as 0x44 bytes (the pool pointer re-read after each write). AL = 1.
 #[hook(addr = 0x5D5570, conv = cdecl, name = "CStuntJumpManager::Save", expect = "56 57 6A 04 68 9C A8 A9 00",
-       unverified = "save-world-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn stunt_jumps_save() -> u8 {
     save(NUM_JUMPS, 4);
     for k in 0..0x100usize {
@@ -419,7 +419,7 @@ pub fn stunt_jumps_save() -> u8 {
 /// `CStuntJumpManager::Load()` (0x5D5920): the count into a local, then that many jumps, each read into a
 /// new pool slot (`CPool::New`); `m_iNumJumps` = the count. AL = 1.
 #[hook(addr = 0x5D5920, conv = cdecl, name = "CStuntJumpManager::Load", expect = "51 56 8D 44 24 04",
-       unverified = "save-world-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn stunt_jumps_load() -> u8 {
     let mut count = 0i32;
     load_data(GPtr::from_raw(&mut count).cast(), 4);
@@ -467,7 +467,7 @@ fn entry_exit_at(idx: i32) -> u32 {
 /// free slot); the list ends with an index of -1 (2). The indices are dword locals of which 2 bytes are
 /// written. AL = 1.
 #[hook(addr = 0x5D5970, conv = cdecl, name = "CEntryExitManager::Save", expect = "83 EC 08 53 55 56 57",
-       unverified = "save-world-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn entry_exits_save() -> u8 {
     let mut idx = [0i32; 2];
     let ip = GPtr::<u8>::from_raw(idx.as_mut_ptr().cast());
@@ -515,7 +515,7 @@ pub fn entry_exits_save() -> u8 {
 /// (2, sign-extended; [`entry_exit_at`]); then entries until an index of -1: its flags (2) and link index (2)
 /// are read; a used slot gets the flags (+0x30) and its link (+0x38: the link's slot, or null for -1). AL = 1.
 #[hook(addr = 0x5D55C0, conv = cdecl, name = "CEntryExitManager::Load", expect = "83 EC 0C 53 56 6A 04",
-       unverified = "save-world-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn entry_exits_load() -> u8 {
     let mut idx = [0u16; 2];
     let mut flags = [0u16; 2];

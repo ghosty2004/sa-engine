@@ -815,7 +815,7 @@ pub fn save_vehicle_pool() -> u8 {
 /// +0x19, +0x25..+0x27) reach the save file; SAVE-1 takes them from the footprint snapshot (ADR-001 §5b;
 /// docs/arch/save-port.md), the iterations reusing the same local.
 #[hook(addr = 0x5D4940, conv = cdecl, name = "CPools::SaveObjectPool", expect = "83 EC 40 8B 15 9C 44 B7 00",
-       unverified = "save-core-2", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn save_object_pool() -> u8 {
     let p0 = pool::OBJECT_POOL.get().read();
     let size = p0.size as u32;

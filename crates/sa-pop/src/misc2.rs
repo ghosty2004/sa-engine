@@ -1212,7 +1212,7 @@ const GANG_WARS_SAVE_DWORDS: [(isize, usize); 15] = [
 /// [`GANG_WARS_SAVE_DWORDS`], +0x4C `bPlayerIsCloseby`, +0x54 `Difficulty`. +1..+3 and +0x4D..+0x4F are not
 /// written.
 #[hook(addr = 0x5D2620, conv = thiscall, name = "CGangWarsSaveStructure::Construct", expect = "A0 90 AB 96 00 88 01",
-       unverified = "save-pop-1", route = "L2", hazards = "none", recs = "save-load")]
+       route = "L2", hazards = "none", recs = "save-load")]
 pub fn gang_wars_save_structure_construct(this: GPtr<u8>) {
     let gw = |a: usize| GPtr::<u32>::from_addr(a).read();
     this.write(GPtr::<u8>::from_addr(0x96AB90).read());
@@ -1247,7 +1247,7 @@ pub fn gang_wars_save_structure_construct(this: GPtr<u8>) {
 /// zone pointers from the indices (`0xBA1DF0 + 0x11 * i` / `0xBA3798 + (i << 5)`, null for -1, no range
 /// checks).
 #[hook(addr = 0x5D2740, conv = thiscall, name = "CGangWarsSaveStructure::Extract", expect = "8A 01 A2 90 AB 96 00",
-       unverified = "save-pop-1", route = "L2", hazards = "none", recs = "save-load")]
+       route = "L2", hazards = "none", recs = "save-load")]
 pub fn gang_wars_save_structure_extract(this: GPtr<u8>) {
     let set = |a: usize, v: u32| GPtr::<u32>::from_addr(a).write(v);
     GPtr::<u8>::from_addr(0x96AB90).write(this.read());
@@ -1270,7 +1270,7 @@ pub fn gang_wars_save_structure_extract(this: GPtr<u8>) {
 /// is an uninitialised local (entry ESP -0x58) whose bytes `Construct` skips (+1..+3, +0x4D..+0x4F) reach the
 /// save file: SAVE-1 takes them from the footprint snapshot (ADR-001 §5b; docs/arch/save-port.md).
 #[hook(addr = 0x5D5530, conv = cdecl, name = "CGangWars::Save", expect = "83 EC 5C 8D 4C 24 04",
-       unverified = "save-pop-1", route = "L2", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "L2", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn gang_wars_save() -> u8 {
     let mut buf = [0u32; 0x17];
     for (k, w) in buf.iter_mut().enumerate().skip(1) {

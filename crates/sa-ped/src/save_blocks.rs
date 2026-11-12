@@ -80,7 +80,7 @@ fn x87_copy(bits: u32) -> u32 {
 /// `CPlayerInfo::Save()` (0x5D3AC0, thiscall): the structure size 0x28 (4) and the 0x28-byte structure
 /// `Construct`ed from this player info (the residue local, see the module doc). AL = 1.
 #[hook(addr = 0x5D3AC0, conv = thiscall, name = "CPlayerInfo::Save", expect = "83 EC 2C 51 8D 4C 24 08", this = "CPlayerInfo",
-       unverified = "save-ped-1", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn player_info_save(this: GPtr<u8>) -> u8 {
     let mut size = 0x28u32;
     let mut s = residue::<0x28>(-0x28);
@@ -94,7 +94,7 @@ pub fn player_info_save(this: GPtr<u8>) -> u8 {
 /// `CPlayerInfo::Load()` (0x5D3B00, thiscall): the size (4, ignored) and the 0x28-byte structure read, then
 /// `Extract`ed into this player info. AL = 1.
 #[hook(addr = 0x5D3B00, conv = thiscall, name = "CPlayerInfo::Load", expect = "83 EC 2C 56 8D 44 24 04", this = "CPlayerInfo",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn player_info_load(this: GPtr<u8>) -> u8 {
     let mut size = 0u32;
     let mut s = [0u8; 0x28];
@@ -140,7 +140,7 @@ fn copy_field(dst: GPtr<u8>, src: GPtr<u8>, n: u8) {
 /// the bytes +0x14C..+0x154 (-> +0x1C..+0x24), the +0x156 word (-> +0x26). +7, +0x11..+0x13, +0x25 are not
 /// written.
 #[hook(addr = 0x5D24B0, conv = thiscall, name = "FUN_005d24b0", expect = "8B 44 24 04 8B 90 B8 00 00 00",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn player_info_save_structure_construct(this: GPtr<u8>, info: GPtr<u8>) {
     for (s, i, n) in PLAYER_INFO_FIELDS {
         copy_field(this.byte_add(s), info.byte_add(i), n);
@@ -152,7 +152,7 @@ pub fn player_info_save_structure_construct(this: GPtr<u8>, info: GPtr<u8>) {
 /// `Construct` in the same order, the +0x130 word written twice, the +0x144 field written as the
 /// zero-extended word of the structure's byte +0x10.
 #[hook(addr = 0x5D2560, conv = thiscall, name = "FUN_005d2560", expect = "8B 11 8B 44 24 04 89 90 B8 00 00 00",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn player_info_save_structure_extract(this: GPtr<u8>, info: GPtr<u8>) {
     for (s, i, n) in PLAYER_INFO_FIELDS {
         match s {
@@ -172,7 +172,7 @@ pub fn player_info_save_structure_extract(this: GPtr<u8>, info: GPtr<u8>) {
 /// `CPedType::Save()` (0x5D3CD0): for the 32 ped types and their 5 acquaintance sets, `GetAcquaintances(k)`
 /// into a dword local, written (4). AL = 1.
 #[hook(addr = 0x5D3CD0, conv = cdecl, name = "CPedType::Save", expect = "51 56 57 33 FF 33 F6",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn ped_type_save() -> u8 {
     let mut v = [0u32; 1];
     let vp = GPtr::<u8>::from_raw(v.as_mut_ptr().cast());
@@ -188,7 +188,7 @@ pub fn ped_type_save() -> u8 {
 
 /// `CPedType::Load()` (0x5D3D10): each value read (4) and stored with `SetAcquaintances(k, value)`. AL = 1.
 #[hook(addr = 0x5D3D10, conv = cdecl, name = "CPedType::Load", expect = "51 56 57 33 FF 33 F6",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn ped_type_load() -> u8 {
     let mut v = [0u32; 1];
     let vp = GPtr::<u8>::from_raw(v.as_mut_ptr().cast());
@@ -207,7 +207,7 @@ pub fn ped_type_load() -> u8 {
 /// `CPed::Save()` (0x5D5730, thiscall): the size 0x18C (4) and the `CPedSaveStructure` (0x18C bytes, the
 /// residue local) `Construct`ed from this ped. AL = 1.
 #[hook(addr = 0x5D5730, conv = thiscall, name = "CPed::Save", expect = "6A FF 68 1B D7 83 00", this = "CPed",
-       unverified = "save-ped-1", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn ped_save(this: GPtr<u8>) -> u8 {
     let mut size = 0x18Cu32;
     let mut s = residue::<0x18C>(-0x198);
@@ -221,7 +221,7 @@ pub fn ped_save(this: GPtr<u8>) -> u8 {
 /// `CPed::Load()` (0x5D4640, thiscall): the size (4) and the 0x18C-byte structure read, `Extract`ed into this
 /// ped. AL = 1.
 #[hook(addr = 0x5D4640, conv = thiscall, name = "CPed::Load", expect = "6A FF 68 DB D6 83 00", this = "CPed",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn ped_load(this: GPtr<u8>) -> u8 {
     let mut size = 0u32;
     let mut s = [0u8; 0x18C];
@@ -245,7 +245,7 @@ fn entry_exit_index(p: u32, objects: u32) -> i32 {
 /// pool index of the ped's entry-exit (+0x78C) when it (or its link +0x38) has the +0x32 byte set; then the
 /// 13 weapons (0x16C bytes from +0x5A0).
 #[hook(addr = 0x5D43D0, conv = thiscall, name = "CPedSaveStructure::Construct", expect = "56 8B 74 24 08 8B 46 14",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn ped_save_structure_construct(this: GPtr<u8>, ped: GPtr<u8>) {
     let m = rd::<u32>(ped, 0x14);
     let pos = if m != 0 { g::<u8>(m as usize + 0x30) } else { ped.byte_add(4) };
@@ -280,7 +280,7 @@ pub fn ped_save_structure_construct(this: GPtr<u8>, ped: GPtr<u8>) {
 /// each), `GiveWeapon(type, total ammo, false)` and the ammo in the clip; `SetCurrentWeapon((int8)slot)`;
 /// area; the entry-exit from its pool index (null for -1 or a free slot).
 #[hook(addr = 0x5D44B0, conv = thiscall, name = "CPedSaveStructure::Extract", expect = "53 57 8B 7C 24 0C 8B 47 14",
-       unverified = "save-ped-1", route = "split", hazards = "heap-writes", recs = "save-load")]
+       route = "split", hazards = "heap-writes", recs = "save-load")]
 pub fn ped_save_structure_extract(this: GPtr<u8>, ped: GPtr<u8>) {
     let (z, y, x) = (x87_copy(rd::<u32>(this, 8)), x87_copy(rd::<u32>(this, 4)), x87_copy(rd::<u32>(this, 0)));
     let m = rd::<u32>(ped, 0x14);
@@ -340,7 +340,7 @@ pub fn ped_save_structure_extract(this: GPtr<u8>, ped: GPtr<u8>) {
 /// bytes +5..+7 and +0x81..+0x83 come from the snapshot); then `CPed::Save()`, the size 0x84 (4) and the
 /// structure. AL = 1.
 #[hook(addr = 0x5D57E0, conv = thiscall, name = "CPlayerPed::Save", expect = "55 8B EC 83 E4 F8", this = "CPlayerPed",
-       unverified = "save-ped-1", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
+       route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn player_ped_save(this: GPtr<u8>) -> u8 {
     // The structure's place relative to the entry ESP (aligned frame): -0x8C or -0x90.
     let base = footprint_entry_esp().map_or(-0x8C, |e| ((e.wrapping_sub(4) & !7).wrapping_sub(0x88)).wrapping_sub(e) as i32);
@@ -367,7 +367,7 @@ pub fn player_ped_save(this: GPtr<u8>) -> u8 {
 /// the size (4) and the 0x84-byte structure read; the wanted record's +0 dword and +0x2C (a dword: the
 /// zero-extended byte +4), the 0x78 clothes bytes, the player data's byte +0x20 restored. AL = 1.
 #[hook(addr = 0x5D46E0, conv = thiscall, name = "CPlayerPed::Load", expect = "81 EC 88 00 00 00", this = "CPlayerPed",
-       unverified = "save-ped-1", route = "split", hazards = "none", recs = "save-load")]
+       route = "split", hazards = "none", recs = "save-load")]
 pub fn player_ped_load(this: GPtr<u8>) -> u8 {
     let mut size = 0u32;
     let mut s = [0u8; 0x84];
