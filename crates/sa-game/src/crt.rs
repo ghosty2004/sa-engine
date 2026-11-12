@@ -10,24 +10,36 @@ use sa_core::mem::GPtr;
 /// `malloc` (0x824257) / `operator new` (0x82119A) / `operator new[]` (0x821195). MSVC's
 /// `malloc(0)` returns a unique pointer; so does glibc's.
 pub extern "C-unwind" fn malloc(size: u32) -> GPtr<u8> {
+    if crate::det::on() {
+        return crate::detheap::alloc(size as usize);
+    }
     // SAFETY: plain C allocation; the game owns the block until `free`.
     GPtr::from_raw(unsafe { libc::malloc(size as usize) }.cast())
 }
 
 /// `free` (0x82413F) / `operator delete` (0x8214BD).
 pub extern "C-unwind" fn free(p: GPtr<u8>) {
+    if crate::det::on() {
+        return crate::detheap::free(p);
+    }
     // SAFETY: `p` came from `malloc`/`calloc`/`realloc` above (or is null).
     unsafe { libc::free(p.raw().cast()) }
 }
 
 /// `calloc` (0x824416).
 pub extern "C-unwind" fn calloc(n: u32, size: u32) -> GPtr<u8> {
+    if crate::det::on() {
+        return crate::detheap::calloc(n as usize * size as usize);
+    }
     // SAFETY: plain C allocation.
     GPtr::from_raw(unsafe { libc::calloc(n as usize, size as usize) }.cast())
 }
 
 /// `realloc` (0x824269).
 pub extern "C-unwind" fn realloc(p: GPtr<u8>, size: u32) -> GPtr<u8> {
+    if crate::det::on() {
+        return crate::detheap::realloc(p, size as usize);
+    }
     // SAFETY: `p` came from this allocator (or is null).
     GPtr::from_raw(unsafe { libc::realloc(p.raw().cast(), size as usize) }.cast())
 }
