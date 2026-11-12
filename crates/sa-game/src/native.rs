@@ -320,7 +320,8 @@ static START_IN_WORLD: std::sync::atomic::AtomicBool = std::sync::atomic::Atomic
 /// cutscene, the ride to Grove Street and the intro's ped scenes) is skipped, and the screen that MAIN faded out just
 /// before it (`DO_FADE 0 0` at 0xEA3B) is faded in as the intro would, through the game's own `CCamera::Fade(0.0,
 /// FADE_IN)`. MAIN then continues as after the intro's launch (`SELECT_INTERIOR 0`, `SET_PLAYER_CONTROL on`,
-/// `RELEASE_WEATHER`, its main loop). Must be set before [`install_script_skip`].
+/// `RELEASE_WEATHER`, its main loop). Applies to every new game of the run, including New Game from the pause
+/// menu. Must be set before [`install_script_skip`].
 pub fn set_start_in_world() {
     START_IN_WORLD.store(true, std::sync::atomic::Ordering::Relaxed);
     println!("sa-game: --start-in-world: main.scm's START_MISSION 2 (the intro) is skipped; the screen is faded in");
@@ -345,7 +346,8 @@ fn before_command(s: sa_script::vm::Scr, w: u32) {
         && w == 0x0417
         && sa_core::mem::GPtr::<u16>::from_addr(ip as usize + 2).read() == 0x0204
     {
-        START_IN_WORLD.store(false, std::sync::atomic::Ordering::Relaxed);
+        // not cleared: a New Game from the pause menu (CGame::ShutDownForRestart + InitialiseWhenRestarting) runs
+        // MAIN again from its start, and its START_MISSION 2 is skipped again
         ip_cell.write(ip + 4);
         camera_fade(sa_core::mem::GPtr::from_addr(0xB6F028), 0, 1);
         println!("sa-game: --start-in-world: skipped START_MISSION 2 at main.scm {:#x}", ip.wrapping_sub(0xA49960));

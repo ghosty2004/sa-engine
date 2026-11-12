@@ -52,6 +52,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::geh::HOOKS,
     crate::gang6::HOOKS,
     crate::partner6::HOOKS,
+    crate::wait_for_ped_control::HOOKS,
     crate::mvpa_ai1::HOOKS,
     crate::mvpa_ai2::HOOKS,
     crate::event_stuck_in_air_priority::HOOKS,
