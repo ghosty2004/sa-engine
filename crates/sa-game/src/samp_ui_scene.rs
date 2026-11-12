@@ -174,7 +174,7 @@ pub fn step(n: u32, w: f32, h: f32, ui: &mut dyn SampUi, input: &mut Vec<InputEv
     };
     // The last frame of a step closes the chat input (step 1) or answers the dialog (steps 2..7) with Esc,
     // so the next step starts clean.
-    if n % HOLD == 0 && (1..=7).contains(&(n / HOLD - 1)) {
+    if n.is_multiple_of(HOLD) && (1..=7).contains(&(n / HOLD - 1)) {
         key(input, Key::Escape);
     }
     if n % HOLD != 1 {
