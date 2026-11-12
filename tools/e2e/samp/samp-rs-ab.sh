@@ -140,7 +140,7 @@ finish() {
             grep -v '^gGameState = ' || true
         # The init thread's game-state lines race with the game thread's log lines: compared as a set.
         echo '---- game states'
-        grep -oE 'gGameState = [0-9]+ \([A-Z_]+\)' "$OUT/samp-rs.log" 2> /dev/null | sort
+        grep -oE 'gGameState = [7-9] \([A-Z_]+\)' "$OUT/samp-rs.log" 2> /dev/null | sort
     } > "$OUT/sequence.txt"
     say "sequence: $(wc -l < "$OUT/sequence.txt") lines in $OUT/sequence.txt"
 }
