@@ -90,6 +90,20 @@ batch from `docs/verify/QUEUE.md`.
   ECX/EDX after the call (the UNDECLARED rows of sa-hook's `callers` test, merged by
   `tools/gen/patterns_callers.py`); such a hook gets `preserve = "..."` when the original keeps the
   registers and the body is L1-pure (its generated spec compares them), and is left unhooked otherwise.
+- **Forwarders into void ports** (VERIFIER-7): a function whose every return passes on the EAX of a
+  tail call into a hand port registered without a result (`fn f(..)` with no `->`, `void_ports`) is
+  generated void: the original returns whatever that callee leaves in EAX, the port leaves it undefined
+  (split FAIL `eax: orig 0x1 rust 0x5db0c0` for `CGrassRenderer::FlushTriPlantBuffer` -> `CPPTriPlantBuffer::Flush`).
+  Such a forwarder that takes nothing and does not read ECX (it sets ECX for its callee) is `cdecl`, as
+  are free functions: ECX is not an input. 16 forwarders; no direct caller reads EAX after them (checked
+  on the exe at generation time by hand; vtable slots: the base class's port is void as well).
+- **Promotion** `tools/gen/patterns_verified.txt`: generated hooks a verifier promoted (address per line,
+  evidence in `docs/verify/verdicts-gen2.tsv`), and own hooks whose `catalog/state.csv` row is L1/L2/L3, are
+  generated without `unverified` (route and hazards stay; batch numbering is unchanged). VERIFIER-7 promoted
+  539 of the 852 (25 L1, 514 split); the other 313 had no split case on grove-walk, pause-restart or
+  save-load (27 of them `atexit` destructors, never called before ExitProcess) and stay `L3-batch`.
+- **Own catalogue rows**: a `catalog/state.csv` row of an address this generator's own files register
+  (the integration's `implemented` rows, L1/L2/L3 after promotion) does not hide it as a candidate.
 - **Unhook list** `tools/gen/patterns_unhook.txt`: `0x41BF70` (`CCarAI::FindSwitchDistanceFar`: a call at
   0x40248E targets 0x41BF79, inside the patched entry bytes) and `0x748F50`
   (`RpAnisotTextureGetMaxAnisotropy`, l2 FAIL on the GEN-ALL branch). Neither is a candidate on master

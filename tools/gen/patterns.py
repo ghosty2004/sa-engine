@@ -908,6 +908,10 @@ def run(fn, st, pc, out):
 X87_EXT = False
 # GEN-ALL: constants >= 0x8000_0000 carry a `_u32` suffix (a bare literal cast `as i32` overflows).
 BIG_SUFFIX = False
+# Addresses of hand ports that return nothing (void_ports; set by gen_main).
+VOID_PORTS = set()
+# Own hooks a verifier promoted (catalog/state.csv L1/L2/L3; set by gen_main): no `unverified`.
+PROMOTED = set()
 X87_MN = {'fld', 'fild', 'fld1', 'fldz', 'fchs', 'fadd', 'fsub', 'fsubr', 'fmul', 'fdiv', 'fdivr', 'faddp',
           'fmulp', 'fxch', 'fst', 'fstp'}
 
@@ -1763,6 +1767,30 @@ def generated_addrs(mark):
     return out
 
 
+def void_ports(skip_mark):
+    """Addresses whose `#[hook]` port (outside files carrying `skip_mark`) returns nothing (`fn f(..)` with
+    no `->`): the EAX they leave is undefined, so a tail call into one has no result to pass on."""
+    out = set()
+    sig_re = re.compile(r'\bfn\s+\w+\s*\(')
+    for dirpath, dirs, files in os.walk(os.path.join(ROOT, 'crates')):
+        dirs[:] = sorted(d for d in dirs if d != 'target')
+        for f in sorted(files):
+            if not f.endswith('.rs'):
+                continue
+            s = open(os.path.join(dirpath, f), encoding='utf-8').read()
+            if skip_mark in s[:400]:
+                continue
+            for m in re.finditer(r'^[ \t]*#\[hook\(\s*addr\s*=\s*0x([0-9A-Fa-f_]+)', s, re.M):
+                f2 = sig_re.search(s, m.end())
+                if not f2:
+                    continue
+                # the signature: from `fn` to the body's `{` (argument lists hold no braces)
+                sig = s[f2.start():s.index('{', f2.end())]
+                if '->' not in sig:
+                    out.add(int(m.group(1).replace('_', ''), 16))
+    return out
+
+
 def read_list(path):
     out = set()
     if os.path.exists(path):
@@ -1920,19 +1948,28 @@ def gen_main():
     X87_EXT = True
     BIG_SUFFIX = True
     check = '--check' in sys.argv
+    global VOID_PORTS
     done = ported(GEN_MARK)
+    VOID_PORTS = void_ports(GEN_MARK)
     inflight = read_list(os.path.join(ROOT, 'tools', 'gen', 'exclude_inflight.txt'))
     state = load_state()
     own = generated_addrs(GEN_MARK)
     skipped_state = set()
     for a, (stt, ev) in state.items():
         # verified or ported elsewhere (also ported-unhookable rows) or excluded, not by this generator; a
-        # row the catalogue records as `implemented` for this generator's own hook (an integration's
-        # "written on master" evidence carries no GEN2 tag) is still this generator's
-        if a in own and stt == 'implemented':
+        # row the catalogue records as `implemented` (an integration's "written on master" evidence carries
+        # no GEN2 tag) or L1/L2/L3 (after promotion) for this generator's own hook describes its own output
+        # and hides nothing
+        if a in own and stt in ('implemented', 'L1', 'L2', 'L3'):
             continue
         if stt in ('implemented', 'L1', 'L2', 'L3', 'excluded') and 'GEN-ALL' not in ev and 'GEN2' not in ev:
             skipped_state.add(a)
+    # promoted by a verifier (docs/verify/HOWTO.md §4.6; `tools/gen/patterns_verified.txt`, or the catalogue
+    # state L1/L2/L3): generated without `unverified` (route and hazards stay as documentation; batch
+    # numbering is unchanged)
+    global PROMOTED
+    PROMOTED = {a for a in own if state.get(a, ('',))[0] in ('L1', 'L2', 'L3')}
+    PROMOTED |= read_list(os.path.join(ROOT, 'tools', 'gen', 'patterns_verified.txt'))
     cand = gen_candidates(done | inflight | skipped_state)
     gens = []
     rest = []
@@ -1952,10 +1989,23 @@ def gen_main():
                 calls = {x[1] for x in flatten(fn.out) if x[0] == 'call'}
                 if all(v is not None and v[0] == 'v' and v[1] in calls for v in rv):
                     fn.ret = 'void'
+            if fn.tail and fn.ret == 'u32':
+                # a tail call into a port that returns nothing (CPPTriPlantBuffer::Flush behind
+                # CGrassRenderer::FlushTriPlantBuffer): the original passes on whatever EAX that callee
+                # leaves, which the port leaves undefined; the forwarder returns nothing either (its
+                # callers are then checked like those of every void hook)
+                tgt = {x[1]: x[2] for x in flatten(fn.out) if x[0] == 'call'}
+                rv = [x[1] for x in flatten(fn.out) if x[0] == 'ret']
+                if all(v is not None and v[0] == 'v' and tgt.get(v[1], ('?',))[0] == 'd'
+                       and tgt[v[1]][1] in VOID_PORTS for v in rv):
+                    fn.ret = 'void'
             em = Emit(fn)
             body = em.stmts(fn.out, 1)
             text = '\n'.join(body)
-            if nm_static(name) and fn.conv == 'thiscall' and not fn.uses_this and fn.nargs == 0:
+            if (nm_static(name) or (fn.ret == 'void' and fn.tail)) and fn.conv == 'thiscall' \
+                    and not fn.uses_this and fn.nargs == 0:
+                # no object and nothing on the stack (a forwarder of that kind sets ECX itself): ECX is
+                # not an input
                 fn.conv = 'cdecl'
             if re.search(r'\bthis\b', text) and fn.conv != 'thiscall':
                 raise Reject('reads ECX in a caller-cleaned function')
@@ -2136,6 +2186,8 @@ def grender(fname, recs, report, crate):
             exp, _ = expect_of(a)
             pres = ', preserve = "%s"' % pres_regs if pres_regs else ''
             hints = ', unverified = "%s", route = "%s", hazards = "%s"' % (g['batch'], g['route'], g['hazards'])
+            if a in PROMOTED:
+                hints = ', route = "%s", hazards = "%s"' % (g['route'], g['hazards'])
             if g['recs']:
                 hints += ', recs = "%s"' % ','.join(g['recs'])
             s += '#[hook(addr = 0x%X, conv = %s, name = "%s", expect = "%s"%s%s)]\n' % (
@@ -2157,7 +2209,8 @@ def grender(fname, recs, report, crate):
     head = ('//! Generated by `tools/gen/patterns.py` from the 1.0 US bytes: %s.\n'
             '//! Every body below was executed instruction by instruction by the generator\'s symbolic\n'
             '//! interpreter; see the script and `docs/arch/gen-all.md`. Every hook is unverified (its batch,\n'
-            '//! route and hazards are in the attribute, docs/verify/HOWTO.md). Do not edit by hand: regenerate.\n'
+            '//! route and hazards are in the attribute, docs/verify/HOWTO.md) until a verifier promotes it\n'
+            '//! (`tools/gen/patterns_verified.txt`). Do not edit by hand: regenerate.\n'
             % what) + GEN_ALLOW + '\n#[allow(unused_imports)]\nuse super::*;\n\n'
     s = head
     if callees:
