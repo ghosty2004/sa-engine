@@ -241,7 +241,22 @@ impl<V: View> Peds for NativeGame<V> {
     }
 
     fn give_weapon(&mut self, ped: PedRef, weapon: WeaponType, ammo: u32) -> GameResult<()> {
+        // samp (samp.dll 0x100AF7D0, samp-rs `client::ped::give_weapon`): the weapon's model loaded first (its
+        // `CWeaponInfo::m_nModelId1`, standard skill), so the ped holds it and the HUD has its icon; then the gift.
         let h = self.ped_script_handle(ped)?.0;
+        let model = if weapon.0 < addr::WEAPON_INFO_STD_COUNT {
+            self.view
+                .read_i32(addr::WEAPON_INFO + u32::from(weapon.0) * addr::WEAPON_INFO_SIZE + 0xC)
+        } else {
+            -1
+        };
+        if model > 0 && !self.model_loaded(ModelId(model)) {
+            self.request_model(ModelId(model))?;
+            self.load_all_now()?;
+            if !self.model_loaded(ModelId(model)) {
+                return Err(GameError::NotLoaded);
+            }
+        }
         self.run_op(
             op::GIVE_WEAPON_TO_CHAR,
             &[I(h), I(i32::from(weapon.0)), I(ammo as i32)],
