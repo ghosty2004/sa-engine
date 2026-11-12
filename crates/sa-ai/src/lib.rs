@@ -119,3 +119,6 @@ pub mod stuck_in_air_subtask;
 pub mod group_membership_remove;
 pub mod attractor_ped_use_effect;
 pub mod general_node_heading;
+pub mod route_round_entity_bbox;
+pub mod route_round_sphere;
+pub mod attractor_place_ped;
