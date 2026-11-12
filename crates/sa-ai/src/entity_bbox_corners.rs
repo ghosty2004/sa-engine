@@ -93,7 +93,7 @@ fn x87_abs(v: X87) -> X87 {
 ///   order and precision (see the code).
 /// - Every corner's z = `zPos`; return 1. No NULL checks on the collision model or data (as the original).
 #[hook(addr = 0x5f1fa0, conv = cdecl, name = "CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached",
-       expect = "90 E9 FA 1A E1 FF", route = "L2", hazards = "none",
+       expect = "90 E9 FA 1A E1 FF", unverified = "intro-ai-1", route = "L2", hazards = "none",
        recs = "grove-walk", note = "long x87 chains: values kept unrounded on the register stack as the original")]
 #[allow(clippy::too_many_lines)]
 pub fn ped_geometry_compute_entity_bbox_corners_uncached(z_pos: f32, entity: GPtr<u8>, corners: GPtr<u8>) -> u8 {
