@@ -173,3 +173,5 @@ pub mod road_rage_events_native;
 pub mod road_rage_sub_tasks;
 pub mod be_in_group_clone;
 pub mod leave_car_ctor;
+pub mod group_closest_ped;
+pub mod road_rage_control;
