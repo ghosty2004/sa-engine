@@ -67,6 +67,7 @@ function start(files) {
       statusEl.textContent = m.error ? `error: ${m.error}` : m.done ? m.done :
         `${m.phase ?? ''} gGameState ${st}, ${m.iterations} iterations${m.blocked ? ` (${m.blocked} blocked)` : ''}, ${m.presents} in-game frames, ${m.mib} MiB read`;
       statusEl.className = m.error ? 'err' : '';
+      $('blocked').textContent = m.blocked ? `blocked iterations: ${m.blocked}, last: ${m.lastBlocked} (not ported yet)` : '';
     }
   };
   worker.onerror = (e) => log(`worker error: ${e.message}`, 'error');
@@ -133,6 +134,16 @@ canvas.addEventListener('mousedown', (e) => {
     return;
   }
   worker.postMessage({ type: 'button', button: e.button, down: true });
+});
+// the capture indicator (pointer lock comes and goes with clicks, Esc and focus changes)
+document.addEventListener('pointerlockchange', () => {
+  const on = document.pointerLockElement === canvas;
+  $('mouse').textContent = `mouse captured: ${on ? 'yes' : 'no'}`;
+  $('mouse').className = on ? 'on' : 'off';
+  window.saGame.mouseCaptured = on;
+});
+document.addEventListener('pointerlockerror', () => {
+  $('mouse').textContent = 'mouse captured: no (the browser refused the pointer lock; click the picture again)';
 });
 document.addEventListener('mousemove', (e) => {
   if (worker && document.pointerLockElement === canvas) {

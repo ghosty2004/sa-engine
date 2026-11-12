@@ -8,7 +8,8 @@
 //        [--seconds 240] [--every 10] [--walk-after 8 --walk-for 12] [--enter-every 0] [--chrome chromium]
 //
 // --walk-after S: S seconds after gGameState first reaches IDLE (in game), W goes down for --walk-for seconds; or
-// --walk 'w:20,wa:6,w:10,wd:6,w:20': held key sets (letters of W/A/S/D) and seconds, in order (real key events).
+// --walk 'w:20,wa:6,w:10,wd:6,w:20': held key sets (letters of W/A/S/D, j = Shift / jump, p = Space / sprint) and
+// seconds, in order (real key events).
 // --enter-every S: presses Enter every S seconds until the game is in IDLE (menus) with real key events.
 // --walk letters l / r: mouse-look left / right while that segment lasts (a real click on the canvas first locks the
 // pointer, then real mouse moves; the page does not pass that click to the game).
@@ -34,7 +35,8 @@ const walkPlan = (arg('walk', '') || `w:${walkFor}`).split(',').map((x) => {
 });
 const walkTotal = walkPlan.reduce((a, p) => a + p.secs, 0);
 const lookPx = Number(arg('look-px', '40'));
-const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83], d: ['KeyD', 'd', 68] };
+// w a s d; j = left Shift (jump), p = Space (sprint)
+const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83], d: ['KeyD', 'd', 68], j: ['ShiftLeft', 'Shift', 16], p: ['Space', ' ', 32] };
 let held = new Set();
 let locked = false, mx = 0, my = 0;
 const enterEvery = Number(arg('enter-every', '0'));

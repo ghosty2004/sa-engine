@@ -133,6 +133,7 @@ function status(extra) {
     phase,
     iterations: sa.iterations(),
     blocked,
+    lastBlocked,
     state: sa.game_state(),
     presents: sa.in_game_presents(),
     allPresents: sa.presents(),
@@ -147,6 +148,7 @@ function status(extra) {
 const BLOCKED_TAG = 'sa-game blocked: ';
 let wasm = null;
 let blocked = 0;
+let lastBlocked = '';
 function stackPointer() {
   return wasm && wasm.__stack_pointer instanceof WebAssembly.Global ? wasm.__stack_pointer : null;
 }
@@ -166,6 +168,9 @@ function tick() {
         if (!msg.startsWith(BLOCKED_TAG)) throw e;
         if (sp) sp.value = sp0;
         blocked++;
+        // "NAME is not ported; ... (0xADDR)" -> "NAME (0xADDR)"
+        const m = msg.slice(BLOCKED_TAG.length).match(/^(\S+) is not ported.*\((0x[0-9a-f]+)/);
+        lastBlocked = m ? `${m[1]} (${m[2]})` : msg.slice(BLOCKED_TAG.length, BLOCKED_TAG.length + 120);
         if (!sa.recover()) {
           stopped = true;
           status({ done: `stopped after a blocked iteration: ${msg.slice(BLOCKED_TAG.length)}` });
