@@ -21,8 +21,6 @@ orig! {
     fn operator_delete(p: GPtr<u32>) = cdecl 0x8214BD => unported;
     /// `IUnknown::Release` (COM vtable slot 2, stdcall)
     fn com_release(obj: GPtr<u8>) -> u32 = stdcall vslot 0x8 => unported;
-    /// `CKeyGen::GetUppercaseKey(const char*)` (0x53CF30, cdecl)
-    fn get_uppercase_key(s: GPtr<u8>) -> u32 = cdecl 0x53CF30 => unported;
 }
 
 fn gp<T: sa_core::mem::GameData>(a: usize) -> GPtr<T> {
@@ -138,30 +136,10 @@ pub fn d3d_index_data_buffer_resize(this: GPtr<u8>, size: i32) {
     wr::<i32>(this, 8, size);
 }
 
-/// `RwTexDictionaryFindHashNamedTexture(RwTexDictionary*, uint32 hash)` (0x734E50, cdecl): walks the dictionary's
-/// texture list (head at +8, the link at texture +8) and returns the first texture whose name (+0x10) has
-/// `CKeyGen::GetUppercaseKey(name) == hash` (the name pointer is never null for a real link), else null.
-#[hook(addr = 0x734E50, conv = cdecl, name = "RwTexDictionaryFindHashNamedTexture", expect = "53 8B 5C 24 08",
-       unverified = "samp-render-2", route = "L2", hazards = "none", recs = "menus-hud")]
-pub fn rw_tex_dictionary_find_hash_named_texture(dict: GPtr<u8>, hash: u32) -> GPtr<u8> {
-    let head = dict.byte_add(8);
-    let mut node = rd::<GPtr<u8>>(head, 0);
-    while node != head {
-        let tex = node.byte_add(-8);
-        let name = tex.byte_add(0x10);
-        if !name.is_null() && get_uppercase_key(name) == hash {
-            return tex;
-        }
-        node = rd::<GPtr<u8>>(node, 0);
-    }
-    GPtr::NULL
-}
-
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
     HOOK_POST_EFFECTS_DRAW_QUAD,
     HOOK_CHECKPOINTS_DELETE_CP,
     HOOK_WIND_MODIFIERS_REGISTER_ONE,
     HOOK_D3D_INDEX_DATA_BUFFER_RESIZE,
-    HOOK_RW_TEX_DICTIONARY_FIND_HASH_NAMED_TEXTURE,
 ];

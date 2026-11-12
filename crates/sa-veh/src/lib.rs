@@ -107,5 +107,4 @@ pub mod automobile_tyre_fix;
 pub mod special_vehicle_control;
 pub mod car_enter_quit;
 pub mod vehicle_kill_entering_peds;
-pub mod vehicle_collision_particles;
 pub mod vehicle_soft_ground;
