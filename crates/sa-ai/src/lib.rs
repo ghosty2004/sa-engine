@@ -153,6 +153,7 @@ pub mod go_to_attractor_first_sub_task;
 pub mod respected_friend_range;
 pub mod attractor_arrival;
 pub mod sit_down_idle_stand_up;
+pub mod enter_car_sub_tasks;
 pub mod use_attractor_tasks;
 pub mod wander_set_dir;
 pub mod walk_round_object_sub_task;
