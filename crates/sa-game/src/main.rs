@@ -29,6 +29,7 @@ mod imports;
 mod native;
 mod rw_standin;
 mod samp;
+mod samp_ui_demo;
 mod sha256;
 mod winmain;
 
@@ -56,6 +57,8 @@ struct Args {
     samp: Option<String>,
     /// `--name NAME`: the SA:MP nickname
     name: String,
+    /// `--samp-ui-demo`: the engine-drawn SA:MP UI with sample content (`samp_ui_demo.rs`)
+    samp_ui_demo: bool,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -69,6 +72,7 @@ fn parse_args() -> Result<Args, String> {
         documents: None,
         samp: None,
         name: "Player".into(),
+        samp_ui_demo: false,
     };
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
@@ -86,12 +90,14 @@ fn parse_args() -> Result<Args, String> {
             "--start-in-world" => native::set_start_in_world(),
             "--samp" => a.samp = Some(val()?),
             "--name" => a.name = val()?,
+            "--samp-ui-demo" => a.samp_ui_demo = true,
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME]] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME] | --samp-ui-demo] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
-                     --samp hosts the SA:MP client (skeleton: the native game adapter with a stand-in client, no network yet)."
+                     --samp hosts the SA:MP client (skeleton: the native game adapter with a stand-in client, no network yet).\n\
+                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content."
                 );
                 std::process::exit(0);
             }
@@ -100,6 +106,9 @@ fn parse_args() -> Result<Args, String> {
     }
     if let Some(s) = &a.samp {
         samp::parse_target(s, &a.name)?;
+        if a.samp_ui_demo {
+            return Err("--samp-ui-demo and --samp are exclusive".into());
+        }
     }
     if a.game.as_os_str().is_empty() {
         return Err("--game DIR is required (the GTA San Andreas install)".into());
@@ -180,6 +189,9 @@ fn run(args: &Args) -> Result<String, String> {
         }
         None => None,
     };
+    if args.samp_ui_demo {
+        samp_ui_demo::install()?;
+    }
     println!(
         "sa-game: game folder {} (read-only), user documents {}",
         args.game.display(),
@@ -353,6 +365,9 @@ fn run(args: &Args) -> Result<String, String> {
     }
     if let Some(t) = &samp_target {
         samp::report(&mut md, t);
+    }
+    if args.samp_ui_demo {
+        samp_ui_demo::report(&mut md);
     }
     let crashed = rep
         .rows

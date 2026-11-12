@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 sa-core = { path = "../sa-core" }
 sa-samp-api = { path = "../sa-samp-api" }
+sa-samp-ui = { path = "../sa-samp-ui" }
 
 [lints.rust]
 missing_docs = "warn"
