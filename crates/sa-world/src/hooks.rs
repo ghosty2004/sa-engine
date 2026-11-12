@@ -113,6 +113,8 @@ pub const MODULES: &[&[HookReg]] = &[
     world::water_creature::HOOKS,
     world::cheat_player_toggles::HOOKS,
     world::furniture_hand_object_mines::HOOKS,
+    // PORT-VEH-4
+    world::entry_exit_transition::HOOKS,
     physical::pair_collision::HOOKS,
     world::garage_tidy_up_close::HOOKS,
     crate::generated::HOOKS,

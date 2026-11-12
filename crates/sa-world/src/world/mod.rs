@@ -77,3 +77,5 @@ pub mod interior_paths_loaded;
 pub mod water_creature;
 pub mod cheat_player_toggles;
 pub mod furniture_hand_object_mines;
+// PORT-VEH-4
+pub mod entry_exit_transition;
