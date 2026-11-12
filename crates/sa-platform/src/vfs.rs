@@ -47,6 +47,23 @@ impl GameFs for ReadOnly {
     }
 }
 
+/// A file layer in front of the mounted trees, at the point where the original's file opens reach kernel32
+/// (`CreateFileA`, which samp.dll hooks to serve samp.saa entries from memory): given the path the game opens,
+/// the replacement bytes or `None` for the disk. Only samp mode registers one (`sa_samp_api::files`).
+pub type Redirect = fn(&str) -> Option<std::sync::Arc<Vec<u8>>>;
+
+static REDIRECT: std::sync::RwLock<Option<Redirect>> = std::sync::RwLock::new(None);
+
+/// Registers (or with `None` removes) the file redirect.
+pub fn set_redirect(r: Option<Redirect>) {
+    *REDIRECT.write().unwrap_or_else(|e| e.into_inner()) = r;
+}
+
+fn redirected(path: &str) -> Option<std::sync::Arc<Vec<u8>>> {
+    let r = (*REDIRECT.read().unwrap_or_else(|e| e.into_inner()))?;
+    r(path)
+}
+
 /// The Windows file namespace of the game process.
 pub struct Vfs {
     mounts: Vec<Mount>,
@@ -182,6 +199,9 @@ impl Vfs {
     }
 
     pub fn read(&self, path: &str) -> io::Result<Vec<u8>> {
+        if let Some(data) = redirected(path) {
+            return Ok(data.as_ref().clone());
+        }
         let (fs, p) = self.resolve(path)?;
         fs.read(&p)
     }
@@ -197,6 +217,9 @@ impl Vfs {
     }
 
     fn open_read(&self, path: &str) -> io::Result<Box<dyn RandomRead>> {
+        if let Some(data) = redirected(path) {
+            return Ok(Box::new(crate::fs::MemFile(data)));
+        }
         let (fs, p) = self.resolve(path)?;
         fs.open(&p)
     }
