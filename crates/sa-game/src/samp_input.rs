@@ -12,13 +12,14 @@ use sa_platform::input::{InputEvent, InputState, MouseButton};
 use sa_platform::win32::key_info;
 use sa_samp_api::input::{EventResult, WindowEvent};
 
-/// The host: delivers one event, and tells whether the UI has the keyboard.
+/// The host: delivers one event, and tells what the UI locks.
 #[derive(Clone, Copy)]
 pub struct Target {
     /// Delivers a window event.
     pub event: fn(WindowEvent) -> EventResult,
-    /// Whether the chat input or a dialog is open.
-    pub wants_keyboard: fn() -> bool,
+    /// samp's input lock: (keyboard, mouse). Keyboard while the chat line or a dialog is open; mouse also
+    /// while the cursor is up for a dialog, the scoreboard, textdraw selection or a locked cursor mode.
+    pub lock: fn() -> (bool, bool),
 }
 
 thread_local! {
@@ -74,11 +75,15 @@ pub fn filter(input: &mut InputState) {
         Some(w) => (t.event)(w) == EventResult::PassToGame,
         None => true,
     });
-    if (t.wants_keyboard)() {
+    let (keyboard, mouse) = (t.lock)();
+    if keyboard {
         input.held.clear();
         input.pressed.clear();
+    }
+    if keyboard || mouse {
         input.mouse_held.clear();
         input.mouse_delta = (0.0, 0.0);
+        input.wheel = 0.0;
     }
 }
 
@@ -134,7 +139,7 @@ mod tests {
         }
         set_target(Target {
             event: ev,
-            wants_keyboard: || true,
+            lock: || (true, true),
         });
         let mut i = InputState::default();
         i.held.insert(Key::W);
@@ -142,6 +147,16 @@ mod tests {
         filter(&mut i);
         assert_eq!(i.events, vec![InputEvent::KeyUp { key: Key::W }]);
         assert!(i.held.is_empty());
+        // Mouse only (the scoreboard): keys stay, the camera does not turn.
+        set_target(Target {
+            event: ev,
+            lock: || (false, true),
+        });
+        let mut i = InputState::default();
+        i.held.insert(Key::W);
+        i.mouse_delta = (3.0, 1.0);
+        filter(&mut i);
+        assert!(i.held.contains(&Key::W) && i.mouse_delta == (0.0, 0.0));
         TARGET.with(|c| c.set(None));
     }
 }
