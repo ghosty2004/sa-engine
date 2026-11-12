@@ -130,6 +130,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // WRITER-NATIVE
     crate::fx_add_sparks::HOOKS,
     crate::fx_add_punch_impact::HOOKS,
+    crate::postfx_speed_fx::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
