@@ -118,6 +118,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::roadsign_line_row::HOOKS,
     crate::roadsign_atomic::HOOKS,
     crate::generated::HOOKS,
+    crate::fx_emitter_render::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
