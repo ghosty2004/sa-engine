@@ -170,3 +170,4 @@ pub mod event_damage_dtor;
 pub mod knock_off_bike_damage_anims;
 pub mod car_set_ped_out_native;
 pub mod road_rage_events_native;
+pub mod road_rage_sub_tasks;
