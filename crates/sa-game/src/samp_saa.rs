@@ -11,8 +11,11 @@
 
 use std::sync::{Arc, OnceLock};
 
-/// The served entries (lower-case basenames, samp's lookup key) and their bytes.
-static SERVED: OnceLock<Vec<(&'static [u8], Arc<Vec<u8>>)>> = OnceLock::new();
+/// One served entry: its lower-case basename (samp's lookup key) and its bytes.
+type Served = (&'static [u8], Arc<Vec<u8>>);
+
+/// The served entries.
+static SERVED: OnceLock<Vec<Served>> = OnceLock::new();
 
 /// The entries served from samp.saa (subset of samp's, see the module comment).
 const ENTRIES: [&str; 1] = ["loadscs.txd"];
