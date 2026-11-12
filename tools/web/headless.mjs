@@ -40,6 +40,8 @@ const KEYS = { w: ['KeyW', 'w', 87], a: ['KeyA', 'a', 65], s: ['KeyS', 's', 83],
 let held = new Set();
 let locked = false, mx = 0, my = 0;
 const enterEvery = Number(arg('enter-every', '0'));
+const menuMouse = arg('menu-mouse') !== undefined ? Number(arg('menu-mouse')) : null;
+let menuMoused = false;
 const chrome = arg('chrome', 'chromium');
 const port = Number(arg('port', '9333'));
 const extraFlags = (arg('flags', '') || '').split(' ').filter(Boolean);
@@ -61,7 +63,7 @@ function gpuFlags(g) {
 const flags = [
   '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${process.cwd()}/target/web1-chrome-${port}`,
   '--no-first-run', '--no-default-browser-check', '--enable-unsafe-webgpu', '--enable-features=Vulkan',
-  '--ignore-gpu-blocklist', ...gpuFlags(arg('gpu', 'swiftshader')), '--window-size=820,700', ...extraFlags, 'about:blank',
+  '--ignore-gpu-blocklist', ...gpuFlags(arg('gpu', 'swiftshader')), `--window-size=${arg('window', '820,700')}`, ...extraFlags, 'about:blank',
 ];
 const proc = spawn(chrome, flags, { stdio: ['ignore', 'ignore', 'pipe'] });
 proc.stderr.on('data', (d) => appendFileSync(`${out}/chrome-stderr.txt`, d));
@@ -125,7 +127,8 @@ const evalJs = async (expr) => (await s('Runtime.evaluate', { expression: expr, 
 const shot = async (name) => {
   const rect = JSON.parse((await evalJs('JSON.stringify(document.getElementById("screen").getBoundingClientRect())')) ?? '{"x":0,"y":0,"width":800,"height":600}');
   const full = process.argv.includes('--full-page');
-  const clip = full ? { x: 0, y: 0, width: 820, height: 700, scale: 1 } : { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
+  const [ww, wh] = arg('window', '820,700').split(',').map(Number);
+  const clip = full ? { x: 0, y: 0, width: ww, height: wh, scale: 1 } : { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
   // a canvas the compositor cannot show (headless with a real GPU) can stall the capture: give up after 5 s
   const r = await Promise.race([s('Page.captureScreenshot', { format: 'png', clip }), sleep(Number(arg("shot-timeout", "5")) * 1000).then(() => ({}))]);
   if (r.result?.data) {
@@ -198,6 +201,19 @@ while ((Date.now() - t0) / 1000 < seconds) {
     break;
   }
   if (status.state === 9 && inGameAt === null) inGameAt = t;
+  // --menu-mouse S: S seconds after the page opened, while in the menus, real mouse moves across the picture (no
+  // pointer lock: the page passes the position to the game), then a screenshot of the menu cursor
+  if (menuMouse !== null && !menuMoused && status.state === 7 && t >= menuMouse) {
+    menuMoused = true;
+    const r = JSON.parse(await evalJs('JSON.stringify(document.getElementById("screen").getBoundingClientRect())'));
+    for (let i = 0; i <= 20; i++) {
+      await s('Input.dispatchMouseEvent', { type: 'mouseMoved', x: r.x + r.width * (0.2 + 0.03 * i), y: r.y + r.height * (0.3 + 0.015 * i) });
+      await sleep(60);
+    }
+    await sleep(500);
+    note(`t=${t.toFixed(1)} s: menu mouse moved (real mouse events, no pointer lock)`);
+    await shot(`menu-mouse-t${Math.round(t)}`);
+  }
   if (enterEvery > 0 && status.state !== 9 && t - lastEnter >= enterEvery && status.phase === 'running') {
     lastEnter = t;
     castEvent({ event: 'enter' });
