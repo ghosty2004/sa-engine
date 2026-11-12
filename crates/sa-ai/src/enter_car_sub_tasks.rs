@@ -1,6 +1,6 @@
 //! `CTaskComplexEnterCar`'s sub-task logic (batch `std14-ai-1`): `CreateFirstSubTask` 0x643A60, `ControlSubTask`
 //! 0x63A890, `CreateSubTask` 0x63E040, `CreateNextSubTask` 0x63E990, `CreateNextSubTask_AfterSimpleCarAlign`
-//! 0x63F970, `ComputeTargetDoorOppositeToFlag` 0x63AB70 and `CTaskComplexEnterCarAsDriver`'s destructor 0x640330.
+//! 0x63F970, `ComputeTargetDoorOppositeToFlag` 0x63AB70 (an inline helper here) and `CTaskComplexEnterCarAsDriver`'s destructor 0x640330.
 //! Ported from the 1.0 US bytes (gta-reversed as a reading aid; it differs in several branches, the bytes are
 //! followed). Unverified (docs/verify/HOWTO.md).
 //!
@@ -19,7 +19,6 @@ use crate::common::*;
 
 orig! {
     fn create_sub_task_o(t: GPtr<u8>, ty: u32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x63E040 => create_sub_task;
-    fn opposite_door_o(t: GPtr<u8>) -> i32 = thiscall 0x63AB70 => compute_target_door_opposite_to_flag;
     /// `CTaskComplexEnterCar::~CTaskComplexEnterCar` (0x63DFA0)
     fn enter_car_dtor(t: GPtr<u8>) = thiscall 0x63DFA0 => unported;
     /// `CTaskComplex::CreateFirstSubTask` (vtable +0x24)
@@ -211,16 +210,15 @@ fn set_cruise_speed(t: GPtr<u8>, v: GPtr<u8>) {
 
 /// `CTaskComplexEnterCarAsDriver::~CTaskComplexEnterCarAsDriver` (0x640330): vtable 0x86EAAC, then (tail jump) the
 /// `CTaskComplexEnterCar` destructor.
-#[hook(addr = 0x640330, conv = thiscall, name = "CTaskComplexEnterCarAsDriver::Destructor", expect = "C7 01 AC EA 86 00 E9",
+#[hook(addr = 0x640330, conv = thiscall, name = "FUN_00640330", expect = "C7 01 AC EA 86 00 E9",
        unverified = "std14-ai-1", route = "L2", hazards = "heap-writes", recs = "enter-car")]
 pub fn enter_car_as_driver_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x86EAAC);
     enter_car_dtor(this);
 }
 
-/// `CTaskComplexEnterCar::ComputeTargetDoorOppositeToFlag()` (0x63AB70): 10 for a driver at door 8, else 0.
-#[hook(addr = 0x63AB70, conv = thiscall, name = "CTaskComplexEnterCar::ComputeTargetDoorOppositeToFlag", expect = "8A 51 10 33 C0 F6 C2 01",
-       unverified = "std14-ai-1", route = "L2", hazards = "none", recs = "enter-car")]
+/// `CTaskComplexEnterCar::ComputeTargetDoorOppositeToFlag()` (0x63AB70, not in the catalogue, so not hooked; called
+/// directly): 10 for a driver at door 8, else 0.
 pub fn compute_target_door_opposite_to_flag(this: GPtr<u8>) -> i32 {
     if flags(this) & 1 != 0 && door(this) == 8 { 10 } else { 0 }
 }
@@ -648,7 +646,7 @@ pub fn create_next_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
             for k in 0..3 {
                 wr::<u32>(this, 0x2C + 4 * k, rd::<u32>(t, 0x38 + 4 * k));
             }
-            let opp = opposite_door_o(this);
+            let opp = compute_target_door_opposite_to_flag(this);
             wr::<i32>(this, 0x18, opp);
             if is_car_door_in_use(veh(this), door(this), opp) != 0 {
                 if ped_is_player(ped) != 0 {
@@ -906,7 +904,6 @@ fn chat_reactions(this: GPtr<u8>, ped: GPtr<u8>) {
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_ENTER_CAR_AS_DRIVER_DTOR,
-    HOOK_COMPUTE_TARGET_DOOR_OPPOSITE_TO_FLAG,
     HOOK_CREATE_FIRST_SUB_TASK,
     HOOK_CONTROL_SUB_TASK,
     HOOK_CREATE_SUB_TASK,

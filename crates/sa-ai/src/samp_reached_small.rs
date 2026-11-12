@@ -169,8 +169,6 @@ pub fn throw_projectile_control_throw(this: GPtr<u8>, release: u32, target: GPtr
 
 /// `CTaskSimpleIKChain::BlendOut(int32 time)` (0x633C40, `ret 4`): unless already blending out (+0x54), an
 /// unlimited (-1) end time (+8) becomes 0, the blend-out end (+0x48) is `now + time` and +0x54 is set.
-#[hook(addr = 0x633C40, conv = thiscall, name = "CTaskSimpleIKChain::BlendOut", expect = "8B 41 54 85 C0",
-       unverified = "ai7-10", route = "L2", hazards = "heap-writes")]
 pub fn ik_chain_blend_out(this: GPtr<u8>, time: i32) {
     if rd::<u32>(this, 0x54) != 0 {
         return;
@@ -228,7 +226,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_F_61C150,
     HOOK_THROW_PROJECTILE_FINISH_ANIM_CB,
     HOOK_THROW_PROJECTILE_CONTROL_THROW,
-    HOOK_IK_CHAIN_BLEND_OUT,
     HOOK_DIE_SAY_DEATH_SAMPLE,
     HOOK_SIMPLE_DEAD_CTOR,
 ];
