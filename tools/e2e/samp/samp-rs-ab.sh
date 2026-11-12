@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SAMP-2/4 A/B join: the ORIGINAL gta_sa.exe 1.0 US with a samp-rs build (samp_client.dll + samp-launcher.exe from
 # DLL_DIR) against our private open.mp 1.6.7 copy, running a fixed join scenario (connect, class selection, spawn,
-# walk, server commands: message, game text, position, weapon, money, clock, weather, vehicle enter/drive/exit,
+# walk, server commands: message, game text, position, weapon, money, clock, weather, pickup, map icon, object,
+# checkpoints, vehicle enter/drive/exit,
 # interior, death and respawn, /q). Used to show that an adapter step of samp-rs is a pure refactor: run it once
 # with the build before the step (A) and once after (B) and diff the two `sequence.txt` files.
 #
@@ -227,6 +228,16 @@ cmd "time|12"
 cmd "weather|10"
 sleep 1
 probe day
+# World entities: a pickup, a map icon, an object, a checkpoint and a race checkpoint, then both checkpoints off.
+cmd "pickup|1240|2|2495|-1684|13.5"
+cmd "icon|1|2500|-1700|13|6"
+cmd "obj|1337|2498|-1690|13.5"
+cmd "cp|2495|-1674|13.5|3"
+sleep 1
+cmd "rcp|0|2495|-1660|13.5|2495|-1640|13.5|5"
+sleep 1
+shot entities
+cmd "cpoff"
 cmd "veh|560|2500|-1660|13.4|0"
 V="$(cmd_id)"
 sleep 2
