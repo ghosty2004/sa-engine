@@ -110,3 +110,10 @@ pub mod vehicle_soft_ground;
 
 // PORT-VEH-4 (unverified batches veh4-*)
 pub mod automobile_nitrous;
+pub mod vehicle_plane_weapons;
+pub mod quad_bike_controls;
+pub mod automobile_flying_component;
+pub mod wake_locks_component_rotation;
+pub mod boat_render;
+pub mod heli_pre_render;
+pub mod boat_pre_render;

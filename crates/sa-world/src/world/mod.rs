@@ -72,3 +72,5 @@ pub mod game_logic_resurrection;
 // PORT-VEH-4
 pub mod break_object;
 pub mod interior_group_paths;
+pub mod entry_exit_transition;
+pub mod water_creature;

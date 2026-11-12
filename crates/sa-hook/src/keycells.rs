@@ -45,6 +45,7 @@ pub struct Reader {
 /// `.HOODLUM`), found by the test below.
 pub const READERS: [Reader; 35] = [
 pub const READERS: [Reader; 36] = [
+pub const READERS: [Reader; 39] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -349,6 +350,31 @@ pub const READERS: [Reader; 36] = [
         insn: [0x1B, 0x3D, 0x62, 0x8D, 0x6C, 0x00],
         key: 0x6C8D62,
         value: 0xD386_DCE9,
+    },
+    // Batch veh4-2: CVehicle::CanPedOpenLocks entry 0x6D1E20 (`push esi; mov esi, ecx; nop; jmp 0x401A4D`):
+    // `mov ecx, [0x6D1E24]` at 0x401B4F and `adc eax, [0x6D1E24]` at 0x405BD6 (the jmp's opcode and rel32).
+    Reader {
+        at: 0x401B4F,
+        insn: [0x8B, 0x0D, 0x24, 0x1E, 0x6D, 0x00],
+        disp_off: 2,
+        key: 0x6D1E24,
+        value: 0xD2FC_24E9,
+    },
+    Reader {
+        at: 0x405BD6,
+        insn: [0x13, 0x05, 0x24, 0x1E, 0x6D, 0x00],
+        disp_off: 2,
+        key: 0x6D1E24,
+        value: 0xD2FC_24E9,
+    },
+    // Batch veh4-2: CVehicle::SetComponentRotation entry 0x6DBA30 (`nop; jmp 0x403907`):
+    // `xor ecx, [0x6DBA32]` at 0x156967D (the jmp's rel32).
+    Reader {
+        at: 0x156967D,
+        insn: [0x33, 0x0D, 0x32, 0xBA, 0x6D, 0x00],
+        disp_off: 2,
+        key: 0x6DBA32,
+        value: 0xFFD2_7ED1,
     },
 ];
 
