@@ -1,0 +1,623 @@
+//! gta_sa.exe 1.0 US addresses and read-only views of game state.
+//!
+//! Addresses and field offsets are public facts about the executable; names
+//! follow gta-reversed (`re/gta-reversed`) and plugin-sdk (`re/plugin-sdk`).
+
+use crate::patch::{Memory, PatchError};
+
+/// Byte probed to identify the executable: the first byte of `mov [gGameState],esi` in `psInitialize` on 1.0 US
+/// (docs/re/subsystems/gta-patches.md, "When patches are applied").
+pub const VERSION_PROBE_ADDR: u32 = 0x747483;
+/// The probe's value on 1.0 US.
+pub const VERSION_PROBE_US10: u8 = 0x89;
+/// Same probe on 1.0 EU (not supported).
+pub const VERSION_PROBE_EU10: u8 = 0xC8;
+
+/// samp's version check also gives up at once when this byte is 1 (read in the polling loop).
+pub const VERSION_GIVE_UP_FLAG: u32 = 0xBA6831;
+/// The check polls every 10 ms …
+pub const VERSION_POLL_MS: u64 = 10;
+/// … up to 6000 times.
+pub const VERSION_POLLS: u32 = 6000;
+/// The message box samp shows when the check fails, followed by `ExitProcess(1)`.
+pub const VERSION_ERROR_TEXT: &str = "I can't determine your GTA version.\r\nSA-MP only supports GTA:SA v1.0 USA/EU";
+pub const VERSION_ERROR_CAPTION: &str = "Version Error";
+
+/// One poll of samp's version check ([`version_poll`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VersionPoll {
+    Us,
+    Eu,
+    /// Neither probe value and the give-up flag set: fail now.
+    Fail,
+    /// Neither value yet: sleep and poll again.
+    Wait,
+}
+
+/// Classifies one poll of the version probe. Mirrors samp.dll B 0x100AA720.
+pub fn version_poll(probe: u8, give_up: u8) -> VersionPoll {
+    match probe {
+        VERSION_PROBE_US10 => VersionPoll::Us,
+        VERSION_PROBE_EU10 => VersionPoll::Eu,
+        _ if give_up == 1 => VersionPoll::Fail,
+        _ => VersionPoll::Wait,
+    }
+}
+
+/// `gGameState` (int32), named via gta-reversed `app/app.h`.
+pub const G_GAME_STATE: u32 = 0xC8D4C0;
+/// `RsGlobal` (RsGlobalType), named via gta-reversed `RenderWare.h`.
+pub const RS_GLOBAL: u32 = 0xC17040;
+/// `RsGlobal.frameLimit` (+0xC), named via gta-reversed `skeleton.h`.
+pub const RS_GLOBAL_FRAME_LIMIT: u32 = RS_GLOBAL + 0xC;
+/// `RsGlobal.quit` (+0x10, RwBool), named via gta-reversed `skeleton.h`.
+pub const RS_GLOBAL_QUIT: u32 = RS_GLOBAL + 0x10;
+/// `FrontEndMenuManager` (CMenuManager), named via gta-reversed `MenuManager.cpp`.
+pub const FRONTEND_MENU_MANAGER: u32 = 0xBA6748;
+/// `CWorld::Players[0]` (CPlayerInfo, 0x190 bytes each), named via gta-reversed `World.h`.
+pub const CWORLD_PLAYERS: u32 = 0xB7CD98;
+/// `Render2dStuff`, named via gta-reversed; called from `Idle` at 0x53EB12.
+pub const RENDER_2D_STUFF: u32 = 0x53E230;
+/// Call site of `Render2dStuff` inside `Idle`, hooked for our per-frame work.
+pub const IDLE_RENDER_2D_CALL: u32 = 0x53EB12;
+
+/// `CGame::Process`, named via gta-reversed; called from `Idle` at 0x53E981.
+pub const CGAME_PROCESS: u32 = 0x53BEE0;
+/// Call site of `CGame::Process` inside `Idle`, hooked like samp. Unlike the Render2dStuff call it also runs
+/// while the screen is faded out.
+pub const IDLE_GAME_PROCESS_CALL: u32 = 0x53E981;
+
+/// `CGame::Shutdown` (cdecl, no args), gta-reversed; samp hooks its entry.
+pub const CGAME_SHUTDOWN: u32 = 0x53C900;
+/// Padding dword in front of `CGame::Shutdown` that holds the handler for the entry hook's `jmp [slot]`.
+pub const CGAME_SHUTDOWN_SLOT: u32 = 0x53C8F1;
+/// First 7 bytes of `CGame::Shutdown` (`push esi; push edi; mov ecx, g_breakMan`).
+pub const CGAME_SHUTDOWN_ORIGINAL: [u8; 7] = [0x56, 0x57, 0xB9, 0x40, 0x42, 0xBB, 0x00];
+
+/// `FindPlayerPed` (cdecl, int player), gta-reversed.
+pub const FIND_PLAYER_PED: u32 = 0x56E210;
+/// The `call FindPlayerPed` in `CAEPoliceScannerAudioEntity::AddAudioEvent`, hooked like samp.
+pub const POLICE_SCANNER_FIND_PLAYER_CALL: u32 = 0x4E7427;
+/// Size of the zeroed stand-in ped samp hands to the police scanner (0x1E8 dwords).
+pub const SCANNER_DUMMY_PED_BYTES: usize = 0x7A0;
+
+/// `CFileMgr::OpenFile(path, mode)` (cdecl, a jump to the CRT `fopen`), gta-reversed `FileMgr.cpp`.
+pub const CFILEMGR_OPEN_FILE: u32 = 0x538900;
+/// The `call CFileMgr::OpenFile` that opens "main.scm" in `CTheScripts::Init`.
+pub const MAIN_SCM_OPEN_CALL: u32 = 0x468EC9;
+/// Where the local player ped is created before the server places it
+/// (the stock script's own start point, Grove Street).
+pub const INITIAL_PLAYER_POS: [f32; 3] = [2488.56, -1666.84, 13.38];
+
+/// `CPad::Pads[0]` (CPad, NewState `CControllerState` at +0), gta-reversed `Pad.h`.
+pub const PAD0: u32 = 0xB73458;
+/// `CPad::NewKeyState` (CKeyboardState, 0x270 bytes), gta-reversed `Pad.h`.
+pub const NEW_KEY_STATE: u32 = 0xB73190;
+/// Offsets of i16 key flags in `CKeyboardState` (gta-reversed `KeyboardState.h`).
+pub mod key {
+    pub const LEFT: u32 = 0x22A;
+    pub const RIGHT: u32 = 0x22C;
+    pub const LSHIFT: u32 = 0x25C;
+    pub const RSHIFT: u32 = 0x25E;
+    pub const SHIFT: u32 = 0x260;
+}
+/// `CPools::ms_pPedPool` (CPool*: objects +0, slot bytes +4, size +8), gta-reversed `Pools.cpp`.
+pub const PED_POOL: u32 = 0xB74490;
+/// Ped pool element size (`CCopPed`, 0x7C4), gta-reversed `CopPed.h`.
+pub const PED_POOL_ELEMENT: u32 = 0x7C4;
+/// `GAME_GRAVITY` (f32), gta-reversed `Physical.h`.
+pub const GAME_GRAVITY: u32 = 0x863984;
+/// `CWorld::Players[0].m_nMoney` (docs/re/subsystems/player-state.md, "20 ResetPlayerMoney").
+pub const PLAYER_MONEY: u32 = CWORLD_PLAYERS + 0xB8;
+/// `FrontEndMenuManager.m_bHudOn` (+0x21), gta-reversed `MenuManager.h`.
+pub const MENU_HUD_ON: u32 = FRONTEND_MENU_MANAGER + 0x21;
+/// `FrontEndMenuManager.m_bMenuActive` (+0x5C).
+pub const MENU_ACTIVE: u32 = FRONTEND_MENU_MANAGER + 0x5C;
+/// `CHud::bScriptDontDisplayRadar`, gta-reversed `Hud.h`.
+pub const HUD_SCRIPT_DONT_DISPLAY_RADAR: u32 = 0xBAA3FB;
+/// `CCamera::Fade` entry; samp writes `ret 8` here at every spawn.
+pub const CAMERA_FADE: u32 = 0x50AC20;
+/// `CPlayerPed::SetInitialState(bool)` (thiscall), gta-reversed `PlayerPed.cpp`.
+pub const PLAYER_PED_SET_INITIAL_STATE: u32 = 0x60CD20;
+/// `CPed::GiveWeapon(eWeaponType, uint32 ammo, bool)` (thiscall), gta-reversed `Ped.cpp`.
+pub const PED_GIVE_WEAPON: u32 = 0x5E6080;
+/// `CPed::ClearWeapons()` (thiscall), gta-reversed `Ped.cpp`.
+pub const PED_CLEAR_WEAPONS: u32 = 0x5E6320;
+/// `CAEPedSpeechAudioEntity::Initialise(CEntity*)` (thiscall), gta-reversed `AEPedSpeechAudioEntity.cpp`.
+pub const PED_SPEECH_INITIALISE: u32 = 0x4E68D0;
+/// `CTaskSimpleJetPack` vtable (docs/re/subsystems/remote-control-onfoot.md, "Keys → shadow pad").
+pub const VTBL_TASK_SIMPLE_JETPACK: u32 = 0x8705C4;
+/// Primary-task vtable samp tests for "hands up" (the task `TASK_HANDS_UP` creates).
+pub const VTBL_TASK_HANDS_UP: u32 = 0x85A29C;
+/// `CPedIntelligence::SetTaskDuckSecondary(u16 length)` (thiscall).
+pub const INTELLIGENCE_SET_TASK_DUCK_SECONDARY: u32 = 0x601230;
+/// `CPedIntelligence` secondary task slot 5 (IK chain task), which samp removes before a skin change.
+pub const INTELLIGENCE_SECONDARY_IK: u32 = 0x2C;
+/// Scalar deleting destructor samp calls on that task.
+pub const TASK_IK_DELETING_DTOR: u32 = 0x639330;
+/// `CModelInfo::ms_modelInfoPtrs`.
+pub const MODEL_INFO_PTRS: u32 = 0xA9B0C8;
+/// Number of entries in `ms_modelInfoPtrs`.
+pub const MODEL_INFO_COUNT: u32 = 20001;
+/// `CPedModelInfo` vtable; a ped model's info has it.
+pub const VTBL_PED_MODEL_INFO: u32 = 0x85BDC0;
+/// `CWorld::PlayerInFocus` (u8).
+pub const PLAYER_IN_FOCUS: u32 = 0xB7CD74;
+/// `CStats::StatTypesFloat[69..79]` (weapon skills, 11 floats).
+pub const WEAPON_SKILL_STATS: u32 = 0xB79380 + 0x114;
+
+/// samp's valid-ped-model test: a model-info pointer with the ped vtable. Mirrors samp.dll 0x100B3E10.
+pub fn is_ped_model<M: Memory>(mem: &M, model: u32) -> bool {
+    if model >= MODEL_INFO_COUNT {
+        return false;
+    }
+    let info = mem.read_u32(MODEL_INFO_PTRS + 4 * model).unwrap_or(0);
+    info != 0 && mem.read_u32(info).ok() == Some(VTBL_PED_MODEL_INFO)
+}
+
+/// Field offsets (named via plugin-sdk VALIDATE_OFFSET / gta-reversed headers).
+pub mod off {
+    /// `CEntity` vtable pointer.
+    pub const VTABLE: u32 = 0x0;
+    /// `CEntity::Teleport(CVector, bool)` vtable slot (docs/re/subsystems/player-state.md, "12 SetPlayerPosition").
+    pub const VT_TELEPORT: u32 = 0x38;
+    /// `CEntity::SetModelIndex(uint32)` vtable slot (samp's skin change).
+    pub const VT_SET_MODEL_INDEX: u32 = 0x14;
+    /// `CEntity::DeleteRwObject()` vtable slot.
+    pub const VT_DELETE_RW_OBJECT: u32 = 0x20;
+    /// `CPed::m_pedSpeech` (CAEPedSpeechAudioEntity).
+    pub const PED_SPEECH: u32 = 0x294;
+    /// `CEntity::m_nModelIndex` (u16).
+    pub const ENTITY_MODEL: u32 = 0x22;
+    /// `CPhysical::m_vecMoveSpeed`.
+    pub const MOVE_SPEED: u32 = 0x44;
+    /// `CPed` flag words (first: bit 8 bInVehicle, bit 26 bIsDucking).
+    pub const PED_FLAGS: u32 = 0x46C;
+    /// `CPed::m_pIntelligence`.
+    pub const PED_INTELLIGENCE: u32 = 0x47C;
+    /// `CPed::m_pPlayerData` (CPlayerPedData; its first field is the `CWanted*`).
+    pub const PED_PLAYER_DATA: u32 = 0x480;
+    /// `CPed::m_pVehicle`.
+    pub const PED_VEHICLE: u32 = 0x58C;
+    /// `CVehicle::m_pDriver`.
+    pub const VEHICLE_DRIVER: u32 = 0x460;
+    /// `CVehicle::m_pFire`.
+    pub const VEHICLE_FIRE: u32 = 0x490;
+    /// `CPed::m_pFire`.
+    pub const PED_FIRE: u32 = 0x730;
+    /// Primary task slot in `CPedIntelligence` (docs/re/subsystems/remote-control-onfoot.md, "Keys → shadow pad").
+    pub const INTELLIGENCE_PRIMARY_TASK: u32 = 0x10;
+    /// `CPed::m_ePedState`.
+    pub const PED_STATE: u32 = 0x530;
+    /// `CPed::m_fHeadingGoal`.
+    pub const PED_HEADING_GOAL: u32 = 0x55C;
+    /// `CPed::m_aWeapons` (13 × CWeapon; the type is at +0).
+    pub const PED_WEAPONS: u32 = 0x5A0;
+    /// Size of one `CWeapon`.
+    pub const WEAPON_SIZE: u32 = 0x1C;
+    /// `CWeapon::m_nTotalAmmo`.
+    pub const WEAPON_AMMO_TOTAL: u32 = 0xC;
+    /// `CPed::m_nSelectedWepSlot` (u8).
+    pub const PED_SELECTED_WEAPON_SLOT: u32 = 0x718;
+    /// Last damage weapon (docs/re/subsystems/player-state.md, "53 OnPlayerDeath"; spawn clears it).
+    pub const PED_LAST_DAMAGE_WEAPON: u32 = 0x760;
+    /// Last damage entity (spawn clears it).
+    pub const PED_LAST_DAMAGE_ENTITY: u32 = 0x764;
+    /// `CPlayerInfo::m_pPed`.
+    pub const PLAYER_INFO_PED: u32 = 0x0;
+    /// `CPlaceable::m_placement` (CSimpleTransform: CVector pos, float heading).
+    pub const PLACEABLE_PLACEMENT: u32 = 0x4;
+    /// `CPlaceable::m_matrix` (CMatrixLink*).
+    pub const PLACEABLE_MATRIX: u32 = 0x14;
+    /// `CMatrix::pos`.
+    pub const MATRIX_POS: u32 = 0x30;
+    /// `CPed::m_fHealth`.
+    pub const PED_HEALTH: u32 = 0x540;
+    /// `CPed::m_fArmour`.
+    pub const PED_ARMOUR: u32 = 0x548;
+    /// `CPed::m_fCurrentRotation` (plugin-sdk: m_fHeadingCurrent), radians.
+    pub const PED_HEADING: u32 = 0x558;
+}
+
+/// `eGameState` values (gta-reversed `Enums/eGameState.h`).
+pub fn game_state_name(v: i32) -> &'static str {
+    match v {
+        0 => "INITIAL",
+        1 => "LOGO",
+        2 => "PLAYING_LOGO",
+        3 => "TITLE",
+        4 => "PLAYING_INTRO",
+        5 => "FRONTEND_LOADING",
+        6 => "FRONTEND_LOADED",
+        7 => "FRONTEND_IDLE",
+        8 => "LOADING_STARTED",
+        9 => "IDLE",
+        _ => "?",
+    }
+}
+
+/// Weapon id → weapon model id (GTA SA `weapon.dat` / `default.ide`).
+pub fn weapon_model(weapon: u32) -> Option<i32> {
+    Some(match weapon {
+        1 => 331,
+        2 => 333,
+        3 => 334,
+        4 => 335,
+        5 => 336,
+        6 => 337,
+        7 => 338,
+        8 => 339,
+        9 => 341,
+        10 => 321,
+        11 => 322,
+        12 => 323,
+        13 => 324,
+        14 => 325,
+        15 => 326,
+        16 => 342,
+        17 => 343,
+        18 => 344,
+        22 => 346,
+        23 => 347,
+        24 => 348,
+        25 => 349,
+        26 => 350,
+        27 => 351,
+        28 => 352,
+        29 => 353,
+        30 => 355,
+        31 => 356,
+        32 => 372,
+        33 => 357,
+        34 => 358,
+        35 => 359,
+        36 => 360,
+        37 => 361,
+        38 => 362,
+        39 => 363,
+        40 => 364,
+        41 => 365,
+        42 => 366,
+        43 => 367,
+        44 => 368,
+        45 => 369,
+        46 => 371,
+        _ => return None,
+    })
+}
+
+/// Degrees → radians in (−π, π].
+pub fn heading_rad(deg: f32) -> f32 {
+    let mut r = deg.to_radians() % std::f32::consts::TAU;
+    if r > std::f32::consts::PI {
+        r -= std::f32::consts::TAU;
+    } else if r <= -std::f32::consts::PI {
+        r += std::f32::consts::TAU;
+    }
+    r
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PedState {
+    pub ptr: u32,
+    pub pos: [f32; 3],
+    pub heading: f32,
+    pub health: f32,
+    pub armour: f32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Snapshot {
+    pub game_state: i32,
+    pub player: Option<PedState>,
+}
+
+/// Reads the local player ped (`CWorld::Players[0].m_pPed`), if any.
+pub fn read_player<M: Memory>(mem: &M) -> Result<Option<PedState>, PatchError> {
+    let ped = mem.read_u32(CWORLD_PLAYERS + off::PLAYER_INFO_PED)?;
+    if ped == 0 {
+        return Ok(None);
+    }
+    let matrix = mem.read_u32(ped + off::PLACEABLE_MATRIX)?;
+    let pos_addr = if matrix != 0 { matrix + off::MATRIX_POS } else { ped + off::PLACEABLE_PLACEMENT };
+    let pos = [mem.read_f32(pos_addr)?, mem.read_f32(pos_addr + 4)?, mem.read_f32(pos_addr + 8)?];
+    Ok(Some(PedState {
+        ptr: ped,
+        pos,
+        heading: mem.read_f32(ped + off::PED_HEADING)?,
+        health: mem.read_f32(ped + off::PED_HEALTH)?,
+        armour: mem.read_f32(ped + off::PED_ARMOUR)?,
+    }))
+}
+
+/// Script handle of a ped (`CPool::GetRef`: index << 8 | slot byte).
+pub fn ped_handle<M: Memory>(mem: &M, ped: u32) -> Result<Option<i32>, PatchError> {
+    let pool = mem.read_u32(PED_POOL)?;
+    if pool == 0 || ped == 0 {
+        return Ok(None);
+    }
+    let objects = mem.read_u32(pool)?;
+    let slots = mem.read_u32(pool + 4)?;
+    let size = mem.read_i32(pool + 8)?;
+    if ped < objects || !(ped - objects).is_multiple_of(PED_POOL_ELEMENT) {
+        return Ok(None);
+    }
+    let index = (ped - objects) / PED_POOL_ELEMENT;
+    if index as i32 >= size {
+        return Ok(None);
+    }
+    let slot = mem.read_u8(slots + index)?;
+    Ok(Some(((index as i32) << 8) | i32::from(slot)))
+}
+
+/// The ped a script handle names (`CPool::GetAtRef`: slot `h >> 8` whose map byte equals `h & 0xFF`); the inverse
+/// of [`ped_handle`].
+pub fn ped_at_ref<M: Memory>(mem: &M, h: i32) -> Result<Option<u32>, PatchError> {
+    let pool = mem.read_u32(PED_POOL)?;
+    if pool == 0 || h < 0 {
+        return Ok(None);
+    }
+    let objects = mem.read_u32(pool)?;
+    let slots = mem.read_u32(pool + 4)?;
+    let size = mem.read_i32(pool + 8)?;
+    let index = (h >> 8) as u32;
+    if index as i32 >= size || mem.read_u8(slots + index)? != (h & 0xFF) as u8 {
+        return Ok(None);
+    }
+    Ok(Some(objects + index * PED_POOL_ELEMENT))
+}
+
+/// `CPools::ms_pObjectPool` and `sizeof(CObject)`.
+pub const OBJECT_POOL: u32 = 0xB7449C;
+pub const OBJECT_SIZE: u32 = 0x19C;
+
+/// `CPool::GetAtRef` on the object pool (see [`ped_at_ref`]).
+pub fn object_at_ref<M: Memory>(mem: &M, h: i32) -> Result<Option<u32>, PatchError> {
+    let pool = mem.read_u32(OBJECT_POOL)?;
+    if pool == 0 || h < 0 {
+        return Ok(None);
+    }
+    let objects = mem.read_u32(pool)?;
+    let slots = mem.read_u32(pool + 4)?;
+    let size = mem.read_i32(pool + 8)?;
+    let index = (h >> 8) as u32;
+    if index as i32 >= size || mem.read_u8(slots + index)? != (h & 0xFF) as u8 {
+        return Ok(None);
+    }
+    Ok(Some(objects + index * OBJECT_SIZE))
+}
+
+/// `CPool::GetRef` on the object pool (see [`ped_handle`]).
+pub fn object_handle<M: Memory>(mem: &M, obj: u32) -> Result<Option<i32>, PatchError> {
+    let pool = mem.read_u32(OBJECT_POOL)?;
+    if pool == 0 || obj == 0 {
+        return Ok(None);
+    }
+    let objects = mem.read_u32(pool)?;
+    let slots = mem.read_u32(pool + 4)?;
+    let size = mem.read_i32(pool + 8)?;
+    if obj < objects || !(obj - objects).is_multiple_of(OBJECT_SIZE) {
+        return Ok(None);
+    }
+    let index = (obj - objects) / OBJECT_SIZE;
+    if index as i32 >= size {
+        return Ok(None);
+    }
+    let slot = mem.read_u8(slots + index)?;
+    Ok(Some(((index as i32) << 8) | i32::from(slot)))
+}
+
+/// Reads one i16 key of `CPad::NewKeyState`.
+pub fn key_down<M: Memory>(mem: &M, key_offset: u32) -> bool {
+    mem.read_u16(NEW_KEY_STATE + key_offset).map(|v| v != 0).unwrap_or(false)
+}
+
+/// Builds the on-foot sync sample from the local ped and pad 0.
+pub fn read_local_sample<M: Memory>(mem: &M, ped: u32) -> Result<crate::footsync::LocalSample, PatchError> {
+    use crate::footsync::{KeyContext, LocalSample, PadState, Rotation};
+    let mut pad = [0u8; PadState::SIZE];
+    mem.read(PAD0, &mut pad)?;
+    let pad = PadState::from_bytes(&pad);
+    let v3 =
+        |a: u32| -> Result<[f32; 3], PatchError> { Ok([mem.read_f32(a)?, mem.read_f32(a + 4)?, mem.read_f32(a + 8)?]) };
+    let matrix = mem.read_u32(ped + off::PLACEABLE_MATRIX)?;
+    let (position, rotation) = if matrix != 0 {
+        (
+            v3(matrix + off::MATRIX_POS)?,
+            Rotation { right: v3(matrix)?, forward: v3(matrix + 0x10)?, up: v3(matrix + 0x20)? },
+        )
+    } else {
+        let h = mem.read_f32(ped + off::PLACEABLE_PLACEMENT + 12)?;
+        (
+            v3(ped + off::PLACEABLE_PLACEMENT)?,
+            Rotation { right: [h.cos(), h.sin(), 0.0], forward: [-h.sin(), h.cos(), 0.0], up: [0.0, 0.0, 1.0] },
+        )
+    };
+    let flags = mem.read_u32(ped + off::PED_FLAGS)?;
+    let in_vehicle = flags & (1 << 8) != 0;
+    let ducking = flags & (1 << 26) != 0;
+    let slot = u32::from(mem.read_u8(ped + off::PED_SELECTED_WEAPON_SLOT)?.min(12));
+    let wbase = ped + off::PED_WEAPONS + slot * off::WEAPON_SIZE;
+    let weapon = mem.read_u32(wbase)?;
+    let ammo = mem.read_u32(wbase + off::WEAPON_AMMO_TOTAL)?;
+    let intel = mem.read_u32(ped + off::PED_INTELLIGENCE)?;
+    let primary_vtbl = if intel != 0 {
+        let task = mem.read_u32(intel + off::INTELLIGENCE_PRIMARY_TASK)?;
+        if task != 0 { mem.read_u32(task)? } else { 0 }
+    } else {
+        0
+    };
+    let jetpack = !in_vehicle && primary_vtbl == VTBL_TASK_SIMPLE_JETPACK;
+    let hands_up = !in_vehicle && primary_vtbl == VTBL_TASK_HANDS_UP;
+    let can_fire = weapon < 16 || weapon == 46 || ammo > 0;
+    Ok(LocalSample {
+        pad,
+        key_ctx: KeyContext { in_vehicle, can_fire, jetpack },
+        position,
+        rotation,
+        health: mem.read_f32(ped + off::PED_HEALTH)?,
+        armour: mem.read_f32(ped + off::PED_ARMOUR)?,
+        weapon: weapon.min(63) as u8,
+        // samp checks in this order: jetpack, dance, hands up, phone, piss, duck, … Only the ones this
+        // function can detect are reported here.
+        special_action: if jetpack {
+            2
+        } else if hands_up {
+            10
+        } else if ducking && !in_vehicle {
+            1
+        } else {
+            0
+        },
+        move_speed: v3(ped + off::MOVE_SPEED)?,
+        animation: 0,
+        surf_offset: [0.0; 3],
+        surf_id: 0,
+    })
+}
+
+pub fn snapshot<M: Memory>(mem: &M) -> Result<Snapshot, PatchError> {
+    let game_state = mem.read_i32(G_GAME_STATE)?;
+    // The player array is only meaningful once the world has been loaded.
+    let player = if game_state >= 9 { read_player(mem)? } else { None };
+    Ok(Snapshot { game_state, player })
+}
+
+/// One-line `state` reply for the control channel.
+pub fn format_state(s: &Snapshot, ticks: u64) -> String {
+    let mut out = format!("state game_state={} ({}) ticks={ticks}", s.game_state, game_state_name(s.game_state));
+    match &s.player {
+        None => out.push_str(" ped=none"),
+        Some(p) => out.push_str(&format!(
+            " ped={:#x} pos={:.3},{:.3},{:.3} heading={:.4} health={:.1} armour={:.1}",
+            p.ptr, p.pos[0], p.pos[1], p.pos[2], p.heading, p.health, p.armour
+        )),
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::patch::fake::FakeMemory;
+
+    fn put_f32(m: &mut FakeMemory, a: u32, v: f32) {
+        m.set(a, &v.to_le_bytes());
+    }
+
+    #[test]
+    fn version_check_polls() {
+        assert_eq!(version_poll(0x89, 1), VersionPoll::Us);
+        assert_eq!(version_poll(0xC8, 0), VersionPoll::Eu);
+        assert_eq!(version_poll(0x00, 0), VersionPoll::Wait);
+        assert_eq!(version_poll(0x00, 1), VersionPoll::Fail);
+    }
+
+    #[test]
+    fn snapshot_reads_matrix_position() {
+        let mut m = FakeMemory::new(0x0040_0000, 0x0100_0000);
+        m.set(G_GAME_STATE, &9i32.to_le_bytes());
+        let ped = 0x0100_0000u32;
+        let mat = 0x0100_1000u32;
+        m.set(CWORLD_PLAYERS, &ped.to_le_bytes());
+        m.set(ped + off::PLACEABLE_MATRIX, &mat.to_le_bytes());
+        put_f32(&mut m, mat + 0x30, 2488.5);
+        put_f32(&mut m, mat + 0x34, -1666.25);
+        put_f32(&mut m, mat + 0x38, 13.5);
+        put_f32(&mut m, ped + off::PED_HEADING, 1.5);
+        put_f32(&mut m, ped + off::PED_HEALTH, 100.0);
+        put_f32(&mut m, ped + off::PED_ARMOUR, 25.0);
+        let s = snapshot(&m).unwrap();
+        let p = s.player.unwrap();
+        assert_eq!(p.pos, [2488.5, -1666.25, 13.5]);
+        assert_eq!(
+            format_state(&s, 7),
+            "state game_state=9 (IDLE) ticks=7 ped=0x1000000 pos=2488.500,-1666.250,13.500 \
+             heading=1.5000 health=100.0 armour=25.0"
+        );
+    }
+
+    #[test]
+    fn heading_normalisation() {
+        assert!((heading_rad(90.0) - std::f32::consts::FRAC_PI_2).abs() < 1e-6);
+        assert!((heading_rad(270.0) + std::f32::consts::FRAC_PI_2).abs() < 1e-5);
+        assert!(heading_rad(355.0) < 0.0);
+    }
+
+    #[test]
+    fn weapon_models() {
+        assert_eq!(weapon_model(24), Some(348));
+        assert_eq!(weapon_model(0), None);
+        assert_eq!(weapon_model(19), None);
+    }
+
+    #[test]
+    fn ped_handle_from_pool() {
+        let mut m = FakeMemory::new(0x0040_0000, 0x0100_0000);
+        let pool = 0x0100_0000u32;
+        let objects = 0x0100_1000u32;
+        let slots = 0x0100_0800u32;
+        m.set(PED_POOL, &pool.to_le_bytes());
+        m.set(pool, &objects.to_le_bytes());
+        m.set(pool + 4, &slots.to_le_bytes());
+        m.set(pool + 8, &140i32.to_le_bytes());
+        m.set(slots + 2, &[0x05]);
+        let ped = objects + 2 * PED_POOL_ELEMENT;
+        assert_eq!(ped_handle(&m, ped).unwrap(), Some(0x205));
+        assert_eq!(ped_handle(&m, ped + 4).unwrap(), None);
+        // The inverse: the same slot and reuse byte only.
+        assert_eq!(ped_at_ref(&m, 0x205).unwrap(), Some(ped));
+        assert_eq!(ped_at_ref(&m, 0x206).unwrap(), None);
+        assert_eq!(ped_at_ref(&m, 140 << 8).unwrap(), None);
+        assert_eq!(ped_at_ref(&m, -1).unwrap(), None);
+    }
+
+    #[test]
+    fn object_handles_round_trip() {
+        let mut m = FakeMemory::new(0x0040_0000, 0x0100_0000);
+        let (pool, objects, slots) = (0x0100_0000u32, 0x0100_1000u32, 0x0100_0800u32);
+        m.set(OBJECT_POOL, &pool.to_le_bytes());
+        m.set(pool, &objects.to_le_bytes());
+        m.set(pool + 4, &slots.to_le_bytes());
+        m.set(pool + 8, &350i32.to_le_bytes());
+        m.set(slots + 3, &[0x07]);
+        let obj = objects + 3 * OBJECT_SIZE;
+        assert_eq!(object_handle(&m, obj).unwrap(), Some(0x307));
+        assert_eq!(object_at_ref(&m, 0x307).unwrap(), Some(obj));
+        assert_eq!(object_at_ref(&m, 0x308).unwrap(), None);
+        assert_eq!(object_handle(&m, obj + 4).unwrap(), None);
+    }
+
+    #[test]
+    fn local_sample_reads_pad_matrix_and_weapon() {
+        let mut m = FakeMemory::new(0x0040_0000, 0x0100_0000);
+        let ped = 0x0100_0000u32;
+        let mat = 0x0100_1000u32;
+        m.set(ped + off::PLACEABLE_MATRIX, &mat.to_le_bytes());
+        for (i, v) in [1.0f32, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0].iter().enumerate() {
+            put_f32(&mut m, mat + 4 * i as u32, *v);
+        }
+        put_f32(&mut m, mat + 0x30, 10.0);
+        put_f32(&mut m, ped + off::PED_HEALTH, 100.0);
+        put_f32(&mut m, ped + off::MOVE_SPEED, 0.25);
+        m.set(ped + off::PED_FLAGS, &(1u32 << 26).to_le_bytes());
+        m.set(ped + off::PED_SELECTED_WEAPON_SLOT, &[2]);
+        m.set(ped + off::PED_WEAPONS + 2 * off::WEAPON_SIZE, &24u32.to_le_bytes());
+        m.set(PAD0 + 2, &(-128i16).to_le_bytes());
+        m.set(PAD0 + 0x22, &255i16.to_le_bytes()); // circle
+        let s = read_local_sample(&m, ped).unwrap();
+        assert_eq!(s.position, [10.0, 0.0, 0.0]);
+        assert_eq!(s.pad.left_stick_y, -128);
+        assert_eq!((s.weapon, s.special_action, s.health), (24, 1, 100.0));
+        assert!(!s.key_ctx.can_fire, "deagle without ammo");
+        assert_eq!(s.move_speed, [0.25, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn snapshot_without_ped() {
+        let mut m = FakeMemory::new(0x0040_0000, 0x0100_0000);
+        m.set(G_GAME_STATE, &7i32.to_le_bytes());
+        let s = snapshot(&m).unwrap();
+        assert_eq!(format_state(&s, 0), "state game_state=7 (FRONTEND_IDLE) ticks=0 ped=none");
+    }
+}

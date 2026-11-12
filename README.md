@@ -5,7 +5,7 @@ against the original game as it goes. Two goals:
 
 1. **A native game:** `sa-game` runs on Linux without Wine and in the browser (WebAssembly).
 2. **SA:MP:** the same engine joins SA:MP 0.3.7-R4 / open.mp servers through the Rust SA:MP client
-   [samp-rs](../samp-rs), natively and in the browser (through a WebSocket↔UDP proxy).
+   samp-rs (in [`samp-rs/`](samp-rs/)), natively and in the browser (through a WebSocket↔UDP proxy).
 
 Nothing from Rockstar or SA:MP is in this repository. Every run reads **your own** game install (and your own
 SA:MP client files); `gta_sa.exe` is checked by SHA-256.

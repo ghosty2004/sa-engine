@@ -1,0 +1,40 @@
+[package]
+name = "samp-client"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "In-game SA:MP 0.3.7 client: a DLL injected into gta_sa.exe 1.0 US"
+
+[lib]
+name = "samp_client"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+web-time = "1.1"
+samp-proto = { path = "../samp-proto" }
+samp-saa = { path = "../samp-saa" }
+samp-ui = { path = "../samp-ui" }
+# Datagram transports (UDP natively, WebSocket through sa-udp-proxy on wasm32), from sa-engine, pinned.
+sa-net = { git = "file:///home/ghosty2004/sa-engine", rev = "b9ab5c20b9b23873bfd1d33346f987aefde43456" }
+# Game-adapter traits shared with sa-engine (docs/samp/game-adapter.md there), pinned to a commit.
+sa-samp-api = { git = "file:///home/ghosty2004/sa-engine", rev = "b4cf80cd0fa2037cf01fbe6e10acd8ab9e7cff18" }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_Globalization",
+    "Win32_Graphics_Gdi",
+    "Win32_System_DataExchange",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Kernel",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Memory",
+    "Win32_System_Performance",
+    "Win32_System_ProcessStatus",
+    "Win32_System_SystemInformation",
+    "Win32_System_SystemServices",
+    "Win32_System_Threading",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+] }

@@ -1,0 +1,152 @@
+# NET-6 — RakNet timing parity and the F2 network diff
+
+Branch `net-timing`. Files: `crates/samp-proto/src/connection.rs`, `crates/samp-client/src/netclient.rs`,
+`tools/diff/{network.sh,netscen.sh,net_report.py,netcap.py,lossproxy.py,net-decisions.tsv}`.
+A = samp.dll 0.3.7-R4 2021 build (the decompiled export / `A.asm`); our words only, no code copied.
+
+## 1. The original's RakNet behaviour
+
+### Static (A)
+
+| item | rule | where |
+|---|---|---|
+| scheduling | RakClient::Connect(host, port, 0, 0, **threadSleepTimer 2**): RakNet runs its own update thread, `RunUpdateCycle` then `Sleep(2)`. Application `Send`s are buffered and enter the reliability layer at the start of the next cycle | A 0x10008988 (push 2), thread A 0x10042700, cycle A 0x10041450 |
+| cycle order | receive every pending datagram (acks, dedup, ordering, split reassembly) → buffered sends → keep-alive test → reliability update (datagrams) → dead-connection test → ping test → internal handling of received messages (auth key, `0x22`, ping → pong, pong → ping sample) and the packet queue for the game. Replies made in the last step go out with the **next** cycle | A 0x10041450 |
+| datagram generation | per datagram: pending acks first (only when the clock moved since the last full ack flush, so in practice every cycle), then the resend list head-first while due (a due resend that does not fit ends the datagram), then the four priority queues 0..3 FIFO (a message that does not fit waits; the next priority is tried); repeated while messages remain and the bandwidth bucket allows | A 0x10048070, A 0x10049ae0 |
+| fit test | datagram bits + header estimate + payload bits ≤ (MTU − 28) × 8; estimate = 4 + 32 (+21 ordered/sequenced) + 17 (+97 instead when split) | A 0x10043ec0 |
+| MTU | default 576 (A 0x1003de50); SetMTUSize (A 0x10038860, RakClient vtable slot 42) is never called by samp (no `[vtable+0xa8]` call on the RakClient object) | |
+| split | payload > MTU − 28 − ⌈estimate/8⌉ bytes → pieces of MTU − 28 − ⌈split estimate/8⌉ bytes; first piece keeps the number, the rest take the next numbers; one split id per message (counter); the ordering index is shared | A 0x10046b00, A 0x10045800 |
+| ordering | separate per-channel counters for ordered (9) and for sequenced (7 and 10 share one) | A 0x10046b00 |
+| resend timeout | 3 × ping where ping = the last accepted pong sample, raised to ≥ 30 ms, 500 when above the timeout; 1000 before any sample (reset), so 3000 ms at first and 90 ms on a LAN. Resent messages are due again one timeout later: **no backoff** | SetPing A 0x10045c00 → A 0x10044070; reset A 0x10047780 |
+| pong sample | accepted when its 5-slot ring entry is empty or the sample is < 3 × that entry and < 1200 ms; lowest ping tracked | A 0x10041ea0 |
+| internal ping | sent by RakNet on `0x22`; the cycle pings again (5 s apart) only while no pong was accepted (`lowestPing == 0xffff`) or occasional ping is enabled (samp never enables it) | A 0x10041a2c |
+| keep-alive | connected, more than 5000 ms since the last reliable send **and the resend list empty** → reliable `0x17`, low priority; base moved to now + 10000 | A 0x10041853 (statistics A 0x100479d0 +0x9c) |
+| bandwidth | token bucket, 512 kbit/s start, floor 144.4 kbit/s, halved/raised on resend ratios in 0.25–0.75 s windows | A 0x10049ae0 |
+
+### Measured (live, `tools/diff/network.sh`, trace lane; loopback through `lossproxy.py`)
+
+| item | original |
+|---|---|
+| ack latency (server datagram with reliable messages → client ack) | p50 1.1 ms, p90 2.0 ms |
+| ack datagrams without messages | 100 % (acks only piggy-back when a send happens in the same cycle, e.g. `acks 3,5 + RPC 25`) |
+| messages per client datagram | 1.06 (one game frame's sends normally land in one cycle: `52 + 205 + 207 + 203` after spawn) |
+| largest client datagram | 131–142 bytes |
+| `0x22` answer | one datagram `0x1e, 0x06, 0x29, 0x17` 2.2 ms after the ack of `0x22`; a second `0x06` 2.4 ms later; then never again; RPC 25 from the game thread in its next frame |
+| pong to a server ping | next cycle (2–3 ms) |
+| resend after a dropped first transmission | 91.4 ms (ping on loopback < 30 ms → 3 × 30) |
+| repeated loss (first 3 transmissions dropped) | resends +90.3, +180.6, +272.2 ms after the first send: no backoff |
+| keep-alive | > 5 s after the last reliable send, then 15 s apart (m10-notes) |
+
+## 2. Our implementation
+
+* `Connection` (sans-IO) implements the rules above: priority queues (`send_with`, `priority::*`;
+  every samp RPC/sync uses HIGH, internal messages SYSTEM, keep-alive LOW), the fit test with
+  RakNet's header estimate, multi-datagram updates, resend list FIFO with 3 × ping, the pong ring,
+  outgoing splits, keep-alive only with an empty resend list and only once connected
+  (`Connection::connecting` + `mark_connected`), the update-cycle ping only until a pong, pongs
+  and the cycle ping queued after the update. `Connection::new` stays "connected" for the bots.
+* `NetClient` runs RakNet's part (`Core::update`) on a thread every 2 ms (the cycle order
+  above); the game thread queues sends and takes the packets in `tick`. PlayerConnect is sent
+  from `tick` (samp's packet handler) on `0x22`. `/quit` still sends `0x20` at once from the
+  calling thread. Host unit tests run without the thread (synthetic clocks).
+* Not reproduced: the bandwidth bucket. The client sends ≈ 30 datagrams/s of ≤ 150 bytes
+  (≈ 40 kbit/s with headers), below the 144.4 kbit/s floor; a burst would need > 170 datagrams
+  in a second. Decision NET6-D1 in ROADMAP.
+
+### Keep-alive clock (follow-up to an m10 failure: 4.997 s on main)
+
+RakNet keeps the keep-alive base in whole milliseconds: when the update cycle takes a buffered
+reliable send it stores the cycle's start time (QPC µs / 1000, A 0x1003cc13), and the test runs
+in a later cycle on the same truncated clock (`now_ms − base > 5000`, A 0x10041853). So the gap
+between the two cycle starts is always more than 5000 ms; on the wire it differs from that only by
+where in its cycle each datagram goes out (< 1 ms). Measured on the original (3 sessions, 33 gaps):
+5.0004–5.0030 s and 15.0002–15.0024 s. The old client used the frame's start `Instant` as the base
+while the datagram left at the end of the frame, so a keep-alive at the start of a later frame
+could come up to one frame's work early (4.997 s). Now `Connection` keeps the base as whole ms of
+its own clock taken at the update that takes the send (`clock_ms`), and the update runs on the
+2 ms thread right before the datagram is sent; m10's window is 4.999–5.010 / 14.999–15.010 s.
+
+## 3. F2: `tools/diff/network.sh`
+
+Scenario (both clients, `tools/diff/netscen.sh`): join, spawn, walk, idle (17 s), chat + command,
+dialog response, scoreboard, pickup, checkpoint, object edit + Escape, drive (enter/exit an
+ambulance), passenger, shoot (Desert Eagle at samp-bot "NetBot"), loss_cs (first transmission of
+two chat lines dropped), loss_repeat (one chat line's first three transmissions dropped),
+loss_sc (server reliable datagrams dropped once), death, `/q`.
+
+Checks (`tools/diff/net_report.py`, tolerances = ROADMAP NET6-D2): per window every C→S key
+(kind + reliability + channel): event messages exact count, bit lengths and order, trigger latency
+from the input; periodic ones count, most common length, median cadence; per session totals; RakNet:
+ack latency p50/p90, share of ack-only datagrams, messages per datagram, largest datagram, never-acked
+server datagrams, the pings (count and time after `0x1e`), the `0x22` answer datagram, resend delay,
+resends per dropped message, the repeated-loss intervals, keep-alives while idle.
+
+Final run (orig-20261105-054855 / ours-20261105-054855, after merging main and the keep-alive clock
+fix): 303 checks, 296 match, 7 accepted (NET6-D3 object Escape → pause, D4 idle 203, D5 spectator
+203; D6 209 after a passenger exit was accepted in the previous run), 0 open, exit 0.
+RakNet level: ack 1.1/2.0 ms vs 1.1/2.0 ms, ack-only datagrams 100 % vs 99.9 %, 1.06 vs 1.03 messages
+per datagram, 2 pings at +0 / +2 ms after `0x1e` in both, resend 91.0 vs 91.0 ms, repeated loss
+intervals 91/91/91 vs 90/92/91 ms, keep-alive 5.002 s in m10 (original 5.002), every session total identical except 203 and 209.
+Before NET-6 (m10 `full` capture of the previous client): only 42 % of the ack datagrams were
+ack-only (acks rode on the frame's sends), a ping every 5 s, resends after 3 × smoothed RTT
+clamped to 100–1000 ms.
+
+
+## 4. Application-level follow-ups (branch sync-fixes: NET6-P1..P4)
+
+Measured with `tools/diff/network.sh` and focused scenarios (`NET_SCEN=`: 8 × enter a parked ambulance
+as passenger with G, exit with F, then 90 s idle). Captures `target/netdiff/orig-20261105-065833`
+(original) and `ours-20261105-071849` (ours, final build).
+
+* **P1 idle 203** (A 0x100074c0 → A 0x10005210). There is no forced resend. The on-foot 203 is attempted
+  every > 1000 ms (frame-start tick). Its duplicate gate shares the 501 ms timestamp with the 207. While
+  standing still the 207 goes out every ~532 ms (28 frames at 19.0 ms, an attempt every second frame), so
+  an unchanged 203 passes only when its attempt falls on the single odd frame between 501 ms after
+  the last 207 and the next 207 attempt. With 53 frames per 203 attempt, that is every 10th attempt.
+  The original sent 203s 19.155 s after the last moving one, then every 10.076–10.089 s, each 512–516 ms
+  after the last 207. Our rule was already the same, but our frames were ~19.2 ms (std's `sleep` in the
+  frame limiter wakes later under Wine than kernel32 `Sleep`), so the rhythm broke up (10.1/20.3/31.3 s).
+  With `Sleep` (`dll.rs`) our frames are 19.03 ms and we send at 19.154 s, then every 10.074–10.086 s,
+  512–517 ms after the last 207.
+* **P2 spectator 203** (A 0x10006540). It is tried only in a tick that just sent a 212, when more than
+  2 × onFootInterval have passed since the last attempt (aim timer +0x117), then the same duplicate gate.
+  Ours: `CombatClient::aim_spectating` is called from `spectator_tick` right after its 212. Death window:
+  64 vs 63, gaps ~532 ms in both.
+* **P3 209 after a passenger exit** (A 0x1001f3c0 / A 0x10006e00). The gating now follows the original:
+  "not stopped" = not (in the moving list and zero speed). Only player peds (ped type 0) count as
+  passengers. The closest-player test walks ids in order, counts only peds in the world and lets the
+  lower id win ties. The 209s themselves come from GTA physics: the door push on entry, the car settling
+  as the passenger sits, and exactly (0.001, 0.001, 0.001) for a frame on exit, caught by the
+  4-frame pool tick. The exit 209: original 4/8 exits, ours 3/8, 0.82–0.84 s after RPC 154 in both,
+  seat 1. Residual difference: after the first entry 209 the original's car keeps settling (follow-up
+  209s ~150 ms apart, z −0.12 m, more 211s) in 7/8 entries. Ours does this in 1 of 12, with
+  ProcessControl running every frame (our hook counters). The cause is not found yet. The main
+  scenario's passenger window matches (1 vs 1).
+* **P4 Escape in the object editor.** The original's window procedure swallows the Escape key-down
+  while the editor or selection is active (UR §6.3), so GTA never opens its pause menu, and the
+  `WM_CHAR` Escape cancels with 117 response 0. Ours: `UiCore::key_state` sets `other_modal` from the
+  editor and selection state.
+* **RPC 25 bits** (join): the serial was random in ours (592–608 bits). Ours now uses samp's derivation
+  (`session::samp_serial`, verified against the original's serial `254FF869…BA87`), so the RPC is
+  identical.
+
+## 5. 209 counts in the F2 runs of 2026-11-07 (67eba42)
+
+F2 on 67eba42 failed once on `session total sync 209` (original 3, ours 0; the rule fails when one client sends
+none and the other ≥ 3) and once, on 244cb98-era code, on `passenger sync 211` (original 8, ours 18); the third run
+(`target/netdiff/*-20261107-041720`) passed 385/385. Suspected: ed04dcc/67eba42 vehicle changes.
+* Code: the 209 path (pool tick A 0x1001F3C0 → sender A 0x10006E00) was re-read: proofs pair, health-0 death,
+  boat / ≥ 200 m / not-in-water gate, rail models (A 0x100B74A0: 537, 538, 569, 570, 449), towed, ≤ 3 sends per
+  tick, > 100 ms per vehicle — the same gates as `Vehicles::unoccupied_send`. ed04dcc/67eba42 change nothing on
+  this path (RC-driver `CWorld::Remove` touches only remote drivers of RC models, the 570 warp only model 570).
+* All F2 runs on record: the original sent 209 in 6 of 8 sessions, ours in 1 of 8, all of them physics-driven:
+  the exit catch (+0.88–0.93 s after the exit key), one entry settle (+2.86 s) and, only in the two newest original
+  runs, a pair ~0.3 s after a car is created next to the player. Ours' 0 is older than ed04dcc (sessions
+  -004400, -052927, -123301, -224422, -235129 had 0 too).
+* Focused runs (`NET_SCEN` script: 4 × {create the ambulance beside the player, passenger enter, exit after 8 s,
+  delete}, once alone and once with the drive round before each, as in netscen.sh): both clients send the entry 209
+  (+0.45–0.60 s) in 16 of 16 rounds; the follow-up settle pair (+5.6–5.9 s, ~150 ms apart, twice the 211s) in 2 of 8
+  original rounds and 1 of 8 ours; the exit catch in 2 of 8 original rounds and 1 of 8 ours; no 209 after creation
+  on either. Totals: original 9 + 8, ours 7 + 7. Across NET-6, the F2 sessions and these runs the exit catch is
+  original 11/24, ours 5/24 — not significant (and fail1 had ours settling more than the original), so no change
+  was made; NET6-P3's "settling" residual stays open.
