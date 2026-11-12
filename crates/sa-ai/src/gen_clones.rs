@@ -2559,7 +2559,6 @@ pub fn g_task_simple_tired_clone_636180(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleSitDown::Clone` (0x636200): clone, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x636200, conv = thiscall, name = "CTaskSimpleSitDown::Clone", expect = "6A FF 68 FB 0B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_sit_down_clone_636200(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -2577,7 +2576,6 @@ pub fn g_task_simple_sit_down_clone_636200(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleStandUp::Clone` (0x636310): clone, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x636310, conv = thiscall, name = "CTaskSimpleStandUp::Clone", expect = "6A FF 68 3B 0C 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_stand_up_clone_636310(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -2841,7 +2839,6 @@ pub fn g_vt_86e1dc_clone_636b40(_this: u32) -> u32 {
 }
 
 /// `CTaskComplexBeInGroup::Clone` (0x636BE0): clone, thiscall, `ret`; 49 instruction(s) matched.
-#[hook(addr = 0x636BE0, conv = thiscall, name = "CTaskComplexBeInGroup::Clone", expect = "6A FF 68 7B 0E 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_be_in_group_clone_636be0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -3636,7 +3633,6 @@ pub fn g_task_simple_car_shuffle_clone_649c40(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::Clone` (0x649CB0): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x649CB0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::Clone", expect = "6A FF 68 FB 2C 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_wait_to_slow_down_clone_649cb0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x14);
     if v1 == 0 {
@@ -4585,7 +4581,6 @@ pub fn g_task_gang_hassle_vehicle_clone_65fc00(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleDoHandSignal::Clone` (0x6608C0): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x6608C0, conv = thiscall, name = "CTaskSimpleDoHandSignal::Clone", expect = "6A FF 68 8B 46 84 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_do_hand_signal_clone_6608c0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0xC);
     if v1 == 0 {
@@ -4836,7 +4831,6 @@ pub fn g_task_complex_goto_door_and_open_clone_66bca0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleGoToPoint::Clone` (0x66CC60): clone, thiscall, `ret`; 43 instruction(s) matched.
-#[hook(addr = 0x66CC60, conv = thiscall, name = "CTaskSimpleGoToPoint::Clone", expect = "6A FF 68 2B 53 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
 pub fn g_task_simple_go_to_point_clone_66cc60(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x30);
     if v1 == 0 {
@@ -5622,7 +5616,6 @@ pub fn g_task_complex_stuck_in_air_clone_67c700(_this: u32) -> u32 {
 }
 
 /// `CTaskComplexChat::Clone` (0x682DA0): clone, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x682DA0, conv = thiscall, name = "CTaskComplexChat::Clone", expect = "6A FF 68 AB 66 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_chat_clone_682da0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x20);
     if v1 == 0 {
@@ -6361,8 +6354,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_DIE_CLONE_636060,
     HOOK_G_TASK_SIMPLE_DEAD_CLONE_636100,
     HOOK_G_TASK_SIMPLE_TIRED_CLONE_636180,
-    HOOK_G_TASK_SIMPLE_SIT_DOWN_CLONE_636200,
-    HOOK_G_TASK_SIMPLE_STAND_UP_CLONE_636310,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_CLONE_636410,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_AND_ACHIEVE_HEADING_CLONE_636490,
     HOOK_G_TASK_COMPLEX_CROSS_ROAD_LOOK_AND_ACHIEVE_HEADING_CLONE_636500,
@@ -6379,7 +6370,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_WAIT_FOR_BUS_CLONE_636A60,
     HOOK_G_TASK_SIMPLE_WAIT_FOR_BUS_CLONE_636AD0,
     HOOK_G_VT_86E1DC_CLONE_636B40,
-    HOOK_G_TASK_COMPLEX_BE_IN_GROUP_CLONE_636BE0,
     HOOK_G_TASK_COMPLEX_USE_PAIRED_ATTRACTOR_CLONE_636C70,
     HOOK_G_TASK_COMPLEX_USE_SCRIPTED_ATTRACTOR_CLONE_636DD0,
     HOOK_G_TASK_COMPLEX_ON_FIRE_CLONE_636E30,
@@ -6427,7 +6417,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_OUTSIDE_CLONE_649B60,
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_CLONE_649BD0,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_CLONE_649C40,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_CLONE_649CB0,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_CLONE_649D20,
     HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER_CLONE_649D90,
     HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER_CLONE_649E00,
@@ -6483,7 +6472,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_FLEE_ANY_MEANS_CLONE_65D030,
     HOOK_G_EVENT_PASS_OBJECT_CLONE_65DD70,
     HOOK_G_TASK_GANG_HASSLE_VEHICLE_CLONE_65FC00,
-    HOOK_G_TASK_SIMPLE_DO_HAND_SIGNAL_CLONE_6608C0,
     HOOK_G_TASK_LEAN_ON_VEHICLE_CLONE_6610A0,
     HOOK_G_TASK_COMPLEX_GANG_LEADER_CLONE_661FA0,
     HOOK_G_TASK_SIMPLE_GO_TO_POINT_FINE_CLONE_662040,
@@ -6493,7 +6481,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_PROSTITUTE_SOLICIT_CLONE_6622F0,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_CENTITY_SEEK_POS_CALCULATOR_XYOFFSET_CLONE_664AF0,
     HOOK_G_TASK_COMPLEX_GOTO_DOOR_AND_OPEN_CLONE_66BCA0,
-    HOOK_G_TASK_SIMPLE_GO_TO_POINT_CLONE_66CC60,
     HOOK_G_TASK_SIMPLE_ACHIEVE_HEADING_CLONE_66CCF0,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_CLONE_66CEA0,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CLONE_66CFD0,
@@ -6529,7 +6516,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CLIMB_CLONE_67C610,
     HOOK_G_TASK_SIMPLE_JET_PACK_CLONE_67C690,
     HOOK_G_TASK_COMPLEX_STUCK_IN_AIR_CLONE_67C700,
-    HOOK_G_TASK_COMPLEX_CHAT_CLONE_682DA0,
     HOOK_G_TASK_COMPLEX_WALK_ALONGSIDE_PED_CLONE_6838E0,
     HOOK_G_VT_8706F8_CLONE_683950,
     HOOK_G_TASK_COMPLEX_BE_IN_COUPLE_CLONE_6839C0,

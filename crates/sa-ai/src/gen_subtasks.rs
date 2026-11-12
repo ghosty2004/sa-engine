@@ -924,7 +924,6 @@ pub fn g_task_complex_destroy_car_armed_control_sub_task_628fa0(this: u32, a0: u
 }
 
 /// `CTaskComplexRoadRage::CreateSubTask` (0x629080): subtask, thiscall, `ret 8`; 214 instruction(s) matched.
-#[hook(addr = 0x629080, conv = thiscall, name = "CTaskComplexRoadRage::CreateSubTask", expect = "64 A1 00 00 00 00", unverified = "ai8g-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_road_rage_create_sub_task_629080(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0xC);
     if v1 == 0 {
@@ -2156,7 +2155,6 @@ pub fn g_task_complex_road_rage_create_next_sub_task_62e270(this: u32, a0: u32) 
 }
 
 /// `CTaskComplexRoadRage::ControlSubTask` (0x62E3F0): subtask, thiscall, `ret 4`; 125 instruction(s) matched.
-#[hook(addr = 0x62E3F0, conv = thiscall, name = "CTaskComplexRoadRage::ControlSubTask", expect = "53 56 8B F1 8B 46 0C", unverified = "ai8g-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_road_rage_control_sub_task_62e3f0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0xC);
     let v2 = rd::<u32>(p(this), 8);
@@ -2525,7 +2523,6 @@ pub fn g_task_complex_die_create_next_sub_task_6301e0(this: u32, a0: u32) -> u32
 }
 
 /// `CTaskComplexSitDownThenIdleThenStandUp::CreateSubTask` (0x631550): subtask, thiscall, `ret 4`; 100 instruction(s) matched.
-#[hook(addr = 0x631550, conv = thiscall, name = "CTaskComplexSitDownThenIdleThenStandUp::CreateSubTask", expect = "64 A1 00 00 00 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_sit_down_then_idle_then_stand_up_create_sub_task_631550(this: u32, a0: u32) -> u32 {
     if (a0 as i32) > (0xDE as i32) {
         if a0 != 0x516 {
@@ -2603,7 +2600,6 @@ pub fn g_task_complex_sit_down_then_idle_then_stand_up_create_first_sub_task_631
 }
 
 /// `CTaskComplexSitDownThenIdleThenStandUp::ControlSubTask` (0x631730): subtask, thiscall, `ret 4`; 31 instruction(s) matched.
-#[hook(addr = 0x631730, conv = thiscall, name = "CTaskComplexSitDownThenIdleThenStandUp::ControlSubTask", expect = "56 8B F1 8A 46 12", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_sit_down_then_idle_then_stand_up_control_sub_task_631730(this: u32, _a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x12));
     if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
@@ -2822,7 +2818,6 @@ pub fn g_task_complex_hit_by_gun_response_create_first_sub_task_631e50(this: u32
 }
 
 /// `CTaskComplexUseEffect::CreateNextSubTask` (0x632420): subtask, thiscall, `ret 4`; 27 instruction(s) matched.
-#[hook(addr = 0x632420, conv = thiscall, name = "CTaskComplexUseEffect::CreateNextSubTask", expect = "8B 41 14 85 C0", unverified = "ai8g-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_use_effect_create_next_sub_task_632420(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     if v1 == 0 {
@@ -2842,7 +2837,6 @@ pub fn g_task_complex_use_effect_create_next_sub_task_632420(this: u32, a0: u32)
 }
 
 /// `CTaskComplexUseEffect::ControlSubTask` (0x632570): subtask, thiscall, `ret 4`; 52 instruction(s) matched.
-#[hook(addr = 0x632570, conv = thiscall, name = "CTaskComplexUseEffect::ControlSubTask", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_use_effect_control_sub_task_632570(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x598);
     if v1 != 6 {
@@ -2928,7 +2922,6 @@ pub fn g_task_complex_wait_at_attractor_create_first_sub_task_632650(_this: u32,
 }
 
 /// `CTaskComplexUseAttractor::ControlSubTask` (0x6327C0): subtask, thiscall, `ret 4`; 25 instruction(s) matched.
-#[hook(addr = 0x6327C0, conv = thiscall, name = "CTaskComplexUseAttractor::ControlSubTask", expect = "56 8B F1 8B 46 0C", unverified = "ai8g-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_use_attractor_control_sub_task_6327c0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0xC);
     if v1 == 0 {
@@ -8300,7 +8293,6 @@ pub fn g_task_complex_go_to_point_and_stand_still_and_achieve_heading_create_fir
 }
 
 /// `CTaskComplexGoToAttractor::CreateFirstSubTask` (0x670420): subtask, thiscall, `ret 4`; 126 instruction(s) matched.
-#[hook(addr = 0x670420, conv = thiscall, name = "CTaskComplexGoToAttractor::CreateFirstSubTask", expect = "64 A1 00 00 00 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_go_to_attractor_create_first_sub_task_670420(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0xC);
     let _v2 = rd::<u32>(p(v1), 0);
@@ -11450,7 +11442,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_CREATE_SUB_TASK_6287A0,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_ARMED_CREATE_SUB_TASK_628DA0,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_ARMED_CONTROL_SUB_TASK_628FA0,
-    HOOK_G_TASK_COMPLEX_ROAD_RAGE_CREATE_SUB_TASK_629080,
     HOOK_G_VT_86DA1C_CREATE_NEXT_SUB_TASK_6293C0,
     HOOK_G_VT_86DA1C_CREATE_FIRST_SUB_TASK_629480,
     HOOK_G_TASK_COMPLEX_KILL_PED_GROUP_ON_FOOT_CREATE_NEXT_SUB_TASK_629570,
@@ -11464,14 +11455,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_MELEE_CONTROL_SUB_TASK_62DDB0,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_ARMED_CREATE_FIRST_SUB_TASK_62E0A0,
     HOOK_G_TASK_COMPLEX_ROAD_RAGE_CREATE_NEXT_SUB_TASK_62E270,
-    HOOK_G_TASK_COMPLEX_ROAD_RAGE_CONTROL_SUB_TASK_62E3F0,
     HOOK_G_TASK_COMPLEX_BE_STILL_CREATE_NEXT_SUB_TASK_62F8D0,
     HOOK_G_TASK_COMPLEX_BE_STILL_CREATE_FIRST_SUB_TASK_62F910,
     HOOK_G_TASK_COMPLEX_DIE_IN_CAR_CREATE_SUB_TASK_62FD50,
     HOOK_G_TASK_COMPLEX_DIE_CREATE_NEXT_SUB_TASK_6301E0,
-    HOOK_G_TASK_COMPLEX_SIT_DOWN_THEN_IDLE_THEN_STAND_UP_CREATE_SUB_TASK_631550,
     HOOK_G_TASK_COMPLEX_SIT_DOWN_THEN_IDLE_THEN_STAND_UP_CREATE_FIRST_SUB_TASK_6316A0,
-    HOOK_G_TASK_COMPLEX_SIT_DOWN_THEN_IDLE_THEN_STAND_UP_CONTROL_SUB_TASK_631730,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_AND_ACHIEVE_HEADING_CREATE_SUB_TASK_631990,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_AND_ACHIEVE_HEADING_CREATE_NEXT_SUB_TASK_631A70,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_AND_ACHIEVE_HEADING_CREATE_FIRST_SUB_TASK_631AC0,
@@ -11479,10 +11467,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_CROSS_ROAD_LOOK_AND_ACHIEVE_HEADING_CREATE_NEXT_SUB_TASK_631C40,
     HOOK_G_TASK_COMPLEX_CROSS_ROAD_LOOK_AND_ACHIEVE_HEADING_CREATE_FIRST_SUB_TASK_631C90,
     HOOK_G_TASK_COMPLEX_HIT_BY_GUN_RESPONSE_CREATE_FIRST_SUB_TASK_631E50,
-    HOOK_G_TASK_COMPLEX_USE_EFFECT_CREATE_NEXT_SUB_TASK_632420,
-    HOOK_G_TASK_COMPLEX_USE_EFFECT_CONTROL_SUB_TASK_632570,
     HOOK_G_TASK_COMPLEX_WAIT_AT_ATTRACTOR_CREATE_FIRST_SUB_TASK_632650,
-    HOOK_G_TASK_COMPLEX_USE_ATTRACTOR_CONTROL_SUB_TASK_6327C0,
     HOOK_G_TASK_COMPLEX_WAIT_FOR_DRY_WEATHER_CREATE_NEXT_SUB_TASK_632840,
     HOOK_G_TASK_COMPLEX_WAIT_FOR_DRY_WEATHER_CREATE_FIRST_SUB_TASK_632860,
     HOOK_G_TASK_COMPLEX_WAIT_FOR_BUS_CREATE_NEXT_SUB_TASK_632940,
@@ -11596,7 +11581,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AIMING_CREATE_NEXT_SUB_TASK_66DD70,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CREATE_NEXT_SUB_TASK_66DFD0,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CREATE_FIRST_SUB_TASK_66E030,
-    HOOK_G_TASK_COMPLEX_GO_TO_ATTRACTOR_CREATE_FIRST_SUB_TASK_670420,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_ANY_MEANS_CREATE_SUB_TASK_6705D0,
     HOOK_G_VT_86FF00_CREATE_FIRST_SUB_TASK_672530,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_ANY_MEANS_CREATE_NEXT_SUB_TASK_6728A0,

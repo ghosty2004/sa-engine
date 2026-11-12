@@ -146,8 +146,6 @@ pub fn intel_add_task_primary_maybe_in_group(this: GPtr<u8>, task: GPtr<u8>, b: 
 /// `CPedGroup::IsAnyoneUsingCar(const CVehicle*)` (0x5F7DB0, `ret 4`): AL = 1 when a member sits in the vehicle
 /// (+0x58C with in-vehicle flag 0x100 of +0x46C) or has an enter-car task (`FindTaskByType` 0x2BD, then 0x2BC) for
 /// it.
-#[hook(addr = 0x5F7DB0, conv = thiscall, name = "CPedGroup::IsAnyoneUsingCar", expect = "53 55 8B 6C 24 0C",
-       unverified = "ai7-8", route = "L2", hazards = "ax-al-return")]
 pub fn group_is_anyone_using_car(this: GPtr<u8>, veh: GPtr<u8>) -> u8 {
     for k in 0..8 {
         let m = rd::<GPtr<u8>>(this, 0xC + k * 4);
@@ -246,7 +244,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_INTEL_IS_INTERESTING_ENTITY,
     HOOK_INTEL_REMOVE_ALL_INTERESTING_ENTITIES,
     HOOK_INTEL_ADD_TASK_PRIMARY_MAYBE_IN_GROUP,
-    HOOK_GROUP_IS_ANYONE_USING_CAR,
     HOOK_GROUP_REMOVE_ALL_FOLLOWERS,
     HOOK_GROUP_DESTRUCTOR,
     HOOK_GROUPS_CLEAN_UP_FOR_SHUT_DOWN,

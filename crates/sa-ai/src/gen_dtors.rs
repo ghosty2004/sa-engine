@@ -2042,7 +2042,6 @@ pub fn g_task_complex_car_drive_mission_kill_ped_ctask_complex_car_drive_mission
 }
 
 /// `CPedAttractor::Destructor` (0x5EC410): dtor, thiscall, `ret`; 52 instruction(s) matched.
-#[hook(addr = 0x5EC410, conv = thiscall, name = "CPedAttractor::Destructor", expect = "6A FF 68 B1 DA 83 00", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
 pub fn g_cped_attractor_destructor_5ec410(this: u32) -> u32 {
     wr::<u32>(p(this), 0, 0x86_C538);
     let v1 = rd::<u32>(p(this), 8);
@@ -3742,7 +3741,6 @@ pub fn g_task_complex_hit_by_gun_response_destructor_631e30(this: u32) {
 }
 
 /// `CTaskComplexUseEffect::Destructor` (0x632270): dtor, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x632270, conv = thiscall, name = "CTaskComplexUseEffect::Destructor", expect = "6A FF 68 58 06 84 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_use_effect_destructor_632270(this: u32) {
     wr::<u32>(p(this), 0, 0x86_E0D8);
     let v1 = rd::<u32>(p(this), 0x18);
@@ -5327,7 +5325,6 @@ pub fn g_task_simple_car_shuffle_destructor_646890(this: u32) {
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::Destructor` (0x646A00): dtor, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x646A00, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::Destructor", expect = "6A FF 68 D8 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_wait_to_slow_down_destructor_646a00(this: u32) {
     wr::<u32>(p(this), 0, 0x86_ED98);
     let v1 = rd::<u32>(p(this), 8);
@@ -9402,7 +9399,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_CTASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_4B89F0,
     HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_CTASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_4B8AB0,
     HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_CTASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_4B8AD0,
-    HOOK_G_CPED_ATTRACTOR_DESTRUCTOR_5EC410,
     HOOK_G_CPED_ATTRACTOR_CPED_ATTRACTOR_5EC4B0,
     HOOK_G_CPED_ATMATTRACTOR_CPED_ATMATTRACTOR_5EE4E0,
     HOOK_G_CPED_SEAT_ATTRACTOR_CPED_SEAT_ATTRACTOR_5EE5B0,
@@ -9502,7 +9498,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_TURN180_DESTRUCTOR_631D00,
     HOOK_G_TASK_COMPLEX_HIT_RESPONSE_DESTRUCTOR_631DA0,
     HOOK_G_TASK_COMPLEX_HIT_BY_GUN_RESPONSE_DESTRUCTOR_631E30,
-    HOOK_G_TASK_COMPLEX_USE_EFFECT_DESTRUCTOR_632270,
     HOOK_G_TASK_COMPLEX_WAIT_AT_ATTRACTOR_DESTRUCTOR_632630,
     HOOK_G_TASK_COMPLEX_USE_ATTRACTOR_DESTRUCTOR_632720,
     HOOK_G_TASK_COMPLEX_WAIT_FOR_DRY_WEATHER_DESTRUCTOR_632830,
@@ -9617,7 +9612,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_OUTSIDE_DESTRUCTOR_646570,
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_DESTRUCTOR_646710,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_DESTRUCTOR_646890,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_DESTRUCTOR_646A00,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_DESTRUCTOR_646C00,
     HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_DESTRUCTOR_646E50,
     HOOK_G_TASK_SIMPLE_CAR_GET_OUT_DESTRUCTOR_647260,
