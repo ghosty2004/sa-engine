@@ -5,39 +5,36 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| clump-1 | 18 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 18 | 0 | 0 | 0 | 0 | L2 14, split 4 |
-| gen2-anim-1 | 25 | UNK-game | ed288e8 | master | 25 | 0 | 0 | 0 | 0 | L1-pure 1, L2 6, split 18 |
-| gen2-cam-1 | 1 | UNK-game | ed288e8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| gen2-coll-1 | 33 | UNK-game | ed288e8 | master | 33 | 0 | 0 | 0 | 0 | L2 8, split 25 |
-| gen2-core-1 | 56 | UNK-game | ed288e8 | master | 56 | 0 | 0 | 0 | 0 | L2 8, split 48 |
-| gen2-input-1 | 15 | UNK-game | ed288e8 | master | 15 | 0 | 0 | 0 | 0 | split 15 |
-| gen2-ped-1 | 23 | UNK-game | ed288e8 | master | 23 | 0 | 0 | 0 | 0 | L2 4, split 19 |
-| gen2-phys-1 | 7 | UNK-game | ed288e8 | master | 7 | 0 | 0 | 0 | 0 | L2 1, split 6 |
-| gen2-pop-1 | 3 | POP, UNK-game | ed288e8 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| gen2-render-1 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | L2 7, split 41 |
-| gen2-render-2 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | split 48 |
-| gen2-render-3 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | split 48 |
-| gen2-render-4 | 48 | RENDER, UNK-game | ed288e8 | master | 48 | 0 | 0 | 0 | 0 | L2 41, split 7 |
-| gen2-rw-1 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 3, L2 9, split 45 |
-| gen2-rw-2 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 4, L2 27, split 26 |
-| gen2-rw-3 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 1, L2 56 |
-| gen2-rw-4 | 57 | RW, UNK-game | ed288e8 | master | 57 | 0 | 0 | 0 | 0 | L1-pure 5, L2 52 |
-| gen2-rw-5 | 53 | RW | ed288e8 | master | 53 | 0 | 0 | 0 | 0 | L1-pure 5, L2 48 |
-| gen2-script-1 | 54 | SCRIPT, UNK-game | ed288e8 | master | 54 | 0 | 0 | 0 | 0 | L1-pure 4, L2 12, split 38 |
-| gen2-stream-1 | 53 | STREAM, UNK-game | ed288e8 | master | 53 | 0 | 0 | 0 | 0 | L2 5, split 48 |
-| gen2-veh-1 | 17 | UNK-game, VEH | ed288e8 | master | 17 | 0 | 0 | 0 | 0 | L1-pure 1, L2 15, split 1 |
-| gen2-weapon-1 | 53 | UNK-game | ed288e8 | master | 53 | 0 | 0 | 0 | 0 | L2 1, split 52 |
-| gen2-world-1 | 28 | UNK-game, WORLD | ed288e8 | master | 28 | 0 | 0 | 0 | 0 | L1-pure 1, L2 20, split 7 |
+| clump-1 | 18 | RW | da9de7f | master | 18 | 0 | 0 | 0 | 0 | L2 14, split 4 |
+| gen2-anim-1 | 1 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| gen2-cam-1 | 1 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| gen2-coll-1 | 20 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
+| gen2-core-1 | 4 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| gen2-ped-1 | 4 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
+| gen2-phys-1 | 2 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 2 | 0 | L2 1, split 1 |
+| gen2-pop-1 | 3 | POP, UNK-game | ed288e8 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| gen2-render-1 | 11 | RENDER, UNK-game | ed288e8 | master | 0 | 0 | 0 | 11 | 0 | L2 6, split 5 |
+| gen2-render-4 | 31 | RENDER, UNK-game | ed288e8 | master | 0 | 0 | 0 | 31 | 0 | L2 31 |
+| gen2-rw-1 | 10 | RW | ed288e8 | master | 0 | 0 | 0 | 10 | 0 | L2 9, split 1 |
+| gen2-rw-2 | 23 | RW, UNK-game | ed288e8 | master | 0 | 0 | 0 | 23 | 0 | L2 23 |
+| gen2-rw-3 | 45 | RW, UNK-game | ed288e8 | master | 0 | 0 | 0 | 45 | 0 | L2 45 |
+| gen2-rw-4 | 51 | RW, UNK-game | ed288e8 | master | 0 | 0 | 0 | 51 | 0 | L2 51 |
+| gen2-rw-5 | 43 | RW | ed288e8 | master | 0 | 0 | 0 | 43 | 0 | L2 43 |
+| gen2-script-1 | 12 | SCRIPT, UNK-game | ed288e8 | master | 0 | 0 | 0 | 12 | 0 | L2 12 |
+| gen2-stream-1 | 5 | STREAM, UNK-game | ed288e8 | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
+| gen2-veh-1 | 16 | UNK-game, VEH | ed288e8 | master | 0 | 0 | 0 | 16 | 0 | L2 15, split 1 |
+| gen2-weapon-1 | 1 | UNK-game | ed288e8 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| gen2-world-1 | 26 | UNK-game, WORLD | ed288e8 | master | 0 | 0 | 0 | 26 | 0 | L2 19, split 7 |
 | harness5-1 | 7 | AUDIO, RENDER | 909b776 | master | 7 | 0 | 0 | 0 | 0 | L1-pure 2, L2 5 |
-| intro-ai-1 | 4 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| intro-ai-2 | 35 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 35 | 0 | 0 | 0 | 0 | L2 35 |
-| intro-ai-3 | 7 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| intro-ai-4 | 8 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 8 | 0 | 0 | 0 | 0 | L2 8 |
-| intro-ai-5 | 2 | AI | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| intro-anim-1 | 2 | ANIM | 5e0f61b | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| menu-1 | 1 | HUD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| menu-2 | 1 | HUD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | split 1 |
-| menu-3 | 4 | HUD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
+| intro-ai-1 | 4 | AI | 5e0f61b | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| intro-ai-2 | 35 | AI | 5e0f61b | master | 35 | 0 | 0 | 0 | 0 | L2 35 |
+| intro-ai-3 | 7 | AI | 5e0f61b | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| intro-ai-4 | 8 | AI | 5e0f61b | master | 8 | 0 | 0 | 0 | 0 | L2 8 |
+| intro-ai-5 | 2 | AI | 5e0f61b | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| intro-anim-1 | 2 | ANIM | 5e0f61b | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| menu-1 | 1 | HUD | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| menu-2 | 1 | HUD | da9de7f | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| menu-3 | 4 | HUD | da9de7f | master | 4 | 0 | 0 | 0 | 0 | L2 1, split 3 |
 | mvpa-ai-1 | 21 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 2 | 19 | 0 | L2 21 |
 | mvpa-ai-2 | 23 | AI, UNK-game | 09ffb62 | master | 0 | 0 | 0 | 23 | 0 | L2 23 |
 | mvpa-core-1 | 5 | CORE | 09ffb62 | master | 0 | 0 | 0 | 5 | 0 | L3-only 5 |
@@ -169,12 +166,12 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpm-render-6 | 1 | RENDER | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | mvpm-script-1 | 2 | SCRIPT | 69c799f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | mvpm-world-1 | 1 | UNK-game | 69c799f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpn-ai-1 | 1 | AI | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpn-anim-1 | 1 | ANIM | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
-| mvpn-anim-2 | 1 | ANIM | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | split 1 |
-| mvpn-render-1 | 2 | RENDER | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L1-pure 1, L2 1 |
-| mvpn-script-1 | 1 | SCRIPT | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| mvpn-script-2 | 1 | SCRIPT | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpn-ai-1 | 1 | AI | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpn-anim-1 | 1 | ANIM | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
+| mvpn-anim-2 | 1 | ANIM | da9de7f | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| mvpn-render-1 | 2 | RENDER | da9de7f | master | 2 | 0 | 0 | 0 | 0 | L1-pure 1, L2 1 |
+| mvpn-script-1 | 1 | SCRIPT | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| mvpn-script-2 | 1 | SCRIPT | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | popw4-drive-1 | 9 | POP | 09ffb62 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
 | popw4-frame-1 | 2 | POP | 09ffb62 | master | 2 | 0 | 0 | 0 | 0 | L2 1, split 1 |
 | popw4-gang-1 | 11 | POP | 09ffb62 | master | 11 | 0 | 0 | 0 | 0 | L2 7, split 4 |
@@ -241,34 +238,37 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std6-stream-1 | 1 | RW | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
 | std6-veh-1 | 1 | VEH | 309d8fe | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std6-world-1 | 3 | MATH, WORLD | 309d8fe | master | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
-| std7-ai-1 | 4 | AI, RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std7-anim-1 | 5 | MATH, RW, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std7-audio-1 | 1 | AUDIO | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std7-core-1 | 1 | UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std7-math-1 | 4 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std7-script-1 | 4 | SCRIPT | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std7-world-1 | 1 | WORLD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std8-ai-1 | 2 | AI | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std8-core-1 | 1 | WORLD | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std8-math-1 | 3 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
-| std8-ped-1 | 1 | UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std8-pop-1 | 2 | POP | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std8-render-1 | 6 | RENDER, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| std8-rw-1 | 3 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std8-world-1 | 3 | MATH, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
-| std9-audio-1 | 1 | AUDIO | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std9-coll-1 | 1 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
-| std9-math-1 | 3 | MATH | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
-| std9-render-1 | 1 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std9-render-2 | 2 | RENDER | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std9-render-3 | 1 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std9-render-4 | 3 | RW, UNK-game | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std9-render-5 | 2 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std9-render-6 | 5 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 5 | 0 | 0 | 0 | 0 | L2 5 |
-| std9-render-7 | 4 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std9-render-8 | 2 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std9-rw-1 | 4 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std9-rw-2 | 3 | RW | da9de7f | worktree-agent-a1ec5bfbbfdf8dd8b | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std7-ai-1 | 4 | AI, RW | da9de7f | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std7-anim-1 | 5 | MATH, RW, UNK-game | da9de7f | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std7-audio-1 | 1 | AUDIO | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std7-core-1 | 1 | UNK-game | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std7-math-1 | 4 | MATH | da9de7f | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std7-script-1 | 4 | SCRIPT | da9de7f | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std7-world-1 | 1 | WORLD | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std8-ai-1 | 2 | AI | da9de7f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std8-core-1 | 1 | WORLD | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std8-math-1 | 3 | MATH | da9de7f | master | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
+| std8-ped-1 | 1 | UNK-game | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std8-pop-1 | 2 | POP | da9de7f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std8-render-1 | 6 | RENDER, UNK-game | da9de7f | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| std8-rw-1 | 3 | RW | da9de7f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std8-world-1 | 3 | MATH, UNK-game | da9de7f | master | 3 | 0 | 0 | 0 | 0 | L1-pure 2, L2 1 |
+| std9-audio-1 | 1 | AUDIO | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std9-coll-1 | 1 | MATH | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std9-math-1 | 3 | MATH | da9de7f | master | 3 | 0 | 0 | 0 | 0 | L1-pure 3 |
+| std9-render-1 | 1 | RW | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std9-render-2 | 2 | RENDER | da9de7f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std9-render-3 | 1 | RW | da9de7f | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std9-render-4 | 3 | RW, UNK-game | da9de7f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std9-render-5 | 2 | RW | da9de7f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std9-render-6 | 5 | RW | da9de7f | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
+| std9-render-7 | 4 | RW | da9de7f | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std9-render-8 | 2 | RW | da9de7f | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std9-rw-1 | 4 | RW | da9de7f | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std9-rw-2 | 3 | RW | da9de7f | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| writero-audio-1 | 1 | AUDIO | 0ba8327 | worktree-agent-a89ee9d4903f5a60d | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| writero-render-1 | 2 | RENDER | c97b6d1 | worktree-agent-a89ee9d4903f5a60d | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| writero-rw-1 | 8 | RW | abe5e42 | worktree-agent-a89ee9d4903f5a60d | 8 | 0 | 0 | 0 | 0 | L2 8 |
 | x87-2-roll | 1 | WORLD | 909b776 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 
 ## clump-1
@@ -305,42 +305,18 @@ SA_UNVERIFIED=clump-1 LANE=$LANE tools/e2e/port-l2.sh batch:clump-1 $SA_ROOT/tar
 
 ## gen2-anim-1
 
-25 hooks in sa-anim; hazards: heap-writes (3); recordings calling them: grove-walk (18), pause-restart (23).
+1 hooks in sa-anim; hazards: none; recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-anim-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-anim-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-anim-1
+SA_UNVERIFIED=gen2-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-anim-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-anim-1
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4CFA90 | `FUN_004cfa90` | written | L2 | heap-writes |
-| 0x4CFB10 | `FUN_004cfb10` | written | L2 | heap-writes |
-| 0x5B1A80 | `FUN_005b1a80` | written | L2 | heap-writes |
-| 0x5B1A90 | `FUN_005b1a90` | written | L2 | none |
-| 0x5B1DE0 | `CCutsceneObject::`scalar deleting destructor'` | written | L2 | none |
-| 0x72F500 | `FUN_0072f500` | written | L1-pure | none |
-| 0x746070 | `FUN_00746070` | written | L2 | none |
-| 0x84BD10 | `__init_g_b4dbdc` | written | split | none |
-| 0x84BEF0 | `__init_g_b4ea10` | written | split | none |
-| 0x84BF10 | `__init_g_b4ea14` | written | split | none |
-| 0x84BF30 | `__init_g_b4ea18` | written | split | none |
-| 0x84BF70 | `__init_g_b4ea20` | written | split | none |
-| 0x84BF90 | `__init_g_b4ea24` | written | split | none |
-| 0x84BFB0 | `__init_g_b4ea38` | written | split | none |
-| 0x84FF60 | `__init_g_bc1cf0` | written | split | none |
-| 0x84FF80 | `__init_g_bc4008` | written | split | none |
-| 0x84FFA0 | `__init_g_bc400c` | written | split | none |
-| 0x84FFC0 | `__init_g_bc4010` | written | split | none |
-| 0x850000 | `__init_g_bc4018` | written | split | none |
-| 0x850020 | `__init_g_bc401c` | written | split | none |
-| 0x8519B0 | `__init_g_c10288` | written | split | none |
-| 0x8519D0 | `__init_g_c1028c` | written | split | none |
-| 0x8519F0 | `__init_g_c10290` | written | split | none |
-| 0x851A30 | `__init_g_c10298` | written | split | none |
-| 0x851A50 | `__init_g_c1029c` | written | split | none |
+| 0x5B1A90 | `FUN_005b1a90` | L3-batch | L2 | none |
 
 ## gen2-cam-1
 
@@ -355,11 +331,11 @@ SA_UNVERIFIED=gen2-cam-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-cam-1 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x509A30 | `IsLampPost` | written | L2 | none |
+| 0x509A30 | `IsLampPost` | L3-batch | L2 | none |
 
 ## gen2-coll-1
 
-33 hooks in sa-world; hazards: none; recordings calling them: grove-walk (13), pause-restart (13).
+20 hooks in sa-world; hazards: none; recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -370,142 +346,48 @@ SA_UNVERIFIED=gen2-coll-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-coll-1 $SA_
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4C4C00 | `FUN_004c4c00` | written | L2 | none |
-| 0x537550 | `FUN_00537550` | written | L2 | none |
-| 0x537560 | `FUN_00537560` | written | L2 | none |
-| 0x537570 | `FUN_00537570` | written | L2 | none |
-| 0x849210 | `__init_g_965568` | written | split | none |
-| 0x849230 | `__init_g_96556c` | written | split | none |
-| 0x849250 | `__init_g_965570` | written | split | none |
-| 0x849290 | `__init_g_965578` | written | split | none |
-| 0x8492B0 | `__init_g_96557c` | written | split | none |
-| 0x8492D0 | `__init_g_9655e8` | written | split | none |
-| 0x8492F0 | `__init_g_9655ec` | written | split | none |
-| 0x849310 | `__init_g_9655f0` | written | split | none |
-| 0x849350 | `__init_g_9655f8` | written | split | none |
-| 0x849370 | `__init_g_9655fc` | written | split | none |
-| 0x849450 | `__init_g_9689fc` | written | split | none |
-| 0x850120 | `__init_g_bc408c` | written | split | none |
-| 0x852010 | `__init_g_c17854` | written | split | none |
-| 0x855FF0 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x856000 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x856010 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x856020 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x856030 | `__dtor_CTempColModels__ms_colModelBBox` | written | split | none |
-| 0x856060 | `__dtor_CTempColModels__ms_colModelPed1` | written | split | none |
-| 0x856070 | `__dtor_CTempColModels__ms_colModelPed2` | written | split | none |
-| 0x856080 | `__dtor_CTempColModels__ms_colModelDoor1` | written | split | none |
-| 0x856090 | `__dtor_CTempColModels__ms_colModelBumper1` | written | split | none |
-| 0x8560A0 | `__dtor_CTempColModels__ms_colModelPanel1` | written | split | none |
-| 0x8560B0 | `__dtor_CTempColModels__ms_colModelBonnet1` | written | split | none |
-| 0x8560C0 | `__dtor_CTempColModels__ms_colModelBoot1` | written | split | none |
-| 0x8560D0 | `__dtor_CTempColModels__ms_colModelWheel1` | written | split | none |
-| 0x8560E0 | `__dtor_CTempColModels__ms_colModelBodyPart1` | written | split | none |
-| 0x8560F0 | `__dtor_CTempColModels__ms_colModelBodyPart2` | written | split | none |
-| 0x856100 | `__dtor_CTempColModels__ms_colModelWeapon` | written | split | none |
+| 0x4C4C00 | `FUN_004c4c00` | L3-batch | L2 | none |
+| 0x537550 | `FUN_00537550` | L3-batch | L2 | none |
+| 0x537560 | `FUN_00537560` | L3-batch | L2 | none |
+| 0x537570 | `FUN_00537570` | L3-batch | L2 | none |
+| 0x855FF0 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x856000 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x856010 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x856020 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x856030 | `__dtor_CTempColModels__ms_colModelBBox` | L3-batch | split | none |
+| 0x856060 | `__dtor_CTempColModels__ms_colModelPed1` | L3-batch | split | none |
+| 0x856070 | `__dtor_CTempColModels__ms_colModelPed2` | L3-batch | split | none |
+| 0x856080 | `__dtor_CTempColModels__ms_colModelDoor1` | L3-batch | split | none |
+| 0x856090 | `__dtor_CTempColModels__ms_colModelBumper1` | L3-batch | split | none |
+| 0x8560A0 | `__dtor_CTempColModels__ms_colModelPanel1` | L3-batch | split | none |
+| 0x8560B0 | `__dtor_CTempColModels__ms_colModelBonnet1` | L3-batch | split | none |
+| 0x8560C0 | `__dtor_CTempColModels__ms_colModelBoot1` | L3-batch | split | none |
+| 0x8560D0 | `__dtor_CTempColModels__ms_colModelWheel1` | L3-batch | split | none |
+| 0x8560E0 | `__dtor_CTempColModels__ms_colModelBodyPart1` | L3-batch | split | none |
+| 0x8560F0 | `__dtor_CTempColModels__ms_colModelBodyPart2` | L3-batch | split | none |
+| 0x856100 | `__dtor_CTempColModels__ms_colModelWeapon` | L3-batch | split | none |
 
 ## gen2-core-1
 
-56 hooks in sa-core; hazards: heap-writes (7); recordings calling them: grove-walk (48), pause-restart (52).
+4 hooks in sa-core; hazards: heap-writes (3); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-core-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-core-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-core-1
+SA_UNVERIFIED=gen2-core-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-core-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-core-1
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x41BD50 | `FUN_0041bd50` | written | L2 | none |
-| 0x424160 | `thunk_FUN_015667f0` | written | L2 | none |
-| 0x4A8E70 | `FUN_004a8e70` | written | L2 | heap-writes |
-| 0x4A8EB0 | `FUN_004a8eb0` | written | L2 | heap-writes |
-| 0x5617C0 | `GetMillisecondTime` | written | L2 | none |
-| 0x5A7280 | `COctTreeBase::FillPalette` | written | L2 | heap-writes |
-| 0x5A7490 | `COctTree::~COctTree` | written | L2 | heap-writes |
-| 0x5A7710 | `COctTreeBase::InsertTree` | written | L2 | heap-writes |
-| 0x84D930 | `__init_g_b714f0` | written | split | none |
-| 0x84D950 | `__init_g_b714f4` | written | split | none |
-| 0x84D970 | `__init_g_b714f8` | written | split | none |
-| 0x84D9B0 | `__init_g_b71500` | written | split | none |
-| 0x84D9D0 | `__init_g_b71504` | written | split | none |
-| 0x84DCF0 | `__init_g_b71a48` | written | split | none |
-| 0x84DD10 | `__init_g_b71a4c` | written | split | none |
-| 0x84DD30 | `__init_g_b71a50` | written | split | none |
-| 0x84DD70 | `__init_g_b71a58` | written | split | none |
-| 0x84DD90 | `__init_g_b71a5c` | written | split | none |
-| 0x84DDB0 | `__init_g_b71f68` | written | split | none |
-| 0x84DDD0 | `__init_g_b71f6c` | written | split | none |
-| 0x84DDF0 | `__init_g_b71f70` | written | split | none |
-| 0x84DE30 | `__init_g_b71f78` | written | split | none |
-| 0x84DE50 | `__init_g_b71f7c` | written | split | none |
-| 0x84DF50 | `__init_g_b72960` | written | split | none |
-| 0x84DF70 | `__init_g_b72964` | written | split | none |
-| 0x84DF90 | `__init_g_b72968` | written | split | none |
-| 0x84DFD0 | `__init_g_b72970` | written | split | none |
-| 0x84DFF0 | `__init_g_b72974` | written | split | none |
-| 0x84E030 | `__init_g_b72c88` | written | split | none |
-| 0x84E050 | `__init_g_b72c8c` | written | split | none |
-| 0x84E070 | `__init_g_b72c90` | written | split | none |
-| 0x84E0B0 | `__init_g_b72c98` | written | split | none |
-| 0x84E0D0 | `__init_g_b72c9c` | written | split | none |
-| 0x84E220 | `__init_g_b7421c` | written | split | none |
-| 0x84E240 | `__init_g_b74220` | written | split | none |
-| 0x84E260 | `__init_g_b74224` | written | split | none |
-| 0x84E2A0 | `__init_g_b7422c` | written | split | none |
-| 0x84E2C0 | `__init_g_b74230` | written | split | none |
-| 0x8502C0 | `__init_g_bd00fc` | written | split | none |
-| 0x8502E0 | `__init_g_bd0100` | written | split | none |
-| 0x850300 | `__init_g_bd0104` | written | split | none |
-| 0x850340 | `__init_g_bd010c` | written | split | none |
-| 0x850360 | `__init_g_bd0110` | written | split | none |
-| 0x851C30 | `__init_g_c1701c` | written | split | none |
-| 0x851C50 | `__init_g_c17020` | written | split | none |
-| 0x851C70 | `__init_g_c17024` | written | split | none |
-| 0x851CB0 | `__init_g_c1702c` | written | split | none |
-| 0x851CD0 | `__init_g_c17030` | written | split | none |
-| 0x855630 | `__init_g_c87b0c` | written | split | none |
-| 0x855670 | `__init_g_Heaps` | written | split | heap-writes |
-| 0x855680 | `__init_g_c87b88` | written | split | heap-writes |
-| 0x855E40 | `__init_g_c8cdd0` | written | split | none |
-| 0x855E60 | `__init_g_c8cdd4` | written | split | none |
-| 0x855E80 | `__init_g_c8cdd8` | written | split | none |
-| 0x855EC0 | `__init_g_c8cde0` | written | split | none |
-| 0x855EE0 | `__init_g_c8cddc` | written | split | none |
-
-## gen2-input-1
-
-15 hooks in sa-input; hazards: none; recordings calling them: grove-walk (15), pause-restart (15).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-input-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-input-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-input-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-input-1
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x84D7A0 | `__init_g_b70160` | written | split | none |
-| 0x84D7C0 | `__init_g_b70164` | written | split | none |
-| 0x84D7E0 | `__init_g_b70168` | written | split | none |
-| 0x84D820 | `__init_g_b70170` | written | split | none |
-| 0x84D840 | `__init_g_b70174` | written | split | none |
-| 0x84D860 | `__init_g_b7017c` | written | split | none |
-| 0x84D880 | `__init_g_b70180` | written | split | none |
-| 0x84D8A0 | `__init_g_b70184` | written | split | none |
-| 0x84D8E0 | `__init_g_b7018c` | written | split | none |
-| 0x84D900 | `__init_g_b70190` | written | split | none |
-| 0x84E130 | `__init_g_b73440` | written | split | none |
-| 0x84E150 | `__init_g_b73444` | written | split | none |
-| 0x84E170 | `__init_g_b73448` | written | split | none |
-| 0x84E1B0 | `__init_g_b73450` | written | split | none |
-| 0x84E1D0 | `__init_g_b73454` | written | split | none |
+| 0x5617C0 | `GetMillisecondTime` | L3-batch | L2 | none |
+| 0x5A7280 | `COctTreeBase::FillPalette` | L3-batch | L2 | heap-writes |
+| 0x5A7490 | `COctTree::~COctTree` | L3-batch | L2 | heap-writes |
+| 0x5A7710 | `COctTreeBase::InsertTree` | L3-batch | L2 | heap-writes |
 
 ## gen2-ped-1
 
-23 hooks in sa-ped; hazards: heap-writes (3); recordings calling them: grove-walk (19), pause-restart (19).
+4 hooks in sa-ped; hazards: heap-writes (3); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -516,33 +398,14 @@ SA_UNVERIFIED=gen2-ped-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-ped-1 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x56F200 | `thunk_FUN_00401616` | written | L2 | none |
-| 0x5DE340 | `CEmergencyPed` | written | L2 | heap-writes |
-| 0x5DE9E0 | `FUN_005de9e0` | written | L2 | heap-writes |
-| 0x5E47A0 | `FUN_005e47a0` | written | L2 | heap-writes |
-| 0x84EB20 | `__init_g_b9b97c` | written | split | none |
-| 0x84EB40 | `__init_g_b9b980` | written | split | none |
-| 0x84EB60 | `__init_g_b9b984` | written | split | none |
-| 0x84EBA0 | `__init_g_b9b98c` | written | split | none |
-| 0x84EBC0 | `__init_g_b9b990` | written | split | none |
-| 0x84FE70 | `__init_g_bc1c60` | written | split | none |
-| 0x84FE90 | `__init_g_bc1c64` | written | split | none |
-| 0x84FEB0 | `__init_g_bc1c68` | written | split | none |
-| 0x84FEF0 | `__init_g_bc1c70` | written | split | none |
-| 0x84FF10 | `__init_g_bc1c74` | written | split | none |
-| 0x850D10 | `__init_g_c09290` | written | split | none |
-| 0x850D30 | `__init_g_c09294` | written | split | none |
-| 0x850D50 | `__init_g_c09298` | written | split | none |
-| 0x850D90 | `__init_g_c092a0` | written | split | none |
-| 0x850DB0 | `__init_g_c092a4` | written | split | none |
-| 0x8516F0 | `__init_g_c0bbf8` | written | split | none |
-| 0x851730 | `__init_g_c0bc00` | written | split | none |
-| 0x851750 | `__init_g_c0bc04` | written | split | none |
-| 0x8546F0 | `__init_g_c3f038` | written | split | none |
+| 0x56F200 | `thunk_FUN_00401616` | L3-batch | L2 | none |
+| 0x5DE340 | `CEmergencyPed` | L3-batch | L2 | heap-writes |
+| 0x5DE9E0 | `FUN_005de9e0` | L3-batch | L2 | heap-writes |
+| 0x5E47A0 | `FUN_005e47a0` | L3-batch | L2 | heap-writes |
 
 ## gen2-phys-1
 
-7 hooks in sa-world; hazards: heap-writes (1); recordings calling them: grove-walk (5), pause-restart (5).
+2 hooks in sa-world; hazards: heap-writes (1); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -553,13 +416,8 @@ SA_UNVERIFIED=gen2-phys-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-phys-1 $SA_
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5A2CB0 | `FUN_005a2cb0` | written | L2 | heap-writes |
-| 0x853700 | `__init_g_c1c840` | written | split | none |
-| 0x853720 | `__init_g_c1c844` | written | split | none |
-| 0x853740 | `__init_g_c1c848` | written | split | none |
-| 0x853780 | `__init_g_c1c850` | written | split | none |
-| 0x8537A0 | `__init_g_c1c854` | written | split | none |
-| 0x856A20 | `__dtor_mod_Buoyancy` | written | split | none |
+| 0x5A2CB0 | `FUN_005a2cb0` | L3-batch | L2 | heap-writes |
+| 0x856A20 | `__dtor_mod_Buoyancy` | L3-batch | split | none |
 
 ## gen2-pop-1
 
@@ -574,545 +432,268 @@ SA_UNVERIFIED=gen2-pop-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-pop-1 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x407D30 | `thunk_FUN_015674b0` | written | L2 | none |
-| 0x407DC0 | `thunk_FUN_0156ce80` | written | L2 | none |
-| 0x4AE1A0 | `FUN_004ae1a0` | written | L2 | heap-writes |
+| 0x407D30 | `thunk_FUN_015674b0` | L3-batch | L2 | none |
+| 0x407DC0 | `thunk_FUN_0156ce80` | L3-batch | L2 | none |
+| 0x4AE1A0 | `FUN_004ae1a0` | L3-batch | L2 | heap-writes |
 
 ## gen2-render-1
 
-48 hooks in sa-render; hazards: heap-writes (8); recordings calling them: grove-walk (36), pause-restart (37).
+11 hooks in sa-render; hazards: heap-writes (8); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-render-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-render-1
+SA_UNVERIFIED=gen2-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-render-1
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4A18F0 | `FxEmitterBP_c::~FxEmitterBP_c` | written | L2 | heap-writes |
-| 0x4A1920 | `FxEmitter_c::FxEmitter_c` | written | L2 | heap-writes |
-| 0x4A4940 | `FxInfo_c::~FxInfo_c` | written | L2 | heap-writes |
-| 0x4A9D20 | `FxPrimBP_c::~FxPrimBP_c` | written | L2 | heap-writes |
-| 0x706410 | `CRealTimeShadow::Constructor` | written | L2 | heap-writes |
-| 0x706440 | `CRealTimeShadow::Destructor` | written | L2 | none |
-| 0x7281E0 | `CSprite2d::Destructor` | written | L2 | heap-writes |
-| 0x84B510 | `__init_g_a9ade8` | written | split | none |
-| 0x84B530 | `__init_g_a9adec` | written | split | none |
-| 0x84B550 | `__init_g_a9adf0` | written | split | none |
-| 0x84B590 | `__init_g_a9adf8` | written | split | none |
-| 0x84B5B0 | `__init_g_a9adfc` | written | split | none |
-| 0x84B630 | `__init_g_a9ae78` | written | split | none |
-| 0x84E320 | `__init_g_b744c8` | written | split | none |
-| 0x84E340 | `__init_g_b744cc` | written | split | none |
-| 0x84E360 | `__init_g_b744d0` | written | split | none |
-| 0x84E3A0 | `__init_g_b744d8` | written | split | none |
-| 0x84E3C0 | `__init_g_b744dc` | written | split | none |
-| 0x84E3E0 | `__init_g_b745a4` | written | split | none |
-| 0x84E400 | `__init_g_b745a8` | written | split | none |
-| 0x84E420 | `__init_g_b745ac` | written | split | none |
-| 0x84E460 | `__init_g_b745b4` | written | split | none |
-| 0x84E480 | `__init_g_b745b8` | written | split | none |
-| 0x84E4A0 | `__init_g_b76858` | written | split | none |
-| 0x84E4C0 | `__init_g_b7685c` | written | split | none |
-| 0x84E4E0 | `__init_g_b76860` | written | split | none |
-| 0x84E520 | `__init_g_b76868` | written | split | none |
-| 0x84E540 | `__init_g_b7686c` | written | split | none |
-| 0x84E620 | `__init_g_b79518` | written | split | none |
-| 0x84E640 | `__init_g_b7951c` | written | split | none |
-| 0x84E660 | `__init_g_b79520` | written | split | none |
-| 0x84E6A0 | `__init_g_b79528` | written | split | none |
-| 0x84E6C0 | `__init_g_b7952c` | written | split | none |
-| 0x84E6F0 | `__init_g_b7c488` | written | split | none |
-| 0x84E710 | `__init_g_b7c48c` | written | split | none |
-| 0x84E730 | `__init_g_b7c490` | written | split | none |
-| 0x84E770 | `__init_g_b7c498` | written | split | none |
-| 0x84E790 | `__init_g_b7c49c` | written | split | none |
-| 0x84FD00 | `__init_g_bb7c98` | written | split | none |
-| 0x84FD20 | `__init_g_bb7c9c` | written | split | none |
-| 0x84FD40 | `__init_g_bb7ca0` | written | split | none |
-| 0x84FD80 | `__init_g_bb7ca8` | written | split | none |
-| 0x84FDA0 | `__init_g_bb7cac` | written | split | none |
-| 0x8561D0 | `__dtor_g_fx` | written | split | none |
-| 0x8561E0 | `__dtor_g_fxMan` | written | split | none |
-| 0x856690 | `__dtor_gOctTreeBase` | written | split | heap-writes |
-| 0x856AD0 | `__dtor_g_realTimeShadowMan` | written | split | none |
-| 0x856C10 | `__dtor_CWeather__m_WeatherAudioEntity` | written | split | heap-writes |
-
-## gen2-render-2
-
-48 hooks in sa-render; hazards: none; recordings calling them: grove-walk (48), pause-restart (48).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-render-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-render-2 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-render-2
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x850800 | `__init_g_c02dc4` | written | split | none |
-| 0x850820 | `__init_g_c02dc8` | written | split | none |
-| 0x850840 | `__init_g_c02dcc` | written | split | none |
-| 0x850880 | `__init_g_c02dd4` | written | split | none |
-| 0x8508A0 | `__init_g_c02dd8` | written | split | none |
-| 0x8508F0 | `__init_g_c03a40` | written | split | none |
-| 0x850AC0 | `__init_g_c0919c` | written | split | none |
-| 0x853E50 | `__init_g_c1df18` | written | split | none |
-| 0x853E70 | `__init_g_c1df1c` | written | split | none |
-| 0x853E90 | `__init_g_c1df20` | written | split | none |
-| 0x853ED0 | `__init_g_c1df28` | written | split | none |
-| 0x853EF0 | `__init_g_c1df2c` | written | split | none |
-| 0x854430 | `__init_g_c38050` | written | split | none |
-| 0x854450 | `__init_g_c38054` | written | split | none |
-| 0x854490 | `__init_g_c3805c` | written | split | none |
-| 0x8544B0 | `__init_g_c38060` | written | split | none |
-| 0x8544F0 | `__init_g_c3a1e4` | written | split | none |
-| 0x854510 | `__init_g_c3a1e8` | written | split | none |
-| 0x854530 | `__init_g_c3a1ec` | written | split | none |
-| 0x854570 | `__init_g_c3a1f4` | written | split | none |
-| 0x854590 | `__init_g_c3a1f8` | written | split | none |
-| 0x854610 | `__init_g_c3e03c` | written | split | none |
-| 0x854630 | `__init_g_c3e040` | written | split | none |
-| 0x854650 | `__init_g_c3e044` | written | split | none |
-| 0x854690 | `__init_g_c3e04c` | written | split | none |
-| 0x8546B0 | `__init_g_c3e050` | written | split | none |
-| 0x8546D0 | `__init_g_c3efb4` | written | split | none |
-| 0x854710 | `__init_g_c3f044` | written | split | none |
-| 0x854730 | `__init_g_c3f0d8` | written | split | none |
-| 0x854750 | `__init_g_c402e8` | written | split | none |
-| 0x854770 | `__init_g_c402ec` | written | split | none |
-| 0x854790 | `__init_g_c402f0` | written | split | none |
-| 0x8547D0 | `__init_g_c402f8` | written | split | none |
-| 0x8547F0 | `__init_g_c402fc` | written | split | none |
-| 0x854810 | `__init_CPostEffects__m_fNightVisionSwitchOnFXCount` | written | split | none |
-| 0x8548A0 | `__init_CPostEffects__m_RadiosityPixelsX` | written | split | none |
-| 0x8548B0 | `__init_CPostEffects__m_RadiosityPixelsY` | written | split | none |
-| 0x8548C0 | `__init_g_c40338` | written | split | none |
-| 0x8548E0 | `__init_g_c4033c` | written | split | none |
-| 0x854900 | `__init_g_c40340` | written | split | none |
-| 0x854940 | `__init_g_c40348` | written | split | none |
-| 0x854960 | `__init_g_c4034c` | written | split | none |
-| 0x8549A0 | `__init_g_c40418` | written | split | none |
-| 0x8549C0 | `__init_g_c4041c` | written | split | none |
-| 0x8549E0 | `__init_g_c40420` | written | split | none |
-| 0x854A20 | `__init_g_c40428` | written | split | none |
-| 0x854A40 | `__init_g_c4042c` | written | split | none |
-| 0x854A60 | `__init_MAX_DISTANCE_PED_SHADOWS_SQR` | written | split | none |
-
-## gen2-render-3
-
-48 hooks in sa-render; hazards: none; recordings calling them: grove-walk (48), pause-restart (48).
-
-```sh
-# whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-render-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
-# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-render-3 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-render-3
-```
-
-| address | name | status | route | hazards |
-|---|---|---|---|---|
-| 0x854A80 | `__init_g_c6a160` | written | split | none |
-| 0x854AA0 | `__init_g_c6a17c` | written | split | none |
-| 0x854AC0 | `__init_g_c6a180` | written | split | none |
-| 0x854AE0 | `__init_g_c6a184` | written | split | none |
-| 0x854B20 | `__init_g_c6a18c` | written | split | none |
-| 0x854B40 | `__init_g_c6a190` | written | split | none |
-| 0x854B90 | `__init_g_c6a8a8` | written | split | none |
-| 0x854BB0 | `__init_g_c6aa84` | written | split | none |
-| 0x854BD0 | `__init_g_c6aa88` | written | split | none |
-| 0x854BF0 | `__init_g_c6aa8c` | written | split | none |
-| 0x854C30 | `__init_g_c6aa94` | written | split | none |
-| 0x854C50 | `__init_g_c6aa98` | written | split | none |
-| 0x854E20 | `__init_g_c71bdc` | written | split | none |
-| 0x854E40 | `__init_g_c71be0` | written | split | none |
-| 0x854E60 | `__init_g_c71be4` | written | split | none |
-| 0x854EA0 | `__init_g_c71bec` | written | split | none |
-| 0x854EC0 | `__init_g_c71bf0` | written | split | none |
-| 0x854F10 | `__init_g_c73c34` | written | split | none |
-| 0x854F30 | `__init_g_c73c38` | written | split | none |
-| 0x854F50 | `__init_g_c73c3c` | written | split | none |
-| 0x854F90 | `__init_g_c73c44` | written | split | none |
-| 0x854FB0 | `__init_g_c73c48` | written | split | none |
-| 0x854FF0 | `__init_g_c73c60` | written | split | none |
-| 0x855010 | `__init_g_c785f4` | written | split | none |
-| 0x855030 | `__init_g_c785f8` | written | split | none |
-| 0x855050 | `__init_g_c785fc` | written | split | none |
-| 0x855090 | `__init_g_c78604` | written | split | none |
-| 0x8550B0 | `__init_g_c78608` | written | split | none |
-| 0x8550D0 | `__init_g_c799b0` | written | split | none |
-| 0x8550F0 | `__init_g_c799b4` | written | split | none |
-| 0x855110 | `__init_g_c799b8` | written | split | none |
-| 0x855150 | `__init_g_c799c0` | written | split | none |
-| 0x855170 | `__init_g_c799c4` | written | split | none |
-| 0x855190 | `__init_g_c79a8c` | written | split | none |
-| 0x8551B0 | `__init_g_c79a90` | written | split | none |
-| 0x8551D0 | `__init_g_c79a94` | written | split | none |
-| 0x855210 | `__init_g_c79a9c` | written | split | none |
-| 0x855230 | `__init_g_c79aa0` | written | split | none |
-| 0x855250 | `__init_g_c7c72c` | written | split | none |
-| 0x855270 | `__init_g_c7c730` | written | split | none |
-| 0x855290 | `__init_g_c7c734` | written | split | none |
-| 0x8552D0 | `__init_g_c7c73c` | written | split | none |
-| 0x8552F0 | `__init_g_c7c740` | written | split | none |
-| 0x855360 | `__init_g_c80724` | written | split | none |
-| 0x855380 | `__init_g_c80728` | written | split | none |
-| 0x8553A0 | `__init_g_c8072c` | written | split | none |
-| 0x8553E0 | `__init_g_c80734` | written | split | none |
-| 0x855400 | `__init_g_c80738` | written | split | none |
+| 0x4A18F0 | `FxEmitterBP_c::~FxEmitterBP_c` | L3-batch | L2 | heap-writes |
+| 0x4A1920 | `FxEmitter_c::FxEmitter_c` | L3-batch | L2 | heap-writes |
+| 0x4A4940 | `FxInfo_c::~FxInfo_c` | L3-batch | L2 | heap-writes |
+| 0x4A9D20 | `FxPrimBP_c::~FxPrimBP_c` | L3-batch | L2 | heap-writes |
+| 0x706410 | `CRealTimeShadow::Constructor` | L3-batch | L2 | heap-writes |
+| 0x7281E0 | `CSprite2d::Destructor` | L3-batch | L2 | heap-writes |
+| 0x8561D0 | `__dtor_g_fx` | L3-batch | split | none |
+| 0x8561E0 | `__dtor_g_fxMan` | L3-batch | split | none |
+| 0x856690 | `__dtor_gOctTreeBase` | L3-batch | split | heap-writes |
+| 0x856AD0 | `__dtor_g_realTimeShadowMan` | L3-batch | split | none |
+| 0x856C10 | `__dtor_CWeather__m_WeatherAudioEntity` | L3-batch | split | heap-writes |
 
 ## gen2-render-4
 
-48 hooks in sa-render; hazards: heap-writes (14); recordings calling them: grove-walk (7), pause-restart (16).
+31 hooks in sa-render; hazards: heap-writes (8); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-render-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-render-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-render-4 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-render-4
+SA_UNVERIFIED=gen2-render-4 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-render-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-render-4
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x49EA80 | `FUN_0049ea80` | written | L2 | none |
-| 0x4A1320 | `Fx_c::Exit` | written | L2 | none |
-| 0x4A9090 | `FUN_004a9090` | written | L2 | none |
-| 0x4A9110 | `FUN_004a9110` | written | L2 | none |
-| 0x4A9C90 | `FxMemoryPool_c::Reset` | written | L2 | heap-writes |
-| 0x4A9DC0 | `FxPrimBP_c::GetRWMatrix` | written | L2 | heap-writes |
-| 0x4AA010 | `FxSphere_c::GetDistToPlane` | written | L2 | none |
-| 0x4AA690 | `FxSystem_c::AddOffsetPos` | written | L2 | heap-writes |
-| 0x4AB270 | `FxPrtMult_c` | written | L2 | heap-writes |
-| 0x4AB290 | `FxPrtMult_c` | written | L2 | heap-writes |
-| 0x556030 | `CRope::ReleasePickedUpObject` | written | L2 | heap-writes |
-| 0x556760 | `CRopes::FindPickupHeight` | written | L2 | none |
-| 0x5A3120 | `ProcObjectMan_c::GetEntityFromPool` | written | L2 | none |
-| 0x5A3130 | `ProcObjectMan_c::ReturnEntityToPool` | written | L2 | none |
-| 0x5DAC10 | `CPPTriPlantBuffer::SetGrassMaterialCB` | written | L2 | heap-writes |
-| 0x5DAC80 | `CPPTriPlantBuffer::SetPlantModelsTab` | written | L2 | heap-writes |
-| 0x5DACA0 | `CPPTriPlantBuffer::GetPlantModelsTab` | written | L2 | none |
-| 0x5DACE0 | `CGrassRenderer::GetPlantModelsTab` | written | L2 | none |
-| 0x5DB140 | `CPPTriPlantBuffer::GetPPTriPlantPtr` | written | L2 | none |
-| 0x5DB170 | `CPPTriPlantBuffer::ChangeCurrentPlantModelsSet` | written | L2 | heap-writes |
-| 0x5DB1A0 | `CPPTriPlantBuffer::IncreaseBufferIndex` | written | L2 | heap-writes |
-| 0x5DB250 | `CGrassRenderer::FlushTriPlantBuffer` | written | L2 | none |
-| 0x5DB590 | `CPlantMgr::MoveLocTriToList` | written | L2 | heap-writes |
-| 0x5DB5F0 | `CPlantMgr::MoveColEntToList` | written | L2 | heap-writes |
-| 0x6E7680 | `RenderBuffer::RenderIfDoesntFit` | written | L2 | none |
-| 0x6FAA10 | `CCoronas::RenderOutGeometryBufferForReflections` | written | L2 | none |
-| 0x6FE200 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x6FE240 | `CCustomRoadsignMgr::SetAtomicAlpha` | written | L2 | none |
-| 0x6FED60 | `CCustomRoadsignMgr::SetupRoadsignAtomic` | written | L2 | none |
-| 0x7053F0 | `CShadowCamera::Constructor` | written | L2 | heap-writes |
-| 0x705620 | `CShadowCamera::atomicQuickRender` | written | L2 | heap-writes |
-| 0x705770 | `CShadowCamera::GetRwRenderRaster` | written | L2 | none |
-| 0x7067A0 | `FUN_007067a0` | written | L2 | none |
-| 0x720570 | `CSkidmarks::Shutdown` | written | L2 | none |
-| 0x722150 | `CBrightLights::RenderOutGeometryBuffer` | written | L2 | none |
-| 0x7221B0 | `CShinyTexts::Init` | written | L2 | none |
-| 0x7221C0 | `CShinyTexts::RenderOutGeometryBuffer` | written | L2 | none |
-| 0x723000 | `CMirrors::Init` | written | L2 | none |
-| 0x723050 | `CMirrors::ShutDown` | written | L2 | none |
-| 0x728150 | `CSprite2d::OffsetTexCoordForBilinearFiltering` | written | L2 | none |
-| 0x855450 | `__init_g_c81344` | written | split | none |
-| 0x855470 | `__init_g_c81348` | written | split | none |
-| 0x855490 | `__init_g_c8134c` | written | split | none |
-| 0x8554D0 | `__init_g_c81354` | written | split | none |
-| 0x8554F0 | `__init_g_c81358` | written | split | none |
-| 0x855530 | `__init_g_c81454` | written | split | none |
-| 0x855550 | `__init_g_c815bc` | written | split | none |
-| 0x856BC0 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
+| 0x49EA80 | `FUN_0049ea80` | L3-batch | L2 | none |
+| 0x4A1320 | `Fx_c::Exit` | L3-batch | L2 | none |
+| 0x4A9090 | `FUN_004a9090` | L3-batch | L2 | none |
+| 0x4A9110 | `FUN_004a9110` | L3-batch | L2 | none |
+| 0x4A9C90 | `FxMemoryPool_c::Reset` | L3-batch | L2 | heap-writes |
+| 0x4AA010 | `FxSphere_c::GetDistToPlane` | L3-batch | L2 | none |
+| 0x4AA690 | `FxSystem_c::AddOffsetPos` | L3-batch | L2 | heap-writes |
+| 0x556030 | `CRope::ReleasePickedUpObject` | L3-batch | L2 | heap-writes |
+| 0x556760 | `CRopes::FindPickupHeight` | L3-batch | L2 | none |
+| 0x5A3120 | `ProcObjectMan_c::GetEntityFromPool` | L3-batch | L2 | none |
+| 0x5A3130 | `ProcObjectMan_c::ReturnEntityToPool` | L3-batch | L2 | none |
+| 0x5DAC80 | `CPPTriPlantBuffer::SetPlantModelsTab` | L3-batch | L2 | heap-writes |
+| 0x5DACA0 | `CPPTriPlantBuffer::GetPlantModelsTab` | L3-batch | L2 | none |
+| 0x5DACE0 | `CGrassRenderer::GetPlantModelsTab` | L3-batch | L2 | none |
+| 0x5DB140 | `CPPTriPlantBuffer::GetPPTriPlantPtr` | L3-batch | L2 | none |
+| 0x5DB170 | `CPPTriPlantBuffer::ChangeCurrentPlantModelsSet` | L3-batch | L2 | heap-writes |
+| 0x5DB1A0 | `CPPTriPlantBuffer::IncreaseBufferIndex` | L3-batch | L2 | heap-writes |
+| 0x5DB5F0 | `CPlantMgr::MoveColEntToList` | L3-batch | L2 | heap-writes |
+| 0x6FAA10 | `CCoronas::RenderOutGeometryBufferForReflections` | L3-batch | L2 | none |
+| 0x6FE200 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x6FE240 | `CCustomRoadsignMgr::SetAtomicAlpha` | L3-batch | L2 | none |
+| 0x6FED60 | `CCustomRoadsignMgr::SetupRoadsignAtomic` | L3-batch | L2 | none |
+| 0x7053F0 | `CShadowCamera::Constructor` | L3-batch | L2 | heap-writes |
+| 0x705770 | `CShadowCamera::GetRwRenderRaster` | L3-batch | L2 | none |
+| 0x7067A0 | `FUN_007067a0` | L3-batch | L2 | none |
+| 0x720570 | `CSkidmarks::Shutdown` | L3-batch | L2 | none |
+| 0x7221B0 | `CShinyTexts::Init` | L3-batch | L2 | none |
+| 0x723000 | `CMirrors::Init` | L3-batch | L2 | none |
+| 0x723050 | `CMirrors::ShutDown` | L3-batch | L2 | none |
+| 0x728150 | `CSprite2d::OffsetTexCoordForBilinearFiltering` | L3-batch | L2 | none |
+| 0x856BC0 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
 
 ## gen2-rw-1
 
-57 hooks in sa-rwcore; hazards: heap-writes (1); recordings calling them: grove-walk (44), pause-restart (47).
+10 hooks in sa-rwcore; hazards: heap-writes (1); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-rw-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-1 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-rw-1
+SA_UNVERIFIED=gen2-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-rw-1
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4C4340 | `C2dEffect::RpGeometryGet2dFxCount` | written | L2 | none |
-| 0x4C4A40 | `C2dEffect::RpGeometryGet2dFxAtIndex` | written | L2 | none |
-| 0x5D6F90 | `CCustomCarEnvMapPipeline::GetFxEnvScaleX` | written | L2 | none |
-| 0x5D6FC0 | `CCustomCarEnvMapPipeline::GetFxEnvScaleY` | written | L2 | none |
-| 0x5D7040 | `CCustomCarEnvMapPipeline::GetFxEnvTransSclX` | written | L2 | none |
-| 0x5D7070 | `CCustomCarEnvMapPipeline::GetFxEnvTransSclY` | written | L2 | none |
-| 0x5D8AD0 | `CCustomCarEnvMapPipeline::GetFxEnvShininess` | written | L2 | none |
-| 0x5D8B50 | `CCustomCarEnvMapPipeline::GetFxSpecTexture` | written | L2 | none |
-| 0x5D96F0 | `CCustomCarEnvMapPipeline::AllocEnvMapPipeAtomicData` | written | L2 | heap-writes |
-| 0x6FA640 | `C2dEffect::Roadsign_GetNumLinesFromFlags` | written | L1-pure | none |
-| 0x6FA670 | `C2dEffect::Roadsign_GetNumLettersFromFlags` | written | L1-pure | none |
-| 0x6FA6A0 | `C2dEffect::Roadsign_GetPaletteIDFromFlags` | written | L1-pure | none |
-| 0x84B730 | `__init_g_a9af54` | written | split | none |
-| 0x84B750 | `__init_g_a9af58` | written | split | none |
-| 0x84B770 | `__init_g_a9af5c` | written | split | none |
-| 0x84B7B0 | `__init_g_a9af64` | written | split | none |
-| 0x84B7D0 | `__init_g_a9af68` | written | split | none |
-| 0x84BE10 | `__init_g_b4e754` | written | split | none |
-| 0x84BE30 | `__init_g_b4e758` | written | split | none |
-| 0x84BE50 | `__init_g_b4e75c` | written | split | none |
-| 0x84BE90 | `__init_g_b4e764` | written | split | none |
-| 0x84BEB0 | `__init_g_b4e768` | written | split | none |
-| 0x84BED0 | `__init_g_b4ea04` | written | split | none |
-| 0x84C020 | `__init_g_b5f860` | written | split | none |
-| 0x84C040 | `__init_g_b5f864` | written | split | none |
-| 0x84C060 | `__init_g_b5f868` | written | split | none |
-| 0x84C0A0 | `__init_g_b5f870` | written | split | none |
-| 0x84C0C0 | `__init_g_b5f874` | written | split | none |
-| 0x84F9A0 | `__init_g_bb421c` | written | split | none |
-| 0x84F9C0 | `__init_g_bb4220` | written | split | none |
-| 0x84F9E0 | `__init_g_bb4224` | written | split | none |
-| 0x84FA20 | `__init_g_bb422c` | written | split | none |
-| 0x84FA40 | `__init_g_bb4230` | written | split | none |
-| 0x84FAA0 | `__init_g_bb4a40` | written | split | none |
-| 0x84FAC0 | `__init_g_bb4a44` | written | split | none |
-| 0x84FAE0 | `__init_g_bb4a48` | written | split | none |
-| 0x84FB20 | `__init_g_bb4a50` | written | split | none |
-| 0x84FB40 | `__init_g_bb4a54` | written | split | none |
-| 0x84FCE0 | `__init_g_bb7c90` | written | split | none |
-| 0x84FDE0 | `__init_g_bbc8c4` | written | split | none |
-| 0x84FE00 | `__init_g_bc128c` | written | split | none |
-| 0x850380 | `__init_g_bd0118` | written | split | none |
-| 0x8503A0 | `__init_g_bd011c` | written | split | none |
-| 0x8503C0 | `__init_g_bd0120` | written | split | none |
-| 0x850400 | `__init_g_bd0128` | written | split | none |
-| 0x850420 | `__init_g_bd012c` | written | split | none |
-| 0x850440 | `__init_g_bd0130` | written | split | none |
-| 0x850460 | `__init_g_bd0134` | written | split | none |
-| 0x850480 | `__init_g_bd0138` | written | split | none |
-| 0x8504A0 | `__init_g_bd013c` | written | split | none |
-| 0x850500 | `__init_g_bd0148` | written | split | none |
-| 0x850520 | `__init_g_bd014c` | written | split | none |
-| 0x850540 | `__init_g_bd0150` | written | split | none |
-| 0x850560 | `__init_g_c02b84` | written | split | none |
-| 0x850580 | `__init_g_c02b88` | written | split | none |
-| 0x8505A0 | `__init_g_c02b8c` | written | split | none |
-| 0x856680 | `__dtor_playerImg` | written | split | none |
+| 0x4C4340 | `C2dEffect::RpGeometryGet2dFxCount` | L3-batch | L2 | none |
+| 0x4C4A40 | `C2dEffect::RpGeometryGet2dFxAtIndex` | L3-batch | L2 | none |
+| 0x5D6F90 | `CCustomCarEnvMapPipeline::GetFxEnvScaleX` | L3-batch | L2 | none |
+| 0x5D6FC0 | `CCustomCarEnvMapPipeline::GetFxEnvScaleY` | L3-batch | L2 | none |
+| 0x5D7040 | `CCustomCarEnvMapPipeline::GetFxEnvTransSclX` | L3-batch | L2 | none |
+| 0x5D7070 | `CCustomCarEnvMapPipeline::GetFxEnvTransSclY` | L3-batch | L2 | none |
+| 0x5D8AD0 | `CCustomCarEnvMapPipeline::GetFxEnvShininess` | L3-batch | L2 | none |
+| 0x5D8B50 | `CCustomCarEnvMapPipeline::GetFxSpecTexture` | L3-batch | L2 | none |
+| 0x5D96F0 | `CCustomCarEnvMapPipeline::AllocEnvMapPipeAtomicData` | L3-batch | L2 | heap-writes |
+| 0x856680 | `__dtor_playerImg` | L3-batch | split | none |
 
 ## gen2-rw-2
 
-57 hooks in sa-rwcore; hazards: heap-writes (8); recordings calling them: grove-walk (28), pause-restart (30).
+23 hooks in sa-rwcore; hazards: heap-writes (6); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-rw-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-rw-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-rw-2 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-2 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-rw-2
+SA_UNVERIFIED=gen2-rw-2 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-rw-2
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4C9F70 | `FUN_004c9f70` | written | L2 | none |
-| 0x7491A0 | `cb_RIGHTTORENDER_RpAtomic_StreamGetSize` | written | L2 | none |
-| 0x74BF00 | `RpAtomicValidatePlugins` | written | L1-pure | none |
-| 0x74BFD0 | `(missed by ghidra: cat7-call)` | written | L2 | none |
-| 0x74D850 | `cb_RIGHTTORENDER_RpMaterial_StreamGetSize` | written | L2 | none |
-| 0x74D870 | `_rpMaterialSetDefaultSurfaceProperties` | written | L2 | none |
-| 0x751630 | `_rpWorldRemoveCameraCB` | written | L2 | heap-writes |
-| 0x758240 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x75D4C0 | `RpMeshSetTriStripMethod` | written | L2 | none |
-| 0x75D500 | `RpMeshGetTriStripMethod` | written | L2 | heap-writes |
-| 0x761DE0 | `cb_RIGHTTORENDER_RpWorld_StreamGetSize` | written | L2 | none |
-| 0x761E80 | `cb_RIGHTTORENDER_RpWorldSector_StreamGetSize` | written | L2 | none |
-| 0x7C4BF0 | `cb_HANIMPLUGIN_RwFrame_StreamGetSize` | written | L2 | none |
-| 0x7C65B0 | `RpHAnimKeyFrameStreamGetSize` | written | L2 | none |
-| 0x7C6A70 | `cb_SKINPLUGIN_RpGeometry_Copy` | written | L1-pure | none |
-| 0x7C6AA0 | `cb_SKINPLUGIN_RpAtomic_Dtor` | written | L2 | heap-writes |
-| 0x7C7500 | `cb_SKINPLUGIN_RpAtomic_StreamWrite` | written | L1-pure | none |
-| 0x7C89C0 | `FUN_007c89c0` | written | L2 | none |
-| 0x7C8A00 | `FUN_007c8a00` | written | L2 | none |
-| 0x7CC010 | `_rpUVAnimCustomDataStreamGetSize` | written | L1-pure | none |
-| 0x7CC3A0 | `RpUVAnimGetName` | written | L2 | none |
-| 0x7ED910 | `_rwV3dNormalize` | written | L2 | heap-writes |
-| 0x7EDBF0 | `RwV2dLength` | written | L2 | none |
-| 0x7EF9D0 | `RwIm3DGetTransformPipeline` | written | L2 | none |
-| 0x7EFDD0 | `_rwIm3DGetPool` | written | L2 | none |
-| 0x800AA0 | `FUN_00800aa0` | written | L2 | none |
-| 0x800AD0 | `FUN_00800ad0` | written | L2 | none |
-| 0x808430 | `_rwPluginRegistrySetStaticPluginsSize` | written | L2 | heap-writes |
-| 0x809C70 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
-| 0x811A40 | `cb_MATERIALEFFECTSPLUGIN_RpAtomic_Copy` | written | L2 | heap-writes |
-| 0x811B40 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Copy` | written | L2 | heap-writes |
-| 0x8505E0 | `__init_g_c02b94` | written | split | none |
-| 0x850600 | `__init_g_c02b98` | written | split | none |
-| 0x850620 | `__init_g_c02b9c` | written | split | none |
-| 0x850640 | `__init_g_c02ba0` | written | split | none |
-| 0x850660 | `__init_g_c02ba4` | written | split | none |
-| 0x8506A0 | `__init_g_c02bac` | written | split | none |
-| 0x8506C0 | `__init_g_c02bb0` | written | split | none |
-| 0x8506E0 | `__init_g_c02bb4` | written | split | none |
-| 0x850700 | `__init_g_c02bb8` | written | split | none |
-| 0x850720 | `__init_g_c02bbc` | written | split | none |
-| 0x850760 | `__init_g_c02bc4` | written | split | none |
-| 0x850780 | `__init_g_c02bc8` | written | split | none |
-| 0x8507A0 | `__init_g_c02c10` | written | split | none |
-| 0x8507C0 | `__init_g_c02c24` | written | split | none |
-| 0x8507E0 | `__init_g_c02d34` | written | split | none |
-| 0x8556C0 | `__init_g_c8801c` | written | split | none |
-| 0x8556E0 | `__init_g_c88058` | written | split | none |
-| 0x855700 | `__init_g_c8805c` | written | split | none |
-| 0x855720 | `__init_g_c88060` | written | split | none |
-| 0x855760 | `__init_g_c88068` | written | split | none |
-| 0x855780 | `__init_g_c8806c` | written | split | none |
-| 0x855F00 | `__init_g_c9211c` | written | split | none |
-| 0x855F20 | `__init_g_c92120` | written | split | none |
-| 0x855F40 | `__init_g_c92124` | written | split | none |
-| 0x855F80 | `__init_g_c9212c` | written | split | none |
-| 0x855FA0 | `__init_g_c92130` | written | split | none |
+| 0x4C9F70 | `FUN_004c9f70` | L3-batch | L2 | none |
+| 0x7491A0 | `cb_RIGHTTORENDER_RpAtomic_StreamGetSize` | L3-batch | L2 | none |
+| 0x74BFD0 | `(missed by ghidra: cat7-call)` | L3-batch | L2 | none |
+| 0x74D850 | `cb_RIGHTTORENDER_RpMaterial_StreamGetSize` | L3-batch | L2 | none |
+| 0x74D870 | `_rpMaterialSetDefaultSurfaceProperties` | L3-batch | L2 | none |
+| 0x751630 | `_rpWorldRemoveCameraCB` | L3-batch | L2 | heap-writes |
+| 0x75D4C0 | `RpMeshSetTriStripMethod` | L3-batch | L2 | none |
+| 0x75D500 | `RpMeshGetTriStripMethod` | L3-batch | L2 | heap-writes |
+| 0x761DE0 | `cb_RIGHTTORENDER_RpWorld_StreamGetSize` | L3-batch | L2 | none |
+| 0x761E80 | `cb_RIGHTTORENDER_RpWorldSector_StreamGetSize` | L3-batch | L2 | none |
+| 0x7C4BF0 | `cb_HANIMPLUGIN_RwFrame_StreamGetSize` | L3-batch | L2 | none |
+| 0x7C65B0 | `RpHAnimKeyFrameStreamGetSize` | L3-batch | L2 | none |
+| 0x7C89C0 | `FUN_007c89c0` | L3-batch | L2 | none |
+| 0x7CC3A0 | `RpUVAnimGetName` | L3-batch | L2 | none |
+| 0x7ED910 | `_rwV3dNormalize` | L3-batch | L2 | heap-writes |
+| 0x7EDBF0 | `RwV2dLength` | L3-batch | L2 | none |
+| 0x7EF9D0 | `RwIm3DGetTransformPipeline` | L3-batch | L2 | none |
+| 0x7EFDD0 | `_rwIm3DGetPool` | L3-batch | L2 | none |
+| 0x800AA0 | `FUN_00800aa0` | L3-batch | L2 | none |
+| 0x800AD0 | `FUN_00800ad0` | L3-batch | L2 | none |
+| 0x808430 | `_rwPluginRegistrySetStaticPluginsSize` | L3-batch | L2 | heap-writes |
+| 0x809C70 | `(missed by ghidra: cat7-call)` | L3-batch | L2 | heap-writes |
+| 0x811B40 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Copy` | L3-batch | L2 | heap-writes |
 
 ## gen2-rw-3
 
-57 hooks in sa-rwcore; hazards: heap-writes (28); recordings calling them: grove-walk (9), pause-restart (11).
+45 hooks in sa-rwcore; hazards: heap-writes (21); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-rw-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-rw-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-rw-3 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-3 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-rw-3
+SA_UNVERIFIED=gen2-rw-3 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-3 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-rw-3
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5A4190 | `CClothesBuilder::LoadCdDirectory` | written | L2 | none |
-| 0x5A4380 | `CClothesBuilder::nullptr` | written | L2 | none |
-| 0x5D0260 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
-| 0x5D03E0 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
-| 0x5D0440 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x5D5BA0 | `CCarFXRenderer::SetFxEnvMapLightMult` | written | L2 | none |
-| 0x5D5FA0 | `CCustomBuildingDNPipeline::DestroyPipe` | written | L2 | none |
-| 0x5D7380 | `CCustomBuildingPipeline::DestroyPipe` | written | L2 | none |
-| 0x5D8C50 | `FUN_005d8c50` | written | L2 | heap-writes |
-| 0x707790 | `RenderBuffer::ClearRenderBuffer` | written | L2 | none |
-| 0x707800 | `RenderBuffer::RenderStuffInBuffer` | written | L2 | none |
-| 0x730E50 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x748F70 | `RpAnisotPluginAttach` | written | L2 | none |
-| 0x749000 | `cb_ANISOTPLUGIN_RwEngine_Open` | written | L2 | none |
-| 0x749010 | `cb_ANISOTPLUGIN_RwEngine_Close` | written | L2 | none |
-| 0x749720 | `RpAtomicSetFreeListCreateParams` | written | L2 | none |
-| 0x74AE40 | `_rpClumpCountObjectsCB` | written | L2 | heap-writes |
-| 0x74D7D0 | `cb_RIGHTTORENDER_RpMaterial_StreamRead` | written | L2 | none |
-| 0x74FF60 | `RpTieSetFreeListCreateParams` | written | L2 | none |
-| 0x7513D0 | `_rpWorldAddLightCB` | written | L2 | heap-writes |
-| 0x7C45E0 | `RpHAnimHierarchySetFreeListCreateParams` | written | L2 | none |
-| 0x7C69F0 | `cb_SKINPLUGIN_RpGeometry_Ctor` | written | L2 | heap-writes |
-| 0x7C6A80 | `cb_SKINPLUGIN_RpAtomic_Ctor` | written | L2 | heap-writes |
-| 0x7C6AC0 | `cb_SKINPLUGIN_RpAtomic_Copy` | written | L2 | heap-writes |
-| 0x7CA6C0 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
-| 0x7CC100 | `RpUVAnimAddRef` | written | L2 | heap-writes |
-| 0x7CCAC0 | `RpUVAnimLinearKeyFrameBlend` | written | L2 | heap-writes |
-| 0x7CCBE0 | `RpUVAnimLinearKeyFrameAdd` | written | L2 | heap-writes |
-| 0x7CCC50 | `FUN_007ccc50` | written | L2 | heap-writes |
-| 0x7CCC80 | `RtAnimAnimationFreeListCreateParams` | written | L2 | none |
-| 0x7F12F0 | `_rwMatrixMultiplyDefault` | written | L2 | heap-writes |
-| 0x7F16A0 | `RwMatrixSetFreeListCreateParams` | written | L2 | none |
-| 0x7FFD90 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
-| 0x7FFDB0 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
-| 0x7FFDF0 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
-| 0x7FFE20 | `(missed by ghidra: data-code-immediate)` | written | L2 | heap-writes |
-| 0x801C10 | `RwFreeListSetFlags` | written | L2 | heap-writes |
-| 0x801C20 | `RwFreeListGetFlags` | written | L2 | none |
-| 0x802230 | `RwOsGetMemoryInterface` | written | L2 | none |
-| 0x802F60 | `(missed by ghidra: cat7-call)` | written | L2 | none |
-| 0x804B60 | `_rwTexDictionaryCountTexturesCB` | written | L2 | heap-writes |
-| 0x8052F0 | `RxHeapGetGlobalHeap` | written | L2 | none |
-| 0x805300 | `RxPacketCreate` | written | L2 | heap-writes |
-| 0x8081B0 | `RwResourcesGetArenaSize` | written | L2 | none |
-| 0x8087B0 | `RwPluginRegistrySetFreeListCreateParams` | written | L2 | none |
-| 0x809020 | `RwBBoxInitialize` | written | L2 | heap-writes |
-| 0x809400 | `_rwSListDestroyEndEntries` | written | L2 | heap-writes |
-| 0x8094B0 | `_rwSListGetNumEntries` | written | L2 | none |
-| 0x809510 | `_rwSListGetEntry` | written | L2 | none |
-| 0x809530 | `_rwSListGetBegin` | written | L2 | none |
-| 0x809540 | `_rwSListGetEnd` | written | L2 | none |
-| 0x810030 | `FUN_00810030` | written | L1-pure | none |
-| 0x810C40 | `cb_MATERIALEFFECTSPLUGIN_RpMaterial_Ctor` | written | L2 | heap-writes |
-| 0x811A00 | `cb_MATERIALEFFECTSPLUGIN_RpAtomic_Ctor` | written | L2 | heap-writes |
-| 0x811A20 | `cb_MATERIALEFFECTSPLUGIN_RpAtomic_Dtor` | written | L2 | heap-writes |
-| 0x811B00 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Ctor` | written | L2 | heap-writes |
-| 0x811B20 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Dtor` | written | L2 | heap-writes |
+| 0x5A4190 | `CClothesBuilder::LoadCdDirectory` | L3-batch | L2 | none |
+| 0x5A4380 | `CClothesBuilder::nullptr` | L3-batch | L2 | none |
+| 0x5D0260 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
+| 0x5D03E0 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
+| 0x5D0440 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x5D5FA0 | `CCustomBuildingDNPipeline::DestroyPipe` | L3-batch | L2 | none |
+| 0x5D7380 | `CCustomBuildingPipeline::DestroyPipe` | L3-batch | L2 | none |
+| 0x5D8C50 | `FUN_005d8c50` | L3-batch | L2 | heap-writes |
+| 0x707790 | `RenderBuffer::ClearRenderBuffer` | L3-batch | L2 | none |
+| 0x707800 | `RenderBuffer::RenderStuffInBuffer` | L3-batch | L2 | none |
+| 0x730E50 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x749010 | `cb_ANISOTPLUGIN_RwEngine_Close` | L3-batch | L2 | none |
+| 0x749720 | `RpAtomicSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x74AE40 | `_rpClumpCountObjectsCB` | L3-batch | L2 | heap-writes |
+| 0x74D7D0 | `cb_RIGHTTORENDER_RpMaterial_StreamRead` | L3-batch | L2 | none |
+| 0x74FF60 | `RpTieSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7513D0 | `_rpWorldAddLightCB` | L3-batch | L2 | heap-writes |
+| 0x7C45E0 | `RpHAnimHierarchySetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7CA6C0 | `(missed by ghidra: cat7-call)` | L3-batch | L2 | heap-writes |
+| 0x7CC100 | `RpUVAnimAddRef` | L3-batch | L2 | heap-writes |
+| 0x7CCAC0 | `RpUVAnimLinearKeyFrameBlend` | L3-batch | L2 | heap-writes |
+| 0x7CCBE0 | `RpUVAnimLinearKeyFrameAdd` | L3-batch | L2 | heap-writes |
+| 0x7CCC50 | `FUN_007ccc50` | L3-batch | L2 | heap-writes |
+| 0x7CCC80 | `RtAnimAnimationFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7F12F0 | `_rwMatrixMultiplyDefault` | L3-batch | L2 | heap-writes |
+| 0x7F16A0 | `RwMatrixSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7FFD90 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
+| 0x7FFDB0 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
+| 0x7FFDF0 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
+| 0x7FFE20 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | heap-writes |
+| 0x801C10 | `RwFreeListSetFlags` | L3-batch | L2 | heap-writes |
+| 0x801C20 | `RwFreeListGetFlags` | L3-batch | L2 | none |
+| 0x802230 | `RwOsGetMemoryInterface` | L3-batch | L2 | none |
+| 0x802F60 | `(missed by ghidra: cat7-call)` | L3-batch | L2 | none |
+| 0x804B60 | `_rwTexDictionaryCountTexturesCB` | L3-batch | L2 | heap-writes |
+| 0x805300 | `RxPacketCreate` | L3-batch | L2 | heap-writes |
+| 0x8081B0 | `RwResourcesGetArenaSize` | L3-batch | L2 | none |
+| 0x8087B0 | `RwPluginRegistrySetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x809020 | `RwBBoxInitialize` | L3-batch | L2 | heap-writes |
+| 0x809400 | `_rwSListDestroyEndEntries` | L3-batch | L2 | heap-writes |
+| 0x8094B0 | `_rwSListGetNumEntries` | L3-batch | L2 | none |
+| 0x809510 | `_rwSListGetEntry` | L3-batch | L2 | none |
+| 0x809530 | `_rwSListGetBegin` | L3-batch | L2 | none |
+| 0x809540 | `_rwSListGetEnd` | L3-batch | L2 | none |
+| 0x811B20 | `cb_MATERIALEFFECTSPLUGIN_RpWorldSector_Dtor` | L3-batch | L2 | heap-writes |
 
 ## gen2-rw-4
 
-57 hooks in sa-rwcore; hazards: heap-writes (8); recordings calling them: pause-restart (1).
+51 hooks in sa-rwcore; hazards: heap-writes (8); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
-tools/verify/bisect-batch.sh gen2-rw-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec $LANE
+tools/verify/bisect-batch.sh gen2-rw-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
 # L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
-SA_UNVERIFIED=gen2-rw-4 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-4 $SA_ROOT/target/e2e/corpus/pause-restart.sarec --runs "plain l2 rust" --tag gen2-rw-4
+SA_UNVERIFIED=gen2-rw-4 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-4 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag gen2-rw-4
 ```
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5CF800 | `FUN_005cf800` | written | L2 | none |
-| 0x5CF820 | `FUN_005cf820` | written | L2 | none |
-| 0x5DAAC0 | `FUN_005daac0` | written | L2 | none |
-| 0x749740 | `RpClumpSetFreeListCreateParams` | written | L2 | none |
-| 0x74A550 | `RpClumpAddCamera` | written | L2 | heap-writes |
-| 0x74A580 | `RpClumpRemoveCamera` | written | L2 | heap-writes |
-| 0x74BF10 | `RpClumpValidatePlugins` | written | L1-pure | none |
-| 0x74CDD0 | `RpGeometrySetStreamAlwaysCallBack` | written | L2 | none |
-| 0x74CDF0 | `RpGeometryGetPluginOffset` | written | L2 | none |
-| 0x74CE10 | `RpGeometryValidatePlugins` | written | L1-pure | none |
-| 0x74D8C0 | `RpMaterialSetFreeListCreateParams` | written | L2 | none |
-| 0x74DC50 | `RpMaterialSetStreamAlwaysCallBack` | written | L2 | none |
-| 0x74DC70 | `RpMaterialSetStreamRightsCallBack` | written | L2 | none |
-| 0x74DC90 | `RpMaterialGetPluginOffset` | written | L2 | none |
-| 0x74DCB0 | `RpMaterialValidatePlugins` | written | L1-pure | none |
-| 0x74E010 | `RpMaterialStreamGetSize` | written | L2 | none |
-| 0x74F570 | `RpWorldRender` | written | L2 | none |
-| 0x74F730 | `RpWorldSetSectorRenderCallBack` | written | L2 | heap-writes |
-| 0x74F750 | `RpWorldGetSectorRenderCallBack` | written | L2 | none |
-| 0x74FD30 | `RpWorldSetStreamAlwaysCallBack` | written | L2 | none |
-| 0x74FD50 | `RpWorldSetStreamRightsCallBack` | written | L2 | none |
-| 0x74FD70 | `RpWorldGetPluginOffset` | written | L2 | none |
-| 0x74FD90 | `RpWorldValidatePlugins` | written | L1-pure | none |
-| 0x74FF80 | `RpLightTieSetFreeListCreateParams` | written | L2 | none |
-| 0x750D90 | `cb_BINMESHPLUGIN_RpGeometry_StreamWrite` | written | L2 | none |
-| 0x750DE0 | `cb_BINMESHPLUGIN_RpGeometry_StreamGetSize` | written | L2 | none |
-| 0x750E00 | `cb_NATIVEDATAPLUGIN_RpGeometry_StreamWrite` | written | L2 | none |
-| 0x750E40 | `cb_NATIVEDATAPLUGIN_RpGeometry_StreamGetSize` | written | L2 | none |
-| 0x750E50 | `cb_NATIVEDATAPLUGIN_RpWorldSector_StreamWrite` | written | L2 | none |
-| 0x750E90 | `cb_NATIVEDATAPLUGIN_RpWorldSector_StreamGetSize` | written | L2 | none |
-| 0x750F90 | `RpWorldAddAtomic` | written | L2 | heap-writes |
-| 0x7516B0 | `RpClumpGetWorld` | written | L2 | none |
-| 0x7519E0 | `RpLightGetWorld` | written | L2 | none |
-| 0x751D90 | `RpLightRegisterPluginStream` | written | L2 | none |
-| 0x751DC0 | `RpLightSetStreamAlwaysCallBack` | written | L2 | none |
-| 0x751DE0 | `RpLightGetPluginOffset` | written | L2 | none |
-| 0x751E00 | `RpLightValidatePlugins` | written | L1-pure | none |
-| 0x751E10 | `RpLightStreamGetSize` | written | L2 | none |
-| 0x752250 | `RpLightSetFreeListCreateParams` | written | L2 | none |
-| 0x75A8E0 | `RpBuildMeshGenerateDefaultIgnoreWindingTriStrip` | written | L2 | none |
-| 0x75A900 | `RpBuildMeshGeneratePreprocessTriStrip` | written | L2 | none |
-| 0x75A920 | `RpBuildMeshGeneratePreprocessIgnoreWindingTriStrip` | written | L2 | none |
-| 0x75A940 | `RpBuildMeshGenerateExhaustiveTriStrip` | written | L2 | none |
-| 0x75B4E0 | `RpBuildMeshGenerateExhaustiveIgnoreWindingTriStrip` | written | L2 | none |
-| 0x75E2D0 | `RpMaterialSetDefaultPipeline` | written | L2 | heap-writes |
-| 0x761C60 | `RpWorldSectorForAllMeshes` | written | L2 | none |
-| 0x761CF0 | `RpWorldSectorSetStreamAlwaysCallBack` | written | L2 | none |
-| 0x761D10 | `RpWorldSectorSetStreamRightsCallBack` | written | L2 | none |
-| 0x761D60 | `cb_RIGHTTORENDER_RpWorld_StreamRead` | written | L2 | none |
-| 0x761E00 | `cb_RIGHTTORENDER_RpWorldSector_StreamRead` | written | L2 | none |
-| 0x7C6BE0 | `cb_SKINPLUGIN_RpGeometry_StreamGetSize` | written | L2 | none |
-| 0x7CC430 | `RpMaterialUVAnimGetInterpolator` | written | L2 | none |
-| 0x7CC450 | `RpMaterialUVAnimSetInterpolator` | written | L2 | heap-writes |
-| 0x7CC810 | `FUN_007cc810` | written | L2 | heap-writes |
-| 0x7CC9F0 | `RpUVAnimLinearKeyFrameApply` | written | L2 | heap-writes |
-| 0x7EBD10 | `RtQuatModulus` | written | L2 | none |
-| 0x804E40 | `_rwTexDictionaryDestroyTextureCB` | written | L2 | none |
+| 0x5CF800 | `FUN_005cf800` | L3-batch | L2 | none |
+| 0x5CF820 | `FUN_005cf820` | L3-batch | L2 | none |
+| 0x749740 | `RpClumpSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x74A550 | `RpClumpAddCamera` | L3-batch | L2 | heap-writes |
+| 0x74A580 | `RpClumpRemoveCamera` | L3-batch | L2 | heap-writes |
+| 0x74CDD0 | `RpGeometrySetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x74CDF0 | `RpGeometryGetPluginOffset` | L3-batch | L2 | none |
+| 0x74D8C0 | `RpMaterialSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x74DC50 | `RpMaterialSetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x74DC70 | `RpMaterialSetStreamRightsCallBack` | L3-batch | L2 | none |
+| 0x74DC90 | `RpMaterialGetPluginOffset` | L3-batch | L2 | none |
+| 0x74E010 | `RpMaterialStreamGetSize` | L3-batch | L2 | none |
+| 0x74F570 | `RpWorldRender` | L3-batch | L2 | none |
+| 0x74F730 | `RpWorldSetSectorRenderCallBack` | L3-batch | L2 | heap-writes |
+| 0x74F750 | `RpWorldGetSectorRenderCallBack` | L3-batch | L2 | none |
+| 0x74FD30 | `RpWorldSetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x74FD50 | `RpWorldSetStreamRightsCallBack` | L3-batch | L2 | none |
+| 0x74FD70 | `RpWorldGetPluginOffset` | L3-batch | L2 | none |
+| 0x74FF80 | `RpLightTieSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x750D90 | `cb_BINMESHPLUGIN_RpGeometry_StreamWrite` | L3-batch | L2 | none |
+| 0x750DE0 | `cb_BINMESHPLUGIN_RpGeometry_StreamGetSize` | L3-batch | L2 | none |
+| 0x750E00 | `cb_NATIVEDATAPLUGIN_RpGeometry_StreamWrite` | L3-batch | L2 | none |
+| 0x750E40 | `cb_NATIVEDATAPLUGIN_RpGeometry_StreamGetSize` | L3-batch | L2 | none |
+| 0x750E50 | `cb_NATIVEDATAPLUGIN_RpWorldSector_StreamWrite` | L3-batch | L2 | none |
+| 0x750E90 | `cb_NATIVEDATAPLUGIN_RpWorldSector_StreamGetSize` | L3-batch | L2 | none |
+| 0x750F90 | `RpWorldAddAtomic` | L3-batch | L2 | heap-writes |
+| 0x7516B0 | `RpClumpGetWorld` | L3-batch | L2 | none |
+| 0x7519E0 | `RpLightGetWorld` | L3-batch | L2 | none |
+| 0x751D90 | `RpLightRegisterPluginStream` | L3-batch | L2 | none |
+| 0x751DC0 | `RpLightSetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x751DE0 | `RpLightGetPluginOffset` | L3-batch | L2 | none |
+| 0x751E10 | `RpLightStreamGetSize` | L3-batch | L2 | none |
+| 0x752250 | `RpLightSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x75A8E0 | `RpBuildMeshGenerateDefaultIgnoreWindingTriStrip` | L3-batch | L2 | none |
+| 0x75A900 | `RpBuildMeshGeneratePreprocessTriStrip` | L3-batch | L2 | none |
+| 0x75A920 | `RpBuildMeshGeneratePreprocessIgnoreWindingTriStrip` | L3-batch | L2 | none |
+| 0x75A940 | `RpBuildMeshGenerateExhaustiveTriStrip` | L3-batch | L2 | none |
+| 0x75B4E0 | `RpBuildMeshGenerateExhaustiveIgnoreWindingTriStrip` | L3-batch | L2 | none |
+| 0x75E2D0 | `RpMaterialSetDefaultPipeline` | L3-batch | L2 | heap-writes |
+| 0x761C60 | `RpWorldSectorForAllMeshes` | L3-batch | L2 | none |
+| 0x761CF0 | `RpWorldSectorSetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x761D10 | `RpWorldSectorSetStreamRightsCallBack` | L3-batch | L2 | none |
+| 0x761D60 | `cb_RIGHTTORENDER_RpWorld_StreamRead` | L3-batch | L2 | none |
+| 0x761E00 | `cb_RIGHTTORENDER_RpWorldSector_StreamRead` | L3-batch | L2 | none |
+| 0x7C6BE0 | `cb_SKINPLUGIN_RpGeometry_StreamGetSize` | L3-batch | L2 | none |
+| 0x7CC430 | `RpMaterialUVAnimGetInterpolator` | L3-batch | L2 | none |
+| 0x7CC450 | `RpMaterialUVAnimSetInterpolator` | L3-batch | L2 | heap-writes |
+| 0x7CC810 | `FUN_007cc810` | L3-batch | L2 | heap-writes |
+| 0x7CC9F0 | `RpUVAnimLinearKeyFrameApply` | L3-batch | L2 | heap-writes |
+| 0x7EBD10 | `RtQuatModulus` | L3-batch | L2 | none |
+| 0x804E40 | `_rwTexDictionaryDestroyTextureCB` | L3-batch | L2 | none |
 
 ## gen2-rw-5
 
-53 hooks in sa-rwcore; hazards: heap-writes (11); recordings calling them: pause-restart (6).
+43 hooks in sa-rwcore; hazards: heap-writes (10); recordings calling them: pause-restart (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1123,63 +704,53 @@ SA_UNVERIFIED=gen2-rw-5 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-rw-5 $SA_ROOT
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5E46D0 | `CVisibilityPlugins::AddWeaponPedForPC` | written | L2 | heap-writes |
-| 0x7226D0 | `RwHelper::RemoveRefsCB` | written | L2 | none |
-| 0x7323C0 | `CVisibilityPlugins::RenderWheelAtomicCB` | written | L2 | none |
-| 0x732660 | `CVisibilityPlugins::RenderAtomicWithAlphaCB` | written | L2 | none |
-| 0x732850 | `CVisibilityPlugins::SetTextureCB` | written | L2 | none |
-| 0x732870 | `CVisibilityPlugins::RenderPlayerCB` | written | L2 | none |
-| 0x732B30 | `CVisibilityPlugins::RenderAtomic` | written | L2 | none |
-| 0x733630 | `CVisibilityPlugins::RenderFadingClumpCB` | written | L2 | none |
-| 0x734530 | `CVisibilityPlugins::InitAlphaAtomicList` | written | L2 | none |
-| 0x734540 | `CVisibilityPlugins::InitAlphaEntityList` | written | L2 | none |
-| 0x734DA0 | `RwHelper::forceLinearFilteringAtomicsCB` | written | L2 | none |
-| 0x734DC0 | `RwHelper::SetFilterModeOnClumpsTextures` | written | L2 | none |
-| 0x750F80 | `RwCameraGetWorld` | written | L2 | none |
-| 0x761D30 | `RpWorldSectorGetPluginOffset` | written | L2 | none |
-| 0x761D50 | `RpWorldSectorValidatePlugins` | written | L1-pure | none |
-| 0x7CEE50 | `RtDictSchemaAddDict` | written | L2 | heap-writes |
-| 0x7CEEE0 | `RtDictSchemaGetCurrentDict` | written | L2 | none |
-| 0x7CEEF0 | `RtDictSchemaSetCurrentDict` | written | L2 | heap-writes |
-| 0x7EC760 | `RwStreamSetFreeListCreateParams` | written | L2 | none |
-| 0x7ED460 | `RwStreamWriteInt32` | written | L2 | none |
-| 0x7ED480 | `RwStreamWriteInt16` | written | L2 | none |
-| 0x7EE0F0 | `RwCameraSetFreeListCreateParams` | written | L2 | none |
-| 0x7EE4A0 | `RwCameraValidatePlugins` | written | L1-pure | none |
-| 0x7EFED0 | `RwFrameSetFreeListCreateParams` | written | L2 | none |
-| 0x7F1290 | `RwFrameGetPluginOffset` | written | L2 | none |
-| 0x7F12B0 | `RwFrameValidatePlugins` | written | L1-pure | none |
-| 0x7F1780 | `RwEngineGetMatrixTolerances` | written | L2 | heap-writes |
-| 0x7F17B0 | `RwEngineSetMatrixTolerances` | written | L2 | heap-writes |
-| 0x7F2BA0 | `RwEngineGetVersion` | written | L1-pure | none |
-| 0x7F2E10 | `RwEngineGetMetrics` | written | L2 | none |
-| 0x7F3C40 | `RwTexDictionaryGetPluginOffset` | written | L2 | none |
-| 0x7F3C60 | `RwTexDictionaryValidatePlugins` | written | L1-pure | none |
-| 0x7F3E80 | `RwTexDictionarySetFreeListCreateParams` | written | L2 | none |
-| 0x8048E0 | `RwTexDictionaryRegisterPluginStream` | written | L2 | none |
-| 0x804910 | `RwTexDictionarySetStreamAlwaysCallBack` | written | L2 | none |
-| 0x804FC0 | `RxPipelineSetFreeListCreateParams` | written | L2 | none |
-| 0x8054C0 | `RxClusterDestroyData` | written | L2 | heap-writes |
-| 0x805680 | `RxPipelineNodeGetPipelineCluster` | written | L2 | none |
-| 0x8056C0 | `RxPipelineClusterSetCreationAttributes` | written | L2 | heap-writes |
-| 0x8056F0 | `RxClusterSetAttributes` | written | L2 | heap-writes |
-| 0x805D70 | `RxPipelineNodeFindOutputByIndex` | written | L2 | none |
-| 0x805DA0 | `RxPipelineNodeFindInput` | written | L2 | none |
-| 0x805F30 | `RxPipelineNodeGetInitData` | written | L2 | none |
-| 0x806BC0 | `RxPipelineFindNodeByIndex` | written | L2 | none |
-| 0x807040 | `RxLockedPipeDeleteNode` | written | L2 | none |
-| 0x807070 | `RxLockedPipeSetEntryPoint` | written | L2 | heap-writes |
-| 0x8070D0 | `RxLockedPipeGetEntryPoint` | written | L2 | none |
-| 0x807100 | `RxLockedPipeAddPath` | written | L2 | heap-writes |
-| 0x807170 | `RxLockedPipeDeletePath` | written | L2 | heap-writes |
-| 0x8075B0 | `RwFrameSetStreamAlwaysCallBack` | written | L2 | none |
-| 0x808C90 | `RwCameraRegisterPluginStream` | written | L2 | none |
-| 0x808CC0 | `RwCameraSetStreamAlwaysCallBack` | written | L2 | none |
-| 0x808CE0 | `RwCameraStreamGetSize` | written | L2 | none |
+| 0x7226D0 | `RwHelper::RemoveRefsCB` | L3-batch | L2 | none |
+| 0x732660 | `CVisibilityPlugins::RenderAtomicWithAlphaCB` | L3-batch | L2 | none |
+| 0x732850 | `CVisibilityPlugins::SetTextureCB` | L3-batch | L2 | none |
+| 0x732870 | `CVisibilityPlugins::RenderPlayerCB` | L3-batch | L2 | none |
+| 0x733630 | `CVisibilityPlugins::RenderFadingClumpCB` | L3-batch | L2 | none |
+| 0x734DA0 | `RwHelper::forceLinearFilteringAtomicsCB` | L3-batch | L2 | none |
+| 0x734DC0 | `RwHelper::SetFilterModeOnClumpsTextures` | L3-batch | L2 | none |
+| 0x750F80 | `RwCameraGetWorld` | L3-batch | L2 | none |
+| 0x761D30 | `RpWorldSectorGetPluginOffset` | L3-batch | L2 | none |
+| 0x7CEE50 | `RtDictSchemaAddDict` | L3-batch | L2 | heap-writes |
+| 0x7CEEE0 | `RtDictSchemaGetCurrentDict` | L3-batch | L2 | none |
+| 0x7CEEF0 | `RtDictSchemaSetCurrentDict` | L3-batch | L2 | heap-writes |
+| 0x7EC760 | `RwStreamSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7ED460 | `RwStreamWriteInt32` | L3-batch | L2 | none |
+| 0x7ED480 | `RwStreamWriteInt16` | L3-batch | L2 | none |
+| 0x7EE0F0 | `RwCameraSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7EFED0 | `RwFrameSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x7F1290 | `RwFrameGetPluginOffset` | L3-batch | L2 | none |
+| 0x7F1780 | `RwEngineGetMatrixTolerances` | L3-batch | L2 | heap-writes |
+| 0x7F17B0 | `RwEngineSetMatrixTolerances` | L3-batch | L2 | heap-writes |
+| 0x7F2E10 | `RwEngineGetMetrics` | L3-batch | L2 | none |
+| 0x7F3C40 | `RwTexDictionaryGetPluginOffset` | L3-batch | L2 | none |
+| 0x7F3E80 | `RwTexDictionarySetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x8048E0 | `RwTexDictionaryRegisterPluginStream` | L3-batch | L2 | none |
+| 0x804910 | `RwTexDictionarySetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x804FC0 | `RxPipelineSetFreeListCreateParams` | L3-batch | L2 | none |
+| 0x8054C0 | `RxClusterDestroyData` | L3-batch | L2 | heap-writes |
+| 0x805680 | `RxPipelineNodeGetPipelineCluster` | L3-batch | L2 | none |
+| 0x8056C0 | `RxPipelineClusterSetCreationAttributes` | L3-batch | L2 | heap-writes |
+| 0x8056F0 | `RxClusterSetAttributes` | L3-batch | L2 | heap-writes |
+| 0x805D70 | `RxPipelineNodeFindOutputByIndex` | L3-batch | L2 | none |
+| 0x805DA0 | `RxPipelineNodeFindInput` | L3-batch | L2 | none |
+| 0x805F30 | `RxPipelineNodeGetInitData` | L3-batch | L2 | none |
+| 0x806BC0 | `RxPipelineFindNodeByIndex` | L3-batch | L2 | none |
+| 0x807040 | `RxLockedPipeDeleteNode` | L3-batch | L2 | none |
+| 0x807070 | `RxLockedPipeSetEntryPoint` | L3-batch | L2 | heap-writes |
+| 0x8070D0 | `RxLockedPipeGetEntryPoint` | L3-batch | L2 | none |
+| 0x807100 | `RxLockedPipeAddPath` | L3-batch | L2 | heap-writes |
+| 0x807170 | `RxLockedPipeDeletePath` | L3-batch | L2 | heap-writes |
+| 0x8075B0 | `RwFrameSetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x808C90 | `RwCameraRegisterPluginStream` | L3-batch | L2 | none |
+| 0x808CC0 | `RwCameraSetStreamAlwaysCallBack` | L3-batch | L2 | none |
+| 0x808CE0 | `RwCameraStreamGetSize` | L3-batch | L2 | none |
 
 ## gen2-script-1
 
-54 hooks in sa-script; hazards: ax-al-return (2), heap-writes (9); recordings calling them: grove-walk (38), pause-restart (38).
+12 hooks in sa-script; hazards: heap-writes (9); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1190,64 +761,22 @@ SA_UNVERIFIED=gen2-script-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-script-1 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x43E090 | `FUN_0043e090` | written | L2 | heap-writes |
-| 0x45AFB0 | `thunk_FUN_015658a0` | written | L2 | heap-writes |
-| 0x463640 | `thunk_FUN_0156f250` | written | L2 | heap-writes |
-| 0x464D20 | `CTheScripts::GetScriptIndexFromPointer` | written | L1-pure | none |
-| 0x464F50 | `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType` | written | L2 | heap-writes |
-| 0x46AB20 | `CScriptsForBrains::HasAttractorScriptBrainWithThisNameLoaded` | written | L2 | none |
-| 0x46CED0 | `CScriptsForBrains::StartOrRequestNewStreamedScriptBrainWithThisName` | written | L2 | none |
-| 0x470070 | `thunk_FUN_01561090` | written | L2 | heap-writes |
-| 0x470900 | `CStreamedScripts::GetStreamedScriptFilename` | written | L1-pure | none |
-| 0x474710 | `CTheScripts::InitialiseSpecialAnimGroup` | written | L2 | heap-writes |
-| 0x47C0E0 | `thunk_FUN_015689b0` | written | L2 | heap-writes |
-| 0x47E070 | `thunk_FUN_015688d0` | written | L2 | none |
-| 0x483BA0 | `CTheScripts::RemoveScriptSphere` | written | L2 | heap-writes |
-| 0x492FD0 | `CTheScripts::RemoveScriptEffectSystem` | written | L2 | heap-writes |
-| 0x571970 | `FUN_00571970` | written | L1-pure | ax-al-return |
-| 0x571980 | `FUN_00571980` | written | L1-pure | ax-al-return |
-| 0x84A580 | `__init_g_a43588` | written | split | none |
-| 0x84A5A0 | `__init_g_a4358c` | written | split | none |
-| 0x84A5C0 | `__init_g_a43590` | written | split | none |
-| 0x84A600 | `__init_g_a43598` | written | split | none |
-| 0x84A620 | `__init_g_a4359c` | written | split | none |
-| 0x84A660 | `__init_g_a90834` | written | split | none |
-| 0x84A680 | `__init_g_a90838` | written | split | none |
-| 0x84A6A0 | `__init_g_a9083c` | written | split | none |
-| 0x84A6E0 | `__init_g_a90844` | written | split | none |
-| 0x84A700 | `__init_g_a90848` | written | split | none |
-| 0x84A740 | `__init_CTheScripts__ScriptsForBrains` | written | split | none |
-| 0x84A7E0 | `__init_g_a95148` | written | split | none |
-| 0x84A800 | `__init_g_a9514c` | written | split | none |
-| 0x84A820 | `__init_g_a95150` | written | split | none |
-| 0x84A860 | `__init_g_a95158` | written | split | none |
-| 0x84A880 | `__init_g_a9515c` | written | split | none |
-| 0x84A960 | `__init_g_a95178` | written | split | none |
-| 0x84A980 | `__init_g_a9517c` | written | split | none |
-| 0x84A9A0 | `__init_g_a95180` | written | split | none |
-| 0x84A9E0 | `__init_g_a95188` | written | split | none |
-| 0x84AA00 | `__init_g_a9518c` | written | split | none |
-| 0x84AC60 | `__init_g_a951dc` | written | split | none |
-| 0x84AC80 | `__init_g_a951e0` | written | split | none |
-| 0x84ACA0 | `__init_g_a951e4` | written | split | none |
-| 0x84ACE0 | `__init_g_a951ec` | written | split | none |
-| 0x84AD00 | `__init_g_a951f0` | written | split | none |
-| 0x84FA60 | `__init_g_bb423c` | written | split | none |
-| 0x84FB60 | `__init_g_bb4a58` | written | split | none |
-| 0x84FB80 | `__init_g_bb4a5c` | written | split | none |
-| 0x84FBA0 | `__init_g_bb4a60` | written | split | none |
-| 0x84FBE0 | `__init_g_bb4a68` | written | split | none |
-| 0x84FC00 | `__init_g_bb4a6c` | written | split | none |
-| 0x852780 | `__init_g_c18d30` | written | split | none |
-| 0x8527A0 | `__init_g_c18d34` | written | split | none |
-| 0x8527C0 | `__init_g_c18d38` | written | split | none |
-| 0x852800 | `__init_g_c18d40` | written | split | none |
-| 0x852820 | `__init_g_c18d44` | written | split | none |
-| 0x8544D0 | `__init_g_c39ed8` | written | split | none |
+| 0x43E090 | `FUN_0043e090` | L3-batch | L2 | heap-writes |
+| 0x45AFB0 | `thunk_FUN_015658a0` | L3-batch | L2 | heap-writes |
+| 0x463640 | `thunk_FUN_0156f250` | L3-batch | L2 | heap-writes |
+| 0x464F50 | `CRunningScript::GetCorrectPedModelIndexForEmergencyServiceType` | L3-batch | L2 | heap-writes |
+| 0x46AB20 | `CScriptsForBrains::HasAttractorScriptBrainWithThisNameLoaded` | L3-batch | L2 | none |
+| 0x46CED0 | `CScriptsForBrains::StartOrRequestNewStreamedScriptBrainWithThisName` | L3-batch | L2 | none |
+| 0x470070 | `thunk_FUN_01561090` | L3-batch | L2 | heap-writes |
+| 0x474710 | `CTheScripts::InitialiseSpecialAnimGroup` | L3-batch | L2 | heap-writes |
+| 0x47C0E0 | `thunk_FUN_015689b0` | L3-batch | L2 | heap-writes |
+| 0x47E070 | `thunk_FUN_015688d0` | L3-batch | L2 | none |
+| 0x483BA0 | `CTheScripts::RemoveScriptSphere` | L3-batch | L2 | heap-writes |
+| 0x492FD0 | `CTheScripts::RemoveScriptEffectSystem` | L3-batch | L2 | heap-writes |
 
 ## gen2-stream-1
 
-53 hooks in sa-stream; hazards: heap-writes (3); recordings calling them: grove-walk (48), pause-restart (48).
+5 hooks in sa-stream; hazards: heap-writes (3); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1258,63 +787,15 @@ SA_UNVERIFIED=gen2-stream-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-stream-1 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x4C5750 | `CClumpModelInfo::~CClumpModelInfo` | written | L2 | heap-writes |
-| 0x4C9580 | `FUN_004c9580` | written | L2 | heap-writes |
-| 0x4C9840 | `FUN_004c9840` | written | L2 | heap-writes |
-| 0x5B2AB0 | `FUN_005b2ab0` | written | L2 | none |
-| 0x5B38F0 | `AddTextureCB` | written | L2 | none |
-| 0x848F10 | `__init_g_8e3ee0` | written | split | none |
-| 0x848F30 | `__init_g_8e3ee4` | written | split | none |
-| 0x848F50 | `__init_g_8e3ee8` | written | split | none |
-| 0x848F90 | `__init_g_8e3ef0` | written | split | none |
-| 0x848FB0 | `__init_g_8e3ef4` | written | split | none |
-| 0x848FD0 | `__init_g_8e3fb8` | written | split | none |
-| 0x848FF0 | `__init_g_8e3fbc` | written | split | none |
-| 0x849010 | `__init_g_8e3fc0` | written | split | none |
-| 0x849050 | `__init_g_8e3fc8` | written | split | none |
-| 0x849070 | `__init_g_8e3fcc` | written | split | none |
-| 0x849090 | `__init_g_9654d8` | written | split | none |
-| 0x8490B0 | `__init_g_9654dc` | written | split | none |
-| 0x8490D0 | `__init_g_9654e0` | written | split | none |
-| 0x849110 | `__init_g_9654e8` | written | split | none |
-| 0x849130 | `__init_g_9654ec` | written | split | none |
-| 0x849150 | `__init_g_96553c` | written | split | none |
-| 0x849170 | `__init_g_965540` | written | split | none |
-| 0x849190 | `__init_g_965544` | written | split | none |
-| 0x8491D0 | `__init_g_96554c` | written | split | none |
-| 0x8491F0 | `__init_g_965550` | written | split | none |
-| 0x84BB50 | `__init_g_a9b0b4` | written | split | none |
-| 0x84BB70 | `__init_g_a9b0b8` | written | split | none |
-| 0x84BB90 | `__init_g_a9b0bc` | written | split | none |
-| 0x84BBB0 | `__init_g_a9b0c0` | written | split | none |
-| 0x84BBD0 | `__init_g_aae94c` | written | split | none |
-| 0x84BD30 | `__init_g_b4dbe0` | written | split | none |
-| 0x84BD50 | `__init_g_b4e6c0` | written | split | none |
-| 0x84BD70 | `__init_g_b4e6c4` | written | split | none |
-| 0x84BD90 | `__init_g_b4e6c8` | written | split | none |
-| 0x84BDD0 | `__init_g_b4e6d0` | written | split | none |
-| 0x84BDF0 | `__init_g_b4e6d4` | written | split | none |
-| 0x84DC30 | `__init_g_b71824` | written | split | none |
-| 0x84DC50 | `__init_g_b71828` | written | split | none |
-| 0x84DC70 | `__init_g_b7182c` | written | split | none |
-| 0x84DCB0 | `__init_g_b71834` | written | split | none |
-| 0x84DCD0 | `__init_g_b71838` | written | split | none |
-| 0x850140 | `__init_g_bc40bc` | written | split | none |
-| 0x850160 | `__init_g_bc40c0` | written | split | none |
-| 0x850180 | `__init_g_bc40c4` | written | split | none |
-| 0x8501C0 | `__init_g_bc40cc` | written | split | none |
-| 0x8501E0 | `__init_g_bc40d0` | written | split | none |
-| 0x855570 | `__init_g_c87ad0` | written | split | none |
-| 0x855590 | `__init_g_c87ad4` | written | split | none |
-| 0x8555B0 | `__init_g_c87ad8` | written | split | none |
-| 0x8555F0 | `__init_g_c87ae0` | written | split | none |
-| 0x855610 | `__init_g_c87ae4` | written | split | none |
-| 0x855650 | `__init_g_c87b38` | written | split | none |
-| 0x8556A0 | `__init_g_c88000` | written | split | none |
+| 0x4C5750 | `CClumpModelInfo::~CClumpModelInfo` | L3-batch | L2 | heap-writes |
+| 0x4C9580 | `FUN_004c9580` | L3-batch | L2 | heap-writes |
+| 0x4C9840 | `FUN_004c9840` | L3-batch | L2 | heap-writes |
+| 0x5B2AB0 | `FUN_005b2ab0` | L3-batch | L2 | none |
+| 0x5B38F0 | `AddTextureCB` | L3-batch | L2 | none |
 
 ## gen2-veh-1
 
-17 hooks in sa-veh; hazards: heap-writes (7); recordings calling them: no coverage data.
+16 hooks in sa-veh; hazards: heap-writes (7); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1325,27 +806,26 @@ SA_UNVERIFIED=gen2-veh-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-veh-1 $SA_RO
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x40FD50 | `CColDisk::Set` | written | L2 | heap-writes |
-| 0x4AB2D0 | `FxPrtMult_c::SetUp` | written | L2 | heap-writes |
-| 0x4C88F0 | `FUN_004c88f0` | written | L1-pure | none |
-| 0x571EA0 | `CCurrentVehicle::Display` | written | L2 | none |
-| 0x6A44D0 | `CAutomobile::PopBootUsingPhysics` | written | L2 | heap-writes |
-| 0x6C7F90 | `CMonsterTruck::`scalar deleting destructor'` | written | L2 | none |
-| 0x6CDC30 | `CQuadBike::~CQuadBike` | written | L2 | heap-writes |
-| 0x6CDCA0 | `CQuadBike::SetupSuspensionLines` | written | L2 | heap-writes |
-| 0x6CE340 | `CQuadBike::SetupDamageAfterLoad` | written | L2 | none |
-| 0x6CE440 | `CQuadBike::`scalar deleting destructor'` | written | L2 | none |
-| 0x6CF180 | `CTrailer::`scalar deleting destructor'` | written | L2 | none |
-| 0x6F4FA0 | `FUN_006f4fa0` | written | L2 | none |
-| 0x6F5440 | `CTrainNode::GetPosn` | written | L2 | heap-writes |
-| 0x6F59C0 | `CTrain::GetDooorAngleOpenRatio` | written | L2 | none |
-| 0x6F7140 | `CTrain::SetNewTrainPosition` | written | L2 | heap-writes |
-| 0x856A10 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
-| 0x856A50 | `__dtor_s_TestBladeCol` | written | split | none |
+| 0x40FD50 | `CColDisk::Set` | L3-batch | L2 | heap-writes |
+| 0x4AB2D0 | `FxPrtMult_c::SetUp` | L3-batch | L2 | heap-writes |
+| 0x571EA0 | `CCurrentVehicle::Display` | L3-batch | L2 | none |
+| 0x6A44D0 | `CAutomobile::PopBootUsingPhysics` | L3-batch | L2 | heap-writes |
+| 0x6C7F90 | `CMonsterTruck::`scalar deleting destructor'` | L3-batch | L2 | none |
+| 0x6CDC30 | `CQuadBike::~CQuadBike` | L3-batch | L2 | heap-writes |
+| 0x6CDCA0 | `CQuadBike::SetupSuspensionLines` | L3-batch | L2 | heap-writes |
+| 0x6CE340 | `CQuadBike::SetupDamageAfterLoad` | L3-batch | L2 | none |
+| 0x6CE440 | `CQuadBike::`scalar deleting destructor'` | L3-batch | L2 | none |
+| 0x6CF180 | `CTrailer::`scalar deleting destructor'` | L3-batch | L2 | none |
+| 0x6F4FA0 | `FUN_006f4fa0` | L3-batch | L2 | none |
+| 0x6F5440 | `CTrainNode::GetPosn` | L3-batch | L2 | heap-writes |
+| 0x6F59C0 | `CTrain::GetDooorAngleOpenRatio` | L3-batch | L2 | none |
+| 0x6F7140 | `CTrain::SetNewTrainPosition` | L3-batch | L2 | heap-writes |
+| 0x856A10 | `(missed by ghidra: data-code-immediate)` | L3-batch | L2 | none |
+| 0x856A50 | `__dtor_s_TestBladeCol` | L3-batch | split | none |
 
 ## gen2-weapon-1
 
-53 hooks in sa-weapon; hazards: heap-writes (1); recordings calling them: grove-walk (52), pause-restart (52).
+1 hooks in sa-weapon; hazards: heap-writes (1); recordings calling them: no coverage data.
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1356,63 +836,11 @@ SA_UNVERIFIED=gen2-weapon-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-weapon-1 
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x5A40E0 | `FUN_005a40e0` | written | L2 | heap-writes |
-| 0x84D9F0 | `__init_g_b717d4` | written | split | none |
-| 0x84DA10 | `__init_g_b717d8` | written | split | none |
-| 0x84DA30 | `__init_g_b717dc` | written | split | none |
-| 0x84DA70 | `__init_g_b717e4` | written | split | none |
-| 0x84DA90 | `__init_g_b717e8` | written | split | none |
-| 0x84DB70 | `__init_g_b7180c` | written | split | none |
-| 0x84DB90 | `__init_g_b71810` | written | split | none |
-| 0x84DBB0 | `__init_g_b71814` | written | split | none |
-| 0x84DBF0 | `__init_g_b7181c` | written | split | none |
-| 0x84DC10 | `__init_g_b71820` | written | split | none |
-| 0x84EA60 | `__init_g_b9b7d4` | written | split | none |
-| 0x84EA80 | `__init_g_b9b7d8` | written | split | none |
-| 0x84EAA0 | `__init_g_b9b7dc` | written | split | none |
-| 0x84EAE0 | `__init_g_b9b7e4` | written | split | none |
-| 0x84EB00 | `__init_g_b9b7e8` | written | split | none |
-| 0x855340 | `__init_g_c80548` | written | split | none |
-| 0x8557A0 | `__init_g_c8870c` | written | split | none |
-| 0x8557C0 | `__init_g_c88710` | written | split | none |
-| 0x8557E0 | `__init_g_c88714` | written | split | none |
-| 0x855820 | `__init_g_c8871c` | written | split | none |
-| 0x855840 | `__init_g_c88720` | written | split | none |
-| 0x855860 | `__init_g_c88728` | written | split | none |
-| 0x855880 | `__init_g_c8872c` | written | split | none |
-| 0x8558A0 | `__init_g_c88730` | written | split | none |
-| 0x8558E0 | `__init_g_c88738` | written | split | none |
-| 0x855900 | `__init_g_c8873c` | written | split | none |
-| 0x855920 | `__init_g_c888b8` | written | split | none |
-| 0x855940 | `__init_g_c888bc` | written | split | none |
-| 0x855960 | `__init_g_c888c0` | written | split | none |
-| 0x8559A0 | `__init_g_c888c8` | written | split | none |
-| 0x8559C0 | `__init_g_c888cc` | written | split | none |
-| 0x855A20 | `__init_g_c89194` | written | split | none |
-| 0x855A40 | `__init_g_c89198` | written | split | none |
-| 0x855A80 | `__init_g_c891a0` | written | split | none |
-| 0x855AA0 | `__init_g_c891a4` | written | split | none |
-| 0x855AE0 | `__init_g_c8967c` | written | split | none |
-| 0x855B00 | `__init_g_c89680` | written | split | none |
-| 0x855B40 | `__init_g_c89688` | written | split | none |
-| 0x855B60 | `__init_g_c8968c` | written | split | none |
-| 0x855B80 | `__init_g_c8a7c4` | written | split | none |
-| 0x855BA0 | `__init_g_c8a7c8` | written | split | none |
-| 0x855BC0 | `__init_g_c8a7cc` | written | split | none |
-| 0x855C00 | `__init_g_c8a7d4` | written | split | none |
-| 0x855C60 | `__init_g_c8a81c` | written | split | none |
-| 0x855C80 | `__init_g_c8a820` | written | split | none |
-| 0x855CA0 | `__init_g_c8a824` | written | split | none |
-| 0x855CE0 | `__init_g_c8a82c` | written | split | none |
-| 0x855D00 | `__init_g_c8a830` | written | split | none |
-| 0x855D50 | `__init_g_c8aaa0` | written | split | none |
-| 0x855D90 | `__init_g_c8aaa8` | written | split | none |
-| 0x855DD0 | `__init_g_c8aab0` | written | split | none |
-| 0x855DF0 | `__init_g_c8aab4` | written | split | none |
+| 0x5A40E0 | `FUN_005a40e0` | L3-batch | L2 | heap-writes |
 
 ## gen2-world-1
 
-28 hooks in sa-world; hazards: heap-writes (7), preserved-regs (1); recordings calling them: pause-restart (2).
+26 hooks in sa-world; hazards: heap-writes (7); recordings calling them: pause-restart (1).
 
 ```sh
 # whole batch on top of the verified set, bisected to the culprit hook on divergence
@@ -1423,34 +851,32 @@ SA_UNVERIFIED=gen2-world-1 LANE=$LANE tools/e2e/port-l2.sh batch:gen2-world-1 $S
 
 | address | name | status | route | hazards |
 |---|---|---|---|---|
-| 0x404590 | `FUN_00404590` | written | L2 | none |
-| 0x447C40 | `CGarages::SetTargetCarForMissionGarage` | written | L2 | heap-writes |
-| 0x45B150 | `CReplay::DisableReplays` | written | L2 | none |
-| 0x45BFF0 | `tReplayBmxBlock::ExtractBmxUpdateData` | written | L2 | heap-writes |
-| 0x45C0D0 | `tReplayBikeBlock::ExtractBikeUpdateData` | written | L2 | heap-writes |
-| 0x45C450 | `CReplay::FindPoolIndexForPed` | written | L2 | none |
-| 0x45C460 | `CReplay::FindPoolIndexForVehicle` | written | L2 | none |
-| 0x45C470 | `CReplay::CanWeFindPoolIndexForPed` | written | L2 | none |
-| 0x45C490 | `CReplay::CanWeFindPoolIndexForVehicle` | written | L2 | none |
-| 0x45C850 | `CReplay::FindSizeOfPacket` | written | L1-pure | preserved-regs |
-| 0x45CD10 | `tReplayTrainBlock::MakeTrainUpdateData` | written | L2 | heap-writes |
-| 0x45E1F0 | `CReplay::RestorePlayerInfoVariables` | written | L2 | none |
-| 0x45F020 | `CReplay::StorePlayerInfoVariables` | written | L2 | none |
-| 0x507400 | `CAudioEngine::StopPoliceScanner` | written | L2 | none |
-| 0x5329A0 | `FUN_005329a0` | written | L2 | heap-writes |
-| 0x563130 | `FUN_00563130` | written | L2 | none |
-| 0x590E70 | `FurnitureSubGroup_c::~FurnitureSubGroup_c` | written | L2 | none |
-| 0x591360 | `Interior_c::Destructor` | written | L2 | none |
-| 0x596890 | `InteriorGroup_c::SetupPeds` | written | L2 | heap-writes |
-| 0x59CBA0 | `FUN_0059cba0` | written | L2 | heap-writes |
-| 0x59F050 | `FUN_0059f050` | written | L2 | none |
-| 0x856160 | `__dtor_CReplay__PlayerInfo` | written | split | none |
-| 0x856480 | `__dtor_gDummyMatrix` | written | split | none |
-| 0x856490 | `__dtor_gMatrixList` | written | split | none |
-| 0x856640 | `__dtor_g_furnitureMan` | written | split | none |
-| 0x856650 | `__dtor_g_interiorMan` | written | split | none |
-| 0x856670 | `__dtor_g_procObjMan` | written | split | none |
-| 0x856A80 | `__dtor_g_waterCreatureMan` | written | split | none |
+| 0x404590 | `FUN_00404590` | L3-batch | L2 | none |
+| 0x447C40 | `CGarages::SetTargetCarForMissionGarage` | L3-batch | L2 | heap-writes |
+| 0x45BFF0 | `tReplayBmxBlock::ExtractBmxUpdateData` | L3-batch | L2 | heap-writes |
+| 0x45C0D0 | `tReplayBikeBlock::ExtractBikeUpdateData` | L3-batch | L2 | heap-writes |
+| 0x45C450 | `CReplay::FindPoolIndexForPed` | L3-batch | L2 | none |
+| 0x45C460 | `CReplay::FindPoolIndexForVehicle` | L3-batch | L2 | none |
+| 0x45C470 | `CReplay::CanWeFindPoolIndexForPed` | L3-batch | L2 | none |
+| 0x45C490 | `CReplay::CanWeFindPoolIndexForVehicle` | L3-batch | L2 | none |
+| 0x45CD10 | `tReplayTrainBlock::MakeTrainUpdateData` | L3-batch | L2 | heap-writes |
+| 0x45E1F0 | `CReplay::RestorePlayerInfoVariables` | L3-batch | L2 | none |
+| 0x45F020 | `CReplay::StorePlayerInfoVariables` | L3-batch | L2 | none |
+| 0x507400 | `CAudioEngine::StopPoliceScanner` | L3-batch | L2 | none |
+| 0x5329A0 | `FUN_005329a0` | L3-batch | L2 | heap-writes |
+| 0x563130 | `FUN_00563130` | L3-batch | L2 | none |
+| 0x590E70 | `FurnitureSubGroup_c::~FurnitureSubGroup_c` | L3-batch | L2 | none |
+| 0x591360 | `Interior_c::Destructor` | L3-batch | L2 | none |
+| 0x596890 | `InteriorGroup_c::SetupPeds` | L3-batch | L2 | heap-writes |
+| 0x59CBA0 | `FUN_0059cba0` | L3-batch | L2 | heap-writes |
+| 0x59F050 | `FUN_0059f050` | L3-batch | L2 | none |
+| 0x856160 | `__dtor_CReplay__PlayerInfo` | L3-batch | split | none |
+| 0x856480 | `__dtor_gDummyMatrix` | L3-batch | split | none |
+| 0x856490 | `__dtor_gMatrixList` | L3-batch | split | none |
+| 0x856640 | `__dtor_g_furnitureMan` | L3-batch | split | none |
+| 0x856650 | `__dtor_g_interiorMan` | L3-batch | split | none |
+| 0x856670 | `__dtor_g_procObjMan` | L3-batch | split | none |
+| 0x856A80 | `__dtor_g_waterCreatureMan` | L3-batch | split | none |
 
 ## harness5-1
 
@@ -6201,6 +5627,59 @@ SA_UNVERIFIED=std9-rw-2 LANE=$LANE tools/e2e/port-l2.sh batch:std9-rw-2 $SA_ROOT
 | 0x7567A0 | `(missed by ghidra: data-code-immediate)` | written | L2 | none |
 | 0x756830 | `FUN_00756830` | written | L2 | heap-writes |
 | 0x756960 | `(missed by ghidra: cat7-call)` | written | L2 | heap-writes |
+
+## writero-audio-1
+
+1 hooks in sa-audio; hazards: entry-protection-read (1), uninit-locals (1); recordings calling them: driving (1), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh writero-audio-1 $SA_ROOT/target/e2e/corpus/driving.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=writero-audio-1 LANE=$LANE tools/e2e/port-l2.sh batch:writero-audio-1 $SA_ROOT/target/e2e/corpus/driving.sarec --runs "plain l2 rust" --tag writero-audio-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4F6420 | `CAEVehicleAudioEntity::AddAudioEvent-0` | written | L2 | uninit-locals,entry-protection-read |
+
+## writero-render-1
+
+2 hooks in sa-render; hazards: heap-writes (2), uninit-locals (2); recordings calling them: driving (1), grove-walk (2), pause-restart (1).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh writero-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=writero-render-1 LANE=$LANE tools/e2e/port-l2.sh batch:writero-render-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag writero-render-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x4A1940 | `FxEmitterBP_c::RenderHeatHaze` | written | L2 | uninit-locals,heap-writes |
+| 0x4A2C40 | `FxEmitterBP_c::Render` | written | L2 | uninit-locals,heap-writes |
+
+## writero-rw-1
+
+8 hooks in sa-rwcore; hazards: x87-transcendental (1); recordings calling them: grove-walk (8), pause-restart (7).
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh writero-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=writero-rw-1 LANE=$LANE tools/e2e/port-l2.sh batch:writero-rw-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag writero-rw-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x7EB5C0 | `RtQuatConvertFromMatrix` | written | L2 | none |
+| 0x7EB6A0 | `_rtQuatFromMatrixX` | written | L2 | none |
+| 0x7EB700 | `_rtQuatFromMatrixY` | written | L2 | none |
+| 0x7EB760 | `_rtQuatFromMatrixZ` | written | L2 | none |
+| 0x7EB7C0 | `RtQuatRotate` | written | L2 | x87-transcendental |
+| 0x7EBBB0 | `RtQuatTransformVectors` | written | L2 | none |
+| 0x7EC220 | `RtQuatSetupSlerpCache` | written | L2 | none |
+| 0x7F1930 | `FUN_007f1930` | written | L2 | none |
 
 ## x87-2-roll
 
