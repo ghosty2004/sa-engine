@@ -1,5 +1,5 @@
-//! `CPedIntelligence::FindRespectedFriendInInformRange()` (0x600CF0) and the complete destructor 0x420F30 of an event
-//! class (vtable 0x858E68) (batch `std13-ai-1`). Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
+//! `CPedIntelligence::FindRespectedFriendInInformRange()` (0x600CF0), the complete destructor 0x420F30 of an event
+//! class (vtable 0x858E68) and `CEventPotentialWalkIntoObject`'s destructor (0x4AE670) (batch `std13-ai-1`). Ported from the 1.0 US bytes. Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
@@ -12,6 +12,8 @@ orig! {
     fn acquaintance_get(a: GPtr<u8>, t: u32) -> u32 = thiscall 0x608970 => unported;
     /// `CPedType::GetPedFlag(ePedType)` (0x608830)
     fn ped_type_flag(t: u32) -> u32 = cdecl 0x608830 => unported;
+    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
+    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
     /// the base event destructor (0x4AF890)
     fn event_base_dtor(e: GPtr<u8>) = thiscall 0x4AF890 => unported;
 }
@@ -67,5 +69,20 @@ pub fn event_dtor_420f30(this: GPtr<u8>) {
     event_base_dtor(this);
 }
 
+/// `CEventPotentialWalkIntoObject::~CEventPotentialWalkIntoObject()` (0x4AE670, thiscall, SEH frame; catalogue
+/// `FUN_004ae670`): vtable 0x85AF18, `CleanUpOldReference(+0x14)` on the object when there is one, then the `CEvent`
+/// vtable 0x85AB38 (the base destructor inlined).
+#[hook(addr = 0x4AE670, conv = thiscall, name = "FUN_004ae670", expect = "6A FF 68 28 9C 83 00",
+       unverified = "std13-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn walk_into_object_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x85AF18);
+    let e = rd::<GPtr<u8>>(this, 0x14);
+    if !e.is_null() {
+        entity_clean_up_old_reference(e, this.byte_add(0x14));
+    }
+    wr::<u32>(this, 0, 0x85AB38);
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_FIND_RESPECTED_FRIEND_IN_INFORM_RANGE, HOOK_EVENT_DTOR_420F30];
+pub const HOOKS: &[HookReg] =
+    &[HOOK_FIND_RESPECTED_FRIEND_IN_INFORM_RANGE, HOOK_EVENT_DTOR_420F30, HOOK_WALK_INTO_OBJECT_DTOR];
