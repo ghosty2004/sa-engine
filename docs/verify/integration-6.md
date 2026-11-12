@@ -1,9 +1,33 @@
 # INTEGRATE-6 / VERIFIER-11: PORT-AI-7, VERIFIER-10, and the SA:MP-priority verification
 
 Integration branch `worktree-agent-aa4c0e8384f020c37`, from master `9f712b9`, rebased onto master `76c533d`
-(SAMP-3 `18671e6` + `76c533d`) before the all-ports runs.
+(SAMP-3) before the all-ports runs, and at the end onto master `14f4b7a` (INTEGRATE-7).
 
-## Part 1: what came from where
+**Final rebase onto `14f4b7a`.** INTEGRATE-7 brought PORT-AI-7 (`f9328ce` / `462c48d` / `5e4797c`) in through the
+STD-14 chain while this branch was running, so this branch's own AI-7 picks and their queue regeneration
+(`0107631`, `fb5f07a`, `1e4d41e`, `1a6154d` below) were dropped; the branch now carries, on top of `14f4b7a`:
+
+| commit | content |
+|---|---|
+| `ad47e4c` | L1 evidence for 0x70FA70 / 0x6FD7C0 (status rows) |
+| `cfac9d9` | VERIFIER-10 `8ba7aa9` (void forwarders; patterns.py, patterns_verified.txt and the generated files of that commit) |
+| `c763529` | VERIFIER-10 `2fc5e63` (23 promotions, l2-extras union, verdicts-gen2b.tsv, verify-status merged by address: 309 rows, 0 conflicts) |
+| `13439d1` | the audio thread `Start` fix (below) |
+| `43ec7e9` | L3-batch status of the union batches (1,102 rows; queue regenerated) |
+| `343a8a2` | the 370 promotions, l2-extras, `docs/verify/verdicts-samp.tsv` (queue: 2,250 unverified hooks in 302 batches) |
+| this doc | |
+
+Queue files and status rows were regenerated / re-applied on `14f4b7a`, never merged. Generators on `14f4b7a`:
+`ai_patterns.py --check`, `patterns.py --check` and `inflight.py --check` **fail on pristine master already**
+(checked on a `git archive` export of `14f4b7a`): INTEGRATE-7 recorded `implemented` in `catalog/state.csv` for
+every hook written on master, and both generators take a state of `implemented` or above as verified, so a
+regeneration would silently drop `unverified` from the ai7-1..5 generated hooks (and patterns.py would add a
+`ped_generated` module). Not regenerated here; open item for the main session (state.csv rows of unverified hooks,
+or the generators reading the verify queue instead).
+
+The rest of Part 1 describes the integration as done on `76c533d` (verified there, int6 below).
+
+## Part 1: what came from where (on `76c533d`)
 
 | commit | source | content |
 |---|---|---|
@@ -124,6 +148,12 @@ DLL sha256 `89d1606395544405…`): **IDENTICAL on all 13 recordings** (save-load
 stack residue, ledger SAVE-1). `cargo test -p sa-hook -p sa-core -p sa-ai --lib` 58 / 72 / 13 passed; generators
 `--check` clean; host sa-oracle rebuilt after the promotions; queue regenerated: 1,607 unverified hooks in 248
 batches.
+
+After the final rebase onto `14f4b7a` (head `cf16087`, DLL sha256 `a6b5b5c11de10fb4…`): `verify-all.sh i6-final 4,5`
+IDENTICAL on 11 recordings; menus-hud and menus-map-controls were skipped by the disk guard (another agent's runs
+took /home to 20 GB) and re-run as `i6-final2`: IDENTICAL. **All 13 IDENTICAL on the rebased tree.**
+`cargo test --lib` sa-hook 58, sa-core 72, sa-ai 14, sa-audio 11 passed; i686-pc-windows-gnu DLL, host sa-oracle
+and i686-unknown-linux-gnu sa-game build. Queue: 2,250 unverified hooks in 302 batches.
 
 ### Differences found (not promoted; no port bug confirmed)
 
