@@ -1,4 +1,5 @@
-//! `CEventAttractor::AffectsPed` (0x4AF4B0, batch `std11-ai-1`): whether an attractor event reaches an ambient ped.
+//! `CEventAttractor::AffectsPed` (0x4AF4B0) and `CEventAttractor::IsEffectActive` (0x4AF460), batch `std11-ai-1`:
+//! whether an attractor event reaches an ambient ped.
 //! Ported from the 1.0 US bytes (gta-reversed as a reading aid; where it differs, the bytes are followed). Unverified
 //! (docs/verify/HOWTO.md).
 
@@ -12,8 +13,8 @@ orig! {
     fn ped_is_alive(ped: GPtr<u8>) -> u8 = thiscall 0x5E0170 => unported;
     /// `CEvent::GetEventType()` (vtable slot 4)
     fn event_get_type(e: GPtr<u8>) -> u32 = thiscall vslot 0x4 => unported;
-    /// `CEventAttractor::IsEffectActive(CEntity*, const C2dEffectPedAttractor*)` (0x4AF460, cdecl)
-    fn is_effect_active(entity: GPtr<u8>, fx: GPtr<u8>) -> u8 = cdecl 0x4AF460 => unported;
+    /// `CBaseModelInfo::Get2dEffect(int32)` (0x4C4C70)
+    fn get_2d_effect(mi: GPtr<u8>, i: i32) -> GPtr<u8> = thiscall 0x4C4C70 => unported;
     /// `CPedIntelligence::FindTaskByType(int32)` (0x600EE0)
     fn intel_find_task_by_type(i: GPtr<u8>, ty: i32) -> GPtr<u8> = thiscall 0x600EE0 => unported;
     /// `FindPlayerWanted(int32)` (0x56E230)
@@ -107,5 +108,23 @@ pub fn event_attractor_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     0
 }
 
+/// `CEventAttractor::IsEffectActive(CEntity* entity, const C2dEffectPedAttractor* fx)` (0x4AF460, cdecl): AL = 1 when
+/// `fx` is one of the entity model's 2d effects (`Get2dEffect(i)` for i below the count byte +0xD) and its type byte
+/// +0xC is 3, else 0 (EAX's upper bytes: `Get2dEffect`'s residue in the original, not reproduced).
+#[hook(addr = 0x4AF460, conv = cdecl, name = "CEventAttractor::IsEffectActive", expect = "8B 4C 24 04 0F BF 51 22",
+       unverified = "std11-ai-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
+pub fn is_effect_active(entity: GPtr<u8>, fx: GPtr<u8>) -> u8 {
+    let mi = g::<GPtr<u8>>(0xA9B0C8 + (i32::from(rd::<i16>(entity, 0x22)) as isize * 4) as usize).read();
+    let mut i = 0;
+    while i < i32::from(rd::<u8>(mi, 0xD)) {
+        let e = get_2d_effect(mi, i);
+        if rd::<u8>(fx, 0xC) == 3 && fx == e {
+            return 1;
+        }
+        i += 1;
+    }
+    0
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_EVENT_ATTRACTOR_AFFECTS_PED];
+pub const HOOKS: &[HookReg] = &[HOOK_EVENT_ATTRACTOR_AFFECTS_PED, HOOK_IS_EFFECT_ACTIVE];
