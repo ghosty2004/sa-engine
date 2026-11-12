@@ -52,6 +52,7 @@ pub fn run() -> String {
                 // wasm32: the type-erased entry, no arguments
                 #[cfg(target_arch = "wasm32")]
                 let call = || sa_core::wabi::call::<()>(entry, f as usize, &sa_core::wabi::Args::new());
+                #[allow(clippy::redundant_closure)] // an `extern "C-unwind" fn` natively
                 match catch_unwind(AssertUnwindSafe(|| call())) {
                     Ok(()) => ran += 1,
                     Err(p) => {

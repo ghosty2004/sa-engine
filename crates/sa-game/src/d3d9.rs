@@ -291,7 +291,7 @@ fn with_res<R>(obj: u32, f: impl FnOnce(&mut Res) -> R) -> Option<R> {
 /// Maps the vtable page.
 #[allow(unsafe_code)]
 pub fn map() -> Result<(), String> {
-    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the D3D9 resource page at {PAGE:#x}")))?;
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the D3D9 resource page at {PAGE:#x}: {e}"))?;
     for (c, cl) in CLASSES.iter().enumerate() {
         for i in 0..cl.methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));
