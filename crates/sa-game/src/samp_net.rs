@@ -79,6 +79,11 @@ const STARTED: &str = "{FFFFFF}SA-MP {B9C9BF}0.3.7-R4 {FFFFFF}Started";
 const KEY_LEFT: u16 = 0x22A;
 const KEY_RIGHT: u16 = 0x22C;
 const KEY_SHIFT: u16 = 0x260;
+/// `lshift` / `rshift`: on Windows after 98 `GTATranslateShiftKey` (0x747CD0) only raises rsLSHIFT / rsRSHIFT, so
+/// the engine never sets `shift` (+0x260) from the keyboard; class selection also accepts these two words (a
+/// real Shift press did not spawn in the browser otherwise).
+const KEY_LSHIFT: u16 = 0x25C;
+const KEY_RSHIFT: u16 = 0x25E;
 /// samp's not-connected scene (samp-rs `connecting_tick`, samp.dll 0x100089B0): the ped parked here, the
 /// camera fixed at `CONNECT_CAMERA` looking at `CONNECT_LOOK_AT` with a jump cut, weather 1, HUD off.
 const CONNECT_PED_POS: Vec3 = Vec3::new(1133.05, -2038.40, 69.1);
@@ -741,7 +746,10 @@ impl NetHooks {
         let keys = classsel::Keys {
             left: game.game_key_down(KEY_LEFT),
             right: game.game_key_down(KEY_RIGHT),
-            shift: game.game_key_down(KEY_SHIFT) || self.auto_spawn,
+            shift: game.game_key_down(KEY_SHIFT)
+                || game.game_key_down(KEY_LSHIFT)
+                || game.game_key_down(KEY_RSHIFT)
+                || self.auto_spawn,
         };
         match self.class_sel.tick(now, keys) {
             Some(classsel::Action::RequestClass(i)) => {
