@@ -223,7 +223,7 @@ pub fn on_foot_process_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u32 {
 /// `CWeaponEffects::ClearCrossHair(player number)`, the lock target's `CleanUpOldReference` and cleared.
 /// EAX's upper bytes are left from earlier calls in the original (not reproduced).
 #[hook(addr = 0x6857e0, conv = thiscall, name = "CTaskSimplePlayerOnFoot::MakeAbortable", expect = "8B 44 24 08 53 56 32 DB",
-       unverified = "mvpj-ai-3", route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
+       route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
 pub fn on_foot_make_abortable(_this: GPtr<u8>, ped: GPtr<u8>, prio: i32, ev: GPtr<u8>) -> u8 {
     let r: u8;
     if prio == 2 {
