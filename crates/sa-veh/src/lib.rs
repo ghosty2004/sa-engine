@@ -82,3 +82,4 @@ pub mod bike_control;
 pub mod bike_render;
 pub mod automobile_random_damage;
 pub mod generated;
+pub mod float_pow;

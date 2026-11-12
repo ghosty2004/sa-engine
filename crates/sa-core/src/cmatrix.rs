@@ -29,6 +29,10 @@ pub fn set_scale(this: GPtr<u8>, s: f32) {
 }
 
 crate::orig! {
+    /// `CMatrix::SetScale(float)` (0x59AED0), through the hook toggle
+    fn set_scale_call(this: GPtr<u8>, s: f32) = thiscall 0x59AED0 => set_scale;
+    /// CRT `_atexit` (0x821D1E)
+    fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// `RwMatrixDestroy(RwMatrix*)` (0x7F2A20)
     fn rw_matrix_destroy(m: GPtr<u8>) -> i32 = cdecl 0x7F2A20 => unported;
 }
@@ -71,7 +75,24 @@ pub fn matrix_dtor(this: GPtr<u8>) {
 
 
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_SET_SCALE, HOOK_ATTACH];
+/// `gDummyMatrix` (`CMatrix`, 0xB74240).
+const DUMMY_MATRIX: usize = 0xB7_4240;
+/// `__dtor_gDummyMatrix` (0x856480: `mov ecx, 0xB74240; jmp CMatrix::~CMatrix`).
+const DTOR_DUMMY_MATRIX: u32 = 0x85_6480;
+
+/// `__init_gDummyMatrix` (0x84E2E0, cdecl; batch `boot-core-1`): the `CMatrix(1.0f)` constructor inlined to
+/// `gDummyMatrix.SetScale(1.0f)` (0x59AED0, so the attach pointer and owner flag keep their zero-initialised
+/// `.bss` values), then `atexit(__dtor_gDummyMatrix)`. The original returns the `_atexit` result in EAX
+/// (ignored by `_initterm`).
+#[hook(addr = 0x84E2E0, conv = cdecl, name = "__init_gDummyMatrix", expect = "68 00 00 80 3F",
+       unverified = "boot-core-1", route = "split", hazards = "none", recs = "boot",
+       note = "C++ static initialiser: runs once from _initterm before WinMain; registers an atexit destructor")]
+pub fn init_dummy_matrix() -> i32 {
+    set_scale_call(GPtr::from_addr(DUMMY_MATRIX), 1.0);
+    atexit(DTOR_DUMMY_MATRIX)
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_SET_SCALE, HOOK_ATTACH, HOOK_INIT_DUMMY_MATRIX];
 
 /// Globals owned by this module.
 pub const GLOBALS: &[GlobalDesc] = &[];

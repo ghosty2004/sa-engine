@@ -67,3 +67,4 @@ pub mod misc;
 pub mod vm;
 pub mod play_anim_command;
 pub mod generated;
+pub mod mission_cleanup_init;

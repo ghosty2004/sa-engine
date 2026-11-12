@@ -78,6 +78,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::hanim_update::HOOKS,
     crate::generated::HOOKS,
     crate::rt_quat::HOOKS,
+    crate::d3d9_destroy_instance::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

@@ -19,3 +19,4 @@ pub mod shared;
 pub mod surface;
 pub mod camera_collision_scan;
 pub mod camera_collision_vehicles;
+pub mod col_box_assign;
