@@ -317,8 +317,8 @@ fn trace_levels(s: &State) {
         let frames = b.size / b.block;
         let peak = (0..frames).map(|f| sample(b, f, 0).abs()).max().unwrap_or(0);
         eprintln!(
-            "dsound: playing #{h} {} bytes {} Hz {} ch vol {} pan {} pos {:.0} peak {peak}",
-            b.size, b.rate, b.channels, b.volume, b.pan, b.pos
+            "dsound: playing #{h} {} bytes {} Hz freq {} {} ch vol {} pan {} pos {:.0} peak {peak} 3d {:?} mode {} dist {}..{}",
+            b.size, b.rate, b.freq, b.channels, b.volume, b.pan, b.pos, b.pos3d, b.mode3d, b.min_dist, b.max_dist
         );
     }
 }
@@ -870,6 +870,9 @@ fn buf_set_format(this: u32, wfx: GPtr<u8>) -> i32 {
 }
 fn buf_set_volume(this: u32, v: i32) -> i32 {
     if !(-10000..=0).contains(&v) {
+        if trace_on() {
+            eprintln!("dsound: SetVolume {this:#x} {v} rejected");
+        }
         return DSERR_INVALIDPARAM;
     }
     with_buf(this, |b| b.volume = v).map_or(DSERR_INVALIDCALL, |_| DS_OK)
@@ -879,6 +882,9 @@ fn buf_set_pan(this: u32, v: i32) -> i32 {
 }
 /// `SetFrequency(hz)`: 0 = the format's rate; 100..200000 Hz.
 fn buf_set_frequency(this: u32, f: u32) -> i32 {
+    if trace_on() {
+        eprintln!("dsound: SetFrequency {this:#x} {f}");
+    }
     if f != 0 && !(100..=200_000).contains(&f) {
         return DSERR_INVALIDPARAM;
     }

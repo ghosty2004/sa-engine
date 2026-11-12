@@ -45,11 +45,33 @@ Needs a browser with WebGPU (Chromium 113+, Firefox 141+ on supported systems) o
 | legacy arena mapped with `mmap(MAP_FIXED)` at 0x401000..0xCB1000, `.HOODLUM`, COM pages at 0x30000 | the same addresses in linear memory: the module is linked with `--global-base=0x1600000 --no-stack-first`, so everything below 0x1600000 is free for the arena (`tools/web/check_layout.mjs` checks it) |
 | registry entries with the original calling convention | type-erased entries (`sa_core::wabi`): arguments as the original's stack words, results as EAX:EDX or ST0 |
 | game folder through `std::fs` | `webfs.rs`: the page's `File`s (`FileReaderSync`) or the localhost server (ranged synchronous requests), 256 KiB block cache |
-| `CdStream` streaming thread, audio threads | no threads: the streaming thread's loop body runs at each release of its semaphore; the audio threads do not run |
+| `CdStream` streaming thread, audio threads | no threads: the streaming thread's loop body runs at each release of its semaphore; the audio threads (smooth fades, stream decoder) run one pass after each main-loop iteration (the stream thread every 100 ms) |
 | frame limiter `sleep`, `Sleep()` | no sleeping; the worker runs main-loop iterations for up to 12 ms per task and yields after a `Present` |
 | winit keyboard / mouse | DOM `KeyboardEvent.code` / pointer-lock motion, posted to the worker, the same `InputState` (window messages + DirectInput state) |
 | CPUID | a fixed virtual SSE2 CPU (the paths of the native runs) |
-| audio (cpal) | silent (the DirectSound buffers advance in real time) |
+| audio (DirectSound mixer thread → cpal) | the same mixer, once per main-loop iteration, into an AudioWorklet (shared ring buffer; the play cursors follow the AudioContext) |
+
+## Audio (WEB-AUDIO)
+
+The game's own audio code (`CAudioEngine`, `CAESoundManager`, `CAEAudioHardware`) plays through sa-game's emulated
+DirectSound (`crates/sa-game/src/dsound.rs`), whose software mixer (volume, pan, frequency, looping; 44.1 kHz stereo
+16-bit, the primary format the game sets) feeds an AudioWorklet (`audio-worklet.js`). The dev server sends
+`Cross-Origin-Opener-Policy: same-origin` / `Cross-Origin-Embedder-Policy: require-corp`, so the page is cross-origin
+isolated and the worker writes a SharedArrayBuffer ring the worklet reads; each main-loop iteration tops it up to
+~93 ms, so the DirectSound play cursors advance by what the AudioContext actually played. Without isolation (another
+server) the worker posts chunks through the page and the cursors follow real time.
+
+Browsers start sound only after a gesture: **click the picture** (the same click captures the mouse) or press a key.
+The bar shows `audio: running` / `suspended`, with **mute** and a **volume** slider (remembered per browser).
+
+Plays today: the game's static channels (front-end sounds, footsteps and the other sound-bank effects in the world;
+about 1,600 `Play` calls in two minutes of walking). Not yet: streamed audio (radio, the loading tune, mission audio):
+the stream thread reaches the unported `CAEDataStream` constructor (0x4DC620) and there is no `VORBISFILE.DLL`
+(`ov_*`) implementation, so that thread ends, as its panic would natively. 3D positioning is not rendered (2D mix).
+
+Evidence runs: `?audiotap=1` and `node tools/web/headless.mjs --audio ...` write `OUT/audio.wav` and
+`OUT/audio-rms.tsv` (derived from your game files: never commit them). `SA_GAME_DSOUND_TRACE=1` logs `Play` and
+`SetFrequency` calls and the playing buffers every 3 s.
 
 ## SA:MP (WEB-SAMP)
 
@@ -85,6 +107,7 @@ second `all: ...` line is `sampcov.pwn`'s own `SendClientMessageToAll`).
 ## Files
 
 * `index.html`, `main.js`: the page (folder picker, input forwarding, status line, log panel)
-* `worker.js`: the worker (module loader, synchronous file reads, main loop scheduling)
+* `worker.js`: the worker (module loader, synchronous file reads, main loop scheduling, the audio ring's writer)
+* `audio-worklet.js`: the AudioWorklet processor that plays the game's mix
 * `pkg/`: build output of `tools/web/build.sh` (not committed)
 * `../tools/web/headless.mjs`: unattended evidence runs in headless Chromium over the DevTools protocol

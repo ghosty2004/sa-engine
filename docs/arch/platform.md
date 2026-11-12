@@ -1834,7 +1834,7 @@ words from the buffer as the x86 entries read the stack. X87 results lose their 
 
 | need | wasm32 |
 |---|---|
-| threads (`CdStreamThread`, audio threads, DirectSound mixer) | none: `ResumeThread` of `CdStreamThread` marks it running and each release of the stream semaphore runs its loop body (`cd_stream_thread_step`, split out of the port without behaviour change) once per count on the main thread; audio threads stay suspended; the DirectSound buffers advance in real time per iteration |
+| threads (`CdStreamThread`, audio threads, DirectSound mixer) | none: `ResumeThread` of `CdStreamThread` marks it running and each release of the stream semaphore runs its loop body (`cd_stream_thread_step`, split out of the port without behaviour change) once per count on the main thread; audio threads run cooperatively (22.8); the DirectSound mixer runs once per iteration, paced by the page's AudioContext |
 | blocking waits | semaphores never block (an unsignalled wait times out at once); `Sleep` and the frame limiter do not sleep |
 | time | `web_time` (`performance.now()`) |
 | files | `webfs.rs`: the page's `File`s (`FileReaderSync`) or the localhost server's ranged synchronous requests, 64 KiB read-ahead per open file (the text loaders read byte by byte), 256 KiB block cache in JS |
@@ -1949,3 +1949,52 @@ it (run2, the recording run).
   the picture freezes), `CAutomobile::CanPedEnterCar` 0x6D1E80, 0x66F530, 0x6513A0 (line-up with car), the real
   `TestForClimb` 0x6803A0 (stubbed by the page), `CIdleCam::ProcessFOVZoom` 0x517BF0 (stubbed by the page).
 
+### 22.8 WEB-AUDIO: the DirectSound mix in the browser
+
+Base: WEB-3 (`worktree-agent-a51e2199757a44c0b`, 3881dab6). sa-game already emulates DirectSound 8 with a software
+mixer (10.0); natively a 5 ms thread mixes into cpal or NullAudio. The mixer now also applies `DSBPAN` (the far side
+attenuated by |pan| hundredths of a dB, as DirectSound does; before, pan was recorded only). Native behaviour is
+otherwise unchanged.
+
+**Output.** On wasm32 the mixer's sink is `saGameAudio` in the worker. The page creates a 44.1 kHz `AudioContext`
+(the browser resamples to the device) with an `AudioWorkletNode` (`web/audio-worklet.js`). Cross-origin isolated
+(serve.py sends COOP `same-origin` / COEP `require-corp`; the game files are same-origin, nothing else on the page
+loads cross-origin), the page allocates a `SharedArrayBuffer` ring (32768 frames, header write / read / running /
+underruns) for the worker and the worklet. Each main-loop iteration the mixer advances every playing buffer by
+`4096 - queued` frames (the ring's target fill, ~93 ms) and writes the mix: the buffers' play cursors therefore move
+by exactly what the worklet consumed, so `GetCurrentPosition` and the streaming code follow the audio clock, not the
+wall clock. While the context is suspended (no gesture yet, tab hidden) or without shared memory, the cursors advance
+by real time and the mix is dropped or posted to the page in chunks. The first pointer-down or key on the page
+resumes the context; the page shows the state, mute and volume (a `GainNode`, squared slider).
+
+**Audio threads.** `CAESmoothFadeThread::SmoothFadeProc` and `CAEStreamThread::MainLoop` have their loop bodies split
+out (`smooth_fade_step`, `stream_thread_step`, no behaviour change). `CreateThread` / `ResumeThread` record them on
+wasm32; the worker calls `audio_threads()` after every iteration: one smooth-fade pass, and one stream-thread pass
+every 100 ms (its `Sleep(100)`). An unported callee in a pass leaves through the blocked-iteration exception; the
+worker restores the stack pointer and `audio_thread_blocked()` ends that thread only, as a panic on the native thread
+ends it. In practice the stream thread ends at the first track request in the world: `CAEDataStream::CAEDataStream`
+(0x4DC620) is unported, and `VORBISFILE.DLL` (`ov_open_callbacks`, `ov_read`, ...) has no implementation, so streamed
+audio (radio, loading tune, mission audio) is silent.
+
+**Results** (headless Chromium, `--gpu native`, `tools/web/headless.mjs --audio`, page `?audiotap=1`; evidence in
+`target/web-audio-evidence/`, not committed). Run `final`: menus by real Enter, in the world at 16.5 s, 44 s of real
+W / sprint / jump / S / D. RMS of the tapped output per phase (dBFS, whole band and above 60 Hz):
+
+| phase | seconds | RMS | RMS > 60 Hz | chunk RMS > 60 Hz min / max |
+|---|---|---|---|---|
+| logos (state 2) | 1.7 | silent | silent | |
+| main menu (state 7) | 8.5 | -8.3 | -30.6 | silent / -24.8 |
+| in the world, standing | 88.2 | -7.0 | -28.1 | -39.8 / -18.1 |
+| in the world, walking | 45.7 | -7.0 | -28.7 | -29.8 / -27.2 |
+
+From the menu on, the game loops a bank sound of 22,044 bytes at 22,050 Hz (one cycle of a sine: 2 Hz) at volume
+-200 on a 3D buffer at the listener (0, 1, 0), mode normal, distance 1 = its minimum distance, so DirectSound would
+not attenuate it either. It is inaudible but carries most of the whole-band RMS (-4 dBFS at 2 Hz), hence the column
+above 60 Hz. The rest is real content: in run2 (two minutes in the world) the game issued 1,602 `Play` calls,
+1,230 of them on 17 kHz sound-bank effects with per-play frequencies of 14-19.5 kHz (footsteps and similar
+pitch-varied effects), plus 8-26.6 kHz ambience loops; buffer peaks are -2.0 dBFS (26028), the SFX banks'
+normalisation. The ring underran during the long loading iteration only (counter stable afterwards).
+
+Open: streamed audio (port `CAEDataStream`, implement `ov_*` over a Vorbis decoder); 3D rendering (distance, cone,
+Doppler) and EAX are not rendered on either build; the mix runs on the game's thread, so a long iteration
+(world loading) underruns the ring (silence, the cursors wait).
