@@ -45,6 +45,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::cutscene_delete::HOOKS,
     crate::cutscene_preload::HOOKS,
     crate::generated::HOOKS,
+    crate::cutscene_memory::HOOKS,
 ];
 
 /// Every `#[native]` registration of this crate (phase B entries of ports that cannot be hooked).
@@ -53,6 +54,8 @@ pub const NATIVES: &[sa_core::abi::NativeReg] = &[
     crate::manager::NATIVE_GET_ANIMATION_BLOCK,
     crate::rp_anim_blend::NATIVE_RP_ANIM_BLEND_CLUMP_GET_FIRST_ASSOCIATION,
     crate::rp_anim_blend::NATIVE_RP_ANIM_BLEND_CLUMP_IS_INITIALIZED,
+    crate::cutscene_memory::NATIVE_CUTSCENE_ADD_CUTSCENE_HEAD,
+    crate::cutscene_memory::NATIVE_CUTSCENE_SET_HEAD_ANIM,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

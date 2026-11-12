@@ -52,3 +52,4 @@ pub mod cutscene_update;
 pub mod cutscene_delete;
 pub mod cutscene_preload;
 pub mod generated;
+pub mod cutscene_memory;

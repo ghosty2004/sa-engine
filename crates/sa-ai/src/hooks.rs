@@ -82,6 +82,16 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::hold_entity_process::HOOKS,
     crate::ped_group_random_place::HOOKS,
     crate::walk_alongside_control::HOOKS,
+    crate::ped_collision_responses::HOOKS,
+    crate::entity_bbox_corners::HOOKS,
+    crate::event_responses_simple::HOOKS,
+    crate::event_responses_peds::HOOKS,
+    crate::event_responses_misc::HOOKS,
+    crate::event_responses_shot_vehicle::HOOKS,
+    crate::player_ped_collision::HOOKS,
+    crate::ped_player_collision::HOOKS,
+    crate::dragged_out_car::HOOKS,
+    crate::vehicle_potential_collision::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
