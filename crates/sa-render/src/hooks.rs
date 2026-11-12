@@ -63,6 +63,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::rope_update::HOOKS,
     crate::building_dn_render::HOOKS,
     crate::visibility_ped::HOOKS,
+    crate::visibility_vehicle::HOOKS,
     crate::visibility_lists::HOOKS,
     crate::visibility_entity::HOOKS,
     crate::render_buffer_store::HOOKS,
