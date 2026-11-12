@@ -1691,8 +1691,9 @@ orig! {
 
 /// `CCarAI::UpdateCarAI(CVehicle*)` (0x41DA30; entry `nop; jmp` into its SEH prologue). PARTIAL (ADR-002):
 /// ported are the early returns (a vehicle recording whose `bUseCarAI` (0x97D6C0) is off, vehicle type 3) and
-/// the whole body for vehicles that are not law enforcers (+0x428 bit 0) with mission 0 (none) or 1
-/// (cruise); every other call runs the original body. That path: status 4 / 5 → cruise speed 0 and mission
+/// the whole body for mission 0 (none) or 1 (cruise) when the vehicle is not a law enforcer (+0x428 bit 0) or the
+/// player's wanted level is 0 (STD-12: for law enforcers the original then only reads the wanted level and adds
+/// [`police_gang_area_cruise_speed`]); every other call runs the original body. That path: status 4 / 5 → cruise speed 0 and mission
 /// 0; the 2D speed squared (f32) above 0.0025 restarts both timers (+0x3B0, +0x3AC); with no temp action,
 /// cruise speed set and mission 1 the stuck test (last collision more than 0.5 s ago restarts +0x3AC; below
 /// 0.000144 for `((seed & 0xF) + 40) * 500` ms with styles 0 / 4, else 1000 ms: the reverse mode cycles
@@ -1703,7 +1704,9 @@ orig! {
 /// `rand ^ seed` == 0xAD → +0x514 = 45); the speed multiplier (+0x3D4) moves towards the node speed (cruise)
 /// or 1.0 by `timestep * 0.01`, snapping to the target when closer (gta-reversed keeps the old value).
 /// gta-reversed's stuck test runs for the listed missions or zero cruise speed; the bytes skip exactly those.
-#[hook(addr = 0x41DA30, conv = cdecl, name = "CCarAI::UpdateCarAI", expect = "90 E9 12 62 FE FF", fallback)]
+#[hook(addr = 0x41DA30, conv = cdecl, name = "CCarAI::UpdateCarAI", expect = "90 E9 12 62 FE FF", fallback,
+       unverified = "std12-pop-1", route = "L2", hazards = "heap-writes", recs = "grove-walk,driving",
+       note = "STD-12 extended the partial port to law enforcers while the wanted level is 0")]
 pub fn update_car_ai(veh: GPtr<u8>) {
     let rec = rd::<i8>(veh, 0x424);
     if rec >= 0 && g::<u8>(0x97D6C0 + rec as usize).read() == 0 {
@@ -1713,7 +1716,8 @@ pub fn update_car_ai(veh: GPtr<u8>) {
         return;
     }
     let mission = rd::<u8>(veh, 0x3BA);
-    if rd::<u8>(veh, 0x428) & 1 != 0 || mission > 1 {
+    let law = rd::<u8>(veh, 0x428) & 1 != 0;
+    if mission > 1 || (law && player_wanted_level() > 0) {
         return update_car_ai_original(veh);
     }
     if matches!(rd::<u8>(veh, 0x36) >> 3, 4 | 5) {
@@ -1823,6 +1827,57 @@ pub fn update_car_ai(veh: GPtr<u8>) {
         x(step).fadd_m(mult)
     };
     wr(veh, 0x3D4, new.to_f32());
+    if law {
+        police_gang_area_cruise_speed(veh);
+    }
+}
+
+/// `FindPlayerPed(-1)->GetWantedLevel()` (0x41BE60 → 0x156D300: the player data's wanted +0x2C).
+fn player_wanted_level() -> i32 {
+    let pd = rd::<GPtr<u8>>(crate::common::find_player_ped(-1), 0x480);
+    rd::<i32>(rd::<GPtr<u8>>(pd, 0), 0x2C)
+}
+
+/// The law-enforcer tail of `UpdateCarAI` (0x420553..0x42065A): on frames with `(frameCounter & 0xF) == 0xE`, a
+/// cruising (mission 1) automobile (+0x594 == 0) with status 2 or 3 in a gang area (`CPopCycle::
+/// m_bCurrentZoneIsGangArea` 0xC0BC5C) counts the peds of types 7..=17 (gangs, dealers) closer than 10 (the pool
+/// walked from the last slot down) and cruises at `max(10 - count, 1)`.
+fn police_gang_area_cruise_speed(veh: GPtr<u8>) {
+    if g::<u32>(0xB7CB4C).read() & 0xF != 0xE
+        || !matches!(rd::<u8>(veh, 0x36) >> 3, 2 | 3)
+        || rd::<u8>(veh, 0x3BA) != 1
+        || rd::<u32>(veh, 0x594) != 0
+        || g::<u8>(0xC0BC5C).read() == 0
+    {
+        return;
+    }
+    let pool = g::<GPtr<u8>>(0xB74490).read();
+    let mut i = rd::<i32>(pool, 8);
+    let mut count = 0i32;
+    let mut tmp = [0f32; 3];
+    while i != 0 {
+        let flag = rd::<i8>(rd::<GPtr<u8>>(pool, 4), (i - 1) as isize);
+        i -= 1;
+        if flag < 0 {
+            continue;
+        }
+        let ped = rd::<GPtr<u8>>(pool, 0).byte_add(i as isize * 0x7C4);
+        if ped.is_null() || !(7..=0x11).contains(&rd::<i32>(ped, 0x598)) {
+            continue;
+        }
+        let d = police_vector_sub(GPtr::from_raw(tmp.as_mut_ptr()), entity_pos(veh), entity_pos(ped));
+        if !X87::from_f64_exact(police_vector_magnitude(d)).fcom(x(kf(0x85862C))).test_parity(0x05) {
+            count += 1;
+        }
+    }
+    wr::<u8>(veh, 0x3D0, (10 - count).max(1) as u8);
+}
+
+orig! {
+    /// `operator-(const CVector&, const CVector&)` (0x40FE60, hidden result pointer first)
+    fn police_vector_sub(out: GPtr<f32>, a: GPtr<f32>, b: GPtr<f32>) -> GPtr<f32> = cdecl 0x40FE60 => unported;
+    /// `CVector::Magnitude()` (0x4082C0, ST0)
+    fn police_vector_magnitude(v: GPtr<f32>) -> f64 = thiscall 0x4082C0 => unported;
 }
 
 orig! {
