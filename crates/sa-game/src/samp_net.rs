@@ -424,6 +424,11 @@ impl NetHooks {
                 self.note("SetPlayerCameraLookAt".into());
             }
             P::SetPlayerCameraBehindPlayer(_) => report(self, "behind_player", game.behind_player()),
+            P::TogglePlayerClock(c) => {
+                use sa_samp_api::config::RuntimeToggle;
+                report(self, "set_toggle", game.set_toggle(RuntimeToggle::GameClock(c.enable != 0)));
+                self.note(format!("TogglePlayerClock {}", c.enable));
+            }
             P::SetPlayerSkin(s) => {
                 self.note(format!("SetPlayerSkin {} {}", s.player_id, s.skin));
                 if self.is_me(s.player_id) {

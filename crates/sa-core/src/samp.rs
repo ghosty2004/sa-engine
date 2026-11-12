@@ -107,6 +107,10 @@ pub mod toggle {
     /// at `gGameState` 7 (frontend idle) samp's init sets the menu flags (+0xE9 = 1, +0x5C = 0, +0x33 = 0) and
     /// `gGameState` := 8, so the game loads straight into the world without the main menu.
     pub const SAMP_STARTUP: u32 = 1 << 1;
+    /// The game clock off (samp's `RuntimeToggle::GameClock(false)`, its Game +0x69 = 0): samp writes `ret` over
+    /// `CClock::Update`'s first byte (0x52CF10), so the clock stops, and zeroes the HUD clock format "%02d:%02d"
+    /// (0x859A6C), so `CHud::DrawPlayerInfo` prints an empty string. Natively both ports test this bit.
+    pub const NO_GAME_CLOCK: u32 = 1 << 2;
 }
 
 /// Sets the disabled features (`FeatureSet` bits) at install; 0 restores single-player behaviour.

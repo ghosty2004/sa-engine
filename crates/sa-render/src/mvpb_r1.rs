@@ -197,6 +197,10 @@ pub fn sprite2d_draw_quad(this: GPtr<u8>, a0: u32, a1: u32, a2: u32, a3: u32, a4
 #[hook(addr = 0x52CF10, conv = cdecl, name = "CClock::Update", expect = "56 8B 35 58 01 B7 00",
        route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clock_update() {
+    // samp's clock-off patch: `ret` at the entry.
+    if sa_core::samp::toggled(sa_core::samp::toggle::NO_GAME_CLOCK) {
+        return;
+    }
     let last = g::<u32>(0xB70158);
     let now = g::<u32>(0xB7CB84).read();
     let per_min = g::<u32>(0xB7015C).read();
