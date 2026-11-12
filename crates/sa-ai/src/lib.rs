@@ -156,3 +156,7 @@ pub mod wander_set_dir;
 pub mod walk_round_object_sub_task;
 pub mod event_vehicle_damage_ctor;
 pub mod task_clones_native;
+pub mod swim_task_process;
+pub mod door_route_fight_strafe;
+pub mod dead_task_process;
+pub mod knock_off_bike_damage_anims;
