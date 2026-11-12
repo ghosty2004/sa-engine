@@ -215,6 +215,13 @@ pub fn ov_open_callbacks(ds: u32, vf: u32, _initial: u32, _ibytes: u32, read: u3
     if let Some(old) = take(vf) {
         drop(old);
     }
+    // wasm32: the page hangs once streams decode (open: the worker stops at the start of the world loading); until
+    // that is found, streams fail to open there (`CAEVorbisDecoder::Initialise` fails, the stream thread goes on
+    // without the track) unless the page passes SA_GAME_WEB_STREAMS
+    #[cfg(target_arch = "wasm32")]
+    if crate::env::var_os("SA_GAME_WEB_STREAMS").is_none() {
+        return OV_ENOTVORBIS;
+    }
     cb_seek(seek, ds, 0, 0, 2);
     let end = cb_tell(tell, ds).max(0) as u32 as u64;
     cb_seek(seek, ds, 0, 0, 0);
