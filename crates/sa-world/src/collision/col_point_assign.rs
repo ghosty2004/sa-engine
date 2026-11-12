@@ -9,7 +9,7 @@ use sa_core::mem::GPtr;
 /// point (+0..+0xB) and the normal (+0x10..+0x1B) as dwords, the three surface bytes at +0x20 and the three at
 /// +0x23 (a word and a byte each), the depth (+0x28); the padding at +0xC, +0x1C and +0x26 is not copied.
 #[hook(addr = 0x40FC80, conv = thiscall, name = "thunk_FUN_015637e0", expect = "E9 5B 3B 15 01",
-       unverified = "std8-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn col_point_assign(this: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> {
     for off in [0, 4, 8, 0x10, 0x14, 0x18] {
         this.byte_add(off).cast::<u32>().write(o.byte_add(off).cast::<u32>().read());

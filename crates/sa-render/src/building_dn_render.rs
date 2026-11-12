@@ -80,7 +80,7 @@ pub fn instance_data_render(h: GPtr<u8>, inst: GPtr<u8>) {
 /// ALPHAARG1 TEXTURE, ALPHAARG2 DIFFUSE); otherwise no texture and SELECTARG2 of DIFFUSE for both; then the shared
 /// draw.
 #[hook(addr = 0x5DA6A0, conv = cdecl, name = "RxD3D9InstanceDataRenderLighting", expect = "F6 44 24 0C 84 6A 00 74",
-       unverified = "std9-render-4", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn instance_data_render_lighting(h: GPtr<u8>, inst: GPtr<u8>, flags: u32, tex: u32) {
     if flags & 0x84 != 0 {
         set_texture(tex, 0);

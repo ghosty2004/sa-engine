@@ -159,7 +159,7 @@ pub fn matrix_mul_vec(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> {
 /// position zeroed, the flags untouched. The original keeps `cos y`, `sin z` and `cos z * sin x` in its
 /// argument slots (rounded to floats) and the other terms on the x87 stack.
 #[hook(addr = 0x59B120, conv = thiscall, name = "CMatrix::SetRotate-xyz", expect = "D9 44 24 04 33 C0 D9 FF",
-       unverified = "std6-math-1", route = "L2", hazards = "x87-transcendental", recs = "new-game")]
+       route = "L2", hazards = "x87-transcendental", recs = "new-game")]
 pub fn set_rotate_xyz(this: GPtr<u8>, ax: f32, ay: f32, az: f32) {
     let cx = X87::from_f32(ax).fcos();
     for o in [0x30, 0x34, 0x38] {
@@ -204,7 +204,7 @@ fn rotate_rows(this: GPtr<u8>, angle: f32, i: isize, j: isize, first_s: Option<X
 
 /// `CMatrix::RotateX(angle)` (0x59B1E0): every row's (y, z) rotated: `y' = c*y - s*z`, `z' = s*y + c*z`.
 #[hook(addr = 0x59B1E0, conv = thiscall, name = "CMatrix::RotateX", expect = "83 EC 20 D9 44 24 24 D9 FF D9 44 24 24 D9 FE D9 5C",
-       unverified = "std6-math-1", route = "L2", hazards = "x87-transcendental", recs = "new-game")]
+       route = "L2", hazards = "x87-transcendental", recs = "new-game")]
 pub fn rotate_x(this: GPtr<u8>, angle: f32) {
     rotate_rows(this, angle, 4, 8, None);
 }
@@ -231,7 +231,7 @@ pub fn rotate_y(this: GPtr<u8>, angle: f32) {
 
 /// `CMatrix::RotateZ(angle)` (0x59B390): every row's (x, y): `x' = c*x - s*y`, `y' = s*x + c*y`.
 #[hook(addr = 0x59B390, conv = thiscall, name = "CMatrix::RotateZ", expect = "83 EC 20 D9 44 24 24 D9 FF D9 44 24 24 D9 FE D9 5C",
-       unverified = "std6-math-1", route = "L2", hazards = "x87-transcendental", recs = "new-game")]
+       route = "L2", hazards = "x87-transcendental", recs = "new-game")]
 pub fn rotate_z(this: GPtr<u8>, angle: f32) {
     rotate_rows(this, angle, 0, 4, None);
 }

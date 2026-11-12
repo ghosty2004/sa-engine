@@ -29,7 +29,7 @@ const NUM_VERTICES_REQUESTED: usize = 0xC40414;
 /// 0x1000, and again when the stored vertices plus `numVertices` reach 0x800 (signed); the out pointers are the next
 /// free slots; the requested counts are recorded.
 #[hook(addr = 0x708290, conv = cdecl, name = "RenderBuffer::StartStoring", expect = "A1 54 B9 C4 00 56 57 8B",
-       unverified = "std9-render-8", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_buffer_start_storing(num_indices: i32, num_vertices: i32, indices: GPtr<u32>, vertices: GPtr<u32>) {
     if g::<i32>(INDICES_STORED).read().wrapping_add(num_indices) >= 0x1000 {
         render_stuff_in_buffer();
@@ -53,7 +53,7 @@ const VEHICLE_ANGLE: usize = 0xC88020;
 /// distance of its frame's LTM position from the camera (`(dz*dz + dy*dy) + dx*dx`, f32) and the angle
 /// `atan2(cam.z - pos.z, sqrt((cam.y - pos.y)^2 + (cam.x - pos.x)^2))` of its frame's own position (+0x40).
 #[hook(addr = 0x733160, conv = cdecl, name = "CVisibilityPlugins::SetupVehicleVariables", expect = "8B 44 24 04 80 38 02 75",
-       unverified = "std9-render-8", route = "L2", hazards = "x87-transcendental", recs = "grove-walk")]
+       route = "L2", hazards = "x87-transcendental", recs = "grove-walk")]
 pub fn setup_vehicle_variables(obj: GPtr<u8>) {
     if rd::<u8>(obj, 0) != 2 {
         return;

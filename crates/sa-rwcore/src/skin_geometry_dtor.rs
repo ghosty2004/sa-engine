@@ -23,7 +23,7 @@ const SKIN_FREE_LIST: usize = 0xC978B8;
 /// `_rpSkinSplitDataDestroy(skin)`, the skin back to the skin freelist (`RwFreeListFree`) and the extension slot
 /// cleared.
 #[hook(addr = 0x7C6A10, conv = cdecl, name = "cb_SKINPLUGIN_RpGeometry_Dtor", expect = "A1 A8 78 C9 00 56 57",
-       unverified = "std8-rw-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn skin_geometry_dtor(obj: GPtr<u8>, _off: u32, _size: u32) -> GPtr<u8> {
     let off = g::<u32>(SKIN_GEOMETRY_OFFSET).read() as isize;
     let skin = p8(rd::<u32>(obj, off));

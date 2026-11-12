@@ -114,7 +114,7 @@ fn drag_back(seq: GPtr<u8>, dragger: GPtr<u8>, veh: GPtr<u8>) {
 ///   original), then `own` → steal the car back, else drag a NULL ped out and enter as a passenger.
 /// - Others: nothing. Finally, with `leave`, +0x24 = a new sequence of `leave` and the current response.
 #[hook(addr = 0x4bcc30, conv = thiscall, name = "CEventHandler::ComputeDraggedOutCarResponse", expect = "6A FF 68 05 B2 83 00",
-       this = "CEventHandler", unverified = "intro-ai-5", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_lines)]
 pub fn handler_compute_dragged_out_car_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let own = rd::<u8>(e, 0x1C) != 0;

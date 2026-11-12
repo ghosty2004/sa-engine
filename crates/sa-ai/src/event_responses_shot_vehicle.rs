@@ -176,7 +176,7 @@ fn flee_scene_or_own_vehicle(this: GPtr<u8>) -> GPtr<u8> {
 /// - 0x451 (same shooter conditions): a player → NULL; appropriate → `CTaskComplexKillCriminal(shooter, false)`; else
 ///   smart flee `(shooter, false)` with its +0x30 = 4 (through NULL on a failed allocation, as the original).
 #[hook(addr = 0x4bc710, conv = thiscall, name = "CEventHandler::ComputeShotFiredResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-4", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_shot_fired_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let shooter = rd::<GPtr<u8>>(e, 0x14);
     if shooter.is_null() {
@@ -370,7 +370,7 @@ pub fn handler_compute_gun_aimed_at_response(this: GPtr<u8>, e: GPtr<u8>, active
 ///   else as a driver flee the scene; else smart flee. 0x404 → `CTaskComplexKillPedOnFootStealth(source)`. 0x451 → a
 ///   player → NULL; appropriate → `CTaskComplexKillCriminal(source, false)`; else smart flee.
 #[hook(addr = 0x4bf9b0, conv = thiscall, name = "CEventHandler::ComputePersonalityResponseToDamage", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-4", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_lines)]
 pub fn handler_compute_personality_response_to_damage(this: GPtr<u8>, e: GPtr<u8>, src: GPtr<u8>) {
     let wanted = |this: GPtr<u8>| rd::<u32>(ped(this), 0x478) & 0x800 != 0;
@@ -548,7 +548,7 @@ pub fn handler_compute_ped_entered_vehicle_response(this: GPtr<u8>, e: GPtr<u8>,
 ///   faster than 0x858CDC → `CTaskComplexHitPedWithCar(vehicle, event impulse)`.
 /// - Afterwards (except the move-state-1 case): a response of type 0x1F9 with a player driver → `IncrementAnger(2)`.
 #[hook(addr = 0x4bd6a0, conv = thiscall, name = "CEventHandler::ComputeVehicleCollisionResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-4", route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
+       this = "CEventHandler", route = "L2", hazards = "x87-transcendental", recs = "grove-walk",
        note = "the WalkRoundCar bool dword carries the impulse's upper bytes (see doc)")]
 #[allow(clippy::too_many_lines)]
 pub fn handler_compute_vehicle_collision_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, simplest: GPtr<u8>) {
@@ -690,7 +690,7 @@ fn anger_check(this: GPtr<u8>, veh: GPtr<u8>) {
 /// - 0x451: a player ped (or a vehicle with a player driver) → NULL; else `CTaskComplexKillCriminal(ped or driver,
 ///   false)`.
 #[hook(addr = 0x4c2fc0, conv = thiscall, name = "CEventHandler::ComputeVehicleDamageResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-4", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_lines)]
 pub fn handler_compute_vehicle_damage_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let damager = rd::<GPtr<u8>>(e, 0x18);

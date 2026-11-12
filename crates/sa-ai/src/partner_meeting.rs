@@ -53,7 +53,7 @@ fn dist2d(mx: X87, my: X87, px: f32, py: f32) -> X87 {
 /// M.y - f32(h.y), f32(M.z) - f32(h.z))`, `*outPartner = (f32(h.x) + M.x, f32(h.y) + f32(M.y), f32(h.z) +
 /// f32(M.z))` (each stored as f32).
 #[hook(addr = 0x681FE0, conv = thiscall, name = "(missed by ghidra: cat7-call)",
-       expect = "83 EC 50 53 56 8B F1", unverified = "std8-ai-1", route = "L2", hazards = "x87-transcendental",
+       expect = "83 EC 50 53 56 8B F1", route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk", note = "FSQRT per pass; the meeting point lives in x87 registers across the passes")]
 pub fn partner_compute_meeting_positions(
     this: GPtr<u8>,

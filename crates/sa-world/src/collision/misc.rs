@@ -154,7 +154,7 @@ pub fn box_set(this: GPtr<u8>, min: GPtr<u32>, max: GPtr<u32>) {
 /// `CBox::Recalc()` (0x40EE20, thiscall): per axis, a min (+0, +4, +8) above its max (+0xC, +0x10, +0x14) swaps the
 /// two (the max gets the min through `fld`/`fstp`, the min the max's raw dword); NaN compares leave the pair.
 #[hook(addr = 0x40EE20, conv = thiscall, name = "CBox::Recalc", expect = "D9 01 D8 59 0C DF E0",
-       unverified = "std9-coll-1", route = "L1-pure", hazards = "none", recs = "grove-walk")]
+       route = "L1-pure", hazards = "none", recs = "grove-walk")]
 pub fn box_recalc(this: GPtr<u8>) {
     for o in [0isize, 4, 8] {
         let lo = this.byte_add(o).cast::<f32>();
@@ -424,7 +424,7 @@ pub fn temp_col_models_initialise() {
 /// `CColBox::Set(const CVector& min, const CVector& max, uint8 material, uint8 piece, uint8 lighting)`
 /// (stub 0x40EE70, body 0x1567850, `ret 0x14`): min +0, max +0xC, surface bytes +0x18..+0x1A (STD-6).
 #[hook(addr = 0x40EE70, conv = thiscall, name = "CColBox::Set", expect = "E9 DB 89 15 01", this = "CColBox",
-       unverified = "std6-world-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn col_box_set(this: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>, material: u32, piece: u32, lighting: u32) {
     for i in 0..3isize {
         this.byte_add(i * 4).cast::<u32>().write(min.byte_add(i * 4).cast::<u32>().read());

@@ -52,7 +52,7 @@ fn first_sequence(group: i32, anim: i32) -> GPtr<u8> {
 /// frame translation (frame stride 32 with translation, else 20) when there are frames. Then the block
 /// references are released and the flag set.
 #[hook(addr = 0x64F860, conv = cdecl, name = "CCarEnterExit::SetAnimOffsetForEnterOrExitVehicle", expect = "A0 20 8C C1 00 83 EC 0C",
-       unverified = "std6-veh-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn set_anim_offset_for_enter_or_exit_vehicle() {
     if g::<u8>(CALCULATED).read() != 0 {
         return;

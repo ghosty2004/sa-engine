@@ -131,7 +131,7 @@ fn play(sound: GPtr<u8>, this: GPtr<u8>, slot: u32, sfx: u32, pos: usize, vol: u
 ///
 /// The stack sound's bytes `Initialise` does not write are stack leftovers in the original (zero here).
 #[hook(addr = 0x4DF210, conv = thiscall, name = "CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire", expect = "6A FF 64 A1 00 00 00 00",
-       unverified = "std7-audio-1", route = "L2", hazards = "uninit-locals,x87-transcendental", recs = "grove-walk")]
+       route = "L2", hazards = "uninit-locals,x87-transcendental", recs = "grove-walk")]
 pub fn service_ambient_gun_fire(this: GPtr<u8>) {
     let now = r32(TIME_MS);
     let mut guard = r32(GUARD);

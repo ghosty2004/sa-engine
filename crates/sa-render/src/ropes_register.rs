@@ -81,7 +81,7 @@ fn place_segment(rope: GPtr<u8>, k: usize, along_z: bool) {
 /// and clear `released[1..32]`. `CreateHookObjectForRope`; 1.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x556B40, conv = cdecl, name = "CRopes::RegisterRope", expect = "8B 54 24 04 83 EC 38",
-       unverified = "std8-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "the reset path's segment loop runs to the count byte inclusive and can write past the arrays")]
 pub fn ropes_register_rope(
     id: u32,

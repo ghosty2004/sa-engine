@@ -42,7 +42,7 @@ fn one() -> f32 {
 /// `CQuaternion::Normalise()` (0x4D1610, thiscall): `s = ((x² + y²) + z²) + w²` (x87); `s == 0` → `w = 1`;
 /// else each component `*= 1 / sqrt(s)` (the reciprocal kept in ST0).
 #[hook(addr = 0x4D1610, conv = thiscall, name = "CQuaternion::Normalise", expect = "D9 41 0C D9 41 08 D9 41 04",
-       unverified = "std7-anim-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn quaternion_normalise(q: GPtr<u8>) {
     let c = |o: isize| x(rd::<f32>(q, o));
     let s = c(0).fmul(c(0)).fadd(c(4).fmul(c(4))).fadd(c(8).fmul(c(8))).fadd(c(0xC).fmul(c(0xC)));

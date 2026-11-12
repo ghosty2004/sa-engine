@@ -101,7 +101,7 @@ const MI_GRASSHOUSE: usize = 0x8CD6F4;
 /// grass house model first goes into the really-draw-last list (a free node: true); an underwater entity (+0x1C bit
 /// 20) into the underwater list, any other into the alpha entity list; true when a node was free.
 #[hook(addr = 0x734570, conv = cdecl, name = "CVisibilityPlugins::InsertEntityIntoSortedList", expect = "83 EC 18 8B 4C 24 20",
-       unverified = "std9-render-1", route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
        note = "AL only: EAX's upper bytes are the node pointer's in the original")]
 pub fn insert_entity_into_sorted_list(e: GPtr<u8>, dist: u32) -> u8 {
     let mut item = [e.addr() as u32, RENDER_ENTITY, dist];

@@ -105,7 +105,7 @@ pub fn finish_playback() {
 
 /// `CReplay::EnableReplays()` (stub 0x45B160 → 0x1568BC0; STD-7): `CReplay::bReplayEnabled` (0x8A6160) = 1.
 #[hook(addr = 0x45B160, conv = cdecl, name = "CReplay::EnableReplays", expect = "E9 5B DA 10 01",
-       unverified = "std7-world-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn enable_replays() {
     g::<u8>(0x8A6160).write(1);
 }

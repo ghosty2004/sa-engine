@@ -6789,3 +6789,68 @@ CStats::BuildStatLine@0xC1AED8:0x480:RW
 # VERIFIER-9 (std8-render-1): the RW callbacks store their result through the data pointer (the caller's local).
 0x722220@arg1:4:RW
 0x734930@arg1:4:RW
+# VERIFIER-9 (std9): RxPipelineExecute and the RW helper 0x756960 drive whole pipelines (RW engine globals, the D3D9
+# state caches, the resource lists): the whole .data/.bss; RenderBuffer::StartStoring returns the two buffer pointers
+# through its out-parameters.
+0x805710@0x8A4000:0x3FA000:D
+0x756960@0x8A4000:0x3FA000:D
+0x708290@arg2:4:RW
+0x708290@arg3:4:RW
+# VERIFIER-9 (std9-render-1..8): the render callbacks and sorted-list renderers set D3D9 / RW render state caches,
+# the visibility lists and the alpha lists (statics): the whole .data/.bss.
+0x5D8870@0x8A4000:0x3FA000:D
+0x5DA640@0x8A4000:0x3FA000:D
+0x5DA6A0@0x8A4000:0x3FA000:D
+0x5D6480@0x8A4000:0x3FA000:D
+0x732480@0x8A4000:0x3FA000:D
+0x7335B0@0x8A4000:0x3FA000:D
+0x7337D0@0x8A4000:0x3FA000:D
+0x733800@0x8A4000:0x3FA000:D
+0x733E90@0x8A4000:0x3FA000:D
+0x733EC0@0x8A4000:0x3FA000:D
+0x733F10@0x8A4000:0x3FA000:D
+0x732500@0x8A4000:0x3FA000:D
+0x732610@0x8A4000:0x3FA000:D
+0x732680@0x8A4000:0x3FA000:D
+0x732B40@0x8A4000:0x3FA000:D
+0x733160@0x8A4000:0x3FA000:D
+0x734570@0x8A4000:0x3FA000:D
+# VERIFIER-9: RegisterKill counts kills in CStats::StatTypesInt / StatTypesFloat (0xB79000..).
+0x4B9340@0xB79000:0x800:D
+# VERIFIER-9 (mvpn-anim-2): LoadCutsceneData_preload loads the cutscene (streaming, audio tracks): the whole .data/.bss.
+0x5B05A0@0x8A4000:0x3FA000:D
+# VERIFIER-9 (clump-1): the clothes builder requests / streams / frees models and TXDs (CStreaming::ms_aInfoForModel,
+# the model info stores, the RW free lists): the whole .data/.bss.
+0x5A41C0@0x8A4000:0x3FA000:D
+0x5A4220@0x8A4000:0x3FA000:D
+0x5A44A0@0x8A4000:0x3FA000:D
+0x5A55A0@0x8A4000:0x3FA000:D
+0x5A6040@0x8A4000:0x3FA000:D
+0x5A6530@0x8A4000:0x3FA000:D
+0x5A5F70@0x8A4000:0x3FA000:D
+# VERIFIER-9 (mvpn-script-1/2): script commands that give tasks (CPedScriptedTaskRecord, CReferences, the script
+# arrays): the whole .data/.bss.
+0x470150@0x8A4000:0x3FA000:D
+0x479DA0@0x8A4000:0x3FA000:D
+# VERIFIER-9 (mvpn-render-1): CreateRoadsignAtomicA creates RW objects (D3DResourceSystem::TextureBuffer, RW lists).
+0x6FEDA0@0x8A4000:0x3FA000:D
+# RegisterRope also creates the rope segment objects (world sector lists, references): the whole .data/.bss.
+0x556B40@0x8A4000:0x3FA000:D
+# VERIFIER-9 (intro-ai-5): ComputeDraggedOutCarResponse makes the ped speak (CAEPedSpeechAudioEntity statics).
+0x4BCC30@0x8A4000:0x3FA000:D
+# VERIFIER-9 (std6-anim-1): RtAnimBlendKeyFrameApply writes the RwMatrix it is given.
+0x4D5FA0@arg0:0x40:RW
+# VERIFIER-9 (std6-veh-1): SetAnimOffsetForEnterOrExitVehicle streams the anim blocks it reads: the whole .data/.bss.
+0x64F860@0x8A4000:0x3FA000:D
+# VERIFIER-9 (clump-1): ConstructGeometryArray fills the caller's RpGeometry*[10].
+0x5A55A0@arg0:0x28:RW
+# VERIFIER-9 (std6-math-1/2): the CMatrix members write this (no this attribute: matrices anywhere).
+0x59B060@ecx:0x48:RW
+0x59B0A0@ecx:0x48:RW
+0x59B120@ecx:0x48:RW
+0x59B1E0@ecx:0x48:RW
+0x59B2C0@ecx:0x48:RW
+0x59B390@ecx:0x48:RW
+0x59B920@ecx:0x48:RW
+0x59AFA0@ecx:0x48:RW
+0x59AFE0@ecx:0x48:RW

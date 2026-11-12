@@ -49,7 +49,7 @@ pub fn scale(this: GPtr<u8>, s: f32) {
 /// temporary = `*this * m` (`operator*` 0x59BE30), `*this = tmp` (`operator=`), the temporary destroyed
 /// (`~CMatrix`); returns `this`. The temporary's attach words come from `operator*`.
 #[hook(addr = 0x411A80, conv = thiscall, name = "CMatrix::operator*=", expect = "E9 7B E4 15 01",
-       unverified = "std7-math-1", route = "L2", hazards = "uninit-locals", recs = "grove-walk")]
+       route = "L2", hazards = "uninit-locals", recs = "grove-walk")]
 pub fn mul_assign(this: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
     let mut tmp = [0u32; 0x48 / 4];
     let t = GPtr::from_raw(tmp.as_mut_ptr()).cast::<u8>();
@@ -63,7 +63,7 @@ pub fn mul_assign(this: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
 /// and forward x/y/z each `_ftol(v * [0x86532C])` (x87 product, low byte) into +0xC..+0x11; the position (dword
 /// copies) into +0..+8.
 #[hook(addr = 0x59BAD0, conv = thiscall, name = "CCompressedMatrixNotAligned::CompressFromFullMatrix", expect = "56 57 8B 7C 24 0C D9 07",
-       unverified = "std7-math-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn compress_from_full_matrix(this: GPtr<u8>, m: GPtr<u8>) {
     let k = GPtr::<f32>::from_addr(0x86532C).read();
     for (i, o) in [0isize, 4, 8, 0x10, 0x14, 0x18].into_iter().enumerate() {

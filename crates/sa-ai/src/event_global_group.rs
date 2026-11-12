@@ -20,7 +20,7 @@ orig! {
 /// (`operator new`; null stays null) with vtable 0x85AAB4, +4 = +8 = 0 and +0xC..+0x4C zeroed, stored and
 /// returned.
 #[hook(addr = 0x4ABA50, conv = cdecl, name = "RwHelper::GetEventGlobalGroup", expect = "A1 6C AF A9 00 85 C0",
-       unverified = "std7-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn get_event_global_group() -> GPtr<u8> {
     let cell = g::<GPtr<u8>>(EVENT_GLOBAL_GROUP);
     let cur = cell.read();

@@ -191,7 +191,7 @@ pub fn clump_data_deleting_dtor(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 /// `RpAnimBlend::RpAnimBlendAllocateData(clump)` (0x4D5F50): a new `CAnimBlendClumpData` (0x14) as
 /// the clump's plugin data (NULL when the allocation fails).
 #[hook(addr = 0x4D5F50, conv = cdecl, name = "RpAnimBlend::RpAnimBlendAllocateData", expect = "6A 14 E8 43 B2 34 00",
-       unverified = "std6-anim-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn rp_anim_blend_allocate_data(clump: GPtr<u8>) {
     let p = operator_new(0x14);
     let d = if p.is_null() { GPtr::NULL } else { clump_data_ctor(p) };
@@ -242,7 +242,7 @@ pub fn rt_anim_blend_key_frame_apply(m: GPtr<u8>, frame: GPtr<u8>) {
 /// customDataSize + 0x18, 0x3001B)` (unchecked): +0 scheme, +4 numFrames, +8 flags, +0xC duration,
 /// +0x10 frames (+0x18), +0x14 custom data after the frames (NULL without).
 #[hook(addr = 0x7CCE40, conv = cdecl, name = "RtAnimAnimationCreate", expect = "8B 15 00 79 C9 00 83 EC 08",
-       unverified = "std6-anim-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn rt_anim_animation_create(ty: u32, n: i32, flags: u32, duration: f32) -> GPtr<u8> {
     let count = g::<i32>(SCHEME_COUNT).read();
     let mut info = GPtr::<u8>::NULL;
@@ -279,7 +279,7 @@ pub fn rt_anim_animation_create(ty: u32, n: i32, flags: u32, duration: f32) -> G
 /// `RpAnimBlend::RpAnimBlendCreateAnimationForHierarchy(hierarchy)` (0x4D60E0): NULL for NULL; an
 /// `RtAnimAnimationCreate(0x253F2FB, 0, 0, 0.0)` whose frame count becomes `2 * numNodes`.
 #[hook(addr = 0x4D60E0, conv = cdecl, name = "RpAnimBlend::RpAnimBlendCreateAnimationForHierarchy", expect = "8B 44 24 04 85 C0 75 01 C3",
-       unverified = "std6-anim-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn rp_anim_blend_create_animation_for_hierarchy(h: GPtr<u8>) -> GPtr<u8> {
     if h.is_null() {
         return h;
@@ -369,7 +369,7 @@ pub fn fill_frame_array_cb(f: GPtr<u8>, array: GPtr<u32>) {
 /// the frames of the ped nodes' bone tags (`RpHAnimIDGetIndex`, the helper 0x4D6450 inlined); else by
 /// hierarchy id.
 #[hook(addr = 0x4D64A0, conv = cdecl, name = "RpAnimBlend::RpAnimBlendClumpFillFrameArray", expect = "A1 78 F8 B5 00 56 8B 74 24 08",
-       unverified = "std6-anim-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn rp_anim_blend_clump_fill_frame_array(clump: GPtr<u8>, array: GPtr<u32>) {
     let d = clump_data(clump);
     if has_skin(clump) {
@@ -524,7 +524,7 @@ fn clump_init_not_skinned(clump: GPtr<u8>) {
 
 /// `RpAnimBlend::RpAnimBlendClumpInit(clump)` (0x4D6720): skinned or non-skinned init.
 #[hook(addr = 0x4D6720, conv = cdecl, name = "RpAnimBlend::RpAnimBlendClumpInit", expect = "56 8B 74 24 08 56 E8",
-       unverified = "std6-anim-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn rp_anim_blend_clump_init(clump: GPtr<u8>) {
     if has_skin(clump) {
         clump_init_skinned(clump);

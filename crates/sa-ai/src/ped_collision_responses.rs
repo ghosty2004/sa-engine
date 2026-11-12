@@ -262,7 +262,7 @@ fn knocks_over(p: GPtr<u8>, other: GPtr<u8>) -> bool {
 ///     `LookAt`.
 ///   - (4|6|7, 0|1) with `facing`: say, `LookAt`, then (mine not 4) the hit response.
 #[hook(addr = 0x4bdb80, conv = thiscall, name = "CEventHandler::ComputePedCollisionWithPedResponse", expect = "6A FF 68 88 B3 83 00",
-       this = "CEventHandler", unverified = "intro-ai-1", route = "L2", hazards = "none", recs = "grove-walk",
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk",
        note = "the evasive direction (forward.x, -forward.y, 0) is the original's")]
 pub fn event_handler_compute_ped_collision_with_ped_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, simplest: GPtr<u8>) {
     let other = rd::<GPtr<u8>>(e, 0x14);
@@ -477,7 +477,7 @@ fn no_group_response(this: GPtr<u8>, other: GPtr<u8>, simplest: GPtr<u8>, my_ms:
 ///   radius² → walk. Then `CTaskComplexAvoidOtherPedWhileWandering(other, &event+0x14, moveState)`; with a follower
 ///   the new task's +0x5C |= 4 (NULL task: written through NULL, as the original).
 #[hook(addr = 0x4c2610, conv = thiscall, name = "CEventHandler::ComputePotentialPedCollideResponse", expect = "6A FF 68 A6 B9 83 00",
-       this = "CEventHandler", unverified = "intro-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn event_handler_compute_potential_ped_collide_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, simplest: GPtr<u8>) {
     let other = rd::<GPtr<u8>>(e, 0x20);
     if other.is_null() {
@@ -591,7 +591,7 @@ fn kill_fallback(p: GPtr<u8>, other: GPtr<u8>, drive: bool) -> GPtr<u8> {
 ///   `GetPedFOVRange() + 5` when not above it (stored as f32); the 3D distance to the other ped not below `range` →
 ///   NULL; else `CTaskSimpleGangDriveBy(other, NULL, range, 90, 8, false)`. Any failed condition: nothing.
 #[hook(addr = 0x4c19a0, conv = thiscall, name = "CEventHandler::ComputePedThreatResponse", expect = "6A FF 64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 #[allow(clippy::too_many_lines)]
 pub fn event_handler_compute_ped_threat_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let other = rd::<GPtr<u8>>(e, 0x14);

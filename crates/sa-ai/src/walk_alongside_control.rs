@@ -119,7 +119,7 @@ fn settle_speed(ped: GPtr<u8>, anim: GPtr<u8>) {
 /// point's z becomes `2 fwd.x + 2 fwd.z`; the dot test uses the ped's (not the target's) position; the original keeps
 /// the ped's flag in its own argument slot (not observable).
 #[hook(addr = 0x685170, conv = thiscall, name = "CTaskComplexWalkAlongsidePed::ControlSubTask",
-       expect = "83 EC 3C 53 56 8B F1", unverified = "mvpn-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       expect = "83 EC 3C 53 56 8B F1", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn walk_alongside_control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     let target = rd::<GPtr<u8>>(this, 0xC);
     if target.is_null() {

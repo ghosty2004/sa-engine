@@ -247,7 +247,7 @@ fn txd_dict(id: i32) -> GPtr<u8> {
 /// result is ignored: when the entry is missing the size is the argument slot's old value (the model id,
 /// the original passes its own argument slot) and the offset an uninitialised local (0 here).
 #[hook(addr = 0x5A41C0, conv = cdecl, name = "CClothesBuilder::RequestGeometry", expect = "51 56 8B 74 24 0C",
-       unverified = "clump-1", route = "L2", hazards = "uninit-locals", recs = "boot")]
+       route = "L2", hazards = "uninit-locals", recs = "boot")]
 pub fn request_geometry(model: i32, key: u32) {
     let mi = g::<GPtr<u8>>(MODEL_INFO_PTRS + 4 * model as usize).read();
     wr::<u8>(mi, 0x13, rd::<u8>(mi, 0x13) | 2);
@@ -263,7 +263,7 @@ pub fn request_geometry(model: i32, key: u32) {
 /// (wrapping 3 → 0), requests `key + ".TXD"` from `playerImg` into that slot and returns the slot.
 /// Offset and size are uninitialised locals when `FindItem` fails (0 here).
 #[hook(addr = 0x5A4220, conv = cdecl, name = "CClothesBuilder::RequestTexture", expect = "A1 D0 12 BC 00",
-       unverified = "clump-1", route = "L2", hazards = "uninit-locals", recs = "boot")]
+       route = "L2", hazards = "uninit-locals", recs = "boot")]
 pub fn request_texture(key: u32) -> i32 {
     let slot = default_txd_slot(g::<i32>(DEFAULT_TXD_ROTOR).read());
     if key == 0 {
@@ -288,7 +288,7 @@ pub fn request_texture(key: u32) -> i32 {
 /// `fat + muscle > 1` both are scaled by `1 / (fat + muscle)` and `normal = 0`. NaN stats pass the
 /// clamps unchanged.
 #[hook(addr = 0x5A42B0, conv = reg("args = eax esi edi ebx"), name = "CClothesBuilder::nullptr", expect = "83 EC 08 8B 48 70",
-       unverified = "clump-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn blend_ratios(desc: GPtr<u8>, fat: GPtr<f32>, muscle: GPtr<f32>, normal: GPtr<f32>) {
     let fat_stat = rd::<f32>(desc, 0x70);
     let mut mus = get_stat_value(23) as f32; // fstp dword
@@ -320,7 +320,7 @@ pub fn blend_ratios(desc: GPtr<u8>, fat: GPtr<f32>, muscle: GPtr<f32>, normal: G
 /// The `RwTexDictionaryForAllTextures` callback 0x5A44A0 (`CClothesBuilder::nullptr` in the catalogue):
 /// removes the texture from its dictionary, destroys it, returns it.
 #[hook(addr = 0x5A44A0, conv = cdecl, name = "CClothesBuilder::nullptr", expect = "56 8B 74 24 08",
-       unverified = "clump-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn destroy_texture_cb(tex: GPtr<u8>, _data: GPtr<u8>) -> GPtr<u8> {
     rw_tex_dictionary_remove_texture(tex);
     rw_texture_destroy(tex);
@@ -343,7 +343,7 @@ pub fn destroy_texture_cb(tex: GPtr<u8>, _data: GPtr<u8>) -> GPtr<u8> {
 /// them), `sel` = B for types 1 and 3, else the part. The conditions persist across rules; the flag bytes
 /// are uninitialised in the original until a condition is added (zero here, never read before written).
 #[hook(addr = 0x5A44C0, conv = cdecl, name = "CClothesBuilder::PreprocessClothesDesc", expect = "83 EC 3C 55 57",
-       unverified = "clump-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn preprocess_clothes_desc(desc: GPtr<u8>, cutscene: u8) {
     let mut keys = [u32::MAX; 8];
     let mut flags = [0u8; 8];
@@ -443,7 +443,7 @@ pub fn preprocess_clothes_desc(desc: GPtr<u8>, cutscene: u8) {
 /// zero-extended byte with the whole dword) gets `w + weight`. With all 8 slots taken the original adds
 /// `w` to `weights[8]` (one past the array) — kept.
 #[hook(addr = 0x5A4840, conv = cdecl, name = "CClothesBuilder::AddWeightToBoneVertex", expect = "D9 44 24 0C D8 1D 50 8B 85 00",
-       unverified = "clump-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn add_weight_to_bone_vertex(weights: GPtr<u8>, bones: GPtr<u8>, w: f32, bone: u32) {
     if x(w).fcom(X87::zero()) == sa_math::x87::Cmp::Equal {
         return;
@@ -470,7 +470,7 @@ pub fn add_weight_to_bone_vertex(weights: GPtr<u8>, bones: GPtr<u8>, w: f32, bon
 /// `gBoneIndices[i][k]`, then writes one -1 terminator when fewer than 64 nodes were copied (the rest of
 /// the row keeps its old values).
 #[hook(addr = 0x5A48B0, conv = cdecl, name = "CClothesBuilder::StoreBoneArray", expect = "83 EC 08 8B 4C 24 0C",
-       unverified = "clump-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn store_bone_array(clump: GPtr<u8>, i: i32) {
     let mut ctx = [0u32; 2];
     let cp = local(&mut ctx);
@@ -506,7 +506,7 @@ pub fn store_bone_array(clump: GPtr<u8>, i: i32) {
 /// Unlocks, adds a reference and returns geometry 0. The weight / bone locals: the original zeroes 5
 /// weights and 4 bone bytes (the others are written before they are read); all are zero here.
 #[hook(addr = 0x5A4940, conv = cdecl, name = "CClothesBuilder::BlendGeometry-3", expect = "81 EC 80 00 00 00",
-       unverified = "clump-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn blend_geometry3(clump: GPtr<u8>, n0: GPtr<u8>, n1: GPtr<u8>, n2: GPtr<u8>, r0: f32, r1: f32, r2: f32) -> GPtr<u8> {
     let mut ctx = [0u32; 2];
     let cp = local(&mut ctx);
@@ -603,7 +603,7 @@ pub fn blend_geometry3(clump: GPtr<u8>, n0: GPtr<u8>, n1: GPtr<u8>, n2: GPtr<u8>
 /// (`RequestGeometry` + `LoadRequestedModels`), `out[i] = BlendGeometry(clump, "normal", "fat",
 /// "ripped", normal, fat, muscle)`, `StoreBoneArray(clump, i)`, and the model is removed.
 #[hook(addr = 0x5A55A0, conv = cdecl, name = "CClothesBuilder::ConstructGeometryArray", expect = "83 EC 0C 8B 44 24 10",
-       unverified = "clump-1", route = "split", hazards = "heap-writes,uninit-locals", recs = "boot")]
+       route = "split", hazards = "heap-writes,uninit-locals", recs = "boot")]
 pub fn construct_geometry_array(out: GPtr<u8>, keys: GPtr<u8>, normal: f32, fat: f32, muscle: f32) {
     let (mut size, mut offset) = (0u32, 0u32);
     for i in 0..10i32 {
@@ -648,7 +648,7 @@ pub fn construct_geometry_array(out: GPtr<u8>, keys: GPtr<u8>, normal: f32, fat:
 /// cdecl): for the bone IDs of `gBoneIndices[i]` up to the first -1 (at most 64), `table[k] =
 /// RpHAnimIDGetIndex(h, id)` (low byte; 0xFF becomes 0).
 #[hook(addr = 0x5A56E0, conv = cdecl, name = "CClothesBuilder::BuildBoneIndexConversionTable", expect = "53 8B 5C 24 08",
-       unverified = "clump-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn build_bone_index_conversion_table(table: GPtr<u8>, h: GPtr<u8>, i: i32) {
     let row = g::<i16>(BONE_INDICES + (i as isize as usize).wrapping_mul(128));
     for k in 0..64i32 {
@@ -665,7 +665,7 @@ pub fn build_bone_index_conversion_table(table: GPtr<u8>, h: GPtr<u8>, i: i32) {
 /// both rasters locked read/write (src first); for `src.width * src.height` pixels, a source pixel with
 /// a non-zero alpha byte replaces the destination pixel; unlocks src, then dst.
 #[hook(addr = 0x5A57B0, conv = cdecl, name = "CClothesBuilder::PlaceTextureOnTopOfTexture", expect = "8B 44 24 08 8B 4C 24 04",
-       unverified = "clump-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn place_texture_on_top_of_texture(dst: GPtr<u8>, src: GPtr<u8>) {
     let dr = rd::<GPtr<u8>>(dst, 0);
     let sr = rd::<GPtr<u8>>(src, 0);
@@ -727,7 +727,7 @@ pub fn blend_textures2(dst: GPtr<u8>, src: GPtr<u8>, r1: f32, r2: f32, _n: i32) 
 /// `ftol((s2*r3 + s1*r2) + d*r1)`; alpha unchanged. Locks src1, src2 (read), dst (read/write); unlocks
 /// src1, src2, dst.
 #[hook(addr = 0x5A59C0, conv = cdecl, name = "CClothesBuilder::BlendTextures-Dst-Src1-Src2", expect = "83 EC 14 8B 4C 24 20",
-       unverified = "clump-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn blend_textures3(dst: GPtr<u8>, s1: GPtr<u8>, s2: GPtr<u8>, r1: f32, r2: f32, r3: f32, _n: i32) {
     let r1r = rd::<GPtr<u8>>(s1, 0);
     let dr = rd::<GPtr<u8>>(dst, 0);
@@ -854,7 +854,7 @@ pub fn get_texture_from_txd_and_load_next_txd(dst: GPtr<u8>, txd: i32, next_key:
 /// 6. keys 13..17: their first textures (named 0x8D0A8C (no null check), 0x8D0A90, 0x8D0A94, 0x8D0A98,
 ///    0x8D0A9C) and a final copy named 0x8D0AA0 for the TXD the last step requested.
 #[hook(addr = 0x5A6040, conv = cdecl, name = "CClothesBuilder::ConstructTextures", expect = "83 EC 10 53 55",
-       unverified = "clump-1", route = "split", hazards = "heap-writes", recs = "boot")]
+       route = "split", hazards = "heap-writes", recs = "boot")]
 pub fn construct_textures(dict: GPtr<u8>, keys: GPtr<u8>, normal: f32, fat: f32, muscle: f32) {
     let (fa, mut fb, mut fc) = (normal, fat, muscle);
     let h = |i: isize| rd::<u32>(keys, 4 * i);
@@ -1096,7 +1096,7 @@ pub fn construct_geometry_and_skin_arrays(
 /// 6. the merged geometry is destroyed (the atomic keeps it) and then flagged `|= 2` at +8 (after the
 ///    destroy, as the original), the dictionary made current, the part geometries and materials destroyed.
 #[hook(addr = 0x5A69D0, conv = cdecl, name = "CClothesBuilder::CreateSkinnedClump", expect = "81 EC D4 00 00 00",
-       unverified = "clump-1", route = "split", hazards = "heap-writes", recs = "boot")]
+       route = "split", hazards = "heap-writes", recs = "boot")]
 pub fn create_skinned_clump(bones: GPtr<u8>, dict: GPtr<u8>, new_desc: GPtr<u8>, old_desc: GPtr<u8>, cutscene: u8) -> GPtr<u8> {
     let mut desc = [0u32; 30];
     let dp = local(&mut desc);

@@ -158,7 +158,7 @@ pub fn rx_packet_destroy(packet: GPtr<u8>) {
 /// first node's body (`nodes[0].nodeDef->body(node, &params)`); FALSE makes the exit code 0. A pipeline +0x10 above 1
 /// becomes 2 and its packet (+0x14) is destroyed. The context is cleared; returns the pipeline, or NULL on failure.
 #[hook(addr = 0x805710, conv = cdecl, name = "RxPipelineExecute", expect = "8B 44 24 0C 56 57 33 FF",
-       unverified = "std9-rw-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn rx_pipeline_execute(pipeline: GPtr<u8>, data: GPtr<u8>, heap_reset: i32) -> GPtr<u8> {
     if heap_reset != 0 {
         let heap = p8(g::<u32>(RX_HEAP_GLOBAL).read());

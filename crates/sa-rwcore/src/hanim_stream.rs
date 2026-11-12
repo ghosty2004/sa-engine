@@ -37,7 +37,7 @@ const HANIM_FRAME_OFFSET: usize = 0xC9B8C8;
 /// 0x4C, 0x3001B)` (unchecked); +0x2C numNodes, +0x24 / +0x20 keyFrameSize, +0x14 -1.0f, +0x28 -1,
 /// +0x38 itself, every other word of the 0x4C header 0.
 #[hook(addr = 0x7CD520, conv = cdecl, name = "RtAnimInterpolatorCreate", expect = "56 8B 74 24 0C 57",
-       unverified = "std6-rw-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn rt_anim_interpolator_create(num_nodes: i32, key_frame_size: i32) -> GPtr<u8> {
     let p = rw_malloc((num_nodes.wrapping_mul(key_frame_size) as u32).wrapping_add(0x4C), 0x3001B);
     wr::<i32>(p, 0x2C, num_nodes);
@@ -62,7 +62,7 @@ pub fn rt_anim_interpolator_create(num_nodes: i32, key_frame_size: i32) -> GPtr<
 
 /// `RtAnimInterpolatorDestroy(interp)` (0x7CD590): `RwFree(interp)` (tail jump).
 #[hook(addr = 0x7CD590, conv = cdecl, name = "RtAnimInterpolatorDestroy", expect = "8B 0D 24 7B C9 00 FF A1 38 01 00 00",
-       unverified = "std6-rw-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn rt_anim_interpolator_destroy(interp: GPtr<u8>) {
     rw_free(interp);
 }
@@ -186,7 +186,7 @@ pub fn rp_hanim_frame_get_id(frame: GPtr<u8>) -> i32 {
 
 /// `RtAnimAnimationDestroy(animation)` (0x7CCF10): `RwFree`, returns 1.
 #[hook(addr = 0x7CCF10, conv = cdecl, name = "RtAnimAnimationDestroy", expect = "8B 44 24 04 8B 0D 24 7B C9 00 50",
-       unverified = "std6-rw-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn rt_anim_animation_destroy(anim: GPtr<u8>) -> u32 {
     rw_free(anim);
     1

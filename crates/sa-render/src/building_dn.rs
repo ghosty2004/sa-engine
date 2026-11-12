@@ -41,7 +41,7 @@ fn rd<T: GameData>(p: GPtr<u8>, o: isize) -> T {
 
 /// The frame-slot advance (0x5D6830): slot = (slot + 1) & 15, "update all" = the argument.
 #[hook(addr = 0x5D6830, conv = cdecl, name = "FUN_005d6830", expect = "A1 14 2C C0 00 8B 4C 24 04",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn advance_update_slot(force_all: u32) {
     g::<u32>(UPDATE_SLOT).write(g::<u32>(UPDATE_SLOT).read().wrapping_add(1) & 0xF);
     g::<u32>(UPDATE_ALL).write(force_all);
@@ -51,7 +51,7 @@ pub fn advance_update_slot(force_all: u32) {
 /// the extension, clamped to [0, 1] (NaN kept) as t, u = 1 - t; with the geometry locked (flags 8) every
 /// prelit colour byte = `_ftol(night * t + day * u)` (x87, `fild` of the bytes); then unlocked.
 #[hook(addr = 0x5D6850, conv = cdecl, name = "CCustomBuildingDNPipeline::NVCPipelineProcess", expect = "83 EC 28 8B 44 24 2C",
-       unverified = "std6-render-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn nvc_pipeline_process(atomic: GPtr<u8>, balance: f32) {
     let geom = GPtr::<u8>::from_addr(rd::<u32>(atomic, 0x18) as usize);
     let ext = geom.byte_add(g::<i32>(EXT_OFFSET).read() as isize);
@@ -77,7 +77,7 @@ pub fn nvc_pipeline_process(atomic: GPtr<u8>, balance: f32) {
 /// (`atomic / 112 & 15`) is this frame's, "update all" is set, `force` is set, or the difference
 /// exceeds 0.3.
 #[hook(addr = 0x5D7200, conv = cdecl, name = "CCustomBuildingDNPipeline::PreRenderUpdate-Atomic", expect = "8B 4C 24 04 85 C9",
-       unverified = "std6-render-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn pre_render_update_atomic(atomic: GPtr<u8>, force: u32) {
     if atomic.is_null() || rd::<u32>(atomic, 0x6C) != g::<u32>(DN_PIPE).read() {
         return;
@@ -120,7 +120,7 @@ pub fn pre_render_update_clump(clump: GPtr<u8>, mut force: u32) {
 /// (`hours * 60 + minutes + seconds / 60`): night (1.0) before 6:00, fading to day (0.0) until 7:00,
 /// day until 20:00, fading to night until 21:00, night after.
 #[hook(addr = 0x5D7F80, conv = cdecl, name = "CCustomBuildingRenderer::UpdateDayNightBalanceParam", expect = "51 0F B6 05 53 01 B7 00",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn update_day_night_balance_param() {
     let minutes = g::<u8>(0xB70153).read() as i32 * 60 + g::<u8>(0xB70152).read() as i32;
     let secs = g::<u16>(0xB70150).read() as i32;
@@ -151,7 +151,7 @@ pub fn update_day_night_balance_param() {
 /// `CCustomBuildingRenderer::Update()` (0x5D8050): the balance updated, then the frame slot advanced
 /// ("update all" off).
 #[hook(addr = 0x5D8050, conv = cdecl, name = "CCustomBuildingRenderer::Update", expect = "E8 2B FF FF FF 6A 00",
-       unverified = "std6-render-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn custom_building_renderer_update() {
     update_dn_balance_call();
     advance_slot_call(0);

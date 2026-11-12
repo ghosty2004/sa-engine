@@ -46,7 +46,7 @@ fn c(addr: usize) -> f32 {
 /// `b = min'(lodDistance, a)` above 150 the fade range is `b / 15 + 10` (else 20); flag bit 8 of +0x1C scales `a`
 /// by [0x8CD804]; `min'((a + 20 - dist) / range, 1) * alpha byte (+0xC)` through `_ftol`.
 #[hook(addr = 0x732500, conv = cdecl, name = "CVisibilityPlugins::CalculateFadingAtomicAlpha", expect = "51 8B 4C 24 08 8B 41 14",
-       unverified = "std9-render-7", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn calculate_fading_atomic_alpha(mi: GPtr<u8>, e: GPtr<u8>, dist: u32) -> i32 {
     let mut range = 20.0f32;
     let r = x(rd::<f32>(rd::<GPtr<u8>>(mi, 0x14), 0x24)).fadd_m(c(FADE_OFFSET));
@@ -72,7 +72,7 @@ pub fn calculate_fading_atomic_alpha(mi: GPtr<u8>, e: GPtr<u8>, dist: u32) -> i3
 /// `CVisibilityPlugins::RenderFadingAtomic(mi, atomic, alpha)` (0x732610, cdecl): additive models (+0x12 bit 2) with
 /// dest blend ONE; `RenderAtomicWithAlpha`; dest blend back to INVSRCALPHA.
 #[hook(addr = 0x732610, conv = cdecl, name = "CVisibilityPlugins::RenderFadingAtomic", expect = "56 8B 74 24 08 F6 46 12",
-       unverified = "std9-render-7", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_fading_atomic(mi: GPtr<u8>, atomic: GPtr<u8>, alpha: i32) {
     if rd::<u8>(mi, 0x12) & 4 != 0 {
         rw_render_state_set(0xB, 2);
@@ -105,7 +105,7 @@ pub fn render_fading_clump(mi: GPtr<u8>, clump: GPtr<u8>, alpha: i32) {
 /// culling restored. Otherwise alpha reference 0 (in an interior or without z-write) or 100 and
 /// `CRenderer::RenderOneNonRoad`.
 #[hook(addr = 0x732B40, conv = cdecl, name = "CVisibilityPlugins::RenderEntity", expect = "56 8B 74 24 08 8B 46 18",
-       unverified = "std9-render-7", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_entity(e: GPtr<u8>, dist: u32) {
     if rd::<u32>(e, 0x18) == 0 {
         return;

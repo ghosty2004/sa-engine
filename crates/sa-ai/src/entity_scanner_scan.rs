@@ -46,7 +46,7 @@ fn sector_of(v: X87) -> i32 {
 /// count capped at 16). The filled slots then register their references, and slot 0 becomes the closest entity
 /// (+0x4C, referenced).
 #[hook(addr = 0x5FFA20, conv = thiscall, name = "CEntityScanner::ScanForEntitiesInRange", expect = "83 EC 64 53 8B D9 8B 43 04",
-       unverified = "std7-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn scan_for_entities_in_range(this: GPtr<u8>, kind: i32, ped: GPtr<u8>) {
     let c = rd::<i32>(this, 4);
     let first = c == 0;

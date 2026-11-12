@@ -209,7 +209,7 @@ fn hook_to_pickup_point(rope: GPtr<u8>, fr: &mut Frame, e: GPtr<u8>) {
 /// picked-up entity) its matrix turned towards the rope. Release, drop of wrecked vehicles, and the pick-up search
 /// (vehicles, the harness's peds, objects by type) follow; a rope below z -50 is removed. Flag bit 0 is cleared.
 #[hook(addr = 0x557530, conv = thiscall, name = "CRope::Update", expect = "6A FF 68 88 CC 83 00",
-       unverified = "std9-render-2", route = "L2", hazards = "heap-writes,uninit-locals,x87-transcendental", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes,uninit-locals,x87-transcendental", recs = "grove-walk",
        note = "the frame's reused stack slots are modelled (Frame); two direct rand calls at 0x557700 / 0x55771D; \
                _CIpow through orig::x87_binary (libm in phases B/C)")]
 pub fn rope_update(rope: GPtr<u8>) {

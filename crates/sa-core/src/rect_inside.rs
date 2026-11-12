@@ -16,7 +16,7 @@ fn ld(p: GPtr<u8>, o: isize) -> f32 {
 /// p.y` or `tol + bottom < p.y` (each in x87 precision; a NaN comparison never rejects), else true.
 /// AL only (AH holds the last `fnstsw`).
 #[hook(addr = 0x4042D0, conv = thiscall, name = "CRect::IsPointInside-Tolerance", expect = "D9 01 8B 54 24 04 D8 64 24 08",
-       unverified = "std7-math-1", route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
+       route = "L2", hazards = "ax-al-return", recs = "grove-walk")]
 pub fn rect_is_point_inside(this: GPtr<u8>, p: GPtr<u8>, tol: f32) -> u8 {
     let t = X87::from_f32(tol);
     let (px, py) = (X87::from_f32(ld(p, 0)), X87::from_f32(ld(p, 4)));
