@@ -1645,3 +1645,42 @@ std13-veh-1 (1).
    to input timing; it reuses freed blocks only within their size class).
 2. The flare pixel comparison: accept the state-level confirmation (19.6), or spend a lane run on a scripted camera
    facing the sun (a free camera or a corpus state with the sun in view).
+
+## 20. RENDER-SHADOW: render targets without alpha
+
+User report (window run, 08:07): large dark grey quads on the ground under and in front of CJ (a darker trapezoid and
+a lighter rectangle) that move with the camera. Base STD-13 (9e704a6).
+
+**Root cause (seam).** The game's camera-texture rasters are `D3DFMT_X8R8G8B8` render-target textures (the
+real-time shadow cameras: 128x128 / 64x64; the post-effect screen copies: 1024x1024); the back buffer is
+`A8R8G8B8`. `WgpuDevice` stored every render target as RGBA8 and kept the alpha draws wrote, while D3D9 has no
+alpha there: it samples alpha 1, ignores alpha writes and `StretchRect` into it drops the source alpha.
+
+1. **The quads.** `CStencilShadows::RenderStencilShadows` (z-fail volumes of the parked car, then a full-screen
+   `DrawRect` with the stencil test) changes mostly the back buffer's *alpha*. `CPostEffects`' colour filter copies
+   the back buffer into an X8 texture (`StretchRect`, a GPU copy on the seam that kept the alpha) and adds it back
+   with SRCALPHA / ONE: wherever a shadow volume set the stencil, the filter added less, so the volumes' screen
+   footprint showed as grey quads. The grey triangle at the bottom right of the first frames (16.8 item 6) is the
+   same effect. Found with `SA_GAME_D3D_BBDUMP`: the back buffer is unchanged up to the colour-filter draws.
+2. **CJ's real-time shadow** (`CRealTimeShadow::Update`): `CShadowCamera::InvertRaster` leaves alpha 0 inside the
+   silhouette (cleared alpha 0, CJ drawn with TFACTOR alpha 1, INVDESTCOLOR / ZERO); the resample / blur passes
+   sample it with the alpha test on (ref 0, GREATER), so the silhouette texels were discarded and the shadow texture
+   kept only faint edges. In D3D9 the X8 raster samples alpha 1 and every texel passes.
+
+**Fix** (`crates/sa-rw-wgpu/src/d3d9.rs`): render targets whose D3D format has no alpha (X8R8G8B8, R8G8B8, R5G6B5,
+X1R5G5B5, X4R4G4B4) start at (0, 0, 0, 1); draws into them mask alpha writes; clears store alpha 1; `StretchRect`
+into them resets the copied rectangle's alpha (an alpha-only pass on the GPU path, 255 on the CPU resample path).
+`WgpuDevice::set_back_buffer_format` does the same for the back buffer; sa-game passes `BackBufferFormat` at
+`CreateDevice` / `Reset` (D3DFMT_UNKNOWN = X8R8G8B8). Test `render_target_without_alpha`.
+
+**Tooling** (`crates/sa-game/src/d3d9.rs`, exploration only): `SA_GAME_D3D_LOG=FROM:TO` logs the render-target
+changes, clears and draws of presented frames FROM..=TO with their states; `SA_GAME_D3D_RTDUMP=DIR` writes the
+render-target textures of those frames as PNGs; `SA_GAME_D3D_BBDUMP=K,...|stencil` writes the back buffer before
+chosen draws.
+
+**Evidence** (not committed, `target/shadow-evidence/`): `window-before-after-{0,1}.png` (headless gamescope window
+runs, play-package binary vs the fix), `offscreen-before-after-{0100,0130,0160}.png` (deterministic,
+`SA_GAME_KEYS=w:100:160`), `cj-shadow-crop-before-after.png`, `shadow-raster-passes-{before,after}.png` (the shadow
+camera / resample / blur / gradient passes, RGB above, alpha below), `colour-filter-draws-before-fix.png`.
+
+Not done: a Wine reference frame of the original at the same spot; the black near palm (not investigated).
