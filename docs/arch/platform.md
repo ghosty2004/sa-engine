@@ -1798,3 +1798,63 @@ sa-ai, sa-veh, sa-core, sa-pop, sa-audio, sa-hook. `cargo test -p sa-hook --lib`
    memory across size classes).
 2. Whether PORT-AI-3's split-L2-failing `PositionPedOutOfCollision` / `SetPedOut::ProcessPed` bodies may stay
    registered for phases B/C until their difference is resolved.
+
+## 22. WEB-1: sa-game in the browser (wasm32)
+
+User decision 2026-11-12: keep the legacy 32-bit layouts and the address arena in wasm32 linear memory. Base: STD-13
+(`worktree-agent-adab932ed2ad46a44`, 7da5de4). How to run it: `web/README.md` (`tools/web/build.sh`, then
+`tools/web/serve.sh [--game DIR]`, open http://localhost:8642/).
+
+### 22.1 The arena at the original addresses
+
+wasm32 pointers are 32-bit like the exe's, so the arena is plain linear memory: the module is linked with
+`--global-base=0x1600000 --no-stack-first -zstack-size=16 MiB` (`tools/web/build.sh`), so its data, stack and heap lie
+above 0x1600000 and everything below is free. `arena::map_fixed` replaces `mmap(MAP_FIXED_NOREPLACE)`: on wasm32 it
+only checks that the range lies below `WASM_LOW_END` (the memory is already there and zero). The exe's
+`.rdata`/`.data`/`.bss`/`_TEXT_HA`/`_rwdseg`/`.rsrc` (0x858000..0xCB1000), the read-only code bytes the no-CD protection
+reads (0x401000..0x858000, `.HOODLUM` 0x1556000..0x1577000) and sa-game's COM / D3D9 / DirectSound pages (0x30000..)
+sit at their original addresses; import traps stay 0x20000 + 0x10·i. No page protection (`.rdata` is writable),
+no fault handler (a stray access below memory size reads the arena or zeros; above it the module traps).
+`tools/web/check_layout.mjs` checks the built module (data segments ≥ 0x1600000, initial stack pointer above it).
+
+### 22.2 `orig!` dispatch on wasm32: type-erased entries (`sa_core::wabi`)
+
+wasm checks every indirect call against the callee's exact signature, while declarations and ports may disagree on
+types the x86 ABI tolerates (`u8`/`u32`, `f32`/`X87`, struct vs words, variadic CRT calls). So every registry entry
+on wasm32 is `extern "C" fn(callee, args: *const u32, ret: *mut Ret)`: the caller (`__orig_dispatch`) pushes its
+arguments as the original's stack words (each rounded up to 4 bytes, in declaration order, `this` / register
+arguments first), the callee reads them with its own types; results come back as EAX:EDX bytes or ST0 (an f64,
+used when the type is `f32`/`f64`/`X87`). `#[hook]` and `#[native]` emit such an entry next to the x86 one; the CRT
+replacements, imports, COM methods, RW stand-ins, static-initialiser shapes, lone-`ret` natives and the
+`SA_GAME_STUB` exploration stubs register erased entries too (`wabi_wrap!`). `sprintf`/`sscanf` read their variadic
+words from the buffer as the x86 entries read the stack. X87 results lose their 80-bit tail across a dispatch
+(f64 in `Ret`).
+
+### 22.3 What wasm32 lacks, and the replacements
+
+| need | wasm32 |
+|---|---|
+| threads (`CdStreamThread`, audio threads, DirectSound mixer) | none: `ResumeThread` of `CdStreamThread` marks it running and each release of the stream semaphore runs its loop body (`cd_stream_thread_step`, split out of the port without behaviour change) once per count on the main thread; audio threads stay suspended; the DirectSound buffers advance in real time per iteration |
+| blocking waits | semaphores never block (an unsignalled wait times out at once); `Sleep` and the frame limiter do not sleep |
+| time | `web_time` (`performance.now()`) |
+| files | `webfs.rs`: the page's `File`s (`FileReaderSync`) or the localhost server's ranged synchronous requests, 64 KiB read-ahead per open file (the text loaders read byte by byte), 256 KiB block cache in JS |
+| C heap | Rust allocator with a size header, **zeroed** (native fresh pages are mostly zero; dlmalloc reuses blocks at once and stale pointers in fields the original leaves uninitialised trapped in the FX blueprint code) |
+| CPUID | a fixed virtual SSE2 CPU (`abi::game_fpu::cpuid`): the SSE skinning paths of the native runs |
+| GPU | wgpu on an `OffscreenCanvas` in the worker: WebGPU, else WebGL2 (`?backend=gl|webgpu`); a positive base vertex becomes a vertex-buffer offset (WebGL2 has no base-vertex draws) |
+| fork probe, SIGSEGV reporter, `--present-dir` read-back | none; panics and traps are reported to the page with their wasm stack |
+
+### 22.4 Results (headless Chromium 14x, offscreen, `tools/web/headless.mjs`)
+
+* WebGPU (SwiftShader, `--use-webgpu-adapter=swiftshader`): boot, logos, main menu (real Enter key events move it on),
+  the legal splash on the canvas; `CGame::Initialise` then stalls on the GPU process (SwiftShader WebGPU at ~1000 % CPU).
+* WebGL2 (ANGLE/SwiftShader): through `CGame::Initialise` into the world: **CJ in Grove Street with the HUD**
+  (`target/web1-evidence/gl2/t0107-state9.png`, not committed), about 105 s after start.
+* The user's desktop (Brave, AMD RX 7800 XT, WebGPU): through the menu into `CGame::Initialise`, then an
+  out-of-bounds trap in `FxManager_c::FindFxSystemBP` (fixed candidate: the zeroed C heap, 21.3).
+
+### 22.5 Network seam for SA:MP (not built)
+
+A page cannot open UDP. The plan: a separate WebSocket↔UDP proxy on localhost (another lane); the samp-rs client's
+socket trait gets a web implementation that sends one binary WebSocket message per datagram
+(`ws://localhost:PORT/udp?host=…&port=7777`) and queues received ones in JS; the client drains the queue once per
+main-loop iteration, so nothing blocks the game loop.

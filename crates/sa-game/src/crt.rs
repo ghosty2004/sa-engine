@@ -14,7 +14,7 @@ use libc as sys;
 
 #[cfg(target_arch = "wasm32")]
 mod sys {
-    use std::alloc::{Layout, alloc, alloc_zeroed, dealloc};
+    use std::alloc::{Layout, alloc_zeroed, dealloc};
 
     const HDR: usize = 16;
 
@@ -33,9 +33,12 @@ mod sys {
         }
     }
 
+    /// Zeroed, like the fresh pages a native heap mostly hands out: dlmalloc on wasm32 reuses freed blocks at once,
+    /// and a port that reads a field the original leaves uninitialised (an FX blueprint list link, seen as an
+    /// out-of-bounds trap in `FindFxSystemBP` / `CreateEntityFx`) must not see stale pointers.
     pub unsafe fn malloc(n: usize) -> *mut u8 {
         // SAFETY: a non-zero layout.
-        unsafe { finish(alloc(layout(n)), n) }
+        unsafe { finish(alloc_zeroed(layout(n)), n) }
     }
 
     pub unsafe fn calloc(k: usize, n: usize) -> *mut u8 {
