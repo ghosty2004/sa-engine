@@ -136,7 +136,11 @@ finish() {
         echo '---- client'
         sed -E 's/^\[[^]]*\] \[[^]]*\] //' "$OUT/samp-rs.log" 2> /dev/null |
             grep -vE '^(tick [0-9]+|control: client|client: net phase|net: connect to|net: auth challenge|net: open-connection)' |
-            sed -E 's/0x[0-9a-f]{5,}/0xADDR/g; s/after [0-9.]+s/after Ns/; s/(physical RAM) [0-9]+ MB/\1 N MB/' || true
+            sed -E 's/0x[0-9a-f]{5,}/0xADDR/g; s/after [0-9.]+s/after Ns/; s/(physical RAM) [0-9]+ MB/\1 N MB/' |
+            grep -v '^gGameState = ' || true
+        # The init thread's game-state lines race with the game thread's log lines: compared as a set.
+        echo '---- game states'
+        grep -oE 'gGameState = [0-9]+ \([A-Z_]+\)' "$OUT/samp-rs.log" 2> /dev/null | sort
     } > "$OUT/sequence.txt"
     say "sequence: $(wc -l < "$OUT/sequence.txt") lines in $OUT/sequence.txt"
 }
