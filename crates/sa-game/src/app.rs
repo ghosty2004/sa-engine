@@ -764,6 +764,7 @@ fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
             let key = match name.as_str() {
                 "space" => Key::Space,
                 "enter" => Key::Enter,
+                "esc" => Key::Escape,
                 "shift" => Key::ShiftLeft,
                 "ctrl" => Key::ControlLeft,
                 "up" => Key::Up,
