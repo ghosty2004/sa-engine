@@ -31,7 +31,7 @@ orig! {
 
 /// `CEventVehicleDamage::~CEventVehicleDamage()` (0x4B1990, thiscall, SEH frame): vtable 0x85B588,
 /// `CleanUpOldReference` on the vehicle (+0x14) and the attacker (+0x18) when set, then the `CEvent` vtable 0x85AB38.
-#[hook(addr = 0x4B1990, conv = thiscall, name = "CEventVehicleDamage::Destructor", expect = "6A FF 68 58 A1 83 00",
+#[hook(addr = 0x4B1990, conv = thiscall, name = "FUN_004b1990", expect = "6A FF 68 58 A1 83 00",
        unverified = "attr-4", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn event_vehicle_damage_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85B588);
