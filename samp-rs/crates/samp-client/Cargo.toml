@@ -14,10 +14,10 @@ web-time = "1.1"
 samp-proto = { path = "../samp-proto" }
 samp-saa = { path = "../samp-saa" }
 samp-ui = { path = "../samp-ui" }
-# Datagram transports (UDP natively, WebSocket through sa-udp-proxy on wasm32), from sa-engine, pinned.
-sa-net = { git = "file:///home/ghosty2004/sa-engine", rev = "b9ab5c20b9b23873bfd1d33346f987aefde43456" }
-# Game-adapter traits shared with sa-engine (docs/samp/game-adapter.md there), pinned to a commit.
-sa-samp-api = { git = "file:///home/ghosty2004/sa-engine", rev = "b4cf80cd0fa2037cf01fbe6e10acd8ab9e7cff18" }
+# Datagram transports (UDP natively, WebSocket through sa-udp-proxy on wasm32), from this repository.
+sa-net = { path = "../../../crates/sa-net" }
+# Game-adapter traits shared with the engine (docs/samp/game-adapter.md).
+sa-samp-api = { path = "../../../crates/sa-samp-api" }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "=0.61.2", features = [
