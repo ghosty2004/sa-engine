@@ -123,6 +123,20 @@ fn sample(game: &dyn GameAdapter) -> String {
     l
 }
 
+/// The UI's input path (`samp_input`): a window event to the adapter.
+fn ui_event(e: sa_samp_api::input::WindowEvent) -> sa_samp_api::input::EventResult {
+    GAME.with(|g| match g.borrow_mut().as_mut() {
+        Some(game) => game.window_event(e),
+        None => sa_samp_api::input::EventResult::PassToGame,
+    })
+}
+
+/// samp's input lock (keyboard, mouse) from the UI.
+fn ui_lock() -> (bool, bool) {
+    GAME.with(|g| g.borrow().as_ref().map(|g| g.ui_input_lock()).unwrap_or_default())
+}
+
+
 /// sa-core's dispatch handler: runs the client's frame callback on the adapter.
 fn on_frame(phase: u8) {
     let Some(&phase) = PHASES.get(usize::from(phase)) else {
@@ -196,6 +210,7 @@ pub fn install(target: &Target, auth: Option<&std::path::Path>) -> Result<(), St
         .map_err(|e| format!("samp: cheats toggle: {e}"))?;
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
+    crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, lock: ui_lock });
     println!(
         "sa-game: samp mode: server {}:{} as {}; adapter {:?}; {what}",
         target.host,

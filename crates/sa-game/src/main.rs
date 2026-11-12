@@ -31,6 +31,8 @@ mod rw_standin;
 mod samp;
 #[cfg(feature = "samp")]
 mod samp_net;
+mod samp_input;
+mod samp_ui_demo;
 mod sha256;
 mod winmain;
 
@@ -60,6 +62,8 @@ struct Args {
     name: String,
     /// `--samp-auth FILE`: the auth table (default: `SAMP_AUTH_TABLE`)
     samp_auth: Option<PathBuf>,
+    /// `--samp-ui-demo`: the engine-drawn SA:MP UI with sample content (`samp_ui_demo.rs`)
+    samp_ui_demo: bool,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -74,6 +78,7 @@ fn parse_args() -> Result<Args, String> {
         samp: None,
         name: "Player".into(),
         samp_auth: None,
+        samp_ui_demo: false,
     };
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
@@ -92,13 +97,15 @@ fn parse_args() -> Result<Args, String> {
             "--samp" => a.samp = Some(val()?),
             "--name" => a.name = val()?,
             "--samp-auth" => a.samp_auth = Some(PathBuf::from(val()?)),
+            "--samp-ui-demo" => a.samp_ui_demo = true,
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE]] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--samp HOST[:PORT] [--name NAME] [--samp-auth FILE] | --samp-ui-demo] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
-                     without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE."
+                     without it a stand-in client only samples the adapter). The auth table comes from --samp-auth or SAMP_AUTH_TABLE.\n\
+                     --samp-ui-demo draws the engine-drawn SA:MP UI (chat, dialogs, nametags, labels, textdraws) with sample content."
                 );
                 std::process::exit(0);
             }
@@ -107,6 +114,9 @@ fn parse_args() -> Result<Args, String> {
     }
     if let Some(s) = &a.samp {
         samp::parse_target(s, &a.name)?;
+        if a.samp_ui_demo {
+            return Err("--samp-ui-demo and --samp are exclusive".into());
+        }
     }
     if a.game.as_os_str().is_empty() {
         return Err("--game DIR is required (the GTA San Andreas install)".into());
@@ -187,6 +197,9 @@ fn run(args: &Args) -> Result<String, String> {
         }
         None => None,
     };
+    if args.samp_ui_demo {
+        samp_ui_demo::install()?;
+    }
     println!(
         "sa-game: game folder {} (read-only), user documents {}",
         args.game.display(),
@@ -293,6 +306,8 @@ fn run(args: &Args) -> Result<String, String> {
             if winmain::game_state() != winmain::STATE_IDLE {
                 i.mouse_delta = (4.0, -2.0);
             }
+            samp_ui_demo::take_input(&mut i);
+            samp_input::filter(&mut i);
             for e in &i.events {
                 p.queue.push_event(e, t);
             }
@@ -363,6 +378,9 @@ fn run(args: &Args) -> Result<String, String> {
     }
     if let Some(t) = &samp_target {
         samp::report(&mut md, t);
+    }
+    if args.samp_ui_demo {
+        samp_ui_demo::report(&mut md);
     }
     let crashed = rep
         .rows
