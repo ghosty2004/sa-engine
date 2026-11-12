@@ -43,11 +43,11 @@ sa-samp-ui = { path = "../sa-samp-ui" }
 wgpu = "29"
 png = "0.18"
 web-time = "1.1"
-# samp-rs (branch sa-engine/adapter), pinned to a commit. samp-client takes sa-samp-api from this repository;
-# the workspace `[patch]` points that back at `crates/sa-samp-api`, so both sides share one crate.
-samp-client = { git = "file:///home/ghosty2004/samp-rs", rev = "fb890107bdd1acb2edbdafac39ad6d45130629f3", optional = true }
-samp-proto = { git = "file:///home/ghosty2004/samp-rs", rev = "fb890107bdd1acb2edbdafac39ad6d45130629f3", optional = true }
-samp-saa = { git = "file:///home/ghosty2004/samp-rs", rev = "fb890107bdd1acb2edbdafac39ad6d45130629f3", optional = true }
+# samp-rs (the SA:MP client, `samp-rs/` in this repository, its own Cargo workspace). samp-client takes
+# sa-samp-api and sa-net from `crates/` by path, so both sides share one crate.
+samp-client = { path = "../../samp-rs/crates/samp-client", optional = true }
+samp-proto = { path = "../../samp-rs/crates/samp-proto", optional = true }
+samp-saa = { path = "../../samp-rs/crates/samp-saa", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libc = "0.2"
