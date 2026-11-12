@@ -151,6 +151,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::knock_off_bike_damage_anims::HOOKS,
     crate::car_set_ped_out_native::HOOKS,
     crate::road_rage_events_native::HOOKS,
+    crate::road_rage_sub_tasks::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
