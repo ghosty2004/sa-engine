@@ -137,3 +137,8 @@ pub mod attractor_ptr_vectors;
 pub mod attractor_register_ped;
 pub mod attractor_task_pair_vector;
 pub mod ped_attractor_base;
+pub mod ped_attractor_dtor;
+pub mod go_to_attractor_first_sub_task;
+pub mod respected_friend_range;
+pub mod attractor_arrival;
+pub mod use_attractor_tasks;

@@ -76,6 +76,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // STD-12 (unverified batches)
     crate::automobile_random_damage::HOOKS,
     crate::bike_fix_hands::HOOKS,
+    crate::bike_car_horn::HOOKS,
     crate::float_pow::HOOKS,
     crate::bike_rider_anims::HOOKS,
 ];

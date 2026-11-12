@@ -84,6 +84,7 @@ pub mod bike_control;
 pub mod bike_render;
 pub mod automobile_random_damage;
 pub mod bike_fix_hands;
+pub mod bike_car_horn;
 pub mod generated;
 pub mod float_pow;
 pub mod bike_rider_anims;
