@@ -175,6 +175,15 @@ impl Ui {
             || self.cursor_mode != CursorMode::Off
     }
 
+    /// Whether the mouse belongs to the UI (the camera must not turn): a dialog, the scoreboard, textdraw
+    /// selection or the locked cursor mode. The free cursor mode leaves the mouse to the game.
+    pub fn locks_mouse(&self) -> bool {
+        self.dialog.is_some()
+            || self.scoreboard.is_some()
+            || self.textdraws.selecting.is_some()
+            || self.cursor_mode == CursorMode::Locked
+    }
+
     /// The display options (the renderer sizes the fonts with `font_size`).
     pub fn options(&self) -> &UiOptions {
         &self.options
@@ -492,7 +501,7 @@ impl SampUi for Ui {
                     _ => PassToGame,
                 }
             }
-            WindowEvent::KeyUp { .. } if self.wants_keyboard() => Consumed,
+            // Key releases always reach the game, so a key held when the chat line opened is not stuck.
             WindowEvent::Char { ch, unicode } => {
                 if std::mem::take(&mut self.swallow_char) {
                     return Consumed;
