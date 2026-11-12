@@ -449,4 +449,63 @@ pub fn climb_scan_to_grab(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface
     collided
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_CLIMB_SCAN_TO_GRAB_SECTOR_LIST, HOOK_CLIMB_SCAN_TO_GRAB];
+/// The edge point for a stand-up / vault test: `(x - sin(a) [0x8D2F24], y + cos(a) [0x8D2F24], z + [0xC18F78])`
+/// (`ms_fAtEdgeOffsetHorz` / `ms_fAtEdgeOffsetVert`), each stored as f32.
+fn edge_point(point: GPtr<u8>, a: f32) -> [f32; 3] {
+    let horz = c(0x8D_2F24);
+    [
+        x(rd::<f32>(point, 0)).fsub(x(a).fsin().fmul_m(horz)).to_f32(),
+        x(a).fcos().fmul_m(horz).fadd_m(rd::<f32>(point, 4)).to_f32(),
+        x(c(0xC1_8F78)).fadd_m(rd::<f32>(point, 8)).to_f32(),
+    ]
+}
+
+/// `ScanToGrab(ped, &tmp, &angle, &surface, false, standUp, vault, &edge)` with the original's scratch outputs
+/// (it points the angle and surface outputs at its own argument slots).
+fn scan_edge(ped: GPtr<u8>, edge: &mut [f32; 3], stand_up: u32, vault: u32) -> GPtr<u8> {
+    let mut tmp = [0u32; 3];
+    let mut slots = [0u32; 2];
+    let sp = buf(&mut slots);
+    climb_scan_to_grab_c(ped, buf(&mut tmp), sp, sp.byte_add(4), 0, stand_up, vault, GPtr::from_raw(edge.as_mut_ptr()).cast())
+}
+
+orig! {
+    /// `CTaskSimpleClimb::ScanToGrab` (0x67FD30), called through its stub
+    #[allow(clippy::too_many_arguments)]
+    fn climb_scan_to_grab_c(ped: GPtr<u8>, pos: GPtr<u8>, angle: GPtr<u8>, surface: GPtr<u8>, launch: u32, stand_up: u32, vault: u32, over: GPtr<u8>) -> GPtr<u8> = cdecl 0x67FD30 => climb_scan_to_grab;
+}
+
+/// `bool CTaskSimpleClimb::TestForVault(CPed* ped, const CVector& point, float angle)` (0x6804D0, `ret 0xC`).
+///
+/// False when the climb entity (+0x24) is a vehicle; otherwise true when a vault scan from the edge point
+/// (`ScanToGrab(..., false, false, true, &edge)`) finds nothing. The edge point is computed first.
+#[hook(addr = 0x6804D0, conv = thiscall, name = "CTaskSimpleClimb::TestForVault",
+       expect = "83 EC 18 D9 44 24 24 8B",
+       unverified = "climb-1", route = "L2", hazards = "x87-transcendental,ax-al-return", recs = "grove-walk",
+       note = "fsin / fcos")]
+pub fn climb_test_for_vault(this: GPtr<u8>, ped: GPtr<u8>, point: GPtr<u8>, angle: f32) -> u8 {
+    let mut edge = edge_point(point, angle);
+    if rd::<u8>(rd::<GPtr<u8>>(this, 0x24), 0x36) & 7 == 2 {
+        return 0;
+    }
+    u8::from(scan_edge(ped, &mut edge, 0, 1).is_null())
+}
+
+/// `bool CTaskSimpleClimb::TestForStandUp(CPed* ped, const CVector& point, float angle)` (0x680570, `ret 0xC`).
+///
+/// True when a stand-up scan from the edge point (`ScanToGrab(..., false, true, false, &edge)`) finds nothing.
+#[hook(addr = 0x680570, conv = thiscall, name = "CTaskSimpleClimb::TestForStandUp",
+       expect = "83 EC 18 D9 44 24 24 8B",
+       unverified = "climb-1", route = "L2", hazards = "x87-transcendental,ax-al-return", recs = "grove-walk",
+       note = "fsin / fcos")]
+pub fn climb_test_for_stand_up(_this: GPtr<u8>, ped: GPtr<u8>, point: GPtr<u8>, angle: f32) -> u8 {
+    let mut edge = edge_point(point, angle);
+    u8::from(scan_edge(ped, &mut edge, 1, 0).is_null())
+}
+
+pub const HOOKS: &[HookReg] = &[
+    HOOK_CLIMB_SCAN_TO_GRAB_SECTOR_LIST,
+    HOOK_CLIMB_SCAN_TO_GRAB,
+    HOOK_CLIMB_TEST_FOR_VAULT,
+    HOOK_CLIMB_TEST_FOR_STAND_UP,
+];
