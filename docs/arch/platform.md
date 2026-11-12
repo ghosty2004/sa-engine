@@ -1888,7 +1888,8 @@ the message and throws a JS exception (`wasm_bindgen::throw_str`). The engine dr
 `sa.frame()` without running Rust destructors. The worker puts back the shadow stack pointer (the module exports
 `__stack_pointer`, `tools/web/build.sh`) to its value before the call, then calls `sa.recover()`, which ends the
 iteration through the same bookkeeping as natively (`Session::finish`: report row, `CGame::Initialise` and
-three-identical-failures stop rules). Why the state stays sane: the original code's state is left exactly as the native
+three-identical-failures stop rules; in the browser the latter is off: the last frame stays on the canvas and the
+page shows the blocked function, so one unported path does not end the session). Why the state stays sane: the original code's state is left exactly as the native
 unwind leaves it (it has no destructors); Rust state that an unwind would release is what differs. The session is no
 longer in a `RefCell` (a borrow would stay taken). Guards held across game code would stay taken: `recover` checks the
 platform lock and stops the session if it is held. The no-threads `Mutex` of wasm32 panics on a second lock, so any
@@ -1901,6 +1902,15 @@ module. `?SA_WEB_NO_RECOVER=1` turns the handler off. Seen in the recording run:
 about two minutes, blocks three iterations in a row and the loop stops). `&stub=...` replaces the list and `&stub=none`
 drops it. Any `SA_*` query variable still wins. The click that locks the pointer is not passed to the game (it used
 to punch: CTaskSimpleFight).
+
+**Input in the frames that read it.** The page runs the main loop without the frame limiter's sleep, so most
+iterations only peek messages; the game reads DirectInput / `CPad` in the few that run a frame (the ones that
+present). Clearing the mouse motion, the wheel and the pressed keys after every iteration lost most of them (user
+report: mouse-look barely turned the camera, sprint unreliable). They now stay pending until an iteration presents
+(`web::frame`); window-message events still go to the queue once. A key released before any frame saw it held is
+released after the next frame (quick taps; Enter on SwiftShader, where a menu frame takes longer than a 150 ms tap).
+Verified headless on the GPU (rec2, rec3): pointer-lock mouse-look turns the camera, Space + W sprints. The page shows
+"Click the picture to capture the mouse; Esc releases it." and whether the mouse is captured.
 
 **The FX out-of-bounds trap** (`FindFxSystemBP` from `CObjectData::Initialise`, `CreateEntityFx`; the user's AMD
 WebGPU run and a headless GL run). The cause is not an uninitialised read: the wasm32 C heap's `realloc` always
@@ -1929,4 +1939,9 @@ it (run2, the recording run).
   `Present` (2,365 blocked iterations, the picture frozen, the loop still running, because the iterations in between
   that do not render keep the three-in-a-row rule from firing). That is a missing port, not a web issue: natively the
   same. Other blocked callees seen: 0x5F3B70, 0x65C680 (vslot `CreateNextSubTask`), 0x5F32D0.
+  With WRITER-NATIVE's 0x4AC840 / 0x4AE270 picked (branch `worktree-agent-a6d319b53fd3185ec`: dfa84753, 99c9089c,
+  1af4e486, 662a6799, 67e218c1, 83637f99, cfb801e0, cherry-picked onto this branch) the car collision no longer
+  blocks. Next web-visible blockers: `hideout_restore_cars` 0x448550 (near CJ's garage, from the first in-world
+  frames; once it blocked every frame when CJ ran into the garage door), the jump's `CTaskSimpleClimb::TestForClimb`
+  0x6803A0, `CIdleCam::ProcessFOVZoom` 0x517BF0 (stubbed by the page), 0x6513A0 (line-up with car, enter-car path).
 
