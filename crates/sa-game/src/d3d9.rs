@@ -369,6 +369,7 @@ fn dev_get_gamma_ramp(_this: u32, _swap: u32, ramp: GPtr<u16>) {
 }
 fn dev_present(_this: u32, _src: u32, _dst: u32, _hwnd: u32, _dirty: u32) -> i32 {
     dump_memory();
+    vehicle_list();
     present_frame()
 }
 
@@ -403,6 +404,56 @@ fn dump_memory() {
             line += &format!(" {v:08x}({})", f32::from_bits(v));
         }
         eprintln!("{line}");
+    }
+}
+/// `SA_GAME_VEHLIST=N` (exploration only): every N-th `Present` prints the player's position, state and vehicle,
+/// and every vehicle of the pool within 150 units (model, position, driver).
+fn vehicle_list() {
+    static SEEN: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+    let Some(every) = std::env::var("SA_GAME_VEHLIST").ok().and_then(|v| v.parse::<u32>().ok()) else { return };
+    let n = SEEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    if every == 0 || !n.is_multiple_of(every) {
+        return;
+    }
+    let rd = |a: u32| GPtr::<u32>::from_addr(a as usize).read();
+    let rf = |a: u32| f32::from_bits(rd(a));
+    let pos = |e: u32| {
+        let m = rd(e + 0x14);
+        let b = if m >= 0x1000 { m + 0x30 } else { e + 4 };
+        (rf(b), rf(b + 4), rf(b + 8))
+    };
+    let ped = rd(0xB7CD98);
+    if ped < 0x1000 {
+        return;
+    }
+    let (px, py, pz) = pos(ped);
+    eprintln!(
+        "sa-game: veh-list present {n}: player {ped:#x} at ({px:.2}, {py:.2}, {pz:.2}) state {} vehicle {:#x} in-vehicle {}",
+        rd(ped + 0x530),
+        rd(ped + 0x58C),
+        (rd(ped + 0x46C) >> 8) & 1
+    );
+    let pool = rd(0xB74494);
+    if pool < 0x1000 {
+        return;
+    }
+    let (objs, map, size) = (rd(pool), rd(pool + 4), rd(pool + 8) as i32);
+    for i in 0..size.max(0) as u32 {
+        if GPtr::<u8>::from_addr((map + i) as usize).read() & 0x80 != 0 {
+            continue;
+        }
+        let v = objs + i * 0xA18;
+        let (x, y, z) = pos(v);
+        if (x - px).hypot(y - py) < 150.0 {
+            eprintln!(
+                "sa-game: veh-list   [{i}] {v:#x} model {} at ({x:.2}, {y:.2}, {z:.2}) driver {:#x} status {:#x} mission {} law {}",
+                GPtr::<u16>::from_addr((v + 0x22) as usize).read(),
+                rd(v + 0x460),
+                GPtr::<u8>::from_addr((v + 0x36) as usize).read(),
+                GPtr::<u8>::from_addr((v + 0x3BA) as usize).read(),
+                GPtr::<u8>::from_addr((v + 0x428) as usize).read() & 1
+            );
+        }
     }
 }
 /// `EvictManagedResources`: nothing to evict (the seam keeps every resource); `D3D_OK`.
