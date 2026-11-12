@@ -185,7 +185,7 @@ impl NetHooks {
             netgame: NetGame::new(0),
             class_sel: ClassSelection::new(now),
             server_text: (target.host.clone(), target.port),
-            auto_spawn: std::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
+            auto_spawn: crate::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
             netgame_created: false,
         })
     }

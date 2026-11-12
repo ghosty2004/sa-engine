@@ -47,5 +47,11 @@ samp's 2 s guard and the class-info wait still apply (`tools/e2e/samp/native-joi
 | logos / intro / legal / menu skipped | same: `gGameState` FRONTEND_LOADING → FRONTEND_LOADED → FRONTEND_IDLE → LOADING_STARTED → IDLE in 4 iterations |
 | loading screen | same art (SA-MP logo, EAX / NVIDIA / RakNet); sa-game also shows GTA's loading bar on the last slides (not seen in the original's 200 ms samples: to check) |
 | connecting scene | same camera, weather and chat lines and the same 3 s connect tick; sa-game shows a "Fat" stat box at the top left (a stat message from GTA's main.scm; samp runs its own main.scm) |
-| class selection | same camera (the gamemode's), HUD off; keyboard flow measured by the server (2 s guard, Shift spawns); the mouse panel (`<< >> Spawn`) is not drawn yet, and the original showed none with keyboard input |
+| class selection | same camera (the gamemode's), HUD off. Real key events through the engine's input path (`SA_GAME_KEYS='right:300:306,right:360:366,left:420:426,shift:500:620'` with native-join.sh and `SA_SAMP_AUTO_SPAWN=0`): the server sees classes 0 → 1 → 2 → 1 and the spawn, as with the original's Right, Right, Left, Shift. Open: the class skin (`Peds::set_ped_model` is not served by the native adapter yet), the arrow sounds 1052/1053 (`GameAudio::one_off_sound` not served), the mouse panel (`<< >> Spawn`; the original showed none with keyboard input) |
 | spawn | same position and camera behind the player; sa-game shows the HUD clock, which samp turns off (`reset_game_defaults`: HUD clock off) |
+
+Browser (wasm32, headless Chromium `--gpu native`, private open.mp + sa-udp-proxy on other ports via `SAMP_LOCK`): the
+same start-up up to class selection: no logos or menu, samp's loading screen from samp.saa (served from the page's game
+folder), connect, class 0 requested. The class view then blocks every iteration on the unported FX getter
+`info_vget_value` 0x4A56E0 (white frames, WEB-SAMP's known blocker), so `CPad::UpdatePads` never sees the Shift key and
+no spawn follows there; natively the same keys spawn.
