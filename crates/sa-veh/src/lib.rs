@@ -127,6 +127,7 @@ pub mod automobile_controls;
 pub mod bike_controls;
 pub mod vehicle_blade_collision;
 pub mod heli_dust;
+pub mod automobile_close_doors;
 pub mod plane_damage;
 pub mod vehicle_tail_calls;
 pub mod vehicle_stub_natives;

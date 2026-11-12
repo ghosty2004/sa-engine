@@ -34,6 +34,7 @@ pub mod script_locate;
 pub mod script_thing_index;
 pub mod streamed_script_load;
 pub mod script_entity_cleanup;
+pub mod script5_callees;
 pub mod cmd0;
 pub mod cmd100;
 pub mod cmd1000;

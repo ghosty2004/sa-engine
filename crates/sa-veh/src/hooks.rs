@@ -118,6 +118,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::bike_controls::HOOKS,
     crate::vehicle_blade_collision::HOOKS,
     crate::heli_dust::HOOKS,
+    crate::automobile_close_doors::HOOKS,
     crate::plane_damage::HOOKS,
     crate::vehicle_tail_calls::HOOKS,
     crate::vehicle_fire_rates_upgrades::HOOKS,
