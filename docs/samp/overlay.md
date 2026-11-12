@@ -202,6 +202,34 @@ Evidence (not committed; Rockstar-derived pixels): `target/samp-ui-evidence/` �
 the frame is not cleared, so text that moved (chat after new lines) leaves earlier frames' pixels there; the demo
 holds its echo lines back until the dialogs are done to keep those frames clean. This is not an overlay effect.
 
+### 6.1 Comparison with the original client
+
+```
+LANE=2 SA_ROOT=~/sa-engine E2E_RES=800x600 tools/e2e/samp-ui-ref.sh       # original gta_sa.exe + samp.dll
+SA_SAMP_DIR=~/sa-engine/re/samp/client SA_SAMP_UI_SCENE=ref <demo command above> --frames 200
+```
+
+`samp-ui-ref.sh` runs the original exe with samp.dll 0.3.7-R4 (no sa_hook) on the lane's headless gamescope
+against a private open.mp copy with `tools/e2e/samp/sampui.pwn`, which shows fixed content (connect lines, server
+lines with colour codes, player chat, a 3D label, textdraws of fonts 0–3 with outline / shadow / box / alignment,
+two sprites, game text, four kill-list rows; then dialog styles 0–5 with text typed or the third row selected, the
+chat input, the scoreboard, F7) and takes screenshots. `SA_SAMP_UI_SCENE=ref` (`samp_ui_scene.rs`) shows the same
+content in the engine, one step every 4 playing frames. Side-by-side PNGs (original | engine, full frames and 2×
+crops per element) are in `target/samp-ui2-evidence/sbs-d/` (not committed). Status at 800 × 600:
+
+| element | status | remaining difference |
+|---|---|---|
+| chat lines (colours, codes, pitch, margins, widths) | matches | glyph hinting (lighter strokes) |
+| chat outline / F7 plain | close | outline from unhinted glyphs |
+| chat input box + scrollbar | matches | — |
+| dialogs 0–5 (skin, caption, buttons, body, list, selection, scrollbar, edit, headers) | close | ≤ 1 px vertical on GUI-font rows / buttons; dialog width ±4 px from text widths |
+| scoreboard | close | HUD / radar not hidden |
+| kill list | close | weapon icons are labels (GTAWEAPON3 not rasterised) |
+| textdraws, game text | matches | drawn by the game's own CFont (same code path) |
+| 3D label | close | position depends on the world (no common camera) |
+| nametags + bars | not compared | the open.mp NPC is flagged NPC, samp draws no tag for it (needs a second real client) |
+| cursor | not compared | hardware cursor not in screenshots; engine draws `mouse.png` |
+
 ## 7. Tests
 
 `cargo test -p sa-samp-ui` (38): colour-code parse / strip / runs (samp's cursor walk), pixel wrapping with
@@ -221,13 +249,21 @@ fails on a pre-existing `deref_addrof` in `camerasize.rs`'s tests (not touched h
 
 1. **Model previews** (textdraw font 5): need `render_model_preview` (an off-screen RW scene). Not drawn yet.
    Sprite textdraws (font 4) are drawn.
-2. **Kill-list weapon icons**: samp draws them with its own GTAWEAPON3 font from samp's files; the engine shows a
-   short label in the icon box. Needs the font from samp.saa through `FileProvider`, or a bitmap set.
+2. **Kill-list weapon icons**: samp draws them with the GTAWEAPON3 font (`gtaweap3.ttf`, a loose file in the
+   user's GTA folder, aux + 8 / aux + 12 px); the engine shows a short label in a black box of the same place.
+   Next step: rasterise `gtaweap3.ttf` at run time like the Arial lookup (samp_assets.rs) into the atlas.
 3. **Nametag AFK icon** (SAMPAUX3 glyphs): shown as "AFK" text. Nametags of drivers of RC vehicles anchor at
    the vehicle in samp; samp-rs can pass `NametagAnchor::World` for them.
 4. **Chat log file**: samp-rs keeps it.
-5. **The DXUT look** of buttons, edit boxes and the scrollbar is approximated with flat rectangles (samp's GUI
-   skin texture is samp's own file).
+5. **The DXUT look** comes from samp's `sampgui.png` when it is found (§2.2); otherwise flat rectangles.
+   Remaining pixel differences against the original (§6.1): glyphs are not hinted (ab_glyph), so text looks
+   slightly lighter and thinner than Wine's hinted GDI text and single widths differ by ≤ 1 px (a 400 px chat
+   line matches to the pixel); GUI-font controls sit up to 1 px off vertically; the HUD and radar are not hidden
+   while the scoreboard is open or the chat is off (samp's 0xBA6769 / 0xBAA3FB writes, not done yet).
+8. **Reference resolutions**: the reference run (§6.1) gets GTA's default 800 × 600 video mode; other modes need
+   the lane's `gta_sa.set` written first. Under a larger window (e.g. 800 × 600 stretched to 1280 × 720 by
+   gamescope) samp centres dialogs and sizes the chat input by the window's client rectangle, not the video mode.
+   The hardware cursor (`mouse.png`) is not in gamescope screenshots, so the cursor is checked by code only.
 6. **Menus** (`ShowMenu`, GTA's `CMenuSystem`) stay on `hud::Menus`, not this UI.
 7. **wasm32**: the UI crate and the backend build; `sa-game` itself does not target wasm32 yet.
 
