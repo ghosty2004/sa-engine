@@ -37,6 +37,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::rxpipeline::HOOKS,
     crate::rx_execute::HOOKS,
     crate::d3d9_mesh_instance::HOOKS,
+    crate::d3d9_skin_node::HOOKS,
+    crate::d3d9_skin_blend::HOOKS,
     crate::imagemod::HOOKS,
     crate::worldplugin::HOOKS,
     crate::anim::HOOKS,

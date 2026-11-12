@@ -11,7 +11,7 @@
 //! (u8[4] each), +0x18 vertex weights (f32[4] each), +0x24 split boneLimit, +0x28 numMeshes, +0x2C numRLE,
 //! +0x30 split block (remap indices), +0x34 RLE counts, +0x38 RLE, +0x3C data block.
 //!
-//! Not ported (left to the original): `_rpD3D9SkinAllInOneNode` (0x7C7B90) (see the hand-back notes).
+//! The skin all-in-one node (0x7C7B90) and its CPU skinning are in `d3d9_skin_node.rs` / `d3d9_skin_blend.rs`.
 
 use sa_core::abi::HookReg;
 use sa_core::mem::{GPtr, GlobalDesc};
