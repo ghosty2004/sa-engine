@@ -102,6 +102,11 @@ pub mod toggle {
     /// Typed cheats off: `CCheat::DoCheats` is not called from `CGame::Process` (samp blocks the typed
     /// characters at 0x438576; natively the whole cheat poll is skipped).
     pub const NO_CHEATS: u32 = 1 << 0;
+    /// samp's start-up (`StartupOptions`, docs/samp/startup.md): `gGameState` := 5 at attach with the
+    /// `mov [gGameState],esi` in `psInitialize` (0x747483) NOPed, so the logo and intro-movie states are skipped;
+    /// at `gGameState` 7 (frontend idle) samp's init sets the menu flags (+0xE9 = 1, +0x5C = 0, +0x33 = 0) and
+    /// `gGameState` := 8, so the game loads straight into the world without the main menu.
+    pub const SAMP_STARTUP: u32 = 1 << 1;
 }
 
 /// Sets the disabled features (`FeatureSet` bits) at install; 0 restores single-player behaviour.
