@@ -308,6 +308,14 @@ pub fn cd_stream_sync(id: i32) -> u32 {
 pub fn cd_stream_thread(_param: u32) -> u32 {
     loop {
         wait_for_single_object(STREAM_SEMAPHORE.get(), INFINITE);
+        cd_stream_thread_step();
+    }
+}
+
+/// One pass of [`cd_stream_thread`]'s loop after its semaphore wait: the request at the head of the queue. Phases
+/// B/C without threads (wasm32) run it on the main thread at each release of the stream semaphore.
+pub fn cd_stream_thread_step() {
+    {
         // GetFirstInQueue: -1 when empty (not checked)
         let id = if QUEUE_HEAD.get() == QUEUE_TAIL.get() {
             -1

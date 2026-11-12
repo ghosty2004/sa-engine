@@ -507,7 +507,35 @@ pub(crate) fn release_semaphore(h: GPtr<u8>, n: i32, prev: GPtr<i32>) -> i32 {
         None => 0,
     };
     crate::det::released(h32(h));
+    #[cfg(target_arch = "wasm32")]
+    coop::released(h32(h));
     r
+}
+
+/// wasm32 has no threads: the streaming thread is cooperative. `ResumeThread` of `CdStreamThread` marks it running;
+/// every release of the stream semaphore (`CdStreamRead` queued a request) then runs the thread's loop body
+/// (`cd_stream_thread_step`) on the main thread once per semaphore count, so each read completes at its request (as
+/// `--fixed-step` arranges natively). The audio threads (smooth fades, the stream decoder) do not run.
+#[cfg(target_arch = "wasm32")]
+mod coop {
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    use super::kernel;
+
+    /// The `CdStreamThread` handle, and whether it was resumed.
+    pub static STREAM_THREAD: AtomicU32 = AtomicU32::new(0);
+    pub static STREAM_RUNNING: AtomicU32 = AtomicU32::new(0);
+
+    pub fn released(h: u32) {
+        if STREAM_RUNNING.load(Ordering::Relaxed) == 0
+            || h != sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32
+        {
+            return;
+        }
+        while kernel().wait(h, 0) == sa_platform::kernel::WAIT_OBJECT_0 {
+            sa_stream::cdstream::cd_stream_thread_step();
+        }
+    }
 }
 pub(crate) fn wait_for_single_object(h: GPtr<u8>, ms: u32) -> u32 {
     crate::det::wait(h32(h), ms, |h, ms| kernel().wait(h, ms))
@@ -577,12 +605,28 @@ pub(crate) fn create_thread(_sec: u32, _stack: u32, entry: u32, param: u32, _fla
         _ => return GPtr::from_addr(0),
     };
     let (h, tid) = kernel().create_thread(f);
+    #[cfg(target_arch = "wasm32")]
+    if entry == sa_stream::cdstream::THREAD_ENTRY {
+        coop::STREAM_THREAD.store(h, std::sync::atomic::Ordering::Relaxed);
+    }
     if !id.is_null() {
         id.write(tid);
     }
     GPtr::from_addr(h as usize)
 }
 pub(crate) fn resume_thread(h: GPtr<u8>) -> u32 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        use std::sync::atomic::Ordering;
+        if h32(h) == coop::STREAM_THREAD.load(Ordering::Relaxed) && h32(h) != 0 {
+            coop::STREAM_RUNNING.store(1, Ordering::Relaxed);
+            // requests queued before the thread ran
+            coop::released(sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32);
+        }
+        // no threads: the others stay suspended (the previous suspend count, as Win32 returns it)
+        return 1;
+    }
+    #[cfg(not(target_arch = "wasm32"))]
     kernel().resume_thread(h32(h))
 }
 pub(crate) fn get_current_thread() -> GPtr<u8> {

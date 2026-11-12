@@ -520,6 +520,8 @@ fn process_game_logic() -> String {
                     // The original spins through the loop until the limit passes; the native loop sleeps for the
                     // rest of it instead (same frames, no busy loop), so one `--frames` iteration in two runs the
                     // game frame.
+                    // wasm32: no sleep; the page calls the next iteration at its next animation frame
+                    #[cfg(not(target_arch = "wasm32"))]
                     std::thread::sleep(std::time::Duration::from_secs_f32((limit - t) / 1000.0 + 0.000_05));
                 }
             }

@@ -27,7 +27,13 @@ macro_rules! natives {
                 extern "C-unwind" fn w($($a: $t),*) $(-> $r)? {
                     $f($($a),*)
                 }
-                v.push(($imp, w as *const () as usize));
+                v.push(($imp, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }
@@ -209,6 +215,9 @@ fn set_error_mode(_mode: u32) -> u32 {
 fn sleep(ms: u32) {
     with("Sleep", |_| ());
     crate::det::slept(ms);
+    // wasm32: the game runs on the worker's event loop, which must not block (the main loop's next iteration comes
+    // with the next animation frame)
+    #[cfg(not(target_arch = "wasm32"))]
     std::thread::sleep(std::time::Duration::from_millis(ms.min(1000) as u64));
 }
 /// `GetVersionExA(OSVERSIONINFOA*)`: Windows 10 (NT 10.0, build 19045), what the phase A Wine

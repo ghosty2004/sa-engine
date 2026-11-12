@@ -820,6 +820,20 @@ fn expand(
             ::sa_core::abi::IntoAbi::into_abi(r)
         }
 
+        // Phase B on wasm32: the type-erased entry (`sa_core::wabi`).
+        #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+        #[doc(hidden)]
+        #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref, unused_mut)]
+        extern "C" fn #native(_callee: u32, __sa_a: *const u32, __sa_ret: *mut ::sa_core::wabi::Ret) {
+            #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
+            // SAFETY: the dispatcher passes an `Args` buffer and a `Ret` slot.
+            let mut __sa_rd = unsafe { ::sa_core::wabi::Reader::new(__sa_a) };
+            #(let #args: #tys = __sa_rd.take();)*
+            #[allow(unused_unsafe)]
+            let r = unsafe { #fname(#(#args),*) };
+            ::sa_core::wabi::put_ret(::sa_core::abi::IntoAbi::into_abi(r), unsafe { &mut *__sa_ret });
+        }
+
         #[doc = #doc]
         pub const #reg: ::sa_core::abi::HookReg = ::sa_core::abi::HookReg {
             addr: #addr,
@@ -835,7 +849,11 @@ fn expand(
                 {
                     #native as usize
                 }
-                #[cfg(not(target_arch = "x86"))]
+                #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+                {
+                    #native as ::sa_core::wabi::Erased as usize
+                }
+                #[cfg(not(any(target_arch = "x86", target_arch = "wasm32")))]
                 {
                     0
                 }
@@ -958,6 +976,18 @@ fn expand_native(
             ::sa_core::abi::IntoAbi::into_abi(r)
         }
 
+        #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+        #[doc(hidden)]
+        #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref, unused_mut)]
+        extern "C" fn #native(_callee: u32, __sa_a: *const u32, __sa_ret: *mut ::sa_core::wabi::Ret) {
+            // SAFETY: the dispatcher passes an `Args` buffer and a `Ret` slot.
+            let mut __sa_rd = unsafe { ::sa_core::wabi::Reader::new(__sa_a) };
+            #(let #args: #tys = __sa_rd.take();)*
+            #[allow(unused_unsafe)]
+            let r = unsafe { #fname(#(#args),*) };
+            ::sa_core::wabi::put_ret(::sa_core::abi::IntoAbi::into_abi(r), unsafe { &mut *__sa_ret });
+        }
+
         #[doc = #doc]
         pub const #reg: ::sa_core::abi::NativeReg = ::sa_core::abi::NativeReg {
             addr: #addr,
@@ -967,7 +997,11 @@ fn expand_native(
                 {
                     #native as usize
                 }
-                #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
+                #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+                {
+                    #native as ::sa_core::wabi::Erased as usize
+                }
+                #[cfg(not(all(any(target_arch = "x86", target_arch = "wasm32"), not(sa_phase_a))))]
                 {
                     0
                 }

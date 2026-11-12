@@ -100,32 +100,20 @@ fn arena_sections(exe: &[u8]) -> Result<Vec<Section>, String> {
 pub fn map(game: &Path) -> Result<String, String> {
     let path = game.join("gta_sa.exe");
     let exe = std::fs::read(&path).map_err(|e| format!("{}: {e} (phase B reads the data sections of your own 1.0 US exe at start-up)", path.display()))?;
+    map_image(exe, &path.display().to_string())
+}
+
+/// [`map`] from the exe's bytes (`label` names it in messages).
+pub fn map_image(exe: Vec<u8>, label: &str) -> Result<String, String> {
     let digest = crate::sha256::hex(&exe);
     if digest != EXE_SHA256 {
         return Err(format!(
-            "{}: SHA-256 {digest} is not gta_sa.exe 1.0 US ({EXE_SHA256})",
-            path.display()
+            "{label}: SHA-256 {digest} is not gta_sa.exe 1.0 US ({EXE_SHA256})"
         ));
     }
     let secs = arena_sections(&exe)?;
     let (lo, hi) = ARENA;
-    // SAFETY: an anonymous private mapping at a fixed address that MAP_FIXED_NOREPLACE refuses to
-    // place over anything already mapped; it is never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            lo as *mut libc::c_void,
-            hi - lo,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != lo {
-        return Err(format!(
-            "cannot map the legacy address arena at {lo:#x}..{hi:#x} (mmap returned {p:?})"
-        ));
-    }
+    map_fixed(lo, hi - lo).map_err(|e| format!("cannot map the legacy address arena: {e}"))?;
     let mut bytes = 0;
     for s in &secs {
         let n = if s.vsize == 0 { s.raw_size } else { s.raw_size.min(s.vsize) };
@@ -164,15 +152,13 @@ pub fn map(game: &Path) -> Result<String, String> {
     sa_core::orig::registry::set_site_resolver(resolve_site);
     let ro = map_read_only_code(&exe, &all)?;
     drop(exe);
-    // SAFETY: `.rdata` lies inside the mapping; making it read-only as the original's loader does.
-    if unsafe { libc::mprotect(RDATA.0 as *mut libc::c_void, RDATA.1 - RDATA.0, libc::PROT_READ) } != 0 {
-        return Err("mprotect(.rdata) failed".into());
-    }
+    // `.rdata` read-only, as the original's loader does
+    protect_read_only(RDATA.0, RDATA.1 - RDATA.0).map_err(|e| format!("mprotect(.rdata) failed: {e}"))?;
     sa_core::orig::registry::set_arena(lo, hi);
     Ok(format!(
         "{} sections, {bytes} initialised bytes at {lo:#x}..{hi:#x} from {} (SHA-256 verified; .bss zero), {nimp} IAT cells trapped, {ro} code bytes readable (no-CD protection reads)",
         secs.len(),
-        path.display()
+        label
     ))
 }
 
@@ -189,20 +175,7 @@ const READ_ONLY_CODE: [(usize, usize); 2] = [(0x0040_1000, 0x0085_8000), (0x0155
 fn map_read_only_code(exe: &[u8], all: &[Section]) -> Result<usize, String> {
     let mut total = 0;
     for &(lo, hi) in &READ_ONLY_CODE {
-        // SAFETY: an anonymous private mapping at a fixed, unused address (MAP_FIXED_NOREPLACE).
-        let p = unsafe {
-            libc::mmap(
-                lo as *mut libc::c_void,
-                hi - lo,
-                libc::PROT_READ | libc::PROT_WRITE,
-                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-                -1,
-                0,
-            )
-        };
-        if p as usize != lo {
-            return Err(format!("cannot map the code bytes at {lo:#x}..{hi:#x} (mmap returned {p:?})"));
-        }
+        map_fixed(lo, hi - lo).map_err(|e| format!("cannot map the code bytes: {e}"))?;
         for s in all.iter().filter(|s| s.va >= lo && s.va < hi) {
             let n = s.raw_size.min(s.vsize.max(s.raw_size)).min(hi - s.va);
             let src = exe
@@ -212,12 +185,64 @@ fn map_read_only_code(exe: &[u8], all: &[Section]) -> Result<usize, String> {
             unsafe { std::ptr::copy_nonoverlapping(src.as_ptr(), s.va as *mut u8, n) };
             total += n;
         }
-        // SAFETY: the mapping made above.
-        if unsafe { libc::mprotect(lo as *mut libc::c_void, hi - lo, libc::PROT_READ) } != 0 {
-            return Err(format!("mprotect({lo:#x}) failed"));
-        }
+        protect_read_only(lo, hi - lo)?;
     }
     Ok(total)
+}
+
+/// wasm32: everything below this address of linear memory is the legacy image's address space (the module is
+/// linked with its data, heap and stack above it: `--global-base`, see `tools/web/build.sh`).
+#[cfg(target_arch = "wasm32")]
+pub const WASM_LOW_END: usize = 0x0160_0000;
+
+/// Makes `[lo, lo + len)` zeroed, writable memory at exactly that address: a fixed anonymous mapping natively (never
+/// over an existing one); on wasm32 the reserved low linear memory, which is already there and zero.
+pub fn map_fixed(lo: usize, len: usize) -> Result<(), String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        static PROBE: u8 = 0;
+        let base = std::ptr::addr_of!(PROBE) as usize;
+        if lo == 0 || lo + len > WASM_LOW_END || base < WASM_LOW_END {
+            return Err(format!("{lo:#x}..{:#x} is not in the reserved low linear memory (data at {base:#x})", lo + len));
+        }
+        Ok(())
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // SAFETY: an anonymous private mapping at a fixed address that MAP_FIXED_NOREPLACE refuses to place over
+        // anything already mapped; it is never unmapped.
+        let p = unsafe {
+            libc::mmap(
+                lo as *mut libc::c_void,
+                len,
+                libc::PROT_READ | libc::PROT_WRITE,
+                libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
+                -1,
+                0,
+            )
+        };
+        if p as usize != lo {
+            return Err(format!("{lo:#x}..{:#x}: mmap returned {p:?}", lo + len));
+        }
+        Ok(())
+    }
+}
+
+/// Makes a [`map_fixed`] range read-only (natively; wasm32 has no page protection).
+pub fn protect_read_only(lo: usize, len: usize) -> Result<(), String> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let _ = (lo, len);
+        Ok(())
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // SAFETY: a range [`map_fixed`] mapped.
+        if unsafe { libc::mprotect(lo as *mut libc::c_void, len, libc::PROT_READ) } != 0 {
+            return Err(format!("mprotect({lo:#x}) failed"));
+        }
+        Ok(())
+    }
 }
 
 /// First trap address written into an IAT cell; import `i` gets `TRAP_BASE + TRAP_STRIDE * i`
@@ -327,11 +352,13 @@ pub fn set_step(name: &'static str) {
     STEP_LEN.store(name.len(), Ordering::SeqCst);
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn write_err(b: &[u8]) {
     // SAFETY: write(2) of a valid buffer; async-signal-safe.
     unsafe { libc::write(2, b.as_ptr().cast(), b.len()) };
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn hex(mut v: usize, out: &mut [u8; 18]) -> &[u8] {
     out[0] = b'0';
     out[1] = b'x';
@@ -351,6 +378,7 @@ fn hex(mut v: usize, out: &mut [u8; 18]) -> &[u8] {
     &out[..2 + n]
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, ctx: *mut libc::c_void) {
     // SAFETY: the kernel passes a valid siginfo for SA_SIGINFO handlers.
     let addr = unsafe { (*info).si_addr() } as usize;
@@ -387,7 +415,12 @@ extern "C" fn on_fault(sig: libc::c_int, info: *mut libc::siginfo_t, ctx: *mut l
     unsafe { libc::_exit(3) };
 }
 
+/// wasm32: a memory fault is a trap the page reports; nothing to install.
+#[cfg(target_arch = "wasm32")]
+pub fn install_crash_reporter() {}
+
 /// Installs the SIGSEGV/SIGBUS reporter.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn install_crash_reporter() {
     // SAFETY: a plain sigaction with an SA_SIGINFO handler that only calls async-signal-safe
     // functions.
@@ -408,11 +441,19 @@ pub struct Watchdog {
 }
 
 impl Watchdog {
+    #[cfg(target_arch = "wasm32")]
+    pub fn start(_step: &'static str) -> Watchdog {
+        Watchdog {
+            done: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn start(step: &'static str) -> Watchdog {
         let done = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let d = done.clone();
         std::thread::spawn(move || {
-            let t = std::time::Instant::now();
+            let t = web_time::Instant::now();
             while t.elapsed() < PROBE_TIMEOUT {
                 if d.load(Ordering::SeqCst) {
                     return;
@@ -442,6 +483,13 @@ pub const PROBE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10
 /// fault (the crash reporter's line), `None` if it finished (the caller then runs the step for
 /// real in this process). The child's side effects (game memory, open files) are discarded; only
 /// files it wrote in the user directory remain.
+#[cfg(target_arch = "wasm32")]
+pub fn probe(_f: impl FnOnce()) -> Option<String> {
+    None
+}
+
+/// See the native [`probe`].
+#[cfg(not(target_arch = "wasm32"))]
 pub fn probe(f: impl FnOnce()) -> Option<String> {
     let mut fds = [0i32; 2];
     // SAFETY: pipe(2) into a local array.
@@ -471,7 +519,7 @@ pub fn probe(f: impl FnOnce()) -> Option<String> {
     let mut out = Vec::new();
     let mut buf = [0u8; 512];
     let mut status = 0;
-    let start = std::time::Instant::now();
+    let start = web_time::Instant::now();
     // SAFETY: making our read end non-blocking.
     unsafe { libc::fcntl(fds[0], libc::F_SETFL, libc::O_NONBLOCK) };
     let hung = loop {
@@ -518,6 +566,7 @@ pub fn probe(f: impl FnOnce()) -> Option<String> {
 mod tests {
     use super::*;
 
+    #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn hex_and_sections() {
         assert_eq!(hex(0xB70198, &mut [0; 18]), b"0xb70198");

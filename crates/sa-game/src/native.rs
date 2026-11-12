@@ -154,7 +154,7 @@ pub fn dispatched() -> Vec<(&'static str, u32, u32)> {
 }
 
 /// Return values of the exploration stubs, by stub index.
-#[cfg(target_arch = "x86")]
+#[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
 static STUB_RET: [std::sync::atomic::AtomicU32; 48] = [const { std::sync::atomic::AtomicU32::new(0) }; 48];
 
 #[cfg(target_arch = "x86")]
@@ -240,9 +240,35 @@ macro_rules! stub_fns {
 /// blocker another lane is porting. `N` (0..=10, default 0) is the number of stack dwords the
 /// callee pops (stdcall / thiscall arguments after `this`); 0 suits cdecl. `!ADDR` replaces a registered port too
 /// (calls through the address registry only; Rust callers that name the port directly still reach it).
-#[cfg(target_arch = "x86")]
+/// wasm32: the stubbed addresses, by stub index (the one erased stub entry finds its value by the callee address).
+#[cfg(target_arch = "wasm32")]
+static STUB_ADDR: [std::sync::atomic::AtomicU32; 48] = [const { std::sync::atomic::AtomicU32::new(0) }; 48];
+
+/// wasm32: every exploration stub (the callee pops nothing: wasm has no caller-visible stack to clean).
+#[cfg(target_arch = "wasm32")]
+#[allow(unsafe_code)]
+extern "C" fn stub_entry(callee: u32, _args: *const u32, ret: *mut sa_core::wabi::Ret) {
+    use std::sync::atomic::Ordering;
+    let v = (0..48)
+        .find(|&i| STUB_ADDR[i].load(Ordering::Relaxed) == callee)
+        .map_or(0, |i| STUB_RET[i].load(Ordering::Relaxed));
+    // SAFETY: the dispatcher passes its `Ret` slot.
+    sa_core::wabi::put_ret(v, unsafe { &mut *ret });
+}
+
+#[cfg(target_arch = "wasm32")]
+macro_rules! stub_fns {
+    ($($i:literal),*) => {
+        [$({
+            let _ = $i;
+            [stub_entry as sa_core::wabi::Erased as usize; 11]
+        }),*]
+    };
+}
+
+#[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
 fn stubs() -> Vec<(u32, usize, bool)> {
-    let Ok(spec) = std::env::var("SA_GAME_STUB") else {
+    let Ok(spec) = crate::env::var("SA_GAME_STUB") else {
         return Vec::new();
     };
     let fns: [[usize; 11]; 48] = stub_fns!(
@@ -268,12 +294,14 @@ fn stubs() -> Vec<(u32, usize, bool)> {
             && n <= 10
         {
             STUB_RET[i].store(r, std::sync::atomic::Ordering::Relaxed);
+            #[cfg(target_arch = "wasm32")]
+            STUB_ADDR[i].store(a, std::sync::atomic::Ordering::Relaxed);
             out.push((a, fns[i][n as usize], force));
         }
     }
     out
 }
-#[cfg(not(target_arch = "x86"))]
+#[cfg(not(any(target_arch = "x86", target_arch = "wasm32")))]
 fn stubs() -> Vec<(u32, usize, bool)> {
     Vec::new()
 }
@@ -329,13 +357,13 @@ fn before_command(s: sa_script::vm::Scr, w: u32) {
 /// one run lists the opcodes a script path needs (the parameter
 /// forms of the `reads` column: `T` text labels and `Cn` parameter groups). The skipped opcode's effect is missing.
 pub fn install_script_skip() {
-    let trace = std::env::var_os("SA_GAME_SCRIPT_TRACE").is_some();
+    let trace = crate::env::var_os("SA_GAME_SCRIPT_TRACE").is_some();
     SCRIPT_TRACE.store(trace, std::sync::atomic::Ordering::Relaxed);
     if trace || START_IN_WORLD.load(std::sync::atomic::Ordering::Relaxed) {
         let f: fn(sa_script::vm::Scr, u32) = before_command;
         sa_script::cmdlib::COMMAND_TRACE_HANDLER.store(f as usize, std::sync::atomic::Ordering::Relaxed);
     }
-    if std::env::var_os("SA_GAME_SCRIPT_SKIP").is_none() {
+    if crate::env::var_os("SA_GAME_SCRIPT_SKIP").is_none() {
         return;
     }
     fn handler(s: sa_script::vm::Scr, command: u32) -> Option<i8> {

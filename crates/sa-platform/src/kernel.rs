@@ -11,6 +11,7 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
 
 /// `WaitForSingleObject` results.
@@ -52,6 +53,18 @@ impl Semaphore {
     /// Waits up to `ms` milliseconds ([`INFINITE`] = forever) for a count > 0 and takes one.
     pub fn wait(&self, ms: u32) -> u32 {
         let mut c = self.count.lock().unwrap_or_else(|e| e.into_inner());
+        // wasm32 (one thread, no blocking): nobody else can release while we wait, so an unsignalled semaphore
+        // times out at once, whatever the timeout
+        #[cfg(target_arch = "wasm32")]
+        {
+            let _ = ms;
+            if *c <= 0 {
+                return WAIT_TIMEOUT;
+            }
+            *c -= 1;
+            return WAIT_OBJECT_0;
+        }
+        #[cfg(not(target_arch = "wasm32"))]
         if ms == INFINITE {
             while *c <= 0 {
                 c = self.cv.wait(c).unwrap_or_else(|e| e.into_inner());
@@ -70,8 +83,11 @@ impl Semaphore {
                     .0;
             }
         }
-        *c -= 1;
-        WAIT_OBJECT_0
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            *c -= 1;
+            WAIT_OBJECT_0
+        }
     }
 }
 
