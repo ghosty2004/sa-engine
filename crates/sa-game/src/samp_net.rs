@@ -68,6 +68,7 @@ pub struct NetHooks {
     server_text: (String, u16),
     /// Synthetic Shift for headless runs (`SA_SAMP_AUTO_SPAWN=1`): the offscreen mode has no keyboard.
     auto_spawn: bool,
+    netgame_created: bool,
 }
 
 /// samp's debug chat colour (`Started`, `Connecting to`, `Connected. Joining the game...`, `Connected to`).
@@ -190,6 +191,7 @@ impl NetHooks {
             class_sel: ClassSelection::new(now),
             server_text: (target.host.clone(), target.port),
             auto_spawn: std::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
+            netgame_created: false,
         })
     }
 
@@ -204,10 +206,14 @@ impl NetHooks {
         if !self.world_set_up {
             self.world_set_up = true;
             self.world_setup(game);
-            // samp prints this when its netgame object is created.
-            self.debug_line(game, STARTED);
         }
         let now_ms = now.duration_since(self.start).as_millis() as u64;
+        if !self.netgame_created {
+            // samp creates its netgame (and prints `Started`) once the game runs; the connect tick counts from here.
+            self.netgame_created = true;
+            self.netgame = NetGame::new(now_ms);
+            self.debug_line(game, STARTED);
+        }
         if self.netgame.connect_due(now_ms) {
             let line = lifecycle::msg::connecting(&self.server_text.0, self.server_text.1);
             self.debug_line(game, &line);
