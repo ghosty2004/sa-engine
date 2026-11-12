@@ -136,3 +136,40 @@ Results (every split run: splito and splitr traces IDENTICAL to the all-original
   modelled: it comes from the frames of the original callees' own callees).
 - With every save port on Rust the save file differs from the original's in residue positions only
   (`save1` rust run: 570 bytes, all inside the mask) and the game state after loading it is IDENTICAL.
+
+### F5 (tools/accept/f5-saves.sh 6, tag f5a)
+
+| set | ports on Rust | trace vs all-original | save file vs the original's |
+|---|---|---|---|
+| all | every save and load port (incl. the unverified GenericSave, SaveSlot, vehicles) | IDENTICAL, 3,900 frames | identical except stack residue (710 bytes, all inside the mask; checksums valid) |
+| save | the save side only: the original loads the Rust save | IDENTICAL, 3,900 frames | identical except stack residue (710 bytes) |
+| load | the load side only: Rust loads the original's save | IDENTICAL, 3,900 frames | IDENTICAL |
+
+So: original saves load in Rust and Rust saves load in the original with identical state hashes after the
+load; the save bytes are identical except the uninitialised-stack bytes of the ledger entry.
+
+### All ports (verify-all)
+
+`tools/e2e/verify-all.sh save1va 6,7` with the 59 promoted ports in the default set: **IDENTICAL on all 13
+recordings** (grove walk 5,200, air-water 5,800, anim-input 3,300, car-ai 5,000, c-bug 3,220, driving 4,338,
+menus-hud 5,700, menus-map-controls 4,000, pause-restart 3,700, police-gang 5,200, save-load 3,900,
+weapon-combat 3,500, world-cheats 3,276 frames). On save-load the default set writes a save that differs from
+the original's in 653 residue bytes only (`GenericSave` stays original, but its block callees run on Rust);
+`verify-all.sh` now accepts a save difference that `save-diff.py --mask` classifies as residue only and says so
+(`save1va2`).
+
+### Gate
+
+`tools/verify/writer-gate.sh 1c3e9e0` (GATE_SKIP=l1test): clippy (host, all targets), i686 release build and
+clippy, wasm32 build of sa-ports, sa-hook lib tests (58) PASS; the `hooks` step lists the 59 promoted hooks as
+problems (this branch both wrote and verified them).
+
+## Open items
+
+- `GenericSave` / `C_PcSave::SaveSlot`: ledger SAVE-1 (stack residue below a Rust frame); promotion is the main
+  session's call.
+- The vehicle save functions, `DeleteSlot`, `ReportError`, `CloseFile` have no corpus case (a recording with a
+  vehicle stored in a safe house garage, a delete from the Load / Delete menu, and a corrupt save would cover
+  them).
+- The harness pokes stand in for a save point and the main menu's Load Game: a recording that reaches a real
+  save point (after the first mission) would cover the script path to the save menu.
