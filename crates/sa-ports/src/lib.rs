@@ -87,6 +87,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_script::entry_exit_flag::NATIVES],
     &[sa_pop::pathfind::NATIVES],
     &[sa_ai::seek::NATIVES],
+    &[sa_veh::vehicle2::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.

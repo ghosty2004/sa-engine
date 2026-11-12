@@ -113,9 +113,14 @@ impl<V: View> NativeGame<V> {
     /// before [`SampHost::install`].
     pub fn dispatch_frame(&mut self, phase: FramePhase) {
         if let Some(mut hooks) = self.hooks.take() {
-            hooks.frame(phase, self);
+            // An adapter call can reach an unported engine function, which unwinds (the phase B gap report);
+            // the client must survive that, so the hooks go back before the unwind continues.
+            let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| hooks.frame(phase, self)));
             // A callback cannot reinstall hooks (it only sees `&mut dyn GameAdapter`), so put them back.
             self.hooks = Some(hooks);
+            if let Err(e) = r {
+                std::panic::resume_unwind(e);
+            }
         }
     }
 

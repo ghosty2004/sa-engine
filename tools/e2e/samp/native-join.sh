@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SAMP-4 native join (docs/samp/native-plan.md): native sa-game (i686 Linux, built with `--features samp`) joins a
 # private copy of our open.mp 1.6.7 server on 127.0.0.1, spawns, and the server then drives the player
-# (tools/e2e/samp/sampcov.pwn commands: position, health, armour, weapon, money, clock, weather, interior).
+# (tools/e2e/samp/sampcov.pwn commands: position, health, armour, weapon, money, clock, weather, interior, a vehicle
+# the player is put in).
 # No Wine, no gta_sa.exe.
 #
 #   tools/e2e/samp/native-join.sh [OUT_DIR]       (default target/samp4-evidence)
@@ -19,10 +20,10 @@ OUT="$(mkdir -p "${1:-$ROOT/target/samp4-evidence}" && cd "${1:-$ROOT/target/sam
 AUTH="${AUTH_TABLE:-$HOME/samp-rs/data/auth_table.txt}"
 PORT="${SAMP_PORT:-7812}"
 GAME_BIN="${SA_GAME:-$ROOT/target/i686-unknown-linux-gnu/release/sa-game}"
-FRAMES="${FRAMES:-1400}"
-# W held from iteration 700 for 400 iterations (after the server's commands): the server sees the walk in the
+FRAMES="${FRAMES:-1600}"
+# W held from iteration 1000 for 450 iterations (after the server's commands): the server sees the walk in the
 # on-foot sync.
-export SA_GAME_WALK="${SA_GAME_WALK:-700:400}"
+export SA_GAME_WALK="${SA_GAME_WALK:-1000:450}"
 SERVER_SRC="$SA_ROOT/re/samp/server"
 SRV="$OUT/server"
 SLOG="$OUT/server.log"
@@ -78,7 +79,9 @@ say() { echo "[$(date +%T)] $*" | tee -a "$OUT/steps.log"; }
 : > "$OUT/steps.log"
 say "server pid $SRV_PID on 127.0.0.1:$PORT"
 
-STUBS='0x7c7b90=1/0,0x80e270=1/0,0x455720=0/0,0x4f6420=0/2,0x732f30=0/0,0x5d9900=0/0,0x4a2c40=0/4,0x701780=0/0,0x733f80=0/0,0x733240=0/0'
+# STD-9's exploration stubs (render callbacks, skin node, effects), plus two for the native join's vehicle:
+# CVisibilityPlugins::RenderVehicleReallyLowDetailCB 0x7331E0 and the collision sparks 0x6A6DC0 (visual only).
+STUBS='0x6a6dc0=0/12,0x7331e0=0/0,0x7c7b90=1/0,0x80e270=1/0,0x455720=0/0,0x4f6420=0/2,0x732f30=0/0,0x5d9900=0/0,0x4a2c40=0/4,0x701780=0/0,0x733f80=0/0,0x733240=0/0'
 SA_GAME_STUB="${SA_GAME_STUB:-$STUBS}" SA_GAME_SCRIPT_SKIP=1 SA_GAME_PRESENT_GAME=1 SA_GAME_PRESENT_EVERY=20 \
     "$GAME_BIN" --game "$SA_ROOT/wine/gta-sa" --frames "$FRAMES" --start-in-world \
     --samp "127.0.0.1:$PORT" --name NativeCJ --samp-auth "$AUTH" \
@@ -111,6 +114,11 @@ if wait_log '\[cov\] spawn id=' 120; then
     cmd "time|12"
     cmd "weather|10"
     cmd "interior|0"
+    # A server vehicle (streamed in and created natively). PUTIN=1 also puts the player in as driver; natively the
+    # warp task does not run yet (native-plan.md §10.7).
+    cmd "veh|560|2445|-1650|13.4|90"
+    V="$(grep -oE "\[cov\] $SEQ veh -?[0-9]+" "$SLOG" | tail -1 | awk '{print $4}')"
+    [ -n "$V" ] && [ "${PUTIN:-0}" = 1 ] && cmd "putin|$V|0"
     sleep 6
 else
     say "FAIL: no spawn"
