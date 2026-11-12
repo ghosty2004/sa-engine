@@ -8,7 +8,7 @@ use sa_core::hook;
 use crate::common::*;
 
 /// The destructor body 0x4ADE90 (thiscall; `CEventDeath` and other events chain to it): `*this = 0x85AB38`.
-#[hook(addr = 0x4ADE90, conv = thiscall, name = "FUN_004ade90", expect = "C7 01 38 AB 85 00 C3",
+#[hook(addr = 0x4ADE90, conv = thiscall, name = "FUN_004ade90", expect = "C7 01 38 AB 85 00 C3", preserve = "ecx",
        unverified = "std15-ai-3", route = "L2", hazards = "none", recs = "car-drive")]
 pub fn event_base_dtor_body(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x85AB38);

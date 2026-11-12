@@ -61,3 +61,5 @@
 0x4B4950  # hooked on worktree-agent-a6d319b53fd3185ec
 0x636280  # hooked on worktree-agent-a1954952637efd64a
 0x636390  # hooked on worktree-agent-a1954952637efd64a
+# STD-15: ported by hand in pass_object_tasks.rs (WRITER-NATIVE native-19); the generated copy duplicated it
+0x661570

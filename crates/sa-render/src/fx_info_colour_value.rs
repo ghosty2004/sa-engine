@@ -17,7 +17,7 @@ orig! {
 /// thiscall, `ret 0x18`): key time `mult` with byte +6 set, else `(float)(currTime / totalTime)`;
 /// `FxInterpInfoU255_c::GetVal` into a 16-float buffer; `out[0..4] = _ftol(key[0..4])` (low bytes), `out[7] =
 /// _ftol(key[4])`, `out +8 = 2`.
-#[hook(addr = 0x4A6860, conv = thiscall, name = "FUN_004a6860", expect = "8A 41 06 83 EC 40",
+#[hook(addr = 0x4A6860, conv = thiscall, name = "FxInfoColourBright_c::GetValue", expect = "8A 41 06 83 EC 40",
        unverified = "std15-render-3", route = "L2", hazards = "heap-writes", recs = "car-drive",
        note = "writes the particle render info")]
 pub fn fx_info_colour_get_value(
