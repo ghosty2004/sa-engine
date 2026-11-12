@@ -48,3 +48,4 @@ pub mod misc5;
 pub mod misc6;
 pub mod population4;
 pub mod generated;
+pub mod car_ai_reason_to_stop;
