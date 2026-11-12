@@ -62,4 +62,32 @@ pub fn pad_mouse_steer_540e80(pad: GPtr<u8>) -> u32 {
     r.ftol() as u32
 }
 
-pub const HOOKS: &[HookReg] = &[HOOK_PAD_MOUSE_STEER_540E80];
+/// `CPad` 0x540F80 (thiscall, EAX; callers read AX): the mouse y delta (int16 0xB7345E), negated (16-bit) with the
+/// invert flag 0xB73402. With |v| > 100 and neither +0x10E nor +0x26 set: `v - 50` (v > 0) or `v + 50` (full
+/// 32-bit EAX). Otherwise, with the third-person mouse camera and |v| > 50: `_ftol((float)(v - 50) * 0.5)` /
+/// `_ftol((float)(v + 50) * 0.5)`; else 0 (AX).
+#[hook(addr = 0x540F80, conv = thiscall, name = "FUN_00540f80", expect = "51 A0 02 34 B7 00",
+       unverified = "std15-input-1", route = "L2", hazards = "ax-al-return", recs = "car-enter",
+       note = "the zero paths clear AX only; 0 here")]
+pub fn pad_mouse_steer_540f80(pad: GPtr<u8>) -> u32 {
+    let mut v = GPtr::<i16>::from_addr(0xB7345E).read();
+    if GPtr::<u8>::from_addr(0xB73402).read() != 0 {
+        v = v.wrapping_neg();
+    }
+    let e = i32::from(v);
+    let big = e.unsigned_abs() > 100;
+    if big && !(rd::<i16>(pad, 0x10E) == 0 && rd::<i16>(pad, 0x26) != 0) {
+        return if v > 0 { (e - 50) as u32 } else { (e + 50) as u32 };
+    }
+    if cam_using_3rd_person_mouse_cam(GPtr::from_addr(0xB6F19C)) == 0 {
+        return 0;
+    }
+    if e.unsigned_abs() <= 50 {
+        return 0;
+    }
+    let half = gf(0x858B8C);
+    let r = if v > 0 { e - 50 } else { e + 50 };
+    X87::from_i32(r).fmul_m(half).ftol() as u32
+}
+
+pub const HOOKS: &[HookReg] = &[HOOK_PAD_MOUSE_STEER_540E80, HOOK_PAD_MOUSE_STEER_540F80];
