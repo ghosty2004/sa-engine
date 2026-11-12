@@ -3,6 +3,8 @@
 pub mod attach;
 pub mod base;
 pub mod buoyancy;
+pub mod buoyancy_boat;
+pub mod buoyancy_splash;
 pub mod collide;
 pub mod forces;
 pub mod friction;

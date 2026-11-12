@@ -49,6 +49,8 @@ pub const MODULES: &[&[HookReg]] = &[
     physical::buoyancy::HOOKS,
     physical::buoyancy::HOOKS_2,
     physical::buoyancy::HOOKS_3,
+    physical::buoyancy_boat::HOOKS,
+    physical::buoyancy_splash::HOOKS,
     // PORT-WORLD-2
     world::statics2::HOOKS,
     world::entity::HOOKS,

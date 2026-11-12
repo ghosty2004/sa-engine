@@ -147,6 +147,14 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::fx_add_bullet_impact::HOOKS,
     crate::bullet_trace_add::HOOKS,
     crate::checkpoint_render::HOOKS,
+    crate::fx_add_wheel_grass::HOOKS,
+    crate::glass_break_physically::HOOKS,
+    crate::permanent_shadow_add::HOOKS,
+    crate::skidmark_register::HOOKS,
+    crate::underwater_ripple::HOOKS,
+    crate::water_high_detail_grid::HOOKS,
+    crate::water_split_x::HOOKS,
+    crate::water_wake_segment::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
