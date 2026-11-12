@@ -5,49 +5,49 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 
 | batch | hooks | subsystems | commit | branch | written | L1 | L2 | L3-batch | failed | routes |
 |---|---|---|---|---|---|---|---|---|---|---|
-| ai7-1 | 60 | AI, UNK-game | b6860a80 | fx-pre-rebase | 0 | 0 | 0 | 60 | 0 | L2 60 |
-| ai7-10 | 10 | AI | 30978c3a | fx-pre-rebase | 0 | 0 | 0 | 10 | 0 | L2 10 |
-| ai7-11 | 5 | AI | 3b3a489b | fx-pre-rebase | 0 | 0 | 0 | 5 | 0 | L2 5 |
-| ai7-12 | 12 | AI | 3b3a489b | fx-pre-rebase | 0 | 0 | 0 | 12 | 0 | L2 12 |
-| ai7-2 | 60 | AI, UNK-game | b6860a80 | fx-pre-rebase | 0 | 0 | 0 | 60 | 0 | L2 60 |
-| ai7-3 | 59 | AI | b6860a80 | fx-pre-rebase | 0 | 0 | 0 | 59 | 0 | L2 59 |
-| ai7-4 | 38 | AI | b6860a80 | fx-pre-rebase | 0 | 0 | 0 | 38 | 0 | L2 38 |
-| ai7-5 | 14 | AI | b6860a80 | fx-pre-rebase | 14 | 0 | 0 | 0 | 0 | L2 13, split 1 |
-| ai7-6 | 31 | AI | 30978c3a | fx-pre-rebase | 31 | 0 | 0 | 0 | 0 | L2 31 |
-| ai7-7 | 6 | AI | 30978c3a | fx-pre-rebase | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| ai7-8 | 11 | AI | 30978c3a | fx-pre-rebase | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
-| ai7-9 | 10 | AI | 30978c3a | fx-pre-rebase | 10 | 0 | 0 | 0 | 0 | L2 10 |
-| ai8-1 | 6 | AI | 0479b3bd | fx-pre-rebase | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| ai8-2 | 3 | AI | 0479b3bd | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| ai8-3 | 4 | AI | 0479b3bd | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| ai8-4 | 22 | AI, UNK-game | 98a57303 | fx-pre-rebase | 22 | 0 | 0 | 0 | 0 | L2 22 |
-| ai8-5 | 23 | AI | 2ae30d99 | fx-pre-rebase | 23 | 0 | 0 | 0 | 0 | L2 23 |
-| ai8-6 | 7 | AI | 2ae30d99 | fx-pre-rebase | 7 | 0 | 0 | 0 | 0 | L2 5, split 2 |
-| ai8g-1 | 51 | AI, SCRIPT | 98a57303 | fx-pre-rebase | 51 | 0 | 0 | 0 | 0 | L2 51 |
-| ai8g-2 | 50 | AI, SCRIPT, UNK-game | 98a57303 | fx-pre-rebase | 50 | 0 | 0 | 0 | 0 | L2 50 |
-| ai8g-3 | 55 | AI | 98a57303 | fx-pre-rebase | 55 | 0 | 0 | 0 | 0 | L2 55 |
-| ai8g-4 | 58 | AI | 98a57303 | fx-pre-rebase | 58 | 0 | 0 | 0 | 0 | L2 58 |
-| ai8g-5 | 57 | AI | 98a57303 | fx-pre-rebase | 57 | 0 | 0 | 0 | 0 | L2 57 |
-| ai8g-6 | 30 | AI | 98a57303 | fx-pre-rebase | 30 | 0 | 0 | 0 | 0 | L2 30 |
-| ai8h-1 | 29 | AI | 2ae30d99 | fx-pre-rebase | 29 | 0 | 0 | 0 | 0 | L2 29 |
-| attr-1 | 15 | AI | 985733d2 | fx-pre-rebase | 15 | 0 | 0 | 0 | 0 | L2 15 |
-| attr-2 | 1 | UNK-game | 2eda9992 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| attr-3 | 1 | VEH | 806442d9 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| attr-4 | 4 | AI, UNK-game | 47eae19e | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| attr-5 | 1 | UNK-game | 5af3e533 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| attr-6 | 4 | AI, UNK-game | 3533ddc6 | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| attr-7 | 4 | AI | 794917c7 | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| attr-8 | 4 | AI, CALLED-ONLY, WORLD | 80046b17 | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| boot-render-2 | 3 | RW, UNK-game | 2077fc01 | fx-pre-rebase | 0 | 0 | 0 | 3 | 0 | L2 3 |
-| boot-rw-1 | 1 | RW | 2077fc01 | fx-pre-rebase | 0 | 0 | 0 | 1 | 0 | L2 1 |
-| climb-1 | 4 | AI | eae25835 | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| climb-2 | 1 | AI | 2c460985 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| climb-3 | 1 | AI | 9f5e84b0 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| climb-4 | 2 | AI | 156bca34 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| climb-5 | 2 | WORLD | 09987e17 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| climb-6 | 1 | WORLD | aa33ce4e | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| climb-7 | 1 | AI | 10b24ec2 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| climb-8 | 1 | WORLD | b2d609d0 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| ai7-1 | 60 | AI, UNK-game | b6860a80 | master | 0 | 0 | 0 | 60 | 0 | L2 60 |
+| ai7-10 | 10 | AI | 30978c3a | master | 0 | 0 | 0 | 10 | 0 | L2 10 |
+| ai7-11 | 5 | AI | 3b3a489b | master | 0 | 0 | 0 | 5 | 0 | L2 5 |
+| ai7-12 | 12 | AI | 3b3a489b | master | 0 | 0 | 0 | 12 | 0 | L2 12 |
+| ai7-2 | 60 | AI, UNK-game | b6860a80 | master | 0 | 0 | 0 | 60 | 0 | L2 60 |
+| ai7-3 | 59 | AI | b6860a80 | master | 0 | 0 | 0 | 59 | 0 | L2 59 |
+| ai7-4 | 38 | AI | b6860a80 | master | 0 | 0 | 0 | 38 | 0 | L2 38 |
+| ai7-5 | 14 | AI | b6860a80 | master | 14 | 0 | 0 | 0 | 0 | L2 13, split 1 |
+| ai7-6 | 31 | AI | 30978c3a | master | 31 | 0 | 0 | 0 | 0 | L2 31 |
+| ai7-7 | 6 | AI | 30978c3a | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| ai7-8 | 11 | AI | 30978c3a | master | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
+| ai7-9 | 10 | AI | 30978c3a | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
+| ai8-1 | 6 | AI | 0479b3bd | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| ai8-2 | 3 | AI | 0479b3bd | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| ai8-3 | 4 | AI | 0479b3bd | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| ai8-4 | 22 | AI, UNK-game | 98a57303 | master | 22 | 0 | 0 | 0 | 0 | L2 22 |
+| ai8-5 | 23 | AI | 2ae30d99 | master | 23 | 0 | 0 | 0 | 0 | L2 23 |
+| ai8-6 | 7 | AI | 2ae30d99 | master | 7 | 0 | 0 | 0 | 0 | L2 5, split 2 |
+| ai8g-1 | 51 | AI, SCRIPT | 98a57303 | master | 51 | 0 | 0 | 0 | 0 | L2 51 |
+| ai8g-2 | 50 | AI, SCRIPT, UNK-game | 98a57303 | master | 50 | 0 | 0 | 0 | 0 | L2 50 |
+| ai8g-3 | 55 | AI | 98a57303 | master | 55 | 0 | 0 | 0 | 0 | L2 55 |
+| ai8g-4 | 58 | AI | 98a57303 | master | 58 | 0 | 0 | 0 | 0 | L2 58 |
+| ai8g-5 | 57 | AI | 98a57303 | master | 57 | 0 | 0 | 0 | 0 | L2 57 |
+| ai8g-6 | 30 | AI | 98a57303 | master | 30 | 0 | 0 | 0 | 0 | L2 30 |
+| ai8h-1 | 29 | AI | 2ae30d99 | master | 29 | 0 | 0 | 0 | 0 | L2 29 |
+| attr-1 | 15 | AI | 985733d2 | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
+| attr-2 | 1 | UNK-game | 2eda9992 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| attr-3 | 1 | VEH | 806442d9 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| attr-4 | 4 | AI, UNK-game | 47eae19e | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| attr-5 | 1 | UNK-game | 5af3e533 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| attr-6 | 4 | AI, UNK-game | 3533ddc6 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| attr-7 | 4 | AI | 794917c7 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| attr-8 | 4 | AI, CALLED-ONLY, WORLD | 80046b17 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| boot-render-2 | 3 | RW, UNK-game | 2077fc01 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
+| boot-rw-1 | 1 | RW | 2077fc01 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
+| climb-1 | 4 | AI | eae25835 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| climb-2 | 1 | AI | 2c460985 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| climb-3 | 1 | AI | 9f5e84b0 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| climb-4 | 2 | AI | 156bca34 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| climb-5 | 2 | WORLD | 09987e17 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| climb-6 | 1 | WORLD | aa33ce4e | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| climb-7 | 1 | AI | 10b24ec2 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| climb-8 | 1 | WORLD | b2d609d0 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | clump-1 | 4 | RW | da9de7f1 | master | 0 | 0 | 0 | 4 | 0 | L2 3, split 1 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
@@ -182,38 +182,38 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | mvpm-script-1 | 2 | SCRIPT | 69c799f9 | master | 0 | 0 | 0 | 2 | 0 | L2 2 |
 | mvpm-world-1 | 1 | UNK-game | 69c799f9 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | mvpn-anim-1 | 1 | ANIM | da9de7f1 | master | 0 | 0 | 0 | 1 | 0 | L3-only 1 |
-| native-1 | 1 | RENDER | 43038126 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-10 | 2 | AI | 4455614c | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-11 | 3 | AI | fbdea3d1 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| native-12 | 2 | AI, UNK-game | c041bded | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-13 | 1 | AI | 637493ce | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-1 | 1 | RENDER | 43038126 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-10 | 2 | AI | 4455614c | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-11 | 3 | AI | fbdea3d1 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| native-12 | 2 | AI, UNK-game | c041bded | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-13 | 1 | AI | 637493ce | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | native-15 | 1 | POP | cbad29be | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-16 | 1 | UNK-game | 382bdb1a | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-17 | 1 | POP | 24fca024 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-18 | 3 | CAM | 99c333a9 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| native-19 | 4 | AI, UNK-game | 9ac74e5e | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| native-2 | 2 | AI | 43038126 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-20 | 1 | AI | 41c25193 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-21 | 1 | PED | 9b7e8ab8 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-22 | 4 | AI, UNK-game | 72e98b64 | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| native-23 | 3 | AI, UNK-game | 18ca94a4 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| native-24 | 2 | RENDER, UNK-game | 389dc505 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-25 | 2 | AI, UNK-game | 32d433f1 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-26 | 2 | AI | b6b81409 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-27 | 4 | AI | 5a94b57c | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| native-28 | 2 | UNK-game, WORLD | cca6b5a1 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-29 | 1 | AI | 5da91ada | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-3 | 1 | AUDIO | f1cf1276 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-30 | 1 | AI | af2ed4ea | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-31 | 1 | AI | 63fdf0e7 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-32 | 2 | UNK-game, WORLD | ee29f80d | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-33 | 1 | VEH | c8d8c565 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-34 | 1 | AI | 3713e6ca | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| native-4 | 2 | UNK-game, VEH | 4b7a6b21 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-6 | 2 | AI, UNK-game | f88e3ec4 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-7 | 2 | UNK-game | ba6c9352 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| native-8 | 3 | AI, VEH | f3cf72bb | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| native-9 | 2 | AI, UNK-game | e3ccdd9b | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-16 | 1 | UNK-game | 382bdb1a | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-17 | 1 | POP | 24fca024 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-18 | 3 | CAM | 99c333a9 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| native-19 | 4 | AI, UNK-game | 9ac74e5e | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| native-2 | 2 | AI | 43038126 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-20 | 1 | AI | 41c25193 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-21 | 1 | PED | 9b7e8ab8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-22 | 4 | AI, UNK-game | 72e98b64 | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| native-23 | 3 | AI, UNK-game | 18ca94a4 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| native-24 | 2 | RENDER, UNK-game | 389dc505 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-25 | 2 | AI, UNK-game | 32d433f1 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-26 | 2 | AI | b6b81409 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-27 | 4 | AI | 5a94b57c | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| native-28 | 2 | UNK-game, WORLD | cca6b5a1 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-29 | 1 | AI | 5da91ada | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-3 | 1 | AUDIO | f1cf1276 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-30 | 1 | AI | af2ed4ea | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-31 | 1 | AI | 63fdf0e7 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-32 | 2 | UNK-game, WORLD | ee29f80d | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-33 | 1 | VEH | c8d8c565 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-34 | 1 | AI | 3713e6ca | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| native-4 | 2 | UNK-game, VEH | 4b7a6b21 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-6 | 2 | AI, UNK-game | f88e3ec4 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-7 | 2 | UNK-game | ba6c9352 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| native-8 | 3 | AI, VEH | f3cf72bb | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| native-9 | 2 | AI, UNK-game | e3ccdd9b | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | popw4-drive-1 | 9 | POP | 09ffb626 | master | 0 | 0 | 0 | 9 | 0 | L2 9 |
 | popw4-frame-1 | 1 | POP | 09ffb626 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | popw4-gang-1 | 11 | POP | 09ffb626 | master | 0 | 0 | 0 | 11 | 0 | L2 7, split 4 |
@@ -235,6 +235,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | rw5-node-1 | 4 | RW | f789a8ea | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
 | rw5-raster | 1 | RW | f789a8ea | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | samp-anim-1 | 1 | ANIM | 87822502 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| samp-heli-1 | 1 | VEH | b729fb20 | worktree-agent-a623a7f9d5dd59528 | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | samp-ped-1 | 1 | PED | 87822502 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | samp-render-1 | 5 | CALLED-ONLY, UNK-game | 87822502 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | samp-render-2 | 6 | RENDER, UNK-game | 87822502 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
@@ -243,41 +244,41 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | samp-rw-2 | 2 | RW | 87822502 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
 | samp-script-1 | 6 | SCRIPT | 87822502 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
 | samp-unk-1 | 14 | UNK-game | 87822502 | master | 14 | 0 | 0 | 0 | 0 | L2 14 |
-| samp2-render-1 | 1 | RENDER | 572a1369 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| samp2-render-1 | 1 | RENDER | 572a1369 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | save-core-1 | 3 | SAVE | 9b1fb21c | master | 3 | 0 | 0 | 0 | 0 | L3-only 1, split 2 |
 | save-veh-1 | 5 | VEH | 9b1fb21c | master | 5 | 0 | 0 | 0 | 0 | L2 1, split 4 |
-| std10-ai-1 | 1 | AI | 8c3ee769 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std10-render-1 | 4 | RW | aa9224ad | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 4 |
-| std10-render-2 | 1 | RW | 8c3ee769 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std10-rw-1 | 1 | RW | 8b0e0457 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std10-skin-1 | 7 | RW | 14221138 | fx-pre-rebase | 7 | 0 | 0 | 0 | 0 | L2 7 |
-| std10-skin-2 | 6 | RW | 14221138 | fx-pre-rebase | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| std10-world-1 | 1 | MATH | 8c3ee769 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std11-ai-1 | 19 | AI, MATH, UNK-game | 7ae9fdff | fx-pre-rebase | 19 | 0 | 0 | 0 | 0 | L2 19 |
-| std11-anim-1 | 1 | MATH | a5a5cbb8 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std12-ai-1 | 9 | AI, CALLED-ONLY | 1d1a185e | fx-pre-rebase | 9 | 0 | 0 | 0 | 0 | L2 9 |
-| std12-audio-1 | 2 | AUDIO | f2a3c68d | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std12-pop-1 | 1 | POP | 531ad05d | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std12-render-1 | 2 | RENDER, RW | 09bb6f96 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std12-render-2 | 1 | RENDER | 1d1a185e | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std12-veh-1 | 2 | VEH | 09bb6f96 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std12-veh-2 | 1 | VEH | 88ebf33d | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std12-world-1 | 1 | WORLD | 09bb6f96 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | split 1 |
-| std12-world-2 | 1 | MATH | 6589bddd | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
-| std13-ai-1 | 52 | AI, UNK-game | baa05446 | fx-pre-rebase | 52 | 0 | 0 | 0 | 0 | L2 52 |
-| std14-ai-1 | 6 | AI, UNK-game | addfc5ef | fx-pre-rebase | 6 | 0 | 0 | 0 | 0 | L2 6 |
-| std14-ai-2 | 3 | AI, UNK-game | 6f547845 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std14-veh-1 | 3 | VEH | afa0eac8 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std14-veh-2 | 1 | VEH | 1960fec6 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std15-ai-1 | 2 | AI | 3f76508d | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std15-ai-2 | 3 | AI | 664e77a8 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std15-ai-3 | 1 | UNK-game | 9cb48ff8 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std15-ai-4 | 2 | AI, UNK-game | 5ed865f5 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std15-audio-1 | 1 | AUDIO | 476280a5 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| std15-input-1 | 2 | UNK-game | e612072c | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std15-render-1 | 2 | RENDER | cd8aaddf | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| std15-render-2 | 3 | RENDER, WORLD | 152f9687 | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| std15-render-3 | 1 | UNK-game | 04faa480 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std10-ai-1 | 1 | AI | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std10-render-1 | 4 | RW | aa9224ad | master | 4 | 0 | 0 | 0 | 0 | L2 4 |
+| std10-render-2 | 1 | RW | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std10-rw-1 | 1 | RW | 8b0e0457 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std10-skin-1 | 7 | RW | 14221138 | master | 7 | 0 | 0 | 0 | 0 | L2 7 |
+| std10-skin-2 | 6 | RW | 14221138 | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| std10-world-1 | 1 | MATH | 8c3ee769 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std11-ai-1 | 19 | AI, MATH, UNK-game | 7ae9fdff | master | 19 | 0 | 0 | 0 | 0 | L2 19 |
+| std11-anim-1 | 1 | MATH | a5a5cbb8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std12-ai-1 | 9 | AI, CALLED-ONLY | 1d1a185e | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| std12-audio-1 | 2 | AUDIO | f2a3c68d | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std12-pop-1 | 1 | POP | 531ad05d | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std12-render-1 | 2 | RENDER, RW | 09bb6f96 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std12-render-2 | 1 | RENDER | 1d1a185e | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std12-veh-1 | 2 | VEH | 09bb6f96 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std12-veh-2 | 1 | VEH | 88ebf33d | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std12-world-1 | 1 | WORLD | 09bb6f96 | master | 1 | 0 | 0 | 0 | 0 | split 1 |
+| std12-world-2 | 1 | MATH | 6589bddd | master | 1 | 0 | 0 | 0 | 0 | L1-pure 1 |
+| std13-ai-1 | 52 | AI, UNK-game | baa05446 | master | 52 | 0 | 0 | 0 | 0 | L2 52 |
+| std14-ai-1 | 6 | AI, UNK-game | addfc5ef | master | 6 | 0 | 0 | 0 | 0 | L2 6 |
+| std14-ai-2 | 3 | AI, UNK-game | 6f547845 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std14-veh-1 | 3 | VEH | afa0eac8 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std14-veh-2 | 1 | VEH | 1960fec6 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std15-ai-1 | 2 | AI | 3f76508d | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std15-ai-2 | 3 | AI | 664e77a8 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std15-ai-3 | 1 | UNK-game | 9cb48ff8 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std15-ai-4 | 2 | AI, UNK-game | 5ed865f5 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std15-audio-1 | 1 | AUDIO | 476280a5 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| std15-input-1 | 2 | UNK-game | e612072c | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std15-render-1 | 2 | RENDER | cd8aaddf | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| std15-render-2 | 3 | RENDER, WORLD | 152f9687 | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| std15-render-3 | 1 | UNK-game | 04faa480 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | std4-audio-1 | 19 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 19 | 0 | L2 11, L3-only 8 |
 | std4-audio-2 | 18 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 18 | 0 | L2 1, L3-only 17 |
 | std4-audio-3 | 1 | AUDIO | 309d8fec | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
@@ -328,25 +329,25 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | std9-rw-1 | 3 | RW | da9de7f1 | master | 0 | 0 | 0 | 3 | 0 | L2 3 |
 | veh3-1 | 42 | VEH | 35a056ba | master | 42 | 0 | 0 | 0 | 0 | L2 40, split 2 |
 | veh3-2 | 2 | VEH | 35a056ba | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| veh3-3 | 16 | VEH | 43038126 | fx-pre-rebase | 16 | 0 | 0 | 0 | 0 | L2 16 |
-| veh4-1 | 2 | VEH | 64663f15 | fx-pre-rebase | 2 | 0 | 0 | 0 | 0 | L2 2 |
-| veh4-2 | 8 | VEH | 419315e3 | fx-pre-rebase | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
-| veh4-3 | 12 | VEH | 4f480416 | fx-pre-rebase | 12 | 0 | 0 | 0 | 0 | L2 11, split 1 |
-| veh4-4 | 9 | VEH | 4f480416 | fx-pre-rebase | 9 | 0 | 0 | 0 | 0 | L2 8, L3-only 1 |
+| veh3-3 | 16 | VEH | 43038126 | master | 16 | 0 | 0 | 0 | 0 | L2 16 |
+| veh4-1 | 2 | VEH | 64663f15 | master | 2 | 0 | 0 | 0 | 0 | L2 2 |
+| veh4-2 | 8 | VEH | 419315e3 | master | 8 | 0 | 0 | 0 | 0 | L2 7, L3-only 1 |
+| veh4-3 | 12 | VEH | 4f480416 | master | 12 | 0 | 0 | 0 | 0 | L2 11, split 1 |
+| veh4-4 | 9 | VEH | 4f480416 | master | 9 | 0 | 0 | 0 | 0 | L2 8, L3-only 1 |
 | world3-1 | 11 | WORLD | 35a056ba | master | 11 | 0 | 0 | 0 | 0 | L2 10, split 1 |
 | world3-2 | 20 | WORLD | 35a056ba | master | 20 | 0 | 0 | 0 | 0 | L2 17, split 3 |
 | world3-3 | 3 | WORLD | c379e778 | master | 3 | 0 | 0 | 0 | 0 | L2 2, split 1 |
-| world4-1 | 9 | WORLD | 64663f15 | fx-pre-rebase | 9 | 0 | 0 | 0 | 0 | L2 9 |
-| world4-2 | 4 | WORLD | 419315e3 | fx-pre-rebase | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
+| world4-1 | 9 | WORLD | 64663f15 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
+| world4-2 | 4 | WORLD | 419315e3 | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
 | world5-2 | 11 | WORLD | 1212c39d | master | 11 | 0 | 0 | 0 | 0 | L2 8, split 3 |
-| world6-1 | 1 | WORLD | 88a72154 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| world6-2 | 15 | WORLD | ecb128cf | fx-pre-rebase | 15 | 0 | 0 | 0 | 0 | L2 15 |
-| world6-3 | 1 | WORLD | 9a4a4418 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| writerq-ai-1 | 3 | AI | ddda169b | fx-pre-rebase | 3 | 0 | 0 | 0 | 0 | L2 3 |
-| writerq-ai-2 | 11 | AI, SCRIPT | 9b393bba | fx-pre-rebase | 11 | 0 | 0 | 0 | 0 | L2 11 |
-| writerq-ai-3 | 11 | AI, UNK-game | 5626d260 | fx-pre-rebase | 11 | 0 | 0 | 0 | 0 | L2 11 |
-| writerq-misc-1 | 1 | WORLD | 5f21caf0 | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
-| writerq-veh-1 | 1 | VEH | d577ab7a | fx-pre-rebase | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| world6-1 | 1 | WORLD | 88a72154 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| world6-2 | 15 | WORLD | ecb128cf | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
+| world6-3 | 1 | WORLD | 9a4a4418 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| writerq-ai-1 | 3 | AI | ddda169b | master | 3 | 0 | 0 | 0 | 0 | L2 3 |
+| writerq-ai-2 | 11 | AI, SCRIPT | 9b393bba | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
+| writerq-ai-3 | 11 | AI, UNK-game | 5626d260 | master | 11 | 0 | 0 | 0 | 0 | L2 11 |
+| writerq-misc-1 | 1 | WORLD | 5f21caf0 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
+| writerq-veh-1 | 1 | VEH | d577ab7a | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | x87-2-roll | 1 | WORLD | 909b776c | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 
 ## ai7-1
@@ -5246,6 +5247,21 @@ SA_UNVERIFIED=samp-anim-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-anim-1 $SA_
 | address | name | status | route | hazards |
 |---|---|---|---|---|
 | 0x5FDC00 | `CPedIK::PointGunInDirection` | written | L2 | x87-transcendental |
+
+## samp-heli-1
+
+1 hooks in sa-veh; hazards: x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh samp-heli-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=samp-heli-1 LANE=$LANE tools/e2e/port-l2.sh batch:samp-heli-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag samp-heli-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x6C58E0 | `CHeli::SearchLightCone` | written | L2 | x87-transcendental |
 
 ## samp-ped-1
 
