@@ -112,18 +112,28 @@ orig! {
     fn c_638ae0_t1(this: u32, a0: u32) -> u32 = thiscall 0x638AE0 => unported;
     /// `CTaskComplexUsePairedAttractor::CreateSubTask` (0x638D30), thiscall, 2 stack argument(s)
     fn c_638d30_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x638D30 => unported;
+    /// `CTaskComplexEnterCar::Constructor` (0x63A220), thiscall, 5 stack argument(s)
+    fn c_63a220_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63A220 => unported;
+    /// `CTaskComplexLeaveCarAsPassengerWait::GetNextPassengerToLeave` (0x63B500), thiscall, 0 stack argument(s)
+    fn c_63b500_t0(this: u32) -> u32 = thiscall 0x63B500 => unported;
     /// `CTaskComplexEnterBoatAsDriver::CreateSubTask` (0x63B6C0), thiscall, 1 stack argument(s)
     fn c_63b6c0_t1(this: u32, a0: u32) -> u32 = thiscall 0x63B6C0 => unported;
     /// `CTaskComplexLeaveBoat::CreateSubTask` (0x63BC50), thiscall, 1 stack argument(s)
     fn c_63bc50_t1(this: u32, a0: u32) -> u32 = thiscall 0x63BC50 => unported;
     /// `CTaskSimpleCarDrive::Constructor` (0x63C340), thiscall, 3 stack argument(s)
     fn c_63c340_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x63C340 => unported;
+    /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint` (0x63CE00), thiscall, 7 stack argument(s)
+    fn c_63ce00_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x63CE00 => unported;
     /// `CTaskComplexShuffleSeats::CreateSubTask` (0x63D240), thiscall, 2 stack argument(s)
     fn c_63d240_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x63D240 => unported;
     /// `CTaskComplexShuffleSeats::CreateTaskUtilityLineUpPedWithCar` (0x63D610), thiscall, 1 stack argument(s)
     fn c_63d610_t1(this: u32, a0: u32) -> u32 = thiscall 0x63D610 => unported;
+    /// `CTaskComplexLeaveCarAsPassengerWait::CreateSubTask` (0x640BE0), thiscall, 2 stack argument(s)
+    fn c_640be0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x640BE0 => unported;
     /// `CTaskComplexStealCar::CreateSubTask` (0x640F30), thiscall, 2 stack argument(s)
     fn c_640f30_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x640F30 => unported;
+    /// `CTaskComplexLeaveCar::CreateFirstSubTask` (0x641FC0), thiscall, 1 stack argument(s)
+    fn c_641fc0_t1(this: u32, a0: u32) -> u32 = thiscall 0x641FC0 => unported;
     /// `CTaskComplexScreamInCarThenLeave::CreateSubTask` (0x642510), thiscall, 2 stack argument(s)
     fn c_642510_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x642510 => unported;
     /// `CTaskComplexGoToBoatSteeringWheel::CreateSubTask` (0x64CDA0), thiscall, 1 stack argument(s)
@@ -148,6 +158,8 @@ orig! {
     fn c_659620_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x659620 => unported;
     /// `CTaskComplexTreatAccident::CreateSubTask` (0x659E90), thiscall, 2 stack argument(s)
     fn c_659e90_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x659E90 => unported;
+    /// `FUN_0065a110` (0x65A110), thiscall, 2 stack argument(s)
+    fn c_65a110_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x65A110 => unported;
     /// `CTaskComplexFleeEntity::CreateSubTask` (0x65BA30), thiscall, 1 stack argument(s)
     fn c_65ba30_t1(this: u32, a0: u32) -> u32 = thiscall 0x65BA30 => unported;
     /// `CTaskComplexSmartFleePoint::ComputeFleeDir` (0x65BE40), thiscall, 1 stack argument(s)
@@ -971,6 +983,73 @@ pub fn g_task_complex_use_paired_attractor_create_first_sub_task_639f70(this: u3
     v1
 }
 
+/// `CTaskComplexDrivePointRoute::CreateNextSubTask` (0x63CF90): subtask, thiscall, `ret 4`; 51 instruction(s) matched.
+#[hook(addr = 0x63CF90, conv = thiscall, name = "CTaskComplexDrivePointRoute::CreateNextSubTask", expect = "6A FF 68 3B 19 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_drive_point_route_create_next_sub_task_63cf90(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0x28);
+    let v2 = rd::<u32>(p(this), 0x10);
+    wr::<u32>(p(this), 0x28, v1.wrapping_add(1));
+    let v3 = rd::<u32>(p(v2), 0);
+    if v1.wrapping_add(1) == v3 {
+        return 0;
+    } else {
+        let v4 = c_61a5a0_c1(0x3C);
+        if v4 == 0 {
+            return 0;
+        } else {
+            let v5 = rd::<u32>(p(this), 0x24);
+            let v6 = rd::<u32>(p(this), 0x20);
+            let v7 = rd::<u32>(p(this), 0x1C);
+            let v8 = rd::<u32>(p(this), 0x18);
+            let v9 = rd::<u32>(p(this), 0x14);
+            let v10 = rd::<u32>(p(this), 0x28);
+            let v11 = rd::<u32>(p(this), 0x10);
+            let v12 = rd::<u32>(p(this), 0xC);
+            let v13 = c_63ce00_t7(
+                v4,
+                v12,
+                (v11.wrapping_add(((v10.wrapping_add((v10.wrapping_mul(2)))).wrapping_mul(4))))
+                    .wrapping_add(4),
+                v9,
+                v8,
+                v7,
+                v6,
+                v5,
+            );
+            return v13;
+        }
+    }
+}
+
+/// `CTaskComplexDrivePointRoute::CreateFirstSubTask` (0x63D030): subtask, thiscall, `ret 4`; 45 instruction(s) matched.
+#[hook(addr = 0x63D030, conv = thiscall, name = "CTaskComplexDrivePointRoute::CreateFirstSubTask", expect = "6A FF 68 5B 19 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_point_route_create_first_sub_task_63d030(this: u32, _a0: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x3C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x24);
+        let v3 = rd::<u32>(p(this), 0x20);
+        let v4 = rd::<u32>(p(this), 0x1C);
+        let v5 = rd::<u32>(p(this), 0x18);
+        let v6 = rd::<u32>(p(this), 0x14);
+        let v7 = rd::<u32>(p(this), 0x28);
+        let v8 = rd::<u32>(p(this), 0x10);
+        let v9 = rd::<u32>(p(this), 0xC);
+        let v10 = c_63ce00_t7(
+            v1,
+            v9,
+            (v8.wrapping_add(((v7.wrapping_add((v7.wrapping_mul(2)))).wrapping_mul(4)))).wrapping_add(4),
+            v6,
+            v5,
+            v4,
+            v3,
+            v2,
+        );
+        return v10;
+    }
+}
+
 /// `CTaskComplexShuffleSeats::ControlSubTask` (0x63D5C0): subtask, thiscall, `ret 4`; 34 instruction(s) matched.
 #[hook(addr = 0x63D5C0, conv = thiscall, name = "CTaskComplexShuffleSeats::ControlSubTask", expect = "53 56 8B F1 8B 4E 08")]
 pub fn g_task_complex_shuffle_seats_control_sub_task_63d5c0(this: u32, a0: u32) -> u32 {
@@ -1004,6 +1083,95 @@ pub fn g_task_complex_shuffle_seats_control_sub_task_63d5c0(this: u32, a0: u32) 
                 return v1;
             }
         }
+    }
+}
+
+/// `CTaskComplexEnterCarAsDriverTimed::CreateFirstSubTask` (0x6405B0): subtask, thiscall, `ret 4`; 44 instruction(s) matched.
+#[hook(addr = 0x6405B0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::CreateFirstSubTask", expect = "6A FF 68 FB 1E 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_driver_timed_create_first_sub_task_6405b0(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0x10);
+    if (v1 as i32) < (0 as i32) {
+        let v2 = c_61a5a0_c1(0x50);
+        if v2 == 0 {
+            let v3 = rd::<u32>(p(this), 0x14);
+            wr::<u32>(p(0), 0x24, v3);
+            return 0;
+        } else {
+            let v4 = rd::<u32>(p(this), 0xC);
+            c_63a220_t5(v2, v4, 1, 0, 0, 0);
+            wr::<u32>(p(v2), 0, 0x86_EAAC);
+            let v6 = rd::<u32>(p(this), 0x14);
+            wr::<u32>(p(v2), 0x24, v6);
+            return v2;
+        }
+    } else {
+        let v7 = g::<u32>(0xB7_CB84).read();
+        wr::<u32>(p(this), 0x18, v7);
+        wr::<u32>(p(this), 0x1C, v1);
+        wr::<u8>(p(this), 0x20, 1 as u8);
+        let v8 = c_61a5a0_c1(0x50);
+        if v8 == 0 {
+            let v9 = rd::<u32>(p(this), 0x14);
+            wr::<u32>(p(0), 0x24, v9);
+            return 0;
+        } else {
+            let v10 = rd::<u32>(p(this), 0xC);
+            c_63a220_t5(v8, v10, 1, 0, 0, 0);
+            wr::<u32>(p(v8), 0, 0x86_EAAC);
+            let v12 = rd::<u32>(p(this), 0x14);
+            wr::<u32>(p(v8), 0x24, v12);
+            return v8;
+        }
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::CreateFirstSubTask` (0x640660): subtask, thiscall, `ret 4`; 59 instruction(s) matched.
+#[hook(addr = 0x640660, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::CreateFirstSubTask", expect = "6A FF 68 1B 1F 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_timed_create_first_sub_task_640660(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 != 0 {
+        let v2 = rd::<u32>(p(this), 0x10);
+        if (v2 as i32) < (0 as i32) {
+            let v3 = c_61a5a0_c1(0x50);
+            if v3 == 0 {
+                let v4 = rd::<u32>(p(this), 0x1C);
+                wr::<u32>(p(0), 0x24, v4);
+                return 0;
+            } else {
+                let v5 = rd::<u32>(p(this), 0xC);
+                let v6 = u32::from(rd::<u8>(p(this), 0x18));
+                let v7 = rd::<u32>(p(this), 0x14);
+                c_63a220_t5(v3, v5, 0, 0, 0, (v6 & 0xFF));
+                wr::<u32>(p(v3), 0x1C, v7);
+                wr::<u32>(p(v3), 0, 0x86_EADC);
+                let v9 = rd::<u32>(p(this), 0x1C);
+                wr::<u32>(p(v3), 0x24, v9);
+                return v3;
+            }
+        } else {
+            let v10 = g::<u32>(0xB7_CB84).read();
+            wr::<u32>(p(this), 0x20, v10);
+            wr::<u32>(p(this), 0x24, v2);
+            wr::<u8>(p(this), 0x28, 1 as u8);
+            let v11 = c_61a5a0_c1(0x50);
+            if v11 == 0 {
+                let v12 = rd::<u32>(p(this), 0x1C);
+                wr::<u32>(p(0), 0x24, v12);
+                return 0;
+            } else {
+                let v13 = rd::<u32>(p(this), 0xC);
+                let v14 = u32::from(rd::<u8>(p(this), 0x18));
+                let v15 = rd::<u32>(p(this), 0x14);
+                c_63a220_t5(v11, v13, 0, 0, 0, (v14 & 0xFF));
+                wr::<u32>(p(v11), 0x1C, v15);
+                wr::<u32>(p(v11), 0, 0x86_EADC);
+                let v17 = rd::<u32>(p(this), 0x1C);
+                wr::<u32>(p(v11), 0x24, v17);
+                return v11;
+            }
+        }
+    } else {
+        return 0;
     }
 }
 
@@ -1066,6 +1234,14 @@ pub fn g_task_complex_leave_boat_create_first_sub_task_642270(this: u32, _a0: u3
     v1
 }
 
+/// `CTaskComplexLeaveCarAndDie::CreateFirstSubTask` (0x642280): subtask, thiscall, `ret 4`; 4 instruction(s) matched.
+#[hook(addr = 0x642280, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::CreateFirstSubTask", expect = "8B 44 24 04 C7 80 30 05 00 00 36 00 00 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_leave_car_and_die_create_first_sub_task_642280(this: u32, a0: u32) -> u32 {
+    wr::<u32>(p(a0), 0x530, 0x36);
+    let v1 = c_641fc0_t1(this, a0);
+    v1
+}
+
 /// `CTaskComplexShuffleSeats::CreateFirstSubTask` (0x643700): subtask, thiscall, `ret 4`; 34 instruction(s) matched.
 #[hook(addr = 0x643700, conv = thiscall, name = "CTaskComplexShuffleSeats::CreateFirstSubTask", expect = "56 8B F1 8B 46 0C")]
 pub fn g_task_complex_shuffle_seats_create_first_sub_task_643700(this: u32, a0: u32) -> u32 {
@@ -1086,6 +1262,81 @@ pub fn g_task_complex_shuffle_seats_create_first_sub_task_643700(this: u32, a0: 
             } else {
                 c_63d610_t1(this, a0);
                 let v8 = c_63d240_t2(this, 0x328, a0);
+                return v8;
+            }
+        }
+    }
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::CreateNextSubTask` (0x643F90): subtask, thiscall, `ret 4`; 44 instruction(s) matched.
+#[hook(addr = 0x643F90, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::CreateNextSubTask", expect = "56 8B F1 8B 4E 08", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_as_passenger_wait_create_next_sub_task_643f90(this: u32, a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_10_0(p(v1));
+    if v3.wrapping_sub(0x2C0) == 0 {
+        let v4 = rd::<u32>(p(this), 0xC);
+        if v4 == 0 {
+            let v5 = c_640be0_t2(this, 0x516, a0);
+            return v5;
+        } else {
+            let v6 = c_640be0_t2(this, 0x384, a0);
+            return v6;
+        }
+    } else {
+        let v7 = (v3.wrapping_sub(0x2C0)).wrapping_sub(5);
+        if (v3.wrapping_sub(0x2C0)).wrapping_sub(5) == 0 {
+            let v8 = c_640be0_t2(this, 0x516, a0);
+            return v8;
+        } else {
+            if v7.wrapping_sub(0xBF) != 0 {
+                return 0;
+            } else {
+                let v9 = c_640be0_t2(this, 0x516, a0);
+                return v9;
+            }
+        }
+    }
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::CreateFirstSubTask` (0x644010): subtask, thiscall, `ret 4`; 23 instruction(s) matched.
+#[hook(addr = 0x644010, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::CreateFirstSubTask", expect = "56 8B F1 8B 46 0C", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_as_passenger_wait_create_first_sub_task_644010(this: u32, a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 != 0 {
+        let v2 = c_63b500_t0(this);
+        if v2 != a0 {
+            let v3 = c_640be0_t2(this, 0x2C5, a0);
+            return v3;
+        } else {
+            let v4 = c_640be0_t2(this, 0x2C0, a0);
+            return v4;
+        }
+    } else {
+        return 0;
+    }
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::ControlSubTask` (0x644050): subtask, thiscall, `ret 4`; 36 instruction(s) matched.
+#[hook(addr = 0x644050, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::ControlSubTask", expect = "53 56 8B F1 8B 4E 08", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_as_passenger_wait_control_sub_task_644050(this: u32, a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_10_0(p(v1));
+    if v3 != 0x2C5 {
+        return v1;
+    } else {
+        let v4 = c_63b500_t0(this);
+        if v4 != a0 {
+            return v1;
+        } else {
+            let v5 = rd::<u32>(p(this), 8);
+            let _v6 = rd::<u32>(p(v5), 0);
+            let v7 = vslot_18_3(p(v5), a0, 1, 0);
+            if ((v7 & 0xFF) as u8) == (0 as u8) {
+                return v1;
+            } else {
+                let v8 = c_640be0_t2(this, 0x2C0, a0);
                 return v8;
             }
         }
@@ -1424,6 +1675,46 @@ pub fn g_task_complex_treat_accident_create_first_sub_task_65a8f0(this: u32, a0:
     }
 }
 
+/// `vt_86f544::CreateNextSubTask` (0x65AFE0): subtask, thiscall, `ret 4`; 39 instruction(s) matched.
+#[hook(addr = 0x65AFE0, conv = thiscall, name = "vt_86f544::CreateNextSubTask", expect = "56 8B F1 8B 4E 08", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86f544_create_next_sub_task_65afe0(this: u32, a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    let _v2 = rd::<u32>(p(v1), 0);
+    let v3 = vslot_10_0(p(v1));
+    if v3 == 0x19D {
+        let v4 = c_65a110_t2(this, 0x516, a0);
+        return v4;
+    } else {
+        if v3 != 0x386 {
+            return 0;
+        } else {
+            c_5effe0_t6(a0, 0x45, 0, 0x3F80_0000, 0, 0, 0);
+            let v6 = c_65a110_t2(this, 0x19D, a0);
+            return v6;
+        }
+    }
+}
+
+/// `vt_86f544::CreateFirstSubTask` (0x65B050): subtask, thiscall, `ret 4`; 5 instruction(s) matched.
+#[hook(addr = 0x65B050, conv = thiscall, name = "vt_86f544::CreateFirstSubTask", expect = "8B 44 24 04 50", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86f544_create_first_sub_task_65b050(this: u32, a0: u32) -> u32 {
+    let v1 = c_65a110_t2(this, 0x386, a0);
+    v1
+}
+
+/// `vt_86f544::ControlSubTask` (0x65B070): subtask, thiscall, `ret 4`; 10 instruction(s) matched.
+#[hook(addr = 0x65B070, conv = thiscall, name = "vt_86f544::ControlSubTask", expect = "8B 41 0C 85 C0", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86f544_control_sub_task_65b070(this: u32, a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0xC);
+    if v1 != 0 {
+        let v2 = rd::<u32>(p(this), 8);
+        return v2;
+    } else {
+        let v3 = c_65a110_t2(this, 0x516, a0);
+        return v3;
+    }
+}
+
 /// `CTaskComplexWanderFlee::ControlSubTask` (0x65B380): subtask, thiscall, `ret 4`; 1 instruction(s) matched.
 /// Not hookable: the entry is a bare `jmp rel32` (sa-hook would treat it as a .HOODLUM stub).
 #[sa_core::native(addr = 0x65B380, conv = thiscall, name = "CTaskComplexWanderFlee::ControlSubTask")]
@@ -1619,6 +1910,21 @@ pub fn g_vt_86ff00_create_next_sub_task_66ad70(this: u32, a0: u32) -> u32 {
             c_618280_t2(0xC1_5448, a0, 0xFA);
             return 0;
         }
+    }
+}
+
+/// `vt_870114::ControlSubTask` (0x66BB00): subtask, thiscall, `ret 4`; 7 instruction(s) matched.
+#[hook(addr = 0x66BB00, conv = thiscall, name = "vt_870114::ControlSubTask", expect = "F6 41 20 03 75 06", unverified = "ai7-5", route = "L2", hazards = "heap-writes")]
+pub fn g_vt_870114_control_sub_task_66bb00(this: u32, a0: u32) -> u32 {
+    let v1 = u32::from(rd::<u8>(p(this), 0x20));
+    if ((v1 & 3) as u8) != (0 as u8) {
+        let _v2 = rd::<u32>(p(this), 0);
+        wr::<u16>(p(this), 0x12, 0 as u16);
+        let v3 = vslot_24_1(p(this), a0);
+        return v3;
+    } else {
+        let v4 = rd::<u32>(p(this), 8);
+        return v4;
     }
 }
 
@@ -2334,11 +2640,19 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_ON_FIRE_CREATE_NEXT_SUB_TASK_6391B0,
     HOOK_G_TASK_COMPLEX_ON_FIRE_CREATE_FIRST_SUB_TASK_6391F0,
     HOOK_G_TASK_COMPLEX_USE_PAIRED_ATTRACTOR_CREATE_FIRST_SUB_TASK_639F70,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_CREATE_NEXT_SUB_TASK_63CF90,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_CREATE_FIRST_SUB_TASK_63D030,
     HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_CONTROL_SUB_TASK_63D5C0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_CREATE_FIRST_SUB_TASK_6405B0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_CREATE_FIRST_SUB_TASK_640660,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_CREATE_NEXT_SUB_TASK_640E60,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_CREATE_FIRST_SUB_TASK_640ED0,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CREATE_FIRST_SUB_TASK_642270,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_DIE_CREATE_FIRST_SUB_TASK_642280,
     HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_CREATE_FIRST_SUB_TASK_643700,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_CREATE_NEXT_SUB_TASK_643F90,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_CREATE_FIRST_SUB_TASK_644010,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_CONTROL_SUB_TASK_644050,
     HOOK_G_TASK_COMPLEX_STEAL_CAR_CREATE_FIRST_SUB_TASK_644210,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_CREATE_NEXT_SUB_TASK_6442D0,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_CREATE_FIRST_SUB_TASK_644320,
@@ -2357,6 +2671,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_CREATE_NEXT_SUB_TASK_65A3E0,
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_CREATE_FIRST_SUB_TASK_65A440,
     HOOK_G_TASK_COMPLEX_TREAT_ACCIDENT_CREATE_FIRST_SUB_TASK_65A8F0,
+    HOOK_G_VT_86F544_CREATE_NEXT_SUB_TASK_65AFE0,
+    HOOK_G_VT_86F544_CREATE_FIRST_SUB_TASK_65B050,
+    HOOK_G_VT_86F544_CONTROL_SUB_TASK_65B070,
     HOOK_G_TASK_COMPLEX_FLEE_ENTITY_CREATE_NEXT_SUB_TASK_65BAC0,
     HOOK_G_TASK_COMPLEX_SMART_FLEE_POINT_CREATE_NEXT_SUB_TASK_65C0C0,
     HOOK_G_TASK_COMPLEX_FLEE_SHOOTING_CREATE_FIRST_SUB_TASK_65CA70,
@@ -2364,6 +2681,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CONTROL_SUB_TASK_668E80,
     HOOK_G_TASK_COMPLEX_AVOID_OTHER_PED_WHILE_WANDERING_CREATE_NEXT_SUB_TASK_66A2C0,
     HOOK_G_VT_86FF00_CREATE_NEXT_SUB_TASK_66AD70,
+    HOOK_G_VT_870114_CONTROL_SUB_TASK_66BB00,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AIMING_CREATE_NEXT_SUB_TASK_66DD70,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CREATE_NEXT_SUB_TASK_66DFD0,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CREATE_FIRST_SUB_TASK_66E030,
@@ -2423,11 +2741,19 @@ pub const BODIES: &[Body] = &[
     (0x6391B0, 0x0AC0E53740D6876E, &[(0x6391B0, 52)]),
     (0x6391F0, 0x57638E4ECCD0B69C, &[(0x6391F0, 13)]),
     (0x639F70, 0x6C13F282D75BB4A1, &[(0x639F70, 18)]),
+    (0x63CF90, 0x9762AE1F02075975, &[(0x63CF90, 148)]),
+    (0x63D030, 0xEFE3C80084D276BA, &[(0x63D030, 134)]),
     (0x63D5C0, 0x9BB25AEF7255CDE7, &[(0x63D5C0, 77)]),
+    (0x6405B0, 0xA55AB7BDF5083B46, &[(0x6405B0, 133)]),
+    (0x640660, 0xBBF521CFDB3B1A12, &[(0x640660, 172)]),
     (0x640E60, 0xFA3F5A7F4B43041B, &[(0x640E60, 112)]),
     (0x640ED0, 0x1A55CFBE805FB6E3, &[(0x640ED0, 49)]),
     (0x642270, 0x9C0FF41F6BB839A8, &[(0x642270, 13)]),
+    (0x642280, 0x64F92286B20DBD84, &[(0x642280, 23)]),
     (0x643700, 0x27D911F3ABC1E329, &[(0x643700, 85)]),
+    (0x643F90, 0x1BC9D199AC267A53, &[(0x643F90, 113)]),
+    (0x644010, 0x5F6705A3EA4D4D34, &[(0x644010, 62)]),
+    (0x644050, 0xB5E0DE50B86D9E48, &[(0x644050, 81)]),
     (0x644210, 0x98E328502B0E1EEC, &[(0x644210, 54)]),
     (0x6442D0, 0x9D438833061918AF, &[(0x6442D0, 77)]),
     (0x644320, 0x95784CD6E2019A5E, &[(0x644320, 54)]),
@@ -2446,6 +2772,9 @@ pub const BODIES: &[Body] = &[
     (0x65A3E0, 0xDE72BB28E79D1C0A, &[(0x65A3E0, 84)]),
     (0x65A440, 0x9756D58C3B9EF294, &[(0x65A440, 18)]),
     (0x65A8F0, 0x17D39AA38501EC4F, &[(0x65A8F0, 149)]),
+    (0x65AFE0, 0xCF59D3CFA0B907BA, &[(0x65AFE0, 97)]),
+    (0x65B050, 0x3F72DF95D4317B2E, &[(0x65B050, 18)]),
+    (0x65B070, 0x931C74AFD5D03BD7, &[(0x65B070, 31)]),
     (0x65B380, 0x92C2F1B8B4F021CE, &[(0x65B380, 5)]),
     (0x65BAC0, 0x6BC3834CBBB610FE, &[(0x65BAC0, 52)]),
     (0x65C0C0, 0x51AA3D05C61558E1, &[(0x65C0C0, 117)]),
@@ -2455,6 +2784,7 @@ pub const BODIES: &[Body] = &[
     (0x668E80, 0x940648EBA387A243, &[(0x668E80, 56)]),
     (0x66A2C0, 0xDCF8952D59DE42B7, &[(0x66A2C0, 88)]),
     (0x66AD70, 0xA4A7696EADBAC6A0, &[(0x66AD70, 48)]),
+    (0x66BB00, 0xB0A21D1FE8758A79, &[(0x66BB00, 23)]),
     (0x66DD70, 0x5BA07C8D63B70967, &[(0x66DD70, 50)]),
     (0x66DFD0, 0x3BBB0984B95498C6, &[(0x66DFD0, 91)]),
     (0x66E030, 0x4C4F7E3234B2DC87, &[(0x66E030, 17)]),

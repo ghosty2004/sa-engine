@@ -63,6 +63,12 @@ pub fn g_event_acquaintance_ped_can_be_interrupted_by_same_event_420f20(_this: u
 #[sa_core::native(addr = 0x421180, conv = thiscall, name = "CTask::StopTimer")]
 pub fn g_task_stop_timer_421180(_this: u32, _a0: u32) {}
 
+/// `CTaskComplexLeaveAnyCar::GetTaskType` (0x421240): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x421240, conv = thiscall, name = "CTaskComplexLeaveAnyCar::GetTaskType", expect = "B8 CA 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_any_car_get_task_type_421240(_this: u32) -> u32 {
+    0x2CA
+}
+
 /// `CEventLeaderEntryExit::GetEventType` (0x43E200): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x43E200, conv = thiscall, name = "CEventLeaderEntryExit::GetEventType", expect = "B8 4D 00 00 00")]
 pub fn g_event_leader_entry_exit_get_event_type_43e200(_this: u32) -> u32 {
@@ -285,6 +291,16 @@ pub fn g_task_complex_seek_entity_radius_angle_offset_get_task_type_493800(_this
 #[hook(addr = 0x499430, conv = thiscall, name = "vt_85a428::GetTaskType", expect = "B8 50 04 00 00")]
 pub fn g_vt_85a428_get_task_type_499430(_this: u32) -> u32 {
     0x450
+}
+
+/// `CTaskSimpleFight::GetComboAnimGroupID` (0x4ABDA0): leaf, thiscall, `ret`; 10 instruction(s) matched.
+#[hook(addr = 0x4ABDA0, conv = thiscall, name = "CTaskSimpleFight::GetComboAnimGroupID", expect = "0F BE 41 24 83 C0 FC", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_fight_get_combo_anim_group_id_4abda0(this: u32) -> u32 {
+    let v1 = rd::<u8>(p(this), 0x24) as i8 as i32 as u32;
+    let v2 = ((u32::from((v1.wrapping_add(0xFFFF_FFFC) as i32) < (0 as i32))) & 0xFF).wrapping_sub(1);
+    let v3 = ((v1.wrapping_add(0xFFFF_FFFC)) & v2);
+    let v4 = rd::<u32>(p(v3.wrapping_mul(0x88)), 0xC1_70D0);
+    v4
 }
 
 /// `CEvent::AffectsPed` (0x4ABFE0): const-bool, thiscall, `ret 4`; 2 instruction(s) matched.
@@ -1273,6 +1289,18 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_get_task_type_4
     0x106
 }
 
+/// `CTaskComplexCarDriveMissionFleeScene::GetTaskType` (0x4B89C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x4B89C0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::GetTaskType", expect = "B8 D6 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_flee_scene_get_task_type_4b89c0(_this: u32) -> u32 {
+    0x2D6
+}
+
+/// `CTaskComplexCarDriveMissionKillPed::GetTaskType` (0x4B8AA0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x4B8AA0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::GetTaskType", expect = "B8 D9 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_kill_ped_get_task_type_4b8aa0(_this: u32) -> u32 {
+    0x2D9
+}
+
 /// `CEventSoundQuiet::GetLifeTime` (0x5DEA70): const-id, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[sa_core::native(addr = 0x5DEA70, conv = thiscall, name = "CEventSoundQuiet::GetLifeTime")]
@@ -1570,6 +1598,30 @@ pub fn g_event_acquaintance_ped_hate_badly_lit_get_event_priority_5ff8a0(_this: 
     0x19
 }
 
+/// `vt_86cbe8::GetEventPriority` (0x5FF8E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x5FF8E0, conv = thiscall, name = "vt_86cbe8::GetEventPriority", expect = "B8 45 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_vt_86cbe8_get_event_priority_5ff8e0(_this: u32) -> u32 {
+    0x45
+}
+
+/// `vt_86cc78::GetEventPriority` (0x5FF8F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x5FF8F0, conv = thiscall, name = "vt_86cc78::GetEventPriority", expect = "B8 22 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_vt_86cc78_get_event_priority_5ff8f0(_this: u32) -> u32 {
+    0x22
+}
+
+/// `vt_86cba0::GetEventPriority` (0x5FF900): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x5FF900, conv = thiscall, name = "vt_86cba0::GetEventPriority", expect = "B8 44 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_vt_86cba0_get_event_priority_5ff900(_this: u32) -> u32 {
+    0x44
+}
+
+/// `vt_86cc30::GetEventPriority` (0x5FF910): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x5FF910, conv = thiscall, name = "vt_86cc30::GetEventPriority", expect = "B8 21 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_vt_86cc30_get_event_priority_5ff910(_this: u32) -> u32 {
+    0x21
+}
+
 /// `CPedIntelligence::SetPedDecisionMakerTypeInGroup` (0x600BB0): setter, thiscall, `ret 4`; 3 instruction(s) matched.
 #[hook(addr = 0x600BB0, conv = thiscall, name = "CPedIntelligence::SetPedDecisionMakerTypeInGroup", expect = "8B 44 24 04 89 81 B8 00 00 00")]
 pub fn g_cped_intelligence_set_ped_decision_maker_type_in_group_600bb0(this: u32, a0: u32) -> u32 {
@@ -1699,6 +1751,12 @@ pub fn g_task_complex_play_hand_signal_anim_get_task_type_61b2e0(_this: u32) -> 
 #[hook(addr = 0x61C320, conv = thiscall, name = "CEventVehicleDamageWeapon::GetEventType", expect = "B8 29 00 00 00")]
 pub fn g_event_vehicle_damage_weapon_get_event_type_61c320(_this: u32) -> u32 {
     0x29
+}
+
+/// `CTaskSimpleFightingControl::GetTaskType` (0x61DC90): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x61DC90, conv = thiscall, name = "CTaskSimpleFightingControl::GetTaskType", expect = "B8 FB 03 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_fighting_control_get_task_type_61dc90(_this: u32) -> u32 {
+    0x3FB
 }
 
 /// `CTaskSimpleGunControl::GetTaskType` (0x61F4C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -1903,6 +1961,12 @@ pub fn g_task_simple_hit_by_gun_from_right_is_interruptable_62f120(_this: u32, _
     0 as u8
 }
 
+/// `CTaskComplexLeaveCarAndDie::GetTaskType` (0x62F240): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x62F240, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::GetTaskType", expect = "B8 C1 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_and_die_get_task_type_62f240(_this: u32) -> u32 {
+    0x2C1
+}
+
 /// `CTaskSimpleSetStayInSamePlace::GetTaskType` (0x62F5B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x62F5B0, conv = thiscall, name = "CTaskSimpleSetStayInSamePlace::GetTaskType", expect = "B8 CC 00 00 00")]
 pub fn g_task_simple_set_stay_in_same_place_get_task_type_62f5b0(_this: u32) -> u32 {
@@ -1934,6 +1998,18 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_make_abortable_62f640(
     _a1: u32,
     _a2: u32,
 ) -> u8 {
+    1 as u8
+}
+
+/// `CTaskSimpleDuckToggle::GetTaskType` (0x62F6B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x62F6B0, conv = thiscall, name = "CTaskSimpleDuckToggle::GetTaskType", expect = "B8 1A 05 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_duck_toggle_get_task_type_62f6b0(_this: u32) -> u32 {
+    0x51A
+}
+
+/// `CTaskSimpleDuckToggle::MakeAbortable` (0x62F6C0): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x62F6C0, conv = thiscall, name = "CTaskSimpleDuckToggle::MakeAbortable", expect = "B0 01 C2 0C 00", unverified = "ai7-1", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_duck_toggle_make_abortable_62f6c0(_this: u32, _a0: u32, _a1: u32, _a2: u32) -> u8 {
     1 as u8
 }
 
@@ -2500,6 +2576,42 @@ pub fn g_event_leader_quit_entering_car_as_driver_get_event_priority_63a1e0(_thi
     0x30
 }
 
+/// `CTaskComplexEnterCarAsDriverTimed::GetTaskType` (0x63ADF0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63ADF0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::GetTaskType", expect = "B8 C9 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_driver_timed_get_task_type_63adf0(_this: u32) -> u32 {
+    0x2C9
+}
+
+/// `CTaskComplexEnterCarAsDriverTimed::CreateNextSubTask` (0x63AED0): const, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63AED0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_driver_timed_create_next_sub_task_63aed0(_this: u32, _a0: u32) -> u32 {
+    0
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::GetTaskType` (0x63B0B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63B0B0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::GetTaskType", expect = "B8 C8 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_timed_get_task_type_63b0b0(_this: u32) -> u32 {
+    0x2C8
+}
+
+/// `CTaskComplexEnterCarAsPassengerTimed::CreateNextSubTask` (0x63B190): const, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63B190, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_timed_create_next_sub_task_63b190(_this: u32, _a0: u32) -> u32 {
+    0
+}
+
+/// `CTaskComplexEnterCarAsPassengerWait::GetTaskType` (0x63B3B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63B3B0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::GetTaskType", expect = "B8 CE 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_wait_get_task_type_63b3b0(_this: u32) -> u32 {
+    0x2CE
+}
+
+/// `CTaskComplexLeaveCarAsPassengerWait::GetTaskType` (0x63B490): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63B490, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::GetTaskType", expect = "B8 DA 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_as_passenger_wait_get_task_type_63b490(_this: u32) -> u32 {
+    0x2DA
+}
+
 /// `CTaskComplexEnterBoatAsDriver::GetTaskType` (0x63B640): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x63B640, conv = thiscall, name = "CTaskComplexEnterBoatAsDriver::GetTaskType", expect = "B8 CB 02 00 00")]
 pub fn g_task_complex_enter_boat_as_driver_get_task_type_63b640(_this: u32) -> u32 {
@@ -2538,16 +2650,98 @@ pub fn g_task_complex_leave_boat_control_sub_task_63bc40(this: u32, _a0: u32) ->
     v1
 }
 
+/// `CTaskComplexLeaveAnyCar::CreateNextSubTask` (0x63BCD0): const, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63BCD0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_any_car_create_next_sub_task_63bcd0(_this: u32, _a0: u32) -> u32 {
+    0
+}
+
+/// `CTaskComplexLeaveAnyCar::ControlSubTask` (0x63BDC0): getter, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63BDC0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_any_car_control_sub_task_63bdc0(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    v1
+}
+
+/// `CTaskComplexLeaveCarAndFlee::GetTaskType` (0x63C020): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63C020, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::GetTaskType", expect = "B8 C2 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_and_flee_get_task_type_63c020(_this: u32) -> u32 {
+    0x2C2
+}
+
+/// `CTaskComplexLeaveCarAndFlee::ControlSubTask` (0x63C090): getter, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63C090, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_leave_car_and_flee_control_sub_task_63c090(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    v1
+}
+
 /// `CTaskComplexScreamInCarThenLeave::GetTaskType` (0x63C2B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x63C2B0, conv = thiscall, name = "CTaskComplexScreamInCarThenLeave::GetTaskType", expect = "B8 C4 02 00 00")]
 pub fn g_task_complex_scream_in_car_then_leave_get_task_type_63c2b0(_this: u32) -> u32 {
     0x2C4
 }
 
+/// `CTaskComplexCarDrive::GetTaskType` (0x63C9C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63C9C0, conv = thiscall, name = "CTaskComplexCarDrive::GetTaskType", expect = "B8 D5 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_get_task_type_63c9c0(_this: u32) -> u32 {
+    0x2D5
+}
+
+/// `CTaskComplexCarDriveMission::GetTaskType` (0x63CCB0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63CCB0, conv = thiscall, name = "CTaskComplexCarDriveMission::GetTaskType", expect = "B8 D4 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_drive_mission_get_task_type_63ccb0(_this: u32) -> u32 {
+    0x2D4
+}
+
+/// `CTaskComplexDriveToPoint::GetTaskType` (0x63CE60): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63CE60, conv = thiscall, name = "CTaskComplexDriveToPoint::GetTaskType", expect = "B8 C6 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_to_point_get_task_type_63ce60(_this: u32) -> u32 {
+    0x2C6
+}
+
+/// `CTaskComplexDrivePointRoute::ControlSubTask` (0x63D0C0): getter, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63D0C0, conv = thiscall, name = "CTaskComplexDrivePointRoute::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_point_route_control_sub_task_63d0c0(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    v1
+}
+
+/// `CTaskComplexEnterAnyCarAsDriver::GetTaskType` (0x63D0F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63D0F0, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::GetTaskType", expect = "B8 CD 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_any_car_as_driver_get_task_type_63d0f0(_this: u32) -> u32 {
+    0x2CD
+}
+
+/// `CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask` (0x63D110): const, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63D110, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_any_car_as_driver_create_next_sub_task_63d110(_this: u32, _a0: u32) -> u32 {
+    0
+}
+
+/// `CTaskComplexEnterAnyCarAsDriver::ControlSubTask` (0x63D120): getter, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x63D120, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_any_car_as_driver_control_sub_task_63d120(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    v1
+}
+
 /// `CTaskComplexShuffleSeats::GetTaskType` (0x63D190): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x63D190, conv = thiscall, name = "CTaskComplexShuffleSeats::GetTaskType", expect = "B8 D0 02 00 00")]
 pub fn g_task_complex_shuffle_seats_get_task_type_63d190(_this: u32) -> u32 {
     0x2D0
+}
+
+/// `CTaskSimpleCarSetTempAction::GetTaskType` (0x63D720): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x63D720, conv = thiscall, name = "CTaskSimpleCarSetTempAction::GetTaskType", expect = "B8 D3 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_temp_action_get_task_type_63d720(_this: u32) -> u32 {
+    0x2D3
+}
+
+/// `CTaskComplexEnterCarAsPassenger::GetTaskType` (0x640370): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x640370, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::GetTaskType", expect = "B8 BC 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_enter_car_as_passenger_get_task_type_640370(_this: u32) -> u32 {
+    0x2BC
 }
 
 /// `CTaskComplexOpenDriverDoor::GetTaskType` (0x6403C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -2568,10 +2762,45 @@ pub fn g_task_complex_drag_ped_from_car_get_task_type_6404c0(_this: u32) -> u32 
     0x2BF
 }
 
+/// `CTaskComplexDrivePointRoute::GetTaskType` (0x643480): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x643480, conv = thiscall, name = "CTaskComplexDrivePointRoute::GetTaskType", expect = "B8 D1 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_point_route_get_task_type_643480(_this: u32) -> u32 {
+    0x2D1
+}
+
 /// `CTaskComplexGoToCarDoorAndStandStill::GetTaskType` (0x645830): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x645830, conv = thiscall, name = "CTaskComplexGoToCarDoorAndStandStill::GetTaskType", expect = "B8 20 03 00 00")]
 pub fn g_task_complex_go_to_car_door_and_stand_still_get_task_type_645830(_this: u32) -> u32 {
     0x320
+}
+
+/// `CTaskSimpleCarAlign::GetTaskType` (0x645BD0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x645BD0, conv = thiscall, name = "CTaskSimpleCarAlign::GetTaskType", expect = "B8 21 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_align_get_task_type_645bd0(_this: u32) -> u32 {
+    0x321
+}
+
+/// `CTaskSimpleCarOpenDoorFromOutside::GetTaskType` (0x645ED0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x645ED0, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::GetTaskType", expect = "B8 22 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_open_door_from_outside_get_task_type_645ed0(_this: u32) -> u32 {
+    0x322
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::GetTaskType` (0x6460E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x6460E0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::GetTaskType", expect = "B8 23 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_open_locked_door_from_outside_get_task_type_6460e0(_this: u32) -> u32 {
+    0x323
+}
+
+/// `CTaskSimpleCarOpenLockedDoorFromOutside::FinishAnimCarOpenLockedDoorFromOutsideCB` (0x6461A0): setter, cdecl, `ret`; 4 instruction(s) matched.
+#[hook(addr = 0x6461A0, conv = cdecl, name = "CTaskSimpleCarOpenLockedDoorFromOutside::FinishAnimCarOpenLockedDoorFromOutsideCB", expect = "8B 44 24 08 C7 40 0C 00 00 00 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_open_locked_door_from_outside_finish_anim_car_open_locked_door_from_outside_cb_6461a0(
+    _a0: u32,
+    a1: u32,
+) -> u32 {
+    wr::<u32>(p(a1), 0xC, 0);
+    wr::<u8>(p(a1), 8, 1 as u8);
+    a1
 }
 
 /// `CTaskSimplePickUpBike::GetTaskType` (0x646220): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -2588,10 +2817,221 @@ pub fn g_task_simple_pick_up_bike_finish_anim_pick_up_bike_cb_6462f0(_a0: u32, a
     a1
 }
 
+/// `CTaskSimpleCarCloseDoorFromInside::GetTaskType` (0x646370): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x646370, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::GetTaskType", expect = "B8 25 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_close_door_from_inside_get_task_type_646370(_this: u32) -> u32 {
+    0x325
+}
+
+/// `CTaskSimpleCarCloseDoorFromOutside::GetTaskType` (0x646560): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x646560, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::GetTaskType", expect = "B8 26 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_close_door_from_outside_get_task_type_646560(_this: u32) -> u32 {
+    0x326
+}
+
+/// `CTaskSimpleCarGetIn::GetTaskType` (0x646700): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x646700, conv = thiscall, name = "CTaskSimpleCarGetIn::GetTaskType", expect = "B8 27 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_get_in_get_task_type_646700(_this: u32) -> u32 {
+    0x327
+}
+
+/// `CTaskSimpleCarShuffle::GetTaskType` (0x646880): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x646880, conv = thiscall, name = "CTaskSimpleCarShuffle::GetTaskType", expect = "B8 28 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_shuffle_get_task_type_646880(_this: u32) -> u32 {
+    0x328
+}
+
+/// `CTaskSimpleCarWaitToSlowDown::GetTaskType` (0x6469F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x6469F0, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::GetTaskType", expect = "B8 29 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_wait_to_slow_down_get_task_type_6469f0(_this: u32) -> u32 {
+    0x329
+}
+
+/// `CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType` (0x646BE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x646BE0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType", expect = "B8 2A 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_get_task_type_646be0(_this: u32) -> u32 {
+    0x32A
+}
+
+/// `CTaskSimpleCarWaitForDoorNotToBeInUse::MakeAbortable` (0x646BF0): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x646BF0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::MakeAbortable", expect = "B0 01 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_make_abortable_646bf0(
+    _this: u32,
+    _a0: u32,
+    _a1: u32,
+    _a2: u32,
+) -> u8 {
+    1 as u8
+}
+
+/// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::GetTaskType` (0x646E30): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x646E30, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::GetTaskType", expect = "B8 3C 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_get_task_type_646e30(_this: u32) -> u32 {
+    0x33C
+}
+
+/// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::MakeAbortable` (0x646E40): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x646E40, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::MakeAbortable", expect = "B0 01 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_make_abortable_646e40(
+    _this: u32,
+    _a0: u32,
+    _a1: u32,
+    _a2: u32,
+) -> u8 {
+    1 as u8
+}
+
+/// `CTaskSimpleCarSetPedInAsPassenger::GetTaskType` (0x647060): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x647060, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::GetTaskType", expect = "B8 2B 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_ped_in_as_passenger_get_task_type_647060(_this: u32) -> u32 {
+    0x32B
+}
+
+/// `CTaskSimpleCarSetPedInAsPassenger::MakeAbortable` (0x647070): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x647070, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_set_ped_in_as_passenger_make_abortable_647070(
+    _this: u32,
+    _a0: u32,
+    _a1: u32,
+    _a2: u32,
+) -> u8 {
+    0 as u8
+}
+
+/// `CTaskSimpleCarSetPedInAsDriver::GetTaskType` (0x647150): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x647150, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::GetTaskType", expect = "B8 2C 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_ped_in_as_driver_get_task_type_647150(_this: u32) -> u32 {
+    0x32C
+}
+
+/// `CTaskSimpleCarSetPedInAsDriver::MakeAbortable` (0x647160): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x647160, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_set_ped_in_as_driver_make_abortable_647160(
+    _this: u32,
+    _a0: u32,
+    _a1: u32,
+    _a2: u32,
+) -> u8 {
+    0 as u8
+}
+
+/// `CTaskSimpleCarGetOut::GetTaskType` (0x647250): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x647250, conv = thiscall, name = "CTaskSimpleCarGetOut::GetTaskType", expect = "B8 2D 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_get_out_get_task_type_647250(_this: u32) -> u32 {
+    0x32D
+}
+
+/// `CTaskSimpleCarJumpOut::GetTaskType` (0x647500): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x647500, conv = thiscall, name = "CTaskSimpleCarJumpOut::GetTaskType", expect = "B8 2E 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_jump_out_get_task_type_647500(_this: u32) -> u32 {
+    0x32E
+}
+
+/// `CTaskSimpleCarJumpOut::FinishAnimCarJumpOutCB` (0x647700): setter, cdecl, `ret`; 4 instruction(s) matched.
+#[hook(addr = 0x647700, conv = cdecl, name = "CTaskSimpleCarJumpOut::FinishAnimCarJumpOutCB", expect = "8B 44 24 08 C7 40 0C 00 00 00 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_jump_out_finish_anim_car_jump_out_cb_647700(_a0: u32, a1: u32) -> u32 {
+    wr::<u32>(p(a1), 0xC, 0);
+    wr::<u8>(p(a1), 8, 1 as u8);
+    a1
+}
+
+/// `vt_86ee94::GetTaskType` (0x647770): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x647770, conv = thiscall, name = "vt_86ee94::GetTaskType", expect = "B8 2F 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_vt_86ee94_get_task_type_647770(_this: u32) -> u32 {
+    0x32F
+}
+
+/// `vt_86ee94::MakeAbortable` (0x647780): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x647780, conv = thiscall, name = "vt_86ee94::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_vt_86ee94_make_abortable_647780(_this: u32, _a0: u32, _a1: u32, _a2: u32) -> u8 {
+    0 as u8
+}
+
+/// `CTaskSimpleCarSetPedOut::MakeAbortable` (0x647940): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x647940, conv = thiscall, name = "CTaskSimpleCarSetPedOut::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_set_ped_out_make_abortable_647940(_this: u32, _a0: u32, _a1: u32, _a2: u32) -> u8 {
+    0 as u8
+}
+
+/// `CTaskSimpleCarSlowDragPedOut::GetTaskType` (0x648060): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x648060, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::GetTaskType", expect = "B8 34 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_slow_drag_ped_out_get_task_type_648060(_this: u32) -> u32 {
+    0x334
+}
+
+/// `CTaskSimpleCarSlowBeDraggedOut::GetTaskType` (0x6482B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x6482B0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::GetTaskType", expect = "B8 35 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_slow_be_dragged_out_get_task_type_6482b0(_this: u32) -> u32 {
+    0x335
+}
+
+/// `CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB` (0x6483A0): setter, cdecl, `ret`; 4 instruction(s) matched.
+#[hook(addr = 0x6483A0, conv = cdecl, name = "CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB", expect = "8B 44 24 08 C6 40 08 01", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_slow_be_dragged_out_finish_anim_car_slow_be_dragged_out_cb_6483a0(
+    _a0: u32,
+    a1: u32,
+) -> u32 {
+    wr::<u8>(p(a1), 8, 1 as u8);
+    wr::<u32>(p(a1), 0xC, 0);
+    a1
+}
+
+/// `CTaskSimpleCarSetPedSlowDraggedOut::GetTaskType` (0x648410): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x648410, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::GetTaskType", expect = "B8 36 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_set_ped_slow_dragged_out_get_task_type_648410(_this: u32) -> u32 {
+    0x336
+}
+
+/// `CTaskSimpleCarSetPedSlowDraggedOut::MakeAbortable` (0x648420): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
+#[hook(addr = 0x648420, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
+pub fn g_task_simple_car_set_ped_slow_dragged_out_make_abortable_648420(
+    _this: u32,
+    _a0: u32,
+    _a1: u32,
+    _a2: u32,
+) -> u8 {
+    0 as u8
+}
+
+/// `CTaskComplexCarSlowBeDraggedOut::GetTaskType` (0x648500): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x648500, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::GetTaskType", expect = "B8 37 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_get_task_type_648500(_this: u32) -> u32 {
+    0x337
+}
+
+/// `CTaskComplexCarSlowBeDraggedOut::ControlSubTask` (0x648510): getter, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x648510, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_control_sub_task_648510(this: u32, _a0: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    v1
+}
+
+/// `CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType` (0x648680): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x648680, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType", expect = "B8 38 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_get_task_type_648680(_this: u32) -> u32 {
+    0x338
+}
+
+/// `CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask` (0x648B80): getter, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x648B80, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_control_sub_task_648b80(
+    this: u32,
+    _a0: u32,
+) -> u32 {
+    let v1 = rd::<u32>(p(this), 8);
+    v1
+}
+
 /// `CTaskSimpleBikeJacked::GetTaskType` (0x648C30): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x648C30, conv = thiscall, name = "CTaskSimpleBikeJacked::GetTaskType", expect = "B8 3A 03 00 00")]
 pub fn g_task_simple_bike_jacked_get_task_type_648c30(_this: u32) -> u32 {
     0x33A
+}
+
+/// `CTaskSimpleCarFallOut::GetTaskType` (0x648DD0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x648DD0, conv = thiscall, name = "CTaskSimpleCarFallOut::GetTaskType", expect = "B8 42 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+pub fn g_task_simple_car_fall_out_get_task_type_648dd0(_this: u32) -> u32 {
+    0x342
 }
 
 /// `CTaskSimpleSetPedAsAutoDriver::GetTaskType` (0x648FA0): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -2877,6 +3317,18 @@ pub fn g_task_complex_treat_accident_control_sub_task_658b90(this: u32, _a0: u32
 #[hook(addr = 0x658C20, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::GetTaskType", expect = "B8 64 00 00 00")]
 pub fn g_task_complex_medic_treat_injured_ped_get_task_type_658c20(_this: u32) -> u32 {
     0x64
+}
+
+/// `vt_86f544::GetTaskType` (0x659230): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x659230, conv = thiscall, name = "vt_86f544::GetTaskType", expect = "B8 6A 00 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_86f544_get_task_type_659230(_this: u32) -> u32 {
+    0x6A
+}
+
+/// `CTaskComplexDriveFireTruck::GetTaskType` (0x659390): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x659390, conv = thiscall, name = "CTaskComplexDriveFireTruck::GetTaskType", expect = "B8 6B 00 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_drive_fire_truck_get_task_type_659390(_this: u32) -> u32 {
+    0x6B
 }
 
 /// `CTaskComplexUseSwatRope::GetTaskType` (0x659440): const-id, thiscall, `ret`; 2 instruction(s) matched.
@@ -3631,6 +4083,25 @@ pub fn g_task_simple_put_down_entity_get_task_type_691900(_this: u32) -> u32 {
     0x135
 }
 
+/// `vt_870b98::GetTaskType` (0x691A40): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x691A40, conv = thiscall, name = "vt_870b98::GetTaskType", expect = "B8 36 01 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_870b98_get_task_type_691a40(_this: u32) -> u32 {
+    0x136
+}
+
+/// `CTaskSimpleDuck::ForceStopMove` (0x6924B0): setter, thiscall, `ret`; 3 instruction(s) matched.
+#[hook(addr = 0x6924B0, conv = thiscall, name = "CTaskSimpleDuck::ForceStopMove", expect = "C6 41 1B 01 C7 41 20 00 00 00 00", unverified = "ai7-4", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_duck_force_stop_move_6924b0(this: u32) {
+    wr::<u8>(p(this), 0x1B, 1 as u8);
+    wr::<u32>(p(this), 0x20, 0);
+}
+
+/// `vt_870bec::GetTaskType` (0x6926E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x6926E0, conv = thiscall, name = "vt_870bec::GetTaskType", expect = "B8 37 01 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+pub fn g_vt_870bec_get_task_type_6926e0(_this: u32) -> u32 {
+    0x137
+}
+
 /// `CTaskComplexFollowLeaderInFormation::GetTaskType` (0x694A30): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x694A30, conv = thiscall, name = "CTaskComplexFollowLeaderInFormation::GetTaskType", expect = "B8 91 03 00 00")]
 pub fn g_task_complex_follow_leader_in_formation_get_task_type_694a30(_this: u32) -> u32 {
@@ -3739,6 +4210,7 @@ pub fn g_task_allocator_kill_threats_driveby_get_type_69cb50(_this: u32) -> u32 
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_GET_LOCAL_SOUND_LEVEL_420EB0,
+    HOOK_G_TASK_COMPLEX_LEAVE_ANY_CAR_GET_TASK_TYPE_421240,
     HOOK_G_EVENT_LEADER_ENTRY_EXIT_GET_EVENT_TYPE_43E200,
     HOOK_G_EVENT_AREA_CODES_GET_EVENT_PRIORITY_43E2C0,
     HOOK_G_TASK_SIMPLE_UNINTERRUPTABLE_GET_TASK_TYPE_43E380,
@@ -3769,6 +4241,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_DIVE_FROM_ATTACHED_ENTITY_AND_GET_UP_GET_TASK_TYPE_492EE0,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_RADIUS_ANGLE_OFFSET_GET_TASK_TYPE_493800,
     HOOK_G_VT_85A428_GET_TASK_TYPE_499430,
+    HOOK_G_TASK_SIMPLE_FIGHT_GET_COMBO_ANIM_GROUP_ID_4ABDA0,
     HOOK_G_EVENT_AFFECTS_PED_4ABFE0,
     HOOK_G_EVENT_GUN_SHOT_GET_EVENT_TYPE_4AC6B0,
     HOOK_G_EVENT_GUN_SHOT_GET_EVENT_PRIORITY_4AC710,
@@ -3864,6 +4337,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_85B8DC_GET_TASK_TYPE_4B8720,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_RUN_GET_TASK_TYPE_4B8810,
     HOOK_G_TASK_COMPLEX_USE_CLOSEST_FREE_SCRIPTED_ATTRACTOR_SPRINT_GET_TASK_TYPE_4B88D0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_FLEE_SCENE_GET_TASK_TYPE_4B89C0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_KILL_PED_GET_TASK_TYPE_4B8AA0,
     HOOK_G_CPED_SHELTER_ATTRACTOR_IS_AT_HEAD_OF_QUEUE_5E9680,
     HOOK_G_CPED_SEAT_ATTRACTOR_GET_TYPE_5EE5A0,
     HOOK_G_CPED_STOP_ATTRACTOR_GET_TYPE_5EE670,
@@ -3897,6 +4372,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_ESCALATOR_GET_EVENT_PRIORITY_5FF870,
     HOOK_G_EVENT_ON_FIRE_GET_EVENT_PRIORITY_5FF890,
     HOOK_G_EVENT_ACQUAINTANCE_PED_HATE_BADLY_LIT_GET_EVENT_PRIORITY_5FF8A0,
+    HOOK_G_VT_86CBE8_GET_EVENT_PRIORITY_5FF8E0,
+    HOOK_G_VT_86CC78_GET_EVENT_PRIORITY_5FF8F0,
+    HOOK_G_VT_86CBA0_GET_EVENT_PRIORITY_5FF900,
+    HOOK_G_VT_86CC30_GET_EVENT_PRIORITY_5FF910,
     HOOK_G_CPED_INTELLIGENCE_SET_PED_DECISION_MAKER_TYPE_IN_GROUP_600BB0,
     HOOK_G_CPED_INTELLIGENCE_GET_EFFECT_IN_USE_6018D0,
     HOOK_G_CPED_INTELLIGENCE_SET_EFFECT_IN_USE_6018E0,
@@ -3915,6 +4394,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_VT_86D594_GET_TASK_TYPE_61AD00,
     HOOK_G_TASK_COMPLEX_PLAY_HAND_SIGNAL_ANIM_GET_TASK_TYPE_61B2E0,
     HOOK_G_EVENT_VEHICLE_DAMAGE_WEAPON_GET_EVENT_TYPE_61C320,
+    HOOK_G_TASK_SIMPLE_FIGHTING_CONTROL_GET_TASK_TYPE_61DC90,
     HOOK_G_TASK_SIMPLE_GUN_CONTROL_GET_TASK_TYPE_61F4C0,
     HOOK_G_TASK_SIMPLE_THROW_PROJECTILE_GET_TASK_TYPE_61F6F0,
     HOOK_G_TASK_SIMPLE_THROW_CONTROL_GET_TASK_TYPE_61F940,
@@ -3948,10 +4428,13 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_REAR_IS_INTERRUPTABLE_62EFC0,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_LEFT_IS_INTERRUPTABLE_62F070,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_RIGHT_IS_INTERRUPTABLE_62F120,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_DIE_GET_TASK_TYPE_62F240,
     HOOK_G_TASK_SIMPLE_SET_STAY_IN_SAME_PLACE_GET_TASK_TYPE_62F5B0,
     HOOK_G_TASK_SIMPLE_SET_STAY_IN_SAME_PLACE_MAKE_ABORTABLE_62F5C0,
     HOOK_G_TASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_GET_TASK_TYPE_62F630,
     HOOK_G_TASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_MAKE_ABORTABLE_62F640,
+    HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_GET_TASK_TYPE_62F6B0,
+    HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_MAKE_ABORTABLE_62F6C0,
     HOOK_G_TASK_COMPLEX_BE_STILL_CONTROL_SUB_TASK_62F9F0,
     HOOK_G_TASK_SIMPLE_DIE_GET_TASK_TYPE_62FA50,
     HOOK_G_TASK_SIMPLE_DIE_FINISH_ANIM_DIE_CB_62FC10,
@@ -4035,21 +4518,74 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_GET_EVENT_TYPE_63A130,
     HOOK_G_EVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_AFFECTS_PED_63A1A0,
     HOOK_G_EVENT_LEADER_QUIT_ENTERING_CAR_AS_DRIVER_GET_EVENT_PRIORITY_63A1E0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_GET_TASK_TYPE_63ADF0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_TIMED_CREATE_NEXT_SUB_TASK_63AED0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_GET_TASK_TYPE_63B0B0,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_TIMED_CREATE_NEXT_SUB_TASK_63B190,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_WAIT_GET_TASK_TYPE_63B3B0,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_GET_TASK_TYPE_63B490,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_GET_TASK_TYPE_63B640,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_CONTROL_SUB_TASK_63B6B0,
     HOOK_G_TASK_COMPLEX_STEAL_CAR_GET_TASK_TYPE_63B840,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_GET_TASK_TYPE_63BBC0,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CREATE_NEXT_SUB_TASK_63BC30,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CONTROL_SUB_TASK_63BC40,
+    HOOK_G_TASK_COMPLEX_LEAVE_ANY_CAR_CREATE_NEXT_SUB_TASK_63BCD0,
+    HOOK_G_TASK_COMPLEX_LEAVE_ANY_CAR_CONTROL_SUB_TASK_63BDC0,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_FLEE_GET_TASK_TYPE_63C020,
+    HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_FLEE_CONTROL_SUB_TASK_63C090,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_GET_TASK_TYPE_63C2B0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_GET_TASK_TYPE_63C9C0,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_GET_TASK_TYPE_63CCB0,
+    HOOK_G_TASK_COMPLEX_DRIVE_TO_POINT_GET_TASK_TYPE_63CE60,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_CONTROL_SUB_TASK_63D0C0,
+    HOOK_G_TASK_COMPLEX_ENTER_ANY_CAR_AS_DRIVER_GET_TASK_TYPE_63D0F0,
+    HOOK_G_TASK_COMPLEX_ENTER_ANY_CAR_AS_DRIVER_CREATE_NEXT_SUB_TASK_63D110,
+    HOOK_G_TASK_COMPLEX_ENTER_ANY_CAR_AS_DRIVER_CONTROL_SUB_TASK_63D120,
     HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_GET_TASK_TYPE_63D190,
+    HOOK_G_TASK_SIMPLE_CAR_SET_TEMP_ACTION_GET_TASK_TYPE_63D720,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_GET_TASK_TYPE_640370,
     HOOK_G_TASK_COMPLEX_OPEN_DRIVER_DOOR_GET_TASK_TYPE_6403C0,
     HOOK_G_TASK_COMPLEX_OPEN_PASSENGER_DOOR_GET_TASK_TYPE_640410,
     HOOK_G_TASK_COMPLEX_DRAG_PED_FROM_CAR_GET_TASK_TYPE_6404C0,
+    HOOK_G_TASK_COMPLEX_DRIVE_POINT_ROUTE_GET_TASK_TYPE_643480,
     HOOK_G_TASK_COMPLEX_GO_TO_CAR_DOOR_AND_STAND_STILL_GET_TASK_TYPE_645830,
+    HOOK_G_TASK_SIMPLE_CAR_ALIGN_GET_TASK_TYPE_645BD0,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_DOOR_FROM_OUTSIDE_GET_TASK_TYPE_645ED0,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_GET_TASK_TYPE_6460E0,
+    HOOK_G_TASK_SIMPLE_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_FINISH_ANIM_CAR_OPEN_LOCKED_DOOR_FROM_OUTSIDE_CB_6461A0,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_GET_TASK_TYPE_646220,
     HOOK_G_TASK_SIMPLE_PICK_UP_BIKE_FINISH_ANIM_PICK_UP_BIKE_CB_6462F0,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_INSIDE_GET_TASK_TYPE_646370,
+    HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_OUTSIDE_GET_TASK_TYPE_646560,
+    HOOK_G_TASK_SIMPLE_CAR_GET_IN_GET_TASK_TYPE_646700,
+    HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_GET_TASK_TYPE_646880,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_GET_TASK_TYPE_6469F0,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_GET_TASK_TYPE_646BE0,
+    HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_MAKE_ABORTABLE_646BF0,
+    HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_GET_TASK_TYPE_646E30,
+    HOOK_G_TASK_SIMPLE_CAR_GO_TO_POINT_NEAR_DOOR_UNTIL_DOOR_NOT_IN_USE_MAKE_ABORTABLE_646E40,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER_GET_TASK_TYPE_647060,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER_MAKE_ABORTABLE_647070,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER_GET_TASK_TYPE_647150,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER_MAKE_ABORTABLE_647160,
+    HOOK_G_TASK_SIMPLE_CAR_GET_OUT_GET_TASK_TYPE_647250,
+    HOOK_G_TASK_SIMPLE_CAR_JUMP_OUT_GET_TASK_TYPE_647500,
+    HOOK_G_TASK_SIMPLE_CAR_JUMP_OUT_FINISH_ANIM_CAR_JUMP_OUT_CB_647700,
+    HOOK_G_VT_86EE94_GET_TASK_TYPE_647770,
+    HOOK_G_VT_86EE94_MAKE_ABORTABLE_647780,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_OUT_MAKE_ABORTABLE_647940,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_GET_TASK_TYPE_648060,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_BE_DRAGGED_OUT_GET_TASK_TYPE_6482B0,
+    HOOK_G_TASK_SIMPLE_CAR_SLOW_BE_DRAGGED_OUT_FINISH_ANIM_CAR_SLOW_BE_DRAGGED_OUT_CB_6483A0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_SLOW_DRAGGED_OUT_GET_TASK_TYPE_648410,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_SLOW_DRAGGED_OUT_MAKE_ABORTABLE_648420,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_GET_TASK_TYPE_648500,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_CONTROL_SUB_TASK_648510,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_GET_TASK_TYPE_648680,
+    HOOK_G_TASK_COMPLEX_CAR_SLOW_BE_DRAGGED_OUT_AND_STAND_UP_CONTROL_SUB_TASK_648B80,
     HOOK_G_TASK_SIMPLE_BIKE_JACKED_GET_TASK_TYPE_648C30,
+    HOOK_G_TASK_SIMPLE_CAR_FALL_OUT_GET_TASK_TYPE_648DD0,
     HOOK_G_TASK_SIMPLE_SET_PED_AS_AUTO_DRIVER_GET_TASK_TYPE_648FA0,
     HOOK_G_TASK_SIMPLE_SET_PED_AS_AUTO_DRIVER_MAKE_ABORTABLE_648FB0,
     HOOK_G_TASK_COMPLEX_GO_TO_BOAT_STEERING_WHEEL_GET_TASK_TYPE_6490F0,
@@ -4091,6 +4627,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_TREAT_ACCIDENT_GET_TASK_TYPE_658AD0,
     HOOK_G_TASK_COMPLEX_TREAT_ACCIDENT_CONTROL_SUB_TASK_658B90,
     HOOK_G_TASK_COMPLEX_MEDIC_TREAT_INJURED_PED_GET_TASK_TYPE_658C20,
+    HOOK_G_VT_86F544_GET_TASK_TYPE_659230,
+    HOOK_G_TASK_COMPLEX_DRIVE_FIRE_TRUCK_GET_TASK_TYPE_659390,
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_GET_TASK_TYPE_659440,
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_IS_INTERRUPTABLE_659450,
     HOOK_G_TASK_COMPLEX_USE_SWAT_ROPE_ABORT_URGENTLY_659460,
@@ -4204,6 +4742,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_HOLD_ENTITY_PLAY_ANIM_691720,
     HOOK_G_TASK_SIMPLE_PICK_UP_ENTITY_GET_TASK_TYPE_691810,
     HOOK_G_TASK_SIMPLE_PUT_DOWN_ENTITY_GET_TASK_TYPE_691900,
+    HOOK_G_VT_870B98_GET_TASK_TYPE_691A40,
+    HOOK_G_TASK_SIMPLE_DUCK_FORCE_STOP_MOVE_6924B0,
+    HOOK_G_VT_870BEC_GET_TASK_TYPE_6926E0,
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_IN_FORMATION_GET_TASK_TYPE_694A30,
     HOOK_G_TASK_COMPLEX_FOLLOW_LEADER_ANY_MEANS_GET_TASK_TYPE_694B20,
     HOOK_G_TASK_COMPLEX_SEEK_ENTITY_AIMING_GET_TASK_TYPE_694C00,
@@ -4232,6 +4773,7 @@ pub const BODIES: &[Body] = &[
     (0x420F00, 0x58389C18233078FF, &[(0x420F00, 3)]),
     (0x420F20, 0xA3703B1A918CFBEB, &[(0x420F20, 3)]),
     (0x421180, 0x69AEB01C23D2A0A9, &[(0x421180, 3)]),
+    (0x421240, 0xC75E4CE9FAD4D80C, &[(0x421240, 6)]),
     (0x43E200, 0x38B892B9D70746EB, &[(0x43E200, 6)]),
     (0x43E210, 0x58389C18233078FF, &[(0x43E210, 3)]),
     (0x43E280, 0xA3703B1A918CFBEB, &[(0x43E280, 3)]),
@@ -4266,6 +4808,7 @@ pub const BODIES: &[Body] = &[
     (0x492EE0, 0xF1BEFC9E89363749, &[(0x492EE0, 6)]),
     (0x493800, 0x064D9488806CBC0A, &[(0x493800, 6)]),
     (0x499430, 0x5DADE9C0DB362BC8, &[(0x499430, 6)]),
+    (0x4ABDA0, 0xC9745387E6D71DA2, &[(0x4ABDA0, 30)]),
     (0x4ABFE0, 0x3F1BE86B45EF479C, &[(0x4ABFE0, 5)]),
     (0x4AC6B0, 0x4B131B0430423831, &[(0x4AC6B0, 6)]),
     (0x4AC6C0, 0x58389C18233078FF, &[(0x4AC6C0, 3)]),
@@ -4418,6 +4961,8 @@ pub const BODIES: &[Body] = &[
     (0x4B8720, 0x1BFE7B447FC92CBD, &[(0x4B8720, 6)]),
     (0x4B8810, 0x9EF3F20D969A998A, &[(0x4B8810, 6)]),
     (0x4B88D0, 0x524FB4D26CDFB29F, &[(0x4B88D0, 6)]),
+    (0x4B89C0, 0xFA195993F011A818, &[(0x4B89C0, 6)]),
+    (0x4B8AA0, 0x9EFA68BC4D193FD1, &[(0x4B8AA0, 6)]),
     (0x5DEA70, 0x58389C18233078FF, &[(0x5DEA70, 3)]),
     (0x5DEAA0, 0xA3703B1A918CFBEB, &[(0x5DEAA0, 3)]),
     (0x5E9680, 0x3F1BE86B45EF479C, &[(0x5E9680, 5)]),
@@ -4465,6 +5010,10 @@ pub const BODIES: &[Body] = &[
     (0x5FF870, 0x04A5E3251C520944, &[(0x5FF870, 6)]),
     (0x5FF890, 0xF94DA4E564795CE2, &[(0x5FF890, 6)]),
     (0x5FF8A0, 0x621A1CAAF5147C67, &[(0x5FF8A0, 6)]),
+    (0x5FF8E0, 0xD3407965EC8A40D3, &[(0x5FF8E0, 6)]),
+    (0x5FF8F0, 0xBAE254D462406882, &[(0x5FF8F0, 6)]),
+    (0x5FF900, 0xDFF05A9069DB5AD0, &[(0x5FF900, 6)]),
+    (0x5FF910, 0xC791B5FEDF90A8FF, &[(0x5FF910, 6)]),
     (0x600BB0, 0x29AF0E10FFE5DF82, &[(0x600BB0, 13)]),
     (0x6018D0, 0x89F0760886E49E57, &[(0x6018D0, 7)]),
     (0x6018E0, 0x387836464E4E19D7, &[(0x6018E0, 13)]),
@@ -4485,6 +5034,7 @@ pub const BODIES: &[Body] = &[
     (0x61AD00, 0xCDA4A4332780168F, &[(0x61AD00, 5)]),
     (0x61B2E0, 0x28EE2AE14ED27D23, &[(0x61B2E0, 6)]),
     (0x61C320, 0x2D07CF52CA0A4917, &[(0x61C320, 6)]),
+    (0x61DC90, 0x3B5DE1E0AB73895A, &[(0x61DC90, 6)]),
     (0x61F4C0, 0xEEBB24A581BB2EEF, &[(0x61F4C0, 6)]),
     (0x61F6F0, 0x882D3ED92381653D, &[(0x61F6F0, 6)]),
     (0x61F940, 0xA216E76A58004804, &[(0x61F940, 6)]),
@@ -4518,10 +5068,13 @@ pub const BODIES: &[Body] = &[
     (0x62EFC0, 0x9EB01BC33B46FA6B, &[(0x62EFC0, 5)]),
     (0x62F070, 0x9EB01BC33B46FA6B, &[(0x62F070, 5)]),
     (0x62F120, 0x9EB01BC33B46FA6B, &[(0x62F120, 5)]),
+    (0x62F240, 0x6E961CC08DA8F989, &[(0x62F240, 6)]),
     (0x62F5B0, 0xEDF5DEA5ACA17C68, &[(0x62F5B0, 6)]),
     (0x62F5C0, 0x3F00B86B45D82E54, &[(0x62F5C0, 5)]),
     (0x62F630, 0x369B31CF3C745AE1, &[(0x62F630, 6)]),
     (0x62F640, 0x3F00B86B45D82E54, &[(0x62F640, 5)]),
+    (0x62F6B0, 0x35855D56C8B789AF, &[(0x62F6B0, 6)]),
+    (0x62F6C0, 0x3F00B86B45D82E54, &[(0x62F6C0, 5)]),
     (0x62F9F0, 0x8A748C4BA712FCF7, &[(0x62F9F0, 6)]),
     (0x62FA50, 0x536B77F9971A4300, &[(0x62FA50, 6)]),
     (0x62FC10, 0x608BA95DC7E454BF, &[(0x62FC10, 16)]),
@@ -4608,21 +5161,74 @@ pub const BODIES: &[Body] = &[
     (0x63A140, 0x58389C18233078FF, &[(0x63A140, 3)]),
     (0x63A1A0, 0x9EB01BC33B46FA6B, &[(0x63A1A0, 5)]),
     (0x63A1E0, 0x9F2DC9D131D5032C, &[(0x63A1E0, 6)]),
+    (0x63ADF0, 0xD40C3614782299A1, &[(0x63ADF0, 6)]),
+    (0x63AED0, 0x3E2634728B17F288, &[(0x63AED0, 5)]),
+    (0x63B0B0, 0x60A547604E481962, &[(0x63B0B0, 6)]),
+    (0x63B190, 0x3E2634728B17F288, &[(0x63B190, 5)]),
+    (0x63B3B0, 0x94A140400594A200, &[(0x63B3B0, 6)]),
+    (0x63B490, 0x924C7F91CFCB7E3C, &[(0x63B490, 6)]),
     (0x63B640, 0x3A9A1BE0D65C6353, &[(0x63B640, 6)]),
     (0x63B6B0, 0x8A748C4BA712FCF7, &[(0x63B6B0, 6)]),
     (0x63B840, 0x212622D6D855B9D0, &[(0x63B840, 6)]),
     (0x63BBC0, 0x2DEA3AB6590B4956, &[(0x63BBC0, 6)]),
     (0x63BC30, 0x3E2634728B17F288, &[(0x63BC30, 5)]),
     (0x63BC40, 0x8A748C4BA712FCF7, &[(0x63BC40, 6)]),
+    (0x63BCD0, 0x3E2634728B17F288, &[(0x63BCD0, 5)]),
+    (0x63BDC0, 0x8A748C4BA712FCF7, &[(0x63BDC0, 6)]),
+    (0x63C020, 0x61E6B3961058AB74, &[(0x63C020, 6)]),
+    (0x63C090, 0x8A748C4BA712FCF7, &[(0x63C090, 6)]),
     (0x63C2B0, 0xC87421626E91A93E, &[(0x63C2B0, 6)]),
+    (0x63C9C0, 0x06C742BE6D5F69AD, &[(0x63C9C0, 6)]),
+    (0x63CCB0, 0x9362540A43884F6E, &[(0x63CCB0, 6)]),
+    (0x63CE60, 0x2F2BA6EC1B1BDB68, &[(0x63CE60, 6)]),
+    (0x63D0C0, 0x8A748C4BA712FCF7, &[(0x63D0C0, 6)]),
+    (0x63D0F0, 0xA151296A82E5C995, &[(0x63D0F0, 6)]),
+    (0x63D110, 0x3E2634728B17F288, &[(0x63D110, 5)]),
+    (0x63D120, 0x8A748C4BA712FCF7, &[(0x63D120, 6)]),
     (0x63D190, 0xC61D60B438C51F7A, &[(0x63D190, 6)]),
+    (0x63D720, 0xA0103534C0D6036B, &[(0x63D720, 6)]),
+    (0x640370, 0xBA6E9D4D2BCB87A6, &[(0x640370, 6)]),
     (0x6403C0, 0x2CD4663DE54E7824, &[(0x6403C0, 6)]),
     (0x640410, 0x2B937A08233EBF92, &[(0x640410, 6)]),
     (0x6404C0, 0x946171CDB3DC6B97, &[(0x6404C0, 6)]),
+    (0x643480, 0x39844F68629F9FB9, &[(0x643480, 6)]),
     (0x645830, 0x743AC531B314F673, &[(0x645830, 6)]),
+    (0x645BD0, 0x279687F6895A0F88, &[(0x645BD0, 6)]),
+    (0x645ED0, 0xDAF252BB5F9F3635, &[(0x645ED0, 6)]),
+    (0x6460E0, 0x8E2475C2E793E6D2, &[(0x6460E0, 6)]),
+    (0x6461A0, 0xAA87810B5344C3D7, &[(0x6461A0, 16)]),
     (0x646220, 0x41803887BDD8FFE7, &[(0x646220, 6)]),
     (0x6462F0, 0xAA87810B5344C3D7, &[(0x6462F0, 16)]),
+    (0x646370, 0xF4DB7B4C941D3F7C, &[(0x646370, 6)]),
+    (0x646560, 0xA83746116A626629, &[(0x646560, 6)]),
+    (0x646700, 0x5B676918F253B0C6, &[(0x646700, 6)]),
+    (0x646880, 0xD9B2DE859D91FC8B, &[(0x646880, 6)]),
+    (0x6469F0, 0x8D0EA14A73D715A0, &[(0x6469F0, 6)]),
+    (0x646BE0, 0x406A6C0F4A1C3C4D, &[(0x646BE0, 6)]),
+    (0x646BF0, 0x3F00B86B45D82E54, &[(0x646BF0, 5)]),
+    (0x646E30, 0x71E404837D486CAF, &[(0x646E30, 6)]),
+    (0x646E40, 0x3F00B86B45D82E54, &[(0x646E40, 5)]),
+    (0x647060, 0xF39A8F16D20D86EA, &[(0x647060, 6)]),
+    (0x647070, 0x9ECB4BC33B5E13B3, &[(0x647070, 5)]),
+    (0x647150, 0xA6F5D1DBA851C67F, &[(0x647150, 6)]),
+    (0x647160, 0x9ECB4BC33B5E13B3, &[(0x647160, 5)]),
+    (0x647250, 0x5A5194A07E96DF94, &[(0x647250, 6)]),
+    (0x647500, 0x0DAD5F6554DC0641, &[(0x647500, 6)]),
+    (0x647700, 0xAA87810B5344C3D7, &[(0x647700, 16)]),
+    (0x647770, 0xC0DF826CDCD0B6DE, &[(0x647770, 6)]),
+    (0x647780, 0x9ECB4BC33B5E13B3, &[(0x647780, 5)]),
+    (0x647940, 0x9ECB4BC33B5E13B3, &[(0x647940, 5)]),
+    (0x648060, 0x0C6DEB2F92CECC97, &[(0x648060, 6)]),
+    (0x6482B0, 0xBFC9ADF46913E5AC, &[(0x6482B0, 6)]),
+    (0x6483A0, 0x7A4ADF266AD52189, &[(0x6483A0, 16)]),
+    (0x648410, 0x7324F8B93F5832D9, &[(0x648410, 6)]),
+    (0x648420, 0x9ECB4BC33B5E13B3, &[(0x648420, 5)]),
+    (0x648500, 0x26559BC0C74A56F6, &[(0x648500, 6)]),
+    (0x648510, 0x8A748C4BA712FCF7, &[(0x648510, 6)]),
+    (0x648680, 0xA4A1112D7288A2BB, &[(0x648680, 6)]),
+    (0x648B80, 0x8A748C4BA712FCF7, &[(0x648B80, 6)]),
     (0x648C30, 0x0B581EB71F1208FD, &[(0x648C30, 6)]),
+    (0x648DD0, 0x195DA2CC61D82A95, &[(0x648DD0, 6)]),
     (0x648FA0, 0xBE88C1BEA7042D1A, &[(0x648FA0, 6)]),
     (0x648FB0, 0x9ECB4BC33B5E13B3, &[(0x648FB0, 5)]),
     (0x6490F0, 0xD89D120D29D538F1, &[(0x6490F0, 6)]),
@@ -4665,6 +5271,8 @@ pub const BODIES: &[Body] = &[
     (0x658AD0, 0x691C5EB59676B3B3, &[(0x658AD0, 6)]),
     (0x658B90, 0x8A748C4BA712FCF7, &[(0x658B90, 6)]),
     (0x658C20, 0x75CC3FE013C7CDB0, &[(0x658C20, 6)]),
+    (0x659230, 0xF4A02388F8E0495A, &[(0x659230, 6)]),
+    (0x659390, 0xE7F2425E7B92955D, &[(0x659390, 6)]),
     (0x659440, 0xDB425933FE416DC8, &[(0x659440, 6)]),
     (0x659450, 0x9EB01BC33B46FA6B, &[(0x659450, 5)]),
     (0x659460, 0x9EB01BC33B46FA6B, &[(0x659460, 5)]),
@@ -4783,6 +5391,9 @@ pub const BODIES: &[Body] = &[
     (0x691720, 0x2D6EFCDED7B2AC6D, &[(0x691720, 17)]),
     (0x691810, 0xCC77971EE661A741, &[(0x691810, 6)]),
     (0x691900, 0xFFBE8A05157E8C1A, &[(0x691900, 6)]),
+    (0x691A40, 0xB319CCC9EBC2CBAF, &[(0x691A40, 6)]),
+    (0x6924B0, 0x433BA136C711287D, &[(0x6924B0, 12)]),
+    (0x6926E0, 0xE660BFB01ADFB088, &[(0x6926E0, 6)]),
     (0x694A30, 0x0537C0100CAFEAD8, &[(0x694A30, 6)]),
     (0x694B20, 0xD13BC7305563623A, &[(0x694B20, 6)]),
     (0x694C00, 0x9D68E60DEC665AFC, &[(0x694C00, 6)]),
@@ -4840,7 +5451,20 @@ mod tests {
             g_task_complex_use_closest_free_scripted_attractor_create_next_sub_task_634730(0, 0),
             0
         );
+        assert_eq!(
+            g_task_complex_enter_car_as_driver_timed_create_next_sub_task_63aed0(0, 0),
+            0
+        );
+        assert_eq!(
+            g_task_complex_enter_car_as_passenger_timed_create_next_sub_task_63b190(0, 0),
+            0
+        );
         assert_eq!(g_task_complex_leave_boat_create_next_sub_task_63bc30(0, 0), 0);
+        assert_eq!(g_task_complex_leave_any_car_create_next_sub_task_63bcd0(0, 0), 0);
+        assert_eq!(
+            g_task_complex_enter_any_car_as_driver_create_next_sub_task_63d110(0, 0),
+            0
+        );
         assert_eq!(
             g_task_complex_get_on_boat_seat_create_next_sub_task_649300(0, 0),
             0
@@ -4979,6 +5603,7 @@ mod tests {
             g_task_simple_set_kinda_stay_in_same_place_make_abortable_62f640(0, 0, 0, 0),
             1
         );
+        assert_eq!(g_task_simple_duck_toggle_make_abortable_62f6c0(0, 0, 0, 0), 1);
         assert_eq!(g_task_simple_drown_in_car_make_abortable_62ff50(0, 0, 0, 0), 0);
         assert_eq!(g_task_simple_dead_make_abortable_6305e0(0, 0, 0, 0), 1);
         assert_eq!(g_task_simple_turn180_make_abortable_631cf0(0, 0, 0, 0), 0);
@@ -4990,6 +5615,28 @@ mod tests {
         assert_eq!(g_task_simple_hit_from_front_is_interruptable_637280(0, 0), 0);
         assert_eq!(
             g_event_leader_quit_entering_car_as_driver_affects_ped_63a1a0(0, 0),
+            0
+        );
+        assert_eq!(
+            g_task_simple_car_wait_for_door_not_to_be_in_use_make_abortable_646bf0(0, 0, 0, 0),
+            1
+        );
+        assert_eq!(
+            g_task_simple_car_go_to_point_near_door_until_door_not_in_use_make_abortable_646e40(0, 0, 0, 0),
+            1
+        );
+        assert_eq!(
+            g_task_simple_car_set_ped_in_as_passenger_make_abortable_647070(0, 0, 0, 0),
+            0
+        );
+        assert_eq!(
+            g_task_simple_car_set_ped_in_as_driver_make_abortable_647160(0, 0, 0, 0),
+            0
+        );
+        assert_eq!(g_vt_86ee94_make_abortable_647780(0, 0, 0, 0), 0);
+        assert_eq!(g_task_simple_car_set_ped_out_make_abortable_647940(0, 0, 0, 0), 0);
+        assert_eq!(
+            g_task_simple_car_set_ped_slow_dragged_out_make_abortable_648420(0, 0, 0, 0),
             0
         );
         assert_eq!(
@@ -5040,6 +5687,7 @@ mod tests {
     #[test]
     fn pattern_const_id() {
         assert_eq!(g_event_acquaintance_ped_get_life_time_420f00(0), 0);
+        assert_eq!(g_task_complex_leave_any_car_get_task_type_421240(0), 0x2CA);
         assert_eq!(g_event_leader_entry_exit_get_event_type_43e200(0), 0x4D);
         assert_eq!(g_event_leader_entry_exit_get_life_time_43e210(0), 0);
         assert_eq!(g_event_area_codes_get_event_priority_43e2c0(0), 0x37);
@@ -5206,6 +5854,14 @@ mod tests {
             g_task_complex_use_closest_free_scripted_attractor_sprint_get_task_type_4b88d0(0),
             0x106
         );
+        assert_eq!(
+            g_task_complex_car_drive_mission_flee_scene_get_task_type_4b89c0(0),
+            0x2D6
+        );
+        assert_eq!(
+            g_task_complex_car_drive_mission_kill_ped_get_task_type_4b8aa0(0),
+            0x2D9
+        );
         assert_eq!(g_event_sound_quiet_get_life_time_5dea70(0), 0);
         assert_eq!(g_cped_atmattractor_get_type_5ee4d0(0), 0);
         assert_eq!(g_cped_seat_attractor_get_type_5ee5a0(0), 1);
@@ -5272,6 +5928,10 @@ mod tests {
             g_event_acquaintance_ped_hate_badly_lit_get_event_priority_5ff8a0(0),
             0x19
         );
+        assert_eq!(g_vt_86cbe8_get_event_priority_5ff8e0(0), 0x45);
+        assert_eq!(g_vt_86cc78_get_event_priority_5ff8f0(0), 0x22);
+        assert_eq!(g_vt_86cba0_get_event_priority_5ff900(0), 0x44);
+        assert_eq!(g_vt_86cc30_get_event_priority_5ff910(0), 0x21);
         assert_eq!(g_event_new_gang_member_get_event_type_608fd0(0), 0x5A);
         assert_eq!(g_event_new_gang_member_get_life_time_608fe0(0), 0);
         assert_eq!(g_event_dont_join_player_group_get_event_type_6091a0(0), 0x5E);
@@ -5291,6 +5951,7 @@ mod tests {
             0x1AA
         );
         assert_eq!(g_event_vehicle_damage_weapon_get_event_type_61c320(0), 0x29);
+        assert_eq!(g_task_simple_fighting_control_get_task_type_61dc90(0), 0x3FB);
         assert_eq!(g_task_simple_gun_control_get_task_type_61f4c0(0), 0x3FC);
         assert_eq!(g_task_simple_throw_projectile_get_task_type_61f6f0(0), 0x3FA);
         assert_eq!(g_task_simple_throw_control_get_task_type_61f940(0), 0x3FD);
@@ -5329,11 +5990,13 @@ mod tests {
             0x40A
         );
         assert_eq!(g_task_simple_ikchain_get_task_type_62ec30(0), 0x108);
+        assert_eq!(g_task_complex_leave_car_and_die_get_task_type_62f240(0), 0x2C1);
         assert_eq!(g_task_simple_set_stay_in_same_place_get_task_type_62f5b0(0), 0xCC);
         assert_eq!(
             g_task_simple_set_kinda_stay_in_same_place_get_task_type_62f630(0),
             0x114
         );
+        assert_eq!(g_task_simple_duck_toggle_get_task_type_62f6b0(0), 0x51A);
         assert_eq!(g_task_simple_die_get_task_type_62fa50(0), 0xD4);
         assert_eq!(g_task_simple_die_in_car_get_task_type_62fc60(0), 0xD6);
         assert_eq!(g_task_complex_die_in_car_get_task_type_62fcb0(0), 0xD7);
@@ -5408,23 +6071,110 @@ mod tests {
             g_event_leader_quit_entering_car_as_driver_get_event_priority_63a1e0(0),
             0x30
         );
+        assert_eq!(
+            g_task_complex_enter_car_as_driver_timed_get_task_type_63adf0(0),
+            0x2C9
+        );
+        assert_eq!(
+            g_task_complex_enter_car_as_passenger_timed_get_task_type_63b0b0(0),
+            0x2C8
+        );
+        assert_eq!(
+            g_task_complex_enter_car_as_passenger_wait_get_task_type_63b3b0(0),
+            0x2CE
+        );
+        assert_eq!(
+            g_task_complex_leave_car_as_passenger_wait_get_task_type_63b490(0),
+            0x2DA
+        );
         assert_eq!(g_task_complex_enter_boat_as_driver_get_task_type_63b640(0), 0x2CB);
         assert_eq!(g_task_complex_steal_car_get_task_type_63b840(0), 0x2BE);
         assert_eq!(g_task_complex_leave_boat_get_task_type_63bbc0(0), 0x2CC);
+        assert_eq!(g_task_complex_leave_car_and_flee_get_task_type_63c020(0), 0x2C2);
         assert_eq!(
             g_task_complex_scream_in_car_then_leave_get_task_type_63c2b0(0),
             0x2C4
         );
+        assert_eq!(g_task_complex_car_drive_get_task_type_63c9c0(0), 0x2D5);
+        assert_eq!(g_task_complex_car_drive_mission_get_task_type_63ccb0(0), 0x2D4);
+        assert_eq!(g_task_complex_drive_to_point_get_task_type_63ce60(0), 0x2C6);
+        assert_eq!(
+            g_task_complex_enter_any_car_as_driver_get_task_type_63d0f0(0),
+            0x2CD
+        );
         assert_eq!(g_task_complex_shuffle_seats_get_task_type_63d190(0), 0x2D0);
+        assert_eq!(g_task_simple_car_set_temp_action_get_task_type_63d720(0), 0x2D3);
+        assert_eq!(
+            g_task_complex_enter_car_as_passenger_get_task_type_640370(0),
+            0x2BC
+        );
         assert_eq!(g_task_complex_open_driver_door_get_task_type_6403c0(0), 0x2D2);
         assert_eq!(g_task_complex_open_passenger_door_get_task_type_640410(0), 0x2D8);
         assert_eq!(g_task_complex_drag_ped_from_car_get_task_type_6404c0(0), 0x2BF);
+        assert_eq!(g_task_complex_drive_point_route_get_task_type_643480(0), 0x2D1);
         assert_eq!(
             g_task_complex_go_to_car_door_and_stand_still_get_task_type_645830(0),
             0x320
         );
+        assert_eq!(g_task_simple_car_align_get_task_type_645bd0(0), 0x321);
+        assert_eq!(
+            g_task_simple_car_open_door_from_outside_get_task_type_645ed0(0),
+            0x322
+        );
+        assert_eq!(
+            g_task_simple_car_open_locked_door_from_outside_get_task_type_6460e0(0),
+            0x323
+        );
         assert_eq!(g_task_simple_pick_up_bike_get_task_type_646220(0), 0x324);
+        assert_eq!(
+            g_task_simple_car_close_door_from_inside_get_task_type_646370(0),
+            0x325
+        );
+        assert_eq!(
+            g_task_simple_car_close_door_from_outside_get_task_type_646560(0),
+            0x326
+        );
+        assert_eq!(g_task_simple_car_get_in_get_task_type_646700(0), 0x327);
+        assert_eq!(g_task_simple_car_shuffle_get_task_type_646880(0), 0x328);
+        assert_eq!(g_task_simple_car_wait_to_slow_down_get_task_type_6469f0(0), 0x329);
+        assert_eq!(
+            g_task_simple_car_wait_for_door_not_to_be_in_use_get_task_type_646be0(0),
+            0x32A
+        );
+        assert_eq!(
+            g_task_simple_car_go_to_point_near_door_until_door_not_in_use_get_task_type_646e30(0),
+            0x33C
+        );
+        assert_eq!(
+            g_task_simple_car_set_ped_in_as_passenger_get_task_type_647060(0),
+            0x32B
+        );
+        assert_eq!(
+            g_task_simple_car_set_ped_in_as_driver_get_task_type_647150(0),
+            0x32C
+        );
+        assert_eq!(g_task_simple_car_get_out_get_task_type_647250(0), 0x32D);
+        assert_eq!(g_task_simple_car_jump_out_get_task_type_647500(0), 0x32E);
+        assert_eq!(g_vt_86ee94_get_task_type_647770(0), 0x32F);
+        assert_eq!(g_task_simple_car_slow_drag_ped_out_get_task_type_648060(0), 0x334);
+        assert_eq!(
+            g_task_simple_car_slow_be_dragged_out_get_task_type_6482b0(0),
+            0x335
+        );
+        assert_eq!(
+            g_task_simple_car_set_ped_slow_dragged_out_get_task_type_648410(0),
+            0x336
+        );
+        assert_eq!(
+            g_task_complex_car_slow_be_dragged_out_get_task_type_648500(0),
+            0x337
+        );
+        assert_eq!(
+            g_task_complex_car_slow_be_dragged_out_and_stand_up_get_task_type_648680(0),
+            0x338
+        );
         assert_eq!(g_task_simple_bike_jacked_get_task_type_648c30(0), 0x33A);
+        assert_eq!(g_task_simple_car_fall_out_get_task_type_648dd0(0), 0x342);
         assert_eq!(
             g_task_simple_set_ped_as_auto_driver_get_task_type_648fa0(0),
             0x33B
@@ -5467,6 +6217,8 @@ mod tests {
             g_task_complex_medic_treat_injured_ped_get_task_type_658c20(0),
             0x64
         );
+        assert_eq!(g_vt_86f544_get_task_type_659230(0), 0x6A);
+        assert_eq!(g_task_complex_drive_fire_truck_get_task_type_659390(0), 0x6B);
         assert_eq!(g_task_complex_use_swat_rope_get_task_type_659440(0), 0x6C);
         assert_eq!(g_task_complex_use_water_cannon_get_task_type_6597a0(0), 0x6D);
         assert_eq!(g_vt_86f5fc_get_task_type_6598a0(0), 0x6E);
@@ -5580,6 +6332,8 @@ mod tests {
         );
         assert_eq!(g_task_simple_pick_up_entity_get_task_type_691810(0), 0x134);
         assert_eq!(g_task_simple_put_down_entity_get_task_type_691900(0), 0x135);
+        assert_eq!(g_vt_870b98_get_task_type_691a40(0), 0x136);
+        assert_eq!(g_vt_870bec_get_task_type_6926e0(0), 0x137);
         assert_eq!(
             g_task_complex_follow_leader_in_formation_get_task_type_694a30(0),
             0x391
