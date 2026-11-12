@@ -114,7 +114,6 @@ pub fn g_event_acquaintance_ped_hate_constructor2_420e70(this: u32, a0: u32) -> 
 }
 
 /// `CTaskComplexLeaveAnyCar::Constructor` (0x421150, stub to .HOODLUM 0x15667C0): ctor, thiscall, `ret 12`; 13 instruction(s) matched.
-#[hook(addr = 0x421150, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Constructor", expect = "E9 6B 56 14 01", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_leave_any_car_constructor_421150(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
     c_61a3b0_t0(this);
     wr::<u32>(p(this), 0xC, a0);
@@ -2139,7 +2138,6 @@ pub fn g_task_simple_stand_up_constructor_6312e0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexSitDownThenIdleThenStandUp::Constructor` (0x631460): ctor, thiscall, `ret 12`; 14 instruction(s) matched.
-#[hook(addr = 0x631460, conv = thiscall, name = "CTaskComplexSitDownThenIdleThenStandUp::Constructor", expect = "56 8B F1 E8 48 8F FE FF", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_sit_down_then_idle_then_stand_up_constructor_631460(
     this: u32,
     a0: u32,
@@ -2725,7 +2723,6 @@ pub fn g_task_complex_steal_car_constructor_63b7d0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexLeaveCar` (0x63B8C0): ctor, thiscall, `ret 20`; 45 instruction(s) matched.
-#[hook(addr = 0x63B8C0, conv = thiscall, name = "CTaskComplexLeaveCar", expect = "6A FF 68 18 16 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
 pub fn g_ctask_complex_leave_car_63b8c0(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 {
     c_61a3b0_t0(this);
     wr::<u32>(p(this), 0x10, a1);
@@ -3142,7 +3139,6 @@ pub fn g_task_simple_car_shuffle_constructor_646810(this: u32, a0: u32, a1: u32,
 }
 
 /// `CTaskSimpleCarWaitToSlowDown::Constructor` (0x646990): ctor, thiscall, `ret 8`; 27 instruction(s) matched.
-#[hook(addr = 0x646990, conv = thiscall, name = "CTaskSimpleCarWaitToSlowDown::Constructor", expect = "6A FF 68 B8 25 84 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_wait_to_slow_down_constructor_646990(this: u32, a0: u32, a1: u32) -> u32 {
     c_61a390_t0(this);
     wr::<u32>(p(this), 0, 0x86_ED98);
@@ -5789,7 +5785,6 @@ pub fn g_event_vehicle_damage_collision_constructor_6a0620(this: u32, a0: u32, a
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_ACQUAINTANCE_PED_HATE_CONSTRUCTOR2_420E70,
-    HOOK_G_TASK_COMPLEX_LEAVE_ANY_CAR_CONSTRUCTOR_421150,
     HOOK_G_EVENT_LEADER_ENTRY_EXIT_CONSTRUCTOR_43E1C0,
     HOOK_G_TASK_SIMPLE_UNINTERRUPTABLE_CONSTRUCTOR_43E2E0,
     HOOK_G_TASK_COMPLEX_WANDER_COP_CONSTRUCTOR_460C80,
@@ -5900,7 +5895,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_SIT_DOWN_CONSTRUCTOR_631030,
     HOOK_G_TASK_SIMPLE_SIT_IDLE_CONSTRUCTOR_631160,
     HOOK_G_TASK_SIMPLE_STAND_UP_CONSTRUCTOR_6312E0,
-    HOOK_G_TASK_COMPLEX_SIT_DOWN_THEN_IDLE_THEN_STAND_UP_CONSTRUCTOR_631460,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_CTASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_631790,
     HOOK_G_TASK_COMPLEX_CROSS_ROAD_LOOK_AND_ACHIEVE_HEADING_CTASK_COMPLEX_CROSS_ROAD_LOOK_AND_ACHIEVE_HEADING_631AE0,
     HOOK_G_TASK_SIMPLE_TURN180_CONSTRUCTOR_631CC0,
@@ -5937,7 +5931,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_LEAVE_CAR_AS_PASSENGER_WAIT_CONSTRUCTOR_63B430,
     HOOK_G_TASK_COMPLEX_ENTER_BOAT_AS_DRIVER_CONSTRUCTOR_63B5E0,
     HOOK_G_TASK_COMPLEX_STEAL_CAR_CONSTRUCTOR_63B7D0,
-    HOOK_G_CTASK_COMPLEX_LEAVE_CAR_63B8C0,
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CONSTRUCTOR_63BB60,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_CONSTRUCTOR_63C240,
     HOOK_G_TASK_COMPLEX_CAR_DRIVE_CONSTRUCTOR_0_63C9D0,
@@ -5958,7 +5951,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_CLOSE_DOOR_FROM_INSIDE_CONSTRUCTOR_646300,
     HOOK_G_TASK_SIMPLE_CAR_GET_IN_CONSTRUCTOR_646690,
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_CONSTRUCTOR_646810,
-    HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_CONSTRUCTOR_646990,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_CONSTRUCTOR_646B70,
     HOOK_G_TASK_SIMPLE_CAR_GET_OUT_CONSTRUCTOR_6471D0,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_CONSTRUCTOR_647FE0,
