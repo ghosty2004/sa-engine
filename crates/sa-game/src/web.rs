@@ -222,13 +222,32 @@ pub fn frame() -> bool {
             }
         }
     }
+    use std::sync::atomic::Ordering;
+    let presents = crate::d3d9::PRESENTS.load(Ordering::Relaxed);
+    // Most main-loop iterations do not run a game frame: the page runs the loop without the frame limiter's sleep,
+    // so between two frames there are many iterations that only peek messages. The game reads its input
+    // (DirectInput state, CPad) in the iterations that run a frame, which are the ones that present. So the mouse
+    // motion, the wheel and the keys pressed since the last frame stay pending until an iteration presents (natively
+    // the limiter sleeps and nearly every iteration is a frame). Window-message events go to the queue once.
+    // A key released before any frame saw it held is released after the next frame instead (a quick tap, or one
+    // shorter than a slow frame, still reaches CPad).
     let input = INPUT.with(|i| {
         let mut i = i.borrow_mut();
+        DEFERRED_UP.with(|d| {
+            d.borrow_mut().retain(|&(k, at)| {
+                if presents > at {
+                    i.key_up(k);
+                    false
+                } else {
+                    true
+                }
+            })
+        });
         let out = i.clone();
-        i.end_frame();
+        i.events.clear();
         out
     });
-    with_session(|s| {
+    let more = with_session(|s| {
         let input = if crate::env::var_os("SA_WEB_AUTO_INPUT").is_some() {
             merge_input(&input, &synthetic_input(s.n))
         } else {
@@ -236,7 +255,18 @@ pub fn frame() -> bool {
         };
         s.iterate(input)
     })
-    .unwrap_or(false)
+    .unwrap_or(false);
+    if crate::d3d9::PRESENTS.load(Ordering::Relaxed) != presents {
+        INPUT.with(|i| i.borrow_mut().end_frame());
+    }
+    more
+}
+
+thread_local! {
+    /// Keys released before a frame saw them held, with the present count at their key-down (see [`frame`]).
+    static DEFERRED_UP: RefCell<Vec<(Key, u32)>> = const { RefCell::new(Vec::new()) };
+    /// The present count when each held key went down.
+    static DOWN_AT: RefCell<Vec<(Key, u32)>> = const { RefCell::new(Vec::new()) };
 }
 
 /// `f` with the session, if the boot made one.
@@ -344,12 +374,33 @@ pub fn presents() -> u32 {
 #[wasm_bindgen]
 pub fn key(code: &str, down: bool, repeat: bool) {
     let Some(k) = key_of(code) else { return };
+    let now = crate::d3d9::PRESENTS.load(std::sync::atomic::Ordering::Relaxed);
     INPUT.with(|i| {
         let mut i = i.borrow_mut();
         match (down, repeat) {
-            (true, false) => i.key_down(k),
+            (true, false) => {
+                DEFERRED_UP.with(|d| d.borrow_mut().retain(|&(x, _)| x != k));
+                DOWN_AT.with(|d| {
+                    let mut d = d.borrow_mut();
+                    d.retain(|&(x, _)| x != k);
+                    d.push((k, now));
+                });
+                i.key_down(k)
+            }
             (true, true) => i.key_repeat(k),
-            (false, _) => i.key_up(k),
+            (false, _) => {
+                let at = DOWN_AT.with(|d| {
+                    let mut d = d.borrow_mut();
+                    let at = d.iter().find(|&&(x, _)| x == k).map(|&(_, a)| a);
+                    d.retain(|&(x, _)| x != k);
+                    at
+                });
+                // no frame since the key went down: release it after the next one
+                match at {
+                    Some(at) if at >= now && i.held.contains(&k) => DEFERRED_UP.with(|d| d.borrow_mut().push((k, at))),
+                    _ => i.key_up(k),
+                }
+            }
         }
     });
 }
@@ -405,6 +456,8 @@ pub fn wheel(lines: f32) {
 /// Focus lost: every held key and button is released.
 #[wasm_bindgen]
 pub fn blur() {
+    DEFERRED_UP.with(|d| d.borrow_mut().clear());
+    DOWN_AT.with(|d| d.borrow_mut().clear());
     INPUT.with(|i| i.borrow_mut().release_all());
 }
 

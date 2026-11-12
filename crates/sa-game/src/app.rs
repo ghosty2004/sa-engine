@@ -413,7 +413,9 @@ impl Session {
         let failed = !matches!(o, Outcome::Ok(_));
         self.repeats = if failed && self.last.as_ref() == Some(&o) { self.repeats + 1 } else { 0 };
         self.last = Some(o);
-        if failed && self.repeats >= 2 && !det::on() {
+        // (not in the browser: there one unported path should not end the session; the page keeps the last frame and
+        // shows the blocked function)
+        if failed && self.repeats >= 2 && !det::on() && !cfg!(target_arch = "wasm32") {
             println!("main loop: the same failure three times in a row; stopping");
             self.stopped = true;
             return false;
