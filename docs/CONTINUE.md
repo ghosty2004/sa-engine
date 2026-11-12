@@ -31,8 +31,8 @@ Added after 11:45:
 | acc62cadcdbd3be53 (AUDIO-STREAM) | 22e226f8 | CAEDataStream + lewton vorbisfile replacement, GetStreamID, 16-tap sinc mixer, native WAV tap; streams decode but the game holds the stream buffer at -10000 (open); web streams off by default (hang) |
 | a43f6b653f2e96d67 (SCRIPT-5) | 17a4881f | 31 callees of the first missions' opcodes (LOCATE helpers, CleanUpThisPed, AddPassenger …); per-mission remaining list in its hand-back (05EB StartPlaybackRecordedCar, 070A, 0637, 0723, 07F5 …) |
 | newgame-1 (NEWGAME) | 5752d60e | New Game from the pause menu (CMenuSystem::Initialise native, CTaskComplexWaitForPed); its CAEDataStream port duplicates AUDIO-STREAM's — keep AUDIO-STREAM's |
-| a2c16c35b48eab431 (INTRO-1) | 52d081eb+ | intro mission 1:1 (in progress at hand-off) |
-| ac8a20a070c956b08 (INTEGRATE-8) | 907043d6+ | WEB-3 tree onto master (in progress; only fast-forward if its verify-all is 13/13) |
+| a2c16c35b48eab431 (INTRO-1) | a87cf585 | New Game runs the real intro cutscene natively (no --start-in-world, no SCRIPT_SKIP); stops at the police-car ride: StartPlaybackRecordedCar 0x45A980, CleanUpThisPed (SCRIPT-5 has it), CTaskComplexDriveToPoint::IsTargetBlocked 0x6452C0 |
+| ac8a20a070c956b08 (INTEGRATE-8) | f94f1ee3 | DONE and verified (verify-all int8 IDENTICAL 13/13 + int8b recheck): WEB-3's whole tree merged onto b239e888, duplicates settled, samp-rs dep → file:///home/ghosty2004/samp-rs rev fb890107. NOT yet combined with INTEGRATE-6 (now on master cff47307): next step = rebase INTEGRATE-6's commits (or master since b239e888) onto f94f1ee3, regenerate, verify-all, fast-forward. Then SAMP-FX, INTRO-1, SCRIPT-5, AUDIO-STREAM, NEWGAME (prefer AUDIO-STREAM's CAEDataStream), WRITER-WORLD-2, WRITER-SAMP-2. |
 
 Next steps, in order:
 1. INTEGRATE-8 (or its successor): bring SAMP-FX's tree (newest SA:MP), STD-15, SCRIPT-5, AUDIO-STREAM, NEWGAME, INTRO-1 and WEB-3's tree (and the branches above not in it) onto master; verify-all 13/13; record promotions.
