@@ -2481,29 +2481,34 @@ dependencies = [
 [[package]]
 name = "samp-client"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
 dependencies = [
+ "sa-net",
  "sa-samp-api",
  "samp-proto",
  "samp-saa",
  "samp-ui",
+ "web-time",
  "windows-sys 0.61.2",
 ]
 
 [[package]]
 name = "samp-proto"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
+dependencies = [
+ "web-time",
+]
 
 [[package]]
 name = "samp-saa"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
 
 [[package]]
 name = "samp-ui"
 version = "0.1.0"
-source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=e706d170a936a0ea104257c8ab8844016a5a306b#e706d170a936a0ea104257c8ab8844016a5a306b"
+source = "git+file:///home/ghosty2004/sa-engine/.claude/worktrees/agent-af11bd66b65e2aabf/target/samp-rs-adapter?rev=4908e11d7e8530b091aebe4c308cc231413d4e38#4908e11d7e8530b091aebe4c308cc231413d4e38"
 dependencies = [
  "samp-proto",
 ]
