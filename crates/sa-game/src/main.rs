@@ -270,9 +270,24 @@ fn synthetic_input(n: u32) -> InputState {
             i.events.push(InputEvent::KeyUp { key: Key::W });
         }
     }
+    // SA_GAME_KEYS: scripted key presses (held from their down iteration to their up iteration)
+    let plan = keys_spec();
+    for (key, down, up) in &plan {
+        if n == *down {
+            i.key_down(*key);
+        }
+        if n >= *down && up.is_none_or(|u| n < u) {
+            i.held.insert(*key);
+        } else if Some(n) == *up {
+            i.events.push(InputEvent::KeyUp { key: *key });
+        }
+    }
     // in game (gGameState IDLE) the menu input stops: the left button is the fire / punch key and Enter
     // enters vehicles
-    let enter = walk.is_none_or(|(start, _)| n + 8 < start) && winmain::game_state() != winmain::STATE_IDLE;
+    let first_key = plan.iter().map(|p| p.1).min();
+    let enter = walk.is_none_or(|(start, _)| n + 8 < start)
+        && first_key.is_none_or(|start| n + 8 < start)
+        && winmain::game_state() != winmain::STATE_IDLE;
     match if enter { n % 8 } else { 0 } {
         4 => {
             i.key_down(Key::Enter);
@@ -512,6 +527,45 @@ fn main() {
             std::process::exit(1);
         }
     }
+}
+
+/// `SA_GAME_KEYS=KEY:DOWN[:UP],...` (evidence runs): `KEY` (a letter, `space`, `enter`, `shift`, `ctrl`, `up`,
+/// `down`, `left`, `right`) is pressed at main-loop iteration DOWN and released at UP (held to the end without UP).
+/// The synthetic Enter stops 8 iterations before the first press.
+fn keys_spec() -> Vec<(Key, u32, Option<u32>)> {
+    let Ok(v) = std::env::var("SA_GAME_KEYS") else {
+        return Vec::new();
+    };
+    v.split(',')
+        .filter_map(|e| {
+            let mut it = e.trim().split(':');
+            let name = it.next()?.to_ascii_lowercase();
+            let key = match name.as_str() {
+                "space" => Key::Space,
+                "enter" => Key::Enter,
+                "shift" => Key::ShiftLeft,
+                "ctrl" => Key::ControlLeft,
+                "up" => Key::Up,
+                "down" => Key::Down,
+                "left" => Key::Left,
+                "right" => Key::Right,
+                n if n.len() == 1 && n.as_bytes()[0].is_ascii_lowercase() => letter_key(n.as_bytes()[0]),
+                _ => return None,
+            };
+            let down = it.next()?.parse().ok()?;
+            let up = it.next().and_then(|u| u.parse().ok());
+            Some((key, down, up))
+        })
+        .collect()
+}
+
+/// The `Key` of a lowercase ASCII letter.
+fn letter_key(c: u8) -> Key {
+    const KEYS: [Key; 26] = [
+        Key::A, Key::B, Key::C, Key::D, Key::E, Key::F, Key::G, Key::H, Key::I, Key::J, Key::K, Key::L, Key::M,
+        Key::N, Key::O, Key::P, Key::Q, Key::R, Key::S, Key::T, Key::U, Key::V, Key::W, Key::X, Key::Y, Key::Z,
+    ];
+    KEYS[usize::from(c - b'a')]
 }
 
 /// `SA_GAME_WALK=START:COUNT` (see [`synthetic_input`]).
