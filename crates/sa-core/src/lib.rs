@@ -62,6 +62,7 @@ pub mod static_init_kinds;
 pub mod static_inits;
 pub mod trivial_ctors;
 pub mod short_entry_natives;
+pub mod vector_ctor_iterator;
 pub mod matrix_more;
 pub mod matrix_orthonormal;
 pub mod matrix_euler;

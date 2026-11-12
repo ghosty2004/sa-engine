@@ -41,6 +41,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::rp_anim_blend::HOOKS,
     crate::clump_update::HOOKS,
     crate::frame_update::HOOKS,
+    crate::frame_update_non_skinned::HOOKS,
+    crate::ped_ik_point_gun::HOOKS,
     crate::cutscene_update::HOOKS,
     crate::cutscene_delete::HOOKS,
     crate::cutscene_preload::HOOKS,

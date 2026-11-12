@@ -23,6 +23,7 @@ pub mod explosion;
 pub mod fire;
 pub mod hooks;
 pub mod projectile;
+pub mod projectile_ctor;
 pub mod statics;
 pub mod water_cannon;
 pub mod weapon;

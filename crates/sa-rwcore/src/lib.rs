@@ -94,3 +94,4 @@ pub mod raster_copy;
 pub mod generated;
 pub mod rt_quat;
 pub mod d3d9_destroy_instance;
+pub mod d3d9_skin_vs_begin;

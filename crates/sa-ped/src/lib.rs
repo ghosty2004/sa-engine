@@ -45,3 +45,4 @@ pub mod player_cross_hair;
 pub mod generated;
 // SAVE-1 (docs/arch/save-port.md)
 pub mod save_blocks;
+pub mod ped_pointer_valid;

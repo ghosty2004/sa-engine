@@ -50,6 +50,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vector2d_normalise::HOOKS,
     crate::generated::HOOKS,
     crate::save::HOOKS,
+    crate::vector_ctor_iterator::HOOKS,
 ];
 
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).
