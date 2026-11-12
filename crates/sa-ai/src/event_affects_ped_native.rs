@@ -1,5 +1,5 @@
-//! WRITER-NATIVE (batch `native-6`): event `AffectsPed` vslots reached on the native walk
-//! (`CEventPotentialWalkIntoObject`, `CEventVehicleDamage`). Ported from the 1.0 US bytes; gta-reversed as a
+//! WRITER-NATIVE (batch `native-6`): `CEventPotentialWalkIntoObject::AffectsPed`, reached on the native walk
+//! (`CEventVehicleDamage::AffectsPed` is WRITER-ATTR's, attr-4). Ported from the 1.0 US bytes; gta-reversed as a
 //! reading aid.
 
 use sa_core::abi::HookReg;
@@ -16,8 +16,6 @@ orig! {
     fn task_manager_get_active_task(tm: GPtr<u8>) -> GPtr<u8> = thiscall 0x681720 => unported;
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
-    /// `CVehicle::IsPassenger(CPed*)` (0x6D1BD0)
-    fn vehicle_is_passenger(v: GPtr<u8>, p: GPtr<u8>) -> u8 = thiscall 0x6D1BD0 => unported;
 }
 
 /// `CModelInfo::ms_modelInfoPtrs` (0xA9B0C8)
@@ -66,27 +64,5 @@ pub fn walk_into_object_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     1
 }
 
-/// `CEventVehicleDamage::AffectsPed(CPed*)` (0x4B1A00, `ret 4`, bool in AL).
-///
-/// False for a dead ped or no attacker (+0x18), and for a ped in a vehicle (+0x46C bit 8) that is a passenger
-/// of a vehicle with a driver. Otherwise true when the damaged vehicle (+0x14) is the ped's vehicle (+0x58C).
-#[hook(addr = 0x4B1A00, conv = thiscall, name = "CEventVehicleDamage::AffectsPed",
-       expect = "56 8B 74 24 08 57 8B F9",
-       unverified = "native-6", route = "L2", hazards = "ax-al-return", recs = "grove-walk,driving",
-       note = "the first false path leaves EAX's upper bytes from the last call or load; the others set all of EAX")]
-pub fn vehicle_damage_affects_ped(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
-    if ped_is_alive(ped) == 0 || rd::<u32>(this, 0x18) == 0 {
-        return 0;
-    }
-    if rd::<u32>(ped, 0x46C) & 0x100 != 0 {
-        let v = rd::<GPtr<u8>>(ped, 0x58C);
-        if !v.is_null() && vehicle_is_passenger(v, ped) != 0 && !rd::<GPtr<u8>>(rd::<GPtr<u8>>(ped, 0x58C), 0x460).is_null() {
-            return 0;
-        }
-    }
-    let v = rd::<GPtr<u8>>(this, 0x14);
-    u8::from(!v.is_null() && rd::<GPtr<u8>>(ped, 0x58C) == v)
-}
-
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_WALK_INTO_OBJECT_AFFECTS_PED, HOOK_VEHICLE_DAMAGE_AFFECTS_PED];
+pub const HOOKS: &[HookReg] = &[HOOK_WALK_INTO_OBJECT_AFFECTS_PED];
