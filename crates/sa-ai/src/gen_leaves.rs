@@ -64,7 +64,7 @@ pub fn g_event_acquaintance_ped_can_be_interrupted_by_same_event_420f20(_this: u
 pub fn g_task_stop_timer_421180(_this: u32, _a0: u32) {}
 
 /// `CTaskComplexLeaveAnyCar::GetTaskType` (0x421240): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x421240, conv = thiscall, name = "CTaskComplexLeaveAnyCar::GetTaskType", expect = "B8 CA 02 00 00")]
+#[hook(addr = 0x421240, conv = thiscall, name = "CTaskComplexLeaveAnyCar::GetTaskType", expect = "B8 CA 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_any_car_get_task_type_421240(_this: u32) -> u32 {
     0x2CA
 }
@@ -294,7 +294,7 @@ pub fn g_vt_85a428_get_task_type_499430(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleFight::GetComboAnimGroupID` (0x4ABDA0): leaf, thiscall, `ret`; 10 instruction(s) matched.
-#[hook(addr = 0x4ABDA0, conv = thiscall, name = "CTaskSimpleFight::GetComboAnimGroupID", expect = "0F BE 41 24 83 C0 FC")]
+#[hook(addr = 0x4ABDA0, conv = thiscall, name = "CTaskSimpleFight::GetComboAnimGroupID", expect = "0F BE 41 24 83 C0 FC", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_simple_fight_get_combo_anim_group_id_4abda0(this: u32) -> u32 {
     let v1 = rd::<u8>(p(this), 0x24) as i8 as i32 as u32;
     let v2 = ((u32::from((v1.wrapping_add(0xFFFF_FFFC) as i32) < (0 as i32))) & 0xFF).wrapping_sub(1);
@@ -1290,13 +1290,13 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_get_task_type_4
 }
 
 /// `CTaskComplexCarDriveMissionFleeScene::GetTaskType` (0x4B89C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x4B89C0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::GetTaskType", expect = "B8 D6 02 00 00")]
+#[hook(addr = 0x4B89C0, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::GetTaskType", expect = "B8 D6 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_drive_mission_flee_scene_get_task_type_4b89c0(_this: u32) -> u32 {
     0x2D6
 }
 
 /// `CTaskComplexCarDriveMissionKillPed::GetTaskType` (0x4B8AA0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x4B8AA0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::GetTaskType", expect = "B8 D9 02 00 00")]
+#[hook(addr = 0x4B8AA0, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::GetTaskType", expect = "B8 D9 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_drive_mission_kill_ped_get_task_type_4b8aa0(_this: u32) -> u32 {
     0x2D9
 }
@@ -1599,25 +1599,25 @@ pub fn g_event_acquaintance_ped_hate_badly_lit_get_event_priority_5ff8a0(_this: 
 }
 
 /// `vt_86cbe8::GetEventPriority` (0x5FF8E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x5FF8E0, conv = thiscall, name = "vt_86cbe8::GetEventPriority", expect = "B8 45 00 00 00")]
+#[hook(addr = 0x5FF8E0, conv = thiscall, name = "vt_86cbe8::GetEventPriority", expect = "B8 45 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_vt_86cbe8_get_event_priority_5ff8e0(_this: u32) -> u32 {
     0x45
 }
 
 /// `vt_86cc78::GetEventPriority` (0x5FF8F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x5FF8F0, conv = thiscall, name = "vt_86cc78::GetEventPriority", expect = "B8 22 00 00 00")]
+#[hook(addr = 0x5FF8F0, conv = thiscall, name = "vt_86cc78::GetEventPriority", expect = "B8 22 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_vt_86cc78_get_event_priority_5ff8f0(_this: u32) -> u32 {
     0x22
 }
 
 /// `vt_86cba0::GetEventPriority` (0x5FF900): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x5FF900, conv = thiscall, name = "vt_86cba0::GetEventPriority", expect = "B8 44 00 00 00")]
+#[hook(addr = 0x5FF900, conv = thiscall, name = "vt_86cba0::GetEventPriority", expect = "B8 44 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_vt_86cba0_get_event_priority_5ff900(_this: u32) -> u32 {
     0x44
 }
 
 /// `vt_86cc30::GetEventPriority` (0x5FF910): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x5FF910, conv = thiscall, name = "vt_86cc30::GetEventPriority", expect = "B8 21 00 00 00")]
+#[hook(addr = 0x5FF910, conv = thiscall, name = "vt_86cc30::GetEventPriority", expect = "B8 21 00 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_vt_86cc30_get_event_priority_5ff910(_this: u32) -> u32 {
     0x21
 }
@@ -1754,7 +1754,7 @@ pub fn g_event_vehicle_damage_weapon_get_event_type_61c320(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleFightingControl::GetTaskType` (0x61DC90): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x61DC90, conv = thiscall, name = "CTaskSimpleFightingControl::GetTaskType", expect = "B8 FB 03 00 00")]
+#[hook(addr = 0x61DC90, conv = thiscall, name = "CTaskSimpleFightingControl::GetTaskType", expect = "B8 FB 03 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_simple_fighting_control_get_task_type_61dc90(_this: u32) -> u32 {
     0x3FB
 }
@@ -1962,7 +1962,7 @@ pub fn g_task_simple_hit_by_gun_from_right_is_interruptable_62f120(_this: u32, _
 }
 
 /// `CTaskComplexLeaveCarAndDie::GetTaskType` (0x62F240): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x62F240, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::GetTaskType", expect = "B8 C1 02 00 00")]
+#[hook(addr = 0x62F240, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::GetTaskType", expect = "B8 C1 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_car_and_die_get_task_type_62f240(_this: u32) -> u32 {
     0x2C1
 }
@@ -2002,13 +2002,13 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_make_abortable_62f640(
 }
 
 /// `CTaskSimpleDuckToggle::GetTaskType` (0x62F6B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x62F6B0, conv = thiscall, name = "CTaskSimpleDuckToggle::GetTaskType", expect = "B8 1A 05 00 00")]
+#[hook(addr = 0x62F6B0, conv = thiscall, name = "CTaskSimpleDuckToggle::GetTaskType", expect = "B8 1A 05 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_simple_duck_toggle_get_task_type_62f6b0(_this: u32) -> u32 {
     0x51A
 }
 
 /// `CTaskSimpleDuckToggle::MakeAbortable` (0x62F6C0): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x62F6C0, conv = thiscall, name = "CTaskSimpleDuckToggle::MakeAbortable", expect = "B0 01 C2 0C 00")]
+#[hook(addr = 0x62F6C0, conv = thiscall, name = "CTaskSimpleDuckToggle::MakeAbortable", expect = "B0 01 C2 0C 00", unverified = "ai7-1", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_duck_toggle_make_abortable_62f6c0(_this: u32, _a0: u32, _a1: u32, _a2: u32) -> u8 {
     1 as u8
 }
@@ -2577,37 +2577,37 @@ pub fn g_event_leader_quit_entering_car_as_driver_get_event_priority_63a1e0(_thi
 }
 
 /// `CTaskComplexEnterCarAsDriverTimed::GetTaskType` (0x63ADF0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63ADF0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::GetTaskType", expect = "B8 C9 02 00 00")]
+#[hook(addr = 0x63ADF0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::GetTaskType", expect = "B8 C9 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_car_as_driver_timed_get_task_type_63adf0(_this: u32) -> u32 {
     0x2C9
 }
 
 /// `CTaskComplexEnterCarAsDriverTimed::CreateNextSubTask` (0x63AED0): const, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63AED0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::CreateNextSubTask", expect = "33 C0 C2 04 00")]
+#[hook(addr = 0x63AED0, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_car_as_driver_timed_create_next_sub_task_63aed0(_this: u32, _a0: u32) -> u32 {
     0
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::GetTaskType` (0x63B0B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63B0B0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::GetTaskType", expect = "B8 C8 02 00 00")]
+#[hook(addr = 0x63B0B0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::GetTaskType", expect = "B8 C8 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_car_as_passenger_timed_get_task_type_63b0b0(_this: u32) -> u32 {
     0x2C8
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::CreateNextSubTask` (0x63B190): const, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63B190, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::CreateNextSubTask", expect = "33 C0 C2 04 00")]
+#[hook(addr = 0x63B190, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_car_as_passenger_timed_create_next_sub_task_63b190(_this: u32, _a0: u32) -> u32 {
     0
 }
 
 /// `CTaskComplexEnterCarAsPassengerWait::GetTaskType` (0x63B3B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63B3B0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::GetTaskType", expect = "B8 CE 02 00 00")]
+#[hook(addr = 0x63B3B0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::GetTaskType", expect = "B8 CE 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_car_as_passenger_wait_get_task_type_63b3b0(_this: u32) -> u32 {
     0x2CE
 }
 
 /// `CTaskComplexLeaveCarAsPassengerWait::GetTaskType` (0x63B490): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63B490, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::GetTaskType", expect = "B8 DA 02 00 00")]
+#[hook(addr = 0x63B490, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::GetTaskType", expect = "B8 DA 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_car_as_passenger_wait_get_task_type_63b490(_this: u32) -> u32 {
     0x2DA
 }
@@ -2651,26 +2651,26 @@ pub fn g_task_complex_leave_boat_control_sub_task_63bc40(this: u32, _a0: u32) ->
 }
 
 /// `CTaskComplexLeaveAnyCar::CreateNextSubTask` (0x63BCD0): const, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63BCD0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::CreateNextSubTask", expect = "33 C0 C2 04 00")]
+#[hook(addr = 0x63BCD0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_any_car_create_next_sub_task_63bcd0(_this: u32, _a0: u32) -> u32 {
     0
 }
 
 /// `CTaskComplexLeaveAnyCar::ControlSubTask` (0x63BDC0): getter, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63BDC0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::ControlSubTask", expect = "8B 41 08 C2 04 00")]
+#[hook(addr = 0x63BDC0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_any_car_control_sub_task_63bdc0(this: u32, _a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     v1
 }
 
 /// `CTaskComplexLeaveCarAndFlee::GetTaskType` (0x63C020): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63C020, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::GetTaskType", expect = "B8 C2 02 00 00")]
+#[hook(addr = 0x63C020, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::GetTaskType", expect = "B8 C2 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_car_and_flee_get_task_type_63c020(_this: u32) -> u32 {
     0x2C2
 }
 
 /// `CTaskComplexLeaveCarAndFlee::ControlSubTask` (0x63C090): getter, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63C090, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::ControlSubTask", expect = "8B 41 08 C2 04 00")]
+#[hook(addr = 0x63C090, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_leave_car_and_flee_control_sub_task_63c090(this: u32, _a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     v1
@@ -2683,44 +2683,44 @@ pub fn g_task_complex_scream_in_car_then_leave_get_task_type_63c2b0(_this: u32) 
 }
 
 /// `CTaskComplexCarDrive::GetTaskType` (0x63C9C0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63C9C0, conv = thiscall, name = "CTaskComplexCarDrive::GetTaskType", expect = "B8 D5 02 00 00")]
+#[hook(addr = 0x63C9C0, conv = thiscall, name = "CTaskComplexCarDrive::GetTaskType", expect = "B8 D5 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_drive_get_task_type_63c9c0(_this: u32) -> u32 {
     0x2D5
 }
 
 /// `CTaskComplexCarDriveMission::GetTaskType` (0x63CCB0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63CCB0, conv = thiscall, name = "CTaskComplexCarDriveMission::GetTaskType", expect = "B8 D4 02 00 00")]
+#[hook(addr = 0x63CCB0, conv = thiscall, name = "CTaskComplexCarDriveMission::GetTaskType", expect = "B8 D4 02 00 00", unverified = "ai7-1", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_drive_mission_get_task_type_63ccb0(_this: u32) -> u32 {
     0x2D4
 }
 
 /// `CTaskComplexDriveToPoint::GetTaskType` (0x63CE60): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63CE60, conv = thiscall, name = "CTaskComplexDriveToPoint::GetTaskType", expect = "B8 C6 02 00 00")]
+#[hook(addr = 0x63CE60, conv = thiscall, name = "CTaskComplexDriveToPoint::GetTaskType", expect = "B8 C6 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_drive_to_point_get_task_type_63ce60(_this: u32) -> u32 {
     0x2C6
 }
 
 /// `CTaskComplexDrivePointRoute::ControlSubTask` (0x63D0C0): getter, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63D0C0, conv = thiscall, name = "CTaskComplexDrivePointRoute::ControlSubTask", expect = "8B 41 08 C2 04 00")]
+#[hook(addr = 0x63D0C0, conv = thiscall, name = "CTaskComplexDrivePointRoute::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_drive_point_route_control_sub_task_63d0c0(this: u32, _a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     v1
 }
 
 /// `CTaskComplexEnterAnyCarAsDriver::GetTaskType` (0x63D0F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63D0F0, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::GetTaskType", expect = "B8 CD 02 00 00")]
+#[hook(addr = 0x63D0F0, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::GetTaskType", expect = "B8 CD 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_any_car_as_driver_get_task_type_63d0f0(_this: u32) -> u32 {
     0x2CD
 }
 
 /// `CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask` (0x63D110): const, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63D110, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask", expect = "33 C0 C2 04 00")]
+#[hook(addr = 0x63D110, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::CreateNextSubTask", expect = "33 C0 C2 04 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_any_car_as_driver_create_next_sub_task_63d110(_this: u32, _a0: u32) -> u32 {
     0
 }
 
 /// `CTaskComplexEnterAnyCarAsDriver::ControlSubTask` (0x63D120): getter, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x63D120, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::ControlSubTask", expect = "8B 41 08 C2 04 00")]
+#[hook(addr = 0x63D120, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_any_car_as_driver_control_sub_task_63d120(this: u32, _a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     v1
@@ -2733,13 +2733,13 @@ pub fn g_task_complex_shuffle_seats_get_task_type_63d190(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSetTempAction::GetTaskType` (0x63D720): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x63D720, conv = thiscall, name = "CTaskSimpleCarSetTempAction::GetTaskType", expect = "B8 D3 02 00 00")]
+#[hook(addr = 0x63D720, conv = thiscall, name = "CTaskSimpleCarSetTempAction::GetTaskType", expect = "B8 D3 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_set_temp_action_get_task_type_63d720(_this: u32) -> u32 {
     0x2D3
 }
 
 /// `CTaskComplexEnterCarAsPassenger::GetTaskType` (0x640370): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x640370, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::GetTaskType", expect = "B8 BC 02 00 00")]
+#[hook(addr = 0x640370, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::GetTaskType", expect = "B8 BC 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_enter_car_as_passenger_get_task_type_640370(_this: u32) -> u32 {
     0x2BC
 }
@@ -2763,7 +2763,7 @@ pub fn g_task_complex_drag_ped_from_car_get_task_type_6404c0(_this: u32) -> u32 
 }
 
 /// `CTaskComplexDrivePointRoute::GetTaskType` (0x643480): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x643480, conv = thiscall, name = "CTaskComplexDrivePointRoute::GetTaskType", expect = "B8 D1 02 00 00")]
+#[hook(addr = 0x643480, conv = thiscall, name = "CTaskComplexDrivePointRoute::GetTaskType", expect = "B8 D1 02 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_drive_point_route_get_task_type_643480(_this: u32) -> u32 {
     0x2D1
 }
@@ -2775,25 +2775,25 @@ pub fn g_task_complex_go_to_car_door_and_stand_still_get_task_type_645830(_this:
 }
 
 /// `CTaskSimpleCarAlign::GetTaskType` (0x645BD0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x645BD0, conv = thiscall, name = "CTaskSimpleCarAlign::GetTaskType", expect = "B8 21 03 00 00")]
+#[hook(addr = 0x645BD0, conv = thiscall, name = "CTaskSimpleCarAlign::GetTaskType", expect = "B8 21 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_align_get_task_type_645bd0(_this: u32) -> u32 {
     0x321
 }
 
 /// `CTaskSimpleCarOpenDoorFromOutside::GetTaskType` (0x645ED0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x645ED0, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::GetTaskType", expect = "B8 22 03 00 00")]
+#[hook(addr = 0x645ED0, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::GetTaskType", expect = "B8 22 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_open_door_from_outside_get_task_type_645ed0(_this: u32) -> u32 {
     0x322
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::GetTaskType` (0x6460E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x6460E0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::GetTaskType", expect = "B8 23 03 00 00")]
+#[hook(addr = 0x6460E0, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::GetTaskType", expect = "B8 23 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_open_locked_door_from_outside_get_task_type_6460e0(_this: u32) -> u32 {
     0x323
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::FinishAnimCarOpenLockedDoorFromOutsideCB` (0x6461A0): setter, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x6461A0, conv = cdecl, name = "CTaskSimpleCarOpenLockedDoorFromOutside::FinishAnimCarOpenLockedDoorFromOutsideCB", expect = "8B 44 24 08 C7 40 0C 00 00 00 00")]
+#[hook(addr = 0x6461A0, conv = cdecl, name = "CTaskSimpleCarOpenLockedDoorFromOutside::FinishAnimCarOpenLockedDoorFromOutsideCB", expect = "8B 44 24 08 C7 40 0C 00 00 00 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_open_locked_door_from_outside_finish_anim_car_open_locked_door_from_outside_cb_6461a0(
     _a0: u32,
     a1: u32,
@@ -2818,37 +2818,37 @@ pub fn g_task_simple_pick_up_bike_finish_anim_pick_up_bike_cb_6462f0(_a0: u32, a
 }
 
 /// `CTaskSimpleCarCloseDoorFromInside::GetTaskType` (0x646370): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x646370, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::GetTaskType", expect = "B8 25 03 00 00")]
+#[hook(addr = 0x646370, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::GetTaskType", expect = "B8 25 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_close_door_from_inside_get_task_type_646370(_this: u32) -> u32 {
     0x325
 }
 
 /// `CTaskSimpleCarCloseDoorFromOutside::GetTaskType` (0x646560): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x646560, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::GetTaskType", expect = "B8 26 03 00 00")]
+#[hook(addr = 0x646560, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::GetTaskType", expect = "B8 26 03 00 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_close_door_from_outside_get_task_type_646560(_this: u32) -> u32 {
     0x326
 }
 
 /// `CTaskSimpleCarGetIn::GetTaskType` (0x646700): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x646700, conv = thiscall, name = "CTaskSimpleCarGetIn::GetTaskType", expect = "B8 27 03 00 00")]
+#[hook(addr = 0x646700, conv = thiscall, name = "CTaskSimpleCarGetIn::GetTaskType", expect = "B8 27 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_get_in_get_task_type_646700(_this: u32) -> u32 {
     0x327
 }
 
 /// `CTaskSimpleCarShuffle::GetTaskType` (0x646880): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x646880, conv = thiscall, name = "CTaskSimpleCarShuffle::GetTaskType", expect = "B8 28 03 00 00")]
+#[hook(addr = 0x646880, conv = thiscall, name = "CTaskSimpleCarShuffle::GetTaskType", expect = "B8 28 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_shuffle_get_task_type_646880(_this: u32) -> u32 {
     0x328
 }
 
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType` (0x646BE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x646BE0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType", expect = "B8 2A 03 00 00")]
+#[hook(addr = 0x646BE0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType", expect = "B8 2A 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_get_task_type_646be0(_this: u32) -> u32 {
     0x32A
 }
 
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::MakeAbortable` (0x646BF0): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x646BF0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::MakeAbortable", expect = "B0 01 C2 0C 00")]
+#[hook(addr = 0x646BF0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::MakeAbortable", expect = "B0 01 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_make_abortable_646bf0(
     _this: u32,
     _a0: u32,
@@ -2859,13 +2859,13 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_make_abortable_646bf0(
 }
 
 /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::GetTaskType` (0x646E30): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x646E30, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::GetTaskType", expect = "B8 3C 03 00 00")]
+#[hook(addr = 0x646E30, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::GetTaskType", expect = "B8 3C 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_get_task_type_646e30(_this: u32) -> u32 {
     0x33C
 }
 
 /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::MakeAbortable` (0x646E40): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x646E40, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::MakeAbortable", expect = "B0 01 C2 0C 00")]
+#[hook(addr = 0x646E40, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::MakeAbortable", expect = "B0 01 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_make_abortable_646e40(
     _this: u32,
     _a0: u32,
@@ -2876,13 +2876,13 @@ pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_make_aborta
 }
 
 /// `CTaskSimpleCarSetPedInAsPassenger::GetTaskType` (0x647060): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x647060, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::GetTaskType", expect = "B8 2B 03 00 00")]
+#[hook(addr = 0x647060, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::GetTaskType", expect = "B8 2B 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_set_ped_in_as_passenger_get_task_type_647060(_this: u32) -> u32 {
     0x32B
 }
 
 /// `CTaskSimpleCarSetPedInAsPassenger::MakeAbortable` (0x647070): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x647070, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::MakeAbortable", expect = "32 C0 C2 0C 00")]
+#[hook(addr = 0x647070, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_set_ped_in_as_passenger_make_abortable_647070(
     _this: u32,
     _a0: u32,
@@ -2893,13 +2893,13 @@ pub fn g_task_simple_car_set_ped_in_as_passenger_make_abortable_647070(
 }
 
 /// `CTaskSimpleCarSetPedInAsDriver::GetTaskType` (0x647150): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x647150, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::GetTaskType", expect = "B8 2C 03 00 00")]
+#[hook(addr = 0x647150, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::GetTaskType", expect = "B8 2C 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_set_ped_in_as_driver_get_task_type_647150(_this: u32) -> u32 {
     0x32C
 }
 
 /// `CTaskSimpleCarSetPedInAsDriver::MakeAbortable` (0x647160): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x647160, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::MakeAbortable", expect = "32 C0 C2 0C 00")]
+#[hook(addr = 0x647160, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_set_ped_in_as_driver_make_abortable_647160(
     _this: u32,
     _a0: u32,
@@ -2910,19 +2910,19 @@ pub fn g_task_simple_car_set_ped_in_as_driver_make_abortable_647160(
 }
 
 /// `CTaskSimpleCarGetOut::GetTaskType` (0x647250): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x647250, conv = thiscall, name = "CTaskSimpleCarGetOut::GetTaskType", expect = "B8 2D 03 00 00")]
+#[hook(addr = 0x647250, conv = thiscall, name = "CTaskSimpleCarGetOut::GetTaskType", expect = "B8 2D 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_get_out_get_task_type_647250(_this: u32) -> u32 {
     0x32D
 }
 
 /// `CTaskSimpleCarJumpOut::GetTaskType` (0x647500): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x647500, conv = thiscall, name = "CTaskSimpleCarJumpOut::GetTaskType", expect = "B8 2E 03 00 00")]
+#[hook(addr = 0x647500, conv = thiscall, name = "CTaskSimpleCarJumpOut::GetTaskType", expect = "B8 2E 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_jump_out_get_task_type_647500(_this: u32) -> u32 {
     0x32E
 }
 
 /// `CTaskSimpleCarJumpOut::FinishAnimCarJumpOutCB` (0x647700): setter, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x647700, conv = cdecl, name = "CTaskSimpleCarJumpOut::FinishAnimCarJumpOutCB", expect = "8B 44 24 08 C7 40 0C 00 00 00 00")]
+#[hook(addr = 0x647700, conv = cdecl, name = "CTaskSimpleCarJumpOut::FinishAnimCarJumpOutCB", expect = "8B 44 24 08 C7 40 0C 00 00 00 00", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_jump_out_finish_anim_car_jump_out_cb_647700(_a0: u32, a1: u32) -> u32 {
     wr::<u32>(p(a1), 0xC, 0);
     wr::<u8>(p(a1), 8, 1 as u8);
@@ -2930,37 +2930,37 @@ pub fn g_task_simple_car_jump_out_finish_anim_car_jump_out_cb_647700(_a0: u32, a
 }
 
 /// `vt_86ee94::GetTaskType` (0x647770): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x647770, conv = thiscall, name = "vt_86ee94::GetTaskType", expect = "B8 2F 03 00 00")]
+#[hook(addr = 0x647770, conv = thiscall, name = "vt_86ee94::GetTaskType", expect = "B8 2F 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_vt_86ee94_get_task_type_647770(_this: u32) -> u32 {
     0x32F
 }
 
 /// `vt_86ee94::MakeAbortable` (0x647780): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x647780, conv = thiscall, name = "vt_86ee94::MakeAbortable", expect = "32 C0 C2 0C 00")]
+#[hook(addr = 0x647780, conv = thiscall, name = "vt_86ee94::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_vt_86ee94_make_abortable_647780(_this: u32, _a0: u32, _a1: u32, _a2: u32) -> u8 {
     0 as u8
 }
 
 /// `CTaskSimpleCarSetPedOut::MakeAbortable` (0x647940): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x647940, conv = thiscall, name = "CTaskSimpleCarSetPedOut::MakeAbortable", expect = "32 C0 C2 0C 00")]
+#[hook(addr = 0x647940, conv = thiscall, name = "CTaskSimpleCarSetPedOut::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_set_ped_out_make_abortable_647940(_this: u32, _a0: u32, _a1: u32, _a2: u32) -> u8 {
     0 as u8
 }
 
 /// `CTaskSimpleCarSlowDragPedOut::GetTaskType` (0x648060): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x648060, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::GetTaskType", expect = "B8 34 03 00 00")]
+#[hook(addr = 0x648060, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::GetTaskType", expect = "B8 34 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_slow_drag_ped_out_get_task_type_648060(_this: u32) -> u32 {
     0x334
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::GetTaskType` (0x6482B0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x6482B0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::GetTaskType", expect = "B8 35 03 00 00")]
+#[hook(addr = 0x6482B0, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::GetTaskType", expect = "B8 35 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_slow_be_dragged_out_get_task_type_6482b0(_this: u32) -> u32 {
     0x335
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB` (0x6483A0): setter, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x6483A0, conv = cdecl, name = "CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB", expect = "8B 44 24 08 C6 40 08 01")]
+#[hook(addr = 0x6483A0, conv = cdecl, name = "CTaskSimpleCarSlowBeDraggedOut::FinishAnimCarSlowBeDraggedOutCB", expect = "8B 44 24 08 C6 40 08 01", unverified = "ai7-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_slow_be_dragged_out_finish_anim_car_slow_be_dragged_out_cb_6483a0(
     _a0: u32,
     a1: u32,
@@ -2971,13 +2971,13 @@ pub fn g_task_simple_car_slow_be_dragged_out_finish_anim_car_slow_be_dragged_out
 }
 
 /// `CTaskSimpleCarSetPedSlowDraggedOut::GetTaskType` (0x648410): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x648410, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::GetTaskType", expect = "B8 36 03 00 00")]
+#[hook(addr = 0x648410, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::GetTaskType", expect = "B8 36 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_set_ped_slow_dragged_out_get_task_type_648410(_this: u32) -> u32 {
     0x336
 }
 
 /// `CTaskSimpleCarSetPedSlowDraggedOut::MakeAbortable` (0x648420): const-bool, thiscall, `ret 12`; 2 instruction(s) matched.
-#[hook(addr = 0x648420, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::MakeAbortable", expect = "32 C0 C2 0C 00")]
+#[hook(addr = 0x648420, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::MakeAbortable", expect = "32 C0 C2 0C 00", unverified = "ai7-3", route = "L2", hazards = "ax-al-return")]
 pub fn g_task_simple_car_set_ped_slow_dragged_out_make_abortable_648420(
     _this: u32,
     _a0: u32,
@@ -2988,26 +2988,26 @@ pub fn g_task_simple_car_set_ped_slow_dragged_out_make_abortable_648420(
 }
 
 /// `CTaskComplexCarSlowBeDraggedOut::GetTaskType` (0x648500): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x648500, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::GetTaskType", expect = "B8 37 03 00 00")]
+#[hook(addr = 0x648500, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::GetTaskType", expect = "B8 37 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_slow_be_dragged_out_get_task_type_648500(_this: u32) -> u32 {
     0x337
 }
 
 /// `CTaskComplexCarSlowBeDraggedOut::ControlSubTask` (0x648510): getter, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x648510, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::ControlSubTask", expect = "8B 41 08 C2 04 00")]
+#[hook(addr = 0x648510, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_slow_be_dragged_out_control_sub_task_648510(this: u32, _a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     v1
 }
 
 /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType` (0x648680): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x648680, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType", expect = "B8 38 03 00 00")]
+#[hook(addr = 0x648680, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::GetTaskType", expect = "B8 38 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_get_task_type_648680(_this: u32) -> u32 {
     0x338
 }
 
 /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask` (0x648B80): getter, thiscall, `ret 4`; 2 instruction(s) matched.
-#[hook(addr = 0x648B80, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask", expect = "8B 41 08 C2 04 00")]
+#[hook(addr = 0x648B80, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::ControlSubTask", expect = "8B 41 08 C2 04 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_control_sub_task_648b80(
     this: u32,
     _a0: u32,
@@ -3023,7 +3023,7 @@ pub fn g_task_simple_bike_jacked_get_task_type_648c30(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarFallOut::GetTaskType` (0x648DD0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x648DD0, conv = thiscall, name = "CTaskSimpleCarFallOut::GetTaskType", expect = "B8 42 03 00 00")]
+#[hook(addr = 0x648DD0, conv = thiscall, name = "CTaskSimpleCarFallOut::GetTaskType", expect = "B8 42 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_fall_out_get_task_type_648dd0(_this: u32) -> u32 {
     0x342
 }
@@ -3314,13 +3314,13 @@ pub fn g_task_complex_medic_treat_injured_ped_get_task_type_658c20(_this: u32) -
 }
 
 /// `vt_86f544::GetTaskType` (0x659230): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x659230, conv = thiscall, name = "vt_86f544::GetTaskType", expect = "B8 6A 00 00 00")]
+#[hook(addr = 0x659230, conv = thiscall, name = "vt_86f544::GetTaskType", expect = "B8 6A 00 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_vt_86f544_get_task_type_659230(_this: u32) -> u32 {
     0x6A
 }
 
 /// `CTaskComplexDriveFireTruck::GetTaskType` (0x659390): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x659390, conv = thiscall, name = "CTaskComplexDriveFireTruck::GetTaskType", expect = "B8 6B 00 00 00")]
+#[hook(addr = 0x659390, conv = thiscall, name = "CTaskComplexDriveFireTruck::GetTaskType", expect = "B8 6B 00 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_task_complex_drive_fire_truck_get_task_type_659390(_this: u32) -> u32 {
     0x6B
 }
@@ -4070,20 +4070,20 @@ pub fn g_task_simple_put_down_entity_get_task_type_691900(_this: u32) -> u32 {
 }
 
 /// `vt_870b98::GetTaskType` (0x691A40): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x691A40, conv = thiscall, name = "vt_870b98::GetTaskType", expect = "B8 36 01 00 00")]
+#[hook(addr = 0x691A40, conv = thiscall, name = "vt_870b98::GetTaskType", expect = "B8 36 01 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_vt_870b98_get_task_type_691a40(_this: u32) -> u32 {
     0x136
 }
 
 /// `CTaskSimpleDuck::ForceStopMove` (0x6924B0): setter, thiscall, `ret`; 3 instruction(s) matched.
-#[hook(addr = 0x6924B0, conv = thiscall, name = "CTaskSimpleDuck::ForceStopMove", expect = "C6 41 1B 01 C7 41 20 00 00 00 00")]
+#[hook(addr = 0x6924B0, conv = thiscall, name = "CTaskSimpleDuck::ForceStopMove", expect = "C6 41 1B 01 C7 41 20 00 00 00 00", unverified = "ai7-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_duck_force_stop_move_6924b0(this: u32) {
     wr::<u8>(p(this), 0x1B, 1 as u8);
     wr::<u32>(p(this), 0x20, 0);
 }
 
 /// `vt_870bec::GetTaskType` (0x6926E0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-#[hook(addr = 0x6926E0, conv = thiscall, name = "vt_870bec::GetTaskType", expect = "B8 37 01 00 00")]
+#[hook(addr = 0x6926E0, conv = thiscall, name = "vt_870bec::GetTaskType", expect = "B8 37 01 00 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_vt_870bec_get_task_type_6926e0(_this: u32) -> u32 {
     0x137
 }

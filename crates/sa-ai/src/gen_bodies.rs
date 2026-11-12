@@ -213,7 +213,7 @@ orig! {
 }
 
 /// `CConversations::AwkwardSay` (0x43A810, stub to .HOODLUM 0x1561CC0): body, cdecl, `ret`; 12 instruction(s) matched.
-#[hook(addr = 0x43A810, conv = cdecl, name = "CConversations::AwkwardSay", expect = "E9 AB 74 12 01")]
+#[hook(addr = 0x43A810, conv = cdecl, name = "CConversations::AwkwardSay", expect = "E9 AB 74 12 01", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cconversations_awkward_say_43a810(a0: u32, a1: u32) -> u32 {
     c_507290_t2(0xB6_BC90, 0, a0);
     let v2 = c_507310_t2(0xB6_BC90, 0, a1);
@@ -222,7 +222,7 @@ pub fn g_cconversations_awkward_say_43a810(a0: u32, a1: u32) -> u32 {
 }
 
 /// `FUN_004abca0` (0x4ABCA0): body, thiscall, `ret`; 10 instruction(s) matched.
-#[hook(addr = 0x4ABCA0, conv = thiscall, name = "FUN_004abca0", expect = "8A 41 40 84 C0")]
+#[hook(addr = 0x4ABCA0, conv = thiscall, name = "FUN_004abca0", expect = "8A 41 40 84 C0", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_fun_004abca0_4abca0(this: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x40));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -238,7 +238,7 @@ pub fn g_fun_004abca0_4abca0(this: u32) -> u32 {
 }
 
 /// `FUN_004adbf0` (0x4ADBF0): body, thiscall, `ret 4`; 11 instruction(s) matched.
-#[hook(addr = 0x4ADBF0, conv = thiscall, name = "FUN_004adbf0", expect = "8B 44 24 04 8B 51 14")]
+#[hook(addr = 0x4ADBF0, conv = thiscall, name = "FUN_004adbf0", expect = "8B 44 24 04 8B 51 14", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_fun_004adbf0_4adbf0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     let v2 = rd::<u32>(p(a0), 0x14);
@@ -256,7 +256,7 @@ pub fn g_fun_004adbf0_4adbf0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CEventKnockOffBike::From` (0x4AFDD0): body, thiscall, `ret 4`; 60 instruction(s) matched.
-#[hook(addr = 0x4AFDD0, conv = thiscall, name = "CEventKnockOffBike::From", expect = "8B 44 24 04 8B 50 38")]
+#[hook(addr = 0x4AFDD0, conv = thiscall, name = "CEventKnockOffBike::From", expect = "8B 44 24 04 8B 50 38", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_event_knock_off_bike_from_4afdd0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x38);
     wr::<u32>(p(this), 0x38, v1);
@@ -342,7 +342,7 @@ pub fn g_event_knock_off_bike_from_4afdd0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CPedAttractor::ComputeAttractTime` (0x5E95E0): body, thiscall, `ret 12`; 11 instruction(s) matched.
-#[hook(addr = 0x5E95E0, conv = thiscall, name = "CPedAttractor::ComputeAttractTime", expect = "8A 44 24 08 84 C0")]
+#[hook(addr = 0x5E95E0, conv = thiscall, name = "CPedAttractor::ComputeAttractTime", expect = "8A 44 24 08 84 C0", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_cped_attractor_compute_attract_time_5e95e0(this: u32, _a0: u32, a1: u32, a2: u32) -> u32 {
     if ((((a1 & 0xFF) & 0xFF) & 0xFF) as u8) == (0 as u8) {
         let v1 = rd::<u32>(p(this), 0x44);
@@ -356,7 +356,7 @@ pub fn g_cped_attractor_compute_attract_time_5e95e0(this: u32, _a0: u32, a1: u32
 }
 
 /// `CPedShelterAttractor::ComputeAttractHeading` (0x5E9690): body, thiscall, `ret 8`; 10 instruction(s) matched.
-#[hook(addr = 0x5E9690, conv = thiscall, name = "CPedShelterAttractor::ComputeAttractHeading", expect = "51 E8 88 84 23 00")]
+#[hook(addr = 0x5E9690, conv = thiscall, name = "CPedShelterAttractor::ComputeAttractHeading", expect = "51 E8 88 84 23 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_cped_shelter_attractor_compute_attract_heading_5e9690(_this: u32, _a0: u32, a1: u32) -> u32 {
     let v1 = sa_core::orig::at_site(0x5E_9696, rand) as u32;
     let v2 = xi(v1 as i32);
@@ -367,14 +367,14 @@ pub fn g_cped_shelter_attractor_compute_attract_heading_5e9690(_this: u32, _a0: 
 }
 
 /// `CPedAttractorManager::ComputeEffectPos` (0x5E96C0): body, cdecl, `ret`; 7 instruction(s) matched.
-#[hook(addr = 0x5E96C0, conv = cdecl, name = "CPedAttractorManager::ComputeEffectPos", expect = "8B 44 24 04 8B 4C 24 08")]
+#[hook(addr = 0x5E96C0, conv = cdecl, name = "CPedAttractorManager::ComputeEffectPos", expect = "8B 44 24 04 8B 4C 24 08", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cped_attractor_manager_compute_effect_pos_5e96c0(a0: u32, a1: u32, a2: u32) -> u32 {
     let v1 = c_59c670_t2(a2, a1, a0);
     v1
 }
 
 /// `CPedAttractorManager::ComputeEffectUseDir` (0x5E96E0): body, cdecl, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x5E96E0, conv = cdecl, name = "CPedAttractorManager::ComputeEffectUseDir", expect = "83 EC 18 8B 44 24 1C")]
+#[hook(addr = 0x5E96E0, conv = cdecl, name = "CPedAttractorManager::ComputeEffectUseDir", expect = "83 EC 18 8B 44 24 1C", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_cped_attractor_manager_compute_effect_use_dir_5e96e0(a0: u32, a1: u32, a2: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -398,7 +398,7 @@ pub fn g_cped_attractor_manager_compute_effect_use_dir_5e96e0(a0: u32, a1: u32, 
 }
 
 /// `CPedAttractorManager::ComputeEffectQueueDir` (0x5E9730): body, cdecl, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x5E9730, conv = cdecl, name = "CPedAttractorManager::ComputeEffectQueueDir", expect = "83 EC 18 8B 44 24 1C")]
+#[hook(addr = 0x5E9730, conv = cdecl, name = "CPedAttractorManager::ComputeEffectQueueDir", expect = "83 EC 18 8B 44 24 1C", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_cped_attractor_manager_compute_effect_queue_dir_5e9730(a0: u32, a1: u32, a2: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -422,7 +422,7 @@ pub fn g_cped_attractor_manager_compute_effect_queue_dir_5e9730(a0: u32, a1: u32
 }
 
 /// `CPedAttractorManager::ComputeEffectForwardDir` (0x5E9780): body, cdecl, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x5E9780, conv = cdecl, name = "CPedAttractorManager::ComputeEffectForwardDir", expect = "83 EC 18 8B 44 24 1C")]
+#[hook(addr = 0x5E9780, conv = cdecl, name = "CPedAttractorManager::ComputeEffectForwardDir", expect = "83 EC 18 8B 44 24 1C", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_cped_attractor_manager_compute_effect_forward_dir_5e9780(a0: u32, a1: u32, a2: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -446,7 +446,7 @@ pub fn g_cped_attractor_manager_compute_effect_forward_dir_5e9780(a0: u32, a1: u
 }
 
 /// `FUN_005e9850` (0x5E9850): body, thiscall, `ret`; 14 instruction(s) matched.
-#[hook(addr = 0x5E9850, conv = thiscall, name = "FUN_005e9850", expect = "8B 41 04 85 C0")]
+#[hook(addr = 0x5E9850, conv = thiscall, name = "FUN_005e9850", expect = "8B 41 04 85 C0", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_fun_005e9850_5e9850(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 4);
     if v1 != 0 {
@@ -462,7 +462,7 @@ pub fn g_fun_005e9850_5e9850(this: u32) -> u32 {
 }
 
 /// `CPedAttractor::operator delete` (0x5EAFE0): body, cdecl, `ret`; 18 instruction(s) matched.
-#[hook(addr = 0x5EAFE0, conv = cdecl, name = "CPedAttractor::operator delete", expect = "8B 4C 24 04 56")]
+#[hook(addr = 0x5EAFE0, conv = cdecl, name = "CPedAttractor::operator delete", expect = "8B 4C 24 04 56", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_cped_attractor_operator_delete_5eafe0(a0: u32) -> u32 {
     let v1 = g::<u32>(0xB7_44C4).read();
     let v2 = rd::<u32>(p(v1), 0);
@@ -484,7 +484,7 @@ pub fn g_cped_attractor_operator_delete_5eafe0(a0: u32) -> u32 {
 }
 
 /// `CPedAttractorManager::GetPedUsingEffect-` (0x5EBE50): body, thiscall, `ret 8`; 76 instruction(s) matched.
-#[hook(addr = 0x5EBE50, conv = thiscall, name = "CPedAttractorManager::GetPedUsingEffect-", expect = "8B 44 24 04 0F B6 50 34")]
+#[hook(addr = 0x5EBE50, conv = thiscall, name = "CPedAttractorManager::GetPedUsingEffect-", expect = "8B 44 24 04 0F B6 50 34", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cped_attractor_manager_get_ped_using_effect_5ebe50(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(a0), 0x34));
     if (v1 as u32) > (9 as u32) {
@@ -541,7 +541,7 @@ pub fn g_cped_attractor_manager_get_ped_using_effect_5ebe50(this: u32, a0: u32, 
 }
 
 /// `FUN_005ede50` (0x5EDE50): body, thiscall, `ret 12`; 46 instruction(s) matched.
-#[hook(addr = 0x5EDE50, conv = thiscall, name = "FUN_005ede50", expect = "53 8B 5C 24 0C")]
+#[hook(addr = 0x5EDE50, conv = thiscall, name = "FUN_005ede50", expect = "53 8B 5C 24 0C", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_fun_005ede50_5ede50(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -590,7 +590,7 @@ pub fn g_fun_005ede50_5ede50(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
 }
 
 /// `CPedShelterAttractor::ComputeAttractPos` (0x5EFC40): body, thiscall, `ret 8`; 29 instruction(s) matched.
-#[hook(addr = 0x5EFC40, conv = thiscall, name = "CPedShelterAttractor::ComputeAttractPos", expect = "83 EC 0C 56 8B F1")]
+#[hook(addr = 0x5EFC40, conv = thiscall, name = "CPedShelterAttractor::ComputeAttractPos", expect = "83 EC 0C 56 8B F1", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_cped_shelter_attractor_compute_attract_pos_5efc40(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 4);
     if v1 == 0 {
@@ -614,7 +614,7 @@ pub fn g_cped_shelter_attractor_compute_attract_pos_5efc40(this: u32, a0: u32, a
 }
 
 /// `CPedGeometryAnalyser::ComputeEntityDirs` (0x5F1500): body, cdecl, `ret`; 74 instruction(s) matched.
-#[hook(addr = 0x5F1500, conv = cdecl, name = "CPedGeometryAnalyser::ComputeEntityDirs", expect = "8B 4C 24 04 8B 41 14")]
+#[hook(addr = 0x5F1500, conv = cdecl, name = "CPedGeometryAnalyser::ComputeEntityDirs", expect = "8B 4C 24 04 8B 41 14", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,x87-transcendental")]
 pub fn g_cped_geometry_analyser_compute_entity_dirs_5f1500(a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x14);
     if v1 == 0 {
@@ -757,7 +757,7 @@ pub fn g_cped_geometry_analyser_compute_entity_dirs_5f1500(a0: u32, a1: u32) -> 
 }
 
 /// `CPedGeometryAnalyser::CanPedJumpObstacle-LoS` (0x5F1B00): body, cdecl, `ret`; 38 instruction(s) matched.
-#[hook(addr = 0x5F1B00, conv = cdecl, name = "CPedGeometryAnalyser::CanPedJumpObstacle-LoS", expect = "8B 44 24 08 8B 48 1C")]
+#[hook(addr = 0x5F1B00, conv = cdecl, name = "CPedGeometryAnalyser::CanPedJumpObstacle-LoS", expect = "8B 44 24 08 8B 48 1C", unverified = "ai8g-1", route = "L2", hazards = "uninit-locals")]
 pub fn g_cped_geometry_analyser_can_ped_jump_obstacle_lo_s_5f1b00(a0: u32, a1: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -819,7 +819,7 @@ pub fn g_cped_geometry_analyser_can_ped_jump_obstacle_lo_s_5f1b00(a0: u32, a1: u
 }
 
 /// `CPedGeometryAnalyser::ComputePedHitSide-pos` (0x5F1E70): body, cdecl, `ret`; 87 instruction(s) matched.
-#[hook(addr = 0x5F1E70, conv = cdecl, name = "CPedGeometryAnalyser::ComputePedHitSide-pos", expect = "83 EC 3C 8B 44 24 44")]
+#[hook(addr = 0x5F1E70, conv = cdecl, name = "CPedGeometryAnalyser::ComputePedHitSide-pos", expect = "83 EC 3C 8B 44 24 44", unverified = "ai8g-1", route = "L2", hazards = "uninit-locals")]
 pub fn g_cped_geometry_analyser_compute_ped_hit_side_pos_5f1e70(a0: u32, a1: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -1053,7 +1053,7 @@ pub fn g_cped_geometry_analyser_compute_ped_hit_side_pos_5f1e70(a0: u32, a1: u32
 }
 
 /// `CPedGroup::PlayerGaveCommand_Attack` (0x5F7CC0): body, thiscall, `ret 8`; 73 instruction(s) matched.
-#[hook(addr = 0x5F7CC0, conv = thiscall, name = "CPedGroup::PlayerGaveCommand_Attack", expect = "6A FF 68 33 E0 83 00")]
+#[hook(addr = 0x5F7CC0, conv = thiscall, name = "CPedGroup::PlayerGaveCommand_Attack", expect = "6A FF 68 33 E0 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_cped_group_player_gave_command_attack_5f7cc0(this: u32, a0: u32, a1: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -1196,7 +1196,7 @@ pub fn g_cped_group_player_gave_command_attack_5f7cc0(this: u32, a0: u32, a1: u3
 }
 
 /// `CDecisionMakerTypes::FlushDecisionMakerEventResponse` (0x604490): body, thiscall, `ret 8`; 9 instruction(s) matched.
-#[hook(addr = 0x604490, conv = thiscall, name = "CDecisionMakerTypes::FlushDecisionMakerEventResponse", expect = "8B 44 24 04 8B 54 24 08")]
+#[hook(addr = 0x604490, conv = thiscall, name = "CDecisionMakerTypes::FlushDecisionMakerEventResponse", expect = "8B 44 24 04 8B 54 24 08", unverified = "ai8g-1", route = "L2", hazards = "none")]
 pub fn g_cdecision_maker_types_flush_decision_maker_event_response_604490(
     this: u32,
     a0: u32,
@@ -1209,7 +1209,7 @@ pub fn g_cdecision_maker_types_flush_decision_maker_event_response_604490(
 }
 
 /// `CTaskSimpleRunNamedAnim::FinishRunAnimMovePedCB` (0x61AAA0): body, cdecl, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x61AAA0, conv = cdecl, name = "CTaskSimpleRunNamedAnim::FinishRunAnimMovePedCB", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x61AAA0, conv = cdecl, name = "CTaskSimpleRunNamedAnim::FinishRunAnimMovePedCB", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_run_named_anim_finish_run_anim_move_ped_cb_61aaa0(a0: u32, a1: u32) -> u32 {
     let v1 = c_4ceb60_t1(a0, 0);
     let v2 = c_4cfc50_t2(v1, a1.wrapping_add(0x50), 0);
@@ -1274,7 +1274,7 @@ pub fn g_task_simple_run_named_anim_finish_run_anim_move_ped_cb_61aaa0(a0: u32, 
 }
 
 /// `CTaskSimpleRunNamedAnim::OffsetPedPosition` (0x61AB00): body, thiscall, `ret 4`; 39 instruction(s) matched.
-#[hook(addr = 0x61AB00, conv = thiscall, name = "CTaskSimpleRunNamedAnim::OffsetPedPosition", expect = "83 EC 0C 56 8B 74 24 14")]
+#[hook(addr = 0x61AB00, conv = thiscall, name = "CTaskSimpleRunNamedAnim::OffsetPedPosition", expect = "83 EC 0C 56 8B 74 24 14", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_simple_run_named_anim_offset_ped_position_61ab00(this: u32, a0: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -1324,7 +1324,7 @@ pub fn g_task_simple_run_named_anim_offset_ped_position_61ab00(this: u32, a0: u3
 }
 
 /// `CTaskSimpleUseGun::StartCountDown` (0x61E160): body, thiscall, `ret 8`; 15 instruction(s) matched.
-#[hook(addr = 0x61E160, conv = thiscall, name = "CTaskSimpleUseGun::StartCountDown", expect = "8A 44 24 08 84 C0")]
+#[hook(addr = 0x61E160, conv = thiscall, name = "CTaskSimpleUseGun::StartCountDown", expect = "8A 44 24 08 84 C0", unverified = "ai8g-2", route = "L2", hazards = "ax-al-return,heap-writes")]
 pub fn g_task_simple_use_gun_start_count_down_61e160(this: u32, a0: u32, a1: u32) -> u8 {
     if ((((a1 & 0xFF) & 0xFF) & 0xFF) as u8) == (0 as u8) {
         let v1 = (((a0 & 0xFF) & 0xFF) & 0xFF);
@@ -1349,7 +1349,7 @@ pub fn g_task_simple_use_gun_start_count_down_61e160(this: u32, a0: u32, a1: u32
 }
 
 /// `CTaskSimpleUseGun::ClearAnim` (0x61E190): body, thiscall, `ret 4`; 32 instruction(s) matched.
-#[hook(addr = 0x61E190, conv = thiscall, name = "CTaskSimpleUseGun::ClearAnim", expect = "56 8B F1 8B 4E 2C")]
+#[hook(addr = 0x61E190, conv = thiscall, name = "CTaskSimpleUseGun::ClearAnim", expect = "56 8B F1 8B 4E 2C", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_use_gun_clear_anim_61e190(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x2C);
     if v1 == 0 {
@@ -1469,7 +1469,7 @@ pub fn g_task_simple_use_gun_clear_anim_61e190(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleChoking::UpdateChoke` (0x620660): body, thiscall, `ret 12`; 85 instruction(s) matched.
-#[hook(addr = 0x620660, conv = thiscall, name = "CTaskSimpleChoking::UpdateChoke", expect = "8A 44 24 0C 53")]
+#[hook(addr = 0x620660, conv = thiscall, name = "CTaskSimpleChoking::UpdateChoke", expect = "8A 44 24 0C 53", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_choking_update_choke_620660(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     let v2 = (((a2 & 0xFF) & 0xFF) & 0xFF);
@@ -1959,7 +1959,7 @@ pub fn g_task_simple_choking_update_choke_620660(this: u32, a0: u32, a1: u32, a2
 }
 
 /// `CTaskComplexKillPedOnFootMelee::CalculateSearchPositionAndRanges` (0x621100): body, thiscall, `ret 4`; 45 instruction(s) matched.
-#[hook(addr = 0x621100, conv = thiscall, name = "CTaskComplexKillPedOnFootMelee::CalculateSearchPositionAndRanges", expect = "56 8B F1 57 8B 7C 24 0C")]
+#[hook(addr = 0x621100, conv = thiscall, name = "CTaskComplexKillPedOnFootMelee::CalculateSearchPositionAndRanges", expect = "56 8B F1 57 8B 7C 24 0C", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_kill_ped_on_foot_melee_calculate_search_position_and_ranges_621100(
     this: u32,
     a0: u32,
@@ -2028,7 +2028,7 @@ pub fn g_task_complex_kill_ped_on_foot_melee_calculate_search_position_and_range
 }
 
 /// `CTaskSimpleStealthKill::FinishAnimStealthKillCB` (0x622790): body, cdecl, `ret`; 13 instruction(s) matched.
-#[hook(addr = 0x622790, conv = cdecl, name = "CTaskSimpleStealthKill::FinishAnimStealthKillCB", expect = "8B 44 24 04 66 8B 40 2C")]
+#[hook(addr = 0x622790, conv = cdecl, name = "CTaskSimpleStealthKill::FinishAnimStealthKillCB", expect = "8B 44 24 04 66 8B 40 2C", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_stealth_kill_finish_anim_stealth_kill_cb_622790(a0: u32, a1: u32) -> u32 {
     let v1 = u32::from(rd::<u16>(p(a0), 0x2C));
     if ((((a0 & 0xFFFF_0000) | (v1 & 0xFFFF)) & 0xFFFF) as u16) == (0x15C as u16) {
@@ -2048,7 +2048,7 @@ pub fn g_task_simple_stealth_kill_finish_anim_stealth_kill_cb_622790(a0: u32, a1
 }
 
 /// `CTaskSimpleUseGun::Reset` (0x624DC0): body, thiscall, `ret 28`; 42 instruction(s) matched.
-#[hook(addr = 0x624DC0, conv = thiscall, name = "CTaskSimpleUseGun::Reset", expect = "8B 54 24 10 53")]
+#[hook(addr = 0x624DC0, conv = thiscall, name = "CTaskSimpleUseGun::Reset", expect = "8B 54 24 10 53", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_use_gun_reset_624dc0(
     this: u32,
     a0: u32,
@@ -2096,7 +2096,7 @@ pub fn g_task_simple_use_gun_reset_624dc0(
 }
 
 /// `CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges` (0x6289F0): body, thiscall, `ret 4`; 43 instruction(s) matched.
-#[hook(addr = 0x6289F0, conv = thiscall, name = "CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges", expect = "53 56 57 8B 79 10", preserve = "ecx")]
+#[hook(addr = 0x6289F0, conv = thiscall, name = "CTaskComplexDestroyCarMelee::CalculateSearchPositionAndRanges", expect = "53 56 57 8B 79 10", preserve = "ecx", unverified = "ai8g-2", route = "L2", hazards = "preserved-regs,heap-writes,x87-transcendental")]
 pub fn g_task_complex_destroy_car_melee_calculate_search_position_and_ranges_6289f0(
     this: u32,
     a0: u32,
@@ -2189,7 +2189,7 @@ pub fn g_task_complex_destroy_car_melee_calculate_search_position_and_ranges_628
 }
 
 /// `CTaskSimpleStealthKill::ManageAnim` (0x6296D0): body, thiscall, `ret 4`; 142 instruction(s) matched.
-#[hook(addr = 0x6296D0, conv = thiscall, name = "CTaskSimpleStealthKill::ManageAnim", expect = "64 A1 00 00 00 00")]
+#[hook(addr = 0x6296D0, conv = thiscall, name = "CTaskSimpleStealthKill::ManageAnim", expect = "64 A1 00 00 00 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_simple_stealth_kill_manage_anim_6296d0(this: u32, a0: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -2330,7 +2330,7 @@ pub fn g_task_simple_stealth_kill_manage_anim_6296d0(this: u32, a0: u32) -> u32 
 }
 
 /// `FUN_0062f2d0` (0x62F2D0): body, cdecl, `ret`; 17 instruction(s) matched.
-#[hook(addr = 0x62F2D0, conv = cdecl, name = "FUN_0062f2d0", expect = "66 8B 44 24 04")]
+#[hook(addr = 0x62F2D0, conv = cdecl, name = "FUN_0062f2d0", expect = "66 8B 44 24 04", unverified = "ai8g-2", route = "L2", hazards = "none")]
 pub fn g_fun_0062f2d0_62f2d0(a0: u32) -> u32 {
     if ((((a0 & 0xFFFF) & 0xFFFF) & 0xFFFF) as u16) == (0 as u16) {
         return 1;
@@ -2360,7 +2360,7 @@ pub fn g_fun_0062f2d0_62f2d0(a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleTired::StartAnim` (0x630F70): body, thiscall, `ret 4`; 45 instruction(s) matched.
-#[hook(addr = 0x630F70, conv = thiscall, name = "CTaskSimpleTired::StartAnim", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x630F70, conv = thiscall, name = "CTaskSimpleTired::StartAnim", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_tired_start_anim_630f70(this: u32, a0: u32) -> u32 {
     c_5dec00_t1(a0, 1);
     let _v2 = rd::<u32>(p(a0), 0);
@@ -2457,7 +2457,7 @@ pub fn g_thunk_fun_0061a6f0_637470(this: u32) -> u32 {
 }
 
 /// `CTaskComplexEnterCar::GetTargetPos` (0x63A300): body, thiscall, `ret 4`; 41 instruction(s) matched.
-#[hook(addr = 0x63A300, conv = thiscall, name = "CTaskComplexEnterCar::GetTargetPos", expect = "56 8B F1 8B 46 14")]
+#[hook(addr = 0x63A300, conv = thiscall, name = "CTaskComplexEnterCar::GetTargetPos", expect = "56 8B F1 8B 46 14", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_enter_car_get_target_pos_63a300(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     if v1 == 0 {
@@ -2498,7 +2498,7 @@ pub fn g_task_complex_enter_car_get_target_pos_63a300(this: u32, a0: u32) -> u32
 }
 
 /// `CTaskComplexLeaveCarAsPassengerWait::SetPedInZerothPassengerSeat` (0x63B540): body, thiscall, `ret 4`; 44 instruction(s) matched.
-#[hook(addr = 0x63B540, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::SetPedInZerothPassengerSeat", expect = "6A FF 68 50 15 84 00")]
+#[hook(addr = 0x63B540, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::SetPedInZerothPassengerSeat", expect = "6A FF 68 50 15 84 00", unverified = "ai8g-3", route = "L2", hazards = "uninit-locals")]
 pub fn g_task_complex_leave_car_as_passenger_wait_set_ped_in_zeroth_passenger_seat_63b540(
     this: u32,
     a0: u32,
@@ -2533,7 +2533,7 @@ pub fn g_task_complex_leave_car_as_passenger_wait_set_ped_in_zeroth_passenger_se
 }
 
 /// `CTaskComplexDriveToPoint::CreateSubTaskCannotGetInCar` (0x63CE80): body, thiscall, `ret 4`; 35 instruction(s) matched.
-#[hook(addr = 0x63CE80, conv = thiscall, name = "CTaskComplexDriveToPoint::CreateSubTaskCannotGetInCar", expect = "6A FF 68 1B 19 84 00")]
+#[hook(addr = 0x63CE80, conv = thiscall, name = "CTaskComplexDriveToPoint::CreateSubTaskCannotGetInCar", expect = "6A FF 68 1B 19 84 00", unverified = "ai8g-3", route = "L2", hazards = "none")]
 pub fn g_task_complex_drive_to_point_create_sub_task_cannot_get_in_car_63ce80(this: u32, _a0: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x34);
     if v1 == 0 {
@@ -2547,7 +2547,7 @@ pub fn g_task_complex_drive_to_point_create_sub_task_cannot_get_in_car_63ce80(th
 }
 
 /// `FUN_00642700` (0x642700): body, thiscall, `ret 4`; 25 instruction(s) matched.
-#[hook(addr = 0x642700, conv = thiscall, name = "FUN_00642700", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x642700, conv = thiscall, name = "FUN_00642700", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_fun_00642700_642700(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x58C);
     let v2 = rd::<u32>(p(v1), 0x384);
@@ -2562,7 +2562,7 @@ pub fn g_fun_00642700_642700(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::ComputeTarget` (0x646F40): body, thiscall, `ret 4`; 54 instruction(s) matched.
-#[hook(addr = 0x646F40, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::ComputeTarget", expect = "83 EC 18 56 8B F1")]
+#[hook(addr = 0x646F40, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::ComputeTarget", expect = "83 EC 18 56 8B F1", unverified = "ai8g-3", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_compute_target_646f40(
     this: u32,
     a0: u32,
@@ -2645,7 +2645,7 @@ pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_compute_tar
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::ComputeAnimID` (0x648330): body, thiscall, `ret 8`; 20 instruction(s) matched.
-#[hook(addr = 0x648330, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::ComputeAnimID", expect = "8B 41 14 8B 54 24 08")]
+#[hook(addr = 0x648330, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::ComputeAnimID", expect = "8B 41 14 8B 54 24 08", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_slow_be_dragged_out_compute_anim_id_648330(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     if (v1.wrapping_add(0xFFFF_FFF8) as u32) > (3 as u32) {
@@ -2707,7 +2707,7 @@ pub fn g_task_simple_car_slow_be_dragged_out_compute_anim_id_648330(this: u32, a
 }
 
 /// `CTaskSimpleBikeJacked::FinishAnimBikeHitCB` (0x648D30): body, cdecl, `ret`; 12 instruction(s) matched.
-#[hook(addr = 0x648D30, conv = cdecl, name = "CTaskSimpleBikeJacked::FinishAnimBikeHitCB", expect = "8B 44 24 08 8B 48 18")]
+#[hook(addr = 0x648D30, conv = cdecl, name = "CTaskSimpleBikeJacked::FinishAnimBikeHitCB", expect = "8B 44 24 08 8B 48 18", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_bike_jacked_finish_anim_bike_hit_cb_648d30(_a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(a1), 0x18);
     wr::<u32>(p(a1), 0xC, 0);
@@ -2727,7 +2727,7 @@ pub fn g_task_simple_bike_jacked_finish_anim_bike_hit_cb_648d30(_a0: u32, a1: u3
 }
 
 /// `CTaskComplexGoToBoatSteeringWheel::ComputeTargetPos` (0x649160): body, thiscall, `ret`; 56 instruction(s) matched.
-#[hook(addr = 0x649160, conv = thiscall, name = "CTaskComplexGoToBoatSteeringWheel::ComputeTargetPos", expect = "83 EC 18 56 8B F1")]
+#[hook(addr = 0x649160, conv = thiscall, name = "CTaskComplexGoToBoatSteeringWheel::ComputeTargetPos", expect = "83 EC 18 56 8B F1", unverified = "ai8g-3", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_complex_go_to_boat_steering_wheel_compute_target_pos_649160(this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -2862,7 +2862,7 @@ pub fn g_task_complex_go_to_boat_steering_wheel_compute_target_pos_649160(this: 
 }
 
 /// `SayJacked` (0x6497A0): body, cdecl, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x6497A0, conv = cdecl, name = "SayJacked", expect = "8B 4C 24 08 81 C1 38 01 00 00")]
+#[hook(addr = 0x6497A0, conv = cdecl, name = "SayJacked", expect = "8B 4C 24 08 81 C1 38 01 00 00", unverified = "ai8g-3", route = "L2", hazards = "none")]
 pub fn g_say_jacked_6497a0(a0: u32, a1: u32, a2: u32) -> u32 {
     let v1 = c_4f4f00_t0(a1.wrapping_add(0x138));
     if ((v1 & 0xFFFF) as u16) != (0 as u16) {
@@ -2875,7 +2875,7 @@ pub fn g_say_jacked_6497a0(a0: u32, a1: u32, a2: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::StartAnim` (0x64AE00): body, thiscall, `ret 4`; 33 instruction(s) matched.
-#[hook(addr = 0x64AE00, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::StartAnim", expect = "56 8B F1 8B 46 14")]
+#[hook(addr = 0x64AE00, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::StartAnim", expect = "56 8B F1 8B 46 14", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_open_locked_door_from_outside_start_anim_64ae00(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     if v1 == 0xA {
@@ -2917,7 +2917,7 @@ pub fn g_task_simple_car_open_locked_door_from_outside_start_anim_64ae00(this: u
 }
 
 /// `CTaskSimpleCarSlowDragPedOut::StartAnim` (0x64C010): body, thiscall, `ret 4`; 27 instruction(s) matched.
-#[hook(addr = 0x64C010, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::StartAnim", expect = "83 EC 08 56 8B F1")]
+#[hook(addr = 0x64C010, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::StartAnim", expect = "83 EC 08 56 8B F1", unverified = "ai8g-4", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_simple_car_slow_drag_ped_out_start_anim_64c010(this: u32, a0: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -2940,7 +2940,7 @@ pub fn g_task_simple_car_slow_drag_ped_out_start_anim_64c010(this: u32, a0: u32)
 }
 
 /// `CTaskComplexWalkRoundCar::SetNewVehicle` (0x654290): body, thiscall, `ret 8`; 28 instruction(s) matched.
-#[hook(addr = 0x654290, conv = thiscall, name = "CTaskComplexWalkRoundCar::SetNewVehicle", expect = "56 8B F1 8B 4E 1C")]
+#[hook(addr = 0x654290, conv = thiscall, name = "CTaskComplexWalkRoundCar::SetNewVehicle", expect = "56 8B F1 8B 4E 1C", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_walk_round_car_set_new_vehicle_654290(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x1C);
     if v1 == 0 {
@@ -3009,7 +3009,7 @@ pub fn g_thunk_fun_0061a6f0_655e00(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleEvasiveDive::StartAnim` (0x655F20): body, thiscall, `ret 4`; 68 instruction(s) matched.
-#[hook(addr = 0x655F20, conv = thiscall, name = "CTaskSimpleEvasiveDive::StartAnim", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x655F20, conv = thiscall, name = "CTaskSimpleEvasiveDive::StartAnim", expect = "56 8B 74 24 08", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_evasive_dive_start_anim_655f20(this: u32, a0: u32) -> u32 {
     c_5effe0_t6(a0, 0x4A, 0, 0x3F80_0000, 0, 0, 0);
     let v2 = rd::<u32>(p(a0), 0x18);
@@ -3067,7 +3067,7 @@ pub fn g_task_simple_evasive_dive_start_anim_655f20(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexWalkRoundCar::ComputeRoute` (0x657B80): body, thiscall, `ret 4`; 5 instruction(s) matched.
-#[hook(addr = 0x657B80, conv = thiscall, name = "CTaskComplexWalkRoundCar::ComputeRoute", expect = "8B 41 1C F6 80 29 04 00 00 04")]
+#[hook(addr = 0x657B80, conv = thiscall, name = "CTaskComplexWalkRoundCar::ComputeRoute", expect = "8B 41 1C F6 80 29 04 00 00 04", unverified = "ai8g-4", route = "L2", hazards = "none")]
 pub fn g_task_complex_walk_round_car_compute_route_657b80(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x1C);
     let v2 = u32::from(rd::<u8>(p(v1), 0x429));
@@ -3081,7 +3081,7 @@ pub fn g_task_complex_walk_round_car_compute_route_657b80(this: u32, a0: u32) ->
 }
 
 /// `CTaskComplexWalkRoundFire::ComputeDetourTarget` (0x6581B0): body, thiscall, `ret 8`; 29 instruction(s) matched.
-#[hook(addr = 0x6581B0, conv = thiscall, name = "CTaskComplexWalkRoundFire::ComputeDetourTarget", expect = "83 EC 20 56 68 FF 00 00 00")]
+#[hook(addr = 0x6581B0, conv = thiscall, name = "CTaskComplexWalkRoundFire::ComputeDetourTarget", expect = "83 EC 20 56 68 FF 00 00 00", unverified = "ai8g-4", route = "L2", hazards = "uninit-locals")]
 pub fn g_task_complex_walk_round_fire_compute_detour_target_6581b0(this: u32, a0: u32, a1: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -3110,7 +3110,7 @@ pub fn g_task_complex_walk_round_fire_compute_detour_target_6581b0(this: u32, a0
 }
 
 /// `CTaskSimpleGiveCPR::ReviveDeadPed` (0x658900): body, thiscall, `ret 4`; 36 instruction(s) matched.
-#[hook(addr = 0x658900, conv = thiscall, name = "CTaskSimpleGiveCPR::ReviveDeadPed", expect = "64 A1 00 00 00 00")]
+#[hook(addr = 0x658900, conv = thiscall, name = "CTaskSimpleGiveCPR::ReviveDeadPed", expect = "64 A1 00 00 00 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_simple_give_cpr_revive_dead_ped_658900(this: u32, _a0: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -3141,7 +3141,7 @@ pub fn g_task_simple_give_cpr_revive_dead_ped_658900(this: u32, _a0: u32) -> u32
 }
 
 /// `CTaskComplexMedicTreatInjuredPed::FindNearestAccident` (0x658CC0): body, thiscall, `ret 4`; 12 instruction(s) matched.
-#[hook(addr = 0x658CC0, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::FindNearestAccident", expect = "8B 44 24 04 56")]
+#[hook(addr = 0x658CC0, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::FindNearestAccident", expect = "8B 44 24 04 56", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_medic_treat_injured_ped_find_nearest_accident_658cc0(this: u32, a0: u32) -> u32 {
     wr::<u32>(p(this), 0x18, 0);
     let v1 = c_56cf20_t0(this);
@@ -3151,7 +3151,7 @@ pub fn g_task_complex_medic_treat_injured_ped_find_nearest_accident_658cc0(this:
 }
 
 /// `CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset` (0x658D20): body, thiscall, `ret 8`; 43 instruction(s) matched.
-#[hook(addr = 0x658D20, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset", expect = "83 EC 18 56 57")]
+#[hook(addr = 0x658D20, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::CalcTargetPosWithOffset", expect = "83 EC 18 56 57", unverified = "ai8g-4", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_complex_medic_treat_injured_ped_calc_target_pos_with_offset_658d20(
     this: u32,
     _a0: u32,
@@ -3195,7 +3195,7 @@ pub fn g_task_complex_medic_treat_injured_ped_calc_target_pos_with_offset_658d20
 }
 
 /// `CTaskComplexMedicTreatInjuredPed::CreateDealWithNextAccidentTask` (0x65A020): body, thiscall, `ret 8`; 73 instruction(s) matched.
-#[hook(addr = 0x65A020, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::CreateDealWithNextAccidentTask", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x65A020, conv = thiscall, name = "CTaskComplexMedicTreatInjuredPed::CreateDealWithNextAccidentTask", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_medic_treat_injured_ped_create_deal_with_next_accident_task_65a020(
     this: u32,
     a0: u32,
@@ -3308,7 +3308,7 @@ pub fn g_task_complex_medic_treat_injured_ped_create_deal_with_next_accident_tas
 }
 
 /// `CTaskComplexFleePoint::ComputeTargetPoint` (0x65B820): body, thiscall, `ret 4`; 78 instruction(s) matched.
-#[hook(addr = 0x65B820, conv = thiscall, name = "CTaskComplexFleePoint::ComputeTargetPoint", expect = "83 EC 28 56 57")]
+#[hook(addr = 0x65B820, conv = thiscall, name = "CTaskComplexFleePoint::ComputeTargetPoint", expect = "83 EC 28 56 57", unverified = "ai8g-4", route = "L2", hazards = "heap-writes,x87-transcendental,uninit-locals")]
 pub fn g_task_complex_flee_point_compute_target_point_65b820(this: u32, a0: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -3459,7 +3459,7 @@ pub fn g_task_complex_flee_point_compute_target_point_65b820(this: u32, a0: u32)
 }
 
 /// `CTaskComplexSmartFleePoint::SetDefaultTaskWanderDir` (0x65BE00): body, thiscall, `ret 4`; 20 instruction(s) matched.
-#[hook(addr = 0x65BE00, conv = thiscall, name = "CTaskComplexSmartFleePoint::SetDefaultTaskWanderDir", expect = "8B 44 24 04 56")]
+#[hook(addr = 0x65BE00, conv = thiscall, name = "CTaskComplexSmartFleePoint::SetDefaultTaskWanderDir", expect = "8B 44 24 04 56", unverified = "ai8g-4", route = "L2", hazards = "none")]
 pub fn g_task_complex_smart_flee_point_set_default_task_wander_dir_65be00(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x47C);
     let v2 = rd::<u32>(p(v1), 0x14);
@@ -3479,7 +3479,7 @@ pub fn g_task_complex_smart_flee_point_set_default_task_wander_dir_65be00(this: 
 }
 
 /// `CTaskSimpleGoToPointFine::Finish` (0x65EF00): body, thiscall, `ret 4`; 20 instruction(s) matched.
-#[hook(addr = 0x65EF00, conv = thiscall, name = "CTaskSimpleGoToPointFine::Finish", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x65EF00, conv = thiscall, name = "CTaskSimpleGoToPointFine::Finish", expect = "56 8B 74 24 08", unverified = "ai8g-4", route = "L2", hazards = "none")]
 pub fn g_task_simple_go_to_point_fine_finish_65ef00(this: u32, a0: u32) -> u32 {
     c_5dec00_t1(a0, 1);
     let _v2 = rd::<u32>(p(a0), 0);
@@ -3492,7 +3492,7 @@ pub fn g_task_simple_go_to_point_fine_finish_65ef00(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleGoToPointFine::BaseRatio` (0x65EF30): body, cdecl, `ret`; 12 instruction(s) matched.
-#[hook(addr = 0x65EF30, conv = cdecl, name = "CTaskSimpleGoToPointFine::BaseRatio", expect = "8B 44 24 04 83 F8 07")]
+#[hook(addr = 0x65EF30, conv = cdecl, name = "CTaskSimpleGoToPointFine::BaseRatio", expect = "8B 44 24 04 83 F8 07", unverified = "ai8g-4", route = "L2", hazards = "none")]
 pub fn g_task_simple_go_to_point_fine_base_ratio_65ef30(a0: u32) -> X87 {
     if (a0 as u32) > (7 as u32) {
         let v1 = g::<u32>(0x85_8B50).read();
@@ -3539,7 +3539,7 @@ pub fn g_task_simple_go_to_point_fine_base_ratio_65ef30(a0: u32) -> X87 {
 }
 
 /// `CTaskGoToVehicleAndLean::DoTidyUp` (0x660F60): body, thiscall, `ret 4`; 14 instruction(s) matched.
-#[hook(addr = 0x660F60, conv = thiscall, name = "CTaskGoToVehicleAndLean::DoTidyUp", expect = "8B 41 0C 85 C0")]
+#[hook(addr = 0x660F60, conv = thiscall, name = "CTaskGoToVehicleAndLean::DoTidyUp", expect = "8B 41 0C 85 C0", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_go_to_vehicle_and_lean_do_tidy_up_660f60(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0xC);
     if v1 == 0 {
@@ -3567,7 +3567,7 @@ pub fn g_task_go_to_vehicle_and_lean_do_tidy_up_660f60(this: u32, a0: u32) -> u3
 }
 
 /// `CTaskLeanOnVehicle::FinishAnimCB` (0x661160): body, cdecl, `ret`; 17 instruction(s) matched.
-#[hook(addr = 0x661160, conv = cdecl, name = "CTaskLeanOnVehicle::FinishAnimCB", expect = "8B 54 24 04 0F BF 4A 2C")]
+#[hook(addr = 0x661160, conv = cdecl, name = "CTaskLeanOnVehicle::FinishAnimCB", expect = "8B 54 24 04 0F BF 4A 2C", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_lean_on_vehicle_finish_anim_cb_661160(a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u16>(p(a0), 0x2C) as i16 as i32 as u32;
     wr::<u32>(p(a1), 0x18, v1);
@@ -3611,7 +3611,7 @@ pub fn g_task_lean_on_vehicle_finish_anim_cb_661160(a0: u32, a1: u32) -> u32 {
 }
 
 /// `CTaskComplexPassObject::AbortIK` (0x661290): body, thiscall, `ret 4`; 15 instruction(s) matched.
-#[hook(addr = 0x661290, conv = thiscall, name = "CTaskComplexPassObject::AbortIK", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x661290, conv = thiscall, name = "CTaskComplexPassObject::AbortIK", expect = "56 8B 74 24 08", unverified = "ai8g-4", route = "L2", hazards = "none")]
 pub fn g_task_complex_pass_object_abort_ik_661290(_this: u32, a0: u32) -> u32 {
     let v1 = c_6182b0_t2(0xC1_5448, 0, a0);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -3623,7 +3623,7 @@ pub fn g_task_complex_pass_object_abort_ik_661290(_this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskComplexProstituteSolicit::GetRidOfPlayerProstitute` (0x661D30): body, thiscall, `ret`; 16 instruction(s) matched.
-#[hook(addr = 0x661D30, conv = thiscall, name = "CTaskComplexProstituteSolicit::GetRidOfPlayerProstitute", expect = "6A FF E8 D9 C4 F0 FF")]
+#[hook(addr = 0x661D30, conv = thiscall, name = "CTaskComplexProstituteSolicit::GetRidOfPlayerProstitute", expect = "6A FF E8 D9 C4 F0 FF", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_prostitute_solicit_get_rid_of_player_prostitute_661d30(_this: u32) -> u32 {
     let v1 = c_56e210_c1(0xFFFF_FFFF);
     let v2 = rd::<u32>(p(v1), 0x480);
@@ -3646,7 +3646,7 @@ pub fn g_task_complex_prostitute_solicit_get_rid_of_player_prostitute_661d30(_th
 }
 
 /// `CTaskComplexFollowPointRoute::GetLastWaypoint` (0x669340): body, thiscall, `ret 8`; 74 instruction(s) matched.
-#[hook(addr = 0x669340, conv = thiscall, name = "CTaskComplexFollowPointRoute::GetLastWaypoint", expect = "8B 51 20 56 8B 32")]
+#[hook(addr = 0x669340, conv = thiscall, name = "CTaskComplexFollowPointRoute::GetLastWaypoint", expect = "8B 51 20 56 8B 32", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_follow_point_route_get_last_waypoint_669340(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x20);
     let v2 = rd::<u32>(p(v1), 0);
@@ -3736,7 +3736,7 @@ pub fn g_task_complex_follow_point_route_get_last_waypoint_669340(this: u32, a0:
 }
 
 /// `CTaskComplexFollowPointRoute::GetNextWaypoint` (0x669420): body, thiscall, `ret 8`; 52 instruction(s) matched.
-#[hook(addr = 0x669420, conv = thiscall, name = "CTaskComplexFollowPointRoute::GetNextWaypoint", expect = "8B 51 20 56 8B 32")]
+#[hook(addr = 0x669420, conv = thiscall, name = "CTaskComplexFollowPointRoute::GetNextWaypoint", expect = "8B 51 20 56 8B 32", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_follow_point_route_get_next_waypoint_669420(this: u32, a0: u32, _a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x20);
     let v2 = rd::<u32>(p(v1), 0);
@@ -3834,7 +3834,7 @@ pub fn g_task_complex_follow_point_route_get_next_waypoint_669420(this: u32, a0:
 }
 
 /// `CTaskComplexFollowNodeRoute::GetLastWaypoint` (0x6698E0): body, thiscall, `ret 8`; 56 instruction(s) matched.
-#[hook(addr = 0x6698E0, conv = thiscall, name = "CTaskComplexFollowNodeRoute::GetLastWaypoint", expect = "8B 51 30 83 3A 01")]
+#[hook(addr = 0x6698E0, conv = thiscall, name = "CTaskComplexFollowNodeRoute::GetLastWaypoint", expect = "8B 51 30 83 3A 01", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_follow_node_route_get_last_waypoint_6698e0(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x30);
     let v2 = rd::<u32>(p(v1), 0);
@@ -3889,7 +3889,7 @@ pub fn g_task_complex_follow_node_route_get_last_waypoint_6698e0(this: u32, a0: 
 }
 
 /// `CTaskComplexFollowNodeRoute::GetNextWaypoint` (0x669980): body, thiscall, `ret 8`; 33 instruction(s) matched.
-#[hook(addr = 0x669980, conv = thiscall, name = "CTaskComplexFollowNodeRoute::GetNextWaypoint", expect = "8B 51 30 56 8B 32")]
+#[hook(addr = 0x669980, conv = thiscall, name = "CTaskComplexFollowNodeRoute::GetNextWaypoint", expect = "8B 51 30 56 8B 32", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_follow_node_route_get_next_waypoint_669980(this: u32, a0: u32, _a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x30);
     let v2 = rd::<u32>(p(v1), 0);
@@ -3942,7 +3942,7 @@ pub fn g_task_complex_follow_node_route_get_next_waypoint_669980(this: u32, a0: 
 }
 
 /// `FUN_00669d50` (0x669D50): body, thiscall, `ret 4`; 21 instruction(s) matched.
-#[hook(addr = 0x669D50, conv = thiscall, name = "FUN_00669d50", expect = "8B 44 24 04 66 8B 51 18")]
+#[hook(addr = 0x669D50, conv = thiscall, name = "FUN_00669d50", expect = "8B 44 24 04 66 8B 51 18", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_fun_00669d50_669d50(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u16>(p(this), 0x18));
     let v2 = u32::from(rd::<u16>(p(a0), 0x18));
@@ -4020,7 +4020,7 @@ pub fn g_thunk_fun_00668870_66dfa0(this: u32) -> u32 {
 }
 
 /// `CTaskInteriorLieInBed::FinishAnimCB` (0x675FC0): body, cdecl, `ret`; 22 instruction(s) matched.
-#[hook(addr = 0x675FC0, conv = cdecl, name = "CTaskInteriorLieInBed::FinishAnimCB", expect = "8B 44 24 08 8B 54 24 04")]
+#[hook(addr = 0x675FC0, conv = cdecl, name = "CTaskInteriorLieInBed::FinishAnimCB", expect = "8B 44 24 08 8B 54 24 04", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_interior_lie_in_bed_finish_anim_cb_675fc0(a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u16>(p(a0), 0x2C) as i16 as i32 as u32;
     let v2 = rd::<u32>(p(a1), 0x2C);
@@ -4067,7 +4067,7 @@ pub fn g_task_interior_lie_in_bed_finish_anim_cb_675fc0(a0: u32, a1: u32) -> u32
 }
 
 /// `CTaskInteriorSitAtDesk::FinishAnimCB` (0x676190): body, cdecl, `ret`; 17 instruction(s) matched.
-#[hook(addr = 0x676190, conv = cdecl, name = "CTaskInteriorSitAtDesk::FinishAnimCB", expect = "8B 54 24 04 0F BF 4A 2C")]
+#[hook(addr = 0x676190, conv = cdecl, name = "CTaskInteriorSitAtDesk::FinishAnimCB", expect = "8B 54 24 04 0F BF 4A 2C", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_interior_sit_at_desk_finish_anim_cb_676190(a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u16>(p(a0), 0x2C) as i16 as i32 as u32;
     wr::<u32>(p(a1), 0x18, v1);
@@ -4111,7 +4111,7 @@ pub fn g_task_interior_sit_at_desk_finish_anim_cb_676190(a0: u32, a1: u32) -> u3
 }
 
 /// `CTaskInteriorSitAtDesk::StartRandomLoopAnim` (0x677780): body, thiscall, `ret 8`; 71 instruction(s) matched.
-#[hook(addr = 0x677780, conv = thiscall, name = "CTaskInteriorSitAtDesk::StartRandomLoopAnim", expect = "51 53 56 57 8B F9")]
+#[hook(addr = 0x677780, conv = thiscall, name = "CTaskInteriorSitAtDesk::StartRandomLoopAnim", expect = "51 53 56 57 8B F9", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_interior_sit_at_desk_start_random_loop_anim_677780(this: u32, a0: u32, a1: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     if v1 == 0 {
@@ -4227,7 +4227,7 @@ pub fn g_task_interior_sit_at_desk_start_random_loop_anim_677780(this: u32, a0: 
 }
 
 /// `CTaskInteriorSitAtDesk::StartRandomOneOffAnim` (0x677880): body, thiscall, `ret 4`; 47 instruction(s) matched.
-#[hook(addr = 0x677880, conv = thiscall, name = "CTaskInteriorSitAtDesk::StartRandomOneOffAnim", expect = "51 56 8B F1 8B 4E 14")]
+#[hook(addr = 0x677880, conv = thiscall, name = "CTaskInteriorSitAtDesk::StartRandomOneOffAnim", expect = "51 56 8B F1 8B 4E 14", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_interior_sit_at_desk_start_random_one_off_anim_677880(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x14);
     if v1 == 0 {
@@ -4293,7 +4293,7 @@ pub fn g_task_interior_sit_at_desk_start_random_one_off_anim_677880(this: u32, a
 }
 
 /// `CTaskComplexFallAndGetUp::SetDownTime` (0x6787A0): body, thiscall, `ret 4`; 15 instruction(s) matched.
-#[hook(addr = 0x6787A0, conv = thiscall, name = "CTaskComplexFallAndGetUp::SetDownTime", expect = "8B 44 24 04 56")]
+#[hook(addr = 0x6787A0, conv = thiscall, name = "CTaskComplexFallAndGetUp::SetDownTime", expect = "8B 44 24 04 56", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_complex_fall_and_get_up_set_down_time_6787a0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     wr::<u32>(p(this), 0x14, a0);
@@ -4311,7 +4311,7 @@ pub fn g_task_complex_fall_and_get_up_set_down_time_6787a0(this: u32, a0: u32) -
 }
 
 /// `CTaskComplexFallAndGetUp::IsFalling` (0x6787D0): body, thiscall, `ret`; 11 instruction(s) matched.
-#[hook(addr = 0x6787D0, conv = thiscall, name = "CTaskComplexFallAndGetUp::IsFalling", expect = "8B 49 08 85 C9")]
+#[hook(addr = 0x6787D0, conv = thiscall, name = "CTaskComplexFallAndGetUp::IsFalling", expect = "8B 49 08 85 C9", unverified = "ai8g-5", route = "L2", hazards = "none")]
 pub fn g_task_complex_fall_and_get_up_is_falling_6787d0(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 8);
     if v1 == 0 {
@@ -4328,7 +4328,7 @@ pub fn g_task_complex_fall_and_get_up_is_falling_6787d0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleClimb::Shutdown` (0x67A250): body, thiscall, `ret`; 8 instruction(s) matched.
-#[hook(addr = 0x67A250, conv = thiscall, name = "CTaskSimpleClimb::Shutdown", expect = "B9 18 95 C1 00")]
+#[hook(addr = 0x67A250, conv = thiscall, name = "CTaskSimpleClimb::Shutdown", expect = "B9 18 95 C1 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
 pub fn g_task_simple_climb_shutdown_67a250(_this: u32) -> u32 {
     c_40f9e0_t0(0xC1_9518);
     c_40f9e0_t0(0xC1_9548);
@@ -4338,7 +4338,7 @@ pub fn g_task_simple_climb_shutdown_67a250(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleClimb::StartSpeech` (0x67A320): body, thiscall, `ret 4`; 35 instruction(s) matched.
-#[hook(addr = 0x67A320, conv = thiscall, name = "CTaskSimpleClimb::StartSpeech", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x67A320, conv = thiscall, name = "CTaskSimpleClimb::StartSpeech", expect = "56 8B 74 24 08", unverified = "ai8g-5", route = "L2", hazards = "none")]
 pub fn g_task_simple_climb_start_speech_67a320(this: u32, a0: u32) -> u32 {
     let v1 = c_5df8f0_t0(a0);
     if ((v1 & 0xFF) as u8) == (0 as u8) {
@@ -4361,7 +4361,7 @@ pub fn g_task_simple_climb_start_speech_67a320(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleClimb::CreateColModel` (0x67A890): body, thiscall, `ret`; 737 instruction(s) matched.
-#[hook(addr = 0x67A890, conv = thiscall, name = "CTaskSimpleClimb::CreateColModel", expect = "83 EC 18 53 56")]
+#[hook(addr = 0x67A890, conv = thiscall, name = "CTaskSimpleClimb::CreateColModel", expect = "83 EC 18 53 56", unverified = "ai8g-5", route = "L2", hazards = "uninit-locals")]
 pub fn g_task_simple_climb_create_col_model_67a890(_this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -5298,7 +5298,7 @@ pub fn g_task_simple_climb_create_col_model_67a890(_this: u32) -> u32 {
 }
 
 /// `CTaskSimpleJetPack::ProcessAnims` (0x67B5C0): body, thiscall, `ret 4`; 53 instruction(s) matched.
-#[hook(addr = 0x67B5C0, conv = thiscall, name = "CTaskSimpleJetPack::ProcessAnims", expect = "80 3D B8 69 8E 00 01")]
+#[hook(addr = 0x67B5C0, conv = thiscall, name = "CTaskSimpleJetPack::ProcessAnims", expect = "80 3D B8 69 8E 00 01", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_jet_pack_process_anims_67b5c0(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(g::<u8>(0x8E_69B8).read());
     if (v1 as u8) == (1 as u8) {
@@ -5375,7 +5375,7 @@ pub fn g_task_simple_jet_pack_process_anims_67b5c0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleArrestPed::StartAnim` (0x68B7E0): body, thiscall, `ret 4`; 61 instruction(s) matched.
-#[hook(addr = 0x68B7E0, conv = thiscall, name = "CTaskSimpleArrestPed::StartAnim", expect = "56 57 8B 7C 24 0C")]
+#[hook(addr = 0x68B7E0, conv = thiscall, name = "CTaskSimpleArrestPed::StartAnim", expect = "56 57 8B 7C 24 0C", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_arrest_ped_start_anim_68b7e0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x18);
     let v2 = c_4d4610_c4(v1, 0, 0x8B, 0x4080_0000);
@@ -5632,7 +5632,7 @@ pub fn g_task_simple_arrest_ped_start_anim_68b7e0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskSimpleShakeFist::StartAnim` (0x692DF0): body, thiscall, `ret 4`; 20 instruction(s) matched.
-#[hook(addr = 0x692DF0, conv = thiscall, name = "CTaskSimpleShakeFist::StartAnim", expect = "8B 44 24 04 56")]
+#[hook(addr = 0x692DF0, conv = thiscall, name = "CTaskSimpleShakeFist::StartAnim", expect = "8B 44 24 04 56", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_shake_fist_start_anim_692df0(this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x18);
     let v2 = c_4d4610_c4(v1, 0, 0x90, 0x4080_0000);
@@ -5666,7 +5666,7 @@ pub fn g_thunk_fun_00691630_6935e0(this: u32) -> u32 {
 }
 
 /// `CEntitySeekPosCalculatorFixedPos::ComputeEntitySeekPos` (0x694830): body, thiscall, `ret 12`; 9 instruction(s) matched.
-#[hook(addr = 0x694830, conv = thiscall, name = "CEntitySeekPosCalculatorFixedPos::ComputeEntitySeekPos", expect = "8B 44 24 0C 50")]
+#[hook(addr = 0x694830, conv = thiscall, name = "CEntitySeekPosCalculatorFixedPos::ComputeEntitySeekPos", expect = "8B 44 24 0C 50", unverified = "ai8g-6", route = "L2", hazards = "none")]
 pub fn g_centity_seek_pos_calculator_fixed_pos_compute_entity_seek_pos_694830(
     this: u32,
     a0: u32,
@@ -5678,7 +5678,7 @@ pub fn g_centity_seek_pos_calculator_fixed_pos_compute_entity_seek_pos_694830(
 }
 
 /// `CTaskComplexInvestigateDeadPed::ComputeTargetPos` (0x696EE0): body, thiscall, `ret 8`; 58 instruction(s) matched.
-#[hook(addr = 0x696EE0, conv = thiscall, name = "CTaskComplexInvestigateDeadPed::ComputeTargetPos", expect = "83 EC 24 56 8B F1")]
+#[hook(addr = 0x696EE0, conv = thiscall, name = "CTaskComplexInvestigateDeadPed::ComputeTargetPos", expect = "83 EC 24 56 8B F1", unverified = "ai8g-6", route = "L2", hazards = "heap-writes,uninit-locals")]
 pub fn g_task_complex_investigate_dead_ped_compute_target_pos_696ee0(this: u32, a0: u32, a1: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -5926,7 +5926,7 @@ pub fn g_task_complex_investigate_dead_ped_compute_target_pos_696ee0(this: u32, 
 }
 
 /// `CTaskComplexExtinguishFires::GetNearestFire` (0x697600): body, thiscall, `ret 4`; 51 instruction(s) matched.
-#[hook(addr = 0x697600, conv = thiscall, name = "CTaskComplexExtinguishFires::GetNearestFire", expect = "56 8B 74 24 08")]
+#[hook(addr = 0x697600, conv = thiscall, name = "CTaskComplexExtinguishFires::GetNearestFire", expect = "56 8B 74 24 08", unverified = "ai8g-6", route = "L2", hazards = "none")]
 pub fn g_task_complex_extinguish_fires_get_nearest_fire_697600(_this: u32, a0: u32) -> u32 {
     let v1 = rd::<u32>(p(a0), 0x14);
     if v1 == 0 {
@@ -6029,7 +6029,7 @@ pub fn g_task_complex_extinguish_fires_get_nearest_fire_697600(_this: u32, a0: u
 }
 
 /// `CCover::FindVectorFromFirstToMissingVertex` (0x698790): body, cdecl, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x698790, conv = cdecl, name = "CCover::FindVectorFromFirstToMissingVertex", expect = "8B 54 24 08 0F B7 0A")]
+#[hook(addr = 0x698790, conv = cdecl, name = "CCover::FindVectorFromFirstToMissingVertex", expect = "8B 54 24 08 0F B7 0A", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
 pub fn g_ccover_find_vector_from_first_to_missing_vertex_698790(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 {
     let v1 = u32::from(rd::<u16>(p(a1), 0));
     let v2 = rd::<u32>(p(a2), 0);
@@ -6259,7 +6259,7 @@ pub fn g_ccover_find_vector_from_first_to_missing_vertex_698790(a0: u32, a1: u32
 }
 
 /// `CCover::Find2HighestPoints` (0x6988E0): body, cdecl, `ret`; 66 instruction(s) matched.
-#[hook(addr = 0x6988E0, conv = cdecl, name = "CCover::Find2HighestPoints", expect = "8B 4C 24 04 8B 54 24 08")]
+#[hook(addr = 0x6988E0, conv = cdecl, name = "CCover::Find2HighestPoints", expect = "8B 4C 24 04 8B 54 24 08", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
 pub fn g_ccover_find2_highest_points_6988e0(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 {
     let v1 = u32::from(rd::<u16>(p(a0), 0));
     let v2 = u32::from(rd::<u16>(p(a0), 2));
@@ -6363,7 +6363,7 @@ pub fn g_ccover_find2_highest_points_6988e0(a0: u32, a1: u32, a2: u32, a3: u32) 
 }
 
 /// `CCover::FindVectorFromDir` (0x698D60): body, cdecl, `ret`; 22 instruction(s) matched.
-#[hook(addr = 0x698D60, conv = cdecl, name = "CCover::FindVectorFromDir", expect = "83 EC 0C 0F B6 44 24 14")]
+#[hook(addr = 0x698D60, conv = cdecl, name = "CCover::FindVectorFromDir", expect = "83 EC 0C 0F B6 44 24 14", unverified = "ai8g-6", route = "L2", hazards = "heap-writes,x87-transcendental")]
 pub fn g_ccover_find_vector_from_dir_698d60(a0: u32, a1: u32) -> u32 {
     let v1 = xi((a1 & 0xFF) as i32);
     let v2 = v1.fmul_m(g::<f32>(0x85_9BBC).read());
@@ -6379,7 +6379,7 @@ pub fn g_ccover_find_vector_from_dir_698d60(a0: u32, a1: u32) -> u32 {
 }
 
 /// `CCoverPoint::CanAccommodateAnotherPed` (0x698E70): body, thiscall, `ret`; 22 instruction(s) matched.
-#[hook(addr = 0x698E70, conv = thiscall, name = "CCoverPoint::CanAccommodateAnotherPed", expect = "0F BE 01 83 E8 00")]
+#[hook(addr = 0x698E70, conv = thiscall, name = "CCoverPoint::CanAccommodateAnotherPed", expect = "0F BE 01 83 E8 00", unverified = "ai8g-6", route = "L2", hazards = "none")]
 pub fn g_ccover_point_can_accommodate_another_ped_698e70(this: u32) -> u32 {
     let v1 = rd::<u8>(p(this), 0) as i8 as i32 as u32;
     if v1 == 0 {
@@ -6405,7 +6405,7 @@ pub fn g_ccover_point_can_accommodate_another_ped_698e70(this: u32) -> u32 {
 }
 
 /// `CTaskAllocatorKillThreatsBasic::ProcessGroup` (0x69C7E0): body, thiscall, `ret 4`; 37 instruction(s) matched.
-#[hook(addr = 0x69C7E0, conv = thiscall, name = "CTaskAllocatorKillThreatsBasic::ProcessGroup", expect = "56 8B F1 8A 46 10")]
+#[hook(addr = 0x69C7E0, conv = thiscall, name = "CTaskAllocatorKillThreatsBasic::ProcessGroup", expect = "56 8B F1 8A 46 10", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_allocator_kill_threats_basic_process_group_69c7e0(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x10));
     if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
@@ -6517,7 +6517,7 @@ pub fn g_task_allocator_kill_threats_basic_process_group_69c7e0(this: u32, a0: u
 }
 
 /// `CTaskAllocatorKillThreatsDriveby::ProcessGroup` (0x69CBC0): body, thiscall, `ret 4`; 37 instruction(s) matched.
-#[hook(addr = 0x69CBC0, conv = thiscall, name = "CTaskAllocatorKillThreatsDriveby::ProcessGroup", expect = "56 8B F1 8A 46 10")]
+#[hook(addr = 0x69CBC0, conv = thiscall, name = "CTaskAllocatorKillThreatsDriveby::ProcessGroup", expect = "56 8B F1 8A 46 10", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_allocator_kill_threats_driveby_process_group_69cbc0(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x10));
     if (((v1 & 0xFF) & 0xFF) as u8) != (0 as u8) {
@@ -6629,7 +6629,7 @@ pub fn g_task_allocator_kill_threats_driveby_process_group_69cbc0(this: u32, a0:
 }
 
 /// `CTaskAllocatorAttack::ProcessGroup` (0x69D0C0): body, thiscall, `ret 4`; 29 instruction(s) matched.
-#[hook(addr = 0x69D0C0, conv = thiscall, name = "CTaskAllocatorAttack::ProcessGroup", expect = "56 8B F1 8A 46 18")]
+#[hook(addr = 0x69D0C0, conv = thiscall, name = "CTaskAllocatorAttack::ProcessGroup", expect = "56 8B F1 8A 46 18", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_allocator_attack_process_group_69d0c0(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x18));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -6677,7 +6677,7 @@ pub fn g_task_allocator_attack_process_group_69d0c0(this: u32, a0: u32) -> u32 {
 }
 
 /// `CTaskAllocatorPlayerCommandAttack::ProcessGroup` (0x69D110): body, thiscall, `ret 4`; 38 instruction(s) matched.
-#[hook(addr = 0x69D110, conv = thiscall, name = "CTaskAllocatorPlayerCommandAttack::ProcessGroup", expect = "56 8B F1 8A 46 18")]
+#[hook(addr = 0x69D110, conv = thiscall, name = "CTaskAllocatorPlayerCommandAttack::ProcessGroup", expect = "56 8B F1 8A 46 18", unverified = "ai8h-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_allocator_player_command_attack_process_group_69d110(this: u32, a0: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x18));
     if (((v1 & 0xFF) & 0xFF) as u8) == (0 as u8) {
@@ -6755,7 +6755,7 @@ pub fn g_task_allocator_player_command_attack_process_group_69d110(this: u32, a0
 }
 
 /// `CTaskAllocator::operator delete` (0x69D990): body, cdecl, `ret`; 16 instruction(s) matched.
-#[hook(addr = 0x69D990, conv = cdecl, name = "CTaskAllocator::operator delete", expect = "8B 0D BC 44 B7 00")]
+#[hook(addr = 0x69D990, conv = cdecl, name = "CTaskAllocator::operator delete", expect = "8B 0D BC 44 B7 00", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
 pub fn g_task_allocator_operator_delete_69d990(a0: u32) -> u32 {
     let v1 = g::<u32>(0xB7_44BC).read();
     let v2 = rd::<u32>(p(v1), 0);
