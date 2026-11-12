@@ -6770,3 +6770,22 @@ CStats::BuildStatLine@0xC1AED8:0x480:RW
 0x5FFA20@ecx:0x50:RW
 0x6997E0@0xC197C0:0xB00:D
 0x698F30@0xC197C0:0xB00:D
+
+# VERIFIER-9 (std7-anim-1): CQuaternion::Normalise normalises this (stack and heap quaternions).
+0x4D1610@ecx:0x10:RW
+# VERIFIER-9 (std7-math-1): CompressFromFullMatrix writes this (position +0..+0xB, the six direction bytes +0xC..+0x11).
+0x59BAD0@ecx:0x12:RW
+# VERIFIER-9 (std8-pop-1, std7-script-1): Find2NodesForCarCreation's two CNodeAddress outputs; RemoveScriptFromList
+# relinks the neighbouring scripts in CTheScripts::ScriptsArray (0xA8B430, 96 x 0x100) and the list heads before it;
+# ScriptAttachAnimGroupToCharModel sets the anim group of a CPedModelInfo (ms_pedModelInfoStore, 0x44 each).
+0x452090@arg3:4:RW
+0x452090@arg4:4:RW
+0x464BD0@0xA8B400:0x6100:D
+0x474800@0xB478F0:0x4400:D
+# VERIFIER-9 (std8-render-1): FUN_004A8E30 (FX / IK managers, several statics: the whole .data/.bss); RegisterRope fills
+# CRopes::aRopes (0xB768B8, 8 x 0x328).
+0x4A8E30@0x8A4000:0x3FA000:D
+0x556B40@0xB768B8:0x1940:D
+# VERIFIER-9 (std8-render-1): the RW callbacks store their result through the data pointer (the caller's local).
+0x722220@arg1:4:RW
+0x734930@arg1:4:RW
