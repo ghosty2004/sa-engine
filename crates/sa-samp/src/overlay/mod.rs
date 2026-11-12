@@ -53,6 +53,9 @@ impl<V: View> WorldView for EngineWorld<'_, V> {
     fn ped_position(&self, ped: PedRef) -> Option<Vec3> {
         self.game.ped_snapshot(ped).ok().map(|s| s.matrix.pos)
     }
+    fn line_clear(&self, a: Vec3, b: Vec3) -> bool {
+        render::line_clear(a, b)
+    }
 }
 
 impl Overlay {
@@ -86,7 +89,7 @@ impl<V: View> NativeGame<V> {
         for t in ov.ui.take_game_texts() {
             ov.big.show(&t.text, t.time_ms, t.style);
         }
-        let heights = heights_for_width(w as u32);
+        let heights = heights_for_width(w as u32, ov.ui.options().font_size);
         if ov.atlas.as_ref().is_none_or(|a| a.heights() != heights) {
             ov.atlas = Some(FontAtlas::build(heights));
             ov.raster = 0;

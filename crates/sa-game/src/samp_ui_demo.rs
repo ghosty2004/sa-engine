@@ -16,7 +16,7 @@ use sa_samp_api::hooks::FramePhase;
 use sa_samp_api::peds::Peds as _;
 use sa_samp_api::ui::{
     ChatKind, ChatMessage, DialogSpec, DialogStyle, Nametag, NametagAnchor, SampUi, ScoreRow, TdAlign,
-    TextDrawSpec, TextLabel3d, UiEvent,
+    TextDrawSpec, TextLabel3d, UiEvent, UiOptions,
 };
 use sa_samp_api::{GameAdapter as _, GameState, Rgba, SampHost as _, Vec3};
 
@@ -61,6 +61,11 @@ fn chat(ui: &mut dyn SampUi, kind: ChatKind, name: &str, name_rgba: u32, text: &
         name_colour: Rgba::from_rgba_u32(name_rgba),
         text: text.into(),
         colour: Rgba::from_rgba_u32(rgba),
+        time: DEMO.with(|d| {
+            // A clock that advances with the demo (samp-rs passes the local time).
+            let n = d.borrow().frames;
+            [20, 15 + (n / 60) as u8, (n % 60) as u8]
+        }),
     });
 }
 
@@ -424,6 +429,20 @@ fn script(game: &mut NativeGame<EngineView>) {
                 ui.set_scoreboard(None);
             }
         }
+        // `/timestamp` and `/pagesize 14` as samp-rs would apply them, then F6 opens the input (the
+        // scrollbar shows while it is open) and Page Up scrolls the history.
+        32 => {
+            if let Some(ui) = game.ui() {
+                ui.set_options(&UiOptions {
+                    timestamps: true,
+                    chat_page_size: 14,
+                    ..UiOptions::default()
+                });
+            }
+            key(Key::Fn(6));
+            type_text("/pagesize 14");
+        }
+        34 => key(Key::PageUp),
         _ => {}
     }
     // The client side: drain the events and answer them like a server would.
