@@ -20,7 +20,9 @@ use std::time::Duration;
 
 use web_time::Instant;
 
+use samp_client::classsel::{self, ClassSelection};
 use samp_client::footsync::{self, FootSender, KeyContext, LocalSample, Rotation};
+use samp_client::lifecycle::{self, NetGame};
 use samp_client::netclient::{Event, NetClient, NetPacket};
 use samp_proto::auth::AuthTable;
 use samp_proto::raknet::Reliability;
@@ -46,7 +48,6 @@ pub struct NetHooks {
     connected: bool,
     on_foot_rate: u32,
     spawn: Option<player::SpawnInfo>,
-    spawn_requested: bool,
     spawned: bool,
     sender: FootSender,
     last_stats: Option<Instant>,
@@ -59,7 +60,31 @@ pub struct NetHooks {
     car_rotation: Option<samp_proto::types::Quat>,
     /// Remote players' names (RPC 137), for player chat lines.
     names: HashMap<u16, String>,
+    /// samp's netgame state and connect timer (`Connecting to` 3 s after `Started`).
+    netgame: NetGame,
+    /// samp's class selection (arrows, Shift; RPC 128 / 129).
+    class_sel: ClassSelection,
+    /// `HOST:PORT` for the `Connecting to` line.
+    server_text: (String, u16),
+    /// Synthetic Shift for headless runs (`SA_SAMP_AUTO_SPAWN=1`): the offscreen mode has no keyboard.
+    auto_spawn: bool,
 }
+
+/// samp's debug chat colour (`Started`, `Connecting to`, `Connected. Joining the game...`, `Connected to`).
+const DEBUG_COLOUR: u32 = 0xA9C4_E4FF;
+/// samp's `Started` line (samp-rs `ui::core::msg::STARTED`).
+const STARTED: &str = "{FFFFFF}SA-MP {B9C9BF}0.3.7-R4 {FFFFFF}Started";
+/// `CKeyboardState` offsets of the keys class selection polls (NewKeyState 0xB73190): left, right, shift
+/// (lshift | rshift).
+const KEY_LEFT: u16 = 0x22A;
+const KEY_RIGHT: u16 = 0x22C;
+const KEY_SHIFT: u16 = 0x260;
+/// samp's not-connected scene (samp-rs `connecting_tick`, samp.dll 0x100089B0): the ped parked here, the
+/// camera fixed at `CONNECT_CAMERA` looking at `CONNECT_LOOK_AT` with a jump cut, weather 1, HUD off.
+const CONNECT_PED_POS: Vec3 = Vec3::new(1133.05, -2038.40, 69.1);
+const CONNECT_CAMERA: Vec3 = Vec3::new(1093.0, -2036.0, 90.0);
+const CONNECT_LOOK_AT: Vec3 = Vec3::new(384.0, -1557.0, 20.0);
+const CONNECT_WEATHER: u8 = 1;
 
 /// The auth table (third-party data, never committed): `--samp-auth FILE` or `SAMP_AUTH_TABLE`; in the browser
 /// its text, which the page fetches from the local web server (`SA_SAMP_AUTH`).
@@ -137,7 +162,8 @@ impl NetHooks {
     pub fn connect(target: &Target, auth: Option<&Path>, journal: Journal) -> Result<Self, String> {
         let mut net = open_session(target, auth_table(auth)?)?;
         net.set_serial_seed(&serial_seed());
-        net.connect().map_err(|e| format!("samp: connect: {e}"))?;
+        // samp connects from its connect tick, 3 s after the netgame was created (`tick`).
+        let now = Instant::now();
         Ok(Self {
             net,
             start: Instant::now(),
@@ -145,7 +171,6 @@ impl NetHooks {
             connected: false,
             on_foot_rate: 30,
             spawn: None,
-            spawn_requested: false,
             spawned: false,
             sender: FootSender::default(),
             last_stats: None,
@@ -156,6 +181,10 @@ impl NetHooks {
             last_car_sync: None,
             car_rotation: None,
             names: HashMap::new(),
+            netgame: NetGame::new(0),
+            class_sel: ClassSelection::new(now),
+            server_text: (target.host.clone(), target.port),
+            auto_spawn: std::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
         })
     }
 
@@ -170,9 +199,27 @@ impl NetHooks {
         if !self.world_set_up {
             self.world_set_up = true;
             self.world_setup(game);
+            // samp prints this when its netgame object is created.
+            self.debug_line(game, STARTED);
+        }
+        let now_ms = now.duration_since(self.start).as_millis() as u64;
+        if self.netgame.connect_due(now_ms) {
+            let line = lifecycle::msg::connecting(&self.server_text.0, self.server_text.1);
+            self.debug_line(game, &line);
+            match self.net.connect() {
+                Ok(()) => self.note(format!("{line} (connect tick)")),
+                Err(e) => self.note(format!("connect: {e}")),
+            }
+            self.netgame
+                .attempt_started(Instant::now().duration_since(self.start).as_millis() as u64);
         }
         for e in self.net.tick(now) {
             self.on_event(e, game);
+        }
+        if !self.netgame.connected() {
+            self.connecting_scene(game);
+        } else if self.class_sel.is_active() {
+            self.class_selection_tick(game, now);
         }
         self.ui_events(game);
         if self.spawned {
@@ -237,14 +284,16 @@ impl NetHooks {
                 report(self, "set_weather", game.set_weather(g.weather));
                 report(self, "set_gravity", game.set_gravity(g.gravity));
                 report(self, "set_zone_names", game.set_zone_names(false));
-                self.net.send_rpc(
-                    &player::PlayerRequestClass { class_index: 0 },
-                    Reliability::Reliable,
-                );
-                self.note("requesting class 0".into());
+                self.netgame.on_init_game();
+                self.debug_line(game, &format!("Connected to {{B9C9BF}}{}", g.server_name));
+                // samp enters class selection on InitGame; its first tick sends RPC 128 for class 0.
+                self.enter_class_selection(game, g.spawns_available);
             }
             Event::Packet(p) => {
                 self.note(format!("packet {p:?}"));
+                if p == NetPacket::Accepted {
+                    self.debug_line(game, lifecycle::msg::JOINING);
+                }
                 if matches!(
                     p,
                     NetPacket::ServerClosed | NetPacket::ConnectionLost | NetPacket::Banned
@@ -277,18 +326,18 @@ impl NetHooks {
                     "class response: selectable={} skin={} pos=({:.1},{:.1},{:.1})",
                     r.selectable, r.spawn.skin, r.spawn.pos.x, r.spawn.pos.y, r.spawn.pos.z
                 ));
-                self.spawn = Some(r.spawn);
-                if r.selectable != 0 && !self.spawn_requested {
-                    self.spawn_requested = true;
-                    self.net
-                        .send_rpc(&player::PlayerRequestSpawn, Reliability::Reliable);
-                    self.note("requesting spawn".into());
+                if r.selectable != 0 {
+                    // samp: the spawn info is stored, the ped loses its weapons and shows the class skin.
+                    self.spawn = Some(r.spawn);
+                    report(self, "clear_weapons", game.clear_weapons(me));
+                    self.set_skin(game, r.spawn.skin as i32);
                 }
+                self.class_sel.on_class_response(r.selectable != 0);
             }
             P::SetSpawnInfo(s) => self.spawn = Some(s.spawn),
             P::PlayerRequestSpawnResponse(r) => {
                 self.note(format!("spawn response {}", r.response));
-                if r.response != 0 {
+                if self.class_sel.on_spawn_response(r.response) {
                     self.spawn_local(game);
                 }
             }
@@ -591,6 +640,7 @@ impl NetHooks {
             self.note("spawn: no spawn info or no local player".into());
             return;
         };
+        self.class_sel.leave();
         report(self, "restore", game.restore());
         report(self, "behind_player", game.behind_player());
         report(self, "set_hud_visible", game.set_hud_visible(true));
@@ -622,13 +672,7 @@ impl NetHooks {
             "set_ped_heading",
             game.set_ped_heading(me, s.rotation, false),
         );
-        if s.skin != 0 && game.model_loaded(ModelId(s.skin as i32)) {
-            report(
-                self,
-                "set_ped_model",
-                game.set_ped_model(me, ModelId(s.skin as i32)),
-            );
-        }
+        self.set_skin(game, s.skin as i32);
         self.spawned = true;
         self.sender.reset();
         self.net
@@ -637,6 +681,93 @@ impl NetHooks {
             "spawned at ({:.2},{:.2},{:.2}) heading {} skin {} (skin change natively: later)",
             s.pos.x, s.pos.y, s.pos.z, s.rotation, s.skin
         ));
+    }
+
+    /// A type-8 (debug) chat line, as samp prints its connection lines.
+    fn debug_line(&self, game: &mut dyn GameAdapter, line: &str) {
+        self.note(format!("chat (debug): {line}"));
+        if let Some(ui) = game.ui() {
+            ui.chat_add(&ChatMessage {
+                kind: ChatKind::Debug,
+                name: String::new(),
+                name_colour: Rgba::from_rgba_u32(DEBUG_COLOUR),
+                text: line.to_string(),
+                colour: Rgba::from_rgba_u32(DEBUG_COLOUR),
+                time: clock_now(),
+            });
+        }
+    }
+
+    /// The class skin on the local ped, when the model is loaded.
+    fn set_skin(&self, game: &mut dyn GameAdapter, skin: i32) {
+        let Some(me) = game.local_player() else { return };
+        if skin != 0 && game.model_loaded(ModelId(skin)) {
+            report(self, "set_ped_model", game.set_ped_model(me, ModelId(skin)));
+        }
+    }
+
+    /// Every frame until InitGame, like samp.dll 0x100089B0 (samp-rs `connecting_tick`): weather 1, HUD off, the
+    /// ped parked under the camera, the camera fixed above Verona Beach looking at downtown Los Santos.
+    fn connecting_scene(&mut self, game: &mut dyn GameAdapter) {
+        report(self, "set_weather", game.set_weather(CONNECT_WEATHER));
+        report(self, "set_hud_visible", game.set_hud_visible(false));
+        if let Some(me) = game.local_player() {
+            report(self, "set_ped_position", game.set_ped_position(me, CONNECT_PED_POS));
+        }
+        report(self, "restore", game.restore());
+        report(self, "set_fixed_position", game.set_fixed_position(CONNECT_CAMERA, Vec3::default()));
+        report(self, "restore", game.restore());
+        report(self, "point_at", game.point_at(CONNECT_LOOK_AT, CameraCut::Cut));
+    }
+
+    /// samp's class selection entry (samp-rs `enter_class_selection`): not spawned, health 100, no control.
+    fn enter_class_selection(&mut self, game: &mut dyn GameAdapter, count: u32) {
+        self.note(format!("entering class selection ({count} class(es))"));
+        self.spawned = false;
+        self.sender.reset();
+        if let Some(me) = game.local_player() {
+            report(self, "set_ped_health", game.set_ped_health(me, 100.0));
+        }
+        report(self, "set_player_control", game.set_player_control(false));
+        self.class_sel.enter(Instant::now(), count);
+    }
+
+    /// One frame of class selection (samp-rs `class_selection_tick`): HUD off while no menu is open, then the
+    /// arrows (previous / next class with samp's sounds) and Shift (spawn request).
+    fn class_selection_tick(&mut self, game: &mut dyn GameAdapter, now: Instant) {
+        if !game.menu_active() {
+            report(self, "set_hud_visible", game.set_hud_visible(false));
+        }
+        let keys = classsel::Keys {
+            left: game.game_key_down(KEY_LEFT),
+            right: game.game_key_down(KEY_RIGHT),
+            shift: game.game_key_down(KEY_SHIFT) || self.auto_spawn,
+        };
+        match self.class_sel.tick(now, keys) {
+            Some(classsel::Action::RequestClass(i)) => {
+                self.note(format!("requesting class {i}"));
+                self.net
+                    .send_rpc(&player::PlayerRequestClass { class_index: i }, Reliability::Reliable);
+            }
+            Some(classsel::Action::ChangeClass { index, sound }) => {
+                if let Some(me) = game.local_player()
+                    && let Ok(s) = game.ped_snapshot(me)
+                {
+                    report(self, "one_off_sound", game.one_off_sound(s.matrix.pos, sound));
+                }
+                self.note(format!("requesting class {index} (sound {sound})"));
+                self.net.send_rpc(
+                    &player::PlayerRequestClass { class_index: index },
+                    Reliability::Reliable,
+                );
+            }
+            Some(classsel::Action::RequestSpawn) => {
+                self.note("requesting spawn".into());
+                self.net
+                    .send_rpc(&player::PlayerRequestSpawn, Reliability::Reliable);
+            }
+            None => {}
+        }
     }
 
     /// On-foot sync (207) when due, stats sync (205) every second.

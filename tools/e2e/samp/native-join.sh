@@ -24,6 +24,8 @@ FRAMES="${FRAMES:-1600}"
 # W held from iteration 1000 for 450 iterations (after the server's commands): the server sees the walk in the
 # on-foot sync.
 export SA_GAME_WALK="${SA_GAME_WALK:-1000:450}"
+# The offscreen run has no keyboard: Shift for class selection is synthetic (samp's 2 s guard still applies).
+export SA_SAMP_AUTO_SPAWN="${SA_SAMP_AUTO_SPAWN:-1}"
 SERVER_SRC="$SA_ROOT/re/samp/server"
 SRV="$OUT/server"
 SLOG="$OUT/server.log"
