@@ -53,3 +53,8 @@
 0x669D30  # FUN_00669d30 (STD-13 lane )
 0x678E60  # CTaskSimpleInAir::DeleteAnimCB (hooked on worktree-agent-a0c5043f7469fc732)
 0x664770  # FUN_00664770 (catalogue state 'implemented' from PORT-AI-1 without a hook here: left to the main session)
+# STD-14 (2026-11-12): generated bodies call ComputeEntityBoundingBoxCornersUncached 0x5F1FA0 as a one-argument
+# thiscall (the original pushes three cdecl arguments); the null entity crashed the enter-car walk
+0x5F2B80
+0x5F3730
+0x5F3B40
