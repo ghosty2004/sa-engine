@@ -15,7 +15,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{jp5, jne_mask, model_info, rd, wr, x};
+use crate::common::{jne_mask, jp5, model_info, rd, wr, x};
 
 orig! {
     /// `CVehicleAnimGroup::ComputeAnimDoorOffsets(CVector* ret, int door)` (0x6E3D10, `ret 8`)
@@ -74,13 +74,21 @@ fn write3(p: GPtr<u8>, v: [f32; 3]) {
 /// The entity's position (`m_matrix` +0x30, or the placement +4 without a matrix).
 fn entity_pos(e: GPtr<u8>) -> GPtr<u8> {
     let m = rd::<GPtr<u8>>(e, 0x14);
-    if m.is_null() { e.byte_add(4) } else { m.byte_add(0x30) }
+    if m.is_null() {
+        e.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    }
 }
 
 /// The front seat dummy (dummy 0 for a boat model, else dummy 4).
 fn front_dummy(mi: GPtr<u8>) -> [f32; 3] {
     let s = rd::<GPtr<u8>>(mi, 0x5C);
-    read3(if rd::<u32>(mi, 0x3C) == 5 { s } else { s.byte_add(0x30) })
+    read3(if rd::<u32>(mi, 0x3C) == 5 {
+        s
+    } else {
+        s.byte_add(0x30)
+    })
 }
 
 /// The rear seat dummy (dummy 5).
@@ -124,7 +132,11 @@ pub fn get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) ->
     let mat = rd::<GPtr<u8>>(veh, 0x14);
     let vtype = rd::<u32>(veh, 0x590);
     if vtype != 9 && (rd::<u32>(hd, 0xCC) >> 9) & 1 == 0 {
-        let seat_bits = if rd::<u8>(hd, 0xDE) == 0x65 && (door == 11 || door == 9) { 0 } else { rd::<u32>(hd, 0xD4) };
+        let seat_bits = if rd::<u8>(hd, 0xDE) == 0x65 && (door == 11 || door == 9) {
+            0
+        } else {
+            rd::<u32>(hd, 0xD4)
+        };
         let seat = f32::from_bits(seat_bits);
         let ty = match door {
             10 | 8 => 0,
@@ -159,7 +171,14 @@ pub fn get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) ->
         let mut r = [0f32; 3];
         multiply3x3(vp(&mut r), mat, vp(&mut b));
         let p = read3(entity_pos(veh));
-        write3(out, [f(x(p[0]).fadd_m(r[0])), f(x(p[1]).fadd_m(r[1])), f(x(p[2]).fadd_m(r[2]))]);
+        write3(
+            out,
+            [
+                f(x(p[0]).fadd_m(r[0])),
+                f(x(p[1]).fadd_m(r[1])),
+                f(x(p[2]).fadd_m(r[2])),
+            ],
+        );
         return out;
     }
     if door == 0x12 {
@@ -176,7 +195,11 @@ pub fn get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) ->
         return out;
     }
     let mut c = door_offset(hd, 0);
-    let mut a = if door == 11 || door == 9 { rear_dummy(mi) } else { front_dummy(mi) };
+    let mut a = if door == 11 || door == 9 {
+        rear_dummy(mi)
+    } else {
+        front_dummy(mi)
+    };
     let right = door == 9 || door == 8;
     if vtype == 9 {
         if right {
@@ -196,7 +219,11 @@ pub fn get_position_to_open_car_door(out: GPtr<u8>, veh: GPtr<u8>, door: i32) ->
     } else {
         a[0] = f(x(a[0]).fsub(seat));
     }
-    let mut b = [f(x(a[0]).fsub_m(c[0])), f(x(a[1]).fsub_m(c[1])), f(x(a[2]).fsub_m(c[2]))];
+    let mut b = [
+        f(x(a[0]).fsub_m(c[0])),
+        f(x(a[1]).fsub_m(c[1])),
+        f(x(a[2]).fsub_m(c[2])),
+    ];
     let mut r = [0f32; 3];
     matrix_mul_vector(vp(&mut r), mat, vp(&mut b));
     write3(out, r);
@@ -249,7 +276,11 @@ pub fn is_room_for_ped_to_leave_car(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) 
         }
         let mut r = [0f32; 3];
         multiply3x3(vp(&mut r), mat, vp(&mut o));
-        t = [f(x(r[0]).fadd_m(t[0])), f(x(r[1]).fadd_m(t[1])), f(x(r[2]).fadd_m(t[2]))];
+        t = [
+            f(x(r[0]).fadd_m(t[0])),
+            f(x(r[1]).fadd_m(t[1])),
+            f(x(r[2]).fadd_m(t[2])),
+        ];
     }
     if !jp5(x(rd::<f32>(mat, 0x28)), x(0.0)) {
         q[2] = f(x(q[2]).fadd_m(0.5));
@@ -275,7 +306,10 @@ pub fn is_room_for_ped_to_leave_car(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) 
     let bld = u32::from(vtype != 6);
     let [tx, ty, tz] = t.map(f32::to_bits);
     let hit = world_test_sphere_against_world(tx, ty, tz, 0x3EB3_3333, veh, bld, 1, 0, 1, 0, 0);
-    if !hit.is_null() && !(rd::<u16>(hit, 0x22) == 0x260 && rd::<u16>(veh, 0x22) == 0x241) && hit != rd::<GPtr<u8>>(veh, 0xFC) {
+    if !hit.is_null()
+        && !(rd::<u16>(hit, 0x22) == 0x260 && rd::<u16>(veh, 0x22) == 0x241)
+        && hit != rd::<GPtr<u8>>(veh, 0xFC)
+    {
         return 0;
     }
     // CColPoint (0x2C bytes; position +0..+8), zeroed z as the original's locals
@@ -285,7 +319,10 @@ pub fn is_room_for_ped_to_leave_car(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) 
     let entp = GPtr::from_raw(&raw mut ent).cast::<u8>();
     let down = world_process_vertical_line(vp(&mut t), 0x447A_0000, cpp, entp, 1, 0, 0, 1, 0, 0, 0);
     let ground = f32::from_bits(cp[2]);
-    if down != 0 && !jne_mask(x(ground), x(t[2]), 0x41) && !jne_mask(x(t[2]).fadd_m(kf(0x858CC8)), x(ground), 0x41) {
+    if down != 0
+        && !jne_mask(x(ground), x(t[2]), 0x41)
+        && !jne_mask(x(t[2]).fadd_m(kf(0x858CC8)), x(ground), 0x41)
+    {
         return 0;
     }
     let model = rd::<u16>(veh, 0x22);
@@ -324,7 +361,13 @@ pub fn is_room_for_ped_to_leave_car(veh: GPtr<u8>, door: i32, offset: GPtr<u8>) 
        unverified = "std14-veh-1", route = "L2", hazards = "ax-al-return", recs = "enter-car",
        note = "entry chunk 0x4058AC (`mov ebp, [esi+0x464]`); the towed-vehicle path test passes the towed vehicle, and door 0x12 also enters the bike branch, as the bytes do (gta-reversed differs)")]
 pub fn get_nearest_car_door(ped: GPtr<u8>, veh: GPtr<u8>, out: GPtr<u8>, door: GPtr<u8>) -> u8 {
-    let off = |taken: bool| if taken { GPtr::<u8>::from_addr(QUICK_DRAGGED_OUT_OFFSET) } else { GPtr::NULL };
+    let off = |taken: bool| {
+        if taken {
+            GPtr::<u8>::from_addr(QUICK_DRAGGED_OUT_OFFSET)
+        } else {
+            GPtr::NULL
+        }
+    };
     let mut drv_off = off(rd::<u32>(veh, 0x460) != 0);
     let mut psg_off = off(rd::<u32>(veh, 0x464) != 0);
     let mut lf = [0f32; 3];
@@ -401,7 +444,9 @@ pub fn get_nearest_car_door(ped: GPtr<u8>, veh: GPtr<u8>, out: GPtr<u8>, door: G
         };
     }
     let drv = rd::<GPtr<u8>>(veh, 0x460);
-    if !drv.is_null() && (ped_groups_are_in_same_group(drv, ped) != 0 || rd::<u32>(drv, 0x46C) & 0x2000_0000 != 0) {
+    if !drv.is_null()
+        && (ped_groups_are_in_same_group(drv, ped) != 0 || rd::<u32>(drv, 0x46C) & 0x2000_0000 != 0)
+    {
         return 0;
     }
     let left_first = rd::<u8>(veh, 0x429) & 2 != 0 || !jne_mask(sq(dr), sq(dl), 0x41);
@@ -424,7 +469,9 @@ pub fn get_nearest_car_door(ped: GPtr<u8>, veh: GPtr<u8>, out: GPtr<u8>, door: G
     if !p0.is_null()
         && vtype != 9
         && (rd::<u32>(hd, 0xCC) >> 9) & 1 == 0
-        && (ped_groups_are_in_same_group(p0, ped) != 0 || rd::<u32>(p0, 0x46C) & 0x2000_0000 != 0 || rd::<u8>(veh, 0x4A4) == 2)
+        && (ped_groups_are_in_same_group(p0, ped) != 0
+            || rd::<u32>(p0, 0x46C) & 0x2000_0000 != 0
+            || rd::<u8>(veh, 0x4A4) == 2)
         && is_room_for_ped_to_leave_car_o(veh, 10, drv_off) != 0
     {
         return take(10, lf);
@@ -445,7 +492,11 @@ fn bike_side_entry(ped: GPtr<u8>, veh: GPtr<u8>, door: GPtr<u8>) -> bool {
     if jp5(x(rd::<f32>(m, 8)).fabs(), x(kf(0x858B1C))) {
         return false;
     }
-    let vp_ = read3(if m.is_null() { veh.byte_add(4) } else { m.byte_add(0x30) });
+    let vp_ = read3(if m.is_null() {
+        veh.byte_add(4)
+    } else {
+        m.byte_add(0x30)
+    });
     let pp = read3(entity_pos(ped));
     let dx = x(pp[0]).fsub_m(vp_[0]);
     let dy = x(pp[1]).fsub_m(vp_[1]);

@@ -66,7 +66,10 @@ pub fn control_sub_task(this: GPtr<u8>, ped: GPtr<u8>) -> GPtr<u8> {
     }
     if rd::<u32>(ped, 0x598) != 6 {
         let d = rd::<GPtr<u8>>(v, 0x460);
-        if !d.is_null() && ped_is_player(d) != 0 && rd::<u32>(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x460), 0x530) == 0x3F {
+        if !d.is_null()
+            && ped_is_player(d) != 0
+            && rd::<u32>(rd::<GPtr<u8>>(rd::<GPtr<u8>>(this, 0xC), 0x460), 0x530) == 0x3F
+        {
             return create_sub_task(this, 0xCB, ped);
         }
     }
