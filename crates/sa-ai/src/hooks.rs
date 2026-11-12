@@ -170,6 +170,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::pass_object_tasks::HOOKS,
     crate::interesting_events_scan::HOOKS,
     crate::fight_sphere_col_and_anim_cb::HOOKS,
+    crate::stare_at_ped_clone::HOOKS,
+    crate::fight_ground_target::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
