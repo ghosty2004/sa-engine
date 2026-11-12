@@ -11,7 +11,7 @@ use crate::pools::{PoolPtr, Slot, call, pool_construct};
 /// `CPool<CStuntJump>::CPool(int32 size, const char* name)` (stub 0x49C8F0 → .HOODLUM 0x156FA80,
 /// `ret 8`): slot 0x44 (`imul eax, eax, 0x44`), called by `CStuntJumpManager::Init`.
 #[hook(addr = 0x49C8F0, conv = thiscall, name = "thunk_FUN_0156fa80", expect = "E9 8B 31 0D 01", this = "CPool<int32>",
-       unverified = "std5-pool-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn stunt_jump_pool_ctor(p: PoolPtr<Slot<0x44>>, size: i32, _name: GPtr<u8>) -> PoolPtr<Slot<0x44>> {
     pool_construct(p, size, call::operator_new_array)
 }
@@ -68,7 +68,7 @@ pub fn ptr_node_single_delete(p: GPtr<u8>) {
 
 /// `CPtrNodeDoubleLink::operator delete(void*)` (0x5523D0): index `(p - objects) / 0xC` (signed).
 #[hook(addr = 0x5523D0, conv = cdecl, name = "delete", expect = "8B 4C 24 04 56 8B 35 88 44 B7",
-       unverified = "std5-pool-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn ptr_node_double_delete(p: GPtr<u8>) {
     let pool = GPtr::<u32>::from_addr(0xB74488).read();
     let objects = GPtr::<u32>::from_addr(pool as usize).read();

@@ -260,7 +260,7 @@ orig! {
 /// `CAEAudioChannel::SetPosition(const CVector*)` (0x4D7950): with both buffers,
 /// `IDirectSound3DBuffer::SetPosition(x, y, z, DS3D_DEFERRED)`.
 #[hook(addr = 0x4D7950, conv = thiscall, name = "CAEAudioChannel::SetPosition", expect = "8B 41 08 85 C0 74 20",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_set_position(this: u32, pos: u32) {
     if r32(this + 8) == 0 {
         return;
@@ -274,7 +274,7 @@ pub fn channel_set_position(this: u32, pos: u32) {
 
 /// `CAEAudioChannel::GetCurrentPlaybackPosition()` (0x4D79A0): the play cursor, 0 without a buffer.
 #[hook(addr = 0x4D79A0, conv = thiscall, name = "CAEAudioChannel::GetCurrentPlaybackPosition", expect = "51 8B 49 08 33 C0",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_get_current_playback_position(this: u32) -> u32 {
     let b = r32(this + 8);
     let mut pos: u32 = 0;
@@ -302,7 +302,7 @@ pub fn channel_lost(this: u32) -> bool {
 /// `CAEAudioChannel::SetFrequency(uint16)` (0x4D7A50): stored (+0x3C) and set on the buffer when it
 /// changes.
 #[hook(addr = 0x4D7A50, conv = thiscall, name = "CAEAudioChannel::SetFrequency", expect = "0F B7 54 24 04 39 51 3C",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_set_frequency(this: u32, f: u32) {
     let f = f & 0xFFFF;
     if r32(this + 0x3C) == f {
@@ -335,7 +335,7 @@ pub fn channel_set_original_frequency(this: u32, f: u32) {
 /// EAX present ([0xB60660] == 1): `IKsPropertySet` property 2 = the environment value from the table
 /// 0x8AC198 (indexed by the reverb byte), property 5 = `depth * 100`; AL = both succeeded.
 #[hook(addr = 0x4D7AA0, conv = thiscall, name = "CAEAudioChannel::SetReverbAndDepth", expect = "51 8B 44 24 0C 6B C0 64",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_set_reverb_and_depth(this: u32, reverb: u32, depth: u32) -> bool {
     let d = depth.wrapping_mul(100);
     if r32(this + 8) == 0 || r32(this + 0xC) == 0 || r8(0xB60660) != 1 {
@@ -364,7 +364,7 @@ pub fn channel_set_reverb_and_depth(this: u32, reverb: u32, depth: u32) -> bool 
 /// `CAEAudioChannel::SetNotInRoom(uint8)` (0x4D7B50): with both buffers and EAX present: property 7
 /// of `DSPROPSETID_EAX20_BufferProperties`-like set 0x85EF9C = 0 (in room) or -10000 (not).
 #[hook(addr = 0x4D7B50, conv = thiscall, name = "CAEAudioChannel::SetNotInRoom", expect = "8B 41 08 83 EC 08 85 C0",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_set_not_in_room(this: u32, not_in_room: u32) {
     if r32(this + 8) == 0 || r32(this + 0xC) == 0 || r8(0xB60660) != 1 {
         return;
@@ -384,7 +384,7 @@ pub fn channel_set_not_in_room(this: u32, not_in_room: u32) {
 /// `CAEAudioChannel::UpdateStatus()` (0x4D7BD0): `GetStatus` into +0x5C; a lost buffer is restored
 /// (`Lost`, tail call).
 #[hook(addr = 0x4D7BD0, conv = thiscall, name = "CAEAudioChannel::UpdateStatus", expect = "56 8B F1 8B 46 08 8B 08",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_update_status(this: u32) {
     buf_get_status(r32(this + 8), this + 0x5C);
     if r8(this + 0x5C) & 2 != 0 {
@@ -398,7 +398,7 @@ pub fn channel_update_status(this: u32) {
 /// the change is small) the volume is set through the fade thread's `SetBufferVolume`. +0x34 =
 /// the new volume (also without a buffer: no, only with one).
 #[hook(addr = 0x4D7C60, conv = thiscall, name = "CAEAudioChannel::SetVolume", expect = "51 56 57 8B F9 8B 77 08",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_set_volume(this: u32, vol: u32) {
     let b = r32(this + 8);
     if b == 0 {
@@ -432,7 +432,7 @@ pub fn channel_set_volume(this: u32, vol: u32) {
 /// Otherwise the frequency becomes `ftol(original * factor)` (u16) and a buffer stopped by an
 /// earlier 0.0 is restarted: muted, `Play(looping)`, then faded (or set) back to its volume.
 #[hook(addr = 0x4D7D00, conv = thiscall, name = "CAEAudioChannel::SetFrequencyScalingFactor", expect = "51 D9 44 24 08 53 D8 1D",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn channel_set_frequency_scaling_factor(this: u32, factor: u32) {
     let f = f32::from_bits(factor);
     if feq(xf(f), xf(0.0)) {
@@ -480,7 +480,7 @@ pub fn channel_set_frequency_scaling_factor(this: u32, factor: u32) {
 /// `CAEStaticChannel::CAEStaticChannel(ds, id, is3D, rate, bits)` (0x4F0B10, `ret 0x14`): the base
 /// constructor (0x4D7890), vtable 0x85F3CC, +0x60 / +0x62 = 0, +0x8A = is3D.
 #[hook(addr = 0x4F0B10, conv = thiscall, name = "FUN_004f0b10", expect = "8B 44 24 14 8B 54 24 08",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn static_channel_ctor(this: u32, ds: u32, id: u32, is3d: u32, rate: u32, bits: u32) -> u32 {
     ac_ctor(this, ds, id, rate, bits);
     w8(this + 0x60, 0);
@@ -496,7 +496,7 @@ pub fn static_channel_ctor(this: u32, ds: u32, id: u32, is3d: u32, rate: u32, bi
 /// `Unlock`. Then `UpdateStatus`; a buffer that stopped by itself (not muted by frequency 0) is
 /// released (`g_numSoundChannelsUsed - 1`). Without a buffer the status is cleared.
 #[hook(addr = 0x4F10D0, conv = thiscall, name = "CAEStaticChannel::Service", expect = "83 EC 08 55 8B E9 8B 45 08",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn static_channel_service(this: u32) {
     let b = r32(this + 8);
     if b == 0 {
@@ -554,7 +554,7 @@ fn zero_bytes(dst: u32, n: u32) {
 /// `CAEStaticChannel::IsSoundPlaying()` (0x4F0F40): no buffer -> false; muted by frequency 0 or a
 /// pending play -> true; else the status's playing bit.
 #[hook(addr = 0x4F0F40, conv = thiscall, name = "CAEStaticChannel::IsSoundPlaying", expect = "8B 41 08 85 C0 75 03",
-       unverified = "std4-audio-1", route = "L2", hazards = "ax-al-return")]
+       route = "L2", hazards = "ax-al-return")]
 pub fn static_channel_is_sound_playing(this: u32) -> bool {
     if r32(this + 8) == 0 {
         return false;
@@ -568,7 +568,7 @@ pub fn static_channel_is_sound_playing(this: u32) -> bool {
 /// `CAEStaticChannel::GetPlayTime()` (0x4F0F70): -1 when not playing, else the play cursor in ms
 /// (sign-extended 16-bit).
 #[hook(addr = 0x4F0F70, conv = thiscall, name = "CAEStaticChannel::GetPlayTime", expect = "56 8B F1 8B 06 FF 50 08",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn static_channel_get_play_time(this: u32) -> i32 {
     if ch_is_sound_playing(this) == 0 {
         return -1;
@@ -580,7 +580,7 @@ pub fn static_channel_get_play_time(this: u32) -> i32 {
 /// `CAEStaticChannel::GetLength()` (0x4F0FA0): the sample's length in ms (+0x2C bytes; sign-extended
 /// 16-bit).
 #[hook(addr = 0x4F0FA0, conv = thiscall, name = "CAEStaticChannel::GetLength", expect = "8B 41 2C 50 E8 27 6A FE FF",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn static_channel_get_length(this: u32) -> i32 {
     ac_bytes_to_ms(this, r32(this + 0x2C)) as u16 as i16 as i32
 }
@@ -589,7 +589,7 @@ pub fn static_channel_get_length(this: u32) -> i32 {
 /// offset (not for a looping sound with a loop region) sets the play cursor and +0x61; +0x62 = 1
 /// (pending until `SynchPlayback`); +0x38 = (freq == 0.0).
 #[hook(addr = 0x4F0BD0, conv = thiscall, name = "CAEStaticChannel::Play", expect = "53 56 8B F1 8A 46 44",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn static_channel_play(this: u32, start: u32, _flags: u32, freq: u32) {
     let s = start as u16;
     if (r8(this + 0x44) == 0 || r32(this + 0x64) == 0) && s != 0 {
@@ -607,7 +607,7 @@ pub fn static_channel_play(this: u32, start: u32, _flags: u32, freq: u32) {
 /// after a cursor move the buffer is muted and faded (or set) back to its volume; `Play(looping)`;
 /// play start = `CTimer` time; pending cleared.
 #[hook(addr = 0x4F1040, conv = thiscall, name = "CAEStaticChannel::SynchPlayback", expect = "56 8B F1 8B 46 08 85 C0 74 7A",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn static_channel_synch_playback(this: u32) {
     let b = r32(this + 8);
     if b == 0 || r8(this + 0x62) == 0 || r8(this + 0x38) != 0 {
@@ -670,7 +670,7 @@ fn release_buffers(this: u32) {
 /// before the loop fill point (+0x80 loops filled, +0x78 fill offset), the fill time +0x74 and
 /// +0x60 = 1. `Unlock`, cursor 0, the 3D buffer (`QueryInterface`), volume -100 dB. AL = 1.
 #[hook(addr = 0x4F0C40, conv = thiscall, name = "CAEStaticChannel::SetAudioBuffer", expect = "83 EC 30 53 55 56 57 8B 7C 24 48",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn static_channel_set_audio_buffer(this: u32, data: u32, size: u32, id0: u32, id1: u32, loop_off: u32, rate: u32) -> bool {
     let rate = rate & 0xFFFF;
     let mut p1: u32 = 0;
@@ -804,7 +804,7 @@ fn release_buffers_counted(this: u32) {
 /// `CAEStreamingChannel::CAEStreamingChannel(ds, id)` (0x4F1800, `ret 8`): the base constructor at
 /// 48 kHz / 16 bit, flags and pointers cleared, vtable 0x85F3F0, state -6 (stopped), +0x60094 = 1.0.
 #[hook(addr = 0x4F1800, conv = thiscall, name = "CAEStreamingChannel::Constructor", expect = "8B 44 24 08 56 6A 10",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_ctor(this: u32, ds: u32, id: u32) -> u32 {
     ac_ctor(this, ds, id, 0xBB80, 0x10);
     for o in 0x60..0x68 {
@@ -826,7 +826,7 @@ pub fn streaming_ctor(this: u32, ds: u32, id: u32) -> u32 {
 /// success: +0x60 = 1, original frequency 48000, decode buffer +0x68 = +0x6C, +0x44 = 1. Then the
 /// silence buffer (0x4F1C70). AL = success.
 #[hook(addr = 0x4F22F0, conv = thiscall, name = "CAEStreamingChannel::Initialise", expect = "83 EC 24 53 56 57 33 DB",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_initialise(this: u32) -> bool {
     co_initialize(0);
     w16(this + 0x47, 1);
@@ -853,7 +853,7 @@ pub fn streaming_initialise(this: u32) -> bool {
 /// `CAEStreamingChannel::InitialiseSilence()` (0x4F1C70): a 0x8000-byte silent looping buffer in
 /// the channel's format (flags 0x8008) into +0x60090: locked, zeroed, unlocked, played looping.
 #[hook(addr = 0x4F1C70, conv = thiscall, name = "CAEStreamingChannel::InitialiseSilence", expect = "83 EC 2C A1 50 91 85 00",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_initialise_silence(this: u32) {
     let mut desc: [u32; 9] = [0x24, 0x8008, 0x8000, 0, this + 0x47, r32(0x859150), r32(0x859154), r32(0x859158), r32(0x85915C)];
     if ds_create_sound_buffer(r32(this + 4), GPtr::<u32>::from_raw(desc.as_mut_ptr()).addr() as u32, this + 0x60090, 0) < 0 {
@@ -870,7 +870,7 @@ pub fn streaming_initialise_silence(this: u32) {
 /// `CAEStreamingChannel::GetPlayingTrackID()` (0x4F1A60): the decoder's stream id while playing,
 /// starting, ending or stopping; else -1.
 #[hook(addr = 0x4F1A60, conv = thiscall, name = "CAEStreamingChannel::GetPlayingTrackID", expect = "8B C1 8B 88 6C 00 06 00",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_get_playing_track_id(this: u32) -> u32 {
     let d = r32(this + 0x6006C);
     if d == 0 {
@@ -899,7 +899,7 @@ pub fn streaming_is_sound_playing(this: u32) -> bool {
 
 /// `CAEStreamingChannel::GetLength()` (0x4F1880): the decoder's stream length in ms, -1 without one.
 #[hook(addr = 0x4F1880, conv = thiscall, name = "CAEStreamingChannel::GetLength", expect = "8B 89 6C 00 06 00 85 C9 75 04",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_get_length(this: u32) -> u32 {
     let d = r32(this + 0x6006C);
     if d == 0 { 0xFFFF_FFFF } else { dec_get_stream_length_ms(d) }
@@ -909,7 +909,7 @@ pub fn streaming_get_length(this: u32) -> u32 {
 /// after the last `UpdatePlayTime` stamp: the stamped time plus the time since; else the state, or
 /// (playing/starting, stamp older) `UpdatePlayTime()` (tail call).
 #[hook(addr = 0x4F19E0, conv = thiscall, name = "CAEStreamingChannel::GetPlayTime", expect = "83 EC 08 56 8B F1 8B 86 74 00 06 00",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_get_play_time(this: u32) -> u32 {
     let st = r32(this + 0x60074);
     if st != 0xFFFF_FFFF && st != 0xFFFF_FFFD {
@@ -930,7 +930,7 @@ pub fn streaming_get_play_time(this: u32) -> u32 {
 /// corrections of the bytes (`one = 393216.0 / (freq * 0.004)` subtracted per the half markers),
 /// minus `one` again when not below it; clamped at 0; the stamp renewed. Returns the play time.
 #[hook(addr = 0x4F18A0, conv = thiscall, name = "CAEStreamingChannel::UpdatePlayTime", expect = "83 EC 10 56 8B F1 8B 86 74 00 06 00",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_update_play_time(this: u32) -> u32 {
     let st = r32(this + 0x60074);
     if st != 0xFFFF_FFFD && st != 0xFFFF_FFFF {
@@ -973,7 +973,7 @@ pub fn streaming_update_play_time(this: u32) -> u32 {
 /// `CAEStreamingChannel::SetNextStream(decoder)` (0x4F1DE0): a queued next decoder is deleted; the
 /// new one queued. EAX = 0.
 #[hook(addr = 0x4F1DE0, conv = thiscall, name = "CAEStreamingChannel::SetNextStream", expect = "56 8B F1 8B 8E 70 00 06 00",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_set_next_stream(this: u32, d: u32) -> u32 {
     let old = r32(this + 0x60070);
     if old != 0 {
@@ -1005,7 +1005,7 @@ pub fn streaming_set_ready(this: u32) {
 /// +0x63 = 1; without a next stream the state becomes -4 (ending). +0x60078 = the decoder's play
 /// time. Returns the bytes produced.
 #[hook(addr = 0x4F1E20, conv = thiscall, name = "CAEStreamingChannel::FillBuffer", expect = "53 55 8B 6C 24 10 56 57",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_fill_buffer(this: u32, buf: u32, size: u32) -> u32 {
     let mut got = dec_fill_buffer(r32(this + 0x6006C), buf, size);
     if got < size {
@@ -1053,7 +1053,7 @@ pub fn streaming_fill_buffer(this: u32, buf: u32, size: u32) -> u32 {
 /// state becomes ready (-2) unless starting / playing / paused; +0x66 = 0, the decoder's sample rate
 /// as original frequency, +0x63 / +0x62 / +0x45 = 0, cursor 0. EAX = 0.
 #[hook(addr = 0x4F23D0, conv = thiscall, name = "CAEStreamingChannel::PrepareStream", expect = "53 56 57 8B 7C 24 10 33 DB",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_prepare_stream(this: u32, d: u32, flags: u32, stop: u32) -> u32 {
     if d == 0 || r32(this + 8) == 0 {
         return 0xFFFF_FFFF;
@@ -1109,7 +1109,7 @@ pub fn streaming_prepare_stream(this: u32, d: u32, flags: u32, stop: u32) -> u32
 /// flag from `flags & 1`; a stopping stream's fade is cancelled and the buffer stopped; state
 /// playing (-1); the volume set (`ftol(volume * 100)`); `Play(looping)`.
 #[hook(addr = 0x4F1D40, conv = thiscall, name = "CAEStreamingChannel::Play", expect = "56 8B F1 8B 8E 6C 00 06 00 85 C9",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_play(this: u32, _start: u32, flags: u32, _freq: u32) {
     let d = r32(this + 0x6006C);
     if d == 0 || r32(this + 8) == 0 {
@@ -1140,7 +1140,7 @@ pub fn streaming_synch_playback(_this: u32) {}
 /// `CAEStreamingChannel::Stop()` (0x4F21C0, vtable slot 7): fade out over 35 ms (or stop); state -5
 /// (stopping), stop counter 0.
 #[hook(addr = 0x4F21C0, conv = thiscall, name = "CAEStreamingChannel::Stop-virtual", expect = "56 6A 01 8B F1 8B 46 08 6A 23",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_stop_virtual(this: u32) {
     if !sf_request_fade(SMOOTH_FADE, r32(this + 8), 0xC2C8_0000, 0x23, 1) {
         buf_stop(r32(this + 8));
@@ -1181,7 +1181,7 @@ pub fn streaming_pause(this: u32) {
 /// `ftol(original * factor)`; a paused stream restarts muted, `Play(looping)`, and fades (or is
 /// set) back to its volume; state playing.
 #[hook(addr = 0x4F2060, conv = thiscall, name = "CAEStreamingChannel::SetFrequencyScalingFactor", expect = "51 D9 44 24 08 56 D8 1D",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_set_frequency_scaling_factor(this: u32, factor: u32) {
     let f = f32::from_bits(factor);
     if feq(xf(f), xf(0.0)) {
@@ -1264,7 +1264,7 @@ pub fn streaming_remove_fx(this: u32) {
 /// else (adding them when needed) both EQ bands get the table entry `0x8CBA70 + (2*setting + i)*12`
 /// with its gain scaled by `gain`.
 #[hook(addr = 0x4F1F30, conv = thiscall, name = "CAEStreamingChannel::SetBassEQ", expect = "83 EC 0C 53 8A 5C 24 14",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn streaming_set_bass_eq(this: u32, setting: u32, gain: u32) {
     let s = setting as u8;
     if s == 0 {
@@ -1298,7 +1298,7 @@ pub fn streaming_set_bass_eq(this: u32, setting: u32, gain: u32) {
 /// rate switch (+0x63) or a queued next stream (+0x62) restarts with it; a silence-ended stream
 /// fills silence; else the decoder fills it (every dword OR 0x10001).
 #[hook(addr = 0x4F2550, conv = thiscall, name = "CAEStreamingChannel::Service", expect = "83 EC 10 53 55 56 57 8B E9",
-       unverified = "std4-audio-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn streaming_service(this: u32) {
     ac_update_status(this);
     let st_addr = this + 0x60074;
@@ -1551,7 +1551,7 @@ pub fn smooth_fade_request_fade(this: u32, buf: u32, vol: u32, time: u32, stop: 
 /// buffer that stops keeps going (nothing set); one fading to this volume (equal or within 0.01)
 /// keeps going too; any other fade of it is cancelled (state 2). Then `SetVolume(ftol(vol * 100))`.
 #[hook(addr = 0x4EEC80, conv = thiscall, name = "CAESmoothFadeThread::SetBufferVolume", expect = "8A 81 14 08 00 00 84 C0 56 57",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn smooth_fade_set_buffer_volume(this: u32, buf: u32, vol: u32) {
     let v = f32::from_bits(vol);
     if r8(this + 0x814) == 0 {
@@ -1882,7 +1882,7 @@ orig! {
 /// under the critical section: a ready channel (play time -2) is stopped; the request stored
 /// (+0x18 track, +0x20 next, +0x1C offset, +0x24 flags, +0x13 / +0x14 user flags) and flagged (+0x12).
 #[hook(addr = 0x4F1230, conv = thiscall, name = "CAEStreamThread::PlayTrack", expect = "56 57 8B F1 8D 7E 38",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn stream_thread_play_track(this: u32, track: u32, next: u32, offset: u32, flags: u32, user: u32, next_user: u32) {
     let cs = this + 0x38;
     enter_critical_section(cs);
@@ -1903,7 +1903,7 @@ pub fn stream_thread_play_track(this: u32, track: u32, next: u32, offset: u32, f
 /// `CAEStreamThread::GetTrackPlayTime()` (0x4F1530): -8 while preparing, else the channel's
 /// `GetPlayTime()` (tail call through the vtable).
 #[hook(addr = 0x4F1530, conv = thiscall, name = "CAEStreamThread::GetTrackPlayTime", expect = "8A 41 15 84 C0 75 08",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn stream_thread_get_track_play_time(this: u32) -> u32 {
     if r8(this + 0x15) != 0 {
         return 0xFFFF_FFF8;
@@ -1931,7 +1931,7 @@ pub fn stream_thread_get_playing_track_id(this: u32) -> u32 {
 
 /// `CAEStreamThread::StopTrack()` (0x4F1580): +0x16 (stop request) = 1.
 #[hook(addr = 0x4F1580, conv = thiscall, name = "CAEStreamThread::StopTrack", expect = "C6 41 16 01 C3",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn stream_thread_stop_track(this: u32) {
     w8(this + 0x16, 1);
 }
@@ -1953,7 +1953,7 @@ pub fn stream_thread_ctor(this: u32) -> u32 {
 /// `CAEStreamTransformer::Initialise()` (0x4F1750): the 16-byte stream key: byte `i` = the
 /// constant key byte `i` (on the stack: EA 3B C6 A2 9E AD 12 F4 40 B9 DD 28 91 E5 F1 FE) XOR `i`.
 #[hook(addr = 0x4F1750, conv = thiscall, name = "CAEStreamTransformer::Initialise", expect = "83 EC 10 56 57 8B F1",
-       unverified = "std4-audio-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn stream_transformer_initialise(this: u32) {
     const KEY: [u8; 16] = [0xEA, 0x3B, 0xC6, 0xA2, 0x9E, 0xAD, 0x12, 0xF4, 0x40, 0xB9, 0xDD, 0x28, 0x91, 0xE5, 0xF1, 0xFE];
     for (i, k) in KEY.iter().enumerate() {

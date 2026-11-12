@@ -147,7 +147,7 @@ fn clear_in_water(this: GPtr<u8>) {
 /// +0x428 bit 4 cleared below `mass * 0.008`, then the driver and passengers (knock-off for subtype
 /// 2 with all wheels extended, else breath for players or a drowning `CEventDamage`).
 #[hook(addr = 0x6A8C00, conv = thiscall, name = "CAutomobile::ProcessBuoyancy", this = "CAutomobile", expect = "6A FF 64 A1 00 00 00 00",
-       unverified = "mvpd-veh-5", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "driving",
        note = "pow through orig::x87_binary(0x822130); rand site 0x6A8C3B (value dropped); epilogue through the protection fragment 0x408C75; event objects on the Rust stack")]
 pub fn automobile_process_buoyancy(this: GPtr<u8>) {
@@ -371,7 +371,7 @@ orig! {
 /// and brake 1 when nearly still, else cleared, steer/gas/+0x514 0, flags += 2. 5: handbrake, brake
 /// 0.05, the rest 0. Others: nothing. Returns true.
 #[hook(addr = 0x6BC930, conv = thiscall, name = "CBike::ProcessAI", this = "CBike", expect = "83 EC 30 53 55 56 8B F1",
-       unverified = "mvpd-veh-6", route = "L2", hazards = "stack-residue",
+       route = "L2", hazards = "stack-residue",
        recs = "driving",
        note = "the original keeps the wheelie torque / the time step in its own flags-pointer argument slot (it holds the pointer in ebx)")]
 pub fn bike_process_ai(this: GPtr<u8>, flags: GPtr<u32>) -> u8 {

@@ -136,7 +136,7 @@ pub fn sound_set_position_native(this: u32, x: u32, y: u32, z: u32) {
 
 /// `floor` of a float (0x406CE0): `floor((double)v)` through the CRT (0x8219F0), result in ST0.
 #[hook(addr = 0x406CE0, conv = cdecl, name = "FUN_00406ce0", expect = "D9 44 24 04 83 EC 08",
-       unverified = "std4-audio-3", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn floor_of_float(v: u32) -> f64 {
     libm::floor(f32::from_bits(v) as f64)
 }
@@ -198,7 +198,7 @@ pub fn audio_hardware_service(this: u32) {
 /// (`CAEAudioEnvironment::GetReverbEnvironmentAndDepth`); unchanged (+5 byte, +0x88) -> nothing;
 /// else the first channel that accepts `SetReverbAndDepth` makes them current.
 #[hook(addr = 0x4D8DA0, conv = thiscall, name = "CAEAudioHardware::UpdateReverbEnvironment", expect = "83 EC 08 56 8D 44 24 08",
-       unverified = "std4-audio-3", route = "L2", hazards = "uninit-locals", this = "CAEAudioHardware",
+       route = "L2", hazards = "uninit-locals", this = "CAEAudioHardware",
        note = "the environment local's upper bytes are uninitialised in the original")]
 pub fn audio_hardware_update_reverb_environment(this: u32) {
     let mut env: u32 = 0;
@@ -289,7 +289,7 @@ pub fn audio_hardware_play_sound(this: u32, slot: u32, ch: u32, sfx: u32, bank: 
 /// sound entry offset 0 and the next entry's offset = size, the slot's loaded sound; request freed;
 /// `+0x666 - 1`; the queue head (+0x664) advanced when it was this request.
 #[hook(addr = 0x4DFE30, conv = thiscall, name = "CAEMP3BankLoader::Service", expect = "51 53 55 56 8B E9 57",
-       unverified = "std4-audio-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn mp3_bank_loader_service(this: u32) {
     let chan = r16(this + 0x66A) as i16 as i32;
     for i in 0..0x32u32 {
@@ -474,7 +474,7 @@ fn sound_position(s: u32, out: &mut [u32; 3]) {
 /// `CAEAudioHardware::Service`; the sounds marked hardware-aware and their frame delays counted
 /// down (unless paused and pausable).
 #[hook(addr = 0x4F0000, conv = thiscall, name = "CAESoundManager::Service", expect = "83 EC 28 53 55 56 8B F1",
-       unverified = "std4-audio-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn sound_manager_service(this: u32) {
     let count = |t: u32| r16(t) as u32;
     let phys = |k: u32| r32(this + 0x87F4) + k * 2;
@@ -849,7 +849,7 @@ const ONE: u32 = 0x3F80_0000;
 /// pair (bank 0x52, sounds `2 * seed (+1)` in slots 2 / 5, event 0x32), its cancel (0x33). Every
 /// case is transcribed from the bytes (the per-case constants are in the code).
 #[hook(addr = 0x4DD4A0, conv = thiscall, name = "CAEFrontendAudioEntity::AddAudioEvent", expect = "6A FF 68 3B BF 83 00",
-       unverified = "std4-audio-3", route = "L2", hazards = "uninit-locals,heap-writes",
+       route = "L2", hazards = "uninit-locals,heap-writes",
        note = "stack CAESound zeroed (the original's is uninitialised)")]
 pub fn frontend_add_audio_event(this: u32, event: u32, boost: u32, speed: u32) {
     let ent = this;

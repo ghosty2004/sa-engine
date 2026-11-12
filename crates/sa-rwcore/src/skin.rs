@@ -653,7 +653,7 @@ const SKIN_OPEN_COUNT: usize = 0xC978C0;
 /// zeroed 0x400F-byte block (`rwmalloc`, not NULL-checked) -> 0xC978B0 and its 16-aligned address
 /// -> 0xC978AC. Counts the instance and returns it.
 #[hook(addr = 0x7C68E0, conv = cdecl, name = "cb_SKINPLUGIN_RwEngine_Open", expect = "A1 C0 78 C9 00 85 C0",
-       unverified = "std4-rxpipe-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn skin_engine_open(instance: u32, _offset: u32, _size: u32) -> u32 {
     if g::<u32>(SKIN_OPEN_COUNT).read() == 0 {
         let mut flags = 1u32;

@@ -219,7 +219,7 @@ fn fade_in() {
 /// and removing weapons in single player unless free (0xB7CEEA / 0xB7CEE9). Finally, in coop with 0x8A5E4A,
 /// players further apart than 0x8A5E4C are stopped from moving away from each other.
 #[hook(addr = 0x442AD0, conv = cdecl, name = "CGameLogic::Update", expect = "83 EC 4C 53 55 56 57",
-       unverified = "mvpd-world-4", route = "L2", hazards = "heap-writes,x87-transcendental",
+       route = "L2", hazards = "heap-writes,x87-transcendental",
        note = "fsqrt distances are stored (0x96AB24); fpatan heading feeds SortOutStreamingAndMemory")]
 pub fn game_logic_update() {
     stats_update_respect_stat(0);

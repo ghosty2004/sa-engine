@@ -104,7 +104,7 @@ pub fn signed_sq_dist_vehicle(entity: GPtr<u8>, point: GPtr<u8>) -> X87 {
 /// unchanged (the third call site 0x70FF22 reuses ECX).
 #[hook(addr = 0x70FA70, conv = reg("args = ecx edx di stack; keep = ecx edx"), name = "FUN_0070fa70",
        expect = "53 0F B7 1A 55",
-       unverified = "harness5-1", route = "L1-pure", hazards = "preserved-regs", recs = "grove-walk,driving",
+       route = "L1-pure", hazards = "preserved-regs", recs = "grove-walk,driving",
        note = "register convention ECX/EDX/DI + stack word (HARNESS-5); callers RenderForVehicle/RenderForObject")]
 pub fn toggle_edge(edges: GPtr<u8>, count: GPtr<u16>, a: u16, b: u16) {
     let n = u32::from(count.read());

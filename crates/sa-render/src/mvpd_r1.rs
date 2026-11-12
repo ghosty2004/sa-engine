@@ -909,7 +909,7 @@ fn fild_u32(v: u32) -> X87 {
 /// type 4/8 shadow closer than 3.0, then to the nearest one on the opposite side (dot of the 2D
 /// directions < 0); finally type 7 → 5.
 #[hook(addr = 0x70C950, conv = cdecl, name = "CShadows::UpdatePermanentShadows", expect = "83 EC 08 53 55",
-       unverified = "mvpd-render-1", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk", note = "FSQRT distances (gasoline trail fire spread)")]
 pub fn update_permanent_shadows() {
     for i in 0..48isize {
@@ -1196,7 +1196,7 @@ fn flush_temp_buffer() {
 /// `RenderBuffer::StopStoring()`; that shadow's +0x3B = 1. A flush closes each group. Finally (12,0),
 /// (8,1).
 #[hook(addr = 0x708300, conv = cdecl, name = "CShadows::RenderStaticShadows", expect = "A1 24 7B C9 00",
-       unverified = "mvpd-render-1", route = "L2", hazards = "uninit-locals",
+       route = "L2", hazards = "uninit-locals",
        recs = "grove-walk", note = "AffectColourWithLighting may leave the colour locals unwritten")]
 pub fn render_static_shadows() {
     g::<u32>(TB_INDICES).write(0);
@@ -1305,7 +1305,7 @@ orig! {
 /// the forward vector; a type-1 shadow with texture [0xC403E0], front = lenY/2 * forward.xy, side =
 /// ±lenX/2 * right.xy (negated when the up vector's z <= 0), rgb 0, z distance 4.5, scale 1.0.
 #[hook(addr = 0x707FA0, conv = cdecl, name = "CShadows::RenderExtraPlayerShadows", expect = "83 EC 30 66 83 3D EA C4 B7 00 00",
-       unverified = "mvpd-render-1", route = "L2", hazards = "none", recs = "driving")]
+       route = "L2", hazards = "none", recs = "driving")]
 pub fn render_extra_player_shadows() {
     if g::<i16>(0xB7C4EA).read() == 0 {
         return;

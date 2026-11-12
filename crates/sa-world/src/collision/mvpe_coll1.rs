@@ -1118,7 +1118,7 @@ fn add_made_invisible(e: GPtr<u8>) {
 /// `gpMadeInvisibleEntities` (reference registered), its held entity (`GetTaskHold(false)` +8) too
 /// when visible (bit 7 cleared first), then the ped's bit 7 cleared; result true. `t` is unused.
 #[hook(addr = 0x415320, conv = cdecl, name = "CCollision::CheckCameraCollisionPeds", expect = "83 EC 18 8B 44 24 20",
-       unverified = "mvpe-coll-1", route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk,driving",
+       route = "L2", hazards = "stack-residue,heap-writes", recs = "grove-walk,driving",
        note = "stores the squared radius into its sectorY argument slot; clears ped/held-entity flags (+0x1C)")]
 pub fn check_camera_collision_peds(sx: i32, sy: i32, pos: GPtr<u8>, dir: GPtr<u8>, _t: GPtr<u8>) -> u8 {
     let mut f = Fpu::new();
@@ -1230,7 +1230,7 @@ fn cam_spheres_overlap(sps: GPtr<u8>, sp: GPtr<u8>) -> bool {
 /// the `y` argument slot) must overlap `spS` ([`cam_spheres_overlap`]); then
 /// `SphereCastVsEntity(spA, spB, building)` → true. `bbSpAB` is unused.
 #[hook(addr = 0x41A820, conv = cdecl, name = "CCollision::CheckCameraCollisionBuildings", expect = "8B 44 24 04 33 C9 83 EC 20",
-       unverified = "mvpe-coll-1", route = "L2", hazards = "stack-residue", recs = "grove-walk,driving",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk,driving",
        note = "writes the flyer flag into its x argument slot and the bound radius into its y slot")]
 pub fn check_camera_collision_buildings(x: i32, y: i32, _bb: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb: GPtr<u8>) -> u8 {
     let cx = x.clamp(0, 0x77);
@@ -1346,7 +1346,7 @@ fn camera_vehicle(v: GPtr<u8>, ign: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb:
 /// sphere (radius through the `y` argument slot) overlapping `spS` ([`cam_spheres_overlap`]) and
 /// `SphereCastVsEntity(spA, spB, object)` → true.
 #[hook(addr = 0x41AB20, conv = cdecl, name = "CCollision::CheckCameraCollisionObjects", expect = "8B 44 24 08 8B 4C 24 04",
-       unverified = "mvpe-coll-1", route = "L2", hazards = "stack-residue", recs = "grove-walk,driving",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk,driving",
        note = "stores the bound radius into its y argument slot")]
 pub fn check_camera_collision_objects(x: i32, y: i32, _bb: GPtr<u8>, sps: GPtr<u8>, spa: GPtr<u8>, spb: GPtr<u8>) -> u8 {
     let idx = (((y & 0xF) << 4) + (x & 0xF)) as usize;

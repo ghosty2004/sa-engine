@@ -262,7 +262,7 @@ pub fn file_loader_load_decision_maker_ptr_port(name: u32, dm: GPtr<u8>) -> bool
 /// +0xCB50, +0xD4EC, +0xDE88, +0xE824). Then loads the named makers `GangMbr.ped` .. (8 ped types, type 0) and
 /// `RANDOM.grp`, `RANDOM2.grp` (type 1) through `LoadDecisionMaker(name, type, false)`.
 #[hook(addr = 0x5BF400, conv = cdecl, name = "CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker", expect = "81 EC 9C 09 00 00",
-       unverified = "std4-data-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn file_loader_load_default_decision_maker() {
     let t = decision_maker_types_get_instance();
     dm_load_event_indices(t);
@@ -306,7 +306,7 @@ pub fn file_loader_load_default_decision_maker() {
 /// and then `SetDefault`s; the static block 0xC0AFE0..0xC0B030 is reset (0xC0AFE0..0xC0AFF0 and 0xC0B01C..0xC0B02C
 /// zero, the ten dwords at 0xC0AFF4 = 0x10001). Returns `this`.
 #[hook(addr = 0x4650F0, conv = thiscall, name = "thunk_FUN_01567930", expect = "E9 3B 28 10 01",
-       unverified = "std4-data-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn decision_maker_types_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0);
     for i in 0..0x14isize {

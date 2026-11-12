@@ -222,7 +222,7 @@ pub fn generate_plate_text(buf: GPtr<u8>, len: i32) -> u8 {
 /// convention); `RenderLicenseplateTextToRaster` calls it through `orig!`.
 #[hook(addr = 0x6FD7C0, conv = reg("args = al stack stack"), name = "CCustomCarPlateMgr::GetCharacterPositionInCharSet",
        expect = "0F B6 C0 83 C0 E0",
-       unverified = "harness5-1", route = "L1-pure", hazards = "none", recs = "driving",
+       route = "L1-pure", hazards = "none", recs = "driving",
        note = "register convention AL + 2 stack words (HARNESS-5); EAX/ECX after return are not read by the caller")]
 pub fn get_character_position_in_char_set(c: u8, col: GPtr<u32>, row: GPtr<u32>) {
     let n = match c {

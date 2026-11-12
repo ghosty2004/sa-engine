@@ -600,7 +600,7 @@ fn clamp0(v: X87) -> f32 {
 /// 0.6 written into the multiplier, which stays changed; else on 0xA9AE24), and with gas > 0.5 and
 /// gear byte +0x4B4 < 3 one more on the left (odd `rand`) or right exhaust.
 #[hook(addr = 0x6DE240, conv = thiscall, name = "CVehicle::AddExhaustParticles", this = "CVehicle", expect = "64 A1 00 00 00 00",
-       unverified = "mvpd-veh-2", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        recs = "driving",
        note = "two rand sites (0x6DE572, 0x6DE744); the colour multiplier is changed in place by in-water particles")]
 pub fn vehicle_add_exhaust_particles(this: GPtr<u8>) {

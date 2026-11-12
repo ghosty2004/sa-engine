@@ -43,7 +43,7 @@ fn normalise(g: GPtr<u8>, o: isize, len: isize) {
 /// + side - base, each min / max in the original's comparison order) and returns its index, then
 /// `NumGarages + 1`.
 #[hook(addr = 0x4471E0, conv = cdecl, name = "CGarages::AddOne", expect = "51 D9 44 24 08 D8 5C 24 14 DF",
-       unverified = "std5-world-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 #[allow(clippy::too_many_arguments)]
 pub fn add_one(
     x1: f32,

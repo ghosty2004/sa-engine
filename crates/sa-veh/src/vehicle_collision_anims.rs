@@ -92,7 +92,7 @@ const BLEND_DELTA: isize = 0x1C;
 /// side gets the value as blend amount (delta 0; missing → blend in t[1] / t[2]), a3 delta -4.
 /// Else a1..a3 delta -4.
 #[hook(addr = 0x6df4a0, conv = thiscall, name = "CVehicle::ProcessDrivingAnims", expect = "51 57 8B F9 F7 47 1C 00 00 02 00",
-       this = "CVehicle", unverified = "mvpf-veh-1", route = "L2", hazards = "stack-residue", recs = "driving",
+       this = "CVehicle", route = "L2", hazards = "stack-residue", recs = "driving",
        note = "argument slots reused: S+4 (driver) holds the third association, S+8 (blend) the speed length, then the fourth association; S-4 (pushed ecx) holds this")]
 pub fn vehicle_process_driving_anims(this: Ent, ped: Ent, blend: u8) {
     if ru(this, EFLAGS) & 0x20000 != 0 {

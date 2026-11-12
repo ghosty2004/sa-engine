@@ -188,7 +188,7 @@ orig! {
 /// rate 0, +0x32 default decision maker 0; the name is left as allocated), then `LoadPedStats` and a
 /// tail jump to `CDecisionMakerTypesFileLoader::LoadDefaultDecisionMaker`.
 #[hook(addr = 0x5BF9D0, conv = cdecl, name = "CPedStats::Initialise", expect = "53 55 56 68 BC 08 00 00",
-       unverified = "std4-data-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn ped_stats_initialise() {
     let t = ps_operator_new(0x8BC);
     PED_STATS.set(t);
@@ -218,7 +218,7 @@ pub fn ped_stats_initialise() {
 /// lines too; before the first line they are zero here, uninitialised there). The floats are copied
 /// with `fld`/`fstp` (an SNaN would be quieted; the port copies bits).
 #[hook(addr = 0x5BB890, conv = cdecl, name = "CPedStats::LoadPedStats", expect = "83 EC 48 53 57",
-       unverified = "std4-data-1", route = "L2", hazards = "uninit-locals", recs = "boot")]
+       route = "L2", hazards = "uninit-locals", recs = "boot")]
 pub fn load_ped_stats() {
     let f = ps_open_file(g::<u8>(0x86A698), g::<u8>(0x85A53C));
     let mut v = [0u32; 10];

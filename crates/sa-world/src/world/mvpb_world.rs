@@ -149,7 +149,7 @@ pub fn entity_render(this: GPtr<u8>) {
 /// `CEntity::~CEntity` (0x535E90): vtable 0x863928, the LOD's child count (+0x30 -> +0x34) decremented,
 /// `DeleteRwObject`, `ResolveReferences`, then the `CPlaceable` destructor.
 #[hook(addr = 0x535E90, conv = thiscall, name = "CEntity::Destructor", this = "CEntity", expect = "6A FF E9 BE 10 ED FF",
-       unverified = "mvpb-world-1", route = "L2", hazards = "heap-writes,entry-protection-read")]
+       route = "L2", hazards = "heap-writes,entry-protection-read")]
 pub fn entity_dtor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x863928);
     let lod = rd::<GPtr<u8>>(this, 0x30);
@@ -186,7 +186,7 @@ fn record_deleted(e: GPtr<u8>, ty: u8, pool: usize, size: i32) {
 /// `CReplay::RecordPedDeleted(CPed*)` (0x45EC20 -> .HOODLUM 0x1561870, cdecl): block type 0xE with the ped's pool
 /// index (0x7C4-byte peds, pool 0xB74490).
 #[hook(addr = 0x45EC20, conv = cdecl, name = "CReplay::RecordPedDeleted", expect = "E9 4B 2C 10 01",
-       unverified = "mvpb-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn replay_record_ped_deleted(ped: GPtr<u8>) {
     record_deleted(ped, 0xE, 0xB74490, 0x7C4);
 }
@@ -194,7 +194,7 @@ pub fn replay_record_ped_deleted(ped: GPtr<u8>) {
 /// `CReplay::RecordVehicleDeleted(CVehicle*)` (0x45EBB0 -> .HOODLUM 0x156DAB0, cdecl): block type 0xD with the
 /// vehicle's pool index (0xA18-byte vehicles, pool 0xB74494).
 #[hook(addr = 0x45EBB0, conv = cdecl, name = "CReplay::RecordVehicleDeleted", expect = "E9 FB EE 10 01",
-       unverified = "mvpb-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn replay_record_vehicle_deleted(v: GPtr<u8>) {
     record_deleted(v, 0xD, 0xB74494, 0xA18);
 }

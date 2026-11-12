@@ -185,7 +185,7 @@ pub fn create_number_of_birds(sx: u32, sy: u32, sz: u32, tx: u32, ty: u32, tz: u
 /// velocity eases to the target by `min(timeStep * 0.02 * 0.5, 1)`, the position moves by
 /// `velocity * timeStep * 0.02` and the angle becomes `atan2(target.x, target.y)`.
 #[hook(addr = 0x712330, conv = cdecl, name = "CBirds::Update", expect = "A1 3C F0 B6 00",
-       unverified = "mvpd-render-2", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk", note = "FSIN/FCOS/FPATAN; rand sites 0x7123FE, 0x712403, 0x71247E, 0x712487, 0x7124FB")]
 pub fn birds_update() {
     let cm = g::<GPtr<u8>>(0xB6F03C).read();
@@ -383,7 +383,7 @@ fn destroy_mirror_buffers() {
 /// `TheCamera.DealWithMirrorBeforeConstructRenderList(active, normal, V, NULL)`, or with a local matrix
 /// from `BuildCameraMatrixForScreens` (destroyed afterwards) for screens or when `[0xC7C72A]` is set.
 #[hook(addr = 0x726DF0, conv = cdecl, name = "CMirrors::BeforeConstructRenderList", expect = "6A FF 68 18 8D 84 00",
-       unverified = "mvpd-render-2", route = "split", hazards = "uninit-locals",
+       route = "split", hazards = "uninit-locals",
        recs = "grove-walk",
        note = "raster create/destroy (RW heap); the active flag is passed as a dword whose upper bytes the original leaves unwritten; SEH frame for the local CMatrix")]
 pub fn mirrors_before_construct_render_list() {

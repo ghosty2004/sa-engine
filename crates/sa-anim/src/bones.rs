@@ -113,7 +113,7 @@ orig! {
 /// chains): push front. `item->prev = NULL`, `item->next = head`, `head = item`; the old head's
 /// `prev` = item, or `tail = item` when the list was empty; `count += 1`.
 #[hook(addr = 0x4A8DF0, conv = thiscall, name = "FUN_004a8df0", expect = "8B 11 85 D2 8B 44 24 04",
-       unverified = "std4-core-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn list_add_item(this: GPtr<u8>, item: GPtr<u8>) {
     let head = this.cast::<u32>().read();
     this.cast::<u32>().write(item.addr() as u32);

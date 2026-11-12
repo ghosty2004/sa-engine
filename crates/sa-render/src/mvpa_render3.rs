@@ -50,7 +50,7 @@ orig! {
 /// starting at the sphere's cached index (s+0x10, `& 3`): a plane with `n . s.centre - d > s.r` stores
 /// its index at s+0x10 and gives 0; none → 1.
 #[hook(addr = 0x4AA030, conv = thiscall, name = "FxFrustumInfo_c::IsCollision", expect = "8B 54 24 04 D9 02",
-       unverified = "mvpa-render-3", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "writes the sphere's cached plane index")]
 pub fn fx_frustum_is_collision(this: GPtr<u8>, s: GPtr<u8>) -> u32 {
     let sf = |o: isize| rd::<f32>(s, o);

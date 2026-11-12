@@ -129,7 +129,7 @@ fn transform_line(line: GPtr<u8>, inv: GPtr<u8>, buf: GPtr<u8>) {
 /// (reached through the obfuscated `push; call next; ...; ret` dispatcher), any triangle
 /// (`TestLineTriangle`) → true. The counts are re-read (sign-extended) every iteration.
 #[hook(addr = 0x417730, conv = cdecl, name = "CCollision::TestLineOfSight", expect = "E9 0B D5 14 01",
-       unverified = "mvpc-coll-1", route = "L2", hazards = "none", recs = "grove-walk,driving",
+       route = "L2", hazards = "none", recs = "grove-walk,driving",
        note = "first call runs the protection VM 0xCB73E0 (static matrix ctor), kept as an orig call")]
 pub fn test_line_of_sight(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8>, see: u8, shoot: u8) -> u8 {
     let cd = rd::<GPtr<u8>>(model, 0x2C);

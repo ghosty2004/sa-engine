@@ -25,7 +25,7 @@ orig! {
 /// (0,0), (0,1), (1,1), (1,0); then the index block (flush at 0x180 sprites).
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x70EAB0, conv = cdecl, name = "CSprite::RenderBufferedOneXLUSprite_Rotate_Dimension", expect = "83 EC 20 D9 44 24 4C",
-       unverified = "mvpd-render-5", route = "L2", hazards = "x87-transcendental,stack-residue",
+       route = "L2", hazards = "x87-transcendental,stack-residue",
        recs = "grove-walk", note = "FSIN/FCOS; temporaries written into its own argument slots (angle, x, h, the r slot's byte 2)")]
 pub fn render_buffered_one_xlu_sprite_rotate_dimension(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) {
     let a = x(angle);
@@ -251,7 +251,7 @@ orig! {
 /// >> 8`, uv (0,0), (0,1), (1,1), (1,0), drawn as a triangle fan.
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x70D490, conv = cdecl, name = "CSprite::RenderOneXLUSprite_Rotate_Aspect", expect = "D9 44 24 0C 83 EC 2C",
-       unverified = "mvpd-render-5", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk", note = "FSIN/FCOS")]
 pub fn render_one_xlu_sprite_rotate_aspect(px: f32, py: f32, pz: f32, w: f32, h: f32, r: u32, gg: u32, b: u32, intensity: u32, recip_z: u32, angle: f32, alpha: u32) {
     let (mut cr, mut cg, mut cb, mut ii) = (r as u8 as i32, gg as u8 as i32, b as u8 as i32, i32::from(intensity as u16 as i16));

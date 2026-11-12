@@ -263,7 +263,7 @@ pub fn env_wave_uv(atomic: GPtr<u8>, env: GPtr<u8>, atm: GPtr<u8>, out: GPtr<u8>
 /// ambient = `AmbientLightColour` copied when `surf.ambient` is exactly 1.0, else multiplied by it.
 /// The original reuses its `spec` / `power` argument slots as temporaries (the caller does not read them).
 #[hook(addr = 0x5DA790, conv = cdecl, name = "FUN_005da790", expect = "8B 44 24 10 53",
-       unverified = "boot-render-2", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "writes the D3DMATERIAL9 global 0x8D12D8..0x8D131B; the spec/power argument slots are overwritten by the original")]
 pub fn set_material_props(surf: GPtr<u8>, color: GPtr<u8>, flags: u32, spec: u32, power: u32) -> u32 {
     let m = |off: usize| g::<u32>(MATERIAL + off);

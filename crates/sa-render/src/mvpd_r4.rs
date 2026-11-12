@@ -115,7 +115,7 @@ fn rand_at(site: u32) -> i32 {
 /// `FindPlayerPed` call (the removed player comment), `UpdateInTunnelness()` and the weather audio
 /// `Service()` (tail call).
 #[hook(addr = 0x72B850, conv = cdecl, name = "CWeather::Update", expect = "A0 4C CB B7 00",
-       unverified = "mvpd-render-4", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        recs = "grove-walk",
        note = "FCOS wind waves; rand sites 0x72B9E0, 0x72BA5A, 0x72BA8D, 0x72C0BE")]
 pub fn weather_update() {
@@ -650,7 +650,7 @@ orig! {
 /// `(CEntity* owner)`: the first stencil shadow object of the list at 0xC6A16C (linked through +0x14)
 /// whose owner (+0) is `owner`, else NULL.
 #[hook(addr = 0x710BA0, conv = cdecl, name = "FUN_00710ba0", expect = "A1 6C A1 C6 00",
-       unverified = "mvpd-render-4", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn stencil_find_object(owner: u32) -> GPtr<u8> {
     let mut o = g::<GPtr<u8>>(0xC6A16C).read();
     while !o.is_null() {

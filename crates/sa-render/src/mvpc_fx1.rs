@@ -160,7 +160,7 @@ fn ftol_scaled(v: f32, kbits: u32) -> u16 {
 
 /// `thunk_FUN_008232d8` (0x4AB240, cdecl): `jmp CFileMgr::OpenFile` (0x538900).
 #[hook(addr = 0x4AB240, conv = cdecl, name = "thunk_FUN_008232d8", expect = "E9 BB D6 08 00 90 90 90",
-       unverified = "mvpc-fx-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "opens a file (the FX project)")]
 pub fn thunk_open_file(path: GPtr<u8>, mode: GPtr<u8>) -> GPtr<u8> {
     cfm_open_file(path, mode)
@@ -176,7 +176,7 @@ pub fn thunk_read_line(f: GPtr<u8>, buf: GPtr<u8>, n: i32) -> bool {
 
 /// `_fclose` (0x4AB260, cdecl): `jmp CFileMgr::CloseFile` (0x5389D0).
 #[hook(addr = 0x4AB260, conv = cdecl, name = "_fclose", expect = "E9 6B D7 08 00 90 90 90",
-       unverified = "mvpc-fx-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "closes a file (the FX project)")]
 pub fn thunk_close_file(f: GPtr<u8>) -> i32 {
     cfm_close_file(f)
@@ -189,7 +189,7 @@ pub fn thunk_close_file(f: GPtr<u8>) -> i32 {
 /// with `"%s"`), then while the field is `"FX_SYSTEM_DATA:"` (16 bytes): `LoadFxSystemBP(path, file)`
 /// and two more lines (`"%s"` of the second). Close, `PopCurrentTxd`, `this+0xAC` pool `Optimise`; 1.
 #[hook(addr = 0x5C2420, conv = thiscall, name = "FxManager_c::LoadFxProject", expect = "81 EC 00 02 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
+       route = "split", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
        note = "reads effects.fxp and effectsPC.txd (one-time loader)")]
 pub fn load_fx_project(this: GPtr<u8>, path: GPtr<u8>) -> u8 {
     // 4 spare bytes in front: the original writes at `len - 4` even for shorter paths.
@@ -236,7 +236,7 @@ pub fn load_fx_project(this: GPtr<u8>, path: GPtr<u8>) -> u8 {
 /// non-null; `bp->Load(filename, file, version)` (called on the null pointer too, like the original);
 /// `List_c::AddItem(this, bp)`; returns bp.
 #[hook(addr = 0x5C1F50, conv = thiscall, name = "FxManager_c::LoadFxSystemBP", expect = "6A FF 68 BE D5 83 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads one FX system of effects.fxp")]
 pub fn load_fx_system_bp(this: GPtr<u8>, name: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8> {
     let mut r = Rd::new(f);
@@ -264,7 +264,7 @@ pub fn load_fx_system_bp(this: GPtr<u8>, name: GPtr<u8>, f: GPtr<u8>) -> GPtr<u8
 /// LoadTextures(names[i], version)` (also slots the original skipped). The texture names are 0x80
 /// bytes per prim on the original's frame (room for 8; more overruns its frame); here 128 slots.
 #[hook(addr = 0x5C05F0, conv = thiscall, name = "FxSystemBP_c::Load", expect = "6A FF 64 A1 00 00 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes,uninit-locals,ax-al-return", recs = "grove-walk",
+       route = "split", hazards = "heap-writes,uninit-locals,ax-al-return", recs = "grove-walk",
        note = "reads effects.fxp; LoadTextures reads texture names a prim Load may leave unwritten")]
 pub fn system_bp_load(this: GPtr<u8>, _name: GPtr<u8>, f: GPtr<u8>, version: i32) -> u8 {
     let mut r = Rd::new(f);
@@ -480,7 +480,7 @@ const INFO_NAMES: [(usize, usize, u32, bool); 32] = [
 /// timeMode; type word +4: `& 0x1000` none, `& 0x2000` → +8 = i if still -1, `& 0xC000` → +9 likewise.
 /// Afterwards +9 = (u8)count when still -1, then +8 = +9 when still -1.
 #[hook(addr = 0x5C0B70, conv = thiscall, name = "FxInfoManager_c::Load", expect = "81 EC 88 01 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads effects.fxp; an unknown info name writes through an unwritten pool slot like the original")]
 pub fn info_manager_load(this: GPtr<u8>, f: GPtr<u8>, version: i32) {
     let mut r = Rd::new(f);
@@ -681,7 +681,7 @@ fn interp_load(this: GPtr<u8>, f: GPtr<u8>, elem: u32, store: impl Fn(GPtr<u8>, 
 /// `FxInterpInfoFloat_c::Load(FILESTREAM)` (0x5C16F0): [`interp_load`] with float keys scanned straight
 /// into `keys[i][j]`.
 #[hook(addr = 0x5C16F0, conv = thiscall, name = "FxInterpInfoFloat_c::Load", expect = "81 EC 88 01 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads effects.fxp")]
 pub fn interp_float_load(this: GPtr<u8>, f: GPtr<u8>) {
     interp_load(this, f, 4, |keys, j, r| r.field2(FMT_S_F, keys.cast::<u32>().wrapping_index(j).cast()));
@@ -697,7 +697,7 @@ fn interp_load_short(this: GPtr<u8>, f: GPtr<u8>, kbits: u32) {
 
 /// `FxInterpInfoU255_c::Load(FILESTREAM)` (0x5C18F0): [`interp_load`] with short keys `_ftol(v * 256.0f)`.
 #[hook(addr = 0x5C18F0, conv = thiscall, name = "FxInterpInfoU255_c::Load", expect = "81 EC 88 01 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads effects.fxp")]
 pub fn interp_u255_load(this: GPtr<u8>, f: GPtr<u8>) {
     interp_load_short(this, f, 0x4380_0000);
@@ -705,7 +705,7 @@ pub fn interp_u255_load(this: GPtr<u8>, f: GPtr<u8>) {
 
 /// `FxInterpInfo32_c::Load(FILESTREAM)` (0x5C1B10): [`interp_load`] with short keys `_ftol(v * 1000.0f)`.
 #[hook(addr = 0x5C1B10, conv = thiscall, name = "FxInterpInfo32_c::Load", expect = "81 EC 88 01 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads effects.fxp")]
 pub fn interp_32_load(this: GPtr<u8>, f: GPtr<u8>) {
     interp_load_short(this, f, 0x447A_0000);
@@ -713,7 +713,7 @@ pub fn interp_32_load(this: GPtr<u8>, f: GPtr<u8>) {
 
 /// `FxInterpInfo255_c::Load(FILESTREAM)` (0x5C1D30): [`interp_load`] with short keys `_ftol(v * 128.0f)`.
 #[hook(addr = 0x5C1D30, conv = thiscall, name = "FxInterpInfo255_c::Load", expect = "81 EC 88 01 00 00",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads effects.fxp")]
 pub fn interp_255_load(this: GPtr<u8>, f: GPtr<u8>) {
     interp_load_short(this, f, 0x4300_0000);
@@ -766,7 +766,7 @@ const STATIC_SYSTEMS: [usize; 17] = [
 /// `Fx_c::InitStaticSystems()` (0x49E660, thiscall): member `i` = `g_fxMan.CreateFxSystem(name_i, &zero,
 /// null, true)` with one zeroed local vector shared by all 17 calls.
 #[hook(addr = 0x49E660, conv = thiscall, name = "Fx_c::InitStaticSystems", expect = "83 EC 0C 56 6A 01",
-       unverified = "mvpc-fx-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "one-time initialiser: creates the 17 static particle systems")]
 pub fn fx_init_static_systems(this: GPtr<u8>) {
     let mut pos = [0u32; 3];
@@ -838,7 +838,7 @@ pub fn create_fx_system_bp(this: GPtr<u8>, bp_: GPtr<u8>, pos: GPtr<u8>, parent:
 /// bpPrim[i]->CreateInstance()` (vtable +0xC) and `prims[i]->Init(bpPrim[i], this)` (vtable +4);
 /// `CAEFireAudioEntity::Initialise(this + 0x7C, this)`.
 #[hook(addr = 0x4AA750, conv = thiscall, name = "FxSystem_c::Init", expect = "8B 44 24 0C 53",
-       unverified = "mvpc-fx-1", route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes,ax-al-return", recs = "grove-walk",
        note = "allocates the prim array and the bounding sphere")]
 pub fn system_init(this: GPtr<u8>, bp_: GPtr<u8>, local: GPtr<u8>, parent: GPtr<u8>) -> u8 {
     wr::<GPtr<u8>>(this, 8, bp_);
@@ -891,7 +891,7 @@ pub fn system_init(this: GPtr<u8>, bp_: GPtr<u8>, local: GPtr<u8>, parent: GPtr<
 /// new(0x10)` + `ListItem_c` constructor (a null item is written through, like the original), item+8 =
 /// sys, item+0xC = entity, `List_c::AddItem(this + 0x44, item)`, `item->sys->Play()`.
 #[hook(addr = 0x4A11E0, conv = thiscall, name = "Fx_c::CreateEntityFx", expect = "64 A1 00 00 00 00",
-       unverified = "mvpc-fx-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "allocates the entity FX list item")]
 pub fn fx_create_entity_fx(this: GPtr<u8>, entity: GPtr<u8>, name: GPtr<u8>, pos: GPtr<u8>, m: GPtr<u8>) {
     let sys = create_fx_system_name(GPtr::from_addr(FX_MAN), name, pos, m, 1);

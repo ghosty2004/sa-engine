@@ -64,7 +64,7 @@ fn register_if_set(slot: GPtr<u8>) {
 /// the old upper nibble, +0x14..+0x20 = 0, +0x24 = 6, bytes +0x28 / +0x29 / +0x3C / +0x44 = 0, +0x38 / +0x40 = 0,
 /// +0x48 = -1.0.
 #[hook(addr = 0x63A220, conv = thiscall, name = "CTaskComplexEnterCar::Constructor", expect = "6A FF 68 68 13 84 00",
-       unverified = "ai7-11", route = "L2", hazards = "heap-writes", recs = "car-ai")]
+       route = "L2", hazards = "heap-writes", recs = "car-ai")]
 pub fn enter_car_ctor(this: GPtr<u8>, veh: GPtr<u8>, b1: u32, b2: u32, b3: u32, b4: u32) -> GPtr<u8> {
     task_complex_ctor(this);
     let low = ((((b4 as u8 & 1) << 1 | (b3 as u8 & 1)) << 1 | (b2 as u8 & 1)) << 1) | (b1 as u8 & 1);
@@ -153,7 +153,7 @@ pub fn leave_boat_create_sub_task(this: GPtr<u8>, ty: i32) -> GPtr<u8> {
 /// 0x86EC9C`, byte +8 = 0, +0xC = 0, vehicle +0x10 (registered when set), the flag byte +0x18, byte +0x19 = 0, the
 /// line-up +0x1C, +0x20 = 0.
 #[hook(addr = 0x645E50, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::Constructor", expect = "6A FF 68 F8 23 84 00",
-       unverified = "ai7-11", route = "L2", hazards = "heap-writes", recs = "car-ai")]
+       route = "L2", hazards = "heap-writes", recs = "car-ai")]
 pub fn car_open_door_from_outside_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32, lineup: u32, b: u32) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0x14, door);
@@ -199,7 +199,7 @@ pub fn car_open_door_from_outside_dtor(this: GPtr<u8>) {
 /// CTaskUtilityLineUpPedWithCar*)` (0x6464F0, `ret 0xC`; entry through the island 0x406F6C): `CTaskSimple` base,
 /// door +0x14, `vtbl = 0x86ED2C`, byte +8 = 0, +0xC = 0, vehicle +0x10 (registered when set), line-up +0x18.
 #[hook(addr = 0x6464F0, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Constructor", expect = "6A FF E9 75 0A DC FF",
-       unverified = "ai7-11", route = "L2", hazards = "heap-writes", recs = "car-ai")]
+       route = "L2", hazards = "heap-writes", recs = "car-ai")]
 pub fn car_close_door_from_outside_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32, lineup: u32) -> GPtr<u8> {
     task_simple_ctor(this);
     wr::<u32>(this, 0x14, door);
@@ -218,7 +218,7 @@ pub fn car_close_door_from_outside_ctor(this: GPtr<u8>, veh: GPtr<u8>, door: u32
 /// only scales the group index by 0x94): `GetGroup(animId)` on the vehicle anim group (result unused), then ST0 =
 /// its `ComputeCriticalBlendTime(animId)`.
 #[hook(addr = 0x64E4B0, conv = cdecl, name = "FUN_0064e4b0", expect = "56 8B 74 24 08",
-       unverified = "ai7-11", route = "L2", hazards = "none", recs = "car-ai")]
+       route = "L2", hazards = "none", recs = "car-ai")]
 pub fn veh_anim_critical_blend_time(group: u32, anim: u32) -> X87 {
     let g: GPtr<u8> = GPtr::from_addr(group.wrapping_mul(0x94).wrapping_add(VEH_ANIM_GROUPS) as usize);
     veh_anim_group_get_group(g, anim);

@@ -47,7 +47,7 @@ fn ga<T: sa_core::mem::GameData>(addr: usize) -> GPtr<T> {
 /// `CTheScripts::WipeLocalVariableMemoryForMissionScript()` (stub 0x464BB0 → 0x1569F10): the 0x400 mission local
 /// variables zeroed (`rep stosd`).
 #[hook(addr = 0x464bb0, conv = cdecl, name = "CTheScripts::WipeLocalVariableMemoryForMissionScript", expect = "E9 5B 53 10 01",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn wipe_local_variable_memory_for_mission_script() {
     for i in 0..0x400 {
         ga::<u32>(MISSION_LOCALS).wrapping_index(i).write(0);
@@ -57,7 +57,7 @@ pub fn wipe_local_variable_memory_for_mission_script() {
 /// `CTheScripts::AddToSwitchJumpTable(int32 value, int32 offset)` (0x470390): entry
 /// `NumberOfEntriesInSwitchTable` (u16) = (value, offset), the count incremented (no bound check).
 #[hook(addr = 0x470390, conv = cdecl, name = "CTheScripts::AddToSwitchJumpTable", expect = "66 8B 0D 50 3F A4 00",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn add_to_switch_jump_table(value: i32, offset: i32) {
     let n = ga::<u16>(SWITCH_NUM_ENTRIES).read();
     let e = ga::<i32>(SWITCH_JUMP_TABLE + usize::from(n) * 8);
@@ -140,7 +140,7 @@ pub fn decision_maker_types_add_by_index(this: GPtr<u8>, index: i32, group: u32,
 /// the entity's +0x2E byte is set. The entity in the 0x14 slots → cleared when `remove`. Not there and not
 /// `remove` → stored in the first empty slot (if any).
 #[hook(addr = 0x481200, conv = cdecl, name = "CTheScripts::AddToInvisibilitySwapArray", expect = "E9 5B CD 0E 01",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn add_to_invisibility_swap_array(e: GPtr<u8>, remove: u8) {
     if e.byte_add(0x2E).read() != 0 {
         return;
@@ -174,7 +174,7 @@ fn object_handle(o: GPtr<u8>) -> i32 {
 /// pool handles of both; the pair already in the 10 slots → nothing; else stored in the LAST free slot (first
 /// handle -1) when there is one.
 #[hook(addr = 0x470980, conv = cdecl, name = "CTheScripts::AddToListOfConnectedLodObjects", expect = "E9 1B 58 0F 01",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn add_to_list_of_connected_lod_objects(a: GPtr<u8>, b: GPtr<u8>) {
     let h1 = object_handle(a);
     let h2 = object_handle(b);
@@ -284,7 +284,7 @@ orig! {
 /// 0x24-byte record's eight dwords = -1 and its +0x20 byte = 0, `FUN_006F9EB0` on the 0x94-byte effect (the
 /// original relies on it preserving ECX), byte A = 0, float = -1.0.
 #[hook(addr = 0x6fa6f0, conv = cdecl, name = "CScripted2dEffects::Init", expect = "53 55 56 57 33 DB 33 F6",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "the callee FUN_006F9EB0 must preserve ECX in the original's loop")]
 pub fn scripted_2d_effects_init() {
     for i in 0..0x40usize {
@@ -308,7 +308,7 @@ pub fn scripted_2d_effects_init() {
 /// gets +0 script, +0xE priority, +3 type, +0xC model, +2 attach, +4 = 1 and +8 the radius when above 0 (or
 /// NaN), else 5.0; none free → nothing.
 #[hook(addr = 0x46a930, conv = thiscall, name = "CScriptsForBrains::AddNewScriptBrain", expect = "53 32 DB 32 D2 84 DB",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn scripts_for_brains_add_new_script_brain(this: GPtr<u8>, script: u32, model: u32, priority: u32, attach: u32, ty: u32, radius: f32) {
     let Some(i) = (0..0x46isize).find(|&i| this.byte_add(i * 0x14).cast::<i16>().read() == -1) else {
         return;
@@ -385,7 +385,7 @@ pub fn process_waiting_for_script_brain_array() {
 /// first script (0x20 bytes from +0, name at +8) whose name matches (`_stricmp`) — index -1, i.e. `this - 0x20`,
 /// when none (original bug, kept) — gets +0x1C = size and +6 = the entry index.
 #[hook(addr = 0x470750, conv = thiscall, name = "CStreamedScripts::ReadStreamedScriptData", expect = "E9 FB EC 0F 01",
-       unverified = "mvpj-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn streamed_scripts_read_streamed_script_data(this: GPtr<u8>) {
     let hdr = |off: u32| ga::<u8>(SCRIPT_SPACE + 3).byte_add(off as isize).cast::<u32>().read();
     let o1 = hdr(0);

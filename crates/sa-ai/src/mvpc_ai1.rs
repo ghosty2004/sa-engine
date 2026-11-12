@@ -602,7 +602,7 @@ pub fn task_simple_scratch_head_dtor(this: GPtr<u8>) {
 /// and +0x4E = 0, vtable 0x85C5C8, +0x304 = -1, the nine (unaligned) dwords +0x2D6..+0x2F6 = -1, +0x2FA and
 /// +0x2FE = -1. Returns `this`.
 #[hook(addr = 0x4C75E0, conv = thiscall, name = "FUN_004c75e0", expect = "56 57 8B F1 E8 77 D4 FF FF",
-       unverified = "mvpc-ai-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "boot-time element constructor run by the CRT initialiser of the vehicle model-info store")]
 pub fn vehicle_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     base_model_info_ctor(this);
@@ -681,63 +681,63 @@ fn store_ctor(this: GPtr<u8>, size: u32, n: u32, ctor: u32, dtor: u32) -> GPtr<u
 
 /// `FUN_004c5cb0` (0x4C5CB0): `CStore<CAtomicModelInfo, 14000>` (0x20 each; ctor 0x4C5540, dtor 0x4C5590).
 #[hook(addr = 0x4C5CB0, conv = thiscall, name = "FUN_004c5cb0", expect = "56 68 90 55 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_atomic_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x20, 0x36B0, 0x4C5540, 0x4C5590)
 }
 
 /// `FUN_004c5d10` (0x4C5D10): `CStore<CDamageAtomicModelInfo, 70>` (0x24 each; ctor 0x4C55A0, dtor 0x4C55D0).
 #[hook(addr = 0x4C5D10, conv = thiscall, name = "FUN_004c5d10", expect = "56 68 D0 55 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_damage_atomic_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x24, 0x46, 0x4C55A0, 0x4C55D0)
 }
 
 /// `FUN_004c5d70` (0x4C5D70): `CStore<CLodAtomicModelInfo, 1>` (0x24; ctor 0x4C55E0, dtor 0x4C5620).
 #[hook(addr = 0x4C5D70, conv = thiscall, name = "FUN_004c5d70", expect = "56 68 20 56 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_lod_atomic_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x24, 1, 0x4C55E0, 0x4C5620)
 }
 
 /// `FUN_004c5dd0` (0x4C5DD0): `CStore<CTimeModelInfo, 169>` (0x24 each; ctor 0x4C5640, dtor 0x4C5680).
 #[hook(addr = 0x4C5DD0, conv = thiscall, name = "FUN_004c5dd0", expect = "56 68 80 56 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_time_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x24, 0xA9, 0x4C5640, 0x4C5680)
 }
 
 /// `FUN_004c5e30` (0x4C5E30): `CStore<CLodTimeModelInfo, 1>` (0x28; ctor 0x4C5690, dtor 0x4C56E0).
 #[hook(addr = 0x4C5E30, conv = thiscall, name = "FUN_004c5e30", expect = "56 68 E0 56 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_lod_time_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x28, 1, 0x4C5690, 0x4C56E0)
 }
 
 /// `FUN_004c5e90` (0x4C5E90): `CStore<CWeaponModelInfo, 51>` (0x28 each; ctor 0x4C5760, dtor 0x4C5790).
 #[hook(addr = 0x4C5E90, conv = thiscall, name = "FUN_004c5e90", expect = "56 68 90 57 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_weapon_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x28, 0x33, 0x4C5760, 0x4C5790)
 }
 
 /// `FUN_004c5ef0` (0x4C5EF0): `CStore<CClumpModelInfo, 92>` (0x24 each; ctor 0x4C56F0, dtor 0x4C5750).
 #[hook(addr = 0x4C5EF0, conv = thiscall, name = "FUN_004c5ef0", expect = "56 68 50 57 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_clump_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x24, 0x5C, 0x4C56F0, 0x4C5750)
 }
 
 /// `FUN_004c5f50` (0x4C5F50): `CStore<CVehicleModelInfo, 212>` (0x308 each; ctor 0x4C75E0, dtor 0x4C5920).
 #[hook(addr = 0x4C5F50, conv = thiscall, name = "FUN_004c5f50", expect = "56 68 20 59 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_vehicle_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x308, 0xD4, 0x4C75E0, 0x4C5920)
 }
 
 /// `FUN_004c67d0` (0x4C67D0): `CStore<CPedModelInfo, 278>` (0x44 each; ctor 0x4C57A0, dtor 0x4C62F0).
 #[hook(addr = 0x4C67D0, conv = thiscall, name = "FUN_004c67d0", expect = "56 68 F0 62 4C 00",
-       unverified = "mvpc-ai-1", route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
+       route = "split", hazards = "none", recs = "grove-walk", note = "one-time CRT initialiser")]
 pub fn store_ped_ctor(this: GPtr<u8>) -> GPtr<u8> {
     store_ctor(this, 0x44, 0x116, 0x4C57A0, 0x4C62F0)
 }

@@ -61,7 +61,7 @@ fn fpv() -> GPtr<u8> {
 /// health the engine catches fire once (+0x614 bit 6, `m_BlowUpTimer` = 0, `m_Damager` = the damager,
 /// reference registered).
 #[hook(addr = 0x6B8EC0, conv = thiscall, name = "CBike::VehicleDamage", this = "CBike", expect = "51 D9 44 24 08 56",
-       unverified = "mvpb-veh-4", route = "L2", hazards = "heap-writes",
+       route = "L2", hazards = "heap-writes",
        note = "the original keeps d/d2 in its intensity argument slot (entry esp+4); the port uses a local")]
 pub fn bike_vehicle_damage(this: GPtr<u8>, intensity: f32, _component: u32, _damager: GPtr<u8>, _coors: GPtr<u8>, _dir: GPtr<u8>, _weapon: u32) {
     if gt(x(intensity), x(0.0)) {

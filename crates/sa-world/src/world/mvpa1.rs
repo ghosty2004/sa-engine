@@ -734,7 +734,7 @@ pub fn grid_ref_init() {
 /// dwords 0xB78A00/0xB78A04; `PopulateFavoriteRadioStationList`, `LoadActionReactionStats`,
 /// `LoadStatUpdateConditions`; then zeroes the nine dwords 0xB794D8, DC, E4, EC, F0, F4, F8, FC, 0xB79500.
 #[hook(addr = 0x55C0C0, conv = cdecl, name = "CStats::Init", expect = "53 57 33 C0 B9 52 00 00 00",
-       unverified = "mvpa-world-1", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "one-time init: reads AR_STATS.DAT and STATDISP.DAT")]
 pub fn stats_init() {
     for i in 0..0x52usize {

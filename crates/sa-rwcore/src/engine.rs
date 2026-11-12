@@ -662,7 +662,7 @@ pub fn rw_im2d_render_indexed_primitive(ty: u32, verts: GPtr<u8>, nv: i32, idx: 
 /// Every `#[hook]` of this module.
 /// `RwOsGetFileInterface()` (0x804130): `&RwEngineInstance->fileFuncs` (`G + 0xC4`).
 #[hook(addr = 0x804130, conv = cdecl, name = "RwOsGetFileInterface", expect = "A1 24 7B C9 00 05 C4 00 00 00",
-       unverified = "std4-audio-3", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn rw_os_get_file_interface() -> GPtr<u8> {
     rw_globals().byte_add(0xC4)
 }

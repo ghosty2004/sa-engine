@@ -579,7 +579,7 @@ sa_core::orig! {
 /// The original keeps its values in the argument and local slots it reuses (the last colour object over the
 /// `y + height` slot, read back only as written); the port keeps them in variables.
 #[hook(addr = 0x728640, conv = cdecl, name = "CSprite2d::DrawBarChart", expect = "A1 24 7B C9 00 83 EC 28",
-       unverified = "std4-render-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 #[allow(clippy::too_many_arguments)]
 pub fn draw_bar_chart(x: f32, y: f32, width: u32, height: u32, progress: f32, progress_add: u32, draw_percentage: u32,
                       draw_black_border: u32, color: u32, add_color: u32) {

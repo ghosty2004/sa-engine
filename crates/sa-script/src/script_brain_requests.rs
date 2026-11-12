@@ -126,7 +126,7 @@ pub fn start_or_request_new_streamed_script_brain(this: GPtr<u8>, index: u32, e:
 /// temporary; not reproduced), and pushes the brain index as the dword of a local whose upper three
 /// bytes it never wrote (zero here).
 #[hook(addr = 0x46ff20, conv = thiscall, name = "CScriptsForBrains::CheckIfNewEntityNeedsScript",
-       expect = "83 EC 08 53 8B 5C 24 14", unverified = "mvpi-script-1", route = "L2", hazards = "stack-residue,uninit-locals",
+       expect = "83 EC 08 53 8B 5C 24 14", route = "L2", hazards = "stack-residue,uninit-locals",
        recs = "grove-walk")]
 pub fn check_if_new_entity_needs_script(this: GPtr<u8>, e: GPtr<u8>, attach: u32, _unused: u32) {
     let at8 = attach as u8;
@@ -224,7 +224,7 @@ fn pool_at(cell: usize, size: isize, h: i32) -> GPtr<u8> {
 /// constructor 0x463640 when non-null) goes to `CScriptedBrainTaskStore::SetTask(ped, task)`; 1 / 4 →
 /// the object of local variable 0: flags (+0x140) bit 0x100000 set, 0x200000 cleared.
 #[hook(addr = 0x465aa0, conv = thiscall, name = "CRunningScript::ShutdownThisScript", expect = "6A FF 68 FB 7C 83 00",
-       unverified = "mvpi-script-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "allocates a task (task pool) for type-5 brains")]
 pub fn shutdown_this_script(this: GPtr<u8>) {
     at::<u8>(this, 0xC4).write(0);

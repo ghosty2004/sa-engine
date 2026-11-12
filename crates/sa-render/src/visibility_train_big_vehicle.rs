@@ -98,7 +98,7 @@ fn rejected_by_dot(id: u32, dot: X87, dot32: f32) -> bool {
 /// the unique-materials flag nor looks at the clump alpha.
 #[hook(addr = 0x732820, conv = cdecl, name = "CVisibilityPlugins::RenderVehicleReallyLowDetailCB_BigVehicle",
        expect = "D9 05 24 80 C8 00 D8 1D 38 80 C8 00",
-       unverified = "boot-render-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn render_vehicle_really_low_detail_cb_big_vehicle(atomic: GPtr<u8>) -> GPtr<u8> {
     if !dist().fcom(k(BIG_VEHICLE_LOD0_DIST)).c0() {
         atomic_default_render(atomic);
@@ -112,7 +112,7 @@ pub fn render_vehicle_really_low_detail_cb_big_vehicle(atomic: GPtr<u8>) -> GPtr
 /// compared unrounded with 0 and squared as the stored f32 ([`rejected_by_dot`]); otherwise `AtomicDefaultRenderCallBack`. Returns the atomic.
 #[hook(addr = 0x733330, conv = cdecl, name = "CVisibilityPlugins::RenderTrainHiDetailCB",
        expect = "51 D9 05 24 80 C8 00 53",
-       unverified = "boot-render-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn render_train_hi_detail_cb(atomic: GPtr<u8>) -> GPtr<u8> {
     if beyond_big_lod0() {
         return atomic;
@@ -141,7 +141,7 @@ pub fn render_train_hi_detail_cb(atomic: GPtr<u8>) -> GPtr<u8> {
 /// when the list is full (insert returns NULL) the atomic is rendered at once. Returns the atomic.
 #[hook(addr = 0x734240, conv = cdecl, name = "CVisibilityPlugins::RenderTrainHiDetailAlphaCB",
        expect = "D9 05 24 80 C8 00 83 EC 10",
-       unverified = "boot-render-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn render_train_hi_detail_alpha_cb(atomic: GPtr<u8>) -> GPtr<u8> {
     if beyond_big_lod0() {
         return atomic;

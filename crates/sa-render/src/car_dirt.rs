@@ -46,7 +46,7 @@ fn rd32(p: GPtr<u8>, o: isize) -> u32 {
 /// colour bytes replaced by `(c * i) / 16 + level / 16` (bytes, wrapping), `level` = 0xFF0 - 0xFF i,
 /// walking rows of `width * 4` bytes from the locked pixels (mode 3). 1.
 #[hook(addr = 0x5D5BC0, conv = cdecl, name = "CCarFXRenderer::InitialiseDirtTexture", expect = "83 EC 28 53 55 56 57 68 2C 98",
-       unverified = "std5-rw-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn initialise_dirt_texture() -> u32 {
     let slot = txd_find_slot(VEHICLE_TXD);
     txd_push_current();

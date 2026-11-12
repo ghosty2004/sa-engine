@@ -1944,7 +1944,7 @@ fn peds_loaded(i: i32) -> GPtr<i32> {
 ///   0` faults: original); slot in {cur, next} and not in {any, any + 1} → model and TXD deletable
 ///   (`SetModelIsDeletable` inlined); slot not in {cur, next} but in {any, any + 1} → `RequestModel(model, 2)`.
 #[hook(addr = 0x40a560, conv = cdecl, name = "CStreaming::StreamZoneModels", expect = "83 EC 24 56 90",
-       unverified = "mvpk-stream-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "the entry fragment 0x40145A computes the CPopCycle::m_pCurrZoneInfo address as ror([0x1560638], [0x727B61]); the port reads 0xC0BC68 (assumed no-CD VM value, as the image resolves it)")]
 pub fn stream_zone_models(_pos: GPtr<f32>) {
     let zi = g::<GPtr<u8>>(POP_CURR_ZONE_INFO).read();

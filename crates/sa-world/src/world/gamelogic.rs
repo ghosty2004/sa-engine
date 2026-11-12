@@ -218,7 +218,7 @@ fn ped_pos(cell: usize) -> GPtr<f32> {
 /// for player 0's ped allowed (EAX = 1) when it is below 0, else EAX = 0; for any other ped allowed
 /// when it is above 0 (NaN: refused). The early AL returns keep EAX's upper bytes (zero here).
 #[hook(addr = 0x441e10, conv = cdecl, name = "CGameLogic::IsPlayerAllowedToGoInThisDirection",
-       expect = "90 E9 28 3B FC FF", unverified = "mvpi-world-1", route = "L2", hazards = "ax-al-return,x87-transcendental",
+       expect = "90 E9 28 3B FC FF", route = "L2", hazards = "ax-al-return,x87-transcendental",
        recs = "grove-walk")]
 pub fn is_player_allowed_to_go_in_this_direction(ped: GPtr<u8>, dir_x: f32, dir_y: f32, dir_z: f32, limit: f32) -> u8 {
     if g::<u32>(PLAYER0_PED).read() == 0

@@ -37,7 +37,7 @@ orig! {
 
 /// `CBaseModelInfo::CBaseModelInfo()` (0x4C4A60): vtable 0x85BB9C, u16 +8 = 0, u16 +0xA = 0xFFFF.
 #[hook(addr = 0x4C4A60, conv = thiscall, name = "CBaseModelInfo", expect = "8B C1 C7 00 9C BB 85 00",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn base_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0x85BB9C);
     wr::<u16>(this, 8, 0);
@@ -54,21 +54,21 @@ fn model_info(this: GPtr<u8>, vtable: u32) -> GPtr<u8> {
 
 /// `CAtomicModelInfo::CAtomicModelInfo()` (0x4C5540): vtable 0x85BBF0.
 #[hook(addr = 0x4C5540, conv = thiscall, name = "FUN_004c5540", expect = "56 8B F1 E8 18 F5 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn atomic_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     model_info(this, 0x85BBF0)
 }
 
 /// `CDamageAtomicModelInfo::CDamageAtomicModelInfo()` (0x4C55A0): vtable 0x85BC30.
 #[hook(addr = 0x4C55A0, conv = thiscall, name = "FUN_004c55a0", expect = "56 8B F1 E8 B8 F4 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn damage_atomic_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     model_info(this, 0x85BC30)
 }
 
 /// `CLodAtomicModelInfo::CLodAtomicModelInfo()` (0x4C55E0): u16 +0x20 = u16 +0x22 = 0, vtable 0x85BC70.
 #[hook(addr = 0x4C55E0, conv = thiscall, name = "FUN_004c55e0", expect = "56 8B F1 E8 78 F4 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn lod_atomic_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     base_model_info_ctor_call(this);
     wr::<u16>(this, 0x20, 0);
@@ -79,7 +79,7 @@ pub fn lod_atomic_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CTimeModelInfo::CTimeModelInfo()` (0x4C5640): vtable 0x85BCB0, u16 +0x22 = 0xFFFF.
 #[hook(addr = 0x4C5640, conv = thiscall, name = "FUN_004c5640", expect = "56 8B F1 E8 18 F4 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn time_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     model_info(this, 0x85BCB0);
     wr::<u16>(this, 0x22, 0xFFFF);
@@ -89,7 +89,7 @@ pub fn time_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `CLodTimeModelInfo::CLodTimeModelInfo()` (0x4C5690): u16 +0x20 = u16 +0x22 = 0, vtable 0x85BCF0,
 /// u16 +0x26 = 0xFFFF.
 #[hook(addr = 0x4C5690, conv = thiscall, name = "FUN_004c5690", expect = "56 8B F1 E8 C8 F3 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn lod_time_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     base_model_info_ctor_call(this);
     wr::<u16>(this, 0x20, 0);
@@ -101,14 +101,14 @@ pub fn lod_time_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CClumpModelInfo::CClumpModelInfo()` (0x4C56F0): vtable 0x85BD30.
 #[hook(addr = 0x4C56F0, conv = thiscall, name = "FUN_004c56f0", expect = "56 8B F1 E8 68 F3 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn clump_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     model_info(this, 0x85BD30)
 }
 
 /// `CWeaponModelInfo::CWeaponModelInfo()` (0x4C5760): vtable 0x85BD78.
 #[hook(addr = 0x4C5760, conv = thiscall, name = "FUN_004c5760", expect = "56 8B F1 E8 F8 F2 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn weapon_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
     model_info(this, 0x85BD78)
 }
@@ -116,7 +116,7 @@ pub fn weapon_model_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// The saved-weapon element constructor of `CGameLogic::SavedWeapons` (0x441E00): bytes +0x14 and
 /// +0x15 = 0, +0x18 = 0.
 #[hook(addr = 0x441E00, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "8B C1 33 C9 88 48 14 88",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn saved_weapon_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u8>(this, 0x14, 0);
     wr::<u8>(this, 0x15, 0);
@@ -133,7 +133,7 @@ pub fn cam_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPad::CPad()` (0x541D80): `Clear(true, true)`.
 #[hook(addr = 0x541D80, conv = thiscall, name = "CPad", expect = "56 6A 01 6A 01 8B F1 E8",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn pad_ctor(this: GPtr<u8>) -> GPtr<u8> {
     pad_clear(this, 1, 1);
     this
@@ -141,7 +141,7 @@ pub fn pad_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `CPtrListSingleLink::CPtrListSingleLink()` (0x43E3F0, the LOD lists' element): head = NULL.
 #[hook(addr = 0x43E3F0, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "8B C1 C7 00 00 00 00 00",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn ptr_list_single_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0);
     this
@@ -185,7 +185,7 @@ pub fn bounding_box_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// constructor over 0x32 elements of 0x34 bytes at +8 (element constructor 0x453FA0, destructor
 /// 0x453FB0).
 #[hook(addr = 0x4541E0, conv = thiscall, name = "thunk_FUN_01568bf0", expect = "E9 0B 4A 11 01",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn path_node_array_owner_ctor(this: GPtr<u8>) -> GPtr<u8> {
     eh_vector_ctor(this.byte_add(8), 0x34, 0x32, 0x453FA0, 0x453FB0);
     this
@@ -195,7 +195,7 @@ pub fn path_node_array_owner_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// offsets from the distance +0x80 (= 1.0) and the constants 0x858C84 (added) and 0x858B18 (factor),
 /// in the original's x87 order (one value goes through an f32 stack temporary).
 #[hook(addr = 0x694850, conv = thiscall, name = "FUN_00694850", expect = "83 EC 08 8B C1",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn formation_offsets_ctor(this: GPtr<u8>) -> GPtr<u8> {
     let st = |o: isize, v: X87| wr::<f32>(this, o, v.to_f32());
     wr::<u32>(this, 0, 0xBF80_0000);
@@ -260,7 +260,7 @@ pub fn glass_pane_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// `List_c::List_c()` (0x4A8DD0): head, tail, count = 0.
 #[hook(addr = 0x4A8DD0, conv = thiscall, name = "FUN_004a8dd0", expect = "8B C1 33 C9 89 08",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn list_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0, 0);
     wr::<u32>(this, 4, 0);
@@ -328,7 +328,7 @@ pub fn proc_object_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// The element constructor of a `ListItem_c` base (0x4A94E0: the FX system's 1000 particle slots of 0x3C).
 #[hook(addr = 0x4A94E0, conv = thiscall, name = "FxEmitterPrt_c::FxEmitterPrt_c", expect = "56 8B F1 E8 C8 F8 FF FF",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn fx_particle_slot_ctor(this: GPtr<u8>) -> GPtr<u8> {
     list_item_ctor_call(this);
     this
@@ -337,7 +337,7 @@ pub fn fx_particle_slot_ctor(this: GPtr<u8>) -> GPtr<u8> {
 
 /// The script element constructor 0x46AE30: bytes +0 and +0x18 = 0.
 #[hook(addr = 0x46AE30, conv = thiscall, name = "(missed by ghidra: data-code-immediate)", expect = "8B C1 C6 00 00 C6 40 18",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn script_element_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u8>(this, 0, 0);
     wr::<u8>(this, 0x18, 0);
@@ -368,7 +368,7 @@ pub fn proc_surface_info_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `FurnitureManager_c::FurnitureManager_c()` (0x591260): 9 groups of 0xC (0x590DE0 / 0x590DF0), 0x200
 /// items of 0x10 at +0x6C (0x590E00 / 0x590E10), the `List_c` at +0x206C.
 #[hook(addr = 0x591260, conv = thiscall, name = "FurnitureManager_c::FurnitureManager_c", expect = "6A FF 68 EC CE 83 00",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn furniture_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
     eh_vector_ctor(this, 0xC, 9, 0x590DE0, 0x590DF0);
     eh_vector_ctor(this.byte_add(0x6C), 0x10, 0x200, 0x590E00, 0x590E10);
@@ -393,7 +393,7 @@ pub fn interior_manager_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `ProcObjectMan_c::ProcObjectMan_c()` (0x5A3E20): 0x80 surface infos of 0x48 at +8 (0x5A2E90 /
 /// 0x5A2EA0), 0x200 objects of 0x14 at +0x2408 (0x5A3070 / 0x5A3080), the `List_c` at +0x4C08.
 #[hook(addr = 0x5A3E20, conv = thiscall, name = "ProcObjectMan_c::ProcObjectMan_c", expect = "6A FF 68 04 D4 83 00",
-       unverified = "std5-ctor-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn proc_object_man_ctor(this: GPtr<u8>) -> GPtr<u8> {
     eh_vector_ctor(this.byte_add(8), 0x48, 0x80, 0x5A2E90, 0x5A2EA0);
     eh_vector_ctor(this.byte_add(0x2408), 0x14, 0x200, 0x5A3070, 0x5A3080);

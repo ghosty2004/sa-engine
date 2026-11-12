@@ -917,7 +917,7 @@ const MATFX_OPEN_COUNT: usize = 0xC9AB7C;
 /// preallocated, space 0xC9AB50, hint 0x40120) -> 0xC9AB80 (NULL: returns NULL) and
 /// `_rpMatFXPipelinesCreate()` (0: returns 0). Counts the instance and returns it.
 #[hook(addr = 0x810BF0, conv = cdecl, name = "cb_MATERIALEFFECTSPLUGIN_RwEngine_Open", expect = "A1 7C AB C9 00 85 C0 75 37",
-       unverified = "std4-rxpipe-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn matfx_engine_open(instance: u32, _offset: u32, _size: u32) -> u32 {
     if g::<u32>(MATFX_OPEN_COUNT).read() == 0 {
         let fl = engine_freelist_create(

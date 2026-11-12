@@ -106,7 +106,7 @@ fn search_light_orient(obj: GPtr<u8>, pitch: u32, heading: u32, base: [f32; 3]) 
 ///   d.y)`, `pitch = f32 fpatan(d.z, sqrt(d.x² + d.y²))`; the tower's matrix position is saved, then the tower and the
 ///   bulb (+0x50, no NULL check) get `SetRotateX(pitch)`, `RotateZ(heading)`, position += the saved position.
 #[hook(addr = 0x4939f0, conv = cdecl, name = "CTheScripts::ProcessAllSearchLights", expect = "83 EC 60 53 55",
-       unverified = "mvpk-script-2", route = "L2", hazards = "x87-transcendental,heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental,heap-writes", recs = "grove-walk",
        note = "writes the light objects' matrices (heap)")]
 #[allow(clippy::collapsible_match)]
 pub fn the_scripts_process_all_search_lights() {

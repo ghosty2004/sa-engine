@@ -481,7 +481,7 @@ const BALACLAVA_NAME: u32 = 0x86718C;
 /// 0x403887): model key 9 (+0x24) == `CKeyGen::GetUppercaseKey("balaclava")`. `sete al`: the upper
 /// three bytes of EAX are the key's.
 #[hook(addr = 0x5a7950, conv = thiscall, name = "CPedClothesDesc::GetIsWearingBalaclava", expect = "56 8B 71 24 E9 2E BF E5 FF",
-       unverified = "mvpi-ped-1", route = "L2", hazards = "entry-protection-read", recs = "grove-walk",
+       route = "L2", hazards = "entry-protection-read", recs = "grove-walk",
        note = "0x407E2C reads entry bytes +5 (keycells)")]
 pub fn get_is_wearing_balaclava(this: GPtr<u8>) -> u32 {
     let mine = rd::<u32>(this, 0x24);

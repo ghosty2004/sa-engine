@@ -54,7 +54,7 @@ const ALL_VALID_WIN_JOYS: usize = 0xC9_2144;
 /// +5, +6 (the "present", "plugged in" and "two sticks" flags) are zeroed, in that order. No `atexit`. The original
 /// leaves EAX = 0xC92168, which `_initterm` ignores.
 #[hook(addr = 0x855FD0, conv = cdecl, name = "__init_AllValidWinJoys", expect = "B8 48 21 C9 00",
-       unverified = "boot-input-1", route = "split", hazards = "none", recs = "boot",
+       route = "split", hazards = "none", recs = "boot",
        note = "C++ static initialiser: runs once from _initterm before WinMain")]
 pub fn init_all_valid_win_joys() {
     for i in 0..2 {

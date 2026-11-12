@@ -235,7 +235,7 @@ pub fn add_goggles_model(this: GPtr<u8>, model: i32, flag: GPtr<u8>) {
 /// `RpClumpDestroy(clump)`, +0x4FC = 0, and the goggles flag (+0x500) when set: `*flag = 0`, +0x500 = 0.
 /// Every use re-reads +0x4FC.
 #[hook(addr = 0x5df170, conv = thiscall, name = "CPed::RemoveGogglesModel", expect = "56 8B F1 90 E9 A3 23 E2 FF",
-       unverified = "mvpi-ped-1", route = "L2", hazards = "entry-protection-read,heap-writes",
+       route = "L2", hazards = "entry-protection-read,heap-writes",
        recs = "grove-walk", note = "destroys the goggles clump (RW heap); 0x409AC8 reads entry bytes +4 (keycells)")]
 pub fn remove_goggles_model_port(this: GPtr<u8>) {
     if rd::<GPtr<u8>>(this, 0x4FC).is_null() {

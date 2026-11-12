@@ -197,7 +197,7 @@ pub fn set_transmission_rotation(_this: GPtr<u8>, frame: GPtr<u8>, l: f32, r: f3
 /// &Q, size, [0xB6F118] * 150, 1, 0, true, false, 0, dot, false, 0.5, 0, 15, false, false)`; returns
 /// whether a red value was computed.
 #[hook(addr = 0x6E1780, conv = thiscall, name = "CVehicle::DoTailLightEffect", this = "CVehicle", expect = "83 EC 28 56 8B F1",
-       unverified = "mvpb-veh-2", route = "L2", hazards = "x87-transcendental",
+       route = "L2", hazards = "x87-transcendental",
        note = "the original keeps mag/dot/size in its own argument slots (entry esp+4/+8/+0xC); the port uses locals")]
 #[allow(clippy::too_many_arguments)]
 pub fn do_tail_light_effect(this: GPtr<u8>, id: i32, mat: GPtr<u8>, right: u8, forced_off: u8, _flags: u32, light_on: u8) -> u8 {

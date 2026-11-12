@@ -14,7 +14,7 @@ use crate::world::common::{g, wr, x};
 /// (day = low nibble, night = high nibble; x87 PC24). Kept original detail: the nibbles are stored into the
 /// caller's argument slot (not modelled).
 #[hook(addr = 0x59F0C0, conv = cdecl, name = "tColLighting::GetCurrentLighting", expect = "8A 44 24 04 D9 05 C0 12 8D 00",
-       unverified = "mvpb-coll-1", route = "L2", hazards = "none", note = "writes its own (caller-owned) first argument slot")]
+       route = "L2", hazards = "none", note = "writes its own (caller-owned) first argument slot")]
 pub fn col_lighting_get_current_lighting(l: u8, scale: f32) -> X87 {
     let b = x(g::<f32>(0x8D12C0).read());
     let k = f32::from_bits(0x3D88_8889);

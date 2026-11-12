@@ -358,7 +358,7 @@ pub fn real_time_shadow_manager_do_shadow_this_frame(this: GPtr<u8>, e: GPtr<u8>
 /// are moved to the free particle list (0xA9AE9C); the system is removed from the manager's list
 /// (+0xC), `Exit()`, destroyed and freed.
 #[hook(addr = 0x4A9810, conv = thiscall, name = "FxManager_c::DestroyFxSystem", expect = "51 53 57 8B 7C 24 10",
-       preserve = "ecx", unverified = "mvpa-render-2", route = "L2", hazards = "heap-writes,preserved-regs",
+       preserve = "ecx", route = "L2", hazards = "heap-writes,preserved-regs",
        recs = "grove-walk", note = "frees the FX system; the original keeps ECX (push ecx .. pop ecx)")]
 pub fn fx_manager_destroy_fx_system(this: GPtr<u8>, sys: GPtr<u8>) {
     let bp = rd::<GPtr<u8>>(sys, 8);

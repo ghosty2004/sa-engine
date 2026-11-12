@@ -129,7 +129,7 @@ fn tag(pipe: u32, id: u32) {
 /// found by the definition's name keeps its instance callback and gets `CustomPipeInstanceCB`
 /// (0x5D8490) as reinstance and `CustomPipeRenderCB` (0x5D9900) as render callback; id 0x53F2009A.
 #[hook(addr = 0x5D9F80, conv = cdecl, name = "CCustomCarEnvMapPipeline::CreateCustomObjPipe", expect = "53 56 57 E8 28 B8 22 00",
-       unverified = "std4-rxpipe-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn car_env_map_create_custom_obj_pipe() -> u32 {
     let pipe = rx_pipeline_create();
     if pipe == 0 {
@@ -201,7 +201,7 @@ pub fn spec_mat_pool_ctor(p: GPtr<CPool<SpecMapMatSlot>>, size: i32, _name: GPtr
 /// (0x1000, 0x86BEA8). Returns 1. (The exception frame of the `new`/constructor pairs is not
 /// modelled: no constructor here can throw.)
 #[hook(addr = 0x5DA020, conv = cdecl, name = "CCustomCarEnvMapPipeline::CreatePipe", expect = "6A FF 68 51 D7 83 00",
-       unverified = "std4-rxpipe-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn car_env_map_create_pipe() -> u32 {
     let p = car_create_custom_obj_pipe_call();
     CAR_ENV_MAP_PIPE.set(p);
@@ -235,7 +235,7 @@ pub fn car_fx_renderer_initialise() -> u32 {
 /// Unlock(lock), each checked (failure: destroyed, NULL). The node keeps its instance callback and
 /// gets `CustomPipeReinstanceCB` (0x5D77A0) / `CustomPipeRenderCB` (0x5D77D0); id 0x53F2009C.
 #[hook(addr = 0x5D7AA0, conv = cdecl, name = "CCustomBuildingPipeline::CreateCustomObjPipe", expect = "53 56 57 E8 08 DD 22 00",
-       unverified = "std4-rxpipe-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn building_create_custom_obj_pipe() -> u32 {
     let pipe = rx_pipeline_create();
     let def = node_def_atomic_all_in_one();
@@ -260,7 +260,7 @@ pub fn building_create_custom_obj_pipe() -> u32 {
 /// (0x5D63E0) when `[0xC02C20]` is set, else its own; render callback `CustomPipeRenderCB`
 /// (0x5D6480); id 0x53F20098.
 #[hook(addr = 0x5D6750, conv = cdecl, name = "CCustomBuildingDNPipeline::CreateCustomObjPipe", expect = "53 56 57 E8 58 F0 22 00",
-       unverified = "std4-rxpipe-3", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn building_dn_create_custom_obj_pipe() -> u32 {
     let pipe = rx_pipeline_create();
     let def = node_def_atomic_all_in_one();

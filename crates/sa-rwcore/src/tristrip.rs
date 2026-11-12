@@ -89,7 +89,7 @@ fn flag_of(pass: u32) -> isize {
 /// `RpBuildMeshGenerateDefaultTriStrip(buildMesh, data)` (0x7591B0): the generator with winding 0
 /// (one pass with the start rotation chosen from the neighbours) and parity-preserving joins.
 #[hook(addr = 0x7591B0, conv = cdecl, name = "RpBuildMeshGenerateDefaultTriStrip", expect = "8B 44 24 04 6A 01 6A 00",
-       unverified = "std5-tristrip-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn generate_default_tristrip(bm: GPtr<u8>, _data: u32) -> GPtr<u8> {
     generate_tristrip_call(bm, 0, 1)
 }
@@ -103,7 +103,7 @@ pub fn generate_default_tristrip(bm: GPtr<u8>, _data: u32) -> GPtr<u8> {
 /// bytes, flags 1 = tri-strip, the module's serial number, post-incremented) with the meshes and their
 /// indices; the temporaries are freed. NULL when the pointer array cannot be allocated.
 #[hook(addr = 0x7591D0, conv = cdecl, name = "FUN_007591d0", expect = "83 EC 1C 55 8B 0D 24 7B C9 00",
-       unverified = "std5-tristrip-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn generate_tristrip(bm: GPtr<u8>, winding: u32, join_parity: u32) -> GPtr<u8> {
     let sorted = rw_malloc(rd::<u32>(bm, 4) << 2, HINT_MESH);
     if sorted.is_null() {
@@ -267,7 +267,7 @@ fn transparency(mat: GPtr<u8>) -> u32 {
 /// (pipelineIndex <) | 2 (textureIndex <) | 1 (matIndex <), all u16 comparisons, as the bytes compute
 /// it (each side's transparency flag is accumulated in the other argument's slot).
 #[hook(addr = 0x759640, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "83 EC 0C 8B 44 24 10 8B 4C 24 14",
-       unverified = "std5-tristrip-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn material_compare(pa: GPtr<u8>, pb: GPtr<u8>) -> i32 {
     let a = ptr(pa, 0);
     let b = ptr(pb, 0);

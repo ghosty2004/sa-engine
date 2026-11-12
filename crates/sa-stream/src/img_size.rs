@@ -16,7 +16,7 @@ const GTA3_IMG_HANDLE: usize = 0x8E4010;
 
 /// The gta3.img size (stub 0x406360): `GetFileSize([0x8E4010], NULL)`.
 #[hook(addr = 0x406360, conv = cdecl, name = "thunk_FUN_015700d0", expect = "E9 6B 9D 16 01",
-       unverified = "std5-stream-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn gta3_img_size() -> u32 {
     get_file_size(GPtr::<u32>::from_addr(GTA3_IMG_HANDLE).read(), GPtr::NULL)
 }
@@ -24,7 +24,7 @@ pub fn gta3_img_size() -> u32 {
 /// `CdStreamGetLastPosn()` (stub 0x406450 → .HOODLUM 0x1567540): `[0x8E4898]`, the sector after the
 /// last read.
 #[hook(addr = 0x406450, conv = cdecl, name = "thunk_FUN_01567540", expect = "E9 EB 10 16 01",
-       unverified = "std5-stream-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn cd_stream_get_last_posn() -> u32 {
     GPtr::<u32>::from_addr(0x8E4898).read()
 }

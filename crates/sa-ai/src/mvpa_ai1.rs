@@ -164,7 +164,7 @@ pub fn conversations_clear() {
 /// `CCover::Init` (0x698710): `m_NumPoints` (0xC197A4) = 0, `m_ListOfProcessedBuildings` (0xC1A2B8) flushed, then
 /// the 100 cover points (0xC197C8, 0x1C each) get type byte +0 = 0.
 #[hook(addr = 0x698710, conv = cdecl, name = "CCover::Init", expect = "B9 B8 A2 C1 00",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn cover_init() {
     g::<u32>(0xC197A4).write(0);
     ptr_list_double_link_flush(g::<u8>(0xC1A2B8));
@@ -522,7 +522,7 @@ pub fn allocator_sit_in_leader_car_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// (0x5F1600, cdecl): out = (0, 0, z) then out.xy = corner 0's xy, then `out.x = c[k].x + out.x` /
 /// `out.y = c[k].y + out.y` for k = 1..3 (each stored as f32), then both scaled by [0x858C84] (0.25).
 #[hook(addr = 0x5F1600, conv = cdecl, name = "CPedGeometryAnalyser::ComputeEntityBoundingBoxCentreUncached", expect = "8B 44 24 0C 8B 4C 24 04",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn compute_entity_bounding_box_centre_uncached(z: u32, corners: GPtr<u8>, out: GPtr<u8>) {
     wr::<u32>(out, 4, 0);
     wr::<u32>(out, 0, 0);
@@ -543,7 +543,7 @@ pub fn compute_entity_bounding_box_centre_uncached(z: u32, corners: GPtr<u8>, ou
 /// corner i): d = c[i] - prev (f32 each), `CVector::Normalise(d)`, normal i = (d.y, -d.x, 0), distance i =
 /// `-((prev.z*n.z + prev.y*n.y) + prev.x*n.x)` with the normal re-read from memory.
 #[hook(addr = 0x5F1670, conv = cdecl, name = "CPedGeometryAnalyser::ComputeEntityBoundingBoxPlanesUncached", expect = "83 EC 24 8B 44 24 2C",
-       unverified = "mvpa-ai-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn compute_entity_bounding_box_planes_uncached(_z: u32, corners: GPtr<u8>, normals: GPtr<u8>, dist: GPtr<u8>) {
     let mut prev = [rd::<f32>(corners, 0x24), rd::<f32>(corners, 0x28), rd::<f32>(corners, 0x2C)];
     for i in 0..4isize {

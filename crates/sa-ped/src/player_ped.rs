@@ -643,7 +643,7 @@ const PED_GROUPS: u32 = 0xC09920;
 /// speech entity (+0x294) initialised, intelligence +0xC8 = 30.0 and +0xC4 = 2, flags +0x478 bit 21 =
 /// `groupCreated` bit 0. Returns `this`.
 #[hook(addr = 0x60d5b0, conv = thiscall, name = "CPlayerPed", expect = "6A FF 68 58 ED 83 00",
-       unverified = "mvpi-ped-1", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "the CPlayerPed constructor (one-time: creates the player's group and data)")]
 pub fn player_ped_ctor(this: GPtr<u8>, player_id: i32, group_created: u32) -> GPtr<u8> {
     ped_ctor(this, 0);

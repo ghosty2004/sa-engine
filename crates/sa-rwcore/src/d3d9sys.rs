@@ -231,7 +231,7 @@ fn ms_probe() {
 
 /// `FUN_007f6bf0()` (0x7F6BF0): the multisample probe ([`ms_probe`]).
 #[hook(addr = 0x7F6BF0, conv = cdecl, name = "FUN_007f6bf0", expect = "51 56 8B 35 F8 BE C9 00",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn multisample_probe() {
     ms_probe();
 }
@@ -244,7 +244,7 @@ pub fn multisample_probe() {
 /// otherwise it is kept with flags 1 (exclusive). Finally the list shrinks to the count when smaller
 /// than `total + 1`.
 #[hook(addr = 0x7F7540, conv = cdecl, name = "FUN_007f7540", expect = "8B 0D 48 7C C9 00 83 EC 0C",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn build_mode_list() {
     let total = u(TOTAL_MODES);
     let size = total.wrapping_mul(5).wrapping_add(5).wrapping_mul(4);
@@ -324,7 +324,7 @@ const NOT_IMPLEMENTED: u32 = 0x7F7530;
 /// `_rwD3D9SetStandardFunctions(table, -, count)` (0x7F72E0): `count > 0` fills the table with
 /// 0x7F7530; `count > 1` then stores the 27 driver functions, last table entry first. Returns 1.
 #[hook(addr = 0x7F72E0, conv = cdecl, name = "_rwD3D9SetStandardFunctions", expect = "81 EC DC 00 00 00 53",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn set_standard_functions(out: GPtr<u32>, _inout: u32, n: i32) -> u32 {
     for i in 0..n.max(0) {
         out.wrapping_index(i).write(NOT_IMPLEMENTED);
@@ -355,7 +355,7 @@ pub fn standard_not_implemented(_out: u32, _inout: u32, _n: i32) -> u32 {
 /// Z depth (0xC9BEFC) and the stencil flag (0xC97C3C) follow. Multisampling from the probe's levels
 /// (DISCARD swap effect when used).
 #[hook(addr = 0x7F6CB0, conv = cdecl, name = "WindowedModeHooks::RenderWare::D3D9SetPresentParameters", expect = "8A 44 24 08 83 EC 10",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn set_present_parameters(mode: u32, flags: u32, format: u32) {
     let m = p8(mode);
     let fmt;
@@ -461,7 +461,7 @@ pub fn set_present_parameters(mode: u32, flags: u32, format: u32) {
 /// `FUN_007f6b00()` (0x7F6B00): the FVF / declaration / shader / index caches (0x8E2440..0x8E2450)
 /// and the four stream caches (0xC97BD8, 0x10 apart: buffer -1, offset 0, stride 0) invalidated.
 #[hook(addr = 0x7F6B00, conv = cdecl, name = "FUN_007f6b00", expect = "83 C9 FF 33 D2",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn reset_caches() {
     for a in [0x8E2440, 0x8E2444, 0x8E2448, 0x8E244C, 0x8E2450] {
         set(a, 0xFFFF_FFFF);
@@ -478,7 +478,7 @@ pub fn reset_caches() {
 /// created (0x40-byte entries, 15 per block, alignment 16) and the table zeroed; then the world
 /// matrix (0xC98070) is a new entry holding the identity of 0x8847A0.
 #[hook(addr = 0x7F6B40, conv = cdecl, name = "FUN_007f6b40", expect = "8B 0D 80 80 C9 00 56 57",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn reset_transform_cache() {
     set(0xC97C68, 0);
     if u(0xC98080) != 0 {
@@ -598,7 +598,7 @@ orig! {
 /// closed, the dynamic vertex buffers and the video-memory rasters released and every freelist
 /// purged. Returns 1.
 #[hook(addr = 0x7F7F70, conv = cdecl, name = "D3D9DeviceReleaseVideoMemory", expect = "53 83 C9 FF 33 DB 56",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "heap-writes", recs = "boot")]
+       route = "L2", hazards = "heap-writes", recs = "boot")]
 pub fn release_video_memory() -> u32 {
     reset_caches();
     reset_transform_cache();
@@ -912,21 +912,21 @@ fn cpuid1_edx() -> Option<u32> {
 
 /// `_rwIntelMMXsupported()` (0x80DBE0): CPUID.1:EDX bit 23 (0 without CPUID).
 #[hook(addr = 0x80DBE0, conv = cdecl, name = "_rwIntelMMXsupported", expect = "55 8B EC 51 33 C9 53",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn intel_mmx_supported() -> u32 {
     cpuid1_edx().map_or(0, |d| (d >> 23) & 1)
 }
 
 /// `_rwIntelSSEsupported()` (0x80DC40): CPUID.1:EDX bits 25 or 26 (0 without CPUID).
 #[hook(addr = 0x80DC40, conv = cdecl, name = "_rwIntelSSEsupported", expect = "55 8B EC 51 33 C9 53",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn intel_sse_supported() -> u32 {
     cpuid1_edx().map_or(0, |d| (d & 0x600_0000 != 0) as u32)
 }
 
 /// `_rwIntelSSE2supported()` (0x80DCA0): CPUID.1:EDX bit 26 (0 without CPUID).
 #[hook(addr = 0x80DCA0, conv = cdecl, name = "_rwIntelSSE2supported", expect = "55 8B EC 51 33 C9 53",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn intel_sse2_supported() -> u32 {
     cpuid1_edx().map_or(0, |d| (d >> 26) & 1)
 }
@@ -934,7 +934,7 @@ pub fn intel_sse2_supported() -> u32 {
 /// `_rwAMD3DNowSupported()` (0x80DD00): CPUID.80000001h:EDX bit 31 when the maximum extended leaf is
 /// above 0x80000000 (0 without CPUID).
 #[hook(addr = 0x80DD00, conv = cdecl, name = "_rwAMD3DNowSupported", expect = "55 8B EC 51 53 56 33 F6",
-       unverified = "std4-d3d9-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn amd_3dnow_supported() -> u32 {
     match sa_core::abi::game_fpu::cpuid(0x8000_0000) {
         Some(r) if r[0] > 0x8000_0000 => sa_core::abi::game_fpu::cpuid(0x8000_0001)
@@ -1027,7 +1027,7 @@ pub fn x87_matrix_multiply(dst: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) {
 /// +0xFC is positive, else 0x14; 1.x 0xA (and caps +0xEC's bits 1..5 cleared); those three then store
 /// `min(caps +0xC8, 0x100)` at 0xC94C04; without vertex shaders 0 (and nothing else).
 #[hook(addr = 0x760CF0, conv = cdecl, name = "FUN_00760cf0", expect = "83 C8 FF 57 A3 F8 26 C9 00",
-       unverified = "std4-d3d9-2", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn vertex_shader_cache_reset() {
     for a in [0xC926F8, 0xC926FC, 0xC92700, 0xC92704] {
         set(a, 0xFFFF_FFFF);

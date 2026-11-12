@@ -467,7 +467,7 @@ pub fn replay_update() {
 /// `width - 20`, proportional, colour (255, 255, 200, 200) built through `CRGBA::CRGBA`, style 1) and in playback
 /// mode the text of key 0x859C4C is printed at `(width / 10, height / 15)` (integer divisions).
 #[hook(addr = 0x45C210, conv = cdecl, name = "CReplay::Display", expect = "51 A0 88 30 A4 00",
-       unverified = "mvpd-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn replay_display() {
     if g::<u8>(REPLAY_MODE).read() == 0 {
         return;
@@ -844,7 +844,7 @@ orig! {
 /// 0xC1B100) when non-negative (0x96C00C >= 0: both, else 0x96C010 alone). Outside the window the key's first
 /// byte is cleared.
 #[hook(addr = 0x447790, conv = cdecl, name = "CGarages::PrintMessages", expect = "51 A1 84 CB B7 00",
-       unverified = "mvpd-world-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn garages_print_messages() {
     let now = g::<u32>(0xB7CB84).read();
     if now < g::<u32>(0x96C020).read() || now >= g::<u32>(0x96C01C).read() {
@@ -1013,7 +1013,7 @@ fn double_delete_inline(list: GPtr<u8>, item: GPtr<u8>) {
 /// sector lists (buildings through `CPtrListSingleLink::DeleteItem`, the rest with an inlined double-link
 /// delete; the same stale-list quirk for types outside 1..=5).
 #[hook(addr = 0x534AE0, conv = thiscall, name = "CEntity::Remove", this = "CEntity", expect = "83 EC 30 53 55 56 8B F1",
-       unverified = "mvpd-world-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn entity_remove(this: GPtr<u8>) {
     let mut rb = [0f32; 4];
     v_get_bound_rect(this, GPtr::from_raw(&mut rb).cast());

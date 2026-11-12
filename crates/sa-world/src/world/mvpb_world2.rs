@@ -191,7 +191,7 @@ fn clear_move_speed(e: GPtr<u8>) {
 /// closest ped node (type 1), or, without one, their matrix z is set to -95 (matrix not null-checked, as the
 /// original); their move speed is cleared.
 #[hook(addr = 0x565CB0, conv = cdecl, name = "CWorld::RemoveFallenPeds", expect = "83 EC 2C 53 8B 1D 90 44 B7 00",
-       unverified = "mvpb-world-2", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn world_remove_fallen_peds() {
     for_pool_desc(0xB74490, 0x7C4, |p| {
         if !fell(p) {

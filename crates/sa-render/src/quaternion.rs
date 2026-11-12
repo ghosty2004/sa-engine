@@ -14,7 +14,7 @@ use crate::common::{jp, rd, wr, x};
 /// `CQuaternion::Set(const RwV3d& axis, float angle)` (0x59C600, thiscall, `ret 8`): h = angle * 0.5;
 /// xyz = `sin(h) * axis`, w = `cos(h)` (FSIN/FCOS of the unrounded h).
 #[hook(addr = 0x59C600, conv = thiscall, name = "CQuaternion::Set", this = "CQuaternion", expect = "D9 44 24 08 8B 44 24 04",
-       unverified = "mvpd-math-1", route = "L2", hazards = "x87-transcendental", note = "FSIN/FCOS")]
+       route = "L2", hazards = "x87-transcendental", note = "FSIN/FCOS")]
 pub fn quaternion_set(this: GPtr<u8>, axis: GPtr<u8>, angle: f32) {
     let h = x(angle).fmul_m(f32::from_bits(0x3F00_0000));
     let s = h.fsin();

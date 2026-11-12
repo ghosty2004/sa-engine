@@ -8,7 +8,7 @@ use sa_core::mem::GPtr;
 /// extension byte at the plugin offset `[0xC92478]`, 0 for a NULL texture (`xor al, al`; the upper
 /// EAX bits are the texture pointer's in both cases).
 #[hook(addr = 0x748F50, conv = cdecl, name = "RpAnisotTextureGetMaxAnisotropy", expect = "8B 44 24 04 85 C0 74 0A",
-       unverified = "std4-render-1", route = "L2", hazards = "ax-al-return", recs = "boot")]
+       route = "L2", hazards = "ax-al-return", recs = "boot")]
 pub fn texture_get_max_anisotropy(tex: GPtr<u8>) -> u8 {
     if tex.is_null() {
         return 0;
@@ -25,7 +25,7 @@ sa_core::orig! {
 /// `RpAnisotGetMaxSupportedMaxAnisotropy()` (0x748F20, cdecl, AL): the byte at `RwD3D9GetCaps() + 0x6C`
 /// (the low byte of `MaxAnisotropy`; the upper EAX bits are the caps pointer's).
 #[hook(addr = 0x748F20, conv = cdecl, name = "RpAnisotGetMaxSupportedMaxAnisotropy", expect = "E8 FB 1D 0B 00",
-       unverified = "std4-render-1", route = "L2", hazards = "ax-al-return", recs = "boot")]
+       route = "L2", hazards = "ax-al-return", recs = "boot")]
 pub fn get_max_supported_max_anisotropy() -> u8 {
     an_get_caps().byte_add(0x6C).read()
 }
@@ -33,7 +33,7 @@ pub fn get_max_supported_max_anisotropy() -> u8 {
 /// `RpAnisotTextureSetMaxAnisotropy(RwTexture*, int8)` (0x748F30, cdecl): the extension byte := value,
 /// returns the texture (NULL → NULL).
 #[hook(addr = 0x748F30, conv = cdecl, name = "RpAnisotTextureSetMaxAnisotropy", expect = "8B 44 24 04 85 C0 74 0E",
-       unverified = "std4-render-1", route = "L2", hazards = "none", recs = "boot")]
+       route = "L2", hazards = "none", recs = "boot")]
 pub fn texture_set_max_anisotropy(tex: GPtr<u8>, value: u32) -> GPtr<u8> {
     if tex.is_null() {
         return GPtr::NULL;

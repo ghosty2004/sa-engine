@@ -44,7 +44,7 @@ fn store3(out: GPtr<u8>, v: [X87; 3]) {
 /// `VectorSub(CVector* out, const CVector* a, const CVector* b)` (0x40FE60, cdecl): `out = a - b`, all
 /// three differences computed before the stores (aliasing-safe as in the original); returns `out`.
 #[hook(addr = 0x40FE60, conv = cdecl, name = "VectorSub", expect = "8B 44 24 08 D9 40 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
     let (va, vb) = (v3(a), v3(b));
     let z = x(va[2]).fsub_m(vb[2]);
@@ -57,7 +57,7 @@ pub fn vector_sub(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
 /// `operator+(const CVector&, const CVector&)` (0x40FE30, cdecl, returns via `out`): `out = a + b`,
 /// loads before stores; returns `out`.
 #[hook(addr = 0x40FE30, conv = cdecl, name = "FUN_0040fe30", expect = "8B 44 24 08 D9 40 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "CVector operator+ (no catalogue name)")]
 pub fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
     let (va, vb) = (v3(a), v3(b));
@@ -71,7 +71,7 @@ pub fn vector_add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
 /// `operator*(const CVector&, float)` (0x40FEC0, cdecl): `out = v * s` (`s * v.c` per component, loads
 /// before stores); returns `out`.
 #[hook(addr = 0x40FEC0, conv = cdecl, name = "FUN_0040fec0", expect = "8B 44 24 08 D9 44 24 0C",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "CVector operator*(CVector, float) (no catalogue name)")]
 pub fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> {
     let vv = v3(v);
@@ -84,7 +84,7 @@ pub fn vector_mul_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> {
 
 /// `operator*(float, const CVector&)` (0x40FE90, cdecl): `out = s * v`; returns `out`.
 #[hook(addr = 0x40FE90, conv = cdecl, name = "FUN_0040fe90", expect = "8B 44 24 0C D9 44 24 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "CVector operator*(float, CVector) (no catalogue name)")]
 pub fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> {
     let vv = v3(v);
@@ -98,7 +98,7 @@ pub fn scalar_mul_vector(out: GPtr<u8>, s: f32, v: GPtr<u8>) -> GPtr<u8> {
 /// `CVector::operator+=(const CVector&)` (0x411A00, thiscall, `ret 4`): per component `this.c = o.c +
 /// this.c` (x, then y, then z, each stored before the next load); returns `this`.
 #[hook(addr = 0x411A00, conv = thiscall, name = "FUN_00411a00", expect = "8B C1 8B 4C 24 04",
-       unverified = "mvpa-math-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "preserved-regs", recs = "grove-walk",
        note = "CVector::operator+= (no catalogue name); the original leaves ECX = the argument")]
 pub fn vector_add_assign(this: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> {
     for off in [0, 4, 8] {
@@ -110,7 +110,7 @@ pub fn vector_add_assign(this: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> {
 /// `CVector::operator-=(const CVector&)` (0x406D70, thiscall, `ret 4`): per component `this.c -= o.c`
 /// (x, y, z in turn); returns `this`.
 #[hook(addr = 0x406D70, conv = thiscall, name = "FUN_00406d70", expect = "8B C1 8B 4C 24 04",
-       unverified = "mvpa-math-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "preserved-regs", recs = "grove-walk",
        note = "CVector::operator-= (no catalogue name); the original leaves ECX = the argument")]
 pub fn vector_sub_assign(this: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> {
     for off in [0, 4, 8] {
@@ -123,7 +123,7 @@ pub fn vector_sub_assign(this: GPtr<u8>, o: GPtr<u8>) -> GPtr<u8> {
 /// argument slot by `fst`), `out.z = r(ST0) * v.z`, `out.y = r(f32) * v.y`, `out.x = r(f32) * v.x`;
 /// returns `out`. The argument-slot store is not reproduced (caller-owned slot no caller reads).
 #[hook(addr = 0x4119D0, conv = cdecl, name = "FUN_004119d0", expect = "D9 05 24 86 85 00",
-       unverified = "mvpa-math-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "CVector operator/(CVector, float) (no catalogue name); fst over its own argument slot")]
 pub fn vector_div_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> {
     let r = X87::one().fdiv_m(s);
@@ -138,7 +138,7 @@ pub fn vector_div_scalar(out: GPtr<u8>, v: GPtr<u8>, s: f32) -> GPtr<u8> {
 
 /// `CVector::SquaredMagnitude()` (0x406DA0, thiscall, ST0): `(x*x + y*y) + z*z` unrounded in ST0.
 #[hook(addr = 0x406DA0, conv = thiscall, name = "FUN_00406da0", expect = "D9 41 08 D9 41 04",
-       unverified = "mvpa-math-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "preserved-regs", recs = "grove-walk",
        note = "CVector::SquaredMagnitude (no catalogue name); ECX/EDX untouched by the original")]
 pub fn vector_squared_magnitude(this: GPtr<u8>) -> X87 {
     let v = v3(this);
@@ -157,7 +157,7 @@ pub fn min_f(a: f32, b: f32) -> X87 {
 /// `max(float a, float b)` (0x420800, cdecl, ST0): `a` when `a > b`, else `b` (equal and unordered
 /// give `b`).
 #[hook(addr = 0x420800, conv = cdecl, name = "FUN_00420800", expect = "D9 44 24 04 D8 5C 24 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "std::max<float> (no catalogue name); pure, L1 spec not written")]
 pub fn max_f(a: f32, b: f32) -> X87 {
     if x(a).fcom(x(b)).test_any(0x41) { x(b) } else { x(a) }
@@ -175,7 +175,7 @@ pub fn approx_equal(a: f32, b: f32, eps: f32) -> u32 {
 /// in[c] * (1/128)` via `fild`; the original parks each int in its own second-argument slot. Returns
 /// the sign-extended z (the EAX the original leaves).
 #[hook(addr = 0x411590, conv = cdecl, name = "FUN_00411590", expect = "8B 44 24 08 0F BF 08",
-       unverified = "mvpa-math-1", route = "L2", hazards = "stack-residue", recs = "grove-walk",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk",
        note = "CompressedVector::Uncompress (no catalogue name); writes its own argument slot")]
 pub fn uncompress_vector(out: GPtr<u8>, inp: GPtr<u8>) -> i32 {
     let mut last = 0;
@@ -190,7 +190,7 @@ pub fn uncompress_vector(out: GPtr<u8>, inp: GPtr<u8>) -> i32 {
 /// (rotation part): x = `(m.at.x*v.z + m.up.x*v.y) + m.right.x*v.x`, y = `(m.at.y*v.z + m.right.y*v.x) +
 /// m.up.y*v.y`, z = `(m.at.z*v.z + m.right.z*v.x) + m.up.z*v.y`; returns `out`.
 #[hook(addr = 0x59C790, conv = cdecl, name = "Multiply3x3", expect = "83 EC 0C 8B 4C 24 14",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> {
     let f = |o: isize| rd::<f32>(m, o);
     let vv = v3(v);
@@ -205,7 +205,7 @@ pub fn multiply3x3(out: GPtr<u8>, m: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> {
 /// (transposed rotation): x = `(m.right.y*v.y + m.right.z*v.z) + v.x*m.right.x`, y = `(m.up.y*v.y +
 /// m.up.x*v.x) + m.up.z*v.z`, z = `(m.at.y*v.y + m.at.x*v.x) + m.at.z*v.z`; returns `out`.
 #[hook(addr = 0x59C810, conv = cdecl, name = "FUN_0059c810", expect = "83 EC 0C 8B 4C 24 18",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "Multiply3x3(CVector, CMatrix) (no catalogue name)")]
 pub fn multiply3x3_transposed(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
     let f = |o: isize| rd::<f32>(m, o);
@@ -221,7 +221,7 @@ pub fn multiply3x3_transposed(out: GPtr<u8>, v: GPtr<u8>, m: GPtr<u8>) -> GPtr<u
 /// of each 0x54-byte link) of the five sentinel links at +0, +0x54, +0xA8, +0xFC, +0x150 and the dword
 /// +0x1F8; returns `this`.
 #[hook(addr = 0x54F440, conv = thiscall, name = "FUN_0054f440", expect = "8B C1 33 C9 89 48 40",
-       unverified = "mvpa-math-1", route = "split", hazards = "preserved-regs", recs = "grove-walk",
+       route = "split", hazards = "preserved-regs", recs = "grove-walk",
        note = "CMatrixLinkList::CMatrixLinkList (static initialiser); the original leaves ECX = 0")]
 pub fn matrix_link_list_ctor(this: GPtr<u8>) -> GPtr<u8> {
     for o in [0x40, 0x44, 0x94, 0x98, 0xE8, 0xEC, 0x13C, 0x140, 0x190, 0x194, 0x1E4, 0x1E8, 0x1F8] {
@@ -233,7 +233,7 @@ pub fn matrix_link_list_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `CMatrix::~CMatrix()` (0x59ACD0, thiscall): when it owns (+0x44) an attached RW matrix (+0x40),
 /// `RwMatrixDestroy` of it.
 #[hook(addr = 0x59ACD0, conv = thiscall, name = "CMatrix", expect = "8B 41 44 85 C0",
-       unverified = "mvpa-math-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn matrix_dtor(this: GPtr<u8>) {
     if rd::<u32>(this, 0x44) != 0 {
         let m = rd::<GPtr<u8>>(this, 0x40);
@@ -246,7 +246,7 @@ pub fn matrix_dtor(this: GPtr<u8>) {
 /// `CColLine::CColLine(const CVector& start, const CVector& end)` (0x40EF50, `.HOODLUM` stub, `ret 8`):
 /// copies start to +0 and end to +0x10 (dword copies); returns `this`.
 #[hook(addr = 0x40EF50, conv = thiscall, name = "CColLine", expect = "E9 5B 22 15 01",
-       unverified = "mvpa-math-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "preserved-regs", recs = "grove-walk",
        note = "the original leaves ECX = end.z bits, EDX = this + 0x10")]
 pub fn col_line_ctor(this: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8> {
     for o in [0, 4, 8] {
@@ -261,7 +261,7 @@ pub fn col_line_ctor(this: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>) -> GPtr<u8>
 /// `CCollisionData::CCollisionData()` (0x40F030, thiscall): the four counts (+0, +2, +4: u16; +6: u8)
 /// = 0, the low three flag bits of +7 cleared, the ten pointers +8..+0x2C = null; returns `this`.
 #[hook(addr = 0x40F030, conv = thiscall, name = "CCollisionData", expect = "8B C1 8A 50 07",
-       unverified = "mvpa-math-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "preserved-regs", recs = "grove-walk",
        note = "the original leaves ECX = 0, DL = the new flags")]
 pub fn collision_data_ctor(this: GPtr<u8>) -> GPtr<u8> {
     let f = rd::<u8>(this, 7) & 0xF8;
@@ -279,7 +279,7 @@ pub fn collision_data_ctor(this: GPtr<u8>) -> GPtr<u8> {
 /// `CMatrixLink::CMatrixLink()` (0x54F0C0, thiscall): prev (+0x40) and next (+0x44) = null; returns
 /// `this`.
 #[hook(addr = 0x54F0C0, conv = thiscall, name = "CMatrixLink", expect = "8B C1 33 C9 89 48 40",
-       unverified = "mvpa-math-1", route = "L2", hazards = "preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "preserved-regs", recs = "grove-walk",
        note = "the original leaves ECX = 0")]
 pub fn matrix_link_ctor(this: GPtr<u8>) -> GPtr<u8> {
     wr::<u32>(this, 0x40, 0);
@@ -301,7 +301,7 @@ fn pool_free_inline(pool: GPtr<u8>, node: GPtr<u8>, size: i32) {
 /// `CPtrListDoubleLink::Flush()` (0x552470, thiscall): unlinks every node (head +0; node: item +0, next
 /// +4, prev +8) and frees it into `CPools::ms_pPtrNodeDoubleLinkPool` (0xB74488, 0xC-byte nodes) inline.
 #[hook(addr = 0x552470, conv = thiscall, name = "CPtrListDoubleLink::Flush", expect = "57 8B 39 85 FF",
-       unverified = "mvpa-math-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn double_link_flush(this: GPtr<u8>) {
     let mut n = rd::<GPtr<u8>>(this, 0);
     while !n.is_null() {
@@ -326,7 +326,7 @@ pub fn double_link_flush(this: GPtr<u8>) {
 /// next +4): the head node is unlinked directly, any other is searched from the head and unlinked; each
 /// is freed into `CPools::ms_pPtrNodeSingleLinkPool` (0xB74484, 8-byte nodes, index `>> 3`) inline.
 #[hook(addr = 0x552400, conv = thiscall, name = "CPtrListSingleLink::Flush", expect = "53 8B 19 85 DB",
-       unverified = "mvpa-math-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn single_link_flush(this: GPtr<u8>) {
     let mut n = rd::<GPtr<u8>>(this, 0);
     while !n.is_null() {
@@ -360,7 +360,7 @@ pub fn single_link_flush(this: GPtr<u8>) {
 /// item is `item`, unlinks it (head or after its predecessor) and frees it with the node `operator
 /// delete` (0x552390). Nothing when absent.
 #[hook(addr = 0x533610, conv = thiscall, name = "CPtrListSingleLink::DeleteItem", expect = "56 8B 31 8B C6",
-       unverified = "mvpa-math-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn single_link_delete_item(this: GPtr<u8>, item: GPtr<u8>) {
     let head = rd::<GPtr<u8>>(this, 0);
     let mut prev = GPtr::<u8>::NULL;
@@ -383,7 +383,7 @@ pub fn single_link_delete_item(this: GPtr<u8>, item: GPtr<u8>) {
 /// `CMaths::InitMathsTables()` (0x59AC90): `ms_SinTable[i]` (0xBB3E00, 256 floats) = `fsin(fild(i) *
 /// 0.024543693f)` (2*pi/256 as stored at 0x859BBC).
 #[hook(addr = 0x59AC90, conv = cdecl, name = "CMaths::InitMathsTables", expect = "51 33 C0 89 44 24 00",
-       unverified = "mvpa-math-1", route = "L2", hazards = "x87-transcendental", recs = "grove-walk")]
+       route = "L2", hazards = "x87-transcendental", recs = "grove-walk")]
 pub fn init_maths_tables() {
     let k = GPtr::<f32>::from_addr(0x859BBC).read();
     for i in 0..256i32 {
@@ -396,7 +396,7 @@ pub fn init_maths_tables() {
 /// (+0xC))`, `s = fsin(heading)`; right = (c, s, 0), up = (-s, c, 0), at = (0, 0, 1), pos = the
 /// transform's position (dword copies); then `RwMatrixUpdate(m)`, whose EAX is returned.
 #[hook(addr = 0x54EF40, conv = thiscall, name = "CSimpleTransform::UpdateRwMatrix", expect = "D9 41 0C 8B 44 24 04",
-       unverified = "mvpa-math-1", route = "L2", hazards = "x87-transcendental,preserved-regs", recs = "grove-walk",
+       route = "L2", hazards = "x87-transcendental,preserved-regs", recs = "grove-walk",
        note = "the original leaves ECX = m (pop ecx)")]
 pub fn simple_transform_update_rw_matrix(this: GPtr<u8>, m: GPtr<u8>) -> u32 {
     let h = rd::<f32>(this, 0xC);
@@ -420,7 +420,7 @@ pub fn simple_transform_update_rw_matrix(this: GPtr<u8>, m: GPtr<u8>) -> u32 {
 /// pointer +0x2C is set: single-allocation data (bit 1) → `CCollision::RemoveTrianglePlanes(data)` and
 /// `CMemoryMgr::Free(data)`; else `data->RemoveCollisionVolumes()` and CRT `free(data)`.
 #[hook(addr = 0x40F700, conv = thiscall, name = "CColModel", expect = "56 8B F1 8A 46 29",
-       unverified = "mvpa-math-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn col_model_dtor(this: GPtr<u8>) {
     let f = rd::<u8>(this, 0x29);
     if f & 4 == 0 {

@@ -96,7 +96,7 @@ pub fn has_resource_been_requested(this: GPtr<u8>, id: i32, ty: u32) -> u32 {
 /// `CTheScripts::InitialiseAllConnectLodObjects()` (stub 0x470960 → 0x1562910, cdecl): the 10 pairs
 /// at 0xA44800 = (-1, -1).
 #[hook(addr = 0x470960, conv = cdecl, name = "CTheScripts::InitialiseAllConnectLodObjects", expect = "E9 AB 1F 0F 01",
-       unverified = "mvpi-script-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn initialise_all_connect_lod_objects() {
     for i in 0..10usize {
         ga::<i32>(CONNECT_LODS + i * 8).write(-1);
@@ -107,7 +107,7 @@ pub fn initialise_all_connect_lod_objects() {
 /// `CTheScripts::InitialiseSpecialAnimGroupsAttachedToCharModels()` (stub 0x474730 → 0x1562530,
 /// cdecl): the 8 entries at 0xA44850: model -1, first name byte 0.
 #[hook(addr = 0x474730, conv = cdecl, name = "CTheScripts::InitialiseSpecialAnimGroupsAttachedToCharModels",
-       expect = "E9 FB DD 0E 01", unverified = "mvpi-script-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       expect = "E9 FB DD 0E 01", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn initialise_special_anim_groups_attached_to_char_models() {
     for i in 0..8usize {
         ga::<i32>(ATTACHED_ANIM_GROUPS + i * 0x14).write(-1);
@@ -174,7 +174,7 @@ pub fn draw_script_spheres() {
 /// (x87: `fsqrt(dz*dz + dy*dy + dx*dx)`) must be below the brain's radius (+8): AL = 1, else 0. The
 /// original's EAX upper bytes are left over (index arithmetic / FPU status word).
 #[hook(addr = 0x46b3d0, conv = thiscall, name = "CScriptsForBrains::IsObjectWithinBrainActivationRange",
-       expect = "8B 54 24 04 0F BF 82 68 01 00 00", unverified = "mvpi-script-2", route = "L2", hazards = "ax-al-return,x87-transcendental",
+       expect = "8B 54 24 04 0F BF 82 68 01 00 00", route = "L2", hazards = "ax-al-return,x87-transcendental",
        recs = "grove-walk")]
 pub fn is_object_within_brain_activation_range(this: GPtr<u8>, obj: GPtr<u8>, point: GPtr<f32>) -> u8 {
     let b = this.byte_add(isize::from(obj.byte_add(0x168).cast::<i16>().read()) * 0x14);

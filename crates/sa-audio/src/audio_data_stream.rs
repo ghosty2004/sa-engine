@@ -98,7 +98,7 @@ fn k(a: usize) -> f32 {
 /// `GetLastError`. Encrypted → `TransformBuffer(dest, read, cur)` on the transformer 0xB612D8 (ECX set in the chunk
 /// 0x40233E). `cur += read`; returns `read`.
 #[hook(addr = 0x4dc1c0, conv = thiscall, name = "CAEDataStream::FillBuffer", expect = "56 8B F1 8B 4E 18",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads the track file (ReadFile, file position): one run per OS state; writes the caller's buffer")]
 pub fn data_stream_fill_buffer(this: GPtr<u8>, dest: GPtr<u8>, size: u32) -> u32 {
     let avail = rd::<u32>(this, 0x10).wrapping_sub(rd::<u32>(this, 0x18)).wrapping_sub(rd::<u32>(this, 0x14));
@@ -117,7 +117,7 @@ pub fn data_stream_fill_buffer(this: GPtr<u8>, dest: GPtr<u8>, size: u32) -> u32
 /// `CAEDataStream::GetCurrentPosition()` (0x4DC230, thiscall): `SetFilePointer(handle, 0, NULL, FILE_CURRENT) -
 /// start`.
 #[hook(addr = 0x4dc230, conv = thiscall, name = "CAEDataStream::GetCurrentPosition", expect = "56 6A 01 6A 00",
-       unverified = "mvpl-audio-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "queries the OS file position")]
 pub fn data_stream_get_current_position(this: GPtr<u8>) -> u32 {
     set_file_pointer(rd::<u32>(this, 4), 0, 0, 1).wrapping_sub(rd::<u32>(this, 0x14))
@@ -127,7 +127,7 @@ pub fn data_stream_get_current_position(this: GPtr<u8>) -> u32 {
 /// 0; whence 2: `(length + start) - offset`, method 0; otherwise `offset` with method `whence`. `cur =
 /// SetFilePointer(handle, that, NULL, method)`; returns `cur - start`.
 #[hook(addr = 0x4dc250, conv = thiscall, name = "CAEDataStream::Seek-OG", expect = "56 8B F1 8B 4C 24 0C",
-       unverified = "mvpl-audio-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "moves the OS file position")]
 pub fn data_stream_seek(this: GPtr<u8>, offset: u32, whence: u32) -> u32 {
     let (pos, method) = match whence {
@@ -170,7 +170,7 @@ pub fn data_stream_initialise(this: GPtr<u8>) -> u8 {
 /// `CAEDataStream::~CAEDataStream()` (0x4DC490, thiscall): vtable 0x85F0BC; open → cleared, `CloseHandle(handle)`; a
 /// file name → `free` and cleared.
 #[hook(addr = 0x4dc490, conv = thiscall, name = "CAEDataStream::Destructor", expect = "56 8B F1 8A 46 0C",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "closes the OS file handle and frees the name")]
 pub fn data_stream_destructor(this: GPtr<u8>) {
     let open = rd::<u8>(this, 0xC);
@@ -190,7 +190,7 @@ pub fn data_stream_destructor(this: GPtr<u8>) {
 /// `CAEStreamingDecoder::~CAEStreamingDecoder()` (0x4F2830, thiscall): vtable 0x85F418; a data stream (+4) →
 /// `CAEDataStream::~CAEDataStream`, `free`, cleared.
 #[hook(addr = 0x4f2830, conv = thiscall, name = "CAEStreamingDecoder::Destructor", expect = "56 8B F1 57 8B 7E 04",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "closes the stream's OS file handle and frees it")]
 pub fn streaming_decoder_destructor(this: GPtr<u8>) {
     let s = rd::<GPtr<u8>>(this, 4);
@@ -218,7 +218,7 @@ pub fn stream_transformer_transform_buffer(this: GPtr<u8>, buf: GPtr<u8>, size: 
 /// `CAEVorbisDecoder::ReadCallback(void* ptr, size_t size, size_t n, void* ds)` (0x502580, cdecl): no data source → 0;
 /// else `FillBuffer(ds, ptr, size * n) / size` (unsigned; a zero `size` faults like the original's `div`).
 #[hook(addr = 0x502580, conv = cdecl, name = "CAEVorbisDecoder::ReadCallback", expect = "8B 4C 24 10 85 C9",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads the track file through CAEDataStream::FillBuffer")]
 pub fn vorbis_read_callback(ptr: GPtr<u8>, size: u32, n: u32, ds: GPtr<u8>) -> u32 {
     if ds.is_null() {
@@ -230,7 +230,7 @@ pub fn vorbis_read_callback(ptr: GPtr<u8>, size: u32, n: u32, ds: GPtr<u8>) -> u
 /// `CAEVorbisDecoder::SeekCallback(void* ds, int64 offset, int32 whence)` (0x5025B0, cdecl): no data source → -1; else
 /// `Seek(ds, low dword of offset, whence)`.
 #[hook(addr = 0x5025b0, conv = cdecl, name = "CAEVorbisDecoder::SeekCallback", expect = "8B 4C 24 04 85 C9",
-       unverified = "mvpl-audio-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "moves the OS file position")]
 pub fn vorbis_seek_callback(ds: GPtr<u8>, off_lo: u32, _off_hi: u32, whence: u32) -> u32 {
     if ds.is_null() {
@@ -242,7 +242,7 @@ pub fn vorbis_seek_callback(ds: GPtr<u8>, off_lo: u32, _off_hi: u32, whence: u32
 /// `CAEVorbisDecoder::CloseCallback(void* ds)` (0x5025D0, cdecl): no data source → -1; else the tail jump into the
 /// uncatalogued `CAEDataStream::Close` (0x4DC2A0): open cleared, `CloseHandle(handle)`'s result.
 #[hook(addr = 0x5025d0, conv = cdecl, name = "CAEVorbisDecoder::CloseCallback", expect = "8B 4C 24 04 85 C9",
-       unverified = "mvpl-audio-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "closes the OS file handle")]
 pub fn vorbis_close_callback(ds: GPtr<u8>) -> i32 {
     if ds.is_null() {
@@ -256,7 +256,7 @@ pub fn vorbis_close_callback(ds: GPtr<u8>) -> i32 {
 /// `CAEVorbisDecoder::TellCallback(void* ds)` (0x5025F0, cdecl): no data source → -1; else the tail jump into
 /// `CAEDataStream::GetCurrentPosition`.
 #[hook(addr = 0x5025f0, conv = cdecl, name = "CAEVorbisDecoder::TellCallback", expect = "8B 4C 24 04 85 C9",
-       unverified = "mvpl-audio-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "queries the OS file position")]
 pub fn vorbis_tell_callback(ds: GPtr<u8>) -> u32 {
     if ds.is_null() {
@@ -267,7 +267,7 @@ pub fn vorbis_tell_callback(ds: GPtr<u8>) -> u32 {
 
 /// `CAEVorbisDecoder::GetSampleRate()` (0x502560, thiscall): initialised → `vorbis_info->rate` (+0x24 → +8), else -1.
 #[hook(addr = 0x502560, conv = thiscall, name = "CAEVorbisDecoder::GetSampleRate", expect = "8A 41 1C 84 C0",
-       unverified = "mvpl-audio-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn vorbis_get_sample_rate(this: GPtr<u8>) -> i32 {
     if rd::<u8>(this, 0x1C) == 0 {
         return -1;
@@ -278,7 +278,7 @@ pub fn vorbis_get_sample_rate(this: GPtr<u8>) -> i32 {
 /// `CAEVorbisDecoder::GetStreamLengthMs()` (0x502610, thiscall): initialised → `_ftol(ov_time_total(vf, -1) *
 /// 1000.0)` (x87, the double constant 0x85A318 as a memory operand; the low dword), else -1.
 #[hook(addr = 0x502610, conv = thiscall, name = "CAEVorbisDecoder::GetStreamLengthMs", expect = "8A 41 1C 84 C0",
-       unverified = "mvpl-audio-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn vorbis_get_stream_length_ms(this: GPtr<u8>) -> i32 {
     if rd::<u8>(this, 0x1C) == 0 {
         return -1;
@@ -290,7 +290,7 @@ pub fn vorbis_get_stream_length_ms(this: GPtr<u8>) -> i32 {
 /// `CAEVorbisDecoder::GetStreamPlayTimeMs()` (0x502640, thiscall): initialised → `_ftol(ov_time_tell(vf) * 1000.0)`,
 /// else -1.
 #[hook(addr = 0x502640, conv = thiscall, name = "CAEVorbisDecoder::GetStreamPlayTimeMs", expect = "8A 41 1C 84 C0",
-       unverified = "mvpl-audio-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn vorbis_get_stream_play_time_ms(this: GPtr<u8>) -> i32 {
     if rd::<u8>(this, 0x1C) == 0 {
         return -1;
@@ -302,7 +302,7 @@ pub fn vorbis_get_stream_play_time_ms(this: GPtr<u8>) -> i32 {
 /// `CAEVorbisDecoder::SetCursor(uint32 ms)` (0x502670, thiscall, `ret 4`): initialised → `ov_time_seek(vf, (ms as
 /// unsigned, `fild` + 2^32 when negative) * 0.001)` (x87, passed as a double).
 #[hook(addr = 0x502670, conv = thiscall, name = "CAEVorbisDecoder::SetCursor", expect = "8A 41 1C 84 C0",
-       unverified = "mvpl-audio-2", route = "split", hazards = "none", recs = "grove-walk",
+       route = "split", hazards = "none", recs = "grove-walk",
        note = "seeks the track file through vorbisfile")]
 pub fn vorbis_set_cursor(this: GPtr<u8>, ms: i32) {
     if rd::<u8>(this, 0x1C) == 0 {
@@ -319,7 +319,7 @@ pub fn vorbis_set_cursor(this: GPtr<u8>, ms: i32) {
 /// `CAEVorbisDecoder::~CAEVorbisDecoder()` (0x5023F0, thiscall): vtable 0x862D70; an `OggVorbis_File` (+0x18) →
 /// `ov_clear`, `free`; then the `CAEStreamingDecoder` part (0x4F2830). The SEH frame of the original is not needed.
 #[hook(addr = 0x5023f0, conv = thiscall, name = "CAEVorbisDecoder::Destructor", expect = "6A FF 68 E8 C4 83 00",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "frees the vorbisfile state and closes the stream's file handle")]
 pub fn vorbis_destructor(this: GPtr<u8>) {
     wr::<u32>(this, 0, 0x862D70);
@@ -334,7 +334,7 @@ pub fn vorbis_destructor(this: GPtr<u8>) {
 /// `CAEVorbisDecoder` scalar deleting destructor (0x502700, thiscall, `ret 4`): the destructor, `free(this)` when
 /// `flags & 1`; returns `this`.
 #[hook(addr = 0x502700, conv = thiscall, name = "CAEVorbisDecoder::~CAEVorbisDecoder", expect = "56 8B F1 E8 E8 FC FF FF",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "frees the decoder")]
 pub fn vorbis_deleting_destructor(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
     vorbis_destructor_call(this);
@@ -348,7 +348,7 @@ pub fn vorbis_deleting_destructor(this: GPtr<u8>, flags: u32) -> GPtr<u8> {
 /// - n, little endian, 16-bit, signed, &bitstream)` (bitstream starts at -1) while it returns above 0 and `n < size`
 /// (unsigned); returns `n`.
 #[hook(addr = 0x502470, conv = thiscall, name = "CAEVorbisDecoder::FillBuffer", expect = "51 53 55 56 57",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "decodes through vorbisfile, which reads the track file")]
 pub fn vorbis_fill_buffer(this: GPtr<u8>, dest: GPtr<u8>, size: u32) -> u32 {
     let mut bitstream: i32 = -1;
@@ -377,7 +377,7 @@ pub fn vorbis_fill_buffer(this: GPtr<u8>, dest: GPtr<u8>, size: u32) -> u32 {
 /// `GetStreamLengthMs`) clears initialised again and gives 0; else 1. AL only: the upper EAX bytes are the last
 /// call's.
 #[hook(addr = 0x5024d0, conv = thiscall, name = "CAEVorbisDecoder::Initialise", expect = "53 56 57 68 D0 02 00 00",
-       unverified = "mvpl-audio-2", route = "split", hazards = "ax-al-return,heap-writes", recs = "grove-walk",
+       route = "split", hazards = "ax-al-return,heap-writes", recs = "grove-walk",
        note = "allocates the vorbisfile state and reads the stream header (file position)")]
 pub fn vorbis_initialise(this: GPtr<u8>) -> u8 {
     let vf = crt_operator_new(0x2D0);
@@ -427,7 +427,7 @@ pub fn vorbis_constructor(this: GPtr<u8>, stream: GPtr<u8>, check: u32) -> GPtr<
 /// NULL too, as the original); a failed `Initialise` destroys and frees it and gives NULL. The SEH frame of the
 /// original is not needed.
 #[hook(addr = 0x4e0d20, conv = thiscall, name = "CAETrackLoader::GetDataStream", expect = "6A FF 68 9B BF 83 00",
-       unverified = "mvpl-audio-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "allocates the stream and its name and opens the stream archive (CreateFileA, file position)")]
 pub fn track_loader_get_data_stream(this: GPtr<u8>, track: u32) -> GPtr<u8> {
     if track >= rd::<u32>(this, 4) {

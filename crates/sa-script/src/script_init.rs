@@ -70,7 +70,7 @@ pub fn running_script_init(this: GPtr<u8>) {
 /// `CTheScripts::ClearAllSuppressedCarModels()` (stub 0x46A7C0 → 0x156F400): the 0x28 dwords at 0xA44940
 /// = -1.
 #[hook(addr = 0x46a7c0, conv = cdecl, name = "CTheScripts::ClearAllSuppressedCarModels", expect = "E9 3B 4C 10 01",
-       unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clear_all_suppressed_car_models() {
     for k in 0..0x28usize {
         ga::<i32>(0xA44940 + 4 * k).write(-1);
@@ -80,7 +80,7 @@ pub fn clear_all_suppressed_car_models() {
 /// `CTheScripts::ClearAllVehicleModelsBlockedByScript()` (stub 0x46A840 → 0x1565EA0): the 0x14 dwords at
 /// 0xA448F0 = -1.
 #[hook(addr = 0x46a840, conv = cdecl, name = "CTheScripts::ClearAllVehicleModelsBlockedByScript", expect = "E9 5B B6 0F 01",
-       unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clear_all_vehicle_models_blocked_by_script() {
     for k in 0..0x14usize {
         ga::<i32>(0xA448F0 + 4 * k).write(-1);
@@ -149,7 +149,7 @@ pub fn streamed_scripts_register_script(this: GPtr<u8>, name: GPtr<u8>) -> i32 {
 /// `LargestNumberOfMissionScriptLocalVariables` (0xA444B4) = dword +0xC, then the mission offsets
 /// (0xA444C8) from +0x10, as many as the sign-extended mission count.
 #[hook(addr = 0x4867c0, conv = cdecl, name = "CTheScripts::ReadMultiScriptFileOffsetsFromScript", expect = "E9 5B F6 0D 01",
-       unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn read_multi_script_file_offsets_from_script() {
     let o1 = ga::<u32>(0xA49963).read();
     let o2 = ga::<u32>((o1.wrapping_add(0xA49963)) as usize).read();
@@ -171,7 +171,7 @@ pub fn read_multi_script_file_offsets_from_script() {
 /// `NumberOfUsedObjects` (u16 0xA44B6C; 0x1C-byte entries at 0xA44B6C + 4: name +0, index +0x18): index
 /// = -1, then `CModelInfo::GetModelInfo(name, &index)`.
 #[hook(addr = 0x486780, conv = cdecl, name = "CTheScripts::UpdateObjectIndices", expect = "E9 DB BE 0D 01",
-       unverified = "mvpf-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn update_object_indices() {
     let mut i: u16 = 1;
     while i < ga::<u16>(0xA44B6C).read() {

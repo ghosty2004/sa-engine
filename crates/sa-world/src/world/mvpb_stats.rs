@@ -137,7 +137,7 @@ fn at16(inf: GPtr<u8>) -> GPtr<i16> {
 /// threshold, text key) whose stat reached its threshold (`<` for less-flagged entries, else `<=` the value)
 /// is marked shown, its text set as help message and 0xB794D4 = 1; every reached entry is processed.
 #[hook(addr = 0x559760, conv = cdecl, name = "CStats::CheckForStatsMessage", expect = "6A 00 E8 09 64 FE FF",
-       unverified = "mvpb-world-5", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn check_for_stats_message() {
     if rd::<u8>(pad_get_pad(0), 0x117) != 0
         || g::<u8>(0x8CDE56).read() == 0

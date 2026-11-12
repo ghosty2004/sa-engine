@@ -382,7 +382,7 @@ pub fn process_line_of_sight_sector(s: GPtr<u8>, r: GPtr<u8>, line: GPtr<u8>, cp
 /// (repeat +0 / +4 / +8; objects with the camera-ignore flag), dummies (sector +4) through
 /// `TestSphereAgainstSectorList`; the first entity found is returned, else null.
 #[hook(addr = 0x569E20, conv = cdecl, name = "CWorld::TestSphereAgainstWorld", expect = "83 EC 1C D9 44 24 20 53",
-       unverified = "mvpc-world-1", route = "L2", hazards = "none", recs = "grove-walk,driving")]
+       route = "L2", hazards = "none", recs = "grove-walk,driving")]
 #[allow(clippy::too_many_arguments)]
 pub fn test_sphere_against_world(x: f32, y: f32, z: f32, radius: f32, ignore: GPtr<u8>, b: u8, v: u8, p: u8, o: u8, d: u8,
     cam: u8) -> GPtr<u8> {
@@ -427,7 +427,7 @@ pub fn test_sphere_against_world(x: f32, y: f32, z: f32, radius: f32, ignore: GP
 /// at once, which never passes.) The local model's data pointer is cleared before its destructor runs;
 /// the matrix destructor follows.
 #[hook(addr = 0x566140, conv = cdecl, name = "CWorld::TestSphereAgainstSectorList<CPtrListDoubleLink<CPhysical*>>",
-       expect = "6A FF E9 70 40 EA FF", unverified = "mvpc-world-1", route = "L2", hazards = "none",
+       expect = "6A FF E9 70 40 EA FF", route = "L2", hazards = "none",
        recs = "grove-walk,driving", note = "local CColModel/CCollisionData/CMatrix live in the Rust frame")]
 pub fn test_sphere_against_sector_list(list: GPtr<u8>, x: f32, y: f32, z: f32, radius: f32, ignore: GPtr<u8>, cam: u8)
     -> GPtr<u8> {
@@ -636,7 +636,7 @@ fn walk_sectors(o: GPtr<u8>, t: GPtr<u8>, mut visit: impl FnMut(i32, i32) -> boo
 /// `GetSector` clamped, the repeat sector of the raw x/y); false at the first blocked sector.
 /// Stack: sector values are kept in the argument slots (target x in the origin slot, ...).
 #[hook(addr = 0x56A490, conv = cdecl, name = "CWorld::GetIsLineOfSightClear", expect = "83 EC 5C 66 81 3D 78 CD B7 00 FF FF",
-       unverified = "mvpc-world-1", route = "L2", hazards = "stack-residue", recs = "grove-walk,driving",
+       route = "L2", hazards = "stack-residue", recs = "grove-walk,driving",
        note = "same-x / same-y cases walk upwards from the origin (gta-reversed walks down from the target); argument slots reused for sector values")]
 #[allow(clippy::too_many_arguments)]
 pub fn get_is_line_of_sight_clear(o: GPtr<u8>, t: GPtr<u8>, b: u8, v: u8, p: u8, ob: u8, d: u8, see: u8, cam: u8) -> u8 {

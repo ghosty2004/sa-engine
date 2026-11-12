@@ -315,7 +315,7 @@ pub fn plant_surf_prop_mgr_initialise() -> u8 {
 /// `CPlantSurfPropMgr::GetSurfProperties(uint16 id)` (0x6F9DE0, cdecl): `m_SurfPropPtrTab[id]` (0xC38070)
 /// for `id < 0xB2`, else NULL. The entry jumps through the protection chunk 0x401A13 (loads AX).
 #[hook(addr = 0x6F9DE0, conv = cdecl, name = "CPlantSurfPropMgr::GetSurfProperties", expect = "E9 2E 7C D0 FF 66 3D B2 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn plant_surf_prop_mgr_get_surf_properties(id: u32) -> GPtr<u8> {
     let id = id as u16;
     if id >= 0xB2 {
@@ -364,7 +364,7 @@ pub fn birds_init() {
 /// blocks at 0xC71468 (the moving-things lists), then `CPointLights::Init()` and (tail call)
 /// `CEscalators::Init()`.
 #[hook(addr = 0x717D00, conv = cdecl, name = "CMovingThings::Init", expect = "BA 68 14 C7 00 57",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn moving_things_init() {
     let mut a = 0xC71468usize;
     loop {
@@ -753,7 +753,7 @@ pub fn real_time_shadow_manager_exit(this: GPtr<u8>) {
 /// (0xB70153)`: `from > to` → `h >= from || h < to`, else `h >= from && h < to` (unsigned bytes). The
 /// entry runs through the protection chunk 0x4017E3 (loads CL). AL result; callers test AL.
 #[hook(addr = 0x52CEE0, conv = cdecl, name = "CClock::GetIsTimeInRange", expect = "8A 44 24 04 8A 54 24 08",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn clock_get_is_time_in_range(from: u8, to: u8) -> u8 {
     let h = g::<u8>(0xB70153).read();
     let r = if from > to { h >= from || h < to } else { h >= from && h < to };
@@ -765,7 +765,7 @@ pub fn clock_get_is_time_in_range(from: u8, to: u8) -> u8 {
 /// add); days > 31 → month (0xB70155) + 1, day 1; month > 12 → 1. The remainders are computed by
 /// repeated subtraction as in the original (same values as `%`).
 #[hook(addr = 0x52CDE0, conv = cdecl, name = "CClock::NormaliseGameClock", expect = "66 8B 0D 50 01 B7 00",
-       unverified = "mvpa-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn normalise_game_clock() {
     let secs = g::<u16>(0xB70150).read();
     let mut mins = g::<u8>(0xB70152).read();

@@ -868,7 +868,7 @@ fn update_default(pk: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32, re
 /// unset; for-sale properties are bought here (money taken, `Remove`); bribes in a vehicle need the sphere
 /// test only; bribe wanted level of player 0; the 2P help sets flag bit 2.
 #[hook(addr = 0x457410, conv = thiscall, name = "CPickup::Update", this = "CPickup", expect = "83 EC 50 53 55 8B D9",
-       unverified = "mvpd-world-5", route = "L2", hazards = "stack-residue,heap-writes,x87-transcendental",
+       route = "L2", hazards = "stack-residue,heap-writes,x87-transcendental",
        note = "writes temporaries into its own argument slots +0x64/+0x68/+0x6C (disabled path, mine loops, max armour/health); fsqrt only compared (revenue distance)")]
 pub fn pickup_update(this: GPtr<u8>, player: GPtr<u8>, vehicle: GPtr<u8>, id: i32) -> u8 {
     let mut removed = 0u8;
@@ -1025,7 +1025,7 @@ fn text_scale(q: f32, s: f32) -> u32 {
 /// [0x858F10])`, left aligned, centre size `maximumWidth`, the entry's colour, style 3, at (x, y). The count
 /// is re-read only after a drawn message; `NumMessages` is cleared at the end.
 #[hook(addr = 0x455000, conv = cdecl, name = "CPickups::RenderPickUpText", expect = "66 8B 15 78 86 97 00",
-       unverified = "mvpd-world-5", route = "L2", hazards = "none",
+       route = "L2", hazards = "none",
        note = "skipped entries: the original's dead store of entry+8 into its own frame (stale ECX = index) is not reproduced")]
 pub fn render_pick_up_text() {
     let num = g::<u16>(0x978678);

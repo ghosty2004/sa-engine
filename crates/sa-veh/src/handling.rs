@@ -219,7 +219,7 @@ fn atof32(s: GPtr<u8>) -> f32 {
 /// animation-group locals persist across lines as in the original (a section line without a name token
 /// writes into the previous record; zero/NULL before the first, as the original initialises them).
 #[hook(addr = 0x5BD830, conv = thiscall, name = "cHandlingDataMgr::LoadHandlingData", expect = "81 EC FC 00 00 00 55 56",
-       unverified = "std4-data-1", route = "L2", hazards = "uninit-locals", recs = "boot")]
+       route = "L2", hazards = "uninit-locals", recs = "boot")]
 pub fn load_handling_data_port(this: GPtr<u8>) {
     hd_set_dir(g::<u8>(0x86A784));
     let file = hd_open_file(g::<u8>(0x86A964), g::<u8>(0x859C6C));
