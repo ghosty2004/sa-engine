@@ -15,6 +15,7 @@ pub mod garage_slide_door;
 pub mod object_damage;
 pub mod misc;
 pub mod pickups;
+pub mod pickups_money;
 pub mod pickup_effects;
 pub mod clear_scan_codes;
 pub mod replay_playback;

@@ -28,6 +28,7 @@ pub const MODULES: &[&[HookReg]] = &[
     world::object_damage::HOOKS,
     world::misc::HOOKS,
     world::pickups::HOOKS,
+    world::pickups_money::HOOKS,
     world::pickup_effects::HOOKS,
     world::replay_playback::HOOKS,
     world::restart::HOOKS,
