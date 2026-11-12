@@ -194,6 +194,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::climb_camera::HOOKS,
     crate::follow_node_route_blend::HOOKS,
     crate::fight_hit_object::HOOKS,
+    crate::use_effect_abort::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
