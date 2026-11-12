@@ -495,6 +495,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     // WRITER-SAMP batch samp-unk-1: the vtable-only event destructors 0x4ADE90 / 0x4B13C0 (preserve ecx: their
     // callers read ECX after the call); specs queued.
     0x4ADE90, 0x4B13C0,
+    // WRITER-NATIVE batch native-21 (preserve edx, added on WEB-3's tree):
+    // CPlayerPed::GetButtonSprintResults; spec queued.
+    0x60A820,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port
