@@ -31,6 +31,7 @@ use samp_proto::sync::player::StatsSync;
 
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
+use sa_samp_api::peds::AnimRequest;
 use sa_samp_api::ui::{ChatKind, ChatMessage, DialogSpec, DialogStyle, UiEvent};
 use sa_samp_api::vehicles::VehicleSpawn;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, Rgba, Vec3, VehicleRef, WeaponType};
@@ -423,6 +424,41 @@ impl NetHooks {
                 self.note("SetPlayerCameraLookAt".into());
             }
             P::SetPlayerCameraBehindPlayer(_) => report(self, "behind_player", game.behind_player()),
+            P::SetPlayerSkin(s) => {
+                self.note(format!("SetPlayerSkin {} {}", s.player_id, s.skin));
+                if self.is_me(s.player_id) {
+                    self.set_skin(game, s.skin as i32);
+                }
+            }
+            P::PlayerPlaySound(s) => {
+                self.note(format!("PlayerPlaySound {}", s.sound_id));
+                report(self, "one_off_sound", game.one_off_sound(v3(s.pos), s.sound_id as i32));
+            }
+            P::ApplyPlayerAnimation(a) => {
+                let lib = text(&a.lib);
+                let name = text(&a.name);
+                self.note(format!("ApplyPlayerAnimation {} {lib}/{name}", a.player_id));
+                // samp ignores the "SEX" library.
+                if self.is_me(u32::from(a.player_id)) && !lib.eq_ignore_ascii_case("SEX") {
+                    let anim = AnimRequest {
+                        name: &name,
+                        block: &lib,
+                        delta: a.delta,
+                        looped: a.looping,
+                        lock_x: a.lock_x,
+                        lock_y: a.lock_y,
+                        freeze: a.freeze,
+                        time_ms: a.time as i32,
+                    };
+                    report(self, "play_anim", game.play_anim(me, &anim));
+                }
+            }
+            P::ClearPlayerTasks(c) => {
+                self.note(format!("ClearPlayerTasks {}", c.player_id));
+                if self.is_me(u32::from(c.player_id)) {
+                    report(self, "stop_anims", game.stop_anims(me));
+                }
+            }
             other => self.note(format!("player rpc {} (not applied natively yet)", other.id())),
         }
     }
@@ -687,7 +723,7 @@ impl NetHooks {
         self.net
             .send_rpc(&player::PlayerSpawn, Reliability::ReliableOrdered);
         self.note(format!(
-            "spawned at ({:.2},{:.2},{:.2}) heading {} skin {} (skin change natively: later)",
+            "spawned at ({:.2},{:.2},{:.2}) heading {} skin {}",
             s.pos.x, s.pos.y, s.pos.z, s.rotation, s.skin
         ));
     }
@@ -707,12 +743,18 @@ impl NetHooks {
         }
     }
 
-    /// The class skin on the local ped, when the model is loaded.
+    /// The class / spawn skin on the local ped (samp's `CPlayerPed::SetModelIndex`: the adapter loads the
+    /// model first). Skin 0 (CJ) needs the clothes rebuild samp does, so it is left alone here.
     fn set_skin(&self, game: &mut dyn GameAdapter, skin: i32) {
         let Some(me) = game.local_player() else { return };
-        if skin != 0 && game.model_loaded(ModelId(skin)) {
+        if skin != 0 && game.is_ped_model(ModelId(skin)) {
             report(self, "set_ped_model", game.set_ped_model(me, ModelId(skin)));
         }
+    }
+
+    /// Whether a player id in an RPC names us.
+    fn is_me(&self, id: u32) -> bool {
+        self.net.player_id().is_some_and(|me| u32::from(me) == id)
     }
 
     /// Every frame until InitGame, like samp.dll 0x100089B0 (samp-rs `connecting_tick`): weather 1, HUD off, the

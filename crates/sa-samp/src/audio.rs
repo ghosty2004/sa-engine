@@ -5,7 +5,13 @@
 use sa_samp_api::audio::*;
 use sa_samp_api::*;
 
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
+
+use crate::script::op;
 use crate::{NativeGame, View};
+
+/// `CAEScriptAudioEntity::ProcessMissionAudioEvent` (0x4ECCF0), where 018C ends.
+const PROCESS_MISSION_AUDIO_EVENT: usize = 0x4ECCF0;
 
 impl<V: View> GameAudio for NativeGame<V> {
     fn radio_volume(&self) -> u8 {
@@ -24,8 +30,18 @@ impl<V: View> GameAudio for NativeGame<V> {
         Err(GameError::Unsupported("GameAudio::mission_ambience"))
     }
 
-    fn one_off_sound(&mut self, _pos: Vec3, _sound: i32) -> GameResult<()> {
-        Err(GameError::Unsupported("GameAudio::one_off_sound"))
+    fn one_off_sound(&mut self, pos: Vec3, sound: i32) -> GameResult<()> {
+        // samp's PlaySound: 018C ADD_ONE_OFF_SOUND (`CAudioEngine::ReportMissionAudioEvent(sound, &pos)`). That
+        // ends in `CAEScriptAudioEntity::ProcessMissionAudioEvent` (0x4ECCF0); until the engine serves it the
+        // command would stop the game thread, so the sound is reported unsupported instead.
+        use sa_core::orig::registry;
+        if registry::is_installed() && registry::name_of(PROCESS_MISSION_AUDIO_EVENT).is_none() {
+            return Err(GameError::Unsupported(
+                "GameAudio::one_off_sound (CAEScriptAudioEntity::ProcessMissionAudioEvent 0x4ECCF0 not ported)",
+            ));
+        }
+        self.run_op(op::ADD_ONE_OFF_SOUND, &[F(pos.x), F(pos.y), F(pos.z), I(sound)])
+            .map(drop)
     }
 
     fn set_weather_sound_muted(&mut self, _muted: bool) -> GameResult<()> {

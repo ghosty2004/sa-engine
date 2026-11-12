@@ -2,7 +2,7 @@
 //! Methods that return `Unsupported` (or a neutral value, for reads that cannot fail) are not served by the
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
-use sa_samp_api::script::ScriptArg::{Float as F, Int as I};
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Text as T};
 use sa_samp_api::streaming::*;
 use sa_samp_api::*;
 
@@ -10,6 +10,25 @@ use crate::addr;
 use crate::script::op;
 
 use crate::{NativeGame, View};
+
+impl<V: View> NativeGame<V> {
+    /// The `CAnimBlock` named `block` (case-insensitive, as `CAnimManager::GetAnimationBlock`), if the game has one.
+    pub(crate) fn anim_block_addr(&self, block: &str) -> Option<u32> {
+        let want = block.as_bytes();
+        if want.is_empty() || want.len() > 15 {
+            return None;
+        }
+        let n = self.view.read_u32(addr::ANIM_BLOCK_COUNT).min(180);
+        (0..n)
+            .map(|i| addr::ANIM_BLOCKS + i * addr::ANIM_BLOCK_SIZE)
+            .find(|&b| {
+                let mut name = [0u8; 16];
+                self.view.read(b, &mut name);
+                let len = name.iter().position(|&c| c == 0).unwrap_or(16);
+                name[..len].eq_ignore_ascii_case(want)
+            })
+    }
+}
 
 impl<V: View> Streaming for NativeGame<V> {
     fn model_kind(&self, _model: ModelId) -> ModelKind {
@@ -46,12 +65,18 @@ impl<V: View> Streaming for NativeGame<V> {
         false
     }
 
-    fn request_anim_block(&mut self, _block: &str) -> GameResult<()> {
-        Err(GameError::Unsupported("Streaming::request_anim_block"))
+    fn request_anim_block(&mut self, block: &str) -> GameResult<()> {
+        if self.anim_block_addr(block).is_none() {
+            return Err(GameError::Other(format!("unknown animation block {block:?}")));
+        }
+        self.run_op(op::REQUEST_ANIMATION, &[T(block.as_bytes())])
+            .map(drop)
     }
 
-    fn anim_block_loaded(&self, _block: &str) -> bool {
-        false
+    fn anim_block_loaded(&self, block: &str) -> bool {
+        // `CAnimBlock::bLoaded` (+0x10).
+        self.anim_block_addr(block)
+            .is_some_and(|b| self.view.read_u8(b + 0x10) != 0)
     }
 
     fn request_component(&mut self, _model: ModelId) -> GameResult<()> {
