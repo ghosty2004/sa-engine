@@ -29,6 +29,7 @@ mod imports;
 mod native;
 mod rw_standin;
 mod samp;
+mod samp_input;
 mod samp_ui_demo;
 mod sha256;
 mod winmain;
@@ -295,6 +296,8 @@ fn run(args: &Args) -> Result<String, String> {
             if winmain::game_state() != winmain::STATE_IDLE {
                 i.mouse_delta = (4.0, -2.0);
             }
+            samp_ui_demo::take_input(&mut i);
+            samp_input::filter(&mut i);
             for e in &i.events {
                 p.queue.push_event(e, t);
             }
