@@ -8,6 +8,8 @@
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/server (open.mp), $SA_ROOT/wine/gta-sa (your own game
 # folder), the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, gitignored third-party data, read only).
 # Ports: SAMP_PORT (UDP, default 7813), PROXY_PORT (WebSocket, default 7781), WEB_PORT (HTTP, default 8644).
+# SAMP_DIR: a SA:MP client folder (samp.saa, sampgui.png, mouse.png) the page reads over the game folder (serve.py
+# --samp-dir), for samp's loading screen and UI skin.
 # The server runs tools/e2e/samp/sampcov.pwn: commands go to $OUT/server/scriptfiles/sampcov.txt (one
 # "SEQ CMD|ARGS" line each, e.g. `echo "1 msg|hello" >> .../sampcov.txt`), its "[cov]" lines are in $OUT/server.log.
 # Lock: $SA_ROOT/target/locks/$SAMP_LOCK (default samp-native.lock, shared with tools/e2e/samp/native-join.sh), held
@@ -71,7 +73,7 @@ trap cleanup EXIT INT TERM
 PIDS+=($!)
 "$PROXY_BIN" "127.0.0.1:$PORT" --bind "127.0.0.1:$PROXY_PORT" > "$OUT/proxy.log" 2>&1 &
 PIDS+=($!)
-python3 -I "$HERE/serve.py" --port "$WEB_PORT" --game "$GAME" --samp-auth "$AUTH" > "$OUT/web.log" 2>&1 &
+python3 -I "$HERE/serve.py" --port "$WEB_PORT" --game "$GAME" --samp-auth "$AUTH" ${SAMP_DIR:+--samp-dir "$SAMP_DIR"} > "$OUT/web.log" 2>&1 &
 PIDS+=($!)
 for _ in $(seq 40); do grep -q 'Legacy Network started' "$SLOG" 2> /dev/null && break; sleep 0.5; done
 grep -q 'Legacy Network started' "$SLOG" || { echo "samp-demo: the server did not start" >&2; cat "$SLOG"; exit 1; }
