@@ -4,13 +4,25 @@ import init, * as sa from './pkg/sa_game.js';
 
 const post = (type, data) => self.postMessage({ type, ...data });
 
-// console lines (the game's println!) also go to the page's log panel
+// console lines (the game's println!) also go to the page's log panel, in batches (one message per tick)
+let pendingLogs = [];
+let lastFlush = 0;
 for (const level of ['log', 'warn', 'error']) {
   const orig = console[level].bind(console);
   console[level] = (...a) => {
     orig(...a);
-    post('log', { level, text: a.map(String).join(' ') });
+    pendingLogs.push({ level, text: a.map(String).join(' ') });
+    if (pendingLogs.length > 500) pendingLogs.splice(0, pendingLogs.length - 500);
+    // inside one long iteration nothing else flushes
+    if (performance.now() - lastFlush > 500) flushLogs();
   };
+}
+function flushLogs() {
+  lastFlush = performance.now();
+  if (pendingLogs.length) {
+    post('logs', { lines: pendingLogs });
+    pendingLogs = [];
+  }
 }
 
 // ---------------------------------------------------------------- the game folder (synchronous reads) ---
@@ -50,8 +62,20 @@ function block(id, b) {
   return v;
 }
 
+// progress while one long main-loop iteration runs (CGame::Initialise loads the world in one): JS-only state, no
+// call back into the module (it is running)
+let lastProgress = 0;
+function progress() {
+  const t = performance.now();
+  if (t - lastProgress < 500) return;
+  lastProgress = t;
+  flushLogs();
+  post('progress', { mib: Math.round(bytesRead / 1048576) });
+}
+
 self.saGameIo = {
   read(id, offset, length) {
+    progress();
     const f = files[id];
     const end = Math.min(f.size, offset + length);
     if (end <= offset) return new Uint8Array(0);
@@ -73,12 +97,18 @@ self.saGameIo = {
 // ---------------------------------------------------------------- the main loop ---
 let pending = () => false;
 let stopped = false;
+let phase = 'starting';
+let lastStatus = 0;
 
 function status(extra) {
+  flushLogs();
+  lastStatus = performance.now();
   post('status', {
+    phase,
     iterations: sa.iterations(),
     state: sa.game_state(),
     presents: sa.in_game_presents(),
+    allPresents: sa.presents(),
     mib: Math.round(bytesRead / 1048576),
     ...extra,
   });
@@ -101,7 +131,7 @@ function tick() {
     console.error(`sa-game trapped: ${e}\n${e.stack || ''}`);
     return;
   }
-  status({});
+  if (performance.now() - lastStatus > 100) status({});
   setTimeout(tick, 0);
 }
 
@@ -118,12 +148,14 @@ self.onmessage = async (ev) => {
           files.push(f.file ? { size: f.size, file: f.file } : { size: f.size, url: f.url });
           sa.add_game_file(f.path, id, f.size);
         }
-        post('log', { level: 'log', text: `${files.length} game files registered` });
-        const gpu = await sa.init_gpu(m.canvas);
-        post('log', { level: 'log', text: `GPU: ${gpu}` });
-        status({ phase: 'booting' });
+        console.log(`${files.length} game files registered`);
+        const gpu = await sa.init_gpu(m.canvas, m.backend || '');
+        console.log(`GPU: ${gpu}`);
+        phase = 'booting';
+        status({});
         sa.boot();
-        status({ phase: 'running' });
+        phase = 'running';
+        status({});
         pending = presentPending();
         setTimeout(tick, 0);
       } catch (e) {

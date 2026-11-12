@@ -36,9 +36,9 @@ const note = (s) => {
 };
 
 const flags = [
-  '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${process.cwd()}/target/web1-chrome`,
+  '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${process.cwd()}/target/web1-chrome-${port}`,
   '--no-first-run', '--no-default-browser-check', '--enable-unsafe-webgpu', '--enable-features=Vulkan',
-  '--ignore-gpu-blocklist', '--window-size=820,700', ...extraFlags, 'about:blank',
+  '--ignore-gpu-blocklist', '--use-angle=swiftshader', '--use-webgpu-adapter=swiftshader', '--window-size=820,700', ...extraFlags, 'about:blank',
 ];
 const proc = spawn(chrome, flags, { stdio: ['ignore', 'ignore', 'pipe'] });
 proc.stderr.on('data', (d) => appendFileSync(`${out}/chrome-stderr.txt`, d));
@@ -82,7 +82,10 @@ await s('Page.navigate', { url });
 
 const evalJs = async (expr) => (await s('Runtime.evaluate', { expression: expr, returnByValue: true })).result?.result?.value;
 const shot = async (name) => {
-  const r = await s('Page.captureScreenshot', { format: 'png', clip: { x: 10, y: 50, width: 800, height: 600, scale: 1 } });
+  const rect = JSON.parse((await evalJs('JSON.stringify(document.getElementById("screen").getBoundingClientRect())')) ?? '{"x":0,"y":0,"width":800,"height":600}');
+  const full = process.argv.includes('--full-page');
+  const clip = full ? { x: 0, y: 0, width: 820, height: 700, scale: 1 } : { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
+  const r = await s('Page.captureScreenshot', { format: 'png', clip });
   if (r.result?.data) {
     writeFileSync(`${out}/${name}.png`, Buffer.from(r.result.data, 'base64'));
     note(`screenshot ${out}/${name}.png`);
@@ -90,17 +93,52 @@ const shot = async (name) => {
 };
 const key = (type, code, keyName, vk) => s('Input.dispatchKeyEvent', { type, code, key: keyName, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
 
+// --stack-on-hang S: when the status has not changed for S seconds (a main-loop iteration that does not return), the
+// worker is paused through the debugger and its call stack (wasm function names) is written to the log.
+const hangSecs = Number(arg('stack-on-hang', '0'));
+const workers = [];
+handlers.push((m) => {
+  if (m.method === 'Target.attachedToTarget' && m.params.targetInfo.type === 'worker') workers.push(m.params.sessionId);
+});
+await s('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: false, flatten: true });
+async function dumpStacks(tag) {
+  const { result } = await send('Target.getTargets');
+  for (const ti of result.targetInfos.filter((x) => x.type === 'worker' && !x.attached)) {
+    const r = await send('Target.attachToTarget', { targetId: ti.targetId, flatten: true });
+    if (r.result?.sessionId) workers.push(r.result.sessionId);
+  }
+  note(`${tag}: ${workers.length} worker session(s)`);
+  for (const ws of workers) {
+    const paused = new Promise((res) => handlers.push((m) => { if (m.method === 'Debugger.paused' && m.sessionId === ws) res(m.params); }));
+    await send('Debugger.enable', {}, ws);
+    await send('Debugger.pause', {}, ws);
+    const p = await Promise.race([paused, sleep(10000).then(() => null)]);
+    if (!p) { note(`${tag}: worker did not pause`); continue; }
+    note(`${tag}: worker stack:\n` + p.callFrames.map((f) => `  ${f.functionName}`).join('\n'));
+    await send('Debugger.resume', {}, ws);
+  }
+}
+let lastChange = Date.now(), lastStatusText = '', lastProgressText = '', dumped = false, lastProgressNote = -10;
+
 const t0 = Date.now();
 let lastShot = -every, inGameAt = null, walking = false, walked = false, lastEnter = 0, logsSeen = 0, lastState = -1;
 while ((Date.now() - t0) / 1000 < seconds) {
   await sleep(500);
   const t = (Date.now() - t0) / 1000;
   const st = (await evalJs('JSON.stringify(window.saGame?.status ?? {})')) ?? '{}';
-  const logs = (await evalJs(`JSON.stringify((window.saGame?.logs ?? []).slice(${logsSeen}))`)) ?? '[]';
+  const pr = (await evalJs('JSON.stringify(window.saGame?.progress ?? {})')) ?? '{}';
+  if (pr !== lastProgressText) { lastProgressText = pr; lastChange = Date.now(); if (t - lastProgressNote >= 5) { lastProgressNote = t; note(`t=${t.toFixed(1)} s: progress ${pr}`); } }
+  const logs = (await evalJs(`JSON.stringify((window.saGame?.logs ?? []).slice(Math.max(0, ${logsSeen} - (window.saGame?.logBase ?? 0))))`)) ?? '[]';
   const ls = JSON.parse(logs);
-  logsSeen += ls.length;
+  logsSeen = Math.max(logsSeen, (await evalJs('window.saGame?.logBase ?? 0')) ?? 0) + ls.length;
   for (const l of ls) appendFileSync(`${out}/game-log.txt`, l + '\n');
   const status = JSON.parse(st);
+  if (st !== lastStatusText) { lastStatusText = st; lastChange = Date.now(); }
+  if (hangSecs > 0 && !dumped && (Date.now() - lastChange) / 1000 > hangSecs) {
+    dumped = true;
+    await dumpStacks(`t=${t.toFixed(1)} s: no status change for ${hangSecs} s`);
+    await shot(`hang-t${Math.round(t)}`);
+  }
   if (status.state !== lastState) {
     note(`t=${t.toFixed(1)} s: gGameState ${lastState} -> ${status.state} (${JSON.stringify(status)})`);
     if (lastState !== -1) await shot(`state-${status.state}-t${Math.round(t)}`);
@@ -136,7 +174,7 @@ while ((Date.now() - t0) / 1000 < seconds) {
     await shot(`t${String(Math.round(t)).padStart(4, '0')}-state${status.state}`);
   }
 }
-note(`final status: ${JSON.stringify(await evalJs('window.saGame?.status'))}`);
+note(`final status: ${JSON.stringify(await evalJs('window.saGame?.status'))} progress ${JSON.stringify(await evalJs('window.saGame?.progress'))}`);
 await shot('final');
 ws.close();
 kill();

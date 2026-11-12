@@ -1,5 +1,5 @@
 // The page (WEB-1): picks the game folder, starts the worker that runs the game, forwards keyboard and mouse input.
-// URL query: ?inworld=0 (play the intro), ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
+// URL query: ?inworld=0 (play the intro), ?backend=gl|webgpu, ?auto=1 (scripted Enter / SA_GAME_WALK, for unattended runs), any SA_* name
 // (SA_GAME_STUB, SA_GAME_WALK, SA_GAME_SCRIPT_SKIP, ...) is passed to the game as a development variable.
 const $ = (id) => document.getElementById(id);
 const canvas = $('screen');
@@ -21,17 +21,26 @@ function log(text, level = 'log') {
 
 const STATES = ['INITIAL', 'LOGO', 'PLAYING_LOGO', 'TITLE', 'PLAYING_INTRO', 'FRONTEND_LOADING', 'FRONTEND_LOADED',
   'FRONTEND_IDLE', 'LOADING_STARTED', 'IDLE', 'EXIT'];
-window.saGame = { status: {}, logs: [] };
+window.saGame = { status: {}, logs: [], logBase: 0 };
 
 function start(files) {
   if (worker) return;
   worker = new Worker('worker.js', { type: 'module' });
   worker.onmessage = (ev) => {
     const m = ev.data;
-    if (m.type === 'log') {
-      log(m.text, m.level);
-      window.saGame.logs.push(m.text);
-      if (window.saGame.logs.length > 2000) window.saGame.logs.shift();
+    if (m.type === 'logs') {
+      for (const l of m.lines) {
+        log(l.text, l.level);
+        window.saGame.logs.push(l.text);
+      }
+      const extra = window.saGame.logs.length - 4000;
+      if (extra > 0) {
+        window.saGame.logs.splice(0, extra);
+        window.saGame.logBase += extra;
+      }
+    } else if (m.type === 'progress') {
+      window.saGame.progress = m;
+      statusEl.textContent = `loading... ${m.mib} MiB read`;
     } else if (m.type === 'status') {
       window.saGame.status = m;
       const st = STATES[m.state] ?? m.state;
@@ -45,7 +54,7 @@ function start(files) {
   for (const [k, v] of params) if (k.startsWith('SA_')) env[k] = v;
   if (params.get('auto') === '1') env.SA_WEB_AUTO_INPUT = '1';
   const off = canvas.transferControlToOffscreen();
-  worker.postMessage({ type: 'start', canvas: off, files, env, startInWorld: $('inworld').checked }, [off]);
+  worker.postMessage({ type: 'start', canvas: off, files, env, startInWorld: $('inworld').checked, backend: params.get('backend') ?? '' }, [off]);
   canvas.focus();
 }
 

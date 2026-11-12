@@ -58,12 +58,20 @@ pub fn rx_d3d9_vertex_shader_default_end_callback() {}
 #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
 extern "C" fn lone_ret_entry() {}
 
+/// wasm32: the shared type-erased entry ([`crate::wabi`]): returns nothing.
+#[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+extern "C" fn lone_ret_wasm(_callee: u32, _args: *const u32, _ret: *mut crate::wabi::Ret) {}
+
 fn lone_ret_addr() -> usize {
     #[cfg(all(target_arch = "x86", not(sa_phase_a)))]
     {
         lone_ret_entry as *const () as usize
     }
-    #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
+    #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+    {
+        lone_ret_wasm as crate::wabi::Erased as usize
+    }
+    #[cfg(not(all(any(target_arch = "x86", target_arch = "wasm32"), not(sa_phase_a))))]
     {
         0
     }
