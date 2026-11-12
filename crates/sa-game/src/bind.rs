@@ -16,7 +16,6 @@ use sa_platform::kernel::Kernel;
 use sa_core::input::ComObj;
 use sa_core::mem::GPtr;
 use sa_core::orig::host;
-use sa_platform::clock::StdClock;
 use sa_platform::input::{DiJoyState2, InputState};
 use sa_platform::vfs::{FileTable, Vfs};
 use sa_platform::win32::{MessageQueue, Win32Time, map_virtual_key};
@@ -35,7 +34,7 @@ pub const DI_PAD2: usize = 0x0003_0020;
 pub struct Platform {
     pub vfs: Vfs,
     pub files: FileTable,
-    pub time: Win32Time<StdClock>,
+    pub time: Win32Time<crate::det::GameClock>,
     pub queue: MessageQueue,
     pub input: InputState,
     pub last_error: u32,
@@ -498,7 +497,7 @@ pub(crate) fn create_semaphore_a(_sec: u32, initial: i32, max: i32, _name: GPtr<
     GPtr::from_addr(kernel().create_semaphore(initial, max) as usize)
 }
 pub(crate) fn release_semaphore(h: GPtr<u8>, n: i32, prev: GPtr<i32>) -> i32 {
-    match kernel().release_semaphore(h32(h), n) {
+    let r = match kernel().release_semaphore(h32(h), n) {
         Some(v) => {
             if !prev.is_null() {
                 prev.write(v);
@@ -506,13 +505,15 @@ pub(crate) fn release_semaphore(h: GPtr<u8>, n: i32, prev: GPtr<i32>) -> i32 {
             1
         }
         None => 0,
-    }
+    };
+    crate::det::released(h32(h));
+    r
 }
 pub(crate) fn wait_for_single_object(h: GPtr<u8>, ms: u32) -> u32 {
-    kernel().wait(h32(h), ms)
+    crate::det::wait(h32(h), ms, |h, ms| kernel().wait(h, ms))
 }
 pub(crate) fn wait_for_single_object_ex(h: GPtr<u8>, ms: u32, _alertable: i32) -> u32 {
-    kernel().wait(h32(h), ms)
+    crate::det::wait(h32(h), ms, |h, ms| kernel().wait(h, ms))
 }
 /// `ReadFile`. With an `OVERLAPPED` the read happens at its offset and completes synchronously
 /// (TRUE, `InternalHigh` = bytes), which Win32 allows for overlapped handles.
@@ -595,10 +596,26 @@ pub(crate) fn set_thread_priority(h: GPtr<u8>, p: i32) -> i32 {
 }
 /// `CMemoryMgr::MallocAlign` (0x72F4C0) / `FreeAlign` (0x72F4F0) stand-ins (not ported): plain
 /// leaked-until-freed allocations through the kernel table.
-pub(crate) fn malloc_align(size: u32, _align: u32, _hint: u32) -> GPtr<u8> {
+pub(crate) fn malloc_align(size: u32, align: u32, _hint: u32) -> GPtr<u8> {
+    if crate::det::on() {
+        // the deterministic heap: the block's own address in the dword before the aligned pointer
+        let a = (align as usize).max(4);
+        let raw = crate::detheap::alloc(size as usize + a + 4);
+        let p = (raw.addr() + 4).div_ceil(a) * a;
+        GPtr::<u32>::from_addr(p - 4).write(raw.addr() as u32);
+        return GPtr::from_addr(p);
+    }
     GPtr::from_addr(kernel().local_alloc(size as usize))
 }
 pub(crate) fn free_align(p: GPtr<u8>) {
+    if crate::det::on() {
+        if !p.is_null() {
+            crate::detheap::free(GPtr::from_addr(
+                GPtr::<u32>::from_addr(p.addr() - 4).read() as usize
+            ));
+        }
+        return;
+    }
     kernel().local_free(p.addr());
 }
 

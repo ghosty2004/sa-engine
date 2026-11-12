@@ -25,21 +25,22 @@ mod com;
 mod crt;
 mod crt_fmt;
 mod d3d9;
-mod dsound;
 mod d3d9_shader;
+mod det;
+mod detheap;
+mod dsound;
 mod dx;
 mod game_window;
-mod screen;
 mod imports;
 mod native;
 mod rw_standin;
+mod screen;
 mod sha256;
 mod winmain;
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
-use sa_platform::clock::StdClock;
 use sa_platform::input::{InputEvent, InputState, Key, MouseButton};
 use sa_platform::native::{NativeFs, documents_dir};
 use sa_platform::vfs::{FileTable, Vfs};
@@ -91,13 +92,16 @@ fn parse_args() -> Result<Args, String> {
             "--documents" => a.documents = Some(PathBuf::from(val()?)),
             "--persistent-documents" => a.documents = Some(documents_dir()),
             "--start-in-world" => native::set_start_in_world(),
+            "--fixed-step" => det::set_fixed_step(val()?.parse().map_err(|e| format!("--fixed-step: {e}"))?),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--frame-times FILE] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--fixed-step MS] [--frame-times FILE] [--window [--exit-after SECONDS] [--auto-input] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given.\n\
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
-                     the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK)."
+                     the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK).\n\
+                     --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
+                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE)."
                 );
                 std::process::exit(0);
             }
@@ -179,7 +183,7 @@ pub fn boot(args: &Args) -> Result<Session, String> {
     bind::install(bind::Platform {
         vfs: Vfs::new(Box::new(game), Box::new(docs_fs)),
         files: FileTable::default(),
-        time: Win32Time::new(StdClock::default()),
+        time: Win32Time::new(det::GameClock::default()),
         queue: MessageQueue::new(bind::HWND),
         input: InputState::default(),
         last_error: 0,
@@ -309,6 +313,13 @@ fn synthetic_input(n: u32) -> InputState {
     if winmain::game_state() != winmain::STATE_IDLE {
         i.mouse_delta = (4.0, -2.0);
     }
+    // SA_GAME_MOUSE: scripted mouse motion
+    for (dx, dy, from, to) in mouse_spec() {
+        if n >= from && n < to {
+            i.mouse_delta.0 += dx;
+            i.mouse_delta.1 += dy;
+        }
+    }
     i
 }
 
@@ -335,6 +346,7 @@ impl Session {
         }
         let n = self.n;
         self.n += 1;
+        det::begin_iteration();
         bind::with("input", |p| {
             let t = p.time.time_get_time();
             for e in &input.events {
@@ -346,6 +358,7 @@ impl Session {
         let state = winmain::game_state();
         let frame = winmain::frame_step();
         let o = run_step(&frame);
+        det::end_iteration();
         self.rep.add(&format!("frame {n}"), &frame, &o);
         // decision 2 of STD-5 (platform.md section 12.1): a failure inside `CGame::Initialise`
         // leaves the game half-initialised; the next iteration would retry it from that state, so
@@ -356,11 +369,12 @@ impl Session {
             self.stopped = true;
             return false;
         }
-        // a loop that cannot get further makes no progress: stop after three identical failures
+        // a loop that cannot get further makes no progress: stop after three identical failures (not in the
+        // deterministic mode, whose runs collect the whole blocker list of their scenario)
         let failed = !matches!(o, Outcome::Ok(_));
         self.repeats = if failed && self.last.as_ref() == Some(&o) { self.repeats + 1 } else { 0 };
         self.last = Some(o);
-        if failed && self.repeats >= 2 {
+        if failed && self.repeats >= 2 && !det::on() {
             println!("main loop: the same failure three times in a row; stopping");
             self.stopped = true;
             return false;
@@ -421,6 +435,27 @@ impl Session {
         );
         if let Some(ft) = frame_time_summary() {
             let _ = writeln!(md, "\nFrame pacing (in-game presents): {ft}");
+        }
+        // the blocker list: every unported callee or panic that stopped an iteration, with its count and first frame
+        let mut blockers: Vec<(String, usize, String)> = Vec::new();
+        for (ph, _, _, r) in rep.rows.iter().filter(|r| r.0.starts_with("frame ")) {
+            let Some(what) = r
+                .strip_prefix("rust: blocked: ")
+                .or_else(|| r.strip_prefix("rust: panicked: "))
+            else {
+                continue;
+            };
+            match blockers.iter_mut().find(|b| b.0 == what) {
+                Some(b) => b.1 += 1,
+                None => blockers.push((what.to_string(), 1, ph.clone())),
+            }
+        }
+        blockers.sort_by_key(|b| std::cmp::Reverse(b.1));
+        let _ = writeln!(md, "\n## Blocker list ({} distinct)\n", blockers.len());
+        println!("blocker list ({} distinct):", blockers.len());
+        for (what, n, first) in &blockers {
+            let _ = writeln!(md, "- {what}: {n} iterations, first in {first}");
+            println!("  {n:6}  {what}  (first in {first})");
         }
         println!(
             "summary: {ok} ok, {blocked} blocked, {orig} original-only, {crashed} crashed; calls served natively: {}",
@@ -566,6 +601,28 @@ fn letter_key(c: u8) -> Key {
         Key::N, Key::O, Key::P, Key::Q, Key::R, Key::S, Key::T, Key::U, Key::V, Key::W, Key::X, Key::Y, Key::Z,
     ];
     KEYS[usize::from(c - b'a')]
+}
+
+/// `SA_GAME_MOUSE=DX:DY:FROM:TO,...` (evidence runs): relative mouse motion (DX, DY) added in every main-loop
+/// iteration from FROM up to (not including) TO, e.g. to turn the player camera.
+fn mouse_spec() -> Vec<(f64, f64, u32, u32)> {
+    let Ok(v) = std::env::var("SA_GAME_MOUSE") else {
+        return Vec::new();
+    };
+    v.split(',')
+        .filter_map(|e| {
+            let f: Vec<&str> = e.trim().split(':').collect();
+            if f.len() != 4 {
+                return None;
+            }
+            Some((
+                f[0].parse().ok()?,
+                f[1].parse().ok()?,
+                f[2].parse().ok()?,
+                f[3].parse().ok()?,
+            ))
+        })
+        .collect()
 }
 
 /// `SA_GAME_WALK=START:COUNT` (see [`synthetic_input`]).
