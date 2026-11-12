@@ -1998,3 +1998,48 @@ normalisation. The ring underran during the long loading iteration only (counter
 Open: streamed audio (port `CAEDataStream`, implement `ov_*` over a Vorbis decoder); 3D rendering (distance, cone,
 Doppler) and EAX are not rendered on either build; the mix runs on the game's thread, so a long iteration
 (world loading) underruns the ring (silence, the cursors wait).
+
+### 22.9 AUDIO-STREAM: streamed audio path, vorbisfile, mixer quality
+
+Base: WEB-AUDIO (e3336f89). Commits e1085d4a, 24f24b5a, ffa6da91, c4d33884.
+
+**Ports** (sa-audio `audio_data_stream.rs`, batch `stream-1`, unverified): `CAEDataStream` constructor (0x4DC620), the
+IStream methods `Read` (0x4DC320), `Seek` (0x4DC340), `Stat` (0x4DC3A0), `QueryInterface` (0x4DC410), `AddRef`
+(0x4DC460), `Release` (0x4DC5B0), `CAEStreamingDecoder` constructor (0x4F2810), `CAEVorbisDecoder::GetStreamID`
+(0x502460). The XOR decoding of the stream archives stays where the original has it (`CAEDataStream::FillBuffer` →
+`CAEStreamTransformer::TransformBuffer`, already ported). Fixed: `CAEStreamThread`'s decoder load (port4_hw) declared
+`GetDataStream` with an extra argument and the `CAEVorbisDecoder` constructor without its `checkLength` (the original
+pushes 0 before `GetDataStream`'s argument): the callee-popped stack was off by 4 and the native stream thread crashed
+in the constructor. The native stream thread now logs why it ends (`sa-game: the audio stream thread ended: ...`).
+
+**vorbisfile.dll** (sa-game `vorbisfile.rs`): the seven imports (`ov_open_callbacks`, `ov_clear`, `ov_read`,
+`ov_info`, `ov_time_total`, `ov_time_tell`, `ov_time_seek`) at their thunks 0x818062..0x818086, over `lewton` 0.10
+(MIT OR Apache-2.0; `ogg` 0.8 BSD-3-Clause; pure Rust, builds for i686 and wasm32). Semantics and the differences from
+libvorbisfile are in the module comment (end of data from `seek(0, SEEK_END)` + `tell`, 16-bit LE interleaved
+output converted as libvorbis rounds, single-link tracks, sample-exact `ov_time_seek`, `ov_clear` closes the data
+source). `SA_GAME_VORBIS_TRACE=1` logs opens, seeks and sampled reads.
+
+**Mixer** (`dsound.rs`): linear interpolation replaced by a 16-tap windowed-sinc resampler (Blackman-Harris, 256
+phases, cutoff 0.92 of the lower Nyquist, tables cached per downsampling step); the mix is f32 and is rounded and hard
+clipped at 16 bits once, where DirectSound's 16-bit output clips (no soft clipping: DirectSound does not have it).
+Gain and pan unchanged. Native evidence tap: `SA_GAME_AUDIO_WAV=PATH` writes the mixer output as a WAV. Exploration:
+`SA_GAME_DSOUND_FULL_VOLUME=BYTES` plays buffers of that size at 0 dB (786432 = the streaming channel's buffer);
+`SA_GAME_DSOUND_TRACE` now also logs the hardware scaling factors and volume changes of large buffers.
+
+**Results (native i686, offscreen, `--frames 3000`, NullAudio + WAV tap).** The stream thread opens the first track
+(2 ch, 24 kHz, 688,128 samples, 347,926 bytes after the XOR), seeks to the start offset the game picks, fills the
+0xC0000-byte streaming buffer (peak 5,835 inside it) and later opens and queues the next track (2 ch, 32 kHz). The
+game holds the streaming buffer at volume -10000 throughout (set at `Play`, never raised; music master and fader
+factors are 1.0), so the tapped output has no stream content. With `SA_GAME_DSOUND_FULL_VOLUME=786432`, before `GetStreamID` was ported (the thread ended after the first fill
+and the buffer looped its 8.2 s), the decoded stream was audible in the tap: RMS about -30 dBFS, peaks up to
+17,077. After the port the same override gives silence from 5 s: the game stops that buffer when it moves to the
+next track, so the override no longer shows the content. Not verified: which manager owns that track (ambience, radio
+retune or loading) and whether -10000 is right in that state. The menu's radio test and a car radio were not reached
+in the time.
+
+**wasm32: open.** Once streams decode on wasm (after `GetStreamID`), the worker stops right after LOADING_STARTED
+(headless: no status after 10 s, no stack dump). Until that is found, `ov_open_callbacks` fails on wasm32 unless
+`SA_GAME_WEB_STREAMS` is set, so `CAEVorbisDecoder::Initialise` fails and the stream thread goes on without a track.
+With that the page reaches the world at 14.6 s and the tapped RMS above 60 Hz matches WEB-AUDIO's (-28 to -30 dBFS).
+Suspects: a cooperative stream-thread pass that never returns (the decoder's first 786,432-byte fill and the seek
+decode run inside one main-loop pass), or a blocked-iteration exception during a stream pass.
