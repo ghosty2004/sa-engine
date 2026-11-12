@@ -1,8 +1,9 @@
-//! `CTaskComplexPlayHandSignalAnim` (vtable 0x86D5DC; batch `attr-7`): `CreateSubTask` 0x61B2F0 and `ControlSubTask`
-//! 0x61B580 (both unreversed in gta-reversed), reached by the gang peds greeting each other on Grove Street. Layout
-//! (0x18 bytes): +0xC anim id, +0x10 blend delta, +0x14 flags (bit 0 left hand model referenced, bit 1 right hand,
-//! bit 2 the "ghands" anim block referenced, bit 3 fat hands). Ported from the 1.0 US bytes. Unverified
-//! (docs/verify/HOWTO.md).
+//! The hand-signal tasks (batch `attr-7`): `CTaskComplexPlayHandSignalAnim` (vtable 0x86D5DC) `CreateSubTask`
+//! 0x61B2F0 and `ControlSubTask` 0x61B580 (both unreversed in gta-reversed), and
+//! `CTaskSimplePlayHandSignalAnim::StartAnim` 0x61AF60; reached by the gang peds greeting each other on Grove Street.
+//! Complex task layout (0x18 bytes): +0xC anim id, +0x10 blend delta, +0x14 flags (bit 0 left hand model referenced,
+//! bit 1 right hand, bit 2 the "ghands" anim block referenced, bit 3 fat hands). Ported from the 1.0 US bytes.
+//! Unverified (docs/verify/HOWTO.md).
 #![allow(clippy::unreadable_literal)]
 
 use sa_core::abi::HookReg;
@@ -32,7 +33,32 @@ orig! {
     /// `CTask::GetTaskType()` (vtable slot 0x10)
     fn task_get_type(t: GPtr<u8>) -> u32 = thiscall vslot 0x10 => unported;
     fn create_sub_task_o(t: GPtr<u8>, ty: u32) -> GPtr<u8> = thiscall 0x61B2F0 => hand_signal_create_sub_task;
+    /// `CPed::GetEntityThatThisPedIsHolding()` (0x5E02E0)
+    fn ped_get_held_entity(p: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E02E0 => unported;
+    /// `IKChainManager_c::IsArmPointing(int arm, CPed*)` (0x6182B0, `ret 8`)
+    fn ik_is_arm_pointing(m: GPtr<u8>, arm: i32, ped: GPtr<u8>) -> u8 = thiscall 0x6182B0 => unported;
+    /// `CAnimManager::BlendAnimation(RpClump*, AssocGroupId, AnimationId, float delta)` (0x4D4610)
+    fn anim_blend_animation(clump: u32, group: u32, id: u32, delta: u32) -> GPtr<u8> = cdecl 0x4D4610 => unported;
+    /// `CAnimBlendAssociation::SetFinishCallback(cb, data)` (0x4CEBE0, `ret 8`)
+    fn anim_set_finish_callback(a: GPtr<u8>, cb: u32, data: u32) = thiscall 0x4CEBE0 => unported;
+    /// `CObject::operator new(uint32)` (0x5A1EE0)
+    fn object_new(size: u32) -> GPtr<u8> = cdecl 0x5A1EE0 => unported;
+    /// `CHandObject::CHandObject(int32 model, CPed*, bool left)` (0x59EEB0, `ret 0xC`)
+    fn hand_object_ctor(o: GPtr<u8>, model: u32, ped: GPtr<u8>, left: u32) -> GPtr<u8> = thiscall 0x59EEB0 => unported;
+    /// `CWorld::Add(CEntity*)` (0x563220)
+    fn world_add(e: GPtr<u8>) = cdecl 0x563220 => unported;
+    /// `CAnimManager::GetAnimAssociation(AssocGroupId, AnimationId)` (0x4D3A60)
+    fn anim_get_anim_association(group: u32, id: u32) -> GPtr<u8> = cdecl 0x4D3A60 => unported;
+    /// `CAnimManager::AddAnimation(RpClump*, CAnimBlendHierarchy*, int flags)` (0x4D4330)
+    fn anim_add_animation(clump: u32, hier: u32, flags: u32) -> GPtr<u8> = cdecl 0x4D4330 => unported;
 }
+
+/// `g_ikChainMan`
+const IK_CHAIN_MAN: usize = 0xC15448;
+/// `CObject::nNoTempObjects` (u16)
+const NO_TEMP_OBJECTS: usize = 0xBB4A70;
+/// `CTaskSimpleAnim::FinishRunAnimCB`
+const FINISH_RUN_ANIM_CB: u32 = 0x61A8A0;
 
 /// `CStreaming::ms_aInfoForModel[id].m_nLoadState` (0x14-byte entries)
 fn load_state(id: usize) -> u8 {
@@ -136,5 +162,64 @@ pub fn hand_signal_control_sub_task(this: GPtr<u8>, _ped: GPtr<u8>) -> GPtr<u8> 
     sub
 }
 
+/// One hand object of the signal: `CHandObject(model, ped, left)` (0x18C bytes) into `slot`; when created, added to
+/// the world with the `group` animation of the task's anim id (+0x10) and counted as a temporary object. Returns
+/// whether it was created.
+fn hand_object(this: GPtr<u8>, ped: GPtr<u8>, model: u32, left: u32, group: u32, slot: isize) -> bool {
+    let o = object_new(0x18C);
+    let o = if o.is_null() { GPtr::NULL } else { hand_object_ctor(o, model, ped, left) };
+    wr::<GPtr<u8>>(this, slot, o);
+    if o.is_null() {
+        return false;
+    }
+    world_add(o);
+    let a = anim_get_anim_association(group, rd::<u32>(this, 0x10));
+    anim_add_animation(rd::<u32>(rd::<GPtr<u8>>(this, slot), 0x18), rd::<u32>(a, 0x10), 0);
+    let n = g::<u16>(NO_TEMP_OBJECTS);
+    n.write(n.read().wrapping_add(1));
+    true
+}
+
+/// `CTaskSimplePlayHandSignalAnim::StartAnim(CPed*)` (0x61AF60, thiscall, `ret 4`, SEH frame). Layout (0x24 bytes):
+/// +8 the anim, +0x10 the hand anim id, +0x14 blend delta, +0x18 fat hands, +0x1C / +0x20 the hand objects. Anim
+/// `0x140 - ftol((rand() & 0xFFFF) * 2^-15 * -5.0)`. A ped holding something, pointing its right arm or with a weapon
+/// in the current slot (+0x718, i8; type at +0x5A0 + 0x1C * slot) blends it from group 0x4E and gets only a left hand
+/// (group 0x4F); otherwise group 0x4D, a left hand (0x4F; on failure the right one is still tried) and a right hand
+/// (0x50). Finish callback `CTaskSimpleAnim::FinishRunAnimCB`. No hands while the hand anim id is -1.
+#[hook(addr = 0x61AF60, conv = thiscall, name = "CTaskSimplePlayHandSignalAnim::StartAnim",
+       expect = "6A FF 68 C2 F1 83 00", unverified = "attr-7", route = "L2", hazards = "heap-writes",
+       recs = "grove-walk", note = "rand() at 0x61AF80")]
+pub fn play_hand_signal_start_anim(this: GPtr<u8>, ped: GPtr<u8>) {
+    let r = sa_core::orig::at_site(0x61AF80, rand) & 0xFFFF;
+    let anim = 0x140i32.wrapping_sub(ftol32(xi(r).fmul_m(g::<f32>(0x858B14).read()).fmul_m(g::<f32>(0x858FC8).read())));
+    let one_hand = !ped_get_held_entity(ped).is_null()
+        || ik_is_arm_pointing(GPtr::from_addr(IK_CHAIN_MAN), 0, ped) != 0
+        || {
+            let slot = rd::<i8>(ped, 0x718) as i32;
+            rd::<u32>(ped, (slot.wrapping_mul(0x1C) + 0x5A0) as isize) != 0
+        };
+    let group = if one_hand { 0x4E } else { 0x4D };
+    let a = anim_blend_animation(rd::<u32>(ped, 0x18), group, anim as u32, rd::<u32>(this, 0x14));
+    wr::<GPtr<u8>>(this, 8, a);
+    anim_set_finish_callback(a, FINISH_RUN_ANIM_CB, this.addr() as u32);
+    if rd::<i32>(this, 0x10) == -1 {
+        return;
+    }
+    let fat = rd::<u8>(this, 0x18) != 0;
+    if one_hand {
+        hand_object(this, ped, if fat { 0x18C } else { 0x18A }, 1, 0x4F, 0x1C);
+        return;
+    }
+    hand_object(this, ped, if fat { 0x18C } else { 0x18A }, 1, 0x4F, 0x1C);
+    if rd::<i32>(this, 0x10) == -1 {
+        return;
+    }
+    hand_object(this, ped, if fat { 0x18D } else { 0x18B }, 0, 0x50, 0x20);
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_HAND_SIGNAL_CREATE_SUB_TASK, HOOK_HAND_SIGNAL_CONTROL_SUB_TASK];
+pub const HOOKS: &[HookReg] = &[
+    HOOK_HAND_SIGNAL_CREATE_SUB_TASK,
+    HOOK_HAND_SIGNAL_CONTROL_SUB_TASK,
+    HOOK_PLAY_HAND_SIGNAL_START_ANIM,
+];
