@@ -1,7 +1,7 @@
-# Where to continue (state at 2026-11-12 ~14:30)
+# Where to continue (state at 2026-11-12 ~15:00)
 
-**Integrated tree = branch `worktree-agent-ab58bdb347d7ad153` (INTEGRATE-9, docs/verify/integration-9.md), verified
-IDENTICAL on all 13 recordings; master fast-forwards to it.** It holds:
+**Integrated tree = branch `worktree-agent-a623a7f9d5dd59528` (INTEGRATE-10, docs/verify/integration-10.md), verified
+IDENTICAL on all 13 recordings; master fast-forwards to it.** It is master `d60bbee9` (INTEGRATE-9) plus SAMP-FX:
 - everything master had (INTEGRATE-7: native Linux game, AI-7/8, VERIFIER-9, VEH-3/4, WORLD, WRITER-SAMP, SAMP-UI;
   INTEGRATE-6: PORT-AI-7, VERIFIER-10/11 with 393 promotions; README + GETTING-STARTED);
 - INTEGRATE-8 (WEB-3's tree): web build (wasm32, WebGL2/WebGPU, input, full window, menu cursor), SA:MP natively and
@@ -9,9 +9,14 @@ IDENTICAL on all 13 recordings; master fast-forwards to it.** It holds:
   WRITER-NATIVE / WRITER-CLIMB picks, world6-1/2/3, WEB-AUDIO;
 - samp-rs in `samp-rs/` (own Cargo workspace; sa-game takes samp-client/samp-proto/samp-saa from it by path,
   samp-rs takes sa-samp-api/sa-net from `crates/` by path; no external ~/samp-rs reference left in code or
-  scripts; third-party auth table at `re/samp/auth_table.txt`);
+  scripts; third-party auth table at `re/samp/auth_table.txt`, SA:MP client files at `re/samp/client`);
 - the generator fix: `ai_patterns.py` keeps `unverified` for listed hooks until L1/L2/L3 (catalogue state
-  `implemented` = written, not verified). Queue: 2328 unverified hooks in 343 batches.
+  `implemented` = written, not verified);
+- SAMP-FX (INTEGRATE-10): skin change / class skins, animations, frontend sounds, hands up / special actions,
+  give-weapon + HUD icon, HUD clock toggle, samp's main.scm / script.img by default in samp mode (no "Fat +" box;
+  `SA_SAMP_SCM=0` keeps GTA's), `serve.py --samp-dir` (samp-demo.sh defaults `SAMP_DIR` to `re/samp/client`),
+  WEB-AUDIO latency, SAMP-SCM, HELI-CONE (CHeli::SearchLightCone 0x6C58E0). Queue: 2329 unverified hooks in 344
+  batches.
 
 Branches below marked "in INTEGRATE-9" are done; the rest are still to integrate (each = its own commits; integrate
 with picks, regenerate generated files with `--check` clean, then verify-all).
@@ -29,17 +34,17 @@ Branches:
 | af11bd66b65e2aabf (SAMP-4) **in INTEGRATE-9** | 6b6d5048 | sa-samp-api v2/v3, sa-samp write side, samp mode toggles, native client samp_net.rs; (its samp-rs dependency is now `samp-rs/` by path) |
 | afb099518e063a1b1 (SAMP-START) **in INTEGRATE-9** | cdf5dc34 | SA:MP startup 1:1 via samp.dll patch points (docs/samp/startup.md) |
 | a0fec7b0bdae3c86c (SAMP-UI-2) **in INTEGRATE-9** | 23ee4454 | SA:MP UI compared with the original client |
-| abbdcb1da87a27a3c (SAMP-SCM) | 646e0f7b | samp's main.scm behind SA_SAMP_SCM=1 (blockers listed in docs/samp/startup.md) |
+| abbdcb1da87a27a3c (SAMP-SCM) **in INTEGRATE-10** | 646e0f7b | samp's main.scm behind SA_SAMP_SCM=1 (blockers listed in docs/samp/startup.md) |
 | a2404a204209682e4 (WEB-AUDIO) **in INTEGRATE-9** | e477afe4+ | browser audio (AudioWorklet + SharedArrayBuffer ring); latency tuning in progress |
-| ab013435f0f3841aa (SAMP-FX) | f10a8428+ | sa-samp: skin change, one-off sounds, animations (in progress at hand-off) |
+| ab013435f0f3841aa (SAMP-FX) **in INTEGRATE-10** | f10a8428+ | sa-samp: skin change, one-off sounds, animations (in progress at hand-off) |
 | aa4c0e8384f020c37 (INTEGRATE-6) **in INTEGRATE-9** | b766ecc3 | PORT-AI-7 + VERIFIER-10 on master + SA:MP verification (did not finish) |
 
 Added after 11:45:
 
 | branch (worktree-agent-…) | head | content |
 |---|---|---|
-| ab013435f0f3841aa (SAMP-FX) | e6e0528e | on WEB-3 421ba072: SA:MP files served to the browser (serve.py --samp-dir), skin change / class skins, animations, 17 frontend sounds, hands up, give-weapon + HUD icon, HUD clock toggle, samp's main.scm default (no "Fat +" box; includes HELI-CONE c47670e6 and WRITER-SAMP's search lights). Serves 127.0.0.1:8644 with open.mp 7813 + proxy 7781. The newest SA:MP tree. |
-| a6df07424cbb59315 (HELI-CONE) | c47670e6 | CHeli::SearchLightCone 0x6C58E0 (in SAMP-FX's tree) |
+| ab013435f0f3841aa (SAMP-FX) **in INTEGRATE-10** | e6e0528e | on WEB-3 421ba072: SA:MP files served to the browser (serve.py --samp-dir), skin change / class skins, animations, 17 frontend sounds, hands up, give-weapon + HUD icon, HUD clock toggle, samp's main.scm default (no "Fat +" box; includes HELI-CONE c47670e6 and WRITER-SAMP's search lights). Serves 127.0.0.1:8644 with open.mp 7813 + proxy 7781. The newest SA:MP tree. |
+| a6df07424cbb59315 (HELI-CONE) **in INTEGRATE-10** | c47670e6 | CHeli::SearchLightCone 0x6C58E0 (in SAMP-FX's tree) |
 | acc62cadcdbd3be53 (AUDIO-STREAM) | 22e226f8 | CAEDataStream + lewton vorbisfile replacement, GetStreamID, 16-tap sinc mixer, native WAV tap; streams decode but the game holds the stream buffer at -10000 (open); web streams off by default (hang) |
 | a43f6b653f2e96d67 (SCRIPT-5) | 17a4881f | 31 callees of the first missions' opcodes (LOCATE helpers, CleanUpThisPed, AddPassenger …); per-mission remaining list in its hand-back (05EB StartPlaybackRecordedCar, 070A, 0637, 0723, 07F5 …) |
 | newgame-1 (NEWGAME) | 5752d60e | New Game from the pause menu (CMenuSystem::Initialise native, CTaskComplexWaitForPed); its CAEDataStream port duplicates AUDIO-STREAM's — keep AUDIO-STREAM's |
@@ -47,21 +52,21 @@ Added after 11:45:
 | ac8a20a070c956b08 (INTEGRATE-8) **in INTEGRATE-9** | f94f1ee3 | WEB-3's whole tree on b239e888; combined with master in INTEGRATE-9 |
 
 Next steps, in order:
-1. Fast-forward master to INTEGRATE-9. Then integrate, on top of it: SAMP-FX (newest SA:MP tree, based on WEB-3
-   421ba072, so take its own commits after 421ba072), INTRO-1, SCRIPT-5, AUDIO-STREAM, NEWGAME (prefer AUDIO-STREAM's
-   CAEDataStream), WRITER-WORLD-2, WRITER-SAMP-2 (FireInstantHit needs detwin to skip its scrub), SAMP-SCM;
-   verify-all 13/13; record promotions.
-2. SA:MP: adapter steps 5b–12 in `samp-rs/`, sa-samp write side (skin, anims, sounds, money,
-   trains, proofs, bones for attached objects), unapplied RPCs (e.g. 60), audio streams (CAEDataStream 0x4DC620 +
+1. Fast-forward master to INTEGRATE-10. Then integrate, on top of it: INTRO-1, SCRIPT-5, AUDIO-STREAM, NEWGAME
+   (prefer AUDIO-STREAM's CAEDataStream), WRITER-WORLD-2, WRITER-SAMP-2 (FireInstantHit needs detwin to skip its
+   scrub); verify-all 13/13; record promotions.
+2. SA:MP: adapter steps 5b–12 in `samp-rs/`, sa-samp write side (non-frontend sounds through
+   ProcessMissionAudioEvent, money, trains, proofs, bones for attached objects), unapplied RPCs (e.g. 60), audio streams (CAEDataStream 0x4DC620 +
    a Rust Vorbis decoder), the ~200 SA:MP-executed functions still unported (docs/samp/native-unported.csv),
-   samp's main.scm (search-light render path, CHeli cone functions), class-selection panel, HUD clock toggle.
+   class-selection panel.
 3. Native: burning/wrecked car path (0x4B1F10, 0x4DCBE0, 0x4B0DA0, 0x6375F0), remaining blockers from det runs.
 4. Verification: the ~7,500 implemented-but-unverified hooks, SA:MP priority first; new recordings (driving,
    interiors, climbing, SA:MP sessions) so the gen2 hooks without callers get evidence.
 5. Web: real viewport resolution, OPFS settings/saves, audio latency, streams.
 
 Known issues: 5 doubled phase B registrations (0x5B0440, 0x618E70, 0x84A540, 0x84E300, 0x84F320); 0x60A820 needs a
-preserve-edx spec; `docs/samp/samp_usage.py` outputs and `catalog/progress.md` are stale against the catalogue;
+preserve-edx spec; `docs/samp/samp_usage.py` outputs and `catalog/progress.md` are stale against the catalogue; `inflight.py` does not
+see `#[sa_core::native(` registrations (0x4413C0 listed as an exclusion);
 stream volume -10000; web stream hang; ProcessMissionAudioEvent 0x4ECCF0 (all non-frontend PlayerPlaySound), phone
 task, class-selection << >> Spawn panel, CEventDamage::AffectsPedGroup 0x4B38D0, burning-car path. The wasm build
 needs wasm-bindgen 0.2.130 (`cargo binstall --root target/tools wasm-bindgen-cli@0.2.130`).
