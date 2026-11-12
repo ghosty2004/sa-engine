@@ -444,7 +444,7 @@ fn vehicle_list() {
         }
         let v = objs + i * 0xA18;
         let (x, y, z) = pos(v);
-        if (x - px).hypot(y - py) < 150.0 {
+        if (x - px).hypot(y - py) < 150.0 || GPtr::<u8>::from_addr((v + 0x3BA) as usize).read() > 1 {
             eprintln!(
                 "sa-game: veh-list   [{i}] {v:#x} model {} at ({x:.2}, {y:.2}, {z:.2}) driver {:#x} status {:#x} mission {} law {}",
                 GPtr::<u16>::from_addr((v + 0x22) as usize).read(),
