@@ -354,7 +354,10 @@ sa-game: 1418 ok, 198 blocked, 0 crashed over 1616 iterations
 ```
 
 The PNGs (`present/`, every 20th in-game frame) show Grove Street with the server's clock (22:04), money
-($5000), weapon and lowered health. CJ himself is not drawn (STD-9's skin-pipeline stub).
+($5000), weapon and lowered health, and — through SAMP-UI's engine-drawn overlay (merged here, 45366aa) — the
+server's chat lines (`SendClientMessage`, yellow and white) and its game text ("NATIVE SA-GAME"). Chat input and
+dialog answers go back as RPC 101 / 50 / 62 (`SampUi::poll_events`; not exercised offscreen). CJ himself is not
+drawn (STD-9's skin-pipeline stub).
 
 Engine work the join needed (phase B only unless stated):
 * `CTaskSimpleInAir::ProcessPed` 0x680600 registered `#[native]` (ported and fixed by PORT-AI-4, unregistered in
@@ -398,8 +401,13 @@ dereferencing the null ped (as under samp.dll). Missions: the game's main.scm st
 samp's main.scm from samp.saa needs `FileProvider` (step 9) and the start-up path.
 
 ### 10.7 Open issues
-1. Interactive play: `sa-game --window` shows the result after the headless frame loop; there is no window-driven
-   game loop yet (platform work), so the native join is driven by `SA_GAME_WALK` and the server.
+1. Interactive play: `sa-game --window` keeps running game frames with the window's input after the `--frames`
+   loop (input through SAMP-UI's `samp_input`), but the 32-bit process cannot open a window on this machine:
+   winit fails with "Failed to load one of xlib's shared libraries" because the 32-bit libraries
+   `libXcursor.so.1`, `libXrandr.so.2`, `libXi.so.6`, `libxkbcommon.so.0`, `libxkbcommon-x11.so.0` are missing
+   from `/usr/lib32` (Arch: `lib32-libxcursor lib32-libxrandr lib32-libxi lib32-libxkbcommon
+   lib32-libxkbcommon-x11`; a user decision, not installed). Until then the evidence runs are offscreen and driven
+   by `SA_GAME_WALK` and the server (the join itself works in that run: `WindowCJ` joined and spawned).
 2. Gaps hit in the join (SAMP-GAPS): `FxInfoAttractPt_c::GetValue` 0x4A56E0, `FUN_00678E80` (ped in-air,
    PreRender), `CAEWeatherAudioEntity::AddAudioEvent` 0x506800 (weather 8 thunder), `CMovingFog::Update` 0x716B10
    (weather 9), `CAEWeaponAudioEntity::PlayGunSounds` 0x503CE0, 0x449D10 (garages); CJ's skin pipeline 0x7C7B90.
