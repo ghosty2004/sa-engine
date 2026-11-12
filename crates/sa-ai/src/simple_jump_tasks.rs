@@ -38,7 +38,23 @@ orig! {
     /// `CEntity::TestCollision(bool)` (vtable slot 0x34)
     fn entity_test_collision(e: GPtr<u8>, b: u32) -> u8 = thiscall vslot 0x34 => unported;
     /// `CTaskSimpleJump::Launch(CPed*)` (0x679B80)
-    fn launch(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x679B80 => unported;
+    fn launch(t: GPtr<u8>, ped: GPtr<u8>) = thiscall 0x679B80 => launch_port;
+    /// `CPhysical::ApplyMoveForce(CVector)` (0x5429F0)
+    fn physical_apply_move_force(p: GPtr<u8>, x: u32, y: u32, z: u32) = thiscall 0x5429F0 => unported;
+    /// `CLocalisation::Blood()` (0x56D230)
+    fn localisation_blood() -> u8 = cdecl 0x56D230 => crate::fight_ground_target::localisation_blood_native;
+    /// `GetAnimHierarchyFromSkinClump(RpClump*)` (0x734A40)
+    fn anim_hierarchy_from_skin_clump(clump: u32) -> u32 = cdecl 0x734A40 => unported;
+    /// `RpHAnimIDGetIndex(RpHAnimHierarchy*, int32)` (0x7C51A0)
+    fn hanim_id_get_index(h: u32, id: u32) -> i32 = cdecl 0x7C51A0 => unported;
+    /// `RpHAnimHierarchyGetMatrixArray(RpHAnimHierarchy*)` (0x7C5120)
+    fn hanim_get_matrix_array(h: u32) -> u32 = cdecl 0x7C5120 => unported;
+    /// `RwV3dTransformPoints(RwV3d* out, const RwV3d* in, int32 n, const RwMatrix*)` (0x7EDD90)
+    fn rw_v3d_transform_points(out: GPtr<u8>, inp: GPtr<u8>, n: i32, m: u32) -> GPtr<u8> = cdecl 0x7EDD90 => unported;
+    /// `CShadows::AddPermanentShadow(type, RwTexture*, CVector*, frontX, frontY, sideX, sideY, r, g, b, a, z, lifetime,
+    /// scale)` (0x706F60)
+    #[allow(clippy::too_many_arguments)]
+    fn shadows_add_permanent_shadow(ty: u32, tex: u32, pos: GPtr<u8>, fx: f32, fy: f32, sx: f32, sy: f32, r: u32, g: u32, b: u32, a: u32, z: f32, life: u32, scale: f32) = cdecl 0x706F60 => unported;
     /// `CEventSoundQuiet(CEntity*, float, uint32, CVector)` (0x5E05B0)
     #[allow(clippy::too_many_arguments)]
     fn event_sound_quiet_ctor(e: GPtr<u8>, ent: GPtr<u8>, volume: f32, time: u32, pos: GPtr<u8>) -> GPtr<u8> = thiscall 0x5E05B0 => unported;
@@ -238,5 +254,118 @@ pub fn check_if_jump_blocked_port(this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     rd::<u8>(this, 0x21)
 }
 
+/// One bloody footprint: the foot bone (`ped +bone_slot`, tag +0x14) origin through the skin hierarchy, moved by
+/// the offset (x / y as the x87 holds them) and `-0.1` in z (as `off.z + (z - 0.1)`), as a permanent blood-pool
+/// shadow.
+fn footprint(ped: GPtr<u8>, bone_slot: isize, off_xy: [X87; 2], off_z: f32, front: [f32; 2], side: [f32; 2]) {
+    let clump = rd::<u32>(ped, 0x18);
+    let mut v = [0f32; 3];
+    let vp: GPtr<u8> = GPtr::from_raw(v.as_mut_ptr()).cast();
+    let h = anim_hierarchy_from_skin_clump(clump);
+    let tag = rd::<u32>(rd::<GPtr<u8>>(ped, bone_slot), 0x14);
+    let idx = hanim_id_get_index(h, tag);
+    let mats = hanim_get_matrix_array(h);
+    rw_v3d_transform_points(vp, vp, 1, mats.wrapping_add((idx as u32).wrapping_shl(6)));
+    let z = x(rd::<f32>(vp, 8)).fsub_m(f32::from_bits(0x3DCC_CCCD));
+    wr::<f32>(vp, 0, off_xy[0].fadd_m(rd::<f32>(vp, 0)).to_f32());
+    wr::<f32>(vp, 4, off_xy[1].fadd_m(rd::<f32>(vp, 4)).to_f32());
+    wr::<f32>(vp, 8, x(off_z).fadd(z).to_f32());
+    let tex = g::<u32>(0xC4_0400).read();
+    shadows_add_permanent_shadow(1, tex, vp, front[0], front[1], side[0], side[1], 0xFF, 0xFF, 0, 0, 4.0, 0xBB8, 1.0);
+}
+
+/// `void CTaskSimpleJump::Launch(CPed* ped)` (0x679B80, `ret 4`).
+///
+/// Horizontal speed `hs`: 0.1 ([0x8703B0]); sprinting `(0.22 - 0.18) * blend + 0.18` ([0x8703B8] / [0x8703B4]),
+/// running `(0.18 - 0.1) * blend + 0.1`. Upward force 4.5 ([0x8703BC]), 8.5 ([0x8703C0]) for the player or a high
+/// jump (+0x25); player peds (+0x480) scale both by `GetFatAndMuscleModifier(2)`; the mega-jump cheat (0x96916C)
+/// multiplies the player's by 10. `ApplyMoveForce(0, 0, force)`. A climb jump (+0x22) zeroes the move speed x/y;
+/// otherwise when `hs^2 > |move xy|^2` (ordered) or the ped stands on something (+0x568), and there is no climb
+/// entity (+0x1C): move = `(-sin(rot) hs, cos(rot) hs)` plus the standing entity's move speed. Flags +0x46C: bit 0
+/// cleared, bit 9 set. Without a climb entity: climb-jump anim 0x80 (finish auto-remove) or glide 0x76, blend 8.
+/// Bloody feet (+0x46C bit 28) with `Blood()`: two permanent blood shadows at the feet (left +0x4AC, right
+/// +0x4B0; offset forward * 0.2, front `forward.xy * 0.26`, side `right.xy * 0.14`), and the blood timer +0x750
+/// counts down by 40 (clearing the flag at or below 40). The original keeps the force and the side x in its ped
+/// argument slot.
+#[hook(addr = 0x679B80, conv = thiscall, name = "CTaskSimpleJump::Launch",
+       expect = "83 EC 48 A1 B0 03 87 00",
+       unverified = "native-27", route = "L2", hazards = "x87-transcendental,heap-writes,stack-residue",
+       recs = "grove-walk", note = "fsin / fcos; the force lives in the ped argument slot")]
+pub fn launch_port(this: GPtr<u8>, ped: GPtr<u8>) {
+    let c = |a: u32| g::<f32>(a as usize).read();
+    let mut hs = c(0x87_03B0);
+    let sprint = clump_get_association(rd::<u32>(ped, 0x18), 2);
+    if !sprint.is_null() {
+        hs = x(c(0x87_03B8)).fsub_m(c(0x87_03B4)).fmul_m(rd::<f32>(sprint, 0x18)).fadd_m(c(0x87_03B4)).to_f32();
+    } else {
+        let run = clump_get_association(rd::<u32>(ped, 0x18), 1);
+        if !run.is_null() {
+            hs = x(c(0x87_03B4)).fsub_m(c(0x87_03B0)).fmul_m(rd::<f32>(run, 0x18)).fadd_m(c(0x87_03B0)).to_f32();
+        }
+    }
+    let mut force = c(0x87_03BC);
+    if ped_is_player(ped) != 0 || rd::<u8>(this, 0x25) != 0 {
+        force = c(0x87_03C0);
+    }
+    if rd::<u32>(ped, 0x480) != 0 {
+        hs = X87::from_f64_exact(stats_get_fat_and_muscle_modifier(2)).fmul_m(hs).to_f32();
+        force = X87::from_f64_exact(stats_get_fat_and_muscle_modifier(2)).fmul_m(force).to_f32();
+    }
+    if g::<u8>(0x96_916C).read() != 0 && ped_is_player(ped) != 0 {
+        force = x(force).fmul_m(10.0).to_f32();
+    }
+    physical_apply_move_force(ped, 0, 0, force.to_bits());
+    if rd::<u8>(this, 0x22) != 0 {
+        wr::<u32>(ped, 0x44, 0);
+        wr::<u32>(ped, 0x48, 0);
+    } else {
+        let (mx, my) = (x(rd::<f32>(ped, 0x44)), x(rd::<f32>(ped, 0x48)));
+        let m2 = mx.fmul(mx).fadd(my.fmul(my));
+        let faster = !x(hs).fmul_m(hs).fcom(m2).test_any(0x41);
+        if (faster || rd::<u32>(ped, 0x568) != 0) && rd::<u32>(this, 0x1C) == 0 {
+            let rot = rd::<f32>(ped, 0x558);
+            let st = x(rot).fsin().fmul_m(hs);
+            let on = rd::<GPtr<u8>>(ped, 0x568);
+            if !on.is_null() {
+                wr::<f32>(ped, 0x44, st.fsubr_m(rd::<f32>(on, 0x44)).to_f32());
+                wr::<f32>(ped, 0x48, x(rd::<f32>(ped, 0x558)).fcos().fmul_m(hs).fadd_m(rd::<f32>(on, 0x48)).to_f32());
+            } else {
+                wr::<f32>(ped, 0x44, st.fchs().to_f32());
+                wr::<f32>(ped, 0x48, x(rd::<f32>(ped, 0x558)).fcos().fmul_m(hs).to_f32());
+            }
+        }
+    }
+    wr::<u32>(ped, 0x46C, (rd::<u32>(ped, 0x46C) & !1) | 0x200);
+    if rd::<u32>(this, 0x1C) == 0 {
+        if rd::<u8>(this, 0x22) != 0 {
+            let a = anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x80, 8.0);
+            wr::<u8>(a, 0x2E, rd::<u8>(a, 0x2E) | 8);
+        } else {
+            anim_blend_animation(rd::<u32>(ped, 0x18), 0, 0x76, 8.0);
+        }
+    }
+    if rd::<u32>(ped, 0x46C) & 0x1000_0000 == 0 || localisation_blood() == 0 {
+        return;
+    }
+    let m = rd::<GPtr<u8>>(ped, 0x14);
+    let (fwx, fwy, fwz) = (rd::<f32>(m, 0x10), rd::<f32>(m, 0x14), rd::<f32>(m, 0x18));
+    let (rx, ry) = (rd::<f32>(m, 0), rd::<f32>(m, 4));
+    let k = f32::from_bits(0x3E4C_CCCD);
+    // the first foot adds the x87 products, the second their stored f32 copies
+    let (ox, oy) = (x(fwx).fmul_m(k), x(fwy).fmul_m(k));
+    let oz = x(fwz).fmul_m(k).to_f32();
+    let front = [x(fwx).fmul_m(f32::from_bits(0x3E85_1EB8)).to_f32(), x(fwy).fmul_m(f32::from_bits(0x3E85_1EB8)).to_f32()];
+    let side = [x(rx).fmul_m(f32::from_bits(0x3E0F_5C29)).to_f32(), x(ry).fmul_m(f32::from_bits(0x3E0F_5C29)).to_f32()];
+    footprint(ped, 0x4AC, [ox, oy], oz, front, side);
+    footprint(ped, 0x4B0, [x(ox.to_f32()), x(oy.to_f32())], oz, front, side);
+    let t = rd::<u32>(ped, 0x750);
+    if t > 0x28 {
+        wr::<u32>(ped, 0x750, t - 0x28);
+    } else {
+        wr::<u32>(ped, 0x750, 0);
+        wr::<u32>(ped, 0x46C, rd::<u32>(ped, 0x46C) & 0xEFFF_FFFF);
+    }
+}
+
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_START_LAUNCH_ANIM, HOOK_SIMPLE_JUMP_PROCESS_PED, HOOK_CHECK_IF_JUMP_BLOCKED_PORT];
+pub const HOOKS: &[HookReg] = &[HOOK_START_LAUNCH_ANIM, HOOK_SIMPLE_JUMP_PROCESS_PED, HOOK_CHECK_IF_JUMP_BLOCKED_PORT, HOOK_LAUNCH_PORT];
