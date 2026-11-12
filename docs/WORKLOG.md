@@ -1063,3 +1063,11 @@
   (CAEVehicleAudioEntity::AddAudioEvent, FxEmitterBP_c::Render/RenderHeatHaze, RtQuat functions).
 - Tests: sa-hook 58, sa-script 8, sa-core 70, L1 18/18. verify-all int4: IDENTICAL on all 13 recordings.
 - Catalogue: 532 generated addresses promoted (25 L1, 507 L2).
+
+## 2026-11-12 INTEGRATE-5: VERIFIER-8, WRITER-P and Save/Load (main session)
+- VERIFIER-8 (527 writer hooks, L3 MATCH on 13 recordings after 4 fixes: FUN_006070F0 3 stack args, ProcessVerticalLineSectorList
+  argument order, IsEntityOccluded max corner, CreateIndexBuffer format argument) → 67 L2. WRITER-P: 15 boot hooks + 1 native.
+  PORT-SAVE (SAVE-1): 73 Save/Load ports, 61 L2, F5 cross-load identical; ledger SAVE-1 in ROADMAP.
+- Integration by agent INTEGRATE-5 (own diffs, generator regenerated). Tests: sa-hook 58, sa-script 9, sa-core 71, L1 18/18.
+  verify-all int5: IDENTICAL on all 13 recordings (save-load: save bytes identical except 750 residue bytes, ledger SAVE-1).
+- Catalogue: 128 addresses → L2; F1 30.88 %.
