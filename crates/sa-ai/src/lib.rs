@@ -161,6 +161,7 @@ pub mod enter_car_sub_tasks;
 pub mod leader_entered_car_event_dtor;
 pub mod go_to_car_door_control;
 pub mod line_up_ped_with_car;
+pub mod ped_geometry_avoid_entity;
 pub mod slide_to_coord_process_ped;
 pub mod use_attractor_tasks;
 pub mod wander_set_dir;
