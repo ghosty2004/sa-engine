@@ -29,7 +29,7 @@ the patch list: samp-rs `docs/re/subsystems/gta-patches.md` ("Startup / intro"),
 |---|---|---|---|
 | `gGameState` 0xC8D4C0 := 5 at attach; 0x747483 `89 35 C0 D4 C8 00` (`mov [gGameState],esi`) → 6×NOP | `Ps::psInitialize` 0x747420 | `sa_core::psinit::ps_initialize` writes 5 instead of 0 when `SAMP_STARTUP` is set | done |
 | end of samp's init-main (runs at `gGameState` 7): `FrontEndMenuManager` +0xE9 (0xBA6831) := 1, +0x5C (0xBA67A4) := 0, +0x33 (0xBA677B) := 0, `gGameState` := 8 | WinMain loop, state 7 (frontend idle) | `sa-game/src/winmain.rs` state 7 applies the same writes when `SAMP_STARTUP` is set | done |
-| `CreateFileA` hook: files whose lower-case basename is a samp.saa entry are served from memory | kernel32 (the game's every file open) | `sa_platform::vfs::set_redirect`, consulted by `Vfs::read` / `open_read` (where the engine's file opens reach the platform); `sa-game/src/samp_saa.rs` reads samp.saa from the game folder (or `SA_SAMP_DIR` natively) with samp-rs's `samp-saa` and serves `loadscs.txd` | done for `loadscs.txd`; samp's `main.scm` / `script.img` are served only with `SA_SAMP_SCM=1` (blockers in "samp's main.scm" below), the IDE/DAT entries need samp's `SAMP` folder |
+| `CreateFileA` hook: files whose lower-case basename is a samp.saa entry are served from memory | kernel32 (the game's every file open) | `sa_platform::vfs::set_redirect`, consulted by `Vfs::read` / `open_read` (where the engine's file opens reach the platform); `sa-game/src/samp_saa.rs` reads samp.saa from the game folder (or `SA_SAMP_DIR` natively) with samp-rs's `samp-saa` and serves `loadscs.txd`, `main.scm` and `script.img` | done for those three (`SA_SAMP_SCM=0` keeps GTA's scripts); the IDE/DAT entries need samp's `SAMP` folder |
 | 0x866CD8 "title_pc_US" → "title", 0x866CCC "loadsc%d" → "title" (`74 69 74 6C 65 00`) | `CLoadingScreen::LoadSplashes` 0x5900B0 string data | `samp_saa::install` writes the same bytes into the mapped .rdata (`arena::patch_image`, over the original bytes only) | done |
 | 0x590099 `E8 C2 7A 19 00` → 5×NOP (`CSprite2d::DrawRect`) | `CLoadingScreen::RenderSplash` 0x58FF60 | `sa_stream::loading_screen::render_splash` skips that call when `SAMP_STARTUP` is set | done |
 | not-connected scene every frame until InitGame (samp.dll 0x100089B0): weather 1, HUD off, ped at (1133.05, -2038.40, 69.1), fixed camera (1093, -2036, 90) pointing at (384, -1557, 20) jump cut | script opcodes 015F / 0160 / 0373 | `samp_net.rs::connecting_scene` through the adapter (`set_fixed_position`, `point_at`, `set_weather`, `set_hud_visible`, `set_ped_position`) | done |
@@ -58,9 +58,9 @@ no spawn follows there; natively the same keys spawn.
 
 ## samp's main.scm (2026-11-12, SAMP-SCM)
 
-samp.dll serves samp.saa's `main.scm` (103876 bytes) and `script.img` (194560 bytes) in place of GTA's. With
-`SA_SAMP_SCM=1` sa-game serves both through the same redirect (`samp_saa.rs`); the default stays GTA's main.scm
-until the blockers below are ported. samp's main thread (`MAIN` at 0xBE64) fades, sets the clock to 01:00
+samp.dll serves samp.saa's `main.scm` (103876 bytes) and `script.img` (194560 bytes) in place of GTA's. sa-game
+serves both through the same redirect (`samp_saa.rs`), by default since the blockers below are ported
+(`SA_SAMP_SCM=0` keeps GTA's main.scm). samp's main thread (`MAIN` at 0xBE64) fades, sets the clock to 01:00
 (`00C0 1 0`), and starts the threads `initial`, `initil2`, `intman`, `hj`, `sa-smp`.
 
 Native run (`native-join.sh` with `SA_SAMP_DIR=re/samp/client`, `SA_SAMP_SCM=1`, port 7818, lock samp-scm.lock):
@@ -80,3 +80,7 @@ Once a light exists, `NumberOfScriptSearchLights` != 0 makes the render path cal
 `CTheScripts::RenderAllSearchLights` 0x493E30 and the CHeli cone functions 0x6C4650 / 0x6C7C50 / 0x6C46E0
 (`sa-core/src/mvpb_app.rs`), and the per-frame search-light update has to be checked too. With samp's 01:00 the
 connecting scene was night before the 12:00 clock above (the original shows day).
+
+Ported since: 0x493000, 0x4934F0, 0x493E30 and the other search-light / checkpoint functions (WRITER-SAMP batch
+samp-script-1) and `CHeli::SearchLightCone` 0x6C58E0 (batch samp-heli-1). native-join.sh with samp's main.scm:
+no blocked iteration, connect, class selection, spawn and every sampcov command; no "Fat" box while connecting.

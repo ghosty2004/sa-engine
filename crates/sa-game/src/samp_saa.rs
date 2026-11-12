@@ -6,8 +6,8 @@
 //! does the same at the same places: the strings are rewritten in the mapped image, and `sa_platform::vfs`'s
 //! redirect (where file opens reach the platform, the native counterpart of `CreateFileA`) serves samp.saa's
 //! `loadscs.txd`. samp.saa is read at run time from the user's SA:MP install (the game folder, or `SA_SAMP_DIR`
-//! natively) and never shipped. Only `loadscs.txd` is served by default (main.scm and script.img with
-//! `SA_SAMP_SCM=1`); the other entries (gta.dat, the IDE files ...) need samp's `SAMP` folder in the engine's
+//! natively) and never shipped. `loadscs.txd`, `main.scm` and `script.img` are served (`SA_SAMP_SCM=0` keeps GTA's scripts);
+//! the other entries (gta.dat, the IDE files ...) need samp's `SAMP` folder in the engine's
 //! file layer first.
 
 use std::sync::{Arc, OnceLock};
@@ -21,8 +21,8 @@ static SERVED: OnceLock<Vec<Served>> = OnceLock::new();
 /// The entries served from samp.saa (subset of samp's, see the module comment).
 const ENTRIES: [&str; 1] = ["loadscs.txd"];
 
-/// samp's own scripts, served only with `SA_SAMP_SCM=1` (exploration): samp's main.scm starts threads that
-/// reach unported code (the script search lights, docs/samp/startup.md), so GTA's main.scm stays the default.
+/// samp's own scripts, served like samp does (its main.scm replaces GTA's: no single-player start-up, no stat
+/// messages). `SA_SAMP_SCM=0` keeps GTA's main.scm and script.img (comparison runs).
 const SCRIPT_ENTRIES: [&str; 2] = ["main.scm", "script.img"];
 
 /// samp.dll's string patches: (address, original bytes, samp's bytes).
@@ -61,7 +61,7 @@ pub fn install() -> String {
         Ok(a) => a,
         Err(e) => return format!("samp.saa: {e:?}: GTA's own loading screen"),
     };
-    let scripts = crate::env::var_os("SA_SAMP_SCM").is_some();
+    let scripts = crate::env::var_os("SA_SAMP_SCM").is_none_or(|v| v != "0");
     let served: Vec<_> = ENTRIES
         .iter()
         .chain(SCRIPT_ENTRIES.iter().filter(|_| scripts))
