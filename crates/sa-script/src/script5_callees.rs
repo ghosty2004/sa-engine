@@ -7,6 +7,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
+use sa_math::x87::X87;
 
 use crate::vm::Scr;
 
@@ -222,6 +223,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_DECISION_MAKER_TYPES_ADD_EVENT_RESPONSE,
     HOOK_THE_SCRIPTS_ADD_SCRIPT_EFFECT_SYSTEM,
     HOOK_THE_SCRIPTS_REMOVE_SCRIPT_SEARCH_LIGHT,
+    HOOK_GARAGES_STORE_CAR_IN_NEAREST_IMPOUNDING_GARAGE,
 ];
 
 orig! {
@@ -392,6 +394,73 @@ pub fn the_scripts_add_script_effect_system(fx: u32) -> i32 {
     used(i).write(1);
     GPtr::<u32>::from_addr(SCRIPT_FX + 8 * i as usize + 4).write(fx);
     get_new_unique_script_thing_index(i, 1)
+}
+
+orig! {
+    /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0; keeps ECX)
+    fn find_safe_house_index_for_garage_type(t: u32) -> i32 = cdecl 0x4489F0 => unported;
+    /// `CStoredCar::StoreCar(CVehicle*)` (0x449760, `ret 4`)
+    fn stored_car_store(slot: GPtr<u8>, v: GPtr<u8>) -> GPtr<u8> = thiscall 0x449760 => unported;
+}
+
+/// `CGarages::NumGarages` (0x96C024, uint32)
+const NUM_GARAGES: usize = 0x96C024;
+/// `CGarages::aGarages` (0x96C048, 0xD8 each: +0 x, +4 y, byte +0x4C type)
+const GARAGES: usize = 0x96C048;
+/// `CGarages::aCarsInSafeHouse` (0x96ABD8, 0x100 per safe house: 4 x `CStoredCar` of 0x40, word +0x12 model)
+const CARS_IN_SAFE_HOUSE: usize = 0x96ABD8;
+
+/// `CGarages::StoreCarInNearestImpoundingGarage(CVehicle*)` (0x44A3C0, cdecl).
+///
+/// Over the garages (unsigned count) of type 0x21..0x23 the nearest in 2D: `sqrt(dy*dy + dx*dx)` on the x87 stack
+/// (`dx = pos.x - g.x`, `dy = pos.y - g.y`, the vehicle's matrix or placement position) taken when below the best
+/// so far (starting at 99999.9f, stored as f32). None → nothing. Else the safe house of its type
+/// (`FindSafeHouseIndexForGarageType`) gets the car: the number of its first three slots with a model (word +0x12
+/// above 0) is the target slot; when all three are used, slots 1 and 2 move down (64-byte copies) and slot 2 is
+/// used. `CStoredCar::StoreCar(vehicle)` on that slot.
+#[hook(addr = 0x44a3c0, conv = cdecl, name = "CGarages::StoreCarInNearestImpoundingGarage", expect = "83 EC 10 56 57 8B 3D",
+       unverified = "script5-11", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn garages_store_car_in_nearest_impounding_garage(v: GPtr<u8>) {
+    let n = GPtr::<u32>::from_addr(NUM_GARAGES).read();
+    let mut best: i32 = -1;
+    let mut min = f32::from_bits(0x47C3_4FF3);
+    let mut i = 0u32;
+    while i < n {
+        let g = GPtr::<u8>::from_addr(GARAGES + 0xD8 * i as usize);
+        let t = g.byte_add(0x4C).read();
+        if (0x21..=0x23).contains(&t) {
+            let m = v.byte_add(0x14).cast::<GPtr<u8>>().read();
+            let pos = if m.is_null() { v.byte_add(4) } else { m.byte_add(0x30) };
+            let gx = g.cast::<f32>().read();
+            let gy = g.byte_add(4).cast::<f32>().read();
+            let dx = X87::from_f32(pos.cast::<f32>().read()).fsub(X87::from_f32(gx));
+            let dy = X87::from_f32(pos.byte_add(4).cast::<f32>().read()).fsub_m(gy);
+            let d = dy.fmul(dy).fadd(dx.fmul(dx)).fsqrt();
+            if !d.fcom(X87::from_f32(min)).test_parity(5) {
+                min = d.to_f32();
+                best = i as i32;
+            }
+        }
+        i += 1;
+    }
+    if best < 0 {
+        return;
+    }
+    let t = GPtr::<u8>::from_addr(GARAGES + 0xD8 * best as usize + 0x4C).read();
+    let idx = find_safe_house_index_for_garage_type(u32::from(t));
+    let cars = GPtr::<u8>::from_addr(CARS_IN_SAFE_HOUSE).byte_add((idx << 8) as isize);
+    let used = |k: isize| u32::from(cars.byte_add(0x40 * k + 0x12).cast::<u16>().read() > 0);
+    let mut slot = used(0) + used(1) + used(2);
+    if slot == 3 {
+        for (dst, src) in [(0isize, 0x40isize), (0x40, 0x80)] {
+            for w in 0..16 {
+                let d = cars.byte_add(dst + 4 * w).cast::<u32>();
+                d.write(cars.byte_add(src + 4 * w).cast::<u32>().read());
+            }
+        }
+        slot = 2;
+    }
+    stored_car_store(cars.byte_add(0x40 * slot as isize), v);
 }
 
 orig! {
