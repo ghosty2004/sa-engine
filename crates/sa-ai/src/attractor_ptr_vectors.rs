@@ -1,6 +1,7 @@
 //! The two `std::vector<T*>` instantiations the ped-attractor registry grows (batch `writerq-ai-3`): `CPedAttractor*`
 //! (the manager's per-type vectors: `push_back` 0x5EE400, `_Insert_n` 0x5EDA50, `uninitialized_fill_n` 0x5EB390,
-//! `uninitialized_copy` 0x5EAEE0) and `CPed*` (an attractor's ped vectors: 0x5EE200, 0x5ECF10, 0x5EB2A0, 0x5EAE10).
+//! `uninitialized_copy` 0x5EAEE0), `CPed*` (an attractor's ped vectors: 0x5EE200, 0x5ECF10, 0x5EB2A0, 0x5EAE10) and,
+//! batch `std13-ai-1`, `CTask*` (`CPedAttractor::ms_tasks`: 0x5EE300, 0x5ED4B0, 0x5EB310, 0x5EAE70).
 //! The two sets are byte-identical up to their callees' addresses. Ported from the 1.0 US bytes (MSVC 7.1 STL).
 //! Unverified (docs/verify/HOWTO.md).
 //!
@@ -42,6 +43,19 @@ orig! {
     fn copy_p_o(first: u32, last: u32, dest: u32) -> u32 = cdecl 0x5EAE10 => copy_p;
     fn insert_n_a_o(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) = thiscall 0x5EDA50 => insert_n_a;
     fn insert_n_p_o(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) = thiscall 0x5ECF10 => insert_n_p;
+    /// `vector<CTask*>::_Xlen()` (0x5ECBB0, throws `length_error`)
+    fn xlen_t(v: GPtr<u8>) = thiscall 0x5ECBB0 => unported;
+    /// `vector<CTask*>::_Ucopy(first, last, dest)` (0x5EB990, `ret 0xC`)
+    fn ucopy_t(v: GPtr<u8>, first: u32, last: u32, dest: u32) -> u32 = thiscall 0x5EB990 => unported;
+    /// `vector<CTask*>::_Ufill(dest, count, const T*)` (0x5EC110, `ret 0xC`)
+    fn ufill_t(v: GPtr<u8>, dest: u32, n: u32, val: GPtr<u8>) -> u32 = thiscall 0x5EC110 => unported;
+    /// `std::copy_backward` for `CTask**` (0x5EB1B0)
+    fn copy_backward_t(out: GPtr<u8>, first: u32, last: u32, dest_last: u32) -> GPtr<u8> = cdecl 0x5EB1B0 => unported;
+    /// `std::fill` for `CTask**` (0x5EAAF0)
+    fn fill_t(first: u32, last: u32, val: GPtr<u8>) = cdecl 0x5EAAF0 => unported;
+    fn fill_n_t_o(dest: u32, n: u32, val: GPtr<u8>) -> u32 = cdecl 0x5EB310 => fill_n_t;
+    fn copy_t_o(first: u32, last: u32, dest: u32) -> u32 = cdecl 0x5EAE70 => copy_t;
+    fn insert_n_t_o(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) = thiscall 0x5ED4B0 => insert_n_t;
 }
 
 /// One instantiation's callees.
@@ -76,6 +90,18 @@ const PEDS: Inst = Inst {
     fill_n: fill_n_p_o,
     copy: copy_p_o,
     insert_n: insert_n_p_o,
+};
+
+/// `vector<CTask*>` (`CPedAttractor::ms_tasks`, 0xC0985C; batch `std13-ai-1`).
+const TASKS: Inst = Inst {
+    xlen: xlen_t,
+    ucopy: ucopy_t,
+    ufill: ufill_t,
+    copy_backward: copy_backward_t,
+    fill: fill_t,
+    fill_n: fill_n_t_o,
+    copy: copy_t_o,
+    insert_n: insert_n_t_o,
 };
 
 /// Element count from two pointers (`sar 2`), 0 when `first` is null (MSVC's `size()` / `capacity()`).
@@ -249,8 +275,43 @@ pub fn copy_p(first: u32, last: u32, dest: u32) -> u32 {
     copy(first, last, dest)
 }
 
+/// `std::vector<CTask*>::push_back(const T&)` (0x5EE300, thiscall, `ret 4`; `CPedAttractor::ms_tasks`): see
+/// `push_back`.
+#[hook(addr = 0x5EE300, conv = thiscall, name = "FUN_005ee300", expect = "56 8B F1 8B 56 04 85 D2",
+       unverified = "std13-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn push_back_t(v: GPtr<u8>, val: GPtr<u8>) {
+    push_back(&TASKS, v, val);
+}
+
+/// `std::vector<CTask*>::_Insert_n(iterator, size_t, const T&)` (0x5ED4B0, thiscall, `ret 0xC`, SEH frame whose
+/// handler push is in the protection fragment 0x4019E5): see `insert_n`.
+#[hook(addr = 0x5ED4B0, conv = thiscall, name = "FUN_005ed4b0", expect = "55 8B EC 6A FF",
+       unverified = "std13-ai-1", route = "L2", hazards = "heap-writes,stack-residue", recs = "grove-walk",
+       note = "the original copies the value into its own argument slot")]
+pub fn insert_n_t(v: GPtr<u8>, at: u32, n: u32, val: GPtr<u8>) {
+    insert_n(&TASKS, v, at, n, val);
+}
+
+/// `uninitialized_fill_n<CTask**>` (0x5EB310, cdecl): see `fill_n`.
+#[hook(addr = 0x5EB310, conv = cdecl, name = "FUN_005eb310", expect = "8B 44 24 08 85 C0",
+       unverified = "std13-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn fill_n_t(dest: u32, n: u32, val: GPtr<u8>) -> u32 {
+    fill_n(dest, n, val)
+}
+
+/// `uninitialized_copy<CTask**>` (0x5EAE70, cdecl): see `copy`.
+#[hook(addr = 0x5EAE70, conv = cdecl, name = "FUN_005eae70", expect = "8B 4C 24 04 8B 54 24 08",
+       unverified = "std13-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn copy_t(first: u32, last: u32, dest: u32) -> u32 {
+    copy(first, last, dest)
+}
+
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_PUSH_BACK_T,
+    HOOK_INSERT_N_T,
+    HOOK_FILL_N_T,
+    HOOK_COPY_T,
     HOOK_PUSH_BACK_A,
     HOOK_PUSH_BACK_P,
     HOOK_INSERT_N_A,
