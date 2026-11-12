@@ -105,6 +105,20 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::automobile_flying_component::HOOKS,
     crate::quad_bike_controls::HOOKS,
     crate::vehicle_plane_weapons::HOOKS,
+    crate::train_track_position::HOOKS,
+    crate::vehicle_drive_by::HOOKS,
+    crate::heli_controls::HOOKS,
+    crate::plane_controls::HOOKS,
+    crate::automobile_blow_up::HOOKS,
+    crate::automobile_controls::HOOKS,
+    crate::bike_controls::HOOKS,
+    crate::vehicle_blade_collision::HOOKS,
+    crate::heli_dust::HOOKS,
+    crate::plane_damage::HOOKS,
+    crate::vehicle_tail_calls::HOOKS,
+    crate::vehicle_fire_rates_upgrades::HOOKS,
+    crate::vehicle_teleport_destroy::HOOKS,
+    crate::vehicle_misc_queries::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
