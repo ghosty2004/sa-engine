@@ -59,6 +59,7 @@ pub mod std6_natives;
 pub mod generated;
 pub mod weather_update_parameters;
 pub mod vehicle_add_audio_event;
+pub mod player_vehicle_engine;
 pub mod bicycle_tyre_volume;
 pub mod radio_queue_tracks_native;
 pub mod weapon_gun_sounds;
