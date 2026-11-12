@@ -173,7 +173,16 @@ orig! {
     // Win32
     fn sleep(ms: u32) = stdcall cell 0x8580C4 => unported;
     fn create_thread(sec: u32, stack: u32, entry: u32, param: u32, flags: u32, id: u32) -> u32 = stdcall cell 0x8580B4 => unported;
+    #[cfg(not(sa_phase_a))]
     fn resume_thread(h: u32) -> u32 = stdcall cell 0x8580A4 => unported;
+    // Phase A: the Start functions' own `call [ResumeThread]` instructions, entered with ECX = this as
+    // the original does (thiscall with one stack argument = stdcall(h) plus ECX). Determinism mode
+    // redirects exactly these two sites to shims that record ECX and leave the thread suspended
+    // (sa-hook detaudio.rs); calling the IAT cell directly would start a free-running thread.
+    #[cfg(sa_phase_a)]
+    fn resume_thread_at_stream_start(this: u32, h: u32) -> u32 = thiscall site 0x4F11F7 => unported;
+    #[cfg(sa_phase_a)]
+    fn resume_thread_at_fade_start(this: u32, h: u32) -> u32 = thiscall site 0x4EEA1A => unported;
     fn set_thread_priority(h: u32, prio: i32) -> i32 = stdcall cell 0x8580A8 => unported;
     fn initialize_critical_section(cs: u32) = stdcall cell 0x8580F0 => unported;
     fn enter_critical_section(cs: u32) = stdcall cell 0x8580EC => unported;
@@ -1426,6 +1435,9 @@ pub fn smooth_fade_initialise_request_slots(this: u32) {
 pub fn smooth_fade_start(this: u32) {
     let h = r32(this);
     w8(this + 0x809, 1);
+    #[cfg(sa_phase_a)]
+    resume_thread_at_fade_start(this, h);
+    #[cfg(not(sa_phase_a))]
     resume_thread(h);
 }
 
@@ -1681,6 +1693,9 @@ pub fn stream_thread_initialise(this: u32, ch: u32) -> bool {
 pub fn stream_thread_start(this: u32) {
     let h = r32(this);
     w8(this + 0x11, 1);
+    #[cfg(sa_phase_a)]
+    resume_thread_at_stream_start(this, h);
+    #[cfg(not(sa_phase_a))]
     resume_thread(h);
 }
 
