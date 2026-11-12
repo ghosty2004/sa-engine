@@ -55,8 +55,8 @@ fn player_info(idx: i32, off: usize) -> usize {
 
 /// `CPickups::GivePlayerGoodiesWithPickUpMI(int16 model, int32 player)` (0x4564F0): the effect of a
 /// collected pickup model on the player's ped (slot `player`, or the focus player for 0/negative):
-/// adrenaline (flag + 20 s, sprint energy), health (= slot's max health), info/camera/... (sound
-/// only), body armour (stat, = slot's max armour), bribe (wanted level - 1, stat 182), jetpack (a
+/// adrenaline (flag + 20 s, sprint energy), body armour (+0x548 = slot's max armour +0x150),
+/// three sound-only models, health (+0x540 = slot's max health +0x14F, the difference to the stats), bribe (wanted level - 1, stat 182), jetpack (a
 /// script-command event with `CTaskSimpleJetPack`), oyster, horseshoe; each with its frontend
 /// sound. False for any other model.
 /// Not hooked: the no-CD protection reads the entry bytes (`xor` at 0x4016E3 reads 0x4564F2); needs a
