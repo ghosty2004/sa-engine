@@ -52,3 +52,6 @@ pub mod tree_wind;
 pub mod object_collision;
 pub mod x87_leaves;
 pub mod replay_vehicle_block;
+// SAVE-1 (docs/arch/save-port.md)
+pub mod save_blocks;
+pub mod stats_strings;

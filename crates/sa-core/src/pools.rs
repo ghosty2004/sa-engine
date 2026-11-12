@@ -811,7 +811,11 @@ pub fn save_vehicle_pool() -> u8 {
 /// `CPools::SaveObjectPool` (0x5D4940; gta-reversed: unreversed). Objects of type 2 (`+0x13C`):
 /// count, then per object ref, model, a `CObjectSaveStructure` (0x30 bytes, `Construct`) preceded by
 /// its size (0x30). The count pass skips free slots with `test 0x80`, the save pass with a sign test.
-#[hook(addr = 0x5D4940, conv = cdecl, name = "CPools::SaveObjectPool", expect = "83 EC 40 8B 15 9C 44 B7 00")]
+/// The structure is an uninitialised local (entry ESP -0x30) whose bytes `Construct` skips (+0x12..+0x17,
+/// +0x19, +0x25..+0x27) reach the save file; SAVE-1 takes them from the footprint snapshot (ADR-001 §5b;
+/// docs/arch/save-port.md), the iterations reusing the same local.
+#[hook(addr = 0x5D4940, conv = cdecl, name = "CPools::SaveObjectPool", expect = "83 EC 40 8B 15 9C 44 B7 00",
+       unverified = "save-core-2", route = "split", hazards = "uninit-locals", recs = "save-load", footprint = 0x1000)]
 pub fn save_object_pool() -> u8 {
     let p0 = pool::OBJECT_POOL.get().read();
     let size = p0.size as u32;
@@ -828,6 +832,10 @@ pub fn save_object_pool() -> u8 {
         i += 1;
     }
     call::save_data(local(&mut count), 4);
+    let mut buf = [0u8; 0x30];
+    for (k, b) in buf.iter_mut().enumerate() {
+        *b = crate::abi::footprint_residue_u8(k as i32 - 0x30, 0x1000);
+    }
     let mut i = 0u32;
     while i < size {
         let p = pool::OBJECT_POOL.get().read();
@@ -838,7 +846,6 @@ pub fn save_object_pool() -> u8 {
                 let mut model = at::<i16>(o, 0x22).read() as i32;
                 call::save_data(local(&mut r), 4);
                 call::save_data(local(&mut model), 4);
-                let mut buf = [0u8; 0x30];
                 let mut n: u32 = 0x30;
                 call::object_save_construct(local(&mut buf), o);
                 call::save_data(local(&mut n), 4);

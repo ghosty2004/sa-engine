@@ -50,6 +50,8 @@ pub mod statics2;
 pub mod train2;
 pub mod transmission;
 pub mod vehicle2;
+// SAVE-1 (docs/arch/save-port.md)
+pub mod vehicle_save;
 
 // WRITER-MVP-B (helper A)
 pub mod mvpb_a1;

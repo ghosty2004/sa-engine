@@ -45,6 +45,11 @@ worker() {
         local line
         line=$(grep -E '^(PASS|FAIL) \(c\)' "$OUT/$name.log" | tail -1)
         [ -n "$line" ] || line="FAIL (c) no comparison line (see $OUT/$name.log)"
+        # SAVE-1: a recording that writes save files must write plain's bytes (port-l2 check (f))
+        local fl
+        fl=$(grep -E '^FAIL \(f\)' "$OUT/$name.log" | head -1)
+        [ -n "$fl" ] && line="FAIL save files differ: ${fl#FAIL }"
+        grep -q -E '^PASS \(f\)' "$OUT/$name.log" && line="$line; save files byte-identical"
         echo "$name: $line" >> "$OUT/summary.txt"
     done
 }
