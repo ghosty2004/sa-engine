@@ -13,7 +13,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{ftol32, k, rd, wr};
+use crate::common::{k, rd, wr};
 
 orig! {
     /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
