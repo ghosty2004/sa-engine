@@ -1071,3 +1071,11 @@
 - Integration by agent INTEGRATE-5 (own diffs, generator regenerated). Tests: sa-hook 58, sa-script 9, sa-core 71, L1 18/18.
   verify-all int5: IDENTICAL on all 13 recordings (save-load: save bytes identical except 750 residue bytes, ledger SAVE-1).
 - Catalogue: 128 addresses → L2; F1 30.88 %.
+
+## 2026-11-12 SA:MP native groundwork and the browser proxy on master (main session)
+- SAMP-3 (18671e6, 76c533d): crate sa-samp (NativeGame on the sa-samp-api traits, read side), frame dispatch points in
+  sa-core samp.rs (Game::Idle / CGame::Process, inert without a handler), `sa-game --samp` host skeleton,
+  docs/samp/native-plan.md, samp-rs networking verified on i686 Linux (join to our open.mp copy in ~1.06 s).
+- SAMP-PROXY (3933363, b9ab5c2): crates sa-udp-proxy (WebSocket↔UDP relay with allowlist/limits/shim mode) and
+  sa-net (DatagramTransport: UDP native, WebSocket wasm32); samp-rs join through the proxy in 1.13 s.
+- verify-all samp3b (fresh DLL, sa-oracle rebuilt after a stale-binary first attempt): IDENTICAL on all 13 recordings.
