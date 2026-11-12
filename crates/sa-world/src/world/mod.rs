@@ -72,3 +72,6 @@ pub mod interior_shop_units;
 pub mod interior_init;
 pub mod object_fire_damage;
 pub mod game_logic_resurrection;
+pub mod break_object;
+pub mod interior_paths_loaded;
+pub mod water_creature;
