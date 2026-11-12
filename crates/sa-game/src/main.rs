@@ -76,6 +76,7 @@ fn parse_args() -> Result<Args, String> {
         report: None,
         documents: None,
     };
+    let mut system_heap = false;
     let mut it = std::env::args().skip(1);
     while let Some(k) = it.next() {
         let mut val = || it.next().ok_or(format!("{k} needs a value"));
@@ -83,6 +84,7 @@ fn parse_args() -> Result<Args, String> {
             "--game" => a.game = PathBuf::from(val()?),
             "--frames" => a.frames = Some(val()?.parse().map_err(|e| format!("--frames: {e}"))?),
             "--window" => a.window = true,
+            "--system-heap" => system_heap = true,
             "--exit-after" => a.exit_after = Some(val()?.parse().map_err(|e| format!("--exit-after: {e}"))?),
             "--auto-input" => a.auto_input = true,
             "--frame-times" => a.frame_times = Some(PathBuf::from(val()?)),
@@ -101,7 +103,9 @@ fn parse_args() -> Result<Args, String> {
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
                      the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK).\n\
                      --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
-                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE)."
+                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE).\n\
+                     Window runs serve the game heap from the deterministic mode's fixed-address region (one heap\n\
+                     layout everywhere); --system-heap uses the C library's allocator instead."
                 );
                 std::process::exit(0);
             }
@@ -111,6 +115,8 @@ fn parse_args() -> Result<Args, String> {
     if a.game.as_os_str().is_empty() {
         return Err("--game DIR is required (the GTA San Andreas install)".into());
     }
+    // decided before the first game allocation: a block must be freed by the allocator that made it
+    det::set_fixed_heap(a.window && !system_heap);
     Ok(a)
 }
 

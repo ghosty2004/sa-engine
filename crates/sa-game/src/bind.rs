@@ -597,7 +597,7 @@ pub(crate) fn set_thread_priority(h: GPtr<u8>, p: i32) -> i32 {
 /// `CMemoryMgr::MallocAlign` (0x72F4C0) / `FreeAlign` (0x72F4F0) stand-ins (not ported): plain
 /// leaked-until-freed allocations through the kernel table.
 pub(crate) fn malloc_align(size: u32, align: u32, _hint: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         // the deterministic heap: the block's own address in the dword before the aligned pointer
         let a = (align as usize).max(4);
         let raw = crate::detheap::alloc(size as usize + a + 4);
@@ -608,7 +608,7 @@ pub(crate) fn malloc_align(size: u32, align: u32, _hint: u32) -> GPtr<u8> {
     GPtr::from_addr(kernel().local_alloc(size as usize))
 }
 pub(crate) fn free_align(p: GPtr<u8>) {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         if !p.is_null() {
             crate::detheap::free(GPtr::from_addr(
                 GPtr::<u32>::from_addr(p.addr() - 4).read() as usize

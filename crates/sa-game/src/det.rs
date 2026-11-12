@@ -40,6 +40,20 @@ pub fn on() -> bool {
     STEP_US.load(Ordering::Relaxed) != 0
 }
 
+/// The fixed-address game heap outside the deterministic mode (window runs; platform.md section 21.1: one heap layout
+/// everywhere). `--system-heap` turns it off.
+static FIXED_HEAP: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// Serves the game heap from [`crate::detheap`] in this run.
+pub fn set_fixed_heap(on: bool) {
+    FIXED_HEAP.store(on, Ordering::SeqCst);
+}
+
+/// Whether the game heap comes from [`crate::detheap`]: the deterministic mode, or [`set_fixed_heap`].
+pub fn fixed_heap() -> bool {
+    on() || FIXED_HEAP.load(Ordering::Relaxed)
+}
+
 fn is_main() -> bool {
     MAIN.get().is_some_and(|m| *m == std::thread::current().id())
 }
