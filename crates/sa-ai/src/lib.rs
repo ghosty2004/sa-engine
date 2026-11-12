@@ -143,3 +143,4 @@ pub mod respected_friend_range;
 pub mod attractor_arrival;
 pub mod use_attractor_tasks;
 pub mod wander_set_dir;
+pub mod walk_round_object_sub_task;
