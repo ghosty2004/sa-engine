@@ -25,11 +25,6 @@ pub fn g_missed_by_ghidra_data_code_immediate_4217b0(this: u32) -> u32 {
     this
 }
 
-/// `CVehicleRecording::Render` (0x459F70, VEH): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cvehicle_recording_render_459f70(_this: u32) {}
-
 /// `FUN_004c88f0` (0x4C88F0, VEH): getter, cdecl, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x4C88F0, conv = cdecl, name = "FUN_004c88f0", expect = "8B 44 24 04 C3", unverified = "gen2-veh-1", route = "L1-pure", hazards = "none")]
 pub fn g_fun_004c88f0_4c88f0(a0: u32) -> u32 {
@@ -41,11 +36,6 @@ pub fn g_fun_004c88f0_4c88f0(a0: u32) -> u32 {
 #[allow(dead_code)]
 pub fn g_cbmx_blow_up_car_6c0560(_this: u32, _a0: u32, _a1: u32) {}
 
-/// `CHeli::SpecialHeliPreRender` (0x6C4750, VEH): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cheli_special_heli_pre_render_6c4750(_this: u32) {}
-
 /// `CBoat::ProcessOpenDoor` (0x6F0190, VEH): empty, thiscall, `ret 20`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -56,10 +46,8 @@ pub fn g_cboat_process_open_door_6f0190(_this: u32, _a0: u32, _a1: u32, _a2: u32
 pub const BODIES: &[Body] = &[
     (0x41BD00, 0x7B290C1B0B7F4D96, &[(0x41BD00, 3)]),
     (0x4217B0, 0x7B290C1B0B7F4D96, &[(0x4217B0, 3)]),
-    (0x459F70, 0xAF647E4C8602FFD2, &[(0x459F70, 1)]),
     (0x4C88F0, 0x3A6DF6CC919E0BCB, &[(0x4C88F0, 5)]),
     (0x6C0560, 0x69D7781C23F54695, &[(0x6C0560, 3)]),
-    (0x6C4750, 0xAF647E4C8602FFD2, &[(0x6C4750, 1)]),
     (0x6F0190, 0x69E5101C2400D339, &[(0x6F0190, 3)]),
 ];
 
@@ -70,9 +58,7 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_cvehicle_recording_render_459f70(0);
         g_cbmx_blow_up_car_6c0560(0, 0, 0);
-        g_cheli_special_heli_pre_render_6c4750(0);
         g_cboat_process_open_door_6f0190(0, 0, 0, 0, 0, 0);
     }
 }

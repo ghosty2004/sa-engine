@@ -162,7 +162,7 @@ orig! {
     /// `CMenuManager::PrintRadioStationList()` (0x5746F0, thiscall)
     pub fn print_radio_station_list_call(this: GPtr<u8>) = thiscall 0x5746F0 => print_radio_station_list;
     /// `CMenuManager::DrawControllerScreenExtraText(int32)` (0x57D8D0, thiscall)
-    pub fn draw_controller_screen_extra_text(this: GPtr<u8>, y: i32) = thiscall 0x57D8D0 => unported;
+    pub fn draw_controller_screen_extra_text(this: GPtr<u8>, y: i32) = thiscall 0x57D8D0 => crate::menu_controls::draw_controller_screen_extra_text;
     /// `CMenuManager::DisplaySlider(float x, float y, float h1, float h2, float length, float value,
     /// int32 spacing)` (0x576860, thiscall)
     pub fn display_slider_call(this: GPtr<u8>, px: f32, py: f32, h1: f32, h2: f32, len: f32, value: f32, spacing: i32) -> i32 = thiscall 0x576860 => display_slider;
@@ -883,7 +883,7 @@ orig! {
     /// `CMenuManager::PrintMap()` (0x575130, thiscall)
     pub fn print_map(this: GPtr<u8>) = thiscall 0x575130 => crate::menu_map::print_map;
     /// `CMenuManager::DrawControllerSetupScreen()` (0x57F300, thiscall)
-    pub fn draw_controller_setup_screen(this: GPtr<u8>) = thiscall 0x57F300 => unported;
+    pub fn draw_controller_setup_screen(this: GPtr<u8>) = thiscall 0x57F300 => crate::menu_controls::draw_controller_setup_screen;
     /// `CMenuManager::DrawQuitGameScreen()` (0x57D860, thiscall)
     pub fn draw_quit_game_screen_call(this: GPtr<u8>) = thiscall 0x57D860 => crate::menu_mgr::draw_quit_game_screen;
     /// `CMenuManager::DrawStandardMenus(bool)` (0x5794A0, thiscall)

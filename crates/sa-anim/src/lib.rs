@@ -44,7 +44,11 @@ pub mod statics;
 pub mod vehgroup;
 pub mod anim_file_load;
 pub mod rp_anim_blend;
+pub mod clump_update;
+pub mod frame_update;
 
 pub mod std6_natives;
 pub mod cutscene_update;
+pub mod cutscene_delete;
+pub mod cutscene_preload;
 pub mod generated;

@@ -567,6 +567,13 @@ pub fn update_compare_flag(s: Scr, state: u32) {
 #[inline]
 fn dispatch(s: Scr) -> i8 {
     COMMANDS_EXECUTED.set(COMMANDS_EXECUTED.get().wrapping_add(1));
+    let trace = crate::cmdlib::COMMAND_TRACE_HANDLER.load(core::sync::atomic::Ordering::Relaxed);
+    if trace != 0 {
+        // SAFETY: only sa-game stores a `fn(Scr, u32)` here (exploration aid)
+        #[allow(unsafe_code)]
+        let f: fn(Scr, u32) = unsafe { core::mem::transmute::<usize, fn(Scr, u32)>(trace) };
+        f(s, u32::from(ip(s).cast::<u16>().read()));
+    }
     let w = read_ip::<u16>(s);
     wr(s, NOT_FLAG, (w >> 15) as u8);
     let id = i32::from(w & 0x7FFF);

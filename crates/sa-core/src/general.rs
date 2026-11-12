@@ -140,8 +140,19 @@ pub mod math_natives {
         }
     }
 
+    /// `CGameLogic::IsCoopGameGoingOn()` (stub 0x441390 → 0x156CF30; sa-hook hooks it locally in phase
+    /// A): 1 in EAX when both `CWorld::Players[0].m_pPed` (0xB7CD98) and `Players[1].m_pPed` (0xB7CF28)
+    /// are set, else 0 (STD-7).
+    #[crate::native(addr = 0x441390, conv = cdecl, name = "CGameLogic::IsCoopGameGoingOn")]
+    pub fn is_coop_game_going_on() -> u32 {
+        let p1 = GPtr::<u32>::from_addr(0xB7CD98).read();
+        let p2 = GPtr::<u32>::from_addr(0xB7CF28).read();
+        u32::from(p1 != 0 && p2 != 0)
+    }
+
     /// Every `#[native]` of this module.
     pub const NATIVES: &[crate::abi::NativeReg] = &[
+        NATIVE_IS_COOP_GAME_GOING_ON,
         NATIVE_LIMIT_RADIAN_ANGLE,
         NATIVE_LIMIT_ANGLE,
         NATIVE_GET_RADIAN_ANGLE_BETWEEN_POINTS,

@@ -862,36 +862,8 @@ pub fn rp_anim_blend_clump_give_associations(clump: GPtr<u8>, assoc: GPtr<u8>) {
     wr::<u32>(assoc, 8, a32(d));
 }
 
-orig! {
-    /// `FrameUpdateCallBackSkinnedWithVelocityExtraction(AnimBlendFrameData* fd)` (0x4D1680): EAX = the
-    /// update data, `fd` on the stack (caller pops)
-    fn frame_update_skinned_with_velocity_extraction(data: u32, fd: GPtr<u8>) = reg("args = eax stack") 0x4D1680 => unported;
-}
-
-/// `gpAnimBlendClump` (`CAnimBlendClumpData*`, set by `RpAnimBlendClumpUpdateAnimations`).
-const ANIM_BLEND_CLUMP: usize = 0xB4EA0C;
-
-/// `FrameUpdateCallBackOffscreen(AnimBlendFrameData* fd, void* data)` (0x4D2E10, the off-screen
-/// `ForAllFrames` callback of `RpAnimBlendClumpUpdateAnimations`): only for a frame with flag 8
-/// (velocity extraction) while `gpAnimBlendClump->m_PedPosition` (+0xC) is set, it calls
-/// 0x4D1680 with EAX = `data` and `fd` pushed; otherwise nothing.
-#[hook(addr = 0x4D2E10, conv = cdecl, name = "FrameUpdateCallBackOffscreen", expect = "8B 44 24 04 F6 00 08",
-       unverified = "regconv-anim-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
-       note = "calls the EAX + stack register-convention 0x4D1680 through orig! reg (HARNESS-5)")]
-pub fn frame_update_callback_offscreen(fd: GPtr<u8>, data: u32) {
-    if fd.read() & 8 == 0 {
-        return;
-    }
-    let clump = g::<GPtr<u8>>(ANIM_BLEND_CLUMP).read();
-    if rd::<u32>(clump, 0xC) == 0 {
-        return;
-    }
-    frame_update_skinned_with_velocity_extraction(data, fd);
-}
-
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
-    HOOK_FRAME_UPDATE_CALLBACK_OFFSCREEN,
     HOOK_RP_ANIM_BLEND_FRAME_SET_NAME,
     HOOK_SET_FRAME_NODE_NAME,
     HOOK_CLUMP_DATA_DELETING_DTOR,

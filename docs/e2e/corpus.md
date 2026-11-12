@@ -36,6 +36,7 @@ run (`--replay`), and its screenshots must show the intended scenario before it 
 | air-water (CORPUS-1) | 5,800 | Hunter flight, parachute jump, jetpack, water, swimming, diving |
 | menus-hud (CORPUS-1) | 5,700 | pause menu pages, map, stats, controller and display setup, radio, busted in a car |
 | police-gang (CORPUS-1) | 5,200 | gang fight, 5-star wanted level, chase on foot, killed by the police, two hospital restarts |
+| menus-map-controls (PORT-MENU) | 4,000 | map pan / zoom / waypoint / legend options menu, stats.html saved, redefine-controls screen with one key redefined |
 
 ### air-water
 
@@ -65,6 +66,24 @@ spawned next to a police car; the collision gives a wanted star and the police a
 original divide by zero at 0x4F1464 (`wine: Unhandled division by zero at address 004F1464`), and the
 game hangs. This is a determinism-mode audio issue to investigate before an audio-menu recording can be
 made.
+
+### menus-map-controls
+
+Made for PORT-MENU (docs/arch/hud-port.md) to reach `CMenuManager::AdditionalOptionInput`'s map path and the
+controller setup screens, which menus-hud does not (its Controller Setup visit never opens screen 0x26).
+Pause menu, Map: pan with the D-pad (left, up) and the left stick, zoom in with `l2` and out with `r2`
+(held: one step per frame), the waypoint set and cleared with `circle` and set again with `T`, the legend
+options menu opened by holding space (one row toggled twice with `cross`, so the blip prefs end as they
+were), the legend toggled with `L`. Stats: `S` writes `stats.html` into the lane prefix's user files
+(`SaveStatsToFile`). Options -> Controller Setup -> Redefine Controls -> Foot Controls (screen 0x26, mouse +
+keys layout, 22 rows): seven rows down to Forward, enter, `W` (Forward's own key: the lane's `gta_sa.set`
+is byte-identical after the run, sha256 13c58cc3...), up, then esc back to the game.
+
+Every lane's `gta_sa.set` is part of every replay's start state (it is not reset between runs and the
+recording header only fingerprints it). A program that changes a setting or a binding must leave the file
+as it found it; check its hash before and after the record run.
+
+Recorded on lane 7 with `--replay`: replay == record IDENTICAL over 4,000 frames.
 
 ### police-gang
 

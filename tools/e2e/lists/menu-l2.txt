@@ -1,0 +1,2 @@
+CMenuManager::AdditionalOptionInput
+CMenuManager::RedefineScreenUserInput

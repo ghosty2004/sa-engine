@@ -481,3 +481,120 @@ incl. master `32279fd`): **IDENTICAL on all 11 recordings** (grove walk 5200, ai
 3300, car-ai 5000, c-bug 3220, driving 4338, menus-hud 5700, pause-restart 3700, police-gang 5200,
 weapon-combat 3500, world-cheats 3276 frames). Summary: the main repo's `target/verify-all/hud3va3/`.
 Note: `cargo test --release -p sa-stream` segfaults in `misc::tests::shadow_vertices` (not touched here).
+
+---
+
+# PORT-MENU: the pause menu complete in Rust
+
+Goal: every `CMenuManager` function the pause-menu screens reach (map, stats, brief, options, controller,
+display, audio) runs in Rust, so the pause menu works natively too. Base: STD-6
+(`worktree-agent-acb42295c15621136`, with PORT-HUD-3). Same rules as the earlier passes (ADR-001, from the
+1.0 US bytes, gta-reversed and `docs/re/specs/HUD/*.md` as reading aids); every new hook is registered
+`unverified` (batches `menu-1` .. `menu-3`) until its L2 / split evidence below.
+
+| file | contents |
+|---|---|
+| `menu_map_input.rs` | `CMenuManager::AdditionalOptionInput` 0x5773D0, complete: the map path (waypoint, zoom, pan, cursor tracking, view clamp, legend options menu, legend toggle) replaces PORT-HUD-3's ADR-002 `fallback` (removed; the hook stays in `menu_input::HOOKS` at its old table position). Batch `menu-1` |
+| `menu_stats_file.rs` | `CMenuManager::SaveStatsToFile` 0x57DDE0 (`stats.html` through the CRT's `fopen` / `fprintf` / `fclose`). Batch `menu-2` |
+| `menu_controls.rs` | `DrawControllerSetupScreen` 0x57F300, `DrawControllerBound` 0x57E6E0, `DrawControllerScreenExtraText` 0x57D8D0, `RedefineScreenUserInput` 0x57EF50. Batch `menu-3` |
+| `sa-game/src/crt.rs` | native `fprintf` 0x823A30 (vararg entry, written through sa-platform's file table: text mode turns `\n` into `\r\n`), `_strdate` 0x823A8E (UTC date: sa-platform has no time zone), `_strupr` 0x836FBA (the existing ASCII `strupr`) |
+
+The `orig!` declarations that pointed these five at `unported` now name the Rust paths (`menu_input.rs`,
+`menu_draw.rs`). Every `CControllerConfigManager` function the screens call was already ported (sa-input,
+reached through the phase B registry); no other `CMenuManager` / `CMenuSystem` row is left `specified`
+(`CMenuSystem::Initialise` is ported but not hookable, PORT-HUD-2).
+
+## Findings (bytes vs gta-reversed)
+
+- `AdditionalOptionInput`: the map fields `m_bDrawingMap` (0xBA67A1) and the last step time (0xBA8280) are
+  written by absolute address. The left stick x is read twice (after y as well). The legend options menu
+  opens while space is **held** (new and old key words set) with no system menu, and closes when both are
+  clear; an accepted row toggles its pref, rebuilds the ON / OFF column and moves the selection (row 4 wraps
+  to 0). Zoom steps are the fixed +-7 / +-21 (gr's frame-rate scaling is not in the original). The view
+  bounds of the pan tests are the entry values (not refreshed after the origin moves); the clamp keeps
+  `left` / `bottom` on the x87 stack and `right` / `top` as f32 locals. The cursor-tracking loops pass
+  `StretchX/Y` EDX = the last screen coordinate loaded, which is the current one on every path (EDX survives
+  `StretchX/Y`, `preserve = "edx"`).
+- `RedefineScreenUserInput`: off screen 0x26 (or on a page other than 0 / 1) the row count is the low byte
+  of the `accept` pointer; the backspace "delete all" path sets +0x1B00 = 0x10 and the editing flags; the
+  200 ms latch reset clears the dword +0x1AF0 and the byte +0x1AF4; on back with +0x1AE9 clear the error
+  +0x1AEA is 3 (EBX, loaded with 3 for the mouse test).
+- `DrawControllerBound`: the row -> action mapping is two jump tables over the row tables 0x865598 (on foot)
+  / 0x865608 (vehicle), copied as `FOOT_ROWS` / `VEHICLE_ROWS` plus a match; on foot rows 22 / 23 are -1 for
+  mouse + keys (0x20 / 0x21 for a joypad). The highlight rect uses 16-bit products; `FEC_QUE` is fetched even
+  when `onlyCheck` suppresses the print.
+- `DrawControllerScreenExtraText`: the blink row compares with the current item +0x54 (gr: the list
+  selection), the blink y is the unstretched `(float)y`, the combo text y the y after the last row + 10.
+- `DrawControllerSetupScreen`: 41 `TheText.Get` calls fill a 44-entry local array in the bytes' order (slots
+  40, 41, 43 are never read); the row's name is printed without a null test; the mouse sets +0x1B00 = 0x10
+  only when it does not start editing off the selected row.
+- `SaveStatsToFile`: the "%0.0f%%" rewrite of percentage stats is `min(atol(v) * 0.001 * 100, 100)` (x87, NaN
+  -> 100), every `'|'` becomes 0xBA; afterwards `SetDir("")`, helper text 6 with fade 300.
+- Uninitialised stack the ports replace (each in a doc comment): `ConstructStatLine`'s page dword upper
+  bytes (the callee reads the byte), and on controller pages other than 0 / 1 (never set: +0xB7 is toggled
+  between 0 and 1) the row heights / counts and the extra text's combo x.
+
+## Verification (PORT-MENU)
+
+Lane 7 (`SA_ROOT=/home/ghosty2004/sa-engine LANE=7`, binary snapshots `target/snap/m1` / `m2` (after the
+column-step fix), `SA_UNVERIFIED=menu-1,menu-2,menu-3`, `L2_PER_FRAME=20`, `SPLIT_PER_FRAME=1`,
+`SPLIT_STACKFILL=4096`, `L2_SPOOL_MAX=1G`; spools deleted after each report). Lists:
+`tools/e2e/lists/menu-l2.txt` (AdditionalOptionInput, RedefineScreenUserInput) and `menu-split.txt` (the
+three drawing functions and SaveStatsToFile). Outputs: the worktree's `target/e2e/lane-7/port-l2-menu-*`.
+
+- **New recording `menus-map-controls`** (docs/e2e/corpus.md): menus-hud never opens screen 0x26 (its
+  Controller Setup visit ends in the joypad configuration page) and zooms with `l1` / `r1`, which the map
+  ignores. Replay == record IDENTICAL over 4,000 frames; the lane's `gta_sa.set` is unchanged by the run.
+- **L2** (`menu-l2-mc4`, `menu-l2-mh`, `menu-l2-pr`): `AdditionalOptionInput` 1000 / 1000 / 597 cases,
+  `RedefineScreenUserInput` 540 cases (menus-map-controls only), **0 mismatches**, 0 undeclared after the
+  extras (`tools/e2e/l2-extras.txt`, section `# PORT-MENU`: audio front-end writes in AESoundManager and
+  the audio entities, the accept / back bools, the nested `DrawControllerBound`'s render buffers); (b) and
+  (c) IDENTICAL on every frame of all three recordings.
+- **Split** (`menu-split-mc2`): `DrawControllerBound` 541, `DrawControllerSetupScreen` 540,
+  `SaveStatsToFile` 1 compared, **0 mismatches**, 0 undeclared; splito / splitr == plain. The first build
+  failed every `DrawControllerBound` case (`menu-split-mc`: the bound-key column step was `StretchX(150)`;
+  the bytes push 75.0): fixed. menus-hud and pause-restart have no case of these four (NOCASES).
+- `DrawControllerScreenExtraText`: no case anywhere; its only caller is `DrawStandardMenus` on screen 0x26,
+  which `DrawBackground` never sends there (0x26 -> `DrawControllerSetupScreen`), so it looks unreachable in
+  the PC build. It stays `unverified` (batch `menu-4`).
+- Promotion: `menu-1`, `menu-2`, `menu-3` (5 hooks) promoted (attributes removed, route / hazards kept); the
+  catalogue state (`catalog/state.csv`) is left to the main session: the verdicts are in
+  `docs/arch/menu-port-verdicts.tsv`.
+- Tests: `cargo test --release -p sa-hook --lib` 54 pass; clippy `-D warnings` sa-hud (host all targets, i686
+  `--features in-process`), sa-hook i686, sa-game host (all targets); wasm32 build of sa-ports;
+  `sa-game` test `crt::strdate_tests::civil_dates`.
+
+## Save / Load screens (not ported, out of scope)
+
+The menu side is Rust already (`ProcessFileActions`, `DrawStandardMenus`' slot rows, `C_PcSave::PopulateSlotInfo`
+/ `SetSaveDirectory`). What the Save / Load screens still reach on the original, i.e. what a native save /
+load needs (from the callees of `GenericSave` 0x5D13E0, `GenericLoad` 0x5D17B0 and `C_PcSave::SaveSlot`
+0x619060 that no branch hooks):
+
+- `C_PcSave`: `SaveSlot` 0x619060, `GenerateGameFilename` 0x6190A0, `DeleteSlot` 0x6190D0.
+- `CGenericGameStorage`: `GenericSave` 0x5D13E0, `GenericLoad` 0x5D17B0, `ReportError` 0x5D08C0,
+  `OpenFileForReading` / `Writing` 0x5D0D20 / 0x5D0DD0, `CloseFile` 0x5D0E30, `MakeValidSaveName` 0x5D0E90,
+  `GetNameOfSavedGame` 0x5D0F40, `GetCurrentVersionNumber` 0x5D0F50, `SaveWorkBuffer` / `LoadWorkBuffer`
+  0x5D0F80 / 0x5D10B0, `CheckDataNotCorrupt` 0x5D1170, `SaveDataToWorkBuffer` / `LoadDataFromWorkBuffer`
+  0x5D1270 / 0x5D1300, `CheckSlotDataValid` 0x5D1380, `GetSavedGameDateAndTime` 0x618D00,
+  `InitRadioStationPositionList` 0x618E70, `DoGameSpecificStuffAfterSucessLoad` / `BeforeSave` 0x618E90 /
+  0x618F50, `RestoreForStartLoad` 0x619000.
+- The per-subsystem blocks: `CSimpleVariablesSaveStructure::Construct` / `Extract` 0x5D1B80 / 0x5D1EA0,
+  `CTheScripts::Save` / `Load` 0x5D4C40 / 0x5D4FD0 (+ `DoScriptSetupAfterPoolsHaveLoaded` 0x5D3390),
+  `CGarages` 0x5D3160 / 0x5D3270, `CGameLogic` 0x5D33C0 / 0x5D3440, `CPickups` 0x5D3540 / 0x5D35A0, `CRestart`
+  0x5D3620 / 0x5D3770, `CPlayerInfo` 0x5D3AC0 / 0x5D3B00, `CStats` 0x5D3B40 / 0x5D3BF0, `CSetPieces` 0x5D3C70 /
+  0x5D3CA0, `CPedType` 0x5D3CD0 / 0x5D3D10, `CShopping` 0x5D3DE0 / 0x5D3E40, `CStuntJumpManager` 0x5D5570 /
+  0x5D5920, `CEntryExitManager` 0x5D5970 / 0x5D55C0, `TextCopy` 0x69F910, the unnamed 0x541E50, plus the CRT
+  `free` / `strncmp` / `sprintf` / `strncpy` (natively replaced already). The pools, streaming, world,
+  radar, zones, gangs, audio and the other blocks `GenericSave` calls are hooked (in this branch or others)
+  but each needs its own save-format check against a 1.0 save file.
+
+## Open items (PORT-MENU)
+
+- `CStats::ConstructStatLine` 0x55A780 and `CStats::FindCriminalRatingString` 0x55A210 (WORLD, `specified`,
+  not hooked on any branch) are called by the stats page (`PrintStats`) and `SaveStatsToFile`: natively the
+  stats screen and the stats file still need them (the `orig!` registry has no entry).
+- `DrawControllerScreenExtraText`: no corpus case (above); batch `menu-4`.
+- Native `_strdate` uses the UTC date (sa-platform has no time zone); the original uses the local date.
+- The legend options menu's pref rows and the redefine screen's mouse paths (+0x1B00 states 3..5, the back
+  button, the mouse row selection) are not driven by the corpus: the test setup feeds no cursor position.

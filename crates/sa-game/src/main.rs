@@ -76,9 +76,10 @@ fn parse_args() -> Result<Args, String> {
             "--present-dir" => d3d9::set_present_dir(PathBuf::from(val()?)),
             "--documents" => a.documents = Some(PathBuf::from(val()?)),
             "--persistent-documents" => a.documents = Some(documents_dir()),
+            "--start-in-world" => native::set_start_in_world(),
             "-h" | "--help" => {
                 println!(
-                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
+                    "sa-game --game DIR [--frames N] [--report FILE] [--present-dir DIR] [--documents DIR | --persistent-documents] [--start-in-world] [--window [--exit-after SECONDS] | --screenshot OUT.png]\n\
                      The user documents folder (settings, saves) is a fresh temporary folder per run unless\n\
                      --documents DIR or --persistent-documents ($XDG_DATA_HOME/sa-engine/documents) is given."
                 );
@@ -220,10 +221,27 @@ fn run(args: &Args) -> Result<String, String> {
         // synthetic input: Enter and the left mouse button pressed and released every 8 iterations
         // (skips the logo and title movie states, presses the menu's default entry; Enter reaches
         // CPad through the window procedure, the mouse through DirectInput)
+        // `SA_GAME_WALK=START:COUNT` (evidence runs): from iteration START the W key (GO_FORWARD) is
+        // pressed and held for COUNT iterations, then released; the synthetic Enter stops 8
+        // iterations before START (Enter enters vehicles in the world)
+        let walk = walk_spec();
         bind::with("input", |p| {
             let t = p.time.time_get_time();
             let mut i = InputState::default();
-            match n % 8 {
+            if let Some((start, count)) = walk {
+                if n >= start && n < start + count {
+                    i.held.insert(Key::W);
+                    if n == start {
+                        i.key_down(Key::W);
+                    }
+                } else if n == start + count {
+                    i.events.push(InputEvent::KeyUp { key: Key::W });
+                }
+            }
+            // in game (gGameState IDLE) the menu input stops: the left button is the fire / punch key and Enter
+            // enters vehicles
+            let enter = walk.is_none_or(|(start, _)| n + 8 < start) && winmain::game_state() != winmain::STATE_IDLE;
+            match if enter { n % 8 } else { 0 } {
                 4 => {
                     i.key_down(Key::Enter);
                     i.mouse_held.insert(MouseButton::Left);
@@ -240,7 +258,10 @@ fn run(args: &Args) -> Result<String, String> {
                 }
                 _ => {}
             }
-            i.mouse_delta = (4.0, -2.0);
+            // the synthetic mouse movement stops in game too: it turns the player camera (pitching it at the ground)
+            if winmain::game_state() != winmain::STATE_IDLE {
+                i.mouse_delta = (4.0, -2.0);
+            }
             for e in &i.events {
                 p.queue.push_event(e, t);
             }
@@ -387,4 +408,11 @@ fn main() {
             std::process::exit(1);
         }
     }
+}
+
+/// `SA_GAME_WALK=START:COUNT` (see the main loop).
+fn walk_spec() -> Option<(u32, u32)> {
+    let v = std::env::var("SA_GAME_WALK").ok()?;
+    let (a, b) = v.split_once(':')?;
+    Some((a.trim().parse().ok()?, b.trim().parse().ok()?))
 }

@@ -1190,7 +1190,7 @@ fn bound_radius(e: GPtr<u8>) -> f32 {
 
 /// `CColSphere::Set(radius, GetBoundCentre(), 0, 0, 0xFF)` into `sp` (the original passes the radius
 /// through one of its own argument slots, not reproduced).
-fn entity_bound_sphere(e: GPtr<u8>, sp: GPtr<u8>) {
+pub(crate) fn entity_bound_sphere(e: GPtr<u8>, sp: GPtr<u8>) {
     let r = bound_radius(e);
     let mut cb = [0u32; 3];
     let c = get_bound_centre(e, local(&mut cb));

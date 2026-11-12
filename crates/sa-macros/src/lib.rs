@@ -143,9 +143,9 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut entry_eax = false;
     let mut fallback = false;
     let mut footprint: Option<u32> = None;
+    let mut peek: Option<u32> = None;
     let mut reg: Option<(LitStr, RegSpec)> = None;
     let mut hints = Hints::default();
-    let mut peek: Option<u32> = None;
     let parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("addr") {
             let v: LitInt = meta.value()?.parse()?;
@@ -220,7 +220,7 @@ pub fn hook(attr: TokenStream, item: TokenStream) -> TokenStream {
     if let Err(e) = hints.check() {
         return e.to_compile_error().into();
     }
-    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, &hints, peek, reg) {
+    match expand(f, addr, conv, name, expect, this, preserve, entry_eax, fallback, footprint, peek, reg, &hints) {
         Ok(t) => t.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -238,9 +238,9 @@ fn expand(
     entry_eax: bool,
     fallback: bool,
     footprint: Option<u32>,
-    hints: &Hints,
     peek: Option<u32>,
     regconv: Option<(LitStr, RegSpec)>,
+    hints: &Hints,
 ) -> syn::Result<proc_macro2::TokenStream> {
     let span = f.sig.ident.span();
     let missing = |what: &str| syn::Error::new(span, format!("#[hook] needs `{what} = ...`"));
@@ -781,7 +781,7 @@ fn expand(
             quote! {
                 #[cfg(target_arch = "x86")]
                 #[doc(hidden)]
-                #[allow(non_snake_case, unsafe_code, clippy::not_unsafe_ptr_arg_deref)]
+                #[allow(non_snake_case, unsafe_code, dead_code, clippy::not_unsafe_ptr_arg_deref)]
                 extern #abi fn #shim(#(#args: #tys),*) -> <#ret as ::sa_core::abi::IntoAbi>::Abi {
                     #calls.fetch_add(1, ::core::sync::atomic::Ordering::Relaxed);
                     let _fpu = ::sa_core::abi::FpuGuard::enter();

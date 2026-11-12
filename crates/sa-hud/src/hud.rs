@@ -496,3 +496,12 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_USER_DISPLAY_INIT,
     HOOK_USER_DISPLAY_PROCESS,
 ];
+
+/// Phase B entry of [`get_int_colour`] (STD-9): the colour index is the low byte of its stack dword.
+#[sa_core::native(addr = 0x58FD50, conv = thiscall, name = "CHudColours::GetIntColour")]
+pub fn get_int_colour_native(this: GPtr<u8>, colour: u32) -> u32 {
+    get_int_colour(this, colour as u8)
+}
+
+/// This module's phase B natives.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_GET_INT_COLOUR_NATIVE];

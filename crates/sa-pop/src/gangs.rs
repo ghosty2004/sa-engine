@@ -214,3 +214,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_CAN_PLAYER_START_A_GANG_WAR_HERE,
     HOOK_TELL_STREAMING_WHICH_GANGS_ARE_NEEDED,
 ];
+
+/// `CPopulation::ChooseGangOccupation(int16 gang)` (0x611550): a `jmp` to `CGangs::ChooseGangPedModel` (0x5DE5A0;
+/// identical code folded), so the same port. A phase B native (an entry `jmp` into game `.text`; STD-8).
+#[sa_core::native(addr = 0x611550, conv = cdecl, name = "CPopulation::ChooseGangOccupation")]
+pub fn choose_gang_occupation(gang: i16) -> i32 {
+    choose_gang_ped_model(gang)
+}

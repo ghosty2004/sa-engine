@@ -46,5 +46,8 @@ pub mod menu_ctrl;
 pub mod menu_draw;
 pub mod menu_input;
 pub mod menu_map;
+pub mod menu_controls;
+pub mod menu_map_input;
+pub mod menu_stats_file;
 pub mod radar_draw3;
 pub mod generated;

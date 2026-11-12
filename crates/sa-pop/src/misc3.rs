@@ -15,7 +15,7 @@ orig! {
     /// `CTheScripts::IsPlayerOnAMission()` (0x464D50)
     fn is_player_on_a_mission() -> u8 = cdecl 0x464D50 => unported;
     /// `CGangWars::EndGangWar(bool)` (0x4464C0; ported unhookable in misc2)
-    fn end_gang_war(b: u32) = cdecl 0x4464C0 => unported;
+    fn end_gang_war(b: u32) = cdecl 0x4464C0 => crate::misc2::end_gang_war;
     /// `CGangWars::UpdateTerritoryUnderControlPercentage()` (0x443DE0)
     fn update_territory_under_control_percentage() = cdecl 0x443DE0 => crate::misc2::update_territory_under_control_percentage;
     /// `CWorld::FindPlayerWanted(int32)` (0x56E230)

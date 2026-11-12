@@ -50,6 +50,7 @@ pub const MODULES: &[&[HookReg]] = &[
     mvpc_fx2::HOOKS,
     mvpc_render1::HOOKS,
     crate::mvpb_r1::HOOKS,
+    crate::transform_vectors::HOOKS,
     crate::mvpd_r1::HOOKS,
     crate::mvpd_d3d::HOOKS,
     crate::mvpd_r2::HOOKS,
@@ -57,8 +58,17 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::mvpd_r4::HOOKS,
     crate::mvpd_r5::HOOKS,
     crate::quaternion::HOOKS,
-    crate::transform_vectors::HOOKS,
     crate::pole_shadow::HOOKS,
+    crate::ropes_register::HOOKS,
+    crate::rope_update::HOOKS,
+    crate::building_dn_render::HOOKS,
+    crate::visibility_ped::HOOKS,
+    crate::visibility_lists::HOOKS,
+    crate::visibility_entity::HOOKS,
+    crate::render_buffer_store::HOOKS,
+    crate::grass_globals::HOOKS,
+    crate::rw_search_callbacks::HOOKS,
+    crate::list_remove_item::HOOKS,
     crate::render_lists::HOOKS,
     crate::mvpd_unk::HOOKS,
     rwplugins::HOOKS,
@@ -103,6 +113,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::plant_col_entity_cache::HOOKS,
     crate::stencil_shadow_volumes::HOOKS,
     crate::roadsign_text_raster::HOOKS,
+    crate::roadsign_line_row::HOOKS,
+    crate::roadsign_atomic::HOOKS,
     crate::generated::HOOKS,
 ];
 
@@ -167,7 +179,7 @@ pub const ALL: &[HookReg] = &ALL_ARRAY;
 /// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
 /// phase A); `sa_ports::NATIVES` lists each of these.
 pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] =
-    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES, crate::short_leaf_natives::NATIVES];
+    &[sprite2d::NATIVES, rwplugins::NATIVES, draw::NATIVES, crate::custompipes::NATIVES, crate::fx_alloc::NATIVES, crate::car_dirt::NATIVES, crate::visibility_access::NATIVES, crate::frame_node_name::NATIVES, crate::collision_plugin_mi::NATIVES, crate::mvpb_r1::NATIVES, crate::car_pipe_setup::NATIVES, crate::short_leaf_natives::NATIVES, crate::cullzones::NATIVES, crate::renderer::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 

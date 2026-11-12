@@ -1,0 +1,4 @@
+CMenuManager::DrawControllerSetupScreen
+CMenuManager::DrawControllerBound
+CMenuManager::DrawControllerScreenExtraText
+CMenuManager::SaveStatsToFile

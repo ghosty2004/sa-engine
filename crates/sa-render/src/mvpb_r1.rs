@@ -1111,24 +1111,6 @@ pub fn transform_points(out: GPtr<u8>, count: u32, m: GPtr<u8>, inp: GPtr<u8>) {
     }
 }
 
-/// `TransformVectors(RwV3d* out, int count, const CMatrix& m, const RwV3d* in)` (0x54EEA0, cdecl): as
-/// `TransformPoints` with `RwV3dTransformVector`. The entry is a `jmp` into the protection chunk
-/// 0x408375 (it loads the scratch matrix pointer 0xB72920 through a rotated `.HOODLUM` dword), so the
-/// port is a phase B native (STD-6).
-#[sa_core::native(addr = 0x54EEA0, conv = cdecl, name = "TransformVectors")]
-pub fn transform_vectors(out: GPtr<u8>, count: u32, m: GPtr<u8>, inp: GPtr<u8>) {
-    matrix_copy_to_rw_matrix(m, g::<GPtr<u8>>(0xB72920).read());
-    rw_matrix_update(g::<GPtr<u8>>(0xB72920).read());
-    let mut n = count;
-    let (mut o, mut i) = (out, inp);
-    while n != 0 {
-        rw_v3d_transform_vector(o, i, g::<GPtr<u8>>(0xB72920).read());
-        o = o.byte_add(0xC);
-        i = i.byte_add(0xC);
-        n = n.wrapping_sub(1);
-    }
-}
-
 /// `CGrassRenderer::GenPointInTriangle(CVector* out, const CVector* v0, const CVector* v1, const
 /// CVector* v2, float r1, float r2)` (0x5DAB00, cdecl): when `r1 + r2 > 1` both become `1 - r`; with
 /// `c = 1 - r1 - r2`, `out = c*v0 + r1*v1 + r2*v2` per component (x87, each sum rounded to f32).
@@ -1477,4 +1459,5 @@ pub const HOOKS: &[HookReg] = &[
 ];
 
 /// Phase B natives of this module.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_TRANSFORM_VECTORS];
+/// TransformVectors (0x54EEA0) is registered by `crate::transform_vectors` (one registration per address).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[];

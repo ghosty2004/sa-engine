@@ -11,11 +11,6 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// `CCollision::Update` (0x411E20, COLL): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_ccollision_update_411e20(_this: u32) {}
-
 /// `FUN_0047e050` (0x47E050, COLL): getter, thiscall, `ret`; 2 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -37,7 +32,6 @@ pub fn g_break_manager_c_exit_59e660(_this: u32) {}
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
-    (0x411E20, 0xAF647E4C8602FFD2, &[(0x411E20, 1)]),
     (0x47E050, 0x57B42AFCD841DAC2, &[(0x47E050, 4)]),
     (0x59A130, 0xAF647E4C8602FFD2, &[(0x59A130, 1)]),
     (0x59E660, 0xAF647E4C8602FFD2, &[(0x59E660, 1)]),
@@ -50,7 +44,6 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_ccollision_update_411e20(0);
         g_interior_c_shop_furnish_ceiling_59a130(0);
         g_break_manager_c_exit_59e660(0);
     }

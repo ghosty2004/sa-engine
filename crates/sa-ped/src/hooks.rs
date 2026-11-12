@@ -15,6 +15,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::player_ped::HOOKS,
     crate::player_info::HOOKS,
     crate::clothes::HOOKS,
+    crate::clothes_builder::HOOKS,
+    crate::default_txd_slot::HOOKS,
     crate::misc::HOOKS,
     crate::small::HOOKS,
     crate::ped_life::HOOKS,

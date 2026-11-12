@@ -214,7 +214,8 @@ pub fn convert_from_ms_to_bytes(ms: u32, freq: u32, channels: u16) -> u32 {
 /// focus player's vehicle (`FindPlayerVehicle(PlayerInFocus, true)`); when there is none, the vehicle
 /// the player ped's +0xFC entity is (entity type 2), else null.
 /// Not hooked: the protection reads its entry bytes as data (`sbb ebx, [0x4D9E12]` at 0x1561A3A);
-/// callers reach it through `orig!` (0x4D9E10).
+/// callers reach it through `orig!` (0x4D9E10). A phase B native (STD-8).
+#[sa_core::native(addr = 0x4D9E10, conv = cdecl, name = "CAEAudioUtility::FindVehicleOfPlayer")]
 pub fn find_vehicle_of_player() -> GPtr<u8> {
     let focus = i32::from(g::<u8>(PLAYER_IN_FOCUS).read());
     let veh = find_player_vehicle(focus, 1);
@@ -676,3 +677,8 @@ pub fn distance_attenuation_f32(dist: f32) -> f32 {
 pub fn directional_mike_attenuation_f32(dir: GPtr<u8>) -> f32 {
     get_directional_mike_attenuation(dir).to_f32()
 }
+
+/// This module's phase B natives (STD-8).
+pub const NATIVES: &[sa_core::abi::NativeReg] =
+    &[NATIVE_FIND_VEHICLE_OF_PLAYER, crate::ped::NATIVE_SPEECH_IS_GLOBAL_CONTEXT_PAIN,
+        crate::ped::NATIVE_SPEECH_IS_GLOBAL_CONTEXT_IMPORTANT_FOR_INTERUPTING];

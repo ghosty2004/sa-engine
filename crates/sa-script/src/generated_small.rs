@@ -12,8 +12,6 @@
 use super::*;
 
 orig! {
-    /// `CScriptsForBrains::Init` (0x46A8C0), thiscall, 0 stack argument(s)
-    fn c_46a8c0_t0(this: u32) -> u32 = thiscall 0x46A8C0 => unported;
     /// `CScriptsForBrains::GetIndexOfScriptBrainWithThisName` (0x46AA30), thiscall, 2 stack argument(s)
     fn c_46aa30_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x46AA30 => unported;
     /// `CScriptsForBrains::StartOrRequestNewStreamedScriptBrain` (0x46CD80), thiscall, 4 stack argument(s)
@@ -58,13 +56,6 @@ pub fn g_cscripts_for_brains_has_attractor_script_brain_with_this_name_loaded_46
     }
 }
 
-/// `CScriptsForBrains` (0x46B260, SCRIPT): small, thiscall, `ret`; 6 instruction(s) matched.
-#[hook(addr = 0x46B260, conv = thiscall, name = "CScriptsForBrains", expect = "56 8B F1 E8 58 F6 FF FF", unverified = "gen2-script-1", route = "L2", hazards = "none", recs = "grove-walk,pause-restart")]
-pub fn g_cscripts_for_brains_46b260(this: u32) -> u32 {
-    c_46a8c0_t0(this);
-    this
-}
-
 /// `CScriptsForBrains::StartOrRequestNewStreamedScriptBrainWithThisName` (0x46CED0, stub to .HOODLUM 0x1562360, SCRIPT): small, thiscall, `ret 12`; 20 instruction(s) matched.
 #[hook(addr = 0x46CED0, conv = thiscall, name = "CScriptsForBrains::StartOrRequestNewStreamedScriptBrainWithThisName", expect = "E9 8B 54 0F 01", unverified = "gen2-script-1", route = "L2", hazards = "none")]
 pub fn g_cscripts_for_brains_start_or_request_new_streamed_script_brain_with_this_name_46ced0(
@@ -95,7 +86,6 @@ pub fn g_thunk_fun_015689b0_47c0e0(this: u32, a0: u32) -> u32 {
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x46AB20, 0x58D18832F402AB96, &[(0x46AB20, 5), (0x1561650, 52)]),
-    (0x46B260, 0x63BB078A5DAFF309, &[(0x46B260, 12)]),
     (0x46CED0, 0xC0D04D4BB3D2B0A0, &[(0x46CED0, 5), (0x1562360, 45)]),
     (0x47C0E0, 0x7F0FA6E24B0DCC3A, &[(0x47C0E0, 5), (0x15689B0, 21)]),
 ];

@@ -187,7 +187,7 @@ pub fn g_cb_righttorender_rp_material_stream_read_74d7d0(a0: u32, a1: u32) -> u3
 }
 
 /// `_rpWorldAddLightCB` (0x7513D0, RW): small, cdecl, `ret`; 29 instruction(s) matched.
-#[hook(addr = 0x7513D0, conv = cdecl, name = "_rpWorldAddLightCB", expect = "A1 B0 25 C9 00", unverified = "gen2-rw-4", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x7513D0, conv = cdecl, name = "_rpWorldAddLightCB", expect = "A1 B0 25 C9 00", unverified = "gen2-rw-3", route = "L2", hazards = "heap-writes")]
 pub fn g_rp_world_add_light_cb_7513d0(a0: u32, a1: u32) -> u32 {
     let v1 = g::<u32>(0xC9_25B0).read();
     wr::<u32>(p(v1.wrapping_add(a0)), 0, a1);

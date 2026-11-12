@@ -312,6 +312,8 @@ pub fn game_state() -> u32 {
 
 /// gGameState LOADING_STARTED: the iteration runs `CGame::Initialise` and the post-loading steps.
 pub const STATE_LOADING_STARTED: u32 = 8;
+/// `gGameState` IDLE (the game runs)
+pub const STATE_IDLE: u32 = 9;
 
 pub fn aborted() -> bool {
     ABORTED.load(Ordering::SeqCst)
@@ -335,6 +337,17 @@ fn state_name(s: u32) -> &'static str {
 }
 
 /// One iteration of WinMain's main loop (0x748A41–0x748DCF).
+/// Clears the flag when dropped (also when the frame unwinds on a blocked callee).
+struct ClearOnDrop(&'static std::sync::atomic::AtomicBool);
+impl Drop for ClearOnDrop {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::SeqCst);
+    }
+}
+
+/// Set when this iteration sent `rsIDLE` (the in-game frame); reported in the step's detail.
+static IDLE_RAN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 fn process_game_logic() -> String {
     if rd::<u32>(RS_QUIT) != 0 || rd::<u8>(MENU_START_GAME_LOADING) != 0 {
         // 0x748DD5: the loop ended
@@ -497,8 +510,17 @@ fn process_game_logic() -> String {
                     && is_beat_info_present(GPtr::from_addr(AUDIO_ENGINE)) == 0;
                 // otherwise the frame limiter (0x748D81): Idle only once `1000 / frameLimit < t`
                 // (`fcomp; test ah, 5; jp skip`: equal, greater or unordered skip)
-                if unlimited || 1000.0 / (rd::<i32>(RS_FRAME_LIMIT) as f32) < t {
+                let limit = 1000.0 / (rd::<i32>(RS_FRAME_LIMIT) as f32);
+                if unlimited || limit < t {
+                    crate::d3d9::IN_GAME_FRAME.store(true, Ordering::SeqCst);
+                    let _clear = ClearOnDrop(&crate::d3d9::IN_GAME_FRAME);
                     rs_event_handler(26, GPtr::from_addr(1));
+                    IDLE_RAN.store(true, Ordering::SeqCst);
+                } else if limit.is_finite() && limit > t {
+                    // The original spins through the loop until the limit passes; the native loop sleeps for the
+                    // rest of it instead (same frames, no busy loop), so one `--frames` iteration in two runs the
+                    // game frame.
+                    std::thread::sleep(std::time::Duration::from_secs_f32((limit - t) / 1000.0 + 0.000_05));
                 }
             }
         }
@@ -508,7 +530,8 @@ fn process_game_logic() -> String {
         wr::<u32>(IS_FOREGROUND, 1);
     }
     let after = rd::<u32>(GAME_STATE);
-    format!("gGameState {} → {}", state_name(before), state_name(after))
+    let idle = if IDLE_RAN.swap(false, Ordering::SeqCst) { ", rsIDLE (Game::Idle) ran" } else { "" };
+    format!("gGameState {} → {}{idle}", state_name(before), state_name(after))
 }
 
 fn loading_started() {

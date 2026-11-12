@@ -1,0 +1,194 @@
+address,name,kind,batch,file
+0x403E40,CEntity::ProcessControl,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x403E50,CEntity::ProcessCollision,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x403E60,CEntity::ProcessShift,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x403EB0,CEntity::FlagToDestroyWhenNextProcessed,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4042D0,CRect::IsPointInside-Tolerance,hook,std7-math-1,crates/sa-core/src/rect_inside.rs
+0x411A80,CMatrix::operator*=,hook,std7-math-1,crates/sa-core/src/matrix_members.rs
+0x411E20,CCollision::Update,native,,crates/sa-core/src/std7_natives.rs
+0x41BC80,CBridge::Update,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x41BCA0,CBridge::FindBridgeEntities,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4395A0,CCheat::PredatorCheat,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x43C600,CCurves::TestCurves,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x43CE70,nullsub_43ce70,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x43EF90,CEntryExitManager::SetEntryExitFlag,native,,crates/sa-script/src/entry_exit_flag.rs
+0x4411A0,nullsub_4411a0,native,,crates/sa-core/src/std7_natives.rs
+0x441390,CGameLogic::IsCoopGameGoingOn,native,,crates/sa-core/src/general.rs
+0x453FB0,nullsub_453fb0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x459350,CMatrix::Scale,native,,crates/sa-core/src/matrix_members.rs
+0x459F70,CVehicleRecording::Render,native,,crates/sa-core/src/std7_natives.rs
+0x45B160,CReplay::EnableReplays,hook,std7-world-1,crates/sa-world/src/world/replay_playback.rs
+0x4634C0,nullsub_4634c0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x463760,nullsub_463760,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x463780,nullsub_463780,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x464BD0,CRunningScript::RemoveScriptFromList,hook,std7-script-1,crates/sa-script/src/the_scripts_init.rs
+0x464D70,CRunningScript::IsPedDead,hook,std7-script-1,crates/sa-script/src/the_scripts_init.rs
+0x465070,thunk_FUN_01561010,hook,std7-core-1,crates/sa-core/src/pool.rs
+0x46A380,nullsub_46a380,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x470100,CBoundingBox::SetMinMax,hook,std7-math-1,crates/sa-core/src/rect_inside.rs
+0x474800,CTheScripts::ScriptAttachAnimGroupToCharModel,hook,std7-script-1,crates/sa-script/src/script_anim_group.rs
+0x485A50,CRunningScript::DoDeathArrestCheck,hook,std7-script-1,crates/sa-script/src/death_arrest_check.rs
+0x485DE0,CTheScripts::ScriptDebugLine3D,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x486AE0,FUN_00486ae0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x49EA60,Fx_c::InitEntitySystems,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4A4950,FxInfoManager_c::~FxInfoManager_c,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4A8DC0,FUN_004a8dc0,native,,crates/sa-core/src/std7_natives.rs
+0x4A8DE0,FUN_004a8de0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4A9C20,FxMemoryPool_c::~FxMemoryPool_c,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4AA120,FxSystemBP_c::Unload,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4ABA50,RwHelper::GetEventGlobalGroup,hook,std7-ai-1,crates/sa-ai/src/event_global_group.rs
+0x4AD420,CPedDamageResponseCalculator::~CPedDamageResponseCalculator,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4C7400,nullsub_4c7400,native,,crates/sa-core/src/std7_natives.rs
+0x4C88F4,CVehicleModelInfo::SetRenderPipelinesCB,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4D1390,nullsub_4d1390,native,,crates/sa-core/src/std7_natives.rs
+0x4D1610,CQuaternion::Normalise,hook,std7-anim-1,crates/sa-anim/src/frame_update.rs
+0x4D1680,RpAnimBlend::FrameUpdateCallBackSkinnedWithVelocityExtraction,hook,std7-anim-1,crates/sa-anim/src/frame_update.rs
+0x4D2B90,RpAnimBlend::FrameUpdateCallBackSkinned,hook,std7-anim-1,crates/sa-anim/src/frame_update.rs
+0x4D2E10,FrameUpdateCallBackOffscreen,hook,std7-anim-1,crates/sa-anim/src/frame_update.rs
+0x4D34F0,RpAnimBlend::RpAnimBlendClumpUpdateAnimations,hook,std7-anim-1,crates/sa-anim/src/clump_update.rs
+0x4DF210,CAEGlobalWeaponAudioEntity::ServiceAmbientGunFire,hook,std7-audio-1,crates/sa-audio/src/global_weapon_ambient.rs
+0x4E3340,nullsub_4e3340,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x4EF070,nullsub_4ef070,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x508E90,nullsub_508e90,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x508EA0,nullsub_508ea0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5097C0,nullsub_5097c0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5097D0,nullsub_5097d0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x509800,nullsub_509800,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x50AF90,CCamera::InitialiseCameraForDebugMode,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x50B880,CCamera::ProcessObbeCinemaCameraPed,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x50E080,nullsub_50e080,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x538BA0,CFire,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x53BED0,CGame::ReloadIPLs,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x53E160,Game::RenderDebugShit,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x541336,FUN_00541336,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5531D0,CRenderer::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5601E0,CTimeCycle::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x561FD0,CWanted::ResetPolicePursuit,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x56CDF0,nullsub_56cdf0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x572360,CTheZones::FindSmallestZoneForPosition,native,,crates/sa-world/src/world/zones.rs
+0x59A130,Interior_c::Shop_FurnishCeiling,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x59ACF0,CMatrix::Detach,hook,std7-math-1,crates/sa-core/src/matrix_members.rs
+0x59BAD0,CCompressedMatrixNotAligned::CompressFromFullMatrix,hook,std7-math-1,crates/sa-core/src/matrix_members.rs
+0x59C9D0,nullsub_59c9d0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x59E660,BreakManager_c::Exit,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5A3110,ProcObjectMan_c::Update,native,,crates/sa-core/src/std7_natives.rs
+0x5B0440,CCutsceneMgr::SetHeadAnim,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5B9E30,nullsub_5b9e30,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5C36F0,nullsub_5c36f0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5C79E0,nullsub_5c79e0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5C9340,nullsub_5c9340,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5CF880,FUN_005cf880,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5DABA0,CGrassRenderer::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5DB2A0,nullsub_5db2a0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5DB2C0,nullsub_5db2c0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5DE540,CGangInfo,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5DEBE0,CPed::Update,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5E01A0,CPed::UpdateStatEnteringVehicle,native,,crates/sa-core/src/std7_natives.rs
+0x5E01B0,CPed::UpdateStatLeavingVehicle,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x5FFA20,CEntityScanner::ScanForEntitiesInRange,hook,std7-ai-1,crates/sa-ai/src/entity_scanner_scan.rs
+0x604500,CCollisionEventScanner::ScanForCollisionEvents,native,,crates/sa-ai/src/collscan.rs
+0x6082E0,nullsub_6082e0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x609490,CPlayerPed::SetMoveAnim,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x60F8C0,FUN_0060f8c0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x610EC0,CPopulation::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6116A0,CPopulation::MoveCarsAndPedsOutOfAbandonedZones,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6116B0,CPopulation::DealWithZoneChange,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x618E70,CGenericGameStorage::InitRadioStationPositionList,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x62EC50,nullsub_62ec50,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x698F30,CCover::AddCoverPoint,hook,std7-ai-1,crates/sa-ai/src/cover_update.rs
+0x6997E0,CCover::Update,hook,std7-ai-1,crates/sa-ai/src/cover_update.rs
+0x6A6290,CVehicle::FlagToDestroyWhenNextProcessed,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6B67A0,CBike::DebugCode,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6B7070,CBike::SetupDamageAfterLoad,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6C4750,CHeli::SpecialHeliPreRender,native,,crates/sa-core/src/std7_natives.rs
+0x6D0B30,FUN_006d0b30,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6D6380,CVehicle::SetupSuspensionLines,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6D6390,CVehicle::Fix,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6D63A0,CVehicle::SetupDamageAfterLoad,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6D63B0,CVehicle::DoBurstAndSoftGroundRatios,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6D63C0,CVehicle::PlayCarHorn,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6F3FE0,CCranes::UpdateCranes,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6F5900,CTrain::UpdateTrains,native,,crates/sa-core/src/std7_natives.rs
+0x6F5910,CTrain::ProcessTrainAnnouncements,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6F5920,CTrain::PlayAnnouncement,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6F9E00,nullsub_6f9e00,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x6F9E30,nullsub_6f9e30,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7076B0,CShadows::PrintDebugPoly,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x70CE10,CSprite::Initialise,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x70F8E0,CStencilShadowObject::Destructor,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x717150,CMovingThings::Render,native,,crates/sa-core/src/std7_natives.rs
+0x717820,CPlaneBanners::Init,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x71D700,CMBlur::MotionBlurRender,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7204C0,CRubbish::SetVisibility,native,,crates/sa-core/src/std7_natives.rs
+0x7228F0,CCheckpoints::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x732307,CVisibilityPlugins::SetClumpForAllAtomicsFlag,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x734620,DestroyDebugFont,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x735720,Light::LightsEnable,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x736000,CBulletInfo::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7368F0,CExplosion::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x739C20,CShotInfo::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x742AA0,CWeaponEffects,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x743C40,CWeaponInfo,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x743C50,CWeaponInfo::Shutdown,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x744DB5,CLoadingScreen::IsActive,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7458A0,Ps::psTerminate,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x761000,_rxD3D9VertexShaderDefaultEndCallBack,native,,crates/sa-core/src/std7_natives.rs
+0x76E686,FUN_0076e686,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x782810,nullsub_782810,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7836C0,nullsub_7836c0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7856D0,FUN_007856d0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7B4D5F,FUN_007b4d5f,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7CC740,RpUVAnimParamKeyFrameMulRecip,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7CC750,RpUVAnimParamKeyFrameAdd,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x7CF9A0,nullsub_7cf9a0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x8055C0,RxClusterUnlock,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x807C80,FUN_00807c80,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x8563D0,__dtor_gIdleCam,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856440,__dtor_84e0f0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856450,__dtor_84e100,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x8564A0,__dtor_84e6e0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x8564B0,__dtor_CTimeCycle__m_BelowHorizonGrey,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856700,__dtor_g_c03970,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856710,__dtor_CPlantMgr__m_AmbientColor,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856940,__dtor_852850,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856B00,__dtor_854c70,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856B10,__dtor_854c80,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856B80,__dtor_854da0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856B90,__dtor_854db0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+0x856C80,__dtor_855fc0,native-lone-ret,,crates/sa-core/src/std7_natives.rs
+opcode 06D1,,opcode,,crates/sa-script/src/cmd1700.rs
+opcode 06D2,,opcode,,crates/sa-script/src/cmd1700.rs
+opcode 075C,,opcode,,crates/sa-script/src/cmd1800.rs
+opcode 0767,,opcode,,crates/sa-script/src/cmd1800.rs
+opcode 076A,,opcode,,crates/sa-script/src/cmd1800.rs
+opcode 076C,,opcode,,crates/sa-script/src/cmd1900.rs
+opcode 0776,,opcode,,crates/sa-script/src/cmd1900.rs
+opcode 0777,,opcode,,crates/sa-script/src/cmd1900.rs
+opcode 0793,,opcode,,crates/sa-script/src/cmd1900.rs
+opcode 0794,,opcode,,crates/sa-script/src/cmd1900.rs
+opcode 07AF,,opcode,,crates/sa-script/src/cmd1900.rs
+opcode 07D3,,opcode,,crates/sa-script/src/cmd2000.rs
+opcode 07F7,,opcode,,crates/sa-script/src/cmd2000.rs
+opcode 07FB,,opcode,,crates/sa-script/src/cmd2000.rs
+opcode 0814,,opcode,,crates/sa-script/src/cmd2000.rs
+opcode 0827,,opcode,,crates/sa-script/src/cmd2000.rs
+opcode 0871,,opcode,,crates/sa-script/src/cmd2100.rs
+opcode 0872,,opcode,,crates/sa-script/src/cmd2100.rs
+opcode 0874,,opcode,,crates/sa-script/src/cmd2100.rs
+opcode 087B,,opcode,,crates/sa-script/src/cmd2100.rs
+opcode 0884,,opcode,,crates/sa-script/src/cmd2100.rs
+opcode 090F,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 0914,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 0928,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 0929,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 0958,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 0959,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 095A,,opcode,,crates/sa-script/src/cmd2300.rs
+opcode 09AE,,opcode,,crates/sa-script/src/cmd2400.rs
+opcode 09B4,,opcode,,crates/sa-script/src/cmd2400.rs
+opcode 09B7,,opcode,,crates/sa-script/src/cmd2400.rs
+opcode 09CA,,opcode,,crates/sa-script/src/cmd2500.rs
+opcode 09E2,,opcode,,crates/sa-script/src/cmd2500.rs
+opcode 09E7,,opcode,,crates/sa-script/src/cmd2500.rs
+opcode 09E8,,opcode,,crates/sa-script/src/cmd2500.rs
+opcode 0A17,,opcode,,crates/sa-script/src/cmd2500.rs

@@ -1739,7 +1739,7 @@ def ported(skip_mark):
             s = open(os.path.join(dirpath, f), encoding='utf-8').read()
             if skip_mark in s[:400]:
                 continue
-            for m in re.finditer(r'^[ \t]*#\[(?:hook|native)\(\s*addr\s*=\s*0x([0-9A-Fa-f_]+)', s, re.M):
+            for m in re.finditer(r'^[ \t]*#\[(?:[\w:]+::)?(?:hook|native)\(\s*addr\s*=\s*0x([0-9A-Fa-f_]+)', s, re.M):
                 done.add(int(m.group(1).replace('_', ''), 16))
             if os.sep + 'sa-ai' + os.sep in dirpath + os.sep and not f.startswith('gen_'):
                 for m in re.finditer(r'^/// `[^`]*` \(0x([0-9A-Fa-f]+)', s, re.M):

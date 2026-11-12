@@ -154,6 +154,64 @@ pub fn custom_car_pipe_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
     custom_pipe_atomic_setup_call(atomic)
 }
 
+/// `g_GameLight` (`D3DLIGHT9`, 0x68 bytes at 0xC02CB0) and `pDirect` (the directional `RpLight*`, 0xC886EC).
+const GAME_LIGHT: usize = 0xC02CB0;
+const P_DIRECT: usize = 0xC886EC;
+
+orig! {
+    /// `CVector::Normalise()` (0x59C910)
+    fn vector_normalise(v: GPtr<u8>) = thiscall 0x59C910 => unported;
+    /// `CCustomCarEnvMapPipeline::PreRenderUpdate()` (0x5D8870)
+    fn env_map_pre_render_update_call() = cdecl 0x5D8870 => env_map_pre_render_update;
+}
+
+/// `CCustomCarEnvMapPipeline::PreRenderUpdate()` (0x5D8870, cdecl): `g_GameLight` zeroed (26 dwords); its direction
+/// (+0x40) = the normalised at vector of `pDirect`'s frame matrix (frame +0x30, copied raw then `CVector::Normalise`);
+/// type 3 (directional), diffuse (0.25, 0.25, 0.25, 1), ambient (0.75, 0.75, 0.75, 1), specular (0.65, 0.65, 0.65, 1),
+/// range 1000, falloff 0, attenuation (1, 0, 0).
+#[hook(addr = 0x5D8870, conv = cdecl, name = "CCustomCarEnvMapPipeline::PreRenderUpdate", expect = "83 EC 0C 33 C0 57 B9 1A 00 00 00",
+       unverified = "std9-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn env_map_pre_render_update() {
+    let l = g::<u8>(GAME_LIGHT);
+    for i in 0..26 {
+        wr::<u32>(l, 4 * i, 0);
+    }
+    let frame = rd::<GPtr<u8>>(g::<GPtr<u8>>(P_DIRECT).read(), 4);
+    let mut at = [rd::<u32>(frame, 0x30), rd::<u32>(frame, 0x34), rd::<u32>(frame, 0x38)];
+    vector_normalise(GPtr::from_raw(at.as_mut_ptr()).cast());
+    for (i, w) in at.iter().enumerate() {
+        wr::<u32>(l, 0x40 + 4 * i as isize, *w);
+    }
+    for (o, v) in [
+        (0x00, 3u32),
+        (0x04, 0x3E80_0000),
+        (0x08, 0x3E80_0000),
+        (0x0C, 0x3E80_0000),
+        (0x10, 0x3F80_0000),
+        (0x24, 0x3F40_0000),
+        (0x28, 0x3F40_0000),
+        (0x2C, 0x3F40_0000),
+        (0x30, 0x3F80_0000),
+        (0x14, 0x3F26_6666),
+        (0x18, 0x3F26_6666),
+        (0x1C, 0x3F26_6666),
+        (0x20, 0x3F80_0000),
+        (0x4C, 0x447A_0000),
+        (0x50, 0),
+        (0x54, 0x3F80_0000),
+        (0x58, 0),
+        (0x5C, 0),
+    ] {
+        wr::<u32>(l, o, v);
+    }
+}
+
+/// `CCarFXRenderer::PreRenderUpdate()` (0x5D5B10): `jmp CCustomCarEnvMapPipeline::PreRenderUpdate`.
+#[sa_core::native(addr = 0x5D5B10, conv = cdecl, name = "CCarFXRenderer::PreRenderUpdate")]
+pub fn car_fx_pre_render_update() {
+    env_map_pre_render_update_call();
+}
+
 /// `CCarFXRenderer::CustomCarPipeClumpSetup(clump)` (0x5D5B40): every atomic set up. Returns the clump.
 #[hook(addr = 0x5D5B40, conv = cdecl, name = "CCarFXRenderer::CustomCarPipeClumpSetup", expect = "56 8B 74 24 08 6A 00 68 30 5B 5D 00",
        unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
@@ -272,6 +330,7 @@ pub fn building_renderer_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
 
 /// Every `#[hook]` of this module.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_ENV_MAP_PRE_RENDER_UPDATE,
     HOOK_ENV_RECORD_OWN,
     HOOK_BUILDING_DN_MATERIAL_SETUP,
     HOOK_BUILDING_PLAIN_MATERIAL_SETUP,
@@ -286,4 +345,4 @@ pub const HOOKS: &[HookReg] = &[
 ];
 
 /// Phase B natives of this module.
-pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_CUSTOM_CAR_PIPE_ATOMIC_SETUP];
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_CUSTOM_CAR_PIPE_ATOMIC_SETUP, NATIVE_CAR_FX_PRE_RENDER_UPDATE];

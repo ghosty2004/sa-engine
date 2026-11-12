@@ -227,7 +227,8 @@ fn zone_size(z: GPtr<u8>) -> i32 {
 /// zone containing the point (`PointLiesWithinZone`) whose size is below the best one's in an
 /// **unsigned** compare (`jae`, original).
 // Not hooked: the protection code at 0x406A9E reads the entry bytes 0x572363.. as data
-// (`xor ecx, [0x572363]`). Ported, unhookable.
+// (`xor ecx, [0x572363]`). Ported, unhookable: a phase B native (STD-7).
+#[sa_core::native(addr = 0x572360, conv = cdecl, name = "CTheZones::FindSmallestZoneForPosition")]
 pub fn find_smallest_zone_for_position(p: GPtr<f32>, nav_only: u8) -> GPtr<u8> {
     let mut best = nav_zone(0);
     let mut best_size = zone_size(best);
@@ -624,3 +625,4 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_LOAD,
     HOOK_ZONE_DEF_IS_POINT_WITHIN,
 ];
+

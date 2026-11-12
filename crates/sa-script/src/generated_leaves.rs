@@ -11,24 +11,10 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// `(missed by ghidra: data-code-immediate)` (0x463750, SCRIPT): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_463750(this: u32) -> u32 {
-    this
-}
-
 /// `(missed by ghidra: data-code-immediate)` (0x463760, SCRIPT): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
 pub fn g_missed_by_ghidra_data_code_immediate_463760() {}
-
-/// `(missed by ghidra: data-code-immediate)` (0x463770, SCRIPT): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_463770(this: u32) -> u32 {
-    this
-}
 
 /// `(missed by ghidra: data-code-immediate)` (0x463780, SCRIPT): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
@@ -72,9 +58,7 @@ pub fn g_missed_by_ghidra_data_code_immediate_6f9e30() {}
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
-    (0x463750, 0x7B290C1B0B7F4D96, &[(0x463750, 3)]),
     (0x463760, 0xAF647E4C8602FFD2, &[(0x463760, 1)]),
-    (0x463770, 0x7B290C1B0B7F4D96, &[(0x463770, 3)]),
     (0x463780, 0xAF647E4C8602FFD2, &[(0x463780, 1)]),
     (0x470900, 0x6E72625AD044AC04, &[(0x470900, 15)]),
     (0x486AE0, 0xAF647E4C8602FFD2, &[(0x486AE0, 1)]),

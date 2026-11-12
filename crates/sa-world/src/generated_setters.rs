@@ -11,38 +11,6 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// `thunk_FUN_015637e0` (0x40FC80, stub to .HOODLUM 0x15637E0, COLL): setter, thiscall, `ret 4`; 37 instruction(s) matched.
-#[hook(addr = 0x40FC80, conv = thiscall, name = "thunk_FUN_015637e0", expect = "E9 5B 3B 15 01", unverified = "gen2-coll-1", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
-pub fn g_thunk_fun_015637e0_40fc80(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(a0), 0);
-    wr::<u32>(p(this), 0, v1);
-    let v2 = rd::<u32>(p(a0), 4);
-    wr::<u32>(p(this), 4, v2);
-    let v3 = rd::<u32>(p(a0), 8);
-    wr::<u32>(p(this), 8, v3);
-    let v4 = rd::<u32>(p(a0), 0x10);
-    wr::<u32>(p(this), 0x10, v4);
-    let v5 = rd::<u32>(p(a0), 0x14);
-    wr::<u32>(p(this), 0x14, v5);
-    let v6 = rd::<u32>(p(a0), 0x18);
-    wr::<u32>(p(this), 0x18, v6);
-    let v7 = u32::from(rd::<u16>(p(a0), 0x20));
-    let v8 = (((v5 & 0xFFFF_0000_u32) | (v7 & 0xFFFF)) & 0xFFFF);
-    wr::<u16>(p(this), 0x20, v8 as u16);
-    let v9 = u32::from(rd::<u8>(p(a0), 0x22));
-    let v10 = ((((a0.wrapping_add(0x20)) & 0xFFFF_FF00_u32) | (v9 & 0xFF)) & 0xFF);
-    wr::<u8>(p(this), 0x22, v10 as u8);
-    let v11 = u32::from(rd::<u16>(p(a0), 0x23));
-    let v12 = (((((v5 & 0xFFFF_0000_u32) | (v7 & 0xFFFF)) & 0xFFFF_0000_u32) | (v11 & 0xFFFF)) & 0xFFFF);
-    wr::<u16>(p(this), 0x23, v12 as u16);
-    let v13 = u32::from(rd::<u8>(p(a0), 0x25));
-    let v14 = ((((a0.wrapping_add(0x23)) & 0xFFFF_FF00_u32) | (v13 & 0xFF)) & 0xFF);
-    wr::<u8>(p(this), 0x25, v14 as u8);
-    let v15 = rd::<u32>(p(a0), 0x28);
-    wr::<u32>(p(this), 0x28, v15);
-    this
-}
-
 /// `FUN_0059cba0` (0x59CBA0, WORLD): setter, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x59CBA0, conv = thiscall, name = "FUN_0059cba0", expect = "C7 01 B0 6D 86 00", unverified = "gen2-world-1", route = "L2", hazards = "heap-writes")]
 pub fn g_fun_0059cba0_59cba0(this: u32) {
@@ -61,7 +29,6 @@ pub fn g_fun_005a2cb0_5a2cb0(this: u32, a0: u32, a1: u32, a2: u32) -> u32 {
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
-    (0x40FC80, 0x1E20B9E07728410E, &[(0x40FC80, 5), (0x15637E0, 97)]),
     (0x59CBA0, 0xE2AF8CF532DCD779, &[(0x59CBA0, 7)]),
     (0x5A2CB0, 0xB94AF0A8EC21B4BE, &[(0x404CAC, 11), (0x5A2CB0, 59)]),
 ];

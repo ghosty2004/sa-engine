@@ -109,7 +109,7 @@ pub fn idx_buffer_pop(this: GPtr<u8>, n: u32) -> GPtr<u8> {
     res
 }
 
-/// `D3DResourceSystem::CreateIndexBuffer(uint32 numIndices, IDirect3DIndexBuffer9** out)` (0x7306A0,
+/// `D3DResourceSystem::CreateIndexBuffer(uint32 numIndices, D3DFORMAT format, IDirect3DIndexBuffer9** out)` (0x7306A0,
 /// cdecl): bucket `(numIndices - 1) / 100` (signed), capacity `(bucket + 1) * 100`. Buckets 0..15 take
 /// their last stored buffer (+0xC and +0x10 decremented; its `GetDesc` is called and ignored); larger
 /// sizes `Pop` from 0xC87FC8. A reused buffer returns 0; otherwise the device (`[0xC97C28]`)
@@ -117,7 +117,7 @@ pub fn idx_buffer_pop(this: GPtr<u8>, n: u32) -> GPtr<u8> {
 #[hook(addr = 0x7306A0, conv = cdecl, name = "D3DResourceSystem::CreateIndexBuffer", expect = "8B 4C 24 04 83 EC 14",
        unverified = "mvpd-d3d-1", route = "split", hazards = "heap-writes",
        note = "creates D3D index buffers (COM state cannot run twice)")]
-pub fn create_index_buffer(n: u32, out: GPtr<u8>) -> u32 {
+pub fn create_index_buffer(n: u32, _format: u32, out: GPtr<u8>) -> u32 {
     let bucket = (n as i32).wrapping_sub(1) / 100;
     let cap = (bucket + 1).wrapping_mul(100);
     if bucket < 0x10 {

@@ -16,8 +16,6 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
-#[path = "generated_ctors.rs"]
-pub mod generated_ctors;
 #[path = "generated_dtors.rs"]
 pub mod generated_dtors;
 #[path = "generated_inits.rs"]
@@ -68,7 +66,6 @@ pub type Body = (u32, u64, &'static [(u32, u32)]);
 
 /// Every generated registration of this crate.
 pub const HOOKS: &[HookReg] = &[
-    generated_ctors::HOOK_G_LIST_ITEM_C_LIST_ITEM_C_4A8DB0,
     generated_dtors::HOOK_G_COCT_TREE_COCT_TREE_5A7490,
     generated_inits::HOOK_G_INIT_G_B714F0_84D930,
     generated_inits::HOOK_G_INIT_G_B714F4_84D950,
@@ -118,7 +115,6 @@ pub const HOOKS: &[HookReg] = &[
     generated_inits::HOOK_G_INIT_G_C8CDD8_855E80,
     generated_inits::HOOK_G_INIT_G_C8CDE0_855EC0,
     generated_inits::HOOK_G_INIT_G_C8CDDC_855EE0,
-    generated_leaf_logic::HOOK_G_FUN_004A8E30_4A8E30,
     generated_leaf_logic::HOOK_G_FUN_004A8E70_4A8E70,
     generated_leaves::HOOK_G_FUN_0041BD50_41BD50,
     generated_leaves::HOOK_G_THUNK_FUN_015667F0_424160,
@@ -130,7 +126,6 @@ pub const HOOKS: &[HookReg] = &[
 
 /// Every generated body of this crate.
 pub const BODIES: &[&[Body]] = &[
-    generated_ctors::BODIES,
     generated_dtors::BODIES,
     generated_inits::BODIES,
     generated_leaf_logic::BODIES,

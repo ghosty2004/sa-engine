@@ -528,6 +528,10 @@ fn balaclava_sound(v: GPtr<u8>) {
 /// entity reference pool (`CReferences::pEmptyList` 0xBA1768 and `aRefs` 0xB9B9A8 differ after the call): the
 /// reference register/release order of the stack events differs from the original. Hook attribute was
 /// `addr = 0x604500, conv = thiscall, expect = "6A FF 68 9D E9 83 00"`.
+///
+/// Phase B (STD-7): registered as a native so the native game runs it (there is no original to call); the
+/// reference-pool order difference above is a known divergence of the native build (platform.md section 13).
+#[sa_core::native(addr = 0x604500, conv = thiscall, name = "CCollisionEventScanner::ScanForCollisionEvents")]
 pub fn scan_for_collision_events(this: GPtr<u8>, v: GPtr<u8>, group: GPtr<u8>) {
     if !rd::<GPtr<u8>>(v, 0xDC).is_null() && x(rd::<f32>(v, 0xD8)).fcom(cf(0x858B50)).test_parity(0x44) {
         let task = tm_get_simplest_active_task(rd::<GPtr<u8>>(v, 0x47C).byte_add(4));

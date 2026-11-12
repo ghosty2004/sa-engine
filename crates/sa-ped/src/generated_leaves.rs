@@ -18,11 +18,6 @@ pub fn g_cbridge_this_is_abridge_object_moving_up_41bcb0(_this: u32) -> u8 {
     0 as u8
 }
 
-/// `(missed by ghidra: data-code-immediate)` (0x4411A0, PED): empty, cdecl, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_4411a0() {}
-
 /// `CWanted::ResetPolicePursuit` (0x561FD0, PED): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -42,7 +37,6 @@ pub fn g_fun_00678e80_678e80(_this: u32, _a0: u32) {}
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x41BCB0, 0x62941518298855C4, &[(0x41BCB0, 3)]),
-    (0x4411A0, 0xAF647E4C8602FFD2, &[(0x4411A0, 1)]),
     (0x561FD0, 0xAF647E4C8602FFD2, &[(0x561FD0, 1)]),
     (0x56E860, 0x69AEB01C23D2A0A9, &[(0x56E860, 3)]),
     (0x678E80, 0x69AEB01C23D2A0A9, &[(0x678E80, 3)]),
@@ -61,7 +55,6 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_missed_by_ghidra_data_code_immediate_4411a0();
         g_cwanted_reset_police_pursuit_561fd0(0);
         g_cplayer_info_cancel_player_entering_cars_56e860(0, 0);
         g_fun_00678e80_678e80(0, 0);

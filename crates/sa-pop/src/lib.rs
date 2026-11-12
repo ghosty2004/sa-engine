@@ -36,6 +36,8 @@ pub mod population2;
 pub mod carctrl3;
 pub mod carctrl4;
 pub mod carctrl5;
+pub mod path_car_creation_nodes;
+pub mod gang_war_release_peds;
 pub mod misc3;
 pub mod misc4;
 pub mod population3;
