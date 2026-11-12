@@ -25,10 +25,14 @@ pub type Body = (u32, u64, &'static [(u32, u32)]);
 orig! {
     /// `CTaskComplexWanderCop::Constructor` (0x460C80), thiscall, 2 stack argument(s)
     fn c_460c80_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x460C80 => unported;
+    /// `CTaskComplexSeekEntityStandard::Constructor` (0x46AC10), thiscall, 8 stack argument(s)
+    fn c_46ac10_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x46AC10 => unported;
     /// `CEventLeaderEnteredCarAsDriver::Constructor` (0x48E1C0), thiscall, 1 stack argument(s)
     fn c_48e1c0_t1(this: u32, a0: u32) -> u32 = thiscall 0x48E1C0 => unported;
     /// `CTaskComplexWanderStandard` (0x48E4F0), thiscall, 3 stack argument(s)
     fn c_48e4f0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x48E4F0 => unported;
+    /// `CTaskComplexSeekEntityRadiusAngleOffset::Constructor` (0x493730), thiscall, 8 stack argument(s)
+    fn c_493730_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x493730 => unported;
     /// `thunk_FUN_0156e930` (0x4993D0), thiscall, 3 stack argument(s)
     fn c_4993d0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x4993D0 => unported;
     /// `CEvent::Constructor` (0x4ABFC0), thiscall, 0 stack argument(s)
@@ -37,6 +41,8 @@ orig! {
     fn c_4ac450_t0(this: u32) -> u32 = thiscall 0x4AC450 => unported;
     /// `CEventVehicleCollision::Constructor` (0x4AC840), thiscall, 7 stack argument(s)
     fn c_4ac840_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x4AC840 => unported;
+    /// `CEventPedCollisionWithPed::Constructor` (0x4AC990), thiscall, 7 stack argument(s)
+    fn c_4ac990_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x4AC990 => unported;
     /// `CEventDraggedOutCar::CEventDraggedOutCar` (0x4AD250), thiscall, 3 stack argument(s)
     fn c_4ad250_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x4AD250 => unported;
     /// `CEventDeadPed::CEventDeadPed` (0x4ADEA0), thiscall, 3 stack argument(s)
@@ -107,22 +113,38 @@ orig! {
     fn c_61a5a0_c1(a0: u32) -> u32 = cdecl 0x61A5A0 => unported;
     /// `CTaskSimpleRunAnim::Constructor2` (0x61A900), thiscall, 6 stack argument(s)
     fn c_61a900_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x61A900 => unported;
+    /// `CTaskSimpleRunTimedAnim::Constructor-1` (0x61AB70), thiscall, 6 stack argument(s)
+    fn c_61ab70_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x61AB70 => unported;
     /// `CTaskSimpleRunTimedAnim::Constructor-2` (0x61ABE0), thiscall, 8 stack argument(s)
     fn c_61abe0_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x61ABE0 => unported;
+    /// `FUN_0061ac90` (0x61AC90), thiscall, 7 stack argument(s)
+    fn c_61ac90_t7(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> u32 = thiscall 0x61AC90 => unported;
+    /// `FUN_0061ad10` (0x61AD10), thiscall, 8 stack argument(s)
+    fn c_61ad10_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x61AD10 => unported;
     /// `CTaskSimpleFight::CTaskSimpleFight` (0x61C470), thiscall, 3 stack argument(s)
     fn c_61c470_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x61C470 => unported;
     /// `CTaskSimpleFightingControl::Constructor` (0x61DC10), thiscall, 3 stack argument(s)
     fn c_61dc10_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x61DC10 => unported;
+    /// `CTaskSimpleGunControl::Constructor` (0x61F3F0), thiscall, 6 stack argument(s)
+    fn c_61f3f0_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x61F3F0 => unported;
     /// `CTaskSimpleThrowControl::Constructor` (0x61F8B0), thiscall, 2 stack argument(s)
     fn c_61f8b0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x61F8B0 => unported;
     /// `CTaskSimpleChoking::Constructor` (0x6202C0), thiscall, 2 stack argument(s)
     fn c_6202c0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6202C0 => unported;
+    /// `CTaskSimpleBeHit::Constructor` (0x620780), thiscall, 4 stack argument(s)
+    fn c_620780_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x620780 => unported;
     /// `FUN_00620b00` (0x620B00), thiscall, 5 stack argument(s)
     fn c_620b00_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x620B00 => unported;
+    /// `CTaskComplexKillPedOnFoot::Constructor` (0x620E30), thiscall, 6 stack argument(s)
+    fn c_620e30_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x620E30 => unported;
     /// `CTaskComplexKillPedOnFootStealth::Constructor` (0x620F70), thiscall, 1 stack argument(s)
     fn c_620f70_t1(this: u32, a0: u32) -> u32 = thiscall 0x620F70 => unported;
     /// `CTaskComplexKillPedOnFootMelee::Constructor` (0x621000), thiscall, 1 stack argument(s)
     fn c_621000_t1(this: u32, a0: u32) -> u32 = thiscall 0x621000 => unported;
+    /// `CTaskComplexKillPedOnFootArmed::Constructor` (0x621190), thiscall, 5 stack argument(s)
+    fn c_621190_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x621190 => unported;
+    /// `CTaskSimpleGangDriveBy` (0x6217D0), thiscall, 6 stack argument(s)
+    fn c_6217d0_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x6217D0 => unported;
     /// `CTaskComplexDestroyCar::Constructor` (0x621C00), thiscall, 4 stack argument(s)
     fn c_621c00_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x621C00 => unported;
     /// `CTaskComplexDestroyCarMelee::Constructor` (0x621D10), thiscall, 1 stack argument(s)
@@ -181,6 +203,8 @@ orig! {
     fn c_63c240_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x63C240 => unported;
     /// `CTaskSimpleCarDrive::Constructor` (0x63C340), thiscall, 3 stack argument(s)
     fn c_63c340_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x63C340 => unported;
+    /// `CTaskComplexCarDrive::Constructor_1` (0x63C940), thiscall, 4 stack argument(s)
+    fn c_63c940_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x63C940 => unported;
     /// `CTaskComplexCarDriveMission::Constructor` (0x63CC30), thiscall, 5 stack argument(s)
     fn c_63cc30_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x63CC30 => unported;
     /// `CTaskComplexDriveToPoint::CTaskComplexDriveToPoint` (0x63CE00), thiscall, 7 stack argument(s)
@@ -215,10 +239,16 @@ orig! {
     fn c_646b70_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646B70 => unported;
     /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Constructor` (0x646D70), thiscall, 4 stack argument(s)
     fn c_646d70_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x646D70 => unported;
+    /// `CTaskSimpleCarSetPedInAsPassenger` (0x646FE0), thiscall, 3 stack argument(s)
+    fn c_646fe0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x646FE0 => unported;
+    /// `CTaskSimpleCarSetPedInAsDriver` (0x6470E0), thiscall, 2 stack argument(s)
+    fn c_6470e0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6470E0 => unported;
     /// `CTaskSimpleCarGetOut::Constructor` (0x6471D0), thiscall, 3 stack argument(s)
     fn c_6471d0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6471D0 => unported;
     /// `FUN_00647710` (0x647710), thiscall, 2 stack argument(s)
     fn c_647710_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x647710 => unported;
+    /// `CTaskSimpleCarSetPedOut` (0x6478B0), thiscall, 3 stack argument(s)
+    fn c_6478b0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6478B0 => unported;
     /// `CTaskSimpleCarSlowDragPedOut::Constructor` (0x647FE0), thiscall, 4 stack argument(s)
     fn c_647fe0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x647FE0 => unported;
     /// `CTaskSimpleCarSlowBeDraggedOut::Constructor` (0x648230), thiscall, 4 stack argument(s)
@@ -259,6 +289,8 @@ orig! {
     fn c_653c10_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x653C10 => unported;
     /// `CTaskSimpleHurtPedWithCar::Constructor` (0x653EA0), thiscall, 2 stack argument(s)
     fn c_653ea0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x653EA0 => unported;
+    /// `CTaskComplexWalkRoundCar::Constructor` (0x6541B0), thiscall, 5 stack argument(s)
+    fn c_6541b0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x6541B0 => unported;
     /// `CTaskComplexWalkRoundBuildingAttempt::Constructor` (0x654740), thiscall, 5 stack argument(s)
     fn c_654740_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x654740 => unported;
     /// `CTaskComplexWalkRoundObject::Constructor` (0x655020), thiscall, 3 stack argument(s)
@@ -299,6 +331,14 @@ orig! {
     fn c_6611b0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x6611B0 => unported;
     /// `CTaskComplexProstituteSolicit` (0x661A60), thiscall, 1 stack argument(s)
     fn c_661a60_t1(this: u32, a0: u32) -> u32 = thiscall 0x661A60 => unported;
+    /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Constructor` (0x661DC0), thiscall, 8 stack argument(s)
+    fn c_661dc0_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x661DC0 => unported;
+    /// `CTaskSimpleGoTo::Constructor` (0x6679C0), thiscall, 3 stack argument(s)
+    fn c_6679c0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x6679C0 => unported;
+    /// `CTaskSimpleGoToPoint::Constructor` (0x667CD0), thiscall, 5 stack argument(s)
+    fn c_667cd0_t5(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) -> u32 = thiscall 0x667CD0 => unported;
+    /// `CTaskComplexGoToPointAndStandStill::Constructor` (0x668120), thiscall, 6 stack argument(s)
+    fn c_668120_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x668120 => unported;
     /// `CTaskComplexGoToPointAndStandStillAndAchieveHeading::Constructor` (0x668CD0), thiscall, 6 stack argument(s)
     fn c_668cd0_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x668CD0 => unported;
     /// `FUN_0066aa20` (0x66AA20), thiscall, 3 stack argument(s)
@@ -309,8 +349,14 @@ orig! {
     fn c_66bb20_t1(this: u32, a0: u32) -> u32 = thiscall 0x66BB20 => unported;
     /// `CTaskComplexGotoDoorAndOpen::Constructor-1` (0x66BBA0), thiscall, 2 stack argument(s)
     fn c_66bba0_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x66BBA0 => unported;
+    /// `CTaskSimpleSlideToCoord::Constructor-NoAnim` (0x66C3E0), thiscall, 3 stack argument(s)
+    fn c_66c3e0_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x66C3E0 => unported;
+    /// `CTaskSimpleSlideToCoord::Constructor-Anim` (0x66C450), thiscall, 9 stack argument(s)
+    fn c_66c450_t9(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32, a8: u32) -> u32 = thiscall 0x66C450 => unported;
     /// `CTaskComplexInvestigateDisturbance::Constructor` (0x66C720), thiscall, 2 stack argument(s)
     fn c_66c720_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x66C720 => unported;
+    /// `FUN_0066ca40` (0x66CA40), thiscall, 8 stack argument(s)
+    fn c_66ca40_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x66CA40 => unported;
     /// `CTaskComplexFollowNodeRoute::Constructor` (0x66EA30), thiscall, 8 stack argument(s)
     fn c_66ea30_t8(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32, a7: u32) -> u32 = thiscall 0x66EA30 => unported;
     /// `CTaskComplexWander::Constructor` (0x66F450), thiscall, 4 stack argument(s)
@@ -329,12 +375,16 @@ orig! {
     fn c_675e20_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x675E20 => unported;
     /// `CTaskInteriorSitAtDesk::Constructor` (0x676010), thiscall, 3 stack argument(s)
     fn c_676010_t3(this: u32, a0: u32, a1: u32, a2: u32) -> u32 = thiscall 0x676010 => unported;
+    /// `CTaskComplexFallToDeath::Constructor` (0x679040), thiscall, 4 stack argument(s)
+    fn c_679040_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x679040 => unported;
     /// `CTaskComplexJump::Constructor` (0x67A030), thiscall, 1 stack argument(s)
     fn c_67a030_t1(this: u32, a0: u32) -> u32 = thiscall 0x67A030 => unported;
     /// `CTaskSimpleClimb::Constructor` (0x67A110), thiscall, 6 stack argument(s)
     fn c_67a110_t6(this: u32, a0: u32, a1: u32, a2: u32, a3: u32, a4: u32, a5: u32) -> u32 = thiscall 0x67A110 => unported;
     /// `CTaskSimpleJetPack::Constructor` (0x67B4E0), thiscall, 4 stack argument(s)
     fn c_67b4e0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x67B4E0 => unported;
+    /// `CTaskComplexChat::Constructor` (0x682CB0), thiscall, 4 stack argument(s)
+    fn c_682cb0_t4(this: u32, a0: u32, a1: u32, a2: u32, a3: u32) -> u32 = thiscall 0x682CB0 => unported;
     /// `CTaskComplexWalkAlongsidePed::Constructor` (0x683240), thiscall, 2 stack argument(s)
     fn c_683240_t2(this: u32, a0: u32, a1: u32) -> u32 = thiscall 0x683240 => unported;
     /// `FUN_00683340` (0x683340), thiscall, 4 stack argument(s)
@@ -484,6 +534,52 @@ pub fn g_task_complex_climb_clone_46a650(_this: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexSeekEntityStandard::Clone` (0x46EF50): clone, thiscall, `ret`; 53 instruction(s) matched.
+#[hook(addr = 0x46EF50, conv = thiscall, name = "CTaskComplexSeekEntityStandard::Clone", expect = "6A FF 68 EB 7F 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_seek_entity_standard_clone_46ef50(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x4C);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(0), 0x44, v2);
+        let v3 = u32::from(rd::<u8>(p(this), 0x48));
+        let v4 = u32::from(rd::<u8>(p(0), 0x48));
+        let v5 = ((((v3 & 0xFF) & 0xFF) ^ (((v2 & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF)) & 0xFF);
+        let v6 = ((((v5 & 0xFF) & 0xFF) & 8) & 0xFF);
+        let v7 = (((((v2 & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF) ^ ((v6 & 0xFF) & 0xFF)) & 0xFF);
+        let v8 = (((((v2 & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF);
+        wr::<u8>(p(0), 0x48, v8 as u8);
+        let v9 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(0), 0x20, f32_of(v9));
+        let v10 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(0), 0x44, v10);
+        return 0;
+    } else {
+        let v11 = rd::<u32>(p(this), 0x24);
+        let v12 = u32::from(rd::<u8>(p(this), 0x48));
+        let v13 = ((v12 & 0xFF) & 0xFFFF_FF01);
+        let v14 = rd::<u32>(p(this), 0x1C);
+        let v15 = rd::<u32>(p(this), 0x18);
+        let v16 = rd::<u32>(p(this), 0x14);
+        let v17 = rd::<u32>(p(this), 0x10);
+        let v18 = rd::<u32>(p(this), 0xC);
+        let v19 = c_46ac10_t8(v1, v18, v17, v16, v15, v14, v11, v13, 1);
+        let v20 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(v19), 0x44, v20);
+        let v21 = u32::from(rd::<u8>(p(this), 0x48));
+        let v22 = u32::from(rd::<u8>(p(v19), 0x48));
+        let v23 = ((((v21 & 0xFF) & 0xFF) ^ (((v20 & 0xFFFF_FF00) | (v22 & 0xFF)) & 0xFF)) & 0xFF);
+        let v24 = ((((v23 & 0xFF) & 0xFF) & 8) & 0xFF);
+        let v25 = (((((v20 & 0xFFFF_FF00) | (v22 & 0xFF)) & 0xFF) ^ ((v24 & 0xFF) & 0xFF)) & 0xFF);
+        let v26 = (((((v20 & 0xFFFF_FF00) | (v22 & 0xFF)) & 0xFFFF_FF00) | (v25 & 0xFF)) & 0xFF);
+        wr::<u8>(p(v19), 0x48, v26 as u8);
+        let v27 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(v19), 0x20, f32_of(v27));
+        let v28 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(v19), 0x44, v28);
+        return v19;
+    }
+}
+
 /// `CTaskSimpleCarDriveTimed::Clone` (0x46F570): clone, thiscall, `ret`; 50 instruction(s) matched.
 #[hook(addr = 0x46F570, conv = thiscall, name = "CTaskSimpleCarDriveTimed::Clone", expect = "6A FF 68 AB 80 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_car_drive_timed_clone_46f570(this: u32) -> u32 {
@@ -500,6 +596,22 @@ pub fn g_task_simple_car_drive_timed_clone_46f570(this: u32) -> u32 {
         wr::<u32>(p(v1), 0x68, 0);
         wr::<u8>(p(v1), 0x6C, 0 as u8);
         wr::<u8>(p(v1), 0x6D, 0 as u8);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleSetCharIgnoreWeaponRangeFlag::Clone` (0x474640): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x474640, conv = thiscall, name = "CTaskSimpleSetCharIgnoreWeaponRangeFlag::Clone", expect = "6A FF 68 3B 82 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_set_char_ignore_weapon_range_flag_clone_474640(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        c_61a390_t0(v1);
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v4 as u8);
+        wr::<u32>(p(v1), 0, 0x85_9EBC);
         return v1;
     }
 }
@@ -631,6 +743,99 @@ pub fn g_task_simple_hands_up_clone_48e9c0(this: u32) -> u32 {
         c_61abe0_t8(v1, 0, 0x8E, 0x4080_0000, 0xC080_0000, v2, 0x19D, 0x85_A2C4, 0);
         wr::<u32>(p(v1), 0, 0x85_A29C);
         return v1;
+    }
+}
+
+/// `CTaskComplexDiveFromAttachedEntityAndGetUp::Clone` (0x492E70): clone, thiscall, `ret`; 37 instruction(s) matched.
+#[hook(addr = 0x492E70, conv = thiscall, name = "CTaskComplexDiveFromAttachedEntityAndGetUp::Clone", expect = "6A FF 68 8B 8A 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_complex_dive_from_attached_entity_and_get_up_clone_492e70(this: u32) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        wr::<u32>(p(fb), 0x3D8, 1);
+        wr::<u32>(p(fb), 0x3E4, v1);
+        wr::<u32>(p(fb), 0x3F8, 0x83_8A8B);
+        wr::<u32>(p(fb), 0x3FC, 0);
+        wr::<u32>(p(fb), 0x3D4, fb.wrapping_add(0x3E8));
+        wr::<u32>(p(fb), 0x3D0, v2);
+        wr::<u32>(p(fb), 0x3CC, 0);
+        wr::<u32>(p(fb), 0x3E8, 0);
+        wr::<u32>(p(fb), 0x3EC, 0);
+        wr::<u32>(p(fb), 0x3F0, 0);
+        c_6536b0_t4(v1, 0, v2, fb.wrapping_add(0x3E8), 1);
+        wr::<u32>(p(v1), 0, 0x85_A358);
+        return v1;
+    }
+}
+
+/// `CTaskComplexSeekEntityRadiusAngleOffset::Clone` (0x495FB0): clone, thiscall, `ret`; 57 instruction(s) matched.
+#[hook(addr = 0x495FB0, conv = thiscall, name = "CTaskComplexSeekEntityRadiusAngleOffset::Clone", expect = "6A FF 68 AB 8B 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_seek_entity_radius_angle_offset_clone_495fb0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x54);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(0), 0x44, v2);
+        let v3 = rd::<u32>(p(this), 0x48);
+        wr::<u32>(p(0), 0x48, v3);
+        let v4 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(0), 0x4C, v4);
+        let v5 = u32::from(rd::<u8>(p(this), 0x50));
+        let v6 = u32::from(rd::<u8>(p(0), 0x50));
+        let v7 = (((((v3 & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFF)
+            ^ (((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v8 = (((((((v3 & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF) & 8) & 0xFF);
+        let v9 = (((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF)
+            ^ (((((((v3 & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFFFF_FF00)
+                | (v8 & 0xFF))
+                & 0xFF))
+            & 0xFF);
+        let v10 = (((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v9 & 0xFF)) & 0xFF);
+        wr::<u8>(p(0), 0x50, v10 as u8);
+        let v11 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(0), 0x20, f32_of(v11));
+        let v12 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(0), 0x4C, v12);
+        return 0;
+    } else {
+        let v13 = rd::<u32>(p(this), 0x24);
+        let v14 = u32::from(rd::<u8>(p(this), 0x50));
+        let v15 = ((v14 & 0xFF) & 0xFFFF_FF01);
+        let v16 = rd::<u32>(p(this), 0x1C);
+        let v17 = rd::<u32>(p(this), 0x18);
+        let v18 = rd::<u32>(p(this), 0x14);
+        let v19 = rd::<u32>(p(this), 0x10);
+        let v20 = rd::<u32>(p(this), 0xC);
+        let v21 = c_493730_t8(v1, v20, v19, v18, v17, v16, v13, v15, 1);
+        let v22 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(v21), 0x44, v22);
+        let v23 = rd::<u32>(p(this), 0x48);
+        wr::<u32>(p(v21), 0x48, v23);
+        let v24 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(v21), 0x4C, v24);
+        let v25 = u32::from(rd::<u8>(p(this), 0x50));
+        let v26 = u32::from(rd::<u8>(p(v21), 0x50));
+        let v27 = (((((v23 & 0xFFFF_FF00) | (v25 & 0xFF)) & 0xFF)
+            ^ (((v24 & 0xFFFF_FF00) | (v26 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v28 =
+            (((((((v23 & 0xFFFF_FF00) | (v25 & 0xFF)) & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFF) & 8) & 0xFF);
+        let v29 = (((((v24 & 0xFFFF_FF00) | (v26 & 0xFF)) & 0xFF)
+            ^ (((((((v23 & 0xFFFF_FF00) | (v25 & 0xFF)) & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFFFF_FF00)
+                | (v28 & 0xFF))
+                & 0xFF))
+            & 0xFF);
+        let v30 = (((((v24 & 0xFFFF_FF00) | (v26 & 0xFF)) & 0xFFFF_FF00) | (v29 & 0xFF)) & 0xFF);
+        wr::<u8>(p(v21), 0x50, v30 as u8);
+        let v31 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(v21), 0x20, f32_of(v31));
+        let v32 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(v21), 0x4C, v32);
+        return v21;
     }
 }
 
@@ -1270,6 +1475,34 @@ pub fn g_task_simple_wait_until_leader_area_codes_match_clone_5f67f0(this: u32) 
     }
 }
 
+/// `CEventPlayerCollisionWithPed::Clone` (0x5FEEA0): clone, thiscall, `ret`; 44 instruction(s) matched.
+#[hook(addr = 0x5FEEA0, conv = thiscall, name = "CEventPlayerCollisionWithPed::Clone", expect = "6A FF 68 8B E5 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+pub fn g_event_player_collision_with_ped_clone_5feea0(this: u32) -> u32 {
+    let v1 = c_4b5620_c1(0x34);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u16>(p(this), 0x32) as i16 as i32 as u32;
+        let v3 = x(rd::<f32>(p(this), 0x10));
+        let v4 = rd::<u16>(p(this), 0x30) as i16 as i32 as u32;
+        let v5 = rd::<u32>(p(this), 0x14);
+        let v6 = u32::from(rd::<u16>(p(this), 0xC));
+        let v7 = f32_of(v3).to_bits();
+        c_4ac990_t7(
+            v1,
+            (v6 & 0xFFFF),
+            v7,
+            v5,
+            this.wrapping_add(0x18),
+            this.wrapping_add(0x24),
+            v4,
+            v2,
+        );
+        wr::<u32>(p(v1), 0, 0x86_C9B0);
+        return v1;
+    }
+}
+
 /// `CEventScriptedAttractor::CloneEditable` (0x5FEF90): clone, thiscall, `ret`; 33 instruction(s) matched.
 #[hook(addr = 0x5FEF90, conv = thiscall, name = "CEventScriptedAttractor::CloneEditable", expect = "6A FF 68 AB E5 83 00")]
 pub fn g_event_scripted_attractor_clone_editable_5fef90(this: u32) -> u32 {
@@ -1417,6 +1650,93 @@ pub fn g_event_player_command_to_group_gather_clone_editable_609280(this: u32) -
     }
 }
 
+/// `CTaskSimpleRunTimedAnim::Clone` (0x61B810): clone, thiscall, `ret`; 43 instruction(s) matched.
+#[hook(addr = 0x61B810, conv = thiscall, name = "CTaskSimpleRunTimedAnim::Clone", expect = "6A FF 68 5B F2 83 00", unverified = "ai8g-1", route = "L2", hazards = "none")]
+pub fn g_task_simple_run_timed_anim_clone_61b810(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x34);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x20);
+        let v3 = u32::from(rd::<u8>(p(this), 0xC));
+        let v4 = ((((v3 & 0xFF) & 0xFF) & 4) & 0xFF);
+        let v5 = (((((((v3 & 0xFF) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFF) & 0xFF) >> 2) & 0xFF);
+        let v6 = rd::<u32>(p(this), 0x1C);
+        let v7 = rd::<u32>(p(this), 0x18);
+        let v8 = rd::<u32>(p(this), 0x14);
+        let v9 = rd::<u32>(p(this), 0x10);
+        let v10 = c_61ab70_t6(
+            v1,
+            v9,
+            v8,
+            v7,
+            v6,
+            v2,
+            (((((v3 & 0xFF) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFFFF_FF00) | (v5 & 0xFF)),
+        );
+        return v10;
+    }
+}
+
+/// `vt_86d594::Clone` (0x61B890): clone, thiscall, `ret`; 80 instruction(s) matched.
+#[hook(addr = 0x61B890, conv = thiscall, name = "vt_86d594::Clone", expect = "6A FF 68 86 F2 83 00", unverified = "ai8g-2", route = "L2", hazards = "none")]
+pub fn g_vt_86d594_clone_61b890(this: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0x44);
+    if v1 == 0 {
+        let v2 = c_61a5a0_c1(0x70);
+        if v2 == 0 {
+            return 0;
+        } else {
+            let v3 = rd::<u32>(p(this), 0x5C);
+            let v4 = u32::from(rd::<u8>(p(this), 0xC));
+            let v5 = ((((v4 & 0xFF) & 0xFF) & 4) & 0xFF);
+            let v6 = (((((((v4 & 0xFF) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFF) & 0xFF) >> 2) & 0xFF);
+            let v7 = rd::<u32>(p(this), 0x50);
+            let v8 = rd::<u32>(p(this), 0x4C);
+            let v9 = rd::<u32>(p(this), 0x48);
+            let v10 = rd::<u32>(p(this), 0x14);
+            let v11 = rd::<u32>(p(this), 0x10);
+            let v12 = c_61ac90_t7(
+                v2,
+                v11,
+                v10,
+                v9,
+                v8,
+                v7,
+                v3,
+                (((((v4 & 0xFF) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF00) | (v6 & 0xFF)),
+            );
+            return v12;
+        }
+    } else {
+        let v13 = c_61a5a0_c1(0x70);
+        if v13 == 0 {
+            return 0;
+        } else {
+            let v14 = rd::<u32>(p(this), 0x5C);
+            let v15 = u32::from(rd::<u8>(p(this), 0xC));
+            let v16 = ((((v15 & 0xFF) & 0xFF) & 4) & 0xFF);
+            let v17 = (((((((v15 & 0xFF) & 0xFFFF_FF00) | (v16 & 0xFF)) & 0xFF) & 0xFF) >> 2) & 0xFF);
+            let v18 = rd::<u32>(p(this), 0x50);
+            let v19 = rd::<u32>(p(this), 0x4C);
+            let v20 = rd::<u32>(p(this), 0x48);
+            let v21 = rd::<u32>(p(this), 0x18);
+            let v22 = c_61ad10_t8(
+                v13,
+                this.wrapping_add(0x1C),
+                this.wrapping_add(0x34),
+                v21,
+                v20,
+                v19,
+                v18,
+                v14,
+                (((((v15 & 0xFF) & 0xFFFF_FF00) | (v16 & 0xFF)) & 0xFFFF_FF00) | (v17 & 0xFF)),
+            );
+            return v22;
+        }
+    }
+}
+
 /// `CTaskComplexPlayHandSignalAnim::Clone` (0x61BA00): clone, thiscall, `ret`; 37 instruction(s) matched.
 #[hook(addr = 0x61BA00, conv = thiscall, name = "CTaskComplexPlayHandSignalAnim::Clone", expect = "6A FF 68 BB F2 83 00")]
 pub fn g_task_complex_play_hand_signal_anim_clone_61ba00(this: u32) -> u32 {
@@ -1484,6 +1804,36 @@ pub fn g_task_simple_fighting_control_clone_622eb0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleGunControl::Clone` (0x622FB0): clone, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x622FB0, conv = thiscall, name = "CTaskSimpleGunControl::Clone", expect = "6A FF 68 3B FA 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_gun_control_clone_622fb0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x3C);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x3A));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x3A, v3 as u8);
+        return 0;
+    } else {
+        let v4 = rd::<u32>(p(this), 0x28);
+        let v5 = u32::from(rd::<u16>(p(this), 0x2C));
+        let v6 = u32::from(rd::<u8>(p(this), 0x2E));
+        let v7 = rd::<u32>(p(this), 0xC);
+        let v8 = c_61f3f0_t6(
+            v1,
+            v7,
+            this.wrapping_add(0x10),
+            this.wrapping_add(0x1C),
+            (v6 & 0xFF),
+            (v5 & 0xFFFF),
+            v4,
+        );
+        let v9 = u32::from(rd::<u8>(p(this), 0x3A));
+        let v10 = ((v9 & 0xFF) & 0xFF);
+        wr::<u8>(p(v8), 0x3A, v10 as u8);
+        return v8;
+    }
+}
+
 /// `CTaskSimpleThrowControl::Clone` (0x6230B0): clone, thiscall, `ret`; 32 instruction(s) matched.
 #[hook(addr = 0x6230B0, conv = thiscall, name = "CTaskSimpleThrowControl::Clone", expect = "6A FF 68 7B FA 83 00")]
 pub fn g_task_simple_throw_control_clone_6230b0(this: u32) -> u32 {
@@ -1545,6 +1895,36 @@ pub fn g_task_simple_choking_clone_623220(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleBeHit::Clone` (0x623290): clone, thiscall, `ret`; 38 instruction(s) matched.
+#[hook(addr = 0x623290, conv = thiscall, name = "CTaskSimpleBeHit::Clone", expect = "6A FF 68 FB FA 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_be_hit_clone_623290(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0xD));
+        let v3 = rd::<u32>(p(this), 0x14);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0xD, v5 as u8);
+        wr::<u32>(p(0), 0x10, v4);
+        wr::<u32>(p(0), 0x14, v3);
+        return 0;
+    } else {
+        let v6 = rd::<u32>(p(this), 0x1C);
+        let v7 = rd::<u32>(p(this), 0x20);
+        let v8 = rd::<u32>(p(this), 0x18);
+        let v9 = rd::<u32>(p(this), 8);
+        let v10 = c_620780_t4(v1, v9, v8, v7, v6);
+        let v11 = u32::from(rd::<u8>(p(this), 0xD));
+        let v12 = rd::<u32>(p(this), 0x14);
+        let v13 = rd::<u32>(p(this), 0x10);
+        let v14 = ((v11 & 0xFF) & 0xFF);
+        wr::<u8>(p(v10), 0xD, v14 as u8);
+        wr::<u32>(p(v10), 0x10, v13);
+        wr::<u32>(p(v10), 0x14, v12);
+        return v10;
+    }
+}
+
 /// `vt_86d868::Clone` (0x623300): clone, thiscall, `ret`; 38 instruction(s) matched.
 #[hook(addr = 0x623300, conv = thiscall, name = "vt_86d868::Clone", expect = "6A FF 68 1B FB 83 00")]
 pub fn g_vt_86d868_clone_623300(this: u32) -> u32 {
@@ -1559,6 +1939,54 @@ pub fn g_vt_86d868_clone_623300(this: u32) -> u32 {
         let v6 = rd::<u32>(p(this), 0x10);
         let v7 = c_620b00_t5(v1, v6, v5, v4, v3, v2);
         return v7;
+    }
+}
+
+/// `CTaskComplexKillPedOnFoot::Clone` (0x623370): clone, thiscall, `ret`; 49 instruction(s) matched.
+#[hook(addr = 0x623370, conv = thiscall, name = "CTaskComplexKillPedOnFoot::Clone", expect = "6A FF 68 3B FB 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_kill_ped_on_foot_clone_623370(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x38);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0xC));
+        let v3 = u32::from(rd::<u8>(p(0), 0xC));
+        let v4 = ((((v3 & 0xFF) & 0xFF) ^ ((v2 & 0xFF) & 0xFF)) & 0xFF);
+        let v5 = u32::from(rd::<u8>(p(0), 0xC));
+        let v6 = ((((v4 & 0xFF) & 0xFF) & 0x10) & 0xFF);
+        let v7 = ((((v5 & 0xFF) & 0xFF) ^ ((v6 & 0xFF) & 0xFF)) & 0xFF);
+        let v8 = ((v7 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0xC, v8 as u8);
+        let v9 = ((v7 & 0xFF) & 0xFF);
+        let v10 = u32::from(rd::<u8>(p(this), 0xC));
+        let v11 = ((((v10 & 0xFF) & 0xFF) ^ ((v9 & 0xFF) & 0xFF)) & 0xFF);
+        let v12 = ((((v11 & 0xFF) & 0xFF) & 0x20) & 0xFF);
+        let v13 = ((((v12 & 0xFF) & 0xFF) ^ ((v9 & 0xFF) & 0xFF)) & 0xFF);
+        let v14 = ((v13 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0xC, v14 as u8);
+        return 0;
+    } else {
+        let v15 = rd::<u8>(p(this), 0x20) as i8 as i32 as u32;
+        let v16 = rd::<u32>(p(this), 0x1C);
+        let v17 = rd::<u32>(p(this), 0x18);
+        let v18 = rd::<u32>(p(this), 0x14);
+        let v19 = rd::<u32>(p(this), 0x28);
+        let v20 = rd::<u32>(p(this), 0x10);
+        let v21 = c_620e30_t6(v1, v20, v19, v18, v17, v16, v15);
+        let v22 = u32::from(rd::<u8>(p(this), 0xC));
+        let v23 = u32::from(rd::<u8>(p(v21), 0xC));
+        let v24 = ((((v23 & 0xFF) & 0xFF) ^ ((v22 & 0xFF) & 0xFF)) & 0xFF);
+        let v25 = u32::from(rd::<u8>(p(v21), 0xC));
+        let v26 = ((((v24 & 0xFF) & 0xFF) & 0x10) & 0xFF);
+        let v27 = ((((v25 & 0xFF) & 0xFF) ^ ((v26 & 0xFF) & 0xFF)) & 0xFF);
+        let v28 = ((v27 & 0xFF) & 0xFF);
+        wr::<u8>(p(v21), 0xC, v28 as u8);
+        let v29 = ((v27 & 0xFF) & 0xFF);
+        let v30 = u32::from(rd::<u8>(p(this), 0xC));
+        let v31 = ((((v30 & 0xFF) & 0xFF) ^ ((v29 & 0xFF) & 0xFF)) & 0xFF);
+        let v32 = ((((v31 & 0xFF) & 0xFF) & 0x20) & 0xFF);
+        let v33 = ((((v32 & 0xFF) & 0xFF) ^ ((v29 & 0xFF) & 0xFF)) & 0xFF);
+        let v34 = ((v33 & 0xFF) & 0xFF);
+        wr::<u8>(p(v21), 0xC, v34 as u8);
+        return v21;
     }
 }
 
@@ -1585,6 +2013,29 @@ pub fn g_task_complex_kill_ped_on_foot_melee_clone_623460(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0xC);
         let v3 = c_621000_t1(v1, v2);
         return v3;
+    }
+}
+
+/// `CTaskComplexKillPedOnFootArmed::Clone` (0x6234C0): clone, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x6234C0, conv = thiscall, name = "CTaskComplexKillPedOnFootArmed::Clone", expect = "6A FF 68 9B FB 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_kill_ped_on_foot_armed_clone_6234c0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x5C);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x35));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x35, v3 as u8);
+        return 0;
+    } else {
+        let v4 = rd::<u8>(p(this), 0x30) as i8 as i32 as u32;
+        let v5 = rd::<u32>(p(this), 0x24);
+        let v6 = rd::<u32>(p(this), 0x20);
+        let v7 = rd::<u32>(p(this), 0x1C);
+        let v8 = rd::<u32>(p(this), 0xC);
+        let v9 = c_621190_t5(v1, v8, v7, v6, v5, v4);
+        let v10 = u32::from(rd::<u8>(p(this), 0x35));
+        let v11 = ((v10 & 0xFF) & 0xFF);
+        wr::<u8>(p(v9), 0x35, v11 as u8);
+        return v9;
     }
 }
 
@@ -1643,6 +2094,37 @@ pub fn g_task_complex_road_rage_clone_623670(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0xC);
         let v3 = c_6220a0_t1(v1, v2);
         return v3;
+    }
+}
+
+/// `CTaskSimpleGangDriveBy::Clone` (0x6236D0): clone, thiscall, `ret`; 41 instruction(s) matched.
+#[hook(addr = 0x6236D0, conv = thiscall, name = "CTaskSimpleGangDriveBy::Clone", expect = "6A FF 68 3B FC 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_gang_drive_by_clone_6236d0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x44);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0xE));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0xE, v3 as u8);
+        return 0;
+    } else {
+        let v4 = u32::from(rd::<u8>(p(this), 0xA));
+        let v5 = u32::from(rd::<u8>(p(this), 0x12));
+        let v6 = u32::from(rd::<u8>(p(this), 0x13));
+        let v7 = rd::<u32>(p(this), 0x20);
+        let v8 = rd::<u32>(p(this), 0x34);
+        let v9 = c_6217d0_t6(
+            v1,
+            v8,
+            this.wrapping_add(0x38),
+            v7,
+            (v6 & 0xFF),
+            (v5 & 0xFF),
+            (v4 & 0xFF),
+        );
+        let v10 = u32::from(rd::<u8>(p(this), 0xE));
+        let v11 = ((v10 & 0xFF) & 0xFF);
+        wr::<u8>(p(v9), 0xE, v11 as u8);
+        return v9;
     }
 }
 
@@ -1844,6 +2326,38 @@ pub fn g_task_complex_leave_car_and_die_clone_62f1d0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleSetStayInSamePlace::Clone` (0x635BD0): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x635BD0, conv = thiscall, name = "CTaskSimpleSetStayInSamePlace::Clone", expect = "6A FF 68 7B 0A 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_set_stay_in_same_place_clone_635bd0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        c_61a390_t0(v1);
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v4 as u8);
+        wr::<u32>(p(v1), 0, 0x86_DD50);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleSetKindaStayInSamePlace::Clone` (0x635C30): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x635C30, conv = thiscall, name = "CTaskSimpleSetKindaStayInSamePlace::Clone", expect = "6A FF 68 9B 0A 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_set_kinda_stay_in_same_place_clone_635c30(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        c_61a390_t0(v1);
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v4 as u8);
+        wr::<u32>(p(v1), 0, 0x86_DD74);
+        return v1;
+    }
+}
+
 /// `CTaskSimpleDuckToggle::Clone` (0x635C90): clone, thiscall, `ret`; 30 instruction(s) matched.
 #[hook(addr = 0x635C90, conv = thiscall, name = "CTaskSimpleDuckToggle::Clone", expect = "6A FF 68 BB 0A 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
 pub fn g_task_simple_duck_toggle_clone_635c90(this: u32) -> u32 {
@@ -1996,6 +2510,34 @@ pub fn g_task_complex_die_clone_636060(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleDead::Clone` (0x636100): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x636100, conv = thiscall, name = "CTaskSimpleDead::Clone", expect = "6A FF 68 BB 0B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_dead_clone_636100(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0xC));
+        let v3 = rd::<u32>(p(this), 8);
+        let v4 = (((((v2 & 0xFF) & 0xFF) & 0xFF) >> 1) & 0xFF);
+        let v5 = ((((v4 & 0xFF) & 0xFF) & 1) & 0xFF);
+        let v6 = c_61a390_t0(v1);
+        let v7 = u32::from(rd::<u8>(p(v1), 0xC));
+        let v8 = ((((v5 & 0xFF) & 0xFF) & 1) & 0xFF);
+        let v9 = (((((v8 & 0xFF) & 0xFF) & 0xFF) << 1) & 0xFF);
+        let v10 = (((((v6 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF) & 0xF9) & 0xFF);
+        let v11 = ((((v9 & 0xFF) & 0xFF)
+            | (((((v6 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFFFF_FF00) | (v10 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v12 = ((((v11 & 0xFF) & 0xFF) | 1) & 0xFF);
+        let v13 = ((v12 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0xC, v13 as u8);
+        wr::<u32>(p(v1), 0, 0x86_DEA4);
+        wr::<u32>(p(v1), 8, v3);
+        return v1;
+    }
+}
+
 /// `CTaskSimpleTired::Clone` (0x636180): clone, thiscall, `ret`; 45 instruction(s) matched.
 #[hook(addr = 0x636180, conv = thiscall, name = "CTaskSimpleTired::Clone", expect = "6A FF 68 DB 0B 84 00")]
 pub fn g_task_simple_tired_clone_636180(this: u32) -> u32 {
@@ -2012,6 +2554,42 @@ pub fn g_task_simple_tired_clone_636180(this: u32) -> u32 {
         wr::<u8>(p(v1), 0x14, 0 as u8);
         wr::<u8>(p(v1), 0x15, 0 as u8);
         wr::<u32>(p(v1), 0x18, 0);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleSitDown::Clone` (0x636200): clone, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x636200, conv = thiscall, name = "CTaskSimpleSitDown::Clone", expect = "6A FF 68 FB 0B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_sit_down_clone_636200(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        c_61a390_t0(v1);
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v4 as u8);
+        wr::<u32>(p(v1), 0, 0x86_DEF4);
+        wr::<u8>(p(v1), 9, 0 as u8);
+        wr::<u32>(p(v1), 0xC, 0);
+        return v1;
+    }
+}
+
+/// `CTaskSimpleStandUp::Clone` (0x636310): clone, thiscall, `ret`; 40 instruction(s) matched.
+#[hook(addr = 0x636310, conv = thiscall, name = "CTaskSimpleStandUp::Clone", expect = "6A FF 68 3B 0C 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_stand_up_clone_636310(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x10);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        c_61a390_t0(v1);
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v4 as u8);
+        wr::<u32>(p(v1), 0, 0x86_DF3C);
+        wr::<u8>(p(v1), 9, 0 as u8);
+        wr::<u32>(p(v1), 0xC, 0);
         return v1;
     }
 }
@@ -2258,6 +2836,29 @@ pub fn g_vt_86e1dc_clone_636b40(_this: u32) -> u32 {
         wr::<u32>(p(v1), 0xC, 0);
         wr::<u8>(p(v1), 0x10, 0 as u8);
         wr::<u8>(p(v1), 0x11, 0 as u8);
+        return v1;
+    }
+}
+
+/// `CTaskComplexBeInGroup::Clone` (0x636BE0): clone, thiscall, `ret`; 49 instruction(s) matched.
+#[hook(addr = 0x636BE0, conv = thiscall, name = "CTaskComplexBeInGroup::Clone", expect = "6A FF 68 7B 0E 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_be_in_group_clone_636be0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x10));
+        let v3 = rd::<u32>(p(this), 0xC);
+        c_61a3b0_t0(v1);
+        let v5 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x10, v5 as u8);
+        wr::<u32>(p(v1), 0xC, v3);
+        wr::<u32>(p(v1), 0x14, 0);
+        wr::<u32>(p(v1), 0x18, 0);
+        wr::<u32>(p(v1), 0x20, 0);
+        wr::<u32>(p(v1), 0, 0x86_E22C);
+        wr::<u32>(p(v1), 0x1C, 0xC8);
+        wr::<u32>(p(v1), 0x24, 0xFFFF_FFFF);
         return v1;
     }
 }
@@ -2635,6 +3236,55 @@ pub fn g_task_complex_scream_in_car_then_leave_clone_63dbb0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleCarDrive::Clone` (0x63DC20): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x63DC20, conv = thiscall, name = "CTaskSimpleCarDrive::Clone", expect = "6A FF 68 7B 1B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_drive_clone_63dc20(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x60);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(0), 0x5C));
+        let v3 = u32::from(rd::<u8>(p(this), 0x5C));
+        let v4 = ((((v3 & 0xFF) & 0xFF) ^ ((v2 & 0xFF) & 0xFF)) & 0xFF);
+        let v5 = ((((v4 & 0xFF) & 0xFF) & 4) & 0xFF);
+        let v6 = ((((v2 & 0xFF) & 0xFF) ^ ((v5 & 0xFF) & 0xFF)) & 0xFF);
+        let v7 = ((v6 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x5C, v7 as u8);
+        return 0;
+    } else {
+        let v8 = rd::<u32>(p(this), 8);
+        let v9 = c_63c340_t3(v1, v8, 0, 0);
+        let v10 = u32::from(rd::<u8>(p(v9), 0x5C));
+        let v11 = u32::from(rd::<u8>(p(this), 0x5C));
+        let v12 = ((((v11 & 0xFF) & 0xFF) ^ ((v10 & 0xFF) & 0xFF)) & 0xFF);
+        let v13 = ((((v12 & 0xFF) & 0xFF) & 4) & 0xFF);
+        let v14 = ((((v10 & 0xFF) & 0xFF) ^ ((v13 & 0xFF) & 0xFF)) & 0xFF);
+        let v15 = ((v14 & 0xFF) & 0xFF);
+        wr::<u8>(p(v9), 0x5C, v15 as u8);
+        return v9;
+    }
+}
+
+/// `CTaskComplexCarDrive::Clone` (0x63DC90): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x63DC90, conv = thiscall, name = "CTaskComplexCarDrive::Clone", expect = "6A FF 68 9B 1B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_car_drive_clone_63dc90(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x1C));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x1C, v3 as u8);
+        return 0;
+    } else {
+        let v4 = rd::<u32>(p(this), 0x18);
+        let v5 = rd::<u32>(p(this), 0x14);
+        let v6 = rd::<u32>(p(this), 0x10);
+        let v7 = rd::<u32>(p(this), 0xC);
+        let v8 = c_63c940_t4(v1, v7, v6, v5, v4);
+        let v9 = u32::from(rd::<u8>(p(this), 0x1C));
+        let v10 = ((v9 & 0xFF) & 0xFF);
+        wr::<u8>(p(v8), 0x1C, v10 as u8);
+        return v8;
+    }
+}
+
 /// `CTaskComplexCarDriveMission::Clone` (0x63DD70): clone, thiscall, `ret`; 38 instruction(s) matched.
 #[hook(addr = 0x63DD70, conv = thiscall, name = "CTaskComplexCarDriveMission::Clone", expect = "6A FF 68 DB 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
 pub fn g_task_complex_car_drive_mission_clone_63dd70(this: u32) -> u32 {
@@ -2728,6 +3378,29 @@ pub fn g_task_complex_enter_car_as_driver_clone_643780(this: u32) -> u32 {
         wr::<u32>(p(v1), 0, 0x86_EAAC);
         let v5 = rd::<u32>(p(this), 0x24);
         wr::<u32>(p(v1), 0x24, v5);
+        return v1;
+    }
+}
+
+/// `CTaskComplexEnterCarAsPassenger::Clone` (0x6437F0): clone, thiscall, `ret`; 44 instruction(s) matched.
+#[hook(addr = 0x6437F0, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::Clone", expect = "6A FF 68 6B 22 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_enter_car_as_passenger_clone_6437f0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x50);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x24);
+        wr::<u32>(p(0), 0x24, v2);
+        return 0;
+    } else {
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = u32::from(rd::<u8>(p(this), 0x10));
+        let v5 = (((((v4 & 0xFF) & 0xFF) & 0xFF) >> 3) & 0xFF);
+        let v6 = rd::<u32>(p(this), 0x1C);
+        let v7 = ((((v4 & 0xFF) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF01);
+        c_63a220_t5(v1, v3, 0, 0, 0, v7);
+        wr::<u32>(p(v1), 0x1C, v6);
+        wr::<u32>(p(v1), 0, 0x86_EADC);
+        let v9 = rd::<u32>(p(this), 0x24);
+        wr::<u32>(p(v1), 0x24, v9);
         return v1;
     }
 }
@@ -2991,6 +3664,71 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_clone_649d20(this: u32) 
     }
 }
 
+/// `CTaskSimpleCarSetPedInAsPassenger::Clone` (0x649D90): clone, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x649D90, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::Clone", expect = "6A FF 68 3B 2D 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_ped_in_as_passenger_clone_649d90(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x20);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x1C));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x1C, v3 as u8);
+        let v4 = u32::from(rd::<u8>(p(this), 0x1D));
+        let v5 = ((v4 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x1D, v5 as u8);
+        let v6 = u32::from(rd::<u8>(p(this), 0x1E));
+        let v7 = ((v6 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x1E, v7 as u8);
+        return 0;
+    } else {
+        let v8 = rd::<u32>(p(this), 0x18);
+        let v9 = rd::<u32>(p(this), 0x14);
+        let v10 = rd::<u32>(p(this), 0x10);
+        let v11 = c_646fe0_t3(v1, v10, v9, v8);
+        let v12 = u32::from(rd::<u8>(p(this), 0x1C));
+        let v13 = ((v12 & 0xFF) & 0xFF);
+        wr::<u8>(p(v11), 0x1C, v13 as u8);
+        let v14 = u32::from(rd::<u8>(p(this), 0x1D));
+        let v15 = ((v14 & 0xFF) & 0xFF);
+        wr::<u8>(p(v11), 0x1D, v15 as u8);
+        let v16 = u32::from(rd::<u8>(p(this), 0x1E));
+        let v17 = ((v16 & 0xFF) & 0xFF);
+        wr::<u8>(p(v11), 0x1E, v17 as u8);
+        return v11;
+    }
+}
+
+/// `CTaskSimpleCarSetPedInAsDriver::Clone` (0x649E00): clone, thiscall, `ret`; 34 instruction(s) matched.
+#[hook(addr = 0x649E00, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::Clone", expect = "6A FF 68 5B 2D 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_ped_in_as_driver_clone_649e00(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x18));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x18, v3 as u8);
+        let v4 = u32::from(rd::<u8>(p(this), 0x19));
+        let v5 = ((v4 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x19, v5 as u8);
+        let v6 = u32::from(rd::<u8>(p(this), 0x1A));
+        let v7 = ((v6 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x1A, v7 as u8);
+        return 0;
+    } else {
+        let v8 = rd::<u32>(p(this), 0x14);
+        let v9 = rd::<u32>(p(this), 0x10);
+        let v10 = c_6470e0_t2(v1, v9, v8);
+        let v11 = u32::from(rd::<u8>(p(this), 0x18));
+        let v12 = ((v11 & 0xFF) & 0xFF);
+        wr::<u8>(p(v10), 0x18, v12 as u8);
+        let v13 = u32::from(rd::<u8>(p(this), 0x19));
+        let v14 = ((v13 & 0xFF) & 0xFF);
+        wr::<u8>(p(v10), 0x19, v14 as u8);
+        let v15 = u32::from(rd::<u8>(p(this), 0x1A));
+        let v16 = ((v15 & 0xFF) & 0xFF);
+        wr::<u8>(p(v10), 0x1A, v16 as u8);
+        return v10;
+    }
+}
+
 /// `CTaskSimpleCarGetOut::Clone` (0x649E70): clone, thiscall, `ret`; 34 instruction(s) matched.
 #[hook(addr = 0x649E70, conv = thiscall, name = "CTaskSimpleCarGetOut::Clone", expect = "6A FF 68 7B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_get_out_clone_649e70(this: u32) -> u32 {
@@ -3017,6 +3755,51 @@ pub fn g_vt_86ee94_clone_649ee0(this: u32) -> u32 {
         let v3 = rd::<u32>(p(this), 8);
         let v4 = c_647710_t2(v1, v3, v2);
         return v4;
+    }
+}
+
+/// `CTaskSimpleCarSetPedOut::Clone` (0x649F50): clone, thiscall, `ret`; 41 instruction(s) matched.
+#[hook(addr = 0x649F50, conv = thiscall, name = "CTaskSimpleCarSetPedOut::Clone", expect = "6A FF 68 BB 2D 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_car_set_ped_out_clone_649f50(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x18);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x11));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x11, v3 as u8);
+        let v4 = u32::from(rd::<u8>(p(this), 0x12));
+        let v5 = ((v4 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x12, v5 as u8);
+        let v6 = u32::from(rd::<u8>(p(this), 0x13));
+        let v7 = ((v6 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x13, v7 as u8);
+        let v8 = u32::from(rd::<u8>(p(this), 0x14));
+        let v9 = ((v8 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x14, v9 as u8);
+        let v10 = u32::from(rd::<u8>(p(this), 0x15));
+        let v11 = ((v10 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x15, v11 as u8);
+        return 0;
+    } else {
+        let v12 = rd::<u32>(p(this), 0xC);
+        let v13 = u32::from(rd::<u8>(p(this), 0x10));
+        let v14 = rd::<u32>(p(this), 8);
+        let v15 = c_6478b0_t3(v1, v14, v12, (v13 & 0xFF));
+        let v16 = u32::from(rd::<u8>(p(this), 0x11));
+        let v17 = ((v16 & 0xFF) & 0xFF);
+        wr::<u8>(p(v15), 0x11, v17 as u8);
+        let v18 = u32::from(rd::<u8>(p(this), 0x12));
+        let v19 = ((v18 & 0xFF) & 0xFF);
+        wr::<u8>(p(v15), 0x12, v19 as u8);
+        let v20 = u32::from(rd::<u8>(p(this), 0x13));
+        let v21 = ((v20 & 0xFF) & 0xFF);
+        wr::<u8>(p(v15), 0x13, v21 as u8);
+        let v22 = u32::from(rd::<u8>(p(this), 0x14));
+        let v23 = ((v22 & 0xFF) & 0xFF);
+        wr::<u8>(p(v15), 0x14, v23 as u8);
+        let v24 = u32::from(rd::<u8>(p(this), 0x15));
+        let v25 = ((v24 & 0xFF) & 0xFF);
+        wr::<u8>(p(v15), 0x15, v25 as u8);
+        return v15;
     }
 }
 
@@ -3366,6 +4149,25 @@ pub fn g_task_simple_hurt_ped_with_car_clone_655a90(this: u32) -> u32 {
         let v3 = rd::<u32>(p(this), 8);
         let v4 = c_653ea0_t2(v1, v3, v2);
         return v4;
+    }
+}
+
+/// `CTaskComplexWalkRoundCar::Clone` (0x655B00): clone, thiscall, `ret`; 43 instruction(s) matched.
+#[hook(addr = 0x655B00, conv = thiscall, name = "CTaskComplexWalkRoundCar::Clone", expect = "6A FF 68 EB 38 84 00", unverified = "ai8g-4", route = "L2", hazards = "none")]
+pub fn g_task_complex_walk_round_car_clone_655b00(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x58);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0xE));
+        let v3 = (((((v2 & 0xFF) & 0xFF) & 0xFF) << 4) & 0xFF);
+        let v4 = u32::from(rd::<u8>(p(this), 0xD));
+        let v5 = ((((((v3 & 0xFF) & 0xFF) as i8 as i32 as u32) as i32) >> 4) as u32);
+        let v6 = rd::<u32>(p(this), 0x1C);
+        let v7 = ((v4 & 0xFF) & 0xFFFF_FF01);
+        let v8 = rd::<u8>(p(this), 0xC) as i8 as i32 as u32;
+        let v9 = c_6541b0_t5(v1, v8, this.wrapping_add(0x10), v6, v7, v5);
+        return v9;
     }
 }
 
@@ -3782,6 +4584,26 @@ pub fn g_task_gang_hassle_vehicle_clone_65fc00(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleDoHandSignal::Clone` (0x6608C0): clone, thiscall, `ret`; 32 instruction(s) matched.
+#[hook(addr = 0x6608C0, conv = thiscall, name = "CTaskSimpleDoHandSignal::Clone", expect = "6A FF 68 8B 46 84 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_do_hand_signal_clone_6608c0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0xC);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 8));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 8, v3 as u8);
+        return 0;
+    } else {
+        c_61a390_t0(v1);
+        wr::<u32>(p(v1), 0, 0x86_FA68);
+        wr::<u8>(p(v1), 8, 0 as u8);
+        let v5 = u32::from(rd::<u8>(p(this), 8));
+        let v6 = ((v5 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 8, v6 as u8);
+        return v1;
+    }
+}
+
 /// `CTaskLeanOnVehicle::Clone` (0x6610A0): clone, thiscall, `ret`; 35 instruction(s) matched.
 #[hook(addr = 0x6610A0, conv = thiscall, name = "CTaskLeanOnVehicle::Clone", expect = "6A FF 68 DB 47 84 00")]
 pub fn g_task_lean_on_vehicle_clone_6610a0(this: u32) -> u32 {
@@ -3825,6 +4647,40 @@ pub fn g_task_complex_gang_leader_clone_661fa0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleGoToPointFine::Clone` (0x662040): clone, thiscall, `ret`; 45 instruction(s) matched.
+#[hook(addr = 0x662040, conv = thiscall, name = "CTaskSimpleGoToPointFine::Clone", expect = "6A FF 68 AB 49 84 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes,uninit-locals")]
+pub fn g_task_simple_go_to_point_fine_clone_662040(this: u32) -> u32 {
+    let mut frame = [0u32; 0x100];
+    let fb = frame.as_mut_ptr() as usize as u32;
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = x(rd::<f32>(p(this), 0x18));
+        let v3 = rd::<u32>(p(this), 0xC);
+        let v4 = rd::<u32>(p(this), 0x10);
+        let v5 = rd::<u32>(p(this), 0x14);
+        let v6 = rd::<u32>(p(this), 0x20);
+        wr::<u32>(p(fb), 0x3D4, v6);
+        wr::<u32>(p(fb), 0x3E4, v1);
+        wr::<u32>(p(fb), 0x3E8, v3);
+        wr::<u32>(p(fb), 0x3EC, v4);
+        wr::<u32>(p(fb), 0x3F8, 0x84_49AB);
+        wr::<u32>(p(fb), 0x3FC, 0);
+        let v7 = f32_of(v2).to_bits();
+        wr::<f32>(p(fb), 0x3D4, f32_of(v2));
+        wr::<u32>(p(fb), 0x3D0, fb.wrapping_add(0x3E8));
+        wr::<u32>(p(fb), 0x3E0, v6);
+        wr::<u32>(p(fb), 0x3CC, 4);
+        wr::<u32>(p(fb), 0x3F0, v5);
+        c_6679c0_t3(v1, 4, fb.wrapping_add(0x3E8), v7);
+        let v9 = rd::<u32>(p(fb), 0x3E0);
+        wr::<u32>(p(v1), 0x20, v9);
+        wr::<u32>(p(v1), 0, 0x86_F964);
+        return v1;
+    }
+}
+
 /// `CTaskComplexSignalAtPed::Clone` (0x662140): clone, thiscall, `ret`; 35 instruction(s) matched.
 #[hook(addr = 0x662140, conv = thiscall, name = "CTaskComplexSignalAtPed::Clone", expect = "6A FF 68 EB 49 84 00")]
 pub fn g_task_complex_signal_at_ped_clone_662140(this: u32) -> u32 {
@@ -3854,6 +4710,23 @@ pub fn g_task_complex_pass_object_clone_662220(this: u32) -> u32 {
     }
 }
 
+/// `CTaskComplexGangJoinRespond::Clone` (0x662290): clone, thiscall, `ret`; 33 instruction(s) matched.
+#[hook(addr = 0x662290, conv = thiscall, name = "CTaskComplexGangJoinRespond::Clone", expect = "6A FF 68 4B 4A 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_gang_join_respond_clone_662290(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0xC));
+        c_61a3b0_t0(v1);
+        let v4 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0xC, v4 as u8);
+        wr::<u32>(p(v1), 0, 0x86_FB5C);
+        wr::<u8>(p(v1), 0xD, 0 as u8);
+        return v1;
+    }
+}
+
 /// `CTaskComplexProstituteSolicit::Clone` (0x6622F0): clone, thiscall, `ret`; 30 instruction(s) matched.
 #[hook(addr = 0x6622F0, conv = thiscall, name = "CTaskComplexProstituteSolicit::Clone", expect = "6A FF 68 6B 4A 84 00")]
 pub fn g_task_complex_prostitute_solicit_clone_6622f0(this: u32) -> u32 {
@@ -3864,6 +4737,77 @@ pub fn g_task_complex_prostitute_solicit_clone_6622f0(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0xC);
         let v3 = c_661a60_t1(v1, v2);
         return v3;
+    }
+}
+
+/// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Clone` (0x664AF0): clone, thiscall, `ret`; 63 instruction(s) matched.
+#[hook(addr = 0x664AF0, conv = thiscall, name = "CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Clone", expect = "6A FF 68 1B 4C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_seek_entity_centity_seek_pos_calculator_xyoffset_clone_664af0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x58);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(0x44), 0, v2);
+        let v3 = rd::<u32>(p(this), 0x48);
+        wr::<u32>(p(0x44), 4, v3);
+        let v4 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(0x44), 8, v4);
+        let v5 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(0), 0x50, v5);
+        let v6 = u32::from(rd::<u8>(p(this), 0x54));
+        let v7 = u32::from(rd::<u8>(p(0), 0x54));
+        let v8 = (((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF)
+            ^ (((v5 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v9 = (((((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v8 & 0xFF)) & 0xFF) & 8) & 0xFF);
+        let v10 = (((((v5 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF)
+            ^ (((((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v8 & 0xFF)) & 0xFFFF_FF00)
+                | (v9 & 0xFF))
+                & 0xFF))
+            & 0xFF);
+        let v11 = (((((v5 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFFFF_FF00) | (v10 & 0xFF)) & 0xFF);
+        wr::<u8>(p(0), 0x54, v11 as u8);
+        let v12 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(0), 0x20, f32_of(v12));
+        let v13 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(0), 0x50, v13);
+        return 0;
+    } else {
+        let v14 = rd::<u32>(p(this), 0x24);
+        let v15 = u32::from(rd::<u8>(p(this), 0x54));
+        let v16 = ((v15 & 0xFF) & 0xFFFF_FF01);
+        let v17 = rd::<u32>(p(this), 0x1C);
+        let v18 = rd::<u32>(p(this), 0x18);
+        let v19 = rd::<u32>(p(this), 0x14);
+        let v20 = rd::<u32>(p(this), 0x10);
+        let v21 = rd::<u32>(p(this), 0xC);
+        let v22 = c_661dc0_t8(v1, v21, v20, v19, v18, v17, v14, v16, 1);
+        let v23 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(v22), 0x44, v23);
+        let v24 = rd::<u32>(p(this), 0x48);
+        wr::<u32>(p(v22), 0x48, v24);
+        let v25 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(v22), 0x4C, v25);
+        let v26 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(v22), 0x50, v26);
+        let v27 = u32::from(rd::<u8>(p(this), 0x54));
+        let v28 = u32::from(rd::<u8>(p(v22), 0x54));
+        let v29 = (((((v25 & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFF)
+            ^ (((v26 & 0xFFFF_FF00) | (v28 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v30 =
+            (((((((v25 & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFFFF_FF00) | (v29 & 0xFF)) & 0xFF) & 8) & 0xFF);
+        let v31 = (((((v26 & 0xFFFF_FF00) | (v28 & 0xFF)) & 0xFF)
+            ^ (((((((v25 & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFFFF_FF00) | (v29 & 0xFF)) & 0xFFFF_FF00)
+                | (v30 & 0xFF))
+                & 0xFF))
+            & 0xFF);
+        let v32 = (((((v26 & 0xFFFF_FF00) | (v28 & 0xFF)) & 0xFFFF_FF00) | (v31 & 0xFF)) & 0xFF);
+        wr::<u8>(p(v22), 0x54, v32 as u8);
+        let v33 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(v22), 0x20, f32_of(v33));
+        let v34 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(v22), 0x50, v34);
+        return v22;
     }
 }
 
@@ -3891,6 +4835,25 @@ pub fn g_task_complex_goto_door_and_open_clone_66bca0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleGoToPoint::Clone` (0x66CC60): clone, thiscall, `ret`; 43 instruction(s) matched.
+#[hook(addr = 0x66CC60, conv = thiscall, name = "CTaskSimpleGoToPoint::Clone", expect = "6A FF 68 2B 53 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+pub fn g_task_simple_go_to_point_clone_66cc60(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x30);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x20));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        let v4 = (((((v3 & 0xFF) & 0xFF) & 0xFF) >> 3) & 0xFF);
+        let v5 = ((v2 & 0xFF) & 0xFFFF_FF01);
+        let v6 = ((((v3 & 0xFF) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFFFF_FF01);
+        let v7 = rd::<u32>(p(this), 0x18);
+        let v8 = rd::<u32>(p(this), 8);
+        let v9 = c_667cd0_t5(v1, v8, this.wrapping_add(0xC), v7, v5, v6);
+        return v9;
+    }
+}
+
 /// `CTaskSimpleAchieveHeading::Clone` (0x66CCF0): clone, thiscall, `ret`; 43 instruction(s) matched.
 #[hook(addr = 0x66CCF0, conv = thiscall, name = "CTaskSimpleAchieveHeading::Clone", expect = "6A FF 68 4B 53 84 00")]
 pub fn g_task_simple_achieve_heading_clone_66ccf0(this: u32) -> u32 {
@@ -3911,6 +4874,26 @@ pub fn g_task_simple_achieve_heading_clone_66ccf0(this: u32) -> u32 {
         wr::<u32>(p(v1), 0xC, v2);
         wr::<u32>(p(v1), 0x10, v3);
         return v1;
+    }
+}
+
+/// `CTaskComplexGoToPointAndStandStill::Clone` (0x66CEA0): clone, thiscall, `ret`; 45 instruction(s) matched.
+#[hook(addr = 0x66CEA0, conv = thiscall, name = "CTaskComplexGoToPointAndStandStill::Clone", expect = "6A FF 68 AB 53 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+pub fn g_task_complex_go_to_point_and_stand_still_clone_66cea0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x28);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x24));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        let v4 = (((((v3 & 0xFF) & 0xFF) & 0xFF) >> 1) & 0xFF);
+        let v5 = ((v2 & 0xFF) & 0xFFFF_FF01);
+        let v6 = ((((v3 & 0xFF) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFFFF_FF01);
+        let v7 = rd::<u32>(p(this), 0x1C);
+        let v8 = rd::<u32>(p(this), 0x20);
+        let v9 = rd::<u32>(p(this), 0xC);
+        let v10 = c_668120_t6(v1, v9, this.wrapping_add(0x10), v7, v8, v5, v6);
+        return v10;
     }
 }
 
@@ -3990,6 +4973,50 @@ pub fn g_task_complex_go_to_point_any_means_clone_66d1e0(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleSlideToCoord::Clone` (0x66D300): clone, thiscall, `ret`; 70 instruction(s) matched.
+#[hook(addr = 0x66D300, conv = thiscall, name = "CTaskSimpleSlideToCoord::Clone", expect = "6A FF 68 B6 54 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+pub fn g_task_simple_slide_to_coord_clone_66d300(this: u32) -> u32 {
+    let v1 = u32::from(rd::<u8>(p(this), 0x78));
+    if ((v1 & 2) as u8) == (0 as u8) {
+        let v2 = c_61a5a0_c1(0x80);
+        if v2 == 0 {
+            return 0;
+        } else {
+            let v3 = rd::<u32>(p(this), 0x74);
+            let v4 = rd::<u32>(p(this), 0x70);
+            let v5 = c_66c3e0_t3(v2, this.wrapping_add(0x64), v4, v3);
+            return v5;
+        }
+    } else {
+        let v6 = c_61a5a0_c1(0x80);
+        if v6 == 0 {
+            return 0;
+        } else {
+            let v7 = rd::<u32>(p(this), 0x40);
+            let v8 = u32::from(rd::<u8>(p(this), 0xC));
+            let v9 = ((((v8 & 0xFF) & 0xFF) & 0x10) & 0xFF);
+            let v10 = rd::<u32>(p(this), 0x38);
+            let v11 = (((((((v8 & 0xFF) & 0xFFFF_FF00) | (v9 & 0xFF)) & 0xFF) & 0xFF) >> 4) & 0xFF);
+            let v12 = rd::<u32>(p(this), 0x5C);
+            let v13 = rd::<u32>(p(this), 0x74);
+            let v14 = rd::<u32>(p(this), 0x70);
+            let v15 = c_66c450_t9(
+                v6,
+                this.wrapping_add(0x64),
+                v14,
+                v13,
+                this.wrapping_add(0x10),
+                this.wrapping_add(0x28),
+                v12,
+                v10,
+                (((((v8 & 0xFF) & 0xFFFF_FF00) | (v9 & 0xFF)) & 0xFFFF_FF00) | (v11 & 0xFF)),
+                v7,
+            );
+            return v15;
+        }
+    }
+}
+
 /// `CTaskComplexInvestigateDisturbance::Clone` (0x66D3D0): clone, thiscall, `ret`; 32 instruction(s) matched.
 #[hook(addr = 0x66D3D0, conv = thiscall, name = "CTaskComplexInvestigateDisturbance::Clone", expect = "6A FF 68 CB 54 84 00")]
 pub fn g_task_complex_investigate_disturbance_clone_66d3d0(this: u32) -> u32 {
@@ -4000,6 +5027,77 @@ pub fn g_task_complex_investigate_disturbance_clone_66d3d0(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0x18);
         let v3 = c_66c720_t2(v1, this.wrapping_add(0xC), v2);
         return v3;
+    }
+}
+
+/// `vt_87004c::Clone` (0x671330): clone, thiscall, `ret`; 63 instruction(s) matched.
+#[hook(addr = 0x671330, conv = thiscall, name = "vt_87004c::Clone", expect = "6A FF 68 0B 57 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_vt_87004c_clone_671330(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x58);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(0x44), 0, v2);
+        let v3 = rd::<u32>(p(this), 0x48);
+        wr::<u32>(p(0x44), 4, v3);
+        let v4 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(0x44), 8, v4);
+        let v5 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(0), 0x50, v5);
+        let v6 = u32::from(rd::<u8>(p(this), 0x54));
+        let v7 = u32::from(rd::<u8>(p(0), 0x54));
+        let v8 = (((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFF)
+            ^ (((v5 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v9 = (((((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v8 & 0xFF)) & 0xFF) & 8) & 0xFF);
+        let v10 = (((((v5 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFF)
+            ^ (((((((v4 & 0xFFFF_FF00) | (v6 & 0xFF)) & 0xFFFF_FF00) | (v8 & 0xFF)) & 0xFFFF_FF00)
+                | (v9 & 0xFF))
+                & 0xFF))
+            & 0xFF);
+        let v11 = (((((v5 & 0xFFFF_FF00) | (v7 & 0xFF)) & 0xFFFF_FF00) | (v10 & 0xFF)) & 0xFF);
+        wr::<u8>(p(0), 0x54, v11 as u8);
+        let v12 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(0), 0x20, f32_of(v12));
+        let v13 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(0), 0x50, v13);
+        return 0;
+    } else {
+        let v14 = rd::<u32>(p(this), 0x24);
+        let v15 = u32::from(rd::<u8>(p(this), 0x54));
+        let v16 = ((v15 & 0xFF) & 0xFFFF_FF01);
+        let v17 = rd::<u32>(p(this), 0x1C);
+        let v18 = rd::<u32>(p(this), 0x18);
+        let v19 = rd::<u32>(p(this), 0x14);
+        let v20 = rd::<u32>(p(this), 0x10);
+        let v21 = rd::<u32>(p(this), 0xC);
+        let v22 = c_66ca40_t8(v1, v21, v20, v19, v18, v17, v14, v16, 1);
+        let v23 = rd::<u32>(p(this), 0x44);
+        wr::<u32>(p(v22), 0x44, v23);
+        let v24 = rd::<u32>(p(this), 0x48);
+        wr::<u32>(p(v22), 0x48, v24);
+        let v25 = rd::<u32>(p(this), 0x4C);
+        wr::<u32>(p(v22), 0x4C, v25);
+        let v26 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(v22), 0x50, v26);
+        let v27 = u32::from(rd::<u8>(p(this), 0x54));
+        let v28 = u32::from(rd::<u8>(p(v22), 0x54));
+        let v29 = (((((v25 & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFF)
+            ^ (((v26 & 0xFFFF_FF00) | (v28 & 0xFF)) & 0xFF))
+            & 0xFF);
+        let v30 =
+            (((((((v25 & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFFFF_FF00) | (v29 & 0xFF)) & 0xFF) & 8) & 0xFF);
+        let v31 = (((((v26 & 0xFFFF_FF00) | (v28 & 0xFF)) & 0xFF)
+            ^ (((((((v25 & 0xFFFF_FF00) | (v27 & 0xFF)) & 0xFFFF_FF00) | (v29 & 0xFF)) & 0xFFFF_FF00)
+                | (v30 & 0xFF))
+                & 0xFF))
+            & 0xFF);
+        let v32 = (((((v26 & 0xFFFF_FF00) | (v28 & 0xFF)) & 0xFFFF_FF00) | (v31 & 0xFF)) & 0xFF);
+        wr::<u8>(p(v22), 0x54, v32 as u8);
+        let v33 = x(rd::<f32>(p(this), 0x20));
+        wr::<f32>(p(v22), 0x20, f32_of(v33));
+        let v34 = rd::<u32>(p(this), 0x50);
+        wr::<u32>(p(v22), 0x50, v34);
+        return v22;
     }
 }
 
@@ -4103,6 +5201,28 @@ pub fn g_vt_870114_clone_674bb0(this: u32) -> u32 {
     }
 }
 
+/// `vt_8701a8::Clone` (0x674F00): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x674F00, conv = thiscall, name = "vt_8701a8::Clone", expect = "6A FF 68 7B 5B 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_vt_8701a8_clone_674f00(this: u32) -> u32 {
+    let v1 = c_4b5620_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = u32::from(rd::<u8>(p(this), 0x18));
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = rd::<u32>(p(this), 0xC);
+        c_4abfc0_t0(v1);
+        wr::<u32>(p(v1), 0x14, v4);
+        let v7 = ((v3 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x18, v7 as u8);
+        wr::<u32>(p(v1), 0, 0x87_01A8);
+        wr::<u32>(p(v1), 0xC, v5);
+        wr::<u32>(p(v1), 0x10, v2);
+        return v1;
+    }
+}
+
 /// `CTaskInteriorBeInHouse::Clone` (0x675010): clone, thiscall, `ret`; 38 instruction(s) matched.
 #[hook(addr = 0x675010, conv = thiscall, name = "CTaskInteriorBeInHouse::Clone", expect = "6A FF 68 9B 5B 84 00")]
 pub fn g_task_interior_be_in_house_clone_675010(this: u32) -> u32 {
@@ -4147,6 +5267,77 @@ pub fn g_task_interior_be_in_shop_clone_675470(this: u32) -> u32 {
         let v2 = rd::<u32>(p(this), 0x28);
         let v3 = c_6753e0_t1(v1, v2);
         return v3;
+    }
+}
+
+/// `CTaskInteriorShopKeeper::Clone` (0x6756C0): clone, thiscall, `ret`; 44 instruction(s) matched.
+#[hook(addr = 0x6756C0, conv = thiscall, name = "CTaskInteriorShopKeeper::Clone", expect = "6A FF 68 1B 5C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_interior_shop_keeper_clone_6756c0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x20);
+    if v1 == 0 {
+        let v2 = rd::<u32>(p(this), 0x18);
+        wr::<u32>(p(0), 0x18, v2);
+        let v3 = rd::<u32>(p(this), 0x1C);
+        wr::<u32>(p(0), 0x1C, v3);
+        return 0;
+    } else {
+        let v4 = u32::from(rd::<u8>(p(this), 0x14));
+        let v5 = rd::<u32>(p(this), 0x10);
+        c_61a3b0_t0(v1);
+        wr::<u32>(p(v1), 0x10, v5);
+        let v7 = ((v4 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x14, v7 as u8);
+        wr::<u32>(p(v1), 0x18, 0);
+        wr::<u32>(p(v1), 0x1C, 0);
+        wr::<u8>(p(v1), 0xC, 0 as u8);
+        wr::<u32>(p(v1), 0, 0x87_0290);
+        let v8 = rd::<u32>(p(this), 0x18);
+        wr::<u32>(p(v1), 0x18, v8);
+        let v9 = rd::<u32>(p(this), 0x1C);
+        wr::<u32>(p(v1), 0x1C, v9);
+        return v1;
+    }
+}
+
+/// `CTaskInteriorGoToInfo::Clone` (0x675820): clone, thiscall, `ret`; 38 instruction(s) matched.
+#[hook(addr = 0x675820, conv = thiscall, name = "CTaskInteriorGoToInfo::Clone", expect = "6A FF 68 5B 5C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_interior_go_to_info_clone_675820(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x18);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x14));
+        let v3 = rd::<u32>(p(this), 0x10);
+        let v4 = rd::<u32>(p(this), 0xC);
+        c_61a3b0_t0(v1);
+        wr::<u32>(p(v1), 0x10, v3);
+        let v6 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x14, v6 as u8);
+        wr::<u32>(p(v1), 0, 0x87_02BC);
+        wr::<u32>(p(v1), 0xC, v4);
+        return v1;
+    }
+}
+
+/// `CTaskInteriorUseInfo::Clone` (0x675AB0): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x675AB0, conv = thiscall, name = "CTaskInteriorUseInfo::Clone", expect = "6A FF 68 9B 5C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_interior_use_info_clone_675ab0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x1C);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0x10);
+        let v3 = u32::from(rd::<u8>(p(this), 0x18));
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = rd::<u32>(p(this), 0xC);
+        c_61a3b0_t0(v1);
+        wr::<u32>(p(v1), 0x14, v4);
+        let v7 = ((v3 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x18, v7 as u8);
+        wr::<u32>(p(v1), 0, 0x87_02E8);
+        wr::<u32>(p(v1), 0xC, v5);
+        wr::<u32>(p(v1), 0x10, v2);
+        return v1;
     }
 }
 
@@ -4283,6 +5474,100 @@ pub fn g_vt_870480_clone_67c270(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimpleLand::Clone` (0x67C3F0): clone, thiscall, `ret`; 46 instruction(s) matched.
+#[hook(addr = 0x67C3F0, conv = thiscall, name = "CTaskSimpleLand::Clone", expect = "6A FF 68 4B 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_land_clone_67c3f0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = rd::<u32>(p(this), 0xC);
+        let v3 = c_61a390_t0(v1);
+        let v4 = u32::from(rd::<u8>(p(v1), 0x10));
+        let v5 = (((((v3 & 0xFFFF_FF00) | ((u32::from(v2 == 0xFFFF_FFFF)) & 0xFF)) & 0xFF) & 1) & 0xFF);
+        let v6 = (((((((v3 & 0xFFFF_FF00) | ((u32::from(v2 == 0xFFFF_FFFF)) & 0xFF)) & 0xFFFF_FF00)
+            | (v5 & 0xFF))
+            & 0xFF)
+            | 2)
+            & 0xFF);
+        let v7 = ((((((((((v3 & 0xFFFF_FF00) | ((u32::from(v2 == 0xFFFF_FFFF)) & 0xFF)) & 0xFFFF_FF00)
+            | (v5 & 0xFF))
+            & 0xFFFF_FF00)
+            | (v6 & 0xFF))
+            & 0xFF)
+            & 0xFF)
+            << 1)
+            & 0xFF);
+        let v8 = ((((v4 & 0xFF) & 0xFF) & 0xFC) & 0xFF);
+        let v9 = (((((((((((v3 & 0xFFFF_FF00) | ((u32::from(v2 == 0xFFFF_FFFF)) & 0xFF))
+            & 0xFFFF_FF00)
+            | (v5 & 0xFF))
+            & 0xFFFF_FF00)
+            | (v6 & 0xFF))
+            & 0xFFFF_FF00)
+            | (v7 & 0xFF))
+            & 0xFF)
+            | ((v8 & 0xFF) & 0xFF))
+            & 0xFF);
+        wr::<u32>(p(v1), 0xC, v2);
+        let v10 = (((((((((((v3 & 0xFFFF_FF00) | ((u32::from(v2 == 0xFFFF_FFFF)) & 0xFF))
+            & 0xFFFF_FF00)
+            | (v5 & 0xFF))
+            & 0xFFFF_FF00)
+            | (v6 & 0xFF))
+            & 0xFFFF_FF00)
+            | (v7 & 0xFF))
+            & 0xFFFF_FF00)
+            | (v9 & 0xFF))
+            & 0xFF);
+        wr::<u8>(p(v1), 0x10, v10 as u8);
+        wr::<u32>(p(v1), 0, 0x87_04FC);
+        wr::<u32>(p(v1), 8, 0);
+        return v1;
+    }
+}
+
+/// `CTaskComplexFallToDeath::Clone` (0x67C480): clone, thiscall, `ret`; 42 instruction(s) matched.
+#[hook(addr = 0x67C480, conv = thiscall, name = "CTaskComplexFallToDeath::Clone", expect = "6A FF 68 6B 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+pub fn g_task_complex_fall_to_death_clone_67c480(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x24);
+    if v1 == 0 {
+        return 0;
+    } else {
+        let v2 = u32::from(rd::<u8>(p(this), 0x21));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        let v4 = (((((v3 & 0xFF) & 0xFF) & 0xFF) >> 4) & 0xFF);
+        let v5 = (((((v2 & 0xFF) & 0xFF) & 0xFF) >> 3) & 0xFF);
+        let v6 = ((((v3 & 0xFF) & 0xFFFF_FF00) | (v4 & 0xFF)) & 0xFFFF_FF01);
+        let v7 = u32::from(rd::<u8>(p(this), 0x20));
+        let v8 = ((((v2 & 0xFF) & 0xFFFF_FF00) | (v5 & 0xFF)) & 0xFFFF_FF01);
+        let v9 = c_679040_t4(v1, v7, this.wrapping_add(0xC), v8, v6);
+        return v9;
+    }
+}
+
+/// `CTaskComplexJump::Clone` (0x67C5A0): clone, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x67C5A0, conv = thiscall, name = "CTaskComplexJump::Clone", expect = "6A FF 68 AB 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_jump_clone_67c5a0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x14);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x10));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x10, v3 as u8);
+        return 0;
+    } else {
+        let v4 = rd::<u32>(p(this), 0xC);
+        c_61a3b0_t0(v1);
+        wr::<u32>(p(v1), 0xC, v4);
+        wr::<u32>(p(v1), 0, 0x87_0570);
+        wr::<u8>(p(v1), 0x10, 0 as u8);
+        let v6 = u32::from(rd::<u8>(p(this), 0x10));
+        let v7 = ((v6 & 0xFF) & 0xFF);
+        wr::<u8>(p(v1), 0x10, v7 as u8);
+        return v1;
+    }
+}
+
 /// `CTaskSimpleClimb::Clone` (0x67C610): clone, thiscall, `ret`; 43 instruction(s) matched.
 #[hook(addr = 0x67C610, conv = thiscall, name = "CTaskSimpleClimb::Clone", expect = "6A FF 68 CB 62 84 00")]
 pub fn g_task_simple_climb_clone_67c610(this: u32) -> u32 {
@@ -4333,6 +5618,28 @@ pub fn g_task_complex_stuck_in_air_clone_67c700(_this: u32) -> u32 {
         c_61a3b0_t0(v1);
         wr::<u32>(p(v1), 0, 0x87_0608);
         return v1;
+    }
+}
+
+/// `CTaskComplexChat::Clone` (0x682DA0): clone, thiscall, `ret`; 36 instruction(s) matched.
+#[hook(addr = 0x682DA0, conv = thiscall, name = "CTaskComplexChat::Clone", expect = "6A FF 68 AB 66 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+pub fn g_task_complex_chat_clone_682da0(this: u32) -> u32 {
+    let v1 = c_61a5a0_c1(0x20);
+    if v1 == 0 {
+        let v2 = u32::from(rd::<u8>(p(this), 0x1A));
+        let v3 = ((v2 & 0xFF) & 0xFF);
+        wr::<u8>(p(0), 0x1A, v3 as u8);
+        return 0;
+    } else {
+        let v4 = rd::<u32>(p(this), 0x14);
+        let v5 = u32::from(rd::<u16>(p(this), 0x18));
+        let v6 = rd::<u32>(p(this), 0x10);
+        let v7 = u32::from(rd::<u8>(p(this), 0xC));
+        let v8 = c_682cb0_t4(v1, (v7 & 0xFF), v6, v4, (v5 & 0xFFFF));
+        let v9 = u32::from(rd::<u8>(p(this), 0x1A));
+        let v10 = ((v9 & 0xFF) & 0xFF);
+        wr::<u8>(p(v8), 0x1A, v10 as u8);
+        return v8;
     }
 }
 
@@ -4680,6 +5987,64 @@ pub fn g_task_simple_pick_up_entity_clone_692a90(this: u32) -> u32 {
     }
 }
 
+/// `CTaskSimplePutDownEntity::Clone` (0x692B70): clone, thiscall, `ret`; 93 instruction(s) matched.
+#[hook(addr = 0x692B70, conv = thiscall, name = "CTaskSimplePutDownEntity::Clone", expect = "64 A1 00 00 00 00", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+pub fn g_task_simple_put_down_entity_clone_692b70(this: u32) -> u32 {
+    let v1 = rd::<u32>(p(this), 0x30);
+    if v1 == 0 {
+        let v2 = c_61a5a0_c1(0x40);
+        if v2 == 0 {
+            return 0;
+        } else {
+            let v3 = rd::<u32>(p(this), 0x3C);
+            let v4 = rd::<u32>(p(this), 0x24);
+            let v5 = rd::<u32>(p(this), 0x20);
+            let v6 = u32::from(rd::<u8>(p(this), 0x19));
+            let v7 = u32::from(rd::<u8>(p(this), 0x18));
+            let v8 = rd::<u32>(p(this), 8);
+            c_6913a0_t7(
+                v2,
+                v8,
+                this.wrapping_add(0xC),
+                (v7 & 0xFF),
+                (v6 & 0xFF),
+                v5,
+                v4,
+                0,
+            );
+            wr::<u32>(p(v2), 0x3C, v3);
+            wr::<u32>(p(v2), 0, 0x87_0B74);
+            return v2;
+        }
+    } else {
+        let v10 = c_61a5a0_c1(0x40);
+        if v10 == 0 {
+            return 0;
+        } else {
+            let v11 = rd::<u32>(p(this), 0x28);
+            let v12 = rd::<u32>(p(this), 0x30);
+            let v13 = rd::<u32>(p(this), 0x3C);
+            let v14 = u32::from(rd::<u8>(p(this), 0x19));
+            let v15 = u32::from(rd::<u8>(p(this), 0x18));
+            let v16 = rd::<u32>(p(this), 0x2C);
+            let v17 = rd::<u32>(p(this), 8);
+            c_691550_t7(
+                v10,
+                v17,
+                this.wrapping_add(0xC),
+                (v15 & 0xFF),
+                (v14 & 0xFF),
+                v16,
+                v12,
+                v11,
+            );
+            wr::<u32>(p(v10), 0x3C, v13);
+            wr::<u32>(p(v10), 0, 0x87_0B74);
+            return v10;
+        }
+    }
+}
+
 /// `vt_870b98::Clone` (0x692C80): clone, thiscall, `ret`; 32 instruction(s) matched.
 #[hook(addr = 0x692C80, conv = thiscall, name = "vt_870b98::Clone", expect = "6A FF 68 3B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
 pub fn g_vt_870b98_clone_692c80(this: u32) -> u32 {
@@ -4885,7 +6250,9 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_FINISH_BRAIN_CLONE_463660,
     HOOK_G_TASK_SIMPLE_SET_CHAR_DECISION_MAKER_CLONE_46A490,
     HOOK_G_TASK_COMPLEX_CLIMB_CLONE_46A650,
+    HOOK_G_TASK_COMPLEX_SEEK_ENTITY_STANDARD_CLONE_46EF50,
     HOOK_G_TASK_SIMPLE_CAR_DRIVE_TIMED_CLONE_46F570,
+    HOOK_G_TASK_SIMPLE_SET_CHAR_IGNORE_WEAPON_RANGE_FLAG_CLONE_474640,
     HOOK_G_TASK_SIMPLE_COWER_CLONE_48DEB0,
     HOOK_G_TASK_SIMPLE_USE_ATM_CLONE_48E010,
     HOOK_G_TASK_SIMPLE_LOOK_ABOUT_CLONE_48E0F0,
@@ -4894,6 +6261,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_WANDER_CRIMINAL_CLONE_48E650,
     HOOK_G_TASK_SIMPLE_PAUSE_CLONE_48E780,
     HOOK_G_TASK_SIMPLE_HANDS_UP_CLONE_48E9C0,
+    HOOK_G_TASK_COMPLEX_DIVE_FROM_ATTACHED_ENTITY_AND_GET_UP_CLONE_492E70,
+    HOOK_G_TASK_COMPLEX_SEEK_ENTITY_RADIUS_ANGLE_OFFSET_CLONE_495FB0,
     HOOK_G_VT_85A428_CLONE_499440,
     HOOK_G_EVENT_VEHICLE_COLLISION_CLONE_4B6BC0,
     HOOK_G_EVENT_DRAGGED_OUT_CAR_CLONE_EDITABLE_4B6DC0,
@@ -4934,6 +6303,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CHAT_CLONE_5F65E0,
     HOOK_G_TASK_COMPLEX_BE_STILL_CLONE_5F6680,
     HOOK_G_TASK_SIMPLE_WAIT_UNTIL_LEADER_AREA_CODES_MATCH_CLONE_5F67F0,
+    HOOK_G_EVENT_PLAYER_COLLISION_WITH_PED_CLONE_5FEEA0,
     HOOK_G_EVENT_SCRIPTED_ATTRACTOR_CLONE_EDITABLE_5FEF90,
     HOOK_G_EVENT_ACQUAINTANCE_PED_HATE_BADLY_LIT_CLONE_EDITABLE_5FF2E0,
     HOOK_G_VT_86CBA0_CLONE_EDITABLE_5FF490,
@@ -4945,21 +6315,28 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_EVENT_NEW_GANG_MEMBER_CLONE_608FF0,
     HOOK_G_EVENT_DONT_JOIN_PLAYER_GROUP_CLONE_6091C0,
     HOOK_G_EVENT_PLAYER_COMMAND_TO_GROUP_GATHER_CLONE_EDITABLE_609280,
+    HOOK_G_TASK_SIMPLE_RUN_TIMED_ANIM_CLONE_61B810,
+    HOOK_G_VT_86D594_CLONE_61B890,
     HOOK_G_TASK_COMPLEX_PLAY_HAND_SIGNAL_ANIM_CLONE_61BA00,
     HOOK_G_EVENT_VEHICLE_DAMAGE_WEAPON_CLONE_EDITABLE_61C330,
     HOOK_G_TASK_SIMPLE_FIGHT_CLONE_622E40,
     HOOK_G_TASK_SIMPLE_FIGHTING_CONTROL_CLONE_622EB0,
+    HOOK_G_TASK_SIMPLE_GUN_CONTROL_CLONE_622FB0,
     HOOK_G_TASK_SIMPLE_THROW_CONTROL_CLONE_6230B0,
     HOOK_G_VT_86D7D8_CLONE_623120,
     HOOK_G_VT_86D7FC_CLONE_623190,
     HOOK_G_TASK_SIMPLE_CHOKING_CLONE_623220,
+    HOOK_G_TASK_SIMPLE_BE_HIT_CLONE_623290,
     HOOK_G_VT_86D868_CLONE_623300,
+    HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_CLONE_623370,
     HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_STEALTH_CLONE_623400,
     HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_MELEE_CLONE_623460,
+    HOOK_G_TASK_COMPLEX_KILL_PED_ON_FOOT_ARMED_CLONE_6234C0,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_CLONE_623530,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_MELEE_CLONE_6235A0,
     HOOK_G_TASK_COMPLEX_DESTROY_CAR_ARMED_CLONE_623600,
     HOOK_G_TASK_COMPLEX_ROAD_RAGE_CLONE_623670,
+    HOOK_G_TASK_SIMPLE_GANG_DRIVE_BY_CLONE_6236D0,
     HOOK_G_VT_86DA1C_CLONE_623750,
     HOOK_G_TASK_COMPLEX_KILL_PED_GROUP_ON_FOOT_CLONE_6237C0,
     HOOK_G_TASK_SIMPLE_STEALTH_KILL_CLONE_623830,
@@ -4973,6 +6350,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_LEFT_CLONE_62F000,
     HOOK_G_TASK_SIMPLE_HIT_BY_GUN_FROM_RIGHT_CLONE_62F0B0,
     HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_DIE_CLONE_62F1D0,
+    HOOK_G_TASK_SIMPLE_SET_STAY_IN_SAME_PLACE_CLONE_635BD0,
+    HOOK_G_TASK_SIMPLE_SET_KINDA_STAY_IN_SAME_PLACE_CLONE_635C30,
     HOOK_G_TASK_SIMPLE_DUCK_TOGGLE_CLONE_635C90,
     HOOK_G_TASK_SIMPLE_DIE_CLONE_635DA0,
     HOOK_G_TASK_SIMPLE_DROWN_CLONE_635E60,
@@ -4980,7 +6359,10 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_DIE_IN_CAR_CLONE_635F90,
     HOOK_G_TASK_SIMPLE_DROWN_IN_CAR_CLONE_636010,
     HOOK_G_TASK_COMPLEX_DIE_CLONE_636060,
+    HOOK_G_TASK_SIMPLE_DEAD_CLONE_636100,
     HOOK_G_TASK_SIMPLE_TIRED_CLONE_636180,
+    HOOK_G_TASK_SIMPLE_SIT_DOWN_CLONE_636200,
+    HOOK_G_TASK_SIMPLE_STAND_UP_CLONE_636310,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_CLONE_636410,
     HOOK_G_TASK_COMPLEX_OBSERVE_TRAFFIC_LIGHTS_AND_ACHIEVE_HEADING_CLONE_636490,
     HOOK_G_TASK_COMPLEX_CROSS_ROAD_LOOK_AND_ACHIEVE_HEADING_CLONE_636500,
@@ -4997,6 +6379,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_WAIT_FOR_BUS_CLONE_636A60,
     HOOK_G_TASK_SIMPLE_WAIT_FOR_BUS_CLONE_636AD0,
     HOOK_G_VT_86E1DC_CLONE_636B40,
+    HOOK_G_TASK_COMPLEX_BE_IN_GROUP_CLONE_636BE0,
     HOOK_G_TASK_COMPLEX_USE_PAIRED_ATTRACTOR_CLONE_636C70,
     HOOK_G_TASK_COMPLEX_USE_SCRIPTED_ATTRACTOR_CLONE_636DD0,
     HOOK_G_TASK_COMPLEX_ON_FIRE_CLONE_636E30,
@@ -5021,12 +6404,15 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_LEAVE_BOAT_CLONE_63DA60,
     HOOK_G_TASK_COMPLEX_LEAVE_CAR_AND_FLEE_CLONE_63DB40,
     HOOK_G_TASK_COMPLEX_SCREAM_IN_CAR_THEN_LEAVE_CLONE_63DBB0,
+    HOOK_G_TASK_SIMPLE_CAR_DRIVE_CLONE_63DC20,
+    HOOK_G_TASK_COMPLEX_CAR_DRIVE_CLONE_63DC90,
     HOOK_G_TASK_COMPLEX_CAR_DRIVE_MISSION_CLONE_63DD70,
     HOOK_G_TASK_COMPLEX_DRIVE_TO_POINT_CLONE_63DDE0,
     HOOK_G_TASK_COMPLEX_ENTER_ANY_CAR_AS_DRIVER_CLONE_63DE60,
     HOOK_G_TASK_COMPLEX_SHUFFLE_SEATS_CLONE_63DEB0,
     HOOK_G_TASK_SIMPLE_CAR_SET_TEMP_ACTION_CLONE_63DF10,
     HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_DRIVER_CLONE_643780,
+    HOOK_G_TASK_COMPLEX_ENTER_CAR_AS_PASSENGER_CLONE_6437F0,
     HOOK_G_TASK_COMPLEX_OPEN_DRIVER_DOOR_CLONE_643870,
     HOOK_G_TASK_COMPLEX_OPEN_PASSENGER_DOOR_CLONE_6438E0,
     HOOK_G_TASK_COMPLEX_DRAG_PED_FROM_CAR_CLONE_643950,
@@ -5043,8 +6429,11 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_CAR_SHUFFLE_CLONE_649C40,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_TO_SLOW_DOWN_CLONE_649CB0,
     HOOK_G_TASK_SIMPLE_CAR_WAIT_FOR_DOOR_NOT_TO_BE_IN_USE_CLONE_649D20,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_PASSENGER_CLONE_649D90,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_IN_AS_DRIVER_CLONE_649E00,
     HOOK_G_TASK_SIMPLE_CAR_GET_OUT_CLONE_649E70,
     HOOK_G_VT_86EE94_CLONE_649EE0,
+    HOOK_G_TASK_SIMPLE_CAR_SET_PED_OUT_CLONE_649F50,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_DRAG_PED_OUT_CLONE_649FD0,
     HOOK_G_TASK_SIMPLE_CAR_SLOW_BE_DRAGGED_OUT_CLONE_64A040,
     HOOK_G_TASK_SIMPLE_CAR_SET_PED_SLOW_DRAGGED_OUT_CLONE_64A0B0,
@@ -5069,6 +6458,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_HIT_PED_WITH_CAR_CLONE_6559B0,
     HOOK_G_TASK_SIMPLE_KILL_PED_WITH_CAR_CLONE_655A20,
     HOOK_G_TASK_SIMPLE_HURT_PED_WITH_CAR_CLONE_655A90,
+    HOOK_G_TASK_COMPLEX_WALK_ROUND_CAR_CLONE_655B00,
     HOOK_G_TASK_COMPLEX_WALK_ROUND_BUILDING_ATTEMPT_CLONE_655B90,
     HOOK_G_TASK_COMPLEX_WALK_ROUND_OBJECT_CLONE_655C10,
     HOOK_G_TASK_COMPLEX_MOVE_BACK_AND_JUMP_CLONE_655C80,
@@ -5093,26 +6483,38 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_COMPLEX_FLEE_ANY_MEANS_CLONE_65D030,
     HOOK_G_EVENT_PASS_OBJECT_CLONE_65DD70,
     HOOK_G_TASK_GANG_HASSLE_VEHICLE_CLONE_65FC00,
+    HOOK_G_TASK_SIMPLE_DO_HAND_SIGNAL_CLONE_6608C0,
     HOOK_G_TASK_LEAN_ON_VEHICLE_CLONE_6610A0,
     HOOK_G_TASK_COMPLEX_GANG_LEADER_CLONE_661FA0,
+    HOOK_G_TASK_SIMPLE_GO_TO_POINT_FINE_CLONE_662040,
     HOOK_G_TASK_COMPLEX_SIGNAL_AT_PED_CLONE_662140,
     HOOK_G_TASK_COMPLEX_PASS_OBJECT_CLONE_662220,
+    HOOK_G_TASK_COMPLEX_GANG_JOIN_RESPOND_CLONE_662290,
     HOOK_G_TASK_COMPLEX_PROSTITUTE_SOLICIT_CLONE_6622F0,
+    HOOK_G_TASK_COMPLEX_SEEK_ENTITY_CENTITY_SEEK_POS_CALCULATOR_XYOFFSET_CLONE_664AF0,
     HOOK_G_TASK_COMPLEX_GOTO_DOOR_AND_OPEN_CLONE_66BCA0,
+    HOOK_G_TASK_SIMPLE_GO_TO_POINT_CLONE_66CC60,
     HOOK_G_TASK_SIMPLE_ACHIEVE_HEADING_CLONE_66CCF0,
+    HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_CLONE_66CEA0,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_AND_STAND_STILL_AND_ACHIEVE_HEADING_CLONE_66CFD0,
     HOOK_G_VT_86FF00_CLONE_66D0C0,
     HOOK_G_TASK_COMPLEX_GO_TO_ATTRACTOR_CLONE_66D130,
     HOOK_G_TASK_COMPLEX_GO_TO_POINT_ANY_MEANS_CLONE_66D1E0,
+    HOOK_G_TASK_SIMPLE_SLIDE_TO_COORD_CLONE_66D300,
     HOOK_G_TASK_COMPLEX_INVESTIGATE_DISTURBANCE_CLONE_66D3D0,
+    HOOK_G_VT_87004C_CLONE_671330,
     HOOK_G_TASK_COMPLEX_FOLLOW_NODE_ROUTE_CLONE_6713E0,
     HOOK_G_TASK_COMPLEX_WANDER_GANG_CLONE_671470,
     HOOK_G_TASK_COMPLEX_FOLLOW_POINT_ROUTE_CLONE_673BE0,
     HOOK_G_TASK_COMPLEX_WANDER_PROSTITUTE_CLONE_673C80,
     HOOK_G_VT_870114_CLONE_674BB0,
+    HOOK_G_VT_8701A8_CLONE_674F00,
     HOOK_G_TASK_INTERIOR_BE_IN_HOUSE_CLONE_675010,
     HOOK_G_TASK_INTERIOR_BE_IN_OFFICE_CLONE_675270,
     HOOK_G_TASK_INTERIOR_BE_IN_SHOP_CLONE_675470,
+    HOOK_G_TASK_INTERIOR_SHOP_KEEPER_CLONE_6756C0,
+    HOOK_G_TASK_INTERIOR_GO_TO_INFO_CLONE_675820,
+    HOOK_G_TASK_INTERIOR_USE_INFO_CLONE_675AB0,
     HOOK_G_VT_870314_CLONE_675CF0,
     HOOK_G_TASK_INTERIOR_LIE_IN_BED_CLONE_675EF0,
     HOOK_G_TASK_INTERIOR_SIT_AT_DESK_CLONE_6760E0,
@@ -5121,9 +6523,13 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_FALL_CLONE_67C180,
     HOOK_G_TASK_COMPLEX_FALL_AND_GET_UP_CLONE_67C200,
     HOOK_G_VT_870480_CLONE_67C270,
+    HOOK_G_TASK_SIMPLE_LAND_CLONE_67C3F0,
+    HOOK_G_TASK_COMPLEX_FALL_TO_DEATH_CLONE_67C480,
+    HOOK_G_TASK_COMPLEX_JUMP_CLONE_67C5A0,
     HOOK_G_TASK_SIMPLE_CLIMB_CLONE_67C610,
     HOOK_G_TASK_SIMPLE_JET_PACK_CLONE_67C690,
     HOOK_G_TASK_COMPLEX_STUCK_IN_AIR_CLONE_67C700,
+    HOOK_G_TASK_COMPLEX_CHAT_CLONE_682DA0,
     HOOK_G_TASK_COMPLEX_WALK_ALONGSIDE_PED_CLONE_6838E0,
     HOOK_G_VT_8706F8_CLONE_683950,
     HOOK_G_TASK_COMPLEX_BE_IN_COUPLE_CLONE_6839C0,
@@ -5140,6 +6546,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_G_TASK_SIMPLE_AFFECT_SECONDARY_BEHAVIOUR_CLONE_692910,
     HOOK_G_TASK_SIMPLE_HOLD_ENTITY_CLONE_6929B0,
     HOOK_G_TASK_SIMPLE_PICK_UP_ENTITY_CLONE_692A90,
+    HOOK_G_TASK_SIMPLE_PUT_DOWN_ENTITY_CLONE_692B70,
     HOOK_G_VT_870B98_CLONE_692C80,
     HOOK_G_TASK_SIMPLE_DUCK_CLONE_692CF0,
     HOOK_G_VT_870BEC_CLONE_692D60,
@@ -5164,7 +6571,9 @@ pub const BODIES: &[Body] = &[
     (0x463660, 0xF08E198D0B76AB96, &[(0x463660, 80)]),
     (0x46A490, 0x5616E5ABAA9F301F, &[(0x46A490, 90)]),
     (0x46A650, 0xC9774298B2F910B6, &[(0x46A650, 82)]),
+    (0x46EF50, 0x783815943D999F1D, &[(0x46EF50, 150)]),
     (0x46F570, 0x1E614DF8922A60F3, &[(0x46F570, 132)]),
+    (0x474640, 0x0C51189EFD5C1367, &[(0x474640, 92)]),
     (0x48DEB0, 0x5B81E3142F7B0487, &[(0x48DEB0, 102)]),
     (0x48E010, 0xDB7EF3C0596D589B, &[(0x48E010, 102)]),
     (0x48E0F0, 0x7766A4048FC44165, &[(0x48E0F0, 112)]),
@@ -5173,6 +6582,8 @@ pub const BODIES: &[Body] = &[
     (0x48E650, 0xBBAAED4BEA37D0C7, &[(0x48E650, 149)]),
     (0x48E780, 0x779216E9AB02F633, &[(0x48E780, 124)]),
     (0x48E9C0, 0xBC3C326E706E74C4, &[(0x48E9C0, 115)]),
+    (0x492E70, 0xCAC0AC3BF75CEE69, &[(0x492E70, 110)]),
+    (0x495FB0, 0x052BF9A84F61BF67, &[(0x495FB0, 162)]),
     (0x499440, 0x42D772B739AFC7B4, &[(0x499440, 121)]),
     (0x4B6BC0, 0xAE7809896BD54F4E, &[(0x4B6BC0, 123)]),
     (0x4B6DC0, 0xB7163BFE71B0C95D, &[(0x4B6DC0, 107)]),
@@ -5213,6 +6624,7 @@ pub const BODIES: &[Body] = &[
     (0x5F65E0, 0xB4007DE5519A83B5, &[(0x5F65E0, 112)]),
     (0x5F6680, 0x4C00449C13C11AC5, &[(0x5F6680, 80)]),
     (0x5F67F0, 0x0EE8697C9605BCBE, &[(0x5F67F0, 117)]),
+    (0x5FEEA0, 0xC78DE5A86C2AC138, &[(0x5FEEA0, 120)]),
     (0x5FEF90, 0xDD946D8E4C041CB3, &[(0x5FEF90, 93)]),
     (0x5FF2E0, 0x566206BAA9CCC9C2, &[(0x5FF2E0, 104)]),
     (0x5FF490, 0xE26676383F6AA3AB, &[(0x5FF490, 80)]),
@@ -5224,21 +6636,28 @@ pub const BODIES: &[Body] = &[
     (0x608FF0, 0xB5D5FF3C2A149702, &[(0x608FF0, 96)]),
     (0x6091C0, 0x42677B7FFFC2EE8F, &[(0x6091C0, 96)]),
     (0x609280, 0x761B29300E665EF3, &[(0x609280, 90)]),
+    (0x61B810, 0xFC9D464777ED54B7, &[(0x61B810, 124)]),
+    (0x61B890, 0x0B1B6F87491E5E81, &[(0x61B890, 226)]),
     (0x61BA00, 0x459F15CEF615B016, &[(0x61BA00, 114)]),
     (0x61C330, 0x397A1430FD39FF57, &[(0x61C330, 96)]),
     (0x622E40, 0x24F62075002476DD, &[(0x622E40, 106)]),
     (0x622EB0, 0xBB8A092B65CBF646, &[(0x622EB0, 104)]),
+    (0x622FB0, 0xBFBEEECED8350E02, &[(0x622FB0, 113)]),
     (0x6230B0, 0x649D2C6B13736883, &[(0x6230B0, 100)]),
     (0x623120, 0x011383D44A010EF1, &[(0x623120, 111)]),
     (0x623190, 0x0C06028A54ECEFEE, &[(0x623190, 130)]),
     (0x623220, 0x62589F9D212B3D48, &[(0x623220, 102)]),
+    (0x623290, 0x1C301A2501382141, &[(0x623290, 112)]),
     (0x623300, 0x5674CEE1AD6D5A8B, &[(0x623300, 112)]),
+    (0x623370, 0x5706FB1A46E26885, &[(0x623370, 137)]),
     (0x623400, 0x3FA60D92B8B9EE7E, &[(0x623400, 96)]),
     (0x623460, 0x1A9FB206378CB272, &[(0x623460, 96)]),
+    (0x6234C0, 0xBC2F05D1B78F6F26, &[(0x6234C0, 105)]),
     (0x623530, 0x45C42F6E23B27332, &[(0x623530, 108)]),
     (0x6235A0, 0x1ACC4E722A9D4480, &[(0x6235A0, 96)]),
     (0x623600, 0x7C3F24AED85AC1B6, &[(0x623600, 108)]),
     (0x623670, 0x3060ACD5A01492F1, &[(0x623670, 96)]),
+    (0x6236D0, 0xAAA66086B9469DD1, &[(0x6236D0, 114)]),
     (0x623750, 0xACCA67DD8DF3DB5B, &[(0x623750, 106)]),
     (0x6237C0, 0x082D0C3A42B599BF, &[(0x6237C0, 100)]),
     (0x623830, 0xC2E75FCB6D1B2E1B, &[(0x623830, 106)]),
@@ -5252,6 +6671,8 @@ pub const BODIES: &[Body] = &[
     (0x62F000, 0xD780EF4C1E9C03A8, &[(0x62F000, 99)]),
     (0x62F0B0, 0x230F1648F86AF43E, &[(0x62F0B0, 99)]),
     (0x62F1D0, 0xC4EA42AB337FC0DA, &[(0x62F1D0, 103)]),
+    (0x635BD0, 0xF5BDCF9A6D4FC2D4, &[(0x635BD0, 92)]),
+    (0x635C30, 0x6D80C587D7186C80, &[(0x635C30, 92)]),
     (0x635C90, 0x28CB11E0FD04D5E3, &[(0x635C90, 90)]),
     (0x635DA0, 0x7B2168F4B3FD9051, &[(0x635DA0, 178)]),
     (0x635E60, 0x4C606DE392C0D127, &[(0x635E60, 142)]),
@@ -5259,7 +6680,10 @@ pub const BODIES: &[Body] = &[
     (0x635F90, 0xF5305CE7D831BABE, &[(0x635F90, 124)]),
     (0x636010, 0x362E0378A7BCA191, &[(0x636010, 80)]),
     (0x636060, 0xB07C711B40C250B7, &[(0x636060, 152)]),
+    (0x636100, 0xD7A1D6FCDC1D3CEA, &[(0x636100, 118)]),
     (0x636180, 0x452B0155C9147AEA, &[(0x636180, 127)]),
+    (0x636200, 0x9150B77715D63052, &[(0x636200, 124)]),
+    (0x636310, 0x3C3562BC8C7BDC9E, &[(0x636310, 124)]),
     (0x636410, 0x72710CBD1A49D0B2, &[(0x636410, 113)]),
     (0x636490, 0xD20BCA79120537AB, &[(0x636490, 106)]),
     (0x636500, 0x63A3FAA2BEB597AF, &[(0x636500, 106)]),
@@ -5276,6 +6700,7 @@ pub const BODIES: &[Body] = &[
     (0x636A60, 0x514403552F4FB558, &[(0x636A60, 107)]),
     (0x636AD0, 0xAC7AC1BC33504080, &[(0x636AD0, 107)]),
     (0x636B40, 0x7064D164E4775BE2, &[(0x636B40, 113)]),
+    (0x636BE0, 0xEC1C7A374F24A0D9, &[(0x636BE0, 143)]),
     (0x636C70, 0x0A16F2E82909A0F9, &[(0x636C70, 127)]),
     (0x636DD0, 0xA7627607EE548220, &[(0x636DD0, 90)]),
     (0x636E30, 0x89CCD6A7D1FE6872, &[(0x636E30, 80)]),
@@ -5300,12 +6725,15 @@ pub const BODIES: &[Body] = &[
     (0x63DA60, 0x4246F9E85362F74A, &[(0x63DA60, 100)]),
     (0x63DB40, 0xF29FC50685E88BB3, &[(0x63DB40, 110)]),
     (0x63DBB0, 0x9EE5605622EF096F, &[(0x63DBB0, 100)]),
+    (0x63DC20, 0x0A80FB497027EE7B, &[(0x63DC20, 102)]),
+    (0x63DC90, 0x2AC1128D9A0AAB13, &[(0x63DC90, 100)]),
     (0x63DD70, 0x98169CD25C48C2A5, &[(0x63DD70, 112)]),
     (0x63DDE0, 0x05741725F4D9566C, &[(0x63DDE0, 120)]),
     (0x63DE60, 0x7D4D4A40E4911C4A, &[(0x63DE60, 80)]),
     (0x63DEB0, 0x8937CB0CE1B8A0C0, &[(0x63DEB0, 96)]),
     (0x63DF10, 0xCF4F489D5A072E4F, &[(0x63DF10, 106)]),
     (0x643780, 0x21F1051B33E909B5, &[(0x643780, 99)]),
+    (0x6437F0, 0x93BC2DDA0DB21CF6, &[(0x6437F0, 120)]),
     (0x643870, 0x1A86328B315F4CA8, &[(0x643870, 107)]),
     (0x6438E0, 0x0CE344B03A5FF06E, &[(0x6438E0, 107)]),
     (0x643950, 0x4F83D2D8B2926095, &[(0x643950, 100)]),
@@ -5322,8 +6750,11 @@ pub const BODIES: &[Body] = &[
     (0x649C40, 0x40E100674C5DF7FF, &[(0x649C40, 104)]),
     (0x649CB0, 0x3489A8EFC693CBE5, &[(0x649CB0, 100)]),
     (0x649D20, 0xC0CA2BB60A3B2B82, &[(0x649D20, 104)]),
+    (0x649D90, 0x1F3825F74A9A6663, &[(0x649D90, 108)]),
+    (0x649E00, 0x4024E67FEF5A10E9, &[(0x649E00, 104)]),
     (0x649E70, 0x494564F9AF01C4C8, &[(0x649E70, 104)]),
     (0x649EE0, 0xB949EA4F3C0A210F, &[(0x649EE0, 100)]),
+    (0x649F50, 0x6A9A2F61A4D5C9A4, &[(0x649F50, 122)]),
     (0x649FD0, 0x17F0450E4CD1E5F2, &[(0x649FD0, 110)]),
     (0x64A040, 0xCA49C7D3FBEB60CA, &[(0x64A040, 106)]),
     (0x64A0B0, 0x167C15C1250E9D31, &[(0x64A0B0, 100)]),
@@ -5348,6 +6779,7 @@ pub const BODIES: &[Body] = &[
     (0x6559B0, 0x79E82DB896000750, &[(0x6559B0, 100)]),
     (0x655A20, 0x29BEA47E559528B6, &[(0x655A20, 100)]),
     (0x655A90, 0xE04153BAD23CD57F, &[(0x655A90, 100)]),
+    (0x655B00, 0xA0CB0E3DF858D365, &[(0x655B00, 130)]),
     (0x655B90, 0x6DBA6679C1FD6748, &[(0x655B90, 121)]),
     (0x655C10, 0x45D1192291E7DE3D, &[(0x655C10, 104)]),
     (0x655C80, 0xD5BF2B4C58BD2547, &[(0x655C80, 80)]),
@@ -5372,26 +6804,38 @@ pub const BODIES: &[Body] = &[
     (0x65D030, 0x18B38B8923BB65DA, &[(0x65D030, 130)]),
     (0x65DD70, 0xC224B94D25EA798D, &[(0x65DD70, 102)]),
     (0x65FC00, 0x80D8EEA677170047, &[(0x65FC00, 114)]),
+    (0x6608C0, 0x255D533F322B13E0, &[(0x6608C0, 100)]),
     (0x6610A0, 0x42A8E49D0C5DE7AF, &[(0x6610A0, 106)]),
     (0x661FA0, 0xEEFBA5097CD56785, &[(0x661FA0, 151)]),
+    (0x662040, 0x3B08EA978014668B, &[(0x662040, 137)]),
     (0x662140, 0x22D1C4915137A337, &[(0x662140, 106)]),
     (0x662220, 0xBEBE973238F48CF0, &[(0x662220, 102)]),
+    (0x662290, 0xE076B0C2820D6383, &[(0x662290, 96)]),
     (0x6622F0, 0x7D41BFAB9CFEBE33, &[(0x6622F0, 96)]),
+    (0x664AF0, 0xF05CB5ADF0A4712D, &[(0x664AF0, 174)]),
     (0x66BCA0, 0x2200B85F608AFF7B, &[(0x66BCA0, 157)]),
+    (0x66CC60, 0x56D1E482F8E99238, &[(0x66CC60, 130)]),
     (0x66CCF0, 0x5AF5E0BFD2AD5AE0, &[(0x66CCF0, 136)]),
+    (0x66CEA0, 0x5F387F43B1604A22, &[(0x66CEA0, 133)]),
     (0x66CFD0, 0x5BBA181F424A0C3E, &[(0x66CFD0, 116)]),
     (0x66D0C0, 0xD93DB00F8F03EC13, &[(0x66D0C0, 104)]),
     (0x66D130, 0x8C4C2D8BE80EA60E, &[(0x66D130, 166)]),
     (0x66D1E0, 0xEA770D97A3E55E27, &[(0x66D1E0, 112)]),
+    (0x66D300, 0xD5CA04586D054046, &[(0x66D300, 204)]),
     (0x66D3D0, 0x80BAAF96CC776304, &[(0x66D3D0, 100)]),
+    (0x671330, 0x6F8D2F9AA163A4D5, &[(0x671330, 174)]),
     (0x6713E0, 0x18D207EE1404197E, &[(0x6713E0, 133)]),
     (0x671470, 0x091F643E5195EA7D, &[(0x671470, 125)]),
     (0x673BE0, 0xF026333C18E9C0D7, &[(0x673BE0, 149)]),
     (0x673C80, 0x40C8F07CA0E3E5B4, &[(0x673C80, 114)]),
     (0x674BB0, 0x555A9860A39131F8, &[(0x674BB0, 114)]),
+    (0x674F00, 0x0864DDAE99C9E15A, &[(0x674F00, 122)]),
     (0x675010, 0x4443E59FD4CF88AE, &[(0x675010, 125)]),
     (0x675270, 0x799232C0FEAEFB29, &[(0x675270, 125)]),
     (0x675470, 0xE298F51AE5083D6E, &[(0x675470, 96)]),
+    (0x6756C0, 0x00FC0A88727A5433, &[(0x6756C0, 123)]),
+    (0x675820, 0xBFFE8BD0C7CAAF97, &[(0x675820, 106)]),
+    (0x675AB0, 0x03D3E0C557A48BE9, &[(0x675AB0, 122)]),
     (0x675CF0, 0x5E88CEAF384EA9C1, &[(0x675CF0, 106)]),
     (0x675EF0, 0x33EE7BD37879B116, &[(0x675EF0, 112)]),
     (0x6760E0, 0x2225ED457FB7BC4C, &[(0x6760E0, 106)]),
@@ -5400,9 +6844,13 @@ pub const BODIES: &[Body] = &[
     (0x67C180, 0xFCA4C5F8B6A89642, &[(0x67C180, 120)]),
     (0x67C200, 0xC52A0A4AB5A230A4, &[(0x67C200, 106)]),
     (0x67C270, 0x2AE3748E20349CDC, &[(0x67C270, 98)]),
+    (0x67C3F0, 0xD79E95352D80A0E4, &[(0x67C3F0, 141)]),
+    (0x67C480, 0x84458EE2082D639B, &[(0x67C480, 130)]),
+    (0x67C5A0, 0x7BA17AC466FE397F, &[(0x67C5A0, 108)]),
     (0x67C610, 0x88CF0FD2A990ADFD, &[(0x67C610, 122)]),
     (0x67C690, 0xAEEA7777E33804AA, &[(0x67C690, 108)]),
     (0x67C700, 0x7A2A32E459A5C590, &[(0x67C700, 80)]),
+    (0x682DA0, 0x8AE01AF24243452F, &[(0x682DA0, 105)]),
     (0x6838E0, 0xC442EA4E00A9D3BA, &[(0x6838E0, 100)]),
     (0x683950, 0xBDD44730F850EECA, &[(0x683950, 110)]),
     (0x6839C0, 0x8FB3A850FD43FDFF, &[(0x6839C0, 118)]),
@@ -5419,6 +6867,7 @@ pub const BODIES: &[Body] = &[
     (0x692910, 0x71CAECF3E6F797D9, &[(0x692910, 149)]),
     (0x6929B0, 0xADEFEC14E8644AFF, &[(0x6929B0, 212)]),
     (0x692A90, 0xE4327A69D86DF96A, &[(0x692A90, 218)]),
+    (0x692B70, 0xF787E6490AB74511, &[(0x692B70, 266)]),
     (0x692C80, 0xC16349B52CB3C857, &[(0x692C80, 100)]),
     (0x692CF0, 0x62C422C7449A702C, &[(0x692CF0, 112)]),
     (0x692D60, 0xA8B6A519F82DF703, &[(0x692D60, 99)]),
