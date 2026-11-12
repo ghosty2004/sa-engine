@@ -29,18 +29,12 @@ pub fn g_cwanted_reset_police_pursuit_561fd0(_this: u32) {}
 #[allow(dead_code)]
 pub fn g_cplayer_info_cancel_player_entering_cars_56e860(_this: u32, _a0: u32) {}
 
-/// `FUN_00678e80` (0x678E80, PED): empty, thiscall, `ret 4`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_fun_00678e80_678e80(_this: u32, _a0: u32) {}
-
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x41BCB0, 0x62941518298855C4, &[(0x41BCB0, 3)]),
     (0x561FD0, 0xAF647E4C8602FFD2, &[(0x561FD0, 1)]),
     (0x56E860, 0x69AEB01C23D2A0A9, &[(0x56E860, 3)]),
-    (0x678E80, 0x69AEB01C23D2A0A9, &[(0x678E80, 3)]),
 ];
 
 #[cfg(all(test, not(sa_phase_a)))]
@@ -58,6 +52,5 @@ mod tests {
     fn pattern_empty() {
         g_cwanted_reset_police_pursuit_561fd0(0);
         g_cplayer_info_cancel_player_entering_cars_56e860(0, 0);
-        g_fun_00678e80_678e80(0, 0);
     }
 }

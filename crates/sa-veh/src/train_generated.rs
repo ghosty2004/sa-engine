@@ -38,21 +38,6 @@ pub fn g_ctrain_get_dooor_angle_open_ratio_6f59c0(this: u32, a0: u32) -> u32 {
     v1
 }
 
-/// `CTrain::OpenTrainDoor` (0x6F5D80, VEH): empty, thiscall, `ret 4`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_ctrain_open_train_door_6f5d80(_this: u32, _a0: u32) {}
-
-/// `CTrain::AddPassenger` (0x6F5D90, VEH): empty, thiscall, `ret 4`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_ctrain_add_passenger_6f5d90(_this: u32, _a0: u32) {}
-
-/// `CTrain::RemovePassenger` (0x6F5DA0, VEH): empty, thiscall, `ret 4`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_ctrain_remove_passenger_6f5da0(_this: u32, _a0: u32) {}
-
 /// `CTrain::SetNewTrainPosition` (0x6F7140, VEH): small, cdecl, `ret`; 20 instruction(s) matched.
 #[hook(addr = 0x6F7140, conv = cdecl, name = "CTrain::SetNewTrainPosition", expect = "8B 4C 24 04 8B 41 14", unverified = "gen2-veh-1", route = "L2", hazards = "heap-writes")]
 pub fn g_ctrain_set_new_train_position_6f7140(a0: u32, a1: u32, a2: u32, a3: u32) -> u32 {
@@ -80,9 +65,6 @@ pub const BODIES: &[Body] = &[
     (0x6F5910, 0xAF647E4C8602FFD2, &[(0x6F5910, 1)]),
     (0x6F5920, 0xAF647E4C8602FFD2, &[(0x6F5920, 1)]),
     (0x6F59C0, 0x357E39600630B729, &[(0x6F59C0, 22)]),
-    (0x6F5D80, 0x69AEB01C23D2A0A9, &[(0x6F5D80, 3)]),
-    (0x6F5D90, 0x69AEB01C23D2A0A9, &[(0x6F5D90, 3)]),
-    (0x6F5DA0, 0x69AEB01C23D2A0A9, &[(0x6F5DA0, 3)]),
     (0x6F7140, 0x6703655E0DB3EDB4, &[(0x6F7140, 69)]),
 ];
 
@@ -95,8 +77,5 @@ mod tests {
     fn pattern_empty() {
         g_ctrain_process_train_announcements_6f5910(0);
         g_ctrain_play_announcement_6f5920(0);
-        g_ctrain_open_train_door_6f5d80(0, 0);
-        g_ctrain_add_passenger_6f5d90(0, 0);
-        g_ctrain_remove_passenger_6f5da0(0, 0);
     }
 }

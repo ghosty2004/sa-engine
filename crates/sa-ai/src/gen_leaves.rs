@@ -2841,11 +2841,6 @@ pub fn g_task_simple_car_shuffle_get_task_type_646880(_this: u32) -> u32 {
     0x328
 }
 
-/// `CTaskSimpleCarWaitToSlowDown::GetTaskType` (0x6469F0): const-id, thiscall, `ret`; 2 instruction(s) matched.
-pub fn g_task_simple_car_wait_to_slow_down_get_task_type_6469f0(_this: u32) -> u32 {
-    0x329
-}
-
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType` (0x646BE0): const-id, thiscall, `ret`; 2 instruction(s) matched.
 #[hook(addr = 0x646BE0, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::GetTaskType", expect = "B8 2A 03 00 00", unverified = "ai7-3", route = "L2", hazards = "none")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_get_task_type_646be0(_this: u32) -> u32 {
@@ -5201,7 +5196,6 @@ pub const BODIES: &[Body] = &[
     (0x646560, 0xA83746116A626629, &[(0x646560, 6)]),
     (0x646700, 0x5B676918F253B0C6, &[(0x646700, 6)]),
     (0x646880, 0xD9B2DE859D91FC8B, &[(0x646880, 6)]),
-    (0x6469F0, 0x8D0EA14A73D715A0, &[(0x6469F0, 6)]),
     (0x646BE0, 0x406A6C0F4A1C3C4D, &[(0x646BE0, 6)]),
     (0x646BF0, 0x3F00B86B45D82E54, &[(0x646BF0, 5)]),
     (0x646E30, 0x71E404837D486CAF, &[(0x646E30, 6)]),
@@ -6134,7 +6128,6 @@ mod tests {
         );
         assert_eq!(g_task_simple_car_get_in_get_task_type_646700(0), 0x327);
         assert_eq!(g_task_simple_car_shuffle_get_task_type_646880(0), 0x328);
-        assert_eq!(g_task_simple_car_wait_to_slow_down_get_task_type_6469f0(0), 0x329);
         assert_eq!(
             g_task_simple_car_wait_for_door_not_to_be_in_use_get_task_type_646be0(0),
             0x32A
