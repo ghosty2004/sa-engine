@@ -315,7 +315,7 @@ pub fn ov_read(vf: u32, buf: u32, len: u32, big: u32, word: u32, sgn: u32, bitst
     f.pending.drain(..frames * f.channels);
     f.pos += frames as u64;
     static READS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
-    if trace_on() && READS.fetch_add(1, std::sync::atomic::Ordering::Relaxed) < 8 {
+    if trace_on() && { let n = READS.fetch_add(1, std::sync::atomic::Ordering::Relaxed); n < 4 || n.is_multiple_of(200) } {
         eprintln!("vorbisfile: read {vf:#x} {len} -> {o} bytes, pos {}", f.pos);
     }
     if bitstream != 0 {
