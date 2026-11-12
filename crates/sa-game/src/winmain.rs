@@ -516,7 +516,7 @@ fn process_game_logic() -> String {
                     let _clear = ClearOnDrop(&crate::d3d9::IN_GAME_FRAME);
                     rs_event_handler(26, GPtr::from_addr(1));
                     IDLE_RAN.store(true, Ordering::SeqCst);
-                } else if limit.is_finite() && limit > t {
+                } else if limit.is_finite() && limit > t && !crate::det::on() {
                     // The original spins through the loop until the limit passes; the native loop sleeps for the
                     // rest of it instead (same frames, no busy loop), so one `--frames` iteration in two runs the
                     // game frame.
