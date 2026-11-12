@@ -11,6 +11,10 @@ use crate::common::*;
 orig! {
     /// `CEntity::RegisterReference(CEntity**)` (0x571B70)
     fn entity_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
+    /// `CEntity::CleanUpOldReference(CEntity**)` (0x571A00)
+    fn entity_clean_up_old_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571A00 => unported;
+    /// `CEvent::~CEvent()` (0x4AC010)
+    fn event_dtor(e: GPtr<u8>) = thiscall 0x4AC010 => unported;
     /// `CEvent::CEvent()` (0x4ABFC0)
     fn event_ctor(e: GPtr<u8>) -> GPtr<u8> = thiscall 0x4ABFC0 => unported;
 }
@@ -60,5 +64,18 @@ pub fn event_5f6190_ctor(this: GPtr<u8>, a: u32, entity: GPtr<u8>, flag: u32, d:
     this
 }
 
+/// `FUN_005f6200` (0x5F6200, thiscall, SEH frame): the destructor of the 0x86C6D0 event: vtable,
+/// `CleanUpOldReference(+0x10)` on the entity when there is one, `CEvent::~CEvent`.
+#[hook(addr = 0x5F6200, conv = thiscall, name = "FUN_005f6200", expect = "6A FF 68 38 DE 83 00",
+       unverified = "std13-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+pub fn event_5f6190_dtor(this: GPtr<u8>) {
+    wr::<u32>(this, 0, 0x86C6D0);
+    let e = rd::<GPtr<u8>>(this, 0x10);
+    if !e.is_null() {
+        entity_clean_up_old_reference(e, this.byte_add(0x10));
+    }
+    event_dtor(this);
+}
+
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_EVENT_VEHICLE_DAMAGE_CTOR, HOOK_EVENT_5F6190_CTOR];
+pub const HOOKS: &[HookReg] = &[HOOK_EVENT_VEHICLE_DAMAGE_CTOR, HOOK_EVENT_5F6190_CTOR, HOOK_EVENT_5F6190_DTOR];
