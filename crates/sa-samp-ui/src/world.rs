@@ -40,6 +40,33 @@ pub trait WorldView {
     fn camera_pos(&self) -> Vec3;
     /// A ped's root position, `None` for a stale handle.
     fn ped_position(&self, ped: PedRef) -> Option<Vec3>;
+    /// Whether nothing solid (buildings, objects) is between `a` and `b` (samp's nametag and label test,
+    /// opcode 06BD with buildings and objects). Default: clear.
+    fn line_clear(&self, a: Vec3, b: Vec3) -> bool {
+        let _ = (a, b);
+        true
+    }
+}
+
+/// Nametag rules from the server and the client (`UiOptions`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct NametagRules {
+    /// Shown at all.
+    pub show: bool,
+    /// Draw distance.
+    pub distance: f32,
+    /// Hidden behind buildings and objects.
+    pub los: bool,
+}
+
+impl Default for NametagRules {
+    fn default() -> Self {
+        Self {
+            show: true,
+            distance: NAMETAG_DISTANCE,
+            los: true,
+        }
+    }
 }
 
 fn dist(a: Vec3, b: Vec3) -> f32 {
@@ -70,7 +97,16 @@ pub fn bars(d: &mut DrawList, x: i32, y: i32, health: f32, armour: f32) {
 }
 
 /// Draws the nametags in range.
-pub fn draw_nametags(tags: &[Nametag], w: &dyn WorldView, m: &dyn Measure, d: &mut DrawList) {
+pub fn draw_nametags(
+    tags: &[Nametag],
+    rules: NametagRules,
+    w: &dyn WorldView,
+    m: &dyn Measure,
+    d: &mut DrawList,
+) {
+    if !rules.show {
+        return;
+    }
     let cam = w.camera_pos();
     for t in tags {
         let root = match t.anchor {
@@ -82,7 +118,7 @@ pub fn draw_nametags(tags: &[Nametag], w: &dyn WorldView, m: &dyn Measure, d: &m
         };
         let head = Vec3::new(root.x, root.y, root.z + HEAD_ABOVE_ROOT);
         let dd = dist(head, cam);
-        if dd > NAMETAG_DISTANCE {
+        if dd >= rules.distance || (rules.los && !w.line_clear(head, cam)) {
             continue;
         }
         let anchor = Vec3::new(head.x, head.y, head.z + RAISE_PER_METRE * dd + RAISE_BASE);
@@ -134,7 +170,7 @@ pub fn draw_labels<'a>(
             },
             None => l.pos,
         };
-        if dist(pos, cam) > l.draw_distance {
+        if dist(pos, cam) > l.draw_distance || (l.test_los && !w.line_clear(pos, cam)) {
             continue;
         }
         let Some((sx, sy)) = w.project(pos) else { continue };
@@ -226,6 +262,7 @@ mod tests {
                 tag(NametagAnchor::Ped(PedRef(2))),
                 tag(NametagAnchor::World(Vec3::new(0.0, 100.0, 0.0))),
             ],
+            NametagRules::default(),
             &Flat,
             &M,
             &mut d,
@@ -238,6 +275,63 @@ mod tests {
             panic!()
         };
         assert_eq!((*y, *colour), (346.0 + 17.0 - 14.0, 0xFFFF_8000));
+    }
+
+    /// Everything with x < 0 is behind a wall.
+    struct Walled;
+    impl WorldView for Walled {
+        fn project(&self, p: Vec3) -> Option<(f32, f32)> {
+            Flat.project(p)
+        }
+        fn camera_pos(&self) -> Vec3 {
+            Vec3::default()
+        }
+        fn ped_position(&self, _ped: PedRef) -> Option<Vec3> {
+            None
+        }
+        fn line_clear(&self, a: Vec3, _b: Vec3) -> bool {
+            a.x >= 0.0
+        }
+    }
+
+    #[test]
+    fn nametag_rules_hide_by_switch_distance_and_line_of_sight() {
+        let tag = |x: f32| Nametag {
+            player_id: 1,
+            anchor: NametagAnchor::World(Vec3::new(x, 10.0, 0.0)),
+            name: "P".into(),
+            colour: Rgba::default(),
+            health: 50.0,
+            armour: 0.0,
+            afk: false,
+        };
+        let count = |rules: NametagRules| {
+            let mut d = DrawList::default();
+            draw_nametags(&[tag(1.0), tag(-1.0)], rules, &Walled, &M, &mut d);
+            d.texts().len()
+        };
+        assert_eq!(count(NametagRules::default()), 1);
+        assert_eq!(
+            count(NametagRules {
+                los: false,
+                ..NametagRules::default()
+            }),
+            2
+        );
+        assert_eq!(
+            count(NametagRules {
+                distance: 5.0,
+                ..NametagRules::default()
+            }),
+            0
+        );
+        assert_eq!(
+            count(NametagRules {
+                show: false,
+                ..NametagRules::default()
+            }),
+            0
+        );
     }
 
     #[test]

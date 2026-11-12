@@ -51,10 +51,21 @@ pub fn main_height(w: u32) -> u32 {
     }
 }
 
-/// Heights of [`FontId::ALL`] for video width `w`.
-pub fn heights_for_width(w: u32) -> [u32; 4] {
-    let m = main_height(w);
-    [m, m - 2, 20, 18]
+/// Heights of [`FontId::ALL`] for video width `w` and `/fontsize` `font_size` (−3..=5, 2 px per step).
+pub fn heights_for_width(w: u32, font_size: i8) -> [u32; 4] {
+    let d = 2 * i32::from(font_size.clamp(-3, 5));
+    let m = main_height(w) as i32;
+    [m, m - 2, 20, 18].map(|h| (h + d).max(6) as u32)
+}
+
+/// Outline kinds of the atlas glyphs.
+pub mod outline {
+    /// No outline.
+    pub const NONE: u8 = 0;
+    /// samp's four-direction one-pixel outline.
+    pub const ONE: u8 = 1;
+    /// samp's eight-offset two-pixel outline (chat lines above 1280 px; main font only).
+    pub const TWO: u8 = 2;
 }
 
 /// Text metrics. `text` never contains colour codes (callers strip them first, as samp does).
@@ -94,9 +105,10 @@ pub struct Glyph {
     pub advance: f32,
 }
 
-/// The glyph atlas of the four UI fonts. Every glyph is there twice: plain, and with samp's one-pixel
-/// black outline baked in (the four-direction outline of the outlined font: black text at the four offsets,
-/// then the text), so an outlined glyph is one quad instead of five. Pixels are white with the glyph's
+/// The glyph atlas of the four UI fonts. Every glyph is there plain and with samp's one-pixel black outline
+/// baked in (the four-direction outline of the outlined font: black text at the four offsets, then the
+/// text), the main font also with the two-pixel eight-offset outline, so an outlined glyph is one quad
+/// instead of five or nine. Pixels are white with the glyph's
 /// coverage as alpha; outline pixels are black. The vertex colour multiplies both.
 pub struct FontAtlas {
     /// Width in pixels (power of two).
@@ -108,21 +120,26 @@ pub struct FontAtlas {
     /// Brightness (0 = outline black, 255 = glyph white), `width * height` bytes.
     pub lum: Vec<u8>,
     heights: [u32; 4],
-    glyphs: HashMap<(usize, bool, char), Glyph>,
+    glyphs: HashMap<(usize, u8, char), Glyph>,
 }
 
 /// A rasterised glyph before packing: key, width, height, alpha and brightness planes.
-type Bitmap = ((usize, bool, char), u32, u32, Vec<u8>, Vec<u8>);
+type Bitmap = ((usize, u8, char), u32, u32, Vec<u8>, Vec<u8>);
+
+/// An outline variant: kind, offsets, padding.
+type OutlineKind = (u8, &'static [(i32, i32)], u32);
 
 /// The characters rasterised: printable ASCII and Latin-1 (what code page 1252 text maps to, mostly).
 fn charset() -> impl Iterator<Item = char> {
     (' '..='~').chain('\u{A1}'..='\u{FF}')
 }
 
-/// The outlined variant of a `w × h` coverage bitmap: one pixel larger on every side; black at the four
-/// offsets below the glyph (alpha `o`), the glyph over it (alpha `f`): `A = f + o·(1 − f)`, brightness `f / A`.
-fn outlined(w: u32, h: u32, cov: &[u8]) -> (u32, u32, Vec<u8>, Vec<u8>) {
-    let (ow, oh) = (w + 2, h + 2);
+/// The outlined variant of a `w × h` coverage bitmap: `pad` pixels larger on every side; black at the
+/// outline `offsets` below the glyph (alpha `o`), the glyph over it (alpha `f`): `A = f + o·(1 − f)`,
+/// brightness `f / A`.
+fn outlined(w: u32, h: u32, cov: &[u8], offsets: &[(i32, i32)], pad: u32) -> (u32, u32, Vec<u8>, Vec<u8>) {
+    let (ow, oh) = (w + 2 * pad, h + 2 * pad);
+    let p = pad as i32;
     let at = |x: i32, y: i32| -> f32 {
         if x < 0 || y < 0 || x >= w as i32 || y >= h as i32 {
             0.0
@@ -134,9 +151,9 @@ fn outlined(w: u32, h: u32, cov: &[u8]) -> (u32, u32, Vec<u8>, Vec<u8>) {
     let mut lum = vec![0u8; (ow * oh) as usize];
     for y in 0..oh as i32 {
         for x in 0..ow as i32 {
-            let (gx, gy) = (x - 1, y - 1);
+            let (gx, gy) = (x - p, y - p);
             let f = at(gx, gy);
-            let o = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+            let o = offsets
                 .iter()
                 .map(|(dx, dy)| at(gx - dx, gy - dy))
                 .fold(0.0, f32::max);
@@ -172,7 +189,7 @@ impl FontAtlas {
                     advance,
                     ..Glyph::default()
                 };
-                let mut go = g;
+                let mut variants = Vec::new();
                 if let Some(og) = font.outline_glyph(id.with_scale_and_position(scale, point(0.0, ascent))) {
                     let b = og.px_bounds();
                     let (gw, gh) = (b.width() as u32, b.height() as u32);
@@ -183,14 +200,30 @@ impl FontAtlas {
                         }
                     });
                     g.offset = (b.min.x, b.min.y);
-                    go.offset = (b.min.x - 1.0, b.min.y - 1.0);
-                    let (ow, oh, oa, ol) = outlined(gw, gh, &px);
-                    bitmaps.push(((fi, true, ch), ow, oh, oa, ol));
+                    let kinds: &[OutlineKind] = if fi == FontId::Main.index() {
+                        &[
+                            (outline::ONE, &crate::draw::OUTLINE_4, 1),
+                            (outline::TWO, &crate::draw::OUTLINE_8, 2),
+                        ]
+                    } else {
+                        &[(outline::ONE, &crate::draw::OUTLINE_4, 1)]
+                    };
+                    for &(kind, offsets, pad) in kinds {
+                        let (ow, oh, oa, ol) = outlined(gw, gh, &px, offsets, pad);
+                        bitmaps.push(((fi, kind, ch), ow, oh, oa, ol));
+                        variants.push((kind, pad as f32));
+                    }
                     let lum = vec![255u8; px.len()];
-                    bitmaps.push(((fi, false, ch), gw, gh, px, lum));
+                    bitmaps.push(((fi, outline::NONE, ch), gw, gh, px, lum));
+                } else {
+                    variants.extend([(outline::ONE, 1.0), (outline::TWO, 2.0)]);
                 }
-                glyphs.insert((fi, false, ch), g);
-                glyphs.insert((fi, true, ch), go);
+                glyphs.insert((fi, outline::NONE, ch), g);
+                for (kind, pad) in variants {
+                    let mut go = g;
+                    go.offset = (g.offset.0 - pad, g.offset.1 - pad);
+                    glyphs.insert((fi, kind, ch), go);
+                }
             }
         }
         // Shelf packing, 1 px padding.
@@ -237,12 +270,18 @@ impl FontAtlas {
 
     /// The plain glyph for `ch` (unknown characters draw as `?`).
     pub fn glyph(&self, font: FontId, ch: char) -> Glyph {
-        self.glyph_variant(font, false, ch)
+        self.glyph_variant(font, outline::NONE, ch)
     }
 
-    /// The plain or outlined glyph for `ch`.
-    pub fn glyph_variant(&self, font: FontId, outline: bool, ch: char) -> Glyph {
+    /// The glyph for `ch` with outline kind `outline` ([`outline`]; the two-pixel outline falls back to
+    /// the one-pixel one outside the main font).
+    pub fn glyph_variant(&self, font: FontId, outline: u8, ch: char) -> Glyph {
         let i = font.index();
+        let outline = if outline == outline::TWO && font != FontId::Main {
+            outline::ONE
+        } else {
+            outline
+        };
         self.glyphs
             .get(&(i, outline, ch))
             .or_else(|| self.glyphs.get(&(i, outline, '?')))
@@ -283,15 +322,17 @@ mod tests {
 
     #[test]
     fn heights_follow_samp_table() {
-        assert_eq!(heights_for_width(800), [14, 12, 20, 18]);
-        assert_eq!(heights_for_width(1024), [16, 14, 20, 18]);
-        assert_eq!(heights_for_width(1400), [18, 16, 20, 18]);
-        assert_eq!(heights_for_width(1920), [20, 18, 20, 18]);
+        assert_eq!(heights_for_width(800, 0), [14, 12, 20, 18]);
+        assert_eq!(heights_for_width(1024, 0), [16, 14, 20, 18]);
+        assert_eq!(heights_for_width(1400, 0), [18, 16, 20, 18]);
+        assert_eq!(heights_for_width(1920, 0), [20, 18, 20, 18]);
+        assert_eq!(heights_for_width(1280, 2), [20, 18, 24, 22]);
+        assert_eq!(heights_for_width(800, -9), [8, 6, 14, 12]);
     }
 
     #[test]
     fn atlas_holds_every_glyph_and_metrics_are_arial_like() {
-        let a = FontAtlas::build(heights_for_width(1280));
+        let a = FontAtlas::build(heights_for_width(1280, 0));
         assert!(a.width.is_power_of_two() && a.height.is_power_of_two());
         assert!(a.height <= 1024, "atlas {}x{}", a.width, a.height);
         // Every printable glyph but the space has pixels inside the atlas.
@@ -311,11 +352,17 @@ mod tests {
         // The outlined variant is one pixel larger on every side, black around a white core.
         let (p, o) = (
             a.glyph(FontId::Main, 'H'),
-            a.glyph_variant(FontId::Main, true, 'H'),
+            a.glyph_variant(FontId::Main, outline::ONE, 'H'),
         );
         assert_eq!((o.rect[2], o.rect[3]), (p.rect[2] + 2, p.rect[3] + 2));
         assert_eq!(o.offset, (p.offset.0 - 1.0, p.offset.1 - 1.0));
         assert_eq!(o.advance, p.advance);
+        let two = a.glyph_variant(FontId::Main, outline::TWO, 'H');
+        assert_eq!((two.rect[2], two.offset.0), (p.rect[2] + 4, p.offset.0 - 2.0));
+        assert_eq!(
+            a.glyph_variant(FontId::Small, outline::TWO, 'H'),
+            a.glyph_variant(FontId::Small, outline::ONE, 'H')
+        );
         let corner = |g: Glyph, dx: u16, dy: u16| {
             let i = (g.rect[1] + dy) as usize * a.width as usize + (g.rect[0] + dx) as usize;
             (a.alpha[i], a.lum[i])

@@ -12,8 +12,16 @@ use crate::text::{replace_control_chars, split_line};
 
 /// Entries kept.
 pub const CAPACITY: usize = 100;
-/// Lines shown.
+/// Lines shown by default (`/pagesize` sets 10..=20).
 pub const PAGE_SIZE: usize = 10;
+/// `/pagesize` range.
+pub const PAGE_SIZE_RANGE: std::ops::RangeInclusive<usize> = 10..=20;
+/// Timestamp sample samp measures once (`[19:58:34]`, main font).
+pub const TIMESTAMP_SAMPLE: &str = "[19:58:34]";
+/// Text starts this far right of the timestamp's width.
+pub const TIMESTAMP_CONTENT_OFFSET: f32 = 50.0;
+/// Scrollbar: x, y, width (height `(h + 1)·pageSize − 60`).
+pub const SCROLLBAR: (f32, f32, f32) = (10.0, 40.0, 20.0);
 /// Longest name prefix.
 pub const MAX_NAME_LEN: usize = 24;
 /// Longest text of one entry.
@@ -50,6 +58,16 @@ pub struct Entry {
     pub text: String,
     /// `0xAARRGGBB`.
     pub colour: u32,
+    /// Arrival time (hour, minute, second).
+    pub time: [u8; 3],
+}
+
+impl Entry {
+    /// `[hh:mm:ss]`.
+    pub fn timestamp(&self) -> String {
+        let [h, m, s] = self.time;
+        format!("[{h:02}:{m:02}:{s:02}]")
+    }
 }
 
 /// Display mode cycled with F7: off, without outline, with outline (samp's default).
@@ -70,6 +88,8 @@ pub struct ChatWindow {
     /// Lines scrolled up from the newest.
     scroll: usize,
     mode: Mode,
+    page_size: usize,
+    timestamps: bool,
 }
 
 impl Default for ChatWindow {
@@ -78,6 +98,8 @@ impl Default for ChatWindow {
             entries: VecDeque::new(),
             scroll: 0,
             mode: Mode::Outlined,
+            page_size: PAGE_SIZE,
+            timestamps: false,
         }
     }
 }
@@ -113,6 +135,7 @@ impl ChatWindow {
                     name_colour,
                     text: first,
                     colour: PLAYER_TEXT,
+                    time: m.time,
                 });
                 if let Some(rest) = rest {
                     self.push(Entry {
@@ -121,6 +144,7 @@ impl ChatWindow {
                         name_colour,
                         text: rest.chars().take(MAX_TEXT_LEN).collect(),
                         colour: PLAYER_TEXT,
+                        time: m.time,
                     });
                 }
             }
@@ -130,6 +154,7 @@ impl ChatWindow {
                 name_colour: 0,
                 text: text.chars().take(MAX_TEXT_LEN).collect(),
                 colour,
+                time: m.time,
             }),
         }
         self.scroll = 0;
@@ -155,9 +180,25 @@ impl ChatWindow {
         };
     }
 
+    /// Lines shown.
+    pub fn page_size(&self) -> usize {
+        self.page_size
+    }
+
+    /// `/pagesize` (clamped to 10..=20; scrolls to the newest line, as samp does).
+    pub fn set_page_size(&mut self, n: usize) {
+        self.page_size = n.clamp(*PAGE_SIZE_RANGE.start(), *PAGE_SIZE_RANGE.end());
+        self.scroll = 0;
+    }
+
+    /// Timestamps on / off.
+    pub fn set_timestamps(&mut self, on: bool) {
+        self.timestamps = on;
+    }
+
     /// Page Up / Page Down (one page; clamped).
     pub fn scroll_by(&mut self, lines: isize) {
-        let max = self.entries.len().saturating_sub(PAGE_SIZE) as isize;
+        let max = self.entries.len().saturating_sub(self.page_size) as isize;
         self.scroll = (self.scroll as isize + lines).clamp(0, max) as usize;
     }
 
@@ -168,7 +209,7 @@ impl ChatWindow {
 
     /// Bottom of the window: `10 + (pageSize + 1)·(h + 1)`.
     pub fn bottom(&self, line_h: f32) -> f32 {
-        FIRST_LINE_TOP + (PAGE_SIZE as f32 + 1.0) * (line_h + 1.0)
+        FIRST_LINE_TOP + (self.page_size as f32 + 1.0) * (line_h + 1.0)
     }
 
     /// Draws the visible page. The newest entry is on the last line; with fewer entries the lines fill from
@@ -184,11 +225,16 @@ impl ChatWindow {
             (_, false) => &OUTLINE_4,
         };
         let end = self.entries.len() - self.scroll.min(self.entries.len());
-        let start = end.saturating_sub(PAGE_SIZE);
-        let skip = PAGE_SIZE - (end - start);
+        let start = end.saturating_sub(self.page_size);
+        let skip = self.page_size - (end - start);
+        let tw = m.width(FontId::Main, TIMESTAMP_SAMPLE);
         for (k, e) in self.entries.range(start..end).enumerate() {
             let y = FIRST_LINE_TOP + (k + skip) as f32 * (h + 1.0);
             let mut x = LINE_LEFT;
+            if self.timestamps {
+                d.coloured(m, x, y, FontId::Main, &e.timestamp(), e.colour, outline);
+                x = tw + TIMESTAMP_CONTENT_OFFSET;
+            }
             if e.kind == ChatKind::Player && !e.name.is_empty() {
                 let prefix = format!("{}:", e.name);
                 d.coloured(m, x, y, FontId::Main, &prefix, e.name_colour, outline);
@@ -196,6 +242,33 @@ impl ChatWindow {
             }
             d.coloured(m, x, y, FontId::Main, &e.text, e.colour, outline);
         }
+    }
+
+    /// The scrollbar at the left (samp's DXUT scrollbar: shown while scrolled up or while the input is
+    /// open): track, the two arrow buttons and the thumb sized by page / entries.
+    pub fn draw_scrollbar(&self, m: &dyn Measure, input_open: bool, d: &mut DrawList) {
+        if self.mode == Mode::Off || (self.scroll == 0 && !input_open) {
+            return;
+        }
+        let h = m.line_height(FontId::Main);
+        let (x, y, w) = SCROLLBAR;
+        let len = (h + 1.0) * self.page_size as f32 - 60.0;
+        if len < 3.0 * w {
+            return;
+        }
+        let (x1, y1) = (x + w, y + len);
+        d.rect(x, y, x1, y1, 0xC820_2020);
+        for (t, b) in [(y, y + w), (y1 - w, y1)] {
+            d.rect(x + 1.0, t + 1.0, x1 - 1.0, b - 1.0, 0xC860_6060);
+        }
+        let (tt, tb) = (y + w, y1 - w);
+        let total = self.entries.len().max(self.page_size) as f32;
+        let th = ((tb - tt) * self.page_size as f32 / total).max(8.0);
+        let first =
+            (self.entries.len() - self.scroll.min(self.entries.len())).saturating_sub(self.page_size) as f32;
+        let span = (total - self.page_size as f32).max(1.0);
+        let top = tt + (tb - tt - th) * (first / span).min(1.0);
+        d.rect(x + 2.0, top, x1 - 2.0, top + th, 0xC8B0_B0B0);
     }
 }
 
@@ -355,6 +428,7 @@ mod tests {
             name_colour: Rgba::default(),
             text: t.into(),
             colour: Rgba::from_argb_u32(0xFF88_AA62),
+            time: [19, 58, 4],
         }
     }
 
@@ -383,6 +457,7 @@ mod tests {
             name_colour: Rgba::from_argb_u32(0xFF00_FF00),
             text,
             colour: Rgba::from_argb_u32(0xFFFF_FFFF),
+            time: [19, 58, 4],
         });
         let e: Vec<&Entry> = c.entries().collect();
         assert_eq!(e.len(), 2);
@@ -406,6 +481,7 @@ mod tests {
             name_colour: Rgba::from_argb_u32(0xFF00_FF00),
             text: "hi".into(),
             colour: Rgba::from_argb_u32(0xFFFF_FFFF),
+            time: [19, 58, 4],
         });
         let mut d = DrawList::default();
         c.draw(&M, 1024, &mut d);
@@ -478,5 +554,49 @@ mod tests {
             ChatInput::box_rect(1280, 197.0, 20.0),
             [40.0, 197.0, 808.0, 241.0]
         );
+    }
+
+    #[test]
+    fn timestamps_page_size_and_scrollbar() {
+        let mut c = ChatWindow::default();
+        for i in 0..30 {
+            c.add(&info(&format!("line {i}")));
+        }
+        c.set_timestamps(true);
+        c.set_page_size(25);
+        assert_eq!(c.page_size(), 20);
+        c.set_page_size(3);
+        assert_eq!(c.page_size(), 10);
+        c.set_page_size(15);
+        let mut d = DrawList::default();
+        c.draw(&M, 1024, &mut d);
+        // 15 lines, each "[19:58:04]" then the text at timestamp width + 50.
+        assert_eq!(d.texts().iter().filter(|t| **t == "[19:58:04]").count(), 15);
+        let x = d.cmds.iter().find_map(|c| match c {
+            Cmd::Text { x, text, .. } if text == "line 29" => Some(*x),
+            _ => None,
+        });
+        assert_eq!(x, Some(7.0 * 10.0 + TIMESTAMP_CONTENT_OFFSET));
+        assert_eq!(c.bottom(16.0), 10.0 + 16.0 * 17.0);
+        // Scrollbar only when scrolled up or typing.
+        let mut d = DrawList::default();
+        c.draw_scrollbar(&M, false, &mut d);
+        assert!(d.cmds.is_empty());
+        c.draw_scrollbar(&M, true, &mut d);
+        assert_eq!(d.cmds.len(), 4);
+        let Cmd::Rect { rect, .. } = d.cmds[0] else { panic!() };
+        assert_eq!(rect, [10.0, 40.0, 30.0, 40.0 + 17.0 * 15.0 - 60.0]);
+        // The thumb sits at the bottom when not scrolled, higher when scrolled up.
+        let thumb = |c: &ChatWindow| {
+            let mut d = DrawList::default();
+            c.draw_scrollbar(&M, true, &mut d);
+            match d.cmds[3] {
+                Cmd::Rect { rect, .. } => rect[1],
+                _ => panic!(),
+            }
+        };
+        let bottom = thumb(&c);
+        c.scroll_by(15);
+        assert!(thumb(&c) < bottom);
     }
 }

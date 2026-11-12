@@ -51,8 +51,9 @@ pub enum Cmd {
         colour: u32,
         /// Text.
         text: String,
-        /// With samp's black one-pixel outline (the renderer's outlined glyphs).
-        outline: bool,
+        /// Outline kind (`font::outline`: none, samp's 1-pixel four-direction or 2-pixel eight-offset
+        /// black outline; the renderer's outlined glyphs).
+        outline: u8,
     },
     /// Text in a game font through `CFont` (textdraws): the complete font state, then `PrintString`.
     GameFont {
@@ -74,6 +75,16 @@ pub enum Cmd {
         /// Tint `0xAARRGGBB`.
         colour: u32,
     },
+}
+
+/// The outline kind of an outline offset list (empty, [`OUTLINE_4`], [`OUTLINE_8`]).
+pub fn outline_kind(offsets: &[(i32, i32)]) -> u8 {
+    use crate::font::outline;
+    match offsets.len() {
+        0 => outline::NONE,
+        8 => outline::TWO,
+        _ => outline::ONE,
+    }
 }
 
 /// The commands of one frame.
@@ -109,7 +120,7 @@ impl DrawList {
                 font,
                 colour,
                 text: text.into(),
-                outline: false,
+                outline: crate::font::outline::NONE,
             });
         }
     }
@@ -137,7 +148,7 @@ impl DrawList {
                     font,
                     colour: run.colour,
                     text: run.text.clone(),
-                    outline: !outline.is_empty(),
+                    outline: outline_kind(outline),
                 });
             }
             pen += m.width(font, &run.text);
@@ -184,7 +195,7 @@ mod tests {
             &OUTLINE_4,
         );
         assert_eq!(w, 28.0);
-        let run = |x: f32, colour: u32, text: &str, outline: bool| Cmd::Text {
+        let run = |x: f32, colour: u32, text: &str, outline: u8| Cmd::Text {
             x,
             y: 20.0,
             font: FontId::Main,
@@ -194,13 +205,10 @@ mod tests {
         };
         assert_eq!(
             d.cmds,
-            vec![
-                run(10.0, 0xFFFF_FFFF, "ab", true),
-                run(24.0, 0xFFFF_0000, "cd", true)
-            ]
+            vec![run(10.0, 0xFFFF_FFFF, "ab", 1), run(24.0, 0xFFFF_0000, "cd", 1)]
         );
         let mut d = DrawList::default();
         d.coloured(&m, 0.0, 20.0, FontId::Main, "x", 0xFF12_3456, &[]);
-        assert_eq!(d.cmds, vec![run(0.0, 0xFF12_3456, "x", false)]);
+        assert_eq!(d.cmds, vec![run(0.0, 0xFF12_3456, "x", 0)]);
     }
 }
