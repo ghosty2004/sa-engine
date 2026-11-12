@@ -387,6 +387,11 @@ pub extern "C-unwind" fn rwfexist(name: GPtr<u8>) -> i32 {
 pub extern "C-unwind" fn pow(x: f64, y: f64) -> f64 {
     x.powf(y)
 }
+/// `acos(x)` (0x822394, cdecl, ST0): the model phase B uses for `_CIacos` (0x822380, `sa_math::libm::acos`); the
+/// CRT's SSE2 / x87 kernel choice is not modelled (a recorded approximation of phase B, as for `pow`).
+pub extern "C-unwind" fn acos(x: f64) -> f64 {
+    sa_core::orig::x87_unary(0x0082_2380, x)
+}
 /// `modf(v, ip)` (0x8232F0): exact (`*ip` = the integral part, the fraction with v's sign returned;
 /// infinities give a signed 0 fraction, NaN propagates), as the CRT computes it.
 ///
@@ -469,6 +474,7 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
         (0x0082_1982, "CRT printf", f(printf as *const ())),
         (0x0082_19F0, "CRT floor", f(floor as *const ())),
         (0x0082_20F0, "CRT pow", f(pow as *const ())),
+        (0x0082_2394, "CRT acos", f(acos as *const ())),
         (0x0082_6590, "CRT strcpy", f(strcpy as *const ())),
         (0x0082_65A0, "CRT strcat", f(strcat as *const ())),
         (0x0082_6450, "CRT strncat", f(strncat as *const ())),

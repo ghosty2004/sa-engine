@@ -123,6 +123,7 @@ pub mod smart_flee_point_abortable;
 pub mod smart_flee_point_position;
 pub mod event_history_store;
 pub mod geometry_line_of_sight;
+pub mod ik_chain_blend_out;
 pub mod attractor_ped_use_effect;
 pub mod general_node_heading;
 pub mod route_round_entity_bbox;
