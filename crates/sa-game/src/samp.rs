@@ -121,6 +121,20 @@ fn sample(game: &dyn GameAdapter) -> String {
     l
 }
 
+/// The UI's input path (`samp_input`): a window event to the adapter.
+fn ui_event(e: sa_samp_api::input::WindowEvent) -> sa_samp_api::input::EventResult {
+    GAME.with(|g| match g.borrow_mut().as_mut() {
+        Some(game) => game.window_event(e),
+        None => sa_samp_api::input::EventResult::PassToGame,
+    })
+}
+
+/// Whether the UI has the keyboard.
+fn ui_wants_keyboard() -> bool {
+    GAME.with(|g| g.borrow_mut().as_mut().and_then(|g| g.ui().map(|u| u.wants_keyboard())).unwrap_or(false))
+}
+
+
 /// sa-core's dispatch handler: runs the client's frame callback on the adapter.
 fn on_frame(phase: u8) {
     let Some(&phase) = PHASES.get(usize::from(phase)) else {
@@ -145,6 +159,7 @@ pub fn install(target: &Target) -> Result<(), String> {
     .map_err(|e| format!("samp: install: {e}"))?;
     GAME.with(|g| *g.borrow_mut() = Some(game));
     sa_core::samp::set_frame_handler(on_frame);
+    crate::samp_input::set_target(crate::samp_input::Target { event: ui_event, wants_keyboard: ui_wants_keyboard });
     println!(
         "sa-game: samp mode (skeleton): server {}:{} as {}; adapter {:?}; stand-in client (no network yet)",
         target.host,
