@@ -13,8 +13,9 @@ let worker = null;
 // skipped, and these functions return a constant (ADDRESS=RETURN/stack dwords popped; a leading ! replaces a port:
 // 0x5efca0 turns off ped attractors, whose task tree is still being ported). Web only: 0x517bf0
 // (CIdleCam::ProcessFOVZoom, thiscall, one float) does nothing, so the idle camera that starts when the player stands
-// still for a while does not block every iteration (the loop stops after three identical blocked iterations).
-const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4,0x517bf0=0/1';
+// still for a while does not block every iteration; 0x6803a0 (CTaskSimpleClimb::TestForClimb, cdecl) returns null,
+// "nothing to climb", so a jump goes on to its launch (until TestForClimb is ported).
+const DEFAULT_STUBS = '0x421a50=0/0,!0x5efca0=0/4,0x517bf0=0/1,0x6803a0=0/0';
 
 if (params.get('inworld') === '0') $('inworld').checked = false;
 

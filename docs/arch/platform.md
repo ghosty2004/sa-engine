@@ -1899,7 +1899,8 @@ module. `?SA_WEB_NO_RECOVER=1` turns the handler off. Seen in the recording run:
 
 **Exploration defaults.** The page sets `SA_GAME_SCRIPT_SKIP=1` and `SA_GAME_STUB` to the play package's list plus
 `0x517bf0=0/1` (`CIdleCam::ProcessFOVZoom`; without it the idle camera, which starts after the player stands still for
-about two minutes, blocks three iterations in a row and the loop stops). `&stub=...` replaces the list and `&stub=none`
+about two minutes, blocks every frame) and `0x6803a0=0/0` (`CTaskSimpleClimb::TestForClimb`, cdecl: null, nothing to
+climb, so a jump reaches its launch; WRITER-NATIVE's det jump run with this stub: 0 blocked frames of 1516). `&stub=...` replaces the list and `&stub=none`
 drops it. Any `SA_*` query variable still wins. The click that locks the pointer is not passed to the game (it used
 to punch: CTaskSimpleFight).
 
