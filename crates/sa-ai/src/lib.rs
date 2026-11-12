@@ -60,6 +60,7 @@ pub mod intelrest;
 pub mod killtasks;
 pub mod misc;
 pub mod partner6;
+pub mod wait_for_ped_control;
 pub mod mvpa_ai1;
 pub mod mvpa_ai2;
 pub mod event_stuck_in_air_priority;

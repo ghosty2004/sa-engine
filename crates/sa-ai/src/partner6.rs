@@ -81,7 +81,9 @@ orig! {
     /// `ret 0x18`)
     fn go_to_point_and_stand_still_ctor(t: GPtr<u8>, ms: u32, p: GPtr<u8>, r: u32, d: u32, a: u32, b: u32) -> GPtr<u8> = thiscall 0x668120 => unported;
     /// `FUN_00683340` (0x683340, `ret 0x10`): the `CTaskComplexWaitForPed` constructor `(CPed*, float, int32, bool)`
-    fn wait_for_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>, f: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x683340 => unported;
+    fn wait_for_ped_ctor(t: GPtr<u8>, ped: GPtr<u8>, f: u32, time: u32, b: u32) -> GPtr<u8> = thiscall 0x683340 => wait_for_ped_ctor_port;
+    /// `CEntity::RegisterReference(CEntity**)` (0x571B70, `ret 4`)
+    fn wfp_register_reference(e: GPtr<u8>, slot: GPtr<u8>) = thiscall 0x571B70 => unported;
     /// `CTaskComplexSequence::CTaskComplexSequence` (0x632BD0)
     fn sequence_ctor(t: GPtr<u8>) -> GPtr<u8> = thiscall 0x632BD0 => unported;
     /// `CTaskComplexSequence::AddTask(CTask*)` (0x632D10, `ret 4`)
@@ -1251,8 +1253,31 @@ pub fn wander_prostitute_scan_for_stuff(this: GPtr<u8>, ped: GPtr<u8>) {
     }
 }
 
+/// `CTaskComplexWaitForPed::CTaskComplexWaitForPed(CPed* ped, float f, int32 time, bool b)` (`FUN_00683340`, thiscall,
+/// `ret 0x10`): `CTaskComplex` base, vtable 0x8706F8, +0x1C / +0x20 = 0, bytes +0x24 / +0x25 = 0, +0x10 = `f`, +0x14 =
+/// `time`, +0xC = `ped`, byte +0x18 = `b` (the bytes' store order), then `ped->RegisterReference(&+0xC)` (no null check,
+/// as the original). Returns `this`. The SEH frame of the original is not needed.
+#[hook(addr = 0x683340, conv = thiscall, name = "FUN_00683340", expect = "6A FF 68 98 67 84 00",
+       unverified = "newgame-1", route = "L2", hazards = "heap-writes", recs = "pause-restart",
+       note = "reached after New Game from the pause menu (--start-in-world run, frame 483)")]
+pub fn wait_for_ped_ctor_port(this: GPtr<u8>, ped: GPtr<u8>, f: u32, time: u32, b: u32) -> GPtr<u8> {
+    task_complex_ctor(this);
+    wr::<u32>(this, 0, 0x8706F8);
+    wr::<u32>(this, 0x1C, 0);
+    wr::<u32>(this, 0x20, 0);
+    wr::<u8>(this, 0x24, 0);
+    wr::<u8>(this, 0x25, 0);
+    wr::<u32>(this, 0x10, f);
+    wr::<u32>(this, 0x14, time);
+    wr::<u32>(this, 0xC, ped.addr() as u32);
+    wr::<u8>(this, 0x18, b as u8);
+    wfp_register_reference(ped, this.byte_add(0xC));
+    this
+}
+
 /// This module's registrations.
 pub const HOOKS: &[HookReg] = &[
+    HOOK_WAIT_FOR_PED_CTOR_PORT,
     HOOK_PARTNER_CREATE_FIRST_SUB_TASK,
     HOOK_PARTNER_CREATE_NEXT_SUB_TASK,
     HOOK_PARTNER_REMOVE_STREAMED_ANIMS,
