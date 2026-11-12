@@ -27,7 +27,7 @@ fn one() -> f32 {
 /// `k2 = f32(1 / sqrt(b.z*tz + ty*ty + b.x*b.x))`; the new right `B = (b.x*k2, ty*k2, tz*k2)`, `Bz = f32(B.z)`; the new
 /// forward `C = (B.z*A.y - B.y*Az, B.x*Az - Bz*A.x, B.y*A.x - B.x*A.y)`. Everything stored as f32 (the up z as `Az`).
 #[hook(addr = 0x59B6A0, conv = thiscall, name = "CMatrix::Reorthogonalise", this = "CMatrix",
-       expect = "83 EC 28 D9 41 04 D8 49 18", unverified = "std8-math-1", route = "L1-pure",
+       expect = "83 EC 28 D9 41 04 D8 49 18", route = "L1-pure",
        hazards = "x87-transcendental", note = "FSQRT twice")]
 pub fn matrix_reorthogonalise(m: GPtr<u8>) {
     let (r0, r1, r2) = (ldf(m, 0), ldf(m, 4), ldf(m, 8));
@@ -74,7 +74,7 @@ pub fn matrix_reorthogonalise(m: GPtr<u8>) {
 /// `a = (u.z*F.y - u.y*F.z, u.x*F.z - u.z*F.x, u.y*F.x - u.x*F.y)`, `sz = f32(a.z)`; right = `a`; forward =
 /// `(a.z*u.y - a.y*u.z, a.x*u.z - sz*u.x, u.x*a.y - a.x*u.y)`; up = `u` (raw copies). Stored as f32.
 #[hook(addr = 0x59B7E0, conv = thiscall, name = "CMatrix::ForceUpVector", this = "CMatrix",
-       expect = "83 EC 18 D9 44 24 24 D8 49 14", unverified = "std8-math-1", route = "L1-pure", hazards = "none")]
+       expect = "83 EC 18 D9 44 24 24 D8 49 14", route = "L1-pure", hazards = "none")]
 pub fn matrix_force_up_vector(m: GPtr<u8>, ux: f32, uy: f32, uz: f32) {
     let (f0, f1, f2) = (ldf(m, 0x10), ldf(m, 0x14), ldf(m, 0x18));
     let a0 = X87::from_f32(uz).fmul_m(f1).fsub(X87::from_f32(uy).fmul_m(f2));

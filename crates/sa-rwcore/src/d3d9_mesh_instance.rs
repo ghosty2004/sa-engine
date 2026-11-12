@@ -64,7 +64,7 @@ fn sorted3(t: GPtr<u8>) -> (u32, u32, u32) {
 /// The `qsort` comparator of triangle lists (0x7567A0, cdecl): both triangles' indices sorted; the first differing
 /// of (min, mid, max) decides (`a - b`, 32-bit).
 #[hook(addr = 0x7567A0, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "8B 4C 24 04 33 C0 33 D2 55",
-       unverified = "std9-rw-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn d3d9_triangle_compare(a: GPtr<u8>, b: GPtr<u8>) -> i32 {
     let (a0, a1, a2) = sorted3(a);
     let (b0, b1, b2) = sorted3(b);
@@ -81,7 +81,7 @@ pub fn d3d9_triangle_compare(a: GPtr<u8>, b: GPtr<u8>) -> i32 {
 /// The strip-to-list rebuild (0x756830, cdecl): for each of the `n - 2` strip triangles `(s[i], s[i+1], s[i+2])` that
 /// is not degenerate, three indices minus `minVert` (u16 arithmetic; reversed on odd `i`); returns the number written.
 #[hook(addr = 0x756830, conv = cdecl, name = "FUN_00756830", expect = "51 8B 44 24 10 53 56 57",
-       unverified = "std9-rw-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "n < 2 wraps the unsigned triangle count as the original does")]
 pub fn d3d9_strip_to_list(dst: GPtr<u8>, src: GPtr<u8>, n: u32, min_vert: u32) -> u32 {
     let tris = n.wrapping_sub(2);
@@ -128,7 +128,7 @@ fn prim_index(flags: u32) -> u8 {
 /// elements); the primitive count by type (2: n/2, 3: n-1, 4: n/3, 5/6: n-2, else 0). The buffer is unlocked; a
 /// failing instance callback frees the entry (NULL). Returns the entry.
 #[hook(addr = 0x756960, conv = cdecl, name = "(missed by ghidra: cat7-call)", expect = "83 EC 1C 53 55 8B 6C 24 38",
-       unverified = "std9-rw-2", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 #[allow(clippy::too_many_arguments)]
 pub fn d3d9_instance(
     object: GPtr<u8>,

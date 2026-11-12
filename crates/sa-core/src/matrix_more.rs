@@ -31,7 +31,7 @@ const ONE: u32 = 0x3F80_0000;
 /// `CMatrix::operator+=(const CMatrix& m)` (0x59ADF0, `ret 4`, returns `this`): the twelve elements
 /// `this[i] = m[i] + this[i]`, column-major order as the original walks them.
 #[hook(addr = 0x59ADF0, conv = thiscall, name = "CMatrix::operator+=", expect = "8B C1 8B 4C 24 04 D9 01",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn add_assign(this: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
     for c in [0isize, 4, 8] {
         for r in [0isize, 0x10, 0x20] {
@@ -46,7 +46,7 @@ pub fn add_assign(this: GPtr<u8>, m: GPtr<u8>) -> GPtr<u8> {
 
 /// `CMatrix::ResetOrientation()` (0x59AEA0): the 3x3 part becomes the identity (position untouched).
 #[hook(addr = 0x59AEA0, conv = thiscall, name = "CMatrix::ResetOrientation", expect = "33 C0 BA 00 00 80 3F 89",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn reset_orientation(this: GPtr<u8>) {
     for (o, v) in [(0, ONE), (4, 0), (8, 0), (0x10, 0), (0x14, ONE), (0x18, 0), (0x20, 0), (0x24, 0), (0x28, ONE)] {
         stu(this, o, v);
@@ -55,7 +55,7 @@ pub fn reset_orientation(this: GPtr<u8>) {
 
 /// `CMatrix::SetTranslateOnly(float x, float y, float z)` (0x59AF80, `ret 0xC`): the position only.
 #[hook(addr = 0x59AF80, conv = thiscall, name = "CMatrix::SetTranslateOnly", expect = "8B 44 24 04 8B 54 24 08",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn set_translate_only(this: GPtr<u8>, x: u32, y: u32, z: u32) {
     stu(this, 0x30, x);
     stu(this, 0x34, y);
@@ -116,7 +116,7 @@ pub fn set_rotate_x(this: GPtr<u8>, angle: f32) {
 
 /// `CMatrix::SetRotateY(float angle)` (0x59B0A0): `SetRotateYOnly` and the position cleared.
 #[hook(addr = 0x59B0A0, conv = thiscall, name = "CMatrix::SetRotateY", expect = "D9 44 24 04 33 C0 D9 FF 89 41 04",
-       unverified = "std6-math-2", route = "L2", hazards = "x87-transcendental", recs = "new-game")]
+       route = "L2", hazards = "x87-transcendental", recs = "new-game")]
 pub fn set_rotate_y(this: GPtr<u8>, angle: f32) {
     zero_pos(this);
     rot_y(this, angle);
@@ -127,7 +127,7 @@ pub fn set_rotate_y(this: GPtr<u8>, angle: f32) {
 /// (`p = in.pos.x * row0 + in.pos.y * row1 + in.pos.z * row2`, each step stored f32) and negated
 /// (`* -1.0`). Padding dwords untouched.
 #[hook(addr = 0x59B920, conv = cdecl, name = "CMatrix::Invert-1", expect = "8B 44 24 08 33 C9 89 48",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn invert_into(inp: GPtr<u8>, out: GPtr<u8>) -> GPtr<u8> {
     zero_pos(out);
     for r in 0..3isize {
@@ -165,7 +165,7 @@ fn emit(out: GPtr<u8>, tmp: &[u32; 16]) -> GPtr<u8> {
 /// into a temporary without RW matrix, copied to the result with +0x40 / +0x44 = 0 (the temporary's
 /// destructor has nothing to free).
 #[hook(addr = 0x59BDD0, conv = cdecl, name = "CMatrix::Invert-2", expect = "83 EC 4C 8B 4C 24 54 53",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn invert(out: GPtr<u8>, inp: GPtr<u8>) -> GPtr<u8> {
     let mut tmp = [0u32; 18];
     let t = GPtr::<u32>::from_raw(tmp.as_mut_ptr()).cast::<u8>();
@@ -179,7 +179,7 @@ pub fn invert(out: GPtr<u8>, inp: GPtr<u8>) -> GPtr<u8> {
 /// first): `a * b` with the original's grouping per element (`(p + q) + r`, then `+ a.pos` for the
 /// position).
 #[hook(addr = 0x59BE30, conv = cdecl, name = "CMatrix::operator*-Mat", expect = "83 EC 4C 8B 44 24 54 8B",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
     let m = |p: GPtr<u8>, o: isize| ldf(p, o);
     // ((x1 * y1) + (x2 * y2)) + (x3 * y3), every product formed from two f32 loads.
@@ -209,7 +209,7 @@ pub fn mul(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
 /// `CMatrix operator+(const CMatrix& a, const CMatrix& b)` (0x59BFA0, cdecl, hidden result pointer
 /// first): element-wise `a + b`.
 #[hook(addr = 0x59BFA0, conv = cdecl, name = "CMatrix::operator+-", expect = "83 EC 4C 8B 44 24 54 8B",
-       unverified = "std6-math-2", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn add(out: GPtr<u8>, a: GPtr<u8>, b: GPtr<u8>) -> GPtr<u8> {
     let mut r = [0u32; 16];
     for i in [0usize, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14] {

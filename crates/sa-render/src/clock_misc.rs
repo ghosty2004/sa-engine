@@ -25,7 +25,7 @@ const DAYS_IN_MONTH: usize = 0x8CCF23;
 /// `CClock::Initialise(msPerMinute)` (0x52CD90): 1 January, 12:00:00, last tick = now, nothing stored,
 /// weekday 4.
 #[hook(addr = 0x52CD90, conv = cdecl, name = "CClock::Initialise", expect = "8B 44 24 04 8B 0D 84 CB B7 00",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn clock_initialise(ms_per_minute: u32) {
     let now = g::<u32>(TIME_MS).read();
     g::<u32>(MS_PER_MINUTE).write(ms_per_minute);

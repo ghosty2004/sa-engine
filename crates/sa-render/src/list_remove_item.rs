@@ -11,7 +11,7 @@ use crate::common::{rd, wr};
 /// `item->next`; the next item's previous, or the list's last, becomes `item->prev`) and decrements the count. The
 /// item's own links are left as they are.
 #[hook(addr = 0x4A8E30, conv = thiscall, name = "FUN_004a8e30", expect = "56 8B 74 24 08 8B 56 04",
-       unverified = "std8-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn list_remove_item(list: GPtr<u8>, item: GPtr<u8>) {
     let prev = rd::<GPtr<u8>>(item, 4);
     let next = rd::<GPtr<u8>>(item, 0);

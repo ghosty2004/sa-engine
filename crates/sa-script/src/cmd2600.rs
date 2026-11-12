@@ -183,7 +183,7 @@ fn rd_f32(p: GPtr<u8>, off: isize) -> f32 {
 /// `CRunningScript::ProcessCommands2600To2699(int32 command)` (0x479DA0, thiscall, `ret 4`): AL = 0 continue, -1
 /// unknown (every case returns 0).
 #[hook(addr = 0x479da0, conv = thiscall, name = "CRunningScript::ProcessCommands2600To2699", expect = "6A FF 64 A1 00 00 00 00",
-       this = "CRunningScript", unverified = "mvpn-script-2", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       this = "CRunningScript", route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "complete switch (39 cases); 0A2E allocates a follow-node-route task")]
 pub fn process_commands_2600_to_2699(s: Scr, command: u32) -> i8 {
     match command {

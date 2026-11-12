@@ -65,7 +65,7 @@ fn is_skinned(clump: GPtr<u8>) -> bool {
 /// f32(blendSum / length))`; then `RwFrameUpdateObjects(clump frame)`. Comparisons with 0 are x87 (`test ah,
 /// 0x44; jp`: NaN counts as non-zero).
 #[hook(addr = 0x4D34F0, conv = cdecl, name = "RpAnimBlend::RpAnimBlendClumpUpdateAnimations", expect = "83 EC 3C A1 78 F8 B5 00",
-       unverified = "std7-anim-1", route = "L2", hazards = "uninit-locals,heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "uninit-locals,heap-writes", recs = "grove-walk")]
 pub fn rp_anim_blend_clump_update_animations(clump: GPtr<u8>, step: f32, on_screen: u8) {
     let data = rd::<GPtr<u8>>(clump, g::<i32>(CLUMP_DATA_OFFSET).read() as isize);
     g::<GPtr<u8>>(ANIM_BLEND_CLUMP).write(data);

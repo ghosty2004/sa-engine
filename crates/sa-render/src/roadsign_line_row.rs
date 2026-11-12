@@ -22,7 +22,7 @@ const CELLS: [(i32, i32); 94] = [
 /// cell of `c` (unsigned byte); characters outside 0x21..=0x7E and the unmapped ones (`"`, `'`, `,`, `/`, `=`, `\`,
 /// `_`, `` ` ``) give the blank cell (0, 26); `!` is (0, 0). Column first, then row.
 #[hook(addr = 0x6fe260, conv = reg("args = al stack stack"), name = "RoadsignGetLineAndRow", expect = "0F B6 C0 83 C0 DF",
-       unverified = "mvpn-render-1", route = "L1-pure", hazards = "none", recs = "grove-walk",
+       route = "L1-pure", hazards = "none", recs = "grove-walk",
        note = "register convention AL + stack (HARNESS-5); pure: writes only its two out pointers")]
 pub fn roadsign_get_line_and_row(c: u8, col: GPtr<i32>, row: GPtr<i32>) {
     let (x, y) = match c {

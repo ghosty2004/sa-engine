@@ -27,7 +27,7 @@ const CLUMP_PLUGIN_OFFSET: usize = 0x8D6094;
 /// flag 0x40 (modulate material colour); each material's alpha (colour +7) is saved and lowered to `alpha` (byte
 /// compare, signed against the int); `AtomicDefaultRenderCallBack`; the alphas restored (last first) and the flags.
 #[hook(addr = 0x732480, conv = cdecl, name = "CVisibilityPlugins::RenderAtomicWithAlpha", expect = "81 EC 98 00 00 00 53 55",
-       unverified = "std9-render-5", route = "L2", hazards = "none", recs = "grove-walk",
+       route = "L2", hazards = "none", recs = "grove-walk",
        note = "the original's 0x98-byte alpha buffer overflows past 152 materials; the port's holds 256")]
 pub fn render_atomic_with_alpha(atomic: GPtr<u8>, alpha: i32) {
     let geo = rd::<GPtr<u8>>(atomic, 0x18);
@@ -57,7 +57,7 @@ pub fn render_atomic_with_alpha(atomic: GPtr<u8>, alpha: i32) {
 /// camera, `(dz*dz + dy*dy) + dx*dx` below `ms_pedLodDist` (else nothing): the clump's alpha 255 renders with
 /// `AtomicDefaultRenderCallBack`, any other through `RenderAtomicWithAlpha`. Returns the atomic.
 #[hook(addr = 0x7335B0, conv = cdecl, name = "CVisibilityPlugins::RenderPedCB", expect = "56 57 8B 7C 24 0C 8B 77 3C",
-       unverified = "std9-render-5", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_ped_cb(atomic: GPtr<u8>) -> GPtr<u8> {
     let clump = rd::<GPtr<u8>>(atomic, 0x3C);
     let m = frame_get_ltm(rd::<GPtr<u8>>(clump, 4)).byte_add(0x30);

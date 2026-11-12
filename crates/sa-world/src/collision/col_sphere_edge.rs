@@ -22,7 +22,7 @@ fn put_vec(p: GPtr<u8>, v: CVector) {
 /// thiscall `ret 0x10`, bool in AL): `sa_math::col::CColSphere::intersect_edge`; on a hit `p2` then `p1` are
 /// written (the original also writes them in that order) and 1 is returned, else nothing is written and 0.
 #[hook(addr = 0x4100E0, conv = thiscall, name = "CColSphere::IntersectEdge", expect = "83 EC 20 56 8B 74 24 28",
-       unverified = "std8-world-1", route = "L1-pure", hazards = "x87-transcendental,ax-al-return",
+       route = "L1-pure", hazards = "x87-transcendental,ax-al-return",
        recs = "grove-walk", note = "FSQRT twice; AL result (upper EAX from fnstsw in the original)")]
 pub fn col_sphere_intersect_edge(this: GPtr<u8>, start: GPtr<u8>, end: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 {
     let s = col_sphere_at(this);
@@ -52,7 +52,7 @@ fn col_sphere_at(this: GPtr<u8>) -> CColSphere {
 /// thiscall `ret 0x10`, bool in AL): `sa_math::col::CColSphere::intersect_ray`; on a hit `p1` then `p2` are written
 /// and 1 is returned, else nothing is written and 0.
 #[hook(addr = 0x40FF20, conv = thiscall, name = "CColSphere::IntersectRay", expect = "83 EC 18 D9 41 0C 56",
-       unverified = "std8-world-1", route = "L1-pure", hazards = "x87-transcendental,ax-al-return",
+       route = "L1-pure", hazards = "x87-transcendental,ax-al-return",
        recs = "grove-walk", note = "FSQRT in CGeneral::SolveQuadratic; AL result")]
 pub fn col_sphere_intersect_ray(this: GPtr<u8>, origin: GPtr<u8>, dir: GPtr<u8>, p1: GPtr<u8>, p2: GPtr<u8>) -> u8 {
     match col_sphere_at(this).intersect_ray(&vec_at(origin), &vec_at(dir)) {

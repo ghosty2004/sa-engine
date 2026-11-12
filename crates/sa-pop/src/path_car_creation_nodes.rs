@@ -29,7 +29,7 @@ const THE_PATHS: usize = 0x96F050;
 /// pointer, not by evaluating the VM).
 #[allow(clippy::too_many_arguments)]
 #[hook(addr = 0x452090, conv = thiscall, name = "CPathFind::Find2NodesForCarCreation", expect = "E9 BB B0 11 01",
-       this = "CPathFind", unverified = "std8-pop-1", route = "L2", hazards = "uninit-locals", recs = "grove-walk",
+       this = "CPathFind", route = "L2", hazards = "uninit-locals", recs = "grove-walk",
        note = "the original computes the loop start (1) in the no-CD VM 0xCB73E0")]
 pub fn find_2_nodes_for_car_creation(
     this: GPtr<u8>,

@@ -246,7 +246,7 @@ fn line_is(line: GPtr<u8>, lit: usize) -> bool {
 /// Not reproduced: the SEH frame and the original's stack slot reuse (the special-model counter starts from the
 /// local it shares with `GetModelInfo`'s index output, which is 0 at that point).
 #[hook(addr = 0x5b05a0, conv = cdecl, name = "CCutsceneMgr::LoadCutsceneData_preload", expect = "55 8B EC 83 E4 F8",
-       unverified = "mvpn-anim-2", route = "split", hazards = "heap-writes", recs = "grove-walk",
+       route = "split", hazards = "heap-writes", recs = "grove-walk",
        note = "reads ANIM\\CUTS.IMG through RwStream (file effects: split); once per cutscene load")]
 pub fn cutscene_load_cutscene_data_preload() {
     if crt_stricmp(gp(NAME), gp(FINALE)) != 0 {

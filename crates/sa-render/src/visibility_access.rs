@@ -51,7 +51,7 @@ fn frame_slot(frame: u32) -> GPtr<u32> {
 
 /// `CVisibilityPlugins::SetModelInfoIndex(atomic, index)` (0x732230): the i16 at +0.
 #[hook(addr = 0x732230, conv = cdecl, name = "CVisibilityPlugins::SetModelInfoIndex", expect = "66 8B 44 24 08 8B 4C 24 04",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn set_model_info_index(atomic: GPtr<u8>, index: i32) {
     wr::<u16>(adata(atomic), 0, index as u16);
 }
@@ -66,7 +66,7 @@ pub fn get_model_info_index(atomic: GPtr<u8>) -> i32 {
 /// `CVisibilityPlugins::GetModelInfo(atomic)` (0x732260): NULL for index -1, else
 /// `ms_modelInfoPtrs[index]`.
 #[hook(addr = 0x732260, conv = cdecl, name = "CVisibilityPlugins::GetModelInfo", expect = "8B 44 24 04 8B 0D 8C 60 8D 00 66 8B",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn get_model_info(atomic: GPtr<u8>) -> u32 {
     let i = rd::<i16>(adata(atomic), 0);
     if i == -1 {
@@ -84,7 +84,7 @@ pub fn set_atomic_id(atomic: GPtr<u8>, id: i32) {
 
 /// `CVisibilityPlugins::SetAtomicFlag(atomic, flag)` (0x7322B0): +2 |= flag.
 #[hook(addr = 0x7322B0, conv = cdecl, name = "CVisibilityPlugins::SetAtomicFlag", expect = "A1 8C 60 8D 00 8B 4C 24 04",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn set_atomic_flag(atomic: GPtr<u8>, flag: u32) {
     let d = adata(atomic);
     wr::<u16>(d, 2, rd::<u16>(d, 2) | flag as u16);
@@ -109,7 +109,7 @@ pub fn set_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) {
 
 /// `CVisibilityPlugins::ClearAtomicFlag(atomic, flag)` (0x732310): +2 &= ~flag.
 #[hook(addr = 0x732310, conv = cdecl, name = "CVisibilityPlugins::ClearAtomicFlag", expect = "8B 54 24 08 A1 8C 60 8D 00",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn clear_atomic_flag(atomic: GPtr<u8>, flag: u32) {
     let d = adata(atomic);
     wr::<u16>(d, 2, rd::<u16>(d, 2) & !(flag as u16));
@@ -117,7 +117,7 @@ pub fn clear_atomic_flag(atomic: GPtr<u8>, flag: u32) {
 
 /// `clearClumpForAllAtomicsFlagCB(atomic, data)` (0x732330): +2 &= ~data; returns the atomic.
 #[hook(addr = 0x732330, conv = cdecl, name = "CVisibilityPlugins::clearClumpForAllAtomicsFlagCB", expect = "8B 54 24 08 8B 0D 8C 60 8D 00",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn clear_clump_for_all_atomics_flag_cb(atomic: GPtr<u8>, data: u32) -> GPtr<u8> {
     let d = adata(atomic);
     wr::<u16>(d, 2, rd::<u16>(d, 2) & !(data as u16));
@@ -126,21 +126,21 @@ pub fn clear_clump_for_all_atomics_flag_cb(atomic: GPtr<u8>, data: u32) -> GPtr<
 
 /// `CVisibilityPlugins::ClearClumpForAllAtomicsFlag(clump, flag)` (0x732350).
 #[hook(addr = 0x732350, conv = cdecl, name = "CVisibilityPlugins::ClearClumpForAllAtomicsFlag", expect = "8B 44 24 08 8B 4C 24 04 50 68 30 23 73 00",
-       unverified = "std6-render-1", route = "L2", hazards = "none")]
+       route = "L2", hazards = "none")]
 pub fn clear_clump_for_all_atomics_flag(clump: GPtr<u8>, flag: u32) {
     clump_for_all_atomics(clump, 0x732330, flag);
 }
 
 /// `CVisibilityPlugins::GetAtomicId(atomic)` (0x732370): the u16 at +2, zero-extended.
 #[hook(addr = 0x732370, conv = cdecl, name = "CVisibilityPlugins::GetAtomicId", expect = "8B 44 24 04 8B 0D 8C 60 8D 00 0F B7",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn get_atomic_id(atomic: GPtr<u8>) -> u32 {
     rd::<u16>(adata(atomic), 2) as u32
 }
 
 /// `CVisibilityPlugins::SetUserValue(atomic, value)` (0x732380): the u16 at +2.
 #[hook(addr = 0x732380, conv = cdecl, name = "CVisibilityPlugins::SetUserValue", expect = "66 8B 44 24 08 8B 4C 24 04 8B 15",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn set_user_value(atomic: GPtr<u8>, value: u32) {
     wr::<u16>(adata(atomic), 2, value as u16);
 }
@@ -148,7 +148,7 @@ pub fn set_user_value(atomic: GPtr<u8>, value: u32) {
 /// `CVisibilityPlugins::GetUserValue(atomic)` (0x7323A0): AX = the u16 at +2; the upper half of EAX
 /// keeps the atomic pointer's (`mov eax, [esp+4]` then `mov ax, ...`).
 #[hook(addr = 0x7323A0, conv = cdecl, name = "CVisibilityPlugins::GetUserValue", expect = "8B 44 24 04 8B 0D 8C 60 8D 00 66 8B 44",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "ax-al-return")]
+       route = "L1-pure", hazards = "ax-al-return")]
 pub fn get_user_value(atomic: GPtr<u8>) -> u32 {
     (atomic.addr() as u32 & 0xFFFF_0000) | rd::<u16>(adata(atomic), 2) as u32
 }
@@ -165,14 +165,14 @@ pub fn set_alpha_cb(material: GPtr<u8>, data: u32) -> GPtr<u8> {
 /// `CVisibilityPlugins::SetAtomicRenderCallback(atomic, cb)` (0x7328A0): `atomic->renderCallBack`
 /// (+0x48) = cb, or `AtomicDefaultRenderCallBack` (0x7491C0) for NULL.
 #[hook(addr = 0x7328A0, conv = cdecl, name = "CVisibilityPlugins::SetAtomicRenderCallback", expect = "8B 44 24 08 85 C0 75 05",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn set_atomic_render_callback(atomic: GPtr<u8>, cb: u32) {
     wr::<u32>(atomic, 0x48, if cb == 0 { ATOMIC_DEFAULT_RENDER_CB } else { cb });
 }
 
 /// `CVisibilityPlugins::SetFrameHierarchyId(frame, id)` (0x732A00).
 #[hook(addr = 0x732A00, conv = cdecl, name = "CVisibilityPlugins::SetFrameHierarchyId", expect = "8B 44 24 08 8B 4C 24 04 8B 15 90 60 8D 00",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none")]
+       route = "L1-pure", hazards = "none")]
 pub fn set_frame_hierarchy_id(frame: GPtr<u8>, id: u32) {
     frame_slot(frame.addr() as u32).write(id);
 }

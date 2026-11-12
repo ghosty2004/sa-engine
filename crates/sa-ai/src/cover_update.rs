@@ -101,7 +101,7 @@ fn sector_bound(c: f32, low: bool) -> i32 {
 /// that should have cover points and is not in the list gets them (`FindCoverPointsForThisBuilding`), is
 /// pushed at the list head, and the function returns.
 #[hook(addr = 0x6997E0, conv = cdecl, name = "CCover::Update", expect = "55 8B EC 83 E4 F8 83 EC 28",
-       unverified = "std7-ai-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn cover_update() {
     if g::<u8>(REPLAY_MODE).read() == 1 {
         return;
@@ -290,7 +290,7 @@ pub fn cover_update() {
 /// entity (+0x10; `RegisterReference` unless it is a building (+0x36 & 7 == 1) with +0x2E clear) and the
 /// position (+4, when `pos`); the count goes up.
 #[hook(addr = 0x698F30, conv = cdecl, name = "CCover::AddCoverPoint", expect = "A1 A4 97 C1 00 83 EC 14",
-       unverified = "std7-ai-1", route = "L2", hazards = "uninit-locals,heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "uninit-locals,heap-writes", recs = "grove-walk")]
 pub fn add_cover_point(kind: i32, entity: GPtr<u8>, pos: GPtr<u8>, usage: u32, dir: u32) {
     if g::<i32>(COVER_NUM_POINTS).read() >= 100 {
         return;

@@ -37,7 +37,7 @@ fn mission_flag_cell() -> GPtr<u32> {
 /// ecx, [0x736A72]; xchg [esp], ecx; add dword [esp + 4], 0x19; ret` jumps to 0xFFA4EBF5 ^ 0xFFCD36C5 =
 /// 0x69DD30 with the return address 0x1564FAC (the instruction after the sequence).
 #[hook(addr = 0x485A50, conv = thiscall, name = "CRunningScript::DoDeathArrestCheck", expect = "E9 AB F4 0D 01",
-       unverified = "std7-script-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn do_death_arrest_check(this: GPtr<u8>) {
     if this.byte_add(0xD3).read() == 0 || GPtr::<u32>::from_addr(ON_A_MISSION_FLAG).read() == 0 {
         return;

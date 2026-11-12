@@ -42,7 +42,7 @@ fn a32(p: GPtr<u8>) -> u32 {
 /// (`numNodes * 16`) at +0x10: frame 0, index i, id / flags from the arrays when given (left as
 /// allocated otherwise); +0x18 = itself.
 #[hook(addr = 0x7C4C30, conv = cdecl, name = "RpHAnimHierarchyCreate", expect = "A1 CC B8 C9 00 8B 0D 24 7B C9 00",
-       unverified = "std6-rw-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn rp_hanim_hierarchy_create(n: i32, node_flags: GPtr<u32>, ids: GPtr<i32>, flags: u32, kfs: i32) -> GPtr<u8> {
     let h = rw_memory_alloc(p8(g::<u32>(HANIM_FREELIST).read()), HINT);
     wr::<u32>(h, 0x20, a32(interpolator_create(n, kfs)));
@@ -102,7 +102,7 @@ pub fn rp_hanim_hierarchy_destroy(h: GPtr<u8>) -> u32 {
 /// `RpHAnimHierarchyCreateFromHierarchy(hierarchy, flags, maxKeyFrameSize)` (0x7C4ED0): a new hierarchy
 /// of the same node count whose nodes copy flags, index and id (frames cleared).
 #[hook(addr = 0x7C4ED0, conv = cdecl, name = "RpHAnimHierarchyCreateFromHierarchy", expect = "8B 4C 24 0C 8B 54 24 08 56",
-       unverified = "std6-rw-1", route = "L2", hazards = "heap-writes")]
+       route = "L2", hazards = "heap-writes")]
 pub fn rp_hanim_hierarchy_create_from_hierarchy(src: GPtr<u8>, flags: u32, kfs: i32) -> GPtr<u8> {
     let h = hierarchy_create_call(rd::<i32>(src, 4), GPtr::NULL, GPtr::NULL, flags, kfs);
     let mut i = 0;

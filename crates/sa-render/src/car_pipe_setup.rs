@@ -65,7 +65,7 @@ fn shininess_nonzero(env: GPtr<u8>) -> bool {
 /// back on the default record. The resulting record's texture (when any) gets filtering 2 (+0x50) and
 /// addressing 0x11 (+0x51).
 #[hook(addr = 0x5DA230, conv = cdecl, name = "CCustomCarEnvMapPipeline::SetFxEnvTexture", expect = "A1 C4 12 8D 00 56 57",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn set_fx_env_texture(m: GPtr<u8>, tex: u32) {
     let slot = mat_slot(m, ENV_OFFSET);
     let mut e = slot.read();
@@ -110,7 +110,7 @@ pub fn set_fx_env_texture(m: GPtr<u8>, tex: u32) {
 /// and a texture, | 4 with a specular record of non-zero specularity and a texture. Returns the
 /// material.
 #[hook(addr = 0x5DA560, conv = cdecl, name = "CCustomCarEnvMapPipeline::CustomPipeMaterialSetup", expect = "56 8B 74 24 08 56 C7 46 10 00 00 00 00",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn custom_pipe_material_setup(m: GPtr<u8>, _data: u32) -> GPtr<u8> {
     wr::<u32>(m, 0x10, 0);
     if matfx_get_effects(m) == 2 {
@@ -140,7 +140,7 @@ pub fn custom_pipe_material_setup(m: GPtr<u8>, _data: u32) -> GPtr<u8> {
 /// 0x5DA560 comes from the protection chunk 0x401B0C): every material set up, the atomic's pipeline
 /// (+0x6C) = the car pipeline, pipeline id 0x53F2009A. Returns the atomic.
 #[hook(addr = 0x5DA610, conv = cdecl, name = "CCustomCarEnvMapPipeline::CustomPipeAtomicSetup", expect = "56 8B 74 24 08 8B 46 18",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn custom_pipe_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
     geometry_for_all_materials(GPtr::from_addr(rd::<u32>(atomic, 0x18) as usize), 0x5DA560, 0);
     wr::<u32>(atomic, 0x6C, g::<u32>(CAR_PIPE).read());
@@ -170,7 +170,7 @@ orig! {
 /// type 3 (directional), diffuse (0.25, 0.25, 0.25, 1), ambient (0.75, 0.75, 0.75, 1), specular (0.65, 0.65, 0.65, 1),
 /// range 1000, falloff 0, attenuation (1, 0, 0).
 #[hook(addr = 0x5D8870, conv = cdecl, name = "CCustomCarEnvMapPipeline::PreRenderUpdate", expect = "83 EC 0C 33 C0 57 B9 1A 00 00 00",
-       unverified = "std9-render-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn env_map_pre_render_update() {
     let l = g::<u8>(GAME_LIGHT);
     for i in 0..26 {
@@ -214,7 +214,7 @@ pub fn car_fx_pre_render_update() {
 
 /// `CCarFXRenderer::CustomCarPipeClumpSetup(clump)` (0x5D5B40): every atomic set up. Returns the clump.
 #[hook(addr = 0x5D5B40, conv = cdecl, name = "CCarFXRenderer::CustomCarPipeClumpSetup", expect = "56 8B 74 24 08 6A 00 68 30 5B 5D 00",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn custom_car_pipe_clump_setup(clump: GPtr<u8>) -> GPtr<u8> {
     clump_for_all_atomics(clump, 0x5D5B30, 0);
     clump
@@ -279,7 +279,7 @@ fn building_material_setup(m: GPtr<u8>) -> GPtr<u8> {
 
 /// `CCustomBuildingDNPipeline::CustomPipeMaterialSetup(material, data)` (0x5D7120).
 #[hook(addr = 0x5D7120, conv = cdecl, name = "CCustomBuildingDNPipeline::CustomPipeMaterialSetup", expect = "56 8B 74 24 08 56 C7 46 10 00 00 00 00 E8 0E B0 23 00",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn building_dn_material_setup(m: GPtr<u8>, _data: u32) -> GPtr<u8> {
     building_material_setup(m)
 }
@@ -294,7 +294,7 @@ pub fn building_plain_material_setup(m: GPtr<u8>, _data: u32) -> GPtr<u8> {
 /// `CCustomBuildingDNPipeline::CustomPipeAtomicSetup(atomic)` (0x5D71C0): materials set up, geometry
 /// usage flag 8, the DN pipeline (+0x6C = `[0xC02C1C]`), pipeline id 0x53F20098. Returns the atomic.
 #[hook(addr = 0x5D71C0, conv = cdecl, name = "CCustomBuildingDNPipeline::CustomPipeAtomicSetup", expect = "56 8B 74 24 08 57 8B 7E 18",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn building_dn_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
     let geom = GPtr::<u8>::from_addr(rd::<u32>(atomic, 0x18) as usize);
     geometry_for_all_materials(geom, 0x5D7120, 0);
@@ -318,7 +318,7 @@ pub fn building_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
 /// `CCustomBuildingRenderer::AtomicSetup(atomic)` (0x5D7F00): the DN pipeline for a geometry with night
 /// colours and a non-zero +0x30 word, else the plain building pipeline.
 #[hook(addr = 0x5D7F00, conv = cdecl, name = "CCustomBuildingRenderer::AtomicSetup", expect = "56 57 8B 7C 24 0C 8B 77 18",
-       unverified = "std6-render-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn building_renderer_atomic_setup(atomic: GPtr<u8>) -> GPtr<u8> {
     let geom = GPtr::<u8>::from_addr(rd::<u32>(atomic, 0x18) as usize);
     if get_extra_vert_colour_ptr(geom) != 0 && rd::<u32>(geom, 0x30) != 0 {

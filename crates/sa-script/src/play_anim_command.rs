@@ -53,7 +53,7 @@ orig! {
 /// Not reproduced: the original's SEH state bookkeeping, the uninitialised upper bytes of the `bool` argument words
 /// (the constructor reads bytes; the port pushes 0/1).
 #[hook(addr = 0x470150, conv = thiscall, name = "CRunningScript::PlayAnimScriptCommand", expect = "E9 0B 93 0F 01",
-       unverified = "mvpn-script-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "the timed task's hold-last-frame word comes from the no-CD VM (evaluated statically as 0xBCC7FC20; see the module docs)")]
 pub fn play_anim_script_command(s: Scr, command: u32) {
     let mut interruptable = true;

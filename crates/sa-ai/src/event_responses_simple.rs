@@ -191,7 +191,7 @@ fn kill_on_foot(other: GPtr<u8>) -> GPtr<u8> {
 /// than 1: `FUN_004ace80(event, ped)` (result unused), then with the object (+0x14) `CTaskComplexWalkRoundObject(ms,
 /// simplest +0xC, object)`. Else no write.
 #[hook(addr = 0x4b92b0, conv = thiscall, name = "CEventHandler::ComputeObjectCollisionResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_object_collision_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, simplest: GPtr<u8>) {
     if simplest.is_null() || task_is_go_to_task(simplest) == 0 {
         return;
@@ -215,7 +215,7 @@ pub fn handler_compute_object_collision_response(this: GPtr<u8>, e: GPtr<u8>, _a
 /// `CStats::IncrementStat(0x79, 1.0)`. Otherwise (and without a killer) `CDarkel::RegisterKillNotByPlayer(ped,
 /// weapon)`.
 #[hook(addr = 0x4b9340, conv = cdecl, name = "CEventHandler::RegisterKill", expect = "57 8B 7C 24 08",
-       unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_register_kill(p: GPtr<u8>, killer: GPtr<u8>, weapon: u32, head_shot: u32) {
     if p.is_null() {
         return;
@@ -241,7 +241,7 @@ pub fn handler_register_kill(p: GPtr<u8>, killer: GPtr<u8>, weapon: u32, head_sh
 /// is the event's byte stored over the low byte of the event argument slot and pushed as that whole dword (its upper
 /// bytes are the event pointer's), as the original.
 #[hook(addr = 0x4b9400, conv = thiscall, name = "CEventHandler::ComputeDeathResponse", expect = "6A FF 68 4B A9 83 00",
-       this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_death_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let time = rd::<u32>(e, 0x10);
     let b = (e.addr() as u32 & 0xFFFF_FF00) | u32::from(rd::<u8>(e, 0xC));
@@ -304,7 +304,7 @@ pub fn handler_compute_sexy_vehicle_response(this: GPtr<u8>, e: GPtr<u8>, _activ
 /// `CEventHandler::ComputePedToFleeResponse` (0x4B9B50): with the ped (+0xC): `CPed::Say(0x45, 0, 1.0, 0, 0, 0)`,
 /// +0x24 = `CTaskComplexSmartFleeEntity(ped, true, 100.0, -1, <period>, <shift>)`.
 #[hook(addr = 0x4b9b50, conv = thiscall, name = "CEventHandler::ComputePedToFleeResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_ped_to_flee_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let other = rd::<GPtr<u8>>(e, 0xC);
     if other.is_null() {
@@ -318,7 +318,7 @@ pub fn handler_compute_ped_to_flee_response(this: GPtr<u8>, e: GPtr<u8>, _active
 /// 0x1B without an entity: nothing. Task 200: NULL. Task 0xE9: `HasEmptySlot(effect, entity)` on the attractor
 /// manager → `CTaskComplexUseEffect(effect, entity)`, else NULL. Others: nothing.
 #[hook(addr = 0x4b9be0, conv = thiscall, name = "CEventHandler::ComputeAttractorResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_attractor_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let effect = rd::<GPtr<u8>>(e, 0x14);
     let entity = rd::<GPtr<u8>>(e, 0x18);
@@ -605,7 +605,7 @@ pub fn handler_compute_cop_car_being_stolen_response(this: GPtr<u8>, e: GPtr<u8>
 /// `CEventHandler::ComputeObjectCollisionPassiveResponse` (0x4BBB90): with the object (+0x14), on foot, move state
 /// (+0x18) not 1 and a go-to `simplest`: `CTaskComplexWalkRoundObject(ms, simplest +0xC, object)`.
 #[hook(addr = 0x4bbb90, conv = thiscall, name = "CEventHandler::ComputeObjectCollisionPassiveResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_object_collision_passive_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, simplest: GPtr<u8>) {
     let obj = rd::<GPtr<u8>>(e, 0x14);
     if obj.is_null() || in_vehicle(ped(this)) {
@@ -793,7 +793,7 @@ pub fn handler_compute_danger_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPt
 /// mission ped (+0x484 == 2); else the current weapons (`+0x5A0 + 0x1C * slot(+0x718)`) decide: 0 when the ped's is
 /// melee and the other's is not, else 1 (the NULL checks on the two weapon addresses are kept).
 #[hook(addr = 0x4bc3e0, conv = cdecl, name = "CEventHandler::IsKillTaskAppropriate", expect = "8B 44 24 04 90 90",
-       unverified = "intro-ai-2", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_is_kill_task_appropriate(p: GPtr<u8>, other: GPtr<u8>, _e: GPtr<u8>) -> u8 {
     if rd::<u8>(p, 0x484) == 2 {
         return 1;

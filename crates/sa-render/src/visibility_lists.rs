@@ -42,7 +42,7 @@ fn render_ordered(list: usize) {
 
 /// `CVisibilityPlugins::RenderFadingUnderwaterEntities()` (0x7337D0, cdecl).
 #[hook(addr = 0x7337D0, conv = cdecl, name = "CVisibilityPlugins::RenderFadingUnderwaterEntities", expect = "56 8B 35 98 81 C8 00",
-       unverified = "std9-render-6", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_fading_underwater_entities() {
     render_ordered(UNDERWATER);
 }
@@ -51,7 +51,7 @@ pub fn render_fading_underwater_entities() {
 /// z-write, vertex alpha on, src / dest blend 5 / 6, fog on, cull mode 1), `SetAmbientColours`,
 /// `DeActivateDirectional`, the list, fog off.
 #[hook(addr = 0x733800, conv = cdecl, name = "CVisibilityPlugins::RenderReallyDrawLastObjects", expect = "A1 24 7B C9 00 56 6A 00",
-       unverified = "std9-render-6", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_really_draw_last_objects() {
     for (s, v) in [(1, 0), (6, 1), (8, 1), (0xC, 1), (0xA, 5), (0xB, 6), (0xE, 1), (0x14, 1)] {
         rw_render_state_set(s, v);
@@ -64,14 +64,14 @@ pub fn render_really_draw_last_objects() {
 
 /// `CVisibilityPlugins::RenderAlphaAtomics()` (0x733E90, cdecl).
 #[hook(addr = 0x733E90, conv = cdecl, name = "CVisibilityPlugins::RenderAlphaAtomics", expect = "56 8B 35 90 80 C8 00",
-       unverified = "std9-render-6", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_alpha_atomics() {
     render_ordered(ALPHA);
 }
 
 /// `CVisibilityPlugins::RenderBoatAlphaAtomics()` (0x733EC0, cdecl): cull mode 1, the boat list, cull mode 2.
 #[hook(addr = 0x733EC0, conv = cdecl, name = "CVisibilityPlugins::RenderBoatAlphaAtomics", expect = "A1 24 7B C9 00 56 6A 01",
-       unverified = "std9-render-6", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_boat_alpha_atomics() {
     rw_render_state_set(0x14, 1);
     render_ordered(BOAT);
@@ -81,7 +81,7 @@ pub fn render_boat_alpha_atomics() {
 /// `CVisibilityPlugins::RenderFadingEntities()` (0x733F10, cdecl): the entity list, then (tail jump)
 /// `RenderBoatAlphaAtomics`.
 #[hook(addr = 0x733F10, conv = cdecl, name = "CVisibilityPlugins::RenderFadingEntities", expect = "56 8B 35 40 81 C8 00",
-       unverified = "std9-render-6", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn render_fading_entities() {
     render_ordered(ENTITIES);
     render_boat_alpha_atomics_call();

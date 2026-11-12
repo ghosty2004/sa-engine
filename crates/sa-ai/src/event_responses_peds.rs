@@ -89,7 +89,7 @@ fn smart_flee(other: GPtr<u8>, b: u32) -> GPtr<u8> {
 /// - Else by task: 200 → NULL; 0x258 → `CTaskComplexInvestigateDeadPed(dead)`; 0x1AB → `CTaskSimpleDuck(0, 0xE0FF,
 ///   -1)`; 0x38F → smart flee `(dead, true, <defaults>)`; others: nothing.
 #[hook(addr = 0x4b9470, conv = thiscall, name = "CEventHandler::ComputeDeadPedResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_dead_ped_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let dead = rd::<GPtr<u8>>(e, 0x14);
     if dead.is_null() {
@@ -134,7 +134,7 @@ pub fn handler_compute_dead_ped_response(this: GPtr<u8>, e: GPtr<u8>, _active: G
 /// flee from the driver; 0x451 → with a driver: a player → NULL, else `CTaskComplexKillCriminal(driver, false)`.
 /// Others (and the driver cases without a driver): nothing.
 #[hook(addr = 0x4c3430, conv = thiscall, name = "CEventHandler::ComputeGotKnockedOverByCarResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_got_knocked_over_by_car_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let veh = rd::<GPtr<u8>>(e, 0x14);
     if veh.is_null() {
@@ -173,7 +173,7 @@ pub fn handler_compute_got_knocked_over_by_car_response(this: GPtr<u8>, e: GPtr<
 /// `CTaskSimpleDuck(0, 0xE0FF, -1)`; 0x38D → `CTaskComplexFleeEntity(threat, true, 45.0, <defaults>)`; 0x38F →
 /// `CTaskComplexSmartFleeEntity(threat, true, 45.0, <defaults>)`; others: nothing.
 #[hook(addr = 0x4c35f0, conv = thiscall, name = "CEventHandler::ComputeSeenPanickedPedResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_seen_panicked_ped_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {
     let src = v_event_source(e);
     if src.is_null() {

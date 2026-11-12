@@ -49,7 +49,7 @@ fn out_of_memory(size: u32) {
 /// `_rpMeshHeaderForAllMeshes(header, 0x75D730, NULL)`, the array freed, the header returned. Either allocation
 /// failing: `RwErrorSet({2, _rwerror(0x80000013, size)})` and null (the array freed first in the second case).
 #[hook(addr = 0x75D530, conv = cdecl, name = "_rpTriListMeshGenerate", expect = "83 EC 08 8B 0D 24 7B C9 00",
-       unverified = "std8-rw-1", route = "L2", hazards = "heap-writes", recs = "grove-walk")]
+       route = "L2", hazards = "heap-writes", recs = "grove-walk")]
 pub fn trilist_mesh_generate(bm: GPtr<u8>, _data: u32) -> GPtr<u8> {
     let n = rd::<u32>(bm, 4);
     let list = rw_malloc(n << 2, HINT);
@@ -129,7 +129,7 @@ pub fn trilist_mesh_generate(bm: GPtr<u8>, _data: u32) -> GPtr<u8> {
 /// are 0xFFFF ×3) whose three vertices are all clear is appended to the mesh's index array, its vertices set and its
 /// copy marked taken. Passes repeat until every triangle is taken; both arrays are freed.
 #[hook(addr = 0x75D730, conv = cdecl, name = "(missed by ghidra: data-code-immediate)", expect = "83 EC 20 53 55 56 57 8B 7C 24 34",
-       unverified = "std8-rw-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "unnamed in the catalogue; the callback _rpTriListMeshGenerate passes to _rpMeshHeaderForAllMeshes")]
 pub fn trilist_reorder_mesh(mesh: GPtr<u8>, _header: GPtr<u8>, _data: u32) -> GPtr<u8> {
     let out = p8(rd::<u32>(mesh, 0));

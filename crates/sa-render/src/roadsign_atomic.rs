@@ -108,7 +108,7 @@ fn line_y(n: i32, i: i32, line_h: f32) -> X87 {
 /// writes (overwritten in the same iteration) are not repeated. More than four lines overrun the original's
 /// four-slot arrays; the port panics instead (callers pass 1..=4).
 #[hook(addr = 0x6feda0, conv = cdecl, name = "CCustomRoadsignMgr::CreateRoadsignAtomicA", expect = "83 EC 3C 8B 4C 24 50",
-       unverified = "mvpn-render-1", route = "L2", hazards = "heap-writes", recs = "grove-walk",
+       route = "L2", hazards = "heap-writes", recs = "grove-walk",
        note = "creates materials, textures, a geometry, an atomic and a frame (RW heap); called when road-sign models are set up")]
 #[allow(clippy::too_many_arguments)]
 pub fn create_roadsign_atomic_a(width: f32, height: f32, n: i32, l1: GPtr<u8>, l2: GPtr<u8>, l3: GPtr<u8>,

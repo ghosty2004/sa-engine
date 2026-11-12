@@ -492,7 +492,7 @@ pub fn add_script_to_list(this: GPtr<u8>, head: GPtr<u32>) {
 /// `CRunningScript::RemoveScriptFromList(listHead)` (stub 0x464BD0, body 0x156DD60, thiscall, `ret 4`; STD-7):
 /// `prev (+4) ? prev->next = next : *listHead = next`; `next (+0) ? next->prev = prev`.
 #[hook(addr = 0x464BD0, conv = thiscall, name = "CRunningScript::RemoveScriptFromList", expect = "E9 8B 91 10 01",
-       unverified = "std7-script-1", route = "L2", hazards = "none", recs = "new-game")]
+       route = "L2", hazards = "none", recs = "new-game")]
 pub fn remove_script_from_list(this: GPtr<u8>, head: GPtr<u32>) {
     let prev = this.byte_add(4).cast::<u32>().read();
     let next = this.cast::<u32>().read();
@@ -510,7 +510,7 @@ pub fn remove_script_from_list(this: GPtr<u8>, head: GPtr<u32>) {
 /// `CRunningScript::IsPedDead(CPed*)` (stub 0x464D70, body 0x156E7B0, thiscall, `ret 4`; STD-7): true when the
 /// ped state (+0x530) is 0x37, 0x36 or 0x38 (dead, die, die by stealth). AL only (AH keeps the state's byte 1).
 #[hook(addr = 0x464D70, conv = thiscall, name = "CRunningScript::IsPedDead", expect = "E9 3B 9A 10 01",
-       unverified = "std7-script-1", route = "L2", hazards = "ax-al-return", recs = "new-game")]
+       route = "L2", hazards = "ax-al-return", recs = "new-game")]
 pub fn is_ped_dead(_this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
     let st = ped.byte_add(0x530).cast::<u32>().read();
     u8::from(st == 0x37 || st == 0x36 || st == 0x38)
@@ -571,7 +571,7 @@ fn ensure_matrix(e: GPtr<u8>) -> GPtr<u8> {
 /// unlocked vehicle loses its driver and passengers (`RemovePed`) and is removed and deleted; a
 /// deletable non-player ped is removed.
 #[hook(addr = 0x486B00, conv = cdecl, name = "CTheScripts::ClearSpaceForMissionEntity", expect = "A0 78 57 A9 00 83 EC 50",
-       unverified = "std6-script-1", route = "L2", hazards = "heap-writes", recs = "new-game")]
+       route = "L2", hazards = "heap-writes", recs = "new-game")]
 pub fn clear_space_for_mission_entity(pos: GPtr<u8>, ours: GPtr<u8>) {
     if g::<u8>(0xA95778).read() & 1 == 0 {
         w32(0xA95778, g::<u32>(0xA95778).read() | 1);

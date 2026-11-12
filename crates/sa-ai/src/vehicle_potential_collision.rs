@@ -135,7 +135,7 @@ fn x87_abs(v: X87) -> X87 {
 ///   `CTaskSimpleAchieveHeading(heading to the vehicle)` and a shaken fist; below 200 → the achieve-heading task and
 ///   `LookAt("CompVehiclePotCollResp", ped, vehicle, 1300, ...)`; below 400 → the look only.
 #[hook(addr = 0x4c0bd0, conv = thiscall, name = "CEventHandler::ComputeVehiclePotentialCollisionResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-5", route = "L2", hazards = "none", recs = "grove-walk",
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk",
        note = "the two no-op eh vector constructor calls over stack arrays are not reproduced")]
 #[allow(clippy::too_many_lines)]
 pub fn handler_compute_vehicle_potential_collision_response(this: GPtr<u8>, e: GPtr<u8>, _active: GPtr<u8>, _simplest: GPtr<u8>) {

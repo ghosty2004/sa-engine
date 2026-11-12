@@ -252,7 +252,7 @@ pub fn get_ped_ref(ped: GPtr<PedSlot>) -> i32 {
 /// `CPool<CPed>::GetRef(ped)` (stub 0x4442D0, body 0x156CD40, thiscall on the pool): `index << 8 |
 /// the slot's flag byte` (STD-6).
 #[hook(addr = 0x4442D0, conv = thiscall, name = "thunk_FUN_0156cd40", expect = "E9 6B 8A 12 01",
-       unverified = "std6-core-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn ped_pool_get_ref(pool: GPtr<CPool<PedSlot>>, ped: GPtr<PedSlot>) -> i32 {
     pool_ref(pool, ped)
 }
@@ -260,7 +260,7 @@ pub fn ped_pool_get_ref(pool: GPtr<CPool<PedSlot>>, ped: GPtr<PedSlot>) -> i32 {
 /// `CPool<CObject>::GetRef(object)` (stub 0x465070, body 0x1561010, thiscall on the pool): `index << 8 |
 /// the slot's flag byte` (index = (object - objects) / 0x19C, signed; STD-7).
 #[hook(addr = 0x465070, conv = thiscall, name = "thunk_FUN_01561010", expect = "E9 9B BF 0F 01",
-       unverified = "std7-core-1", route = "L2", hazards = "none", recs = "grove-walk")]
+       route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn object_pool_get_ref(pool: GPtr<CPool<ObjectSlot>>, object: GPtr<ObjectSlot>) -> i32 {
     pool_ref(pool, object)
 }

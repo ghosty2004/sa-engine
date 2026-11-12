@@ -1026,7 +1026,7 @@ pub fn get_accelerate_just_down(this: GPtr<u8>) -> u8 {
 /// `FUN_005404a0` (0x5404A0, AL; the cycle-camera "just down" the camera code reads): Mode 0/2/3 Select
 /// pressed, Mode 1 DPadUp pressed (jump table 0x5404DC), else 0 (STD-6).
 #[hook(addr = 0x5404A0, conv = thiscall, name = "FUN_005404a0", expect = "0F B7 81 0A 01 00 00", this = "CPad",
-       unverified = "std6-input-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn cycle_camera_just_down(this: GPtr<u8>) -> u8 {
     match mode(this) {
         0 | 2 | 3 => pressed(this, SELECT) as u8,

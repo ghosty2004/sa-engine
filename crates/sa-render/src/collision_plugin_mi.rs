@@ -38,7 +38,7 @@ const CURRENT_MODEL: usize = 0x9689E0;
 
 /// `CCollisionPlugin::SetModelInfo(modelInfo)` (0x41B350): stores the model info.
 #[hook(addr = 0x41B350, conv = cdecl, name = "CCollisionPlugin::SetModelInfo", expect = "8B 44 24 04 A3 E0 89 96 00 C3",
-       unverified = "std6-render-1", route = "L1-pure", hazards = "none", recs = "new-game")]
+       route = "L1-pure", hazards = "none", recs = "new-game")]
 pub fn collision_plugin_set_model_info(mi: GPtr<u8>) {
     GPtr::<u32>::from_addr(CURRENT_MODEL).write(mi.addr() as u32);
 }

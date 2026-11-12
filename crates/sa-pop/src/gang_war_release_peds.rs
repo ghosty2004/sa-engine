@@ -51,7 +51,7 @@ fn ped_handle(pool: GPtr<u8>, ped: GPtr<u8>) -> u32 {
 /// The 0x2000 clear mask comes out of the no-CD protection VM (into EBP); its use (clearing the flag that pairs with
 /// the blip removal, as gta-reversed's source has it) decodes it as `!0x2000`, not by evaluating the VM.
 #[hook(addr = 0x445C30, conv = cdecl, name = "CGangWars::ReleasePedsInAttackWave", expect = "E9 8B AD 11 01",
-       unverified = "std8-pop-1", route = "L2", hazards = "uninit-locals", recs = "grove-walk",
+       route = "L2", hazards = "uninit-locals", recs = "grove-walk",
        note = "the original computes the 0x2000 clear mask in the no-CD VM 0xCB73E0; SEH frame not modelled")]
 pub fn release_peds_in_attack_wave(is_end_of_war: u32, restore: u32) -> u32 {
     let pool = g::<GPtr<u8>>(PED_POOL).read();

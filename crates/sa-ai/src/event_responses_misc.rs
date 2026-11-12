@@ -76,7 +76,7 @@ fn set(this: GPtr<u8>, t: GPtr<u8>) {
 /// <defaults>)`; 0x2D6 → as the driver of its own vehicle `CTaskComplexCarDriveMissionFleeScene(own vehicle)`, else
 /// smart flee from its own vehicle (+0x58C, possibly NULL, as the original). Others: nothing.
 #[hook(addr = 0x4bb2e0, conv = thiscall, name = "CEventHandler::ComputeVehicleOnFireResponse", expect = "64 A1 00 00 00 00",
-       this = "CEventHandler", unverified = "intro-ai-3", route = "L2", hazards = "none", recs = "grove-walk")]
+       this = "CEventHandler", route = "L2", hazards = "none", recs = "grove-walk")]
 pub fn handler_compute_vehicle_on_fire_response(this: GPtr<u8>, e: GPtr<u8>, active: GPtr<u8>, simplest: GPtr<u8>) {
     let veh = rd::<GPtr<u8>>(e, 0x14);
     if veh.is_null() {
