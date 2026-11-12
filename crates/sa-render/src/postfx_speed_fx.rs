@@ -143,11 +143,11 @@ pub fn speed_fx(speed: f32) {
     }
     let m = X87::from_i32(s[0x34 / 4] as i32);
     let dx = x(gf(0xC4016C)).fmul(m).fmul_m(gf(0x86C340)).to_f32();
-    s[4 / 4] = dx.to_bits();
+    s[1] = dx.to_bits();
     let dy = m.fmul_m(gf(0xC40170)).fmul_m(gf(0x86C340)).to_f32();
     s[0x2C / 4] = dx.to_bits();
     s[0x38 / 4] = dx.to_bits();
-    s[8 / 4] = dy.to_bits();
+    s[2] = dy.to_bits();
     let ndx = (-dx).to_bits();
     let ndy = (-dy).to_bits();
     s[0x30 / 4] = ndx;

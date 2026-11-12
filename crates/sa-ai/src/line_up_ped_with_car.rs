@@ -695,8 +695,7 @@ pub fn line_up_ped_with_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr
         let q68p: GPtr<u8> = GPtr::from_raw(q68.as_mut_ptr()).cast();
         let mut cache = [0u32; 10];
         let cp: GPtr<u8> = GPtr::from_raw(cache.as_mut_ptr()).cast();
-        let q;
-        if bike1 {
+        let q = if bike1 {
             matrix_copy_ctor(m1p, rd::<GPtr<u8>>(veh, 0x14));
             if id == 0x16B {
                 let mut m2 = [0u32; 0x12];
@@ -712,7 +711,7 @@ pub fn line_up_ped_with_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr
             rt_quat_convert_from_matrix(q68p, r2p);
             let l10 = anim_progress(assoc).to_f32();
             rt_quat_setup_slerp_cache(q68p, q78p, cp);
-            q = slerp(q68p, q78p, cp, l10);
+            slerp(q68p, q78p, cp, l10)
         } else {
             matrix_copy_ctor(m3p, rd::<GPtr<u8>>(veh, 0x14));
             matrix_copy_to_rw(m3p, r2p);
@@ -723,8 +722,8 @@ pub fn line_up_ped_with_car_process_ped(this: GPtr<u8>, ped: GPtr<u8>, veh: GPtr
             rt_quat_convert_from_matrix(q68p, r1p);
             let l10 = anim_progress(assoc).to_f32();
             rt_quat_setup_slerp_cache(q78p, q68p, cp);
-            q = slerp(q78p, q68p, cp, l10);
-        }
+            slerp(q78p, q68p, cp, l10)
+        };
         quat_to_rw_matrix(q, r3p);
         matrix_update(m4p, r3p);
         wr::<f32>(m4p, 0x30, p[0]);

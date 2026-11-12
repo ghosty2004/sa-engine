@@ -86,9 +86,7 @@ pub fn compute_move_dir_to_avoid_entity(ped: GPtr<u8>, e: GPtr<u8>, out: GPtr<u8
     let zero = x(g::<f32>(0x858B50).read());
     if !a.fcom(zero).test_any(0x41) {
         copy(1);
-    } else if !x(b).fcom(zero).test_any(0x41) {
-        copy(3);
-    } else if a.fcom(x(b)).test_any(0x41) {
+    } else if !x(b).fcom(zero).test_any(0x41) || a.fcom(x(b)).test_any(0x41) {
         copy(3);
     } else {
         copy(1);
