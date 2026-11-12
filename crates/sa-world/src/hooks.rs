@@ -120,6 +120,11 @@ pub const MODULES: &[&[HookReg]] = &[
     world::furniture_hand_object_mines::HOOKS,
     // PORT-VEH-4
     world::entry_exit_transition::HOOKS,
+    // WRITER-WORLD-2 (world6-*)
+    world::explosion_sector_list::HOOKS,
+    world::interior_wall_fillers::HOOKS,
+    world::ground_z_for_coord::HOOKS,
+    world::protected_world_queries::HOOKS,
     physical::pair_collision::HOOKS,
     world::garage_tidy_up_close::HOOKS,
     world::interior_group_paths::HOOKS,

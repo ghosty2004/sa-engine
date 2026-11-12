@@ -97,3 +97,7 @@ pub mod interior_place_furniture;
 pub mod garage_car_blocking;
 pub mod garage_slide_door_closed;
 pub mod garage_store_cars;
+pub mod explosion_sector_list;
+pub mod interior_wall_fillers;
+pub mod ground_z_for_coord;
+pub mod protected_world_queries;

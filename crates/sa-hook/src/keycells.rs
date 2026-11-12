@@ -43,7 +43,7 @@ pub struct Reader {
 
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
-pub const READERS: [Reader; 47] = [
+pub const READERS: [Reader; 49] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -436,6 +436,23 @@ pub const READERS: [Reader; 47] = [
         disp_off: 2,
         key: 0x642511,
         value: 0xDBFD_76E9,
+    // Batch world6-1: InteriorGroup_c::FindInteriorInfo entry 0x594970 (`nop; jmp 0x4075A5`):
+    // `sbb edx, [0x594972]` at 0x401249 (the jmp's rel32).
+    Reader {
+        at: 0x401249,
+        insn: [0x1B, 0x15, 0x72, 0x49, 0x59, 0x00],
+        disp_off: 2,
+        key: 0x594972,
+        value: 0xFFE7_2C2F,
+    },
+    // Batch world6-1: CSetPiece::TryToGenerateCopPed entry 0x499690 (`push -1; jmp 0x40193F`):
+    // `xor edx, [0x499692]` at 0x4015AA (the jmp opcode and three rel32 bytes).
+    Reader {
+        at: 0x4015AA,
+        insn: [0x33, 0x15, 0x92, 0x96, 0x49, 0x00],
+        disp_off: 2,
+        key: 0x499692,
+        value: 0xF682_A8E9,
     },
 ];
 
