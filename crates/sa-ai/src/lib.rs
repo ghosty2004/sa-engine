@@ -143,6 +143,7 @@ pub mod route_round_sphere;
 pub mod attractor_place_ped;
 pub mod chat_task_ctor;
 pub mod chat_task_subtasks;
+pub mod hand_signal_anim_tasks;
 pub mod hand_signal_clone_fire_dtor;
 pub mod attractor_registry;
 pub mod interesting_events_add;
