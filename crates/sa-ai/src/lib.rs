@@ -184,3 +184,4 @@ pub mod car_wait_slow_down;
 pub mod lean_on_vehicle_point;
 pub mod group_scan_loops;
 pub mod group_events_loops;
+pub mod event_pass_object_ctor;
