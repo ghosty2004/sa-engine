@@ -104,19 +104,10 @@ pub fn sort_out_streaming_and_memory(pos: GPtr<u8>, angle: u32) {
 /// `CGameLogic::Remove2ndPlayerIfPresent()` (0x4413C0): when `CWorld::Players[1].m_pPed` (0xB7CF28)
 /// exists it leaves the world and is deleted, the slot cleared, player 1's clothes rebuilt and its
 /// +0x474 bits 27/28 cleared; `CGameLogic::n2PlayerPedInFocus` (0x8A5E50) = 2 in every case.
-///
-/// The entry is `jmp 0x4011B9`, a no-CD protection detour in `.text` (not a `.HOODLUM` stub):
-/// `pushfd; mov eax, [0x1560604]; add eax, [0x156E74D]; mov eax, [eax]; popfd; jmp 0x4413C5`.
-/// Decoded by hand from the exe image: `0x2FB8CDD2 + 0xD0FF0156 = 0xB7CF28`, so the detour only loads
-/// `CWorld::Players[1].m_pPed` into EAX (flags preserved) and the body tests it; the port reads
-/// 0xB7CF28 directly. The hook relocates the whole `jmp` (expect runs into the body's `test eax,
-/// eax` so the entry is an inline patch, not a stub retarget); the detour's return lands at
-/// 0x4413C5, the end of the patched range. No reader of the entry bytes in
-/// `catalog/code-data-reads.csv`.
-#[hook(addr = 0x4413C0, conv = cdecl, name = "CGameLogic::Remove2ndPlayerIfPresent",
-       expect = "E9 F4 FD FB FF 85 C0",
-       unverified = "world5-1", route = "L2", hazards = "heap-writes",
-       note = "entry is a jmp into the protection detour 0x4011B9 (decoded: loads [0xB7CF28]); deletes player 2's ped when present")]
+/// The entry is `jmp 0x4011B9`, a protection fragment outside `.HOODLUM` that decodes the `Players[1]`
+/// ped into EAX (`[[0x1560604] + [0x156E74D]]` = 0xB7CF28) and jumps back to 0x4413C5; a lone 5-byte
+/// `jmp` that is not a `.HOODLUM` stub cannot be hooked in phase A, so this is a phase B native.
+#[sa_core::native(addr = 0x4413C0, conv = cdecl, name = "CGameLogic::Remove2ndPlayerIfPresent")]
 pub fn remove_2nd_player_if_present() {
     let p = g::<GPtr<u8>>(0xB7_CF28).read();
     if !p.is_null() {
@@ -137,5 +128,7 @@ pub fn remove_2nd_player_if_present() {
 pub const HOOKS: &[HookReg] = &[
     HOOK_PASS_TIME,
     HOOK_SORT_OUT_STREAMING_AND_MEMORY,
-    HOOK_REMOVE_2ND_PLAYER_IF_PRESENT,
 ];
+
+/// This module's phase B natives.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_REMOVE_2ND_PLAYER_IF_PRESENT];

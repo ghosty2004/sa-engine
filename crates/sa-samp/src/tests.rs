@@ -272,7 +272,7 @@ fn reads_world_input_hud_and_camera() {
     put(&mut g, addr::PAD0 + 2 * 21, 255i16);
     put(&mut g, addr::PAD0 + 0x30 + 2 * 16, 255i16);
     let (new, old) = g.pad();
-    assert_eq!((new.left_x, new.face[1], new.home), (-128, 255, 255));
+    assert_eq!((new.left_x, new.face[1], new.ped_walk), (-128, 255, 255));
     assert_eq!(old.face[2], 255);
     put(&mut g, addr::NEW_MOUSE, 1u8);
     put(&mut g, addr::NEW_MOUSE + 0xC, 3.5f32);
@@ -354,6 +354,13 @@ fn script_threads_keep_their_locals() {
     locals.0[0] = 6;
     assert_eq!(g.run_command(Opcode(0x0470), &[], &mut locals), Ok(true));
     assert_eq!(locals.int(1), 7);
+    // A destroyed thread is gone and its slot is reused; the one-shot thread survives a destroy.
+    g.destroy_script_thread(t);
+    assert_eq!(g.thread_local(t, 0), Err(GameError::InvalidHandle));
+    let u = g.create_script_thread().unwrap();
+    assert_eq!((u, g.thread_local(u, 0)), (t, Ok(0)));
+    g.destroy_script_thread(sa_samp_api::script::ScriptThreadRef(1));
+    assert_eq!(g.run_command(Opcode(0x0470), &[], &mut locals), Ok(true));
 }
 
 type Seen = std::sync::Arc<std::sync::Mutex<Vec<(FramePhase, Option<PedRef>)>>>;
@@ -384,4 +391,189 @@ fn install_and_frame_dispatch() {
         *seen.lock().unwrap(),
         [(FramePhase::BeforeGameProcess, me), (FramePhase::Before2d, me)]
     );
+}
+
+/// The encoded instruction the backend issued last (`script::encode`'s format).
+fn issued(g: &NativeGame<FakeView>, back: usize) -> Vec<u8> {
+    let v = &g.threads.issued;
+    v[v.len() - 1 - back].clone()
+}
+
+fn enc(op: u16, args: &[ScriptArg<'_>]) -> Vec<u8> {
+    let mut b = Vec::new();
+    script::encode(Opcode(op), args, &mut b);
+    b
+}
+
+#[test]
+fn ped_writes_go_through_opcodes_and_fields() {
+    use ScriptArg::{Float as F, Int as I};
+    let mut g = game();
+    let me = g.local_player().unwrap();
+    let h = 0x205;
+    g.set_ped_position(me, Vec3::new(1.0, 2.0, 3.0)).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x00A1, &[I(h), F(1.0), F(2.0), F(3.0)]));
+    g.set_ped_heading(me, 90.0, false).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0173, &[I(h), F(90.0)]));
+    g.set_ped_heading(me, 1.5, true).unwrap();
+    assert_eq!(g.view.read_f32(LOCAL + off::PED_HEADING), 1.5);
+    assert_eq!(g.view.read_f32(LOCAL + off::PED_HEADING_GOAL), 1.5);
+    g.set_ped_health(me, 55.0).unwrap();
+    g.set_ped_armour(me, 20.0).unwrap();
+    assert_eq!(g.ped_snapshot(me).map(|s| (s.health, s.armour)), Ok((55.0, 20.0)));
+    g.give_weapon(me, WeaponType(24), 100).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x01B2, &[I(h), I(24), I(100)]));
+    g.set_current_weapon(me, WeaponType(24)).unwrap();
+    g.clear_weapons(me).unwrap();
+    assert_eq!(issued(&g, 1), enc(0x01B9, &[I(h), I(24)]));
+    assert_eq!(issued(&g, 0), enc(0x048F, &[I(h)]));
+    g.set_ped_area(me, AreaCode(17)).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0860, &[I(h), I(17)]));
+    g.set_player_control(false).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x01B4, &[I(0), I(0)]));
+    g.set_player_money(5000).unwrap();
+    assert_eq!(g.player_money(), 5000);
+    // A stale ped issues nothing.
+    let n = g.threads.issued.len();
+    assert_eq!(
+        g.set_ped_position(PedRef(0x305), Vec3::default()),
+        Err(GameError::InvalidHandle)
+    );
+    assert_eq!(g.threads.issued.len(), n);
+}
+
+#[test]
+fn world_hud_camera_and_streaming_writes() {
+    use ScriptArg::{Float as F, Int as I};
+    let mut g = game();
+    g.set_clock(22, 30).unwrap();
+    assert_eq!(g.clock(), (22, 30));
+    assert_eq!(issued(&g, 0), enc(0x00C0, &[I(22), I(30)]));
+    g.set_weather(8).unwrap();
+    assert_eq!(g.weather(), (8, 8, 8));
+    g.force_weather(10).unwrap();
+    assert_eq!(g.weather(), (10, 8, 8));
+    put(&mut g, addr::GAME_GRAVITY, 0.008f32);
+    assert_eq!(g.set_gravity(0.008), Ok(()));
+    assert!(g.set_gravity(0.005).is_err());
+    assert_eq!(g.gravity(), 0.008);
+    g.set_area(AreaCode(3)).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x04BB, &[I(3)]));
+    g.set_hud_visible(false).unwrap();
+    assert_eq!(
+        (
+            g.view.read_u8(addr::MENU_HUD_ON),
+            g.view.read_u8(addr::HUD_DONT_DISPLAY_RADAR)
+        ),
+        (0, 1)
+    );
+    g.set_zone_names(false).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x09BA, &[I(0)]));
+    g.add_score(-250).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0109, &[I(0), I(-250)]));
+    g.point_at(Vec3::new(1.0, 2.0, 3.0), sa_samp_api::camera::CameraCut::Cut)
+        .unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0160, &[F(1.0), F(2.0), F(3.0), I(2)]));
+    g.behind_player().unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0373, &[]));
+    use sa_samp_api::streaming::Streaming;
+    g.request_model(ModelId(560)).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0247, &[I(560)]));
+    assert!(!g.model_loaded(ModelId(560)));
+    put(
+        &mut g,
+        addr::STREAMING_INFO + 560 * addr::STREAMING_INFO_SIZE + 0x10,
+        1u8,
+    );
+    assert!(g.model_loaded(ModelId(560)));
+    assert!(!g.model_loaded(ModelId(-1)));
+}
+
+/// Stands in for CREATE_CAR / CREATE_OBJECT: stores a handle into local 0.
+fn create_exec(s: sa_core::mem::GPtr<u8>) -> i8 {
+    // SAFETY: the thread buffer of `Threads::run`, alive for the call.
+    unsafe {
+        (s.raw().add(script::layout::LOCAL_VARS) as *mut u32).write_unaligned((3 << 8) | 1);
+    }
+    0
+}
+
+#[test]
+fn created_entities_come_back_as_handles() {
+    use ScriptArg::{Float as F, Int as I, Local as L};
+    let mut g = game();
+    g.threads.exec = create_exec;
+    put(&mut g, VEH_MAP + 3, 0x01u8);
+    let spawn = sa_samp_api::vehicles::VehicleSpawn {
+        model: ModelId(560),
+        pos: Vec3::new(1.0, 2.0, 3.0),
+        heading_deg: 90.0,
+        colours: [1, 2],
+        paintjob: 3,
+        area: AreaCode(0),
+    };
+    assert_eq!(g.create_vehicle(&spawn), Ok(VehicleRef(0x301)));
+    assert_eq!(
+        issued(&g, 2),
+        enc(0x00A5, &[I(560), F(1.0), F(2.0), F(3.0), L(0)])
+    );
+    assert_eq!(issued(&g, 1), enc(0x0175, &[I(0x301), F(90.0)]));
+    assert_eq!(issued(&g, 0), enc(0x0229, &[I(0x301), I(1), I(2)]));
+    g.destroy_vehicle(VehicleRef(0x301)).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x00A6, &[I(0x301)]));
+    put(&mut g, OBJ_MAP + 3, 0x01u8);
+    assert_eq!(
+        g.create_object(ModelId(1337), Vec3::new(1.0, 2.0, 3.0)),
+        Ok(ObjectRef(0x301))
+    );
+    // A creation the engine refused (slot free) is reported, not a wild handle.
+    put(&mut g, OBJ_MAP + 3, 0x81u8);
+    assert_eq!(
+        g.create_object(ModelId(1337), Vec3::default()),
+        Err(GameError::NotLoaded)
+    );
+}
+
+#[test]
+fn feature_bits_match_the_api() {
+    use sa_core::samp::feature as f;
+    use sa_samp_api::config::Feature;
+    for (bit, feat) in [
+        (f::AMBIENT_PEDS, Feature::AmbientPeds),
+        (f::RANDOM_TRAFFIC, Feature::RandomTraffic),
+        (f::CAR_GENERATORS, Feature::CarGenerators),
+        (f::AMBIENT_PLANES, Feature::AmbientPlanes),
+        (f::CUTSCENES, Feature::Cutscenes),
+        (f::REPLAY, Feature::Replay),
+        (f::PLANT_MANAGER, Feature::PlantManager),
+        (f::SUN_MOON_CORONAS, Feature::SunMoonCoronas),
+        (f::IDLE_CAMERA, Feature::IdleCamera),
+        (f::HELP_MESSAGES, Feature::HelpMessages),
+        (f::ZONE_NAMES, Feature::ZoneNames),
+    ] {
+        assert_eq!(bit, feat as u8, "{feat:?}");
+    }
+}
+
+struct Panicky(std::sync::Arc<std::sync::atomic::AtomicU32>);
+
+impl GameHooks for Panicky {
+    fn frame(&mut self, _phase: FramePhase, _game: &mut dyn GameAdapter) {
+        let n = self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        assert!(n != 0, "an unported engine function reached from the first callback");
+    }
+}
+
+#[test]
+fn hooks_survive_an_unwinding_callback() {
+    let mut g = game();
+    let n = std::sync::Arc::new(std::sync::atomic::AtomicU32::new(0));
+    let cfg = sa_samp_api::config::SampModeConfig::default();
+    g.install(&cfg, Box::new(Panicky(n.clone())), None).unwrap();
+    let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        g.dispatch_frame(FramePhase::Before2d)
+    }));
+    assert!(r.is_err());
+    g.dispatch_frame(FramePhase::Before2d);
+    assert_eq!(n.load(std::sync::atomic::Ordering::SeqCst), 2);
 }

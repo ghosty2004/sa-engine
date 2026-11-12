@@ -106,7 +106,7 @@ fn handle(obj: u32) -> u32 {
 /// Whether the native device reports (and so the game uses) vertex/pixel shaders:
 /// `SA_GAME_SHADERS=1`.
 pub fn shaders_enabled() -> bool {
-    std::env::var_os("SA_GAME_SHADERS").is_some_and(|v| v == "1")
+    crate::env::var_os("SA_GAME_SHADERS").is_some_and(|v| v == "1")
 }
 
 /// Sets the shader fields of the native `D3DCAPS9` at `out` when [`shaders_enabled`]: vs_2_0
@@ -123,21 +123,7 @@ pub fn patch_caps9(out: GPtr<u8>) {
 /// Maps the vtable page.
 #[allow(unsafe_code)]
 pub fn map() -> Result<(), String> {
-    // SAFETY: an anonymous private mapping at a fixed low address that MAP_FIXED_NOREPLACE refuses
-    // to place over anything already mapped; never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            PAGE as *mut libc::c_void,
-            0x1000,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != PAGE {
-        return Err(format!("cannot map the D3D9 shader object page at {PAGE:#x}"));
-    }
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the D3D9 shader object page at {PAGE:#x}: {e}"))?;
     for (c, (_, methods)) in CLASSES.iter().enumerate() {
         for i in 0..methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));
@@ -486,7 +472,13 @@ macro_rules! entries {
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
                     $f($($a),*)
                 }
-                v.push(($addr, $name, w as *const () as usize));
+                v.push(($addr, $name, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }

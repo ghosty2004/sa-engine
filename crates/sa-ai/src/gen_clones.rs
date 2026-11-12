@@ -434,7 +434,7 @@ orig! {
 }
 
 /// `CTaskComplexLeaveAnyCar::Clone` (0x4211C0): clone, thiscall, `ret`; 38 instruction(s) matched.
-#[hook(addr = 0x4211C0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Clone", expect = "6A FF 68 9B 73 83 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+#[hook(addr = 0x4211C0, conv = thiscall, name = "CTaskComplexLeaveAnyCar::Clone", expect = "6A FF 68 9B 73 83 00")]
 pub fn g_task_complex_leave_any_car_clone_4211c0(this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -558,7 +558,7 @@ pub fn g_task_complex_climb_clone_46a650(_this: u32) -> u32 {
 }
 
 /// `CTaskComplexSeekEntityStandard::Clone` (0x46EF50): clone, thiscall, `ret`; 53 instruction(s) matched.
-#[hook(addr = 0x46EF50, conv = thiscall, name = "CTaskComplexSeekEntityStandard::Clone", expect = "6A FF 68 EB 7F 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x46EF50, conv = thiscall, name = "CTaskComplexSeekEntityStandard::Clone", expect = "6A FF 68 EB 7F 83 00")]
 pub fn g_task_complex_seek_entity_standard_clone_46ef50(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x4C);
     if v1 == 0 {
@@ -604,7 +604,7 @@ pub fn g_task_complex_seek_entity_standard_clone_46ef50(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarDriveTimed::Clone` (0x46F570): clone, thiscall, `ret`; 50 instruction(s) matched.
-#[hook(addr = 0x46F570, conv = thiscall, name = "CTaskSimpleCarDriveTimed::Clone", expect = "6A FF 68 AB 80 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x46F570, conv = thiscall, name = "CTaskSimpleCarDriveTimed::Clone", expect = "6A FF 68 AB 80 83 00")]
 pub fn g_task_simple_car_drive_timed_clone_46f570(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x70);
     if v1 == 0 {
@@ -624,7 +624,7 @@ pub fn g_task_simple_car_drive_timed_clone_46f570(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleSetCharIgnoreWeaponRangeFlag::Clone` (0x474640): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x474640, conv = thiscall, name = "CTaskSimpleSetCharIgnoreWeaponRangeFlag::Clone", expect = "6A FF 68 3B 82 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x474640, conv = thiscall, name = "CTaskSimpleSetCharIgnoreWeaponRangeFlag::Clone", expect = "6A FF 68 3B 82 83 00")]
 pub fn g_task_simple_set_char_ignore_weapon_range_flag_clone_474640(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0xC);
     if v1 == 0 {
@@ -770,7 +770,7 @@ pub fn g_task_simple_hands_up_clone_48e9c0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleTogglePedThreatScanner::Clone` (0x492D50): clone, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x492D50, conv = thiscall, name = "CTaskSimpleTogglePedThreatScanner::Clone", expect = "6A FF 68 6B 8A 83 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+#[hook(addr = 0x492D50, conv = thiscall, name = "CTaskSimpleTogglePedThreatScanner::Clone", expect = "6A FF 68 6B 8A 83 00")]
 pub fn g_task_simple_toggle_ped_threat_scanner_clone_492d50(this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -803,7 +803,7 @@ pub fn g_task_simple_toggle_ped_threat_scanner_clone_492d50(this: u32) -> u32 {
 }
 
 /// `CTaskComplexDiveFromAttachedEntityAndGetUp::Clone` (0x492E70): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x492E70, conv = thiscall, name = "CTaskComplexDiveFromAttachedEntityAndGetUp::Clone", expect = "6A FF 68 8B 8A 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+#[hook(addr = 0x492E70, conv = thiscall, name = "CTaskComplexDiveFromAttachedEntityAndGetUp::Clone", expect = "6A FF 68 8B 8A 83 00")]
 pub fn g_task_complex_dive_from_attached_entity_and_get_up_clone_492e70(this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -829,7 +829,7 @@ pub fn g_task_complex_dive_from_attached_entity_and_get_up_clone_492e70(this: u3
 }
 
 /// `CTaskComplexSeekEntityRadiusAngleOffset::Clone` (0x495FB0): clone, thiscall, `ret`; 57 instruction(s) matched.
-#[hook(addr = 0x495FB0, conv = thiscall, name = "CTaskComplexSeekEntityRadiusAngleOffset::Clone", expect = "6A FF 68 AB 8B 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x495FB0, conv = thiscall, name = "CTaskComplexSeekEntityRadiusAngleOffset::Clone", expect = "6A FF 68 AB 8B 83 00")]
 pub fn g_task_complex_seek_entity_radius_angle_offset_clone_495fb0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x54);
     if v1 == 0 {
@@ -1431,7 +1431,7 @@ pub fn g_task_complex_use_closest_free_scripted_attractor_sprint_clone_4b8870(_t
 }
 
 /// `CTaskComplexCarDriveMissionFleeScene::Clone` (0x4B8950): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x4B8950, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::Clone", expect = "6A FF 68 5B A8 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x4B8950, conv = thiscall, name = "CTaskComplexCarDriveMissionFleeScene::Clone", expect = "6A FF 68 5B A8 83 00")]
 pub fn g_task_complex_car_drive_mission_flee_scene_clone_4b8950(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x2C);
     if v1 == 0 {
@@ -1445,7 +1445,7 @@ pub fn g_task_complex_car_drive_mission_flee_scene_clone_4b8950(this: u32) -> u3
 }
 
 /// `CTaskComplexCarDriveMissionKillPed::Clone` (0x4B8A30): clone, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x4B8A30, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::Clone", expect = "6A FF 68 7B A8 83 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x4B8A30, conv = thiscall, name = "CTaskComplexCarDriveMissionKillPed::Clone", expect = "6A FF 68 7B A8 83 00")]
 pub fn g_task_complex_car_drive_mission_kill_ped_clone_4b8a30(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x2C);
     if v1 == 0 {
@@ -1532,7 +1532,7 @@ pub fn g_task_simple_wait_until_leader_area_codes_match_clone_5f67f0(this: u32) 
 }
 
 /// `CEventPlayerCollisionWithPed::Clone` (0x5FEEA0): clone, thiscall, `ret`; 44 instruction(s) matched.
-#[hook(addr = 0x5FEEA0, conv = thiscall, name = "CEventPlayerCollisionWithPed::Clone", expect = "6A FF 68 8B E5 83 00", unverified = "ai8g-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x5FEEA0, conv = thiscall, name = "CEventPlayerCollisionWithPed::Clone", expect = "6A FF 68 8B E5 83 00")]
 pub fn g_event_player_collision_with_ped_clone_5feea0(this: u32) -> u32 {
     let v1 = c_4b5620_c1(0x34);
     if v1 == 0 {
@@ -1707,7 +1707,7 @@ pub fn g_event_player_command_to_group_gather_clone_editable_609280(this: u32) -
 }
 
 /// `CTaskSimpleRunTimedAnim::Clone` (0x61B810): clone, thiscall, `ret`; 43 instruction(s) matched.
-#[hook(addr = 0x61B810, conv = thiscall, name = "CTaskSimpleRunTimedAnim::Clone", expect = "6A FF 68 5B F2 83 00", unverified = "ai8g-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x61B810, conv = thiscall, name = "CTaskSimpleRunTimedAnim::Clone", expect = "6A FF 68 5B F2 83 00")]
 pub fn g_task_simple_run_timed_anim_clone_61b810(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x34);
     if v1 == 0 {
@@ -1735,7 +1735,7 @@ pub fn g_task_simple_run_timed_anim_clone_61b810(this: u32) -> u32 {
 }
 
 /// `vt_86d594::Clone` (0x61B890): clone, thiscall, `ret`; 80 instruction(s) matched.
-#[hook(addr = 0x61B890, conv = thiscall, name = "vt_86d594::Clone", expect = "6A FF 68 86 F2 83 00", unverified = "ai8g-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x61B890, conv = thiscall, name = "vt_86d594::Clone", expect = "6A FF 68 86 F2 83 00")]
 pub fn g_vt_86d594_clone_61b890(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x44);
     if v1 == 0 {
@@ -1831,7 +1831,7 @@ pub fn g_event_vehicle_damage_weapon_clone_editable_61c330(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleFight::Clone` (0x622E40): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x622E40, conv = thiscall, name = "CTaskSimpleFight::Clone", expect = "6A FF 68 DB F9 83 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x622E40, conv = thiscall, name = "CTaskSimpleFight::Clone", expect = "6A FF 68 DB F9 83 00")]
 pub fn g_task_simple_fight_clone_622e40(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -1846,7 +1846,7 @@ pub fn g_task_simple_fight_clone_622e40(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleFightingControl::Clone` (0x622EB0): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x622EB0, conv = thiscall, name = "CTaskSimpleFightingControl::Clone", expect = "6A FF 68 FB F9 83 00", unverified = "ai7-1", route = "L2", hazards = "none")]
+#[hook(addr = 0x622EB0, conv = thiscall, name = "CTaskSimpleFightingControl::Clone", expect = "6A FF 68 FB F9 83 00")]
 pub fn g_task_simple_fighting_control_clone_622eb0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -1861,7 +1861,7 @@ pub fn g_task_simple_fighting_control_clone_622eb0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleGunControl::Clone` (0x622FB0): clone, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x622FB0, conv = thiscall, name = "CTaskSimpleGunControl::Clone", expect = "6A FF 68 3B FA 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x622FB0, conv = thiscall, name = "CTaskSimpleGunControl::Clone", expect = "6A FF 68 3B FA 83 00")]
 pub fn g_task_simple_gun_control_clone_622fb0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x3C);
     if v1 == 0 {
@@ -1952,7 +1952,7 @@ pub fn g_task_simple_choking_clone_623220(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleBeHit::Clone` (0x623290): clone, thiscall, `ret`; 38 instruction(s) matched.
-#[hook(addr = 0x623290, conv = thiscall, name = "CTaskSimpleBeHit::Clone", expect = "6A FF 68 FB FA 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x623290, conv = thiscall, name = "CTaskSimpleBeHit::Clone", expect = "6A FF 68 FB FA 83 00")]
 pub fn g_task_simple_be_hit_clone_623290(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -1999,7 +1999,7 @@ pub fn g_vt_86d868_clone_623300(this: u32) -> u32 {
 }
 
 /// `CTaskComplexKillPedOnFoot::Clone` (0x623370): clone, thiscall, `ret`; 49 instruction(s) matched.
-#[hook(addr = 0x623370, conv = thiscall, name = "CTaskComplexKillPedOnFoot::Clone", expect = "6A FF 68 3B FB 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x623370, conv = thiscall, name = "CTaskComplexKillPedOnFoot::Clone", expect = "6A FF 68 3B FB 83 00")]
 pub fn g_task_complex_kill_ped_on_foot_clone_623370(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x38);
     if v1 == 0 {
@@ -2073,7 +2073,7 @@ pub fn g_task_complex_kill_ped_on_foot_melee_clone_623460(this: u32) -> u32 {
 }
 
 /// `CTaskComplexKillPedOnFootArmed::Clone` (0x6234C0): clone, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x6234C0, conv = thiscall, name = "CTaskComplexKillPedOnFootArmed::Clone", expect = "6A FF 68 9B FB 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6234C0, conv = thiscall, name = "CTaskComplexKillPedOnFootArmed::Clone", expect = "6A FF 68 9B FB 83 00")]
 pub fn g_task_complex_kill_ped_on_foot_armed_clone_6234c0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x5C);
     if v1 == 0 {
@@ -2154,7 +2154,7 @@ pub fn g_task_complex_road_rage_clone_623670(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleGangDriveBy::Clone` (0x6236D0): clone, thiscall, `ret`; 41 instruction(s) matched.
-#[hook(addr = 0x6236D0, conv = thiscall, name = "CTaskSimpleGangDriveBy::Clone", expect = "6A FF 68 3B FC 83 00", unverified = "ai8g-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6236D0, conv = thiscall, name = "CTaskSimpleGangDriveBy::Clone", expect = "6A FF 68 3B FC 83 00")]
 pub fn g_task_simple_gang_drive_by_clone_6236d0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x44);
     if v1 == 0 {
@@ -2366,7 +2366,7 @@ pub fn g_task_simple_hit_by_gun_from_right_clone_62f0b0(_this: u32) -> u32 {
 }
 
 /// `CTaskComplexLeaveCarAndDie::Clone` (0x62F1D0): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x62F1D0, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::Clone", expect = "6A FF 68 FB 02 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x62F1D0, conv = thiscall, name = "CTaskComplexLeaveCarAndDie::Clone", expect = "6A FF 68 FB 02 84 00")]
 pub fn g_task_complex_leave_car_and_die_clone_62f1d0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x34);
     if v1 == 0 {
@@ -2383,7 +2383,7 @@ pub fn g_task_complex_leave_car_and_die_clone_62f1d0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleSetStayInSamePlace::Clone` (0x635BD0): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x635BD0, conv = thiscall, name = "CTaskSimpleSetStayInSamePlace::Clone", expect = "6A FF 68 7B 0A 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x635BD0, conv = thiscall, name = "CTaskSimpleSetStayInSamePlace::Clone", expect = "6A FF 68 7B 0A 84 00")]
 pub fn g_task_simple_set_stay_in_same_place_clone_635bd0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0xC);
     if v1 == 0 {
@@ -2399,7 +2399,7 @@ pub fn g_task_simple_set_stay_in_same_place_clone_635bd0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleSetKindaStayInSamePlace::Clone` (0x635C30): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x635C30, conv = thiscall, name = "CTaskSimpleSetKindaStayInSamePlace::Clone", expect = "6A FF 68 9B 0A 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x635C30, conv = thiscall, name = "CTaskSimpleSetKindaStayInSamePlace::Clone", expect = "6A FF 68 9B 0A 84 00")]
 pub fn g_task_simple_set_kinda_stay_in_same_place_clone_635c30(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0xC);
     if v1 == 0 {
@@ -2415,7 +2415,7 @@ pub fn g_task_simple_set_kinda_stay_in_same_place_clone_635c30(this: u32) -> u32
 }
 
 /// `CTaskSimpleDuckToggle::Clone` (0x635C90): clone, thiscall, `ret`; 30 instruction(s) matched.
-#[hook(addr = 0x635C90, conv = thiscall, name = "CTaskSimpleDuckToggle::Clone", expect = "6A FF 68 BB 0A 84 00", unverified = "ai7-1", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x635C90, conv = thiscall, name = "CTaskSimpleDuckToggle::Clone", expect = "6A FF 68 BB 0A 84 00")]
 pub fn g_task_simple_duck_toggle_clone_635c90(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0xC);
     if v1 == 0 {
@@ -2567,7 +2567,7 @@ pub fn g_task_complex_die_clone_636060(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleDead::Clone` (0x636100): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x636100, conv = thiscall, name = "CTaskSimpleDead::Clone", expect = "6A FF 68 BB 0B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x636100, conv = thiscall, name = "CTaskSimpleDead::Clone", expect = "6A FF 68 BB 0B 84 00")]
 pub fn g_task_simple_dead_clone_636100(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -3081,7 +3081,7 @@ pub fn g_event_leader_quit_entering_car_as_driver_clone_63a150(_this: u32) -> u3
 }
 
 /// `CTaskComplexEnterCarAsDriverTimed::Clone` (0x63D780): clone, thiscall, `ret`; 30 instruction(s) matched.
-#[hook(addr = 0x63D780, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Clone", expect = "6A FF 68 1B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63D780, conv = thiscall, name = "CTaskComplexEnterCarAsDriverTimed::Clone", expect = "6A FF 68 1B 1A 84 00")]
 pub fn g_task_complex_enter_car_as_driver_timed_clone_63d780(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -3099,7 +3099,7 @@ pub fn g_task_complex_enter_car_as_driver_timed_clone_63d780(this: u32) -> u32 {
 }
 
 /// `CTaskComplexEnterCarAsPassengerTimed::Clone` (0x63D7E0): clone, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x63D7E0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Clone", expect = "6A FF 68 3B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63D7E0, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerTimed::Clone", expect = "6A FF 68 3B 1A 84 00")]
 pub fn g_task_complex_enter_car_as_passenger_timed_clone_63d7e0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x2C);
     if v1 == 0 {
@@ -3119,7 +3119,7 @@ pub fn g_task_complex_enter_car_as_passenger_timed_clone_63d7e0(this: u32) -> u3
 }
 
 /// `CTaskComplexEnterCarAsPassengerWait::Clone` (0x63D850): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x63D850, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Clone", expect = "6A FF 68 5B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x63D850, conv = thiscall, name = "CTaskComplexEnterCarAsPassengerWait::Clone", expect = "6A FF 68 5B 1A 84 00")]
 pub fn g_task_complex_enter_car_as_passenger_wait_clone_63d850(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -3135,7 +3135,7 @@ pub fn g_task_complex_enter_car_as_passenger_wait_clone_63d850(this: u32) -> u32
 }
 
 /// `CTaskComplexLeaveCarAsPassengerWait::Clone` (0x63D8C0): clone, thiscall, `ret`; 30 instruction(s) matched.
-#[hook(addr = 0x63D8C0, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Clone", expect = "6A FF 68 7B 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x63D8C0, conv = thiscall, name = "CTaskComplexLeaveCarAsPassengerWait::Clone", expect = "6A FF 68 7B 1A 84 00")]
 pub fn g_task_complex_leave_car_as_passenger_wait_clone_63d8c0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -3174,7 +3174,7 @@ pub fn g_task_complex_steal_car_clone_63d980(this: u32) -> u32 {
 }
 
 /// `CTaskComplexLeaveCar::Clone` (0x63D9E0): clone, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x63D9E0, conv = thiscall, name = "CTaskComplexLeaveCar::Clone", expect = "6A FF 68 DB 1A 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x63D9E0, conv = thiscall, name = "CTaskComplexLeaveCar::Clone", expect = "6A FF 68 DB 1A 84 00")]
 pub fn g_task_complex_leave_car_clone_63d9e0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x34);
     if v1 == 0 {
@@ -3205,7 +3205,7 @@ pub fn g_task_complex_leave_boat_clone_63da60(this: u32) -> u32 {
 }
 
 /// `CTaskComplexLeaveCarAndFlee::Clone` (0x63DB40): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x63DB40, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::Clone", expect = "6A FF 68 3B 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x63DB40, conv = thiscall, name = "CTaskComplexLeaveCarAndFlee::Clone", expect = "6A FF 68 3B 1B 84 00")]
 pub fn g_task_complex_leave_car_and_flee_clone_63db40(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -3234,7 +3234,7 @@ pub fn g_task_complex_scream_in_car_then_leave_clone_63dbb0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarDrive::Clone` (0x63DC20): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x63DC20, conv = thiscall, name = "CTaskSimpleCarDrive::Clone", expect = "6A FF 68 7B 1B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63DC20, conv = thiscall, name = "CTaskSimpleCarDrive::Clone", expect = "6A FF 68 7B 1B 84 00")]
 pub fn g_task_simple_car_drive_clone_63dc20(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x60);
     if v1 == 0 {
@@ -3261,7 +3261,7 @@ pub fn g_task_simple_car_drive_clone_63dc20(this: u32) -> u32 {
 }
 
 /// `CTaskComplexCarDrive::Clone` (0x63DC90): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x63DC90, conv = thiscall, name = "CTaskComplexCarDrive::Clone", expect = "6A FF 68 9B 1B 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63DC90, conv = thiscall, name = "CTaskComplexCarDrive::Clone", expect = "6A FF 68 9B 1B 84 00")]
 pub fn g_task_complex_car_drive_clone_63dc90(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -3283,7 +3283,7 @@ pub fn g_task_complex_car_drive_clone_63dc90(this: u32) -> u32 {
 }
 
 /// `CTaskComplexCarDriveMission::Clone` (0x63DD70): clone, thiscall, `ret`; 38 instruction(s) matched.
-#[hook(addr = 0x63DD70, conv = thiscall, name = "CTaskComplexCarDriveMission::Clone", expect = "6A FF 68 DB 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x63DD70, conv = thiscall, name = "CTaskComplexCarDriveMission::Clone", expect = "6A FF 68 DB 1B 84 00")]
 pub fn g_task_complex_car_drive_mission_clone_63dd70(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x2C);
     if v1 == 0 {
@@ -3300,7 +3300,7 @@ pub fn g_task_complex_car_drive_mission_clone_63dd70(this: u32) -> u32 {
 }
 
 /// `CTaskComplexDriveToPoint::Clone` (0x63DDE0): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x63DDE0, conv = thiscall, name = "CTaskComplexDriveToPoint::Clone", expect = "6A FF 68 FB 1B 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x63DDE0, conv = thiscall, name = "CTaskComplexDriveToPoint::Clone", expect = "6A FF 68 FB 1B 84 00")]
 pub fn g_task_complex_drive_to_point_clone_63dde0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x3C);
     if v1 == 0 {
@@ -3318,7 +3318,7 @@ pub fn g_task_complex_drive_to_point_clone_63dde0(this: u32) -> u32 {
 }
 
 /// `CTaskComplexEnterAnyCarAsDriver::Clone` (0x63DE60): clone, thiscall, `ret`; 25 instruction(s) matched.
-#[hook(addr = 0x63DE60, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::Clone", expect = "6A FF 68 1B 1C 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63DE60, conv = thiscall, name = "CTaskComplexEnterAnyCarAsDriver::Clone", expect = "6A FF 68 1B 1C 84 00")]
 pub fn g_task_complex_enter_any_car_as_driver_clone_63de60(_this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0xC);
     if v1 == 0 {
@@ -3344,7 +3344,7 @@ pub fn g_task_complex_shuffle_seats_clone_63deb0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSetTempAction::Clone` (0x63DF10): clone, thiscall, `ret`; 40 instruction(s) matched.
-#[hook(addr = 0x63DF10, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Clone", expect = "6A FF 68 5B 1C 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x63DF10, conv = thiscall, name = "CTaskSimpleCarSetTempAction::Clone", expect = "6A FF 68 5B 1C 84 00")]
 pub fn g_task_simple_car_set_temp_action_clone_63df10(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x68);
     if v1 == 0 {
@@ -3362,7 +3362,7 @@ pub fn g_task_simple_car_set_temp_action_clone_63df10(this: u32) -> u32 {
 }
 
 /// `CTaskComplexEnterCarAsDriver::Clone` (0x643780): clone, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x643780, conv = thiscall, name = "CTaskComplexEnterCarAsDriver::Clone", expect = "6A FF 68 4B 22 84 00", unverified = "ai7-2", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x643780, conv = thiscall, name = "CTaskComplexEnterCarAsDriver::Clone", expect = "6A FF 68 4B 22 84 00")]
 pub fn g_task_complex_enter_car_as_driver_clone_643780(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x50);
     if v1 == 0 {
@@ -3380,7 +3380,7 @@ pub fn g_task_complex_enter_car_as_driver_clone_643780(this: u32) -> u32 {
 }
 
 /// `CTaskComplexEnterCarAsPassenger::Clone` (0x6437F0): clone, thiscall, `ret`; 44 instruction(s) matched.
-#[hook(addr = 0x6437F0, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::Clone", expect = "6A FF 68 6B 22 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6437F0, conv = thiscall, name = "CTaskComplexEnterCarAsPassenger::Clone", expect = "6A FF 68 6B 22 84 00")]
 pub fn g_task_complex_enter_car_as_passenger_clone_6437f0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x50);
     if v1 == 0 {
@@ -3456,7 +3456,7 @@ pub fn g_task_complex_drag_ped_from_car_clone_643950(this: u32) -> u32 {
 }
 
 /// `CTaskComplexDrivePointRoute::Clone` (0x6439C0): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x6439C0, conv = thiscall, name = "CTaskComplexDrivePointRoute::Clone", expect = "6A FF 68 EB 22 84 00", unverified = "ai7-2", route = "L2", hazards = "none")]
+#[hook(addr = 0x6439C0, conv = thiscall, name = "CTaskComplexDrivePointRoute::Clone", expect = "6A FF 68 EB 22 84 00")]
 pub fn g_task_complex_drive_point_route_clone_6439c0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x2C);
     if v1 == 0 {
@@ -3475,7 +3475,7 @@ pub fn g_task_complex_drive_point_route_clone_6439c0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Clone` (0x646EC0): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x646EC0, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Clone", expect = "6A FF 68 8B 26 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x646EC0, conv = thiscall, name = "CTaskSimpleCarGoToPointNearDoorUntilDoorNotInUse::Clone", expect = "6A FF 68 8B 26 84 00")]
 pub fn g_task_simple_car_go_to_point_near_door_until_door_not_in_use_clone_646ec0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -3512,7 +3512,7 @@ pub fn g_task_complex_go_to_car_door_and_stand_still_clone_6498b0(this: u32) -> 
 }
 
 /// `CTaskSimpleCarAlign::Clone` (0x649930): clone, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x649930, conv = thiscall, name = "CTaskSimpleCarAlign::Clone", expect = "6A FF 68 FB 2B 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x649930, conv = thiscall, name = "CTaskSimpleCarAlign::Clone", expect = "6A FF 68 FB 2B 84 00")]
 pub fn g_task_simple_car_align_clone_649930(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -3527,7 +3527,7 @@ pub fn g_task_simple_car_align_clone_649930(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarOpenDoorFromOutside::Clone` (0x6499A0): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x6499A0, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::Clone", expect = "6A FF 68 1B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x6499A0, conv = thiscall, name = "CTaskSimpleCarOpenDoorFromOutside::Clone", expect = "6A FF 68 1B 2C 84 00")]
 pub fn g_task_simple_car_open_door_from_outside_clone_6499a0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -3543,7 +3543,7 @@ pub fn g_task_simple_car_open_door_from_outside_clone_6499a0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarOpenLockedDoorFromOutside::Clone` (0x649A10): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649A10, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Clone", expect = "6A FF 68 3B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x649A10, conv = thiscall, name = "CTaskSimpleCarOpenLockedDoorFromOutside::Clone", expect = "6A FF 68 3B 2C 84 00")]
 pub fn g_task_simple_car_open_locked_door_from_outside_clone_649a10(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3573,7 +3573,7 @@ pub fn g_task_simple_pick_up_bike_clone_649a80(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarCloseDoorFromInside::Clone` (0x649AF0): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649AF0, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Clone", expect = "6A FF 68 7B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x649AF0, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromInside::Clone", expect = "6A FF 68 7B 2C 84 00")]
 pub fn g_task_simple_car_close_door_from_inside_clone_649af0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3588,7 +3588,7 @@ pub fn g_task_simple_car_close_door_from_inside_clone_649af0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarCloseDoorFromOutside::Clone` (0x649B60): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649B60, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Clone", expect = "6A FF 68 9B 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x649B60, conv = thiscall, name = "CTaskSimpleCarCloseDoorFromOutside::Clone", expect = "6A FF 68 9B 2C 84 00")]
 pub fn g_task_simple_car_close_door_from_outside_clone_649b60(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3603,7 +3603,7 @@ pub fn g_task_simple_car_close_door_from_outside_clone_649b60(this: u32) -> u32 
 }
 
 /// `CTaskSimpleCarGetIn::Clone` (0x649BD0): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649BD0, conv = thiscall, name = "CTaskSimpleCarGetIn::Clone", expect = "6A FF 68 BB 2C 84 00", unverified = "ai7-3", route = "L2", hazards = "none")]
+#[hook(addr = 0x649BD0, conv = thiscall, name = "CTaskSimpleCarGetIn::Clone", expect = "6A FF 68 BB 2C 84 00")]
 pub fn g_task_simple_car_get_in_clone_649bd0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -3618,7 +3618,7 @@ pub fn g_task_simple_car_get_in_clone_649bd0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarShuffle::Clone` (0x649C40): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649C40, conv = thiscall, name = "CTaskSimpleCarShuffle::Clone", expect = "6A FF 68 DB 2C 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x649C40, conv = thiscall, name = "CTaskSimpleCarShuffle::Clone", expect = "6A FF 68 DB 2C 84 00")]
 pub fn g_task_simple_car_shuffle_clone_649c40(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3633,7 +3633,7 @@ pub fn g_task_simple_car_shuffle_clone_649c40(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarWaitForDoorNotToBeInUse::Clone` (0x649D20): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649D20, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Clone", expect = "6A FF 68 1B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x649D20, conv = thiscall, name = "CTaskSimpleCarWaitForDoorNotToBeInUse::Clone", expect = "6A FF 68 1B 2D 84 00")]
 pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_clone_649d20(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x14);
     if v1 == 0 {
@@ -3648,7 +3648,7 @@ pub fn g_task_simple_car_wait_for_door_not_to_be_in_use_clone_649d20(this: u32) 
 }
 
 /// `CTaskSimpleCarSetPedInAsPassenger::Clone` (0x649D90): clone, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x649D90, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::Clone", expect = "6A FF 68 3B 2D 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x649D90, conv = thiscall, name = "CTaskSimpleCarSetPedInAsPassenger::Clone", expect = "6A FF 68 3B 2D 84 00")]
 pub fn g_task_simple_car_set_ped_in_as_passenger_clone_649d90(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x20);
     if v1 == 0 {
@@ -3681,7 +3681,7 @@ pub fn g_task_simple_car_set_ped_in_as_passenger_clone_649d90(this: u32) -> u32 
 }
 
 /// `CTaskSimpleCarSetPedInAsDriver::Clone` (0x649E00): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649E00, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::Clone", expect = "6A FF 68 5B 2D 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x649E00, conv = thiscall, name = "CTaskSimpleCarSetPedInAsDriver::Clone", expect = "6A FF 68 5B 2D 84 00")]
 pub fn g_task_simple_car_set_ped_in_as_driver_clone_649e00(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3713,7 +3713,7 @@ pub fn g_task_simple_car_set_ped_in_as_driver_clone_649e00(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarGetOut::Clone` (0x649E70): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x649E70, conv = thiscall, name = "CTaskSimpleCarGetOut::Clone", expect = "6A FF 68 7B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x649E70, conv = thiscall, name = "CTaskSimpleCarGetOut::Clone", expect = "6A FF 68 7B 2D 84 00")]
 pub fn g_task_simple_car_get_out_clone_649e70(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x20);
     if v1 == 0 {
@@ -3728,7 +3728,7 @@ pub fn g_task_simple_car_get_out_clone_649e70(this: u32) -> u32 {
 }
 
 /// `vt_86ee94::Clone` (0x649EE0): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x649EE0, conv = thiscall, name = "vt_86ee94::Clone", expect = "6A FF 68 9B 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x649EE0, conv = thiscall, name = "vt_86ee94::Clone", expect = "6A FF 68 9B 2D 84 00")]
 pub fn g_vt_86ee94_clone_649ee0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -3742,7 +3742,7 @@ pub fn g_vt_86ee94_clone_649ee0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSetPedOut::Clone` (0x649F50): clone, thiscall, `ret`; 41 instruction(s) matched.
-#[hook(addr = 0x649F50, conv = thiscall, name = "CTaskSimpleCarSetPedOut::Clone", expect = "6A FF 68 BB 2D 84 00", unverified = "ai8g-3", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x649F50, conv = thiscall, name = "CTaskSimpleCarSetPedOut::Clone", expect = "6A FF 68 BB 2D 84 00")]
 pub fn g_task_simple_car_set_ped_out_clone_649f50(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x18);
     if v1 == 0 {
@@ -3787,7 +3787,7 @@ pub fn g_task_simple_car_set_ped_out_clone_649f50(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSlowDragPedOut::Clone` (0x649FD0): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x649FD0, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::Clone", expect = "6A FF 68 DB 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x649FD0, conv = thiscall, name = "CTaskSimpleCarSlowDragPedOut::Clone", expect = "6A FF 68 DB 2D 84 00")]
 pub fn g_task_simple_car_slow_drag_ped_out_clone_649fd0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x20);
     if v1 == 0 {
@@ -3803,7 +3803,7 @@ pub fn g_task_simple_car_slow_drag_ped_out_clone_649fd0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSlowBeDraggedOut::Clone` (0x64A040): clone, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x64A040, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::Clone", expect = "6A FF 68 FB 2D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64A040, conv = thiscall, name = "CTaskSimpleCarSlowBeDraggedOut::Clone", expect = "6A FF 68 FB 2D 84 00")]
 pub fn g_task_simple_car_slow_be_dragged_out_clone_64a040(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x20);
     if v1 == 0 {
@@ -3818,7 +3818,7 @@ pub fn g_task_simple_car_slow_be_dragged_out_clone_64a040(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarSetPedSlowDraggedOut::Clone` (0x64A0B0): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x64A0B0, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Clone", expect = "6A FF 68 1B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64A0B0, conv = thiscall, name = "CTaskSimpleCarSetPedSlowDraggedOut::Clone", expect = "6A FF 68 1B 2E 84 00")]
 pub fn g_task_simple_car_set_ped_slow_dragged_out_clone_64a0b0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -3832,7 +3832,7 @@ pub fn g_task_simple_car_set_ped_slow_dragged_out_clone_64a0b0(this: u32) -> u32
 }
 
 /// `CTaskComplexCarSlowBeDraggedOut::Clone` (0x64A120): clone, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x64A120, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Clone", expect = "6A FF 68 3B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64A120, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOut::Clone", expect = "6A FF 68 3B 2E 84 00")]
 pub fn g_task_complex_car_slow_be_dragged_out_clone_64a120(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3847,7 +3847,7 @@ pub fn g_task_complex_car_slow_be_dragged_out_clone_64a120(this: u32) -> u32 {
 }
 
 /// `CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone` (0x64A190): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x64A190, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone", expect = "6A FF 68 5B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64A190, conv = thiscall, name = "CTaskComplexCarSlowBeDraggedOutAndStandUp::Clone", expect = "6A FF 68 5B 2E 84 00")]
 pub fn g_task_complex_car_slow_be_dragged_out_and_stand_up_clone_64a190(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x14);
     if v1 == 0 {
@@ -3878,7 +3878,7 @@ pub fn g_task_simple_bike_jacked_clone_64a200(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarFallOut::Clone` (0x64A280): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x64A280, conv = thiscall, name = "CTaskSimpleCarFallOut::Clone", expect = "6A FF 68 9B 2E 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64A280, conv = thiscall, name = "CTaskSimpleCarFallOut::Clone", expect = "6A FF 68 9B 2E 84 00")]
 pub fn g_task_simple_car_fall_out_clone_64a280(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -3984,7 +3984,7 @@ pub fn g_task_simple_wait_until_ped_is_in_car_clone_64a520(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleCarJumpOut::Clone` (0x64D220): clone, thiscall, `ret`; 34 instruction(s) matched.
-#[hook(addr = 0x64D220, conv = thiscall, name = "CTaskSimpleCarJumpOut::Clone", expect = "6A FF 68 BB 31 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x64D220, conv = thiscall, name = "CTaskSimpleCarJumpOut::Clone", expect = "6A FF 68 BB 31 84 00")]
 pub fn g_task_simple_car_jump_out_clone_64d220(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -4136,7 +4136,7 @@ pub fn g_task_simple_hurt_ped_with_car_clone_655a90(this: u32) -> u32 {
 }
 
 /// `CTaskComplexWalkRoundCar::Clone` (0x655B00): clone, thiscall, `ret`; 43 instruction(s) matched.
-#[hook(addr = 0x655B00, conv = thiscall, name = "CTaskComplexWalkRoundCar::Clone", expect = "6A FF 68 EB 38 84 00", unverified = "ai8g-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x655B00, conv = thiscall, name = "CTaskComplexWalkRoundCar::Clone", expect = "6A FF 68 EB 38 84 00")]
 pub fn g_task_complex_walk_round_car_clone_655b00(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x58);
     if v1 == 0 {
@@ -4315,7 +4315,7 @@ pub fn g_task_complex_medic_treat_injured_ped_clone_659af0(this: u32) -> u32 {
 }
 
 /// `vt_86f544::Clone` (0x659B60): clone, thiscall, `ret`; 30 instruction(s) matched.
-#[hook(addr = 0x659B60, conv = thiscall, name = "vt_86f544::Clone", expect = "6A FF 68 9B 3D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x659B60, conv = thiscall, name = "vt_86f544::Clone", expect = "6A FF 68 9B 3D 84 00")]
 pub fn g_vt_86f544_clone_659b60(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x10);
     if v1 == 0 {
@@ -4328,7 +4328,7 @@ pub fn g_vt_86f544_clone_659b60(this: u32) -> u32 {
 }
 
 /// `CTaskComplexDriveFireTruck::Clone` (0x659BC0): clone, thiscall, `ret`; 35 instruction(s) matched.
-#[hook(addr = 0x659BC0, conv = thiscall, name = "CTaskComplexDriveFireTruck::Clone", expect = "6A FF 68 BB 3D 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x659BC0, conv = thiscall, name = "CTaskComplexDriveFireTruck::Clone", expect = "6A FF 68 BB 3D 84 00")]
 pub fn g_task_complex_drive_fire_truck_clone_659bc0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -4611,7 +4611,7 @@ pub fn g_task_complex_gang_leader_clone_661fa0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleGoToPointFine::Clone` (0x662040): clone, thiscall, `ret`; 45 instruction(s) matched.
-#[hook(addr = 0x662040, conv = thiscall, name = "CTaskSimpleGoToPointFine::Clone", expect = "6A FF 68 AB 49 84 00", unverified = "ai8g-4", route = "L2", hazards = "heap-writes,uninit-locals")]
+#[hook(addr = 0x662040, conv = thiscall, name = "CTaskSimpleGoToPointFine::Clone", expect = "6A FF 68 AB 49 84 00")]
 pub fn g_task_simple_go_to_point_fine_clone_662040(this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -4674,7 +4674,7 @@ pub fn g_task_complex_pass_object_clone_662220(this: u32) -> u32 {
 }
 
 /// `CTaskComplexGangJoinRespond::Clone` (0x662290): clone, thiscall, `ret`; 33 instruction(s) matched.
-#[hook(addr = 0x662290, conv = thiscall, name = "CTaskComplexGangJoinRespond::Clone", expect = "6A FF 68 4B 4A 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x662290, conv = thiscall, name = "CTaskComplexGangJoinRespond::Clone", expect = "6A FF 68 4B 4A 84 00")]
 pub fn g_task_complex_gang_join_respond_clone_662290(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x14);
     if v1 == 0 {
@@ -4704,7 +4704,7 @@ pub fn g_task_complex_prostitute_solicit_clone_6622f0(this: u32) -> u32 {
 }
 
 /// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Clone` (0x664AF0): clone, thiscall, `ret`; 63 instruction(s) matched.
-#[hook(addr = 0x664AF0, conv = thiscall, name = "CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Clone", expect = "6A FF 68 1B 4C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x664AF0, conv = thiscall, name = "CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::Clone", expect = "6A FF 68 1B 4C 84 00")]
 pub fn g_task_complex_seek_entity_centity_seek_pos_calculator_xyoffset_clone_664af0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x58);
     if v1 == 0 {
@@ -4822,7 +4822,7 @@ pub fn g_task_simple_achieve_heading_clone_66ccf0(this: u32) -> u32 {
 }
 
 /// `CTaskComplexGoToPointAndStandStill::Clone` (0x66CEA0): clone, thiscall, `ret`; 45 instruction(s) matched.
-#[hook(addr = 0x66CEA0, conv = thiscall, name = "CTaskComplexGoToPointAndStandStill::Clone", expect = "6A FF 68 AB 53 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x66CEA0, conv = thiscall, name = "CTaskComplexGoToPointAndStandStill::Clone", expect = "6A FF 68 AB 53 84 00")]
 pub fn g_task_complex_go_to_point_and_stand_still_clone_66cea0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -4918,7 +4918,7 @@ pub fn g_task_complex_go_to_point_any_means_clone_66d1e0(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleSlideToCoord::Clone` (0x66D300): clone, thiscall, `ret`; 70 instruction(s) matched.
-#[hook(addr = 0x66D300, conv = thiscall, name = "CTaskSimpleSlideToCoord::Clone", expect = "6A FF 68 B6 54 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x66D300, conv = thiscall, name = "CTaskSimpleSlideToCoord::Clone", expect = "6A FF 68 B6 54 84 00")]
 pub fn g_task_simple_slide_to_coord_clone_66d300(this: u32) -> u32 {
     let v1 = u32::from(rd::<u8>(p(this), 0x78));
     if ((v1 & 2) as u8) == (0 as u8) {
@@ -4975,7 +4975,7 @@ pub fn g_task_complex_investigate_disturbance_clone_66d3d0(this: u32) -> u32 {
 }
 
 /// `vt_87004c::Clone` (0x671330): clone, thiscall, `ret`; 63 instruction(s) matched.
-#[hook(addr = 0x671330, conv = thiscall, name = "vt_87004c::Clone", expect = "6A FF 68 0B 57 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x671330, conv = thiscall, name = "vt_87004c::Clone", expect = "6A FF 68 0B 57 84 00")]
 pub fn g_vt_87004c_clone_671330(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x58);
     if v1 == 0 {
@@ -5146,7 +5146,7 @@ pub fn g_vt_870114_clone_674bb0(this: u32) -> u32 {
 }
 
 /// `vt_8701a8::Clone` (0x674F00): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x674F00, conv = thiscall, name = "vt_8701a8::Clone", expect = "6A FF 68 7B 5B 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x674F00, conv = thiscall, name = "vt_8701a8::Clone", expect = "6A FF 68 7B 5B 84 00")]
 pub fn g_vt_8701a8_clone_674f00(this: u32) -> u32 {
     let v1 = c_4b5620_c1(0x1C);
     if v1 == 0 {
@@ -5215,7 +5215,7 @@ pub fn g_task_interior_be_in_shop_clone_675470(this: u32) -> u32 {
 }
 
 /// `CTaskInteriorShopKeeper::Clone` (0x6756C0): clone, thiscall, `ret`; 44 instruction(s) matched.
-#[hook(addr = 0x6756C0, conv = thiscall, name = "CTaskInteriorShopKeeper::Clone", expect = "6A FF 68 1B 5C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x6756C0, conv = thiscall, name = "CTaskInteriorShopKeeper::Clone", expect = "6A FF 68 1B 5C 84 00")]
 pub fn g_task_interior_shop_keeper_clone_6756c0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x20);
     if v1 == 0 {
@@ -5244,7 +5244,7 @@ pub fn g_task_interior_shop_keeper_clone_6756c0(this: u32) -> u32 {
 }
 
 /// `CTaskInteriorGoToInfo::Clone` (0x675820): clone, thiscall, `ret`; 38 instruction(s) matched.
-#[hook(addr = 0x675820, conv = thiscall, name = "CTaskInteriorGoToInfo::Clone", expect = "6A FF 68 5B 5C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x675820, conv = thiscall, name = "CTaskInteriorGoToInfo::Clone", expect = "6A FF 68 5B 5C 84 00")]
 pub fn g_task_interior_go_to_info_clone_675820(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x18);
     if v1 == 0 {
@@ -5264,7 +5264,7 @@ pub fn g_task_interior_go_to_info_clone_675820(this: u32) -> u32 {
 }
 
 /// `CTaskInteriorUseInfo::Clone` (0x675AB0): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x675AB0, conv = thiscall, name = "CTaskInteriorUseInfo::Clone", expect = "6A FF 68 9B 5C 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x675AB0, conv = thiscall, name = "CTaskInteriorUseInfo::Clone", expect = "6A FF 68 9B 5C 84 00")]
 pub fn g_task_interior_use_info_clone_675ab0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x1C);
     if v1 == 0 {
@@ -5419,7 +5419,7 @@ pub fn g_vt_870480_clone_67c270(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleLand::Clone` (0x67C3F0): clone, thiscall, `ret`; 46 instruction(s) matched.
-#[hook(addr = 0x67C3F0, conv = thiscall, name = "CTaskSimpleLand::Clone", expect = "6A FF 68 4B 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x67C3F0, conv = thiscall, name = "CTaskSimpleLand::Clone", expect = "6A FF 68 4B 62 84 00")]
 pub fn g_task_simple_land_clone_67c3f0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x14);
     if v1 == 0 {
@@ -5472,7 +5472,7 @@ pub fn g_task_simple_land_clone_67c3f0(this: u32) -> u32 {
 }
 
 /// `CTaskComplexFallToDeath::Clone` (0x67C480): clone, thiscall, `ret`; 42 instruction(s) matched.
-#[hook(addr = 0x67C480, conv = thiscall, name = "CTaskComplexFallToDeath::Clone", expect = "6A FF 68 6B 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x67C480, conv = thiscall, name = "CTaskComplexFallToDeath::Clone", expect = "6A FF 68 6B 62 84 00")]
 pub fn g_task_complex_fall_to_death_clone_67c480(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x24);
     if v1 == 0 {
@@ -5491,7 +5491,7 @@ pub fn g_task_complex_fall_to_death_clone_67c480(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleJump::Clone` (0x67C510): clone, thiscall, `ret`; 45 instruction(s) matched.
-#[hook(addr = 0x67C510, conv = thiscall, name = "CTaskSimpleJump::Clone", expect = "6A FF 68 8B 62 84 00", unverified = "ai8h-1", route = "L2", hazards = "heap-writes,uninit-locals")]
+#[hook(addr = 0x67C510, conv = thiscall, name = "CTaskSimpleJump::Clone", expect = "6A FF 68 8B 62 84 00")]
 pub fn g_task_simple_jump_clone_67c510(this: u32) -> u32 {
     let mut frame = [0u32; 0x100];
     let fb = frame.as_mut_ptr() as usize as u32;
@@ -5528,7 +5528,7 @@ pub fn g_task_simple_jump_clone_67c510(this: u32) -> u32 {
 }
 
 /// `CTaskComplexJump::Clone` (0x67C5A0): clone, thiscall, `ret`; 36 instruction(s) matched.
-#[hook(addr = 0x67C5A0, conv = thiscall, name = "CTaskComplexJump::Clone", expect = "6A FF 68 AB 62 84 00", unverified = "ai8g-5", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x67C5A0, conv = thiscall, name = "CTaskComplexJump::Clone", expect = "6A FF 68 AB 62 84 00")]
 pub fn g_task_complex_jump_clone_67c5a0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x14);
     if v1 == 0 {
@@ -5947,7 +5947,7 @@ pub fn g_task_simple_pick_up_entity_clone_692a90(this: u32) -> u32 {
 }
 
 /// `CTaskSimplePutDownEntity::Clone` (0x692B70): clone, thiscall, `ret`; 93 instruction(s) matched.
-#[hook(addr = 0x692B70, conv = thiscall, name = "CTaskSimplePutDownEntity::Clone", expect = "64 A1 00 00 00 00", unverified = "ai8g-6", route = "L2", hazards = "heap-writes")]
+#[hook(addr = 0x692B70, conv = thiscall, name = "CTaskSimplePutDownEntity::Clone", expect = "64 A1 00 00 00 00")]
 pub fn g_task_simple_put_down_entity_clone_692b70(this: u32) -> u32 {
     let v1 = rd::<u32>(p(this), 0x30);
     if v1 == 0 {
@@ -6005,7 +6005,7 @@ pub fn g_task_simple_put_down_entity_clone_692b70(this: u32) -> u32 {
 }
 
 /// `vt_870b98::Clone` (0x692C80): clone, thiscall, `ret`; 32 instruction(s) matched.
-#[hook(addr = 0x692C80, conv = thiscall, name = "vt_870b98::Clone", expect = "6A FF 68 3B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x692C80, conv = thiscall, name = "vt_870b98::Clone", expect = "6A FF 68 3B 74 84 00")]
 pub fn g_vt_870b98_clone_692c80(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x34);
     if v1 == 0 {
@@ -6019,7 +6019,7 @@ pub fn g_vt_870b98_clone_692c80(this: u32) -> u32 {
 }
 
 /// `CTaskSimpleDuck::Clone` (0x692CF0): clone, thiscall, `ret`; 37 instruction(s) matched.
-#[hook(addr = 0x692CF0, conv = thiscall, name = "CTaskSimpleDuck::Clone", expect = "6A FF 68 5B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x692CF0, conv = thiscall, name = "CTaskSimpleDuck::Clone", expect = "6A FF 68 5B 74 84 00")]
 pub fn g_task_simple_duck_clone_692cf0(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {
@@ -6034,7 +6034,7 @@ pub fn g_task_simple_duck_clone_692cf0(this: u32) -> u32 {
 }
 
 /// `vt_870bec::Clone` (0x692D60): clone, thiscall, `ret`; 31 instruction(s) matched.
-#[hook(addr = 0x692D60, conv = thiscall, name = "vt_870bec::Clone", expect = "6A FF 68 7B 74 84 00", unverified = "ai7-4", route = "L2", hazards = "none")]
+#[hook(addr = 0x692D60, conv = thiscall, name = "vt_870bec::Clone", expect = "6A FF 68 7B 74 84 00")]
 pub fn g_vt_870bec_clone_692d60(this: u32) -> u32 {
     let v1 = c_61a5a0_c1(0x28);
     if v1 == 0 {

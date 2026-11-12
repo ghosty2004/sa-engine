@@ -585,7 +585,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2045,7 +2045,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2131,6 +2131,7 @@ version = "0.1.0"
 name = "sa-game"
 version = "0.1.0"
 dependencies = [
+ "js-sys",
  "libc",
  "png",
  "sa-ai",
@@ -2149,11 +2150,19 @@ dependencies = [
  "sa-rwcore",
  "sa-samp",
  "sa-samp-api",
+ "sa-samp-ui",
  "sa-script",
  "sa-stream",
  "sa-veh",
  "sa-weapon",
  "sa-world",
+ "samp-client",
+ "samp-proto",
+ "samp-saa",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "web-time",
  "wgpu",
 ]
 
@@ -2483,6 +2492,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "samp-client"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
+dependencies = [
+ "sa-net",
+ "sa-samp-api",
+ "samp-proto",
+ "samp-saa",
+ "samp-ui",
+ "web-time",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "samp-proto"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
+dependencies = [
+ "web-time",
+]
+
+[[package]]
+name = "samp-saa"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
+
+[[package]]
+name = "samp-ui"
+version = "0.1.0"
+source = "git+file:///home/ghosty2004/samp-rs?rev=fb890107bdd1acb2edbdafac39ad6d45130629f3#fb890107bdd1acb2edbdafac39ad6d45130629f3"
+dependencies = [
+ "samp-proto",
 ]
 
 [[package]]
@@ -3241,6 +3285,7 @@ dependencies = [
  "thiserror 2.0.21",
  "wgpu-core-deps-apple",
  "wgpu-core-deps-emscripten",
+ "wgpu-core-deps-wasm",
  "wgpu-core-deps-windows-linux-android",
  "wgpu-hal",
  "wgpu-naga-bridge",
@@ -3261,6 +3306,15 @@ name = "wgpu-core-deps-emscripten"
 version = "29.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01e09be551dc939498bdd5f6b2c66e55ab275dad25825267a08605a80fc9f0af"
+dependencies = [
+ "wgpu-hal",
+]
+
+[[package]]
+name = "wgpu-core-deps-wasm"
+version = "29.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af1fb1798be2a912497d4c224f72d39bb0cb34af50e8bcc29865bc339c943059"
 dependencies = [
  "wgpu-hal",
 ]
@@ -3358,7 +3412,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]

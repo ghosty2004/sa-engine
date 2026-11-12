@@ -60,10 +60,18 @@ pub fn install(p: Platform) {
 
 /// Runs `f` on the platform state. Stand-ins never call back into game code while holding it.
 pub fn with<R>(key: &'static str, f: impl FnOnce(&mut Platform) -> R) -> R {
+    #[cfg(target_arch = "wasm32")]
+    crate::web::maybe_sample(key);
     let mut b = PLATFORM.lock().unwrap_or_else(|e| e.into_inner());
     let p = b.as_mut().expect("sa-game: platform not installed");
     *p.calls.entry(key).or_default() += 1;
     f(p)
+}
+
+/// wasm32: whether the platform lock is free (after an iteration left through a JS exception, see `web::recover`).
+#[cfg(target_arch = "wasm32")]
+pub fn lock_is_free() -> bool {
+    !matches!(PLATFORM.try_lock(), Err(std::sync::TryLockError::WouldBlock))
 }
 
 /// Reads a NUL-terminated string from game memory (at most 4 KiB).
@@ -507,7 +515,123 @@ pub(crate) fn release_semaphore(h: GPtr<u8>, n: i32, prev: GPtr<i32>) -> i32 {
         None => 0,
     };
     crate::det::released(h32(h));
+    #[cfg(target_arch = "wasm32")]
+    coop::released(h32(h));
     r
+}
+
+/// wasm32 has no threads: the streaming thread is cooperative. `ResumeThread` of `CdStreamThread` marks it running;
+/// every release of the stream semaphore (`CdStreamRead` queued a request) then runs the thread's loop body
+/// (`cd_stream_thread_step`) on the main thread once per semaphore count, so each read completes at its request (as
+/// `--fixed-step` arranges natively). The audio threads are cooperative too: once resumed, the main loop runs one pass
+/// of `CAESmoothFadeThread::SmoothFadeProc` every iteration (natively `Sleep(1)` between passes) and one pass of
+/// `CAEStreamThread::MainLoop` every 100 ms ([`service_audio_threads`]).
+#[cfg(target_arch = "wasm32")]
+pub(crate) mod coop {
+    use std::sync::Mutex;
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    use super::kernel;
+
+    /// The `CdStreamThread` handle, and whether it was resumed.
+    pub static STREAM_THREAD: AtomicU32 = AtomicU32::new(0);
+    pub static STREAM_RUNNING: AtomicU32 = AtomicU32::new(0);
+
+    /// A cooperative audio thread: handle, entry, parameter, resumed, the stream loop's locals, its last pass (ms).
+    struct AudioThread {
+        h: u32,
+        entry: u32,
+        param: u32,
+        running: bool,
+        stream: sa_audio::port4_hw::StreamLoopState,
+        last_ms: f64,
+    }
+
+    static AUDIO: Mutex<Vec<AudioThread>> = Mutex::new(Vec::new());
+
+    /// The stream thread's pass period: its `Sleep(100)`.
+    const STREAM_PERIOD_MS: f64 = 100.0;
+
+    pub fn audio_thread_created(h: u32, entry: u32, param: u32) {
+        AUDIO.lock().unwrap_or_else(|e| e.into_inner()).push(AudioThread {
+            h,
+            entry,
+            param,
+            running: false,
+            stream: Default::default(),
+            last_ms: f64::NEG_INFINITY,
+        });
+    }
+
+    pub fn audio_thread_resumed(h: u32) {
+        for t in AUDIO.lock().unwrap_or_else(|e| e.into_inner()).iter_mut() {
+            if t.h == h {
+                t.running = true;
+            }
+        }
+    }
+
+    /// One pass of each resumed audio thread that is due (called once per main-loop iteration). The list is copied
+    /// out first: a pass may create or resume threads.
+    pub fn service_audio_threads() {
+        let now = web_time::Instant::now();
+        static T0: std::sync::OnceLock<web_time::Instant> = std::sync::OnceLock::new();
+        let ms = now.duration_since(*T0.get_or_init(|| now)).as_secs_f64() * 1000.0;
+        let due: Vec<(usize, u32, u32, sa_audio::port4_hw::StreamLoopState)> = {
+            let mut g = AUDIO.lock().unwrap_or_else(|e| e.into_inner());
+            g.iter_mut()
+                .enumerate()
+                .filter(|(_, t)| t.running)
+                .filter_map(|(i, t)| {
+                    if t.entry == 0x4F_15C0 {
+                        if ms - t.last_ms < STREAM_PERIOD_MS {
+                            return None;
+                        }
+                        t.last_ms = ms;
+                    }
+                    Some((i, t.entry, t.param, t.stream))
+                })
+                .collect()
+        };
+        for (i, entry, param, mut st) in due {
+            CURRENT.store(i as u32 + 1, Ordering::Relaxed);
+            let alive = match entry {
+                0x4E_EE90 => sa_audio::port4_hw::smooth_fade_step(param),
+                _ => sa_audio::port4_hw::stream_thread_step(param, &mut st),
+            };
+            let mut g = AUDIO.lock().unwrap_or_else(|e| e.into_inner());
+            if let Some(t) = g.get_mut(i) {
+                t.stream = st;
+                // a thread whose loop ended has returned
+                t.running = alive;
+            }
+        }
+        CURRENT.store(0, Ordering::Relaxed);
+    }
+
+    /// The audio thread whose pass is running (index + 1; 0 = none).
+    static CURRENT: AtomicU32 = AtomicU32::new(0);
+
+    /// The running pass reached an unported callee and left through a JS exception (`web::audio_threads`): natively
+    /// the thread's panic ends that thread and the game goes on, so the thread stops here too. Returns its entry.
+    pub fn audio_thread_blocked() -> Option<u32> {
+        let i = CURRENT.swap(0, Ordering::Relaxed).checked_sub(1)?;
+        let mut g = AUDIO.lock().unwrap_or_else(|e| e.into_inner());
+        let t = g.get_mut(i as usize)?;
+        t.running = false;
+        Some(t.entry)
+    }
+
+    pub fn released(h: u32) {
+        if STREAM_RUNNING.load(Ordering::Relaxed) == 0
+            || h != sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32
+        {
+            return;
+        }
+        while kernel().wait(h, 0) == sa_platform::kernel::WAIT_OBJECT_0 {
+            sa_stream::cdstream::cd_stream_thread_step();
+        }
+    }
 }
 pub(crate) fn wait_for_single_object(h: GPtr<u8>, ms: u32) -> u32 {
     crate::det::wait(h32(h), ms, |h, ms| kernel().wait(h, ms))
@@ -576,13 +700,41 @@ pub(crate) fn create_thread(_sec: u32, _stack: u32, entry: u32, param: u32, _fla
         }),
         _ => return GPtr::from_addr(0),
     };
+    // a game thread that stops on a panic (an unported function) releases the critical sections it holds, so the
+    // main thread does not block on them (the audio stream thread loading a radio track, STD-15)
+    let f: Box<dyn FnOnce() + Send> = Box::new(move || {
+        if std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).is_err() {
+            let n = crate::imports::release_critical_sections_of_current_thread();
+            eprintln!("sa-game: game thread (entry {entry:#x}) stopped on a panic; {n} critical section(s) released");
+        }
+    });
     let (h, tid) = kernel().create_thread(f);
+    #[cfg(target_arch = "wasm32")]
+    if entry == sa_stream::cdstream::THREAD_ENTRY {
+        coop::STREAM_THREAD.store(h, std::sync::atomic::Ordering::Relaxed);
+    } else {
+        coop::audio_thread_created(h, entry, param);
+    }
     if !id.is_null() {
         id.write(tid);
     }
     GPtr::from_addr(h as usize)
 }
 pub(crate) fn resume_thread(h: GPtr<u8>) -> u32 {
+    #[cfg(target_arch = "wasm32")]
+    #[allow(clippy::needless_return)] // the native call below is cfg'd out on wasm32
+    {
+        use std::sync::atomic::Ordering;
+        if h32(h) == coop::STREAM_THREAD.load(Ordering::Relaxed) && h32(h) != 0 {
+            coop::STREAM_RUNNING.store(1, Ordering::Relaxed);
+            // requests queued before the thread ran
+            coop::released(sa_stream::cdstream::STREAM_SEMAPHORE.get().addr() as u32);
+        }
+        coop::audio_thread_resumed(h32(h));
+        // no threads: the others run cooperatively (the previous suspend count, as Win32 returns it)
+        return 1;
+    }
+    #[cfg(not(target_arch = "wasm32"))]
     kernel().resume_thread(h32(h))
 }
 pub(crate) fn get_current_thread() -> GPtr<u8> {
@@ -597,7 +749,7 @@ pub(crate) fn set_thread_priority(h: GPtr<u8>, p: i32) -> i32 {
 /// `CMemoryMgr::MallocAlign` (0x72F4C0) / `FreeAlign` (0x72F4F0) stand-ins (not ported): plain
 /// leaked-until-freed allocations through the kernel table.
 pub(crate) fn malloc_align(size: u32, align: u32, _hint: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         // the deterministic heap: the block's own address in the dword before the aligned pointer
         let a = (align as usize).max(4);
         let raw = crate::detheap::alloc(size as usize + a + 4);
@@ -608,7 +760,7 @@ pub(crate) fn malloc_align(size: u32, align: u32, _hint: u32) -> GPtr<u8> {
     GPtr::from_addr(kernel().local_alloc(size as usize))
 }
 pub(crate) fn free_align(p: GPtr<u8>) {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         if !p.is_null() {
             crate::detheap::free(GPtr::from_addr(
                 GPtr::<u32>::from_addr(p.addr() - 4).read() as usize

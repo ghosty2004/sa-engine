@@ -81,8 +81,11 @@ pub trait WorldState {
     /// Weather ids: forced, new, old (`CWeather::ForcedWeatherType/NewWeatherType/OldWeatherType`
     /// 0xC81318/0xC8131C/0xC81320).
     fn weather(&self) -> (i16, i16, i16);
-    /// Forces a weather (writes all three like samp).
+    /// Forces a weather now (writes all three like samp while the game clock is off).
     fn set_weather(&mut self, weather: u8) -> GameResult<()>;
+    /// Forces a weather through `ForcedWeatherType` only (samp while the game clock runs: the weather
+    /// blends over as the game's weather update moves on).
+    fn force_weather(&mut self, weather: u8) -> GameResult<()>;
     /// Gravity (`GAME_GRAVITY` 0x863984).
     fn gravity(&self) -> f32;
     /// Sets gravity.

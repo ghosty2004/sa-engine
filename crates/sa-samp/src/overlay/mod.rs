@@ -23,6 +23,14 @@ pub struct Overlay {
     /// The atlas raster (`RwRaster*`), 0 before the upload or when it failed.
     raster: u32,
     upload_failed: bool,
+    /// samp's skin (`sampgui.png` + `mouse.png`, [`sa_samp_ui::skin`]) as RGBA8, from the user's SA:MP
+    /// install; `None` = flat controls.
+    skin_image: Option<Vec<u8>>,
+    /// The skin raster, 0 before the upload or when it failed.
+    skin_raster: u32,
+    skin_failed: bool,
+    /// The UI font file from the user's system (Arial), `None` = the committed Liberation Sans Bold.
+    font_file: Option<Vec<u8>>,
     big: render::BigMessages,
     sprites: render::Sprites,
     /// Frames drawn (for logs).
@@ -60,6 +68,31 @@ impl<V: View> WorldView for EngineWorld<'_, V> {
 }
 
 impl Overlay {
+    /// Gives the overlay samp's skin texture: `rgba` is [`sa_samp_ui::skin::TEXTURE_W`] ×
+    /// [`sa_samp_ui::skin::TEXTURE_H`] RGBA8 (`sampgui.png` at the top, `mouse.png` at (0, 512)).
+    pub fn set_skin(&mut self, rgba: Vec<u8>) {
+        if self.skin_raster != 0 {
+            render::destroy_raster(self.skin_raster);
+        }
+        self.skin_raster = 0;
+        self.skin_failed = false;
+        self.skin_image = Some(rgba);
+    }
+
+    /// Whether the skin texture is on the GPU.
+    pub fn skin_uploaded(&self) -> bool {
+        self.skin_raster != 0
+    }
+
+    /// Uses `ttf` (the user's own Arial Bold, as samp's D3DX "Arial") for the UI fonts instead of the committed
+    /// Liberation Sans Bold. Ignored when it does not parse.
+    pub fn set_font(&mut self, ttf: Vec<u8>) {
+        if sa_samp_ui::font::parses(&ttf) {
+            self.font_file = Some(ttf);
+            self.atlas = None;
+        }
+    }
+
     /// Whether the glyph atlas is on the GPU (otherwise UI text falls back to the game font).
     pub fn atlas_uploaded(&self) -> bool {
         self.raster != 0
@@ -95,7 +128,10 @@ impl<V: View> NativeGame<V> {
         }
         let heights = heights_for_width(w as u32, ov.ui.options().font_size);
         if ov.atlas.as_ref().is_none_or(|a| a.heights() != heights) {
-            ov.atlas = Some(FontAtlas::build(heights));
+            ov.atlas = Some(match &ov.font_file {
+                Some(ttf) => FontAtlas::build_from(ttf, heights),
+                None => FontAtlas::build(heights),
+            });
             if ov.raster != 0 {
                 render::destroy_raster(ov.raster);
             }
@@ -109,13 +145,24 @@ impl<V: View> NativeGame<V> {
                 None => ov.upload_failed = true,
             }
         }
+        if ov.skin_raster == 0
+            && !ov.skin_failed
+            && let Some(img) = &ov.skin_image
+        {
+            use sa_samp_ui::skin::{TEXTURE_H, TEXTURE_W};
+            match render::upload_rgba(TEXTURE_W, TEXTURE_H, img) {
+                Some(r) => ov.skin_raster = r,
+                None => ov.skin_failed = true,
+            }
+        }
+        ov.ui.set_skin(ov.skin_raster != 0);
         if phase == FramePhase::After2d {
             let list = ov.ui.build_textdraws(w, h);
-            render::draw(&list, atlas, ov.raster, &mut ov.sprites, false);
+            render::draw(&list, atlas, ov.raster, ov.skin_raster, &mut ov.sprites, false);
         } else {
             let now = self.game_time_ms();
             let list = ov.ui.build(atlas, &EngineWorld { game: self }, w, h, now);
-            render::draw(&list, atlas, ov.raster, &mut ov.sprites, true);
+            render::draw(&list, atlas, ov.raster, ov.skin_raster, &mut ov.sprites, true);
             ov.frames += 1;
         }
         self.overlay = ov;

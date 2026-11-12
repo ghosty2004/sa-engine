@@ -1684,3 +1684,317 @@ runs, play-package binary vs the fix), `offscreen-before-after-{0100,0130,0160}.
 camera / resample / blur / gradient passes, RGB above, alpha below), `colour-filter-draws-before-fix.png`.
 
 Not done: a Wine reference frame of the original at the same spot; the black near palm (not investigated).
+
+## 21. STD-14: the enter-car chain up to the door, lane integration, the window heap
+
+### 21.1 Main-session decisions on STD-13's questions (recorded by STD-14, 2026-11-12)
+
+1. **One heap layout everywhere:** window runs serve the game heap from the deterministic mode's fixed-address
+   region too (`det::fixed_heap`, decided at argument parsing, before the first game allocation); `--system-heap`
+   turns it off. The region falls back to a kernel-chosen address when 0x18000000 is taken (no `setarch -R` in the
+   play package). Freed blocks are reused only within their size class; long sessions were not measured.
+2. **The flare:** the state-level match of 19.6 is enough for now; no lane run on it.
+
+### 21.2 Base and merges
+
+Base STD-13 (`worktree-agent-adab932ed2ad46a44`, 9e704a6). Cherry-picked, in order: PORT-AI-8 (f9328ce, 462c48d,
+5e4797c, 60ec250, e030fca, later d879c4d), WRITER-NATIVE (404c763; 68ffe50..34e3306 without 6c6d495, a duplicate
+of 404c763; f19bf238, 092fa866; 0ab02d5..654c82d without 1a13d09), WRITER-ATTR (3461aa8; dcbe3d2, 53c1f7e,
+5ee67d7, 2c9d51a; the rest already came through WRITER-NATIVE), RENDER-SHADOW (7e080de, 86d6e5f, 3984228, its
+platform.md section 20), PORT-VEH-3/4 (1e2f939, be17e4f, 08c723d, 49cc1ac, df2eefb). Conflicts in the generated
+queue files (`catalog/verify-queue.csv`, `docs/verify/QUEUE.md`) were resolved to ours and not regenerated.
+
+Duplicates removed on the way (each address registered once, `cargo test -p sa-hook --lib` 58 passed):
+* PORT-AI-8's generated copies (`gen_*.rs`, `samp_reached_small.rs`, `intel_group_misc.rs`) of 47 functions other
+  lanes port by hand; WRITER-NATIVE's f19bf238 then regenerated the AI-GEN modules without them.
+* STD-13's `CBike::PlayCarHorn`, STD-14's `IsPlayerToQuitCarEnter` and crane native in favour of PORT-VEH-3/4's.
+* The keycell `READERS` of both sides merged (41 readers).
+
+**AI-GEN bug found:** the generated bodies of 0x5F2B80, 0x5F3730 and 0x5F3B40 call
+`ComputeEntityBoundingBoxCornersUncached` 0x5F1FA0 as a one-argument thiscall; the original pushes three cdecl
+arguments. The enter-car walk crashed on the null entity (SIGSEGV at 0x36). The three addresses are excluded in
+`tools/gen/ai_patterns_exclude.txt`; other callees whose entry is `nop; jmp` may be misdeclared the same way.
+
+### 21.3 Ports (`docs/arch/std14-ports.csv`, `tools/native/std14_ports.py`)
+
+* `std14-veh-1`: `CCarEnterExit::GetPositionToOpenCarDoor` 0x64E740, `IsRoomForPedToLeaveCar` 0x6504C0 (both
+  unreversed in gta-reversed), `GetNearestCarDoor` 0x6528F0 (entry chunk 0x4058AC; the bytes differ from
+  gta-reversed in the bike branch, door 0x12 and the towed-vehicle path test).
+* `std14-ai-1`: `CTaskComplexEnterCar` `CreateFirstSubTask` 0x643A60, `ControlSubTask` 0x63A890, `CreateSubTask`
+  0x63E040, `CreateNextSubTask` 0x63E990 (0x2C0 and the fall-and-get-up order follow the bytes),
+  `CreateNextSubTask_AfterSimpleCarAlign` 0x63F970 (chat reactions with `rand()` at their call sites), the
+  `CTaskComplexEnterCarAsDriver` destructor 0x640330; `ComputeTargetDoorOppositeToFlag` 0x63AB70 is called directly
+  (not in the catalogue).
+* `std14-veh-2`: `CVehicle::ProcessOpenDoor` 0x6D56C0 (the door enum's default passes the time's bits; the default
+  animation groups of the last cases read the pushed `this` and argument slots as floats, as the bytes do).
+* `std14-ai-2`: `CEventLeaderEnteredCarAsDriver` destructor 0x48E220, `CTaskComplexGoToCarDoorAndStandStill::
+  ControlSubTask` 0x64A820, `CTaskSimpleSlideToCoord::ProcessPed` 0x66C4E0.
+* Phase-B natives of existing ports: `CTaskSimpleCarSetPedOut::PositionPedOutOfCollision` 0x6479B0 (PORT-AI-3's
+  body, unhooked for its split L2 difference) and `CAERadioTrackManager::QueueUpTracksForStation` 0x4EA670
+  (unhookable entry).
+* Extended partial ports: `CCarAI::UpdateCarAI` 0x41DA30 now takes the ported body for the missions both of its
+  mission switches leave to the default (45..=51, 56..=58, 62, 63, > 68: parking, heli landing...); the parking car
+  at Grove Street (mission 45) blocked every frame. `SteerAICarWithPhysics_OnlyMission` 0x436A90 dispatches the
+  parking missions 0x2D / 0x31 and 0x2E / 0x32 to the ported `SteerAICarParkPerpendicular` / `Parallel`.
+* sa-game: `SA_GAME_VEHLIST=N` (vehicles near the player, with mission and law flag) and
+  `SA_GAME_TELEPORT=ITER:X:Y:Z[:HEADING]` (the player through its `Teleport` virtual) for exploration runs.
+
+### 21.4 Runs (release, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, no stubs)
+
+Enter-car scenario: deterministic, `SA_GAME_TELEPORT=60:2456.5:-1761.7:13.6` (next to the parked Savanna, model
+567, at (2452.88, -1761.75)), `SA_GAME_KEYS=f:100:103`.
+
+| run | first blocker | where the player got |
+|---|---|---|
+| car1 | `GetNearestCarDoor` 0x6528F0 | standing |
+| car4 | `CreateFirstSubTask` 0x643A60, the 0x640330 destructor | standing |
+| car5..car9 | the leader event 0x4B0EF0, `UpdateCarAI` (mission 45), the steering of mission 45 | standing |
+| car9 | SIGSEGV in the AI-GEN body of 0x5F3730 (21.2) | standing |
+| car12 | `GoToCarDoorAndStandStill::ControlSubTask` 0x64A820 | standing |
+| car13..car14 | `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0, `CVehicle::ProcessOpenDoor` 0x6D56C0 | at the door (2454.72, -1761.54) |
+| car15 (ProcessOpenDoor ported) | `LineUpPedWithCar::ProcessPed` 0x6513A0 (from frame 118), then `ProcessPlayerVehicleEngine` 0x4FBB10, the excluded 0x5F3730 | at the door |
+
+Window runs (headless gamescope 800x600, `--auto-input`, W held from iteration 150): 60 s, 1,887 frames, 0
+blocked, no crash (system heap, before 21.1); with the fixed heap a `CTaskSimpleSlideToCoord::ProcessPed` block
+appeared (since ported).
+
+Evidence (not committed, `target/std14-evidence/`): `enter-door/png/` and `enter-door/cj-to-car-door.mp4`
+(deterministic run, CJ teleported beside the car turns and walks to its door; the camera faces the wall),
+`car*/sa-game.log` (blocker lists), `win3/`, `win4/`, `win5/` (window runs).
+
+### 21.5 Play package
+
+Refreshed at 08:54 (RENDER-SHADOW), 09:04 (WRITER-NATIVE car damage, two stubs left), 09:33 (no stubs,
+`SA_GAME_STUB` gone from `play.sh`), 09:47 (fixed heap, SlideToCoord, fists) and 09:54 (ProcessOpenDoor; 90 s
+headless window walk: 1,128 frames, 0 blocked, no crash). The README says not to press F next to a car: three identical blocked frames
+stop a window run.
+
+### 21.6 Next gaps, in order
+
+1. `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 (unreversed; 0x6513A0..beyond 0x652640, more than 1,000
+   instructions: the chunk 0x406B07, SEH, a per-anim switch of 0xFA entries, the slide offset and heading blend, then
+   for the bike / quad anims 0x167..0x16B two `CMatrix` locals, `RtQuatConvertFromMatrix` 0x7EB5C0, an inlined
+   quaternion slerp with polynomial sin / cos, and more) and `GetLocalPositionToOpenCarDoor` 0x64FC10. Read up to
+   0x651FFD in STD-14, not ported: the next lane's main item for entering cars.
+2. Then the get-in / close-door / set-ped-in tasks run (their bodies are ported) and the driving path follows:
+   PORT-VEH-4's `ProcessControlInputs` are now in; camera in car, vehicle audio (`ProcessPlayerVehicleEngine`
+   0x4FBB10 blocked in car14).
+3. `CCarEnterExit::GetNearestCarPassengerDoor` 0x650BB0 (passengers), `CEventVehicleCollision` ctor 0x4AC840,
+   `CPed::KillPedWithCar` 0x5F0360, `ComputeClosestSurfacePoint` 0x5F3B70, `ChoosePolicePedOccupation` 0x610F40.
+4. `UpdateCarAI` for law enforcers with a wanted level and the remaining missions.
+5. AI-GEN: check the other `nop; jmp` callees for the 0x5F1FA0 argument bug; port 0x5F3730 / 0x5F2B80 / 0x5F3B40 by
+   hand (0x5F3730 blocks once excluded).
+6. `CAEVehicleAudioEntity::ProcessPlayerVehicleEngine` 0x4FBB10 (blocked every frame after 178 in car15).
+
+### 21.7 Checks
+
+clippy -D warnings, i686-unknown-linux-gnu: sa-ai, sa-veh, sa-core, sa-game, sa-pop, sa-audio, sa-ports; host:
+sa-ai, sa-veh, sa-core, sa-pop, sa-audio, sa-hook. `cargo test -p sa-hook --lib`: 58 passed. Every commit builds
+(the release sa-game build after each).
+
+### 21.8 Decisions needed
+
+1. Whether to keep the fixed-address heap in the play package before a long-session memory test (it never returns
+   memory across size classes).
+2. Whether PORT-AI-3's split-L2-failing `PositionPedOutOfCollision` / `SetPedOut::ProcessPed` bodies may stay
+   registered for phases B/C until their difference is resolved.
+
+## 22. WEB-1: sa-game in the browser (wasm32)
+
+User decision 2026-11-12: keep the legacy 32-bit layouts and the address arena in wasm32 linear memory. Base: STD-13
+(`worktree-agent-adab932ed2ad46a44`, 7da5de4). How to run it: `web/README.md` (`tools/web/build.sh`, then
+`tools/web/serve.sh [--game DIR]`, open http://localhost:8642/).
+
+### 22.1 The arena at the original addresses
+
+wasm32 pointers are 32-bit like the exe's, so the arena is plain linear memory: the module is linked with
+`--global-base=0x1600000 --no-stack-first -zstack-size=16 MiB` (`tools/web/build.sh`), so its data, stack and heap lie
+above 0x1600000 and everything below is free. `arena::map_fixed` replaces `mmap(MAP_FIXED_NOREPLACE)`: on wasm32 it
+only checks that the range lies below `WASM_LOW_END` (the memory is already there and zero). The exe's
+`.rdata`/`.data`/`.bss`/`_TEXT_HA`/`_rwdseg`/`.rsrc` (0x858000..0xCB1000), the read-only code bytes the no-CD protection
+reads (0x401000..0x858000, `.HOODLUM` 0x1556000..0x1577000) and sa-game's COM / D3D9 / DirectSound pages (0x30000..)
+sit at their original addresses; import traps stay 0x20000 + 0x10·i. No page protection (`.rdata` is writable),
+no fault handler (a stray access below memory size reads the arena or zeros; above it the module traps).
+`tools/web/check_layout.mjs` checks the built module (data segments ≥ 0x1600000, initial stack pointer above it).
+
+### 22.2 `orig!` dispatch on wasm32: type-erased entries (`sa_core::wabi`)
+
+wasm checks every indirect call against the callee's exact signature, while declarations and ports may disagree on
+types the x86 ABI tolerates (`u8`/`u32`, `f32`/`X87`, struct vs words, variadic CRT calls). So every registry entry
+on wasm32 is `extern "C" fn(callee, args: *const u32, ret: *mut Ret)`: the caller (`__orig_dispatch`) pushes its
+arguments as the original's stack words (each rounded up to 4 bytes, in declaration order, `this` / register
+arguments first), the callee reads them with its own types; results come back as EAX:EDX bytes or ST0 (an f64,
+used when the type is `f32`/`f64`/`X87`). `#[hook]` and `#[native]` emit such an entry next to the x86 one; the CRT
+replacements, imports, COM methods, RW stand-ins, static-initialiser shapes, lone-`ret` natives and the
+`SA_GAME_STUB` exploration stubs register erased entries too (`wabi_wrap!`). `sprintf`/`sscanf` read their variadic
+words from the buffer as the x86 entries read the stack. X87 results lose their 80-bit tail across a dispatch
+(f64 in `Ret`).
+
+### 22.3 What wasm32 lacks, and the replacements
+
+| need | wasm32 |
+|---|---|
+| threads (`CdStreamThread`, audio threads, DirectSound mixer) | none: `ResumeThread` of `CdStreamThread` marks it running and each release of the stream semaphore runs its loop body (`cd_stream_thread_step`, split out of the port without behaviour change) once per count on the main thread; audio threads run cooperatively (22.8); the DirectSound mixer runs once per iteration, paced by the page's AudioContext |
+| blocking waits | semaphores never block (an unsignalled wait times out at once); `Sleep` and the frame limiter do not sleep |
+| time | `web_time` (`performance.now()`) |
+| files | `webfs.rs`: the page's `File`s (`FileReaderSync`) or the localhost server's ranged synchronous requests, 64 KiB read-ahead per open file (the text loaders read byte by byte), 256 KiB block cache in JS |
+| C heap | Rust allocator with a size header, **zeroed** (native fresh pages are mostly zero; dlmalloc reuses blocks at once and stale pointers in fields the original leaves uninitialised trapped in the FX blueprint code) |
+| CPUID | a fixed virtual SSE2 CPU (`abi::game_fpu::cpuid`): the SSE skinning paths of the native runs |
+| GPU | wgpu on an `OffscreenCanvas` in the worker: WebGPU, else WebGL2 (`?backend=gl|webgpu`); a positive base vertex becomes a vertex-buffer offset (WebGL2 has no base-vertex draws) |
+| fork probe, SIGSEGV reporter, `--present-dir` read-back | none; panics and traps are reported to the page with their wasm stack |
+
+### 22.4 Results (headless Chromium 14x, offscreen, `tools/web/headless.mjs`)
+
+* WebGPU (SwiftShader, `--use-webgpu-adapter=swiftshader`): boot, logos, main menu (real Enter key events move it on),
+  the legal splash on the canvas; `CGame::Initialise` then stalls on the GPU process (SwiftShader WebGPU at ~1000 % CPU).
+* WebGL2 (ANGLE/SwiftShader): through `CGame::Initialise` into the world: **CJ in Grove Street with the HUD**
+  (`target/web1-evidence/gl2/t0107-state9.png`, not committed), about 105 s after start.
+* WebGL2, real keys: with `?auto=1` for the menus, the run is in the world 87 s after start; a real W key event
+  (`Input.dispatchKeyEvent` → the page's keydown listener → the worker → window message + DirectInput state) held for
+  30 s: **CJ runs from the cul-de-sac towards his garage** (`keep/03-…`, `keep/04-…` under `target/web1-evidence/`, not
+  committed; frames read back in the worker with `OffscreenCanvas.convertToBlob`). Five seconds after W was released
+  ambient-ped AI reached an unported vslot (`v_control_sub_task` 0x631730, from `GeneratePedsAtAttractors`): natively a
+  "blocked" iteration, on wasm32 a panic aborts the module (no unwinding).
+* The user's desktop (Brave, AMD RX 7800 XT, WebGPU): through the menu into `CGame::Initialise`, then an
+  out-of-bounds trap in `FxManager_c::FindFxSystemBP`; one headless GL run trapped the same way in `CreateEntityFx`.
+  Fixed candidate: the zeroed C heap (22.3), not yet confirmed on the user's machine.
+
+### 22.5 Next steps (WEB-1)
+
+1. Unported callees abort the web session (no unwinding). Done differently in WEB-2 (22.7): no unwinding needed.
+2. WebGPU on the user's GPU: confirm the FX fix (22.7: the cause was the moving shrink in `realloc`, not stale heap
+   contents); then WebGPU stays the default and WebGL2 the fallback.
+3. Loading runs as one long task (the loading screens are not shown): yield inside `CGame::Initialise` needs the loop
+   turned inside out (asyncify, or a worker with `Atomics.wait` and a second thread presenting).
+4. OPFS cache of the picked folder (no re-pick per visit), audio through an AudioWorklet, threads (atomics, build-std).
+
+### 22.6 Network seam for SA:MP (not built)
+
+A page cannot open UDP. The plan: a separate WebSocket↔UDP proxy on localhost (another lane); the samp-rs client's
+socket trait gets a web implementation that sends one binary WebSocket message per datagram
+(`ws://localhost:PORT/udp?host=…&port=7777`) and queues received ones in JS; the client drains the queue once per
+main-loop iteration, so nothing blocks the game loop.
+
+### 22.7 WEB-2: STD-14 tree, blocked iterations without unwinding, the FX trap's cause
+
+Base: STD-14 (`worktree-agent-a98204e188a13ff2e`, a449ffb3 at the last rebase) with WEB-1's commits rebased on it (STD-14's
+`SA_GAME_TELEPORT`, `SA_GAME_LMB` and `--system-heap` moved into `app.rs`, where WEB-1 put the executable's code).
+
+**Blocked iterations on wasm32.** Natively an unported callee panics, the panic unwinds to `run_step`'s
+`catch_unwind` and the iteration is a "blocked" step. wasm32 builds abort on panic. Instead of unwinding (nightly
+`build-std` with wasm exception handling), `orig!`'s unported path calls `sa_core::orig::unported`, which calls a
+handler when one is installed (else it panics as before). The web front end installs one after the boot: it records
+the message and throws a JS exception (`wasm_bindgen::throw_str`). The engine drops the wasm frames up to the worker's
+`sa.frame()` without running Rust destructors. The worker puts back the shadow stack pointer (the module exports
+`__stack_pointer`, `tools/web/build.sh`) to its value before the call, then calls `sa.recover()`, which ends the
+iteration through the same bookkeeping as natively (`Session::finish`: report row, `CGame::Initialise` and
+three-identical-failures stop rules; in the browser the latter is off: the last frame stays on the canvas and the
+page shows the blocked function, so one unported path does not end the session). Why the state stays sane: the original code's state is left exactly as the native
+unwind leaves it (it has no destructors); Rust state that an unwind would release is what differs. The session is no
+longer in a `RefCell` (a borrow would stay taken). Guards held across game code would stay taken: `recover` checks the
+platform lock and stops the session if it is held. The no-threads `Mutex` of wasm32 panics on a second lock, so any
+other stuck guard shows as a real panic, not silent corruption. Real Rust panics (not unported callees) still abort the
+module. `?SA_WEB_NO_RECOVER=1` turns the handler off. Seen in the recording run: frame 74855 blocked on 0x5F32D0
+(`CPedGeometryAnalyser::CanPedJumpObstacle`, ambient ped AI), and the loop went on for 2,400 more iterations.
+
+**Exploration defaults.** The page sets `SA_GAME_SCRIPT_SKIP=1` and `SA_GAME_STUB` to the play package's list plus
+`0x517bf0=0/1` (`CIdleCam::ProcessFOVZoom`; without it the idle camera, which starts after the player stands still for
+about two minutes, blocks every frame) and `0x6803a0=0/0` (`CTaskSimpleClimb::TestForClimb`, cdecl: null, nothing to
+climb, so a jump reaches its launch; WRITER-NATIVE's det jump run with this stub: 0 blocked frames of 1516). `&stub=...` replaces the list and `&stub=none`
+drops it. Any `SA_*` query variable still wins. The click that locks the pointer is not passed to the game (it used
+to punch: CTaskSimpleFight).
+
+**Input in the frames that read it.** The page runs the main loop without the frame limiter's sleep, so most
+iterations only peek messages; the game reads DirectInput / `CPad` in the few that run a frame (the ones that
+present). Clearing the mouse motion, the wheel and the pressed keys after every iteration lost most of them (user
+report: mouse-look barely turned the camera, sprint unreliable). They now stay pending until an iteration presents
+(`web::frame`); window-message events still go to the queue once. A key released before any frame saw it held is
+released after the next frame (quick taps; Enter on SwiftShader, where a menu frame takes longer than a 150 ms tap).
+Verified headless on the GPU (rec2, rec3): pointer-lock mouse-look turns the camera, Space + W sprints. The page shows
+"Click the picture to capture the mouse; Esc releases it." and whether the mouse is captured.
+
+**The FX out-of-bounds trap** (`FindFxSystemBP` from `CObjectData::Initialise`, `CreateEntityFx`; the user's AMD
+WebGPU run and a headless GL run). The cause is not an uninitialised read: the wasm32 C heap's `realloc` always
+allocated, copied and freed, even when shrinking. `FxMemoryPool_c::Optimise` (0x4A9CD0) shrinks the 1 MiB effects pool
+to its used size after `LoadFxProject` and keeps using the blueprints inside it, whose list links (`g_fxMan` +0, each
+blueprint +4) point into the block. MSVC's realloc (`HeapReAlloc`) shrinks in place, and so does glibc natively. The
+moved pool left the links in a freed block that later allocations reuse. The zeroed heap only changed which garbage
+was read. Fix: a shrink keeps the block, both in the wasm32 heap and in the fixed-address heap (`detheap`, now also
+the native window runs' heap since STD-14 3f2b6d7f, which moved across size classes the same way). Reproduced
+before the fix (`target/web2-evidence/run1`: trap in `CreateEntityFx` at the menu → world transition) and gone after
+it (run2, the recording run).
+
+**Results** (headless Chromium, `tools/web/headless.mjs`, evidence under `target/web2-evidence/`, not committed):
+* WebGL2 on SwiftShader (run2): world 84 s after start, real W/A/D for 71 s, 0 blocked, no trap; about 1.4 in-game
+  frames/s (SwiftShader is the bottleneck).
+* WebGL2 on ANGLE/Vulkan (the machine's GPU, `--gpu vulkan`, still headless/offscreen; rec1): menus driven by real
+  Enter key events, **in the world 21 s after the page opened**, 73 s of real W/A/S/D and pointer-lock mouse-look (a CDP
+  click locks the pointer, CDP mouse moves arrive as `movementX`); 4 blocked iterations, the last three
+  (0x517BF0, after 2 min standing still) stopped the loop, hence the stub above.
+  `browser-playthrough.mp4` is that run's screencast (`--screencast`, assembled by `tools/web/make_video.py`).
+* **WebGPU on an AMD RDNA3 GPU** (`--gpu native`: Chromium `--use-gl=angle --use-angle=vulkan` gives Dawn a Vulkan
+  adapter, vendor amd, architecture rdna-3, the user's GPU family; headless, offscreen; gpu1): through the menus with
+  real Enter key events, **in the world 23 s after the page opened**, 60 s of real W/A/D: no FX trap (the user's
+  trap was on this path). After about 35 s CJ ran into a car: `CEventVehicleCollision::CEventVehicleCollision`
+  (0x4AC840, from `sa-ai` collscan) is unported, so every rendering iteration from then on blocked before its
+  `Present` (2,365 blocked iterations, the picture frozen, the loop still running, because the iterations in between
+  that do not render keep the three-in-a-row rule from firing). That is a missing port, not a web issue: natively the
+  same. Other blocked callees seen: 0x5F3B70, 0x65C680 (vslot `CreateNextSubTask`), 0x5F32D0.
+  WRITER-NATIVE's ports picked onto this branch (`worktree-agent-a6d319b53fd3185ec`: dfa84753, 99c9089c, 1af4e486,
+  662a6799, 67e218c1, 83637f99, cfb801e0, a6a2e813, 8bbc8b6e, 818e3702) remove the car-collision (0x4AC840 /
+  0x4AE270), garage hideout restore (0x448550) and jump (0x680C60, CheckIfJumpBlocked, Launch) blocks. On the final
+  build: a SwiftShader WebGL2 run (run3) with real Enter menus, in the world at 110 s, 71 s of W/A/D, 0 blocked, no
+  trap; a GPU garage run (rec4: sprint, mouse-look, three jumps) 1 blocked iteration in 137k (0x66F530), no freeze.
+  Next web-visible blockers: `CGarage::SlideDoorOpen` 0x44A660 (sprinting at CJ's garage door: every frame blocks,
+  the picture freezes), `CAutomobile::CanPedEnterCar` 0x6D1E80, 0x66F530, 0x6513A0 (line-up with car), the real
+  `TestForClimb` 0x6803A0 (stubbed by the page), `CIdleCam::ProcessFOVZoom` 0x517BF0 (stubbed by the page).
+
+### 22.8 WEB-AUDIO: the DirectSound mix in the browser
+
+Base: WEB-3 (`worktree-agent-a51e2199757a44c0b`, 3881dab6). sa-game already emulates DirectSound 8 with a software
+mixer (10.0); natively a 5 ms thread mixes into cpal or NullAudio. The mixer now also applies `DSBPAN` (the far side
+attenuated by |pan| hundredths of a dB, as DirectSound does; before, pan was recorded only). Native behaviour is
+otherwise unchanged.
+
+**Output.** On wasm32 the mixer's sink is `saGameAudio` in the worker. The page creates a 44.1 kHz `AudioContext`
+(the browser resamples to the device) with an `AudioWorkletNode` (`web/audio-worklet.js`). Cross-origin isolated
+(serve.py sends COOP `same-origin` / COEP `require-corp`; the game files are same-origin, nothing else on the page
+loads cross-origin), the page allocates a `SharedArrayBuffer` ring (32768 frames, header write / read / running /
+underruns) for the worker and the worklet. Each main-loop iteration the mixer advances every playing buffer by
+`4096 - queued` frames (the ring's target fill, ~93 ms) and writes the mix: the buffers' play cursors therefore move
+by exactly what the worklet consumed, so `GetCurrentPosition` and the streaming code follow the audio clock, not the
+wall clock. While the context is suspended (no gesture yet, tab hidden) or without shared memory, the cursors advance
+by real time and the mix is dropped or posted to the page in chunks. The first pointer-down or key on the page
+resumes the context; the page shows the state, mute and volume (a `GainNode`, squared slider).
+
+**Audio threads.** `CAESmoothFadeThread::SmoothFadeProc` and `CAEStreamThread::MainLoop` have their loop bodies split
+out (`smooth_fade_step`, `stream_thread_step`, no behaviour change). `CreateThread` / `ResumeThread` record them on
+wasm32; the worker calls `audio_threads()` after every iteration: one smooth-fade pass, and one stream-thread pass
+every 100 ms (its `Sleep(100)`). An unported callee in a pass leaves through the blocked-iteration exception; the
+worker restores the stack pointer and `audio_thread_blocked()` ends that thread only, as a panic on the native thread
+ends it. In practice the stream thread ends at the first track request in the world: `CAEDataStream::CAEDataStream`
+(0x4DC620) is unported, and `VORBISFILE.DLL` (`ov_open_callbacks`, `ov_read`, ...) has no implementation, so streamed
+audio (radio, loading tune, mission audio) is silent.
+
+**Results** (headless Chromium, `--gpu native`, `tools/web/headless.mjs --audio`, page `?audiotap=1`; evidence in
+`target/web-audio-evidence/`, not committed). Run `final`: menus by real Enter, in the world at 16.5 s, 44 s of real
+W / sprint / jump / S / D. RMS of the tapped output per phase (dBFS, whole band and above 60 Hz):
+
+| phase | seconds | RMS | RMS > 60 Hz | chunk RMS > 60 Hz min / max |
+|---|---|---|---|---|
+| logos (state 2) | 1.7 | silent | silent | |
+| main menu (state 7) | 8.5 | -8.3 | -30.6 | silent / -24.8 |
+| in the world, standing | 88.2 | -7.0 | -28.1 | -39.8 / -18.1 |
+| in the world, walking | 45.7 | -7.0 | -28.7 | -29.8 / -27.2 |
+
+From the menu on, the game loops a bank sound of 22,044 bytes at 22,050 Hz (one cycle of a sine: 2 Hz) at volume
+-200 on a 3D buffer at the listener (0, 1, 0), mode normal, distance 1 = its minimum distance, so DirectSound would
+not attenuate it either. It is inaudible but carries most of the whole-band RMS (-4 dBFS at 2 Hz), hence the column
+above 60 Hz. The rest is real content: in run2 (two minutes in the world) the game issued 1,602 `Play` calls,
+1,230 of them on 17 kHz sound-bank effects with per-play frequencies of 14-19.5 kHz (footsteps and similar
+pitch-varied effects), plus 8-26.6 kHz ambience loops; buffer peaks are -2.0 dBFS (26028), the SFX banks'
+normalisation. The ring underran during the long loading iteration only (counter stable afterwards).
+
+Open: streamed audio (port `CAEDataStream`, implement `ov_*` over a Vorbis decoder); 3D rendering (distance, cone,
+Doppler) and EAX are not rendered on either build; the mix runs on the game's thread, so a long iteration
+(world loading) underruns the ring (silence, the cursors wait).

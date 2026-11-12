@@ -29,6 +29,8 @@ static DEVICE: Mutex<Option<WgpuDevice>> = Mutex::new(None);
 
 /// Runs `f` on the device (`None` before `CreateDevice`).
 pub fn with_device<R>(f: impl FnOnce(&mut WgpuDevice) -> R) -> Option<R> {
+    #[cfg(target_arch = "wasm32")]
+    crate::web::maybe_sample("IDirect3DDevice9 (seam)");
     let mut d = DEVICE.lock().unwrap_or_else(|e| e.into_inner());
     d.as_mut().map(f)
 }
@@ -76,10 +78,10 @@ fn present_to_window(d: &mut WgpuDevice) {
 }
 
 /// Wall-clock times of the in-game `Present` calls (`Game::Idle` frames), for the frame-pacing report.
-static FRAME_TIMES: Mutex<Vec<std::time::Instant>> = Mutex::new(Vec::new());
+static FRAME_TIMES: Mutex<Vec<web_time::Instant>> = Mutex::new(Vec::new());
 
 /// The in-game present times so far.
-pub fn frame_times() -> Vec<std::time::Instant> {
+pub fn frame_times() -> Vec<web_time::Instant> {
     FRAME_TIMES.lock().unwrap_or_else(|e| e.into_inner()).clone()
 }
 
@@ -98,7 +100,11 @@ pub fn create_device(w: u32, h: u32, color: u32, depth: u32) -> bool {
         .map(|t| (t.device.clone(), t.queue.clone()));
     let mut dev = match window {
         Some((device, queue)) => Some(WgpuDevice::new(device, queue, w, h)),
+        #[cfg(not(target_arch = "wasm32"))]
         None => WgpuDevice::new_headless(w, h),
+        // the web build always has its canvas device (`crate::web`); no blocking adapter request on wasm32
+        #[cfg(target_arch = "wasm32")]
+        None => None,
     };
     // X8R8G8B8 / R5G6B5 back buffers have no alpha channel (D3D9 reads their alpha as 1); a windowed
     // D3DFMT_UNKNOWN back buffer has the desktop format (X8R8G8B8)
@@ -128,21 +134,33 @@ pub fn set_present_dir(dir: std::path::PathBuf) {
 /// Set by the main loop while `rsIDLE` (`Game::Idle`, the in-game frame) runs.
 pub static IN_GAME_FRAME: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
+/// Presents since the page's current task began (the web front end resets it per main-loop iteration).
+pub static PRESENTED_THIS_TASK: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// Every `Present` so far (the web page ends its task after one, so the browser shows the frame).
+pub static PRESENTS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
 /// `Present` on the seam device, and the frame to `--present-dir`.
 fn present_frame() -> i32 {
+    PRESENTS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let in_game = IN_GAME_FRAME.load(std::sync::atomic::Ordering::SeqCst);
     let read_back = PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner()).is_some();
     let r = with_device(|d| {
         let r = d.present();
-        present_to_window(d);
+        // wasm32: the canvas shows only the last frame of a task (the worker yields between main-loop iterations), so
+        // inside one long iteration (the loading screens of `CGame::Initialise`) only the first present per
+        // iteration reaches the canvas; the rest would only queue swap-chain work
+        if PRESENTED_THIS_TASK.fetch_add(1, std::sync::atomic::Ordering::Relaxed) == 0 || !cfg!(target_arch = "wasm32") {
+            present_to_window(d);
+        }
         (r, if read_back { d.read_render_target(None).ok() } else { None })
     });
     if in_game {
-        FRAME_TIMES.lock().unwrap_or_else(|e| e.into_inner()).push(std::time::Instant::now());
+        FRAME_TIMES.lock().unwrap_or_else(|e| e.into_inner()).push(web_time::Instant::now());
     }
     // `SA_GAME_PRESENT_GAME=1`: only the frames presented inside `Game::Idle` (the in-game frames) are counted and
     // written; the loading screens are not.
-    if std::env::var_os("SA_GAME_PRESENT_GAME").is_some() && !in_game {
+    if crate::env::var_os("SA_GAME_PRESENT_GAME").is_some() && !in_game {
         with("Present", |_| ());
         return match r {
             Some((Ok(()), _)) => D3D_OK,
@@ -154,8 +172,8 @@ fn present_frame() -> i32 {
     // `SA_GAME_PRESENT_SKIP=K`: the first K presented frames are not written.
     static SEEN: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
     let seen = SEEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let skip: u32 = std::env::var("SA_GAME_PRESENT_SKIP").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
-    let every: u32 = std::env::var("SA_GAME_PRESENT_EVERY").ok().and_then(|v| v.parse().ok()).unwrap_or(1).max(1);
+    let skip: u32 = crate::env::var("SA_GAME_PRESENT_SKIP").ok().and_then(|v| v.parse().ok()).unwrap_or(0);
+    let every: u32 = crate::env::var("SA_GAME_PRESENT_EVERY").ok().and_then(|v| v.parse().ok()).unwrap_or(1).max(1);
     if let (Some((dir, n)), Some((_, Some((w, h, rgba))))) = (pd.as_mut(), &r) {
         let keep = *n < 200 && seen >= skip && (seen - skip).is_multiple_of(every);
         let path = if keep {
@@ -273,21 +291,7 @@ fn with_res<R>(obj: u32, f: impl FnOnce(&mut Res) -> R) -> Option<R> {
 /// Maps the vtable page.
 #[allow(unsafe_code)]
 pub fn map() -> Result<(), String> {
-    // SAFETY: an anonymous private mapping at a fixed low address that MAP_FIXED_NOREPLACE refuses
-    // to place over anything already mapped; never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            PAGE as *mut libc::c_void,
-            0x1000,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != PAGE {
-        return Err(format!("cannot map the D3D9 resource page at {PAGE:#x}"));
-    }
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the D3D9 resource page at {PAGE:#x}: {e}"))?;
     for (c, cl) in CLASSES.iter().enumerate() {
         for i in 0..cl.methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));
@@ -488,8 +492,8 @@ mod trace {
 /// `SA_GAME_DUMP=ADDR:LEN[,ADDR:LEN...]` (exploration only): every `Present` prints those game-memory
 /// ranges as dwords, with their f32 reading.
 fn dump_memory() {
-    let Some(spec) = std::env::var_os("SA_GAME_DUMP") else { return };
-    for part in spec.to_string_lossy().split(',') {
+    let Some(spec) = crate::env::var_os("SA_GAME_DUMP") else { return };
+    for part in spec.split(',') {
         let mut it = part.split(':');
         let parse = |v: Option<&str>| v.and_then(|v| u32::from_str_radix(v.trim_start_matches("0x"), 16).ok());
         // `BASE>OFF>OFF...`: each `>` reads the dword at the address so far and adds the offset
@@ -817,7 +821,7 @@ fn dev_create_texture(_this: u32, w: u32, h: u32, levels: u32, usage: u32, forma
             D3D_OK
         }
         r => {
-            if std::env::var_os("SA_GAME_D3D_TRACE").is_some() {
+            if crate::env::var_os("SA_GAME_D3D_TRACE").is_some() {
                 eprintln!("sa-game: CreateTexture({w}x{h}, levels {levels}, usage {usage:#x}, format {format:#x}) failed: {:?}", r.map(|e| e.err()));
             }
             D3DERR_INVALIDCALL
@@ -1387,7 +1391,13 @@ macro_rules! entries {
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
                     $f($($a),*)
                 }
-                v.push(($addr, $name, w as *const () as usize));
+                v.push(($addr, $name, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }

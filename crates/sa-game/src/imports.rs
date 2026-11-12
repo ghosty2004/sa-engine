@@ -27,7 +27,13 @@ macro_rules! natives {
                 extern "C-unwind" fn w($($a: $t),*) $(-> $r)? {
                     $f($($a),*)
                 }
-                v.push(($imp, w as *const () as usize));
+                v.push(($imp, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }
@@ -209,6 +215,9 @@ fn set_error_mode(_mode: u32) -> u32 {
 fn sleep(ms: u32) {
     with("Sleep", |_| ());
     crate::det::slept(ms);
+    // wasm32: the game runs on the worker's event loop, which must not block (the main loop's next iteration comes
+    // with the next animation frame)
+    #[cfg(not(target_arch = "wasm32"))]
     std::thread::sleep(std::time::Duration::from_millis(ms.min(1000) as u64));
 }
 /// `GetVersionExA(OSVERSIONINFOA*)`: Windows 10 (NT 10.0, build 19045), what the phase A Wine
@@ -325,6 +334,24 @@ type CsMap = std::collections::HashMap<u32, (u64, u32)>;
 static CRITICAL: std::sync::Mutex<Option<CsMap>> = std::sync::Mutex::new(None);
 static CRITICAL_CV: std::sync::Condvar = std::sync::Condvar::new();
 
+/// Releases every critical section the calling thread owns (a game thread that ends by a panic, e.g. on an
+/// unported function, would otherwise leave them locked and block the main thread on its next `Enter`).
+/// Returns how many were released.
+pub(crate) fn release_critical_sections_of_current_thread() -> usize {
+    let me = thread_key();
+    let mut m = CRITICAL.lock().unwrap_or_else(|e| e.into_inner());
+    let mut n = 0;
+    for e in m.get_or_insert_with(Default::default).values_mut() {
+        if e.1 > 0 && e.0 == me {
+            *e = (0, 0);
+            n += 1;
+        }
+    }
+    if n > 0 {
+        CRITICAL_CV.notify_all();
+    }
+    n
+}
 fn thread_key() -> u64 {
     use std::hash::{Hash, Hasher};
     let mut h = std::collections::hash_map::DefaultHasher::new();

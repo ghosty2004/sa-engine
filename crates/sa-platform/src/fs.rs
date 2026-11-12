@@ -99,7 +99,7 @@ impl MemFs {
     }
 }
 
-struct MemFile(Arc<Vec<u8>>);
+pub(crate) struct MemFile(pub(crate) Arc<Vec<u8>>);
 
 impl RandomRead for MemFile {
     fn read_at(&mut self, offset: u64, buf: &mut [u8]) -> io::Result<()> {

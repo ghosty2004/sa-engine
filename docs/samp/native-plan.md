@@ -15,7 +15,7 @@ Inputs: `docs/samp/game-adapter.md` (API, 12-step migration, open questions), `d
 | native sa-game | boots, runs the front end and `CGame::Initialise`, presents in-world frames at Grove Street (`--start-in-world`, 10 exploration stubs, platform.md §15) | STD-9 |
 | SA:MP-executed engine functions | 4,777 non-init functions; **4,471 in Rust (93.6 %), 2,061 of them verified (L1–L3)**, **306 not in Rust** | §4, `tools/native/samp_unported.py` |
 | sa-samp-api | 15 traits, API v1 at d666ce0 (script threads, `area_raw`, `menu_active_dword`) | `crates/sa-samp-api` |
-| original backend (samp-rs) | steps 1–3 committed on `sa-engine/adapter`; step 4 ready as a patch (§8) | `docs/samp/patches/samp-rs-adapter-step4.patch` |
+| original backend (samp-rs) | steps 1–3 committed on `sa-engine/adapter`; 4, 5 (world, HUD) and the network refactors by SAMP-4 (§10.2) | §10 |
 | **native backend `sa-samp`** | **new**: read side served (§3.2), script threads through the ported interpreter, host tests | `crates/sa-samp`, 12 tests (x86_64 and i686) |
 | **dispatch points** | **new**: `sa_core::samp::frame` in the `Game::Idle` and `CGame::Process` ports at samp's three hook sites | `crates/sa-core/src/samp.rs` |
 | **`sa-game --samp HOST[:PORT]`** | **new skeleton**: installs the native adapter with a stand-in client; frame callbacks run in game | §3.4 |
@@ -227,7 +227,7 @@ test joins_a_server_from_linux ... ok
 * Outside the game the client serial is random (`netclient.rs` falls back when 0xC9236C cannot be read); the
   native host must feed it the documents-path string (Q8, §7).
 
-## 7. Open questions
+## 7. Open questions (answered 2026-11-12, see §10.1)
 
 1. **samp-rs worktree access.** This agent could not write or run git in `~/samp-rs-adapter` (the harness
    confines worktree agents to their own worktree). Step 4 and the handshake test are therefore a patch
@@ -272,3 +272,164 @@ test joins_a_server_from_linux ... ok
 | SAMP-2 (update) | samp-rs original backend | in-progress | as before | step 4 (script threads) prepared as `docs/samp/patches/samp-rs-adapter-step4.patch`: tests, clippy host+i686, release DLL OK; lane A/B join still to run before committing on `sa-engine/adapter` |
 | SAMP-GAPS | Port the 306 SA:MP-executed functions not in Rust (`docs/samp/native-unported.csv`, `tools/native/samp_unported.py`) | todo | 0 rows | render callbacks first (STD-9 stubs), then AI 77, WORLD 62, UNK-game 46, VEH 39, RW 30, RENDER 25 |
 | SAMP-4 (update) | samp mode | todo | F13 | order in native-plan.md §3.5 (start-up path, remote player slots, limits, features, toggles) |
+
+## 10. SAMP-4 (2026-11-12): native join, samp mode, adapter steps 4–5, browser-ready networking
+
+### 10.1 Main-session decisions on §7
+1. **A/B before step 4's commit**: done (§10.3), on lane 3 with the original exe.
+2. **`ScriptCommands::destroy_script_thread`** added (default: keep the thread) and **`PadState::home` split** into
+   `chat_indicated` (+0x28) and `ped_walk` (+0x2A): sa-samp-api v2 (7fd398c). v3 (b4cf80c) adds
+   `WorldState::force_weather` (samp writes only `ForcedWeatherType` while the game clock runs).
+3. **gpci serial natively**: a random 40-hex-digit seed made once per install and kept in sa-game's configuration
+   (`$XDG_CONFIG_HOME/sa-engine/samp.cfg`, `serial_seed=`), never derived from user or host data;
+   `NetClient::set_serial_seed` (samp-rs e706d17) turns it into the serial with `session::make_serial`.
+4. **`--start-in-world` stays the interim way into the world** for `--samp`.
+5. **samp-rs is a git dependency of sa-game pinned to a commit of `sa-engine/adapter`, feature `samp`**
+   (`cargo build -p sa-game --features samp`). samp-client takes sa-samp-api and sa-net from this repository by URL;
+   the workspace `[patch."file:///home/ghosty2004/sa-engine"]` points both back at the workspace crates.
+
+### 10.2 samp-rs commits (branch `sa-engine/adapter`)
+This agent could not run version control in `~/samp-rs-adapter` (worktree isolation, as SAMP-3), so it worked in a
+clone of the branch at `target/samp-rs-adapter` inside its sa-engine worktree. **The main session must fetch them
+from that clone before the worktree is removed** and fast-forward `sa-engine/adapter` (7422107 → the last commit below). Every
+commit: `cargo test --workspace` (632 → 638 passed), clippy `-D warnings` host and i686-pc-windows-gnu, release DLL
+build, rustfmt on the touched files, and the A/B join of §10.3 identical.
+
+| commit | step | content |
+|---|---|---|
+| d54b1f4 | 4 | script commands through adapter script threads (SAMP-3's patch) + `destroy_script_thread`; pin v2 |
+| c9af579 | 5 (world) | clock (direct bytes + `SET_TIME_OF_DAY`), weather (`set_weather` / `force_weather`), gravity, `SET_AREA_VISIBLE` through `WorldState`; the backend runs its opcodes on its own script thread; pin v3 |
+| 3c27423 | 5 (HUD) | HUD switch, `menu_active` (byte) / `menu_active_dword`, `DISPLAY_ZONE_NAMES`, `ADD_SCORE`, `CLEAR_PRINTS`, `AddBigMessage` through `Hud` (the UI's RPC 73 game text stays in the UI until step 11) |
+| e706d17 | — | `NetClient::set_serial_seed` (unused by the DLL) |
+| 9e74177 | web (a) | `web_time::Instant` in samp-proto / samp-client (on native it *is* `std::time::Instant`); samp-proto builds for wasm32 |
+| 1ef8e5d | web (b) | `Core.sock` → boxed `sa_net::DatagramTransport` from a `NetConnector` per attempt; `UdpNetConnector` = sa-net's `UdpTransport` (same socket calls); a transport closed while opening fails the attempt at once |
+| 4908e11 | web (c) | `NetClient::new_unresolved("host:port")` (cipher key from the real port); wasm32: `WebSocketNetConnector { proxy_url }`, no update thread (`tick` updates), `rak_wait` no-op; samp-client clippy-clean for wasm32 |
+| 3d25201 | 5 (streaming) | `REQUEST_MODEL`, `HAS_MODEL_LOADED`, `MARK_MODEL_AS_NO_LONGER_NEEDED`, `LOAD_ALL_MODELS_NOW`, `REQUEST_COLLISION`, vehicle-mod request/loaded through `Streaming`; the `&self` queries run on the process-wide backend thread (`backend_op`) |
+| d8ea167 | 5 (camera) | `SET_FIXED_CAMERA_POSITION`, `POINT_CAMERA_AT_POINT` (mode 2/1), `SET_CAMERA_BEHIND_PLAYER`, `RESTORE_CAMERA_JUMPCUT` through `Camera` |
+| 45fe143 | 5 (peds, part 1) | current weapon, critical hits, drops weapons, freeze, ped area, heading, player control, drunkenness through `Peds`; `ped_from_script_handle` (`CPool::GetAtRef`) |
+| 538e6c2 | 5 (vehicles, part 1) | delete, heading, hydraulics, tyres, petrol tank, area through `Vehicles`; `vehicle_script_handle` / `vehicle_from_script_handle` with GTA's pool `GetRef` / `GetAt` |
+| 78be658 | 5 (world entities) | `REMOVE_PICKUP`, `DELETE_CHECKPOINT`, `REMOVE_BLIP`, `CHANGE_BLIP_COLOUR`, `CHANGE_BLIP_SCALE` through `WorldEntities` |
+| fb89010 | 5 (objects, part 1) | object visible / scale / attached / delete / remove elegantly through `Objects`; object pool handles |
+
+Sites holding a script handle go through small `calls` modules (`adapter::original::{stream, cam, ped_calls,
+veh_calls, world_calls, object_calls}`) that resolve the handle to the typed reference; the backend turns it back
+into the same handle, so the opcode bytes are unchanged (a handle that names nothing issues no opcode, where the
+old code would have faulted inside the opcode). Arguments the typed API cannot carry unchanged stay on the
+`Runner` for now (`SWITCH_WIDESCREEN`'s raw byte, the mod-shop interior word, paintjobs from SCM events, the
+remote players' `Arg` forms). Not done: step 5's second parts (creation, tasks, anims, proofs, money, trains,
+trailers, blip creation, camera vector moves, audio), steps 6–12.
+
+### 10.3 A/B join (original exe + samp-rs DLL, lane 3)
+`tools/e2e/samp/samp-rs-ab.sh DLL_DIR NAME` (new): our open.mp copy on 127.0.0.1:7813 with `sampcov.pwn`, the
+original `gta_sa.exe` with samp-rs's launcher and DLL (no samp.dll); scenario: connect, class selection (3
+classes), spawn, walk, message, game text, position, weapon, money, clock and weather (night/day), vehicle create +
+put in + drive + exit + delete, interior 17 and back, kill, respawn, `/q`. `sequence.txt` = the server's `[cov]`
+events + game-state probes (weather, clock, `CClock::Update` byte, HUD clock format, gravity, area, money through
+the DLL's `peek`) + the client log without timestamps, addresses and tick lines. Results: A vs A (base 7422107
+twice) identical; every step identical to the build before it (328–329 lines). One line (`gGameState = 9`, written
+by the init thread) races with the game thread's log and moved with lane load (reproduced on a rerun of the *old*
+build); it is now compared as a set. The native handshake test (`tools/e2e/samp/native-handshake.sh`) passes after
+the transport steps (join in ~1.1 s).
+
+### 10.4 Native join (sa-game `--samp`, feature `samp`)
+`crates/sa-game/src/samp_net.rs`: a minimal client on samp-rs's `NetClient` and `footsync` until samp-core is
+linkable (step 10): world set-up like samp's own main.scm (densities 0, wanted level 0, roads off, control off),
+join, class 0, spawn (samp's routine reduced to what the adapter serves), on-foot sync (207) from `ped_snapshot` +
+`pad` when due, stats sync (205) every second, and the player RPCs applied through the adapter (position, facing,
+health, armour, weapons, money, clock, weather, interior, control, camera). `tools/e2e/samp/native-join.sh`
+(lock `target/locks/samp-native.lock`, UDP 7812): server copy + `sampcov.pwn`, sa-game `--start-in-world --samp`,
+server commands after the spawn (including a server vehicle, streamed in and created natively with `CREATE_CAR`),
+then W held (`SA_GAME_WALK`). Result (`target/samp4-evidence/` and
+`target/samp4-walk/`, not committed):
+
+```
+[join] NativeCJ has joined the server (0:127.0.0.1)
+[cov] class id=0 class=0 / state 0->8 / spawn id=0 / state 8->1
+[cov] where st=1 pos=2495.00,-1687.00,13.51 hp=100 weapon=31        (on-foot sync from native sa-game)
+hp|60 armour|40 money|5000 weapon|24|100 time|22 weather|4 pos|2495|-1680 pos|2440|-1660 time|12 ...
+[cov] where st=1 pos=2495.00,-1680.33,13.33 hp=60 weapon=24         (SetPlayerPos applied, CJ fell to the ground)
+samp: vehicle 5 (model 560) streamed in at (2445.0,-1650.0,13.4) as 0x1
+[cov] where st=1 pos=2434.03,-1660.00 ... 2367.15,-1660.00          (W held: CJ walks down Grove Street)
+sa-game: 1418 ok, 198 blocked, 0 crashed over 1616 iterations
+```
+
+The PNGs (`present/`, every 20th in-game frame) show Grove Street with the server's clock (22:04), money
+($5000), weapon and lowered health, and — through SAMP-UI's engine-drawn overlay (merged here, 45366aa) — the
+server's chat lines (`SendClientMessage`, yellow and white) and its game text ("NATIVE SA-GAME"). Chat input and
+dialog answers go back as RPC 101 / 50 / 62 (`SampUi::poll_events`; not exercised offscreen). CJ himself is not
+drawn (STD-9's skin-pipeline stub).
+
+Engine work the join needed (phase B only unless stated):
+* `CTaskSimpleInAir::ProcessPed` 0x680600 registered `#[native]` (ported and fixed by PORT-AI-4, unregistered in
+  phase A until its L3 rerun): a spawn sets the ped 0.5 m above the point.
+* `CPad` 0x540E80 / 0x540F80 (on-foot camera stick readers) ported from the bytes, `#[native]`.
+* `CVisibilityPlugins::RenderWeaponCB` 0x733670 ported (`#[hook]`, unverified `samp4-render-1`): the weapon in
+  CJ's hand; without it the loop stopped on three identical blocks.
+* sa-game: after an unwound step the `FxManager_c` RwMatrix stack (g_fxMan +0x88) is reset; unwinds inside
+  `CreateParticles` (unported `FxInfoAttractPt_c::GetValue` 0x4A56E0) leaked entries until a garbage matrix
+  faulted (`SIGSEGV at 0x25b9c`).
+* sa-game: `SA_GAME_WALK` never sent its key-down (`key_down` after `held.insert` saw the key as already held);
+  fixed, repeated every 8 iterations.
+* `CVehicle::CanPedOpenLocks` 0x6D1E20 registered `#[native]` (ported, not hookable in phase A).
+* sa-samp: the client's hooks go back in place when an adapter call unwinds (an unported engine function), so
+  one gap no longer drops the client for the rest of the run.
+* Evidence-only stubs added to STD-9's list in `native-join.sh`: `RenderVehicleReallyLowDetailCB` 0x7331E0 and the
+  collision sparks `dmgDrawCarCollidingParticles` 0x6A6DC0 (visual only).
+* `WorldState::set_gravity`: `GAME_GRAVITY` is in `.rdata`, read-only in the native arena; the default value is
+  accepted, others return `Unsupported` (samp unprotects the page; natively an engine gravity setting is needed).
+
+### 10.5 sa-samp write side
+Peds (position 00A1, heading 0173 or the raw fields, health/armour fields, weapons 01B2/01B9/048F, area 0860,
+freeze 04D7, control 01B4, money fields, drunkenness 052C, vehicle warps 036A/0430/0362), world (clock, weather,
+gravity, area 04BB, wanted 01F0, densities 03DE/01EB, roads 01E8, trains 06D7, restart 016C, pickups 0213/0215),
+HUD (flags, 09BA, 0109, 00BE, `AddBigMessage` through `orig!`), camera (015F, 0160, 0373, 02EB, 02A3), streaming
+(0247, 0249, 038B, 04E4, load state from `ms_aInfoForModel`), vehicles (00A5 + 0175 + 0229 + 0840, 00A6, heading,
+health field, colours, area), objects (0107, 0108, 01BC + 0453). Opcode-backed methods run on the backend's own
+script thread through the ported interpreter (the same opcodes samp issues); host tests check the encoded
+commands, fields and created handles (16 tests). Not yet: remote players (`Limits::player_slots`), skins
+(`set_ped_model`), animations, checkpoints, 3D text, object attach/material.
+
+### 10.6 samp mode (SAMP-4)
+`sa_core::samp` holds the disabled `Feature` bits and runtime toggles (single-player when 0); `sa-samp`'s
+`install` hands `SampModeConfig::disabled` to it, sa-game `--samp` disables every feature samp does and turns typed
+cheats off. Wired sites (the call samp NOPs, skipped when the bit is set): `CGame::Process` cutscenes 0x53BF28,
+cheats (`DoCheats`, whole poll), car generators 0x53C06A, replay 0x53C090, sun/moon coronas 0x53C136, plants
+0x53C159, random traffic 0x53C1C1; `CPopulation::AddPed` returns null; `GenerateRandomCars`' planes 0x434272;
+`CHud::SetHelpMessage`; `CPlaceName::Process` 0x5720A5; idle camera 0x524582. Peds, traffic and wanted level also
+go to zero through samp's own script commands (densities, wanted level, roads), which keeps `AddToPopulation` from
+dereferencing the null ped (as under samp.dll). Missions: the game's main.scm still runs (`--start-in-world`);
+samp's main.scm from samp.saa needs `FileProvider` (step 9) and the start-up path.
+
+### 10.7 Open issues
+1. Interactive play: `sa-game --window` keeps running game frames with the window's input after the `--frames`
+   loop (input through SAMP-UI's `samp_input`), but the 32-bit process cannot open a window on this machine:
+   winit fails with "Failed to load one of xlib's shared libraries" because the 32-bit libraries
+   `libXcursor.so.1`, `libXrandr.so.2`, `libXi.so.6`, `libxkbcommon.so.0`, `libxkbcommon-x11.so.0` are missing
+   from `/usr/lib32` (Arch: `lib32-libxcursor lib32-libxrandr lib32-libxi lib32-libxkbcommon
+   lib32-libxkbcommon-x11`; a user decision, not installed). Until then the evidence runs are offscreen and driven
+   by `SA_GAME_WALK` and the server (the join itself works in that run: `WindowCJ` joined and spawned).
+2. Gaps hit in the join (SAMP-GAPS): `FxInfoAttractPt_c::GetValue` 0x4A56E0, `FUN_00678E80` (ped in-air,
+   PreRender), `CAEWeatherAudioEntity::AddAudioEvent` 0x506800 (weather 8 thunder), `CMovingFog::Update` 0x716B10
+   (weather 9), `CAEWeaponAudioEntity::PlayGunSounds` 0x503CE0, 0x449D10 (garages); CJ's skin pipeline 0x7C7B90.
+3. The pinned URLs (`file:///home/ghosty2004/sa-engine` in samp-rs; the clone path in `crates/sa-game/Cargo.toml`)
+   resolve only on this machine; after the fetch of §10.2 the sa-game dependency URL must be switched to
+   `file:///home/ghosty2004/samp-rs` (same rev) and `cargo update -p samp-client`.
+4. `regconv::hook_tests::x86` (6 tests) fail on i686-unknown-linux-gnu: the phase A naked entries read their
+   arguments one stack word off under the test harness's `call_regs` on Linux (`al_and_stack_words` sees
+   `(120, 0x401000, …)` for `(0x41, 0x12345678, 0x401000)`); the entries are phase A (Windows) only and native
+   sa-game never calls them, so they are not in the native path's way. Not fixed.
+5. The browser join: samp-client is wasm32-ready (§10.2); it needs WEB-1's page and a `WebSocketNetConnector` with
+   the proxy URL.
+6. Driving natively: `PutPlayerInVehicle` → `WARP_CHAR_INTO_CAR` reaches a task with a null vtable
+   (`v_get_task_type (0x0)`) on the following frames, so the player is placed in the seat but the game does not
+   treat him as the driver (`native-join.sh` with `PUTIN=1`). The client's driver sync (200) is written and runs
+   once the ped reports its vehicle.
+
+### 10.8 Proposed ROADMAP rows
+| ID | Task | Status | Acceptance | Notes |
+|---|---|---|---|---|
+| SAMP-2 (update) | samp-rs original backend | in-progress | as before | 2026-11-12 (SAMP-4): step 4 and step 5's first parts (world, HUD, streaming, camera, peds, vehicles, world entities, objects) on `sa-engine/adapter` (native-plan §10.2), each with tests/clippy/DLL and the lane-3 A/B join (`tools/e2e/samp/samp-rs-ab.sh`) identical; sa-samp-api v2/v3. Next: step 5 second parts (creation, tasks, anims, audio), then step 6 |
+| SAMP-3 (update) | native backend + hosting | in-progress | sa-game `--samp` joins, spawns and syncs on foot | 2026-11-12 (SAMP-4): **met for a local open.mp**: join, class, spawn, server-driven position/health/armour/weapon/money/clock/weather, on-foot sync of a W walk (`tools/e2e/samp/native-join.sh`); sa-samp write side; client = `sa-game/src/samp_net.rs` on samp-rs's NetClient until step 10 |
+| SAMP-4 (update) | samp mode | in-progress | F13 | `sa_core::samp` feature bits + toggles; 14 sites wired (native-plan §10.6); limits, behaviour and start-up not read yet |
+| SAMP-WEB-NET | samp-rs networking for wasm32 | done (samp-rs side) | native identical, wasm32 builds | 9e74177, 1ef8e5d, 4908e11: web-time clock, sa-net transports, unresolved host:port, no thread or waits on wasm32; A/B join and native handshake unchanged |
+| SAMP-GAPS (update) | | | | add 0x4A56E0, 0x678E80, 0x506800, 0x716B10, 0x503CE0 (hit by the native join) |

@@ -3,9 +3,11 @@
 //! native engine yet (docs/samp/native-plan.md lists the order).
 
 use sa_samp_api::objects::*;
+use sa_samp_api::script::ScriptArg::{Float as F, Int as I, Local as L};
 use sa_samp_api::*;
 
 use crate::addr::{self, off};
+use crate::script::op;
 use crate::{NativeGame, View};
 
 impl<V: View> NativeGame<V> {
@@ -49,16 +51,28 @@ impl<V: View> Objects for NativeGame<V> {
         Err(GameError::Unsupported("Objects::object_ray_test"))
     }
 
-    fn create_object(&mut self, _model: ModelId, _pos: Vec3) -> GameResult<ObjectRef> {
-        Err(GameError::Unsupported("Objects::create_object"))
+    fn create_object(&mut self, model: ModelId, pos: Vec3) -> GameResult<ObjectRef> {
+        let h = self.run_op_out(
+            op::CREATE_OBJECT,
+            &[I(model.0), F(pos.x), F(pos.y), F(pos.z), L(0)],
+        )?;
+        self.object_from_script_handle(ScriptHandle(h as i32))
+            .ok_or(GameError::NotLoaded)
     }
 
-    fn destroy_object(&mut self, _o: ObjectRef, _fade: bool) -> GameResult<()> {
-        Err(GameError::Unsupported("Objects::destroy_object"))
+    fn destroy_object(&mut self, o: ObjectRef, _fade: bool) -> GameResult<()> {
+        let h = self.object_script_handle(o)?.0;
+        self.run_op(op::DELETE_OBJECT, &[I(h)]).map(drop)
     }
 
-    fn set_object_transform(&mut self, _o: ObjectRef, _pos: Vec3, _rot_deg: Vec3) -> GameResult<()> {
-        Err(GameError::Unsupported("Objects::set_object_transform"))
+    fn set_object_transform(&mut self, o: ObjectRef, pos: Vec3, rot_deg: Vec3) -> GameResult<()> {
+        let h = self.object_script_handle(o)?.0;
+        self.run_op(op::SET_OBJECT_COORDINATES, &[I(h), F(pos.x), F(pos.y), F(pos.z)])?;
+        self.run_op(
+            op::SET_OBJECT_ROTATION,
+            &[I(h), F(rot_deg.x), F(rot_deg.y), F(rot_deg.z)],
+        )
+        .map(drop)
     }
 
     fn set_object_matrix(&mut self, _o: ObjectRef, _m: &Matrix) -> GameResult<()> {

@@ -1,7 +1,7 @@
 //! The `FxInfo*_c::GetValue` functions SA:MP executes that were still unported (batch `samp-render-1`):
-//! `FxInfoAttractPt_c`, `FxInfoSpriteRect_c`, `FxInfoTrail_c`, `FxInfoFlat_c`, `FxInfoColourBright_c`,
+//! `FxInfoAttractPt_c`, `FxInfoSpriteRect_c`, `FxInfoFlat_c`, `FxInfoColourBright_c`,
 //! `FxInfoGroundCollide_c`, and the key evaluator `FxInterpInfo255_c::GetVal`. Ported from the 1.0 US bytes
-//! (gta-reversed's `Fx/Blueprints` as a reading aid; where it differs, the bytes win and the difference is named).
+//! (`FxInfoTrail_c::GetValue` 0x4A62B0 is in `fx_info_trail_value`.) (gta-reversed's `Fx/Blueprints` as a reading aid; where it differs, the bytes win and the difference is named).
 //!
 //! `GetValue(float currTime, float mult, float timeStep, float totalTime, bool useConst, void* out)` (thiscall,
 //! `ret 0x18`): the key time is `mult` when the info's byte +6 is set, else `(float)(currTime / totalTime)`; the
@@ -13,7 +13,7 @@ use sa_core::mem::GPtr;
 use sa_core::{hook, orig};
 use sa_math::x87::X87;
 
-use crate::common::{ftol32, k, rd, wr};
+use crate::common::{k, rd, wr};
 
 orig! {
     /// `FxInterpInfo32_c::GetVal(float* out, float t)` (0x4A89C0)
@@ -118,20 +118,6 @@ pub fn fx_info_flat_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, 
     rw_matrix_update(out.byte_add(0x38));
 }
 
-/// `FxInfoColourBright_c::GetValue` (0x4A6860): `key = FxInterpInfoU255_c::GetVal(t)`; render info bytes 0..3 =
-/// `_ftol(key[0..3])`, byte 7 = `_ftol(key[4])` (low bytes), dword +8 = 2.
-#[hook(addr = 0x4A6860, conv = thiscall, name = "FxInfoColourBright_c::GetValue", expect = "8A 41 06 83 EC 40",
-       unverified = "samp-render-1", route = "L2", hazards = "heap-writes", recs = "weapon-combat",
-       note = "writes the particle render info")]
-pub fn fx_info_colour_bright_get_value(this: GPtr<u8>, curr: u32, mult: u32, _step: u32, total: u32, _use_const: u32, out: GPtr<u8>) {
-    let t = key_time(this, curr, mult, total);
-    let b = eval(this, t, interp_u255_get_val);
-    for (i, o) in [0, 1, 2, 3, 7].into_iter().enumerate() {
-        wr::<u8>(out, o, ftol32(xf(b[i])) as u8);
-    }
-    wr::<u32>(out, 8, 2);
-}
-
 /// A random component: `(f32)((rand() % 10000) * 0.0002f - 1.0f)`, the `rand` call attributed to its original
 /// return address.
 fn rand_comp(ret: u32) -> f32 {
@@ -222,7 +208,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FX_INFO_ATTRACT_PT_GET_VALUE,
     HOOK_FX_INFO_SPRITE_RECT_GET_VALUE,
     HOOK_FX_INFO_FLAT_GET_VALUE,
-    HOOK_FX_INFO_COLOUR_BRIGHT_GET_VALUE,
     HOOK_FX_INFO_GROUND_COLLIDE_GET_VALUE,
     HOOK_INTERP_255_GET_VAL,
 ];

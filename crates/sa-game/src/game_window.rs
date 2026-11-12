@@ -13,13 +13,14 @@
 //! connection exist before the boot; a forked child must not touch them).
 
 use std::sync::Arc;
-use std::time::Instant;
+use web_time::Instant;
 
 use sa_platform::input::{InputEvent, InputState};
 use sa_platform::native::{Window, WindowApp, WindowConfig, run_windowed, set_pointer_capture};
 use sa_rw_wgpu::d3d9::WgpuDevice;
 
-use crate::{Args, Session, d3d9, merge_input, synthetic_input};
+use crate::app::{Args, Session, merge_input, synthetic_input};
+use crate::d3d9;
 
 /// The window's size (the game's default video mode, 800 x 600).
 const WIDTH: u32 = 800;
@@ -113,7 +114,7 @@ impl WindowApp for GameWindow<'_> {
             }
         }
         crate::boot::NO_PROBE.store(true, std::sync::atomic::Ordering::SeqCst);
-        match crate::boot(self.args) {
+        match crate::app::boot(self.args) {
             Ok(s) => self.session = Some(s),
             Err(e) => self.error = Some(e),
         }

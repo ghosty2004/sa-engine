@@ -36,6 +36,22 @@ fn entry_at(addr: u32) -> usize {
     }
 }
 
+/// wasm32: calls the registered type-erased entry at `addr` with `words` ([`crate::wabi`]).
+#[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+fn call_words(addr: u32, words: &[u32]) {
+    let Some(e) = crate::orig::registry::lookup(addr as usize) else {
+        panic!(
+            "static initialiser callee is not ported; phases B/C have no original code to call ({addr:#x} {})",
+            crate::orig::registry::describe(addr as usize)
+        )
+    };
+    let mut a = crate::wabi::Args::new();
+    for w in words {
+        a.push(*w);
+    }
+    crate::wabi::call::<u32>(e.entry, addr as usize, &a);
+}
+
 /// `this->ctor()` (thiscall, no stack arguments); the result is ignored.
 #[allow(unsafe_code)]
 fn call_thiscall0(ctor: u32, this: u32) {
@@ -46,7 +62,9 @@ fn call_thiscall0(ctor: u32, this: u32) {
             unsafe { core::mem::transmute::<usize, extern "thiscall-unwind" fn(u32) -> u32>(entry_at(ctor)) };
         f(this);
     }
-    #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
+    #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+    call_words(ctor, &[this]);
+    #[cfg(not(all(any(target_arch = "x86", target_arch = "wasm32"), not(sa_phase_a))))]
     let _ = (ctor, this);
 }
 
@@ -60,7 +78,9 @@ fn atexit(dtor: u32) {
             unsafe { core::mem::transmute::<usize, extern "C-unwind" fn(u32) -> i32>(entry_at(0x821D1E)) };
         f(dtor);
     }
-    #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
+    #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+    call_words(0x821D1E, &[dtor]);
+    #[cfg(not(all(any(target_arch = "x86", target_arch = "wasm32"), not(sa_phase_a))))]
     let _ = dtor;
 }
 
@@ -77,7 +97,9 @@ fn vec_ctor(ptr: u32, size: u32, count: u32, ctor: u32, dtor: u32) {
         };
         f(ptr, size, count, ctor, dtor);
     }
-    #[cfg(not(all(target_arch = "x86", not(sa_phase_a))))]
+    #[cfg(all(target_arch = "wasm32", not(sa_phase_a)))]
+    call_words(0x821D30, &[ptr, size, count, ctor, dtor]);
+    #[cfg(not(all(any(target_arch = "x86", target_arch = "wasm32"), not(sa_phase_a))))]
     let _ = (ptr, size, count, ctor, dtor);
 }
 
@@ -142,7 +164,13 @@ macro_rules! static_inits {
     ($(($a:expr, $n:expr, $k:ident<$($x:literal),*>)),* $(,)?) => {
         /// The table-driven static initialisers (phase B natives).
         pub const NATIVES: &[crate::abi::NativeReg] = &[
-            $(crate::abi::NativeReg { addr: $a, name: $n, entry: || $k::<$($x),*> as *const () as usize }),*
+            $(crate::abi::NativeReg { addr: $a, name: $n, entry: || {
+                #[cfg(target_arch = "wasm32")]
+                let e = crate::wabi_wrap!($k::<$($x),*>;);
+                #[cfg(not(target_arch = "wasm32"))]
+                let e = $k::<$($x),*> as *const () as usize;
+                e
+            } }),*
         ];
     };
 }

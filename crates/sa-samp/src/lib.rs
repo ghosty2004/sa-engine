@@ -67,6 +67,8 @@ pub struct NativeGame<V: View> {
     files: Option<Box<dyn files::FileProvider>>,
     installed: bool,
     threads: script::Threads,
+    /// The text `CMessages::AddBigMessage` points into (GTA keeps the pointer).
+    big_message: Box<[u8; 0x200]>,
     overlay: overlay::Overlay,
 }
 
@@ -90,6 +92,7 @@ impl<V: View> NativeGame<V> {
             files: None,
             installed: false,
             threads: script::Threads::new(exec),
+            big_message: Box::new([0; 0x200]),
             overlay: overlay::Overlay::default(),
         }
     }
@@ -113,9 +116,14 @@ impl<V: View> NativeGame<V> {
     /// before [`SampHost::install`].
     pub fn dispatch_frame(&mut self, phase: FramePhase) {
         if let Some(mut hooks) = self.hooks.take() {
-            hooks.frame(phase, self);
+            // An adapter call can reach an unported engine function, which unwinds (the phase B gap report);
+            // the client must survive that, so the hooks go back before the unwind continues.
+            let r = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| hooks.frame(phase, self)));
             // A callback cannot reinstall hooks (it only sees `&mut dyn GameAdapter`), so put them back.
             self.hooks = Some(hooks);
+            if let Err(e) = r {
+                std::panic::resume_unwind(e);
+            }
         }
         self.overlay_frame(phase);
     }
@@ -124,6 +132,10 @@ impl<V: View> NativeGame<V> {
     pub fn shutdown(&mut self) {
         if let Some(mut hooks) = self.hooks.take() {
             hooks.shutdown(self);
+        }
+        if self.installed {
+            sa_core::samp::set_disabled_features(0);
+            sa_core::samp::set_toggle(sa_core::samp::toggle::NO_CHEATS, false);
         }
     }
 }
@@ -180,9 +192,9 @@ impl<V: View> SampHost for NativeGame<V> {
         if self.installed {
             return Err(GameError::Unsupported("SampHost::install called twice"));
         }
-        // The engine does not read samp mode yet (SAMP-4): the configuration is stored and reported by
-        // `SampMode::config`, the ports keep their single-player behaviour.
+        // samp mode (SAMP-4): the ports read the disabled features from sa-core (see `config.rs`).
         self.config = config.clone();
+        sa_core::samp::set_disabled_features(config.disabled.0);
         self.hooks = Some(hooks);
         self.files = files;
         self.installed = true;

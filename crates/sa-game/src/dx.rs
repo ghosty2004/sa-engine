@@ -172,21 +172,7 @@ const TRAP_DD_CREATE_EX: u32 = TRAP + 0x3F00;
 /// Maps the page and writes the objects' vtable pointers and the vtables.
 #[allow(unsafe_code)]
 pub fn map() -> Result<(), String> {
-    // SAFETY: an anonymous private mapping at a fixed low address that MAP_FIXED_NOREPLACE refuses
-    // to place over anything already mapped; never unmapped.
-    let p = unsafe {
-        libc::mmap(
-            PAGE as *mut libc::c_void,
-            0x1000,
-            libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED_NOREPLACE,
-            -1,
-            0,
-        )
-    };
-    if p as usize != PAGE {
-        return Err(format!("cannot map the DirectX object page at {PAGE:#x}"));
-    }
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the DirectX object page at {PAGE:#x}: {e}"))?;
     let w = |a: usize, v: u32| GPtr::<u32>::from_addr(a).write(v);
     for (c, cl) in CLASSES.iter().enumerate() {
         w(cl.object, cl.vtable as u32);
@@ -223,7 +209,13 @@ macro_rules! entries {
                 extern "C-unwind" fn w($($a: $t),*) -> $r {
                     $f($($a),*)
                 }
-                v.push(($addr, $name, w as *const () as usize));
+                v.push(($addr, $name, {
+                    #[cfg(target_arch = "wasm32")]
+                    let e = sa_core::wabi_wrap!(w; $($a)*);
+                    #[cfg(not(target_arch = "wasm32"))]
+                    let e = w as *const () as usize;
+                    e
+                }));
             })*
             v
         }

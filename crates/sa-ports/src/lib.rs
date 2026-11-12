@@ -87,6 +87,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_world::std6_natives::NATIVES],
     &[sa_world::std7_natives::NATIVES],
     &[sa_world::std12_natives::NATIVES],
+    &[sa_world::world::game_logic_time::NATIVES],
     &[sa_veh::wake_locks_component_rotation::NATIVES],
     &[sa_veh::vehicle_tail_calls::NATIVES],
     &[sa_veh::vehicle_stub_natives::NATIVES],
@@ -97,6 +98,10 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_ai::police_pursuit::NATIVES],
     &[sa_ai::car_set_ped_out_native::NATIVES],
     &[sa_audio::radio_queue_tracks_native::NATIVES],
+    &[sa_ai::fight_choose_attack_natives::NATIVES],
+    &[sa_veh::vehicle2::NATIVES],
+    &[sa_ai::fight_ground_target::NATIVES],
+    &[sa_ai::short_body_natives::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.

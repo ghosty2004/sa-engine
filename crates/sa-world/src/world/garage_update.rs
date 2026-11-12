@@ -38,13 +38,13 @@ orig! {
     /// `FUN_00447d80(float x, float y)` (0x447D80): squared 2D distance to the garage box, ST0
     fn dist_sq_to_box(gp: GPtr<u8>, px: f32, py: f32) -> f64 = thiscall 0x447D80 => dist_sq_to_box_port;
     /// `FUN_0044a750()` (0x44A750): slides the door shut, true once closed
-    fn slide_door_closed(gp: GPtr<u8>) -> u8 = thiscall 0x44A750 => unported;
+    fn slide_door_closed(gp: GPtr<u8>) -> u8 = thiscall 0x44A750 => super::garage_slide_door_closed::slide_door_closed;
     /// `FUN_0044a660()` (0x44A660): slides the door open, true once open
     fn slide_door_open(gp: GPtr<u8>) -> u8 = thiscall 0x44A660 => unported;
     /// `FUN_00449220(CVehicle*)` (0x449220): pushes cars near the door out of the garage
     fn throw_cars_near_door_out(gp: GPtr<u8>, veh: GPtr<u8>) = thiscall 0x449220 => unported;
     /// `thunk_FUN_0156d610()` (0x4494F0): another car blocks the garage
-    fn is_any_car_blocking(gp: GPtr<u8>) -> u8 = thiscall 0x4494F0 => unported;
+    fn is_any_car_blocking(gp: GPtr<u8>) -> u8 = thiscall 0x4494F0 => super::garage_car_blocking::garage_is_any_car_blocking_door;
     /// `thunk_FUN_01561400(CVehicle*)` (0x4495F0): the count of cars inside except the given one
     fn count_cars_inside(gp: GPtr<u8>, veh: GPtr<u8>) -> i32 = thiscall 0x4495F0 => unported;
     /// `thunk_FUN_01566680(CPed*)` (0x449100): another ped touches the garage
@@ -64,7 +64,7 @@ orig! {
     /// `CGarage::RemoveCarsBlockingDoorNotInside()` (0x449690)
     fn remove_cars_blocking_door_not_inside(gp: GPtr<u8>) = thiscall 0x449690 => unported;
     /// `CGarage::StoreAndRemoveCarsForThisHideOut(CStoredCar*, int32)` (0x449900)
-    fn store_and_remove_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449900 => unported;
+    fn store_and_remove_cars(gp: GPtr<u8>, stored: GPtr<u8>, max: i32) = thiscall 0x449900 => super::garage_store_cars::store_and_remove_cars_for_this_hide_out;
     /// `CGarages::FindSafeHouseIndexForGarageType(eGarageType)` (0x4489F0)
     fn find_safe_house_index(ty: i32) -> i32 = cdecl 0x4489F0 => crate::world::misc2::find_safe_house_index_for_garage_type;
     /// `CGarages::CountCarsInHideoutGarage(eGarageType)` (0x44A210)

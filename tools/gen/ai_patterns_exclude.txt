@@ -61,3 +61,5 @@
 0x5F2B80
 0x5F3730
 0x5F3B40
+# STD-15: ported by hand in pass_object_tasks.rs (WRITER-NATIVE native-19); the generated copy duplicated it
+0x661570

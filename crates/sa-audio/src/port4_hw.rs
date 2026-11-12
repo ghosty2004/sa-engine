@@ -1434,11 +1434,20 @@ pub fn smooth_fade_start(this: u32) {
 #[hook(addr = 0x4EEE90, conv = stdcall, name = "CAESmoothFadeThread::SmoothFadeProc", expect = "56 8B 74 24 08 8A 86 09 08 00 00",
        unverified = "std4-audio-1", route = "L3-only", hazards = "none", note = "thread entry")]
 pub fn smooth_fade_proc(this: u32) -> u32 {
-    while r8(this + 0x809) != 0 {
-        sf_service(this);
+    while smooth_fade_step(this) {
         sleep(1);
     }
     0
+}
+
+/// One pass of [`smooth_fade_proc`]'s loop: `Service()` while running; false once stopped. wasm32 (no threads)
+/// calls it from the main loop.
+pub fn smooth_fade_step(this: u32) -> bool {
+    if r8(this + 0x809) == 0 {
+        return false;
+    }
+    sf_service(this);
+    true
 }
 
 /// `CAESmoothFadeThread::RequestFade(buffer, volume, time, stop)` (0x4EEAA0, `ret 0x10`).
@@ -1682,33 +1691,54 @@ pub fn stream_thread_start(this: u32) {
 #[hook(addr = 0x4F15C0, conv = stdcall, name = "CAEStreamThread::MainLoop", expect = "51 53 57 8B 7C 24 10",
        unverified = "std4-audio-1", route = "L3-only", hazards = "none", note = "thread entry")]
 pub fn stream_thread_main_loop(this: u32) -> u32 {
-    let mut was_fg = true;
-    let mut paused = false;
-    while r8(this + 0x11) != 0 {
-        let fg = is_foreground_app() != 0;
-        if fg {
-            if !was_fg && paused {
-                ch_play(r32(this + 8), 0, 0, 0x3F80_0000);
-            }
-            let t0 = current_time_ms() as u32;
-            st_service(this);
-            ch_service(r32(this + 8));
-            let t1 = current_time_ms() as u32;
-            if t1.wrapping_sub(t0) < 5 {
-                sleep(t0.wrapping_sub(t1).wrapping_add(5));
-            }
-        } else if was_fg {
-            if ac_is_buffer_playing(r32(this + 8)) != 0 {
-                sc_pause(r32(this + 8));
-                paused = true;
-            } else {
-                paused = false;
-            }
-        }
-        was_fg = fg;
+    let mut st = StreamLoopState::default();
+    while stream_thread_step(this, &mut st) {
         sleep(100);
     }
     0
+}
+
+/// The locals [`stream_thread_main_loop`] keeps between passes.
+#[derive(Debug, Clone, Copy)]
+pub struct StreamLoopState {
+    was_fg: bool,
+    paused: bool,
+}
+
+impl Default for StreamLoopState {
+    fn default() -> Self {
+        StreamLoopState { was_fg: true, paused: false }
+    }
+}
+
+/// One pass of [`stream_thread_main_loop`]'s loop without its trailing `Sleep(100)`; false once the thread is
+/// stopped (+0x11 = 0). wasm32 (no threads) calls it from the main loop at the same cadence.
+pub fn stream_thread_step(this: u32, st: &mut StreamLoopState) -> bool {
+    if r8(this + 0x11) == 0 {
+        return false;
+    }
+    let fg = is_foreground_app() != 0;
+    if fg {
+        if !st.was_fg && st.paused {
+            ch_play(r32(this + 8), 0, 0, 0x3F80_0000);
+        }
+        let t0 = current_time_ms() as u32;
+        st_service(this);
+        ch_service(r32(this + 8));
+        let t1 = current_time_ms() as u32;
+        if t1.wrapping_sub(t0) < 5 {
+            sleep(t0.wrapping_sub(t1).wrapping_add(5));
+        }
+    } else if st.was_fg {
+        if ac_is_buffer_playing(r32(this + 8)) != 0 {
+            sc_pause(r32(this + 8));
+            st.paused = true;
+        } else {
+            st.paused = false;
+        }
+    }
+    st.was_fg = fg;
+    true
 }
 
 /// Caches the channel's playing track (+0x34), play time (+0x28), active track (+0x30), length (+0x2C).

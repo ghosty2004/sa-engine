@@ -7,7 +7,13 @@ use sa_core::mem::GPtr;
 /// `CAERadioTrackManager::QueueUpTracksForStation(eRadioID, int8*, int8, tRadioSettings&)` (0x4EA670, thiscall,
 /// `ret 0x10`): [`crate::port3_lead::radio_queue_up_tracks_for_station`].
 #[sa_core::native(addr = 0x4EA670, conv = thiscall, name = "CAERadioTrackManager::QueueUpTracksForStation")]
-pub fn radio_queue_up_tracks_for_station(this: GPtr<u8>, station: u32, count: GPtr<u8>, ty: u32, s: GPtr<u8>) -> u8 {
+pub fn radio_queue_up_tracks_for_station(
+    this: GPtr<u8>,
+    station: u32,
+    count: GPtr<u8>,
+    ty: u32,
+    s: GPtr<u8>,
+) -> u8 {
     crate::port3_lead::radio_queue_up_tracks_for_station(this, station, count, ty, s)
 }
 

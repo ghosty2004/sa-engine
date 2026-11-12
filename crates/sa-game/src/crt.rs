@@ -7,41 +7,119 @@
 
 use sa_core::mem::GPtr;
 
+/// The C heap: libc natively; on wasm32 the Rust allocator with a 16-byte size header (the blocks
+/// lie above the reserved legacy address range, see [`crate::arena::WASM_LOW_END`]).
+#[cfg(not(target_arch = "wasm32"))]
+use libc as sys;
+
+#[cfg(target_arch = "wasm32")]
+mod sys {
+    use std::alloc::{Layout, alloc_zeroed, dealloc};
+
+    const HDR: usize = 16;
+
+    fn layout(n: usize) -> Layout {
+        Layout::from_size_align(n + HDR, 16).expect("C heap block layout")
+    }
+
+    unsafe fn finish(p: *mut u8, n: usize) -> *mut u8 {
+        if p.is_null() {
+            return p;
+        }
+        // SAFETY: a fresh block of at least HDR bytes.
+        unsafe {
+            p.cast::<usize>().write(n);
+            p.add(HDR)
+        }
+    }
+
+    /// Zeroed, like the fresh pages a native heap mostly hands out: dlmalloc on wasm32 reuses freed blocks at once.
+    /// (The `FindFxSystemBP` / `CreateEntityFx` out-of-bounds trap this was first meant for was the moving shrink in
+    /// [`realloc`], not an uninitialised field.)
+    pub unsafe fn malloc(n: usize) -> *mut u8 {
+        // SAFETY: a non-zero layout.
+        unsafe { finish(alloc_zeroed(layout(n)), n) }
+    }
+
+    pub unsafe fn calloc(k: usize, n: usize) -> *mut u8 {
+        let n = k.saturating_mul(n);
+        // SAFETY: a non-zero layout.
+        unsafe { finish(alloc_zeroed(layout(n)), n) }
+    }
+
+    pub unsafe fn free(p: *mut u8) {
+        if p.is_null() {
+            return;
+        }
+        // SAFETY: `p` came from `malloc` / `calloc` / `realloc`: its header holds the size.
+        unsafe {
+            let b = p.sub(HDR);
+            dealloc(b, layout(b.cast::<usize>().read()));
+        }
+    }
+
+    pub unsafe fn realloc(p: *mut u8, n: usize) -> *mut u8 {
+        if p.is_null() {
+            // SAFETY: as malloc.
+            return unsafe { malloc(n) };
+        }
+        // SAFETY: as free; the copy stays inside both blocks.
+        unsafe {
+            let old = p.sub(HDR).cast::<usize>().read();
+            // A shrink stays in place, as MSVC's realloc (and glibc's, natively) does. The game relies on it:
+            // `FxMemoryPool_c::Optimise` (0x4A9CD0) shrinks the 1 MiB effects pool to its used size after
+            // `LoadFxProject` and keeps the blueprints allocated inside it, whose list links (`g_fxMan` +0, each
+            // blueprint +4) point into the block. A moved pool left them in a freed block that later allocations
+            // reuse: the out-of-bounds trap in `FindFxSystemBP` from `CObjectData::Initialise`. The header keeps
+            // the block's real size (its layout for `dealloc`).
+            if n <= old {
+                return p;
+            }
+            let q = malloc(n);
+            if !q.is_null() {
+                std::ptr::copy_nonoverlapping(p, q, old.min(n));
+                free(p);
+            }
+            q
+        }
+    }
+}
+
 /// `malloc` (0x824257) / `operator new` (0x82119A) / `operator new[]` (0x821195). MSVC's
 /// `malloc(0)` returns a unique pointer; so does glibc's.
 pub extern "C-unwind" fn malloc(size: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::alloc(size as usize);
     }
     // SAFETY: plain C allocation; the game owns the block until `free`.
-    GPtr::from_raw(unsafe { libc::malloc(size as usize) }.cast())
+    GPtr::from_raw(unsafe { sys::malloc(size as usize) }.cast())
 }
 
 /// `free` (0x82413F) / `operator delete` (0x8214BD).
 pub extern "C-unwind" fn free(p: GPtr<u8>) {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::free(p);
     }
     // SAFETY: `p` came from `malloc`/`calloc`/`realloc` above (or is null).
-    unsafe { libc::free(p.raw().cast()) }
+    unsafe { sys::free(p.raw().cast()) }
 }
 
 /// `calloc` (0x824416).
 pub extern "C-unwind" fn calloc(n: u32, size: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::calloc(n as usize * size as usize);
     }
     // SAFETY: plain C allocation.
-    GPtr::from_raw(unsafe { libc::calloc(n as usize, size as usize) }.cast())
+    GPtr::from_raw(unsafe { sys::calloc(n as usize, size as usize) }.cast())
 }
 
 /// `realloc` (0x824269).
 pub extern "C-unwind" fn realloc(p: GPtr<u8>, size: u32) -> GPtr<u8> {
-    if crate::det::on() {
+    if crate::det::fixed_heap() {
         return crate::detheap::realloc(p, size as usize);
     }
     // SAFETY: `p` came from this allocator (or is null).
-    GPtr::from_raw(unsafe { libc::realloc(p.raw().cast(), size as usize) }.cast())
+    GPtr::from_raw(unsafe { sys::realloc(p.raw().cast(), size as usize) }.cast())
 }
 
 /// `strncmp` (0x8214D0): MSVC returns -1/0/1.
@@ -78,8 +156,15 @@ macro_rules! vararg_entry {
                 body = sym $body,
             )
         }
+        /// wasm32: the type-erased entry ([`sa_core::wabi`]); its argument words are the x86 stack words.
+        #[cfg(target_arch = "wasm32")]
+        extern "C" fn $entry(_callee: u32, args: *const u32, ret: *mut sa_core::wabi::Ret) {
+            let r = $body(args);
+            // SAFETY: the dispatcher passes its `Ret` slot.
+            sa_core::wabi::put_ret(r, unsafe { &mut *ret });
+        }
         /// Other targets: no original-ABI dispatch exists, the entry is never called.
-        #[cfg(not(target_arch = "x86"))]
+        #[cfg(not(any(target_arch = "x86", target_arch = "wasm32")))]
         extern "C" fn $entry() {
             let _ = $body;
         }
@@ -110,7 +195,7 @@ extern "C" fn printf_body(args: *const u32) -> i32 {
     std::panic::catch_unwind(|| {
         let w = |i: usize| word(args, 1 + i);
         let s = crate::crt_fmt::format(&crate::crt_fmt::cbytes(word(args, 0)), &mut crate::crt_fmt::Args::new(&w));
-        if std::env::var_os("SA_GAME_PRINTF").is_some() {
+        if crate::env::var_os("SA_GAME_PRINTF").is_some() {
             eprint!("{}", String::from_utf8_lossy(&s));
         }
         s.len() as i32
@@ -422,8 +507,8 @@ pub extern "C-unwind" fn ceil(v: f64) -> f64 {
 /// takes the local date from `GetLocalTime`; natively the date is the host's UTC date (sa-platform has no
 /// time zone).
 pub extern "C-unwind" fn strdate(buf: GPtr<u8>) -> GPtr<u8> {
-    let secs = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
+    let secs = web_time::SystemTime::now()
+        .duration_since(web_time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
     let (y, m, d) = civil_from_days((secs / 86_400) as i64);
     let text = [
@@ -476,62 +561,119 @@ extern "C-unwind" fn mf_library_startup(_flags: u32) -> u32 {
     0xFFFF_F7D3
 }
 
+/// The registry entry of a replacement: the function itself on x86 (its ABI is the original's), its type-erased
+/// entry on wasm32 ([`sa_core::wabi`]).
+macro_rules! ent {
+    (raw $f:ident) => {
+        $f as *const () as usize
+    };
+    ($f:ident; $($a:ident)*) => {{
+        #[cfg(target_arch = "wasm32")]
+        let e = sa_core::wabi_wrap!($f; $($a)*);
+        #[cfg(not(target_arch = "wasm32"))]
+        let e = $f as *const () as usize;
+        e
+    }};
+}
+
+/// Calls the registry entry `e` (an element constructor / destructor, thiscall) with `this`.
+fn call_this(e: &sa_core::orig::registry::Entry, this: u32) -> u32 {
+    #[cfg(target_arch = "x86")]
+    {
+        // SAFETY: a registered thiscall entry `T* T::T()` / `void T::~T()` (EAX ignored for the latter).
+        let f = unsafe { std::mem::transmute::<usize, extern "thiscall-unwind" fn(u32) -> u32>(e.entry) };
+        f(this)
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        let mut a = sa_core::wabi::Args::new();
+        a.push(this);
+        sa_core::wabi::call(e.entry, e.addr as usize, &a)
+    }
+    #[cfg(not(any(target_arch = "x86", target_arch = "wasm32")))]
+    {
+        let _ = (e, this);
+        unreachable!("no original-ABI dispatch on this target")
+    }
+}
+
+/// Calls the registry entry `e` (a cdecl `int cmp(const void*, const void*)`).
+fn call_cmp(e: &sa_core::orig::registry::Entry, a: u32, b: u32) -> i32 {
+    #[cfg(target_arch = "x86")]
+    {
+        // SAFETY: a registered cdecl entry `int cmp(const void*, const void*)`.
+        let f = unsafe { std::mem::transmute::<usize, extern "C-unwind" fn(u32, u32) -> i32>(e.entry) };
+        f(a, b)
+    }
+    #[cfg(target_arch = "wasm32")]
+    {
+        let mut x = sa_core::wabi::Args::new();
+        x.push(a);
+        x.push(b);
+        sa_core::wabi::call(e.entry, e.addr as usize, &x)
+    }
+    #[cfg(not(any(target_arch = "x86", target_arch = "wasm32")))]
+    {
+        let _ = (e, a, b);
+        unreachable!("no original-ABI dispatch on this target")
+    }
+}
+
 /// `(address, name, entry)` of every replacement.
 pub fn entries() -> Vec<(u32, &'static str, usize)> {
-    let f = |p: *const ()| p as usize;
     let mut v = vec![
-        (0x0082_13AE, "CRT free (operator delete[])", f(free as *const ())),
-        (0x0082_13D0, "CRT strchr", f(strchr as *const ())),
-        (0x0082_1490, "CRT strrchr", f(strrchr as *const ())),
-        (0x0082_1982, "CRT printf", f(printf as *const ())),
-        (0x0082_19F0, "CRT floor", f(floor as *const ())),
-        (0x0082_20F0, "CRT pow", f(pow as *const ())),
-        (0x0082_2394, "CRT acos", f(acos as *const ())),
-        (0x0082_6590, "CRT strcpy", f(strcpy as *const ())),
-        (0x0082_65A0, "CRT strcat", f(strcat as *const ())),
-        (0x0082_6450, "CRT strncat", f(strncat as *const ())),
-        (0x0082_63C0, "CRT strcmp", f(strcmp as *const ())),
-        (0x0080_A420, "RW rwstrrchr", f(strrchr as *const ())),
-        (0x0080_A400, "RW rwstrchr", f(strchr as *const ())),
-        (0x0080_A350, "RW rwstricmp", f(stricmp as *const ())),
-        (0x0080_A3A0, "RW rwstrupr", f(strupr as *const ())),
-        (0x0080_A3D0, "RW rwstrlwr", f(strlwr as *const ())),
-        (0x0080_4200, "RW rwfexist", f(rwfexist as *const ())),
-        (0x0082_32D8, "CRT fopen", f(fopen as *const ())),
-        (0x0082_318B, "CRT fclose", f(fclose as *const ())),
-        (0x0082_3521, "CRT fread", f(fread as *const ())),
-        (0x0082_3674, "CRT fwrite", f(fwrite as *const ())),
-        (0x0082_3798, "CRT fgets", f(fgets as *const ())),
-        (0x0082_62B8, "CRT fputs", f(fputs as *const ())),
-        (0x0082_62A2, "CRT feof", f(feof as *const ())),
-        (0x0082_374F, "CRT fseek", f(fseek as *const ())),
-        (0x0082_3E86, "CRT fflush", f(fflush as *const ())),
-        (0x0082_6261, "CRT ftell", f(ftell as *const ())),
-        (0x0082_1B11, "CRT srand", f(srand as *const ())),
-        (0x0082_1B1E, "CRT rand", f(rand as *const ())),
-        (0x0082_1BB5, "CRT sprintf", f(sprintf as *const ())),
-        (0x0082_3A30, "CRT fprintf", f(fprintf as *const ())),
-        (0x0082_3A8E, "CRT _strdate", f(strdate as *const ())),
-        (0x0083_6FBA, "CRT _strupr", f(strupr as *const ())),
-        (0x0082_1D1E, "CRT atexit", f(atexit as *const ())),
-        (0x0082_1F40, "CRT strncpy", f(strncpy as *const ())),
-        (0x0082_20AD, "CRT sscanf", f(sscanf as *const ())),
-        (0x0082_244B, "CRT strtok", f(strtok as *const ())),
-        (0x0082_258E, "CRT atol", f(atol as *const ())),
-        (0x0082_2650, "CRT strstr", f(strstr as *const ())),
-        (0x0082_2789, "CRT isdigit", f(isdigit as *const ())),
-        (0x0082_29B6, "CRT _stricmp", f(stricmp as *const ())),
-        (0x0082_3820, "CRT ceil", f(ceil as *const ())),
-        (0x0082_32F0, "CRT modf", f(modf as *const ())),
-        (0x0082_3CEE, "CRT atof", f(atof as *const ())),
-        (0x0082_45A0, "CRT strncpy (2)", f(strncpy as *const ())),
-        (0x0082_6330, "CRT strlen", f(strlen as *const ())),
-        (0x0083_5AC7, "CRT _strnicmp", f(strnicmp as *const ())),
-        (0x0083_6C58, "CRT _strlwr", f(strlwr as *const ())),
+        (0x0082_13AE, "CRT free (operator delete[])", ent!(free; p)),
+        (0x0082_13D0, "CRT strchr", ent!(strchr; s c)),
+        (0x0082_1490, "CRT strrchr", ent!(strrchr; s c)),
+        (0x0082_1982, "CRT printf", ent!(raw printf)),
+        (0x0082_19F0, "CRT floor", ent!(floor; v)),
+        (0x0082_20F0, "CRT pow", ent!(pow; x y)),
+        (0x0082_2394, "CRT acos", ent!(acos; x)),
+        (0x0082_6590, "CRT strcpy", ent!(strcpy; d s)),
+        (0x0082_65A0, "CRT strcat", ent!(strcat; d s)),
+        (0x0082_6450, "CRT strncat", ent!(strncat; d s n)),
+        (0x0082_63C0, "CRT strcmp", ent!(strcmp; a b)),
+        (0x0080_A420, "RW rwstrrchr", ent!(strrchr; s c)),
+        (0x0080_A400, "RW rwstrchr", ent!(strchr; s c)),
+        (0x0080_A350, "RW rwstricmp", ent!(stricmp; a b)),
+        (0x0080_A3A0, "RW rwstrupr", ent!(strupr; s)),
+        (0x0080_A3D0, "RW rwstrlwr", ent!(strlwr; s)),
+        (0x0080_4200, "RW rwfexist", ent!(rwfexist; name)),
+        (0x0082_32D8, "CRT fopen", ent!(fopen; path mode)),
+        (0x0082_318B, "CRT fclose", ent!(fclose; f)),
+        (0x0082_3521, "CRT fread", ent!(fread; buf size n f)),
+        (0x0082_3674, "CRT fwrite", ent!(fwrite; buf size n f)),
+        (0x0082_3798, "CRT fgets", ent!(fgets; buf n f)),
+        (0x0082_62B8, "CRT fputs", ent!(fputs; s f)),
+        (0x0082_62A2, "CRT feof", ent!(feof; f)),
+        (0x0082_374F, "CRT fseek", ent!(fseek; f offset origin)),
+        (0x0082_3E86, "CRT fflush", ent!(fflush; f)),
+        (0x0082_6261, "CRT ftell", ent!(ftell; f)),
+        (0x0082_1B11, "CRT srand", ent!(srand; seed)),
+        (0x0082_1B1E, "CRT rand", ent!(rand;)),
+        (0x0082_1BB5, "CRT sprintf", ent!(raw sprintf)),
+        (0x0082_3A30, "CRT fprintf", ent!(raw fprintf)),
+        (0x0082_3A8E, "CRT _strdate", ent!(strdate; buf)),
+        (0x0083_6FBA, "CRT _strupr", ent!(strupr; s)),
+        (0x0082_1D1E, "CRT atexit", ent!(atexit; _f)),
+        (0x0082_1F40, "CRT strncpy", ent!(strncpy; d s n)),
+        (0x0082_20AD, "CRT sscanf", ent!(raw sscanf)),
+        (0x0082_244B, "CRT strtok", ent!(strtok; s delim)),
+        (0x0082_258E, "CRT atol", ent!(atol; s)),
+        (0x0082_2650, "CRT strstr", ent!(strstr; a b)),
+        (0x0082_2789, "CRT isdigit", ent!(isdigit; c)),
+        (0x0082_29B6, "CRT _stricmp", ent!(stricmp; a b)),
+        (0x0082_3820, "CRT ceil", ent!(ceil; v)),
+        (0x0082_32F0, "CRT modf", ent!(modf; v ip)),
+        (0x0082_3CEE, "CRT atof", ent!(atof; s)),
+        (0x0082_45A0, "CRT strncpy (2)", ent!(strncpy; d s n)),
+        (0x0082_6330, "CRT strlen", ent!(strlen; s)),
+        (0x0083_5AC7, "CRT _strnicmp", ent!(strnicmp; a b n)),
+        (0x0083_6C58, "CRT _strlwr", ent!(strlwr; s)),
         (
             0x0081_95C0,
             "MF library startup (statically linked loader; no Media Foundation natively)",
-            f(mf_library_startup as *const ()),
+            ent!(mf_library_startup; _flags),
         ),
     ];
     v.extend(base_entries());
@@ -542,17 +684,17 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
 /// `count` elements from the last to the first (`ptr += size * count`, then `ptr -= size` before each call; the
 /// signed count is decremented first and the loop stops when it goes negative), through `orig!`'s registry. The
 /// SEH frame (`__ArrayUnwind` on a throwing destructor) has no counterpart: no game destructor throws.
-#[cfg(target_arch = "x86")]
-extern "stdcall-unwind" fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor: u32) {
+#[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+pub(crate) fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor: u32) {
     let Some(e) = sa_core::orig::registry::lookup(dtor as usize) else {
-        panic!(
+        sa_core::orig::unported(format_args!(
             "eh_vector_dtor_element is not ported; phases B/C have no original code to call ({dtor:#x} {})",
             sa_core::orig::registry::describe(dtor as usize)
-        );
+        ));
     };
-    // SAFETY: a registered thiscall entry of an element destructor.
-    let f: extern "thiscall-unwind" fn(u32) =
-        unsafe { std::mem::transmute::<usize, extern "thiscall-unwind" fn(u32)>(e.entry) };
+    let f = |p: u32| {
+        call_this(e, p);
+    };
     let mut p = ptr.wrapping_add(size.wrapping_mul(count as u32));
     let mut n = count;
     loop {
@@ -569,17 +711,15 @@ extern "stdcall-unwind" fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor:
 /// (thiscall) on each of `count` elements (signed count, `size` bytes apart), through `orig!`'s
 /// registry. The original's unwind path (destroying the constructed elements when a constructor
 /// throws) has no counterpart: no game constructor throws.
-#[cfg(target_arch = "x86")]
-extern "stdcall-unwind" fn eh_vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32, _dtor: u32) {
+#[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+pub(crate) fn eh_vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32, _dtor: u32) {
     let Some(e) = sa_core::orig::registry::lookup(ctor as usize) else {
-        panic!(
+        sa_core::orig::unported(format_args!(
             "eh_vector_ctor_element is not ported; phases B/C have no original code to call ({ctor:#x} {})",
             sa_core::orig::registry::describe(ctor as usize)
-        );
+        ));
     };
-    // SAFETY: a registered thiscall entry of an element constructor `T* T::T()`.
-    let f: extern "thiscall-unwind" fn(u32) -> u32 =
-        unsafe { std::mem::transmute::<usize, extern "thiscall-unwind" fn(u32) -> u32>(e.entry) };
+    let f = |p: u32| call_this(e, p);
     let mut p = ptr;
     let mut i = 0;
     while i < count {
@@ -596,8 +736,8 @@ extern "stdcall-unwind" fn eh_vector_ctor(ptr: u32, size: u32, count: i32, ctor:
 /// swapping on > 0), the `loguy`/`higuy` partition around `mid` (which follows the element when it is
 /// swapped), the run of elements equal to `mid` skipped, and the larger part pushed. Swaps are byte
 /// by byte and skipped for identical pointers. `comp` (cdecl) is called through `orig!`'s registry.
-#[cfg(target_arch = "x86")]
-extern "C-unwind" fn qsort(base: u32, num: u32, width: u32, comp: u32) {
+#[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+pub(crate) fn qsort(base: u32, num: u32, width: u32, comp: u32) {
     if num < 2 || width == 0 {
         return;
     }
@@ -607,9 +747,7 @@ extern "C-unwind" fn qsort(base: u32, num: u32, width: u32, comp: u32) {
             sa_core::orig::registry::describe(comp as usize)
         );
     };
-    // SAFETY: a registered cdecl entry `int cmp(const void*, const void*)`.
-    let f: extern "C-unwind" fn(u32, u32) -> i32 =
-        unsafe { std::mem::transmute::<usize, extern "C-unwind" fn(u32, u32) -> i32>(e.entry) };
+    let f = |a: u32, b: u32| call_cmp(e, a, b);
     let swap = |a: u32, b: u32| {
         if a != b {
             for i in 0..width {
@@ -737,17 +875,15 @@ extern "C-unwind" fn qsort(base: u32, num: u32, width: u32, comp: u32) {
 
 /// `vector constructor iterator(ptr, size, count, ctor)` (0x403D60, stdcall, protected entry): `ctor`
 /// (thiscall) on each of `count` elements (signed; none when <= 0), `size` bytes apart.
-#[cfg(target_arch = "x86")]
-extern "stdcall-unwind" fn vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32) {
+#[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+pub(crate) fn vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32) {
     let Some(e) = sa_core::orig::registry::lookup(ctor as usize) else {
         panic!(
             "vector_ctor_element is not ported; phases B/C have no original code to call ({ctor:#x} {})",
             sa_core::orig::registry::describe(ctor as usize)
         );
     };
-    // SAFETY: a registered thiscall entry of an element constructor `T* T::T()`.
-    let f: extern "thiscall-unwind" fn(u32) -> u32 =
-        unsafe { std::mem::transmute::<usize, extern "thiscall-unwind" fn(u32) -> u32>(e.entry) };
+    let f = |p: u32| call_this(e, p);
     let mut p = ptr;
     for _ in 0..count.max(0) {
         f(p);
@@ -755,28 +891,50 @@ extern "stdcall-unwind" fn vector_ctor(ptr: u32, size: u32, count: i32, ctor: u3
     }
 }
 
+#[cfg(target_arch = "x86")]
+mod abi_entries {
+    pub extern "stdcall-unwind" fn eh_vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32, dtor: u32) {
+        super::eh_vector_ctor(ptr, size, count, ctor, dtor)
+    }
+    pub extern "C-unwind" fn qsort(base: u32, num: u32, width: u32, comp: u32) {
+        super::qsort(base, num, width, comp)
+    }
+    pub extern "stdcall-unwind" fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor: u32) {
+        super::eh_vector_dtor(ptr, size, count, dtor)
+    }
+    pub extern "stdcall-unwind" fn vector_ctor(ptr: u32, size: u32, count: i32, ctor: u32) {
+        super::vector_ctor(ptr, size, count, ctor)
+    }
+}
+#[cfg(target_arch = "wasm32")]
+mod abi_entries {
+    pub(crate) use super::{eh_vector_ctor, eh_vector_dtor, qsort, vector_ctor};
+}
+
 fn base_entries() -> Vec<(u32, &'static str, usize)> {
+    #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+    use abi_entries::{eh_vector_ctor, eh_vector_dtor, qsort, vector_ctor};
     vec![
-        #[cfg(target_arch = "x86")]
+        #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
         (
             0x0082_1D30,
             "CRT eh vector constructor iterator",
-            eh_vector_ctor as *const () as usize,
+            ent!(eh_vector_ctor; ptr size count ctor _dtor),
         ),
-        #[cfg(target_arch = "x86")]
-        (0x0082_47E0, "CRT qsort", qsort as *const () as usize),
-        #[cfg(target_arch = "x86")]
-        (0x0082_1E02, "CRT eh vector destructor iterator", eh_vector_dtor as *const () as usize),
-        #[cfg(target_arch = "x86")]
-        (0x0040_3D60, "CRT vector constructor iterator", vector_ctor as *const () as usize),
-        (0x0082_1195, "CRT operator new[]", malloc as *const () as usize),
-        (0x0082_119A, "CRT operator new", malloc as *const () as usize),
-        (0x0082_14BD, "CRT operator delete", free as *const () as usize),
-        (0x0082_14D0, "CRT strncmp", strncmp as *const () as usize),
-        (0x0082_413F, "CRT free", free as *const () as usize),
-        (0x0082_4257, "CRT malloc", malloc as *const () as usize),
-        (0x0082_4269, "CRT realloc", realloc as *const () as usize),
-        (0x0082_4416, "CRT calloc", calloc as *const () as usize),
+        #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+        (0x0082_47E0, "CRT qsort", ent!(qsort; base num width comp)),
+        #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+        (0x0082_1E02, "CRT eh vector destructor iterator", ent!(eh_vector_dtor; ptr size count dtor)),
+        #[cfg(any(target_arch = "x86", target_arch = "wasm32"))]
+        (0x0040_3D60, "CRT vector constructor iterator", ent!(vector_ctor; ptr size count ctor)),
+        (0x0082_1195, "CRT operator new[]", ent!(malloc; n)),
+        (0x0082_119A, "CRT operator new", ent!(malloc; n)),
+        (0x0082_14BD, "CRT operator delete", ent!(free; p)),
+        (0x0082_14D0, "CRT strncmp", ent!(strncmp; a b n)),
+        (0x0082_413F, "CRT free", ent!(free; p)),
+        (0x0082_4257, "CRT malloc", ent!(malloc; n)),
+        (0x0082_4269, "CRT realloc", ent!(realloc; p n)),
+        (0x0082_4416, "CRT calloc", ent!(calloc; k n)),
     ]
 }
 

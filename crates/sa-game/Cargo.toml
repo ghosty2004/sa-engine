@@ -7,9 +7,15 @@ license.workspace = true
 publish.workspace = true
 
 [features]
-default = ["gamepad"]
-gamepad = ["sa-platform/gamepad"]
+default = ["native", "gamepad"]
+gamepad = ["native", "sa-platform/gamepad"]
+native = ["sa-platform/native"]
 audio = ["sa-platform/audio"]
+# `--samp` joins SA:MP / open.mp servers with samp-rs's network core (docs/samp/native-plan.md).
+samp = ["dep:samp-client", "dep:samp-proto", "dep:samp-saa"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 sa-core = { path = "../sa-core" }
@@ -29,10 +35,26 @@ sa-weapon = { path = "../sa-weapon" }
 sa-script = { path = "../sa-script" }
 sa-pop = { path = "../sa-pop" }
 sa-world = { path = "../sa-world" }
-sa-platform = { path = "../sa-platform" }
+sa-platform = { path = "../sa-platform", default-features = false }
 sa-rw-wgpu = { path = "../sa-rw-wgpu" }
 sa-samp = { path = "../sa-samp" }
 sa-samp-api = { path = "../sa-samp-api" }
+sa-samp-ui = { path = "../sa-samp-ui" }
 wgpu = "29"
 png = "0.18"
+web-time = "1.1"
+# samp-rs (branch sa-engine/adapter), pinned to a commit. samp-client takes sa-samp-api from this repository;
+# the workspace `[patch]` points that back at `crates/sa-samp-api`, so both sides share one crate.
+samp-client = { git = "file:///home/ghosty2004/samp-rs", rev = "fb890107bdd1acb2edbdafac39ad6d45130629f3", optional = true }
+samp-proto = { git = "file:///home/ghosty2004/samp-rs", rev = "fb890107bdd1acb2edbdafac39ad6d45130629f3", optional = true }
+samp-saa = { git = "file:///home/ghosty2004/samp-rs", rev = "fb890107bdd1acb2edbdafac39ad6d45130629f3", optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libc = "0.2"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { version = "29", features = ["fragile-send-sync-non-atomic-wasm", "webgpu", "webgl"] }
+wasm-bindgen = "=0.2.130"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["console", "DedicatedWorkerGlobalScope", "WorkerGlobalScope", "Performance", "FileReaderSync", "Blob", "File", "XmlHttpRequest", "XmlHttpRequestResponseType", "OffscreenCanvas", "MessageEvent"] }
