@@ -560,7 +560,10 @@ struct Panicky(std::sync::Arc<std::sync::atomic::AtomicU32>);
 impl GameHooks for Panicky {
     fn frame(&mut self, _phase: FramePhase, _game: &mut dyn GameAdapter) {
         let n = self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        assert!(n != 0, "an unported engine function reached from the first callback");
+        assert!(
+            n != 0,
+            "an unported engine function reached from the first callback"
+        );
     }
 }
 
@@ -576,4 +579,78 @@ fn hooks_survive_an_unwinding_callback() {
     assert!(r.is_err());
     g.dispatch_frame(FramePhase::Before2d);
     assert_eq!(n.load(std::sync::atomic::Ordering::SeqCst), 2);
+}
+
+#[test]
+fn skin_anim_and_task_effects_go_through_opcodes() {
+    use ScriptArg::{Float as F, Int as I, Text as T};
+    use sa_samp_api::peds::{AnimRequest, PedTask};
+    let mut g = game();
+    let me = g.local_player().unwrap();
+    let h = 0x205;
+    // Model 105: a ped model (CPedModelInfo vtable), already loaded.
+    let info = 0x0170_0000u32;
+    put(&mut g, addr::MODEL_INFO_PTRS + 4 * 105, info);
+    put(&mut g, info, addr::VTBL_PED_MODEL_INFO);
+    put(
+        &mut g,
+        addr::STREAMING_INFO + 105 * addr::STREAMING_INFO_SIZE + 0x10,
+        1u8,
+    );
+    g.set_ped_model(me, ModelId(105)).unwrap();
+    // The local player is player slot 0: 09C7 SET_PLAYER_MODEL.
+    assert_eq!(issued(&g, 0), enc(0x09C7, &[I(0), I(105)]));
+    // Not a ped model: nothing issued.
+    let n = g.threads.issued.len();
+    assert!(g.set_ped_model(me, ModelId(400)).is_err());
+    assert_eq!(g.threads.issued.len(), n);
+    // An animation of a loaded block ("PED", matched case-insensitively): 0812 only.
+    put(&mut g, addr::ANIM_BLOCK_COUNT, 1u32);
+    g.view.write(addr::ANIM_BLOCKS, b"PED\0");
+    put(&mut g, addr::ANIM_BLOCKS + 0x10, 1u8);
+    let anim = AnimRequest {
+        name: "IDLE_chat",
+        block: "ped",
+        delta: 4.1,
+        looped: true,
+        lock_x: false,
+        lock_y: false,
+        freeze: false,
+        time_ms: 0,
+    };
+    g.play_anim(me, &anim).unwrap();
+    assert_eq!(
+        issued(&g, 0),
+        enc(
+            0x0812,
+            &[
+                I(h),
+                T(b"IDLE_chat"),
+                T(b"ped"),
+                F(4.1),
+                I(1),
+                I(0),
+                I(0),
+                I(0),
+                I(0)
+            ]
+        )
+    );
+    // An unknown block is refused before any command.
+    let n = g.threads.issued.len();
+    assert!(
+        g.play_anim(
+            me,
+            &AnimRequest {
+                block: "NOPE",
+                ..anim
+            }
+        )
+        .is_err()
+    );
+    assert_eq!(g.threads.issued.len(), n);
+    g.stop_anims(me).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x0687, &[I(h)]));
+    g.start_task(me, PedTask::HandsUp { time_ms: -2 }).unwrap();
+    assert_eq!(issued(&g, 0), enc(0x05C4, &[I(h), I(-2)]));
 }
