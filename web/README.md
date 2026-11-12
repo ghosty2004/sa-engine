@@ -24,9 +24,11 @@ URL options: `?inworld=0` plays the intro mission; `?auto=1` adds the native off
 (Enter through the menus, `SA_GAME_WALK`); any `SA_*` development variable (`SA_GAME_STUB=...`,
 `SA_GAME_WALK=40:200`, `SA_GAME_SCRIPT_SKIP=1`, ...) is passed to the game as natively.
 
-Status (2026-11-12): headless Chromium on WebGL2 boots to the world and CJ walks with a real W key; an unported
-callee further on (ambient-ped AI) still ends the session with a panic shown in the log (wasm32 cannot unwind).
-`?backend=gl` forces WebGL2, the path verified headless. Details: `docs/arch/platform.md` section 20.
+Status (2026-11-12, WEB-2): headless Chromium on WebGL2 boots to the world and CJ walks and looks around with real
+keys and mouse. An unported callee ends only its main-loop iteration (a "blocked" step, as natively; the status line
+counts them); three identical ones in a row stop the loop, as natively. The page applies the play package's exploration
+stubs by default: `&stub=ADDR=RET/N,...` replaces them, `&stub=none` drops them. `?backend=gl` forces WebGL2, the path
+verified headless. Details: `docs/arch/platform.md` section 21.
 
 Needs a browser with WebGPU (Chromium 113+, Firefox 141+ on supported systems) or WebGL2 and module workers.
 

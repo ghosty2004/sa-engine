@@ -1857,21 +1857,70 @@ words from the buffer as the x86 entries read the stack. X87 results lose their 
   "blocked" iteration, on wasm32 a panic aborts the module (no unwinding).
 * The user's desktop (Brave, AMD RX 7800 XT, WebGPU): through the menu into `CGame::Initialise`, then an
   out-of-bounds trap in `FxManager_c::FindFxSystemBP`; one headless GL run trapped the same way in `CreateEntityFx`.
-  Fixed candidate: the zeroed C heap (21.3), not yet confirmed on the user's machine.
+  Fixed candidate: the zeroed C heap (22.3), not yet confirmed on the user's machine.
 
-### 21.6 Next steps
+### 22.5 Next steps (WEB-1)
 
-1. Unported callees abort the web session (no unwinding): build with `-Cpanic=unwind` + wasm exception handling
-   (nightly `-Zbuild-std`) so a blocked iteration is reported and the loop goes on, as natively; or port the callees
-   (0x631730 first).
-2. WebGPU on the user's GPU: confirm the zeroed-heap fix; then WebGPU stays the default and WebGL2 the fallback.
+1. Unported callees abort the web session (no unwinding). Done differently in WEB-2 (22.7): no unwinding needed.
+2. WebGPU on the user's GPU: confirm the FX fix (22.7: the cause was the moving shrink in `realloc`, not stale heap
+   contents); then WebGPU stays the default and WebGL2 the fallback.
 3. Loading runs as one long task (the loading screens are not shown): yield inside `CGame::Initialise` needs the loop
    turned inside out (asyncify, or a worker with `Atomics.wait` and a second thread presenting).
 4. OPFS cache of the picked folder (no re-pick per visit), audio through an AudioWorklet, threads (atomics, build-std).
 
-### 22.5 Network seam for SA:MP (not built)
+### 22.6 Network seam for SA:MP (not built)
 
 A page cannot open UDP. The plan: a separate WebSocket↔UDP proxy on localhost (another lane); the samp-rs client's
 socket trait gets a web implementation that sends one binary WebSocket message per datagram
 (`ws://localhost:PORT/udp?host=…&port=7777`) and queues received ones in JS; the client drains the queue once per
 main-loop iteration, so nothing blocks the game loop.
+
+### 22.7 WEB-2: STD-14 tree, blocked iterations without unwinding, the FX trap's cause
+
+Base: STD-14 (`worktree-agent-a98204e188a13ff2e`, 3f2b6d7f) with WEB-1's commits rebased on it (STD-14's
+`SA_GAME_TELEPORT`, `SA_GAME_LMB` and `--system-heap` moved into `app.rs`, where WEB-1 put the executable's code).
+
+**Blocked iterations on wasm32.** Natively an unported callee panics, the panic unwinds to `run_step`'s
+`catch_unwind` and the iteration is a "blocked" step. wasm32 builds abort on panic. Instead of unwinding (nightly
+`build-std` with wasm exception handling), `orig!`'s unported path calls `sa_core::orig::unported`, which calls a
+handler when one is installed (else it panics as before). The web front end installs one after the boot: it records
+the message and throws a JS exception (`wasm_bindgen::throw_str`). The engine drops the wasm frames up to the worker's
+`sa.frame()` without running Rust destructors. The worker puts back the shadow stack pointer (the module exports
+`__stack_pointer`, `tools/web/build.sh`) to its value before the call, then calls `sa.recover()`, which ends the
+iteration through the same bookkeeping as natively (`Session::finish`: report row, `CGame::Initialise` and
+three-identical-failures stop rules). Why the state stays sane: the original code's state is left exactly as the native
+unwind leaves it (it has no destructors); Rust state that an unwind would release is what differs. The session is no
+longer in a `RefCell` (a borrow would stay taken). Guards held across game code would stay taken: `recover` checks the
+platform lock and stops the session if it is held. The no-threads `Mutex` of wasm32 panics on a second lock, so any
+other stuck guard shows as a real panic, not silent corruption. Real Rust panics (not unported callees) still abort the
+module. `?SA_WEB_NO_RECOVER=1` turns the handler off. Seen in the recording run: frame 74855 blocked on 0x5F32D0
+(`CPedGeometryAnalyser::CanPedJumpObstacle`, ambient ped AI), and the loop went on for 2,400 more iterations.
+
+**Exploration defaults.** The page sets `SA_GAME_SCRIPT_SKIP=1` and `SA_GAME_STUB` to the play package's list plus
+`0x517bf0=0/1` (`CIdleCam::ProcessFOVZoom`; without it the idle camera, which starts after the player stands still for
+about two minutes, blocks three iterations in a row and the loop stops). `&stub=...` replaces the list and `&stub=none`
+drops it. Any `SA_*` query variable still wins. The click that locks the pointer is not passed to the game (it used
+to punch: CTaskSimpleFight).
+
+**The FX out-of-bounds trap** (`FindFxSystemBP` from `CObjectData::Initialise`, `CreateEntityFx`; the user's AMD
+WebGPU run and a headless GL run). The cause is not an uninitialised read: the wasm32 C heap's `realloc` always
+allocated, copied and freed, even when shrinking. `FxMemoryPool_c::Optimise` (0x4A9CD0) shrinks the 1 MiB effects pool
+to its used size after `LoadFxProject` and keeps using the blueprints inside it, whose list links (`g_fxMan` +0, each
+blueprint +4) point into the block. MSVC's realloc (`HeapReAlloc`) shrinks in place, and so does glibc natively. The
+moved pool left the links in a freed block that later allocations reuse. The zeroed heap only changed which garbage
+was read. Fix: a shrink keeps the block, both in the wasm32 heap and in the fixed-address heap (`detheap`, now also
+the native window runs' heap since STD-14 3f2b6d7f, which moved across size classes the same way). Reproduced
+before the fix (`target/web2-evidence/run1`: trap in `CreateEntityFx` at the menu → world transition) and gone after
+it (run2, the recording run).
+
+**Results** (headless Chromium, `tools/web/headless.mjs`, evidence under `target/web2-evidence/`, not committed):
+* WebGL2 on SwiftShader (run2): world 84 s after start, real W/A/D for 71 s, 0 blocked, no trap; about 1.4 in-game
+  frames/s (SwiftShader is the bottleneck).
+* WebGL2 on ANGLE/Vulkan (the machine's GPU, `--gpu vulkan`, still headless/offscreen; rec1): menus driven by real
+  Enter key events, **in the world 21 s after the page opened**, 73 s of real W/A/S/D and pointer-lock mouse-look (a CDP
+  click locks the pointer, CDP mouse moves arrive as `movementX`); 4 blocked iterations, the last three
+  (0x517BF0, after 2 min standing still) stopped the loop, hence the stub above.
+  `browser-playthrough.mp4` is that run's screencast (`--screencast`, assembled by `tools/web/make_video.py`).
+* WebGPU: not rerun headless (SwiftShader WebGPU stalls, 22.4); the FX fix above is the cause found for the user's
+  trap, still to be confirmed on the user's machine.
+

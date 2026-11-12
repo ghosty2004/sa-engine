@@ -624,6 +624,7 @@ pub(crate) fn create_thread(_sec: u32, _stack: u32, entry: u32, param: u32, _fla
 }
 pub(crate) fn resume_thread(h: GPtr<u8>) -> u32 {
     #[cfg(target_arch = "wasm32")]
+    #[allow(clippy::needless_return)] // the native call below is cfg'd out on wasm32
     {
         use std::sync::atomic::Ordering;
         if h32(h) == coop::STREAM_THREAD.load(Ordering::Relaxed) && h32(h) != 0 {

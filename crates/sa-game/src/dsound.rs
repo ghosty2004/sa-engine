@@ -248,7 +248,7 @@ static DS8_OBJECT: Mutex<u32> = Mutex::new(0);
 
 /// Maps the vtable page and starts the mixer.
 pub fn map() -> Result<(), String> {
-    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the DirectSound vtable page at {PAGE:#x}")))?;
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the DirectSound vtable page at {PAGE:#x}: {e}"))?;
     for (c, cl) in CLASSES.iter().enumerate() {
         for i in 0..cl.methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));

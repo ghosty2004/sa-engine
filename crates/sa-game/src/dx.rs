@@ -172,7 +172,7 @@ const TRAP_DD_CREATE_EX: u32 = TRAP + 0x3F00;
 /// Maps the page and writes the objects' vtable pointers and the vtables.
 #[allow(unsafe_code)]
 pub fn map() -> Result<(), String> {
-    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the DirectX object page at {PAGE:#x}")))?;
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the DirectX object page at {PAGE:#x}: {e}"))?;
     let w = |a: usize, v: u32| GPtr::<u32>::from_addr(a).write(v);
     for (c, cl) in CLASSES.iter().enumerate() {
         w(cl.object, cl.vtable as u32);

@@ -56,6 +56,7 @@ impl Semaphore {
         // wasm32 (one thread, no blocking): nobody else can release while we wait, so an unsignalled semaphore
         // times out at once, whatever the timeout
         #[cfg(target_arch = "wasm32")]
+        #[allow(clippy::needless_return)] // the native code below is cfg'd out on wasm32
         {
             let _ = ms;
             if *c <= 0 {

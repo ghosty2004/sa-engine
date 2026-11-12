@@ -3,10 +3,10 @@
 
     python3 -I tools/web/make_video.py OUT/cast out.mp4 [--speed 8] [--fps 25]
 
-The screencast frames keep their capture times (a frame lasts until the next one). The loading stretch is played
-`--speed` times faster with an on-screen note; everything else is real time. The loading stretch runs from the first
-status that leaves the menus (gGameState 8 -> anything else) to the first in-game frame (`presents` > 0), unless
-`--fast FROM:TO` (seconds since the first frame) gives it explicitly.
+The screencast frames keep their capture times (a frame lasts until the next one). The loading stretches are played
+`--speed` times faster with an on-screen note; everything else is real time. The fast stretches are the boot's
+first long iteration (gGameState LOGO) and the world loading (from leaving the menus to the first in-game frame),
+unless `--fast FROM:TO[,FROM:TO]` (seconds since the first frame) gives them.
 """
 import argparse
 import json
@@ -22,6 +22,7 @@ def main():
     ap.add_argument("--speed", type=float, default=8.0)
     ap.add_argument("--fps", type=int, default=25)
     ap.add_argument("--fast", default=None)
+    ap.add_argument("--end", type=float, default=None, help="stop at this many seconds after the first frame")
     a = ap.parse_args()
 
     frames = [json.loads(l) for l in open(os.path.join(a.cast, "frames.jsonl")) if l.strip()]
@@ -29,34 +30,37 @@ def main():
     if not frames:
         sys.exit("no frames")
     t0 = frames[0]["ts"]
+    if a.end is not None:
+        frames = [f for f in frames if f["ts"] - t0 <= a.end]
 
+    # stretches played faster: the boot's first long iteration (gGameState LOGO until the logos play) and the
+    # world loading (leaving the menus until the first in-game frame); or --fast FROM:TO[,FROM:TO]
+    fast = []
     if a.fast:
-        f0, f1 = (float(x) for x in a.fast.split(":"))
+        for part in a.fast.split(","):
+            x, y = part.split(":")
+            fast.append((float(x), float(y)))
     else:
-        f0 = f1 = None
-        was_menu = False
-        for e in events:
-            st = e.get("status")
-            if not st:
-                continue
-            if st.get("state") == 8:
-                was_menu = True
-            elif was_menu and f0 is None:
-                f0 = e["ts"] - t0
-            if f0 is not None and (st.get("presents") or 0) > 0:
-                f1 = e["ts"] - t0
-                break
-        if f0 is None or f1 is None:
-            f0 = f1 = 0.0
-    print(f"loading stretch {f0:.1f}..{f1:.1f} s at {a.speed}x", file=sys.stderr)
+        sts = [(e["ts"] - t0, e["status"]) for e in events if e.get("status")]
+        logo = next((t for t, st in sts if st.get("state") == 1), None)
+        logo_end = next((t for t, st in sts if logo is not None and t > logo and (st.get("state") or 0) >= 2), None)
+        if logo is not None and logo_end is not None and logo_end - logo > 5:
+            fast.append((logo, logo_end))
+        menu = next((t for t, st in sts if st.get("state") == 7), None)
+        load = next((t for t, st in sts if menu is not None and t > menu and (st.get("state") or 0) >= 8), None)
+        load_end = next((t for t, st in sts if load is not None and t >= load and (st.get("presents") or 0) > 0), None)
+        if load is not None and load_end is not None:
+            fast.append((load, load_end))
+    for f0, f1 in fast:
+        print(f"fast stretch {f0:.1f}..{f1:.1f} s at {a.speed}x", file=sys.stderr)
 
     def out_time(t):
         # source time (s since the first frame) -> output time
-        if t <= f0:
-            return t
-        if t <= f1:
-            return f0 + (t - f0) / a.speed
-        return f0 + (f1 - f0) / a.speed + (t - f1)
+        o = t
+        for f0, f1 in fast:
+            if t > f0:
+                o -= (min(t, f1) - f0) * (1 - 1 / a.speed)
+        return o
 
     lst = os.path.join(a.cast, "concat.txt")
     with open(lst, "w") as f:
@@ -67,13 +71,13 @@ def main():
             f.write(f"file '{fr['file']}'\nduration {d:.4f}\n")
         f.write(f"file '{frames[-1]['file']}'\n")
 
-    o0, o1 = out_time(f0), out_time(f1)
     note = f"loading - {a.speed:g}x speed"
+    enable = "+".join(f"between(t,{out_time(f0):.3f},{out_time(f1):.3f})" for f0, f1 in fast) or "0"
     vf = (
         "pad=ceil(iw/2)*2:ceil(ih/2)*2,"
         f"drawtext=text='{note}':fontcolor=yellow:fontsize=28:box=1:boxcolor=black@0.6:boxborderw=8:"
-        f"x=(w-tw)/2:y=h-th-40:enable='between(t,{o0:.3f},{o1:.3f})',"
-        f"fps={a.fps},format=yuv420p"
+        f"x=(w-tw)/2:y=h-th-40:enable='{enable}',"
+        f"fps={a.fps},scale=in_range=full:out_range=tv,format=yuv420p"
     )
     cmd = [
         "ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,

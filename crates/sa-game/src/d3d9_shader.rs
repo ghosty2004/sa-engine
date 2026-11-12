@@ -123,7 +123,7 @@ pub fn patch_caps9(out: GPtr<u8>) {
 /// Maps the vtable page.
 #[allow(unsafe_code)]
 pub fn map() -> Result<(), String> {
-    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the D3D9 shader object page at {PAGE:#x}")))?;
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the D3D9 shader object page at {PAGE:#x}: {e}"))?;
     for (c, (_, methods)) in CLASSES.iter().enumerate() {
         for i in 0..methods.len() {
             GPtr::<u32>::from_addr(vtable(c) as usize + 4 * i).write(trap(c, i));

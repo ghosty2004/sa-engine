@@ -82,7 +82,7 @@ fn trap(class: u32, slot: usize) -> u32 {
 
 /// Maps the page and writes the objects' vtable pointers and the vtables.
 pub fn map() -> Result<(), String> {
-    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("{}: {e}", format!("cannot map the DirectInput object page at {PAGE:#x}")))?;
+    crate::arena::map_fixed(PAGE, 0x1000).map_err(|e| format!("cannot map the DirectInput object page at {PAGE:#x}: {e}"))?;
     let w = |a: usize, v: u32| GPtr::<u32>::from_addr(a).write(v);
     w(DI8, VT_DI8 as u32);
     for obj in [DI_MOUSE, DI_PAD1, DI_PAD2] {
