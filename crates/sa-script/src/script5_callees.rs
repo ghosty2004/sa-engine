@@ -224,6 +224,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_THE_SCRIPTS_ADD_SCRIPT_EFFECT_SYSTEM,
     HOOK_THE_SCRIPTS_REMOVE_SCRIPT_SEARCH_LIGHT,
     HOOK_GARAGES_STORE_CAR_IN_NEAREST_IMPOUNDING_GARAGE,
+    HOOK_WATER_CREATURE_MANAGER_TRY_TO_FREE_UP,
 ];
 
 orig! {
@@ -461,6 +462,58 @@ pub fn garages_store_car_in_nearest_impounding_garage(v: GPtr<u8>) {
         slot = 2;
     }
     stored_car_store(cars.byte_add(0x40 * slot as isize), v);
+}
+
+orig! {
+    /// The intrusive list's `RemoveItem(item)` (0x4A8E30, thiscall, `ret 4`)
+    fn list_remove_item(list: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8E30 => unported;
+    /// The intrusive list's `AddItem(item)` (0x4A8DF0, thiscall, `ret 4`)
+    fn list_add_item(list: GPtr<u8>, item: GPtr<u8>) = thiscall 0x4A8DF0 => unported;
+    /// `CWorld::Remove(CEntity*)` (0x563280)
+    fn world_remove(e: GPtr<u8>) = cdecl 0x563280 => unported;
+    /// Virtual slot 0 (the scalar deleting destructor, `ret 4`)
+    fn vcall_delete(f: u32, this: GPtr<u8>, flags: u32) = thiscall dyn => unported;
+}
+
+/// The water creature manager's used list (0xC1F93C) and free list (0xC1F930)
+const WC_USED_LIST: usize = 0xC1F93C;
+const WC_FREE_LIST: usize = 0xC1F930;
+/// `WaterCreatureManager_c::m_nNumCreatures` (0xBB4A70, int16)
+const WC_COUNT: usize = 0xBB4A70;
+
+/// `WaterCreatureManager_c::TryToFreeUpWaterCreatures(int32 max)` (0x6E40E0, thiscall, `ret 4`).
+///
+/// Walks the list from `this + 0x1A0C` (the next node, +4, read before anything else): a creature whose object
+/// (+8) has flags bit 17 (+0x1C, 0x20000) and whose +0x1C is non-zero is moved from the used list to the free list,
+/// `CWorld::Remove(object)`, the object (re-read, if non-null) deleted (vtable slot 0, flag 1), +8 cleared and the
+/// creature count decremented; the walk stops once `max` were freed. Returns the number freed.
+#[hook(addr = 0x6e40e0, conv = thiscall, name = "WaterCreatureManager_c::TryToFreeUpWaterCreatures", expect = "53 56 8B B1 0C 1A 00 00",
+       unverified = "script5-12", route = "L2", hazards = "none", recs = "grove-walk")]
+pub fn water_creature_manager_try_to_free_up(this: GPtr<u8>, max: i32) -> i32 {
+    let mut freed = 0;
+    let mut node = this.byte_add(0x1A0C).cast::<GPtr<u8>>().read();
+    while !node.is_null() {
+        let next = node.byte_add(4).cast::<GPtr<u8>>().read();
+        let obj = node.byte_add(8).cast::<GPtr<u8>>().read();
+        if obj.byte_add(0x1C).cast::<u32>().read() & 0x20000 != 0 && node.byte_add(0x1C).cast::<u32>().read() != 0 {
+            list_remove_item(GPtr::from_addr(WC_USED_LIST), node);
+            list_add_item(GPtr::from_addr(WC_FREE_LIST), node);
+            world_remove(node.byte_add(8).cast::<GPtr<u8>>().read());
+            let o = node.byte_add(8).cast::<GPtr<u8>>().read();
+            if !o.is_null() {
+                vcall_delete(o.cast::<GPtr<u32>>().read().read(), o, 1);
+            }
+            node.byte_add(8).cast::<u32>().write(0);
+            let n = GPtr::<i16>::from_addr(WC_COUNT);
+            n.write(n.read().wrapping_sub(1));
+            freed += 1;
+            if freed >= max {
+                break;
+            }
+        }
+        node = next;
+    }
+    freed
 }
 
 orig! {
