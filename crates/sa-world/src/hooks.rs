@@ -124,6 +124,7 @@ pub const MODULES: &[&[HookReg]] = &[
     physical::pair_collision::HOOKS,
     world::garage_tidy_up_close::HOOKS,
     world::garage_car_blocking::HOOKS,
+    world::garage_slide_door_closed::HOOKS,
     crate::generated::HOOKS,
     // SAVE-1
     world::save_blocks::HOOKS,

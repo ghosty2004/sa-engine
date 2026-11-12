@@ -38,7 +38,7 @@ orig! {
     /// `FUN_00447d80(float x, float y)` (0x447D80): squared 2D distance to the garage box, ST0
     fn dist_sq_to_box(gp: GPtr<u8>, px: f32, py: f32) -> f64 = thiscall 0x447D80 => dist_sq_to_box_port;
     /// `FUN_0044a750()` (0x44A750): slides the door shut, true once closed
-    fn slide_door_closed(gp: GPtr<u8>) -> u8 = thiscall 0x44A750 => unported;
+    fn slide_door_closed(gp: GPtr<u8>) -> u8 = thiscall 0x44A750 => super::garage_slide_door_closed::slide_door_closed;
     /// `FUN_0044a660()` (0x44A660): slides the door open, true once open
     fn slide_door_open(gp: GPtr<u8>) -> u8 = thiscall 0x44A660 => unported;
     /// `FUN_00449220(CVehicle*)` (0x449220): pushes cars near the door out of the garage
