@@ -88,3 +88,4 @@ pub mod float_pow;
 pub mod bike_rider_anims;
 pub mod vehicle_collision_particles;
 pub mod car_door_positions;
+pub mod player_quit_car_enter;
