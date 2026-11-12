@@ -15,8 +15,8 @@ use sa_samp_api::camera::Camera as _;
 use sa_samp_api::hooks::FramePhase;
 use sa_samp_api::peds::Peds as _;
 use sa_samp_api::ui::{
-    ChatKind, ChatMessage, DialogSpec, DialogStyle, Nametag, NametagAnchor, SampUi, ScoreRow, TdAlign,
-    TextDrawSpec, TextLabel3d, UiEvent, UiOptions,
+    ChatBubble, ChatKind, ChatMessage, DialogSpec, DialogStyle, Nametag, NametagAnchor, SampUi, ScoreRow,
+    TdAlign, TextDrawSpec, TextLabel3d, UiEvent, UiOptions,
 };
 use sa_samp_api::{GameAdapter as _, GameState, Rgba, SampHost as _, Vec3};
 
@@ -351,6 +351,21 @@ fn script(game: &mut NativeGame<EngineView>) {
         && let Some(ui) = game.ui()
     {
         setup(ui);
+    }
+    if n == 1
+        && let Some(cj) = game.local_player()
+        && let Some(ui) = game.ui()
+    {
+        ui.set_chat_bubble(
+            0,
+            Some(&ChatBubble {
+                anchor: NametagAnchor::Ped(cj),
+                text: "Ah shit, here we go again.".into(),
+                colour: Rgba::from_rgba_u32(0xFFFF_FFFF),
+                distance: 40.0,
+                expire_ms: 120_000,
+            }),
+        );
     }
     world_state(game);
     match n {

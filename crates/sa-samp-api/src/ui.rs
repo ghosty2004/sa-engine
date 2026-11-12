@@ -177,6 +177,21 @@ pub struct Nametag {
     pub afk: bool,
 }
 
+/// A chat bubble above a player (`SetPlayerChatBubble`, RPC 59).
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChatBubble {
+    /// The player's ped (or a fixed position).
+    pub anchor: NametagAnchor,
+    /// Text (≤ 144 characters, `{RRGGBB}` codes; wrapped at 36 characters like samp).
+    pub text: String,
+    /// Colour (alpha forced opaque, as samp does).
+    pub colour: Rgba,
+    /// Draw distance in metres.
+    pub distance: f32,
+    /// Lifetime in milliseconds of game time.
+    pub expire_ms: u32,
+}
+
 /// A 3D text label (RPC 36).
 #[derive(Clone, Debug, PartialEq)]
 pub struct TextLabel3d {
@@ -304,6 +319,8 @@ pub trait SampUi {
     fn show_dialog(&mut self, dialog: Option<&DialogSpec>);
     /// Replaces the set of nametags drawn this frame and after.
     fn set_nametags(&mut self, tags: &[Nametag]);
+    /// Shows / replaces (`Some`) or removes (`None`) player `player_id`'s chat bubble.
+    fn set_chat_bubble(&mut self, player_id: u16, bubble: Option<&ChatBubble>);
     /// Creates / replaces (`Some`) or deletes (`None`) 3D text label `id`.
     fn set_label(&mut self, id: u16, label: Option<&TextLabel3d>);
     /// Shows / replaces (`Some`) or hides (`None`) textdraw `id` (0..2048 global, 2048.. player).
