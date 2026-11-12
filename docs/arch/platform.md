@@ -1503,3 +1503,145 @@ sa-render, sa-world, sa-ai, sa-pop, sa-audio, sa-core, sa-ports, sa-game; writer
 1. Whether the remaining exploration stubs (18.5) may stay for the evidence runs while the real-time tail keeps
    growing, or STD-13 should first make the window run deterministic (fixed timestep) so one blocker list holds.
 2. 18.7: who produces the original comparison frame (needs a Wine lane and a scripted camera turn).
+
+## 19. STD-13: deterministic runs, the attractor base class, a crash-free window walk
+
+### 19.1 Main-session decisions on STD-12's questions (recorded by STD-13, 2026-11-12)
+
+1. **A deterministic mode** in sa-game produces one reproducible blocker list per scenario; real-time window runs stay
+   the acceptance check (19.3).
+2. **STD-13 produces the original sun-flare comparison** (Wine lane, offscreen gamescope, scripted camera turn) (19.6).
+
+### 19.2 Base and merges
+
+Base STD-12 (`worktree-agent-a0c5043f7469fc732`, d447cbf). INTEGRATE-5 had not landed on master when STD-13 ended, so
+no rebase. Cherry-picked: WRITER-NATIVE 4012bb9 (`Fx_c::AddSparks`, two task clones, PORT-VEH-3's
+`dmgDrawCarCollidingParticles`). Mid-task the main session moved the attractor tree to WRITER-ATTR and the native
+blockers to WRITER-NATIVE; STD-13 kept entering cars, driving and the flare.
+
+### 19.3 sa-game `--fixed-step MS` (deterministic mode, `det.rs`, `detheap.rs`)
+
+* The Win32 time sources read a virtual clock: +MS at the start of every main-loop iteration, +10 us at every time
+  read on the main thread (loops that poll the time end; their read count is itself deterministic), +ms for every
+  `Sleep(ms)` on the main thread. The frame limiter does not sleep. With MS = 40.5 every in-game iteration runs one
+  game frame (the limiter needs `40 < t`).
+* Streaming reads complete at their request: after `CdStreamRead` releases the stream semaphore the main thread waits
+  until the queue is empty and the streaming thread idle (and once more at the end of every iteration).
+* The game heap (`malloc` / `calloc` / `realloc` / `free`, `CMemoryMgr::MallocAlign` / `FreeAlign`) comes from a
+  fixed-address region (0x18000000, 896 MiB, size-class free lists): the game seeds `rand` with entity addresses
+  (the timed enex lights, 0x5339F5), and glibc's addresses depended on what other threads allocated.
+* The DirectSound play cursors advance by the step in the main loop (the ped speech state reads them).
+* Runs use `setarch i686 -R` (no ASLR) and `GLIBC_TUNABLES=glibc.malloc.mmap_max=0` (scratch run script).
+* Each iteration prints `det: clock, rand state, rand calls, srand calls (last seed)`; two runs of a scenario are
+  compared on these lines and the step results. `SA_GAME_DET_BT=N` prints a backtrace for every time read of
+  iteration N (how the remaining sources were found).
+* Report and stdout end with the **blocker list** (callee, iterations, first frame). In this mode a repeated failure
+  does not stop the loop.
+* `SA_GAME_MOUSE=DX:DY:FROM:TO,...` scripted mouse motion; `SA_GAME_STUB` entries may pop up to 10 dwords, and a
+  leading `!` replaces a registered port (exploration only; Rust callers that name the port directly still reach it).
+
+Reproducibility: grove-walk scenario (`SA_GAME_KEYS=w:40:600,d:200:260,a:400:430`), two runs of 700 iterations:
+identical traces (clock, rand state / counts, every step result) and identical blocker lists
+(`target/std13-evidence/drep4-{a,b}/`). Before the heap and DirectSound fixes the runs diverged at iteration 24
+(srand seed = an entity address) and then at 294 (ped speech state). Not covered: the audio threads' own timing
+(smooth fade, stream decoder).
+
+### 19.4 Ports (`docs/arch/std13-ports.csv`, `tools/native/std13_ports.py`)
+
+53 hooks (`std13-ai-1` 52, `std13-veh-1` 1) and one `#[native]`:
+* The **`CPedAttractor` base class**: constructor 0x5EDFB0 (entry `push -1; jmp` into 0x404CB7; keycell reader
+  `adc edx, [0x5EDFB2]` at 0x40206A added), destructor 0x5EC410 and the nine derived complete destructors,
+  `RegisterPed`, `SetTaskForPed`, `DeRegisterPed`, `BroadcastArrival`, `BroadcastDeparture`, `ComputeAttractPos` /
+  `ComputeAttractHeading` (the x87 rounding of the original) and their random deltas, `HasEmptySlot`,
+  `GetQueueSlot`, head / tail of the queue; the manager's `BroadcastArrival` / `BroadcastDeparture` dispatch and
+  templates; the `CPedTaskPair` vector (push_back, insert, `_Insert_n`, fill, copies) and the `CTask*` vector
+  instantiation of the pointer-vector module.
+* Attractor tasks: `CTaskComplexGoToAttractor::CreateFirstSubTask` / `MakeAbortable`,
+  `CTaskComplexUseAttractor::CreateFirstSubTask` (all ten types) / `CreateNextSubTask` / `ControlSubTask`, the
+  `CTaskComplexSitDownThenIdleThenStandUp` constructor.
+* Others found by the deterministic runs: `FindRespectedFriendInInformRange`, `CTaskComplexWander::SetDir`,
+  `CTaskComplexWalkRoundObject::CreateSubTask`, the `CEventVehicleDamage` ctor, the 0x86C6D0 event's ctor / dtor,
+  `CEventPotentialWalkIntoObject`'s dtor, the event dtor 0x420F30, `CBike::PlayCarHorn`;
+  `CAEVehicleAudioEntity::GetBaseVolumeForBicycleTyre` 0x4F60B0 `#[native]` (its loop branches back into the 5
+  patched bytes).
+
+The CPointRoute null-route crash and the attractor `IsPedRegisteredWithEffect` crash (STD-12) followed a blocked
+`CPedAttractor` constructor (a pool slot taken, a null pointer pushed to the manager's vector); neither recurred after
+the base class was ported (no further STD-13 run crashed). Not separately root-caused for `CPointRoute::operator=`.
+
+### 19.5 Runs (release, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+Deterministic grove walk (2,000 iterations, `SA_GAME_KEYS=w:40:1900,d:300:340,a:700:760,d:1100:1180,a:1500:1540`):
+
+| run | stubs | blocked iterations | blocker list |
+|---|---|---|---|
+| walk2 (attractor base ported) | STD-12's three | 1,604 | null vslot (an event half-destroyed after the blocked dtor 0x420F30), FindRespectedFriend, GoToAttractor first sub-task, step-attractor dtor, HasEmptySlot, PlayCarHorn |
+| walk5 (use-attractor tasks ported) | same | 1,921 | the sit task's `ControlSubTask` 0x631730 (the sit / idle / stand-up task family follows) |
+| walk10 | + `!0x5EFCA0` (no attractors), 0x6B5A10, 0x4B4950, 0x503CE0/10 | 93 | `CEventVehicleDamage` ctor (since ported), AddSparks (since picked), 0x5F6190 (since ported), SpawnFlyingComponent |
+
+Window runs (headless gamescope 800x600, `--auto-input`, W held from iteration 100, scripted mouse turns; the
+machine's load average was ~26 from other lanes):
+
+| run | in-game present intervals | blocked | crash |
+|---|---|---|---|
+| winT, 95 s walking | 1,479 intervals, mean 61.23 ms (16.3 fps), median 55.30, p95 103.68, p99 133.95, max 720.85 | 5 | none |
+| 95 s standing (W never pressed) | 2,161 intervals, mean 42.13 ms (23.7 fps), median 41.88, p95 54.46, p99 59.24 | 5 | none |
+| winV2 video (PNG of every 3rd in-game frame) | 466 intervals (capture cost) | 439 (a gang ped's hand-signal task `ControlSubTask` 0x61B580) | none |
+
+Exploration stubs of these runs: `0x421a50=0/0,0x6a6dc0=0/3,0x6510d0=0/0,!0x5efca0=0/4,0x6b5a10=0/0,0x4b4950=0/1,
+0x503ce0=0/10,0x4b1a00=0/1` (0x6A6DC0 is ported since the WRITER-NATIVE pick). The walk is crash-free but not
+stub-free.
+
+Evidence (not committed, `target/std13-evidence/`): `drep4-{a,b}/` (reproducibility), `walk2..walk10/` (blocker
+lists), `winT/frame-times.txt`, `winV2/cj-walk-window.mp4` (CJ turns and walks across Grove Street; 157 captured
+frames), `winV/cj-walk-window.mp4` (an earlier run into the garage wall), `flare-orig-l2/` (19.6).
+
+### 19.6 The sun flare: the original
+
+Lane 2 (flock), original exe with sa-launcher + master's `sa_hook.dll`, no ports selected, headless gamescope, New
+Game, the intro skipped, the camera pitched up and swept a full turn by xdotool relative motion (36 shots), `peek
+0xC3E094 3840` (`CCoronas::aCoronas`) and the clock at every shot (scratch `flare-orig.sh`, `corona.py`). At 07:xx
+the original registers **corona id 2 (the sun halo) with flare type 1** whenever the sun is above the horizon, colour
+(166..218, 125..128, 2..6) rising with the time (the native run had (236, 121, 2) at 08:05), together with id 1 (the
+sun core, flare 0). In all 36 shots the halo's fade intensity was 0 (sun outside the view or its line of sight
+blocked), so no original frame with the flare drawn exists yet. Conclusion so far: the native blobs are the same
+`SunFlareDef` flare the original registers; the pixel comparison (count, colour, raster bound) still needs an
+original frame with the sun unoccluded. No code change.
+
+### 19.7 Entering a car (not done)
+
+`CCarEnterExit::GetNearestCarDoor` 0x6528F0 (gr-reversed; ~350 instructions, protection chunk 0x4058AC loads +0x464)
+needs `GetPositionToOpenCarDoor` 0x64E740 (gr-unreversed, ~150 instructions, jump table 0x64EC7C over door ids 8..11,
+x87) and `IsRoomForPedToLeaveCar` 0x6504C0 (gr-unreversed); both are unported. After them the enter-car task chain
+(CTaskComplexEnterCar sub-tasks, door animations) and the player's driving path follow. Not reached in STD-13; no
+driving video.
+
+### 19.8 Next gaps, in order
+
+1. Enter car: 0x6504C0, 0x64E740, 0x6528F0, then the CTaskComplexEnterCar chain; driving.
+2. The sit / idle / stand-up tasks (WRITER-ATTR): `CTaskComplexSitDownThenIdleThenStandUp` Clone 0x636390,
+   MakeAbortable 0x631510, CreateNextSubTask 0x637DB0, CreateSubTask 0x631550, ControlSubTask 0x631730;
+   `CTaskSimpleSitDown` / `SitIdle` / `StandUp` (StartAnim, ProcessPed, Clone, MakeAbortable, finish callbacks);
+   `CTaskComplexUsePairedAttractor::CreateNextSubTask` 0x639E40; the `CTaskComplexSunbathe` ctor 0x631F80; the script
+   brain calls 0x46B390 / 0x635850 / 0x6358B0. Then drop `!0x5EFCA0`.
+3. The remaining stubs: `CBike::DamageKnockOffRider` 0x6B5A10 (~280 instructions, x87),
+   `CAEWeaponAudioEntity::PlayGunSounds` 0x503CE0, `CEventPotentialWalkIntoObject::AffectsPed` 0x4B4950, 0x4B1A00,
+   0x421A50, 0x6510D0.
+4. The hand-signal task `ControlSubTask` 0x61B580 / `CreateSubTask` 0x61B2F0, task clone 0x636BE0, 0x664770,
+   0x5FACD0, 0x5179E0, 0x605A30, `CAutomobile::SpawnFlyingComponent` 0x6A8580.
+5. `CCarAI::UpdateCarAI` complete (missions > 1, law enforcers with a wanted level): not started in STD-13.
+6. 19.6's pixel comparison; the black palm and the grey Im3D triangle.
+
+### 19.9 Checks
+
+At every commit: `cargo test -p sa-hook --lib` 58 passed; clippy -D warnings i686-unknown-linux-gnu for the touched
+crates (sa-ai, sa-veh, sa-audio, sa-game, sa-core) and host for sa-ai, sa-hook, sa-game, sa-core; i686-pc-windows-gnu
+clippy of sa-hook (keycells); writer gate hooks step: 53 new hooks, all unverified, batches std13-ai-1 (52) and
+std13-veh-1 (1).
+
+### 19.10 Decisions needed
+
+1. Whether the deterministic mode's fixed-address heap should also serve window runs (repeatable real-time runs up
+   to input timing; it reuses freed blocks only within their size class).
+2. The flare pixel comparison: accept the state-level confirmation (19.6), or spend a lane run on a scripted camera
+   facing the sun (a free camera or a corpus state with the sun in view).
