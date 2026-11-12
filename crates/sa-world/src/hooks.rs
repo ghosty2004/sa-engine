@@ -107,6 +107,9 @@ pub const MODULES: &[&[HookReg]] = &[
     world::interior_init::HOOKS,
     world::object_fire_damage::HOOKS,
     world::game_logic_resurrection::HOOKS,
+    // PORT-VEH-4
+    world::break_object::HOOKS,
+    world::interior_group_paths::HOOKS,
     physical::pair_collision::HOOKS,
     world::garage_tidy_up_close::HOOKS,
     crate::generated::HOOKS,

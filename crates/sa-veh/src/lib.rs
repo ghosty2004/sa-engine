@@ -107,3 +107,6 @@ pub mod car_enter_quit;
 pub mod vehicle_kill_entering_peds;
 pub mod vehicle_collision_particles;
 pub mod vehicle_soft_ground;
+
+// PORT-VEH-4 (unverified batches veh4-*)
+pub mod automobile_nitrous;

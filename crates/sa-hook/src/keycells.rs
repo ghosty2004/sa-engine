@@ -44,6 +44,7 @@ pub struct Reader {
 /// Every absolute read of a hooked entry's bytes in gta_sa.exe 1.0 US (`.text`, the no-CD `.text` and
 /// `.HOODLUM`), found by the test below.
 pub const READERS: [Reader; 35] = [
+pub const READERS: [Reader; 36] = [
     // CStreaming::AreAnimsUsedByRequestedModels entry (0x407AD0)
     Reader {
         at: 0x401BCE,
@@ -332,6 +333,22 @@ pub const READERS: [Reader; 35] = [
         disp_off: 2,
         key: 0x5EDFB2,
         value: 0xE16D_00E9,
+    // Batch world4-1: CPickups::GivePlayerGoodiesWithPickUpMI entry 0x4564F0 (`nop; jmp 0x401F0F`):
+    // `xor eax, [0x4564F2]` at 0x4016E3 (the jmp's rel32).
+        at: 0x4016E3,
+        insn: [0x33, 0x05, 0xF2, 0x64, 0x45, 0x00],
+        key: 0x4564F2,
+        value: 0xFFFA_BA19,
+    // Batch veh4-1: CMonsterTruck::CMonsterTruck entry 0x6C8D60 (`push -1; jmp 0x401443`):
+    // `xor ecx, [0x6C8D62]` at 0x409B96 and `sbb edi, [0x6C8D62]` at 0x1562E04 (the jmp's opcode and rel32).
+        at: 0x409B96,
+        insn: [0x33, 0x0D, 0x62, 0x8D, 0x6C, 0x00],
+        key: 0x6C8D62,
+        value: 0xD386_DCE9,
+        at: 0x1562E04,
+        insn: [0x1B, 0x3D, 0x62, 0x8D, 0x6C, 0x00],
+        key: 0x6C8D62,
+        value: 0xD386_DCE9,
     },
 ];
 

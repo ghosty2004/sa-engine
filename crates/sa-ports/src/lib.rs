@@ -87,6 +87,7 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     &[sa_world::std6_natives::NATIVES],
     &[sa_world::std7_natives::NATIVES],
     &[sa_world::std12_natives::NATIVES],
+    &[sa_world::world::game_logic_time::NATIVES],
     &[sa_script::entry_exit_flag::NATIVES],
     &[sa_pop::pathfind::NATIVES],
     &[sa_pop::car_ai_reason_to_stop::NATIVES],

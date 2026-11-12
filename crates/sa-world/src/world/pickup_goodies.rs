@@ -3,7 +3,7 @@
 
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
-use sa_core::orig;
+use sa_core::{hook, orig};
 
 use super::common::{ftol32, g, rd, wr, xi};
 
@@ -59,8 +59,14 @@ fn player_info(idx: i32, off: usize) -> usize {
 /// three sound-only models, health (+0x540 = slot's max health +0x14F, the difference to the stats), bribe (wanted level - 1, stat 182), jetpack (a
 /// script-command event with `CTaskSimpleJetPack`), oyster, horseshoe; each with its frontend
 /// sound. False for any other model.
-/// Not hooked: the no-CD protection reads the entry bytes (`xor` at 0x4016E3 reads 0x4564F2); needs a
-/// keycells redirect.
+/// The armour and health branches index the `CPlayerInfo` maxima with the raw `player` argument, not
+/// the resolved slot (original behaviour, kept). The entry is `nop; jmp 0x401F0F` (a protection
+/// fragment that only loads `fs:[0]`); `xor` at 0x4016E3 reads the jmp's rel32 (keycells reader).
+#[hook(addr = 0x4564F0, conv = cdecl, name = "CPickups::GivePlayerGoodiesWithPickUpMI",
+       expect = "90 E9 19 BA FA FF",
+       unverified = "world4-1", route = "L2", hazards = "entry-protection-read,heap-writes",
+       recs = "grove-walk",
+       note = "the jetpack branch builds a CEventScriptCommand on the Rust stack and adds it to the ped's event group (copied there); writes the player ped's health/armour and player data")]
 pub fn give_player_goodies_with_pick_up_mi(model: u16, player: i32) -> u8 {
     let slot = if player > 0 { player } else { i32::from(g::<u8>(0xB7_CD74).read()) };
     let ped = g::<GPtr<u8>>(player_info(slot, 0)).read();
@@ -123,4 +129,4 @@ pub fn give_player_goodies_with_pick_up_mi(model: u16, player: i32) -> u8 {
 }
 
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[];
+pub const HOOKS: &[HookReg] = &[HOOK_GIVE_PLAYER_GOODIES_WITH_PICK_UP_MI];

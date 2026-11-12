@@ -104,7 +104,10 @@ pub fn sort_out_streaming_and_memory(pos: GPtr<u8>, angle: u32) {
 /// `CGameLogic::Remove2ndPlayerIfPresent()` (0x4413C0): when `CWorld::Players[1].m_pPed` (0xB7CF28)
 /// exists it leaves the world and is deleted, the slot cleared, player 1's clothes rebuilt and its
 /// +0x474 bits 27/28 cleared; `CGameLogic::n2PlayerPedInFocus` (0x8A5E50) = 2 in every case.
-/// Not hooked: the entry is a `jmp` into a protection detour outside `.HOODLUM` (0x4011B9) that jumps back to 0x4413C5, so neither a stub hook nor a longer patch fits.
+/// The entry is `jmp 0x4011B9`, a protection fragment outside `.HOODLUM` that decodes the `Players[1]`
+/// ped into EAX (`[[0x1560604] + [0x156E74D]]` = 0xB7CF28) and jumps back to 0x4413C5; a lone 5-byte
+/// `jmp` that is not a `.HOODLUM` stub cannot be hooked in phase A, so this is a phase B native.
+#[sa_core::native(addr = 0x4413C0, conv = cdecl, name = "CGameLogic::Remove2ndPlayerIfPresent")]
 pub fn remove_2nd_player_if_present() {
     let p = g::<GPtr<u8>>(0xB7_CF28).read();
     if !p.is_null() {
@@ -126,3 +129,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_PASS_TIME,
     HOOK_SORT_OUT_STREAMING_AND_MEMORY,
 ];
+
+/// This module's phase B natives.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_REMOVE_2ND_PLAYER_IF_PRESENT];

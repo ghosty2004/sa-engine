@@ -69,3 +69,6 @@ pub mod interior_shop_units;
 pub mod interior_init;
 pub mod object_fire_damage;
 pub mod game_logic_resurrection;
+// PORT-VEH-4
+pub mod break_object;
+pub mod interior_group_paths;
