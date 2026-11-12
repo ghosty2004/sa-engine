@@ -7,6 +7,7 @@ pub mod common;
 pub mod cworld;
 pub mod entryexit;
 pub mod escalators;
+pub mod hand_object;
 pub mod gamelogic;
 pub mod garages;
 pub mod garage_update;
