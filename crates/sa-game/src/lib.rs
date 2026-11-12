@@ -59,6 +59,8 @@ pub mod samp;
 pub mod samp_assets;
 #[cfg(feature = "samp")]
 pub mod samp_net;
+#[cfg(feature = "samp")]
+pub mod samp_saa;
 pub mod samp_input;
 pub mod samp_ui_demo;
 pub mod samp_ui_scene;

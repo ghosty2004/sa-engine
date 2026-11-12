@@ -245,6 +245,37 @@ pub fn protect_read_only(lo: usize, len: usize) -> Result<(), String> {
     }
 }
 
+/// Writes `new` over `original` at `addr` inside the mapped image when the original bytes are there, lifting a
+/// read-only protection for the write (what samp.dll does with `VirtualProtect` before its data patches).
+/// Returns false when the bytes differ (nothing written).
+pub fn patch_image(addr: usize, original: &[u8], new: &[u8]) -> Result<bool, String> {
+    // SAFETY: callers pass addresses inside the image `map_image` mapped (read access is always allowed).
+    let current = unsafe { std::slice::from_raw_parts(addr as *const u8, original.len()) };
+    if current != original {
+        return Ok(false);
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    let (page, len) = {
+        let page = addr & !0xFFF;
+        let len = (addr + new.len()).div_ceil(0x1000) * 0x1000 - page;
+        // SAFETY: pages of the mapped image.
+        if unsafe { libc::mprotect(page as *mut libc::c_void, len, libc::PROT_READ | libc::PROT_WRITE) } != 0 {
+            return Err(format!("mprotect({page:#x}) failed"));
+        }
+        (page, len)
+    };
+    // SAFETY: as above; the range is writable now.
+    unsafe { std::ptr::copy_nonoverlapping(new.as_ptr(), addr as *mut u8, new.len()) };
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let in_rdata = (RDATA.0..RDATA.1).contains(&page);
+        if in_rdata {
+            protect_read_only(page, len)?;
+        }
+    }
+    Ok(true)
+}
+
 /// First trap address written into an IAT cell; import `i` gets `TRAP_BASE + TRAP_STRIDE * i`
 /// (below the image, never a port address).
 pub const TRAP_BASE: u32 = 0x0002_0000;

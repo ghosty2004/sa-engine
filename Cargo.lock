@@ -2158,6 +2158,7 @@ dependencies = [
  "sa-world",
  "samp-client",
  "samp-proto",
+ "samp-saa",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
