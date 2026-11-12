@@ -183,6 +183,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::can_ped_jump_obstacle::HOOKS,
     crate::climb_scan::HOOKS,
     crate::climb_anim::HOOKS,
+    crate::climb_process::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
