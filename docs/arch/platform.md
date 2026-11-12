@@ -1764,15 +1764,18 @@ Evidence (not committed, `target/std14-evidence/`): `enter-door/png/` and `enter
 
 ### 21.5 Play package
 
-Refreshed at 08:54 (RENDER-SHADOW), 09:04 (WRITER-NATIVE car damage, two stubs left) and 09:33 (no stubs,
-`SA_GAME_STUB` gone from `play.sh`). The README says not to press F next to a car: three identical blocked frames
+Refreshed at 08:54 (RENDER-SHADOW), 09:04 (WRITER-NATIVE car damage, two stubs left), 09:33 (no stubs,
+`SA_GAME_STUB` gone from `play.sh`), 09:47 (fixed heap, SlideToCoord, fists) and 09:54 (ProcessOpenDoor; 90 s
+headless window walk: 1,128 frames, 0 blocked, no crash). The README says not to press F next to a car: three identical blocked frames
 stop a window run.
 
 ### 21.6 Next gaps, in order
 
-1. `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 (unreversed, ~650 instructions over 0x6513A0..0x651F00 with
-   the entry chunk 0x406B07, SEH, a per-anim switch of 0xFA entries, the ped's slide offset and heading blend) and
-   `GetLocalPositionToOpenCarDoor` 0x64FC10. Read up to 0x651CF3 in STD-14, not ported.
+1. `CTaskUtilityLineUpPedWithCar::ProcessPed` 0x6513A0 (unreversed; 0x6513A0..beyond 0x652640, more than 1,000
+   instructions: the chunk 0x406B07, SEH, a per-anim switch of 0xFA entries, the slide offset and heading blend, then
+   for the bike / quad anims 0x167..0x16B two `CMatrix` locals, `RtQuatConvertFromMatrix` 0x7EB5C0, an inlined
+   quaternion slerp with polynomial sin / cos, and more) and `GetLocalPositionToOpenCarDoor` 0x64FC10. Read up to
+   0x651FFD in STD-14, not ported: the next lane's main item for entering cars.
 2. Then the get-in / close-door / set-ped-in tasks run (their bodies are ported) and the driving path follows:
    PORT-VEH-4's `ProcessControlInputs` are now in; camera in car, vehicle audio (`ProcessPlayerVehicleEngine`
    0x4FBB10 blocked in car14).
