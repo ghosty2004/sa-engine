@@ -180,7 +180,7 @@ pub fn get_ret<R>(ret: &Ret) -> R {
     }
 }
 
-/// Dispatches so far, and an optional sampler `fn(callee, count)` called every 2^20 dispatches (the web build logs
+/// Dispatches so far, and an optional sampler `fn(callee, count)` called every 2^14 dispatches (the web build logs
 /// where a long main-loop iteration spends its time: it cannot be interrupted from outside).
 pub static CALLS: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 pub static SAMPLER: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
@@ -189,7 +189,7 @@ pub static SAMPLER: core::sync::atomic::AtomicUsize = core::sync::atomic::Atomic
 pub fn call<R>(entry: usize, callee: usize, args: &Args) -> R {
     use core::sync::atomic::Ordering;
     let n = CALLS.fetch_add(1, Ordering::Relaxed);
-    if n & 0xF_FFFF == 0 {
+    if n & 0x3FFF == 0 {
         let s = SAMPLER.load(Ordering::Relaxed);
         if s != 0 {
             // SAFETY: stored from a `fn(usize, u32)` by the embedder.

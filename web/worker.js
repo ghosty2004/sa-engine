@@ -3,6 +3,7 @@
 import init, * as sa from './pkg/sa_game.js';
 
 const post = (type, data) => self.postMessage({ type, ...data });
+Error.stackTraceLimit = 60;
 
 // console lines (the game's println!) also go to the page's log panel, in batches (one message per tick)
 let pendingLogs = [];
@@ -41,7 +42,11 @@ function fetchRange(f, start, end) {
   xhr.open('GET', f.url, false);
   xhr.responseType = 'arraybuffer';
   xhr.setRequestHeader('Range', `bytes=${start}-${end - 1}`);
+  const t0 = performance.now();
+  post('progress', { mib: Math.round(bytesRead / 1048576), pending: `${f.url} ${start}-${end}` });
   xhr.send();
+  const dt = performance.now() - t0;
+  if (dt > 1000) console.warn(`slow read: ${f.url} ${start}-${end}: ${Math.round(dt)} ms`);
   if (xhr.status !== 206 && xhr.status !== 200) throw new Error(`${f.url}: HTTP ${xhr.status}`);
   return new Uint8Array(xhr.response);
 }
