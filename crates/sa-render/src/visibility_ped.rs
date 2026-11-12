@@ -78,33 +78,5 @@ pub fn render_ped_cb(atomic: GPtr<u8>) -> GPtr<u8> {
     atomic
 }
 
-/// `TheCamera.m_fLODDistMultiplier` (0xB6F118); the frame plugin offset of the clump model info (0x8D6090).
-const LOD_DIST_MULTIPLIER: usize = 0xB6F118;
-const FRAME_MODEL_INFO_OFFSET: usize = 0x8D6090;
-
-/// `CVisibilityPlugins::RenderWeaponCB(RpAtomic*)` (0x733670, cdecl; SAMP-4: a weapon in the player's hand after a
-/// SA:MP spawn): the clump (+0x3C) frame's model info (frame plugin slot at 0x8D6090) and LTM position against the
-/// camera; `lod = TheCamera.m_fLODDistMultiplier * drawDistance (+0x18)`; renders with
-/// `AtomicDefaultRenderCallBack` when `lod*lod > (dz*dz + dy*dy) + dx*dx` (x87 order of the bytes). Returns the
-/// atomic.
-#[hook(addr = 0x733670, conv = cdecl, name = "CVisibilityPlugins::RenderWeaponCB", expect = "8B 0D 90 60 8D 00",
-       unverified = "samp4-render-1", route = "L2", hazards = "none", recs = "grove-walk")]
-pub fn render_weapon_cb(atomic: GPtr<u8>) -> GPtr<u8> {
-    let frame = rd::<GPtr<u8>>(rd::<GPtr<u8>>(atomic, 0x3C), 4);
-    let off = g::<u32>(FRAME_MODEL_INFO_OFFSET).read();
-    let mi = rd::<GPtr<u8>>(frame, off as isize);
-    let m = frame_get_ltm(frame).byte_add(0x30);
-    let cam = g::<GPtr<u8>>(CAMERA_POSN).read();
-    let d = |o: isize| X87::from_f32(rd::<f32>(m, o)).fsub_m(rd::<f32>(cam, o));
-    let (dx, dy, dz) = (d(0), d(4), d(8));
-    let lod = X87::from_f32(g::<f32>(LOD_DIST_MULTIPLIER).read()).fmul_m(rd::<f32>(mi, 0x18));
-    let s = dz.fmul(dz).fadd(dy.fmul(dy)).fadd(dx.fmul(dx));
-    // `fcompp` of lod² against the sum; `test ah, 0x41` skips the render when lod² <= sum.
-    if !lod.fmul(lod).fcom(s).test_any(0x41) {
-        atomic_default_render(atomic);
-    }
-    atomic
-}
-
 /// Every `#[hook]` of this module.
-pub const HOOKS: &[HookReg] = &[HOOK_RENDER_ATOMIC_WITH_ALPHA, HOOK_RENDER_PED_CB, HOOK_RENDER_WEAPON_CB];
+pub const HOOKS: &[HookReg] = &[HOOK_RENDER_ATOMIC_WITH_ALPHA, HOOK_RENDER_PED_CB];
