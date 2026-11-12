@@ -61,10 +61,10 @@ public OnPlayerDisconnect(playerid, reason)
 
 public OnPlayerRequestClass(playerid, classid)
 {
-    SetPlayerPos(playerid, 2495.0, -1687.0, 13.5);
+    SetPlayerPos(playerid, 2495.0, -1674.0, 13.4);
     SetPlayerFacingAngle(playerid, 180.0);
-    SetPlayerCameraPos(playerid, 2495.0, -1693.0, 15.0);
-    SetPlayerCameraLookAt(playerid, 2495.0, -1687.0, 13.5);
+    SetPlayerCameraPos(playerid, 2495.0, -1680.0, 14.9);
+    SetPlayerCameraLookAt(playerid, 2495.0, -1674.0, 13.9);
     printf("[cov] class id=%d class=%d", playerid, classid);
     return 1;
 }
