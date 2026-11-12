@@ -10,7 +10,7 @@
 # M8B_ONLY selects scenario blocks like m8b.sh. Both runs use TRACE_GAMEMODE=tracegm (as TRACE-8's run did).
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DATA="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+DATA="${SAMP_RS_ROOT:-$ROOT}"
 CLIENT="${1:?usage: $0 orig|ours}"
 say() { printf '[m8bparity] %s\n' "$*"; }
 

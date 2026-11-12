@@ -3,6 +3,8 @@
 Date: 2026-11-05. Scope: `gta_sa.exe` 1.0 US, a Rust reimplementation, a browser build, and integration with
 the existing Rust SA:MP client (`~/samp-rs`).
 
+Note: samp-rs moved into this repository as `samp-rs/` on 2026-11-12; the `~/samp-rs` paths below are historical.
+
 Evidence tags used throughout:
 
 - **[V]** verified in this session (source inspected, command run, bytes read).

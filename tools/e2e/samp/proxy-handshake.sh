@@ -9,10 +9,10 @@
 # the server allowed) and the shim, then runs samp-rs's `native_handshake` host test (32-bit Linux) against
 # the shim. samp-rs is only built and run, never edited.
 #
-#   tools/e2e/samp/proxy-handshake.sh SAMP_RS_DIR [AUTH_TABLE]
+#   tools/e2e/samp/proxy-handshake.sh [SAMP_RS_DIR [AUTH_TABLE]]
 #
-# SAMP_RS_DIR: a samp-rs checkout that has crates/samp-client/tests/native_handshake.rs (branch
-# sa-engine/adapter with step 4). AUTH_TABLE defaults to ~/samp-rs/data/auth_table.txt (third-party data, never
+# SAMP_RS_DIR: a samp-rs tree that has crates/samp-client/tests/native_handshake.rs (default: samp-rs/ in this
+# repository). AUTH_TABLE defaults to $SA_ROOT/re/samp/auth_table.txt (gitignored third-party data, never
 # committed). Port: SAMP_PORT (default 7812), WebSocket port WS_PORT (default 7781). SA_ROOT: the sa-engine
 # checkout holding re/ and the shared lock (default: the main checkout of this worktree, else this tree).
 # Lock: $SA_ROOT/target/locks/samp-native.lock. Logs: target/samp-proxy/.
@@ -21,8 +21,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 MAIN="$(git -C "$ROOT" worktree list --porcelain 2> /dev/null | awk 'NR==1 {print $2}')"
 SA_ROOT="${SA_ROOT:-${MAIN:-$ROOT}}"
-SAMP_RS="${1:?usage: proxy-handshake.sh SAMP_RS_DIR [AUTH_TABLE]}"
-AUTH="${2:-$HOME/samp-rs/data/auth_table.txt}"
+SAMP_RS="${1:-$ROOT/samp-rs}"
+AUTH="${2:-$SA_ROOT/re/samp/auth_table.txt}"
 PORT="${SAMP_PORT:-7812}"
 WS_PORT="${WS_PORT:-7781}"
 SERVER_SRC="$SA_ROOT/re/samp/server"

@@ -1,7 +1,7 @@
 # sa-engine
 
 A Rust reimplementation of GTA San Andreas (`gta_sa.exe` 1.0 US) that aims for 1:1 behaviour. It will later
-also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-rs`.
+also build for WebAssembly, and it hosts the Rust SA:MP client samp-rs, which lives in this repository in `samp-rs/`.
 
 ## Read first
 - `docs/PLAN.md`: strategy, oracle levels, definition of done.
@@ -26,7 +26,7 @@ also build for WebAssembly, and it will host the Rust SA:MP client from `~/samp-
 - Every replaced function goes through the parity loop (PLAN.md §3). It is "verified" only after an oracle
   comparison against the original binary. A remaining difference must be recorded in the ROADMAP's
   divergence ledger, never left silent.
-- Visual checks only on an isolated headless display (our own gamescope setup, modelled on samp-rs `tools/e2e/lib.sh`), never the user's desktop. Wine runs use our own prefix and game copy under `wine/` (gitignored), never `~/samp-rs/wine`.
+- Visual checks only on an isolated headless display (our own gamescope setup, modelled on samp-rs `tools/e2e/lib.sh`), never the user's desktop. Wine runs use our own prefix and game copy under `wine/` (gitignored), never a wine prefix of another checkout.
 - Keep ≥ 20 GB free on /home (`df -h`). Fixture and trace directories have quotas.
 - Code, comments and docs are in English.
 

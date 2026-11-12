@@ -1,13 +1,13 @@
 # SAMP-API: the game adapter between samp-rs and the game
 
 Status: design (ROADMAP SAMP-API, 2026-11-11). Types and traits: `crates/sa-samp-api` (no implementation).
-Nothing in `~/samp-rs` was changed. Every samp-rs file name below is relative to
-`~/samp-rs/crates/samp-client/src/`.
+samp-rs lives in this repository in `samp-rs/` (moved in on 2026-11-12). Every samp-rs file name below is relative
+to `samp-rs/crates/samp-client/src/`.
 
 ## 1. Goal and constraints
 
 The user wants to join SA:MP servers (client 0.3.7-R4, open.mp 1.6.7 and samp-server 0.3.7) from a
-**native Linux build** of sa-engine, with the Rust SA:MP client `~/samp-rs`. Today samp-rs is an i686
+**native Linux build** of sa-engine, with the Rust SA:MP client samp-rs (`samp-rs/`). Today samp-rs is an i686
 Windows DLL injected into `gta_sa.exe` 1.0 US. It reaches the game through 622 distinct addresses
 (811 `samp-rs` rows in `catalog/samp-usage.csv`: 157 hook rows, 96 calls, 99 globals, 62 struct fields,
 104 SCM opcodes, 194 `patch-modify` and 55 `patch-disable` rows) plus samp.dll's 384 patch rows.
@@ -533,7 +533,8 @@ the CdStream wake-up fix, D3D device internals (kept behind `RenderApi::Direct3D
 
 ## 11. Revisions after SAMP-2 steps 1–3 (2026-11-11)
 
-From the first samp-rs migration steps (branch `sa-engine/adapter` in ~/samp-rs-adapter):
+From the first samp-rs migration steps (branch `sa-engine/adapter` of the then separate samp-rs repository;
+since 2026-11-12 that tree is `samp-rs/` in this repository):
 - `Hud::menu_active` reads the **byte** at 0xBA67A4; new `Hud::menu_active_dword` for samp-rs sites that test
   the dword (they also see the three following bytes).
 - New `WorldState::area_raw() -> i32` (`CGame::currArea` is an i32; samp-rs reads it as such).
@@ -545,6 +546,6 @@ From the first samp-rs migration steps (branch `sa-engine/adapter` in ~/samp-rs-
 - Infallible reads (`clock`, `menu_active`, `pad`, ...): a backend that cannot serve them returns the value the
   game has right after `CGame::Initialise` (clock 12:00, menu inactive, neutral pad). Only the original and
   phase A backends can hit this, and only before the game is initialised.
-- Q1 note: the pinned git dependency uses `file:///home/ghosty2004/sa-engine`, which resolves only on this
-  machine. It is fine while the adapter branch is local; before samp-rs merges it, sa-engine must be reachable
-  from samp-rs's remote (a published repository) or the crate vendored. That is a user decision.
+- Q1 note (settled 2026-11-12): samp-rs moved into this repository as `samp-rs/`. samp-client takes sa-samp-api
+  and sa-net from `crates/` by path, and sa-game takes samp-client, samp-proto and samp-saa from `samp-rs/` by
+  path; no pinned git URL is left.

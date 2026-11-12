@@ -11,7 +11,7 @@
 # screenshots). Compare with tools/trace/diff.py / d3d_diff.py and the net logs (feata-notes.md).
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DATA="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+DATA="${SAMP_RS_ROOT:-$ROOT}"
 CLIENT="${1:?usage: $0 orig|ours}"
 say() { printf '[featparity] %s\n' "$*"; }
 

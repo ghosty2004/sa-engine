@@ -6,11 +6,11 @@
 # part of tools/e2e/m8a.sh on the ORIGINAL client (samp.dll 0.3.7-R4 + samp-tracer) in the trace
 # lane, with the same filterscript (tools/e2e/probe/m8afs.pwn) on our own server copy at the trace
 # lane's port 7790. Run it under the trace-lane lock:
-#   /home/ghosty2004/samp-rs/tools/trace/with-lock.sh tools/e2e/m8a-orig.sh
+#   tools/trace/with-lock.sh tools/e2e/m8a-orig.sh
 # Output: target/m8a-orig/ (screenshots, d3d-NAME.jsonl, server.log, trace.jsonl via run.sh).
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-MAIN="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+MAIN="${SAMP_RS_ROOT:-$ROOT}"
 T="$MAIN/tools/trace"
 OUT="$ROOT/target/m8a-orig2"
 mkdir -p "$OUT"

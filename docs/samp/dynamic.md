@@ -11,7 +11,7 @@ breakpoint (INF-10, `docs/re/l3-coverage.md`), and scripted scenarios exercise t
 
 | item | what |
 |---|---|
-| client | samp.dll 0.3.7-R4, build 2019-11-21 (fv0.3.7.3, sha256 `15db80c5…f4f9ff12ab`). This is the build samp-rs installs in its game copy. Plus samp.saa, `SAMP/`, bass.dll, sampgui.png, mouse.png and sampaux3.ttf. All are copied from `~/samp-rs` into `re/samp/client/` (gitignored) |
+| client | samp.dll 0.3.7-R4, build 2019-11-21 (fv0.3.7.3, sha256 `15db80c5…f4f9ff12ab`). This is the build samp-rs installs in its game copy. Plus samp.saa, `SAMP/`, bass.dll, sampgui.png, mouse.png and sampaux3.ttf. All are copied from `~/samp-rs` into `re/samp/client/` (gitignored; samp-rs itself moved into this repository as `samp-rs/` on 2026-11-12, these third-party files stay under `re/samp/`) |
 | server | open.mp 1.6.7 (32-bit Linux), copied to `re/samp/server/`. Each run uses its own copy in `target/e2e/lane-4/samp/server` on **UDP 7810** (samp-rs uses 7777/7790). Settings: artwork, rcon and announce off; `max_bots` 4 |
 | gamemode | `tools/e2e/samp/sampcov.pwn`, compiled with the server's pawncc. It sets up 3 classes and a static train, logs every player callback as `[cov] …`, and reads a command channel (`scriptfiles/sampcov.txt`, `SEQ CMD|ARG|…`) |
 | patch list | samp-rs `docs/re/data/gta-patches-r4-annotated.csv`, copied to `re/samp/` |

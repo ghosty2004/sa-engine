@@ -14,7 +14,7 @@
 # target/uiroot/target/trace/… (ours); target/featb/{orig,ours}-latest point at them.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DATA="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+DATA="${SAMP_RS_ROOT:-$ROOT}"
 export SAMP_RS_ROOT="$DATA"
 TB="${CARGO_TARGET_DIR:-$ROOT/target}"
 FB="$ROOT/target/featb"

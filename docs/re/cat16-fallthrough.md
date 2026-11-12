@@ -80,7 +80,8 @@ Catalogue: 15,486 → 15,479 live functions. `excluded:mis-split` 653 → 660. 6
   fall-through workaround (`fallthrough_edges`), so its closures change only slightly: B 6,037 → 6,054,
   D 6,615 → 6,629. C/E/F/G each drop by 3 or 4 because the 7 merged rows are no longer live. The
   `samp_rs_*` deltas (for example `scm-opcode` 104 → 114) come from changes in `~/samp-rs` since the
-  last run, not from CAT-16.
+  last run, not from CAT-16. (samp-rs moved into this repository as `samp-rs/` on 2026-11-12;
+  `samp_usage.py` now reads it there.)
 
 ## Follow-ups (not done here)
 

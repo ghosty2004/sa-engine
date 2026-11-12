@@ -8,7 +8,7 @@
 #   tools/e2e/samp/native-join.sh [OUT_DIR]       (default target/samp4-evidence)
 #
 # Inputs (gitignored, never committed): $SA_ROOT/re/samp/server (open.mp), $SA_ROOT/wine/gta-sa (the game data
-# sa-game reads), the auth table AUTH_TABLE (default ~/samp-rs/data/auth_table.txt, third-party data, read only).
+# sa-game reads), the auth table AUTH_TABLE (default $SA_ROOT/re/samp/auth_table.txt, gitignored third-party data, read only).
 # SA_GAME = the sa-game binary (default target/i686-unknown-linux-gnu/release/sa-game). FRAMES (default 1400).
 # Port SAMP_PORT (default 7812), lock target/locks/$SAMP_LOCK (default samp-native.lock, shared with
 # native-handshake.sh; give another name together with another port to run beside a running stack).
@@ -18,7 +18,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 SA_ROOT="${SA_ROOT:-$ROOT}"
 OUT="$(mkdir -p "${1:-$ROOT/target/samp4-evidence}" && cd "${1:-$ROOT/target/samp4-evidence}" && pwd)"
-AUTH="${AUTH_TABLE:-$HOME/samp-rs/data/auth_table.txt}"
+AUTH="${AUTH_TABLE:-$SA_ROOT/re/samp/auth_table.txt}"
 PORT="${SAMP_PORT:-7812}"
 GAME_BIN="${SA_GAME:-$ROOT/target/i686-unknown-linux-gnu/release/sa-game}"
 FRAMES="${FRAMES:-1600}"

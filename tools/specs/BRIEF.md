@@ -46,7 +46,7 @@ docs/re/specs/<SUBSYSTEM>/<Class>.deviations.md (deviation notes), plus your ind
 $WORK/index-<AGENT>.csv
 with header `address,name,subsystem,spec_file,kind,confidence` (spec_file relative to repo root, kind =
 full-spec | deviation-note, confidence = high | medium | low; low = open questions remain that affect behaviour).
-English only, no emojis. Do not touch anything else (no commits, no catalog edits, never ~/samp-rs).
+English only, no emojis. Do not touch anything else (no commits, no catalog edits, never samp-rs/).
 Class naming: the class from the catalogue name (`CGarage::Foo` → CGarage.md). Unnamed functions: put them
 in the class their evidence points to (callers, `this` layout, name_hint) and give a best evidence-backed
 name like `CGarage::sub_448330 (proposed: ...)` with the evidence; if unclear use `_unattributed.md`.

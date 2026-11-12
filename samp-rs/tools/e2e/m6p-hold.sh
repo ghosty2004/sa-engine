@@ -8,7 +8,7 @@
 #   tools/e2e/m6p-hold.sh           prepare + start the session in the background (log: $VR/hold.log)
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DATA="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+DATA="${SAMP_RS_ROOT:-$ROOT}"
 TGT="${CARGO_TARGET_DIR:-$ROOT/target}"
 VR="$ROOT/target/vehroot"
 BIN="$VR/target/i686-pc-windows-gnu/release"

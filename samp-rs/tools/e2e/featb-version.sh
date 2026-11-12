@@ -8,7 +8,7 @@
 # original is never touched) and is removed afterwards. Output: target/featb/version-{orig,ours}.txt + .png.
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DATA="${SAMP_RS_ROOT:-/home/ghosty2004/samp-rs}"
+DATA="${SAMP_RS_ROOT:-$ROOT}"
 export SAMP_RS_ROOT="$DATA"
 WHICH="${1:-both}"
 if [ "${SAMP_RS_UI_LOCK_HELD:-0}" != 1 ]; then

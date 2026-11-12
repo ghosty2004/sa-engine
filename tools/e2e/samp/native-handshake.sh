@@ -4,17 +4,18 @@
 # as a 32-bit Linux process (i686-unknown-linux-gnu): cookie exchange, RakNet connection, auth key,
 # PlayerConnect, InitGame. No game, no Wine.
 #
-#   tools/e2e/samp/native-handshake.sh SAMP_RS_DIR [AUTH_TABLE]
+#   tools/e2e/samp/native-handshake.sh [SAMP_RS_DIR [AUTH_TABLE]]
 #
-# SAMP_RS_DIR is a samp-rs checkout with the test (branch sa-engine/adapter); AUTH_TABLE defaults to
-# ~/samp-rs/data/auth_table.txt (third-party data, never committed). Port: SAMP_PORT (default 7812; samp-rs
+# SAMP_RS_DIR defaults to samp-rs/ in this repository; AUTH_TABLE defaults to
+# $SA_ROOT/re/samp/auth_table.txt (gitignored third-party data, never committed).
+# Port: SAMP_PORT (default 7812; samp-rs
 # uses 7777/7790, samp-cov.sh 7810). Lock: target/locks/samp-native.lock. Server log: target/samp-native/.
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../../.." && pwd)"
 SA_ROOT="${SA_ROOT:-$ROOT}"
-SAMP_RS="${1:?usage: native-handshake.sh SAMP_RS_DIR [AUTH_TABLE]}"
-AUTH="${2:-$HOME/samp-rs/data/auth_table.txt}"
+SAMP_RS="${1:-$ROOT/samp-rs}"
+AUTH="${2:-$SA_ROOT/re/samp/auth_table.txt}"
 PORT="${SAMP_PORT:-7812}"
 SERVER_SRC="$SA_ROOT/re/samp/server"
 OUT="$ROOT/target/samp-native"

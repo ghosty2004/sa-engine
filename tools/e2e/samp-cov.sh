@@ -5,7 +5,7 @@
 #   LANE=4 SA_ROOT=~/sa-engine tools/e2e/samp-cov.sh [--no-cov] [--steps LIST] [--name NAME]
 #
 # --steps: comma list of scenario steps (default: all); see `steps_all` below.
-# Inputs (gitignored, copied from ~/samp-rs, never used in place): $SA_ROOT/re/samp/client/ (samp.dll,
+# Inputs (gitignored, third-party files, never committed): $SA_ROOT/re/samp/client/ (samp.dll,
 # samp.saa, SAMP/, bass.dll, sampgui.png, mouse.png, sampaux3.ttf), $SA_ROOT/re/samp/server/ (open.mp
 # 1.6.7), $SA_ROOT/re/samp/gta-patches-r4-annotated.csv (samp.dll's patch list).
 # The server copy runs from target/e2e/lane-N/samp/server on UDP 7810 with tools/e2e/samp/sampcov.pwn
