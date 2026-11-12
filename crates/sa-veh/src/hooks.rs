@@ -75,6 +75,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::float_pow::HOOKS,
     // STD-12 (unverified batches)
     crate::automobile_random_damage::HOOKS,
+    crate::bike_fix_hands::HOOKS,
+    crate::float_pow::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).
