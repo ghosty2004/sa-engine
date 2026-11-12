@@ -65,9 +65,10 @@ Browsers start sound only after a gesture: **click the picture** (the same click
 The bar shows `audio: running` / `suspended`, with **mute** and a **volume** slider (remembered per browser).
 
 Plays today: the game's static channels (front-end sounds, footsteps and the other sound-bank effects in the world;
-about 1,600 `Play` calls in two minutes of walking). Not yet: streamed audio (radio, the loading tune, mission audio):
-the stream thread reaches the unported `CAEDataStream` constructor (0x4DC620) and there is no `VORBISFILE.DLL`
-(`ov_*`) implementation, so that thread ends, as its panic would natively. 3D positioning is not rendered (2D mix).
+about 1,600 `Play` calls in two minutes of walking). Streamed audio (radio, the loading tune, mission audio): the
+stream path is ported and `vorbisfile.dll` is replaced (lewton, docs/arch/platform.md 22.9), but on wasm32 the page
+hangs once streams decode, so streams stay off in the browser unless `SA_GAME_WEB_STREAMS` is set (debugging only).
+The mixer resamples with a 16-tap windowed sinc and mixes in f32. 3D positioning is not rendered (2D mix).
 
 Evidence runs: `?audiotap=1` and `node tools/web/headless.mjs --audio ...` write `OUT/audio.wav` and
 `OUT/audio-rms.tsv` (derived from your game files: never commit them). `SA_GAME_DSOUND_TRACE=1` logs `Play` and
