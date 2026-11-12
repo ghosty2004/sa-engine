@@ -166,3 +166,4 @@ pub mod knock_off_bike_damage_anims;
 pub mod group_list_loops;
 pub mod event_affects_ped_native;
 pub mod event_damage_dtor;
+pub mod knock_off_bike_damage_anims;
