@@ -375,6 +375,8 @@ pub fn release_cars_in_attack_wave() {
 /// `CGangWars::EndGangWar(bool)` (0x4464C0; its first read of `State2` goes through an obfuscated pointer
 /// (`[0x451F3F] ^ [0x156063C]` = 0x96AB4C).
 // Unhookable: its entry bytes (0x4464C1..) are a code key read by protection code at 0x40589D (`sub edi, [0x4464C1]`; sa-hook keycells test).
+// A phase B native (STD-8).
+#[sa_core::native(addr = 0x4464C0, conv = cdecl, name = "CGangWars::EndGangWar")]
 pub fn end_gang_war(b: u32) {
     let s2 = g::<i32>(STATE2).read();
     g::<i32>(STATE).write(0);

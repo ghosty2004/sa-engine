@@ -13,7 +13,7 @@ orig! {
     /// `RwRasterUnlock(RwRaster*)` (0x7FAEC0)
     fn rw_raster_unlock(r: GPtr<u8>) -> GPtr<u8> = cdecl 0x7FAEC0 => unported;
     /// `RoadsignGetLineAndRow(char c (AL), int32* col, int32* row)` (0x6FE260, register convention, caller pops)
-    fn roadsign_get_line_and_row(c: u8, col: GPtr<i32>, row: GPtr<i32>) = reg("args = al stack stack") 0x6FE260 => unported;
+    fn roadsign_get_line_and_row(c: u8, col: GPtr<i32>, row: GPtr<i32>) = reg("args = al stack stack") 0x6FE260 => crate::roadsign_line_row::roadsign_get_line_and_row;
 }
 
 /// `CCustomRoadsignMgr::pCharsetLockedRaster` (0xC3EF88)

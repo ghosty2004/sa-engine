@@ -11,42 +11,6 @@
 #[allow(unused_imports)]
 use super::*;
 
-/// `FUN_004a8e30` (0x4A8E30, CORE): leaf, thiscall, `ret 4`; 24 instruction(s) matched.
-#[hook(addr = 0x4A8E30, conv = thiscall, name = "FUN_004a8e30", expect = "56 8B 74 24 08", unverified = "gen2-core-1", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
-pub fn g_fun_004a8e30_4a8e30(this: u32, a0: u32) -> u32 {
-    let v1 = rd::<u32>(p(a0), 4);
-    let v2 = rd::<u32>(p(a0), 0);
-    if v1 == 0 {
-        wr::<u32>(p(this), 4, v2);
-        if v2 == 0 {
-            let v3 = rd::<u32>(p(a0), 4);
-            wr::<u32>(p(this), 0, v3);
-            let v4 = rd::<u32>(p(this), 8);
-            wr::<u32>(p(this), 8, v4.wrapping_add(0xFFFF_FFFF_u32));
-            return v4;
-        } else {
-            wr::<u32>(p(v2), 4, v1);
-            let v5 = rd::<u32>(p(this), 8);
-            wr::<u32>(p(this), 8, v5.wrapping_add(0xFFFF_FFFF_u32));
-            return v5;
-        }
-    } else {
-        wr::<u32>(p(v1), 0, v2);
-        if v2 == 0 {
-            let v6 = rd::<u32>(p(a0), 4);
-            wr::<u32>(p(this), 0, v6);
-            let v7 = rd::<u32>(p(this), 8);
-            wr::<u32>(p(this), 8, v7.wrapping_add(0xFFFF_FFFF_u32));
-            return v7;
-        } else {
-            wr::<u32>(p(v2), 4, v1);
-            let v8 = rd::<u32>(p(this), 8);
-            wr::<u32>(p(this), 8, v8.wrapping_add(0xFFFF_FFFF_u32));
-            return v8;
-        }
-    }
-}
-
 /// `FUN_004a8e70` (0x4A8E70, CORE): leaf, thiscall, `ret`; 20 instruction(s) matched.
 #[hook(addr = 0x4A8E70, conv = thiscall, name = "FUN_004a8e70", expect = "8B 01 85 C0 74 2D", unverified = "gen2-core-1", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
 pub fn g_fun_004a8e70_4a8e70(this: u32) -> u32 {
@@ -80,7 +44,4 @@ pub fn g_fun_004a8e70_4a8e70(this: u32) -> u32 {
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
-pub const BODIES: &[Body] = &[
-    (0x4A8E30, 0xFA14DE63A9DB347B, &[(0x4A8E30, 59)]),
-    (0x4A8E70, 0x0E5DAEACB894228E, &[(0x4A8E70, 54)]),
-];
+pub const BODIES: &[Body] = &[(0x4A8E70, 0x0E5DAEACB894228E, &[(0x4A8E70, 54)])];

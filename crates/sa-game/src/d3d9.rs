@@ -48,12 +48,18 @@ pub fn create_device(w: u32, h: u32, color: u32, depth: u32) -> bool {
 /// Where `Present` writes each frame (`--present-dir`), and how many so far.
 static PRESENT_DIR: Mutex<Option<(std::path::PathBuf, u32)>> = Mutex::new(None);
 
-/// `--present-dir DIR`: every presented frame is written to `DIR/present-NNNN.png` (at most 200;
+/// `--present-dir DIR` (created when missing): every presented frame is written to `DIR/present-NNNN.png` (at most 200;
 /// `SA_GAME_PRESENT_SKIP=K` skips the first K, `SA_GAME_PRESENT_EVERY=N` keeps every N-th after that;
-/// every 32nd frame not kept overwrites `DIR/present-last.png`).
+/// every 32nd frame not kept overwrites `DIR/present-last.png`; `SA_GAME_PRESENT_GAME=1` counts only the in-game
+/// frames).
 pub fn set_present_dir(dir: std::path::PathBuf) {
+    // created here: `File::create` below fails silently in a missing directory
+    let _ = std::fs::create_dir_all(&dir);
     *PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner()) = Some((dir, 0));
 }
+
+/// Set by the main loop while `rsIDLE` (`Game::Idle`, the in-game frame) runs.
+pub static IN_GAME_FRAME: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// `Present` on the seam device, and the frame to `--present-dir`.
 fn present_frame() -> i32 {
@@ -61,6 +67,16 @@ fn present_frame() -> i32 {
         let r = d.present();
         (r, d.read_render_target(None).ok())
     });
+    // `SA_GAME_PRESENT_GAME=1`: only the frames presented inside `Game::Idle` (the in-game frames) are counted and
+    // written; the loading screens are not.
+    if std::env::var_os("SA_GAME_PRESENT_GAME").is_some() && !IN_GAME_FRAME.load(std::sync::atomic::Ordering::SeqCst) {
+        with("Present", |_| ());
+        return match r {
+            Some((Ok(()), _)) => D3D_OK,
+            Some((Err(e), _)) => e.hresult() as i32,
+            None => D3DERR_INVALIDCALL,
+        };
+    }
     let mut pd = PRESENT_DIR.lock().unwrap_or_else(|e| e.into_inner());
     // `SA_GAME_PRESENT_SKIP=K`: the first K presented frames are not written.
     static SEEN: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
@@ -147,7 +163,7 @@ enum Res {
     Surface { tex: Option<u32>, level: u32, w: u32, h: u32, format: u32, usage: u32, pool: u32, own: Option<gpu::TextureId>, sys: Vec<u8> },
     VertexBuffer { id: gpu::VertexBufferId, data: Vec<u8>, lock: (u32, u32) },
     IndexBuffer { id: gpu::IndexBufferId, data: Vec<u8>, format: u32, lock: (u32, u32) },
-    Decl { id: gpu::VertexDeclId },
+    Decl { id: gpu::VertexDeclId, elems: Vec<[u8; 8]> },
 }
 
 struct Store {
@@ -736,12 +752,14 @@ fn dev_draw_indexed_primitive_up(_this: u32, ty: u32, min: u32, num: u32, count:
 }
 fn dev_create_vertex_declaration(_this: u32, elems: GPtr<u8>, out: GPtr<u32>) -> i32 {
     let mut v = Vec::new();
+    let mut raw = Vec::new();
     for i in 0..64 {
         let e = elems.byte_add(8 * i);
         let stream = e.cast::<u16>().read();
         if stream == 0xFF {
             break;
         }
+        raw.push(core::array::from_fn(|k| e.byte_add(k as isize).read()));
         v.push(gpu::VertexElement {
             stream,
             offset: e.byte_add(2).cast::<u16>().read(),
@@ -753,18 +771,41 @@ fn dev_create_vertex_declaration(_this: u32, elems: GPtr<u8>, out: GPtr<u32>) ->
     }
     match with_device(|d| d.create_vertex_declaration(&v)) {
         Some(Ok(id)) => {
-            out.write(new_object(DECL, Res::Decl { id }));
+            out.write(new_object(DECL, Res::Decl { id, elems: raw }));
             D3D_OK
         }
         _ => D3DERR_INVALIDCALL,
     }
+}
+/// `IDirect3DVertexDeclaration9::GetDeclaration(D3DVERTEXELEMENT9* elems, UINT* num)`: the elements given at creation
+/// plus `D3DDECL_END()`; `*num` = their count including the end marker (only the count when `elems` is NULL).
+fn decl_get_declaration(obj: u32, elems: GPtr<u8>, num: GPtr<u32>) -> i32 {
+    let Some(raw) = with_res(obj, |r| match r {
+        Res::Decl { elems, .. } => Some(elems.clone()),
+        _ => None,
+    })
+    .flatten() else {
+        return D3DERR_INVALIDCALL;
+    };
+    if !num.is_null() {
+        num.write(raw.len() as u32 + 1);
+    }
+    if !elems.is_null() {
+        let end: [u8; 8] = [0xFF, 0, 0, 0, 0x11, 0, 0, 0];
+        for (i, e) in raw.iter().chain(core::iter::once(&end)).enumerate() {
+            for (k, b) in e.iter().enumerate() {
+                elems.byte_add((8 * i + k) as isize).write(*b);
+            }
+        }
+    }
+    D3D_OK
 }
 fn dev_set_vertex_declaration(_this: u32, decl: u32) -> i32 {
     let id = if decl == 0 {
         None
     } else {
         with_res(decl, |r| match r {
-            Res::Decl { id } => Some(*id),
+            Res::Decl { id, .. } => Some(*id),
             _ => None,
         })
         .flatten()
@@ -836,7 +877,7 @@ fn res_release(obj: u32) -> u32 {
         Some(Res::IndexBuffer { id, .. }) => {
             with_device(|d| d.release_index_buffer(id));
         }
-        Some(Res::Decl { id }) => {
+        Some(Res::Decl { id, .. }) => {
             with_device(|d| d.release_vertex_declaration(id));
         }
         _ => {}
@@ -1134,4 +1175,5 @@ entries! {
     trap(BUFFER, 13), "IDirect3DBuffer9::GetDesc" => buf_get_desc: fn(obj: u32, out: GPtr<u32>) -> i32;
     trap(DECL, 1), "IDirect3DVertexDeclaration9::AddRef" => res_add_ref: fn(obj: u32) -> u32;
     trap(DECL, 2), "IDirect3DVertexDeclaration9::Release" => res_release: fn(obj: u32) -> u32;
+    trap(DECL, 4), "IDirect3DVertexDeclaration9::GetDeclaration" => decl_get_declaration: fn(obj: u32, elems: GPtr<u8>, num: GPtr<u32>) -> i32;
 }

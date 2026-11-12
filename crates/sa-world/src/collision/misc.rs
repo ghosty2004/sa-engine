@@ -151,6 +151,23 @@ pub fn box_set(this: GPtr<u8>, min: GPtr<u32>, max: GPtr<u32>) {
     copy3(this.byte_add(0xC), max);
 }
 
+/// `CBox::Recalc()` (0x40EE20, thiscall): per axis, a min (+0, +4, +8) above its max (+0xC, +0x10, +0x14) swaps the
+/// two (the max gets the min through `fld`/`fstp`, the min the max's raw dword); NaN compares leave the pair.
+#[hook(addr = 0x40EE20, conv = thiscall, name = "CBox::Recalc", expect = "D9 01 D8 59 0C DF E0",
+       unverified = "std9-coll-1", route = "L1-pure", hazards = "none", recs = "grove-walk")]
+pub fn box_recalc(this: GPtr<u8>) {
+    for o in [0isize, 4, 8] {
+        let lo = this.byte_add(o).cast::<f32>();
+        let hi = this.byte_add(o + 0xC).cast::<f32>();
+        let a = sa_math::x87::X87::from_f32(lo.read());
+        if !a.fcom(sa_math::x87::X87::from_f32(hi.read())).test_any(0x41) {
+            let raw = hi.cast::<u32>().read();
+            hi.write(a.to_f32());
+            lo.cast::<u32>().write(raw);
+        }
+    }
+}
+
 /// `CColSphere::Set(radius, center, material, piece, lighting)` (0x40FD10, thiscall): the sphere, then the
 /// three bytes at +0x10, +0x11, +0x12.
 #[hook(addr = 0x40FD10, conv = thiscall, name = "CColSphere::Set", expect = "8B 44 24 04 8B 54 24 08",
@@ -422,6 +439,7 @@ pub fn col_box_set(this: GPtr<u8>, min: GPtr<u8>, max: GPtr<u8>, material: u32, 
 
 pub const HOOKS: &[HookReg] = &[
     HOOK_COL_BOX_SET,
+    HOOK_BOX_RECALC,
     HOOK_CHECK_PEDS,
     HOOK_RESET_MADE_INVISIBLE_OBJECTS,
     HOOK_TEMP_COL_MODELS_SHUTDOWN,

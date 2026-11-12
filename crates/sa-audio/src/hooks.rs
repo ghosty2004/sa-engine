@@ -34,7 +34,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::port4_init::HOOKS,
     crate::port4_service::HOOKS,
     ped_events::HOOKS,
+    crate::global_weapon_ambient::HOOKS,
     crate::audio_data_stream::HOOKS,
+    crate::weather_update_parameters::HOOKS,
     crate::generated::HOOKS,
 ];
 
@@ -62,6 +64,7 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
 /// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
 /// phase A); `sa_ports::NATIVES` lists each of these.
 pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
+    crate::utility::NATIVES,
     crate::port4_hw::NATIVES,
     crate::port4_init::NATIVES,
     crate::port4_service::NATIVES,

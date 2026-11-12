@@ -120,7 +120,7 @@ pub fn g_rp_world_sector_set_stream_always_call_back_761cf0(a0: u32, a1: u32) ->
 }
 
 /// `RpWorldSectorSetStreamRightsCallBack` (0x761D10, RW): thunk, cdecl, `ret`; 8 instruction(s) matched.
-#[hook(addr = 0x761D10, conv = cdecl, name = "RpWorldSectorSetStreamRightsCallBack", expect = "8B 44 24 08 8B 4C 24 04", unverified = "gen2-rw-5", route = "L2", hazards = "none")]
+#[hook(addr = 0x761D10, conv = cdecl, name = "RpWorldSectorSetStreamRightsCallBack", expect = "8B 44 24 08 8B 4C 24 04", unverified = "gen2-rw-4", route = "L2", hazards = "none")]
 pub fn g_rp_world_sector_set_stream_rights_call_back_761d10(a0: u32, a1: u32) -> u32 {
     let v1 = c_808950_c3(0x8D_736C, a0, a1);
     v1

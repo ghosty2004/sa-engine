@@ -24,6 +24,7 @@ pub mod common;
 pub mod hooks;
 
 pub mod engine;
+pub mod global_weapon_ambient;
 pub mod entities;
 #[rustfmt::skip] // generated (tools/gen/audio_patterns.py --check compares the files byte for byte)
 pub mod gen_bodies;
@@ -56,3 +57,4 @@ pub mod audio_data_stream;
 
 pub mod std6_natives;
 pub mod generated;
+pub mod weather_update_parameters;

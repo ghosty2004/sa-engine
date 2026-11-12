@@ -31,6 +31,16 @@ pub fn g_missed_by_ghidra_data_code_immediate_5097d0() {}
 #[allow(dead_code)]
 pub fn g_missed_by_ghidra_data_code_immediate_509800() {}
 
+/// `CCamera::InitialiseCameraForDebugMode` (0x50AF90, CAM): empty, thiscall, `ret`; 1 instruction(s) matched.
+/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[allow(dead_code)]
+pub fn g_ccamera_initialise_camera_for_debug_mode_50af90(_this: u32) {}
+
+/// `CCamera::ProcessObbeCinemaCameraPed` (0x50B880, CAM): empty, thiscall, `ret`; 1 instruction(s) matched.
+/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
+#[allow(dead_code)]
+pub fn g_ccamera_process_obbe_cinema_camera_ped_50b880(_this: u32) {}
+
 /// `(missed by ghidra: data-code-immediate)` (0x50E080, CAM): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -48,6 +58,8 @@ pub const BODIES: &[Body] = &[
     (0x5097C0, 0xAF647E4C8602FFD2, &[(0x5097C0, 1)]),
     (0x5097D0, 0xAF647E4C8602FFD2, &[(0x5097D0, 1)]),
     (0x509800, 0xAF647E4C8602FFD2, &[(0x509800, 1)]),
+    (0x50AF90, 0xAF647E4C8602FFD2, &[(0x50AF90, 1)]),
+    (0x50B880, 0xAF647E4C8602FFD2, &[(0x50B880, 1)]),
     (0x50E080, 0xAF647E4C8602FFD2, &[(0x50E080, 1)]),
     (0x71D700, 0xAF647E4C8602FFD2, &[(0x71D700, 1)]),
 ];
@@ -63,6 +75,8 @@ mod tests {
         g_missed_by_ghidra_data_code_immediate_5097c0();
         g_missed_by_ghidra_data_code_immediate_5097d0();
         g_missed_by_ghidra_data_code_immediate_509800();
+        g_ccamera_initialise_camera_for_debug_mode_50af90(0);
+        g_ccamera_process_obbe_cinema_camera_ped_50b880(0);
         g_missed_by_ghidra_data_code_immediate_50e080();
         g_cmblur_motion_blur_render_71d700(0);
     }

@@ -73,6 +73,8 @@ pub const MODULES: &[&[HookReg]] = &[
     world::replay_vehicle_block::HOOKS,
     collision::camera_collision_scan::HOOKS,
     collision::sphere_cast::HOOKS,
+    collision::col_point_assign::HOOKS,
+    collision::col_sphere_edge::HOOKS,
     collision::col_models::HOOKS,
     physical::friction_attach::HOOKS,
     world::mvpd_w1::HOOKS,

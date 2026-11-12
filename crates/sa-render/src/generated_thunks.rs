@@ -12,8 +12,26 @@
 use super::*;
 
 orig! {
+    /// `FUN_004a8df0` (0x4A8DF0), thiscall, 1 stack argument(s)
+    fn c_4a8df0_t1(this: u32, a0: u32) -> u32 = thiscall 0x4A8DF0 => unported;
+    /// `FUN_004a8e70` (0x4A8E70), thiscall, 0 stack argument(s)
+    fn c_4a8e70_t0(this: u32) -> u32 = thiscall 0x4A8E70 => unported;
     /// `CMatrix` (0x59ACD0), thiscall, 0 stack argument(s)
     fn c_59acd0_t0(this: u32) -> u32 = thiscall 0x59ACD0 => unported;
+}
+
+/// `ProcObjectMan_c::GetEntityFromPool` (0x5A3120, RENDER): thunk, thiscall, `ret`; 2 instruction(s) matched.
+#[hook(addr = 0x5A3120, conv = thiscall, name = "ProcObjectMan_c::GetEntityFromPool", expect = "81 C1 08 4C 00 00", unverified = "gen2-render-4", route = "L2", hazards = "none")]
+pub fn g_proc_object_man_c_get_entity_from_pool_5a3120(this: u32) -> u32 {
+    let v1 = c_4a8e70_t0(this.wrapping_add(0x4C08));
+    v1
+}
+
+/// `ProcObjectMan_c::ReturnEntityToPool` (0x5A3130, RENDER): thunk, thiscall, `ret 4`; 2 instruction(s) matched.
+#[hook(addr = 0x5A3130, conv = thiscall, name = "ProcObjectMan_c::ReturnEntityToPool", expect = "81 C1 08 4C 00 00", unverified = "gen2-render-4", route = "L2", hazards = "none")]
+pub fn g_proc_object_man_c_return_entity_to_pool_5a3130(this: u32, a0: u32) -> u32 {
+    let v1 = c_4a8df0_t1(this.wrapping_add(0x4C08), a0);
+    v1
 }
 
 /// `(missed by ghidra: data-code-immediate)` (0x856BC0, RENDER): thunk, cdecl, `ret`; 2 instruction(s) matched.
@@ -25,4 +43,8 @@ pub fn g_missed_by_ghidra_data_code_immediate_856bc0() -> u32 {
 
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
-pub const BODIES: &[Body] = &[(0x856BC0, 0x633C1B47FBC549D4, &[(0x856BC0, 10)])];
+pub const BODIES: &[Body] = &[
+    (0x5A3120, 0x2DE3627B146E5C91, &[(0x5A3120, 11)]),
+    (0x5A3130, 0xA3D748E33AFCB1D6, &[(0x5A3130, 11)]),
+    (0x856BC0, 0x633C1B47FBC549D4, &[(0x856BC0, 10)]),
+];

@@ -29,10 +29,14 @@ pub const MODULES: &[&[HookReg]] = &[
     engine::HOOKS,
     mesh::HOOKS,
     crate::tristrip::HOOKS,
+    crate::trilist_mesh::HOOKS,
+    crate::skin_geometry_dtor::HOOKS,
     crate::atomic_world_sync::HOOKS,
     light::HOOKS,
     videomode::HOOKS,
     crate::rxpipeline::HOOKS,
+    crate::rx_execute::HOOKS,
+    crate::d3d9_mesh_instance::HOOKS,
     crate::imagemod::HOOKS,
     crate::worldplugin::HOOKS,
     crate::anim::HOOKS,
@@ -163,6 +167,7 @@ pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[
     crate::memory::NATIVES,
     crate::d3d9sys::NATIVES,
     crate::d3d9rast::NATIVES,
+    crate::raster_copy::NATIVES,
 ];
 
 pub const COUNT: usize = ALL.len();

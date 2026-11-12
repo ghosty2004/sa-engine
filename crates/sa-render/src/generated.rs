@@ -36,8 +36,6 @@ pub mod generated_thunks;
 pub mod grass_renderer_generated;
 #[path = "pp_tri_plant_buffer_generated.rs"]
 pub mod pp_tri_plant_buffer_generated;
-#[path = "proc_object_man_c_generated.rs"]
-pub mod proc_object_man_c_generated;
 #[path = "shadow_camera_generated.rs"]
 pub mod shadow_camera_generated;
 
@@ -237,7 +235,6 @@ pub const HOOKS: &[HookReg] = &[
     generated_setters::HOOK_G_FX_PRT_MULT_C_4AB270,
     generated_setters::HOOK_G_FX_PRT_MULT_C_4AB290,
     generated_setters::HOOK_G_CSHINY_TEXTS_INIT_7221B0,
-    generated_setters::HOOK_G_MARKER_ATOMIC_CB_722220,
     generated_setters::HOOK_G_CSPRITE2D_OFFSET_TEX_COORD_FOR_BILINEAR_FILTERING_728150,
     generated_small::HOOK_G_FUN_0049EA80_49EA80,
     generated_small::HOOK_G_FX_C_EXIT_4A1320,
@@ -255,6 +252,8 @@ pub const HOOKS: &[HookReg] = &[
     generated_small::HOOK_G_CSHINY_TEXTS_RENDER_OUT_GEOMETRY_BUFFER_7221C0,
     generated_small::HOOK_G_CMIRRORS_INIT_723000,
     generated_small::HOOK_G_CMIRRORS_SHUT_DOWN_723050,
+    generated_thunks::HOOK_G_PROC_OBJECT_MAN_C_GET_ENTITY_FROM_POOL_5A3120,
+    generated_thunks::HOOK_G_PROC_OBJECT_MAN_C_RETURN_ENTITY_TO_POOL_5A3130,
     generated_thunks::HOOK_G_MISSED_BY_GHIDRA_DATA_CODE_IMMEDIATE_856BC0,
     grass_renderer_generated::HOOK_G_CGRASS_RENDERER_GET_PLANT_MODELS_TAB_5DACE0,
     grass_renderer_generated::HOOK_G_CGRASS_RENDERER_FLUSH_TRI_PLANT_BUFFER_5DB250,
@@ -264,8 +263,6 @@ pub const HOOKS: &[HookReg] = &[
     pp_tri_plant_buffer_generated::HOOK_G_CPPTRI_PLANT_BUFFER_GET_PPTRI_PLANT_PTR_5DB140,
     pp_tri_plant_buffer_generated::HOOK_G_CPPTRI_PLANT_BUFFER_CHANGE_CURRENT_PLANT_MODELS_SET_5DB170,
     pp_tri_plant_buffer_generated::HOOK_G_CPPTRI_PLANT_BUFFER_INCREASE_BUFFER_INDEX_5DB1A0,
-    proc_object_man_c_generated::HOOK_G_PROC_OBJECT_MAN_C_GET_ENTITY_FROM_POOL_5A3120,
-    proc_object_man_c_generated::HOOK_G_PROC_OBJECT_MAN_C_RETURN_ENTITY_TO_POOL_5A3130,
     shadow_camera_generated::HOOK_G_CSHADOW_CAMERA_CONSTRUCTOR_7053F0,
     shadow_camera_generated::HOOK_G_CSHADOW_CAMERA_ATOMIC_QUICK_RENDER_705620,
     shadow_camera_generated::HOOK_G_CSHADOW_CAMERA_GET_RW_RENDER_RASTER_705770,
@@ -283,7 +280,6 @@ pub const BODIES: &[&[Body]] = &[
     generated_thunks::BODIES,
     grass_renderer_generated::BODIES,
     pp_tri_plant_buffer_generated::BODIES,
-    proc_object_man_c_generated::BODIES,
     shadow_camera_generated::BODIES,
 ];
 

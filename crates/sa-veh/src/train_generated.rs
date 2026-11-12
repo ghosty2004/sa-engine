@@ -18,11 +18,6 @@ orig! {
     fn c_6f6cc0_t0(this: u32) -> u32 = thiscall 0x6F6CC0 => unported;
 }
 
-/// `CTrain::UpdateTrains` (0x6F5900, VEH): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_ctrain_update_trains_6f5900(_this: u32) {}
-
 /// `CTrain::ProcessTrainAnnouncements` (0x6F5910, VEH): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -81,7 +76,6 @@ pub fn g_ctrain_set_new_train_position_6f7140(a0: u32, a1: u32, a2: u32, a3: u32
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
-    (0x6F5900, 0xAF647E4C8602FFD2, &[(0x6F5900, 1)]),
     (0x6F5910, 0xAF647E4C8602FFD2, &[(0x6F5910, 1)]),
     (0x6F5920, 0xAF647E4C8602FFD2, &[(0x6F5920, 1)]),
     (0x6F59C0, 0x357E39600630B729, &[(0x6F59C0, 22)]),
@@ -98,7 +92,6 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_ctrain_update_trains_6f5900(0);
         g_ctrain_process_train_announcements_6f5910(0);
         g_ctrain_play_announcement_6f5920(0);
         g_ctrain_open_train_door_6f5d80(0, 0);

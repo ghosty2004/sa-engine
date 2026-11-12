@@ -104,13 +104,6 @@ pub fn g_render_buffer_clear_render_buffer_707790(_this: u32) -> u32 {
     0
 }
 
-/// `GetFirstTextureCallback` (0x734930, RW): setter, cdecl, `ret`; 5 instruction(s) matched.
-#[hook(addr = 0x734930, conv = cdecl, name = "GetFirstTextureCallback", expect = "8B 44 24 08 8B 4C 24 04", unverified = "gen2-rw-3", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
-pub fn g_get_first_texture_callback_734930(a0: u32, a1: u32) -> u32 {
-    wr::<u32>(p(a1), 0, a0);
-    0
-}
-
 /// `cb_ANISOTPLUGIN_RwEngine_Open` (0x749000, RW): setter, cdecl, `ret`; 5 instruction(s) matched.
 #[hook(addr = 0x749000, conv = cdecl, name = "cb_ANISOTPLUGIN_RwEngine_Open", expect = "A1 74 24 C9 00", unverified = "gen2-rw-3", route = "L2", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_cb_anisotplugin_rw_engine_open_749000(a0: u32) -> u32 {
@@ -1000,7 +993,6 @@ pub const BODIES: &[Body] = &[
     (0x5D5BA0, 0x26878BB902F6B885, &[(0x5D5BA0, 10)]),
     (0x5D8C50, 0x3AF7DC5235DAA9C8, &[(0x5D8C50, 118)]),
     (0x707790, 0xCEBA1B082658A4F7, &[(0x707790, 13)]),
-    (0x734930, 0xC35ED763E253B508, &[(0x734930, 13)]),
     (0x749000, 0x3E0F949BB94712C3, &[(0x749000, 16)]),
     (0x749010, 0x7AEA22AF6644A7BB, &[(0x749010, 16)]),
     (0x749720, 0x4AEAA9E42D032311, &[(0x749720, 20)]),

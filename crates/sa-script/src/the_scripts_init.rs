@@ -489,6 +489,33 @@ pub fn add_script_to_list(this: GPtr<u8>, head: GPtr<u32>) {
     head.write(a);
 }
 
+/// `CRunningScript::RemoveScriptFromList(listHead)` (stub 0x464BD0, body 0x156DD60, thiscall, `ret 4`; STD-7):
+/// `prev (+4) ? prev->next = next : *listHead = next`; `next (+0) ? next->prev = prev`.
+#[hook(addr = 0x464BD0, conv = thiscall, name = "CRunningScript::RemoveScriptFromList", expect = "E9 8B 91 10 01",
+       unverified = "std7-script-1", route = "L2", hazards = "none", recs = "new-game")]
+pub fn remove_script_from_list(this: GPtr<u8>, head: GPtr<u32>) {
+    let prev = this.byte_add(4).cast::<u32>().read();
+    let next = this.cast::<u32>().read();
+    if prev != 0 {
+        g::<u32>(prev as usize).write(next);
+    } else {
+        head.write(next);
+    }
+    let next = this.cast::<u32>().read();
+    if next != 0 {
+        g::<u32>(next as usize + 4).write(this.byte_add(4).cast::<u32>().read());
+    }
+}
+
+/// `CRunningScript::IsPedDead(CPed*)` (stub 0x464D70, body 0x156E7B0, thiscall, `ret 4`; STD-7): true when the
+/// ped state (+0x530) is 0x37, 0x36 or 0x38 (dead, die, die by stealth). AL only (AH keeps the state's byte 1).
+#[hook(addr = 0x464D70, conv = thiscall, name = "CRunningScript::IsPedDead", expect = "E9 3B 9A 10 01",
+       unverified = "std7-script-1", route = "L2", hazards = "ax-al-return", recs = "new-game")]
+pub fn is_ped_dead(_this: GPtr<u8>, ped: GPtr<u8>) -> u8 {
+    let st = ped.byte_add(0x530).cast::<u32>().read();
+    u8::from(st == 0x37 || st == 0x36 || st == 0x38)
+}
+
 /// `CTheScripts::ReinitialiseSwitchStatementData()` (stub 0x470370, body 0x156E5F0): the switch
 /// statement state cleared (0xA43F60 word, 0xA43F5C dword, 0xA43F58 byte, 0xA43F54 dword, 0xA43F50 word).
 #[hook(addr = 0x470370, conv = cdecl, name = "CTheScripts::ReinitialiseSwitchStatementData", expect = "E9 7B E2 0F 01",
@@ -631,6 +658,8 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_START_TEST_SCRIPT,
     HOOK_IS_PLAYER_ON_A_MISSION,
     HOOK_ADD_SCRIPT_TO_LIST,
+    HOOK_REMOVE_SCRIPT_FROM_LIST,
+    HOOK_IS_PED_DEAD,
     HOOK_THE_SCRIPTS_INIT,
     HOOK_READ_OBJECT_NAMES_FROM_SCRIPT,
 ];

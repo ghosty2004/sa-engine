@@ -41,13 +41,20 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::vector_ops::HOOKS,
     crate::matrix_ops::HOOKS,
     crate::matrix_rotate::HOOKS,
+    crate::rect_inside::HOOKS,
+    crate::matrix_members::HOOKS,
     crate::matrix_more::HOOKS,
+    crate::matrix_orthonormal::HOOKS,
+    crate::matrix_euler::HOOKS,
+    crate::replay_camera::HOOKS,
+    crate::vector2d_normalise::HOOKS,
     crate::generated::HOOKS,
 ];
 
 /// Every `#[native]` of this crate (phase B entries of ports that cannot be hooked in phase A).
 pub const NATIVES: &[crate::abi::NativeReg] = &[
     crate::memory::NATIVE_INIT,
+    crate::matrix_members::NATIVE_SCALE,
     crate::memory::NATIVE_NULLSUB_72F3C0,
     crate::filemgr::NATIVE_SET_DIR,
     crate::platform::NATIVE_WIN32_INIT_APPLICATION,

@@ -31,24 +31,10 @@ pub fn g_cexplosion_shutdown_7368f0(_this: u32) {}
 #[allow(dead_code)]
 pub fn g_cshot_info_shutdown_739c20(_this: u32) {}
 
-/// `CWeaponEffects` (0x742A90, WEAPON): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cweapon_effects_742a90(this: u32) -> u32 {
-    this
-}
-
 /// `CWeaponEffects` (0x742AA0, WEAPON): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
 pub fn g_cweapon_effects_742aa0() {}
-
-/// `CWeaponInfo` (0x743C30, WEAPON): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cweapon_info_743c30(this: u32) -> u32 {
-    this
-}
 
 /// `CWeaponInfo` (0x743C40, WEAPON): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
@@ -62,9 +48,7 @@ pub const BODIES: &[Body] = &[
     (0x736000, 0xAF647E4C8602FFD2, &[(0x736000, 1)]),
     (0x7368F0, 0xAF647E4C8602FFD2, &[(0x7368F0, 1)]),
     (0x739C20, 0xAF647E4C8602FFD2, &[(0x739C20, 1)]),
-    (0x742A90, 0x7B290C1B0B7F4D96, &[(0x742A90, 3)]),
     (0x742AA0, 0xAF647E4C8602FFD2, &[(0x742AA0, 1)]),
-    (0x743C30, 0x7B290C1B0B7F4D96, &[(0x743C30, 3)]),
     (0x743C40, 0xAF647E4C8602FFD2, &[(0x743C40, 1)]),
 ];
 

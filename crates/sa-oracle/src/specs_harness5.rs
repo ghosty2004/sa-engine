@@ -135,8 +135,36 @@ pub fn toggle_edge() -> Spec {
     }
 }
 
+// ------------------------------------------------------------------ RoadsignGetLineAndRow ------
+
+const ROADSIGN_CELL: u32 = 0x6FE260;
+
+/// Inputs: [character byte, register garbage, scratch fill word] (as `GetCharacterPositionInCharSet`).
+fn roadsign_call(i: &Inputs) -> Call {
+    let mut c = Call::regconv(ROADSIGN_CELL, &regconv(ROADSIGN_CELL), &[i[0], SCRATCH, SCRATCH + 4], i[1]);
+    for w in c.scratch.chunks_mut(4) {
+        w.copy_from_slice(&i[2].to_le_bytes());
+    }
+    c
+}
+
+pub fn roadsign_line_and_row() -> Spec {
+    Spec {
+        generate: Arc::new(|r: &mut Rng| vec![r.below(256), r.next_u32(), r.next_u32()]),
+        edges: Arc::new(|| (0..256).map(|c| vec![c, 0xDEAD_BE00, 0xA5A5_A5A5]).collect()),
+        call: Arc::new(roadsign_call),
+        rust: Arc::new(|i, s| {
+            let mut m = *s;
+            let (col, row) = (host_ptr(&mut m, 0), host_ptr(&mut m, 4));
+            sa_render::roadsign_line_row::roadsign_get_line_and_row(i[0] as u8, col, row);
+            Expect::Returns { ret: ExpRet::Void, scratch: m }
+        }),
+        ..base("RoadsignCell", "RoadsignGetLineAndRow", ROADSIGN_CELL)
+    }
+}
+
 pub fn all() -> Vec<Spec> {
-    vec![char_position(), toggle_edge()]
+    vec![char_position(), toggle_edge(), roadsign_line_and_row()]
 }
 
 #[cfg(test)]

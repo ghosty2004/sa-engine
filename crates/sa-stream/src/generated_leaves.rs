@@ -60,26 +60,12 @@ pub fn g_missed_by_ghidra_data_code_immediate_4c73f0(this: u32) -> u32 {
     this
 }
 
-/// `(missed by ghidra: data-code-immediate)` (0x4C7400, STREAM): empty, cdecl, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_4c7400() {}
-
-/// `FUN_007316d0` (0x7316D0, STREAM): getter, cdecl, `ret`; 3 instruction(s) matched.
-#[hook(addr = 0x7316D0, conv = cdecl, name = "FUN_007316d0", expect = "8B 44 24 04 0F BF 04 45 04 80 C8 00", unverified = "gen2-stream-1", route = "L2", hazards = "none", recs = "pause-restart")]
-pub fn g_fun_007316d0_7316d0(a0: u32) -> u32 {
-    let v1 = rd::<u16>(p(a0.wrapping_mul(2)), 0xC8_8004) as i16 as i32 as u32;
-    v1
-}
-
 /// (address, 64-bit FNV-1a of the matched bytes, the matched spans `(va, len)`: the stub, every
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x44D2D0, 0x6A5F681C2468C4FD, &[(0x44D2D0, 3)]),
     (0x44D2E0, 0x6A7A981C247FDE45, &[(0x44D2E0, 3)]),
     (0x4C73F0, 0x7B290C1B0B7F4D96, &[(0x4C73F0, 3)]),
-    (0x4C7400, 0xAF647E4C8602FFD2, &[(0x4C7400, 1)]),
-    (0x7316D0, 0x03FCBFBA9949624C, &[(0x7316D0, 13)]),
 ];
 
 #[cfg(all(test, not(sa_phase_a)))]
@@ -91,6 +77,5 @@ mod tests {
     fn pattern_empty() {
         g_fun_0044d2d0_44d2d0(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         g_fun_0044d2e0_44d2e0(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        g_missed_by_ghidra_data_code_immediate_4c7400();
     }
 }

@@ -7,9 +7,9 @@ use sa_core::mem::GlobalDesc;
 use crate::{
     cleanup, cmd0, cmd100, cmd200, cmd300, cmd400, cmd500, cmd600, cmd700, cmd800, cmd900, cmd1000, cmd1100,
     cmd1200, cmd1300, cmd1400, cmd1500, cmd1600, cmd1700, cmd1800, cmd1900, cmd2000, cmd2100, cmd2200,
-    cmd2300, cmd2400, cmd2500, misc, script_brain_requests, script_brains, script_draw, script_init,
-    script_objects, script_process, script_registries, script_resources, script_tables, script_tasks,
-    script_things, script_locate, vm,
+    cmd2300, cmd2400, cmd2500, misc, script_brain_requests, script_brains, script_draw, script_init, script_locate,
+    script_objects, script_process, script_registries, script_resources, script_search_lights, script_tables,
+    script_tasks, script_things, vm,
 };
 
 /// Every module's registrations, in this order.
@@ -41,6 +41,7 @@ pub const MODULES: &[&[HookReg]] = &[
     cmd2300::HOOKS,
     cmd2400::HOOKS,
     cmd2500::HOOKS,
+    crate::cmd2600::HOOKS,
     cleanup::HOOKS,
     script_init::HOOKS,
     script_draw::HOOKS,
@@ -54,13 +55,15 @@ pub const MODULES: &[&[HookReg]] = &[
     script_tasks::HOOKS,
     script_things::HOOKS,
     crate::the_scripts_init::HOOKS,
-    misc::HOOKS,
-    // The full port of 0x4939F0 (mvpk-script-2) replaces the_scripts_init's partial (std6-script-1).
-    crate::script_search_lights::HOOKS,
+    script_search_lights::HOOKS,
+    crate::death_arrest_check::HOOKS,
+    crate::script_anim_group::HOOKS,
     script_locate::HOOKS,
     crate::script_thing_index::HOOKS,
     crate::streamed_script_load::HOOKS,
     crate::script_entity_cleanup::HOOKS,
+    crate::play_anim_command::HOOKS,
+    misc::HOOKS,
     crate::generated::HOOKS,
 ];
 
@@ -91,6 +94,7 @@ pub const PARTIAL: &[(u16, &[u16])] = &[
     (2300, cmd2300::PORTED),
     (2400, cmd2400::PORTED),
     (2500, cmd2500::PORTED),
+    (2600, crate::cmd2600::PORTED),
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

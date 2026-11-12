@@ -35,6 +35,8 @@ pub const MODULES: &[&[HookReg]] = &[
     misc5::HOOKS,
     misc6::HOOKS,
     population4::HOOKS,
+    crate::path_car_creation_nodes::HOOKS,
+    crate::gang_war_release_peds::HOOKS,
     crate::generated::HOOKS,
 ];
 

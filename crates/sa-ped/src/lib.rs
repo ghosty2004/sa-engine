@@ -18,6 +18,8 @@ extern crate std;
 pub use sa_core::hook;
 
 pub mod clothes;
+pub mod clothes_builder;
+pub mod default_txd_slot;
 pub mod common;
 pub mod damage;
 pub mod hooks;

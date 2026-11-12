@@ -38,6 +38,7 @@ orig! {
     fn atexit(f: u32) -> i32 = cdecl 0x821D1E => unported;
     /// the no-CD protection VM entry (0xCB73E0, pops its two arguments), called from the static
     /// initialiser of `TestLineOfSight`'s inverse matrix
+    #[cfg_attr(not(sa_phase_a), allow(dead_code))]
     fn protection_vm(code: u32, n: u32) = stdcall 0xCB73E0 => unported;
     /// `CMatrix::Invert(const CMatrix& src, CMatrix& dst)` (0x59B920, cdecl, returns `dst`)
     fn matrix_invert(src: GPtr<u8>, dst: GPtr<u8>) -> GPtr<u8> = cdecl 0x59B920 => unported;
@@ -138,7 +139,13 @@ pub fn test_line_of_sight(line: GPtr<u8>, transform: GPtr<u8>, model: GPtr<u8>, 
     const GUARD: usize = 0x9659A8;
     if g::<u32>(GUARD).read() & 1 == 0 {
         g::<u32>(GUARD).write(g::<u32>(GUARD).read() | 1);
+        // The VM call stands where the static `CMatrix` constructor's `m_pAttachMatrix = nullptr` (0x9659A0) was
+        // (every other function-static matrix of this file writes it inline). Phase A keeps the VM call; phases B/C
+        // have no VM and write the field (STD-8; not decoded by evaluating the VM bytecode).
+        #[cfg(sa_phase_a)]
         protection_vm(0x155FF68, 0x586A);
+        #[cfg(not(sa_phase_a))]
+        g::<u32>(0x9659A0).write(0);
         g::<u32>(0x9659A4).write(0);
         atexit(0x855FF0);
     }

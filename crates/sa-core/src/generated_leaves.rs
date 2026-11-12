@@ -32,23 +32,6 @@ pub fn g_thunk_fun_015667f0_424160(this: u32, a0: u32) -> u32 {
     v8
 }
 
-/// `FUN_0044d2b0` (0x44D2B0, CORE): empty, cdecl, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_fun_0044d2b0_44d2b0() {}
-
-/// `(missed by ghidra: data-code-immediate)` (0x463360, CORE): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_463360(this: u32) -> u32 {
-    this
-}
-
-/// `FUN_004a8dc0` (0x4A8DC0, CORE): empty, cdecl, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_fun_004a8dc0_4a8dc0() {}
-
 /// `(missed by ghidra: data-vtable)` (0x508E90, CORE): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -64,9 +47,6 @@ pub fn g_missed_by_ghidra_data_vtable_508ea0() {}
 pub const BODIES: &[Body] = &[
     (0x41BD50, 0x6C41685FEEBCBCEA, &[(0x41BD50, 7)]),
     (0x424160, 0x86F44B3552C4E513, &[(0x424160, 5), (0x15667F0, 40)]),
-    (0x44D2B0, 0xAF647E4C8602FFD2, &[(0x44D2B0, 1)]),
-    (0x463360, 0x7B290C1B0B7F4D96, &[(0x463360, 3)]),
-    (0x4A8DC0, 0xAF647E4C8602FFD2, &[(0x4A8DC0, 1)]),
     (0x508E90, 0xAF647E4C8602FFD2, &[(0x508E90, 1)]),
     (0x508EA0, 0xAF647E4C8602FFD2, &[(0x508EA0, 1)]),
 ];
@@ -78,8 +58,6 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_fun_0044d2b0_44d2b0();
-        g_fun_004a8dc0_4a8dc0();
         g_missed_by_ghidra_data_vtable_508e90();
         g_missed_by_ghidra_data_vtable_508ea0();
     }

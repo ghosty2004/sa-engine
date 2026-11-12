@@ -61,24 +61,10 @@ pub fn g_cropes_find_pickup_height_556760(a0: u32) -> X87 {
     X87::from_f32(f32::from_bits(v4))
 }
 
-/// `(missed by ghidra: data-code-immediate)` (0x5DB290, RENDER): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_5db290(this: u32) -> u32 {
-    this
-}
-
 /// `(missed by ghidra: data-code-immediate)` (0x5DB2A0, RENDER): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
 pub fn g_missed_by_ghidra_data_code_immediate_5db2a0() {}
-
-/// `(missed by ghidra: data-code-immediate)` (0x5DB2B0, RENDER): getter, thiscall, `ret`; 2 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_missed_by_ghidra_data_code_immediate_5db2b0(this: u32) -> u32 {
-    this
-}
 
 /// `(missed by ghidra: data-code-immediate)` (0x5DB2C0, RENDER): empty, cdecl, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
@@ -95,20 +81,10 @@ pub fn g_cshadows_print_debug_poly_7076b0(_this: u32) {}
 #[allow(dead_code)]
 pub fn g_csprite_initialise_70ce10(_this: u32) {}
 
-/// `CMovingThings::Render` (0x717150, RENDER): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cmoving_things_render_717150(_this: u32) {}
-
 /// `CPlaneBanners::Init` (0x717820, RENDER): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
 pub fn g_cplane_banners_init_717820(_this: u32) {}
-
-/// `CRubbish::SetVisibility` (0x7204C0, RENDER): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_crubbish_set_visibility_7204c0(_this: u32) {}
 
 /// `CCheckpoints::Shutdown` (0x7228F0, RENDER): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
@@ -124,15 +100,11 @@ pub const BODIES: &[Body] = &[
     (0x4AA120, 0xAF647E4C8602FFD2, &[(0x4AA120, 1)]),
     (0x4AA1F0, 0x1DC13EF6FFD54D40, &[(0x4AA1F0, 4)]),
     (0x556760, 0x76B1E200D174B3D8, &[(0x556760, 22)]),
-    (0x5DB290, 0x7B290C1B0B7F4D96, &[(0x5DB290, 3)]),
     (0x5DB2A0, 0xAF647E4C8602FFD2, &[(0x5DB2A0, 1)]),
-    (0x5DB2B0, 0x7B290C1B0B7F4D96, &[(0x5DB2B0, 3)]),
     (0x5DB2C0, 0xAF647E4C8602FFD2, &[(0x5DB2C0, 1)]),
     (0x7076B0, 0xAF647E4C8602FFD2, &[(0x7076B0, 1)]),
     (0x70CE10, 0xAF647E4C8602FFD2, &[(0x70CE10, 1)]),
-    (0x717150, 0xAF647E4C8602FFD2, &[(0x717150, 1)]),
     (0x717820, 0xAF647E4C8602FFD2, &[(0x717820, 1)]),
-    (0x7204C0, 0xAF647E4C8602FFD2, &[(0x7204C0, 1)]),
     (0x7228F0, 0xAF647E4C8602FFD2, &[(0x7228F0, 1)]),
 ];
 
@@ -150,9 +122,7 @@ mod tests {
         g_missed_by_ghidra_data_code_immediate_5db2c0();
         g_cshadows_print_debug_poly_7076b0(0);
         g_csprite_initialise_70ce10(0);
-        g_cmoving_things_render_717150(0);
         g_cplane_banners_init_717820(0);
-        g_crubbish_set_visibility_7204c0(0);
         g_ccheckpoints_shutdown_7228f0(0);
     }
 }

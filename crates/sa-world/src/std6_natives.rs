@@ -8,4 +8,5 @@ pub const NATIVES: &[sa_core::abi::NativeReg] = &[
     crate::world::entity::NATIVE_PLACEABLE_GET_MATRIX_RAW,
     crate::world::misc2::NATIVE_INTERIOR_GROUP_GET_ENTITY,
     crate::world::misc2::NATIVE_BREAK_OBJECT_DTOR,
+    crate::collision::camera_collision_vehicles::NATIVE_CHECK_CAMERA_COLLISION_VEHICLES,
 ];

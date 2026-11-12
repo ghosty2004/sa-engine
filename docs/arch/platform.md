@@ -793,3 +793,340 @@ STD-6 wrote or registered: hooks in batches `std6-rw-1`, `std6-rw-2`, `std6-rend
 4. In world: the skinned ped render path, `CPad` keyboard input → walking.
 5. Remaining `CMatrix` members: `Reorthogonalise`, `ForceUpVector`, `Rotate`, `Scale` / `ScaleAll`,
    `operator*=`, `Detach`, `ConvertTo/FromEulerAngles`.
+
+### 12.7 Main-session decisions on STD-6's questions (recorded by STD-7, 2026-11-11)
+
+1. **`CCamera::Process` uninitialised slots**: the port reads 0 where the original reads stack slots it never
+   wrote (the transition path with `fS > 1` or NaN). Proposed ledger text for docs/ROADMAP.md (the main
+   session copies it): "**CCamera::Process uninitialised transition slots (phases A/B)**: on the camera
+   transition path with `fS > 1` or a NaN `fS`, `CCamera::Process` (0x52B730) reads stack slots the original
+   never writes (spec open question 2); the port reads 0 there, the original whatever its caller left. No
+   recording reaches the path so far. Closing: model the slots with `peek` (ADR-001 §5b) once a recording
+   exercises the path, or prove it unreachable."
+2. **`jmp`-entry ports as `#[native]`**: acceptable for the MVP (a harness hook class for in-`.text` `jmp`
+   entries comes later). The list: `RpAnimBlendFrameGetName` 0x4D5EF0, `VehicleVisibilityCB_BigVehicle`
+   0x732AB0, `CustomCarPipeAtomicSetup` 0x5D5B20, `RwMatrixOrthoNormalize` 0x7F1920 (STD-6);
+   `CMatrix::Scale` 0x459350 and `CTheZones::FindSmallestZoneForPosition` 0x572360 (STD-7, section 13).
+   `TransformVectors` 0x54EEA0 is a `#[hook]` again (MVP-K's, 9-byte expect; the main session preferred the
+   hook, `cargo test -p sa-hook --lib` accepts it); STD-6's native copy was removed.
+3. **`ProcessAllSearchLights` 0x4939F0**: the main session's final decision keeps MVP-K's whole port
+   (`script_search_lights.rs`, batch `mvpk-script-2`) registered; STD-6's partial ADR-002 port was removed
+   from `the_scripts_init.rs`.
+
+## 13. STD-7: past the first game frames (in progress)
+
+### 13.1 Merges
+
+STD-6 (fast-forward, head 97a6025), WRITER-MVP-K (whole branch, then its final head ab22554),
+HARNESS-5, X87-2 (its hooked `Process_FollowPed_SA` replaces STD-6's native; the native was dropped from
+`sa-cam/std6_natives.rs`), VERIFIER-5 (twice: the driver fixes, then the vehbig promotions with the
+`CBike::ProcessControl` lean-recovery fix), and WRITER-MVP-L's own three commits (cherry-picked: its branch
+carries a "WIP STD-6" snapshot that conflicts with the final STD-6 everywhere). Conflicts: hook/module lists
+unioned; keycells `READERS` 30 (unchanged by HARNESS-5) then 32 with MVP-L's two; `tools/e2e/l2-extras.txt`
+= ours plus the VERIFIER-5 lines; one registration per address (`CPool<CStuntJump>::New` 0x49C9E0 keeps
+MVP-L's hook; the 0x4700E0 helper keeps MVP-J's hook). `cargo test -p sa-hook --lib`: 58 passed.
+
+### 13.2 sa-game changes
+
+* **`--present-dir` creates the directory.** `File::create` failed silently in a missing directory, so no
+  PNG was written; STD-6's "no frame has been presented" was this (1,600+ frames are presented per run).
+* `SA_GAME_STUB` takes up to 48 addresses (exploration only).
+* `SA_GAME_SCRIPT_SKIP` reads the `reads` column of `catalog/script-params.csv` (`T` = an 8-byte text
+  label, `Cn` = n parameters), so opcodes with label parameters are skipped without misaligning the script.
+* `SA_GAME_SCRIPT_TRACE=1` (exploration only): every command's script name, offset and command word
+  (through `sa_script::cmdlib::COMMAND_TRACE_HANDLER`).
+* `SA_GAME_WALK=START:COUNT` (evidence runs): W (GO_FORWARD) pressed at iteration START and held for COUNT
+  iterations; the synthetic Enter stops 8 iterations before START.
+
+### 13.3 Boot progress (`SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+| step | status |
+|---|---|
+| boot, front end, New Game, `CGame::Initialise` (Init1..3), loading screen | ok (as STD-6) |
+| frame 24 (`LOADING_STARTED → IDLE`): `ServiceAmbientGunFire`, `StreamZoneModels` (MVP-K), `CRect::IsPointInside`, `CCover::Update` / `AddCoverPoint`, `DoDeathArrestCheck` (the obfuscated call decoded: `[0x15604F4] ^ [0x736A72]` = `CMessages::ClearSmallMessagesOnly`, return 0x1564FAC) | ported, pass |
+| main.scm start-up (`initial` script): 36 opcodes ported (list in `docs/arch/std7-ports.csv`); `IsPedDead`, `RemoveScriptFromList`, `ScriptAttachAnimGroupToCharModel`, `SetEntryExitFlag`, the pool `New` / `GetRef` thunks | the start-up block runs to its first `WAIT` |
+| frame 25 game logic: `IsCoopGameGoingOn`, `FindSmallestZoneForPosition`, `GetEventGlobalGroup`, `CompressFromFullMatrix`, `EnableReplays`, 130 lone-`ret` functions, `RpAnimBlendClumpUpdateAnimations` + the skinned / off-screen / velocity-extraction frame callbacks, `ScanForCollisionEvents` (native), `ScanForEntitiesInRange` | ported, pass |
+| next block | **`CRopes::RegisterRope` 0x556B40** (from `CObject::ProcessControl` of a crane magnet object, 0x8CD6BC..0x8CD6C4 models) |
+| after it (other frames / scripts) | `CClothesBuilder::CreateSkinnedClump` 0x5A69D0 (CJ's clothes rebuild, script frame 27), more script opcodes |
+
+No game frame has rendered yet: every game frame stops at the first unported callee before
+`RenderScene`. The loading screens are presented (13.4).
+
+### 13.4 The loading-screen `Present` path
+
+Frames reach the native device (evidence `target/std7-evidence/00-boot-splash.png`,
+`01-loading-screen-new-game.png`: the new-game loading screen with its artwork and progress bar).
+STD-5's white loading screen is the original's behaviour on a slow load: `NewChunkLoaded` changes the
+splash every 5 s of real time and `CurrDisplayedSplash` is not bounded (`DisplayNextSplash` only stops at
+6); the debug build loads slowly enough to pass splash 6, and `m_aSplashes[7..]` are other globals (a sprite
+without a texture draws white). A release build of sa-game should load within the six splashes.
+
+### 13.5 Ports and verification queue
+
+`docs/arch/std7-ports.csv` (regenerate with `tools/native/std7_ports.py 8b8890d`): 21 hooks in batches
+`std7-audio-1`, `std7-math-1`, `std7-ai-1`, `std7-script-1`, `std7-core-1`, `std7-world-1`, `std7-anim-1`
+(each ≤ 60), 18 `#[native]`s, 118 lone-`ret` natives (`sa_core::std7_natives::LONE_RET_NATIVES`, one shared
+entry: every catalogued game-`.text` function whose body is a lone `ret` and that had no registration) and
+36 script opcodes (cases in the partial switches; `cmdlib::zone_info_by_label`,
+`register_script_brain_for_code_use`, `streamed_script_index_to_sp0` are shared helpers). All written,
+none verified. A seam test `im2d_declaration_untextured_uses_vertex_colour` (sa-rw-wgpu) covers RW's
+untextured Im2D path.
+
+### 13.6 Divergences and ledger proposals
+
+1. **`CCollisionEventScanner::ScanForCollisionEvents` 0x604500 registered natively** (PORT-AI-5 left it
+   unregistered: the c-bug split run showed the reference pool's order differing after the call). Proposed
+   ledger text: "**ScanForCollisionEvents reference order (phase B)**: the native build runs PORT-AI-5's
+   port of 0x604500, whose stack events register and release entity references in a different order than
+   the original (c-bug recording, frame 233: `CReferences::pEmptyList` 0xBA1768 / `aRefs` 0xB9B9A8 differ);
+   the referenced entities and the events raised are the same. Closing: reproduce the original's
+   construction / destruction order of the stack events, then hook it in phase A."
+2. **`CEntryExitManager::SetEntryExitFlag` 0x43EF90** is not in the catalogue (no name in gta-reversed or
+   the plugin SDK); registered as a native under that name.
+3. **Uninitialised stack bytes** read by the original (stack `CAESound`s, text-label buffers past the label,
+   `AddCoverPoint`'s reference position before the first point) are zero in the ports (`uninit-locals`
+   hazard on the hooks).
+
+### 13.7 Next gaps, in order
+
+1. `CRopes::RegisterRope` 0x556B40 (~260 instructions, two unrolled segment-placement loops; not reversed
+   in gta-reversed).
+2. `CClothesBuilder::CreateSkinnedClump` 0x5A69D0 and its unported tree: `PreprocessClothesDesc` 0x5A44C0,
+   the register-argument helper 0x5A42B0 (EAX/ESI/EDI/EBX: the fat / muscle blend weights; HARNESS-5's
+   `reg("args = eax esi edi ebx")`), `ConstructGeometryArray` 0x5A55A0 (+ `BlendGeometry` 0x5A4940 /
+   0x5A4F10, `CopyGeometry` 0x5A5340), `ConstructTextures` 0x5A6040 (+ the three `BlendTextures`,
+   `PlaceTextureOnTopOfTexture`, `GetTextureFromTxdAndLoadNextTxd`), `ConstructGeometryAndSkinArrays`
+   0x5A6530 (+ `StoreBoneArray`, `AddWeightToBoneVertex`, `BuildBoneIndexConversionTable`): about 3,000
+   instructions. It builds CJ's clump, so it gates "CJ visible".
+3. The remaining frame update callbacks as recordings reach them: non-skinned 0x4D30A0, compressed
+   0x4D2E40 / 0x4D32D0, the 3D-velocity variants 0x4D1A50 / 0x4D2450 and the compressed / non-skinned
+   velocity variants 0x4D1DB0 / 0x4D27F0, `CQuaternion::Get` 0x59C080.
+4. Further start-up script opcodes (`SA_GAME_SCRIPT_SKIP=1` lists them), the first `RenderScene`, the
+   skinned ped render path, then walking (`SA_GAME_WALK` is ready).
+5. `CMatrix`: `Reorthogonalise` 0x59B6A0, `ForceUpVector` 0x59B7E0, `Rotate` 0x59B460,
+   `ConvertTo/FromEulerAngles` 0x59A840 / 0x59AA40 (STD-7 ported `Detach`, `Scale`, `operator*=` and
+   `CompressFromFullMatrix`).
+
+### 13.8 Decisions needed
+
+1. The `ScanForCollisionEvents` native (13.6 item 1): accept for the MVP with the ledger line, or keep it
+   unregistered (the native game then stops on the first collision frame).
+2. A release-build `sa-game` for evidence runs (loading speed, 13.4), or keep debug builds and accept the
+   white loading screen past splash 6.
+
+## 14. STD-8: the first in-game frames
+
+### 14.1 Main-session decisions on STD-7's questions (recorded by STD-8, 2026-11-12)
+
+1. **`ScanForCollisionEvents` 0x604500 registered natively** is accepted for the MVP, with the ledger line of 13.6
+   item 1.
+2. **Evidence runs use a release-build `sa-game`** (`cargo build --release -p sa-game --target
+   i686-unknown-linux-gnu`); debug builds are for debugging only.
+3. **The main session copies the ledger texts into the ROADMAP** (13.6, 14.6).
+
+### 14.2 Merges
+
+Base: STD-7 (`worktree-agent-af554962f754b69a7`, head 407b907; the branch was reset to it: master's "WIP" squash
+commits duplicate STD-7's merged history). Taken as cherry-picks of the branches' own commits (each branch carries
+master's squash commits, which conflict with STD-7's originals everywhere): WRITER-MVP-M (mvpm-ai-1..3,
+mvpm-script-1, mvpm-render-1..6, mvpm-ped-1, mvpm-anim-2, mvpm-coll-1, mvpm-world-1; its `FrameUpdateCallBackOffscreen`
+commit skipped: STD-7 registers 0x4D2E10), PORT-SCRIPT-4 (integration, host-test fix, docs), PORT-MENU (three
+commits), VERIFIER-6 (DrawTriPlants srand site, render split L2, 28 promotions, water-pass re-run), the srand
+at_site fixes (`a6386803`, df75d3a) and WRITER-CLUMP (`a825eb3a`, cb0b3cb: the `CreateSkinnedClump` tree, batch
+`clump-1`). Conflicts: hook / module lists unioned; `tools/e2e/l2-extras.txt` unioned; the generated queue files
+regenerated. One registration per address: `CBoundingBox::SetMinMax` 0x470100 keeps PORT-SCRIPT-4's verified hook
+(`sa-script/misc.rs`; STD-7's `std7-math-1` copy in `sa-core/rect_inside.rs` dropped). The clothes builder's
+phase B dependencies: 0x5A47E0 was already on the base (MVP-I, `sa-ped/clothes.rs`); 0x7316D0 is ported here.
+`cargo test -p sa-hook --lib`: 58 passed.
+
+### 14.3 sa-game changes
+
+* **Every C++ static initialiser runs natively.** 871 of the 1,668 `__xc_a..__xc_z` slots had no port, so
+  globals like `CWeather::m_WeatherAudioEntity` kept vtable 0 and 806 float constants (`1/50`, `x * y`, `1 / x²`,
+  ...) stayed 0. `tools/native/static_inits.py` classifies the initialisers by instruction shape and generates
+  `crates/sa-core/src/static_inits.rs` (865 table rows: `fdiv`, `fmul`, `fsub`, `frecip_mul`, `ftol_mul`,
+  `copy32`/`copy16`, constructor + `atexit`, tail constructor, `atexit` only, `eh vector constructor` + `atexit`);
+  the shapes are const-generic natives in `static_init_kinds.rs`, which also holds the five one-off initialisers.
+  The x87 arithmetic runs at the CRT's initial precision (`_CW_DEFAULT`: 53 bits), so f64 arithmetic plus one
+  f64 → f32 rounding is exact for these shapes. Not ported: 0x8339CA (the CRT security-cookie set-up; nothing
+  ported reads the cookie). The constructors they reach that had no port are natives in `trivial_ctors.rs`.
+  Result: 1,666 static initialisers run, 1 skipped.
+* **The frame limiter sleeps** instead of spinning: when `gGameState` is IDLE and `1000 / frameLimit` ms have not
+  passed, the iteration sleeps for the rest (same frames, no busy loop), so about every second `--frames`
+  iteration runs `Game::Idle`. The step detail says `rsIDLE (Game::Idle) ran` for those.
+* **The synthetic menu input stops in game**: Enter and the left button (pressed every 8 iterations to get
+  through the menus) are no longer sent once `gGameState` is IDLE (the left button is fire / punch: it started a
+  `CTaskSimpleFight` on CJ).
+* `SA_GAME_PRESENT_GAME=1`: `--present-dir` counts and writes only the frames presented inside `Game::Idle`.
+* `SA_GAME_BACKTRACE=1` (exploration): every panic prints its Rust call chain (finds the caller of a blocked
+  virtual / table call).
+* `SA_GAME_STUB` stubs may pop up to 8 stack dwords (`ADDR=RET/N`, `N <= 8`).
+* CRT `eh vector destructor iterator` (0x821E02) in the CRT table.
+
+### 14.4 Boot progress (release build, `SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+| step | status |
+|---|---|
+| boot, front end, New Game, `CGame::Initialise`, loading screens | ok (as STD-7) |
+| C++ static initialisers | 1,666 run, 1 skipped (14.3) |
+| frame 25: `CRopes::RegisterRope` (crane magnet), `CMatrix::Reorthogonalise` / `ForceUpVector`, `ShouldStandardCameraBeProcessed`, the grass globals, `TestLineOfSight`'s static matrix (VM decoded) | ported, pass |
+| frame 25 next block | **`CRope::Update` 0x557530** (~400 instructions, not reversed) for the crane magnet rope; with it stubbed (`SA_GAME_STUB=0x557530=0/0`) also **`CAEWeatherAudioEntity::UpdateParameters` 0x505A00** (~700 instructions; the city-noise / wind sounds the weather entity plays from the first frame) |
+| with those two stubbed: frames 25..63 | `Find2NodesForCarCreation` (VM decoded), CJ's clump (`CreateSkinnedClump` tree of WRITER-CLUMP + `_rpTriListMeshGenerate`, the skin geometry destructor, the default-TXD slot getter), `EndGangWar` / `ReleasePedsInAttackWave` (VM decoded), the seek / partner / fight tasks, collision helpers: ported, pass; **the first `Game::Idle` frames render natively**: `RenderScene` runs, the intro text "Francis INTL. Airport, Liberty City, 1992." is presented (21–27 in-game frames per run) |
+| next block (intro mission, peds around the airport) | `CEventHandler::ComputePedCollisionWithPedResponse` 0x4BDB80 (~400, not reversed), `ComputePotentialPedCollideResponse` 0x4C2610 and `ComputePedThreatResponse` 0x4C19A0 (reversed in gta-reversed), `CPedGeometryAnalyser::ComputeEntityBoundingBoxCornersUncached` 0x5F1FA0 (~400), `CCutsceneMgr::LoadCutsceneData_preload` 0x5B05A0 (~400) |
+
+Evidence (not committed): `target/std8-evidence/keep/01-first-game-frame-intro-text.png` (the first in-game
+frame presented natively) and `02-intro-sequence-*.png` (the in-game frames of one run, both with the two
+exploration stubs of row 3). CJ is not on screen yet: the intro mission's first frames are the black screen with
+the location text before the airport cutscene; the walking evidence needs the frames past it.
+
+### 14.5 Ports and verification queue
+
+`docs/arch/std8-ports.csv` (regenerate with `tools/native/std8_ports.py`): 21 hooks in batches `std8-render-1`,
+`std8-math-1`, `std8-core-1`, `std8-pop-1`, `std8-ped-1`, `std8-world-1`, `std8-ai-1`, `std8-rw-1` (each ≤ 60),
+17 `#[native]`s (new ports and existing ports registered: the `CNodeAddress` constructors, `EndGangWar`,
+`FindVehicleOfPlayer`, `ChooseGangOccupation` (a `jmp` to `ChooseGangPedModel`), the two speech-context
+predicates, `CCamera::Get_Just_Switched_Status`, `IsThisCarBeingTargettedByAnyCrane`, the
+`CTaskComplexSeekEntity<XYOffset>::CreateSubTask` entry 0x665270 (a code key: its body is shared with 0x46F1E0's
+port), the trivial constructors) and 870 static-initialiser natives. Five hooks are `L1-pure` with existing
+L1 specs (`CMatrix::Reorthogonalise`, `ForceUpVector`, `CVector2D::Normalise`, `CColSphere::IntersectEdge`,
+`IntersectRay`; the last three delegate to sa-math's models); the writer gate's L1 step was not run (no Wine lane
+in this task). The gate's hooks step passes for every `std8-*` batch; it reports PORT-SCRIPT-4's three search-light
+hooks (verified on master, no `unverified`) as new on this base. All written, none verified.
+
+### 14.6 Divergences and ledger proposals
+
+1. **No-CD VM values decoded from their use** (phases B/C; phase A keeps the VM call where noted). Proposed ledger
+   text: "**Protection-VM results decoded from their use (phases B/C)**: the no-CD VM 0xCB73E0 returns a value or
+   performs a store the bytes do not show; STD-8 decoded three from the surrounding code instead of evaluating the
+   VM bytecode: `TestLineOfSight`'s static `CMatrix` constructor store (`m_pAttachMatrix` 0x9659A0 = 0, as every
+   other function-static matrix; phase A keeps the VM call), `Find2NodesForCarCreation`'s loop start (1, the loop's
+   own pointer starts at slot 1) and `ReleasePedsInAttackWave`'s flag mask (`~0x2000`, `bClearRadarBlipOnDeath`, as
+   gta-reversed's source). Closing: evaluate the VM descriptors (0x155FF68, 0x1560064, 0x155FF14) and compare."
+2. **The native frame limiter sleeps** (sa-game, not a port): no game-visible difference; the original's spin
+   iterations call nothing but `PeekMessageA` and the timer.
+3. **Uninitialised stack words** in `Find2NodesForCarCreation`'s node slots (upper halves) and the stack
+   `CEventScriptCommand` of `ReleasePedsInAttackWave` are zero in the ports (`uninit-locals` on the hooks).
+
+### 14.7 Next gaps, in order
+
+1. `CRope::Update` 0x557530 and `CAEWeatherAudioEntity::UpdateParameters` 0x505A00: without them no in-game frame
+   completes (both stubbed in the evidence runs).
+2. The intro's ped AI: `ComputePedCollisionWithPedResponse` 0x4BDB80, `ComputePotentialPedCollideResponse`
+   0x4C2610, `ComputePedThreatResponse` 0x4C19A0, `ComputeEntityBoundingBoxCornersUncached` 0x5F1FA0; the airport
+   cutscene: `LoadCutsceneData_preload` 0x5B05A0; then the next blockers `SA_GAME_STUB` look-ahead lists.
+3. CJ on screen: the skinned ped render path (`RpSkin` D3D9 pipeline, `RpHAnimHierarchyUpdateMatrices`), the
+   remaining frame-update callbacks (13.7 item 3), `CQuaternion::Get`.
+4. Walking: `SA_GAME_WALK=START:COUNT` with START past the intro's first in-world frame.
+5. `CMatrix`: `Rotate` 0x59B460, `ConvertTo/FromEulerAngles` 0x59A840 / 0x59AA40 (`Reorthogonalise`,
+   `ForceUpVector` done).
+
+### 14.8 Decisions needed
+
+1. Whether evidence runs may skip the intro mission (e.g. an sa-game option that starts at the first save point
+   in Ganton) to reach "CJ walking" before the airport cutscene and the intro's ped AI are ported, or whether the
+   intro path is to be ported first.
+2. The VM-decoded values of 14.6 item 1: accept for the MVP with the ledger line, or require the VM evaluation.
+
+## 15. STD-9: the world on screen (`--start-in-world`)
+
+### 15.1 Main-session decisions on STD-8's questions (recorded by STD-9, 2026-11-12)
+
+1. **Both**: an sa-game option starts the player in the world without the intro mission (15.3), so the CJ-walking
+   evidence does not wait for the intro; the intro path itself keeps being ported (WRITER-INTRO).
+2. **The three no-CD VM values decoded from their use** (`TestLineOfSight`'s static matrix, `Find2NodesForCarCreation`'s
+   loop start 1, `ReleasePedsInAttackWave`'s mask `~0x2000`) are accepted for the MVP with the ledger line of 14.6
+   item 1.
+
+### 15.2 Merges
+
+Base: STD-8 (`worktree-agent-aec7f5b6ca90ad56e`, 51b8fcd; the branch was reset to it). Cherry-picked: INTEGRATE-2's
+REGCONV (8d70493: STD-7's `FrameUpdateCallBackOffscreen` 0x4D2E10 in `sa-anim/src/frame_update.rs` kept over
+REGCONV's `rp_anim_blend.rs` copy, which differs from integration-2.md's choice) and GEN-ALL-2 (ed288e8), regenerated
+on this tree (`tools/gen/patterns.py`; the generator now also counts path-qualified `#[sa_core::native(addr` /
+`#[crate::native(addr` registrations as ported, which dropped generated duplicates of `ListItem_c::ListItem_c`,
+`CAESound::CAESound`, `CScriptsForBrains` and others; `tools/native/static_inits.py` re-run after it); INTEGRATE-2's
+other commits (MVP-M, VERIFIER-6, SRAND-FIX, the search-light registration) were already on STD-8 and were skipped
+as empty; its documentation commit 90b2042. WRITER-MVP-N's seven own commits (fb31b52..50588be); its complete
+`ProcessCommands2600To2699` replaces STD-9's partial switch (std9-script-1, CREATE_USER_3D_MARKER only). The
+generated queue files were regenerated. PORT-SAVE and WRITER-INTRO had no commits of their own yet.
+Two duplicate registrations remain from the STD-8 base (both sides already there): 0x6F9DE0
+`CPlantSurfPropMgr::GetSurfProperties` (hook in `sa-render/mvpa_render1.rs`, native in `sa-core/gameinit.rs`) and
+0x407F20 `CStreaming::LoadInitialVehicles` (hook in `sa-stream/streaming.rs`, native in `gameinit.rs`); the registry
+uses the hook.
+
+### 15.3 sa-game changes
+
+* **`--start-in-world`**: main.scm's MAIN script runs unchanged (it creates the player at Grove Street,
+  `CREATE_PLAYER 0 2488.56 -1666.84 13.38`, and loads the scene there); only its `START_MISSION 2` (0x0417 at
+  main.scm offset 0xEA48, the INTRO mission: the airport cutscene, the ride to Grove Street and the intro's ped scenes)
+  is skipped, and the screen MAIN faded out just before it (`DO_FADE 0 0` at 0xEA3B) is faded in through the game's
+  own `CCamera::Fade(0.0, FADE_IN)`, as the intro would. MAIN then continues as after the launch (`SELECT_INTERIOR
+  0`, `SET_PLAYER_CONTROL on`, `RELEASE_WEATHER`, its loop). Skipped game state: everything the intro mission sets
+  (its flags, the cutscene, CJ's arrival animation and the intro's peds and vehicles).
+* `SA_GAME_SCRIPT_TRACE` and `--start-in-world` share one per-command callback (`native::before_command`).
+* The synthetic mouse movement stops in game (it pitched the player camera at the ground, as Enter / the left button
+  were stopped by STD-8).
+* `IDirect3DVertexDeclaration9::GetDeclaration` (the elements given at creation plus `D3DDECL_END`).
+
+### 15.4 Boot progress (release build, `--start-in-world`, `SA_GAME_SCRIPT_SKIP=1`, i686, the user's install)
+
+| step | status |
+|---|---|
+| boot, front end, New Game, `CGame::Initialise`, loading screens, static initialisers | ok (as STD-8) |
+| frames 25..28: `CRope::Update` + `UpdateWeightInRope` (std9-render-2), `CAEWeatherAudioEntity::UpdateParameters` (std9-audio-1) | ported, pass: **no stub needed** |
+| main.scm `START_MISSION 2` | skipped (`--start-in-world`), screen faded in |
+| in-world frames: `FindTunnelAttributesForCoors` (native), `InsertEntityIntoSortedList`, `CMatrix` To/From Euler and `Rotate`, `RxPipelineExecute` + Rx heap / packet, CREATE_USER_3D_MARKER (now MVP-N's switch), `CBox::Recalc`, `CCustomCarEnvMapPipeline::PreRenderUpdate`, `_rxD3D9Instance` (+ strip-to-list, triangle sort), `D3DResourceSystem::CreateIndexBuffer` (argument fix), the building DN render callback and instance-data draws, `SetupLightingForEntity` (native), `RenderPedCB` / `RenderAtomicWithAlpha`, the sorted-list renderers, `RenderEntity` + fading, `RenderBuffer::StartStoring`, `SetupVehicleVariables`, `CHudColours::GetIntColour` (native) | ported, pass |
+| with 10 exploration stubs (below) | **in-world frames present natively**: Grove Street, CJ's house, the HUD (clock, money, health, radar) and the first help message; 79 of 120 iterations present a frame |
+
+Exploration stubs still needed for the screens (`SA_GAME_STUB=0x7c7b90=1/0,0x80e270=1/0,0x455720=0/0,0x4f6420=0/2,0x732f30=0/0,0x5d9900=0/0,0x4a2c40=0/4,0x701780=0/0,0x733f80=0/0,0x733240=0/0`): `_rpD3D9SkinAllInOneNode` 0x7C7B90 (CJ's skin pipeline: CJ is
+not drawn), `_rwD3D9ImmRenderPrimitiveNode` 0x80E270 (Im3D primitives: markers, ropes), `CPickups::DoPickUpEffects`
+0x455720, `CAEVehicleAudioEntity::AddAudioEvent` 0x4F6420, `CVisibilityPlugins::RenderWeaponPedsForPC` 0x732F30, the
+car env-map render callback 0x5D9900, `FxEmitterBP_c::Render` 0x4A2C40, `CPostEffects::HeatHazeFX` 0x701780, the vehicle
+hi-detail render callbacks 0x733F80 / 0x733240.
+
+Evidence (not committed): `target/std9-evidence/keep/01-grove-street-in-world-no-cj.png` (camera still pitched by the
+old synthetic mouse), `02-grove-street-cj-house-native.png` (Grove Street from CJ's position, the sky drawn wrong:
+yellow / red / black blocks), `03-grove-street-walk-last.png` (`SA_GAME_WALK=60:80`).
+
+### 15.5 Walking
+
+`SA_GAME_WALK=60:80` holds W from iteration 60: the frames advance until the ped collision responses are reached
+(`ComputePotentialPedCollideResponse` 0x4C2610, `ComputeEntityBoundingBoxCornersUncached` 0x5F1FA0, WRITER-INTRO's
+list) and a null-function call in the car AI (`update_car_ai_original (0x0)`, a vehicle with a null vtable slot);
+CJ himself is not drawn (skin node stubbed), so the PNG sequence shows the camera moving, not CJ. No gamescope window
+run was made (STD-9 ran out of time; the offscreen `--present-dir` path is unchanged).
+
+### 15.6 Ports and verification queue
+
+`docs/arch/std9-ports.csv` (regenerate with `tools/native/std9_ports.py`): 32 hooks in batches `std9-audio-1`,
+`std9-coll-1`, `std9-math-1`, `std9-render-1..8`, `std9-rw-1..2` (each ≤ 60) and 4 `#[native]`s (0x72D9F0, 0x5D5B10,
+0x553E40, 0x58FD50: protected entries whose ports existed or are thunks). `CMatrix` To/From Euler and `Rotate` are
+`L1-pure` hooks over sa-math's models (existing L1 specs); `CBox::Recalc` is `L1-pure` without a spec. All written,
+none verified. Writer gate: hooks PASS (since 51b8fcd, every new hook unverified, batches ≤ 60), queue regenerated;
+`cargo test -p sa-hook --lib`: 58 passed; clippy -D warnings clean for the touched crates on i686-unknown-linux-gnu and
+for sa-hook on i686-pc-windows-gnu. L1 / Wine steps not run (no Wine lane).
+
+### 15.7 Divergences and ledger proposals
+
+1. **`CRope::Update`'s stack frame is modelled** (`Frame` in `rope_update.rs`): the original reuses stack slots
+   across sections (the harness pick-up's shortening reads the slot 0x2C another section wrote); the port keeps the
+   frame so those reads match; slots read before any write are zero (`uninit-locals`).
+2. **`RenderAtomicWithAlpha`'s alpha buffer** holds 256 entries; the original's 0x98-byte buffer overflows past 152
+   materials (no SA model has that many).
+3. `_CIpow` in `CRope::Update` and the thunder volume runs through `orig::x87_binary` (libm in phases B/C, STD-5's
+   choice).
+
+### 15.8 Next gaps, in order
+
+1. CJ on screen: `_rpD3D9SkinAllInOneNode` 0x7C7B90 (~300 instructions) with the skin instancing 0x7C8D60, the
+   vertex-shader render callback 0x7C8060 (or the software path: matrix setup 0x7CAA30 / 0x7CA850, the eight vertex
+   blenders 0x7C9DA0..0x7CAF50, instancing 0x7C9680, render 0x7C85B0) and the lighting update 0x7C90D0.
+2. The sky (clouds / sky gradient draw wrong) and the remaining stubbed render callbacks of 15.4.
+3. Walking: the ped collision responses (WRITER-INTRO), the null car-AI call, then the PNG sequence of CJ walking
+   and a gamescope window run for frame pacing.
+4. The intro path without `--start-in-world` as WRITER-INTRO's ports land.
+
+### 15.9 Decisions needed
+
+1. Whether `--start-in-world` should also set what the intro's end leaves (its global flags), or stay a pure skip.
+2. Whether the 0x6F9DE0 / 0x407F20 hook-vs-native duplicates of the STD-8 base are settled by dropping the natives.

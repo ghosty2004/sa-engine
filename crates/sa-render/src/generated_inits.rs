@@ -480,7 +480,7 @@ pub fn g_init_g_bb7cac_84fda0() {
 }
 
 /// `__init_g_c02dc4` (0x850800, RENDER): static-init, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x850800, conv = cdecl, name = "__init_g_c02dc4", expect = "D9 05 04 BF 86 00", unverified = "gen2-render-1", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
+#[hook(addr = 0x850800, conv = cdecl, name = "__init_g_c02dc4", expect = "D9 05 04 BF 86 00", unverified = "gen2-render-2", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c02dc4_850800() {
     let v1 = g::<u32>(0x86_BF04).read();
     let v2 = g::<u32>(0x85_8620).read();
@@ -1089,7 +1089,7 @@ pub fn g_init_max_distance_ped_shadows_sqr_854a60() {
 }
 
 /// `__init_g_c6a160` (0x854A80, RENDER): static-init, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x854A80, conv = cdecl, name = "__init_g_c6a160", expect = "D9 05 4C 27 87 00", unverified = "gen2-render-2", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
+#[hook(addr = 0x854A80, conv = cdecl, name = "__init_g_c6a160", expect = "D9 05 4C 27 87 00", unverified = "gen2-render-3", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c6a160_854a80() {
     let v1 = g::<u32>(0x87_274C).read();
     let v2 = g::<u32>(0x85_8620).read();
@@ -1102,7 +1102,7 @@ pub fn g_init_g_c6a160_854a80() {
 }
 
 /// `__init_g_c6a17c` (0x854AA0, RENDER): static-init, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x854AA0, conv = cdecl, name = "__init_g_c6a17c", expect = "D9 05 50 27 87 00", unverified = "gen2-render-2", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
+#[hook(addr = 0x854AA0, conv = cdecl, name = "__init_g_c6a17c", expect = "D9 05 50 27 87 00", unverified = "gen2-render-3", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c6a17c_854aa0() {
     let v1 = g::<u32>(0x87_2750).read();
     let v2 = g::<u32>(0x85_8620).read();
@@ -1713,7 +1713,7 @@ pub fn g_init_g_c80738_855400() {
 }
 
 /// `__init_g_c81344` (0x855450, RENDER): static-init, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x855450, conv = cdecl, name = "__init_g_c81344", expect = "D9 05 68 2A 87 00", unverified = "gen2-render-3", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
+#[hook(addr = 0x855450, conv = cdecl, name = "__init_g_c81344", expect = "D9 05 68 2A 87 00", unverified = "gen2-render-4", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c81344_855450() {
     let v1 = g::<u32>(0x87_2A68).read();
     let v2 = g::<u32>(0x85_8620).read();
@@ -1726,7 +1726,7 @@ pub fn g_init_g_c81344_855450() {
 }
 
 /// `__init_g_c81348` (0x855470, RENDER): static-init, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x855470, conv = cdecl, name = "__init_g_c81348", expect = "D9 05 24 86 85 00", unverified = "gen2-render-3", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
+#[hook(addr = 0x855470, conv = cdecl, name = "__init_g_c81348", expect = "D9 05 24 86 85 00", unverified = "gen2-render-4", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c81348_855470() {
     let v1 = g::<u32>(0x85_8624).read();
     let v2 = g::<u32>(0x87_2A70).read();
@@ -1739,7 +1739,7 @@ pub fn g_init_g_c81348_855470() {
 }
 
 /// `__init_g_c8134c` (0x855490, RENDER): static-init, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x855490, conv = cdecl, name = "__init_g_c8134c", expect = "D9 05 28 86 85 00", unverified = "gen2-render-3", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
+#[hook(addr = 0x855490, conv = cdecl, name = "__init_g_c8134c", expect = "D9 05 28 86 85 00", unverified = "gen2-render-4", route = "split", hazards = "none", recs = "grove-walk,pause-restart")]
 pub fn g_init_g_c8134c_855490() {
     let v1 = g::<u32>(0x85_8628).read();
     let v2 = g::<u32>(0x87_2A6C).read();

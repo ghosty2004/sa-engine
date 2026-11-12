@@ -18,6 +18,8 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::taskmgr::HOOKS,
     crate::usegun::HOOKS,
     crate::fight::HOOKS,
+    crate::fight_combo_style::HOOKS,
+    crate::partner_meeting::HOOKS,
     crate::handler::HOOKS,
     crate::intel::HOOKS,
     crate::group::HOOKS,
@@ -69,6 +71,9 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::conversation_ready::HOOKS,
     crate::ik_tasks::HOOKS,
     crate::hold_entity::HOOKS,
+    crate::cover_update::HOOKS,
+    crate::event_global_group::HOOKS,
+    crate::entity_scanner_scan::HOOKS,
     crate::mvpb_ai::HOOKS,
     crate::mvpb_ai2::HOOKS,
     crate::mvpb_ai3::HOOKS,
@@ -76,6 +81,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::attractor_scanner::HOOKS,
     crate::hold_entity_process::HOOKS,
     crate::ped_group_random_place::HOOKS,
+    crate::walk_alongside_control::HOOKS,
 ];
 
 /// Every module's globals (initial values checked against the exe image by a test).

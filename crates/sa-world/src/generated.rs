@@ -111,7 +111,6 @@ pub const HOOKS: &[HookReg] = &[
     generated_inits::HOOK_G_INIT_G_C1C854_8537A0,
     generated_leaf_logic::HOOK_G_FUN_005329A0_5329A0,
     generated_leaf_logic::HOOK_G_FUN_0059F050_59F050,
-    generated_setters::HOOK_G_THUNK_FUN_015637E0_40FC80,
     generated_setters::HOOK_G_FUN_0059CBA0_59CBA0,
     generated_setters::HOOK_G_FUN_005A2CB0_5A2CB0,
     generated_small::HOOK_G_FUN_00404590_404590,

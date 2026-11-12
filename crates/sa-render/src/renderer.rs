@@ -744,7 +744,8 @@ fn st0(v: f64) -> X87 {
 /// `CCarFXRenderer::SetFxEnvMapLightMult`; inlined. The original stores the light product into the
 /// caller's argument slot (`fstp [esp+0x18]`) before passing it on; the slot is dead in every caller.
 /// Not hooked: protection code reads the entry's jump displacement as data (`mov edi, [0x553E45]` at
-/// 0x403C1B); its callers reach it through `orig!`.
+/// 0x403C1B); its callers reach it through `orig!`. Registered as a phase B `#[native]` (STD-9).
+#[sa_core::native(addr = 0x553E40, conv = cdecl, name = "CRenderer::SetupLightingForEntity")]
 pub fn setup_lighting_for_entity(e: GPtr<u8>) -> u8 {
     set_fx_env_map_light_mult(0x3F80_0000);
     if rd::<u32>(e, 0x40) & 0x2000_0000 != 0 {
@@ -1776,3 +1777,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_REQUEST_OBJECTS_IN_FRUSTUM,
     HOOK_REQUEST_OBJECTS_IN_DIRECTION,
 ];
+
+/// This module's phase B natives.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_SETUP_LIGHTING_FOR_ENTITY];

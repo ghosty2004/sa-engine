@@ -72,13 +72,21 @@ pub const NATIVES: &[&[&[sa_core::abi::NativeReg]]] = &[
     sa_hud::hooks::NATIVE_MODULES,
     sa_audio::hooks::NATIVE_MODULES,
     &[sa_ai::std6_natives::NATIVES],
+    &[sa_ai::std7_natives::NATIVES],
     &[sa_anim::std6_natives::NATIVES],
     &[sa_audio::std6_natives::NATIVES],
     &[sa_cam::std6_natives::NATIVES],
     &[sa_core::std6_natives::NATIVES],
+    &[sa_core::std7_natives::NATIVES],
+    &[sa_core::std7_natives::LONE_RET_NATIVES],
+    &[sa_core::static_inits::NATIVES, sa_core::static_init_kinds::NATIVES_MISC, sa_core::trivial_ctors::NATIVES, sa_core::short_entry_natives::NATIVES],
     &[sa_input::std6_natives::NATIVES],
     &[sa_stream::std6_natives::NATIVES],
     &[sa_world::std6_natives::NATIVES],
+    &[sa_world::std7_natives::NATIVES],
+    &[sa_script::entry_exit_flag::NATIVES],
+    &[sa_pop::pathfind::NATIVES],
+    &[sa_ai::seek::NATIVES],
 ];
 
 /// Every `#[native]` registration of every crate.

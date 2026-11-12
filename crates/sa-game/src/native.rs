@@ -150,7 +150,7 @@ pub fn dispatched() -> Vec<(&'static str, u32, u32)> {
 
 /// Return values of the exploration stubs, by stub index.
 #[cfg(target_arch = "x86")]
-static STUB_RET: [std::sync::atomic::AtomicU32; 16] = [const { std::sync::atomic::AtomicU32::new(0) }; 16];
+static STUB_RET: [std::sync::atomic::AtomicU32; 48] = [const { std::sync::atomic::AtomicU32::new(0) }; 48];
 
 #[cfg(target_arch = "x86")]
 /// Stub `i` with `n` callee-cleaned stack dwords (`n = 0`: cdecl, also fine for a thiscall
@@ -188,20 +188,47 @@ macro_rules! stub_fns {
                 }
                 f as *const () as usize
             },
+            {
+                extern "stdcall" fn f(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32) -> u32 {
+                    STUB_RET[$i].load(std::sync::atomic::Ordering::Relaxed)
+                }
+                f as *const () as usize
+            },
+            {
+                extern "stdcall" fn f(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32) -> u32 {
+                    STUB_RET[$i].load(std::sync::atomic::Ordering::Relaxed)
+                }
+                f as *const () as usize
+            },
+            {
+                extern "stdcall" fn f(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32, _g: u32) -> u32 {
+                    STUB_RET[$i].load(std::sync::atomic::Ordering::Relaxed)
+                }
+                f as *const () as usize
+            },
+            {
+                extern "stdcall" fn f(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32, _g: u32, _h: u32) -> u32 {
+                    STUB_RET[$i].load(std::sync::atomic::Ordering::Relaxed)
+                }
+                f as *const () as usize
+            },
         ]),*]
     };
 }
 
-/// `SA_GAME_STUB="ADDR=RET[/N],..."` (development aid, never a port): registers up to 16
+/// `SA_GAME_STUB="ADDR=RET[/N],..."` (development aid, never a port): registers up to 48
 /// addresses as functions that return RET without doing anything, so a boot run can look past a
-/// blocker another lane is porting. `N` (0..=4, default 0) is the number of stack dwords the
+/// blocker another lane is porting. `N` (0..=8, default 0) is the number of stack dwords the
 /// callee pops (stdcall / thiscall arguments after `this`); 0 suits cdecl.
 #[cfg(target_arch = "x86")]
 fn stubs() -> Vec<(u32, usize)> {
     let Ok(spec) = std::env::var("SA_GAME_STUB") else {
         return Vec::new();
     };
-    let fns: [[usize; 5]; 16] = stub_fns!(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+    let fns: [[usize; 9]; 48] = stub_fns!(
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+        31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47
+    );
     let num = |t: &str| {
         let t = t.trim();
         match t.strip_prefix("0x") {
@@ -210,11 +237,11 @@ fn stubs() -> Vec<(u32, usize)> {
         }
     };
     let mut out = Vec::new();
-    for (i, item) in spec.split(',').filter(|s| !s.trim().is_empty()).take(16).enumerate() {
+    for (i, item) in spec.split(',').filter(|s| !s.trim().is_empty()).take(48).enumerate() {
         let (a, r) = item.split_once('=').unwrap_or((item, "0"));
         let (r, n) = r.split_once('/').unwrap_or((r, "0"));
         if let (Some(a), Some(r), Some(n)) = (num(a), num(r), num(n))
-            && n <= 4
+            && n <= 8
         {
             STUB_RET[i].store(r, std::sync::atomic::Ordering::Relaxed);
             out.push((a, fns[i][n as usize]));
@@ -227,21 +254,88 @@ fn stubs() -> Vec<(u32, usize)> {
     Vec::new()
 }
 
+/// `SA_GAME_SCRIPT_TRACE=1` (exploration only): every command's script name (+8), offset in the script space and
+/// command word on stderr.
+static SCRIPT_TRACE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// `--start-in-world` (see [`set_start_in_world`]).
+static START_IN_WORLD: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// `--start-in-world` (evidence runs, never a port): the new game starts without the intro mission. main.scm's MAIN
+/// script runs unchanged (it creates the player at Grove Street, `CREATE_PLAYER 0 2488.56 -1666.84 13.38`, and loads
+/// the scene there); only its `START_MISSION 2` (0x0417 at main.scm offset 0xEA48: the INTRO mission, the airport
+/// cutscene, the ride to Grove Street and the intro's ped scenes) is skipped, and the screen that MAIN faded out just
+/// before it (`DO_FADE 0 0` at 0xEA3B) is faded in as the intro would, through the game's own `CCamera::Fade(0.0,
+/// FADE_IN)`. MAIN then continues as after the intro's launch (`SELECT_INTERIOR 0`, `SET_PLAYER_CONTROL on`,
+/// `RELEASE_WEATHER`, its main loop). Must be set before [`install_script_skip`].
+pub fn set_start_in_world() {
+    START_IN_WORLD.store(true, std::sync::atomic::Ordering::Relaxed);
+    println!("sa-game: --start-in-world: main.scm's START_MISSION 2 (the intro) is skipped; the screen is faded in");
+}
+
+sa_core::orig! {
+    /// `CCamera::Fade(float time, int16 direction)` (0x50AC20, `ret 8`), the float as its raw dword
+    fn camera_fade(cam: sa_core::mem::GPtr<u8>, time: u32, direction: u32) = thiscall 0x50AC20 => unported;
+}
+
+/// The script VM's per-command callback (installed for `SA_GAME_SCRIPT_TRACE` and `--start-in-world`), called with
+/// the script and the command word before the command is dispatched.
+fn before_command(s: sa_script::vm::Scr, w: u32) {
+    let ip_cell = s.byte_add(0x14).cast::<u32>();
+    let ip = ip_cell.read();
+    if SCRIPT_TRACE.load(std::sync::atomic::Ordering::Relaxed) {
+        let name: Vec<u8> = (0..8).map(|i| s.byte_add(8 + i).read()).take_while(|&c| c != 0).collect();
+        eprintln!("script-trace: {} {:#x} {w:04X}", String::from_utf8_lossy(&name), ip.wrapping_sub(0xA49960));
+    }
+    // START_MISSION with the 8-bit immediate 2 (`17 04 04 02`)
+    if START_IN_WORLD.load(std::sync::atomic::Ordering::Relaxed)
+        && w == 0x0417
+        && sa_core::mem::GPtr::<u16>::from_addr(ip as usize + 2).read() == 0x0204
+    {
+        START_IN_WORLD.store(false, std::sync::atomic::Ordering::Relaxed);
+        ip_cell.write(ip + 4);
+        camera_fade(sa_core::mem::GPtr::from_addr(0xB6F028), 0, 1);
+        println!("sa-game: --start-in-world: skipped START_MISSION 2 at main.scm {:#x}", ip.wrapping_sub(0xA49960));
+    }
+}
+
 /// `SA_GAME_SCRIPT_SKIP=1` (exploration only, never a port): an unported script opcode is logged
 /// ("script: skipped opcode XXXX") and its parameters skipped (`CollectParameters(n)`, n from
 /// `catalog/script-params.csv`; opcodes with a variable or unknown count stop the run as before), so
-/// one run lists the opcodes a script path needs. The skipped opcode's effect is missing.
+/// one run lists the opcodes a script path needs (the parameter
+/// forms of the `reads` column: `T` text labels and `Cn` parameter groups). The skipped opcode's effect is missing.
 pub fn install_script_skip() {
+    let trace = std::env::var_os("SA_GAME_SCRIPT_TRACE").is_some();
+    SCRIPT_TRACE.store(trace, std::sync::atomic::Ordering::Relaxed);
+    if trace || START_IN_WORLD.load(std::sync::atomic::Ordering::Relaxed) {
+        let f: fn(sa_script::vm::Scr, u32) = before_command;
+        sa_script::cmdlib::COMMAND_TRACE_HANDLER.store(f as usize, std::sync::atomic::Ordering::Relaxed);
+    }
     if std::env::var_os("SA_GAME_SCRIPT_SKIP").is_none() {
         return;
     }
     fn handler(s: sa_script::vm::Scr, command: u32) -> Option<i8> {
         static PARAMS: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../../catalog/script-params.csv"));
         let key = format!("{command:04X},");
-        let n: u32 = PARAMS.lines().find(|l| l.starts_with(&key))?.split(',').nth(4)?.trim().parse().ok()?;
-        eprintln!("script: skipped opcode {command:04X} ({n} params)");
-        if n > 0 {
-            sa_script::cmdlib::collect(s, n);
+        let row = PARAMS.lines().find(|l| l.starts_with(&key))?;
+        let reads = row.split(',').nth(3)?.trim();
+        // the "reads" column: `T` (an 8-byte text label), `Cn` (n parameters), in order; other forms stop
+        let mut steps = Vec::new();
+        for t in reads.split_whitespace() {
+            if t == "T" {
+                steps.push(0);
+            } else {
+                steps.push(t.strip_prefix('C')?.parse::<u32>().ok()?);
+            }
+        }
+        eprintln!("script: skipped opcode {command:04X} ({reads})");
+        for n in steps {
+            if n == 0 {
+                let mut buf = [0u8; 16];
+                sa_script::cmdlib::read_text_label(s, sa_core::mem::GPtr::from_raw(buf.as_mut_ptr()), 8);
+            } else {
+                sa_script::cmdlib::collect(s, n);
+            }
         }
         Some(0)
     }

@@ -83,7 +83,7 @@ orig! {
     /// `CTaskComplexSeekEntityStandard::CreateSubTask(int, CPed*)` (0x46F1E0)
     fn std_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x46F1E0 => unported;
     /// `CTaskComplexSeekEntity<XYOffset>::CreateSubTask(int, CPed*)` (0x665270)
-    fn xy_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x665270 => unported;
+    fn xy_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> = thiscall 0x665270 => seek_entity_xy_create_sub_task_665270;
 
     /// `CTask::GetTaskType` (vtable +0x10)
     fn task_get_task_type(t: GPtr<u8>) -> i32 = thiscall vslot 0x10 => unported;
@@ -337,6 +337,22 @@ pub fn seek_entity_xy_create_first_sub_task_665600(this: GPtr<u8>, ped: GPtr<u8>
 /// copied into a second one for the constructor.
 #[hook(addr = 0x46F1E0, conv = thiscall, name = "CTaskComplexSeekEntityStandard::CreateSubTask", expect = "64 A1 00 00 00 00")]
 pub fn seek_entity_standard_create_sub_task_46f1e0(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
+    seek_create_sub_task(this, ty, ped, 0x48)
+}
+
+/// `CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CreateSubTask(int, CPed*)` (0x665270: `nop; jmp`
+/// into the chunk 0x402328, back at 0x665276; `ret 8`): the bytes of 0x46F1E0 with the flags at +0x54 and the move
+/// state at +0x50 (STD-8).
+// Not hookable: its entry bytes (0x665271..) are a code key protection code reads (0x407DF5 / 0x15650F8 `sub reg,
+// [0x665271]`); a phase B native.
+#[sa_core::native(addr = 0x665270, conv = thiscall, name = "CTaskComplexSeekEntity<CEntitySeekPosCalculatorXYOffset>::CreateSubTask")]
+pub fn seek_entity_xy_create_sub_task_665270(this: GPtr<u8>, ty: i32, ped: GPtr<u8>) -> GPtr<u8> {
+    seek_create_sub_task(this, ty, ped, 0x54)
+}
+
+/// The shared body of the two `CreateSubTask` instances: the flags at `flags` (+0x48 / +0x54) and the move state at
+/// `flags - 4` (+0x44 / +0x50); otherwise the bytes are the same.
+fn seek_create_sub_task(this: GPtr<u8>, ty: i32, ped: GPtr<u8>, flags: isize) -> GPtr<u8> {
     match ty {
         0xDB => {
             let e = task_new(0x1C);
@@ -349,7 +365,7 @@ pub fn seek_entity_standard_create_sub_task_46f1e0(this: GPtr<u8>, ty: i32, ped:
         0xF4 => {
             let s = task_new(0x40);
             let s = if s.is_null() { GPtr::NULL } else { sequence_ctor(s) };
-            if rd::<u8>(this, 0x48) & 2 != 0 {
+            if rd::<u8>(this, flags) & 2 != 0 {
                 let t = task_new(0x28);
                 let t = if t.is_null() {
                     GPtr::NULL
@@ -397,7 +413,7 @@ pub fn seek_entity_standard_create_sub_task_46f1e0(this: GPtr<u8>, ty: i32, ped:
                 copy3(lp.byte_add(0xC), lp);
                 go_to_point_and_stand_still_ctor(
                     e,
-                    rd::<u32>(this, 0x44),
+                    rd::<u32>(this, flags - 4),
                     lp.byte_add(0xC),
                     rd::<u32>(this, 0x18),
                     rd::<u32>(this, 0x1C),
@@ -406,7 +422,7 @@ pub fn seek_entity_standard_create_sub_task_46f1e0(this: GPtr<u8>, ty: i32, ped:
                 )
             };
             let b = rd::<u8>(e, 0x24);
-            wr::<u8>(e, 0x24, b ^ ((rd::<u8>(this, 0x48) ^ b) & 8));
+            wr::<u8>(e, 0x24, b ^ ((rd::<u8>(this, flags) ^ b) & 8));
             e
         }
         0x38A => {
@@ -420,7 +436,7 @@ pub fn seek_entity_standard_create_sub_task_46f1e0(this: GPtr<u8>, ty: i32, ped:
             copy3(lp.byte_add(0xC), lp);
             follow_node_route_ctor(
                 e,
-                rd::<u32>(this, 0x44),
+                rd::<u32>(this, flags - 4),
                 lp.byte_add(0xC),
                 rd::<u32>(this, 0x18),
                 rd::<u32>(this, 0x1C),
@@ -736,3 +752,6 @@ fn general_get_radian_angle_between_points(x1: f32, y1: f32, x2: f32, y2: f32) -
 fn general_limit_radian_angle(a: f32) -> X87 {
     X87::from_f64_exact(general_limit_radian_angle_st0(a))
 }
+
+/// This module's phase B natives (STD-8).
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_SEEK_ENTITY_XY_CREATE_SUB_TASK_665270];

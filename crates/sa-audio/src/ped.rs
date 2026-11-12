@@ -214,7 +214,9 @@ pub fn speech_set_next_play_time(this: GPtr<u8>, global_ctx: u32) {
 }
 
 /// `CAEPedSpeechAudioEntity::IsGlobalContextPain(int16)` (0x4E44F0, static): 0x153 < ctx < 0x167.
-/// Not hooked: the caller at 0x4E6683 keeps EDX across the call (sa-hook callers test).
+/// Not hooked: the caller at 0x4E6683 keeps EDX across the call (sa-hook callers test). A phase B native (STD-8;
+/// every caller there is a port).
+#[sa_core::native(addr = 0x4E44F0, conv = stdcall, name = "CAEPedSpeechAudioEntity::IsGlobalContextPain")]
 pub fn speech_is_global_context_pain(ctx: u32) -> u8 {
     let c = ctx as u16 as i16;
     (c > 0x153 && c < 0x167) as u8
@@ -222,7 +224,8 @@ pub fn speech_is_global_context_pain(ctx: u32) -> u8 {
 
 /// `CAEPedSpeechAudioEntity::IsGlobalContextImportantForInterupting(int16)` (0x4E4600, static): the
 /// exe's jump table is true for 13, 15, 125, 126 and 127.
-/// Not hooked: callers 0x4E5F29 / 0x4E5F76 / 0x4E668D keep ECX/EDX across the call.
+/// Not hooked: callers 0x4E5F29 / 0x4E5F76 / 0x4E668D keep ECX/EDX across the call. A phase B native (STD-8).
+#[sa_core::native(addr = 0x4E4600, conv = stdcall, name = "CAEPedSpeechAudioEntity::IsGlobalContextImportantForInterupting")]
 pub fn speech_is_global_context_important_for_interupting(ctx: u32) -> u8 {
     matches!(ctx as u16 as i16, 13 | 15 | 125..=127) as u8
 }

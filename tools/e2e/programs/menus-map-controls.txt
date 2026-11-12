@@ -1,0 +1,60 @@
+# PORT-MENU menus-map-controls corpus program (CMenuManager::AdditionalOptionInput map path, the controller
+# setup screens, SaveStatsToFile): the grove-walk start, then the pause menu (esc) navigated with the D-pad
+# and enter. Map: pan with the D-pad and the left stick (held), zoom in / out with L2 / R2 (held), the
+# waypoint set and cleared with circle and set again with T, the legend options menu opened by holding
+# space (a row toggled twice, so the blip prefs end unchanged), the legend toggled with L. Stats: 'S' saves
+# stats.html into the lane prefix's user files. Options -> Controller Setup -> Redefine Controls -> Foot
+# Controls (screen 0x26): rows walked with the D-pad, the Forward row redefined to 'W' (its default key,
+# so gta_sa.set keeps its content), then back out with esc to the game. Pad controls; frames as in
+# grove-walk.txt (40 ms of virtual time each).
+0 key=space pulse            # logo / intro states 2 and 4 wait for a key
+150 key=enter                # main menu: Start Game
+200 key=enter                # New Game (loading starts; gameplay from frame 202)
+300..1199 cross pulse        # skip the intro cutscene
+1300 key=esc                 # pause menu
+1400 down
+1460 down                    # Map
+1520 key=enter
+1600..1640 left              # pan: D-pad held
+1660..1700 up
+1720..1760 lx=128            # pan: left stick
+1780..1800 ly=-128
+1820..1880 l2                # zoom in (one step per frame while held)
+1900..1960 r2                # zoom out
+1980 circle                  # waypoint on
+2040 circle                  # waypoint off
+2100 key=std:0x54            # T: waypoint on again
+2160..2300 key=space         # legend options menu while space is held
+2200 down
+2230 cross                   # toggle a blip pref ...
+2260 cross                   # ... and back
+2340 key=std:0x4C            # L: legend
+2380 key=std:0x4C
+2440 key=esc                 # back to the pause menu
+2500 down                    # Stats
+2560 key=enter
+2620 key=std:0x53            # S: save stats.html
+2700 key=esc
+2760 down                    # Brief
+2820 down                    # Options
+2880 key=enter
+2940 key=enter               # Controller Setup
+3000 down                    # Redefine Controls
+3060 key=enter
+3120 key=enter               # Foot Controls (screen 0x26)
+3180 down
+3220 down
+3260 down
+3300 down
+3340 down
+3380 down
+3420 down                    # row 7: Forward
+3480 key=enter               # redefine
+3540 key=std:0x57            # W
+3620 up                      # wrap check: up from row 6
+3660 key=esc                 # back out
+3720 key=esc
+3780 key=esc
+3840 key=esc
+3900 key=esc                 # resume the game
+end 4000

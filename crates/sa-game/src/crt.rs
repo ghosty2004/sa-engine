@@ -107,6 +107,26 @@ extern "C" fn printf_body(args: *const u32) -> i32 {
 }
 vararg_entry!(printf => printf_body);
 
+/// `fprintf(f, fmt, ...)` (0x823A30): formatted as `sprintf` does, written with `fwrite` (text mode
+/// turns `\n` into `\r\n` in sa-platform's file table, as the MSVC CRT does). Returns the number of
+/// characters formatted, -1 when the write is short.
+extern "C" fn fprintf_body(args: *const u32) -> i32 {
+    std::panic::catch_unwind(|| {
+        let f = GPtr::<u8>::from_addr(word(args, 0) as usize);
+        let w = |i: usize| word(args, 2 + i);
+        let s = crate::crt_fmt::format(&crate::crt_fmt::cbytes(word(args, 1)), &mut crate::crt_fmt::Args::new(&w));
+        let mut buf = s;
+        let n = buf.len() as u32;
+        if n == 0 {
+            return 0;
+        }
+        let p = GPtr::<u8>::from_raw(buf.as_mut_ptr());
+        if crate::bind::fwrite(p, 1, n, f) == n { n as i32 } else { -1 }
+    })
+    .unwrap_or(-1)
+}
+vararg_entry!(fprintf => fprintf_body);
+
 extern "C" fn sscanf_body(args: *const u32) -> i32 {
     std::panic::catch_unwind(|| {
         use crate::crt_fmt::Store;
@@ -381,6 +401,44 @@ pub unsafe extern "C-unwind" fn modf(v: f64, ip: *mut f64) -> f64 {
 pub extern "C-unwind" fn ceil(v: f64) -> f64 {
     v.ceil()
 }
+/// `_strdate(buf)` (0x823A8E): `MM/DD/YY` and a NUL into `buf` (9 bytes), returns `buf`. The original
+/// takes the local date from `GetLocalTime`; natively the date is the host's UTC date (sa-platform has no
+/// time zone).
+pub extern "C-unwind" fn strdate(buf: GPtr<u8>) -> GPtr<u8> {
+    let secs = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs());
+    let (y, m, d) = civil_from_days((secs / 86_400) as i64);
+    let text = [
+        b'0' + (m / 10) as u8,
+        b'0' + (m % 10) as u8,
+        b'/',
+        b'0' + (d / 10) as u8,
+        b'0' + (d % 10) as u8,
+        b'/',
+        b'0' + ((y % 100) / 10) as u8,
+        b'0' + (y % 10) as u8,
+        0,
+    ];
+    for (i, c) in text.iter().enumerate() {
+        buf.byte_add(i as isize).write(*c);
+    }
+    buf
+}
+
+/// Days since 1970-01-01 to (year, month, day) in the proleptic Gregorian calendar.
+fn civil_from_days(z: i64) -> (i64, i64, i64) {
+    let z = z + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    (yoe + era * 400 + i64::from(m <= 2), m, d)
+}
+
 /// `atexit`: the native process never runs the game's exit handlers (recorded only).
 pub extern "C-unwind" fn atexit(_f: u32) -> i32 {
     0
@@ -434,6 +492,9 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
         (0x0082_1B11, "CRT srand", f(srand as *const ())),
         (0x0082_1B1E, "CRT rand", f(rand as *const ())),
         (0x0082_1BB5, "CRT sprintf", f(sprintf as *const ())),
+        (0x0082_3A30, "CRT fprintf", f(fprintf as *const ())),
+        (0x0082_3A8E, "CRT _strdate", f(strdate as *const ())),
+        (0x0083_6FBA, "CRT _strupr", f(strupr as *const ())),
         (0x0082_1D1E, "CRT atexit", f(atexit as *const ())),
         (0x0082_1F40, "CRT strncpy", f(strncpy as *const ())),
         (0x0082_20AD, "CRT sscanf", f(sscanf as *const ())),
@@ -457,6 +518,33 @@ pub fn entries() -> Vec<(u32, &'static str, usize)> {
     ];
     v.extend(base_entries());
     v
+}
+
+/// `eh vector destructor iterator(ptr, size, count, dtor)` (0x821E02, stdcall): `dtor` (thiscall) on each of
+/// `count` elements from the last to the first (`ptr += size * count`, then `ptr -= size` before each call; the
+/// signed count is decremented first and the loop stops when it goes negative), through `orig!`'s registry. The
+/// SEH frame (`__ArrayUnwind` on a throwing destructor) has no counterpart: no game destructor throws.
+#[cfg(target_arch = "x86")]
+extern "stdcall-unwind" fn eh_vector_dtor(ptr: u32, size: u32, count: i32, dtor: u32) {
+    let Some(e) = sa_core::orig::registry::lookup(dtor as usize) else {
+        panic!(
+            "eh_vector_dtor_element is not ported; phases B/C have no original code to call ({dtor:#x} {})",
+            sa_core::orig::registry::describe(dtor as usize)
+        );
+    };
+    // SAFETY: a registered thiscall entry of an element destructor.
+    let f: extern "thiscall-unwind" fn(u32) =
+        unsafe { std::mem::transmute::<usize, extern "thiscall-unwind" fn(u32)>(e.entry) };
+    let mut p = ptr.wrapping_add(size.wrapping_mul(count as u32));
+    let mut n = count;
+    loop {
+        n = n.wrapping_sub(1);
+        if n < 0 {
+            break;
+        }
+        p = p.wrapping_sub(size);
+        f(p);
+    }
 }
 
 /// `eh vector constructor iterator(ptr, size, count, ctor, dtor)` (0x821D30, stdcall): `ctor`
@@ -660,6 +748,8 @@ fn base_entries() -> Vec<(u32, &'static str, usize)> {
         #[cfg(target_arch = "x86")]
         (0x0082_47E0, "CRT qsort", qsort as *const () as usize),
         #[cfg(target_arch = "x86")]
+        (0x0082_1E02, "CRT eh vector destructor iterator", eh_vector_dtor as *const () as usize),
+        #[cfg(target_arch = "x86")]
         (0x0040_3D60, "CRT vector constructor iterator", vector_ctor as *const () as usize),
         (0x0082_1195, "CRT operator new[]", malloc as *const () as usize),
         (0x0082_119A, "CRT operator new", malloc as *const () as usize),
@@ -670,4 +760,14 @@ fn base_entries() -> Vec<(u32, &'static str, usize)> {
         (0x0082_4269, "CRT realloc", realloc as *const () as usize),
         (0x0082_4416, "CRT calloc", calloc as *const () as usize),
     ]
+}
+
+#[cfg(test)]
+mod strdate_tests {
+    #[test]
+    fn civil_dates() {
+        assert_eq!(super::civil_from_days(0), (1970, 1, 1));
+        assert_eq!(super::civil_from_days(11_016), (2000, 2, 29));
+        assert_eq!(super::civil_from_days(20_768), (2026, 11, 11));
+    }
 }

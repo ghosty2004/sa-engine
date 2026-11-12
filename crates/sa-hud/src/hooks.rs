@@ -8,6 +8,7 @@ use crate::{
     font, font_print, hud, hud_draw, menu, menu2, menu_mgr, messages, place, radar, radar_draw, radar_draw2, statics, statics2,
     text, text_load, timer,
     credits, hud_draw3, menu3, menu_ctrl, menu_draw, menu_input, menu_map, radar_draw3,
+    menu_controls, menu_map_input, menu_stats_file,
 };
 
 /// Every module's registrations, in this order.
@@ -37,6 +38,9 @@ pub const MODULES: &[&[HookReg]] = &[
     menu3::HOOKS,
     credits::HOOKS,
     menu_ctrl::HOOKS,
+    menu_map_input::HOOKS,
+    menu_stats_file::HOOKS,
+    menu_controls::HOOKS,
     crate::generated::HOOKS,
 ];
 
@@ -67,6 +71,9 @@ pub const GLOBALS: &[&[GlobalDesc]] = &[
     menu3::GLOBALS,
     credits::GLOBALS,
     menu_ctrl::GLOBALS,
+    menu_map_input::GLOBALS,
+    menu_stats_file::GLOBALS,
+    menu_controls::GLOBALS,
 ];
 
 const fn total(parts: &[&[HookReg]]) -> usize {
@@ -102,7 +109,7 @@ pub const ALL: &[HookReg] = &ALL_ARRAY;
 
 /// Every module's `#[native]` registrations (phase B entries of ports that cannot be hooked in
 /// phase A); `sa_ports::NATIVES` lists each of these.
-pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[crate::font_print::NATIVES];
+pub const NATIVE_MODULES: &[&[sa_core::abi::NativeReg]] = &[crate::font_print::NATIVES, crate::hud::NATIVES];
 
 pub const COUNT: usize = ALL.len();
 

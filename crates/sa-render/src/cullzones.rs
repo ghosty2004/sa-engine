@@ -8,7 +8,7 @@
 use sa_core::abi::HookReg;
 use sa_core::mem::GPtr;
 use sa_core::timer::FRAME_COUNTER;
-use sa_core::{hook, orig};
+use sa_core::{hook, native, orig};
 
 use crate::common::{Fpu, ftol32, k, rd, x};
 use sa_world::world::common::{find_player_coors, find_player_ped};
@@ -133,6 +133,8 @@ pub fn find_attributes_for_coors(px: f32, py: f32, pz: f32) -> i32 {
 /// entry jumps into the protection chunk 0x4017AD, which loads `NumTunnelAttributeZones` (0xC87AC0) and
 /// jumps back. Not hooked: the protection reads the entry's jump displacement (0x72D9F4) as data
 /// (0x401C18 `adc`, 0x1566FC3 `xor`); callers reach the original through `orig!`.
+/// Registered as a phase B `#[native]` (STD-9).
+#[native(addr = 0x72D9F0, conv = cdecl, name = "CCullZones::FindTunnelAttributesForCoors")]
 pub fn find_tunnel_attributes_for_coors(px: f32, py: f32, pz: f32) -> i32 {
     or_flags_of_zones(TUNNEL_BASE, NUM_TUNNEL_ZONES.get(), px, py, pz)
 }
@@ -435,3 +437,6 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_UPDATE,
     HOOK_ADD_CULL_ZONE,
 ];
+
+/// This module's phase B natives.
+pub const NATIVES: &[sa_core::abi::NativeReg] = &[NATIVE_FIND_TUNNEL_ATTRIBUTES_FOR_COORS];

@@ -3165,6 +3165,43 @@ mod tests {
         assert_px(&img, 24, 16, [0, 0, 255], 0);
     }
 
+    /// RenderWare's Im2D path (STD-7): a POSITIONT / D3DCOLOR / TEXCOORD declaration (stride 0x1C) from a
+    /// vertex buffer, stage 0 SELECTARG2 of DIFFUSE for colour and alpha, no texture bound, vertex alpha blended
+    /// over white (the loading screen's fade to black).
+    #[test]
+    fn im2d_declaration_untextured_uses_vertex_colour() {
+        let Some(mut d) = dev(32, 32) else { return };
+        let decl = d
+            .create_vertex_declaration(&[
+                element(0, 0, decltype::FLOAT4, declusage::POSITIONT, 0),
+                element(0, 16, decltype::D3DCOLOR, declusage::COLOR, 0),
+                element(0, 20, decltype::FLOAT2, declusage::TEXCOORD, 0),
+            ])
+            .unwrap();
+        let mut v = Vec::new();
+        for (x, y) in [(0.0, 0.0), (32.0, 0.0), (0.0, 32.0), (32.0, 32.0)] {
+            rhw_ct(&mut v, x, y, 0x8000_0000, 0.0, 0.0);
+        }
+        let vb = d.create_vertex_buffer(v.len() as u32, false).unwrap();
+        d.update_vertex_buffer(vb, 0, &v).unwrap();
+        begin(&mut d, 0xFFFF_FFFF);
+        d.set_render_state(rs::CULLMODE, 1);
+        d.set_render_state(rs::LIGHTING, 0);
+        d.set_texture(0, None);
+        d.set_texture_stage_state(0, tss::COLOROP, 3);
+        d.set_texture_stage_state(0, tss::COLORARG2, 0);
+        d.set_texture_stage_state(0, tss::ALPHAOP, 3);
+        d.set_texture_stage_state(0, tss::ALPHAARG2, 0);
+        d.set_render_state(rs::ALPHABLENDENABLE, 1);
+        d.set_render_state(rs::SRCBLEND, 5);
+        d.set_render_state(rs::DESTBLEND, 6);
+        d.set_vertex_declaration(Some(decl));
+        d.set_stream_source(0, Some(vb), 0, 0x1C);
+        d.draw_primitive(PrimitiveType::TriangleStrip, 0, 2).unwrap();
+        let img = finish(&mut d);
+        assert_px(&img, 16, 16, [127, 127, 127], 2);
+    }
+
     fn dxt1_block() -> Vec<u8> {
         let bits: u32 = (4..16).map(|i| 1u32 << (2 * i)).sum();
         let mut b = Vec::new();

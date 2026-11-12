@@ -16,11 +16,6 @@ use super::*;
 #[allow(dead_code)]
 pub fn g_cped_update_5debe0(_this: u32) {}
 
-/// `CPed::UpdateStatEnteringVehicle` (0x5E01A0, PED): empty, thiscall, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_cped_update_stat_entering_vehicle_5e01a0(_this: u32) {}
-
 /// `CPed::UpdateStatLeavingVehicle` (0x5E01B0, PED): empty, thiscall, `ret`; 1 instruction(s) matched.
 /// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
 #[allow(dead_code)]
@@ -35,7 +30,6 @@ pub fn g_cped_spawn_flying_component_5f0190(_this: u32, _a0: u32, _a1: u32) {}
 /// executed instruction, switch tables): the bodies this file was generated from.
 pub const BODIES: &[Body] = &[
     (0x5DEBE0, 0xAF647E4C8602FFD2, &[(0x5DEBE0, 1)]),
-    (0x5E01A0, 0xAF647E4C8602FFD2, &[(0x5E01A0, 1)]),
     (0x5E01B0, 0xAF647E4C8602FFD2, &[(0x5E01B0, 1)]),
     (0x5F0190, 0x69D7781C23F54695, &[(0x5F0190, 3)]),
 ];
@@ -48,7 +42,6 @@ mod tests {
     #[test]
     fn pattern_empty() {
         g_cped_update_5debe0(0);
-        g_cped_update_stat_entering_vehicle_5e01a0(0);
         g_cped_update_stat_leaving_vehicle_5e01b0(0);
         g_cped_spawn_flying_component_5f0190(0, 0, 0);
     }

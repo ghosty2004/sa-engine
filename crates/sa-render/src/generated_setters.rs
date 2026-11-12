@@ -58,13 +58,6 @@ pub fn g_cshiny_texts_init_7221b0(_this: u32) {
     g::<u32>(0xC7_C6F8).write(0);
 }
 
-/// `MarkerAtomicCB` (0x722220, RENDER): setter, cdecl, `ret`; 4 instruction(s) matched.
-#[hook(addr = 0x722220, conv = cdecl, name = "MarkerAtomicCB", expect = "8B 44 24 04 8B 4C 24 08", unverified = "gen2-render-4", route = "L2", hazards = "heap-writes", recs = "pause-restart")]
-pub fn g_marker_atomic_cb_722220(a0: u32, a1: u32) -> u32 {
-    wr::<u32>(p(a1), 0, a0);
-    a0
-}
-
 /// `CSprite2d::OffsetTexCoordForBilinearFiltering` (0x728150, RENDER): setter, cdecl, `ret`; 30 instruction(s) matched.
 #[hook(addr = 0x728150, conv = cdecl, name = "CSprite2d::OffsetTexCoordForBilinearFiltering", expect = "D9 44 24 04 DC C0", unverified = "gen2-render-4", route = "L2", hazards = "none")]
 pub fn g_csprite2d_offset_tex_coord_for_bilinear_filtering_728150(a0: u32, a1: u32) {
@@ -159,6 +152,5 @@ pub const BODIES: &[Body] = &[
     (0x4AB270, 0x4CC2A72E0A49B746, &[(0x40A18C, 10), (0x4AB270, 28)]),
     (0x4AB290, 0x92F381E24500789D, &[(0x4AB290, 53)]),
     (0x7221B0, 0x37C8C96802AFBBD1, &[(0x7221B0, 11)]),
-    (0x722220, 0x18C4A0D58E81C2A0, &[(0x722220, 11)]),
     (0x728150, 0xC29906DC68A18ED8, &[(0x728150, 135)]),
 ];

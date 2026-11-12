@@ -263,14 +263,17 @@ pub fn compressed_vector2d_uncompress(v: GPtr<i16>, out: GPtr<f32>) -> GPtr<f32>
 }
 
 /// `CNodeAddress::CNodeAddress()` (0x4241A0): area word = 0xFFFF, returns `this`. Ported, unhookable: protection
-/// code reads its bytes as data (0x1465802 `call [0x4241A4]`, 0x147358B `mov [0x4241A0], 3`).
+/// code reads its bytes as data (0x1465802 `call [0x4241A4]`, 0x147358B `mov [0x4241A0], 3`); a phase B native
+/// (STD-8: the `eh vector constructor iterator` reaches it by address).
+#[sa_core::native(addr = 0x4241A0, conv = thiscall, name = "CNodeAddress::CNodeAddress")]
 pub fn node_address_ctor(a: GPtr<u16>) -> GPtr<u16> {
     a.write(0xFFFF);
     a
 }
 
 /// `CNodeAddress::CNodeAddress()` (0x4241B0, a second copy of 0x4241A0). Ported, unhookable: protection code
-/// writes its bytes (0x14735AE `mov [0x4241B0], 4`).
+/// writes its bytes (0x14735AE `mov [0x4241B0], 4`); a phase B native (STD-8).
+#[sa_core::native(addr = 0x4241B0, conv = thiscall, name = "CNodeAddress::CNodeAddress-2")]
 pub fn node_address_ctor2(a: GPtr<u16>) -> GPtr<u16> {
     a.write(0xFFFF);
     a
@@ -3405,3 +3408,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_FIND_NODE_COORS_FOR_SCRIPT_TWO_NODES,
     HOOK_LOAD_PATH_FIND_DATA_AREA,
 ];
+
+/// This module's phase B natives (STD-8).
+pub const NATIVES: &[sa_core::abi::NativeReg] =
+    &[NATIVE_NODE_ADDRESS_CTOR, NATIVE_NODE_ADDRESS_CTOR2, crate::gangs::NATIVE_CHOOSE_GANG_OCCUPATION, crate::misc2::NATIVE_END_GANG_WAR];

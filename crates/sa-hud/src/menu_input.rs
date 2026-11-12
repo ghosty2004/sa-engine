@@ -1,4 +1,4 @@
-//! `CMenuManager::UserInput`, `AdditionalOptionInput` (PORT-HUD-3). Ported from the 1.0 US bytes;
+//! `CMenuManager::UserInput` (PORT-HUD-3; `AdditionalOptionInput` moved to `menu_map_input.rs`, PORT-MENU). Ported from the 1.0 US bytes;
 //! gta-reversed `Frontend/MenuManager_Input.cpp` as reading aid (the bytes win).
 //!
 //! `this` fields used here (offsets from the bytes, see also `menu_mgr.rs`): +0x30 system menu flags
@@ -65,9 +65,9 @@ orig! {
     /// `CMenuManager::CheckFrontEndRightInput()` (0x573990, thiscall)
     pub fn check_front_end_right_input_call(this: GPtr<u8>) -> u8 = thiscall 0x573990 => crate::menu_mgr::check_front_end_right_input;
     /// `CMenuManager::RedefineScreenUserInput(bool* accept, bool* back)` (0x57EF50, thiscall)
-    pub fn redefine_screen_user_input(this: GPtr<u8>, accept: GPtr<u8>, back: GPtr<u8>) = thiscall 0x57EF50 => unported;
+    pub fn redefine_screen_user_input(this: GPtr<u8>, accept: GPtr<u8>, back: GPtr<u8>) = thiscall 0x57EF50 => crate::menu_controls::redefine_screen_user_input;
     /// `CMenuManager::AdditionalOptionInput(bool* up, bool* down)` (0x5773D0, thiscall)
-    pub fn additional_option_input_call(this: GPtr<u8>, up: GPtr<u8>, down: GPtr<u8>) = thiscall 0x5773D0 => additional_option_input;
+    pub fn additional_option_input_call(this: GPtr<u8>, up: GPtr<u8>, down: GPtr<u8>) = thiscall 0x5773D0 => crate::menu_map_input::additional_option_input;
     /// `CMenuManager::ProcessUserInput(bool down, bool up, bool accept, bool back, int8 lr)` (0x57B480, thiscall)
     pub fn process_user_input_call(this: GPtr<u8>, down: u32, up: u32, accept: u32, back: u32, lr: u32) = thiscall 0x57B480 => crate::menu_mgr::process_user_input;
     /// `CPad::GetPedWalkLeftRight()` (0x53FC90, thiscall; AX)
@@ -482,75 +482,5 @@ fn menu_navigation(this: GPtr<u8>, accept: &mut [u8; 4], back: &mut [u8; 4], up:
     }
 }
 
-orig! {
-    /// `CMenuManager::SaveStatsToFile()` (0x57DDE0, thiscall)
-    pub fn save_stats_to_file(this: GPtr<u8>) = thiscall 0x57DDE0 => unported;
-}
-
-/// `CPad::NewKeyState.standardKeys` / `OldKeyState` words for 'S' (0x53) and 's' (0x73)
-const KEY_S: (usize, usize) = (0xB7324E, 0xB72FDE);
-const KEY_S_LOWER: (usize, usize) = (0xB7328E, 0xB7301E);
-/// `CMessages::PreviousBriefs` (0xC1A570, entries of 0x20, +0 text)
-const PREVIOUS_BRIEFS: usize = 0xC1A570;
-
-/// The screens `additional_option_input` handles in Rust (ADR-002 `PORTED` list): every screen but the
-/// map screen 5 with its streaming done (+0x5B clear), which runs the original body.
-pub const ADDITIONAL_OPTION_INPUT_PORTED: &[&str] = &["screen 0 (stats)", "screen 2 (briefs)", "other screens (no-op)", "screen 5 with +0x5B set (no-op)"];
-
-/// `CMenuManager::AdditionalOptionInput(bool* up, bool* down)` (0x5773D0, thiscall, `ret 8`; the map
-/// part spans 8 ranges). By the current screen (+0x15D, signed):
-///
-/// - 0 (stats): 'S' or 's' just pressed (standard key words, `GetPad(+0xEA)` before each test, results
-///   unused) -> `SaveStatsToFile`.
-/// - 2 (briefs): front-end up with the row (+8, byte) below 0x13 and `PreviousBriefs[row + 1]` with a
-///   text: row + 1, `*up = 1`; then front-end down with row > 3: row - 1, `*down = 1`.
-/// - 5 (map) with the streaming flag +0x5B clear: the map's pan / zoom / waypoint / legend input.
-///   **Not ported**: this path runs the original body (`#[hook(fallback)]`, ADR-002), whose own screen
-///   switch reaches the same code; it is the bulk of the function (x87 map arithmetic, `CRadar`
-///   transforms, blips).
-/// - otherwise (and screen 5 with +0x5B set): nothing.
-///
-/// Differences from gta-reversed in the ported paths: none.
-#[hook(addr = 0x5773D0, conv = thiscall, name = "CMenuManager::AdditionalOptionInput", expect = "55 8B EC 83 E4 F8", fallback)]
-pub fn additional_option_input(this: GPtr<u8>, up: GPtr<u8>, down: GPtr<u8>) {
-    match b8(this, 0x15D) as i8 {
-        0 => {
-            let pad = || get_pad(u32::from(b8(this, 0xEA)));
-            pad();
-            let hit = (g::<u16>(KEY_S.0).read() != 0 && {
-                pad();
-                g::<u16>(KEY_S.1).read() == 0
-            }) || {
-                pad();
-                g::<u16>(KEY_S_LOWER.0).read() != 0 && {
-                    pad();
-                    g::<u16>(KEY_S_LOWER.1).read() == 0
-                }
-            };
-            if hit {
-                save_stats_to_file(this);
-            }
-        }
-        2 => {
-            if check_front_end_up_input_call(this) != 0 {
-                let row = b8(this, 8);
-                if row < 0x13 && g::<u32>(PREVIOUS_BRIEFS + 0x20 + usize::from(row) * 0x20).read() != 0 {
-                    wr(this, 8, row + 1);
-                    wr::<u8>(up, 0, 1);
-                }
-            }
-            if check_front_end_down_input_call(this) != 0 {
-                let row = b8(this, 8);
-                if row > 3 {
-                    wr(this, 8, row - 1);
-                    wr::<u8>(down, 0, 1);
-                }
-            }
-        }
-        5 if b8(this, 0x5B) == 0 => additional_option_input_original(this, up, down),
-        _ => {}
-    }
-}
-
 /// This module's registrations.
-pub const HOOKS: &[HookReg] = &[HOOK_USER_INPUT, HOOK_ADDITIONAL_OPTION_INPUT];
+pub const HOOKS: &[HookReg] = &[HOOK_USER_INPUT, crate::menu_map_input::HOOK_ADDITIONAL_OPTION_INPUT];

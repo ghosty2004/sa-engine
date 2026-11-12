@@ -16,6 +16,9 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
+#[path = "generated_leaves.rs"]
+pub mod generated_leaves;
+
 /// A 32-bit game address as a pointer.
 #[allow(dead_code)]
 fn p(a: u32) -> GPtr<u8> {
@@ -53,7 +56,7 @@ pub type Body = (u32, u64, &'static [(u32, u32)]);
 pub const HOOKS: &[HookReg] = &[];
 
 /// Every generated body of this crate.
-pub const BODIES: &[&[Body]] = &[];
+pub const BODIES: &[&[Body]] = &[generated_leaves::BODIES];
 
 #[cfg(all(test, not(sa_phase_a)))]
 mod tests {

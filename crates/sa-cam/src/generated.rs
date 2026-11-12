@@ -16,8 +16,6 @@ use sa_core::{hook, orig};
 #[allow(unused_imports)]
 use sa_math::x87::X87;
 
-#[path = "camera_generated.rs"]
-pub mod camera_generated;
 #[path = "generated_dtors.rs"]
 pub mod generated_dtors;
 #[path = "generated_leaf_logic.rs"]
@@ -63,7 +61,6 @@ pub const HOOKS: &[HookReg] = &[generated_leaf_logic::HOOK_G_IS_LAMP_POST_509A30
 
 /// Every generated body of this crate.
 pub const BODIES: &[&[Body]] = &[
-    camera_generated::BODIES,
     generated_dtors::BODIES,
     generated_leaf_logic::BODIES,
     generated_leaves::BODIES,

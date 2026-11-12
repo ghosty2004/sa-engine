@@ -32,11 +32,6 @@ pub fn g_missed_by_ghidra_cat7_call_74bfd0() -> u32 {
     v1
 }
 
-/// `_rxD3D9VertexShaderDefaultEndCallBack` (0x761000, RW): empty, cdecl, `ret`; 1 instruction(s) matched.
-/// Not hookable: the body up to its `ret` is shorter than the 5-byte patch.
-#[allow(dead_code)]
-pub fn g_rx_d3_d9_vertex_shader_default_end_call_back_761000() {}
-
 /// `RpHAnimKeyFrameStreamGetSize` (0x7C65B0, RW): getter, cdecl, `ret`; 5 instruction(s) matched.
 #[hook(addr = 0x7C65B0, conv = cdecl, name = "RpHAnimKeyFrameStreamGetSize", expect = "8B 44 24 04 8B 40 04", unverified = "gen2-rw-2", route = "L2", hazards = "none")]
 pub fn g_rp_hanim_key_frame_stream_get_size_7c65b0(a0: u32) -> u32 {
@@ -248,7 +243,6 @@ pub const BODIES: &[Body] = &[
     (0x4C9F70, 0xB7CAE5A66E4288FF, &[(0x4C9F70, 19)]),
     (0x74BF00, 0x31B5D0AF35A4361F, &[(0x74BF00, 6)]),
     (0x74BFD0, 0x566846B71016A9B0, &[(0x74BFD0, 6)]),
-    (0x761000, 0xAF647E4C8602FFD2, &[(0x761000, 1)]),
     (0x7C65B0, 0x012A0C0EF5A54040, &[(0x7C65B0, 14)]),
     (0x7C6A70, 0x3A6DF6CC919E0BCB, &[(0x7C6A70, 5)]),
     (0x7C7500, 0x3A6DF6CC919E0BCB, &[(0x7C7500, 5)]),
@@ -293,7 +287,6 @@ mod tests {
     /// Pattern `empty`: every port returns the constant the bytes load (no memory access).
     #[test]
     fn pattern_empty() {
-        g_rx_d3_d9_vertex_shader_default_end_call_back_761000();
         g_rp_uvanim_param_key_frame_mul_recip_7cc740();
         g_rp_uvanim_param_key_frame_add_7cc750();
         g_missed_by_ghidra_data_code_immediate_7cf9a0();
