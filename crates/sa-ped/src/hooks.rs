@@ -34,6 +34,7 @@ pub const MODULES: &[&[HookReg]] = &[
     // WRITER-NATIVE
     crate::ped_pointer_valid::HOOKS,
     crate::player_sprint_results::HOOKS,
+    crate::ped_dead_money::HOOKS,
     crate::save_blocks::HOOKS,
     crate::ped_is_pointer_valid::HOOKS,
 ];

@@ -48,3 +48,4 @@ pub mod player_sprint_results;
 // SAVE-1 (docs/arch/save-port.md)
 pub mod save_blocks;
 pub mod ped_is_pointer_valid;
+pub mod ped_dead_money;
