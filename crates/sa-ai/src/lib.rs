@@ -126,6 +126,7 @@ pub mod dragged_out_car;
 pub mod car_slow_drag_out;
 pub mod jack_events;
 pub mod car_drive_close_door_cb;
+pub mod leave_car_and_flee;
 pub mod vehicle_potential_collision;
 pub mod attractor_approach_event;
 pub mod task_in_air_process_ped;
