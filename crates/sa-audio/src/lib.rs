@@ -54,6 +54,7 @@ pub mod statics;
 pub mod utility;
 pub mod vehicle;
 pub mod audio_data_stream;
+pub mod beat_info;
 
 pub mod std6_natives;
 pub mod generated;
