@@ -1376,3 +1376,50 @@
 - Fast-forwarded master to 606b1434 (rebased on 27d89952): WRITER-WORLD-2 and WRITER-SAMP-2 integrated (master's copies kept on duplicates), `tools/verify/frontier.py` (723 unported callees left: 512 direct + 211 virtual), the native `reg(...)` call path fixed (register frame + 16-byte stack alignment; root cause of the pause-menu SIGSEGV), 20 user-hit ports (frontier-1-1/2: ProstituteSolicit::ControlSubTask, ProcessTrainCrossingBehaviour, BikeJacked, GoToPointFine, KillPedOnFootMelee, FightHitPed, …).
 - Agent: verify-all frontier2 IDENTICAL 13/13 with all the new batches on. Main session: sa-hook lib 58/58, i686 and wasm (samp) builds, pausemenu scenario 0 blocked (416 steps); play package refreshed.
 - Still open (FRONTIER-2): GunControl 0x625270, police path, burning car, melee HandlePedHit 0x4E1CC0 / ComputeDamageAnim 0x4B3FC0, crossing 0x6A1460 / 0x6CF1A0.
+
+## 2026-11-14 — DEDUP-1 pass 1: ADR-003 migration steps 1–3 (agent, branch worktree-agent-af0f2f8c9349698a3)
+- Detector: `tools/verify/dupes.py` (`make dupes`): free functions defined in several crates (same names; identical
+  bodies; `--renamed` = identical modulo parameter / local / generic names, bounds, path prefixes, integer spelling,
+  implied turbofish, via `tools/verify/helpernorm.py`). Generated files, `#[hook]`/`#[native]` ports, `orig!`
+  entries and tests excluded. Before → after this pass: renamed-copy groups across crates 175 groups / 956
+  redundant copies → 124 / 227; exact-body groups 150 / 797 → 82 / 142; names in ≥ 2 crates 592 → 552.
+- Step 1 (shared helpers): `sa_core::field` (rd/wr/at/rd32/wr32/rdf/rd8/ldx/rdp/rd3f/rd3u/copy3/addr32, g/gu/pa/p8,
+  gf/gfu/gx, gr32/gw32/…, ptr_of), `sa_math::fpu` (x/xi/xc/st0/f32_of/ftol32/fbits/fabs/floor_f64 and the `fcom`
+  tests le_or_nan/gt/ge_or_nan/lt/fcom_any/fcom_parity), `sa_world::world::common` (entity_pos + _f/_u/3,
+  entity_type), `sa_core::crt::rand_at`, `sa_core::hooks::{total, concat}`. 790 copies became imports (local names
+  kept with `use … as`); patterns.py / ai_patterns.py emit imports. sa-script gained a direct sa-world dependency.
+  Only copies equal modulo renaming were merged; semantically different paths stay separate helpers (raw
+  `MODEL_INFO_PTRS` address vs the `Global`, raw TIME_MS reads vs `timer::TIME_MS.get()`, `rd(a: usize) -> u32`
+  style single-argument readers, samp-rs's raw-pointer readers).
+- Step 2 (one front end): `sa-game/src/frontend.rs` = the input pipeline (keys pending until a frame presents,
+  releases before a frame deferred, motion / wheel handed over once; `Session::iterate` keeps DirectInput's
+  accumulation), the pointer rule `in_menu` (state ≠ IDLE, MENU_ACTIVE, SA:MP UI cursor), client-pixel scaling and
+  the iteration driver. `game_window.rs` (winit) and `web.rs` (worker; new export `in_menu`, used by main.js) are its
+  backends. Native now also applies the key-pending rule (previously web only).
+- Step 3 (one binding per address): `tools/gen/bindings.py` (`make bindings`, `--check` in the writer gate):
+  `catalog/bindings.csv` → `crates/<crate>/src/bindings.rs`; `--migrate` merged the literal-address `orig!`
+  declarations that are identical in convention, types and target (9064 declarations → 1881 bindings in 15
+  crates; owner crate by catalogue subsystem when every caller depends on it, else the highest common dependency).
+  Literal-address declarations 19921 → 12738; addresses declared in more than one file 2837 → 2048 (max 138 → 42
+  files). Left (pass 2): 3070 declarations whose types / target differ from the binding (mostly `u32` vs `GPtr<u8>`
+  arguments, `u8` vs `u32` bools: merging them changes caller code), 574 with relative `=>` paths, 393 with
+  non-primitive types, 126 under attributes / in macro bodies, 73 whose names are `orig::host` stand-in keys, and
+  the generators' own declarations (step 5). Report: `tools/gen/bindings.py --migrate --dry --report FILE`.
+- `tools/verify/state_check.py` (writer gate `state`): a row is implemented/L1/L2/L3 only with a registration or a
+  Rust function documented with its address. 52 rows lowered to `specified` (evidence "not-ported", "deferred",
+  "protection"; e.g. 0x5105C0 Process_M16_1stPerson, the vt_866db0 user-track player, HandlePedHit 0x4E1CC0).
+- Gates: writer gate PASS for each step (hooks, queue, bindings, state, clippy, i686, i686clip, wasm32, hooktest,
+  l1test, l1); make test; i686 sa-game (+samp); FEATURES=samp web build; samp-rs workspace tests (step 3).
+- verify-all: step 1 `dedup1-s1` IDENTICAL 13/13; `SA_UNVERIFIED=all` 12/13 IDENTICAL, weapon-combat crashes in the
+  rust run at frame ~1745-1857 (read of 0x9FC2) — the same on master ecc59c5b with `SA_UNVERIFIED=all`
+  (`master-u-wc`), so pre-existing in some unverified batch, not from this pass. Step 2: DLL byte-identical to
+  step 1 (sha 08e48c17…), `dedup1-s2` IDENTICAL 13/13. Step 3 (DLL 5f21fcbf…): `dedup1-s3u` (`SA_UNVERIFIED=all`)
+  12/13 IDENTICAL + the same pre-existing weapon-combat crash (1792 common frames, as on master); `dedup1-s3`
+  (verified set) IDENTICAL 13/13.
+- Front-end checks: native window (headless gamescope, xdotool) step 1 vs step 2 binaries: menu screenshots with
+  mouse moves pixel-identical; in game, mouse-look turns the camera. Offscreen 600 frames: same report. Browser
+  (brave, own serve.py on 8662, the running open.mp 7813 / proxy 7781): SA:MP join, class panel `>>` and Spawn
+  clicks with `--pointer`, spawned, 0 blocked (repeated on the step-3 build; native window and offscreen runs of the
+  step-3 binary identical to step 2's).
+- Also found: `tools/gen/audio_patterns.py --check` already failed on master (regeneration adds 3 hooks:
+  0x4F4620, 0x59CD50, 0x59CB70); left as is.
