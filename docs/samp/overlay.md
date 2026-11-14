@@ -1,8 +1,8 @@
 # SAMP-UI: the SA:MP overlay drawn by the engine
 
 Status: first working slice (2026-11-12). Chat window and input line, all six dialog styles, nametags with
-health / armour bars, 3D text labels, textdraws (fonts 0–3), game text, the kill list, the scoreboard and the
-cursor are drawn by native sa-game through ported engine code, driven by window events from the platform layer.
+health / armour bars, 3D text labels, textdraws (fonts 0–3), game text, the kill list, the scoreboard, the class-selection panel
+(2026-11-14) and the cursor are drawn by native sa-game through ported engine code, driven by window events from the platform layer.
 Evidence: `sa-game --samp-ui-demo` (offscreen PNGs, §6).
 
 Inputs: `docs/samp/game-adapter.md` §4.10 (overlay surface), `docs/samp/native-plan.md` §3 (dispatch points),
@@ -85,6 +85,14 @@ title, buttons (face, label, fill, label; under the mouse moved by (−1, −2),
 edit box (nine-slice frame, white text, grey 2-px caret that does not blink). Without the files the same
 controls are flat rectangles of the same colours (`DrawList::skin` false).
 
+The skin is sampled **trilinearly**, as in samp: DXUT loads `sampgui.png` with `D3DXCreateTextureFromFileEx` and
+D3DX_DEFAULT mip levels (box filter), and `ID3DXSprite::Begin` sets MIN / MAG / MIP filter LINEAR, so a scaled
+control (a button: 136 × 54 texels into 90 × 30 pixels, LOD ≈ 0.85) blends mip levels 0 and 1. The engine uploads
+the skin raster with `rwRASTERFORMATMIPMAP` and writes every level itself (`skin::mip_chain`, D3DX's box filter;
+RW's automipmap path left the levels empty on the wgpu device) and draws skin quads with
+`rwFILTERLINEARMIPLINEAR`. Measured on the class-selection panel (§6.2): with bilinear sampling the button rims were
+up to 60 levels off the original; with the mip chain they match to the pixel.
+
 ## 3. Look and behaviour (matches samp-rs's samp-ui spec)
 
 * **Colour codes** `{RRGGBB}`: parsed and stripped as samp.dll 0x100b5fd0 / 0x100b6100 (in-place removal),
@@ -132,8 +140,15 @@ controls are flat rectangles of the same colours (`DrawList::skin` false).
   colours (row 0 selected, the row under the cursor selected), server name and `Players: N` (0xFFBEBEBE) and the
   headers (0xFF95B0D0) in the small font, outlined; click → `ScoreboardClicked(id)`. While it is open only the
   nametags and the scoreboard are drawn (no chat, labels, kill list, dialog, textdraws).
+* **Class-selection panel** (samp.dll's GUI dialog 0x1026eaa4; samp-rs `Renderer::class_panel`, `ui-rendering.md`
+  §4.2): 310 × 40 on the scoreboard background 0x960A0A0A at `x = (W − 310) / 2`, `y = H − 40 − 50`; DXUT buttons
+  `<<` (10, 5), `>>` (110, 5), `Spawn` (210, 5), 90 × 30, GUI font 0, the usual hover look (moved by (−1, −2), red).
+  Drawn after the chat input's GUI dialog, not while the scoreboard is open. A button fires as `CDXUTButton`: the left
+  button goes down over it and comes up still over it → `UiEvent::ClassPanelClicked(ClassButton)`. While it shows,
+  the cursor is up and the mouse belongs to the UI (samp's cursor mode 2); the keyboard stays with the game, because
+  samp reads the class keys itself. `crates/sa-samp-ui/src/classpanel.rs`.
 * **Cursor**: `mouse.png` (hotspot 0, 0) from the skin, else a drawn arrow; shown while a dialog, the scoreboard,
-  textdraw selection or a cursor mode is active.
+  textdraw selection, the class-selection panel or a cursor mode is active.
 
 ## 4. Input path
 
@@ -167,6 +182,22 @@ handle), RPC 36/58 as `set_label`, RPC 59 as `set_chat_bubble`, RPC 134/135 as `
 `kill_entry`, the score list as `set_scoreboard`, RPC 83 as `select_textdraws`, `InitGame`'s nametag flags and
 its own `/pagesize` / `/timestamp` / `/fontsize` state as `set_options`; then `poll_events()` →
 RPC 101 / 50 / 62 / 83 / 23. samp-rs's local commands (`/q`, `/pagesize`, `/timestamp`, ...) stay in samp-rs.
+
+### 5.1 API v4 (class-selection panel, 2026-11-14)
+
+`SampUi::show_class_panel(bool)` and `UiEvent::ClassPanelClicked(ClassButton)` with `ClassButton { Previous, Next,
+Spawn }`; `API_VERSION` 3 → 4 (a new required trait method and a new variant of a public enum). The only implementor
+is `sa_samp_ui::Ui`; the original backend's `GameAdapter::ui()` stays `None`.
+
+The native client (`sa-game/src/samp_net.rs`, samp-rs `frame.rs` / `classsel.rs` / `client/spawn.rs` rules): the
+panel is shown on the first class-selection frame without an open dialog, kept when a dialog opens later, hidden
+when class selection ends (the spawn); the class step takes the panel click every frame and, while a dialog is open,
+does nothing else (this also holds back the first RPC 128, as samp); a click acts as its key in the same tick logic
+(`<<` = Left → RPC 128 + sound 1053, `>>` = Right → RPC 128 + sound 1052, `Spawn` = Shift → RPC 129), with the same
+2 s guard, 250 ms repeat and "class info received" gates; Shift does nothing while the chat input is open.
+
+The browser page releases the pointer lock and sends absolute positions and clicks (as in the menus) while the UI
+shows its cursor: the worker reports `uiCursor` (`sa_game::web::ui_cursor`) in its status.
 
 ## 6. Demo and evidence
 
@@ -229,10 +260,28 @@ crops per element) are in `target/samp-ui2-evidence/sbs-d/` (not committed). Sta
 | 3D label | close | position depends on the world (no common camera) |
 | nametags + bars | not compared | the open.mp NPC is flagged NPC, samp draws no tag for it (needs a second real client) |
 | cursor | not compared | hardware cursor not in screenshots; engine draws `mouse.png` |
+| class-selection panel (§6.2) | matches except labels | background, rims, hover shift and colours identical to the pixel; GUI font 0 labels about 10 % narrower |
+
+### 6.2 Class-selection panel against the original (2026-11-14)
+
+Both clients on the same open.mp server (UDP 7813, the same class camera, 12:00, weather 10) at 800 × 600: the
+original (`gta_sa.exe` + samp.dll 0.3.7-R4 under Wine on lane 6, xdotool moves and clicks on the gamescope display,
+gamescope screenshots), the browser build (headless Brave, GPU, `tools/web/headless.mjs --pointer`, the worker's
+canvas snapshots) and native sa-game (`SA_GAME_POINTER`, `--present-dir`). The scene outside the panel is identical in
+all three. Inside the panel (330 × 60 px around it), outside the label glyphs and the engine-drawn cursor, the largest
+difference is 22 levels, all of it on pixels next to the glyphs; the panel background (0x960A0A0A over the scene), the
+button faces and rims, the red hover face and fill and the (−1, −2) hover shift are equal to the pixel. Remaining:
+GUI font 0 labels (`Spawn` 51 px wide in the engine, 57 px in the original; `<<` 18 vs 21) — the engine maps cell
+height 20 to 17 ppem with the rule calibrated on the main font (14 → 12 ppem, chat lines match to the pixel), while
+Wine's GDI renders samp's GUI font (quality 0) about 12 % larger; the same applies to every DXUT button, edit box
+and list label (dialogs, scoreboard). The worker's canvas snapshot PNGs carry the back buffer's alpha and are
+un-premultiplied by `convertToBlob`: multiply RGB by alpha / 255 to get the back buffer bytes before comparing.
+Evidence (not committed): `target/classpanel-evidence/` in the SAMP-CLASSPANEL worktree.
 
 ## 7. Tests
 
-`cargo test -p sa-samp-ui` (38): colour-code parse / strip / runs (samp's cursor walk), pixel wrapping with
+`cargo test -p sa-samp-ui` (44; class panel: layout and hit tests, draw / hover, DXUT press-release clicks,
+scoreboard precedence, cursor; skin mip chain): colour-code parse / strip / runs (samp's cursor walk), pixel wrapping with
 colour carry, player-chat split, chat capacity / truncation / wrap / layout / scrolling / F7 / timestamps /
 page size / scrollbar, input history and
 submit, edit caret / capacity / password, dialog geometry (message box, input, list, tab list with headers),
@@ -264,6 +313,9 @@ fails on a pre-existing `deref_addrof` in `camerasize.rs`'s tests (not touched h
    the lane's `gta_sa.set` written first. Under a larger window (e.g. 800 × 600 stretched to 1280 × 720 by
    gamescope) samp centres dialogs and sizes the chat input by the window's client rectangle, not the video mode.
    The hardware cursor (`mouse.png`) is not in gamescope screenshots, so the cursor is checked by code only.
+9. **GUI font 0 size** (§6.2): button / edit / list labels render about 12 % narrower than Wine's GDI rendering of
+   samp's GUI font (cell height 20, quality 0); the main and small fonts match. Next step: measure the GUI fonts'
+   ppem in the reference (one glyph run per size) and give the GUI fonts their own cell → ppem rule.
 6. **Menus** (`ShowMenu`, GTA's `CMenuSystem`) stay on `hud::Menus`, not this UI.
 7. **wasm32**: the UI crate and the backend build; `sa-game` itself does not target wasm32 yet.
 

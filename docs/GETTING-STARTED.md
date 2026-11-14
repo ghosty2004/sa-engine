@@ -185,6 +185,7 @@ Useful options (all documented in [arch/platform.md](arch/platform.md) §13–§
 | `--present-dir DIR` + `SA_GAME_PRESENT_GAME=1` | save every in-game frame as PNG |
 | `--report FILE` | step table + **blocker list** (unported functions the run hit) |
 | `SA_GAME_KEYS=w:40:200,shift:300:304,…` | scripted keys `key:from:to` (iterations) |
+| `SA_GAME_POINTER=X:Y:ITER[:click],…` | scripted pointer moves (and left clicks) for the SA:MP UI's cursor |
 | `SA_GAME_STUB=ADDR=RET/N,…` | exploration only: make an unported function return a constant |
 | `SA_GAME_SCRIPT_SKIP=1` | skip unported script opcodes — not 1:1 |
 | `SA_GAME_AUDIO=cpal` | real audio output natively |

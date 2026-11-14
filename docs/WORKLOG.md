@@ -1218,3 +1218,25 @@
 - Rebased CARJACK (03471585, 10 commits) onto 87c1b470 in a temporary worktree (queue conflicts resolved by regeneration: 2438 unverified hooks, 380 batches) and fast-forwarded master. 32 hooks + 1 native, batch carjack-1: the CTaskComplexCarSlowBeDraggedOutAndStandUp / CarSlowDragPedOut / CarSlowBeDraggedOut family (0x6486F0 was the user's blocker), CEventPedEnteredMyVehicle, KillPedOnFoot base, DestroyCar / DestroyCarArmed / DragPedFromCar / ScreamInCarThenLeave, LeaveCarAndFlee, GetCurrentCJMood, 16 previously unlisted generated natives; `SA_GAME_JACK` exploration knob.
 - Agent evidence: verify-all carjack2 IDENTICAL 13/13; 3 drivers jacked, 0 blocked over 3600 iterations. Main session on the rebased head: sa-hook lib 58/58, ai_patterns --check clean, i686 build, the jack repro 0 blocked over 3600 iterations; play package refreshed. Ledger entry for 0x621F50 (reference cell).
 - Frontier the agent saw: jacked peds fighting back (GunControl 0x625270, KillPedOnFootMelee), police after a jack (UpdateCarAI law-enforcer path), GoToPointFine::ProcessPed 0x663540, ProstituteSolicit::IsTaskValid 0x661BB0, IsSphereTouchingVehicle 0x6D84D0, burning car 0x4DCBE0.
+## 2026-11-14 SAMP-CLASSPANEL: SA:MP class-selection panel in the engine-drawn UI (agent, branch worktree-agent-a386e2d86a077ef0c)
+- `crates/sa-samp-ui/src/classpanel.rs`: samp's class-selection GUI dialog (0x1026eaa4) per samp-rs `class_panel` /
+  `ui-rendering.md` §4.2: 310 × 40 on 0x960A0A0A at ((W − 310) / 2, H − 90), `<<` `>>` `Spawn` 90 × 30 DXUT buttons
+  with the hover look; drawn after the chat input, not with the scoreboard; DXUT press-release clicks. sa-samp-api v4:
+  `SampUi::show_class_panel`, `UiEvent::ClassPanelClicked(ClassButton)`.
+- The skin is sampled trilinearly like samp's D3DX sprite (box-filtered mip chain written per level,
+  `rwFILTERLINEARMIPLINEAR`); found by the pixel comparison (bilinear rims were up to 60 levels off).
+- `sa-game/src/samp_net.rs`: panel shown / kept / hidden as samp-rs; clicks act as Left / Right / Shift through
+  `classsel` (guards, sounds 1052 / 1053, RPC 128 / 129); the class tick waits while a dialog is open; Shift ignored
+  with the chat input open. Browser: the page hands the pointer to the UI while it shows its cursor (`uiCursor`).
+  `SA_GAME_POINTER` (native) and `headless.mjs --pointer` (browser) for scripted clicks.
+- Verified: sa-samp-ui 44 tests (6 new), sa-samp-api / sa-samp tests, sa-game samp tests (i686); clippy -D warnings
+  for sa-samp-ui / sa-samp-api / sa-samp (host, i686 all targets, wasm32) and sa-game --features samp (i686 lib/bin,
+  wasm32 lib); samp-rs: `cargo test -p samp-client` 201 + 1, clippy i686-pc-windows-gnu clean. Pre-existing, not
+  touched: sa-game host clippy (dead `call_this` / `call_cmp` in crt.rs), sa-game i686 `--all-targets` clippy
+  (`is_multiple_of` in detheap.rs tests).
+- Runs against the shared open.mp server (UDP 7813): browser (headless Brave, GPU, own serve.py on 8660) and native
+  i686 offscreen: panel at class selection, hover, `>>` → "requesting class 1 (sound 1052)", `<<` → class 0
+  (sound 1053), `Spawn` → RPC 129, spawn response 1, spawned; 0 blocked. Original gta_sa.exe + samp.dll on lane 6
+  against the same server with xdotool clicks: side-by-side at 800 × 600, the same scene; the panel matches to the
+  pixel except the GUI font 0 labels (about 12 % narrower in the engine; ledger, overlay.md §6.2). Evidence under
+  `target/classpanel-evidence/` (not committed).
