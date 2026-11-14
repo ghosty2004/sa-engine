@@ -88,8 +88,7 @@ pub fn go_to_point_fine_set_blended_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         virtual_delete(tired, 1);
     }
     let le = |k: usize| !x(ratio()).fcom(X87::from_f64_exact(g::<f64>(k).read())).test_parity(0x41);
-    let state;
-    if le(0x85_A310) {
+    let state = if le(0x85_A310) {
         if walk.is_null() {
             walk = add_anim(ped, 0);
         }
@@ -98,7 +97,7 @@ pub fn go_to_point_fine_set_blended_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         wr::<u32>(walk, 0x1C, 0);
         delete(run);
         delete(sprint);
-        state = 4;
+        4
     } else if le(0x86_F990) {
         if walk.is_null() {
             walk = add_anim(ped, 0);
@@ -115,7 +114,7 @@ pub fn go_to_point_fine_set_blended_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         wr::<u32>(run, 0x1C, 0);
         wr::<f32>(run, 0x18, v);
         delete(sprint);
-        state = 6;
+        6
     } else if le(0x86_F988) {
         delete(walk);
         if run.is_null() {
@@ -132,10 +131,10 @@ pub fn go_to_point_fine_set_blended_move_anim(this: GPtr<u8>, ped: GPtr<u8>) {
         let v = x(ratio()).fsub_m(g::<f32>(0x85_8CA0).read()).to_f32();
         wr::<u32>(sprint, 0x1C, 0);
         wr::<f32>(sprint, 0x18, v);
-        state = 7;
+        7
     } else {
         return;
-    }
+    };
     ped_set_move_state(ped, state);
     wr::<u32>(ped, 0x538, state);
     wr::<u32>(this, 8, state);
