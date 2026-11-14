@@ -240,8 +240,9 @@ pub fn frame() -> bool {
     let presents = crate::d3d9::PRESENTS.load(Ordering::Relaxed);
     // Most main-loop iterations do not run a game frame: the page runs the loop without the frame limiter's sleep,
     // so between two frames there are many iterations that only peek messages. The game reads its input
-    // (DirectInput state, CPad) in the iterations that run a frame, which are the ones that present. So the mouse
-    // motion, the wheel and the keys pressed since the last frame stay pending until an iteration presents (natively
+    // (DirectInput state, CPad) in the iterations that run a frame, which are the ones that present. So the keys
+    // pressed since the last frame stay pending until an iteration presents (the mouse motion and the wheel are kept by
+    // `Session::iterate` until `GetDeviceState` reads them; natively
     // the limiter sleeps and nearly every iteration is a frame). Window-message events go to the queue once.
     // A key released before any frame saw it held is released after the next frame instead (a quick tap, or one
     // shorter than a slow frame, still reaches CPad).
@@ -259,6 +260,10 @@ pub fn frame() -> bool {
         });
         let out = i.clone();
         i.events.clear();
+        // the mouse motion and the wheel are handed over once: `Session::iterate` keeps them until the game's
+        // `GetDeviceState` reads them (DirectInput semantics), so passing the pending sum again would count it twice
+        i.mouse_delta = (0.0, 0.0);
+        i.wheel = 0.0;
         out
     });
     let more = with_session(|s| {
