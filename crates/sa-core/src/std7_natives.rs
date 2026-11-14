@@ -21,6 +21,10 @@ pub fn train_update_trains() {}
 #[crate::native(addr = 0x5E01A0, conv = cdecl, name = "CPed::UpdateStatEnteringVehicle")]
 pub fn ped_update_stat_entering_vehicle() {}
 
+/// `CPed::UpdateStatLeavingVehicle` (0x5E01B0): `ret` (reached when a jacked ped is set out of its car).
+#[crate::native(addr = 0x5E01B0, conv = cdecl, name = "CPed::UpdateStatLeavingVehicle")]
+pub fn ped_update_stat_leaving_vehicle() {}
+
 /// `ProcObjectMan_c::Update` (0x5A3110): `ret`.
 #[crate::native(addr = 0x5A3110, conv = cdecl, name = "ProcObjectMan_c::Update")]
 pub fn proc_object_man_update() {}
@@ -215,6 +219,7 @@ pub const NATIVES: &[crate::abi::NativeReg] = &[
     NATIVE_RUBBISH_SET_VISIBILITY,
     NATIVE_TRAIN_UPDATE_TRAINS,
     NATIVE_PED_UPDATE_STAT_ENTERING_VEHICLE,
+    NATIVE_PED_UPDATE_STAT_LEAVING_VEHICLE,
     NATIVE_PROC_OBJECT_MAN_UPDATE,
     NATIVE_HELI_SPECIAL_HELI_PRE_RENDER,
     NATIVE_MOVING_THINGS_RENDER,

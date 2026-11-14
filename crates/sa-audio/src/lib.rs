@@ -64,3 +64,4 @@ pub mod player_vehicle_engine;
 pub mod bicycle_tyre_volume;
 pub mod radio_queue_tracks_native;
 pub mod weapon_gun_sounds;
+pub mod cj_mood;
