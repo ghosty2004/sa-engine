@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/img/logo.svg" alt="sa-engine: San Andreas, rebuilt in Rust" width="560"></p>
+
 # sa-engine
 
 A function-by-function Rust reimplementation of **GTA San Andreas PC 1.0 US** (`gta_sa.exe`), checked

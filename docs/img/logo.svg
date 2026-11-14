@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="220" viewBox="0 0 640 220" role="img" aria-labelledby="t d">
+  <title id="t">sa-engine</title>
+  <desc id="d">A rust-coloured cog with the letters SA, beside the words sa-engine: a San Andreas engine written in Rust.</desc>
+  <style>
+    .word { fill: #1B1F24; }
+    .sub { fill: #A3401C; }
+    @media (prefers-color-scheme: dark) {
+      .word { fill: #E6EDF3; }
+      .sub { fill: #F3A66B; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="rust" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E8743B"/>
+      <stop offset="1" stop-color="#A3401C"/>
+    </linearGradient>
+    <linearGradient id="sunset" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFB347"/>
+      <stop offset="1" stop-color="#F06A2A"/>
+    </linearGradient>
+  </defs>
+  <polygon points="201.9,106.1 201.9,113.9 185.7,116.8 184.9,123.1 199.8,130.1 197.8,137.5 181.4,136.1 178.9,142.0 191.5,152.6 187.7,159.3 172.2,153.7 168.3,158.8 177.7,172.3 172.3,177.7 158.8,168.3 153.7,172.2 159.3,187.7 152.6,191.5 142.0,178.9 136.1,181.4 137.5,197.8 130.1,199.8 123.1,184.9 116.8,185.7 113.9,201.9 106.1,201.9 103.2,185.7 96.9,184.9 89.9,199.8 82.5,197.8 83.9,181.4 78.0,178.9 67.4,191.5 60.7,187.7 66.3,172.2 61.2,168.3 47.7,177.7 42.3,172.3 51.7,158.8 47.8,153.7 32.3,159.3 28.5,152.6 41.1,142.0 38.6,136.1 22.2,137.5 20.2,130.1 35.1,123.1 34.3,116.8 18.1,113.9 18.1,106.1 34.3,103.2 35.1,96.9 20.2,89.9 22.2,82.5 38.6,83.9 41.1,78.0 28.5,67.4 32.3,60.7 47.8,66.3 51.7,61.2 42.3,47.7 47.7,42.3 61.2,51.7 66.3,47.8 60.7,32.3 67.4,28.5 78.0,41.1 83.9,38.6 82.5,22.2 89.9,20.2 96.9,35.1 103.2,34.3 106.1,18.1 113.9,18.1 116.8,34.3 123.1,35.1 130.1,20.2 137.5,22.2 136.1,38.6 142.0,41.1 152.6,28.5 159.3,32.3 153.7,47.8 158.8,51.7 172.3,42.3 177.7,47.7 168.3,61.2 172.2,66.3 187.7,60.7 191.5,67.4 178.9,78.0 181.4,83.9 197.8,82.5 199.8,89.9 184.9,96.9 185.7,103.2" fill="url(#rust)"/>
+  <circle cx="110" cy="110" r="62" fill="#1B1F24"/>
+  <circle cx="110" cy="110" r="62" fill="none" stroke="#F3A66B" stroke-width="3"/>
+  <text x="110" y="129" text-anchor="middle" font-family="DejaVu Sans, Verdana, sans-serif" font-weight="700" font-size="56" fill="url(#sunset)" letter-spacing="-2">SA</text>
+  <text x="230" y="112" font-family="DejaVu Sans Mono, Menlo, Consolas, monospace" font-weight="700" font-size="58" class="word">sa-engine</text>
+  <text x="232" y="152" font-family="DejaVu Sans, Verdana, sans-serif" font-size="21" class="sub">San Andreas, rebuilt in Rust · 1:1</text>
+</svg>
