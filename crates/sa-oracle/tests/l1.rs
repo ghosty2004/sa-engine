@@ -503,6 +503,9 @@ const PRESERVE_SPECS_PENDING: &[u32] = &[
     0x6432A0, 0x6452C0,
     // SCRIPT-5 batch script5-1 (integrated by INTRO-2): CTheScripts::IsVehicleStopped (preserve 0x1); spec queued.
     0x4861F0,
+    // FRONTIER-1 batch frontier-1-1: the vtable-only destructor 0x4B1F00 (preserve ecx: its scalar deleting
+    // destructor 0x4B6840 reads ECX after the call); spec queued.
+    0x4B1F00,
 ];
 
 /// Preserved registers (VER-2, verifier finding V-9): every spec that declares them names a port

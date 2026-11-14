@@ -1316,3 +1316,46 @@
 - Fast-forwarded master to 7e2da8b9: one SA:MP UI, samp-rs's own, drawn through `sa_samp_api::ui::UiBackend` (API v5): samp-client's pass (`ui::render`, `ui::session`, `ui::host`) generic over the trait, its D3D9/DXUT code the original-exe backend, `sa-samp`'s overlay the engine backend; shared geometry moved into samp-ui (dxut, classpanel, scoreboard/deathwindow layout); `crates/sa-samp-ui` deleted (22,722 → 19,537 lines incl. new tests). Behaviour differences resolved by samp-rs/spec, listed in overlay.md section 10.4.
 - Main session: the browser build panicked at start-up (`std::time::SystemTime` in the UI core; wasm32 has no std clock) → web_time; GETTING-STARTED and the Makefile `test` target updated. Checks: samp-rs workspace tests green, sa-samp 30, sa-samp-api; browser (headless Brave, GPU) joins the local open.mp server, class-panel Spawn click → spawned, 0 blocked.
 - Not re-measured: the D3D9 call stream on the original exe (builds and clippy clean).
+## 2026-11-14 FRONTIER-1: the phase B frontier, the user-hit blockers and the pause-menu crash (agent adab96e32a9742efe)
+- Integration (step 0): WRITER-WORLD-2's own commits world6-1/3/4/5 cherry-picked (world3/5/6-2 were on master
+  already); its BreakObject_c::DoCollision 0x59E1F0 (world5-1) moved into master's BreakObject_c port (master's file
+  had every other method). WRITER-SAMP-2's a089a405 / 855a5ba0 picked (FireInstantHit, FireProjectile, AddProjectile,
+  bullet trace / impact, checkpoint render, water line test / split / wake / ripple, glass, boat buoyancy); master's
+  0x49FF20 (fx_debris_wheel_grass), 0x706F60 (shadows_permanent) and 0x6E91D0 (waterlevel, intro3-9) kept, SAMP-2's
+  copies dropped, and its 0x61D6F0 file kept as master's. The remaining "in-flight" addresses of both branches were
+  `#[sa_core::native(` / `#[crate::native(` registrations master already has: `inflight.py` now matches path-prefixed
+  attributes. FireInstantHit's determinism scrub (detwin.rs) and the hook no longer conflict: the installer takes the
+  scrub stub as the hook's original (`detwin::redirected_entry`, win.rs `install_one`), so the original path keeps the
+  scrub. keycells READERS merged (51). Generators regenerated (`--check` clean), queue regenerated.
+- `tools/verify/frontier.py` (step 1): direct `=> unported` literal/table targets of `orig!` declarations and
+  unregistered unknown/specified vtable slots, minus X-* rows and the protection's code; registered = `#[hook]` /
+  `#[native]` (any path prefix), the lone-ret / static-init tables and sa-game's address entries; addresses another
+  branch or agent worktree registers (inflight.py's `elsewhere()`) are marked and left out (`--all` shows them).
+  Counts: after the integration 523 direct + 217 virtual (740); at hand-back 512 + 211 (723).
+- Pause-menu crash (Esc, down x3, Enter = Stats): root cause in the phase B `orig!` path, not in a port.
+  `stats_strings.rs` declares `CStats::GetStatValue` as `reg("args = stack") -> X87`; phase B dispatched every
+  unported `reg(...)` declaration as `cdecl`, i.e. `extern "C" fn(u32) -> X87`, a struct return through a hidden
+  pointer the registered entry (the hook's ST0 shim) does not take: the call returned into `orig::host::TABLE`.
+  Fix: phase B calls the registered entry of a `reg(...)` declaration through a `RegFrame` / `call_regs` (the
+  original convention, as phase A does); `call_regs` now aligns ESP to 16 at its `call` (the X87 shim's `movaps`
+  faulted on the 4-aligned stack). The only other unported `reg` declaration with a registration whose convention
+  differed was 0x4CAAE0 (`raster_copy`, EAX source, registered as a cdecl native): its declaration now calls the
+  port directly. Repro `tools/e2e/scenarios/frontier.sh pausemenu`: 400 iterations, Stats pages drawn, 0 blocked.
+- Ports (unverified): batch `frontier-1-1` (15): CTaskComplexProstituteSolicit::ControlSubTask 0x6669D0,
+  CObject::ProcessTrainCrossingBehaviour 0x5A0B50, CPedGeometryAnalyser::IsEntityBlockingTarget 0x5F3970,
+  CTaskSimpleBikeJacked ctor 0x648B90 (+ keycells reader 0x156DAD4) / ProcessPed 0x64C970,
+  CTaskSimpleGoToPointFine ProcessPed 0x663540 / SetBlendedMoveAnim 0x65EF80, CTaskComplexKillPedOnFootMelee
+  CreateSubTask 0x626AC0 / ControlSubTask 0x626D90 / CreateNextSubTask 0x62BC10, CTaskSimpleFightingControl ctor
+  0x61DC10, CVehicle::IsSphereTouchingVehicle 0x6D84D0, the walk-into-fire event destructors 0x4B1F00 / 0x4B6840,
+  CEventPlayerCollisionWithPed's destructor 0x5FEE80. Batch `frontier-1-2` (5): CTaskSimpleFight::FightHitPed
+  0x61CBA0, CTaskSimpleFight::BeHitWhileBlocking 0x61C650, CPedGeometryAnalyser::ComputePedShotSide 0x5F13F0,
+  Fx_c::AddBlood 0x49EB00, the complex-task destructor 0x6833D0. Catalogue names (CAT-17 name-corrections):
+  0x4B1F00, 0x5FEE80, 0x61CBA0, 0x61C650.
+- No new helper copies (ADR-003): `sa_math::x87::ci_acos` replaces sa-anim's and sa-script's private copies,
+  `sa_world::world::common::entity_pos` is the shared entity-position helper, and the `orig!` declarations the new
+  ports share live in sa-ai's / sa-render's / sa-veh's `common.rs`.
+- Not done (handed to the next lane): GunControl::ProcessPed 0x625270, the police path (UpdateCarAI law enforcer,
+  KillCriminal::ControlSubTask 0x68E950 (4.2 KB), GenerateOneEmergencyServicesCar 0x42B7D0), the burning car
+  0x4DCBE0. New blockers the scenarios reach: CAEPedAudioEntity::HandlePedHit 0x4E1CC0 (melee, 2 iterations; nested
+  jump tables and a protection fragment), CAutomobile::UpdateMovingCollision 0x6A1460 and
+  CTrailer::SetupSuspensionLines 0x6CF1A0 (crossing run).
