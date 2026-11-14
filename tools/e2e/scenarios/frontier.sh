@@ -10,8 +10,8 @@
 #                  (ControlSubTask 0x6669D0) and IsEntityBlockingTarget 0x5F3970 run
 # crossing (1200)  the Greenwood taken to the level crossing south of Grove Street (2200, -1895; traincross1/2) and
 #                  driven over the tracks: CObject::ProcessTrainCrossingBehaviour 0x5A0B50 for the barriers
-# melee    (3000)  on foot at Grove Street, CJ walks into the peds punching (LMB): fist fights
-#                  (CTaskComplexKillPedOnFootMelee, CTaskSimpleFightingControl)
+# melee    (2600)  on foot at Grove Street, CJ sprints into the peds and punches (LMB): CTaskSimpleFight::FightHitPed
+#                  (not yet 0 blocked: HandlePedHit 0x4E1CC0, CEventDamage::ComputeDamageAnim 0x4B3FC0)
 # Env: SA_ROOT (checkout holding wine/gta-sa; default ~/sa-engine), SA_GAME (binary; default this checkout's
 # i686-unknown-linux-gnu release build), WRAP (a command prefix, e.g. WRAP="gdb -q -batch -x tools/e2e/scenarios/frontier-counts.gdb --args"
 # to count the ports' calls), plus any SA_GAME_* (SA_GAME_PRESENT_GAME=1 + PRESENT_DIR for frames).
@@ -43,10 +43,13 @@ crossing)
     export SA_GAME_KEYS=f:100:103,w:330:420,s:520:560
     run "${3:-1200}" --start-in-world ;;
 melee)
-    export SA_GAME_SCRIPT_SKIP=1 SA_GAME_KEYS="w:100:1300"
-    export SA_GAME_LMB="${SA_GAME_LMB:-200:204,260:264,320:324,380:384,440:444,500:504,560:564,620:624,680:684,740:744,800:804,860:864,920:924,980:984,1040:1044,1100:1104,1160:1164,1220:1224,1280:1284}"
+    # the PEDHIT foot run's sprint into the Grove Street peds (they are next to CJ at ~905), then punches every 25
+    # iterations: CTaskSimpleFight::FightHitPed lands (7 hits by 2600); stops on HandlePedHit 0x4E1CC0 and
+    # CEventDamage::ComputeDamageAnim 0x4B3FC0 (not ported yet)
+    export SA_GAME_SCRIPT_SKIP=1 SA_GAME_KEYS="w:100:910,space:120:900"
     export SA_GAME_MOUSE="15:0:200:400,-20:3:500:700,25:-2:800:1000"
-    run "${3:-3000}" --start-in-world --system-heap ;;
+    export SA_GAME_LMB="${SA_GAME_LMB:-$(i=905; s=; while [ $i -lt 2400 ]; do s="$s${s:+,}$i:$((i + 4))"; i=$((i + 25)); done; echo "$s")}"
+    run "${3:-2600}" --start-in-world --system-heap ;;
 *)
     echo "usage: $0 pausemenu|solicit|crossing|melee OUTDIR [FRAMES]" >&2
     exit 2 ;;
