@@ -172,7 +172,13 @@ async function start(files) {
       statusEl.className = m.error ? 'err' : '';
       $('ministatus').textContent = m.error ? `error: ${m.error}` : m.blocked ? `${m.blocked} blocked` : '';
       // the SA:MP UI's cursor (dialogs, scoreboard, class-selection panel) takes the pointer like the menus
+      const wasMenu = inMenu;
       inMenu = m.state !== 9 || !!m.uiCursor || !!m.menuActive;
+      // back in game from a menu or the SA:MP UI (Resume / Esc / Enter / a click: a recent user gesture, which the
+      // browser needs for the pointer lock): capture the pointer again, so the game has it at once
+      if (wasMenu && !inMenu && m.state === 9 && document.pointerLockElement !== canvas && document.hasFocus()) {
+        canvas.requestPointerLock?.()?.catch?.(() => {});
+      }
       if ((m.uiCursor || m.menuActive) && document.pointerLockElement === canvas) { selfRelease = true; document.exitPointerLock?.(); }
       canvas.classList.toggle('menu', inMenu && document.pointerLockElement !== canvas);
       $('blocked').textContent = m.blocked ? `blocked iterations: ${m.blocked}, last: ${m.lastBlocked} (not ported yet)` : '';
