@@ -1169,3 +1169,8 @@
 - Gate: sa-hook lib tests 58/58, i686-windows DLL, wasm32 sa-ports, queue regenerated. The clippy -D warnings
   failures are already on master: sa-pop carctrl4.rs doc lists, sa-game crt.rs/detheap.rs, sa-render
   postfx_speed_fx.rs.
+
+## 2026-11-14 — FRAMELIMIT on master (main session)
+- Fast-forwarded master to FRAMELIMIT's 8592d839 (rebased on a266cc61): CRealTimeShadowManager::ReInit 0x706870 (the vsync toggle resets the D3D9 device; the reset callback 0x5BA120 makes the next shadow update reinit), plus walk blockers surfaced by the menu timing (0x4AF700, 0x649020, 0x664590, 0x6648C0, 0x4AC920) and CEventVehicleCollision::AffectsPed 0x4B2EE0 copied from CARJACK; `SA_GAME_KEYS` accepts `esc`.
+- Agent evidence: scripted toggle ON→OFF→ON→OFF then 2616 iterations, 0 blocked; window run 0 blocked; gta_sa.set byte 0xB35 saved; verify-all framelimit-final IDENTICAL 13/13 with the new batches on. Main session: sa-hook lib 58/58, i686 sa-game build, play package refreshed.
+- CARJACK registers 0x4AC920 and 0x4B2EE0 too: keep master's when it lands. Driving later hits ProcessTrainCrossingBehaviour 0x5A0B50 (independent of the menu).
