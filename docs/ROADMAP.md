@@ -210,6 +210,9 @@ Sections: *pending* (blocks "done") · *original UB, not reproducible* · *accep
 - FSIN/FCOS/FPATAN modelled at 53 bits vs the CPU's 64 (sa_math::x87): every stored/product result matched on the 17 CPU-decided specs; the authority is one Intel CPU (an AMD CPU may differ) (MATH-2).
 - Aliased output pointers are not modelled for IntersectRay, IntersectEdge, CRect::GetCenter, ConvertToEulerAngles and matrix ops whose result aliases an operand; explicit in-place variants exist; L2 must confirm the call sites (MATH-2).
 - `CGeneral::GetATanOfXY` (0x53CC70) (state set back to `implemented` after verifier V-1: 35 call sites feed the full ST0 into x87 arithmetic; with the f32 API, 4,579/200k differ, while the `_x87` API has 0), path x > 0, y > 0, |x| ≥ |y|: the original returns the raw FPATAN value in ST0 (64-bit significand); `sa_math` has it to 53 bits. The stored f32 matched in all 1,003,364 cases on the CPU; ST0 beyond f32 differs in 78,162. Resolve by an x87-exact atan or by showing every caller stores ST0 to f32 first (call graph).
+- SA:MP UI GUI font 0 (DXUT button / edit / list labels, e.g. the class-selection panel's `<<` `>>` `Spawn`): the engine's
+  glyphs are about 12 % narrower than the original's under Wine (cell 20 → 17 ppem by the main-font rule); everything
+  else of the class-selection panel matches to the pixel (SAMP-CLASSPANEL, docs/samp/overlay.md §6.2, §8 item 9).
 
 *original UB, not reproducible*
 - `CTheZones::AssignZoneInfoForThisZone` loops forever when index < count (port loops too; never hit). `CEntryExit::GetPositionRelativeToOutsideWorld` writes the z sum into its own unused stack argument slot (not reproduced). `CStuntJumpManager::Init` SEH frame around the pool constructor not reproduced. `FindPlayerCentreOfWorld_NoSniperShift` reads Players[-1] for id -1 and CShopping touches the byte before its bought-flags table for unknown keys (kept) (PORT-WORLD p1).
