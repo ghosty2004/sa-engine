@@ -1,0 +1,34 @@
+# gdb command file for tools/e2e/scenarios/frontier.sh (WRAP="gdb -q -batch -x THIS --args"): counts the calls of the
+# FRONTIER-1 ports (their registered phase B entries) and prints the hit counts at the end (`info breakpoints`).
+set pagination off
+set breakpoint pending on
+handle SIGSEGV stop nopass
+handle SIGUSR1 nostop noprint pass
+handle SIGUSR2 nostop noprint pass
+handle SIGPIPE nostop noprint pass
+rbreak __sa_hook_native_object_process_train_crossing_behaviour$
+rbreak __sa_hook_native_prostitute_solicit_control_sub_task$
+rbreak __sa_hook_native_is_entity_blocking_target$
+rbreak __sa_hook_native_kill_ped_on_foot_melee_create_sub_task$
+rbreak __sa_hook_native_kill_ped_on_foot_melee_control_sub_task$
+rbreak __sa_hook_native_kill_ped_on_foot_melee_create_next_sub_task$
+rbreak __sa_hook_native_fighting_control_ctor_61dc10$
+rbreak __sa_hook_native_fight_hit_ped$
+rbreak __sa_hook_native_fight_block_hit$
+rbreak __sa_hook_native_fx_add_blood$
+rbreak __sa_hook_native_go_to_point_fine_process_ped$
+rbreak __sa_hook_native_go_to_point_fine_set_blended_move_anim$
+rbreak __sa_hook_native_bike_jacked_ctor$
+rbreak __sa_hook_native_bike_jacked_process_ped$
+rbreak __sa_hook_native_vehicle_is_sphere_touching_vehicle$
+rbreak __sa_hook_native_event_base_dtor_4b1f00$
+rbreak __sa_hook_native_event_potential_walk_into_fire_sdd_4b6840$
+rbreak __sa_hook_native_event_player_collision_with_ped_dtor_5fee80$
+rbreak __sa_hook_native_complex_task_8706f8_dtor$
+rbreak __sa_hook_native_compute_ped_shot_side$
+commands 1-40
+silent
+continue
+end
+run
+info breakpoints

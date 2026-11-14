@@ -54,6 +54,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | framelimit-ai | 5 | AI, UNK-game | 4b8a01b9 | master | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | framelimit-render | 1 | RENDER | 4b8a01b9 | master | 1 | 0 | 0 | 0 | 0 | L3-only 1 |
 | frontier-1-1 | 15 | AI, UNK-game, VEH, WORLD | 21ae2faf | worktree-agent-adab96e32a9742efe | 15 | 0 | 0 | 0 | 0 | L2 15 |
+| frontier-1-2 | 5 | AI, RENDER, UNK-game | b6de5b5a | worktree-agent-adab96e32a9742efe | 5 | 0 | 0 | 0 | 0 | L2 5 |
 | gen2-anim-1 | 1 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 1 | 0 | L2 1 |
 | gen2-coll-1 | 20 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 20 | 0 | L2 8, split 12 |
 | gen2-core-1 | 4 | UNK-game | ed288e85 | master | 0 | 0 | 0 | 4 | 0 | L2 4 |
@@ -1903,6 +1904,25 @@ SA_UNVERIFIED=frontier-1-1 LANE=$LANE tools/e2e/port-l2.sh batch:frontier-1-1 $S
 | 0x663540 | `CTaskSimpleGoToPointFine::ProcessPed` | written | L2 | heap-writes |
 | 0x6669D0 | `CTaskComplexProstituteSolicit::ControlSubTask` | written | L2 | heap-writes |
 | 0x6D84D0 | `CVehicle::IsSphereTouchingVehicle` | written | L2 | none |
+
+## frontier-1-2
+
+5 hooks in sa-ai, sa-render; hazards: heap-writes (4), stack-residue (2), x87-transcendental (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh frontier-1-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=frontier-1-2 LANE=$LANE tools/e2e/port-l2.sh batch:frontier-1-2 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag frontier-1-2
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x49EB00 | `Fx_c::AddBlood` | written | L2 | heap-writes,stack-residue |
+| 0x5F13F0 | `CPedGeometryAnalyser::ComputePedShotSide` | written | L2 | x87-transcendental |
+| 0x61C650 | `CTaskSimpleFight::BeHitWhileBlocking` | written | L2 | heap-writes |
+| 0x61CBA0 | `CTaskSimpleFight::FightHitPed` | written | L2 | heap-writes,stack-residue |
+| 0x6833D0 | `FUN_006833d0` | written | L2 | heap-writes |
 
 ## gen2-anim-1
 
