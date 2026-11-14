@@ -99,6 +99,7 @@ pub const MODULES: &[&[HookReg]] = &[
     crate::car_drive_close_door_cb::HOOKS,
     crate::leave_car_and_flee::HOOKS,
     crate::kill_ped_on_foot::HOOKS,
+    crate::retaliation_car_tasks::HOOKS,
     crate::vehicle_potential_collision::HOOKS,
     crate::attractor_approach_event::HOOKS,
     crate::task_in_air_process_ped::HOOKS,

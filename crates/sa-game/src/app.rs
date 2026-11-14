@@ -797,9 +797,30 @@ sa_core::orig! {
 /// ped (on foot) is moved DIST units (default 7) in front of the nearest car (no law enforcer) that has a driver other
 /// than the player, SIDE units (default 0) along the vehicle's right axis, facing the vehicle, through its `Teleport` virtual.
 /// A driver usually stops for a ped in its path; a scripted F press (SA_GAME_KEYS) then jacks it.
+/// The driver `SA_GAME_JACK` last aimed at and the iteration it did (its state is printed every 20 iterations for
+/// 400 iterations: ped state +0x530, in-vehicle bit, health +0x540, position).
+static JACK_VICTIM: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 fn teleport_in_front_of_driven_car(n: u32) {
     use sa_core::mem::GPtr;
     let Ok(v) = crate::env::var("SA_GAME_JACK") else { return };
+    let victim = JACK_VICTIM.load(std::sync::atomic::Ordering::Relaxed);
+    let (vp, since) = ((victim & 0xFFFF_FFFF) as u32, (victim >> 32) as u32);
+    if vp >= 0x1000 && n > since && n - since <= 400 && (n - since).is_multiple_of(20) {
+        let rd = |a: u32| GPtr::<u32>::from_addr(a as usize).read();
+        let m = rd(vp + 0x14);
+        let b = if m >= 0x1000 { m + 0x30 } else { vp + 4 };
+        let f = |a: u32| f32::from_bits(rd(a));
+        println!(
+            "jack-victim {n}: ped {vp:#x} state {} in-vehicle {} health {:.1} at ({:.2}, {:.2}, {:.2})",
+            rd(vp + 0x530),
+            (rd(vp + 0x46C) >> 8) & 1,
+            f(vp + 0x540),
+            f(b),
+            f(b + 4),
+            f(b + 8)
+        );
+    }
     let Some(f) = v.split(',').find_map(|e| {
         let f: Vec<f32> = e.split(':').filter_map(|x| x.trim().parse().ok()).collect();
         (f.first().map(|i| *i as u32) == Some(n)).then_some(f)
@@ -853,6 +874,7 @@ fn teleport_in_front_of_driven_car(n: u32) {
     for off in [0x558, 0x55C] {
         GPtr::<f32>::from_addr((ped + off) as usize).write(h);
     }
+    JACK_VICTIM.store(u64::from(rd(v + 0x460)) | (u64::from(n) << 32), std::sync::atomic::Ordering::Relaxed);
     println!(
         "jack-teleport {n}: car {v:#x} model {} driver {:#x} at ({cx:.2}, {cy:.2}, {cz:.2}) {d:.1} away; player to ({x:.2}, {y:.2})",
         GPtr::<u16>::from_addr((v + 0x22) as usize).read(),
