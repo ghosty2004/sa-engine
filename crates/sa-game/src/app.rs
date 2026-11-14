@@ -44,6 +44,14 @@ pub struct Args {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
+/// The current main-loop iteration (the numbering of `SA_GAME_KEYS` / `SA_GAME_TELEPORT`), for exploration output.
+static ITERATION: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// The current main-loop iteration (see [`ITERATION`]).
+pub(crate) fn iteration() -> u32 {
+    ITERATION.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 fn parse_args() -> Result<Args, String> {
     let mut a = Args {
         game: PathBuf::new(),
@@ -499,6 +507,7 @@ impl Session {
         if !QUIET_FRAMES.load(std::sync::atomic::Ordering::Relaxed) {
             println!("frame {n}:");
         }
+        ITERATION.store(n, std::sync::atomic::Ordering::Relaxed);
         teleport_player(n);
         teleport_in_front_of_driven_car(n);
         let state = winmain::game_state();
@@ -910,27 +919,52 @@ fn teleport_in_front_of_driven_car(n: u32) {
     );
 }
 
-/// `SA_GAME_TELEPORT=ITER:X:Y:Z[:HEADING]` (exploration only): at main-loop iteration ITER the player ped is moved
-/// to (X, Y, Z) through its `Teleport` virtual, and its current and aimed rotations set to HEADING (radians).
+/// `SA_GAME_TELEPORT=ITER:X:Y:Z[:HEADING][;ITER:X:Y:Z[:HEADING]...]` (exploration only): at main-loop iteration
+/// ITER the player ped is moved to (X, Y, Z) through its `Teleport` virtual, and its current and aimed rotations set
+/// to HEADING (radians). In a vehicle the vehicle is moved instead: `Teleport`, then (with HEADING) its matrix turned
+/// to that heading about z (forward = (-sin, cos, 0)) and its move and turn speeds cleared.
 fn teleport_player(n: u32) {
     let Ok(v) = crate::env::var("SA_GAME_TELEPORT") else { return };
-    let f: Vec<f32> = v.split(':').filter_map(|x| x.trim().parse().ok()).collect();
-    if f.len() < 4 || f[0] as u32 != n {
-        return;
-    }
-    let ped = sa_core::mem::GPtr::<u32>::from_addr(0xB7CD98).read();
-    if ped < 0x1000 {
-        println!("teleport: no player ped");
-        return;
-    }
-    let ped = sa_core::mem::GPtr::<u8>::from_addr(ped as usize);
-    entity_teleport(ped, f[1].to_bits(), f[2].to_bits(), f[3].to_bits(), 0);
-    if let Some(h) = f.get(4) {
-        for off in [0x558, 0x55C] {
-            sa_core::mem::GPtr::<f32>::from_addr(ped.addr() + off).write(*h);
+    for e in v.split(';') {
+        let f: Vec<f32> = e.split(':').filter_map(|x| x.trim().parse().ok()).collect();
+        if f.len() < 4 || f[0] as u32 != n {
+            continue;
         }
+        let ped = sa_core::mem::GPtr::<u32>::from_addr(0xB7CD98).read();
+        if ped < 0x1000 {
+            println!("teleport: no player ped");
+            return;
+        }
+        let at = |a: usize| sa_core::mem::GPtr::<f32>::from_addr(a);
+        let ped = sa_core::mem::GPtr::<u8>::from_addr(ped as usize);
+        let veh = sa_core::mem::GPtr::<u32>::from_addr(ped.addr() + 0x58C).read();
+        let in_veh = sa_core::mem::GPtr::<u32>::from_addr(ped.addr() + 0x46C).read() & 0x100 != 0;
+        if in_veh && veh >= 0x1000 {
+            let veh = sa_core::mem::GPtr::<u8>::from_addr(veh as usize);
+            entity_teleport(veh, f[1].to_bits(), f[2].to_bits(), f[3].to_bits(), 0);
+            if let Some(h) = f.get(4) {
+                let m = sa_core::mem::GPtr::<u32>::from_addr(veh.addr() + 0x14).read() as usize;
+                if m >= 0x1000 {
+                    let (s, c) = h.sin_cos();
+                    for (o, val) in [(0, c), (4, s), (8, 0.0), (0x10, -s), (0x14, c), (0x18, 0.0), (0x20, 0.0), (0x24, 0.0), (0x28, 1.0)] {
+                        at(m + o).write(val);
+                    }
+                }
+                for o in 0..6 {
+                    at(veh.addr() + 0x44 + 4 * o).write(0.0);
+                }
+            }
+            println!("teleport: vehicle to ({}, {}, {})", f[1], f[2], f[3]);
+            continue;
+        }
+        entity_teleport(ped, f[1].to_bits(), f[2].to_bits(), f[3].to_bits(), 0);
+        if let Some(h) = f.get(4) {
+            for off in [0x558, 0x55C] {
+                at(ped.addr() + off).write(*h);
+            }
+        }
+        println!("teleport: player to ({}, {}, {})", f[1], f[2], f[3]);
     }
-    println!("teleport: player to ({}, {}, {})", f[1], f[2], f[3]);
 }
 
 /// `SA_GAME_WALK=START:COUNT` (see [`synthetic_input`]).
