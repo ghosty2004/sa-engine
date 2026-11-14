@@ -381,6 +381,7 @@ Unverified ports (`#[hook(unverified = "BATCH")]`), one section per batch. Proce
 | world3-3 | 3 | WORLD | c379e778 | master | 3 | 0 | 0 | 0 | 0 | L2 2, split 1 |
 | world4-1 | 9 | WORLD | 64663f15 | master | 9 | 0 | 0 | 0 | 0 | L2 9 |
 | world4-2 | 4 | WORLD | 419315e3 | master | 4 | 0 | 0 | 0 | 0 | L2 3, L3-only 1 |
+| world5-1 | 1 | WORLD | 21dfdc40 | master | 1 | 0 | 0 | 0 | 0 | L2 1 |
 | world5-2 | 11 | WORLD | 1212c39d | master | 11 | 0 | 0 | 0 | 0 | L2 8, split 3 |
 | world6-1 | 10 | WORLD | 88a72154 | master | 10 | 0 | 0 | 0 | 0 | L2 10 |
 | world6-2 | 15 | WORLD | ecb128cf | master | 15 | 0 | 0 | 0 | 0 | L2 15 |
@@ -8067,6 +8068,21 @@ SA_UNVERIFIED=world4-2 LANE=$LANE tools/e2e/port-l2.sh batch:world4-2 $SA_ROOT/t
 | 0x4404A0 | `CEntryExit::TransitionFinished` | written | L3-only | heap-writes |
 | 0x6E4160 | `WaterCreature_c::Init` | written | L2 | heap-writes,x87-transcendental |
 | 0x6E4670 | `WaterCreature_c::Update` | written | L2 | heap-writes,x87-transcendental |
+
+## world5-1
+
+1 hooks in sa-world; hazards: heap-writes (1); recordings calling them: no coverage data.
+
+```sh
+# whole batch on top of the verified set, bisected to the culprit hook on divergence
+tools/verify/bisect-batch.sh world5-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec $LANE
+# L2 of the whole batch (read/write sets; add --runs "plain split rust" for split-route hooks)
+SA_UNVERIFIED=world5-1 LANE=$LANE tools/e2e/port-l2.sh batch:world5-1 $SA_ROOT/target/e2e/lane-2/inf4/rec.sarec --runs "plain l2 rust" --tag world5-1
+```
+
+| address | name | status | route | hazards |
+|---|---|---|---|---|
+| 0x59E1F0 | `BreakObject_c::DoCollision` | written | L2 | heap-writes |
 
 ## world5-2
 

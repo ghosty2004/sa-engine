@@ -411,6 +411,19 @@ pub fn break_object_do_collision_response(this: GPtr<u8>, grp: GPtr<u8>, ts: f32
     }
 }
 
+/// `BreakObject_c::DoCollision(BreakGroup_t* group, float ts)` (0x59E1F0): the ground response when
+/// the piece's bottom (`pos.z - half size`) is below the ground z (`fcomp; test ah, 5; jp` skips
+/// when not below or unordered). Taken from WRITER-WORLD-2 (batch world5-1) at integration.
+#[hook(addr = 0x59E1F0, conv = thiscall, name = "BreakObject_c::DoCollision", this = "BreakObject_c",
+       expect = "8B 54 24 04 D9 42 38",
+       unverified = "world5-1", route = "L2", hazards = "heap-writes")]
+pub fn break_object_do_collision(this: GPtr<u8>, grp: GPtr<u8>, ts: f32) {
+    let below = x(rd::<f32>(grp, 0x38)).fsub_m(rd::<f32>(grp, 0x5C)).fcom(x(rd::<f32>(this, 0x10)));
+    if !below.test_parity(0x05) {
+        do_collision_response(this, grp, ts, this.byte_add(0x14), rd::<f32>(this, 0x10));
+    }
+}
+
 /// `BreakObject_c::Update(float timeStep)` (0x59E220): without groups `Exit`; else every moving group
 /// falls (`v.z -= timeStep * 0.008`) and moves by `v * timeStep`; during the first five frames it spins
 /// about its random axis (`timeStep * speed` degrees, pre-concatenated), later its facing axis (by type:
@@ -646,6 +659,7 @@ pub const HOOKS: &[HookReg] = &[
     HOOK_BREAK_OBJECT_SET_GROUP_DATA,
     HOOK_BREAK_OBJECT_SET_BREAK_INFO,
     HOOK_BREAK_OBJECT_DO_COLLISION_RESPONSE,
+    HOOK_BREAK_OBJECT_DO_COLLISION,
     HOOK_BREAK_OBJECT_UPDATE,
     HOOK_BREAK_OBJECT_RENDER,
     HOOK_BREAK_OBJECT_INIT,

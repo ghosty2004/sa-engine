@@ -1,5 +1,4 @@
 # Generator exclusions: addresses registered (#[hook]/#[native]) on master, a worktree-agent-* branch
 # or an agent worktree, but not in this checkout. Regenerate: python3 -I tools/gen/inflight.py
 0x4AD420  # worktree-agent-aa6be1d1b3cc0f218
-0x59E1F0  # worktree-agent-a33f0e44a9994a468
 0x645600  # worktree-agent-acb5cdcad9d0bd3d6
