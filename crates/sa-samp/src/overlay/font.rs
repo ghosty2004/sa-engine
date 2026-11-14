@@ -105,6 +105,9 @@ pub struct FontAtlas {
     present: [bool; SLOTS],
 }
 
+/// An outline variant: kind, offsets, padding.
+type OutlineKind = (u8, &'static [(i32, i32)], u32);
+
 /// A rasterised glyph before packing: key (slot, outline, byte), width, height, alpha and brightness planes.
 type Bitmap = ((usize, u8, u8), u32, u32, Vec<u8>, Vec<u8>);
 
@@ -222,7 +225,7 @@ impl FontAtlas {
             let scale = PxScale::from(ppem * cell / units);
             let scaled = font.as_scaled(scale);
             let ascent = scaled.ascent().round();
-            let kinds: &[(u8, &[(i32, i32)], u32)] = match si {
+            let kinds: &[OutlineKind] = match si {
                 0 => &[(outline::ONE, &OUTLINE_4, 1), (outline::TWO, &OUTLINE_8, 2)],
                 1..=4 => &[(outline::ONE, &OUTLINE_4, 1)],
                 _ => &[],

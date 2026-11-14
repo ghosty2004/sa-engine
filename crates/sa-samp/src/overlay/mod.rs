@@ -53,6 +53,8 @@ pub struct Overlay {
     input: (bool, bool, bool),
     /// Passes drawn (for logs).
     pub frames: u64,
+    /// A fixed screen size instead of the game's video mode (offline rendering of the pass: tests, comparisons).
+    screen: Option<(i32, i32)>,
 }
 
 impl std::fmt::Debug for Overlay {
@@ -82,6 +84,17 @@ impl Overlay {
         self.skin_raster = 0;
         self.skin_failed = false;
         self.skin_image = Some(rgba);
+    }
+
+    /// Fixes the screen size instead of reading the game's video mode (offline rendering: tests and the UI
+    /// comparisons; no game memory is read then, except by projection and textdraws).
+    pub fn set_screen_size(&mut self, size: Option<(i32, i32)>) {
+        self.screen = size;
+    }
+
+    /// Takes the draws collected so far (offline rendering) and the atlas they refer to.
+    pub fn take_list(&mut self) -> (DrawList, Option<&FontAtlas>) {
+        (std::mem::take(&mut self.list), self.atlas.as_ref())
     }
 
     /// Whether the skin texture is on the GPU.
@@ -178,6 +191,9 @@ impl Overlay {
 
 impl UiBackend for Overlay {
     fn video_size(&self) -> (i32, i32) {
+        if let Some(s) = self.screen {
+            return s;
+        }
         let (w, h) = render::screen_size();
         (w as i32, h as i32)
     }
@@ -488,5 +504,70 @@ impl<V: View> NativeGame<V> {
     /// The camera position (`TheCamera.m_mCameraMatrix`), for nametag distances.
     pub fn camera_pos(&self) -> Vec3 {
         self.view.read_vec3(addr::camera::MATRIX + addr::matrix::POS)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The backend offline (fixed screen, a blank skin image): what the shared pass's calls become.
+    fn backend() -> Overlay {
+        let mut o = Overlay::default();
+        o.set_screen_size(Some((800, 600)));
+        o.set_skin(vec![0; (skin::TEXTURE_W * skin::TEXTURE_H * 4) as usize]);
+        assert!(o.fonts(b"Arial", 700, 0, false));
+        assert!(!o.fonts(b"Arial", 700, 0, false));
+        o
+    }
+
+    #[test]
+    fn metrics_follow_the_atlas() {
+        let o = backend();
+        let m = o.metrics();
+        assert_eq!((m.main_h, m.small_h, m.gui0_h, m.gui1_h), (14, 12, 20, 18));
+        // Without GTAWEAPON3: its aux + 12 cell and the 31 px glyph width stand in.
+        assert_eq!((m.icon_w, m.icon_h), (31, 24));
+        assert!(m.timestamp_w > 50 && m.nick_w > 150);
+    }
+
+    #[test]
+    fn dxut_calls_become_skin_quads_rects_and_centred_text() {
+        let mut o = backend();
+        o.dialog_begin(UiRect::new(245, 510, 555, 550), 0x960A_0A0A);
+        o.gui_sprite(UiRect::new(0, 0, 136, 54), UiRect::new(255, 515, 345, 545), 0xC8FF_FFFF);
+        o.gui_sprite(UiRect::new(0, 0, 136, 54), UiRect::new(255, 515, 345, 545), 0x00FF_FFFF);
+        o.gui_text(UiFont::Gui0, b"<<", UiRect::new(255, 515, 345, 545), 0x5, 0xFFC8_C8C8);
+        o.dialog_end();
+        let (list, atlas) = o.take_list();
+        let w = atlas.unwrap().width(2, b"<<");
+        assert_eq!(list.cmds[0], Cmd::Rect { rect: [245.0, 510.0, 555.0, 550.0], colour: 0x960A_0A0A });
+        assert!(matches!(list.cmds[1], Cmd::Skin { dst: [255.0, 515.0, 345.0, 545.0], colour: 0xC8FF_FFFF, .. }));
+        // The fill layer with alpha 0 draws nothing; the label is centred in both directions.
+        assert_eq!(list.cmds.len(), 3);
+        let Cmd::Text { x, y, slot, .. } = &list.cmds[2] else { panic!() };
+        assert_eq!((*x, *y, *slot), ((255 + (90 - w) / 2) as f32, 520.0, 2));
+    }
+
+    #[test]
+    fn outlined_text_is_one_run_of_pre_outlined_glyphs() {
+        let mut o = backend();
+        let glyphs = [0xFFFF_FFFF; 5];
+        o.draw_text_outlined(
+            UiSprite::Chat,
+            UiFont::Main,
+            UiFont::MainOutline,
+            b"hello",
+            UiRect::new(45, 10, 550, 110),
+            dt::SINGLELINE,
+            0xFFFF_FFFF,
+            &glyphs,
+            &samp_ui::fonts::OUTLINE_4,
+        );
+        let (list, _) = o.take_list();
+        assert_eq!(list.cmds.len(), 1);
+        assert!(matches!(&list.cmds[0], Cmd::Text { x: 45.0, y: 10.0, outline: 1, .. }));
+        // DXUT's password mask has its own glyph.
+        assert_eq!(narrow(&[0x25CF, u16::from(b'a'), 0x4E2D]), vec![MASK_BYTE, b'a', b'?']);
     }
 }

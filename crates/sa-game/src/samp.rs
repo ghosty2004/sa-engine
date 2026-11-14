@@ -171,6 +171,14 @@ impl<H: GameHooks> GameHooks for Counting<H> {
     fn shutdown(&mut self, game: &mut dyn GameAdapter) {
         self.0.shutdown(game);
     }
+
+    fn window_event(
+        &mut self,
+        event: sa_samp_api::input::WindowEvent,
+        game: &dyn GameAdapter,
+    ) -> sa_samp_api::input::EventResult {
+        self.0.window_event(event, game)
+    }
 }
 
 /// The client `--samp` installs: the network client with the `samp` feature, else the stand-in.

@@ -1,9 +1,9 @@
 # SAMP-UI: the SA:MP overlay drawn by the engine
 
-Status: first working slice (2026-11-12). Chat window and input line, all six dialog styles, nametags with
-health / armour bars, 3D text labels, textdraws (fonts 0–3), game text, the kill list, the scoreboard, the class-selection panel
-(2026-11-14) and the cursor are drawn by native sa-game through ported engine code, driven by window events from the platform layer.
-Evidence: `sa-game --samp-ui-demo` (offscreen PNGs, §6).
+Status (2026-11-14, SAMP-UI-DEDUP, §10): there is one SA:MP UI, samp-rs's own (samp-ui + samp-client `ui::render` /
+`ui::session` / `ui::host`), drawn through `sa_samp_api::ui::UiBackend`; the engine backend is `sa-samp/src/overlay`. The
+engine-only UI crate `sa-samp-ui` described in §1–§9 is gone; those sections stay as the history of the first slice
+(2026-11-12) and of what was measured with it. Evidence: `sa-game --samp-ui-demo` (offscreen PNGs, §6) and §10.5.
 
 Inputs: `docs/samp/game-adapter.md` §4.10 (overlay surface), `docs/samp/native-plan.md` §3 (dispatch points),
 samp-rs's `samp-ui` crate (`samp-rs/crates/samp-ui`: its specification of samp.dll's UI
@@ -399,3 +399,94 @@ are renderer-independent.
   `WindowEvent`s to it (mapped to `samp_ui::keys::Event`) and draws it at `FramePhase::Present` (textdraws at
   `After2d`) through `game.ui()`. The demo / reference scene drive the same `UiCore`.
 * `crates/sa-samp-ui` is deleted.
+
+### 10.3 What moved where
+
+| piece | before | now |
+|---|---|---|
+| backend trait | — (engine-owned `SampUi` state API) | `sa_samp_api::ui::UiBackend` (API v5); `GameAdapter::ui()` returns it |
+| UI pass (chat, nametags, bubbles, labels, dialogs, list box, scoreboard, death window, F5, audio title) | `samp-client/src/ui/render` (D3D only) + sa-samp-ui | `samp-client/src/ui/render/{mod,chat,panels,world,text,gui}.rs`, platform-independent, generic over the trait |
+| DXUT controls (caption, button, scrollbar, edit box, list box) | `samp-client/src/ui/dxut.rs` + `sa-samp-ui/src/skin.rs` | drawing: `render/gui.rs`; skin rects / colours / formats and geometry (`ScrollBar::parts`, `edit_rects`, `button_look`, `caption_rects`): `samp_ui::dxut`; `dxut.rs` keeps only the D3D primitives |
+| class-selection panel | `render/chat.rs class_panel` + `sa-samp-ui/src/classpanel.rs` | geometry / hit test / labels `samp_ui::classpanel`; drawn by `render::class_panel`; shown and clicked in `ui::session` |
+| textdraw pass | `samp-client/src/ui/textdraws.rs` (D3D) + `sa-samp-ui/src/textdraw.rs` | `render/textdraws.rs` (generic); the `txd:name` rule `samp_ui::textdraw::sprite_source`; the `CFont` / TXD calls per backend |
+| per-frame pass, dialog layout cache, input caret, clicks (dialog buttons, list double click, scoreboard, textdraws, class panel) | `glue/present.rs`, `glue/input.rs` (Windows) + `sa-samp-ui/src/ui.rs` | `samp-client/src/ui/session.rs` (`UiSession`) |
+| host steps on an adapter (frame entry, After2d, Present, window events → samp's WM routing incl. TranslateMessage's `WM_CHAR`, cursor modes via `InputLock`) | — | `samp-client/src/ui/host.rs` (`UiHost`): sa-game's native client and the demo |
+| sending the UI's messages | `glue/session.rs send_one` | `ui::core::send_outgoing` (both hosts) |
+| edit-key mapping | `wndproc.rs edit_key` | `samp_ui::edit::EditKey::from_vk` |
+| scoreboard / death-window geometry | hand-computed in `render/panels.rs` next to unused samp-ui copies | `samp_ui::scoreboard::layout(w, h, small_h, players_w)`, `samp_ui::deathwindow::origin` (unused `DeathWindow::layout` deleted) |
+| D3D9 backend | `render/mod.rs Renderer` | `ui/d3d/renderer/{mod,backend,fontset,editor}.rs` (`impl UiBackend for Renderer`; chat render target, plate painter, object editor, lost / reset stay there) |
+| engine backend | `sa-samp/src/overlay` + sa-samp-ui (font, draw, skin) | `sa-samp/src/overlay/{mod,draw,font,skin,render}.rs`: `impl UiBackend for Overlay`, D3DX `DrawText` layout on the atlas, atlas of 9 fonts (UI fonts, `gtaweap3.ttf`, `sampaux3.ttf` from the user's install, `●` for DXUT's password mask), skin mip chain |
+| native client UI | `samp_net.rs` translated RPCs into `SampUi` calls | `samp_net.rs` feeds every RPC to `UiCore::on_rpc` and sends `take_outgoing()` |
+
+What is not shared 1:1, and why: the Windows glue keeps its own steps around `UiSession` (screenshot,
+`GetAsyncKeyState` F1 / F5 / F10, HUD flags and cursor ops patched into gta_sa.exe, nametag and bubble gathering from
+raw game memory with samp's script-opcode LOS test, model previews, menus, the object editor): they are the original
+exe's side of things the engine reaches through other adapter traits. The native host has no F5 / F10 overlays, F1
+help, HUD flags, remote-player nametags / bubbles (the native client has no remote players yet; the demo builds them),
+model previews or menus yet (§10.6).
+
+### 10.4 Behaviour differences found, and their resolution
+
+Where the engine-only UI and samp-rs differed, samp-rs (its spec `ui-rendering.md`, measured against samp.dll) wins.
+Every change of engine pixels this caused:
+
+1. **Chat paging**: the old UI clamped Page Up at the oldest stored line; samp's chat is a 100-slot ring
+   (samp.dll 0x100672d0), so Page Up from the bottom shows the empty slots above the first message.
+2. **Password mask**: `*` → U+25CF `●` (DXUT's `DrawTextW` mask, `samp_ui::edit::PASSWORD_MASK`).
+3. **Death window**: the weapon "icons" were short labels in black boxes; now the GTAWEAPON3 glyphs of the user's
+   `gtaweap3.ttf` (backdrop `G` in black, the reason glyph white / connect blue / disconnect red) with the font's own
+   metrics (icon width 32 px instead of the 31 px stand-in: names move by 1 px). Without the file: no icons, old metrics.
+4. **Death-window origin**: the spec says `round(0.75·W)`; samp-rs's renderer truncates (`_ftol`, matched by its D3D
+   call-stream comparison). Truncation kept; identical except where `0.75·W` or `0.3·H` ends in .5 (e.g. W = 1366).
+   samp-ui's unused `DeathWindow::layout` (rows from the top, rounding) contradicted both and was deleted.
+5. **AFK nametag**: the text "AFK" → samp's SAMPAUX3 glyphs (`C` backdrop, `E` icon) from `sampaux3.ttf`, with
+   `nametag_status` on (the default).
+6. **3D labels and chat bubbles**: the old UI wrapped labels at 400 px and centred the block vertically on the point;
+   samp's 3D-text painter draws from the projected point downward (`[x, y, x+1, y+1]`, `DT_CENTER`), no wrap; each
+   line at `x + (1 − w) / 2` (integer division) instead of a float rounding (≤ 1 px).
+7. **Scoreboard**: one click selected and answered; now DXUT's list: a click selects, a double click sends RPC 23
+   and closes; the selection no longer follows the hover; opening sends RPC 155 (samp's refresh).
+8. **Tab lists**: runs of tabs are one separator, the column count is the first row's cell count, rows ≤ 256 and
+   cells ≤ 128 characters, titles ≤ 64; Page Up / Down move by page − 1 (DXUT). The reference dialogs do not change.
+9. **Dialog bodies with tabs**: tabs had no width; now `DT_EXPANDTABS` with stops every 8 average character widths
+   (the average taken as the width of `x`, an approximation of GDI's `tmAveCharWidth`).
+10. **Cursor and input lock** follow samp's cursor modes (`InputLock`): the chat input locks the mouse and shows the
+    cursor (mode 2), the scoreboard mode 3; the old UI showed no cursor while typing.
+11. **Edit boxes**: samp-ui's DXUT edit (selection, Ctrl word moves, Insert, clipboard requests); Backspace / Enter /
+    Esc arrive as samp reads them (`WM_CHAR` after the key-down; `UiHost` makes it up when the platform sends none).
+12. **Game text**: one long-lived buffer as samp (was one per style), `ClearPrints` first, Latin-1 bytes
+    (`NativeGame::big_message` now encodes GXT text as Latin-1).
+13. **`DT_VCENTER` without `DT_SINGLELINE`** (DXUT's button / edit / caption formats) centres the block as D3DX does
+    (the original's pixels), not as GDI.
+14. **Class-panel click**: the old UI required press and release over the button (DXUT); samp-rs's rule is the
+    release (as its Windows glue). Kept; press tracking is open for both backends.
+15. Unchanged natively (open, as before): HUD / radar not hidden while the scoreboard is open; no `~k~` expansion in
+    chat lines; model previews (font 5) take the text path.
+
+### 10.5 Evidence (not committed; Rockstar-derived pixels)
+
+* **UI layer, old vs new** (`target/uicmp/` in the SAMP-UI-DEDUP worktree builds the old sa-samp-ui of 6102d540 and
+  the new pass on the engine backend from the same content and rasterises both command lists with one software
+  rasteriser onto one background; `target/pix-evidence/uicmp/*.png` = old | new | differing pixels, `*.old.txt` /
+  `*.new.txt` the lists): the chat lines, the open chat input with its scrollbar, all six dialog styles (list
+  selection, typed input), the scoreboard, the plain chat after F7 and the class-selection panel with `>>` hovered are
+  identical to the pixel; the only differences are the death window (3313 px, item 3) and the password mask (576 px,
+  item 2).
+* **Native join** against open.mp (UDP 7813, `SA_GAME_POINTER` hover and click; `target/pix-before/join` vs
+  `target/pix-after/join`): the class-selection panel region is 0 px different, hovered `>>` included; the chat region
+  differs only where trees sway; the `<<` click requests class 2 with sound 1053 as before.
+* **Demo / reference scene** (`--fixed-step 33`; each build is deterministic, two runs equal): `target/pix-before/{d1,ref}`
+  vs `target/pix-after/{d1,ref}`. The world does not line up between the builds (the load takes 7 more iterations and
+  the input lock differs, item 10), so whole frames are not compared; they show the items above. All UI events still
+  arrive (chat line, list answer `MP5`, password, scoreboard double click → RPC 23, the reference's six Esc answers).
+* The D3D9 backend builds and passes clippy for i686-pc-windows-gnu; its call stream was not re-measured on the
+  original exe in this step. Each trait method is the D3D helper the pass called before, with the same arguments and
+  counts, in the same order. One behaviour change on that path: textdraws now need the renderer object, which only
+  matters when D3DX failed to load.
+* Browser: not run in this step.
+
+### 10.6 Open items
+
+The browser run of the new pass; the D3D call-stream diff on the original exe (`tools/trace/d3d_diff.py`); press
+tracking for DXUT buttons; the native host's F1 / F5 / F10, HUD flags, remote-player nametags and bubbles, model
+previews and menus; GUI font 0 size (§8 item 9).

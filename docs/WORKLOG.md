@@ -1289,3 +1289,25 @@
 - Clippy: workspace host clippy and i686-pc-windows sa-hook clippy clean again (64-bit check build gates the busy-wait handler and registry callers; phase A dead `draw_quad_bits`; `is_multiple_of`); writer gate all PASS after the queue regeneration (4f558734).
 - NEWGAME's last two commits (CMenuSystem::Initialise 0x5822D0 as a phase B native, CTaskComplexWaitForPed ctor/ControlSubTask, --start-in-world on every new game) cherry-picked; its CAEDataStream / CAEStreamingDecoder constructors and stream-thread fix dropped (master has them); duplicate `esc` arm removed. sa-hook lib 58/58, i686 build. Not re-proven by a scripted pause-menu run (menu position not found); the user's report is the check.
 - Found while scripting the pause menu: Enter on pause-menu item 4 (down ×3) SIGSEGVs in a Rust port (host pointer 0x58dc4f9c) — queued for the frontier agent.
+
+## 2026-11-14 SAMP-UI-DEDUP: one SA:MP UI, samp-rs's, drawn through a backend trait (agent, branch worktree-agent-ad98c9348a6e71dda)
+- Inventory and design first (docs/samp/overlay.md §10.1–10.2): `crates/sa-samp-ui` (4,894 lines) re-did samp-ui's
+  logic, samp-client's `UiCore` routing and its D3D renderer's layout. Per the user's direction (one implementation,
+  abstraction where it applies; ADR-003 §3.1 / §3.2): `sa_samp_api::ui::UiBackend` (API v5, replaces `SampUi`);
+  samp-client's render code is platform-independent and generic over it (`ui::render`), the pass state and clicks are
+  `ui::session`, the adapter-side host is `ui::host::UiHost`; the D3D9 renderer implements the trait
+  (`ui/d3d/renderer`), the engine backend is `sa-samp/src/overlay` (atlas incl. the user's gtaweap3.ttf / sampaux3.ttf,
+  D3DX DrawText layout, skin mip chain). samp-ui gains `dxut` (skin + control geometry), `classpanel`,
+  `textdraw::sprite_source`, `EditKey::from_vk`; `send_outgoing` moved into `ui::core`. sa-samp-ui deleted; sa-game's
+  native client and `--samp-ui-demo` / `SA_SAMP_UI_SCENE=ref` drive `UiCore`.
+- Behaviour differences recorded with their resolution (overlay.md §10.4: chat ring paging, `●` mask, GTAWEAPON3 / SAMPAUX3
+  glyphs, label anchoring, scoreboard double click, cursor modes, WM_CHAR emulation, game-text buffer, D3DX VCENTER).
+- Verified: samp-rs `cargo test --workspace` (samp-ui 103, samp-client 205 incl. 4 new pass tests on a recording
+  backend); sa-samp 30 (atlas, symbol cmap, layout, backend), sa-samp-api, sa-game --features samp lib; clippy -D warnings:
+  sa-samp / sa-samp-api host all targets, i686, wasm32; sa-game --features samp host, i686, wasm32 lib; samp-client
+  i686-pc-windows-gnu all targets and host. UI-layer comparison old vs new (target/uicmp): chat, chat input, six
+  dialog styles, scoreboard, F7, class panel identical to the pixel; only the death window and the password mask differ
+  (§10.4 items 2, 3). Native join on open.mp 7813 with SA_GAME_POINTER: class panel region 0 px different incl. hover,
+  `<<` → class 2. Not done: browser run, D3D call-stream diff on the original exe.
+- Lines: sa-samp-ui 4,894 → 0; samp-ui 6,066 → 6,344; samp-client ui 8,645 → 9,329; sa-samp overlay 847 → 1,876;
+  sa-samp-api ui 373 → 350; sa-game samp_net / demo / scene 1,897 → 1,638. Total 22,722 → 19,537 (incl. new tests).

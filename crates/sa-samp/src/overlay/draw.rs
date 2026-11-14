@@ -102,8 +102,9 @@ pub fn width(a: &FontAtlas, si: usize, text: &[u8], flags: u32) -> i32 {
 }
 
 /// D3DX `DrawText` layout of `text` in `rect` with `flags`: the lines (empty for nothing to draw) and the
-/// extent `DT_CALCRECT` reports. Lines break at `\n` (not with `DT_SINGLELINE`); `DT_VCENTER` / `DT_BOTTOM`
-/// apply to single-line text. Centring uses integer division (`left + (width − textWidth) / 2`).
+/// extent `DT_CALCRECT` reports. Lines break at `\n` (not with `DT_SINGLELINE`); `DT_VCENTER` / `DT_BOTTOM` place the
+/// whole block (D3DX does so also without `DT_SINGLELINE`). Centring uses integer division
+/// (`left + (width − textWidth) / 2`).
 pub fn layout(a: &FontAtlas, si: usize, text: &[u8], rect: UiRect, flags: u32) -> (Vec<Line>, UiRect) {
     let lh = a.line_height(si);
     let mut ranges = Vec::new();
@@ -122,14 +123,15 @@ pub fn layout(a: &FontAtlas, si: usize, text: &[u8], rect: UiRect, flags: u32) -
     let n = ranges.len() as i32;
     let rw = rect.right - rect.left;
     let rh = rect.bottom - rect.top;
-    let mut top = rect.top;
-    if flags & dt::SINGLELINE != 0 {
-        if flags & dt::VCENTER != 0 {
-            top = rect.top + (rh - lh) / 2;
-        } else if flags & dt::BOTTOM != 0 {
-            top = rect.bottom - lh;
-        }
-    }
+    // D3DX centres / bottom-aligns the whole block, with or without `DT_SINGLELINE` (unlike GDI).
+    let block = n * lh;
+    let top = if flags & dt::VCENTER != 0 {
+        rect.top + (rh - block) / 2
+    } else if flags & dt::BOTTOM != 0 {
+        rect.bottom - block
+    } else {
+        rect.top
+    };
     let mut lines = Vec::with_capacity(ranges.len());
     let mut max_w = 0;
     for (k, mut r) in ranges.into_iter().enumerate() {
@@ -234,6 +236,9 @@ mod tests {
         let w = a.width(2, b"OK");
         let (l, _) = layout(&a, 2, b"OK", UiRect::new(100, 50, 200, 80), dt::CENTER | dt::VCENTER | dt::SINGLELINE);
         assert_eq!((l[0].x, l[0].y), (100 + (100 - w) / 2, 50 + (30 - 20) / 2));
+        // DXUT's button format (`DT_CENTER | DT_VCENTER`, no `DT_SINGLELINE`) centres too.
+        let (l2, _) = layout(&a, 2, b"OK", UiRect::new(100, 50, 200, 80), dt::CENTER | dt::VCENTER);
+        assert_eq!(l2, l);
         let (l, e) = layout(&a, 1, b"ab\ncde", UiRect::new(10, 20, 10, 20), 0);
         assert_eq!(l.len(), 2);
         assert_eq!((l[1].x, l[1].y), (10, 20 + 12));
