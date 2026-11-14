@@ -638,7 +638,8 @@ pub(crate) mod coop {
         };
         for (i, entry, param, mut st) in due {
             CURRENT.store(i as u32 + 1, Ordering::Relaxed);
-            let pass = || match entry {
+            #[cfg_attr(not(target_arch = "wasm32"), allow(unused_mut))]
+            let mut pass = || match entry {
                 0x4E_EE90 => sa_audio::port4_hw::smooth_fade_step(param),
                 _ => sa_audio::port4_hw::stream_thread_step(param, &mut st),
             };
