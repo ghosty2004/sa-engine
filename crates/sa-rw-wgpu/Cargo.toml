@@ -7,7 +7,6 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
-sa-rw = { path = "../sa-rw" }
 sa-platform = { path = "../sa-platform", default-features = false }
 wgpu = "29"
 bytemuck = { version = "1", features = ["derive"] }

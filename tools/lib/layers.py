@@ -1,5 +1,5 @@
 """The crate layers of ADR-003 §3.4, lowest first. A crate may depend only on crates of a lower layer
-(`tools/verify/layers.py` checks it in the writer gate; `tools/gen/bindings.py` places bindings with it).
+(`tools/verify/crate_layers.py` checks it in the writer gate; `tools/gen/bindings.py` places bindings with it).
 
 The order is the one the code has (measured 2026-11-14): `sa-pop` sits below `sa-veh` / `sa-cam` / `sa-render`
 (they call its car-control and population code), `sa-anim` / `sa-input` beside `sa-stream`.
@@ -7,7 +7,7 @@ The order is the one the code has (measured 2026-11-14): `sa-pop` sits below `sa
 
 LAYERS = [
     # leaves: no engine dependency
-    ['sa-macros', 'sa-math', 'sa-platform', 'sa-formats', 'sa-oracle-format', 'sa-samp-api', 'sa-net',
+    ['sa-macros', 'sa-math', 'sa-platform', 'sa-oracle-format', 'sa-samp-api', 'sa-net',
      'sa-launcher', 'sa-udp-proxy', 'sa-build'],
     ['sa-core'],
     ['sa-rwcore', 'sa-stream', 'sa-input', 'sa-anim'],
@@ -15,10 +15,10 @@ LAYERS = [
     ['sa-pop'],
     ['sa-ped', 'sa-veh', 'sa-cam', 'sa-ai', 'sa-weapon', 'sa-render'],
     ['sa-script', 'sa-hud', 'sa-audio'],
-    # the SA:MP glue, the demo RenderWare stack, the registry of every port
-    ['sa-samp', 'sa-rw', 'sa-ports'],
+    # the SA:MP glue, the registry of every port
+    ['sa-samp', 'sa-ports'],
     ['sa-rw-wgpu', 'sa-hook'],
-    ['sa-game', 'sa-viewer', 'sa-oracle'],
+    ['sa-game', 'sa-oracle'],
 ]
 RANK = {c: i for i, layer in enumerate(LAYERS) for c in layer}
 

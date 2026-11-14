@@ -38,7 +38,7 @@
 //! * **Textures.** Uncompressed formats are converted to RGBA8 on the CPU. DXT1/3/5 (and the
 //!   premultiplied DXT2/4, treated as 3/5) are uploaded as BC1/2/3 when the device has
 //!   `TEXTURE_COMPRESSION_BC` and the size is a multiple of 4, otherwise decoded with
-//!   [`sa_rw::dxt`].
+//!   [`crate::dxt`].
 //!
 //! # Implemented
 //! Transforms (`v * World * View * Proj`, D3D row vectors), pre-transformed `XYZRHW` vertices, the
@@ -83,7 +83,7 @@ use sa_platform::gpu::{
     Caps, D3d9Device, D3dError, D3dResult, IndexBufferId, Light, Material, PrimitiveType, ShaderId, TextureDesc, TextureId,
     VertexBufferId, VertexDeclId, VertexElement, Viewport, clear, decltype, declusage, fmt, rs, samp, ts, tss,
 };
-use sa_rw::dxt;
+use crate::dxt;
 
 use crate::sm::{self, wgsl::ConstBlock};
 

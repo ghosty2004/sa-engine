@@ -1,5 +1,9 @@
 # NATIVE-DEMO: `sa-viewer`, the first standalone (phase B) executable
 
+> **Retired (DEDUP-1 pass 2, 2026-11-14):** `sa-viewer`, `sa-formats`, `sa-rw` and `sa-rw-wgpu`'s world renderer
+> were removed (ADR-003 §5.2): only this demo used them; the ported code renders through `sa-rw-wgpu`'s D3D9 seam.
+> This page is kept as the record of what the demo did.
+
 `sa-viewer` is a native Linux x86_64 program that loads San Andreas from the user's game folder and
 lets you fly a free camera through the world. It needs no Wine, no `gta_sa.exe` and no Rockstar
 code: it reads only the data files (`gta.dat`, IDE/IPL, `gta3.img`, `gta_int.img`, `timecyc.dat`,

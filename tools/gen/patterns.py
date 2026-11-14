@@ -44,44 +44,40 @@ import os
 import re
 import sys
 
-import capstone
-import pefile
 from capstone import x86_const as X
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-EXE = os.environ.get('SA_GTA_EXE') or os.path.expanduser('~/sa-engine/re/gta/1.0-US/gta_sa.exe')
 
-pe = pefile.PE(EXE, fast_load=True)
-IMG = pe.get_memory_mapped_image()
-BASE = pe.OPTIONAL_HEADER.ImageBase
-md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'lib'))
+import exe  # noqa: E402  (the shared exe / catalogue reader and callee facts, ADR-003 §3.5)
+from exe import (BASE, EXE, GR, HOODLUM, IMG, M32, PARENT, PROCS, RANGES, REG8, REG16, REG32, body_ranges,  # noqa: E402,F401
+                 catname, cls_of, ecx_first_read, insn_at, linear, md, method_of, pe, rd, read_entries, u32_at)
+
+
+def pops(a, depth=0):
+    """Stack bytes the function at `a` removes on return (this generator reads CRT callees off the bytes)."""
+    return exe.pops(a, depth, crt=False)
+
+
+def entry_reads(a):
+    """Registers the callee's first block reads before writing (`mov edi, edi` counts as a read here)."""
+    return exe.entry_reads(a, skip_mov_self=False)
+
+
 md.detail = True
 
 
-def rd(a, n):
-    return IMG[a - BASE:a - BASE + n]
 
 
-def u32_at(a):
-    return int.from_bytes(rd(a, 4), 'little')
 
 
-def insn_at(a):
-    return next(md.disasm(rd(a, 16), a), None)
-
-
-HOODLUM = 0x1556000
-M32 = 0xFFFFFFFF
 
 # ---------------------------------------------------------------- catalogue
 
-GR = {}
 for r in csv.DictReader(open(os.path.join(ROOT, 'catalog', 'functions.csv'))):
     GR[int(r['address'], 16)] = f"{r['owner']}::{r['name']}"
-PROCS = {}
 for r in csv.DictReader(open(os.path.join(ROOT, 'catalog', 'procedures.csv'))):
     PROCS[int(r['address'], 16)] = r
-RANGES = {}
 for r in csv.DictReader(open(os.path.join(ROOT, 'catalog', 'extents.csv'))):
     rs = []
     for part in r['ranges'].split(';'):
@@ -91,187 +87,27 @@ for r in csv.DictReader(open(os.path.join(ROOT, 'catalog', 'extents.csv'))):
     RANGES[int(r['address'], 16)] = rs
 
 
-def catname(a):
-    if a in GR:
-        return GR[a]
-    p = PROCS.get(a)
-    if p is None:
-        return None
-    return p['name'] or p['ghidra_name'] or None
 
 
-def cls_of(name):
-    return name.split('::')[0] if name and '::' in name else ''
 
 
-def method_of(name):
-    return name.split('::')[-1] if name else ''
-
-
-# INF-20 readers: entries whose first bytes other code reads (sa-hook rejects hooks on them).
-def read_entries():
-    out = {}
-    path = os.path.join(ROOT, 'catalog', 'code-data-reads.csv')
-    for l in open(path).read().splitlines()[1:]:
-        m = re.match(r'(0x[0-9a-f]+),', l)
-        cells = re.findall(r'(?:^|,)("(?:[^"]*)"|[^,]*)', l)
-        try:
-            target, size = int(cells[6], 16), int(cells[7])
-        except (ValueError, IndexError):
-            continue
-        out.setdefault(target, []).append((int(m.group(1), 16), size))
-    return out
 
 
 READS = read_entries()
 
 # ---------------------------------------------------------------- callee facts
 
-_pops = {}
 
 
-def body_ranges(a):
-    return RANGES.get(a) or []
 
 
-def linear(a, e):
-    out = []
-    p = a
-    while p < e:
-        i = insn_at(p)
-        if i is None:
-            break
-        out.append(i)
-        p += i.size
-    return out
 
 
-def pops(a, depth=0):
-    """Stack bytes the function at `a` removes on return (from its own `ret N`), or None."""
-    if a in _pops:
-        return _pops[a]
-    res = None
-    rs = body_ranges(a)
-    if not rs:
-        i = insn_at(a)
-        if i and i.mnemonic == 'jmp' and i.op_str.startswith('0x') and depth < 4:
-            res = pops(int(i.op_str, 16), depth + 1)
-        _pops[a] = res
-        return res
-    vals = set()
-    tails = set()
-    for s, e in rs:
-        for i in linear(s, e):
-            if i.mnemonic == 'ret':
-                vals.add(int(i.op_str, 16) if i.op_str else 0)
-            elif i.mnemonic == 'jmp' and i.op_str.startswith('0x'):
-                t = int(i.op_str, 16)
-                if not any(s2 <= t < e2 for s2, e2 in rs):
-                    tails.add(t)
-    if depth < 4:
-        for t in sorted(tails):
-            if t in RANGES or catname(t):
-                v = pops(t, depth + 1)
-                if v is not None:
-                    vals.add(v)
-    if len(vals) == 1:
-        res = vals.pop()
-    _pops[a] = res
-    return res
 
 
-REG32 = {X.X86_REG_EAX: 'eax', X.X86_REG_ECX: 'ecx', X.X86_REG_EDX: 'edx', X.X86_REG_EBX: 'ebx',
-         X.X86_REG_ESP: 'esp', X.X86_REG_EBP: 'ebp', X.X86_REG_ESI: 'esi', X.X86_REG_EDI: 'edi'}
-REG8 = {X.X86_REG_AL: 'eax', X.X86_REG_CL: 'ecx', X.X86_REG_DL: 'edx', X.X86_REG_BL: 'ebx'}
-REG16 = {X.X86_REG_AX: 'eax', X.X86_REG_CX: 'ecx', X.X86_REG_DX: 'edx', X.X86_REG_BX: 'ebx',
-         X.X86_REG_SI: 'esi', X.X86_REG_DI: 'edi', X.X86_REG_BP: 'ebp'}
-PARENT = {}
-for k, v in REG32.items():
-    PARENT[k] = v
-for k, v in REG8.items():
-    PARENT[k] = v
-for k, v in REG16.items():
-    PARENT[k] = v
-for k, v in {X.X86_REG_AH: 'eax', X.X86_REG_CH: 'ecx', X.X86_REG_DH: 'edx', X.X86_REG_BH: 'ebx'}.items():
-    PARENT[k] = v
-
-_reads = {}
 
 
-def entry_reads(a):
-    """Registers the callee's first block reads before writing (following a .HOODLUM stub)."""
-    if a in _reads:
-        return _reads[a]
-    p = a
-    i = insn_at(p)
-    if i and i.mnemonic == 'jmp' and i.op_str.startswith('0x'):
-        p = int(i.op_str, 16)
-    written, read = set(), set()
-    n = 0
-    for i in md.disasm(rd(p, 200), p):
-        n += 1
-        if i.mnemonic == 'xor' and len(i.operands) == 2 and i.operands[0].type == X.X86_OP_REG and \
-                i.operands[0].reg == i.operands[1].reg:
-            written.add(PARENT.get(i.operands[0].reg))
-            continue
-        if i.mnemonic == 'push' and i.operands[0].type == X.X86_OP_REG and \
-                PARENT.get(i.operands[0].reg) in ('ebx', 'esi', 'edi', 'ebp'):
-            continue
-        try:
-            rr, ww = i.regs_access()
-        except capstone.CsError:
-            rr, ww = [], []
-        for r in rr:
-            pr = PARENT.get(r)
-            if pr and pr != 'esp' and pr not in written:
-                read.add(pr)
-        for r in ww:
-            pr = PARENT.get(r)
-            if pr:
-                written.add(pr)
-        if i.mnemonic in ('ret', 'jmp', 'call') or i.mnemonic.startswith('j') or n > 40:
-            break
-    _reads[a] = read
-    return read
 
-
-_ecx = {}
-
-
-def ecx_first_read(a):
-    """True when the first instruction touching ECX/CX/CL in a linear sweep of the callee's extent
-    (stub target first) reads it: the callee takes ECX even if its first block does not read it."""
-    if a in _ecx:
-        return _ecx[a]
-    rs = sorted(body_ranges(a))
-    i = insn_at(a)
-    if not rs and i and i.mnemonic == 'jmp' and i.op_str.startswith('0x'):
-        rs = sorted(body_ranges(int(i.op_str, 16))) or [(int(i.op_str, 16), int(i.op_str, 16) + 200)]
-    res = False
-    for s, e in rs:
-        hit = None
-        for i in linear(s, e):
-            if i.mnemonic == 'xor' and len(i.operands) == 2 and i.operands[0].type == X.X86_OP_REG and \
-                    i.operands[0].reg == i.operands[1].reg:
-                if PARENT.get(i.operands[0].reg) == 'ecx':
-                    hit = False
-                    break
-                continue
-            try:
-                rr, ww = i.regs_access()
-            except capstone.CsError:
-                continue
-            if any(PARENT.get(r) == 'ecx' for r in rr):
-                hit = True
-                break
-            if any(PARENT.get(r) == 'ecx' for r in ww):
-                hit = False
-                break
-        if hit is not None:
-            res = hit
-            break
-    _ecx[a] = res
-    return res
 
 
 # ---------------------------------------------------------------- symbolic execution
@@ -1581,7 +1417,6 @@ def merge_spans(rng):
     return out
 
 
-
 # ================================================================ driver: every subsystem but AI
 
 GEN_MARK = 'Generated by `tools/gen/patterns.py`'
@@ -1863,7 +1698,6 @@ def max_x87_ops(out):
             if isinstance(x_, tuple):
                 m = max(m, x87_ops(x_))
     return m
-
 
 
 
@@ -2373,7 +2207,6 @@ mod tests {
 }
 '''
     return s
-
 
 
 def grender_specs(gs):

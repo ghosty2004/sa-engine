@@ -2091,6 +2091,7 @@ dependencies = [
  "sa-math",
  "sa-ped",
  "sa-pop",
+ "sa-rwcore",
  "sa-script",
  "sa-stream",
  "sa-weapon",
@@ -2114,6 +2115,7 @@ name = "sa-audio"
 version = "0.1.0"
 dependencies = [
  "libm",
+ "sa-ai",
  "sa-anim",
  "sa-core",
  "sa-hud",
@@ -2122,6 +2124,7 @@ dependencies = [
  "sa-math",
  "sa-ped",
  "sa-pop",
+ "sa-render",
  "sa-script",
  "sa-stream",
  "sa-veh",
@@ -2134,9 +2137,11 @@ name = "sa-cam"
 version = "0.1.0"
 dependencies = [
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
  "sa-pop",
+ "sa-rwcore",
  "sa-stream",
  "sa-world",
 ]
@@ -2148,10 +2153,6 @@ dependencies = [
  "sa-macros",
  "sa-math",
 ]
-
-[[package]]
-name = "sa-formats"
-version = "0.1.0"
 
 [[package]]
 name = "sa-game"
@@ -2225,11 +2226,17 @@ name = "sa-hud"
 version = "0.1.0"
 dependencies = [
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
+ "sa-ped",
  "sa-pop",
+ "sa-render",
+ "sa-rwcore",
  "sa-script",
  "sa-stream",
+ "sa-veh",
+ "sa-weapon",
  "sa-world",
 ]
 
@@ -2314,9 +2321,13 @@ version = "0.1.0"
 name = "sa-ped"
 version = "0.1.0"
 dependencies = [
+ "sa-anim",
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
+ "sa-pop",
+ "sa-rwcore",
  "sa-stream",
  "sa-weapon",
  "sa-world",
@@ -2335,9 +2346,11 @@ dependencies = [
 name = "sa-pop"
 version = "0.1.0"
 dependencies = [
+ "sa-anim",
  "sa-core",
  "sa-macros",
  "sa-math",
+ "sa-rwcore",
  "sa-stream",
  "sa-world",
 ]
@@ -2368,19 +2381,15 @@ dependencies = [
 name = "sa-render"
 version = "0.1.0"
 dependencies = [
+ "sa-anim",
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
  "sa-pop",
+ "sa-rwcore",
  "sa-stream",
  "sa-world",
-]
-
-[[package]]
-name = "sa-rw"
-version = "0.1.0"
-dependencies = [
- "sa-formats",
 ]
 
 [[package]]
@@ -2390,7 +2399,6 @@ dependencies = [
  "bytemuck",
  "png",
  "sa-platform",
- "sa-rw",
  "wgpu",
 ]
 
@@ -2419,7 +2427,11 @@ version = "0.1.0"
 dependencies = [
  "ab_glyph",
  "sa-core",
+ "sa-hud",
+ "sa-render",
+ "sa-rwcore",
  "sa-samp-api",
+ "sa-stream",
  "samp-ui",
 ]
 
@@ -2431,10 +2443,20 @@ version = "0.1.0"
 name = "sa-script"
 version = "0.1.0"
 dependencies = [
+ "sa-ai",
+ "sa-anim",
+ "sa-cam",
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
+ "sa-ped",
+ "sa-pop",
+ "sa-render",
+ "sa-rwcore",
  "sa-stream",
+ "sa-veh",
+ "sa-weapon",
  "sa-world",
 ]
 
@@ -2462,35 +2484,28 @@ dependencies = [
 name = "sa-veh"
 version = "0.1.0"
 dependencies = [
+ "sa-anim",
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
  "sa-pop",
+ "sa-rwcore",
  "sa-stream",
  "sa-world",
-]
-
-[[package]]
-name = "sa-viewer"
-version = "0.1.0"
-dependencies = [
- "png",
- "sa-formats",
- "sa-math",
- "sa-platform",
- "sa-rw",
- "sa-rw-wgpu",
- "sa-stream",
- "wgpu",
 ]
 
 [[package]]
 name = "sa-weapon"
 version = "0.1.0"
 dependencies = [
+ "sa-anim",
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
+ "sa-pop",
+ "sa-rwcore",
  "sa-stream",
  "sa-world",
 ]
@@ -2499,9 +2514,12 @@ dependencies = [
 name = "sa-world"
 version = "0.1.0"
 dependencies = [
+ "sa-anim",
  "sa-core",
+ "sa-input",
  "sa-macros",
  "sa-math",
+ "sa-rwcore",
  "sa-stream",
 ]
 
