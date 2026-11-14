@@ -206,6 +206,7 @@ function status(extra) {
     blocked,
     lastBlocked,
     state: sa.game_state(),
+    uiCursor: sa.ui_cursor?.() ?? false,
     presents: sa.in_game_presents(),
     allPresents: sa.presents(),
     mib: Math.round(bytesRead / 1048576),

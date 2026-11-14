@@ -397,6 +397,13 @@ pub fn game_state() -> u32 {
     crate::winmain::game_state()
 }
 
+/// Whether the SA:MP UI shows its cursor (dialogs, scoreboard, textdraw selection, class-selection panel): the page
+/// then sends absolute pointer positions and clicks as in the menus instead of locking the pointer.
+#[wasm_bindgen]
+pub fn ui_cursor() -> bool {
+    crate::samp::ui_cursor_visible()
+}
+
 /// In-game frames presented so far.
 #[wasm_bindgen]
 pub fn in_game_presents() -> u32 {

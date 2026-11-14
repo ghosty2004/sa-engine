@@ -92,7 +92,7 @@ fn parse_args() -> Result<Args, String> {
                      --window runs the game in a native window with the window's keyboard and mouse; --auto-input adds\n\
                      the offscreen mode's synthetic input (Enter through the menus, SA_GAME_WALK).\n\
                      --fixed-step MS: deterministic mode (the game clock advances MS per main-loop iteration, streaming\n\
-                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE, SA_GAME_LMB).\n\
+                     reads complete within their iteration; scripted input: SA_GAME_KEYS, SA_GAME_WALK, SA_GAME_MOUSE, SA_GAME_LMB, SA_GAME_POINTER).\n\
                      Window runs serve the game heap from the deterministic mode's fixed-address region (one heap\n\
                      layout everywhere); --system-heap uses the C library's allocator instead.\n\
                      --samp joins a SA:MP / open.mp server through the native game adapter (build with --features samp;\n\
@@ -426,7 +426,35 @@ pub(crate) fn synthetic_input(n: u32) -> InputState {
             i.mouse_held.insert(MouseButton::Left);
         }
     }
+    // SA_GAME_POINTER: window-message pointer moves and clicks (the SA:MP UI's cursor)
+    for (x, y, at, click) in pointer_spec() {
+        if n == at {
+            i.events.push(InputEvent::MouseMove { x, y });
+        } else if click && n == at + 2 {
+            i.events.push(InputEvent::MouseDown(MouseButton::Left));
+        } else if click && n == at + 4 {
+            i.events.push(InputEvent::MouseUp(MouseButton::Left));
+        }
+    }
     i
+}
+
+/// `SA_GAME_POINTER=X:Y:ITER[:click],...` (evidence runs): at main-loop iteration ITER the pointer moves to the
+/// client position (X, Y) (`WM_MOUSEMOVE`, what the SA:MP UI's cursor follows); with `click` the left button goes
+/// down (`WM_LBUTTONDOWN`) at ITER + 2 and up at ITER + 4.
+fn pointer_spec() -> Vec<(i32, i32, u32, bool)> {
+    let Ok(v) = crate::env::var("SA_GAME_POINTER") else {
+        return Vec::new();
+    };
+    v.split(',')
+        .filter_map(|e| {
+            let f: Vec<&str> = e.trim().split(':').collect();
+            if f.len() < 3 {
+                return None;
+            }
+            Some((f[0].parse().ok()?, f[1].parse().ok()?, f[2].parse().ok()?, f.get(3) == Some(&"click")))
+        })
+        .collect()
 }
 
 /// `extra` added to `base`: events appended, held keys and buttons united, motion summed.

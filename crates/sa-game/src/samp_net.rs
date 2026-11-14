@@ -32,7 +32,7 @@ use samp_proto::sync::player::StatsSync;
 use sa_samp_api::camera::CameraCut;
 use sa_samp_api::hooks::{FramePhase, GameHooks};
 use sa_samp_api::peds::{AnimRequest, PedTask};
-use sa_samp_api::ui::{ChatKind, ChatMessage, DialogSpec, DialogStyle, UiEvent};
+use sa_samp_api::ui::{ChatKind, ChatMessage, ClassButton, DialogSpec, DialogStyle, UiEvent};
 use sa_samp_api::vehicles::VehicleSpawn;
 use sa_samp_api::{AreaCode, GameAdapter, ModelId, Rgba, Vec3, VehicleRef, WeaponType};
 
@@ -72,6 +72,12 @@ pub struct NetHooks {
     /// Synthetic Shift for headless runs (`SA_SAMP_AUTO_SPAWN=1`): the offscreen mode has no keyboard.
     auto_spawn: bool,
     netgame_created: bool,
+    /// A samp dialog is open (shown by RPC 61, until answered or hidden): class selection waits meanwhile.
+    dialog_open: bool,
+    /// The class-selection panel is visible (samp-rs `class_panel_shown`).
+    class_panel_shown: bool,
+    /// A class-panel click not yet taken by the class-selection tick (samp-rs `take_class_click`).
+    class_click: Option<ClassButton>,
 }
 
 /// samp's debug chat colour (`Started`, `Connecting to`, `Connected. Joining the game...`, `Connected to`).
@@ -194,6 +200,9 @@ impl NetHooks {
             server_text: (target.host.clone(), target.port),
             auto_spawn: crate::env::var("SA_SAMP_AUTO_SPAWN").is_ok_and(|v| v == "1"),
             netgame_created: false,
+            dialog_open: false,
+            class_panel_shown: false,
+            class_click: None,
         })
     }
 
@@ -235,6 +244,7 @@ impl NetHooks {
             self.class_selection_tick(game, now);
         }
         self.ui_events(game);
+        self.class_panel(game);
         if self.spawned {
             self.sync(game, now);
         }
@@ -544,6 +554,7 @@ impl NetHooks {
                 ui.chat_add(&msg(ChatKind::Player, name, white, text(&m.message), white));
             }
             U::ShowDialog(d) => {
+                self.dialog_open = d.dialog_id >= 0;
                 if d.dialog_id < 0 {
                     ui.show_dialog(None);
                 } else {
@@ -601,7 +612,12 @@ impl NetHooks {
                             .collect(),
                     };
                     self.net.send_rpc(&r, Reliability::ReliableOrdered);
+                    self.dialog_open = false;
                     self.note(format!("dialog {id} answered with button {button}"));
+                }
+                UiEvent::ClassPanelClicked(b) => {
+                    self.note(format!("class panel: {b:?} clicked"));
+                    self.class_click = Some(b);
                 }
                 _ => {}
             }
@@ -827,16 +843,47 @@ impl NetHooks {
         self.class_sel.enter(Instant::now(), count);
     }
 
-    /// One frame of class selection (samp-rs `class_selection_tick`): HUD off while no menu is open, then the
-    /// arrows (previous / next class with samp's sounds) and Shift (spawn request).
+    /// The class-selection panel (samp-rs `frame` / `after_frame`, samp.dll's class-selection step 0x10006100):
+    /// made visible on the first class-selection frame without an open dialog, kept while a later dialog is
+    /// open, hidden when class selection ends (the spawn).
+    fn class_panel(&mut self, game: &mut dyn GameAdapter) {
+        let shown = if !self.class_sel.is_active() {
+            false
+        } else {
+            self.class_panel_shown || !self.dialog_open
+        };
+        if shown != self.class_panel_shown {
+            self.class_panel_shown = shown;
+            if !shown {
+                self.class_click = None;
+            }
+            if let Some(ui) = game.ui() {
+                ui.show_class_panel(shown);
+            }
+        }
+    }
+
+    /// One frame of class selection (samp-rs `class_selection_tick`): HUD off while no menu is open, the panel's
+    /// clicks taken, nothing more while a dialog is open (it holds back even the first RPC 128), then the
+    /// arrows (previous / next class with samp's sounds) and Shift (spawn request); a panel click acts as its
+    /// key (`<<` Left, `>>` Right, `Spawn` Shift).
     fn class_selection_tick(&mut self, game: &mut dyn GameAdapter, now: Instant) {
         if !game.menu_active() {
             report(self, "set_hud_visible", game.set_hud_visible(false));
         }
+        let click = self.class_click.take();
+        if self.dialog_open {
+            return;
+        }
+        // Shift does nothing while the chat input is open (samp-rs `class_selection_keys`); the input takes the
+        // keyboard together with a dialog, which returned above.
+        let chat_open = game.ui().is_some_and(|ui| ui.wants_keyboard());
         let keys = classsel::Keys {
-            left: game.game_key_down(KEY_LEFT),
-            right: game.game_key_down(KEY_RIGHT),
-            shift: KEY_SHIFTS.iter().any(|k| game.game_key_down(*k)) || self.auto_spawn,
+            left: click == Some(ClassButton::Previous) || game.game_key_down(KEY_LEFT),
+            right: click == Some(ClassButton::Next) || game.game_key_down(KEY_RIGHT),
+            shift: click == Some(ClassButton::Spawn)
+                || (!chat_open && KEY_SHIFTS.iter().any(|k| game.game_key_down(*k)))
+                || self.auto_spawn,
         };
         match self.class_sel.tick(now, keys) {
             Some(classsel::Action::RequestClass(i)) => {
